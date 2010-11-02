@@ -1,0 +1,12 @@
+LSL - The LWA Software Library
+
+DESCRIPTION
+	This package contains a collection of tools for reading, format shifting, 
+	and analyzing LWA data.
+
+REQUIREMENTS
+	numpy >= 1.2
+	pyfits >= 1.3
+	aipy >= 0.9.1
+	*matplotlib >= 0.98.3
+	(* required for some of teh script)

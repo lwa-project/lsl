@@ -7,10 +7,10 @@ import glob
 from distutils.core import setup
 from distutils.command.install_data import install_data
 
-def is_package(path):
+__version__ = open('VERSION').read().strip()
 
-	"""
-	From:
+def is_package(path):
+	"""From:
 	http://wiki.python.org/moin/Distutils/Cookbook/AutoPackageDiscovery
 	"""
 
@@ -40,9 +40,7 @@ def find_packages(path, base="" ):
 	return packages
 
 def non_python_files(path):
-
-	"""
-	From:
+	"""From:
 	http://wiki.python.org/moin/Distutils/Cookbook/AutoDataDiscovery
 	"""
 
@@ -66,9 +64,7 @@ def non_python_files(path):
 	return all_results
 
 class smart_install_data(install_data):
-
-	"""
-	From:
+	"""From:
 	http://wiki.python.org/moin/Distutils/Cookbook/InstallDataScattered
 	"""
 
@@ -78,21 +74,47 @@ class smart_install_data(install_data):
 		self.install_dir = getattr(install_cmd, 'install_lib')
 		return install_data.run(self)
 
+def get_description(filename):
+	desc = ''
+	fh = open(filename, 'r')
+	lines = fh.readlines()
+	fh.close()
+
+	inDescription = False
+	for line in lines:
+		line = line.replace('\n', '')
+		line = line.replace('\t', '')
+		if line.find('DESCRIPTION') == 0:
+			inDescription = True
+			continue
+		if line.find('REQUIREMENTS') == 0:
+			inDescription = False
+			break
+		if inDescription:
+			desc = ' '.join([desc, line])
+
+	return desc
+
 packages = find_packages(".")
 py_files = ["lsl/*", "lsl/common/*", "lsl/correlator/*", "lsl/misc/*", 
 		"lsl/reader/*", "lsl/statistics/*", "lsl/writer/*"]
 data_files = non_python_files('lsl')
-script_files = glob.glob('scripts/*')
+script_files = glob.glob('scripts/*.py')
 
 setup(
 	name = "lsl",
-	version = "0.1",
-	description = "Collection of python scripts for working with LWA data.",
+	version = __version__,
+	description = "LWA Software Library",
 	author = "Jayce Dowell",
 	author_email = "jdowell@unm.edu",
 	url = "http://panda.unm.edu/Courses/Dowell/",
-	long_description = """Collection of python scripts for working with LWA data.""",
+	long_description = get_description('README'), 
+	classifiers = ['Development Status :: 2 - Pre-Alpha',
+			'Intended Audience :: Science/Research',
+			'License :: OSI Approved :: GNU General Public License (GPL)',
+			'Topic :: Scientific/Engineering :: Astronomy'],
 	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'aipy>=0.9.1'],
+	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits'],
 	package_dir = packages, 
 	packages = packages.keys(),
 	package_data = {'lsl' : py_files},
