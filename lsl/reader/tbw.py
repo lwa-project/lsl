@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """Python module to reading in data from both 12-bit and 4-bit TBW files."""

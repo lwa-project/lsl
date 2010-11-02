@@ -2,6 +2,8 @@
 
 """Module that stores various useful constants in one convenient location."""
 
+import math
+
 __version__ = '0.1'
 __revision__ ='$ Revision: 1 $'
 __all__ = ['c', 'deg2rad']
