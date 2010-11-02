@@ -2,6 +2,8 @@
 
 import os
 import imp
+import glob
+
 from distutils.core import setup
 from distutils.command.install_data import install_data
 
@@ -77,9 +79,10 @@ class smart_install_data(install_data):
 		return install_data.run(self)
 
 packages = find_packages(".")
-py_files = ["lsl/*", "lsl/common/*", "lsl/correlator/*", "lsl/data/*", "lsl/misc/*", 
-		"lsl/reader/*", "lsl/scripts/*", "lsl/statistics/*", "lsl/writer/*"]
+py_files = ["lsl/*", "lsl/common/*", "lsl/correlator/*", "lsl/misc/*", 
+		"lsl/reader/*", "lsl/statistics/*", "lsl/writer/*"]
 data_files = non_python_files('lsl')
+script_files = glob.glob('scripts/*')
 
 setup(
 	name = "lsl",
@@ -89,9 +92,11 @@ setup(
 	author_email = "jdowell@unm.edu",
 	url = "http://panda.unm.edu/Courses/Dowell/",
 	long_description = """Collection of python scripts for working with LWA data.""",
+	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'aipy>=0.9.1'],
 	package_dir = packages, 
 	packages = packages.keys(),
-	package_data = {'lsl' : py_files },
+	package_data = {'lsl' : py_files},
 	data_files = data_files,
+	scripts = script_files,
 	cmdclass = {'install_data':smart_install_data}
 ) 

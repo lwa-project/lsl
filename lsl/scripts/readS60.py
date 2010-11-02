@@ -9,39 +9,10 @@ import sys
 import numpy
 import getopt
 
-from ..common.paths import data as dataPath
+from lsl.common.paths import data as dataPath
+from lsl.reader import s60
 
 import matplotlib.pyplot as plt
-
-
-# Packet length seems to describe how many bytes of data are in 
-# each UDP packet.  1468 bytes == 734 samples.  This doesn't 
-# really seem germane to reading in the data but, rather, to 
-# collecting it.
-PacketLength = 1468
-# Packtets per second seens to indicate how many UDP packets are 
-# sent out by the S60 system to be recorded every second.  Thus in
-# one second, it would seem that there are 5109*1468 = 7.50 M byes 
-# or 3.75 M samples.  
-PacketsPerSecond = 5109
-
-
-def readChunk(filehandle, Chunk=4096):
-	"""Function to read a certain number of chunks (samples) from the input file-
-	handle and return them as a complex numpy array.  The output is in samples so 
-	twice as many bytes need to be read in as samples."""
-
-	try:
-		rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=2*Chunk)
-	except IOError as (errorNumber, errorString):
-		print 'File I/O error {0}: {1}' % (errorNumber, errorString) 
-		raise
-	
-	data = numpy.empty(Chunk, dtype=numpy.complex_)
-	data.real = rawData[0::2] - 128.0
-	data.imag = rawData[1::2] - 128.0
-
-	return data
 
 
 def usage(exitCode=None):
@@ -124,7 +95,7 @@ def main(args):
 		nSamples = os.path.getsize(filename) / 2
 		# The number of seconds in a file is its size divided by the number of bytes per
 		# packet, divided by the number of packets per second
-		nSeconds = os.path.getsize(filename) / PacketLength / PacketsPerSecond
+		nSeconds = os.path.getsize(filename) / 2 / s60.SampleRate
 		print "Working on file: '%s'" % filename
 		print "Samples in file: %i" % nSamples
 		print "Seconds in file: %i" % nSeconds
@@ -140,7 +111,7 @@ def main(args):
 		for i in range(timeBlocks.shape[0]):
 			if config['verbose']:
 				print "Working on time: %i to %i... %6.2f%%" % (i*integrationTime, (i+1)*integrationTime, (100.0*i/timeBlocks.shape[0]))
-			data = readChunk(fh, Chunk=integrationTime*5109*734)
+			data = s60.readChunk(fh, Chunk=integrationTime*5109*734)
 			# Work on computing an integrated spectrum.  This is done by reading in a chunk 
 			# of length LFFT, computing is power spectrum, and adding it to all of the pre-
 			# vious samples.  The min, mean, and max powers are printed out at every 1,000-
@@ -179,11 +150,8 @@ def main(args):
 		# current directory) or with a 17-th order polynomial.  In general, I found that
 		# the higher order works better on some of the bandpasses.
 		if config['enableModel']:
-			from scipy.io import loadmat
-
-			modelFile = os.path.join(dataPath, 's60-bandpass-model.mat')
-			model = loadmat(modelFile, struct_as_record=True, squeeze_me=True)
-			bandpass = (model['y'])[300:3700]
+			bandpass = s60.getBandpassModel()
+			bandpass = bandpass[300:3700]
 			bandpass = bandpass - bandpass.mean() + timeBlocks[:,300:3700].mean()
 		else:
 			bandpassCoeff = numpy.polyfit(w[300:3700], numpy.squeeze(timeBlocks[:,300:3700].mean(axis=0)), 

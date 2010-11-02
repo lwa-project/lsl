@@ -3,11 +3,13 @@
 """Python module for reading data in from S60 files."""
 
 import numpy
+
+from ..common.paths import data as dataPath
 from errors import numpyError
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 1 $'
-__all__ = ['readFrame', 'readChunk', 'FrameSize', 'SampleRate', '__version__', '__revision__', '__all__']
+__all__ = ['readFrame', 'readChunk', 'getBandpassModel', 'FrameSize', 'SampleRate', '__version__', '__revision__', '__all__']
 
 # Packet length seems to describe how many bytes of data are in 
 # each UDP packet.  1468 bytes == 734 samples.
@@ -51,3 +53,13 @@ def readChunk(filehandle, Chunk=4096):
 	data.imag = rawData[1::2] - 128.0
 
 	return data
+
+
+def getBandpassModel():
+	"""Read in Joe's model for the S60 badpass that is posted on the wiki."""
+
+	from scipy.io import loadmat
+
+	modelFile = os.path.join(dataPath, 's60-bandpass-model.mat')
+	model = loadmat(modelFile, struct_as_record=True, squeeze_me=True)
+	return model['y']
