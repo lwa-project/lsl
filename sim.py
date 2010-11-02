@@ -9,17 +9,14 @@ buildSimArray - given a station object, a list of stands, and a list of
 buildSimData - """
 
 import os
+import sys
 import aipy
 import math
 import numpy as n
 
-try:
-	import uvUtils
-	import dp_common
-except ImportError, err:
-	moduleName = (err.args[0]).split()[-1]
-	print "The '%s' module is needed by this file." % moduleName
-	sys.exit(-1)
+from common import dp as dp_common
+from common.paths import data as dataPath
+from correlator import uvUtils
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 7 $'
@@ -50,7 +47,7 @@ def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False)
 	
 	# If the beam Alm coefficient file is present, build a more relatistc beam 
 	# response.  Otherwise, assume a flat beam
-	if not ForceFlat and os.path.exists('beam_shape.npz'):
+	if not ForceFlat and os.path.exists(os.path.join(dataPath, 'beam-shape.npz')):
 		dd = n.load('beam_shape.npz')
 		coeffs = dd['coeffs']
 

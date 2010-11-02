@@ -17,14 +17,11 @@ import math
 import numpy
 
 from ..common.paths import data as dataPath
+from ..common.constants import *
 
 __version__ = '0.2'
 __revision__ = '$ Revision: 12 $'
 __all__ = ['getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
-
-
-c = 2.9979245800e8			# speed of light in m/s
-deg2rad = math.pi / 180.0	# degrees to radians conversion
 
 
 class uvUtilsError(Exception):

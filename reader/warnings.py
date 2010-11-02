@@ -2,13 +2,14 @@
 
 """Module that contains the warning classes for the DRX, TBN, and TBW readers."""
 
-__version__ = '0.1'
-__revision__ = '$ Revision: 1 $'
-__all__ = ['warnDeprecated', '__version__', '__revision__']
-
 import sys
 import warnings
 import linecache
+
+
+__version__ = '0.1'
+__revision__ = '$ Revision: 1 $'
+__all__ = ['warnDeprecated', '__version__', '__revision__', '__all__']
 
 
 def __modifiedFormatWarning(message, category, filename, lineno, line=None):

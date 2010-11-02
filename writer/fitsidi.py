@@ -9,15 +9,10 @@ import numpy
 import pyfits
 from datetime import datetime
 
-try:
-	import dp_common
-	import uvUtils
-	from readerWarnings import warnDeprecated
-	from lwa_common import geo2ecef
-except ImportError, err:
-	moduleName = (err.args[0]).split()[-1]
-	print "The '%s' module is needed by this file." % moduleName
-	sys.exit(-1)
+from ..common import dp as dp_common
+from ..common.stations import geo2ecef
+from ..correlator import uvUtils
+from ..reader.warnings import warnDeprecated
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 1 $'

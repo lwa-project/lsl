@@ -73,13 +73,8 @@ class TBNFrameData(object):
 		"""Function to convert the time tag from samples since station midnight to
 		seconds since station midnight.  This function needs to dp_common module 
 		in order to work."""
-
-		if self.sampleRate is not None:
-			seconds = self.timeTag / self.sampleRate
-		else:
-			seconds = None
 		
-		return seconds
+		return self.timeTag / dp_common.fS
 
 	def getFilterCode(self):
 		"""Function to convert the sample rate in Hz to a filter code."""
