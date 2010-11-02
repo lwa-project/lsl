@@ -97,7 +97,7 @@ def get_description(filename):
 
 packages = find_packages(".")
 py_files = ["lsl/*", "lsl/common/*", "lsl/correlator/*", "lsl/misc/*", 
-		"lsl/reader/*", "lsl/statistics/*", "lsl/writer/*"]
+		"lsl/reader/*", "lsl/statistics/*", "lsl/writer/*", "lsl/sim/*"]
 data_files = non_python_files('lsl')
 script_files = glob.glob('scripts/*.py')
 

@@ -10,7 +10,6 @@ import reader
 import writer
 import correlator
 import statistics
-import misc
-
 import sim
+import misc
 
