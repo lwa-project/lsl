@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains common values about the LWA sites."""
+"""Module that contains common values about the LWA station sites."""
 
 import math
 import ephem
