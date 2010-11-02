@@ -9,7 +9,8 @@ import sys
 import numpy
 import getopt
 
-from scipy.io import loadmat
+from ..common.paths import data as dataPath
+
 import matplotlib.pyplot as plt
 
 
@@ -177,8 +178,11 @@ def main(args):
 		# Bandpass fitting can either be done with Joe's model from the wiki (if in the
 		# current directory) or with a 17-th order polynomial.  In general, I found that
 		# the higher order works better on some of the bandpasses.
-		if config['enableModel'] and os.path.exists('model_ch10_4096.mat'):
-			model = loadmat('model_ch10_4096.mat', struct_as_record=True, squeeze_me=True)
+		if config['enableModel']:
+			from scipy.io import loadmat
+
+			modelFile = os.path.join(dataPath, 's60-bandpass-model.mat')
+			model = loadmat(modelFile, struct_as_record=True, squeeze_me=True)
 			bandpass = (model['y'])[300:3700]
 			bandpass = bandpass - bandpass.mean() + timeBlocks[:,300:3700].mean()
 		else:
