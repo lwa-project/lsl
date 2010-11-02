@@ -11,11 +11,14 @@ coverage and time delays.  The functions in the module:
    the Earth rotates.
 """
 
+import os
 import csv
 import math
 import numpy
 
-__version__ = '0.1'
+from ..common.paths import data as dataPath
+
+__version__ = '0.2'
 __revision__ = '$ Revision: 12 $'
 __all__ = ['getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
 
@@ -34,7 +37,7 @@ class uvUtilsError(Exception):
 		return "%s" % self.strerror
 
 
-def _loadPositionData(filename='lwa1-asbuilt.csv'):
+def _loadPositionData(filename='lwa1-positions.csv'):
 	"""Private function to load in the stand location data CSV file.  Someday 
 	this should be absorbed into this script so that there is not need to keep 
 	yet another file floating around."""
@@ -42,7 +45,7 @@ def _loadPositionData(filename='lwa1-asbuilt.csv'):
 	# lwa1-asbuilt.csv contains the stand (x,y,z) coordinates for all 257 stands.
 	# The data come from the "LWA-1 Antenna Position and Cable Data" memo, version 1.
 	try:
-		csvFH = open(filename, 'r')
+		csvFH = open(os.path.join(dataPath, filename), 'r')
 	except IOError as (errno, strerror):
 		raise uvUtilsError("%s: stand position file '%s'" % (strerror, filename))
 	csvData = csv.reader(csvFH, delimiter=',', quotechar='"')
@@ -151,7 +154,7 @@ def _loadDelayData(filename='lwa1-cables.csv'):
 	# LWA-1 stands.  The data come from the "LWA-1 Antenna Position and Cable 
 	# Data" memo, version 1.
 	try:
-		csvFH = open(filename, 'r')	
+		csvFH = open(os.path.join(dataPath, filename), 'r')	
 	except IOError as (errno, strerror):
 		raise uvUtilsError("%s: cable length file '%s'" % (strerror, filename))
 	csvData = csv.reader(csvFH, delimiter=',', quotechar='"')

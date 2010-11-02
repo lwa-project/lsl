@@ -8,14 +8,9 @@ import sys
 import numpy
 import pyfits
 
-try:
-	import dp_common
-	import correlate
-	from readerWarnings import warnDeprecated
-except ImportError, err:
-	moduleName = (err.args[0]).split()[-1]
-	print "The '%s' module is needed by this file." % moduleName
-	sys.exit(-1)
+from ..common import dp as dp_common
+from ..reader.warngins import warnDeprecated
+from ..correlator import fx as correlate
 
 __version__ = '0.3'
 __revision__ = '$ Revision: 15 $'

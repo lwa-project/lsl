@@ -10,14 +10,9 @@ import numpy
 import pyfits
 from datetime import datetime, timedelta, tzinfo
 
-try:
-	import dp_common
-	from readTBN import filterCodes as tbnCodes
-	from readerWarnings import warnDeprecated
-except ImportError, err:
-	moduleName = (err.args[0]).split()[-1]
-	print "The '%s' module is needed by this file." % moduleName
-	sys.exit(-1)
+from ..common import dp as dp_common
+from ..reader.tbw import filterCodes as tbnCodes
+from ..reader.warnings import warnDeprecated
 
 __version__ = '0.5'
 __revision__ = '$ Revision: 15 $'
