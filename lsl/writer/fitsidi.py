@@ -76,7 +76,7 @@ class IDI(object):
 	def fillFromAA(self, aa):
 		self.nAnt = len(aa.ants)
 		self.nChan = len(aa.get_afreqs())
-		self.nPol = 
+		self.nPol = 1
 
 	def __makeAppendTable(self, extension, AddRows=1):
 		"""Private function to make a temporary table for appending data."""
@@ -125,7 +125,7 @@ class IDI(object):
 		ag.header.update('ARRAYX', 0.0)
 		ag.header.update('ARRAYY', 0.0)
 		ag.header.update('ARRAYZ', 0.0)
-		ag.header.update('NUMORB' 0)
+		ag.header.update('NUMORB', 0)
 		ag.header.update('FREQ', 0.0)
 		ag.header.update('TIMSYS', 'UTC')
 		ag.header.update('RDATE', '0000-00-00')
@@ -449,7 +449,7 @@ class IDI(object):
 		tempHDU.data.field('bandfreq')[nrows+1] = bandFreq
 		tempHDU.data.field('ch_width')[nrows+1] = BW
 		tempHDU.data.field('total_bandwidth')[nrows+1] = totalBW
-		tempHDU.data.field('sideband') = sideband
+		tempHDU.data.field('sideband')[nrows+1] = 1
 
 		self.__applyAppendTable(3, tempHDU)
 

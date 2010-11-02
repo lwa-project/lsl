@@ -11,7 +11,7 @@ import pyfits
 from datetime import datetime, timedelta, tzinfo
 
 from ..common import dp as dp_common
-from ..reader.tbw import filterCodes as tbnCodes
+from ..reader.tbn import filterCodes as tbnCodes
 from ..reader.warnings import warnDeprecated
 
 __version__ = '0.5'

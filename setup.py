@@ -1,32 +1,97 @@
 # -*- coding: utf-8 -*
 
+import os
+import imp
 from distutils.core import setup
+from distutils.command.install_data import install_data
 
-#This is a list of files to install, and where
-#(relative to the 'root' dir, where setup.py is)
-#You could be more specific.
-files = ["lsl/*"]
+def is_package(path):
 
-setup(name = "lsl",
-    version = "0.1",
-    description = "Collection of python scripts for working with LWA data.",
-    author = "Jayce Dowell",
-    author_email = "jdowell@unm.edu",
-    url = "http://panda.unm.edu/Courses/Dowell/",
-    #Name the folder where your packages live:
-    #(If you have other packages (dirs) or modules (py files) then
-    #put them into the package directory - they will be found 
-    #recursively.)
-    packages = ['lsl'],
-    #'package' package must contain files (see list above)
-    #I called the package 'package' thus cleverly confusing the whole issue...
-    #This dict maps the package name =to=> directories
-    #It says, package *needs* these files.
-    package_data = {'lsl' : files },
-    #'runner' is in the root.
-    scripts = ["runner"],
-    long_description = """Really long text here.""" 
-    #
-    #This next part it for the Cheese Shop, look a little down the page.
-    #classifiers = []     
+	"""
+	From:
+	http://wiki.python.org/moin/Distutils/Cookbook/AutoPackageDiscovery
+	"""
+
+	return (
+		os.path.isdir(path) and
+		os.path.isfile(os.path.join(path, '__init__.py'))
+	)
+
+def find_packages(path, base="" ):
+
+	"""
+	From:
+	http://wiki.python.org/moin/Distutils/Cookbook/AutoPackageDiscovery
+	"""
+
+	""" Find all packages in path """
+	packages = {}
+	for item in os.listdir(path):
+		dir = os.path.join(path, item)
+		if is_package( dir ):
+			if base:
+				module_name = "%(base)s.%(item)s" % vars()
+			else:
+				module_name = item
+			packages[module_name] = dir
+			packages.update(find_packages(dir, module_name))
+	return packages
+
+def non_python_files(path):
+
+	"""
+	From:
+	http://wiki.python.org/moin/Distutils/Cookbook/AutoDataDiscovery
+	"""
+
+
+	""" Return all non-python-file filenames in path """
+	result = []
+	all_results = []
+	module_suffixes = [info[0] for info in imp.get_suffixes()]
+	ignore_dirs = ['svn']
+	for item in os.listdir(path):
+		name = os.path.join(path, item)
+		if (
+			os.path.isfile(name) and
+			os.path.splitext(item)[1] not in module_suffixes
+			):
+			result.append(name)
+		elif os.path.isdir(name) and item.lower() not in ignore_dirs:
+			all_results.extend(non_python_files(name))
+	if result:
+		all_results.append((path, result))
+	return all_results
+
+class smart_install_data(install_data):
+
+	"""
+	From:
+	http://wiki.python.org/moin/Distutils/Cookbook/InstallDataScattered
+	"""
+
+	def run(self):
+		#need to change self.install_dir to the library dir
+		install_cmd = self.get_finalized_command('install')
+		self.install_dir = getattr(install_cmd, 'install_lib')
+		return install_data.run(self)
+
+packages = find_packages(".")
+py_files = ["lsl/*", "lsl/common/*", "lsl/correlator/*", "lsl/data/*", "lsl/misc/*", 
+		"lsl/reader/*", "lsl/scripts/*", "lsl/statistics/*", "lsl/writer/*"]
+data_files = non_python_files('lsl')
+
+setup(
+	name = "lsl",
+	version = "0.1",
+	description = "Collection of python scripts for working with LWA data.",
+	author = "Jayce Dowell",
+	author_email = "jdowell@unm.edu",
+	url = "http://panda.unm.edu/Courses/Dowell/",
+	long_description = """Collection of python scripts for working with LWA data.""",
+	package_dir = packages, 
+	packages = packages.keys(),
+	package_data = {'lsl' : py_files },
+	data_files = data_files,
+	cmdclass = {'install_data':smart_install_data}
 ) 

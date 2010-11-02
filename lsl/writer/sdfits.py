@@ -9,7 +9,7 @@ import numpy
 import pyfits
 
 from ..common import dp as dp_common
-from ..reader.warngins import warnDeprecated
+from ..reader.warnings import warnDeprecated
 from ..correlator import fx as correlate
 
 __version__ = '0.3'

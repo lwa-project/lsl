@@ -8,3 +8,4 @@ __all__ = ['c', 'deg2rad']
 
 c = 2.9979245800e8			# speed of light in m/s
 deg2rad = math.pi / 180.0	# degrees to radians conversion
+tpi = 2j*math.pi			# two pi i
