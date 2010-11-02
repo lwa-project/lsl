@@ -21,12 +21,12 @@ def main(args):
 		raise notTBNError()
 	fh.seek(0)
 
-	nFpO = getFramesPerObs(fh)
+	nFpO = tbn.getFramesPerObs(fh)
 	print "Samples per observations: %i in x pol., %i in y pol." % nFpO
 	nFpO = nFpO[0] + nFpO[1]
 
-	sampleRate = getSampleRate(fh, nFrames=nFpO)
-	print "Filter code is: %i" % getSampleRate(fh, nFrames=nFpO, FilterCode=True)
+	sampleRate = tbn.getSampleRate(fh, nFrames=nFpO)
+	print "Filter code is: %i" % tbn.getSampleRate(fh, nFrames=nFpO, FilterCode=True)
 	print "Sampling rate is: %i Hz" % sampleRate
 
 	tStart = time.time()
