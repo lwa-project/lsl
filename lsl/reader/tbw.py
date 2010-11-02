@@ -14,14 +14,14 @@ import pyfits
 from  ..common import dp as dp_common
 from errors import *
 
-__version__ = '0.3'
-__revision__ = '$ Revision: 14 $'
-__all__ = ['TBWFrameHeader', 'TBWFrameData', 'TBWFrame', 'readTBWFrame', 'TBWFrameSize', 'getDataBits', 'getFramesPerObs', '__version__', '__revision__', '__all__']
+__version__ = '0.4'
+__revision__ = '$ Revision: 17 $'
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getDataBits', 'getFramesPerObs', '__version__', '__revision__', '__all__']
 
-TBWFrameSize = 1224
+FrameSize = 1224
 
 
-class TBWFrameHeader(object):
+class FrameHeader(object):
 	"""Class that stores the information found in the header of a TBW 
 	frame.  All three fields listed in the DP IDC version H are stored as 
 	well as the original binary header data."""
@@ -66,7 +66,7 @@ class TBWFrameHeader(object):
 		return dataBits
 
 
-class TBWFrameData(object):
+class FrameData(object):
 	"""Class that stores the information found in the data section of a TBW
 	frame.  Both fields listed in the DP IDC version H are stored."""
 
@@ -84,34 +84,34 @@ class TBWFrameData(object):
 		return seconds
 
 
-class TBWFrame(object):
+class Frame(object):
 	"""Class that stores the information contained within a single TBW 
-	frame.  It's properties are TBWFrameHeader and TBWFrameData objects."""
+	frame.  It's properties are FrameHeader and FrameData objects."""
 
-	def __init__(self, header=TBWFrameHeader(), data=TBWFrameData()):
+	def __init__(self, header=FrameHeader(), data=FrameData()):
 		self.header = header
 		self.data = data
 
 	def parseID(self):
-		"""Convenience wrapper for the TBWFrame.TBWFrameHeader.parseID 
+		"""Convenience wrapper for the Frame.FrameHeader.parseID 
 		function."""
 		
 		return self.header.parseID()
 
 	def getDataBits(self):
-		"""Convenience wrapper for the TBWFrame.TBWFrameHeader.getDataBits 
+		"""Convenience wrapper for the Frame.FrameHeader.getDataBits 
 		function."""
 		
 		return self.header.getDataBits()
 
 	def getTime(self):
-		"""Convenience wrapper for the TBWFrame.TBWFrameData.getTime function."""
+		"""Convenience wrapper for the Frame.FrameData.getTime function."""
 		
 		return self.data.getTime()
 
 
-def __readTBWHeader(filehandle, Verbose=False):
-	"""Private function to read in a TBW header.  Returns a TBWFrameHeader object."""
+def __readHeader(filehandle, Verbose=False):
+	"""Private function to read in a TBW header.  Returns a FrameHeader object."""
 
 	rawHeader = ''
 	try:
@@ -136,7 +136,7 @@ def __readTBWHeader(filehandle, Verbose=False):
 	if sync1 != 92 or sync2 != 222 or sync3 != 192 or sync4 != 222:
 		raise syncError(sync1=sync1, sync2=sync2, sync3=sync3, sync4=sync4)
 
-	newHeader = TBWFrameHeader()
+	newHeader = FrameHeader()
 	newHeader.frameCount = frameCount
 	newHeader.secondsCount = secondsCount[0]
 	newHeader.tbwID = tbwID
@@ -149,9 +149,9 @@ def __readTBWHeader(filehandle, Verbose=False):
 	return newHeader
 
 
-def __readTBWData12(filehandle):
+def __readData12(filehandle):
 	"""Private function to read in a TBW frame data section and unpack that data
-	when is the 12-bit.  Returns a TBWFrameData object."""
+	when is the 12-bit.  Returns a FrameData object."""
 
 	try:
 		s = filehandle.read(8)
@@ -174,16 +174,16 @@ def __readTBWData12(filehandle):
 	negativeValues = numpy.where( data >= 2048 )
 	data[negativeValues] -= 4096
 
-	newData = TBWFrameData()
+	newData = FrameData()
 	newData.timeTag = long(timeTag[0])
 	newData.xy = data
 
 	return newData
 	
 	
-def __readTBWData4(filehandle):
+def __readData4(filehandle):
 	"""Private function to read in a TBW frame data section and unpack that data
-	when is the 4-bit.  Returns a TBWFrameData object."""
+	when is the 4-bit.  Returns a FrameData object."""
 
 	try:
 		s = filehandle.read(8)
@@ -205,34 +205,34 @@ def __readTBWData4(filehandle):
 	negativeValues = numpy.where( data >= 8 )
 	data[negativeValues] -= 16
 	
-	newData = TBWFrameData()
+	newData = FrameData()
 	newData.timeTag = long(timeTag[0])
 	newData.xy = data
 	
 	return newData
 
 
-def readTBWFrame(filehandle, Verbose=False):
+def readFrame(filehandle, Verbose=False):
 	"""Function to read in a single TBW frame (header+data) and store the 
-	contents as a TBWFrame object.  This function wraps readerHeader and 
+	contents as a Frame object.  This function wraps readerHeader and 
 	readData[(12)|4]."""
 
 	try:
-		hdr = __readTBWHeader(filehandle, Verbose=Verbose)
+		hdr = __readHeader(filehandle, Verbose=Verbose)
 	except syncError, err:
 		# Why?  If we run into a sync error here, then the following frame is invalid.  
 		# Thus, we need to skip over this frame be advancing the file pointer 8+1200 B 
 		currPos = filehandle.tell()
-		frameEnd = currPos + TBWFrameSize - 16
+		frameEnd = currPos + FrameSize - 16
 		filehandle.seek(frameEnd)
 		raise err
 
 	if hdr.getDataBits() == 12:
-		dat = __readTBWData12(filehandle)
+		dat = __readData12(filehandle)
 	else:
-		dat = __readTBWData4(filehandle)
+		dat = __readData4(filehandle)
 	
-	newFrame = TBWFrame()
+	newFrame = Frame()
 	newFrame.header = hdr
 	newFrame.data = dat
 
@@ -249,7 +249,7 @@ def getDataBits(filehandle):
 	# Go back to the beginning...
 	filehandle.seek(0)
 
-	cFrame = readTBWFrame(filehandle)
+	cFrame = readFrame(filehandle)
 
 	dataBits = cFrame.getDataBits()
 
@@ -274,8 +274,8 @@ def getFramesPerObs(filehandle):
 	for i in range(3*256):
 		currentPosition = filehandle.tell()
 		try:
-			cFrame1 = readTBWFrame(filehandle)
-			cFrame2 = readTBWFrame(filehandle)
+			cFrame1 = readFrame(filehandle)
+			cFrame2 = readFrame(filehandle)
 		except eofError:
 			break
 		except syncError:
@@ -291,87 +291,10 @@ def getFramesPerObs(filehandle):
 			idCodes.append(cID)
 
 		# Junk 30,000 frames since that is how many frames there are per stand
-		filehandle.seek(currentPosition+30000*TBWFrameSize)
+		filehandle.seek(currentPosition+30000*FrameSize)
 
 	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
 	
 	# Get the length of the stand list and return
 	return len(idCodes)
-
-
-def main(args):
-	from ..writer import tsfits
-	import matplotlib.pyplot as plt
-
-	# Determine the number of samples in the specified file
-	nSamples = os.path.getsize(args[0]) / TBWFrameSize
-	print "Samples in file: ", nSamples
-	fh = open(args[0], "rb", buffering=TBWFrameSize)
-
-	# Make sure that the data is TBW and determine the data length
-	test = readTBWFrame(fh)
-	print "TBW Data:  %s" % test.header.isTBW()
-	if not test.header.isTBW():
-		raise notTBWError()
-	print "Data Length: %i bits" % test.getDataBits()
-	if test.header.getDataBits() == 12:
-		nData = 400
-	else:
-		nData = 1200
-	fh.seek(0)
-
-	# Due to the size of the FITS files being generated, the number of frames that 
-	# can be read in is limited to 300,000, or 30,000 frames for 10 stands.  Getting
-	# around this limit will require finding out how to do on-the-fly FITS binary 
-	# table resizing.  
-	nSamples = 900000
-
-	tStart = time.time()
-
-	# Create a new FITS file with the name 'tbw.fits'
-	fitsFile = tsfits.TBW('tbw-tsfits-test.fits')
-
-	# Read in the data and add it to the FITS file created above
-	count = {}
-	syncCount = 0
-	masterCount = 0
-	for i in range(nSamples):
-		# Read in the next frame and anticipate any problems that could occur
-		try:
-			cFrame = readTBWFrame(fh, Verbose=False)
-		except eofError:
-			break
-		except syncError:
-			#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
-			syncCount = syncCount + 1
-			continue
-		except numpyError:
-			break
-
-		stand = cFrame.header.parseID()
-		if cFrame.header.frameCount % 10000 == 0:
-			print "%2i  %14i  %6.3f  %5i  %5i" % (stand, cFrame.data.timeTag, cFrame.getTime(), cFrame.header.frameCount, cFrame.header.secondsCount)
-		if stand not in count.keys():
-			count[stand] = 0
-
-		fitsFile.addStandData(cFrame)
-
-		count[stand] = count[stand] + 1
-		masterCount = masterCount + 1
-
-	tEnd = time.time()
-	print 'Read %i frames in %0.3f s (%0.1f frames/s)' % (masterCount, (tEnd-tStart), masterCount/(tEnd-tStart))
-
-	fh.close()
-	fitsFile.info()
-
-	# Summary information about the file that was just read in
-	print "Summary:"
-	for stand in sorted(count.keys()):
-		print "Stand: %2i, Frames: %5i" % (stand, count[stand])
-	print "Sync Errors: %5i" % syncCount
-
-
-if __name__ == "__main__":
-	main(sys.argv[1:])

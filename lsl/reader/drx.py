@@ -13,17 +13,17 @@ import struct
 from  ..common import dp as dp_common
 from errors import *
 
-__version__ = '0.2'
-__revision__ = '$ Revision: 12 $'
-__all__ = ['DRXFrameHeader', 'DRXFrameData', 'DRXFrame', 'DRXObservingBlock', 'readDRXFrame', 'readDRXBlock', 'getBeamCount', 'getFramesPerObs', 'averageObservations', 'averageObservations2', 'DRXFrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
+__version__ = '0.3'
+__revision__ = '$ Revision: 15 $'
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getBeamCount', 'getFramesPerObs', 'averageObservations', 'averageObservations2', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
-DRXFrameSize = 4128
+FrameSize = 4128
 
 # List of filter codes and their corresponding sample rates in Hz
 filterCodes = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4000000, 6: 9800000, 7: 19600000}
 
 
-class DRXFrameHeader(object):
+class FrameHeader(object):
 	"""Class that stores the information found in the header of a DRX 
 	frame.  All six fields listed in the DP IDC version H are stored as 
 	well as the original binary header data."""
@@ -53,7 +53,7 @@ class DRXFrameHeader(object):
 		return sampleRate
 
 
-class DRXFrameData(object):
+class FrameData(object):
 	"""Class that stores the information found in the data section of a DRX
 	frame.  All three fields listed in the DP IDC version H are stored."""
 
@@ -72,45 +72,45 @@ class DRXFrameData(object):
 		return seconds
 
 
-class DRXFrame(object):
+class Frame(object):
 	"""Class that stores the information contained within a single DRX 
-	frame.  It's properties are DRXFrameHeader and DRXFrameData objects."""
+	frame.  It's properties are FrameHeader and FrameData objects."""
 
-	def __init__(self, header=DRXFrameHeader(), data=DRXFrameData()):
+	def __init__(self, header=FrameHeader(), data=FrameData()):
 		self.header = header
 		self.data = data
 
 	def parseID(self):
-		"""Convenience wrapper for the DRXFrame.DRXFrameHeader.parseID 
+		"""Convenience wrapper for the Frame.FrameHeader.parseID 
 		function."""
 		
 		return self.header.parseID()
 
 	def getSampleRate(self):
-		"""Convenience wrapper for the DRXFrame.DRXFrameHeader.getSampleRate 
+		"""Convenience wrapper for the Frame.FrameHeader.getSampleRate 
 		function."""
 		
 		return self.header.getSampleRate()
 
 	def getTime(self):
-		"""Convenience wrapper for the DRXFrame.DRXFrameData.getTime function."""
+		"""Convenience wrapper for the Frame.FrameData.getTime function."""
 		
 		return self.data.getTime()
 
 
-class DRXObservingBlock(object):
+class ObservingBlock(object):
 	"""Class that stores all frames associates with a particular beam at a
 	particular time."""
 
-	def __init__(self, x1=DRXFrame(), y1=DRXFrame(), x2=DRXFrame(), y2=DRXFrame()):
+	def __init__(self, x1=Frame(), y1=Frame(), x2=Frame(), y2=Frame()):
 		self.x1 = x1
 		self.y1 = y1
 		self.x2 = x2
 		self.y2 = y2
 		
 
-def __readDRXHeader(filehandle, Verbose=False):
-	"""Private function to read in a DRX header.  Returns a DRXFrameHeader object."""
+def __readHeader(filehandle, Verbose=False):
+	"""Private function to read in a DRX header.  Returns a FrameHeader object."""
 
 	rawHeader = ''
 	try:
@@ -136,7 +136,7 @@ def __readDRXHeader(filehandle, Verbose=False):
 		raise syncError(sync1=sync1, sync2=sync2, sync3=sync3, sync4=sync4)
 
 	drxID = m5cID
-	newHeader = DRXFrameHeader()
+	newHeader = FrameHeader()
 	newHeader.frameCount = frameCount
 	newHeader.drxID = drxID
 	newHeader.secondsCount = secondsCount
@@ -154,9 +154,9 @@ def __readDRXHeader(filehandle, Verbose=False):
 	return newHeader
 
 
-def __readDRXData(filehandle):
+def __readData(filehandle):
 	"""Private function to read in a DRX frame data section.  Returns a 
-	DRXFrameData object."""
+	FrameData object."""
 
 	try:
 		s = filehandle.read(8)
@@ -184,7 +184,7 @@ def __readDRXData(filehandle):
 	negativeValues = numpy.where( data.imag >= 8 )
 	data.imag[negativeValues] -= 16
 	
-	newData = DRXFrameData()
+	newData = FrameData()
 	newData.timeTag = timeTag[0]
 	newData.flags = flags
 	newData.iq = data
@@ -192,46 +192,46 @@ def __readDRXData(filehandle):
 	return newData
 
 
-def readDRXFrame(filehandle, Verbose=False):
+def readFrame(filehandle, Verbose=False):
 	"""Function to read in a single DRX frame (header+data) and store the 
-	contents as a DRXFrame object.  This function wraps readerHeader and 
+	contents as a Frame object.  This function wraps readerHeader and 
 	readData."""
 	
 	try:
-		hdr = __readDRXHeader(filehandle, Verbose=Verbose)
+		hdr = __readHeader(filehandle, Verbose=Verbose)
 	except syncError, err:
 		# Why?  If we run into a sync error here, then the following frame is invalid.  
 		# Thus, we need to skip over this frame be advancing the file pointer 8+8+4096 B 
 		currPos = filehandle.tell()
-		frameEnd = currPos + DRXFrameSize - 16
+		frameEnd = currPos + FrameSize - 16
 		filehandle.seek(frameEnd)
 		raise err
 
 
-	dat = __readDRXData(filehandle)
+	dat = __readData(filehandle)
 	
 	# Create the new frame object and return
-	newFrame = DRXFrame()
+	newFrame = Frame()
 	newFrame.header = hdr
 	newFrame.data = dat
 
 	return newFrame
 
 
-def readDRXBlock(filehandle):
+def readBlock(filehandle):
 	"""Function to read in a single DRX block (four frames) and store the 
-	contents as a DRXObservingBlock object.  This function wraps 
-	readDRXFrame."""
+	contents as a ObservingBlock object.  This function wraps 
+	readFrame."""
 	
 	try:
-		x1 = readDRXFrame(filehandle)
-		y1 = readDRXFrame(filehandle)
-		x2 = readDRXFrame(filehandle)
-		y2 = readDRXFrame(filehandle)
+		x1 = readFrame(filehandle)
+		y1 = readFrame(filehandle)
+		x2 = readFrame(filehandle)
+		y2 = readFrame(filehandle)
 	except baseReaderError, err:
 		raise err
 
-	block = DRXObservingBlock(x1=x1, y1=y1, x2=x2, y2=y2)
+	block = ObservingBlock(x1=x1, y1=y1, x2=x2, y2=y2)
 	return block
 
 
@@ -251,7 +251,7 @@ def getBeamCount(filehandle):
 	# there.
 	beams = []
 	for i in range(16):
-		cFrame = readDRXFrame(filehandle)
+		cFrame = readFrame(filehandle)
 		cID = cFrame.header.drxID
 		beam = cID&7
 		if beam not in beams:
@@ -281,7 +281,7 @@ def getFramesPerObs(filehandle):
 	# there.
 	idCodes = [[], [], [], []]
 	for i in range(16):
-		cFrame = readDRXFrame(filehandle)
+		cFrame = readFrame(filehandle)
 		cID = cFrame.header.drxID
 		beam = cID&7
 		if cID not in idCodes[beam-1]:
@@ -356,101 +356,3 @@ def averageObservations2(Observations, timeAvg=1, chanAvg=1):
 		taBlocks = caBlocks
 			
 	return taBlocks
-	
-
-def main(args):
-	from ..writer import sdfits
-	import matplotlib.pyplot as plt
-
-	nSamples = os.path.getsize(args[0]) / DRXFrameSize
-	print "Samples in file: ", nSamples
-	fh = open(args[0], "rb", buffering=DRXFrameSize)
-	nFpO = getFramesPerObs(fh)
-	nBeams = getBeamCount(fh)
-	print "Beams: ", nBeams
-	print "Frames per Observations: ", nFpO
-	blockBuffer = []
-	blocks = []
-
-	tStart = time.time()
-
-	nSamples = (nSamples/4/16)*16
-
-	fig = plt.figure()
-
-	for i in range(0,nSamples):
-		currBlock = readDRXBlock(fh)
-		blockBuffer.append(currBlock)
-
-		if len(blockBuffer) == 16:
-			avgBlock = averageObservations(blockBuffer)
-			#avgBlock = averageObservations2(blockBuffer, timeAvg=16, chanAvg=2)
-			blocks.append(avgBlock)
-			blockBuffer = []
-	
-	nChan = blocks[0].x1.data.iq.shape[0]
-	outSpec = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	outTime = numpy.zeros(nSamples/16)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec[row,:] = block.x1.data.iq
-		outTime[row] = block.x1.data.timeTag
-	outSpec2 = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec2[row,:] = block.y1.data.iq
-	outSpec3 = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec3[row,:] = block.x2.data.iq
-	outSpec4 = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec4[row,:] = block.y2.data.iq
-
-	tEnd = time.time()
-	print 'Read %i frames in %0.3f s (%0.1f frames/s)' % (4*nSamples, (tEnd-tStart), 4*nSamples/(tEnd-tStart))
-	
-	writefits(outSpec, outTime)
-	readfits('test-sdfits.fits')
-
-	ax = fig.add_subplot(221)
-	dB = outSpec - outSpec.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 1, Pol. 0')
-	ax.set_ylabel('Channel')
-	ax.axis('auto')
-	
-	ax = fig.add_subplot(222)
-	dB = outSpec2 - outSpec2.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 1, Pol. 1')
-	ax.axis('auto')
-
-	ax = fig.add_subplot(223)
-	dB = outSpec3 - outSpec3.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 2, Pol. 0')
-	ax.set_xlabel('Time')
-	ax.set_ylabel('Channel')
-	ax.axis('auto')
-
-	ax = fig.add_subplot(224)
-	dB = outSpec4 - outSpec4.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 2, Pol. 1')
-	ax.set_xlabel('Time')
-	ax.axis('auto')
-
-	plt.show()
-	fig.savefig("readDRX.png")
-
-	fh.close()
-
-if __name__ == "__main__":
-	main(sys.argv[1:])
-
