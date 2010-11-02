@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Randomly select 20 antennae from LWA-1 and plot the uv-plane coverage for 
+a zenith snapshot and the expected beam."""
+
 import os
 import sys
 import math

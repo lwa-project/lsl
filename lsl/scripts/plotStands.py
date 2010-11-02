@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Example script to read in the positions of stands at LWA-1 and make a plot
+of the site."""
+
 import os
 import sys
 import math

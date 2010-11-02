@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Given a TBW file, plot the time averaged spectra for each digitizer input."""
+
 import os
 import sys
 import math
@@ -16,7 +18,7 @@ import matplotlib.pyplot as plt
 
 def usage(exitCode=None):
 	print """tbwSpectra.py - Read in TBW files and create a collection of 
-time- averaged spectra.
+time-averaged spectra.
 
 Usage: tbwSpectra.py [OPTIONS] file
 

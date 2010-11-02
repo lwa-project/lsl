@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Example script that reads in TBN data and runs a cross-correlation on it.  
+The results are saved in the Miriad UV format."""
+
 import os
 import re
 import sys
