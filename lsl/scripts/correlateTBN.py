@@ -36,7 +36,7 @@ def isValidDate(date):
 def usage(exitCode=None):
 	print """correlateTBN.py - cross-correlate data in a TBN file
 
-Usage: readS60.py [OPTIONS] file
+Usage: correlateTBN.py [OPTIONS] file
 
 Options:
 -h --help             Display this help information
@@ -95,7 +95,7 @@ def parseConfig(args):
 		elif opt in ('-t', '--avg-time'):
 			config['avgTime'] = int(value)
 		elif opt in ('-s', '--samples'):
-			config['samples'] = int(samples)
+			config['samples'] = int(value)
 		else:
 			assert False
 	
