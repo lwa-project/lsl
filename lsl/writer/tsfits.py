@@ -10,9 +10,9 @@ import numpy
 import pyfits
 from datetime import datetime, timedelta, tzinfo
 
-from ..common import dp as dp_common
-from ..reader.tbn import filterCodes as tbnCodes
-from ..reader.warnings import warnDeprecated
+from lsl.common import dp as dp_common
+from lsl.reader.tbn import filterCodes as tbnCodes
+from lsl.reader.warnings import warnDeprecated
 
 __version__ = '0.5'
 __revision__ = '$ Revision: 15 $'

@@ -14,9 +14,9 @@ import aipy
 import math
 import numpy as n
 
-from common import dp as dp_common
-from common.paths import data as dataPath
-from correlator import uvUtils
+from lsl.common import dp as dp_common
+from lsl.common.paths import data as dataPath
+from lsl.correlator import uvUtils
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 7 $'

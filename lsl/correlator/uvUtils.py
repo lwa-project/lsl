@@ -16,8 +16,8 @@ import csv
 import math
 import numpy
 
-from ..common.paths import data as dataPath
-from ..common.constants import *
+from lsl.common.paths import data as dataPath
+from lsl.common.constants import *
 
 __version__ = '0.2'
 __revision__ = '$ Revision: 12 $'
@@ -43,7 +43,7 @@ def _loadPositionData(filename='lwa1-positions.csv'):
 	# The data come from the "LWA-1 Antenna Position and Cable Data" memo, version 1.
 	try:
 		csvFH = open(os.path.join(dataPath, filename), 'r')
-	except IOError as (errno, strerror):
+	except IOError, (errno, strerror):
 		raise uvUtilsError("%s: stand position file '%s'" % (strerror, filename))
 	csvData = csv.reader(csvFH, delimiter=',', quotechar='"')
 	data = numpy.empty((257,3))
@@ -152,7 +152,7 @@ def _loadDelayData(filename='lwa1-cables.csv'):
 	# Data" memo, version 1.
 	try:
 		csvFH = open(os.path.join(dataPath, filename), 'r')	
-	except IOError as (errno, strerror):
+	except IOError, (errno, strerror):
 		raise uvUtilsError("%s: cable length file '%s'" % (strerror, filename))
 	csvData = csv.reader(csvFH, delimiter=',', quotechar='"')
 	data = numpy.empty(256)

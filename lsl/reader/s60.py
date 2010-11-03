@@ -4,7 +4,7 @@
 
 import numpy
 
-from ..common.paths import data as dataPath
+from lsl.common.paths import data as dataPath
 from errors import numpyError
 
 __version__ = '0.1'

@@ -9,10 +9,10 @@ import numpy
 import pyfits
 from datetime import datetime
 
-from ..common import dp as dp_common
-from ..common.stations import geo2ecef
-from ..correlator import uvUtils
-from ..reader.warnings import warnDeprecated
+from lsl.common import dp as dp_common
+from lsl.common.stations import geo2ecef
+from lsl.correlator import uvUtils
+from lsl.reader.warnings import warnDeprecated
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 1 $'

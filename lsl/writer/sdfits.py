@@ -8,9 +8,9 @@ import sys
 import numpy
 import pyfits
 
-from ..common import dp as dp_common
-from ..reader.warnings import warnDeprecated
-from ..correlator import fx as correlate
+from lsl.common import dp as dp_common
+from lsl.reader.warnings import warnDeprecated
+from lsl.correlator import fx as correlate
 
 __version__ = '0.3'
 __revision__ = '$ Revision: 15 $'

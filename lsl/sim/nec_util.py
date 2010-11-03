@@ -13,7 +13,7 @@ http://www.physics.otago.ac.nz/research/electronics/nec/index.html
 
 
 from numpy import *
-from ..misc.mathutil import regrid
+from lsl.misc.mathutil import regrid
 import os
 import re
 import logging

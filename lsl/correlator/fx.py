@@ -13,8 +13,8 @@ import sys
 import math
 import numpy
 
-from ..common import dp as dp_common
-from ..common.constants import *
+from lsl.common import dp as dp_common
+from lsl.common.constants import *
 import uvUtils
 
 __version__ = '0.2'

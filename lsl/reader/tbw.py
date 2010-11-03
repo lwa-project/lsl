@@ -10,7 +10,7 @@ import array
 import struct
 import pyfits
 
-from  ..common import dp as dp_common
+from  lsl.common import dp as dp_common
 from errors import *
 
 __version__ = '0.4'
