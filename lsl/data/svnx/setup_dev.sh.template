@@ -1,0 +1,44 @@
+#----------------------------------------------------------------------
+# setup_dev.sh - create development environment for $package
+#                package
+#
+# $$Id: setup_dev.sh.template 245 2007-03-19 19:01:27Z dwood $$
+#----------------------------------------------------------------------
+
+
+# check command line
+
+if [ $${#argv} == 0 ]; then
+    root=`pwd`
+elif [ $${#argv} == 1 ]; then
+    root=$$1
+else
+    echo "usage: source setup_dev.sh [working_dir]"
+    return
+fi    
+
+
+# add working dirs to environment
+
+if [ $${#PYTHONPATH} ]; then
+    PYTHONPATH=$$root:$${PYTHONPATH}
+else
+    PYTHONPATH=$$root
+fi
+export PYTHONPATH
+
+if [ $${#PATH} ]; then
+    PATH=$$root/$package/scripts:$${PATH}
+else
+    PATH=$$root/$package/scripts
+fi
+export PATH
+
+# build any extension modules (*.so) in-place
+
+# python $$root/setup.py build_ext --inplace
+
+      
+# clean up
+       
+unset root

@@ -328,13 +328,13 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, BlackmanFilt
 			fft2 = numpy.fft.fftshift(fft2)
 
 		# Calculate the visibility of the desired part of the frequency space
-		tempVis = fft2[1:LFFT]*(fft1[1:LFFT].conj())
+		tempVis = fft1[1:LFFT]*(fft2[1:LFFT].conj())
 
 		# Add it on to the master output visibility for averaging
 		visibility += tempVis
 	
 	# Apply the phase rotator to the visibility
-	#visibility *= numpy.exp(2j*numpy.pi*freq*((delay1-start1/SampleRate)-(delay2-start2/SampleRate)))
+	visibility *= numpy.exp(2j*numpy.pi*freq*((delay1-start1/SampleRate)-(delay2-start2/SampleRate)))
 
 	# Average and return
 	visibility /= float(length)

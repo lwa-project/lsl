@@ -1,0 +1,39 @@
+"""
+Setup script for $package package.
+"""
+
+#######################################################################
+# $$Id: setup.py.template 247 2007-03-19 20:08:13Z dwood $$
+#######################################################################
+
+                                  
+from lwa_user.distutils.core import setup
+
+
+PACKAGE_NAME    = '$package'
+PACKAGE_VERSION = 'dev'
+
+
+SCRIPTS = []
+EXT_MODULES = []
+PACKAGE_DATA = {PACKAGE_NAME : []} 
+DATA_FILES = []           
+
+
+
+# perform setup of package
+
+setup(name = PACKAGE_NAME,
+      version = PACKAGE_VERSION,
+      description = 'Put description here',
+      author = 'My Name',
+      author_email = 'myname@email',
+      url = 'TBD',
+      packages = [PACKAGE_NAME],
+      scripts = SCRIPTS,
+      ext_modules = EXT_MODULES,
+      package_data = PACKAGE_DATA,
+      data_files = DATA_FILES
+      )
+      
+      

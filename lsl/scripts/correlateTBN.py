@@ -114,9 +114,6 @@ def main(args):
 	# Length of the FFT
 	LFFT = config['LFFT']
 
-	# Number of frames to read in at once and average
-	nFrames = int(391*config['avgTime']/2)
-
 	# Setup the LWA station information and get the JD of observations
 	lwa1 = lwa_common.lwa1()
 	stands = lwa1.getStands(config['date'])
@@ -132,6 +129,9 @@ def main(args):
 	nFpO = nFpO[0] + nFpO[1]
 	sampleRate = tbn.getSampleRate(fh, nFrames=nFpO)
 	nInts = os.path.getsize(filename) / tbn.FrameSize / nFpO
+
+	# Number of frames to read in at once and average
+	nFrames = int(config['avgTime']*sampleRate/512)
 	nSets = os.path.getsize(filename) / tbn.FrameSize / nFpO / nFrames
 
 	print "TBN Data:  %s" % test.header.isTBN()
@@ -143,7 +143,7 @@ def main(args):
 	print "Station: %s" % lwa1.name
 	print "Date observed: %s" % config['date']
 	print "Julian day: %.5f" % jd
-	print "Integration Time: %.2f s" % (512*nFrames/sampleRate)
+	print "Integration Time: %.3f s" % (512*nFrames/sampleRate)
 	print "Number of averaged samples: %i" % nSets
 
 	if config['samples'] > nSets:
@@ -185,7 +185,7 @@ def main(args):
 			count[aStand] = count[aStand] + 1
 			masterCount = masterCount + 1
 
-		print "Working on set #%i (%i seconds after set #1)" % ((s+1), (setTime-refTime))
+		print "Working on set #%i (%.3f seconds after set #1)" % ((s+1), (setTime-refTime))
 		freqYY, outYY = fxc.FXCorrelator(data, stands, LFFT=LFFT, Overlap=1, IncludeAuto=True, verbose=True,  SampleRate=sampleRate, CentralFreq=config['cFreq'])
 		uvw = uvUtils.computeUVW(stands, HA=((setTime-refTime)/3600.0), freq=freqYY, IncludeAuto=True)
 		ccList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=True)
@@ -237,200 +237,3 @@ def main(args):
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
-
-	import aipy
-	import robust
-
-
-
-	# Pre 8/25/10
-	#stands = numpy.array([214, 212, 228, 204, 225, 210, 187, 174, 123, 125])
-	# Post 8/25/10
-	stands = numpy.array([214, 212, 228, 206, 127, 157, 187, 208, 123, 125])
-
-	#fh = open("/home/jdowell/055424_740_threeTBW.dat", "rb")
-	#fh = open("/home/jdowell/triple12M_TBW_Midnight_Sept_3.dat", "rb")
-	#fh = open("/home/jdowell/12M_TBW_430pm_Sept_8.dat", "rb")
-	fh = open("/home/jdowell/12M_TBW_900pm_Sept_8.dat", "rb")
-	jd = 2455448.62500
-	#fh = open("/home/jdowell/tbw_test1_091310.dat", "rb")
-	#jd = 2455453.31531
-	nSamples = 300000
-
-	refTime = 0.0
-	setTime = 0.0
-
-	for s in range(1):
-		count = {}
-		masterCount = 0
-		iTime = 0
-		data = numpy.zeros((20,12000000), dtype=numpy.int16)
-		for i in range(nSamples):
-			# Read in the next frame and anticipate any problems that could occur
-			try:
-				cFrame = readTBWFrame(fh, Verbose=False)
-			except eofError:
-				break
-			except syncError:
-				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
-				continue
-			except numpyError:
-				break
-
-			stand = cFrame.header.parseID()
-			if i == 0:
-				if s == 0:
-					refTime = cFrame.header.secondsCount
-				setTime = cFrame.header.secondsCount
-			print "%2i  %6.3f  %5i  %5i" % (stand, cFrame.getTime(), cFrame.header.frameCount, cFrame.header.secondsCount)
-			if stand not in count.keys():
-				count[stand] = 0
-
-			if stand < 11:
-				if cFrame.getDataBits() == 12:
-					data[2*(stand-1),  count[stand]*400:(count[stand]+1)*400] = numpy.squeeze(cFrame.data.xy[0,:])
-					data[2*(stand-1)+1,count[stand]*400:(count[stand]+1)*400] = numpy.squeeze(cFrame.data.xy[1,:])
-				else:
-					data[2*(stand-1),  count[stand]*1200:(count[stand]+1)*1200] = numpy.squeeze(cFrame.data.xy[0,:])
-					data[2*(stand-1)+1,count[stand]*1200:(count[stand]+1)*1200] = numpy.squeeze(cFrame.data.xy[1,:])
-
-			count[stand] = count[stand] + 1
-			masterCount = masterCount + 1
-
-		LFFT = 64
-		freqY, specY = calcSpectra(data[0::2,:], LFFT=LFFT, PolyphaseFilter=True, verbose=True)
-		freqX, specX = calcSpectra(data[1::2,:], LFFT=LFFT, PolyphaseFilter=True, verbose=True)
-
-		rfiClip = 5
-
-		rfiX = {}
-		bandpassX = {}
-		rfiY = {}
-		bandpassY = {}
-
-		valid = numpy.where( (freqX>20.0e6) & (freqX<88.0e6) )
-		valid = valid[0]
-		for i in range(specX.shape[0]):
-			sm = robust.robustMean(specX[i,valid])
-			ss = robust.robustSigma(specX[i,valid])
-
-			rfiX[i] = freqX[valid[numpy.where( specX[i,valid] > sm+rfiClip*ss )]]
-			bandpassX[i] = numpy.zeros_like(valid)*sm
-
-		valid = numpy.where( (freqY>20.0e6) & (freqY<88.0e6) )
-		valid = valid[0]
-		for i in range(specY.shape[0]):
-			sm = robust.robustMean(specY[i,valid])
-			ss = robust.robustSigma(specY[i,valid])
-			
-			rfiY[i] = freqY[valid[numpy.where( specY[i,valid] > sm+rfiClip*ss )]]
-			bandpassY[i] = numpy.zeros_like(valid)*sm
-
-		print "Working on set #%i (%i seconds after set #1)" % ((s+1), (setTime-refTime))
-		freqYY, outYY = FXCorrelator(data[0::2,:], stands, LFFT=LFFT, PolyphaseFilter=True, verbose=True)
-		freqXX, outXX = FXCorrelator(data[1::2,:], stands, LFFT=LFFT, PolyphaseFilter=True, verbose=True)
-		freqYX, outYX = FXCorrelator(data[0::2,:], stands, LFFT=LFFT, PolyphaseFilter=True, verbose=True, CrossPol=data[1::2,:])
-		freqXY, outXY = FXCorrelator(data[1::2,:], stands, LFFT=LFFT, PolyphaseFilter=True, verbose=True, CrossPol=data[0::2,:])
-		uvw = uvUtils.computeUVW(stands, HA=((setTime-refTime)/3600.0), freq=freqXX)
-		ccList = uvUtils.getBaselines(stands, Indicies=True)
-
-		toUse = numpy.where( (freqYY>20.0e6) & (freqYY<88.0e6) )
-		toUse = toUse[0]
-
-		if s == 0:
-			uv = aipy.miriad.UV('test-20100908-2100.uv', status='new')
-			tags = ['nants', 'nchan', 'npol', 'pol', 'sfreq', 'sdf', 'longitu', 'latitud', 'dec', 'ra', 'source']
-			codes = ['i', 'i', 'i', 'i', 'r', 'r', 'r', 'r', 'r', 'r', 'a']
-			for tag,code in zip(tags, codes):
-				print "%s -> %s" % (tag, code)
-				uv.add_var(tag, code)
-			uv['source'] = 'zenith'
-			uv['longitu'] = -107.628
-			uv['latitud'] = 34.070
-			uv['dec'] = 34.070
-			uv['nants'] = stands.shape[0]
-			uv['nchan'] = toUse.shape[0]
-			uv['npol'] = 4
-			uv['sfreq'] = freqYY[toUse[0]]
-			uv['sdf'] = freqYY[toUse[1]]-freqYY[toUse[0]]
-
-		uv['pol'] = -6
-		for i in range(uvw.shape[0]):
-			preamble = (numpy.squeeze(uvw[i,:,toUse[0]]), jd+(setTime-refTime)/3600.0/24.0, ccList[i])
-
-			current = numpy.squeeze( outYY[i,toUse] )
-			#current = current / bandpassY[ccList[i][0]] / bandpassY[ccList[i][1]]
-
-			mask = numpy.zeros_like(current)
-			for cf in rfiY[ccList[i][0]]:
-				bad = numpy.where( cf == freqYY[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-			for cf in rfiY[ccList[i][1]]:
-				bad = numpy.where( cf == freqYY[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-
-			uv.write(preamble, current, mask)
-
-		uv['pol'] = -5
-		for i in range(uvw.shape[0]):
-			preamble = (numpy.squeeze(uvw[i,:,toUse[0]]), jd+(setTime-refTime)/3600.0/24.0, ccList[i])
-
-			current = numpy.squeeze( outXX[i,toUse] )
-			#current = current / bandpassX[ccList[i][0]] / bandpassX[ccList[i][1]]
-
-			mask = numpy.zeros_like(current)
-			for cf in rfiX[ccList[i][0]]:
-				bad = numpy.where( cf == freqXX[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-			for cf in rfiX[ccList[i][1]]:
-				bad = numpy.where( cf == freqXX[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-
-			uv.write(preamble, current, mask)
-
-		uv['pol'] = -8
-		for i in range(uvw.shape[0]):
-			preamble = (numpy.squeeze(uvw[i,:,toUse[0]]), jd+(setTime-refTime)/3600.0/24.0, ccList[i])
-
-			current = numpy.squeeze( outYX[i,toUse] )
-			#current = current / bandpassY[ccList[i][0]] / bandpassX[ccList[i][1]]
-
-			mask = numpy.zeros_like(current)
-			for cf in rfiY[ccList[i][0]]:
-				bad = numpy.where( cf == freqYY[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-			for cf in rfiX[ccList[i][1]]:
-				bad = numpy.where( cf == freqXX[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-
-			uv.write(preamble, current, mask)
-
-		uv['pol'] = -7
-		for i in range(uvw.shape[0]):
-			preamble = (numpy.squeeze(uvw[i,:,toUse[0]]), jd+(setTime-refTime)/3600.0/24.0, ccList[i])
-
-			current = numpy.squeeze( outXY[i,toUse] )
-			#current = current / bandpassX[ccList[i][0]] / bandpassY[ccList[i][1]]
-
-			mask = numpy.zeros_like(current)
-			for cf in rfiX[ccList[i][0]]:
-				bad = numpy.where( cf == freqXX[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-			for cf in rfiY[ccList[i][1]]:
-				bad = numpy.where( cf == freqYY[toUse] )
-				if len(bad[0]) != 0:
-					mask[bad] = 1
-
-			uv.write(preamble, current, mask)
-
-		del(data)
-
-	fh.close()
-	
