@@ -133,6 +133,7 @@ class uvUtils_tests(unittest.TestCase):
 		bl = numpy.array(bl)
 		self.assertTrue(bl.max() < 100)
 		
+		
 class uvUtils_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.reader units 
 	tests."""

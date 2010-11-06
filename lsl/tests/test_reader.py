@@ -81,7 +81,7 @@ class reader_tests(unittest.TestCase):
 		fh.close()
 
 	def test_tbw_errors(self):
-		"""Test reading in all frames from a truncated TBW file."""
+		"""Test reading errors."""
 
 		fh = open(tbwFile, 'rb')
 		# Frames 1 through 8
@@ -90,6 +90,13 @@ class reader_tests(unittest.TestCase):
 
 		# Last frame should be an error (errors.numpyError)
 		self.assertRaises(errors.numpyError, tbw.readFrame, fh)
+		fh.close()
+		
+		# If we offset in the file by 1 byte, we should be a 
+		# sync error (errors.syncError).
+		fh = open(tbwFile, 'rb')
+		fh.seek(1)
+		self.assertRaises(errors.syncError, tbw.readFrame, fh)
 		fh.close()
 
 	### TBN ###
@@ -120,6 +127,13 @@ class reader_tests(unittest.TestCase):
 
 		# Last frame should be an error (errors.numpyError)
 		self.assertRaises(errors.numpyError, tbn.readFrame, fh)
+		fh.close()
+		
+		# If we offset in the file by 1 byte, we should be a 
+		# sync error (errors.syncError).
+		fh = open(tbnFile, 'rb')
+		fh.seek(1)
+		self.assertRaises(errors.syncError, tbn.readFrame, fh)
 		fh.close()
 
 	def test_tbn_block(self):
