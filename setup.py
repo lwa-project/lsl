@@ -3,9 +3,15 @@
 import os
 import imp
 import glob
+import unittest
 
-from distutils.core import setup
+from distutils.core import setup, Extension, Command, Distribution
 from distutils.command.install_data import install_data
+
+try:
+	import numpy
+except ImportError:
+	pass
 
 __version__ = open('VERSION').read().strip()
 
@@ -95,13 +101,74 @@ def get_description(filename):
 
 	return desc
 
+class TestCommand(Command):
+	"""From:
+	http://http://da44en.wordpress.com/2002/11/22/using-distutils/
+	"""
+
+	user_options = [ ]
+
+	def initialize_options(self):
+		self._dir = os.getcwd()
+
+	def finalize_options(self):
+		pass
+
+	def run(self):
+		"""Finds all the tests modules in tests/, and runs them."""
+		testfiles = [ ]
+		for t in glob.glob(os.path.join(self._dir, 'lsl', 'tests', '*.py')):
+			if not t.endswith('__init__.py'):
+				testfiles.append('.'.join(['lsl', 'tests', os.path.splitext(os.path.basename(t))[0]]))
+		
+		tests = unittest.TestLoader().loadTestsFromNames(testfiles)
+		t = unittest.TextTestRunner(verbosity = 1)
+		t.run(tests)
+
+class CleanCommand(Command):
+	"""From:
+	http://http://da44en.wordpress.com/2002/11/22/using-distutils/
+	"""
+
+	user_options = [ ]
+
+	def initialize_options(self):
+		self._clean_me = [ ]
+		for root, dirs, files in os.walk('.'):
+			for f in files:
+				if f.endswith('.so'):
+					self._clean_me.append(os.path.join(root, f))
+				if f.endswith('.pyc'):
+					self._clean_me.append(os.path.join(root, f))
+
+	def finalize_options(self):
+		pass
+
+	def run(self):
+		for clean_me in self._clean_me:
+			try:
+				os.unlink(clean_me)
+			except:
+				pass
+
+class Dist(Distribution):
+	def parse_config_files(self, filenames = None):
+		# parse cfg file, but remove any pacakge specific options
+		# otherwise distutils complains
+
+		Distribution.parse_config_files(self, filenames)
+		self.get_option_dict('build_ext').pop('libnova_prefix')
+
 packages = find_packages(".")
 py_files = ["lsl/*", "lsl/common/*", "lsl/correlator/*", "lsl/misc/*", 
-		"lsl/reader/*", "lsl/statistics/*", "lsl/writer/*", "lsl/sim/*"]
+		"lsl/reader/*", "lsl/statistics/*", "lsl/writer/*", "lsl/sim/*", "lsl/tests/*"]
 data_files = non_python_files('lsl')
 script_files = glob.glob('scripts/*.py')
+ext_files = [Extension('lsl._libnova', ['lsl/libnova.i']), 
+			Extension('lsl.astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()])]
 
 setup(
+	distclass = Dist,
 	name = "lsl",
 	version = __version__,
 	description = "LWA Software Library",
@@ -109,16 +176,17 @@ setup(
 	author_email = "jdowell@unm.edu",
 	url = "http://panda.unm.edu/Courses/Dowell/",
 	long_description = get_description('README'), 
-	classifiers = ['Development Status :: 2 - Pre-Alpha',
+	classifiers = ['Development Status :: 3 - Alpha',
 			'Intended Audience :: Science/Research',
-			'License :: OSI Approved :: GNU General Public License (GPL)',
 			'Topic :: Scientific/Engineering :: Astronomy'],
-	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'aipy>=0.9.1'],
+	setup_requires = ['numpy>=1.2'],
+	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'scipy>=0.7', 'aipy>=0.9.1'],
 	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits'],
 	package_dir = packages, 
 	packages = packages.keys(),
 	package_data = {'lsl' : py_files},
 	data_files = data_files,
 	scripts = script_files,
-	cmdclass = {'install_data':smart_install_data}
+	ext_modules = ext_files,
+	cmdclass = {'install_data':smart_install_data, 'test':TestCommand, 'clean':CleanCommand}
 ) 

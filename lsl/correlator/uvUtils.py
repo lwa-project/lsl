@@ -104,8 +104,8 @@ class PositionCache(object):
 		self.standsXYZ = _loadPositionData()
 		
 	def __isValid(self, stand):
-		if stand == 0 or stand > 257:
-			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stands[i])
+		if stand < -1 or stand == 0 or stand > 257:
+			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
 		
 	def getXYZ(self, stands):
 		try:
@@ -174,7 +174,7 @@ def cableDelay(stand, freq):
 	are needed, the frequencies can be passed in as a numpy array."""
 
 	# Stands start at 1, indices do not
-	if stand == 0 or stand > 256:
+	if stand < -1 or stand == 0 or stand > 256:
 		raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
 
 	# Try this so that freq can be either a scalar or a list
@@ -226,7 +226,7 @@ class CableCache(object):
 		self.applyDispersion = applyDispersion
 
 	def __isValid(self, stand):
-		if stand == 0 or stand > 256:
+		if stand < -1 or stand == 0 or stand > 256:
 			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stands[i])
 
 	def cableDelay(self, stand, freq=None):
@@ -303,7 +303,7 @@ def cableAttenuation(stand):
 	losses."""
 
 	# Stands start at 1, indices do not
-	if stand == 0 or stand > 256:
+	if stand < -1 or stand == 0 or stand > 256:
 		raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
 
 	# Catch the outlier and load cable and delay information into holder variables.

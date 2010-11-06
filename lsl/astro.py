@@ -2726,11 +2726,11 @@ _LEAP_SEC_LIST = []
 def _parse_tai_file():
 
   import os
-  from lwa_user import prefix
+  from lsl.common.paths import data as dataPath
 
   # get path to almanac data file
      
-  datName = os.path.join(prefix.LWA_USER_PREFIX, 'refdata', 'astro', 'tai-utc.dat') 
+  datName = os.path.join(dataPath, 'astro', 'tai-utc.dat') 
   if not os.path.exists(datName):
     raise RuntimeError, "file %s not found" % datName        
 

@@ -163,7 +163,7 @@ def __readData12(filehandle):
 	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=1200)
 	rawData = rawData.astype(numpy.uint16)
 	data = numpy.zeros((2,400), dtype=numpy.int16)
-	if rawData.shape[0] < 3*data.shape[0]:
+	if rawData.shape[0] < 3*data.shape[1]:
 		raise numpyError()
 
 	data[0,:] = (rawData[0::3]<<4) | ((rawData[1::3]>>4)&15)
@@ -194,7 +194,7 @@ def __readData4(filehandle):
 	
 	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=1200)
 	data = numpy.zeros((2,1200), dtype=numpy.int8)
-	if rawData.shape[0] < data.shape[0]:
+	if rawData.shape[0] < data.shape[1]:
 		raise numpyError()
 
 	data[0,:] = (rawData>>4)&15

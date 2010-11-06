@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""
-Unit test for lwa_user.astro module.
-"""
-
-#########################################################
-# $Id: test_astro.py 87 2010-05-20 15:37:42Z dwood $
-#########################################################
+"""Unit test for lsl.astro module."""
 
 
 import unittest
@@ -17,139 +11,119 @@ import operator
 from lsl import astro
 
 
-
-__revision__  = "$Revision: 87 $"
-__version__   = "dev"
+__revision__  = "$Revision: 88 $"
+__version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
 
 class astro_tests(unittest.TestCase):
-  """
-  A unittest.TestCase collection of unit tests for the lwa_user.astro
-  module.
-  """
+	"""A unittest.TestCase collection of unit tests for the lsl.astro
+	module."""
 
-  def setUp(self):
-    """
-    Setup for running unit tests.
-    """
-    
-    lng = astro.dms(True,  90, 0, 0)
-    lat = astro.dms(False, 40, 0, 0)
-    self.geo = astro.geo_posn(lng, lat)
-        
-    self.times = (\
-      astro.date(2001,  1, 22, 0, 0, 0),
-      astro.date(2001,  4, 16, 0, 0, 0),
-      astro.date(2001,  8,  2, 0, 0, 0),
-      astro.date(2001, 10, 10, 0, 0, 0),
-      astro.date(1979,  2, 28, 0, 0, 0))
+	def setUp(self):
+		"""
+		Setup for running unit tests.
+		"""
+		
+		lng = astro.dms(True,  90, 0, 0)
+		lat = astro.dms(False, 40, 0, 0)
+		self.geo = astro.geo_posn(lng, lat)
+			
+		self.times = (\
+			astro.date(2001,  1, 22, 0, 0, 0),
+			astro.date(2001,  4, 16, 0, 0, 0),
+			astro.date(2001,  8,  2, 0, 0, 0),
+			astro.date(2001, 10, 10, 0, 0, 0),
+			astro.date(1979,  2, 28, 0, 0, 0))
             
-            
-  def test_hms_init(self):
-    """
-    Test astro.hms constructor.
-    """
-            
-    h = astro.hms(3, 42, 20.3242)
-    self.assertEqual(h.hours, 3)
-    self.assertEqual(h.minutes, 42)
-    self.assertAlmostEqual(h.seconds, 20.3242)
-        
-    self.assertRaises(ValueError, astro.hms, 30, 0, 0)
-    self.assertRaises(ValueError, astro.hms, 0, 90, 0)
-    self.assertRaises(ValueError, astro.hms, 0, 0, 100) 
+	def test_hms_init(self):
+		"""Test astro.hms constructor."""
+				
+		h = astro.hms(3, 42, 20.3242)
+		self.assertEqual(h.hours, 3)
+		self.assertEqual(h.minutes, 42)
+		self.assertAlmostEqual(h.seconds, 20.3242)
+			
+		self.assertRaises(ValueError, astro.hms, 30, 0, 0)
+		self.assertRaises(ValueError, astro.hms, 0, 90, 0)
+		self.assertRaises(ValueError, astro.hms, 0, 0, 100) 
         
         
-  def test_hms_reduce(self):
-    """
-    Test astro.hms.__reduce__() method.
-    """
-        
-    h = astro.hms(3, 42, 20.3242)
-    s = pickle.dumps(h)
-    h = pickle.loads(s)
-    self.assertEqual(h.hours, 3)   
-    self.assertEqual(h.minutes, 42)
-    self.assertAlmostEqual(h.seconds, 20.3242)
+	def test_hms_reduce(self):
+		"""Test astro.hms.__reduce__() method."""
+			
+		h = astro.hms(3, 42, 20.3242)
+		s = pickle.dumps(h)
+		h = pickle.loads(s)
+		self.assertEqual(h.hours, 3)   
+		self.assertEqual(h.minutes, 42)
+		self.assertAlmostEqual(h.seconds, 20.3242)
     
     
-  def test_hms_cmp(self):
-    """
-    Test astro.hms.__cmp__() method.
-    """
+	def test_hms_cmp(self):
+		"""Test astro.hms.__cmp__() method."""
+		
+		h1 = astro.hms(2, 43, 32.232)
+		h2 = astro.hms(2, 43, 32.232)
+		h3 = astro.hms(4, 23, 42.221)
+		
+		self.assertTrue(operator.eq(h1, h2))
+		self.assertFalse(operator.eq(h1, h3))
+		self.assertFalse(operator.ne(h1, h2))
+		self.assertTrue(operator.ne(h1, h3))
+		self.assertTrue(operator.lt(h1, h3))
+		self.assertTrue(operator.gt(h3, h1))
+		self.assertTrue(operator.eq(h1, h1.to_deg()))
+		self.assertTrue(operator.eq(h2, h2.to_dms()))
+		
+		self.assertRaises(TypeError, operator.eq, h3, "string")
     
-    h1 = astro.hms(2, 43, 32.232)
-    h2 = astro.hms(2, 43, 32.232)
-    h3 = astro.hms(4, 23, 42.221)
-    
-    self.assertTrue(operator.eq(h1, h2))
-    self.assertFalse(operator.eq(h1, h3))
-    self.assertFalse(operator.ne(h1, h2))
-    self.assertTrue(operator.ne(h1, h3))
-    self.assertTrue(operator.lt(h1, h3))
-    self.assertTrue(operator.gt(h3, h1))
-    self.assertTrue(operator.eq(h1, h1.to_deg()))
-    self.assertTrue(operator.eq(h2, h2.to_dms()))
-    
-    self.assertRaises(TypeError, operator.eq, h3, "string")
-    
-            
-  def test_hms_to_deg(self):
-    """
-    Test astro.hms_to_deg() function.
-    """
-        
-    h = astro.hms(0, 0, 0)
-    self.assertAlmostEqual(astro.hms_to_deg(h), 0.0)
-    h = astro.hms(6, 0, 0)
-    self.assertAlmostEqual(astro.hms_to_deg(h), 90.0)
-    h = astro.hms(12, 0, 0)
-    self.assertAlmostEqual(astro.hms_to_deg(h), 180.0)
-    h = astro.hms(18, 0, 0)
-    self.assertAlmostEqual(astro.hms_to_deg(h), 270.0)
-        
-        
-  def test_deg_to_hms(self):
-    """
-    Test astro.deg_to_hms() function.
-    """
-        
-    h = astro.deg_to_hms(0.0)
-    self.assertEqual(h.hours, 0)
-    self.assertEqual(h.minutes, 0)
-    self.assertAlmostEqual(h.seconds, 0.0)
-    h = astro.deg_to_hms(90.0)
-    self.assertEqual(h.hours, 6)
-    self.assertEqual(h.minutes, 0)
-    self.assertAlmostEqual(h.seconds, 0.0)
-    h= astro.deg_to_hms(180.0)
-    self.assertEqual(h.hours, 12)
-    self.assertEqual(h.minutes, 0)
-    self.assertAlmostEqual(h.seconds, 0.0)
-    h = astro.deg_to_hms(270.0)
-    self.assertEqual(h.hours, 18)
-    self.assertEqual(h.minutes, 0)
-    self.assertAlmostEqual(h.seconds, 0.0)
-        
-    
-  def test_dms_init(self):
-    """
-    Test astro.dms constructor.
-    """
-        
-    d = astro.dms(True, 1, 30, 29.3245)
-    self.assert_(d.neg)
-    self.assertEqual(d.degrees, 1)
-    self.assertEqual(d.minutes, 30)
-    self.assertAlmostEqual(d.seconds, 29.3245)
-        
-    self.assertRaises(ValueError, astro.dms, False, 400, 0, 0)
-    self.assertRaises(ValueError, astro.dms, False, 0, 80, 0)
-    self.assertRaises(ValueError, astro.dms, False, 0, 0, 500)
-        
-        
+	def test_hms_to_deg(self):
+		"""Test astro.hms_to_deg() function."""
+			
+		h = astro.hms(0, 0, 0)
+		self.assertAlmostEqual(astro.hms_to_deg(h), 0.0)
+		h = astro.hms(6, 0, 0)
+		self.assertAlmostEqual(astro.hms_to_deg(h), 90.0)
+		h = astro.hms(12, 0, 0)
+		self.assertAlmostEqual(astro.hms_to_deg(h), 180.0)
+		h = astro.hms(18, 0, 0)
+		self.assertAlmostEqual(astro.hms_to_deg(h), 270.0)
+
+	def test_deg_to_hms(self):
+		"""Test astro.deg_to_hms() function."""
+			
+		h = astro.deg_to_hms(0.0)
+		self.assertEqual(h.hours, 0)
+		self.assertEqual(h.minutes, 0)
+		self.assertAlmostEqual(h.seconds, 0.0)
+		h = astro.deg_to_hms(90.0)
+		self.assertEqual(h.hours, 6)
+		self.assertEqual(h.minutes, 0)
+		self.assertAlmostEqual(h.seconds, 0.0)
+		h= astro.deg_to_hms(180.0)
+		self.assertEqual(h.hours, 12)
+		self.assertEqual(h.minutes, 0)
+		self.assertAlmostEqual(h.seconds, 0.0)
+		h = astro.deg_to_hms(270.0)
+		self.assertEqual(h.hours, 18)
+		self.assertEqual(h.minutes, 0)
+		self.assertAlmostEqual(h.seconds, 0.0)
+
+	def test_dms_init(self):
+		"""Test astro.dms constructor."""
+			
+		d = astro.dms(True, 1, 30, 29.3245)
+		self.assert_(d.neg)
+		self.assertEqual(d.degrees, 1)
+		self.assertEqual(d.minutes, 30)
+		self.assertAlmostEqual(d.seconds, 29.3245)
+			
+		self.assertRaises(ValueError, astro.dms, False, 400, 0, 0)
+		self.assertRaises(ValueError, astro.dms, False, 0, 80, 0)
+		self.assertRaises(ValueError, astro.dms, False, 0, 0, 500)
+
   def test_dms_reduce(self):
     """
     Test astro.dms.__reduce__() method.
@@ -162,8 +136,7 @@ class astro_tests(unittest.TestCase):
     self.assertEqual(d.degrees, 1)
     self.assertEqual(d.minutes, 30)
     self.assertAlmostEqual(d.seconds, 29.3245)
-        
-  
+
   def test_dms_cmp(self):
     """
     Test astro.dms.__cmp__() method.
@@ -183,8 +156,7 @@ class astro_tests(unittest.TestCase):
     self.assertTrue(operator.eq(d2, d2.to_hms()))
        
     self.assertRaises(TypeError, operator.eq, d3, "string")
-       
-        
+  
   def test_dms_to_deg(self):
     """
     Test astro.dms_to_deg() function.
@@ -196,8 +168,7 @@ class astro_tests(unittest.TestCase):
     self.assertAlmostEqual(astro.dms_to_deg(d), 100.0)
     d = astro.dms(True, 100, 0, 0)
     self.assertAlmostEqual(astro.dms_to_deg(d), -100.0)
-        
-        
+
   def test_deg_to_dms(self):
     """
     Test astro.deg_to_dms() function.
@@ -218,8 +189,7 @@ class astro_tests(unittest.TestCase):
     self.assertEqual(d.degrees, 100)
     self.assertEqual(d.minutes, 0)
     self.assertAlmostEqual(d.seconds, 0.0)
-        
-        
+
   def test_dir_cos(self):
     """
     Test astro.dir_cos() function.
@@ -255,8 +225,7 @@ class astro_tests(unittest.TestCase):
     self.assertAlmostEqual(l, 0.0)
     self.assertAlmostEqual(m, 0.0)
     self.assertAlmostEqual(n, -1.0)
-        
-        
+    
   def test_range_degrees(self):
     """
     Test astro.range_degrees() function.
@@ -265,8 +234,7 @@ class astro_tests(unittest.TestCase):
     self.assertAlmostEqual(astro.range_degrees(20.0), 20.0)
     self.assertAlmostEqual(astro.range_degrees(370.0), 10.0)
     self.assertAlmostEqual(astro.range_degrees(-10.0), 350.0)
-        
-        
+
   def test_range_hours(self):
     """
     Test astro.range_hours() function.
@@ -275,8 +243,7 @@ class astro_tests(unittest.TestCase):
     self.assertAlmostEqual(astro.range_hours(10.0), 10.0)
     self.assertAlmostEqual(astro.range_hours(30.0), 6.0)
     self.assertAlmostEqual(astro.range_hours(-6.0), 18.0)
-    
-    
+
   def test_date_init(self):
     """
     Test astro.date constructor.
@@ -295,8 +262,7 @@ class astro_tests(unittest.TestCase):
     self.assertRaises(ValueError, astro.date, 2000, 1, 1, 39, 0, 0)
     self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 69, 0)
     self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 0, 73)
-        
-        
+
   def test_date_reduce(self):
     """
     Test astro.date.__reduce__() method.
@@ -311,8 +277,7 @@ class astro_tests(unittest.TestCase):
     self.assertEqual(d.hours, 21)
     self.assertEqual(d.minutes, 49)
     self.assertAlmostEqual(d.seconds, 13.0238)
-        
-  
+
   def test_date_cmp(self):
     """
     Test astro.date.__cmp__() method.
@@ -325,8 +290,7 @@ class astro_tests(unittest.TestCase):
     self.assertTrue(operator.gt(d2, d1))
     self.assertTrue(operator.eq(d2, d3))
     self.assertTrue(operator.ne(d1, d3))
-  
-        
+
   def test_date_load(self):
     """
     Test astro.date.load() method.
@@ -341,8 +305,7 @@ class astro_tests(unittest.TestCase):
     self.assertEqual(d.hours, 21)
     self.assertEqual(d.minutes, 49)
     self.assertAlmostEqual(d.seconds, 13.0238)
-          
-    
+
   def test_zonedate_init(self):
     """
     Test astro.zonedate constructor.
@@ -362,8 +325,7 @@ class astro_tests(unittest.TestCase):
     self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 39, 0, 0, 0)
     self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 69, 0, 0)
     self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 0, 73, 0)
-        
-        
+
   def test_zonedate_reduce(self):
     """
     Test astro.zonedate reduce method.
@@ -379,8 +341,7 @@ class astro_tests(unittest.TestCase):
     self.assertEqual(d.minutes, 49)
     self.assertAlmostEqual(d.seconds, 13.0238)
     self.assertEqual(d.gmtoff, -3600 * 5)
-        
-        
+
   def test_date_to_zonedate(self):
     """
     Test astro.date_to_zonedate() function.
@@ -397,8 +358,7 @@ class astro_tests(unittest.TestCase):
     self.assertEqual(z.minutes, 49)
     self.assertAlmostEqual(z.seconds, 13.0238, ACCURACY)
     self.assertEqual(z.gmtoff, -18000)
-        
-    
+
   def test_zonedate_to_date(self):
     """
     Test astro.zonedate_to_date() function.
@@ -414,8 +374,7 @@ class astro_tests(unittest.TestCase):
     self.assertEqual(d.hours, 21)
     self.assertEqual(d.minutes, 49)
     self.assertAlmostEqual(d.seconds, 13.0238, ACCURACY)
-        
-        
+
   def test_get_date(self):
     """
     Test astro.get_date() function.
@@ -437,8 +396,7 @@ class astro_tests(unittest.TestCase):
       self.assertEqual(d.hours, 0)
       self.assertEqual(d.minutes, 0)
       self.assertAlmostEqual(d.seconds, 0.0)
-        
-        
+
   def test_utc_to_tai(self):
     """
     Test astro.utc_to_tai() function.
@@ -1483,22 +1441,13 @@ class astro_tests(unittest.TestCase):
       self.assertAlmostEqual(equ.dec, idec_out.next())
                                  
 
-
-
 class astro_test_suite(unittest.TestSuite):
-
-    
-  def __init__(self):
-    
-    unittest.TestSuite.__init__(self)
-    
-    loader = unittest.TestLoader()
-    self.addTests(loader.loadTestsFromTestCase(astro_tests))
-               
-    
-
+	def __init__(self):
+		unittest.TestSuite.__init__(self)
+		
+		loader = unittest.TestLoader()
+		self.addTests(loader.loadTestsFromTestCase(astro_tests))
+                   
 
 if __name__ == '__main__':
-
-  unittest.main()
-        
+	unittest.main()

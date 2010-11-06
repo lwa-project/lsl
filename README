@@ -2,11 +2,112 @@ LSL - The LWA Software Library
 
 DESCRIPTION
 	This package contains a collection of tools for reading, format shifting, 
-	and analyzing LWA data.
+	and analyzing LWA data.  It also contains the majority of the lwa_user
+	library developed by NRL.  The lwa_user modules includes (and their 
+	respective names in the LSL package are):
+		lwa_user.astro_array	(lsl.astro_array)
+		lwa_user.astro			(lsl.astro)
+		lwa_user.catalog		(lsl.catalog)
+		lwa_user.mathutil		(lsl.misc.mathutil)
+		lwa_user.nec_util		(lsl.sim.nec_util)
+		lwa_user.skymap		(lsl.skymap)
+		lwa_user.transform		(lsl.transform)
 
 REQUIREMENTS
 	numpy >= 1.2
+	scipy >= 0.7
 	pyfits >= 1.3
 	aipy >= 0.9.1
 	*matplotlib >= 0.98.3
-	(* required for some of teh script)
+	(* required for some of the scripts)
+
+	In addition, the libnova C library is required.  This is an astronomical
+	calculation and ephemeris library.  The lsl.libnova python module is built 
+	as a SWIG wrapper around the libnova library, and this provides the basis 
+	of the astronomical code contained in the package.  If you are using binary 
+	packages, be sure to install the libnova-dev version, as the library header 
+	include files are required for the build.  Some issues have arisen with the 
+	system version of swig for some platforms: this default version is too old 
+	to correctly generate wrapper code for python 2.6.  Use libnova version 
+	0.13.0 or later; version 0.12 is known to contain errors. (The lsl wrapper 
+	code will correct for these errors if an older version of libnova is used.)
+
+	The libnova C library can be found at:
+		http://http://libnova.sourceforge.net/
+
+BUILD
+	The LSL package is installed as a regular Python package using distutils.  
+	Unzip and untar the source distribution. Setup the python interpreter you 
+	wish to use for running the package applications and switch to the root of 
+	the source distribution tree.
+
+	A setup configuration script is required to run the build process.  A sample 
+	config file may be found in the root directory of the source distribution as 
+	'setup.cfg'.  This file must be edited to specify the location of the 
+	libnova library files if that location is not in '/usr/local'.  Edit the 
+	following lines:
+		***********************************************************************
+		[DEFAULT]
+		
+		# The libnova_prefix value should point to the platform installation of
+		# the libnova libraries and header files
+		
+		libnova_prefix = /usr/local
+		***********************************************************************
+	and change to to the location where libnova is installed on your machine:
+		***********************************************************************
+		[DEFAULT]
+		
+		# The libnova_prefix value should point to the platform installation of
+		# the libnova libraries and header files
+		
+		libnova_prefix = /Software/libnova/0.13.0
+		***********************************************************************
+
+	The setup process will expect to find the libnova library C header files in 
+	'<libnova_prefix>/include/libnova' and the share library object file in 
+	'<libnova_prefix>/lib'.  Do not modify any of the lines in the [build_ext] 
+	section of the config file.
+
+	To build the LSL package, run:
+		'python setup.py build'
+
+TEST
+	Once the LSL package as been built, 
+
+INSTALL
+	If all tests have been passed, install LSL by running:
+		'python setup.py install [--prefix=<prefix>|--user]'
+
+	If the '--prefix' option is not provided, then the installation 
+	tree root directory is the same as for the python interpreter used to run 
+	setup.py.  For instance, if the python interpreter is in 
+	`/usr/local/bin/python', then <prefix> will be set to '/usr/local'.
+	Otherwise, the explicit <prefix> value is taken from the command line
+	option.  The package will install files in the following locations:
+		<prefix>/bin
+		<prefix>/lib/python2.6/site-packages
+		<prefix>/share/doc
+		<prefix>/share/install
+	If an alternate <prefix> value is provided, you should set the PATH
+	environment to include directory '<prefix>/bin' and the PYTHONPATH
+	environment to include directory '<prefix>/lib/python2.6/site-packages'.
+
+	If the '--user' option is provided, then then installation tree root 
+	directory will be in the current user's home directory.	
+
+UNIT TESTS
+	Unit tests for the package may be found in the 'lsl/tests' sub-directory 
+	in the package source distribution tree.  To run the complete suite of 
+	package unit tests:
+		'python test_lsl.py'.
+	The tests may also be run from an interactive python session after LSL has 
+	been successfully installed via: 
+		'import lsl; lsl.test()'
+
+RELEASE NOTES
+	Version 0.2
+		Added in other modules from the lwa_user library developed by NRL
+
+	Version 0.1
+		Initial version

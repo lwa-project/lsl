@@ -53,8 +53,8 @@ class SkyMap(object):
     def __init__(self, skyMapFileName=None, freqMHz=73.9):
         """Initialize the SkyMap object with an optional full file path to the skymap file."""
         if skyMapFileName is None:
-            from lwa_user import prefix
-            skyMapFileName = os.path.join(prefix.LWA_USER_PREFIX, 'refdata', 'skymap', 'LFmap_73.9.fits')
+            from lsl.common.paths import data as dataPath
+            skyMapFileName = os.path.join(dataPath, 'skymap', 'LFmap_73.9.fits')
         
         fits = pyfits.open(skyMapFileName)
         

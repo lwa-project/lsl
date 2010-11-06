@@ -21,3 +21,4 @@ import skymap
 import transform
 
 import tests
+from tests.test_lsl import main as test

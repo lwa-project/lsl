@@ -1,5 +1,6 @@
 include README
 include VERSION
+include setup.cfg
 recursive-include lsl *
 global-exclude *~ *.pyc
 

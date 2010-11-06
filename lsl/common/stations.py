@@ -20,8 +20,8 @@ def geo2ecef(lat, lon, elev):
 	WGS84_b = 6356752.314245
 	N = WGS84_a**2 / math.sqrt(WGS84_a**2*math.cos(lat)**2 + WGS84_b**2*math.sin(lon)**2)
 
-	x = (N+elev)*math.cos(oo.lat)*math.cos(lon)
-	y = (N+elev)*math.cos(oo.lat)*math.sin(lon)
+	x = (N+elev)*math.cos(lat)*math.cos(lon)
+	y = (N+elev)*math.cos(lat)*math.sin(lon)
 	z = ((WGS84_b**2/WGS84_a**2)*N+elev)*math.sin(lat)
 
 	return (x, y, z)

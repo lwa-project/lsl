@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""
-Unit test for lwa_user.mathutil module.
-"""
-
-#########################################################
-# $Id: test_mathutil.py 87 2010-05-20 15:37:42Z dwood $
-#########################################################
-
+"""Unit test for lsl.misc.mathutil module."""
 
 import unittest
 import logging
@@ -19,16 +12,15 @@ import numpy
 from lsl.misc import mathutil
 
 
-__revision__  = "$Revision: 87 $"
-__version__   = "dev"
+__revision__  = "$Revision: 88 $"
+__version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
 
-
 class mathutil_tests(unittest.TestCase):
     """
-    A unittest.TestCase collection of unit tests for the lwa_user.mathutil
+    A unittest.TestCase collection of unit tests for the lsl.misc.mathutil
     module.
     """
     
