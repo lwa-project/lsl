@@ -9,7 +9,7 @@ import os
 import imp
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 5 $'
+__revision__ = '$ Revision: 6 $'
 __all__ = ['module', 'data', 'moduleBuild', 'dataBuild']
 
 modInfo = imp.find_module('lsl')
@@ -25,9 +25,9 @@ data = os.path.join(module, 'data')
 # If we don't seem to be in the 
 # source directory, moduleBuild points to module and dataBuild 
 # points to data.
-currentDir = os.path.abspath(os.path.getcwd())
+currentDir = os.path.abspath(os.getcwd())
 if os.path.exists(os.path.join(currentDir, 'setup.py')):
-	modInfoBuild = imp.find_module('lsl', currentDir)
+	modInfoBuild = imp.find_module('lsl', [currentDir])
 	moduleBuild =  os.path.abspath(modInfoBuild[1])
 	dataBuild = os.path.join(moduleBuild, 'data')
 else:
