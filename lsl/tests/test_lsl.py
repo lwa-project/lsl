@@ -34,6 +34,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_stations.stations_test_suite())
 		self.addTest(test_reader.reader_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())
+		self.addTest(test_visUtils.visUtils_test_suite())
 
 
 def main(opts=None, args=None):
