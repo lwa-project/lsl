@@ -69,17 +69,19 @@ class uvUtils_tests(unittest.TestCase):
 		self.assertRaises(uvUtils.uvUtilsError, cache.getXYZ, 500)
 
 	def test_cable(self):
-		"""Test cable delays directly and via the cable cahce object."""
+		"""Test cable delays directly and via the cable cache object."""
+
+		ACCURACY = 12
 
 		d = uvUtils.cableDelay(1, 10e6)
-		self.assertAlmostEqual(d, 557.913e-9)
+		self.assertAlmostEqual(d, 557.913e-9, ACCURACY)
 
 		cache = uvUtils.CableCache(10e6)
 		d = cache.cableDelay(1)
-		self.assertAlmostEqual(d, 557.913e-9)
+		self.assertAlmostEqual(d, 557.913e-9, ACCURACY)
 
 	def test_cable_bounds(self):
-		"""Test that stand ID number bound are respected by the cable routines."""
+		"""Test that stand ID number bounds are respected by the cable routines."""
 
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableDelay, -10, 10e6)
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableDelay, 0, 10e6)
@@ -93,8 +95,10 @@ class uvUtils_tests(unittest.TestCase):
 	def test_attenuation(self):
 		"""Test that the cable attenuation is working."""
 
+		ACCURACY = 4
+
 		a = uvUtils.cableAttenuation(1)
-		self.assertAlmostEqual(a, 4.4524597279)
+		self.assertAlmostEqual(a, 4.45246, ACCURACY)
 
 	def test_attenuation_bounds(self):
 		"""Test that stand ID number bound are respected by the attenuation routine."""
@@ -104,7 +108,7 @@ class uvUtils_tests(unittest.TestCase):
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 500)
 
 	def test_baseline_gen(self):
-		"""Test that the generated baselines contian the correct numbers of elements."""
+		"""Test that the generated baselines contain the correct numbers of elements."""
 
 		standList = numpy.array([100, 101, 102, 103])
 
@@ -114,7 +118,7 @@ class uvUtils_tests(unittest.TestCase):
 		self.assertEqual(len(bl), 10)
 
 	def test_baseline_ind(self):
-		"""Test that the baselines generated with Incidies do return indicies and vice
+		"""Test that the baselines generated with Indicies do return indicies and vice
 		versa."""
 
 		standList = numpy.array([100, 101, 102, 103])

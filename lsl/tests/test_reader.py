@@ -5,7 +5,7 @@
 import os
 import unittest
 
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import dataBuild as dataPath
 from lsl.reader import s60
 from lsl.reader import tbw
 from lsl.reader import tbn

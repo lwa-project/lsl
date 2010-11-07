@@ -8,7 +8,7 @@ import os
 import StringIO
 
 from lsl.sim import nec_util
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import dataBuild as dataPath
 
 
 __revision__  = "$Revision: 90 $"

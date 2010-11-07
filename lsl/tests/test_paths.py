@@ -20,7 +20,7 @@ class paths_tests(unittest.TestCase):
 	def test_module_path(self):
 		"""Test the paths.module variable."""
 		
-		modPath = paths.module
+		modPath = paths.moduleBuild
 
 		astroFile = os.path.join(modPath, 'astro.py')
 		self.assertTrue(os.path.exists(astroFile))
@@ -31,7 +31,7 @@ class paths_tests(unittest.TestCase):
 	def test_data_path(self):
 		"""Test the paths.data variable."""
 		
-		dataPath = paths.data
+		dataPath = paths.dataBuild
 
 		cablesFile = os.path.join(dataPath, 'lwa1-cables.csv')
 		self.assertTrue(os.path.exists(cablesFile))

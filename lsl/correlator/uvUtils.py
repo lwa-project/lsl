@@ -227,7 +227,7 @@ class CableCache(object):
 
 	def __isValid(self, stand):
 		if stand < -1 or stand == 0 or stand > 256:
-			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stands[i])
+			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
 
 	def cableDelay(self, stand, freq=None):
 		self.__isValid(stand)
@@ -302,7 +302,7 @@ def cableAttenuation(stand):
 	"""For a given stands, return the factor needed to correct for cable 
 	losses."""
 
-	# Stands start at 1, indices do not
+	# Stands start at 1, indicies do not
 	if stand < -1 or stand == 0 or stand > 256:
 		raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
 
@@ -369,7 +369,7 @@ def baseline2antenna(baseline, stands, BaselineList=None, IncludeAuto=False, Ind
 def antenna2baseline(ant1, ant2, stands, BaselineList=None, IncludeAuto=False, Indicies=False):
 	"""Given two antenna numbers, a list of stands, and options to how the base-
 	line listed was generated, convert the antenna pair to  a baseline number. 
-	This utility is usefull for picking out a particular pair from a list of
+	This utility is useful for picking out a particular pair from a list of
 	baselines."""
 
 	# Build up the list of baselines using the options provided
@@ -419,7 +419,7 @@ def computeUVW(stands, HA=0.0, dec=34.070, freq=49.0e6, IncludeAuto=False):
 	dec2 = dec * deg2rad
 	lat2 = 34.070 * deg2rad
 
-	# Coordinate transformation matracies
+	# Coordinate transformation matrices
 	trans1 = numpy.matrix([[0, -math.sin(lat2), math.cos(lat2)],
 					   [1, 0,               0],
 					   [0, math.cos(lat2),  math.sin(lat2)]])
@@ -452,7 +452,7 @@ def computeUVTrack(stands, dec=34.070, freq=49.0e6):
 	integration.  The output is a three dimensional numpy array with 
 	dimensions baselines, uv, and 512 points along the track ellipses.  
 	Unlike computeUVW, however, only a single frequency (in Hz) can be 
-	speficied."""
+	specified."""
 
 	# Try this so that freq can be either a scalar or a list
 	try:
@@ -469,7 +469,7 @@ def computeUVTrack(stands, dec=34.070, freq=49.0e6):
 	dec2 = dec * math.pi/180.0
 	lat2 = 34.070 * math.pi/180.0
 
-	# Coordinate transformation matracies
+	# Coordinate transformation matrices
 	trans1 = numpy.matrix([[0, -math.sin(lat2), math.cos(lat2)],
 					   [1, 0,               0],
 					   [0, math.cos(lat2),  math.sin(lat2)]])
