@@ -5,7 +5,9 @@
 
 import os
 import sys
+import time
 from lsl.reader import tbw
+from lsl.reader import errors
 from lsl.writer import tsfits
 
 import matplotlib.pyplot as plt
@@ -20,7 +22,7 @@ def main(args):
 	test = tbw.readFrame(fh)
 	print "TBW Data:  %s" % test.header.isTBW()
 	if not test.header.isTBW():
-		raise notTBWError()
+		raise errors.notTBWError()
 	print "Data Length: %i bits" % test.getDataBits()
 	if test.header.getDataBits() == 12:
 		nData = 400
@@ -47,13 +49,13 @@ def main(args):
 		# Read in the next frame and anticipate any problems that could occur
 		try:
 			cFrame = tbw.readFrame(fh, Verbose=False)
-		except eofError:
+		except errors.eofError:
 			break
-		except syncError:
+		except errors.syncError:
 			#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
 			syncCount = syncCount + 1
 			continue
-		except numpyError:
+		except errors.numpyError:
 			break
 
 		stand = cFrame.header.parseID()
@@ -71,6 +73,7 @@ def main(args):
 	print 'Read %i frames in %0.3f s (%0.1f frames/s)' % (masterCount, (tEnd-tStart), masterCount/(tEnd-tStart))
 
 	fh.close()
+	fitsFile.close()
 	fitsFile.info()
 
 	# Summary information about the file that was just read in

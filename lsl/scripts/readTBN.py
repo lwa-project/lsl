@@ -5,7 +5,9 @@
 
 import os
 import sys
+import time
 from lsl.reader import tbn
+from lsl.reader import errors
 from lsl.writer import tsfits
 
 import matplotlib.pyplot as plt
@@ -43,12 +45,12 @@ def main(args):
 	for i in range(nSamples):
 		try:
 			cFrame = tbn.readBlock(fh, nFrames=nFpO, SampleRate=sampleRate)
-		except eofError:
+		except errors.eofError:
 			break
-		except syncError:
+		except errors.syncError:
 			syncCount = syncCount + 1
 			continue
-		except numpyError:
+		except errors.numpyError:
 			break
 		blocks.append(cFrame)
 
@@ -74,6 +76,7 @@ def main(args):
 	print 'Read %i frames in %0.3f s (%0.1f frames/s)' % (nFpO*nSamples, (tEnd-tStart), nFpO*nSamples/(tEnd-tStart))
 
 	fh.close()
+	fitsFile.close()
 	fitsFile.info()
 
 	# Summary information about the file that was just read in

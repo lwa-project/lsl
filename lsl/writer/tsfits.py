@@ -70,6 +70,11 @@ class TSFITS(object):
 	def flush(self):
 		self.hdulist.flush()
 
+	def close(self):
+		if self.UseQueue:
+			self.__emptyQueue()
+		self.flush()
+
 	def setSite(self, site):
 		self.site = site.name
 
@@ -181,6 +186,83 @@ class TSFITS(object):
 		self.queue[stand].append(frame)
 
 		if len(self.queue[stand]) >= self.queueLimit:
+			start = 0
+			extension = self.__findExtension(stand)
+
+			if extension is None:
+				start = 1
+				frame = self.queue[stand][0]
+				
+				print "Stand '%i' not found, creating new binary table extension" % stand
+				self.standCount = self.standCount + 1
+
+				# Data
+				if self.mode == 'TBW':
+					c1 = pyfits.Column(name='data', format='%iI' % frame.data.xy.shape[1], array=frame.data.xy.astype(numpy.int16))
+				else:
+					c1 = pyfits.Column(name='data', format='512C', array=frame.data.iq.astype(numpy.csingle))
+				# Polarization
+				c2 = pyfits.Column(name='pol', format='1I')
+				# Time
+				c3 = pyfits.Column(name='time', format='1K')
+
+				# Define the collection of columns
+				colDefs = pyfits.ColDefs([c1, c2, c3])
+
+				# Get the time of the first sample and convert it to a datetime
+				self.firstSamples[stand] = long(frame.data.timeTag / dp_common.fS)
+				firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
+
+				tsfits = pyfits.new_table(colDefs)
+				tsfits.header.update('EXTNAME', 'TIME SERIES', after='tfields')
+				tsfits.header.update('EXTVER', self.standCount, after='EXTNAME')
+				tsfits.header.update('STAND', stand, after='EXTVER')
+				tsfits.header.update('DATE-OBS', firstSample.isoformat('T'))
+
+				self.hdulist.append(tsfits)
+				self.hdulist[0].header.update('NSTAND', self.standCount)
+				self.flush()
+				
+				self.hdulist[-1].data.field('pol')[0] = 0
+				self.hdulist[-1].data.field('time')[0] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
+				if self.mode == 'TBW':
+					self.hdulist[-1].data.field('time')[1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
+					self.hdulist[-1].data.field('pol')[1] = 1
+
+				self.flush()
+				extension = self.__findExtension(stand)
+
+			# Make sure that we have a first sample time to reference to if 
+			# we are adding on to the end of a file
+			if stand not in self.firstSamples.keys():
+				firstSample = datetime.strptime(self.hdulist[extension].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
+				self.firstSamples[stand] = long(time.mktime(firstSample.timetuple()))
+
+			nrows = self.hdulist[extension].data.shape[0]
+			if self.mode == 'TBW':
+				tempHDU = self.__makeAppendTable(extension, AddRows=2*(self.queueLimit-start))
+				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
+					tempHDU.data.field('data')[nrows+2*count] = numpy.squeeze(frame.data.xy.astype(numpy.int16)[0,:])
+					tempHDU.data.field('pol')[nrows+2*count] = 0
+					tempHDU.data.field('time')[nrows+2*count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
+					tempHDU.data.field('data')[nrows+2*count+1] = numpy.squeeze(frame.data.xy.astype(numpy.int16)[1,:])
+					tempHDU.data.field('pol')[nrows+2*count+1] = 1
+					tempHDU.data.field('time')[nrows+2*count+1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
+			else:
+				tempHDU = self.__makeAppendTable(extension, AddRows=(self.queueLimit-start))
+				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
+					stand,pol = frame.parseID()
+					tempHDU.data.field('data')[nrows+count] = frame.data.iq.astype(numpy.csingle)
+					tempHDU.data.field('pol')[nrows+count] = pol
+					tempHDU.data.field('time')[nrows+count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
+
+			self.__applyAppendTable(extension, tempHDU)
+			del(self.queue[stand])
+
+	def __emptyQueue(self):
+		for stand in self.queue.keys():
+			if len(self.queue[stand]) == 0:
+				continue
 			start = 0
 			extension = self.__findExtension(stand)
 

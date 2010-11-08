@@ -55,6 +55,11 @@ class SDFITS(object):
 	def flush(self):
 		self.hdulist.flush()
 
+	def close(self):
+		if self.UseQueue:
+			self.__emptyQueue()
+		self.flush()
+
 	def setSite(self, site):
 		self.site = site.name
 
@@ -165,6 +170,95 @@ class SDFITS(object):
 		self.queue[stand].append(frame)
 
 		if len(self.queue[stand]) >= self.queueLimit:
+			start = 0
+			extension = self.__findExtension(stand)
+
+			if extension is None:
+				start = 1
+				frame = self.queue[stand][0]
+				freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength, SampleRate=self.sampleRate)
+				
+				print "Stand '%i' not found, creating new binary table extension" % stand
+				self.standCount = self.standCount + 1
+
+				# Data - power spectrum
+				c1 = pyfits.Column(name='data', format='%iD' % self.fftLength, array=framePS.astype(numpy.float_))
+				# Polarization
+				c2 = pyfits.Column(name='pol', format='1I')
+				# Time
+				c3 = pyfits.Column(name='time', format='1D')
+
+				# Define the collection of columns
+				colDefs = pyfits.ColDefs([c1, c2, c3])
+
+				# Get the time of the first sample and convert it to a datetime
+				self.firstSamples[stand] = long(frame.data.timeTag / dp_common.fS)
+				firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
+
+				sdfits = pyfits.new_table(colDefs)
+				sdfits.header.update('EXTNAME', 'SINGLE DISH', after='tfields')
+				sdfits.header.update('EXTVER', self.standCount, after='EXTNAME')
+				sdfits.header.update('STAND', stand, after='EXTVER')
+
+				# Define static fields - core
+				sdfits.header.update('OBJECT', 'zenith')
+				sdfits.header.update('TELESCOP', 'LWA-1')
+				sdfits.header.update('BANDWID', 78.0e6)
+				sdfits.header.update('DATE-OBS', firstSample.isoformat('T'))
+				sdfits.header.update('EXPOSURE', 0.0)
+				sdfits.header.update('TSYS', 1.0)
+				# Define static fields - virtual columns
+				sdfits.header.update('CTYPE1', 'FREQ-OBS')
+				sdfits.header.update('CRVAL1', freq[0])
+				sdfits.header.update('CRPIX1', 1)
+				sdfits.header.update('CDELT1', (freq[1]-freq[0]))
+				sdfits.header.update('CTYPE2', 'HA')
+				sdfits.header.update('CRVAL2', 0.0, unit='degrees')
+				sdfits.header.update('CTYPE3', 'DEC')
+				sdfits.header.update('CRVAL3', 0.0, unit='degrees')
+				sdfits.header.update('OBSMODE', self.mode)
+				sdfits.header.update('NCHAN', len(freq))
+
+				self.hdulist.append(tsfits)
+				self.hdulist[0].header.update('NSTAND', self.standCount)
+				self.flush()
+				
+				self.hdulist[-1].data.field('pol')[0] = 0
+				self.hdulist[-1].data.field('pol')[1] = 1
+				self.hdulist[-1].data.field('time')[0] = frame.data.timeTag / dp_common.fS
+				self.hdulist[-1].data.field('time')[1] = frame.data.timeTag / dp_common.fS
+
+				self.flush()
+				extension = self.__findExtension(stand)
+
+			# Make sure that we have a first sample time to reference to if 
+			# we are adding on to the end of a file
+			if stand not in self.firstSamples.keys():
+				firstSample = long(datetime.strptime(self.hdulist[extension].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
+				self.firstSamples[stand] = time.mktime(firstSample.timetuple())
+
+			nrows = self.hdulist[extension].data.shape[0]
+			tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+2*(self.queueLimit-start))
+			for key in self.hdulist[extension].header.keys():
+				tempHDU.header.update(key, self.hdulist[extension].header[key])
+			for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
+				freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength)
+
+				tempHDU.data.field('data')[nrows+2*count] = numpy.squeeze(framePS.astype(numpy.float_)[0,:])
+				tempHDU.data.field('pol')[nrows+2*count] = 0
+				tempHDU.data.field('time')[nrows+2*count] = frame.data.timeTag / dp_common.fS
+				tempHDU.data.field('data')[nrows+2*count+1] = numpy.squeeze(framePS.astype(numpy.float_)[1,:])
+				tempHDU.data.field('pol')[nrows+2*count+1] = 1
+				tempHDU.data.field('time')[nrows+2*count+1] = frame.data.timeTag / dp_common.fS
+
+			self.hdulist[extension] = tempHDU
+			self.flush()
+			del(self.queue[stand])
+
+	def __emptyQueue(self):
+		for stand in self.queue.keys():
+			if len(self.queue[stand]) == 0:
+				continue
 			start = 0
 			extension = self.__findExtension(stand)
 
