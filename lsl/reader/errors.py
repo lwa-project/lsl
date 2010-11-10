@@ -111,6 +111,3 @@ def listErrorCodes(errno=None):
 			print "5: Data appears to be TBN, not TBW as expected"
 		else:
 			print "Unknown error code '%i'" % errno
-
-
-		

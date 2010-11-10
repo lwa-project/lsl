@@ -104,6 +104,10 @@ UNIT TESTS
 		'import lsl; lsl.test()'
 
 RELEASE NOTES
+	Version 0.3
+		Added in modules for writing simulated data to the S60, TBW, TBN, and 
+		DRX raw data formats
+
 	Version 0.2
 		Added in other modules from the lwa_user library developed by NRL
 

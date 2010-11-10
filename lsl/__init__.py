@@ -2,8 +2,8 @@
 
 """LWA Software Library"""
 
-__version__ = '0.2'
-__revision__ = '$ Revision: 3 $'
+__version__ = '0.3'
+__revision__ = '$ Revision: 4 $'
 __author__ = "Jayce Dowell"
 
 import common
