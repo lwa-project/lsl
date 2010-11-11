@@ -5,11 +5,12 @@ DRX frames to a file."""
 
 import numpy
 
-from lsl.common import dp_common
+from lsl.common import dp as dp_common
 from lsl.reader import drx
+from errors import *
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 5 $'
+__revision__ = '$ Revision: 6 $'
 __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
 
@@ -71,16 +72,66 @@ def frame2frame(drxFrame):
 	q = q.clip(-8, 7)
 	q = q.astype(numpy.uint8)
 
-	rawFrame[32:] = (i<<4) | q
+	rawFrame[32:] = (i << 4) | q
 
 	return rawFrame
 
 
 class SimFrame(drx.Frame):
+	def __init__(self, beam=None, tune=None, pol=None, filterCode=None, timeOffset=None, frameCount=None, obsTime=None, flags=None, iq=None):
+		"""Given a list of parameters, build a drx.SimFrame object."""
+		
+		self.beam = beam
+		self.tune = tune
+		self.pol = pol
+		self.filterCode = filterCode
+		self.timeOffset = timeOffset
+		self.frameCount = frameCount
+		self.obsTime = obsTime
+		self.flags = flags
+		self.iq = iq
+		
+		self.header = drx.FrameHeader()
+		self.data = drx.FrameData()
+		
+	def __update(self):
+		"""Use the class values to build up a tbw.Frame-like object."""
+		
+		self.header.frameCount = self.frameCount
+		self.header.decimation = int(dp_common.fS / drx.filterCodes[self.filterCode])
+		self.header.timeOffset = self.timeOffset
+		self.header.drxID = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
+		
+		self.data.timeTag = self.obsTime * dp_common.fS
+		self.data.flags = self.flags
+		self.data.iq = self.iq
+		
+	def loadFrame(self, drxFrame):
+		"""Populate the a drx.SimFrame object with a pre-made frame."""
+		
+		self.header = drxFrame.header
+		self.data = drxFrame.data
+		
+		# Back-fill the class' fields to make sure the object is consistent
+		## Header
+		self.beam = self.header.parseID()[0]
+		self.tune = self.header.parseID()[1]
+		self.pol = self.header.parseID()[2]
+		self.frameCount = self.header.frameCount
+		self.filterCode = int(dp_common.fS / self.header.decimations)
+		self.timeOffset = self.header.timeOffset
+		## Data
+		self.obsTime = self.data.timeTag / dp_common.fS
+		self.flags = self.data.flags
+		self.iq = self.data.iq
+	
 	def isValid(self):
 		"""Check if simulated DRX frame is valid or not.  Valid frames return 
 		True and invalid frames False.  If the `raiseErrors' keyword is set, 
 		isValid raises an error when a problem is encountered."""
+
+		# Make sure we have the latest values
+		self.__update()
 
 		# Is the time offset reasonable?
 		if self.header.timeOffset >= dp_common.fS:
@@ -130,12 +181,17 @@ class SimFrame(drx.Frame):
 		"""Re-express a simulated DRX frame as a numpy array of unsigned 8-bit 
 		integers.  Returns a numpy array if the frame is valid."""
 
+		# Make sure we have the latest values
+		self.__update()
+
 		self.isValid(raiseErrors=True)
 		return frame2frame(self)
 
 	def writeRawFrame(self, fh):
 		"""Write a simulated DRX frame to a filehandle if the frame is valid."""
 
-		self.isValid(raiseErrors=True)
+		# Make sure we have the latest values
+		self.__update()
+
 		rawFrame = self.createRawFrame(self)
 		rawFrame.tofile(fh)

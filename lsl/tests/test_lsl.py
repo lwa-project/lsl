@@ -4,11 +4,17 @@
 
 import unittest
 
+from lsl.tests import test_paths
 from lsl.tests import test_astro
 from lsl.tests import test_skymap
 from lsl.tests import test_mathutil
 from lsl.tests import test_nec_util
 from lsl.tests import test_catalog
+from lsl.tests import test_stations
+from lsl.tests import test_reader
+from lsl.tests import test_uvUtils
+from lsl.tests import test_visUtils
+from lsl.tests import test_fakedata
 
 
 __revision__  = "$Revision: 95 $"
@@ -35,6 +41,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_reader.reader_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())
 		self.addTest(test_visUtils.visUtils_test_suite())
+		self.addTest(test_fakedata.fakedata_test_suite())
 
 
 def main(opts=None, args=None):

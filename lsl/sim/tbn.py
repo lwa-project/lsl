@@ -5,11 +5,12 @@ TBN frames to a file."""
 
 import numpy
 
-from lsl.common import dp_common
+from lsl.common import dp as dp_common
 from lsl.reader import tbn
+from errors import *
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 5 $'
+__revision__ = '$ Revision: 6 $'
 __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
 
@@ -35,8 +36,8 @@ def frame2frame(tbnFrame):
 	rawFrame[10] = (tbnFrame.header.secondsCount>>8) & 255
 	rawFrame[11] = tbnFrame.header.secondsCount & 255
 	## TBN ID
-	rawFrame[12] = (tbnFrame.tbnID>>8) & 255
-	rawFrame[13] = tbnFrame.tbnID & 255
+	rawFrame[12] = (tbnFrame.header.tbnID>>8) & 255
+	rawFrame[13] = tbnFrame.header.tbnID & 255
 	## NB: Next two bytes are unsigned
 	
 	# Part 2: The data
@@ -61,28 +62,62 @@ def frame2frame(tbnFrame):
 	q = q.astype(numpy.uint8)
 	
 	rawFrame[24::2] = i
-	rawFrame[23::2] = q
+	rawFrame[25::2] = q
 	
 	return rawFrame
 
 
 class SimFrame(tbn.Frame):
+	def __init__(self, stand=None, pol=None, frameCount=None, obsTime=None, iq=None):
+		"""Given a list of parameters, build a tbw.SimFrame object."""
+		
+		self.stand = stand
+		self.pol = pol
+		self.frameCount = frameCount
+		self.obsTime = obsTime
+		self.iq = iq
+		
+		self.header = tbn.FrameHeader()
+		self.data = tbn.FrameData()
+		
+	def __update(self):
+		"""Use the class values to build up a tbw.Frame-like object."""
+		
+		self.header.frameCount = self.frameCount
+		self.header.secondsCount = int(self.obsTime)
+		self.header.tbnID = 2*(self.stand-1) + self.pol + 1
+		
+		self.data.timeTag = self.obsTime * dp_common.fS
+		self.data.iq = self.iq
+	
+	def loadFrame(self, tbnFrame):
+		"""Populate the a tbn.SimFrame object with a pre-made frame."""
+		
+		self.header = tbnFrame.header
+		self.data = tbnFrame.data
+		
+		# Back-fill the class' fields to make sure the object is consistent
+		## Header
+		self.stand = self.header.parseID()[0]
+		self.pol = self.header.parseID()[1]
+		self.frameCount = self.header.frameCount
+		## Data
+		self.obsTime = self.data.timeTag / dp_common.fS
+		self.iq = self.data.iq
+	
 	def isValid(self, raiseErrors=False):
 		"""Check if simulated TBN frame is valid or not.  Valid frames return 
 		True and invalid frames False.  If the `raiseErrors' keyword is set, 
 		isValid raises an error when a problem is encountered."""
 
-		# Is the frame actually a TBN frame?
-		if not self.header.isTBN:
-			if raiseErrors:
-				raise invalidFrameType()
-			return False
+		# Make sure we have the latest values
+		self.__update()
 
 		stand, pol = self.parseID()
 		# Is the stand number reasonable?
 		if stand == 0 or stand > 258:
 			if raiseErrors:
-				raise invalidStabd()
+				raise invalidStand()
 			return False
 
 		# Is the polarization reasonable?
@@ -116,12 +151,17 @@ class SimFrame(tbn.Frame):
 		"""Re-express a simulated TBN frame as a numpy array of unsigned 8-bit 
 		integers.  Returns a numpy array if the frame  is valid."""
 
+		# Make sure we have the latest values
+		self.__update()
+
 		self.isValid(raiseErrors=True)
 		return frame2frame(self)
 
 	def writeRawFrame(self, fh):
 		"""Write a simulated TBN frame to a filehandle if the frame is valid."""
 
-		self.isValid(raiseErrors=True)
+		# Make sure we have the latest values
+		self.__update()
+
 		rawFrame = self.createRawFrame(self)
 		rawFrame.tofile(fh)

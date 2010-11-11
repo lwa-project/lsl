@@ -8,7 +8,7 @@ import numpy
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 1 $'
-__all__ = ['baseSimrError', 'invalidFrameType', 'invalidStand', 'invalidPol', 'invalidBeam', 'invalidTune', 'invalidDataSize', 'invalidDataType', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
+__all__ = ['baseSimError', 'invalidFrameType', 'invalidStand', 'invalidPol', 'invalidBeam', 'invalidTune', 'invalidDataSize', 'invalidDataType', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
 
 
 MinErrorNo = 1

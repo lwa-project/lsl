@@ -37,10 +37,10 @@ class FrameHeader(object):
 	
 	def parseID(self):
 		"""Parse the DRX ID into a tuple containing the beam (1 through
-		4), tunning (0 and 1), and polarization (0 and 1)."""
+		4), tunning (1 and 2), and polarization (0 and 1)."""
 		
 		beam = self.drxID&7
-		tune = (self.drxID>>3)&7 - 1
+		tune = (self.drxID>>3)&7
 		pol  = (self.drxID>>7)&1
 
 		return (beam, tune, pol)

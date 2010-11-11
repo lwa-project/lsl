@@ -5,7 +5,7 @@ a file."""
 
 import numpy
 
-from lsl.common import dp_common
+from lsl.common import dp as dp_common
 from lsl.reader import s60
 from errors import *
 
@@ -29,7 +29,7 @@ def frame2frame(s60Data):
 	if s60Data.dtype.kind != 'c':
 		raise invalidDataType()
 	### Does the data length make sense?
-	if self.data.iq.shape[0] != s60.FrameSize/2:
+	if s60Data.shape[0] != s60.FrameSize/2:
 		raise invalidDataSize()
 	
 	# Part 2: The data
@@ -63,7 +63,7 @@ def chunk2frame(s60Data):
 	if s60Data.dtype.kind != 'c':
 		raise invalidDataType()
 	### Does the data length make sense?
-	if self.data.iq.shape[0] < 1:
+	if s60Data.shape[0] < 1:
 		raise invalidDataSize()
 	
 	# Part 2: The data
