@@ -107,6 +107,10 @@ RELEASE NOTES
 	Version 0.3
 		Added in modules for writing simulated data to the S60, TBW, TBN, and 
 		DRX raw data formats
+		Added a module for simulated basic test signals in TBW, TBN, and DRX
+		data
+		Fixed a couple of bugs dealing with incorrect chunking of data in 
+		scripts/tbwSpectra.py and scripts/tbnSpectra.py
 
 	Version 0.2
 		Added in other modules from the lwa_user library developed by NRL
