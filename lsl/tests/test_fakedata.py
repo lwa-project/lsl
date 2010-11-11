@@ -26,8 +26,8 @@ class fake_S60_tests(unittest.TestCase):
 	testFile = os.path.join(testPath, 's60-test.dat')
 	dataFile = os.path.join(dataPath, 'tests', 's60-test.dat')
 
-	def test_read_write(self):
-		"""Test that the S60 data writer works."""
+	def test_read_write_frame(self):
+		"""Test that the S60 data writer works for frames."""
 
 		# Read in a S60 frame from the test file
 		fh = open(dataFile, 'rb')
@@ -47,6 +47,31 @@ class fake_S60_tests(unittest.TestCase):
 			self.assertAlmostEqual(fakeData[i].real, origData[i].real, 4)
 			self.assertAlmostEqual(fakeData[i].imag, origData[i].imag, 4)
 
+	def test_read_write_chunk(self):
+		"""Test that the S60 data writer works for chunks."""
+
+		# Read in a S60 frame from the test file
+		fh = open(dataFile, 'rb')
+		origData = reader.readChunk(fh, Chunk=2202)
+		fh.close()
+		# Write the data to a S60 test frame
+		fh = open(testFile, 'wb')
+		rawFrame = writer.chunk2frame(origData)
+		rawFrame.tofile(fh)
+		fh.close()
+		# Read in the 
+		fh = open(testFile, 'rb')
+		fakeData = reader.readChunk(fh, Chunk=2202)
+		fh.close()
+
+		self.assertEqual(len(fakeData), len(origData))
+		for i in range(25):
+			self.assertAlmostEqual(fakeData[i].real, origData[i].real, 4)
+			self.assertAlmostEqual(fakeData[i].imag, origData[i].imag, 4)
+
+	def test_frame_errors(self):
+		
+
 
 class fake_TBW_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.sim.tbw
@@ -59,7 +84,7 @@ class fake_TBW_tests(unittest.TestCase):
 	testFile = os.path.join(testPath, 'tbw-test.dat')
 	dataFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 
-	def test_read_write(self):
+	def test_read_write_frame(self):
 		"""Test that the TBW data writer works."""
 
 		# Read in a TBW frame from the test file
