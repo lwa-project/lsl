@@ -85,6 +85,11 @@ def main(args):
 	# Make sure that the file chunk size contains is an intger multiple
 	# of the FFT length so that no data gets dropped
 	maxFrames = int(config['maxFrames']/float(LFFT))*LFFT
+	# It seems like that would be a good idea, however...  TBW data comes one
+	# capture at a time so doing something like this actually truncates data 
+	# from the last set of stands for the first integration.  So, we really 
+	# should stick with
+	maxFrames = config['maxFrames']
 
 	fh = open(config['args'][0], "rb")
 	nFrames = os.path.getsize(config['args'][0]) / tbw.FrameSize

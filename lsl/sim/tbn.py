@@ -68,8 +68,20 @@ def frame2frame(tbnFrame):
 
 
 class SimFrame(tbn.Frame):
+	"""tbn.SimFrame extends the lsl.reader.tbn.Frame object to yield a method 
+	for easily creating DP ICD-compliant raw TBN frames.  Frames created with
+	this method can be written to a file via the methods writeRawFrame() function."""
+
 	def __init__(self, stand=None, pol=None, frameCount=None, obsTime=None, iq=None):
-		"""Given a list of parameters, build a tbw.SimFrame object."""
+		"""Given a list of parameters, build a tbn.SimFrame object.  The parameters
+		needed are:
+		  + stand id (>0 & <259)
+		  + polarization (0 for x, or 1 for y)
+		  + which frame number to create
+		  + observation time in seconds since the epoch
+		  + 1-D numpy array representing the frame I/Q (complex) data
+		Not all of these parameters are needed at initialization of the object and
+		the values can be added later."""
 		
 		self.stand = stand
 		self.pol = pol
@@ -81,13 +93,14 @@ class SimFrame(tbn.Frame):
 		self.data = tbn.FrameData()
 		
 	def __update(self):
-		"""Use the class values to build up a tbw.Frame-like object."""
+		"""Private function to use the object's parameter values to build up 
+		a tbn.Frame-like object."""
 		
 		self.header.frameCount = self.frameCount
 		self.header.secondsCount = int(self.obsTime)
 		self.header.tbnID = 2*(self.stand-1) + self.pol + 1
 		
-		self.data.timeTag = self.obsTime * dp_common.fS
+		self.data.timeTag = long(self.obsTime * dp_common.fS)
 		self.data.iq = self.iq
 	
 	def loadFrame(self, tbnFrame):
@@ -149,7 +162,8 @@ class SimFrame(tbn.Frame):
 
 	def createRawFrame(self):
 		"""Re-express a simulated TBN frame as a numpy array of unsigned 8-bit 
-		integers.  Returns a numpy array if the frame  is valid."""
+		integers.  Returns a numpy array if the frame  is valid.  If the frame 
+		is not ICD-compliant, a errors.baseSimError-type error is raised."""
 
 		# Make sure we have the latest values
 		self.__update()
@@ -158,10 +172,18 @@ class SimFrame(tbn.Frame):
 		return frame2frame(self)
 
 	def writeRawFrame(self, fh):
-		"""Write a simulated TBN frame to a filehandle if the frame is valid."""
+		"""Write a simulated TBN frame to a filehandle if the frame is valid.
+		If the frame is not ICD-compliant, a errors.baseSimError-type error 
+		is raised."""
 
 		# Make sure we have the latest values
 		self.__update()
 
-		rawFrame = self.createRawFrame(self)
+		rawFrame = self.createRawFrame()
 		rawFrame.tofile(fh)
+
+	def __str__(self):
+		if self.stand is None:
+			return "Empty TBN SimFrame object"
+		else:
+			return "TBN SimFrame for stand %i, pol. %i @ time %i" % (self.stand, self.pol, self.obsTime)

@@ -112,15 +112,18 @@ def main(args):
 	# Length of the FFT
 	LFFT = config['LFFT']
 
-	# Make sure that the file chunk size contains is an intger multiple
-	# of the FFT length so that no data gets dropped
-	maxFrames = int(config['maxFrames']/float(LFFT))*LFFT
-
 	fh = open(config['args'][0], "rb")
 	nFrames = os.path.getsize(config['args'][0]) / tbn.FrameSize
 	srate = tbn.getSampleRate(fh)
 	antpols = tbn.getFramesPerObs(fh)
 	antpols = antpols[0]+antpols[1]
+
+	# Make sure that the file chunk size contains is an intger multiple
+	# of the FFT length so that no data gets dropped.  This needs to
+	# take into account the number of antpols in the data, the FFT length,
+	# and the number of samples per frame.
+	maxFrames = int(config['maxFrames']/antpols*512/float(LFFT))*LFFT/512*antpols
+
 	nChunks = int(math.ceil(1.0*nFrames/maxFrames))
 
 	# File summary

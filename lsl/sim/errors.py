@@ -8,11 +8,11 @@ import numpy
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 1 $'
-__all__ = ['baseSimError', 'invalidFrameType', 'invalidStand', 'invalidPol', 'invalidBeam', 'invalidTune', 'invalidDataSize', 'invalidDataType', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
+__all__ = ['baseSimError', 'invalidStand', 'invalidPol', 'invalidBeam', 'invalidTune', 'invalidDataSize', 'invalidDataType', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
 
 
 MinErrorNo = 1
-MaxErrorNo = 7
+MaxErrorNo = 6
 
 
 class baseSimError(IOError):
@@ -28,23 +28,12 @@ class baseSimError(IOError):
 		return "%s" % self.strerror
 
 
-class invalidFrameType(baseSimError):
-	"""Extension to the base class for dealing with TBW/TBN frames that appear
-	to be of the oposite type.  The error code is 1."""
+class invalidStand(baseSimError):
+	"""Extension to the base class for dealing with frames with out-of-range 
+	stand numbers.  The error code is 1."""
 
 	def __init__(self):
 		self.errno = 1
-		self.strerror = 'Frame type does not match ID type'
-		self.filename = None
-		self.args = (self.errno, self.strerror)
-
-
-class invalidStand(baseSimError):
-	"""Extension to the base class for dealing with frames with out-of-range 
-	stand numbers.  The error code is 2."""
-
-	def __init__(self):
-		self.errno = 2
 		self.strerror = 'Stand number is out of range (==0 or >258)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -52,10 +41,10 @@ class invalidStand(baseSimError):
 
 class invalidPol(baseSimError):
 	"""Extension to the base class for dealing with frames with out-of-range 
-	polarization numbers.  The error code is 3."""
+	polarization numbers.  The error code is 2."""
 
 	def __init__(self):
-		self.errno = 3
+		self.errno = 2
 		self.strerror = 'Polarization is out of range (!=0 and !=1)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -63,10 +52,10 @@ class invalidPol(baseSimError):
 
 class invalidBeam(baseSimError):
 	"""Extension to the base class for dealing with frames with out-of-range 
-	DRX beam numbers.  The error code is 4."""
+	DRX beam numbers.  The error code is 3."""
 
 	def __init__(self):
-		self.errno = 4
+		self.errno = 3
 		self.strerror = 'Beam is out of range (==0 or >4)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -74,10 +63,10 @@ class invalidBeam(baseSimError):
 
 class invalidTune(baseSimError):
 	"""Extension to the base class for dealing with frames with out-of-range 
-	DRX tunning numbers.  The error code is 5."""
+	DRX tunning numbers.  The error code is 4."""
 
 	def __init__(self):
-		self.errno = 5
+		self.errno = 4
 		self.strerror = 'Tunning is out of range (!=1 and !=2)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -85,10 +74,10 @@ class invalidTune(baseSimError):
 
 class invalidDataSize(baseSimError):
 	"""Extension to the base class for dealing with frames with data sections that
-	have the wrong array size.  The error code is 6."""
+	have the wrong array size.  The error code is 5."""
 
 	def __init__(self):
-		self.errno = 6
+		self.errno = 5
 		self.strerror = 'Data array size is not consistent with frame type'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -96,10 +85,10 @@ class invalidDataSize(baseSimError):
 
 class invalidDataType(baseSimError):
 	"""Extension to the base class for dealing with frames with data sections that
-	have the wrong type (real vs complex).  The error code is 7."""
+	have the wrong type (real vs complex).  The error code is 6."""
 
 	def __init__(self):
-		self.errno = 7
+		self.errno = 6
 		self.strerror = 'Data array has the wrong general kind'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -115,18 +104,16 @@ def listErrorCodes(errno=None):
 			listErrorCodes(errno=i)
 	else:
 		if errno == 1:
-			print "1: Frame type does not match ID type"
+			print "1: Stand number is out of range (==0 or >258)"
 		elif errno == 2:
-			print "2: Stand number is out of range (==0 or >258)"
+			print "2: Polarization is out of range (!=0 and !=1)"
 		elif errno == 3:
-			print "3: Polarization is out of range (!=0 and !=1)"
+			print "3: Beam is out of range (==0 or >4)"
 		elif errno == 4:
-			print "4: Beam is out of range (==0 or >4)"
+			print "4: Tunning is out of range (!=1 and !=2)"
 		elif errno == 5:
-			print "5: Tunning is out of range (!=1 and !=2)"
+			print "5: Data array size is not consistent with frame type"
 		elif errno == 6:
-			print "6: Data array size is not consistent with frame type"
-		elif errno == 7:
-			print "7: Data array has the wrong general kind"
+			print "6: Data array has the wrong general kind"
 		else:
 			print "Unknown error code '%i'" % errno
