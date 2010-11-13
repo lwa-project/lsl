@@ -7,9 +7,9 @@ import warnings
 import linecache
 
 
-__version__ = '0.1'
-__revision__ = '$ Revision: 1 $'
-__all__ = ['warnDeprecated', '__version__', '__revision__', '__all__']
+__version__ = '0.2'
+__revision__ = '$ Revision: 2 $'
+__all__ = ['warnDeprecated', 'warnExperimental', '__version__', '__revision__', '__all__']
 
 
 def __modifiedFormatWarning(message, category, filename, lineno, line=None):
@@ -49,5 +49,16 @@ def warnDeprecated(name, memo=None):
 		warnings.warn("'%s' is deprecated" % name, DeprecationWarning, 3)
 	else:
 		warnings.warn("'%s' is deprecated: %s" % (name, memo), DeprecationWarning, 3)
+
+
+def warnExperimental(name, memo=None):
+	"""Wrapper around warnins.warn to fix the problems with 
+	[(format)(show)]warnings functions described above."""
+
+	warnings.showwarning = __modifiedShowWarning
+	warnings.formatwarning = __modifiedFormatWarning
 	
-	
+	if memo is None:
+		warnings.warn("'%s' is experimental" % name, ImportWarning, 3)
+	else:
+		warnings.warn("'%s' is experimental: %s" % (name, memo), ImportWarning, 3)
