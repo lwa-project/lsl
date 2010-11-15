@@ -5,6 +5,7 @@
 import functools
 import itertools
 import math
+import time
 import numpy
 import scipy.stats
 
@@ -20,16 +21,29 @@ __revision__ = '$ Revision: 1 $'
 __all__ = ['__version__', '__revision__', '__all__']
 
 
-def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12):
-	"""Generate a collection of frames with a basic test signal for TBW, TBN, 
-	and DRX.  The signls are:
+def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
+	"""Generate a collection of frames with a basic test signal for TBW, 
+	TBN, and DRX.  The signals for the three modes are:
 	  TBW:
-	    noise + 40 MHz signal for x-pol.; noise + 60 MHz signal for y-pol.-> odd stands
-	    noise + 30 MHz signal for x-pol.; noise + 50 MHz signal for ypol. -> even stands
+	    noise + 40 MHz signal for x-pol.; noise + 60 MHz signal for y-pol.
+	      -> odd stands
+	    noise + 30 MHz signal for x-pol.; noise + 50 MHz signal for ypol.
+	      -> even stands
 	  TBN:
-	    noise + 
+	    noise + (sampleRate/4) kHz signal for x-pol. and noise + 
+	    (-sampleRate/4) for y-pol.
 	  DRX:
-	    same test signal used in the original lwa_dp_sim"""
+	    same test signal used in the original lwa_dp_sim
+	    
+	All modes need to have stands (beams in the case of DRX) and number of
+	frames to generate.  TBW also needs to `bits' keyword set to generate 
+	either 12-bit or 4-bit data.  The TBN and DRX frames need the `filter'
+	keyword set to specify the filter width."""
+
+	if tStart == 0:
+		tStart = time.time()
+	else:
+		tStart = float(tStart)
 
 	if mode == 'TBW':
 		sampleRate = dp_common.fS
@@ -50,7 +64,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12):
 					FramesThisBatch = 30000
 				print "-> Frames %i" % FramesThisBatch
 				for i in range(FramesThisBatch):
-					t = i*samplesPerFrame/sampleRate + 60.0*capture
+					t = tStart + i*samplesPerFrame/sampleRate + 60.0*capture
 					
 					cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=t)
 					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
@@ -74,20 +88,22 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12):
 		sampleRate = TBNFilters[filter]
 		maxValue = 127
 		samplesPerFrame = 512
+		upperSpike = sampleRate / 4.0
+		lowerSpike = -sampleRate / 4.0
 		
 		for i in range(nFrames):
 			if i % 1000 == 0:
 				print "Simulating frame %i" % (i+1)
-			t = 1.0*i*samplesPerFrame/sampleRate
+			t = tStart + i*samplesPerFrame/sampleRate
 			for stand in stands:
 				cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=t)
 				temp = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 				temp.real = numpy.random.randn(samplesPerFrame)
 				temp.real *= maxValue/15.0
-				temp.real += maxValue*numpy.cos(2*numpy.pi/100.0*(i*samplesPerFrame+numpy.arange(samplesPerFrame)))
+				temp.real += maxValue*numpy.cos(2*numpy.pi*upperSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
 				temp.imag = numpy.random.randn(samplesPerFrame)
 				temp.imag *= maxValue/15.0
-				temp.imag += maxValue*numpy.sin(2*numpy.pi/100.0*(i*samplesPerFrame+numpy.arange(samplesPerFrame)))
+				temp.imag += maxValue*numpy.sin(2*numpy.pi*upperSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
 				cFrame.iq = temp
 				
 				cFrame.writeRawFrame(fh)
@@ -96,10 +112,10 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12):
 				temp = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 				temp.real = numpy.random.randn(samplesPerFrame)
 				temp.real *= maxValue/15.0
-				temp.real += maxValue*numpy.cos(2*numpy.pi/200.0*(i*samplesPerFrame+numpy.arange(samplesPerFrame)))
+				temp.real += maxValue*numpy.cos(2*numpy.pi*lowerSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
 				temp.imag = numpy.random.randn(samplesPerFrame)
 				temp.imag *= maxValue/15.0
-				temp.imag += maxValue*numpy.sin(2*numpy.pi/200.0*(i*samplesPerFrame+numpy.arange(samplesPerFrame)))
+				temp.imag += maxValue*numpy.sin(2*numpy.pi*lowerSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
 				cFrame.iq = temp
 				
 				cFrame.writeRawFrame(fh)
@@ -129,7 +145,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12):
 		for i in range(nFrames):
 			if i % 1000 == 0:
 				print "Simulating frame %i" % i
-			t = 1.0*i*samplesPerFrame/sampleRate
+			t = tStart + i*samplesPerFrame/sampleRate
 			for beam in beams:
 				for tune in [1, 2]:
 					for pol in [0, 1]:
