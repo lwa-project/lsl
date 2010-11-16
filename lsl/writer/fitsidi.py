@@ -11,7 +11,7 @@ import pyfits
 from datetime import datetime
 
 from lsl import astro
-from lsl.common import consts
+from lsl.common import constants
 from lsl.common import dp as dp_common
 from lsl.common.stations import geo2ecef
 from lsl.correlator import uvUtils
@@ -19,11 +19,9 @@ from lsl.misc import mathutil
 from lsl.reader.warnings import warnExperimental
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 3 $'
+__revision__ = '$ Revision: 7 $'
 __all__ = ['IDI', 'StokesCodes', '__version__', '__revision__', '__all__']
 
-
-warnExperimental(memo='fitsidi', memo="this module probably won't work")
 
 IDIVersion = (2, 0)
 
@@ -147,8 +145,19 @@ class IDI(object):
 			self.data.append( self._UVData(obsTime, intTime, dataDict) )
 
 	def write(self):
+		"""Fill in the FITS-IDI file will all of the tables in the 
+		correct order."""
+		
+		self.__writePrimary()
+		self.__writeGeometry()
+		self.__writeFrequency()
+		self.__writeAntenna()
+		self.__writeBandpass()
+		self.__writeSource()
+		self.__writeStars()
+		self.__writeData()
 
-	def __addCommonKeyword(self, hdr, name, revision):
+	def __addCommonKeywords(self, hdr, name, revision):
 		"""Added keywords common to all table headers."""
 
 		hdr.update('EXTNAME', name, 'FITS-IDI table name')
@@ -223,7 +232,7 @@ class IDI(object):
 
 		# Antenna name
 		c1 = pyfits.Column(name='anname', format='A8', 
-						array=numpy.array([ant.getName() for ant in self.array[0]['ants']])
+						array=numpy.array([ant.getName() for ant in self.array[0]['ants']]))
 		# Station coordinates in meters
 		c2 = pyfits.Column(name='stabxyz', unit='METERS', format='3D', 
 						array=xyz)
@@ -248,7 +257,7 @@ class IDI(object):
 
 		# Create the table and fill in the header
 		ag = pyfits.new_table(colDefs)
-		self.__addCommonKeyword(ag.header, 'ARRAY_GEOMETRY', 1)
+		self.__addCommonKeywords(ag.header, 'ARRAY_GEOMETRY', 1)
 
 		ag.header.update('EXTVER', 1, 'array ID')
 		ag.header.update('ARRNAM', 'LWA-1')
@@ -289,10 +298,10 @@ class IDI(object):
 
 		# Frequency setup number
 		c1 = pyfits.Column(name='freqid', format='1J', 
-						array=numpy.array([self.freq[0].id, dtype=numpy.int32)
+						array=numpy.array([self.freq[0].id], dtype=numpy.int32))
 		# Frequency offsets in Hz
 		c2 = pyfits.Column(name='bandfreq', format='1D', 
-						array=numpy.array([self.freq[0].bandFreq], dtype=numpy.float64)
+						array=numpy.array([self.freq[0].bandFreq], dtype=numpy.float64))
 		# Channel width in Hz
 		c3 = pyfits.Column(name='ch_width', format='1R', 
 						array=numpy.array([self.freq[0].chWidth], dtype=numpy.float32))
@@ -311,7 +320,7 @@ class IDI(object):
 
 		# Create the table and header
 		fq = pyfits.new_table(colDefs)
-		self.__addCommonKeywords(fq.header, 'FREQUENCY' 2)
+		self.__addCommonKeywords(fq.header, 'FREQUENCY', 2)
 		
 		# Add the table to the file
 		fq.name = 'FREQUENCY'
@@ -326,7 +335,7 @@ class IDI(object):
 						array=numpy.zeros((self.nAnts,), dtype=numpy.float64))
 		# Durration of period covered by record in days
 		c2 = pyfits.Column(name='time_interval', unit='DAYS', format='1E', 
-						array=(2*numpy.ones((self.nAnts,), dtype=numpy.float32))
+						array=(2*numpy.ones((self.nAnts,), dtype=numpy.float32)))
 		# Antenna name
 		c3 = pyfits.Column(name='anname', format='A8', 
 						array=self.FITS['ARRAY_GEOMETRY'].field('ANNAME'))
@@ -404,7 +413,7 @@ class IDI(object):
 						array=(numpy.zeros((self.nAnts,), type=numpy.float32)+self.freq[0].bandFreq))
 		# Referance antenna number
 		c9 = pyfits.Column(name='ref_ant1', format='1J',
-						array=(numpy.ones((self.nAnts,), type=numpy.int32))
+						array=numpy.ones((self.nAnts,), type=numpy.int32))
 		# Real part of the bandpass
 		c10 = pyfits.Column(name='breal_1', format='%dE' % self.nChan,
 						array=numpy.ones((self.nAnts,), dtype=numpy.float32))
