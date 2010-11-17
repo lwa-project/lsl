@@ -78,6 +78,7 @@ class Frame(object):
 	def __init__(self, header=FrameHeader(), data=FrameData()):
 		self.header = header
 		self.data = data
+		self.valid = True
 
 	def parseID(self):
 		"""Convenience wrapper for the Frame.FrameHeader.parseID 

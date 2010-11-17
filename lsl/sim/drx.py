@@ -26,6 +26,8 @@ def frame2frame(drxFrame):
 	rawFrame[1] = 0xC0  # 192
 	rawFrame[2] = 0xDE  # 222
 	rawFrame[3] = 0x5C  #  92
+	## DRX ID
+	rawFrame[4] = drxFrame.header.drxID
 	## Frame count
 	rawFrame[5] = (drxFrame.header.frameCount>>16) & 255
 	rawFrame[6] = (drxFrame.header.frameCount>>8) & 255
