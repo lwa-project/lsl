@@ -16,12 +16,14 @@ from lsl.common import dp as dp_common
 from lsl.common.stations import geo2ecef
 from lsl.correlator import uvUtils
 from lsl.misc import mathutil
-from lsl.common.warnings import warnExperimental
+from lsl.common.warns import warnExperimental
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 7 $'
 __all__ = ['IDI', 'StokesCodes', '__version__', '__revision__', '__all__']
 
+
+warnExperimental('fitsidi', 'this module has not been tested')
 
 IDIVersion = (2, 0)
 

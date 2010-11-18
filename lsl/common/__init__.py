@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 
-import warnings
+import warns
 
 import paths
 import dp

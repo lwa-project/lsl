@@ -4,10 +4,38 @@
 
 import copy
 
-__version__ = '0.2'
-__revision__ = '$ Revision: 3 $'
+__version__ = '0.3'
+__revision__ = '$ Revision: 5 $'
 __all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBWFrameBuffer', '__version__', '__revision__', '__all__']
 
+
+def cmpStands(x, y):
+	"""Function to compare two frames and sort by stand/beam number."""
+	
+	# Parse if frame IDs to extract the stand/beam, tunning, and polarization
+	# information (where appropriate)
+	idsX = x.parseID()
+	idsY = y.parseID()
+	try:
+		len1 = len(idsX)
+		if len1 == 2:
+			sX = 2*(idsX[0]-1) + idsX[1]
+			sY = 2*(idsY[0]-1) + idsY[1]
+		else:
+			sX = 4*(idsX[0]-1) + 2*(idsX[1]-1) + idsX[2]
+			sY = 4*(idsY[0]-1) + 2*(idsY[1]-1) + idsY[2]
+	except TypeError:
+		sX = idsX
+		sY = idsY
+		
+	# Do the comparison
+	if sY > sX:
+		return -1
+	elif sX > sY:
+		return 1
+	else:
+		return 0
+	
 
 class FrameBuffer(object):
 	"""Frame buffer for re-ordering TBN and DRX frames in time order.  
@@ -64,7 +92,7 @@ class FrameBuffer(object):
 		
 		# TBN Mode
 		if len(self.beams) == 0:
-			nFrames = len(self.stands)*= len(self.pols)
+			nFrames = len(self.stands)*len(self.pols)
 				
 			frameList = []
 			for stand in self.stands:
@@ -81,25 +109,27 @@ class FrameBuffer(object):
 					for pol in self.pols:
 						frameList.append((beam, tune, pol))
 			
-		return (nFrame, frameList)
+		return (nFrames, frameList)
 
 	def append(self, frame):
 		"""Append a new frame to the buffer with the appropriate time
-		tag.  Nothing is returned."""
+		tag.  True is returned if the frame was added to the buffer and
+		False if the frame was dropped."""
 
 		# Make sure that it is not in the `done' list.  If it is,
 		# disgaurd the frame and make a note of it.
 		if frame.data.timeTag in self.done:
 			self.dropped = self.dropped + 1
-			continue
+			return False
 
 		# If that time tag hasn't been done yet, add it to the 
 		# buffer in the correct place.
 		if frame.data.timeTag not in self.buffer.keys():
 			self.buffer[frame.data.timeTag] = []
 		self.buffer[frame.data.timeTag].append(frame)
+		return True
 
-	def get(self, frame):
+	def get(self):
 		"""Return a list of frames that consitute a 'full' buffer.  
 		Afterwards, delete that buffer."""
 
@@ -108,7 +138,7 @@ class FrameBuffer(object):
 		if nKeys == 0:
 			output = None
 		elif nKeys == 1:
-			if maxCount == nFrames:
+			if maxCount == self.nFrames:
 				self.done.append(maxKey)
 				self.full = self.full + 1
 				
@@ -117,20 +147,31 @@ class FrameBuffer(object):
 			else:
 				output = None
 		else:
-			if minCount == self.dump:
+			if maxCount == self.nFrames:
+				self.done.append(maxKey)
+				self.full = self.full + 1
+				
+				output = copy.deepcopy(self.buffer[maxKey])
+				del(self.buffer[maxKey])
+			elif minCount == self.dump:
 				self.partial = self.partial + 1
 				self.missing = self.missing + (len(self.buffer[maxKey]) - self.nFrames)
 				self.done.append(maxKey)
 				
 				output = copy.deepcopy(self.buffer[maxKey])
-				for frame in self.__missingList(maxKey)
+				for frame in self.__missingList(maxKey):
 					output.append( self.__createFrame(key, frame) )
 				
 				del(self.buffer[maxKey])
 				print "%i is missing Frames" % maxKey
 			else:
 				output = None
-		return output
+		
+		# Sort and return
+		if output is None:
+			return output
+		else:
+			return sorted(output, cmp=cmpStands)
 
 	def __bufferStatus(self):
 		"""Return the state of the buffer in the form of a tuple.  
@@ -176,8 +217,8 @@ class FrameBuffer(object):
 		# FrameBuffer object to build a list of missing frames.
 		missingList = []
 		for frame in self.frameList:
-			if frame not in frameLis:
-				missingList.apend(frame)
+			if frame not in frameList:
+				missingList.append(frame)
 				
 		return missingList
 
@@ -237,7 +278,7 @@ class TBNFrameBuffer(FrameBuffer):
 		super(TBNFrameBuffer, self).__init__(stands=stands, pols=pols)
 
 
-clas DRXFrameBuffer(FrameBuffer):
+class DRXFrameBuffer(FrameBuffer):
 	"""A sub-type of FrameBuffer specifically for dealing with DRX frames.
 	See FrameBuffer for a description of how the buffering is implemented."""
 	
@@ -290,30 +331,32 @@ class TBWFrameBuffer(object):
 
 	def append(self, frame):
 		"""Append a new frame to the buffer with the appropriate time
-		tag.  Nothing is returned."""
+		tag.  True is returned if the frame was added to the buffer and
+		False if the frame was dropped."""
 
 		# Make sure that it is not in the `done' list.  If it is,
 		# disgaurd the frame and make a note of it.
-		if frame.data.timeTag in self.done:
+		if frame.parseID() in self.done:
 			self.dropped = self.dropped + 1
-			continue
+			return False
 
 		# If that time tag hasn't been done yet, add it to the 
 		# buffer in the correct place.
-		if frame.data.timeTag not in self.buffer.keys():
-			self.buffer[frame.data.timeTag] = []
-		self.buffer[frame.data.timeTag].append(frame)
+		if frame.parseID() not in self.buffer.keys():
+			self.buffer[frame.parseID()] = []
+		self.buffer[frame.parseID()].append(frame)
+		return True
 
-	def get(self, frame):
+	def get(self):
 		"""Return a list of frames that consitute a 'full' buffer.  
 		Afterwards, delete that buffer."""
 		
 		# Get the current status of the buffer
 		nKeys, minKey, minCount, maxKey, maxCount = self.__bufferStatus()
-		if nKeys == 0:
+		if nKeys <= 1:
 			output = None
-		elif nKeys == 1:
-			if maxCount == nFrames:
+		elif nKeys == 2:
+			if maxCount == self.nFrames:
 				self.done.append(maxKey)
 				self.full = self.full + 1
 				
@@ -322,20 +365,27 @@ class TBWFrameBuffer(object):
 			else:
 				output = None
 		else:
-			if minCount == self.dump:
+			if maxCount == self.nFrames:
+				self.done.append(maxKey)
+				self.full = self.full + 1
+				
+				output = copy.deepcopy(self.buffer[maxKey])
+				del(self.buffer[maxKey])
+			elif minCount == self.dump:
 				self.partial = self.partial + 1
 				self.missing = self.missing + (len(self.buffer[maxKey]) - self.nFrames)
 				self.done.append(maxKey)
 				
 				output = copy.deepcopy(self.buffer[maxKey])
-				for frame in self.__missingList(maxKey)
-					output.append( self.__createFrame(key, frame) )
-				
 				del(self.buffer[maxKey])
 				print "%i is missing Frames" % maxKey
 			else:
 				output = None
-		return output
+		# Sort and return
+		if output is None:
+			return output
+		else:
+			return sorted(output)
 
 	def __bufferStatus(self):
 		"""Return the state of the buffer in the form of a tuple.  
@@ -348,8 +398,8 @@ class TBWFrameBuffer(object):
 		If the buffer is empty, min/maxKeys are set to None."""
 
 		# Build the list of keys to look at
-		keyList = self.buffer.keys()
 
+		keyList = self.buffer.keys()
 		# Setup the basic variables
 		nKeys = len(keyList)
 		minKey = None
@@ -368,32 +418,6 @@ class TBWFrameBuffer(object):
 				maxCount = count
 				
 		return (nKeys, minKey, minCount, maxKey, maxCount)
-
-	def __missingList(self, key):
-		"""Create a list of tuples of missing frame information."""
-		
-		frameList = []
-		for frame in self.buffer[key]:
-			frameList.append(frame.parseID())
-			
-
-	def __createFill(self, key, frameParameters):
-		"""Create a 'fill' frame of zeros using an existing good
-		packet as a template."""
-
-		fillFrame = copy.deepcopy(self.buffer[key][0])
-		
-		# Fix-up the header
-		fillFrame.header.tbwID = frameParameters
-		fillFrame.header.frameCount = 0
-		
-		# Zero the data for the fill packet
-		fillFrame.data.xy *= 0
-		
-		# Invalidate the frame
-		fillFrame.valid = False
-		
-		return fillFrame
 		
 	def status(self):
 		"""Print out the status of the buffer."""
@@ -410,3 +434,38 @@ class TBWFrameBuffer(object):
 		outString = '\n'.join([outString, "Dropped frames:  %i" % self.dropped])
 
 		print outString
+
+
+	# Stuff that may work someday.  The trick is figuring out which 
+	# time stamps are missing from a sequence:
+	"""
+	From get:
+		for frame in self.__missingList(maxKey):
+			output.append( self.__createFrame(key, frame) )
+	
+	def __missingList(self, key):
+		Create a list of tuples of missing frame information.
+		
+		frameList = []
+		for frame in self.buffer[key]:
+			frameList.append(frame.parseID())
+			
+
+	def __createFill(self, key, frameParameters):
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+
+		fillFrame = copy.deepcopy(self.buffer[key][0])
+		
+		# Fix-up the header
+		fillFrame.header.frameCount = 0
+		
+		# Zero the data for the fill packet
+		fillFrame.data.timeTag = frameParameters
+		fillFrame.data.xy *= 0
+		
+		# Invalidate the frame
+		fillFrame.valid = False
+		
+		return fillFrame
+	"""

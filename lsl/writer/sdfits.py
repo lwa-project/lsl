@@ -9,7 +9,7 @@ import numpy
 import pyfits
 
 from lsl.common import dp as dp_common
-from lsl.common.warnings import warnDeprecated
+from lsl.common.warns import warnDeprecated
 from lsl.correlator import fx as correlate
 
 __version__ = '0.3'

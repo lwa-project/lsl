@@ -3,7 +3,7 @@
 """Module that contains the warning classes for the DRX, TBN, and TBW readers."""
 
 import sys
-import warnings
+import warnings as sysWarnings
 import linecache
 
 
@@ -42,23 +42,23 @@ def warnDeprecated(name, memo=None):
 	"""Wrapper around warnins.warn to fix the problems with 
 	[(format)(show)]warnings functions described above."""
 
-	warnings.showwarning = __modifiedShowWarning
-	warnings.formatwarning = __modifiedFormatWarning
+	sysWarnings.showwarning = __modifiedShowWarning
+	sysWarnings.formatwarning = __modifiedFormatWarning
 	
 	if memo is None:
-		warnings.warn("'%s' is deprecated" % name, DeprecationWarning, 3)
+		sysWarnings.warn("'%s' is deprecated" % name, DeprecationWarning, 3)
 	else:
-		warnings.warn("'%s' is deprecated: %s" % (name, memo), DeprecationWarning, 3)
+		sysWarnings.warn("'%s' is deprecated: %s" % (name, memo), DeprecationWarning, 3)
 
 
 def warnExperimental(name, memo=None):
 	"""Wrapper around warnins.warn to fix the problems with 
 	[(format)(show)]warnings functions described above."""
 
-	warnings.showwarning = __modifiedShowWarning
-	warnings.formatwarning = __modifiedFormatWarning
+	sysWarnings.showwarning = __modifiedShowWarning
+	sysWarnings.formatwarning = __modifiedFormatWarning
 	
 	if memo is None:
-		warnings.warn("'%s' is experimental" % name, ImportWarning, 3)
+		sysWarnings.warn("'%s' is experimental" % name, ImportWarning, 3)
 	else:
-		warnings.warn("'%s' is experimental: %s" % (name, memo), ImportWarning, 3)
+		sysWarnings.warn("'%s' is experimental: %s" % (name, memo), ImportWarning, 3)

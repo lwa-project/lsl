@@ -12,8 +12,8 @@ import struct
 from  lsl.common import dp as dp_common
 from errors import *
 
-__version__ = '0.3'
-__revision__ = '$ Revision: 15 $'
+__version__ = '0.4'
+__revision__ = '$ Revision: 16 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getBeamCount', 'getFramesPerObs', 'averageObservations', 'averageObservations2', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 4128
@@ -96,6 +96,147 @@ class Frame(object):
 		"""Convenience wrapper for the Frame.FrameData.getTime function."""
 		
 		return self.data.getTime()
+			
+	def __add__(self, y):
+		"""Add the data sections of two frames together or add a number 
+		to every element in the data section."""
+		
+		try:
+			return self.data.xy + y.self.data.xy
+		except AttributeError:
+			return self.data.xy + y
+			
+	def __iadd__(self, y):
+		"""In-place add the data sections of two frames together or add 
+		a number to every element in the data section."""
+		
+		try:
+			self.data.xy += y.self.data.xy
+		except AttributeError:
+			self.data.xy += y
+		
+	def __mul__(self, y):
+		"""Multiple the data sections of two frames together or multiply 
+		a number to every element in the data section."""
+		
+		try:
+			return self.data.xy * y.self.data.xy
+		except AttributeError:
+			return self.data.xy * y
+			
+	def __imul__(self, y):
+		"""In-place multiple the data sections of two frames together or 
+		multiply a number to every element in the data section."""
+		
+		try:
+			self.data.xy *= y.self.data.xy
+		except AttributeError:
+			self.data.xy *= y
+			
+	def __eq__(self, y):
+		"""Check if the time tags of two frames are equal or if the time
+		tag is equal to a particular value."""
+		
+		tX = self.data.timeTag
+		try:
+			tY = self.data.timeTag
+		except AttributeError:
+			tY = y
+		
+		if tX == tY:
+			return True
+		else:
+			return False
+			
+	def __ne__(self, y):
+		"""Check if the time tags of two frames are not equal or if the time
+		tag is not equal to a particular value."""
+		
+		tX = self.data.timeTag
+		try:
+			tY = self.data.timeTag
+		except AttributeError:
+			tY = y
+		
+		if tX != tY:
+			return True
+		else:
+			return False
+			
+	def __gt__(self, y):
+		"""Check if the time tag of the first frame is greater than that of a
+		second frame or if the time tag is greater than a particular value."""
+		
+		tX = self.data.timeTag
+		try:
+			tY = self.data.timeTag
+		except AttributeError:
+			tY = y
+		
+		if tX > tY:
+			return True
+		else:
+			return False
+			
+	def __ge__(self, y):
+		"""Check if the time tag of the first frame is greater than or equal to 
+		that of a second frame or if the time tag is greater than a particular 
+		value."""
+		
+		tX = self.data.timeTag
+		try:
+			tY = self.data.timeTag
+		except AttributeError:
+			tY = y
+		
+		if tX >= tY:
+			return True
+		else:
+			return False
+			
+	def __lt__(self, y):
+		"""Check if the time tag of the first frame is less than that of a
+		second frame or if the time tag is greater than a particular value."""
+		
+		tX = self.data.timeTag
+		try:
+			tY = self.data.timeTag
+		except AttributeError:
+			tY = y
+		
+		if tX < tY:
+			return True
+		else:
+			return False
+			
+	def __le__(self, y):
+		"""Check if the time tag of the first frame is less than or equal to 
+		that of a second frame or if the time tag is greater than a particular 
+		value."""
+		
+		tX = self.data.timeTag
+		try:
+			tY = self.data.timeTag
+		except AttributeError:
+			tY = y
+		
+		if tX <= tY:
+			return True
+		else:
+			return False
+			
+	def __cmp__(self, y):
+		"""Compare two frames based on the time tags.  This is helpful for 
+		sorting things."""
+		
+		tX = self.data.timeTag
+		tY = y.data.timeTag
+		if tY > tX:
+			return -1
+		elif tX > tY:
+			return 1
+		else:
+			return 0
 
 
 class ObservingBlock(object):
