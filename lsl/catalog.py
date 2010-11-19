@@ -78,11 +78,7 @@ class Catalog(collections.Mapping):
   the dict built-in type.
   """
   
-  
-  # this is an abstract class
-  
   __metaclass__ = abc.ABCMeta
-  
   
   # a logging instance for catalogs
   
@@ -151,7 +147,7 @@ class Catalog(collections.Mapping):
     
     entry = self.lookup(key)
     if entry is None:
-      raise KeyError, "name %s not in catalog" % repr(key)
+      raise KeyError("name %s not in catalog" % repr(key))
     return entry
     
     
@@ -160,7 +156,7 @@ class Catalog(collections.Mapping):
     Return an iterator to the primary names in the catalog.
     """
     
-    return self.source_map.iterkeys()
+    return iter(self.source_map.keys())
 
 
   def lookup(self, name):
@@ -231,10 +227,10 @@ class LWA_Catalog(Catalog):
         decMinutes = int(line[25:27], 10)
         decSeconds = float(line[28:32])
       
-      except ValueError, err:
+      except ValueError as err:
         
-        raise RuntimeError, "file %s, line %d incorectly formated: \'%s\' : %s]" % \
-          (fileName, lineNum, line, err)
+        raise RuntimeError("file %s, line %d incorectly formated: \'%s\' : %s]" % \
+          (fileName, lineNum, line, err))
                     
       name = name.rstrip()           
 
@@ -309,7 +305,7 @@ class PSR_Catalog(Catalog):
                     (raHours, raMinutes) = sp
                     raSeconds = 0.0
                 else:
-                    if debug: print 'Bad format for RAJ line : '+line
+                    if debug: print('Bad format for RAJ line : '+line)
                     bad = True
                 raHours = int(raHours)
                 raMinutes = int(raMinutes)
@@ -317,7 +313,7 @@ class PSR_Catalog(Catalog):
                 try:
                     ra = astro.hms(raHours, raMinutes, raSeconds)
                 except:
-                    if debug: print 'PSRCAT: Bad RA for ',psrj," : ",rastr
+                    if debug: print('PSRCAT: Bad RA for ',psrj," : ",rastr)
                     bad = True
             if line.startswith('DECJ'):
                 decstr = line.split()[1]
@@ -328,7 +324,7 @@ class PSR_Catalog(Catalog):
                     (decDegrees, decMinutes) = sp
                     decSeconds = 0.0
                 else:
-                    if debug: print 'PSRCAT: Bad format for DECJ line : '+line
+                    if debug: print('PSRCAT: Bad format for DECJ line : '+line)
                     bad = True
                     continue
                 if decDegrees.startswith('-'):
@@ -342,7 +338,7 @@ class PSR_Catalog(Catalog):
                 try:
                     dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
                 except:
-                    if debug: print 'PSRCAT: Bad DEC for ',psrj," : ",decstr
+                    if debug: print('PSRCAT: Bad DEC for ',psrj," : ",decstr)
                     bad = True
                 
             if line.startswith('@-'):
@@ -368,13 +364,13 @@ class PSR_Catalog(Catalog):
                     entry = CatalogEntry(name, 
                       transform.CelestialPosition(sourcePos, name = name))
                     self.source_map[name] = entry
-                    if debug: print 'Added ',name
+                    if debug: print('Added ',name)
     
                     if alias is not None:
                         alias = alias.rstrip()
                         self.alias_map[alias] = entry
                         entry.alias_list.append(alias)
-                        if debug: print 'Alias : ',alias.rstrip()
+                        if debug: print('Alias : ',alias.rstrip())
                     
                 # Clear out vars for next source
                 psrb = None
@@ -435,8 +431,8 @@ class PKS_Catalog(Catalog):
                 decMinutes = int(line[37:39])
                 decSeconds = int(line[40:42])
             except ValueError:
-                raise RuntimeError, "file %s, line %d incorectly formated [%s]" % \
-                    (fileName, lineNum, line)   
+                raise RuntimeError("file %s, line %d incorectly formated [%s]" % \
+                    (fileName, lineNum, line))   
 
             ra = astro.hms(raHours, raMinutes, raSeconds)
             
@@ -514,8 +510,8 @@ class PKS90_Catalog(Catalog):
                 decMinutes = int(line[27:29])
                 decSeconds = float(line[30:34])
             except ValueError:
-                raise RuntimeError, "file %s, line %d incorectly formated [%s]" % \
-                    (fileName, lineNum, line)
+                raise RuntimeError("file %s, line %d incorectly formated [%s]" % \
+                    (fileName, lineNum, line))
                     
             ra = astro.hms(raHours, raMinutes, raSeconds)
             
@@ -586,8 +582,8 @@ class C3C_Catalog(Catalog):
                 decDegrees = int(line[28:30])
                 decMinutes = float(line[31:35])
             except ValueError:
-                raise RuntimeError, "file %s, line %d incorectly formated [%s]" % \
-                    (fileName, lineNum, line)
+                raise RuntimeError("file %s, line %d incorectly formated [%s]" % \
+                    (fileName, lineNum, line))
                     
             name = ('3C' + name.strip())         
                     
@@ -654,8 +650,8 @@ class C4C_Catalog(Catalog):
                 decMinutes = float(line[26:30])
                 alias = line[64:-1]
             except ValueError:
-                raise RuntimeError, "file %s, line %d incorectly formated [%s]" % \
-                    (fileName, lineNum, line)
+                raise RuntimeError("file %s, line %d incorectly formated [%s]" % \
+                    (fileName, lineNum, line))
             
             name = name.strip()        
             name = ('4C' + name)
@@ -799,8 +795,8 @@ class CatalogFactory(object):
     
     # check parameters
     
-    if name not in klass.catalog_class_map.keys():
-      raise ValueError, "unknown catalog \'%s\'" % name
+    if name not in list(klass.catalog_class_map.keys()):
+      raise ValueError("unknown catalog \'%s\'" % name)
     
     # try to find an already created instance
     # if not found, create a new instance and cache
@@ -821,6 +817,6 @@ class CatalogFactory(object):
     Return a list of known catalog names.
     """
     
-    return klass.catalog_class_map.keys()
+    return list(klass.catalog_class_map.keys())
     
 

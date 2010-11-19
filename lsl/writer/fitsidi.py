@@ -23,8 +23,6 @@ __revision__ = '$ Revision: 7 $'
 __all__ = ['IDI', 'StokesCodes', '__version__', '__revision__', '__all__']
 
 
-warnExperimental('fitsidi', 'this module has not been tested')
-
 IDIVersion = (2, 0)
 
 StokesCodes = {'I': 1, 'Q': 2, 'U': 3, 'V': 4, 
@@ -185,7 +183,7 @@ class IDI(object):
 
 		nrows = self.hdulist[extension].data.shape[0]
 		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
-		for key in self.hdulist[extension].header.keys():
+		for key in list(self.hdulist[extension].header.keys()):
 			tempHDU.header.update(key, self.hdulist[extension].header[key])
 	
 		return tempHDU
@@ -624,7 +622,7 @@ class IDI(object):
 			uvwCoords *= consts.c / self.refVal
 
 			# Loop over the data store in the dataDict and extract each baseline
-			baselines = dataSet.dataDict.keys()
+			baselines = list(dataSet.dataDict.keys())
 			baselines.sort()
 			for baseline in baselines: 
 		
@@ -633,12 +631,12 @@ class IDI(object):
 				stand2 = baseline & 255
 				
 				if (stand1 not in self.FITS['ARRAY_GEOMETRY'].field('NOSTA')) or (stand2 not in self.FITS['ARRAY_GEOMETRY'].field('NOSTA')):
-					raise ValueError, "baseline 0x%04x contains unknown antenna ID's" % bline
+					raise ValueError("baseline 0x%04x contains unknown antenna ID's" % bline)
 			
 				# validate data matrix shape
 				visData = dataSet.dataDict[baseline]
 				if (len(visData) != self.nChan):
-					raise ValueError, "data for baseline 0x%04x is wrong size %s (!= %s)" % (baseline, len(visData), self.nChan)
+					raise ValueError("data for baseline 0x%04x is wrong size %s (!= %s)" % (baseline, len(visData), self.nChan))
 			
 				# calculate UVW coordinates for antenna pair
 				which = (numpy.where( uvwBaselines == baseline ))[0][0]

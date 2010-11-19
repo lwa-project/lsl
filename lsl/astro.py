@@ -52,7 +52,7 @@ _MAX_LIBNOVA_VER = _hexversion((0, 13, 0))
 _CUR_LIBNOVA_VER = _hexversion(get_libnova_version())
 
 if (_CUR_LIBNOVA_VER < _MIN_LIBNOVA_VER) or (_CUR_LIBNOVA_VER > _MAX_LIBNOVA_VER):
-  raise ImportError, "libnova version %s not supported" % libnova.ln_get_version()
+  raise ImportError("libnova version %s not supported" % libnova.ln_get_version())
     
     
 
@@ -93,17 +93,17 @@ class dms(libnova.ln_dms):
             
     if degrees is not None:
       if degrees < 0 or degrees > 359:
-        raise ValueError, "degrees parameter range is [0, 359], is set to %d" % degrees
+        raise ValueError("degrees parameter range is [0, 359], is set to %d" % degrees)
       self.degrees = degrees
             
     if minutes is not None:
       if minutes < 0 or minutes > 59:
-        raise ValueError, "minutes parameter range is [0, 59], is set to %d" % minutes
+        raise ValueError("minutes parameter range is [0, 59], is set to %d" % minutes)
       self.minutes = minutes
             
     if seconds is not None:
       if seconds < 0.0 or seconds >= 60.0:
-        raise ValueError, "seconds parameter range is [0.0, 60.0), is set to %0.3f" % seconds
+        raise ValueError("seconds parameter range is [0.0, 60.0), is set to %0.3f" % seconds)
       self.seconds = seconds
             
 	
@@ -162,7 +162,7 @@ class dms(libnova.ln_dms):
     elif isinstance(other, (dms, hms)):
       o = other.to_deg()
     else:
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
           
     return cmp(self.to_deg(), o)
 
@@ -211,17 +211,17 @@ class hms(libnova.ln_hms):
 
     if hours is not None:
       if hours < 0 or hours > 23:
-        raise ValueError, "hours paramerer range is [0, 23], is set to %d" % hours
+        raise ValueError("hours paramerer range is [0, 23], is set to %d" % hours)
       self.hours = hours
             
     if minutes is not None:
       if minutes < 0 or minutes > 59:
-        raise ValueError, "minutes paramerer range is [0, 59], is set to %d" % minutes
+        raise ValueError("minutes paramerer range is [0, 59], is set to %d" % minutes)
       self.minutes = minutes
             
     if seconds is not None:
       if seconds < 0.0 or seconds >= 60.0:
-        raise ValueError, "seconds paramerer range is [0.0, 60.0), is set to %0.3f" % seconds
+        raise ValueError("seconds paramerer range is [0.0, 60.0), is set to %0.3f" % seconds)
       self.seconds = seconds
             
             
@@ -270,7 +270,7 @@ class hms(libnova.ln_hms):
     elif isinstance(other, (hms, dms)):
       o = other.to_deg()
     else:
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return cmp(self.to_deg(), o)
 
@@ -338,27 +338,27 @@ class date(libnova.ln_date):
             
     if months is not None:
       if months < 1 or months > 12:
-        raise ValueError, "months paramerer range is [1, 12], is set to %d" % months
+        raise ValueError("months paramerer range is [1, 12], is set to %d" % months)
       self.months = months
             
     if days is not None:
       if days < 1 or days > 31:
-        raise ValueError, "days paramerer range is [1, 31], is set to %d" % days
+        raise ValueError("days paramerer range is [1, 31], is set to %d" % days)
       self.days = days
             
     if hours is not None:
       if hours < 0 or hours > 23:
-        raise ValueError, "hours paramerer range is [0, 23], is set to %d" % hours
+        raise ValueError("hours paramerer range is [0, 23], is set to %d" % hours)
       self.hours = hours
             
     if minutes is not None:
       if minutes < 0 or minutes > 59:
-        raise ValueError, "minutes paramerer range is [0, 59], is set to %d" % minutes
+        raise ValueError("minutes paramerer range is [0, 59], is set to %d" % minutes)
       self.minutes = minutes
             
     if seconds is not None:
       if seconds < 0.0 or seconds >= 60.0:
-        raise ValueError, "degrees paramerer range is [0.0, 60.0), is set to %0.3f" % seconds
+        raise ValueError("degrees paramerer range is [0.0, 60.0), is set to %0.3f" % seconds)
       self.seconds = seconds
 		
 		
@@ -398,7 +398,7 @@ class date(libnova.ln_date):
     """
         
     if not isinstance(other, (date, zonedate)):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return cmp(self.to_jd(), other.to_jd())   
         
@@ -441,54 +441,54 @@ class date(libnova.ln_date):
     try:
       (yearStr, monthStr, dayStr) = dateStr.split('-')
     except ValueError:
-      raise ValueError, "date incorrectly formated: %s" % dateStr 
+      raise ValueError("date incorrectly formated: %s" % dateStr) 
           
     try:
       year = int(yearStr)
     except ValueError:
-      raise ValueError, "year incorrectly formated: %s" % yearStr
+      raise ValueError("year incorrectly formated: %s" % yearStr)
         
     try:
       month = int(monthStr)
     except ValueError:
-      raise ValueError, "month incorrectly formated: %s" % monthStr
+      raise ValueError("month incorrectly formated: %s" % monthStr)
     if month < 1 or month > 12:
-      raise ValueError, "months paramerer range is [1, 12], is set to %d" % month
+      raise ValueError("months paramerer range is [1, 12], is set to %d" % month)
         
     try:
       day = int(dayStr)
     except ValueError:
-      raise ValueError, "day incorrectly formated: %s" % dayStr
+      raise ValueError("day incorrectly formated: %s" % dayStr)
     if day < 1 or day > 31:
-      raise ValueError, "days paramerer range is [1, 31], is set to %d" % day
+      raise ValueError("days paramerer range is [1, 31], is set to %d" % day)
      
     # parse time sting 
         
     try:    
       (hourStr, minuteStr, secondStr) = timeStr.split(':') 
     except ValueError:
-      raise ValueError, "time incorrectly formated: %s" % timeStr         
+      raise ValueError("time incorrectly formated: %s" % timeStr)         
         
     try:
       hour = int(hourStr)
     except ValueError:
-      raise ValueError, "hour incorrectly formated: %s" % hourStr
+      raise ValueError("hour incorrectly formated: %s" % hourStr)
     if hour < 0 or hour > 23:
-      raise ValueError, "hours paramerer range is [0, 23], is set to %d" % hour
+      raise ValueError("hours paramerer range is [0, 23], is set to %d" % hour)
         
     try:
       minute = int(minuteStr)
     except ValueError:
-      raise ValueError, "minutes incorrectly formated: %s" % minuteStr
+      raise ValueError("minutes incorrectly formated: %s" % minuteStr)
     if minute < 0 or minute > 59:
-      raise ValueError, "minutes paramerer range is [0, 59], is set to %d" % minute
+      raise ValueError("minutes paramerer range is [0, 59], is set to %d" % minute)
             
     try:
       second = float(secondStr)
     except ValueError:
-      raise ValueError, "seconds incorrectly formated: %s" % secondStr
+      raise ValueError("seconds incorrectly formated: %s" % secondStr)
     if second < 0.0 or second >= 60.0:
-      raise ValueError, "degrees paramerer range is [0.0, 60.0), is set to %0.3f" % second
+      raise ValueError("degrees paramerer range is [0.0, 60.0), is set to %0.3f" % second)
         
     # set attributes
         
@@ -538,27 +538,27 @@ class zonedate(libnova.ln_zonedate):
             
     if months is not None:
       if months < 1 or months > 12:
-        raise ValueError, "months paramerer range is [1, 12], is set to %d" % months
+        raise ValueError("months paramerer range is [1, 12], is set to %d" % months)
       self.months = months
             
     if days is not None:
       if days < 1 or days > 31:
-        raise ValueError, "days paramerer range is [1, 31], is set to %d" % days
+        raise ValueError("days paramerer range is [1, 31], is set to %d" % days)
       self.days = days
             
     if hours is not None:
       if hours < 0 or hours > 23:
-        raise ValueError, "hours paramerer range is [0, 23], is set to %d" % hours
+        raise ValueError("hours paramerer range is [0, 23], is set to %d" % hours)
       self.hours = hours
             
     if minutes is not None:
       if minutes < 0 or minutes > 59:
-        raise ValueError, "minutes paramerer range is [0, 59], is set to %d" % minutes
+        raise ValueError("minutes paramerer range is [0, 59], is set to %d" % minutes)
       self.minutes = minutes
             
     if seconds is not None:
       if seconds < 0.0 or seconds >= 60.0:
-        raise ValueError, "degrees paramerer range is [0.0, 60.0), is set to %0.3f" % seconds
+        raise ValueError("degrees paramerer range is [0.0, 60.0), is set to %0.3f" % seconds)
       self.seconds = seconds
             
     if gmtoff is None:
@@ -602,7 +602,7 @@ class zonedate(libnova.ln_zonedate):
     """
         
     if not isinstance(other, (zonedate, date)):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
     
     return cmp(self.to_jd(), other.to_jd())
     
@@ -734,12 +734,12 @@ class hrz_posn(libnova.ln_hrz_posn):
 
     if az is not None:
       if az < 0.0 or az >= 360.0:
-        raise ValueError, "az paramerer range is [0.0, 360.0), is set to %0.3f" % az
+        raise ValueError("az paramerer range is [0.0, 360.0), is set to %0.3f" % az)
       self.az = az
             
     if alt is not None:
       if alt < -90.0 or alt > 90.0:
-        raise ValueError, "alt paramerer range is [-90.0, 90.0], is set to %0.3f" % alt
+        raise ValueError("alt paramerer range is [-90.0, 90.0], is set to %0.3f" % alt)
       self.alt = alt
 
 
@@ -763,7 +763,7 @@ class hrz_posn(libnova.ln_hrz_posn):
     if value is None:
       return 90.0 - self.alt
     if value <  0.0 or value > 180.0:
-      raise ValueError, "value paramerer range is [0.0, 180.0], is set to %0.3f" % value
+      raise ValueError("value paramerer range is [0.0, 180.0], is set to %0.3f" % value)
     self.alt = 90.0 - value 
 
 
@@ -813,7 +813,7 @@ class hrz_posn(libnova.ln_hrz_posn):
     elif key == 1:
       return self.alt
     else:
-      raise ValueError, "subscript %d out of range" % key
+      raise ValueError("subscript %d out of range" % key)
           
           
   def __setitem__(self, key, value):
@@ -826,7 +826,7 @@ class hrz_posn(libnova.ln_hrz_posn):
     elif key == 1:
       self.alt = value
     else:
-      raise ValueError, "subscript %d out of range" % key
+      raise ValueError("subscript %d out of range" % key)
     
    
   def __eq__(self, other):
@@ -835,7 +835,7 @@ class hrz_posn(libnova.ln_hrz_posn):
     """
         
     if not isinstance(other, hrz_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return (self.az == other.az) and (self.alt == other.alt)
           
@@ -846,7 +846,7 @@ class hrz_posn(libnova.ln_hrz_posn):
     """
         
     if not isinstance(other, hrz_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
           
     return (self.az != other.az) or (self.alt != other.alt)
               
@@ -908,14 +908,14 @@ class equ_posn(libnova.ln_equ_posn):
       if isinstance(ra, hms):
         ra = ra.to_deg()
       if ra < 0.0 or ra >= 360.0:
-        raise ValueError, "ra paramerer range is [0.0, 360.0), is set to %0.3f" % ra
+        raise ValueError("ra paramerer range is [0.0, 360.0), is set to %0.3f" % ra)
       self.ra = ra
                 
     if dec is not None:
       if isinstance(dec, dms):
         dec = dec.to_deg()
       if dec < -90.0 or dec > 90.0:
-        raise ValueError, "dec paramerer range is [-90.0, 90.0], is set to %0.3f" % dec
+        raise ValueError("dec paramerer range is [-90.0, 90.0], is set to %0.3f" % dec)
       self.dec = dec
 
 
@@ -946,7 +946,7 @@ class equ_posn(libnova.ln_equ_posn):
     elif key == 1:
       return self.dec
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __setitem__(self, key, value):
@@ -959,7 +959,7 @@ class equ_posn(libnova.ln_equ_posn):
     elif key == 1:
       self.dec = value
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __eq__(self, other):
@@ -968,7 +968,7 @@ class equ_posn(libnova.ln_equ_posn):
     """
         
     if not isinstance(other, equ_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
           
     return (self.ra == other.ra) and (self.dec == other.dec)
         
@@ -979,7 +979,7 @@ class equ_posn(libnova.ln_equ_posn):
     """
         
     if not isinstance(other, equ_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return (self.ra != other.ra) or (self.dec != other.dec)
     
@@ -1096,14 +1096,14 @@ class gal_posn(libnova.ln_gal_posn):
       if isinstance(l, dms):
         l = l.to_deg()
       if l < -360.0 or l >= 360.0:
-        raise ValueError, "l parameter range is [-360.0, 360.0), is set to %0.3f" % l
+        raise ValueError("l parameter range is [-360.0, 360.0), is set to %0.3f" % l)
       self.l = l
                 
     if b is not None:
       if isinstance(b, dms):
         b = b.to_deg()
       if b < -90.0 or b > 90.0:
-        raise ValueError, "b paramerer range is [-90.0, 90.0], is set to %0.3f" % b
+        raise ValueError("b paramerer range is [-90.0, 90.0], is set to %0.3f" % b)
       self.b = b
 	
 
@@ -1142,7 +1142,7 @@ class gal_posn(libnova.ln_gal_posn):
     elif key == 1:
       return self.b
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __setitem__(self, key, value):
@@ -1155,7 +1155,7 @@ class gal_posn(libnova.ln_gal_posn):
     elif key == 1:
       self.b = value
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __eq__(self, other):
@@ -1164,7 +1164,7 @@ class gal_posn(libnova.ln_gal_posn):
     """
         
     if not isinstance(other, gal_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__        
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)        
         
     return (self.l == other.l) and (self.b == other.b)
         
@@ -1175,7 +1175,7 @@ class gal_posn(libnova.ln_gal_posn):
     """
         
     if not isinstance(other, gal_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return (self.l != other.l) or (self.b != other.b)      
     
@@ -1276,7 +1276,7 @@ class rect_posn(libnova.ln_rect_posn):
     elif key == 2:
       return self.Z
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __setitem__(self, key, value):
@@ -1291,7 +1291,7 @@ class rect_posn(libnova.ln_rect_posn):
     elif key == 2:
       self.Z = value
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __eq__(self, other):
@@ -1300,7 +1300,7 @@ class rect_posn(libnova.ln_rect_posn):
     """
         
     if not isinstance(other, rect_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return (self.X == other.X) and (self.Y == other.Y) and (self.Z == other.Z)
         
@@ -1311,7 +1311,7 @@ class rect_posn(libnova.ln_rect_posn):
     """
         
     if not isinstance(other, rect_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return (self.X != other.X) or (self.Y != other.Y) or (self.Z != other.Z)
         
@@ -1349,14 +1349,14 @@ class lnlat_posn(libnova.ln_lnlat_posn):
       if isinstance(lng, dms):
         lng = lng.to_deg()
       if lng <= -360.0 or lng >= 360.0:
-        raise ValueError, "lng parameter range is (-360.0, 360.0), is set to %0.3f" % lng
+        raise ValueError("lng parameter range is (-360.0, 360.0), is set to %0.3f" % lng)
       self.lng = lng
                 
     if lat is not None:
       if isinstance(lat, dms):
         lat = lat.to_deg()
       if lat < -90.0 or lat > 90.0:
-        raise ValueError, "lat paramerer range is [-90.0, 90.0], is set to %0.3f" % lat
+        raise ValueError("lat paramerer range is [-90.0, 90.0], is set to %0.3f" % lat)
       self.lat = lat
         
         
@@ -1395,7 +1395,7 @@ class lnlat_posn(libnova.ln_lnlat_posn):
     elif key == 1:
       return self.lat
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __setitem__(self, key, value):
@@ -1408,7 +1408,7 @@ class lnlat_posn(libnova.ln_lnlat_posn):
     elif key == 1:
       self.lat = value
     else:
-      raise ValueError, "subscript %s out of range" % key
+      raise ValueError("subscript %s out of range" % key)
           
           
   def __eq__(self, other):
@@ -1417,7 +1417,7 @@ class lnlat_posn(libnova.ln_lnlat_posn):
     """
         
     if not isinstance(other, lnlat_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
         
     return (self.lng == other.lng) and (self.lat == other.lat)
         
@@ -1428,7 +1428,7 @@ class lnlat_posn(libnova.ln_lnlat_posn):
     """
         
     if not isinstance(other, lnlat_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
           
     return (self.lng != other.lng) or (self.lat != other.lat)  
                                           
@@ -1509,21 +1509,21 @@ class nutation(libnova.ln_nutation):
       if isinstance(longitude, dms):
         longitude = longitude.to_deg()
       if longitude <= -360.0 or longitude >= 360.0:
-        raise ValueError, "longitude parameter range is (-360.0, 360.0), is set to %0.3f" % longitude
+        raise ValueError("longitude parameter range is (-360.0, 360.0), is set to %0.3f" % longitude)
       self.longitude = longitude
                 
     if obliquity is not None:
       if isinstance(obliquity, dms):
         obliquity = obliquity.to_deg()
       if obliquity < -90.0 or obliquity > 90.0:
-        raise ValueError, "obliquity paramerer range is [-90.0, 90.0], is set to %0.3f" % obliquity
+        raise ValueError("obliquity paramerer range is [-90.0, 90.0], is set to %0.3f" % obliquity)
       self.obliquity = obliquity
                 
     if ecliptic is not None:
       if isinstance(ecliptic, dms):
         ecliptic = ecliptic.to_deg()
       if ecliptic < -90.0 or ecliptic > 90.0:
-        raise ValueError, "ecliptic paramerer range is [-90.0, 90.0], is set to %0.3f" % ecliptic
+        raise ValueError("ecliptic paramerer range is [-90.0, 90.0], is set to %0.3f" % ecliptic)
       self.ecliptic = ecliptic  
                 
                 
@@ -2644,6 +2644,11 @@ Offset in days between standary Julian day and modified Julian day.
 MJD_OFFSET = 2400000.5
     
 """
+Offset in days between standard Julian day and Dublin Julian day.
+"""
+DJD_OFFSET = 2415020.0
+    
+"""
 The number of seconds in one day
 """
 SECS_IN_DAY = 86400.0
@@ -2732,7 +2737,7 @@ def _parse_tai_file():
      
   datName = os.path.join(dataPath, 'astro', 'tai-utc.dat') 
   if not os.path.exists(datName):
-    raise RuntimeError, "file %s not found" % datName        
+    raise RuntimeError("file %s not found" % datName)        
 
   # read tai-utc.dat file to get conversion info
 
@@ -2748,7 +2753,7 @@ def _parse_tai_file():
     try:
       utcJD = float(l[16:26])
     except ValueError:
-      raise RuntimeError, "line %d of %s file not correctly formatted" % (lineNum, datName)
+      raise RuntimeError("line %d of %s file not correctly formatted" % (lineNum, datName))
         
     # only get values prior to UTC JD 2441317.5 (1972 JAN  1)
     
@@ -2761,7 +2766,7 @@ def _parse_tai_file():
     try:
       leapSec = float(l[36:48])
     except ValueError:
-      raise RuntimeError, "line %d of %s file not correctly formatted" % (lineNum, datName)
+      raise RuntimeError("line %d of %s file not correctly formatted" % (lineNum, datName))
         
     # add entry to list
     
@@ -2807,7 +2812,7 @@ def jd_to_mjd(jd):
   """
     
   if jd < MJD_OFFSET:
-    raise ValueError, "jd must be >= %f" % MJD_OFFSET
+    raise ValueError("jd must be >= %f" % MJD_OFFSET)
 
   return (jd - MJD_OFFSET)
 
@@ -2822,7 +2827,7 @@ def mjd_to_jd(mjd):
   """
 
   if mjd < 0.0:
-    raise ValueError, "mjd must be >= 0.0"
+    raise ValueError("mjd must be >= 0.0")
 
   return (mjd + MJD_OFFSET)
 
@@ -2845,7 +2850,7 @@ def leap_secs(utcJD):
     return p[1]
       
   if utcJD < FIRST_LEAP_UTC:
-	  raise ValueError, "utcJD must be greater than %f" % FIRST_LEAP_UTC
+	  raise ValueError("utcJD must be greater than %f" % FIRST_LEAP_UTC)
 
   # search the conversion list for the UTC JD range
   
@@ -2880,7 +2885,7 @@ def utc_to_tai(utcJD):
     return utcJD + p[2]
     
   if utcJD < FIRST_LEAP_UTC:
-	  raise ValueError, "utcJD must be greater than %f" % FIRST_LEAP_UTC
+	  raise ValueError("utcJD must be greater than %f" % FIRST_LEAP_UTC)
 
   # search the conversion list for the UTC JD range
 
@@ -2918,7 +2923,7 @@ def tai_to_utc(taiJD):
   p = _LEAP_SEC_LIST[0]
   firstTai = p[0] + p[2]
   if taiJD < firstTai:
-    raise ValueError, "taiJD must be greater than %f" % firstTai
+    raise ValueError("taiJD must be greater than %f" % firstTai)
 
   # search the conversion list for the TAI JD range
 
@@ -3162,7 +3167,7 @@ class geo_posn(lnlat_posn):
     """
     
     if not isinstance(other, geo_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
       
     return lnlat_posn.__eq__(self, other) and (self.elv == other.elv)
     
@@ -3173,7 +3178,7 @@ class geo_posn(lnlat_posn):
     """
     
     if not isinstance(other, geo_posn):
-      raise TypeError, "comparison not supported for type %s" % type(other).__name__
+      raise TypeError("comparison not supported for type %s" % type(other).__name__)
       
     return lnlat_posn.__ne__(self, other) or (self.elv != other.elv)
     
@@ -3500,7 +3505,7 @@ if __name__ == '__main__':
     # get libnova version
     
     ver = get_libnova_version()
-    print "Using libnova version %d.%d.%d" % (ver[0], ver[1], ver[2])
+    print("Using libnova version %d.%d.%d" % (ver[0], ver[1], ver[2]))
 
     # input NRL longitude and latitude
     
@@ -3508,17 +3513,17 @@ if __name__ == '__main__':
     lat = dms(False, 38, 49, 30)  
     nrl_lnlat = lnlat_posn(lng, lat)
     
-    print '---------------------------------------------------------------'
-    print 'NRL location'
-    print '---------------------------------------------------------------'
-    print 'Longitude:         %s (%0.3f)' % (lng, nrl_lnlat.lng)
-    print 'Latitude:          %s (%0.3f)' % (lat, nrl_lnlat.lat) 
+    print('---------------------------------------------------------------')
+    print('NRL location')
+    print('---------------------------------------------------------------')
+    print('Longitude:         %s (%0.3f)' % (lng, nrl_lnlat.lng))
+    print('Latitude:          %s (%0.3f)' % (lat, nrl_lnlat.lat)) 
         
     # calculate offset from GM
     
     nrl_gm_hms = deg_to_hms(-nrl_lnlat.lng)
     nrl_gm_off = nrl_gm_hms.to_sec()
-    print 'GM Offset:         %s (%0.3f)' % (nrl_gm_hms, nrl_gm_off)
+    print('GM Offset:         %s (%0.3f)' % (nrl_gm_hms, nrl_gm_off))
     
     # get current UTC time from system clock
     
@@ -3532,26 +3537,26 @@ if __name__ == '__main__':
     gm_sid = get_apparent_sidereal_time(utc)
     nrl_sid = get_local_sidereal_time(nrl_lnlat.lng, utc)
         
-    print '---------------------------------------------------------------'
-    print 'Current time'
-    print '---------------------------------------------------------------'
-    print 'UTC time:          %s (%0.3f)' % (utcd, utc)
-    print 'NRL local time:    %s' % str(lcld)
-    print 'GM sidereal time:  %0.3f' % gm_sid
-    print 'NRL sidereal time: %0.3f' % nrl_sid
-    print 'UNIX time:         %d' % unixt   
+    print('---------------------------------------------------------------')
+    print('Current time')
+    print('---------------------------------------------------------------')
+    print('UTC time:          %s (%0.3f)' % (utcd, utc))
+    print('NRL local time:    %s' % str(lcld))
+    print('GM sidereal time:  %0.3f' % gm_sid)
+    print('NRL sidereal time: %0.3f' % nrl_sid)
+    print('UNIX time:         %d' % unixt)   
     
     # calculate nutation
     
     nut = get_nutation(utc)
     (nut_lng, nut_obl, nut_ecl) = nut.format()
     
-    print '---------------------------------------------------------------'
-    print 'Nutation'
-    print '---------------------------------------------------------------'
-    print 'Longitude nutation: %s (%0.4f)' % (nut_lng, nut.longitude)
-    print 'Obliquity nutation: %s (%0.4f)' % (nut_obl, nut.obliquity)
-    print 'Ecliptic obliquity: %s (%0.4f)' % (nut_ecl, nut.ecliptic)
+    print('---------------------------------------------------------------')
+    print('Nutation')
+    print('---------------------------------------------------------------')
+    print('Longitude nutation: %s (%0.4f)' % (nut_lng, nut.longitude))
+    print('Obliquity nutation: %s (%0.4f)' % (nut_obl, nut.obliquity))
+    print('Ecliptic obliquity: %s (%0.4f)' % (nut_ecl, nut.ecliptic))
     
     # calculate Solar phenomena
     
@@ -3567,19 +3572,19 @@ if __name__ == '__main__':
     sun_ecl = sun_equ.to_ecl(utc)
     (sun_lng, sun_lat) = sun_ecl.format()
     
-    print '---------------------------------------------------------------'
-    print 'Sun'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (sun_ra, sun_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (sun_dec, sun_equ.dec) 
-    print 'Ecl longitude:     %s (%0.3f)' % (sun_lng, sun_ecl.lng)
-    print 'Ecl latitude:      %s (%0.3f)' % (sun_lat, sun_ecl.lat)             
-    print 'Rise:              %s (%0.3f) [%s]' % (sun_utc_rise, sun_rst.rise, sun_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (sun_utc_trans, sun_rst.transit, sun_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (sun_utc_set, sun_rst.set, sun_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (sun_hrz.az, hrz_to_nswe(sun_hrz))
-    print 'Altitude:          %0.3f' % sun_hrz.alt
-    print 'Zenith:            %0.3f' % sun_hrz.zen() 
+    print('---------------------------------------------------------------')
+    print('Sun')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (sun_ra, sun_equ.ra))
+    print('DEC:               %s (%0.3f)' % (sun_dec, sun_equ.dec)) 
+    print('Ecl longitude:     %s (%0.3f)' % (sun_lng, sun_ecl.lng))
+    print('Ecl latitude:      %s (%0.3f)' % (sun_lat, sun_ecl.lat))             
+    print('Rise:              %s (%0.3f) [%s]' % (sun_utc_rise, sun_rst.rise, sun_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (sun_utc_trans, sun_rst.transit, sun_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (sun_utc_set, sun_rst.set, sun_lcl_set))
+    print('Azimuth:           %0.3f %s' % (sun_hrz.az, hrz_to_nswe(sun_hrz)))
+    print('Altitude:          %0.3f' % sun_hrz.alt)
+    print('Zenith:            %0.3f' % sun_hrz.zen()) 
      
     
     # calculate Lunar phenomena
@@ -3598,20 +3603,20 @@ if __name__ == '__main__':
     
     moon_sun_ang = sun_equ.angular_separation(moon_equ)
     
-    print '---------------------------------------------------------------'
-    print 'Moon'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (moon_ra, moon_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (moon_dec, moon_equ.dec) 
-    print 'Ecl longitude:     %s (%0.3f)' % (moon_lng, moon_ecl.lng)
-    print 'Ecl latitude:      %s (%0.3f)' % (moon_lat, moon_ecl.lat)             
-    print 'Rise:              %s (%0.3f) [%s]' % (moon_utc_rise, moon_rst.rise, moon_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (moon_utc_trans, moon_rst.transit, moon_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (moon_utc_set, moon_rst.set, moon_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (moon_hrz.az, hrz_to_nswe(moon_hrz))
-    print 'Altitude:          %0.3f' % moon_hrz.alt
-    print 'Zenith:            %0.3f' % moon_hrz.zen()
-    print 'Sun angle:         %0.3f' % moon_sun_ang 
+    print('---------------------------------------------------------------')
+    print('Moon')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (moon_ra, moon_equ.ra))
+    print('DEC:               %s (%0.3f)' % (moon_dec, moon_equ.dec)) 
+    print('Ecl longitude:     %s (%0.3f)' % (moon_lng, moon_ecl.lng))
+    print('Ecl latitude:      %s (%0.3f)' % (moon_lat, moon_ecl.lat))             
+    print('Rise:              %s (%0.3f) [%s]' % (moon_utc_rise, moon_rst.rise, moon_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (moon_utc_trans, moon_rst.transit, moon_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (moon_utc_set, moon_rst.set, moon_lcl_set))
+    print('Azimuth:           %0.3f %s' % (moon_hrz.az, hrz_to_nswe(moon_hrz)))
+    print('Altitude:          %0.3f' % moon_hrz.alt)
+    print('Zenith:            %0.3f' % moon_hrz.zen())
+    print('Sun angle:         %0.3f' % moon_sun_ang) 
     
     
     # calculate Venus phenomena
@@ -3635,21 +3640,21 @@ if __name__ == '__main__':
     else:
         venus_dir = 'W'
     
-    print '---------------------------------------------------------------'
-    print 'Venus'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (venus_ra, venus_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (venus_dec, venus_equ.dec) 
-    print 'Ecl longitude:     %s (%0.3f)' % (venus_lng, venus_ecl.lng)
-    print 'Ecl latitude:      %s (%0.3f)' % (venus_lat, venus_ecl.lat)             
-    print 'Rise:              %s (%0.3f) [%s]' % (venus_utc_rise, venus_rst.rise, venus_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (venus_utc_trans, venus_rst.transit, venus_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (venus_utc_set, venus_rst.set, venus_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (venus_hrz.az, hrz_to_nswe(venus_hrz))
-    print 'Altitude:          %0.3f' % venus_hrz.alt
-    print 'Zenith:            %0.3f' % venus_hrz.zen()
-    print 'Sun angle:         %0.3f' % venus_sun_ang
-    print 'Elongation:        %s %s (%0.3f)' % (deg_to_dms(venus_elong), venus_dir, venus_elong)
+    print('---------------------------------------------------------------')
+    print('Venus')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (venus_ra, venus_equ.ra))
+    print('DEC:               %s (%0.3f)' % (venus_dec, venus_equ.dec)) 
+    print('Ecl longitude:     %s (%0.3f)' % (venus_lng, venus_ecl.lng))
+    print('Ecl latitude:      %s (%0.3f)' % (venus_lat, venus_ecl.lat))             
+    print('Rise:              %s (%0.3f) [%s]' % (venus_utc_rise, venus_rst.rise, venus_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (venus_utc_trans, venus_rst.transit, venus_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (venus_utc_set, venus_rst.set, venus_lcl_set))
+    print('Azimuth:           %0.3f %s' % (venus_hrz.az, hrz_to_nswe(venus_hrz)))
+    print('Altitude:          %0.3f' % venus_hrz.alt)
+    print('Zenith:            %0.3f' % venus_hrz.zen())
+    print('Sun angle:         %0.3f' % venus_sun_ang)
+    print('Elongation:        %s %s (%0.3f)' % (deg_to_dms(venus_elong), venus_dir, venus_elong))
     
     
     # calculate Mars phenomena
@@ -3668,20 +3673,20 @@ if __name__ == '__main__':
     
     mars_sun_ang = sun_equ.angular_separation(mars_equ)
     
-    print '---------------------------------------------------------------'
-    print 'Mars'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (mars_ra, mars_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (mars_dec, mars_equ.dec) 
-    print 'Ecl longitude:     %s (%0.3f)' % (mars_lng, mars_ecl.lng)
-    print 'Ecl latitude:      %s (%0.3f)' % (mars_lat, mars_ecl.lat)             
-    print 'Rise:              %s (%0.3f) [%s]' % (mars_utc_rise, mars_rst.rise, mars_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (mars_utc_trans, mars_rst.transit, mars_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (mars_utc_set, mars_rst.set, mars_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (mars_hrz.az, hrz_to_nswe(mars_hrz))
-    print 'Altitude:          %0.3f' % mars_hrz.alt
-    print 'Zenith:            %0.3f' % mars_hrz.zen()
-    print 'Sun angle:         %0.3f' % mars_sun_ang
+    print('---------------------------------------------------------------')
+    print('Mars')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (mars_ra, mars_equ.ra))
+    print('DEC:               %s (%0.3f)' % (mars_dec, mars_equ.dec)) 
+    print('Ecl longitude:     %s (%0.3f)' % (mars_lng, mars_ecl.lng))
+    print('Ecl latitude:      %s (%0.3f)' % (mars_lat, mars_ecl.lat))             
+    print('Rise:              %s (%0.3f) [%s]' % (mars_utc_rise, mars_rst.rise, mars_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (mars_utc_trans, mars_rst.transit, mars_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (mars_utc_set, mars_rst.set, mars_lcl_set))
+    print('Azimuth:           %0.3f %s' % (mars_hrz.az, hrz_to_nswe(mars_hrz)))
+    print('Altitude:          %0.3f' % mars_hrz.alt)
+    print('Zenith:            %0.3f' % mars_hrz.zen())
+    print('Sun angle:         %0.3f' % mars_sun_ang)
     
     
     # calculate Jupiter phenomena
@@ -3700,20 +3705,20 @@ if __name__ == '__main__':
     
     jupiter_sun_ang = sun_equ.angular_separation(jupiter_equ)
     
-    print '---------------------------------------------------------------'
-    print 'Jupiter'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (jupiter_ra, jupiter_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (jupiter_dec, jupiter_equ.dec) 
-    print 'Ecl longitude:     %s (%0.3f)' % (jupiter_lng, jupiter_ecl.lng)
-    print 'Ecl latitude:      %s (%0.3f)' % (jupiter_lat, jupiter_ecl.lat)             
-    print 'Rise:              %s (%0.3f) [%s]' % (jupiter_utc_rise, jupiter_rst.rise, jupiter_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (jupiter_utc_trans, jupiter_rst.transit, jupiter_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (jupiter_utc_set, jupiter_rst.set, jupiter_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (jupiter_hrz.az, hrz_to_nswe(jupiter_hrz))
-    print 'Altitude:          %0.3f' % jupiter_hrz.alt
-    print 'Zenith:            %0.3f' % jupiter_hrz.zen()
-    print 'Sun angle:         %0.3f' % jupiter_sun_ang
+    print('---------------------------------------------------------------')
+    print('Jupiter')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (jupiter_ra, jupiter_equ.ra))
+    print('DEC:               %s (%0.3f)' % (jupiter_dec, jupiter_equ.dec)) 
+    print('Ecl longitude:     %s (%0.3f)' % (jupiter_lng, jupiter_ecl.lng))
+    print('Ecl latitude:      %s (%0.3f)' % (jupiter_lat, jupiter_ecl.lat))             
+    print('Rise:              %s (%0.3f) [%s]' % (jupiter_utc_rise, jupiter_rst.rise, jupiter_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (jupiter_utc_trans, jupiter_rst.transit, jupiter_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (jupiter_utc_set, jupiter_rst.set, jupiter_lcl_set))
+    print('Azimuth:           %0.3f %s' % (jupiter_hrz.az, hrz_to_nswe(jupiter_hrz)))
+    print('Altitude:          %0.3f' % jupiter_hrz.alt)
+    print('Zenith:            %0.3f' % jupiter_hrz.zen())
+    print('Sun angle:         %0.3f' % jupiter_sun_ang)
     
     
     # calculate Saturn phenomena
@@ -3732,20 +3737,20 @@ if __name__ == '__main__':
     
     saturn_sun_ang = sun_equ.angular_separation(saturn_equ)
     
-    print '---------------------------------------------------------------'
-    print 'Saturn'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (saturn_ra, saturn_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (saturn_dec, saturn_equ.dec) 
-    print 'Ecl longitude:     %s (%0.3f)' % (saturn_lng, saturn_ecl.lng)
-    print 'Ecl latitude:      %s (%0.3f)' % (saturn_lat, saturn_ecl.lat)             
-    print 'Rise:              %s (%0.3f) [%s]' % (saturn_utc_rise, saturn_rst.rise, saturn_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (saturn_utc_trans, saturn_rst.transit, saturn_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (saturn_utc_set, saturn_rst.set, saturn_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (saturn_hrz.az, hrz_to_nswe(saturn_hrz))
-    print 'Altitude:          %0.3f' % saturn_hrz.alt
-    print 'Zenith:            %0.3f' % saturn_hrz.zen()
-    print 'Sun angle:         %0.3f' % saturn_sun_ang
+    print('---------------------------------------------------------------')
+    print('Saturn')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (saturn_ra, saturn_equ.ra))
+    print('DEC:               %s (%0.3f)' % (saturn_dec, saturn_equ.dec)) 
+    print('Ecl longitude:     %s (%0.3f)' % (saturn_lng, saturn_ecl.lng))
+    print('Ecl latitude:      %s (%0.3f)' % (saturn_lat, saturn_ecl.lat))             
+    print('Rise:              %s (%0.3f) [%s]' % (saturn_utc_rise, saturn_rst.rise, saturn_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (saturn_utc_trans, saturn_rst.transit, saturn_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (saturn_utc_set, saturn_rst.set, saturn_lcl_set))
+    print('Azimuth:           %0.3f %s' % (saturn_hrz.az, hrz_to_nswe(saturn_hrz)))
+    print('Altitude:          %0.3f' % saturn_hrz.alt)
+    print('Zenith:            %0.3f' % saturn_hrz.zen())
+    print('Sun angle:         %0.3f' % saturn_sun_ang)
     
     # calculate SgrA phenomena
     
@@ -3764,20 +3769,20 @@ if __name__ == '__main__':
     
     sgra_sun_ang = sun_equ.angular_separation(sgra_equ)
     
-    print '---------------------------------------------------------------'
-    print 'SgrA'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (sgra_ra, sgra_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (sgra_dec, sgra_equ.dec) 
-    print 'Gal longitude:     %s (%0.3f)' % (sgra_l, sgra_gal.l)
-    print 'Gal latitude:      %s (%0.3f)' % (sgra_b, sgra_gal.b)           
-    print 'Rise:              %s (%0.3f) [%s]' % (sgra_utc_rise, sgra_rst.rise, sgra_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (sgra_utc_trans, sgra_rst.transit, sgra_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (sgra_utc_set, sgra_rst.set, sgra_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (sgra_hrz.az, hrz_to_nswe(sgra_hrz))
-    print 'Altitude:          %0.3f' % sgra_hrz.alt
-    print 'Zenith:            %0.3f' % sgra_hrz.zen()
-    print 'Sun angle:         %0.3f' % sgra_sun_ang
+    print('---------------------------------------------------------------')
+    print('SgrA')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (sgra_ra, sgra_equ.ra))
+    print('DEC:               %s (%0.3f)' % (sgra_dec, sgra_equ.dec)) 
+    print('Gal longitude:     %s (%0.3f)' % (sgra_l, sgra_gal.l))
+    print('Gal latitude:      %s (%0.3f)' % (sgra_b, sgra_gal.b))           
+    print('Rise:              %s (%0.3f) [%s]' % (sgra_utc_rise, sgra_rst.rise, sgra_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (sgra_utc_trans, sgra_rst.transit, sgra_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (sgra_utc_set, sgra_rst.set, sgra_lcl_set))
+    print('Azimuth:           %0.3f %s' % (sgra_hrz.az, hrz_to_nswe(sgra_hrz)))
+    print('Altitude:          %0.3f' % sgra_hrz.alt)
+    print('Zenith:            %0.3f' % sgra_hrz.zen())
+    print('Sun angle:         %0.3f' % sgra_sun_ang)
     
     # calculate CasA phenomena
     
@@ -3791,17 +3796,17 @@ if __name__ == '__main__':
     
     casa_sun_ang = sun_equ.angular_separation(casa_equ)
     
-    print '---------------------------------------------------------------'
-    print 'CasA'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (casa_ra, casa_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (casa_dec, casa_equ.dec) 
-    print 'Gal longitude:     %s (%0.3f)' % (casa_l, casa_gal.l)
-    print 'Gal latitude:      %s (%0.3f)' % (casa_b, casa_gal.b) 
-    print 'Azimuth:           %0.3f %s' % (casa_hrz.az, hrz_to_nswe(casa_hrz))
-    print 'Altitude:          %0.3f' % casa_hrz.alt
-    print 'Zenith:            %0.3f' % casa_hrz.zen()
-    print 'Sun angle:         %0.3f' % casa_sun_ang
+    print('---------------------------------------------------------------')
+    print('CasA')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (casa_ra, casa_equ.ra))
+    print('DEC:               %s (%0.3f)' % (casa_dec, casa_equ.dec)) 
+    print('Gal longitude:     %s (%0.3f)' % (casa_l, casa_gal.l))
+    print('Gal latitude:      %s (%0.3f)' % (casa_b, casa_gal.b)) 
+    print('Azimuth:           %0.3f %s' % (casa_hrz.az, hrz_to_nswe(casa_hrz)))
+    print('Altitude:          %0.3f' % casa_hrz.alt)
+    print('Zenith:            %0.3f' % casa_hrz.zen())
+    print('Sun angle:         %0.3f' % casa_sun_ang)
          
 
     # calculate CygA phenomena
@@ -3821,19 +3826,19 @@ if __name__ == '__main__':
     
     cyga_sun_ang = sun_equ.angular_separation(cyga_equ)
     
-    print '---------------------------------------------------------------'
-    print 'CygA'
-    print '---------------------------------------------------------------'
-    print 'RA:                %s (%0.3f)' % (cyga_ra, cyga_equ.ra)
-    print 'DEC:               %s (%0.3f)' % (cyga_dec, cyga_equ.dec) 
-    print 'Gal longitude:     %s (%0.3f)' % (cyga_l, cyga_gal.l)
-    print 'Gal latitude:      %s (%0.3f)' % (cyga_b, cyga_gal.b)           
-    print 'Rise:              %s (%0.3f) [%s]' % (cyga_utc_rise, cyga_rst.rise, cyga_lcl_rise)
-    print 'Transit:           %s (%0.3f) [%s]' % (cyga_utc_trans, cyga_rst.transit, cyga_lcl_trans)
-    print 'Set:               %s (%0.3f) [%s]' % (cyga_utc_set, cyga_rst.set, cyga_lcl_set)
-    print 'Azimuth:           %0.3f %s' % (cyga_hrz.az, hrz_to_nswe(cyga_hrz))
-    print 'Altitude:          %0.3f' % cyga_hrz.alt
-    print 'Zenith:            %0.3f' % cyga_hrz.zen()
-    print 'Sun angle:         %0.3f' % cyga_sun_ang
+    print('---------------------------------------------------------------')
+    print('CygA')
+    print('---------------------------------------------------------------')
+    print('RA:                %s (%0.3f)' % (cyga_ra, cyga_equ.ra))
+    print('DEC:               %s (%0.3f)' % (cyga_dec, cyga_equ.dec)) 
+    print('Gal longitude:     %s (%0.3f)' % (cyga_l, cyga_gal.l))
+    print('Gal latitude:      %s (%0.3f)' % (cyga_b, cyga_gal.b))           
+    print('Rise:              %s (%0.3f) [%s]' % (cyga_utc_rise, cyga_rst.rise, cyga_lcl_rise))
+    print('Transit:           %s (%0.3f) [%s]' % (cyga_utc_trans, cyga_rst.transit, cyga_lcl_trans))
+    print('Set:               %s (%0.3f) [%s]' % (cyga_utc_set, cyga_rst.set, cyga_lcl_set))
+    print('Azimuth:           %0.3f %s' % (cyga_hrz.az, hrz_to_nswe(cyga_hrz)))
+    print('Altitude:          %0.3f' % cyga_hrz.alt)
+    print('Zenith:            %0.3f' % cyga_hrz.zen())
+    print('Sun angle:         %0.3f' % cyga_sun_ang)
     
     

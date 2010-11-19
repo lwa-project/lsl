@@ -43,7 +43,7 @@ def open_and_get_nec_freq(fname):
     for line in f:
         if line.find('STRUCTURE SPECIFICATION') >= 0: break
     else:
-        raise RuntimeError, "STRUCTURE SPECIFICATION not found!"
+        raise RuntimeError("STRUCTURE SPECIFICATION not found!")
         
 #  Now look for FREQUENCY and get the value
     for line in f:
@@ -57,7 +57,7 @@ def open_and_get_nec_freq(fname):
             freq = float(line[line.find(':')+1:].split()[0])
             break
     else:
-        raise RuntimeError, "Frequency value not found"
+        raise RuntimeError("Frequency value not found")
         
     _NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
     return (f, freq)
@@ -124,7 +124,7 @@ class NECImpedance:
         for line in f:
             if line.find('STRUCTURE SPECIFICATION') >= 0: break
         else:
-            raise RuntimeError, "STRUCTURE SPECIFICATION not found!"
+            raise RuntimeError("STRUCTURE SPECIFICATION not found!")
 
         freqs = []
         impedances = []
@@ -153,7 +153,7 @@ class NECImpedance:
                     gotimp = True
                     break
             if not gotimp:
-                raise RuntimeError, "IMPEDANCE not found"
+                raise RuntimeError("IMPEDANCE not found")
             for line in f:
                 break
             for line in f:
@@ -197,7 +197,7 @@ class NECPattern:
         try:
             f, filefreq = open_and_get_nec_freq(outname)
         except:
-            print "NEC .out file not found! Running NEC"
+            print("NEC .out file not found! Running NEC")
             f = None
         
         if f is None or not CloseTo(filefreq,freq):
@@ -215,21 +215,20 @@ class NECPattern:
                 cmdstr = "nec4d %s %s" % (necname, outname)
                 ret=os.system(cmdstr)
                 if ret != 0:
-                    raise RuntimeError, "Bad return value from nec2++ call : %d" % ret       
+                    raise RuntimeError("Bad return value from nec2++ call : %d" % ret)       
                 f, filefreq = open_and_get_nec_freq(outname)
                 if not CloseTo(filefreq,freq):
-                    raise ValueError, "NEC failed to generate a file with the correct frequency."
+                    raise ValueError("NEC failed to generate a file with the correct frequency.")
                     
             else:
-                raise ValueError, \
-                    "NEC output file is at a different frequency (%f) than the requested frequency (%f)." % \
-                        (filefreq, freq)
+                raise ValueError("NEC output file is at a different frequency (%f) than the requested frequency (%f)." % \
+                        (filefreq, freq))
         
     #  Now look for RADIATION PATTERN and read it
         for line in f:
             if line.find('RADIATION PATTERN') >= 0: break
         else:
-            raise RuntimeError, "RADIATION PATTERN not found!"
+            raise RuntimeError("RADIATION PATTERN not found!")
                     
     # Some versions of NEC2 output extraneous data after "RADIATION PATTERNS" before the actual data
     # and column labels (e.g. RANGE = and EXP (-JKR) values ).  Discard until

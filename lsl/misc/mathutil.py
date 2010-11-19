@@ -35,7 +35,7 @@ def regrid(x, y, newx, allow_extrapolation = False, method = 'spline'):
     elif method == 'spline':
         return _regrid_spline(x, y, newx, allow_extrapolation)
     else:
-        raise ValueError, "interp method '%s' not recognized" % method
+        raise ValueError("interp method '%s' not recognized" % method)
 
 
 def _regrid_linear(x, y, newx, allow_extrapolation=False):
@@ -47,9 +47,9 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
         _MATHUTIL_LOG.warning("allow_extrapolation=True not honored for regrid_linear")
     
     if newx.min() < x.min():
-        raise ValueError, 'x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min())
+        raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
     if newx.max() > x.max():
-        raise ValueError, 'x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max())
+        raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
 
     return numpy.interp(newx, x, y)
 
@@ -63,9 +63,9 @@ def _regrid_spline(x, y, newx, allow_extrapolation=False):
 
   if not allow_extrapolation:
       if newx.min() < x.min():
-        raise ValueError, 'x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min())
+        raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
       if newx.max() > x.max():
-        raise ValueError, 'x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max())
+        raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
   spl = interpolate.splrep(x, y)
   newy = interpolate.splev(newx, spl)
 
@@ -131,10 +131,10 @@ def smooth(x,window_len=10,window='hanning'):
     """
 
     if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
+        raise ValueError("smooth only accepts 1 dimension arrays.")
 
     if x.size < window_len:
-        raise ValueError, "Input vector needs to be bigger than window size."
+        raise ValueError("Input vector needs to be bigger than window size.")
 
 
     if window_len<3:
@@ -142,7 +142,7 @@ def smooth(x,window_len=10,window='hanning'):
 
 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
 
     s=numpy.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
@@ -181,7 +181,7 @@ def cpolar(cmplx):
     """
     
     if isinstance(cmplx, (numpy.ndarray, list, tuple)):
-        return numpy.array(zip(cmagnitude(cmplx), cphase(cmplx)))
+        return numpy.array(list(zip(cmagnitude(cmplx), cphase(cmplx))))
     else:
         return (cmagnitude(cmplx), cphase(cmplx))
     

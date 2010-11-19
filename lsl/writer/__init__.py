@@ -4,3 +4,5 @@ import tsfits
 import sdfits
 import fitsidi
 
+import vdif
+

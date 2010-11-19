@@ -183,7 +183,7 @@ setup(
 	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'scipy>=0.7', 'aipy>=0.9.1'],
 	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits'],
 	package_dir = packages, 
-	packages = packages.keys(),
+	packages = list(packages.keys()),
 	package_data = {'lsl' : py_files},
 	data_files = data_files,
 	scripts = script_files,

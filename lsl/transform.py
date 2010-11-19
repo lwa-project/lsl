@@ -88,10 +88,10 @@ class Time(object):
     # check parameters
     
     if format not in self.known_formats:
-      raise ValueError, "unknown format %s" % format
+      raise ValueError("unknown format %s" % format)
       
     if timesys not in self.known_timesys:
-      raise ValueError, "unknown timesys %s" % timesys
+      raise ValueError("unknown timesys %s" % timesys)
     
     # parse init value base on format type
     # time value is held internally as UTC JD float
@@ -104,7 +104,7 @@ class Time(object):
       
     elif format == self.FORMAT_STR:
       if not isinstance(value, str):
-        raise TypeError, "value must be type str"
+        raise TypeError("value must be type str")
       d = astro.date()
       d.load(*value.split())
       self._time = d.to_jd()
@@ -170,7 +170,7 @@ class Time(object):
   def utc_jd(self, value):
 
     if not isinstance(value, (int, float)):
-      raise TypeError, "value must be type int or float"
+      raise TypeError("value must be type int or float")
       
     self._time = float(value)
     
@@ -188,7 +188,7 @@ class Time(object):
   def utc_mjd(self, value):
   
     if not isinstance(value, (int, float)):
-      raise TypeError, "value must be type int or float"
+      raise TypeError("value must be type int or float")
       
     self._time = astro.mjd_to_jd(float(value))
     
@@ -206,7 +206,7 @@ class Time(object):
   def utc_ln_date(self, value):
   
     if not isinstance(value, astro.date):
-      raise TypeError, "value must be type astro.date"
+      raise TypeError("value must be type astro.date")
       
     self._time = astro.get_julian_day(value)
     
@@ -224,7 +224,7 @@ class Time(object):
   def utc_py_date(self, value):
   
     if not isinstance(value, datetime.datetime):
-      raise ValueError, "value must be type datetime.datetime"
+      raise ValueError("value must be type datetime.datetime")
       
     self.utc_ln_date = self.date_py_to_ln(value)
     
@@ -251,7 +251,7 @@ class Time(object):
   def tai_jd(self, value):
   
     if not isinstance(value, (int, float)):
-      raise TypeError, "value must be type int or float"
+      raise TypeError("value must be type int or float")
       
     self._time = astro.tai_to_utc(float(value))
     
@@ -269,7 +269,7 @@ class Time(object):
   def tai_mjd(self, value):
   
     if not isinstance(value, (int, float)):
-      raise TypeError, "value must be type int or float"
+      raise TypeError("value must be type int or float")
       
     self._time = astro.taimjd_to_utcjd(float(value))
     
@@ -287,7 +287,7 @@ class Time(object):
   def utc_timet(self, value):
     
     if not isinstance(value, (int, float)):
-      raise TypeError, "value must be type int or float"
+      raise TypeError("value must be type int or float")
       
     self._time = astro.get_julian_from_timet(int(value))
     
@@ -305,7 +305,7 @@ class Time(object):
   def tai_timet(self, value):
   
     if not isinstance(value, (int, float)):
-      raise TypeError, "value must be type int or float"
+      raise TypeError("value must be type int or float")
       
     self._time = astro.tai_to_utc(astro.get_julian_from_timet(int(value)))
     
@@ -342,11 +342,7 @@ class SkyPosition(object):
   Base abstract class for representing positions on the sky.
   """
   
-  
-  # this is an abstract class
-  
   __metaclass__ = abc.ABCMeta
-  
   
   @abc.abstractmethod
   def apparent_equ(self, time_):
@@ -369,7 +365,7 @@ class SkyPosition(object):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be of type transform.Time"
+      raise TypeError("time_ must be of type transform.Time")
     
     equ = astro.get_apparent_posn(self._posn, time_.utc_jd)
     return astro.get_ecl_from_equ(equ, time_.utc_jd)
@@ -443,10 +439,10 @@ class CelestialPosition(SkyPosition):
     # check parameters
     
     if format not in self.known_formats:
-      raise ValueError, "unknown format %s" % format
+      raise ValueError("unknown format %s" % format)
       
     if epoch not in self.known_epochs:
-      raise ValueError, "unknown epoch %s" % epoch
+      raise ValueError("unknown epoch %s" % epoch)
       
     self.name = name
 
@@ -465,14 +461,14 @@ class CelestialPosition(SkyPosition):
       if epoch == self.EPOCH_J2000:
         self.j2000_gal = value
       else:
-        raise ValueError, "epoch %s not supported for GAL format" % epoch
+        raise ValueError("epoch %s not supported for GAL format" % epoch)
     
     elif format == self.FORMAT_ECL:
 
       if epoch == self.EPOCH_J2000:
         self.j2000_ecl = value
       else:
-        raise ValueError, "epoch %s not supported for ECL format" % epoch
+        raise ValueError("epoch %s not supported for ECL format" % epoch)
   
   
   def __repr__(self):
@@ -495,10 +491,10 @@ class CelestialPosition(SkyPosition):
   def j2000_equ(self, value):
   
     if not isinstance(value, (astro.equ_posn, collections.Sequence)):
-      raise TypeError, "value must be type astro.equ_posn or sequence of length 2"
+      raise TypeError("value must be type astro.equ_posn or sequence of length 2")
     if isinstance(value, collections.Sequence):
       if len(value) != 2:
-        raise TypeError, "value sequence must be length 2"
+        raise TypeError("value sequence must be length 2")
       value = astro.equ_posn(*value)
     
     self._posn = copy.copy(value)
@@ -513,7 +509,7 @@ class CelestialPosition(SkyPosition):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be of type transform.Time"
+      raise TypeError("time_ must be of type transform.Time")
     
     return astro.get_apparent_posn(self._posn, time_.utc_jd)
       
@@ -532,10 +528,10 @@ class CelestialPosition(SkyPosition):
   def b1950_equ(self, value):
   
     if not isinstance(value, (astro.equ_posn, collections.Sequence)):
-      raise TypeError, "value must be type astro.equ_posn or sequence of length 2"
+      raise TypeError("value must be type astro.equ_posn or sequence of length 2")
     if isinstance(value, collections.Sequence):
       if len(value) != 2:
-        raise TypeError, "value sequence must be length 2"
+        raise TypeError("value sequence must be length 2")
       value = astro.equ_posn(*value)
     
     self._posn = astro.get_equ_prec2(value, astro.B1950_UTC_JD, astro.J2000_UTC_JD)
@@ -555,10 +551,10 @@ class CelestialPosition(SkyPosition):
   def j2000_ecl(self, value):
     
     if not isinstance(value, (astro.equ_posn, collections.Sequence)):
-      raise TypeError, "value must be type astro.ecl_posn or sequence of length 2"
+      raise TypeError("value must be type astro.ecl_posn or sequence of length 2")
     if isinstance(value, collections.Sequence):
       if len(value) != 2:
-        raise TypeError, "value sequence must be length 2"
+        raise TypeError("value sequence must be length 2")
       value = astro.ecl_posn(*value)
     
     self._posn = astro.get_equ_from_ecl(value, astro.J2000_UTC_JD)
@@ -573,7 +569,7 @@ class CelestialPosition(SkyPosition):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be of type transform.Time"
+      raise TypeError("time_ must be of type transform.Time")
     
     equ = astro.get_apparent_posn(self._posn, time_.utc_jd)
     return astro.get_ecl_from_equ(equ, time_.utc_jd)
@@ -593,10 +589,10 @@ class CelestialPosition(SkyPosition):
   def j2000_gal(self, value):
   
     if not isinstance(value, (astro.gal_posn, collections.Sequence)):
-      raise TypeError, "value must be type astro.gal_posn or sequence of length 2"
+      raise TypeError("value must be type astro.gal_posn or sequence of length 2")
     if isinstance(value, collections.Sequence):
       if len(value) != 2:
-        raise TypeError, "value sequence must be length 2"
+        raise TypeError("value sequence must be length 2")
       value = astro.gal_posn(*value)
     
     self._posn = astro.get_equ2000_from_gal(value)
@@ -631,7 +627,7 @@ class PlanetaryPosition(SkyPosition):
     # check parameters
     
     if name not in self.known_names:
-      raise ValueError, "unknown name %s" % name
+      raise ValueError("unknown name %s" % name)
       
     self.name = name
     
@@ -660,7 +656,7 @@ class PlanetaryPosition(SkyPosition):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be of type transform.Time"
+      raise TypeError("time_ must be of type transform.Time")
     
     return self._posn_func(time_.utc_jd)
     
@@ -674,7 +670,7 @@ class PlanetaryPosition(SkyPosition):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be of type transform.Time"
+      raise TypeError("time_ must be of type transform.Time")
     
     equ = self._posn_func(time_.utc_jd)
     return astro.get_ecl_from_equ(equ, time_.utc_jd)
@@ -716,7 +712,7 @@ class GeographicalPosition(object):
     # check parameters
     
     if format not in self.known_formats:
-      raise ValueError, "unknown format %s" % format 
+      raise ValueError("unknown format %s" % format) 
    
     self.name = name
 
@@ -750,10 +746,10 @@ class GeographicalPosition(object):
   def geo(self, value):
   
     if not isinstance(value, (astro.geo_posn, collections.Sequence)):
-      raise TypeError, "value must be type astro.geo_posn or sequence of length 2/3"
+      raise TypeError("value must be type astro.geo_posn or sequence of length 2/3")
     if isinstance(value, collections.Sequence):
       if (len(value) != 2) and (len(value) != 3):
-        raise TypeError, "value sequence must be length 2/3"
+        raise TypeError("value sequence must be length 2/3")
       value = astro.geo_posn(*value)
       
     self._posn = copy.copy(value)
@@ -773,10 +769,10 @@ class GeographicalPosition(object):
   def ecef(self, value):
   
     if not isinstance(value, (astro.rect_posn, collections.Sequence)):
-      raise TypeError, "value must be type astro.rect_posn or sequence of length 3"
+      raise TypeError("value must be type astro.rect_posn or sequence of length 3")
     if isinstance(value, collections.Sequence):
       if len(value) != 3:
-        raise TypeError, "value sequence must be length 3"
+        raise TypeError("value sequence must be length 3")
       value = astro.rect_posn(*value)
       
     self._posn = astro.get_geo_from_rect(value)
@@ -791,7 +787,7 @@ class GeographicalPosition(object):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be type transform.Time"
+      raise TypeError("time_ must be type transform.Time")
     
     return astro.get_local_sidereal_time(self._posn.lng, time_.utc_jd)
     
@@ -842,10 +838,10 @@ class PointingDirection(object):
     # make surce 'source' and 'site' member are correct type
     
     if (name == 'source') and (not isinstance(value, SkyPosition)):
-      raise TypeError, "\'source\' must be type SkyPosition"
+      raise TypeError("\'source\' must be type SkyPosition")
     
     elif (name == 'site') and (not isinstance(value, GeographicalPosition)):
-      raise TypeError, "\'site\' must be type GeographicalPosition"
+      raise TypeError("\'site\' must be type GeographicalPosition")
       
     object.__setattr__(self, name, value)
     
@@ -859,7 +855,7 @@ class PointingDirection(object):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be type transform.Time"
+      raise TypeError("time_ must be type transform.Time")
     
     return astro.get_hrz_from_equ(self.source.apparent_equ(time_), 
       self.site.geo, time_.utc_jd)
@@ -886,7 +882,7 @@ class PointingDirection(object):
     """
     
     if not isinstance(time_, Time):
-      raise TypeError, "time_ must be type transform.Time"
+      raise TypeError("time_ must be type transform.Time")
       
     return astro.get_object_rst(time_.utc_jd, self.site.geo, 
       self.source.apparent_equ(time_))
