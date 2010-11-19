@@ -15,6 +15,7 @@ from lsl.tests import test_reader
 from lsl.tests import test_uvUtils
 from lsl.tests import test_visUtils
 from lsl.tests import test_fakedata
+from lsl.tests import test_geodesy
 
 
 __revision__  = "$Revision: 95 $"
@@ -42,6 +43,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_uvUtils.uvUtils_test_suite())
 		self.addTest(test_visUtils.visUtils_test_suite())
 		self.addTest(test_fakedata.fakedata_test_suite())
+		self.addTest(test_geodesy.geodesy_test_suite())
 
 
 def main(opts=None, args=None):
