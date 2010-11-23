@@ -8,7 +8,7 @@ import numpy
 
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 8 $'
+__revision__ = '$ Revision: 9 $'
 __all__ = ['geo2ecef', 'LWAStation', 'lwa1']
 
 
@@ -94,13 +94,13 @@ class lwa1(LWAStation):
 
 		if fDate >= 40475.0:
 			# Current as of 10/29/2010 for both TBN and TBW
-			stands = numpy.array([-1, 4, 158, 205, 246, 9, 69, 168, 80, 14, 254, 118, 38, 34, 67, 181, 206, 183, 153, 174])
+			stands = numpy.array([258, 4, 158, 205, 246, 9, 69, 168, 80, 14, 254, 118, 38, 34, 67, 181, 206, 183, 153, 174])
 		elif fDate >= 40435.0:
 			# Current as of 9/15/2010
 			# Note:  This is for the input reversed TBW data.  Any TBN data should have 
 			# the stand numbers exchanged in pairs.  For example, TBN data would be:
-			# -1, 4, 158, 205, etc.
-			stands = numpy.array([4, -1, 205, 158, 9, 246, 168, 69, 14, 80, 118, 254, 34, 38, 181, 67, 183, 206, 174, 153])
+			# 258, 4, 158, 205, etc.
+			stands = numpy.array([4, 258, 205, 158, 9, 246, 168, 69, 14, 80, 118, 254, 34, 38, 181, 67, 183, 206, 174, 153])
 		elif fDate >= 40414.0:
 			# Between 8/25/2010 and 9/15/2010
 			stands = numpy.array([214, 212, 228, 206, 127, 157, 187, 208, 123, 125])

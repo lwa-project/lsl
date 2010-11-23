@@ -59,13 +59,15 @@ class uvUtils_tests(unittest.TestCase):
 	def test_position_bounds(self):
 		"""Test that stand ID number bounds are respected by the position routines."""
 
-		self.assertRaises(uvUtils.uvUtilsError, uvUtils.getXYZ, -10)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.getXYZ, -1)
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.getXYZ, 0)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.getXYZ, 259)
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.getXYZ, 500)
 
 		cache = uvUtils.PositionCache()
-		self.assertRaises(uvUtils.uvUtilsError, cache.getXYZ, -10)
+		self.assertRaises(uvUtils.uvUtilsError, cache.getXYZ, -1)
 		self.assertRaises(uvUtils.uvUtilsError, cache.getXYZ, 0)
+		self.assertRaises(uvUtils.uvUtilsError, cache.getXYZ, 259)
 		self.assertRaises(uvUtils.uvUtilsError, cache.getXYZ, 500)
 
 	def test_cable(self):
@@ -83,13 +85,15 @@ class uvUtils_tests(unittest.TestCase):
 	def test_cable_bounds(self):
 		"""Test that stand ID number bounds are respected by the cable routines."""
 
-		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableDelay, -10, 10e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableDelay, -1, 10e6)
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableDelay, 0, 10e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableDelay, 259, 10e6)
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableDelay, 500, 10e6)
 
 		cache = uvUtils.CableCache(10e6)
-		self.assertRaises(uvUtils.uvUtilsError, cache.cableDelay, -10)
+		self.assertRaises(uvUtils.uvUtilsError, cache.cableDelay, -1)
 		self.assertRaises(uvUtils.uvUtilsError, cache.cableDelay, 0)
+		self.assertRaises(uvUtils.uvUtilsError, cache.cableDelay, 259)
 		self.assertRaises(uvUtils.uvUtilsError, cache.cableDelay, 500)
 
 	def test_attenuation(self):
@@ -103,8 +107,9 @@ class uvUtils_tests(unittest.TestCase):
 	def test_attenuation_bounds(self):
 		"""Test that stand ID number bound are respected by the attenuation routine."""
 
-		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, -10)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, -1)
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 0)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 259)
 		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 500)
 
 	def test_baseline_gen(self):

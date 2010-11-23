@@ -19,9 +19,9 @@ import numpy
 from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
-__version__ = '0.2'
-__revision__ = '$ Revision: 12 $'
-__all__ = ['getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
+__version__ = '0.3'
+__revision__ = '$ Revision: 15 $'
+__all__ = ['validateStand', 'getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
 
 
 class uvUtilsError(Exception):
@@ -34,19 +34,30 @@ class uvUtilsError(Exception):
 		return "%s" % self.strerror
 
 
+def validateStand(stand, max=258):
+	"""Make sure that the provided stand number is valid.  If it is not between
+	1 and max (default of 258 for LWA-1), raise an error."""
+
+	if stand < 1 or stand > max:
+			raise uvUtilsError('Stand #%i is out of range (1-%i)' % (stand, max))
+
+	return True
+
+
 def _loadPositionData(filename='lwa1-positions.csv'):
 	"""Private function to load in the stand location data CSV file.  Someday 
 	this should be absorbed into this script so that there is not need to keep 
 	yet another file floating around."""
 
-	# lwa1-asbuilt.csv contains the stand (x,y,z) coordinates for all 257 stands.
-	# The data come from the "LWA-1 Antenna Position and Cable Data" memo, version 1.
+	# lwa1-asbuilt.csv contains the stand (x,y,z) coordinates for all 257 stands +
+	# the outlier (#258).  The data come from the "LWA-1 Antenna Position and 
+	# Cable Data" memo, version 1.
 	try:
 		csvFH = open(os.path.join(dataPath, filename), 'r')
 	except IOError, (errno, strerror):
 		raise uvUtilsError("%s: stand position file '%s'" % (strerror, filename))
 	csvData = csv.reader(csvFH, delimiter=',', quotechar='"')
-	data = numpy.empty((257,3))
+	data = numpy.empty((258,3))
 	
 	i = 0
 	for row in csvData:
@@ -76,12 +87,8 @@ def getXYZ(stands):
 
 	out = numpy.zeros((stands.shape[0],3))
 	for i in range(stands.shape[0]):
-		if stands[i] == -1:
-			out[i,:] = numpy.array([339.61, 15.32, -0.08])
-		elif stands[i] > 0 and stands[i] < 257:
-			out[i,:] = standsXYZ[stands[i]-1,:]
-		else:
-			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stands[i])
+		validateStand(stands[i])
+		out[i,:] = standsXYZ[stands[i]-1,:]
 
 	return out
 
@@ -104,8 +111,8 @@ class PositionCache(object):
 		self.standsXYZ = _loadPositionData()
 		
 	def __isValid(self, stand):
-		if stand < -1 or stand == 0 or stand > 257:
-			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
+		if stand < 1 or stand > 258:
+			raise uvUtilsError('Stand #%i is out of range (1-258)' % stand)
 		
 	def getXYZ(self, stands):
 		try:
@@ -116,10 +123,7 @@ class PositionCache(object):
 		out = numpy.zeros((stands.shape[0],3))
 		for i in range(stands.shape[0]):
 			self.__isValid(stands[i])
-			if stands[i] == -1:
-				out[i,:] = numpy.array([339.61, 15.32, -0.08])
-			else:
-				out[i,:] = self.standsXYZ[stands[i]-1,:]
+			out[i,:] = self.standsXYZ[stands[i]-1,:]
 	
 		return out
 			
@@ -155,7 +159,7 @@ def _loadDelayData(filename='lwa1-cables.csv'):
 	except IOError, (errno, strerror):
 		raise uvUtilsError("%s: cable length file '%s'" % (strerror, filename))
 	csvData = csv.reader(csvFH, delimiter=',', quotechar='"')
-	data = numpy.empty(256)
+	data = numpy.empty(258)
 	
 	i = 0
 	for row in csvData:
@@ -174,8 +178,7 @@ def cableDelay(stand, freq):
 	are needed, the frequencies can be passed in as a numpy array."""
 
 	# Stands start at 1, indices do not
-	if stand < -1 or stand == 0 or stand > 256:
-		raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
+	validateStand(stand)
 
 	# Try this so that freq can be either a scalar or a list
 	try:
@@ -185,15 +188,13 @@ def cableDelay(stand, freq):
 
 	# Catch the outlier and load cable and delay information into holder variables.
 	# This makes it easier to do one common set of operations with different cables.
-	if stand == -1:
-		cableLength = 315.344 # m
+	cableLengths = _loadDelayData()
+	cableLength = cableLengths[stand-1]
+	velocityFactor = 0.83
+	tauD0 = 2.4e-9 # dispersion delay in seconds
+	if stand == 258:
 		velocityFactor = 0.85
 		tauD0 = 4.6e-9	# dispersion delay in seconds
-	else:
-		cableLengths = _loadDelayData()
-		cableLength = cableLengths[stand-1]
-		velocityFactor = 0.83
-		tauD0 = 2.4e-9 # dispersion delay in seconds
 
 	# First, calculate the delay from cable length assuming a velocity factor.
 	delay = cableLength / (velocityFactor * c)
@@ -226,22 +227,20 @@ class CableCache(object):
 		self.applyDispersion = applyDispersion
 
 	def __isValid(self, stand):
-		if stand < -1 or stand == 0 or stand > 256:
-			raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
+		if stand < 1 or stand > 258:
+			raise uvUtilsError('Stand #%i is out of range (1-258)' % stand)
 
 	def cableDelay(self, stand, freq=None):
 		self.__isValid(stand)
 	
 		# Catch the outlier and load cable and delay information into holder variables.
 		# This makes it easier to do one common set of operations with different cables.
-		if stand == -1:
-			cableLength = 315.344 # m
+		cableLength = self.cableLengths[stand-1]
+		velocityFactor = 0.83
+		tauD0 = 2.4e-9 # dispersion delay in seconds
+		if stand == 258:
 			velocityFactor = 0.85
 			tauD0 = 4.6e-9	# dispersion delay in seconds
-		else:
-			cableLength = self.cableLengths[stand-1]
-			velocityFactor = 0.83
-			tauD0 = 2.4e-9 # dispersion delay in seconds
 	
 		# First, calculate the delay from cable length assuming a velocity factor.
 		delay = cableLength / (velocityFactor * c)
@@ -277,8 +276,7 @@ def signalDelay(stand, freq, cache=None):
 	#addDelay = {4: 0.0, -1: -208.6, 205: 96.5, 158: 197.2, 9: 249.8, 246: -153.4, 168: 372.4, 69: 124.4, 14: 314.9, 80: 339.7, 118: 401.3, 254: -81.1, 34: 239.7, 38: 292.5, 181: -123.6, 67: 79.2, 183: -108.6, 206: -118.2, 174: 467.5, 153: -93.2}
 
 	# Stands start at 1, indices do not
-	if stand == 0 or stand > 256:
-		raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
+	validateStand(stand)
 
 	# Get the delays from the cable model and add in any additional delays found 
 	# in the addDelay dictionary.
@@ -303,8 +301,7 @@ def cableAttenuation(stand):
 	losses."""
 
 	# Stands start at 1, indicies do not
-	if stand < -1 or stand == 0 or stand > 256:
-		raise uvUtilsError('Stand #%i is out of range (-1, 1-256)' % stand)
+	validateStand(stand)
 
 	# Catch the outlier and load cable and delay information into holder variables.
 	# This makes it easier to do one common set of operations with different cables.
@@ -336,7 +333,11 @@ def getBaselines(stands, IncludeAuto=False, Indicies=False):
 	else:
 		offset = 1
 
-	N = stands.shape[0]
+	try:
+		N = stands.shape[0]
+	except AttributeError:
+		stands = numpy.array(stands)
+		N = stands.shape[0]
 	out = []
 	for i in range(0, N-offset):
 		for j in range(i+offset, N):

@@ -211,7 +211,6 @@ def main(args):
 			tags = ['nants', 'nchan', 'npol', 'pol', 'sfreq', 'sdf', 'longitu', 'latitud', 'dec', 'ra', 'source']
 			codes = ['i', 'i', 'i', 'i', 'r', 'r', 'r', 'r', 'r', 'r', 'a']
 			for tag,code in zip(tags, codes):
-				print "%s -> %s" % (tag, code)
 				uv.add_var(tag, code)
 			uv['source'] = 'zenith'
 			uv['longitu'] = -107.628
