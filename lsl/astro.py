@@ -2647,6 +2647,11 @@ MJD_OFFSET = 2400000.5
 Offset in days between standard Julian day and Dublin Julian day.
 """
 DJD_OFFSET = 2415020.0
+
+"""
+Offset in days between UNIX time (epoch 1970/01/01) and standard Julian day.
+"""
+UNIX_OFFSET = 2440587.5
     
 """
 The number of seconds in one day
@@ -2965,6 +2970,60 @@ def utcjd_to_taimjd(utcJD):
     
   tai = utc_to_tai(utcJD)
   return jd_to_mjd(tai)
+
+
+def unix_to_utcjd(unixTime):
+  """
+  Get the UTC JD time value for a given UNIX time value.
+  
+  Param: unixTime - the UNIX time (int/float)
+  
+  Returns: The UTC JD value.
+  """
+  
+  utcJD = float(unixTime) / SECS_IN_DAY + UNIX_OFFSET
+  return utcJD
+  
+  
+def unix_to_taimjd(unixTime):
+  """
+  Get the TAI MJD time value for a given UNIX time value.
+  
+  Param: unixTime - the UNIX time (int/float)
+  
+  Returns: The TAI MJD value.
+  """
+  
+  utcJD = unix_to_utcjd(unixTime)
+  taiMJD = utcjd_to_taimjd(utcJD)
+  return taiMJD
+  
+  
+def utcjd_to_unix(utcJD):
+  """
+  Get UNIX time value for a given UTC JD value.
+  
+  Param: utcJD - The UTC JD time (float).
+  
+  Returns: The UNIX time
+  """
+  
+  unixTime = (utcJD - UNIX_OFFSET) / SECS_IN_DAY
+  return unixTime
+  
+  
+def taimjd_to_unix(taiMJD):
+  """
+  Get UNIX time value for a given TAI MJDvalue.
+  
+  Param: taiMJD - The TAI MJD time (float).
+  
+  Returns: The UNIX time
+  """
+  
+  utcJD = taimjd_to_utcjd(taiMJD)
+  unixTime = utcjd_to_unix(utcJD)
+  return unixTime
 
 
 def tai_to_tt(taiJD):
