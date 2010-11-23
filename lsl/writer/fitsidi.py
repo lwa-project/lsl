@@ -185,11 +185,8 @@ class IDI(object):
 		self.nAnt = len(ants)
 		self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper} )
 
-	def addDataSet(self, obsTime, intTime, baselines, visibilities, UTC=True):
-			if UTC:
-				tai = astro.utcjd_to_taimjd(obsTime)
-			else:
-				tai = obsTime
+	def addDataSet(self, obsTime, intTime, baselines, visibilities):
+			"""Create a UVData object to store a collection of visibilites."""
 
 			dataDict = {}
 			for (stand1,stand2), visData in zip(baselines, visibilities):
