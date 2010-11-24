@@ -191,7 +191,6 @@ class IDI(object):
 			dataDict = {}
 			for (stand1,stand2), visData in zip(baselines, visibilities):
 				baseline = (stand1 << 16) | stand2
-				print baseline, visData.shape
 				dataDict[baseline] = visData
 				
 			self.data.append( self._UVData(obsTime, intTime, dataDict) )
@@ -815,7 +814,7 @@ class IDI(object):
 
 		uv.header.update('NMATRIX', 1, 'number of UV data matricies')
 		uv.header.update('MAXIS', 6, 'number of UV data matrix axes')
-		uv.header.update('TMATX13', True, 'axis 13 contains UV matrix')
+		uv.header.update('TMATX1', True, 'axis 1 contains UV matrix')
 		
 		uv.header.update('MAXIS1', 2, 'number of pixels in COMPLEX axis')
 		uv.header.update('CTYPE1', 'COMPLEX', 'axis 1 is COMPLEX axis')
