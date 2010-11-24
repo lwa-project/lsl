@@ -712,7 +712,7 @@ class IDI(object):
 				standIDs = self.FITS['ARRAY_GEOMETRY'].data.field('NOSTA')
 			uvwBaselines = numpy.array([(i << 16) | j for i,j in uvUtils.getBaselines(standIDs)])
 			uvwCoords = uvUtils.computeUVW(standIDs, HA=0.0, dec=equ.dec, freq=self.refVal)
-			uvwCoords *= constants.c / self.refVal
+			uvwCoords *= 1.0 / self.refVal
 
 			# Loop over the data store in the dataDict and extract each baseline
 			baselines = list(dataSet.dataDict.keys())
@@ -745,9 +745,9 @@ class IDI(object):
 					uvw = numpy.zeros((3,))
 
 				# Load the data into a matrix that splits the real and imaginary parts out
-				matrix = numpy.empty((self.nChan, 2), numpy.float32)
-				matrix[...,0] = visData.real
-				matrix[...,1] = visData.imag
+				matrix = numpy.empty((self.nChan, 2), dtype=numpy.float32)
+				matrix[:,0] = visData.real
+				matrix[:,1] = visData.imag
 			
 				blineList.append(baselineMapped)
 				mList.append(matrix.ravel())
