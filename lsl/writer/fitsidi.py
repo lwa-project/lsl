@@ -191,6 +191,7 @@ class IDI(object):
 			dataDict = {}
 			for (stand1,stand2), visData in zip(baselines, visibilities):
 				baseline = (stand1 << 16) | stand2
+				print baseline, visData.shape
 				dataDict[baseline] = visData
 				
 			self.data.append( self._UVData(obsTime, intTime, dataDict) )
@@ -745,9 +746,12 @@ class IDI(object):
 					uvw = numpy.zeros((3,))
 
 				# Load the data into a matrix that splits the real and imaginary parts out
-				matrix = numpy.empty((self.nChan, 2), dtype=numpy.float32)
-				matrix[:,0] = visData.real
-				matrix[:,1] = visData.imag
+				##matrix = numpy.empty((self.nChan, 2), dtype=numpy.float32)
+				##matrix[:,0] = visData.real
+				##matrix[:,1] = visData.imag
+				matrix = numpy.empty((2*self.nChan,), dtype=numpy.float32)
+				matrix[0::2] = visData.real
+				matrix[1::2] = visData.imag
 			
 				blineList.append(baselineMapped)
 				mList.append(matrix.ravel())
@@ -763,7 +767,7 @@ class IDI(object):
 		nSource = len(nameList)
 
 		# Visibility Data
-		c1 = pyfits.Column(name='FLUX', format='%iD' % len(mList[0]), unit='UNCALIB', 
+		c1 = pyfits.Column(name='FLUX', format='%iD' % (2*self.nChan), unit='UNCALIB', 
 						array=numpy.array(mList, dtype=numpy.float32))
 		# Baseline number (first*256+second)
 		c2 = pyfits.Column(name='BASELINE', format='1J', 
