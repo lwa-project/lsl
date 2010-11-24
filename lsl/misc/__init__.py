@@ -2,3 +2,5 @@
 
 import mathutil
 import geodesy
+
+import difxconfig

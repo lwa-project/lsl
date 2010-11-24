@@ -18,10 +18,11 @@ from lsl.common import dp as dp_common
 from lsl.common.stations import geo2ecef
 from lsl.correlator import uvUtils
 from lsl.misc import mathutil
+from lsl.misc import geodesy
 from lsl.common.warns import warnExperimental
 
-__version__ = '0.1'
-__revision__ = '$ Revision: 8 $'
+__version__ = '0.2'
+__revision__ = '$ Revision: 11 $'
 __all__ = ['IDI', 'StokesCodes', '__version__', '__revision__', '__all__']
 
 
@@ -36,12 +37,12 @@ class IDI(object):
 	class _Antenna(object):
 		"""Holds information describing the location and properties of an antenna."""
 
-		def __init__(self, id, x, y, z):
+		def __init__(self, id, x, y, z, bits=8):
 			self.id = id
 			self.x = x
 			self.y = y
 			self.z = z
-			self.levels = 1
+			self.levels = bits
 			self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': 1.0}
 			self.polB = {'Type': 'Y', 'Angle': 0.0, 'Cal': 1.0}
 
@@ -147,7 +148,7 @@ class IDI(object):
 		freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
 		self.freq.append(freqSetup)
 
-	def setGeometry(self, site, stands):
+	def setGeometry(self, site, stands, bits=8):
 		"""Given a station and an array of stands, set the relevant common observation
 		parameters and add entries to the self.array list."""
 
@@ -170,7 +171,7 @@ class IDI(object):
 		topo2eci = site.getECEFTransform()
 		for i in range(len(stands)):
 			eci = numpy.dot(topo2eci, xyz[i,:])
-			ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2]) )
+			ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
 			if enableMapper:
 				mapper[stands[i]] = i+1
 			else:
@@ -259,6 +260,8 @@ class IDI(object):
 		primary.header.update('INSTRUME', 'LWA-1')
 		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
 		primary.header.update('ORIGIN', 'LSL')
+		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
+		primary.header.update('FXCORVER', '1', 'Correlator version')
 		primary.header.update('LWATYPE', 'IDI-ZA', 'LWA FITS file type')
 		primary.header.update('LWAMAJV', IDIVersion[0], 'LWA FITS file format major version')
 		primary.header.update('LWAMINV', IDIVersion[1], 'LWA FITS file format minor version')
@@ -329,10 +332,16 @@ class IDI(object):
 		deg = ds * 15.0      
 		ag.header.update('DEGPDY', 360.0 + deg, 'rotation rate of the earth (deg/day)')
 		
-		ag.header.update('UT1UTC', 0.0, 'difference UT1 - UTC for reference date')
+		refDate = self.refTime2AstroDate()
+		refMJD = refDate.to_jd() - astro.MJD_OFFSET
+		eop = geodesy.getEOP(refMJD)
+		if eop is None:
+			eop = [geodesy.EOP(mjd=refMJD)]
+
+		ag.header.update('UT1UTC', eop[0].utDiff, 'difference UT1 - UTC for reference date')
 		ag.header.update('IATUTC', astro.leap_secs(utc0), 'TAI - UTC for reference date')
-		ag.header.update('POLARX', 0.0)
-		ag.header.update('POLARY', 0.0)
+		ag.header.update('POLARX', eop[0].x)
+		ag.header.update('POLARY', eop[0].y)
 
 		ag.header.update('ARRAYX', self.array[0]['center'][0], 'array ECI X coordinate (m)')
 		ag.header.update('ARRAYY', self.array[0]['center'][1], 'array ECI Y coordinate (m)')
@@ -473,7 +482,7 @@ class IDI(object):
 						array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
 		# Imagniary part of the bandpass
 		c11 = pyfits.Column(name='BIMAG_1', format='%dE' % self.nChan,
-						array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
+						array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
 
 		colDefs = pyfits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
 							c11])
@@ -745,10 +754,7 @@ class IDI(object):
 					uvw = numpy.zeros((3,))
 
 				# Load the data into a matrix that splits the real and imaginary parts out
-				##matrix = numpy.empty((self.nChan, 2), dtype=numpy.float32)
-				##matrix[:,0] = visData.real
-				##matrix[:,1] = visData.imag
-				matrix = numpy.empty((2*self.nChan,), dtype=numpy.float32)
+				matrix = numpy.zeros((2*self.nChan,), dtype=numpy.float32)
 				matrix[0::2] = visData.real
 				matrix[1::2] = visData.imag
 			
@@ -766,7 +772,7 @@ class IDI(object):
 		nSource = len(nameList)
 
 		# Visibility Data
-		c1 = pyfits.Column(name='FLUX', format='%iD' % (2*self.nChan), unit='UNCALIB', 
+		c1 = pyfits.Column(name='FLUX', format='%iE' % (2*self.nChan), unit='UNCALIB', 
 						array=numpy.array(mList, dtype=numpy.float32))
 		# Baseline number (first*256+second)
 		c2 = pyfits.Column(name='BASELINE', format='1J', 
@@ -805,8 +811,8 @@ class IDI(object):
 		c13 = pyfits.Column(name='WEIGHT', format='%iE' % self.nChan, 
 						array=numpy.ones((nBaseline, self.nChan), dtype=numpy.float32))
 		
-		colDefs = pyfits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
-							c11, c12, c13])
+		colDefs = pyfits.ColDefs([c6, c7, c8, c3, c4, c2, c11, c9, c10, c5, 
+						c13, c12, c1])
 
 		# Create the UV Data table and update its header
 		uv = pyfits.new_table(colDefs)
@@ -814,7 +820,7 @@ class IDI(object):
 
 		uv.header.update('NMATRIX', 1, 'number of UV data matricies')
 		uv.header.update('MAXIS', 6, 'number of UV data matrix axes')
-		uv.header.update('TMATX1', True, 'axis 1 contains UV matrix')
+		uv.header.update('TMATX13', True, 'axis 13 contains UV matrix')
 		
 		uv.header.update('MAXIS1', 2, 'number of pixels in COMPLEX axis')
 		uv.header.update('CTYPE1', 'COMPLEX', 'axis 1 is COMPLEX axis')
@@ -929,3 +935,4 @@ class IDI(object):
 
 		# Return
 		return (mapper, inverseMapper)
+

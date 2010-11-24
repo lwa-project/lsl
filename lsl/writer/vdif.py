@@ -9,7 +9,6 @@ import struct
 
 from lsl.common import stations as lwa_common
 from lsl.common import dp as dp_common
-from lsl.reader import tbw
 import lsl.astro as astro
 
 __version__ = '0.1'
@@ -152,6 +151,9 @@ class Frame(object):
 
 
 if __name__ == "__main__":
+	from lsl.reader import tbw as tbw
+	from lsl.reader import errors as errors
+
 	fh = open('/home/jayce/TBW Data/multiTBW_Sept_19_8pm.dat', 'rb')
 	
 	# Make sure that the data is TBW and determine the data length
