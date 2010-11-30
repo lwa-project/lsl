@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """Module of methods for visualizing visibility data.  Routines include:
-* plots of visibility amplitude as a function of uv radius
-* plots of phase for specific baselines as a function of time
-* plots of closure phase for three antennae as a function of time
+  plots of visibility amplitude as a function of uv radius
+  plots of phase for specific baselines as a function of time
+  plots of closure phase for three antennae as a function of time
 In addition, most of the functions have the ability to compare the observed 
 data with simulations."""
 

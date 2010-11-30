@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains the warning classes for the DRX, TBN, and TBW readers."""
+"""Module that contains the warning classes for the DRX, TBN, and TBW 
+readers.  The two warnings defined here are:
+  warnDeprecated and
+  warnExperimental.
+These are for warning users about deprecated functions and experimental 
+features, respectively."""
 
 import sys
 import warnings as sysWarnings
 import linecache
 
-
 __version__ = '0.2'
-__revision__ = '$ Revision: 2 $'
+__revision__ = '$ Revision: 4 $'
 __all__ = ['warnDeprecated', 'warnExperimental', '__version__', '__revision__', '__all__']
 
 

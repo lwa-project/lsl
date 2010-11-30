@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
+
+"""Small collection of robust statistical estimators based on functions from
+the AstroIDL User's Library.  Function included are:
+  robustMean - robust estimator of the mean of a data set and
+  robustSigma - robust estimator of the standard deviation of a data set."""
+
 import math
 import numpy
 
-epsilon = 1.0e-20
+__version__ = '0.1'
+__revision__ = '$ Revision: 2 $'
+__all__ = ['robustMean', 'robustSigma', '__version__', '__revision__', '__all__']
+
+__epsilon = 1.0e-20
 
 def robustMean(inputData, Cut=3.0):
 	"""Robust estimator of the mean of a data set.  Based on the 
@@ -12,7 +22,7 @@ def robustMean(inputData, Cut=3.0):
 
 	data0 = numpy.median(data)
 	maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
-	if maxAbsDev < epsilon:
+	if maxAbsDev < __epsilon:
 		maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
 
 	cutOff = Cut*maxAbsDev
@@ -55,9 +65,9 @@ def robustSigma(inputData):
 
 	data0 = numpy.median(data)
 	maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
-	if maxAbsDev < epsilon:
+	if maxAbsDev < __epsilon:
 		maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
-	if maxAbsDev < epsilon:
+	if maxAbsDev < __epsilon:
 		sigma = 0.0
 		return sigma
 

@@ -2,12 +2,12 @@
 
 """Module that stores various functions that are needed for computing UV 
 coverage and time delays.  The functions in the module:
-* return the x, y, and z coordinates of a stand or array of stands
-* return the relative x, y, and z offsets between two stands
-* return the cable delays as a function of frequency for a stand
-* compute the u, v, and w coordinates of all baselines defined by an array 
+  return the x, y, and z coordinates of a stand or array of stands
+  return the relative x, y, and z offsets between two stands
+  return the cable delays as a function of frequency for a stand
+  compute the u, v, and w coordinates of all baselines defined by an array 
    of stands
-* compute the track through the uv-plane of a collection of baselines as 
+  compute the track through the uv-plane of a collection of baselines as 
    the Earth rotates.
 """
 

@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+"""Module for seting up DiFX to work with TBW and TBN data.  This includes:
+  writing the various configuration files needed by DiFX and
+  converting the TBW/TBN data into VDIF format.
+
+This module is under development and is not automatically loaded as part 
+of LSL."""
+
 import sys
 import numpy
 try:
@@ -16,6 +23,9 @@ from lsl.reader import tbn as tbn
 from lsl.reader import errors as errors
 from lsl.writer import vdif
 
+__version__ = '0.1'
+__revision__ = '$ Revision: 1 $'
+__all__ = ['ConfigError', 'DiFXConfig', '__version__', '__revision__', '__all__']
 
 class ConfigError(Exception):
 	"""Base exception class for dealing with errors in creating the DiFX 

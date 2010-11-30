@@ -1,12 +1,40 @@
 # -*- coding: utf-8 -*-
 
-"""Module for generating simulated arrays and data.  The chief functions of 
-this module are:
-buildSimArray - given a station object, a list of stands, and a list of 
-                frequencies, build a AIPY AntennaArray.  This module can 
-                also generate AntennaArray objects with positional erros by
-                setting the 'PosError' keyword to a positive value
-buildSimData - """
+"""Module for generating simulated arrays and visilibity data.  The chief 
+functions of this module are:
+  buildSimArray - given a station object, a list of stands, and a list of 
+                  frequencies, build a AIPY AntennaArray.  This module can 
+                  also generate AntennaArray objects with positional errors by
+                  setting the 'PosError' keyword to a positive value
+  buildSimData - given a SimArray and a list of aipy.src sources, build up a 
+                 collection of visibilities for a given set of Julian dates
+  scaleData    - given a dictionary of simulated visibilities from buildSimData,
+                 apply antenna-based gains and delays to the visibilities
+  shiftData    - given a dictionary of simulated visibilities from buildSimData,
+                 shift the uvw coordinates of the visibilities.  Note:  this 
+                 only changes the uvw values and does not phase-shift the data
+
+The format of the data dictionaries mentioned above is:
+  primary keys:
+    freq - list of frequencies used in Hz
+    isMasked - whether or not the visibility data have been masked 
+               (numpy.compress'd)
+    bls - list of baselines in (stand 1, stand2) format
+    uvw - list of uvw coordinates as 3-element numpy arrays
+    vis - list of visibility numpy arrays
+    wgt - list of weight arrays with the same length as the visilitity arrays
+    msk - list of mask arrays used for the data.  1 = masked, 0 = valid
+    jd  - list of Julian dates associated with each list element
+  secondary keys:
+    The bls, uvw, vis, wgt, msk, and jd primary keys also have secondary keys
+    that indicate which polarizations are being stored.  Valid keys are:
+      xx
+      yy
+      xy
+      yx
+
+In addition to simulation functions, this module includes buildGriddedImage
+which takes a dictionary of visibilities and returns and aipy.im.ImgW object."""
 
 import os
 import sys
@@ -19,8 +47,8 @@ from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 7 $'
-__all__ = ['srcs', 'buildSimArray', 'getBeamShape', 'buildSimData', 'buildSimSignals', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+__revision__ = '$ Revision: 9 $'
+__all__ = ['srcs', 'buildSimArray', 'getBeamShape', 'buildSimData', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
 # A dictionary of bright sources in the sky to use for simulations
@@ -48,7 +76,7 @@ def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False)
 	# If the beam Alm coefficient file is present, build a more relatistc beam 
 	# response.  Otherwise, assume a flat beam
 	if not ForceFlat and os.path.exists(os.path.join(dataPath, 'beam-shape.npz')):
-		dd = n.load('beam_shape.npz')
+		dd = n.load(os.path.join(dataPath, 'beam-shape.npz'))
 		coeffs = dd['coeffs']
 
 		deg = coeffs.shape[0]-1

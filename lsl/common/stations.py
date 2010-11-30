@@ -1,6 +1,19 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains common values about the LWA station sites."""
+"""Module that contains information about the LWA station sites.  This 
+information includes
+  latitude, 
+  longitude, 
+  elevation, and 
+  stand list.
+The information for each site is stored as a LWAStation object.  This object 
+has a variety of attributes for dealing with station-related parameters such
+as creating an ephem.Observer object for the station, getting the station's
+geocentric location, and creating a geocentric coordinate transformation 
+matrix for the station's baselines.
+
+Currently, data exists for the following LWA stations:
+  lwa1 - LWA 1 near the VLA center"""
 
 import math
 import ephem
@@ -8,8 +21,8 @@ import numpy
 
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 9 $'
-__all__ = ['geo2ecef', 'LWAStation', 'lwa1']
+__revision__ = '$ Revision: 10 $'
+__all__ = ['geo2ecef', 'LWAStation', 'lwa1', '__version__', '__revision__', '__all__']
 
 
 def geo2ecef(lat, lon, elev):
@@ -92,16 +105,19 @@ class lwa1(LWAStation):
 		oo = self.getObserver(date=date, JD=JD)
 		fDate = float(oo.date)
 
-		if fDate >= 40475.0:
+		if fDate >= ephem.date('2010/11/23'):
+			# Current as of 11/30/2010
+			stands = numpy.array([206, 183, 174, 153, 38, 34, 181, 67, 80, 14, 118, 254, 246, 9, 168, 69, 258, 4, 205, 158])
+		elif fDate >= ephem.Date('2010/10/29'):
 			# Current as of 10/29/2010 for both TBN and TBW
 			stands = numpy.array([258, 4, 158, 205, 246, 9, 69, 168, 80, 14, 254, 118, 38, 34, 67, 181, 206, 183, 153, 174])
-		elif fDate >= 40435.0:
+		elif fDate >= ephem.Date('2010/09/15'):
 			# Current as of 9/15/2010
 			# Note:  This is for the input reversed TBW data.  Any TBN data should have 
 			# the stand numbers exchanged in pairs.  For example, TBN data would be:
 			# 258, 4, 158, 205, etc.
 			stands = numpy.array([4, 258, 205, 158, 9, 246, 168, 69, 14, 80, 118, 254, 34, 38, 181, 67, 183, 206, 174, 153])
-		elif fDate >= 40414.0:
+		elif fDate >= ephem.Date('2010/08/25'):
 			# Between 8/25/2010 and 9/15/2010
 			stands = numpy.array([214, 212, 228, 206, 127, 157, 187, 208, 123, 125])
 		else:

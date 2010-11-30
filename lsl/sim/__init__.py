@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sim
+import vis
 import nec_util
 
 import errors

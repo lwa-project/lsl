@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-"""Module to write VDIF frames."""
+"""Module to write VDIF frames.  The implementation of this module is similar
+to that of lsl.sim.tbw in that the primary element defined in this module is
+a Frame object which as attribute functions that can create a numpy 
+representation of the raw frame and write that raw frame to an open file-
+handle."""
 
 import math
 import numpy
@@ -12,17 +16,11 @@ from lsl.common import dp as dp_common
 import lsl.astro as astro
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 3 $'
+__revision__ = '$ Revision: 4 $'
 __all__ = ['Frame', '__version__', '__revision__', '__all__']
 
 vdifEpoch = ephem.Date('2000/01/01 00:00:00.00')
 unixEpoch = ephem.Date('1970/01/01 00:00:00.00')
-
-
-def log2(numb):
-	"""Calculate the log-base 2 of a number or array."""
-  
-	return numpy.log(numb) / numpy.log(2.0)
 
 
 class Frame(object):
@@ -148,54 +146,3 @@ class Frame(object):
 		
 		rawFrame = self.createRawFrame()
 		rawFrame.tofile(fh)
-
-
-if __name__ == "__main__":
-	from lsl.reader import tbw as tbw
-	from lsl.reader import errors as errors
-
-	fh = open('/home/jayce/TBW Data/multiTBW_Sept_19_8pm.dat', 'rb')
-	
-	# Make sure that the data is TBW and determine the data length
-	test = tbw.readFrame(fh)
-	print("TBW Data:  %s" % test.header.isTBW())
-	if not test.header.isTBW():
-		raise errors.notTBWError()
-	print("Data Length: %i bits" % test.getDataBits())
-	fh.seek(0)
-
-	# Create the output files
-	ofh = []
-	for i in range(20):
-		ofh.append(open('tbw-frame-%i.vdif' % (i+1), 'wb'))
-
-	# Read in the data and add it to the VDIF files created above
-	for i in range(300000):
-		# Read in the next frame and anticipate any problems that could occur
-		try:
-			cFrame = tbw.readFrame(fh, Verbose=False)
-		except errors.eofError:
-			break
-		except errors.syncError:
-			#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
-			syncCount = syncCount + 1
-			continue
-		except errors.numpyError:
-			break
-
-		stand = cFrame.header.parseID()
-		if cFrame.header.frameCount % 10000 == 0:
-			print("%2i  %14i  %6.3f  %5i  %5i" % (stand, cFrame.data.timeTag, cFrame.getTime(), cFrame.header.frameCount, cFrame.header.secondsCount))
-		
-		frame1 = Frame(stand=2*(stand-1)+1, time=cFrame.getTime(), bits=cFrame.getDataBits(), 
-						sampleRate = dp_common.fS, data=cFrame.data.xy[0,:])
-		frame2 = Frame(stand=2*(stand-1)+2, time=cFrame.getTime(), bits=cFrame.getDataBits(), 
-						sampleRate = dp_common.fS, data=cFrame.data.xy[1,:])
-		
-		frame1.writeRawFrame(ofh[2*(stand-1)+0])
-		frame2.writeRawFrame(ofh[2*(stand-1)+1])
-	fh.close()
-	
-	# Close all of the constituent VDIF files.
-	for fh in ofh:
-		fh.close()

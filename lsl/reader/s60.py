@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 
-"""Python module for reading data in from S60 files."""
+"""Python module for reading data in from S60 files.  Unlike TBW or TBN data, 
+the S60 data consists of only packed binary values.  Thus, the functions for 
+reading in the S60 data do not return objects describing each frame but rather
+return numpy arrays of the data.  The two reading functions defined are:
+  readFrame - return a complex array containing the data from one UDP packet
+              (734 samples)
+  readChunk - return a complex array containing a specified number of samples,
+              i.e., the `chunk' size.
+
+In addition to the two readers, there is also a function, getBandpassModel, 
+which reads in Joe Craig's model of the S60 bandpass."""
 
 import numpy
 
@@ -8,7 +18,7 @@ from lsl.common.paths import data as dataPath
 from errors import numpyError
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 1 $'
+__revision__ = '$ Revision: 2 $'
 __all__ = ['readFrame', 'readChunk', 'getBandpassModel', 'FrameSize', 'SampleRate', '__version__', '__revision__', '__all__']
 
 # Packet length seems to describe how many bytes of data are in 

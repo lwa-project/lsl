@@ -2,8 +2,8 @@
 
 """Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main functions in this module are:
-* calcSpectra - calculate power spectra for a collection of signals
-* FXCorrelator - calculate cross power spectra for a collection of signals
+  calcSpectra - calculate power spectra for a collection of signals
+  FXCorrelator - calculate cross power spectra for a collection of signals
 Each function is set up to process the signals in parallel using the 
 processing module and accepts a variety of options controlling the processing
 of the data, including various window functions and time averaging."""

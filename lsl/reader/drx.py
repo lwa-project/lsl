@@ -1,6 +1,35 @@
 # -*- coding: utf-8 -*-
 
-"""Python module to read in DRX data."""
+"""Python module to read in DRX data.  This module defines the following 
+classes for storing the DRX data found in a file:
+  Frame          - object that contains all data associated with a particular DRX
+                   frame.  The primary constituents of each frame are:
+                     FrameHeader - the DRX frame header object and
+                     FrameData   - the DRX frame data object.
+                   Combined, these two objects contain all of the information found in
+                   the original DRX frame.
+  ObservingBlock - object that stores a collection of Frames for all beams/
+                   tunnings/polarizations for a particular time.
+
+The functions defined in this module fall into two class:
+  1)  convert a frame in a file to a Frame object and
+  2)  describe the format of the data in the file.
+
+For reading in data, use the readFrame function.  It takes a python file-
+handle as an input and returns a fully-filled Frame object.  The readBlock
+function reads in a (user-defined) number of DRX frames and returns a 
+ObservingBlock object.
+
+For describing the format of data in the file, two function are provided:
+  getBeamCount -    read in the first few frames of an open file handle and 
+                    return how many beams are present in the file.
+  getFramesPerObs - read in the first several frames to see how many frames
+                    (tunnings/polarizations) are associated with each beam.
+
+Finally, there are also two experimental functions defined in this file for 
+averaging DRX observations.  averageObservations performs a straight channel-
+by-channel average of a collection of DRX frames, which averageObservations2
+allows for both temporal and spatial averaging."""
 
 import os
 import sys

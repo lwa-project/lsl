@@ -206,7 +206,6 @@ class IDI(object):
 		self.__writeAntenna()
 		self.__writeBandpass()
 		self.__writeSource()
-		self.__writeStars()
 		self.__writeData()
 
 	def __addCommonKeywords(self, hdr, name, revision):
@@ -255,6 +254,8 @@ class IDI(object):
 		primary.header.update('NAXIS', 0, 'indicates IDI file')
 		primary.header.update('EXTEND', True, 'indicates IDI file')
 		primary.header.update('GROUPS', True, 'indicates IDI file')
+		primary.header.update('GCOUNT', 0)
+		primary.header.update('PCOUNT', 0)
 		primary.header.update('OBJECT', 'BINARYTB')
 		primary.header.update('TELESCOP', 'LWA-1')
 		primary.header.update('INSTRUME', 'LWA-1')
@@ -383,7 +384,7 @@ class IDI(object):
 
 		# Create the table and header
 		fq = pyfits.new_table(colDefs)
-		self.__addCommonKeywords(fq.header, 'FREQUENCY', 2)
+		self.__addCommonKeywords(fq.header, 'FREQUENCY', 1)
 		
 		# Add the table to the file
 		fq.name = 'FREQUENCY'
@@ -409,7 +410,7 @@ class IDI(object):
 		c5 = pyfits.Column(name='ARRAY', format='1J', 
 						array=numpy.ones((self.nAnt,), dtype=numpy.int32))
 		# Frequency setup number
-		c6 = pyfits.Column(name='FREQID', format='IJ', 
+		c6 = pyfits.Column(name='FREQID', format='1J', 
 						array=(numpy.zeros((self.nAnt,), dtype=numpy.int32) + self.freq[0].id))
 		# Number of digitizer levels
 		c7 = pyfits.Column(name='NO_LEVELS', format='1J', 
@@ -419,19 +420,19 @@ class IDI(object):
 						array=numpy.array([ant.polA['Type'] for ant in self.array[0]['ants']]))
 		# Feed A orientation in degrees
 		c9 = pyfits.Column(name='POLAA', format='1E', 
-						array=numpy.array([ant.polA['Angle'] for ant in self.array[0]['ants']], dtype=numpy.int32))
+						array=numpy.array([ant.polA['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 		# Feed A polarization parameters
 		c10 = pyfits.Column(name='POLCALA', format='1E', 
-						array=numpy.array([ant.polA['Cal'] for ant in self.array[0]['ants']], dtype=numpy.int32))
+						array=numpy.array([ant.polA['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 		# Feed B polarization label
 		c11 = pyfits.Column(name='POLTYB', format='A1', 
 						array=numpy.array([ant.polB['Type'] for ant in self.array[0]['ants']]))
 		# Feed B orientation in degrees
 		c12 = pyfits.Column(name='POLAB', format='1E', 
-						array=numpy.array([ant.polB['Angle'] for ant in self.array[0]['ants']], dtype=numpy.int32))
+						array=numpy.array([ant.polB['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 		# Feed B polarization parameters
 		c13 = pyfits.Column(name='POLCALB', format='1E', 
-						array=numpy.array([ant.polB['Cal'] for ant in self.array[0]['ants']], dtype=numpy.int32))
+						array=numpy.array([ant.polB['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 
 		colDefs = pyfits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
 							c11, c12, c13])
@@ -441,7 +442,7 @@ class IDI(object):
 		self.__addCommonKeywords(an.header, 'ANTENNA', 1)
 
 		an.header.update('NOPCAL', 0, 'number of polarization parameters')
-		an.header.update('POLTYPE', 'APPROX', 'polarization parameterization')
+		an.header.update('POLTYPE', 'X-Y LIN', 'polarization parameterization')
 		
 		an.name = 'ANTENNA'
 		self.FITS.append(an)
@@ -458,7 +459,7 @@ class IDI(object):
 						array=(2*numpy.ones((self.nAnt,), dtype=numpy.float32)))
 		# Source ID
 		c3 = pyfits.Column(name='SOURCE_ID', format='1J', 
-						array=numpy.ones((self.nAnt,), dtype=numpy.int32))
+						array=numpy.zeros((self.nAnt,), dtype=numpy.int32))
 		# Antenna number
 		c4 = pyfits.Column(name='ANTENNA_NO', format='1J', 
 						array=self.FITS['ANTENNA'].data.field('ANTENNA_NO'))
@@ -466,54 +467,42 @@ class IDI(object):
 		c5 = pyfits.Column(name='ARRAY', format='1J', 
 						array=numpy.ones((self.nAnt,), dtype=numpy.int32))
 		# Frequency setup number
-		c6 = pyfits.Column(name='FREQID', format='IJ',
+		c6 = pyfits.Column(name='FREQID', format='1J',
 						array=(numpy.zeros((self.nAnt,), dtype=numpy.int32) + self.freq[0].id))
 		# Bandwidth in Hz
 		c7 = pyfits.Column(name='BANDWIDTH', unit='HZ', format='1E',
 						array=(numpy.zeros((self.nAnt,), dtype=numpy.float32)+self.freq[0].totalBW))
 		# Band frequency in Hz
 		c8 = pyfits.Column(name='BAND_FREQ', unit='HZ', format='1D',
-						array=(numpy.zeros((self.nAnt,), dtype=numpy.float32)+self.freq[0].bandFreq))
-		# Referance antenna number
+						array=(numpy.zeros((self.nAnt,), dtype=numpy.float64)+self.freq[0].bandFreq))
+		# Referance antenna number (pol. 1)
 		c9 = pyfits.Column(name='REFANT_1', format='1J',
 						array=numpy.ones((self.nAnt,), dtype=numpy.int32))
-		# Real part of the bandpass
+		# Real part of the bandpass (pol. 1)
 		c10 = pyfits.Column(name='BREAL_1', format='%dE' % self.nChan,
 						array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
-		# Imagniary part of the bandpass
+		# Imagniary part of the bandpass (pol. 1)
 		c11 = pyfits.Column(name='BIMAG_1', format='%dE' % self.nChan,
+						array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
+		# Referance antenna number (pol. 2)
+		c12 = pyfits.Column(name='REFANT_2', format='1J',
+						array=numpy.ones((self.nAnt,), dtype=numpy.int32))
+		# Real part of the bandpass (pol. 2)
+		c13 = pyfits.Column(name='BREAL_2', format='%dE' % self.nChan,
 						array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
+		# Imagniary part of the bandpass (pol. 2)
+		c14 = pyfits.Column(name='BIMAG_2', format='%dE' % self.nChan,
+						array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
 
 		colDefs = pyfits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
-							c11])
+							c11, c12, c13, c14])
 
 		# Create the Bandpass table and update its header
 		bp = pyfits.new_table(colDefs)
 		self.__addCommonKeywords(bp.header, 'BANDPASS', 1)
 
-		# Figure out how many polarization are present.  First, reverse the 
-		# StokesCodes dictionary so we can convert codes to names.  Second, go 
-		# through all of the codes in self.stokes and look at them.  The list 
-		# of polarizations used goes into pols.
-		codes = {}
-		for key in list(StokesCodes.keys()):
-			codes[StokesCodes[key]] = key
-		pols = []
-		for sp in self.stokes:
-			name = codes[sp]
-			if len(name) == 2:
-				part1 = name[0]
-				part2 = name[1]
-			else:
-				part1 = name
-				part2 = name
-			if part1 not in pols:
-				pols.append(part1)
-			if part2 not in pols:
-				pol.append(part2)
-
 		bp.header.update('NO_ANT', self.nAnt)
-		bp.header.update('NO_POL', len(pols))
+		bp.header.update('NO_POL', 2)
 		bp.header.update('NO_BACH', self.nChan)
 		bp.header.update('STRT_CHN', self.refPix)
 
@@ -593,47 +582,49 @@ class IDI(object):
 		# Frequency offset in Hz
 		c11 = pyfits.Column(name='FREQOFF', format='1E', 
 						array=numpy.zeros((nSource,), dtype=numpy.float32))
-		# Mean equinox
-		c12 = pyfits.Column(name='EPOCH', format='1D', 
+		# Mean equinox and epoch
+		c12 = pyfits.Column(name='EQUINOX', format='A8',
+						array=numpy.array(('J2000',)).repeat(nSource))
+		c13 = pyfits.Column(name='EPOCH', format='1D', 
 						array=numpy.zeros((nSource,), dtype=numpy.float64) + 2000.0)
 		# Appearrent right ascension in degrees
-		c13 = pyfits.Column(name='RAAPP', format='1D', 
+		c14 = pyfits.Column(name='RAAPP', format='1D', 
 						array=numpy.array(raList))
 		# Apparent declination in degrees
-		c14 = pyfits.Column(name='DECAPP', format='1D', 
+		c15 = pyfits.Column(name='DECAPP', format='1D', 
 						array=numpy.array(decList))
 		# Right ascension at mean equinox in degrees
-		c15 = pyfits.Column(name='RAEPO', format='1D', 
+		c16 = pyfits.Column(name='RAEPO', format='1D', 
 						array=numpy.array(raPoList))
 		# Declination at mean equinox in degrees
-		c16 = pyfits.Column(name='DECEPO', format='1D', 
+		c17 = pyfits.Column(name='DECEPO', format='1D', 
 						array=numpy.array(decPoList))
 		# Systemic velocity in m/s
-		c17 = pyfits.Column(name='SYSVEL', format='1D', 
+		c18 = pyfits.Column(name='SYSVEL', format='1D', 
 						array=numpy.zeros((nSource,), dtype=numpy.float64))
 		# Velocity type
-		c18 = pyfits.Column(name='VELTYP', format='A8', 
+		c19 = pyfits.Column(name='VELTYP', format='A8', 
 						array=numpy.array(('GEOCENTR',)).repeat(nSource))
 		# Velocity definition
-		c19 = pyfits.Column(name='VELDEF', format='A8', 
+		c20 = pyfits.Column(name='VELDEF', format='A8', 
 						array=numpy.array(('OPTICAL',)).repeat(nSource))
 		# Line rest frequency in Hz
-		c20 = pyfits.Column(name='RESTFREQ', format='1D', 
+		c21 = pyfits.Column(name='RESTFREQ', format='1D', 
 						array=(numpy.zeros((nSource,), dtype=numpy.float64) + self.refVal))
 		# Proper motion in RA in degrees/day
-		c21 = pyfits.Column(name='PMRA', format='1D', 
+		c22 = pyfits.Column(name='PMRA', format='1D', 
 						array=numpy.zeros((nSource,), dtype=numpy.float64))
 		# Proper motion in Dec in degrees/day
-		c22 = pyfits.Column(name='PMDEC', format='1D', 
+		c23 = pyfits.Column(name='PMDEC', format='1D', 
 						array=numpy.zeros((nSource,), dtype=numpy.float64))
 		# Parallax of source in arc sec.
-		c23 = pyfits.Column(name='PARALLAX', format='1E', 
+		c24 = pyfits.Column(name='PARALLAX', format='1E', 
 						array=numpy.zeros((nSource,), dtype=numpy.float32))
 
 		# Define the collection of columns
 		colDefs = pyfits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
 							c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, 
-							c21, c22, c23])
+							c21, c22, c23, c24])
 
 		# Create the Source table and update its header
 		sr = pyfits.new_table(colDefs)
@@ -641,39 +632,6 @@ class IDI(object):
 		
 		sr.name = 'SOURCE'
 		self.FITS.append(sr)
-		self.FITS.flush()
-
-	def __writeStars(self):
-		"""Define the STARS table (group ?, table ?)."""
-
-		nSource = len(self.FITS['SOURCE'].data.field('SOURCE_ID'))
-
-		sunLngList = []
-		sunLatList = []
-		for dataSet in self.data:
-			utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-			
-			 #get the galactic coordinates of Sun's current position
-			sunGal = astro.get_solar_equ_coords(utc).to_gal(utc)
-			sunLngList.append(sunGal.l)
-			sunLatList.append(sunGal.b)
-        
-		# Source ID number
-		sourceId = pyfits.Column(name = 'SOURCE', format = '1J', 
-							array = numpy.arange(1, nSource + 1, dtype = numpy.int32))
-		# Solar galactic latitude in degrees
-		sunLng = pyfits.Column(name = 'SUNGALL', format = '1D', unit = 'DEGREES',
-							array = numpy.array(sunLngList))
-		# Solar galactic longitude in degrees
-		sunLat = pyfits.Column(name = 'SUNGALB', format = '1D', unit = 'DEGREES',
-							array = numpy.array(sunLatList))
-		
-		# Create the Stars table and update its header
-		st = pyfits.new_table([sourceId, sunLng, sunLat])
-		self.__addCommonKeywords(st.header, 'STARS', 1) 
-
-		st.name = 'STARS'
-		self.FITS.append(st)
 		self.FITS.flush()
 
 	def __writeData(self):
