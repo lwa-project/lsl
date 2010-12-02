@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """Modules to take TBW/TBN time series data and write it to a FITS file composed 
-of binary tables.  The format of TSFITS files is::
+of binary tables.  The format of TSFITS files is:
 
-**PRIMARY HDU**
-  Keywords::
+PRIMARY HDU
+  Keywords:
     * OBJECT - object being observed in this data set, e.g., 'zenith'
     * TELESCOP - telescope used for the observations, e.g., 'LWA-1'
-    * OBSMODE - observation mode used for the data.  Options are::
+    * OBSMODE - observation mode used for the data.  Options are:
         1. TBW
         2. TBN
     * NSTANDS - number of stands found in the file
@@ -16,10 +16,10 @@ of binary tables.  The format of TSFITS files is::
     * GAIN *optional* - TBN gain setting used to acquire the data
     * FREQ *optional* - central frequency in Hz for the TBN observations
 
-**TIME SERIES HDU**
+TIME SERIES HDU
   Binary table that stores the actual observations.  There is one TIME SERIES 
   extionsion per stand in the data.
-  Keywords::
+  Keywords:
     * EXTNAME - extension name of 'TIME SERIES'
     * EXTVER - extension version equal to the order in which the data was 
       added to the FITS file
@@ -27,7 +27,7 @@ of binary tables.  The format of TSFITS files is::
     * DATE-OBS - date of observation for the first sample of the first data 
       row
 
-  Data::
+  Data:
     * DATA - column storing the observations.  For TBW data this consists of 
       400 (12-bit) or 1200 (4-bit) elements per row stored as 16-bit integers.
       For TBN data this consits of 512 elements per row stored as 32-bit 

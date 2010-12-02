@@ -2,8 +2,8 @@
 
 """Small collection of robust statistical estimators based on functions from
 the AstroIDL User's Library.  Function included are:
-  robustMean - robust estimator of the mean of a data set and
-  robustSigma - robust estimator of the standard deviation of a data set."""
+  * robustMean - robust estimator of the mean of a data set and
+  * robustSigma - robust estimator of the standard deviation of a data set."""
 
 import math
 import numpy

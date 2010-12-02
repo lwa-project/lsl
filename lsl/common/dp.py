@@ -2,10 +2,11 @@
 
 """Module that contains common values found DP ICD, revision I.  The values 
 are:
- f_S - Sampleng rate in samples per second, 
- T - Slot duration in seconds, 
- T_2 - Sub-slot duration, and
- N_MAX_UDP - Maximum UDP packet size."""
+  * f_S - Sampleng rate in samples per second
+  * T - Slot duration in seconds
+  * T_2 - Sub-slot duration
+  * N_MAX_UDP - Maximum UDP packet size
+"""
 
 __version__ = '0.2'
 __revision__ = '$ Revision: 5 $'

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 
 """This module stores various functions that are needed for computing UV 
-coverage and time delays.  The functions in the module::
+coverage and time delays.  The functions in the module:
   * return the x, y, and z coordinates of a stand or array of stands
   * return the relative x, y, and z offsets between two stands
   * return the cable delays as a function of frequency for a stand

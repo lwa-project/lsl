@@ -3,7 +3,7 @@
 """This module contains a set of convenience functions to parse the output 
 of NEC2, modify the input (.nec) file, and rerun NEC as necessary.
 NEC2 is the Numerical Electromagnetics Code, developed at LLNL.
-The version of NEC2 this code currently assumes is `here <http://www.physics.otago.ac.nz/research/electronics/nec/index.html)`_.
+The version of NEC2 this code currently assumes is `here <http://www.physics.otago.ac.nz/research/electronics/nec/index.html>`_.
 """
 
 from numpy import *

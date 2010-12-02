@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 
 """Module to set up path information for the LWA Software Library.  Two 
-variables are defined by this module::
+variables are defined by this module:
   * module
   * data
 

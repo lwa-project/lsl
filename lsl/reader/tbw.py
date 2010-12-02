@@ -2,17 +2,17 @@
 
 """Python module to reading in data from both 12-bit and 4-bit TBW files.  
 This module defines the following classes for storing the TBW data found in
-a file::
+a file:
 
-**Frame**
+Frame
   object that contains all data associated with a particular TBW frame.  The 
-  primary consituents of each frame are::
+  primary consituents of each frame are:
     * FrameHeader - the TBW frame header object and
     * FrameData   - the TBW frame data object.  
   Combined, these two objects contain all of the information found in the 
   original TBW frame.
 
-The functions defined in this module fall into two class::
+The functions defined in this module fall into two class:
  1. convert a frame in a file to a Frame object and
  2. describe the format of the data in the file.
 
@@ -20,13 +20,13 @@ For reading in data, use the readFrame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.  readFrame 
 is designed to work with both 4-bit and 12-bit observations.
 
-For describing the format of data in the file, two function are provided::
+For describing the format of data in the file, two function are provided:
 
-**getDataBits**
+getDataBits
   read in the first frame of an open file handle and return whether or not 
   the data is 12 or 4-bit
 
-**getFramesPerObs**
+getFramesPerObs
   read in the first several frames to see how many stands are found in the 
   data.
   .. note::

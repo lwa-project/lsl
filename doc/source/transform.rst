@@ -1,19 +1,26 @@
 Time and Position Transformation
 ================================
 .. versionadded:: 0.2
+.. automodule:: lsl.transform
 
 Time
 ----
-.. automodule:: lsl.transform
-   :members: Time
+.. autoclass:: lsl.transform.Time
+   :members:
 
 Celstial Positions
 ------------------
-.. automodule:: lsl.transform
-   :members: CelestialPosition, PlanetaryPosition, SkyPosition, PointingDirection
+.. autoclass:: lsl.transform.CelestialPosition
+   :members:
+.. autoclass:: lsl.transform.PlanetaryPosition
+   :members:
+.. autoclass:: lsl.transform.SkyPosition
+   :members:
+.. autoclass:: lsl.transform.PointingDirection
+   :members:
 
 Geographic Positions
 --------------------
-.. automodule:: lsl.transform
-   :members: GeographicalPosition
+.. autoclass:: lsl.transform.GeographicalPosition
+   :members:
 

@@ -27,12 +27,14 @@ __all__ = ['basicSignal', '__version__', '__revision__', '__all__']
 
 def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 	"""Generate a collection of frames with a basic test signal for TBW, TBN, 
-	and DRX.  The signals for the three modes are::
+	and DRX.  The signals for the three modes are:
 	
 	TBW
-	    * noise + 40 MHz signal for x-pol.; noise + 60 MHz signal for y-pol.
+	    * noise + 40 MHz signal for x-pol.
+	    * noise + 60 MHz signal for y-pol.
 	      -> odd stands
-	    * noise + 30 MHz signal for x-pol.; noise + 50 MHz signal for ypol.
+	    * noise + 30 MHz signal for x-pol.
+	    * noise + 50 MHz signal for ypol.
 	      -> even stands
 	
 	TBN

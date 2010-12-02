@@ -5,10 +5,10 @@ the S60 data consists of only packed binary values.  Thus, the functions for
 reading in the S60 data do not return objects describing each frame but rather
 return numpy arrays of the data.  The two reading functions defined are:
 
-**readFrame**
+readFrame
   return a complex array containing the data from one UDP packet (734 samples)
 
-**readChunk**
+readChunk
   return a complex array containing a specified number of samples, i.e., the 
   'chunk' size.
 

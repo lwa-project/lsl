@@ -32,6 +32,7 @@ General Utilities
    catalog
    transform
    mathutils
+   robust
    paths
 
 LWA-Specific Utilites

@@ -2,8 +2,9 @@
 
 """Module that contains the warning classes for the DRX, TBN, and TBW 
 readers.  The two warnings defined here are:
-  warnDeprecated and
-  warnExperimental.
+  * warnDeprecated and
+  * warnExperimental.
+
 These are for warning users about deprecated functions and experimental 
 features, respectively."""
 
