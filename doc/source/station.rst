@@ -25,9 +25,9 @@ Cable Model and Delays
 .. autoclass:: lsl.correlator.uvUtils.CableCache
    :members:
 .. autofunction:: lsl.correlator.uvUtils.signalDelay
-.. autocalss:: lsl.correlator.uvUtils.SignalCache
+.. autoclass:: lsl.correlator.uvUtils.SignalCache
+   :show-inheritance:
    :members:
-   :inherited-members:
 
 Exceptions
 ++++++++++

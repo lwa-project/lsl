@@ -2,23 +2,23 @@
 
 """LWA Software Library
 Provided packages:
- * lsl.common
- * lsl.reader
- * lsl.writer
- * lsl.correlator
- * lsl.statistics
- * lsl.sim
- * lsl.misc
+  * lsl.common
+  * lsl.reader
+  * lsl.writer
+  * lsl.correlator
+  * lsl.statistics
+  * lsl.sim
+  * lsl.misc
 
 Provided modules:
- * lsl.astro_array
- * lsl.astro
- * lsl.catalog
- * lsl.skymap
- * lsl.transform
+  * lsl.astro_array
+  * lsl.astro
+  * lsl.catalog
+  * lsl.skymap
+  * lsl.transform
 
 Provided tests:
- * lsl.test()
+  * lsl.test()
 
 See the individual package descriptions for more information.
 """

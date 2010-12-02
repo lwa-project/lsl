@@ -2,10 +2,12 @@
 
 """Module to set up path information for the LWA Software Library.  Two 
 variables are defined by this module:  
-  module and
-  data.  
-`module' specifies the absolute path to the module and `data' the abs. 
-path to the data directory where data files are stored."""
+  * module
+  * data
+
+'module' specifies the absolute path to the module and 'data' the abs. 
+path to the data directory where data files are stored.
+"""
 
 import os
 import imp

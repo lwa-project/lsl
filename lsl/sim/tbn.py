@@ -120,7 +120,7 @@ class SimFrame(tbn.Frame):
 	
 	def isValid(self, raiseErrors=False):
 		"""Check if simulated TBN frame is valid or not.  Valid frames return 
-		True and invalid frames False.  If the `raiseErrors' keyword is set, 
+		True and invalid frames False.  If the 'raiseErrors' keyword is set, 
 		isValid raises an error when a problem is encountered."""
 
 		# Make sure we have the latest values

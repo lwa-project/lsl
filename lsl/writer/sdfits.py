@@ -14,7 +14,7 @@ from lsl.correlator import fx as correlate
 
 __version__ = '0.3'
 __revision__ = '$ Revision: 15 $'
-__all__ = ['SDFITS', 'TBW', 'TBN', 'writeSDFITS', '__version__', '__revision__', '__all__']
+__all__ = ['SDFITS', 'TBW', 'TBN', 'DRX', '__version__', '__revision__', '__all__']
 
 
 class SDFITS(object):

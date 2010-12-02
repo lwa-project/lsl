@@ -21,7 +21,7 @@ import uvUtils
 
 __version__ = '0.2'
 __revision__ = '$ Revision: 8 $'
-__all__ = ['blackmanWindow', 'sincWindow', 'polyphaseFilter', 'calcSpectrum', 'calcSpectra', 'correlate', 'FXcorrelator', '__version__', '__revision__', '__all__']
+__all__ = ['blackmanWindow', 'sincWindow', 'polyphaseFilter', 'calcSpectrum', 'calcSpectra', 'correlate', 'FXCorrelator', '__version__', '__revision__', '__all__']
 
 
 def blackmanWindow(length):

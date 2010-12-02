@@ -20,8 +20,8 @@ def regrid(x, y, newx, allow_extrapolation = False, method = 'spline'):
 	"""Regrid data from x,y onto newx. If allow_extrapolation is True,
 	extrapolation is attempted if the method supports it.  Supported
 	methods are:
-		linear
-		spline
+	  * linear
+	  * spline
 	Use of this function may require the scipy extension package."""
 	
 	if method == 'linear':
@@ -95,24 +95,22 @@ def smooth(x,window_len=10,window='hanning'):
 	in the begining and end part of the output signal.
 	
 	input:
-		x: the input signal 
-		window_len: the dimension of the smoothing window
-		window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-			flat window will produce a moving average smoothing.
+	  * x: the input signal 
+	  * window_len: the dimension of the smoothing window
+	  * window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+	    flat window will produce a moving average smoothing.
 
 	output:
-		the smoothed signal
+	  * the smoothed signal
 		
 	example:
-
-	t=linspace(-2,2,0.1)
-	x=sin(t)+randn(len(t))*0.1
-	y=smooth(x)
+	>>> t=linspace(-2,2,0.1)
+	>>> x=sin(t)+randn(len(t))*0.1
+	>>> y=smooth(x)
 	
-	see also: 
-	
-	numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
-	scipy.signal.lfilter
+	.. seealso:: 
+		numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
+		scipy.signal.lfilter
 	
 	TODO: the window parameter could be the window itself if an array instead of a string"""
 

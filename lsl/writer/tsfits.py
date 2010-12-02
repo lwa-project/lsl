@@ -14,7 +14,7 @@ of binary tables.  The format of TSFITS files is:
     * TBWBITS *optional* - how many bits are used by the TBW data (4 or 12)
     * FILTER *optional* - TBN filter code used to acquire the data
     * GAIN *optional* - TBN gain setting used to acquire the data
-    * FREQ *optional* - central frequency in Hz for the TBN observations.
+    * FREQ *optional* - central frequency in Hz for the TBN observations
 
 **TIME SERIES HDU**
   Binary table that stores the actual observations.  There is one TIME SERIES 

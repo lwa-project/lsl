@@ -6,7 +6,7 @@
  * drx
  * s60
 
-A ring buffer for re-ordering TBN/DRX data is included in the `buffer'
+A ring buffer for re-ordering TBN/DRX data is included in the 'buffer'
 module."""
 
 import errors

@@ -2,9 +2,16 @@
 
 """Module that stores various useful constants in one convenient location.
 The constants defined in this file are:
-  c       - the speed of light in m/s, 
-  deg2rad - the conversion factor for degrees to radians, and 
-  tpi     - two * pi * sqrt(-1)."""
+
+c
+  the speed of light in m/s
+
+deg2rad
+  the conversion factor for degrees to radians
+
+tpi
+  two * pi * sqrt(-1)
+"""
 
 import math
 

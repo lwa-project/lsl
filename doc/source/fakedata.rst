@@ -9,20 +9,20 @@ Writers
 TBW
 +++
 .. automodule:: lsl.sim.tbw
+   :show-inheritance:
    :members:
-   :inherited-members:
 
 TBN
 +++
 .. automodule:: lsl.sim.tbn
+   :show-inheritance:
    :members:
-   :inherited-members:
 
 DRX
 +++
 .. automodule:: lsl.sim.drx
+   :show-inheritance:
    :members:
-   :inherited-members:
 
 Simulators
 ----------
@@ -31,6 +31,7 @@ Digitial Processor Data
 +++++++++++++++++++++++
 .. versionadded:: 0.3
 .. automodule:: lsl.sim.dp
+   :members:
 
 Visibility Data
 +++++++++++++++

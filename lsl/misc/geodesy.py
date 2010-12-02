@@ -25,14 +25,15 @@ class EOP(object):
 	"""Object for storing the geodetic parameters relevant for DiFX input files:
 	  * mjd - modified Julian Date of the measurement/prediction
 	  * x - difference between the celestial ephemeric pole (CEP) and the 
-	        international reference pole (IRP) in the direction of the IERS
-	        meridian [arc seconds]
+	    international reference pole (IRP) in the direction of the IERS
+	    meridian [arc seconds]
 	  * y - difference between the CEP and IRP in the direction of 90 degrees 
-	        west longitude [arc seconds]
+	    west longitude [arc seconds]
 	  * UT1-UTC - difference between rotation angle about the pole and UTC
-	              [seconds]
+	    [seconds]
 	  * type - whether the values for the given MJD are observed (final/IERS) or
-	           predicted."""
+	    predicted.
+	"""
 
 	def __init__(self, mjd=0.0, x=0.0, y=0.0, utDiff=0.0, type='final'):
 		self.mjd = mjd

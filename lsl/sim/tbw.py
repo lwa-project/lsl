@@ -138,7 +138,7 @@ class SimFrame(tbw.Frame):
 	
 	def isValid(self, raiseErrors=False):
 		"""Check if simulated TBW frame is valid or not.  Valid frames return 
-		True and invalid frames False.  If the `raiseErrors' keyword is set, 
+		True and invalid frames False.  If the 'raiseErrors' keyword is set, 
 		isValid() raises an error when a problem with the frame structure is 
 		encountered."""
 
