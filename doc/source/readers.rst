@@ -21,3 +21,8 @@ Reader Error Codes
 .. automodule:: lsl.reader.errors
    :members:
 
+Reader Ring Buffer
+==================
+.. automodule:: lsl.reader.buffer
+   :members:
+

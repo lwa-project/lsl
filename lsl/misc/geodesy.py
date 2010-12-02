@@ -22,7 +22,8 @@ Historic1973Limit = 55518.0
 
 
 class EOP(object):
-	"""Object for storing the geodetic parameters relevant for DiFX input files:
+	"""Object for storing the geodetic parameters relevant for DiFX input 
+	files:
 	  * mjd - modified Julian Date of the measurement/prediction
 	  * x - difference between the celestial ephemeric pole (CEP) and the 
 	    international reference pole (IRP) in the direction of the IERS
