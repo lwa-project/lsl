@@ -18,7 +18,7 @@ from lsl.common import dp as dp_common
 from lsl.correlator import uvUtils
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 5 $'
+__revision__ = '$ Revision: 7 $'
 __all__ = ['BeamformingError', 'calcDelay', 'intDelayAndSum', 'intBeamShape', 'fftDelayAndSum', 'fftBeamShape', '__version__', '__revision__', '__all__']
 
 class BeamformingError(Exception):
@@ -191,8 +191,8 @@ def fftDelayAndSum(stands, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=
 	delay and sum the data stream into one beam.  The delays first applied 
 	as integer sample delays.  Then, the data are transformed to the 
 	frequency domain and the remainder of the delay is applied as a phase 
-	rotation.  A numpy array of the frequency-domain data over time is
-	returned."""
+	rotation.  A tuple consisting of the frequency array and a numpy array 
+	of the frequency-domain data over time is returned."""
 
 	# Get the stand delays in seconds
 	delays = calcDelay(stands, azimuth=azimuth, elevation=elevation)
@@ -207,6 +207,7 @@ def fftDelayAndSum(stands, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=
 	freq = numpy.fft.fftfreq(LFFT, d=1.0/sampleRate)
 	if data.dtype.kind == 'c':
 		freq = freq + CentralFreq
+		freq = numpy.fft.fftshift(freq)
 
 	# Loop over stands and FFT sections to compute the formed beam
 	output = numpy.zeros((LFFT, (data.shape[1]-intDelays.max())/LFFT), dtype=numpy.complex64)
@@ -214,11 +215,13 @@ def fftDelayAndSum(stands, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=
 		for l in list(range(output.shape[1])):
 			section = data[s,(l*LFFT+intDelays[s]):((l+1)*LFFT+intDelays[s])]
 			sectionF = numpy.fft.fft(section)
+			if data.dtype.kind == 'c':
+				sectionF = numpy.fft.fftshift(sectionF)
 			sectionF *= numpy.exp(2j*numpy.pi*freq*frcDelays[s])
 			output[:,l] = output[:,l] + sectionF
 
 	# Done
-	return output
+	return (freq, output)
 
 
 def fftBeamShape(stands, sampleRate=dp_common.fS, LFFT=256, CentralFreq=49.0e6, azimuth=0.0, elevation=90.0, progress=False):
@@ -279,7 +282,7 @@ def fftBeamShape(stands, sampleRate=dp_common.fS, LFFT=256, CentralFreq=49.0e6, 
 				signals[i,:] = currResponse * numpy.cos(2*numpy.pi*CentralFreq*(t + currDelay))
 
 			# Beamform with delay-and-sum and store the RMS result
-			beam = fftDelayAndSum(stands, signals, sampleRate=sampleRate, LFFT=LFFT, CentralFreq=CentralFreq, 
+			freq, beam = fftDelayAndSum(stands, signals, sampleRate=sampleRate, LFFT=LFFT, CentralFreq=CentralFreq, 
 								azimuth=azimuth, elevation=elevation)
 			output[az,el] = (numpy.abs(beam)**2).max()
 

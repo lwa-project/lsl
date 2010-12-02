@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*
 
-"""Module that stores various functions that are needed for computing UV 
+"""This module stores various functions that are needed for computing UV 
 coverage and time delays.  The functions in the module:
-  return the x, y, and z coordinates of a stand or array of stands
-  return the relative x, y, and z offsets between two stands
-  return the cable delays as a function of frequency for a stand
-  compute the u, v, and w coordinates of all baselines defined by an array 
-   of stands
-  compute the track through the uv-plane of a collection of baselines as 
-   the Earth rotates.
+  * return the x, y, and z coordinates of a stand or array of stands
+  * return the relative x, y, and z offsets between two stands
+  * return the cable delays as a function of frequency for a stand
+  * compute the u, v, and w coordinates of all baselines defined by an array 
+    of stands
+  * compute the track through the uv-plane of a collection of baselines as 
+    the Earth rotates.
 """
 
 import os
@@ -76,7 +76,11 @@ def getXYZ(stands):
 	"""Function to return a numpy array of the stand's x, y, and z coordinates
 	(in meters) from the center pole.  If the coordinates of more than one 
 	stand are needed, getXYZ can be called with a numpy array of stand 
-	numbers."""
+	numbers.
+
+	.. versionchanged:: 0.3
+		Changed the numbering of the outlier from -1 to a more consistent 258
+	"""
 
 	try:
 		junk = len(stands)
@@ -107,7 +111,18 @@ def getRelativeXYZ(stand1, stand2):
 
 
 class PositionCache(object):
+	"""PositionCache is a safe alternative to calling uvUtils.getXYZ or
+	uvUtils.getRealtiveXYZ over and over again.  PositionCache loads the 
+	stand positions from the included CSV file once and then uses that 
+	stored information for all subsequent calls.
+
+	.. warning::
+		This assumes LWA-1 as the stations.  This will need to be changed some day.
+	"""
+
 	def __init__(self):
+		"""Initialize the cache by loading in all stand positions."""
+
 		self.standsXYZ = _loadPositionData()
 		
 	def __isValid(self, stand):
@@ -115,6 +130,11 @@ class PositionCache(object):
 			raise uvUtilsError('Stand #%i is out of range (1-258)' % stand)
 		
 	def getXYZ(self, stands):
+		"""Function to return a numpy array of the stand's x, y, and z coordinates
+		(in meters) from the center pole.  If the coordinates of more than one 
+		stand are needed, getXYZ can be called with a numpy array of stand 
+		numbers."""
+
 		try:
 			junk = len(stands)
 		except TypeError:
@@ -127,7 +147,10 @@ class PositionCache(object):
 	
 		return out
 			
-	def getRelativeXYZ(self, stand1, stand2):	
+	def getRelativeXYZ(self, stand1, stand2):
+		"""Function to return the relative coordinate difference between two 
+		stands.  The output is a three-element numpy array."""
+
 		xyzs = self.getXYZ(numpy.array([stand1, stand2]))
 		xyz1 = numpy.squeeze(xyzs[0,:])
 		xyz2 = numpy.squeeze(xyzs[1,:])
@@ -137,6 +160,9 @@ class PositionCache(object):
 		return deltaXYZ
 	
 	def getZenithDelay(self, stand1, stand2):
+		"""Return the geometrical delay in seconds for zenith as viewed by
+		a baseline between stand1 and stand2."""
+
 		import aipy
 		
 		b = self.getRelativeXYZ(stand1, stand2)
@@ -175,7 +201,8 @@ def _loadDelayData(filename='lwa1-cables.csv'):
 def cableDelay(stand, freq):
 	"""For a given stands, return a numpy array of the cable delay in seconds 
 	for a specific frequency (in Hz).  If delays for more than one frequency
-	are needed, the frequencies can be passed in as a numpy array."""
+	are needed, the frequencies can be passed in as a numpy array.
+	"""
 
 	# Stands start at 1, indices do not
 	validateStand(stand)
@@ -209,7 +236,18 @@ def cableDelay(stand, freq):
 
 
 class CableCache(object):
+	"""CableCache is a safe alternative to calling uvUtils.cableDelay over 
+	and over again.  CableCache loads the cable length file once and then
+	uses that stored information for all subsequent calls.
+
+	.. warning::
+		This assumes LWA-1 as the stations.  This will need to be changed some day.
+	"""
+
 	def __init__(self, freq, applyDispersion=True):
+		"""Initialize the cache by loading in all stand cable lengths and begin
+		filling in the attributes."""
+
 		self.cableLengths = _loadDelayData()
 		try:
 			junk = len(freq)
@@ -220,10 +258,16 @@ class CableCache(object):
 		self.applyDispersion = applyDispersion
 	
 	def updateFreq(self, freq):
+		"""Update the freq attribute of the cache to change which frequencies the
+		delays are calculated for."""
+
 		self.freq = freq
 		self.disp = 1.0/numpy.sqrt(numpy.abs(self.freq)/10.0e6)
 
 	def updateApplyDispersion(self, applyDispersion):
+		"""Update the applyDispersion attribute of the cache to turn the cable
+		dispersion on and off."""
+
 		self.applyDispersion = applyDispersion
 
 	def __isValid(self, stand):
@@ -231,6 +275,10 @@ class CableCache(object):
 			raise uvUtilsError('Stand #%i is out of range (1-258)' % stand)
 
 	def cableDelay(self, stand, freq=None):
+		"""For a given stands, return a numpy array of the cable delay in seconds 
+		for a specific frequency (in Hz).  If delays for more than one frequency
+		are needed, the frequencies can be passed in as a numpy array."""
+
 		self.__isValid(stand)
 	
 		# Catch the outlier and load cable and delay information into holder variables.
@@ -268,7 +316,14 @@ class CableCache(object):
 def signalDelay(stand, freq, cache=None):
 	"""Experimental function that wraps the cable delay for a stand along with 
 	any other delays determined by phase fitting.  The list of stands that can be 
-	corrected is incomplete.  Similar to cableDelay, a numpy array is returned."""
+	corrected is incomplete.  Similar to cableDelay, a numpy array is returned.
+
+	.. note::
+		Currently all additional delays are set to 0.
+
+	.. warning::
+		This assumes LWA-1 as the stations.  This will need to be changed some day.
+	"""
 
 	# Additional delays in ns found from phase fitting.  There are currently no
 	# other delays added in and signalDelay returns the same values as cableDelay.
@@ -292,7 +347,14 @@ def signalDelay(stand, freq, cache=None):
 	
 
 class SignalCache(CableCache):
+	"""Subclass of CableCache that does for signalDelay what CableCache did for
+	cableDelay."""
+
 	def signalDelay(self, stand):
+		"""Experimental function that wraps the cable delay for a stand along with 
+		any other delays determined by phase fitting.  The list of stands that can be 
+		corrected is incomplete.  Similar to cableDelay, a numpy array is returned."""
+
 		return signalDelay(stand, self.freq, cache=self)
 
 

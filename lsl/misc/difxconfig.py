@@ -44,11 +44,17 @@ class DiFXConfig(object):
 	"""Object for creating DiFX input, calc, flag, and joblist configuration 
 	files.  The class is initialized with a set of common observation parameters
 	and the output files are written using the class's 'write' function.  By 
-	default, the outfile files are:
+	default, the outfile files are named:
 	  lwa_<mode>_<mjd>.joblist
 	  lwa_<mode>_<mjd>_1.input
 	  lwa_<mode>_<mjd>_1.calc
-	  lwa_<mode>_<mjd>_1.flag"""
+	  lwa_<mode>_<mjd>_1.flag
+
+	Once the various configuration parameters have been defined, the config.
+	files can be written to disk using DiFXConfig.write() or DiFXConfig.make().
+	The difference between the two function is the `write' only writes the 
+	config. files while `make' writes the config. files and converts the TBW/
+	TBN data into appropriately-named VDIF files."""
 
 	def __init__(self, site=lwa_common.lwa1(), stands=[], mode='TBW', refTime=0.0, intTime=0, nInts=1, bits=12, filter=7, centralFreq=49.0e6):
 		"""Initialize all of the values needed to create a complete set of DiFX 
@@ -272,7 +278,7 @@ class DiFXConfig(object):
 		fh.write('JOB START TIME:     %.7f\n' % refMJD)
 		fh.write('JOB STOP TIME:      %.7f\n' % stpMJD)
 		fh.write('DUTY CYCLE:         1.000\n')
-		fh.write('OBSCODE:            %s\n' self.mode)
+		fh.write('OBSCODE:            %s\n' % self.mode)
 		fh.write('DIFX VERSION:       DiFX-1.5.4\n')
 		fh.write('SUBJOB ID:          0\n')
 		fh.write('SUBARRAY ID:        0\n')

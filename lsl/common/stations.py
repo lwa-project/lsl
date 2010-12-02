@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 
 """Module that contains information about the LWA station sites.  This 
-information includes
-  latitude, 
-  longitude, 
-  elevation, and 
-  stand list.
+information includes:
+  * latitude, 
+  * longitude, 
+  * elevation, and 
+  * stand list.
+
 The information for each site is stored as a LWAStation object.  This object 
-has a variety of attributes for dealing with station-related parameters such
+has a variety of attributes for dealing with station-related parameters, such
 as creating an ephem.Observer object for the station, getting the station's
 geocentric location, and creating a geocentric coordinate transformation 
 matrix for the station's baselines.
 
 Currently, data exists for the following LWA stations:
-  lwa1 - LWA 1 near the VLA center"""
+  * lwa1 - LWA 1 near the VLA center.
+"""
 
 import math
 import ephem

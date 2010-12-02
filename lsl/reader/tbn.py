@@ -1,23 +1,27 @@
 # -*- coding: utf-8 -*-
 
 """Python module for reading data in from TBN files.This module defines the 
-following classes for storing the TBN data found in
-a file:
-  Frame          - object that contains all data associated with a particular TBN
-                   frame.  The primary constituents of each frame are:
-                     FrameHeader - the TBN frame header object and
-                     FrameData   - the TBN frame data object.
-                   Combined, these two objects contain all of the information found in
-                   the original TBN frame.
-  ObservingBlock - object that stores a collection of Frames for all stands/
-                   polarizations for a particular time.
+following classes for storing the TBN data found in a file:
+
+**Frame**
+  object that contains all data associated with a particular TBN frame.  
+  The primary constituents of each frame are:
+    * FrameHeader - the TBN frame header object and
+    * FrameData   - the TBN frame data object.
+  Combined, these two objects contain all of the information found in the 
+  original TBN frame.
+
+**ObservingBlock**
+  object that stores a collection of Frames for all stands/polarizations for 
+  a particular time.
+
 In addition to storing the data available in the frame, the Frame object also
 has attributes for holding information about the gain, central frequency, and
 filter code used for the observations.
 
 The functions defined in this module fall into two class:
-  1)  convert a frame in a file to a Frame object and
-  2)  describe the format of the data in the file.
+ 1. convert a frame in a file to a Frame object and
+ 2. describe the format of the data in the file.
 
 For reading in data, use the readFrame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.  The readBlock
@@ -25,10 +29,14 @@ function reads in a (user-defined) number of TBN frames and returns a
 ObservingBlock object.
 
 For describing the format of data in the file, two function are provided:
-  getSampleRate -   read in the few frame of an open file handle and return
-                    the sampling rate of the data
-  getFramesPerObs - read in the first several frames to see how many stands 
-                    are found in the data."""
+
+**getSampleRate**
+  read in the few frame of an open file handle and return the sampling rate 
+  of the data
+
+**getFramesPerObs**
+  read in the first several frames to see how many stands are found in the data.
+"""
 
 import os
 import sys

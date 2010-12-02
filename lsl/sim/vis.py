@@ -2,39 +2,56 @@
 
 """Module for generating simulated arrays and visilibity data.  The chief 
 functions of this module are:
-  buildSimArray - given a station object, a list of stands, and a list of 
-                  frequencies, build a AIPY AntennaArray.  This module can 
-                  also generate AntennaArray objects with positional errors by
-                  setting the 'PosError' keyword to a positive value
-  buildSimData - given a SimArray and a list of aipy.src sources, build up a 
-                 collection of visibilities for a given set of Julian dates
-  scaleData    - given a dictionary of simulated visibilities from buildSimData,
-                 apply antenna-based gains and delays to the visibilities
-  shiftData    - given a dictionary of simulated visibilities from buildSimData,
-                 shift the uvw coordinates of the visibilities.  Note:  this 
-                 only changes the uvw values and does not phase-shift the data
+
+**buildSimArray**
+  given a station object, a list of stands, and a list of frequencies, build 
+  a AIPY AntennaArray-like object.  This module can also generate AntennaArray 
+  objects with positional errors by setting the 'PosError' keyword to a 
+  positive value.
+
+**buildSimData**
+  given a SimArray and a list of aipy.src sources, build up a collection of 
+  visibilities for a given set of Julian dates.
+
+**scaleData**
+  given a dictionary of simulated visibilities from buildSimData, apply 
+  antenna-based gains and delays to the visibilities.
+
+**shiftData**
+  given a dictionary of simulated visibilities from buildSimData, shift the uvw 
+  coordinates of the visibilities.
+  .. note::
+	This only changes the uvw values and does not phase-shift the data.
 
 The format of the data dictionaries mentioned above is:
-  primary keys:
-    freq - list of frequencies used in Hz
-    isMasked - whether or not the visibility data have been masked 
-               (numpy.compress'd)
-    bls - list of baselines in (stand 1, stand2) format
-    uvw - list of uvw coordinates as 3-element numpy arrays
-    vis - list of visibility numpy arrays
-    wgt - list of weight arrays with the same length as the visilitity arrays
-    msk - list of mask arrays used for the data.  1 = masked, 0 = valid
-    jd  - list of Julian dates associated with each list element
-  secondary keys:
-    The bls, uvw, vis, wgt, msk, and jd primary keys also have secondary keys
-    that indicate which polarizations are being stored.  Valid keys are:
-      xx
-      yy
-      xy
-      yx
+
+**primary keys**
+  The primary keys store the major aspects of the visiblity data, e.g., 
+  frequency coverage, baseline pairs, uvw coordinates, etc.  Valid keys are:
+    * *freq* - list of frequencies used in Hz
+    * *isMasked* - whether or not the visibility data have been masked 
+      (numpy.compress'd)
+    * bls* - list of baselines in (stand 1, stand2) format
+    * *uvw* - list of uvw coordinates as 3-element numpy arrays
+    * *vis* - list of visibility numpy arrays
+    * *wgt* - list of weight arrays with the same length as the visilitity arrays
+    * *msk* - list of mask arrays used for the data.  1 = masked, 0 = valid
+    * *jd*  - list of Julian dates associated with each list element
+
+**secondary keys**
+  The bls, uvw, vis, wgt, msk, and jd primary keys also have secondary keys that 
+  indicate which polarizations are being stored.  Valid keys are:
+    * *xx*
+    * *yy*
+    * *xy*
+    * *yx*
 
 In addition to simulation functions, this module includes buildGriddedImage
-which takes a dictionary of visibilities and returns and aipy.im.ImgW object."""
+which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
+
+.. versionchanged:: 0.3
+	This module was formerly called lsl.sim.sim
+"""
 
 import os
 import sys
@@ -42,17 +59,78 @@ import aipy
 import math
 import numpy as n
 
+from lsl import astro
 from lsl.common import dp as dp_common
 from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 
-__version__ = '0.1'
-__revision__ = '$ Revision: 9 $'
-__all__ = ['srcs', 'buildSimArray', 'getBeamShape', 'buildSimData', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+__version__ = '0.2'
+__revision__ = '$ Revision: 11 $'
+__all__ = ['srcs', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
 # A dictionary of bright sources in the sky to use for simulations
 srcs = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
+
+
+class Antenna(aipy.amp.Antenna):
+	"""Modification to the aipy.amp.Antenna class to also store the stand ID 
+	number in the Antenna.stand attribute.  This also add a getBeamShape 
+	attribute that pulls in the old vis.getBeamShape function."""
+
+	def __init__(self, x, y, z, beam, phsoff=[0.,0.], bp_r=n.array([1]), bp_i=n.array([0]), amp=1, pointing=(0.,n.pi/2,0), stand=0, **kwargs):
+		"""New init call that adds support for a `stand' attribute."""
+
+		super(Antenna, self).__init__(x, y, z, beam, phsoff=phsoff, bp_r=bp_r, bp_i=bp_i, amp=amp, pointing=pointing, **kwargs)
+		self.stand = stand
+
+	def getBeamShape(self, pol='x'):
+		"""Return a 360 by 90 by nFreqs numpy array showning the beam pattern of a
+		particular antenna in the array.  The first two dimensions of the output 
+		array contain the azimuth (from 0 to 359 degrees in 1 degree steps) and 
+		altitlude (from 0 to 89 degrees in 1 degree steps)."""
+
+		# Build azimuth and altitude arrays.  Be sure to convert to radians
+		az = n.zeros((360,90))
+		for i in range(360):
+			az[i,:] = i*n.pi/180.0
+		alt = n.zeros((360,90))
+		for i in range(90):
+			alt[:,i] = i*n.pi/180.0
+
+		# The beam model is computed in terms of topocentric coordinates, so make that
+		# converseion right quick using the aipy.coord module.
+		xyz = aipy.coord.azalt2top(n.concatenate([[az],[alt]]))
+		
+		# I cannot figure out how to do this all at once, so loop through azimuth/
+		# altitude pairs
+		resp = n.zeros((360,90,len(aa.get_afreqs())))
+		for i in range(360):
+			for j in range(90):
+				resp[i,j,:] = n.squeeze( self.bm_response(n.squeeze(xyz[:,i,j]), pol=pol) )
+
+		return resp
+
+
+class AntennaArray(aipy.amp.AntennaArray):
+	"""Modification to the aipy.ant.AntennaArray class to add a fuction to 
+	retrieve the stands stored in the AntennaArray.ants attribute.  Also add 
+	a function to set the array time from a UNIX timestamp."""
+
+	def getStands(self):
+		"""Return a numpy array listing the stands found in the AntennaArray 
+		object."""
+
+		stands = []
+		for ant in self.ants:
+			stands.append(ant.stand)
+		
+		return numpy.array(stands)
+
+	def set_unixtime(self, timestamp):
+		"""Set the array time using a UNIX timestamp (epoch 1970)."""
+
+		self.set_jultime(astro.unix_to_utcjd(time))
 
 
 def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False):
@@ -110,11 +188,11 @@ def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False)
 
 		amp = 1.0 / uvUtils.cableAttenuation(stand)
 		
-		ants.append( aipy.amp.Antenna(eq[0], eq[1], eq[2], beam, phsoff=delayCoeff, amp=amp) )
+		ants.append( Antenna(eq[0], eq[1], eq[2], beam, phsoff=delayCoeff, amp=amp, stand=stand) )
 
 	# Combine the array of antennas with the array's location to generate an
 	# AIPY AntennaArray object
-	simAA = aipy.amp.AntennaArray(ants=ants, location=station.getAIPYLocation())
+	simAA = AntennaArray(ants=ants, location=station.getAIPYLocation())
 
 	# Set the Julian Data for the AntennaArray object if it is provided.  The try...except
 	# clause is used to deal with people who may want to pass an array of JDs in rather than
@@ -128,34 +206,6 @@ def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False)
 			simAA.set_jultime(jd[0])
 
 	return simAA
-
-
-def getBeamShape(aa, antenna=0, pol='x'):
-	"""Return a 360 by 90 by nFreqs numpy array showning the beam pattern of a
-	particular antenna in the array.  The first two dimensions of the output 
-	array contain the azimuth (from 0 to 359 degrees in 1 degree steps) and 
-	altitlude (from 0 to 89 degrees in 1 degree steps)."""
-
-	# Build azimuth and altitude arrays.  Be sure to convert to radians
-	az = n.zeros((360,90))
-	for i in range(360):
-		az[i,:] = i*n.pi/180.0
-	alt = n.zeros((360,90))
-	for i in range(90):
-		alt[:,i] = i*n.pi/180.0
-
-	# The beam model is computed in terms of topocentric coordinates, so make that
-	# converseion right quick using the aipy.coord module.
-	xyz = aipy.coord.azalt2top(n.concatenate([[az],[alt]]))
-	
-	# I cannot figure out how to do this all at once, so loop through azimuth/
-	# altitude pairs
-	resp = n.zeros((360,90,len(aa.get_afreqs())))
-	for i in range(360):
-		for j in range(90):
-			resp[i,j,:] = n.squeeze( aa.ants[antenna].bm_response(n.squeeze(xyz[:,i,j]), pol=pol) )
-
-	return resp
 
 
 def __buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None):

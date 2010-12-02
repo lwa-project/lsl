@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Module for writting correlator output to a FITS IDI file.  The classes and 
-functions defined in this module are based heavily off the lwda_fits library.  
-This module is still under active development."""
+functions defined in this module are based heavily off the lwda_fits library."""
 
 import os
 import re
@@ -34,6 +33,10 @@ StokesCodes = {'I': 1, 'Q': 2, 'U': 3, 'V': 4,
 
 
 class IDI(object):
+	"""Class for storing visibility data and writing the data, along with array
+	geometry, frequency setup, etc., to a FITS IDI file that can be read into 
+	AIPS via the FITLD task."""
+
 	class _Antenna(object):
 		"""Holds information describing the location and properties of an antenna."""
 
@@ -102,6 +105,10 @@ class IDI(object):
 
 
 	def __init__(self, filename, refTime=0.0):
+		"""Initialize a new FITS IDI object using a filename and a reference time 
+		given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+		string in the format of 'YYYY-MM-DDTHH:MM:SS'."""
+
 		# File-specific information
 		self.filename = filename
 		self.hdulist = None
@@ -187,7 +194,7 @@ class IDI(object):
 		self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper} )
 
 	def addDataSet(self, obsTime, intTime, baselines, visibilities):
-			"""Create a UVData object to store a collection of visibilites."""
+		"""Create a UVData object to store a collection of visibilites."""
 
 			dataDict = {}
 			for (stand1,stand2), visData in zip(baselines, visibilities):
@@ -893,4 +900,3 @@ class IDI(object):
 
 		# Return
 		return (mapper, inverseMapper)
-

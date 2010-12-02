@@ -44,7 +44,7 @@ class nec_util_tests(unittest.TestCase):
 		"""Test nec_util.calcIME() function."""
 		
 		(freqs, ime) = nec_util.calcIME(self.nec_name)
-		
+	
 	def test_NECPattern_init(self):
 		"""Test nec_util.NECPattern constructor method."""
 		

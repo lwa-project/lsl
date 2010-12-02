@@ -4,13 +4,17 @@
 the S60 data consists of only packed binary values.  Thus, the functions for 
 reading in the S60 data do not return objects describing each frame but rather
 return numpy arrays of the data.  The two reading functions defined are:
-  readFrame - return a complex array containing the data from one UDP packet
-              (734 samples)
-  readChunk - return a complex array containing a specified number of samples,
-              i.e., the `chunk' size.
+
+**readFrame**
+  return a complex array containing the data from one UDP packet (734 samples)
+
+**readChunk**
+  return a complex array containing a specified number of samples, i.e., the 
+  'chunk' size.
 
 In addition to the two readers, there is also a function, getBandpassModel, 
-which reads in Joe Craig's model of the S60 bandpass."""
+which reads in Joe Craig's model of the S60 bandpass. See `the S60 data page <http://www.phys.unm.edu/~lwa/dokuwiki/doku.php?id=s60_data#view_and_plot_with_octave>`_
+for information about the model."""
 
 import numpy
 

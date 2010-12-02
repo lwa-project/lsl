@@ -2,11 +2,13 @@
 
 """Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main functions in this module are:
-  calcSpectra - calculate power spectra for a collection of signals
-  FXCorrelator - calculate cross power spectra for a collection of signals
+  * calcSpectra - calculate power spectra for a collection of signals
+  * FXCorrelator - calculate cross power spectra for a collection of signals
+
 Each function is set up to process the signals in parallel using the 
 processing module and accepts a variety of options controlling the processing
-of the data, including various window functions and time averaging."""
+of the data, including various window functions and time averaging.
+"""
 
 import os
 import sys
@@ -55,7 +57,11 @@ def polyphaseFilter(signal, length=64, windows=4):
 	input signal by a sinc function, breaks it into windows, and sum over the 
 	different windows.  This results in a decimation of the signal by a factor 
 	proportional to the number of windows used.  The output is the decimated 
-	signal as a numpy array."""
+	signal as a numpy array.
+
+	.. warning::
+		This function has not been tested and may not be implemented correctly.
+	"""
 	
 	# The averaging length holds the size of the signal to be filtered
 	aLength = length*windows

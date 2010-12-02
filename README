@@ -15,9 +15,11 @@ DESCRIPTION
 
 REQUIREMENTS
 	python >= 2.6 and python < 3.0
+	swig >= 1.3
 	numpy >= 1.2
 	scipy >= 0.7
-	pyfits >= 1.3
+	pyfits >= 2.1
+	pyephem >= 3.7.3
 	aipy >= 0.9.1
 	*matplotlib >= 0.98.3
 	(* required for some of the scripts)
@@ -73,6 +75,11 @@ BUILD
 	To build the LSL package, run:
 		'python setup.py build'
 
+TESTING
+	To test the as-build LSL package, run:
+		'python setup.py test'
+	There are currently 140 unit tests defined.
+
 INSTALL
 	Install LSL by running:
 		'python setup.py install [--prefix=<prefix>|--user]'
@@ -103,12 +110,20 @@ UNIT TESTS
 	been successfully installed via: 
 		'import lsl; lsl.test()'
 
+DOCUMENTATION
+	See doc/README for documentation information.
+
 RELEASE NOTES
 	Version 0.3
+		New setuptools-based build system
+		New, improved documentation
+		Added post-acquisition beam forming module
 		Added in modules for writing simulated data to the S60, TBW, TBN, and 
 		DRX raw data formats
 		Added a module for simulated basic test signals in TBW, TBN, and DRX
 		data
+		Moved the lwa_user script `astrostatus.py' into the scripts directory
+		Fixed the FITS IDI writer
 		Fixed a couple of bugs dealing with incorrect chunking of data in 
 		scripts/tbwSpectra.py and scripts/tbnSpectra.py
 
