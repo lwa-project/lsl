@@ -196,12 +196,12 @@ class IDI(object):
 	def addDataSet(self, obsTime, intTime, baselines, visibilities):
 		"""Create a UVData object to store a collection of visibilites."""
 
-			dataDict = {}
-			for (stand1,stand2), visData in zip(baselines, visibilities):
-				baseline = (stand1 << 16) | stand2
-				dataDict[baseline] = visData
-				
-			self.data.append( self._UVData(obsTime, intTime, dataDict) )
+		dataDict = {}
+		for (stand1,stand2), visData in zip(baselines, visibilities):
+			baseline = (stand1 << 16) | stand2
+			dataDict[baseline] = visData
+			
+		self.data.append( self._UVData(obsTime, intTime, dataDict) )
 
 	def write(self):
 		"""Fill in the FITS-IDI file will all of the tables in the 
