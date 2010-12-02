@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*
 
 """Module to set up path information for the LWA Software Library.  Two 
-variables are defined by this module:  
+variables are defined by this module::
   * module
   * data
 
-'module' specifies the absolute path to the module and 'data' the abs. 
-path to the data directory where data files are stored.
+module
+  specifies the absolute path to the module
+
+data
+  the absolute path to the data directory where data files are stored
+
 """
 
 import os

@@ -63,12 +63,10 @@ def _regrid_spline(x, y, newx, allow_extrapolation=False):
   
 
 def downsample(vector, factor, rescale=True):
-	"""downsample(vector, factor):
-	Downsample (i.e. co-add consecutive numbers) a vector
-	by an integer factor.  Trims the input timeseries to be 
-	a multiple of the downsample factor, if needed.
-	If rescale == True, then divides each sum by factor to produce a mean value,
-	otherwise just adds the values in the vector."""
+	"""Downsample (i.e. co-add consecutive numbers) a vector by an integer 
+	factor.  Trims the input timeseries to be a multiple of the downsample 
+	factor, if needed.  If rescale == True, then divides each sum by factor 
+	to produce a mean value, otherwise just adds the values in the vector."""
 
 	if (len(vector) % factor):
 		_MATHUTIL_LOG.warning("Length of 'vector' is not divisible by 'factor'=%d, clipping!", factor)
@@ -104,6 +102,7 @@ def smooth(x,window_len=10,window='hanning'):
 	  * the smoothed signal
 		
 	example:
+	>>> from numpy import *
 	>>> t=linspace(-2,2,0.1)
 	>>> x=sin(t)+randn(len(t))*0.1
 	>>> y=smooth(x)

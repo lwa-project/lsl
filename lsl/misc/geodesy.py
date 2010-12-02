@@ -22,7 +22,7 @@ Historic1973Limit = 55518.0
 
 
 class EOP(object):
-	"""Object for storing the geodetic parameters relevant for DiFX input files:
+	"""Object for storing the geodetic parameters relevant for DiFX input files::
 	  * mjd - modified Julian Date of the measurement/prediction
 	  * x - difference between the celestial ephemeric pole (CEP) and the 
 	    international reference pole (IRP) in the direction of the IERS
@@ -217,9 +217,3 @@ def getEOPRange(start=None, stop=None):
 
 	mjdList = numpy.arange(start, stop+1)
 	return getEOP(mjdList)
-
-
-if __name__ == "__main__":
-	out = getEOPRange(start=55500.0, stop=55515.0)
-	for e in out:
-		print e

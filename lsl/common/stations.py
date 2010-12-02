@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Module that contains information about the LWA station sites.  This 
-information includes:
+information includes::
   * latitude, 
   * longitude, 
   * elevation, and 
@@ -13,7 +13,7 @@ as creating an ephem.Observer object for the station, getting the station's
 geocentric location, and creating a geocentric coordinate transformation 
 matrix for the station's baselines.
 
-Currently, data exists for the following LWA stations:
+Currently, data exists for the following LWA stations::
   * lwa1 - LWA 1 near the VLA center.
 """
 

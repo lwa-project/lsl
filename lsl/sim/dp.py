@@ -27,7 +27,7 @@ __all__ = ['basicSignal', '__version__', '__revision__', '__all__']
 
 def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 	"""Generate a collection of frames with a basic test signal for TBW, TBN, 
-	and DRX.  The signals for the three modes are:
+	and DRX.  The signals for the three modes are::
 	
 	TBW
 	    * noise + 40 MHz signal for x-pol.; noise + 60 MHz signal for y-pol.
@@ -44,7 +44,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 	    
 	All modes need to have stands (beams in the case of DRX) and number of
 	frames to generate.  TBW also needs to 'bits' keyword set to generate 
-	either 12-bit or 4-bit data.  The TBN and DRX frames need the `filter'
+	either 12-bit or 4-bit data.  The TBN and DRX frames need the 'filter'
 	keyword set to specify the filter width."""
 
 	if tStart == 0:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Module for generating simulated arrays and visilibity data.  The chief 
-functions of this module are:
+functions of this module are::
 
 **buildSimArray**
   given a station object, a list of stands, and a list of frequencies, build 
@@ -11,11 +11,11 @@ functions of this module are:
 
 **buildSimData**
   given a SimArray and a list of aipy.src sources, build up a collection of 
-  visibilities for a given set of Julian dates.
+  visibilities for a given set of Julian dates
 
 **scaleData**
   given a dictionary of simulated visibilities from buildSimData, apply 
-  antenna-based gains and delays to the visibilities.
+  antenna-based gains and delays to the visibilities
 
 **shiftData**
   given a dictionary of simulated visibilities from buildSimData, shift the uvw 
@@ -23,11 +23,11 @@ functions of this module are:
   .. note::
 	This only changes the uvw values and does not phase-shift the data.
 
-The format of the data dictionaries mentioned above is:
+The format of the data dictionaries mentioned above is::
 
 **primary keys**
   The primary keys store the major aspects of the visiblity data, e.g., 
-  frequency coverage, baseline pairs, uvw coordinates, etc.  Valid keys are:
+  frequency coverage, baseline pairs, uvw coordinates, etc.  Valid keys are::
     * *freq* - list of frequencies used in Hz
     * *isMasked* - whether or not the visibility data have been masked 
       (numpy.compress'd)
@@ -40,7 +40,7 @@ The format of the data dictionaries mentioned above is:
 
 **secondary keys**
   The bls, uvw, vis, wgt, msk, and jd primary keys also have secondary keys that 
-  indicate which polarizations are being stored.  Valid keys are:
+  indicate which polarizations are being stored.  Valid keys are::
     * *xx*
     * *yy*
     * *xy*

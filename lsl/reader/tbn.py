@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 """Python module for reading data in from TBN files.This module defines the 
-following classes for storing the TBN data found in a file:
+following classes for storing the TBN data found in a file::
 
 **Frame**
   object that contains all data associated with a particular TBN frame.  
-  The primary constituents of each frame are:
+  The primary constituents of each frame are::
     * FrameHeader - the TBN frame header object and
     * FrameData   - the TBN frame data object.
   Combined, these two objects contain all of the information found in the 
@@ -19,7 +19,7 @@ In addition to storing the data available in the frame, the Frame object also
 has attributes for holding information about the gain, central frequency, and
 filter code used for the observations.
 
-The functions defined in this module fall into two class:
+The functions defined in this module fall into two class::
  1. convert a frame in a file to a Frame object and
  2. describe the format of the data in the file.
 
@@ -28,7 +28,7 @@ handle as an input and returns a fully-filled Frame object.  The readBlock
 function reads in a (user-defined) number of TBN frames and returns a 
 ObservingBlock object.
 
-For describing the format of data in the file, two function are provided:
+For describing the format of data in the file, two function are provided::
 
 **getSampleRate**
   read in the few frame of an open file handle and return the sampling rate 

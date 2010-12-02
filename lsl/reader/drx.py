@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 """Python module to read in DRX data.  This module defines the following 
-classes for storing the DRX data found in a file:
+classes for storing the DRX data found in a file::
 
 **Frame**
   object that contains all data associated with a particular DRX frame.  
-  The primary constituents of each frame are:
+  The primary constituents of each frame are::
     * FrameHeader - the DRX frame header object and
     * FrameData   - the DRX frame data object.
   Combined, these two objects contain all of the information found in the 
@@ -24,7 +24,7 @@ handle as an input and returns a fully-filled Frame object.  The readBlock
 function reads in a (user-defined) number of DRX frames and returns a 
 ObservingBlock object.
 
-For describing the format of data in the file, two function are provided:
+For describing the format of data in the file, two function are provided::
 
 **getBeamCount**
   read in the first few frames of an open file handle and return how many 

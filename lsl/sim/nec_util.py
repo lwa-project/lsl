@@ -3,10 +3,7 @@
 """This module contains a set of convenience functions to parse the output 
 of NEC2, modify the input (.nec) file, and rerun NEC as necessary.
 NEC2 is the Numerical Electromagnetics Code, developed at LLNL.
-The version of NEC2 this code currently assumes is:
-
-http://www.physics.otago.ac.nz/research/electronics/nec/index.html
-
+The version of NEC2 this code currently assumes is `here <http://www.physics.otago.ac.nz/research/electronics/nec/index.html)`_.
 """
 
 from numpy import *
@@ -116,10 +113,14 @@ class NECImpedance:
 	"""NECImpedance:
 	Python class to read an array of impedance values from a NEC2 .out file The 
 	.nec file should loop over a range of frequencies with an FR card like this:
-	  FR 0 91 0 0 10.0 1.0
+
+		FR 0 91 0 0 10.0 1.0
+
 	The RP card should be minimal to keep the runtime and output file size from 
 	growing huge.  For example:
-	  RP 0,91,1,1000,0.,0.,1.0,1.0
+
+		RP 0,91,1,1000,0.,0.,1.0,1.0
+
 	"""
 
 	def __init__(self, necname):
@@ -189,9 +190,14 @@ class NECPattern:
 	"""NECPattern:
 	Python class to read the pattern from a NEC2 .out file.  Note that the 
 	.nec file should have an RP card to run over the full pattern, like this:
-	  RP 0,91,360,1000,0.,0.,1.0,1.0,0.
+
+		RP 0,91,360,1000,0.,0.,1.0,1.0,0.
+
 	The FR card should be a simple single frequency run:
-	  FR 0,1,0,0,74.0,1"""
+
+		FR 0,1,0,0,74.0,1
+
+	"""
         
 	def __init__(self, necname, freq, rerun = True):
 
