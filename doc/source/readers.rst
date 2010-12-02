@@ -24,5 +24,6 @@ Reader Error Codes
 Reader Ring Buffer
 ==================
 .. automodule:: lsl.reader.buffer
+   :show-inheritance:
    :members:
 

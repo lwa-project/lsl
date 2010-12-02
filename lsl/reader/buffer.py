@@ -41,19 +41,20 @@ class FrameBuffer(object):
 	"""Frame buffer for re-ordering TBN and DRX frames in time order.  
 	This class is filled with frames and a returns a frame list when 
 	either:
-	  + the buffer contains all frames for a given time, or
-	  + another has started to be filled and has more than 50 frames in 
+	  * the buffer contains all frames for a given time, or
+	  * another has started to be filled and has more than 50 frames in 
 	    it.
+
 	The buffer also keeps track of what has already been read out so 
 	that tardy frames are just dropped.  For buffers that are read out,
 	missing frames are replaced with frames filled with zeros."""
 
 	def __init__(self, stands=[], pols=[], beams=[], tunes=[]):
 		"""Initialize the buffer with a list of:
-		  + TBN:
+		  * TBN
 		      * list of stands
 		      * list of pols
-		  + DRX:
+		  * DRX
 		      * list of beams
 		      * list of tunnings
 		      * list of pols
@@ -88,7 +89,7 @@ class FrameBuffer(object):
 	def __calcFrames(self):
 		"""Calculate the maximum number of frames that we expect from 
 		the setup of the observations and a list of tuples that describe
-		all of the possible stand/beam/pol/tune combination.."""
+		all of the possible stand/beam/pol/tune combination."""
 		
 		# TBN Mode
 		if len(self.beams) == 0:
@@ -176,11 +177,11 @@ class FrameBuffer(object):
 	def __bufferStatus(self):
 		"""Return the state of the buffer in the form of a tuple.  
 		The values are:
-		  + number of buffer keys, 
-		  + buffer key with minimum length, 
-		  + length of the shortest buffer, 
-		  + buffer key with maximum length, and
-		  + length of the longest buffer.
+		  * number of buffer keys, 
+		  * buffer key with minimum length, 
+		  * length of the shortest buffer, 
+		  * buffer key with maximum length, and
+		  * length of the longest buffer.
 		If the buffer is empty, min/maxKeys are set to None."""
 
 		# Build the list of keys to look at
@@ -290,9 +291,10 @@ class TBWFrameBuffer(object):
 	"""Frame buffer for re-ordering TBW frames in time order.  
 	This class is filled with frames and a returns a frame list when 
 	either:
-	  + the buffer contains all frames for a given time, or
-	  + another has started to be filled and has more than 5 frames in 
+	  * the buffer contains all frames for a given time, or
+	  * another has started to be filled and has more than 5 frames in 
 	    it.
+
 	The buffer also keeps track of what has already been read out so 
 	that tardy frames are just dropped.  For buffers that are read out,
 	missing frames are replaced with frames filled with zeros.
@@ -303,7 +305,7 @@ class TBWFrameBuffer(object):
 
 	def __init__(self, stands=[], nFrames=None):
 		"""Initialize the buffer with a list of:
-		  + TBW:
+		  * TBW:
 		      * list of stands
 		By doing this, we should be able to keep up with when the buffer 
 		is full and to help figure out which stands are missing."""
@@ -390,11 +392,11 @@ class TBWFrameBuffer(object):
 	def __bufferStatus(self):
 		"""Return the state of the buffer in the form of a tuple.  
 		The values are:
-		  + number of buffer keys, 
-		  + buffer key with minimum length, 
-		  + length of the shortest buffer, 
-		  + buffer key with maximum length, and
-		  + length of the longest buffer.
+		  * number of buffer keys, 
+		  * buffer key with minimum length, 
+		  * length of the shortest buffer, 
+		  * buffer key with maximum length, and
+		  * length of the longest buffer.
 		If the buffer is empty, min/maxKeys are set to None."""
 
 		# Build the list of keys to look at
