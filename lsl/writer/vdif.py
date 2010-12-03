@@ -7,7 +7,7 @@ representation of the raw frame and write that raw frame to an open file-
 handle.
 
 .. seealso::
-	:mod: `lsl.sim.tbw`
+	:mod:`lsl.sim.tbw`
 
 """
 

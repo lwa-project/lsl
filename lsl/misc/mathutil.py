@@ -9,7 +9,7 @@ import numpy
 
 __version__   = "0.1"
 __revision__  = "$Revision: 92 $"
-__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', '__version__', '__revision__', '__all__']
+__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'robustmean', '__version__', '__revision__', '__all__']
 __author__    = "P.S.Ray"
 __maintainer__ = "Jayce Dowell"
 
@@ -99,7 +99,7 @@ def smooth(x,window_len=10,window='hanning'):
 	Output:
 	  * the smoothed signal
 		
-	example::
+	Example:
 	  >>> from numpy import *
 	  >>> t=linspace(-2,2,0.1)
 	  >>> x=sin(t)+randn(len(t))*0.1
@@ -144,7 +144,11 @@ def cmagnitude(cmplx):
     
 
 def cphase(cmplx):
-	"""Return the polar phases of complex values as radians."""
+	"""Return the polar phases of complex values as radians.
+
+	.. seealso::
+		:func:`lsl.correlator.visUtils.argument`
+	"""
 	
 	return numpy.angle(cmplx)
     
@@ -208,7 +212,11 @@ def from_dB(dB):
 def robustmean(arr):
 	"""Take the robust mean of an array, normally a small section of a 
 	spectrum, over which the mean can be assumed to be constant.  Makes two 
-	passes discarding outliers >3 sigma ABOVE (not below) the mean."""
+	passes discarding outliers >3 sigma ABOVE (not below) the mean.
+
+	.. seealso::
+		:func:`lsl.statistics.robust.robustMean`
+	"""
 	
 	# First pass discarding points >3 sigma above mean
 	mean = arr.mean()

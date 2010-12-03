@@ -31,7 +31,7 @@ primary keys
     * *freq* - list of frequencies used in Hz
     * *isMasked* - whether or not the visibility data have been masked 
       (numpy.compress'd)
-    * bls* - list of baselines in (stand 1, stand2) format
+    * *bls* - list of baselines in (stand 1, stand2) format
     * *uvw* - list of uvw coordinates as 3-element numpy arrays
     * *vis* - list of visibility numpy arrays
     * *wgt* - list of weight arrays with the same length as the visilitity arrays

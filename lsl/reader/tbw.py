@@ -13,8 +13,8 @@ Frame
   original TBW frame.
 
 The functions defined in this module fall into two class:
- 1. convert a frame in a file to a Frame object and
- 2. describe the format of the data in the file.
+  1. convert a frame in a file to a Frame object and
+  2. describe the format of the data in the file.
 
 For reading in data, use the readFrame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.  readFrame 

@@ -3,7 +3,8 @@
 """Small collection of robust statistical estimators based on functions from
 the AstroIDL User's Library.  Function included are:
   * robustMean - robust estimator of the mean of a data set and
-  * robustSigma - robust estimator of the standard deviation of a data set."""
+  * robustSigma - robust estimator of the standard deviation of a data set.
+"""
 
 import math
 import numpy
@@ -16,7 +17,11 @@ __epsilon = 1.0e-20
 
 def robustMean(inputData, Cut=3.0):
 	"""Robust estimator of the mean of a data set.  Based on the 
-	resistant_mean function from the AstroIDL User's Library."""
+	resistant_mean function from the AstroIDL User's Library.
+
+	.. seealso::
+		:func:`lsl.misc.mathutils.robustmean`
+	"""
 
 	data = inputData.ravel()
 

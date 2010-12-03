@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Example script for reading in TBW data and writing it to a TS-FITS file."""
+"""Example script for reading in TBN data and writing it to a TS-FITS file."""
 
 import os
 import sys

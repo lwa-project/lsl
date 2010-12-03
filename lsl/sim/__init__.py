@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """lsl.sim - Simulate various types of LWA data.  The following follow DP
-format writers are avaliable::
+format writers are avaliable:
   * tbw
   * tbn
   * drx

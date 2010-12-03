@@ -59,6 +59,13 @@ Miscellaneous
    modindex
    search
 
+Included Scripts
+----------------
+.. toctree::
+   :maxdepth: 2
+
+   scripts
+
 
 Indices and Tables
 ==================

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Application to calculate real-time ephemeris for a LWDA site."""
+"""Application to calculate real-time ephemeris for a LWA site."""
 
 import curses
 import math
@@ -54,7 +54,7 @@ if __name__ == '__main__':
 	# check command line
 	parser = optparse.OptionParser(usage = usage)
 	parser.add_option("-s", "--site", action = "store", type = "string",
-					dest = "site", default = 'LWDA', help = "site name (default LWDA)")
+					dest = "site", default = 'LWA-1', help = "site name (default LWA-1)")
 	(opts, args) = parser.parse_args()
 			
 	# setup transform objects

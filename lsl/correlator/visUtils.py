@@ -6,7 +6,11 @@
   * plots of closure phase for three antennae as a function of time
 
 In addition, most of the functions have the ability to compare the observed 
-data with simulations.
+data with simulations.  The data dictionaries referred to in the functions 
+are in the formate as the data dictionaries created by :mod:`lsl.sim.vis`.
+
+.. seealso::
+   :mod:`lsl.sim.vis`
 """
 
 import math
