@@ -21,7 +21,7 @@ from lsl.misc import geodesy
 from lsl.common.warns import warnExperimental
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 11 $'
+__revision__ = '$ Revision: 12 $'
 __all__ = ['IDI', 'StokesCodes', '__version__', '__revision__', '__all__']
 
 
@@ -104,14 +104,14 @@ class IDI(object):
 		return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
 
 
-	def __init__(self, filename, refTime=0.0):
+	def __init__(self, filename, refTime=0.0, verbose=False):
 		"""Initialize a new FITS IDI object using a filename and a reference time 
 		given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
 		string in the format of 'YYYY-MM-DDTHH:MM:SS'."""
 
 		# File-specific information
 		self.filename = filename
-		self.hdulist = None
+		self.verbose = verbose
 
 		# Observation-specifc information
 		self.refTime = self.parseRefTime(refTime)
@@ -185,7 +185,7 @@ class IDI(object):
 				mapper[stands[i]] = stands[i]
 
 		# If the mapper has been enabled, tell the user about it
-		if enableMapper:
+		if enableMapper and self.verbose:
 			print "FITS IDI: stand ID mapping enabled"
 			for key, value in mapper.iteritems():
 				print "FITS IDI:  stand #%i -> mapped #%i" % (key, value)
