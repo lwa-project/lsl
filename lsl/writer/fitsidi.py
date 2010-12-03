@@ -98,7 +98,7 @@ class IDI(object):
 		return refTime
 
 	def refTime2AstroDate(self):
-		"""Convert a reference time string to an astro.date object."""
+		"""Convert a reference time string to an :class:`lsl.astro.date` object."""
 
 		dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
 		return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
