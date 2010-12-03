@@ -21,6 +21,7 @@ shiftData
   given a dictionary of simulated visibilities from buildSimData, shift the uvw 
   coordinates of the visibilities.
   .. note::
+
 	This only changes the uvw values and does not phase-shift the data.
 
 The format of the data dictionaries mentioned above is:

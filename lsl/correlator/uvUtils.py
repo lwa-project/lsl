@@ -319,6 +319,7 @@ def signalDelay(stand, freq, cache=None):
 	corrected is incomplete.  Similar to cableDelay, a numpy array is returned.
 
 	.. note::
+
 		Currently all additional delays are set to 0.
 
 	.. warning::

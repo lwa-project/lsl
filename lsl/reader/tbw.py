@@ -30,6 +30,7 @@ getFramesPerObs
   read in the first several frames to see how many stands are found in the 
   data.
   .. note::
+
 	This function is a little flaky on TBW data sets that have less 
 	than a full complement or 12M (36M) samples.
 """
