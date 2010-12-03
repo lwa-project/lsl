@@ -71,7 +71,7 @@ class UTC(tzinfo):
 class TSFITS(object):
 	"""Class that holds TSFITS data until it is ready to be writen to disk."""
 
-	def __init__(self, filename, mode, Overwrite=False, UseQueue=True):
+	def __init__(self, filename, mode, Overwrite=False, UseQueue=True, verbose=False):
 		"""Initialize a TSFITS object using a filename and an observation mode 
 		(TBW or TBN).  Optionally, TSFITS can be told to overwrite the file if it 
 		already exists using the 'Overwrite' keyword."""
@@ -86,6 +86,7 @@ class TSFITS(object):
 		self.queueLimit = 10000
 		self.site = 'LWA'
 		self.firstSamples = {}
+		self.verbose = verbose
 
 		if os.path.exists(filename) and not Overwrite:
 			self.hdulist = pyfits.open(self.filename, mode="update", memmap=0)
@@ -177,7 +178,8 @@ class TSFITS(object):
 		extension = self.__findExtension(stand)
 
 		if extension is None:
-			print "Stand '%i' not found, creating new binary table extension" % stand
+			if self.verbose:
+				print "Stand '%i' not found, creating new binary table extension" % stand
 			self.standCount = self.standCount + 1
 
 			# Data
@@ -255,7 +257,8 @@ class TSFITS(object):
 				start = 1
 				frame = self.queue[stand][0]
 				
-				print "Stand '%i' not found, creating new binary table extension" % stand
+				if self.verbose:
+					print "Stand '%i' not found, creating new binary table extension" % stand
 				self.standCount = self.standCount + 1
 
 				# Data
@@ -335,7 +338,8 @@ class TSFITS(object):
 				start = 1
 				frame = self.queue[stand][0]
 				
-				print "Stand '%i' not found, creating new binary table extension" % stand
+				if self.verbose:
+					print "Stand '%i' not found, creating new binary table extension" % stand
 				self.standCount = self.standCount + 1
 
 				# Data
@@ -417,7 +421,8 @@ class TSFITS(object):
 			try:
 				self.hdulist[0].header['FILTER']
 			except:
-				self.hdulist[0].header.update('FILTER', frame.getFilterCode())
+				if frame.data.sampleRate is not None:
+					self.hdulist[0].header.update('FILTER', frame.getFilterCode())
 				if frame.data.gain is not None:
 					self.hdulist[0].header.update('GAIN', frame.data.gain)
 				if frame.data.centralFreq is not None:
@@ -453,12 +458,12 @@ class TSFITS(object):
 class TBW(TSFITS):
 	"""Sub-class of TSFITS for dealing with TBW data in particular."""
 
-	def __init__(self, filename, Overwrite=False, UseQueue=True):
-		super(TBW, self).__init__(filename, 'TBW', Overwrite=Overwrite, UseQueue=UseQueue)
+	def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
+		super(TBW, self).__init__(filename, 'TBW', Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
 		
 
 class TBN(TSFITS):
 	"""Sub-class of TSFITS for dealing with TBN data in particular."""
 
-	def __init__(self, filename, Overwrite=False, UseQueue=True):
-		super(TBN, self).__init__(filename, 'TBN', Overwrite=Overwrite, UseQueue=UseQueue)
+	def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
+		super(TBN, self).__init__(filename, 'TBN', Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
