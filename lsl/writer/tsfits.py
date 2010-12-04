@@ -421,7 +421,7 @@ class TSFITS(object):
 			try:
 				self.hdulist[0].header['FILTER']
 			except:
-				if frame.data.sampleRate is not None:
+				if frame.getFilterCode() is not None:
 					self.hdulist[0].header.update('FILTER', frame.getFilterCode())
 				if frame.data.gain is not None:
 					self.hdulist[0].header.update('GAIN', frame.data.gain)

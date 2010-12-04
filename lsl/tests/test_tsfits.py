@@ -304,7 +304,7 @@ class tsfits_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_write_tbn_queueV(self):
-		"""Test that TBN data can be written to a TS FITS file one at a time (simple)."""
+		"""Test that TBN data can be written to a TS FITS file with a queue (simple)."""
 		
 		
 		# Setup the file names
@@ -366,8 +366,7 @@ class tsfits_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_write_tbn_queue(self):
-		"""Test that TBN data can be written to a TS FITS file one at a time (full)."""
-		
+		"""Test that TBN data can be written to a TS FITS file with a queue (full)."""
 		
 		# Setup the file names
 		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
