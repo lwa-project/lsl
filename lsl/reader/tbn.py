@@ -100,7 +100,7 @@ class FrameData(object):
 	def __init__(self, timeTag=None, iq=None):
 		self.sampleRate = None
 		self.centralFreq = None
-		self.gain
+		self.gain = None
 		self.timeTag = timeTag
 		self.iq = iq
 
