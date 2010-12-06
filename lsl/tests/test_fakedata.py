@@ -58,6 +58,9 @@ class fake_S60_tests(unittest.TestCase):
 			self.assertAlmostEqual(fakeData[i].real, origData[i].real, 4)
 			self.assertAlmostEqual(fakeData[i].imag, origData[i].imag, 4)
 
+		os.unlink(testFile)
+		os.rmdir(testPath)
+
 	def test_write_chunk(self):
 		"""Test that the S60 data writer works for chunks."""
 
@@ -85,6 +88,9 @@ class fake_S60_tests(unittest.TestCase):
 		for i in range(2202):
 			self.assertAlmostEqual(fakeData[i].real, origData[i].real, 4)
 			self.assertAlmostEqual(fakeData[i].imag, origData[i].imag, 4)
+
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_frame_data_errors(self):
 		"""Test the different error scenarios in s60.frame2frame."""
@@ -167,6 +173,9 @@ class fake_TBW_tests(unittest.TestCase):
 		for i in range(400):
 			self.assertEqual(fakeFrame.data.xy[0,i], origFrame.data.xy[0,i])
 			self.assertEqual(fakeFrame.data.xy[1,i], origFrame.data.xy[1,i])
+
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_frame_data_errors(self):
 		"""Test the data error scenarios when validating a TBW SimFrame ."""
@@ -268,6 +277,9 @@ class fake_TBN_tests(unittest.TestCase):
 		for i in range(512):
 			self.assertEqual(fakeFrame.data.iq[i].real, origFrame.data.iq[i].real)
 			self.assertEqual(fakeFrame.data.iq[i].imag, origFrame.data.iq[i].imag)
+
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_frame_data_errors(self):
 		"""Test the data error scenarios when validating a TBN SimFrame."""

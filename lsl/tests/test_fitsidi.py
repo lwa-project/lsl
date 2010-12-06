@@ -69,7 +69,10 @@ class fitsidi_tests(unittest.TestCase):
 		extNames = [hdu.name for hdu in hdulist]
 		for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
 			self.assertTrue(ext in extNames)
+
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_array_geometry(self):
 		"""Test the ARRAY_GEOMETRY table."""
@@ -101,6 +104,8 @@ class fitsidi_tests(unittest.TestCase):
 			self.assertEqual(name, anname)
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_frequency(self):
 		"""Test the FREQUENCY table."""
@@ -136,6 +141,8 @@ class fitsidi_tests(unittest.TestCase):
 		self.assertEqual(fq.field('SIDEBAND')[0], 1)
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_antenna(self):
 		"""Test the ANTENNA table."""
@@ -166,6 +173,8 @@ class fitsidi_tests(unittest.TestCase):
 			self.assertEqual(freqid, 1)
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_bandpass(self):
 		"""Test the BANDPASS table."""
@@ -200,6 +209,8 @@ class fitsidi_tests(unittest.TestCase):
 			self.assertEqual(freqid, 1)
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_source(self):
 		"""Test the SOURCE table."""
@@ -229,6 +240,8 @@ class fitsidi_tests(unittest.TestCase):
 		self.assertEqual(so.field('SOURCE_ID'), 1)
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_uvdata(self):
 		"""Test the UV_DATA table."""
@@ -296,6 +309,8 @@ class fitsidi_tests(unittest.TestCase):
 			i = i + 1
 		
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_mapper(self):
 		"""Test the NOSTA_MAPPER table."""
@@ -331,6 +346,10 @@ class fitsidi_tests(unittest.TestCase):
 			for msta, mact, asta, anam in zip(mNoSta, mNoAct, aNoSta, aAnNam):
 				self.assertEqual(msta, asta)
 				self.assertEqual(mact, int(anam[3:]))
+
+		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 
 class fitsidi_test_suite(unittest.TestSuite):

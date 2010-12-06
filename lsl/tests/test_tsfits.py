@@ -124,6 +124,8 @@ class tsfits_tests(unittest.TestCase):
 			
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_write_tbw_queue(self):
 		"""Test that TBW data can be written to a TS FITS file with a queue."""
@@ -189,6 +191,8 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_write_tbn_singleV(self):
 		"""Test that TBN data can be written to a TS FITS file one at a time (simple)."""
@@ -251,6 +255,8 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_write_tbn_single(self):
 		"""Test that TBN data can be written to a TS FITS file one at a time (full)."""
@@ -313,6 +319,8 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_write_tbn_queueV(self):
 		"""Test that TBN data can be written to a TS FITS file with a queue (simple)."""
@@ -378,6 +386,8 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 	def test_write_tbn_queue(self):
 		"""Test that TBN data can be written to a TS FITS file with a queue (full)."""
@@ -442,6 +452,8 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
+		os.unlink(testFile)
+		os.rmdir(testPath)
 
 
 class tsfits_test_suite(unittest.TestSuite):
