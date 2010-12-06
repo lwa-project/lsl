@@ -45,9 +45,10 @@ def open_and_get_nec_freq(fname):
 	# reading Numerical Green's Function parts. Of course, if a user writes
 	# "STRUCTURE SPECIFICATION" in his comment lines, this still fails...
 	for line in f:
-		if line.find('STRUCTURE SPECIFICATION') >= 0: break
-	else:
-		raise RuntimeError("STRUCTURE SPECIFICATION not found!")
+		if line.find('STRUCTURE SPECIFICATION') >= 0:
+			break
+		else:
+			raise RuntimeError("STRUCTURE SPECIFICATION not found!")
 		
 	#  Now look for FREQUENCY and get the value
 	for line in f:
