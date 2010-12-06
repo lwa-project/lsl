@@ -186,7 +186,9 @@ class TSFITS(object):
 			if self.mode == 'TBW':
 				c1 = pyfits.Column(name='data', format='%iI' % frame.data.xy.shape[1], array=frame.data.xy.astype(numpy.int16))
 			else:
-				c1 = pyfits.Column(name='data', format='512C', array=frame.data.iq.astype(numpy.csingle))
+				data = frame.data.iq.astype(numpy.csingle)
+				data.shape = (1,512)
+				c1 = pyfits.Column(name='data', format='512C', array=data)
 			# Polarization
 			c2 = pyfits.Column(name='pol', format='1I')
 			# Time
@@ -229,7 +231,9 @@ class TSFITS(object):
 				tempHDU.data.field('time')[nrows:] = numpy.array([frame.data.timeTag, frame.data.timeTag]) / dp_common.fS - self.firstSamples[stand]
 			else:
 				tempHDU = self.__makeAppendTable(extension, AddRows=1)
-				tempHDU.data.field('data')[nrows:] = frame.data.iq.astype(numpy.csingle)
+				data = frame.data.iq.astype(numpy.csingle)
+                                data.shape = (1,512)
+				tempHDU.data.field('data')[nrows:] = data
 				tempHDU.data.field('pol')[nrows:] = numpy.array([pol])
 				tempHDU.data.field('time')[nrows:] = numpy.array([frame.data.timeTag]) / dp_common.fS - self.firstSamples[stand]
 
@@ -265,7 +269,9 @@ class TSFITS(object):
 				if self.mode == 'TBW':
 					c1 = pyfits.Column(name='data', format='%iI' % frame.data.xy.shape[1], array=frame.data.xy.astype(numpy.int16))
 				else:
-					c1 = pyfits.Column(name='data', format='512C', array=frame.data.iq.astype(numpy.csingle))
+					data = frame.data.iq.astype(numpy.csingle)
+	                                data.shape = (1,512)
+					c1 = pyfits.Column(name='data', format='512C', array=data)
 				# Polarization
 				c2 = pyfits.Column(name='pol', format='1I')
 				# Time
@@ -317,7 +323,9 @@ class TSFITS(object):
 				tempHDU = self.__makeAppendTable(extension, AddRows=(self.queueLimit-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
 					stand,pol = frame.parseID()
-					tempHDU.data.field('data')[nrows+count] = frame.data.iq.astype(numpy.csingle)
+					data = frame.data.iq.astype(numpy.csingle)
+	                                data.shape = (1,512)
+					tempHDU.data.field('data')[nrows+count] = data
 					tempHDU.data.field('pol')[nrows+count] = pol
 					tempHDU.data.field('time')[nrows+count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
 
@@ -331,6 +339,7 @@ class TSFITS(object):
 		for stand in self.queue.keys():
 			if len(self.queue[stand]) == 0:
 				continue
+			self.queueLimit = len(self.queue[stand])
 			start = 0
 			extension = self.__findExtension(stand)
 
@@ -346,7 +355,9 @@ class TSFITS(object):
 				if self.mode == 'TBW':
 					c1 = pyfits.Column(name='data', format='%iI' % frame.data.xy.shape[1], array=frame.data.xy.astype(numpy.int16))
 				else:
-					c1 = pyfits.Column(name='data', format='512C', array=frame.data.iq.astype(numpy.csingle))
+					data = frame.data.iq.astype(numpy.csingle)
+                                        data.shape = (1,512)	
+					c1 = pyfits.Column(name='data', format='512C', array=data)
 				# Polarization
 				c2 = pyfits.Column(name='pol', format='1I')
 				# Time
@@ -398,7 +409,9 @@ class TSFITS(object):
 				tempHDU = self.__makeAppendTable(extension, AddRows=(self.queueLimit-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
 					stand,pol = frame.parseID()
-					tempHDU.data.field('data')[nrows+count] = frame.data.iq.astype(numpy.csingle)
+					data = frame.data.iq.astype(numpy.csingle)
+                                        data.shape = (1,512)
+					tempHDU.data.field('data')[nrows+count] = data
 					tempHDU.data.field('pol')[nrows+count] = pol
 					tempHDU.data.field('time')[nrows+count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
 
