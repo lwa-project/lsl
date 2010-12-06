@@ -339,7 +339,7 @@ class TSFITS(object):
 		for stand in self.queue.keys():
 			if len(self.queue[stand]) == 0:
 				continue
-			self.queueLimit = len(self.queue[stand])
+			queueSize = len(self.queue[stand])
 			start = 0
 			extension = self.__findExtension(stand)
 
@@ -397,7 +397,7 @@ class TSFITS(object):
 
 			nrows = self.hdulist[extension].data.shape[0]
 			if self.mode == 'TBW':
-				tempHDU = self.__makeAppendTable(extension, AddRows=2*(self.queueLimit-start))
+				tempHDU = self.__makeAppendTable(extension, AddRows=2*(queueSize-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
 					tempHDU.data.field('data')[nrows+2*count] = numpy.squeeze(frame.data.xy.astype(numpy.int16)[0,:])
 					tempHDU.data.field('pol')[nrows+2*count] = 0
@@ -406,7 +406,7 @@ class TSFITS(object):
 					tempHDU.data.field('pol')[nrows+2*count+1] = 1
 					tempHDU.data.field('time')[nrows+2*count+1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
 			else:
-				tempHDU = self.__makeAppendTable(extension, AddRows=(self.queueLimit-start))
+				tempHDU = self.__makeAppendTable(extension, AddRows=(queueSize-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
 					stand,pol = frame.parseID()
 					data = frame.data.iq.astype(numpy.csingle)

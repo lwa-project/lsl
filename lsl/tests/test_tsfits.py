@@ -141,7 +141,6 @@ class tsfits_tests(unittest.TestCase):
 		for frame in frames:
 			frameData[frame.parseID()-1, count[frame.parseID()], :, :] = frame.data.xy
 			count[frame.parseID()] = count[frame.parseID()] + 1
-		print count
 
 		# Load it in
 		fits = tsfits.TBW(testFile, UseQueue=True)
@@ -158,17 +157,16 @@ class tsfits_tests(unittest.TestCase):
 		self.assertEqual(hdulist[0].header['TBWBITS'], frames[0].getDataBits())
 
 		# Check each extension for accuracy
-		print [hdu.header['STAND'] for hdu in hdulist[1:]]
 		for hdu in hdulist[1:]:
 			stand = hdu.data
 			sNumb = hdu.header['STAND']
-			print sNumb
 			# Check the time tags
 			for time in stand.field('time'):
 				self.assertTrue(time % 400 == 0)
 
 			# Check the pol. values
 			for pol in stand.field('pol'):
+				print pol
 				self.assertTrue(pol in [0, 1])
 
 			# Check the data length
@@ -178,7 +176,6 @@ class tsfits_tests(unittest.TestCase):
 			# Check the data itself
 			count = {0: 0, 1: 0}
 			for pol, time, data in zip(stand.field('pol'), stand.field('time'), stand.field('data')):
-				print count, data.shape, frameData.shape, (sNumb-1), count[pol], pol, stand.field('data').shape
 				for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
 					self.assertEqual(ts, fs)
 				count[pol] = count[pol] + 1
@@ -237,7 +234,6 @@ class tsfits_tests(unittest.TestCase):
 			# Check the data itself
 			count = {0: 0, 1: 0}
 			for pol, data in zip(stand.field('pol'), stand.field('data')):
-				print count, data.shape, frameData.shape, (sNumb-1), count[pol], pol, stand.field('data').shape
 				for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
 					self.assertAlmostEqual(ts, fs, 6)
 				count[pol] = count[pol] + 1
@@ -296,7 +292,6 @@ class tsfits_tests(unittest.TestCase):
 			# Check the data itself
 			count = {0: 0, 1: 0}
 			for pol, data in zip(stand.field('pol'), stand.field('data')):
-				print count, data.shape, frameData.shape, (sNumb-1), count[pol], pol, stand.field('data').shape
 				for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
 					self.assertAlmostEqual(ts, fs, 6)
 				count[pol] = count[pol] + 1
@@ -358,7 +353,6 @@ class tsfits_tests(unittest.TestCase):
 			# Check the data itself
 			count = {0: 0, 1: 0}
 			for pol, data in zip(stand.field('pol'), stand.field('data')):
-				print count, data.shape, frameData.shape, (sNumb-1), count[pol], pol, stand.field('data').shape
 				for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
 					self.assertAlmostEqual(ts, fs, 6)
 				count[pol] = count[pol] + 1
@@ -419,7 +413,6 @@ class tsfits_tests(unittest.TestCase):
 			# Check the data itself
 			count = {0: 0, 1: 0}
 			for pol, data in zip(stand.field('pol'), stand.field('data')):
-				print count, data.shape, frameData.shape, (sNumb-1), count[pol], pol, stand.field('data').shape
 				for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
 					self.assertAlmostEqual(ts, fs, 6)
 				count[pol] = count[pol] + 1
