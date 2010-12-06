@@ -105,9 +105,13 @@ class tsfits_tests(unittest.TestCase):
 
 			# Check the pol. values
 			for pol in stand.field('pol'):
-				self.assertTrue(pol in [0, 1])
+				self.assertTrue(pol in [0, 1], "Polarization value out of range: %i" % pol)
 
 			# Check the data length
+			x, y = stand.field('data').shape
+			self.assertEqual(x, 8, "Shape mis-match on dimension 1: %i != 8" % x)
+			self.assertEqual(y, 400, "Shape mis-match on dimension 2: %i != 400" % y)
+
 			for data in stand.field('data'):
 				self.assertEqual(len(data), 400)
 			
@@ -170,6 +174,10 @@ class tsfits_tests(unittest.TestCase):
 				self.assertTrue(pol in [0, 1])
 
 			# Check the data length
+			x, y = stand.field('data').shape
+			self.assertEqual(x, 8, "Shape mis-match on dimension 1: %i != 8" % x)
+			self.assertEqual(y, 400, "Shape mis-match on dimension 2: %i != 400" % y)
+
 			for data in stand.field('data'):
 				self.assertEqual(len(data), 400)
 			
@@ -227,6 +235,10 @@ class tsfits_tests(unittest.TestCase):
 				self.assertTrue(pol in [0, 1])
 
 			# Check the data length
+			x, y = stand.field('data').shape
+			self.assertEqual(x, 2, "Shape mis-match on dimension 1: %i != 2" % x)
+			self.assertEqual(y, 512, "Shape mis-match on dimension 2: %i != 512" % y)
+
 			for data in stand.field('data'):
 				self.assertEqual(data.dtype.kind, 'c')
 				self.assertEqual(len(data), 512)
@@ -285,6 +297,10 @@ class tsfits_tests(unittest.TestCase):
 				self.assertTrue(pol in [0, 1])
 
 			# Check the data length
+			x, y = stand.field('data').shape
+			self.assertEqual(x, 2, "Shape mis-match on dimension 1: %i != 2" % x)
+			self.assertEqual(y, 512, "Shape mis-match on dimension 2: %i != 512" % y)
+
 			for data in stand.field('data'):
 				self.assertEqual(data.dtype.kind, 'c')
 				self.assertEqual(len(data), 512)
@@ -346,6 +362,10 @@ class tsfits_tests(unittest.TestCase):
 				self.assertTrue(pol in [0, 1])
 
 			# Check the data length
+			x, y = stand.field('data').shape
+			self.assertEqual(x, 2, "Shape mis-match on dimension 1: %i != 2" % x)
+			self.assertEqual(y, 512, "Shape mis-match on dimension 2: %i != 512" % y)
+
 			for data in stand.field('data'):
 				self.assertEqual(data.dtype.kind, 'c')
 				self.assertEqual(len(data), 512)
@@ -406,6 +426,10 @@ class tsfits_tests(unittest.TestCase):
 				self.assertTrue(pol in [0, 1])
 
 			# Check the data length
+			x, y = stand.field('data').shape
+			self.assertEqual(x, 2, "Shape mis-match on dimension 1: %i != 2" % x)
+			self.assertEqual(y, 512, "Shape mis-match on dimension 2: %i != 512" % y)
+
 			for data in stand.field('data'):
 				self.assertEqual(data.dtype.kind, 'c')
 				self.assertEqual(len(data), 512)

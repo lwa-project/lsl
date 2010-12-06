@@ -182,17 +182,22 @@ class TSFITS(object):
 				print "Stand '%i' not found, creating new binary table extension" % stand
 			self.standCount = self.standCount + 1
 
-			# Data
 			if self.mode == 'TBW':
+				# Data
 				c1 = pyfits.Column(name='data', format='%iI' % frame.data.xy.shape[1], array=frame.data.xy.astype(numpy.int16))
+				# Polarization
+				c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0, 1]))
+				# Time
+				c3 = pyfits.Column(name='time', format='1K', array=numpy.array([0, 0]))
 			else:
+				# Data
 				data = frame.data.iq.astype(numpy.csingle)
 				data.shape = (1,512)
 				c1 = pyfits.Column(name='data', format='512C', array=data)
-			# Polarization
-			c2 = pyfits.Column(name='pol', format='1I')
-			# Time
-			c3 = pyfits.Column(name='time', format='1K')
+				# Polarization
+				c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0]))
+				# Time
+				c3 = pyfits.Column(name='time', format='1K', array=numpy.array([0]))
 
 			# Define the collection of columns
 			colDefs = pyfits.ColDefs([c1, c2, c3])
@@ -265,17 +270,22 @@ class TSFITS(object):
 					print "Stand '%i' not found, creating new binary table extension" % stand
 				self.standCount = self.standCount + 1
 
-				# Data
 				if self.mode == 'TBW':
+					# Data
 					c1 = pyfits.Column(name='data', format='%iI' % frame.data.xy.shape[1], array=frame.data.xy.astype(numpy.int16))
+					# Polarization
+					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0, 1]))
+					# Time
+					c3 = pyfits.Column(name='time', format='1K', array=numpy.array([0, 0]))
 				else:
+					# Data
 					data = frame.data.iq.astype(numpy.csingle)
-	                                data.shape = (1,512)
+					data.shape = (1,512)
 					c1 = pyfits.Column(name='data', format='512C', array=data)
-				# Polarization
-				c2 = pyfits.Column(name='pol', format='1I')
-				# Time
-				c3 = pyfits.Column(name='time', format='1K')
+					# Polarization
+					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0]))
+					# Time
+					c3 = pyfits.Column(name='time', format='1K', array=numpy.array([0]))
 
 				# Define the collection of columns
 				colDefs = pyfits.ColDefs([c1, c2, c3])
@@ -351,17 +361,22 @@ class TSFITS(object):
 					print "Stand '%i' not found, creating new binary table extension" % stand
 				self.standCount = self.standCount + 1
 
-				# Data
 				if self.mode == 'TBW':
+					# Data
 					c1 = pyfits.Column(name='data', format='%iI' % frame.data.xy.shape[1], array=frame.data.xy.astype(numpy.int16))
+					# Polarization
+					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0, 1]))
+					# Time
+					c3 = pyfits.Column(name='time', format='1K', array=numpy.array([0, 0]))
 				else:
+					# Data
 					data = frame.data.iq.astype(numpy.csingle)
-                                        data.shape = (1,512)	
+					data.shape = (1,512)
 					c1 = pyfits.Column(name='data', format='512C', array=data)
-				# Polarization
-				c2 = pyfits.Column(name='pol', format='1I')
-				# Time
-				c3 = pyfits.Column(name='time', format='1K')
+					# Polarization
+					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0]))
+					# Time
+					c3 = pyfits.Column(name='time', format='1K', array=numpy.array([0]))
 
 				# Define the collection of columns
 				colDefs = pyfits.ColDefs([c1, c2, c3])

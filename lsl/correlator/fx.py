@@ -28,9 +28,12 @@ def blackmanWindow(length):
 	"""Generate a Blackman window of the specified length.  The window is returned
 	as a numpy array."""
 
-	N = length - 1
-	x = numpy.linspace(0,length-1,length)
-	w = 0.42 - 0.50*numpy.cos(2*numpy.pi*x/N) + 0.08*numpy.cos(4*numpy.pi*x/N)
+	if length > 1:
+		N = length - 1
+		x = numpy.linspace(0,length-1,length)
+		w = 0.42 - 0.50*numpy.cos(2*numpy.pi*x/N) + 0.08*numpy.cos(4*numpy.pi*x/N)
+	else:
+		w = numpy.ones(1)
 
 	return w
 

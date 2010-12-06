@@ -97,7 +97,7 @@ class FrameData(object):
 	"""Class that stores the information found in the data section of a TBN
 	frame.  Both fields listed in the DP IDC version H are stored."""
 
-	def __init__self(self, timeTag=None, iq=None):
+	def __init__(self, timeTag=None, iq=None):
 		self.sampleRate = None
 		self.centralFreq = None
 		self.gain

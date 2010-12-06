@@ -102,7 +102,7 @@ class FrameData(object):
 	"""Class that stores the information found in the data section of a TBW
 	frame.  Both fields listed in the DP IDC version H are stored."""
 
-	def __init__self(self, timeTag=None, samples=400, xy=None):
+	def __init__(self, timeTag=None, samples=400, xy=None):
 		self.timeTag = timeTag
 		self.xy = xy
 

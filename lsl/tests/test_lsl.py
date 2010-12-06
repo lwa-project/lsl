@@ -11,8 +11,10 @@ from lsl.tests import test_mathutil
 from lsl.tests import test_nec_util
 from lsl.tests import test_catalog
 from lsl.tests import test_stations
+from lsl.tests import robust
 from lsl.tests import test_reader
 from lsl.tests import test_uvUtils
+from lsl.tests import test_fx
 from lsl.tests import test_visUtils
 from lsl.tests import test_fakedata
 from lsl.tests import test_geodesy
@@ -41,8 +43,10 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_nec_util.nec_util_test_suite())
 		self.addTest(test_catalog.catalog_test_suite())
 		self.addTest(test_stations.stations_test_suite())
+		self.addTest(test_robust.robust_test_suite())
 		self.addTest(test_reader.reader_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())
+		self.addTest(test_fx.fx_test_suite())
 		self.addTest(test_visUtils.visUtils_test_suite())
 		self.addTest(test_fakedata.fakedata_test_suite())
 		self.addTest(test_geodesy.geodesy_test_suite())
