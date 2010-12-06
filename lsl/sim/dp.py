@@ -67,7 +67,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 		nCaptures = int(math.ceil(nFrames / 30000.0))
 		for capture in range(nCaptures):
 			for stand1, stand2 in zip(stands[0::2], stands[1::2]):
-				print "Simulating capture %i, stands %i and %i" % (capture+1, stand1, stand2)
+				print "Simulating TBW capture %i, stands %i and %i" % (capture+1, stand1, stand2)
 				FramesThisBatch = nFrames - capture*30000
 				if FramesThisBatch > 30000:
 					FramesThisBatch = 30000
@@ -102,7 +102,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 		
 		for i in range(nFrames):
 			if i % 1000 == 0:
-				print "Simulating frame %i" % (i+1)
+				print "Simulating TBN frame %i" % (i+1)
 			t = tStart + i*samplesPerFrame/sampleRate
 			for stand in stands:
 				cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=t)
@@ -153,7 +153,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 
 		for i in range(nFrames):
 			if i % 1000 == 0:
-				print "Simulating frame %i" % i
+				print "Simulating DRX frame %i" % i
 			t = tStart + i*samplesPerFrame/sampleRate
 			for beam in beams:
 				for tune in [1, 2]:
@@ -268,14 +268,14 @@ def __buildSignals(aa, srcParams, times):
 	return tdSignals
 
 
-def pointSource(fh, stands, src, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
-	"""Generate a collection of frames with a point source signal for TBW, 
-	TBN, and DRX.  The point source is specified as a aipy.src object.
+def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=0):
+	"""Generate a collection of frames with a point source signal for TBW
+	and TBN.  The point source is specified as a aipy.src object.
 	    
 	All modes need to have stands (beams in the case of DRX) and number of
 	frames to generate.  TBW also needs to `bits' keyword set to generate 
-	either 12-bit or 4-bit data.  The TBN and DRX frames need the `filter'
-	keyword set to specify the filter width."""
+	either 12-bit or 4-bit data.  The TBN frames need the `filter' keyword 
+	set to specify the filter width."""
 
 	if tStart == 0:
 		tStart = time.time()
@@ -296,12 +296,15 @@ def pointSource(fh, stands, src, nFrames, mode='DRX', filter=6, bits=12, tStart=
 
 		nCaptures = int(math.ceil(nFrames / 30000.0))
 		for capture in range(nCaptures):
+			j = 0
+			k = 1
 			for stand1, stand2 in zip(stands[0::2], stands[1::2]):
-				print "Simulating capture %i, stands %i and %i" % (capture+1, stand1, stand2)
+				print "Simulating TBW capture %i, stands %i and %i" % (capture+1, stand1, stand2)
 				FramesThisBatch = nFrames - capture*30000
 				if FramesThisBatch > 30000:
 					FramesThisBatch = 30000
 				print "-> Frames %i" % FramesThisBatch
+
 				for i in range(FramesThisBatch):
 					frameT = tStart + i*samplesPerFrame/sampleRate + 60.0*capture
 
@@ -312,68 +315,52 @@ def pointSource(fh, stands, src, nFrames, mode='DRX', filter=6, bits=12, tStart=
 					t = frameT + n.arange(samplesPerFrame)/sampleRate * 1e9 # s -> ns
 					tdSignals = __buildSignals(aa, srcParams, t)
 
-					cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=t)
+					cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=frameT)
 					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-					cFrame.xy[0,:] *= maxValue/15.0
-					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.2041*numpy.arange(samplesPerFrame))
-					cFrame.xy[1,:] *= maxValue/15.0
-					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.3061*numpy.arange(samplesPerFrame))
+					cFrame.xy[0,:] = tdSignals.real[j,:])
+					cFrame.xy[1,:] = tdSignals.real[j,:])
 					
 					cFrame.writeRawFrame(fh)
 
-					cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=t)
+					cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=frameT)
 					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-					cFrame.xy[0,:] *= maxValue/15.0
-					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.1531*numpy.arange(samplesPerFrame))
-					cFrame.xy[1,:] *= maxValue/15.0
-					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.2551*numpy.arange(samplesPerFrame))
+					cFrame.xy[0,:] = tdSignals.real[k,:])
+					cFrame.xy[1,:] = tdSignals.real[k,:])
 					
 					cFrame.writeRawFrame(fh)
+			j = j + 2
+			k = k + 2
 
 	if mode == 'TBN':
 		sampleRate = TBNFilters[filter]
 		maxValue = 127
 		samplesPerFrame = 512
-		freqs = (numpy.fft.fftfreq(512, d=1.0/sampleRate)) + CentralFreq
+		freqs = (numpy.fft.fftfreq(samplesPerFrame, d=1.0/sampleRate)) + CentralFreq
 		freqs = numpy.fft.fftshift(freqs)
 		aa = __buildAntennaArray(lwa_common.lwa1(), stands, tStart, freqs)
 
-		# Define the stand position and cable/signal delay caches to the simulator 
-		# move along faster
-		dlyCache = uvUtils.SignalCache(freqs, applyDispersion=True)
+		for i in range(nFrames):
+			if i % 1000 == 0:
+				print "Simulating TBN frame %i" % (i+1)
+			frameT = tStart + i*samplesPerFrame/sampleRate
 
-		# Generate the time series response of each signal at each frequency
-		t = n.arange(length)/SampleRate * 1e9 # s -> ns
-		tdSignals = n.zeros((Nstand, length), dtype=n.complex64)
-		temp = n.zeros((len(srcs_tp), Nstand, length), dtype=n.complex64)
-		for sc,tp,mp,jy,fq in zip(range(temp.shape[0]), srcs_tp, srcs_mp, srcs_jy, srcs_fq):
-			for i,ant in zip(range(Nstand), aa.ants):
-				# Zeroth, get the beam response in the direction of the current source for all frequencies
-				antResponse = n.squeeze( ant.bm_response(tp, pol=pol) )
+			# Get the source parameters
+			srcParams = __getSourceParameters(aa, frameT, src)
 
-				# First, do the geometric delay
-				geoDelay = ( n.dot(mp, ant.pos).transpose() )[2] 
-				geoDelayPC = ( n.dot(phaseCenterMap, ant.pos).transpose() )[2]
-				print geoDelay, geoDelayPC
+			# Generate the time series response of each signal at each frequency
+			t = frameT + n.arange(samplesPerFrame)/sampleRate * 1e9 # s -> ns
+			tdSignals = __buildSignals(aa, srcParams, t)
 
-				# Second, do the cable delay
-				Delayat1MHz = dlyCache.cableDelay(stands[i], freq=1.0e6)[0] * 1e9 # s -> ns
-				cblDelay = dlyCache.cableDelay(stands[i]) * 1e9 # s -> ns
-				# NB: Replace the cable delays below 1 MHz with the 1 MHz value to keep the 
-				# delays from blowing up for small f
-				cblDelay = n.where( fq >= 0.001, cblDelay, Delayat1MHz )
+			j = 0
+			for stand in stands:
+				cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=frameT)
+				cFrame.iq = tdSignals[j,:].astype(numpy.singlecomplex)
+				
+				cFrame.writeRawFrame(fh)
 
-				for a,j,f,d in zip(antResponse, jy, fq, cblDelay):
-					factor = a * n.sqrt(j)
-					angle = 2*n.pi*f*(t + (d - (geoDelay-geoDelayPC)))
-					temp[sc,i,:] += factor*(n.cos(angle) + 1j*n.sin(angle))
-
-		print temp.shape
-		tdSignals = temp.sum(axis=0)
-		if not IQ:
-			return tdSignals.real
-		else:
-			return tdSginals
-
-	if mode == 'DRX':
-		pass
+				cFrame = tbn.SimFrame(stand=stand, pol=1, frameCount=i+1, obsTime=frameT)
+				cFrame.iq = tdSignals[j,:].astype(numpy.singlecomplex)
+				
+				cFrame.writeRawFrame(fh)
+				
+				j = j + 1

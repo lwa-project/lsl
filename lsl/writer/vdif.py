@@ -54,18 +54,16 @@ class Frame(object):
 		arrays."""
 		
 		if self.dataReal:
-			interlaced = 1*self.data
+			interlaced = self.data
 		else:
 			interlaced = numpy.zeros(2*len(self.data))
 			interlaced[0::2] = self.data.real
 			interlaced[1::2] = self.data.imag
 		
-		biased = interlaced - interlaced.min()
+		biased = interlaced + 2**(self.bits-1)
+		biased = biased.astype(numpy.uint32) & (2**self.bits-1)
 		
-		scaled = 1.0*biased/biased.max() * (2**self.bits-1)
-		scaled = scaled.astype(numpy.uint32)
-		
-		self.data = scaled
+		self.data = biased
 		
 	def __setEpoch(self):
 		"""Convert a UNIX timestap in seconds since 1970 to seconds since
@@ -94,7 +92,7 @@ class Frame(object):
 		# Find out how many samples can be packed into a work and build
 		# the corresponding numpy array.
 		samplesPerWord = int(32 / self.bits)
-		raw = numpy.zeros(32 + samplesPerWord*len(self.data), dtype=numpy.uint8)
+		raw = numpy.zeros(32 + 4*len(self.data)/samplesPerWord, dtype=numpy.uint8)
 
 		# Valid data, standard (not legacy) 32-bit header, and seconds since 
 		# the 01/01/2000 epoch.

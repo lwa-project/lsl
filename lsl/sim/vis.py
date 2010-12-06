@@ -80,10 +80,25 @@ class Antenna(aipy.amp.Antenna):
 	attribute that pulls in the old vis.getBeamShape function."""
 
 	def __init__(self, x, y, z, beam, phsoff=[0.,0.], bp_r=n.array([1]), bp_i=n.array([0]), amp=1, pointing=(0.,n.pi/2,0), stand=0, **kwargs):
-		"""New init call that adds support for a `stand' attribute."""
+		"""New init function that include stand ID number support.  From aipy.amp.Antenna:
 
-		super(Antenna, self).__init__(x, y, z, beam, phsoff=phsoff, bp_r=bp_r, bp_i=bp_i, amp=amp, pointing=pointing, **kwargs)
+		  * x,y z = antenna coordinates in equatorial (ns) coordinates
+		  * beam = Beam object (implements response() function)
+		  * phsoff = polynomial phase vs. frequency.  Phs term that is linear
+		    with freq is often called 'delay'.
+		  * bp_r = polynomial (in freq) modeling real component of passband
+		  * bp_i = polynomial (in freq) modeling imaginary component of passband
+		  * amp = overall multiplicative scaling of gain
+		  * pointing = antenna pointing (az,alt).  Default is zenith.
+		"""
+
+		aipy.phs.Antenna.__init__(self, x,y,z, beam=beam, phsoff=phsoff)
+		self.set_pointing(*pointing)
+		self.bp_r = bp_r
+		self.bp_i = bp_i
+		self.amp = amp
 		self.stand = stand
+		self._update_gain()
 
 	def getBeamShape(self, pol='x'):
 		"""Return a 360 by 90 by nFreqs numpy array showning the beam pattern of a
