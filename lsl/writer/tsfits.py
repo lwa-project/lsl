@@ -462,7 +462,7 @@ class TSFITS(object):
 		else:
 			self.__addDataSingle(frame)
 
-	def getStandData(stand):
+	def getStandData(self, stand):
 		"""Retrieve a dictionary of all data stored for a particular stand.  The 
 		dictionary keys are:
 		  * *data* - numpy array of data
@@ -479,7 +479,7 @@ class TSFITS(object):
 		else:
 			output = {}
 			for key in ['data', 'pol', 'time']:
-				output[key] = self.hdulist[extension].field(key)
+				output[key] = self.hdulist[extension].data.field(key)
 		return output
 
 
