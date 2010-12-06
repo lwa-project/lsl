@@ -231,13 +231,16 @@ class TSFITS(object):
 			nrows = self.hdulist[extension].data.shape[0]
 			if self.mode == 'TBW':
 				tempHDU = self.__makeAppendTable(extension, AddRows=2)
-				tempHDU.data.field('data')[nrows:] = frame.data.xy.astype(numpy.int16)
-				tempHDU.data.field('pol')[nrows:] = numpy.array([0, 1], dtype=numpy.int16)
-				tempHDU.data.field('time')[nrows:] = numpy.array([frame.data.timeTag, frame.data.timeTag]) / dp_common.fS - self.firstSamples[stand]
+				tempHDU.data.field('data')[nrows] = numpy.squeeze(frame.data.xy.astype(numpy.int16)[0,:])
+				tempHDU.data.field('pol')[nrows] = numpy.array([0], dtype=numpy.int16)
+				tempHDU.data.field('time')[nrows] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
+				tempHDU.data.field('data')[nrows+1] = numpy.squeeze(frame.data.xy.astype(numpy.int16)[1,:])
+				tempHDU.data.field('pol')[nrows+1] = numpy.array([1], dtype=numpy.int16)
+				tempHDU.data.field('time')[nrows+1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
 			else:
 				tempHDU = self.__makeAppendTable(extension, AddRows=1)
 				data = frame.data.iq.astype(numpy.csingle)
-                                data.shape = (1,512)
+                    data.shape = (1,512)
 				tempHDU.data.field('data')[nrows:] = data
 				tempHDU.data.field('pol')[nrows:] = numpy.array([pol], dtype=numpy.int16)
 				tempHDU.data.field('time')[nrows:] = numpy.array([frame.data.timeTag]) / dp_common.fS - self.firstSamples[stand]
@@ -334,7 +337,7 @@ class TSFITS(object):
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
 					stand,pol = frame.parseID()
 					data = frame.data.iq.astype(numpy.csingle)
-	                                data.shape = (1,512)
+	                    data.shape = (1,512)
 					tempHDU.data.field('data')[nrows+count] = data
 					tempHDU.data.field('pol')[nrows+count] = numpy.array([pol], dtype=numpy.int16)
 					tempHDU.data.field('time')[nrows+count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
@@ -425,7 +428,7 @@ class TSFITS(object):
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
 					stand,pol = frame.parseID()
 					data = frame.data.iq.astype(numpy.csingle)
-                                        data.shape = (1,512)
+                         data.shape = (1,512)
 					tempHDU.data.field('data')[nrows+count] = data
 					tempHDU.data.field('pol')[nrows+count] = numpy.array([pol], dtype=numpy.int16)
 					tempHDU.data.field('time')[nrows+count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]

@@ -4,6 +4,7 @@
 functions defined in this module are based heavily off the lwda_fits library."""
 
 import os
+import gc
 import re
 import sys
 import math
@@ -214,6 +215,10 @@ class IDI(object):
 		self.__writeBandpass()
 		self.__writeSource()
 		self.__writeData()
+
+		# Clear out the data section
+		del(self.data[:])
+		gc.collect()
 
 	def __addCommonKeywords(self, hdr, name, revision):
 		"""Added keywords common to all table headers."""
