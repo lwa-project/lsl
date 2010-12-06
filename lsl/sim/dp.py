@@ -317,15 +317,15 @@ def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=
 
 					cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=frameT)
 					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-					cFrame.xy[0,:] = tdSignals.real[j,:])
-					cFrame.xy[1,:] = tdSignals.real[j,:])
+					cFrame.xy[0,:] = tdSignals.real[j,:]
+					cFrame.xy[1,:] = tdSignals.real[j,:]
 					
 					cFrame.writeRawFrame(fh)
 
 					cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=frameT)
 					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-					cFrame.xy[0,:] = tdSignals.real[k,:])
-					cFrame.xy[1,:] = tdSignals.real[k,:])
+					cFrame.xy[0,:] = tdSignals.real[k,:]
+					cFrame.xy[1,:] = tdSignals.real[k,:]
 					
 					cFrame.writeRawFrame(fh)
 			j = j + 2
