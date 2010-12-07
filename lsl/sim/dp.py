@@ -47,7 +47,8 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 	All modes need to have stands (beams in the case of DRX) and number of
 	frames to generate.  TBW also needs to 'bits' keyword set to generate 
 	either 12-bit or 4-bit data.  The TBN and DRX frames need the 'filter'
-	keyword set to specify the filter width."""
+	keyword set to specify the filter width.  In addition, the 'stands' 
+	argument is interpreted as beam numbers for DRX."""
 
 	if tStart == 0:
 		tStart = time.time()
@@ -133,6 +134,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 		sampleRate = DRXFilters[filter]
 		maxValue = 7
 		samplesPerFrame = 4096
+		beams = stands
 		
 		part1 = scipy.stats.norm(loc=1000, scale=100, size=samplesPerFrame)
 		part2 = scipy.stats.norm(loc=3000, scale=100, size=samplesPerFrame)
@@ -160,10 +162,10 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 					for pol in [0, 1]:
 						cFrame = drx.SimFrame(beam=beam, tune=tune, pol=pol, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
 
-						iq = numpy.zeros(samplePerFrame, dtype=numpy.singlecomplex)
+						iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 						for chan, scale in itertools.izip(numpy.arange(samplesPerFrame), signal[2*(tune-1)+pol]):
-							iq[chan].real = norm(scale=scale)
-							iq[chan].imag = norm(scale=scale)
+							iq.real[chan] = norm(scale=scale)
+							iq.imag[chan] = norm(scale=scale)
 						cFrame.iq = iq
 
 						cFrame.writeRawFrame(fh)

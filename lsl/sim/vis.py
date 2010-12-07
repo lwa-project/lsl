@@ -100,7 +100,7 @@ class Antenna(aipy.amp.Antenna):
 		self.stand = stand
 		self._update_gain()
 
-	def getBeamShape(self, pol='x'):
+	def get_beam_shape(self, pol='x'):
 		"""Return a 360 by 90 by nFreqs numpy array showning the beam pattern of a
 		particular antenna in the array.  The first two dimensions of the output 
 		array contain the azimuth (from 0 to 359 degrees in 1 degree steps) and 
@@ -133,7 +133,7 @@ class AntennaArray(aipy.amp.AntennaArray):
 	retrieve the stands stored in the AntennaArray.ants attribute.  Also add 
 	a function to set the array time from a UNIX timestamp."""
 
-	def getStands(self):
+	def get_stands(self):
 		"""Return a numpy array listing the stands found in the AntennaArray 
 		object."""
 
@@ -149,7 +149,7 @@ class AntennaArray(aipy.amp.AntennaArray):
 		self.set_jultime(astro.unix_to_utcjd(time))
 
 
-def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False):
+def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False, verbose=False):
 	"""Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
 	object defined from the lwa_common module, a numpy array of stand numbers, 
 	and a numpy array of frequencies in either Hz of GHz.  Optional inputs are
@@ -179,10 +179,12 @@ def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False)
 		for i in range(deg+1):
 			beamShapeDict[i] = n.squeeze(coeffs[-1-i,:])
 
-		print "Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax)
+		if verbose:
+			print "Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax)
 		beam = aipy.amp.BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
 	else:
-		print "Using flat beam model"
+		if verbose:
+			print "Using flat beam model"
 		beam = aipy.amp.Beam(freqs)
 
 	if PosError != 0:

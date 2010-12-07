@@ -17,10 +17,13 @@ from lsl.tests import test_uvUtils
 from lsl.tests import test_fx
 from lsl.tests import test_visUtils
 from lsl.tests import test_fakedata
+from lsl.tests import test_simdp
+from lsl.tests import test_simvis
 from lsl.tests import test_geodesy
 from lsl.tests import test_fitsidi
 from lsl.tests import test_tsfits
 from lsl.tests import test_vdif
+from lsl.tests import test_beamformer
 
 
 __revision__  = "$Revision: 95 $"
@@ -50,10 +53,13 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_fx.fx_test_suite())
 		self.addTest(test_visUtils.visUtils_test_suite())
 		self.addTest(test_fakedata.fakedata_test_suite())
+		self.addTest(test_simdp.simdp_test_suite())
+		self.addTest(test_simvis.simvis_test_suite())
 		self.addTest(test_geodesy.geodesy_test_suite())
 		self.addTest(test_fitsidi.fitsidi_test_suite())
 		self.addTest(test_tsfits.tsfits_test_suite())
 		self.addTest(test_vdif.vdif_test_suite())
+		self.addTest(test_beamformer.beamformer_test_suite())
 
 
 def main(opts=None, args=None):

@@ -121,7 +121,36 @@ def intDelayAndSum(stands, data, sampleRate=dp_common.fS, azimuth=0.0, elevation
 	return output
 
 
-def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, progress=False):
+def __intBeepAndSweep(stands, arrayXYZ, t, azimuth, elevation, dlyCache=None, beamShape=1.0, sampleRate=dp_common.fS, direction=(0.0, 90.0)):
+	"""Worker function for intBeamShape that 'beep's (makes a simulated signals) and
+	'sweep's (delays it appropriately)."""
+
+	# Convert from degrees to radian
+	rAz = azimuth*numpy.pi/180.0
+	rEl = elevation*numpy.pi/180.0
+
+	# Unit vector for the currect on-sky location
+	currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
+						numpy.cos(rEl)*numpy.cos(rAz), 
+						numpy.sin(rEl)])
+	# Stand response in this direction
+	currResponse = beamShape
+
+	# Loop over stands to build the simulated singnals
+	signals = numpy.zeros((len(stands), len(t)))
+	for i in list(range(len(stands))):
+		currDelay = dlyCache.cableDelay(stands[i]) - numpy.dot(currPos, arrayXYZ[i,:]) / c
+		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*49.0e6*(t + currDelay))
+
+	# Beamform with delay-and-sum and store the RMS result
+	beamHere = intDelayAndSum(stands, signals, sampleRate=sampleRate, azimuth=direction[0], elevation=direction[1])
+
+	# Return
+	sigHere = numpy.sqrt((beamHere**2).mean())
+	return sigHere
+
+
+def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, progress=False, DisablePool=False):
 	"""Given a list of stands, compute the on-sky response of the delay-and-sum
 	scheme implemented in intDelayAndSum.  A 360x90 numpy array spaning azimuth
 	and elevation is returned."""
@@ -142,6 +171,36 @@ def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, p
 
 	# Load in the respoonse of a single isolated stand
 	standBeam = __loadStandResponse(freq=49.0e6)
+
+	# The processing module allows for the creation of worker pools to help speed
+	# things along.  If the processing module is found, use it.  Otherwise, set
+	# the 'usePool' variable to false and run single threaded.
+	try:
+		from processing import Pool
+		
+		# To get results pack from the pool, you need to keep up with the workers.  
+		# In addition, we need to keep up with which workers goes with which 
+		# baseline since the workers are called asychronisly.  Thus, we need a 
+		# taskList array to hold tuples of baseline ('count') and workers.
+		taskPool = Pool(processes=4)
+		taskList = []
+
+		usePool = True
+		progress = False
+	except ImportError:
+		usePool = False
+
+	# Turn off the thread pool if we are explicitly told not to use it.
+	if DisablePool:
+		usePool = False
+
+	# Build up the beam shape over all azimuths and elevations
+	beamShape =  numpy.zeros((360,90))
+	for az in list(range(360)):
+		rAz = az*numpy.pi/180.0
+		for el in list(range(90)):
+			rEl = el*numpy.pi/180.0
+			beamShape[az,el] = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
 	# Build the output array and loop over all azimuths and elevations
 	output = numpy.zeros((360,90))
@@ -165,22 +224,41 @@ def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, p
 					pass
 				sys.stdout.flush()
 
-			# Unit vector for the currect on-sky location
-			currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
-							numpy.cos(rEl)*numpy.cos(rAz), 
-							numpy.sin(rEl)])
-			# Stand response in this direction
-			currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
+			if usePool:
+				task = taskPool.apply_async(__intBeepAndSweep, args=(stands, arrayXYZ, t, az, el), kwds={'dlyCache': dlyCache, 'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
+				taskList.append((az,el,task))
+			else:
+				# Unit vector for the currect on-sky location
+				currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
+								numpy.cos(rEl)*numpy.cos(rAz), 
+								numpy.sin(rEl)])
+				# Stand response in this direction
+				currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
-			# Loop over stands to build the simulated singnals
-			signals = numpy.zeros((len(stands), 1000))
-			for i in list(range(len(stands))):
-				currDelay = dlyCache.cableDelay(stands[i]) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-				signals[i,:] = currResponse * numpy.cos(2*numpy.pi*49.0e6*(t + currDelay))
+				# Loop over stands to build the simulated singnals
+				signals = numpy.zeros((len(stands), 1000))
+				for i in list(range(len(stands))):
+					currDelay = dlyCache.cableDelay(stands[i]) - numpy.dot(currPos, arrayXYZ[i,:]) / c
+					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*49.0e6*(t + currDelay))
 
-			# Beamform with delay-and-sum and store the RMS result
-			beam = intDelayAndSum(stands, signals, sampleRate=sampleRate, azimuth=azimuth, elevation=elevation)
-			output[az,el] = numpy.sqrt((beam**2).mean())
+				# Beamform with delay-and-sum and store the RMS result
+				beam = intDelayAndSum(stands, signals, sampleRate=sampleRate, azimuth=azimuth, elevation=elevation)
+				output[az,el] = numpy.sqrt((beam**2).mean())
+
+	# If pooling... Close the pool so that it knows that no ones else is joining.
+	# Then, join the workers together and wait on the last one to finish before
+	# saving the results.
+	if usePool:
+		taskPool.close()
+		taskPool.join()
+
+		# This is where he taskList list comes in handy.  We now know who did what
+		# when we unpack the various results
+		for az,el,task in taskList:
+			output[az,el] = task.get()
+
+		# Destroy the taskPool
+		del(taskPool)
 
 	# Done
 	return output

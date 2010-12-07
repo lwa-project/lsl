@@ -19,6 +19,11 @@ class simvis_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.sim.vis
 	module."""
 
+	def setUp(self):
+		"""Turn off all numpy warnings."""
+
+		numpy.seterr(all='ignore')
+
 	def test_build_aa_flat(self):
 		"""Test building a antenna array object with uniform sky response."""
 
@@ -42,7 +47,74 @@ class simvis_tests(unittest.TestCase):
 		# Check the frequencies comming out
 		for fo, fi in zip(aa.get_afreqs(), freqs):
 			self.assertAlmostEqual(fo, fi/1e9, 6)
+
+	def test_build_data(self):
+		"""Test building simulated visibility data"""
+
+		# Setup
+		lwa1 = lwa_common.lwa1()
+		stands = lwa1.getStands()
+		freqs = numpy.arange(30e6, 50e6, 1e6)
+		aa = vis.buildSimArray(lwa1, stands, freqs)
+
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs)
+
+		# Do a check of keys
+		keyList = out.keys()
+		for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			self.assertTrue(key in keyList)
+
+		# Do a check of frequencies
+		for fa, fq in zip(out['freq'], freqs):
+			self.assertAlmostEqual(fa, fq, 6)
+
+		# Do a check to make sure that the entries with secondary keys have them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(key2 in secondaryKeyList)
+
+		# Do a check to make sure that the entries with secondary keys also 
+		# have lists in them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(type(out[key][key2]).__name__ == 'list')
 		
+	def test_scale_data(self):
+		"""Test that we can scale a data dictionary without error"""
+
+		# Setup
+		lwa1 = lwa_common.lwa1()
+		stands = lwa1.getStands()
+		freqs = numpy.arange(30e6, 50e6, 1e6)
+		aa = vis.buildSimArray(lwa1, stands, freqs)
+
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs)
+
+		# Scale
+		amp = vis.scaleData(out, numpy.ones(len(stands))*2, numpy.zeros(len(stands)))
+		# Delay
+		phs = vis.scaleData(out, numpy.ones(len(stands)), numpy.ones(len(stands)))
+
+	def test_shift_data(self):
+		"""Test that we can shift the uvw coordinates of a data dictionary 
+		without error"""
+
+		# Setup
+		lwa1 = lwa_common.lwa1()
+		stands = lwa1.getStands()
+		freqs = numpy.arange(30e6, 50e6, 1e6)
+		aa = vis.buildSimArray(lwa1, stands, freqs)
+
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs)
+
+		# Shift
+		sft = vis.shiftData(out, aa)
+
 
 class  simvis_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.sim.vis units 
@@ -50,7 +122,7 @@ class  simvis_test_suite(unittest.TestSuite):
 	
 	def __init__(self):
 		unittest.TestSuite.__init__(self)
-		
+
 		loader = unittest.TestLoader()
 		self.addTests(loader.loadTestsFromTestCase(simvis_tests)) 
 

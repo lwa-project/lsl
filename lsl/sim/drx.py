@@ -33,16 +33,16 @@ def frame2frame(drxFrame):
 	rawFrame[6] = (drxFrame.header.frameCount>>8) & 255
 	rawFrame[7] = drxFrame.header.frameCount & 255
 	## Seconds count
-	rawFrame[8] = (drxFrame.header.timeTag>>24) & 255
-	rawFrame[9] = (drxFrame.header.timeTag>>16) & 255
-	rawFrame[10] = (drxFrame.header.timeTag>>8) & 255
-	rawFrame[11] = drxFrame.header.timeTag & 255
+	rawFrame[8] = (drxFrame.header.secondsCount>>24) & 255
+	rawFrame[9] = (drxFrame.header.secondsCount>>16) & 255
+	rawFrame[10] = (drxFrame.header.secondsCount>>8) & 255
+	rawFrame[11] = drxFrame.header.secondsCount & 255
 	## Decimation
-	rawFrame[12] = (drxFrame.decimation>>8) & 255
-	rawFrame[13] = drxFrame.decimation & 255
+	rawFrame[12] = (drxFrame.header.decimation>>8) & 255
+	rawFrame[13] = drxFrame.header.decimation & 255
 	## Time offset
-	rawFrame[14] = (drxFrame.timeOffset>>8) & 255
-	rawFrame[15] = drxFrame.timeOffset & 255
+	rawFrame[14] = (drxFrame.header.timeOffset>>8) & 255
+	rawFrame[15] = drxFrame.header.timeOffset & 255
 
 	# Part 2: The data
 	## Time tag
@@ -117,6 +117,7 @@ class SimFrame(drx.Frame):
 		a drx.Frame-like object."""
 		
 		self.header.frameCount = self.frameCount
+		self.header.secondsCount = int(self.obsTime)
 		self.header.decimation = int(dp_common.fS / drx.filterCodes[self.filterCode])
 		self.header.timeOffset = self.timeOffset
 		self.header.drxID = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
@@ -144,7 +145,7 @@ class SimFrame(drx.Frame):
 		self.flags = self.data.flags
 		self.iq = self.data.iq
 	
-	def isValid(self):
+	def isValid(self, raiseErrors=False):
 		"""Check if simulated DRX frame is valid or not.  Valid frames return 
 		True and invalid frames False.  If the 'raiseErrors' keyword is set, 
 		isValid raises an error when a problem is encountered."""

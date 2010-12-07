@@ -173,7 +173,6 @@ class tsfits_tests(unittest.TestCase):
 
 			# Check the pol. values
 			for pol in stand.field('pol'):
-				print pol
 				self.assertTrue(pol in [0, 1])
 
 			# Check the data length

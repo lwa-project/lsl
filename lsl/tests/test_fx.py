@@ -18,6 +18,11 @@ class fx_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.correlator.fx
 	module."""
 
+	def setUp(self):
+		"""Turn off all numpy warnings."""
+
+		numpy.seterr(all='ignore')
+
 	def test_blackman(self):
 		"""Test the Blackman window function."""
 
