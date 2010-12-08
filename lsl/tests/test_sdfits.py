@@ -60,64 +60,64 @@ class sdfits_tests(unittest.TestCase):
 
 		return frames
 
-	def test_write_tbw_single(self):
-		"""Test that TBW data can be written to a SD FITS file one at a time."""
+	#def test_write_tbw_single(self):
+		#"""Test that TBW data can be written to a SD FITS file one at a time."""
 
-		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='sdfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'sd-tbw-test.fits')
+		## Setup the file names
+		#testPath = tempfile.mkdtemp(prefix='sdfits-', suffix='.tmp')
+		#testFile = os.path.join(testPath, 'sd-tbw-test.fits')
 
-		# Get some data and organize it into a nice numpy array
-		frames = self.__getTBW()
-		junk = [frame.parseID() for frame in frames]
-		stands = []
-		for j in junk:
-			if j not in stands:
-				stands.append(j)
-		count = {1: 0, 2: 0}
-		frameData = numpy.zeros((len(stands), 4, 2, 400), dtype=numpy.int16)
-		for frame in frames:
-			frameData[frame.parseID()-1, count[frame.parseID()], :, :] = frame.data.xy
-			count[frame.parseID()] = count[frame.parseID()] + 1
+		## Get some data and organize it into a nice numpy array
+		#frames = self.__getTBW()
+		#junk = [frame.parseID() for frame in frames]
+		#stands = []
+		#for j in junk:
+			#if j not in stands:
+				#stands.append(j)
+		#count = {1: 0, 2: 0}
+		#frameData = numpy.zeros((len(stands), 4, 2, 400), dtype=numpy.int16)
+		#for frame in frames:
+			#frameData[frame.parseID()-1, count[frame.parseID()], :, :] = frame.data.xy
+			#count[frame.parseID()] = count[frame.parseID()] + 1
 
-		# Load it in
-		fits = sdfits.TBW(testFile, LFFT=128, UseQueue=False)
-		for frame in frames:
-			fits.addStandData(frame)
-		fits.close()
+		## Load it in
+		#fits = sdfits.TBW(testFile, LFFT=128, UseQueue=False)
+		#for frame in frames:
+			#fits.addStandData(frame)
+		#fits.close()
 	
-		# Read it back in
-		hdulist = pyfits.open(testFile)
-		# Check if we have the correct number of extensions
-		self.assertEqual(len(stands)+1, len(hdulist))
+		## Read it back in
+		#hdulist = pyfits.open(testFile)
+		## Check if we have the correct number of extensions
+		#self.assertEqual(len(stands)+1, len(hdulist))
 		
-		for hdu in hdulist[1:]:
-			stand = hdu.data
-			sNumb = hdu.header['STAND']
+		#for hdu in hdulist[1:]:
+			#stand = hdu.data
+			#sNumb = hdu.header['STAND']
 
-			# Check the pol. values
-			for pol in stand.field('pol'):
-				self.assertTrue(pol in [0, 1])
+			## Check the pol. values
+			#for pol in stand.field('pol'):
+				#self.assertTrue(pol in [0, 1])
 
-			# Check the data length
-			x, y = stand.field('data').shape
-			self.assertEqual(x, 8, "Shape mis-match on dimension 1: %i != 8" % x)
-			self.assertEqual(y, 127, "Shape mis-match on dimension 2: %i != 127" % y)
+			## Check the data length
+			#x, y = stand.field('data').shape
+			#self.assertEqual(x, 8, "Shape mis-match on dimension 1: %i != 8" % x)
+			#self.assertEqual(y, 127, "Shape mis-match on dimension 2: %i != 127" % y)
 
-			for data in stand.field('data'):
-				self.assertEqual(data.dtype.kind, 'f')
-				self.assertEqual(len(data), 127)
+			#for data in stand.field('data'):
+				#self.assertEqual(data.dtype.kind, 'f')
+				#self.assertEqual(len(data), 127)
 			
-			## Check the data itself
-			#count = {0: 0, 1: 0}
-			#for pol, data in zip(stand.field('pol'), stand.field('data')):
-				#for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
-					#self.assertAlmostEqual(ts, fs, 6)
-				#count[pol] = count[pol] + 1
+			### Check the data itself
+			##count = {0: 0, 1: 0}
+			##for pol, data in zip(stand.field('pol'), stand.field('data')):
+				##for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
+					##self.assertAlmostEqual(ts, fs, 6)
+				##count[pol] = count[pol] + 1
 		
-		hdulist.close
-		os.unlink(testFile)
-		os.rmdir(testPath)
+		#hdulist.close
+		#os.unlink(testFile)
+		#os.rmdir(testPath)
 
 	def test_write_tbw_queue(self):
 		"""Test that TBW data can be written to a SD FITS file with a queue."""
