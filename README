@@ -78,7 +78,6 @@ BUILD
 TESTING
 	To test the as-build LSL package, run:
 		'python setup.py test'
-	There are currently 140 unit tests defined.
 
 INSTALL
 	Install LSL by running:

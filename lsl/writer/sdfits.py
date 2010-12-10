@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""Modules to take DRX/TBW/TBN data and write it to a SDFITS file.  This module
-is still under active development."""
+"""Modules to take DRX/TBW/TBN data and write it to a SDFITS file.
+
+.. warning:
+	The FITS files created by this module to not strictly conform to the
+	SDFITS convention.
+"""
 
 import os
 import sys
