@@ -295,7 +295,7 @@ def fftDelayAndSum(stands, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=
 			sectionF = numpy.fft.fft(section)
 			if data.dtype.kind == 'c':
 				sectionF = numpy.fft.fftshift(sectionF)
-			sectionF *= numpy.exp(2j*numpy.pi*freq*frcDelays[s])
+			sectionF *= numpy.exp(-2j*numpy.pi*freq*frcDelays[s])
 			output[:,l] = output[:,l] + sectionF
 
 	# Done

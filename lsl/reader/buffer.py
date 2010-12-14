@@ -263,7 +263,7 @@ class FrameBuffer(object):
 			
 		outString = ''
 		outString = '\n'.join([outString, "Current buffer level:  %i frames" % nf])
-		outString = '\n'.join([outString, "Buffer dumps:  %i full / %i partial" % (self.filled, self.partial)])
+		outString = '\n'.join([outString, "Buffer dumps:  %i full / %i partial" % (self.full, self.partial)])
 		outString = '\n'.join([outString, "--"])
 		outString = '\n'.join([outString, "Missing frames:  %i" % self.missing])
 		outString = '\n'.join([outString, "Dropped frames:  %i" % self.dropped])

@@ -220,6 +220,12 @@ class IDI(object):
 		del(self.data[:])
 		gc.collect()
 
+	def close(self):
+		"""Close out the file."""
+
+		self.FITS.flush()
+		self.FITS.close()
+
 	def __addCommonKeywords(self, hdr, name, revision):
 		"""Added keywords common to all table headers."""
 
