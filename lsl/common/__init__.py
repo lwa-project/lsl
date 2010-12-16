@@ -7,6 +7,7 @@
  * stations - information about LWA stations."""
 
 import warns
+import progress
 
 import paths
 import dp

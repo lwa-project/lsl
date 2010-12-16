@@ -67,6 +67,30 @@ plotUVCoverage.py
 
 Data Reading and Writing
 ========================
+splitTBW.py
+  :Description: Split a TBW file containing multiple captures into several single capture files.
+
+  :Usage: splitTBW.py [options] file
+
+  :Options: -h, --help             	Display this help information
+
+            -c, --count            	Number of capturs to split off
+            -o, --offset           	Number of captures to skip before splitting
+            -d, --date             	Label the split files with a date rather than a 
+					sequence number
+
+splitTBN.py
+  :Description: Split a TBN file containing multiple seconds into several files
+
+  :Usage: splitTBN.py [options] file
+
+  :Options: -h, --help             	Display this help information
+
+            -c, --count            	Number of seconds to keep
+            -o, --offset           	Number of seconds to skip before splitting
+            -d, --date             	Label the split files with a date rather than a 
+					sequence number
+
 readTBW.py
   :Description: Example script for reading in TBW data and writing it to a TSFITS file.
 
@@ -166,14 +190,14 @@ correlateTBN.py
             -c, --central-freq     Central frequency of the observations in MHz
 
             -d, --date             Specify the date when the data were obtained
-                                  (YYYY/MM/DD HH:MM:SS)
+                                   (YYYY/MM/DD HH:MM:SS)
 
             -f, --fft-length       Set FFT length (default = 512)
 
             -t, --avg-time         Window to average visibilities in time (seconds;
-                                  default = 6 s)
+                                   default = 6 s)
 
             -s, --samples          Number of average visibilities to generate
-                                  (default = 10)
+                                   (default = 10)
 
             -q, --quiet            Run correlateTBN in silent mode
