@@ -11,8 +11,8 @@ Stand-Level Data
 .. automodule:: lsl.correlator.uvUtils
    :members: validateStand
 
-Positions and Cable Model
-+++++++++++++++++++++++++
+Stand Positions
++++++++++++++++
 .. autofunction:: lsl.correlator.uvUtils.getXYZ
 .. autofunction:: lsl.correlator.uvUtils.getRelativeXYZ
 .. autoclass:: lsl.correlator.uvUtils.PositionCache

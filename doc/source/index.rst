@@ -44,7 +44,11 @@ LWA-Specific Utilites
    readers
    writers
 
+   spectra
+
    correlator
+
+   beamformer
 
    fakedata
 
@@ -66,6 +70,16 @@ Included Scripts
 
    scripts
 
+Tutorial
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   tutorial-gen
+   tutorial-tbw
+   tutorial-tbn
+   tutorial-drx
 
 Indices and Tables
 ==================

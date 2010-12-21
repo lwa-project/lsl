@@ -1,12 +1,12 @@
 LWA_User Modules
 ================
 
-The lwa_user modules included in LSL aree:
+The lwa_user modules included in LSL are:
 
 ====================	=================	===========
-      lwa_user 		lsl
---------------------	-----------------	-----------
-Name			Name			Version
+      lwa_user 		                  lsl
+--------------------	-----------------------------------
+        Name		       Name		  Version
 ====================	=================	===========
 lwa_user.astro_array	lsl.astro_array		0.2
 lwa_user.astro		lsl.astro		0.2
