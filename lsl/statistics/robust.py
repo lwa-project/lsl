@@ -254,7 +254,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
 				return (0.0, 0.0)
 			tSlope = (sxy - sy*sx) / d
 			tYInt = (syy*sx - sy*sxy) / d
-			if numpy.abs(tSlope) < epsilon:
+			if numpy.abs(tSlope) < __epsilon:
 				return (0.0, 0.0)
 			xSlope = 1.0/tSlope
 			xYInt = -tYInt / tSlope
@@ -296,7 +296,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
 		return cc[::-1]
 		
 	sigma1 = (100.0*sigma)
-	closeEnough = closeFactor * numpy.sqrt(0.5/(n-1))
+	closeEnough = CloseFactor * numpy.sqrt(0.5/(n-1))
 	if closeEnough < __delta:
 		closeEnough = __delta
 	diff = 1.0e20
@@ -322,7 +322,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
 		if Bisector:
 			syy = (biweights*y*y).sum()
 			d = syy - sy*sy
-			if numpy.abs(d) < epsilon:
+			if numpy.abs(d) < __epsilon:
 				return (0.0, 0.0)
 			tSlope = (sxy - sy*sx) / d
 			tYInt = (syy*sx - sy*sxy) / d
