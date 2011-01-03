@@ -99,9 +99,9 @@ class robust_tests(unittest.TestCase):
 		cc = robust.polyfit(x, y, 4)
 		self.assertAlmostEqual(cc[0], 0.003, 3)
 		self.assertAlmostEqual(cc[1], 0.012, 3)
-		self.assertAlmostEqual(cc[2], 0.340, 3)
-		self.assertAlmostEqual(cc[3], 1.340, 3)
-		self.assertAlmostEqual(cc[4], 0.560, 3)
+		self.assertAlmostEqual(cc[2], 0.34,  2)
+		self.assertAlmostEqual(cc[3], 1.34,  2)
+		self.assertAlmostEqual(cc[4], 0.56,  2)
 
 
 class robust_test_suite(unittest.TestSuite):
