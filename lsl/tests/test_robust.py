@@ -94,10 +94,14 @@ class robust_tests(unittest.TestCase):
 		self.assertAlmostEqual(cc[3], 0.560, 3)
 
 		x = numpy.random.rand(2048)*100.0
-		y = 0.34*x**2 + 1.34*x + 0.56
-		self.assertAlmostEqual(cc[0], 0.340, 3)
-		self.assertAlmostEqual(cc[1], 1.340, 3)
-		self.assertAlmostEqual(cc[2], 0.560, 3)
+		y = 0.003*x**4 + 0.012*x**3 + 0.34*x**2 + 1.34*x + 0.56
+
+		cc = robust.polyfit(x, y, 4)
+		self.assertAlmostEqual(cc[0], 0.003, 3)
+		self.assertAlmostEqual(cc[1], 0.012, 3)
+		self.assertAlmostEqual(cc[2], 0.340, 3)
+		self.assertAlmostEqual(cc[3], 1.340, 3)
+		self.assertAlmostEqual(cc[4], 0.560, 3)
 
 
 class robust_test_suite(unittest.TestSuite):
