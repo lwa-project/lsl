@@ -23,15 +23,15 @@ class robust_tests(unittest.TestCase):
 
 		# Make sure that it can do simple averages
 		a = numpy.random.rand(512)
-		self.assertAlmostEqual(a.mean(), robust.robustMean(a, Cut=100), 6)
+		self.assertAlmostEqual(a.mean(), robust.mean(a, Cut=100), 6)
 
 		b = numpy.random.randn(512)
-		self.assertAlmostEqual(b.mean(), robust.robustMean(b, Cut=100), 6)
+		self.assertAlmostEqual(b.mean(), robust.mean(b, Cut=100), 6)
 
 		# Make sure it can reject obvious points
 		b = 1.0*a
 		b[10] = 1e6
-		self.assertTrue(robust.robustMean(b) < b.mean())
+		self.assertTrue(robust.mean(b) < b.mean())
 
 	def test_std(self):
 		"""Test the outlier-resistant standard deviation function."""
@@ -39,7 +39,22 @@ class robust_tests(unittest.TestCase):
 		# Make sure it can reject obvious points
 		b = numpy.random.randn(512)
 		b[10] = 1e6
-		self.assertTrue(robust.robustSigma(b) < b.std())
+		self.assertTrue(robust.std(b) < b.std())
+
+	def test_biweight(self):
+		"""Test the outlier-resistant biweighted mean function."""
+
+		# Make sure that it can do simple averages
+                a = numpy.random.rand(512)
+                self.assertAlmostEqual(a.mean(), robust.biweightMean(a, Cut=100), 6)
+
+                b = numpy.random.randn(512)
+                self.assertAlmostEqual(b.mean(), robust.biweightMean(b, Cut=100), 6)
+
+                # Make sure it can reject obvious points
+                b = 1.0*a
+                b[10] = 1e6
+                self.assertTrue(robust.biweightMean(b) < b.mean())
 
 
 class robust_test_suite(unittest.TestSuite):

@@ -3,4 +3,5 @@
 """lsl.statistics - Statistical routines for data analysis"""
 
 import robust
+import tests
 

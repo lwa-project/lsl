@@ -19,8 +19,8 @@ import numpy
 from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
-__version__ = '0.3'
-__revision__ = '$ Revision: 15 $'
+__version__ = '0.4'
+__revision__ = '$ Revision: 16 $'
 __all__ = ['validateStand', 'getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
 
 
@@ -235,6 +235,40 @@ def cableDelay(stand, freq):
 	return delays
 
 
+def cableAttenuation(stands):
+	"""For a given stand or numpy array of stands, return the multiplicative factor needed 
+	to correct for cable losses."""
+
+	try:
+		junk = len(stands)
+	except TypeError:
+		stands = numpy.array([stands])
+
+	# Load the cable length
+	cableLengths = _loadDelayData()
+
+	out = numpy.zeros(stands.shape[0])
+	for i in range(stands.shape[0]):
+		validateStand(stands[i])
+		cableLength = cableLengths[stands[i]-1]
+
+		# Catch the outlier and load cable and delay information into holder variables.
+		# This makes it easier to do one common set of operations with different cables.
+		if stands[i] == 258:
+			# For the outlier, the attenuation comes from the Times Microwave LMR-400 
+			# data sheet for 50 Mhz.
+			dBperM = 0.029 # dB/m
+		else:
+			dBperM = 0.047 # dB / m
+
+		dBLoss = dBperM*cableLength
+		multFactor = 10.0**(dBLoss/10.0)
+		
+		out[i] = multFactor
+
+	return out
+
+
 class CableCache(object):
 	"""CableCache is a safe alternative to calling uvUtils.cableDelay over 
 	and over again.  CableCache loads the cable length file once and then
@@ -312,6 +346,28 @@ class CableCache(object):
 
 		return delays
 
+	def cableAttenuation(self, stand):
+		"""For a given stand , return the multiplicative factor needed to correct 
+		for cable losses."""
+
+		# Validate and load in the cable length
+		self.__isValid(stand)
+		cableLength = self.cableLengths[stand-1]
+
+		# Catch the outlier and load cable and delay information into holder variables.
+		# This makes it easier to do one common set of operations with different cables.
+		if stand == 258:
+			# For the outlier, the attenuation comes from the Times Microwave LMR-400 
+			# data sheet for 50 Mhz.
+			dBperM = 0.029 # dB/m
+		else:
+			dBperM = 0.047 # dB / m
+
+		dBLoss = dBperM*cableLength
+		multFactor = 10.0**(dBLoss/10.0)
+
+		return multFactor
+
 
 def signalDelay(stand, freq, cache=None):
 	"""Experimental function that wraps the cable delay for a stand along with 
@@ -357,31 +413,6 @@ class SignalCache(CableCache):
 		corrected is incomplete.  Similar to cableDelay, a numpy array is returned."""
 
 		return signalDelay(stand, self.freq, cache=self)
-
-
-def cableAttenuation(stand):
-	"""For a given stands, return the factor needed to correct for cable 
-	losses."""
-
-	# Stands start at 1, indicies do not
-	validateStand(stand)
-
-	# Catch the outlier and load cable and delay information into holder variables.
-	# This makes it easier to do one common set of operations with different cables.
-	if stand == -1:
-		# For the outlier, the attenuation comes from the Times Microwave LMR-400 
-		# data sheet for 50 Mhz.
-		cableLength = 315.344 # m
-		dBperM = 0.029 # dB/m
-	else:
-		cableLengths = _loadDelayData()
-		cableLength = cableLengths[stand-1]
-		dBperM = 0.047 # dB / m
-
-	dBLoss = dBperM*cableLength
-	multFactor = 10.0**(dBLoss/10.0)
-
-	return multFactor
 
 
 def getBaselines(stands, IncludeAuto=False, Indicies=False):
