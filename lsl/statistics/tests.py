@@ -1,8 +1,13 @@
+# -*- coding: utf-8 -*-
+
+"""Collection of statistical tests not found in any of the common
+python libraries."""
+
 import numpy
 from scipy.special import ndtr
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 1 $'
+__revision__ = '$ Revision: 2 $'
 __all__ = ['waldwolfowitz', '__version__', '__revision__', '__all__']
 
 
