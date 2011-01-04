@@ -23,7 +23,7 @@ class stattests_tests(unittest.TestCase):
 		"""Test the Wald-Wolfowitz (runs) test"""
 
 		data = numpy.random.randn(1024)
-		pValue = tests.waldwolfowitz(data)
+		pValue = stattests.waldwolfowitz(data)
 
 
 class stattests_test_suite(unittest.TestSuite):
