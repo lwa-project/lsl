@@ -3,9 +3,6 @@
 
 """Given a TBN file, plot the time averaged spectra for each digitizer input."""
 
-import matplotlib
-matplotlib.use('TkAgg')
-
 import os
 import sys
 import math

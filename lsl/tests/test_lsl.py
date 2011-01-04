@@ -12,6 +12,7 @@ from lsl.tests import test_nec_util
 from lsl.tests import test_catalog
 from lsl.tests import test_stations
 from lsl.tests import test_robust
+from lsl.tests import test_statstests
 from lsl.tests import test_reader
 from lsl.tests import test_uvUtils
 from lsl.tests import test_fx
@@ -27,7 +28,7 @@ from lsl.tests import test_vdif
 from lsl.tests import test_beamformer
 
 
-__revision__  = "$Revision: 95 $"
+__revision__  = "$Revision: 97 $"
 __version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -49,6 +50,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_catalog.catalog_test_suite())
 		self.addTest(test_stations.stations_test_suite())
 		self.addTest(test_robust.robust_test_suite())
+		self.addTest(test_stattests.stattests_test_suite())
 		self.addTest(test_reader.reader_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())
 		self.addTest(test_fx.fx_test_suite())

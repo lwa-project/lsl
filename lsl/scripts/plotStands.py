@@ -6,7 +6,6 @@ of the site."""
 
 import os
 import sys
-import math
 import numpy
 
 import lsl.correlator.uvUtils as uvUtils
@@ -37,7 +36,7 @@ def main(args):
 	ax1.set_xlim([-80, 80])
 	ax1.set_ylabel('$\Delta$Y [N-S; m]')
 	ax1.set_ylim([-80, 80])
-	ax1.set_title('%s Site:  %.3f$^\circ$N, %.3f$^\circ$W' % (station.name, station.lat*180.0/math.pi, -station.long*180.0/math.pi))
+	ax1.set_title('%s Site:  %.3f$^\circ$N, %.3f$^\circ$W' % (station.name, station.lat*180.0/numpy.pi, -station.long*180.0/numpy.pi))
 
 	ax2.scatter(data[:,0], data[:,2], c=color, s=40.0)
 	ax2.xaxis.set_major_formatter( NullFormatter() )
