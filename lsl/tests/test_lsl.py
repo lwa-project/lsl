@@ -12,7 +12,7 @@ from lsl.tests import test_nec_util
 from lsl.tests import test_catalog
 from lsl.tests import test_stations
 from lsl.tests import test_robust
-from lsl.tests import test_statstests
+from lsl.tests import test_stattests
 from lsl.tests import test_reader
 from lsl.tests import test_uvUtils
 from lsl.tests import test_fx
