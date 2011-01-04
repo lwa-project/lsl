@@ -7,5 +7,3 @@ __revision__  = "$Revision: 84 $"
 __version__   = "0.1"
 __author__    = "D.L.Wood"
 
-
-

@@ -7,12 +7,13 @@ import time
 import unittest
 import numpy
 
-from lsl.statistics import tests
+from lsl.statistics import stattests
 
 
 __revision__ = "$Revision:1 $"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
+
 
 class stattests_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.statistics.tests
@@ -38,6 +39,3 @@ class stattests_test_suite(unittest.TestSuite):
 
 if __name__ == '__main__':
 	unittest.main()
-
-
-	

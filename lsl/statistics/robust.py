@@ -478,4 +478,3 @@ def polyfit(inputX, inputY, order, iterMax=25):
 		else:
 			diff = diff2
 	return cc
-	
