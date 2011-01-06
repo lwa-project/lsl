@@ -209,9 +209,10 @@ def main(args):
 
 		ax.set_title('Input: %i' % (i+1))
 		ax.set_xlabel('Frequency [MHz]')
-		ax.set_ylabel('P. S. [Arb. dB]')
+		ax.set_ylabel('P.S.D. [dB/RBW]')
 		ax.set_xlim([10,90])
 
+	print "RBW: %.1f Hz" % (freq[1]-freq[0])
 	plt.show()
 
 	# Save spectra image if requested

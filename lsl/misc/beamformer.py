@@ -18,7 +18,7 @@ from lsl.common import dp as dp_common
 from lsl.correlator import uvUtils
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 7 $'
+__revision__ = '$ Revision: 8 $'
 __all__ = ['BeamformingError', 'calcDelay', 'intDelayAndSum', 'intBeamShape', 'fftDelayAndSum', 'fftBeamShape', '__version__', '__revision__', '__all__']
 
 class BeamformingError(Exception):
@@ -59,7 +59,7 @@ def __loadStandResponse(freq=49.0e6):
 def calcDelay(stands, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	"""Calculate the time delays for delay-and-sum beam forming a collection of 
 	stands looking in at a particular azimuth and elevation (both in degrees).  
-	A numpy array of the needed delays in seconds is returned."""
+	A numpy array of the geometric + cable delays in seconds is returned."""
 
 	# Make sure the pointing coordinates make sense
 	if elevation < 0 or elevation > 90:
@@ -97,10 +97,20 @@ def calcDelay(stands, freq=49.0e6, azimuth=0.0, elevation=90.0):
 
 
 def intDelayAndSum(stands, data, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0):
-	"""Given a list of stands and a data stream of the form stands x times, 
+	"""Given a list of stands and a 2-D data stream with stands enumerated
+	along the first axis and time series samples along the second axis, 
 	delay and sum the data stream into one beam.  The delays applied are 
-	integer sample delays.  Return a numpy array of the time series data 
-	associated with the formed beam."""
+	integer sample delays.  Return a 1-D numpy array of the time series data 
+	associated with the formed beam.
+
+	.. note:
+		In order for this output to be properly processed by :mod:`lsl.correlate.fx.calcSpectra`,
+		The data need to be convert to a 2-D array via::
+
+			>>> beamData = intDelayAndSum(stands, data)
+			>>> beamData.shape = (1,)+beamData.shape
+
+	"""
 
 	# Get the stand delays and convert the delay times from seconds to samples
 	delays = calcDelay(stands, azimuth=azimuth, elevation=elevation)

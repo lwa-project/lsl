@@ -238,9 +238,10 @@ def main(args):
 
 		ax.set_title('Stand %i, Pol. %i' % (standMapper[i]/2+1, standMapper[i]%2))
 		ax.set_xlabel('Frequency Offset [%s]' % units)
-		ax.set_ylabel('P. S. [Arb. dB]')
+		ax.set_ylabel('P.S.D. [dB/RBW]')
 		ax.set_xlim([freq.min(), freq.max()])
 
+	print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
 	plt.show()
 
 	# Save spectra image if requested

@@ -121,7 +121,7 @@ def calcSpectrum(signal, LFFT=64, BlackmanFilter=False, PolyphaseFilter=False, v
 		if BlackmanFilter:
 			cs *= blackmanWindow(lFactor*LFFT)
 		cf = numpy.fft.fft(cs, lFactor*LFFT)
-		cp = numpy.abs(cf)**2.0
+		cp = numpy.abs(cf)**2.0 / lFactor / LFFT
 			
 		out += cp[1:LFFT]
 	out /= float(nChunks)
@@ -337,7 +337,7 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, BlackmanFilt
 			fft2 = numpy.fft.fftshift(fft2)
 
 		# Calculate the visibility of the desired part of the frequency space
-		tempVis = fft1[1:LFFT]*(fft2[1:LFFT].conj())
+		tempVis = fft1[1:LFFT]*(fft2[1:LFFT].conj()) / lfactor / LFFT
 
 		# Add it on to the master output visibility for averaging
 		visibility += tempVis

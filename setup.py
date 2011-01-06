@@ -77,9 +77,10 @@ setup(
 	setup_requires = ['numpy>=1.2'], 
 	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.3', 'aipy>=0.9.1'], 
 	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits'], 
-	include_package_data = True, 
+	include_package_data = True,  
 	ext_package = 'lsl', 
 	ext_modules = [Extension('_libnova', ['lsl/libnova.i']), 
-				Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()])], 
+				Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
+				Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m', 'fftw3'], extra_compile_args=['-fopenmp'], extra_link_args=['-fopenmp'])],  
 	test_suite = "lsl.tests.test_lsl.lsl_tests"
 ) 

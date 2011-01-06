@@ -410,16 +410,11 @@ def __readData(filehandle):
 	except IOError:
 		raise eofError()
 
-	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=1024)
+	rawData = numpy.fromfile(filehandle, dtype=numpy.dtype('>i1'), count=1024)
 	rawData = rawData.astype(numpy.int8)
 	data = numpy.zeros(512, dtype=numpy.csingle)
 	if rawData.shape[0] < 2*data.shape[0]:
 		raise numpyError()
-
-	# The data are signed, so apply the two-complement rule to generate 
-	# the negative values
-	negativeValues = numpy.where( rawData >= 128 )
-	rawData[negativeValues] -= 256
 
 	data.real = rawData[0::2]
 	data.imag = rawData[1::2]
