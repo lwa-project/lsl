@@ -337,7 +337,7 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, BlackmanFilt
 			fft2 = numpy.fft.fftshift(fft2)
 
 		# Calculate the visibility of the desired part of the frequency space
-		tempVis = fft1[1:LFFT]*(fft2[1:LFFT].conj()) / lfactor / LFFT
+		tempVis = fft1[1:LFFT]*(fft2[1:LFFT].conj()) / lFactor / LFFT
 
 		# Add it on to the master output visibility for averaging
 		visibility += tempVis
