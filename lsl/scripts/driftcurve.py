@@ -38,7 +38,7 @@ if __name__ == '__main__':
 	parser.add_option("-x", "--doplot", action = "store_true", dest = "doplot",
 		default = False, help = "Make an X-windows plot")
 	parser.add_option("-s", "--site", action = "store", dest = "site", type = "str",
-		default = "LWDA", help = "site name (default LWDA)")
+		default = "LWA", help = "site name (default LWA)")
 	parser.add_option("-p", "--polarization", action = "store", dest = "polarization",
 		default = "NS", help = "antenna polarization orientation (NS or EW)")
 	
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 		pylab.grid(1)
 		pylab.show()
 	
-	mf = file("model_%s_%s_%s_%0.2f.txt" % (opts.site, os.path.basename(necname),opts.polarization, freq),"w")
+	mf = file("model_%s_%s_%s_%0.2f.txt" % (opts.site, os.path.basename(necname), opts.polarization, freq),"w")
 	for lst,pow in zip(lstList,powListAnt):
 		mf.write("%f  %f\n" % (lst,pow))
 	mf.close()

@@ -38,6 +38,7 @@ getFramesPerObs
 import os
 import sys
 import time
+import copy
 import numpy
 import array
 import struct
@@ -146,37 +147,37 @@ class Frame(object):
 		"""Add the data sections of two frames together or add a number 
 		to every element in the data section."""
 		
-		try:
-			return self.data.xy + y.self.data.xy
-		except AttributeError:
-			return self.data.xy + y
-			
+		newFrame = copy.deepcopy(self)
+		newFrame += y
+		return newFrame
+	
 	def __iadd__(self, y):
 		"""In-place add the data sections of two frames together or add 
 		a number to every element in the data section."""
 		
 		try:
-			self.data.xy += y.self.data.xy
+			self.data.xy += y.data.xy
 		except AttributeError:
 			self.data.xy += y
+		return self
 		
 	def __mul__(self, y):
 		"""Multiple the data sections of two frames together or multiply 
 		a number to every element in the data section."""
-		
-		try:
-			return self.data.xy * y.self.data.xy
-		except AttributeError:
-			return self.data.xy * y
+
+		newFrame = copy.deepcopy(self)
+		newFrame *= y		
+		return newFrame
 			
 	def __imul__(self, y):
 		"""In-place multiple the data sections of two frames together or 
 		multiply a number to every element in the data section."""
 		
 		try:
-			self.data.xy *= y.self.data.xy
+			self.data.xy *= y.data.xy
 		except AttributeError:
 			self.data.xy *= y
+		return self
 			
 	def __eq__(self, y):
 		"""Check if the time tags of two frames are equal or if the time
@@ -184,7 +185,7 @@ class Frame(object):
 		
 		tX = self.data.timeTag
 		try:
-			tY = self.data.timeTag
+			tY = y.data.timeTag
 		except AttributeError:
 			tY = y
 		
@@ -199,7 +200,7 @@ class Frame(object):
 		
 		tX = self.data.timeTag
 		try:
-			tY = self.data.timeTag
+			tY = y.data.timeTag
 		except AttributeError:
 			tY = y
 		
@@ -214,7 +215,7 @@ class Frame(object):
 		
 		tX = self.data.timeTag
 		try:
-			tY = self.data.timeTag
+			tY = y.data.timeTag
 		except AttributeError:
 			tY = y
 		
@@ -230,7 +231,7 @@ class Frame(object):
 		
 		tX = self.data.timeTag
 		try:
-			tY = self.data.timeTag
+			tY = y.data.timeTag
 		except AttributeError:
 			tY = y
 		
@@ -245,7 +246,7 @@ class Frame(object):
 		
 		tX = self.data.timeTag
 		try:
-			tY = self.data.timeTag
+			tY = y.data.timeTag
 		except AttributeError:
 			tY = y
 		
@@ -261,7 +262,7 @@ class Frame(object):
 		
 		tX = self.data.timeTag
 		try:
-			tY = self.data.timeTag
+			tY = y.data.timeTag
 		except AttributeError:
 			tY = y
 		

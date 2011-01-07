@@ -99,6 +99,54 @@ class reader_tests(unittest.TestCase):
 		self.assertRaises(errors.syncError, tbw.readFrame, fh)
 		fh.close()
 
+	def test_tbw_comps(self):
+		"""Test the TBW frame comparison operators (>, <, etc.) for time tags."""
+
+		fh = open(tbwFile, 'rb')
+		# Frames 1 through 3
+		frames = []
+		for i in range(1,4):
+			frames.append(tbw.readFrame(fh))
+		fh.close()
+
+		self.assertTrue(0 < frames[0])
+		self.assertTrue(frames[-1] >= frames[0])
+		self.assertTrue(frames[0] == frames[0])
+		self.assertFalse(frames[0] == frames[-1])
+		self.assertFalse(frames[0] != frames[0])
+
+	def test_tbw_math(self):
+		"""Test mathematical operations on TBW frame data via frames."""
+
+		fh = open(tbwFile, 'rb')
+		# Frames 1 through 3
+		frames = []
+		for i in range(1,4):
+			frames.append(tbw.readFrame(fh))
+		fh.close()
+
+		# Multiplication
+		frameT = frames[0] * 2.0
+		for i in range(800):
+			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 2*frames[0].data.xy[i%2, i/2], 6)
+		frameT *= 2.0
+		for i in range(800):
+			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 4*frames[0].data.xy[i%2, i/2], 6)
+		frameT = frames[0] * frames[1]
+		for i in range(800):
+			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]*frames[1].data.xy[i%2, i/2], 6)
+		
+		# Addition
+		frameA = frames[0] + 2.0
+		for i in range(800):
+			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 2+frames[0].data.xy[i%2, i/2], 6)
+		frameA += 2.0
+		for i in range(800):
+			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 4+frames[0].data.xy[i%2, i/2], 6)
+		frameA = frames[0] + frames[1]
+		for i in range(800):
+			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]+frames[1].data.xy[i%2, i/2], 6)
+
 	### TBN ###
 
 	def test_tbn_read(self):
@@ -155,6 +203,54 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(code, 7)
 		fh.close()
 
+	def test_tbn_comps(self):
+		"""Test the TBN frame comparison operators (>, <, etc.) for time tags."""
+
+		fh = open(tbnFile, 'rb')
+		# Frames 1 through 29
+		frames = []
+		for i in range(1,30):
+			frames.append(tbn.readFrame(fh))
+		fh.close()
+
+		self.assertTrue(frames[0] > 0)
+		self.assertTrue(frames[-1] >= frames[0])
+		self.assertTrue(frames[0] == frames[0])
+		self.assertFalse(frames[0] == frames[-1])
+		self.assertFalse(frames[0] != frames[0])
+
+	def test_tbn_math(self):
+		"""Test mathematical operations on TBN frame data via frames."""
+
+		fh = open(tbnFile, 'rb')
+		# Frames 1 through 29
+		frames = []
+		for i in range(1,30):
+			frames.append(tbn.readFrame(fh))
+		fh.close()
+
+		# Multiplication
+		frameT = frames[0] * 2.0
+		for i in range(512):
+			self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 6)
+		frameT *= 2.0
+		for i in range(512):
+			self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 6)
+		frameT = frames[0] * frames[1]
+		for i in range(512):
+			self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 6)
+		
+		# Addition
+		frameA = frames[0] + 2.0
+		for i in range(512):
+			self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 6)
+		frameA += 2.0
+		for i in range(512):
+			self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 6)
+		frameA = frames[0] + frames[1]
+		for i in range(512):
+			self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 6)
+
 	### TBW/TBN Mix-up ###
 
 	def test_tbw_tbn_catch(self):
@@ -171,6 +267,9 @@ class reader_tests(unittest.TestCase):
 		fh.close()
 		
 	### DRX ###
+
+	# Maybe someday...
+
 
 class reader_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.reader units 
