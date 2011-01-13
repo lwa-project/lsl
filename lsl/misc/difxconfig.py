@@ -24,7 +24,7 @@ from lsl.reader import errors as errors
 from lsl.writer import vdif
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 1 $'
+__revision__ = '$ Revision: 2 $'
 __all__ = ['ConfigError', 'DiFXConfig', '__version__', '__revision__', '__all__']
 
 class ConfigError(Exception):
@@ -372,7 +372,7 @@ class DiFXConfig(object):
 
 		names = [inputFile, calcFile, flagFile, jobsFile]
 		conts = [inputCont, calcCont, flagCont, jobsCont]
-		for name,cont = zip(names, conts):
+		for name, cont in zip(names, conts):
 			print "Writing %i lines to file '%s'" % (len(cont.split('\n')), name)
 			fh = open(name, "w")
 			fh.write(cont)

@@ -7,6 +7,7 @@ import os
 import imp
 import glob
 import unittest
+import commands
 
 from setuptools import setup, Extension, Distribution, find_packages
 try:
@@ -44,6 +45,26 @@ def get_description(filename):
 
 	return desc
 
+
+def get_fftw():
+	"""Use pkg-config (if installed) to figure out the C flags and linker flags
+	needed to compile a C program with FFTW3.  If FFTW3 cannot be found via
+	pkg-config, some 'sane' values are returned."""
+
+	status, output = commands.getstatusoutput('pkg-config fftw3 --exists')
+	if status == 0:
+		configCommand = 'pkg-config fftw3'
+		outCFLAGS = os.popen('%s --cflags' % configCommand, 'r').readline().rstrip().split()
+		outLIBS = os.popen('%s --libs' % configCommand, 'r').readline().rstrip().split()
+
+	else:
+		print "WARNING:  FFTW3 cannot be found, using defaults"
+		outCFLAGS = []
+		outLIBS = ['-lfftw3', '-lm']
+
+	return outCFLAGS, outLIBS
+		
+
 class LSLDist(Distribution):
 	"""Sub-class of setupuptools (distutils.core) Distribution class that fixes
 	problems building the libnova extension."""
@@ -59,6 +80,14 @@ class LSLDist(Distribution):
 		except:
 			pass
 
+# Get the FFTW flags/libs and manipulate the flags and libraries for 
+# correlator._core appropriately.  This will, hopefully, fix the build
+# problems on Mac
+cflags, libs = get_fftw()
+coreExtraFlags = ['-fopenmp',]
+coreExtraFlags.extend(cflags)
+coreExtraLibs = ['-fopenmp',]
+coreExtraLibs.extend(libs)
 
 setup(
 	distclass = LSLDist, 
@@ -67,7 +96,7 @@ setup(
 	description = "LWA Software Library", 
 	author = "Jayce Dowell", 
 	author_email = "jdowell@unm.edu", 
-	url = "http://panda.unm.edu/Courses/Dowell/", 
+	url = "http://fornax.phys.unm.edu/lwa/trac/", 
 	long_description = get_description('README'), 
 	classifiers = ['Development Status :: 4 - Beta',
 			'Intended Audience :: Science/Research',
@@ -76,11 +105,12 @@ setup(
 	scripts = glob.glob('lsl/scripts/*.py'), 
 	setup_requires = ['numpy>=1.2'], 
 	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.3', 'aipy>=0.9.1'], 
-	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits'], 
+	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits/Download'], 
 	include_package_data = True,  
 	ext_package = 'lsl', 
 	ext_modules = [Extension('_libnova', ['lsl/libnova.i']), 
 				Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
-				Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m', 'fftw3'], extra_compile_args=['-fopenmp'], extra_link_args=['-fopenmp'])],  
+				Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs)], 
+	zip_safe = False,  
 	test_suite = "lsl.tests.test_lsl.lsl_tests"
 ) 

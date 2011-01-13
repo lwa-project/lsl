@@ -16,8 +16,8 @@ from lsl.reader import errors
 from lsl.writer import vdif
 
 
-__revision__ = "$Revision:1 $"
-__version__  = "0.1"
+__revision__ = "$ Revision: 2 $"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
@@ -38,6 +38,7 @@ class vdif_tests(unittest.TestCase):
 		for i in range(1,9):
 			frames.append(tbw.readFrame(fh))
 
+		fh.close()
 		return frames
 
 	def __getTBN(self, vanilla=False):
@@ -59,6 +60,7 @@ class vdif_tests(unittest.TestCase):
 				frame.setGain(22)
 				frame.setSampleRate(100000)
 
+		fh.close()
 		return frames
 
 	def test_vdif_real(self):
@@ -85,10 +87,8 @@ class vdif_tests(unittest.TestCase):
 		dataBits = (junk[15]>>2) & 15
 		dataSize = (frameSize - 4) * 8
 		fh.seek(0)
-		vFrames = []
-		for i in range(8):
-			vFrames.append( numpy.fromfile(fh, dtype=numpy.uint8, count=frameSize*8) )
-		for vFrame, tFrame in zip(vFrames, frames):
+		for tFrame in frames:
+			vFrame = numpy.fromfile(fh, dtype=numpy.uint8, count=frameSize*8)
 			data = numpy.zeros(400, dtype=numpy.int16)
 			j = 0
 			for i in range(32,vFrame.shape[0],4):
@@ -131,10 +131,9 @@ class vdif_tests(unittest.TestCase):
 		dataBits = (junk[15]>>2) & 15
 		dataSize = (frameSize - 4) * 8
 		fh.seek(0)
-		vFrames = []
-		for i in range(8):
-			vFrames.append( numpy.fromfile(fh, dtype=numpy.uint8, count=frameSize*8) )
-		for vFrame, tFrame in zip(vFrames, frames[::2]):
+		
+		for tFrame in frames[::2]:
+			vFrame = numpy.fromfile(fh, dtype=numpy.uint8, count=frameSize*8)
 			data = numpy.zeros(512, dtype=numpy.singlecomplex)
 			j = 0
 			for i in range(32,vFrame.shape[0],4):

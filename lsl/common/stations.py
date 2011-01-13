@@ -23,7 +23,7 @@ import numpy
 
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 10 $'
+__revision__ = '$ Revision: 13 $'
 __all__ = ['geo2ecef', 'LWAStation', 'lwa1', '__version__', '__revision__', '__all__']
 
 
@@ -107,12 +107,16 @@ class lwa1(LWAStation):
 		oo = self.getObserver(date=date, JD=JD)
 		fDate = float(oo.date)
 
-		if fDate >= ephem.date('2010/11/23'):
+		if fDate >= ephem.Date('2011/01/12'):
+			# Current as of 1/12/2011
+			stands = numpy.array([206, 183, 153, 174, 38, 34, 67, 187, 80, 14, 254, 118, 246, 9, 69, 168, 258, 4, 158, 205])
+
+		elif fDate >= ephem.Date('2010/11/23'):
 			# Current as of 11/30/2010
-			stands = numpy.array([206, 183, 174, 153, 38, 34, 181, 67, 80, 14, 118, 254, 246, 9, 168, 69, 258, 4, 205, 158])
+			stands = numpy.array([206, 183, 153, 174, 38, 34, 67, 181, 80, 14, 254, 118, 246, 9, 69, 168, 258, 4, 158, 205])
 		elif fDate >= ephem.Date('2010/10/29'):
 			# Current as of 10/29/2010 for both TBN and TBW
-			stands = numpy.array([258, 4, 158, 205, 246, 9, 69, 168, 80, 14, 254, 118, 38, 34, 67, 181, 206, 183, 153, 174])
+			stands = numpy.array([258, 4, 205, 158, 246, 9, 168, 69, 80, 14, 118, 254, 38, 34, 181, 67, 206, 183, 174, 153])
 		elif fDate >= ephem.Date('2010/09/15'):
 			# Current as of 9/15/2010
 			# Note:  This is for the input reversed TBW data.  Any TBN data should have 
