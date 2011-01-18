@@ -466,24 +466,24 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 		delays[i,:] = dlyCache.signalDelay(stands[i])
 	delays = delays[:,dlyRef].max() - delays
 
-	# F
+	# F - defaults to running parallel in C via OpenMP
 	if signals.dtype.kind == 'c':
 		signalsF = _core.FEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
 		signalsFC = signalsF.conj()
 	else:
-		nFFT = signals.shape[1] / 2 / LFFT * Overlap - Overlap + 1
-
-		signalsF = numpy.zeros((signals.shape[0], LFFT-1, nFFT), dtype=numpy.complex64)
-		for i in list(range(signals.shape[0])):
-			signalsF[i,:,:] = _core.FEngineR(signals[i,:], freq, delays[i,:], LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		signalsF = _core.FEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
 		signalsFC = signalsF.conj()
 
 	# X
-	t0 = time.time()
 	count = 0
 	output = numpy.zeros( (nBL, LFFT-1), dtype=numpy.complex64)
 	for i,j in baselines:
 		output[count,:] = __MultiplyEngine(signalsF[i,:,:], signalsFC[j,:,:])
 		count = count + 1
+
+	# Divide the cross-multiplied data by the number of channels used
+	output /= LFFT
+	if signals.dtype.kind != 'c':
+		output /= 2
 
 	return (freq, output)

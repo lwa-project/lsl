@@ -65,10 +65,16 @@ class fx_tests(unittest.TestCase):
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		freq, cps = fx.FXCorrelator(fakeData, numpy.array([1,2,3,4]), DisablePool=False)
 
-	def test_correlator(self):
-		"""Test the C-based correlator."""
+	def test_correlator_real(self):
+		"""Test the C-based correlator on real-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
+		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]))
+
+	def test_correlator_complex(self):
+		"""Test the C-based correlator on complex-valued data."""
+
+		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
 		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]))
 
 
