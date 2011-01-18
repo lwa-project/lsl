@@ -69,7 +69,7 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, cps = fx.FXCorrelator(fakeData, numpy.array([1,2,3,4]))
+		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]))
 
 
 
