@@ -10,8 +10,8 @@ import numpy
 from lsl.correlator import fx
 
 
-__revision__ = "$Revision:1 $"
-__version__  = "0.1"
+__revision__ = "$ Revision: 3 $"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 class fx_tests(unittest.TestCase):
@@ -23,38 +23,23 @@ class fx_tests(unittest.TestCase):
 
 		numpy.seterr(all='ignore')
 
-	def test_blackman(self):
-		"""Test the Blackman window function."""
+	def test_window(self):
+		"""Test that window functions can be passed to calcSpectra/calcSpectrum."""
 
-		window = {1: [1], 
-				2: [-1.3878e-17, -1.3878e-17], 
-				4: [-1.3878e-17, 6.3000e-1, 6.3000e-1, -1.3878e-17], 
-				8: [-1.3878e-17, 9.0453e-2, 4.5918e-1, 9.2036e-1, 9.2036e-1, 4.5918e-1, 9.0453e-2, -1.3878e-17]}
+		fakeData = numpy.random.rand(4,1024) + 3.0
+		freq, spectra = fx.calcSpectra(fakeData, window=numpy.blackman, DisablePool=True)
 
-		for length in window.keys():
-			ref = numpy.array(window[length])
-			out = fx.blackmanWindow(length)
-			
-			i = 0
-			for r,o in zip(ref, out):
-				self.assertAlmostEqual(r, o, 4, "Error on window length %i, value %i" % (length,i))
-				i = i + 1
+		fakeData = numpy.random.rand(4,1024) + 3.0
+		freq, spectra = fx.calcSpectra(fakeData, window=numpy.hamming, DisablePool=True)
 
-	def test_sinc(self):
-		"""Test the sinc window function."""
+	def test_window_custom(self):
+		"""Test that custom window functions can be passed to calcSpectra/calcSpectrum."""
 
-		window = {1: [1], 
-				2: [-3.8980e-17, 1.0], 
-				4: [-3.8980e-17, 3.8980e-17, 1.0, 3.8980e-17]}
+		def wndw(L):
+			return numpy.kaiser(L, 5)
 
-		for length in window.keys():
-			ref = numpy.array(window[length])
-			out = fx.sincWindow(length)
-
-			i = 0
-			for r,o in zip(ref, out):
-				self.assertAlmostEqual(r, o, 5, "Error on window length %i, value %i" % (length,i))
-				i = i + 1
+		fakeData = numpy.random.rand(4,1024) + 3.0
+		freq, spectra = fx.calcSpectra(fakeData, window=wndw, DisablePool=True)
 
 	def test_spectra_single(self):
 		"""Test the calcSpectra/calcSpectrum functions in single thread mode."""
@@ -68,17 +53,23 @@ class fx_tests(unittest.TestCase):
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		freq, spectra = fx.calcSpectra(fakeData, DisablePool=False)
 
-	def test_correlator_single(self):
-		"""Test the FXCorrelaotr/correlate functions in single thread mode."""
+	def test_correlator_old_single(self):
+		"""Test the FXCorrelator/correlate functions in single thread mode."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		freq, cps = fx.FXCorrelator(fakeData, numpy.array([1,2,3,4]), DisablePool=True)
 
-	def test_correlator_multi(self):
-		"""Test the FXCorrelaotr/correlate functions in multi-thread mode."""
+	def test_correlator_old_multi(self):
+		"""Test the FXCorrelator/correlate functions in multi-thread mode."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		freq, cps = fx.FXCorrelator(fakeData, numpy.array([1,2,3,4]), DisablePool=False)
+
+	def test_correlator(self):
+		"""Test the C-based correlator."""
+
+		fakeData = numpy.random.rand(4,1024) + 3.0
+		freq, cps = fx.FXCorrelator(fakeData, numpy.array([1,2,3,4]))
 
 
 

@@ -19,9 +19,9 @@ import numpy
 from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
-__version__ = '0.4'
-__revision__ = '$ Revision: 16 $'
-__all__ = ['validateStand', 'getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
+__version__ = '0.5'
+__revision__ = '$ Revision: 17 $'
+__all__ = ['validateStand', 'getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'cableGain', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
 
 
 class uvUtilsError(Exception):
@@ -235,38 +235,55 @@ def cableDelay(stand, freq):
 	return delays
 
 
-def cableAttenuation(stands):
-	"""For a given stand or numpy array of stands, return the multiplicative factor needed 
-	to correct for cable losses."""
+def cableAttenuation(stand, freq):
+	"""For a given stand, return the multiplicative factor needed to correct for 
+	cable losses for a specific frequency (in Hz).  If attenuations for more than one 
+	frequency are needed, the frequencies can be passed in as a numpy array.
 
+	.. versionchanged:: 0.3.4
+		Switched over the the cable attenuation model in SLC 0014, version 3 and
+		added in frequency support.
+	"""
+
+	# Try this so that freq can be either a scalar or a list
 	try:
-		junk = len(stands)
+		junk = len(freq)
 	except TypeError:
-		stands = numpy.array([stands])
+		freq = numpy.array([freq])
 
 	# Load the cable length
 	cableLengths = _loadDelayData()
 
-	out = numpy.zeros(stands.shape[0])
-	for i in range(stands.shape[0]):
-		validateStand(stands[i])
-		cableLength = cableLengths[stands[i]-1]
+	validateStand(stand)
+	cableLength = cableLengths[stand-1]
 
-		# Catch the outlier and load cable and delay information into holder variables.
-		# This makes it easier to do one common set of operations with different cables.
-		if stands[i] == 258:
-			# For the outlier, the attenuation comes from the Times Microwave LMR-400 
-			# data sheet for 50 Mhz.
-			dBperM = 0.029 # dB/m
-		else:
-			dBperM = 0.047 # dB / m
-
-		dBLoss = dBperM*cableLength
-		multFactor = 10.0**(dBLoss/10.0)
-		
-		out[i] = multFactor
+	# Catch the outlier and load cable and delay information into holder variables.
+	# This makes it easier to do one common set of operations with different cables.
+	if stand == 258:
+		# Values for Times Microwave LMR-400
+		alpha0 = 0.00146
+		alpha1 = 0.00002
+	else:
+		# Values for KSR200DB from SLC0014, version 3
+		alpha0 = 0.00428
+		alpha1 = 0.00000
+	out = numpy.exp(2*alpha0*cableLength*numpy.sqrt(freq/10.0e6) + alpha1*cableLength*(freq/10.0e6))
 
 	return out
+
+
+def cableGain(stand, freq):
+	"""For a given stand, return the cable gain ("inverse loss") for a specific 
+	frequency (in Hz).  If gains for more than one frequency are needed, the 
+	frequencies can be passed in as a numpy array.
+
+	This function wraps cableAttenuation and return the multiplicative inverse of
+	that function.
+
+	.. versionadded:: 0.3.4
+	"""
+
+	return 1.0/cableAttenuation(stand, freq)
 
 
 class CableCache(object):
@@ -346,8 +363,8 @@ class CableCache(object):
 
 		return delays
 
-	def cableAttenuation(self, stand):
-		"""For a given stand , return the multiplicative factor needed to correct 
+	def cableAttenuation(self, stand, freq=None):
+		"""For a given stand, return the multiplicative factor needed to correct 
 		for cable losses."""
 
 		# Validate and load in the cable length
@@ -357,16 +374,31 @@ class CableCache(object):
 		# Catch the outlier and load cable and delay information into holder variables.
 		# This makes it easier to do one common set of operations with different cables.
 		if stand == 258:
-			# For the outlier, the attenuation comes from the Times Microwave LMR-400 
-			# data sheet for 50 Mhz.
-			dBperM = 0.029 # dB/m
+			# Values for Times Microwave LMR-400
+			alpha0 = 0.00146
+			alpha1 = 0.00002
 		else:
-			dBperM = 0.047 # dB / m
+			# Values for KSR200DB from SLC0014, version 3
+			alpha0 = 0.00428
+			alpha1 = 0.00000
+		if freq is None:
+			out = numpy.exp(2*alpha0*cableLength*numpy.sqrt(self.freq/10.0e6) + alpha1*cableLength*(self.freq/10.0e6))
+		else:
+			try:
+				junk = len(freq)
+			except TypeError:
+				freq = numpy.array([freq])
+			out = numpy.exp(2*alpha0*cableLength*numpy.sqrt(self.freq/10.0e6) + alpha1*cableLength*(self.freq/10.0e6))
 
-		dBLoss = dBperM*cableLength
-		multFactor = 10.0**(dBLoss/10.0)
+		return out
 
-		return multFactor
+	def cableGain(self, stand, freq=None):
+		"""For a given stand, return the cable gain as a function of frequency.
+
+		This function wraps self.cableAttenuation and returns the multiplicative
+		inverse of that function."""
+
+		return self.cableAttenuation(stand, freq=freq)
 
 
 def signalDelay(stand, freq, cache=None):

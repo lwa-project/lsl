@@ -4,6 +4,8 @@
 TBN data.  The main functions in this module are:
   * calcSpectra - calculate power spectra for a collection of signals
   * FXCorrelator - calculate cross power spectra for a collection of signals
+    (deprecated)
+  * FXMaster - calculate cross power spectra for a collection of signals
 
 Each function is set up to process the signals in parallel using the 
 processing module and accepts a variety of options controlling the processing
@@ -12,82 +14,28 @@ of the data, including various window functions and time averaging.
 
 import os
 import sys
-import math
 import numpy
 
 from lsl.common import dp as dp_common
 from lsl.common.constants import *
-import uvUtils
+from lsl.common.warns import warnDeprecated
+from lsl.correlator import uvUtils
 
-__version__ = '0.2'
-__revision__ = '$ Revision: 8 $'
-__all__ = ['blackmanWindow', 'sincWindow', 'polyphaseFilter', 'calcSpectrum', 'calcSpectra', 'correlate', 'FXCorrelator', '__version__', '__revision__', '__all__']
+import _core
 
-
-def blackmanWindow(length):
-	"""Generate a Blackman window of the specified length.  The window is returned
-	as a numpy array."""
-
-	if length > 1:
-		N = length - 1
-		x = numpy.linspace(0,length-1,length)
-		w = 0.42 - 0.50*numpy.cos(2*numpy.pi*x/N) + 0.08*numpy.cos(4*numpy.pi*x/N)
-	else:
-		w = numpy.ones(1)
-
-	return w
+__version__ = '0.4'
+__revision__ = '$ Revision: 21 $'
+__all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
 
 
-def sincWindow(length):
-	"""Generate a sinc function of length elements such that the function 
-	evaluates to zero at both ends of the range. The output is the sinc function
-	as a numpy array."""
+def noWindow(L):
+	"""Default "empty" windowing function for use with the various routines.  This
+	function returned a numpy array of '1's of the specified length."""
 
-	x = numpy.arange(length)
-	xPrime = 4*math.pi/float(length)*(x-length/2)
-	fnc = numpy.sin(xPrime)/xPrime
-
-	# Fix "the z=0 problem"
-	z = numpy.where( xPrime == 0 )
-	if len(z[0]) != 0:
-		fnc[z[0]] = 1.0
-
-	return fnc
+	return numpy.ones(L)
 
 
-def polyphaseFilter(signal, length=64, windows=4):
-	"""Polyphase filter for the time series data.  This function multiplies the 
-	input signal by a sinc function, breaks it into windows, and sum over the 
-	different windows.  This results in a decimation of the signal by a factor 
-	proportional to the number of windows used.  The output is the decimated 
-	signal as a numpy array.
-
-	.. warning::
-		This function has not been tested and may not be implemented correctly.
-	"""
-	
-	# The averaging length holds the size of the signal to be filtered
-	aLength = length*windows
-	filtered = numpy.zeros(signal.shape[0]/length/windows*length)
-
-	# Loop over the signal
-	for i in range(signal.shape[0]/aLength):
-		# Current section of length 'length'
-		s1 = signal[aLength*i:aLength*(i+1)]
-		s1 = s1*sincWindow(aLength)
-
-		# Create the 'windows' window components out of the sinc-multiplied signal
-		parts = numpy.zeros((windows, length))
-		for j in range(parts.shape[0]):
-			parts[j,:] = s1[length*j:length*(j+1)]
-
-		# Sum and save to the output array
-		filtered[length*i:length*(i+1)] = parts.sum(axis=0)
-
-	return filtered
-
-
-def calcSpectrum(signal, LFFT=64, BlackmanFilter=False, PolyphaseFilter=False, verbose=False):
+def calcSpectrum(signal, LFFT=64, window=noWindow, verbose=False):
 	"""Worker function for calcSpectra."""
 
 	# Figure out if we are working with complex (I/Q) data or only real.  This
@@ -100,16 +48,8 @@ def calcSpectrum(signal, LFFT=64, BlackmanFilter=False, PolyphaseFilter=False, v
 
 	out = numpy.zeros(LFFT-1)
 
-	# Optionally apply a polyphase filter to the signals and store the results in
-	# is intermediate signal variables 'is[12]'
-	if PolyphaseFilter:
-		intSignal = polyphaseFilter(signal, length=2*LFFT, windows=4)
-		if verbose:
-			print "  %i samples -> %i filtered samples" % (signal.shape[0], intSignal.shape[0])
-	else:
-		intSignal = signal
-
 	# Remove the mean
+	intSignal = 1.0*signal
 	intSignal -= intSignal.mean()
 
 	nChunks = intSignal.shape[0]/lFactor/LFFT
@@ -118,8 +58,7 @@ def calcSpectrum(signal, LFFT=64, BlackmanFilter=False, PolyphaseFilter=False, v
 
 	for i in range(nChunks):
 		cs = intSignal[i*lFactor*LFFT:(i+1)*lFactor*LFFT]
-		if BlackmanFilter:
-			cs *= blackmanWindow(lFactor*LFFT)
+		cs *= window(lFactor*LFFT)
 		cf = numpy.fft.fft(cs, lFactor*LFFT)
 		cp = numpy.abs(cf)**2.0 / lFactor / LFFT
 			
@@ -129,12 +68,27 @@ def calcSpectrum(signal, LFFT=64, BlackmanFilter=False, PolyphaseFilter=False, v
 	return out
 
 
-def calcSpectra(signals, LFFT=64, SampleAverage=None, BlackmanFilter=False, PolyphaseFilter=False, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
+def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
 	"""Given a collection of time series data with inputs on the first dimension
 	and data on the second, compute the spectra for all inputs.  By default, 
 	all data in the time series are average into a single spectrum.  However, this 
 	behavior can be modified if the SampleAverage keyword is set.  SampleAverage 
-	specifies how many individual spectra of length LFFT are to be averaged."""
+	specifies how many individual spectra of length LFFT are to be averaged.
+
+	.. versionchanged:: 0.4
+		Prior to LSL version 0.4, the window functions avaliable for calcSpectra 
+		were limited to Blackmand and an (untest) Polyphase filter.  With version
+		0.4, the window to be used is passed to the function call via the 'window'
+		keyword and an "empty" window is provided by the module.  This allows for
+		the various window function defined in numpy (i.e., barlet, blackman, 
+		hamming, etc.) to be used.  It also makes it easier to filter the data using
+		a custom window.  For example, a Kaiser window with a shape factor of 5 
+		could be make with::
+			
+			>>> import numpy
+			>>> def newWindow(L):
+			...      return numpy.kaiser(L, 5)
+	"""
 
 	# Figure out if we are working with complex (I/Q) data or only real.  This
 	# will determine how the FFTs are done since the real data mirrors the pos-
@@ -201,10 +155,10 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, BlackmanFilter=False, Poly
 			# If pool, pool...  Otherise don't
 			if usePool:
 				task = taskPool.apply_async(calcSpectrum, args=(signals[i,bchan:echan], ), 
-									kwds={'LFFT': LFFT, 'BlackmanFilter': BlackmanFilter, 'PolyphaseFilter': PolyphaseFilter, 'verbose': verbose})
+									kwds={'LFFT': LFFT, 'window': window, 'verbose': verbose})
 				taskList.append((i,j,task))
 			else:
-				tempPS = calcSpectrum(signals[i,bchan:echan], LFFT=LFFT, BlackmanFilter=BlackmanFilter, PolyphaseFilter=PolyphaseFilter, verbose=verbose)
+				tempPS = calcSpectrum(signals[i,bchan:echan], LFFT=LFFT, window=window, verbose=verbose)
 
 				if doFFTShift:
 					output[i,j,:] = numpy.fft.fftshift(tempPS)
@@ -236,7 +190,7 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, BlackmanFilter=False, Poly
 	return (freq, output)
 
 
-def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, BlackmanFilter=False, PolyphaseFilter=False, verbose=False, SampleRate=None, DlyCache=None, CentralFreq=0.0):
+def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, window=noWindow, verbose=False, SampleRate=None, DlyCache=None, CentralFreq=0.0):
 	"""Channalize and cross-correlate singal from two antennae.  Both the signals 
 	and the stand numnbers are needed to implement time delay and phase corrections.
 	The resulting visibilities from the cross-correlation are time average and a 
@@ -293,17 +247,10 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, BlackmanFilt
 		print "  Delay for stands #%i: %.2f - %.2f ns (= %i samples)" % (stand1, delay1[-1]*1e9, delay1[0]*1e9, start1)
 		print "  Delay for stands #%i: %.2f - %.2f ns (= %i samples)" % (stand2, delay2[-1]*1e9, delay2[0]*1e9, start2)
 
-	# Optionally apply a polyphase filter to the signals and store the results in
-	# is intermediate signal variables 'is[12]'
-	if PolyphaseFilter:
-		is1 = polyphaseFilter(signal1, length=lFactor*LFFT, windows=4)
-		is2 = polyphaseFilter(signal2, length=lFactor*LFFT, windows=4)
-	else:
-		is1 = 1.0*signal1
-		is2 = 1.0*signal2
-
 	# Remove the mean
+	is1 = 1.0*signal1
 	is1 -= is1.mean()
+	is2 = 1.0*signal2
 	is2 -= is2.mean()
 
 	# Compute the length of each time series and find the shortest one.
@@ -319,14 +266,9 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, BlackmanFilt
 		# Current chunks
 		s1 = is1[(start1+int(lFactor*LFFT*(1.0*i)/Overlap)):(start1+int(lFactor*LFFT*((1.0*i)/Overlap+1)))]
 		s2 = is2[(start2+int(lFactor*LFFT*(1.0*i)/Overlap)):(start2+int(lFactor*LFFT*((1.0*i)/Overlap+1)))]
-		#import pylab
-		#pylab.plot(s1.real)
-		#pylab.plot(s2.real)
-		#pylab.show()
 
-		if BlackmanFilter:
-			s1 *= blackmanWindow(lFactor*LFFT)
-			s2 *= blackmanWindow(lFactor*LFFT)
+		s1 *= window(lFactor*LFFT)
+		s2 *= window(lFactor*LFFT)
 		
 		# The FFTs
 		fft1 = numpy.fft.fft(s1, lFactor*LFFT)
@@ -351,12 +293,33 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, BlackmanFilt
 	return visibility
 
 
-def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, BlackmanFilter=False, PolyphaseFilter=False, CrossPol=None, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
+def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=noWindow, CrossPol=None, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
 	"""A basic FX correlators for the TBW data.  Given an 2-D array of signals
 	(stands, time-series) and an array of stands, compute the cross-correlation of
 	the data for all baselines.  If cross-polarizations need to be calculated, the
 	CrossPol keyword allows for the other polarization data to be entered into the
-	correlator.  Return the frequencies and visibilities as a two-elements tuple."""
+	correlator.  Return the frequencies and visibilities as a two-elements tuple.
+
+	.. deprecated:: 0.4
+		FXCorrelator has been deprecated as of LSL version 0.4 in favor of the new
+		C-based correlator "FXMaster".  The new correlator, however, does not 
+		currently support windowing the data.
+
+	.. versionchanged:: 0.4
+		Prior to LSL version 0.4, the window functions avaliable for FXCorrelator
+		were limited to Blackmand and an (untest) Polyphase filter.  With version
+		0.4, the window to be used is passed to the function call via the 'window'
+		keyword and an "empty" window is provided by the module.  This allows for
+		the various window function defined in numpy (i.e., barlet, blackman, 
+		hamming, etc.) to be used.  It also makes it easier to filter the data using
+		a custom window.  For example, a Kaiser window with a shape factor of 5 
+		could be make with::
+			
+			>>> import numpy
+			>>> def newWindow(L):
+			...      return numpy.kaiser(L, 5)"""
+
+	warnDeprecated("FXCorrelator", "Please use the C-based FX correlator 'FXMaster'")
 
 	N = stands.shape[0]
 	baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)
@@ -419,16 +382,16 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, Blackma
 		if usePool:
 			if CrossPol is not None:
 				task = taskPool.apply_async(correlate, args=(signals[i,:], CrossPol[j,:], stands[i], stands[j]), 
-								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'BlackmanFilter': BlackmanFilter, 'PolyphaseFilter': PolyphaseFilter, 'verbose': verbose, 'SampleRate': SampleRate, 'DlyCache': dlyCache, 'CentralFreq': CentralFreq})
+								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'window': window, 'verbose': verbose, 'SampleRate': SampleRate, 'DlyCache': dlyCache, 'CentralFreq': CentralFreq})
 			else:
 				task = taskPool.apply_async(correlate, args=(signals[i,:], signals[j,:], stands[i], stands[j]), 
-								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'BlackmanFilter': BlackmanFilter, 'PolyphaseFilter': PolyphaseFilter, 'verbose': verbose, 'SampleRate': SampleRate, 'DlyCache': dlyCache, 'CentralFreq': CentralFreq})
+								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'window': window, 'verbose': verbose, 'SampleRate': SampleRate, 'DlyCache': dlyCache, 'CentralFreq': CentralFreq})
 			taskList.append((count,task))
 		else:
 			if CrossPol is not None:
-				tempCPS = correlate(signals[i,:], CrossPol[j,:], stands[i], stands[j], LFFT=LFFT, Overlap=Overlap, BlackmanFilter=BlackmanFilter, PolyphaseFilter=PolyphaseFilter, verbose=verbose, SampleRate=SampleRate, DlyCache=dlyCache, CentralFreq=CentralFreq)
+				tempCPS = correlate(signals[i,:], CrossPol[j,:], stands[i], stands[j], LFFT=LFFT, Overlap=Overlap, window=window, verbose=verbose, SampleRate=SampleRate, DlyCache=dlyCache, CentralFreq=CentralFreq)
 			else:
-				tempCPS = correlate(signals[i,:], signals[j,:], stands[i], stands[j], LFFT=LFFT, Overlap=Overlap, BlackmanFilter=BlackmanFilter,  PolyphaseFilter=PolyphaseFilter, verbose=verbose, SampleRate=SampleRate, DlyCache=dlyCache, CentralFreq=CentralFreq)
+				tempCPS = correlate(signals[i,:], signals[j,:], stands[i], stands[j], LFFT=LFFT, Overlap=Overlap, window=window, verbose=verbose, SampleRate=SampleRate, DlyCache=dlyCache, CentralFreq=CentralFreq)
 
 			if doFFTShift:
 				output[count,:] = tempCPS
@@ -453,5 +416,74 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, Blackma
 
 		# Destroy the taskPool
 		del(taskPool)
+
+	return (freq, output)
+
+
+def __MultiplyEngine(signal1, signal2):
+	"""'X' part of an FX correlator.  This function takes two Fourier transformed
+	signals and multiples the signals and averages with time."""
+
+	return numpy.mean(numpy.multiply(signal1, signal2), axis=1)
+
+
+def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, SampleRate=None, CentralFreq=0.0):
+	"""A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
+	2-D array of signals (stands, time-series) and an array of stands, compute 
+	the cross-correlation of the data for all baselines.  Return the frequencies 
+	and visibilities as a two-elements tuple.
+	"""
+
+	nStands = stands.shape[0]
+	baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)
+	nBL = len(baselines)
+
+	# Figure out if we are working with complex (I/Q) data or only real.  This
+	# will determine how the FFTs are done since the real data mirrors the pos-
+	# itive and negative Fourier frequencies.
+	if signals.dtype.kind == 'c':
+		lFactor = 1
+		doFFTShift = True
+		CentralFreq = float(CentralFreq)
+	else:
+		lFactor = 2
+		doFFTShift = False
+
+	if SampleRate is None:
+		SampleRate = dp_common.fS
+	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+	if doFFTShift:
+		freq += CentralFreq
+		freq = numpy.fft.fftshift(freq)
+	freq = freq[1:LFFT]
+
+	# Define the cable/signal delay caches to help correlate along and compute 
+	# the delays that we need to apply to align the signals
+	dlyCache = uvUtils.SignalCache(freq)
+	dlyRef = len(freq)/2
+	delays = numpy.zeros((nStands,LFFT-1))
+	for i in list(range(nStands)):
+		delays[i,:] = dlyCache.signalDelay(stands[i])
+	delays = delays[:,dlyRef].max() - delays
+
+	# F
+	if signals.dtype.kind == 'c':
+		signalsF = _core.FEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		signalsFC = signalsF.conj()
+	else:
+		nFFT = signals.shape[1] / 2 / LFFT * Overlap - Overlap + 1
+
+		signalsF = numpy.zeros((signals.shape[0], LFFT-1, nFFT), dtype=numpy.complex64)
+		for i in list(range(signals.shape[0])):
+			signalsF[i,:,:] = _core.FEngineR(signals[i,:], freq, delays[i,:], LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		signalsFC = signalsF.conj()
+
+	# X
+	t0 = time.time()
+	count = 0
+	output = numpy.zeros( (nBL, LFFT-1), dtype=numpy.complex64)
+	for i,j in baselines:
+		output[count,:] = __MultiplyEngine(signalsF[i,:,:], signalsFC[j,:,:])
+		count = count + 1
 
 	return (freq, output)

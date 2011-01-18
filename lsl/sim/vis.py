@@ -204,7 +204,7 @@ def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False,
 
 		delayCoeff = n.zeros(2)
 
-		amp = 1.0 / uvUtils.cableAttenuation(stand)
+		amp = uvUtils.cableGain(stand, freq=(freq*1e9))
 		
 		ants.append( Antenna(eq[0], eq[1], eq[2], beam, phsoff=delayCoeff, amp=amp, stand=stand) )
 

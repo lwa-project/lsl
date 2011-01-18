@@ -8,8 +8,8 @@ import numpy
 from lsl.correlator import uvUtils
 
 
-__revision__ = "$Revision:1 $"
-__version__  = "0.1"
+__revision__ = "$ Revision: 1 $"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -101,16 +101,32 @@ class uvUtils_tests(unittest.TestCase):
 
 		ACCURACY = 4
 
-		a = uvUtils.cableAttenuation(1)
-		self.assertAlmostEqual(a, 4.45246, ACCURACY)
+		a = uvUtils.cableAttenuation(1, freq=10.0e6)
+		self.assertAlmostEqual(a, 3.25854247, ACCURACY)
 
 	def test_attenuation_bounds(self):
 		"""Test that stand ID number bound are respected by the attenuation routine."""
 
-		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, -1)
-		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 0)
-		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 259)
-		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 500)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, -1, freq=10.0e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 0, freq=10.0e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 259, freq=10.0e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableAttenuation, 500, freq=10.0e6)
+
+	def test_gain(self):
+		"""Test that the cable attenuation is working."""
+
+		ACCURACY = 4
+
+		a = uvUtils.cableGain(1, freq=10.0e6)
+		self.assertAlmostEqual(a, 0.30688567, ACCURACY)
+
+	def test_gain_bounds(self):
+		"""Test that stand ID number bound are respected by the attenuation routine."""
+
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableGain, -1, freq=10.0e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableGain, 0, freq=10.0e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableGain, 259, freq=10.0e6)
+		self.assertRaises(uvUtils.uvUtilsError, uvUtils.cableGain, 500, freq=10.0e6)
 
 	def test_baseline_gen(self):
 		"""Test that the generated baselines contain the correct numbers of elements."""

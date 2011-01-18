@@ -22,6 +22,7 @@ Cable Model and Delays
 ++++++++++++++++++++++
 .. autofunction:: lsl.correlator.uvUtils.cableDelay
 .. autofunction:: lsl.correlator.uvUtils.cableAttenuation
+.. autofunctin:: lsl.correlator.uvUtils.cableGain
 .. autoclass:: lsl.correlator.uvUtils.CableCache
    :members:
 .. autofunction:: lsl.correlator.uvUtils.signalDelay
