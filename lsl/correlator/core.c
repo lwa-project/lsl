@@ -65,7 +65,7 @@ static PyObject *FEngineR(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Find out how large the output array needs to be and initialize it
 	nFFT = (data->dimensions[0] - start) / 2 / nChan * Overlap - Overlap + 1;
-	npy_int dims[2];
+	npy_intp dims[2];
 	dims[0] = nChan - 1;
 	dims[1] = nFFT;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
@@ -204,7 +204,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Find out how large the output array needs to be and initialize it
 	nFFT = (nSamps - startMax) / 2 / nChan * Overlap - Overlap + 1;
-	npy_int dims[3];
+	npy_intp dims[3];
 	dims[0] = nStand;
 	dims[1] = nChan - 1;
 	dims[2] = nFFT;
@@ -339,7 +339,7 @@ static PyObject *FEngineC(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Find out how large the output array needs to be and initialize it
 	nFFT = data->dimensions[0] / nChan * Overlap - Overlap + 1;
-	npy_int dims[2];
+	npy_intp dims[2];
 	dims[0] = nChan - 1;
 	dims[1] = nFFT;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
@@ -477,7 +477,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
-	npy_int dims[3];
+	npy_intp dims[3];
 	dims[0] = nStand;
 	dims[1] = nChan - 1;
 	dims[2] = nFFT;
