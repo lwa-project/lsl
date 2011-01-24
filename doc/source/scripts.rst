@@ -189,9 +189,6 @@ correlateTBN.py
 
             -c, --central-freq     Central frequency of the observations in MHz
 
-            -d, --date             Specify the date when the data were obtained
-                                   (YYYY/MM/DD HH:MM:SS)
-
             -f, --fft-length       Set FFT length (default = 512)
 
             -t, --avg-time         Window to average visibilities in time (seconds;
@@ -201,3 +198,11 @@ correlateTBN.py
                                    (default = 10)
 
             -q, --quiet            Run correlateTBN in silent mode
+
+possm.py
+  :Description:  Script that takes a FITS IDI file and mimics the AIPS task POSSM by plotting
+                 average cross-power spectra for all baselines in the FITS IDI file.
+
+  :Usage: possm.py file
+
+  :Options: None

@@ -20,7 +20,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 17 $'
+__revision__ = '$ Revision: 18 $'
 __all__ = ['validateStand', 'getXYZ', 'getRelativeXYZ', 'PositionCache', 'cableDelay', 'CableCache', 'signalDelay', 'SignalCache', 'cableAttenuation', 'cableGain', 'getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
 
 
@@ -388,7 +388,7 @@ class CableCache(object):
 				junk = len(freq)
 			except TypeError:
 				freq = numpy.array([freq])
-			out = numpy.exp(2*alpha0*cableLength*numpy.sqrt(self.freq/10.0e6) + alpha1*cableLength*(self.freq/10.0e6))
+			out = numpy.exp(2*alpha0*cableLength*numpy.sqrt(freq/10.0e6) + alpha1*cableLength*(freq/10.0e6))
 
 		return out
 

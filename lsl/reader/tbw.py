@@ -346,8 +346,7 @@ def __readData12(filehandle):
 	data[1,:] = ((rawData[1::3]&15)<<8) | rawData[2::3]
 	# The data are signed, so apply the two-complement rule to generate 
 	# the negative values
-	negativeValues = numpy.where( data >= 2048 )
-	data[negativeValues] -= 4096
+	data -= 4096*((data>>11)&1)
 
 	newData = FrameData()
 	newData.timeTag = long(timeTag[0])
@@ -377,8 +376,7 @@ def __readData4(filehandle):
 	data[1,:] = rawData&15
 	# The data are signed, so apply the two-complement rule to generate 
 	# the negative values
-	negativeValues = numpy.where( data >= 8 )
-	data[negativeValues] -= 16
+	data -= 16*((data>>3)&1)
 	
 	newData = FrameData()
 	newData.timeTag = long(timeTag[0])

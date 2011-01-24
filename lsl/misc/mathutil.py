@@ -6,10 +6,11 @@ import logging
 import math
 
 import numpy
+from scipy.special import sph_harm
 
-__version__   = "0.1"
-__revision__  = "$Revision: 92 $"
-__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'robustmean', '__version__', '__revision__', '__all__']
+__version__   = "0.3"
+__revision__  = "$Revision: 95 $"
+__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'robustmean', 'savitzky_golay', 'gaussian1d', 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', '__version__', '__revision__', '__all__']
 __author__    = "P.S.Ray"
 __maintainer__ = "Jayce Dowell"
 
@@ -243,3 +244,247 @@ def robustmean(arr):
 			finalmean = finalarr.mean()
 
 	return finalmean
+
+
+def savitzky_golay(y, window_size, order, deriv=0):
+	"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
+	The Savitzky-Golay filter removes high frequency noise from data.  It has 
+	the advantage of preserving the original shape and features of the signal 
+	better than other types of filtering approaches, such as moving averages 
+	techhniques.
+
+	Parameters
+	----------
+	  * y: array_like, shape (N,) = the values of the time history of the signal.
+	  * window_size: int = the length of the window. Must be an odd integer number.
+	  * order: int = the order of the polynomial used in the filtering.  Must be 
+	    less then `window_size` - 1.
+	  * deriv: int = the order of the derivative to compute (default = 0 means 
+	    only smoothing)
+
+	Returns
+	-------
+	  * ys: ndarray, shape (N) = the smoothed signal (or it's n-th derivative).
+
+	Notes
+	-----
+	The Savitzky-Golay is a type of low-pass filter, particularly suited for 
+	smoothing noisy data. The main idea behind this approach is to make for each 
+	point a least-square fit with a polynomial of high order over a odd-sized 
+	window centered at the point.
+
+	Examples
+	--------
+	>>> t = numpy.linspace(-4, 4, 500)
+	>>> y = numpy.exp( -t**2 ) + numpy.random.normal(0, 0.05, t.shape)
+	>>> ysg = savitzky_golay(y, window_size=31, order=4)
+	>>> import matplotlib.pyplot as plt
+	>>> plt.plot(t, y, label='Noisy signal')
+	>>> plt.plot(t, numpy.exp(-t**2), 'k', lw=1.5, label='Original signal')
+	>>> plt.plot(t, ysg, 'r', label='Filtered signal')
+	>>> plt.legend()
+	>>> plt.show()
+
+	References
+	----------
+	  1. A. Savitzky, M. J. E. Golay, Smoothing and Differentiation of Data by 
+	     Simplified Least Squares Procedures. Analytical Chemistry, 1964, 36 (8), 
+	     pp 1627-1639.
+	  2. Numerical Recipes 3rd Edition: The Art of Scientific Computing W.H. Press,
+	     S.A. Teukolsky, W.T. Vetterling, B.P. Flannery Cambridge University Press 
+	     ISBN-13: 9780521880688
+	"""
+
+	try:
+		window_size = numpy.abs(numpy.int(window_size))
+		order = numpy.abs(numpy.int(order))
+	except ValueError, msg:
+		raise ValueError("window_size and order have to be of type int")
+	if window_size % 2 != 1 or window_size < 1:
+		raise TypeError("window_size size must be a positive odd number")
+	if window_size < order + 2:
+		raise TypeError("window_size is too small for the polynomials order")
+	order_range = range(order+1)
+	half_window = (window_size -1) // 2
+	# precompute coefficients
+	b = numpy.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
+	m = numpy.linalg.pinv(b).A[deriv]
+	# pad the signal at the extremes with
+	# values taken from the signal itself
+	firstvals = y[0] - numpy.abs( y[1:half_window+1][::-1] - y[0] )
+	lastvals = y[-1] + numpy.abs(y[-half_window-1:-1][::-1] - y[-1])
+	y = numpy.concatenate((firstvals, y, lastvals))
+	return numpy.convolve( m, y, mode='valid')
+
+
+def gaussian1d(height, center, width):
+	"""Return a function that generates a 1-D gaussian with the specified
+	height, mean, and standard deviation.
+
+	Based on: http://code.google.com/p/agpy/source/browse/trunk/agpy/gaussfitter.py
+	"""
+
+	width = float(width)
+	return lambda x: height*numpy.exp(-(center-x)**2/2.0/width**2)
+
+
+def gaussian2d(height, centerX, centerY, widthMaj, widthMin, angle=0.0):
+	"""Return a function that generates a 2-D gaussian with the specified 
+	height, mean (for both X and Y), standard deviation (for both major and 
+	minor axes), and rotation angle from the X axis in degrees.
+
+	Based on: http://code.google.com/p/agpy/source/browse/trunk/agpy/gaussfitter.py
+	"""
+
+	widthMaj = float(widthMaj)
+	widthMin = float(widthMin)
+	pa = angle*numpy.pi/180.0
+	return lambda x,y: height*numpy.exp(-((((x-centerX)*numpy.cos(pa)+(y-centerY)*numpy.sin(pa))/widthMaj)**2 + ((-(x-centerX)*numpy.sin(pa)+(y-centerY)*numpy.cos(pa))/widthMin)**2)/2.0)
+
+
+def gaussparams(data, x=None, y=None):
+	"""Estimate the parameters (height, center, width) for a gaussian."""
+
+	total = data.sum()
+	height = data.max()
+
+	if len(data.shape) == 2:
+		# 2-D Data
+		if x is None or y is None:
+			x, y = numpy.indicies(data.shape)
+		centerX = (x*data).sum() / total
+		centerY = (y*data).sum() / total
+		bestX = (numpy.where( numpy.abs(centerX - x) == numpy.min(numpy.abs(centerX - x)) ))[0][0]
+		bestY = (numpy.where( numpy.abs(centerY - y) == numpy.min(numpy.abs(centerY - y)) ))[0][0]
+		col = data[:, bestY]
+		widthX = numpy.sqrt(abs((arange(col.size)-y)**2*col).sum()/col.sum())
+		row = data[bestX, :]
+		widthY = sqrt(abs((arange(row.size)-x)**2*row).sum()/row.sum())
+		return height, centerX, centerY, widthX, widthY, 0.0
+
+	else:
+		# 1-D Data
+		if x is None:
+			x = numpy.arange(data.size)
+		center = (x*data).sum() / total
+		width = numpy.sqrt(abs(numpy.sum((x-center)**2*data)/total))
+		return height, center, width
+
+
+def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
+	"""Decompose a spherical or semi-spherical data set into spherical harmonics.  
+
+	Inputs:
+	  * az: 2-D numpy array of azimuth coordinates in radians or degrees if the 
+	  `degrees` keyword is set
+	  * alt: 2-D numpy array of altitude coordinates in radian or degrees if the 
+	  `degrees` keyword is set
+	  * data: 2-D numpy array of the data to be fit.  If the data array is purely
+	  real, then the `realOnly` keyword can be set which speeds up the decomposition
+	  * lmax: integer setting the maximum order harmonic to fit
+
+	Keywords:
+	  * degrees: boolean of whether or not the input azimuth and altitude coordinates
+	  are in degrees or not
+	  * realOnly: boolean of whether or not the input data is purely real or not.  If
+	  the data are real, only coefficients for modes >=0 are computed.
+
+	Returned is a 1-D complex numpy array with the spherical harmonic coefficients 
+	packed packed in order of increasing harmonic order and increasing mode, i.e.,
+	(0,0), (1,-1), (1,0), (1,1), (2,-2), etc.  If the `realOnly` keyword has been 
+	set, the negative coefficients for the negative modes are excluded from the 
+	output array.
+	"""
+
+	if degrees:
+		rAz = az*numpy.pi/180.0
+		rAlt = alt*numpy.pi/180.0
+	else:
+		rAz = 1.0*az
+		rAlt = 1.0*alt
+	rAlt += numpy.pi/2
+	sinAlt = numpy.sin(rAlt)
+
+	if realOnly:
+		nTerms = (lmax*(lmax+3)+2)/2
+		terms = numpy.zeros(nTerms, dtype=numpy.complex64)
+
+		t = 0
+		for l in range(lmax+1):
+			for m in range(0, l+1):
+				Ylm = sph_harm(m, l, rAz, rAlt)
+				terms[t] = (data*sinAlt*Ylm.conj()).sum() * (rAz[1,0]-rAz[0,0])*(rAlt[0,1]-rAlt[0,0])
+				t += 1
+	
+	else:
+		nTerms = (lmax+1)**2
+		terms = numpy.zeros(nTerms, dtype=numpy.complex64)
+
+		t = 0
+		for l in range(lmax+1):
+			for m in range(-l, l+1):
+				Ylm = sph_harm(m, l, rAz, rAlt)
+				terms[t] = (data*sinAlt*Ylm.conj()).sum()
+				t += 1
+	
+	return terms
+
+
+def sphval(terms, az, alt, degrees=False, realOnly=False):
+	"""Evaluate a set of spherical harmonic coefficents at a specified set of
+	azimuth and altitude coordinates.
+
+	Inputs:
+	  * terms: 1-D complex numpy array, typically from sphfit
+	  * az: : 2-D numpy array of azimuth coordinates in radians or degrees if the 
+	  `degrees` keyword is set
+	  * alt: 2-D numpy array of altitude coordinates in radian or degrees if the 
+	  `degrees` keyword is set
+
+	Keywords:
+	  * degrees: boolean of whether or not the input azimuth and altitude coordinates
+	  are in degrees or not
+	  * realOnly: boolean of whether or not the input data is purely real or not.  If
+	  the data are real, only coefficients for modes >=0 are computed.
+
+	Returns a 2-D numpy array of the harmoics evalated and summed at the given 
+	coordinates.
+	"""
+
+	if degrees:
+		rAz = az*numpy.pi/180.0
+		rAlt = alt*numpy.pi/180.0
+	else:
+		rAz = 1.0*az
+		rAlt = 1.0*alt
+	rAlt += numpy.pi/2
+
+	nTerms = terms.size
+	if realOnly:
+		lmax = int((numpy.sqrt(1+8*nTerms)-3)/2)
+
+		t = 0
+		out = numpy.zeros(az.shape, dtype=numpy.float32)
+		for l in range(lmax+1):
+			Ylm = sph_harm(0, l, rAz, rAlt)
+			out += numpy.real(terms[t]*Ylm)
+			t += 1
+			for m in range(1, l+1):
+				Ylm = sph_harm(m, l, rAz, rAlt)
+				out += numpy.real(terms[t]*Ylm)
+				out += numpy.real(terms[t]*Ylm.conj()/(-1)**m)
+				t += 1
+	
+	else:
+		lmax = int(numpy.sqrt(nTerms)-1)
+		print lmax
+
+		t = 0
+		out = numpy.zeros(az.shape, dtype=numpy.complex64)
+		for l in range(lmax+1):
+			for m in range(-l, l+1):
+				Ylm = sph_harm(m, l, rAz, rAlt)
+				out += terms[t]*Ylm
+				t += 1
+
+	return out
