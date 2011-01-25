@@ -11,6 +11,26 @@ from lsl import astro
 
 import matplotlib.pyplot as plt
 
+try:
+	from lsl.common.progress import ProgressBar
+except ImportError:
+	class ProgressBar(object):
+		def __init__(self,max=100):
+			self.amount = 0
+			self.max = max
+			self.span = 70
+		
+		def inc(self, amount=1):
+			self.amount += amount
+
+		def show(self):
+			barSpan = self.span - 9
+			nMarks = int(round(float(self.amount)/self.max * barSpan))
+			bar = '=' * nMarks
+			bar = bar+(' ' * (barSpan-nMarks))
+			nte = "%5.1f%%" % (float(self.amount)/self.max*100)
+			return "|%s| %s" % (bar, nte)
+
 def main(args):
 	# Grab the filename and open the FITS file using PyFits
 	filename = args[0]
@@ -39,11 +59,13 @@ def main(args):
 	visCount = numpy.zeros(nBL)
 
 	print "Reading in FITS IDI data"
+	pb = ProgressBar(max=len(uvData.data))
 	for row in uvData.data:
 		bl = row['BASELINE']
 		i = ((bl >> 8) & 255)
 		j = (bl & 255)
 		if i == j:
+			pb.inc(amount=1)
 			continue
 
 		if bl not in baselines:
@@ -62,11 +84,21 @@ def main(args):
 		visibilities[blIndex,:] += vis
 		visCount[blIndex] += 1
 
+		pb.inc(amount=1)
+		if pb.amount != 0 and pb.amount % 100 == 0:
+			sys.stdout.write(pb.show()+'\r')
+			sys.stdout.flush()
+	sys.stdout.write(pb.show()+'\r')
+	sys.stdout.write('\n')
+	sys.stdout.flush()
+
 	baselines = numpy.array(baselines)
 	order = baselines.argsort()
 	for i in range(visCount.size):
 		visibilities[i,:] /= visCount[i]
 	
+	print "Plotting"
+	pb = ProgressBar(max=nBL)
 	for k in range(int(numpy.ceil(nBL/25.0))):
 		fig = plt.figure()
 
@@ -98,7 +130,15 @@ def main(args):
 			ax.set_title('%i - %i' % (stnd1, stnd2))
 			ax.set_ylabel('Amp')
 
+			pb.inc(amount=1)
+			if pb.amount != 0 and pb.amount % 10 == 0:
+				sys.stdout.write(pb.show()+'\r')
+				sys.stdout.flush()
 		plt.draw()
+
+	sys.stdout.write(pb.show()+'\r')
+	sys.stdout.write('\n')
+	sys.stdout.flush()
 	plt.show()
 	
 

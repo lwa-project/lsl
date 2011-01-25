@@ -1,9 +1,16 @@
 0.4-dev
-  * Added the C-based correlator to correlator.fx
-  * Major re-organization of correlator.fx with regards to windowing functions
+  * Added new robust statistical methods
+  * Added Global Sky Model models to skymap
+  * Added new smoothing and fitting fuctions to misc.mathutil
+  * Added a progress bar for use with long-running applications
 
 0.3.4
   * Added in the new cable attenuation model
+  * Re-wrote the TBW reader so that is it ~40% faster
+  * Removed unnecessary "import" statments in the TBW, TBN, and DRX readers
+  * Fixed slow frame creation by sim.dp on 64-bit systems
+  * Added in the new C-based correlator
+  * Major re-organization of correlator.fx with regards to windowing functions
 
 0.3.3
   * Fixed stand indexing error in uvUtils.cableAttenuation

@@ -8,7 +8,7 @@ TBN data.  The main functions in this module are:
   * FXMaster - calculate cross power spectra for a collection of signals
 
 Each function is set up to process the signals in parallel using the 
-processing module and accepts a variety of options controlling the processing
+multiprocessing module and accepts a variety of options controlling the processing
 of the data, including various window functions and time averaging.
 """
 
@@ -119,17 +119,17 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 		SampleAverage = signals.shape[1] / lFactor / LFFT
 	nSamples = signals.shape[1] / lFactor / LFFT / int(SampleAverage)
 
-	# The processing module allows for the creation of worker pools to help speed
+	# The multiprocessing module allows for the creation of worker pools to help speed
 	# things along.  If the processing module is found, use it.  Otherwise, set
 	# the 'usePool' variable to false and run single threaded.
 	try:
-		from processing import Pool
+		from multiprocessing import Pool, cpu_count
 		
 		# To get results pack from the pool, you need to keep up with the workers.  
 		# In addition, we need to keep up with which workers goes with which 
 		# signal since the workers are called asychronisly.  Thus, we need a 
 		# taskList array to hold tuples of signal ('count') and workers.
-		taskPool = Pool(processes=6)
+		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
 		taskList = []
 
 		usePool = True
@@ -348,17 +348,17 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=
 	# Define the cable/signal delay caches to help correlate along
 	dlyCache = uvUtils.SignalCache(freq)
 
-	# The processing module allows for the creation of worker pools to help speed
+	# The multiprocessing module allows for the creation of worker pools to help speed
 	# things along.  If the processing module is found, use it.  Otherwise, set
 	# the 'usePool' variable to false and run single threaded.
 	try:
-		from processing import Pool
+		from multiprocessing import Pool, cpu_count
 		
 		# To get results pack from the pool, you need to keep up with the workers.  
 		# In addition, we need to keep up with which workers goes with which 
 		# baseline since the workers are called asychronisly.  Thus, we need a 
 		# taskList array to hold tuples of baseline ('count') and workers.
-		taskPool = Pool(processes=4)
+		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
 		taskList = []
 
 		usePool = True

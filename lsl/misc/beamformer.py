@@ -182,17 +182,17 @@ def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, p
 	# Load in the respoonse of a single isolated stand
 	standBeam = __loadStandResponse(freq=49.0e6)
 
-	# The processing module allows for the creation of worker pools to help speed
+	# The multiprocessing module allows for the creation of worker pools to help speed
 	# things along.  If the processing module is found, use it.  Otherwise, set
 	# the 'usePool' variable to false and run single threaded.
 	try:
-		from processing import Pool
+		from multiprocessing import Pool, cpu_count
 		
 		# To get results pack from the pool, you need to keep up with the workers.  
 		# In addition, we need to keep up with which workers goes with which 
 		# baseline since the workers are called asychronisly.  Thus, we need a 
 		# taskList array to hold tuples of baseline ('count') and workers.
-		taskPool = Pool(processes=4)
+		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
 		taskList = []
 
 		usePool = True
