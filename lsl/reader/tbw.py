@@ -35,20 +35,15 @@ getFramesPerObs
 	than a full complement or 12M (36M) samples.
 """
 
-import os
-import sys
-import time
 import copy
 import numpy
-import array
 import struct
-import pyfits
 
 from  lsl.common import dp as dp_common
 from errors import *
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 18 $'
+__revision__ = '$ Revision: 19 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getDataBits', 'getFramesPerObs', '__version__', '__revision__', '__all__']
 
 FrameSize = 1224

@@ -38,19 +38,15 @@ getFramesPerObs
   read in the first several frames to see how many stands are found in the data.
 """
 
-import os
-import sys
-import time
 import copy
 import numpy
-import array
 import struct
 
 from  lsl.common import dp as dp_common
 from errors import *
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 10 $'
+__revision__ = '$ Revision: 11 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 1048

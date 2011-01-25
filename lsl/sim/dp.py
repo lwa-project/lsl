@@ -4,11 +4,10 @@
 
 import functools
 import itertools
-import aipy
-import math
 import time
 import numpy
 import scipy.stats
+from aipy import coord as aipycoord
 
 from lsl import astro
 from lsl.common import dp as dp_common
@@ -65,7 +64,7 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 			maxValue =  7
 			samplesPerFrame = 1200
 
-		nCaptures = int(math.ceil(nFrames / 30000.0))
+		nCaptures = int(numpy.ceil(nFrames / 30000.0))
 		for capture in range(nCaptures):
 			for stand1, stand2 in zip(stands[0::2], stands[1::2]):
 				print "Simulating TBW capture %i, stands %i and %i" % (capture+1, stand1, stand2)
@@ -75,22 +74,23 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 				print "-> Frames %i" % FramesThisBatch
 				for i in range(FramesThisBatch):
 					t = tStart + i*samplesPerFrame/sampleRate + 60.0*capture
+					tFrame = numpy.arange(samplesPerFrame, dtype=numpy.float32)
 					
 					cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=t)
 					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
 					cFrame.xy[0,:] *= maxValue/15.0
-					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.2041*numpy.arange(samplesPerFrame))
+					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.2041*tFrame)
 					cFrame.xy[1,:] *= maxValue/15.0
-					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.3061*numpy.arange(samplesPerFrame))
+					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.3061*tFrame)
 					
 					cFrame.writeRawFrame(fh)
 
 					cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=t)
 					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
 					cFrame.xy[0,:] *= maxValue/15.0
-					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.1531*numpy.arange(samplesPerFrame))
+					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.1531*tFrame)
 					cFrame.xy[1,:] *= maxValue/15.0
-					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.2551*numpy.arange(samplesPerFrame))
+					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.2551*tFrame)
 					
 					cFrame.writeRawFrame(fh)
 	
@@ -105,28 +105,21 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 			if i % 1000 == 0:
 				print "Simulating TBN frame %i" % (i+1)
 			t = tStart + i*samplesPerFrame/sampleRate
+			tFrame = t + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 			for stand in stands:
 				cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=t)
-				temp = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-				temp.real = numpy.random.randn(samplesPerFrame)
-				temp.real *= maxValue/15.0
-				temp.real += maxValue*numpy.cos(2*numpy.pi*upperSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
-				temp.imag = numpy.random.randn(samplesPerFrame)
-				temp.imag *= maxValue/15.0
-				temp.imag += maxValue*numpy.sin(2*numpy.pi*upperSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
-				cFrame.iq = temp
+				cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+				cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+				cFrame.iq *= maxValue/15.0
+				cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike*tFrame)
 				
 				cFrame.writeRawFrame(fh)
 
 				cFrame = tbn.SimFrame(stand=stand, pol=1, frameCount=i+1, obsTime=t)
-				temp = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-				temp.real = numpy.random.randn(samplesPerFrame)
-				temp.real *= maxValue/15.0
-				temp.real += maxValue*numpy.cos(2*numpy.pi*lowerSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
-				temp.imag = numpy.random.randn(samplesPerFrame)
-				temp.imag *= maxValue/15.0
-				temp.imag += maxValue*numpy.sin(2*numpy.pi*lowerSpike*(t+numpy.arange(samplesPerFrame)/sampleRate))
-				cFrame.iq = temp
+				cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+				cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+				cFrame.iq *= maxValue/15.0
+				cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
 				
 				cFrame.writeRawFrame(fh)
 	
@@ -207,7 +200,7 @@ def __getSourceParameters(aa, time, srcs):
 		jys = numpy.where( frq >= 0.001, jys, Jyat1MHz )
 
 		## Filter out sources that are below the horizon or have no flux
-		srcAzAlt = aipy.coord.top2azalt(top) * 180/math.pi
+		srcAzAlt = aipycoord.top2azalt(top) * 180/numpy.pi
 		if srcAzAlt[1] <= 0 or jys.sum() <= 0:
 			continue
 
@@ -296,7 +289,7 @@ def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=
 			maxValue =  7
 			samplesPerFrame = 1200
 
-		nCaptures = int(math.ceil(nFrames / 30000.0))
+		nCaptures = int(numpy.ceil(nFrames / 30000.0))
 		for capture in range(nCaptures):
 			j = 0
 			k = 1

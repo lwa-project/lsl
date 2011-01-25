@@ -40,10 +40,6 @@ by-channel average of a collection of DRX frames, which averageObservations2
 allows for both temporal and spatial averaging.
 """
 
-import os
-import sys
-import math
-import time
 import copy
 import numpy
 import struct
@@ -52,7 +48,7 @@ from  lsl.common import dp as dp_common
 from errors import *
 
 __version__ = '0.4'
-__revision__ = '$ Revision: 16 $'
+__revision__ = '$ Revision: 17 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getBeamCount', 'getFramesPerObs', 'averageObservations', 'averageObservations2', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 4128
