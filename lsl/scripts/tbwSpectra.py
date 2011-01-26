@@ -7,11 +7,15 @@ import os
 import sys
 import math
 import numpy
+import ephem
 import getopt
 
 import lsl.reader.tbw as tbw
 import lsl.reader.errors as errors
 import lsl.correlator.fx as fxc
+from lsl.correlator.uvUtils import CableCache
+from lsl.common import stations
+from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 import matplotlib.pyplot as plt
 
@@ -24,9 +28,12 @@ Usage: tbwSpectra.py [OPTIONS] file
 
 Options:
 -h --help                  Display this help information
+-t --bartlett              Apply a Bartlett window to the data
 -b --blackman              Apply a Blackman window to the data
+-n --hanning               Apply a Hanning window to the data
 -q --quiet                 Run tbwSpectra in silent mode
 -l --fft-length            Set FFT length (default = 4096)
+-g --gain-correct          Correct signals for the cable losses
 -o --output                Output file name for spectra image
 """
 
@@ -41,14 +48,15 @@ def parseOptions(args):
 	# Command line flags - default values
 	config['LFFT'] = 4096
 	config['maxFrames'] = 300000
-	config['blackman'] = False
+	config['window'] = fxc.noWindow
+	config['applyGain'] = False
 	config['output'] = None
 	config['verbose'] = True
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hqbl:o:", ["help", "quiet", "blackman", "fft-length=", "output="])
+		opts, args = getopt.getopt(args, "hqtbnl:go:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -60,10 +68,16 @@ def parseOptions(args):
 			usage(exitCode=0)
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
+		elif opt in ('-t', '--bartlett'):
+			config['window'] = numpy.bartlett
 		elif opt in ('-b', '--blackman'):
-			config['blackman'] = True
+			config['window'] = numpy.blackman
+		elif opt in ('-n', '--hanning'):
+			config['window'] = numpy.hanning
 		elif opt in ('-l', '--fft-length'):
 			config['LFFT'] = int(value)
+		elif opt in ('-g', '--gain-correct'):
+			config['applyGain'] = True
 		elif opt in ('-o', '--output'):
 			config['output'] = value
 		else:
@@ -103,8 +117,16 @@ def main(args):
 	else:
 		nSamples = 1200
 
+	# Read in the first frame and get the date/time of the first sample 
+	# of the frame.  This is needed to get the list of stands.
+	junkFrame = tbw.readFrame(fh)
+	fh.seek(0)
+	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
+	stands = stations.lwa1().getStands(beginDate)
+
 	# File summary
 	print "Filename: %s" % config['args'][0]
+	print "Date of First Frame: %s" % str(beginDate)
 	print "Ant/Pols: %i" % antpols
 	print "Sample Length: %i-bit" % dataBits
 	print "Frames: %i" % nFrames
@@ -138,7 +160,7 @@ def main(args):
 			except errors.eofError:
 				break
 			except errors.syncError:
-				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
+				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbw.FrameSize-1)
 				continue
 			except errors.numpyError:
 				break
@@ -170,7 +192,7 @@ def main(args):
 		# the total number of frames read.  This is needed to keep the averages correct.
 		# NB:  The weighting is the same for the x and y polarizations because of how 
 		# the data are packed in TBW
-		freq, tempSpec = fxc.calcSpectra(data, LFFT=LFFT, BlackmanFilter=config['blackman'], verbose=config['verbose'])
+		freq, tempSpec = fxc.calcSpectra(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'])
 		for stand in count.keys():
 			masterSpectra[i,stand,:] = tempSpec[stand,:]
 			masterSpectra[i,stand+1,:] = tempSpec[stand+1,:]
@@ -179,6 +201,13 @@ def main(args):
 
 		# We don't really need the data array anymore, so delete it
 		del(data)
+
+	# Apply the cable loss corrections, if requested
+	if config['applyGain']:
+		cbl = CableCache(freq=freq)
+		for s in range(masterSpectra.shape[1]):
+			for c in range(masterSpectra.shape[0]):
+				masterSpectra[c,s,:] *= cbl.cableGain(stands[s])
 
 	# Now that we have read through all of the chunks, peform the final averaging by
 	# dividing by all of the chunks

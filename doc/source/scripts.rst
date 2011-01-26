@@ -156,11 +156,17 @@ tbwSpectra.py
 
   :Options: -h, --help                  Display this help information
 
-            -b, --blackman              Apply a Blackman window to the data
+            -t, --bartlett              Apply a Bartlett window to the data
+
+	    -b, --blackman              Apply a Blackman window to the data
+
+	    -n, --hanning               Apply a Hanning window to the data
 
             -q, --quiet                 Run tbwSpectra in silent mode
 
             -l, --fft-length            Set FFT length (default = 4096)
+
+	    -g, --gain-correct          Correct signals for the cable losses
 
             -o, --output                Output file name for spectra imag
 
@@ -171,7 +177,30 @@ tbnSpectra.py
 
   :Options: -h, --help                  Display this help information
 
-            -b, --blackman              Apply a Blackman window to the data
+            -t, --bartlett              Apply a Bartlett window to the data
+
+	    -b, --blackman              Apply a Blackman window to the data
+
+	    -n, --hanning               Apply a Hanning window to the data
+
+            -q, --quiet                 Run tbwSpectra in silent mode
+
+            -l, --fft-length            Set FFT length (default = 4096)
+
+            -o, --output                Output file name for spectra image
+
+drxSpectra.py
+  :Description: Given a DRX file, plot the time averaged spectra for each beam output.
+
+  :Usage: drxSpectra.py [OPTIONS] file
+
+  :Options: -h, --help                  Display this help information
+
+            -t, --bartlett              Apply a Bartlett window to the data
+
+	    -b, --blackman              Apply a Blackman window to the data
+
+	    -n, --hanning               Apply a Hanning window to the data
 
             -q, --quiet                 Run tbwSpectra in silent mode
 

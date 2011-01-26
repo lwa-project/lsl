@@ -1,30 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Given a TBN file, plot the time averaged spectra for each digitizer input."""
+"""Given a TBN file, plot the time averaged spectra for each beam output."""
 
 import os
 import sys
 import math
 import numpy
-import ephem
 import getopt
 
-import lsl.reader.tbn as tbn
+import lsl.reader.drx as drx
 import lsl.reader.errors as errors
 import lsl.correlator.fx as fxc
-from lsl.correlator.uvUtils import CableCache
-from lsl.common import stations
-from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 import matplotlib.pyplot as plt
 
 
 def usage(exitCode=None):
-	print """tbnSpectra.py - Read in TBN files and create a collection of 
+	print """drxSpectra.py - Read in DRX files and create a collection of 
 time- averaged spectra.
 
-Usage: tbnSpectra.py [OPTIONS] file
+Usage: drxSpectra.py [OPTIONS] file
 
 Options:
 -h --help                  Display this help information
@@ -46,16 +42,15 @@ def parseOptions(args):
 	config = {}
 	# Command line flags - default values
 	config['LFFT'] = 4096
-	config['maxFrames'] = 400000
+	config['maxFrames'] = 10000
 	config['window'] = fxc.noWindow
-	config['applyGain'] = False
 	config['output'] = None
 	config['verbose'] = True
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hqtbnl:go:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output="])
+		opts, args = getopt.getopt(args, "hqtbnl:o:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "output="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -75,10 +70,6 @@ def parseOptions(args):
 			config['window'] = numpy.hanning
 		elif opt in ('-l', '--fft-length'):
 			config['LFFT'] = int(value)
-		elif opt in ('-g', '--gain-correct'):
-			# This will need to be changed if we ever get frequency information
-			# into the frame headers/add an option to input the frequency
-			config['applyGain'] = False
 		elif opt in ('-o', '--output'):
 			config['output'] = value
 		else:
@@ -125,30 +116,28 @@ def main(args):
 	LFFT = config['LFFT']
 
 	fh = open(config['args'][0], "rb")
-	nFrames = os.path.getsize(config['args'][0]) / tbn.FrameSize
-	srate = tbn.getSampleRate(fh)
-	antpols = tbn.getFramesPerObs(fh)
-	antpols = antpols[0]+antpols[1]
+	nFrames = os.path.getsize(config['args'][0]) / drx.FrameSize
+	junkFrame = drx.readFrame(fh)
+	print junkFrame
+	fh.seek(0)
+	srate = junkFrame.getSampleRate()
+	beams = drx.getBeamCount(fh)
+	tunepols = drx.getFramesPerObs(fh)
+	tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
+	beampols = tunepol
 
 	# Make sure that the file chunk size contains is an intger multiple
 	# of the FFT length so that no data gets dropped.  This needs to
-	# take into account the number of antpols in the data, the FFT length,
+	# take into account the number of beampols in the data, the FFT length,
 	# and the number of samples per frame.
-	maxFrames = int(config['maxFrames']/antpols*512/float(LFFT))*LFFT/512*antpols
+	maxFrames = int(config['maxFrames']/beampols*4096/float(LFFT))*LFFT/4096*beampols
 
 	nChunks = int(math.ceil(1.0*nFrames/maxFrames))
 
-	# Read in the first frame and get the date/time of the first sample 
-	# of the frame.  This is needed to get the list of stands.
-	junkFrame = tbn.readFrame(fh)
-	fh.seek(0)
-	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
-	stands = stations.lwa1().getStands(beginDate)
-
 	# File summary
 	print "Filename: %s" % config['args'][0]
-	print "Date of First Frame: %s" % str(beginDate)
-	print "Ant/Pols: %i" % antpols
+	print "Beams: %i" % beams
+	print "Tune/Pols: %i %i %i %i" % tunepols
 	print "Sample Rate: %i Hz" % srate
 	print "Frames: %i" % nFrames
 	print "Chunks: %i" % nChunks
@@ -156,8 +145,8 @@ def main(args):
 	# Master loop over all of the file chuncks
 	masterCount = {}
 	standMapper = []
-	masterWeight = numpy.zeros((nChunks, antpols, LFFT-1))
-	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
+	masterWeight = numpy.zeros((nChunks, beampols, LFFT-1))
+	masterSpectra = numpy.zeros((nChunks, beampols, LFFT-1))
 	for i in range(nChunks):
 		# Find out how many frames remain in the file.  If this number is larger
 		# than the maximum of frames we can work with at a time (maxFrames),
@@ -170,7 +159,7 @@ def main(args):
 		print "Working on chunk %i, %i frames remaining" % (i, framesRemaining)
 		
 		count = {}
-		data = numpy.zeros((antpols,framesWork*512/antpols), dtype=numpy.csingle)
+		data = numpy.zeros((beampols,framesWork*4096/beampols), dtype=numpy.csingle)
 		# If there are fewer frames than we need to fill an FFT, skip this chunk
 		if data.shape[1] < LFFT:
 			break
@@ -178,24 +167,22 @@ def main(args):
 		for j in range(framesWork):
 			# Read in the next frame and anticipate any problems that could occur
 			try:
-				cFrame = tbn.readFrame(fh, SampleRate=srate, Verbose=False)
+				cFrame = drx.readFrame(fh, Verbose=False)
 			except errors.eofError:
 				break
 			except errors.syncError:
-				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
+				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/drx.FrameSize-1)
 				continue
 			except errors.numpyError:
 				break
 
-			stand,pol = cFrame.header.parseID()
-			# In the current configuration, stands start at 1 and go up to 10.  So, we
-			# can use this little trick to populate the data array
-			aStand = 2*(stand-1)+pol
+			beam,tune,pol = cFrame.parseID()
+			aStand = 4*(beam-1) + 2*(tune-1) + pol
 			if aStand not in standMapper:
 				standMapper.append(aStand)
 				oStand = 1*aStand
 				aStand = standMapper.index(aStand)
-				print "Mapping stand %3i, pol. %1i (%3i) to array index %3i" % (stand, pol, oStand, aStand)
+				print "Mapping beam %i, tune. %1i, pol. %1i (%2i) to array index %3i" % (beam, tune, pol, oStand, aStand)
 
 			if aStand not in count.keys():
 				count[aStand] = 0
@@ -205,12 +192,16 @@ def main(args):
 
 			# Additional check on the data array bounds so that we don't overflow it.  
 			# This check may be redundant...
-			if (count[aStand]+1)*512 >= data.shape[1]:
+			if (count[aStand]+1)*4096 >= data.shape[1]:
 				continue
-			data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+			data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
 			# Update the counters so that we can average properly later on
 			count[aStand] = count[aStand] + 1
 			masterCount[aStand] = masterCount[aStand] + 1
+
+		## Calculate the data mean for each signal
+		#for stand in range(data.shape[0]):
+		#	print "Stand %i:  mean is %.4f + %.4f j" % (stand, data[stand,:].mean().real, data[stand,:].mean().imag)
 
 		# Calculate the spectra for this block of data and then weight the results by 
 		# the total number of frames read.  This is needed to keep the averages correct.
@@ -222,21 +213,14 @@ def main(args):
 		# We don't really need the data array anymore, so delete it
 		del(data)
 
-	# Apply the cable loss corrections, if requested
-	if config['applyGain']:
-		cbl = CableCache(freq=freq)
-		for s in range(masterSpectra.shape[1]):
-			for c in range(masterSpectra.shape[0]):
-				masterSpectra[c,s,:] *= cbl.cableGain(stands[s])
-
 	# Now that we have read through all of the chunks, peform the final averaging by
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
-	# The plots:  This is setup for the current configuration of 20 antpols
+	# The plots:  This is setup for the current configuration of 20 beampols
 	fig = plt.figure()
-	figsX = int(round(math.sqrt(antpols)))
-	figsY = antpols / figsX
+	figsX = int(round(math.sqrt(beampols)))
+	figsY = beampols / figsX
 	# Put the freqencies in the best units possible
 	freq, units = bestFreqUnits(freq)
 
@@ -262,7 +246,7 @@ def main(args):
 				diff = subspectra - currSpectra
 				ax.plot(freq, diff)
 
-		ax.set_title('Stand %i, Pol. %i' % (standMapper[i]/2+1, standMapper[i]%2))
+		ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2))
 		ax.set_xlabel('Frequency Offset [%s]' % units)
 		ax.set_ylabel('P.S.D. [dB/RBW]')
 		ax.set_xlim([freq.min(), freq.max()])

@@ -97,7 +97,7 @@ class SimFrame(tbw.Frame):
 		Not all of these parameters are needed at initialization of the object and
 		the values can be added later.
 
-		.. versionchanged: 0.3.4
+		.. versionchanged:: 0.3.4
 			obsTime now in samples at fS, not seconds
 		"""
 		

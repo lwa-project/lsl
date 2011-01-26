@@ -11,6 +11,12 @@
   * Fixed slow frame creation by sim.dp on 64-bit systems
   * Added in the new C-based correlator
   * Major re-organization of correlator.fx with regards to windowing functions
+  * Switched from 'processing' to 'multiprocessing'
+  * Added the possm.py script for each FITS IDI examination
+  * Fixed tbwSpectra.py and tbnSpectra.py to accomedate the windowing change
+  * Added drxSpectra.py
+  * Fixed various problems with the DP data simulator
+  * Added in option to cable losses in tbwSpectra.py
 
 0.3.3
   * Fixed stand indexing error in uvUtils.cableAttenuation
