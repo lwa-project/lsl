@@ -24,6 +24,128 @@ __revision__ = '$ Revision: 1 $'
 __all__ = ['basicSignal', '__version__', '__revision__', '__all__']
 
 
+def __basicTBW(fh, stands, nFrames, **kwargs):
+	"""Private function for generating a basic TBW signal."""
+
+	tStart = kwargs['tStart']
+	bits = kwargs['bits']
+	if bits == 12:
+		maxValue = 2047
+		samplesPerFrame = 400
+	else:
+		maxValue =  7
+		samplesPerFrame = 1200
+
+	nCaptures = int(numpy.ceil(nFrames / 30000.0))
+	for capture in range(nCaptures):
+		for stand1, stand2 in zip(stands[0::2], stands[1::2]):
+			print "Simulating TBW capture %i, stands %i and %i" % (capture+1, stand1, stand2)
+			FramesThisBatch = nFrames - capture*30000
+			if FramesThisBatch > 30000:
+				FramesThisBatch = 30000
+			print "-> Frames %i" % FramesThisBatch
+
+			for i in range(FramesThisBatch):
+				t = long(tStart*dp_common.fS) + i*samplesPerFrame
+				t += long(60*dp_common.fS*capture)
+				tFrame = numpy.arange(samplesPerFrame, dtype=numpy.float32)
+				
+				cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=t)
+				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
+				cFrame.xy[0,:] *= maxValue/15.0
+				cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.2041*tFrame)
+				cFrame.xy[1,:] *= maxValue/15.0
+				cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.3061*tFrame)
+				
+				cFrame.writeRawFrame(fh)
+
+				cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=t)
+				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
+				cFrame.xy[0,:] *= maxValue/15.0
+				cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.1531*tFrame)
+				cFrame.xy[1,:] *= maxValue/15.0
+				cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.2551*tFrame)
+				
+				cFrame.writeRawFrame(fh)
+
+
+def __basicTBN(fh, stands, nFrames, **kwargs):
+	"""Private function for generating a basic TBN signal."""
+
+	tStart = kwargs['tStart']
+	filter = kwargs['filter']
+	sampleRate = TBNFilters[filter]
+	maxValue = 127
+	samplesPerFrame = 512
+	upperSpike = sampleRate / 4.0
+	lowerSpike = -sampleRate / 4.0
+	
+	for i in range(nFrames):
+		if i % 1000 == 0:
+			print "Simulating TBN frame %i" % (i+1)
+		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
+		tFrame = t/dp_common.fS + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
+		for stand in stands:
+			cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=t)
+			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+			cFrame.iq *= maxValue/15.0
+			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike*tFrame)
+			
+			cFrame.writeRawFrame(fh)
+
+			cFrame = tbn.SimFrame(stand=stand, pol=1, frameCount=i+1, obsTime=t)
+			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+			cFrame.iq *= maxValue/15.0
+			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
+			
+			cFrame.writeRawFrame(fh)
+
+def __basicDRX(fh, stands, nFrames, **kwargs):
+	"""Private function for generating a basic TBN signal."""
+
+	tStart = kwargs['tStart']
+	filter = kwargs['filter']
+	sampleRate = DRXFilters[filter]
+	maxValue = 7
+	samplesPerFrame = 4096
+	beams = stands
+	
+	part1 = scipy.stats.norm(loc=1000, scale=100, size=samplesPerFrame)
+	part2 = scipy.stats.norm(loc=3000, scale=100, size=samplesPerFrame)
+	part3 = scipy.stats.norm(loc=1500, scale=100, size=samplesPerFrame)
+	part4 = scipy.stats.norm(loc=2500, scale=100, size=samplesPerFrame)
+
+	signal1 = part1.pdf(numpy.arange(samplesPerFrame)) + 0.3*part2.pdf(numpy.arange(samplesPerFrame))
+	signal1 *= 0.2 / signal1.max() 
+	signal2 = 0.3*part1.pdf(numpy.arange(samplesPerFrame)) + part2.pdf(numpy.arange(samplesPerFrame))
+	signal2 *= 0.2 / signal2.max() 
+	signal3 = part3.pdf(numpy.arange(samplesPerFrame)) + 0.3*part4.pdf(numpy.arange(samplesPerFrame))
+	signal3 *= 0.2 / signal3.max() 
+	signal4 = 0.3*part3.pdf(numpy.arange(samplesPerFrame)) + part4.pdf(numpy.arange(samplesPerFrame))
+	signal4 *= 0.2 / signal4.max() 
+	signal = [signal1, signal2, signal3, signal4]
+
+	norm = functools.partial(numpy.random.normal, loc=8)
+
+	for i in range(nFrames):
+		if i % 1000 == 0:
+			print "Simulating DRX frame %i" % i
+		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
+		for beam in beams:
+			for tune in [1, 2]:
+				for pol in [0, 1]:
+					cFrame = drx.SimFrame(beam=beam, tune=tune, pol=pol, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
+
+					iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+					for chan, scale in itertools.izip(numpy.arange(samplesPerFrame), signal[2*(tune-1)+pol]):
+						iq.real[chan] = norm(scale=scale)
+						iq.imag[chan] = norm(scale=scale)
+					cFrame.iq = iq
+
+					cFrame.writeRawFrame(fh)
+
 def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 	"""Generate a collection of frames with a basic test signal for TBW, TBN, 
 	and DRX.  The signals for the three modes are:
@@ -51,117 +173,15 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 
 	if tStart == 0:
 		tStart = time.time()
-	else:
-		tStart = float(tStart)
 
 	if mode == 'TBW':
-		sampleRate = dp_common.fS
-		
-		if bits == 12:
-			maxValue = 2047
-			samplesPerFrame = 400
-		else:
-			maxValue =  7
-			samplesPerFrame = 1200
-
-		nCaptures = int(numpy.ceil(nFrames / 30000.0))
-		for capture in range(nCaptures):
-			for stand1, stand2 in zip(stands[0::2], stands[1::2]):
-				print "Simulating TBW capture %i, stands %i and %i" % (capture+1, stand1, stand2)
-				FramesThisBatch = nFrames - capture*30000
-				if FramesThisBatch > 30000:
-					FramesThisBatch = 30000
-				print "-> Frames %i" % FramesThisBatch
-				for i in range(FramesThisBatch):
-					t = tStart + i*samplesPerFrame/sampleRate + 60.0*capture
-					tFrame = numpy.arange(samplesPerFrame, dtype=numpy.float32)
-					
-					cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=t)
-					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-					cFrame.xy[0,:] *= maxValue/15.0
-					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.2041*tFrame)
-					cFrame.xy[1,:] *= maxValue/15.0
-					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.3061*tFrame)
-					
-					cFrame.writeRawFrame(fh)
-
-					cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=t)
-					cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-					cFrame.xy[0,:] *= maxValue/15.0
-					cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*0.1531*tFrame)
-					cFrame.xy[1,:] *= maxValue/15.0
-					cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*0.2551*tFrame)
-					
-					cFrame.writeRawFrame(fh)
-	
-	if mode == 'TBN':
-		sampleRate = TBNFilters[filter]
-		maxValue = 127
-		samplesPerFrame = 512
-		upperSpike = sampleRate / 4.0
-		lowerSpike = -sampleRate / 4.0
-		
-		for i in range(nFrames):
-			if i % 1000 == 0:
-				print "Simulating TBN frame %i" % (i+1)
-			t = tStart + i*samplesPerFrame/sampleRate
-			tFrame = t + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
-			for stand in stands:
-				cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=t)
-				cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-				cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-				cFrame.iq *= maxValue/15.0
-				cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike*tFrame)
-				
-				cFrame.writeRawFrame(fh)
-
-				cFrame = tbn.SimFrame(stand=stand, pol=1, frameCount=i+1, obsTime=t)
-				cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-				cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-				cFrame.iq *= maxValue/15.0
-				cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
-				
-				cFrame.writeRawFrame(fh)
-	
-	if mode == 'DRX':
-		sampleRate = DRXFilters[filter]
-		maxValue = 7
-		samplesPerFrame = 4096
-		beams = stands
-		
-		part1 = scipy.stats.norm(loc=1000, scale=100, size=samplesPerFrame)
-		part2 = scipy.stats.norm(loc=3000, scale=100, size=samplesPerFrame)
-		part3 = scipy.stats.norm(loc=1500, scale=100, size=samplesPerFrame)
-		part4 = scipy.stats.norm(loc=2500, scale=100, size=samplesPerFrame)
-
-		signal1 = part1.pdf(numpy.arange(samplesPerFrame)) + 0.3*part2.pdf(numpy.arange(samplesPerFrame))
-		signal1 *= 0.2 / signal1.max() 
-		signal2 = 0.3*part1.pdf(numpy.arange(samplesPerFrame)) + part2.pdf(numpy.arange(samplesPerFrame))
-		signal2 *= 0.2 / signal2.max() 
-		signal3 = part3.pdf(numpy.arange(samplesPerFrame)) + 0.3*part4.pdf(numpy.arange(samplesPerFrame))
-		signal3 *= 0.2 / signal3.max() 
-		signal4 = 0.3*part3.pdf(numpy.arange(samplesPerFrame)) + part4.pdf(numpy.arange(samplesPerFrame))
-		signal4 *= 0.2 / signal4.max() 
-		signal = [signal1, signal2, signal3, signal4]
-	
-		norm = functools.partial(numpy.random.normal, loc=8)
-
-		for i in range(nFrames):
-			if i % 1000 == 0:
-				print "Simulating DRX frame %i" % i
-			t = tStart + i*samplesPerFrame/sampleRate
-			for beam in beams:
-				for tune in [1, 2]:
-					for pol in [0, 1]:
-						cFrame = drx.SimFrame(beam=beam, tune=tune, pol=pol, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
-
-						iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-						for chan, scale in itertools.izip(numpy.arange(samplesPerFrame), signal[2*(tune-1)+pol]):
-							iq.real[chan] = norm(scale=scale)
-							iq.imag[chan] = norm(scale=scale)
-						cFrame.iq = iq
-
-						cFrame.writeRawFrame(fh)
+		__basicTBW(fh, stands, nFrames, mode=mode, filter=filter, bits=bits, tStart=tStart)
+	elif mode == 'TBN':
+		__basicTBN(fh, stands, nFrames, mode=mode, filter=filter, bits=bits, tStart=tStart)
+	elif mode == 'DRX':
+		__basicDRX(fh, stands, nFrames, mode=mode, filter=filter, bits=bits, tStart=tStart)
+	else:
+		raise RuntimeError("Unknown observations mode: %s" % mode)
 
 
 def __getAntennaArray(station, stands, time, freqs):

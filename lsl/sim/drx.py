@@ -93,11 +93,15 @@ class SimFrame(drx.Frame):
 		  + which filter code the data corresponds to (>0 & <8)
 		  + what time offset in units of f_S to use
 		  + which frame number to create
-		  + observation time in seconds since the epoch
+		  + observation time in samples at fS since the epoch
 		  + what flags are set on the data
 		  + 1-D numpy array representing the frame I/Q (complex) data
 		Not all of these parameters are needed at initialization of the object and
-		the values can be added later."""
+		the values can be added later.
+
+		.. versionchanged: 0.3.4
+			obsTime now in samples at fS, not seconds
+		"""
 		
 		self.beam = beam
 		self.tune = tune
@@ -122,7 +126,7 @@ class SimFrame(drx.Frame):
 		self.header.timeOffset = self.timeOffset
 		self.header.drxID = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
 		
-		self.data.timeTag = long(self.obsTime * dp_common.fS)
+		self.data.timeTag = self.obsTime
 		self.data.flags = self.flags
 		self.data.iq = self.iq
 		
@@ -141,7 +145,7 @@ class SimFrame(drx.Frame):
 		self.filterCode = int(dp_common.fS / self.header.decimations)
 		self.timeOffset = self.header.timeOffset
 		## Data
-		self.obsTime = self.data.timeTag / dp_common.fS
+		self.obsTime = self.data.timeTag
 		self.flags = self.data.flags
 		self.iq = self.data.iq
 	

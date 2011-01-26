@@ -5,7 +5,6 @@ TBN frames to a file."""
 
 import numpy
 
-from lsl.common import dp as dp_common
 from lsl.reader import tbn
 from errors import *
 
@@ -78,10 +77,14 @@ class SimFrame(tbn.Frame):
 		  + stand id (>0 & <259)
 		  + polarization (0 for x, or 1 for y)
 		  + which frame number to create
-		  + observation time in seconds since the epoch
+		  + observation time in samples at fS since the epoch
 		  + 1-D numpy array representing the frame I/Q (complex) data
 		Not all of these parameters are needed at initialization of the object and
-		the values can be added later."""
+		the values can be added later.
+
+		.. versionchanged: 0.3.4
+			obsTime now in samples at fS, not seconds
+		"""
 		
 		self.stand = stand
 		self.pol = pol
@@ -100,7 +103,7 @@ class SimFrame(tbn.Frame):
 		self.header.secondsCount = int(self.obsTime)
 		self.header.tbnID = 2*(self.stand-1) + self.pol + 1
 		
-		self.data.timeTag = long(self.obsTime * dp_common.fS)
+		self.data.timeTag = self.obsTime
 		self.data.iq = self.iq
 	
 	def loadFrame(self, tbnFrame):
@@ -115,7 +118,7 @@ class SimFrame(tbn.Frame):
 		self.pol = self.header.parseID()[1]
 		self.frameCount = self.header.frameCount
 		## Data
-		self.obsTime = self.data.timeTag / dp_common.fS
+		self.obsTime = self.data.timeTag
 		self.iq = self.data.iq
 	
 	def isValid(self, raiseErrors=False):

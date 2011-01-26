@@ -5,7 +5,6 @@ TBW frames to a file."""
 
 import numpy
 
-from lsl.common import dp as dp_common
 from lsl.reader import tbw
 from errors import *
 
@@ -93,10 +92,14 @@ class SimFrame(tbw.Frame):
 		  + stand id (>0 & <259)
 		  + which frame number to create
 		  + dataBits (12 or 4)
-		  + observation time in seconds since the epoch
+		  + observation time in samples at fS since the epoch
 		  + 2-D numpy array representing the frame data for both polarizations.
 		Not all of these parameters are needed at initialization of the object and
-		the values can be added later."""
+		the values can be added later.
+
+		.. versionchanged: 0.3.4
+			obsTime now in samples at fS, not seconds
+		"""
 		
 		self.stand = stand
 		self.frameCount = frameCount
@@ -118,7 +121,7 @@ class SimFrame(tbw.Frame):
 		else:
 			self.header.tbwID = 32768 | 16384 | self.stand
 		
-		self.data.timeTag = long(self.obsTime * dp_common.fS)
+		self.data.timeTag = self.obsTime
 		self.data.xy = self.xy
 		
 	def loadFrame(self, tbwFrame):
@@ -133,7 +136,7 @@ class SimFrame(tbw.Frame):
 		self.frameCount = self.header.frameCount
 		self.dataBits = self.header.getDataBits()
 		## Data
-		self.obsTime = self.data.timeTag / dp_common.fS
+		self.obsTime = self.data.timeTag
 		self.xy = self.data.xy
 	
 	def isValid(self, raiseErrors=False):

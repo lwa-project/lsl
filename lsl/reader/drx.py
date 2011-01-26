@@ -49,7 +49,7 @@ from errors import *
 
 __version__ = '0.4'
 __revision__ = '$ Revision: 17 $'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getBeamCount', 'getFramesPerObs', 'averageObservations', 'averageObservations2', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 4128
 
@@ -466,67 +466,3 @@ def getFramesPerObs(filehandle):
 	
 	# Get the length of each beam list and return them as a tuple
 	return (len(idCodes[0]), len(idCodes[1]), len(idCodes[2]), len(idCodes[3]))
-	
-
-def averageObservations(Observations):
-	"""Given a list of ObservingBlock objects, average the observations 
-	together on a per tuning, per polarization basis.  A new ObsevingBlock 
-	object is returned that contains the averaged data."""
-	
-	newBlock = Observations[0]
-	tempx1 = newBlock.x1.data.iq * complex(0.0, 0.0)
-	tempy1 = newBlock.y1.data.iq * complex(0.0, 0.0)
-	tempx2 = newBlock.x2.data.iq * complex(0.0, 0.0)
-	tempy2 = newBlock.y2.data.iq * complex(0.0, 0.0)
-	
-	obsCount = 0
-	for Observation in Observations:
-		tempx1 = tempx1 + Observation.x1.data.iq
-		tempy1 = tempy1 + Observation.y1.data.iq
-		tempx2 = tempx2 + Observation.x2.data.iq
-		tempy2 = tempy2 + Observation.y2.data.iq
-		obsCount = obsCount + 1
-	
-	tempx1 = tempx1 / float(obsCount)
-	tempy1 = tempy1 / float(obsCount)
-	tempx2 = tempx2 / float(obsCount)
-	tempy2 = tempy2 / float(obsCount)
-			
-	newBlock.x1.data.iq = tempx1
-	newBlock.y1.data.iq = tempy1
-	newBlock.x2.data.iq = tempx2
-	newBlock.y2.data.iq = tempy2
-			
-	return newBlock
-
-
-def averageObservations2(Observations, timeAvg=1, chanAvg=1):
-	"""Given a list of ObservingBlock objects, average the observations 
-	together on a per tuning, per polarization basis.  A new ObsevingBlock 
-	object is returned that contains the averaged data."""
-	
-	caBlocks = []
-	if chanAvg > 1:
-		for Observation in Observations:
-			currBlock = Observation
-			for i in range(len(Observation.x1.data.iq)/chanAvg):
-				currBlock.x1.data.iq[i] = numpy.average( Observation.x1.data.iq[i*chanAvg:(i+1)*chanAvg] )
-				currBlock.y1.data.iq[i] = numpy.average( Observation.y1.data.iq[i*chanAvg:(i+1)*chanAvg] )
-				currBlock.x2.data.iq[i] = numpy.average( Observation.x2.data.iq[i*chanAvg:(i+1)*chanAvg] )
-				currBlock.y2.data.iq[i] = numpy.average( Observation.y2.data.iq[i*chanAvg:(i+1)*chanAvg] )
-			currBlock.x1.data.iq = currBlock.x1.data.iq[0:len(Observation.x1.data.iq)/chanAvg]
-			currBlock.y1.data.iq = currBlock.y1.data.iq[0:len(Observation.x1.data.iq)/chanAvg]
-			currBlock.x2.data.iq = currBlock.x2.data.iq[0:len(Observation.x1.data.iq)/chanAvg]
-			currBlock.y2.data.iq = currBlock.y2.data.iq[0:len(Observation.x1.data.iq)/chanAvg]
-			caBlocks.append(currBlock)
-	else:
-		caBlocks = Observations
-			
-	taBlocks = []
-	if timeAvg > 1:
-		for i in range(len(Observations)/timeAvg):
-			taBlocks.append( averageObservations(caBlocks[i*timeAvg:(i+1)*timeAvg]) )
-	else:
-		taBlocks = caBlocks
-			
-	return taBlocks
