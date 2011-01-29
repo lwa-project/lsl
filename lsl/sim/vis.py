@@ -66,7 +66,7 @@ from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 11 $'
+__revision__ = '$ Revision: 12 $'
 __all__ = ['srcs', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
@@ -120,7 +120,7 @@ class Antenna(aipy.amp.Antenna):
 		
 		# I cannot figure out how to do this all at once, so loop through azimuth/
 		# altitude pairs
-		resp = n.zeros((360,90,len(aa.get_afreqs())))
+		resp = n.zeros((360,90,len(self.beam.freqs)))
 		for i in range(360):
 			for j in range(90):
 				resp[i,j,:] = n.squeeze( self.bm_response(n.squeeze(xyz[:,i,j]), pol=pol) )

@@ -10,5 +10,6 @@ the results.  Modules included are:
 
 import uvUtils
 import visUtils
+import filterbank
 import fx
 

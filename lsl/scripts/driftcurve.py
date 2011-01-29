@@ -3,131 +3,208 @@
 
 """Predict driftcurve for a given site using a given antenna model."""
 
-import sys
-import optparse
-import logging
-import math
 import os
-
+import sys
+import math
 import numpy
 import pylab
+import getopt
 
 from lsl import skymap, astro
 from lsl.common import stations
-from lsl.sim import nec_util
-        
+from lsl.common.paths import data as dataPath
 
-__revision__ = "$Revision: 93 $"
+__revision__ = "$Revision: 94 $"
 __version__  = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
+def usage(exitCode=None):
+	print """driftcurve.py - Generate a drift curve for a dipole at LWA-1 
+observing at a given frequency in MHz.
 
-if __name__ == '__main__':
-	# setup logger
+Usage: driftcurve.py [OPTIONS]
 
-	logging.basicConfig()
-	log = logging.getLogger()
-	log.setLevel(logging.INFO)
-	
-	# parse command line
-	parser = optparse.OptionParser(usage="%prog [options] FREQ NECFILENAME SKYMAPFILENAME", \
-		description="Generate a drift curve for a dipole at SITE observing at a given FREQ (MHz).  SITE must be one of the sites known by the station module in lwda_util.")
-	parser.add_option("-v", "--verbose", action = "store_true", dest = "verbose",
-		default = False, help = "enable debug messages")
-	parser.add_option("-x", "--doplot", action = "store_true", dest = "doplot",
-		default = False, help = "Make an X-windows plot")
-	parser.add_option("-s", "--site", action = "store", dest = "site", type = "str",
-		default = "LWA", help = "site name (default LWA)")
-	parser.add_option("-p", "--polarization", action = "store", dest = "polarization",
-		default = "NS", help = "antenna polarization orientation (NS or EW)")
-	
-	(opts, args) = parser.parse_args()    
+Options:
+-h --help             Display this help information
+-f --freq             Frequency of the observations in MHz
+                      (default = 74 MHz)
+-p --polarization     Polarization of the observations (NS or EW; 
+                      default = EW)
+-l --lf-map           Use LF map instead of GSM
+-t --time-step        Time step of simulations in minutes (default = 
+                      10)
+-x --do-plot          Plot the driftcurve data
+-v --verbose          Run driftcurve in vebose mode
+"""
 
-	if len(args) != 3:
-		parser.error("wrong number of arguments")
-		
-	if opts.verbose:
-		log.setLevel(logging.DEBUG)
-		
-	if (opts.polarization != 'EW') and (opts.polarization != 'NS'):
-		parser.error("only 'EW' and 'NS' allowed for polarization")
-		
-	# Extract the command line arguments
-	freq = float(args[0])
-	if freq < 1.0 or freq > 1000.0:
-		log.error("Please specify a frequency in MHz!")
-		sys.exit(1)
-	necname = args[1]
-	skymapname = args[2]
-	
-	# get site geo position
+	if exitCode is not None:
+		sys.exit(exitCode)
+	else:
+		return True
+
+
+def parseOptions(args):
+	config = {}
+	# Command line flags - default values
+	config['freq'] = 74.0e6
+	config['pol'] = 'EW'
+	config['GSM'] = True
+	config['tStep'] = 10.0
+	config['enableDisplay'] = False
+	config['verbose'] = False
+	config['args'] = []
+
+	# Read in and process the command line flags
 	try:
-		sta = stations.lwa1()
-	except:
-		log.error("cannot get info for site %s", site)
-		sys.exit(1)
-	log.info("Site %s, Long %f", sta.name, sta.long*180.0/math.pi)
+		opts, arg = getopt.getopt(args, "hvf:p:lt:x", ["help", "verbose", "freq=", "polarization=", "lf-map", "time-step=", "do-plot",])
+	except getopt.GetoptError, err:
+		# Print help information and exit:
+		print str(err) # will print something like "option -a not recognized"
+		usage(exitCode=2)
 	
-	# read skymap and scale to target frequency
-	log.info("Reading skymap file")
-	smap = skymap.SkyMap(skymapname)
-	log.info("Read skymap of %d x %d pixels, min=%f, max=%f",smap.numPixelsX,smap.numPixelsY,smap._power.min(),smap._power.max())
+	# Work through opts
+	for opt, value in opts:
+		if opt in ('-h', '--help'):
+			usage(exitCode=0)
+		elif opt in ('-v', '--verbose'):
+			config['verbose'] = True
+		elif opt in ('-f', '--freq'):
+			config['freq'] = float(value)*1e6
+		elif opt in ('-p', '--polarization'):
+			config['pol'] = value.upper()
+		elif opt in ('-l', '--lf-map'):
+			config['GSM'] = False
+		elif opt in ('-t', '--time-step'):
+			config['tStep'] = float(value)
+		elif opt in ('-x', '--do-plot'):
+			config['enableDisplay'] = True
+		else:
+			assert False
 	
-	log.info("Reading antenna info")    
-	# get user-supplied pattern
-	antPatAnt = nec_util.NECPattern(necname, freq).antenna_pat_dB
-	#pylab.figure(3)
-	log.info("Read pattern.  Min %f Max %f", antPatAnt.min(), antPatAnt.max())
-	#pylab.imshow(antPatAnt.transpose(), origin='lower', vmin=-10.0, cmap=pylab.cm.hot)
-	antPatAnt = numpy.power(10.0, antPatAnt / 10.0)
+	# Add in arguments
+	config['args'] = arg
+
+	# Check the validity of arguments
+	if config['pol'] not in ('NS', 'EW'):
+		print "Invalid polarization: '%s'" % config['pol']
+		usage(exitCode=2)
+
+	# Return configuration
+	return config
+
+
+def main(args):
+	# Parse command line
+	config = parseOptions(args)
 	
-	# calculate times in both site LST and UTC
+	# Get the site information for LWA-1
+	sta = stations.lwa1()
+	
+	# Read in the skymap (GSM or LF map @ 74 MHz)
+	if config['GSM']:
+		smap = skymap.SkyMapGSM()
+		if config['verbose']:
+			print "Read in GSM map of %s pixels; min=%f, max=%f" % (len(smap.ra), smap._power.min(), smap._power.max())
+	else:
+		smap = skymap.SkyMap()
+		if config['verbose']:
+			print "Read in LF map of %d x %d pixels; min=%f, max=%f" % (smap.numPixelsX, smap.numPixelsY, smap._power.min(), smap._power.max())
+	
+	# Get the emperical model of the beam and compute it for the correct frequencies
+	beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
+	if config['pol'] == 'EW':
+		beamCoeff = beamDict['fitX']
+	else:
+		beamCoeff = beamDict['fitY']
+	alphaE = numpy.polyval(beamCoeff[0,0,:], config['freq'])
+	betaE =  numpy.polyval(beamCoeff[0,1,:], config['freq'])
+	gammaE = numpy.polyval(beamCoeff[0,2,:], config['freq'])
+	deltaE = numpy.polyval(beamCoeff[0,3,:], config['freq'])
+	alphaH = numpy.polyval(beamCoeff[1,0,:], config['freq'])
+	betaH =  numpy.polyval(beamCoeff[1,1,:], config['freq'])
+	gammaH = numpy.polyval(beamCoeff[1,2,:], config['freq'])
+	deltaH = numpy.polyval(beamCoeff[1,3,:], config['freq'])
+	if config['verbose']:
+		print "Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH)
+		print "Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE)
+	
+	def BeamPattern(az, alt):
+		zaR = numpy.pi/2 - alt*numpy.pi / 180.0 
+		azR = az*numpy.pi / 180.0
+
+		pE = (1-(2*zaR/numpy.pi)**alphaE)*numpy.cos(zaR)**betaE + gammaE*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaE
+		pH = (1-(2*zaR/numpy.pi)**alphaH)*numpy.cos(zaR)**betaH + gammaH*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaH
+
+		return numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
+
+	if config['enableDisplay']:
+		az = numpy.zeros((90,360))
+		alt = numpy.zeros((90,360))
+		for i in range(360):
+			az[:,i] = i
+		for i in range(90):
+			alt[i,:] = i
+		pylab.figure(1)
+		pylab.title("Beam Response: %s pol. @ %0.2f MHz" % (config['pol'], config['freq']/1e6))
+		pylab.imshow(BeamPattern(az, alt), extent=(0,359, 0,89), origin='lower')
+		pylab.xlabel("Azimuth [deg]")
+		pylab.ylabel("Altitude [deg]")
+		pylab.grid(1)
+		pylab.draw()
+	
+	# Calculate times in both site LST and UTC
 	t0 = astro.get_julian_from_sys()
 	lst = astro.get_local_sidereal_time(sta.long*180.0/math.pi, t0) / 24.0
 	t0 -= lst*(23.933/24.0) # Compensate for shorter sidereal days
-	times = numpy.arange(0, 1, 0.2/24) + t0
+	times = numpy.arange(0.0, 1.0, config['tStep']/1440.0) + t0
 	
 	lstList = []
 	powListAnt = [] 
 	
 	for t in times:
-		# project skymap to site location and observation time
+		# Project skymap to site location and observation time
 		pmap = skymap.ProjectedSkyMap(smap, sta.lat*180.0/math.pi, sta.long*180.0/math.pi, t)
 		lst = astro.get_local_sidereal_time(sta.long*180.0/math.pi, t)
-		iaz = pmap.visibleAz.astype(numpy.int_)
-		ialt = pmap.visibleAlt.astype(numpy.int_)
 		lstList.append(lst)
 		
-		#log.info("iaz : %f - %f",iaz.min(),iaz.max())
-		#log.info("ialt : %f - %f",ialt.min(),ialt.max())
-		if opts.polarization == 'EW':
-			iaz += 90.0
-			iaz = (iaz >= 360).choose(iaz, iaz - 360)
-		
-		cdec = numpy.cos(pmap.visibleDec * smap.degToRad)
+		if config['GSM']:
+			cdec = numpy.ones_like(pmap.visibleDec)
+		else:
+			cdec = numpy.cos(pmap.visibleDec * smap.degToRad)
 				
-		# convolution of user antenna pattern with visible skymap
-		gain = antPatAnt[iaz, ialt]
+		# Convolution of user antenna pattern with visible skymap
+		gain = BeamPattern(pmap.visibleAz, pmap.visibleAlt)
 		powerAnt = (pmap.visiblePower * gain * cdec).sum() / (gain * cdec).sum()
 		powListAnt.append(powerAnt)
-		
-		log.debug("LST=%f, power_ant=%f", lst, powerAnt) 
+
+		if config['verbose']:
+			lstH = int(lst)
+			lstM = int((lst - lstH)*60.0)
+			lstS = ((lst - lstH)*60.0 - lstM)*60.0
+			sys.stdout.write("LST: %02i:%02i:%04.1f, Power_ant: %.1f K\r" % (lstH, lstM, lstS, powerAnt))
+			sys.stdout.flush()
+	sys.stdout.write("\n")
 			
 	# plot results
-	if opts.doplot:
-		pylab.figure(1)
-		pylab.title("Driftcurve: Site %s Pol %s Ant %s Freq %0.2f MHz" % \
-			(opts.site, opts.polarization, os.path.basename(necname), freq))
-		pylab.plot(lstList, powListAnt, "ro",label="NEC Antenna Pattern")
-		pylab.xlabel("LST")
-		pylab.ylabel("Temp (K)")
-		pylab.grid(1)
+	if config['enableDisplay']:
+		pylab.figure(2)
+		pylab.title("Driftcurve: %s pol. @ %0.2f MHz - LWA-1" % \
+			(config['pol'], config['freq']/1e6))
+		pylab.plot(lstList, powListAnt, "ro",label="Antenna Pattern")
+		pylab.xlabel("LST [hours]")
+		pylab.ylabel("Temp. [K]")
+		pylab.grid(2)
+		pylab.draw()
 		pylab.show()
 	
-	mf = file("model_%s_%s_%s_%0.2f.txt" % (opts.site, os.path.basename(necname), opts.polarization, freq),"w")
-	for lst,pow in zip(lstList,powListAnt):
+	outputFile = "driftcurve_%s_%s_%.2f.txt" % ('lwa1', config['pol'], config['freq']/1e6)
+	print "Writing driftcurve to file '%s'" % outputFile
+	mf = file(outputFile, "w")
+	for lst,pow in zip(lstList, powListAnt):
 		mf.write("%f  %f\n" % (lst,pow))
 	mf.close()
-	
-	sys.exit(0)
+
+
+if __name__ == '__main__':
+	main(sys.argv[1:])

@@ -17,6 +17,7 @@
   * Added drxSpectra.py
   * Fixed various problems with the DP data simulator
   * Added in option to cable losses in tbwSpectra.py
+  * Fixed a problem in the sim.vis.Antenna class function get_beam_shap
 
 0.3.3
   * Fixed stand indexing error in uvUtils.cableAttenuation

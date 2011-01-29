@@ -658,7 +658,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	
 	// Create the output visibility array and fill with zeros
 	int dims[2];
-	dims[0] = nStand*(nStand+1)/2;
+	dims[0] = nBL;
 	dims[1] = nChan;
 	vis = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
 	if(vis == NULL) {
