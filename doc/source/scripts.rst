@@ -10,21 +10,23 @@ astrostatus.py
             -s SITE, --site=SITE  site name (default LWA-1)
 
 driftcurve.py
-  :Description: Generate a drift curve for a dipole at SITE observing at a given FREQ (MHz).
-                SITE must be one of the sites known by the station module in lwda_util.
+  :Description: Generate a drift curve for a dipole at LWA-1 observing at a given frequency in MHz.
 
-  :Usage: driftcurve.py [options] FREQ NECFILENAME SKYMAPFILENAME
+  :Usage: driftcurve.py [OPTIONS]
 
-  :Options: -h, --help            show this help message and exit
+  :Options: -h, --help             Display this help information
 
-            -v, --verbose         enable debug messages
+            -f, --freq             Frequency of the observations in MHz (default = 74 MHz)
 
-            -x, --doplot          Make an X-windows plot
+            -p, --polarization     Polarization of the observations (NS or EW; default = EW)
 
-            -s SITE, --site=SITE  site name (default LWDA)
+            -l, --lf-map           Use LF map instead of GSM
 
-            -p POLARIZATION, --polarization=POLARIZATION
-                                 antenna polarization orientation (NS or EW)
+            -t, --time-step        Time step of simulations in minutes (default = 10)
+
+            -x, --do-plot          Plot the driftcurve data
+
+            -v, --verbose          Run driftcurve in vebose mode
 
 lwa_cat_view.py
   :Description: Simple LWDA astronomical source catalogue display application.
@@ -75,9 +77,10 @@ splitTBW.py
   :Options: -h, --help             	Display this help information
 
             -c, --count            	Number of capturs to split off
+
             -o, --offset           	Number of captures to skip before splitting
-            -d, --date             	Label the split files with a date rather than a 
-					sequence number
+
+            -d, --date             	Label the split files with a date rather than a sequence number
 
 splitTBN.py
   :Description: Split a TBN file containing multiple seconds into several files
@@ -87,9 +90,10 @@ splitTBN.py
   :Options: -h, --help             	Display this help information
 
             -c, --count            	Number of seconds to keep
+
             -o, --offset           	Number of seconds to skip before splitting
-            -d, --date             	Label the split files with a date rather than a 
-					sequence number
+
+            -d, --date             	Label the split files with a date rather than a squence number
 
 readTBW.py
   :Description: Example script for reading in TBW data and writing it to a TSFITS file.
@@ -127,11 +131,9 @@ readS60.py
 
   :Usage: readS60.py [OPTIONS] file
 
-  :Options: -h, --help                 Display this help information
+  :Options: -h, --help                  Display this help information
 
-            -e, --enable-model          Use the CFTOOL bandpass model if
-                                       it is present in the current
-                                       directory
+            -e, --enable-model          Use the CFTOOL bandpass model if it is present in the current directory
 
             -q, --quiet                 Run readS60 in silent mode
 
@@ -158,15 +160,15 @@ tbwSpectra.py
 
             -t, --bartlett              Apply a Bartlett window to the data
 
-	    -b, --blackman              Apply a Blackman window to the data
+            -b, --blackman              Apply a Blackman window to the data
 
-	    -n, --hanning               Apply a Hanning window to the data
+            -n, --hanning               Apply a Hanning window to the data
 
             -q, --quiet                 Run tbwSpectra in silent mode
 
             -l, --fft-length            Set FFT length (default = 4096)
 
-	    -g, --gain-correct          Correct signals for the cable losses
+            -g, --gain-correct          Correct signals for the cable losses
 
             -o, --output                Output file name for spectra imag
 
@@ -179,9 +181,9 @@ tbnSpectra.py
 
             -t, --bartlett              Apply a Bartlett window to the data
 
-	    -b, --blackman              Apply a Blackman window to the data
+            -b, --blackman              Apply a Blackman window to the data
 
-	    -n, --hanning               Apply a Hanning window to the data
+            -n, --hanning               Apply a Hanning window to the data
 
             -q, --quiet                 Run tbwSpectra in silent mode
 
@@ -198,15 +200,28 @@ drxSpectra.py
 
             -t, --bartlett              Apply a Bartlett window to the data
 
-	    -b, --blackman              Apply a Blackman window to the data
+            -b, --blackman              Apply a Blackman window to the data
 
-	    -n, --hanning               Apply a Hanning window to the data
+            -n, --hanning               Apply a Hanning window to the data
 
             -q, --quiet                 Run tbwSpectra in silent mode
 
             -l, --fft-length            Set FFT length (default = 4096)
 
             -o, --output                Output file name for spectra image
+
+correlateTBW.py
+  :Description: Cross-correlate data in a TBW file
+
+  :Usage: correlateTBW.py [OPTIONS] file
+
+  :Options: -h, --help             Display this help information
+
+            -f, --fft-length       Set FFT length (default = 512)
+
+            -s, --samples          Number of average visibilities to generate (default = 10)
+
+            -q, --quiet            Run correlateTBW in silent mode
 
 correlateTBN.py
   :Description: Example script that reads in TBN data and runs a cross-correlation on it.
@@ -220,11 +235,9 @@ correlateTBN.py
 
             -f, --fft-length       Set FFT length (default = 512)
 
-            -t, --avg-time         Window to average visibilities in time (seconds;
-                                   default = 6 s)
+            -t, --avg-time         Window to average visibilities in time (seconds; default = 6 s)
 
-            -s, --samples          Number of average visibilities to generate
-                                   (default = 10)
+            -s, --samples          Number of average visibilities to generate (default = 10)
 
             -q, --quiet            Run correlateTBN in silent mode
 
