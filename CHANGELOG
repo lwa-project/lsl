@@ -4,6 +4,9 @@
   * Added new smoothing and fitting fuctions to misc.mathutil
   * Added a progress bar for use with long-running applications
 
+0.3.4.1
+  * Fixed various documentation problems
+
 0.3.4
   * Added in the new cable attenuation model
   * Re-wrote the TBW reader so that is it ~40% faster
@@ -19,6 +22,7 @@
   * Added in option to cable losses in tbwSpectra.py
   * Fixed a problem in the sim.vis.Antenna class function get_beam_shape
   * Added in a correlator script for TBW
+  * Added new beam models for use with AIPY based on SLC0015
 
 0.3.3
   * Fixed stand indexing error in uvUtils.cableAttenuation

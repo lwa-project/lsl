@@ -13,13 +13,17 @@ Computing *uvw* Coordinates
 .. autofunction:: lsl.correlator.uvUtils.computeUVW
 .. autofunction:: lsl.correlator.uvUtils.computeUVTrack
 
+Polyphase Filter Bank
+---------------------
+.. automodule:: lsl.correlator.filterbank
+   :members:
+
 FX Correlator
 -------------
-.. autofunction:: lsl.correlator.fx.blackmanWindow
-.. autofunction:: lsl.correlator.fx.sincWindow
-.. autofunction:: lsl.correlator.fx.polyphaseFilter
+.. autofunction:: lsl.correlator.fx.noWindow
 .. autofunction:: lsl.correlator.fx.correlate
 .. autofunction:: lsl.correlator.fx.FXCorrelator
+.. autofunction:: lsl.correlator.fx.FXMaster
 
 Visibility Visualization
 ------------------------

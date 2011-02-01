@@ -170,6 +170,8 @@ tbwSpectra.py
 
             -g, --gain-correct          Correct signals for the cable losses
 
+            -s, --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
+
             -o, --output                Output file name for spectra imag
 
 tbnSpectra.py

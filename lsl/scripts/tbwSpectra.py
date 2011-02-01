@@ -34,6 +34,7 @@ Options:
 -q --quiet                 Run tbwSpectra in silent mode
 -l --fft-length            Set FFT length (default = 4096)
 -g --gain-correct          Correct signals for the cable losses
+-s --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
 -o --output                Output file name for spectra image
 """
 
@@ -50,13 +51,14 @@ def parseOptions(args):
 	config['maxFrames'] = 300000
 	config['window'] = fxc.noWindow
 	config['applyGain'] = False
+	config['stack'] = False
 	config['output'] = None
 	config['verbose'] = True
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hqtbnl:go:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output="])
+		opts, args = getopt.getopt(args, "hqtbnl:gso:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "stack", "output="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -78,6 +80,8 @@ def parseOptions(args):
 			config['LFFT'] = int(value)
 		elif opt in ('-g', '--gain-correct'):
 			config['applyGain'] = True
+		elif opt in ('-s', '--stack'):
+			config['stack'] = True
 		elif opt in ('-o', '--output'):
 			config['output'] = value
 		else:
@@ -214,32 +218,52 @@ def main(args):
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
 	# The plots:  This is setup for the current configuration of 20 antpols
-	fig = plt.figure()
-	figsX = int(round(math.sqrt(antpols)))
-	figsY = antpols / figsX
-	for i in range(antpols):
-		ax = fig.add_subplot(figsX,figsY,i+1)
-		currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-		ax.plot(freq/1e6, currSpectra, label='%i' % (i+1))
+	if config['applyGain'] & config['stack']:
+		# Stacked spectra - only if cable loss corrections are to be applied
+		fig = plt.figure()
+		ax1 = fig.add_subplot(2, 2, 1)
+		ax2 = fig.add_subplot(2, 2, 2)
+		ax3 = fig.add_subplot(2, 2, 3)
+		ax4 = fig.add_subplot(2, 2, 4)
+		axs = [ax1, ax2, ax3, ax4]
+		for i in range(antpols):
+			currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
+			axs[i/6].plot(freq/1e6, currSpectra, label='%i' % stands[i])
 
-		# If there is more than one chunk, plot the difference between the global 
-		# average and each chunk
-		if nChunks > 1:
-			for j in range(nChunks):
-				# Some files are padded by zeros at the end and, thus, carry no 
-				# weight in the average spectra.  Skip over those.
-				if masterWeight[j,i,:].sum() == 0:
-					continue
+		for ax in axs:
+			ax.set_xlabel('Frequency [MHz]')
+			ax.set_ylabel('P.S.D. [dB/RBW]')
+			ax.set_xlim([20,88])
+			#ax.set_ylim([10,90])
+			ax.legend(loc=0)
+	else:
+		# Normal plotting
+		fig = plt.figure()
+		figsX = int(round(math.sqrt(antpols)))
+		figsY = antpols / figsX
+		for i in range(antpols):
+			ax = fig.add_subplot(figsX,figsY,i+1)
+			currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
+			ax.plot(freq/1e6, currSpectra, label='%i' % (i+1))
 
-				# Calculate the difference between the spectra and plot
-				subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
-				diff = subspectra - currSpectra
-				ax.plot(freq/1e6, diff)
+			# If there is more than one chunk, plot the difference between the global 
+			# average and each chunk
+			if nChunks > 1:
+				for j in range(nChunks):
+					# Some files are padded by zeros at the end and, thus, carry no 
+					# weight in the average spectra.  Skip over those.
+					if masterWeight[j,i,:].sum() == 0:
+						continue
 
-		ax.set_title('Input: %i' % (i+1))
-		ax.set_xlabel('Frequency [MHz]')
-		ax.set_ylabel('P.S.D. [dB/RBW]')
-		ax.set_xlim([10,90])
+					# Calculate the difference between the spectra and plot
+					subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
+					diff = subspectra - currSpectra
+					ax.plot(freq/1e6, diff)
+
+			ax.set_title('Input: %i' % (i+1))
+			ax.set_xlabel('Frequency [MHz]')
+			ax.set_ylabel('P.S.D. [dB/RBW]')
+			ax.set_xlim([10,90])
 
 	print "RBW: %.1f Hz" % (freq[1]-freq[0])
 	plt.show()
@@ -251,3 +275,4 @@ def main(args):
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
+

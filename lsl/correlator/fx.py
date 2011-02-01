@@ -24,7 +24,7 @@ from lsl.correlator import uvUtils
 import _core
 
 __version__ = '0.4'
-__revision__ = '$ Revision: 21 $'
+__revision__ = '$ Revision: 22 $'
 __all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
 
 
@@ -75,15 +75,15 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 	behavior can be modified if the SampleAverage keyword is set.  SampleAverage 
 	specifies how many individual spectra of length LFFT are to be averaged.
 
-	.. versionchanged:: 0.4
-		Prior to LSL version 0.4, the window functions avaliable for calcSpectra 
+	.. versionchanged:: 0.3.4
+		Prior to LSL version 0.3.4, the window functions avaliable for calcSpectra 
 		were limited to Blackmand and an (untest) Polyphase filter.  With version
 		0.4, the window to be used is passed to the function call via the 'window'
 		keyword and an "empty" window is provided by the module.  This allows for
 		the various window function defined in numpy (i.e., barlet, blackman, 
 		hamming, etc.) to be used.  It also makes it easier to filter the data using
 		a custom window.  For example, a Kaiser window with a shape factor of 5 
-		could be make with::
+		could be made with:
 			
 			>>> import numpy
 			>>> def newWindow(L):
@@ -300,12 +300,12 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=
 	CrossPol keyword allows for the other polarization data to be entered into the
 	correlator.  Return the frequencies and visibilities as a two-elements tuple.
 
-	.. deprecated:: 0.4
+	.. deprecated:: 0.3.4
 		FXCorrelator has been deprecated as of LSL version 0.4 in favor of the new
 		C-based correlator "FXMaster".  The new correlator, however, does not 
 		currently support windowing the data.
 
-	.. versionchanged:: 0.4
+	.. versionchanged:: 0.3.4
 		Prior to LSL version 0.4, the window functions avaliable for FXCorrelator
 		were limited to Blackmand and an (untest) Polyphase filter.  With version
 		0.4, the window to be used is passed to the function call via the 'window'
@@ -313,7 +313,7 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=
 		the various window function defined in numpy (i.e., barlet, blackman, 
 		hamming, etc.) to be used.  It also makes it easier to filter the data using
 		a custom window.  For example, a Kaiser window with a shape factor of 5 
-		could be make with::
+		could be made with:
 			
 			>>> import numpy
 			>>> def newWindow(L):
@@ -432,6 +432,9 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 	2-D array of signals (stands, time-series) and an array of stands, compute 
 	the cross-correlation of the data for all baselines.  Return the frequencies 
 	and visibilities as a two-elements tuple.
+
+	.. note::
+		Applying window function to the data is currently not supported.
 	"""
 
 	nStands = stands.shape[0]
