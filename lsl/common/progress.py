@@ -2,9 +2,12 @@
 
 """Module to make an ASCII progress bar."""
 
+import copy
+
 __version__ = '0.1'
 __revision__ = '$ Revision: 3 $'
 __all__ = ['ProgressBar', '__version__', '__revision__', '__all__']
+
 
 class ProgressBar(object):
 	"""Object to make a ASCII progress bar for use with various long-
@@ -38,13 +41,13 @@ class ProgressBar(object):
 		"""Increment the progress bar's internal counter by some amount.  The
 		default is one."""
 
-		self.__add__(amount)
+		self.__iadd__(amount)
 
 	def dec(self, amount=1):
 		"""Decrement the progress bar's internal counter by some amount.  The
 		default is one."""
 			
-		self.__sub__(amount)
+		self.__isub__(amount)
 
 	def show(self):
 		"""Build a string representation of the progress bar and return it."""
@@ -69,17 +72,36 @@ class ProgressBar(object):
 			out = "|%s|" % bar
 
 		return out
-
+		
 	def __add__(self, amount):
+		"""Increment the internal counter by a certain amount, return a new
+		ProgressBar object."""
+		
+		newBar = copy.deepcopy(self)
+		newBar += amount
+		return newBar
+
+	def __iadd__(self, amount):
 		"""Increment the internal counter by a certain amount."""
 
 		self.amount += amount
-
+		return self
+		
 	def __sub__(self, amount):
+		"""Decrement the internal counter by a certain amount, return a new
+		ProgressBar object."""
+		
+		newBar = copy.deepcopy(self)
+		if newBar.amount >= amount:
+			newBar += amount
+		return newBar
+
+	def __isub__(self, amount):
 		"""Decrement the internal counter by a certain amount"""
 
-		if self.amount >= 0:
-			self.amount -= 1
+		if self.amount >= amount:
+			self.amount -= amount
+		return self
 
 	def __str__(self):
 		"""Alternative to self.show()."""

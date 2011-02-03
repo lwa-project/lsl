@@ -196,6 +196,16 @@ class mathutil_tests(unittest.TestCase):
 		
 		self.assert_(mathutil.robustmean(x) < x.mean())
 		
+	def test_savitzky_golay(self):
+		"""Test Savitzky-Golay smoothing."""
+		
+		# Actual smoothing
+		data = numpy.random.rand(4096)
+		out = savitzky_golay(data, 15, 3)
+		
+		# Derivative
+		out = savitzky_golay(data, 15, 3, deriv=1)
+		
 	def test_gaussian_gen(self):
 		"""Test 1-D and 2-D Gaussisan generating functions."""
 		
@@ -203,7 +213,7 @@ class mathutil_tests(unittest.TestCase):
 		height = 1
 		center = 5.0
 		width = 2.1
-		gauFnc = guassian1d(height, center, width)
+		gauFnc = gaussian1d(height, center, width)
 		value = gauFnc(numpy.arange(0, 100))
 		
 		# 2-D
@@ -211,7 +221,7 @@ class mathutil_tests(unittest.TestCase):
 		centerY = -centerX
 		widthX = width
 		widthY = widthX/2
-		gauFnc = guassian2d(height, centerX, centerY, widthX, widthY)
+		gauFnc = gaussian2d(height, centerX, centerY, widthX, widthY)
 		value = gauFnc(numpy.arange(0, 100), numpy.arange(0,100))
 		
 	def test_gaussian_par(self):
@@ -221,7 +231,7 @@ class mathutil_tests(unittest.TestCase):
 		height = 1.5
 		center = 50.3
 		width = 2.1
-		gauFnc = guassian1d(height, center, width)
+		gauFnc = gaussian1d(height, center, width)
 		value = gauFnc(numpy.arange(0, 100))
 		params = gaussparams(value, x=numpy.arange(0, 100))
 		self.assertAlmostEqual(height, params[0], 1)
@@ -233,7 +243,7 @@ class mathutil_tests(unittest.TestCase):
 		centerY = center - 20.0
 		widthX = width
 		widthY = widthX/2.0
-		gauFnc = guassian2d(height, centerX, centerY, widthX, widthY)
+		gauFnc = gaussian2d(height, centerX, centerY, widthX, widthY)
 		value = gauFnc(numpy.arange(0, 100), numpy.arange(0,100))
 		params = gaussparams(value, x=numpy.arange(0, 100), y=numpy.arange(0, 100))
 		self.assertAlmostEqual(height,  params[0], 1)

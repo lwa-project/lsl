@@ -34,7 +34,7 @@ class filterbank_tests(unittest.TestCase):
 		"""Test that the 8-tap filter band works"""
 
 		data = numpy.random.rand(4096)
-		filterbank.fft8(dat, 256)
+		filterbank.fft8(data, 256)
 
 	def test_filterbank16(self):
 		"""Test that the 16-tap filter band works"""

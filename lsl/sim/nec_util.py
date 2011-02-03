@@ -260,9 +260,9 @@ class NECPattern:
 
 		
 		if radpat:
-			__readRADIATION(f)
+			self.__readRADIATION(f)
 		else:
-			__readEXCITATION(f)
+			self.__readEXCITATION(f)
 		
 
 	def __readRADIATION(self, f):
