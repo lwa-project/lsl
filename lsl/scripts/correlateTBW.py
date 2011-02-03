@@ -41,11 +41,11 @@ def usage(exitCode=None):
 Usage: correlateTBW.py [OPTIONS] file
 
 Options:
--h --help             Display this help information
--f --fft-length       Set FFT length (default = 512)
--s --samples          Number of average visibilities to generate
-                      (default = 10)
--q --quiet            Run correlateTBW in silent mode
+-h, --help             Display this help information
+-f, --fft-length       Set FFT length (default = 512)
+-s, --samples          Number of average visibilities to generate
+                       (default = 10)
+-q, --quiet            Run correlateTBW in silent mode
 """
 
 	if exitCode is not None:
@@ -114,7 +114,7 @@ def processChunk(fh, site, stands, filename, LFFT=64, Overlap=1, SampleRate=dp_c
 			except errors.eofError:
 				break
 			except errors.syncError:
-				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
+				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbw.FrameSize-1)
 				continue
 			except errors.numpyError:
 				break

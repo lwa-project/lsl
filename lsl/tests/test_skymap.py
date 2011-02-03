@@ -27,7 +27,27 @@ class skymap_tests(unittest.TestCase):
 		
 		s = skymap.SkyMap()
 		s.ComputeTotalPowerFromSky()
+
+	def test_ProjectedSkyMap_init(self):
+		"""Test skymap.ProjectedSkyMap constructor method."""
 		
+		s = skymap.SkyMap()
+		skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys())
+
+	def test_ProjectedSkyMap_ComputeTotalPowerFromVisibleSky(self):
+		"""Test skymap.ProjectedSkyMap.ComputeTotalPowerFromVisibleSky() method."""
+		
+		s = skymap.SkyMap()
+		p = skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys()) 
+		p.ComputeTotalPowerFromVisibleSky()
+	
+	def test_ProjectedSkyMap_ComputeDirectionCosines(self):
+		"""Test skymap.ProjectedSkyMap.ComputeDirectionCosines() method."""
+		
+		s = skymap.SkyMap()
+		p = skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys())
+		p.ComputeDirectionCosines()
+
 	def test_SkyMapGSM_init(self):
 		"""Test skymap.SkyMapGSM class constructor method.""" 
 		
@@ -39,39 +59,19 @@ class skymap_tests(unittest.TestCase):
 		s = skymap.SkyMapGSM()
 		s.ComputeTotalPowerFromSky()
 
-	def test_ProjectedSkyMap_init(self):
-		"""Test skymap.ProjectedSkyMap constructor method."""
-		
-		s = skymap.SkyMap()
-		skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys())
-
 	def test_ProjectedSkyMap_init_GSM(self):
 		"""Test skymap.ProjectedSkyMap constructor method using SkyMapGSM."""
 		
 		s = skymap.SkyMapGSM()
 		skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys())
-		
-	def test_ProjectedSkyMap_ComputeTotalPowerFromVisibleSky(self):
-		"""Test skymap.ProjectedSkyMap.ComputeTotalPowerFromVisibleSky() method."""
-		
-		s = skymap.SkyMap()
-		p = skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys()) 
-		p.ComputeTotalPowerFromVisibleSky()
-	
+
 	def test_ProjectedSkyMap_ComputeTotalPowerFromVisibleSky_GSM(self):
 		"""Test skymap.ProjectedSkyMap.ComputeTotalPowerFromVisibleSky() method using SkyMapGSM."""
 		
 		s = skymap.SkyMapGSM()
 		p = skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys()) 
 		p.ComputeTotalPowerFromVisibleSky()
-	
-	def test_ProjectedSkyMap_ComputeDirectionCosines(self):
-		"""Test skymap.ProjectedSkyMap.ComputeDirectionCosines() method."""
-		
-		s = skymap.SkyMap()
-		p = skymap.ProjectedSkyMap(s, 20, 30, astro.get_julian_from_sys())
-		p.ComputeDirectionCosines()
-        
+
 	def test_ProjectedSkyMap_ComputeDirectionCosines_GSM(self):
 		"""Test skymap.ProjectedSkyMap.ComputeDirectionCosines() method using SkyMapGSM."""
 		

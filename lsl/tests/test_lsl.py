@@ -16,6 +16,7 @@ from lsl.tests import test_stattests
 from lsl.tests import test_reader
 from lsl.tests import test_uvUtils
 from lsl.tests import test_fx
+from lsl.tests import test_filterbank
 from lsl.tests import test_visUtils
 from lsl.tests import test_fakedata
 from lsl.tests import test_simdp
@@ -26,9 +27,10 @@ from lsl.tests import test_tsfits
 from lsl.tests import test_sdfits
 from lsl.tests import test_vdif
 from lsl.tests import test_beamformer
+from lsl.tests import test_progress
 
 
-__revision__  = "$Revision: 97 $"
+__revision__  = "$ Revision: 101 $"
 __version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -54,6 +56,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_reader.reader_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())
 		self.addTest(test_fx.fx_test_suite())
+		self.addTest(test_filterbank.filterbank_test_suite())
 		self.addTest(test_visUtils.visUtils_test_suite())
 		self.addTest(test_fakedata.fakedata_test_suite())
 		self.addTest(test_simdp.simdp_test_suite())
@@ -64,6 +67,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_sdfits.sdfits_test_suite())
 		self.addTest(test_vdif.vdif_test_suite())
 		self.addTest(test_beamformer.beamformer_test_suite())
+		self.addTest(test_progress.progress_test_suite())
 
 
 def main(opts=None, args=None):

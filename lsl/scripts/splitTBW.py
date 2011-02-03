@@ -36,11 +36,11 @@ several single capture files
 Usage: splitTBW.py [OPTIONS] file
 
 Options:
--h --help             Display this help information
--c --count            Number of capturs to split off
--o --offset           Number of captures to skip before splitting
--d --date             Label the split files with a date rather than a 
-                      sequence number
+-h, --help             Display this help information
+-c, --count            Number of capturs to split off
+-o, --offset           Number of captures to skip before splitting
+-d, --date             Label the split files with a date rather than a 
+                       sequence number
 """
 
 	if exitCode is not None:

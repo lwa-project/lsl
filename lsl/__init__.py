@@ -23,8 +23,8 @@ Provided tests:
 See the individual package descriptions for more information.
 """
 
-__version__ = '0.3'
-__revision__ = '$ Revision: 5 $'
+__version__ = '0.4'
+__revision__ = '$ Revision: 6 $'
 __author__ = "Jayce Dowell"
 
 import common

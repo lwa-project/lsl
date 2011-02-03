@@ -23,13 +23,13 @@ time- averaged spectra.
 Usage: drxSpectra.py [OPTIONS] file
 
 Options:
--h --help                  Display this help information
--t --bartlett              Apply a Bartlett window to the data
--b --blackman              Apply a Blackman window to the data
--n --hanning               Apply a Hanning window to the data
--q --quiet                 Run tbwSpectra in silent mode
--l --fft-length            Set FFT length (default = 4096)
--o --output                Output file name for spectra image
+-h, --help                  Display this help information
+-t, --bartlett              Apply a Bartlett window to the data
+-b, --blackman              Apply a Blackman window to the data
+-n, --hanning               Apply a Hanning window to the data
+-q, --quiet                 Run tbwSpectra in silent mode
+-l, --fft-length            Set FFT length (default = 4096)
+-o, --output                Output file name for spectra image
 """
 
 	if exitCode is not None:

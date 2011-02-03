@@ -12,7 +12,7 @@ import numpy
 from lsl.misc import mathutil
 
 
-__revision__  = "$Revision: 88 $"
+__revision__  = "$ Revision: 89 $"
 __version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -195,7 +195,53 @@ class mathutil_tests(unittest.TestCase):
 		x[-5] = 3000.0
 		
 		self.assert_(mathutil.robustmean(x) < x.mean())
-    
+		
+	def test_gaussian_gen(self):
+		"""Test 1-D and 2-D Gaussisan generating functions."""
+		
+		# 1-D
+		height = 1
+		center = 5.0
+		width = 2.1
+		gauFnc = guassian1d(height, center, width)
+		value = gauFnc(numpy.arange(0, 100))
+		
+		# 2-D
+		centerX = center
+		centerY = -centerX
+		widthX = width
+		widthY = widthX/2
+		gauFnc = guassian2d(height, centerX, centerY, widthX, widthY)
+		value = gauFnc(numpy.arange(0, 100), numpy.arange(0,100))
+		
+	def test_gaussian_par(self):
+		"""Test 1-D and 2-D Gaussisan parameter estimation."""
+		
+		# 1-D
+		height = 1.5
+		center = 50.3
+		width = 2.1
+		gauFnc = guassian1d(height, center, width)
+		value = gauFnc(numpy.arange(0, 100))
+		params = gaussparams(value, x=numpy.arange(0, 100))
+		self.assertAlmostEqual(height, params[0], 1)
+		self.assertAlmostEqual(center, params[1], 1)
+		self.assertAlmostEqual(width,  params[2], 1)
+		
+		# 2-D
+		centerX = center
+		centerY = center - 20.0
+		widthX = width
+		widthY = widthX/2.0
+		gauFnc = guassian2d(height, centerX, centerY, widthX, widthY)
+		value = gauFnc(numpy.arange(0, 100), numpy.arange(0,100))
+		params = gaussparams(value, x=numpy.arange(0, 100), y=numpy.arange(0, 100))
+		self.assertAlmostEqual(height,  params[0], 1)
+		self.assertAlmostEqual(centerX, params[1], 1)
+		self.assertAlmostEqual(centerY, params[2], 1)
+		self.assertAlmostEqual(widthX,  params[3], 1)
+		self.assertAlmostEqual(widthY,  params[4], 1)
+
     
 class mathutil_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lwa_user.mathutil

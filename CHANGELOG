@@ -3,6 +3,14 @@
   * Added Global Sky Model models to skymap
   * Added new smoothing and fitting fuctions to misc.mathutil
   * Added a progress bar for use with long-running applications
+  * Added in new LWA-1 dipole NEC models
+  * Re-worked the plotAntenna.py script to use the pre-computed dipole
+   response fits
+  * Added support for EXCITATION keywords in misc.nec_util
+
+0.3.4.2
+  * Fixed a couple of typos. in the correlator scripts
+  * Added more colors to tbwSpectra.py so that all 20 inputs can be plotted
 
 0.3.4.1
   * Fixed various documentation problems

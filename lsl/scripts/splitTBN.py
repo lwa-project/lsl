@@ -37,11 +37,11 @@ several files
 Usage: splitTBN.py [OPTIONS] file
 
 Options:
--h --help             Display this help information
--c --count            Number of seconds to keep
--o --offset           Number of seconds to skip before splitting
--d --date             Label the split files with a date rather than a 
-                      sequence number
+-h, --help             Display this help information
+-c, --count            Number of seconds to keep
+-o, --offset           Number of seconds to skip before splitting
+-d, --date             Label the split files with a date rather than a 
+                       sequence number
 """
 
 	if exitCode is not None:

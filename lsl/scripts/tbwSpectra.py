@@ -27,15 +27,15 @@ time-averaged spectra.
 Usage: tbwSpectra.py [OPTIONS] file
 
 Options:
--h --help                  Display this help information
--t --bartlett              Apply a Bartlett window to the data
--b --blackman              Apply a Blackman window to the data
--n --hanning               Apply a Hanning window to the data
--q --quiet                 Run tbwSpectra in silent mode
--l --fft-length            Set FFT length (default = 4096)
--g --gain-correct          Correct signals for the cable losses
--s --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
--o --output                Output file name for spectra image
+-h, --help                  Display this help information
+-t, --bartlett              Apply a Bartlett window to the data
+-b, --blackman              Apply a Blackman window to the data
+-n, --hanning               Apply a Hanning window to the data
+-q, --quiet                 Run tbwSpectra in silent mode
+-l, --fft-length            Set FFT length (default = 4096)
+-g, --gain-correct          Correct signals for the cable losses
+-s, --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
+-o, --output                Output file name for spectra image
 """
 
 	if exitCode is not None:
@@ -220,22 +220,23 @@ def main(args):
 	# The plots:  This is setup for the current configuration of 20 antpols
 	if config['applyGain'] & config['stack']:
 		# Stacked spectra - only if cable loss corrections are to be applied
+		colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'black', 
+			'purple', 'salmon', 'olive', 'maroon', 'saddlebrown', 'yellowgreen', 
+			'teal', 'steelblue', 'seagreen', 'slategray', 'mediumorchid', 'lime', 
+			'dodgerblue', 'darkorange']
 		fig = plt.figure()
-		ax1 = fig.add_subplot(2, 2, 1)
-		ax2 = fig.add_subplot(2, 2, 2)
-		ax3 = fig.add_subplot(2, 2, 3)
-		ax4 = fig.add_subplot(2, 2, 4)
-		axs = [ax1, ax2, ax3, ax4]
+		ax1 = fig.add_subplot(1, 1, 1)
 		for i in range(antpols):
 			currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-			axs[i/6].plot(freq/1e6, currSpectra, label='%i' % stands[i])
+			ax1.plot(freq/1e6, currSpectra, label='%i' % stands[i], color=colors[i])
 
-		for ax in axs:
-			ax.set_xlabel('Frequency [MHz]')
-			ax.set_ylabel('P.S.D. [dB/RBW]')
-			ax.set_xlim([20,88])
-			#ax.set_ylim([10,90])
-			ax.legend(loc=0)
+		ax1.set_xlabel('Frequency [MHz]')
+		ax1.set_ylabel('P.S.D. [dB/RBW]')
+		ax1.set_xlim([20,88])
+		#ax1.set_ylim([10,90])
+		leg = ax1.legend(loc=0, ncol=3)
+		for l in leg.get_lines():
+			l.set_linewidth(1.7)  # the legend line width
 	else:
 		# Normal plotting
 		fig = plt.figure()

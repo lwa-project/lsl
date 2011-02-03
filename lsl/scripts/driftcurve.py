@@ -26,16 +26,16 @@ observing at a given frequency in MHz.
 Usage: driftcurve.py [OPTIONS]
 
 Options:
--h --help             Display this help information
--f --freq             Frequency of the observations in MHz
-                      (default = 74 MHz)
--p --polarization     Polarization of the observations (NS or EW; 
-                      default = EW)
--l --lf-map           Use LF map instead of GSM
--t --time-step        Time step of simulations in minutes (default = 
-                      10)
--x --do-plot          Plot the driftcurve data
--v --verbose          Run driftcurve in vebose mode
+-h, --help             Display this help information
+-f, --freq             Frequency of the observations in MHz
+                       (default = 74 MHz)
+-p, --polarization     Polarization of the observations (NS or EW; 
+                       default = EW)
+-l, --lf-map           Use LF map instead of GSM
+-t, --time-step        Time step of simulations in minutes (default = 
+                       10)
+-x, --do-plot          Plot the driftcurve data
+-v, --verbose          Run driftcurve in vebose mode
 """
 
 	if exitCode is not None:

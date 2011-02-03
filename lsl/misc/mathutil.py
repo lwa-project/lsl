@@ -319,7 +319,14 @@ def savitzky_golay(y, window_size, order, deriv=0):
 
 def gaussian1d(height, center, width):
 	"""Return a function that generates a 1-D gaussian with the specified
-	height, mean, and standard deviation.
+	height, mean, and standard deviation.  
+	
+	Example:
+		>>> height = 1
+		>>> center = 5.0
+		>>> width = 2.1
+		>>> gauFnc = guassian1d(height, center, width)
+		>>> value = gauFnc(numpy.arange(0, 100))
 
 	Based on: http://code.google.com/p/agpy/source/browse/trunk/agpy/gaussfitter.py
 	"""
@@ -343,7 +350,11 @@ def gaussian2d(height, centerX, centerY, widthMaj, widthMin, angle=0.0):
 
 
 def gaussparams(data, x=None, y=None):
-	"""Estimate the parameters (height, center, width) for a gaussian."""
+	"""Estimate the parameters (height, center, width) for a gaussian.  The 
+	return order is:
+	  1-D: height, center, width
+	  2-D: height, center x, center y, width x, width y
+	"""
 
 	total = data.sum()
 	height = data.max()
@@ -394,6 +405,13 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
 	(0,0), (1,-1), (1,0), (1,1), (2,-2), etc.  If the `realOnly` keyword has been 
 	set, the negative coefficients for the negative modes are excluded from the 
 	output array.
+
+	.. note::
+		sphfit was designed to fit the LWA dipole response pattern as a function of
+		azimuth and elevation.  Elevation angles are mapped to theta angles by adding
+		pi/2 so that an elevation of 90 degrees corresponds to a theta of 180 degrees.
+		To fit in terms of spherical coordianates, subtract pi/2 from the theta values
+		before running.
 	"""
 
 	if degrees:
@@ -449,6 +467,13 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
 
 	Returns a 2-D numpy array of the harmoics evalated and summed at the given 
 	coordinates.
+	
+	.. note::
+		sphfit was designed to fit the LWA dipole response pattern as a function of
+		azimuth and elevation.  Elevation angles are mapped to theta angles by adding
+		pi/2 so that an elevation of 90 degrees corresponds to a theta of 180 degrees.
+		To spherical harmonics in terms of spherical coordianates, subtract pi/2 from 
+		the theta values before running.
 	"""
 
 	if degrees:

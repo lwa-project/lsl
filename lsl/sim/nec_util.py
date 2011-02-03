@@ -201,15 +201,14 @@ class NECPattern:
 	"""
         
 	def __init__(self, necname, freq, rerun = True):
-
 		# Modify NEC file to set FR card to use "freq"
 		
 		# Run NEC if necessary.
-		# anntenna_pat_dB[az,alt] is the total gain in dB in the direction
-		# az, alt (integer degrees), where
-		# az (azimuth) runs from 0 to 359, where 0 is North
-		# and alt (altitude) runs from 0 to 89 , where 0 is the horizon
-		# The default pattern is all zeros (isotropic response)
+		# anntenna_pat_dB[az,alt] is the total gain or current in dB in the 
+		# direction az, alt (integer degrees), where az (azimuth) runs from 
+		# 0 to 359, where 0 is North and alt (altitude) runs from 0 to 89 , 
+		# where 0 is the horizon The default pattern is all zeros (isotropic 
+		# response)
 		self.antenna_pat_dB=zeros(shape=(360,90),dtype=float_)
 
 		outname = os.path.splitext(necname)[0] + '.out'
@@ -247,13 +246,29 @@ class NECPattern:
 				raise ValueError("NEC output file is at a different frequency (%f) than the requested frequency (%f)." % \
 					(filefreq, freq))
 		
-		#  Now look for RADIATION PATTERN and read it
+		#  Now look for RADIATION PATTERN or EXCITATION and read it
+		radpat = None
 		for line in f:
 			if line.find('RADIATION PATTERN') >= 0:
+				radpat = True
+				break
+			if line.find('EXCITATION') >= 0:
+				radpat = False
 				break
 		else:
-			raise RuntimeError("RADIATION PATTERN not found!")
-					
+			raise RuntimeError("RADIATION PATTERN nor EXCITATION not found!")
+
+		
+		if radpat:
+			__readRADIATION(f)
+		else:
+			__readEXCITATION(f)
+		
+
+	def __readRADIATION(self, f):
+		"""Private function to read in a RADIATION PATTERN section of a NEC
+		output file."""
+
 		# Some versions of NEC2 output extraneous data after "RADIATION PATTERNS" before the actual data
 		# and column labels (e.g. RANGE = and EXP (-JKR) values ).  Discard until
 		# the true bottom of the column labels (look for DB) */
@@ -278,6 +293,59 @@ class NECPattern:
 			self.antenna_pat_dB[phi,theta] = powgain
 			n += 1
 			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f", theta,phi,powgain)
+
+
+	def __readEXCITATION(self, f):
+		"""Private function to read in data stored in a collection of EXCITATION 
+		sections in a NEC output file."""
+
+		n = 0
+		# We have already read the first line of the first entry, so start there
+		# The information we need is stored across the 12 lines following the 
+		# EXCITATAION heading.  Read those lines into parts and then deal with the
+		# results.  The keys lines are #2 (theta and phi) and #12 (induced currents)
+		parts = []
+		for l in xrange(12):
+			parts.append( f.readline() )
+		fieldsAngle = parts[1].split()
+		fieldsCurrent = parts[11].split()
+
+		# Direction of the incident radiation
+		theta = 90 - int(fieldsAngle[3])
+		phi = int(fieldsAngle[6])
+		if theta < 0 or theta > 89 or phi > 359:
+			pass
+		else:
+			# Get the absolute value and put it on a dB scale
+			powcurr = numpy.abs( float(fieldsCurrent[6]) + 1j*float(fieldsCurrent[7]) )
+			powcurr = 10.0*numpy.log10(powcurr)
+			#print phi, theta, powcurr
+			self.antenna_pat_dB[phi,theta] = powcurr
+			n += 1
+			_NEC_UTIL_LOG.debug("theta %d phi %d current %f", theta,phi,powcurr)
+		
+		for line in f:
+			# The information we need is stored across the 12 lines following the 
+			# EXCITATAION heading.  Read those lines into parts and then deal with the
+			# results.  The keys lines are #2 (theta and phi) and #12 (induced currents)
+			parts = []
+			for l in xrange(12):
+				parts.append( f.readline() )
+			fieldsAngle = parts[1].split()
+			fieldsCurrent = parts[11].split()
+
+			# Direction of the incident radiation
+			theta = 90 - int(fieldsAngle[3])
+			phi = int(fieldsAngle[6])
+			if theta < 0 or theta > 89 or phi > 359:
+				continue
+			# Get the absolute value and put it on a dB scale
+			powcurr = numpy.abs( float(fieldsCurrent[6]) + 1j*float(fieldsCurrent[7]) )
+			powcurr = 10.0*numpy.log10(powcurr)
+			#print phi, theta, powcurr
+			self.antenna_pat_dB[phi,theta] = powcurr
+			n += 1
+			_NEC_UTIL_LOG.debug("theta %d phi %d current %f", theta, phi, powcurr)	
 
 
 def whichNEC4():

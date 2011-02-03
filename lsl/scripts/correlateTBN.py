@@ -47,15 +47,15 @@ def usage(exitCode=None):
 Usage: correlateTBN.py [OPTIONS] file
 
 Options:
--h --help             Display this help information
--c --central-freq     Central frequency of the observations in MHz
--f --fft-length       Set FFT length (default = 512)
--t --avg-time         Window to average visibilities in time (seconds; 
-                      default = 6 s)
--s --samples          Number of average visibilities to generate
-                      (default = 10)
--o --offset           Seconds to skip from the beginning of the file
--q --quiet            Run correlateTBN in silent mode
+-h, --help             Display this help information
+-c, --central-freq     Central frequency of the observations in MHz
+-f, --fft-length       Set FFT length (default = 512)
+-t, --avg-time         Window to average visibilities in time (seconds; 
+                       default = 6 s)
+-s, --samples          Number of average visibilities to generate
+                       (default = 10)
+-o, --offset           Seconds to skip from the beginning of the file
+-q, --quiet            Run correlateTBN in silent mode
 """
 
 	if exitCode is not None:
@@ -130,7 +130,7 @@ def processChunk(fh, site, stands, filename, intTime=6.0, LFFT=64, Overlap=1, Ce
 			except errors.eofError:
 				break
 			except errors.syncError:
-				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
+				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
 				continue
 			except errors.numpyError:
 				break

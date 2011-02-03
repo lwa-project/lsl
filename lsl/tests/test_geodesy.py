@@ -14,8 +14,7 @@ __author__    = "Jayce Dowell"
 
 
 class geodesy_tests(unittest.TestCase):
-	"""A unittest.TestCase collection of unit tests for the lsl.common.paths tests
-	module."""
+	"""A unittest.TestCase collection of unit tests for the lsl.misc.geodesy module."""
 
 	def test_read_MAIA(self):
 		"""Test that a line from one of the MAIA files can be read."""
@@ -100,3 +99,4 @@ class geodesy_test_suite(unittest.TestSuite):
 
 if __name__ == '__main__':
 	unittest.main()
+

@@ -1,0 +1,16 @@
+2011/02/03
+
+Four NEC files, two for each dipole, are provided for modeling the 
+LWA-1 isolated dipole response.  These modules were used to create
+the spherical harmonic and emperical fits found in the file:
+  lwa1-dipole-sph.npz
+  lwa1-dipole-emp.npz
+The NEC file found in the LWDA User's Library and version sof LSL 
+prior to the 0.4 branch has been removed in favor of these new
+models.
+
+The NEC files provided are similar to those used in memo. SLC 0015
+with the exception that the NEC files evalute the induced currents
+for radiation from azimuth in the range of 0 to 359 degrees in one
+degree increments and elevations in 0 to 89 degrees in one degree
+increments.
