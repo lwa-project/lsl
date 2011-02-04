@@ -174,9 +174,7 @@ class mathutil_tests(unittest.TestCase):
 		mathutil.smooth(x, window='flat')
 		
 	def test_to_dB(self):
-		"""
-		Test mathutil.to_dB() function.
-		"""
+		"""Test mathutil.to_dB() function."""
 		
 		x = numpy.random.randn(100) + 1000.0
 		mathutil.to_dB(x)
@@ -229,11 +227,15 @@ class mathutil_tests(unittest.TestCase):
 		
 		# 1-D
 		height = 1.5
-		center = 50.3
+		center = 50.0
 		width = 2.1
 		gauFnc = mathutil.gaussian1d(height, center, width)
-		value = gauFnc(numpy.arange(0, 100))
-		params = mathutil.gaussparams(value, x=numpy.arange(0, 100))
+		
+		x = numpy.arange(0, 100)
+		value = gauFnc(x)
+		
+		params = mathutil.gaussparams(value)
+		params = mathutil.gaussparams(value, x=x)
 		self.assertAlmostEqual(height, params[0], 1)
 		self.assertAlmostEqual(center, params[1], 1)
 		self.assertAlmostEqual(width,  params[2], 1)
@@ -244,8 +246,16 @@ class mathutil_tests(unittest.TestCase):
 		widthX = width
 		widthY = widthX/2.0
 		gauFnc = mathutil.gaussian2d(height, centerX, centerY, widthX, widthY)
-		value = gauFnc(numpy.arange(0, 100), numpy.arange(0,100))
-		params = mathutil.gaussparams(value, x=numpy.arange(0, 100), y=numpy.arange(0, 100))
+		
+		x = numpy.zeros((100,100))
+		y = numpy.zeros_like(x)
+		for i in range(100):
+			x[i,:] = i
+			y[:,i] = i
+		value = gauFnc(x, y)
+		
+		params = mathutil.gaussparams(value)
+		params = mathutil.gaussparams(value, x=x, y=y)
 		self.assertAlmostEqual(height,  params[0], 1)
 		self.assertAlmostEqual(centerX, params[1], 1)
 		self.assertAlmostEqual(centerY, params[2], 1)

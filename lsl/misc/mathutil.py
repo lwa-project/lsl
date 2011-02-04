@@ -353,7 +353,7 @@ def gaussparams(data, x=None, y=None):
 	"""Estimate the parameters (height, center, width) for a gaussian.  The 
 	return order is:
 	  1-D: height, center, width
-	  2-D: height, center x, center y, width x, width y
+	  2-D: height, center x, center y, width x, width y, position angle
 	"""
 
 	total = data.sum()
@@ -362,15 +362,15 @@ def gaussparams(data, x=None, y=None):
 	if len(data.shape) == 2:
 		# 2-D Data
 		if x is None or y is None:
-			x, y = numpy.indicies(data.shape)
+			x, y = numpy.indices(data.shape)
 		centerX = (x*data).sum() / total
 		centerY = (y*data).sum() / total
 		bestX = (numpy.where( numpy.abs(centerX - x) == numpy.min(numpy.abs(centerX - x)) ))[0][0]
 		bestY = (numpy.where( numpy.abs(centerY - y) == numpy.min(numpy.abs(centerY - y)) ))[0][0]
 		col = data[:, bestY]
-		widthX = numpy.sqrt(abs((arange(col.size)-y)**2*col).sum()/col.sum())
+		widthX = numpy.sqrt(abs((x[:,bestY]-centerX)**2*col).sum()/col.sum())
 		row = data[bestX, :]
-		widthY = sqrt(abs((arange(row.size)-x)**2*row).sum()/row.sum())
+		widthY = numpy.sqrt(abs((y[bestX,:]-centerY)**2*row).sum()/row.sum())
 		return height, centerX, centerY, widthX, widthY, 0.0
 
 	else:
