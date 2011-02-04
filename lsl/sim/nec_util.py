@@ -301,51 +301,32 @@ class NECPattern:
 
 		n = 0
 		# We have already read the first line of the first entry, so start there
-		# The information we need is stored across the 12 lines following the 
+		# The information we need is stored across the 15 lines following the 
 		# EXCITATAION heading.  Read those lines into parts and then deal with the
 		# results.  The keys lines are #2 (theta and phi) and #12 (induced currents)
-		parts = []
-		for l in xrange(12):
-			parts.append( f.readline() )
-		fieldsAngle = parts[1].split()
-		fieldsCurrent = parts[11].split()
-
-		# Direction of the incident radiation
-		theta = 90 - int(fieldsAngle[3])
-		phi = int(fieldsAngle[6])
-		if theta < 0 or theta > 89 or phi > 359:
-			pass
-		else:
-			# Get the absolute value and put it on a dB scale
-			powcurr = numpy.abs( float(fieldsCurrent[6]) + 1j*float(fieldsCurrent[7]) )
-			powcurr = 10.0*numpy.log10(powcurr)
-			#print phi, theta, powcurr
-			self.antenna_pat_dB[phi,theta] = powcurr
-			n += 1
-			_NEC_UTIL_LOG.debug("theta %d phi %d current %f", theta,phi,powcurr)
-		
+		lineCount = 0
 		for line in f:
-			# The information we need is stored across the 12 lines following the 
-			# EXCITATAION heading.  Read those lines into parts and then deal with the
-			# results.  The keys lines are #2 (theta and phi) and #12 (induced currents)
-			parts = []
-			for l in xrange(12):
-				parts.append( f.readline() )
-			fieldsAngle = parts[1].split()
-			fieldsCurrent = parts[11].split()
+			if lineCount % 16 == 0:
+				parts = []
+			parts.append( line )
+			lineCount += 1
+			if lineCount % 16 == 0:
+				fieldsAngle = parts[1].split()
+				fieldsCurrent = parts[11].split()
 
-			# Direction of the incident radiation
-			theta = 90 - int(fieldsAngle[3])
-			phi = int(fieldsAngle[6])
-			if theta < 0 or theta > 89 or phi > 359:
-				continue
-			# Get the absolute value and put it on a dB scale
-			powcurr = numpy.abs( float(fieldsCurrent[6]) + 1j*float(fieldsCurrent[7]) )
-			powcurr = 10.0*numpy.log10(powcurr)
-			#print phi, theta, powcurr
-			self.antenna_pat_dB[phi,theta] = powcurr
-			n += 1
-			_NEC_UTIL_LOG.debug("theta %d phi %d current %f", theta, phi, powcurr)	
+				# Direction of the incident radiation
+				theta = 90 - int(float(fieldsAngle[3]))
+				phi = int(float(fieldsAngle[6]))
+				if theta < 0 or theta > 89 or phi > 359:
+					pass
+				else:
+					# Get the absolute value and put it on a dB scale
+					powcurr = float(fieldsCurrent[8])
+					powcurr = 10.0*log10(powcurr)
+					#print phi, theta, powcurr
+					self.antenna_pat_dB[phi,theta] = powcurr
+					n += 1
+					_NEC_UTIL_LOG.debug("theta %d phi %d current %f", theta,phi,powcurr)
 
 
 def whichNEC4():

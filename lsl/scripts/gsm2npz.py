@@ -29,6 +29,9 @@ def usage(exitCode=None):
 	print """gsm2npz.py - Read in a GSM RING-style HEALpix file created by gsm
 and convert it to a NPZ file with RA and dec. pairs at a lower resolution.
 
+Note:  This script needs the HEALpy python module to run.  HEALpy can be found 
+       at http://code.google.com/p/healpy/
+
 Usage: gsm2npz.py [OPTIONS] gsm_file [gsm_file [...]]
 
 Options:
