@@ -86,7 +86,7 @@ class LSLDist(Distribution):
 cflags, libs = get_fftw()
 coreExtraFlags = ['-fopenmp',]
 coreExtraFlags.extend(cflags)
-coreExtraLibs = ['-fopenmp',]
+coreExtraLibs = ['-fopenmp', '-lcblas', '-latlas']
 coreExtraLibs.extend(libs)
 
 setup(

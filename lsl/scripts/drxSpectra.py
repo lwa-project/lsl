@@ -42,7 +42,7 @@ def parseOptions(args):
 	config = {}
 	# Command line flags - default values
 	config['LFFT'] = 4096
-	config['maxFrames'] = 10000
+	config['maxFrames'] = 50000
 	config['window'] = fxc.noWindow
 	config['output'] = None
 	config['verbose'] = True
@@ -188,7 +188,7 @@ def main(args):
 				count[aStand] = 0
 				masterCount[aStand] = 0
 			if cFrame.header.frameCount % 10000 == 0 and config['verbose']:
-				print "%2i,%1i -> %2i  %5i  %i" % (stand, pol, aStand, cFrame.header.frameCount, cFrame.data.timeTag)
+				print "%2i,%1i,%1i -> %2i  %5i  %i" % (beam, tune, pol, aStand, cFrame.header.frameCount, cFrame.data.timeTag)
 
 			# Additional check on the data array bounds so that we don't overflow it.  
 			# This check may be redundant...

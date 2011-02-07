@@ -26,11 +26,11 @@ def fft(signal, N, P=1, window=noWindow):
 	'window' keyword.  See :mod:`lsl.correlator.fx.calcSpectra` for 
 	details on using window functions."""
 
-	filteredSignal = signal[0:N*P]*__filterCoeff(N,P)
+	filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N,P)
 	
-	fbOutput = numpy.fft.fft(window(N)*filteredSignal[0:N])
+	fbOutput = numpy.fft.fft(filteredSignal[0:N])
 	for i in range(1,P):
-		fbOutput += numpy.fft.fft(window(N)*filteredSignal[i*N:(i+1)*N])
+		fbOutput += numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
 
 	return fbOutput
 
@@ -58,3 +58,4 @@ def fft32(signal, N, window=noWindow):
 	"""Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses 32 taps."""
 
 	return fft(signal, N, P=32, window=window)
+
