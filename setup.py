@@ -110,6 +110,7 @@ setup(
 	ext_package = 'lsl', 
 	ext_modules = [Extension('_libnova', ['lsl/libnova.i']), 
 				Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
+				Extension('reader._gofast', ['lsl/reader/gofast.c'], include_dirs=[numpy.get_include()]),
 				Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs)], 
 	zip_safe = False,  
 	test_suite = "lsl.tests.test_lsl.lsl_tests"

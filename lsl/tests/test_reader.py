@@ -11,6 +11,7 @@ from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
 from lsl.reader import errors
+from lsl.reader import _gofast
 
 
 __revision__ = "$Revision:1 $"
@@ -69,6 +70,42 @@ class reader_tests(unittest.TestCase):
 		self.assertTrue(frame2.header.isTBW())
 		self.assertEqual(frame2.parseID(), 1)
 		fh.close()
+		
+	def test_tbw_read_gofast(self):
+		"""Test the Go Fast! TBW reader."""
+		
+		fh = open(tbwFile, 'rb')
+		# First frame is really TBW and stores the correct stand ID
+		fileLoc = fh.tell()
+		frame1 = tbw.readFrame(fh)
+		fh.seek(fileLoc)
+		frame1G = _gofast.readTBW(fh, tbw.Frame())
+		
+		self.assertEqual(frame1.parseID(), frame1G.parseID())
+		self.assertEqual(frame1.header.tbwID, frame1G.header.tbwID)
+		self.assertEqual(frame1.header.frameCount, frame1G.header.frameCount)
+		self.assertEqual(frame1.header.secondsCount, frame1G.header.secondsCount)
+		self.assertEqual(frame1.data.timeTag, frame1G.data.timeTag)
+		for i in xrange(400):
+			self.assertEqual(frame1.data.xy[0,i], frame1G.data.xy[0,i])
+			self.assertEqual(frame1.data.xy[1,i], frame1G.data.xy[1,i])
+		
+		# Second frame
+		fileLoc = fh.tell()
+		frame2 = tbw.readFrame(fh)
+		fh.seek(fileLoc)
+		frame2G = _gofast.readTBW(fh, tbw.Frame())
+		
+		self.assertEqual(frame2.parseID(), frame2G.parseID())
+		self.assertEqual(frame2.header.tbwID, frame2G.header.tbwID)
+		self.assertEqual(frame2.header.frameCount, frame2G.header.frameCount)
+		self.assertEqual(frame2.header.secondsCount, frame2G.header.secondsCount)
+		self.assertEqual(frame2.data.timeTag, frame2G.data.timeTag)
+		for i in xrange(400):
+			self.assertEqual(frame2.data.xy[0,i], frame2G.data.xy[0,i])
+			self.assertEqual(frame2.data.xy[1,i], frame2G.data.xy[1,i])
+		
+		fh.close()
 
 	def test_tbw_bits(self):
 		"""Test getting the data bits from a TBW file."""
@@ -97,6 +134,25 @@ class reader_tests(unittest.TestCase):
 		fh = open(tbwFile, 'rb')
 		fh.seek(1)
 		self.assertRaises(errors.syncError, tbw.readFrame, fh)
+		fh.close()
+		
+	def test_tbw_errors_gofast(self):
+		"""Test the Go Fast! TBW reader errors."""
+		
+		fh = open(tbwFile, 'rb')
+		# Frames 1 through 8
+		for i in range(1,9):
+			frame = _gofast.readTBW(fh, tbw.Frame())
+
+		# Last frame should be an error (_gofast.eofError)
+		self.assertRaises(_gofast.eofError, _gofast.readTBW, fh, tbw.Frame())
+		fh.close()
+		
+		# If we offset in the file by 1 byte, we should be a 
+		# sync error (_gofast.syncError).
+		fh = open(tbwFile, 'rb')
+		fh.seek(1)
+		self.assertRaises(_gofast.syncError, _gofast.readTBW, fh, tbw.Frame())
 		fh.close()
 
 	def test_tbw_comps(self):
@@ -164,6 +220,40 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(stand, 1)
 		self.assertEqual(pol, 1)
 		fh.close()
+		
+	def test_tbn_read_gofast(self):
+		"""Test the Go Fast! TBN reader."""
+		
+		fh = open(tbnFile, 'rb')
+		# First frame is really TBN and stores the correct stand ID
+		fileLoc = fh.tell()
+		frame1 = tbn.readFrame(fh)
+		fh.seek(fileLoc)
+		frame1G = _gofast.readTBN(fh, tbn.Frame())
+		
+		self.assertEqual(frame1.header.tbnID, frame1G.header.tbnID)
+		self.assertEqual(frame1.header.frameCount, frame1G.header.frameCount)
+		self.assertEqual(frame1.header.secondsCount, frame1G.header.secondsCount)
+		self.assertEqual(frame1.data.timeTag, frame1G.data.timeTag)
+		for i in xrange(512):
+			self.assertEqual(frame1.data.iq[i].real, frame1G.data.iq[i].real)
+			self.assertEqual(frame1.data.iq[i].imag, frame1G.data.iq[i].imag)
+		
+		# Second frame
+		fileLoc = fh.tell()
+		frame2 = tbn.readFrame(fh)
+		fh.seek(fileLoc)
+		frame2G = _gofast.readTBN(fh, tbn.Frame())
+		
+		self.assertEqual(frame2.header.tbnID, frame2G.header.tbnID)
+		self.assertEqual(frame2.header.frameCount, frame2G.header.frameCount)
+		self.assertEqual(frame2.header.secondsCount, frame2G.header.secondsCount)
+		self.assertEqual(frame2.data.timeTag, frame2G.data.timeTag)
+		for i in xrange(512):
+			self.assertEqual(frame2.data.iq[i].real, frame2G.data.iq[i].real)
+			self.assertEqual(frame2.data.iq[i].imag, frame2G.data.iq[i].imag)
+		
+		fh.close()
 
 	def test_tbn_errors(self):
 		"""Test reading in all frames from a truncated TBN file."""
@@ -182,6 +272,25 @@ class reader_tests(unittest.TestCase):
 		fh = open(tbnFile, 'rb')
 		fh.seek(1)
 		self.assertRaises(errors.syncError, tbn.readFrame, fh)
+		fh.close()
+		
+	def test_tbn_errors_gofast(self):
+		"""Test reading in all frames from a truncated TBN file."""
+
+		fh = open(tbnFile, 'rb')
+		# Frames 1 through 29
+		for i in range(1,30):
+			frame = _gofast.readTBN(fh, tbn.Frame())
+
+		# Last frame should be an error (_gofast.eofError)
+		self.assertRaises(_gofast.eofError, _gofast.readTBN, fh, tbn.Frame())
+		fh.close()
+		
+		# If we offset in the file by 1 byte, we should be a 
+		# sync error (_gofast.syncError).
+		fh = open(tbnFile, 'rb')
+		fh.seek(1)
+		self.assertRaises(_gofast.syncError, _gofast.readTBN, fh, tbn.Frame())
 		fh.close()
 
 	def test_tbn_block(self):

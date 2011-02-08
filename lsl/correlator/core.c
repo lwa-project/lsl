@@ -1812,7 +1812,8 @@ static PyMethodDef CorrelatorMethods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-PyDoc_STRVAR(correlator_doc, "C-based F and X engines for the LWA software FX correlator.  These function\n\
+PyDoc_STRVAR(correlator_doc, \
+"C-based F and X engines for the LWA software FX correlator.  These function\n\
 are meant to provide an alternative to the lsl.correlator.fx.correlate function and \n\
 provide a much-needed speed boost to cross-correlation.\n\
 \n\
