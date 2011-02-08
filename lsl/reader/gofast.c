@@ -70,7 +70,6 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	sync2 = bytes[2];
 	sync3 = bytes[1];
 	sync4 = bytes[0];
-	printf("%i %i %i %i -> %i\n", sync1, sync2, sync3, sync4, validSync(sync1, sync2, sync3, sync4));
 	if( !validSync(sync1, sync2, sync3, sync4) ) {
 		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
 		return NULL;
