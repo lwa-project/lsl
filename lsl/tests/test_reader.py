@@ -104,6 +104,36 @@ class reader_tests(unittest.TestCase):
 		for i in xrange(400):
 			self.assertEqual(frame2.data.xy[0,i], frame2G.data.xy[0,i])
 			self.assertEqual(frame2.data.xy[1,i], frame2G.data.xy[1,i])
+			
+		# Third frame
+		fileLoc = fh.tell()
+		frame3 = tbw.readFrame(fh)
+		fh.seek(fileLoc)
+		frame3G = _gofast.readTBW(fh, tbw.Frame())
+		
+		self.assertEqual(frame3.parseID(), frame3G.parseID())
+		self.assertEqual(frame3.header.tbwID, frame3G.header.tbwID)
+		self.assertEqual(frame3.header.frameCount, frame3G.header.frameCount)
+		self.assertEqual(frame3.header.secondsCount, frame3G.header.secondsCount)
+		self.assertEqual(frame3.data.timeTag, frame3G.data.timeTag)
+		for i in xrange(400):
+			self.assertEqual(frame3.data.xy[0,i], frame3G.data.xy[0,i])
+			self.assertEqual(frame3.data.xy[1,i], frame3G.data.xy[1,i])
+			
+		# Fourth frame
+		fileLoc = fh.tell()
+		frame4 = tbw.readFrame(fh)
+		fh.seek(fileLoc)
+		frame4G = _gofast.readTBW(fh, tbw.Frame())
+		
+		self.assertEqual(frame4.parseID(), frame4G.parseID())
+		self.assertEqual(frame4.header.tbwID, frame4G.header.tbwID)
+		self.assertEqual(frame4.header.frameCount, frame4G.header.frameCount)
+		self.assertEqual(frame4.header.secondsCount, frame4G.header.secondsCount)
+		self.assertEqual(frame4.data.timeTag, frame4G.data.timeTag)
+		for i in xrange(400):
+			self.assertEqual(frame4.data.xy[0,i], frame4G.data.xy[0,i])
+			self.assertEqual(frame4.data.xy[1,i], frame4G.data.xy[1,i])
 		
 		fh.close()
 
@@ -252,6 +282,34 @@ class reader_tests(unittest.TestCase):
 		for i in xrange(512):
 			self.assertEqual(frame2.data.iq[i].real, frame2G.data.iq[i].real)
 			self.assertEqual(frame2.data.iq[i].imag, frame2G.data.iq[i].imag)
+		
+		# Third frame
+		fileLoc = fh.tell()
+		frame3 = tbn.readFrame(fh)
+		fh.seek(fileLoc)
+		frame3G = _gofast.readTBN(fh, tbn.Frame())
+		
+		self.assertEqual(frame3.header.tbnID, frame3G.header.tbnID)
+		self.assertEqual(frame3.header.frameCount, frame3G.header.frameCount)
+		self.assertEqual(frame3.header.secondsCount, frame3G.header.secondsCount)
+		self.assertEqual(frame3.data.timeTag, frame3G.data.timeTag)
+		for i in xrange(512):
+			self.assertEqual(frame3.data.iq[i].real, frame3G.data.iq[i].real)
+			self.assertEqual(frame3.data.iq[i].imag, frame3G.data.iq[i].imag)
+			
+		# Fourth frame
+		fileLoc = fh.tell()
+		frame4 = tbn.readFrame(fh)
+		fh.seek(fileLoc)
+		frame4G = _gofast.readTBN(fh, tbn.Frame())
+		
+		self.assertEqual(frame4.header.tbnID, frame4G.header.tbnID)
+		self.assertEqual(frame4.header.frameCount, frame4G.header.frameCount)
+		self.assertEqual(frame4.header.secondsCount, frame4G.header.secondsCount)
+		self.assertEqual(frame4.data.timeTag, frame4G.data.timeTag)
+		for i in xrange(512):
+			self.assertEqual(frame4.data.iq[i].real, frame4G.data.iq[i].real)
+			self.assertEqual(frame4.data.iq[i].imag, frame4G.data.iq[i].imag)
 		
 		fh.close()
 

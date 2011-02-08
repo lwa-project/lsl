@@ -9,8 +9,13 @@
 #define PI 3.1415926535898
 #define imaginary _Complex_I
 
+/*
+  Exceptions for the Go Fast! Readers
+*/
+
 static PyObject *syncError;
 static PyObject *eofError;
+
 
 /*
   Validate a collection of Mark 5C sync words.  Return 1 is all are
@@ -21,7 +26,7 @@ int validSync(unsigned char w1, unsigned char w2, unsigned char w3, unsigned cha
 	int valid = 1;
 	
 	if( w1 != 92 || w2 != 222 || w3 != 192 || w4 != 222 ) {
-		valid = 1;
+		valid = 0;
 	}
 	
 	return valid;
@@ -48,7 +53,11 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	unsigned char bytes[1224];
 	i = fread(bytes, 1, sizeof(bytes), fh);	
 	if(ferror(fh)) {
-		fclose(fh);
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_SetString(PyExc_IOError, "An error occured while reading from the file");
+		return NULL;
+	}
+	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_SetString(eofError, "End of file encountered during filehandle read");
 		return NULL;
@@ -61,8 +70,9 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	sync2 = bytes[2];
 	sync3 = bytes[1];
 	sync4 = bytes[0];
+	printf("%i %i %i %i -> %i\n", sync1, sync2, sync3, sync4, validSync(sync1, sync2, sync3, sync4));
 	if( !validSync(sync1, sync2, sync3, sync4) ) {
-		PyErr_SetString(syncError, "Mark 5C sync word differs from expected");
+		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
 		return NULL;
 	}
 	unsigned long int frameCount;
@@ -202,7 +212,11 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	unsigned char bytes[1048];
 	i = fread(bytes, 1, sizeof(bytes), fh);	
 	if(ferror(fh)) {
-		fclose(fh);
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_SetString(PyExc_IOError, "An error occured while reading from the file");
+		return NULL;
+	}
+	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_SetString(eofError, "End of file encountered during filehandle read");
 		return NULL;
@@ -216,7 +230,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	sync3 = bytes[1];
 	sync4 = bytes[0];
 	if( !validSync(sync1, sync2, sync3, sync4) ) {
-		PyErr_SetString(syncError, "Mark 5C sync word differs from expected");
+		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
 		return NULL;
 	}
 	unsigned long int frameCount;
@@ -322,7 +336,11 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	unsigned char bytes[4128];
 	i = fread(bytes, 1, sizeof(bytes), fh);	
 	if(ferror(fh)) {
-		fclose(fh);
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_SetString(PyExc_IOError, "An error occured while reading from the file");
+		return NULL;
+	}
+	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_SetString(eofError, "End of file encountered during filehandle read");
 		return NULL;
@@ -336,7 +354,7 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	sync3 = bytes[1];
 	sync4 = bytes[0];
 	if( !validSync(sync1, sync2, sync3, sync4) ) {
-		PyErr_SetString(syncError, "Mark 5C sync word differs from expected");
+		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
 		return NULL;
 	}
 	unsigned char drxID;
