@@ -14,14 +14,15 @@ from lsl.reader import errors
 from lsl.reader import _gofast
 
 
-__revision__ = "$Revision:1 $"
-__version__  = "0.1"
+__revision__ = "$ Revision: 2 $"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
 s60File = os.path.join(dataPath, 'tests', 's60-test.dat')
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
+drxFile = os.path.join(dataPath, 'tests', 'sim-drx-test.dat')
 
 
 class reader_tests(unittest.TestCase):
@@ -75,65 +76,21 @@ class reader_tests(unittest.TestCase):
 		"""Test the Go Fast! TBW reader."""
 		
 		fh = open(tbwFile, 'rb')
-		# First frame is really TBW and stores the correct stand ID
-		fileLoc = fh.tell()
-		frame1 = tbw.readFrame(fh)
-		fh.seek(fileLoc)
-		frame1G = _gofast.readTBW(fh, tbw.Frame())
+		# Read and validate the first four frames
+		for i in xrange(4):
+			fileLoc = fh.tell()
+			frame = tbw.readFrame(fh)
+			fh.seek(fileLoc)
+			frameG = _gofast.readTBW(fh, tbw.Frame())
 		
-		self.assertEqual(frame1.parseID(), frame1G.parseID())
-		self.assertEqual(frame1.header.tbwID, frame1G.header.tbwID)
-		self.assertEqual(frame1.header.frameCount, frame1G.header.frameCount)
-		self.assertEqual(frame1.header.secondsCount, frame1G.header.secondsCount)
-		self.assertEqual(frame1.data.timeTag, frame1G.data.timeTag)
-		for i in xrange(400):
-			self.assertEqual(frame1.data.xy[0,i], frame1G.data.xy[0,i])
-			self.assertEqual(frame1.data.xy[1,i], frame1G.data.xy[1,i])
-		
-		# Second frame
-		fileLoc = fh.tell()
-		frame2 = tbw.readFrame(fh)
-		fh.seek(fileLoc)
-		frame2G = _gofast.readTBW(fh, tbw.Frame())
-		
-		self.assertEqual(frame2.parseID(), frame2G.parseID())
-		self.assertEqual(frame2.header.tbwID, frame2G.header.tbwID)
-		self.assertEqual(frame2.header.frameCount, frame2G.header.frameCount)
-		self.assertEqual(frame2.header.secondsCount, frame2G.header.secondsCount)
-		self.assertEqual(frame2.data.timeTag, frame2G.data.timeTag)
-		for i in xrange(400):
-			self.assertEqual(frame2.data.xy[0,i], frame2G.data.xy[0,i])
-			self.assertEqual(frame2.data.xy[1,i], frame2G.data.xy[1,i])
-			
-		# Third frame
-		fileLoc = fh.tell()
-		frame3 = tbw.readFrame(fh)
-		fh.seek(fileLoc)
-		frame3G = _gofast.readTBW(fh, tbw.Frame())
-		
-		self.assertEqual(frame3.parseID(), frame3G.parseID())
-		self.assertEqual(frame3.header.tbwID, frame3G.header.tbwID)
-		self.assertEqual(frame3.header.frameCount, frame3G.header.frameCount)
-		self.assertEqual(frame3.header.secondsCount, frame3G.header.secondsCount)
-		self.assertEqual(frame3.data.timeTag, frame3G.data.timeTag)
-		for i in xrange(400):
-			self.assertEqual(frame3.data.xy[0,i], frame3G.data.xy[0,i])
-			self.assertEqual(frame3.data.xy[1,i], frame3G.data.xy[1,i])
-			
-		# Fourth frame
-		fileLoc = fh.tell()
-		frame4 = tbw.readFrame(fh)
-		fh.seek(fileLoc)
-		frame4G = _gofast.readTBW(fh, tbw.Frame())
-		
-		self.assertEqual(frame4.parseID(), frame4G.parseID())
-		self.assertEqual(frame4.header.tbwID, frame4G.header.tbwID)
-		self.assertEqual(frame4.header.frameCount, frame4G.header.frameCount)
-		self.assertEqual(frame4.header.secondsCount, frame4G.header.secondsCount)
-		self.assertEqual(frame4.data.timeTag, frame4G.data.timeTag)
-		for i in xrange(400):
-			self.assertEqual(frame4.data.xy[0,i], frame4G.data.xy[0,i])
-			self.assertEqual(frame4.data.xy[1,i], frame4G.data.xy[1,i])
+			self.assertEqual(frame.parseID(), frameG.parseID())
+			self.assertEqual(frame.header.tbwID, frameG.header.tbwID)
+			self.assertEqual(frame.header.frameCount, frameG.header.frameCount)
+			self.assertEqual(frame.header.secondsCount, frameG.header.secondsCount)
+			self.assertEqual(frame.data.timeTag, frameG.data.timeTag)
+			for j in xrange(400):
+				self.assertEqual(frame.data.xy[0,j], frameG.data.xy[0,j])
+				self.assertEqual(frame.data.xy[1,j], frameG.data.xy[1,j])
 		
 		fh.close()
 
@@ -239,7 +196,7 @@ class reader_tests(unittest.TestCase):
 		"""Test reading in a frame from a TBN file."""
 
 		fh = open(tbnFile, 'rb')
-		# First frame is really TBW and stores the correct stand ID
+		# First frame is really TBN and stores the correct IDs
 		frame1 = tbn.readFrame(fh)
 		stand, pol = frame1.parseID()
 		self.assertEqual(stand, 1)
@@ -255,61 +212,20 @@ class reader_tests(unittest.TestCase):
 		"""Test the Go Fast! TBN reader."""
 		
 		fh = open(tbnFile, 'rb')
-		# First frame is really TBN and stores the correct stand ID
-		fileLoc = fh.tell()
-		frame1 = tbn.readFrame(fh)
-		fh.seek(fileLoc)
-		frame1G = _gofast.readTBN(fh, tbn.Frame())
+		# Read and validate the first four frames
+		for i in xrange(4):
+			fileLoc = fh.tell()
+			frame = tbn.readFrame(fh)
+			fh.seek(fileLoc)
+			frameG = _gofast.readTBN(fh, tbn.Frame())
 		
-		self.assertEqual(frame1.header.tbnID, frame1G.header.tbnID)
-		self.assertEqual(frame1.header.frameCount, frame1G.header.frameCount)
-		self.assertEqual(frame1.header.secondsCount, frame1G.header.secondsCount)
-		self.assertEqual(frame1.data.timeTag, frame1G.data.timeTag)
-		for i in xrange(512):
-			self.assertEqual(frame1.data.iq[i].real, frame1G.data.iq[i].real)
-			self.assertEqual(frame1.data.iq[i].imag, frame1G.data.iq[i].imag)
-		
-		# Second frame
-		fileLoc = fh.tell()
-		frame2 = tbn.readFrame(fh)
-		fh.seek(fileLoc)
-		frame2G = _gofast.readTBN(fh, tbn.Frame())
-		
-		self.assertEqual(frame2.header.tbnID, frame2G.header.tbnID)
-		self.assertEqual(frame2.header.frameCount, frame2G.header.frameCount)
-		self.assertEqual(frame2.header.secondsCount, frame2G.header.secondsCount)
-		self.assertEqual(frame2.data.timeTag, frame2G.data.timeTag)
-		for i in xrange(512):
-			self.assertEqual(frame2.data.iq[i].real, frame2G.data.iq[i].real)
-			self.assertEqual(frame2.data.iq[i].imag, frame2G.data.iq[i].imag)
-		
-		# Third frame
-		fileLoc = fh.tell()
-		frame3 = tbn.readFrame(fh)
-		fh.seek(fileLoc)
-		frame3G = _gofast.readTBN(fh, tbn.Frame())
-		
-		self.assertEqual(frame3.header.tbnID, frame3G.header.tbnID)
-		self.assertEqual(frame3.header.frameCount, frame3G.header.frameCount)
-		self.assertEqual(frame3.header.secondsCount, frame3G.header.secondsCount)
-		self.assertEqual(frame3.data.timeTag, frame3G.data.timeTag)
-		for i in xrange(512):
-			self.assertEqual(frame3.data.iq[i].real, frame3G.data.iq[i].real)
-			self.assertEqual(frame3.data.iq[i].imag, frame3G.data.iq[i].imag)
-			
-		# Fourth frame
-		fileLoc = fh.tell()
-		frame4 = tbn.readFrame(fh)
-		fh.seek(fileLoc)
-		frame4G = _gofast.readTBN(fh, tbn.Frame())
-		
-		self.assertEqual(frame4.header.tbnID, frame4G.header.tbnID)
-		self.assertEqual(frame4.header.frameCount, frame4G.header.frameCount)
-		self.assertEqual(frame4.header.secondsCount, frame4G.header.secondsCount)
-		self.assertEqual(frame4.data.timeTag, frame4G.data.timeTag)
-		for i in xrange(512):
-			self.assertEqual(frame4.data.iq[i].real, frame4G.data.iq[i].real)
-			self.assertEqual(frame4.data.iq[i].imag, frame4G.data.iq[i].imag)
+			self.assertEqual(frame.header.tbnID, frameG.header.tbnID)
+			self.assertEqual(frame.header.frameCount, frameG.header.frameCount)
+			self.assertEqual(frame.header.secondsCount, frameG.header.secondsCount)
+			self.assertEqual(frame.data.timeTag, frameG.data.timeTag)
+			for j in xrange(512):
+				self.assertEqual(frame.data.iq[j].real, frameG.data.iq[j].real)
+				self.assertEqual(frame.data.iq[j].imag, frameG.data.iq[j].imag)
 		
 		fh.close()
 
@@ -435,7 +351,152 @@ class reader_tests(unittest.TestCase):
 		
 	### DRX ###
 
-	# Maybe someday...
+	def test_drx_read(self):
+		"""Test reading in a frame from a DRX file."""
+
+		fh = open(drxFile, 'rb')
+		# First frame is really DRX and stores the IDs
+		frame1 = drx.readFrame(fh)
+		beam, tune, pol = frame1.parseID()
+		self.assertEqual(beam, 1)
+		self.assertEqual(tune, 1)
+		self.assertEqual(pol, 0)
+		# Second frame
+		frame2 = drx.readFrame(fh)
+		beam, tune, pol = frame2.parseID()
+		self.assertEqual(beam, 1)
+		self.assertEqual(tune, 1)
+		self.assertEqual(pol, 1)
+		fh.close()
+		
+	def test_drx_read_gofast(self):
+		"""Test the Go Fast! DRX reader."""
+		
+		fh = open(drxFile, 'rb')
+		# Read and validate the first four frames
+		for i in xrange(4):
+			fileLoc = fh.tell()
+			frame = drx.readFrame(fh)
+			fh.seek(fileLoc)
+			frameG = _gofast.readDRX(fh, drx.Frame())
+
+			self.assertEqual(frame.header.drxID, frameG.header.drxID)
+			self.assertEqual(frame.header.decimation, frameG.header.decimation)
+			self.assertEqual(frame.header.frameCount, frameG.header.frameCount)
+			self.assertEqual(frame.header.secondsCount, frameG.header.secondsCount)
+			self.assertEqual(frame.header.timeOffset, frameG.header.timeOffset)
+			self.assertEqual(frame.data.timeTag, frameG.data.timeTag)
+			self.assertEqual(frame.data.flags, frameG.data.flags)
+			for j in xrange(4096):
+				self.assertEqual(frame.data.iq[j].real, frameG.data.iq[j].real)
+				self.assertEqual(frame.data.iq[j].imag, frameG.data.iq[j].imag)
+		
+		fh.close()
+
+	def test_drx_errors(self):
+		"""Test reading in all frames from a truncated DRX file."""
+
+		fh = open(drxFile, 'rb')
+		# Frames 1 through 16
+		for i in range(1,17):
+			frame = drx.readFrame(fh)
+
+		# Last frame should be an error (errors.numpyError)
+		self.assertRaises(errors.numpyError, drx.readFrame, fh)
+		fh.close()
+		
+		# If we offset in the file by 1 byte, we should be a 
+		# sync error (errors.syncError).
+		fh = open(drxFile, 'rb')
+		fh.seek(1)
+		self.assertRaises(errors.syncError, drx.readFrame, fh)
+		fh.close()
+		
+	def test_drx_errors_gofast(self):
+		"""Test reading in all frames from a truncated DRX file."""
+
+		fh = open(drxFile, 'rb')
+		# Frames 1 through 16
+		for i in range(1,17):
+			frame = _gofast.readDRX(fh, drx.Frame())
+
+		# Last frame should be an error (_gofast.eofError)
+		self.assertRaises(_gofast.eofError, _gofast.readDRX, fh, drx.Frame())
+		fh.close()
+		
+		# If we offset in the file by 1 byte, we should be a 
+		# sync error (_gofast.syncError).
+		fh = open(drxFile, 'rb')
+		fh.seek(1)
+		self.assertRaises(_gofast.syncError, _gofast.readDRX, fh, drx.Frame())
+		fh.close()
+
+	def test_drx_beam(self):
+		"""Test finding out how many beams are present in a DRX file."""
+
+		fh = open(drxFile, 'rb')
+		nBeam = drx.getBeamCount(fh)
+		self.assertEqual(nBeam, 1)
+		fh.close()
+
+	def test_drx_block(self):
+		"""Test finding out how many tunings/pols. per beam are in a DRX file."""
+
+		fh = open(drxFile, 'rb')
+		b1, b2, b3, b4 = drx.getFramesPerObs(fh)
+		self.assertEqual(b1, 2)
+		self.assertEqual(b2, 0)
+		self.assertEqual(b3, 0)
+		self.assertEqual(b4, 0)
+		fh.close()
+
+	def test_drx_comps(self):
+		"""Test the DRX frame comparison operators (>, <, etc.) for time tags."""
+
+		fh = open(drxFile, 'rb')
+		# Frames 1 through 10
+		frames = []
+		for i in range(1,11):
+			frames.append(drx.readFrame(fh))
+		fh.close()
+
+		self.assertTrue(frames[0] > 0)
+		self.assertTrue(frames[-1] >= frames[0])
+		self.assertTrue(frames[0] == frames[0])
+		self.assertFalse(frames[0] == frames[-1])
+		self.assertFalse(frames[0] != frames[0])
+
+	def test_drx_math(self):
+		"""Test mathematical operations on DRX frame data via frames."""
+
+		fh = open(drxFile, 'rb')
+		# Frames 1 through 10
+		frames = []
+		for i in range(1,11):
+			frames.append(drx.readFrame(fh))
+		fh.close()
+
+		# Multiplication
+		frameT = frames[0] * 2.0
+		for i in range(4096):
+			self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 6)
+		frameT *= 2.0
+		for i in range(4096):
+			self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 6)
+		frameT = frames[0] * frames[1]
+		for i in range(4096):
+			self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 6)
+		
+		# Addition
+		frameA = frames[0] + 2.0
+		for i in range(4096):
+			self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 6)
+		frameA += 2.0
+		for i in range(4096):
+			self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 6)
+		frameA = frames[0] + frames[1]
+		for i in range(4096):
+			self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 6)
 
 
 class reader_test_suite(unittest.TestSuite):

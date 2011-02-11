@@ -135,6 +135,10 @@ class SimFrame(drx.Frame):
 		
 		self.header = drxFrame.header
 		self.data = drxFrame.data
+
+		inverseCodes = {}
+		for code,rate in drx.filterCodes.iteritems():
+			inverseCodes[int(rate)] = code
 		
 		# Back-fill the class' fields to make sure the object is consistent
 		## Header
@@ -142,7 +146,8 @@ class SimFrame(drx.Frame):
 		self.tune = self.header.parseID()[1]
 		self.pol = self.header.parseID()[2]
 		self.frameCount = self.header.frameCount
-		self.filterCode = int(dp_common.fS / self.header.decimations)
+		self.secondsCount = self.header.secondsCount
+		self.filterCode = inverseCodes[int(dp_common.fS / self.header.decimation)]
 		self.timeOffset = self.header.timeOffset
 		## Data
 		self.obsTime = self.data.timeTag

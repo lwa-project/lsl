@@ -28,6 +28,14 @@ class tsfits_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.writer.tsfits
 	module."""
 
+	testPath = None
+
+	def setUp(self):
+		"""Turn off all numpy warnings and create the temporary file directory."""
+
+		numpy.seterr(all='ignore')
+		self.testPath = tempfile.mkdtemp(prefix='test-tsfits-', suffix='.tmp')
+
 	def __getTBW(self):
 		"""Private function to load in the test TBW data and get the frames."""
 
@@ -65,8 +73,7 @@ class tsfits_tests(unittest.TestCase):
 		#"""Test that TBW data can be written to a TS FITS file one at a time."""
 
 		## Setup the file names
-		#testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		#testFile = os.path.join(testPath, 'ts-tbw-testS.fits')
+		#testFile = os.path.join(self.testPath, 'tbw-test-WS.fits')
 
 		## Get some data and organize it into a nice numpy array
 		#frames = self.__getTBW()
@@ -125,16 +132,13 @@ class tsfits_tests(unittest.TestCase):
 			
 
 		#hdulist.close()
-		#os.unlink(testFile)
-		#os.rmdir(testPath)
 
 	def test_write_tbw_queue(self):
 		"""Test that TBW data can be written to a TS FITS file with a queue."""
 		
 		
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'ts-tbw-testQ.fits')
+		testFile = os.path.join(self.testPath, 'tbw-test-WQ.fits')
 
 		# Get some data and organize it into a nice numpy array
 		frames = self.__getTBW()
@@ -191,15 +195,12 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_write_tbn_singleV(self):
 		"""Test that TBN data can be written to a TS FITS file one at a time (simple)."""
 
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'ts-tbn-testS.fits')
+		testFile = os.path.join(self.testPath, 'tbn-test-WSV.fits')
 
 		# Get some data and organize it into a nice numpy array
 		frames = self.__getTBN(vanilla=True)
@@ -255,15 +256,12 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_write_tbn_single(self):
 		"""Test that TBN data can be written to a TS FITS file one at a time (full)."""
 
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'ts-tbn-testS.fits')
+		testFile = os.path.join(self.testPath, 'tbn-test-WS.fits')
 
 		# Get some data and organize it into a nice numpy array
 		frames = self.__getTBN()
@@ -319,16 +317,13 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_write_tbn_queueV(self):
 		"""Test that TBN data can be written to a TS FITS file with a queue (simple)."""
 		
 		
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'ts-tbn-testQ.fits')
+		testFile = os.path.join(self.testPath, 'tbn-test-WQV.fits')
 
 		# Get some data
 		frames = self.__getTBN(vanilla=True)
@@ -386,15 +381,12 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_write_tbn_queue(self):
 		"""Test that TBN data can be written to a TS FITS file with a queue (full)."""
 		
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'ts-tbn-testQ.fits')
+		testFile = os.path.join(self.testPath, 'tbn-test-WQ.fits')
 
 		# Get some data
 		frames = self.__getTBN()
@@ -452,8 +444,15 @@ class tsfits_tests(unittest.TestCase):
 				count[pol] = count[pol] + 1
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
+
+	def tearDown(self):
+		"""Remove the test path directory and its contents"""
+
+		tempFiles = os.listdir(self.testPath)
+		for tempFile in tempFiles:
+			os.unlink(os.path.join(self.testPath, tempFile))
+		os.rmdir(self.testPath)
+		self.testPath = None
 
 
 class tsfits_test_suite(unittest.TestSuite):

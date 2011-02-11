@@ -145,9 +145,10 @@ class Frame(object):
 		a number to every element in the data section."""
 		
 		try:
-			self.data.xy += y.data.xy
+			self.data.iq += y.data.iq
 		except AttributeError:
-			self.data.xy += y
+			self.data.iq += y
+		return self
 		
 	def __mul__(self, y):
 		"""Multiple the data sections of two frames together or multiply 
@@ -162,9 +163,10 @@ class Frame(object):
 		multiply a number to every element in the data section."""
 		
 		try:
-			self.data.xy *= y.data.xy
+			self.data.iq *= y.data.iq
 		except AttributeError:
-			self.data.xy *= y
+			self.data.iq *= y
+		return self
 			
 	def __eq__(self, y):
 		"""Check if the time tags of two frames are equal or if the time
@@ -313,7 +315,7 @@ def __readHeader(filehandle, Verbose=False):
 	newHeader = FrameHeader()
 	newHeader.frameCount = frameCount
 	newHeader.drxID = drxID
-	newHeader.secondsCount = secondsCount
+	newHeader.secondsCount = secondsCount[0]
 	newHeader.decimation = decimation
 	newHeader.timeOffset = timeOffset
 	newHeader.raw = rawHeader
@@ -360,7 +362,7 @@ def __readData(filehandle):
 	
 	newData = FrameData()
 	newData.timeTag = timeTag[0]
-	newData.flags = flags
+	newData.flags = flags[0]
 	newData.iq = data
 
 	return newData

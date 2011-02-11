@@ -23,6 +23,14 @@ class fitsidi_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.writer.fitsidi
 	module."""
 
+	testPath = None
+
+	def setUp(self):
+		"""Turn off all numpy warnings and create the temporary file directory."""
+
+		numpy.seterr(all='ignore')
+		self.testPath = tempfile.mkdtemp(prefix='test-fitsidi-', suffix='.tmp')
+
 	def __initData(self):
 		"""Private function to generate a random set of data for writing a FITS
 		IDI file.  The data is returned as a dictionary with keys:
@@ -49,8 +57,7 @@ class fitsidi_tests(unittest.TestCase):
 		"""Test if the FITS IDI writer writes all of the tables."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-W.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -71,15 +78,12 @@ class fitsidi_tests(unittest.TestCase):
 			self.assertTrue(ext in extNames)
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_array_geometry(self):
 		"""Test the ARRAY_GEOMETRY table."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-AG.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -104,15 +108,12 @@ class fitsidi_tests(unittest.TestCase):
 			self.assertEqual(name, anname)
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_frequency(self):
 		"""Test the FREQUENCY table."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-FQ.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -141,15 +142,12 @@ class fitsidi_tests(unittest.TestCase):
 		self.assertEqual(fq.field('SIDEBAND')[0], 1)
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_antenna(self):
 		"""Test the ANTENNA table."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-AN.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -173,15 +171,12 @@ class fitsidi_tests(unittest.TestCase):
 			self.assertEqual(freqid, 1)
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_bandpass(self):
 		"""Test the BANDPASS table."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-BP.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -209,15 +204,12 @@ class fitsidi_tests(unittest.TestCase):
 			self.assertEqual(freqid, 1)
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_source(self):
 		"""Test the SOURCE table."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-SO.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -240,15 +232,12 @@ class fitsidi_tests(unittest.TestCase):
 		self.assertEqual(so.field('SOURCE_ID'), 1)
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_uvdata(self):
 		"""Test the UV_DATA table."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-UV.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -309,15 +298,12 @@ class fitsidi_tests(unittest.TestCase):
 			i = i + 1
 		
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_mapper(self):
 		"""Test the NOSTA_MAPPER table."""
 
 		testTime = time.time()
-		testPath = tempfile.mkdtemp(prefix='fitsidi-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'idi-test.fits')
+		testFile = os.path.join(self.testPath, 'idi-test-SM.fits')
 		
 		# Get some data
 		data = self.__initData()
@@ -348,8 +334,15 @@ class fitsidi_tests(unittest.TestCase):
 				self.assertEqual(mact, int(anam[3:]))
 
 		hdulist.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
+
+	def tearDown(self):
+		"""Remove the test path directory and its contents"""
+
+		tempFiles = os.listdir(self.testPath)
+		for tempFile in tempFiles:
+			os.unlink(os.path.join(self.testPath, tempFile))
+		os.rmdir(self.testPath)
+		self.testPath = None
 
 
 class fitsidi_test_suite(unittest.TestSuite):

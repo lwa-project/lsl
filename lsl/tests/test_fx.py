@@ -4,6 +4,7 @@
 
 import os
 import time
+import warnings
 import unittest
 import numpy
 
@@ -19,9 +20,10 @@ class fx_tests(unittest.TestCase):
 	module."""
 
 	def setUp(self):
-		"""Turn off all numpy warnings."""
+		"""Turn off all numpy and python warnings."""
 
 		numpy.seterr(all='ignore')
+		warnings.simplefilter('ignore')
 
 	def test_window(self):
 		"""Test that window functions can be passed to calcSpectra/calcSpectrum."""

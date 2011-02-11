@@ -27,6 +27,14 @@ class sdfits_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.writer.sdfits
 	module."""
 
+	testPath = None
+
+	def setUp(self):
+		"""Turn off all numpy warnings and create the temporary file directory."""
+
+		numpy.seterr(all='ignore')
+		self.testPath = tempfile.mkdtemp(prefix='test-sdfits-', suffix='.tmp')
+
 	def __getTBW(self):
 		"""Private function to load in the test TBW data and get the frames."""
 
@@ -64,8 +72,7 @@ class sdfits_tests(unittest.TestCase):
 		#"""Test that TBW data can be written to a SD FITS file one at a time."""
 
 		## Setup the file names
-		#testPath = tempfile.mkdtemp(prefix='sdfits-', suffix='.tmp')
-		#testFile = os.path.join(testPath, 'sd-tbw-test.fits')
+		#testFile = os.path.join(self.testPath, 'tbw-test-WS.fits')
 
 		## Get some data and organize it into a nice numpy array
 		#frames = self.__getTBW()
@@ -116,15 +123,12 @@ class sdfits_tests(unittest.TestCase):
 				##count[pol] = count[pol] + 1
 		
 		#hdulist.close
-		#os.unlink(testFile)
-		#os.rmdir(testPath)
 
 	def test_write_tbw_queue(self):
 		"""Test that TBW data can be written to a SD FITS file with a queue."""
 
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='sdfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'sd-tbw-test.fits')
+		testFile = os.path.join(self.testPath, 'tbw-test-WQ.fits')
 
 		# Get some data and organize it into a nice numpy array
 		frames = self.__getTBW()
@@ -175,15 +179,12 @@ class sdfits_tests(unittest.TestCase):
 				#count[pol] = count[pol] + 1
 		
 		hdulist.close
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_write_tbn_single(self):
 		"""Test that TBN data can be written to a SD FITS file one at a time."""
 
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='sdfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'sd-tbn-testS.fits')
+		testFile = os.path.join(self.testPath, 'tbn-test-WS.fits')
 
 		# Get some data and organize it into a nice numpy array
 		frames = self.__getTBN()
@@ -238,15 +239,12 @@ class sdfits_tests(unittest.TestCase):
 				#count[pol] = count[pol] + 1
 		
 		hdulist.close
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_write_tbn_queue(self):
 		"""Test that TBN data can be written to a SD FITS file with a queue"""
 		
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='sdfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'sd-tbn-testQ.fits')
+		testFile = os.path.join(self.testPath, 'tbn-test-WQ.fits')
 
 		# Get some data
 		frames = self.__getTBN()
@@ -303,8 +301,15 @@ class sdfits_tests(unittest.TestCase):
 				#count[pol] = count[pol] + 1
 		
 		hdulist.close
-		os.unlink(testFile)
-		os.rmdir(testPath)
+
+	def tearDown(self):
+		"""Remove the test path directory and its contents"""
+
+		tempFiles = os.listdir(self.testPath)
+		for tempFile in tempFiles:
+			os.unlink(os.path.join(self.testPath, tempFile))
+		os.rmdir(self.testPath)
+		self.testPath = None
 
 
 class  sdfits_test_suite(unittest.TestSuite):

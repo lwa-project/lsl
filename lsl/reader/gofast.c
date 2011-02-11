@@ -54,12 +54,12 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	i = fread(bytes, 1, sizeof(bytes), fh);	
 	if(ferror(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_SetString(PyExc_IOError, "An error occured while reading from the file");
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
 		return NULL;
 	}
 	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_SetString(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
 		return NULL;
 	}
 	PyFile_DecUseCount((PyFileObject *) ph);
@@ -108,18 +108,22 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		}
 	
 		// Fill the data array
+		short int *a;
+		a = (short int *) data->data;
 		for(i=0; i<400; i++) {
 			fLoc[0] = (npy_intp) 0;
 			fLoc[1] = (npy_intp) i;
-			temp = bytes[24+3*i]<<4 | (bytes[24+3*i+1]>>4)&15;
-			temp -= 4096*((temp>>11)&1);
-			*(short int *) PyArray_GetPtr(data, fLoc) = temp;
+			temp = (bytes[24+3*i]<<4) | ((bytes[24+3*i+1]>>4)&15);
+			temp -= ((temp&2048)<<1);
+			*(a + i) = (short int) temp;
+			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 
 			fLoc[0] = (npy_intp) 1;
 			fLoc[1] = (npy_intp) i;
-			temp = (bytes[24+3*i+1]&15)<<8 | bytes[24+3*i+2];
-			temp -= 4096*((temp>>11)&1);
-			*(short int *) PyArray_GetPtr(data, fLoc) = temp;
+			temp = ((bytes[24+3*i+1]&15)<<8) | bytes[24+3*i+2];
+			temp -= ((temp&2048)<<1);
+			*(a + 400 + i) = (short int) temp;
+			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 		}
 	} else {
 		dims[0] = 2;
@@ -132,18 +136,22 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		}
 	
 		// Fill the data array
+		short int *a;
+		a = (short int *) data->data;
 		for(i=0; i<1200; i++) {
 			fLoc[0] = 0;
 			fLoc[1] = (npy_intp) i;
 			temp = (bytes[i+24]>>4)&15;
-			temp -= 16*((temp>>3)&1);
-			*(short int *) PyArray_GetPtr(data, fLoc) = temp;
+			temp -= ((temp&8)<<1);
+			*(a + i) = (short int) temp;
+			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 
 			fLoc[0] = 1;
 			fLoc[1] = (npy_intp) i;
 			temp = bytes[i+24]&15;
-			temp -= 16*((temp>>3)&1);
-			*(short int *) PyArray_GetPtr(data, fLoc) = temp;
+			temp -= ((temp&8)<<1);
+			*(a + 400 + i) = (short int) temp;
+			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 		}
 
 	}
@@ -166,7 +174,9 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	Py_DECREF(fData);
 	Py_XDECREF(data);
 
-	return Py_BuildValue("O", frame);
+	output = Py_BuildValue("O", frame);
+
+	return output;
 }
 
 PyDoc_STRVAR(readTBW_doc, \
@@ -212,12 +222,12 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	i = fread(bytes, 1, sizeof(bytes), fh);	
 	if(ferror(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_SetString(PyExc_IOError, "An error occured while reading from the file");
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
 		return NULL;
 	}
 	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_SetString(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
 		return NULL;
 	}
 	PyFile_DecUseCount((PyFileObject *) ph);
@@ -255,7 +265,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	fLoc = PyDimMem_NEW(1);
 	short int tempR, tempI;
 	dims[0] = 512;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, PyArray_CDOUBLE);
+	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, PyArray_CFLOAT);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -263,13 +273,16 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	}
 	
 	// Fill the data array
+	float complex *a;
+	a = (float complex *) data->data;
 	for(i=0; i<512; i++) {
 		fLoc[0] = (npy_intp) i;
 		tempR = bytes[24+2*i];
-		tempR -= 256*((tempR>>7)&1);
+		tempR -= ((tempR&128)<<1);
 		tempI = bytes[24+2*i+1];
-		tempI -= 256*((tempI>>7)&1);
-		*(double complex *) PyArray_GetPtr(data, fLoc) = (double) tempR + imaginary * (double) tempI; 
+		tempI -= ((tempI&128)<<1);
+		*(a + i) = (float) tempR + imaginary * (float) tempI;
+		// *(float complex *) PyArray_GetPtr(data, fLoc) = (float) tempR + imaginary * (float) tempI; 
 	}
 	PyDimMem_FREE(fLoc);
 
@@ -290,7 +303,9 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	Py_DECREF(fData);
 	Py_XDECREF(data);
 
-	return Py_BuildValue("O", frame);
+	output = Py_BuildValue("O", frame);
+
+	return output;
 }
 
 PyDoc_STRVAR(readTBN_doc, \
@@ -336,12 +351,12 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	i = fread(bytes, 1, sizeof(bytes), fh);	
 	if(ferror(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_SetString(PyExc_IOError, "An error occured while reading from the file");
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
 		return NULL;
 	}
 	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_SetString(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
 		return NULL;
 	}
 	PyFile_DecUseCount((PyFileObject *) ph);
@@ -361,38 +376,35 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	unsigned long int frameCount;
 	frameCount = bytes[5]<<16 | bytes[6]<<8 | bytes[7];
 	unsigned long int secondsCount;
-	secondsCount = bytes[8]<<24 | bytes[9]<<16 | bytes[10]<<8 | bytes[11];
+	secondsCount  = bytes[8]<<24 | bytes[9]<<16 | bytes[10]<<8 | bytes[11];
 	unsigned short int decimation;
 	decimation = bytes[12]<<8 | bytes[13];
 	unsigned short int timeOffset;
 	timeOffset = bytes[14]<<8 | bytes[15];
 
 	unsigned long long timeTag;
-	timeTag = ((unsigned long long) bytes[16])<<56 | \
-			((unsigned long long) bytes[17])<<48 | \
-			((unsigned long long) bytes[18])<<40 | \
-			((unsigned long long) bytes[19])<<32 | \
-			((unsigned long long) bytes[20])<<24 | \
-			((unsigned long long) bytes[21])<<16 | \
-			((unsigned long long) bytes[22])<<8 | \
-			bytes[23];
+	timeTag  = ((unsigned long long) bytes[16])<<56;
+	timeTag |= ((unsigned long long) bytes[17])<<48; 
+	timeTag |= ((unsigned long long) bytes[18])<<40;
+	timeTag |= ((unsigned long long) bytes[19])<<32;
+	timeTag |= ((unsigned long long) bytes[20])<<24;
+	timeTag |= ((unsigned long long) bytes[21])<<16;
+	timeTag |= ((unsigned long long) bytes[22])<<8;
+	timeTag |= bytes[23];
 	unsigned long long flags;
-	flags = ((unsigned long long) bytes[24])<<56 | \
-			((unsigned long long) bytes[25])<<48 | \
-			((unsigned long long) bytes[26])<<40 | \
-			((unsigned long long) bytes[27])<<32 | \
-			((unsigned long long) bytes[28])<<24 | \
-			((unsigned long long) bytes[29])<<16 | \
-			((unsigned long long) bytes[30])<<8 | \
-			bytes[31];
-	// Create the output data array
-	npy_intp dims[2];
-	npy_intp *fLoc;
-	fLoc = PyDimMem_NEW(1);
+	flags  = ((unsigned long long) bytes[24])<<56;
+	flags |= ((unsigned long long) bytes[25])<<48;
+	flags |= ((unsigned long long) bytes[26])<<40;
+	flags |= ((unsigned long long) bytes[27])<<32;
+	flags |= ((unsigned long long) bytes[28])<<24;
+	flags |= ((unsigned long long) bytes[29])<<16;
+	flags |= ((unsigned long long) bytes[30])<<8;
+	flags |= bytes[31];
 	
-	short int tempR, tempI;
+	// Create the output data array
+	npy_intp dims[1];
 	dims[0] = 4096;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, PyArray_CDOUBLE);
+	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, PyArray_CFLOAT);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -400,18 +412,24 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	}
 
 	// Fill the data array
+	npy_intp *fLoc;
+	fLoc = PyDimMem_NEW(1);
+	short int tempR, tempI;
+	float complex *a;
+	a = (float complex *) data->data;
 	for(i=0; i<4096; i++) {
 		fLoc[0] = (npy_intp) i;
 		tempR = (bytes[i+32]>>4)&15;
-		tempR -= 16*((tempR>>3)&1);
-		tempI = bytes[i+24]&15;
-		tempI -= 16*((tempI>>3)&1);
-		*(double complex *) PyArray_GetPtr(data, fLoc) = (double) tempR + imaginary * (double) tempI;
+		tempR -= ((tempR&8)<<1);
+		tempI = bytes[i+32]&15;
+		tempI -= ((tempI&8)<<1);
+		*(a + i) = (float) tempR + imaginary * (float) tempI;
+		// *(float complex *) PyArray_GetPtr(data, fLoc) = (float) tempR + imaginary * (float) tempI;
 	}
 	PyDimMem_FREE(fLoc);
 
 	// Save the data to the frame object
-	// 1.  Header
+	// 1. Header
 	fHeader = PyObject_GetAttr(frame, Py_BuildValue("s", "header"));
 	PyObject_SetAttr(fHeader, Py_BuildValue("s", "frameCount"), Py_BuildValue("l", frameCount));
 	PyObject_SetAttr(fHeader, Py_BuildValue("s", "drxID"), Py_BuildValue("i", drxID));
@@ -430,7 +448,9 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	Py_DECREF(fData);
 	Py_XDECREF(data);
 
-	return Py_BuildValue("O", frame);
+	output = Py_BuildValue("O", frame);
+
+	return output;
 }
 
 PyDoc_STRVAR(readDRX_doc, \

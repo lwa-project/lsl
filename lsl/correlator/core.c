@@ -31,130 +31,11 @@ double sinc(double x) {
 
 /*
   FFT Functions ("F-engines")
-    1. FEngineR  - FFT real-valued data one signal at a time
-    2. FEngineR2 - FFT a real-valued collection of signals
-    3. FEngineR3 - window the data and FFT a real-valued collection of signals
-    4. FEngineC  - FFT complex-valued data one signal at a time
-    5. FEngineC2 - FFT a complex-valued collection of signals
-    6. FEngineC3 - window the data and FFT a complex-valued collection of signals
+    1. FEngineR2 - FFT a real-valued collection of signals
+    2. FEngineR3 - window the data and FFT a real-valued collection of signals
+    3. FEngineC2 - FFT a complex-valued collection of signals
+    4. FEngineC3 - window the data and FFT a complex-valued collection of signals
 */
-
-static PyObject *FEngineR(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signal, *freq, *delay, *signalF;
-	PyArrayObject *data, *fq, *times, *dataF;
-	int nChan = 64;
-	int Overlap = 1;
-	double SampleRate = 196.0e6;
-
-	long i, j, nFFT, start;
-	
-	static char *kwlist[] = {"signal", "freq", "delay", "LFFT", "Overlap", "SampleRate", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iid", kwlist, &signal, &freq, &delay, &nChan, &Overlap, &SampleRate)) {
-		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
-	}
-
-	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signal, PyArray_DOUBLE, 1, 1);
-	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
-	times = (PyArrayObject *) PyArray_ContiguousFromObject(delay, PyArray_DOUBLE, 1, 1);
-	
-	// Check data dimensions
-	if(nChan != (fq->dimensions[0]+1)) {
-		PyErr_Format(PyExc_RuntimeError, "freq has a different channel count than nChan");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		return NULL;
-	}
-	
-	if(fq->dimensions[0] != times->dimensions[0]) {
-		PyErr_Format(PyExc_TypeError, "freq and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		return NULL;
-	}
-	
-	// Compute the interger sample offset and the fractional sample delay
-	npy_intp *tLoc;
-	tLoc = PyDimMem_NEW(1);
-	tLoc[0] = (npy_intp) fq->dimensions[0] / 2;
-	start = (long) round(*(double *) PyArray_GetPtr(times, tLoc) * SampleRate);
-	double frac[nChan];
-	for(i=0; i<nChan; i++) {
-		tLoc[0] = (npy_intp) i;
-		frac[i] = *(double *) PyArray_GetPtr(times, tLoc) - start/SampleRate;
-	}
-	PyDimMem_FREE(tLoc);
-
-	// Find out how large the output array needs to be and initialize it
-	nFFT = (data->dimensions[0] - start) / 2 / nChan * Overlap - Overlap + 1;
-	npy_intp dims[2];
-	dims[0] = nChan - 1;
-	dims[1] = nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
-	if(dataF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		return NULL;
-	}
-
-	// Create the FFTW plan
-	fftw_complex *in, *out;
-	fftw_plan p;
-	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-	p = fftw_plan_dft_1d(2*nChan, in, out, FFTW_FORWARD, FFTW_MEASURE);
-	
-	// Part 1:  Integer delay, FFT, and fractional delay
-	long secStart, fftIndex;
-	npy_intp *dLoc, *fLoc, *qLoc;
-	dLoc = PyDimMem_NEW(1);
-	fLoc = PyDimMem_NEW(2);
-	qLoc = PyDimMem_NEW(1);
-	for(i=0; i<nFFT; i++) {
-		secStart = start + ((long) (2*nChan*((float) i)/Overlap));
-		for(j=0; j<2*nChan; j++) {
-			dLoc[0] = (npy_intp) (secStart + j);
-			in[j][0] = *(double *) PyArray_GetPtr(data, dLoc);
-			in[j][1] = 0.0;
-			out[j][0] = 0.0;
-			out[j][1] = 0.0;
-		}
-		
-		fftw_execute(p);
-		
-		fLoc[1] = (npy_intp) i;
-		for(j=0; j<(nChan-1); j++) {
-			fLoc[0] = (npy_intp) j;
-			qLoc[0] = (npy_intp) j;
-			fftIndex = j + 1;
-			*(double complex *) PyArray_GetPtr(dataF, fLoc) = out[fftIndex][0] + imaginary*out[fftIndex][1];
-			*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[j]);
-		}
-	}
-	fftw_destroy_plan(p);
-	fftw_free(in);
-	fftw_free(out);
-	
-	PyDimMem_FREE(dLoc);
-	PyDimMem_FREE(fLoc);
-	PyDimMem_FREE(qLoc);
-
-	Py_XDECREF(data);
-	Py_XDECREF(fq);
-	Py_XDECREF(times);
-
-	signalF = Py_BuildValue("O", PyArray_Return(dataF));
-	Py_XDECREF(dataF);
-
-	return signalF;
-}
-
-PyDoc_STRVAR(FEngineR_doc, "Perform a series of overlaped Fourier transforms on real-valued data.");
 
 
 static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -484,124 +365,6 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 PyDoc_STRVAR(FEngineR3_doc, "Perform a series of overlaped Fourier transforms on real-valued data using OpenMP and windows.");
 
 
-static PyObject *FEngineC(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signal, *freq, *delay, *signalF;
-	PyArrayObject *data, *fq, *times, *dataF;
-	int nChan = 64;
-	int Overlap = 1;
-	double SampleRate = 1.0e5;
-
-	long i, j, nFFT, start;
-
-	static char *kwlist[] = {"signal", "freq", "delay", "LFFT", "Overlap", "SampleRate", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iid", kwlist, &signal, &freq, &delay, &nChan, &Overlap, &SampleRate)) {
-		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
-	}
-
-	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signal, PyArray_CDOUBLE, 1, 1);
-	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
-	times = (PyArrayObject *) PyArray_ContiguousFromObject(delay, PyArray_DOUBLE, 1, 1);
-	
-	// Check data dimensions
-	if(nChan != (fq->dimensions[0]+1)) {
-		PyErr_Format(PyExc_RuntimeError, "freq has a different channel count than nChan");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		return NULL;
-	}
-	
-	if(fq->dimensions[0] != times->dimensions[0]) {
-		PyErr_Format(PyExc_TypeError, "freq and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		return NULL;
-	}
-
-	// Compute the interger sample offset and the fractional sample delay
-	npy_intp *tLoc;
-	tLoc = PyDimMem_NEW(1);
-	tLoc[0] = (npy_intp) fq->dimensions[0] / 2;
-	start = (long) round(*(double *) PyArray_GetPtr(times, tLoc) * SampleRate);
-	double frac[nChan];
-	for(i=0; i<nChan; i++) {
-		tLoc[0] = (npy_intp) i;
-		frac[i] = *(double *) PyArray_GetPtr(times, tLoc) - start/SampleRate;
-	}
-	PyDimMem_FREE(tLoc);
-
-	// Find out how large the output array needs to be and initialize it
-	nFFT = data->dimensions[0] / nChan * Overlap - Overlap + 1;
-	npy_intp dims[2];
-	dims[0] = nChan - 1;
-	dims[1] = nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
-	if(dataF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		return NULL;
-	}
-
-	// Create the FFTW plan
-	fftw_complex *in, *out;
-	fftw_plan p;
-	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-	p = fftw_plan_dft_1d(nChan, in, out, FFTW_FORWARD, FFTW_MEASURE);
-
-	// Part 1:  Integer delay, FFT, and fractional delay
-	long secStart, fftIndex;
-	npy_intp *dLoc, *fLoc, *qLoc;
-	dLoc = PyDimMem_NEW(1);
-	fLoc = PyDimMem_NEW(2);
-	qLoc = PyDimMem_NEW(1);
-	for(i=0; i<nFFT; i++) {
-		secStart = start + ((long) (nChan*((float) i)/Overlap));
-		for(j=0; j<nChan; j++) {
-			dLoc[0] = (npy_intp) (secStart + j);
-			in[j][0] = creal(*(double complex *) PyArray_GetPtr(data, dLoc));
-			in[j][1] = cimag(*(double complex *) PyArray_GetPtr(data, dLoc));
-			out[j][0] = 0.0;
-			out[j][1] = 0.0;
-		}
-		
-		fftw_execute(p);
-		
-		fLoc[1] = (npy_intp) i;
-		for(j=0; j<(nChan-1); j++) {
-			fLoc[0] = (npy_intp) j;
-			qLoc[0] = (npy_intp) j;
-			fftIndex = ((j+1) + nChan/2) % nChan;
-			*(double complex *) PyArray_GetPtr(dataF, fLoc) = (out[fftIndex][0] + imaginary*out[fftIndex][1]);
-			*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[j]);
-		}
-	}
-	fftw_destroy_plan(p);
-	fftw_free(in);
-	fftw_free(out);
-	
-	PyDimMem_FREE(dLoc);
-	PyDimMem_FREE(fLoc);
-	PyDimMem_FREE(qLoc);
-
-	Py_XDECREF(data);
-	Py_XDECREF(fq);
-	Py_XDECREF(times);
-
-	signalF = Py_BuildValue("O", PyArray_Return(dataF));
-	Py_XDECREF(dataF);
-
-	return signalF;
-}
-
-PyDoc_STRVAR(FEngineC_doc, "Perform a series of overlaped Fourier transforms on complex-valued data.");
-
-
 static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freq, *delays, *signalsF;
 	PyArrayObject *data, *fq, *times, *dataF;
@@ -654,12 +417,16 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Compute the interger sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
+	long startMax = 0;
 	double frac[nStand][nChan];
 	tLoc = PyDimMem_NEW(2);
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
 		start[i] = (long) round(*(double *) PyArray_GetPtr(times, tLoc) * SampleRate);
+		if(start[i] > startMax) {
+			startMax = start[i];
+		}
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
@@ -669,7 +436,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = nStand;
 	dims[1] = nChan - 1;
@@ -819,12 +586,16 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Compute the interger sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
+	long startMax = 0;
 	double frac[nStand][nChan];
 	tLoc = PyDimMem_NEW(2);
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
 		start[i] = (long) round(*(double *) PyArray_GetPtr(times, tLoc) * SampleRate);
+		if(start[i] > startMax) {
+			startMax = start[i];
+		}
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
@@ -834,7 +605,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = nStand;
 	dims[1] = nChan - 1;
@@ -1084,8 +855,8 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 			PyDimMem_FREE(dLoc2);
 		}
 	}
-	
 	Py_XDECREF(data);
+	Py_XDECREF(dataC);
 
 	output = Py_BuildValue("O", PyArray_Return(vis));
 	Py_XDECREF(vis);
@@ -1099,8 +870,8 @@ Inputs:\n\
 Outputs:\n\
   * vis - cross-power spectra for every baseline (include autocorrelations) for\n\
     the input data\n");
-
-
+    
+    
 /* 
   Polyphase Filterbank Functions ("P Engines")
     1. PEngineR2 - Filterbank analog to FEngineR2 using 4 taps
@@ -1797,10 +1568,8 @@ PyDoc_STRVAR(PEngineC3_doc, "Perform a series of overlaped filter bank transfomr
 */
 
 static PyMethodDef CorrelatorMethods[] = {
-	{"FEngineR",  FEngineR,  METH_KEYWORDS, FEngineR_doc}, 
 	{"FEngineR2", FEngineR2, METH_KEYWORDS, FEngineR2_doc}, 
 	{"FEngineR3", FEngineR3, METH_KEYWORDS, FEngineR3_doc}, 
-	{"FEngineC",  FEngineC,  METH_KEYWORDS, FEngineC_doc}, 
 	{"FEngineC2", FEngineC2, METH_KEYWORDS, FEngineC2_doc}, 
 	{"FEngineC3", FEngineC3, METH_KEYWORDS, FEngineC3_doc}, 
 	{"XEngine",   XEngine,   METH_VARARGS,  XEngine_doc}, 
@@ -1818,16 +1587,14 @@ are meant to provide an alternative to the lsl.correlator.fx.correlate function 
 provide a much-needed speed boost to cross-correlation.\n\
 \n\
 The function defined in this module are:\n\
-  * FEngineR - F-engine for computing a series of overlapped Fourier transforms with\n\
-    delay corrections for a real-valued (TBW) signal from a single stand\n\
-  * FEngineR2 - Similar to FEngineR, but works with a collection of stands all at\n\
+  * FEngineR2 -F-engine for computing a series of overlapped Fourier transforms with\n\
+    delay corrections for a real-valued (TBW) signal from a collection of stands all at\n\
     once\n\
   * FEngineR3 - Similar to FEngineR2, but allows for a window function to be applied\n\
     to the data.  The window function needs to be evaluated for the correct FFT length\n\
     before being passed to FEngineR3\n\
-  * FEngineC - F-engine for computing a series of overlapped Fourier transforms with\n\
-    delay corrections for a complex-valued (TBN) signal from a single stand\n\
-  * FEngineC2 - Similar to FEngineC, but works with a collection of stands all at\n\
+  * FEngineC2 - F-engine for computing a series of overlapped Fourier transforms with\n\
+    delay corrections for a complex-valued (TBN) signal from a collection of stands all at\n\
     once\n\
   * FEngineC3 - Similar to FEngineC2, but allows for a window function to be applied\n\
     to the data.  The window function needs to be evaluated for the correct FFT length\n\

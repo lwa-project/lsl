@@ -234,10 +234,11 @@ def __buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None
 
 	# Update the JD if necessary
 	if jd is not None:
-		if count is not None and max is not None:
-			print "Setting Julian Date to %.5f (%i of %i)" % (jd, count, max)
-		else:
-			print "Setting Julian Date to %.5f" % jd
+		if verbose:
+			if count is not None and max is not None:
+				print "Setting Julian Date to %.5f (%i of %i)" % (jd, count, max)
+			else:
+				print "Setting Julian Date to %.5f" % jd
 		aa.set_jultime(jd)
 	else:
 		jd = aa.get_jultime()

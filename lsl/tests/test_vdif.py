@@ -28,6 +28,14 @@ class vdif_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.writer.vdif
 	module."""
 
+	testPath = None
+
+	def setUp(self):
+		"""Turn off all numpy warnings and create the temporary file directory."""
+
+		numpy.seterr(all='ignore')
+		self.testPath = tempfile.mkdtemp(prefix='test-vdif-', suffix='.tmp')
+
 	def __getTBW(self):
 		"""Private function to load in the test TBW data and get the frames."""
 
@@ -67,8 +75,7 @@ class vdif_tests(unittest.TestCase):
 		"""Test writing real data to VDIF format."""
 
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'ts-tbw-testS.fits')
+		testFile = os.path.join(self.testPath, 'tbw-test-W.fits')
 
 		# Get some data
 		frames = self.__getTBW()
@@ -101,15 +108,12 @@ class vdif_tests(unittest.TestCase):
 				self.assertEqual(v, t)
 
 		fh.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
 
 	def test_vdif_complex(self):
 		"""Test writing complex data to VIDF format."""
 
 		# Setup the file names
-		testPath = tempfile.mkdtemp(prefix='tsfits-', suffix='.tmp')
-		testFile = os.path.join(testPath, 'ts-tbw-testS.fits')
+		testFile = os.path.join(self.testPath, 'tbn-test-W.fits')
 
 		# Get some data
 		frames = self.__getTBN()
@@ -149,8 +153,15 @@ class vdif_tests(unittest.TestCase):
 				self.assertAlmostEqual(v, t, 6)
 		
 		fh.close()
-		os.unlink(testFile)
-		os.rmdir(testPath)
+
+	def tearDown(self):
+		"""Remove the test path directory and its contents"""
+
+		tempFiles = os.listdir(self.testPath)
+		for tempFile in tempFiles:
+			os.unlink(os.path.join(self.testPath, tempFile))
+		os.rmdir(self.testPath)
+		self.testPath = None
 
 
 class  vdif_test_suite(unittest.TestSuite):

@@ -26,6 +26,7 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 
 	tStart = kwargs['tStart']
 	bits = kwargs['bits']
+	verbose = kwargs['verbose']
 	if bits == 12:
 		maxValue = 2047
 		samplesPerFrame = 400
@@ -33,14 +34,17 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 		maxValue =  7
 		samplesPerFrame = 1200
 
+	if verbose:
+		print "Simulating %i captures of %-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands))
+
 	nCaptures = int(numpy.ceil(nFrames / 30000.0))
 	for capture in range(nCaptures):
 		for stand1, stand2 in zip(stands[0::2], stands[1::2]):
-			print "Simulating TBW capture %i, stands %i and %i" % (capture+1, stand1, stand2)
 			FramesThisBatch = nFrames - capture*30000
 			if FramesThisBatch > 30000:
 				FramesThisBatch = 30000
-			print "-> Frames %i" % FramesThisBatch
+			if verbose:
+				print " capture %i, stands %i and %i" % (capture+1, stand1, stand2)
 
 			for i in range(FramesThisBatch):
 				t = long(tStart*dp_common.fS) + i*samplesPerFrame
@@ -69,15 +73,19 @@ def __basicTBN(fh, stands, nFrames, **kwargs):
 
 	tStart = kwargs['tStart']
 	filter = kwargs['filter']
+	verbose = kwargs['verbose']
 	sampleRate = TBNFilters[filter]
 	maxValue = 127
 	samplesPerFrame = 512
 	upperSpike = sampleRate / 4.0
 	lowerSpike = -sampleRate / 4.0
 	
+	if verbose:
+		print "Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands))
+	
 	for i in range(nFrames):
-		if i % 1000 == 0:
-			print "Simulating TBN frame %i" % (i+1)
+		if i % 1000 == 0 and verbose:
+			print " frame %i" % (i+1)
 		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
 		tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 		for stand in stands:
@@ -100,6 +108,8 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 
 	tStart = kwargs['tStart']
 	filter = kwargs['filter']
+	nTuning = kwargs['nTuning']
+	verbose = kwargs['verbose']
 	sampleRate = DRXFilters[filter]
 	maxValue = 7
 	samplesPerFrame = 4096
@@ -108,45 +118,50 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 	upperSpike2 = sampleRate / 3.0
 	lowerSpike2 = -sampleRate / 3.0
 
+	if verbose:
+		print "Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % (nFrames, sampleRate/1e6, len(stands), nTuning)
+
 	beams = stands
 	for i in range(nFrames):
-		if i % 1000 == 0:
-			print "Simulating DRX frame %i" % i
+		if i % 1000 == 0 and verbose:
+			print " frame %i" % i
 		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
 		tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 		for beam in beams:
-			# Tuning 1:
-			cFrame = drx.SimFrame(beam=beam, tune=1, pol=0, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
-			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-			cFrame.iq *= maxValue/15.0
-			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike1*tFrame)
-			cFrame.writeRawFrame(fh)
+			for tune in range(1, nTuning+1):
+				if tune == 1:
+					# Tuning 1:
+					cFrame = drx.SimFrame(beam=beam, tune=1, pol=0, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
+					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+					cFrame.iq *= maxValue/15.0
+					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike1*tFrame)
+					cFrame.writeRawFrame(fh)
 			
-			cFrame = drx.SimFrame(beam=beam, tune=1, pol=1, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
-			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-			cFrame.iq *= maxValue/15.0
-			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike1*tFrame)
-			cFrame.writeRawFrame(fh)
-
-			# Tuning 2:
-			cFrame = drx.SimFrame(beam=beam, tune=2, pol=0, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
-			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-			cFrame.iq *= maxValue/15.0
-			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike2*tFrame)
-			cFrame.writeRawFrame(fh)
+					cFrame = drx.SimFrame(beam=beam, tune=1, pol=1, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
+					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+					cFrame.iq *= maxValue/15.0
+					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike1*tFrame)
+					cFrame.writeRawFrame(fh)
+				else:
+					# Tuning 2:
+					cFrame = drx.SimFrame(beam=beam, tune=2, pol=0, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
+					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+					cFrame.iq *= maxValue/15.0
+					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike2*tFrame)
+					cFrame.writeRawFrame(fh)
 			
-			cFrame = drx.SimFrame(beam=beam, tune=2, pol=1, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
-			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-			cFrame.iq *= maxValue/15.0
-			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike2*tFrame)
-			cFrame.writeRawFrame(fh)
+					cFrame = drx.SimFrame(beam=beam, tune=2, pol=1, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
+					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+					cFrame.iq *= maxValue/15.0
+					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike2*tFrame)
+					cFrame.writeRawFrame(fh)
 
 
-def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
+def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, tStart=0, verbose=False):
 	"""Generate a collection of frames with a basic test signal for TBW, TBN, 
 	and DRX.  The signals for the three modes are:
 	
@@ -180,11 +195,11 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, bits=12, tStart=0):
 		tStart = time.time()
 
 	if mode == 'TBW':
-		__basicTBW(fh, stands, nFrames, mode=mode, filter=filter, bits=bits, tStart=tStart)
+		__basicTBW(fh, stands, nFrames, bits=bits, tStart=tStart, verbose=verbose)
 	elif mode == 'TBN':
-		__basicTBN(fh, stands, nFrames, mode=mode, filter=filter, bits=bits, tStart=tStart)
+		__basicTBN(fh, stands, nFrames, filter=filter, tStart=tStart, verbose=verbose)
 	elif mode == 'DRX':
-		__basicDRX(fh, stands, nFrames, mode=mode, filter=filter, bits=bits, tStart=tStart)
+		__basicDRX(fh, stands, nFrames, filter=filter, nTuning=nTuning, tStart=tStart, verbose=verbose)
 	else:
 		raise RuntimeError("Unknown observations mode: %s" % mode)
 
