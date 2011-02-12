@@ -98,6 +98,7 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	fLoc = PyDimMem_NEW(2);
 	short int temp;
 	if(bits == 0) {
+		// 12-bit Data -> 400 samples in the data section
 		dims[0] = 2;
 		dims[1] = 400;
 		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_INT16);
@@ -116,16 +117,15 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 			temp = (bytes[24+3*i]<<4) | ((bytes[24+3*i+1]>>4)&15);
 			temp -= ((temp&2048)<<1);
 			*(a + i) = (short int) temp;
-			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 
 			fLoc[0] = (npy_intp) 1;
 			fLoc[1] = (npy_intp) i;
 			temp = ((bytes[24+3*i+1]&15)<<8) | bytes[24+3*i+2];
 			temp -= ((temp&2048)<<1);
 			*(a + 400 + i) = (short int) temp;
-			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 		}
 	} else {
+		// 4-bit Data -> 1200 samples in the data section
 		dims[0] = 2;
 		dims[1] = 1200;
 		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_UINT16);
@@ -144,14 +144,12 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 			temp = (bytes[i+24]>>4)&15;
 			temp -= ((temp&8)<<1);
 			*(a + i) = (short int) temp;
-			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 
 			fLoc[0] = 1;
 			fLoc[1] = (npy_intp) i;
 			temp = bytes[i+24]&15;
 			temp -= ((temp&8)<<1);
 			*(a + 400 + i) = (short int) temp;
-			// *(short int *) PyArray_GetPtr(data, fLoc) = temp;
 		}
 
 	}
@@ -175,7 +173,6 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	Py_XDECREF(data);
 
 	output = Py_BuildValue("O", frame);
-
 	return output;
 }
 
@@ -282,7 +279,6 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 		tempI = bytes[24+2*i+1];
 		tempI -= ((tempI&128)<<1);
 		*(a + i) = (float) tempR + imaginary * (float) tempI;
-		// *(float complex *) PyArray_GetPtr(data, fLoc) = (float) tempR + imaginary * (float) tempI; 
 	}
 	PyDimMem_FREE(fLoc);
 
@@ -304,7 +300,6 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	Py_XDECREF(data);
 
 	output = Py_BuildValue("O", frame);
-
 	return output;
 }
 
@@ -424,7 +419,6 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 		tempI = bytes[i+32]&15;
 		tempI -= ((tempI&8)<<1);
 		*(a + i) = (float) tempR + imaginary * (float) tempI;
-		// *(float complex *) PyArray_GetPtr(data, fLoc) = (float) tempR + imaginary * (float) tempI;
 	}
 	PyDimMem_FREE(fLoc);
 
@@ -449,7 +443,6 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	Py_XDECREF(data);
 
 	output = Py_BuildValue("O", frame);
-
 	return output;
 }
 

@@ -289,6 +289,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
+		Py_XDECREF(windowData);
 		return NULL;
 	}
 	
@@ -616,6 +617,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
+		Py_XDECREF(windowData);
 		return NULL;
 	}
 
@@ -681,6 +683,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_XDECREF(data);
 	Py_XDECREF(fq);
 	Py_XDECREF(times);
+	Py_XDECREF(windowData);
 
 	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);
@@ -1150,6 +1153,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
+		Py_XDECREF(windowData);
 		return NULL;
 	}
 	
@@ -1278,12 +1282,16 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Compute the interger sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
+	long startMax = 0;
 	double frac[nStand][nChan];
 	tLoc = PyDimMem_NEW(2);
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
 		start[i] = (long) round(*(double *) PyArray_GetPtr(times, tLoc) * SampleRate);
+		if(start[i] > startMax) {
+			startMax = start[i];
+		}
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
@@ -1299,7 +1307,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / nChan * Overlap - Overlap + 1;
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[3];
 	dims[0] = nStand;
@@ -1451,12 +1459,16 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Compute the interger sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
+	long startMax = 0;
 	double frac[nStand][nChan];
 	tLoc = PyDimMem_NEW(2);
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
 		start[i] = (long) round(*(double *) PyArray_GetPtr(times, tLoc) * SampleRate);
+		if(start[i] > startMax) {
+			startMax = start[i];
+		}
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
@@ -1477,7 +1489,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(qLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / nChan * Overlap - Overlap + 1;
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[3];
 	dims[0] = nStand;
@@ -1489,6 +1501,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
+		Py_XDECREF(windowData);
 		return NULL;
 	}
 	PyArray_FILLWBYTE(dataF, 0);
@@ -1553,6 +1566,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_XDECREF(data);
 	Py_XDECREF(fq);
 	Py_XDECREF(times);
+	Py_XDECREF(windowData);
 
 	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);

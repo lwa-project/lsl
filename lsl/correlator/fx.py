@@ -478,12 +478,7 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 		signalsFC = signalsF.conj()
 
 	# X
-	count = 0
 	output = _core.XEngine2(signalsF, signalsFC)
-	#output = numpy.zeros( (nBL, LFFT-1), dtype=numpy.complex64)
-	#for i,j in baselines:
-	#	output[count,:] = __MultiplyEngine(signalsF[i,:,:], signalsFC[j,:,:])
-	#	count = count + 1
 
 	# Divide the cross-multiplied data by the number of channels used
 	output /= LFFT

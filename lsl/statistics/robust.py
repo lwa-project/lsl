@@ -36,6 +36,8 @@ def biweightMean(inputData):
 	Library."""
 	
 	y = inputData.ravel()
+	if type(y).__name__ == "MaskedArray":
+		y = y.compressed()
 	
 	n = len(y)
 	closeEnough = 0.03*numpy.sqrt(0.5/(n-1))
@@ -78,6 +80,8 @@ def mean(inputData, Cut=3.0):
 	"""
 
 	data = inputData.ravel()
+	if type(data).__name__ == "MaskedArray":
+		data = data.compressed()
 
 	data0 = numpy.median(data)
 	maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
@@ -121,6 +125,8 @@ def std(inputData, Zero=False):
 	the robust_sigma function from the AstroIDL User's Library."""
 
 	data = inputData.ravel()
+	if type(data).__name__ == "MaskedArray":
+		data = data.compressed()
 
 	if Zero:
 		data0 = 0.0
@@ -167,6 +173,10 @@ def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
 	
 	data = inputData.ravel()
 	fit = inputFit.ravel()
+	if type(data).__name__ == "MaskedArray":
+		data = data.compressed()
+	if type(fit).__name__ == "MaskedArray":
+		fit = fit.compressed()
 
 	deviation = data - fit
 	sigma = std(deviation, Zero=True)
@@ -199,6 +209,9 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
 	
 	xIn = inputX.ravel()
 	yIn = inputY.ravel()
+	if type(yIn).__name__ == "MaskedArray":
+		xIn = xIn.compress(numpy.logical_not(yIn.mask))
+		yIn = yIn.compressed()
 	n = len(xIn)
 	
 	x0 = xIn.sum() / n
@@ -396,6 +409,9 @@ def polyfit(inputX, inputY, order, iterMax=25):
 	
 	x = inputX.ravel()
 	y = inputY.ravel()
+	if type(y).__name__ == "MaskedArray":
+		x = x.compress(numpy.logical_not(y.mask))
+		y = y.compressed()
 	n = len(x)
 	
 	x0 = x.sum() / n
