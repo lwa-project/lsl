@@ -43,10 +43,13 @@ class fx_tests(unittest.TestCase):
 			return numpy.kaiser(L, 5)
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, spectra = fx.SpecMaster(fakeData, window=wndw, DisablePool=True)
+		freq, spectra = fx.SpecMaster(fakeData, window=wndw)
+		
+		def wndw2(L):
+			return numpy.kaiser(L, 1)
 		
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
-		freq, spectra = fx.SpecMaster(fakeData, window=numpy.hamming)
+		freq, spectra = fx.SpecMaster(fakeData, window=wndw2)
 
 	def test_spectra_real(self):
 		"""Test the SpecMaster function on real-valued data."""
@@ -58,7 +61,7 @@ class fx_tests(unittest.TestCase):
 		"""Test the SpecMaster function on complex-valued data."""
 		
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
-		freq, spectra = fx.SpecMaster(fakeData)
+		freq, spectra = fx.SpecMaster(fakeData, SampleRate=1e5, CentralFreq=38e6)
 
 	### FXMaster Function ###
 
@@ -72,19 +75,21 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator on complex-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
-		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]))
+		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6)
 		
 	def test_correlator_real_window(self):
 		"""Test the C-based correlator on real-valued data window."""
 		
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
+		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), 
+							window=numpy.blackman)
 		
 	def test_correlator_complex_window(self):
 		"""Test the C-based correlator on complex-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
-		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
+		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6, 
+							window=numpy.blackman)
 	
 	### PXMaster Function ###
 	
@@ -98,19 +103,21 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator on complex-valued data."""
 
 		fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
-		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]))
+		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6)
 		
 	def test_fb_correlator_real_window(self):
 		"""Test the C-based correlator on real-valued data window."""
 		
 		fakeData = numpy.random.rand(4,4096) + 3.0
-		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
+		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), 
+							window=numpy.blackman)
 		
 	def test_fb_correlator_complex_window(self):
 		"""Test the C-based correlator on complex-valued data."""
 
 		fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
-		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
+		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6, 
+							window=numpy.blackman)
 
 
 class fx_test_suite(unittest.TestSuite):

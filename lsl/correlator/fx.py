@@ -227,15 +227,15 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
 	if window is noWindow:
 		# Data without a window function provided
 		if signals.dtype.kind == 'c':
-			output = _spec.FEngineC2(signals, LFFT=LFFT, Overlap=1)
+			output = _spec.FPSDC2(signals, LFFT=LFFT, Overlap=1)
 		else:
-			output = _spec.PEngineR2(signals, LFFT=LFFT, Overlap=1)
+			output = _spec.FPSDR2(signals, LFFT=LFFT, Overlap=1)
 	else:
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
-			output = _spec.FEngineC3(signals, LFFT=LFFT, Overlap=1, window=window(LFFT))
+			output = _spec.FPSDC3(signals, LFFT=LFFT, Overlap=1, window=window(LFFT))
 		else:
-			output = _spec.FEngineR3(signals, LFFT=LFFT, Overlap=1, window=window(2*LFFT))
+			output = _spec.FPSDR3(signals, LFFT=LFFT, Overlap=1, window=window(2*LFFT))
 	
 	return (freq, output)
 
@@ -468,13 +468,6 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=
 		del(taskPool)
 
 	return (freq, output)
-
-
-def __MultiplyEngine(signal1, signal2):
-	"""'X' part of an FX correlator.  This function takes two Fourier transformed
-	signals and multiples the signals and averages with time."""
-
-	return numpy.mean(numpy.multiply(signal1, signal2), axis=1)
 
 
 def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
