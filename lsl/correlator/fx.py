@@ -21,11 +21,12 @@ from lsl.common.constants import *
 from lsl.common.warns import warnDeprecated
 from lsl.correlator import uvUtils
 
+import _spec
 import _core
 
-__version__ = '0.4'
-__revision__ = '$ Revision: 22 $'
-__all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
+__version__ = '0.5'
+__revision__ = '$ Revision: 23 $'
+__all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'correlate', 'FXCorrelator', 'FXMaster', 'PXMaster', '__version__', '__revision__', '__all__']
 
 
 def noWindow(L):
@@ -187,6 +188,55 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 	# default behavior
 	output = numpy.squeeze(output)
 
+	return (freq, output)
+
+
+def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
+	"""A more advanced version of calcSpectra that uses the _spec C extension 
+	to handle all of the P.S.D. calculations in parallel.  Returns a two-
+	element tuple of the frequencies (in Hz) and PSDs in dB/RBW.
+	
+	.. note::
+		SpecMaster currently average all data given and does not support the
+		SampleAverage keyword that calcSpectra does.
+	"""
+	
+	# Figure out if we are working with complex (I/Q) data or only real.  This
+	# will determine how the FFTs are done since the real data mirrors the pos-
+	# itive and negative Fourier frequencies.
+	if signals.dtype.kind == 'c':
+		lFactor = 1
+		doFFTShift = True
+		CentralFreq = float(CentralFreq)
+	else:
+		lFactor = 2
+		doFFTShift = False
+
+	# Calculate the frequencies of the FFTs.  We do this for twice the FFT length
+	# because the real-valued signal only occupies the positive part of the 
+	# frequency space.
+	if SampleRate is None:
+		SampleRate = dp_common.fS
+	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+	# Deal with TBW and TBN data in the correct way
+	if doFFTShift:
+		freq += CentralFreq
+		freq = numpy.fft.fftshift(freq)
+	freq = freq[1:LFFT]
+	
+	if window is noWindow:
+		# Data without a window function provided
+		if signals.dtype.kind == 'c':
+			output = _spec.FEngineC2(signals, LFFT=LFFT, Overlap=1)
+		else:
+			output = _spec.PEngineR2(signals, LFFT=LFFT, Overlap=1)
+	else:
+		# Data with a window function provided
+		if signals.dtype.kind == 'c':
+			output = _spec.FEngineC3(signals, LFFT=LFFT, Overlap=1, window=window(LFFT))
+		else:
+			output = _spec.FEngineR3(signals, LFFT=LFFT, Overlap=1, window=window(2*LFFT))
+	
 	return (freq, output)
 
 
@@ -427,15 +477,11 @@ def __MultiplyEngine(signal1, signal2):
 	return numpy.mean(numpy.multiply(signal1, signal2), axis=1)
 
 
-def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, SampleRate=None, CentralFreq=0.0):
+def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
 	"""A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
 	2-D array of signals (stands, time-series) and an array of stands, compute 
 	the cross-correlation of the data for all baselines.  Return the frequencies 
-	and visibilities as a two-elements tuple.
-
-	.. note::
-		Applying window function to the data is currently not supported.
-	"""
+	and visibilities as a two-elements tuple."""
 
 	nStands = stands.shape[0]
 	baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)
@@ -470,12 +516,21 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 	delays = delays[:,dlyRef].max() - delays
 
 	# F - defaults to running parallel in C via OpenMP
-	if signals.dtype.kind == 'c':
-		signalsF = _core.FEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
-		signalsFC = signalsF.conj()
+	if window is noWindow:
+		# Data without a window function provided
+		if signals.dtype.kind == 'c':
+			signalsF = _core.FEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		else:
+			signalsF = _core.FEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
 	else:
-		signalsF = _core.FEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
-		signalsFC = signalsF.conj()
+		# Data with a window function provided
+		if signals.dtype.kind == 'c':
+			signalsF = _core.FEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
+									SampleRate=SampleRate, window=window(LFFT))
+		else:
+			signalsF = _core.FEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
+									SampleRate=SampleRate, window=window(2*LFFT))
+	signalsFC = signalsF.conj()
 
 	# X
 	output = _core.XEngine2(signalsF, signalsFC)
@@ -483,6 +538,71 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 	# Divide the cross-multiplied data by the number of channels used
 	output /= LFFT
 	if signals.dtype.kind != 'c':
-		output /= 2
+		output /= 2.0
+
+	return (freq, output)
+
+
+def PXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
+	"""A version of FXMaster that uses a 4-tap polyphase filter for the FFT step
+	rather than a normal FFT.  Returns the frequencies and visibilities as a 
+	two-elements tuple."""
+
+	nStands = stands.shape[0]
+	baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)
+	nBL = len(baselines)
+
+	# Figure out if we are working with complex (I/Q) data or only real.  This
+	# will determine how the FFTs are done since the real data mirrors the pos-
+	# itive and negative Fourier frequencies.
+	if signals.dtype.kind == 'c':
+		lFactor = 1
+		doFFTShift = True
+		CentralFreq = float(CentralFreq)
+	else:
+		lFactor = 2
+		doFFTShift = False
+
+	if SampleRate is None:
+		SampleRate = dp_common.fS
+	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+	if doFFTShift:
+		freq += CentralFreq
+		freq = numpy.fft.fftshift(freq)
+	freq = freq[1:LFFT]
+
+	# Define the cable/signal delay caches to help correlate along and compute 
+	# the delays that we need to apply to align the signals
+	dlyCache = uvUtils.SignalCache(freq)
+	dlyRef = len(freq)/2
+	delays = numpy.zeros((nStands,LFFT-1))
+	for i in list(range(nStands)):
+		delays[i,:] = dlyCache.signalDelay(stands[i])
+	delays = delays[:,dlyRef].max() - delays
+
+	# F - defaults to running parallel in C via OpenMP
+	if window is noWindow:
+		# Data without a window function provided
+		if signals.dtype.kind == 'c':
+			signalsF = _core.PEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		else:
+			signalsF = _core.PEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+	else:
+		# Data with a window function provided
+		if signals.dtype.kind == 'c':
+			signalsF = _core.PEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
+									SampleRate=SampleRate, window=window(4*LFFT))
+		else:
+			signalsF = _core.PEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
+									SampleRate=SampleRate, window=window(2*4*LFFT))
+	signalsFC = signalsF.conj()
+
+	# X
+	output = _core.XEngine2(signalsF, signalsFC)
+
+	# Divide the cross-multiplied data by the number of channels used
+	output /= LFFT
+	if signals.dtype.kind != 'c':
+		output /= 2.0
 
 	return (freq, output)

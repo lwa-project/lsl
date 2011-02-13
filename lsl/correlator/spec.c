@@ -52,8 +52,8 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -151,8 +151,8 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -244,8 +244,8 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -343,11 +343,10 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
-	npy_intp dims[3];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
-	dims[2] = nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, PyArray_CDOUBLE);
+	npy_intp dims[2];
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -449,8 +448,8 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -571,8 +570,8 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -681,8 +680,8 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -804,8 +803,8 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
-	dims[0] = nStand;
-	dims[1] = nChan - 1;
+	dims[0] = (npy_intp) nStand;
+	dims[1] = (npy_intp) (nChan - 1);
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");

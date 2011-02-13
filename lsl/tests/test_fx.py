@@ -24,48 +24,43 @@ class fx_tests(unittest.TestCase):
 
 		numpy.seterr(all='ignore')
 		warnings.simplefilter('ignore')
-
+	
+	### SpecMaster Function ###
+	
 	def test_window(self):
-		"""Test that window functions can be passed to calcSpectra/calcSpectrum."""
-
+		"""Test that window functions can be passed to SpecMaster."""
+		
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, spectra = fx.calcSpectra(fakeData, window=numpy.blackman, DisablePool=True)
+		freq, spectra = fx.SpecMaster(fakeData, window=numpy.blackman)
 
-		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, spectra = fx.calcSpectra(fakeData, window=numpy.hamming, DisablePool=True)
-
+		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
+		freq, spectra = fx.SpecMaster(fakeData, window=numpy.hamming)
+		
 	def test_window_custom(self):
-		"""Test that custom window functions can be passed to calcSpectra/calcSpectrum."""
+		"""Test that custom window functions can be passed to SpecMaster."""
 
 		def wndw(L):
 			return numpy.kaiser(L, 5)
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, spectra = fx.calcSpectra(fakeData, window=wndw, DisablePool=True)
+		freq, spectra = fx.SpecMaster(fakeData, window=wndw, DisablePool=True)
+		
+		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
+		freq, spectra = fx.SpecMaster(fakeData, window=numpy.hamming)
 
-	def test_spectra_single(self):
-		"""Test the calcSpectra/calcSpectrum functions in single thread mode."""
-
-		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, spectra = fx.calcSpectra(fakeData, DisablePool=True)
-
-	def test_spectra_multi(self):
-		"""Test the calcSpectra/calcSpectrum functions in multi-thread mode."""
+	def test_spectra_real(self):
+		"""Test the SpecMaster function on real-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, spectra = fx.calcSpectra(fakeData, DisablePool=False)
+		freq, spectra = fx.SpecMaster(fakeData)
+		
+	def test_spectra_complex(self):
+		"""Test the SpecMaster function on complex-valued data."""
+		
+		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
+		freq, spectra = fx.SpecMaster(fakeData)
 
-	def test_correlator_old_single(self):
-		"""Test the FXCorrelator/correlate functions in single thread mode."""
-
-		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, cps = fx.FXCorrelator(fakeData, numpy.array([1,2,3,4]), DisablePool=True)
-
-	def test_correlator_old_multi(self):
-		"""Test the FXCorrelator/correlate functions in multi-thread mode."""
-
-		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, cps = fx.FXCorrelator(fakeData, numpy.array([1,2,3,4]), DisablePool=False)
+	### FXMaster Function ###
 
 	def test_correlator_real(self):
 		"""Test the C-based correlator on real-valued data."""
@@ -78,7 +73,44 @@ class fx_tests(unittest.TestCase):
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
 		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]))
+		
+	def test_correlator_real_window(self):
+		"""Test the C-based correlator on real-valued data window."""
+		
+		fakeData = numpy.random.rand(4,1024) + 3.0
+		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
+		
+	def test_correlator_complex_window(self):
+		"""Test the C-based correlator on complex-valued data."""
 
+		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
+		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
+	
+	### PXMaster Function ###
+	
+	def test_fb_correlator_correlator_real(self):
+		"""Test the C-based correlator on real-valued data."""
+
+		fakeData = numpy.random.rand(4,4096) + 3.0
+		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]))
+
+	def test_fb_correlator_complex(self):
+		"""Test the C-based correlator on complex-valued data."""
+
+		fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
+		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]))
+		
+	def test_fb_correlator_real_window(self):
+		"""Test the C-based correlator on real-valued data window."""
+		
+		fakeData = numpy.random.rand(4,4096) + 3.0
+		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
+		
+	def test_fb_correlator_complex_window(self):
+		"""Test the C-based correlator on complex-valued data."""
+
+		fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
+		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), window=numpy.blackman)
 
 
 class fx_test_suite(unittest.TestSuite):
