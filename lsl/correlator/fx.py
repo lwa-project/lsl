@@ -233,9 +233,58 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
 	else:
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
-			output = _spec.FPSDC3(signals, LFFT=LFFT, Overlap=1, window=window(LFFT))
+			output = _spec.FPSDC3(signals, LFFT=LFFT, Overlap=1, window=window)
 		else:
-			output = _spec.FPSDR3(signals, LFFT=LFFT, Overlap=1, window=window(2*LFFT))
+			output = _spec.FPSDR3(signals, LFFT=LFFT, Overlap=1, window=window)
+	
+	return (freq, output)
+
+
+def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
+	"""Similar to SpecMaster but uses a 4-tap polyphase filter bank instead
+	of a FFT.  Returns a two-element tuple of the frequencies (in Hz) and 
+	PSDs in dB/RBW.
+	
+	.. note::
+		SpecMaster currently average all data given and does not support the
+		SampleAverage keyword that calcSpectra does.
+	"""
+	
+	# Figure out if we are working with complex (I/Q) data or only real.  This
+	# will determine how the FFTs are done since the real data mirrors the pos-
+	# itive and negative Fourier frequencies.
+	if signals.dtype.kind == 'c':
+		lFactor = 1
+		doFFTShift = True
+		CentralFreq = float(CentralFreq)
+	else:
+		lFactor = 2
+		doFFTShift = False
+
+	# Calculate the frequencies of the FFTs.  We do this for twice the FFT length
+	# because the real-valued signal only occupies the positive part of the 
+	# frequency space.
+	if SampleRate is None:
+		SampleRate = dp_common.fS
+	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+	# Deal with TBW and TBN data in the correct way
+	if doFFTShift:
+		freq += CentralFreq
+		freq = numpy.fft.fftshift(freq)
+	freq = freq[1:LFFT]
+	
+	if window is noWindow:
+		# Data without a window function provided
+		if signals.dtype.kind == 'c':
+			output = _spec.PPSDC2(signals, LFFT=LFFT, Overlap=1)
+		else:
+			output = _spec.PPSDR2(signals, LFFT=LFFT, Overlap=1)
+	else:
+		# Data with a window function provided
+		if signals.dtype.kind == 'c':
+			output = _spec.PPSDC3(signals, LFFT=LFFT, Overlap=1, window=window)
+		else:
+			output = _spec.PPSDR3(signals, LFFT=LFFT, Overlap=1, window=window)
 	
 	return (freq, output)
 
@@ -519,10 +568,10 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
 			signalsF = _core.FEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window(LFFT))
+									SampleRate=SampleRate, window=window)
 		else:
 			signalsF = _core.FEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window(2*LFFT))
+									SampleRate=SampleRate, window=window)
 	signalsFC = signalsF.conj()
 
 	# X
@@ -537,7 +586,7 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 
 
 def PXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
-	"""A version of FXMaster that uses a 4-tap polyphase filter for the FFT step
+	"""A version of FXMaster that uses a 64-tap polyphase filter for the FFT step
 	rather than a normal FFT.  Returns the frequencies and visibilities as a 
 	two-elements tuple."""
 
@@ -584,10 +633,10 @@ def PXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
 			signalsF = _core.PEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window(4*LFFT))
+									SampleRate=SampleRate, window=window)
 		else:
 			signalsF = _core.PEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window(2*4*LFFT))
+									SampleRate=SampleRate, window=window)
 	signalsFC = signalsF.conj()
 
 	# X

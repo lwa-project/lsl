@@ -1,19 +1,40 @@
 #include "Python.h"
 #include <math.h>
 #include <stdio.h>
-#include <fftw3.h>
+#ifdef _MKL
+	#include "mkl_cblas.h"
+	#include "fftw3.h"
+#else
+	#include <cblas.h>
+	#include <fftw3.h>
+#endif
 #include <stdlib.h>
 #include <complex.h>
-#include <cblas.h>
 
 #ifdef _OPENMP
-        #include <omp.h>
+	#include <omp.h>
+	#ifdef _MKL
+		#include "fftw3_mkl.h"
+	#endif
 #endif
 
 #include "numpy/arrayobject.h"
 
 #define PI 3.1415926535898
 #define imaginary _Complex_I
+
+/*
+  Static declaration of the number of taps to use
+*/
+
+#define nTaps 64
+
+
+/*
+  Holder for window function callback
+*/
+
+static PyObject *windowFunc = NULL;
 
 
 /*
@@ -134,6 +155,9 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *dLoc, *fLoc, *qLoc;
 	
 	#ifdef _OPENMP
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
 		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
 	#endif
 	{
@@ -204,16 +228,28 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	long i, j, k, nStand, nSamps, nFFT;
 	
 	static char *kwlist[] = {"signals", "freq", "delays", "LFFT", "Overlap", "SampleRate", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO:set_callback", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
+	} else {
+		if(!PyCallable_Check(window)) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		}
+		Py_XINCREF(window);
+		Py_XDECREF(windowFunc);
+		windowFunc = window;
 	}
 
 	// Bring the data into C and make it useable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	
+	// Calculate the windowing function
+	window = Py_BuildValue("(i)", 2*nChan);
+	window = PyObject_CallObject(windowFunc, window);
 	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	Py_DECREF(window);
 	
 	// Check data dimensions
 	if(data->dimensions[0] != times->dimensions[0]) {
@@ -236,15 +272,6 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	if(fq->dimensions[0] != times->dimensions[1]) {
 		PyErr_Format(PyExc_TypeError, "freq and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		Py_XDECREF(windowData);
-		return NULL;
-	}
-	
-	if( windowData->dimensions[0] != 2*nChan) {
-		PyErr_Format(PyExc_TypeError, "window has a different channel count than twice nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
@@ -304,6 +331,9 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *dLoc, *fLoc, *qLoc;
 	
 	#ifdef _OPENMP
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
 		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
 	#endif
 	{
@@ -462,6 +492,9 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *dLoc, *fLoc, *qLoc;
 	
 	#ifdef _OPENMP
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
 		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
 	#endif
 	{
@@ -532,16 +565,28 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	long i, j, k, nStand, nSamps, nFFT;
 
 	static char *kwlist[] = {"signals", "freq", "delays", "LFFT", "Overlap", "SampleRate", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO:set_callback", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
+	} else {
+		if(!PyCallable_Check(window)) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		}
+		Py_XINCREF(window);
+		Py_XDECREF(windowFunc);
+		windowFunc = window;
 	}
 
 	// Bring the data into C and make it useable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	
+	// Calculate the windowing function
+	window = Py_BuildValue("(i)", nChan);
+	window = PyObject_CallObject(windowFunc, window);
 	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	Py_DECREF(window);
 	
 	// Check data dimensions
 	if(data->dimensions[0] != times->dimensions[0]) {
@@ -564,15 +609,6 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	if(fq->dimensions[0] != times->dimensions[1]) {
 		PyErr_Format(PyExc_TypeError, "freq and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		Py_XDECREF(windowData);
-		return NULL;
-	}
-
-	if( windowData->dimensions[0] != nChan) {
-		PyErr_Format(PyExc_TypeError, "window has a different channel count than nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
@@ -632,6 +668,9 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *dLoc, *fLoc, *qLoc;
 	
 	#ifdef _OPENMP
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
 		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
 	#endif
 	{
@@ -889,7 +928,6 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freq, *delays, *signalsF;
 	PyArrayObject *data, *fq, *times, *dataF;
 	int nChan = 64;
-	int nTaps = 4;
 	int Overlap = 1;
 	double SampleRate = 196.0e6;
 
@@ -959,7 +997,7 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Compute the filterbank window for the correct numer of taps
 	double fbWindow[2*nChan*nTaps];
 	for(i=0; i<2*nChan*nTaps; i++) {
-		fbWindow[i] = sinc((double) (i - nTaps*nChan + 0.5)/2/nChan) / 2 / nChan;
+		fbWindow[i] = sinc((double) (i - nTaps*nChan + 0.5)/2/nChan);
 	}
 
 	// Find out how large the output array needs to be and initialize it
@@ -990,6 +1028,9 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *dLoc, *fLoc, *qLoc;
 	
 	#ifdef _OPENMP
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
 		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
 	#endif
 	{
@@ -1052,23 +1093,34 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freq, *delays, *signalsF, *window;
 	PyArrayObject *data, *fq, *times, *dataF, *windowData;
 	int nChan = 64;
-	int nTaps = 4;
 	int Overlap = 1;
 	double SampleRate = 196.0e6;
 
 	long i, j, k, nStand, nSamps, nFFT;
 	
 	static char *kwlist[] = {"signals", "freq", "delays", "LFFT", "Overlap", "SampleRate", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO:set_callback", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
+	} else {
+		if(!PyCallable_Check(window)) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		}
+		Py_XINCREF(window);
+		Py_XDECREF(windowFunc);
+		windowFunc = window;
 	}
 
 	// Bring the data into C and make it useable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	
+	// Calculate the windowing function
+	window = Py_BuildValue("(i)", 2*nTaps*nChan);
+	window = PyObject_CallObject(windowFunc, window);
 	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	Py_DECREF(window);
 	
 	// Check data dimensions
 	if(data->dimensions[0] != times->dimensions[0]) {
@@ -1091,15 +1143,6 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	if(fq->dimensions[0] != times->dimensions[1]) {
 		PyErr_Format(PyExc_TypeError, "freq and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		Py_XDECREF(windowData);
-		return NULL;
-	}
-	
-	if( windowData->dimensions[0] != 2*nTaps*nChan) {
-		PyErr_Format(PyExc_TypeError, "window has a different channel count than 2*nTaps*nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
@@ -1138,7 +1181,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	qLoc = PyDimMem_NEW(1);
 	for(i=0; i<2*nChan*nTaps; i++) {
 		qLoc[0] = (npy_intp) i;
-		fbWindow[i] = sinc((double) (i - nTaps*nChan + 0.5)/2/nChan) / 2 / nChan;
+		fbWindow[i] = sinc((double) (i - nTaps*nChan + 0.5)/2/nChan);
 		fbWindow[i] *= *(double *) PyArray_GetPtr(windowData, qLoc);
 	}
 	PyDimMem_FREE(qLoc);
@@ -1171,6 +1214,9 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *dLoc, *fLoc;
 	
 	#ifdef _OPENMP
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
 		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
 	#endif
 	{
@@ -1236,11 +1282,10 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freq, *delays, *signalsF;
 	PyArrayObject *data, *fq, *times, *dataF;
 	int nChan = 64;
-	int nTaps = 4;
 	int Overlap = 1;
 	double SampleRate = 1.0e5;
 
-	long i, j, k, nStand, nSamps, nFFT;
+	long i, j, k, m, nStand, nSamps, nFFT;
 
 	static char *kwlist[] = {"signals", "freq", "delays", "LFFT", "Overlap", "SampleRate", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iid", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate)) {
@@ -1305,8 +1350,9 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Compute the filterbank window for the correct numer of taps
 	double fbWindow[nChan*nTaps];
+	double complex tempFB[nChan-1];
 	for(i=0; i<nChan*nTaps; i++) {
-		fbWindow[i] = sinc((double) (i - nTaps*nChan/2 + 0.5)/nChan) / nChan;
+		fbWindow[i] = sinc((double) (i - nTaps*nChan/2 + 0.5)/nChan);
 	}
 
 	// Find out how large the output array needs to be and initialize it
@@ -1334,48 +1380,56 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	npy_intp *dLoc, *fLoc, *qLoc;
+	npy_intp *fLoc;
+	double complex *a;
+	double *f;
+	a = (double complex *) data->data;
+	f = (double *) fq->data;
 	
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
+		#pragma omp parallel default(shared) private(fLoc, in, secStart, tempFB, i, j, k, m, fftIndex)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
-			dLoc = PyDimMem_NEW(2);
 			fLoc = PyDimMem_NEW(3);
-			qLoc = PyDimMem_NEW(1);
 			
 			in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
 			
-			dLoc[0] = (npy_intp) i;
 			fLoc[0] = (npy_intp) i;
 			
-			for(j=0; j<nFFT; j++) {
-				secStart = start[i] + ((long) (nChan*((float) j)/Overlap));
+			for(j=0; j<nFFT; j+=nTaps) {
+				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				
-				for(k=0; k<nChan; k++) {
-					dLoc[1] = (npy_intp) (secStart + k);
-					in[k][0] = creal(*(double complex *) PyArray_GetPtr(data, dLoc) * fbWindow[nChan*(j % nTaps) + k]);
-					in[k][1] = cimag(*(double complex *) PyArray_GetPtr(data, dLoc) * fbWindow[nChan*(j % nTaps) + k]);
-				}	
-			
-				fftw_execute_dft(p, in, in);
+				for(m=0; m<nTaps; m++) {
+					secStart = nSamps * i + nChan*j/Overlap;
+					
+					for(k=0; k<nChan; k++) {
+						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
+						in[k][1] = cimag(*(a + secStart + k)) * fbWindow[nChan*m + k];
+					}
+				
+					fftw_execute_dft(p, in, in);
+				
+					for(k=0; k<(nChan-1); k++) {
+						fftIndex = ((k+1) + nChan/2) % nChan;
+						tempFB[k] += in[fftIndex][0] + imaginary * in[fftIndex][1];
+					}
+				}
 			
 				fLoc[2] = (npy_intp) (j / nTaps);
 				for(k=0; k<(nChan-1); k++) {
 					fLoc[1] = (npy_intp) k;
-					qLoc[0] = (npy_intp) k;
-					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(-2*imaginary*PI * *(f + k) * frac[i][k]);
 				}
 			}
 			
-			PyDimMem_FREE(dLoc);
 			PyDimMem_FREE(fLoc);
-			PyDimMem_FREE(qLoc);
 
 			fftw_free(in);
 		}
@@ -1400,23 +1454,34 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freq, *delays, *signalsF, *window;
 	PyArrayObject *data, *fq, *times, *dataF, *windowData;
 	int nChan = 64;
-	int nTaps = 4;
 	int Overlap = 1;
 	double SampleRate = 1.0e5;
 
-	long i, j, k, nStand, nSamps, nFFT;
+	long i, j, k, m, nStand, nSamps, nFFT;
 
 	static char *kwlist[] = {"signals", "freq", "delays", "LFFT", "Overlap", "SampleRate", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidO:set_callback", kwlist, &signals, &freq, &delays, &nChan, &Overlap, &SampleRate, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
+	} else {
+		if(!PyCallable_Check(window)) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		}
+		Py_XINCREF(window);
+		Py_XDECREF(windowFunc);
+		windowFunc = window;
 	}
 
 	// Bring the data into C and make it useable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	
+	// Calculate the windowing function
+	window = Py_BuildValue("(i)", nTaps*nChan);
+	window = PyObject_CallObject(windowFunc, window);
 	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	Py_DECREF(window);
 
 	// Check data dimensions
 	if(data->dimensions[0] != times->dimensions[0]) {
@@ -1439,15 +1504,6 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	if(fq->dimensions[0] != times->dimensions[1]) {
 		PyErr_Format(PyExc_TypeError, "freq and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(fq);
-		Py_XDECREF(times);
-		Py_XDECREF(windowData);
-		return NULL;
-	}
-
-	if( windowData->dimensions[0] != nTaps*nChan) {
-		PyErr_Format(PyExc_TypeError, "window has a different channel count than nTaps*nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
@@ -1481,15 +1537,14 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Compute the filterbank window for the correct numer of taps
-	npy_intp *qLoc;
 	double fbWindow[nChan*nTaps];
-	qLoc = PyDimMem_NEW(1);
+	double complex tempFB[nChan-1];
+	double *c;
+	c = (double *) windowData->data;
 	for(i=0; i<nChan*nTaps; i++) {
-		qLoc[0] = (npy_intp) i;
-		fbWindow[i] = sinc((double) (i - nTaps*nChan/2 + 0.5)/nChan) / nChan;
-		fbWindow[i] *= *(double *) PyArray_GetPtr(windowData, qLoc);
+		fbWindow[i] = sinc((double) (i - nTaps*nChan/2 + 0.5)/nChan);
+		fbWindow[i] *= *(c + i);
 	}
-	PyDimMem_FREE(qLoc);
 
 	// Find out how large the output array needs to be and initialize it
 	nFFT = (nSamps - startMax) / nChan * Overlap - Overlap + 1;
@@ -1517,48 +1572,56 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	npy_intp *dLoc, *fLoc;
+	npy_intp *fLoc;
+	double complex *a;
+	double *f;
+	a = (double complex *) data->data;
+	f = (double *) fq->data;
 	
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, in, secStart, j, k, fftIndex)
+		#ifdef _MKL
+			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
+		#endif
+		#pragma omp parallel default(shared) private(fLoc, in, secStart, tempFB, i, j, k, m, fftIndex)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
-			dLoc = PyDimMem_NEW(2);
 			fLoc = PyDimMem_NEW(3);
-			qLoc = PyDimMem_NEW(1);
 			
 			in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
 			
-			dLoc[0] = (npy_intp) i;
 			fLoc[0] = (npy_intp) i;
 			
-			for(j=0; j<nFFT; j++) {
-				secStart = start[i] + ((long) (nChan*((float) j)/Overlap));
+			for(j=0; j<nFFT; j+=nTaps) {
+				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				
-				for(k=0; k<nChan; k++) {
-					dLoc[1] = (npy_intp) (secStart + k);
-					in[k][0] = creal(*(double complex *) PyArray_GetPtr(data, dLoc) * fbWindow[nChan*(j % nTaps) + k]);
-					in[k][1] = cimag(*(double complex *) PyArray_GetPtr(data, dLoc) * fbWindow[nChan*(j % nTaps) + k]);
-				}	
+				for(m=0; m<nTaps; m++) {
+					secStart = nSamps * i + nChan*j/Overlap;
+					
+					for(k=0; k<nChan; k++) {
+						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
+						in[k][1] = cimag(*(a + secStart + k)) * fbWindow[nChan*m + k];
+					}
+				
+					fftw_execute_dft(p, in, in);
+				
+					for(k=0; k<(nChan-1); k++) {
+						fftIndex = ((k+1) + nChan/2) % nChan;
+						tempFB[k] += in[fftIndex][0] + imaginary * in[fftIndex][1];
+					}
+				}
 			
-				fftw_execute_dft(p, in, in);
-			
-				fLoc[2] = (npy_intp) j / nTaps;
+				fLoc[2] = (npy_intp) (j / nTaps);
 				for(k=0; k<(nChan-1); k++) {
 					fLoc[1] = (npy_intp) k;
-					qLoc[0] = (npy_intp) k;
-					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(-2*imaginary*PI * *(f + k) * frac[i][k]);
 				}
 			}
 			
-			PyDimMem_FREE(dLoc);
 			PyDimMem_FREE(fLoc);
-			PyDimMem_FREE(qLoc);
 
 			fftw_free(in);
 		}
