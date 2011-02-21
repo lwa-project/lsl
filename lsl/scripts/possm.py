@@ -35,7 +35,6 @@ def main(args):
 	# Grab the filename and open the FITS file using PyFits
 	filename = args[0]
 	hdulist = pyfits.open(filename)
-	mapper = hdulist['NOSTA_MAPPER']
 	uvData = hdulist['UV_DATA']
 
 	# Extract observation date/time information
@@ -44,11 +43,21 @@ def main(args):
 	print "Date Observered:", hdulist[0].header['DATE-OBS']
 
 	# Read in the stand mapping table if it exists
+	try:
+		mapper = hdu['NOSTA_MAPPER']
+		
+		nosta = mapper.data.field('NOSTA')
+		noact = mapper.data.field('NOACT')
+	except KeyError:
+		ag = hdu['ARRAY_GEOMETRY']
+
+		nosta = ag.data.field('NOSTA')
+		noact = ag.data.field('NOSTA')
 	standMap = {}
 	stands = []
-	for nosta, noact in zip(mapper.data.field('NOSTA'), mapper.data.field('NOACT')):
-		standMap[nosta] = noact
-		stands.append(noact)
+	for s, a in zip(nosta, noact):
+		standMap[s] = a
+		stands.append(a)
 
 	# Create output array
 	nStand = len(stands)

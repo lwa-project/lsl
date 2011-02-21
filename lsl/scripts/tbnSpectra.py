@@ -31,7 +31,7 @@ Options:
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
--q, --quiet                 Run tbwSpectra in silent mode
+-q, --quiet                 Run tbnSpectra in silent mode
 -l, --fft-length            Set FFT length (default = 4096)
 -o, --output                Output file name for spectra image
 """
@@ -235,8 +235,8 @@ def main(args):
 
 	# The plots:  This is setup for the current configuration of 20 antpols
 	fig = plt.figure()
-	figsX = int(round(math.sqrt(antpols)))
-	figsY = antpols / figsX
+	figsY = int(round(math.sqrt(antpols)))
+	figsX = antpols / figsY
 	# Put the freqencies in the best units possible
 	freq, units = bestFreqUnits(freq)
 

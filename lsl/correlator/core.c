@@ -1407,7 +1407,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				
 				for(m=0; m<nTaps; m++) {
-					secStart = nSamps * i + nChan*j/Overlap;
+					secStart = start[i] + nSamps * i + nChan*j/Overlap;
 					
 					for(k=0; k<nChan; k++) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
@@ -1599,7 +1599,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				
 				for(m=0; m<nTaps; m++) {
-					secStart = nSamps * i + nChan*j/Overlap;
+					secStart = start[i] + nSamps*i + nChan*j/Overlap;
 					
 					for(k=0; k<nChan; k++) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
@@ -1683,19 +1683,24 @@ The function defined in this module are:\n\
     two stands\n\
   * XEngine2 - Similar to XEngine, but works with a collection of stands all at\n\
     once\n\
-  * PEngineR2 - F-engined based on a 4-tap polyphase filter bank for computing a series\n\
+  * PEngineR2 - F-engined based on a 4-tap uniform DFT filter bank for computing a series\n\
     of overlapped transforms with delay corrections for a real-valued (TBW) signals from\n\
     a collection of stands\n\
   * PEngineR3 - Similar to PEngineR2, but allows for a window function to be applied to\n\
     the data.  The window function needs to be evaluated to the correct FFT length and\n\
     number of taps before being passed to PEngineR3\n\
-  * PEngineC2 - F-engined based on a 4-tap polyphase filter bank for computing a series\n\
+  * PEngineC2 - F-engined based on a 4-tap uniform DFT filter bank for computing a series\n\
     of overlapped transforms with delay corrections for a complex-valued (TBN) signals \n\
     from a collection of stands\n\
   * PEngineC3 - Similar to PEngineC3, but allows for a window function to be applied to\n\
     the data.  The window function needs to be evaluated to the correct FFT length and\n\
     number of taps before being passed to PEngineC3\n\
-See the inidividual functions for more details.");
+See the inidividual functions for more details.\n\
+\n\
+.. note::\n\
+	The 'P' engines do not preserve phase and do not yield valid results for use in\n\
+	cross-correlation.  Currently only the 'F' engines are know to be useful.\n\
+");
 
 
 /*

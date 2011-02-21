@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 
 """Python module to handle the channelization and cross-correlation of TBW and
-TBN data.  The main functions in this module are:
+TBN data.  The main python functions in this module are:
   * calcSpectra - calculate power spectra for a collection of signals
   * FXCorrelator - calculate cross power spectra for a collection of signals
-    (deprecated)
+both of which have been deprecated in favor of the new C extension based 
+routines listed below.
+
+The main python/C extension functions in this module are:
+  * SpecMaster - similar to calcSpectra but uses the _spec module for all 
+    computations and does not support automatic sub-integration
+  * SpecMasterP - SpecMaster with a 64-tap uniform DFT filter bank
   * FXMaster - calculate cross power spectra for a collection of signals
 
 Each function is set up to process the signals in parallel using the 
@@ -26,7 +32,7 @@ import _core
 
 __version__ = '0.5'
 __revision__ = '$ Revision: 23 $'
-__all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'correlate', 'FXCorrelator', 'FXMaster', 'PXMaster', '__version__', '__revision__', '__all__']
+__all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
 
 
 def noWindow(L):
@@ -585,66 +591,67 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 	return (freq, output)
 
 
-def PXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
-	"""A version of FXMaster that uses a 64-tap polyphase filter for the FFT step
-	rather than a normal FFT.  Returns the frequencies and visibilities as a 
-	two-elements tuple."""
+#def PXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
+	#"""A version of FXMaster that uses a 64-tap polyphase filter for the FFT step
+	#rather than a normal FFT.  Returns the frequencies and visibilities as a 
+	#two-elements tuple."""
 
-	nStands = stands.shape[0]
-	baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)
-	nBL = len(baselines)
+	#nStands = stands.shape[0]
+	#baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)
+	#nBL = len(baselines)
 
-	# Figure out if we are working with complex (I/Q) data or only real.  This
-	# will determine how the FFTs are done since the real data mirrors the pos-
-	# itive and negative Fourier frequencies.
-	if signals.dtype.kind == 'c':
-		lFactor = 1
-		doFFTShift = True
-		CentralFreq = float(CentralFreq)
-	else:
-		lFactor = 2
-		doFFTShift = False
+	## Figure out if we are working with complex (I/Q) data or only real.  This
+	## will determine how the FFTs are done since the real data mirrors the pos-
+	## itive and negative Fourier frequencies.
+	#if signals.dtype.kind == 'c':
+		#lFactor = 1
+		#doFFTShift = True
+		#CentralFreq = float(CentralFreq)
+	#else:
+		#lFactor = 2
+		#doFFTShift = False
 
-	if SampleRate is None:
-		SampleRate = dp_common.fS
-	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
-	if doFFTShift:
-		freq += CentralFreq
-		freq = numpy.fft.fftshift(freq)
-	freq = freq[1:LFFT]
+	#if SampleRate is None:
+		#SampleRate = dp_common.fS
+	#freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+	#if doFFTShift:
+		#freq += CentralFreq
+		#freq = numpy.fft.fftshift(freq)
+	#freq = freq[1:LFFT]
 
-	# Define the cable/signal delay caches to help correlate along and compute 
-	# the delays that we need to apply to align the signals
-	dlyCache = uvUtils.SignalCache(freq)
-	dlyRef = len(freq)/2
-	delays = numpy.zeros((nStands,LFFT-1))
-	for i in list(range(nStands)):
-		delays[i,:] = dlyCache.signalDelay(stands[i])
-	delays = delays[:,dlyRef].max() - delays
+	## Define the cable/signal delay caches to help correlate along and compute 
+	## the delays that we need to apply to align the signals
+	#dlyCache = uvUtils.SignalCache(freq)
+	#dlyRef = len(freq)/2
+	#delays = numpy.zeros((nStands,LFFT-1))
+	#for i in list(range(nStands)):
+		#delays[i,:] = dlyCache.signalDelay(stands[i])
+	#delays = delays[:,dlyRef].max() - delays
 
-	# F - defaults to running parallel in C via OpenMP
-	if window is noWindow:
-		# Data without a window function provided
-		if signals.dtype.kind == 'c':
-			signalsF = _core.PEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
-		else:
-			signalsF = _core.PEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
-	else:
-		# Data with a window function provided
-		if signals.dtype.kind == 'c':
-			signalsF = _core.PEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window)
-		else:
-			signalsF = _core.PEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window)
-	signalsFC = signalsF.conj()
+	## F - defaults to running parallel in C via OpenMP
+	#if window is noWindow:
+		#print "No Window"
+		## Data without a window function provided
+		#if signals.dtype.kind == 'c':
+			#signalsF = _core.PEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		#else:
+			#signalsF = _core.PEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+	#else:
+		## Data with a window function provided
+		#if signals.dtype.kind == 'c':
+			#signalsF = _core.PEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
+									#SampleRate=SampleRate, window=window)
+		#else:
+			#signalsF = _core.PEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
+									#SampleRate=SampleRate, window=window)
+	#signalsFC = signalsF.conj()
 
-	# X
-	output = _core.XEngine2(signalsF, signalsFC)
+	## X
+	#output = _core.XEngine2(signalsF, signalsFC)
 
-	# Divide the cross-multiplied data by the number of channels used
-	output /= LFFT
-	if signals.dtype.kind != 'c':
-		output /= 2.0
+	## Divide the cross-multiplied data by the number of channels used
+	#output /= LFFT
+	#if signals.dtype.kind != 'c':
+		#output /= 2.0
 
-	return (freq, output)
+	#return (freq, output)

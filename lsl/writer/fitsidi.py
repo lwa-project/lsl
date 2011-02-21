@@ -897,7 +897,7 @@ class IDI(object):
 
 		try:
 			nsm = self.FITS['NOSTA_MAPPER']
-		except IndexError:
+		except KeyError:
 			return (None, None)
 
 		# Build the mapper and inverseMapper

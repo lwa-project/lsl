@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Given a TBN file, plot the time averaged spectra for each beam output."""
+"""Given a DRX file, plot the time averaged spectra for each beam output."""
 
 import os
 import sys
@@ -27,7 +27,7 @@ Options:
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
--q, --quiet                 Run tbwSpectra in silent mode
+-q, --quiet                 Run drxSpectra in silent mode
 -l, --fft-length            Set FFT length (default = 4096)
 -o, --output                Output file name for spectra image
 """

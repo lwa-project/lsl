@@ -22,10 +22,8 @@ to correctly generate wrapper code for python 2.6.
 
 .. warning::
 	Use libnova version 0.13.0 or later; version 0.12 is known to contain errors.
-	(The lsl wrapper code will correct for these errors if an older version of 
-	libnova is used.)
 
-The libnova C library can be found `here <http://http://libnova.sourceforge.net/>`_.
+The libnova C library can be found `here <http://libnova.sourceforge.net/>`_.
 
 Building
 ========

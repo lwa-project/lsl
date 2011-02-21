@@ -29,8 +29,8 @@ splitTBN.py is also useful for aligning TBN files with full frames.  In some sit
 TBN file does not correspond to the first stand.  splitTBN.py examines the start of every file and removes the 
 first capture if it is missing some of the frames.
 
-Quick Spectra with tbnSpectra.py
-+++++++++++++++++++++++++++++++++
+Generate Quick Spectra with tbnSpectra.py
++++++++++++++++++++++++++++++++++++++++++
 tbnSpectra.py provides a way to plot integrated spectra for *all* data in a TBN file.  For short TBN captures
 (up to a few minutes) it can be directly run on the file.  However, longer TBN files should be pared down with
 splitTBN.py to ensure that tbnSpectra.py does not take hours to run.  To use tbnSpectra.py::
@@ -67,21 +67,29 @@ In the above code, line 3 reads the raw TBN frame into a :mod:`lsl.reader.tbn.Fr
 
 Plot Spectra
 ------------
-After the TBW data have been read in, spectra can by computed and plotted using the function
+After the TBN data have been read in, spectra can by computed and plotted using the function
 :mod:`lsl.correlator.fx.calcSpectra`.  For example::
 
 	>>> from lsl.correlator import fx as fxc
-	>>> freq, spec = fxc.calcSpectra(data, LFFT=2048, DisablePool=True)
+	>>> freq, spec = fxc.calcSpectra(data, LFFT=2048, SampleRate=1e5, CentralFreq=38e6, DisablePool=True)
 
-Where data is a 2-D array of where the first dimension loops through stands  and the second samples.
+Where data is a 2-D array of where the first dimension loops through stands  and the second samples.  Unlike TBW data,
+the additional keywords 'SampleRate' and 'CentralFreq' are needed to create the correct frequencies associated with
+the FFTs.  The sample rate can be obtained from the data using::
+
+	>>> sampleRate = tbn.getSampleRate(fh)
+
+which uses the time tags of sequetial frames to determine the sample rate.  Currently there is not a way to determine
+the central frequency of the observations from the data frames.
+
 Once the spectra have been computed, they can be plotted via *matplotlib* via::
 
 	>>> import numpy
 	>>> from matplotlib import pyplot as plt
 	>>> fig = plt.figure()
 	>>> ax = fig.gca()
-	>>> ax.plot(freq/1e6, numpy.log10(spec[0,:])*10.0)
-	>>> ax.set_xlabel('Frequency [MHz]')
+	>>> ax.plot(freq/1e3, numpy.log10(spec[0,:])*10.0)
+	>>> ax.set_xlabel('Frequency [kHz]')
 	>>> ax.set_ylabel('PSD [Arb. dB]')
 
 .. note::

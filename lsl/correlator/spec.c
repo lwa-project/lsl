@@ -538,7 +538,7 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 				
 				for(m=0; m<nTaps; m++) {
-					secStart = nSamps * i + 2*nChan*j/Overlap;
+					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
 					
 					for(k=0; k<(nChan<<1); k+=2) {
 						in[k][0] = *(a + secStart + k) * fbWindow[2*nChan*m + k];
@@ -677,7 +677,7 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 				
 				for(m=0; m<nTaps; m++) {
-					secStart = nSamps * i + 2*nChan*j/Overlap;
+					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
 					
 					for(k=0; k<(nChan<<1); k+=2) {
 						in[k][0] = *(a + secStart + k) * fbWindow[2*nChan*m + k];
@@ -799,7 +799,7 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 
 				for(m=0; m<nTaps; m++) {
-					secStart = nSamps * i + nChan*j/Overlap;
+					secStart = nSamps * i + nChan*(j+m)/Overlap;
 					
 					for(k=0; k<nChan; k++) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
@@ -934,7 +934,7 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 
 				for(m=0; m<nTaps; m++) {
-					secStart = nSamps * i + nChan*j/Overlap;
+					secStart = nSamps * i + nChan*(j+m)/Overlap;
 					
 					for(k=0; k<nChan; k++) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];

@@ -154,7 +154,7 @@ def main(args):
 		count = {}
 		data = numpy.zeros((antpols,framesWork*nSamples/antpols), dtype=numpy.int16)
 		# If there are fewer frames than we need to fill an FFT, skip this chunk
-		if data.shape[1] < LFFT:
+		if data.shape[1] < 2*LFFT:
 			break
 		# Inner loop that actually reads the frames into the data array
 		for j in range(framesWork):
@@ -240,8 +240,8 @@ def main(args):
 	else:
 		# Normal plotting
 		fig = plt.figure()
-		figsX = int(round(math.sqrt(antpols)))
-		figsY = antpols / figsX
+		figsY = int(round(math.sqrt(antpols)))
+		figsX = antpols / figsY
 		for i in range(antpols):
 			ax = fig.add_subplot(figsX,figsY,i+1)
 			currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )

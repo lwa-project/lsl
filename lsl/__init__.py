@@ -8,6 +8,7 @@ Provided packages:
   * lsl.correlator
   * lsl.statistics
   * lsl.sim
+  * lsl.imaging
   * lsl.misc
 
 Provided modules:
@@ -24,7 +25,7 @@ See the individual package descriptions for more information.
 """
 
 __version__ = '0.4'
-__revision__ = '$ Revision: 6 $'
+__revision__ = '$ Revision: 7 $'
 __author__ = "Jayce Dowell"
 
 import common
@@ -33,6 +34,7 @@ import writer
 import correlator
 import statistics
 import sim
+import imaging
 import misc
 
 import astro_array

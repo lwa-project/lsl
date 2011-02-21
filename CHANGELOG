@@ -7,10 +7,17 @@
   * Re-worked the plotAntenna.py script to use the pre-computed dipole
    response fits
   * Added support for EXCITATION keywords in misc.nec_util
+  * Added new gofast reader for TBW, TBN, and DRX
+  * Added better polyphase filter support
 
 0.3.4.2
   * Fixed a couple of typos. in the correlator scripts
   * Added more colors to tbwSpectra.py so that all 20 inputs can be plotted
+  * Fixed problems with DRX frame attributes
+  * Fixed filter code problems in the DRX writer
+  * Fixed typo in URL for libnova
+  * Added a brief tutorial for DRX data
+  * Fixed a problem determining if a TBW chunk has enough samples to FFT
 
 0.3.4.1
   * Fixed various documentation problems
