@@ -50,7 +50,7 @@ secondary keys
 In addition to simulation functions, this module includes buildGriddedImage
 which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
 
-.. versionchanged:: 0.3
+.. versionchanged:: 0.3.0
 	This module was formerly called lsl.sim.sim
 """
 
@@ -66,7 +66,7 @@ from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 12 $'
+__revision__ = '$ Revision: 13 $'
 __all__ = ['srcs', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
@@ -226,7 +226,7 @@ def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False,
 	return simAA
 
 
-def __buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None):
+def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None):
 	"""Helper function for buildSimData so that buildSimData can be called with 
 	a list of Julian Dates and reconstruct the data appropriately."""
 
@@ -303,7 +303,6 @@ def __buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None
 	if phaseCenter is not 'z':
 		phaseCenter.compute(aa)
 
-	pols = ['xx', 'yy', 'xy', 'yx']
 	for pol in pols:
 		UVData['bls'][pol] = []
 		UVData['uvw'][pol] = []
@@ -357,11 +356,15 @@ def __buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None
 	return UVData
 
 
-def buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None, verbose=False):
+def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter='z', baselines=None, mask=None, verbose=False):
 	"""Given an AIPY AntennaArray object and a dictionary of sources from 
-	aipy.src.get_catalog, returned a data dictionary of simulated data taken 
-	at zenith.  Optinally, the data can be masked using some referenced 
-	(observed) data set or only a specific sub-set of baselines."""
+	aipy.src.get_catalog, returned a data dictionary of simulated data taken at 
+	zenith.  Optinally, the data can be masked using some referenced (observed) 
+	data set or only a specific sub-set of baselines.
+	
+	..versionchanged:: 0.4.0
+		Added the 'pols' keyword to only compute certain polarization components
+	"""
 
 	nFreq = (aa.get_afreqs()).shape[0]
 
@@ -382,7 +385,6 @@ def buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None, 
 		UVData['isMasked'] = True
 	
 	# Loop over polarizations to populate the simulated data set
-	pols = ['xx', 'yy', 'xy', 'yx']
 	for pol in pols:
 		UVData['bls'][pol] = []
 		UVData['uvw'][pol] = []
@@ -394,7 +396,7 @@ def buildSimData(aa, srcs, jd=None, phaseCenter='z', baselines=None, mask=None, 
 	# Loop over Julian days to fill in the simulated data set
 	jdCounter = 1
 	for juldate in jd:
-		oBlk = __buildSimData(aa, srcs, jd=juldate, phaseCenter=phaseCenter, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd))
+		oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, phaseCenter=phaseCenter, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd))
 		jdCounter = jdCounter + 1
 
 		for pol in oBlk['bls']:
@@ -509,8 +511,12 @@ def buildSimSignals(aa, stands, srcs, length=1024000, jd=None, phaseCenter='z', 
 
 
 def scaleData(dataDict, amps, delays):
-	"""Apply a set of antenna-based gains and phase delays to a data dictionary.
-	Returned the new scaled and delayed dictionary."""
+	"""Apply a set of antenna-based real gain values and phase delays in ns to a 
+	data dictionary.  Returned the new scaled and delayed dictionary.
+	
+	..versionchanged:: 0.4.0
+		The delays are now expected to be in nanoseconds rather than radians.
+	"""
 
 	import copy
 
@@ -520,6 +526,7 @@ def scaleData(dataDict, amps, delays):
 		sclUVData['isMasked'] = True
 	else:
 		sclUVData['isMasked'] = False
+	fq = dataDict['freq'] / 1e9
 
 	# Apply the scales and delays for all polarization pairs found in the original data
 	for pol in dataDict['vis'].keys():
@@ -531,7 +538,7 @@ def scaleData(dataDict, amps, delays):
 		sclUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
 
 		for (i,j),vis in zip(dataDict['bls'][pol], dataDict['vis'][pol]):
-			sclUVData['vis'][pol].append( vis*amps[i]*amps[j]*n.exp(-1j*2.0*math.pi*(delays[j]-delays[i])) )
+			sclUVData['vis'][pol].append( vis*amps[i]*amps[j]*n.exp(2j*math.pi*fq*(delays[j]-delays[i])) )
 
 	return sclUVData
 	
