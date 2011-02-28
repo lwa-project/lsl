@@ -91,33 +91,33 @@ class fx_tests(unittest.TestCase):
 		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6, 
 							window=numpy.blackman)
 	
-	### PXMaster Function ###
+	#### PXMaster Function ###
 	
-	def test_fb_correlator_correlator_real(self):
-		"""Test the C-based correlator on real-valued data."""
+	#def test_fb_correlator_correlator_real(self):
+		#"""Test the C-based correlator on real-valued data."""
 
-		fakeData = numpy.random.rand(4,4096) + 3.0
-		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]))
+		#fakeData = numpy.random.rand(4,4096) + 3.0
+		#freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]))
 
-	def test_fb_correlator_complex(self):
-		"""Test the C-based correlator on complex-valued data."""
+	#def test_fb_correlator_complex(self):
+		#"""Test the C-based correlator on complex-valued data."""
 
-		fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
-		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6)
+		#fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
+		#freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6)
 		
-	def test_fb_correlator_real_window(self):
-		"""Test the C-based correlator on real-valued data window."""
+	#def test_fb_correlator_real_window(self):
+		#"""Test the C-based correlator on real-valued data window."""
 		
-		fakeData = numpy.random.rand(4,4096) + 3.0
-		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), 
-							window=numpy.blackman)
+		#fakeData = numpy.random.rand(4,4096) + 3.0
+		#freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), 
+							#window=numpy.blackman)
 		
-	def test_fb_correlator_complex_window(self):
-		"""Test the C-based correlator on complex-valued data."""
+	#def test_fb_correlator_complex_window(self):
+		#"""Test the C-based correlator on complex-valued data."""
 
-		fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
-		freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6, 
-							window=numpy.blackman)
+		#fakeData = numpy.random.rand(4,4096) + 1j*numpy.random.rand(4,4096)
+		#freq, cps = fx.PXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6, 
+							#window=numpy.blackman)
 
 
 class fx_test_suite(unittest.TestSuite):

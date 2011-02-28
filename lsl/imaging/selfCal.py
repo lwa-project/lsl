@@ -85,7 +85,7 @@ def __residualsSCA(amps, delays, dataDict, simDict, chan, pol='yy', MapSize=30, 
 	return numpy.abs(err)
 
 
-def selfCal(dataDict, simDict, MapSize=30, MapRes=0.5, pol='xx', chan=22, doGain=False, returnDelays=False):
+def selfCal(dataDict, simDict, pol='xx', chan=22, doGain=False, returnDelays=False):
 	"""Function used to perform a simple phase self-calibration of data stored in a 
 	readUVData dictionary and a model sky stored in a lsl.sim.vis.buildSimSky 
 	dictionary for a given polarization and channel."""
@@ -145,10 +145,15 @@ def selfCal(dataDict, simDict, MapSize=30, MapRes=0.5, pol='xx', chan=22, doGain
 
 
 def __selfCalResid(gains, dataDict, simDict, chan, pol):
-	"""Private function  """
+	"""Private function for computing residuals for selfCal2.  Inputs are an array 
+	of gains of the form [amplitude, delay1, delay2, ..., delayN] where delays are in
+	nanoseconds, a input data dictionary, a simulated data dictionary, a channel 
+	range, and a polarization keyword."""
 	
 	fq = dataDict['freq'][chan] / 1e9
-	cGains = numpy.abs(gains[0])*numpy.exp(2j*numpy.pi*fq*gains[1:])
+	cGains = numpy.zeros(((len(gains)-1), len(chan)), dtype=numpy.complex_)
+	for i in range(len(gains)-1):
+		cGains[i,:] = numpy.abs(gains[0])*numpy.exp(-2j*numpy.pi*fq*gains[i+1])
 
 	obsVis = []
 	for vis,wgt in zip(dataDict['vis'][pol], dataDict['wgt'][pol]):
@@ -165,9 +170,9 @@ def __selfCalResid(gains, dataDict, simDict, chan, pol):
 	gainProd = []
 	for i,j in dataDict['bls'][pol]:
 		gainProd.append(cGains[i]*cGains[j].conj())
-	gainProd = numpy.array(gainProd)
+	gainProd = numpy.concatenate(gainProd)
 
-	return (numpy.abs(X - gainProd)**2).sum()
+	return numpy.abs(X - gainProd)**2
 
 
 def selfCal2(dataDict, simDict, chan, pol, returnDelays=False):
@@ -179,7 +184,7 @@ def selfCal2(dataDict, simDict, chan, pol, returnDelays=False):
 	initialAmps = numpy.ones(1)*0.388
 	initialDelays = numpy.zeros(20)
 	initialGains = numpy.concatenate([initialAmps, initialDelays])
-	bestFit = fmin_cg(selfCalResid, initialGains, args=(dataDict, simDict, chan, pol), full_output=True)
+	bestFit = fmin(__selfCalResid, initialGains, args=(dataDict, simDict, chan, pol), full_output=True)
 
 	# Report on the fits
 	bestAmps = numpy.abs(bestFit[0][0])*numpy.ones(20)
