@@ -399,3 +399,102 @@ def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=
 				cFrame.writeRawFrame(fh)
 				
 				j = j + 1
+
+
+def buildSimSignals(aa, stands, srcs, length=1024000, jd=None, phaseCenter='z', pol='x', SampleRate=dp_common.fS, IQ=False, verbose=True):
+	"""Build up a collection of time series data that represents the output
+	voltage of each stand as a function of time for a given collection of
+	sources.  Note:  This only seems to work for single sources."""
+
+	eta = 119.9169832*n.pi	# impedance of free space (Ohm)
+
+	Nstand = len(aa.ants)
+	freq = n.squeeze((aa.get_afreqs())) * 1e9 # GHz to Hz
+	Nfreq = freq.shape[0]
+	
+	# Compute the source parameters
+	srcs_tp = []
+	srcs_mp = []
+	srcs_jy = []
+	srcs_fq = []
+	if verbose:
+		print "Sources Used for Simulation:"
+	for name,src in srcs.iteritems():
+		## Update the source's coordinates
+		src.compute(aa)
+
+		## Get parameters
+		top = src.get_crds(crdsys='top', ncrd=3)	# topo. coords.
+		map = src.map							# equitorial -> topo. rotation matrix
+		jys = src.get_jys()						# F_nu
+		frq = aa.get_afreqs()					# nu
+
+		## Fix the lowest frequencies to avoid problems with the flux blowing up
+		## at nu = 0 Hz by replacing flux values below 1 MHz with the flux at 
+		## 1 MHz
+		Jyat1MHz = jys[ n.where( n.abs(frq-0.001) == n.abs(frq-0.001).min() ) ]
+		jys = n.where( frq >= 0.001, jys, Jyat1MHz )
+
+		## Filter out sources that are below the horizon or have no flux
+		srcAzAlt = aipy.coord.top2azalt(top) * 180/math.pi
+		if verbose:
+			if srcAzAlt[1] < 0:
+				print "  %s: below horizon" % name
+			else:
+				print "  %s: %+.2f altitude; flux mean %.2f kJy" % (name, srcAzAlt[1], jys.mean()/1e3)
+		if srcAzAlt[1] <= 0 or jys.sum() <= 0:
+			continue
+
+		## Save values into the source arrays
+		srcs_tp.append( top )
+		srcs_mp.append( map )
+		srcs_jy.append( jys )
+		srcs_fq.append( frq )
+
+	# Get the topocentric coorindates for the zenith
+	zen = aipy.coord.azalt2top(n.array([[n.pi/4],[n.pi/2]]))
+	zen = n.squeeze(zen)
+
+	# Define the stand position and cable/signal delay caches to the simulator 
+	# move along faster
+	dlyCache = uvUtils.SignalCache(freq, applyDispersion=True)
+
+	# Update the phase center if necessary
+	if phaseCenter == 'z':
+		phaseCenterMap = aipy.coord.eq2top_m(0.0, aa.lat)
+	else:
+		phaseCenter.compute(aa)
+		phaseCenterMap = phaseCenter.map
+
+	# Generate the time series response of each signal at each frequency
+	t = n.arange(length)/SampleRate * 1e9 # s -> ns
+	tdSignals = n.zeros((Nstand, length), dtype=n.complex64)
+	temp = n.zeros((len(srcs_tp), Nstand, length), dtype=n.complex64)
+	for sc,tp,mp,jy,fq in zip(range(temp.shape[0]), srcs_tp, srcs_mp, srcs_jy, srcs_fq):
+		for i,ant in zip(range(Nstand), aa.ants):
+			# Zeroth, get the beam response in the direction of the current source for all frequencies
+			antResponse = n.squeeze( ant.bm_response(tp, pol=pol) )
+
+			# First, do the geometric delay
+			geoDelay = ( n.dot(mp, ant.pos).transpose() )[2] 
+			geoDelayPC = ( n.dot(phaseCenterMap, ant.pos).transpose() )[2]
+			print geoDelay, geoDelayPC
+
+			# Second, do the cable delay
+			Delayat1MHz = dlyCache.cableDelay(stands[i], freq=1.0e6)[0] * 1e9 # s -> ns
+			cblDelay = dlyCache.cableDelay(stands[i]) * 1e9 # s -> ns
+			# NB: Replace the cable delays below 1 MHz with the 1 MHz value to keep the 
+			# delays from blowing up for small f
+			cblDelay = n.where( fq >= 0.001, cblDelay, Delayat1MHz )
+
+			for a,j,f,d in zip(antResponse, jy, fq, cblDelay):
+				factor = a * n.sqrt(j)
+				angle = 2*n.pi*f*(t + (d - (geoDelay-geoDelayPC)))
+				temp[sc,i,:] += factor*(n.cos(angle) + 1j*n.sin(angle))
+
+	print temp.shape
+	tdSignals = temp.sum(axis=0)
+	if not IQ:
+		return tdSignals.real
+	else:
+		return tdSginals
