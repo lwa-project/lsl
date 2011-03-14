@@ -157,19 +157,20 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 
 	// Save the data to the frame object
 	// 1.  Header
-	fHeader = PyObject_GetAttr(frame, Py_BuildValue("s", "header"));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "frameCount"), Py_BuildValue("l", frameCount));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "secondsCount"), Py_BuildValue("l", secondsCount));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "tbwID"), Py_BuildValue("i", tbwID));
+	fHeader = PyObject_GetAttrString(frame, "header");
+	PyObject_SetAttrString(fHeader, "frameCount", Py_BuildValue("l", frameCount));
+	PyObject_SetAttrString(fHeader, "secondsCount", Py_BuildValue("l", secondsCount));
+	PyObject_SetAttrString(fHeader, "tbwID", Py_BuildValue("i", tbwID));
 	// 2. Data
-	fData = PyObject_GetAttr(frame, Py_BuildValue("s", "data"));
-	PyObject_SetAttr(fData, Py_BuildValue("s", "timeTag"), Py_BuildValue("l", timeTag));
-	PyObject_SetAttr(fData, Py_BuildValue("s", "xy"), PyArray_Return(data));
+	fData = PyObject_GetAttrString(frame, "data");
+	PyObject_SetAttrString(fData, "timeTag", Py_BuildValue("l", timeTag));
+	PyObject_SetAttrString(fData, "xy", PyArray_Return(data));
 	// 3. Frame
-	PyObject_SetAttr(frame, Py_BuildValue("s", "header"), fHeader);
-	PyObject_SetAttr(frame, Py_BuildValue("s", "data"), fData);
-	Py_DECREF(fHeader);
-	Py_DECREF(fData);
+	PyObject_SetAttrString(frame, "header", fHeader);
+	PyObject_SetAttrString(frame, "data", fData);
+	
+	Py_XDECREF(fHeader);
+	Py_XDECREF(fData);
 	Py_XDECREF(data);
 
 	output = Py_BuildValue("O", frame);
@@ -284,19 +285,20 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 
 	// Save the data to the frame object
 	// 1.  Header
-	fHeader = PyObject_GetAttr(frame, Py_BuildValue("s", "header"));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "frameCount"), Py_BuildValue("l", frameCount));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "secondsCount"), Py_BuildValue("l", secondsCount));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "tbnID"), Py_BuildValue("i", tbnID));
+	fHeader = PyObject_GetAttrString(frame, "header");
+	PyObject_SetAttrString(fHeader, "frameCount", Py_BuildValue("l", frameCount));
+	PyObject_SetAttrString(fHeader, "secondsCount", Py_BuildValue("l", secondsCount));
+	PyObject_SetAttrString(fHeader, "tbnID", Py_BuildValue("i", tbnID));
 	// 2. Data
-	fData = PyObject_GetAttr(frame, Py_BuildValue("s", "data"));
-	PyObject_SetAttr(fData, Py_BuildValue("s", "timeTag"), Py_BuildValue("l", timeTag));
-	PyObject_SetAttr(fData, Py_BuildValue("s", "iq"), PyArray_Return(data));
+	fData = PyObject_GetAttrString(frame, "data");
+	PyObject_SetAttrString(fData, "timeTag", Py_BuildValue("l", timeTag));
+	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
 	// 3. Frame
-	PyObject_SetAttr(frame, Py_BuildValue("s", "header"), fHeader);
-	PyObject_SetAttr(frame, Py_BuildValue("s", "data"), fData);
-	Py_DECREF(fHeader);
-	Py_DECREF(fData);
+	PyObject_SetAttrString(frame, "header", fHeader);
+	PyObject_SetAttrString(frame, "data", fData);
+	
+	Py_XDECREF(fHeader);
+	Py_XDECREF(fData);
 	Py_XDECREF(data);
 
 	output = Py_BuildValue("O", frame);
@@ -424,22 +426,23 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 
 	// Save the data to the frame object
 	// 1. Header
-	fHeader = PyObject_GetAttr(frame, Py_BuildValue("s", "header"));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "frameCount"), Py_BuildValue("l", frameCount));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "drxID"), Py_BuildValue("i", drxID));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "secondsCount"), Py_BuildValue("l", secondsCount));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "decimation"), Py_BuildValue("i", decimation));
-	PyObject_SetAttr(fHeader, Py_BuildValue("s", "timeOffset"), Py_BuildValue("i", timeOffset));
+	fHeader = PyObject_GetAttrString(frame, "header");
+	PyObject_SetAttrString(fHeader, "frameCount", Py_BuildValue("l", frameCount));
+	PyObject_SetAttrString(fHeader, "drxID", Py_BuildValue("i", drxID));
+	PyObject_SetAttrString(fHeader, "secondsCount", Py_BuildValue("l", secondsCount));
+	PyObject_SetAttrString(fHeader, "decimation", Py_BuildValue("i", decimation));
+	PyObject_SetAttrString(fHeader, "timeOffset", Py_BuildValue("i", timeOffset));
 	// 2. Data
-	fData = PyObject_GetAttr(frame, Py_BuildValue("s", "data"));
-	PyObject_SetAttr(fData, Py_BuildValue("s", "timeTag"), Py_BuildValue("l", timeTag));
-	PyObject_SetAttr(fData, Py_BuildValue("s", "flags"), Py_BuildValue("l", flags));
-	PyObject_SetAttr(fData, Py_BuildValue("s", "iq"), PyArray_Return(data));
+	fData = PyObject_GetAttrString(frame, "data");
+	PyObject_SetAttrString(fData, "timeTag", Py_BuildValue("l", timeTag));
+	PyObject_SetAttrString(fData, "flags", Py_BuildValue("l", flags));
+	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
 	// 3. Frame
-	PyObject_SetAttr(frame, Py_BuildValue("s", "header"), fHeader);
-	PyObject_SetAttr(frame, Py_BuildValue("s", "data"), fData);
-	Py_DECREF(fHeader);
-	Py_DECREF(fData);
+	PyObject_SetAttrString(frame, "header", fHeader);
+	PyObject_SetAttrString(frame, "data", fData);
+	
+	Py_XDECREF(fHeader);
+	Py_XDECREF(fData);
 	Py_XDECREF(data);
 
 	output = Py_BuildValue("O", frame);

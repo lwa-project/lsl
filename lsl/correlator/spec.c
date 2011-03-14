@@ -342,9 +342,9 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_free(inP);
 
 	cblas_dscal((nChan-1)*nStand, 1.0/(nChan*nFFT), b, 1);
-	
-	Py_XDECREF(data);
 
+	Py_XDECREF(data);
+	
 	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);
 

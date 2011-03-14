@@ -41,21 +41,22 @@ lwa_cat_view.py
                         update period in seconds (default 5)
 
 plotAntenna.py
-  :Description: Example script to plot the relative response of an isolated LWA antenna
-                as a function of azimuth and elevation using an NEC model at a particular
-                frequency in MHz.
+  :Description: Plot the relative dipole response for both polarizations of an isolated LWA-1 antenna at a particular frequency.
 
-  :Usage: plotAntenna.py FREQ
+  :Usage: plotAntenna.py [OPTIONS]
 
-  :Options: None
+  :Options: -h, --help             Display this help information
+            -f, --freq             Frequency of the observations in MHz (default = 74 MHz)
+            -v, --verbose          Run plotAntenna in vebose mode
 
 plotStands.py
-  :Description: Example script to read in the positions of stands at LWA-1 and make a plot
-                of the site.
+  :Description: Plot the x, y, and z locations of stands at LWA-1.  Also, mark and label particular stands, if requested.
 
-  :Usage: plotStands.py
+  :Usage: plotStands.py [OPTIONS] [stand1 [stand2 [...]]]
 
-  :Options: None
+  :Options: -h, --help             Display this help information
+            -l, --label            Label the stands with their ID numbers (default = No)
+            -v, --verbose          Run plotStands in vebose mode
 
 plotUVCoverage.py
   :Description: Randomly select 20 antennae from LWA-1 and plot the uv-plane coverage for
