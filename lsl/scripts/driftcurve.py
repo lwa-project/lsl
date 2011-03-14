@@ -103,13 +103,13 @@ def main(args):
 	
 	# Read in the skymap (GSM or LF map @ 74 MHz)
 	if config['GSM']:
-		smap = skymap.SkyMapGSM()
+		smap = skymap.SkyMapGSM(freqMHz=config['freq']/1e6)
 		if config['verbose']:
-			print "Read in GSM map of %s pixels; min=%f, max=%f" % (len(smap.ra), smap._power.min(), smap._power.max())
+			print "Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (config['freq']/1e6, len(smap.ra), smap._power.min(), smap._power.max())
 	else:
-		smap = skymap.SkyMap()
+		smap = skymap.SkyMap(freqMHz=config['freq']/1e6)
 		if config['verbose']:
-			print "Read in LF map of %d x %d pixels; min=%f, max=%f" % (smap.numPixelsX, smap.numPixelsY, smap._power.min(), smap._power.max())
+			print "Read in LF map at %.2f MHz of %d x %d pixels; min=%f, max=%f" % (config['freq']/1e6, smap.numPixelsX, smap.numPixelsY, smap._power.min(), smap._power.max())
 	
 	# Get the emperical model of the beam and compute it for the correct frequencies
 	beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))

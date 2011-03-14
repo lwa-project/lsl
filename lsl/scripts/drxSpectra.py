@@ -42,7 +42,7 @@ def parseOptions(args):
 	config = {}
 	# Command line flags - default values
 	config['LFFT'] = 4096
-	config['maxFrames'] = 50000
+	config['maxFrames'] = 20000
 	config['window'] = fxc.noWindow
 	config['output'] = None
 	config['verbose'] = True
@@ -118,7 +118,7 @@ def main(args):
 	fh = open(config['args'][0], "rb")
 	nFrames = os.path.getsize(config['args'][0]) / drx.FrameSize
 	junkFrame = drx.readFrame(fh)
-	print junkFrame
+	
 	fh.seek(0)
 	srate = junkFrame.getSampleRate()
 	beams = drx.getBeamCount(fh)
@@ -188,7 +188,7 @@ def main(args):
 				count[aStand] = 0
 				masterCount[aStand] = 0
 			if cFrame.header.frameCount % 10000 == 0 and config['verbose']:
-				print "%2i,%1i,%1i -> %2i  %5i  %i" % (beam, tune, pol, aStand, cFrame.header.frameCount, cFrame.data.timeTag)
+				print "%2i,%1i,%1i -> %2i  %5i  %i" % (beam, tune, pol, aStand, j/4, cFrame.data.timeTag)
 
 			# Additional check on the data array bounds so that we don't overflow it.  
 			# This check may be redundant...
@@ -230,7 +230,7 @@ def main(args):
 
 		ax = fig.add_subplot(figsX,figsY,k+1)
 		currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-		ax.plot(freq, currSpectra, label='%i' % (i+1))
+		ax.plot(freq, currSpectra, label='%i (avg)' % (i+1))
 
 		# If there is more than one chunk, plot the difference between the global 
 		# average and each chunk
@@ -238,20 +238,26 @@ def main(args):
 			for j in range(nChunks):
 				# Some files are padded by zeros at the end and, thus, carry no 
 				# weight in the average spectra.  Skip over those.
+				print k, aStand, j, masterWeight[j,i,:].sum()
 				if masterWeight[j,i,:].sum() == 0:
 					continue
 
 				# Calculate the difference between the spectra and plot
 				subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
 				diff = subspectra - currSpectra
-				ax.plot(freq, diff)
+				print diff
+				ax.plot(freq, diff, label='%i' % j)
 
 		ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2))
 		ax.set_xlabel('Frequency Offset [%s]' % units)
 		ax.set_ylabel('P.S.D. [dB/RBW]')
 		ax.set_xlim([freq.min(), freq.max()])
+		ax.legend(loc=0)
+		
+		print "For beam %i, tune. %i, pol. %i maximum in PSD at %.3f %s" % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2, freq[numpy.where( spec[i,:] == spec[i,:].max() )][0], units)
 
 	print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
+	plt.subplots_adjust(hspace=0.35, wspace=0.30)
 	plt.show()
 
 	# Save spectra image if requested
