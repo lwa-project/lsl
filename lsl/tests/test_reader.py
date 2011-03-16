@@ -89,8 +89,8 @@ class reader_tests(unittest.TestCase):
 		for i in range(1,9):
 			frame = tbw.readFrame(fh)
 
-		# Last frame should be an error (errors.numpyError)
-		self.assertRaises(errors.numpyError, tbw.readFrame, fh)
+		# Last frame should be an error (errors.eofError)
+		self.assertRaises(errors.eofError, tbw.readFrame, fh)
 		fh.close()
 		
 		# If we offset in the file by 1 byte, we should be a 
@@ -174,8 +174,8 @@ class reader_tests(unittest.TestCase):
 		for i in range(1,30):
 			frame = tbn.readFrame(fh)
 
-		# Last frame should be an error (errors.numpyError)
-		self.assertRaises(errors.numpyError, tbn.readFrame, fh)
+		# Last frame should be an error (errors.eofError)
+		self.assertRaises(errors.eofError, tbn.readFrame, fh)
 		fh.close()
 		
 		# If we offset in the file by 1 byte, we should be a 
@@ -295,8 +295,8 @@ class reader_tests(unittest.TestCase):
 		for i in range(1,17):
 			frame = drx.readFrame(fh)
 
-		# Last frame should be an error (errors.numpyError)
-		self.assertRaises(errors.numpyError, drx.readFrame, fh)
+		# Last frame should be an error (errors.eofError)
+		self.assertRaises(errors.eofError, drx.readFrame, fh)
 		fh.close()
 		
 		# If we offset in the file by 1 byte, we should be a 

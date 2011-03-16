@@ -141,9 +141,11 @@ class Frame(object):
 	"""Class that stores the information contained within a single TBN 
 	frame.  It's properties are FrameHeader and FrameData objects."""
 
-	def __init__(self, header=FrameHeader(), data=FrameData()):
-		self.header = header
-		self.data = data
+	def __init__(self, header=None, data=None):
+		if header is None:
+			self.header = FrameHeader()
+		if data is None:
+			self.data = FrameData()
 		self.valid = True
 
 	def parseID(self):
@@ -468,7 +470,7 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 	filehandle.seek(0)
 
 	if nFrames is None:
-		nFrames = 512
+		nFrames = 560
 	nFrames = 2*nFrames
 
 	# Build up the list-of-lists that store ID codes and loop through 512
@@ -483,8 +485,6 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 			break
 		except syncError:
 			continue
-		except numpyError:
-			break
 		
 		stand, pol = cFrame.parseID()
 		key = 2*stand + pol

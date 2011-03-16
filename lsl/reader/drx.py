@@ -124,9 +124,11 @@ class Frame(object):
 	"""Class that stores the information contained within a single DRX 
 	frame.  It's properties are FrameHeader and FrameData objects."""
 
-	def __init__(self, header=FrameHeader(), data=FrameData()):
-		self.header = header
-		self.data = data
+	def __init__(self, header=None, data=None):
+		if header is None:
+			self.header = FrameHeader()
+		if data is None:
+			self.data = FrameData()
 		self.valid = True
 
 	def parseID(self):
