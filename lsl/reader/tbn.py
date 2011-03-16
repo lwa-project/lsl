@@ -36,11 +36,13 @@ getSampleRate
 
 getFramesPerObs
   read in the first several frames to see how many stands are found in the data.
+
+.. versionchanged:: 0.4
+	Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
 import copy
 import numpy
-import struct
 
 from  lsl.common import dp as dp_common
 from _gofast import readTBN
@@ -49,7 +51,7 @@ from _gofast import eofError as geofError
 from errors import *
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 13 $'
+__revision__ = '$ Revision: 15 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 1048
@@ -144,8 +146,14 @@ class Frame(object):
 	def __init__(self, header=None, data=None):
 		if header is None:
 			self.header = FrameHeader()
+		else:
+			self.header = header
+			
 		if data is None:
 			self.data = FrameData()
+		else:
+			self.data = data
+			
 		self.valid = True
 
 	def parseID(self):
@@ -321,9 +329,16 @@ class Frame(object):
 
 
 class ObservingBlock(object):
-	def __init__(self, x=[], y=[]):
-		self.x = x
-		self.y = y
+	def __init__(self, x=None, y=None):
+		if x is None:
+			self.x = []
+		else:
+			self.x = x
+			
+		if y is None:
+			self.y = []
+		else:
+			self.y = y
 
 	def getTime(self):
 		"""Convenience wrapper for the Frame.FrameData.getTime function."""
@@ -358,68 +373,6 @@ class ObservingBlock(object):
 			self.x[i].data.setGain(gain)
 		for i in len(self.y):
 			self.y[i].data.setGain(gain)
-
-
-def __readHeader(filehandle, Verbose=False):
-	"""Private function to read in a TBN header.  Returns a FrameHeader object."""
-
-	try:
-		s = filehandle.read(4)
-		sync4, sync3, sync2, sync1 = struct.unpack(">BBBB", s)
-		s = filehandle.read(4)
-		m5cID, frameCount3, frameCount2, frameCount1 = struct.unpack(">BBBB", s)
-		frameCount = (long(frameCount3)<<16) | (long(frameCount2)<<8) | long(frameCount1)
-		s = filehandle.read(4)
-		secondsCount = struct.unpack(">L", s)
-		s = filehandle.read(4)
-		tbnID, junk = struct.unpack(">HH", s)
-	except IOError:
-		raise eofError()
-	except struct.error:
-		raise eofError()
-
-	if sync1 != 92 or sync2 != 222 or sync3 != 192 or sync4 != 222:
-		raise syncError(sync1=sync1, sync2=sync2, sync3=sync3, sync4=sync4)
-
-	newHeader = FrameHeader()
-	newHeader.frameCount = frameCount
-	newHeader.secondsCount = secondsCount[0]
-	newHeader.tbnID = tbnID
-
-	if Verbose:
-		stand, pol = newHeader.parseID()
-		print "Header: ", tbnID
-		print "  Stand: ", stand
-		print "  Polarization: ", pol
-
-	return newHeader
-
-
-def __readData(filehandle):
-	"""Private function to read in a TBN frame data section.  Returns a 
-	FrameData object."""
-
-	try:
-		s = filehandle.read(8)
-		timeTag = struct.unpack(">Q", s)
-	except IOError:
-		raise eofError()
-
-	rawData = numpy.fromfile(filehandle, dtype=numpy.dtype('>i1'), count=1024)
-	rawData = rawData.astype(numpy.int8)
-	data = numpy.zeros(512, dtype=numpy.csingle)
-	if rawData.shape[0] < 2*data.shape[0]:
-		raise numpyError()
-
-	data.real = rawData[0::2]
-	data.imag = rawData[1::2]
-	#print data.real.min(), data.real.max(), data.imag.min(), data.imag.max()
-	
-	newData = FrameData()
-	newData.timeTag = timeTag[0]
-	newData.iq = data
-
-	return newData
 
 
 def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):

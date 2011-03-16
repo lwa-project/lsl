@@ -33,11 +33,13 @@ getFramesPerObs
 
 	This function is a little flaky on TBW data sets that have less 
 	than a full complement or 12M (36M) samples.
+
+.. versionchanged:: 0.4
+	Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
 import copy
 import numpy
-import struct
 
 from  lsl.common import dp as dp_common
 from _gofast import readTBW
@@ -46,7 +48,7 @@ from _gofast import eofError as geofError
 from errors import *
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 21 $'
+__revision__ = '$ Revision: 23 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getDataBits', 'getFramesPerObs', '__version__', '__revision__', '__all__']
 
 FrameSize = 1224
@@ -120,8 +122,14 @@ class Frame(object):
 	def __init__(self, header=None, data=None):
 		if header is None:
 			self.header = FrameHeader()
+		else:
+			self.header = header
+			
 		if data is None:
 			self.data = FrameData()
+		else:
+			self.data = data
+			
 		self.valid = True
 
 	def parseID(self):
@@ -281,101 +289,6 @@ class Frame(object):
 			return 1
 		else:
 			return 0
-
-
-def __readHeader(filehandle, Verbose=False):
-	"""Private function to read in a TBW header.  Returns a FrameHeader object."""
-
-	try:
-		s = filehandle.read(4)
-		sync4, sync3, sync2, sync1 = struct.unpack(">BBBB", s)
-		s = filehandle.read(4)
-		m5cID, frameCount3, frameCount2, frameCount1 = struct.unpack(">BBBB", s)
-		frameCount = (long(frameCount3)<<16) | (long(frameCount2)<<8) | long(frameCount1)
-		s = filehandle.read(4)
-		secondsCount = struct.unpack(">L", s)
-		s = filehandle.read(4)
-		tbwID, junk = struct.unpack(">HH", s)
-	except IOError:
-		raise eofError()
-	except struct.error:
-		raise eofError()
-
-	if sync1 != 92 or sync2 != 222 or sync3 != 192 or sync4 != 222:
-		raise syncError(sync1=sync1, sync2=sync2, sync3=sync3, sync4=sync4)
-
-	newHeader = FrameHeader()
-	newHeader.frameCount = frameCount
-	newHeader.secondsCount = secondsCount[0]
-	newHeader.tbwID = tbwID
-
-	if Verbose:
-		stand = newHeader.parseID()
-		print "Header: ", tbwID, secondsCount, junk
-		print "  Stand: ", stand
-
-	return newHeader
-
-
-def __readData12(filehandle):
-	"""Private function to read in a TBW frame data section and unpack that data
-	when is the 12-bit.  Returns a FrameData object."""
-
-	try:
-		s = filehandle.read(8)
-		timeTag = struct.unpack(">Q", s)
-	except IOError:
-		raise eofError()
-	except struct.error:
-		raise eofError()
-
-	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=1200)
-	rawData = rawData.astype(numpy.uint16)
-	data = numpy.zeros((2,400), dtype=numpy.int16)
-	if rawData.shape[0] < 3*data.shape[1]:
-		raise numpyError()
-
-	data[0,:] = (rawData[0::3]<<4) | ((rawData[1::3]>>4)&15)
-	data[1,:] = ((rawData[1::3]&15)<<8) | rawData[2::3]
-	# The data are signed, so apply the two-complement rule to generate 
-	# the negative values
-	data -= 4096*((data>>11)&1)
-
-	newData = FrameData()
-	newData.timeTag = long(timeTag[0])
-	newData.xy = data
-
-	return newData
-	
-	
-def __readData4(filehandle):
-	"""Private function to read in a TBW frame data section and unpack that data
-	when is the 4-bit.  Returns a FrameData object."""
-
-	try:
-		s = filehandle.read(8)
-		timeTag = struct.unpack(">Q", s)
-	except IOError:
-		raise eofError()
-	except struct.error:
-		raise eofError()
-	
-	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=1200)
-	data = numpy.zeros((2,1200), dtype=numpy.int8)
-	if rawData.shape[0] < data.shape[1]:
-		raise numpyError()
-
-	data[0,:] = (rawData>>4)&15
-	data[1,:] = rawData&15
-	# The data are signed, so apply the two-complement rule to generate 
-	# the negative values
-	data -= 16*((data>>3)&1)
-	
-	newData = FrameData()
-	newData.timeTag = long(timeTag[0])
-	newData.xy = data
-	
-	return newData
 
 
 def readFrame(filehandle, Verbose=False):

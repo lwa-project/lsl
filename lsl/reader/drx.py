@@ -38,11 +38,13 @@ Finally, there are also two experimental functions defined in this file for
 averaging DRX observations.  averageObservations performs a straight channel-
 by-channel average of a collection of DRX frames, which averageObservations2
 allows for both temporal and spatial averaging.
+
+.. versionchanged:: 0.4
+	Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
 import copy
 import numpy
-import struct
 
 from  lsl.common import dp as dp_common
 from _gofast import readDRX
@@ -51,8 +53,8 @@ from _gofast import eofError as geofError
 from errors import *
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 19 $'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
+__revision__ = '$ Revision: 21 $'
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 4128
 
@@ -127,8 +129,14 @@ class Frame(object):
 	def __init__(self, header=None, data=None):
 		if header is None:
 			self.header = FrameHeader()
+		else:
+			self.header = header
+			
 		if data is None:
 			self.data = FrameData()
+		else:
+			self.data = data
+			
 		self.valid = True
 
 	def parseID(self):
@@ -312,88 +320,54 @@ class ObservingBlock(object):
 	"""Class that stores all frames associates with a particular beam at a
 	particular time."""
 
-	def __init__(self, x1=Frame(), y1=Frame(), x2=Frame(), y2=Frame()):
-		self.x1 = x1
-		self.y1 = y1
-		self.x2 = x2
-		self.y2 = y2
+	def __init__(self, x1=None, y1=None, x2=None, y2=None):
+		if x1 is None:
+			self.x1 = Frame()
+		else:
+			self.x1 = x1
+			
+		if y1 is None:
+			self.y1 = Frame()
+		else:
+			self.y1 = y1
+			
+		if x2 is None:
+			self.x2 = Frame()
+		else:
+			self.x2 = x2
+			
+		if y2 is None:
+			self.y2 = Frame()
+		else:
+			self.y2 = y2
+			
+	def getTime(self):
+		"""Convenience wrapper for the Frame.FrameData.getTime function."""
 		
+		return self.x1.data.getTime()
 
-def __readHeader(filehandle, Verbose=False):
-	"""Private function to read in a DRX header.  Returns a FrameHeader object."""
+	def getFilterCode(self):
+		"""Convenience wrapper for the Frame.FrameData.getFilterCode function."""
 
-	try:
-		s = filehandle.read(4)
-		sync4, sync3, sync2, sync1 = struct.unpack(">BBBB", s)
-		s = filehandle.read(4)
-		m5cID, frameCount3, frameCount2, frameCount1 = struct.unpack(">BBBB", s)
-		frameCount = (long(frameCount3)<<16) | (long(frameCount2)<<8) | long(frameCount1)
-		s = filehandle.read(4)
-		secondsCount = struct.unpack(">L", s)
-		s = filehandle.read(4)
-		decimation, timeOffset = struct.unpack(">HH", s)
-	except IOError:
-		raise eofError()
-	except struct.error:
-		raise eofError()
+		return self.x1.data.getFilterCode()
 
-	if sync1 != 92 or sync2 != 222 or sync3 != 192 or sync4 != 222:
-		raise syncError(sync1=sync1, sync2=sync2, sync3=sync3, sync4=sync4)
+	def setCentralFreq(self, centralFreq):
+		"""Convenience wrapper for the Frame.FrameData.setCentralFreq function."""
 
-	drxID = m5cID
-	newHeader = FrameHeader()
-	newHeader.frameCount = frameCount
-	newHeader.drxID = drxID
-	newHeader.secondsCount = secondsCount[0]
-	newHeader.decimation = decimation
-	newHeader.timeOffset = timeOffset
+		self.x1.data.setCentralFreq(centralFreq)
+		self.y1.data.setCentralFreq(centralFreq)
+			
+		self.x2.data.setCentralFreq(centralFreq)
+		self.y2.data.setCentralFreq(centralFreq)
 
-	if Verbose:
-		beam, tune, pol = newHeader.parseID()
-		print "Header: ", drxID, decimation, timeOffset
-		print "  Beam: ", beam
-		print "  Tuning: ", tune
-		print "  Polarization: ", pol
+	def setGain(self, gain):
+		"""Convenience wrapper for the Frame.FrameData.setGain function."""
 
-	return newHeader
-
-
-def __readData(filehandle):
-	"""Private function to read in a DRX frame data section.  Returns a 
-	FrameData object."""
-
-	try:
-		s = filehandle.read(8)
-		timeTag = struct.unpack(">Q", s)
-		s = filehandle.read(8)
-		flags = struct.unpack(">Q", s)
-	except IOError:
-		raise eofError()
-	except struct.error:
-		raise eofError()
-	
-	# A truly excellent idea from Dan Wood
-	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=4096)
-	data = numpy.zeros(4096, dtype=numpy.complex_)
-	if rawData.shape[0] < data.shape[0]:
-		raise numpyError()
-	
-	data.real = (rawData>>4)&15
-	data.imag = rawData&15
-
-	# The data are signed, so apply the two-complement rule to generate 
-	# the negative values
-	negativeValues = numpy.where( data.real >= 8 )
-	data.real[negativeValues] -= 16
-	negativeValues = numpy.where( data.imag >= 8 )
-	data.imag[negativeValues] -= 16
-	
-	newData = FrameData()
-	newData.timeTag = timeTag[0]
-	newData.flags = flags[0]
-	newData.iq = data
-
-	return newData
+		self.x1.data.setGain(gain)
+		self.y1.data.setGain(gain)
+			
+		self.x2.data.setGain(gain)
+		self.y2.data.setGain(gain)
 
 
 def readFrame(filehandle, CentralFreq=None, Gain=None, Verbose=False):
@@ -420,16 +394,59 @@ def readBlock(filehandle):
 	contents as a ObservingBlock object.  This function wraps 
 	readFrame."""
 	
+	# Read in four frames
 	try:
-		x1 = readFrame(filehandle)
-		y1 = readFrame(filehandle)
-		x2 = readFrame(filehandle)
-		y2 = readFrame(filehandle)
+		f1 = readFrame(filehandle)
+		f2 = readFrame(filehandle)
+		f3 = readFrame(filehandle)
+		f4 = readFrame(filehandle)
 	except baseReaderError, err:
 		raise err
 
+	# Load them into x1, y1, x2, y2 based on their tuning and polariztaion
+	# values
+	for f in [f1, f2, f3, f4]:
+		beam, tune, pol = f.parseID()
+		if tune == 1:
+			if pol == 0:
+				x1 = f
+			else:
+				y1 = f
+		else:
+			if pol == 0:
+				x2 = f
+			else:
+				y2 = f
+
+	# Create the block structure and return
 	block = ObservingBlock(x1=x1, y1=y1, x2=x2, y2=y2)
+	
 	return block
+
+
+def getSampleRate(filehandle, nFrames=None, FilterCode=False):
+	"""Find out what the sampling rate/filter code is from a sigle observations.  
+	By default, the rate in Hz is returned.  However, the corresponding filter 
+	code can be returned instead by setting the FilterCode keyword to true.
+	
+	This function is included to make eaiser to write code for TBN analysis and 
+	modify it for DRX data.
+	"""
+
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+	
+	# Go back to the beginning...
+	filehandle.seek(0)
+
+	# Read in one frame
+	newFrame = readFrame(filehandle)
+	filehandle.seek(fhStart)
+
+	if not FilterCode:
+		return newFrame.getSampleRate()
+	else:
+		return newFrame.getFilterCode()
 
 
 def getBeamCount(filehandle):
