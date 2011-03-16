@@ -11,7 +11,6 @@ from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
 from lsl.reader import errors
-from lsl.reader import _gofast
 
 
 __revision__ = "$ Revision: 2 $"
@@ -72,28 +71,6 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(frame2.parseID(), 1)
 		fh.close()
 		
-	def test_tbw_read_gofast(self):
-		"""Test the Go Fast! TBW reader."""
-		
-		fh = open(tbwFile, 'rb')
-		# Read and validate the first four frames
-		for i in xrange(4):
-			fileLoc = fh.tell()
-			frame = tbw.readFrame(fh)
-			fh.seek(fileLoc)
-			frameG = _gofast.readTBW(fh, tbw.Frame())
-		
-			self.assertEqual(frame.parseID(), frameG.parseID())
-			self.assertEqual(frame.header.tbwID, frameG.header.tbwID)
-			self.assertEqual(frame.header.frameCount, frameG.header.frameCount)
-			self.assertEqual(frame.header.secondsCount, frameG.header.secondsCount)
-			self.assertEqual(frame.data.timeTag, frameG.data.timeTag)
-			for j in xrange(400):
-				self.assertEqual(frame.data.xy[0,j], frameG.data.xy[0,j])
-				self.assertEqual(frame.data.xy[1,j], frameG.data.xy[1,j])
-		
-		fh.close()
-
 	def test_tbw_bits(self):
 		"""Test getting the data bits from a TBW file."""
 
@@ -121,25 +98,6 @@ class reader_tests(unittest.TestCase):
 		fh = open(tbwFile, 'rb')
 		fh.seek(1)
 		self.assertRaises(errors.syncError, tbw.readFrame, fh)
-		fh.close()
-		
-	def test_tbw_errors_gofast(self):
-		"""Test the Go Fast! TBW reader errors."""
-		
-		fh = open(tbwFile, 'rb')
-		# Frames 1 through 8
-		for i in range(1,9):
-			frame = _gofast.readTBW(fh, tbw.Frame())
-
-		# Last frame should be an error (_gofast.eofError)
-		self.assertRaises(_gofast.eofError, _gofast.readTBW, fh, tbw.Frame())
-		fh.close()
-		
-		# If we offset in the file by 1 byte, we should be a 
-		# sync error (_gofast.syncError).
-		fh = open(tbwFile, 'rb')
-		fh.seek(1)
-		self.assertRaises(_gofast.syncError, _gofast.readTBW, fh, tbw.Frame())
 		fh.close()
 
 	def test_tbw_comps(self):
@@ -208,27 +166,6 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(pol, 1)
 		fh.close()
 		
-	def test_tbn_read_gofast(self):
-		"""Test the Go Fast! TBN reader."""
-		
-		fh = open(tbnFile, 'rb')
-		# Read and validate the first four frames
-		for i in xrange(4):
-			fileLoc = fh.tell()
-			frame = tbn.readFrame(fh)
-			fh.seek(fileLoc)
-			frameG = _gofast.readTBN(fh, tbn.Frame())
-		
-			self.assertEqual(frame.header.tbnID, frameG.header.tbnID)
-			self.assertEqual(frame.header.frameCount, frameG.header.frameCount)
-			self.assertEqual(frame.header.secondsCount, frameG.header.secondsCount)
-			self.assertEqual(frame.data.timeTag, frameG.data.timeTag)
-			for j in xrange(512):
-				self.assertEqual(frame.data.iq[j].real, frameG.data.iq[j].real)
-				self.assertEqual(frame.data.iq[j].imag, frameG.data.iq[j].imag)
-		
-		fh.close()
-
 	def test_tbn_errors(self):
 		"""Test reading in all frames from a truncated TBN file."""
 
@@ -246,25 +183,6 @@ class reader_tests(unittest.TestCase):
 		fh = open(tbnFile, 'rb')
 		fh.seek(1)
 		self.assertRaises(errors.syncError, tbn.readFrame, fh)
-		fh.close()
-		
-	def test_tbn_errors_gofast(self):
-		"""Test reading in all frames from a truncated TBN file."""
-
-		fh = open(tbnFile, 'rb')
-		# Frames 1 through 29
-		for i in range(1,30):
-			frame = _gofast.readTBN(fh, tbn.Frame())
-
-		# Last frame should be an error (_gofast.eofError)
-		self.assertRaises(_gofast.eofError, _gofast.readTBN, fh, tbn.Frame())
-		fh.close()
-		
-		# If we offset in the file by 1 byte, we should be a 
-		# sync error (_gofast.syncError).
-		fh = open(tbnFile, 'rb')
-		fh.seek(1)
-		self.assertRaises(_gofast.syncError, _gofast.readTBN, fh, tbn.Frame())
 		fh.close()
 
 	def test_tbn_block(self):
@@ -368,30 +286,6 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(tune, 1)
 		self.assertEqual(pol, 1)
 		fh.close()
-		
-	def test_drx_read_gofast(self):
-		"""Test the Go Fast! DRX reader."""
-		
-		fh = open(drxFile, 'rb')
-		# Read and validate the first four frames
-		for i in xrange(4):
-			fileLoc = fh.tell()
-			frame = drx.readFrame(fh)
-			fh.seek(fileLoc)
-			frameG = _gofast.readDRX(fh, drx.Frame())
-
-			self.assertEqual(frame.header.drxID, frameG.header.drxID)
-			self.assertEqual(frame.header.decimation, frameG.header.decimation)
-			self.assertEqual(frame.header.frameCount, frameG.header.frameCount)
-			self.assertEqual(frame.header.secondsCount, frameG.header.secondsCount)
-			self.assertEqual(frame.header.timeOffset, frameG.header.timeOffset)
-			self.assertEqual(frame.data.timeTag, frameG.data.timeTag)
-			self.assertEqual(frame.data.flags, frameG.data.flags)
-			for j in xrange(4096):
-				self.assertEqual(frame.data.iq[j].real, frameG.data.iq[j].real)
-				self.assertEqual(frame.data.iq[j].imag, frameG.data.iq[j].imag)
-		
-		fh.close()
 
 	def test_drx_errors(self):
 		"""Test reading in all frames from a truncated DRX file."""
@@ -410,25 +304,6 @@ class reader_tests(unittest.TestCase):
 		fh = open(drxFile, 'rb')
 		fh.seek(1)
 		self.assertRaises(errors.syncError, drx.readFrame, fh)
-		fh.close()
-		
-	def test_drx_errors_gofast(self):
-		"""Test reading in all frames from a truncated DRX file."""
-
-		fh = open(drxFile, 'rb')
-		# Frames 1 through 16
-		for i in range(1,17):
-			frame = _gofast.readDRX(fh, drx.Frame())
-
-		# Last frame should be an error (_gofast.eofError)
-		self.assertRaises(_gofast.eofError, _gofast.readDRX, fh, drx.Frame())
-		fh.close()
-		
-		# If we offset in the file by 1 byte, we should be a 
-		# sync error (_gofast.syncError).
-		fh = open(drxFile, 'rb')
-		fh.seek(1)
-		self.assertRaises(_gofast.syncError, _gofast.readDRX, fh, drx.Frame())
 		fh.close()
 
 	def test_drx_beam(self):

@@ -43,10 +43,13 @@ import numpy
 import struct
 
 from  lsl.common import dp as dp_common
+from _gofast import readTBN
+from _gofast import syncError as gsyncError
+from _gofast import eofError as geofError
 from errors import *
 
-__version__ = '0.5'
-__revision__ = '$ Revision: 11 $'
+__version__ = '0.6'
+__revision__ = '$ Revision: 13 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 1048
@@ -60,11 +63,10 @@ class FrameHeader(object):
 	frame.  All three fields listed in the DP IDC version H are stored as 
 	well as the original binary header data."""
 
-	def __init__(self, frameCount=None, secondsCount=None, tbnID=None,  raw=None):
+	def __init__(self, frameCount=None, secondsCount=None, tbnID=None):
 		self.frameCount = frameCount
 		self.secondsCount = secondsCount
 		self.tbnID = tbnID
-		self.raw = raw
 		
 	def isTBN(self):
 		"""Function to check if the data is really TBN and not TBW by examining
@@ -102,14 +104,14 @@ class FrameData(object):
 		self.iq = iq
 
 	def getTime(self):
-		"""Function to convert the time tag from samples since station midnight to
-		seconds since station midnight.  This function needs to dp_common module 
-		in order to work."""
+		"""Function to convert the time tag from samples since the UNIX epoch
+		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch."""
 		
 		return self.timeTag / dp_common.fS
 
 	def getFilterCode(self):
 		"""Function to convert the sample rate in Hz to a filter code."""
+		
 		if self.sampleRate is None:
 			return None
 		else:
@@ -359,20 +361,15 @@ class ObservingBlock(object):
 def __readHeader(filehandle, Verbose=False):
 	"""Private function to read in a TBN header.  Returns a FrameHeader object."""
 
-	rawHeader = ''
 	try:
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		sync4, sync3, sync2, sync1 = struct.unpack(">BBBB", s)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		m5cID, frameCount3, frameCount2, frameCount1 = struct.unpack(">BBBB", s)
 		frameCount = (long(frameCount3)<<16) | (long(frameCount2)<<8) | long(frameCount1)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		secondsCount = struct.unpack(">L", s)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		tbnID, junk = struct.unpack(">HH", s)
 	except IOError:
 		raise eofError()
@@ -386,7 +383,6 @@ def __readHeader(filehandle, Verbose=False):
 	newHeader.frameCount = frameCount
 	newHeader.secondsCount = secondsCount[0]
 	newHeader.tbnID = tbnID
-	newHeader.raw = rawHeader
 
 	if Verbose:
 		stand, pol = newHeader.parseID()
@@ -426,24 +422,15 @@ def __readData(filehandle):
 
 def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):
 	"""Function to read in a single TBN frame (header+data) and store the 
-	contents as a Frame object.  This function wraps readerHeader and 
-	readData."""
+	contents as a Frame object."""
 
+	# New Go Fast! (TM) method
 	try:
-		hdr = __readHeader(filehandle, Verbose=Verbose)
-	except syncError, err:
-		# Why?  If we run into a sync error here, then the following frame is invalid.  
-		# Thus, we need to skip over this frame be advancing the file pointer 8+1000 B 
-		currPos = filehandle.tell()
-		frameEnd = currPos + FrameSize - 16
-		filehandle.seek(frameEnd)
-		raise err
-
-	dat = __readData(filehandle)
-	
-	newFrame = Frame()
-	newFrame.header = hdr
-	newFrame.data = dat
+		newFrame = readTBN(filehandle, Frame())
+	except gsyncError:
+		raise syncError
+	except geofError:
+		raise eofError
 	
 	newFrame.setSampleRate(SampleRate)
 	newFrame.setCentralFreq(CentralFreq)
@@ -540,7 +527,7 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 def getFramesPerObs(filehandle):
 	"""Find out how many frames are present per observation by examining 
-	the first 512 TBN frames.  Return the number of frames per observations 
+	the first 600 TBN frames.  Return the number of frames per observations 
 	as a two-	element tuple, one for each polarization."""
 	
 	# Save the current position in the file so we can return to that point
@@ -549,12 +536,14 @@ def getFramesPerObs(filehandle):
 	# Go back to the beginning...
 	filehandle.seek(0)
 
-	# Build up the list-of-lists that store ID codes and loop through 512
+	# Build up the list-of-lists that store ID codes and loop through 600
 	# frames.  In each case, parse pull the TBN ID, extract the stand 
 	# number, and append the stand number to the relevant polarization array 
 	# if it is not already there.
 	idCodes = [[], []]
-	for i in range(512):
+	maxX = 0
+	maxY = 0
+	for i in range(600):
 		try:
 			cFrame = readFrame(filehandle)
 		except eofError:
@@ -567,9 +556,26 @@ def getFramesPerObs(filehandle):
 		cID, cPol = cFrame.header.parseID()
 		if cID not in idCodes[cPol]:
 			idCodes[cPol].append(cID)
+		
+		# Also, look at the actual IDs to try to figure out how many of
+		# each there are in case the frames are out of order.  Will this
+		# help in all cases?  Probably not but we should at least try it
+		if cPol == 0:
+			if cID > maxX:
+				maxX = cID
+		else:
+			if cID > maxY:
+				maxY = cID
 			
 	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
 	
+	# Compaqre idCodes sizes with maxX and maxY.  Load maxX and maxY with 
+	# the larger of the two values.
+	if maxX < len(idCodes[0]):
+		maxX = len(idCodes[0])
+	if maxY < len(idCodes[1]):
+		maxY = len(idCodes[1])
+	
 	# Get the length of each beam list and return them as a tuple
-	return (len(idCodes[0]), len(idCodes[1]))
+	return (maxX, maxY)

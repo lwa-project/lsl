@@ -40,10 +40,13 @@ import numpy
 import struct
 
 from  lsl.common import dp as dp_common
+from _gofast import readTBW
+from _gofast import syncError as gsyncError
+from _gofast import eofError as geofError
 from errors import *
 
-__version__ = '0.5'
-__revision__ = '$ Revision: 19 $'
+__version__ = '0.6'
+__revision__ = '$ Revision: 21 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getDataBits', 'getFramesPerObs', '__version__', '__revision__', '__all__']
 
 FrameSize = 1224
@@ -54,11 +57,10 @@ class FrameHeader(object):
 	frame.  All three fields listed in the DP IDC version H are stored as 
 	well as the original binary header data."""
 
-	def __init__(self, frameCount=None, secondsCount=None, tbwID=None,  raw=None):
+	def __init__(self, frameCount=None, secondsCount=None, tbwID=None):
 		self.frameCount = frameCount
 		self.secondsCount = secondsCount
 		self.tbwID = tbwID
-		self.raw = raw
 
 	def isTBW(self):
 		"""Function to check if the data is really TBW and not TBN by examining
@@ -103,9 +105,8 @@ class FrameData(object):
 		self.xy = xy
 
 	def getTime(self):
-		"""Function to convert the time tag from samples since station 
-		midnight to seconds since station midnight.  This function needs to 
-		dp_common module in order to work."""
+		"""Function to convert the time tag from samples since the UNIX epoch
+		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch."""
 
 		seconds = self.timeTag / dp_common.fS
 		
@@ -283,20 +284,15 @@ class Frame(object):
 def __readHeader(filehandle, Verbose=False):
 	"""Private function to read in a TBW header.  Returns a FrameHeader object."""
 
-	rawHeader = ''
 	try:
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		sync4, sync3, sync2, sync1 = struct.unpack(">BBBB", s)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		m5cID, frameCount3, frameCount2, frameCount1 = struct.unpack(">BBBB", s)
 		frameCount = (long(frameCount3)<<16) | (long(frameCount2)<<8) | long(frameCount1)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		secondsCount = struct.unpack(">L", s)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		tbwID, junk = struct.unpack(">HH", s)
 	except IOError:
 		raise eofError()
@@ -384,25 +380,14 @@ def readFrame(filehandle, Verbose=False):
 	"""Function to read in a single TBW frame (header+data) and store the 
 	contents as a Frame object.  This function wraps readerHeader and 
 	readData[(12)|4]."""
-
-	try:
-		hdr = __readHeader(filehandle, Verbose=Verbose)
-	except syncError, err:
-		# Why?  If we run into a sync error here, then the following frame is invalid.  
-		# Thus, we need to skip over this frame be advancing the file pointer 8+1200 B 
-		currPos = filehandle.tell()
-		frameEnd = currPos + FrameSize - 16
-		filehandle.seek(frameEnd)
-		raise err
-
-	if hdr.getDataBits() == 12:
-		dat = __readData12(filehandle)
-	else:
-		dat = __readData4(filehandle)
 	
-	newFrame = Frame()
-	newFrame.header = hdr
-	newFrame.data = dat
+	# New Go Fast! (TM) method
+	try:
+		newFrame = readTBW(filehandle, Frame())
+	except gsyncError:
+		raise syncError
+	except geofError:
+		raise eofError
 
 	return newFrame
 

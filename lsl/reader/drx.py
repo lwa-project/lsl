@@ -45,10 +45,13 @@ import numpy
 import struct
 
 from  lsl.common import dp as dp_common
+from _gofast import readDRX
+from _gofast import syncError as gsyncError
+from _gofast import eofError as geofError
 from errors import *
 
-__version__ = '0.4'
-__revision__ = '$ Revision: 17 $'
+__version__ = '0.6'
+__revision__ = '$ Revision: 19 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 4128
@@ -62,13 +65,12 @@ class FrameHeader(object):
 	frame.  All six fields listed in the DP IDC version H are stored as 
 	well as the original binary header data."""
 	
-	def __init__(self, frameCount=None, drxID=None, secondsCount=None, decimation=None, timeOffset=None, raw=None):
+	def __init__(self, frameCount=None, drxID=None, secondsCount=None, decimation=None, timeOffset=None):
 		self.frameCount = frameCount
 		self.drxID = drxID
 		self.secondsCount = secondsCount
 		self.decimation = decimation
 		self.timeOffset = timeOffset
-		self.raw = raw
 	
 	def parseID(self):
 		"""Parse the DRX ID into a tuple containing the beam (1 through
@@ -85,6 +87,15 @@ class FrameHeader(object):
 		
 		sampleRate = dp_common.fS / self.decimation
 		return sampleRate
+		
+	def getFilterCode(self):
+		"""Function to convert the sample rate in Hz to a filter code."""
+		
+		sampleCodes = {}
+		for key,value in filterCodes.iteritems():
+			sampleCodes[value] = key
+
+		return sampleCodes[self.sampleRate]
 
 
 class FrameData(object):
@@ -92,18 +103,21 @@ class FrameData(object):
 	frame.  All three fields listed in the DP IDC version H are stored."""
 
 	def __init__(self, timeTag=None, flags=None, iq=None):
+		self.centralFreq = None
+		self.gain = None
 		self.timeTag = timeTag
 		self.flags = flags
 		self.iq = iq
-
-	def getTime(self):
-		"""Function to convert the time tag from samples since station 
-		midnight to seconds since station midnight.  This function needs 
-		the dp_common module in order to work."""
-
-		seconds = self.timeTag / dp_common.fS
 		
-		return seconds
+	def setCentralFreq(self, centralFreq):
+		"""Function to set the central frequency of the DRX data in Hz."""
+
+		self.centralFreq = centralFreq
+
+	def setGain(self, gain):
+		"""Function to set the gain of the DRX data."""
+
+		self.gain = gain
 
 
 class Frame(object):
@@ -126,12 +140,30 @@ class Frame(object):
 		function."""
 		
 		return self.header.getSampleRate()
+		
+	def getFilterCode(self):
+		"""Convenience wrapper for the Frame.FrameHeader.getFilterCode function."""
+
+		return self.header.getFilterCode()
 
 	def getTime(self):
-		"""Convenience wrapper for the Frame.FrameData.getTime function."""
+		"""Function to convert the time tag from samples since the UNIX epoch
+		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch."""
+
+		seconds = (self.data.timeTag - self.header.timeOffset) / dp_common.fS
 		
-		return self.data.getTime()
-			
+		return seconds
+	
+	def setCentralFreq(self, centralFreq):
+		"""Convenience wrapper for the Frame.FrameData.setCentralFreq function."""
+
+		self.data.setCentralFreq(centralFreq)
+
+	def setGain(self, gain):
+		"""Convenience wrapper for the Frame.FrameData.setGain function."""
+
+		self.data.setGain(gain)
+
 	def __add__(self, y):
 		"""Add the data sections of two frames together or add a number 
 		to every element in the data section."""
@@ -288,20 +320,15 @@ class ObservingBlock(object):
 def __readHeader(filehandle, Verbose=False):
 	"""Private function to read in a DRX header.  Returns a FrameHeader object."""
 
-	rawHeader = ''
 	try:
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		sync4, sync3, sync2, sync1 = struct.unpack(">BBBB", s)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		m5cID, frameCount3, frameCount2, frameCount1 = struct.unpack(">BBBB", s)
 		frameCount = (long(frameCount3)<<16) | (long(frameCount2)<<8) | long(frameCount1)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		secondsCount = struct.unpack(">L", s)
 		s = filehandle.read(4)
-		rawHeader = rawHeader + s
 		decimation, timeOffset = struct.unpack(">HH", s)
 	except IOError:
 		raise eofError()
@@ -318,7 +345,6 @@ def __readHeader(filehandle, Verbose=False):
 	newHeader.secondsCount = secondsCount[0]
 	newHeader.decimation = decimation
 	newHeader.timeOffset = timeOffset
-	newHeader.raw = rawHeader
 
 	if Verbose:
 		beam, tune, pol = newHeader.parseID()
@@ -368,28 +394,21 @@ def __readData(filehandle):
 	return newData
 
 
-def readFrame(filehandle, Verbose=False):
+def readFrame(filehandle, CentralFreq=None, Gain=None, Verbose=False):
 	"""Function to read in a single DRX frame (header+data) and store the 
 	contents as a Frame object.  This function wraps readerHeader and 
 	readData."""
 	
+	# New Go Fast! (TM) method
 	try:
-		hdr = __readHeader(filehandle, Verbose=Verbose)
-	except syncError, err:
-		# Why?  If we run into a sync error here, then the following frame is invalid.  
-		# Thus, we need to skip over this frame be advancing the file pointer 8+8+4096 B 
-		currPos = filehandle.tell()
-		frameEnd = currPos + FrameSize - 16
-		filehandle.seek(frameEnd)
-		raise err
-
-
-	dat = __readData(filehandle)
+		newFrame = readDRX(filehandle, Frame())
+	except gsyncError:
+		raise syncError
+	except geofError:
+		raise eofError
 	
-	# Create the new frame object and return
-	newFrame = Frame()
-	newFrame.header = hdr
-	newFrame.data = dat
+	newFrame.setCentralFreq(CentralFreq)
+	newFrame.setGain(Gain)
 
 	return newFrame
 
