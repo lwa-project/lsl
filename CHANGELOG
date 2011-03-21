@@ -11,7 +11,7 @@
   * Fixed initiaization problems the various lsl.reader Frame objects
   * Fixed the ring buffer TBN/DRX ring buffers
   * Added support for simulating point sources in TBW and TBN data
-  
+  * Moved the tests directory out of lsl proper
 
 0.3.4.2
   * Fixed a couple of typos. in the correlator scripts

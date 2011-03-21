@@ -4,35 +4,35 @@
 
 import unittest
 
-from lsl.tests import test_paths
-from lsl.tests import test_astro
-from lsl.tests import test_skymap
-from lsl.tests import test_mathutil
-from lsl.tests import test_nec_util
-from lsl.tests import test_catalog
-from lsl.tests import test_stations
-from lsl.tests import test_robust
-from lsl.tests import test_stattests
-from lsl.tests import test_reader
-from lsl.tests import test_uvUtils
-from lsl.tests import test_fx
-from lsl.tests import test_fx_old
-from lsl.tests import test_filterbank
-from lsl.tests import test_visUtils
-from lsl.tests import test_fakedata
-from lsl.tests import test_simdp
-from lsl.tests import test_simvis
-from lsl.tests import test_geodesy
-from lsl.tests import test_fitsidi
-from lsl.tests import test_tsfits
-from lsl.tests import test_sdfits
-from lsl.tests import test_vdif
-from lsl.tests import test_beamformer
-from lsl.tests import test_progress
+import test_paths
+import test_astro
+import test_skymap
+import test_mathutil
+import test_nec_util
+import test_catalog
+import test_stations
+import test_robust
+import test_stattests
+import test_reader
+import test_uvUtils
+import test_fx
+import test_fx_old
+import test_filterbank
+import test_visUtils
+import test_fakedata
+import test_simdp
+import test_simvis
+import test_geodesy
+import test_fitsidi
+import test_tsfits
+import test_sdfits
+import test_vdif
+import test_beamformer
+import test_progress
 
 
 __revision__  = "$ Revision: 101 $"
-__version__   = "0.1"
+__version__   = "0.2"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
