@@ -36,7 +36,7 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 		samplesPerFrame = 1200
 
 	if verbose:
-		print "Simulating %i captures of %-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands))
+		print "Simulating %i captures of %i-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands))
 
 	nCaptures = int(numpy.ceil(nFrames / 30000.0))
 	for capture in range(nCaptures):

@@ -18,14 +18,11 @@ Provided modules:
   * lsl.skymap
   * lsl.transform
 
-Provided tests:
-  * lsl.test()
-
 See the individual package descriptions for more information.
 """
 
 __version__ = '0.4'
-__revision__ = '$ Revision: 7 $'
+__revision__ = '$ Revision: 8 $'
 __author__ = "Jayce Dowell"
 
 import common
@@ -43,5 +40,3 @@ import catalog
 import skymap
 import transform
 
-import tests
-from tests.test_lsl import main as test

@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 def usage(exitCode=None):
 	print """drxSpectra.py - Read in DRX files and create a collection of 
-time- averaged spectra.
+time-averaged spectra.
 
 Usage: drxSpectra.py [OPTIONS] file
 
@@ -27,8 +27,14 @@ Options:
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
+-s, --skip                  Skip the specified number of seconds at the beginning
+                            of the file (default = 0)
+-a, --average               Number of seconds of data to average for spectra 
+                            (default = 10)
 -q, --quiet                 Run drxSpectra in silent mode
 -l, --fft-length            Set FFT length (default = 4096)
+-d, --disable-chunks        Display plotting chunks in addition to the global 
+                            average
 -o, --output                Output file name for spectra image
 """
 
@@ -41,16 +47,19 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
+	config['offset'] = 0.0
+	config['average'] = 10.0
 	config['LFFT'] = 4096
-	config['maxFrames'] = 20000
+	config['maxFrames'] = 19144
 	config['window'] = fxc.noWindow
 	config['output'] = None
+	config['displayChunks'] = True
 	config['verbose'] = True
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hqtbnl:o:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "output="])
+		opts, args = getopt.getopt(args, "hqtbnl:o:s:a:d", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "output=", "skip=", "average=", "disable-chunks"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -72,6 +81,12 @@ def parseOptions(args):
 			config['LFFT'] = int(value)
 		elif opt in ('-o', '--output'):
 			config['output'] = value
+		elif opt in ('-s', '--skip'):
+			config['offset'] = float(value)
+		elif opt in ('-a', '--average'):
+			config['average'] = float(value)
+		elif opt in ('-d', '--disable-chunks'):
+			config['displayChunks'] = False
 		else:
 			assert False
 	
@@ -116,7 +131,7 @@ def main(args):
 	LFFT = config['LFFT']
 
 	fh = open(config['args'][0], "rb")
-	nFrames = os.path.getsize(config['args'][0]) / drx.FrameSize
+	nFramesFile = os.path.getsize(config['args'][0]) / drx.FrameSize
 	junkFrame = drx.readFrame(fh)
 	
 	fh.seek(0)
@@ -126,21 +141,42 @@ def main(args):
 	tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
 	beampols = tunepol
 
+	# Offset in frames for beampols beam/tuning/pol. sets
+	offset = int(config['offset'] * srate / 4096 * beampols)
+	offset = int(1.0 * offset / beampols) * beampols
+	config['offset'] = 1.0 * offset / beampols * 4096 / srate
+	fh.seek(offset*drx.FrameSize)
+
 	# Make sure that the file chunk size contains is an intger multiple
 	# of the FFT length so that no data gets dropped.  This needs to
 	# take into account the number of beampols in the data, the FFT length,
 	# and the number of samples per frame.
-	maxFrames = int(config['maxFrames']/beampols*4096/float(LFFT))*LFFT/4096*beampols
+	maxFrames = int(1.0*config['maxFrames']/beampols*4096/float(LFFT))*LFFT/4096*beampols
 
-	nChunks = int(math.ceil(1.0*nFrames/maxFrames))
+	# Number of frames to integrate over
+	nFrames = int(config['average'] * srate / 4096 * beampols)
+	nFrames = int(1.0 * nFrames / beampols*4096/float(LFFT))*LFFT/4096*beampols
+	config['average'] = 1.0 * nFrames / beampols * 4096 / srate
+
+	# Number of remaining chunks
+	nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
 
 	# File summary
 	print "Filename: %s" % config['args'][0]
 	print "Beams: %i" % beams
 	print "Tune/Pols: %i %i %i %i" % tunepols
 	print "Sample Rate: %i Hz" % srate
-	print "Frames: %i" % nFrames
+	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate)
+	print "---"
+	print "Offset: %.3f s (%i frames)" % (config['offset'], offset)
+	print "Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (config['average'], nFrames, nFrames / beampols)
 	print "Chunks: %i" % nChunks
+
+	# Sanity check
+	if offset > nFramesFile:
+		raise RuntimeError("Requested offset is greater than file length")
+	if nFrames > (nFramesFile - offset):
+		raise RuntimeError("Requestion integration time+offset is greater than file length")
 
 	# Master loop over all of the file chuncks
 	masterCount = {}
@@ -163,7 +199,10 @@ def main(args):
 		# If there are fewer frames than we need to fill an FFT, skip this chunk
 		if data.shape[1] < LFFT:
 			break
+
 		# Inner loop that actually reads the frames into the data array
+		print "Working on %.1f ms of data" % ((framesWork*4096/beampols/srate)*1000.0)
+
 		for j in range(framesWork):
 			# Read in the next frame and anticipate any problems that could occur
 			try:
@@ -187,13 +226,9 @@ def main(args):
 			if aStand not in count.keys():
 				count[aStand] = 0
 				masterCount[aStand] = 0
-			if cFrame.header.frameCount % 10000 == 0 and config['verbose']:
-				print "%2i,%1i,%1i -> %2i  %5i  %i" % (beam, tune, pol, aStand, j/4, cFrame.data.timeTag)
+			#if cFrame.header.frameCount % 10000 == 0 and config['verbose']:
+			#	print "%2i,%1i,%1i -> %2i  %5i  %i" % (beam, tune, pol, aStand, j/4, cFrame.data.timeTag)
 
-			# Additional check on the data array bounds so that we don't overflow it.  
-			# This check may be redundant...
-			if (count[aStand]+1)*4096 >= data.shape[1]:
-				continue
 			data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
 			# Update the counters so that we can average properly later on
 			count[aStand] = count[aStand] + 1
@@ -234,18 +269,16 @@ def main(args):
 
 		# If there is more than one chunk, plot the difference between the global 
 		# average and each chunk
-		if nChunks > 1:
+		if nChunks > 1 and config['displayChunks']:
 			for j in range(nChunks):
 				# Some files are padded by zeros at the end and, thus, carry no 
 				# weight in the average spectra.  Skip over those.
-				print k, aStand, j, masterWeight[j,i,:].sum()
 				if masterWeight[j,i,:].sum() == 0:
 					continue
 
 				# Calculate the difference between the spectra and plot
 				subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
 				diff = subspectra - currSpectra
-				print diff
 				ax.plot(freq, diff, label='%i' % j)
 
 		ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2))
