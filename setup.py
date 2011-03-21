@@ -114,5 +114,5 @@ setup(
 				Extension('correlator._spec', ['lsl/correlator/spec.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
 				Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs)], 
 	zip_safe = False,  
-	test_suite = "lsl.tests.test_lsl.lsl_tests"
+	test_suite = "tests.test_lsl.lsl_tests"
 ) 

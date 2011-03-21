@@ -4,11 +4,14 @@
   * Added new smoothing and fitting fuctions to misc.mathutil
   * Added a progress bar for use with long-running applications
   * Added in new LWA-1 dipole NEC models
-  * Re-worked the plotAntenna.py script to use the pre-computed dipole
-   response fits
+  * Re-worked the plotAntenna.py script to use the pre-computed dipole response fits
   * Added support for EXCITATION keywords in misc.nec_util
-  * Added new gofast reader for TBW, TBN, and DRX
+  * Added new gofast readers for TBW, TBN, and DRX
   * Added better polyphase filter support
+  * Fixed initiaization problems the various lsl.reader Frame objects
+  * Fixed the ring buffer TBN/DRX ring buffers
+  * Added support for simulating point sources in TBW and TBN data
+  
 
 0.3.4.2
   * Fixed a couple of typos. in the correlator scripts

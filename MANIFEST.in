@@ -3,5 +3,6 @@ include VERSION
 include setup.cfg
 recursive-include lsl *
 recursive-include doc *
+recursive-include tests *
 global-exclude *~ *.bak *.pyc
 
