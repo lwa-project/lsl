@@ -8,28 +8,10 @@ import pyfits
 from datetime import datetime
 
 from lsl import astro
+from lsl.common.progress import ProgressBar
 
 import matplotlib.pyplot as plt
 
-try:
-	from lsl.common.progress import ProgressBar
-except ImportError:
-	class ProgressBar(object):
-		def __init__(self,max=100):
-			self.amount = 0
-			self.max = max
-			self.span = 70
-		
-		def inc(self, amount=1):
-			self.amount += amount
-
-		def show(self):
-			barSpan = self.span - 9
-			nMarks = int(round(float(self.amount)/self.max * barSpan))
-			bar = '=' * nMarks
-			bar = bar+(' ' * (barSpan-nMarks))
-			nte = "%5.1f%%" % (float(self.amount)/self.max*100)
-			return "|%s| %s" % (bar, nte)
 
 def main(args):
 	# Grab the filename and open the FITS file using PyFits

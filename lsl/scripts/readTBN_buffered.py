@@ -10,7 +10,7 @@ import sys
 import time
 from lsl.reader import tbn
 from lsl.reader import errors
-from lsl.reader.buffer import TBNFrameBuffer as FrameBuffer
+from lsl.reader.buffer import TBNFrameBuffer
 from lsl.writer import tsfits
 
 import matplotlib.pyplot as plt
@@ -37,7 +37,7 @@ def main(args):
 	tStart = time.time()
 
 	# Create the FrameBuffer instance
-	buffer = FrameBuffer(stands=range(nFpO/2), pols=[0, 1])
+	buffer = TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1])
 
 	# Create a new FITS file with the name 'tbw.fits'
 	fitsFile = tsfits.TBN('tbn-tsfits-test.fits')

@@ -173,6 +173,8 @@ tbwSpectra.py
 
             -s, --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
 
+            -d, --disable-chunks        Display plotting chunks in addition to the global average
+
             -o, --output                Output file name for spectra imag
 
 tbnSpectra.py
@@ -188,9 +190,15 @@ tbnSpectra.py
 
             -n, --hanning               Apply a Hanning window to the data
 
+            -s, --skip                  Skip the specified number of seconds at the beginning of the file (default = 0)
+
+            -a, --average               Number of seconds of data to average for spectra (default = 10)
+
             -q, --quiet                 Run tbwSpectra in silent mode
 
             -l, --fft-length            Set FFT length (default = 4096)
+
+            -d, --disable-chunks        Display plotting chunks in addition to the global average
 
             -o, --output                Output file name for spectra image
 
@@ -207,9 +215,15 @@ drxSpectra.py
 
             -n, --hanning               Apply a Hanning window to the data
 
+            -s, --skip                  Skip the specified number of seconds at the beginning of the file (default = 0)
+
+            -a, --average               Number of seconds of data to average for spectra (default = 10)
+
             -q, --quiet                 Run tbwSpectra in silent mode
 
             -l, --fft-length            Set FFT length (default = 4096)
+
+            -d, --disable-chunks        Display plotting chunks in addition to the global average
 
             -o, --output                Output file name for spectra image
 

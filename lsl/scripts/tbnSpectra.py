@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 def usage(exitCode=None):
 	print """tbnSpectra.py - Read in TBN files and create a collection of 
-time- averaged spectra.
+time-averaged spectra.
 
 Usage: tbnSpectra.py [OPTIONS] file
 
@@ -31,8 +31,14 @@ Options:
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
+-s, --skip                  Skip the specified number of seconds at the beginning
+                            of the file (default = 0)
+-a, --average               Number of seconds of data to average for spectra 
+                            (default = 10)
 -q, --quiet                 Run tbnSpectra in silent mode
 -l, --fft-length            Set FFT length (default = 4096)
+-d, --disable-chunks        Display plotting chunks in addition to the global 
+                            average
 -o, --output                Output file name for spectra image
 """
 
@@ -45,17 +51,20 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
+	config['offset'] = 0.0
+	config['average'] = 10.0
 	config['LFFT'] = 4096
 	config['maxFrames'] = 400000
 	config['window'] = fxc.noWindow
 	config['applyGain'] = False
 	config['output'] = None
+	config['displayChunks'] = True
 	config['verbose'] = True
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hqtbnl:go:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output="])
+		opts, args = getopt.getopt(args, "hqtbnl:go:s:a:d", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output=", "skip=", "average=", "disable-chunks"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -81,6 +90,12 @@ def parseOptions(args):
 			config['applyGain'] = False
 		elif opt in ('-o', '--output'):
 			config['output'] = value
+		elif opt in ('-s', '--skip'):
+			config['offset'] = float(value)
+		elif opt in ('-a', '--average'):
+			config['average'] = float(value)
+		elif opt in ('-d', '--disable-chunks'):
+			config['displayChunks'] = False
 		else:
 			assert False
 	
@@ -130,13 +145,25 @@ def main(args):
 	antpols = tbn.getFramesPerObs(fh)
 	antpols = antpols[0]+antpols[1]
 
+	# Offset in frames for beampols beam/tuning/pol. sets
+	offset = int(config['offset'] * srate / 512 * antpols)
+	offset = int(1.0 * offset / antpols) * antpols
+	config['offset'] = 1.0 * offset / antpols * 512 / srate
+	fh.seek(offset*tbn.FrameSize)
+
 	# Make sure that the file chunk size contains is an intger multiple
 	# of the FFT length so that no data gets dropped.  This needs to
 	# take into account the number of antpols in the data, the FFT length,
 	# and the number of samples per frame.
 	maxFrames = int(config['maxFrames']/antpols*512/float(LFFT))*LFFT/512*antpols
 
-	nChunks = int(math.ceil(1.0*nFrames/maxFrames))
+	# Number of frames to integrate over
+	nFrames = int(config['average'] * srate / 512 * antpols)
+	nFrames = int(1.0 * nFrames / antpols*512/float(LFFT))*LFFT/512*antpols
+	config['average'] = 1.0 * nFrames / antpols * 512 / srate
+
+	# Number of remaining chunks
+	nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
 
 	# Read in the first frame and get the date/time of the first sample 
 	# of the frame.  This is needed to get the list of stands.
@@ -150,8 +177,17 @@ def main(args):
 	print "Date of First Frame: %s" % str(beginDate)
 	print "Ant/Pols: %i" % antpols
 	print "Sample Rate: %i Hz" % srate
-	print "Frames: %i" % nFrames
+	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate)
+	print "---"
+	print "Offset: %.3f s (%i frames)" % (config['offset'], offset)
+	print "Integration: %.3f s (%i frames; %i frames per stand/pol)" % (config['average'], nFrames, nFrames / antpols)
 	print "Chunks: %i" % nChunks
+
+	# Sanity check
+	if offset > nFramesFile:
+		raise RuntimeError("Requested offset is greater than file length")
+	if nFrames > (nFramesFile - offset):
+		raise RuntimeError("Requestion integration time+offset is greater than file length")
 
 	# Master loop over all of the file chuncks
 	masterCount = {}
@@ -250,7 +286,7 @@ def main(args):
 
 		# If there is more than one chunk, plot the difference between the global 
 		# average and each chunk
-		if nChunks > 1:
+		if nChunks > 1 and config['displayChunks']:
 			for j in range(nChunks):
 				# Some files are padded by zeros at the end and, thus, carry no 
 				# weight in the average spectra.  Skip over those.

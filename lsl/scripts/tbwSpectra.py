@@ -35,6 +35,8 @@ Options:
 -l, --fft-length            Set FFT length (default = 4096)
 -g, --gain-correct          Correct signals for the cable losses
 -s, --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
+-d, --disable-chunks        Display plotting chunks in addition to the global 
+                            average
 -o, --output                Output file name for spectra image
 """
 
@@ -53,12 +55,13 @@ def parseOptions(args):
 	config['applyGain'] = False
 	config['stack'] = False
 	config['output'] = None
+	config['displayChunks'] = True
 	config['verbose'] = True
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hqtbnl:gso:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "stack", "output="])
+		opts, args = getopt.getopt(args, "hqtbnl:gso:d", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "stack", "output=", "disable-chunks"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -84,6 +87,8 @@ def parseOptions(args):
 			config['stack'] = True
 		elif opt in ('-o', '--output'):
 			config['output'] = value
+		elif opt in ('-d', '--disable-chunks'):
+			config['displayChunks'] = False
 		else:
 			assert False
 	
@@ -249,7 +254,7 @@ def main(args):
 
 			# If there is more than one chunk, plot the difference between the global 
 			# average and each chunk
-			if nChunks > 1:
+			if nChunks > 1 and config['displayChunks']:
 				for j in range(nChunks):
 					# Some files are padded by zeros at the end and, thus, carry no 
 					# weight in the average spectra.  Skip over those.
