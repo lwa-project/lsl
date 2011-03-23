@@ -150,20 +150,27 @@ def __selfCalResid(gains, dataDict, simDict, chan, pol):
 	nanoseconds, a input data dictionary, a simulated data dictionary, a channel 
 	range, and a polarization keyword."""
 	
+	# Frequency in GHz so that the delays can be in ns
 	fq = dataDict['freq'][chan] / 1e9
-	cGains = numpy.zeros(((len(gains)-1), len(chan)), dtype=numpy.complex_)
-	for i in range(len(gains)-1):
-		cGains[i,:] = numpy.abs(gains[0])*numpy.exp(-2j*numpy.pi*fq*gains[i+1])
+	
+	# Build the complex gains
+	nStands = len(gains)/2
+	cGains = numpy.zeros((nStands, len(chan)), dtype=numpy.complex_)
+	for i in range(nStands):
+		cGains[i,:] = numpy.abs(gains[i])*numpy.exp(-2j*numpy.pi*fq*gains[nStands+i])
 
+	# Multiply the observations by the various complex gains
 	obsVis = []
-	for vis,wgt in zip(dataDict['vis'][pol], dataDict['wgt'][pol]):
-		obsVis.append( numpy.array((wgt*vis)[chan]) )
+	for (i,j),vis,wgt in zip(dataDict['bls'][pol], dataDict['vis'][pol], dataDict['wgt'][pol]):
+		obsVis.append( numpy.array(vis[chan]*cGains[i,:]*cGains[j,:].conj()) )
 	obsVis = numpy.concatenate(obsVis)
+	#obsVis /= numpy.median(obsVis)
 
 	simVis = []
 	for vis in simDict['vis'][pol]:
 		simVis.append( numpy.array(vis[chan]) )
 	simVis = numpy.concatenate(simVis)
+	#simVis /= numpy.median(simVis)
 
 	X = obsVis / simVis
 
@@ -172,23 +179,25 @@ def __selfCalResid(gains, dataDict, simDict, chan, pol):
 		gainProd.append(cGains[i]*cGains[j].conj())
 	gainProd = numpy.concatenate(gainProd)
 
-	return numpy.abs(X - gainProd)**2
+	return ((numpy.abs(X)-1)**2).sum()
 
 
 def selfCal2(dataDict, simDict, chan, pol, returnDelays=False):
+	"""Function used to perform a simple phase self-calibration of data stored in a 
+	readUVData dictionary and a model sky stored in a lsl.sim.vis.buildSimSky 
+	dictionary for a given polarization and channel(s)."""
+	
 	from scipy.optimize import leastsq, fmin, fmin_cg
 
-	print "Self-cal start"
-
-	# Initial guesses are no phase delays and blaket gains of 0.28
-	initialAmps = numpy.ones(1)*0.388
-	initialDelays = numpy.zeros(20)
+	# Initial guesses for complex gain amplitude and phase
+	initialAmps = numpy.ones(20)*0.388
+	initialDelays = numpy.linspace(0, 1e9/dataDict['freq'][chan].mean(), 20)
 	initialGains = numpy.concatenate([initialAmps, initialDelays])
-	bestFit = fmin(__selfCalResid, initialGains, args=(dataDict, simDict, chan, pol), full_output=True)
+	bestFit = fmin(__selfCalResid, initialGains, args=(dataDict, simDict, chan, pol), full_output=True, maxiter=500000, xtol=0.1, ftol=0.1)
 
 	# Report on the fits
-	bestAmps = numpy.abs(bestFit[0][0])*numpy.ones(20)
-	bestDelays = bestFit[0][1:]
+	bestAmps = numpy.abs(bestFit[0][0:20])*numpy.ones(20)
+	bestDelays = bestFit[0][20:]
 	bestGains = bestAmps*numpy.exp(-2j*numpy.pi*bestDelays)
 	print 'Best Delays: ', bestDelays
 	print 'Best Gains:  ', bestAmps

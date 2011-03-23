@@ -147,6 +147,44 @@ class AntennaArray(aipy.amp.AntennaArray):
 		"""Set the array time using a UNIX timestamp (epoch 1970)."""
 
 		self.set_jultime(astro.unix_to_utcjd(time))
+		
+	def sim(self, i, j, pol='xx'):
+		"""Simulate visibilites for the specified (i,j) baseline and 
+		polarization.  sim_cache() must be called at each time step before 
+		this will return valid results.
+		
+		This function differs from aipy.amp.AntennaArray.sim in the fast that
+		*ionref* and *srcshape* are both None in the call to gen_phs and that
+		*resolve_src* is set to False.
+		"""
+		
+		assert(pol in ('xx','yy','xy','yx'))
+		
+		if self._cache is None:
+			raise RuntimeError('sim_cache() must be called before the first sim() call at each time step.')
+		elif self._cache == {}:
+			return n.zeros_like(self.passband(i,j))
+			
+		s_eqs = self._cache['s_eqs']
+		u,v,w = self.gen_uvw(i, j, src=s_eqs)
+		I_sf = self._cache['jys']
+		Gij_sf = self.passband(i,j)
+		Bij_sf = self.bm_response(i, j, pol=pol)
+		if len(Bij_sf.shape) == 2:
+			Gij_sf = n.reshape(Gij_sf, (1, Gij_sf.size))
+			
+		# Get the phase of each src vs. freq, also does resolution effects
+		E_sf = n.conjugate( self.gen_phs(s_eqs, i, j, mfreq=self._cache['mfreq'], resolve_src=False) )
+		try:
+			E_sf.shape = I_sf.shape
+		except(AttributeError):
+			pass
+		
+		# Combine and sum over sources
+		GBIE_sf = Gij_sf * Bij_sf * I_sf * E_sf
+		Vij_f = GBIE_sf.sum(axis=0)
+		
+		return Vij_f
 
 
 def buildSimArray(station, stands, freq, jd=None, PosError=0.0, ForceFlat=False, verbose=False):

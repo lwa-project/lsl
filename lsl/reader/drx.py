@@ -383,8 +383,10 @@ def readFrame(filehandle, CentralFreq=None, Gain=None, Verbose=False):
 	except geofError:
 		raise eofError
 	
-	newFrame.setCentralFreq(CentralFreq)
-	newFrame.setGain(Gain)
+	if CentralFreq is not None:
+		newFrame.setCentralFreq(CentralFreq)
+	if Gain is not None:
+		newFrame.setGain(Gain)
 
 	return newFrame
 

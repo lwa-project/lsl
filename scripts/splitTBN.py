@@ -88,7 +88,7 @@ def main(args):
 		nCaptures = config['count'] * sampleRate / 512
 	else:
 		config['count'] = nCaptures * 512 / sampleRate
-	nSkip = config['offset'] * sampleRate / 512
+	nSkip = int(config['offset'] * sampleRate / 512)
 
 	print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], nSkip)
 	print "Seconds to Split: %.2f (%i captures)" % (config['count'], nCaptures)

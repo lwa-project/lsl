@@ -387,9 +387,12 @@ def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=
 	except geofError:
 		raise eofError
 	
-	newFrame.setSampleRate(SampleRate)
-	newFrame.setCentralFreq(CentralFreq)
-	newFrame.setGain(Gain)
+	if SampleRate is not None:
+		newFrame.setSampleRate(SampleRate)
+	if CentralFreq is not None:
+		newFrame.setCentralFreq(CentralFreq)
+	if Gain is not None:
+		newFrame.setGain(Gain)
 
 	return newFrame
 
