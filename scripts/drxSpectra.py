@@ -212,8 +212,6 @@ def main(args):
 			except errors.syncError:
 				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/drx.FrameSize-1)
 				continue
-			except errors.numpyError:
-				break
 
 			beam,tune,pol = cFrame.parseID()
 			aStand = 4*(beam-1) + 2*(tune-1) + pol
@@ -222,6 +220,8 @@ def main(args):
 				oStand = 1*aStand
 				aStand = standMapper.index(aStand)
 				print "Mapping beam %i, tune. %1i, pol. %1i (%2i) to array index %3i" % (beam, tune, pol, oStand, aStand)
+			else:
+				aStand = standMapper.index(aStand)
 
 			if aStand not in count.keys():
 				count[aStand] = 0

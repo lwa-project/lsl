@@ -202,6 +202,21 @@ tbnSpectra.py
 
             -o, --output                Output file name for spectra image
 
+drxTimeseries.py
+  :Description: Read in DRX files and create a collection of timeseries (I/Q) plots.
+
+  :Usage: drxTimeseries.py [OPTIONS] file
+
+  :Options: -h, --help                  Display this help information
+
+            -s, --skip                  Skip the specified number of seconds at the beginning of the file (default = 0)
+
+            -p, --plot-range            Number of seconds of data to show in the I/Q plots (default = 0.0001)
+
+            -q, --quiet                 Run drxSpectra in silent mode
+
+            -o, --output                Output file name for time series image
+
 drxSpectra.py
   :Description: Given a DRX file, plot the time averaged spectra for each beam output.
 
