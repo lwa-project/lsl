@@ -94,14 +94,12 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 
 	// Create the output data array
 	npy_intp dims[2];
-	npy_intp *fLoc;
-	fLoc = PyDimMem_NEW(2);
 	short int temp;
 	if(bits == 0) {
 		// 12-bit Data -> 400 samples in the data section
 		dims[0] = 2;
 		dims[1] = 400;
-		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_INT16);
+		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_INT16);
 		if(data == NULL) {
 			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 			Py_XDECREF(data);
@@ -112,14 +110,10 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		short int *a;
 		a = (short int *) data->data;
 		for(i=0; i<400; i++) {
-			fLoc[0] = (npy_intp) 0;
-			fLoc[1] = (npy_intp) i;
 			temp = (bytes[24+3*i]<<4) | ((bytes[24+3*i+1]>>4)&15);
 			temp -= ((temp&2048)<<1);
 			*(a + i) = (short int) temp;
 
-			fLoc[0] = (npy_intp) 1;
-			fLoc[1] = (npy_intp) i;
 			temp = ((bytes[24+3*i+1]&15)<<8) | bytes[24+3*i+2];
 			temp -= ((temp&2048)<<1);
 			*(a + 400 + i) = (short int) temp;
@@ -128,7 +122,7 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		// 4-bit Data -> 1200 samples in the data section
 		dims[0] = 2;
 		dims[1] = 1200;
-		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_UINT16);
+		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_INT16);
 		if(data == NULL) {
 			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 			Py_XDECREF(data);
@@ -139,21 +133,16 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		short int *a;
 		a = (short int *) data->data;
 		for(i=0; i<1200; i++) {
-			fLoc[0] = 0;
-			fLoc[1] = (npy_intp) i;
 			temp = (bytes[i+24]>>4)&15;
 			temp -= ((temp&8)<<1);
 			*(a + i) = (short int) temp;
 
-			fLoc[0] = 1;
-			fLoc[1] = (npy_intp) i;
 			temp = bytes[i+24]&15;
 			temp -= ((temp&8)<<1);
 			*(a + 400 + i) = (short int) temp;
 		}
 
 	}
-	PyDimMem_FREE(fLoc);
 
 	// Save the data to the frame object
 	// 1.  Header
@@ -263,7 +252,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	fLoc = PyDimMem_NEW(1);
 	short int tempR, tempI;
 	dims[0] = 512;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, PyArray_CFLOAT);
+	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_COMPLEX64);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -401,7 +390,7 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	// Create the output data array
 	npy_intp dims[1];
 	dims[0] = 4096;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, PyArray_CFLOAT);
+	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_COMPLEX64);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);

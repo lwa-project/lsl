@@ -64,7 +64,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Get the properties of the data
 	nStand = (long) data->dimensions[0];
@@ -75,7 +75,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -168,12 +168,12 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", 2*nChan);
 	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
 	Py_DECREF(window);
 	
 	// Get the properties of the data
@@ -185,7 +185,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -274,7 +274,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 
 	// Get the properties of the data
 	nStand = (long) data->dimensions[0];
@@ -285,7 +285,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -376,12 +376,12 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", nChan);
 	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
 	Py_DECREF(window);
 
 	// Get the properties of the data
@@ -393,7 +393,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -480,7 +480,7 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Get the properties of the data
 	nStand = (long) data->dimensions[0];
@@ -500,7 +500,7 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -607,12 +607,12 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", 2*nTaps*nChan);
 	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
 	Py_DECREF(window);
 	
 	// Get the properties of the data
@@ -638,7 +638,7 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -740,7 +740,7 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 
 	// Get the properties of the data
 	nStand = (long) data->dimensions[0];
@@ -760,7 +760,7 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -865,12 +865,12 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", nTaps*nChan);
 	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
 	Py_DECREF(window);
 
 	// Get the properties of the data
@@ -894,7 +894,7 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
-	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
