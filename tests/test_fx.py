@@ -31,9 +31,11 @@ class fx_tests(unittest.TestCase):
 		"""Test that window functions can be passed to SpecMaster."""
 		
 		fakeData = numpy.random.rand(4,1024) + 3.0
+		fakeData = fakeData.astype(numpy.int16)
 		freq, spectra = fx.SpecMaster(fakeData, window=numpy.blackman)
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
+		fakeData = fakeData.astype(numpy.csingle)
 		freq, spectra = fx.SpecMaster(fakeData, window=numpy.hamming)
 		
 	def test_window_custom(self):
@@ -43,24 +45,28 @@ class fx_tests(unittest.TestCase):
 			return numpy.kaiser(L, 5)
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
+		fakeData = fakeData.astype(numpy.int16)
 		freq, spectra = fx.SpecMaster(fakeData, window=wndw)
 		
 		def wndw2(L):
 			return numpy.kaiser(L, 1)
 		
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
+		fakeData = fakeData.astype(numpy.csingle)
 		freq, spectra = fx.SpecMaster(fakeData, window=wndw2)
 
 	def test_spectra_real(self):
 		"""Test the SpecMaster function on real-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
+		fakeData = fakeData.astype(numpy.int16)
 		freq, spectra = fx.SpecMaster(fakeData)
 		
 	def test_spectra_complex(self):
 		"""Test the SpecMaster function on complex-valued data."""
 		
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024) + 3.0 + 3.0j
+		fakeData = fakeData.astype(numpy.csingle)
 		freq, spectra = fx.SpecMaster(fakeData, SampleRate=1e5, CentralFreq=38e6)
 
 	### FXMaster Function ###

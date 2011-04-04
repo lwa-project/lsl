@@ -91,8 +91,9 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double *a, *b;
-	a = (double *) data->data;
+	short int *a;
+	double *b;
+	a = (short int *) data->data;
 	b = (double *) dataF->data;
 	
 	#ifdef _OPENMP
@@ -112,10 +113,10 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				secStart = (long) (nSamps * i) + 2*nChan*j/Overlap;
 				
 				for(k=0; k<(nChan<<1); k+=2) {
-					in[k][0] = *(a + secStart + k);
+					in[k][0] = (double) *(a + secStart + k);
 					in[k][1] = 0.0;
 					
-					in[k+1][0] = *(a + secStart + k+1);
+					in[k+1][0] = (double) *(a + secStart + k+1);
 					in[k+1][1] = 0.0;
 				}
 				
@@ -202,8 +203,9 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double *a, *b, *c;
-	a = (double *) data->data;
+	short int *a;
+	double *b, *c;
+	a = (short int *) data->data;
 	b = (double *) dataF->data;
 	c = (double *) windowData->data;
 	
@@ -224,10 +226,10 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				secStart = nSamps * i + 2*nChan*j/Overlap;
 				
 				for(k=0; k<(nChan<<1); k+=2) {
-					in[k][0] = *(a + secStart + k) * *(c + k);
+					in[k][0] = (double) *(a + secStart + k) * *(c + k);
 					in[k][1] = 0.0;
 					
-					in[k+1][0] = *(a + secStart + k+1) * *(c + k+1);
+					in[k+1][0] = (double) *(a + secStart + k+1) * *(c + k+1);
 					in[k+1][1] = 0.0;
 				}
 				
@@ -279,7 +281,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Get the properties of the data
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
-
+	
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
@@ -516,8 +518,9 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double *a, *b;
-	a = (double *) data->data;
+	short int *a;
+	double *b;
+	a = (short int *) data->data;
 	b = (double *) dataF->data;
 	
 	#ifdef _OPENMP
@@ -541,10 +544,10 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
 					
 					for(k=0; k<(nChan<<1); k+=2) {
-						in[k][0] = *(a + secStart + k) * fbWindow[2*nChan*m + k];
+						in[k][0] = (double) *(a + secStart + k) * fbWindow[2*nChan*m + k];
 						in[k][1] = 0.0;
 						
-						in[k+1][0] = *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
+						in[k+1][0] = (double) *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
 						in[k+1][1] = 0.0;
 					}
 				
@@ -655,8 +658,9 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double *a, *b;
-	a = (double *) data->data;
+	short int *a;
+	double *b;
+	a = (short int *) data->data;
 	b = (double *) dataF->data;
 
 	#ifdef _OPENMP
@@ -680,10 +684,10 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
 					
 					for(k=0; k<(nChan<<1); k+=2) {
-						in[k][0] = *(a + secStart + k) * fbWindow[2*nChan*m + k];
+						in[k][0] = (double) *(a + secStart + k) * fbWindow[2*nChan*m + k];
 						in[k][1] = 0.0;
 						
-						in[k+1][0] = *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
+						in[k+1][0] = (double) *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
 						in[k+1][1] = 0.0;
 					}
 				
