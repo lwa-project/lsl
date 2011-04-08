@@ -303,9 +303,9 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double complex *a;
+	float complex *a;
 	double *b;
-	a = (double complex *) data->data;
+	a = (float complex *) data->data;
 	b = (double *) dataF->data;
 	
 	#ifdef _OPENMP
@@ -412,9 +412,9 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double complex *a;
+	float complex *a;
 	double *b, *c;
-	a = (double complex *) data->data;
+	a = (float complex *) data->data;
 	b = (double *) dataF->data;
 	c = (double *) windowData->data;
 	
@@ -780,9 +780,9 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double complex *a;
+	float complex *a;
 	double *b;
-	a = (double complex *) data->data;
+	a = (float complex *) data->data;
 	b = (double *) dataF->data;
 	
 	#ifdef _OPENMP
@@ -915,9 +915,9 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
-	double complex *a;
+	float complex *a;
 	double *b;
-	a = (double complex *) data->data;
+	a = (float complex *) data->data;
 	b = (double *) dataF->data;
 	
 	#ifdef _OPENMP
