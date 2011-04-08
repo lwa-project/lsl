@@ -4,10 +4,7 @@ import os
 try:
 	import _drsu
 except ImportError:
-	if os.uname()[0] != 'Linux':
-		raise RuntimeError("Direct DRSU access is not supported on non-linux OSes")
-	else:
-		raise ImportError("Direct DRSU access extension not avaliable")
+	pass
 from lsl.reader import errors
 
 __version__ = '0.1'
@@ -113,7 +110,11 @@ def listFiles(device):
 	"""Function to return a list of File instances describing the files on a 
 	the specified DRSU device."""
 	
-	return  _drsu.listFiles(device, File)
+	try:
+		return  _drsu.listFiles(device, File)
+	except NameError:
+		if os.uname()[0] != 'Linux':
+			raise RuntimeError("Direct DRSU access is not supported on non-linux OSes")
 
 
 def shepherdedReadFrame(File, reader):
