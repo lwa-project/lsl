@@ -1,6 +1,10 @@
 Requirements
 ============
  * python >= 2.6 and python < 3.0
+ * atlas >= 3.6
+ * blas >= 1.2
+ * fftw3 >= 3.2
+ * gdbm >= 1.8
  * swig >= 1.3
  * numpy >= 1.2
  * scipy >= 0.7

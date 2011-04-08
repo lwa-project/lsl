@@ -16,14 +16,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
 allStands = numpy.arange(1,257)
-# List of installed stands from Joe
-installedStands = numpy.array([13, 78, 9, 38, 34, 70, 106, 10, 170, 142, 32, 8, 71, 33, 69, 168, 108, 
-						140, 110, 76, 161, 101, 99, 31, 67, 159, 185, 97, 127, 157, 125, 208, 
-						123, 181, 206, 183, 153, 174, 225, 176, 172, 204, 178, 200, 202, 228, 
-						210, 212, 214, 187, 15, 80, 14, 148, 112, 46, 118])
-# List of stands we *do not* want to use.  204, 202, 178, 148, 176, 225, and 
-# 200 are close to the shelter and may have some self-RFI problems.
-excludeStands = numpy.array([204, 202, 178, 148, 176, 225, 200])
+
 
 def shift(data, xy=[0,0]):
 	data1 = numpy.concatenate([data[xy[0]:], data[:xy[0]]], axis=0)
@@ -59,20 +52,7 @@ def main(args):
 	# Set the LWA Station
 	station = lwa_common.lwa1()
 
-	if len(args) == 0:
-		fraction = 0.75
-		stands = randomSelection(20, installedStands, allStands, Fraction=fraction, IncludeOutlier=True)
-	elif len(args) > 1:
-		stands = numpy.array([int(i) for i in args])
-	else:
-		fraction = float(args[0])
-		stands = randomSelection(20, installedStands, allStands, Fraction=fraction, IncludeOutlier=True)
-
-	print stands.shape[0], stands
-	print "New Stands:"
-	for stand in stands:
-		if stand not in installedStands:
-			print " %3i" % stand
+	stands = allStands
 
 	HA = 0.0
 	dec = station.lat*180.0/math.pi
@@ -83,18 +63,11 @@ def main(args):
 	uvw = uvw * 2.9979245800e8 / freq
 
 	# Coursely grid the uv data to come up with a rough beam
-	if min(stands) < 0:
-		grid = numpy.zeros((900,900))
-		for i in range(uvw.shape[0]):
-			u = round(uvw[i,0])+450
-			v = round(uvw[i,1])+450
-			grid[u,v] = grid[u,v]+1
-	else:
-		grid = numpy.zeros((240,240))
-		for i in range(uvw.shape[0]):
-			u = round(uvw[i,0])+120
-			v = round(uvw[i,1])+120
-			grid[u,v] = grid[u,v]+1
+	grid = numpy.zeros((1*240,1*240))
+	for i in range(uvw.shape[0]):
+		u = round((uvw[i,0]+120)*1)
+		v = round((uvw[i,1]+120)*1)
+		grid[u,v] = grid[u,v]+1
 
 	# Plot
 	fig = plt.figure(figsize=(8,8))
@@ -106,30 +79,27 @@ def main(args):
 	ax5 = plt.axes([0.32, 0.32, 0.15, 0.15])
 
 	beam = numpy.fft.fft2(grid)
-	if min(stands) < 0:
-		beam = shift(beam, xy=(450,450))
-		ax5.imshow((numpy.log10(beam[375:525, 375:525])*10.0).real, interpolation="nearest")
-		ax5.xaxis.set_major_formatter( NullFormatter() )
-		ax5.yaxis.set_major_formatter( NullFormatter() )
-	else:
-		beam = shift(beam, xy=(120,120))
-		ax5.imshow((numpy.log10(beam.real[100:140, 100:140])*10.0).real, interpolation="nearest")
-		ax5.xaxis.set_major_formatter( NullFormatter() )
-		ax5.yaxis.set_major_formatter( NullFormatter() )
+	beam = shift(beam, xy=(grid.shape[0]/2,grid.shape[1]/2))
+	beam = beam.real - beam.real.min()
+	beam = numpy.where( beam > 0, beam, 1e-6 )
+	beam = numpy.log10(beam.real)*10.0
+	ax5.imshow(beam[40:200,40:200], interpolation="nearest", vmin=numpy.median(beam), vmax=beam.max())
+	ax5.xaxis.set_major_formatter( NullFormatter() )
+	ax5.yaxis.set_major_formatter( NullFormatter() )
 
-	c = ax1.scatter(uvw[:,0], uvw[:,1], c=uvw[:,2], s=40.0, alpha=0.75)
-	d = ax1.scatter(-uvw[:,0], -uvw[:,1], c=-uvw[:,2], s=40.0, alpha=0.75)
+	c = ax1.scatter(uvw[:,0], uvw[:,1], c=uvw[:,2], s=10.0, alpha=0.75)
+	d = ax1.scatter(-uvw[:,0], -uvw[:,1], c=-uvw[:,2], s=10.0, alpha=0.75)
 	ax1.set_xlabel('u [m]')
 	ax1.set_ylabel('v [m]')
 	ax1.set_title('UV Coverage for HA=%+.3f$^h$, $\delta$=%+.3f$^\circ$ at %s' % (HA, dec, station.name))
 
-	ax2.scatter(uvw[:,0], uvw[:,2], c=uvw[:,2], s=40.0)
-	ax2.scatter(-uvw[:,0], -uvw[:,2], c=-uvw[:,2], s=40.0)
+	ax2.scatter(uvw[:,0], uvw[:,2], c=uvw[:,2], s=10.0)
+	ax2.scatter(-uvw[:,0], -uvw[:,2], c=-uvw[:,2], s=10.0)
 	ax2.xaxis.set_major_formatter( NullFormatter() )
 	ax2.set_ylabel('w')
 
-	ax3.scatter(uvw[:,2], uvw[:,1], c=uvw[:,2], s=40.0)
-	ax3.scatter(-uvw[:,2], -uvw[:,1], c=-uvw[:,2], s=40.0)
+	ax3.scatter(uvw[:,2], uvw[:,1], c=uvw[:,2], s=10.0)
+	ax3.scatter(-uvw[:,2], -uvw[:,1], c=-uvw[:,2], s=10.0)
 	ax3.yaxis.set_major_formatter( NullFormatter() )
 	ax3.set_xlabel('w')
 
@@ -141,36 +111,13 @@ def main(args):
 	ax4.hist(rad, 20)
 	ax4.set_xlabel('uv Radius [$\lambda$]')
 	ax4.set_ylabel('Baselines')
-	if min(stands) < 0:
-		ax4.set_xticks([0, 15, 30, 45, 60, 75])
-		ax4.set_yticks([0, 10, 20, 30, 40, 50])
-	else:
-		ax4.set_xticks([0, 4, 8, 12, 16, 20])
-		ax4.set_yticks([0, 4, 8, 12, 16, 20])
+	ax4.set_xticks([0, 4, 8, 12, 16, 20])
+	ax4.set_yticks([0, 500, 1000, 1500, 2000, 2500, 3000])
 
-	if min(stands) < 0:
-		ax1.set_xlim([-450, 450])
-		ax1.set_ylim([-450, 450])
-	else:
-		ax1.set_xlim([-120, 120])
-		ax1.set_ylim([-120, 120])
+	ax1.set_xlim([-120, 120])
+	ax1.set_ylim([-120, 120])
 	ax2.set_xlim( ax1.get_xlim() )
 	ax3.set_ylim( ax1.get_ylim() )
-
-	if min(stands) < 0:
-		ax1.text(465, 375, 'Stands:')
-		for i in range(stands.shape[0]):
-			if stands[i] > 0:
-				if stands[i] in installedStands:
-					ax1.text(476.25, 337.5-i*37.5, "%i" % stands[i])
-				else:
-					ax1.text(476.25, 337.5-i*37.5, "%i (*)" % stands[i])
-			else:
-				ax1.text(476.25, 337.5-i*37.5, 'outlier')
-	else:
-		ax1.text(124, 100, 'Stands:')
-		for i in range(stands.shape[0]):
-			ax1.text(127, 90-i*10, str(stands[i]))
 
 	plt.show()
 	fig.savefig('uv-plane.png')

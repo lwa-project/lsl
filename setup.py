@@ -89,6 +89,24 @@ coreExtraFlags.extend(cflags)
 coreExtraLibs = ['-fopenmp', '-lcblas', '-latlas']
 coreExtraLibs.extend(libs)
 
+drsuExtraFlags = ['-D_GNU_SOURCE', '-O3', '-fmessage-length=0', '-MMD', '-MP', '-MF"$(@:%.o=%.d)"']
+drsuExtraLibs = ['-lrt', '-lgdbm']
+
+# Create the list of extension modules.  We do this here so that we can turn 
+# off the DRSU direct module for non-linux system
+ExtensionModules = [Extension('_libnova', ['lsl/libnova.i']), 
+			Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
+			Extension('reader._gofast', ['lsl/reader/gofast.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-funroll-loops']),
+			Extension('correlator._spec', ['lsl/correlator/spec.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
+			Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
+			Extension('reader._drsu', ['lsl/reader/Disk.c', 'lsl/reader/FileSystem.c', 'lsl/reader/HostInterface.c', 'lsl/reader/Log.c', 'lsl/reader/Persistence.c', 'lsl/reader/Time.c', 'lsl/reader/drsu.c'], extra_compile_args=drsuExtraFlags, extra_link_args=drsuExtraLibs)]
+
+# Check if we have linux or not.  If we don't, I don't think we can compile the
+# DRSU direct access module. 
+if os.uname()[0] != 'Linux':
+	print "WARNING: OS does not appear to be linux, skipping _drsu extension"
+	del(ExtensionModules[-1])
+
 setup(
 	distclass = LSLDist, 
 	name = "lsl", 
@@ -108,11 +126,7 @@ setup(
 	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits/Download'], 
 	include_package_data = True,  
 	ext_package = 'lsl', 
-	ext_modules = [Extension('_libnova', ['lsl/libnova.i']), 
-				Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
-				Extension('reader._gofast', ['lsl/reader/gofast.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-funroll-loops']),
-				Extension('correlator._spec', ['lsl/correlator/spec.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
-				Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs)], 
+	ext_modules = ExtensionModules,
 	zip_safe = False,  
 	test_suite = "tests.test_lsl.lsl_tests"
 ) 

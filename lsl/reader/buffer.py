@@ -197,7 +197,7 @@ class FrameBuffer(object):
 				output = self.buffer[oldestKey]
 				for frame in self.__missingList(oldestKey):
 					output.append( self.__createFill(oldestKey, frame) )
-				
+			
 			del(self.buffer[oldestKey])
 			self.done.append(oldestKey)
 			
@@ -208,7 +208,8 @@ class FrameBuffer(object):
 		if output is None:
 			return output
 		else:
-			return output.sort(cmp=_cmpStands)
+			output.sort(cmp=_cmpStands)
+			return output
 			
 	def flush(self):
 		"""Return a list of lists containing all remaining frames in the 
@@ -241,7 +242,8 @@ class FrameBuffer(object):
 				for frame in self.__missingList(key):
 					output2.append( self.__createFill(key, frame) )
 			
-			output.append( output2.sort(cmp=_cmpStands) )
+			output2.sort(cmp=_cmpStands)
+			output.append( output2 )
 			self.done.append(key)
 			del(self.buffer[key])
 				
@@ -374,4 +376,5 @@ class TBNFrameBuffer(FrameBuffer):
 		    <frame count of frame>
 		"""
 		
+		#return frame.data.timeTag
 		return frame.header.frameCount

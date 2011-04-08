@@ -17,3 +17,8 @@ import tbn
 import drx
 
 import buffer
+
+try:
+	import drsu
+except ImportError:
+	pass
