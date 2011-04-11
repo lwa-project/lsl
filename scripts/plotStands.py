@@ -9,8 +9,8 @@ import sys
 import numpy
 import getopt
 
-import lsl.correlator.uvUtils as uvUtils
-import lsl.common.stations as lwa_common
+from lsl.common import stations
+from lsl.correlator import uvUtils
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -75,7 +75,7 @@ def main(args):
 	toMark = numpy.array(config['args'])-1
 	
 	# Set the LWA Station
-	station = lwa_common.lwa1()
+	station = stations.lwa1()
 	stands = station.getStands()
 
 	# Load in the stand position data

@@ -37,6 +37,9 @@ class beamformer_tests(unittest.TestCase):
 	def test_pointing_limits(self):
 		"""Test that beamformer.calcDelay respects the pointing limits"""
 
+		station = stations.lwa1()
+		antennas = station.getAntennas()
+
 		# Azimuth  checks
 		self.assertRaises(beamformer.BeamformingError, beamformer.calcDelay, antennas[:3], 49.0e6, -5, 30)
 		self.assertRaises(beamformer.BeamformingError, beamformer.calcDelay, antennas[:3], 49.0e6, 365, 30)

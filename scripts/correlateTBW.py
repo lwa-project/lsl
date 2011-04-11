@@ -10,7 +10,7 @@ import getopt
 from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
-from lsl.common import stations as lwa_common
+from lsl.common import stations
 from lsl.common import dp as dp_common
 from lsl.statistics import robust
 from lsl.reader import tbw
@@ -169,7 +169,7 @@ def main(args):
 	LFFT = config['LFFT']
 
 	# Setup the LWA station information
-	lwa1 = lwa_common.lwa1()
+	lwa1 = stations.lwa1()
 
 	fh = open(filename, "rb", buffering=tbw.FrameSize*10000)
 	test = tbw.readFrame(fh)

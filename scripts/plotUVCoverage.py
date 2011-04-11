@@ -9,8 +9,8 @@ import sys
 import math
 import numpy
 
-import lsl.correlator.uvUtils as uvUtils
-import lsl.common.stations as lwa_common
+from lsl.common import stations
+from lsl.correlator import uvUtils
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -50,7 +50,7 @@ def randomSelection(N, readyStands, allStands, Fraction=0.75, IncludeOutlier=Fal
 
 def main(args):
 	# Set the LWA Station
-	station = lwa_common.lwa1()
+	station = stations.lwa1()
 	stands = station.getStands()
 
 	HA = 0.0

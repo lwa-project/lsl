@@ -10,10 +10,10 @@ import numpy
 import ephem
 import getopt
 
-import lsl.reader.tbn as tbn
-import lsl.reader.errors as errors
-import lsl.correlator.fx as fxc
-from lsl.correlator.uvUtils import CableCache
+from lsl.reader import tbn
+from lsl.reader import errors
+from lsl.reader.buffer import TBNFrameBuffer
+from lsl.correlator import fx as fxc
 from lsl.common import stations
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 

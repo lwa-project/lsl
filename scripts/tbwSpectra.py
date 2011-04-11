@@ -11,11 +11,9 @@ import ephem
 import getopt
 
 from lsl.common import stations
-import lsl.reader.tbw as tbw
-import lsl.reader.errors as errors
-import lsl.correlator.fx as fxc
-from lsl.correlator.uvUtils import CableCache
-from lsl.common import stations
+from lsl.reader import tbw
+from lsl.reader import errors
+from lsl.correlator import fx as fxc
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 import matplotlib.pyplot as plt

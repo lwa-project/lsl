@@ -56,8 +56,8 @@ class LWAStation(object):
 	def __init__(self, name, lat, long, elev, id='', antennas=None):
 		self.name = name
 		self.id = id
-		self.lat = lat*math.pi/180.0
-		self.long = long*math.pi/180.0
+		self.lat = lat*numpy.pi/180.0
+		self.long = long*numpy.pi/180.0
 		self.elev = elev
 		
 		if antennas is None:
@@ -99,9 +99,9 @@ class LWAStation(object):
 		for that baseline [x, y, z].  Based off the 'local_to_eci' function
 		in the lwda_fits-dev library."""
 
-		return numpy.array([[0.0, -math.sin(self.lat), math.cos(self.lat)], 
-						[1.0, 0.0,                 0.0], 
-						[0.0, math.cos(self.lat), math.sin(self.lat)]])
+		return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
+						[1.0, 0.0,                  0.0], 
+						[0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
 						
 	def __sortAntennas(self, attr='digitizer'):
 		"""Sort the antennas list by the specified attribute.  The default
