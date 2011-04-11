@@ -782,9 +782,9 @@ def parseSSMIF(filename):
 		
 	# Build a Station
 	try:
-		station = LWAStation(_id2name[idn], lat, lon, elv, id=idn, antennas=Antennas)
+		station = LWAStation(_id2name[idn], lat, lon, elv, id=idn, antennas=antennas)
 	except KeyError:
-		station = LWAStation('New LWA Station', lat, lon, elv, id=idn, antennas=Antennas)
+		station = LWAStation('New LWA Station', lat, lon, elv, id=idn, antennas=antennas)
 	
 	# And return it
 	return station
