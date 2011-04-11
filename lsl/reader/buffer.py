@@ -166,9 +166,10 @@ class FrameBuffer(object):
 
 		# If that time tag hasn't been done yet, add it to the 
 		# buffer in the correct place.
-		if fom not in self.buffer.keys():
-			self.buffer[fom] = []
-		self.buffer[fom].append(frame)
+		try:
+			self.buffer[fom].append(frame)
+		except KeyError:
+			self.buffer[fom] = [frame,]
 		return True
 
 	def get(self):
@@ -200,6 +201,10 @@ class FrameBuffer(object):
 			
 			del(self.buffer[oldestKey])
 			self.done.append(oldestKey)
+			try:
+				self.done = self.done[-21:]
+			except:
+				pass
 			
 		else:
 			output = None
@@ -208,7 +213,7 @@ class FrameBuffer(object):
 		if output is None:
 			return output
 		else:
-			output.sort(cmp=_cmpStands)
+			#output.sort(cmp=_cmpStands)
 			return output
 			
 	def flush(self):

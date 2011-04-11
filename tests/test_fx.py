@@ -8,11 +8,12 @@ import warnings
 import unittest
 import numpy
 
+from lsl.common import stations
 from lsl.correlator import fx
 
 
-__revision__ = "$ Revision: 3 $"
-__version__  = "0.2"
+__revision__ = "$ Revision: 4 $"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 class fx_tests(unittest.TestCase):
@@ -75,26 +76,42 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator on real-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]))
+		
+		station = stations.lwa1()
+		antennas = station.getAntennas()
+		
+		freq, cps = fx.FXMaster(fakeData, antennas[:4])
 
 	def test_correlator_complex(self):
 		"""Test the C-based correlator on complex-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
-		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6)
+		
+		fstation = stations.lwa1()
+		antennas = station.getAntennas()
+		
+		freq, cps = fx.FXMaster(fakeData, antennas[:4], SampleRate=1e5, CentralFreq=38e6)
 		
 	def test_correlator_real_window(self):
 		"""Test the C-based correlator on real-valued data window."""
 		
 		fakeData = numpy.random.rand(4,1024) + 3.0
-		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), 
+		
+		station = stations.lwa1()
+		antennas = station.getAntennas()
+		
+		freq, cps = fx.FXMaster(fakeData, antennas[:4], 
 							window=numpy.blackman)
 		
 	def test_correlator_complex_window(self):
 		"""Test the C-based correlator on complex-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
-		freq, cps = fx.FXMaster(fakeData, numpy.array([1,2,3,4]), SampleRate=1e5, CentralFreq=38e6, 
+		
+		station = stations.lwa1()
+		antennas = station.getAntennas()
+		
+		freq, cps = fx.FXMaster(fakeData, antennas[:4], SampleRate=1e5, CentralFreq=38e6, 
 							window=numpy.blackman)
 	
 	#### PXMaster Function ###

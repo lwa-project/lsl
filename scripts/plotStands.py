@@ -76,9 +76,17 @@ def main(args):
 	
 	# Set the LWA Station
 	station = lwa_common.lwa1()
+	stands = station.getStands()
 
 	# Load in the stand position data
-	data = uvUtils.getXYZ(numpy.arange(1,257))
+	data = numpy.zeros((len(stands),3))
+	
+	i = 0
+	for stand in stands:
+		data[i,0] = stand.x
+		data[i,1] = stand.y
+		data[i,2] = stand.z
+		i += 1
 
 	# Color-code the stands by their elevation
 	color = data[:,2]

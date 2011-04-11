@@ -295,7 +295,7 @@ def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=Non
 	return (freq, output)
 
 
-def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, window=noWindow, verbose=False, SampleRate=None, DlyCache=None, CentralFreq=0.0):
+def correlate(signal1, signal2, antenna1, antenna2, LFFT=64, Overlap=1, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
 	"""Channalize and cross-correlate singal from two antennae.  Both the signals 
 	and the stand numnbers are needed to implement time delay and phase corrections.
 	The resulting visibilities from the cross-correlation are time average and a 
@@ -328,15 +328,8 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, window=noWin
 	freq = freq[1:LFFT]
 	delayRef = len(freq)/2
 
-	DlyCache.updateFreq(freq)
-
-	# Calculate the frequency-based cable delays in seconds.
-	if DlyCache is None:
-		delay1 = uvUtils.signalDelay(stand1, freq=freq)
-		delay2 = uvUtils.signalDelay(stand2, freq=freq)
-	else:
-		delay1 = DlyCache.signalDelay(stand1)
-		delay2 = DlyCache.signalDelay(stand2)
+	delay1 = antenna1.cable.delay(freq=freq)
+	delay2 = antenna2.cable.delay(freq=freq)
 
 	if delay2[delayRef] > delay1[delayRef]:
 		delay1 = delay2 - delay1
@@ -349,8 +342,8 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, window=noWin
 	start2 = int(round(delay2[delayRef]*SampleRate))
 
 	if verbose:
-		print "  Delay for stands #%i: %.2f - %.2f ns (= %i samples)" % (stand1, delay1[-1]*1e9, delay1[0]*1e9, start1)
-		print "  Delay for stands #%i: %.2f - %.2f ns (= %i samples)" % (stand2, delay2[-1]*1e9, delay2[0]*1e9, start2)
+		print "  Delay for stands #%i, pol. %i: %.2f - %.2f ns (= %i samples)" % (antenna1.stand.id, antenna1.pol, delay1[-1]*1e9, delay1[0]*1e9, start1)
+		print "  Delay for stands #%i, pol. %i: %.2f - %.2f ns (= %i samples)" % (antenna2.stand.id, antenna2.pol, delay2[-1]*1e9, delay2[0]*1e9, start2)
 
 	# Remove the mean
 	is1 = 1.0*signal1
@@ -398,7 +391,7 @@ def correlate(signal1, signal2, stand1, stand2, LFFT=64, Overlap=1, window=noWin
 	return visibility
 
 
-def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=noWindow, CrossPol=None, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
+def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, window=noWindow, CrossPol=None, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
 	"""A basic FX correlators for the TBW data.  Given an 2-D array of signals
 	(stands, time-series) and an array of stands, compute the cross-correlation of
 	the data for all baselines.  If cross-polarizations need to be calculated, the
@@ -450,9 +443,6 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=
 		freq = numpy.fft.fftshift(freq)
 	freq = freq[1:LFFT]
 
-	# Define the cable/signal delay caches to help correlate along
-	dlyCache = uvUtils.SignalCache(freq)
-
 	# The multiprocessing module allows for the creation of worker pools to help speed
 	# things along.  If the processing module is found, use it.  Otherwise, set
 	# the 'usePool' variable to false and run single threaded.
@@ -486,17 +476,17 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=
 		# If pool, pool...  Otherise don't
 		if usePool:
 			if CrossPol is not None:
-				task = taskPool.apply_async(correlate, args=(signals[i,:], CrossPol[j,:], stands[i], stands[j]), 
-								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'window': window, 'verbose': verbose, 'SampleRate': SampleRate, 'DlyCache': dlyCache, 'CentralFreq': CentralFreq})
+				task = taskPool.apply_async(correlate, args=(signals[i,:], CrossPol[j,:], antennas[i], antennas[j]), 
+								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'window': window, 'verbose': verbose, 'SampleRate': SampleRate, 'CentralFreq': CentralFreq})
 			else:
-				task = taskPool.apply_async(correlate, args=(signals[i,:], signals[j,:], stands[i], stands[j]), 
-								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'window': window, 'verbose': verbose, 'SampleRate': SampleRate, 'DlyCache': dlyCache, 'CentralFreq': CentralFreq})
+				task = taskPool.apply_async(correlate, args=(signals[i,:], signals[j,:], antennas[i], antennas[j]), 
+								kwds={'LFFT': LFFT, 'Overlap': Overlap, 'window': window, 'verbose': verbose, 'SampleRate': SampleRate, 'CentralFreq': CentralFreq})
 			taskList.append((count,task))
 		else:
 			if CrossPol is not None:
-				tempCPS = correlate(signals[i,:], CrossPol[j,:], stands[i], stands[j], LFFT=LFFT, Overlap=Overlap, window=window, verbose=verbose, SampleRate=SampleRate, DlyCache=dlyCache, CentralFreq=CentralFreq)
+				tempCPS = correlate(signals[i,:], CrossPol[j,:], antennas[i], antennas[j], LFFT=LFFT, Overlap=Overlap, window=window, verbose=verbose, SampleRate=SampleRate, CentralFreq=CentralFreq)
 			else:
-				tempCPS = correlate(signals[i,:], signals[j,:], stands[i], stands[j], LFFT=LFFT, Overlap=Overlap, window=window, verbose=verbose, SampleRate=SampleRate, DlyCache=dlyCache, CentralFreq=CentralFreq)
+				tempCPS = correlate(signals[i,:], signals[j,:], antennas[i], antennas[j], LFFT=LFFT, Overlap=Overlap, window=window, verbose=verbose, SampleRate=SampleRate, CentralFreq=CentralFreq)
 
 			if doFFTShift:
 				output[count,:] = tempCPS
@@ -525,7 +515,7 @@ def FXCorrelator(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, window=
 	return (freq, output)
 
 
-def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
+def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
 	"""A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
 	2-D array of signals (stands, time-series) and an array of stands, compute 
 	the cross-correlation of the data for all baselines.  Return the frequencies 
@@ -556,11 +546,10 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 
 	# Define the cable/signal delay caches to help correlate along and compute 
 	# the delays that we need to apply to align the signals
-	dlyCache = uvUtils.SignalCache(freq)
 	dlyRef = len(freq)/2
 	delays = numpy.zeros((nStands,LFFT-1))
 	for i in list(range(nStands)):
-		delays[i,:] = dlyCache.signalDelay(stands[i])
+		delays[i,:] = antennas.cable.delay(freq)
 	delays = delays[:,dlyRef].max() - delays
 
 	# F - defaults to running parallel in C via OpenMP
@@ -591,7 +580,7 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 	return (freq, output)
 
 
-#def PXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
+#def PXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
 	#"""A version of FXMaster that uses a 64-tap polyphase filter for the FFT step
 	#rather than a normal FFT.  Returns the frequencies and visibilities as a 
 	#two-elements tuple."""
@@ -621,11 +610,10 @@ def FXMaster(signals, stands, LFFT=64, Overlap=1, IncludeAuto=False, verbose=Fal
 
 	## Define the cable/signal delay caches to help correlate along and compute 
 	## the delays that we need to apply to align the signals
-	#dlyCache = uvUtils.SignalCache(freq)
 	#dlyRef = len(freq)/2
 	#delays = numpy.zeros((nStands,LFFT-1))
 	#for i in list(range(nStands)):
-		#delays[i,:] = dlyCache.signalDelay(stands[i])
+		#delays[i,:] = antennas.cable.delay(freq)
 	#delays = delays[:,dlyRef].max() - delays
 
 	## F - defaults to running parallel in C via OpenMP

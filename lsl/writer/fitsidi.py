@@ -22,7 +22,7 @@ from lsl.misc import geodesy
 from lsl.common.warns import warnExperimental
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 12 $'
+__revision__ = '$ Revision: 13 $'
 __all__ = ['IDI', 'StokesCodes', '__version__', '__revision__', '__all__']
 
 
@@ -353,14 +353,22 @@ class IDI(object):
 		
 		refDate = self.refTime2AstroDate()
 		refMJD = refDate.to_jd() - astro.MJD_OFFSET
-		eop = geodesy.getEOP(refMJD)
-		if eop is None:
-			eop = [geodesy.EOP(mjd=refMJD)]
+		try:
+			eop = geodesy.getEOP(refMJD)
+			if eop is None:
+				eop = [geodesy.EOP(mjd=refMJD)]
 
-		ag.header.update('UT1UTC', eop[0].utDiff, 'difference UT1 - UTC for reference date')
-		ag.header.update('IATUTC', astro.leap_secs(utc0), 'TAI - UTC for reference date')
-		ag.header.update('POLARX', eop[0].x)
-		ag.header.update('POLARY', eop[0].y)
+			ag.header.update('UT1UTC', eop[0].utDiff, 'difference UT1 - UTC for reference date')
+			ag.header.update('IATUTC', astro.leap_secs(utc0), 'TAI - UTC for reference date')
+			ag.header.update('POLARX', eop[0].x)
+			ag.header.update('POLARY', eop[0].y)
+		except IOError:
+			# If urllib (called by geodesy.getEOP) fails, an IOError is raised.
+			
+			ag.header.update('UT1UTC', 0.0, 'difference UT1 - UTC for reference date')
+			ag.header.update('IATUTC', astro.leap_secs(utc0), 'TAI - UTC for reference date')
+			ag.header.update('POLARX', 0.0)
+			ag.header.update('POLARY', 0.0)
 
 		ag.header.update('ARRAYX', self.array[0]['center'][0], 'array ECI X coordinate (m)')
 		ag.header.update('ARRAYY', self.array[0]['center'][1], 'array ECI Y coordinate (m)')

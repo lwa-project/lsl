@@ -51,8 +51,7 @@ def randomSelection(N, readyStands, allStands, Fraction=0.75, IncludeOutlier=Fal
 def main(args):
 	# Set the LWA Station
 	station = lwa_common.lwa1()
-
-	stands = allStands
+	stands = station.getStands()
 
 	HA = 0.0
 	dec = station.lat*180.0/math.pi

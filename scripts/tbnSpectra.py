@@ -133,6 +133,10 @@ def bestFreqUnits(freq):
 
 
 def main(args):
+	# Set the station
+	station = stations.lwa1()
+	antennas = station.getAntennas()
+	
 	# Parse command line options
 	config = parseOptions(args)
 
@@ -260,10 +264,9 @@ def main(args):
 
 	# Apply the cable loss corrections, if requested
 	if config['applyGain']:
-		cbl = CableCache(freq=freq)
 		for s in range(masterSpectra.shape[1]):
 			for c in range(masterSpectra.shape[0]):
-				masterSpectra[c,s,:] *= cbl.cableGain(stands[s])
+				masterSpectra[c,s,:] *= antennas[s].cable.gain(freq)
 
 	# Now that we have read through all of the chunks, peform the final averaging by
 	# dividing by all of the chunks
