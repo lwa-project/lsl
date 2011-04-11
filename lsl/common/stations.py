@@ -9,7 +9,7 @@ import numpy
 from lsl.common.paths import data as dataPath
 
 __version__ = "0.4"
-__revision__ = "$ Revision: 19 $"
+__revision__ = "$ Revision: 20 $"
 __all__ = ['geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', '__version__', '__revision__', '__all__']
 
 
@@ -21,11 +21,11 @@ def geo2ecef(lat, lon, elev):
 
 	WGS84_a = 6378137.000000
 	WGS84_b = 6356752.314245
-	N = WGS84_a**2 / math.sqrt(WGS84_a**2*math.cos(lat)**2 + WGS84_b**2*math.sin(lon)**2)
+	N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lon)**2)
  
-	x = (N+elev)*math.cos(lat)*math.cos(lon)
-	y = (N+elev)*math.cos(lat)*math.sin(lon)
-	z = ((WGS84_b**2/WGS84_a**2)*N+elev)*math.sin(lat)
+	x = (N+elev)*numpy.cos(lat)*numpy.cos(lon)
+	y = (N+elev)*numpy.cos(lat)*numpy.sin(lon)
+	z = ((WGS84_b**2/WGS84_a**2)*N+elev)*numpy.sin(lat)
 
 	return (x, y, z)
 
@@ -734,7 +734,7 @@ def parseSSMIF(filename):
 	i = 1
 	fees = []
 	for id,gain1,gain2,stat in zip(feeID, feeGai1, feeGai2, feeStat):
-		fees.append(Fee(id, gain1=gain1, gain2=gain2, status=stat))
+		fees.append(FEE(id, gain1=gain1, gain2=gain2, status=stat))
 	
 	# Build up a list of Cable instances and load them with data
 	i = 1

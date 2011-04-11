@@ -56,7 +56,7 @@ def __loadStandResponse(freq=49.0e6):
 	return aipy.amp.BeamAlm(numpy.array([freq/1e9]), lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
 
 
-def calcDelay(stands, freq=49.0e6, azimuth=0.0, elevation=90.0):
+def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	"""Calculate the time delays for delay-and-sum beam forming a collection of 
 	stands looking in at a particular azimuth and elevation (both in degrees).  
 	A numpy array of the geometric + cable delays in seconds is returned."""
@@ -68,7 +68,15 @@ def calcDelay(stands, freq=49.0e6, azimuth=0.0, elevation=90.0):
 		raise BeamformingError("Pointing azimuth (%.2f deg) is out of range [0, 360]" % azimuth)
 
 	# Get the positions of the stands and compute the mean center of the array
-	xyz = uvUtils.getXYZ(stands)
+	xyz = numpy.zeros((len(antennas),3))
+	
+	i = 0
+	for ant in antennas:
+		xyz[i,0] = ant.stand.x
+		xyz[i,1] = ant.stand.y
+		xyz[i,2] = ant.stand.z
+		i += 1
+
 	arrayX = xyz[:,0].mean()
 	arrayY = xyz[:,1].mean()
 	arrayZ = xyz[:,2].mean()
@@ -83,20 +91,19 @@ def calcDelay(stands, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	# Compute the stand positions relative to the average and loop over stands
 	# to compute the time delays in seconds
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
-	delays = numpy.zeros((len(stands),))
-	for i in list(range(len(stands))):
+	delays = numpy.zeros((len(antennas),))
+	for i in list(range(len(antennas))):
 		delays[i] = numpy.dot(source, arrayXYZ[i,:]) / c
 
 	# Get the cable delays for each stand and add that in as well
-	dlyCache = uvUtils.CableCache(freq, applyDispersion=True)
-	for i in list(range(len(stands))):
-		delays[i] = dlyCache.cableDelay(stands[i]) - delays[i]
+	for i in list(range(len(antennas))):
+		delays[i] = antennas[i].cable.delay(freq) - delays[i]
 
 	# Done
 	return delays
 
 
-def intDelayAndSum(stands, data, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0):
+def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0):
 	"""Given a list of stands and a 2-D data stream with stands enumerated
 	along the first axis and time series samples along the second axis, 
 	delay and sum the data stream into one beam.  The delays applied are 
@@ -113,7 +120,7 @@ def intDelayAndSum(stands, data, sampleRate=dp_common.fS, azimuth=0.0, elevation
 	"""
 
 	# Get the stand delays and convert the delay times from seconds to samples
-	delays = calcDelay(stands, azimuth=azimuth, elevation=elevation)
+	delays = calcDelay(antennas, azimuth=azimuth, elevation=elevation)
 	delays = numpy.round(delays*sampleRate).astype(numpy.int16)
 
 	# Make the delays into something meaningful for the shifting of the data 
@@ -122,7 +129,7 @@ def intDelayAndSum(stands, data, sampleRate=dp_common.fS, azimuth=0.0, elevation
 
 	# Delay and sum by looping over stands inside of looping over times
 	output = numpy.zeros((data.shape[1]-delays.max()), dtype=data.dtype)
-	for s in list(range(len(stands))):
+	for s in list(range(len(antennas))):
 		start = delays[s]
 		stop = data.shape[1] - delays.max() + start
 		output = output + data[s,start:stop]
@@ -131,7 +138,7 @@ def intDelayAndSum(stands, data, sampleRate=dp_common.fS, azimuth=0.0, elevation
 	return output
 
 
-def __intBeepAndSweep(stands, arrayXYZ, t, azimuth, elevation, dlyCache=None, beamShape=1.0, sampleRate=dp_common.fS, direction=(0.0, 90.0)):
+def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, dlyCache=None, beamShape=1.0, sampleRate=dp_common.fS, direction=(0.0, 90.0)):
 	"""Worker function for intBeamShape that 'beep's (makes a simulated signals) and
 	'sweep's (delays it appropriately)."""
 
@@ -147,10 +154,10 @@ def __intBeepAndSweep(stands, arrayXYZ, t, azimuth, elevation, dlyCache=None, be
 	currResponse = beamShape
 
 	# Loop over stands to build the simulated singnals
-	signals = numpy.zeros((len(stands), len(t)))
-	for i in list(range(len(stands))):
-		currDelay = dlyCache.cableDelay(stands[i]) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*49.0e6*(t + currDelay))
+	signals = numpy.zeros((len(antennas), len(t)))
+	for i in list(range(len(antennas))):
+		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
+		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t + currDelay))
 
 	# Beamform with delay-and-sum and store the RMS result
 	beamHere = intDelayAndSum(stands, signals, sampleRate=sampleRate, azimuth=direction[0], elevation=direction[1])
@@ -160,27 +167,37 @@ def __intBeepAndSweep(stands, arrayXYZ, t, azimuth, elevation, dlyCache=None, be
 	return sigHere
 
 
-def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, progress=False, DisablePool=False):
+def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, progress=False, DisablePool=False):
 	"""Given a list of stands, compute the on-sky response of the delay-and-sum
 	scheme implemented in intDelayAndSum.  A 360x90 numpy array spaning azimuth
 	and elevation is returned."""
 
+	# Set the frequency
+	freq = 49.0e6
+
 	# Get the stand delays and convert the delay times from seconds to samples
-	delays = calcDelay(stands, freq=49.0e6, azimuth=azimuth, elevation=elevation)
+	delays = calcDelay(antennas, freq=freq, azimuth=azimuth, elevation=elevation)
 	delays = numpy.round(delays*sampleRate).astype(numpy.int16)
 
 	# Build up a base time array, load in the cable delays, and get the stand 
 	# positions for geometric delay calculations.
 	t = numpy.arange(0,1000)/sampleRate
-	dlyCache = uvUtils.CableCache(49.0e6, applyDispersion=True)
-	xyz = uvUtils.getXYZ(stands)
+	xyz = numpy.zeros((len(antennas),3))
+	
+	i = 0
+	for ant in antennas:
+		xyz[i,0] = ant.stand.x
+		xyz[i,1] = ant.stand.y
+		xyz[i,2] = ant.stand.z
+		i += 1
+
 	arrayX = xyz[:,0].mean()
 	arrayY = xyz[:,1].mean()
 	arrayZ = xyz[:,2].mean()
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
 
 	# Load in the respoonse of a single isolated stand
-	standBeam = __loadStandResponse(freq=49.0e6)
+	standBeam = __loadStandResponse(freq)
 
 	# The multiprocessing module allows for the creation of worker pools to help speed
 	# things along.  If the processing module is found, use it.  Otherwise, set
@@ -235,7 +252,7 @@ def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, p
 				sys.stdout.flush()
 
 			if usePool:
-				task = taskPool.apply_async(__intBeepAndSweep, args=(stands, arrayXYZ, t, az, el), kwds={'dlyCache': dlyCache, 'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
+				task = taskPool.apply_async(__intBeepAndSweep, args=(antennas, arrayXYZ, t, freq, az, el), kwds={'dlyCache': dlyCache, 'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
 				taskList.append((az,el,task))
 			else:
 				# Unit vector for the currect on-sky location
@@ -246,13 +263,13 @@ def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, p
 				currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
 				# Loop over stands to build the simulated singnals
-				signals = numpy.zeros((len(stands), 1000))
-				for i in list(range(len(stands))):
-					currDelay = dlyCache.cableDelay(stands[i]) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*49.0e6*(t + currDelay))
+				signals = numpy.zeros((len(antennas), 1000))
+				for i in list(range(len(antennas))):
+					currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
+					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t + currDelay))
 
 				# Beamform with delay-and-sum and store the RMS result
-				beam = intDelayAndSum(stands, signals, sampleRate=sampleRate, azimuth=azimuth, elevation=elevation)
+				beam = intDelayAndSum(antennas, signals, sampleRate=sampleRate, azimuth=azimuth, elevation=elevation)
 				output[az,el] = numpy.sqrt((beam**2).mean())
 
 	# If pooling... Close the pool so that it knows that no ones else is joining.
@@ -274,7 +291,7 @@ def intBeamShape(stands, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, p
 	return output
 
 
-def fftDelayAndSum(stands, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=49.0e6, azimuth=0.0, elevation=90.0):
+def fftDelayAndSum(antennas, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=49.0e6, azimuth=0.0, elevation=90.0):
 	"""Given a list of stands and a data stream of the form stands x times, 
 	delay and sum the data stream into one beam.  The delays first applied 
 	as integer sample delays.  Then, the data are transformed to the 
@@ -283,7 +300,7 @@ def fftDelayAndSum(stands, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=
 	of the frequency-domain data over time is returned."""
 
 	# Get the stand delays in seconds
-	delays = calcDelay(stands, azimuth=azimuth, elevation=elevation)
+	delays = calcDelay(antennas, azimuth=azimuth, elevation=elevation)
 
 	# Make the delays into something meaningful for the shifting of the data 
 	# streams.  Then, get the integer delay and sub-sample delay for each stand
@@ -312,13 +329,13 @@ def fftDelayAndSum(stands, data, sampleRate=dp_common.fS, LFFT=256, CentralFreq=
 	return (freq, output)
 
 
-def fftBeamShape(stands, sampleRate=dp_common.fS, LFFT=256, CentralFreq=49.0e6, azimuth=0.0, elevation=90.0, progress=False):
+def fftBeamShape(antennas, sampleRate=dp_common.fS, LFFT=256, CentralFreq=49.0e6, azimuth=0.0, elevation=90.0, progress=False):
 	"""Given a list of stands, compute the on-sky response of the delay-and-sum
 	scheme implemented in intDelayAndSum.  A 360x90 numpy array spaning azimuth
 	and elevation is returned."""
 
 	# Get the stand delays and convert the delay times from seconds to samples
-	delays = calcDelay(stands, freq=CentralFreq, azimuth=azimuth, elevation=elevation)
+	delays = calcDelay(antennas, freq=CentralFreq, azimuth=azimuth, elevation=elevation)
 	delays = numpy.round(delays*sampleRate).astype(numpy.int16)
 
 	# Build up a base time array, load in the cable delays, and get the stand 
@@ -364,13 +381,13 @@ def fftBeamShape(stands, sampleRate=dp_common.fS, LFFT=256, CentralFreq=49.0e6, 
 			currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
 			# Loop over stands to build the simulated singnals
-			signals = numpy.zeros((len(stands), 1000))
-			for i in list(range(len(stands))):
-				currDelay = dlyCache.cableDelay(stands[i]) - numpy.dot(currPos, arrayXYZ[i,:]) / c
+			signals = numpy.zeros((len(antennas), 1000))
+			for i in list(range(len(antennas))):
+				currDelay = antennas[i].cable.delay(CentralFreq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
 				signals[i,:] = currResponse * numpy.cos(2*numpy.pi*CentralFreq*(t + currDelay))
 
 			# Beamform with delay-and-sum and store the RMS result
-			freq, beam = fftDelayAndSum(stands, signals, sampleRate=sampleRate, LFFT=LFFT, CentralFreq=CentralFreq, 
+			freq, beam = fftDelayAndSum(antennas, signals, sampleRate=sampleRate, LFFT=LFFT, CentralFreq=CentralFreq, 
 								azimuth=azimuth, elevation=elevation)
 			output[az,el] = (numpy.abs(beam)**2).max()
 

@@ -8,10 +8,11 @@ import warnings
 import unittest
 import numpy
 
+from lsl.common import stations
 from lsl.correlator import fx
 
 
-__revision__ = "$ Revision: 5 $"
+__revision__ = "$ Revision: 6 $"
 __version__  = "0.3"
 __author__    = "Jayce Dowell"
 

@@ -33,8 +33,8 @@ class paths_tests(unittest.TestCase):
 		
 		dataPath = paths.dataBuild
 
-		cablesFile = os.path.join(dataPath, 'lwa1-cables.csv')
-		self.assertTrue(os.path.exists(cablesFile))
+		ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+		self.assertTrue(os.path.exists(ssmif))
 
 		timeFile = os.path.join(dataPath, 'astro', 'tai-utc.dat')
 		self.assertTrue(os.path.exists(timeFile))
