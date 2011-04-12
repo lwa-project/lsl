@@ -44,14 +44,20 @@ class fitsidi_tests(unittest.TestCase):
 		# Frequency range
 		freq = numpy.arange(0,512)*20e6/512 + 40e6
 		# Site and stands
-		site = lwa_common.lwa1()
-		stands = site.getStands('2010/11/25 00:00:00')
+		site = lwa_common.lwa1
+		antennas = site.getAntennas()[0:40:2]
+		
+		stands = []
+		for antenna in antennas:
+			stands.append(antenna.stand.id)
+		stands = numpy.array(stands)
+		
 		# Set baselines and data
 		blList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=False)
 		visData = numpy.random.rand(len(blList), len(freq))
 		visData = visData.astype(numpy.complex64)
 
-		return {'freq': freq, 'site': site, 'stands': stands, 'bl': blList, 'vis': visData}
+		return {'freq': freq, 'site': site, 'antennas': antennas, 'stands': stands, 'bl': blList, 'vis': visData}
 
 	def test_write_tables(self):
 		"""Test if the FITS IDI writer writes all of the tables."""
@@ -66,7 +72,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 
@@ -92,7 +98,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 
@@ -100,7 +106,7 @@ class fitsidi_tests(unittest.TestCase):
 		hdulist = pyfits.open(testFile)
 		ag = hdulist['ARRAY_GEOMETRY'].data
 		# Correct number of stands
-		self.assertEqual(len(data['stands']), len(ag.field('NOSTA')))
+		self.assertEqual(len(data['antennas']), len(ag.field('NOSTA')))
 
 		# Correct stand names
 		names = ['LWA%03i' % stand for stand in data['stands']]
@@ -122,7 +128,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 
@@ -156,7 +162,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 
@@ -185,7 +191,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 
@@ -218,7 +224,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 
@@ -246,7 +252,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 
@@ -312,7 +318,7 @@ class fitsidi_tests(unittest.TestCase):
 		fits = fitsidi.IDI(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
-		fits.setGeometry(data['site'], data['stands'])
+		fits.setGeometry(data['site'], data['antennas'])
 		fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
 		fits.write()
 

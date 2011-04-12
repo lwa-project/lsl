@@ -77,7 +77,7 @@ class fx_tests(unittest.TestCase):
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 		
 		freq, cps = fx.FXMaster(fakeData, antennas[:4])
@@ -87,7 +87,7 @@ class fx_tests(unittest.TestCase):
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
 		
-		fstation = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 		
 		freq, cps = fx.FXMaster(fakeData, antennas[:4], SampleRate=1e5, CentralFreq=38e6)
@@ -97,18 +97,18 @@ class fx_tests(unittest.TestCase):
 		
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 		
 		freq, cps = fx.FXMaster(fakeData, antennas[:4], 
 							window=numpy.blackman)
 		
 	def test_correlator_complex_window(self):
-		"""Test the C-based correlator on complex-valued data."""
+		"""Test the C-based correlator on complex-valued data window."""
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
 		
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 		
 		freq, cps = fx.FXMaster(fakeData, antennas[:4], SampleRate=1e5, CentralFreq=38e6, 

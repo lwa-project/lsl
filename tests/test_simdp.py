@@ -38,13 +38,13 @@ class simdp_tests(unittest.TestCase):
 		testFile = os.path.join(self.testPath, 'tbw.dat')
 
 		fh = open(testFile, 'wb')
-		dp.basicSignal(fh, numpy.array([1,2,3,4]), 30000, mode='TBW', bits=12, tStart=1000)
+		dp.basicSignal(fh, numpy.array([1,2,3,4]), 3000, mode='TBW', bits=12, tStart=1000)
 		fh.close()
 
 		# Check file size
 		fileSize = os.path.getsize(testFile)
 		nSamples = fileSize / tbw.FrameSize
-		self.assertEqual(nSamples, 30000*4)
+		self.assertEqual(nSamples, 3000*4)
 
 		# Check the time of the first frame
 		fh = open(testFile, 'rb')

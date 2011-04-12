@@ -169,7 +169,7 @@ def main(args):
 	LFFT = config['LFFT']
 
 	# Setup the LWA station information
-	lwa1 = stations.lwa1()
+	lwa1 = stations.lwa1
 
 	fh = open(filename, "rb", buffering=tbw.FrameSize*10000)
 	test = tbw.readFrame(fh)

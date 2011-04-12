@@ -98,7 +98,7 @@ def parseOptions(args):
 
 def main(args):
 	# Set the station
-	station = stations.lwa1()
+	station = stations.lwa1
 	antennas = station.getAntennas()
 	
 	# Parse command line options
@@ -219,7 +219,7 @@ def main(args):
 			ax1 = fig.add_subplot(1, 1, 1)
 			for i in xrange(f*20, f*20+20):
 				currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-				ax1.plot(freq/1e6, currSpectra, label='%i,%i' % (stands[i], pols[i]), color=colors[i % 20])
+				ax1.plot(freq/1e6, currSpectra, label='%i,%i' % (antennas[i].stand.id, antennas[i].pol), color=colors[i % 20])
 
 			ax1.set_xlabel('Frequency [MHz]')
 			ax1.set_ylabel('P.S.D. [dB/RBW]')
@@ -241,7 +241,7 @@ def main(args):
 					currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
 				except IndexError:
 					break
-				ax.plot(freq/1e6, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (stands[i], pols[i], i+1))
+				ax.plot(freq/1e6, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer))
 
 				# If there is more than one chunk, plot the difference between the global 
 				# average and each chunk
@@ -257,7 +257,7 @@ def main(args):
 						diff = subspectra - currSpectra
 						ax.plot(freq/1e6, diff)
 
-				ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (stands[i], pols[i], i+1, status[i]))
+				ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer, antennas[i].getStatus()))
 				ax.set_xlabel('Frequency [MHz]')
 				ax.set_ylabel('P.S.D. [dB/RBW]')
 				ax.set_xlim([10,90])

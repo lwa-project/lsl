@@ -75,7 +75,7 @@ def main(args):
 	toMark = numpy.array(config['args'])-1
 	
 	# Set the LWA Station
-	station = stations.lwa1()
+	station = stations.lwa1
 	stands = station.getStands()
 
 	# Load in the stand position data

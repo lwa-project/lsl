@@ -99,7 +99,7 @@ def main(args):
 	config = parseOptions(args)
 	
 	# Get the site information for LWA-1
-	sta = stations.lwa1()
+	sta = stations.lwa1
 	
 	# Read in the skymap (GSM or LF map @ 74 MHz)
 	if config['GSM']:

@@ -58,7 +58,7 @@ if __name__ == '__main__':
 	(opts, args) = parser.parse_args()
 			
 	# setup transform objects
-	lwa1 = stations.lwa1()
+	lwa1 = stations.lwa1
 	site = transform.GeographicalPosition((lwa1.long*180.0/math.pi, lwa1.lat*180.0/math.pi), name=lwa1.name)
 	
 	sun_pos = transform.PlanetaryPosition('Sun')

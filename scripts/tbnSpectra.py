@@ -134,7 +134,7 @@ def bestFreqUnits(freq):
 
 def main(args):
 	# Set the station
-	station = stations.lwa1()
+	station = stations.lwa1
 	antennas = station.getAntennas()
 	
 	# Parse command line options
@@ -146,8 +146,7 @@ def main(args):
 	fh = open(config['args'][0], "rb")
 	nFrames = os.path.getsize(config['args'][0]) / tbn.FrameSize
 	srate = tbn.getSampleRate(fh)
-	antpols = tbn.getFramesPerObs(fh)
-	antpols = antpols[0]+antpols[1]
+	antpols = len(antennas)
 
 	# Offset in frames for beampols beam/tuning/pol. sets
 	offset = int(config['offset'] * srate / 512 * antpols)
@@ -174,7 +173,6 @@ def main(args):
 	junkFrame = tbn.readFrame(fh)
 	fh.seek(0)
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
-	stands = stations.lwa1().getStands(beginDate)
 
 	# File summary
 	print "Filename: %s" % config['args'][0]

@@ -7,8 +7,8 @@ import unittest
 from lsl.common import stations
 
 
-__revision__ = "$Revision:1 $"
-__version__  = "0.1"
+__revision__ = "$ Revision: 2 $"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -19,7 +19,7 @@ class stations_tests(unittest.TestCase):
 	def test_station(self):
 		"""Test retrieving a stations from the stations module."""
 
-		lwa1 = stations.lwa1()
+		lwa1 = stations.lwa1
 		self.assertTrue(isinstance(lwa1, stations.LWAStation))
 
 	def test_ecef_conversion(self):

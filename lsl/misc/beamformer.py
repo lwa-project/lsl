@@ -69,7 +69,6 @@ def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 
 	# Get the positions of the stands and compute the mean center of the array
 	xyz = numpy.zeros((len(antennas),3))
-	
 	i = 0
 	for ant in antennas:
 		xyz[i,0] = ant.stand.x
@@ -138,7 +137,7 @@ def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, azimuth=0.0, elevati
 	return output
 
 
-def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, dlyCache=None, beamShape=1.0, sampleRate=dp_common.fS, direction=(0.0, 90.0)):
+def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamShape=1.0, sampleRate=dp_common.fS, direction=(0.0, 90.0)):
 	"""Worker function for intBeamShape that 'beep's (makes a simulated signals) and
 	'sweep's (delays it appropriately)."""
 
@@ -160,7 +159,7 @@ def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, dlyCache=
 		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t + currDelay))
 
 	# Beamform with delay-and-sum and store the RMS result
-	beamHere = intDelayAndSum(stands, signals, sampleRate=sampleRate, azimuth=direction[0], elevation=direction[1])
+	beamHere = intDelayAndSum(antennas, signals, sampleRate=sampleRate, azimuth=direction[0], elevation=direction[1])
 
 	# Return
 	sigHere = numpy.sqrt((beamHere**2).mean())
@@ -183,7 +182,6 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 	# positions for geometric delay calculations.
 	t = numpy.arange(0,1000)/sampleRate
 	xyz = numpy.zeros((len(antennas),3))
-	
 	i = 0
 	for ant in antennas:
 		xyz[i,0] = ant.stand.x
@@ -252,7 +250,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 				sys.stdout.flush()
 
 			if usePool:
-				task = taskPool.apply_async(__intBeepAndSweep, args=(antennas, arrayXYZ, t, freq, az, el), kwds={'dlyCache': dlyCache, 'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
+				task = taskPool.apply_async(__intBeepAndSweep, args=(antennas, arrayXYZ, t, freq, az, el), kwds={'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
 				taskList.append((az,el,task))
 			else:
 				# Unit vector for the currect on-sky location

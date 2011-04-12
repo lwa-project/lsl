@@ -27,22 +27,22 @@ class simvis_tests(unittest.TestCase):
 	def test_build_aa_flat(self):
 		"""Test building a antenna array object with uniform sky response."""
 
-		lwa1 = lwa_common.lwa1()
-		stands = lwa1.getStands()
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
 		freqs = numpy.arange(30e6, 50e6, 1e6)
 
-		aa = vis.buildSimArray(lwa1, stands, freqs, ForceFlat=True)
+		aa = vis.buildSimArray(lwa1, antennas, freqs, ForceFlat=True)
 
 	def test_build_aa(self):
 		"""Test building a antenna array object with realistic sky response."""
 
-		lwa1 = lwa_common.lwa1()
-		stands = lwa1.getStands()
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
 		freqs = numpy.arange(30e6, 50e6, 1e6)
 
-		aa = vis.buildSimArray(lwa1, stands, freqs)
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
 		# Check the number of stands
-		self.assertEqual(len(aa.ants), len(stands))
+		self.assertEqual(len(aa.ants), len(antennas))
 
 		# Check the frequencies comming out
 		for fo, fi in zip(aa.get_afreqs(), freqs):
@@ -52,10 +52,10 @@ class simvis_tests(unittest.TestCase):
 		"""Test building simulated visibility data"""
 
 		# Setup
-		lwa1 = lwa_common.lwa1()
-		stands = lwa1.getStands()
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
 		freqs = numpy.arange(30e6, 50e6, 1e6)
-		aa = vis.buildSimArray(lwa1, stands, freqs)
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
 
 		# Build the data dictionary
 		out = vis.buildSimData(aa, vis.srcs)
@@ -86,28 +86,28 @@ class simvis_tests(unittest.TestCase):
 		"""Test that we can scale a data dictionary without error"""
 
 		# Setup
-		lwa1 = lwa_common.lwa1()
-		stands = lwa1.getStands()
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
 		freqs = numpy.arange(30e6, 50e6, 1e6)
-		aa = vis.buildSimArray(lwa1, stands, freqs)
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
 
 		# Build the data dictionary
 		out = vis.buildSimData(aa, vis.srcs)
 
 		# Scale
-		amp = vis.scaleData(out, numpy.ones(len(stands))*2, numpy.zeros(len(stands)))
+		amp = vis.scaleData(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
 		# Delay
-		phs = vis.scaleData(out, numpy.ones(len(stands)), numpy.ones(len(stands)))
+		phs = vis.scaleData(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
 
 	def test_shift_data(self):
 		"""Test that we can shift the uvw coordinates of a data dictionary 
 		without error"""
 
 		# Setup
-		lwa1 = lwa_common.lwa1()
-		stands = lwa1.getStands()
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
 		freqs = numpy.arange(30e6, 50e6, 1e6)
-		aa = vis.buildSimArray(lwa1, stands, freqs)
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
 
 		# Build the data dictionary
 		out = vis.buildSimData(aa, vis.srcs)

@@ -7,6 +7,7 @@ import sys
 import numpy
 
 from lsl.common.paths import data as dataPath
+from lsl.common.constants import *
 
 __version__ = "0.4"
 __revision__ = "$ Revision: 20 $"
@@ -246,26 +247,28 @@ class Stand(object):
 	def __add__(self, std):
 		try:
 			# If its a Stand instance, do this
-			out = (self.x + std.x, self.y + std.y, self.z + std.z)
+			out = (self.x+std.x, self.y+std.y, self.z+std.z)
 		except AttributeError:
 			try:
 				# Maybe it is a list/tuple, so do this
-				out = (self.x + std[0], self.y + std[1], self.z + std[2])
+				out = (self.x+std[0], self.y+std[1], self.z+std[2])
 			except TypeError:
-				out = (self.x + std, self.y + std, self.z + std)
+				out = (self.x+std, self.y+std, self.z+std)
 		
 		return out
 		
-	def __sub__(self, y):
+	def __sub__(self, std):
 		try:
 			# If its a Stand instance, do this
-			out = (self.x - std.x, self.y - std.y, self.z - std.z)
+			out = (self.x-std.x, self.y-std.y, self.z-std.z)
 		except AttributeError:
 			try:
 				# Maybe it is a list/tuple, so do this
-				out = (self.x - std[0], self.y - std[1], self.z - std[2])
+				out = (self.x-std[0], self.y-std[1], self.z-std[2])
 			except TypeError:
-				out = (self.x - std, self.y - std, self.z - std)
+				out = (self.x-std, self.y-std, self.z-std)
+				
+		return out
 
 
 class FEE(object):
@@ -366,7 +369,9 @@ class Cable(object):
 		alpha0 = 0.00428
 		alpha1 = 0.00000
 	
-		atten = numpy.exp(2*alpha0*self.length*numpy.sqrt(freq/numpy.array(10e6)) + alpha1*self.length*(freq/numpy.array(10e6)))
+		atten = 2 * alpha0 * self.length * numpy.sqrt(frequency / numpy.array(10e6)) 
+		atten += alpha1 * self.length * (frequency / numpy.array(10e6))
+		atten = numpy.exp(atten)
 		return atten
 		
 	def gain(self, frequency=49e6):
@@ -382,7 +387,7 @@ class Cable(object):
 			added in frequency support.
 		"""
 		
-		return 1.0 / self.attenuation(freq=freq)
+		return 1.0 / self.attenuation(frequency=frequency)
 
 
 def parseSSMIF(filename):
@@ -790,11 +795,5 @@ def parseSSMIF(filename):
 	return station
 
 
-class lwa1(LWAStation):
-	"""Object to hold information about the first LWA station.  This object can
-	create a ephem.Observer representation of itself and identify which stands
-	were in use at a given time."""
-
-	def __init__(self):
-		ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
-		self = parseSSMIF(ssmif)
+_ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+lwa1 = parseSSMIF(_ssmif)

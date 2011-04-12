@@ -65,20 +65,20 @@ class fx_old_tests(unittest.TestCase):
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 		
-		freq, cps = fx.FXMaster(fakeData, antennas[:4], DisablePool=True)
+		freq, cps = fx.FXCorrelator(fakeData, antennas[:4], DisablePool=True)
 
 	def test_correlator_multi_old(self):
 		"""Test the FXCorrelator/correlate functions in multi-thread mode."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
 		
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 		
-		freq, cps = fx.FXMaster(fakeData, antennas[:4], DisablePool=False)
+		freq, cps = fx.FXCorrelator(fakeData, antennas[:4], DisablePool=False)
 
 
 class fx_old_test_suite(unittest.TestSuite):

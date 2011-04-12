@@ -22,7 +22,7 @@ class beamformer_tests(unittest.TestCase):
 	def test_calcDelay(self):
 		"""Check that the beamformer.calcDelay function actually runs"""
 
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 
 		out = beamformer.calcDelay(antennas[:3])
@@ -37,7 +37,7 @@ class beamformer_tests(unittest.TestCase):
 	def test_pointing_limits(self):
 		"""Test that beamformer.calcDelay respects the pointing limits"""
 
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 
 		# Azimuth  checks
@@ -51,7 +51,7 @@ class beamformer_tests(unittest.TestCase):
 	def test_intDelayAndSum(self):
 		"""Check that the beamformer.intDelayAndSum function actually runs"""
 		
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 		data = numpy.random.rand(3, 1000)
 		
@@ -60,15 +60,16 @@ class beamformer_tests(unittest.TestCase):
 	def test_intBeamShape(self):
 		"""Check that the beamformer.intBeamShape function actually runs"""
 
-		station = stations.lwa1()
+		station = stations.lwa1
 		antennas = station.getAntennas()
 
-		out = beamformer.intBeamShape(antennas[:3], azimuth=135.0, elevation=60.0)
+		out = beamformer.intBeamShape(antennas[0:60:2], azimuth=135.0, elevation=60.0)
+
 		i = out.argmax()
-		az = i / 90
-		el = i % 90
-		self.assertAlmostEqual(az, 135.0, 1)
-		self.assertAlmostEqual(el, 60.0, 1)
+		azDiff = numpy.abs(135.0 - i / 90)
+		elDiff = numpy.abs(60.0 - i % 90)
+		self.assertTrue(azDiff <= 1)
+		self.assertTrue(elDiff <= 1)
 		
 
 class  beamformer_test_suite(unittest.TestSuite):
