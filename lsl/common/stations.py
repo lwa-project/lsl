@@ -3,14 +3,14 @@
 
 import os
 import re
-import sys
 import numpy
+import ephem
 
 from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
 __version__ = "0.4"
-__revision__ = "$ Revision: 20 $"
+__revision__ = "$ Revision: 22 $"
 __all__ = ['geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', '__version__', '__revision__', '__all__']
 
 
@@ -209,7 +209,7 @@ class Antenna(object):
 			return 0
 		
 	def __str__(self):
-		return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i)" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
+		return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
 		
 	def getStatus(self):
 		"""Return the combined antenna + FEE status as a two digit number 
@@ -360,10 +360,6 @@ class Cable(object):
 
 		.. note::
 			This function assumes a cable of type KSR200DB from SLC0014, version 3
-
-		.. versionchanged:: 0.3.4
-			Switched over the the cable attenuation model in SLC 0014, version 3 and
-			added in frequency support.
 		"""
 		
 		alpha0 = 0.00428
@@ -381,10 +377,6 @@ class Cable(object):
 
 		.. note::
 			This function assumes a cable of type KSR200DB from SLC0014, version 3
-
-		.. versionchanged:: 0.3.4
-			Switched over the the cable attenuation model in SLC 0014, version 3 and
-			added in frequency support.
 		"""
 		
 		return 1.0 / self.attenuation(frequency=frequency)

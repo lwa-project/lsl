@@ -13,16 +13,13 @@ coverage and time delays.  The functions in the module:
 	module.
 """
 
-import os
-import csv
-import math
 import numpy
 
 from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 20 $'
+__revision__ = '$ Revision: 22 $'
 __all__ = ['getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
 
 
@@ -139,12 +136,12 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, IncludeAuto=False):
 	lat2 = 34.070 * deg2rad
 
 	# Coordinate transformation matrices
-	trans1 = numpy.matrix([[0, -math.sin(lat2), math.cos(lat2)],
-					   [1, 0,               0],
-					   [0, math.cos(lat2),  math.sin(lat2)]])
-	trans2 = numpy.matrix([[math.sin(HA2),                 math.cos(HA2),                 0],
-					   [-math.sin(dec2)*math.cos(HA2), math.sin(dec2)*math.sin(HA2),  math.cos(dec2)],
-					   [math.cos(dec2)*math.cos(HA2),  -math.cos(dec2)*math.sin(HA2), math.sin(dec2)]])
+	trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+					   [1,  0,               0],
+					   [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+	trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
+					   [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+					   [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
 
 	count = 0
 	for i,j in baselines:
@@ -182,13 +179,13 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6):
 
 	# Phase center coordinates
 	# Convert numbers to radians and, for HA, hours to degrees
-	dec2 = dec * math.pi/180.0
-	lat2 = 34.070 * math.pi/180.0
+	dec2 = dec * numpy.pi/180.0
+	lat2 = 34.070 * numpy.pi/180.0
 
 	# Coordinate transformation matrices
-	trans1 = numpy.matrix([[0, -math.sin(lat2), math.cos(lat2)],
-					   [1, 0,               0],
-					   [0, math.cos(lat2),  math.sin(lat2)]])
+	trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+					   [1,  0,               0],
+					   [0,  numpy.cos(lat2), numpy.sin(lat2)]])
 
 	count = 0
 	for i,j in getBaselines(antennas, Indicies=True):
@@ -197,7 +194,7 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6):
 		xyzPrime = antennas[j].stand - antennas[i].stand
 		xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
 
-		uRange = numpy.linspace(-math.sqrt(xyz[0]**2 + xyz[1]**2), math.sqrt(xyz[0]**2 + xyz[1]**2), num=256)
+		uRange = numpy.linspace(-numpy.sqrt(xyz[0]**2 + xyz[1]**2), numpy.sqrt(xyz[0]**2 + xyz[1]**2), num=256)
 		vRange1 = numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*sin(dec2) + xyz[2]*cos(dec2)
 		vRange2 = -numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*sin(dec2) + xyz[2]*cos(dec2)
 

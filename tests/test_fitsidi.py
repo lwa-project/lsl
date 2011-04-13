@@ -47,17 +47,12 @@ class fitsidi_tests(unittest.TestCase):
 		site = lwa_common.lwa1
 		antennas = site.getAntennas()[0:40:2]
 		
-		stands = []
-		for antenna in antennas:
-			stands.append(antenna.stand.id)
-		stands = numpy.array(stands)
-		
 		# Set baselines and data
-		blList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=False)
+		blList = uvUtils.getBaselines(antennas, IncludeAuto=True, Indicies=False)
 		visData = numpy.random.rand(len(blList), len(freq))
 		visData = visData.astype(numpy.complex64)
 
-		return {'freq': freq, 'site': site, 'antennas': antennas, 'stands': stands, 'bl': blList, 'vis': visData}
+		return {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
 
 	def test_write_tables(self):
 		"""Test if the FITS IDI writer writes all of the tables."""
@@ -109,7 +104,7 @@ class fitsidi_tests(unittest.TestCase):
 		self.assertEqual(len(data['antennas']), len(ag.field('NOSTA')))
 
 		# Correct stand names
-		names = ['LWA%03i' % stand for stand in data['stands']]
+		names = ['LWA%03i' % ant.stand.id for ant in data['antennas']]
 		for name, anname in zip(names, ag.field('ANNAME')):
 			self.assertEqual(name, anname)
 
@@ -170,7 +165,7 @@ class fitsidi_tests(unittest.TestCase):
 		hdulist = pyfits.open(testFile)
 		an = hdulist['ANTENNA'].data
 		# Correct number of stands
-		self.assertEqual(len(data['stands']), len(an.field('ANTENNA_NO')))
+		self.assertEqual(len(data['antennas']), len(an.field('ANTENNA_NO')))
 
 		# Correct FREQIDs
 		for freqid in an.field('FREQID'):
@@ -199,7 +194,7 @@ class fitsidi_tests(unittest.TestCase):
 		hdulist = pyfits.open(testFile)
 		bp = hdulist['BANDPASS'].data
 		# Correct number of entries
-		self.assertEqual(len(data['stands']), len(bp.field('ANTENNA_NO')))
+		self.assertEqual(len(data['antennas']), len(bp.field('ANTENNA_NO')))
 
 		# Correct Source ID number
 		for src in bp.field('SOURCE_ID'):
@@ -289,8 +284,8 @@ class fitsidi_tests(unittest.TestCase):
 			# Find out which visibility set in the random data corresponds to the 
 			# current visibility
 			i = 0
-			for s1,s2 in data['bl']:
-				if s1 == stand1 and s2 == stand2:
+			for ant1,ant2 in data['bl']:
+				if ant1.stand.id == stand1 and ant2.stand.id == stand2:
 					break
 				else:
 					i = i + 1
@@ -325,7 +320,11 @@ class fitsidi_tests(unittest.TestCase):
 		# Open the file and examine
 		hdulist = pyfits.open(testFile)
 		extNames = [hdu.name for hdu in hdulist]
-		if data['stands'].max() > 255:
+		maxStand = -1
+		for ant in data['antennas']:
+			if ant.stand.id > maxStand:
+				maxStand = ant.stand.id
+		if maxStand > 255:
 			self.assertTrue('NOSTA_MAPPER' in extNames)
 
 			# Make sure the mapper makes sense

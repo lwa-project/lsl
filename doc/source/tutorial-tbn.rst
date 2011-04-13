@@ -108,7 +108,7 @@ at LWA-1 on 12/17/2010 at 21:18 UTC (JD 2,455,548.38787)::
 	>>> import math
 	>>> import ephem
 	>>> from lsl.common import stations
-	>>> lwa1 = stations.lwa1()
+	>>> lwa1 = stations.lwa1
 	>>> lwaObserver = lwa1.getObserver(2455548.38787, JD=True)
 	>>> jove = ephem.Jupiter()
 	>>> jove.compute(lwaObserver)
@@ -133,16 +133,19 @@ For fixed positions, use::
 	Cygnus A:  az -> 10.0, el -> 83.2
 
 After TBN data have been read in and a pointing position has been found, a beam can be 
-formed.  For example, forming a beam via integer sample delay-and-sum on Cygnus A for 
+formed.  For example, forming a N-S beam via integer sample delay-and-sum on Cygnus A for 
 data taken on JD 2,455,548.38787::
 
 	>>> from lsl.misc import beamformer
-	>>> stands = lwa1.getStands(2455548.38787, JD=True)
-	>>> beamdata = beamformer.intDelayAndSum(stands, data, sampleRate=1e5, 
+	>>> antennas = []
+	>>> for ant in lwa1.getAntennas():
+	...     if ant.pol == 0:
+	...         antennas.append(ant)
+	...
+	>>> beamdata = beamformer.intDelayAndSum(antennas, data, sampleRate=1e5, 
 	... azimuth=10.0, elevation=83.2)
 
-Line 2 retrieves the list of stands used for observations on the given date.  This information is needed in order to get the
-correct delays geometric and cable delays to use for the beam forming.
+Lines 2 through 5 retrieves the list of antennas used for observations and selects only antennas with N-S polarization.  This information is needed in order to get the correct delays geometric and cable delays to use for the beam forming.
 
 	
 

@@ -190,14 +190,14 @@ def selfCal2(dataDict, simDict, chan, pol, returnDelays=False):
 	from scipy.optimize import leastsq, fmin, fmin_cg
 
 	# Initial guesses for complex gain amplitude and phase
-	initialAmps = numpy.ones(20)*0.388
-	initialDelays = numpy.linspace(0, 1e9/dataDict['freq'][chan].mean(), 20)
+	initialAmps = numpy.ones(175)*0.388
+	initialDelays = numpy.linspace(0, 1e9/dataDict['freq'][chan].mean(), 175)
 	initialGains = numpy.concatenate([initialAmps, initialDelays])
 	bestFit = fmin(__selfCalResid, initialGains, args=(dataDict, simDict, chan, pol), full_output=True, maxiter=500000, xtol=0.1, ftol=0.1)
 
 	# Report on the fits
-	bestAmps = numpy.abs(bestFit[0][0:20])*numpy.ones(20)
-	bestDelays = bestFit[0][20:]
+	bestAmps = numpy.abs(bestFit[0][0:175])*numpy.ones(175)
+	bestDelays = bestFit[0][175:]
 	bestGains = bestAmps*numpy.exp(-2j*numpy.pi*bestDelays)
 	print 'Best Delays: ', bestDelays
 	print 'Best Gains:  ', bestAmps

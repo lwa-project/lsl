@@ -5,7 +5,7 @@
 # See MCS0031 for format info 
 # Search "FIXME" for things that need work
 
-FORMAT_VERSION 2
+FORMAT_VERSION 4
 STATION_ID VL
 GEO_N   +34.070
 GEO_E  -107.628
@@ -799,6 +799,12 @@ STD_LZ[257]   +1.30
 STD_LX[258] +339.61
 STD_LY[258]  +15.32
 STD_LZ[258]   -0.08
+STD_LX[259]    0.00
+STD_LY[259]    0.00
+STD_LZ[259]    0.00
+STD_LX[260]    0.00
+STD_LY[260]    0.00
+STD_LZ[260]    0.00
 
 # ------------------------------------
 # --- Antenna # -> Stand # mapping ---
@@ -1008,15 +1014,15 @@ ANT_STAT[124] 1
 # These will be set to 0.0 (no error) for any antenna n <= 2*N_STD not identified
 # *** ANT_THETA[antenna_id] in degrees goes here:
 # *** ANT_PHI[antenna_id] in degrees goes here: 
-ANT_PHI[7]   +15.0 # Stand 4
+ANT_PHI[7]   +15.0
 ANT_PHI[8]   +15.0
-ANT_PHI[315] +15.0 # Stand 158
+ANT_PHI[315] +15.0
 ANT_PHI[316] +15.0
-ANT_PHI[409] +15.0 # Stand 205
+ANT_PHI[409] +15.0
 ANT_PHI[410] +15.0
-ANT_PHI[491] +15.0 # Stand 246
+ANT_PHI[491] +15.0
 ANT_PHI[492] +15.0
-ANT_PHI[507] +15.0 # Stand 254
+ANT_PHI[507] +15.0
 ANT_PHI[508] +15.0
 
 # ----------------------------------

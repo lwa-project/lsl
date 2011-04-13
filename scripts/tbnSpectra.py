@@ -263,8 +263,9 @@ def main(args):
 	# Apply the cable loss corrections, if requested
 	if config['applyGain']:
 		for s in range(masterSpectra.shape[1]):
+			currGain = antennas[s].cable.gain(freq)
 			for c in range(masterSpectra.shape[0]):
-				masterSpectra[c,s,:] *= antennas[s].cable.gain(freq)
+				masterSpectra[c,s,:] /= currGain
 
 	# Now that we have read through all of the chunks, peform the final averaging by
 	# dividing by all of the chunks

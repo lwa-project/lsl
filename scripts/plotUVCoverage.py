@@ -49,15 +49,18 @@ def randomSelection(N, readyStands, allStands, Fraction=0.75, IncludeOutlier=Fal
 
 
 def main(args):
-	# Set the LWA Station
+	# Set the LWA Station (and use only the 256 "official" stands)
 	station = stations.lwa1
-	stands = station.getStands()
+	antennas = []
+	for ant in station.getAntennas()[0::2]:
+		if ant.stand.id < 257:
+			antennas.append(ant)
 
 	HA = 0.0
 	dec = station.lat*180.0/math.pi
 	freq = 50.0e6
 
-	uvw = uvUtils.computeUVW(stands, HA=HA, dec=dec, freq=freq)
+	uvw = uvUtils.computeUVW(antennas, HA=HA, dec=dec, freq=freq)
 	uvw = numpy.squeeze(uvw[:,:,0])
 	uvw = uvw * 2.9979245800e8 / freq
 

@@ -53,13 +53,13 @@ from _gofast import eofError as geofError
 from errors import *
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 21 $'
+__revision__ = '$ Revision: 22 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 4128
 
 # List of filter codes and their corresponding sample rates in Hz
-filterCodes = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4000000, 6: 9800000, 7: 19600000}
+filterCodes = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4900000, 6: 9800000, 7: 19600000}
 
 
 class FrameHeader(object):

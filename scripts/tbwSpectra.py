@@ -199,8 +199,9 @@ def main(args):
 	# Apply the cable loss corrections, if requested
 	if config['applyGain']:
 		for s in xrange(masterSpectra.shape[1]):
+			currGain = antennas[s].cable.gain(freq)
 			for c in xrange(masterSpectra.shape[0]):
-				masterSpectra[c,s,:] *= antennas[s].cable.gain(freq)
+				masterSpectra[c,s,:] /= currGain
 
 	# Now that we have read through all of the chunks, peform the final averaging by
 	# dividing by all of the chunks
@@ -229,7 +230,7 @@ def main(args):
 			for l in leg.get_lines():
 				l.set_linewidth(1.7)  # the legend line width
 	else:
-		for f in xrange(numpy.ceil(antpols/20)):
+		for f in xrange(int(numpy.ceil(antpols/20))):
 			# Normal plotting
 			fig = plt.figure()
 			figsY = 4
