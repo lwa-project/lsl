@@ -313,12 +313,11 @@ def getDataBits(filehandle):
 
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-	
-	# Go back to the beginning...
-	filehandle.seek(0)
 
+	# Read a frame
 	cFrame = readFrame(filehandle)
 
+	# Get the number of bits used to represent the data
 	dataBits = cFrame.getDataBits()
 
 	# Return to the place in the file where we started
@@ -329,17 +328,20 @@ def getDataBits(filehandle):
 
 def getFramesPerObs(filehandle):
 	"""Find out how many frames are present per observation by examining 
-	the first frames for what would be 256 stands.  This is done by reading
-	two frames and then skipping the next 30,000."""
+	the first frames for what would be 260 stands.  This is done by reading
+	two frames and then skipping the next 30,000.
+	
+	.. note::
+		Post-IOC it is probably simpiler to adopt a value of the number of 
+		frames per observation of 260 rather than try to find it from the
+		file.
+	"""
 
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-	
-	# Go back to the beginning...
-	filehandle.seek(0)
 
 	idCodes = []
-	for i in range(3*256):
+	for i in range(260):
 		currentPosition = filehandle.tell()
 		try:
 			cFrame1 = readFrame(filehandle)
@@ -348,8 +350,6 @@ def getFramesPerObs(filehandle):
 			break
 		except syncError:
 			continue
-		except numpyError:
-			break
 
 		cID = cFrame1.parseID()
 		if cID not in idCodes:

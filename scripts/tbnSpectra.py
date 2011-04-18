@@ -146,6 +146,7 @@ def main(args):
 	fh = open(config['args'][0], "rb")
 	nFramesFile = os.path.getsize(config['args'][0]) / tbn.FrameSize
 	srate = tbn.getSampleRate(fh)
+	#antpols = tbn.getFramesPerObs(fh)
 	antpols = len(antennas)
 
 	# Offset in frames for beampols beam/tuning/pol. sets
@@ -195,13 +196,11 @@ def main(args):
 	buffer = TBNFrameBuffer(stands=range(1,antpols/2+1), pols=[0, 1])
 
 	# Master loop over all of the file chuncks
-	masterCount = {}
-	standMapper = []
+	masterCount = [0 for a in xrange(len(antennas))]
 	masterWeight = numpy.zeros((nChunks, antpols, LFFT-1))
 	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
-	
+
 	k = 0
-	missing = 0
 	for i in xrange(nChunks):
 		# Find out how many frames remain in the file.  If this number is larger
 		# than the maximum of frames we can work with at a time (maxFrames),
@@ -217,7 +216,7 @@ def main(args):
 			print "Padding from %i to %i frames" % (framesRemaining, framesWork)
 		print "Working on chunk %i, %i frames remaining" % (i, framesRemaining)
 		
-		count = {}
+		count = [0 for a in xrange(len(antennas))]
 		# If there are fewer frames than we need to fill an FFT, skip this chunk
 		if data.shape[1] < LFFT:
 			break
@@ -243,24 +242,14 @@ def main(args):
 			
 			valid = reduce(lambda x,y: x+int(y.valid), cFrames, 0)
 			if valid != antpols:
-				bad = []
-				for cFrame in cFrames:
-					if not cFrame.valid:
-						bad.append(cFrame.parseID())
-				bad.sort()
-					
-				missing += (antpols-valid)
-				total = (buffer.full + buffer.partial)*antpols
-				print j, valid, antpols-valid, cFrames[0].header.frameCount, 1.0*missing / total* 100, bad[0], bad[-1], buffer.dropped
+				print "WARNING: frame count %i at %i missing %.2f%% of frames" % (cFrames[0].header.frameCount, cFrames[0].data.timeTag, float(antpols - valid)/antpols*100)
+				
 			for cFrame in cFrames:
 				stand,pol = cFrame.header.parseID()
 				
 				# In the current configuration, stands start at 1 and go up to 260.  So, we
 				# can use this little trick to populate the data array
 				aStand = 2*(stand-1)+pol
-				if aStand not in count.keys():
-					count[aStand] = 0
-					masterCount[aStand] = 0
 				
 				data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
 				
@@ -270,28 +259,26 @@ def main(args):
 			
 			j += 1
 		
-		#print j, framesWork, framesWork / antpols, cFrame.data.iq.sum()
 		# Calculate the spectra for this block of data and then weight the results by 
 		# the total number of frames read.  This is needed to keep the averages correct.
 		freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
-		for stand in count.keys():
+		for stand in xrange(len(count)):
 			masterSpectra[i,stand,:] = tempSpec[stand,:]
 			masterWeight[i,stand,:] = count[stand]
 	
 	# Empty the remaining portion of the buffer and integrate what's left
 	for cFrames in buffer.flush():
-		print j, k, k/antpols, count[0], count[0]*512, data.shape, reduce(lambda x,y: x+int(y.valid), cFrames, 0)
 		# Inner loop that actually reads the frames into the data array
+		valid = reduce(lambda x,y: x+int(y.valid), cFrames, 0)
+		if valid != antpols:
+			print "WARNING: frame count %i at %i missing %.2f%% of frames" % (cFrames[0].header.frameCount, cFrames[0].data.timeTag, float(antpols - valid)/antpols*100)
+		
 		for cFrame in cFrames:
 			stand,pol = cFrame.header.parseID()
 			# In the current configuration, stands start at 1 and go up to 10.  So, we
 			# can use this little trick to populate the data array
 			aStand = 2*(stand-1)+pol
-
-			if aStand not in count.keys():
-				count[aStand] = 0
-				masterCount[aStand] = 0
-				
+			
 			data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
 				
 			# Update the counters so that we can average properly later on
@@ -301,7 +288,7 @@ def main(args):
 	# Calculate the spectra for this block of data and then weight the results by 
 	# the total number of frames read.  This is needed to keep the averages correct.
 	freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
-	for stand in count.keys():
+	for stand in xrange(len(count)):
 		masterSpectra[i,stand,:] = tempSpec[stand,:]
 		masterWeight[i,stand,:] = count[stand]
 
@@ -319,46 +306,53 @@ def main(args):
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
-	# The plots:  This is setup for the current configuration of 20 antpols
-	fig = plt.figure()
-	figsY = int(round(math.sqrt(antpols)))
-	figsX = antpols / figsY
 	# Put the freqencies in the best units possible
 	freq, units = bestFreqUnits(freq)
 
-	sortedMapper = sorted(standMapper)
-	for k, aStand in enumerate(sortedMapper):
-		i = standMapper.index(aStand)
+	
+	for i in xrange(int(numpy.ceil(antpols/20))):
+		# Normal plotting
+		fig = plt.figure()
+		figsY = 4
+		figsX = 5
+		fig.subplots_adjust(left=0.06, bottom=0.06, right=0.94, top=0.94, wspace=0.20, hspace=0.50)
+		for j in xrange(i*20, i*20+20):
+			ax = fig.add_subplot(figsX, figsY, (j%20)+1)
+			try:
+				currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
+			except IndexError:
+				break
+			ax.plot(freq/1e6, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
 
-		ax = fig.add_subplot(figsX,figsY,k+1)
-		currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-		ax.plot(freq, currSpectra, label='%i' % (i+1))
+			# If there is more than one chunk, plot the difference between the global 
+			# average and each chunk
+			if nChunks > 1 and config['displayChunks']:
+				for k in xrange(nChunks):
+					# Some files are padded by zeros at the end and, thus, carry no 
+					# weight in the average spectra.  Skip over those.
+					if masterWeight[k,j,:].sum() == 0:
+						continue
 
-		# If there is more than one chunk, plot the difference between the global 
-		# average and each chunk
-		if nChunks > 1 and config['displayChunks']:
-			for j in range(nChunks):
-				# Some files are padded by zeros at the end and, thus, carry no 
-				# weight in the average spectra.  Skip over those.
-				if masterWeight[j,i,:].sum() == 0:
-					continue
+					# Calculate the difference between the spectra and plot
+					subspectra = numpy.squeeze( numpy.log10(masterSpectra[k,j,:])*10.0 )
+					diff = subspectra - currSpectra
+					ax.plot(freq/1e6, diff)
 
-				# Calculate the difference between the spectra and plot
-				subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
-				diff = subspectra - currSpectra
-				ax.plot(freq, diff)
-
-		ax.set_title('Stand %i, Pol. %i' % (standMapper[i]/2+1, standMapper[i]%2))
-		ax.set_xlabel('Frequency Offset [%s]' % units)
-		ax.set_ylabel('P.S.D. [dB/RBW]')
-		ax.set_xlim([freq.min(), freq.max()])
+			ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].getStatus()))
+			ax.set_xlabel('Frequency [%s]' % units)
+			ax.set_ylabel('P.S.D. [dB/RBW]')
+			
+		# Save spectra image if requested
+		if config['output'] is not None:
+			base, ext = os.path.splitext(config['output'])
+			outFigure = "%s-%02i%s" % (base, i+1, ext)
+			fig.savefig(outFigure)
+			
+		plt.draw()
 
 	print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
 	plt.show()
 
-	# Save spectra image if requested
-	if config['output'] is not None:
-		fig.savefig(config['output'])
 
 if __name__ == "__main__":
 	main(sys.argv[1:])

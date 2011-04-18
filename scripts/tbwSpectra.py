@@ -176,7 +176,7 @@ def main(args):
 			# In the current configuration, stands start at 1 and go up to 10.  So, we
 			# can use this little trick to populate the data array
 			aStand = 2*(stand-1)
-			if cFrame.header.frameCount % 5000 == 0 and config['verbose'] and cFrame.parseID() in [18, 34]:
+			if cFrame.header.frameCount % 10000 == 0 and config['verbose']:
 				print "%3i -> %3i  %6.3f  %5i  %i" % (stand, aStand, cFrame.getTime(), cFrame.header.frameCount, cFrame.data.timeTag)
 
 			# Actaully load the data.  x pol goes into the even numbers, y pol into the 

@@ -109,46 +109,100 @@ def parseConfig(args):
 	return config
 
 
-def processChunk(fh, site, stands, filename, intTime=6.0, LFFT=64, Overlap=1, CentralFreq=49.0e6, SampleRate=dp_common.fS, ChunkSize=300):
+def processChunk(fh, site, filename, intTime=6.0, LFFT=64, Overlap=1, CentralFreq=49.0e6, SampleRate=dp_common.fS, ChunkSize=300, pol=0):
 	"""Given a filehandle pointing to some TBN data and various parameters for
 	the cross-correlation, write cross-correlate the data and save it to a file."""
 
+	# Get antennas
+	antennas = site.getAntennas()
+	antpols = len(antennas)
+
+	# Create the FrameBuffer instance
+	buffer = TBNFrameBuffer(stands=range(1,antpols/2+1), pols=[0, 1])
+
+	# Create the list of good digitizers
+	goodDigs = []
+	dig2ant = {}
+	for ant in antennas:
+		if ant.pol != pol:
+			continue
+		goodDigs.append(ant.digitizer)
+		dig2ant[ant.digitizer] = ant
+
+	# Find out how many frames to work with at a time
 	nFrames = int(intTime*SampleRate/512)
 
+	k = 0
+	mapper = []
+	mapper2 = []
 	refTime = 0.0
 	setTime = 0.0
 	wallTime = time.time()
-	for s in list(range(ChunkSize)):
-		count = {}
-		masterCount = 0
-		iTime = 0
-		data = numpy.zeros((20,nFrames*512), dtype=numpy.complex64)
-		for i in range(20*nFrames):
-			# Read in the next frame and anticipate any problems that could occur
+	for s in xrange(ChunkSize):
+		# Find out how many frames remain in the file.  If this number is larger
+		# than the maximum of frames we can work with at a time (maxFrames),
+		# only deal with that chunk
+		framesRemaining = ChunkSize*nFrames*antpols - k
+		if framesRemaining > nFrames*antpols:
+			framesWork =  nFrames*antpols
+			data = numpy.zeros((len(goodDigs), framesWork*512/antpols), dtype=numpy.csingle)
+		else:
+			framesWork = framesRemaining + antpols*buffer.nSegments
+			data = numpy.zeros((len(goodDigs), framesWork/antpols*512), dtype=numpy.csingle)
+			framesWork = framesRemaining
+		
+		count = [0 for a in xrange(len(goodDigs))]
+		# If there are fewer frames than we need to fill an FFT, skip this chunk
+		if data.shape[1] < LFFT:
+			break
+		
+		j = 0
+		fillsWork = framesWork / antpols
+		# Inner loop that actually reads the frames into the data array
+		while j < fillsWork:
 			try:
-				cFrame = tbn.readFrame(fh, Verbose=False, SampleRate=SampleRate, CentralFreq=CentralFreq, Gain=22)
+				cFrame = tbn.readFrame(fh)
+				k = k + 1
 			except errors.eofError:
 				break
 			except errors.syncError:
-				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
+				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
 				continue
-			except errors.numpyError:
-				break
+					
+			buffer.append(cFrame)
+			cFrames = buffer.get()
 
-			stand,pol = cFrame.header.parseID()
-			aStand = 2*(stand-1)+pol
-			if i == 0:
-				setTime = cFrame.getTime()
-				if s == 0:
-					refTime = setTime
+			if cFrames is None:
+				continue
 			
-			if aStand not in count.keys():
-				count[aStand] = 0
-
-			data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+			valid = reduce(lambda x,y: x+int(y.valid), cFrames, 0)
+			if valid != antpols:
+				print "WARNING: frame count %i at %i missing %.2f%% of frames" % (cFrames[0].header.frameCount, cFrames[0].data.timeTag, float(antpols - valid)/antpols*100)
 			
-			count[aStand] = count[aStand] + 1
-			masterCount = masterCount + 1
+			for cFrame in cFrames:
+				stand,pol = cFrame.header.parseID()
+				
+				# In the current configuration, stands start at 1 and go up to 260.  So, we
+				# can use this little trick to populate the data array
+				aStand = 2*(stand-1)+pol
+				
+				# Skip stands of the wrong polarization
+				if aStand not in goodDigs:
+					continue
+				
+				# Get the set time and reference time if we are in the right 
+				if j == 0:
+					setTime = cFrame.getTime()
+					if s == 0:
+						refTime = setTime
+				
+				data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+				
+				# Update the counters so that we can average properly later on
+				count[aStand] = count[aStand] + 1
+				masterCount[aStand] = masterCount[aStand] + 1
+			
+			j += 1
 
 		setDT = datetime.utcfromtimestamp(setTime)
 		setDT.replace(tzinfo=UTC())
@@ -168,6 +222,50 @@ def processChunk(fh, site, stands, filename, intTime=6.0, LFFT=64, Overlap=1, Ce
 		obsTime = astro.unix_to_taimjd(setTime)
 		fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, outYY[:,toUse])
 		print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
+		
+	# Empty the remaining portion of the buffer and integrate what's left
+	for cFrames in buffer.flush():
+		# Inner loop that actually reads the frames into the data array
+		valid = reduce(lambda x,y: x+int(y.valid), cFrames, 0)
+		if valid != antpols:
+			print "WARNING: frame count %i at %i missing %.2f%% of frames" % (cFrames[0].header.frameCount, cFrames[0].data.timeTag, float(antpols - valid)/antpols*100)
+		
+		for cFrame in cFrames:
+			stand,pol = cFrame.header.parseID()
+			# In the current configuration, stands start at 1 and go up to 10.  So, we
+			# can use this little trick to populate the data array
+			aStand = 2*(stand-1)+pol
+			if j == 0:
+				setTime = cFrame.getTime()
+				if s == 0:
+					refTime = setTime
+			
+			data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+				
+			# Update the counters so that we can average properly later on
+			count[aStand] = count[aStand] + 1
+			masterCount[aStand] = masterCount[aStand] + 1
+			
+		j += 1
+		
+	setDT = datetime.utcfromtimestamp(setTime)
+	setDT.replace(tzinfo=UTC())
+	print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
+	freqYY, outYY = fxc.FXMaster(data, stands, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False,  SampleRate=SampleRate, CentralFreq=CentralFreq)
+	blList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=False)
+
+	toUse = numpy.where( (freqYY>10.0e6) & (freqYY<88.0e6) )
+	toUse = toUse[0]
+
+	if s  == 0:
+		fits = fitsidi.IDI(filename, refTime=refTime)
+		fits.setStokes(['xx'])
+		fits.setFrequency(freqYY[toUse])
+		fits.setGeometry(site, stands)
+
+	obsTime = astro.unix_to_taimjd(setTime)
+	fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, outYY[:,toUse])
+	print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
 
 	fits.write()
 	fits.close()
@@ -186,7 +284,8 @@ def main(args):
 	LFFT = config['LFFT']
 
 	# Setup the LWA station information
-	lwa1 = stations.lwa1
+	station = stations.lwa1
+	antennas = station.getAntennas()
 
 	fh = open(filename, "rb", buffering=tbn.FrameSize*10000)
 	test = tbn.readFrame(fh)
@@ -196,14 +295,11 @@ def main(args):
 
 	jd = astro.unix_to_utcjd(test.getTime())
 	date = str(ephem.Date(jd - astro.DJD_OFFSET))
-	nFpO = tbn.getFramesPerObs(fh)
-	nFpO = nFpO[0] + nFpO[1]
-	sampleRate = tbn.getSampleRate(fh, nFrames=nFpO)
+	#nFpO = tbn.getFramesPerObs(fh)
+	#nFpO = nFpO[0] + nFpO[1]
+	nFpO = len(antennas)
+	sampleRate = tbn.getSampleRate(fh)
 	nInts = os.path.getsize(filename) / tbn.FrameSize / nFpO
-
-	# Get stands
-	stands = lwa1.getStands(date)
-	print stands
 
 	# Number of frames to read in at once and average
 	nFrames = int(config['avgTime']*sampleRate/512)
@@ -235,7 +331,7 @@ def main(args):
 			chunk = 300
 		else:
 			chunk = leftToDo
-		processChunk(fh, lwa1, stands, fitsFilename, intTime=config['avgTime'], LFFT=config['LFFT'], Overlap=1, CentralFreq=config['cFreq'], 
+		processChunk(fh, station, fitsFilename, intTime=config['avgTime'], LFFT=config['LFFT'], Overlap=1, CentralFreq=config['cFreq'], 
 					SampleRate=sampleRate, ChunkSize=chunk)
 
 		s = s + 1

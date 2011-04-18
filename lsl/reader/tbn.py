@@ -397,10 +397,18 @@ def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=
 	return newFrame
 
 
-def readBlock(filehandle, nFrames=512, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):
-	"""Function to read in a single TBW block (frames set by the nFrames 
+def readBlock(filehandle, nFrames=520, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):
+	"""Function to read in a single TBN block (frames set by the nFrames 
 	keyword) and store the contents as a ObservingBlock object.  This function 
-	wraps readFrame."""
+	wraps readFrame.
+	
+	..warning::
+		Since the various TBN frames are interleaved on the network before 
+		recording, the frames returned by a single call to readBlock may
+		not all have the same frame count/time tag.  It is recommended that
+		the :mod:`lsl.reader.buffer.TBNFrameBuffer` be used in order to 
+		deal with the out-of-order frames.
+	"""
 
 	frames = []
 	for i in range(0, nFrames):
@@ -421,15 +429,12 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-	
-	# Go back to the beginning...
-	filehandle.seek(0)
 
 	if nFrames is None:
-		nFrames = 560
-	nFrames = 2*nFrames
+		nFrames = 520
+	nFrames = 4*nFrames
 
-	# Build up the list-of-lists that store ID codes and loop through 512
+	# Build up the list-of-lists that store ID codes and loop through 2,080
 	# frames.  In each case, parse pull the TBN ID, extract the stand 
 	# number, and append the stand number to the relevant polarization array 
 	# if it is not already there.
@@ -444,9 +449,10 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 		
 		stand, pol = cFrame.parseID()
 		key = 2*stand + pol
-		if key not in frames.keys():
-			frames[key] = []
-		frames[key].append(cFrame)
+		try:
+			frames[key].append(cFrame)
+		except:
+			frames[key] = [cFrame,]
 			
 	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
@@ -456,10 +462,19 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 	keyCount = 0
 	frame1 = None
 	frame2 = None
+	frameKeys = frames.keys()
 	while frame1 is None and frame2 is None:
-		validKey = (frames.keys())[keyCount]
-		frame1 = frames[validKey][0]
-		frame2 = frames[validKey][1]
+		validKey = frameKeys[keyCount]
+		
+		try:
+			frame1 = frames[validKey][0]
+		except IndexError:
+			frame1 = None
+			
+		try:
+			frame2 = frames[validKey][1]
+		except IndexError:
+			frame2 = None
 
 		keyCount = keyCount + 1
 
@@ -483,14 +498,20 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 def getFramesPerObs(filehandle):
 	"""Find out how many frames are present per observation by examining 
-	the first 600 TBN frames.  Return the number of frames per observations 
-	as a two-	element tuple, one for each polarization."""
+	the first 2,080 TBN frames.  Return the number of frames per observations 
+	as a two-	element tuple, one for each polarization.
+	
+	So many TBN frames are read in order to try to compensate for the inter-
+	leaving of the packtes from the various DP1 boards during the recording.
+	
+	.. note::
+		Post-IOC it is probably simpiler to adopt a value of the number of 
+		frames per observation of 520 rather than try to find it from the
+		file.
+	"""
 	
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-	
-	# Go back to the beginning...
-	filehandle.seek(0)
 
 	# Build up the list-of-lists that store ID codes and loop through 600
 	# frames.  In each case, parse pull the TBN ID, extract the stand 
@@ -499,15 +520,13 @@ def getFramesPerObs(filehandle):
 	idCodes = [[], []]
 	maxX = 0
 	maxY = 0
-	for i in range(600):
+	for i in range(4*520):
 		try:
 			cFrame = readFrame(filehandle)
 		except eofError:
 			break
 		except syncError:
 			continue
-		except numpyError:
-			break
 		
 		cID, cPol = cFrame.header.parseID()
 		if cID not in idCodes[cPol]:

@@ -26,12 +26,12 @@ def main(args):
 
 	# Read in the stand mapping table if it exists
 	try:
-		mapper = hdu['NOSTA_MAPPER']
+		mapper = hdulist['NOSTA_MAPPER']
 		
 		nosta = mapper.data.field('NOSTA')
 		noact = mapper.data.field('NOACT')
 	except KeyError:
-		ag = hdu['ARRAY_GEOMETRY']
+		ag = hdulist['ARRAY_GEOMETRY']
 
 		nosta = ag.data.field('NOSTA')
 		noact = ag.data.field('NOSTA')

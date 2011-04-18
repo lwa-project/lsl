@@ -437,12 +437,11 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-	
-	# Go back to the beginning...
-	filehandle.seek(0)
 
 	# Read in one frame
 	newFrame = readFrame(filehandle)
+	
+	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
 
 	if not FilterCode:
@@ -457,9 +456,6 @@ def getBeamCount(filehandle):
 
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-	
-	# Go back to the beginning...
-	filehandle.seek(0)
 
 	# Build up the list-of-lists that store ID codes and loop through 32
 	# frames.  In each case, parse pull the DRX ID, extract the beam number, 
@@ -468,6 +464,7 @@ def getBeamCount(filehandle):
 	beams = []
 	for i in range(16):
 		cFrame = readFrame(filehandle)
+			
 		cID = cFrame.header.drxID
 		beam = cID&7
 		if beam not in beams:
@@ -487,9 +484,6 @@ def getFramesPerObs(filehandle):
 	
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-
-	# Go back to the beginning...
-	filehandle.seek(0)
 	
 	# Build up the list-of-lists that store ID codes and loop through 32
 	# frames.  In each case, parse pull the DRX ID, extract the beam number, 
@@ -498,6 +492,7 @@ def getFramesPerObs(filehandle):
 	idCodes = [[], [], [], []]
 	for i in range(16):
 		cFrame = readFrame(filehandle)
+		
 		cID = cFrame.header.drxID
 		beam = cID&7
 		if cID not in idCodes[beam-1]:
