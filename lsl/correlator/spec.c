@@ -144,7 +144,19 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FPSDR2_doc, "Perform a series of Fourier transforms on real-valued data to get the PSD");
+PyDoc_STRVAR(FPSDR2_doc, \
+"Perform a series of Fourier transforms on real-valued data to get the PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -258,7 +270,21 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FPSDR3_doc, "Perform a series of Fourier transforms with windows on real-valued data to get the PSD.");
+PyDoc_STRVAR(FPSDR3_doc, \
+"Perform a series of Fourier transforms with windows on real-valued data to\n\
+get the PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * window: Callable Python function for generating the window\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -353,7 +379,20 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FPSDC2_doc, "Perform a series of Fourier transforms on complex-valued data to get the PSD");
+PyDoc_STRVAR(FPSDC2_doc, \
+"Perform a series of Fourier transforms on complex-valued data to get the\n\
+PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -464,7 +503,21 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FPSDC3_doc, "Perform a series of Fourier transforms with windows on complex-valued data to get the PSD");
+PyDoc_STRVAR(FPSDC3_doc, \
+"Perform a series of Fourier transforms with windows on complex-valued data\n\
+to get the PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * window: Callable Python function for generating the window\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -585,7 +638,20 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PPSDR2_doc, "Perform a series of filter bank transforms on real-valued data to get the PSD");
+PyDoc_STRVAR(PPSDR2_doc, \
+"Perform a series of filter bank transforms on real-valued data to get the\n\
+PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -726,7 +792,21 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PPSDR3_doc, "Perform a series of filter bank transforms with windows on real-valued data to get the PSD.");
+PyDoc_STRVAR(PPSDR3_doc, \
+"Perform a series of filter bank transforms with windows on real-valued data\n\
+to get the PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * window: Callable Python function for generating the window\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -844,7 +924,20 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PPSDC2_doc, "Perform a series of filter bank transforms on complex-valued data to get the PSD");
+PyDoc_STRVAR(PPSDC2_doc, \
+"Perform a series of filter bank transforms on complex-valued data to get\n\
+the PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -980,7 +1073,21 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PPSDC3_doc, "Perform a series of filter bank transforms with windows on complex-valued data to get the PSD");
+PyDoc_STRVAR(PPSDC3_doc, \
+"Perform a series of filter bank transforms with windows on complex-valued\n\
+data to get the PSD.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * window: Callable Python function for generating the window\n\
+\n\
+Outputs:\n\
+ * psd: 2-D numpy.double (stands by channels) of PSD data\n\
+");
 
 
 /*

@@ -144,6 +144,23 @@ def selfCal(dataDict, simDict, pol='xx', chan=22, doGain=False, returnDelays=Fal
 ### Newer Implmentation Based on a New Approach ###
 
 
+def __residWorker(dataDict, simDict, cGains, chan, pol):
+	# Multiply the observations by the various complex gains
+	obsVis = []
+	for (i,j),vis,wgt in zip(dataDict['bls'][pol], dataDict['vis'][pol], dataDict['wgt'][pol]):
+		obsVis.append( numpy.array(vis[chan]*cGains[i,chan]*cGains[j,chan].conj()) )
+	obsVis = numpy.concatenate(obsVis)
+	
+	simVis = []
+	for vis in simDict['vis'][pol]:
+		simVis.append( numpy.array(vis[chan]) )
+	simVis = numpy.concatenate(simVis)
+	
+	X = obsVis / simVis
+	
+	return X
+
+
 def __selfCalResid(gains, dataDict, simDict, chan, pol):
 	"""Private function for computing residuals for selfCal2.  Inputs are an array 
 	of gains of the form [amplitude, delay1, delay2, ..., delayN] where delays are in
@@ -151,53 +168,67 @@ def __selfCalResid(gains, dataDict, simDict, chan, pol):
 	range, and a polarization keyword."""
 	
 	# Frequency in GHz so that the delays can be in ns
-	fq = dataDict['freq'][chan] / 1e9
+	fq = dataDict['freq'] / 1e9
 	
 	# Build the complex gains
 	nStands = len(gains)/2
-	cGains = numpy.zeros((nStands, len(chan)), dtype=numpy.complex_)
+	cGains = numpy.zeros((nStands, len(fq)), dtype=numpy.complex_)
 	for i in range(nStands):
-		cGains[i,:] = numpy.abs(gains[i])*numpy.exp(-2j*numpy.pi*fq*gains[nStands+i])
+		cGains[i,:] = numpy.abs(gains[0])*numpy.exp(-2j*numpy.pi*fq*gains[nStands+i])
 
+	#from multiprocessing import Pool
+	#taskPool = Pool(3)
+	#taskList = []
+	
+	#for i in xrange(len(chan)):
+		#c = chan[i]
+		#task = taskPool.apply_async(__residWorker, args=(dataDict, simDict, cGains, c, pol))
+		#taskList.append( (i,task) )
+		
+	#taskPool.close()
+	#taskPool.join()
+	
+	#X = [0 for c in chan]
+	#print len(X)
+	#for i,task in taskList:
+		#X[i] = task.get()
+		#print len(X[i]), i
+	#X = numpy.concatenate(X)
+	
 	# Multiply the observations by the various complex gains
 	obsVis = []
 	for (i,j),vis,wgt in zip(dataDict['bls'][pol], dataDict['vis'][pol], dataDict['wgt'][pol]):
-		obsVis.append( numpy.array(vis[chan]*cGains[i,:]*cGains[j,:].conj()) )
+		obsVis.append( numpy.array(vis[chan]*cGains[i,chan]*cGains[j,chan].conj()) )
 	obsVis = numpy.concatenate(obsVis)
-	#obsVis /= numpy.median(obsVis)
-
+	
 	simVis = []
 	for vis in simDict['vis'][pol]:
 		simVis.append( numpy.array(vis[chan]) )
 	simVis = numpy.concatenate(simVis)
-	#simVis /= numpy.median(simVis)
-
+	
 	X = obsVis / simVis
-
-	gainProd = []
-	for i,j in dataDict['bls'][pol]:
-		gainProd.append(cGains[i]*cGains[j].conj())
-	gainProd = numpy.concatenate(gainProd)
 
 	return ((numpy.abs(X)-1)**2).sum()
 
 
-def selfCal2(dataDict, simDict, chan, pol, returnDelays=False):
+def selfCal2(aa, dataDict, simDict, chan, pol, returnDelays=False):
 	"""Function used to perform a simple phase self-calibration of data stored in a 
 	readUVData dictionary and a model sky stored in a lsl.sim.vis.buildSimSky 
 	dictionary for a given polarization and channel(s)."""
 	
 	from scipy.optimize import leastsq, fmin, fmin_cg
 
+	N = len(aa.ants)
+
 	# Initial guesses for complex gain amplitude and phase
-	initialAmps = numpy.ones(175)*0.388
-	initialDelays = numpy.linspace(0, 1e9/dataDict['freq'][chan].mean(), 175)
+	initialAmps = numpy.ones(N)*0.388
+	initialDelays = numpy.linspace(0, 1e9/dataDict['freq'][chan].mean(), N)
 	initialGains = numpy.concatenate([initialAmps, initialDelays])
-	bestFit = fmin(__selfCalResid, initialGains, args=(dataDict, simDict, chan, pol), full_output=True, maxiter=500000, xtol=0.1, ftol=0.1)
+	bestFit = fmin(__selfCalResid, initialGains, args=(dataDict, simDict, chan, pol), full_output=True, maxiter=500000, xtol=1e-5, ftol=1e-5)
 
 	# Report on the fits
-	bestAmps = numpy.abs(bestFit[0][0:175])*numpy.ones(175)
-	bestDelays = bestFit[0][175:]
+	bestAmps = numpy.abs(bestFit[0][0])*numpy.ones(N)
+	bestDelays = -bestFit[0][N:]
 	bestGains = bestAmps*numpy.exp(-2j*numpy.pi*bestDelays)
 	print 'Best Delays: ', bestDelays
 	print 'Best Gains:  ', bestAmps

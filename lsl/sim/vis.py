@@ -246,7 +246,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 
 		delayCoeff = n.zeros(2)
 
-		amp = antenna.cable.gain(freq*1e9)
+		amp = 0*antenna.cable.gain(freq*1e9) + 1
 		
 		ants.append( Antenna(eq[0], eq[1], eq[2], beam, phsoff=delayCoeff, amp=amp, stand=antenna.stand.id) )
 

@@ -76,6 +76,7 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator on real-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 3.0
+		fakeData = fakeData.astype(numpy.int16)
 		
 		station = stations.lwa1
 		antennas = station.getAntennas()
@@ -86,6 +87,7 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator on complex-valued data."""
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
+		fakeData = fakeData.astype(numpy.csingle)
 		
 		station = stations.lwa1
 		antennas = station.getAntennas()
@@ -96,6 +98,7 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator on real-valued data window."""
 		
 		fakeData = numpy.random.rand(4,1024) + 3.0
+		fakeData = fakeData.astype(numpy.int16)
 		
 		station = stations.lwa1
 		antennas = station.getAntennas()
@@ -107,6 +110,7 @@ class fx_tests(unittest.TestCase):
 		"""Test the C-based correlator on complex-valued data window."""
 
 		fakeData = numpy.random.rand(4,1024) + 1j*numpy.random.rand(4,1024)
+		fakeData = fakeData.astype(numpy.csingle)
 		
 		station = stations.lwa1
 		antennas = station.getAntennas()

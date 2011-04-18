@@ -75,9 +75,9 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
-	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
-	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
+	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
+	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	
 	// Check data dimensions
 	if(data->dimensions[0] != times->dimensions[0]) {
@@ -135,7 +135,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, PyArray_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -215,7 +215,25 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FEngineR2_doc, "Perform a series of overlaped Fourier transforms on real-valued data using OpenMP.");
+PyDoc_STRVAR(FEngineR2_doc, \
+"Perform a series of overlaped Fourier transforms on real-valued data using\n\
+OpenMP.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
+ * frequency: 1-D numpy.double array of frequency values in Hz for the\n\
+   FFT channels\n\
+ * delays: 1-D numpy.double array of delays to apply to each stand\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * SampleRate: sample rate of the data (default=196e6)\n\
+\n\
+Outputs:\n\
+ * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+   data\n\
+");
 
 
 static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -241,14 +259,14 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
-	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
-	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
+	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
+	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", 2*nChan);
 	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
 	Py_DECREF(window);
 	
 	// Check data dimensions
@@ -310,7 +328,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, PyArray_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -393,7 +411,26 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FEngineR3_doc, "Perform a series of overlaped Fourier transforms on real-valued data using OpenMP and windows.");
+PyDoc_STRVAR(FEngineR3_doc, \
+"Perform a series of overlaped Fourier transforms on real-valued data using\n\
+OpenMP and windows.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
+ * frequency: 1-D numpy.double array of frequency values in Hz for the\n\
+   FFT channels\n\
+ * delays: 1-D numpy.double array of delays to apply to each stand\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * SampleRate: sample rate of the data (default=196e6)\n\
+ * window: Callable Python function for generating the window\n\
+\n\
+Outputs:\n\
+ * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+   data\n\
+");
 
 
 static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -412,9 +449,9 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
-	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
-	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
+	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
+	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	
 	// Check data dimensions
 	if(data->dimensions[0] != times->dimensions[0]) {
@@ -472,7 +509,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, PyArray_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -552,7 +589,25 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FEngineC2_doc, "Perform a series of overlaped Fourier transforms on complex-valued data using OpenMP.");
+PyDoc_STRVAR(FEngineC2_doc, \
+"Perform a series of overlaped Fourier transforms on complex-valued data\n\
+using OpenMP.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
+ * frequency: 1-D numpy.double array of frequency values in Hz for the\n\
+   FFT channels\n\
+ * delays: 1-D numpy.double array of delays to apply to each stand\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * SampleRate: sample rate of the data (default=100e3)\n\
+\n\
+Outputs:\n\
+ * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+   data\n\
+");
 
 
 static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -578,14 +633,14 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
-	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
-	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
+	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
+	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", nChan);
 	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, PyArray_DOUBLE, 1, 1);
+	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
 	Py_DECREF(window);
 	
 	// Check data dimensions
@@ -647,7 +702,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, PyArray_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -730,7 +785,26 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(FEngineC3_doc, "Perform a series of overlaped Fourier transforms on complex-valued data using OpenMP and allow for windowing of the data.");
+PyDoc_STRVAR(FEngineC3_doc, \
+"Perform a series of overlaped Fourier transforms on complex-valued data\n\
+using OpenMP and allow for windowing of the data.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
+ * frequency: 1-D numpy.double array of frequency values in Hz for the\n\
+   FFT channels\n\
+ * delays: 1-D numpy.double array of delays to apply to each stand\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * SampleRate: sample rate of the data (default=100e3)\n\
+ * window: Callable Python function for generating the window\n\
+\n\
+Outputs:\n\
+ * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+   data\n\
+");
 
 
 /*
@@ -750,8 +824,8 @@ static PyObject *XEngine(PyObject *self, PyObject *args) {
 	}
 
 	// Bring the data into C and make it useable
-	data1 = (PyArrayObject *) PyArray_ContiguousFromObject(signal1, PyArray_CDOUBLE, 2, 2);
-	data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signal2, PyArray_CDOUBLE, 2, 2);
+	data1 = (PyArrayObject *) PyArray_ContiguousFromObject(signal1, NPY_CDOUBLE, 2, 2);
+	data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signal2, NPY_CDOUBLE, 2, 2);
 
 	// Check data dimensions
 	if(data1->dimensions[0] != data2->dimensions[0]) {
@@ -774,7 +848,7 @@ static PyObject *XEngine(PyObject *self, PyObject *args) {
 	// Create the output visibility array
 	npy_intp dims[1];
 	dims[0] = (npy_intp) nChan;
-	vis = (PyArrayObject*) PyArray_SimpleNew(1, dims, PyArray_CDOUBLE);
+	vis = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_CDOUBLE);
 	if(vis == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data1);
@@ -808,8 +882,22 @@ static PyObject *XEngine(PyObject *self, PyObject *args) {
 	return output;
 }
 
-PyDoc_STRVAR(XEngine_doc, "Perform XMAC on two data streams out of the F engine.\n\
-NOTE: This function is *slower* than a pure numpy version of the same function.\n");
+PyDoc_STRVAR(XEngine_doc, \
+"Perform XMAC on two data streams out of the F engine.\n\
+\n\
+Input arguments are:\n\
+ * fsignals1: 3-D numpy.cdouble (stand by channels by FFT_set) array of FFTd\n\
+   data from an F engine.\n\
+ * fsignals2: 3-D numpy.cdouble (stand by channels by FFT_set) array of\n\
+   conjudated FFTd data from an F engine.\n\
+\n\
+Ouputs:\n\
+  * visibility: 3-D numpy.cdouble (baseline by channel) array of cross-\n\
+    correlated and average visibility data.\n\
+\n\
+.. note::\n\
+\tThis function is *slower* than a pure numpy version of the same function.\n\
+");
 
 
 static PyObject *XEngine2(PyObject *self, PyObject *args) {
@@ -823,8 +911,8 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	}
 
 	// Bring the data into C and make it useable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 3, 3);
-	dataC = (PyArrayObject *) PyArray_ContiguousFromObject(signalsC, PyArray_CDOUBLE, 3, 3);
+	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_CDOUBLE, 3, 3);
+	dataC = (PyArrayObject *) PyArray_ContiguousFromObject(signalsC, NPY_CDOUBLE, 3, 3);
 
 	// Get channel count and number of FFTs stored
 	nStand = (long) data->dimensions[0];
@@ -836,7 +924,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nBL;
 	dims[1] = (npy_intp) nChan;
-	vis = (PyArrayObject*) PyArray_SimpleNew(2, dims, PyArray_CDOUBLE);
+	vis = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_CDOUBLE);
 	if(vis == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -908,13 +996,17 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 
 PyDoc_STRVAR(XEngine2_doc, \
 "Perform all XMACs for a data stream out of the F engine using OpenMP.\n\
-Inputs:\n\
-  * signals - stand x channel x fft numpy array of frequency-domain signals\n\
-  * singalsC - stand x channel x fft numpy array of the complex conjugate of\n\
-    frequency-domain signals\n\
-Outputs:\n\
-  * vis - cross-power spectra for every baseline (including autocorrelations)\n\
-    for the input data\n");
+\n\
+Input arguments are:\n\
+ * fsignals1: 3-D numpy.cdouble (stand by channels by FFT_set) array of FFTd\n\
+   data from an F engine.\n\
+ * fsignals2: 3-D numpy.cdouble (stand by channels by FFT_set) array of\n\
+   conjudated FFTd data from an F engine.\n\
+\n\
+Ouputs:\n\
+  * visibility: 3-D numpy.cdouble (baseline by channel) array of cross-\n\
+    correlated and average visibility data.\n\
+");
     
     
 /* 

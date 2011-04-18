@@ -54,7 +54,7 @@ def parseOptions(args):
 	config['offset'] = 0.0
 	config['average'] = 10.0
 	config['LFFT'] = 4096
-	config['maxFrames'] = 400000
+	config['maxFrames'] = 2*260*1000
 	config['window'] = fxc.noWindow
 	config['applyGain'] = False
 	config['output'] = None
@@ -144,7 +144,7 @@ def main(args):
 	LFFT = config['LFFT']
 
 	fh = open(config['args'][0], "rb")
-	nFrames = os.path.getsize(config['args'][0]) / tbn.FrameSize
+	nFramesFile = os.path.getsize(config['args'][0]) / tbn.FrameSize
 	srate = tbn.getSampleRate(fh)
 	antpols = len(antennas)
 
@@ -191,74 +191,122 @@ def main(args):
 	if nFrames > (nFramesFile - offset):
 		raise RuntimeError("Requestion integration time+offset is greater than file length")
 
+	# Create the FrameBuffer instance
+	buffer = TBNFrameBuffer(stands=range(1,antpols/2+1), pols=[0, 1])
+
 	# Master loop over all of the file chuncks
 	masterCount = {}
 	standMapper = []
 	masterWeight = numpy.zeros((nChunks, antpols, LFFT-1))
 	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
-	for i in range(nChunks):
+	
+	k = 0
+	missing = 0
+	for i in xrange(nChunks):
 		# Find out how many frames remain in the file.  If this number is larger
 		# than the maximum of frames we can work with at a time (maxFrames),
 		# only deal with that chunk
-		framesRemaining = nFrames - i*maxFrames
+		framesRemaining = nFrames - k
 		if framesRemaining > maxFrames:
 			framesWork = maxFrames
+			data = numpy.zeros((antpols, framesWork*512/antpols), dtype=numpy.csingle)
 		else:
+			framesWork = framesRemaining + antpols*buffer.nSegments
+			data = numpy.zeros((antpols, framesWork/antpols*512), dtype=numpy.csingle)
 			framesWork = framesRemaining
+			print "Padding from %i to %i frames" % (framesRemaining, framesWork)
 		print "Working on chunk %i, %i frames remaining" % (i, framesRemaining)
 		
 		count = {}
-		data = numpy.zeros((antpols,framesWork*512/antpols), dtype=numpy.csingle)
 		# If there are fewer frames than we need to fill an FFT, skip this chunk
 		if data.shape[1] < LFFT:
 			break
+		
+		j = 0
+		fillsWork = framesWork / antpols
 		# Inner loop that actually reads the frames into the data array
-		for j in range(framesWork):
-			# Read in the next frame and anticipate any problems that could occur
+		while j < fillsWork:
 			try:
-				cFrame = tbn.readFrame(fh, SampleRate=srate, Verbose=False)
+				cFrame = tbn.readFrame(fh)
+				k = k + 1
 			except errors.eofError:
 				break
 			except errors.syncError:
 				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
 				continue
-			except errors.numpyError:
-				break
+					
+			buffer.append(cFrame)
+			cFrames = buffer.get()
 
+			if cFrames is None:
+				continue
+			
+			valid = reduce(lambda x,y: x+int(y.valid), cFrames, 0)
+			if valid != antpols:
+				bad = []
+				for cFrame in cFrames:
+					if not cFrame.valid:
+						bad.append(cFrame.parseID())
+				bad.sort()
+					
+				missing += (antpols-valid)
+				total = (buffer.full + buffer.partial)*antpols
+				print j, valid, antpols-valid, cFrames[0].header.frameCount, 1.0*missing / total* 100, bad[0], bad[-1], buffer.dropped
+			for cFrame in cFrames:
+				stand,pol = cFrame.header.parseID()
+				
+				# In the current configuration, stands start at 1 and go up to 260.  So, we
+				# can use this little trick to populate the data array
+				aStand = 2*(stand-1)+pol
+				if aStand not in count.keys():
+					count[aStand] = 0
+					masterCount[aStand] = 0
+				
+				data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+				
+				# Update the counters so that we can average properly later on
+				count[aStand] = count[aStand] + 1
+				masterCount[aStand] = masterCount[aStand] + 1
+			
+			j += 1
+		
+		#print j, framesWork, framesWork / antpols, cFrame.data.iq.sum()
+		# Calculate the spectra for this block of data and then weight the results by 
+		# the total number of frames read.  This is needed to keep the averages correct.
+		freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
+		for stand in count.keys():
+			masterSpectra[i,stand,:] = tempSpec[stand,:]
+			masterWeight[i,stand,:] = count[stand]
+	
+	# Empty the remaining portion of the buffer and integrate what's left
+	for cFrames in buffer.flush():
+		print j, k, k/antpols, count[0], count[0]*512, data.shape, reduce(lambda x,y: x+int(y.valid), cFrames, 0)
+		# Inner loop that actually reads the frames into the data array
+		for cFrame in cFrames:
 			stand,pol = cFrame.header.parseID()
 			# In the current configuration, stands start at 1 and go up to 10.  So, we
 			# can use this little trick to populate the data array
 			aStand = 2*(stand-1)+pol
-			if aStand not in standMapper:
-				standMapper.append(aStand)
-				oStand = 1*aStand
-				aStand = standMapper.index(aStand)
-				print "Mapping stand %3i, pol. %1i (%3i) to array index %3i" % (stand, pol, oStand, aStand)
 
 			if aStand not in count.keys():
 				count[aStand] = 0
 				masterCount[aStand] = 0
-			if cFrame.header.frameCount % 10000 == 0 and config['verbose']:
-				print "%2i,%1i -> %2i  %5i  %i" % (stand, pol, aStand, cFrame.header.frameCount, cFrame.data.timeTag)
-
-			# Additional check on the data array bounds so that we don't overflow it.  
-			# This check may be redundant...
-			if (count[aStand]+1)*512 >= data.shape[1]:
-				continue
+				
 			data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+				
 			# Update the counters so that we can average properly later on
 			count[aStand] = count[aStand] + 1
 			masterCount[aStand] = masterCount[aStand] + 1
+			
+	# Calculate the spectra for this block of data and then weight the results by 
+	# the total number of frames read.  This is needed to keep the averages correct.
+	freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
+	for stand in count.keys():
+		masterSpectra[i,stand,:] = tempSpec[stand,:]
+		masterWeight[i,stand,:] = count[stand]
 
-		# Calculate the spectra for this block of data and then weight the results by 
-		# the total number of frames read.  This is needed to keep the averages correct.
-		freq, tempSpec = fxc.calcSpectra(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
-		for stand in count.keys():
-			masterSpectra[i,stand,:] = tempSpec[stand,:]
-			masterWeight[i,stand,:] = count[stand]
-
-		# We don't really need the data array anymore, so delete it
-		del(data)
+	# We don't really need the data array anymore, so delete it
+	del(data)
 
 	# Apply the cable loss corrections, if requested
 	if config['applyGain']:

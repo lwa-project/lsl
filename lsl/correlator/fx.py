@@ -31,7 +31,7 @@ import _spec
 import _core
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 23 $'
+__revision__ = '$ Revision: 24 $'
 __all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
 
 
@@ -521,7 +521,7 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 	return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
+def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0, GainCorrect=False):
 	"""A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
 	2-D array of signals (stands, time-series) and an array of stands, compute 
 	the cross-correlation of the data for all baselines.  Return the frequencies 
@@ -588,6 +588,13 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	output /= LFFT
 	if signals.dtype.kind != 'c':
 		output /= 2.0
+		
+	# Apply cable gain corrections (if needed)
+	if GainCorrect:
+		for a in xrange(output.shape[0]):
+			cableGain = antennas[a].cable.gain(freq)
+			for s in xrange(output.shape[2]):
+				output[a,:,s] /= numpy.sqrt(cableGain)
 
 	return (freq, output)
 
