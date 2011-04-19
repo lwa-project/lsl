@@ -39,16 +39,15 @@ def main(args):
 	# Create the FrameBuffer instance
 	buffer = TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1])
 
-	# Create a new FITS file with the name 'tbw.fits'
-	fitsFile = tsfits.TBN('tbn-tsfits-test.fits')
+	# Create a new FITS file with the name 'tbn-tsfits.fits'
+	fitsFile = tsfits.TBN('tbn-tsfits.fits')
 
 	nSamples = 340000
 
-	blocks = []
 	count = {}
 	syncCount = 0
-	masterCount = 0
 	for i in range(nSamples):
+		# Inner loop that actually reads the frames into the data array
 		try:
 			cFrame = tbn.readFrame(fh, SampleRate=sampleRate)
 		except errors.eofError:
@@ -56,28 +55,42 @@ def main(args):
 		except errors.syncError:
 			syncCount = syncCount + 1
 			continue
-		except errors.numpyError:
-			break
+
 		buffer.append(cFrame)
 		cFrames = buffer.get()
+
 		if cFrames is None:
 			continue
 		blocks.append(cFrames)
 
-		for frame in blocks[-1]:
-			if frame is None:
+		for cFrame in cFrames:
+			if cFrame is None:
 				print "sync error"
 				continue
-			stand, pol = frame.parseID()
-			if stand not in count.keys():
-				count[stand] = 0
-			count[stand] = count[stand] + 1
-
-		for cFrame in blocks[-1]:
+			stand, pol = cFrame.parseID()
+			
+			try:
+				count[stand] = count[stand] + 1
+			except KeyError:
+				count[stand] = 1
+				
 			fitsFile.addStandData(cFrame)
-
-		masterCount = masterCount + 1
-		#print cFrame.header.parseID(),cFrame.data.timeTag
+	
+	# Empty the remaining portion of the buffer and integrate what's left
+	for cFrames in buffer.flush():
+		# Inner loop that actually reads the frames into the data array
+		for cFrame in cFrames:
+			if cFrame is None:
+				print "sync error"
+				continue
+			stand, pol = cFrame.parseID()
+			
+			try:
+				count[stand] = count[stand] + 1
+			except KeyError:
+				count[stand] = 1
+				
+			fitsFile.addStandData(cFrame)
 
 	tEnd = time.time()
 	print 'Read %i frames in %0.3f s (%0.1f frames/s)' % (nFpO*nSamples, (tEnd-tStart), nFpO*nSamples/(tEnd-tStart))

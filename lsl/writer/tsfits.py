@@ -18,7 +18,7 @@ PRIMARY HDU
 
 TIME SERIES HDU
   Binary table that stores the actual observations.  There is one TIME SERIES 
-  extionsion per stand in the data.
+  extension per stand (TBW/TBN) or beam/tuning pair (DRX) in the data.
   Keywords:
     * EXTNAME - extension name of 'TIME SERIES'
     * EXTVER - extension version equal to the order in which the data was 
@@ -30,8 +30,9 @@ TIME SERIES HDU
   Data:
     * DATA - column storing the observations.  For TBW data this consists of 
       400 (12-bit) or 1200 (4-bit) elements per row stored as 16-bit integers.
-      For TBN data this consits of 512 elements per row stored as 32-bit 
-      complex numbers.
+      For TBN data this consists of 512 elements per row stored as 32-bit 
+      complex numbers.  For DRX data this consists of 4096 elements per row 
+      stored as 32-bit complex numbers.
     * POL - column storing the polarization associated with the DATA column.  
       'x' polarization is stored as 0 and 'y' polarization is stored as 1.  
       The values is stored as a 16-bit integer.
@@ -51,7 +52,7 @@ from lsl.reader.tbn import filterCodes as tbnCodes
 from lsl.common.warns import warnDeprecated
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 16 $'
+__revision__ = '$ Revision: 18 $'
 __all__ = ['UTC', 'TSFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all__']
 
 
@@ -69,7 +70,7 @@ class UTC(tzinfo):
 
 
 class TSFITS(object):
-	"""Class that holds TSFITS data until it is ready to be writen to disk."""
+	"""Class that holds TSFITS data until it is ready to be written to disk."""
 
 	def __init__(self, filename, mode, Overwrite=False, UseQueue=True, verbose=False):
 		"""Initialize a TSFITS object using a filename and an observation mode 
@@ -174,7 +175,11 @@ class TSFITS(object):
 		if self.mode == 'TBW':
 			stand = frame.parseID()
 		else:
-			stand, pol = frame.parseID()
+			try:
+				stand, pol = frame.parseID()
+			except ValueError:
+				stand, tune, pol = frame.parseID()
+				stand = stand*10 + tune
 		extension = self.__findExtension(stand)
 
 		if extension is None:
@@ -192,8 +197,8 @@ class TSFITS(object):
 			else:
 				# Data
 				data = frame.data.iq.astype(numpy.csingle)
-				data.shape = (1,512)
-				c1 = pyfits.Column(name='data', format='512C', array=data)
+				data.shape = (1,)+data.shape
+				c1 = pyfits.Column(name='data', format='%iC' % data.shape[1], array=data)
 				# Polarization
 				c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0], dtype=numpy.int16))
 				# Time
@@ -240,7 +245,7 @@ class TSFITS(object):
 			else:
 				tempHDU = self.__makeAppendTable(extension, AddRows=1)
 				data = frame.data.iq.astype(numpy.csingle)
-				data.shape = (1,512)
+				data.shape = (1,)+data.shape
 				tempHDU.data.field('data')[nrows:] = data
 				tempHDU.data.field('pol')[nrows:] = numpy.array([pol], dtype=numpy.int16)
 				tempHDU.data.field('time')[nrows:] = numpy.array([frame.data.timeTag]) / dp_common.fS - self.firstSamples[stand]
@@ -256,7 +261,11 @@ class TSFITS(object):
 		if self.mode == 'TBW':
 			stand = frame.parseID()
 		else:
-			stand, pol = frame.parseID()
+			try:
+				stand, pol = frame.parseID()
+			except ValueError:
+				stand, tune, pol = frame.parseID()
+				stand = stand*10 + tune
 		if stand not in self.queue.keys():
 			self.queue[stand] = []
 		self.queue[stand].append(frame)
@@ -283,8 +292,8 @@ class TSFITS(object):
 				else:
 					# Data
 					data = frame.data.iq.astype(numpy.csingle)
-					data.shape = (1,512)
-					c1 = pyfits.Column(name='data', format='512C', array=data)
+					data.shape = (1,)+data.shape
+					c1 = pyfits.Column(name='data', format='%iC' % data.shape[1], array=data)
 					# Polarization
 					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0], dtype=numpy.int16))
 					# Time
@@ -335,9 +344,14 @@ class TSFITS(object):
 			else:
 				tempHDU = self.__makeAppendTable(extension, AddRows=(self.queueLimit-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
-					stand,pol = frame.parseID()
+					try:
+						stand, pol = frame.parseID()
+					except ValueError:
+						stand, tune, pol = frame.parseID()
+						stand = stand*10 + tune
+						
 					data = frame.data.iq.astype(numpy.csingle)
-					data.shape = (1,512)
+					data.shape = (1,) + data.shape
 					tempHDU.data.field('data')[nrows+count] = data
 					tempHDU.data.field('pol')[nrows+count] = numpy.array([pol], dtype=numpy.int16)
 					tempHDU.data.field('time')[nrows+count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
@@ -374,8 +388,8 @@ class TSFITS(object):
 				else:
 					# Data
 					data = frame.data.iq.astype(numpy.csingle)
-					data.shape = (1,512)
-					c1 = pyfits.Column(name='data', format='512C', array=data)
+					data.shape = (1,)+data.shape
+					c1 = pyfits.Column(name='data', format='%iC' % data.shape[1], array=data)
 					# Polarization
 					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0], dtype=numpy.int16))
 					# Time
@@ -426,9 +440,14 @@ class TSFITS(object):
 			else:
 				tempHDU = self.__makeAppendTable(extension, AddRows=(queueSize-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
-					stand,pol = frame.parseID()
+					try:
+						stand, pol = frame.parseID()
+					except ValueError:
+						stand, tune, pol = frame.parseID()
+						stand = stand*10 + tune
+						
 					data = frame.data.iq.astype(numpy.csingle)
-					data.shape = (1,512)
+					data.shape = (1,) + data.shape
 					tempHDU.data.field('data')[nrows+count] = data
 					tempHDU.data.field('pol')[nrows+count] = numpy.array([pol], dtype=numpy.int16)
 					tempHDU.data.field('time')[nrows+count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]

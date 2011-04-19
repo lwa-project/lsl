@@ -4,13 +4,16 @@
 
 .. versionchanged:: 0.5
 	Removed support for DRX FrameBuffers since they shouldn't be needed.
+	
+.. versionchanged:: 0.6
+	Removed support for TBW FrameBuffers since they didn't really work.
 """
 
 import copy
 
-__version__ = '0.5'
-__revision__ = '$ Revision: 13 $'
-__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'TBWFrameBuffer', '__version__', '__revision__', '__all__']
+__version__ = '0.6'
+__revision__ = '$ Revision: 14 $'
+__all__ = ['FrameBuffer', 'TBNFrameBuffer', '__version__', '__revision__', '__all__']
 
 
 def _cmpStands(x, y):
@@ -202,7 +205,7 @@ class FrameBuffer(object):
 			del(self.buffer[oldestKey])
 			self.done.append(oldestKey)
 			try:
-				self.done = self.done[-21:]
+				self.done = self.done[-2*self.nSegments+1:]
 			except:
 				pass
 			
@@ -323,37 +326,6 @@ class FrameBuffer(object):
 		outString = '\n'.join([outString, "Dropped frames:  %i" % self.dropped])
 
 		print outString
-
-
-class TBWFrameBuffer(FrameBuffer):
-	"""A sub-type of FrameBuffer specifically for dealing with TBW frames.
-	See :mod:`lsl.reader.buffer.FrameBuffer` for a description of how the 
-	buffering is implemented.
-	
-	Keywords:
-	stands
-	  list of stands to expect packets for
-	  
-	samples
-	  total number of data captures to expect for each stand (default is 12 million)
-	  
-	bits
-	  data bits (12 or 4, default is 12)
-	  
-	nSegments
-	  number of ring segments to use for the buffer (default is 52)
-	"""
-
-	def __init__(self, stands=[], samples=12000000, bits=12, nSegments=52):
-		super(TBWFrameBuffer, self).__init__(mode='TBW', stands=stands, samples=samples, bits=bits, nSegments=nSegments)
-		
-	def figureOfMerit(self, frame):
-		"""Figure-of-merit for sorting frames.  For TBW it is:
-			<time of first frame>*1000 + <stand ID>
-		"""
-		
-		t0 = frame.data.timeTag - frame.data.xy.shape[1]*(frame.header.frameCount-1)
-		return t0*1000 + frame.parseID()
 
 
 class TBNFrameBuffer(FrameBuffer):

@@ -1,104 +1,84 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Example script for reading in DRX data and writing it to a SD-FITS file."""
+"""Example script for reading in DRX data and writing it to a TS-FITS file."""
 
 import os
 import sys
-from lsl.reader import drx
-from lsl.writer import sdfits
+import time
+import ephem
 
-import matplotlib.pyplot as plt
+from lsl.reader import drx
+from lsl.writer import tsfits
+from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 def main(args):
-	nSamples = os.path.getsize(args[0]) / drx.FrameSize
-	print "Samples in file: ", nSamples
-	fh = open(args[0], "rb", buffering=drx.FrameSize)
-	nFpO = getFramesPerObs(fh)
-	nBeams = getBeamCount(fh)
-	print "Beams: ", nBeams
-	print "Frames per Observations: ", nFpO
-	blockBuffer = []
-	blocks = []
+	fh = open(args[0], "rb")
+	nFramesFile = os.path.getsize(args[0]) / drx.FrameSize
+	junkFrame = drx.readFrame(fh)
+	
+	fh.seek(0)
+	srate = junkFrame.getSampleRate()
+	beams = drx.getBeamCount(fh)
+	tunepols = drx.getFramesPerObs(fh)
+	tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
+	beampols = tunepol
+	
+	# Date
+	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
+	
+	# File summary
+	print "Filename: %s" % args[0]
+	print "Date of First Frame: %s" % str(beginDate)
+	print "Beams: %i" % beams
+	print "Tune/Pols: %i %i %i %i" % tunepols
+	print "Sample Rate: %i Hz" % srate
+	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate)
+	print "---"
 
 	tStart = time.time()
-
-	nSamples = (nSamples/4/16)*16
-
-	fig = plt.figure()
-
-	for i in range(0,nSamples):
-		currBlock = readDRXBlock(fh)
-		blockBuffer.append(currBlock)
-
-		if len(blockBuffer) == 16:
-			avgBlock = averageObservations(blockBuffer)
-			#avgBlock = averageObservations2(blockBuffer, timeAvg=16, chanAvg=2)
-			blocks.append(avgBlock)
-			blockBuffer = []
 	
-	nChan = blocks[0].x1.data.iq.shape[0]
-	outSpec = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	outTime = numpy.zeros(nSamples/16)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec[row,:] = block.x1.data.iq
-		outTime[row] = block.x1.data.timeTag
-	outSpec2 = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec2[row,:] = block.y1.data.iq
-	outSpec3 = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec3[row,:] = block.x2.data.iq
-	outSpec4 = numpy.zeros((nSamples/16, nChan), dtype=numpy.complex64)
-	for row,block in zip(range(nSamples),blocks):
-		outSpec4[row,:] = block.y2.data.iq
+	# Create a new FITS file with the name 'drx-tsfits.fits'
+	fitsFile = tsfits.TBN('drx-tsfits.fits')
+	
+	nSamples = 3400
+
+	count = {}
+	syncCount = 0
+	masterCount = 0
+	for i in range(0,nSamples):
+		currBlock = drx.readBlock(fh)
+
+		for attr in ['x1', 'y1', 'x2', 'y2']:
+			frame = getattr(currBlock, attr)
+			if frame is None:
+				syncCount += 1
+				print "sync error"
+				continue
+			else:
+				beam, pol, tune = frame.parseID()
+				try:
+					count[beam] += 1
+				except KeyError:
+					count[beam] = 1
+
+				fitsFile.addStandData(frame)
+
+		masterCount = masterCount + 1
 
 	tEnd = time.time()
-	print 'Read %i frames in %0.3f s (%0.1f frames/s)' % (4*nSamples, (tEnd-tStart), 4*nSamples/(tEnd-tStart))
-	
-	writefits(outSpec, outTime)
-	readfits('test-sdfits.fits')
-
-	ax = fig.add_subplot(221)
-	dB = outSpec - outSpec.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 1, Pol. 0')
-	ax.set_ylabel('Channel')
-	ax.axis('auto')
-	
-	ax = fig.add_subplot(222)
-	dB = outSpec2 - outSpec2.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 1, Pol. 1')
-	ax.axis('auto')
-
-	ax = fig.add_subplot(223)
-	dB = outSpec3 - outSpec3.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 2, Pol. 0')
-	ax.set_xlabel('Time')
-	ax.set_ylabel('Channel')
-	ax.axis('auto')
-
-	ax = fig.add_subplot(224)
-	dB = outSpec4 - outSpec4.mean(axis=0)
-	dB = numpy.log10( (dB*dB.conj()).real )*10.0
-	
-	ax.imshow(numpy.transpose(dB), origin='lower')
-	ax.set_title('Tuning 2, Pol. 1')
-	ax.set_xlabel('Time')
-	ax.axis('auto')
-
-	plt.show()
-	fig.savefig("readDRX.png")
+	print 'Read %i frames in %0.3f s (%0.1f frames/s)' % (beampols*nSamples, (tEnd-tStart), beampols*nSamples/(tEnd-tStart))
 
 	fh.close()
+	fitsFile.close()
+	fitsFile.info()
+
+	# Summary information about the file that was just read in
+	print "Summary:"
+	for beam in sorted(count.keys()):
+		print "Beam: %2i, Frames: %5i" % (beam, count[beam])
+	print "Sync Errors: %5i" % syncCount
+
 
 if __name__ == "__main__":
 	main(sys.argv[1:])

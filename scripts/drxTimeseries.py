@@ -8,10 +8,12 @@ import sys
 import math
 import time
 import numpy
+import ephem
 import getopt
 
 import lsl.reader.drx as drx
 import lsl.reader.errors as errors
+from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 import matplotlib.pyplot as plt
 
@@ -98,7 +100,7 @@ def main(args):
 	config['offset'] = 1.0 * offset / beampols * 4096 / srate
 	fh.seek(offset*drx.FrameSize)
 
-	# Make sure that the file chunk size contains is an intger multiple
+	# Make sure that the file chunk size contains is an integer multiple
 	# of the beampols.
 	maxFrames = int(config['maxFrames']/beampols)*beampols
 
@@ -115,8 +117,12 @@ def main(args):
 	# Number of remaining chunks
 	nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
 
+	# Date
+	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
+
 	# File summary
 	print "Filename: %s" % config['args'][0]
+	print "Date of First Frame: %s" % str(beginDate)
 	print "Beams: %i" % beams
 	print "Tune/Pols: %i %i %i %i" % tunepols
 	print "Sample Rate: %i Hz" % srate
@@ -132,7 +138,7 @@ def main(args):
 	if nFrames > (nFramesFile - offset):
 		raise RuntimeError("Requested integration time+offset is greater than file length")
 
-	# Master loop over all of the file chuncks
+	# Master loop over all of the file chunks
 	standMapper = []
 	for i in range(nChunks):
 		# Find out how many frames remain in the file.  If this number is larger
@@ -166,7 +172,6 @@ def main(args):
 			
 			beam,tune,pol = cFrame.parseID()
 			aStand = 4*(beam-1) + 2*(tune-1) + pol
-			#print aStand, beam, tune, pol
 			if aStand not in standMapper:
 				standMapper.append(aStand)
 				oStand = 1*aStand
@@ -200,16 +205,16 @@ def main(args):
 
 			ax = fig.add_subplot(figsX,figsY,k+1)
 			if toClip:
-				ax.plot(numpy.arange(0,samples)/srate, data[i,0:samples].real, label='%i (real)' % (i+1))
-				ax.plot(numpy.arange(0,samples)/srate, data[i,0:samples].imag, label='%i (imag)' % (i+1))
+				ax.plot(numpy.arange(0,samples)/srate*1e3, data[i,0:samples].real, label='%i (real)' % (i+1))
+				ax.plot(numpy.arange(0,samples)/srate*1e3, data[i,0:samples].imag, label='%i (imag)' % (i+1))
 			else:
-				ax.plot(numpy.arange(0,data.shape[1])/srate, data[i,:].real, label='%i (real)' % (i+1))
-				ax.plot(numpy.arange(0,data.shape[1])/srate, data[i,:].imag, label='%i (imag)' % (i+1))
+				ax.plot(numpy.arange(0,data.shape[1])/srate*1e3, data[i,:].real, label='%i (real)' % (i+1))
+				ax.plot(numpy.arange(0,data.shape[1])/srate*1e3, data[i,:].imag, label='%i (imag)' % (i+1))
 			ax.set_ylim([-8, 7])
 			ax.legend(loc=0)
 			
 			ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2))
-			ax.set_xlabel('Time [seconds]')
+			ax.set_xlabel('Time [ms]')
 			ax.set_ylabel('Output Level')
 		plt.show()
 

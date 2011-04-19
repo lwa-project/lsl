@@ -155,7 +155,7 @@ def main(args):
 	config['offset'] = 1.0 * offset / antpols * 512 / srate
 	fh.seek(offset*tbn.FrameSize)
 
-	# Make sure that the file chunk size contains is an intger multiple
+	# Make sure that the file chunk size contains is an integer multiple
 	# of the FFT length so that no data gets dropped.  This needs to
 	# take into account the number of antpols in the data, the FFT length,
 	# and the number of samples per frame.
@@ -190,12 +190,12 @@ def main(args):
 	if offset > nFramesFile:
 		raise RuntimeError("Requested offset is greater than file length")
 	if nFrames > (nFramesFile - offset):
-		raise RuntimeError("Requestion integration time+offset is greater than file length")
+		raise RuntimeError("Requested integration time+offset is greater than file length")
 
 	# Create the FrameBuffer instance
 	buffer = TBNFrameBuffer(stands=range(1,antpols/2+1), pols=[0, 1])
 
-	# Master loop over all of the file chuncks
+	# Master loop over all of the file chunks
 	masterCount = [0 for a in xrange(len(antennas))]
 	masterWeight = numpy.zeros((nChunks, antpols, LFFT-1))
 	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
@@ -302,11 +302,11 @@ def main(args):
 			for c in range(masterSpectra.shape[0]):
 				masterSpectra[c,s,:] /= currGain
 
-	# Now that we have read through all of the chunks, peform the final averaging by
+	# Now that we have read through all of the chunks, perform the final averaging by
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
-	# Put the freqencies in the best units possible
+	# Put the frequencies in the best units possible
 	freq, units = bestFreqUnits(freq)
 
 	

@@ -83,11 +83,11 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 	specifies how many individual spectra of length LFFT are to be averaged.
 
 	.. versionchanged:: 0.3.4
-		Prior to LSL version 0.3.4, the window functions avaliable for calcSpectra 
-		were limited to Blackmand and an (untest) Polyphase filter.  With version
+		Prior to LSL version 0.3.4, the window functions available for calcSpectra 
+		were limited to Blackman and an (untest) Polyphase filter.  With version
 		0.4, the window to be used is passed to the function call via the 'window'
 		keyword and an "empty" window is provided by the module.  This allows for
-		the various window function defined in numpy (i.e., barlet, blackman, 
+		the various window function defined in numpy (i.e., bartlett, blackman, 
 		hamming, etc.) to be used.  It also makes it easier to filter the data using
 		a custom window.  For example, a Kaiser window with a shape factor of 5 
 		could be made with:
@@ -134,7 +134,7 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 		
 		# To get results pack from the pool, you need to keep up with the workers.  
 		# In addition, we need to keep up with which workers goes with which 
-		# signal since the workers are called asychronisly.  Thus, we need a 
+		# signal since the workers are called asynchronously.  Thus, we need a 
 		# taskList array to hold tuples of signal ('count') and workers.
 		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
 		taskList = []
@@ -296,8 +296,8 @@ def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=Non
 
 
 def correlate(signal1, signal2, antenna1, antenna2, LFFT=64, Overlap=1, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
-	"""Channalize and cross-correlate singal from two antennae.  Both the signals 
-	and the stand numnbers are needed to implement time delay and phase corrections.
+	"""Channalize and cross-correlate signals from two antennae.  Both the signals 
+	and the stand numbers are needed to implement time delay and phase corrections.
 	The resulting visibilities from the cross-correlation are time average and a 
 	LFFT-1 length numpy array is returned.  This array does not contain the DC 
 	component of the signal."""
@@ -357,7 +357,7 @@ def correlate(signal1, signal2, antenna1, antenna2, LFFT=64, Overlap=1, window=n
 	# Factor in  the overlap amount for all but the last full sample
 	length = numpy.array([length1, length2]).min() * Overlap - Overlap + 1
 
-	# Begin computing the visibilities and loop over the signal chuncks in order 
+	# Begin computing the visibilities and loop over the signal chunks in order 
 	# to average in time.
 	visibility = numpy.zeros(LFFT-1, dtype=numpy.complex_)
 	for i in range(length):
@@ -404,11 +404,11 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 		currently support windowing the data.
 
 	.. versionchanged:: 0.3.4
-		Prior to LSL version 0.4, the window functions avaliable for FXCorrelator
-		were limited to Blackmand and an (untest) Polyphase filter.  With version
+		Prior to LSL version 0.4, the window functions available for FXCorrelator
+		were limited to Blackman and an (untest) Polyphase filter.  With version
 		0.4, the window to be used is passed to the function call via the 'window'
 		keyword and an "empty" window is provided by the module.  This allows for
-		the various window function defined in numpy (i.e., barlet, blackman, 
+		the various window function defined in numpy (i.e., bartlett, blackman, 
 		hamming, etc.) to be used.  It also makes it easier to filter the data using
 		a custom window.  For example, a Kaiser window with a shape factor of 5 
 		could be made with:
@@ -457,7 +457,7 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 		
 		# To get results pack from the pool, you need to keep up with the workers.  
 		# In addition, we need to keep up with which workers goes with which 
-		# baseline since the workers are called asychronisly.  Thus, we need a 
+		# baseline since the workers are called asynchronously.  Thus, we need a 
 		# taskList array to hold tuples of baseline ('count') and workers.
 		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
 		taskList = []
@@ -479,7 +479,7 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 			else:
 				print "Cross-correlating stands %i and %i" % (stands[i], stands[j])
 			
-		# If pool, pool...  Otherise don't
+		# If pool, pool...  Otherwise don't
 		if usePool:
 			if CrossPol is not None:
 				task = taskPool.apply_async(correlate, args=(signals[i,:], CrossPol[j,:], antennas[i], antennas[j]), 

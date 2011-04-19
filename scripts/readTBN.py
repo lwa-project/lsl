@@ -33,8 +33,8 @@ def main(args):
 
 	tStart = time.time()
 
-	# Create a new FITS file with the name 'tbw.fits'
-	fitsFile = tsfits.TBN('tbn-tsfits-test.fits')
+	# Create a new FITS file with the name 'tbn-tsfits.fits'
+	fitsFile = tsfits.TBN('tbn-tsfits.fits')
 
 	nSamples = 340000
 

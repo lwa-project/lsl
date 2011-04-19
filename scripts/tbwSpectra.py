@@ -107,7 +107,7 @@ def main(args):
 	# Length of the FFT
 	LFFT = config['LFFT']
 
-	# Make sure that the file chunk size contains is an intger multiple
+	# Make sure that the file chunk size contains is an integer multiple
 	# of the FFT length so that no data gets dropped
 	maxFrames = int(config['maxFrames']/float(LFFT))*LFFT
 	# It seems like that would be a good idea, however...  TBW data comes one
@@ -144,7 +144,7 @@ def main(args):
 
 	nChunks = 1
 
-	# Master loop over all of the file chuncks
+	# Master loop over all of the file chunks
 	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
 	for i in range(nChunks):
 		# Find out how many frames remain in the file.  If this number is larger
@@ -179,7 +179,7 @@ def main(args):
 			if cFrame.header.frameCount % 10000 == 0 and config['verbose']:
 				print "%3i -> %3i  %6.3f  %5i  %i" % (stand, aStand, cFrame.getTime(), cFrame.header.frameCount, cFrame.data.timeTag)
 
-			# Actaully load the data.  x pol goes into the even numbers, y pol into the 
+			# Actually load the data.  x pol goes into the even numbers, y pol into the 
 			# odd numbers
 			count = cFrame.header.frameCount - 1
 			data[aStand,   count*nSamples:(count+1)*nSamples] = cFrame.data.xy[0,:]
@@ -203,7 +203,7 @@ def main(args):
 			for c in xrange(masterSpectra.shape[0]):
 				masterSpectra[c,s,:] /= currGain
 
-	# Now that we have read through all of the chunks, peform the final averaging by
+	# Now that we have read through all of the chunks, perform the final averaging by
 	# dividing by all of the chunks
 	spec = masterSpectra.mean(axis=0)
 

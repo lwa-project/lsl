@@ -56,7 +56,7 @@ FrameSize = 1224
 
 class FrameHeader(object):
 	"""Class that stores the information found in the header of a TBW 
-	frame.  All three fields listed in the DP IDC version H are stored as 
+	frame.  All three fields listed in the DP ICD version H are stored as 
 	well as the original binary header data."""
 
 	def __init__(self, frameCount=None, secondsCount=None, tbwID=None):
@@ -77,7 +77,7 @@ class FrameHeader(object):
 	def parseID(self):
 		"""Function to parse the TBW ID field and return the stand number."""
 
-		# Why &1023?  Well, from DP ICH revision H, it seems that the stand count 
+		# Why &1023?  Well, from DP ICD revision H, it seems that the stand count 
 		# only goes up 260.  So, channel numbers should range up to 520, which can
 		# be represented as 10 bits or 1023.
 		stand = self.tbwID&1023
@@ -100,7 +100,7 @@ class FrameHeader(object):
 
 class FrameData(object):
 	"""Class that stores the information found in the data section of a TBW
-	frame.  Both fields listed in the DP IDC version H are stored."""
+	frame.  Both fields listed in the DP ICD version H are stored."""
 
 	def __init__(self, timeTag=None, samples=400, xy=None):
 		self.timeTag = timeTag
@@ -332,7 +332,7 @@ def getFramesPerObs(filehandle):
 	two frames and then skipping the next 30,000.
 	
 	.. note::
-		Post-IOC it is probably simpiler to adopt a value of the number of 
+		Post-IOC it is probably simpler to adopt a value of the number of 
 		frames per observation of 260 rather than try to find it from the
 		file.
 	"""

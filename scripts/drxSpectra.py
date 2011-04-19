@@ -7,11 +7,13 @@ import os
 import sys
 import math
 import numpy
+import ephem
 import getopt
 
 import lsl.reader.drx as drx
 import lsl.reader.errors as errors
 import lsl.correlator.fx as fxc
+from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 import matplotlib.pyplot as plt
 
@@ -147,7 +149,7 @@ def main(args):
 	config['offset'] = 1.0 * offset / beampols * 4096 / srate
 	fh.seek(offset*drx.FrameSize)
 
-	# Make sure that the file chunk size contains is an intger multiple
+	# Make sure that the file chunk size contains is an integer multiple
 	# of the FFT length so that no data gets dropped.  This needs to
 	# take into account the number of beampols in the data, the FFT length,
 	# and the number of samples per frame.
@@ -160,9 +162,13 @@ def main(args):
 
 	# Number of remaining chunks
 	nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
+	
+	# Date
+	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
 
 	# File summary
 	print "Filename: %s" % config['args'][0]
+	print "Date of First Frame: %s" % str(beginDate)
 	print "Beams: %i" % beams
 	print "Tune/Pols: %i %i %i %i" % tunepols
 	print "Sample Rate: %i Hz" % srate
@@ -176,9 +182,9 @@ def main(args):
 	if offset > nFramesFile:
 		raise RuntimeError("Requested offset is greater than file length")
 	if nFrames > (nFramesFile - offset):
-		raise RuntimeError("Requestion integration time+offset is greater than file length")
+		raise RuntimeError("Requested integration time+offset is greater than file length")
 
-	# Master loop over all of the file chuncks
+	# Master loop over all of the file chunks
 	masterCount = {}
 	standMapper = []
 	masterWeight = numpy.zeros((nChunks, beampols, LFFT-1))
@@ -240,7 +246,7 @@ def main(args):
 
 		# Calculate the spectra for this block of data and then weight the results by 
 		# the total number of frames read.  This is needed to keep the averages correct.
-		freq, tempSpec = fxc.calcSpectra(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
+		freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
 		for stand in count.keys():
 			masterSpectra[i,stand,:] = tempSpec[stand,:]
 			masterWeight[i,stand,:] = count[stand]
@@ -248,7 +254,7 @@ def main(args):
 		# We don't really need the data array anymore, so delete it
 		del(data)
 
-	# Now that we have read through all of the chunks, peform the final averaging by
+	# Now that we have read through all of the chunks, perform the final averaging by
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
@@ -256,7 +262,7 @@ def main(args):
 	fig = plt.figure()
 	figsX = int(round(math.sqrt(beampols)))
 	figsY = beampols / figsX
-	# Put the freqencies in the best units possible
+	# Put the frequencies in the best units possible
 	freq, units = bestFreqUnits(freq)
 
 	sortedMapper = sorted(standMapper)

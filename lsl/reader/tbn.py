@@ -62,7 +62,7 @@ filterCodes = {1: 1000, 2: 3125, 3: 6250, 4: 12500, 5: 25000, 6: 50000, 7: 10000
 
 class FrameHeader(object):
 	"""Class that stores the information found in the header of a TBW 
-	frame.  All three fields listed in the DP IDC version H are stored as 
+	frame.  All three fields listed in the DP ICD version H are stored as 
 	well as the original binary header data."""
 
 	def __init__(self, frameCount=None, secondsCount=None, tbnID=None):
@@ -96,7 +96,7 @@ class FrameHeader(object):
 
 class FrameData(object):
 	"""Class that stores the information found in the data section of a TBN
-	frame.  Both fields listed in the DP IDC version H are stored."""
+	frame.  Both fields listed in the DP ICD version H are stored."""
 
 	def __init__(self, timeTag=None, iq=None):
 		self.sampleRate = None
@@ -480,7 +480,7 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 	# Now that we have two valid frames that follow one another in time, load in their
 	# time tags and calculate the sampling rate.  Since the time tags are based off f_S
-	# @ 196 MSPS, and each frame contains 512 samples, the sampleing rate is:
+	# @ 196 MSPS, and each frame contains 512 samples, the sampling rate is:
 	#  f_S / <difference in time tags per 512 samples>
 	time1 = frame1.data.timeTag
 	time2 = frame2.data.timeTag
@@ -502,10 +502,10 @@ def getFramesPerObs(filehandle):
 	as a two-	element tuple, one for each polarization.
 	
 	So many TBN frames are read in order to try to compensate for the inter-
-	leaving of the packtes from the various DP1 boards during the recording.
+	leaving of the packets from the various DP1 boards during the recording.
 	
 	.. note::
-		Post-IOC it is probably simpiler to adopt a value of the number of 
+		Post-IOC it is probably simpler to adopt a value of the number of 
 		frames per observation of 520 rather than try to find it from the
 		file.
 	"""
@@ -545,7 +545,7 @@ def getFramesPerObs(filehandle):
 	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
 	
-	# Compaqre idCodes sizes with maxX and maxY.  Load maxX and maxY with 
+	# Compare idCodes sizes with maxX and maxY.  Load maxX and maxY with 
 	# the larger of the two values.
 	if maxX < len(idCodes[0]):
 		maxX = len(idCodes[0])

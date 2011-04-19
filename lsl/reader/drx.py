@@ -12,7 +12,7 @@ Frame
   original DRX frame.
 
 ObservingBlock
-  object that stores a collection of Frames for all beams/tunnings/
+  object that stores a collection of Frames for all beams/tunings/
   polarizations for a particular time.
 
 The functions defined in this module fall into two class:
@@ -31,7 +31,7 @@ getBeamCount
   beams are present in the file.
 
 getFramesPerObs
-  read in the first several frames to see how many frames (tunnings/polarizations)
+  read in the first several frames to see how many frames (tunings/polarizations)
   are associated with each beam.
 
 Finally, there are also two experimental functions defined in this file for 
@@ -53,7 +53,7 @@ from _gofast import eofError as geofError
 from errors import *
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 22 $'
+__revision__ = '$ Revision: 23 $'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 FrameSize = 4128
@@ -64,7 +64,7 @@ filterCodes = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4900000, 6: 9800
 
 class FrameHeader(object):
 	"""Class that stores the information found in the header of a DRX 
-	frame.  All six fields listed in the DP IDC version H are stored as 
+	frame.  All six fields listed in the DP ICD version H are stored as 
 	well as the original binary header data."""
 	
 	def __init__(self, frameCount=None, drxID=None, secondsCount=None, decimation=None, timeOffset=None):
@@ -97,12 +97,12 @@ class FrameHeader(object):
 		for key,value in filterCodes.iteritems():
 			sampleCodes[value] = key
 
-		return sampleCodes[self.sampleRate]
+		return sampleCodes[self.getSampleRate()]
 
 
 class FrameData(object):
 	"""Class that stores the information found in the data section of a DRX
-	frame.  All three fields listed in the DP IDC version H are stored."""
+	frame.  All three fields listed in the DP ICD version H are stored."""
 
 	def __init__(self, timeTag=None, flags=None, iq=None):
 		self.centralFreq = None
@@ -396,6 +396,12 @@ def readBlock(filehandle):
 	contents as a ObservingBlock object.  This function wraps 
 	readFrame."""
 	
+	# Create dummy values
+	x1 = None
+	y1 = None
+	x2 = None
+	y2 = None
+	
 	# Read in four frames
 	try:
 		f1 = readFrame(filehandle)
@@ -427,11 +433,11 @@ def readBlock(filehandle):
 
 
 def getSampleRate(filehandle, nFrames=None, FilterCode=False):
-	"""Find out what the sampling rate/filter code is from a sigle observations.  
+	"""Find out what the sampling rate/filter code is from a single observations.  
 	By default, the rate in Hz is returned.  However, the corresponding filter 
 	code can be returned instead by setting the FilterCode keyword to true.
 	
-	This function is included to make eaiser to write code for TBN analysis and 
+	This function is included to make easier to write code for TBN analysis and 
 	modify it for DRX data.
 	"""
 
