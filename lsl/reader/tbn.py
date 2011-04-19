@@ -406,7 +406,7 @@ def readBlock(filehandle, nFrames=520, SampleRate=None, CentralFreq=None, Gain=N
 		Since the various TBN frames are interleaved on the network before 
 		recording, the frames returned by a single call to readBlock may
 		not all have the same frame count/time tag.  It is recommended that
-		the :mod:`lsl.reader.buffer.TBNFrameBuffer` be used in order to 
+		the :class:`lsl.reader.buffer.TBNFrameBuffer` be used in order to 
 		deal with the out-of-order frames.
 	"""
 

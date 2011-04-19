@@ -34,7 +34,7 @@ Here is a Python code snippet for reading in DRX data::
 	>>> print frame.data.iq.mean()
 	0.03+1.03j
 
-In the above code, line 3 reads the raw DRX frame into a :mod:`lsl.reader.drx.Frame` object.  Lines 4 and 6 access the Frame objects various attributes.  Line 4, for example, parses the DRX ID field and returns a three-element tuple containing the beam number, tuning, and polarization.  Line 6 prints the mean value of the I/Q data associated with this frame.
+In the above code, line 3 reads the raw DRX frame into a :class:`lsl.reader.drx.Frame` object.  Lines 4 and 6 access the Frame objects various attributes.  Line 4, for example, parses the DRX ID field and returns a three-element tuple containing the beam number, tuning, and polarization.  Line 6 prints the mean value of the I/Q data associated with this frame.
 
 .. warning::
 	The DRX reader can throw various errors when reading in a DRX frame if the frame
@@ -45,7 +45,7 @@ In the above code, line 3 reads the raw DRX frame into a :mod:`lsl.reader.drx.Fr
 Plot Spectra
 ------------
 After the DRX data have been read in, spectra can by computed and plotted using the function
-:mod:`lsl.correlator.fx.calcSpectra`.  For example::
+:func:`lsl.correlator.fx.calcSpectra`.  For example::
 
 	>>> from lsl.correlator import fx as fxc
 	>>> freq, spec = fxc.calcSpectra(data, LFFT=2048, SampleRate=19.6e6, CentralFreq=38e6, DisablePool=True)
@@ -59,6 +59,12 @@ the FFTs.  The sample rate can be obtained from the data using::
 
 Currently there is not a way to determine the central frequency of the observations from the data frames.
 
+LSL 0.4.0 introduces a new way to compute spectra with the :func:`lsl.correlator.fx.SpecMaster`
+function.  This function uses a C extension and OpenMP to provide better overall performance.  SpecMaster
+is called in the same way as the original calcSpectra function::
+
+	>>> freq, spec = fxc.SpecMaster(data, LFFT=2048, SampleRate=1e5, CentralFreq=38e6)
+
 Once the spectra have been computed, they can be plotted via *matplotlib* via::
 
 	>>> import numpy
@@ -70,7 +76,7 @@ Once the spectra have been computed, they can be plotted via *matplotlib* via::
 	>>> ax.set_ylabel('PSD [Arb. dB]')
 
 .. note::
-	In the above example, the thread pool has been disabled for :mod:`lsl.correlator.fx.calcSpectra` which
+	In the above example, the thread pool has been disabled for :func:`lsl.correlator.fx.calcSpectra` which
 	forces the function to run single-threaded.  By default, calcSpectra runs with 4 threads and this can
 	cause problems if a Ctrl-C is issued.  Ctrl-C kills the main python thread but leaves the worker 
 	threads running. 

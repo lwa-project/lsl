@@ -128,6 +128,11 @@ def processChunk(fh, site, filename, intTime=6.0, LFFT=64, Overlap=1, CentralFre
 			continue
 		goodDigs.append(ant.digitizer)
 		dig2ant[ant.digitizer] = ant
+		
+	if pol == 0:
+		polCode = 'yy'
+	else:
+		polCode = 'xx'
 
 	# Find out how many frames to work with at a time
 	nFrames = int(intTime*SampleRate/512)
@@ -207,20 +212,20 @@ def processChunk(fh, site, filename, intTime=6.0, LFFT=64, Overlap=1, CentralFre
 		setDT = datetime.utcfromtimestamp(setTime)
 		setDT.replace(tzinfo=UTC())
 		print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
-		freqYY, outYY = fxc.FXMaster(data, stands, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False,  SampleRate=SampleRate, CentralFreq=CentralFreq)
+		freqVis, outVis = fxc.FXMaster(data, stands, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False,  SampleRate=SampleRate, CentralFreq=CentralFreq)
 		blList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=False)
 
-		toUse = numpy.where( (freqYY>10.0e6) & (freqYY<88.0e6) )
+		toUse = numpy.where( (freqVis>10.0e6) & (freqVis<88.0e6) )
 		toUse = toUse[0]
 
 		if s  == 0:
 			fits = fitsidi.IDI(filename, refTime=refTime)
-			fits.setStokes(['xx'])
-			fits.setFrequency(freqYY[toUse])
+			fits.setStokes([polCode])
+			fits.setFrequency(freqVis[toUse])
 			fits.setGeometry(site, stands)
 
 		obsTime = astro.unix_to_taimjd(setTime)
-		fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, outYY[:,toUse])
+		fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, outVis[:,toUse])
 		print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
 		
 	# Empty the remaining portion of the buffer and integrate what's left
@@ -251,27 +256,28 @@ def processChunk(fh, site, filename, intTime=6.0, LFFT=64, Overlap=1, CentralFre
 	setDT = datetime.utcfromtimestamp(setTime)
 	setDT.replace(tzinfo=UTC())
 	print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
-	freqYY, outYY = fxc.FXMaster(data, stands, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False,  SampleRate=SampleRate, CentralFreq=CentralFreq)
+	freqVis, outVis = fxc.FXMaster(data, stands, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False,  SampleRate=SampleRate, CentralFreq=CentralFreq)
 	blList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=False)
 
-	toUse = numpy.where( (freqYY>10.0e6) & (freqYY<88.0e6) )
+	toUse = numpy.where( (freqVis>10.0e6) & (freqVis<88.0e6) )
 	toUse = toUse[0]
 
 	if s  == 0:
 		fits = fitsidi.IDI(filename, refTime=refTime)
-		fits.setStokes(['xx'])
-		fits.setFrequency(freqYY[toUse])
+		fits.setStokes([polCode])
+		fits.setFrequency(freqVis[toUse])
 		fits.setGeometry(site, stands)
 
 	obsTime = astro.unix_to_taimjd(setTime)
-	fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, outYY[:,toUse])
+	fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, outVis[:,toUse])
 	print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
 
 	fits.write()
 	fits.close()
 	del(fits)
 	del(data)
-	del(outYY)
+	del(freqVis)
+	del(outVis)
 	return True
 
 

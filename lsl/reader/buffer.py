@@ -330,7 +330,7 @@ class FrameBuffer(object):
 
 class TBNFrameBuffer(FrameBuffer):
 	"""A sub-type of FrameBuffer specifically for dealing with TBN frames.
-	See :mod:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+	See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
 	buffering is implemented.
 	
 	Keywords:

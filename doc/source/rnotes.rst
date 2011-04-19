@@ -1,6 +1,24 @@
 Release Notes
 =============
 
+Version 0.4
+-----------
+ * Added new robust statistical methods
+ * Added Global Sky Model models to skymap
+ * Added new smoothing and fitting fuctions to misc.mathutil
+ * Added a progress bar for use with long-running applications
+ * Added in new LWA-1 dipole NEC models
+ * Re-worked the plotAntenna.py script to use the pre-computed dipole response fits
+ * Added support for EXCITATION keywords in misc.nec_util
+ * Added new gofast readers for TBW, TBN, and DRX
+ * Added better polyphase filter support
+ * Fixed initiaization problems the various lsl.reader Frame objects
+ * Fixed the TBN ring buffer
+ * Added support for simulating point sources in TBW and TBN data
+ * Moved the tests directory out of lsl proper
+ * Added new offset/average options to drxSpectra and tbnSpectra
+ * Added new DRSU direct access module for linux system (experimental)
+
 Version 0.3
 -----------
  * New setuptools-based build system

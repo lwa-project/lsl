@@ -3,41 +3,42 @@
 """Modules to take TBW/TBN time series data and write it to a FITS file composed 
 of binary tables.  The format of TSFITS files is:
 
-PRIMARY HDU
-  Keywords:
-    * OBJECT - object being observed in this data set, e.g., 'zenith'
-    * TELESCOP - telescope used for the observations, e.g., 'LWA-1'
-    * OBSMODE - observation mode used for the data.  Options are:
-        1. TBW
-        2. TBN
-    * NSTANDS - number of stands found in the file
-    * TBWBITS *optional* - how many bits are used by the TBW data (4 or 12)
-    * FILTER *optional* - TBN filter code used to acquire the data
-    * GAIN *optional* - TBN gain setting used to acquire the data
-    * FREQ *optional* - central frequency in Hz for the TBN observations
+**PRIMARY HDU**
 
-TIME SERIES HDU
-  Binary table that stores the actual observations.  There is one TIME SERIES 
-  extension per stand (TBW/TBN) or beam/tuning pair (DRX) in the data.
-  Keywords:
-    * EXTNAME - extension name of 'TIME SERIES'
-    * EXTVER - extension version equal to the order in which the data was 
-      added to the FITS file
-    * STAND - stand number associated with this data
-    * DATE-OBS - date of observation for the first sample of the first data 
-      row
+Keywords:
+ * OBJECT - object being observed in this data set, e.g., 'zenith'
+ * TELESCOP - telescope used for the observations, e.g., 'LWA-1'
+ * OBSMODE - observation mode used for the data.  Options are TBW or TBN.
+ * NSTANDS - number of stands found in the file
+ * TBWBITS *optional* - how many bits are used by the TBW data (4 or 12)
+ * FILTER *optional* - TBN filter code used to acquire the data
+ * GAIN *optional* - TBN gain setting used to acquire the data
+ * FREQ *optional* - central frequency in Hz for the TBN observations
 
-  Data:
-    * DATA - column storing the observations.  For TBW data this consists of 
-      400 (12-bit) or 1200 (4-bit) elements per row stored as 16-bit integers.
-      For TBN data this consists of 512 elements per row stored as 32-bit 
-      complex numbers.  For DRX data this consists of 4096 elements per row 
-      stored as 32-bit complex numbers.
-    * POL - column storing the polarization associated with the DATA column.  
-      'x' polarization is stored as 0 and 'y' polarization is stored as 1.  
-      The values is stored as a 16-bit integer.
-    * TIME - number of samples at f_S (196 MSamples/s) since DATE-OBS for the
-      first sample in the row.  This is stored as a 64-bit integer.
+**TIME SERIES HDU**
+
+Binary table that stores the actual observations.  There is one TIME SERIES 
+extension per stand (TBW/TBN) or beam/tuning pair (DRX) in the data.
+
+Keywords:
+ * EXTNAME - extension name of 'TIME SERIES'
+ * EXTVER - extension version equal to the order in which the data was 
+   added to the FITS file
+ * STAND - stand number associated with this data
+ * DATE-OBS - date of observation for the first sample of the first data 
+   row
+
+Data:
+ * DATA - column storing the observations.  For TBW data this consists of 
+   400 (12-bit) or 1200 (4-bit) elements per row stored as 16-bit integers.
+   For TBN data this consists of 512 elements per row stored as 32-bit 
+   complex numbers.  For DRX data this consists of 4096 elements per row 
+   stored as 32-bit complex numbers.
+ * POL - column storing the polarization associated with the DATA column.  
+   'x' polarization is stored as 0 and 'y' polarization is stored as 1.  
+   The values is stored as a 16-bit integer.
+ * TIME - number of samples at f_S (196 MSamples/s) since DATE-OBS for the
+   first sample in the row.  This is stored as a 64-bit integer.
 """
 
 import os

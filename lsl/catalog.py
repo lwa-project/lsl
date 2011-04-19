@@ -32,11 +32,11 @@ class CatalogEntry(object):
   Represents one source entry in a catalogue.
   
   Contains members:
-    name        - The source name.
-    position    - The source equatorial J2000 position as object
-                  of type transform.CelestialPosition.
-    alias_list  - A list of strings providing alternate names for
-                  the source.
+   * name        - The source name.
+   * position    - The source equatorial J2000 position as object
+     of type transform.CelestialPosition.
+   * alias_list  - A list of strings providing alternate names for
+     the source.
   """
   
   

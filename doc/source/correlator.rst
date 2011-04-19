@@ -21,9 +21,12 @@ Polyphase Filter Bank
 FX Correlator
 -------------
 .. autofunction:: lsl.correlator.fx.noWindow
+.. autofunction:: lsl.correlator.fx.FXMaster
+
+Deprecated
+++++++++++
 .. autofunction:: lsl.correlator.fx.correlate
 .. autofunction:: lsl.correlator.fx.FXCorrelator
-.. autofunction:: lsl.correlator.fx.FXMaster
 
 Visibility Visualization
 ------------------------

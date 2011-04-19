@@ -4,6 +4,10 @@
 of NEC2, modify the input (.nec) file, and rerun NEC as necessary.
 NEC2 is the Numerical Electromagnetics Code, developed at LLNL.
 The version of NEC2 this code currently assumes is `here <http://www.physics.otago.ac.nz/research/electronics/nec/index.html>`_.
+
+Several NEC files are included with the LSL distribution for modeling the 
+dipoles.  See the `README.NEC` file included in the LSL data directory for
+more information about what is included.
 """
 
 from numpy import *

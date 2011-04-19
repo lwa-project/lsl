@@ -83,6 +83,10 @@ splitTBW.py
 
             -d, --date             	Label the split files with a date rather than a sequence number
 
+  .. note::
+	This script does not use a :mod:`lsl.reader.buffer` buffer to try to re-order or verify all
+	packets and simply splits files based on size.
+
 splitTBN.py
   :Description: Split a TBN file containing multiple seconds into several files
 
@@ -95,6 +99,10 @@ splitTBN.py
             -o, --offset           	Number of seconds to skip before splitting
 
             -d, --date             	Label the split files with a date rather than a squence number
+
+  .. note::
+	This script does not use a :mod:`lsl.reader.buffer` buffer to try to re-order or verify all
+	packets and simply splits files based on size.
 
 readTBW.py
   :Description: Example script for reading in TBW data and writing it to a TSFITS file.
@@ -176,6 +184,11 @@ tbwSpectra.py
             -d, --disable-chunks        Display plotting chunks in addition to the global average
 
             -o, --output                Output file name for spectra imag
+
+  .. warning::
+	tbwSpectra.py currently assumed that the system it is running on has enough memory to read in
+	a full TBW capture.  Due to data representation and processing overheads this amounts to about
+	16 GB.
 
 tbnSpectra.py
   :Description: Given a TBN file, plot the time averaged spectra for each digitizer input.

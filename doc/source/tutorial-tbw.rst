@@ -57,7 +57,7 @@ Here is a Python code snippet for reading in TBW data::
 	>>> print frame.data.xy.mean()
 	5.43
 
-In the above code, line 3 reads the raw TBW frame into a :mod:`lsl.reader.tbw.Frame` object.  Lines 4 and 6 access the Frame objects various attributes.  Line 4, for example, parses the TBW ID field and returns the stand number.  Line 6 prints the mean value of the X and Y polarizations.
+In the above code, line 3 reads the raw TBW frame into a :class:`lsl.reader.tbw.Frame` object.  Lines 4 and 6 access the Frame objects various attributes.  Line 4, for example, parses the TBW ID field and returns the stand number.  Line 6 prints the mean value of the X and Y polarizations.
 
 .. warning::
 	The TBW reader can throw various errors when reading in a TBW frame if the frame
@@ -68,10 +68,16 @@ In the above code, line 3 reads the raw TBW frame into a :mod:`lsl.reader.tbw.Fr
 Plot Spectra
 ------------
 After the TBW data have been read in, spectra can by computed and plotted using the function
-:mod:`lsl.correlator.fx.calcSpectra`.  For example::
+:func:`lsl.correlator.fx.calcSpectra`.  For example::
 
 	>>> from lsl.correlator import fx as fxc
 	>>> freq, spec = fxc.calcSpectra(data, LFFT=2048, DisablePool=True)
+
+LSL 0.4.0 introduces a new way to compute spectra with the :func:`lsl.correlator.fx.SpecMaster`
+function.  This function uses a C extension and OpenMP to provide better overall performance.  SpecMaster
+is called in the same way as the original calcSpectra function::
+
+	>>> freq, spec = fxc.SpecMaster(data, LFFT=2048)
 
 Where data is a 2-D array of where the first dimension loops through stands  and the second samples.
 Once the spectra have been computed, they can be plotted via *matplotlib* via::
@@ -85,7 +91,7 @@ Once the spectra have been computed, they can be plotted via *matplotlib* via::
 	>>> ax.set_ylabel('PSD [Arb. dB]')
 
 .. note::
-	In the above example, the thread pool has been disabled for :mod:`lsl.correlator.fx.calcSpectra` which
+	In the above example, the thread pool has been disabled for :func:`lsl.correlator.fx.calcSpectra` which
 	forces the function to run single-threaded.  By default, calcSpectra runs with 4 threads and this can
 	cause problems if a Ctrl-C is issued.  Ctrl-C kills the main python thread but leaves the worker 
 	threads running. 
@@ -108,7 +114,7 @@ at LWA-1 on 12/17/2010 at 21:18 UTC (JD 2,455,548.38787)::
 	... jove.alt*180/math.pi)
 	Jupiter:  az -> 112.4, el -> 24.4
 
-Line 4 defines the location for LWA-1 as a :mod:`lsl.common.stations.LWAStation` object while line 5 create an ephem.Observer object that can be used to calculate the sky positions of various bodies.  The position of Jupiter is calculated using this Observer object on lines 6 and 7.
+Line 4 defines the location for LWA-1 as a :class:`lsl.common.stations.LWAStation` object while line 5 create an ephem.Observer object that can be used to calculate the sky positions of various bodies.  The position of Jupiter is calculated using this Observer object on lines 6 and 7.
 
 .. note::
 	When working with positions from *pyephem* objects, all values are in radians.  For more

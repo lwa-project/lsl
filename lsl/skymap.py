@@ -107,8 +107,8 @@ class SkyMap(object):
 
 class SkyMapGSM(SkyMap):
 	"""Extension of the SkyMap class to use a Global Sky Model-based set of maps
-	of T0 @ f0 and alpha, where:
-		T(f) = T0*(f/f0)**alpha
+	of T0 @ f0, alpha, and beta, where:
+		.. math:: T(f) = T_0 \\times \\left(\\frac{f}{f_0}\\right)^{\\alpha + \\beta*\\log{f/f_0}}
 
 	For more information on the Global Sky Model, see: http://space.mit.edu/~angelica/gsm/index.html
 	"""

@@ -136,7 +136,7 @@ def processChunk(fh, site, stands, filename, LFFT=64, Overlap=1, SampleRate=dp_c
 		setDT = datetime.utcfromtimestamp(setTime)
 		setDT.replace(tzinfo=UTC())
 		print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
-		freqYY, outYY = fxc.FXMaster(data, stands, LFFT=LFFT, Overlap=1, IncludeAuto=True, SampleRate=SampleRate)
+		freqYY, outYY = fxc.FXMaster(data[1::2,:], stands, LFFT=LFFT, Overlap=1, IncludeAuto=True, SampleRate=SampleRate)
 		blList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=False)
 
 		toUse = numpy.where( (freqYY>10.0e6) & (freqYY<88.0e6) )

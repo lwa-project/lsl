@@ -253,8 +253,7 @@ def savitzky_golay(y, window_size, order, deriv=0):
 	better than other types of filtering approaches, such as moving averages 
 	techhniques.
 
-	Parameters
-	----------
+	Parameters:
 	  * y: array_like, shape (N,) = the values of the time history of the signal.
 	  * window_size: int = the length of the window. Must be an odd integer number.
 	  * order: int = the order of the polynomial used in the filtering.  Must be 
@@ -262,31 +261,27 @@ def savitzky_golay(y, window_size, order, deriv=0):
 	  * deriv: int = the order of the derivative to compute (default = 0 means 
 	    only smoothing)
 
-	Returns
-	-------
+	Returns:
 	  * ys: ndarray, shape (N) = the smoothed signal (or it's n-th derivative).
 
-	Notes
-	-----
+	Notes:
 	The Savitzky-Golay is a type of low-pass filter, particularly suited for 
 	smoothing noisy data. The main idea behind this approach is to make for each 
 	point a least-square fit with a polynomial of high order over a odd-sized 
 	window centered at the point.
 
-	Examples
-	--------
-	>>> t = numpy.linspace(-4, 4, 500)
-	>>> y = numpy.exp( -t**2 ) + numpy.random.normal(0, 0.05, t.shape)
-	>>> ysg = savitzky_golay(y, window_size=31, order=4)
-	>>> import matplotlib.pyplot as plt
-	>>> plt.plot(t, y, label='Noisy signal')
-	>>> plt.plot(t, numpy.exp(-t**2), 'k', lw=1.5, label='Original signal')
-	>>> plt.plot(t, ysg, 'r', label='Filtered signal')
-	>>> plt.legend()
-	>>> plt.show()
+	Examples:
+		>>> t = numpy.linspace(-4, 4, 500)
+		>>> y = numpy.exp( -t**2 ) + numpy.random.normal(0, 0.05, t.shape)
+		>>> ysg = savitzky_golay(y, window_size=31, order=4)
+		>>> import matplotlib.pyplot as plt
+		>>> plt.plot(t, y, label='Noisy signal')
+		>>> plt.plot(t, numpy.exp(-t**2), 'k', lw=1.5, label='Original signal')
+		>>> plt.plot(t, ysg, 'r', label='Filtered signal')
+		>>> plt.legend()
+		>>> plt.show()
 
-	References
-	----------
+	References:
 	  1. A. Savitzky, M. J. E. Golay, Smoothing and Differentiation of Data by 
 	     Simplified Least Squares Procedures. Analytical Chemistry, 1964, 36 (8), 
 	     pp 1627-1639.

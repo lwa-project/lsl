@@ -2,7 +2,7 @@
 
 """Modules to take DRX/TBW/TBN data and write it to a SDFITS file.
 
-.. warning:
+.. warning::
 	The FITS files created by this module to not strictly conform to the
 	SDFITS convention.
 """
@@ -17,9 +17,9 @@ from lsl.common import dp as dp_common
 from lsl.common.warns import warnDeprecated
 from lsl.correlator import fx as correlate
 
-__version__ = '0.3'
-__revision__ = '$ Revision: 15 $'
-__all__ = ['SDFITS', 'TBW', 'TBN', 'DRX', '__version__', '__revision__', '__all__']
+__version__ = '0.4'
+__revision__ = '$ Revision: 16 $'
+__all__ = ['SDFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all__']
 
 
 class SDFITS(object):

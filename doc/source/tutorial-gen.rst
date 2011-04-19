@@ -5,80 +5,78 @@ General - How do I...
 
 Get a List of Stands for a Particular Date
 ------------------------------------------
-To obtain an ordered numpy array of stands connected to the DP system at a particular station
-for a particular date::
+To obtain an ordered numpy array of stands connected to the DP system at a particular station::
 
 	from lsl.common import stations
-	lwa1 = stations.lwa1()
-	stands = lwa1.getStands(2455548.38787, JD=True)
+	lwa1 = stations.lwa1
+	stands = lwa1.getStands()
 
-This retrieves a :mod:`lsl.common.stations.LWAStation` object for LWA-1 and queries the obejct for
-a list of stands for JD 2,455,548.38.  Alternatively, the date used can be set as a string, i.e.,::
+This retrieves a :class:`lsl.common.stations.LWAStation` instance for LWA-1 built using the SSMIF 
+file included with the LSL release.  To get the list of stands corresponding to a different SSMIF
+file::
 
-	stands = lwa1.getStands('2010/12/17 21:18:00')
+	from lsl.common import stations
+	lwa = stations.parseSSMIF('your_ssmif.txt')
+	stands = lwa1.getStands()
 
-This fetches the list of stands for UT December 17, 2010 at 21:18.
+Although the stand list is useful, it is more useful to have a list of :class:`lsl.common.stations.Antenna`
+instances.  This provide much more information about the station setup (stand, FEE, position, etc.) 
+than the simple stands list.  To get this list::
+
+	from lsl.common import stations
+	lwa1 = stations.lwa1
+	antennas = lwa1.getAntennas()
+
+It should be noted that this function returned the antennas in order of DP digitizer number so 
+that it is easier to convert digitizer numbers to something useful.
 
 Get the Coordinates of a Particular Stand
 -----------------------------------------
-The :mod:`lsl.correlator.uvUtils` module contains functions to return the location of a particular stand.
-Stands are numbered from 1 to 258 with stand #257 being the isolated stand in the south west corner of LWA-1
-and stand #258 the outlier (RTA).  Two method exist to get stand position, :mod:`lsl.correlator.uvUtils.getXYZ`
-and :mod:`lsl.correlator.uvUtils.PositionCache`.  The difference between these two methods is that the former 
-reads in the list of stand coordinates each time it is called whereas the latter reads in the locations only 
-once and caches the results.  To use either method::
+Once a list of :class:`lsl.common.stations.Antenna` instances has been retrieved, it is easy to get 
+stand positions::
+	
+	xyz = numpy.zeros((3,))
+	xyz[0] = antennas[0].stand.x
+	xyz[1] = antennas[0].stand.y
+	xyz[2] = antennas[0].stand.z
 
-	import numpy
-	from lsl.correlator import uvUtils
-	xyz = uvUtils.getXYZ( numpy.array([1, 2, 3]) )
-	pCache = uvUtils.PositionCache()
-	xyz = pCache.getXYZ( numpy.array([1, 2, 3]) )
+Where x refers to the east-west difference of the antenna from the station's center post, y refers to 
+the north-south distance from the station's center post, and z to the height above the center post.  
+All of the coordinates are in meters.
 
-Both lines 3 and 5 retrive the x, y, and z coordinates (in meters) of stands 1, 2, and 3.  
+Get the Cable Delays and Gains for a Particular Stand
+-----------------------------------------------------
+The list of :class:`lsl.common.stations.Antenna` also makes it easy to find out the cable delay for a 
+particular antennas::
 
-Get the Cable Delays for a Particular Stand
--------------------------------------------
-Similar to the coordinates, the :mod:`lsl.correlator.uvUtils` module has functions to retrieve the the cable
-delays as a function of frequency for a particular stand over a particular range of frequencies.  In addition,
-there also exists both stand-alone and cached versions of the functions.  To calculate cable delays in seconds::
+	dly = antennas[0].cable.getDelay(49e6)
 
-	import numpy
-	from lsl.correlator import uvUtils
-	dly = uvUtils.cableDelay(1, freq=numpy.array([50e6, 55e6, 60e6]))
+By default, delays are computed in seconds and the input frequencies are in Hz.  The delays can be
+automatically converted to nanoseconds by setting the `ns` keyword to True.
 
-which returns a numpy array of delays for stand #1 at teh frequencies 50, 55, and 60 MHz.  The cached version is
-implemented differently so that the frequencies used are also stored in the object::
+Similarly, the cable loss for a particular antenna can be found::
 
-	import numpy
-	from lsl.correlator import uvUtils
-	dCache = uvUtils.CableCache(numpy.array([50e6, 55e6, 60e6]))
-	dly = dCache.cableDelay(1)
-	dCache.updateFreq(numpy.array([40e6, 45e6]))
-	dly = dCache.cableDelay(1)
-
-Line 3 creates the cache for frequencies of 50, 55, and 60 MHz and line 4 returns the delays at those frequencies
-for stand #1.  Unless the frequencies stored in the cache are updated (i.e., line 5), all other calls to the cache
-use the initial frequency set.
+	los = antennas[0].cable.getGain(49e6)
 
 Compute the *uvw* Coordinates of a Baseline
 -------------------------------------------
-The :mod:`lsl.correlator.uvUtils.computeUVW` function allows for *uvw* coordinates to be computed for a all baselines
+The :func:`lsl.correlator.uvUtils.computeUVW` function allows for *uvw* coordinates to be computed for a all baselines
 formed from a collection of stands for a particular hour angle, declination, and frequency::
 
 	from lsl.common import stations
 	from lsl.correlator import uvUtils
-	lwa1 = stations.lwa1()
-	stands = lwa1.getStands(2455548.38787, JD=True)
-	uvw = uvUtils.computeUVW(stands, HA=1.0, dec=65.0, freq=50e6, IncludeAuto=True)
+	lwa1 = stations.lwa1
+	antennas = lwa1.getAntennas()
+	uvw = uvUtils.computeUVW(antennas, HA=1.0, dec=65.0, freq=50e6, IncludeAuto=True)
 
 The above code block computes the *uvw* coordinates at 50 MHz for all stands used on JD 2,455,548.38 for an object at
 an hour angle of 1 hour and a declination of +65 degrees.  The returned list of *uvw* coordinates will also include 
-entries for autocorrelations.  The order of the baselines is given by the function :mod:`lsl.correlator.uvUtils.getBaselines`.
+entries for autocorrelations.  The order of the baselines is given by the function :func:`lsl.correlator.uvUtils.getBaselines`.
 
 Retrieve Earth Orientation Parameters
 -------------------------------------
 The :mod:`lsl.misc.geodesy` modules includes functions to retrieve earth orientation parameters (EOP; x, y, and UT1-UTC) for
-a given modified Julian Date (MJD) or MJD range.  To retrieve the parameters as a :mod:`lsl.misc.geodesy.EOP` object, use::
+a given modified Julian Date (MJD) or MJD range.  To retrieve the parameters as a :class:`lsl.misc.geodesy.EOP` object, use::
 
 	from lsl import astro
 	from lsl.misc import geodesy
@@ -86,7 +84,7 @@ a given modified Julian Date (MJD) or MJD range.  To retrieve the parameters as 
 	mjd = jd - astro.MJD_OFFSET
 	eop = geodesy.getEOP(mjd)
 	
-For multiple MJDs, use :mod:`lsl.misc.geodesy.getEOPRange` to return a list of EOPs, one for each day::
+For multiple MJDs, use :func:`lsl.misc.geodesy.getEOPRange` to return a list of EOPs, one for each day::
 	
 	from lsl import astro
 	from lsl.misc import geodesy
