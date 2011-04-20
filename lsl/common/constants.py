@@ -10,7 +10,7 @@ deg2rad
   the conversion factor for degrees to radians
 
 tpi
-  .. math:: 2 \\pi \\sqrt{-1}
+  :math: 2 \\pi \\sqrt{-1}
 """
 
 import math

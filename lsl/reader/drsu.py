@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
 
+"""Module to provide direct access to the files stored on a DRSU.
+
+.. warning::
+	Direct access to DRSU is currently an experimental feature that has only
+	been tested to a limited extent.  The direct access module also only 
+	compiles on Linux systems and may not work with 32-bit Linux installation.
+"""
+
+
 import os
 try:
 	import _drsu
@@ -7,9 +16,9 @@ except ImportError:
 	pass
 from lsl.reader import errors
 
-__version__ = '0.1'
-__revision__ = '$ Revision: 2 $'
-__all__ = ['File', 'listFiles', 'shepherdedReadFrame', '__version__', '__revision__', '__all__']
+__version__ = '0.2'
+__revision__ = '$ Revision: 5 $'
+__all__ = ['File', 'listFiles', 'getFileByName', 'shepherdedReadFrame', '__version__', '__revision__', '__all__']
 
 class File(object):
 	"""Object to provide direct access to a file stored on a DRSU.  The File 
@@ -76,7 +85,7 @@ class File(object):
 			self.bytesRead = self.start + self.size + offset
 	
 	def tell(self):
-		"""Return the current position in the file by using the interal
+		"""Return the current position in the file by using the internal
 		'bytesRead' attribute value."""
 		
 		return self.bytesRead
@@ -108,7 +117,13 @@ class File(object):
 
 def listFiles(device):
 	"""Function to return a list of File instances describing the files on a 
-	the specified DRSU device."""
+	the specified DRSU device.
+	
+	.. note::
+		Currently, the user needs to have read/write privileges to the device in
+		question.  This typically means running the script calling this function
+		via `sudo`.
+	"""
 	
 	try:
 		return  _drsu.listFiles(device, File)
@@ -117,12 +132,36 @@ def listFiles(device):
 			raise RuntimeError("Direct DRSU access is not supported on non-linux OSes")
 
 
+def getFileByName(device, filename):
+	"""Function to return a File instance corresponding to the specified filename 
+	on the provided device.  None is returned if the filename does not exists on
+	the device."""
+	
+	try:
+		fileList = _drsu.listFiles(device, File)
+	except NameError:
+		if os.uname()[0] != 'Linux':
+			raise RuntimeError("Direct DRSU access is not supported on non-linux OSes")
+		
+	for drsuFile in fileList:
+		if drsuFile.name == filename:
+			return drsuFile
+	
+	return None
+
+
 def shepherdedReadFrame(File, reader):
-	"""Given a (open) File object and a reader module, read in a single Frame
-	instance.  This function wraps the reader's readFrame method and 'spepherds'
-	the reading such that the file size specified by the File.size attribute is
-	enforced on the reading process.  This ensures that data beyond the 
-	'offical' end of the file are not read in."""
+	"""Given a (open) File object and a reader module (e.g., :mod:`lsl.reader.tbn`), 
+	read in a single Frame instance.  This function wraps the reader's readFrame 
+	method and 'shepherds' the reading such that the file size specified by the 
+	File.size attribute is enforced on the reading process.  This ensures that data 
+	beyond the 'official' end of the file are not read in.
+	
+	.. note::
+		Currently, the user needs to have read/write privileges to the device in
+		question.  This typically means running the script calling this function
+		via `sudo`.
+	"""
 	
 	# Make sure that the file has actually be opened.  We could do this 
 	# here but people should really open their own files so that they 

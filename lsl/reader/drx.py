@@ -39,7 +39,7 @@ averaging DRX observations.  averageObservations performs a straight channel-
 by-channel average of a collection of DRX frames, which averageObservations2
 allows for both temporal and spatial averaging.
 
-.. versionchanged:: 0.4
+.. versionchanged:: 0.4.0
 	Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 

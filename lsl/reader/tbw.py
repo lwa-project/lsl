@@ -34,7 +34,7 @@ getFramesPerObs
 	This function is a little flaky on TBW data sets that have less 
 	than a full complement or 12M (36M) samples.
 
-.. versionchanged:: 0.4
+.. versionchanged:: 0.4.0
 	Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 

@@ -85,7 +85,7 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 	.. versionchanged:: 0.3.4
 		Prior to LSL version 0.3.4, the window functions available for calcSpectra 
 		were limited to Blackman and an (untest) Polyphase filter.  With version
-		0.4, the window to be used is passed to the function call via the 'window'
+		0.4.0, the window to be used is passed to the function call via the 'window'
 		keyword and an "empty" window is provided by the module.  This allows for
 		the various window function defined in numpy (i.e., bartlett, blackman, 
 		hamming, etc.) to be used.  It also makes it easier to filter the data using
@@ -255,7 +255,7 @@ def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=Non
 		SpecMaster currently average all data given and does not support the
 		SampleAverage keyword that calcSpectra does.
 		
-	.. alsosee::
+	.. seealso::
 		:mod:`lsl.correlator.filterbank`
 	"""
 	
@@ -402,14 +402,14 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 	correlator.  Return the frequencies and visibilities as a two-elements tuple.
 
 	.. deprecated:: 0.3.4
-		FXCorrelator has been deprecated as of LSL version 0.4 in favor of the new
+		FXCorrelator has been deprecated as of LSL version 0.4.0 in favor of the new
 		C-based correlator "FXMaster".  The new correlator, however, does not 
 		currently support windowing the data.
 
 	.. versionchanged:: 0.3.4
-		Prior to LSL version 0.4, the window functions available for FXCorrelator
+		Prior to LSL version 0.4.0, the window functions available for FXCorrelator
 		were limited to Blackman and an (untest) Polyphase filter.  With version
-		0.4, the window to be used is passed to the function call via the 'window'
+		0.4.0, the window to be used is passed to the function call via the 'window'
 		keyword and an "empty" window is provided by the module.  This allows for
 		the various window function defined in numpy (i.e., bartlett, blackman, 
 		hamming, etc.) to be used.  It also makes it easier to filter the data using

@@ -37,7 +37,7 @@ getSampleRate
 getFramesPerObs
   read in the first several frames to see how many stands are found in the data.
 
-.. versionchanged:: 0.4
+.. versionchanged:: 0.4.0
 	Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
