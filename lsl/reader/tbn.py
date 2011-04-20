@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Python module for reading data in from TBN files.This module defines the 
+"""
+Python module for reading data in from TBN files.This module defines the 
 following classes for storing the TBN data found in a file:
 
 Frame
@@ -61,9 +62,11 @@ filterCodes = {1: 1000, 2: 3125, 3: 6250, 4: 12500, 5: 25000, 6: 50000, 7: 10000
 
 
 class FrameHeader(object):
-	"""Class that stores the information found in the header of a TBW 
+	"""
+	Class that stores the information found in the header of a TBW 
 	frame.  All three fields listed in the DP ICD version H are stored as 
-	well as the original binary header data."""
+	well as the original binary header data.
+	"""
 
 	def __init__(self, frameCount=None, secondsCount=None, tbnID=None):
 		self.frameCount = frameCount
@@ -71,8 +74,10 @@ class FrameHeader(object):
 		self.tbnID = tbnID
 		
 	def isTBN(self):
-		"""Function to check if the data is really TBN and not TBW by examining
-		the TBN ID field.  Returns True if the data is TBN, false otherwise."""
+		"""
+		Function to check if the data is really TBN and not TBW by examining
+		the TBN ID field.  Returns True if the data is TBN, false otherwise.
+		"""
 
 		mode = (self.tbnID>>15)&1
 		if mode == 0:
@@ -81,8 +86,10 @@ class FrameHeader(object):
 			return False
 
 	def parseID(self):
-		"""Function to parse the TBN ID field and return a tuple of the stand 
-		number and polarization."""
+		"""
+		Function to parse the TBN ID field and return a tuple of the stand 
+		number and polarization.
+		"""
 
 		if self.tbnID&1023 % 2 == 0:
 			stand = (self.tbnID&1023) / 2
@@ -95,8 +102,10 @@ class FrameHeader(object):
 
 
 class FrameData(object):
-	"""Class that stores the information found in the data section of a TBN
-	frame.  Both fields listed in the DP ICD version H are stored."""
+	"""
+	Class that stores the information found in the data section of a TBN
+	frame.  Both fields listed in the DP ICD version H are stored.
+	"""
 
 	def __init__(self, timeTag=None, iq=None):
 		self.sampleRate = None
@@ -106,13 +115,17 @@ class FrameData(object):
 		self.iq = iq
 
 	def getTime(self):
-		"""Function to convert the time tag from samples since the UNIX epoch
-		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch."""
+		"""
+		Function to convert the time tag from samples since the UNIX epoch
+		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+		"""
 		
 		return self.timeTag / dp_common.fS
 
 	def getFilterCode(self):
-		"""Function to convert the sample rate in Hz to a filter code."""
+		"""
+		Function to convert the sample rate in Hz to a filter code.
+		"""
 		
 		if self.sampleRate is None:
 			return None
@@ -124,24 +137,32 @@ class FrameData(object):
 			return sampleCodes[self.sampleRate]
 
 	def setSampleRate(self, sampleRate):
-		"""Function to set the sample rate of the TBN data in Hz."""
+		"""
+		Function to set the sample rate of the TBN data in Hz.
+		"""
 
 		self.sampleRate = sampleRate
 
 	def setCentralFreq(self, centralFreq):
-		"""Function to set the central frequency of the TBN data in Hz."""
+		"""
+		Function to set the central frequency of the TBN data in Hz.
+		"""
 
 		self.centralFreq = centralFreq
 
 	def setGain(self, gain):
-		"""Function to set the gain of the TBN data."""
+		"""
+		Function to set the gain of the TBN data.
+		"""
 
 		self.gain = gain
 
 
 class Frame(object):
-	"""Class that stores the information contained within a single TBN 
-	frame.  It's properties are FrameHeader and FrameData objects."""
+	"""
+	Class that stores the information contained within a single TBN 
+	frame.  It's properties are FrameHeader and FrameData objects.
+	"""
 
 	def __init__(self, header=None, data=None):
 		if header is None:
@@ -157,46 +178,62 @@ class Frame(object):
 		self.valid = True
 
 	def parseID(self):
-		"""Convenience wrapper for the Frame.FrameHeader.parseID function."""
+		"""
+		Convenience wrapper for the Frame.FrameHeader.parseID function.
+		"""
 		
 		return self.header.parseID()
 
 	def getTime(self):
-		"""Convenience wrapper for the Frame.FrameData.getTime function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.getTime function.
+		"""
 		
 		return self.data.getTime()
 
 	def getFilterCode(self):
-		"""Convenience wrapper for the Frame.FrameData.getFilterCode function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.getFilterCode function.
+		"""
 
 		return self.data.getFilterCode()
 
 	def setSampleRate(self, sampleRate):
-		"""Convenience wrapper for the Frame.FrameData.setSampleRate function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.setSampleRate function.
+		"""
 
 		self.data.setSampleRate(sampleRate)
 
 	def setCentralFreq(self, centralFreq):
-		"""Convenience wrapper for the Frame.FrameData.setCentralFreq function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.setCentralFreq function.
+		"""
 
 		self.data.setCentralFreq(centralFreq)
 
 	def setGain(self, gain):
-		"""Convenience wrapper for the Frame.FrameData.setGain function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.setGain function.
+		"""
 
 		self.data.setGain(gain)
 			
 	def __add__(self, y):
-		"""Add the data sections of two frames together or add a number 
-		to every element in the data section."""
+		"""
+		Add the data sections of two frames together or add a number 
+		to every element in the data section.
+		"""
 		
 		newFrame = copy.deepcopy(self)
 		newFrame += y
 		return newFrame
 			
 	def __iadd__(self, y):
-		"""In-place add the data sections of two frames together or add 
-		a number to every element in the data section."""
+		"""
+		In-place add the data sections of two frames together or add 
+		a number to every element in the data section.
+		"""
 		
 		try:
 			self.data.iq += y.data.iq
@@ -205,16 +242,20 @@ class Frame(object):
 		return self
 		
 	def __mul__(self, y):
-		"""Multiple the data sections of two frames together or multiply 
-		a number to every element in the data section."""
+		"""
+		Multiple the data sections of two frames together or multiply 
+		a number to every element in the data section.
+		"""
 		
 		newFrame = copy.deepcopy(self)
 		newFrame *= y
 		return newFrame
 	
 	def __imul__(self, y):
-		"""In-place multiple the data sections of two frames together or 
-		multiply a number to every element in the data section."""
+		"""
+		In-place multiple the data sections of two frames together or 
+		multiply a number to every element in the data section.
+		"""
 		
 		try:
 			self.data.iq *= y.data.iq
@@ -223,8 +264,10 @@ class Frame(object):
 		return self
 
 	def __eq__(self, y):
-		"""Check if the time tags of two frames are equal or if the time
-		tag is equal to a particular value."""
+		"""
+		Check if the time tags of two frames are equal or if the time
+		tag is equal to a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -238,8 +281,10 @@ class Frame(object):
 			return False
 			
 	def __ne__(self, y):
-		"""Check if the time tags of two frames are not equal or if the time
-		tag is not equal to a particular value."""
+		"""
+		Check if the time tags of two frames are not equal or if the time
+		tag is not equal to a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -253,8 +298,10 @@ class Frame(object):
 			return False
 			
 	def __gt__(self, y):
-		"""Check if the time tag of the first frame is greater than that of a
-		second frame or if the time tag is greater than a particular value."""
+		"""
+		Check if the time tag of the first frame is greater than that of a
+		second frame or if the time tag is greater than a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -268,9 +315,11 @@ class Frame(object):
 			return False
 			
 	def __ge__(self, y):
-		"""Check if the time tag of the first frame is greater than or equal to 
+		"""
+		Check if the time tag of the first frame is greater than or equal to 
 		that of a second frame or if the time tag is greater than a particular 
-		value."""
+		value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -284,8 +333,10 @@ class Frame(object):
 			return False
 			
 	def __lt__(self, y):
-		"""Check if the time tag of the first frame is less than that of a
-		second frame or if the time tag is greater than a particular value."""
+		"""
+		Check if the time tag of the first frame is less than that of a
+		second frame or if the time tag is greater than a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -299,9 +350,11 @@ class Frame(object):
 			return False
 			
 	def __le__(self, y):
-		"""Check if the time tag of the first frame is less than or equal to 
+		"""
+		Check if the time tag of the first frame is less than or equal to 
 		that of a second frame or if the time tag is greater than a particular 
-		value."""
+		value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -315,8 +368,10 @@ class Frame(object):
 			return False
 			
 	def __cmp__(self, y):
-		"""Compare two frames based on the time tags.  This is helpful for 
-		sorting things."""
+		"""
+		Compare two frames based on the time tags.  This is helpful for 
+		sorting things.
+		"""
 		
 		tX = self.data.timeTag
 		tY = y.data.timeTag
@@ -341,17 +396,23 @@ class ObservingBlock(object):
 			self.y = y
 
 	def getTime(self):
-		"""Convenience wrapper for the Frame.FrameData.getTime function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.getTime function.
+		"""
 		
 		return self.x[0].data.getTime()
 
 	def getFilterCode(self):
-		"""Convenience wrapper for the Frame.FrameData.getFilterCode function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.getFilterCode function.
+		"""
 
 		return self.x[0].data.getFilterCode()
 
 	def setSampleRate(self, sampleRate):
-		"""Convenience wrapper for the Frame.FrameData.setSampleRate function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.setSampleRate function.
+		"""
 
 		for i in len(self.x):
 			self.x[i].data.setSampleRate(sampleRate)
@@ -359,7 +420,9 @@ class ObservingBlock(object):
 			self.y[i].data.setSampleRate(sampleRate)
 
 	def setCentralFreq(self, centralFreq):
-		"""Convenience wrapper for the Frame.FrameData.setCentralFreq function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.setCentralFreq function.
+		"""
 
 		for i in len(self.x):
 			self.x[i].data.setCentralFreq(centralFreq)
@@ -367,7 +430,9 @@ class ObservingBlock(object):
 			self.y[i].data.setCentralFreq(centralFreq)
 
 	def setGain(self, gain):
-		"""Convenience wrapper for the Frame.FrameData.setGain function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.setGain function.
+		"""
 
 		for i in len(self.x):
 			self.x[i].data.setGain(gain)
@@ -376,8 +441,10 @@ class ObservingBlock(object):
 
 
 def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):
-	"""Function to read in a single TBN frame (header+data) and store the 
-	contents as a Frame object."""
+	"""
+	Function to read in a single TBN frame (header+data) and store the 
+	contents as a Frame object.
+	"""
 
 	# New Go Fast! (TM) method
 	try:
@@ -398,7 +465,8 @@ def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=
 
 
 def readBlock(filehandle, nFrames=520, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):
-	"""Function to read in a single TBN block (frames set by the nFrames 
+	"""
+	Function to read in a single TBN block (frames set by the nFrames 
 	keyword) and store the contents as a ObservingBlock object.  This function 
 	wraps readFrame.
 	
@@ -422,10 +490,12 @@ def readBlock(filehandle, nFrames=520, SampleRate=None, CentralFreq=None, Gain=N
 	
 
 def getSampleRate(filehandle, nFrames=None, FilterCode=False):
-	"""Find out what the sampling rate/filter code is from consecutive sets of 
+	"""
+	Find out what the sampling rate/filter code is from consecutive sets of 
 	observations.  By default, the rate in Hz is returned.  However, the 
 	corresponding filter code can be returned instead by setting the FilterCode
-	keyword to true."""
+	keyword to True.
+	"""
 
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
@@ -497,7 +567,8 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 
 def getFramesPerObs(filehandle):
-	"""Find out how many frames are present per observation by examining 
+	"""
+	Find out how many frames are present per observation by examining 
 	the first 2,080 TBN frames.  Return the number of frames per observations 
 	as a two-	element tuple, one for each polarization.
 	

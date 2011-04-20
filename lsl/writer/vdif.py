@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Module to write VDIF frames.  The implementation of this module is similar
+"""
+Module to write VDIF frames.  The implementation of this module is similar
 to that of lsl.sim.tbw in that the primary element defined in this module is
 a Frame object which as attribute functions that can create a numpy 
 representation of the raw frame and write that raw frame to an open file-
@@ -8,7 +9,6 @@ handle.
 
 .. seealso::
 	:mod:`lsl.sim.tbw`
-
 """
 
 import math
@@ -29,8 +29,10 @@ unixEpoch = ephem.Date('1970/01/01 00:00:00.00')
 
 
 class Frame(object):
-	"""Object to create and write a VDIF (VLBI Data Interchange Format) 
-	frame (version 1, June 26, 2009)."""
+	"""
+	Object to create and write a VDIF (VLBI Data Interchange Format) 
+	frame (version 1, June 26, 2009).
+	"""
 	
 	def __init__(self, stand=0, time=0, bits=16, data=None, sampleRate=dp_common.fS):
 		self.stand = stand
@@ -49,9 +51,11 @@ class Frame(object):
 		self.__setEpoch()
 		
 	def __dataAdjust(self):
-		"""Adjust the data to the number of bits required for the frame 
+		"""
+		Adjust the data to the number of bits required for the frame 
 		and convert to unsigned 32-bit integers.  Also, interlace complex
-		arrays."""
+		arrays.
+		"""
 		
 		if self.dataReal:
 			interlaced = self.data
@@ -66,9 +70,11 @@ class Frame(object):
 		self.data = biased
 		
 	def __setEpoch(self):
-		"""Convert a UNIX timestap in seconds since 1970 to seconds since
+		"""
+		Convert a UNIX timestap in seconds since 1970 to seconds since
 		January 1st, 2000 using ephem.Data objects.  Also, calculate the 
-		frame number since the beginning of the second."""
+		frame number since the beginning of the second.
+		"""
 		
 		# UNIX time to seconds since DJD  = 0
 		curEpoch = float(unixEpoch)*astro.SECS_IN_DAY + self.time
@@ -86,8 +92,10 @@ class Frame(object):
 			self.frame = long(frame * 2)
 
 	def createRawFrame(self):
-		"""Using the data and information stored in the object, create a
-		numpy array on unsigned 1-byte integers that represents the frame."""
+		"""
+		Using the data and information stored in the object, create a
+		numpy array on unsigned 1-byte integers that represents the frame.
+		"""
 		
 		# Find out how many samples can be packed into a work and build
 		# the corresponding numpy array.
@@ -144,8 +152,10 @@ class Frame(object):
 		return raw
 
 	def writeRawFrame(self, fh):
-		"""Create a numpy representation of the VDIF frame and then write 
-		it to the specified file handle."""
+		"""
+		Create a numpy representation of the VDIF frame and then write 
+		it to the specified file handle.
+		"""
 		
 		rawFrame = self.createRawFrame()
 		rawFrame.tofile(fh)

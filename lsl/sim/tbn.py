@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Python module for creating creating, validating, and writing simulated 
-TBN frames to a file."""
+"""
+Python module for creating creating, validating, and writing simulated 
+TBN frames to a file.
+"""
 
 import numpy
 
@@ -14,7 +16,9 @@ __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
 
 def frame2frame(tbnFrame):
-	"""Convert a tbn.Frame object to a raw DP TBN frame."""
+	"""
+	Convert a :class:`lsl.reader.tbn.Frame` object to a raw DP TBN frame.
+	"""
 
 	# The raw frame
 	rawFrame = numpy.zeros(tbn.FrameSize, dtype=numpy.uint8)
@@ -67,18 +71,22 @@ def frame2frame(tbnFrame):
 
 
 class SimFrame(tbn.Frame):
-	"""tbn.SimFrame extends the lsl.reader.tbn.Frame object to yield a method 
+	"""
+	tbn.SimFrame extends the :class:`lsl.reader.tbn.Frame` object to yield a method 
 	for easily creating DP ICD-compliant raw TBN frames.  Frames created with
-	this method can be written to a file via the methods writeRawFrame() function."""
+	this method can be written to a file via the methods writeRawFrame() function.
+	"""
 
 	def __init__(self, stand=None, pol=None, frameCount=None, obsTime=None, iq=None):
-		"""Given a list of parameters, build a tbn.SimFrame object.  The parameters
+		"""
+		Given a list of parameters, build a tbn.SimFrame object.  The parameters
 		needed are:
-		  + stand id (>0 & <259)
-		  + polarization (0 for x, or 1 for y)
-		  + which frame number to create
-		  + observation time in samples at fS since the epoch
-		  + 1-D numpy array representing the frame I/Q (complex) data
+		  * stand id (>0 & <259)
+		  * polarization (0 for x, or 1 for y)
+		  * which frame number to create
+		  * observation time in samples at fS since the epoch
+		  * 1-D numpy array representing the frame I/Q (complex) data
+		  
 		Not all of these parameters are needed at initialization of the object and
 		the values can be added later.
 
@@ -96,8 +104,10 @@ class SimFrame(tbn.Frame):
 		self.data = tbn.FrameData()
 		
 	def __update(self):
-		"""Private function to use the object's parameter values to build up 
-		a tbn.Frame-like object."""
+		"""
+		Private function to use the object's parameter values to build up 
+		a tbn.Frame-like object.
+		"""
 		
 		self.header.frameCount = self.frameCount
 		self.header.secondsCount = int(self.obsTime)
@@ -107,7 +117,9 @@ class SimFrame(tbn.Frame):
 		self.data.iq = self.iq
 	
 	def loadFrame(self, tbnFrame):
-		"""Populate the a tbn.SimFrame object with a pre-made frame."""
+		"""
+		Populate the a tbn.SimFrame object with a pre-made frame.
+		"""
 		
 		self.header = tbnFrame.header
 		self.data = tbnFrame.data
@@ -122,9 +134,11 @@ class SimFrame(tbn.Frame):
 		self.iq = self.data.iq
 	
 	def isValid(self, raiseErrors=False):
-		"""Check if simulated TBN frame is valid or not.  Valid frames return 
+		"""
+		Check if simulated TBN frame is valid or not.  Valid frames return 
 		True and invalid frames False.  If the 'raiseErrors' keyword is set, 
-		isValid raises an error when a problem is encountered."""
+		isValid raises an error when a problem is encountered.
+		"""
 
 		# Make sure we have the latest values
 		self.__update()
@@ -164,9 +178,11 @@ class SimFrame(tbn.Frame):
 		return True
 
 	def createRawFrame(self):
-		"""Re-express a simulated TBN frame as a numpy array of unsigned 8-bit 
+		"""
+		Re-express a simulated TBN frame as a numpy array of unsigned 8-bit 
 		integers.  Returns a numpy array if the frame  is valid.  If the frame 
-		is not ICD-compliant, a errors.baseSimError-type error is raised."""
+		is not ICD-compliant, a errors.baseSimError-type error is raised.
+		"""
 
 		# Make sure we have the latest values
 		self.__update()
@@ -175,9 +191,11 @@ class SimFrame(tbn.Frame):
 		return frame2frame(self)
 
 	def writeRawFrame(self, fh):
-		"""Write a simulated TBN frame to a filehandle if the frame is valid.
+		"""
+		Write a simulated TBN frame to a filehandle if the frame is valid.
 		If the frame is not ICD-compliant, a errors.baseSimError-type error 
-		is raised."""
+		is raised.
+		"""
 
 		# Make sure we have the latest values
 		self.__update()

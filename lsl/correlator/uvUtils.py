@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 
-"""This module stores various functions that are needed for computing UV 
+"""
+This module stores various functions that are needed for computing UV 
 coverage and time delays.  The functions in the module:
   * compute the u, v, and w coordinates of all baselines defined by an array 
     of stands
@@ -34,11 +35,13 @@ class uvUtilsError(Exception):
 
 
 def getBaselines(antennas, IncludeAuto=False, Indicies=False):
-	"""Generate a list of two-element tuples that describe which antennae
+	"""
+	Generate a list of two-element tuples that describe which antennae
 	compose each of the output uvw triplets from computeUVW/computeUVTrack.
 	If the Indicies keyword is set to True, the two-element tuples 
 	contain the indicies of the stands array used, rather than the actual
-	stand numbers."""
+	stand numbers.
+	"""
 
 	if IncludeAuto:
 		offset = 0
@@ -59,10 +62,12 @@ def getBaselines(antennas, IncludeAuto=False, Indicies=False):
 	
 
 def baseline2antenna(baseline, antennas, BaselineList=None, IncludeAuto=False, Indicies=False):
-	"""Given a baseline number, a list of stands, and options of how the base-
+	"""
+	Given a baseline number, a list of stands, and options of how the base-
 	line listed was generated, convert the baseline number to antenna numbers.
 	Alternatively, use a list of baselines instead of generating a new list.  
-	This utility is useful for figuring out what antennae comprise a baseline."""
+	This utility is useful for figuring out what antennae comprise a baseline.
+	"""
 
 	# Build up the list of baselines using the options provided
 	if BaselineList is None:
@@ -77,10 +82,12 @@ def baseline2antenna(baseline, antennas, BaselineList=None, IncludeAuto=False, I
 
 
 def antenna2baseline(ant1, ant2, antennas, BaselineList=None, IncludeAuto=False, Indicies=False):
-	"""Given two antenna numbers, a list of stands, and options to how the base-
+	"""
+	Given two antenna numbers, a list of stands, and options to how the base-
 	line listed was generated, convert the antenna pair to  a baseline number. 
 	This utility is useful for picking out a particular pair from a list of
-	baselines."""
+	baselines.
+	"""
 
 	# Build up the list of baselines using the options provided
 	if BaselineList is None:
@@ -104,7 +111,8 @@ def antenna2baseline(ant1, ant2, antennas, BaselineList=None, IncludeAuto=False,
 
 
 def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, IncludeAuto=False):
-	"""Compute the uvw converate of a baselines formed by a collection of 
+	"""
+	Compute the uvw converate of a baselines formed by a collection of 
 	stands.  The coverage is computed at a given HA (in hours) and 
 	declination (in degrees) for LWA-1.  The frequency provided (in Hz) can 
 	either as a scalar or as a numpy array.  If more than one frequency is 
@@ -160,7 +168,8 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, IncludeAuto=False):
 
 
 def computeUVTrack(antennas, dec=34.070, freq=49.0e6):
-	"""Whereas computeUVW provides the uvw coverage at a particular time, 
+	"""
+	Whereas computeUVW provides the uvw coverage at a particular time, 
 	computeUVTrack provides the complete uv plane track for a long 
 	integration.  The output is a three dimensional numpy array with 
 	dimensions baselines, uv, and 512 points along the track ellipses.  

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Python module for reading data in from S60 files.  Unlike TBW or TBN data, 
+"""
+Python module for reading data in from S60 files.  Unlike TBW or TBN data, 
 the S60 data consists of only packed binary values.  Thus, the functions for 
 reading in the S60 data do not return objects describing each frame but rather
 return numpy arrays of the data.  The two reading functions defined are:
@@ -14,7 +15,8 @@ readChunk
 
 In addition to the two readers, there is also a function, getBandpassModel, 
 which reads in Joe Craig's model of the S60 bandpass. See `the S60 data page <http://www.phys.unm.edu/~lwa/dokuwiki/doku.php?id=s60_data#view_and_plot_with_octave>`_
-for information about the model."""
+for information about the model.
+"""
 
 import numpy
 
@@ -39,8 +41,10 @@ SampleRate = FrameSize*__PacketsPerSecond / 2.0
 
 
 def readFrame(filehandle):
-	"""Function to read in a single S60 frame and return the data as a numpy
-	single-precision complex array with 734 elements."""
+	"""
+	Function to read in a single S60 frame and return the data as a numpy
+	single-precision complex array with 734 elements.
+	"""
 
 	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=FrameSize)
 	data = numpy.zeros(FrameSize/2, dtype=numpy.csingle)
@@ -54,9 +58,11 @@ def readFrame(filehandle):
 
 
 def readChunk(filehandle, Chunk=4096):
-	"""Function to read a certain number of chunks (samples) from the input file-
+	"""
+	Function to read a certain number of chunks (samples) from the input file-
 	handle and return them as a single-precision complex numpy array.  The output 
-	is in samples so twice as many bytes need to be read in as samples."""
+	is in samples so twice as many bytes need to be read in as samples.
+	"""
 
 	rawData = numpy.fromfile(filehandle, dtype=numpy.uint8, count=2*Chunk)
 	data = numpy.empty(Chunk, dtype=numpy.csingle)
@@ -70,7 +76,9 @@ def readChunk(filehandle, Chunk=4096):
 
 
 def getBandpassModel():
-	"""Read in Joe's model for the S60 badpass that is posted on the wiki."""
+	"""
+	Read in Joe's model for the S60 badpass that is posted on the wiki.
+	"""
 
 	from scipy.io import loadmat
 

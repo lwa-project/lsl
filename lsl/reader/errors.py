@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains the error classes for the DRX, TBN, and TBW readers.  
-These errors are currently meant to deal with file I/O problems."""
+"""
+Module that contains the error classes for the DRX, TBN, and TBW readers.  
+These errors are currently meant to deal with file I/O problems.
+"""
 
 __version__ = '0.1'
 __revision__ = '$ Revision: 0 $'
@@ -13,8 +15,10 @@ MaxErrorNo = 5
 
 
 class baseReaderError(IOError):
-	"""Base class for file I/O problem during numpy.fromfile calls and out-of-
-sync Mark5C headers."""
+	"""
+	Base class for file I/O problem during numpy.fromfile calls and out-of-
+	sync Mark5C headers.
+	"""
 
 	def __init__(self, strerror, errno='-1'):
 		self.errno = errno
@@ -27,8 +31,10 @@ sync Mark5C headers."""
 
 
 class eofError(baseReaderError):
-	"""Extension to the base class for dealing with EOF errors.  The error code
-	is 1."""
+	"""
+	Extension to the base class for dealing with EOF errors.  The error code
+	is 1.
+	"""
 
 	def __init__(self):
 		self.errno = 1
@@ -38,9 +44,11 @@ class eofError(baseReaderError):
 
 
 class numpyError(baseReaderError):
-	"""Extension to the base class for dealing with errors that occur when 
+	"""
+	Extension to the base class for dealing with errors that occur when 
 	numpy.fromfile tried to read more data can exists.  This is a specialized form
-	of EOF error.  The error code is 2."""
+	of EOF error.  The error code is 2.
+	"""
 
 	def __init__(self):
 		self.errno = 2
@@ -50,9 +58,11 @@ class numpyError(baseReaderError):
 
 
 class syncError(baseReaderError):
-	"""Extension to the base class for dealing with Mark 5C header sync word 
+	"""
+	Extension to the base class for dealing with Mark 5C header sync word 
 	problems.  If the sync word doesn't match what is expected.  The error code 
-	is 3."""
+	is 3.
+	"""
 
 	def __init__(self, sync1=None, sync2=None, sync3=None, sync4=None):
 		self.errno = 3
@@ -69,8 +79,10 @@ class syncError(baseReaderError):
 
 
 class notTBNError(baseReaderError):
-	"""Extenstion to the base class for dealing with trying to read in TBW data 
-	with a TBN reader.  The error code is 4."""
+	"""
+	Extenstion to the base class for dealing with trying to read in TBW data 
+	with a TBN reader.  The error code is 4.
+	"""
 
 	def __init__(self):
 		self.errno = 4
@@ -80,8 +92,10 @@ class notTBNError(baseReaderError):
 
 
 class notTBWError(baseReaderError):
-	"""Extenstion to the base class for dealing with trying to read in TBN data 
-	with a TBW reader.  The error code is 5."""
+	"""
+	Extenstion to the base class for dealing with trying to read in TBN data 
+	with a TBW reader.  The error code is 5.
+	"""
 
 	def __init__(self):
 		self.errno = 5
@@ -91,9 +105,11 @@ class notTBWError(baseReaderError):
 
 
 def listErrorCodes(errno=None):
-	"""Function to provide a list of errors defined in this file.  It 
+	"""
+	Function to provide a list of errors defined in this file.  It 
 	alternatively takes an error code using the 'errno' keyword and returns its
-	description."""
+	description.
+	"""
 
 	if errno is None:
 		for i in range(MinErrorNo, (MaxErrorNo+1)):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Python module to reading in data from both 12-bit and 4-bit TBW files.  
+"""
+Python module to reading in data from both 12-bit and 4-bit TBW files.  
 This module defines the following classes for storing the TBW data found in
 a file:
 
@@ -30,7 +31,6 @@ getFramesPerObs
   read in the first several frames to see how many stands are found in the 
   data.
   .. note::
-
 	This function is a little flaky on TBW data sets that have less 
 	than a full complement or 12M (36M) samples.
 
@@ -55,9 +55,11 @@ FrameSize = 1224
 
 
 class FrameHeader(object):
-	"""Class that stores the information found in the header of a TBW 
+	"""
+	Class that stores the information found in the header of a TBW 
 	frame.  All three fields listed in the DP ICD version H are stored as 
-	well as the original binary header data."""
+	well as the original binary header data.
+	"""
 
 	def __init__(self, frameCount=None, secondsCount=None, tbwID=None):
 		self.frameCount = frameCount
@@ -65,8 +67,10 @@ class FrameHeader(object):
 		self.tbwID = tbwID
 
 	def isTBW(self):
-		"""Function to check if the data is really TBW and not TBN by examining
-		the TBW ID field.  Returns True if the data is TBW, false otherwise."""
+		"""
+		Function to check if the data is really TBW and not TBN by examining
+		the TBW ID field.  Returns True if the data is TBW, false otherwise.
+		"""
 
 		mode = (self.tbwID>>15)&1
 		if mode == 1:
@@ -75,7 +79,9 @@ class FrameHeader(object):
 			return False
 
 	def parseID(self):
-		"""Function to parse the TBW ID field and return the stand number."""
+		"""
+		Function to parse the TBW ID field and return the stand number.
+		"""
 
 		# Why &1023?  Well, from DP ICD revision H, it seems that the stand count 
 		# only goes up 260.  So, channel numbers should range up to 520, which can
@@ -85,9 +91,11 @@ class FrameHeader(object):
 		return stand
 
 	def getDataBits(self):
-		"""Function to parse the TBW ID field and return the size of number of 
+		"""
+		Function to parse the TBW ID field and return the size of number of 
 		bits that comprise the data.  12 is returned for 12-bit data, and 4 
-		for 4-bit data."""
+		for 4-bit data.
+		"""
 
 		bits = (self.tbwID>>14)&1
 		if bits == 0:
@@ -99,16 +107,20 @@ class FrameHeader(object):
 
 
 class FrameData(object):
-	"""Class that stores the information found in the data section of a TBW
-	frame.  Both fields listed in the DP ICD version H are stored."""
+	"""
+	Class that stores the information found in the data section of a TBW
+	frame.  Both fields listed in the DP ICD version H are stored.
+	"""
 
 	def __init__(self, timeTag=None, samples=400, xy=None):
 		self.timeTag = timeTag
 		self.xy = xy
 
 	def getTime(self):
-		"""Function to convert the time tag from samples since the UNIX epoch
-		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch."""
+		"""
+		Function to convert the time tag from samples since the UNIX epoch
+		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+		"""
 
 		seconds = self.timeTag / dp_common.fS
 		
@@ -116,8 +128,10 @@ class FrameData(object):
 
 
 class Frame(object):
-	"""Class that stores the information contained within a single TBW 
-	frame.  It's properties are FrameHeader and FrameData objects."""
+	"""
+	Class that stores the information contained within a single TBW 
+	frame.  It's properties are FrameHeader and FrameData objects.
+	"""
 
 	def __init__(self, header=None, data=None):
 		if header is None:
@@ -133,33 +147,43 @@ class Frame(object):
 		self.valid = True
 
 	def parseID(self):
-		"""Convenience wrapper for the Frame.FrameHeader.parseID 
-		function."""
+		"""
+		Convenience wrapper for the Frame.FrameHeader.parseID 
+		function.
+		"""
 		
 		return self.header.parseID()
 
 	def getDataBits(self):
-		"""Convenience wrapper for the Frame.FrameHeader.getDataBits 
-		function."""
+		"""
+		Convenience wrapper for the Frame.FrameHeader.getDataBits 
+		function.
+		"""
 		
 		return self.header.getDataBits()
 
 	def getTime(self):
-		"""Convenience wrapper for the Frame.FrameData.getTime function."""
+		"""
+		Convenience wrapper for the Frame.FrameData.getTime function.
+		"""
 		
 		return self.data.getTime()
 			
 	def __add__(self, y):
-		"""Add the data sections of two frames together or add a number 
-		to every element in the data section."""
+		"""
+		Add the data sections of two frames together or add a number 
+		to every element in the data section.
+		"""
 		
 		newFrame = copy.deepcopy(self)
 		newFrame += y
 		return newFrame
 	
 	def __iadd__(self, y):
-		"""In-place add the data sections of two frames together or add 
-		a number to every element in the data section."""
+		"""
+		In-place add the data sections of two frames together or add 
+		a number to every element in the data section.
+		"""
 		
 		try:
 			self.data.xy += y.data.xy
@@ -168,16 +192,20 @@ class Frame(object):
 		return self
 		
 	def __mul__(self, y):
-		"""Multiple the data sections of two frames together or multiply 
-		a number to every element in the data section."""
+		"""
+		Multiple the data sections of two frames together or multiply 
+		a number to every element in the data section.
+		"""
 
 		newFrame = copy.deepcopy(self)
 		newFrame *= y		
 		return newFrame
 			
 	def __imul__(self, y):
-		"""In-place multiple the data sections of two frames together or 
-		multiply a number to every element in the data section."""
+		"""
+		In-place multiple the data sections of two frames together or 
+		multiply a number to every element in the data section.
+		"""
 		
 		try:
 			self.data.xy *= y.data.xy
@@ -186,8 +214,10 @@ class Frame(object):
 		return self
 			
 	def __eq__(self, y):
-		"""Check if the time tags of two frames are equal or if the time
-		tag is equal to a particular value."""
+		"""
+		Check if the time tags of two frames are equal or if the time
+		tag is equal to a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -201,8 +231,10 @@ class Frame(object):
 			return False
 			
 	def __ne__(self, y):
-		"""Check if the time tags of two frames are not equal or if the time
-		tag is not equal to a particular value."""
+		"""
+		Check if the time tags of two frames are not equal or if the time
+		tag is not equal to a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -216,8 +248,10 @@ class Frame(object):
 			return False
 			
 	def __gt__(self, y):
-		"""Check if the time tag of the first frame is greater than that of a
-		second frame or if the time tag is greater than a particular value."""
+		"""
+		Check if the time tag of the first frame is greater than that of a
+		second frame or if the time tag is greater than a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -231,9 +265,11 @@ class Frame(object):
 			return False
 			
 	def __ge__(self, y):
-		"""Check if the time tag of the first frame is greater than or equal to 
+		"""
+		Check if the time tag of the first frame is greater than or equal to 
 		that of a second frame or if the time tag is greater than a particular 
-		value."""
+		value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -247,8 +283,10 @@ class Frame(object):
 			return False
 			
 	def __lt__(self, y):
-		"""Check if the time tag of the first frame is less than that of a
-		second frame or if the time tag is greater than a particular value."""
+		"""
+		Check if the time tag of the first frame is less than that of a
+		second frame or if the time tag is greater than a particular value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -262,9 +300,11 @@ class Frame(object):
 			return False
 			
 	def __le__(self, y):
-		"""Check if the time tag of the first frame is less than or equal to 
+		"""
+		Check if the time tag of the first frame is less than or equal to 
 		that of a second frame or if the time tag is greater than a particular 
-		value."""
+		value.
+		"""
 		
 		tX = self.data.timeTag
 		try:
@@ -278,8 +318,10 @@ class Frame(object):
 			return False
 			
 	def __cmp__(self, y):
-		"""Compare two frames based on the time tags.  This is helpful for 
-		sorting things."""
+		"""
+		Compare two frames based on the time tags.  This is helpful for 
+		sorting things.
+		"""
 		
 		tX = self.data.timeTag
 		tY = y.data.timeTag
@@ -292,9 +334,11 @@ class Frame(object):
 
 
 def readFrame(filehandle, Verbose=False):
-	"""Function to read in a single TBW frame (header+data) and store the 
+	"""
+	Function to read in a single TBW frame (header+data) and store the 
 	contents as a Frame object.  This function wraps readerHeader and 
-	readData[(12)|4]."""
+	readData[(12)|4].
+	"""
 	
 	# New Go Fast! (TM) method
 	try:
@@ -308,8 +352,10 @@ def readFrame(filehandle, Verbose=False):
 
 
 def getDataBits(filehandle):
-	"""Find out the number of data bits used in the file be reading in the 
-	first frame."""
+	"""
+	Find out the number of data bits used in the file be reading in the 
+	first frame.
+	"""
 
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
@@ -327,7 +373,8 @@ def getDataBits(filehandle):
 
 
 def getFramesPerObs(filehandle):
-	"""Find out how many frames are present per observation by examining 
+	"""
+	Find out how many frames are present per observation by examining 
 	the first frames for what would be 260 stands.  This is done by reading
 	two frames and then skipping the next 30,000.
 	

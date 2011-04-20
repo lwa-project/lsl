@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Module to make an ASCII progress bar."""
+"""
+Module to make an ASCII progress bar.
+"""
 
 import copy
 
@@ -10,20 +12,22 @@ __all__ = ['ProgressBar', '__version__', '__revision__', '__all__']
 
 
 class ProgressBar(object):
-	"""Object to make a ASCII progress bar for use with various long-
+	"""
+	Object to make a ASCII progress bar for use with various long-
 	run tasks.
 
 	Example Usage:
-	>>> import sys
-	>>> from progess import ProgressBar
-	>>> pb = ProgressBar()
-	>>> pb.inc()
-	>>> sys.stdout.write(pb.show() + '\r')
-	>>> sys.stdout.flush()
+		>>> import sys
+		>>> from progess import ProgressBar
+		>>> pb = ProgressBar()
+		>>> pb.inc()
+		>>> sys.stdout.write(pb.show())
+		>>> sys.stdout.flush()
 	"""
 
 	def __init__(self, max=100, span=70, sym='=', printP=True):
-		"""Initialize the ProgressBar class with various parameters:
+		"""
+		Initialize the ProgressBar class with various parameters:
 		  * max: maximum count for the progress bar (default: 100)
 		  * span: width in characters to make the bar (default: 70)
 		  * sym: character to use in the progress bar (default: '=')
@@ -38,19 +42,25 @@ class ProgressBar(object):
 		self.printP = printP
 	
 	def inc(self, amount=1):
-		"""Increment the progress bar's internal counter by some amount.  The
-		default is one."""
+		"""
+		Increment the progress bar's internal counter by some amount.  The
+		default is one.
+		"""
 
 		self.__iadd__(amount)
 
 	def dec(self, amount=1):
-		"""Decrement the progress bar's internal counter by some amount.  The
-		default is one."""
+		"""
+		Decrement the progress bar's internal counter by some amount.  The
+		default is one.
+		"""
 			
 		self.__isub__(amount)
 
 	def show(self):
-		"""Build a string representation of the progress bar and return it."""
+		"""
+		Build a string representation of the progress bar and return it.
+		"""
 
 		if self.printP:
 			# If we want the percentage also displayed, trim a little 
@@ -74,22 +84,28 @@ class ProgressBar(object):
 		return out
 		
 	def __add__(self, amount):
-		"""Increment the internal counter by a certain amount, return a new
-		ProgressBar object."""
+		"""
+		Increment the internal counter by a certain amount, return a new
+		ProgressBar object.
+		"""
 		
 		newBar = copy.deepcopy(self)
 		newBar += amount
 		return newBar
 
 	def __iadd__(self, amount):
-		"""Increment the internal counter by a certain amount."""
+		"""
+		Increment the internal counter by a certain amount.
+		"""
 
 		self.amount += amount
 		return self
 		
 	def __sub__(self, amount):
-		"""Decrement the internal counter by a certain amount, return a new
-		ProgressBar object."""
+		"""
+		Decrement the internal counter by a certain amount, return a new
+		ProgressBar object.
+		"""
 		
 		newBar = copy.deepcopy(self)
 		if newBar.amount >= amount:
@@ -97,13 +113,17 @@ class ProgressBar(object):
 		return newBar
 
 	def __isub__(self, amount):
-		"""Decrement the internal counter by a certain amount"""
+		"""
+		Decrement the internal counter by a certain amount.
+		"""
 
 		if self.amount >= amount:
 			self.amount -= amount
 		return self
 
 	def __str__(self):
-		"""Alternative to self.show()."""
+		"""
+		Alternative to self.show().
+		"""
 
 		return self.show()

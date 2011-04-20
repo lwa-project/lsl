@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 
-"""Module that stores various useful constants in one convenient location.
+"""
+Module that stores various useful constants in one convenient location.
 The constants defined in this file are:
 
 c

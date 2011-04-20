@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains a set of convenience functions to parse the output 
+"""
+This module contains a set of convenience functions to parse the output 
 of NEC2, modify the input (.nec) file, and rerun NEC as necessary.
 NEC2 is the Numerical Electromagnetics Code, developed at LLNL.
 The version of NEC2 this code currently assumes is `here <http://www.physics.otago.ac.nz/research/electronics/nec/index.html>`_.
@@ -28,16 +29,20 @@ _NEC_UTIL_LOG.setLevel(logging.INFO)
 
 
 def CloseTo( x, y, epsilon=0.005 ):
-	"""Return True if two numbers are within a specified fractional, not 
+	"""
+	Return True if two numbers are within a specified fractional, not 
 	absolute, tolerance of each other.  Tolerance epsilon is a keyword 
-	parameter with a default of 0.005."""
+	parameter with a default of 0.005.
+	"""
 
 	return ( 2.0*abs(x-y)/(x+y) < epsilon )
 
 
 def open_and_get_nec_freq(fname):
-	"""Open a NEC output file and return a tuple containing the open file 
-	object and the first frequency found in the file (MHz)."""
+	"""
+	Open a NEC output file and return a tuple containing the open file 
+	object and the first frequency found in the file (MHz).
+	"""
 
 	f = open(fname)
 
@@ -74,7 +79,9 @@ def open_and_get_nec_freq(fname):
 
 
 def change_nec_freq(necname, freq):
-	"""Modify the FR card in a NEC input file to run at freq."""
+	"""
+	Modify the FR card in a NEC input file to run at freq.
+	"""
 
 	f = open(necname,'r+')
 	buf = f.read()
@@ -98,11 +105,13 @@ def change_nec_freq(necname, freq):
 
 
 def calcIME(necname, myfreqs = None, zpre = 100):
-	"""Compute the impedance mismatch efficiency (IME), for a given NEC run 
+	"""
+	Compute the impedance mismatch efficiency (IME), for a given NEC run 
 	and write out the results in a file.  Assumes a default preamplifier input 
 	impedance of 100 ohms, unless overridden by the zpre keyword argument.
 	Returns the frequencies calculated by NEC, unless myfreqs is set, in 
-	which case it interpolates onto that frequency grid."""
+	which case it interpolates onto that frequency grid.
+	"""
 
 	ant = NECImpedance(necname)
 	gamma = (zpre - ant.z)/(zpre + ant.z)
@@ -115,7 +124,8 @@ def calcIME(necname, myfreqs = None, zpre = 100):
 
 
 class NECImpedance:
-	"""NECImpedance:
+	"""
+	NECImpedance:
 	Python class to read an array of impedance values from a NEC2 .out file The 
 	.nec file should loop over a range of frequencies with an FR card like this:
 
@@ -192,7 +202,8 @@ class NECImpedance:
 
 
 class NECPattern:
-	"""NECPattern:
+	"""
+	NECPattern:
 	Python class to read the pattern from a NEC2 .out file.  Note that the 
 	.nec file should have an RP card to run over the full pattern, like this:
 
@@ -270,8 +281,10 @@ class NECPattern:
 		
 
 	def __readRADIATION(self, f):
-		"""Private function to read in a RADIATION PATTERN section of a NEC
-		output file."""
+		"""
+		Private function to read in a RADIATION PATTERN section of a NEC
+		output file.
+		"""
 
 		# Some versions of NEC2 output extraneous data after "RADIATION PATTERNS" before the actual data
 		# and column labels (e.g. RANGE = and EXP (-JKR) values ).  Discard until
@@ -300,8 +313,10 @@ class NECPattern:
 
 
 	def __readEXCITATION(self, f):
-		"""Private function to read in data stored in a collection of EXCITATION 
-		sections in a NEC output file."""
+		"""
+		Private function to read in data stored in a collection of EXCITATION 
+		sections in a NEC output file.
+		"""
 
 		n = 0
 		# We have already read the first line of the first entry, so start there
@@ -334,9 +349,11 @@ class NECPattern:
 
 
 def whichNEC4():
-	"""Return the path to the nec4d executable if it can be found in the 
+	"""
+	Return the path to the nec4d executable if it can be found in the 
 	current path.  None otherwise.  This is useful for making sure that NEC
-	is installed before trying to run something."""
+	is installed before trying to run something.
+	"""
 
 	def is_exe(fpath):
 		return os.path.exists(fpath) and os.access(fpath, os.X_OK)

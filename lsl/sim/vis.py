@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Module for generating simulated arrays and visilibity data.  The chief 
+"""
+Module for generating simulated arrays and visilibity data.  The chief 
 functions of this module are:
 
 buildSimArray
@@ -75,13 +76,15 @@ srcs = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her',
 
 
 class Antenna(aipy.amp.Antenna):
-	"""Modification to the aipy.amp.Antenna class to also store the stand ID 
+	"""
+	Modification to the aipy.amp.Antenna class to also store the stand ID 
 	number in the Antenna.stand attribute.  This also add a getBeamShape 
-	attribute that pulls in the old vis.getBeamShape function."""
+	attribute that pulls in the old vis.getBeamShape function.
+	"""
 
 	def __init__(self, x, y, z, beam, phsoff=[0.,0.], bp_r=n.array([1]), bp_i=n.array([0]), amp=1, pointing=(0.,n.pi/2,0), stand=0, **kwargs):
-		"""New init function that include stand ID number support.  From aipy.amp.Antenna:
-
+		"""
+		New init function that include stand ID number support.  From aipy.amp.Antenna:
 		  * x,y z = antenna coordinates in equatorial (ns) coordinates
 		  * beam = Beam object (implements response() function)
 		  * phsoff = polynomial phase vs. frequency.  Phs term that is linear
@@ -101,10 +104,12 @@ class Antenna(aipy.amp.Antenna):
 		self._update_gain()
 
 	def get_beam_shape(self, pol='x'):
-		"""Return a 360 by 90 by nFreqs numpy array showning the beam pattern of a
+		"""
+		Return a 360 by 90 by nFreqs numpy array showning the beam pattern of a
 		particular antenna in the array.  The first two dimensions of the output 
 		array contain the azimuth (from 0 to 359 degrees in 1 degree steps) and 
-		altitlude (from 0 to 89 degrees in 1 degree steps)."""
+		altitlude (from 0 to 89 degrees in 1 degree steps).
+		"""
 
 		# Build azimuth and altitude arrays.  Be sure to convert to radians
 		az = n.zeros((360,90))
@@ -129,13 +134,17 @@ class Antenna(aipy.amp.Antenna):
 
 
 class AntennaArray(aipy.amp.AntennaArray):
-	"""Modification to the aipy.ant.AntennaArray class to add a fuction to 
+	"""
+	Modification to the aipy.ant.AntennaArray class to add a fuction to 
 	retrieve the stands stored in the AntennaArray.ants attribute.  Also add 
-	a function to set the array time from a UNIX timestamp."""
+	a function to set the array time from a UNIX timestamp.
+	"""
 
 	def get_stands(self):
-		"""Return a numpy array listing the stands found in the AntennaArray 
-		object."""
+		"""
+		Return a numpy array listing the stands found in the AntennaArray 
+		object.
+		"""
 
 		stands = []
 		for ant in self.ants:
@@ -144,12 +153,15 @@ class AntennaArray(aipy.amp.AntennaArray):
 		return numpy.array(stands)
 
 	def set_unixtime(self, timestamp):
-		"""Set the array time using a UNIX timestamp (epoch 1970)."""
+		"""
+		Set the array time using a UNIX timestamp (epoch 1970).
+		"""
 
 		self.set_jultime(astro.unix_to_utcjd(time))
 		
 	def sim(self, i, j, pol='xx'):
-		"""Simulate visibilites for the specified (i,j) baseline and 
+		"""
+		Simulate visibilites for the specified (i,j) baseline and 
 		polarization.  sim_cache() must be called at each time step before 
 		this will return valid results.
 		
@@ -188,7 +200,8 @@ class AntennaArray(aipy.amp.AntennaArray):
 
 
 def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=False, verbose=False):
-	"""Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
+	"""
+	Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
 	object defined from the lwa_common module, a numpy array of stand numbers, 
 	and a numpy array of frequencies in either Hz of GHz.  Optional inputs are
 	a Julian Date to set the array to and a positional error terms that perturbs
@@ -269,8 +282,10 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 
 
 def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None):
-	"""Helper function for buildSimData so that buildSimData can be called with 
-	a list of Julian Dates and reconstruct the data appropriately."""
+	"""
+	Helper function for buildSimData so that buildSimData can be called with 
+	a list of Julian Dates and reconstruct the data appropriately.
+	"""
 
 	nFreq = (n.squeeze((aa.get_afreqs()))).shape[0]
 
@@ -399,7 +414,8 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 
 
 def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter='z', baselines=None, mask=None, verbose=False):
-	"""Given an AIPY AntennaArray object and a dictionary of sources from 
+	"""
+	Given an AIPY AntennaArray object and a dictionary of sources from 
 	aipy.src.get_catalog, returned a data dictionary of simulated data taken at 
 	zenith.  Optinally, the data can be masked using some referenced (observed) 
 	data set or only a specific sub-set of baselines.
@@ -454,7 +470,8 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter='
 
 
 def scaleData(dataDict, amps, delays):
-	"""Apply a set of antenna-based real gain values and phase delays in ns to a 
+	"""
+	Apply a set of antenna-based real gain values and phase delays in ns to a 
 	data dictionary.  Returned the new scaled and delayed dictionary.
 	
 	..versionchanged:: 0.4.0
@@ -487,9 +504,11 @@ def scaleData(dataDict, amps, delays):
 	
 
 def shiftData(dataDict, aa):
-	"""Shift the uvw coordinates in one data dictionary to a new set of uvw 
+	"""
+	Shift the uvw coordinates in one data dictionary to a new set of uvw 
 	coordinates that correspond to a new AntennaArray object.  This is useful
-	for looking at how positional errors in the array affect the data."""
+	for looking at how positional errors in the array affect the data.
+	"""
 
 	import copy
 	
@@ -520,9 +539,11 @@ def shiftData(dataDict, aa):
 
 
 def buildGriddedImage(dataDict, MapSize=30, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None):
-	"""Given a data dictionary, build an aipy.img.ImgW object of gridded uv data 
+	"""
+	Given a data dictionary, build an aipy.img.ImgW object of gridded uv data 
 	which can be used for imaging.  The ImgW object itself is returned by this 
-	function to make it more versatile."""
+	function to make it more versatile.
+	"""
 
 	im = aipy.img.ImgW(size=MapSize, res=MapRes, wres=MapWRes)
 

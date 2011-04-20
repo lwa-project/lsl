@@ -9,7 +9,6 @@ Station-Level Data
 Stand-Level Data
 ----------------
 .. automodule:: lsl.correlator.uvUtils
-   :members: validateStand
 
 Exceptions
 ++++++++++

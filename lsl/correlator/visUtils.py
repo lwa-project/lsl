@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Module of methods for visualizing visibility data.  Routines include:
+"""
+Module of methods for visualizing visibility data.  Routines include:
   * plots of visibility amplitude as a function of uv radius
   * plots of phase for specific baselines as a function of time
   * plots of closure phase for three antennae as a function of time
@@ -25,16 +26,20 @@ __all__ = ['argument', 'unwrap', 'unmaskCompressedData', 'plotVisibilities', 'pl
 
 
 def argument(data):
-	"""Return the argument (phase) of a complex number.  This function is 
-	a 'short cut' for the numpy.angle function."""
+	"""
+	Return the argument (phase) of a complex number.  This function is 
+	a 'short cut' for the numpy.angle function.
+	"""
 	
 	return n.angle(data)
 
 
 def unwrap(theta):
-	"""Given a numpy array of phases (complex number arguments), unwrap the 
+	"""
+	Given a numpy array of phases (complex number arguments), unwrap the 
 	phases by looking for +/- pi jumps in the data.  Return an unwrapped 
-	numpy array of the same length."""
+	numpy array of the same length.
+	"""
 
 	output = 1.0*theta
 	for i in range(1, len(theta), 1):
@@ -46,9 +51,11 @@ def unwrap(theta):
 
 
 def unmaskCompressedData(data, mask):
-	"""Given a numpy array that has been compressed and the mask used to 
+	"""
+	Given a numpy array that has been compressed and the mask used to 
 	compress it, rebuild the original full-sized array.  Values that were 
-	previously masked are replaced with NaNs."""
+	previously masked are replaced with NaNs.
+	"""
 
 	origData = n.zeros(len(mask), dtype=data.dtype)
 	
@@ -66,11 +73,13 @@ def unmaskCompressedData(data, mask):
 
 
 def plotVisibilities(dataDict,  pol='yy', chan=None, jd=None, simDict=None, SaveFig=False):
-	"""Given a data dictionary from readUVData, create a plot of visibility
+	"""
+	Given a data dictionary from readUVData, create a plot of visibility
 	amplitude as a function of uv radius.  Alternately, a Julian Date can be 
 	specified and only data matched that date are plotted.  If a dictionary of 
 	simulated data are also supplied via the simDict keyword, a two-panel plot
-	is created comparing the real and simulated data."""
+	is created comparing the real and simulated data.
+	"""
 	
 	fig = plt.figure()
 	if simDict is not None:
@@ -127,10 +136,12 @@ def plotVisibilities(dataDict,  pol='yy', chan=None, jd=None, simDict=None, Save
 
 
 def plotPhases(dataDict, baselines=[0], pol='yy', jd=None, stands=None, simDict=None, Unwrap=False, SaveFig=False):
-	"""Given a data dictionary from readUVData, create a plot of visibility
+	"""
+	Given a data dictionary from readUVData, create a plot of visibility
 	phase as a function of frequency.  If a dictionary of simulated data are 
 	also supplied via the simDict keyword, a two-panel plot is created comparing 
-	the real and simulated data."""
+	the real and simulated data.
+	"""
 
 	fig = plt.figure()
 	if simDict is not None:
@@ -242,14 +253,16 @@ def plotPhases(dataDict, baselines=[0], pol='yy', jd=None, stands=None, simDict=
 
 
 def fitPhases(dataDict, simDict, baseline=0, pol='yy', minCorr=0.90, returnDispersion=False, stands=None, NoPlot=False):
-	"""Given a data dictionary from readUVData, fit delays by examining the
+	"""
+	Given a data dictionary from readUVData, fit delays by examining the
 	change of the visiblility phases with frequency.  This routine examines
 	each baseline of interest and looks for flat regions that are 3 MHz wide 
 	and have R correlation values greater than 'minCorr'.  In theses flat 
 	regions, a line is fit to the data and average slope found from the fits
 	yields a delay.  The delays are returned as a numpy array with values in
 	ns.  If the returnDispersion keyword is set, a numpy array with the 
-	standard deviation of the fits is also returned."""
+	standard deviation of the fits is also returned.
+	"""
 
 	import pylab
 
@@ -336,10 +349,12 @@ def fitPhases(dataDict, simDict, baseline=0, pol='yy', minCorr=0.90, returnDispe
 
 
 def plotClosure(dataDict, pol='yy', antennas=[1, 2, 3], individualPhases=False, stands=None, SaveFig=False):
-	"""Given a data dictionary from readUVData, plot the closure phase of three 
+	"""
+	Given a data dictionary from readUVData, plot the closure phase of three 
 	antennae as a function of time.  If the individualPhases keyword is set, also 
 	plot the phases over time of the three antennae that comprise the closure 
-	triplet."""
+	triplet.
+	"""
 
 	fig = plt.figure()
 	if not individualPhases:
@@ -444,9 +459,11 @@ def plotClosure(dataDict, pol='yy', antennas=[1, 2, 3], individualPhases=False, 
 
 
 def plotWaterfall(dataDict, baseline=21, pol='yy', stands=None, simDict=None, SaveFig=False):
-	"""Create a waterfall diagram (visibility amplitude as a function of time and 
+	"""
+	Create a waterfall diagram (visibility amplitude as a function of time and 
 	frequency) for a particular baseline.  If simulated data are also provided, 
-	plot those on a seperate axis."""
+	plot those on a seperate axis.
+	"""
 	
 	fig = plt.figure()
 	if simDict is None:
@@ -536,9 +553,11 @@ def plotWaterfall(dataDict, baseline=21, pol='yy', stands=None, simDict=None, Sa
 
 
 def matchAmps(dataDict, baseline=21, pol='yy', stands=None, simDict=None, SaveFig=False):
-	"""Create a waterfall diagram (visibility amplitude as a function of time and 
+	"""
+	Create a waterfall diagram (visibility amplitude as a function of time and 
 	frequency) for a particular baseline.  If simulated data are also provided, 
-	plot those on a seperate axis."""
+	plot those on a seperate axis.
+	"""
 	
 	fig = plt.figure()
 	if simDict is None:
@@ -648,9 +667,11 @@ def matchAmps(dataDict, baseline=21, pol='yy', stands=None, simDict=None, SaveFi
 
 
 def plotDiffWaterfall(dataDict, simDict, baseline=21, pol='yy', stands=None, SaveFig=False):
-	"""Create a waterfall diagram (visibility amplitude as a function of time and 
+	"""
+	Create a waterfall diagram (visibility amplitude as a function of time and 
 	frequency) for a particular baseline.  If simulated data are also provided, 
-	plot those on a seperate axis."""
+	plot those on a seperate axis.
+	"""
 	
 	fig = plt.figure()
 	ax1 = fig.add_subplot(3, 1, 1)
@@ -753,9 +774,11 @@ def plotDiffWaterfall(dataDict, simDict, baseline=21, pol='yy', stands=None, Sav
 
 
 def plotPhaseWaterfall(dataDict, baseline=21, pol='yy', stands=None, simDict=None, SaveFig=False):
-	"""Create a waterfall diagram (visibility phase as a function of time and 
+	"""
+	Create a waterfall diagram (visibility phase as a function of time and 
 	frequency) for a particular baseline.  If simulated data are also provided, 
-	plot those on a seperate axis."""
+	plot those on a seperate axis.
+	"""
 	
 	fig = plt.figure()
 	if simDict is None:

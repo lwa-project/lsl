@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains the error classes for the DRX, TBN, and TBW simulated
+"""
+Module that contains the error classes for the DRX, TBN, and TBW simulated
 data writers.  These errors are currently meant to deal with things that can 
-invalidate a frame or set of frames."""
+invalidate a frame or set of frames.
+"""
 
 import numpy
 
@@ -16,7 +18,9 @@ MaxErrorNo = 6
 
 
 class baseSimError(IOError):
-	"""Base class for problems that can invalidate a data frame."""
+	"""
+	Base class for problems that can invalidate a data frame.
+	"""
 
 	def __init__(self, strerror, errno='-1'):
 		self.errno = errno
@@ -29,8 +33,10 @@ class baseSimError(IOError):
 
 
 class invalidStand(baseSimError):
-	"""Extension to the base class for dealing with frames with out-of-range 
-	stand numbers.  The error code is 1."""
+	"""
+	Extension to the base class for dealing with frames with out-of-range 
+	stand numbers.  The error code is 1.
+	"""
 
 	def __init__(self):
 		self.errno = 1
@@ -40,8 +46,10 @@ class invalidStand(baseSimError):
 
 
 class invalidPol(baseSimError):
-	"""Extension to the base class for dealing with frames with out-of-range 
-	polarization numbers.  The error code is 2."""
+	"""
+	Extension to the base class for dealing with frames with out-of-range 
+	polarization numbers.  The error code is 2.
+	"""
 
 	def __init__(self):
 		self.errno = 2
@@ -51,8 +59,10 @@ class invalidPol(baseSimError):
 
 
 class invalidBeam(baseSimError):
-	"""Extension to the base class for dealing with frames with out-of-range 
-	DRX beam numbers.  The error code is 3."""
+	"""
+	Extension to the base class for dealing with frames with out-of-range 
+	DRX beam numbers.  The error code is 3.
+	"""
 
 	def __init__(self):
 		self.errno = 3
@@ -62,8 +72,10 @@ class invalidBeam(baseSimError):
 
 
 class invalidTune(baseSimError):
-	"""Extension to the base class for dealing with frames with out-of-range 
-	DRX tunning numbers.  The error code is 4."""
+	"""
+	Extension to the base class for dealing with frames with out-of-range 
+	DRX tunning numbers.  The error code is 4.
+	"""
 
 	def __init__(self):
 		self.errno = 4
@@ -73,8 +85,10 @@ class invalidTune(baseSimError):
 
 
 class invalidDataSize(baseSimError):
-	"""Extension to the base class for dealing with frames with data sections that
-	have the wrong array size.  The error code is 5."""
+	"""
+	Extension to the base class for dealing with frames with data sections that
+	have the wrong array size.  The error code is 5.
+	"""
 
 	def __init__(self):
 		self.errno = 5
@@ -84,8 +98,10 @@ class invalidDataSize(baseSimError):
 
 
 class invalidDataType(baseSimError):
-	"""Extension to the base class for dealing with frames with data sections that
-	have the wrong type (real vs complex).  The error code is 6."""
+	"""
+	Extension to the base class for dealing with frames with data sections that
+	have the wrong type (real vs complex).  The error code is 6.
+	"""
 
 	def __init__(self):
 		self.errno = 6
@@ -95,9 +111,11 @@ class invalidDataType(baseSimError):
 
 
 def listErrorCodes(errno=None):
-	"""Function to provide a list of errors defined in this file.  It 
+	"""
+	Function to provide a list of errors defined in this file.  It 
 	alternatively takes an error code using the 'errno' keyword and returns its
-	description."""
+	description.
+	"""
 
 	if errno is None:
 		for i in range(MinErrorNo, (MaxErrorNo+1)):

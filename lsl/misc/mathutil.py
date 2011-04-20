@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Useful math functions for LWA work"""
+"""
+Useful math functions for LWA work.
+"""
 
 import logging
 import math
@@ -18,12 +20,14 @@ _MATHUTIL_LOG = logging.getLogger('mathutil')
 
 
 def regrid(x, y, newx, allow_extrapolation = False, method = 'spline'):
-	"""Regrid data from x,y onto newx. If allow_extrapolation is True,
+	"""
+	Regrid data from x,y onto newx. If allow_extrapolation is True,
 	extrapolation is attempted if the method supports it.  Supported
 	methods are:
 	  * linear
 	  * spline
-	Use of this function may require the scipy extension package."""
+	Use of this function may require the scipy extension package.
+	"""
 	
 	if method == 'linear':
 		return _regrid_linear(x, y, newx, allow_extrapolation)
@@ -34,7 +38,9 @@ def regrid(x, y, newx, allow_extrapolation = False, method = 'spline'):
 
 
 def _regrid_linear(x, y, newx, allow_extrapolation=False):
-	"""Implement regrid() function using linear interpolation."""
+	"""
+	Implement regrid() function using linear interpolation.
+	"""
 	
 	if allow_extrapolation:
 		_MATHUTIL_LOG.warning("allow_extrapolation=True not honored for regrid_linear")
@@ -48,7 +54,9 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
 
 
 def _regrid_spline(x, y, newx, allow_extrapolation=False):
-	"""Implement regrid() function using spline fit and interpolation."""
+	"""
+	Implement regrid() function using spline fit and interpolation.
+	"""
 	
 	from scipy import interpolate
 
@@ -64,10 +72,12 @@ def _regrid_spline(x, y, newx, allow_extrapolation=False):
   
 
 def downsample(vector, factor, rescale=True):
-	"""Downsample (i.e. co-add consecutive numbers) a vector by an integer 
+	"""
+	Downsample (i.e. co-add consecutive numbers) a vector by an integer 
 	factor.  Trims the input timeseries to be a multiple of the downsample 
 	factor, if needed.  If rescale == True, then divides each sum by factor 
-	to produce a mean value, otherwise just adds the values in the vector."""
+	to produce a mean value, otherwise just adds the values in the vector.
+	"""
 
 	if (len(vector) % factor):
 		_MATHUTIL_LOG.warning("Length of 'vector' is not divisible by 'factor'=%d, clipping!", factor)
@@ -83,7 +93,8 @@ def downsample(vector, factor, rescale=True):
     
     
 def smooth(x,window_len=10,window='hanning'):
-	"""Smooth the data using a window with requested size.  Stolen from SciPy 
+	"""
+	Smooth the data using a window with requested size.  Stolen from SciPy 
 	Cookbook at http://www.scipy.org/Cookbook/SignalSmooth
 	
 	This method is based on the convolution of a scaled window with the signal.
@@ -99,18 +110,18 @@ def smooth(x,window_len=10,window='hanning'):
 
 	Output:
 	  * the smoothed signal
-		
 	Example:
-	  >>> from numpy import *
-	  >>> t=linspace(-2,2,0.1)
-	  >>> x=sin(t)+randn(len(t))*0.1
-	  >>> y=smooth(x)
+		>>> from numpy import *
+		>>> t=linspace(-2,2,0.1)
+		>>> x=sin(t)+randn(len(t))*0.1
+		>>> y=smooth(x)
 	
 	.. seealso:: 
 		numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
 		scipy.signal.lfilter
 	
-	TODO: the window parameter could be the window itself if an array instead of a string"""
+	TODO: the window parameter could be the window itself if an array instead of a string
+	"""
 
 	if x.ndim != 1:
 		raise ValueError("smooth only accepts 1 dimension arrays.")
@@ -139,13 +150,16 @@ def smooth(x,window_len=10,window='hanning'):
 
 
 def cmagnitude(cmplx):
-	"""Return the polar magnitudes of complex values."""
+	"""
+	Return the polar magnitudes of complex values.
+	"""
 	
 	return abs(cmplx)
     
 
 def cphase(cmplx):
-	"""Return the polar phases of complex values as radians.
+	"""
+	Return the polar phases of complex values as radians.
 
 	.. seealso::
 		:func:`lsl.correlator.visUtils.argument`
@@ -155,9 +169,11 @@ def cphase(cmplx):
     
     
 def cpolar(cmplx):
-	"""Return the polar (magnitude, phase) representation of complex
+	"""
+	Return the polar (magnitude, phase) representation of complex
 	values (real, imaginary).  The return value is an array of shape (N,2),
-	where N is the length of the cmplx input array."""
+	where N is the length of the cmplx input array.
+	"""
 	
 	if isinstance(cmplx, (numpy.ndarray, list, tuple)):
 		return numpy.array(list(zip(cmagnitude(cmplx), cphase(cmplx))))
@@ -166,8 +182,10 @@ def cpolar(cmplx):
     
 
 def creal(cmplx):
-	"""Return the real rectilinear component from complex values
-	expressed in polar form (magnitude, phase)."""
+	"""
+	Return the real rectilinear component from complex values
+	expressed in polar form (magnitude, phase).
+	"""
 	
 	if isinstance(cmplx, numpy.ndarray):
 		return (cmplx[...,0] * numpy.cos(cmplx[...,1]))
@@ -176,8 +194,10 @@ def creal(cmplx):
 
   
 def cimag(cmplx):
-	"""Return the imaginary rectilinear component from complex values
-	expressed in polar form (magnitude, phase)."""
+	"""
+	Return the imaginary rectilinear component from complex values
+	expressed in polar form (magnitude, phase).
+	"""
 	
 	if isinstance(cmplx, numpy.ndarray):
 		return (cmplx[...,0] * numpy.sin(cmplx[...,1]))
@@ -186,8 +206,10 @@ def cimag(cmplx):
     
 
 def crect(cmplx):
-	"""Return the rectilinear (real, imaginary) representation of complex
-	values (magnitude, phase)."""
+	"""
+	Return the rectilinear (real, imaginary) representation of complex
+	values (magnitude, phase).
+	"""
 	
 	if isinstance(cmplx, numpy.ndarray):
 		ret = numpy.empty((len(cmplx),), numpy.complex_)
@@ -199,19 +221,24 @@ def crect(cmplx):
         
     
 def to_dB(factor):
-	"""Convert from linear units to decibels."""
+	"""
+	Convert from linear units to decibels.
+	"""
 	
 	return 10.0 * numpy.log10(factor)
     
     
 def from_dB(dB):
-	"""Convert from decibels to linear units."""
+	"""
+	Convert from decibels to linear units.
+	"""
 	
 	return numpy.power(10.0, (dB/10.0))
     
     
 def robustmean(arr):
-	"""Take the robust mean of an array, normally a small section of a 
+	"""
+	Take the robust mean of an array, normally a small section of a 
 	spectrum, over which the mean can be assumed to be constant.  Makes two 
 	passes discarding outliers >3 sigma ABOVE (not below) the mean.
 
@@ -247,7 +274,8 @@ def robustmean(arr):
 
 
 def savitzky_golay(y, window_size, order, deriv=0):
-	"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
+	"""
+	Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
 	The Savitzky-Golay filter removes high frequency noise from data.  It has 
 	the advantage of preserving the original shape and features of the signal 
 	better than other types of filtering approaches, such as moving averages 
@@ -313,7 +341,8 @@ def savitzky_golay(y, window_size, order, deriv=0):
 
 
 def gaussian1d(height, center, width):
-	"""Return a function that generates a 1-D gaussian with the specified
+	"""
+	Return a function that generates a 1-D gaussian with the specified
 	height, mean, and standard deviation.  
 	
 	Example:
@@ -331,7 +360,8 @@ def gaussian1d(height, center, width):
 
 
 def gaussian2d(height, centerX, centerY, widthMaj, widthMin, angle=0.0):
-	"""Return a function that generates a 2-D gaussian with the specified 
+	"""
+	Return a function that generates a 2-D gaussian with the specified 
 	height, mean (for both X and Y), standard deviation (for both major and 
 	minor axes), and rotation angle from the X axis in degrees.
 
@@ -345,7 +375,8 @@ def gaussian2d(height, centerX, centerY, widthMaj, widthMin, angle=0.0):
 
 
 def gaussparams(data, x=None, y=None):
-	"""Estimate the parameters (height, center, width) for a gaussian.  The 
+	"""
+	Estimate the parameters (height, center, width) for a gaussian.  The 
 	return order is:
 	  1-D: height, center, width
 	  2-D: height, center x, center y, width x, width y, position angle
@@ -378,7 +409,8 @@ def gaussparams(data, x=None, y=None):
 
 
 def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
-	"""Decompose a spherical or semi-spherical data set into spherical harmonics.  
+	"""
+	Decompose a spherical or semi-spherical data set into spherical harmonics.  
 
 	Inputs:
 	  * az: 2-D numpy array of azimuth coordinates in radians or degrees if the 
@@ -444,7 +476,8 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
 
 
 def sphval(terms, az, alt, degrees=False, realOnly=False):
-	"""Evaluate a set of spherical harmonic coefficents at a specified set of
+	"""
+	Evaluate a set of spherical harmonic coefficents at a specified set of
 	azimuth and altitude coordinates.
 
 	Inputs:

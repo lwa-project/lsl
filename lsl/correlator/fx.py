@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Python module to handle the channelization and cross-correlation of TBW and
+"""
+Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main python functions in this module are:
   * calcSpectra - calculate power spectra for a collection of signals
   * FXCorrelator - calculate cross power spectra for a collection of signals
@@ -36,14 +37,18 @@ __all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP
 
 
 def noWindow(L):
-	"""Default "empty" windowing function for use with the various routines.  This
-	function returned a numpy array of '1's of the specified length."""
+	"""
+	Default "empty" windowing function for use with the various routines.  This
+	function returned a numpy array of '1's of the specified length.
+	"""
 
 	return numpy.ones(L)
 
 
 def calcSpectrum(signal, LFFT=64, window=noWindow, verbose=False):
-	"""Worker function for calcSpectra."""
+	"""
+	Worker function for calcSpectra.
+	"""
 
 	# Figure out if we are working with complex (I/Q) data or only real.  This
 	# will determine how the FFTs are done since the real data mirrors the pos-
@@ -76,7 +81,8 @@ def calcSpectrum(signal, LFFT=64, window=noWindow, verbose=False):
 
 
 def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
-	"""Given a collection of time series data with inputs on the first dimension
+	"""
+	Given a collection of time series data with inputs on the first dimension
 	and data on the second, compute the spectra for all inputs.  By default, 
 	all data in the time series are average into a single spectrum.  However, this 
 	behavior can be modified if the SampleAverage keyword is set.  SampleAverage 
@@ -198,7 +204,8 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 
 
 def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
-	"""A more advanced version of calcSpectra that uses the _spec C extension 
+	"""
+	A more advanced version of calcSpectra that uses the _spec C extension 
 	to handle all of the P.S.D. calculations in parallel.  Returns a two-
 	element tuple of the frequencies (in Hz) and PSDs in dB/RBW.
 	
@@ -247,7 +254,8 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
 
 
 def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
-	"""Similar to SpecMaster but uses a 4-tap polyphase filter bank instead
+	"""
+	Similar to SpecMaster but uses a 4-tap polyphase filter bank instead
 	of a FFT.  Returns a two-element tuple of the frequencies (in Hz) and 
 	PSDs in dB/RBW.
 	
@@ -299,11 +307,13 @@ def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=Non
 
 
 def correlate(signal1, signal2, antenna1, antenna2, LFFT=64, Overlap=1, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
-	"""Channalize and cross-correlate signals from two antennae.  Both the signals 
+	"""
+	Channalize and cross-correlate signals from two antennae.  Both the signals 
 	and the stand numbers are needed to implement time delay and phase corrections.
 	The resulting visibilities from the cross-correlation are time average and a 
 	LFFT-1 length numpy array is returned.  This array does not contain the DC 
-	component of the signal."""
+	component of the signal.
+	"""
 
 	import aipy
 
@@ -395,7 +405,8 @@ def correlate(signal1, signal2, antenna1, antenna2, LFFT=64, Overlap=1, window=n
 
 
 def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, window=noWindow, CrossPol=None, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
-	"""A basic FX correlators for the TBW data.  Given an 2-D array of signals
+	"""
+	A basic FX correlators for the TBW data.  Given an 2-D array of signals
 	(stands, time-series) and an array of stands, compute the cross-correlation of
 	the data for all baselines.  If cross-polarizations need to be calculated, the
 	CrossPol keyword allows for the other polarization data to be entered into the
@@ -525,7 +536,8 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 
 
 def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0, GainCorrect=False):
-	"""A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
+	"""
+	A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
 	2-D array of signals (stands, time-series) and an array of stands, compute 
 	the cross-correlation of the data for all baselines.  Return the frequencies 
 	and visibilities as a two-elements tuple.
@@ -603,9 +615,11 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 
 
 #def PXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
-	#"""A version of FXMaster that uses a 64-tap polyphase filter for the FFT step
+	#"""
+	#A version of FXMaster that uses a 64-tap polyphase filter for the FFT step
 	#rather than a normal FFT.  Returns the frequencies and visibilities as a 
-	#two-elements tuple."""
+	#two-elements tuple.
+	#"""
 
 	#nStands = stands.shape[0]
 	#baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Python module for creating creating, validating, and writing simulated 
-DRX frames to a file."""
+"""
+Python module for creating creating, validating, and writing simulated 
+DRX frames to a file.
+"""
 
 import numpy
 
@@ -15,7 +17,9 @@ __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
 
 def frame2frame(drxFrame):
-	"""Convert a drx.Frame object to a raw DP DRX frame."""
+	"""
+	Convert a :class:`lsl.reader.drx.Frame` object to a raw DP DRX frame.
+	"""
 
 	# The raw frame
 	rawFrame = numpy.zeros(drx.FrameSize, dtype=numpy.uint8)
@@ -80,22 +84,26 @@ def frame2frame(drxFrame):
 
 
 class SimFrame(drx.Frame):
-	"""drx.SimFrame extends the lsl.reader.tbn.Frame object to yield a method 
+	"""
+	drx.SimFrame extends the :class:`lsl.reader.drx.Frame` object to yield a method 
 	for easily creating DP ICD-compliant raw DRX frames.  Frames created with
-	this method can be written to a file via the methods writeRawFrame() function."""
+	this method can be written to a file via the methods writeRawFrame() function.
+	"""
 
 	def __init__(self, beam=None, tune=None, pol=None, filterCode=None, timeOffset=None, frameCount=None, obsTime=None, flags=None, iq=None):
-		"""Given a list of parameters, build a drx.SimFrame object.  The parameters
+		"""
+		Given a list of parameters, build a drx.SimFrame object.  The parameters
 		needed are:
-		  + beam id (>0 & <5)
-		  + tunning (1 or 2)
-		  + polarization (0 for x, or 1 for y)
-		  + which filter code the data corresponds to (>0 & <8)
-		  + what time offset in units of f_S to use
-		  + which frame number to create
-		  + observation time in samples at fS since the epoch
-		  + what flags are set on the data
-		  + 1-D numpy array representing the frame I/Q (complex) data
+		  * beam id (>0 & <5)
+		  * tunning (1 or 2)
+		  * polarization (0 for x, or 1 for y)
+		  * which filter code the data corresponds to (>0 & <8)
+		  * what time offset in units of f_S to use
+		  * which frame number to create
+		  * observation time in samples at fS since the epoch
+		  * what flags are set on the data
+		  * 1-D numpy array representing the frame I/Q (complex) data
+		  
 		Not all of these parameters are needed at initialization of the object and
 		the values can be added later.
 
@@ -117,8 +125,10 @@ class SimFrame(drx.Frame):
 		self.data = drx.FrameData()
 		
 	def __update(self):
-		"""Private function to use the object's parameter values to build up 
-		a drx.Frame-like object."""
+		"""
+		Private function to use the object's parameter values to build up 
+		a drx.Frame-like object.
+		"""
 		
 		self.header.frameCount = self.frameCount
 		self.header.secondsCount = int(self.obsTime)
@@ -131,7 +141,9 @@ class SimFrame(drx.Frame):
 		self.data.iq = self.iq
 		
 	def loadFrame(self, drxFrame):
-		"""Populate the a drx.SimFrame object with a pre-made frame."""
+		"""
+		Populate the a drx.SimFrame object with a pre-made frame.
+		"""
 		
 		self.header = drxFrame.header
 		self.data = drxFrame.data
@@ -155,9 +167,11 @@ class SimFrame(drx.Frame):
 		self.iq = self.data.iq
 	
 	def isValid(self, raiseErrors=False):
-		"""Check if simulated DRX frame is valid or not.  Valid frames return 
+		"""
+		Check if simulated DRX frame is valid or not.  Valid frames return 
 		True and invalid frames False.  If the 'raiseErrors' keyword is set, 
-		isValid raises an error when a problem is encountered."""
+		isValid raises an error when a problem is encountered.
+		"""
 
 		# Make sure we have the latest values
 		self.__update()
@@ -207,9 +221,11 @@ class SimFrame(drx.Frame):
 		return True
 
 	def createRawFrame(self):
-		"""Re-express a simulated DRX frame as a numpy array of unsigned 8-bit 
+		"""
+		Re-express a simulated DRX frame as a numpy array of unsigned 8-bit 
 		integers.  Returns a numpy array if the frame is valid.  If the frame 
-		is not ICD-compliant, a errors.baseSimError-type error is raised."""
+		is not ICD-compliant, a errors.baseSimError-type error is raised.
+		"""
 
 		# Make sure we have the latest values
 		self.__update()
@@ -218,9 +234,11 @@ class SimFrame(drx.Frame):
 		return frame2frame(self)
 
 	def writeRawFrame(self, fh):
-		"""Write a simulated DRX frame to a filehandle if the frame is valid.
+		"""
+		Write a simulated DRX frame to a filehandle if the frame is valid.
 		If the frame is not ICD-compliant, a errors.baseSimError-type error 
-		is raised."""
+		is raised.
+		"""
 
 		# Make sure we have the latest values
 		self.__update()

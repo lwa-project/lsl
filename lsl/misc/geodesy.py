@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Module for querying the earth orientation parameters for a given date/list
-of dates."""
+"""
+Module for querying the earth orientation parameters for a given date/list
+of dates.
+"""
 
 import os
 import gzip
@@ -22,7 +24,8 @@ Historic1973Limit = 55518.0
 
 
 class EOP(object):
-	"""Object for storing the geodetic parameters relevant for DiFX input 
+	"""
+	Object for storing the geodetic parameters relevant for DiFX input 
 	files:
 	  * mjd - modified Julian Date of the measurement/prediction
 	  * x - difference between the celestial ephemeric pole (CEP) and the 
@@ -46,8 +49,10 @@ class EOP(object):
 		self.__setDate()
 
 	def fromMAIA(self, line):
-		"""Given a line from a MAIA standard rapiod EOP data (IAU2000) file, fill
-		in the object's values with the needed information."""
+		"""
+		Given a line from a MAIA standard rapiod EOP data (IAU2000) file, fill
+		in the object's values with the needed information.
+		"""
 
 		self.mjd = float(line[7:15])
 		self.x = float(line[18:27])
@@ -61,7 +66,9 @@ class EOP(object):
 		self.__setDate()
 
 	def __setDate(self):
-		"""Use the ephem.Data object to get an easy-to-use date into the structure."""
+		"""
+		Use the ephem.Data object to get an easy-to-use date into the structure.
+		"""
 
 		# Catch statement for working is version of LSL older than 0.3
 		try:
@@ -70,14 +77,18 @@ class EOP(object):
 			self.date = ephem.Date(self.mjd + astro.MJD_OFFSET - 2415020.0)
 
 	def __str__(self):
-		"""Create a string representation of the EOP object that shows the MJD, x, 
-		y, and UT1-UTC values."""
+		"""
+		Create a string representation of the EOP object that shows the MJD, x, 
+		y, and UT1-UTC values.
+		"""
 
 		return "%.1f (%s): x=%.6f y=%.6f UT1-UTC=%.6f (%s)" % (self.mjd, str(self.date), self.x, self.y, self.utDiff, self.type)
 
 	def __eq__(self, y):
-		"""Determine if MJDs of two EOP objects are equal, or if the MJD of a EOP 
-		object equal data of a numeric MJD."""
+		"""
+		Determine if MJDs of two EOP objects are equal, or if the MJD of a EOP 
+		object equal data of a numeric MJD.
+		"""
 
 		tX = self.mjd
 		try:
@@ -91,7 +102,9 @@ class EOP(object):
 			return False
 
 	def __cmp__(self, y):
-		"""Method for soring EOP objects based on their MJDs."""
+		"""
+		Method for soring EOP objects based on their MJDs.
+		"""
 
 		tX = float(self.date)
 		try:
@@ -107,8 +120,10 @@ class EOP(object):
 
 
 def __loadHistoric1973():
-	"""Load in historical values.  The file included with LSL contains values 
-	from January 2, 1973 to November 18, 2010."""
+	"""
+	Load in historical values.  The file included with LSL contains values 
+	from January 2, 1973 to November 18, 2010.
+	"""
 
 	# Open the file and read in via the gzip.GzipFile object
 	heopFH = gzip.GzipFile(os.path.join(paths.data, 'astro', 'eop-historical.dat.gz'), 'rb')
@@ -130,8 +145,10 @@ def __loadHistoric1973():
 
 
 def __loadHistoric1992():
-	"""Load in historical values from the web.  The downloaded file includes 
-	values from January 1, 1992 until today (usually)."""
+	"""
+	Load in historical values from the web.  The downloaded file includes 
+	values from January 1, 1992 until today (usually).
+	"""
 
 	eopFH = urllib.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.daily')
 	lines = eopFH.readlines()
@@ -149,7 +166,9 @@ def __loadHistoric1992():
 
 
 def __loadCurrent90():
-	"""Load data for the current 90-day period from MAIA via the web."""
+	"""
+	Load data for the current 90-day period from MAIA via the web.
+	"""
 
 	eopFH = urllib.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.daily')
 	lines = eopFH.readlines()
@@ -165,8 +184,10 @@ def __loadCurrent90():
 
 
 def getEOP(mjd=None):
-	"""Return a list of earth orientation parameter objects for the specified 
-	MJDs.  A MJD of 'None' returns the values for today's date."""
+	"""
+	Return a list of earth orientation parameter objects for the specified 
+	MJDs.  A MJD of 'None' returns the values for today's date.
+	"""
 	
 	try:
 		junk = len(mjd)
@@ -202,8 +223,10 @@ def getEOP(mjd=None):
 		
 
 def getEOPRange(start=None, stop=None):
-	"""Return a list of orientation parameter objects that span the start and 
-	stop (inclusive) MJDs provided.  Values of 'None' indicate today's date."""
+	"""
+	Return a list of orientation parameter objects that span the start and 
+	stop (inclusive) MJDs provided.  Values of 'None' indicate today's date.
+	"""
 
 	if start is None:
 		try:

@@ -28,22 +28,33 @@ __maintainer__ = "Jayce Dowell"
 ###     ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.8 MHz to the desired frequency.
 
 class SkyMapError(Exception):
-	"""Base class for SkyMap exceptions"""
+	"""
+	Base class for SkyMap exceptions.
+	"""
+	
 	pass
 
 
 class SkyMapLoadError(SkyMapError):
-	"""Exception raised when a SkyMap fails to load"""
+	"""
+	Exception raised when a SkyMap fails to load.
+	"""
+	
 	pass
 
 
 class SkyMapPowerError(SkyMapError):
-	"""Exception raised when an operation on a normalized SkyMap fails to compute (such as summing or multiplying over an empty data set)"""
+	"""
+	Exception raised when an operation on a normalized SkyMap fails to 
+	compute (such as summing or multiplying over an empty data set).
+	"""
+	
 	pass
 
 
 class SkyMap(object):
-	"""The class for handling the model sky brightness maps.  This code is the base 
+	"""
+	The class for handling the model sky brightness maps.  This code is the base 
 	class for the sky map. It takes as input a skymap file name and frequency to
 	which the skymap corresponds.  It has the following methods:
 	  1. _init_ - takes the array coordinate filename as an input argument.
@@ -58,7 +69,10 @@ class SkyMap(object):
 	degToRad = (pi/180.)             # Usual conversion factor
 	    
 	def __init__(self, skyMapFileName=None, freqMHz=73.9):
-		"""Initialize the SkyMap object with an optional full file path to the skymap file."""
+		"""
+		Initialize the SkyMap object with an optional full file path to 
+		the skymap file.
+		"""
 
 		if skyMapFileName is None:
 			from lsl.common.paths import data as dataPath
@@ -90,15 +104,19 @@ class SkyMap(object):
 		fits.close()
 	
 	def NormalizePower(self):
-		"""Compute the skymap power (total power radiated into 4 pi steradians) into 
-		a power at antenna, based on pixel count."""
+		"""
+		Compute the skymap power (total power radiated into 4 pi steradians) into 
+		a power at antenna, based on pixel count.
+		"""
 
 		# The cosine term is the projection of the receiving area onto the direction 
 		# of the source
 		return self._power*cos(self.dec * self.degToRad) 
 
 	def ComputeTotalPowerFromSky(self):
-		"""Compute and return the the total power from the sky."""
+		"""
+		Compute and return the the total power from the sky.
+		"""
 
 		if len(self._power) == 0:
 			raise SkyMapPowerError("self._power contains 0 elements")
@@ -106,7 +124,8 @@ class SkyMap(object):
 
 
 class SkyMapGSM(SkyMap):
-	"""Extension of the SkyMap class to use a Global Sky Model-based set of maps
+	"""
+	Extension of the SkyMap class to use a Global Sky Model-based set of maps
 	of T0 @ f0, alpha, and beta, where:
 		.. math:: T(f) = T_0 \\times \\left(\\frac{f}{f_0}\\right)^{\\alpha + \\beta*\\log{f/f_0}}
 
@@ -114,7 +133,11 @@ class SkyMapGSM(SkyMap):
 	"""
 
 	def __init__(self, skyMapFileName=None, freqMHz=73.9):
-		"""Initialize the SkyMapGSM object with an optional full file path to the skymap file."""
+		"""
+		Initialize the SkyMapGSM object with an optional full file path to 
+		the skymap file.
+		"""
+		
 		if skyMapFileName is None:
 			from lsl.common.paths import data as dataPath
 			skyMapFileName = os.path.join(dataPath, 'skymap', 'gsm.npz')
@@ -134,14 +157,17 @@ class SkyMapGSM(SkyMap):
 		self._power = dataDict['T0']*fRatio**(dataDict['alpha']+dataDict['beta']*log10(fRatio))
 
 	def NormalizePower(self):
-		"""Compute the skymap power (total power radiated into 4 pi steradians) into 
-		a power at antenna, based on pixel count."""
+		"""
+		Compute the skymap power (total power radiated into 4 pi steradians) into 
+		a power at antenna, based on pixel count.
+		"""
 
 		return self._power
 
 
 class ProjectedSkyMap(object):
-	"""The class for handling the model sky brightness maps over a particular site.
+	"""
+	The class for handling the model sky brightness maps over a particular site.
 	This code is the base class for the sky map visible at a specific location. It 
 	takes as input a skymap file name and frequency to which the skymap corresponds.
 	It inherits from class SkyMap. It has the following methods:
@@ -152,7 +178,10 @@ class ProjectedSkyMap(object):
 	"""
 
 	def __init__(self, skyMapObject, lat, lon, utc_jd):
-		"""Initialize the skymap at input lat,lon (decimal degrees) and time (in UTC julian day)."""
+		"""
+		Initialize the skymap at input lat,lon (decimal degrees) and time (in 
+		UTC julian day).
+		"""
 
 		self.skyMapObject=skyMapObject
 
@@ -186,7 +215,9 @@ class ProjectedSkyMap(object):
 		self.visibleDec = compress(visibleMask, self.skyMapObject.dec)
 
 	def ComputeDirectionCosines(self):
-		"""Compute the direction cosines and return the tuple of arrays (l,m,n)."""
+		"""
+		Compute the direction cosines and return the tuple of arrays (l,m,n).
+		"""
 
 		altRad = self.visibleAlt*self.skyMapObject.degToRad
 		azRad = self.visibleAz*self.skyMapObject.degToRad
@@ -196,7 +227,9 @@ class ProjectedSkyMap(object):
 		return (l,m,n)
 
 	def ComputeTotalPowerFromVisibleSky(self):
-		"""Compute and return the the total power from visible portion of the sky."""
+		"""
+		Compute and return the the total power from visible portion of the sky.
+		"""
 
 		if len(self.visibleNormalizedPower) == 0:
 			raise SkyMapPowerError("visibleNormalizedPower contains 0 elements")

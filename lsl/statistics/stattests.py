@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Collection of statistical tests not found in any of the common
-python libraries."""
+"""
+Collection of statistical tests not found in any of the common
+python libraries.
+"""
 
 import numpy
 from scipy.special import ndtr
@@ -12,9 +14,11 @@ __all__ = ['waldwolfowitz', '__version__', '__revision__', '__all__']
 
 
 def __toBinary(inputData):
-	"""Convert a floating point data sequence (like the difference
+	"""
+	Convert a floating point data sequence (like the difference
 	between the data and a model to a 1-bit data sequence.  Values
-	<=0 are mapped to 0 and all others to 1."""
+	<=0 are mapped to 0 and all others to 1.
+	"""
 	
 	data = inputData.ravel()
 	binary = numpy.where( data > 0, 1, 0 )
@@ -22,13 +26,15 @@ def __toBinary(inputData):
 
 
 def __countRuns(inputData):
-	"""Count the number of runs in a data set and returns a three-element
+	"""
+	Count the number of runs in a data set and returns a three-element
 	tuple of the number of:
 	  * total runs
 	  * positive values (inputData > 0)
 	  * negative values ( inputData <= 0)
 	Where a run is defined as sequential groups of two or more instances of
-	the same value in the data."""
+	the same value in the data.
+	"""
 	
 	data = __toBinary(inputData)
 	
@@ -50,7 +56,8 @@ def __countRuns(inputData):
 
 
 def waldwolfowitz(inputData):
-	"""Wald-Wolfowitz test of randomness.  Given a numpy array of values
+	"""
+	Wald-Wolfowitz test of randomness.  Given a numpy array of values
 	compute the probability that the values are mutially independent.
 	
 	.. seealso::

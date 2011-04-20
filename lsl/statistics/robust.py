@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Small collection of robust statistical estimators based on functions from
+"""
+Small collection of robust statistical estimators based on functions from
 Henry Freudenriech (Hughes STX) statistics library (called ROBLIB) that have
 been incorporated into the AstroIDL User's Library.  Function included are:
   * biweightMean - biweighted mean estimator
@@ -31,9 +32,12 @@ __epsilon = 1.0e-20
 
 
 def biweightMean(inputData):
-	"""Calculate the mean of a data set using bisquare weighting.  
+	"""
+	Calculate the mean of a data set using bisquare weighting.  
+	
 	Based on the biweight_mean routine from the AstroIDL User's 
-	Library."""
+	Library.
+	"""
 	
 	y = inputData.ravel()
 	if type(y).__name__ == "MaskedArray":
@@ -72,7 +76,8 @@ def biweightMean(inputData):
 
 
 def mean(inputData, Cut=3.0):
-	"""Robust estimator of the mean of a data set.  Based on the 
+	"""
+	Robust estimator of the mean of a data set.  Based on the 
 	resistant_mean function from the AstroIDL User's Library.
 
 	.. seealso::
@@ -121,8 +126,11 @@ def mean(inputData, Cut=3.0):
 
 
 def std(inputData, Zero=False):
-	"""Robust estimator of the standard deviation of a data set.  Based on 
-	the robust_sigma function from the AstroIDL User's Library."""
+	"""
+	Robust estimator of the standard deviation of a data set.  
+	
+	Based on the robust_sigma function from the AstroIDL User's Library.
+	"""
 
 	data = inputData.ravel()
 	if type(data).__name__ == "MaskedArray":
@@ -161,15 +169,18 @@ def std(inputData, Zero=False):
 
 
 def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
-	"""Determine the quality of a fit and biweights.  Returns a tuple
+	"""
+	Determine the quality of a fit and biweights.  Returns a tuple
 	with elements:
 	  0. Robust standard deviation analog
 	  1. Fractional median absolute deviation of the residuals
 	  2. Number of input points given non-zero weight in the calculation
 	  3. Bisquare weights of the input points
 	  4. Residual values scaled by sigma
+	
 	This function is based on the rob_checkfit routine from the AstroIDL 
-	User's Library."""
+	User's Library.
+	"""
 	
 	data = inputData.ravel()
 	fit = inputFit.ravel()
@@ -204,8 +215,11 @@ def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
 
 
 def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, CloseFactor=0.03):
-	"""Outlier resistance two-variable linear regression function based 
-	on the robust_linefit routine in the AstroIDL User's Library."""
+	"""
+	Outlier resistance two-variable linear regression function.
+	
+	Based on the robust_linefit routine in the AstroIDL User's Library.
+	"""
 	
 	xIn = inputX.ravel()
 	yIn = inputY.ravel()
@@ -389,14 +403,17 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
 
 
 def polyfit(inputX, inputY, order, iterMax=25):
-	"""Outlier resistance two-variable polynomial function fitter 
-	based on the robust_poly_fit routine in the AstroIDL User's 
+	"""
+	Outlier resistance two-variable polynomial function fitter.
+	
+	Based on the robust_poly_fit routine in the AstroIDL User's 
 	Library.
 	
 	Unlike robust_poly_fit, two different polynomial fitters are used
 	because numpy.polyfit does not support non-uniform weighting of the
 	data.  For the weighted fitting, the SciPy Orthogonal Distance
-	Regression module (scipy.odr) is used."""
+	Regression module (scipy.odr) is used.
+	"""
 	
 	from scipy import odr
 	

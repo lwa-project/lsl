@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Modules to take DRX/TBW/TBN data and write it to a SDFITS file.
+"""
+Modules to take DRX/TBW/TBN data and write it to a SDFITS file.
 
 .. warning::
 	The FITS files created by this module to not strictly conform to the
@@ -23,12 +24,16 @@ __all__ = ['SDFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all__']
 
 
 class SDFITS(object):
-	"""Class that holds TSFITS data until it is ready to be writen to disk."""
+	"""
+	Class that holds TSFITS data until it is ready to be writen to disk.
+	"""
 
 	def __init__(self, filename, mode, LFFT=128, Overwrite=False, UseQueue=True, verbose=False):
-		"""Initialize a SDFITS object using a filename, an observation mode (TBW,  
+		"""
+		Initialize a SDFITS object using a filename, an observation mode (TBW,  
 		TBN, or DRX), and a FFT length in channels.  Optionally, SDFITS can be 
-		told to overwrite the file if it already exists using the 'Overwrite' keyword."""
+		told to overwrite the file if it already exists using the 'Overwrite' keyword.
+		"""
 
 		assert(mode in ['TBW', 'TBN', 'DRX'])
 
@@ -62,26 +67,34 @@ class SDFITS(object):
 			self.hdulist = pyfits.open(self.filename, mode="update", memmap=0)
 
 	def info(self):
-		"""Short-cut to the pyfits.info() function on an opened FITS file."""
+		"""
+		Short-cut to the pyfits.info() function on an opened FITS file.
+		"""
 
 		self.hdulist.info()
 
 	def flush(self):
-		"""Short-cut to the pyfits.flush() function on an opened FITS file."""
+		"""
+		Short-cut to the pyfits.flush() function on an opened FITS file.
+		"""
 
 		self.hdulist.flush()
 
 	def close(self):
-		"""Empty the data queue (if it exists) and write all changes to disk 
-		using flush."""
+		"""
+		Empty the data queue (if it exists) and write all changes to disk 
+		using flush.
+		"""
 
 		if self.UseQueue:
 			self.__emptyQueue()
 		self.flush()
 
 	def setSite(self, site):
-		"""Set the TELESCOP keyword in the primary HDU using an lsl.common.stations
-		object."""
+		"""
+		Set the TELESCOP keyword in the primary HDU using an lsl.common.stations
+		object.
+		"""
 
 		self.site = site.name
 
@@ -91,21 +104,27 @@ class SDFITS(object):
 		self.flush()
 
 	def setSampleRate(self, sampleRate):
-		"""Set the sample rate in Hz of the data for TBN and DRX observations."""
+		"""
+		Set the sample rate in Hz of the data for TBN and DRX observations.
+		"""
 
 		if self.mode != 'TBW':
 			self.sampleRate = sampleRate
 
 	def setCentralFrequency(self, centralFreq):
-		"""Set the central frequency in Hz of the data for TBN and DRX 
-		observations."""
+		"""
+		Set the central frequency in Hz of the data for TBN and DRX 
+		observations.
+		"""
 
 		if self.mode != 'TBW':
 			self.centralFreq = centralFreq
 
 	def __findExtension(self, stand):
-		"""Private function to find out which extension stores the stand in 
-		question.  None is returned is that stand is not in the SDFITS file."""
+		"""
+		Private function to find out which extension stores the stand in 
+		question.  None is returned is that stand is not in the SDFITS file.
+		"""
 
 		extension = None
 
@@ -119,7 +138,9 @@ class SDFITS(object):
 		return extension
 
 	def __makeAppendTable(self, extension, AddRows=1):
-		"""Private function to make a temporary table for appending data."""
+		"""
+		Private function to make a temporary table for appending data.
+		"""
 
 		nrows = self.hdulist[extension].data.shape[0]
 		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
@@ -128,16 +149,20 @@ class SDFITS(object):
 		return tempHDU
 
 	def __applyAppendTable(self, extension, tempHDU):
-		"""Private function to replace the given extension with the temporary
-		table."""
+		"""
+		Private function to replace the given extension with the temporary
+		table.
+		"""
 
 		self.hdulist[extension] = tempHDU
 		self.flush()
 
 	def __addDataSingle(self, frame):
-		"""Private function to add a single data entry to a SDFITS file.  This 
+		"""
+		Private function to add a single data entry to a SDFITS file.  This 
 		method is not particular fast since the existing file needs to be copied
-		to append data to the end of a particular extension."""
+		to append data to the end of a particular extension.
+		"""
 
 		if self.mode == 'TBW':
 			stand = frame.parseID()
@@ -248,8 +273,10 @@ class SDFITS(object):
 		self.flush()
 
 	def __addDataQueue(self, frame):
-		"""Private function similar to __addDataSignle, but it saves the data to 
-		memory (self.queue) to be written once the queue fills up."""
+		"""
+		Private function similar to __addDataSignle, but it saves the data to 
+		memory (self.queue) to be written once the queue fills up.
+		"""
 
 		if self.mode == 'TBW':
 			stand = frame.parseID()
@@ -371,8 +398,10 @@ class SDFITS(object):
 			del(self.queue[stand])
 
 	def __emptyQueue(self):
-		"""Private function to empty a empty the self.queue dictionary on demand
-		if it exists."""
+		"""
+		Private function to empty a empty the self.queue dictionary on demand
+		if it exists.
+		"""
 
 		for stand in self.queue.keys():
 			if len(self.queue[stand]) == 0:
@@ -495,10 +524,12 @@ class SDFITS(object):
 			del(self.queue[stand])
 
 	def addStandData(self, frame):
-		"""Add a frame object to the SDFITS file.  This function takes care of 
+		"""
+		Add a frame object to the SDFITS file.  This function takes care of 
 		figuring out which extension the data goes to and how it should be formated.
 		This function also updates the primary HDU with information about the data, 
-		i.e., TBW data bits."""
+		i.e., TBW data bits.
+		"""
 
 		if self.mode == 'TBW':
 			try:
@@ -513,7 +544,8 @@ class SDFITS(object):
 			self.__addDataSingle(frame)
 
 	def getStandData(self, stand):
-		"""Retrieve a dictionary of all data stored for a particular stand.  The 
+		"""
+		Retrieve a dictionary of all data stored for a particular stand.  The 
 		dictionary keys are:
 		  * *data* - numpy array of data
 		  * *pol* - numpy array of polarizations
@@ -534,21 +566,27 @@ class SDFITS(object):
 
 
 class TBW(SDFITS):
-	"""Sub-class of SDFITS for dealing with TBW data in particular."""
+	"""
+	Sub-class of SDFITS for dealing with TBW data in particular.
+	"""
 
 	def __init__(self, filename, LFFT=128, Overwrite=False, UseQueue=True, verbose=False):
 		super(TBW, self).__init__(filename, 'TBW', LFFT=LFFT, Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
 
 
 class TBN(SDFITS):
-	"""Sub-class of SDFITS for dealing with TBN data in particular."""
+	"""
+	Sub-class of SDFITS for dealing with TBN data in particular.
+	"""
 
 	def __init__(self, filename, LFFT=128, Overwrite=False, UseQueue=True, verbose=False):
 		super(TBN, self).__init__(filename, 'TBN', LFFT=LFFT, Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
 
 
 #class DRX(SDFITS):
-	#"""Sub-class of SDFITS for dealing with DRX data in particular."""
+	#"""
+	#Sub-class of SDFITS for dealing with DRX data in particular.
+	#"""
 
 	#def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
 		#super(DRX, self).__init__(filename, 'DRX', LFFT=4096, Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)

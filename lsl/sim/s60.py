@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Python module for creating creating and writing simulated S60 frames to 
-a file."""
+"""
+Python module for creating creating and writing simulated S60 frames to 
+a file.
+"""
 
 import numpy
 
@@ -15,8 +17,10 @@ __all__ = ['frame2frame', 'chunk2frame', '__version__', '__revision__', '__all__
 
 
 def frame2frame(s60Data):
-	"""Convert a complex numpy array with the same length as a S60 frame to a 
-	raw S60 frame."""
+	"""
+	Convert a complex numpy array with the same length as a S60 frame to a 
+	raw S60 frame.
+	"""
 
 	# The raw frame
 	rawFrame = numpy.zeros(s60.FrameSize, dtype=numpy.uint8)
@@ -50,7 +54,9 @@ def frame2frame(s60Data):
 
 
 def chunk2frame(s60Data):
-	"""Convert a complex numpy array to a raw S60 frame."""
+	"""
+	Convert a complex numpy array to a raw S60 frame.
+	"""
 
 	# The raw frame
 	rawFrame = numpy.zeros(2*len(s60Data), dtype=numpy.uint8)

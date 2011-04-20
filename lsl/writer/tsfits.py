@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Modules to take TBW/TBN time series data and write it to a FITS file composed 
+"""
+Modules to take TBW/TBN time series data and write it to a FITS file composed 
 of binary tables.  The format of TSFITS files is:
 
 **PRIMARY HDU**
@@ -58,7 +59,9 @@ __all__ = ['UTC', 'TSFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all_
 
 
 class UTC(tzinfo):
-    """tzinfo object for UTC time."""
+    """
+    tzinfo object for UTC time.
+    """
 
     def utcoffset(self, dt):
         return timedelta(0)
@@ -71,12 +74,16 @@ class UTC(tzinfo):
 
 
 class TSFITS(object):
-	"""Class that holds TSFITS data until it is ready to be written to disk."""
+	"""
+	Class that holds TSFITS data until it is ready to be written to disk.
+	"""
 
 	def __init__(self, filename, mode, Overwrite=False, UseQueue=True, verbose=False):
-		"""Initialize a TSFITS object using a filename and an observation mode 
+		"""
+		Initialize a TSFITS object using a filename and an observation mode 
 		(TBW or TBN).  Optionally, TSFITS can be told to overwrite the file if it 
-		already exists using the 'Overwrite' keyword."""
+		already exists using the 'Overwrite' keyword.
+		"""
 
 		assert(mode in ['TBW', 'TBN'])
 
@@ -110,26 +117,34 @@ class TSFITS(object):
 			self.hdulist = pyfits.open(self.filename, mode="update", memmap=0)
 
 	def info(self):
-		"""Short-cut to the pyfits.info() function on an opened FITS file."""
+		"""
+		Short-cut to the pyfits.info() function on an opened FITS file.
+		"""
 
 		self.hdulist.info()
 
 	def flush(self):
-		"""Short-cut to the pyfits.flush() function on an opened FITS file."""
+		"""
+		Short-cut to the pyfits.flush() function on an opened FITS file.
+		"""
 
 		self.hdulist.flush()
 
 	def close(self):
-		"""Empty the data queue (if it exists) and write all changes to disk 
-		using flush."""
+		"""
+		Empty the data queue (if it exists) and write all changes to disk 
+		using flush.
+		"""
 
 		if self.UseQueue:
 			self.__emptyQueue()
 		self.flush()
 
 	def setSite(self, site):
-		"""Set the TELESCOP keyword in the primary HDU using an lsl.common.stations
-		object."""
+		"""
+		Set the TELESCOP keyword in the primary HDU using an lsl.common.stations
+		object.
+		"""
 
 		self.site = site.name
 
@@ -138,8 +153,10 @@ class TSFITS(object):
 		self.flush()
 
 	def __findExtension(self, stand):
-		"""Private function to find out which extension stores the stand in 
-		question.  None is returned is that stand is not in the TSFITS file."""
+		"""
+		Private function to find out which extension stores the stand in 
+		question.  None is returned is that stand is not in the TSFITS file.
+		"""
 
 		extension = None
 
@@ -153,7 +170,9 @@ class TSFITS(object):
 		return extension
 
 	def __makeAppendTable(self, extension, AddRows=1):
-		"""Private function to make a temporary table for appending data."""
+		"""
+		Private function to make a temporary table for appending data.
+		"""
 
 		nrows = self.hdulist[extension].data.shape[0]
 		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
@@ -162,16 +181,20 @@ class TSFITS(object):
 		return tempHDU
 
 	def __applyAppendTable(self, extension, tempHDU):
-		"""Private function to replace the given extension with the temporary
-		table."""
+		"""
+		Private function to replace the given extension with the temporary
+		table.
+		"""
 
 		self.hdulist[extension] = tempHDU
 		self.flush()
 
 	def __addDataSingle(self, frame):
-		"""Private function to add a single data entry to a TSFITS file.  This 
+		"""
+		Private function to add a single data entry to a TSFITS file.  This 
 		method is not particular fast since the existing file needs to be copied
-		to append data to the end of a particular extension."""
+		to append data to the end of a particular extension.
+		"""
 
 		if self.mode == 'TBW':
 			stand = frame.parseID()
@@ -256,8 +279,10 @@ class TSFITS(object):
 		self.flush()
 
 	def __addDataQueue(self, frame):
-		"""Private function similar to __addDataSignle, but it saves the data to 
-		memory (self.queue) to be written once the queue fills up."""
+		"""
+		Private function similar to __addDataSignle, but it saves the data to 
+		memory (self.queue) to be written once the queue fills up.
+		"""
 
 		if self.mode == 'TBW':
 			stand = frame.parseID()
@@ -361,8 +386,10 @@ class TSFITS(object):
 			del(self.queue[stand])
 
 	def __emptyQueue(self):
-		"""Private function to empty a empty the self.queue dictionary on demand
-		if it exists."""
+		"""
+		Private function to empty a empty the self.queue dictionary on demand
+		if it exists.
+		"""
 
 		for stand in self.queue.keys():
 			if len(self.queue[stand]) == 0:
@@ -457,10 +484,12 @@ class TSFITS(object):
 			del(self.queue[stand])
 
 	def addStandData(self, frame):
-		"""Add a frame object to the TSFITS file.  This function takes care of 
+		"""
+		Add a frame object to the TSFITS file.  This function takes care of 
 		figuring out which extension the data goes to and how it should be formated.
 		This function also updates the primary HDU with information about the data, 
-		i.e., TBW data bits, TBN filter code, etc."""
+		i.e., TBW data bits, TBN filter code, etc.
+		"""
 
 		if self.mode == 'TBW':
 			try:
@@ -486,7 +515,8 @@ class TSFITS(object):
 			self.__addDataSingle(frame)
 
 	def getStandData(self, stand):
-		"""Retrieve a dictionary of all data stored for a particular stand.  The 
+		"""
+		Retrieve a dictionary of all data stored for a particular stand.  The 
 		dictionary keys are:
 		  * *data* - numpy array of data
 		  * *pol* - numpy array of polarizations
@@ -507,14 +537,18 @@ class TSFITS(object):
 
 
 class TBW(TSFITS):
-	"""Sub-class of TSFITS for dealing with TBW data in particular."""
+	"""
+	Sub-class of TSFITS for dealing with TBW data in particular.
+	"""
 
 	def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
 		super(TBW, self).__init__(filename, 'TBW', Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
 		
 
 class TBN(TSFITS):
-	"""Sub-class of TSFITS for dealing with TBN data in particular."""
+	"""
+	Sub-class of TSFITS for dealing with TBN data in particular.
+	"""
 
 	def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
 		super(TBN, self).__init__(filename, 'TBN', Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)

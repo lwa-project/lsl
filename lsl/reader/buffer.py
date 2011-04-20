@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Buffer for dealing with out-of-order/missing frames.
+"""
+Buffer for dealing with out-of-order/missing frames.
 
 .. versionchanged:: 0.5
 	Removed support for DRX FrameBuffers since they shouldn't be needed.
@@ -17,8 +18,10 @@ __all__ = ['FrameBuffer', 'TBNFrameBuffer', '__version__', '__revision__', '__al
 
 
 def _cmpStands(x, y):
-	"""Function to compare two frames and sort by stand/beam number.  This 
-	should work TBW, TBN, and DRX."""
+	"""
+	Function to compare two frames and sort by stand/beam number.  This 
+	should work TBW, TBN, and DRX.
+	"""
 	
 	# Parse if frame IDs to extract the stand/beam, tunning, and polarization
 	# information (where appropriate)
@@ -48,7 +51,8 @@ def _cmpStands(x, y):
 	
 
 class FrameBuffer(object):
-	"""Frame buffer for re-ordering TBW and TBN frames in time order.  
+	"""
+	Frame buffer for re-ordering TBW and TBN frames in time order.  
 	This class is filled with frames and a returns a frame list when 
 	the 'nSegments' starts filling.  In that case, the oldest segment 
 	is returned.
@@ -69,7 +73,8 @@ class FrameBuffer(object):
 	"""
 
 	def __init__(self, mode='TBN', stands=[], pols=[], samples=12000000, bits=12, nSegments=6):
-		"""Initialize the buffer with a list of:
+		"""
+		Initialize the buffer with a list of:
 		  * TBW:
 		      * list of stands
 		      * number of data samples (default of 12,000,000)
@@ -77,7 +82,8 @@ class FrameBuffer(object):
 		      * list of stands
 		      * list of pols
 		By doing this, we should be able to keep up with when the buffer 
-		is full and to help figure out which stands are missing."""
+		is full and to help figure out which stands are missing.
+		"""
 
 		# Input validation
 		if mode.upper() not in ('TBW', 'TBN'):
@@ -121,9 +127,11 @@ class FrameBuffer(object):
 		self.possibleFrames = calcFramesOut[1]
 		
 	def __calcFrames(self):
-		"""Calculate the maximum number of frames that we expect from 
+		"""
+		Calculate the maximum number of frames that we expect from 
 		the setup of the observations and a list of tuples that describes
-		all of the possible stand/pol combination."""
+		all of the possible stand/pol combination.
+		"""
 		
 		nFrames = 0
 		frameList = []
@@ -148,17 +156,21 @@ class FrameBuffer(object):
 		return (nFrames, frameList)
 		
 	def figureOfMerit(self, frame):
-		"""Figure of merit for storing/sorting frames in the ring buffer.
+		"""
+		Figure of merit for storing/sorting frames in the ring buffer.
 		
-		This will be overridden by sub-classes of FrameBuffer."""
+		This will be overridden by sub-classes of FrameBuffer.
+		"""
 		
 		pass
 
 	def append(self, frame):
-		"""Append a new frame to the buffer with the appropriate time tag.  
+		"""
+		Append a new frame to the buffer with the appropriate time tag.  
 		True is returned if the frame was added to the buffer and False if 
 		the frame was dropped because it belongs to a buffer that has 
-		already been returned."""
+		already been returned.
+		"""
 
 		# Make sure that it is not in the `done' list.  If it is,
 		# disgaurd the frame and make a note of it.
@@ -176,10 +188,12 @@ class FrameBuffer(object):
 		return True
 
 	def get(self):
-		"""Return a list of frames that consitute a 'full' buffer.  Afterwards, 
+		"""
+		Return a list of frames that consitute a 'full' buffer.  Afterwards, 
 		delete that buffer and mark it as closed so that any missing frames that
 		are recieved late are dropped.  If none of the buffers are ready to be 
-		dumped, None is returned."""
+		dumped, None is returned.
+		"""
 
 		# Get the current status of the buffer
 		keys = self.buffer.keys()
@@ -220,7 +234,8 @@ class FrameBuffer(object):
 			return output
 			
 	def flush(self):
-		"""Return a list of lists containing all remaining frames in the 
+		"""
+		Return a list of lists containing all remaining frames in the 
 		buffer from buffers that are considered 'full'.  Afterwards, 
 		delete all buffers.  This is useful for emptying the buffer after
 		reading in all of the data.
@@ -258,7 +273,9 @@ class FrameBuffer(object):
 		return output
 
 	def __missingList(self, key):
-		"""Create a list of tuples of missing frame information."""
+		"""
+		Create a list of tuples of missing frame information.
+		"""
 		
 		# Find out what frames we have
 		frameList = []
@@ -275,8 +292,10 @@ class FrameBuffer(object):
 		return missingList
 
 	def __createFill(self, key, frameParameters):
-		"""Create a 'fill' frame of zeros using an existing good
-		packet as a template."""
+		"""
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+		"""
 
 		# Get a template based on the first frame for the current buffer
 		fillFrame = copy.deepcopy(self.buffer[key][0])
@@ -305,7 +324,8 @@ class FrameBuffer(object):
 		return fillFrame
 		
 	def status(self):
-		"""Print out the status of the buffer.  This contains information about:
+		"""
+		Print out the status of the buffer.  This contains information about:
 		  1.  The current buffer fill level
 		  2. The numer of full and partial buffer dumps preformed
 		  3. The number of missing frames that fill packets needed to be created
@@ -329,7 +349,8 @@ class FrameBuffer(object):
 
 
 class TBNFrameBuffer(FrameBuffer):
-	"""A sub-type of FrameBuffer specifically for dealing with TBN frames.
+	"""
+	A sub-type of FrameBuffer specifically for dealing with TBN frames.
 	See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
 	buffering is implemented.
 	
@@ -342,14 +363,14 @@ class TBNFrameBuffer(FrameBuffer):
 	  
 	nSegments
 	  number of ring segments to use for the buffer (default is 10)
-	  
 	"""
 	
 	def __init__(self, stands=[], pols=[0, 1], nSegments=10):
 		super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments)
 		
 	def figureOfMerit(self, frame):
-		"""Figure of merit for sorting frames.  For TBN it is:
+		"""
+		Figure of merit for sorting frames.  For TBN it is:
 		    <frame count of frame>
 		"""
 		

@@ -10,15 +10,38 @@ from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
 __version__ = "0.4"
-__revision__ = "$ Revision: 22 $"
-__all__ = ['geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', '__version__', '__revision__', '__all__']
+__revision__ = "$ Revision: 23 $"
+__all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', '__version__', '__revision__', '__all__']
 
 
 _id2name = {'VL': 'LWA-1'}
 
+def status2string(code):
+	"""
+	Convert a numerical SSMIF status code to a string.
+	"""
+	
+	# Make sure we have an integer
+	code = int(code)
+	
+	# Loop through the options
+	if code == 0:
+		return "Not installed"
+	elif code == 1:
+		return "Bad"
+	elif code == 2:
+		return "Suspect, possibly bad"
+	elif code == 3:
+		return "OK"
+	else:
+		return "Unknown status code '%i'" % code
+
+
 def geo2ecef(lat, lon, elev):
-	"""Convert latitude (rad), longitude (rad), elevation (m) to earth-
-	centered, earth-fixed coordinates."""
+	"""
+	Convert latitude (rad), longitude (rad), elevation (m) to earth-
+	centered, earth-fixed coordinates.
+	"""
 
 	WGS84_a = 6378137.000000
 	WGS84_b = 6356752.314245
@@ -32,10 +55,10 @@ def geo2ecef(lat, lon, elev):
 
 
 class LWAStation(object):
-	"""Object to hold information about the a LWA station.  This object can
+	"""
+	Object to hold information about the a LWA station.  This object can
 	create a ephem.Observer representation of itself and identify which stands
 	were in use at a given time.  Stores station:
-	
 	  * Name (name)
 	  * ID code (id)
 	  * Latitiude in radians [but initialized as degrees] (N is positive, lat)
@@ -67,7 +90,9 @@ class LWAStation(object):
 			self.antennas = antennas
 
 	def getObserver(self, date=None, JD=False):
-		"""Return a ephem.Observer object for this site."""
+		"""
+		Return a ephem.Observer object for this site.
+		"""
 
 		oo = ephem.Observer()
 		oo.lat = self.lat
@@ -84,29 +109,37 @@ class LWAStation(object):
 		return oo
 
 	def getAIPYLocation(self):
-		"""Return a tuple that can be used by AIPY for specifying a array
-		location."""
+		"""
+		Return a tuple that can be used by AIPY for specifying a array
+		location.
+		"""
 
 		return (self.lat, self.long, self.elev)
 
 	def getGeocentricLocation(self):
-		"""Return a tuple with earth-centered, earth-fixed coordinates for the station."""
+		"""
+		Return a tuple with earth-centered, earth-fixed coordinates for the station.
+		"""
 
 		return geo2ecef(self.lat, self.long, self.elev)
 
 	def getECEFTransform(self):
-		"""Return a 3x3 tranformation matrix that converts a baseline in 
+		"""
+		Return a 3x3 tranformation matrix that converts a baseline in 
 		[east, north, elevation] to earh-centered, earth-fixed coordinates
 		for that baseline [x, y, z].  Based off the 'local_to_eci' function
-		in the lwda_fits-dev library."""
+		in the lwda_fits-dev library.
+		"""
 
 		return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
 						[1.0, 0.0,                  0.0], 
 						[0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
 						
 	def __sortAntennas(self, attr='digitizer'):
-		"""Sort the antennas list by the specified attribute.  The default
-		attribute is the digitizer number."""
+		"""
+		Sort the antennas list by the specified attribute.  The default
+		attribute is the digitizer number.
+		"""
 		
 		# Build the sorting function
 		def sortFcn(x, y):
@@ -120,32 +153,40 @@ class LWAStation(object):
 		self.antennas.sort(cmp=sortFcn)
 		
 	def getAntennas(self):
-		"""Return the list of Antenna instances for the station, sorted by 
-		digitizer number."""
+		"""
+		Return the list of Antenna instances for the station, sorted by 
+		digitizer number.
+		"""
 		
 		# Sort and return
 		self.__sortAntennas()
 		return self.antennas
 		
 	def getStands(self):
-		"""Return a list of Stand instances for each antenna, sorted by 
-		digitizer number."""
+		"""
+		Return a list of Stand instances for each antenna, sorted by 
+		digitizer number.
+		"""
 		
 		# Sort and return
 		self.__sortAntennas()
 		return [ant.stand for ant in self.antennas]
 	
 	def getPols(self):
-		"""Return a list of polarization (0 == N-S; 1 == E-W) for each antenna, 
-		sorted by digitizer number."""
+		"""
+		Return a list of polarization (0 == N-S; 1 == E-W) for each antenna, 
+		sorted by digitizer number.
+		"""
 		
 		# Sort and return
 		self.__sortAntennas()
 		return [ant.pol for ant in self.antennas]
 		
 	def getCables(self):
-		"""Return a list of Cable instances for each antenna, sorted by
-		digitizer number."""
+		"""
+		Return a list of Cable instances for each antenna, sorted by
+		digitizer number.
+		"""
 		
 		# Sort and return
 		self.__sortAntennas()
@@ -153,8 +194,8 @@ class LWAStation(object):
 
 
 class Antenna(object):
-	"""Object to store the information about an antenna.  Stores antenna:
-	
+	"""
+	Object to store the information about an antenna.  Stores antenna:
 	  * ID number (id)
 	  * DP1 board number (board)
 	  * DP1 digitizer number (digiziter)
@@ -167,7 +208,6 @@ class Antenna(object):
 	  * Status of the antenna (status)
 	  
 	Status codes are:
-	
 	  * 0 == Not installed
 	  * 1 == Bad
 	  * 2 == Suspect, possibly bad
@@ -212,17 +252,19 @@ class Antenna(object):
 		return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
 		
 	def getStatus(self):
-		"""Return the combined antenna + FEE status as a two digit number 
+		"""
+		Return the combined antenna + FEE status as a two digit number 
 		with the first digit representing the antenna status and the 
-		second the FEE status."""
+		second the FEE status.
+		"""
 		
 		return 10*self.status + self.fee.status
 
 
 class Stand(object):
-	"""Object to store the information (location and ID) about a stand.  
+	"""
+	Object to store the information (location and ID) about a stand.  
 	Stores stand:
-	
 	  * ID number (id)
 	  * Position relative to the center stake in meters (x,y,z)
 	"""
@@ -272,15 +314,14 @@ class Stand(object):
 
 
 class FEE(object):
-	"""Object to store the information about a FEE.  Stores FEE:
-	
+	"""
+	Object to store the information about a FEE.  Stores FEE:
 	  * ID name (id)
 	  * Gain of port 1 (gain1)
 	  * Gain of part 2 (gain2)
 	  * Status (status)
 	  
 	Status codes are:
-	
 	  * 0 == Not installed
 	  * 1 == Bad
 	  * 2 == Suspect, possibly bad
@@ -306,8 +347,8 @@ class FEE(object):
 
 
 class Cable(object):
-	"""Object to store information about a cable.  Stores cable:
-	
+	"""
+	Object to store information about a cable.  Stores cable:
 	  * ID name (id)
 	  * Length in meters (length)
 	  * Velocity factor (fractional, vf)
@@ -315,7 +356,8 @@ class Cable(object):
 	
 	The object also as a functional attribute named 'delay' that computes the
 	cable delay for a particular frequency or collection of frequencies in 
-	Hz."""
+	Hz.
+	"""
 	
 	def __init__(self, id, length, vf=0, dd=0):
 		self.id = str(id)
@@ -383,7 +425,9 @@ class Cable(object):
 
 
 def parseSSMIF(filename):
-	"""Given a SSMIF file, return a fully-filled LWAStation instance."""
+	"""
+	Given a SSMIF file, return a fully-filled LWAStation instance.
+	"""
 	
 	fh = open(filename, 'r')
 	

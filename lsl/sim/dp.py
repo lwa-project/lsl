@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Module to simulate observations made with the DP system."""
+"""
+Module to simulate observations made with the DP system.
+"""
 
 import time
 import numpy
@@ -22,7 +24,9 @@ __all__ = ['basicSignal', 'pointSource', '__version__', '__revision__', '__all__
 
 
 def __basicTBW(fh, stands, nFrames, **kwargs):
-	"""Private function for generating a basic TBW signal."""
+	"""
+	Private function for generating a basic TBW signal.
+	"""
 
 	tStart = kwargs['tStart']
 	bits = kwargs['bits']
@@ -70,7 +74,9 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 
 
 def __basicTBN(fh, stands, nFrames, **kwargs):
-	"""Private function for generating a basic TBN signal."""
+	"""
+	Private function for generating a basic TBN signal.
+	"""
 
 	tStart = kwargs['tStart']
 	filter = kwargs['filter']
@@ -106,7 +112,9 @@ def __basicTBN(fh, stands, nFrames, **kwargs):
 			cFrame.writeRawFrame(fh)
 
 def __basicDRX(fh, stands, nFrames, **kwargs):
-	"""Private function for generating a basic TBN signal."""
+	"""
+	Private function for generating a basic TBN signal.
+	"""
 
 	tStart = kwargs['tStart']
 	filter = kwargs['filter']
@@ -165,34 +173,34 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 
 
 def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, tStart=0, verbose=False):
-	"""Generate a collection of frames with a basic test signal for TBW, TBN, 
+	"""
+	Generate a collection of frames with a basic test signal for TBW, TBN, 
 	and DRX.  The signals for the three modes are:
 	
 	TBW
-	    * noise + 40 MHz signal for x-pol.
-	    * noise + 60 MHz signal for y-pol.
-	      -> odd stands
-	    * noise + 30 MHz signal for x-pol.
-	    * noise + 50 MHz signal for ypol.
-	      -> even stands
+	  * noise + 40 MHz signal for x-pol.
+	  * noise + 60 MHz signal for y-pol.
+	    -> odd stands
+	  * noise + 30 MHz signal for x-pol.
+	  * noise + 50 MHz signal for ypol.
+	    -> even stands
 	
 	TBN
-	    * noise + (sampleRate/4) kHz signal for x-pol. and noise + 
-	      (-sampleRate/4) for y-pol.
+	  * noise + (sampleRate/4) kHz signal for x-pol. and noise + 
+	    (-sampleRate/4) for y-pol.
 
 	DRX
-	    *  noise + (sampleRate/4) kHz signal for x-pol. and noise + 
-	      (-sampleRate/4) for y-pol.
-	      -> tuning 1
-	    *  noise + (-sampleRate/3) kHz signal for x-pol. and noise + 
-	      (sampleRate/3) for y-pol.
-	      -> tuning 2
+	  * noise + (sampleRate/4) kHz signal for x-pol. and noise + 
+	    (-sampleRate/4) for y-pol. -> tuning 1
+	  * noise + (-sampleRate/3) kHz signal for x-pol. and noise + 
+	    (sampleRate/3) for y-pol. -> tuning 2
 	    
 	All modes need to have stands (beams in the case of DRX) and number of
 	frames to generate.  TBW also needs to 'bits' keyword set to generate 
 	either 12-bit or 4-bit data.  The TBN and DRX frames need the 'filter'
 	keyword set to specify the filter width.  In addition, the 'stands' 
-	argument is interpreted as beam numbers for DRX."""
+	argument is interpreted as beam numbers for DRX.
+	"""
 
 	if tStart == 0:
 		tStart = time.time()
@@ -208,15 +216,19 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, t
 
 
 def __getAntennaArray(station, stands, time, freqs):
-	"""Given a LWA station object, a list of stands, an observation time, and
-	a list of frequencies in Hz, build an aipy AntennaArray object."""
+	"""
+	Given a LWA station object, a list of stands, an observation time, and
+	a list of frequencies in Hz, build an aipy AntennaArray object.
+	"""
 
 	return vis.buildSimArray(station, stands, freqs/1e9, jd=astro.unix_to_utcjd(time))
 
 
 def __getSourceParameters(aa, time, srcs):
-	"""Given an aipy AntennaArray object, an observation time, and aipy.src 
-	object, return all of the parameters needed for a simulation."""
+	"""
+	Given an aipy AntennaArray object, an observation time, and aipy.src 
+	object, return all of the parameters needed for a simulation.
+	"""
 	
 	# Set the time for the array
 	aa.set_unixtime(time)
@@ -258,9 +270,11 @@ def __getSourceParameters(aa, time, srcs):
 
 
 def __buildSignals(aa, srcParams, times, pol='x', phaseCenter='z'):
-	"""Given an aipy AntennaArray, a list of stand numbers, a dictionary of source 
+	"""
+	Given an aipy AntennaArray, a list of stand numbers, a dictionary of source 
 	parameters, and an array of times in ns, return a numpy array of the simulated 
-	signals that is Nstands x Ntimes in shape."""
+	signals that is Nstands x Ntimes in shape
+	."""
 
 	# Find out how many stands, srcs, and samples (times) we are working with
 	Nstand = len(aa.ants)
@@ -319,7 +333,9 @@ def __buildSignals(aa, srcParams, times, pol='x', phaseCenter='z'):
 
 
 def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
-	"""Private function to build TBW point sources."""
+	"""
+	Private function to build TBW point sources.
+	"""
 	
 	bits = kwargs['bits']
 	tStart = kwargs['tStart']
@@ -379,7 +395,9 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 
 
 def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
-	"""Private function to build TBN point sources."""
+	"""
+	Private function to build TBN point sources.
+	"""
 	
 	filter = kwargs['filter']
 	tStart = kwargs['tStart']
@@ -425,13 +443,15 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 
 
 def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=0, phaseCenter='z', verbose=False):
-	"""Generate a collection of frames with a point source signal for TBW
+	"""
+	Generate a collection of frames with a point source signal for TBW
 	and TBN.  The point source is specified as a aipy.src object.
 	    
 	All modes need to have stands (beams in the case of DRX) and number of
 	frames to generate.  TBW also needs to `bits' keyword set to generate 
 	either 12-bit or 4-bit data.  The TBN frames need the `filter' keyword 
-	set to specify the filter width."""
+	set to specify the filter width.
+	"""
 
 	if tStart == 0:
 		tStart = time.time()
@@ -442,4 +462,3 @@ def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=
 		__basicTBN(fh, stands, src, nFrames, filter=filter, tStart=tStart, phaseCenter=phaseCenter, verbose=verbose)
 	else:
 		raise RuntimeError("Unknown observations mode: %s" % mode)
-	

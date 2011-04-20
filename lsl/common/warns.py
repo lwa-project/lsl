@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains the warning classes for the DRX, TBN, and TBW 
+"""
+Module that contains the warning classes for the DRX, TBN, and TBW 
 readers.  The two warnings defined here are:
   * warnDeprecated and
   * warnExperimental.
 
 These are for warning users about deprecated functions and experimental 
-features, respectively."""
+features, respectively.
+"""
 
 import sys
 import warnings as sysWarnings
@@ -18,9 +20,11 @@ __all__ = ['warnDeprecated', 'warnExperimental', '__version__', '__revision__', 
 
 
 def __modifiedFormatWarning(message, category, filename, lineno, line=None):
-	"""For some reason, the default warning.formatwarning function does not 
+	"""
+	For some reason, the default warning.formatwarning function does not 
 	support the 'line' argument and all warning calls throw their own warning
-	calls.  This function is meant to fix that."""
+	calls.  This function is meant to fix that.
+	"""
 
 	s =  "%s:%s: %s: %s\n" % (filename, lineno, category.__name__, message)
 	if line is None:
@@ -32,8 +36,10 @@ def __modifiedFormatWarning(message, category, filename, lineno, line=None):
 
 
 def __modifiedShowWarning(message, category, filename, lineno, file=None, line=None):
-	"""This is a new warning.showwarning function to address the same problem as 
-	seen with the warning.formatwarning default function."""
+	"""
+	This is a new warning.showwarning function to address the same problem as 
+	seen with the warning.formatwarning default function.
+	"""
 
 	s =  __modifiedFormatWarning(message, category, filename, lineno, line=line)
 	
@@ -44,8 +50,10 @@ def __modifiedShowWarning(message, category, filename, lineno, file=None, line=N
 
 
 def warnDeprecated(name, memo=None):
-	"""Wrapper around warnins.warn to fix the problems with 
-	[(format)(show)]warnings functions described above."""
+	"""
+	Wrapper around warnins.warn to fix the problems with 
+	[(format)(show)]warnings functions described above.
+	"""
 
 	sysWarnings.showwarning = __modifiedShowWarning
 	sysWarnings.formatwarning = __modifiedFormatWarning
@@ -57,8 +65,10 @@ def warnDeprecated(name, memo=None):
 
 
 def warnExperimental(name, memo=None):
-	"""Wrapper around warnins.warn to fix the problems with 
-	[(format)(show)]warnings functions described above."""
+	"""
+	Wrapper around warnins.warn to fix the problems with 
+	[(format)(show)]warnings functions described above.
+	"""
 
 	sysWarnings.showwarning = __modifiedShowWarning
 	sysWarnings.formatwarning = __modifiedFormatWarning

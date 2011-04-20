@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Module to provide direct access to the files stored on a DRSU.
+"""
+Module to provide direct access to the files stored on a DRSU.
 
 .. warning::
 	Direct access to DRSU is currently an experimental feature that has only
@@ -21,7 +22,8 @@ __revision__ = '$ Revision: 5 $'
 __all__ = ['File', 'listFiles', 'getFileByName', 'shepherdedReadFrame', '__version__', '__revision__', '__all__']
 
 class File(object):
-	"""Object to provide direct access to a file stored on a DRSU.  The File 
+	"""
+	Object to provide direct access to a file stored on a DRSU.  The File 
 	object supports:
 	  * open
 	  * seek
@@ -51,8 +53,10 @@ class File(object):
 		self.bytesRead = 0
 		
 	def open(self):
-		"""Open the 'file' on the device and ready the File object for 
-		reading."""
+		"""
+		Open the 'file' on the device and ready the File object for 
+		reading.
+		"""
 		
 		# Open the device and set the self.fh attribute
 		self.fh = open(self.device, 'rb', buffering=self.chunkSize)
@@ -64,7 +68,9 @@ class File(object):
 		self.bytesRead = 0
 		
 	def seek(self, offset, whence=0):
-		"""Seek in the file.  All three 'whence' modes are supported."""
+		"""
+		Seek in the file.  All three 'whence' modes are supported.
+		"""
 		
 		if whence == 0:
 			# From the start of the file (start + offset)
@@ -85,13 +91,17 @@ class File(object):
 			self.bytesRead = self.start + self.size + offset
 	
 	def tell(self):
-		"""Return the current position in the file by using the internal
-		'bytesRead' attribute value."""
+		"""
+		Return the current position in the file by using the internal
+		'bytesRead' attribute value.
+		"""
 		
 		return self.bytesRead
 	
 	def read(self, size=0):
-		"""Read in a specified amount of data."""
+		"""
+		Read in a specified amount of data.
+		"""
 		
 		if self.bytesRead > self.size:
 			return ''
@@ -103,20 +113,25 @@ class File(object):
 		return self.fh.read(size)
 		
 	def close(self):
-		"""Close the file object."""
+		"""
+		Close the file object.
+		"""
 		
 		self.fh.close()
 		self.fh = None
 		
 	def getFilehandle(self):
-		"""Return the underlying file object associated with an open file.
-		None is returned if the file isn't open."""
+		"""
+		Return the underlying file object associated with an open file.
+		None is returned if the file isn't open.
+		"""
 		
 		return self.fh
 
 
 def listFiles(device):
-	"""Function to return a list of File instances describing the files on a 
+	"""
+	Function to return a list of File instances describing the files on a 
 	the specified DRSU device.
 	
 	.. note::
@@ -133,9 +148,11 @@ def listFiles(device):
 
 
 def getFileByName(device, filename):
-	"""Function to return a File instance corresponding to the specified filename 
+	"""
+	Function to return a File instance corresponding to the specified filename 
 	on the provided device.  None is returned if the filename does not exists on
-	the device."""
+	the device.
+	"""
 	
 	try:
 		fileList = _drsu.listFiles(device, File)
@@ -151,7 +168,8 @@ def getFileByName(device, filename):
 
 
 def shepherdedReadFrame(File, reader):
-	"""Given a (open) File object and a reader module (e.g., :mod:`lsl.reader.tbn`), 
+	"""
+	Given a (open) File object and a reader module (e.g., :mod:`lsl.reader.tbn`), 
 	read in a single Frame instance.  This function wraps the reader's readFrame 
 	method and 'shepherds' the reading such that the file size specified by the 
 	File.size attribute is enforced on the reading process.  This ensures that data 
