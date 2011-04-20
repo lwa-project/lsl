@@ -386,7 +386,7 @@ class aipsidi_tests(unittest.TestCase):
 		return {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
 
 	def test_write_tables(self):
-		"""Test if the FITS IDI writer writes all of the tables."""
+		"""Test if the AIPS IDI writer writes all of the tables."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-W.fits')
@@ -395,7 +395,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
@@ -412,7 +412,7 @@ class aipsidi_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_array_geometry(self):
-		"""Test the ARRAY_GEOMETRY table."""
+		"""Test the AIPS IDI ARRAY_GEOMETRY table."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-AG.fits')
@@ -421,7 +421,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
@@ -442,7 +442,7 @@ class aipsidi_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_frequency(self):
-		"""Test the FREQUENCY table."""
+		"""Test the AIPS IDI FREQUENCY table."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-FQ.fits')
@@ -451,7 +451,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
@@ -476,7 +476,7 @@ class aipsidi_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_antenna(self):
-		"""Test the ANTENNA table."""
+		"""Test the AIPS IDI ANTENNA table."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-AN.fits')
@@ -485,7 +485,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
@@ -505,7 +505,7 @@ class aipsidi_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_bandpass(self):
-		"""Test the BANDPASS table."""
+		"""Test the AIPS IDI BANDPASS table."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-BP.fits')
@@ -514,7 +514,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
@@ -538,7 +538,7 @@ class aipsidi_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_source(self):
-		"""Test the SOURCE table."""
+		"""Test the AIPS IDI SOURCE table."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-SO.fits')
@@ -547,7 +547,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
@@ -566,7 +566,7 @@ class aipsidi_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_uvdata(self):
-		"""Test the UV_DATA table."""
+		"""Test the AIPS IDI UV_DATA table."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-UV.fits')
@@ -575,7 +575,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
@@ -632,7 +632,7 @@ class aipsidi_tests(unittest.TestCase):
 		hdulist.close()
 
 	def test_mapper(self):
-		"""Test the NOSTA_MAPPER table."""
+		"""Test the AIPS IDI NOSTA_MAPPER table."""
 
 		testTime = time.time()
 		testFile = os.path.join(self.testPath, 'idi-test-SM.fits')
@@ -641,7 +641,7 @@ class aipsidi_tests(unittest.TestCase):
 		data = self.__initData()
 		
 		# Start the file
-		fits = fitsidi.IDI(testFile, refTime=testTime)
+		fits = fitsidi.AIPS(testFile, refTime=testTime)
 		fits.setStokes(['xx'])
 		fits.setFrequency(data['freq'])
 		fits.setGeometry(data['site'], data['antennas'])
