@@ -984,7 +984,7 @@ class AIPS(IDI):
 			return "L%03i" % self.id
 	
 	def __init__(self, filename, refTime=0.0, verbose=False):
-		super(AIPS_IDI, self).__init__(filename, refTime=refTime, verbose=verbose)
+		super(AIPS, self).__init__(filename, refTime=refTime, verbose=verbose)
 		
 	def setGeometry(self, site, antennas, bits=8):
 		"""Given a station and an array of stands, set the relevant common observation
