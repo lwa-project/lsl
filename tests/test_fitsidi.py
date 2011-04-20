@@ -667,7 +667,7 @@ class aipsidi_tests(unittest.TestCase):
 			aAnNam = ag.field('ANNAME')
 			for msta, mact, asta, anam in zip(mNoSta, mNoAct, aNoSta, aAnNam):
 				self.assertEqual(msta, asta)
-				self.assertEqual(mact, int(anam[3:]))
+				self.assertEqual(mact, int(anam[1:]))
 
 		hdulist.close()
 
