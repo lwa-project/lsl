@@ -497,21 +497,28 @@ PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, and DRX readers written in C
 */
 
 PyMODINIT_FUNC init_gofast(void) {
-	PyObject *m;
+	PyObject *m, *dict1, *dict2;
 
 	// Module definitions and functions
 	m = Py_InitModule3("_gofast", GoFastMethods, GoFast_doc);
 	import_array();
 
 	// Exceptions
+	
 	//   1.  syncError -> similar to lsl.reader.errors.syncError
-	PyDoc_STRVAR(syncError_doc, "Exception raised when a reader encounters an error with one of the four sync. words");
-	syncError = PyErr_NewExceptionWithDoc("_gofast.syncError", syncError_doc, PyExc_IOError, NULL);
+	dict1 = (PyObject *) PyDict_New();
+	PyDict_SetItemString(dict1, "__doc__", \
+		PyString_FromString("Exception raised when a reader encounters an error with one of the four sync. words"));
+	syncError = PyErr_NewException("_gofast.syncError", PyExc_IOError, dict1);
 	Py_INCREF(syncError);
 	PyModule_AddObject(m, "syncError", syncError);
+	
 	//    2. eofError -> similar to lsl.reader.errors.eofError
-	PyDoc_STRVAR(eofError_doc, "Exception raised when a reader encounters the end-of-file while reading.");
-	eofError = PyErr_NewExceptionWithDoc("_gofast.eofError", eofError_doc, PyExc_IOError, NULL);
+	dict2 = (PyObject *) PyDict_New();
+	PyDict_SetItemString(dict1, "__doc__", \
+		PyString_FromString("Exception raised when a reader encounters the end-of-file while reading."));
+	eofError = PyErr_NewException("_gofast.eofError", PyExc_IOError, NULL);
 	Py_INCREF(eofError);
 	PyModule_AddObject(m, "eofError", eofError);
+	
 }
