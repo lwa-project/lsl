@@ -9,6 +9,8 @@ Go-Fast! Readers
 ----------------
 .. automodule:: lsl.reader._gofast
    :members:
+.. autoexception:: lsl.reader._gofast.eofError
+.. autoexception:: lsl.reader._gofast.syncError
 
 DRSU Direct Access Module
 -------------------------

@@ -189,8 +189,8 @@ frame reader need to be changed to 'IOError' since syncError and eofError are\n\
 are sub-classes of IOError.\n\
 \n\
 .. versionchanged:: 0.4.0\n\
-\tAs for LSL 0.4.0, the Go Fast! readers are the default readers used by the \n\
-\t:mod:`lsl.reader.tbw` module.\n\
+\tThe Go Fast! readers are the default readers used by the :mod:`lsl.reader.tbw`\n\
+\tmodule.\n\
 ");
 
 
@@ -323,8 +323,8 @@ frame reader need to be changed to 'IOError' since syncError and eofError are\n\
 are sub-classes of IOError.\n\
 \n\
 .. versionchanged:: 0.4.0\n\
-\tAs for LSL 0.4.0, the Go Fast! readers are the default readers used by the \n\
-\t:mod:`lsl.reader.tbn` module.\n\
+\tThe Go Fast! readers are the default readers used by the :mod:`lsl.reader.tbn`\n\
+\tmodule.\n\
 ");
 
 
@@ -473,8 +473,8 @@ frame reader need to be changed to 'IOError' since syncError and eofError are\n\
 are sub-classes of IOError.\n\
 \n\
 .. versionchanged:: 0.4.0\n\
-\tAs for LSL 0.4.0, the Go Fast! readers are the default readers used by the \n\
-\t:mod:`lsl.reader.drx` module.\n\
+\tThe Go Fast! readers are the default readers used by the :mod:`lsl.reader.drx`\n\
+\tmodule.\n\
 ");
 
 
@@ -508,16 +508,16 @@ PyMODINIT_FUNC init_gofast(void) {
 	//   1.  syncError -> similar to lsl.reader.errors.syncError
 	dict1 = (PyObject *) PyDict_New();
 	PyDict_SetItemString(dict1, "__doc__", \
-		PyString_FromString("Exception raised when a reader encounters an error with one of the four sync. words"));
+		PyString_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
 	syncError = PyErr_NewException("_gofast.syncError", PyExc_IOError, dict1);
 	Py_INCREF(syncError);
 	PyModule_AddObject(m, "syncError", syncError);
 	
 	//    2. eofError -> similar to lsl.reader.errors.eofError
 	dict2 = (PyObject *) PyDict_New();
-	PyDict_SetItemString(dict1, "__doc__", \
+	PyDict_SetItemString(dict2, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters the end-of-file while reading."));
-	eofError = PyErr_NewException("_gofast.eofError", PyExc_IOError, NULL);
+	eofError = PyErr_NewException("_gofast.eofError", PyExc_IOError, dict2);
 	Py_INCREF(eofError);
 	PyModule_AddObject(m, "eofError", eofError);
 	
