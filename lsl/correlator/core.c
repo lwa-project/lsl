@@ -74,7 +74,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
@@ -108,7 +108,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -216,7 +216,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 }
 
 PyDoc_STRVAR(FEngineR2_doc, \
-"Perform a series of overlaped Fourier transforms on real-valued data using\n\
+"Perform a series of overlapped Fourier transforms on real-valued data using\n\
 OpenMP.\n\
 \n\
 Input arguments are:\n\
@@ -258,7 +258,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
@@ -301,7 +301,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -412,7 +412,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 }
 
 PyDoc_STRVAR(FEngineR3_doc, \
-"Perform a series of overlaped Fourier transforms on real-valued data using\n\
+"Perform a series of overlapped Fourier transforms on real-valued data using\n\
 OpenMP and windows.\n\
 \n\
 Input arguments are:\n\
@@ -448,7 +448,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
@@ -482,7 +482,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -590,7 +590,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 }
 
 PyDoc_STRVAR(FEngineC2_doc, \
-"Perform a series of overlaped Fourier transforms on complex-valued data\n\
+"Perform a series of overlapped Fourier transforms on complex-valued data\n\
 using OpenMP.\n\
 \n\
 Input arguments are:\n\
@@ -632,7 +632,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, NPY_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
@@ -675,7 +675,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -786,7 +786,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 }
 
 PyDoc_STRVAR(FEngineC3_doc, \
-"Perform a series of overlaped Fourier transforms on complex-valued data\n\
+"Perform a series of overlapped Fourier transforms on complex-valued data\n\
 using OpenMP and allow for windowing of the data.\n\
 \n\
 Input arguments are:\n\
@@ -823,7 +823,7 @@ static PyObject *XEngine(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data1 = (PyArrayObject *) PyArray_ContiguousFromObject(signal1, NPY_CDOUBLE, 2, 2);
 	data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signal2, NPY_CDOUBLE, 2, 2);
 
@@ -910,7 +910,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_CDOUBLE, 3, 3);
 	dataC = (PyArrayObject *) PyArray_ContiguousFromObject(signalsC, NPY_CDOUBLE, 3, 3);
 
@@ -1031,7 +1031,7 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
@@ -1065,7 +1065,7 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -1086,7 +1086,7 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	PyDimMem_FREE(tLoc);
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	double fbWindow[2*nChan*nTaps];
 	for(i=0; i<2*nChan*nTaps; i++) {
 		fbWindow[i] = sinc((double) (i - nTaps*nChan + 0.5)/2/nChan);
@@ -1178,7 +1178,7 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PEngineR2_doc, "Perform a series of overlaped filter bank tranforms on real-valued data using OpenMP.");
+PyDoc_STRVAR(PEngineR2_doc, "Perform a series of overlapped filter bank transforms on real-valued data using OpenMP.");
 
 
 static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -1203,7 +1203,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_DOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
@@ -1246,7 +1246,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -1267,7 +1267,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	PyDimMem_FREE(tLoc);
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	npy_intp *qLoc;
 	double fbWindow[2*nChan*nTaps];
 	qLoc = PyDimMem_NEW(1);
@@ -1367,7 +1367,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PEngineR3_doc, "Perform a series of overlaped filter bank tranforms on real-valued data using OpenMP and windows.");
+PyDoc_STRVAR(PEngineR3_doc, "Perform a series of overlapped filter bank transforms on real-valued data using OpenMP and windows.");
 
 
 static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -1385,7 +1385,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
@@ -1419,7 +1419,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -1440,7 +1440,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	PyDimMem_FREE(tLoc);
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	double fbWindow[nChan*nTaps];
 	double complex tempFB[nChan-1];
 	for(i=0; i<nChan*nTaps; i++) {
@@ -1539,7 +1539,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PEngineC2_doc, "Perform a series of overlaped filter bank transfomrs on complex-valued data using OpenMP.");
+PyDoc_STRVAR(PEngineC2_doc, "Perform a series of overlapped filter bank transforms on complex-valued data using OpenMP.");
 
 
 static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -1564,7 +1564,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, PyArray_CDOUBLE, 2, 2);
 	fq = (PyArrayObject *) PyArray_ContiguousFromObject(freq, PyArray_DOUBLE, 1, 1);
 	times = (PyArrayObject *) PyArray_ContiguousFromObject(delays, PyArray_DOUBLE, 2, 2);
@@ -1607,7 +1607,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 	
-	// Compute the interger sample offset and the fractional sample delay for each stand
+	// Compute the integer sample offset and the fractional sample delay for each stand
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
@@ -1628,7 +1628,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	PyDimMem_FREE(tLoc);
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	double fbWindow[nChan*nTaps];
 	double complex tempFB[nChan-1];
 	double *c;
@@ -1732,7 +1732,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	return signalsF;
 }
 
-PyDoc_STRVAR(PEngineC3_doc, "Perform a series of overlaped filter bank transfomrs on complex-valued data using OpenMP and a window.");
+PyDoc_STRVAR(PEngineC3_doc, "Perform a series of overlapped filter bank transforms on complex-valued data using OpenMP and a window.");
 
 
 /*

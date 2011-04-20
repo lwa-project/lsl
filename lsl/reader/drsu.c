@@ -365,7 +365,7 @@ static PyObject *getFileType(PyObject *self, PyObject *args) {
 }
 
 PyDoc_STRVAR(getFileType_doc, \
-"Function to return a string of the file metadata type (DEFAULT_DRX, etc.) for\n\
+"Function to return a string of the file meta-data type (DEFAULT_DRX, etc.) for\n\
 a particular file on the specified DRSU device.  An IOError is raised if the\n\
 file cannot be found on the device.");
 
@@ -498,7 +498,7 @@ PyDoc_STRVAR(listFiles_doc, \
 as a list of 'File' instances.  These instances can then be used to provide direct\n\
 access to the files stored on the DRSU.\n\
 \n\
-The use of this function is prefered over listDevice/getFileSize/etc. because it\n\
+The use of this function is preferred over listDevice/getFileSize/etc. because it\n\
 stores all of the information returned in the other function in the File structure\n\
 along with additional information.  It also makes it 'easier' to open the specified\n\
 file for reading.");
@@ -517,7 +517,11 @@ static PyMethodDef DRSUMethods[] = {
 
 PyDoc_STRVAR(DRSUMethods_doc, \
 "Module to provide the information necessary for direct access to files stored\n\
-on a data recorder storage unit (DRSU).");
+on a data recorder storage unit (DRSU).\n\
+\n\
+.. warning::\n\
+\tThis module is currently in an experimental phase.\n\
+");
 
 
 PyMODINIT_FUNC init_drsu(void) {

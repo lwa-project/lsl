@@ -171,20 +171,26 @@ PyDoc_STRVAR(readTBW_doc, \
 as a Frame object.  This function serves as a replacement for the pure python\n\
 reader lsl.reader.tbw.readFrame.\n\
 \n\
-In order to use this\n\
-reader in place of lsl.reader.tbw.readFrame change:\n\
-  >>> import lsl.reader.tbw as tbw\n\
-  >>> fh = open('some-tbw-file.dat', 'rb')\n\
-  >>> frame = tbw.readFrame(fh)\n\
+In order to use this reader in place of lsl.reader.tbw.readFrame change:\n\
+\n\
+\t>>> import lsl.reader.tbw as tbw\n\
+\t>>> fh = open('some-tbw-file.dat', 'rb')\n\
+\t>>> frame = tbw.readFrame(fh)\n\
+\n\
 to:\n\
-  >>> import lsl.reader.tbw as tbw\n\
-  >>> from lsl.reader._gofast import ReadTBW, syncError, eofError\n\
-  >>> fh = open('some-tbw-file.dat', 'rb')\n\
-  >>> frame = readTBW(fh, tbw.Frame())\n\
+\n\
+\t>>> import lsl.reader.tbw as tbw\n\
+\t>>> from lsl.reader._gofast import ReadTBW, syncError, eofError\n\
+\t>>> fh = open('some-tbw-file.dat', 'rb')\n\
+\t>>> frame = readTBW(fh, tbw.Frame())\n\
 \n\
 In addition, the exceptions checked for in the try...except blocks wrapping the\n\
 frame reader need to be changed to 'IOError' since syncError and eofError are\n\
-are sub-classs of IOError.\n\
+are sub-classes of IOError.\n\
+\n\
+.. versionchanged:: 0.4.0\n\
+\tAs for LSL 0.4.0, the Go Fast! readers are the default readers used by the \n\
+\t:mod:`lsl.reader.tbw` module.\n\
 ");
 
 
@@ -299,20 +305,26 @@ PyDoc_STRVAR(readTBN_doc, \
 as a Frame object.  This function serves as a replacement for the pure python\n\
 reader lsl.reader.tbn.readFrame.\n\
 \n\
-In order to use this\n\
-reader in place of lsl.reader.tbn.readFrame change:\n\
-  >>> import lsl.reader.tbn as tbn\n\
-  >>> fh = open('some-tbn-file.dat', 'rb')\n\
-  >>> frame = tbn.readFrame(fh)\n\
+In order to use this reader in place of lsl.reader.tbn.readFrame change:\n\
+\n\
+\t>>> import lsl.reader.tbn as tbn\n\
+\t>>> fh = open('some-tbn-file.dat', 'rb')\n\
+\t>>> frame = tbn.readFrame(fh)\n\
+\n\
 to:\n\
-  >>> import lsl.reader.tbn as tbn\n\
-  >>> from lsl.reader._gofast import ReadTBN, syncError, eofError\n\
-  >>> fh = open('some-tbn-file.dat', 'rb')\n\
-  >>> frame = readTBN(fh, tbn.Frame())\n\
+\n\
+\t>>> import lsl.reader.tbn as tbn\n\
+\t>>> from lsl.reader._gofast import ReadTBN, syncError, eofError\n\
+\t>>> fh = open('some-tbn-file.dat', 'rb')\n\
+\t>> frame = readTBN(fh, tbn.Frame())\n\
 \n\
 In addition, the exceptions checked for in the try...except blocks wrapping the\n\
 frame reader need to be changed to 'IOError' since syncError and eofError are\n\
-are sub-classs of IOError.\n\
+are sub-classes of IOError.\n\
+\n\
+.. versionchanged:: 0.4.0\n\
+\tAs for LSL 0.4.0, the Go Fast! readers are the default readers used by the \n\
+\t:mod:`lsl.reader.tbn` module.\n\
 ");
 
 
@@ -443,20 +455,26 @@ PyDoc_STRVAR(readDRX_doc, \
 as a Frame object.  This function serves as a replacement for the pure python\n\
 reader lsl.reader.drx.readFrame.\n\
 \n\
-In order to use this\n\
-reader in place of lsl.reader.drx.readFrame change:\n\
-  >>> import lsl.reader.tbn as drx\n\
-  >>> fh = open('some-drx-file.dat', 'rb')\n\
-  >>> frame = drx.readFrame(fh)\n\
+In order to use this reader in place of lsl.reader.drx.readFrame change:\n\
+\n\
+\t>>> import lsl.reader.tbn as drx\n\
+\t>>> fh = open('some-drx-file.dat', 'rb')\n\
+\t>>> frame = drx.readFrame(fh)\n\
+\n\
 to:\n\
-  >>> import lsl.reader.drx as drx\n\
-  >>> from lsl.reader._gofast import ReadDRX, syncError, eofError\n\
-  >>> fh = open('some-drx-file.dat', 'rb')\n\
-  >>> frame = readDRX(fh, tbn.Frame())\n\
+\n\
+\t>>> import lsl.reader.drx as drx\n\
+\t>>> from lsl.reader._gofast import ReadDRX, syncError, eofError\n\
+\t>>> fh = open('some-drx-file.dat', 'rb')\n\
+\t>>> frame = readDRX(fh, tbn.Frame())\n\
 \n\
 In addition, the exceptions checked for in the try...except blocks wrapping the\n\
 frame reader need to be changed to 'IOError' since syncError and eofError are\n\
-are sub-classs of IOError.\n\
+are sub-classes of IOError.\n\
+\n\
+.. versionchanged:: 0.4.0\n\
+\tAs for LSL 0.4.0, the Go Fast! readers are the default readers used by the \n\
+\t:mod:`lsl.reader.drx` module.\n\
 ");
 
 
@@ -487,11 +505,13 @@ PyMODINIT_FUNC init_gofast(void) {
 
 	// Exceptions
 	//   1.  syncError -> similar to lsl.reader.errors.syncError
-	syncError = PyErr_NewException("_gofast.syncError", PyExc_IOError, NULL);
+	PyDoc_STRVAR(syncError_doc, "Exception raised when a reader encounters an error with one of the four sync. words");
+	syncError = PyErr_NewExceptionWithDoc("_gofast.syncError", syncError_doc, PyExc_IOError, NULL);
 	Py_INCREF(syncError);
 	PyModule_AddObject(m, "syncError", syncError);
 	//    2. eofError -> similar to lsl.reader.errors.eofError
-	eofError = PyErr_NewException("_gofast.eofError", PyExc_IOError, NULL);
+	PyDoc_STRVAR(eofError_doc, "Exception raised when a reader encounters the end-of-file while reading.");
+	eofError = PyErr_NewExceptionWithDoc("_gofast.eofError", eofError_doc, PyExc_IOError, NULL);
 	Py_INCREF(eofError);
 	PyModule_AddObject(m, "eofError", eofError);
 }

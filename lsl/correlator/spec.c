@@ -63,7 +63,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Get the properties of the data
@@ -180,7 +180,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Calculate the windowing function
@@ -301,7 +301,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 
 	// Get the properties of the data
@@ -416,7 +416,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	
 	// Calculate the windowing function
@@ -534,14 +534,14 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Get the properties of the data
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	double fbWindow[2*nChan*nTaps];
 	double complex tempFB[nChan-1];
 	double tempB[nChan-1];
@@ -675,7 +675,7 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	
 	// Calculate the windowing function
@@ -688,7 +688,7 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	npy_intp *qLoc;
 	double fbWindow[2*nChan*nTaps];
 	double complex tempFB[nChan-1];
@@ -823,14 +823,14 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 
 	// Get the properties of the data
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	double fbWindow[nChan*nTaps];
 	double complex tempFB[nChan-1];
 	double tempB[nChan-1];
@@ -961,7 +961,7 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		windowFunc = window;
 	}
 
-	// Bring the data into C and make it useable
+	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	
 	// Calculate the windowing function
@@ -974,7 +974,7 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nStand = (long) data->dimensions[0];
 	nSamps = (long) data->dimensions[1];
 
-	// Compute the filterbank window for the correct numer of taps
+	// Compute the filterbank window for the correct number of taps
 	double fbWindow[nChan*nTaps];
 	double complex tempFB[nChan-1];
 	double tempB[nChan-1];

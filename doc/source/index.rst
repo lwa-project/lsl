@@ -82,6 +82,14 @@ Tutorial
    tutorial-tbn
    tutorial-drx
 
+Advanced
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   c-extensions
+
 Indices and Tables
 ==================
 
