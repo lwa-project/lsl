@@ -1,8 +1,8 @@
 Release Notes
 =============
 
-Version 0.4
------------
+Version 0.4.x
+-------------
  * Added new robust statistical methods
  * Added Global Sky Model models to skymap
  * Added new smoothing and fitting fuctions to misc.mathutil
@@ -18,9 +18,10 @@ Version 0.4
  * Moved the tests directory out of lsl proper
  * Added new offset/average options to drxSpectra and tbnSpectra
  * Added new DRSU direct access module for linux system (experimental)
+ * Added documentation for the various C extensions
 
-Version 0.3
------------
+Version 0.3.x
+-------------
  * New setuptools-based build system
  * New, improved documentation
  * Added post-acquisition beam forming module
@@ -31,10 +32,10 @@ Version 0.3
  * Fixed the FITS IDI writer
  * Fixed a couple of bugs dealing with incorrect chunking of data in scripts/tbwSpectra.py and scripts/tbnSpectra.py
 
-Version 0.2
------------
+Version 0.2.x
+-------------
  * Added in other modules from the lwa_user library developed by NRL
 
-Version 0.1
------------
+Version 0.1.x
+-------------
  * Initial version

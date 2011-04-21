@@ -105,7 +105,7 @@ class FrameBuffer(object):
 		# The buffer itself
 		self.nSegments = nSegments
 		self.buffer = {}
-		self.done = []
+		self.done = [0,]
 		
 		# Buffer statistics
 		self.full = 0		# Number of times a full buffer was emptied
@@ -175,8 +175,8 @@ class FrameBuffer(object):
 		# Make sure that it is not in the `done' list.  If it is,
 		# disgaurd the frame and make a note of it.
 		fom = self.figureOfMerit(frame)
-		if fom in self.done:
-			self.dropped = self.dropped + 1
+		if fom in self.done or fom < self.done[0]:
+			self.dropped += 1
 			return False
 
 		# If that time tag hasn't been done yet, add it to the 
@@ -267,8 +267,12 @@ class FrameBuffer(object):
 			
 			output2.sort(cmp=_cmpStands)
 			output.append( output2 )
-			self.done.append(key)
 			del(self.buffer[key])
+			self.done.append(key)
+			try:
+				self.done = self.done[-2*self.nSegments+1:]
+			except:
+				pass
 				
 		return output
 
@@ -362,10 +366,32 @@ class TBNFrameBuffer(FrameBuffer):
 	  list of polarizations to expect packets for
 	  
 	nSegments
-	  number of ring segments to use for the buffer (default is 10)
+	  number of ring segments to use for the buffer (default is 20)
+	  
+	The number of segements in the ring can be converted to a buffer time in 
+	seconds:
+	
+	+----------+------------------------------------------------+
+	|          |                TBN Filter Code                 |
+	| Segments +------+------+------+------+------+------+------+
+	|          |  1   |  2   |  3   |  4   |  5   |  6   |  7   |
+	+----------+------+------+------+------+------+------+------+
+	|    10    |  5.1 |  1.6 |  0.8 |  0.4 |  0.2 |  0.1 | 0.05 |
+	+----------+------+------+------+------+------+------+------+
+	|    20    | 10.2 |  3.3 |  1.6 |  0.8 |  0.4 |  0.2 | 0.10 |
+	+----------+------+------+------+------+------+------+------+
+	|    30    | 15.4 |  4.9 |  2.5 |  1.2 |  0.6 |  0.3 | 0.15 |
+	+----------+------+------+------+------+------+------+------+
+	|    40    | 20.5 |  6.6 |  3.3 |  1.6 |  0.8 |  0.4 | 0.20 |
+	+----------+------+------+------+------+------+------+------+
+	|    50    | 25.6 |  8.2 |  4.1 |  2.0 |  1.0 |  0.5 | 0.26 |
+	+----------+------+------+------+------+------+------+------+
+	|   100    | 51.2 | 16.4 |  8.2 |  4.1 |  2.0 |  1.0 | 0.51 |
+	+----------+------+------+------+------+------+------+------+
+	
 	"""
 	
-	def __init__(self, stands=[], pols=[0, 1], nSegments=10):
+	def __init__(self, stands=[], pols=[0, 1], nSegments=20):
 		super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments)
 		
 	def figureOfMerit(self, frame):
@@ -374,5 +400,5 @@ class TBNFrameBuffer(FrameBuffer):
 		    <frame count of frame>
 		"""
 		
-		#return frame.data.timeTag
-		return frame.header.frameCount
+		return frame.data.timeTag
+		#return frame.header.frameCount

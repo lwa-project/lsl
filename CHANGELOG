@@ -1,4 +1,4 @@
-0.4-dev
+0.4.0
   * Added new robust statistical methods
   * Added Global Sky Model models to skymap
   * Added new smoothing and fitting fuctions to misc.mathutil
@@ -14,6 +14,7 @@
   * Moved the tests directory out of lsl proper
   * Added new offset/average options to drxSpectra and tbnSpectra
   * Added new DRSU direct access module for linux system (experimental)
+  * Added documentation for the various C extensions
 
 0.3.4.2
   * Fixed a couple of typos. in the correlator scripts
