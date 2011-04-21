@@ -21,8 +21,8 @@ Provided modules:
 See the individual package descriptions for more information.
 """
 
-__version__ = '0.4'
-__revision__ = '$ Revision: 8 $'
+__version__ = '0.5'
+__revision__ = '$ Revision: 9 $'
 __author__ = "Jayce Dowell"
 
 import common
