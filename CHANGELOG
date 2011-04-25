@@ -1,20 +1,28 @@
+0.4.1
+  * Fixes a problem with the C readers that manifests itself on 32-bit platforms
+  * Modified sphinx to be more independent about version numbers and release notes
+  * Added additional PyDict checks to the _gofast module
+  * Modified lsl.sim.drx to zero the frame and seconds counts to make the DRX frames ICD compliant
+  * Fixed a small bug in lsl.sim.tbw/tbn/drx that caused the seconds counts to be wrong
+
 0.4.0
   * Added new robust statistical methods
   * Added Global Sky Model models to skymap
-  * Added new smoothing and fitting fuctions to misc.mathutil
+  * Added new smoothing and fitting functions to misc.mathutil
   * Added a progress bar for use with long-running applications
   * Added in new LWA-1 dipole NEC models
   * Re-worked the plotAntenna.py script to use the pre-computed dipole response fits
   * Added support for EXCITATION keywords in misc.nec_util
   * Added new gofast readers for TBW, TBN, and DRX
   * Added better polyphase filter support
-  * Fixed initiaization problems the various lsl.reader Frame objects
+  * Fixed initialization problems the various lsl.reader Frame objects
   * Fixed the TBN ring buffer
   * Added support for simulating point sources in TBW and TBN data
   * Moved the tests directory out of lsl proper
   * Added new offset/average options to drxSpectra and tbnSpectra
-  * Added new DRSU direct access module for linux system (experimental)
+  * Added new DRSU direct access module for Linux system (experimental)
   * Added documentation for the various C extensions
+  * Updated the dependencies list to capture everything needed for the extensions
 
 0.3.4.2
   * Fixed a couple of typos. in the correlator scripts
@@ -31,13 +39,13 @@
 0.3.4
   * Added in the new cable attenuation model
   * Re-wrote the TBW reader so that is it ~40% faster
-  * Removed unnecessary "import" statments in the TBW, TBN, and DRX readers
+  * Removed unnecessary "import" statements in the TBW, TBN, and DRX readers
   * Fixed slow frame creation by sim.dp on 64-bit systems
   * Added in the new C-based correlator
   * Major re-organization of correlator.fx with regards to windowing functions
   * Switched from 'processing' to 'multiprocessing'
   * Added the possm.py script for each FITS IDI examination
-  * Fixed tbwSpectra.py and tbnSpectra.py to accomedate the windowing change
+  * Fixed tbwSpectra.py and tbnSpectra.py to accommodated the windowing change
   * Added drxSpectra.py
   * Fixed various problems with the DP data simulator
   * Added in option to cable losses in tbwSpectra.py
@@ -58,14 +66,13 @@
 
 0.3.2
   * Added new "tutorial" style documentation for various parts of LSL
-  * Added scripts tbwSplit.py and tbnSplit.py to split large TBW and TBN files down to more
-    managable sizes
+  * Added scripts tbwSplit.py and tbnSplit.py to split large TBW and TBN files down to more manageable sizes
 
 0.3.1
   * Fixed various typos. in correlator.fx, misc.beamformer, and reader.buffer
   * Added "close" function to writer.fitsidi
 
-0.3
+0.3.0
   * New setuptools-based build system
   * New, improved documentation
   * Added post-acquisition beam forming module
@@ -73,5 +80,10 @@
   * Added a module for simulated basic test signals in TBW, TBN, and DRX data
   * Moved the lwa_user script `astrostatus.py' into the scripts directory
   * Fixed the FITS IDI writer
-  * Fixed a couple of bugs dealing with incorrect chunking of data in scripts/tbwSpectra.py 
-    and scripts/tbnSpectra.py
+  * Fixed a couple of bugs dealing with incorrect chunking of data in scripts/tbwSpectra.py and scripts/tbnSpectra.py
+
+0.2.0
+  * Added in other modules from the lwa_user library developed by NRL
+
+0.1.0
+  * Initial version

@@ -15,8 +15,8 @@ from lsl.common import dp as dp_common
 from lsl.common import stations as lwa_common
 
 
+__version__  = "0.3"
 __revision__ = "$ Revision: 2 $"
-__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -51,6 +51,7 @@ class simdp_tests(unittest.TestCase):
 		frame = tbw.readFrame(fh)
 		fh.close()
 		self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
+		self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
 
 		# Check that the frames have the correct value of data bits
 		self.assertEqual(frame.getDataBits(), 12)
@@ -74,6 +75,7 @@ class simdp_tests(unittest.TestCase):
 		frame = tbn.readFrame(fh)
 		fh.close()
 		self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
+		self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
 
 	def test_basic_drx(self):
 		"""Test building a basic DRX signal"""
@@ -94,6 +96,8 @@ class simdp_tests(unittest.TestCase):
 		frame = drx.readFrame(fh)
 		fh.close()
 		self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
+		self.assertEqual(frame.header.frameCount, 0)
+		self.assertEqual(frame.header.secondsCount, 0)
 
 	def tearDown(self):
 		"""Remove the test path directory and its contents"""

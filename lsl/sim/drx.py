@@ -7,12 +7,12 @@ DRX frames to a file.
 
 import numpy
 
-from lsl.common import dp as dp_common
+from lsl.common.dp import fS
 from lsl.reader import drx
 from errors import *
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 6 $'
+__revision__ = '$ Revision: 9 $'
 __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
 
@@ -130,9 +130,9 @@ class SimFrame(drx.Frame):
 		a drx.Frame-like object.
 		"""
 		
-		self.header.frameCount = self.frameCount
-		self.header.secondsCount = int(self.obsTime)
-		self.header.decimation = int(dp_common.fS / drx.filterCodes[self.filterCode])
+		self.header.frameCount = 0*self.frameCount
+		self.header.secondsCount = 0*long(self.obsTime / fS)
+		self.header.decimation = int(fS / drx.filterCodes[self.filterCode])
 		self.header.timeOffset = self.timeOffset
 		self.header.drxID = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
 		
@@ -159,7 +159,7 @@ class SimFrame(drx.Frame):
 		self.pol = self.header.parseID()[2]
 		self.frameCount = self.header.frameCount
 		self.secondsCount = self.header.secondsCount
-		self.filterCode = inverseCodes[int(dp_common.fS / self.header.decimation)]
+		self.filterCode = inverseCodes[int(fS / self.header.decimation)]
 		self.timeOffset = self.header.timeOffset
 		## Data
 		self.obsTime = self.data.timeTag
@@ -177,7 +177,7 @@ class SimFrame(drx.Frame):
 		self.__update()
 
 		# Is the time offset reasonable?
-		if self.header.timeOffset >= dp_common.fS:
+		if self.header.timeOffset >= fS:
 			return False
 
 		beam, tune, pol = self.parseID()
@@ -240,9 +240,6 @@ class SimFrame(drx.Frame):
 		is raised.
 		"""
 
-		# Make sure we have the latest values
-		self.__update()
-
 		rawFrame = self.createRawFrame()
 		rawFrame.tofile(fh)
 
@@ -250,4 +247,4 @@ class SimFrame(drx.Frame):
 		if self.stand is None:
 			return "Empty DRX SimFrame object"
 		else:
-			return "TBN SimFrame for beam %i, tunning %i, pol. %i @ time %i" % (self.beam, self.tune, self.pol, self.obsTime)
+			return "DRX SimFrame for beam %i, tunning %i, pol. %i @ time %i" % (self.beam, self.tune, self.pol, self.obsTime)

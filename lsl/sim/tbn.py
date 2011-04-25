@@ -7,11 +7,12 @@ TBN frames to a file.
 
 import numpy
 
+from lsl.common.dp import fS
 from lsl.reader import tbn
 from errors import *
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 6 $'
+__revision__ = '$ Revision: 8 $'
 __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
 
@@ -110,7 +111,7 @@ class SimFrame(tbn.Frame):
 		"""
 		
 		self.header.frameCount = self.frameCount
-		self.header.secondsCount = int(self.obsTime)
+		self.header.secondsCount = long(self.obsTime / fS)
 		self.header.tbnID = 2*(self.stand-1) + self.pol + 1
 		
 		self.data.timeTag = self.obsTime
@@ -196,9 +197,6 @@ class SimFrame(tbn.Frame):
 		If the frame is not ICD-compliant, a errors.baseSimError-type error 
 		is raised.
 		"""
-
-		# Make sure we have the latest values
-		self.__update()
 
 		rawFrame = self.createRawFrame()
 		rawFrame.tofile(fh)

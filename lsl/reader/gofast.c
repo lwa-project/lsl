@@ -147,12 +147,12 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	// Save the data to the frame object
 	// 1.  Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-	PyObject_SetAttrString(fHeader, "frameCount", Py_BuildValue("l", frameCount));
-	PyObject_SetAttrString(fHeader, "secondsCount", Py_BuildValue("l", secondsCount));
+	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
+	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
 	PyObject_SetAttrString(fHeader, "tbwID", Py_BuildValue("i", tbwID));
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-	PyObject_SetAttrString(fData, "timeTag", Py_BuildValue("l", timeTag));
+	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
 	PyObject_SetAttrString(fData, "xy", PyArray_Return(data));
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
@@ -281,12 +281,12 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	// Save the data to the frame object
 	// 1.  Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-	PyObject_SetAttrString(fHeader, "frameCount", Py_BuildValue("l", frameCount));
-	PyObject_SetAttrString(fHeader, "secondsCount", Py_BuildValue("l", secondsCount));
+	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
+	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
 	PyObject_SetAttrString(fHeader, "tbnID", Py_BuildValue("i", tbnID));
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-	PyObject_SetAttrString(fData, "timeTag", Py_BuildValue("l", timeTag));
+	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
 	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
@@ -381,23 +381,23 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	timeOffset = bytes[14]<<8 | bytes[15];
 
 	unsigned long long timeTag;
-	timeTag  = ((unsigned long long) bytes[16])<<56;
-	timeTag |= ((unsigned long long) bytes[17])<<48; 
-	timeTag |= ((unsigned long long) bytes[18])<<40;
-	timeTag |= ((unsigned long long) bytes[19])<<32;
-	timeTag |= ((unsigned long long) bytes[20])<<24;
-	timeTag |= ((unsigned long long) bytes[21])<<16;
-	timeTag |= ((unsigned long long) bytes[22])<<8;
-	timeTag |= bytes[23];
+	timeTag = ((unsigned long long) bytes[16])<<56 | \
+			((unsigned long long) bytes[17])<<48 | \
+			((unsigned long long) bytes[18])<<40 | \
+			((unsigned long long) bytes[19])<<32 | \
+			((unsigned long long) bytes[20])<<24 | \
+			((unsigned long long) bytes[21])<<16 | \
+			((unsigned long long) bytes[22])<<8 | \
+			bytes[23];
 	unsigned long long flags;
-	flags  = ((unsigned long long) bytes[24])<<56;
-	flags |= ((unsigned long long) bytes[25])<<48;
-	flags |= ((unsigned long long) bytes[26])<<40;
-	flags |= ((unsigned long long) bytes[27])<<32;
-	flags |= ((unsigned long long) bytes[28])<<24;
-	flags |= ((unsigned long long) bytes[29])<<16;
-	flags |= ((unsigned long long) bytes[30])<<8;
-	flags |= bytes[31];
+	flags  =  ((unsigned long long) bytes[24])<<56 | \
+			((unsigned long long) bytes[25])<<48 | \
+			((unsigned long long) bytes[26])<<40 | \
+			((unsigned long long) bytes[27])<<32 | \
+			((unsigned long long) bytes[28])<<24 | \
+			((unsigned long long) bytes[29])<<16 | \
+			((unsigned long long) bytes[30])<<8 | \
+			bytes[31];
 	
 	// Create the output data array
 	npy_intp dims[1];
@@ -428,15 +428,15 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	// Save the data to the frame object
 	// 1. Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-	PyObject_SetAttrString(fHeader, "frameCount", Py_BuildValue("l", frameCount));
+	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
 	PyObject_SetAttrString(fHeader, "drxID", Py_BuildValue("i", drxID));
-	PyObject_SetAttrString(fHeader, "secondsCount", Py_BuildValue("l", secondsCount));
+	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
 	PyObject_SetAttrString(fHeader, "decimation", Py_BuildValue("i", decimation));
 	PyObject_SetAttrString(fHeader, "timeOffset", Py_BuildValue("i", timeOffset));
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-	PyObject_SetAttrString(fData, "timeTag", Py_BuildValue("l", timeTag));
-	PyObject_SetAttrString(fData, "flags", Py_BuildValue("l", flags));
+	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
+	PyObject_SetAttrString(fData, "flags", PyLong_FromUnsignedLongLong(flags));
 	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
@@ -507,6 +507,12 @@ PyMODINIT_FUNC init_gofast(void) {
 	
 	//   1.  syncError -> similar to lsl.reader.errors.syncError
 	dict1 = (PyObject *) PyDict_New();
+	if(dict1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
+		Py_XDECREF(dict1);
+		Py_XDECREF(m);
+		return NULL;
+	}
 	PyDict_SetItemString(dict1, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
 	syncError = PyErr_NewException("_gofast.syncError", PyExc_IOError, dict1);
@@ -515,6 +521,14 @@ PyMODINIT_FUNC init_gofast(void) {
 	
 	//    2. eofError -> similar to lsl.reader.errors.eofError
 	dict2 = (PyObject *) PyDict_New();
+	if(dict1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
+		Py_XDECREF(dict1);
+		Py_XDECREF(syncError);
+		Py_XDEFREF(dict2);
+		Py_XDECREF(m);
+		return NULL;
+	}
 	PyDict_SetItemString(dict2, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters the end-of-file while reading."));
 	eofError = PyErr_NewException("_gofast.eofError", PyExc_IOError, dict2);
