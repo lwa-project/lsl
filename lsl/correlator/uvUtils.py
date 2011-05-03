@@ -34,7 +34,7 @@ class uvUtilsError(Exception):
 		return "%s" % self.strerror
 
 
-def getBaselines(antennas, IncludeAuto=False, Indicies=False):
+def getBaselines(antennas, antennas2=None, IncludeAuto=False, Indicies=False):
 	"""
 	Generate a list of two-element tuples that describe which antennae
 	compose each of the output uvw triplets from computeUVW/computeUVTrack.
@@ -51,52 +51,64 @@ def getBaselines(antennas, IncludeAuto=False, Indicies=False):
 	out = []
 	N = len(antennas)
 	
+	# If we don't have an antennas2 array, use antennas again
+	if antennas2 is None:
+		antennas2 = antennas
+	
 	for i in range(0, N-offset):
 		for j in range(i+offset, N):
 			if Indicies:
 				out.append( (i, j) )
 			else:
-				out.append( (antennas[i], antennas[j]) )
+				out.append( (antennas[i], antennas2[j]) )
 
 	return out
 	
 
-def baseline2antenna(baseline, antennas, BaselineList=None, IncludeAuto=False, Indicies=False):
+def baseline2antenna(baseline, antennas, antennas2=None, BaselineList=None, IncludeAuto=False, Indicies=False):
 	"""
 	Given a baseline number, a list of stands, and options of how the base-
 	line listed was generated, convert the baseline number to antenna numbers.
 	Alternatively, use a list of baselines instead of generating a new list.  
 	This utility is useful for figuring out what antennae comprise a baseline.
 	"""
+	
+	# If we don't have an antennas2 array, use antennas again
+	if antennas2 is None:
+		antennas2 = antennas
 
 	# Build up the list of baselines using the options provided
 	if BaselineList is None:
-		BaselineList = getBaselines(antennas, IncludeAuto=IncludeAuto, Indicies=Indices)
+		BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indices)
 	
 	# Select the correct one and return based on the value of Indicies
 	i,j = BaselineList[baseline]
 	if Indicies:
 		return i,j
 	else:
-		return antennas[i], antennas[j]
+		return antennas[i], antennas2[j]
 
 
-def antenna2baseline(ant1, ant2, antennas, BaselineList=None, IncludeAuto=False, Indicies=False):
+def antenna2baseline(ant1, ant2, antennas, antennas2=None, BaselineList=None, IncludeAuto=False, Indicies=False):
 	"""
 	Given two antenna numbers, a list of stands, and options to how the base-
 	line listed was generated, convert the antenna pair to  a baseline number. 
 	This utility is useful for picking out a particular pair from a list of
 	baselines.
 	"""
+	
+	# If we don't have an antennas2 array, use antennas again
+	if antennas2 is None:
+		antennas2 = antennas
 
 	# Build up the list of baselines using the options provided
 	if BaselineList is None:
-		BaselineList = getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=Indices)
+		BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indices)
 
 	# If we don't want indicies, convert stand numbers to indicies
 	if not Indicies:
-		ant1 = (numpy.where( antennas == ant1 ))[0][0]
-		ant2 = (numpy.where( antennas == ant2 ))[0][0]
+		ant1 = (numpy.where( antennas  == ant1 ))[0][0]
+		ant2 = (numpy.where( antennas2 == ant2 ))[0][0]
 	
 	# Loop over the baselines until we find one that matches.  If we don't find 
 	# one, return -1
@@ -155,7 +167,7 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, IncludeAuto=False):
 	for i,j in baselines:
 		# Go from a east, north, up coordinate system to a celestial equation, 
 		# east, north celestial pole system
-		xyzPrime = antennas[j].stand - antennas[i].stand
+		xyzPrime = antennas[i].stand - antennas[j].stand
 		xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
 		
 		# Go from CE, east, NCP to u, v, w

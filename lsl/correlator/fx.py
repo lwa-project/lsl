@@ -33,7 +33,26 @@ import _core
 
 __version__ = '0.5'
 __revision__ = '$ Revision: 25 $'
-__all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
+__all__ = ['pol2pol', 'noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
+
+
+def pol2pol(pol):
+	"""
+	Convert a polarization string, e.g., XX or XY, to a numeric :mod:`lsl.common.stations.Antena`
+	instance polarization.
+	"""
+	
+	pol = pol.upper()
+	out = []
+	for p in pol:
+		if p == 'X':
+			out.append(0)
+		elif p == 'Y':
+			out.append(1)
+		else:
+			raise RuntimeError("Unknown polarization code '%s'" % pol)
+		
+	return out
 
 
 def noWindow(L):
@@ -535,7 +554,7 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 	return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0, GainCorrect=False):
+def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0, Pol='XX', GainCorrect=False, ReturnBaselines=False):
 	"""
 	A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
 	2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -548,8 +567,15 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		numbers.
 	"""
 
-	nStands = len(antennas)
-	baselines = uvUtils.getBaselines(antennas, IncludeAuto=IncludeAuto, Indicies=True)
+	pol1, pol2 = pol2pol(Pol)
+	
+	antennas1 = [a for a in antennas if a.pol == pol1]
+	signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == pol1]
+	antennas2 = [a for a in antennas if a.pol == pol2]
+	signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
+
+	nStands = len(antennas1)
+	baselines = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=True)
 	nBL = len(baselines)
 
 	# Figure out if we are working with complex (I/Q) data or only real.  This
@@ -574,30 +600,38 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	# Define the cable/signal delay caches to help correlate along and compute 
 	# the delays that we need to apply to align the signals
 	dlyRef = len(freq)/2
-	delays = numpy.zeros((nStands,LFFT-1))
+	delays1 = numpy.zeros((nStands,LFFT-1))
+	delays2 = numpy.zeros((nStands,LFFT-1))
 	for i in list(range(nStands)):
-		delays[i,:] = antennas[i].cable.delay(freq)
-	delays = delays[:,dlyRef].max() - delays
+		delays1[i,:] = antennas1[i].cable.delay(freq)
+		delays2[i,:] = antennas2[i].cable.delay(freq)
+	maxDelay = delays1[:,dlyRef].max() if delays1[:,dlyRef].max() > delays2[:,dlyRef].max() else delays2[:,dlyRef].max()
+	delays1 = maxDelay - delays1
+	delays2 = maxDelay - delays2
 
 	# F - defaults to running parallel in C via OpenMP
 	if window is noWindow:
 		# Data without a window function provided
 		if signals.dtype.kind == 'c':
-			signalsF = _core.FEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+			FEngine = _core.FEngineC2
 		else:
-			signalsF = _core.FEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+			FEngine = _core.FEngineR2
 	else:
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
-			signalsF = _core.FEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window)
+			FEngine = _core.FEngineC3
 		else:
-			signalsF = _core.FEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									SampleRate=SampleRate, window=window)
-	signalsFC = signalsF.conj()
+			FEngine = _core.FEngineR3
+	
+	signalsF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+	if pol2 == pol1:
+		signalsF2 = signalsF1
+	else:
+		signalsF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+	signalsF2C = signalsF2.conj()
 
 	# X
-	output = _core.XEngine2(signalsF, signalsFC)
+	output = _core.XEngine2(signalsF1, signalsF2C)
 
 	# Divide the cross-multiplied data by the number of channels used
 	output /= LFFT
@@ -607,76 +641,18 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	# Apply cable gain corrections (if needed)
 	if GainCorrect:
 		for bl in xrange(output.shape[0]):
-			cableGain1 = antennas[baselines[bl][0]].cable.gain(freq)
-			cableGain2 = antennas[baselines[bl][1]].cable.gain(freq)
+			cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
+			cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
 			
 			output[bl,:] /= numpy.sqrt(cableGain1*cableGain2)
+			
+	# Create antenna baseline list (if needed)
+	if ReturnBaselines:
+		antennaBaselines = []
+		for bl in xrange(output.shape[0]):
+			antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
+		returnValues = (antennaBaselines, freq, output)
+	else:
+		returnValues = (freq, output)
 
-	return (freq, output)
-
-
-#def PXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0):
-	#"""
-	#A version of FXMaster that uses a 64-tap polyphase filter for the FFT step
-	#rather than a normal FFT.  Returns the frequencies and visibilities as a 
-	#two-elements tuple.
-	#"""
-
-	#nStands = stands.shape[0]
-	#baselines = uvUtils.getBaselines(stands, IncludeAuto=IncludeAuto, Indicies=True)
-	#nBL = len(baselines)
-
-	## Figure out if we are working with complex (I/Q) data or only real.  This
-	## will determine how the FFTs are done since the real data mirrors the pos-
-	## itive and negative Fourier frequencies.
-	#if signals.dtype.kind == 'c':
-		#lFactor = 1
-		#doFFTShift = True
-		#CentralFreq = float(CentralFreq)
-	#else:
-		#lFactor = 2
-		#doFFTShift = False
-
-	#if SampleRate is None:
-		#SampleRate = dp_common.fS
-	#freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
-	#if doFFTShift:
-		#freq += CentralFreq
-		#freq = numpy.fft.fftshift(freq)
-	#freq = freq[1:LFFT]
-
-	## Define the cable/signal delay caches to help correlate along and compute 
-	## the delays that we need to apply to align the signals
-	#dlyRef = len(freq)/2
-	#delays = numpy.zeros((nStands,LFFT-1))
-	#for i in list(range(nStands)):
-		#delays[i,:] = antennas.cable.delay(freq)
-	#delays = delays[:,dlyRef].max() - delays
-
-	## F - defaults to running parallel in C via OpenMP
-	#if window is noWindow:
-		#print "No Window"
-		## Data without a window function provided
-		#if signals.dtype.kind == 'c':
-			#signalsF = _core.PEngineC2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
-		#else:
-			#signalsF = _core.PEngineR2(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
-	#else:
-		## Data with a window function provided
-		#if signals.dtype.kind == 'c':
-			#signalsF = _core.PEngineC3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									#SampleRate=SampleRate, window=window)
-		#else:
-			#signalsF = _core.PEngineR3(signals, freq, delays, LFFT=LFFT, Overlap=Overlap, 
-									#SampleRate=SampleRate, window=window)
-	#signalsFC = signalsF.conj()
-
-	## X
-	#output = _core.XEngine2(signalsF, signalsFC)
-
-	## Divide the cross-multiplied data by the number of channels used
-	#output /= LFFT
-	#if signals.dtype.kind != 'c':
-		#output /= 2.0
-
-	#return (freq, output)
+	return returnValues
