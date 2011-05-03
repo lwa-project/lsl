@@ -28,8 +28,8 @@ from lsl.misc import mathutil
 from lsl.misc import geodesy
 from lsl.common.warns import warnExperimental
 
-__version__ = '0.3'
-__revision__ = '$ Revision: 15 $'
+__version__ = '0.5'
+__revision__ = '$ Revision: 17 $'
 __all__ = ['IDI', 'AIPS', 'StokesCodes', '__version__', '__revision__', '__all__']
 
 
@@ -58,8 +58,8 @@ class IDI(object):
 			self.y = y
 			self.z = z
 			self.levels = bits
-			self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': 1.0}
-			self.polB = {'Type': 'Y', 'Angle': 0.0, 'Cal': 1.0}
+			self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': [0.0, 0.0]}
+			self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
 
 		def getName(self):
 			return "LWA%03i" % self.id
@@ -82,10 +82,11 @@ class IDI(object):
 		Represents one UV visibility data set for a given observation time.
 		"""
     
-		def __init__(self, obsTime, intTime, dataDict):
+		def __init__(self, obsTime, intTime, dataDict, pol=StokesCodes['XX']):
 			self.obsTime = obsTime
 			self.intTime = intTime
 			self.dataDict = dataDict
+			self.pol = pol
 		
 		def time(self):
 			return self.obsTime
@@ -160,9 +161,16 @@ class IDI(object):
 
 		for pol in polList:
 			if type(pol).__name__ == 'str':
-				self.stokes.append(StokesCodes[pol.upper()])
+				numericPol = StokesCodes[pol.upper()]
 			else:
-				self.stokes.append(pol)
+				numericPol = pol
+				
+			if numericPol not in self.stokes:
+				self.stokes.append(numericPol)
+				
+		# Sort into order of 'XX', 'YY', 'XY', and 'YX'
+		self.stokes.sort()
+		self.stokes.reverse()
 
 		self.nStokes = len(self.stokes)
 
@@ -238,7 +246,7 @@ class IDI(object):
 		self.nAnt = len(ants)
 		self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )
 
-	def addDataSet(self, obsTime, intTime, baselines, visibilities):
+	def addDataSet(self, obsTime, intTime, baselines, visibilities, pol='XX'):
 		"""
 		Create a UVData object to store a collection of visibilities.
 		
@@ -248,18 +256,42 @@ class IDI(object):
 			as part of the baselines.
 		"""
 
+		if type(pol).__name__ == 'str':
+			numericPol = StokesCodes[pol.upper()]
+		else:
+			numericPol = pol
+
 		dataDict = {}
 		for (ant1,ant2), visData in zip(baselines, visibilities):
 			baseline = (ant1.stand.id << 16) | ant2.stand.id
 			dataDict[baseline] = visData
 			
-		self.data.append( self._UVData(obsTime, intTime, dataDict) )
+		self.data.append( self._UVData(obsTime, intTime, dataDict, pol=numericPol) )
 
 	def write(self):
 		"""
 		Fill in the FITS-IDI file will all of the tables in the 
 		correct order.
 		"""
+		
+		def __sortData(x, y):
+			"""
+			Function to sort the self.data list in order of time and then 
+			polarization code.
+			"""
+			
+			xID = x.obsTime*1000000 + abs(x.pol)
+			yID = y.obsTime*1000000 + abs(y.pol)
+			
+			if xID > yID:
+				return 1
+			elif xID < yID:
+				return -1
+			else:
+				return 0
+				
+		# Sort the data set
+		self.data.sort(cmp=__sortData)
 		
 		self.__writePrimary()
 		self.__writeGeometry()
@@ -289,7 +321,7 @@ class IDI(object):
 		hdr.update('EXTNAME', name, 'FITS-IDI table name')
 		hdr.update('EXTVER', 1, 'table instance number') 
 		hdr.update('TABREV', revision, 'table format revision number')
-		hdr.update('NO_STKD', 1, 'number of Stokes parameters')
+		hdr.update('NO_STKD', self.nStokes, 'number of Stokes parameters')
 		hdr.update('STK_1', self.stokes[0], 'first Stokes parameter')
 		hdr.update('NO_BAND', 1, 'number of frequency bands')
 		hdr.update('NO_CHAN', self.nChan, 'number of frequency channels')
@@ -517,7 +549,7 @@ class IDI(object):
 		c9 = pyfits.Column(name='POLAA', format='1E', 
 						array=numpy.array([ant.polA['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 		# Feed A polarization parameters
-		c10 = pyfits.Column(name='POLCALA', format='1E', 
+		c10 = pyfits.Column(name='POLCALA', format='2E', 
 						array=numpy.array([ant.polA['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 		# Feed B polarization label
 		c11 = pyfits.Column(name='POLTYB', format='A1', 
@@ -526,7 +558,7 @@ class IDI(object):
 		c12 = pyfits.Column(name='POLAB', format='1E', 
 						array=numpy.array([ant.polB['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 		# Feed B polarization parameters
-		c13 = pyfits.Column(name='POLCALB', format='1E', 
+		c13 = pyfits.Column(name='POLCALB', format='2E', 
 						array=numpy.array([ant.polB['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
 
 		colDefs = pyfits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
@@ -536,7 +568,7 @@ class IDI(object):
 		an = pyfits.new_table(colDefs)
 		self.__addCommonKeywords(an.header, 'ANTENNA', 1)
 
-		an.header.update('NOPCAL', 0, 'number of polarization parameters')
+		an.header.update('NOPCAL', 2, 'number of polarization parameters')
 		an.header.update('POLTYPE', 'X-Y LIN', 'polarization parameterization')
 		
 		an.name = 'ANTENNA'
@@ -623,29 +655,30 @@ class IDI(object):
 		decPoList = []
 		sourceID = 1
 		for dataSet in self.data:
-			utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-			date = astro.get_date(utc)
-			date.hours = 0
-			date.minutes = 0
-			date.seconds = 0
-			utc0 = date.to_jd()
-			equ = hrz.to_equ(arrPos, utc)
-			
-			# current apparent zenith equatorial coordinates
-			raList.append(equ.ra)
-			decList.append(equ.dec)
-			
-			# J2000 zenith equatorial coordinates
-			equPo = astro.get_equ_prec2(equ, utc, astro.J2000_UTC_JD)
-			raPoList.append(equPo.ra)
-			decPoList.append(equPo.dec)
-			
-			# format 'source' name based on local sidereal time
-			raHms = astro.deg_to_hms(equ.ra)
-			(tsecs, secs) = math.modf(raHms.seconds)
-			name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
-			nameList.append(name)
-			sourceID += 1
+			if dataSet.pol == self.stokes[0]:
+				utc = astro.taimjd_to_utcjd(dataSet.obsTime)
+				date = astro.get_date(utc)
+				date.hours = 0
+				date.minutes = 0
+				date.seconds = 0
+				utc0 = date.to_jd()
+				equ = hrz.to_equ(arrPos, utc)
+				
+				# current apparent zenith equatorial coordinates
+				raList.append(equ.ra)
+				decList.append(equ.dec)
+				
+				# J2000 zenith equatorial coordinates
+				equPo = astro.get_equ_prec2(equ, utc, astro.J2000_UTC_JD)
+				raPoList.append(equPo.ra)
+				decPoList.append(equPo.dec)
+				
+				# format 'source' name based on local sidereal time
+				raHms = astro.deg_to_hms(equ.ra)
+				(tsecs, secs) = math.modf(raHms.seconds)
+				name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
+				nameList.append(name)
+				sourceID += 1
 		nSource = len(nameList)
 
 		# Source ID number
@@ -761,36 +794,39 @@ class IDI(object):
 		sourceList = []
 		sourceID = 1
 		for dataSet in self.data:
-			utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-			date = astro.get_date(utc)
-			date.hours = 0
-			date.minutes = 0
-			date.seconds = 0
-			utc0 = date.to_jd()
-			equ = hrz.to_equ(arrPos, utc)
-			
-			# format 'source' name based on local sidereal time
-			raHms = astro.deg_to_hms(equ.ra)
-			(tsecs, secs) = math.modf(raHms.seconds)
-			name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), 
-				int(tsecs * 10.0))
-			nameList.append(name)
-			
-			# Compute the uvw coordinates of all baselines
-			if inverseMapper is not None:
-				standIDs = []
-				for stand in self.FITS['ARRAY_GEOMETRY'].data.field('NOSTA'):
-					standIDs.append(inverseMapper[stand])
-				standIDs = numpy.array(standIDs)
-			else:
-				standIDs = self.FITS['ARRAY_GEOMETRY'].data.field('NOSTA')
-			antennaStands = []
-			for standID in standIDs:
-				antennaStands.append( inputAnts[standID] )
-			
-			uvwBaselines = numpy.array([(a1.stand.id << 16) | a2.stand.id for a1,a2 in uvUtils.getBaselines(antennaStands)])
-			uvwCoords = uvUtils.computeUVW(antennaStands, HA=0.0, dec=equ.dec, freq=self.refVal)
-			uvwCoords *= 1.0 / self.refVal
+			if self.stokes.index(dataSet.pol) == 0:
+				utc = astro.taimjd_to_utcjd(dataSet.obsTime)
+				date = astro.get_date(utc)
+				date.hours = 0
+				date.minutes = 0
+				date.seconds = 0
+				utc0 = date.to_jd()
+				equ = hrz.to_equ(arrPos, utc)
+				
+				# format 'source' name based on local sidereal time
+				raHms = astro.deg_to_hms(equ.ra)
+				(tsecs, secs) = math.modf(raHms.seconds)
+				name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), 
+					int(tsecs * 10.0))
+				nameList.append(name)
+				
+				# Compute the uvw coordinates of all baselines
+				if inverseMapper is not None:
+					standIDs = []
+					for stand in self.FITS['ARRAY_GEOMETRY'].data.field('NOSTA'):
+						standIDs.append(inverseMapper[stand])
+					standIDs = numpy.array(standIDs)
+				else:
+					standIDs = self.FITS['ARRAY_GEOMETRY'].data.field('NOSTA')
+				antennaStands = []
+				for standID in standIDs:
+					antennaStands.append( inputAnts[standID] )
+				
+				uvwBaselines = numpy.array([(a1.stand.id << 16) | a2.stand.id for a1,a2 in uvUtils.getBaselines(antennaStands)])
+				uvwCoords = uvUtils.computeUVW(antennaStands, HA=0.0, dec=equ.dec, freq=self.refVal)
+				uvwCoords *= 1.0 / self.refVal
+				
+				tempMList = {}
 
 			# Loop over the data store in the dataDict and extract each baseline
 			baselines = list(dataSet.dataDict.keys())
@@ -826,21 +862,36 @@ class IDI(object):
 				matrix[0::2] = visData.real
 				matrix[1::2] = visData.imag
 			
-				blineList.append(baselineMapped)
-				mList.append(matrix.ravel())
-				uList.append(uvw[0])
-				vList.append(uvw[1])
-				wList.append(uvw[2])
-				dateList.append(utc0)
-				timeList.append(utc - utc0) 
-				intTimeList.append(dataSet.intTime)
-				sourceList.append(sourceID)
-			sourceID += 1
+				try:
+					tempMList[dataSet.pol].append(matrix.ravel())
+				except KeyError:
+					tempMList[dataSet.pol] = [matrix.ravel(),]
+					
+				if self.stokes.index(dataSet.pol) == 0:
+					blineList.append(baselineMapped)
+					uList.append(uvw[0])
+					vList.append(uvw[1])
+					wList.append(uvw[2])
+					dateList.append(utc0)
+					timeList.append(utc - utc0) 
+					intTimeList.append(dataSet.intTime)
+					sourceList.append(sourceID)
+			
+			if dataSet.pol == self.stokes[-1]:
+				for bl in xrange(len(tempMList[self.stokes[0]])):
+					matrix = numpy.zeros((2*self.nStokes*self.nChan,), dtype=numpy.float32)
+					for pol in self.stokes:
+						offset = 2*self.stokes.index(pol)
+						matrix[(0+offset)::(2*self.nStokes)] = tempMList[pol][bl][0::2]
+						matrix[(1+offset)::(2*self.nStokes)] = tempMList[pol][bl][1::2]
+					mList.append(matrix.ravel())
+			
+				sourceID += 1
 		nBaseline = len(blineList)
 		nSource = len(nameList)
 
 		# Visibility Data
-		c1 = pyfits.Column(name='FLUX', format='%iE' % (2*self.nChan), unit='UNCALIB', 
+		c1 = pyfits.Column(name='FLUX', format='%iE' % (2*self.nStokes*self.nChan), unit='UNCALIB', 
 						array=numpy.array(mList, dtype=numpy.float32))
 		# Baseline number (first*256+second)
 		c2 = pyfits.Column(name='BASELINE', format='1J', 
@@ -896,7 +947,7 @@ class IDI(object):
 		uv.header.update('CRPIX1', 1.0)
 		uv.header.update('CRVAL1', 1.0)
 		
-		uv.header.update('MAXIS2', 1, 'number of pixels in STOKES axis')
+		uv.header.update('MAXIS2', self.nStokes, 'number of pixels in STOKES axis')
 		uv.header.update('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)')
 		uv.header.update('CDELT2', -1.0)
 		uv.header.update('CRPIX2', 1.0)
@@ -1032,8 +1083,8 @@ class AIPS(IDI):
 			self.y = y
 			self.z = z
 			self.levels = bits
-			self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': 1.0}
-			self.polB = {'Type': 'Y', 'Angle': 0.0, 'Cal': 1.0}
+			self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': [0.0, 0.0]}
+			self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
 
 		def getName(self):
 			return "L%03i" % self.id
