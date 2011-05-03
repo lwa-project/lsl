@@ -610,7 +610,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 			cableGain1 = antennas[baselines[bl][0]].cable.gain(freq)
 			cableGain2 = antennas[baselines[bl][1]].cable.gain(freq)
 			
-			output[a,:] /= numpy.sqrt(cableGain1*cableGain2)
+			output[bl,:] /= numpy.sqrt(cableGain1*cableGain2)
 
 	return (freq, output)
 
