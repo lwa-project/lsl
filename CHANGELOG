@@ -1,5 +1,12 @@
+0.4.2
+  * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file
+  * Fixed the common.stations.geo2ecef() conversion function (Ticket #16)
+  * Fixed the correlator.fx.FXMaster() function (Ticket #18)
+  * Fixed a few type conversion problems in correlator._core (core.c) introduced with the new data types
+  * Fixed a frequency units conversion in tbnSpectra.py
+
 0.4.1
-  * Fixes a problem with the C readers that manifests itself on 32-bit platforms
+  * Fixed a problem with the C readers that manifests itself on 32-bit platforms
   * Modified sphinx to be more independent about version numbers and release notes
   * Added additional PyDict checks to the _gofast module
   * Modified lsl.sim.drx to zero the frame and seconds counts to make the DRX frames ICD compliant

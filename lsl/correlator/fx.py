@@ -32,7 +32,7 @@ import _spec
 import _core
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 24 $'
+__revision__ = '$ Revision: 25 $'
 __all__ = ['noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
 
 
@@ -606,10 +606,11 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		
 	# Apply cable gain corrections (if needed)
 	if GainCorrect:
-		for a in xrange(output.shape[0]):
-			cableGain = antennas[a].cable.gain(freq)
-			for s in xrange(output.shape[2]):
-				output[a,:,s] /= numpy.sqrt(cableGain)
+		for bl in xrange(output.shape[0]):
+			cableGain1 = antennas[baselines[bl][0]].cable.gain(freq)
+			cableGain2 = antennas[baselines[bl][1]].cable.gain(freq)
+			
+			output[a,:] /= numpy.sqrt(cableGain1*cableGain2)
 
 	return (freq, output)
 

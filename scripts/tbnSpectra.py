@@ -322,7 +322,7 @@ def main(args):
 				currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
 			except IndexError:
 				break
-			ax.plot(freq/1e6, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
+			ax.plot(freq, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
 
 			# If there is more than one chunk, plot the difference between the global 
 			# average and each chunk
@@ -336,11 +336,12 @@ def main(args):
 					# Calculate the difference between the spectra and plot
 					subspectra = numpy.squeeze( numpy.log10(masterSpectra[k,j,:])*10.0 )
 					diff = subspectra - currSpectra
-					ax.plot(freq/1e6, diff)
+					ax.plot(freq, diff)
 
 			ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].getStatus()))
 			ax.set_xlabel('Frequency [%s]' % units)
 			ax.set_ylabel('P.S.D. [dB/RBW]')
+			ax.set_ylim([-10, 30])
 			
 		# Save spectra image if requested
 		if config['output'] is not None:

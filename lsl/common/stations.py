@@ -10,7 +10,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
 __version__ = "0.4"
-__revision__ = "$ Revision: 23 $"
+__revision__ = "$ Revision: 24 $"
 __all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', '__version__', '__revision__', '__all__']
 
 
@@ -45,7 +45,7 @@ def geo2ecef(lat, lon, elev):
 
 	WGS84_a = 6378137.000000
 	WGS84_b = 6356752.314245
-	N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lon)**2)
+	N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
  
 	x = (N+elev)*numpy.cos(lat)*numpy.cos(lon)
 	y = (N+elev)*numpy.cos(lat)*numpy.sin(lon)

@@ -141,8 +141,18 @@ def main(args):
 	print "Sample Length: %i-bit" % dataBits
 	print "Frames: %i" % nFrames
 	print "Chunks: %i" % nChunks
+	print "==="
 
 	nChunks = 1
+	
+	# Skip over any non-TBW frames at the beginning of the file
+	i = 0
+	junkFrame = tbw.readFrame(fh)
+	while not junkFrame.header.isTBW():
+		junkFrame = tbw.readFrame(fh)
+		i += 1
+	fh.seek(-tbw.FrameSize, 1)
+	print "Skipped %i non-TBW frames at the beginning of the file" % i
 
 	# Master loop over all of the file chunks
 	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))

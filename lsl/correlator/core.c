@@ -179,7 +179,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				for(k=0; k<2*nChan; k++) {
 					dLoc[1] = (npy_intp) (secStart + k);
-					in[k][0] = *(double *) PyArray_GetPtr(data, dLoc);
+					in[k][0] = *(short int *) PyArray_GetPtr(data, dLoc);
 					in[k][1] = 0.0;
 				}	
 			
@@ -374,7 +374,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				for(k=0; k<2*nChan; k++) {
 					dLoc[1] = (npy_intp) (secStart + k);
 					qLoc[0] = (npy_intp) k;
-					in[k][0] = *(double *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc);
+					in[k][0] = *(short int *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc);
 					in[k][1] = 0.0;
 				}	
 			
@@ -553,8 +553,8 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				for(k=0; k<nChan; k++) {
 					dLoc[1] = (npy_intp) (secStart + k);
-					in[k][0] = creal(*(double complex *) PyArray_GetPtr(data, dLoc));
-					in[k][1] = cimag(*(double complex *) PyArray_GetPtr(data, dLoc));
+					in[k][0] = creal(*(float complex *) PyArray_GetPtr(data, dLoc));
+					in[k][1] = cimag(*(float complex *) PyArray_GetPtr(data, dLoc));
 				}	
 			
 				fftw_execute_dft(p, in, in);
@@ -748,8 +748,8 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				for(k=0; k<nChan; k++) {
 					dLoc[1] = (npy_intp) (secStart + k);
 					qLoc[0] = (npy_intp) k;
-					in[k][0] = creal(*(double complex *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc));
-					in[k][1] = cimag(*(double complex *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc));
+					in[k][0] = creal(*(float complex *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc));
+					in[k][1] = cimag(*(float complex *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc));
 				}	
 			
 				fftw_execute_dft(p, in, in);
