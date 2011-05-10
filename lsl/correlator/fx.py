@@ -641,6 +641,14 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 
 	# X
 	output = _core.XEngine2(signalsF1, signalsF2C)
+	if not IncludeAuto:
+		# Remove auto-correlations from the output of the X engine if we don't 
+		# need them.  To do this we need to first build the full list of baselines
+		# (including auto-correlations) and then prune that.
+		baselinesFull = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=True, Indicies=True)
+		fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
+		nonAuto = numpy.where( fom != 0 )[0]
+		output = output[nonAuto,:]
 
 	# Divide the cross-multiplied data by the number of channels used
 	output /= LFFT

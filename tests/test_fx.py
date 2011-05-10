@@ -176,7 +176,7 @@ class fx_tests(unittest.TestCase):
 			
 		## YX
 		blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], SampleRate=1e5, CentralFreq=38e6, 
-									ReturnBaselines=True, Pol='XY')
+									ReturnBaselines=True, Pol='YX')
 		for (ant1,ant2) in blList:
 			self.assertEqual(ant1.pol, 1)
 			self.assertEqual(ant2.pol, 0)
