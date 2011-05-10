@@ -8,6 +8,8 @@
   * Fixed a few type conversion problems in correlator._core (core.c) introduced with the new data types
   * Fixed a frequency units conversion in tbnSpectra.py
   * Improved polarization support in the FITS IDI writer
+  * Fixed a sign error in the fractional delay correction of the correlator F engine
+  * Improved the speed of the X Engine
 
 0.4.1
   * Fixed a problem with the C readers that manifests itself on 32-bit platforms

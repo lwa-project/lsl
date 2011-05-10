@@ -28,16 +28,38 @@ from lsl.misc import mathutil
 from lsl.misc import geodesy
 from lsl.common.warns import warnExperimental
 
-__version__ = '0.5'
-__revision__ = '$ Revision: 17 $'
-__all__ = ['IDI', 'AIPS', 'StokesCodes', '__version__', '__revision__', '__all__']
+__version__ = '0.6'
+__revision__ = '$ Revision: 18 $'
+__all__ = ['IDI', 'AIPS', 'StokesCodes', 'NumericStokes', '__version__', '__revision__', '__all__']
 
 
 IDIVersion = (2, 0)
 
-StokesCodes = {'I': 1, 'Q': 2, 'U': 3, 'V': 4, 
+StokesCodes = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
 			'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 
 			'XX': -5, 'YY': -6, 'XY': -7, 'YX': -8}
+
+NumericStokes = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
+			  -1: 'RR', -2: 'LL', -3: 'RL', -4: 'RL', 
+			  -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
+
+
+def mergeBaseline(ant1, ant2, shift=16):
+	"""
+	Merage two stand ID numbers into a single baseline using the specified bit 
+	shift size.
+	"""
+	
+	return (ant1 << shift) | ant2
+
+def splitBaseline(baseline, shift=16):
+	"""
+	Given a baseline, split it into it consitnet stand ID numbers.
+	"""
+	
+	part = 2**shift - 1
+	return (baseline >> shift) & part, baseline & part
+
 
 
 class IDI(object):
@@ -262,9 +284,9 @@ class IDI(object):
 			numericPol = pol
 
 		dataDict = {}
-		for (ant1,ant2), visData in zip(baselines, visibilities):
-			baseline = (ant1.stand.id << 16) | ant2.stand.id
-			dataDict[baseline] = visData
+		for bl, (ant1,ant2) in enumerate(baselines):
+			baseline = mergeBaseline(ant1.stand.id, ant2.stand.id, shift=16)
+			dataDict[baseline] = visibilities[bl,:].squeeze()
 			
 		self.data.append( self._UVData(obsTime, intTime, dataDict, pol=numericPol) )
 
@@ -280,8 +302,8 @@ class IDI(object):
 			polarization code.
 			"""
 			
-			xID = x.obsTime*1000000 + abs(x.pol)
-			yID = y.obsTime*1000000 + abs(y.pol)
+			xID = x.obsTime*10000000 + abs(x.pol)
+			yID = y.obsTime*10000000 + abs(y.pol)
 			
 			if xID > yID:
 				return 1
@@ -790,11 +812,12 @@ class IDI(object):
 		dateList = []
 		intTimeList = []
 		blineList = []
+		rawList = []
 		nameList = []
 		sourceList = []
 		sourceID = 1
 		for dataSet in self.data:
-			if self.stokes.index(dataSet.pol) == 0:
+			if dataSet.pol == self.stokes[0]:
 				utc = astro.taimjd_to_utcjd(dataSet.obsTime)
 				date = astro.get_date(utc)
 				date.hours = 0
@@ -822,24 +845,25 @@ class IDI(object):
 				for standID in standIDs:
 					antennaStands.append( inputAnts[standID] )
 				
-				uvwBaselines = numpy.array([(a1.stand.id << 16) | a2.stand.id for a1,a2 in uvUtils.getBaselines(antennaStands)])
+				uvwBaselines = numpy.array([mergeBaseline(a1.stand.id, a2.stand.id, shift=16) for a1,a2 in uvUtils.getBaselines(antennaStands)])
 				uvwCoords = uvUtils.computeUVW(antennaStands, HA=0.0, dec=equ.dec, freq=self.refVal)
 				uvwCoords *= 1.0 / self.refVal
 				
 				tempMList = {}
+				for stokes in self.stokes:
+					tempMList[stokes] = {}
 
 			# Loop over the data store in the dataDict and extract each baseline
 			baselines = list(dataSet.dataDict.keys())
 			baselines.sort()
 			for baseline in baselines: 
 				# validate baseline antenna ID's
-				stand1 = (baseline >> 16) & 65535
-				stand2 = baseline & 65535
+				stand1, stand2 = splitBaseline(baseline, shift=16)
 				if mapper is not None:
 					stand1 = mapper[stand1]
 					stand2 = mapper[stand2]
 				# Recontruct the baseline in FITS IDI format
-				baselineMapped = (stand1 << 8) | stand2
+				baselineMapped = mergeBaseline(stand1, stand2, shift=8)
 
 				if (stand1 not in ids) or (stand2 not in ids):
 					raise ValueError("baseline 0x%04x (%i to %i) contains unknown antenna IDs" % (baselineMapped, stand1, stand2))
@@ -861,14 +885,11 @@ class IDI(object):
 				matrix = numpy.zeros((2*self.nChan,), dtype=numpy.float32)
 				matrix[0::2] = visData.real
 				matrix[1::2] = visData.imag
-			
-				try:
-					tempMList[dataSet.pol].append(matrix.ravel())
-				except KeyError:
-					tempMList[dataSet.pol] = [matrix.ravel(),]
+				tempMList[dataSet.pol][baseline] = matrix.ravel()
 					
-				if self.stokes.index(dataSet.pol) == 0:
+				if dataSet.pol == self.stokes[0]:
 					blineList.append(baselineMapped)
+					rawList.append(baseline)
 					uList.append(uvw[0])
 					vList.append(uvw[1])
 					wList.append(uvw[2])
@@ -878,15 +899,29 @@ class IDI(object):
 					sourceList.append(sourceID)
 			
 			if dataSet.pol == self.stokes[-1]:
-				for bl in xrange(len(tempMList[self.stokes[0]])):
+				for bl in rawList:
 					matrix = numpy.zeros((2*self.nStokes*self.nChan,), dtype=numpy.float32)
-					for pol in self.stokes:
-						offset = 2*self.stokes.index(pol)
-						matrix[(0+offset)::(2*self.nStokes)] = tempMList[pol][bl][0::2]
-						matrix[(1+offset)::(2*self.nStokes)] = tempMList[pol][bl][1::2]
+					for p in xrange(self.nStokes):
+						try:
+							matrix[(0+2*p)::(2*self.nStokes)] = tempMList[self.stokes[p]][bl][0::2]
+							matrix[(1+2*p)::(2*self.nStokes)] = tempMList[self.stokes[p]][bl][1::2]
+						except KeyError:
+							stand1, stand2 = splitBaseline(bl, shift=16)
+							newBL = mergeBaseline(stand2, stand1, shift=16)
+							print bl, bl in tempMList[self.stokes[p]], stand1, stand2, newBL, newBL in tempMList[self.stokes[p]]
+							
+							#
+							#print stand1, stand2
+							#print newBL, newBL in tempMList[self.stokes[p]]
+							#tempMList[self.stokes[p]][newBL] = tempMList[self.stokes[p]][newBL].conj()
+							#matrix[(0+2*p)::(2*self.nStokes)] = tempMList[self.stokes[p]][newBL][0::2]
+							#matrix[(1+2*p)::(2*self.nStokes)] = tempMList[self.stokes[p]][newBL][1::2]
+							#
+							
 					mList.append(matrix.ravel())
 			
 				sourceID += 1
+				rawList = []
 		nBaseline = len(blineList)
 		nSource = len(nameList)
 

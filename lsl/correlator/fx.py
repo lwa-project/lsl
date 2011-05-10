@@ -32,7 +32,7 @@ import _spec
 import _core
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 25 $'
+__revision__ = '$ Revision: 26 $'
 __all__ = ['pol2pol', 'noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
 
 
@@ -566,7 +566,9 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		:mod:`lsl.common.stations` module instead of a list of stand ID
 		numbers.
 	"""
-
+	
+	# Decode the polarization product into something that we can use to figure 
+	# out which antennas to use for the cross-correlation
 	pol1, pol2 = pol2pol(Pol)
 	
 	antennas1 = [a for a in antennas if a.pol == pol1]
@@ -605,7 +607,10 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	for i in list(range(nStands)):
 		delays1[i,:] = antennas1[i].cable.delay(freq)
 		delays2[i,:] = antennas2[i].cable.delay(freq)
-	maxDelay = delays1[:,dlyRef].max() if delays1[:,dlyRef].max() > delays2[:,dlyRef].max() else delays2[:,dlyRef].max()
+	if delays1[:,dlyRef].max() > delays2[:,dlyRef].max():
+		maxDelay = delays1[:,dlyRef].max()
+	else:
+		maxDelay = delays2[:,dlyRef].max()
 	delays1 = maxDelay - delays1
 	delays2 = maxDelay - delays2
 
@@ -616,18 +621,22 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 			FEngine = _core.FEngineC2
 		else:
 			FEngine = _core.FEngineR2
+		signalsF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
 	else:
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
 			FEngine = _core.FEngineC3
 		else:
 			FEngine = _core.FEngineR3
+		signalsF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, window=window)
 	
-	signalsF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
 	if pol2 == pol1:
 		signalsF2 = signalsF1
 	else:
-		signalsF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		if window is noWindow:
+			signalsF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		else:
+			signalsF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, window=window)
 	signalsF2C = signalsF2.conj()
 
 	# X

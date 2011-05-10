@@ -191,7 +191,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (in[fftIndex][0] + imaginary*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -386,7 +386,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (in[fftIndex][0] + imaginary*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -565,7 +565,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (in[fftIndex][0] + imaginary*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -760,7 +760,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (in[fftIndex][0] + imaginary*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -944,45 +944,24 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	
 	// Cross-multiplication and accumulation
 	long bl, c, f;
-	npy_intp *vLoc, *dLoc1, *dLoc2;
 	double complex tempVis, dataBL1[nFFT], dataBL2[nFFT];
+	double complex *a, *b, *v;
+	a = (double complex *) data->data;
+	b = (double complex *) dataC->data;
+	v = (double complex *) vis->data;
 	
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(vLoc, dLoc1, dLoc2, c, f, dataBL1, dataBL2, tempVis)
+		#pragma omp parallel default(shared) private(c, f, dataBL1, dataBL2, tempVis)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(bl=0; bl<nBL; bl++) {
-			vLoc = PyDimMem_NEW(2);
-			dLoc1 = PyDimMem_NEW(3);
-			dLoc2 = PyDimMem_NEW(3);
-			
-			vLoc[0] = (npy_intp) bl;
-			dLoc1[0] = (npy_intp) mapper[bl][0];
-			dLoc2[0] = (npy_intp) mapper[bl][1];
-			
 			for(c=0; c<nChan; c++) {
-				vLoc[1] = (npy_intp) c;
-				dLoc1[1] = (npy_intp) c;
-				dLoc2[1] = (npy_intp) c;
-				
-				for(f=0; f<nFFT; f++) {
-					dLoc1[2] = (npy_intp) f;
-					dLoc2[2] = (npy_intp) f;
-					
-					dataBL1[f] = *(double complex *) PyArray_GetPtr(data, dLoc1);
-					dataBL2[f] = *(double complex *) PyArray_GetPtr(dataC, dLoc2);
-				}
-			
-				cblas_zdotu_sub(nFFT, dataBL1, 1, dataBL2, 1, &tempVis);
-				*(double complex *) PyArray_GetPtr(vis, vLoc) = tempVis / nFFT;
+				cblas_zdotu_sub(nFFT, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, &tempVis);
+				*(v + bl*nChan + c) = tempVis / nFFT;
 			}
-			
-			PyDimMem_FREE(vLoc);
-			PyDimMem_FREE(dLoc1);
-			PyDimMem_FREE(dLoc2);
 		}
 	}
 	Py_XDECREF(data);
@@ -1007,8 +986,8 @@ Ouputs:\n\
   * visibility: 3-D numpy.cdouble (baseline by channel) array of cross-\n\
     correlated and average visibility data.\n\
 ");
-    
-    
+
+
 /* 
   Polyphase Filterbank Functions ("P Engines")
     1. PEngineR2 - Filterbank analog to FEngineR2 using 4 taps
@@ -1154,7 +1133,7 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -1342,7 +1321,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -1517,7 +1496,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				fLoc[2] = (npy_intp) (j / nTaps);
 				for(k=0; k<(nChan-1); k++) {
 					fLoc[1] = (npy_intp) k;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(-2*imaginary*PI * *(f + k) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(2*imaginary*PI * *(f + k) * frac[i][k]);
 				}
 			}
 			
@@ -1709,7 +1688,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				fLoc[2] = (npy_intp) (j / nTaps);
 				for(k=0; k<(nChan-1); k++) {
 					fLoc[1] = (npy_intp) k;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(-2*imaginary*PI * *(f + k) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(2*imaginary*PI * *(f + k) * frac[i][k]);
 				}
 			}
 			

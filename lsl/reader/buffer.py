@@ -13,7 +13,7 @@ Buffer for dealing with out-of-order/missing frames.
 import copy
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 14 $'
+__revision__ = '$ Revision: 15 $'
 __all__ = ['FrameBuffer', 'TBNFrameBuffer', '__version__', '__revision__', '__all__']
 
 
@@ -72,7 +72,7 @@ class FrameBuffer(object):
 		are, effectively, on different networks.
 	"""
 
-	def __init__(self, mode='TBN', stands=[], pols=[], samples=12000000, bits=12, nSegments=6):
+	def __init__(self, mode='TBN', stands=[], pols=[], samples=12000000, bits=12, nSegments=6, ReorderFrames=False):
 		"""
 		Initialize the buffer with a list of:
 		  * TBW:
@@ -119,6 +119,9 @@ class FrameBuffer(object):
 		self.pols = pols
 		self.bits = bits
 		self.samples = samples
+		
+		# If we should reorder the returned frames by stand/pol or not
+		self.reorder = ReorderFrames
 		
 		# Figure out how many frames fill the buffer and the list of all
 		# possible frames in the data set
@@ -230,7 +233,8 @@ class FrameBuffer(object):
 		if output is None:
 			return output
 		else:
-			#output.sort(cmp=_cmpStands)
+			if self.reorder:
+				output.sort(cmp=_cmpStands)
 			return output
 			
 	def flush(self):
@@ -265,7 +269,8 @@ class FrameBuffer(object):
 				for frame in self.__missingList(key):
 					output2.append( self.__createFill(key, frame) )
 			
-			output2.sort(cmp=_cmpStands)
+			if self.reorder:
+				output2.sort(cmp=_cmpStands)
 			output.append( output2 )
 			del(self.buffer[key])
 			self.done.append(key)
@@ -368,6 +373,10 @@ class TBNFrameBuffer(FrameBuffer):
 	nSegments
 	  number of ring segments to use for the buffer (default is 20)
 	  
+	ReorderFrames
+	  whether or not to reorder frames returned by get() or flush() by 
+	  stand/polarization (default is False)
+	  
 	The number of segements in the ring can be converted to a buffer time in 
 	seconds:
 	
@@ -391,8 +400,8 @@ class TBNFrameBuffer(FrameBuffer):
 	
 	"""
 	
-	def __init__(self, stands=[], pols=[0, 1], nSegments=20):
-		super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments)
+	def __init__(self, stands=[], pols=[0, 1], nSegments=20, ReorderFrames=False):
+		super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
 		
 	def figureOfMerit(self, frame):
 		"""
