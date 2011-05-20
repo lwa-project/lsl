@@ -43,8 +43,13 @@ hrz_from_equ(int n,double lng, double lat, double JD, double *ra, double *dec, d
 
            ln_get_hrz_from_equ (&object, &observer, JD, &hrz);
 
+		 /* Note:  libnova works with an azimuth definition that 0 is south, not 
+		    the standard definition that 0 is north.  This convention difference 
+		    was not noted in the pervious version of astro_array.c but this should
+		    take care of it.
+		 */
            *(alt++)=hrz.alt;
-           *(az++)=hrz.az;
+           *(az++)=fmod((hrz.az+180.0), 360.0);
         }
 
  return n;
