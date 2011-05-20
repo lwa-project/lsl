@@ -1,6 +1,7 @@
 0.5-dev
   * Worked on adding better polarization support to correlator.fx and correlator.uvUtils
   * Updated the correlateTBN script to make full polarization support possible
+  * Added a crude deconvolution routine that should work with the AIPY ImgW images
 
 0.4.2
   * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file
@@ -14,6 +15,9 @@
   * Fixed a azimuth definition problem in astro_array.c
   * Updated the included SSMIF to the 5/18/2011 version
   * Updated the correlateTBN script to make computing XX and YY products easier
+  * Added support for different cable attenuation models supported in MCS0031, v5
+  * Added support for the old 20-stand prototype system through lsl.common.stations.prototypeSystem
+  * Updated the correlateTBW script to make computing XX and YY products easier
 
 0.4.1
   * Fixed a problem with the C readers that manifests itself on 32-bit platforms

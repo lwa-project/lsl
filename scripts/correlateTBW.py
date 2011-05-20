@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Example script that reads in TBW data and runs a cross-correlation on it.  
+The results are saved in the FITS IDI format.
+"""
+
 import os
 import sys
 import time
 import ephem
 import numpy
 import getopt
+import random
 from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
@@ -42,10 +48,13 @@ Usage: correlateTBW.py [OPTIONS] file
 
 Options:
 -h, --help             Display this help information
+-m, --metadata         Name of SSMIF file to use for mappings
 -f, --fft-length       Set FFT length (default = 512)
 -s, --samples          Number of average visibilities to generate
                        (default = 10)
 -q, --quiet            Run correlateTBW in silent mode
+-x, --xx               Compute only the XX polarization product (default)
+-y, --yy               Compute only the YY polarization product
 """
 
 	if exitCode is not None:
@@ -57,17 +66,17 @@ Options:
 def parseConfig(args):
 	config = {}
 	# Command line flags - default values
-	config['avgTime'] = 6
+	config['SSMIF'] = ''
 	config['LFFT'] = 512
-	config['cFreq'] = 38.0e6
 	config['samples'] = 10
 	config['offset'] = 0
 	config['verbose'] = True
+	config['products'] = ['xx',]
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hql:s:", ["help", "quiet", "fft-length=", "samples="])
+		opts, arg = getopt.getopt(args, "hm:ql:s:xy", ["help", "metadata=", "quiet", "fft-length=", "samples=", "xx", "yy"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -77,12 +86,18 @@ def parseConfig(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
+		elif opt in ('-m', '--metadata'):
+			config['SSMIF'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
 		elif opt in ('-l', '--fft-length'):
 			config['LFFT'] = int(value)
 		elif opt in ('-s', '--samples'):
 			config['samples'] = int(value)
+		elif opt in ('-x', '--xx'):
+			config['products'] = ['xx',]
+		elif opt in ('-y', '--yy'):
+			config['products'] = ['yy',]
 		else:
 			assert False
 	
@@ -93,71 +108,124 @@ def parseConfig(args):
 	return config
 
 
-def processChunk(fh, site, stands, filename, LFFT=64, Overlap=1, SampleRate=dp_common.fS, ChunkSize=300, dataSize=400):
-	"""Given a filehandle pointing to some TBN data and various parameters for
-	the cross-correlation, write cross-correlate the data and save it to a file."""
+def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e6, SampleRate=dp_common.fS, ChunkSize=300, pols=['xx',],  dataSize=400):
+	"""
+	Given a filehandle pointing to some TBW data and various parameters for
+	the cross-correlation, write cross-correlate the data and save it to a file.
+	"""
 
-	nFrames = 30000
+	# Get antennas
+	antennas = site.getAntennas()
+
+	# Create the list of good digitizers
+	goodDigs = []
+	dig2ant = {}
+	for i in good:
+		goodDigs.append(antennas[i].digitizer)
+		dig2ant[antennas[i].digitizer] = antennas[i]
 	
+	# Find out how many frames to work with at a time
+	nFrames = int(30000)
+
+	mapper = []
+	mapper2 = []
 	refTime = 0.0
 	setTime = 0.0
 	wallTime = time.time()
-	for s in list(range(ChunkSize)):
+	for s in xrange(ChunkSize):
 		count = {}
 		masterCount = 0
 		iTime = 0
-		data = numpy.zeros((20,12000000), dtype=numpy.int16)
-		for i in range(10*nFrames):
+		data = numpy.zeros((len(good),nFrames*dataSize), dtype=numpy.int16)
+		
+		i = 0
+		j = 0
+		while j < (260*nFrames):
 			# Read in the next frame and anticipate any problems that could occur
 			try:
 				cFrame = tbw.readFrame(fh)
 			except errors.eofError:
 				break
 			except errors.syncError:
-				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbw.FrameSize-1)
+				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbw.FrameSize-1)
 				continue
-			except errors.numpyError:
-				break
 
-			stand = cFrame.parseID()
+			stand = cFrame.header.parseID()
+			pol = 0
+			aStand = 2*(stand-1)+pol + 1
+				
 			if i == 0:
 				setTime = cFrame.getTime()
 				if s == 0:
 					refTime = setTime
+				
+			if aStand not in goodDigs:
+				continue
+			
+			#if cFrame.header.frameCount % 1000:
+				#print "Skipping stand %i -> %i" % (stand, aStand)
+				
+			oStand = aStand
+			if aStand not in mapper:
+				mapper.append(aStand)
+				mapper2.append(dig2ant[aStand])
+				aStand = mapper.index(aStand)
+			else:
+				aStand = mapper.index(aStand)
 
-			if stand not in count.keys():
-				count[stand] = 0
-			data[2*(stand-1),  count[stand]*dataSize:(count[stand]+1)*dataSize] = numpy.squeeze(cFrame.data.xy[0,:])
-			data[2*(stand-1)+1,count[stand]*dataSize:(count[stand]+1)*dataSize] = numpy.squeeze(cFrame.data.xy[1,:])
-		
-			count[stand] = count[stand] + 1
+			cnt = cFrame.header.frameCount - 1
+			data[aStand,  cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[1,:]
+			
 			masterCount = masterCount + 1
-
+			
+			j += 1
+		i += 1
+		
 		setDT = datetime.utcfromtimestamp(setTime)
 		setDT.replace(tzinfo=UTC())
 		print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
-		freqYY, outYY = fxc.FXMaster(data[1::2,:], stands, LFFT=LFFT, Overlap=1, IncludeAuto=True, SampleRate=SampleRate)
-		blList = uvUtils.getBaselines(stands, IncludeAuto=True, Indicies=False)
+		
+		nSec = 8
+		secSize = data.shape[1]/nSec
+		
+		for pol in pols:
+			print "-> %s" % pol
+			try:
+				del tempVis
+			except:
+				pass
+			
+			for k in xrange(nSec):
+				blList, freq, vis = fxc.FXMaster(data[:,k*secSize:(k+1)*secSize], mapper2, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False, SampleRate=SampleRate, CentralFreq=CentralFreq, Pol=pol, ReturnBaselines=True, GainCorrect=True)
 
-		toUse = numpy.where( (freqYY>10.0e6) & (freqYY<88.0e6) )
-		toUse = toUse[0]
+				toUse = numpy.where( (freq>10.0e6) & (freq<88.0e6) )
+				toUse = toUse[0]
+				
+				try:
+					tempVis += vis
+				except:
+					tempVis = vis
+					
+			vis = tempVis / float(nSec)
+			
+			if s  == 0 and pol == pols[0]:
+				pol1, pol2 = fxc.pol2pol(pol)
+				
+				fits = fitsidi.IDI(filename, refTime=refTime)
+				fits.setStokes(pols)
+				fits.setFrequency(freq[toUse])
+				fits.setGeometry(site, [a for a in mapper2 if a.pol == pol1])
 
-		if s  == 0:
-			fits = fitsidi.IDI(filename, refTime=refTime)
-			fits.setStokes(['xx'])
-			fits.setFrequency(freqYY[toUse])
-			fits.setGeometry(site, stands)
-
-		obsTime = astro.unix_to_taimjd(setTime)
-		fits.addDataSet(obsTime, 400*nFrames/SampleRate, blList, outYY[:,toUse])
-		print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
+			obsTime = astro.unix_to_taimjd(setTime)
+			fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, vis[:,toUse], pol=pol)
+			print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
 
 	fits.write()
 	fits.close()
 	del(fits)
 	del(data)
-	del(outYY)
-	return True		
+	del(vis)
+	return True
 
 
 def main(args):
@@ -169,7 +237,8 @@ def main(args):
 	LFFT = config['LFFT']
 
 	# Setup the LWA station information
-	lwa1 = stations.lwa1
+	station = stations.lwa1
+	antennas = station.getAntennas()
 
 	fh = open(filename, "rb", buffering=tbw.FrameSize*10000)
 	test = tbw.readFrame(fh)
@@ -180,11 +249,34 @@ def main(args):
 	jd = astro.unix_to_utcjd(test.getTime())
 	date = str(ephem.Date(jd - astro.DJD_OFFSET))
 	sampleRate = dp_common.fS
-	nInts = os.path.getsize(filename) / tbw.FrameSize / 300000
+	nInts = os.path.getsize(filename) / tbw.FrameSize / 30000 / len(antennas) / 2
 
-	# Get stands
-	stands = lwa1.getStands(date)
-	print stands
+	# Get valid stands for both polarizations
+	goodX = []
+	goodY = []
+	for i in xrange(len(antennas)):
+		ant = antennas[i]
+		if ant.stand.id > 255:
+			pass
+		elif ant.getStatus() != 33:
+			pass
+		else:
+			if ant.pol == 0:
+				goodX.append(ant)
+			else:
+				goodY.append(ant)
+	
+	# Select which polarization to use
+	if config['products'][0] == 'xx':
+		good = goodX
+	else:
+		good = goodY
+		
+	# Report on the valid stands found.  This is a little verbose,
+	# but nice to see.
+	print "Found %i good stands to use" % len(good)
+	for i in good:
+		print "%3i, %i" % (antennas[i].stand.id, antennas[i].pol)
 
 	# Number of frames to read in at once and average
 	nFrames = 30000
@@ -193,7 +285,7 @@ def main(args):
 	print "TBW Data:  %s" % test.header.isTBW()
 	print "Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sampleRate)
 	print "=="
-	print "Station: %s" % lwa1.name
+	print "Station: %s" % station.name
 	print "Date observed: %s" % date
 	print "Julian day: %.5f" % jd
 	print "Integration Time: %.3f s" % (400*nFrames/sampleRate)
@@ -202,19 +294,19 @@ def main(args):
 
 	# Align the file with the first full capture
 	fh = open(filename, "rb")
-	frame = tbw.readFrame(fh)
-	skip = 0
-	while frame.parseID() != 1 and frame.header.frameCount != 1:
-		frame = tbw.readFrame(fh)
-		skip += 1
-	fh.seek(fh.tell() - tbw.FrameSize)
-	print "Skipped %i frames" % skip
+	
+	i = 0
+	junkFrame = tbw.readFrame(fh)
+	while not junkFrame.header.isTBW():
+		junkFrame = tbw.readFrame(fh)
+		i += 1
+	fh.seek(-tbw.FrameSize, 1)
+	print "Skipped %i non-TBW frames at the beginning of the file" % i
 
 	# Get the data frame size
 	dataSize = 400
-	if frame.getDataBits() == 4:
+	if junkFrame.getDataBits() == 4:
 		dataSize = 1200
-
 	
 	if config['samples'] > nSets:
 		config['samples'] = nSets
@@ -227,7 +319,7 @@ def main(args):
 			chunk = 300
 		else:
 			chunk = leftToDo
-		processChunk(fh, lwa1, stands, fitsFilename, LFFT=config['LFFT'], Overlap=1, SampleRate=sampleRate,
+		processChunk(fh, station, good, fitsFilename, LFFT=config['LFFT'], Overlap=1, SampleRate=sampleRate,
 				ChunkSize=chunk, dataSize=dataSize)
 
 		s = s + 1
@@ -239,4 +331,3 @@ def main(args):
 if __name__ == "__main__":
 	numpy.seterr(all='ignore')
 	main(sys.argv[1:])
-

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Example script that reads in TBN data and runs a cross-correlation on it.  
-The results are saved in the Miriad UV format."""
+"""
+Example script that reads in TBN data and runs a cross-correlation on it.  
+The results are saved in the FITS IDI format.
+"""
 
 import os
 import re
@@ -41,7 +43,6 @@ class UTC(tzinfo):
 
     def dst(self, dt):
         return timedelta(0)
-
 
 
 def usage(exitCode=None):
@@ -131,8 +132,10 @@ def parseConfig(args):
 
 
 def processChunk(fh, site, good, filename, intTime=6.0, LFFT=64, Overlap=1, CentralFreq=49.0e6, SampleRate=dp_common.fS, pols=['xx',], ChunkSize=300):
-	"""Given a filehandle pointing to some TBN data and various parameters for
-	the cross-correlation, write cross-correlate the data and save it to a file."""
+	"""
+	Given a filehandle pointing to some TBN data and various parameters for
+	the cross-correlation, write cross-correlate the data and save it to a file.
+	"""
 
 	# Get antennas
 	antennas = site.getAntennas()
@@ -141,12 +144,10 @@ def processChunk(fh, site, good, filename, intTime=6.0, LFFT=64, Overlap=1, Cent
 	# buffer.get() and buffer.flush() are in stand/polariation order
 	buffer = TBNFrameBuffer(stands=range(1,520/2+1), pols=[0, 1], ReorderFrames=False)
 
-	# Create the list of good digitizers and a digitizer to Antenna instance mapping
-	#goodDigs = []
-	#dig2ant = {}
-	#for i in good:
-		#goodDigs.append(antennas[i].digitizer)
-		#dig2ant[antennas[i].digitizer] = antennas[i]
+	# Create the list of good digitizers and a digitizer to Antenna instance mapping.  
+	# These are:
+	#  mapper  -> mapping of digitizer number to array location
+	#  mapper2 -> mapping of Antenna instance to array location
 	mapper = [antennas[i].digitizer for i in good]
 	mapper2 = [antennas[i] for i in good]
 	
@@ -156,12 +157,8 @@ def processChunk(fh, site, good, filename, intTime=6.0, LFFT=64, Overlap=1, Cent
 
 	# Main loop over the input file to read in the data and organize it.  Several control 
 	# variables are defined for this:
-	#  mapper  -> mapping of digitizer number to array location
-	#  mapper2 -> mapping of Antenna instance to array location
 	#  refTime -> time (in seconds since the UNIX epoch) for the first data set
 	#  setTime -> time (in seconds since the UNIX epoch) for the current data set
-	#mapper = []
-	#mapper2 = []
 	refTime = 0.0
 	setTime = 0.0
 	wallTime = time.time()
@@ -373,6 +370,7 @@ def main(args):
 		leftToDo = leftToDo - chunk
 
 	fh.close()
+
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
