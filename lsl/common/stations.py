@@ -5,12 +5,13 @@ import os
 import re
 import numpy
 import ephem
+import struct
 
 from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
-__version__ = "0.5"
-__revision__ = "$ Revision: 27 $"
+__version__ = "0.6"
+__revision__ = "$ Revision: 29 $"
 __all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', 'lwa1', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
@@ -88,6 +89,9 @@ class LWAStation(object):
 			self.antennas = []
 		else:
 			self.antennas = antennas
+			
+	def __str__(self):
+		return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
 
 	def getObserver(self, date=None, JD=False):
 		"""
@@ -426,9 +430,10 @@ class Cable(object):
 		return 1.0 / self.attenuation(frequency=frequency)
 
 
-def parseSSMIF(filename):
+def __parseTextSSMIF(filename):
 	"""
-	Given a SSMIF file, return a fully-filled LWAStation instance.
+	Given a human-readable (text) SSMIF file and return a collection of
+	variables via locals() containing the files data.
 	"""
 	
 	fh = open(filename, 'r')
@@ -676,7 +681,7 @@ def parseSSMIF(filename):
 			continue
 		
 		#
-		# ARX Data
+		# ARX (ARB) Data
 		#
 		
 		if keyword == 'N_ARB':
@@ -808,6 +813,261 @@ def parseSSMIF(filename):
 		if keyword == 'DP2_DESI':
 			dp2Desi[ids[0]-1] = int(value)
 			continue
+		
+		#
+		# DR Data
+		#
+		
+		if keyword == 'N_DR':
+			nDR = int(value)
+			
+			drStat = [0 for n in xrange(nDR)]
+			drID = ["UNK" for n in xrange(nDR)]
+			drShlf = [0 for n in xrange(nDR)]
+			drPC = ["UNK" for n in xrange(nDR)]
+			drDP = [0 for n in xrange(nDR)]
+			
+			continue
+		
+		if keyword == 'DR_STAT':
+			drStat[ids[0]-1] = int(value)
+			continue
+		
+		if keyword == 'DR_ID':
+			drID[ids[0]-1] = value
+			continue
+		
+		if keyword == 'DR_SHLF':
+			drShlf[ids[0]-1] = int(value)
+			continue
+		
+		if keyword == 'DR_PC':
+			drPC[ids[0]-1] = value
+			continue
+		
+		if keyword == 'DR_DP':
+			drDP[ids[0]-1] = int(value)
+			continue
+		
+	fh.close()
+	
+	return locals()
+
+
+def __guidedBinaryRead(fh, fmt):
+	"""
+	Function to wrap reading in packed binary data directrly from an open file
+	handle.  This function calls struct.unpack() and struct.calcsize() to figure 
+	out what to read and how.
+	
+	Return either a single item if a single item is requested or a list of items.
+	
+	Used by __parseBinarySSMIF()
+	"""
+	
+	
+	data = struct.unpack(fmt, fh.read(struct.calcsize(fmt)))
+	if len(data) == 1:
+		return data[0]
+	else:
+		return list(data)
+
+
+def __parseBinarySSMIF(filename):
+	"""
+	Given a binary packed SSMIF file and return a collection of
+	variables via locals() containing the files data.
+	"""
+	
+	maxStd  = 260
+	maxFEE  = 250
+	feeIDL  = 10
+	maxRack = 6
+	maxPort = 50
+	maxRPD  = 520
+	rpdIDL  = 25
+	maxSEP  = 520
+	sepIDL  = 25
+	cblIDL  = 25
+	maxARB  = 33
+	arbIDL  = 10
+	maxARBChan = 16
+	maxDP1  = 26
+	dp1IDL  = 10
+	maxDP1Chan = 20
+	maxDP2  = 2
+	dp2IDL  = 10
+	maxDR  = 5
+	drIDL  = 10
+	
+	fh = open(filename, 'rb')
+	
+	#
+	# General station information
+	#
+	
+	version = __guidedBinaryRead(fh, "<i")
+	idn = __guidedBinaryRead(fh, "<3s")
+	lat, lon, elv = __guidedBinaryRead(fh, "<3d")
+	
+	#
+	# Stand information
+	#
+	
+	nStand   = __guidedBinaryRead(fh, "<i")
+	stdX     = __guidedBinaryRead(fh, "<%id" % maxStd)
+	stdY     = __guidedBinaryRead(fh, "<%id" % maxStd)
+	stdZ     = __guidedBinaryRead(fh, "<%id" % maxStd)
+	stdPos   = [[stdX[i], stdY[i], stdZ[i]] for i in xrange(maxStd)]
+	stdAnt   = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
+	stdOrie  = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
+	stdStat  = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
+	stdTheta = __guidedBinaryRead(fh, "<%if" % (2*maxStd,))
+	stdPhi   = __guidedBinaryRead(fh, "<%if" % (2*maxStd,))
+	stdDesi  = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
+	
+	#
+	# FEE information
+	#
+	
+	nFee    = __guidedBinaryRead(fh, "<i")
+	feeID   = __guidedBinaryRead(fh, "<%is" % ((feeIDL+1)*maxFEE,))
+	feeID   = [feeID[i*(feeIDL+1):(i+1)*(feeIDL+1)] for i in xrange(maxFEE)]
+	feeStat = __guidedBinaryRead(fh, "<%ii" % maxFEE)
+	feeDesi = __guidedBinaryRead(fh, "<%ii" % maxFEE)
+	feeGai1 = __guidedBinaryRead(fh, "<%if" % maxFEE)
+	feeGai2 = __guidedBinaryRead(fh, "<%if" % maxFEE)
+	feeAnt1 = __guidedBinaryRead(fh, "<%ii" % maxFEE)
+	feeAnt2 = __guidedBinaryRead(fh, "<%ii" % maxFEE)
+	feeRack = __guidedBinaryRead(fh, "<%ii" % maxFEE)
+	feePort = __guidedBinaryRead(fh, "<%ii" % maxFEE)
+	
+	#
+	# RPD information
+	#
+	
+	nRPD    = __guidedBinaryRead(fh, "<i")
+	rpdID   = __guidedBinaryRead(fh, "<%is" % ((rpdIDL+1)*maxRPD),)
+	rpdID   = [rpdID[i*(rpdIDL+1):(i+1)*(rpdIDL+1)] for i in xrange(maxRPD)]
+	rpdStat = __guidedBinaryRead(fh, "<%ii" % maxRPD)
+	rpdDesi = __guidedBinaryRead(fh, "<%ii" % maxRPD)
+	rpdLeng = __guidedBinaryRead(fh, "<%if" % maxRPD)
+	rpdVF   = __guidedBinaryRead(fh, "<%if" % maxRPD)
+	rpdDD   = __guidedBinaryRead(fh, "<%if" % maxRPD)
+	rpdA0   = __guidedBinaryRead(fh, "<%if" % maxRPD)
+	rpdA1   = __guidedBinaryRead(fh, "<%if" % maxRPD)
+	rpdFre  = __guidedBinaryRead(fh, "<%if" % maxRPD)
+	rpdStr  = __guidedBinaryRead(fh, "<%if" % maxRPD)
+	rpdAnt  = __guidedBinaryRead(fh, "<%ii" % maxRPD)
+	
+	#
+	# SEP information
+	#
+	
+	nSEP    = __guidedBinaryRead(fh, "<i")
+	sepID   = __guidedBinaryRead(fh, "<%is" % ((sepIDL+1)*maxSEP),)
+	sepID   = [sepID[i*(sepIDL+1):(i+1)*(sepIDL+1)] for i in xrange(maxSEP)]
+	sepStat = __guidedBinaryRead(fh, "<%ii" % maxSEP)
+	sepCbl  = __guidedBinaryRead(fh, "<%is" % ((cblIDL+1)*maxSEP,))
+	sepCbl  = [sepCbl[i*(cblIDL+1):(i+1)*(cblIDL+1)] for i in xrange(maxSEP)]
+	sepLeng = __guidedBinaryRead(fh, "<%if" % maxSEP)
+	sepDesi = __guidedBinaryRead(fh, "<%ii" % maxSEP)
+	sepGain = __guidedBinaryRead(fh, "<%if" % maxSEP)
+	sepAnt  = __guidedBinaryRead(fh, "<%ii" % maxSEP)
+	
+	#
+	# ARX (ARB) information
+	#
+	
+	nARX     = __guidedBinaryRead(fh, "<i")
+	nChanARX = __guidedBinaryRead(fh, "<i")
+	arxID    = __guidedBinaryRead(fh, "<%is" % ((arbIDL+1)*maxARB,))
+	arxID    = [arxID[i*(arbIDL+1):(i+1)*(arbIDL+1)] for i in xrange(maxARB)]
+	arxSlot  = __guidedBinaryRead(fh, "<%ii" % maxARB)
+	arxDesi  = __guidedBinaryRead(fh, "<%ii" % maxARB)
+	arxRack  = __guidedBinaryRead(fh, "<%ii" % maxARB)
+	arxPort  = __guidedBinaryRead(fh, "<%ii" % maxARB)
+	arxStat  = __guidedBinaryRead(fh, "<%ii" % (maxARB*maxARBChan,))
+	arxStat  = [arxStat[i*maxARBChan:(i+1)*maxARBChan] for i in xrange(maxARB)]
+	arxGain  = __guidedBinaryRead(fh, "<%if" % (maxARB*maxARBChan,))
+	arxGain  = [arxGain[i*maxARBChan:(i+1)*maxARBChan] for i in xrange(maxARB)]
+	arxAnt   = __guidedBinaryRead(fh, "<%ii" % (maxARB*maxARBChan,))
+	arxAnt   = [arxAnt[i*maxARBChan:(i+1)*maxARBChan] for i in xrange(maxARB)]
+	arxIn    = __guidedBinaryRead(fh, "<%is" % (maxARB*maxARBChan,))
+	arxIn    = [arxIn[i*(arbIDL+1):(i+1)*(arbIDL+1)] for i in xrange(maxARB)]
+	arxOut   = __guidedBinaryRead(fh, "<%is" % (maxARB*maxARBChan,))
+	arxOut   = [arxOut[i*(arbIDL+1):(i+1)*(arbIDL+1)] for i in xrange(maxARB)]
+	
+	#
+	# DP1 information
+	#
+	
+	nDP1     = __guidedBinaryRead(fh, "<i")
+	nChanDP1 = __guidedBinaryRead(fh, "<i")
+	dp1ID    = __guidedBinaryRead(fh, "<%is" % (maxDP1*(dp1IDL+1),))
+	dp1ID    = [dp1ID[i*(dp1IDL+1):(i+1)*(dp1IDL+1)] for i in xrange(maxDP1)]
+	dp1Slot  = __guidedBinaryRead(fh, "<%is" % (maxDP1*(dp1IDL+1),))
+	dp1Slot  = [dp1Slot[i*(dp1IDL+1):(i+1)*(dp1IDL+1)] for i in xrange(maxDP1)]
+	dp1Desi  = __guidedBinaryRead(fh, "<%ii" % maxDP1)
+	dp1Stat  = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan,))
+	dp1Stat  = [dp1Stat[i*maxDP1Chan:(i+1)*maxDP1Chan] for i in xrange(maxDP1)]
+	dp1Inr   = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan*(dp1IDL+1),))
+	dp1Inr   = [[dp1Inr[i*maxDP1Chan*(dp1IDL+1):(i+1)*maxDP1Chan*(dp1IDL+1)][j*(dp1IDL+1):(j+1)*(dp1IDL+1)] for j in xrange(maxDP1Chan)] for i in xrange(maxDP)]
+	dp1Inc   = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan*(dp1IDL+1),))
+	dp1Inc   = [[dp1Inc[i*maxDP1Chan*(dp1IDL+1):(i+1)*maxDP1Chan*(dp1IDL+1)][j*(dp1IDL+1):(j+1)*(dp1IDL+1)] for j in xrange(maxDP1Chan)] for i in xrange(maxDP)]
+	dp1Ant   = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan,))
+	dp1Ant   = [dp1Ant[i*maxDP1Chan:(i+1)*maxDP1Chan] for i in xrange(maxDP1)]
+	
+	#
+	# DP2 information
+	#
+	
+	nDP2    = __guidedBinaryRead(fh, "<i")
+	dp2ID   = __guidedBinaryRead(fh, "<%is" % (maxDP2*(dp2IDL+1),))
+	dp2ID   = [dp2ID[i*(dp2IDL+1):(i+1)*(dp2IDL+1)] for i in xrange(maxDP2)]
+	dp2Slot = __guidedBinaryRead(fh, "<%is" % (maxDP2*(dp2IDL+1),))
+	dp2Slot = [dp2Slot[i*(dp2IDL+1):(i+1)*(dp2IDL+1)] for i in xrange(maxDP2)]
+	dp2Stat = __guidedBinaryRead(fh, "<%ii" % maxDP2)
+	dp2Desi = __guidedBinaryRead(fh, "<%ii" % maxDP2)
+	
+	#
+	# DR information
+	#
+	
+	nDR = __guidedBinaryRead(fh, "<i")
+	drStat = __guidedBinaryRead(fh, "<%ii" % maxDR)
+	drID = __guidedBinaryRead(fh, "<%is" % (maxDR*(drIDL+1),))
+	drID = [drID[i*(drIDL+1):(i+1)*(drIDL+1)] for i in xrange(maxDR)]
+	drPC = __guidedBinaryRead(fh, "<%is" % (maxDR*(drIDL+1),))
+	drPC = [drPC[i*(drIDL+1):(i+1)*(drIDL+1)] for i in xrange(maxDR)]
+	drDP = __guidedBinaryRead(fh, "<%ii" % maxDR)
+	
+	fh.close()
+	
+	return locals()
+
+
+def parseSSMIF(filename):
+	"""
+	Given a SSMIF file, return a fully-filled LWAStation instance.  This function
+	supports both human-readable files (filenames with '.txt' extensions) or 
+	binary packed files (filenames with '.dat' extensions).
+	"""
+	
+	# Find out if we have a .txt or .dat file and process accordingly
+	base, ext = os.path.splitext(filename)
+	
+	# Read in the ssmif to a dictionary of variables
+	if ext == '.dat':
+		ssmifDataDict = __parseBinarySSMIF(filename)
+	elif ext == '.txt':
+		ssmifDataDict = __parseTextSSMIF(filename)
+	else:
+		raise ValueError("Unknown file extension '%s', cannot tell if it is text or binary" % ext)
+	
+	# Unpack the dictionary into the current variable scope
+	for k in ssmifDataDict.keys():
+		exec("%s = ssmifDataDict['%s']" % (k, k))
 	
 	# Build up a list of Stand instances and load them with data
 	i = 1
@@ -890,7 +1150,7 @@ class PrototypeStation(LWAStation):
 		pLat = base.lat * 180 / numpy.pi
 		pLng = base.long * 180 / numpy.pi
 	
-		super(PrototypeStation, self).__init__('%s prototype' % base.name, pLat, pLng, base.elev, id='', antennas=base.antennas)
+		super(PrototypeStation, self).__init__('%s prototype' % base.name, pLat, pLng, base.elev, id='PS', antennas=base.antennas)
 	
 	def __standsList(self, date):
 		"""

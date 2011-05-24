@@ -97,12 +97,15 @@ def parseOptions(args):
 	return config
 
 def main(args):
-	# Set the station
-	station = stations.lwa1
-	antennas = station.getAntennas()
-	
 	# Parse command line options
 	config = parseOptions(args)
+
+	# Set the station
+	if config['SSMIF'] != '':
+		station = stations.parseSSMIF(config['SSMIF'])
+	else:
+		station = stations.lwa1
+	antennas = station.getAntennas()
 
 	# Length of the FFT
 	LFFT = config['LFFT']

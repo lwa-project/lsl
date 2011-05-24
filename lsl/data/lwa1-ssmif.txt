@@ -2580,6 +2580,8 @@ RPD_LENG[516] 311.2  # SE's guess; see comment below
 # RPD_DD[514]
 # Cables to Stand 258 (RTA)
 RPD_VF[515] 85.0 # this is the known value for LMR-400
+RPD_VF[516] 85.0 # this is the known value for LMR-400
+RPD_DD[515]  2.0 # this is SE's guess; see comment below 
 RPD_DD[516]  2.0 # this is SE's guess; see comment below 
 # FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
 # ... a LMR-200-like cable, but I'm not sure by how much.  
@@ -2589,6 +2591,20 @@ RPD_DD[516]  2.0 # this is SE's guess; see comment below
 # Cables to Stand 260 are not currently installed (since 260 doesn't exist):
 # RPD_VF[519]
 # RPD_DD[520]
+
+# Cable gain model from M.170.  For most of the cables, the model is A0 = 0.00428 and 
+# A1 = 0.00000.  For the cables to Stand 258 (RTA), the cable is differnent and both
+# A0 and A1 are different.  Note:  All measurements are made relative to 10 MHz
+RPD_A0 0.00428
+RPD_A0[515] 0.00146
+RPD_A0[516] 0.00146
+RPD_A1 0.00000
+RPD_A1[515] 0.00002
+RPD_A1[516] 0.00002
+RPD_FREF 10000000
+
+# Cable stretching is set to 0.5% based on the average TDR measurements
+RPD_STR 1.005
 
 # This will be set to 1 for any cables not identified below
 # You should set it to 0 if different / not known, or >1 if appropriate

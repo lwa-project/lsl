@@ -2,6 +2,8 @@
   * Worked on adding better polarization support to correlator.fx and correlator.uvUtils
   * Updated the correlateTBN script to make full polarization support possible
   * Added a crude deconvolution routine that should work with the AIPY ImgW images
+  * Worked on adding in support for binary packed SSMIF files in lsl.common.stations
+  * Worked on adding in support for binary packed SDM files via a new lsl.common.sdm module
 
 0.4.2
   * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file
@@ -18,6 +20,7 @@
   * Added support for different cable attenuation models supported in MCS0031, v5
   * Added support for the old 20-stand prototype system through lsl.common.stations.prototypeSystem
   * Updated the correlateTBW script to make computing XX and YY products easier
+  * Updated SSMIF with new stretch and cable gain coefficients
 
 0.4.1
   * Fixed a problem with the C readers that manifests itself on 32-bit platforms

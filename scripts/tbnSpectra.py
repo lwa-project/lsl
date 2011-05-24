@@ -28,6 +28,7 @@ Usage: tbnSpectra.py [OPTIONS] file
 
 Options:
 -h, --help                  Display this help information
+-m, --metadata              Name of SSMIF file to use for mappings
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
@@ -51,6 +52,7 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
+	config['SSMIF'] = ''
 	config['offset'] = 0.0
 	config['average'] = 10.0
 	config['LFFT'] = 4096
@@ -64,7 +66,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hqtbnl:go:s:a:d", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output=", "skip=", "average=", "disable-chunks"])
+		opts, args = getopt.getopt(args, "hm:qtbnl:go:s:a:d", ["help", "metadata=", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output=", "skip=", "average=", "disable-chunks"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -74,6 +76,8 @@ def parseOptions(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
+		elif opt in ('-m', '--metadata'):
+			config['SSMIF'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
 		elif opt in ('-t', '--bartlett'):
@@ -133,12 +137,15 @@ def bestFreqUnits(freq):
 
 
 def main(args):
-	# Set the station
-	station = stations.lwa1
-	antennas = station.getAntennas()
-	
 	# Parse command line options
 	config = parseOptions(args)
+	
+	# Set the station
+	if config['SSMIF'] != '':
+		station = stations.parseSSMIF(config['SSMIF'])
+	else:
+		station = stations.lwa1
+	antennas = station.getAntennas()
 
 	# Length of the FFT
 	LFFT = config['LFFT']
