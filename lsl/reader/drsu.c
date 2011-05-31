@@ -505,14 +505,14 @@ file for reading.");
 
 
 static PyMethodDef DRSUMethods[] = {
-	{"listDevice", listDevice, METH_VARARGS, listDevice_doc}, 
+	{"listDevice",         listDevice,         METH_VARARGS, listDevice_doc}, 
 	{"getDeviceChunkSize", getDeviceChunkSize, METH_VARARGS, getDeviceChunkSize_doc}, 
-	{"getFileSize", getFileSize, METH_VARARGS, getFileSize_doc}, 
-	{"getFileStart", getFileStart, METH_VARARGS, getFileStart_doc}, 
-	{"getFileType", getFileType, METH_VARARGS, getFileType_doc}, 
-	{"getFileTime", getFileTime, METH_VARARGS, getFileTime_doc}, 
-	{"listFiles", listFiles, METH_VARARGS, listFiles_doc}, 
-	{NULL, NULL, 0, NULL}
+	{"getFileSize",        getFileSize,        METH_VARARGS, getFileSize_doc}, 
+	{"getFileStart",       getFileStart,       METH_VARARGS, getFileStart_doc}, 
+	{"getFileType",        getFileType,        METH_VARARGS, getFileType_doc}, 
+	{"getFileTime",        getFileTime,        METH_VARARGS, getFileTime_doc}, 
+	{"listFiles",          listFiles,          METH_VARARGS, listFiles_doc}, 
+	{NULL,                 NULL,               0,            NULL}
 };
 
 PyDoc_STRVAR(DRSUMethods_doc, \

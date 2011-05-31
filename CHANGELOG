@@ -21,6 +21,7 @@
   * Added support for the old 20-stand prototype system through lsl.common.stations.prototypeSystem
   * Updated the correlateTBW script to make computing XX and YY products easier
   * Updated SSMIF with new stretch and cable gain coefficients
+  * Added support for time-domain blanking via the 'ClipLevel' keyword to various _spec and _core routines
 
 0.4.1
   * Fixed a problem with the C readers that manifests itself on 32-bit platforms

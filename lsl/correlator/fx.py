@@ -222,7 +222,7 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 	return (freq, output)
 
 
-def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
+def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0, ClipLevel=0):
 	"""
 	A more advanced version of calcSpectra that uses the _spec C extension 
 	to handle all of the P.S.D. calculations in parallel.  Returns a two-
@@ -259,20 +259,20 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
 	if window is noWindow:
 		# Data without a window function provided
 		if signals.dtype.kind == 'c':
-			output = _spec.FPSDC2(signals, LFFT=LFFT, Overlap=1)
+			output = _spec.FPSDC2(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel)
 		else:
-			output = _spec.FPSDR2(signals, LFFT=LFFT, Overlap=1)
+			output = _spec.FPSDR2(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel)
 	else:
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
-			output = _spec.FPSDC3(signals, LFFT=LFFT, Overlap=1, window=window)
+			output = _spec.FPSDC3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 		else:
-			output = _spec.FPSDR3(signals, LFFT=LFFT, Overlap=1, window=window)
+			output = _spec.FPSDR3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 	
 	return (freq, output)
 
 
-def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0):
+def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0, ClipLevel=0):
 	"""
 	Similar to SpecMaster but uses a 4-tap polyphase filter bank instead
 	of a FFT.  Returns a two-element tuple of the frequencies (in Hz) and 
@@ -312,15 +312,15 @@ def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=Non
 	if window is noWindow:
 		# Data without a window function provided
 		if signals.dtype.kind == 'c':
-			output = _spec.PPSDC2(signals, LFFT=LFFT, Overlap=1)
+			output = _spec.PPSDC2(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel)
 		else:
-			output = _spec.PPSDR2(signals, LFFT=LFFT, Overlap=1)
+			output = _spec.PPSDR2(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel)
 	else:
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
-			output = _spec.PPSDC3(signals, LFFT=LFFT, Overlap=1, window=window)
+			output = _spec.PPSDC3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 		else:
-			output = _spec.PPSDR3(signals, LFFT=LFFT, Overlap=1, window=window)
+			output = _spec.PPSDR3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 	
 	return (freq, output)
 
@@ -554,7 +554,7 @@ def FXCorrelator(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, windo
 	return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0, Pol='XX', GainCorrect=False, ReturnBaselines=False):
+def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0, Pol='XX', GainCorrect=False, ReturnBaselines=False, ClipLevel=0):
 	"""
 	A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
 	2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -621,26 +621,27 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 			FEngine = _core.FEngineC2
 		else:
 			FEngine = _core.FEngineR2
-		signalsF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+		signalsF1, validF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel)
 	else:
 		# Data with a window function provided
 		if signals.dtype.kind == 'c':
 			FEngine = _core.FEngineC3
 		else:
 			FEngine = _core.FEngineR3
-		signalsF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, window=window)
+		signalsF1, validF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
 	
 	if pol2 == pol1:
 		signalsF2 = signalsF1
+		validF2 = validF1
 	else:
 		if window is noWindow:
-			signalsF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate)
+			signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel)
 		else:
-			signalsF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, window=window)
+			signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
 	signalsF2C = signalsF2.conj()
 
 	# X
-	output = _core.XEngine2(signalsF1, signalsF2C)
+	output = _core.XEngine2(signalsF1, signalsF2C, validF1, validF2)
 	if not IncludeAuto:
 		# Remove auto-correlations from the output of the X engine if we don't 
 		# need them.  To do this we need to first build the full list of baselines

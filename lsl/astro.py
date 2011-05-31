@@ -15,7 +15,7 @@ import math
 from lsl import libnova
 
 
-__revision__  = "$Revision: 84 $"
+__revision__  = "$ Revision: 86 $"
 __version__   = "dev"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -2981,7 +2981,8 @@ def unix_to_utcjd(unixTime):
   Returns: The UTC JD value.
   """
   
-  utcJD = float(unixTime) / SECS_IN_DAY + UNIX_OFFSET
+  #utcJD = float(unixTime) / SECS_IN_DAY + UNIX_OFFSET
+  utcJD = get_julian_from_timet(unixTime)
   return utcJD
   
   
@@ -3008,7 +3009,8 @@ def utcjd_to_unix(utcJD):
   Returns: The UNIX time
   """
   
-  unixTime = (utcJD - UNIX_OFFSET) / SECS_IN_DAY
+  #unixTime = (utcJD - UNIX_OFFSET) * SECS_IN_DAY
+  unixTime = get_timet_from_julian(utcJD)
   return unixTime
   
   

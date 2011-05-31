@@ -11,7 +11,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
 __version__ = "0.6"
-__revision__ = "$ Revision: 29 $"
+__revision__ = "$ Revision: 30 $"
 __all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', 'lwa1', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
@@ -205,7 +205,8 @@ class Antenna(object):
 	  * DP1 digitizer number (digiziter)
 	  * Stand instance the antenna is part of (stand)
 	  * Polarization (0 == N-S; pol)
-	  * Antenna mis-alignment in degrees (phi)
+	  * Antenna vertial mis-alignment in degrees (theta)
+	  * Antenna rotation mis-alignment in degrees (phi)
 	  * Fee instance the antenna is attached to (fee)
 	  * Port of the FEE used for the antenna (feePort)
 	  * Cable instance used to connect the antenna (cable)
@@ -358,6 +359,10 @@ class Cable(object):
 	  * Length in meters (length)
 	  * Velocity factor (fractional, vf)
 	  * Dispersive delay (seconds, dd)
+	  * Gain term that goes as the square root of frequency (a0)
+	  * Gain term that goes as frequency (a1)
+	  * Gain term reference frequency (Hz, aFreq)
+	  * Cable length stretch factor (stretch)
 	
 	The object also as a functional attribute named 'delay' that computes the
 	cable delay for a particular frequency or collection of frequencies in 
@@ -408,9 +413,6 @@ class Cable(object):
 		loss for a specific frequency (in Hz).  If attenuations for more 
 		than one frequency are needed, the frequencies can be passed in as 
 		a numpy array.
-
-		.. note::
-			This function assumes a cable of type KSR200DB from SLC0014, version 3
 		"""
 	
 		atten = 2 * self.a0 * self.length*self.stretch * numpy.sqrt(frequency / numpy.array(self.aFreq)) 
@@ -422,9 +424,6 @@ class Cable(object):
 		"""Get the cable gain ("inverse loss") for a specific frequency (in 
 		Hz).  If gains for more than one frequency are needed, the 
 		frequencies can be passed in as a numpy array.
-
-		.. note::
-			This function assumes a cable of type KSR200DB from SLC0014, version 3
 		"""
 		
 		return 1.0 / self.attenuation(frequency=frequency)

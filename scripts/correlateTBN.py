@@ -354,8 +354,9 @@ def main(args):
 	# the FITS IDI memory buffer
 	s = 0
 	leftToDo = config['samples']
+	basename, ext = os.path.splitext(filename)
 	while leftToDo > 0:
-		fitsFilename = "TEST.FITS_%i" % (s+1)
+		fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
 		
 		if leftToDo > 300:
 			chunk = 300
