@@ -8,9 +8,30 @@ files (as defined in MCS0031, v5).
 import copy
 import struct
 
+from lsl.common.mcs import *
+
 __version__ = '0.1'
-__revision__ = '$ Revision: 1 $'
+__revision__ = '$ Revision: 2 $'
 __all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', '__version__', '__revision__', '__all__']
+
+
+def __guidedBinaryRead(fh, fmt):
+	"""
+	Function to wrap reading in packed binary data directrly from an open file
+	handle.  This function calls struct.unpack() and struct.calcsize() to figure 
+	out what to read and how.
+	
+	Return either a single item if a single item is requested or a list of items.
+	
+	Used by SDM.binaryFill()
+	"""
+	
+	
+	data = struct.unpack(fmt, fh.read(struct.calcsize(fmt)))
+	if len(data) == 1:
+		return data[0]
+	else:
+		return list(data)
 
 
 class SubSystemStatus(object):
@@ -18,8 +39,6 @@ class SubSystemStatus(object):
 	Python object that holds the status for a particular subsystem in a SDM 
 	file.
 	"""
-	
-	nBytes = 268
 	
 	def __init__(self, name, summary=6, info='UNK', time=0):
 		self.name = name
@@ -30,17 +49,16 @@ class SubSystemStatus(object):
 	def __str__(self):
 		return "%s at %i: %s [%i]" % (self.name, self.time, self.info, self.summary)
 		
-	def binaryFill(self, binaryData):
+	def __binaryRead(self, fh):
 		"""
-		Given a binary string, interpret it in the context of a 
+		Given an open file handle, interpret it in the context of a 
 		subsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
-		data = struct.unpack('<i256c2l', binaryData)
-		
-		self.summary = data[0]
-		self.info = ''.join(data[1:-3])
-		self.time = data[-2] + data[-1]/1.0e6
+		self.summary = __guidedBinaryRead(fh, "<i")
+		self.info = __guidedBinaryRead(fh, "<256s")
+		ts, tu = __guidedBinaryRead(fh, "<2l")
+		self.time = ts + tu/1.0e6
 
 
 class SubSubSystemStatus(object):
@@ -48,92 +66,56 @@ class SubSubSystemStatus(object):
 	Python object that holds the status for the sub-subsystems in a SDM file.
 	"""
 	
-	nBytes = 5464
-	
-	def __init__(self, feeStat=None, rpdStat=None, sepStat=None, arbStat=None, dp1Stat=None, dp2Stat=None, drStat=None, 
-				nFEE=260, nRPD=520, nSEP=520, nARB=33, nDP1=26, nDP2=2, nDR=5):
-		
-		self.nFEE = nFEE
-		self.nRPD = RPD
-		self.nSEP = nSEP
-		self.nARB = nARB
-		self.nDP1 = nDP1
-		self.nDP2 = nDP2
-		self.nDR  = nDR
+	def __init__(self, feeStat=None, rpdStat=None, sepStat=None, arbStat=None, dp1Stat=None, dp2Stat=None, drStat=None):
 		
 		if feeStat is None:
-			self.feeStat = [0 for n in xrange(self.nFEE)]
+			self.feeStat = [0 for n in xrange(ME_MAX_NFEE)]
 		else:
 			self.feeStat = feeStat
 		
 		if rpdStat is None:
-			self.rpdStat = [0 for n in xrange(self.nRPD)]
+			self.rpdStat = [0 for n in xrange(ME_MAX_NRPD)]
 		else:
 			self.rpdStat = rpdStat
 			
 		if sepStat is None:
-			self.sepStat = [0 for n in xrange(self.nSEP)]
+			self.sepStat = [0 for n in xrange(ME_MAX_NSEP)]
 		else:
 			self.sepStat = sepStat
 		
 		if arbStat is None:
-			self.arbStat = [0 for n in xrange(self.nARB)]
+			self.arbStat = [0 for n in xrange(ME_MAX_NARB)]
 		else:
 			self.arbStat = arbStat
 			
 		if dp1Stat is None:
-			self.dp1Stat = [0 for n in xrange(self.nDP1)]
+			self.dp1Stat = [0 for n in xrange(ME_MAX_NDP1)]
 		else:
 			self.dp1Stat = dp1Stat
 		
 		if dp2Stat is None:
-			self.dp2Stat = [0 for n in xrange(self.nDP2)]
+			self.dp2Stat = [0 for n in xrange(ME_MAX_NDP2)]
 		else:
 			self.dp2Stat = dp2Stat
 			
 		if drStat is None:
-			self.drStat = [0 for n in xrange(self.nDR)]
+			self.drStat = [0 for n in xrange(ME_MAX_NDR)]
 		else:
 			self.drStat = drStat
-			
-		self.updateBytes()
-		
-	def updateBytes(self):
-		"""
-		Update the size of the object based on the values of nFEE, nRPD, etc.
-		"""
-		
-		self.nBytes = (self.nFEE + self.nRPD + self.nSEP + self.nARB + self.nDP1 + self.nDP2 + self.nDR)*4
 	
-	def binaryFill(self, binaryData):
+	def __binaryRead(self, fh):
 		"""
-		Given a binary string, interpret it in the context of a 
+		Given an open file handle, interpret it in the context of a 
 		subsubsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
-		nInts = self.nFEE + self.nRPD + self.nSEP + self.nARB + self.nDP1 + self.nDP2 + self.nDR
-		data = struct.unpack('<%ii' % nInts, binaryData)
-		
-		self.feeStat = list(data[0:self.nFEE])
-		del data[0:self.nFEE]
-		
-		self.rpdStat = list(data[0:self.nRPD])
-		del data[0:self.nRPD]
-		
-		self.sepStat = list(data[0:self.nSEP])
-		del data[0:self.nSEP]
-		
-		self.arbStat = list(data[0:self.nARB])
-		del data[0:self.nARB]
-		
-		self.dp1Stat = list(data[0:self.nDP1])
-		del data[0:self.nDP1]
-		
-		self.dp2Stat = list(data[0:self.nDP2])
-		del data[0:self.nDP2]
-		
-		self.drStat  = list(data[0:self.nDR])
-		del data[0:self.nDR]
+		self.feeStat = __binaryRead(fh, "<%ii" % ME_MAX_NFEE)
+		self.rpdStat = __binaryRead(fh, "<%ii" % ME_MAX_NRPD)
+		self.sepStat = __binaryRead(fh, "<%ii" % ME_MAX_NSEP)
+		self.arbStat = __binaryRead(fh, "<%ii" % ME_MAX_NARB)
+		self.dp1Stat = __binaryRead(fh, "<%ii" % ME_MAX_NDP1)
+		self.dp2Stat = __binaryRead(fh, "<%ii" % ME_MAX_NDP2)
+		self.drStat  = __binaryRead(fh, "<%ii" % ME_MAX_NDR)
 
 
 class StationSettings(object):
@@ -141,11 +123,9 @@ class StationSettings(object):
 	Python object that holds the status for the sub-subsystems in a SDM file.
 	"""
 	
-	nBytes = 2640
-	
 	def __init__(self, report=None, update=None, fee=None, aspFlt=None, aspAT1=None, aspAT2=None, aspATS=None, 
 				tbnGain=-1, drxGain=-1, nSTD=260):
-		self.nSTD = nSTD
+		ME_MAX_NSTD = nSTD
 					
 		if report is None:
 			self.report = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
@@ -158,77 +138,54 @@ class StationSettings(object):
 			self.update = update
 			
 		if fee is None:
-			self.fee = [0 for n in xrange(self.nSTD)]
+			self.fee = [0 for n in xrange(ME_MAX_NSTD)]
 		else:
 			self.fee = fee
 			
 		if aspFlt is None:
-			self.aspFlt = [0 for n in xrange(self.nSTD)]
+			self.aspFlt = [0 for n in xrange(ME_MAX_NSTD)]
 		else:
 			self.aspFlt = aspFlt
 			
 		if aspAT1 is None:
-			self.aspAT1 = [0 for n in xrange(self.nSTD)]
+			self.aspAT1 = [0 for n in xrange(ME_MAX_NSTD)]
 		else:
 			self.aspAT1 = aspAT1
 			
 		if aspAT2 is None:
-			self.aspAT2 = [0 for n in xrange(self.nSTD)]
+			self.aspAT2 = [0 for n in xrange(ME_MAX_NSTD)]
 		else:
 			self.aspAT2 = aspAT2
 			
 		if aspATS is None:
-			self.aspATS = [0 for n in xrange(self.nSTD)]
+			self.aspATS = [0 for n in xrange(ME_MAX_NSTD)]
 		else:
 			self.aspATS = aspATS
 			
 		self.tbnGain = tbnGain
 		self.drxGain = drxGain
 		
-		self.updateBytes()
-		
-	def updateBytes(self):
+	def __binaryRead(self, fh):
 		"""
-		Update the size of the object based on the value of nSTD.
-		"""
-		
-		self.nBytes = (18 + 5*self.nSTD + 2)*2
-		
-	def binaryFill(self, binaryData):
-		"""
-		Given a binary string, interpret it in the context of a 
+		Given an open file handle, interpret it in the context of a 
 		station_settings_struct C structure and update the Python instance accordingly.
 		"""
-		
-		nShorts = 18 + 5*self.nSTD + 2
-		data = struct.unpack('<%ih' % nShorts, binaryData)
-		
+
 		for ss in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-			self.report[ss] = data[0]
-			del data[0]
+			self.report[ss] = __guideBinaryRead(fh, "<h")
 		for ss in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-			self.update[ss] = data[0]
-			del data[0]
+			self.update[ss] = __guideBinaryRead(fh, "<h")
 			
-		self.fee = list(data[0:self.nSTD])
-		del data[0:self.nStand]
+		self.fee = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+
+		self.aspFlt = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspAT1 = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspAT2 = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspATS = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
 		
-		self.aspFlt = list(data[0:self.nSTD])
-		del data[0:self.nStand]
-		
-		self.aspAT1 = list(data[0:self.nSTD])
-		del data[0:self.nStand]
-		
-		self.aspAT2 = list(data[0:self.nSTD])
-		del data[0:self.nStand]
-		
-		self.aspATS = list(data[0:self.nSTD])
-		del data[0:self.nStand]
-		
-		self.tbnGain = data[0]
-		del data[0]
-		self.drxgain = data[0]
-		del data[0]
+		self.tbnGain = __guidedBinaryRead(fh, "<h")
+		self.drxgain = __guidedBinaryRead(fh, "<h")
+
 
 class SDM(object):
 	"""
@@ -236,67 +193,21 @@ class SDM(object):
 	Dynamic MIB file (SDM file).
 	"""
 	
-	nBytes = 268*9 + 5464 + 2080 + 20 + 2640
-	
-	def __init__(self, filename='', nSTD=260, nFEE=260, nRPD=520, nSEP=520, nARB=33, nDP1=26, nDP2=2, nDR=5):
+	def __init__(self, filename=''):
 		self.filename = filename
-		
-		self.nSTD = nSTD
-		self.nFEE = nFEE
-		self.nRPD = nRPD
-		self.nSEP = nSEP
-		self.nARB = nARB
-		self.nDP1 = nDP1
-		self.nDP2 = nDP2
-		self.nDR  = nDR
 		
 		self.station = SubSystemStatus('station')
 		self.shl = SubSystemStatus('shl')
 		self.asp = SubSystemStatus('sdp')
 		self.dp  = SubSystemStatus('dp')
 		self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(nDR)]
-		self.status = SubSubSystemStatus(nFEE=self.nFEE, nRPD=self.nRPD, nSEP=self.nSEP, nARB=self.nARB, nDP1=self.nDP1, nDP2=self.nDP2, nDR=self.nDR)
-		self.antStatus = [[0,0] for n in xrange(self.nSTD)]
-		self.dpoStatus = [0 for n in xrange(self.nDR)]
-		self.settings = StationSettings(nSTD=self.nSTD)
-		
-		self.updateBytes()
+		self.status = SubSubSystemStatus()
+		self.antStatus = [[0,0] for n in xrange(ME_MAX_NSTD)]
+		self.dpoStatus = [0 for n in xrange(ME_MAX_NDR)]
+		self.settings = StationSettings()
 		
 		if self.filename != '':
 			self.load()
-			
-	def updateBytes(self):
-		"""
-		Update the size of the object based on the values of nSTD, nFEE, etc.
-		
-		.. note::
-			updateBytes() makes sure the the relevant child instances of 
-			SubSubSystemStatus and StationSettings have the right values and updates
-			their sizes as well.
-		"""
-		
-		# Update the values in self.status
-		self.status.nFEE = self.nFEE
-		self.status.nRPD = self.nRPD
-		self.status.nSEP = self.nSEP
-		self.status.nARB = self.nARB
-		self.status.nDP1 = self.nDP1
-		self.status.nDP2 = self.nDP2
-		self.status.nDR  = self.nDR
-		self.status.updateBytes()
-		
-		# Update the values in self.settings
-		self.settings.nSTD = self.nSTD
-		self.settings.updateBytes()
-		
-		# Build up the new size for the SDM instance
-		self.nBytes  = self.station.nBytes + self.shl.nBytes + self.asp.nBytes + self.nDP.nBytes
-		for n in xrange(self.nDR):
-			self.nBytes += self.dr[n].nBytes
-		self.nBytes += self.settings.status.nBytes
-		self.nBytes += (self.nSTD*2*4)
-		self.nBytes += (self.nDR*4)
-		self.nBytes += self.settings.nBytes()
 	
 	def load(self, filename=''):
 		"""
@@ -312,48 +223,22 @@ class SDM(object):
 			pass
 		
 		fh = open(self.filename, 'rb')
-		data = fh.read(nBytes)
+		
+		self.station.__binaryRead(fh)
+		self.shl.__binaryRead(fh)
+		self.asp.__binaryRead(fh)
+		self.dp.__binaryRead(fh)
+		for n in xrange(ME_MAX_NDR):
+			self.dr[n].__binaryRead(fh)
+		
+		self.status.__binaryRaed(fh)
+		
+		self.antStatus = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
+		self.dpoStatus = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
+		
+		self.settings.__binaryRead(fh)
+		
 		fh.close()
-		
-		self.binaryFill(data)
-	
-	def binaryFill(self, binaryData):
-		"""
-		Given a binary string, interpret it in the context of a sdm_struct C 
-		structure and update the Python instances accordingly.
-		"""
-		
-		data = copy.deepcoy(binaryData)
-		
-		self.station.binaryFill(data[0:self.station.nBytes])
-		del data[0:self.station.nBytes]
-		
-		self.shl.binaryFill(data[0:self.shl.nBytes])
-		del data[0:self.shl.nBytes]
-		
-		self.asp.binaryFill(data[0:self.asp.nBytes])
-		del data[0:self.asp.nBytes]
-		
-		self.dp.binaryFill(data[0:self.dp.nBytes])
-		del data[0:self.dp.nBytes]
-		
-		for n in xrange(self.nDR):
-			self.dr[n].binaryFill(data[0:self.dr[n].nBytes])
-			del data[0:self.dr[n].nBytes]
-		
-		self.status.binaryFill(data[0:self.status.nBytes])
-		del data[0:self.status.nBytes]
-		
-		#temp = list(struct.unpack('<%ii' % (2*self.nSTD,), data[0:2*self.nSTD*4]))
-		#self.antStatus = [[temp[2*n], temp[2*n+1]] for n in xrange(self.nSTD)]
-		self.antStatus = list(struct.unpack('<%ii' % (2*self.nSTD,), data[0:2*self.nSTD*4]))
-		del data[0:(2*self.nSTD*4)]
-		
-		self.dpoStatus = list(struct.unpack('<%ii' % self.nDR, data[0:self.nDR*4]))
-		del data[0:self.nDR*4]
-		
-		self.settings.binaryFill(data[0:self.settings.nBytes])
-		del data[0:self.settings.nByts]
 		
 	def updateAntennas(self, antennas):
 		"""

@@ -8,10 +8,11 @@ import ephem
 import struct
 
 from lsl.common.paths import data as dataPath
+from lsl.common.mcs import *
 from lsl.common.constants import *
 
 __version__ = "0.6"
-__revision__ = "$ Revision: 30 $"
+__revision__ = "$ Revision: 31 $"
 __all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', 'lwa1', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
@@ -878,27 +879,6 @@ def __parseBinarySSMIF(filename):
 	variables via locals() containing the files data.
 	"""
 	
-	maxStd  = 260
-	maxFEE  = 250
-	feeIDL  = 10
-	maxRack = 6
-	maxPort = 50
-	maxRPD  = 520
-	rpdIDL  = 25
-	maxSEP  = 520
-	sepIDL  = 25
-	cblIDL  = 25
-	maxARB  = 33
-	arbIDL  = 10
-	maxARBChan = 16
-	maxDP1  = 26
-	dp1IDL  = 10
-	maxDP1Chan = 20
-	maxDP2  = 2
-	dp2IDL  = 10
-	maxDR  = 5
-	drIDL  = 10
-	
 	fh = open(filename, 'rb')
 	
 	#
@@ -914,65 +894,65 @@ def __parseBinarySSMIF(filename):
 	#
 	
 	nStand   = __guidedBinaryRead(fh, "<i")
-	stdX     = __guidedBinaryRead(fh, "<%id" % maxStd)
-	stdY     = __guidedBinaryRead(fh, "<%id" % maxStd)
-	stdZ     = __guidedBinaryRead(fh, "<%id" % maxStd)
-	stdPos   = [[stdX[i], stdY[i], stdZ[i]] for i in xrange(maxStd)]
-	stdAnt   = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
-	stdOrie  = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
-	stdStat  = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
-	stdTheta = __guidedBinaryRead(fh, "<%if" % (2*maxStd,))
-	stdPhi   = __guidedBinaryRead(fh, "<%if" % (2*maxStd,))
-	stdDesi  = __guidedBinaryRead(fh, "<%ii" % (2*maxStd,))
+	stdX     = __guidedBinaryRead(fh, "<%id" % ME_MAX_NSTD)
+	stdY     = __guidedBinaryRead(fh, "<%id" % ME_MAX_NSTD)
+	stdZ     = __guidedBinaryRead(fh, "<%id" % ME_MAX_NSTD)
+	stdPos   = [[stdX[i], stdY[i], stdZ[i]] for i in xrange(ME_MAX_NSTD)]
+	stdAnt   = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
+	stdOrie  = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
+	stdStat  = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
+	stdTheta = __guidedBinaryRead(fh, "<%if" % (2*ME_MAX_NSTD,))
+	stdPhi   = __guidedBinaryRead(fh, "<%if" % (2*ME_MAX_NSTD,))
+	stdDesi  = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
 	
 	#
 	# FEE information
 	#
 	
 	nFee    = __guidedBinaryRead(fh, "<i")
-	feeID   = __guidedBinaryRead(fh, "<%is" % ((feeIDL+1)*maxFEE,))
-	feeID   = [feeID[i*(feeIDL+1):(i+1)*(feeIDL+1)] for i in xrange(maxFEE)]
-	feeStat = __guidedBinaryRead(fh, "<%ii" % maxFEE)
-	feeDesi = __guidedBinaryRead(fh, "<%ii" % maxFEE)
-	feeGai1 = __guidedBinaryRead(fh, "<%if" % maxFEE)
-	feeGai2 = __guidedBinaryRead(fh, "<%if" % maxFEE)
-	feeAnt1 = __guidedBinaryRead(fh, "<%ii" % maxFEE)
-	feeAnt2 = __guidedBinaryRead(fh, "<%ii" % maxFEE)
-	feeRack = __guidedBinaryRead(fh, "<%ii" % maxFEE)
-	feePort = __guidedBinaryRead(fh, "<%ii" % maxFEE)
+	feeID   = __guidedBinaryRead(fh, "<%is" % ((ME_MAX_FEEID_LENGTH+1)*ME_MAX_NFEE,))
+	feeID   = [feeID[i*(ME_MAX_FEEID_LENGTH+1):(i+1)*(ME_MAX_FEEID_LENGTH+1)] for i in xrange(ME_MAX_NFEE)]
+	feeStat = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
+	feeDesi = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
+	feeGai1 = __guidedBinaryRead(fh, "<%if" % ME_MAX_NFEE)
+	feeGai2 = __guidedBinaryRead(fh, "<%if" % ME_MAX_NFEE)
+	feeAnt1 = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
+	feeAnt2 = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
+	feeRack = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
+	feePort = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
 	
 	#
 	# RPD information
 	#
 	
 	nRPD    = __guidedBinaryRead(fh, "<i")
-	rpdID   = __guidedBinaryRead(fh, "<%is" % ((rpdIDL+1)*maxRPD),)
-	rpdID   = [rpdID[i*(rpdIDL+1):(i+1)*(rpdIDL+1)] for i in xrange(maxRPD)]
-	rpdStat = __guidedBinaryRead(fh, "<%ii" % maxRPD)
-	rpdDesi = __guidedBinaryRead(fh, "<%ii" % maxRPD)
-	rpdLeng = __guidedBinaryRead(fh, "<%if" % maxRPD)
-	rpdVF   = __guidedBinaryRead(fh, "<%if" % maxRPD)
-	rpdDD   = __guidedBinaryRead(fh, "<%if" % maxRPD)
-	rpdA0   = __guidedBinaryRead(fh, "<%if" % maxRPD)
-	rpdA1   = __guidedBinaryRead(fh, "<%if" % maxRPD)
-	rpdFre  = __guidedBinaryRead(fh, "<%if" % maxRPD)
-	rpdStr  = __guidedBinaryRead(fh, "<%if" % maxRPD)
-	rpdAnt  = __guidedBinaryRead(fh, "<%ii" % maxRPD)
+	rpdID   = __guidedBinaryRead(fh, "<%is" % ((ME_MAX_RPDID_LENGTH+1)*ME_MAX_NRPD),)
+	rpdID   = [rpdID[i*(ME_MAX_RPDID_LENGTH+1):(i+1)*(ME_MAX_RPDID_LENGTH+1)] for i in xrange(ME_MAX_NRPD)]
+	rpdStat = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
+	rpdDesi = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
+	rpdLeng = __guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
+	rpdVF   = __guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
+	rpdDD   = __guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
+	rpdA0   = __guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
+	rpdA1   = __guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
+	rpdFre  = __guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
+	rpdStr  = __guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
+	rpdAnt  = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
 	
 	#
 	# SEP information
 	#
 	
 	nSEP    = __guidedBinaryRead(fh, "<i")
-	sepID   = __guidedBinaryRead(fh, "<%is" % ((sepIDL+1)*maxSEP),)
-	sepID   = [sepID[i*(sepIDL+1):(i+1)*(sepIDL+1)] for i in xrange(maxSEP)]
-	sepStat = __guidedBinaryRead(fh, "<%ii" % maxSEP)
-	sepCbl  = __guidedBinaryRead(fh, "<%is" % ((cblIDL+1)*maxSEP,))
-	sepCbl  = [sepCbl[i*(cblIDL+1):(i+1)*(cblIDL+1)] for i in xrange(maxSEP)]
-	sepLeng = __guidedBinaryRead(fh, "<%if" % maxSEP)
-	sepDesi = __guidedBinaryRead(fh, "<%ii" % maxSEP)
-	sepGain = __guidedBinaryRead(fh, "<%if" % maxSEP)
-	sepAnt  = __guidedBinaryRead(fh, "<%ii" % maxSEP)
+	sepID   = __guidedBinaryRead(fh, "<%is" % ((ME_MAX_SEPID_LENGTH+1)*ME_MAX_NSEP),)
+	sepID   = [sepID[i*(ME_MAX_SEPID_LENGTH+1):(i+1)*(ME_MAX_SEPID_LENGTH+1)] for i in xrange(ME_MAX_NSEP)]
+	sepStat = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
+	sepCbl  = __guidedBinaryRead(fh, "<%is" % ((ME_MAX_SEPCABL_LENGTH+1)*ME_MAX_NSEP,))
+	sepCbl  = [sepCbl[i*(ME_MAX_SEPCABL_LENGTH+1):(i+1)*(ME_MAX_SEPCABL_LENGTH+1)] for i in xrange(ME_MAX_NSEP)]
+	sepLeng = __guidedBinaryRead(fh, "<%if" % ME_MAX_NSEP)
+	sepDesi = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
+	sepGain = __guidedBinaryRead(fh, "<%if" % ME_MAX_NSEP)
+	sepAnt  = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
 	
 	#
 	# ARX (ARB) information
@@ -980,22 +960,22 @@ def __parseBinarySSMIF(filename):
 	
 	nARX     = __guidedBinaryRead(fh, "<i")
 	nChanARX = __guidedBinaryRead(fh, "<i")
-	arxID    = __guidedBinaryRead(fh, "<%is" % ((arbIDL+1)*maxARB,))
-	arxID    = [arxID[i*(arbIDL+1):(i+1)*(arbIDL+1)] for i in xrange(maxARB)]
-	arxSlot  = __guidedBinaryRead(fh, "<%ii" % maxARB)
-	arxDesi  = __guidedBinaryRead(fh, "<%ii" % maxARB)
-	arxRack  = __guidedBinaryRead(fh, "<%ii" % maxARB)
-	arxPort  = __guidedBinaryRead(fh, "<%ii" % maxARB)
-	arxStat  = __guidedBinaryRead(fh, "<%ii" % (maxARB*maxARBChan,))
-	arxStat  = [arxStat[i*maxARBChan:(i+1)*maxARBChan] for i in xrange(maxARB)]
-	arxGain  = __guidedBinaryRead(fh, "<%if" % (maxARB*maxARBChan,))
-	arxGain  = [arxGain[i*maxARBChan:(i+1)*maxARBChan] for i in xrange(maxARB)]
-	arxAnt   = __guidedBinaryRead(fh, "<%ii" % (maxARB*maxARBChan,))
-	arxAnt   = [arxAnt[i*maxARBChan:(i+1)*maxARBChan] for i in xrange(maxARB)]
-	arxIn    = __guidedBinaryRead(fh, "<%is" % (maxARB*maxARBChan,))
-	arxIn    = [arxIn[i*(arbIDL+1):(i+1)*(arbIDL+1)] for i in xrange(maxARB)]
-	arxOut   = __guidedBinaryRead(fh, "<%is" % (maxARB*maxARBChan,))
-	arxOut   = [arxOut[i*(arbIDL+1):(i+1)*(arbIDL+1)] for i in xrange(maxARB)]
+	arxID    = __guidedBinaryRead(fh, "<%is" % ((ME_MAX_ARBID_LENGTH+1)*ME_MAX_NARB,))
+	arxID    = [arxID[i*(ME_MAX_ARBID_LENGTH+1):(i+1)*(ME_MAX_ARBID_LENGTH+1)] for i in xrange(ME_MAX_NARB)]
+	arxSlot  = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
+	arxDesi  = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
+	arxRack  = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
+	arxPort  = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
+	arxStat  = __guidedBinaryRead(fh, "<%ii" % (ME_MAX_NARB*ME_MAX_NARBCH,))
+	arxStat  = [arxStat[i*ME_MAX_NARBCH:(i+1)*ME_MAX_NARBCH] for i in xrange(ME_MAX_NARB)]
+	arxGain  = __guidedBinaryRead(fh, "<%if" % (ME_MAX_NARB*ME_MAX_NARBCH,))
+	arxGain  = [arxGain[i*ME_MAX_NARBCH:(i+1)*ME_MAX_NARBCH] for i in xrange(ME_MAX_NARB)]
+	arxAnt   = __guidedBinaryRead(fh, "<%ii" % (ME_MAX_NARB*ME_MAX_NARBCH,))
+	arxAnt   = [arxAnt[i*ME_MAX_NARBCH:(i+1)*ME_MAX_NARBCH] for i in xrange(ME_MAX_NARB)]
+	arxIn    = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NARB*ME_MAX_NARBCH,))
+	arxIn    = [arxIn[i*(ME_MAX_ARBID_LENGTH+1):(i+1)*(ME_MAX_ARBID_LENGTH+1)] for i in xrange(ME_MAX_NARB)]
+	arxOut   = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NARB*ME_MAX_NARBCH,))
+	arxOut   = [arxOut[i*(ME_MAX_ARBID_LENGTH+1):(i+1)*(ME_MAX_ARBID_LENGTH+1)] for i in xrange(ME_MAX_NARB)]
 	
 	#
 	# DP1 information
@@ -1003,43 +983,43 @@ def __parseBinarySSMIF(filename):
 	
 	nDP1     = __guidedBinaryRead(fh, "<i")
 	nChanDP1 = __guidedBinaryRead(fh, "<i")
-	dp1ID    = __guidedBinaryRead(fh, "<%is" % (maxDP1*(dp1IDL+1),))
-	dp1ID    = [dp1ID[i*(dp1IDL+1):(i+1)*(dp1IDL+1)] for i in xrange(maxDP1)]
-	dp1Slot  = __guidedBinaryRead(fh, "<%is" % (maxDP1*(dp1IDL+1),))
-	dp1Slot  = [dp1Slot[i*(dp1IDL+1):(i+1)*(dp1IDL+1)] for i in xrange(maxDP1)]
-	dp1Desi  = __guidedBinaryRead(fh, "<%ii" % maxDP1)
-	dp1Stat  = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan,))
-	dp1Stat  = [dp1Stat[i*maxDP1Chan:(i+1)*maxDP1Chan] for i in xrange(maxDP1)]
-	dp1Inr   = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan*(dp1IDL+1),))
-	dp1Inr   = [[dp1Inr[i*maxDP1Chan*(dp1IDL+1):(i+1)*maxDP1Chan*(dp1IDL+1)][j*(dp1IDL+1):(j+1)*(dp1IDL+1)] for j in xrange(maxDP1Chan)] for i in xrange(maxDP)]
-	dp1Inc   = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan*(dp1IDL+1),))
-	dp1Inc   = [[dp1Inc[i*maxDP1Chan*(dp1IDL+1):(i+1)*maxDP1Chan*(dp1IDL+1)][j*(dp1IDL+1):(j+1)*(dp1IDL+1)] for j in xrange(maxDP1Chan)] for i in xrange(maxDP)]
-	dp1Ant   = __guidedBinaryRead(fh, "<%ii" % (maxDP1*maxDP1Chan,))
-	dp1Ant   = [dp1Ant[i*maxDP1Chan:(i+1)*maxDP1Chan] for i in xrange(maxDP1)]
+	dp1ID    = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP1*(ME_MAX_DP1ID_LENGTH+1),))
+	dp1ID    = [dp1ID[i*(ME_MAX_DP1ID_LENGTH+1):(i+1)*(ME_MAX_DP1ID_LENGTH+1)] for i in xrange(ME_MAX_NDP1)]
+	dp1Slot  = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP1*(ME_MAX_DP1ID_LENGTH+1),))
+	dp1Slot  = [dp1Slot[i*(ME_MAX_DP1ID_LENGTH+1):(i+1)*(ME_MAX_DP1ID_LENGTH+1)] for i in xrange(ME_MAX_NDP1)]
+	dp1Desi  = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP1)
+	dp1Stat  = __guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH,))
+	dp1Stat  = [dp1Stat[i*ME_MAX_NDP1CH:(i+1)*ME_MAX_NDP1CH] for i in xrange(ME_MAX_NDP1)]
+	dp1Inr   = __guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1),))
+	dp1Inr   = [[dp1Inr[i*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1):(i+1)*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1)][j*(ME_MAX_DP1ID_LENGTH+1):(j+1)*(ME_MAX_DP1ID_LENGTH+1)] for j in xrange(ME_MAX_NDP1CH)] for i in xrange(maxDP)]
+	dp1Inc   = __guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1),))
+	dp1Inc   = [[dp1Inc[i*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1):(i+1)*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1)][j*(ME_MAX_DP1ID_LENGTH+1):(j+1)*(ME_MAX_DP1ID_LENGTH+1)] for j in xrange(ME_MAX_NDP1CH)] for i in xrange(maxDP)]
+	dp1Ant   = __guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH,))
+	dp1Ant   = [dp1Ant[i*ME_MAX_NDP1CH:(i+1)*ME_MAX_NDP1CH] for i in xrange(ME_MAX_NDP1)]
 	
 	#
 	# DP2 information
 	#
 	
 	nDP2    = __guidedBinaryRead(fh, "<i")
-	dp2ID   = __guidedBinaryRead(fh, "<%is" % (maxDP2*(dp2IDL+1),))
-	dp2ID   = [dp2ID[i*(dp2IDL+1):(i+1)*(dp2IDL+1)] for i in xrange(maxDP2)]
-	dp2Slot = __guidedBinaryRead(fh, "<%is" % (maxDP2*(dp2IDL+1),))
-	dp2Slot = [dp2Slot[i*(dp2IDL+1):(i+1)*(dp2IDL+1)] for i in xrange(maxDP2)]
-	dp2Stat = __guidedBinaryRead(fh, "<%ii" % maxDP2)
-	dp2Desi = __guidedBinaryRead(fh, "<%ii" % maxDP2)
+	dp2ID   = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP2*(ME_MAX_DP2ID_LENGTH+1),))
+	dp2ID   = [dp2ID[i*(ME_MAX_DP2ID_LENGTH+1):(i+1)*(ME_MAX_DP2ID_LENGTH+1)] for i in xrange(ME_MAX_NDP2)]
+	dp2Slot = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP2*(ME_MAX_DP2ID_LENGTH+1),))
+	dp2Slot = [dp2Slot[i*(ME_MAX_DP2ID_LENGTH+1):(i+1)*(ME_MAX_DP2ID_LENGTH+1)] for i in xrange(ME_MAX_NDP2)]
+	dp2Stat = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP2)
+	dp2Desi = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP2)
 	
 	#
 	# DR information
 	#
 	
 	nDR = __guidedBinaryRead(fh, "<i")
-	drStat = __guidedBinaryRead(fh, "<%ii" % maxDR)
-	drID = __guidedBinaryRead(fh, "<%is" % (maxDR*(drIDL+1),))
-	drID = [drID[i*(drIDL+1):(i+1)*(drIDL+1)] for i in xrange(maxDR)]
-	drPC = __guidedBinaryRead(fh, "<%is" % (maxDR*(drIDL+1),))
-	drPC = [drPC[i*(drIDL+1):(i+1)*(drIDL+1)] for i in xrange(maxDR)]
-	drDP = __guidedBinaryRead(fh, "<%ii" % maxDR)
+	drStat = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
+	drID = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NDR*(ME_MAX_DRID_LENGTH+1),))
+	drID = [drID[i*(ME_MAX_DRID_LENGTH+1):(i+1)*(ME_MAX_DRID_LENGTH+1)] for i in xrange(ME_MAX_NDR)]
+	drPC = __guidedBinaryRead(fh, "<%is" % (ME_MAX_NDR*(ME_MAX_DRID_LENGTH+1),))
+	drPC = [drPC[i*(ME_MAX_DRID_LENGTH+1):(i+1)*(ME_MAX_DRID_LENGTH+1)] for i in xrange(ME_MAX_NDR)]
+	drDP = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
 	
 	fh.close()
 	
