@@ -54,11 +54,12 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 
 	long i, j, k, nStand, nSamps, nFFT;
 	
-	static char *kwlist[] = {"signals", "LFFT", "Overlap", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, &signals, &nChan, &Overlap)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iii", kwlist, &signals, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
@@ -96,20 +97,26 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	a = (short int *) data->data;
 	b = (double *) dataF->data;
 	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
+	
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j++) {
+				cleanFactor = 1.0;
 				secStart = (long) (nSamps * i) + 2*nChan*j/Overlap;
 				
 				for(k=0; k<(nChan<<1); k+=2) {
@@ -118,15 +125,24 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					
 					in[k+1][0] = (double) *(a + secStart + k+1);
 					in[k+1][1] = 0.0;
+					
+					if( Clip && (in[k][0] >= Clip || in[k][0] <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
+					if( Clip && (in[k+1][0] >= Clip || in[k+1][0] <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
 				}
 				
 				fftw_execute_dft(p, in, in);
 				
 				for(k=0; k<(nChan-1); k++) {
 					fftIndex = k + 1;
-					*(b + (nChan-1)*i + k) += in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += in[fftIndex][1]*in[fftIndex][1];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
 				}
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -134,7 +150,10 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), 1.0/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 
 	Py_XDECREF(data);
 
@@ -153,6 +172,9 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with values greater \n\
+   than or equal to this value greater are zeroed.  Setting the ClipLevel \n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -164,11 +186,12 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF, *windowData;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 	
 	long i, j, k, nStand, nSamps, nFFT;
 	
-	static char *kwlist[] = {"signals", "LFFT", "Overlap", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiO:set_callback", kwlist, &signals, &nChan, &Overlap, &window)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", "window", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiO:set_callback", kwlist, &signals, &nChan, &Overlap, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	} else {
@@ -221,20 +244,26 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	b = (double *) dataF->data;
 	c = (double *) windowData->data;
 	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
+	
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j++) {
+				cleanFactor = 1.0;
 				secStart = nSamps * i + 2*nChan*j/Overlap;
 				
 				for(k=0; k<(nChan<<1); k+=2) {
@@ -243,15 +272,24 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					
 					in[k+1][0] = (double) *(a + secStart + k+1) * *(c + k+1);
 					in[k+1][1] = 0.0;
+					
+					if( Clip && (*(a + secStart + k) >= Clip || *(a + secStart + k) <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
+					if( Clip && (*(a + secStart + k+1) >= Clip || *(a + secStart + k+1) <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
 				}
 				
 				fftw_execute_dft(p, in, in);
 				
 				for(k=0; k<(nChan-1); k++) {
 					fftIndex = k + 1;
-					*(b + (nChan-1)*i + k) += in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += in[fftIndex][1]*in[fftIndex][1];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
 				}
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -259,7 +297,10 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), 1.0/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 
 	Py_XDECREF(data);
 	Py_XDECREF(windowData);
@@ -281,6 +322,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with values greater \n\
+   than or equal to this value greater are zeroed.  Setting the ClipLevel \n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -292,11 +336,12 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 
 	long i, j, k, nStand, nSamps, nFFT;
 
-	static char *kwlist[] = {"signals", "LFFT", "Overlap", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, &signals, &nChan, &Overlap)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iii", kwlist, &signals, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
@@ -334,34 +379,49 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	a = (float complex *) data->data;
 	b = (double *) dataF->data;
 	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
+	
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
 			
 			for(j=0; j<nFFT; j++) {
+				cleanFactor = 1.0;
 				secStart = nSamps * i + nChan*j/Overlap;
 				
 				for(k=0; k<nChan; k++) {
 					in[k][0] = creal(*(a + secStart + k));
 					in[k][1] = cimag(*(a + secStart + k));
+					
+					if( Clip && (in[k][0] >= Clip || in[k][0] <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
+					if( Clip && (in[k][1] >= Clip || in[k][1] <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
 				}
 				
 				fftw_execute_dft(p, in, in);
 				
 				for(k=0; k<(nChan-1); k++) {
 					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(b + (nChan-1)*i + k) += in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += in[fftIndex][1]*in[fftIndex][1];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
 				}
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -369,7 +429,10 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 
-	cblas_dscal((nChan-1)*nStand, 1.0/(nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, 1.0/(nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 
 	Py_XDECREF(data);
 	
@@ -389,6 +452,9 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with I or Q values \n\
+   greater than or equal to this value greater are zeroed.  Setting the \n\
+   ClipLevel to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -400,11 +466,12 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF, *windowData;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 
 	long i, j, k, nStand, nSamps, nFFT;
 
-	static char *kwlist[] = {"signals", "LFFT", "Overlap", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiO:set_callback", kwlist, &signals, &nChan, &Overlap, &window)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", "window", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiO:set_callback", kwlist, &signals, &nChan, &Overlap, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	} else {
@@ -457,34 +524,49 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	b = (double *) dataF->data;
 	c = (double *) windowData->data;
 	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
+	
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
 			
 			for(j=0; j<nFFT; j++) {
+				cleanFactor = 1.0;
 				secStart = nSamps * i + nChan*j/Overlap;
 				
 				for(k=0; k<nChan; k++) {
 					in[k][0] = creal(*(a + secStart + k)) * *(c + k);
 					in[k][1] = cimag(*(a + secStart + k)) * *(c + k);
+					
+					if( Clip && (creal(*(a + secStart + k)) >= Clip || creal(*(a + secStart + k)) <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
+					if( Clip && (cimag(*(a + secStart + k)) >= Clip || cimag(*(a + secStart + k)) <= -Clip) ) {
+						cleanFactor = 0.0;
+					}
 				}
 				
 				fftw_execute_dft(p, in, in);
 				
 				for(k=0; k<(nChan-1); k++) {
 					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(b + (nChan-1)*i + k) += in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += in[fftIndex][1]*in[fftIndex][1];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
 				}
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -492,7 +574,10 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 
-	cblas_dscal((nChan-1)*nStand, 1.0/(nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, 1.0/(nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 	
 	Py_XDECREF(data);
 	Py_XDECREF(windowData);
@@ -514,6 +599,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with I or Q values \n\
+   greater than or equal to this value greater are zeroed.  Setting the \n\
+   ClipLevel to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -525,11 +613,12 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 
 	long i, j, k, m, nStand, nSamps, nFFT;
 	
-	static char *kwlist[] = {"signals", "LFFT", "Overlap", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, &signals, &nChan, &Overlap)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iii", kwlist, &signals, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
@@ -576,20 +665,26 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	a = (short int *) data->data;
 	b = (double *) dataF->data;
 	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
+	
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m,  fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j+=nTaps) {
+				cleanFactor = 1.0;
 				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 				
@@ -602,13 +697,20 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 						
 						in[k+1][0] = (double) *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
 						in[k+1][1] = 0.0;
+						
+						if( Clip && (*(a + secStart + k) >= Clip || *(a + secStart + k) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
+						if( Clip && (*(a + secStart + k+1) >= Clip || *(a + secStart + k+1) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
 					}
 				
 					fftw_execute_dft(p, in, in);
 				
 					for(k=0; k<(nChan-1); k++) {
 						fftIndex = k + 1;
-						tempFB[k] += in[fftIndex][0] + imaginary * in[fftIndex][1];
+						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary *  cleanFactor*in[fftIndex][1];
 					}
 				}
 				
@@ -621,6 +723,8 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -628,7 +732,10 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), ((float) nTaps)/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 
 	Py_XDECREF(data);
 
@@ -648,6 +755,9 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * ClipLevel: count value of 'bad' data.  Filterbank windows with values greater\n\
+   than or equal to this value greater are zeroed.  Setting the ClipLevel to zero\n\
+   disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -659,11 +769,12 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF, *windowData;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 
 	long i, j, k, m, nStand, nSamps, nFFT;
 	
-	static char *kwlist[] = {"signals", "LFFT", "Overlap", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiO:set_callback", kwlist, &signals, &nChan, &Overlap, &window)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", "window", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiO:set_callback", kwlist, &signals, &nChan, &Overlap, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	} else {
@@ -728,21 +839,27 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *b;
 	a = (short int *) data->data;
 	b = (double *) dataF->data;
+	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
 
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m, fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j+=nTaps) {
+				cleanFactor = 1.0;
 				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 				
@@ -755,13 +872,20 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 						
 						in[k+1][0] = (double) *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
 						in[k+1][1] = 0.0;
+						
+						if( Clip && (*(a + secStart + k) >= Clip || *(a + secStart + k) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
+						if( Clip && (*(a + secStart + k+1) >= Clip || *(a + secStart + k+1) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
 					}
 				
 					fftw_execute_dft(p, in, in);
 				
 					for(k=0; k<(nChan-1); k++) {
 						fftIndex = k + 1;
-						tempFB[k] += in[fftIndex][0] + imaginary * in[fftIndex][1];
+						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary * cleanFactor*in[fftIndex][1];
 					}
 				}
 				
@@ -774,6 +898,8 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -781,7 +907,10 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), ((float) nTaps)/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 
 	Py_XDECREF(data);
 	Py_XDECREF(windowData);
@@ -803,6 +932,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
+ * ClipLevel: count value of 'bad' data.  Filterbank windows with values greater\n\
+   than or equal to this value greater are zeroed.  Setting the ClipLevel to zero\n\
+   disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -814,11 +946,12 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 
 	long i, j, k, m, nStand, nSamps, nFFT;
 
-	static char *kwlist[] = {"signals", "LFFT", "Overlap", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, &signals, &nChan, &Overlap)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, &signals, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
@@ -865,20 +998,26 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	a = (float complex *) data->data;
 	b = (double *) dataF->data;
 	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
+	
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m, fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
 			
 			for(j=0; j<nFFT; j+=nTaps) {
+				cleanFactor = 1.0;
 				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 
@@ -888,13 +1027,20 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					for(k=0; k<nChan; k++) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
 						in[k][1] = cimag(*(a + secStart + k)) * fbWindow[nChan*m + k];
+						
+						if( Clip && (creal(*(a + secStart + k)) >= Clip || creal(*(a + secStart + k)) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
+						if( Clip && (cimag(*(a + secStart + k)) >= Clip || cimag(*(a + secStart + k)) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
 					}
 				
 					fftw_execute_dft(p, in, in);
 				
 					for(k=0; k<(nChan-1); k++) {
 						fftIndex = ((k+1) + nChan/2) % nChan;
-						tempFB[k] += in[fftIndex][0] + imaginary * in[fftIndex][1];
+						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary * cleanFactor*in[fftIndex][1];
 					}
 				}
 				
@@ -907,6 +1053,8 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -914,7 +1062,10 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 
-	cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), ((float) nTaps)/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 	
 	Py_XDECREF(data);
 
@@ -934,6 +1085,9 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
+ * ClipLevel: count value of 'bad' data.  Filterbank windows with I or Q \n\
+   values greater than or equal to this value greater are zeroed.  Setting\n\
+   the ClipLevel to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -945,11 +1099,12 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArrayObject *data, *dataF, *windowData;
 	int nChan = 64;
 	int Overlap = 1;
+	int Clip = 0;
 
 	long i, j, k, m, nStand, nSamps, nFFT;
 
-	static char *kwlist[] = {"signals","LFFT", "Overlap", "window", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiO:set_callback", kwlist, &signals, &nChan, &Overlap, &window)) {
+	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", "window", NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiO:set_callback", kwlist, &signals, &nChan, &Overlap, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	} else {
@@ -1013,20 +1168,26 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	a = (float complex *) data->data;
 	b = (double *) dataF->data;
 	
+	// Time-domain blanking control
+	double cleanFactor;
+	long nActFFT[nStand];
+	
 	#ifdef _OPENMP
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m, fftIndex)
+		#pragma omp parallel default(shared) private(in, secStart, tempFB, tempB, i, j, k, m, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
 			#pragma omp for schedule(static)
 		#endif
 		for(i=0; i<nStand; i++) {
+			nActFFT[i] = 0;
 			in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
 			
 			for(j=0; j<nFFT; j+=nTaps) {
+				cleanFactor = 1.0;
 				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
 				cblas_dscal((nChan-1), 0.0, tempB, 1);
 
@@ -1036,6 +1197,13 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					for(k=0; k<nChan; k++) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
 						in[k][1] = cimag(*(a + secStart + k)) * fbWindow[nChan*m + k];
+						
+						if( Clip && (creal(*(a + secStart + k)) >= Clip || creal(*(a + secStart + k)) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
+						if( Clip && (cimag(*(a + secStart + k)) >= Clip || cimag(*(a + secStart + k)) <= -Clip) ) {
+							cleanFactor = 0.0;
+						}
 					}
 				
 					fftw_execute_dft(p, in, in);
@@ -1055,6 +1223,8 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
+				
+				nActFFT[i] += (long) cleanFactor;
 			}
 			fftw_free(in);
 		}
@@ -1062,7 +1232,10 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 
-	cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
+	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
+	for(i=0; i<nStand; i++) {
+		cblas_dscal((nChan-1), ((float) nTaps)/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+	}
 	
 	Py_XDECREF(data);
 	Py_XDECREF(windowData);
@@ -1084,6 +1257,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
+ * ClipLevel: count value of 'bad' data.  Filterbank windows with I or Q \n\
+   values greater than or equal to this value greater are zeroed.  Setting\n\
+   the ClipLevel to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -1095,15 +1271,15 @@ Outputs:\n\
 */
 
 static PyMethodDef SpecMethods[] = {
-	{"FPSDR2",  FPSDR2,  METH_KEYWORDS, FPSDR2_doc}, 
-	{"FPSDR3",  FPSDR3,  METH_KEYWORDS, FPSDR3_doc}, 
-	{"FPSDC2",  FPSDC2,  METH_KEYWORDS, FPSDC2_doc}, 
-	{"FPSDC3",  FPSDC3,  METH_KEYWORDS, FPSDC3_doc}, 
-	{"PPSDR2",  PPSDR2,  METH_KEYWORDS, PPSDR2_doc}, 
-	{"PPSDR3",  PPSDR3,  METH_KEYWORDS, PPSDR3_doc}, 
-	{"PPSDC2",  PPSDC2,  METH_KEYWORDS, PPSDC2_doc}, 
-	{"PPSDC3",  PPSDC3,  METH_KEYWORDS, PPSDC3_doc}, 
-	{NULL, NULL, 0, NULL}
+	{"FPSDR2",  FPSDR2,  METH_VARARGS|METH_KEYWORDS, FPSDR2_doc}, 
+	{"FPSDR3",  FPSDR3,  METH_VARARGS|METH_KEYWORDS, FPSDR3_doc}, 
+	{"FPSDC2",  FPSDC2,  METH_VARARGS|METH_KEYWORDS, FPSDC2_doc}, 
+	{"FPSDC3",  FPSDC3,  METH_VARARGS|METH_KEYWORDS, FPSDC3_doc}, 
+	{"PPSDR2",  PPSDR2,  METH_VARARGS|METH_KEYWORDS, PPSDR2_doc}, 
+	{"PPSDR3",  PPSDR3,  METH_VARARGS|METH_KEYWORDS, PPSDR3_doc}, 
+	{"PPSDC2",  PPSDC2,  METH_VARARGS|METH_KEYWORDS, PPSDC2_doc}, 
+	{"PPSDC3",  PPSDC3,  METH_VARARGS|METH_KEYWORDS, PPSDC3_doc}, 
+	{NULL,      NULL,    0,                          NULL}
 };
 
 PyDoc_STRVAR(spec_doc, \
