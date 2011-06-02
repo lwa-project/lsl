@@ -259,8 +259,8 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * SampleRate: sample rate of the data (default=196e6)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with values greater \n\
-   than or equal to this value greater are zeroed.  Setting the ClipLevel \n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
@@ -492,8 +492,8 @@ Input keywords are:\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * SampleRate: sample rate of the data (default=196e6)\n\
  * window: Callable Python function for generating the window\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with values greater \n\
-   than or equal to this value greater are zeroed.  Setting the ClipLevel \n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
@@ -648,10 +648,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					in[k][0] = creal(*(float complex *) PyArray_GetPtr(data, dLoc));
 					in[k][1] = cimag(*(float complex *) PyArray_GetPtr(data, dLoc));
 					
-					if( Clip && (in[k][0] >= Clip || in[k][0] <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (in[k][1] >= Clip || in[k][1] <= -Clip) ) {
+					if( Clip && cabs(*(float complex *) PyArray_GetPtr(data, dLoc)) >= Clip ) {
 						cleanFactor = 0.0;
 					}
 				}	
@@ -707,9 +704,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * SampleRate: sample rate of the data (default=100e3)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with I or Q values \n\
-   greater than or equal to this value greater are zeroed.  Setting the \n\
-   ClipLevel to zero disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
@@ -882,10 +879,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					in[k][0] = creal(*(float complex *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc));
 					in[k][1] = cimag(*(float complex *) PyArray_GetPtr(data, dLoc) * *(double *) PyArray_GetPtr(windowData, qLoc));
 					
-					if( Clip && (creal(*(float complex *) PyArray_GetPtr(data, dLoc)) >= Clip || creal(*(float complex *) PyArray_GetPtr(data, dLoc)) <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (cimag(*(float complex *) PyArray_GetPtr(data, dLoc)) >= Clip || cimag(*(float complex *) PyArray_GetPtr(data, dLoc)) <= -Clip) ) {
+					if( Clip && cabs(*(float complex *) PyArray_GetPtr(data, dLoc)) >= Clip ) {
 						cleanFactor = 0.0;
 					}
 				}	
@@ -943,9 +937,9 @@ Input keywords are:\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * SampleRate: sample rate of the data (default=100e3)\n\
  * window: Callable Python function for generating the window\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with I or Q values \n\
-   greater than or equal to this value greater are zeroed.  Setting the \n\
-   ClipLevel to zero disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
@@ -1929,13 +1923,13 @@ static PyMethodDef CorrelatorMethods[] = {
 	{"FEngineR3", FEngineR3, METH_VARARGS|METH_KEYWORDS, FEngineR3_doc}, 
 	{"FEngineC2", FEngineC2, METH_VARARGS|METH_KEYWORDS, FEngineC2_doc}, 
 	{"FEngineC3", FEngineC3, METH_VARARGS|METH_KEYWORDS, FEngineC3_doc}, 
-	{"XEngine",   XEngine,   METH_VARARGS,               XEngine_doc}, 
-	{"XEngine2",  XEngine2,  METH_VARARGS,               XEngine2_doc}, 
+	{"XEngine",   XEngine,   METH_VARARGS,               XEngine_doc  }, 
+	{"XEngine2",  XEngine2,  METH_VARARGS,               XEngine2_doc }, 
 	{"PEngineR2", PEngineR2, METH_VARARGS|METH_KEYWORDS, PEngineR2_doc}, 
 	{"PEngineR3", PEngineR3, METH_VARARGS|METH_KEYWORDS, PEngineR3_doc}, 
 	{"PEngineC2", PEngineC2, METH_VARARGS|METH_KEYWORDS, PEngineC2_doc}, 
 	{"PEngineC3", PEngineC3, METH_VARARGS|METH_KEYWORDS, PEngineC3_doc}, 
-	{NULL,        NULL,      0,                          NULL}
+	{NULL,        NULL,      0,                          NULL         }
 };
 
 PyDoc_STRVAR(correlator_doc, \

@@ -172,8 +172,8 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with values greater \n\
-   than or equal to this value greater are zeroed.  Setting the ClipLevel \n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
@@ -322,8 +322,8 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with values greater \n\
-   than or equal to this value greater are zeroed.  Setting the ClipLevel \n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
@@ -405,10 +405,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					in[k][0] = creal(*(a + secStart + k));
 					in[k][1] = cimag(*(a + secStart + k));
 					
-					if( Clip && (in[k][0] >= Clip || in[k][0] <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (in[k][1] >= Clip || in[k][1] <= -Clip) ) {
+					if( Clip && cabs(*(a + secStart + k)) >= Clip ) {
 						cleanFactor = 0.0;
 					}
 				}
@@ -452,9 +449,9 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with I or Q values \n\
-   greater than or equal to this value greater are zeroed.  Setting the \n\
-   ClipLevel to zero disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -550,10 +547,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					in[k][0] = creal(*(a + secStart + k)) * *(c + k);
 					in[k][1] = cimag(*(a + secStart + k)) * *(c + k);
 					
-					if( Clip && (creal(*(a + secStart + k)) >= Clip || creal(*(a + secStart + k)) <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (cimag(*(a + secStart + k)) >= Clip || cimag(*(a + secStart + k)) <= -Clip) ) {
+					if( Clip && cabs(*(a + secStart + k)) >= Clip ) {
 						cleanFactor = 0.0;
 					}
 				}
@@ -599,9 +593,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with I or Q values \n\
-   greater than or equal to this value greater are zeroed.  Setting the \n\
-   ClipLevel to zero disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -755,9 +749,9 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
- * ClipLevel: count value of 'bad' data.  Filterbank windows with values greater\n\
-   than or equal to this value greater are zeroed.  Setting the ClipLevel to zero\n\
-   disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -932,9 +926,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
- * ClipLevel: count value of 'bad' data.  Filterbank windows with values greater\n\
-   than or equal to this value greater are zeroed.  Setting the ClipLevel to zero\n\
-   disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -1028,10 +1022,7 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
 						in[k][1] = cimag(*(a + secStart + k)) * fbWindow[nChan*m + k];
 						
-						if( Clip && (creal(*(a + secStart + k)) >= Clip || creal(*(a + secStart + k)) <= -Clip) ) {
-							cleanFactor = 0.0;
-						}
-						if( Clip && (cimag(*(a + secStart + k)) >= Clip || cimag(*(a + secStart + k)) <= -Clip) ) {
+						if( Clip && cabs(*(a + secStart + k)) >= Clip ) {
 							cleanFactor = 0.0;
 						}
 					}
@@ -1085,9 +1076,9 @@ Input arguments are:\n\
 Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
- * ClipLevel: count value of 'bad' data.  Filterbank windows with I or Q \n\
-   values greater than or equal to this value greater are zeroed.  Setting\n\
-   the ClipLevel to zero disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -1198,10 +1189,7 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 						in[k][0] = creal(*(a + secStart + k)) * fbWindow[nChan*m + k];
 						in[k][1] = cimag(*(a + secStart + k)) * fbWindow[nChan*m + k];
 						
-						if( Clip && (creal(*(a + secStart + k)) >= Clip || creal(*(a + secStart + k)) <= -Clip) ) {
-							cleanFactor = 0.0;
-						}
-						if( Clip && (cimag(*(a + secStart + k)) >= Clip || cimag(*(a + secStart + k)) <= -Clip) ) {
+						if( Clip && cabs(*(a + secStart + k)) >= Clip ) {
 							cleanFactor = 0.0;
 						}
 					}
@@ -1210,7 +1198,7 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 					for(k=0; k<(nChan-1); k++) {
 						fftIndex = ((k+1) + nChan/2) % nChan;
-						tempFB[k] += in[fftIndex][0] + imaginary * in[fftIndex][1];
+						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary * cleanFactor*in[fftIndex][1];
 					}
 				}
 				
@@ -1257,9 +1245,9 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * window: Callable Python function for generating the window\n\
- * ClipLevel: count value of 'bad' data.  Filterbank windows with I or Q \n\
-   values greater than or equal to this value greater are zeroed.  Setting\n\
-   the ClipLevel to zero disables time-domain blanking\n\
+ * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
+   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
+   to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
@@ -1279,7 +1267,7 @@ static PyMethodDef SpecMethods[] = {
 	{"PPSDR3",  PPSDR3,  METH_VARARGS|METH_KEYWORDS, PPSDR3_doc}, 
 	{"PPSDC2",  PPSDC2,  METH_VARARGS|METH_KEYWORDS, PPSDC2_doc}, 
 	{"PPSDC3",  PPSDC3,  METH_VARARGS|METH_KEYWORDS, PPSDC3_doc}, 
-	{NULL,      NULL,    0,                          NULL}
+	{NULL,      NULL,    0,                          NULL      }
 };
 
 PyDoc_STRVAR(spec_doc, \

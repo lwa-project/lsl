@@ -521,11 +521,11 @@ PyMODINIT_FUNC init_gofast(void) {
 	
 	//    2. eofError -> similar to lsl.reader.errors.eofError
 	dict2 = (PyObject *) PyDict_New();
-	if(dict1 == NULL) {
+	if(dict2 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
 		Py_XDECREF(dict1);
 		Py_XDECREF(syncError);
-		Py_XDEFREF(dict2);
+		Py_XDECREF(dict2);
 		Py_XDECREF(m);
 		return NULL;
 	}
