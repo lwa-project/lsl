@@ -1192,37 +1192,37 @@ class PrototypeStation(LWAStation):
 	
 	def getAntennas(self, date):
 		"""Return the list of Antenna instances for the station, sorted by 
-		digitizer number.
+		digitizer number, for a given DateTime instance.
 		"""
 		
 		# Sort and return
 		protoAnts = self.__filterAntennas(date)
 		return protoAnts
 		
-	def getStands(self):
+	def getStands(self, date):
 		"""
 		Return a list of Stand instances for each antenna, sorted by 
-		digitizer number.
+		digitizer number, for a given DateTime instance.
 		"""
 		
 		# Sort and return
 		protoAnts = self.__filterAntennas(date)
 		return [ant.stand for ant in protoAnts]
 	
-	def getPols(self):
+	def getPols(self, date):
 		"""
 		Return a list of polarization (0 == N-S; 1 == E-W) for each antenna, 
-		sorted by digitizer number.
+		sorted by digitizer number, for a given DateTime instance.
 		"""
 		
 		# Sort and return
 		protoAnts = self.__filterAntennas(date)
 		return [ant.pol for ant in protoAnts]
 		
-	def getCables(self):
+	def getCables(self, date):
 		"""
 		Return a list of Cable instances for each antenna, sorted by
-		digitizer number.
+		digitizer number, for a given DateTime instance.
 		"""
 		
 		# Sort and return
