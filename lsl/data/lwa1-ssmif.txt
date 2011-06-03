@@ -2603,8 +2603,13 @@ RPD_A1[515] 0.00002
 RPD_A1[516] 0.00002
 RPD_FREF 10000000
 
-# Cable stretching is set to 0.5% based on the average TDR measurements
+# Cable stretching is set to 0.5% based on the average TDR measurements (except for
+# stands 257 and 258 which are left alone)
 RPD_STR 1.005
+RPD_STR[513] 1.000
+RPD_STR[514] 1.000
+RPD_STR[515] 1.000
+RPD_STR[516] 1.000
 
 # This will be set to 1 for any cables not identified below
 # You should set it to 0 if different / not known, or >1 if appropriate

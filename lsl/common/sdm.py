@@ -10,9 +10,9 @@ import struct
 
 from lsl.common.mcs import *
 
-__version__ = '0.1'
-__revision__ = '$ Revision: 2 $'
-__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', '__version__', '__revision__', '__all__']
+__version__ = '0.2'
+__revision__ = '$ Revision: 4 $'
+__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parseSDM', '__version__', '__revision__', '__all__']
 
 
 def __guidedBinaryRead(fh, fmt):
@@ -193,52 +193,48 @@ class SDM(object):
 	Dynamic MIB file (SDM file).
 	"""
 	
-	def __init__(self, filename=''):
+	def __init__(self, station=None, shl=None, asp=None, dp=None, dr=None, status=None, antStatus=None, dpoStatus=None, settings=None):
 		self.filename = filename
 		
-		self.station = SubSystemStatus('station')
-		self.shl = SubSystemStatus('shl')
-		self.asp = SubSystemStatus('sdp')
-		self.dp  = SubSystemStatus('dp')
-		self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(nDR)]
-		self.status = SubSubSystemStatus()
-		self.antStatus = [[0,0] for n in xrange(ME_MAX_NSTD)]
-		self.dpoStatus = [0 for n in xrange(ME_MAX_NDR)]
-		self.settings = StationSettings()
-		
-		if self.filename != '':
-			self.load()
-	
-	def load(self, filename=''):
-		"""
-		Given a filename or using the filename the SDM instance was created with, 
-		read the file's contents into the SDM instance.
-		"""
-		
-		if filename is not '':
-			self.filename = filename
-		elif self.filename == '':
-			raise RuntimeError('No filename provided')
+		if station is None:
+			self.station = SubSystemStatus('station')
 		else:
-			pass
+			self.station = station
+		if shl is None:
+			self.shl = SubSystemStatus('shl')
+		else:
+			self.shl = shl
+		if asp is None:
+			self.asp = SubSystemStatus('asp')
+		else:
+			self.asp = asp
+		if dp is None:
+			self.dp  = SubSystemStatus('dp')
+		else:
+			self.dp = dp
+		if dr is None:
+			self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(nDR)]
+		else:
+			self.dr = dr
 		
-		fh = open(self.filename, 'rb')
+		if status is None:
+			self.status = SubSubSystemStatus()
+		else:
+			self.status = status
 		
-		self.station.__binaryRead(fh)
-		self.shl.__binaryRead(fh)
-		self.asp.__binaryRead(fh)
-		self.dp.__binaryRead(fh)
-		for n in xrange(ME_MAX_NDR):
-			self.dr[n].__binaryRead(fh)
-		
-		self.status.__binaryRaed(fh)
-		
-		self.antStatus = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
-		self.dpoStatus = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
-		
-		self.settings.__binaryRead(fh)
-		
-		fh.close()
+		if antStatus is None:
+			self.antStatus = [[0,0] for n in xrange(ME_MAX_NSTD)]
+		else:
+			self.antStatus = antStatus
+		if dpoStatus is None:
+			self.dpoStatus = [0 for n in xrange(ME_MAX_NDR)]
+		else:
+			self.dpoStatus = dpoStatus
+			
+		if settings is None:
+			self.settings = StationSettings()
+		else:
+			self.settings = settings
 		
 	def updateAntennas(self, antennas):
 		"""
@@ -254,3 +250,38 @@ class SDM(object):
 			updatedAntennas[-1].status = self.antStatus[index]
 			
 		return updatedAntennas
+
+
+def parseSDM(filename):
+	"""
+	Given a filename, read the file's contents into the SDM instance and return
+	that instance.
+	"""
+		
+	fh = open(self.filename, 'rb')
+	
+	# Create a new SDM instance
+	dynamic = SDM()
+	
+	# Sub-system status sections
+	dynamic.station.__binaryRead(fh)
+	dynamic.shl.__binaryRead(fh)
+	dynamic.asp.__binaryRead(fh)
+	dynamic.dp.__binaryRead(fh)
+	for n in xrange(ME_MAX_NDR):
+			dynamic.dr[n].__binaryRead(fh)
+	
+	# Sub-sub-system status section
+	dynamic.status.__binaryRead(fh)
+	
+	# Antenna status and data path status
+	dynamic.antStatus = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
+	dynamic.dpoStatus = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
+	
+	# Station settings section
+	dynamic.settings.__binaryRead(fh)
+	
+	fh.close()
+	
+	return dynamic
+

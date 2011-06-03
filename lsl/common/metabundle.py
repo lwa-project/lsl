@@ -17,7 +17,7 @@ from lsl.common.dp import fS
 from lsl.common import stations, sdm
 
 __version__ = "0.1"
-__revision__ = "$ Revision: 1 $"
+__revision__ = "$ Revision: 3 $"
 __all__ = ['readSESFile', 'readOBSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
@@ -160,7 +160,7 @@ def getSDM(tarname):
 	tf.extractall(path=tempDir, members=[ti,])
 	
 	# Parse the SDM file and build the SDM instance
-	dynamic = sdm.SDM(filename=os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+	dynamic = sdm.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
 	
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
@@ -282,7 +282,8 @@ def getObservationSpec(tarname, selectObs=None):
 	"""
 	Given a MCS meta-data tarball, extract one or more observation specification 
 	file (MCS0030, Section 6) and return a list of dictionaries corresponding to
-	each OBS file.
+	each OBS file.  If the `selectObs` keyword is set to a list of observation
+	numbers, only observations matching the numbers in `selectObs` are returned.
 	"""
 	
 	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
@@ -298,18 +299,18 @@ def getObservationSpec(tarname, selectObs=None):
 	tf.extractall(path=tempDir, members=tis)
 	
 	# Read in the OBS files
-	obs = []
+	obsList = []
 	for of in glob.glob(tempDir, '*.obs'):
-		obs.append( readOBSFile(of) )
+		obsList.append( readOBSFile(of) )
 		
 	# Cull the list based on the observation ID selection
-	if obs is not None:
+	if selectObs is not None:
 		outObs = []
-		for o in obs:
+		for o in obsList:
 			if o['obsID'] in selectObs:
 				outObs.append(o)
 	else:
-		outObs = obs
+		outObs = obsList
 		
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
