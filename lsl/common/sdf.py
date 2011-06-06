@@ -60,7 +60,7 @@ from lsl.reader.drx import FrameSize as DRXSize
 
 
 __version__ = '0.4'
-__revision__ = '$ Revision: 14 $'
+__revision__ = '$ Revision: 15 $'
 __all__ = ['Observer', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse', '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?)$')
@@ -69,7 +69,7 @@ _EST = pytz.timezone('US/Eastern')
 _CST = pytz.timezone('US/Central')
 _MST = pytz.timezone('US/Mountain')
 _PST = pytz.timezone('US/Pacific')
-_nStands = 256
+_nStands = 260
 _DRSUCapacityTB = 5
 
 
@@ -936,9 +936,15 @@ class BeamStep(object):
 	  * RADec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
 	  * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
 	    (default = False)
+	  * SpecDelays - 520 list of delays to apply for each antenna
+	  * SpecGains - 260 by 2 by 2 list of gains to apply for each antenna
+	  
+	.. note::
+	   If `SpecDelays` is specified, `SpecGains` must also be specified.
+	   Specifying both `SpecDelays` and `SpecGains` overrides the `MaxSNR` keyword.
 	"""
 	
-	def __init__(self, c1, c2, duration, frequency1, frequency2, RADec=True, MaxSNR=False):
+	def __init__(self, c1, c2, duration, frequency1, frequency2, RADec=True, MaxSNR=False, SpecDelays=None, SpecGains=None):
 		self.RADec = bool(RADec)
 		self.c1 = float(c1)
 		self.c2 = float(c2)
@@ -946,6 +952,8 @@ class BeamStep(object):
 		self.frequency1 = float(frequency1)
 		self.frequency2 = float(frequency2)
 		self.MaxSNR = bool(MaxSNR)
+		self.delays = self.SpecDelays
+		self.gains = self.SpecGains
 		
 		self.dur = self.getDuration()
 		self.freq1 = self.getFrequency1()
@@ -1014,6 +1022,25 @@ class BeamStep(object):
 		"""Evaluate the step and return True if it is valid, False otherwise."""
 		
 		failures = 0
+		# Basic - Delay and gain settings are correctly configured
+		if self.delays is not None:
+			if len(self.delays) != 520:
+				failures += 1
+				if verbose:
+					print "[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid()
+			if self.gains is None:
+				failures += 1
+				if verbose:
+					print "[%i] Error: Delays specified but gains were not" % os.getpid()
+		if self.gains is not None:
+			if len(self.gains) != 260:
+				failures += 1
+				if verbose:
+					print "[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid()
+			if self.delays is None:
+				failures += 1
+				if verbose:
+					print "[%i] Error: Gains specified but delays were not" % os.getpid()
 		# Basic - Observation time
 		if self.dur < 5:
 			failures += 1

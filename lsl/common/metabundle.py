@@ -13,12 +13,13 @@ import shutil
 import tarfile
 import tempfile
 
-from lsl.common.dp import fS
-from lsl.common import stations, sdm
+from lsl.common.dp import fS, word2freq
+from lsl.common import stations, sdm, sdf
+from lsl.transform import Time
 
 __version__ = "0.1"
-__revision__ = "$ Revision: 3 $"
-__all__ = ['readSESFile', 'readOBSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', '__version__', '__revision__', '__all__']
+__revision__ = "$ Revision: 5 $"
+__all__ = ['readSESFile', 'readOBSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
@@ -41,14 +42,6 @@ def __guidedBinaryRead(fh, fmt):
 		return data[0]
 	else:
 		return list(data)
-
-
-def __word2freq(word):
-	"""
-	Convert a LWA DP tuning word to a frequency in Hz.
-	"""
-	
-	return word*fS / 2**32
 
 
 def readSESFile(filename):
@@ -140,9 +133,10 @@ def readOBSFile(filename):
 	fh.close()
 	
 	return {'version': version, 'projectID': projectID, 'sessionID': sessionID, 'obsID': obsID, 'MJD': obsMJD, 'MPM': obsMPM, 
-		   'Dur': obsDur, 'Mode': obsMode, 'RA': obsRA, 'Dec': obsDec, 'Beam': obsB, 'Freq1': __word2freq(obsFreq1), 
-		   'Freq2': __word2freq(obsFreq2), 'BW': obsBW, 'nSteps': nSteps, 'StepRADec': stepRADec,  'steps': steps, 
-		   'fee': fee, 'flt': flt, 'at1': at1, 'at2': at2, 'ats': ats}
+		   'Dur': obsDur, 'Mode': obsMode, 'RA': obsRA, 'Dec': obsDec, 'Beam': obsB, 'Freq1': word2freq(obsFreq1), 
+		   'Freq2': word2freq(obsFreq2), 'BW': obsBW, 'nSteps': nSteps, 'StepRADec': stepRADec,  'steps': steps, 
+		   'fee': fee, 'flt': flt, 'at1': at1, 'at2': at2, 'ats': ats, 'tbwBits': tbwBits, 'tbwSamples': tbwSamps, 
+		   'tbnGain': tbnGain, 'drxGain': drxGain}
 
 
 def getSDM(tarname):
@@ -317,3 +311,120 @@ def getObservationSpec(tarname, selectObs=None):
 	
 	# Return
 	return outObs
+
+
+def getSessionDefinition(tarname):
+	"""
+	Given a MCS meta-data tarball, extract the session specification file, the 
+	session meta-data file, and all observation specification files to build up
+	a SDF-representation of the session.
+	"""
+	
+	ses = getSessionSpec(tarname)
+	sem = getSessionMetaData(tarname)
+	obs = getObservationSpec(tarname)
+	
+	observer = sdf.Observer(tarname, 0)
+	project = sdf.Project(observer, tarname, ses['projectID'])
+	session = sdf.Session(tarname, ses['sessionID'], observations=[])
+	project.sessions = [session,]
+	
+	# Session-wide parameters from the SES file
+	project.sessions[0].cra = ses['CRA']
+	project.sessions[0].recordMIB = ses['record']
+	project.sessions[0].updateMIB = ses['update']
+	project.sessions[0].logScheduler = bool(ses['logSch'])
+	project.sessions[0].logExecutive = bool(ses['logExe'])
+	project.sessions[0].includeStationStatic= bool(ses['incSMIF'])
+	project.sessions[0].includeDesign = bool(ses['incDesi'])
+	
+	# Session-wide parameters from the first OBS file that we find
+	fee = obs[0]['fee']
+	project.sessions[0].obsFEE = [[fee[i], fee[i+1]] for i in xrange(0, len(fee), 2)]
+	project.sessions[0].aspFlt = obs[0]['flt']
+	project.sessions[0].aspAT1 = obs[0]['at1']
+	project.sessions[0].aspAT2 = obs[0]['at2']
+	project.sessions[0].aspATS = obs[0]['ats']
+	project.sessions[0].tbnGain = obs[0]['tbnGain']
+	project.sessions[0].drxGain = obs[0]['drxGain']
+	
+	# Load in the various OBS files and create the needed sdf.Observation instances
+	#
+	# WARNING: This probably isn't going to work with stepped observations
+	#
+	for o in obs:
+		## Generic observation name and target
+		cName = 'obs_%i' % o['obsID']
+		cTarget = 'target_%i' % o['obsID']
+		
+		## Convert the start MJD and MPM values into a string for use with sdf.Observation
+		cStart = Time(o['MJD'] + o['MPM'] / 1000.0 / 3600.0 / 24.0, format='MJD').utc_py_date
+		cStart += timedelta(microseconds=(int(round(start.microsecond/1000.0)*1000.0)-start.microsecond))
+		cStart = cStart.strftime("UTC %Y %m %d %H:%M:%S.%f")
+		cStart = cStart[:-3]
+		
+		## Convert the duration value into a string for use with sdf.Observation
+		cDur = float(o['Dur']) / 1000.0
+		cDur = '%02i:%02i:%06.3f' % (cDur/3600.0, (cDur%3600.0)/60.0, cDur%60.0)
+		
+		## Switch statement for the observing mode
+		if o['Mode'] == 1:
+			cMode = 'TRK_RADEC'
+		elif o['Mode'] == 2:
+			cMode = 'TRK_SOL'
+		elif o['Mode'] == 3:
+			cMode = 'TRK_JOV'
+		elif o['Mode'] == 4:
+			cMode = 'STEPPED'
+		elif o['Mode'] == 5:
+			cMode = 'TBW'
+		else:
+			cMode = 'TBN'
+		
+		## RA and Dec values
+		cRA = o['RA']
+		cDec = o['Dec']
+		
+		## Tuning and BW setup
+		cFreq1 = o['Freq1']
+		cFreq2 = o['Freq2']
+		cFilter = o['BW']
+		
+		## Beam control for DRX observing modes
+		if c['Beam'] == 2:
+			cMaxSNR = True
+		else:
+			cMaxSNR = False
+		
+		## Create the (normal) observation entries or deal with Stepped observations
+		if cMode != 'STEPPED':
+			cObs = sdf.Observation(cName, cTarget, cStart, cDur, cMode, cRA, cDec, cFreq1, cFreq2, cFfilter, MaxSNR=cMaxSNR)
+		else:
+			### Decode the steps
+			steps = []
+			for i in xrange(o['nSteps']):
+				c1, c2, t, f1, f2, b, delay, gain = o['steps'][i]
+				
+				sDur = float(t) / 1000.0
+				sDur = '%02i:%02i:%06.3f' % (sDur/3600.0, (sDur%3600.0)/60.0, sDur%60.0)
+				
+				if b == 2:
+					sMaxSNR = True
+				else:
+					sMaxSNR = False
+				
+				steps.append(sdf.BeamStep(c1, c2, sDur, f1, f2, RADec=bool(o['StepRADec']), MaxSNR=sMaxSNR))
+			
+			### Create the complete observation
+			cObs = sdf.Stepped(cName, cTarget, cStart, cFilter, steps=steps)
+			
+		## Apply additional information for TBW captures
+		if cMode == 'TBW':
+			cObs.samples = o['tbwSamples']
+			cObs.bits = o['tbwBits']
+		
+		## Add the observation to the session and update its ID number
+		project.sessions[0].observations.append( cObs )
+		project.sessions[0].observations[-1].id = o['obsID']
+	
+	return project
