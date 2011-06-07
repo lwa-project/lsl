@@ -6,6 +6,7 @@
   * Worked on adding in support for binary packed SDM files via a new lsl.common.sdm module
   * Worked on adding in support for the various MCS meta-data tarball file formats
   * Moved the SDF module out of SessionSchedules and into lsl.common
+  * Added functions to generate the TBN and DRX filter magnitude response
 
 0.4.2
   * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file

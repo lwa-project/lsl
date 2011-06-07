@@ -426,5 +426,14 @@ def getSessionDefinition(tarname):
 		## Add the observation to the session and update its ID number
 		project.sessions[0].observations.append( cObs )
 		project.sessions[0].observations[-1].id = o['obsID']
+		
+	# Set the opcode, outcome, and message for each observation using the contents of the station
+	# meta-data file
+	for i in xrange(len(project.sessions[0].observations)):
+		obsID = project.sessions[0].observations[i].id
+		project.sessions[0].observations[i].opcode  = sem[obsID]['tag']
+		project.sessions[0].observations[i].outcome = sem[obsID]['outcome']
+		project.sessions[0].observations[i].message = sem[obsID]['msg']
 	
+	# Return the filled-in SDF instance
 	return project
