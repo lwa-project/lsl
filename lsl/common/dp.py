@@ -78,7 +78,7 @@ def tbnFilter(sampleRate=1e5):
 	# Mirror and filter magnitude
 	h = numpy.concatenate([-h[::-1], h[1:]])
 	h *= fS / decimation / numpy.pi
-	w = numpy.concatenate([w[::-1], w[1:]])
+	w = numpy.concatenate([wFIR[::-1], wFIR[1:]])
 	w = numpy.abs(w)**2
 	
 	# Return the interpolating function
