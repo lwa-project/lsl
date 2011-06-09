@@ -13,6 +13,7 @@ words and functions for calculating the magnitude response of the TBN and DRX
 filters.
 """
 
+import numpy
 from scipy.signal import freqz
 from scipy.interpolate import interp1d
 
