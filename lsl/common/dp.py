@@ -127,4 +127,3 @@ def drxFilter(sampleRate=19.6e6):
 	
 	# Return the interpolating function
 	return interp1d(h, w/w.max(), kind='cubic')
-	
