@@ -10,11 +10,11 @@ import math
 import numpy
 from scipy.special import sph_harm
 
-__version__   = "0.3"
-__revision__  = "$Revision: 95 $"
+__version__   = '0.3'
+__revision__ = '$Rev$'
 __all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'robustmean', 'savitzky_golay', 'gaussian1d', 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', '__version__', '__revision__', '__all__']
-__author__    = "P.S.Ray"
-__maintainer__ = "Jayce Dowell"
+__author__    = 'P. S. Ray'
+__maintainer__ = 'Jayce Dowell'
 
 _MATHUTIL_LOG = logging.getLogger('mathutil')
 

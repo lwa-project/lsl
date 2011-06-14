@@ -15,10 +15,10 @@ import math
 from lsl import libnova
 
 
-__revision__  = "$ Revision: 86 $"
-__version__   = "dev"
-__author__    = "D.L.Wood"
-__maintainer__ = "Jayce Dowell"
+__version__   = '0.1'
+__revision__ = '$Rev$'
+__author__    = 'D. L. Wood'
+__maintainer__ = 'Jayce Dowell'
 
 
 ######################################################################

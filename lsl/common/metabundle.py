@@ -17,8 +17,8 @@ from lsl.common.dp import fS, word2freq
 from lsl.common import stations, sdm, sdf
 from lsl.transform import Time
 
-__version__ = "0.1"
-__revision__ = "$ Revision: 5 $"
+__version__ = '0.1'
+__revision__ = '$Rev$'
 __all__ = ['readSESFile', 'readOBSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames

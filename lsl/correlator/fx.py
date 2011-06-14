@@ -32,7 +32,7 @@ import _spec
 import _core
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 29 $'
+__revision__ = '$Rev$'
 __all__ = ['pol2pol', 'noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'correlate', 'FXCorrelator', 'FXMaster', '__version__', '__revision__', '__all__']
 
 

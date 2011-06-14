@@ -7,7 +7,7 @@ Module to make an ASCII progress bar.
 import copy
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 3 $'
+__revision__ = '$Rev$'
 __all__ = ['ProgressBar', '__version__', '__revision__', '__all__']
 
 

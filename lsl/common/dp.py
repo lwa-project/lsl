@@ -19,7 +19,7 @@ from scipy.interpolate import interp1d
 
 
 __version__ = '0.4'
-__revision__ = '$ Revision: 7 $'
+__revision__ = '$Rev$'
 __all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'tbnFilter', 'drxFilter', '__version__', '__revision__', '__all__']
 
 fS = 196.0e6	# Hz

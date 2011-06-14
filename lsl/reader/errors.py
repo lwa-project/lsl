@@ -6,7 +6,7 @@ These errors are currently meant to deal with file I/O problems.
 """
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 0 $'
+__revision__ = '$Rev$'
 __all__ = ['baseReaderError', 'eofError', 'numpyError', 'syncError', 'notTBNError', 'notTBWError', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
 
 

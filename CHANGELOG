@@ -8,6 +8,9 @@
   * Moved the SDF module out of SessionSchedules and into lsl.common
   * Added functions to generate the TBN and DRX filter magnitude response
 
+0.4.3
+  * Cleaned up the various __init__.py scripts
+
 0.4.2
   * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file
   * Fixed the common.stations.geo2ecef() conversion function (Ticket #16)

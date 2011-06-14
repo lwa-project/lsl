@@ -11,8 +11,8 @@ from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
 from lsl.common.constants import *
 
-__version__ = "0.6"
-__revision__ = "$ Revision: 31 $"
+__version__ = '0.6'
+__revision__ = '$Rev$'
 __all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', 'lwa1', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 

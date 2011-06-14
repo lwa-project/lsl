@@ -13,7 +13,7 @@ Buffer for dealing with out-of-order/missing frames.
 import copy
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 15 $'
+__revision__ = '$Rev$'
 __all__ = ['FrameBuffer', 'TBNFrameBuffer', '__version__', '__revision__', '__all__']
 
 

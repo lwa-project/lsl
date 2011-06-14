@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 15 $'
+__revision__ = '$Rev$'
 __all__ = ['argument', 'unwrap', 'unmaskCompressedData', 'plotVisibilities', 'plotPhases', 'fitPhases', 'plotClosure', '__version__', '__revision__', '__all__']
 
 

@@ -19,7 +19,7 @@ from lsl.common.warns import warnDeprecated
 from lsl.correlator import fx as correlate
 
 __version__ = '0.4'
-__revision__ = '$ Revision: 16 $'
+__revision__ = '$Rev$'
 __all__ = ['SDFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all__']
 
 

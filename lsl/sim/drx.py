@@ -12,7 +12,7 @@ from lsl.reader import drx
 from errors import *
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 9 $'
+__revision__ = '$Rev$'
 __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
 

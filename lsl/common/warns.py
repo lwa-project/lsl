@@ -15,7 +15,7 @@ import warnings as sysWarnings
 import linecache
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 4 $'
+__revision__ = '$Rev$'
 __all__ = ['warnDeprecated', 'warnExperimental', '__version__', '__revision__', '__all__']
 
 

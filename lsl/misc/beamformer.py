@@ -20,7 +20,7 @@ from lsl.common import dp as dp_common
 from lsl.correlator import uvUtils
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 10 $'
+__revision__ = '$Rev$'
 __all__ = ['BeamformingError', 'calcDelay', 'intDelayAndSum', 'intBeamShape', 'fftDelayAndSum', 'fftBeamShape', '__version__', '__revision__', '__all__']
 
 class BeamformingError(Exception):

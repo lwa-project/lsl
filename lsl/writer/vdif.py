@@ -21,7 +21,7 @@ from lsl.common import dp as dp_common
 import lsl.astro as astro
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 4 $'
+__revision__ = '$Rev$'
 __all__ = ['Frame', '__version__', '__revision__', '__all__']
 
 vdifEpoch = ephem.Date('2000/01/01 00:00:00.00')

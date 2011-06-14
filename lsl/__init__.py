@@ -22,21 +22,7 @@ See the individual package descriptions for more information.
 """
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 9 $'
+__revision__ = '$Rev$'
 __author__ = "Jayce Dowell"
 
-import common
-import reader
-import writer
-import correlator
-import statistics
-import sim
-import imaging
-import misc
-
-import astro_array
-import astro
-import catalog
-import skymap
-import transform
 

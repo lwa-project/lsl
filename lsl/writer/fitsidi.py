@@ -29,7 +29,7 @@ from lsl.misc import geodesy
 from lsl.common.warns import warnExperimental
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 18 $'
+__revision__ = '$Rev$'
 __all__ = ['IDI', 'AIPS', 'StokesCodes', 'NumericStokes', '__version__', '__revision__', '__all__']
 
 

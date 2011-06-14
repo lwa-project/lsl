@@ -14,10 +14,10 @@ import pyfits
 
 from lsl import astro_array
 
-__revision__  = "$ Revision: 92 $"
-__version__   = "0.1"
-__author__    = "J.York"
-__maintainer__ = "Jayce Dowell"
+__version__   = '0.1'
+__revision__ = '$Rev$'
+__author__    = 'J. York'
+__maintainer__ = 'Jayce Dowell'
 
 
 ### This code is the base class for the sky map. It takes as input a skymap file name and frequency to

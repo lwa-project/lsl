@@ -11,7 +11,7 @@ import struct
 from lsl.common.mcs import *
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 4 $'
+__revision__ = '$Rev$'
 __all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parseSDM', '__version__', '__revision__', '__all__']
 
 

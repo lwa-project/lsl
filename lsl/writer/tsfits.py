@@ -54,7 +54,7 @@ from lsl.reader.tbn import filterCodes as tbnCodes
 from lsl.common.warns import warnDeprecated
 
 __version__ = '0.5'
-__revision__ = '$ Revision: 18 $'
+__revision__ = '$Rev$'
 __all__ = ['UTC', 'TSFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all__']
 
 

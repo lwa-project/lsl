@@ -67,7 +67,7 @@ from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 13 $'
+__revision__ = '$Rev$'
 __all__ = ['srcs', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 

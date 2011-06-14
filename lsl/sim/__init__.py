@@ -11,14 +11,4 @@ In addition, there are two simulation modules to generate fake data sets::
   * vis - generate visibility data sets for use with the aipy module
 """
 
-import errors
 
-import s60
-import tbw
-import tbn
-import drx
-
-import dp
-import vis
-
-import nec_util

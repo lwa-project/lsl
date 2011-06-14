@@ -11,8 +11,8 @@ import numpy
 
 from lsl.sim.vis import scaleData
 
-__version__ = "0.1"
-__revision__ = "$ Revision: 1 $"
+__version__ = '0.1'
+__revision__ = '$Rev$'
 __all__ = ['selfCal', 'selfCal2', '__version__', '__revision__', '__all__']
 
 

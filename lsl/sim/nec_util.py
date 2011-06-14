@@ -18,11 +18,11 @@ import re
 import logging
 
 
-__version__   = "0.1"
-__revision__  = "$Revision: 92 $"
+__version__   = '0.1'
+__revision__ = '$Rev$'
 __all__ = ['CloseTo', 'open_and_get_nec_freq', 'change_nec_freq', 'calcIME', 'NECImpedance', 'NECPattern', 'whichNEC4', '__version__', '__revision__', '__all__']
-__author__    = "P.S.Ray"
-__maintainer__ = "Jayce Dowell"
+__author__    = 'P. S. Ray'
+__maintainer__ = 'Jayce Dowell'
 
 _NEC_UTIL_LOG = logging.getLogger('nec_util')
 _NEC_UTIL_LOG.setLevel(logging.INFO)

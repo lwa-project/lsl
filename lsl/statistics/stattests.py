@@ -9,7 +9,7 @@ import numpy
 from scipy.special import ndtr
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 2 $'
+__revision__ = '$Rev$'
 __all__ = ['waldwolfowitz', '__version__', '__revision__', '__all__']
 
 

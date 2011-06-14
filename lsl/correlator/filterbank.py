@@ -9,8 +9,8 @@ on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
 import numpy
 from fx import noWindow
 
-__version__ = "0.1"
-__revision__ = "$ Revision: 1 $"
+__version__ = '0.1'
+__revision__ = '$Rev$'
 __all__ = ['fft', 'fft2', 'fft4', 'fft8', 'fft16', 'fft32', '__version__', '__revision__', '__all__']
 
 def __filterCoeff(N, P):

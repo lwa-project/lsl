@@ -20,7 +20,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.constants import *
 
 __version__ = '0.6'
-__revision__ = '$ Revision: 22 $'
+__revision__ = '$Rev$'
 __all__ = ['getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
 
 

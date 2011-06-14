@@ -23,7 +23,7 @@ import math
 import numpy
 
 __version__ = '0.3'
-__revision__ = '$ Revision: 8 $'
+__revision__ = '$Rev$'
 __all__ = ['biweightMean', 'mean', 'std', 'checkfit', 'linefit', 'polyfit', '__version__', '__revision__', '__all__']
 
 __iterMax = 25

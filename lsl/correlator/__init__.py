@@ -8,8 +8,5 @@ the results.  Modules included are:
               and FX-style correlator, and
  * visUtils - visualize visibility data in various ways with matplotlib."""
 
-import uvUtils
-import visUtils
-import filterbank
-import fx
+
 

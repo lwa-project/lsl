@@ -17,7 +17,7 @@ import os
 import imp
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 6 $'
+__revision__ = '$Rev$'
 __all__ = ['module', 'data', 'moduleBuild', 'dataBuild', '__version__', '__revision__', '__all__']
 
 modInfo = imp.find_module('lsl')

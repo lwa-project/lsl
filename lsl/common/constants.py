@@ -17,7 +17,7 @@ tpi
 import math
 
 __version__ = '0.1'
-__revision__ ='$ Revision: 3 $'
+__revision__ = '$Rev$'
 __all__ = ['c', 'deg2rad', 'tpi', '__version__', '__revision__', '__all__']
 
 c = 2.9979245800e8			# speed of light in m/s

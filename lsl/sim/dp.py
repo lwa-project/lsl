@@ -19,7 +19,7 @@ from lsl.reader.tbn import filterCodes as TBNFilters
 from lsl.reader.drx import filterCodes as DRXFilters
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 9 $'
+__revision__ = '$Rev$'
 __all__ = ['basicSignal', 'pointSource', '__version__', '__revision__', '__all__']
 
 

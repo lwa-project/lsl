@@ -24,7 +24,7 @@ from lsl.reader import errors as errors
 from lsl.writer import vdif
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 2 $'
+__revision__ = '$Rev$'
 __all__ = ['ConfigError', 'DiFXConfig', '__version__', '__revision__', '__all__']
 
 class ConfigError(Exception):

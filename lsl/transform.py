@@ -13,7 +13,11 @@ import abc
 
 from lsl import astro
    
-    
+__version__ = '0.1'
+__revision__ = '$Rev$'
+__author__ = "Unknown"
+__maintainer__ = "Jayce Dowell"
+
 
 class Time(object):
   """

@@ -15,7 +15,7 @@ import lsl.astro as astro
 import lsl.common.paths as paths
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 3 $'
+__revision__ = '$Rev$'
 __all__ = ['EOP', 'getEOP', 'getEOPRange', '__version__', '__revision__', '__all__']
 
 # Last valid MJD in the historic EOP data included with LSL

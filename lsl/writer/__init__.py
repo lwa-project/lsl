@@ -8,9 +8,5 @@ Formats include:
  * fitsidi - FITS IDI writer for storeing correlator output, and
  * vdif    - write data to the VLBI Data Interchange Format."""
 
-import tsfits
-import sdfits
-import fitsidi
 
-import vdif
 

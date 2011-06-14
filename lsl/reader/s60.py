@@ -24,7 +24,7 @@ from lsl.common.paths import data as dataPath
 from errors import numpyError
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 2 $'
+__revision__ = '$Rev$'
 __all__ = ['readFrame', 'readChunk', 'getBandpassModel', 'FrameSize', 'SampleRate', '__version__', '__revision__', '__all__']
 
 # Packet length seems to describe how many bytes of data are in 

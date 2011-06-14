@@ -12,7 +12,7 @@ from lsl.reader import s60
 from errors import *
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 2 $'
+__revision__ = '$Rev$'
 __all__ = ['frame2frame', 'chunk2frame', '__version__', '__revision__', '__all__']
 
 

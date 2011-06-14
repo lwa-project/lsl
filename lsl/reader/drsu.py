@@ -18,7 +18,7 @@ except ImportError:
 from lsl.reader import errors
 
 __version__ = '0.2'
-__revision__ = '$ Revision: 5 $'
+__revision__ = '$Rev$'
 __all__ = ['File', 'listFiles', 'getFileByName', 'shepherdedReadFrame', '__version__', '__revision__', '__all__']
 
 class File(object):

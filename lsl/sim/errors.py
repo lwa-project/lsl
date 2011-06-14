@@ -9,7 +9,7 @@ invalidate a frame or set of frames.
 import numpy
 
 __version__ = '0.1'
-__revision__ = '$ Revision: 1 $'
+__revision__ = '$Rev$'
 __all__ = ['baseSimError', 'invalidStand', 'invalidPol', 'invalidBeam', 'invalidTune', 'invalidDataSize', 'invalidDataType', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
 
 
