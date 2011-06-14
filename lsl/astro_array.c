@@ -135,7 +135,18 @@ PyDoc_STRVAR(astro_array_doc,
 PyMODINIT_FUNC
 initastro_array(void)
 {
-  (void) Py_InitModule3("astro_array", AstroArrayMethods, astro_array_doc);
-  import_array();
+  PyObject *m;
 
+  // Module definitions and functions
+  m = Py_InitModule3("astro_array", AstroArrayMethods, astro_array_doc);
+  import_array();
+  
+  // Version and revision information
+  PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
+  PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+  
+  // Author and maintainer information
+  PyModule_AddObject(m, "__author__", PyString_FromString("J. York"));
+  PyModule_AddObject(m, "__maintainer__", PyString_FromString("Jayce Dowell"));
+  
 }

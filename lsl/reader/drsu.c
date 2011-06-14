@@ -529,4 +529,9 @@ PyMODINIT_FUNC init_drsu(void) {
 
 	// Module definitions and functions
 	m = Py_InitModule3("_drsu", DRSUMethods, DRSUMethods_doc);
+	
+	// Version and revision information
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
+	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+	
 }

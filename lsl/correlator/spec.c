@@ -1279,6 +1279,14 @@ PyDoc_STRVAR(spec_doc, \
 */
 
 PyMODINIT_FUNC init_spec(void) {
-	(void) Py_InitModule3("_spec", SpecMethods, spec_doc);
+	PyObject *m;
+
+	// Module definitions and functions
+	m = Py_InitModule3("_spec", SpecMethods, spec_doc);
 	import_array();
+	
+	// Version and revision information
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
+	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+	
 }

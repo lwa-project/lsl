@@ -1979,7 +1979,15 @@ See the inidividual functions for more details.\n\
 */
 
 PyMODINIT_FUNC init_core(void) {
-	(void) Py_InitModule3("_core", CorrelatorMethods, correlator_doc);
+	PyObject *m;
+
+	// Module definitions and functions
+	m = Py_InitModule3("_core", CorrelatorMethods, correlator_doc);
 	import_array();
+	
+	// Version and revision information
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
+	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+	
 }
 
