@@ -109,7 +109,7 @@ class ProgressBar(object):
 		
 		newBar = copy.deepcopy(self)
 		if newBar.amount >= amount:
-			newBar += amount
+			newBar -= amount
 		return newBar
 
 	def __isub__(self, amount):

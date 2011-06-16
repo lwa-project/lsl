@@ -10,6 +10,7 @@ import numpy
 import ephem
 import getopt
 
+import lsl.common.metabundle as mcsMB
 from lsl.common import stations
 from lsl.reader import tbw
 from lsl.reader import errors

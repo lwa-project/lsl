@@ -10,6 +10,7 @@ import numpy
 import ephem
 import getopt
 
+import lsl.common.metabundle as mcsMB
 from lsl.reader import tbn
 from lsl.reader import errors
 from lsl.reader.buffer import TBNFrameBuffer
@@ -159,7 +160,7 @@ def main(args):
 	## SSMIF supplied with LSL.  
 	station = mcsMB.getStation(metaDataFile, ApplySDM=True)
 	if station is None:
-		print "WARNING:  not SSMIF file found in '%s', using default values" % metaDataFile
+		print "WARNING:  no SSMIF file found in '%s', using default values" % metaDataFile
 		station = stations.lwa1
 	antennas = station.getAntennas()
 
