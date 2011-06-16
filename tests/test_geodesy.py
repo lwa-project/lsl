@@ -43,6 +43,15 @@ class geodesy_tests(unittest.TestCase):
 		self.assertAlmostEqual(eop.x, 0.120728, ACCURACY)
 		self.assertAlmostEqual(eop.y, 0.137027, ACCURACY)
 		self.assertAlmostEqual(eop.utDiff,  0.8084209, ACCURACY)
+		
+		# Read in the data for January 2, 1993
+		eops = geodesy.getEOP(48989.0)
+		eop = eops[0]
+		
+		# Check
+		self.assertAlmostEqual(eop.x, 0.208313, ACCURACY)
+		self.assertAlmostEqual(eop.y, 0.356619, ACCURACY)
+		self.assertAlmostEqual(eop.utDiff,  0.0594743, ACCURACY)
 
 		# Read in three values and check the output
 		mjdList = [41684.0, 41685.0, 41686.0]

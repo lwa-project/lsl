@@ -10,6 +10,7 @@
 
 0.4.3
   * Cleaned up the various __init__.py scripts
+  * Fixed a few typos in lsl.correlator.uvUtils
 
 0.4.2
   * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file

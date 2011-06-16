@@ -10,6 +10,7 @@ import test_skymap
 import test_mathutil
 import test_nec_util
 import test_catalog
+import test_dp
 import test_stations
 import test_robust
 import test_stattests
@@ -31,7 +32,7 @@ import test_beamformer
 import test_progress
 
 
-__revision__  = "$ Revision: 101 $"
+__revision__  = "$Rev$"
 __version__   = "0.2"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -51,6 +52,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_mathutil.mathutil_test_suite())
 		self.addTest(test_nec_util.nec_util_test_suite())
 		self.addTest(test_catalog.catalog_test_suite())
+		self.addTest(test_dp.dp_test_suite())
 		self.addTest(test_stations.stations_test_suite())
 		self.addTest(test_robust.robust_test_suite())
 		self.addTest(test_stattests.stattests_test_suite())

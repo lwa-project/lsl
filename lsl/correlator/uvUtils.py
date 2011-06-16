@@ -79,14 +79,11 @@ def baseline2antenna(baseline, antennas, antennas2=None, BaselineList=None, Incl
 
 	# Build up the list of baselines using the options provided
 	if BaselineList is None:
-		BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indices)
+		BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indicies)
 	
 	# Select the correct one and return based on the value of Indicies
 	i,j = BaselineList[baseline]
-	if Indicies:
-		return i,j
-	else:
-		return antennas[i], antennas2[j]
+	return i,j
 
 
 def antenna2baseline(ant1, ant2, antennas, antennas2=None, BaselineList=None, IncludeAuto=False, Indicies=False):
@@ -103,12 +100,7 @@ def antenna2baseline(ant1, ant2, antennas, antennas2=None, BaselineList=None, In
 
 	# Build up the list of baselines using the options provided
 	if BaselineList is None:
-		BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indices)
-
-	# If we don't want indicies, convert stand numbers to indicies
-	if not Indicies:
-		ant1 = (numpy.where( antennas  == ant1 ))[0][0]
-		ant2 = (numpy.where( antennas2 == ant2 ))[0][0]
+		BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indicies)
 	
 	# Loop over the baselines until we find one that matches.  If we don't find 
 	# one, return -1
@@ -167,7 +159,7 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, IncludeAuto=False):
 	for i,j in baselines:
 		# Go from a east, north, up coordinate system to a celestial equation, 
 		# east, north celestial pole system
-		xyzPrime = antennas[i].stand - antennas[j].stand
+		xyzPrime = antennas[j].stand - antennas[i].stand
 		xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
 		
 		# Go from CE, east, NCP to u, v, w
