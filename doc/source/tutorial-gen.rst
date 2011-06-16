@@ -3,8 +3,8 @@ General - How do I...
 .. highlight:: python
    :linenothreshold: 2
 
-Get a List of Stands for a Particular Date
-------------------------------------------
+Get a List of Stands
+--------------------
 To obtain an ordered numpy array of stands connected to the DP system at a particular station::
 
 	from lsl.common import stations
@@ -29,6 +29,36 @@ than the simple stands list.  To get this list::
 
 It should be noted that this function returned the antennas in order of DP digitizer number so 
 that it is easier to convert digitizer numbers to something useful.
+
+Working with MCS Meta-Data Tarballs
+-----------------------------------
+LSL provides several interfaces for working with the contents of a MCS meta-data tarball without having
+to manually extract all of the files and identify the necessary files.  For example, the SSMIF file
+contained in the tarball can be converted to a :class:`lsl.common.stations.LWAStation` instance using::
+
+	from lsl.common import metabundle
+	lwa1 = metabundle.getStation('obs_metadata.tar.gz', ApplySDM=True)
+
+:func:`lsl.common.metabundle.getStation` hides all of the details of extracting the SSMIF file from the
+tarball and converting it to a LWAStation instance.  The `ApplySDM` flag indicates the the station 
+dynamic MIB file should be used to update the various antenna status values for the station based on their
+condition as defined by MCS.
+
+The :mod:`lsl.common.metabundle` module also provides access to the actual settings (tuning, filter code, 
+etc.) used for the individual observations.  The :func:`lsl.common.metabundle.getSessionDefinition` function 
+creates a filled :class:`lsl.common.sdf.Project` instance containing all of the session-wide and observation-
+specific values used by MCS.  This function also updates the individual :class:`lsl.common.sdf.Observation` 
+instances to include attributes storing the op. code name (for matching is data file names), the outcome 
+status, and any MCS message relating to that observation::
+
+	from lsl.common import metabundle
+	project = metabundle.getSessionDefinition('obs_metadata.tar.gz')
+	nObs = len(project.sessions[0].observations)
+	OpCode0 = project.sessions[0].observations[0].opcode
+	Outcome0 = project.sessions[0].observations[0].outcome
+
+The above code reads all of the session and observation related files inside the meta-data tarball and creates
+a SDF Project instance.  The individual observations are stored in the `project.sessions[0].observations` list.
 
 Get the Coordinates of a Particular Stand
 -----------------------------------------

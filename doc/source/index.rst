@@ -42,6 +42,7 @@ LWA-Specific Utilites
    :maxdepth: 2
 
    station
+   sdf
    readers
    writers
 

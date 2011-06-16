@@ -167,6 +167,8 @@ tbwSpectra.py
 
   :Options: -h, --help                  Display this help information
 
+            -m, --metadata              Name of SSMIF file to use for mappings
+
             -t, --bartlett              Apply a Bartlett window to the data
 
             -b, --blackman              Apply a Blackman window to the data
@@ -196,6 +198,8 @@ tbnSpectra.py
   :Usage: tbnSpectra.py [OPTIONS] file
 
   :Options: -h, --help                  Display this help information
+
+            -m, --metadata              Name of SSMIF file to use for mappings
 
             -t, --bartlett              Apply a Bartlett window to the data
 
@@ -293,3 +297,154 @@ possm.py
   :Usage: possm.py file
 
   :Options: None
+
+
+Post-IOC Compatible Scripts
+============================
+The scripts listed below are compatible with post-IOC observing conditions and use the meta-data 
+tarballs provided with each observation to set all relevant parameters (frequency, stand mappings, 
+etc.)  These scripts can be found in the scripts/IOC directory included with LSL 0.5.
+
+.. seealso::
+	`MCS0030 <http://www.ece.vt.edu/swe/lwavt/doc/MCS0030v5_Observing.pdf>`_ for a description 
+	of the post-IOC observing procedure and the contents of the meta-data tarball.
+
+plotStands.py
+  :Description: Plot the x, y, and z locations of stands at LWA-1.  Also, mark and label particular stands, if requested.
+
+  :Usage: plotStands.py [OPTIONS] metaData [stand1 [stand2 [...]]]
+
+  :Options: -h, --help             Display this help information
+            -l, --label            Label the stands with their ID numbers (default = No)
+            -v, --verbose          Run plotStands in vebose mode
+
+plotUVCoverage.py
+  :Description: Randomly select 20 antennae from LWA-1 and plot the uv-plane coverage for
+                a zenith snapshot and the expected beam.  Alternatively, select some 
+                FRACTION of the stands with installed FEEs to use or use the specified
+                list of stands.
+
+  :Usage: plotUVCoverage.py [OPTIONS] metaData
+
+  :Options: -h, --help             Display this help information
+
+            -f, --frequency        Frequency in MHz to compute the uv coverage (default 50 MHz)
+
+
+readTBN_buffered.py
+  :Description: Example script for reading in TBW data and writing it to a TSFITS file.
+                This version differs from the regular readTBN script in that it uses a frame
+                buffer to reorder out-of-order packets and dropped frames.
+
+  :Usage: readTBN_buffered.py metaData data
+
+  :Options: None
+
+tbwSpectra.py
+  :Description: Given a TBW file, plot the time averaged spectra for each digitizer input.
+
+  :Usage: tbwSpectra.py [OPTIONS] metaData data
+
+  :Options: -h, --help                  Display this help information
+
+            -t, --bartlett              Apply a Bartlett window to the data
+
+            -b, --blackman              Apply a Blackman window to the data
+
+            -n, --hanning               Apply a Hanning window to the data
+
+            -q, --quiet                 Run tbwSpectra in silent mode
+
+            -l, --fft-length            Set FFT length (default = 4096)
+
+            -g, --gain-correct          Correct signals for the cable losses
+
+            -s, --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
+
+            -d, --disable-chunks        Display plotting chunks in addition to the global average
+
+            -o, --output                Output file name for spectra imag
+
+  .. warning::
+	tbwSpectra.py currently assumed that the system it is running on has enough memory to read in
+	a full TBW capture.  Due to data representation and processing overheads this amounts to about
+	16 GB.
+
+tbnSpectra.py
+  :Description: Given a TBN file, plot the time averaged spectra for each digitizer input.
+
+  :Usage: tbnSpectra.py [OPTIONS] metaData data
+
+  :Options: -h, --help                  Display this help information
+
+            -t, --bartlett              Apply a Bartlett window to the data
+
+            -b, --blackman              Apply a Blackman window to the data
+
+            -n, --hanning               Apply a Hanning window to the data
+
+            -s, --skip                  Skip the specified number of seconds at the beginning of the file (default = 0)
+
+            -a, --average               Number of seconds of data to average for spectra (default = 10)
+
+            -q, --quiet                 Run tbwSpectra in silent mode
+
+            -l, --fft-length            Set FFT length (default = 4096)
+
+            -d, --disable-chunks        Display plotting chunks in addition to the global average
+
+            -o, --output                Output file name for spectra image
+
+drxSpectra.py
+  :Description: Given a DRX file, plot the time averaged spectra for each beam output.
+
+  :Usage: drxSpectra.py [OPTIONS] metaData data
+
+  :Options: -h, --help                  Display this help information
+
+            -t, --bartlett              Apply a Bartlett window to the data
+
+            -b, --blackman              Apply a Blackman window to the data
+
+            -n, --hanning               Apply a Hanning window to the data
+
+            -s, --skip                  Skip the specified number of seconds at the beginning of the file (default = 0)
+
+            -a, --average               Number of seconds of data to average for spectra (default = 10)
+
+            -q, --quiet                 Run tbwSpectra in silent mode
+
+            -l, --fft-length            Set FFT length (default = 4096)
+
+            -d, --disable-chunks        Display plotting chunks in addition to the global average
+
+            -o, --output                Output file name for spectra image
+
+correlateTBW.py
+  :Description: Cross-correlate data in a TBW file
+
+  :Usage: correlateTBW.py [OPTIONS] metaData data
+
+  :Options: -h, --help             Display this help information
+
+            -f, --fft-length       Set FFT length (default = 512)
+
+            -s, --samples          Number of average visibilities to generate (default = 10)
+
+            -q, --quiet            Run correlateTBW in silent mode
+
+correlateTBN.py
+  :Description: Example script that reads in TBN data and runs a cross-correlation on it.
+                The results are saved in the Miriad UV format.
+
+  :Usage: correlateTBN.py [OPTIONS] metaData data
+  
+  :Options: -h, --help             Display this help information
+
+            -f, --fft-length       Set FFT length (default = 512)
+
+            -t, --avg-time         Window to average visibilities in time (seconds; default = 6 s)
+
+            -s, --samples          Number of average visibilities to generate (default = 10)
+
+            -q, --quiet            Run correlateTBN in silent mode
