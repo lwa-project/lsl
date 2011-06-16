@@ -4,12 +4,14 @@
 """Given a DRX file, plot the time averaged spectra for each beam output."""
 
 import os
+import re
 import sys
 import math
 import numpy
 import ephem
 import getopt
 
+import lsl.common.metabundle as mcsMB
 import lsl.reader.drx as drx
 import lsl.reader.errors as errors
 import lsl.correlator.fx as fxc
@@ -18,11 +20,14 @@ from lsl.astro import unix_to_utcjd, DJD_OFFSET
 import matplotlib.pyplot as plt
 
 
+filenameRE = re.compile(r'.*(?P<mjd>\d{6})_(?P<opcode>\d{9})_(?P<dr>\d)_(?P<mode>[A-Z]{3}).dat')
+
+
 def usage(exitCode=None):
 	print """drxSpectra.py - Read in DRX files and create a collection of 
 time-averaged spectra.
 
-Usage: drxSpectra.py [OPTIONS] file
+Usage: drxSpectra.py [OPTIONS] metaData data
 
 Options:
 -h, --help                  Display this help information
@@ -132,8 +137,27 @@ def main(args):
 	# Length of the FFT
 	LFFT = config['LFFT']
 
-	fh = open(config['args'][0], "rb")
-	nFramesFile = os.path.getsize(config['args'][0]) / drx.FrameSize
+	metaDataFile = config['args'][0]
+	dataFile = config['args'][1]
+
+	# First, deal with the metadata
+	## Read in the meta-data bundle and split up the data filename into MJD, op 
+	## code, etc.
+	project = mcsMB.getSessionDefinition(metaDataFile)
+	mtch = filenameRE.match('filename')
+	
+	## Loop over the observation defined in the meta-data bundle and set cObs to 
+	## the observation with the right MJD and op code. 
+	cObs = None
+	for o in project.sessions[0].observations:
+		if int(mtch.group('mjd')) == o.mjd and int(mtch.group('opcode')) == o.opcode:
+			cObs = o
+			break
+	if cObs is None:
+		print "WARNING:  observation entry for file '%s' not found in '%s'" % (dataFile, metaDataFile)
+
+	fh = open(dataFile, "rb")
+	nFramesFile = os.path.getsize(dataFile) / drx.FrameSize
 	junkFrame = drx.readFrame(fh)
 	
 	fh.seek(0)
@@ -167,10 +191,12 @@ def main(args):
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
 
 	# File summary
-	print "Filename: %s" % config['args'][0]
+	print "Filename: %s" % dataFile
 	print "Date of First Frame: %s" % str(beginDate)
 	print "Beams: %i" % beams
 	print "Tune/Pols: %i %i %i %i" % tunepols
+	if cObs is not None:
+		print "Tunings:  1 @ %.4f MHz, 2 @ %.4f MHz" % (cObs.frequency1/1e6, cObs.frequency2/1e6)
 	print "Sample Rate: %i Hz" % srate
 	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate)
 	print "---"
@@ -257,17 +283,33 @@ def main(args):
 	# Now that we have read through all of the chunks, perform the final averaging by
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
+	
+	# Apply what we know from the meta-data bundle to the frequencies
+	if cObs is not None:
+		freq1 = freq + cObs.frequency1
+		freq2 = freq + cObs.frequency2
+	else:
+		freq1 = freq
+		freq2 = freq
 
 	# The plots:  This is setup for the current configuration of 20 beampols
 	fig = plt.figure()
 	figsX = int(round(math.sqrt(beampols)))
 	figsY = beampols / figsX
 	# Put the frequencies in the best units possible
-	freq, units = bestFreqUnits(freq)
+	freq1, units1 = bestFreqUnits(freq1)
+	freq2, units2 = bestFreqUnits(freq2)
 
 	sortedMapper = sorted(standMapper)
 	for k, aStand in enumerate(sortedMapper):
 		i = standMapper.index(aStand)
+		
+		if standMapper[i]%4/2+1 == 1:
+			freq = freq1
+			units = units1
+		else:
+			freq = freq2
+			units = units2
 
 		ax = fig.add_subplot(figsX,figsY,k+1)
 		currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
@@ -295,7 +337,8 @@ def main(args):
 		
 		print "For beam %i, tune. %i, pol. %i maximum in PSD at %.3f %s" % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2, freq[numpy.where( spec[i,:] == spec[i,:].max() )][0], units)
 
-	print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
+	print "RBW 1: %.4f %s" % ((freq1[1]-freq1[0]), units1)
+	print "RBW 2: %.4f %s" % ((freq2[1]-freq2[0]), units2)
 	plt.subplots_adjust(hspace=0.35, wspace=0.30)
 	plt.show()
 

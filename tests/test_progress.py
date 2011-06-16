@@ -35,7 +35,7 @@ class progress_tests(unittest.TestCase):
 			pbar2 = pbar2 + 1
 			pbar2 = pbar2 - 1
 			
-			self.assertEqual(pbar.amount, i+1)
+			self.assertEqual(pbar2.amount, i+1)
 
 
 class progress_test_suite(unittest.TestSuite):

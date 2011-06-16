@@ -144,13 +144,19 @@ def getSDM(tarname):
 	Given a MCS meta-data tarball, extract the information stored in the 
 	dynamic/sdm.dat file and return a :class:`lsl.common.sdm.SDM` instance
 	describing the dynamic condition of the station.
+	
+	If a sdm.dat file cannot be found in the tarball, None is returned.
 	"""
 	
 	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
 	
-	# Extract the SDM file
+	# Extract the SDM file.  If the dynamic/sdm.dat file cannot be found, None
+	# is returned via the try...except block.
 	tf = tarfile.open(tarname, mode='r:gz')
-	ti = fh.getmember('dynamic/sdm.dat')
+	try:
+		ti = tf.getmember('dynamic/sdm.dat')
+	except KeyError:
+		return None
 	tf.extractall(path=tempDir, members=[ti,])
 	
 	# Parse the SDM file and build the SDM instance
@@ -168,13 +174,19 @@ def getStation(tarname, ApplySDM=True):
 	file and return a :class:`lsl.common.stations.LWAStation` object.  Optionaly, 
 	update the :class:`lsl.common.stations.Antenna` instances associated whith the
 	LWAStation object using the included SDM file.
+	
+	If a ssmif.dat file cannot be found in the tarball, None is returned.  
 	"""
 	
 	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
 	
-	# Extract the SSMIF and SDM files
+	# Extract the SSMIF and SDM files.  If the ssmif.dat file cannot be found, None
+	# is returned via the try...except block
 	tf = tarfile.open(tarname, mode='r:gz')
-	ti = fh.getmember('ssmif.dat')
+	try:
+		ti = tf.getmember('ssmif.dat')
+	except KeyError:
+		return None
 	tf.extractall(path=tempDir, members=[ti,])
 	
 	# Read in the SSMIF
@@ -182,10 +194,7 @@ def getStation(tarname, ApplySDM=True):
 	
 	# Get the SDM (if we need to)
 	if ApplySDM:
-		try:
-			dynamic = getSDM(tarname)
-		except:
-			dynamic = None
+		dynamic = getSDM(tarname)
 	else:
 		dynamic = None
 	
@@ -214,7 +223,7 @@ def getSessionMetaData(tarname):
 	
 	# Extract the session meta-data file
 	tf = tarfile.open(tarname, mode='r:gz')
-	ti = fh.getmember('%s_metadata.txt' % basename)
+	ti = tf.getmember('%s_metadata.txt' % basename)
 	tf.extractall(path=tempDir, members=[ti,])
 	
 	# Read in the SMF
@@ -259,7 +268,7 @@ def getSessionSpec(tarname):
 	
 	# Extract the session specification file
 	tf = tarfile.open(tarname, mode='r:gz')
-	ti = fh.getmember('%s.ses' % basename)
+	ti = tf.getmember('%s.ses' % basename)
 	tf.extractall(path=tempDir, members=[ti,])
 	
 	# Read in the SES
@@ -318,6 +327,11 @@ def getSessionDefinition(tarname):
 	Given a MCS meta-data tarball, extract the session specification file, the 
 	session meta-data file, and all observation specification files to build up
 	a SDF-representation of the session.
+	
+	.. note::
+		This functionn returned a full :class:`lsl.common.sdf.project` instance 
+		with the session in question stored under `project.sessions[0]` and the 
+		observations under `project.sessions[0].observations`.
 	"""
 	
 	ses = getSessionSpec(tarname)
@@ -422,6 +436,9 @@ def getSessionDefinition(tarname):
 		if cMode == 'TBW':
 			cObs.samples = o['tbwSamples']
 			cObs.bits = o['tbwBits']
+		
+		## Run the update on the observation to make sure everything gets filled in
+		cObs.update()
 		
 		## Add the observation to the session and update its ID number
 		project.sessions[0].observations.append( cObs )

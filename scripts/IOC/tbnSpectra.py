@@ -24,11 +24,10 @@ def usage(exitCode=None):
 	print """tbnSpectra.py - Read in TBN files and create a collection of 
 time-averaged spectra.
 
-Usage: tbnSpectra.py [OPTIONS] file
+Usage: tbnSpectra.py [OPTIONS] metaData data
 
 Options:
 -h, --help                  Display this help information
--m, --metadata              Name of SSMIF file to use for mappings
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
@@ -52,7 +51,6 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
-	config['SSMIF'] = ''
 	config['offset'] = 0.0
 	config['average'] = 10.0
 	config['LFFT'] = 4096
@@ -66,7 +64,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hm:qtbnl:go:s:a:d", ["help", "metadata=", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output=", "skip=", "average=", "disable-chunks"])
+		opts, args = getopt.getopt(args, "hqtbnl:go:s:a:d", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output=", "skip=", "average=", "disable-chunks"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -76,8 +74,6 @@ def parseOptions(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
-		elif opt in ('-m', '--metadata'):
-			config['SSMIF'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
 		elif opt in ('-t', '--bartlett'):
@@ -140,18 +136,38 @@ def main(args):
 	# Parse command line options
 	config = parseOptions(args)
 	
-	# Set the station
-	if config['SSMIF'] != '':
-		station = stations.parseSSMIF(config['SSMIF'])
-	else:
+	metaDataFile = config['args'][0]
+	dataFile = config['args'][1]
+
+	# First, deal with the metadata
+	## Read in the meta-data bundle and split up the data filename into MJD, op 
+	## code, etc.
+	project = mcsMB.getSessionDefinition(metaDataFile)
+	mtch = filenameRE.match('filename')
+	
+	## Loop over the observation defined in the meta-data bundle and set cObs to 
+	## the observation with the right MJD and op code. 
+	cObs = None
+	for o in project.sessions[0].observations:
+		if int(mtch.group('mjd')) == o.mjd and int(mtch.group('opcode')) == o.opcode:
+			cObs = o
+			break
+	if cObs is None:
+		print "WARNING:  observation entry for file '%s' not found in '%s'" % (dataFile, metaDataFile)
+	
+	## Set the station from the meta-data bundle (if it is included) or from the
+	## SSMIF supplied with LSL.  
+	station = mcsMB.getStation(metaDataFile, ApplySDM=True)
+	if station is None:
+		print "WARNING:  not SSMIF file found in '%s', using default values" % metaDataFile
 		station = stations.lwa1
 	antennas = station.getAntennas()
 
 	# Length of the FFT
 	LFFT = config['LFFT']
 
-	fh = open(config['args'][0], "rb")
-	nFramesFile = os.path.getsize(config['args'][0]) / tbn.FrameSize
+	fh = open(dataFile, "rb")
+	nFramesFile = os.path.getsize(dataFile) / tbn.FrameSize
 	srate = tbn.getSampleRate(fh)
 	#antpols = tbn.getFramesPerObs(fh)
 	antpols = len(antennas)
@@ -183,10 +199,12 @@ def main(args):
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
 
 	# File summary
-	print "Filename: %s" % config['args'][0]
+	print "Filename: %s" % dataFile
 	print "Date of First Frame: %s" % str(beginDate)
 	print "Ant/Pols: %i" % antpols
 	print "Sample Rate: %i Hz" % srate
+	if cObs is not None:
+		print "Tuning: %.4f MHz" % (cObs.frequency1/1e6,)
 	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate)
 	print "---"
 	print "Offset: %.3f s (%i frames)" % (config['offset'], offset)
@@ -313,9 +331,12 @@ def main(args):
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
+	# Apply what we know from the meta-data bundle to the frequencies
+	if cObs is not None:
+		freq = freq + cObs.frequency1
+
 	# Put the frequencies in the best units possible
 	freq, units = bestFreqUnits(freq)
-
 	
 	for i in xrange(int(numpy.ceil(antpols/20))):
 		# Normal plotting

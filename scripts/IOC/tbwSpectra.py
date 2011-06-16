@@ -23,11 +23,10 @@ def usage(exitCode=None):
 	print """tbwSpectra.py - Read in TBW files and create a collection of 
 time-averaged spectra.
 
-Usage: tbwSpectra.py [OPTIONS] file
+Usage: tbwSpectra.py [OPTIONS] metaData data
 
 Options:
 -h, --help                  Display this help information
--m, --metadata              Name of SSMIF file to use for mappings
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
@@ -47,7 +46,6 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
-	config['SSMIF'] = ''
 	config['LFFT'] = 4096
 	config['maxFrames'] = 30000*260
 	config['window'] = fxc.noWindow
@@ -59,7 +57,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hm:qtbnl:gso:", ["help", "metadata=", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "stack", "output="])
+		opts, args = getopt.getopt(args, "hqtbnl:gso:", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "stack", "output="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -69,8 +67,6 @@ def parseOptions(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
-		elif opt in ('-m', '--metadata'):
-			config['SSMIF'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
 		elif opt in ('-t', '--bartlett'):
@@ -100,10 +96,30 @@ def main(args):
 	# Parse command line options
 	config = parseOptions(args)
 
-	# Set the station
-	if config['SSMIF'] != '':
-		station = stations.parseSSMIF(config['SSMIF'])
-	else:
+	metaDataFile = config['args'][0]
+	dataFile = config['args'][1]
+
+	# First, deal with the metadata
+	## Read in the meta-data bundle and split up the data filename into MJD, op 
+	## code, etc.
+	project = mcsMB.getSessionDefinition(metaDataFile)
+	mtch = filenameRE.match('filename')
+	
+	## Loop over the observation defined in the meta-data bundle and set cObs to 
+	## the observation with the right MJD and op code. 
+	cObs = None
+	for o in project.sessions[0].observations:
+		if int(mtch.group('mjd')) == o.mjd and int(mtch.group('opcode')) == o.opcode:
+			cObs = o
+			break
+	if cObs is None:
+		print "WARNING:  observation entry for file '%s' not found in '%s'" % (dataFile, metaDataFile)
+	
+	## Set the station from the meta-data bundle (if it is included) or from the
+	## SSMIF supplied with LSL.  
+	station = mcsMB.getStation(metaDataFile, ApplySDM=True)
+	if station is None:
+		print "WARNING:  not SSMIF file found in '%s', using default values" % metaDataFile
 		station = stations.lwa1
 	antennas = station.getAntennas()
 
@@ -119,8 +135,8 @@ def main(args):
 	# should stick with
 	maxFrames = config['maxFrames']
 
-	fh = open(config['args'][0], "rb")
-	nFrames = os.path.getsize(config['args'][0]) / tbw.FrameSize
+	fh = open(dataFile, "rb")
+	nFrames = os.path.getsize(dataFile) / tbw.FrameSize
 	dataBits = tbw.getDataBits(fh)
 	# The number of ant/pols in the file is hard coded because I cannot figure out 
 	# a way to get this number in a systematic fashion
@@ -138,7 +154,7 @@ def main(args):
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
 
 	# File summary
-	print "Filename: %s" % config['args'][0]
+	print "Filename: %s" % dataFile
 	print "Date of First Frame: %s" % str(beginDate)
 	print "Ant/Pols: %i" % antpols
 	print "Sample Length: %i-bit" % dataBits
