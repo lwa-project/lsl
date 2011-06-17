@@ -315,13 +315,44 @@ class Session(object):
 		observationCount = 1
 		for obs in self.observations:
 			if verbose:
-				print "[%i] Validation observation %i" % (os.getpid(), observationCount)
+				print "[%i] Validating observation %i" % (os.getpid(), observationCount)
 			
 			if not obs.validate(verbose=verbose):
 				failures += 1
 			totalData += obs.dataVolume
 			
 			observationCount += 1
+
+		# Make sure that the observations don't overlap (TBW and TBN)
+		sObs = self.observations
+		
+		for i in xrange(len(sObs)):
+			if self.observations[i].mode in ('TBW', 'TBN'):
+				maxOverlaps = 1
+			else:
+				maxOverlaps = 4
+			overlaps = []
+			nOverlaps = 0
+
+			for j in xrange(len(sObs)):
+				if verbose:
+					print "[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1)
+
+				cStart = sObs[j].mjd*24 + sObs[j].mpm/1000.0/3600.0
+				cStop = cStart + sObs[j].dur/1000.0/3600.0
+				pStart = sObs[i].mjd*24 + sObs[i].mpm/1000.0/3600.0
+				pStop = pStart + sObs[i].dur/1000.0/3600.0
+
+				if pStart >= cStart and pStart < cStop:
+					nOverlaps += 1
+					
+					if i != j:
+						overlaps.append(j)
+			
+			if nOverlaps > maxOverlaps:
+				if verbose:
+					print "[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps]))
+				failures += 1
 			
 		if totalData >= (2*_DRSUCapacityTB*1024**4):
 			if verbose:
