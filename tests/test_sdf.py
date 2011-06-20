@@ -30,9 +30,7 @@ class sdf_tests(unittest.TestCase):
 	def test_tbw_parse(self):
 		"""Test reading in a TBW SDF file."""
 		
-		fh = open(tbwFile)
-		project = sdf.parseFile(fh)
-		fh.close()
+		project = sdf.parseSDF(tbwFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -51,18 +49,13 @@ class sdf_tests(unittest.TestCase):
 	def test_tbw_write(self):
 		"""Test writing a TBW SDF file."""
 		
-		fh = open(tbwFile)
-		project = sdf.parseFile(fh)
-		fh.close()
-		
+		project = sdf.parseSDF(tbwFile)
 		out = project.render()
 	
 	def test_tbw_errors(self):
 		"""Test various TBW SDF errors."""
 		
-		fh = open(tbwFile)
-		project = sdf.parseFile(fh)
-		fh.close()
+		project = sdf.parseSDF(tbwFile)
 		
 		# Bad number of TBW bits
 		project.sessions[0].observations[0].bits = 6
@@ -82,9 +75,7 @@ class sdf_tests(unittest.TestCase):
 	def test_tbn_parse(self):
 		"""Test reading in a TBN SDF file."""
 		
-		fh = open(tbnFile)
-		project = sdf.parseFile(fh)
-		fh.close()
+		project = sdf.parseSDF(tbnFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -109,18 +100,13 @@ class sdf_tests(unittest.TestCase):
 	def test_tbn_write(self):
 		"""Test writing a TBN SDF file."""
 		
-		fh = open(tbnFile)
-		project = sdf.parseFile(fh)
-		fh.close()
-		
+		project = sdf.parseSDF(tbnFile)
 		out = project.render()
 	
 	def test_tbn_errors(self):
 		"""Test various TBN SDF errors."""
 		
-		fh = open(tbnFile)
-		project = sdf.parseFile(fh)
-		fh.close()
+		project = sdf.parseSDF(tbnFile)
 		
 		# Bad filter
 		project.sessions[0].observations[0].filter = 10
@@ -143,16 +129,14 @@ class sdf_tests(unittest.TestCase):
 	def test_drx_parse(self):
 		"""Test reading in a DRX SDF file."""
 		
-		fh = open(drxFile)
-		project = sdf.parseFile(fh)
-		fh.close()
+		project = sdf.parseSDF(drxFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
 		self.assertEqual(len(project.sessions[0].observations), 2)
 		
 		# Observational setup - 1
-		self.assertEqual(project.sessions[0].observations[0].mode, 'TBN')
+		self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_RADEC')
 		self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
 		self.assertEqual(project.sessions[0].observations[0].mpm,      0)
 		self.assertEqual(project.sessions[0].observations[0].dur,  10000)
@@ -163,7 +147,7 @@ class sdf_tests(unittest.TestCase):
 		self.assertAlmostEqual(project.sessions[0].observations[0].dec, 22.0, 6)
 		
 		# Observational setup - 2
-		self.assertEqual(project.sessions[0].observations[1].mode, 'TBN')
+		self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_RADEC')
 		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
 		self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
 		self.assertEqual(project.sessions[0].observations[1].dur,  10000)
@@ -176,18 +160,13 @@ class sdf_tests(unittest.TestCase):
 	def test_drx_write(self):
 		"""Test writing a DRX SDF file."""
 		
-		fh = open(drxFile)
-		project = sdf.parseFile(fh)
-		fh.close()
-		
+		project = sdf.parseSDF(drxFile)
 		out = project.render()
 		
 	def test_drx_errors(self):
 		"""Test various DRX SDF errors."""
 		
-		fh = open(drxFile)
-		project = sdf.parseFile(fh)
-		fh.close()
+		project = sdf.parseSDF(drxFile)
 		
 		# Bad filter
 		project.sessions[0].observations[0].filter = 10
@@ -230,4 +209,3 @@ class sdf_test_suite(unittest.TestSuite):
 
 if __name__ == '__main__':
 	unittest.main()
-	

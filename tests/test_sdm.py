@@ -20,7 +20,7 @@ __author__    = "Jayce Dowell"
 sdmFile = os.path.join(dataPath, 'tests', 'bigblade_imp.out')
 
 
-class sdf_tests(unittest.TestCase):
+class sdm_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.common.sdm
 	module."""
 

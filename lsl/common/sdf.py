@@ -59,9 +59,9 @@ from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse', '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?)$')
 _UTC = pytz.utc
@@ -1165,8 +1165,14 @@ def __parseCreateObsObject(obsTemp, beamTemps=[]):
 	return obsOut
 
 
-def parse(fh):
-	"""Given a open filehandle, read in the file and create Project object that describes it."""
+def parseSDF(filename):
+	"""
+	Given a filename, read the file's contents into the SDM instance and return
+	that instance.
+	"""
+	
+	# Open the file
+	fh = open(filename, 'r')
 	
 	# Create the keyword regular expression to deal with various indicies included 
 	# in the keywords
@@ -1447,6 +1453,9 @@ def parse(fh):
 			obs.samples = int(sessionSamples)
 			obs.dur = (obs.samples / 196000 + 1)*1100 * 3.5
 			obs.duration = str(obs.dur / 1000.0)
+
+	# Close the file
+	fh.close()
 
 	# Return the project
 	return project

@@ -75,7 +75,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_beamformer.beamformer_test_suite())
 		self.addTest(test_progress.progress_test_suite())
 		self.addTest(test_sdf.sdf_test_suite())
-		self.addTest(test_sdf.sdm_test_suite())
+		self.addTest(test_sdm.sdm_test_suite())
 
 
 def main(opts=None, args=None):

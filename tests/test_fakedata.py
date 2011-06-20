@@ -28,7 +28,7 @@ __author__    = "Jayce Dowell"
 s60File = os.path.join(dataPath, 'tests', 's60-test.dat')
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(dataPath, 'tests', 'sim-drx-test.dat')
+drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
 
 
 class fake_S60_tests(unittest.TestCase):

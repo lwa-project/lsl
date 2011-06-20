@@ -21,7 +21,7 @@ __author__    = "Jayce Dowell"
 s60File = os.path.join(dataPath, 'tests', 's60-test.dat')
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(dataPath, 'tests', 'sim-drx-test.dat')
+drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
 
 
 class reader_tests(unittest.TestCase):
@@ -276,15 +276,15 @@ class reader_tests(unittest.TestCase):
 		# First frame is really DRX and stores the IDs
 		frame1 = drx.readFrame(fh)
 		beam, tune, pol = frame1.parseID()
-		self.assertEqual(beam, 1)
-		self.assertEqual(tune, 1)
-		self.assertEqual(pol, 0)
+		self.assertEqual(beam, 2)
+		self.assertEqual(tune, 2)
+		self.assertEqual(pol,  1)
 		# Second frame
 		frame2 = drx.readFrame(fh)
 		beam, tune, pol = frame2.parseID()
-		self.assertEqual(beam, 1)
+		self.assertEqual(beam, 2)
 		self.assertEqual(tune, 1)
-		self.assertEqual(pol, 1)
+		self.assertEqual(pol,  0)
 		fh.close()
 
 	def test_drx_errors(self):
@@ -319,8 +319,8 @@ class reader_tests(unittest.TestCase):
 
 		fh = open(drxFile, 'rb')
 		b1, b2, b3, b4 = drx.getFramesPerObs(fh)
-		self.assertEqual(b1, 2)
-		self.assertEqual(b2, 0)
+		self.assertEqual(b1, 0)
+		self.assertEqual(b2, 4)
 		self.assertEqual(b3, 0)
 		self.assertEqual(b4, 0)
 		fh.close()

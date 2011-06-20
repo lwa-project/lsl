@@ -15,7 +15,7 @@ __revision__ = '$Rev$'
 __all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parseSDM', '__version__', '__revision__', '__all__']
 
 
-def __guidedBinaryRead(fh, fmt):
+def _guidedBinaryRead(fh, fmt):
 	"""
 	Function to wrap reading in packed binary data directrly from an open file
 	handle.  This function calls struct.unpack() and struct.calcsize() to figure 
@@ -49,15 +49,15 @@ class SubSystemStatus(object):
 	def __str__(self):
 		return "%s at %i: %s [%i]" % (self.name, self.time, self.info, self.summary)
 		
-	def __binaryRead(self, fh):
+	def binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		subsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
-		self.summary = __guidedBinaryRead(fh, "<i")
-		self.info = __guidedBinaryRead(fh, "<256s")
-		ts, tu = __guidedBinaryRead(fh, "<2l")
+		self.summary = _guidedBinaryRead(fh, "<i")
+		self.info = _guidedBinaryRead(fh, "<256s")
+		ts, tu = _guidedBinaryRead(fh, "<2l")
 		self.time = ts + tu/1.0e6
 
 
@@ -103,19 +103,19 @@ class SubSubSystemStatus(object):
 		else:
 			self.drStat = drStat
 	
-	def __binaryRead(self, fh):
+	def binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		subsubsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
-		self.feeStat = __binaryRead(fh, "<%ii" % ME_MAX_NFEE)
-		self.rpdStat = __binaryRead(fh, "<%ii" % ME_MAX_NRPD)
-		self.sepStat = __binaryRead(fh, "<%ii" % ME_MAX_NSEP)
-		self.arbStat = __binaryRead(fh, "<%ii" % ME_MAX_NARB)
-		self.dp1Stat = __binaryRead(fh, "<%ii" % ME_MAX_NDP1)
-		self.dp2Stat = __binaryRead(fh, "<%ii" % ME_MAX_NDP2)
-		self.drStat  = __binaryRead(fh, "<%ii" % ME_MAX_NDR)
+		self.feeStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
+		self.rpdStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
+		self.sepStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
+		self.arbStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
+		self.dp1Stat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP1)
+		self.dp2Stat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP2)
+		self.drStat  = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
 
 
 class StationSettings(object):
@@ -165,26 +165,26 @@ class StationSettings(object):
 		self.tbnGain = tbnGain
 		self.drxGain = drxGain
 		
-	def __binaryRead(self, fh):
+	def binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		station_settings_struct C structure and update the Python instance accordingly.
 		"""
 
 		for ss in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-			self.report[ss] = __guideBinaryRead(fh, "<h")
+			self.report[ss] = _guidedBinaryRead(fh, "<h")
 		for ss in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-			self.update[ss] = __guideBinaryRead(fh, "<h")
+			self.update[ss] = _guidedBinaryRead(fh, "<h")
 			
-		self.fee = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.fee = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
 
-		self.aspFlt = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
-		self.aspAT1 = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
-		self.aspAT2 = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
-		self.aspATS = __guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspFlt = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspAT1 = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspAT2 = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspATS = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
 		
-		self.tbnGain = __guidedBinaryRead(fh, "<h")
-		self.drxgain = __guidedBinaryRead(fh, "<h")
+		self.tbnGain = _guidedBinaryRead(fh, "<h")
+		self.drxgain = _guidedBinaryRead(fh, "<h")
 
 
 class SDM(object):
@@ -194,8 +194,6 @@ class SDM(object):
 	"""
 	
 	def __init__(self, station=None, shl=None, asp=None, dp=None, dr=None, status=None, antStatus=None, dpoStatus=None, settings=None):
-		self.filename = filename
-		
 		if station is None:
 			self.station = SubSystemStatus('station')
 		else:
@@ -213,7 +211,7 @@ class SDM(object):
 		else:
 			self.dp = dp
 		if dr is None:
-			self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(nDR)]
+			self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(ME_MAX_NDR)]
 		else:
 			self.dr = dr
 		
@@ -258,28 +256,28 @@ def parseSDM(filename):
 	that instance.
 	"""
 		
-	fh = open(self.filename, 'rb')
+	fh = open(filename, 'rb')
 	
 	# Create a new SDM instance
 	dynamic = SDM()
 	
 	# Sub-system status sections
-	dynamic.station.__binaryRead(fh)
-	dynamic.shl.__binaryRead(fh)
-	dynamic.asp.__binaryRead(fh)
-	dynamic.dp.__binaryRead(fh)
+	dynamic.station.binaryRead(fh)
+	dynamic.shl.binaryRead(fh)
+	dynamic.asp.binaryRead(fh)
+	dynamic.dp.binaryRead(fh)
 	for n in xrange(ME_MAX_NDR):
-			dynamic.dr[n].__binaryRead(fh)
+			dynamic.dr[n].binaryRead(fh)
 	
 	# Sub-sub-system status section
-	dynamic.status.__binaryRead(fh)
+	dynamic.status.binaryRead(fh)
 	
 	# Antenna status and data path status
-	dynamic.antStatus = __guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
-	dynamic.dpoStatus = __guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
+	dynamic.antStatus = _guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
+	dynamic.dpoStatus = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
 	
 	# Station settings section
-	dynamic.settings.__binaryRead(fh)
+	dynamic.settings.binaryRead(fh)
 	
 	fh.close()
 	
