@@ -43,4 +43,3 @@ class sdm_test_suite(unittest.TestSuite):
 
 if __name__ == '__main__':
 	unittest.main()
-	
