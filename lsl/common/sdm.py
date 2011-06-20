@@ -49,7 +49,7 @@ class SubSystemStatus(object):
 	def __str__(self):
 		return "%s at %i: %s [%i]" % (self.name, self.time, self.info, self.summary)
 		
-	def binaryRead(self, fh):
+	def _binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		subsystem_status_struct C structure and update the Python instance accordingly.
@@ -103,7 +103,7 @@ class SubSubSystemStatus(object):
 		else:
 			self.drStat = drStat
 	
-	def binaryRead(self, fh):
+	def _binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		subsubsystem_status_struct C structure and update the Python instance accordingly.
@@ -165,7 +165,7 @@ class StationSettings(object):
 		self.tbnGain = tbnGain
 		self.drxGain = drxGain
 		
-	def binaryRead(self, fh):
+	def _binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		station_settings_struct C structure and update the Python instance accordingly.
@@ -262,22 +262,22 @@ def parseSDM(filename):
 	dynamic = SDM()
 	
 	# Sub-system status sections
-	dynamic.station.binaryRead(fh)
-	dynamic.shl.binaryRead(fh)
-	dynamic.asp.binaryRead(fh)
-	dynamic.dp.binaryRead(fh)
+	dynamic.station._binaryRead(fh)
+	dynamic.shl._binaryRead(fh)
+	dynamic.asp._binaryRead(fh)
+	dynamic.dp._binaryRead(fh)
 	for n in xrange(ME_MAX_NDR):
-			dynamic.dr[n].binaryRead(fh)
+			dynamic.dr[n]._binaryRead(fh)
 	
 	# Sub-sub-system status section
-	dynamic.status.binaryRead(fh)
+	dynamic.status._binaryRead(fh)
 	
 	# Antenna status and data path status
 	dynamic.antStatus = _guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
 	dynamic.dpoStatus = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
 	
 	# Station settings section
-	dynamic.settings.binaryRead(fh)
+	dynamic.settings._binaryRead(fh)
 	
 	fh.close()
 	

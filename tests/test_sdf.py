@@ -37,14 +37,14 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(len(project.sessions[0].observations), 2)
 		
 		# Observational setup - 1
-		self.assertEqual(project.sessions[0].observations[0].mode, 'TBW')
-		self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
-		self.assertEqual(project.sessions[0].observations[0].mpm,      0)
+		self.assertEqual(project.sessions[0].observations[0].mode,  'TBW')
+		self.assertEqual(project.sessions[0].observations[0].mjd,   55616)
+		self.assertEqual(project.sessions[0].observations[0].mpm,       0)
 		
 		# Observational setup - 2
-		self.assertEqual(project.sessions[0].observations[1].mode, 'TBW')
-		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
-		self.assertEqual(project.sessions[0].observations[1].mpm,  70000)
+		self.assertEqual(project.sessions[0].observations[1].mode,  'TBW')
+		self.assertEqual(project.sessions[0].observations[1].mjd,   55616)
+		self.assertEqual(project.sessions[0].observations[1].mpm,  700000)
 	
 	def test_tbw_write(self):
 		"""Test writing a TBW SDF file."""
@@ -87,7 +87,7 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(project.sessions[0].observations[0].mpm,      0)
 		self.assertEqual(project.sessions[0].observations[0].dur,  10000)
 		self.assertEqual(project.sessions[0].observations[0].freq1, 438261968)
-		self.assertEqual(project.sessions[0].observations[0].filter, 7)
+		self.assertEqual(project.sessions[0].observations[0].filter,   7)
 		
 		# Observational setup - 2
 		self.assertEqual(project.sessions[0].observations[1].mode, 'TBN')
@@ -95,7 +95,7 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
 		self.assertEqual(project.sessions[0].observations[1].dur,  10000)
 		self.assertEqual(project.sessions[0].observations[1].freq1, 832697741)
-		self.assertEqual(project.sessions[0].observations[1].filter, 7)
+		self.assertEqual(project.sessions[0].observations[1].filter,   7)
 	
 	def test_tbn_write(self):
 		"""Test writing a TBN SDF file."""
@@ -142,7 +142,7 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(project.sessions[0].observations[0].dur,  10000)
 		self.assertEqual(project.sessions[0].observations[0].freq1,  438261968)
 		self.assertEqual(project.sessions[0].observations[0].freq2, 1928352663)
-		self.assertEqual(project.sessions[0].observations[0].filter, 7)
+		self.assertEqual(project.sessions[0].observations[0].filter,   7)
 		self.assertAlmostEqual(project.sessions[0].observations[0].ra, 5.6, 6)
 		self.assertAlmostEqual(project.sessions[0].observations[0].dec, 22.0, 6)
 		
@@ -153,7 +153,7 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(project.sessions[0].observations[1].dur,  10000)
 		self.assertEqual(project.sessions[0].observations[1].freq1,  832697741)
 		self.assertEqual(project.sessions[0].observations[1].freq2, 1621569285)
-		self.assertEqual(project.sessions[0].observations[1].filter, 7)
+		self.assertEqual(project.sessions[0].observations[1].filter,   7)
 		self.assertAlmostEqual(project.sessions[0].observations[1].ra, 5.6, 6)
 		self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.0, 6)
 		
