@@ -1,0 +1,30 @@
+PI_ID          1
+PI_NAME        Ellingson, Steven
+
+PROJECT_ID     TPSS0003
+PROJECT_TITLE  Project Title
+PROJECT_REMPI  Project REMPI
+PROJECT_REMPO  Project REMPO
+
+SESSION_ID     1
+SESSION_TITLE  tp_session_sch SDF test #3
+SESSION_REMPI  Test SDF consisting of 2 TBW observations
+SESSION_REMPO  Session REMPO
+
+OBS_ID         1
+OBS_TITLE      Observation 1 Title
+OBS_TARGET     Observation 1 Target
+OBS_REMPI      Observation 1 REMPI
+OBS_REMPO      Observation 1 REMPO
+OBS_START_MJD  55616
+OBS_START_MPM  0
+OBS_START      UTC 2011 Feb 24 00:00:00.000 
+OBS_MODE       TBW
+
+OBS_ID         2
+OBS_TITLE      Observation 2 Title
+OBS_START_MJD  55616
+OBS_START_MPM  70000
+OBS_START      UTC 2011 Feb 24 00:01:10.000 
+OBS_MODE       TBW
+
