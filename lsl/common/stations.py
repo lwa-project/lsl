@@ -3,6 +3,7 @@
 
 import os
 import re
+import copy
 import numpy
 import ephem
 import struct
@@ -1129,7 +1130,7 @@ class PrototypeStation(LWAStation):
 		pLat = base.lat * 180 / numpy.pi
 		pLng = base.long * 180 / numpy.pi
 	
-		super(PrototypeStation, self).__init__('%s prototype' % base.name, pLat, pLng, base.elev, id='PS', antennas=base.antennas)
+		super(PrototypeStation, self).__init__('%s prototype' % base.name, pLat, pLng, base.elev, id='PS', antennas=copy.deepcopy(base.antennas))
 	
 	def __standsList(self, date):
 		"""

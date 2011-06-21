@@ -225,14 +225,14 @@ def __getAntennaArray(station, stands, time, freqs):
 	return vis.buildSimArray(station, stands, freqs/1e9, jd=astro.unix_to_utcjd(time))
 
 
-def __getSourceParameters(aa, time, srcs):
+def __getSourceParameters(aa, timestamp, srcs):
 	"""
 	Given an aipy AntennaArray object, an observation time, and aipy.src 
 	object, return all of the parameters needed for a simulation.
 	"""
 	
 	# Set the time for the array
-	aa.set_unixtime(time)
+	aa.set_unixtime(timestamp)
 
 	# Compute the source parameters
 	srcs_tp = []
