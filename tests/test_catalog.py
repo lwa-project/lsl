@@ -22,10 +22,20 @@ class catalog_tests(unittest.TestCase):
 		
 		catalog.CatalogFactory.get_catalog('LWA')
 		
+	def test_PSR(self):
+		"""Test catalog.PSR_Catalog contructor."""
+		
+		catalog.CatalogFactory.get_catalog('PSR')
+		
 	def test_PKS(self):
 		"""Test catalog.PKS_Catalog constructor."""
 		
 		catalog.CatalogFactory.get_catalog('PKS')
+		
+	def test_PKS90(self):
+		"""Test catalog.PKS90_Catalog constructor."""
+		
+		catalog.CatalogFactory.get_catalog('PKS90')
 		
 	def test_C3C(self):
 		"""Test catalog.C3C_Catalog constructor."""
@@ -36,6 +46,11 @@ class catalog_tests(unittest.TestCase):
 		"""Test catalog.C4C_Catalog constructor."""
 		
 		catalog.CatalogFactory.get_catalog('4C')
+		
+	def test_1FGL(self):
+		"""Test catalog.F1FGL_Catalog constructor."""
+		
+		catalog.CatalogFactory.get_catalog('1FGL')
 	
 	def test_get_names(self):
 		"""Test catalog.CatalogFactory.get_names() method."""

@@ -1,5 +1,12 @@
 General Utilities
 =================
+astroevents.py
+  :Description: Application to display rise, transit, and set times for various astronomical sources from LWA-1 for the current date.
+
+  :Usage: astroevents.py
+
+  :Options: None
+
 astrostatus.py
   :Description: Application to calculate real-time ephemeris for a LWA site.
 

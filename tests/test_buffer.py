@@ -73,7 +73,7 @@ class buffer_tests(unittest.TestCase):
 		self.assertEqual(len(frameBuffer.buffer[119196675960320]),  9)
 	
 	
-	def test_buffer_small(self):
+	def test_tbn_small(self):
 		"""Test a small version of the TBN ring buffer."""
 		
 		fh = open(tbnFile, 'rb')
@@ -147,6 +147,85 @@ class buffer_tests(unittest.TestCase):
 				self.assertTrue(cID > pID)
 		
 		fh.close()
+	
+	def test_buffer_flush(self):
+		"""Test the TBN ring buffer's flush() function."""
+		
+		fh = open(tbnFile, 'rb')
+		nFpO = tbn.getFramesPerObs(fh)
+		nFpO = nFpO[0] + nFpO[1]
+		
+		# Create the FrameBuffer instance
+		frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1])
+		
+		# Go
+		while True:
+			try:
+				cFrame = tbn.readFrame(fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+
+			frameBuffer.append(cFrame)
+			cFrames = frameBuffer.get()
+
+			if cFrames is None:
+				continue
+			
+		fh.close()
+		
+		# Flush the buffer
+		for cFrames in frameBuffer.flush():
+			# Make sure the dump has one of the expected time tags
+			self.assertTrue(cFrames[0].data.timeTag in (119196674956800, 119196675960320))
+			
+			# Make sure it has the right number of frames
+			self.assertEqual(len(cFrames), nFpO)
+	
+	def test_buffer_reorder_flush(self):
+		"""Test the TBN ring buffer's flush() function with reordering."""
+		
+		fh = open(tbnFile, 'rb')
+		nFpO = tbn.getFramesPerObs(fh)
+		nFpO = nFpO[0] + nFpO[1]
+		
+		# Create the FrameBuffer instance
+		frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1], ReorderFrames=True)
+		
+		# Go
+		while True:
+			try:
+				cFrame = tbn.readFrame(fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+
+			frameBuffer.append(cFrame)
+			cFrames = frameBuffer.get()
+
+			if cFrames is None:
+				continue
+		
+		fh.close()
+
+		# Flush the buffer
+		for cFrames in frameBuffer.flush():
+			# Make sure the dump has one of the expected time tags
+			self.assertTrue(cFrames[0].data.timeTag in (119196674956800, 119196675960320))
+			
+			# Make sure it has the right number of frames
+			self.assertEqual(len(cFrames), nFpO)
+			
+			# Check the order
+			for i in xrange(1, len(cFrames)):
+				pS, pP = cFrames[i-1].parseID()
+				cS, cP = cFrames[i].parseID()
+				
+				pID = pS*2 + pP
+				cID = cS*2 + cP
+				self.assertTrue(cID > pID)
 
 
 class buffer_test_suite(unittest.TestSuite):

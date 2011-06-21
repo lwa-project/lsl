@@ -74,8 +74,8 @@ class fx_tests(unittest.TestCase):
 
 	### SpecMasterP Function ###
 	
-	def test_window(self):
-		"""Test that window functions can be passed to SpecMaster."""
+	def test_window_p(self):
+		"""Test that window functions can be passed to SpecMasterP."""
 		
 		fakeData = numpy.random.rand(self.nAnt,1024) + 3.0
 		fakeData = fakeData.astype(numpy.int16)
@@ -85,8 +85,8 @@ class fx_tests(unittest.TestCase):
 		fakeData = fakeData.astype(numpy.csingle)
 		freq, spectra = fx.SpecMasterP(fakeData, LFFT=128, window=numpy.hamming)
 		
-	def test_window_custom(self):
-		"""Test that custom window functions can be passed to SpecMaster."""
+	def test_window_custom_p(self):
+		"""Test that custom window functions can be passed to SpecMasterP."""
 
 		def wndw(L):
 			return numpy.kaiser(L, 5)
@@ -102,15 +102,15 @@ class fx_tests(unittest.TestCase):
 		fakeData = fakeData.astype(numpy.csingle)
 		freq, spectra = fx.SpecMasterP(fakeData, LFFT=128, window=wndw2)
 
-	def test_spectra_real(self):
-		"""Test the SpecMaster function on real-valued data."""
+	def test_spectra_real_p(self):
+		"""Test the SpecMasterP function on real-valued data."""
 
 		fakeData = numpy.random.rand(self.nAnt,1024) + 3.0
 		fakeData = fakeData.astype(numpy.int16)
 		freq, spectra = fx.SpecMasterP(fakeData, LFFT=128)
 		
-	def test_spectra_complex(self):
-		"""Test the SpecMaster function on complex-valued data."""
+	def test_spectra_complex_p(self):
+		"""Test the SpecMasterP function on complex-valued data."""
 		
 		fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
 		fakeData = fakeData.astype(numpy.csingle)
