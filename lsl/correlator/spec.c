@@ -945,7 +945,7 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	long i, j, k, m, nStand, nSamps, nFFT;
 
 	static char *kwlist[] = {"signals", "LFFT", "Overlap", "ClipLevel", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, &signals, &nChan, &Overlap, &Clip)) {
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iii", kwlist, &signals, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}

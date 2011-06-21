@@ -8,6 +8,7 @@ import math
 import StringIO
 
 import numpy
+from scipy.special import sph_harm
 
 from lsl.misc import mathutil
 
@@ -261,6 +262,42 @@ class mathutil_tests(unittest.TestCase):
 		self.assertAlmostEqual(centerY, params[2], 1)
 		self.assertAlmostEqual(widthX,  params[3], 1)
 		self.assertAlmostEqual(widthY,  params[4], 1)
+	
+	def test_sphval(self):
+		"""Test that the sphval() function runs."""
+		
+		terms = numpy.array([1, 0.5, 0.4, 0.01, -0.02, -0.005])
+		az  = numpy.zeros((180,45))
+		alt = numpy.zeros((180,45))
+		for i in xrange(180):
+			az[i,:] = 2*i
+		for i in xrange(45):
+			alt[:,i] = 2*i
+		
+		out = mathutil.sphval(terms, az, alt, degrees=True, realOnly=True)
+		
+		# Make sure we have the right output shape
+		self.assertEqual(out.shape, az.shape)
+	
+	def test_sphfit(self):
+		"""Test the sphfit() function."""
+		
+		az  = numpy.zeros((180,45))
+		alt = numpy.zeros((180,45))
+		for i in xrange(180):
+			az[i,:] = 2*i
+		for i in xrange(45):
+			alt[:,i] = 2*i
+		
+		# Setup a nice, easy problem
+		out = 10*sph_harm(-1, 2, az*numpy.pi/180.0, alt*numpy.pi/180.0 + numpy.pi/2)
+
+		# Evaluate the fit
+		terms = mathutil.sphfit(az, alt, out, lmax=2, degrees=True)
+		
+		# Make sure the term with the most power correspond to the 2,-1 mode
+		terms = (numpy.abs(terms) / numpy.abs(terms).max())**2
+		self.assertEqual(numpy.where(terms == 1)[0][0], 5)
 
     
 class mathutil_test_suite(unittest.TestSuite):

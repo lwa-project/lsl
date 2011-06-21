@@ -206,10 +206,11 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6):
 		# east, north celestial pole system
 		xyzPrime = antennas[j].stand - antennas[i].stand
 		xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+		xyz = numpy.ravel(xyz)
 
 		uRange = numpy.linspace(-numpy.sqrt(xyz[0]**2 + xyz[1]**2), numpy.sqrt(xyz[0]**2 + xyz[1]**2), num=256)
-		vRange1 = numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*sin(dec2) + xyz[2]*cos(dec2)
-		vRange2 = -numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*sin(dec2) + xyz[2]*cos(dec2)
+		vRange1 = numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*numpy.sin(dec2) + xyz[2]*numpy.cos(dec2)
+		vRange2 = -numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*numpy.sin(dec2) + xyz[2]*numpy.cos(dec2)
 
 		uvTrack[count,0,0:256] = uRange * freq / numpy.array(c)
 		uvTrack[count,1,0:256] = vRange1 * freq / numpy.array(c)

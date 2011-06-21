@@ -6,6 +6,7 @@ import unittest
 import numpy
 
 from lsl.correlator import uvUtils
+from lsl.common import stations
 
 
 __version__  = "0.4"
@@ -75,6 +76,17 @@ class uvUtils_tests(unittest.TestCase):
 		
 		ind = uvUtils.antenna2baseline(0, 3, standList, IncludeAuto=False, Indicies=True)
 		self.assertEqual(ind, 2)
+		
+	def test_computeUVTrack(self):
+		"""Test that the computeUVTrack function runs."""
+		
+		station = stations.lwa1
+		antennas = station.getAntennas()
+		
+		out = uvUtils.computeUVTrack(antennas[0:60:2])
+		
+		# Make sure we have the right dimensions
+		self.assertEqual(out.shape, (435,2,512))
 		
 		
 class uvUtils_test_suite(unittest.TestSuite):
