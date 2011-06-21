@@ -15,6 +15,7 @@ from lsl.sim import tbw
 from lsl.sim import tbn
 from lsl.sim import drx
 from lsl.sim import vis
+from lsl.correlator import uvUtils
 from lsl.reader.tbn import filterCodes as TBNFilters
 from lsl.reader.drx import filterCodes as DRXFilters
 
@@ -269,7 +270,7 @@ def __getSourceParameters(aa, time, srcs):
 	return {'topo': srcs_tp, 'trans': srcs_mp, 'flux': srcs_jy, 'freq': srcs_fq}
 
 
-def __buildSignals(aa, srcParams, times, pol='x', phaseCenter='z'):
+def __buildSignals(aa, stands, srcParams, times, pol='x', phaseCenter='z'):
 	"""
 	Given an aipy AntennaArray, a list of stand numbers, a dictionary of source 
 	parameters, and an array of times in ns, return a numpy array of the simulated 
@@ -280,18 +281,14 @@ def __buildSignals(aa, srcParams, times, pol='x', phaseCenter='z'):
 	Nstand = len(aa.ants)
 	Nsrc = len(srcParams['topo'])
 	Ntime = len(times)
-
-	# Define the stand position and cable/signal delay caches to the simulator 
-	# move along faster
-	dlyCache = uvUtils.SignalCache(aa.get_afreqs()*1e9, applyDispersion=True)
 	
 	# Get the topocentric coorindates for the zenith
-	zen = aipy.coord.azalt2top(n.array([[n.pi/4],[n.pi/2]]))
-	zen = n.squeeze(zen)
+	zen = aipycoord.azalt2top(numpy.array([[numpy.pi/4],[numpy.pi/2]]))
+	zen = numpy.squeeze(zen)
 	
 	# Update the phase center if necessary
 	if phaseCenter == 'z':
-		phaseCenterMap = aipy.coord.eq2top_m(0.0, aa.lat)
+		phaseCenterMap = aipycoord.eq2top_m(0.0, aa.lat)
 	else:
 		phaseCenter.compute(aa)
 		phaseCenterMap = phaseCenter.map
@@ -299,31 +296,31 @@ def __buildSignals(aa, srcParams, times, pol='x', phaseCenter='z'):
 	# Setup a temporary array to hold the signals per source, stand, and time.  
 	# This array is complex so that it can accomidate both TBW and TBN data at
 	# the same time
-	temp = n.zeros((Nsrc, Nstand, Ntime), dtype=n.complex64)
+	temp = numpy.zeros((Nsrc, Nstand, Ntime), dtype=numpy.complex64)
 
 	# Loop over sources and stands to build up the signals
 	srcCount = 0
 	for topo,trans,flux,freq in zip(srcParams['topo'], srcParams['trans'], srcParams['flux'], srcParams['freq']):
 		antCount = 0
-		for ant in aa.ants:
+		for ant,std in zip(aa.ants, stands):
 			# Zeroth, get the beam response in the direction of the current source for all frequencies
-			antResponse = numpy.squeeze( ant.bm_response(tp, pol=pol) )
+			antResponse = numpy.squeeze( ant.bm_response(topo, pol=pol) )
 
 			# First, do the geometric delay
 			geoDelay = ( numpy.dot(trans, ant.pos).transpose() )[2] 
-			geoDelayPC = ( n.dot(phaseCenterMap, ant.pos).transpose() )[2]
+			geoDelayPC = ( numpy.dot(phaseCenterMap, ant.pos).transpose() )[2]
 
 			# Second, do the cable delay
-			Delayat1MHz = dlyCache.cableDelay(ant.stand, freq=1.0e6)[0] * 1e9 # s -> ns
-			cblDelay = dlyCache.cableDelay(ant.stand) * 1e9 # s -> ns
+			Delayat1MHz = std.cable.delay(frequency=1.0e6) * 1e9 # s -> ns
+			cblDelay = std.cable.delay(frequency=aa.get_afreqs()*1e9) * 1e9 # s -> ns
 			# NB: Replace the cable delays below 1 MHz with the 1 MHz value to keep the 
 			# delays from blowing up for small f
 			cblDelay = numpy.where( freq >= 0.001, cblDelay, Delayat1MHz )
 
 			for a,j,f,d in zip(antResponse, flux, freq, cblDelay):
-				factor = a * n.sqrt(j)
-				angle = 2*n.pi*f*(t + (d - (geoDelay-geoDelayPC)))
-				temp[srcCount,antCount,:] += factor*(n.cos(angle) + 1j*n.sin(angle))
+				factor = a * numpy.sqrt(j)
+				angle = 2*numpy.pi*f*(times + (d - (geoDelay-geoDelayPC)))
+				temp[srcCount,antCount,:] += factor*(numpy.cos(angle) + 1j*numpy.sin(angle))
 			antCount = antCount + 1
 		srcCount = srcCount + 1
 
@@ -344,7 +341,7 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 	
 	sampleRate = dp_common.fS
 	freqs = (numpy.fft.fftfreq(1024, d=1.0/sampleRate))[1:512]
-	aa = __buildAntennaArray(lwa_common.lwa1(), stands, tStart, freqs)
+	aa = __getAntennaArray(lwa_common.lwa1, stands, tStart, freqs)
 	
 	if bits == 12:
 		maxValue = 2047
@@ -373,20 +370,20 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 				tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / dp_common.fS
 
 				# Get the source parameters
-				srcParams = __getSourceParameters(aa, frameT[0], src)
+				srcParams = __getSourceParameters(aa, tFrame[0], src)
 
 				# Generate the time series response of each signal at each frequency
-				tdSignalsX = __buildSignals(aa, srcParams, tFrame*1e9, pol='x', phaseCenter=phaseCenter)
-				tdSignalsY = __buildSignals(aa, srcParams, tFrame*1e9, pol='y', phaseCenter=phaseCenter)
+				tdSignalsX = __buildSignals(aa, stands, srcParams, tFrame*1e9, pol='x', phaseCenter=phaseCenter)
+				tdSignalsY = __buildSignals(aa, stands, srcParams, tFrame*1e9, pol='y', phaseCenter=phaseCenter)
 
-				cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=frameT)
+				cFrame = tbw.SimFrame(stand=stand1.stand.id, frameCount=i+1, dataBits=bits, obsTime=t)
 				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
 				cFrame.xy[0,:] = tdSignalsX.real[j,:]
 				cFrame.xy[1,:] = tdSignalsY.real[j,:]
 				
 				cFrame.writeRawFrame(fh)
 
-				cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=frameT)
+				cFrame = tbw.SimFrame(stand=stand2.stand.id, frameCount=i+1, dataBits=bits, obsTime=t)
 				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
 				cFrame.xy[0,:] = tdSignalsX.real[k,:]
 				cFrame.xy[1,:] = tdSignalsY.real[k,:]
@@ -399,6 +396,7 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 	Private function to build TBN point sources.
 	"""
 	
+	CentralFreq = kwargs['CentralFreq']
 	filter = kwargs['filter']
 	tStart = kwargs['tStart']
 	phaseCenter = kwargs['phaseCenter']
@@ -409,7 +407,7 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 	samplesPerFrame = 512
 	freqs = (numpy.fft.fftfreq(samplesPerFrame, d=1.0/sampleRate)) + CentralFreq
 	freqs = numpy.fft.fftshift(freqs)
-	aa = __buildAntennaArray(lwa_common.lwa1(), stands, tStart, freqs)
+	aa = __getAntennaArray(lwa_common.lwa1, stands, tStart, freqs)
 	
 	if verbose:
 		print "Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands))
@@ -421,28 +419,28 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 		tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 		
 		# Get the source parameters
-		srcParams = __getSourceParameters(aa, frameT[0], src)
+		srcParams = __getSourceParameters(aa, tFrame[0], src)
 		
 		# Generate the time series response of each signal at each frequency
-		tdSignalsX = __buildSignals(aa, srcParams, tFrame*1e9, pol='x', phaseCenter=phaseCenter)
-		tdSignalsY = __buildSignals(aa, srcParams, tFrame*1e9, pol='y', phaseCenter=phaseCenter)
+		tdSignalsX = __buildSignals(aa, stands, srcParams, tFrame*1e9, pol='x', phaseCenter=phaseCenter)
+		tdSignalsY = __buildSignals(aa, stands, srcParams, tFrame*1e9, pol='y', phaseCenter=phaseCenter)
 		
 		j = 0
 		for stand in stands:
-			cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=frameT)
-			cFrame.iq = tdSignals[j,:].astype(numpy.singlecomplex)
+			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=0, frameCount=i+1, obsTime=t)
+			cFrame.iq = tdSignalsX[j,:].astype(numpy.singlecomplex)
 			
 			cFrame.writeRawFrame(fh)
 
-			cFrame = tbn.SimFrame(stand=stand, pol=1, frameCount=i+1, obsTime=frameT)
-			cFrame.iq = tdSignals[j,:].astype(numpy.singlecomplex)
+			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=1, frameCount=i+1, obsTime=t)
+			cFrame.iq = tdSignalsY[j,:].astype(numpy.singlecomplex)
 			
 			cFrame.writeRawFrame(fh)
 			
 			j += 1
 
 
-def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=0, phaseCenter='z', verbose=False):
+def pointSource(fh, stands, src, nFrames, mode='TBN', CentralFreq=49.0e6, filter=7, bits=12, tStart=0, phaseCenter='z', verbose=False):
 	"""
 	Generate a collection of frames with a point source signal for TBW
 	and TBN.  The point source is specified as a aipy.src object.
@@ -457,8 +455,8 @@ def pointSource(fh, stands, src, nFrames, mode='TBN', filter=7, bits=12, tStart=
 		tStart = time.time()
 
 	if mode == 'TBW':
-		__basicTBW(fh, stands, src, nFrames, bits=bits, tStart=tStart, phaseCenter=phaseCenter, verbose=verbose)
+		__pointSourceTBW(fh, stands, src, nFrames, bits=bits, tStart=tStart, phaseCenter=phaseCenter, verbose=verbose)
 	elif mode == 'TBN':
-		__basicTBN(fh, stands, src, nFrames, filter=filter, tStart=tStart, phaseCenter=phaseCenter, verbose=verbose)
+		__pointSourceTBN(fh, stands, src, nFrames, CentralFreq=CentralFreq, filter=filter, tStart=tStart, phaseCenter=phaseCenter, verbose=verbose)
 	else:
 		raise RuntimeError("Unknown observations mode: %s" % mode)

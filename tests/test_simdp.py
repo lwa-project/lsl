@@ -7,6 +7,8 @@ import unittest
 import numpy
 import tempfile
 
+import aipy
+
 from lsl.sim import dp
 from lsl.reader import tbw
 from lsl.reader import tbn
@@ -31,7 +33,8 @@ class simdp_tests(unittest.TestCase):
 
 		numpy.seterr(all='ignore')
 		self.testPath = tempfile.mkdtemp(prefix='test-simdp-', suffix='.tmp')
-
+		self.src = aipy.src.get_catalog(['cyg',])
+		
 	def test_basic_tbw(self):
 		"""Test building a basic TBW signal"""
 
@@ -69,6 +72,57 @@ class simdp_tests(unittest.TestCase):
 		fileSize = os.path.getsize(testFile)
 		nSamples = fileSize / tbn.FrameSize
 		self.assertEqual(nSamples, 2000*4*2)
+
+		# Check the time of the first frame
+		fh = open(testFile, 'rb')
+		frame = tbn.readFrame(fh)
+		fh.close()
+		self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
+		self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
+
+	def test_point_tbw(self):
+		"""Test building a point source TBW signal"""
+
+		testFile = os.path.join(self.testPath, 'tbw.dat')
+		
+		station = lwa_common.lwa1
+		antennas = station.getAntennas()
+
+		fh = open(testFile, 'wb')
+		dp.pointSource(fh, antennas[:8:2], self.src, 3, mode='TBW', bits=12, tStart=1000)
+		fh.close()
+
+		# Check file size
+		fileSize = os.path.getsize(testFile)
+		nSamples = fileSize / tbw.FrameSize
+		self.assertEqual(nSamples, 3*4)
+
+		# Check the time of the first frame
+		fh = open(testFile, 'rb')
+		frame = tbw.readFrame(fh)
+		fh.close()
+		self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
+		self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
+
+		# Check that the frames have the correct value of data bits
+		self.assertEqual(frame.getDataBits(), 12)
+
+	def test_point_tbn(self):
+		"""Test building a point source TBN signal"""
+
+		testFile = os.path.join(self.testPath, 'tbn.dat')
+		
+		station = lwa_common.lwa1
+		antennas = station.getAntennas()
+
+		fh = open(testFile, 'wb')
+		dp.pointSource(fh, antennas[:8:2], self.src, 4, mode='TBN', filter=7, tStart=1000)
+		fh.close()
+
+		# Check the file size
+		fileSize = os.path.getsize(testFile)
+		nSamples = fileSize / tbn.FrameSize
+		self.assertEqual(nSamples, 4*4*2)
 
 		# Check the time of the first frame
 		fh = open(testFile, 'rb')

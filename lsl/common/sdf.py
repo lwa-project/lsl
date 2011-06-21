@@ -136,7 +136,7 @@ def parseTimeString(s):
 			elif monthName == 'nov':
 				month = 11
 			elif monthName == 'dec':
-				month == 12
+				month = 12
 			else:
 				raise ValueError("Unknown month abbreviation: '%s'" % monthName)
 		

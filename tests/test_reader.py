@@ -80,7 +80,7 @@ class reader_tests(unittest.TestCase):
 		frame1 = tbw.readFrame(fh)
 		self.assertEqual(frame1.getDataBits(), 12)
 		fh.close()
-
+	
 	def test_tbw_errors(self):
 		"""Test reading errors."""
 
@@ -111,10 +111,28 @@ class reader_tests(unittest.TestCase):
 		fh.close()
 
 		self.assertTrue(0 < frames[0])
+		self.assertFalse(0 > frames[0])
 		self.assertTrue(frames[-1] >= frames[0])
+		self.assertFalse(frames[-1] <= frames[0])
 		self.assertTrue(frames[0] == frames[0])
 		self.assertFalse(frames[0] == frames[-1])
 		self.assertFalse(frames[0] != frames[0])
+		
+	def test_tbw_sort(self):
+		"""Test sorting TBW frames by time tags."""
+		
+		fh = open(tbwFile, 'rb')
+		# Frames 1 through 3
+		frames = []
+		for i in range(1,4):
+			frames.append(tbw.readFrame(fh))
+		fh.close()
+		
+		frames.sort()
+		frames = frames[::-1]
+		
+		for i in xrange(1,len(frames)):
+			self.assertTrue( frames[i-1] >= frames[i] )
 
 	def test_tbw_math(self):
 		"""Test mathematical operations on TBW frame data via frames."""
@@ -214,11 +232,29 @@ class reader_tests(unittest.TestCase):
 			frames.append(tbn.readFrame(fh))
 		fh.close()
 
-		self.assertTrue(frames[0] > 0)
+		self.assertTrue(0 < frames[0])
+		self.assertFalse(0 > frames[0])
 		self.assertTrue(frames[-1] >= frames[0])
+		self.assertFalse(frames[-1] <= frames[0])
 		self.assertTrue(frames[0] == frames[0])
 		self.assertFalse(frames[0] == frames[-1])
 		self.assertFalse(frames[0] != frames[0])
+		
+	def test_tbn_sort(self):
+		"""Test sorting TBN frames by time tags."""
+		
+		fh = open(tbnFile, 'rb')
+		# Frames 1 through 29
+		frames = []
+		for i in range(1,30):
+			frames.append(tbn.readFrame(fh))
+		fh.close()
+		
+		frames.sort()
+		frames = frames[::-1]
+		
+		for i in xrange(1,len(frames)):
+			self.assertTrue( frames[i-1] >= frames[i] )
 
 	def test_tbn_math(self):
 		"""Test mathematical operations on TBN frame data via frames."""
@@ -369,11 +405,29 @@ class reader_tests(unittest.TestCase):
 			frames.append(drx.readFrame(fh))
 		fh.close()
 
-		self.assertTrue(frames[0] > 0)
+		self.assertTrue(0 < frames[0])
+		self.assertFalse(0 > frames[0])
 		self.assertTrue(frames[-1] >= frames[0])
+		self.assertFalse(frames[-1] <= frames[0])
 		self.assertTrue(frames[0] == frames[0])
 		self.assertFalse(frames[0] == frames[-1])
 		self.assertFalse(frames[0] != frames[0])
+		
+	def test_drx_sort(self):
+		"""Test sorting DRX frames by time tags."""
+		
+		fh = open(drxFile, 'rb')
+		# Frames 1 through 10
+		frames = []
+		for i in range(1,11):
+			frames.append(drx.readFrame(fh))
+		fh.close()
+		
+		frames.sort()
+		frames = frames[::-1]
+		
+		for i in xrange(1,len(frames)):
+			self.assertTrue( frames[i-1] >= frames[i] )
 
 	def test_drx_math(self):
 		"""Test mathematical operations on DRX frame data via frames."""

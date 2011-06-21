@@ -24,6 +24,51 @@ drxFile = os.path.join(dataPath, 'tests', 'drx-sdf.txt')
 class sdf_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.common.sdf
 	module."""
+	
+	### General ###
+	def test_time(self):
+		"""Test the sdf.parseTimeString() function."""
+		
+		# Different realizations of the same thing
+		s1 = "EST 2011-01-01 12:13:14.567"
+		s2 = "EST 2011 01 01 12:13:14.567"
+		s3 = "EST 2011 Jan 01 12:13:14.567"
+		
+		self.assertEqual(sdf.parseTimeString(s1), sdf.parseTimeString(s2))
+		self.assertEqual(sdf.parseTimeString(s1), sdf.parseTimeString(s3))
+		self.assertEqual(sdf.parseTimeString(s2), sdf.parseTimeString(s3))
+		
+		# Month name and month number agreement
+		for n,m in enumerate(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']):
+			s1 = "UTC 2011-%s-14 12:13:14.000" % m
+			s2 = "UTC 2011-%02i-14 12:13:14.000" % (n+1)
+			self.assertEqual(sdf.parseTimeString(s1), sdf.parseTimeString(s2))
+			
+		# Time zone agreement - UTC
+		s1 = "2011-01-01 12:13:14.567"
+		s2 = "2011 01 01 12:13:14.567"
+		self.assertEqual(sdf.parseTimeString(s1), sdf.parseTimeString(s2))
+		
+		# Time zone agreement - local
+		for o,z in enumerate(['EST', 'CST', 'MST', 'PST']):
+			h = 12
+			o = -5 - o
+			s1 = "%s 2011 01 01 %02i:13:14.567" % ('UTC', h)
+			s2 = "%s 2011 01 01 %02i:13:14.567" % (z, h+o)
+			self.assertEqual(sdf.parseTimeString(s1), sdf.parseTimeString(s2))
+			
+		# Details
+		s1 = "2011 01 02 03:04:05.678"
+		out = sdf.parseTimeString(s1)
+		## Date
+		self.assertEqual(out.year, 2011)
+		self.assertEqual(out.month, 1)
+		self.assertEqual(out.day, 2)
+		## Time
+		self.assertEqual(out.hour, 3)
+		self.assertEqual(out.minute, 4)
+		self.assertEqual(out.second, 5)
+		self.assertEqual(out.microsecond, 678000)
 
 	### TBW ###
 

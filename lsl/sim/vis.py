@@ -157,7 +157,7 @@ class AntennaArray(aipy.amp.AntennaArray):
 		Set the array time using a UNIX timestamp (epoch 1970).
 		"""
 
-		self.set_jultime(astro.unix_to_utcjd(time))
+		self.set_jultime(astro.unix_to_utcjd(timestamp))
 		
 	def sim(self, i, j, pol='xx'):
 		"""
