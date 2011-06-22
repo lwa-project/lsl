@@ -29,13 +29,13 @@ src/exec/me.h.  The values are:
     codes used for PWR_NAME
 """
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
-			'ME_MAX_SSNAME_LENGTH', '__version__', '__revision__', '__all__']
+			'ME_MAX_SSNAME_LENGTH', 'guidedBinaryRead', '__version__', '__revision__', '__all__']
 
 ME_SSMIF_FORMAT_VERSION = 4	# SSMIF format version code
 ME_MAX_NSTD = 260			# Maximum number of stands that can be described
@@ -60,3 +60,20 @@ ME_MAX_NDR = 5				# Maximum number of data recorders
 ME_MAX_DRID_LENGTH = 10		# Number of characters in the DR ID name
 ME_MAX_NPWRPORT = 50		# Maximum number of power ports
 ME_MAX_SSNAME_LENGTH = 3		# Number of characters in the power port ID names, for codes used for PWR_NAME
+
+
+def guidedBinaryRead(fh, fmt):
+	"""
+	Function to wrap reading in packed binary data directrly from an open file
+	handle.  This function calls struct.unpack() and struct.calcsize() to figure 
+	out what to read and how.
+	
+	Return either a single item if a single item is requested or a list of items.
+	"""
+	
+	
+	data = struct.unpack(fmt, fh.read(struct.calcsize(fmt)))
+	if len(data) == 1:
+		return data[0]
+	else:
+		return list(data)

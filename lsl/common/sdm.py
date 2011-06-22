@@ -15,25 +15,6 @@ __revision__ = '$Rev$'
 __all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parseSDM', '__version__', '__revision__', '__all__']
 
 
-def _guidedBinaryRead(fh, fmt):
-	"""
-	Function to wrap reading in packed binary data directrly from an open file
-	handle.  This function calls struct.unpack() and struct.calcsize() to figure 
-	out what to read and how.
-	
-	Return either a single item if a single item is requested or a list of items.
-	
-	Used by SDM.binaryFill()
-	"""
-	
-	
-	data = struct.unpack(fmt, fh.read(struct.calcsize(fmt)))
-	if len(data) == 1:
-		return data[0]
-	else:
-		return list(data)
-
-
 class SubSystemStatus(object):
 	"""
 	Python object that holds the status for a particular subsystem in a SDM 
@@ -55,9 +36,9 @@ class SubSystemStatus(object):
 		subsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
-		self.summary = _guidedBinaryRead(fh, "<i")
-		self.info = _guidedBinaryRead(fh, "<256s")
-		ts, tu = _guidedBinaryRead(fh, "<2l")
+		self.summary = guidedBinaryRead(fh, "<i")
+		self.info = guidedBinaryRead(fh, "<256s")
+		ts, tu = guidedBinaryRead(fh, "<2l")
 		self.time = ts + tu/1.0e6
 
 
@@ -109,13 +90,13 @@ class SubSubSystemStatus(object):
 		subsubsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
-		self.feeStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
-		self.rpdStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
-		self.sepStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
-		self.arbStat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
-		self.dp1Stat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP1)
-		self.dp2Stat = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP2)
-		self.drStat  = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
+		self.feeStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
+		self.rpdStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
+		self.sepStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
+		self.arbStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
+		self.dp1Stat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP1)
+		self.dp2Stat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP2)
+		self.drStat  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
 
 
 class StationSettings(object):
@@ -172,19 +153,19 @@ class StationSettings(object):
 		"""
 
 		for ss in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-			self.report[ss] = _guidedBinaryRead(fh, "<h")
+			self.report[ss] = guidedBinaryRead(fh, "<h")
 		for ss in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-			self.update[ss] = _guidedBinaryRead(fh, "<h")
+			self.update[ss] = guidedBinaryRead(fh, "<h")
 			
-		self.fee = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.fee = guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
 
-		self.aspFlt = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
-		self.aspAT1 = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
-		self.aspAT2 = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
-		self.aspATS = _guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspFlt = guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspAT1 = guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspAT2 = guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
+		self.aspATS = guidedBinaryRead(fh, "<%ih" % ME_MAX_NSTD)
 		
-		self.tbnGain = _guidedBinaryRead(fh, "<h")
-		self.drxgain = _guidedBinaryRead(fh, "<h")
+		self.tbnGain = guidedBinaryRead(fh, "<h")
+		self.drxgain = guidedBinaryRead(fh, "<h")
 
 
 class SDM(object):
@@ -273,8 +254,8 @@ def parseSDM(filename):
 	dynamic.status._binaryRead(fh)
 	
 	# Antenna status and data path status
-	dynamic.antStatus = _guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
-	dynamic.dpoStatus = _guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
+	dynamic.antStatus = guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
+	dynamic.dpoStatus = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
 	
 	# Station settings section
 	dynamic.settings._binaryRead(fh)

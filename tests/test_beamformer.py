@@ -70,7 +70,15 @@ class beamformer_tests(unittest.TestCase):
 		elDiff = numpy.abs(60.0 - i % 90)
 		self.assertTrue(azDiff <= 1)
 		self.assertTrue(elDiff <= 1)
+	
+	def test_fftDelayAndSum(self):
+		"""Check that the beamformer.fftDelayAndSum function actually runs"""
 		
+		station = stations.lwa1
+		antennas = station.getAntennas()
+		data = numpy.random.rand(3, 1000)
+		
+		beam = beamformer.fftDelayAndSum(antennas[:3], data, azimuth=45.0, elevation=30.0)
 
 class  beamformer_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.sim.vis units 

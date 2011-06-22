@@ -15,6 +15,7 @@ import tempfile
 
 from lsl.common.dp import fS, word2freq
 from lsl.common import stations, sdm, sdf
+from lsl.common.mcs import guidedBinaryRead
 from lsl.transform import Time
 
 __version__ = '0.1'
@@ -23,25 +24,6 @@ __all__ = ['readSESFile', 'readOBSFile', 'getSDM', 'getStation', 'getSessionMeta
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
-
-
-def __guidedBinaryRead(fh, fmt):
-	"""
-	Function to wrap reading in packed binary data directrly from an open file
-	handle.  This function calls struct.unpack() and struct.calcsize() to figure 
-	out what to read and how.
-	
-	Return either a single item if a single item is requested or a list of items.
-	
-	Used by SDM.binaryFill()
-	"""
-	
-	
-	data = struct.unpack(fmt, fh.read(struct.calcsize(fmt)))
-	if len(data) == 1:
-		return data[0]
-	else:
-		return list(data)
 
 
 def readSESFile(filename):
@@ -53,23 +35,23 @@ def readSESFile(filename):
 	# Read the SES
 	fh = open(filename, 'rb')
 
-	version = __guidedBinaryRead(fh, "<H")
-	projectID, sessionID = __guidedBinaryRead(fh, "<9sI")
-	cra = __guidedBinaryRead(fh, "<h")
-	drxBeam = __guidedBinaryRead(fh, "<h")
-	sessionMJD, sessionMPM = __guidedBinaryRead(fh, "<QQ")
-	sessionDur = __guidedBinaryRead(fh, "<Q")
-	sessionObs = __guidedBinaryRead(fh, "<I")
+	version = guidedBinaryRead(fh, "<H")
+	projectID, sessionID = guidedBinaryRead(fh, "<9sI")
+	cra = guidedBinaryRead(fh, "<h")
+	drxBeam = guidedBinaryRead(fh, "<h")
+	sessionMJD, sessionMPM = guidedBinaryRead(fh, "<QQ")
+	sessionDur = guidedBinaryRead(fh, "<Q")
+	sessionObs = guidedBinaryRead(fh, "<I")
 	
 	record = {}
 	for k in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-		record[k] = __guidedBinaryRead(fh, "<h")
+		record[k] = guidedBinaryRead(fh, "<h")
 	update = {}
 	for k in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-		update[k] = __guidedBinaryRead(fh, "<h")
+		update[k] = guidedBinaryRead(fh, "<h")
 	
-	logSch, logExe = __guidedBinaryRead(fh, "<bb")
-	incSMIF, incDesi = __guidedBinaryRead(fh, "<bb")
+	logSch, logExe = guidedBinaryRead(fh, "<bb")
+	incSMIF, incDesi = guidedBinaryRead(fh, "<bb")
 
 	fh.close()
 	
@@ -88,26 +70,26 @@ def readOBSFile(filename):
 	# Read the OBS
 	fh = open(filename, 'rb')
 	
-	version = __guidedBinaryRead(fh, "<H")
-	projectID, sessionID = __guidedBinaryRead(fh, "<9sI")
-	obsID = __guidedBinaryRead(fh, "<I")
-	obsMJD, obsMPM = __guidedBinaryRead(fh, "<QQ")
-	obsDur = __guidedBinaryRead(fh, "<Q")
-	obsMode = __guidedBinaryRead(fh, "<H")
-	obsRA, obsDec = __guidedBinaryRead(fh, "<ff")
-	obsB = __guidedBinaryRead(fh, "<H")
-	obsFreq1, obsFreq2, obsBW = __guidedBinaryRead(fh, "<IIH")
-	nSteps, stepRADec = __guidedBinaryRead(fh, "<IH")
+	version = guidedBinaryRead(fh, "<H")
+	projectID, sessionID = guidedBinaryRead(fh, "<9sI")
+	obsID = guidedBinaryRead(fh, "<I")
+	obsMJD, obsMPM = guidedBinaryRead(fh, "<QQ")
+	obsDur = guidedBinaryRead(fh, "<Q")
+	obsMode = guidedBinaryRead(fh, "<H")
+	obsRA, obsDec = guidedBinaryRead(fh, "<ff")
+	obsB = guidedBinaryRead(fh, "<H")
+	obsFreq1, obsFreq2, obsBW = guidedBinaryRead(fh, "<IIH")
+	nSteps, stepRADec = guidedBinaryRead(fh, "<IH")
 
 	steps = []
 	for n in xrange(nSteps):
-		c1, c2 = __guidedBinaryRead(fh, "<ff")
-		t = __guidedBinaryRead(fh, "<I")
-		f1, f2 = __guidedBinaryRead(fh, "<II")
-		b = __guidedBinaryRead(fh, "<H")
+		c1, c2 = guidedBinaryRead(fh, "<ff")
+		t = guidedBinaryRead(fh, "<I")
+		f1, f2 = guidedBinaryRead(fh, "<II")
+		b = guidedBinaryRead(fh, "<H")
 		if b == 3:
-			delay = __guidedBinaryRead(fh, "<520H")
-			gain = __guidedBinaryRead(fh, "<1040h")
+			delay = guidedBinaryRead(fh, "<520H")
+			gain = guidedBinaryRead(fh, "<1040h")
 		else:
 			delay = []
 			gain = []
@@ -118,15 +100,15 @@ def readOBSFile(filename):
 		if alignment != (2**32 - 2):
 			raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
 
-	fee = __guidedBinaryRead(fh, "<520h")
-	flt = __guidedBinaryRead(fh, "<260h")
-	at1 = __guidedBinaryRead(fh, "<260h")
-	at2 = __guidedBinaryRead(fh, "<260h")
-	ats = __guidedBinaryRead(fh, "<260h")
+	fee = guidedBinaryRead(fh, "<520h")
+	flt = guidedBinaryRead(fh, "<260h")
+	at1 = guidedBinaryRead(fh, "<260h")
+	at2 = guidedBinaryRead(fh, "<260h")
+	ats = guidedBinaryRead(fh, "<260h")
 
-	tbwBits, tbwSamps = __guidedBinaryRead(fh, "<HI")
-	tbnGain, drxGain = __guidedBinaryRead(fh, "<hh")
-	alignment = __guidedBinaryRead(fh, "<I")
+	tbwBits, tbwSamps = guidedBinaryRead(fh, "<HI")
+	tbnGain, drxGain = guidedBinaryRead(fh, "<hh")
+	alignment = guidedBinaryRead(fh, "<I")
 	if aligment != (2**32 - 1):
 		raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
 
