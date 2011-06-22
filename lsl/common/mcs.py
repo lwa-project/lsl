@@ -29,6 +29,9 @@ src/exec/me.h.  The values are:
     codes used for PWR_NAME
 """
 
+import struct
+
+
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
@@ -36,6 +39,7 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
 			'ME_MAX_SSNAME_LENGTH', 'guidedBinaryRead', '__version__', '__revision__', '__all__']
+
 
 ME_SSMIF_FORMAT_VERSION = 4	# SSMIF format version code
 ME_MAX_NSTD = 260			# Maximum number of stands that can be described

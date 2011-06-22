@@ -6,7 +6,6 @@ files (as defined in MCS0031, v5).
 """
 
 import copy
-import struct
 
 from lsl.common.mcs import *
 
