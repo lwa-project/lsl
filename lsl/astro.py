@@ -2981,8 +2981,7 @@ def unix_to_utcjd(unixTime):
   Returns: The UTC JD value.
   """
   
-  #utcJD = float(unixTime) / SECS_IN_DAY + UNIX_OFFSET
-  utcJD = get_julian_from_timet(unixTime)
+  utcJD = float(unixTime) / SECS_IN_DAY + UNIX_OFFSET
   return utcJD
   
   
@@ -3009,8 +3008,7 @@ def utcjd_to_unix(utcJD):
   Returns: The UNIX time
   """
   
-  #unixTime = (utcJD - UNIX_OFFSET) * SECS_IN_DAY
-  unixTime = get_timet_from_julian(utcJD)
+  unixTime = (utcJD - UNIX_OFFSET) * SECS_IN_DAY
   return unixTime
   
   

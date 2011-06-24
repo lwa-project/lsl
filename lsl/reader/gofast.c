@@ -139,7 +139,7 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 
 			temp = bytes[i+24]&15;
 			temp -= ((temp&8)<<1);
-			*(a + 400 + i) = (short int) temp;
+			*(a + 1200 + i) = (short int) temp;
 		}
 
 	}
@@ -254,8 +254,6 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 
 	// Create the output data array
 	npy_intp dims[1];
-	npy_intp *fLoc;
-	fLoc = PyDimMem_NEW(1);
 	short int tempR, tempI;
 	dims[0] = 512;
 	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_COMPLEX64);
@@ -269,14 +267,12 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	float complex *a;
 	a = (float complex *) data->data;
 	for(i=0; i<512; i++) {
-		fLoc[0] = (npy_intp) i;
 		tempR = bytes[24+2*i];
 		tempR -= ((tempR&128)<<1);
 		tempI = bytes[24+2*i+1];
 		tempI -= ((tempI&128)<<1);
 		*(a + i) = (float) tempR + imaginary * (float) tempI;
 	}
-	PyDimMem_FREE(fLoc);
 
 	// Save the data to the frame object
 	// 1.  Header
@@ -410,20 +406,16 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	}
 
 	// Fill the data array
-	npy_intp *fLoc;
-	fLoc = PyDimMem_NEW(1);
 	short int tempR, tempI;
 	float complex *a;
 	a = (float complex *) data->data;
 	for(i=0; i<4096; i++) {
-		fLoc[0] = (npy_intp) i;
 		tempR = (bytes[i+32]>>4)&15;
 		tempR -= ((tempR&8)<<1);
 		tempI = bytes[i+32]&15;
 		tempI -= ((tempI&8)<<1);
 		*(a + i) = (float) tempR + imaginary * (float) tempI;
 	}
-	PyDimMem_FREE(fLoc);
 
 	// Save the data to the frame object
 	// 1. Header

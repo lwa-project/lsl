@@ -89,7 +89,7 @@ coreExtraFlags.extend(cflags)
 coreExtraLibs = ['-fopenmp', '-lcblas', '-latlas']
 coreExtraLibs.extend(libs)
 
-drsuExtraFlags = ['-D_GNU_SOURCE', '-O3', '-fmessage-length=0', '-MMD', '-MP', '-MF"$(@:%.o=%.d)"']
+drsuExtraFlags = ['-D_GNU_SOURCE', '-O3', '-fmessage-length=0', '-MMD', '-MP']
 drsuExtraLibs = ['-lrt', '-lgdbm']
 
 # Create the list of extension modules.  We do this here so that we can turn 

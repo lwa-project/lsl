@@ -16,6 +16,7 @@
   * Fixed a few typos in lsl.correlator.uvUtils.computeUVTrack
   * Fixed a typo in the _spec.PPSDC2() function that caused it to die
   * Fixed several heinous problems in sim.dp.pointSource()
+  * Fixed a bug with indexing in the 4-bit TBW reader
 
 0.4.2
   * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file
