@@ -217,7 +217,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
 				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
@@ -448,7 +448,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
 				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
@@ -662,7 +662,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
 				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
@@ -893,7 +893,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
 				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
@@ -1333,7 +1333,7 @@ static PyObject *PEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -1521,7 +1521,7 @@ static PyObject *PEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) += (in[fftIndex][0] + imaginary*in[fftIndex][1]) * cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 			}
 			
@@ -1696,7 +1696,7 @@ static PyObject *PEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				fLoc[2] = (npy_intp) (j / nTaps);
 				for(k=0; k<(nChan-1); k++) {
 					fLoc[1] = (npy_intp) k;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(2*imaginary*PI * *(f + k) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(-2*imaginary*PI * *(f + k) * frac[i][k]);
 				}
 			}
 			
@@ -1888,7 +1888,7 @@ static PyObject *PEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				fLoc[2] = (npy_intp) (j / nTaps);
 				for(k=0; k<(nChan-1); k++) {
 					fLoc[1] = (npy_intp) k;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(2*imaginary*PI * *(f + k) * frac[i][k]);
+					*(double complex *) PyArray_GetPtr(dataF, fLoc) = tempFB[k] * cexp(-2*imaginary*PI * *(f + k) * frac[i][k]);
 				}
 			}
 			

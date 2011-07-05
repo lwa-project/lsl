@@ -159,7 +159,7 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, IncludeAuto=False):
 	for i,j in baselines:
 		# Go from a east, north, up coordinate system to a celestial equation, 
 		# east, north celestial pole system
-		xyzPrime = antennas[j].stand - antennas[i].stand
+		xyzPrime = antennas[i].stand - antennas[j].stand
 		xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
 		
 		# Go from CE, east, NCP to u, v, w
@@ -204,7 +204,7 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6):
 	for i,j in getBaselines(antennas, Indicies=True):
 		# Go from a east, north, up coordinate system to a celestial equation, 
 		# east, north celestial pole system
-		xyzPrime = antennas[j].stand - antennas[i].stand
+		xyzPrime = antennas[i].stand - antennas[j].stand
 		xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
 		xyz = numpy.ravel(xyz)
 

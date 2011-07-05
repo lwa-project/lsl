@@ -474,7 +474,7 @@ class IDI(object):
 		refMJD = refDate.to_jd() - astro.MJD_OFFSET
 		try:
 			eop = geodesy.getEOP(refMJD)
-			if eop is None:
+			if eop[0] is None:
 				eop = [geodesy.EOP(mjd=refMJD)]
 
 			ag.header.update('UT1UTC', eop[0].utDiff, 'difference UT1 - UTC for reference date')

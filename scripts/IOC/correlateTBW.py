@@ -281,9 +281,9 @@ def main(args):
 			pass
 		else:
 			if ant.pol == 0:
-				goodX.append(ant)
+				goodX.append(i)
 			else:
-				goodY.append(ant)
+				goodY.append(i)
 	
 	# Select which polarization to use
 	if config['products'][0] == 'xx':
@@ -332,8 +332,10 @@ def main(args):
 
 	s = 0
 	leftToDo = config['samples']
+	basename, ext = os.path.splitext(filename)
 	while leftToDo > 0:
-		fitsFilename = "TEST.FITS_%i" % (s+1)
+		fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
+		
 		if leftToDo > 300:
 			chunk = 300
 		else:

@@ -17,6 +17,9 @@
   * Fixed a typo in the _spec.PPSDC2() function that caused it to die
   * Fixed several heinous problems in sim.dp.pointSource()
   * Fixed a bug with indexing in the 4-bit TBW reader
+  * Fixed a few sign errors in correlator _core and uvUtils modules
+  * Fixed a bug in the correlateTBW script related to antenna indexing
+  * Fixed a bug in the FITS IDI writer that caused EOP problems to be fatal
 
 0.4.2
   * Fixed tbwSpectra.py to skip over non-TBW frames at the beginning of a TBW file
