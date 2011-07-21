@@ -46,7 +46,7 @@ def word2freq(word):
 	return word*fS / 2**32
 
 
-def tbnFilter(sampleRate=1e5, Alias=False):
+def tbnFilter(sampleRate=1e5):
 	"""
 	Return a function that will generate the shape of a TBN filter for a given sample
 	rate.
@@ -130,28 +130,6 @@ def tbnFilter(sampleRate=1e5, Alias=False):
 	h *= fS / decimation / numpy.pi
 	w = numpy.abs(w)**2
 	
-	# Alias
-	if Alias:
-		
-		aliasWidth = sampleRate / 2.0
-		for i in xrange(int(h.max()/aliasWidth)):
-			section = numpy.where( (h >= i*aliasWidth) & (h < (i+1)*aliasWidth) )[0]
-			sectionStart = section[0]
-			sectionStop  = section[-1] + 1
-			
-			temp = w[sectionStart:sectionStop]
-			try:
-				if i % 2 == 0:
-					outW += temp
-				else:
-					outW += temp[::-1]
-			except:
-				outW = temp*1.0
-		
-		w *= 0
-		w += 1
-		w[0:len(outW)] = outW
-	
 	# Mirror
 	h = numpy.concatenate([-h[::-1], h[1:]])
 	w = numpy.concatenate([ w[::-1], w[1:]])
@@ -160,7 +138,7 @@ def tbnFilter(sampleRate=1e5, Alias=False):
 	return interp1d(h, w/w.max(), kind='cubic', bounds_error=False)
 
 
-def drxFilter(sampleRate=19.6e6, Alias=False):
+def drxFilter(sampleRate=19.6e6):
 	"""
 	Return a function that will generate the shape of a DRX filter for a given sample
 	rate.
@@ -211,28 +189,6 @@ def drxFilter(sampleRate=19.6e6, Alias=False):
 	# Convert to a "real" frequency and magnitude response
 	h *= fS / decimation / numpy.pi
 	w = numpy.abs(w)**2
-	
-	# Alias
-	if Alias:
-		
-		aliasWidth = sampleRate / 2.0
-		for i in xrange(int(h.max()/aliasWidth)):
-			section = numpy.where( (h >= i*aliasWidth) & (h < (i+1)*aliasWidth) )[0]
-			sectionStart = section[0]
-			sectionStop  = section[-1] + 1
-			
-			temp = w[sectionStart:sectionStop]
-			try:
-				if i % 2 == 0:
-					outW += temp
-				else:
-					outW += temp[::-1]
-			except:
-				outW = temp*1.0
-		
-		w *= 0
-		w += 1
-		w[0:len(outW)] = outW
 	
 	# Mirror
 	h = numpy.concatenate([-h[::-1], h[1:]])
