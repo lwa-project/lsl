@@ -24,6 +24,7 @@ from lsl.reader import errors
 from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi
+from lsl.common.progress import ProgressBar
 
 from matplotlib import pyplot as plt
 
@@ -108,7 +109,7 @@ def parseConfig(args):
 	return config
 
 
-def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e6, SampleRate=dp_common.fS, ChunkSize=300, pols=['xx',],  dataSize=400):
+def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e6, SampleRate=dp_common.fS, ChunkSize=300, pols=['xx',], dataSize=400):
 	"""
 	Given a filehandle pointing to some TBW data and various parameters for
 	the cross-correlation, write cross-correlate the data and save it to a file.
@@ -151,7 +152,10 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 				continue
 
 			stand = cFrame.header.parseID()
-			pol = 0
+			if pols[0] == 'xx':
+				pol = 0
+			else:
+				pol = 1
 			aStand = 2*(stand-1)+pol + 1
 				
 			if i == 0:
@@ -174,8 +178,11 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 				aStand = mapper.index(aStand)
 
 			cnt = cFrame.header.frameCount - 1
-			data[aStand,  cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[1,:]
-			
+			if pols[0] == 'xx':
+				data[aStand,  cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[0,:]
+			else:
+				data[aStand,  cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[1,:]
+				
 			masterCount = masterCount + 1
 			
 			j += 1
@@ -185,18 +192,29 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 		setDT.replace(tzinfo=UTC())
 		print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
 		
+		# In order for the TBW stuff to actaully run, we need to run in with sub-
+		# integrations.  8 sub-integrations (61.2 ms / 8 = 7.7 ms per section) 
+		# seems to work ok with a "reasonable" number of channels.
 		nSec = 8
 		secSize = data.shape[1]/nSec
 		
+		# Loop over polarizations (there should be only 1)
 		for pol in pols:
 			print "-> %s" % pol
 			try:
-				del tempVis
+				tempVis *= 0
 			except:
 				pass
 			
+			# Set up the progress bar so we can keep up with how the sub-integrations 
+			# are progressing
+			pb = ProgressBar(max=nSec)
+			sys.stdout.write(pb.show()+'\r')
+			sys.stdout.flush()
+			
+			# Loop over sub-integrations (set by nSec)
 			for k in xrange(nSec):
-				blList, freq, vis = fxc.FXMaster(data[:,k*secSize:(k+1)*secSize], mapper2, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False, SampleRate=SampleRate, CentralFreq=CentralFreq, Pol=pol, ReturnBaselines=True, GainCorrect=True)
+				blList, freq, vis = fxc.FXMaster(data[:,k*secSize:(k+1)*secSize], mapper2, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False, SampleRate=dp_common.fS, CentralFreq=0.0, Pol=pol, ReturnBaselines=True, GainCorrect=True)
 
 				toUse = numpy.where( (freq>10.0e6) & (freq<88.0e6) )
 				toUse = toUse[0]
@@ -206,8 +224,14 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 				except:
 					tempVis = vis
 					
+				pb.inc(amount=1)
+				sys.stdout.write(pb.show()+'\r')
+				sys.stdout.flush()
+			
+			# Average the sub-integrations together
 			vis = tempVis / float(nSec)
 			
+			# Set up the FITS IDI file is we need to
 			if s  == 0 and pol == pols[0]:
 				pol1, pol2 = fxc.pol2pol(pol)
 				
@@ -215,10 +239,15 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 				fits.setStokes(pols)
 				fits.setFrequency(freq[toUse])
 				fits.setGeometry(site, [a for a in mapper2 if a.pol == pol1])
-
+			
+			# Add the visibilities
 			obsTime = astro.unix_to_taimjd(setTime)
 			fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, vis[:,toUse], pol=pol)
 			print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
+			
+		sys.stdout.write(pb.show()+'\r')
+		sys.stdout.write('\n')
+		sys.stdout.flush()
 
 	fits.write()
 	fits.close()
@@ -322,7 +351,7 @@ def main(args):
 		else:
 			chunk = leftToDo
 		processChunk(fh, station, good, fitsFilename, LFFT=config['LFFT'], Overlap=1, SampleRate=sampleRate,
-				ChunkSize=chunk, dataSize=dataSize)
+				ChunkSize=chunk, dataSize=dataSize, pols=config['products'])
 
 		s = s + 1
 		leftToDo = leftToDo - chunk

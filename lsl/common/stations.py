@@ -11,12 +11,12 @@ from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
 from lsl.common.constants import *
 
-__version__ = '0.6'
+__version__ = '0.7'
 __revision__ = '$Rev$'
-__all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', 'lwa1', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
+__all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
-_id2name = {'VL': 'LWA-1'}
+_id2name = {'VL': 'LWA-1', 'NA': 'LWA-2'}
 
 def status2string(code):
 	"""
@@ -235,7 +235,7 @@ class Antenna(object):
 		self.phi = float(phi)
 		
 		if fee is None:
-			self.fee = FEE('')
+			self.fee = FEE('', 0)
 		else:
 			self.fee = fee
 		self.feePort = feePort
@@ -324,6 +324,7 @@ class FEE(object):
 	"""
 	Object to store the information about a FEE.  Stores FEE:
 	  * ID name (id)
+	  * ID number (idNumber)
 	  * Gain of port 1 (gain1)
 	  * Gain of part 2 (gain2)
 	  * Status (status)
@@ -335,8 +336,9 @@ class FEE(object):
 	  * 3 == OK
 	"""
 	
-	def __init__(self, id, gain1=0, gain2=0, status=0):
+	def __init__(self, id, idNumber, gain1=0, gain2=0, status=0):
 		self.id = str(id)
+		self.idNumber = int(idNumber)
 		self.gain1 = float(gain1)
 		self.gain2 = float(gain2)
 		self.status = int(status)
@@ -1040,7 +1042,8 @@ def parseSSMIF(filename):
 	i = 1
 	fees = []
 	for id,gain1,gain2,stat in zip(feeID, feeGai1, feeGai2, feeStat):
-		fees.append(FEE(id, gain1=gain1, gain2=gain2, status=stat))
+		fees.append(FEE(id, i, gain1=gain1, gain2=gain2, status=stat))
+		i += 1
 	
 	# Build up a list of Cable instances and load them with data
 	i = 1
@@ -1096,8 +1099,11 @@ def parseSSMIF(filename):
 	return station
 
 
-_ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
-lwa1 = parseSSMIF(_ssmif)
+_ssmif1 = os.path.join(dataPath, 'lwa1-ssmif.txt')
+lwa1 = parseSSMIF(_ssmif1)
+
+_ssmif2 = os.path.join(dataPath, 'lwa2-ssmif.txt')
+lwa2 = parseSSMIF(_ssmif2)
 
 
 class PrototypeStation(LWAStation):

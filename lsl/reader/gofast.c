@@ -149,7 +149,7 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	fHeader = PyObject_GetAttrString(frame, "header");
 	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
 	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
-	PyObject_SetAttrString(fHeader, "tbwID", Py_BuildValue("i", tbwID));
+	PyObject_SetAttrString(fHeader, "tbwID", Py_BuildValue("H", tbwID));
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
 	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
@@ -279,7 +279,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	fHeader = PyObject_GetAttrString(frame, "header");
 	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
 	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
-	PyObject_SetAttrString(fHeader, "tbnID", Py_BuildValue("i", tbnID));
+	PyObject_SetAttrString(fHeader, "tbnID", Py_BuildValue("H", tbnID));
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
 	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
@@ -421,10 +421,10 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	// 1. Header
 	fHeader = PyObject_GetAttrString(frame, "header");
 	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
-	PyObject_SetAttrString(fHeader, "drxID", Py_BuildValue("i", drxID));
+	PyObject_SetAttrString(fHeader, "drxID", Py_BuildValue("B", drxID));
 	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
-	PyObject_SetAttrString(fHeader, "decimation", Py_BuildValue("i", decimation));
-	PyObject_SetAttrString(fHeader, "timeOffset", Py_BuildValue("i", timeOffset));
+	PyObject_SetAttrString(fHeader, "decimation", Py_BuildValue("H", decimation));
+	PyObject_SetAttrString(fHeader, "timeOffset", Py_BuildValue("H", timeOffset));
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
 	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
@@ -527,4 +527,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	Py_INCREF(eofError);
 	PyModule_AddObject(m, "eofError", eofError);
 	
+	// Version and revision information
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
+	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 }

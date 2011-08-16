@@ -1,0 +1,582 @@
+# ----------------------------------------------
+# --- Station Static MIB Initialization File ---
+# ----------------------------------------------
+# 2011 AUG 16 by J. Dowell
+# See MCS0031 for format info 
+# Search "FIXME" for things that need work
+
+FORMAT_VERSION 4
+STATION_ID NA
+GEO_N   +34.247
+GEO_E  -107.640
+GEO_EL 2133.6
+N_STD 20
+
+# --------------------------------------
+# --- Stand Positions  -----------------
+# --------------------------------------
+# These will be set to 0.0 for any stand #'s <= N_STD not identified
+# *** STD_LX[stand_id] [m] goes here 
+# *** STD_LY[stand_id] [m] goes here 
+# *** STD_LZ[stand_id] [m] goes here 
+STD_LX[1]   -47.527
+STD_LY[1]     9.086
+STD_LZ[1]     1.625
+STD_LX[2]   -47.940
+STD_LY[2]   -13.286
+STD_LZ[2]     1.560
+STD_LX[3]   -34.411
+STD_LY[3]   -35.887
+STD_LZ[3]     1.522
+STD_LX[4]   -10.172
+STD_LY[4]   -40.585
+STD_LZ[4]     1.378
+STD_LX[5]   -17.898
+STD_LY[5]   -18.835
+STD_LZ[5]     1.473
+STD_LX[6]   -24.588
+STD_LY[6]    11.555
+STD_LZ[6]     1.582
+STD_LX[7]   -31.546
+STD_LY[7]    32.125
+STD_LZ[7]     1.676
+STD_LX[8]   -11.095
+STD_LY[8]    41.936
+STD_LZ[8]     1.664
+STD_LX[9]   -11.354
+STD_LY[9]    23.123
+STD_LZ[9]     1.591
+STD_LX[10]    2.959
+STD_LY[10]   10.516
+STD_LZ[10]    1.460
+STD_LX[11]    3.408
+STD_LY[11]   -4.152
+STD_LZ[11]    1.426
+STD_LX[12]    6.517
+STD_LY[12]  -28.153
+STD_LZ[12]    1.379
+STD_LX[13]   10.044
+STD_LY[13]  -44.771
+STD_LZ[13]    1.262
+STD_LX[14]   22.663
+STD_LY[14]  -37.899
+STD_LZ[14]    1.246
+STD_LX[15]   24.186
+STD_LY[15]  -16.165
+STD_LZ[15]    1.338
+STD_LX[16]   15.811
+STD_LY[16]    8.904
+STD_LZ[16]    1.485
+STD_LX[17]   16.427
+STD_LY[17]   37.187
+STD_LZ[17]    1.539
+STD_LX[18]   34.232
+STD_LY[18]   27.755
+STD_LZ[18]    1.491
+STD_LX[19]   46.540
+STD_LY[19]    5.216
+STD_LZ[19]    1.358
+STD_LX[20]   37.909
+STD_LY[20]  -19.072
+STD_LZ[20]    1.260
+
+# ------------------------------------
+# --- Antenna # -> Stand # mapping ---
+# ------------------------------------
+# This will be set to floor((n-1)/2)+1 for any antenna n <= 2*N_STD not identified
+# Strongly recommmended to leave this alone, so that antennas 1 & 2 are on stand 1,
+#   antennas 3 & 4 are on stand 2, and so on.
+# *** ANT_STD[antenna_id] goes here:
+
+
+# ----------------------------
+# --- Antenna orientations ---
+# ----------------------------
+# For any antenna n <= 2*N_STD not identified, this will be set to (n-1) mod 2
+# Strongly recommended to leave this alone, so that antennas 1 & 2 are 0 (N-S) and
+#   and 1 (E-W) respectively, and so on.
+# *** ANT_ORIE[antenna_id] goes here: (0 = N-S, 1 = E-W)
+
+
+# ----------------------
+# --- Antenna Status ---
+# ----------------------
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This refers to the *antenna*, not the FEE or some combination of the two.
+# This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
+# *** ANT_STAT[antenna_id] goes here:
+ANT_STAT[2]   0
+ANT_STAT[4]   0
+ANT_STAT[6]   0
+ANT_STAT[8]   0
+ANT_STAT[10]  0
+ANT_STAT[12]  0
+ANT_STAT[14]  0
+ANT_STAT[16]  0
+ANT_STAT[18]  0
+ANT_STAT[20]  0
+ANT_STAT[22]  0
+ANT_STAT[24]  0
+ANT_STAT[26]  0
+ANT_STAT[28]  0
+ANT_STAT[30]  0
+ANT_STAT[32]  0
+ANT_STAT[34]  0
+ANT_STAT[36]  0
+ANT_STAT[38]  0
+ANT_STAT[40]  0
+
+
+# -------------------------------
+# --- Antenna mis-orientation ---
+# -------------------------------
+# These will be set to 0.0 (no error) for any antenna n <= 2*N_STD not identified
+# *** ANT_THETA[antenna_id] in degrees goes here:
+# *** ANT_PHI[antenna_id] in degrees goes here: 
+
+
+# ----------------------------------
+# --- Antenna design information ---
+# ----------------------------------
+# This will be set to 1 for any antenna #'s <= 2*N_STD not identified
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** ANT_DESI[antenna_id] goes here:
+
+
+# -------------------------------------------------------
+# --- FEEs (number, status, design, nominal gain) -------
+# -------------------------------------------------------
+N_FEE 20
+
+
+# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identified
+# *** FEE_ID[fee_id] goes here:
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any FEE #'s <= N_FEE not identified
+
+# This will be set to 1 for any FEEs not identified below
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** FEE_DESI[fee_id] goes here:
+
+# FEE_GAI1[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
+# *** FEE_GAI1[fee_id] goes here:
+# FIXME JC: Need to set to actual values to the extent that these are known to be significantly different from 35.7 dB 
+# none known
+
+# FEE_GAI2[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
+# *** FEE_GAI2[fee_id] goes here:
+# FIXME JC: Need to set to actual values to the extent that these are known to be significantly different from 35.7 dB 
+# none known
+
+
+# ------------------------------------
+# --- Antenna # -> FEE # mapping -----
+# ------------------------------------
+# Format (example) "FEE_ANT1[2] 3" means antenna 3 is connected to port 1 of FEE 2.
+# If not specified, then FEE_ANT1[1] will be 1, FEE_ANT2[1] will be 2,
+#   FEE_ANT1[2] will be 3, FEE_ANT2[2] will be 4, and so on.
+# Strongly recommmended to leave this alone, and that only exceptions are noted.
+# *** FEE_ANT1[fee_id] goes here:
+# *** FEE_ANT2[fee_id] goes here:
+
+
+# ----------------------------------------
+# --- FEE Power Source Identification ----
+# ----------------------------------------
+# Note that FEE_RACK[] and FEE_PORT[] are used by MCS only to identify power sources;
+#  the control of application of power to FEEs is controlled using ARX 
+# Format (example) "FEE_RACK[2] 3" means FEE 2 is powered via a supply in Rack 3.
+# FEE_RACK[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
+# Format (example) "FEE_PORT[2] 7" means FEE 2 is powered via port 7 on whatever rack 
+#   is specified by FEE_RACK[2].
+# FEE_PORT[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
+# *** FEE_RACK[fee_id] goes here:
+# *** FEE_PORT[fee_id] goes here:
+# All FEEs are currently on Rack 1, Port 1:
+# FIX_ME JC: verify port numbers
+FEE_RACK[1] 1
+FEE_PORT[1] 1
+FEE_RACK[1] 1
+FEE_PORT[1] 1
+FEE_RACK[2] 1
+FEE_PORT[2] 1
+FEE_RACK[3] 1
+FEE_PORT[3] 1
+FEE_RACK[4] 1
+FEE_PORT[4] 1
+FEE_RACK[5] 1
+FEE_PORT[5] 1
+FEE_RACK[6] 1
+FEE_PORT[6] 1
+FEE_RACK[7] 1
+FEE_PORT[7] 1
+FEE_RACK[8] 1
+FEE_PORT[8] 1
+FEE_RACK[9] 1
+FEE_PORT[9] 1
+FEE_RACK[10] 1
+FEE_PORT[10] 1
+FEE_RACK[11] 1
+FEE_PORT[11] 1
+FEE_RACK[12] 1
+FEE_PORT[12] 1
+FEE_RACK[13] 1
+FEE_PORT[13] 1
+FEE_RACK[14] 1
+FEE_PORT[14] 1
+FEE_RACK[15] 1
+FEE_PORT[15] 1
+FEE_RACK[16] 1
+FEE_PORT[16] 1
+FEE_RACK[17] 1
+FEE_PORT[17] 1
+FEE_RACK[18] 1
+FEE_PORT[18] 1
+FEE_RACK[19] 1
+FEE_PORT[19] 1
+FEE_RACK[20] 1
+FEE_PORT[20] 1
+
+
+# ----------------------
+# --- RPD --------------
+# ----------------------
+N_RPD 40
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
+# *** RPD_STAT[cable#] goes here:
+
+# RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
+# *** RPD_LENG[cable#] [m] goes here:
+
+
+
+# --------------------------------------
+# --- Antenna # -> cable # mapping -----
+# --------------------------------------
+# Format (example) "RPD_ANT[2] 3" means antenna 3 is connected to cable 2.
+# RPD_ANT[n] will be set to n for any cables #'s <= N_RPD not identified
+#   ...so you should only need to note exceptions here
+# Set RPD_ANT[] to the corresponding negative value to indicated that only the input is connected.
+# *** RPD_ANT[cable#] goes here:
+
+
+# ----------------------
+# --- SEP --------------
+# ----------------------
+N_SEP 520
+
+# SEP_ID[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
+# *** SEP_ID[port#] goes here:
+# FIXME JC: I think we agreed Steve Tremblay was going to provide this
+# Still working on it
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any port #'s <= N_SEP not identified
+# *** SEP_STAT[port#] goes here:
+
+# SEP_CABL[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
+# *** SEP_CABL[port#] goes here:
+
+# SEP_LENG[] will be set to 0 for any SEP port #'s <= N_SEP not identified
+# *** SEP_LENG[port#] goes here:
+
+# SEP_DESI[] be set to 1 for any SEP port #'s <= N_SEP not identified
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** SEP_DESI[port#] goes here:
+
+# SEP_GAIN[] be set to 0.0 for any SEP port #'s <= N_SEP not identified
+# *** SEP_GAIN[port] [dB] goes here:
+
+
+# -----------------------------------------
+# --- Antenna # -> SEP port # mapping -----
+# -----------------------------------------
+# Format (example) "SEP_ANT[2] 3" means antenna 3 is connected to SEP port 2.
+# SEP_ANT[n] will be set to n for any port #'s <= N_SEP not identified
+#   ... so only need to note exceptions below
+# Set SEP_ANT[] to the corresponding negative value to indicated that only the input is connected.
+# *** SEP_ANT[port#] goes here:
+
+
+# ----------------------
+# --- ASP --------------
+# ----------------------
+# Maximum (not necessarily actual) number of ARX boards:
+N_ARB 2
+# Maximum (not necessarily actual) number or channels per ARX board:
+N_ARBCH 16
+
+# ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
+# *** ARB_ID[arb#] goes here:
+ARB_ID[1] 0201
+ARB_ID[2] 0202
+
+
+# ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
+# *** ARB_DESI[arb#] goes here:
+ARB_DESI[1] 1
+ARB_DESI[1] 1
+
+# Format (example) "ARB_RACK[2] 3" means ARX board 2 is powered via a supply in Rack 2.
+# ARB_RACK[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
+# Format (example) "ARB_PORT[2] 7" means ARX board 2 is powered via port 7 (on whatever rack is specified elsewhere).
+# ARB_PORT[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
+# *** ARB_RACK[arb#] goes here:
+# *** ARB_PORT[arb#] goes here:
+ARB_RACK[1] 1
+ARB_PORT[1] 2
+ARB_RACK[2] 1
+ARB_PORT[2] 2
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any ARX board-channels not identified
+# *** ARB_STAT[arb#][ch#] goes here:
+
+# ARB_GAIN[][] will be set to 67.0 for any boards/channels not identified
+# *** ARB_GAIN[arb#][ch#] goes here:
+# ARB_STAT[4][12] 66.0 # FIXME JC: I believe this is what you told me?
+# The above, has since been fixed.
+
+
+# ----------------------------------------------
+# --- Antenna # -> ARX board-channel mapping ---
+# ----------------------------------------------
+# Format (example) "ARB_ANT[2][3] 4" means antenna 4 is connected to ARX Board 2, channel 3.
+# If not indicated otherwise, ARB_ANT[1][1] will be set to 1, ARB_ANT[1][2] will be set to 2, etc.
+#   ... so best is to note only the exceptions below.
+# Set ARB_ANT[][] to the corresponding negative value to indicated that only the input is connected.
+# *** ARB_ANT[arb#][ch#] goes here:
+ARB_ANT[1][1]    1
+ARB_ANT[1][2]    3
+ARB_ANT[1][3]    5
+ARB_ANT[1][4]    7
+ARB_ANT[1][5]    9
+ARB_ANT[1][6]   11
+ARB_ANT[1][7]   13
+ARB_ANT[1][8]   15
+ARB_ANT[1][9]   17
+ARB_ANT[1][10]  19
+ARB_ANT[1][11]  21
+ARB_ANT[1][12]  23
+ARB_ANT[1][13]  25
+ARB_ANT[1][14]  27
+ARB_ANT[1][15]  29
+ARB_ANT[1][16]  31
+ARB_ANT[2][1]   33
+ARB_ANT[2][2]   35
+ARB_ANT[2][3]   37
+ARB_ANT[2][4]   39
+
+# ----------------------------------------------
+# --- ASP input/output labeling ----------------
+# ----------------------------------------------
+# ARB_IN[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# ARB_OUT[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** ARB_IN[][] goes here:
+# FIXME JC:  Joe provides this
+# label = panel#_input#
+
+ARB_IN[1][1]   1_1
+ARB_IN[1][2]   1_2
+ARB_IN[1][3]   1_3
+ARB_IN[1][4]   1_4
+ARB_IN[1][5]   1_5
+ARB_IN[1][6]   1_6
+ARB_IN[1][7]   1_7
+ARB_IN[1][8]   1_8
+ARB_IN[1][9]   1_9
+ARB_IN[1][10] 1_10
+ARB_IN[1][11] 1_11
+ARB_IN[1][12] 1_12
+ARB_IN[1][13] 1_13
+ARB_IN[1][14] 1_14
+ARB_IN[1][15] 1_15
+ARB_IN[1][16] 1_16
+ARB_IN[2][1]  1_17
+ARB_IN[2][2]  1_18
+ARB_IN[2][3]  1_19
+ARB_IN[2][4]  1_20
+
+# *** ARB_OUT[][] goes here:
+# FIXME JC:  Joe provides this
+# label = panel#_input#_pair#
+
+ARB_OUT[1][1]  1_1_1
+ARB_OUT[1][2]  1_1_2
+ARB_OUT[1][3]  1_1_3
+ARB_OUT[1][4]  1_1_4
+ARB_OUT[1][5]  1_2_1
+ARB_OUT[1][6]  1_2_2
+ARB_OUT[1][7]  1_2_3
+ARB_OUT[1][8]  1_2_4
+ARB_OUT[1][9]  1_3_1
+ARB_OUT[1][10] 1_3_2
+ARB_OUT[1][11] 1_3_3
+ARB_OUT[1][12] 1_3_4
+ARB_OUT[1][13] 1_4_1
+ARB_OUT[1][14] 1_4_2
+ARB_OUT[1][15] 1_4_3
+ARB_OUT[1][16] 1_4_4
+ARB_OUT[2][1]  1_5_1
+ARB_OUT[2][2]  1_5_2
+ARB_OUT[2][3]  1_5_3
+ARB_OUT[2][4]  1_5_4
+
+# ----------------------
+# --- DP1 --------------
+# ----------------------
+# Maximum number of DP1 boards:
+N_DP1 1
+# Maximum number or channels per DP1 board
+N_DP1CH 20
+
+# DP1_ID[] will be set to "UNK" (no identification) for any DP1 boards not identified
+# *** DP1_ID[dp1#] goes here:
+# FIXME JC: I strongly recommend using this, to allow trouble-tracking of boards over time
+
+# DP1_SLOT[] will be set to 0 (not known/not applicable) for any DP1 boards not identified
+# *** DP1_SLOT[dp1#] goes here:
+
+# DP1_DESI[] be set to 1 for any DP1 boards not identified
+# *** DP1_DESI[dp1#] goes here:
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any DP1 board-channels not identified
+# *** DP1_STAT[dp1#][ch#] goes here:
+
+# DP1_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** DP1_INR[dp1#][ch#] goes here:
+# FIXME JC: Here's where the rack labels go...
+# unknown at this time
+
+# DP1_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** DP1_INC[dp1#][ch#] goes here:
+# FIXME JC: Here's where the chassis labels go...
+# unknown at this time
+
+
+# ----------------------------------------------
+# --- Antenna # -> DP1 board channel mapping ---
+# ----------------------------------------------
+# Format (example) "DP1_ANT[2][3] 4" means antenna 4 is connected to DP1 Board 2, channel 3.
+# DP1_ANT[1][1] will be set to 1, DP1_ANT[1][2] will be set to 2, etc., if not indicated otherwise
+#   ... so best is to note only the exceptions below.
+# DP1_ANT[][] will be set to 0 (no connection, or only connected at outout) for any boards/channels not identified
+# *** DP1_ANT[dp1#][ch#] goes here:
+DP1_ANT[1][1]    1
+DP1_ANT[1][2]    3
+DP1_ANT[1][3]    5
+DP1_ANT[1][4]    7
+DP1_ANT[1][5]    9
+DP1_ANT[1][6]   11
+DP1_ANT[1][7]   13
+DP1_ANT[1][8]   15
+DP1_ANT[1][9]   17
+DP1_ANT[1][10]  19
+DP1_ANT[1][11]  21
+DP1_ANT[1][12]  23
+DP1_ANT[1][13]  25
+DP1_ANT[1][14]  27
+DP1_ANT[1][15]  29
+DP1_ANT[1][16]  31
+DP1_ANT[1][17]  33
+DP1_ANT[1][18]  35
+DP1_ANT[1][19]  37
+DP1_ANT[1][20]  39
+
+
+# ----------------------
+# --- DP2 --------------
+# ----------------------
+# Maximum number of DP2 boards:
+N_DP2 0
+
+# DP2_ID[] will be set to "UNK" (no identification) for any DP2 boards not identified
+# *** DP2_ID[dp2#] goes here:
+
+# DP2_SLOT[] will be set to 0 (not known/not applicable) for any DP2 boards not identified
+# *** DP2_SLOT[dp2#] goes here:
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any DP2 board-channels not identified
+# *** DP2_STAT[dp2#] goes here:
+
+# DP2_DESI[] be set to 1 for any DP2 boards not identified
+# *** DP2_DESI[dp2#] goes here:
+
+
+# ----------------------
+# --- DR ---------------
+# ----------------------
+# Maximum number of DR subsystems:
+N_DR 1
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any DRs not identified
+# *** DR_STAT[dr#] goes here:
+DR_STAT[1] 3
+
+
+# DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
+# *** DR_ID[dr#] goes here:
+DR_ID[1] DR1
+
+# DR_SHLF[] will be set to 0 (not known/not applicable) for any DRs not identified
+# *** DR_SHLF[dr#] goes here:
+
+# DR_PC[] will be set to "UNK" (not known/not applicable) for any DRs not identified
+# *** DR_PC[dr#] goes here:
+DR_PC[1] T1500
+
+# 1-4 are the beam outputs, 5 is TBW/TBN
+# DR_DP[] will be set to 0 (no connection) for any DPs not identified
+# *** DR_DP[] goes here:
+DR_DP[1] 5
+
+
+# ----------------------
+# --- Power ------------
+# ----------------------
+N_PWR_RACK 1
+
+# N_PWR_PORT[] will be set to 0 (no ports) for any rack power supplies not identified
+# *** _N_PWR_PORT[rack#] goes here:
+# FIXME JC: Note below we just have rack 1 defined, with 8 ports.  Is that it?
+# changed for IOC config
+N_PWR_PORT[1] 8
+
+# Format (example) "PWR_SS[2][3] SHL" means power from Rack 2 Port 3 goes to SHL.
+# Valid values are SHL, ASP, DP , MCS, DR1, DR2, DR3, DR4, and DR5.
+# PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
+# Format (example) "PWR_NAME[2][3] MCS", assuming "PWR_SS[2][3] SHL", means power from Rack 2 Port 3 goes to SHL-MCS.
+#   For PWR SS[m][p] = SHL, valid values are MCS, others TBD
+#   For PWR SS[m][p] = ASP, valid values are MCS, FEE, ARX, FAN 
+#   For PWR SS[m][p] = DP , valid values are MCS, others TBD
+#   For PWR SS[m][p] = MCS, valid values are SCH, EXE, TP, CH, and GW.
+#   For PWR SS[m][p] = DR1, DR2, DR3, DR4, and DR5; valid values are PC, DS1 (DRSU 1), and DS2 (DRSU 2)
+# PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
+# *** PWR_SS[rack#][port#] goes here:
+# *** PWR_NAME[rack#][port#] goes here:
+PWR_SS[1][1] ASP
+PWR_NAME[1][1] FEE  
+
+PWR_SS[1][2] ASP
+PWR_NAME[1][2] ARX  
+
+PWR_SS[1][3] ASP
+PWR_NAME[1][3] FAN  
+
+PWR_SS[1][7] ASP
+PWR_NAME[1][7] MCS 
+  
+ 
+# ====================
+# === STATUS CODES ===
+# ====================
+# 3 = OK
+# 2 = Suspect; possibly bad (If used, provide warning)
+# 1 = Bad (Don't use)
+# 0 = Not Installed
