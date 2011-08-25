@@ -40,6 +40,9 @@ getFramesPerObs
 
 .. versionchanged:: 0.4.0
 	Switched over from pure Python readers to the new C-base Go Fast! readers.
+
+.. versionchanged:: 0.5.0
+	Support for ECR 11 TBN header format change.
 """
 
 import copy
@@ -51,7 +54,7 @@ from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
 from errors import *
 
-__version__ = '0.6'
+__version__ = '0.7'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
@@ -66,12 +69,18 @@ class FrameHeader(object):
 	Class that stores the information found in the header of a TBW 
 	frame.  All three fields listed in the DP ICD version H are stored as 
 	well as the original binary header data.
+	
+	.. versionchanged:: 0.5.0
+		Added various attributes to retrieve the central frequnecy 
+		and gain that are part of the ECR 11 changes.
 	"""
 
-	def __init__(self, frameCount=None, secondsCount=None, tbnID=None):
+	def __init__(self, frameCount=None, tuningWord=None, tbnID=None, gain=None):
 		self.frameCount = frameCount
-		self.secondsCount = secondsCount
+		self.tuningWord = tuningWord
 		self.tbnID = tbnID
+		self.gain = gain
+		self.sampleRate = None
 		
 	def isTBN(self):
 		"""
@@ -100,27 +109,26 @@ class FrameHeader(object):
 			
 		return (stand, pol)
 
-
-class FrameData(object):
-	"""
-	Class that stores the information found in the data section of a TBN
-	frame.  Both fields listed in the DP ICD version H are stored.
-	"""
-
-	def __init__(self, timeTag=None, iq=None):
-		self.sampleRate = None
-		self.centralFreq = None
-		self.gain = None
-		self.timeTag = timeTag
-		self.iq = iq
-
-	def getTime(self):
+	def getCentralFreq(self):
 		"""
-		Function to convert the time tag from samples since the UNIX epoch
-		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+		Convert the tuning word to a frequency in Hz.
 		"""
-		
-		return self.timeTag / dp_common.fS
+
+		return dp_common.fS * self.tuningWord / 2**32
+
+	def getGain(self):
+		"""
+		Get the current TBN gain for this frame.
+		"""
+
+		return self.gain
+
+	def setSampleRate(self, sampleRate):
+		"""
+		Function to set the sample rate of the TBN data in Hz.
+		"""
+
+		self.sampleRate = sampleRate
 
 	def getFilterCode(self):
 		"""
@@ -136,32 +144,38 @@ class FrameData(object):
 
 			return sampleCodes[self.sampleRate]
 
-	def setSampleRate(self, sampleRate):
-		"""
-		Function to set the sample rate of the TBN data in Hz.
-		"""
 
-		self.sampleRate = sampleRate
+class FrameData(object):
+	"""
+	Class that stores the information found in the data section of a TBN
+	frame.  Both fields listed in the DP ICD version H are stored.
+	
+	.. versionchanged:: 0.5.0
+		Removed various attributes related to storing a central frequnecy 
+		and gain that aren't needed with ECR 11.
+	"""
 
-	def setCentralFreq(self, centralFreq):
-		"""
-		Function to set the central frequency of the TBN data in Hz.
-		"""
+	def __init__(self, timeTag=None, iq=None):
+		self.timeTag = timeTag
+		self.iq = iq
 
-		self.centralFreq = centralFreq
-
-	def setGain(self, gain):
+	def getTime(self):
 		"""
-		Function to set the gain of the TBN data.
+		Function to convert the time tag from samples since the UNIX epoch
+		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
 		"""
-
-		self.gain = gain
+		
+		return self.timeTag / dp_common.fS
 
 
 class Frame(object):
 	"""
 	Class that stores the information contained within a single TBN 
 	frame.  It's properties are FrameHeader and FrameData objects.
+	
+	.. versionchanged:: 0.5.0
+		Removed various attributes related to storing a central frequnecy 
+		and gain that aren't needed with ECR 11.
 	"""
 
 	def __init__(self, header=None, data=None):
@@ -205,19 +219,19 @@ class Frame(object):
 
 		self.data.setSampleRate(sampleRate)
 
-	def setCentralFreq(self, centralFreq):
+	def getCentralFreq(self):
 		"""
 		Convenience wrapper for the Frame.FrameData.setCentralFreq function.
 		"""
 
-		self.data.setCentralFreq(centralFreq)
+		self.header.getCentralFreq()
 
-	def setGain(self, gain):
+	def getGain(self):
 		"""
 		Convenience wrapper for the Frame.FrameData.setGain function.
 		"""
 
-		self.data.setGain(gain)
+		self.header.getGain()
 			
 	def __add__(self, y):
 		"""

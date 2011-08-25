@@ -11,7 +11,7 @@ from lsl.common.dp import fS
 from lsl.reader import tbn
 from errors import *
 
-__version__ = '0.1'
+__version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
 
@@ -34,15 +34,17 @@ def frame2frame(tbnFrame):
 	rawFrame[5] = (tbnFrame.header.frameCount>>16) & 255
 	rawFrame[6] = (tbnFrame.header.frameCount>>8) & 255
 	rawFrame[7] = tbnFrame.header.frameCount & 255
-	## Seconds count
-	rawFrame[8] = (tbnFrame.header.secondsCount>>24) & 255
-	rawFrame[9] = (tbnFrame.header.secondsCount>>16) & 255
-	rawFrame[10] = (tbnFrame.header.secondsCount>>8) & 255
-	rawFrame[11] = tbnFrame.header.secondsCount & 255
+	## Tuning word
+	rawFrame[8] = (tbnFrame.header.tuningWord>>24) & 255
+	rawFrame[9] = (tbnFrame.header.tuningWord>>16) & 255
+	rawFrame[10] = (tbnFrame.header.tuningWord>>8) & 255
+	rawFrame[11] = tbnFrame.header.tuningWord & 255
 	## TBN ID
 	rawFrame[12] = (tbnFrame.header.tbnID>>8) & 255
 	rawFrame[13] = tbnFrame.header.tbnID & 255
-	## NB: Next two bytes are unsigned
+	## Gain
+	rawFrame[14] = (tbnFrame.header.gain>>8) & 255
+	rawFrame[15] = tbnFrame.header.gain & 255
 	
 	# Part 2: The data
 	## Time tag
@@ -78,12 +80,14 @@ class SimFrame(tbn.Frame):
 	this method can be written to a file via the methods writeRawFrame() function.
 	"""
 
-	def __init__(self, stand=None, pol=None, frameCount=None, obsTime=None, iq=None):
+	def __init__(self, stand=None, pol=None, centralFreq=None, gain=None, frameCount=None, obsTime=None, iq=None):
 		"""
 		Given a list of parameters, build a tbn.SimFrame object.  The parameters
 		needed are:
 		  * stand id (>0 & <259)
 		  * polarization (0 for x, or 1 for y)
+                  * central frequency of tuning in (Hz)
+		  * TBN gain
 		  * which frame number to create
 		  * observation time in samples at fS since the epoch
 		  * 1-D numpy array representing the frame I/Q (complex) data
@@ -93,10 +97,15 @@ class SimFrame(tbn.Frame):
 
 		.. versionchanged:: 0.3.4
 			obsTime now in samples at fS, not seconds
+
+		.. versionchanged:: 0.5.0
+			Added support for ECR 11 TBN headers
 		"""
 		
 		self.stand = stand
 		self.pol = pol
+		self.freq = freq
+		self.gain = gain
 		self.frameCount = frameCount
 		self.obsTime = obsTime
 		self.iq = iq
@@ -111,8 +120,9 @@ class SimFrame(tbn.Frame):
 		"""
 		
 		self.header.frameCount = self.frameCount
-		self.header.secondsCount = long(self.obsTime / fS)
+		self.header.tuningWOrd = long( round(self.freq/fS*2**32) )
 		self.header.tbnID = 2*(self.stand-1) + self.pol + 1
+		self.header.gain = self.gain
 		
 		self.data.timeTag = self.obsTime
 		self.data.iq = self.iq
@@ -129,6 +139,8 @@ class SimFrame(tbn.Frame):
 		## Header
 		self.stand = self.header.parseID()[0]
 		self.pol = self.header.parseID()[1]
+		self.freq = self.header.getCentralFreq()
+		self.gain = self.header.getGain()
 		self.frameCount = self.header.frameCount
 		## Data
 		self.obsTime = self.data.timeTag

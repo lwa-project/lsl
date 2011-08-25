@@ -253,10 +253,12 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	}
 	unsigned long int frameCount;
 	frameCount = bytes[5]<<16 | bytes[6]<<8 | bytes[7];
-	unsigned long int secondsCount;
-	secondsCount = bytes[8]<<24 | bytes[9]<<16 | bytes[10]<<8 | bytes[11];
+	unsigned long int tuningWord;
+	tuningWord = bytes[8]<<24 | bytes[9]<<16 | bytes[10]<<8 | bytes[11];
 	unsigned short int tbnID;
 	tbnID = bytes[12]<<8 | bytes[13];
+	unsigned short int gain;
+	gain = bytes[14]<<8 | bytes[15];
 
 	unsigned long long timeTag;
 	timeTag = ((unsigned long long) bytes[16])<<56 | \
@@ -298,12 +300,16 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	PyObject_SetAttrString(fHeader, "frameCount", temp);
 	Py_XDECREF(temp);
 
-	temp = PyLong_FromUnsignedLong(secondsCount);
-	PyObject_SetAttrString(fHeader, "secondsCount", temp);
+	temp = PyLong_FromUnsignedLong(tuningWord);
+	PyObject_SetAttrString(fHeader, "tuningWord", temp);
 	Py_XDECREF(temp);
 
 	temp = Py_BuildValue("H", tbnID);
 	PyObject_SetAttrString(fHeader, "tbnID", temp);
+	Py_XDECREF(temp);
+
+	temp = Py_BuildValue("H", gain);
+	PyObject_SetAttrString(fHeader, "gain", temp);
 	Py_XDECREF(temp);
 
 	// 2. Data
@@ -583,7 +589,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "eofError", eofError);
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 }

@@ -17,6 +17,7 @@
   * Added `keep` option to tbnSpectra.py to only display a certain collection of stands
   * Possibly cleared up a install problem on some systems that prevents testing
   * Fixed various memory leaks in the readers and the direct DRSU access module
+  * Added `documentation support` for accessing the central frequency of a TBN frame
 
 0.4.3
   * Cleaned up the various __init__.py scripts

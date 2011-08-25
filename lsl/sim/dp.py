@@ -19,7 +19,7 @@ from lsl.correlator import uvUtils
 from lsl.reader.tbn import filterCodes as TBNFilters
 from lsl.reader.drx import filterCodes as DRXFilters
 
-__version__ = '0.2'
+__version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['basicSignal', 'pointSource', '__version__', '__revision__', '__all__']
 
@@ -32,6 +32,7 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 	tStart = kwargs['tStart']
 	bits = kwargs['bits']
 	verbose = kwargs['verbose']
+	noiseStrength = kwarg['noiseStrength']
 	
 	if bits == 12:
 		maxValue = 2047
@@ -59,17 +60,17 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 				
 				cFrame = tbw.SimFrame(stand=stand1, frameCount=i+1, dataBits=bits, obsTime=t)
 				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-				cFrame.xy[0,:] *= maxValue/15.0
+				cFrame.xy[0,:] *= maxValue*noiseStrength
 				cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*40.0e6*tFrame)
-				cFrame.xy[1,:] *= maxValue/15.0
+				cFrame.xy[1,:] *= maxValue*noiseStrength
 				cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*60.0e6*tFrame)
 				cFrame.writeRawFrame(fh)
 
 				cFrame = tbw.SimFrame(stand=stand2, frameCount=i+1, dataBits=bits, obsTime=t)
 				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-				cFrame.xy[0,:] *= maxValue/15.0
+				cFrame.xy[0,:] *= maxValue*noiseStrength
 				cFrame.xy[0,:] += maxValue*numpy.cos(2*numpy.pi*30.0e6*tFrame)
-				cFrame.xy[1,:] *= maxValue/15.0
+				cFrame.xy[1,:] *= maxValue*noiseStrength
 				cFrame.xy[1,:] += maxValue*numpy.cos(2*numpy.pi*50.0e6*tFrame)
 				cFrame.writeRawFrame(fh)
 
@@ -82,6 +83,7 @@ def __basicTBN(fh, stands, nFrames, **kwargs):
 	tStart = kwargs['tStart']
 	filter = kwargs['filter']
 	verbose = kwargs['verbose']
+	noiseStrength = kwarg['noiseStrength']
 	sampleRate = TBNFilters[filter]
 	
 	maxValue = 127
@@ -98,17 +100,17 @@ def __basicTBN(fh, stands, nFrames, **kwargs):
 		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
 		tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 		for stand in stands:
-			cFrame = tbn.SimFrame(stand=stand, pol=0, frameCount=i+1, obsTime=t)
+			cFrame = tbn.SimFrame(stand=stand, pol=0, freq=40e6, gain=20, frameCount=i+1, obsTime=t)
 			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-			cFrame.iq *= maxValue/15.0
+			cFrame.iq *= maxValue*noiseStrength
 			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike*tFrame)
 			cFrame.writeRawFrame(fh)
 
-			cFrame = tbn.SimFrame(stand=stand, pol=1, frameCount=i+1, obsTime=t)
+			cFrame = tbn.SimFrame(stand=stand, pol=1, freq=40e6, gain=20, frameCount=i+1, obsTime=t)
 			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-			cFrame.iq *= maxValue/15.0
+			cFrame.iq *= maxValue*noiseStrength
 			cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
 			cFrame.writeRawFrame(fh)
 
@@ -121,6 +123,7 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 	filter = kwargs['filter']
 	nTuning = kwargs['nTuning']
 	verbose = kwargs['verbose']
+	noiseStrength = kwarg['noiseStrength']
 	sampleRate = DRXFilters[filter]
 	
 	maxValue = 7
@@ -146,14 +149,14 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 					cFrame = drx.SimFrame(beam=beam, tune=1, pol=0, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
 					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-					cFrame.iq *= maxValue/15.0
+					cFrame.iq *= maxValue*noiseStrength
 					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike1*tFrame)
 					cFrame.writeRawFrame(fh)
 			
 					cFrame = drx.SimFrame(beam=beam, tune=1, pol=1, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
 					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-					cFrame.iq *= maxValue/15.0
+					cFrame.iq *= maxValue*noiseStrength
 					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike1*tFrame)
 					cFrame.writeRawFrame(fh)
 				else:
@@ -161,19 +164,19 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 					cFrame = drx.SimFrame(beam=beam, tune=2, pol=0, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
 					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-					cFrame.iq *= maxValue/15.0
+					cFrame.iq *= maxValue*noiseStrength
 					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike2*tFrame)
 					cFrame.writeRawFrame(fh)
 			
 					cFrame = drx.SimFrame(beam=beam, tune=2, pol=1, frameCount=i+1, filterCode=filter, timeOffset=0, obsTime=t, flags=0)
 					cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 					cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-					cFrame.iq *= maxValue/15.0
+					cFrame.iq *= maxValue*noiseStrength
 					cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike2*tFrame)
 					cFrame.writeRawFrame(fh)
 
 
-def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, tStart=0, verbose=False):
+def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, tStart=0, noiseStength=0.1, verbose=False):
 	"""
 	Generate a collection of frames with a basic test signal for TBW, TBN, 
 	and DRX.  The signals for the three modes are:
@@ -201,17 +204,21 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, t
 	either 12-bit or 4-bit data.  The TBN and DRX frames need the 'filter'
 	keyword set to specify the filter width.  In addition, the 'stands' 
 	argument is interpreted as beam numbers for DRX.
+	
+	.. versionchanged:: 0.4.4
+		Added the `noiseStrength` keyword to control how much noise is added to 
+		the data.
 	"""
 
 	if tStart == 0:
 		tStart = time.time()
 
 	if mode == 'TBW':
-		__basicTBW(fh, stands, nFrames, bits=bits, tStart=tStart, verbose=verbose)
+		__basicTBW(fh, stands, nFrames, bits=bits, tStart=tStart, noiseStrengh=noiseStrength, verbose=verbose)
 	elif mode == 'TBN':
-		__basicTBN(fh, stands, nFrames, filter=filter, tStart=tStart, verbose=verbose)
+		__basicTBN(fh, stands, nFrames, filter=filter, tStart=tStart, noiseStrengh=noiseStrength, verbose=verbose)
 	elif mode == 'DRX':
-		__basicDRX(fh, stands, nFrames, filter=filter, nTuning=nTuning, tStart=tStart, verbose=verbose)
+		__basicDRX(fh, stands, nFrames, filter=filter, nTuning=nTuning, tStart=tStart, noiseStrengh=noiseStrength, verbose=verbose)
 	else:
 		raise RuntimeError("Unknown observations mode: %s" % mode)
 
@@ -338,6 +345,7 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 	tStart = kwargs['tStart']
 	phaseCenter = kwargs['phaseCenter']
 	verbose = kwargs['verbose']
+	noiseStrength = kwargs['noiseStrength']
 	
 	sampleRate = dp_common.fS
 	freqs = (numpy.fft.fftfreq(1024, d=1.0/sampleRate))[1:512]
@@ -378,15 +386,17 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 
 				cFrame = tbw.SimFrame(stand=stand1.stand.id, frameCount=i+1, dataBits=bits, obsTime=t)
 				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-				cFrame.xy[0,:] = tdSignalsX.real[j,:]
-				cFrame.xy[1,:] = tdSignalsY.real[j,:]
+				cFrame.xy *= maxValue*noiseStrength
+				cFrame.xy[0,:] += maxValue*tdSignalsX.real[j,:]
+				cFrame.xy[1,:] += maxvalue*tdSignalsY.real[j,:]
 				
 				cFrame.writeRawFrame(fh)
 
 				cFrame = tbw.SimFrame(stand=stand2.stand.id, frameCount=i+1, dataBits=bits, obsTime=t)
 				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
-				cFrame.xy[0,:] = tdSignalsX.real[k,:]
-				cFrame.xy[1,:] = tdSignalsY.real[k,:]
+				cFrame.xy *= maxValue*noiseStrength
+				cFrame.xy[0,:] += maxValue*tdSignalsX.real[k,:]
+				cFrame.xy[1,:] += maxValue*tdSignalsY.real[k,:]
 				
 				cFrame.writeRawFrame(fh)
 
@@ -401,6 +411,7 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 	tStart = kwargs['tStart']
 	phaseCenter = kwargs['phaseCenter']
 	verbose = kwargs['verbose']
+	noiseStrength = kwargs['noiseStrength']
 	
 	sampleRate = TBNFilters[filter]
 	maxValue = 127
@@ -427,20 +438,26 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 		
 		j = 0
 		for stand in stands:
-			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=0, frameCount=i+1, obsTime=t)
-			cFrame.iq = tdSignalsX[j,:].astype(numpy.singlecomplex)
+			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=0, freq=CentralFreq, gain=19, frameCount=i+1, obsTime=t)
+			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+			cFrame.iq *= maxValue*noiseStrength
+			cFrame.iq += mavValue*tdSignalsX[j,:].astype(numpy.singlecomplex)
 			
 			cFrame.writeRawFrame(fh)
 
-			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=1, frameCount=i+1, obsTime=t)
-			cFrame.iq = tdSignalsY[j,:].astype(numpy.singlecomplex)
+			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=1, freq=CentralFreq, gain=19, frameCount=i+1, obsTime=t)
+			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+			cFrame.iq *= maxValue*noiseStrength
+			cFrame.iq += maxValue*tdSignalsY[j,:].astype(numpy.singlecomplex)
 			
 			cFrame.writeRawFrame(fh)
 			
 			j += 1
 
 
-def pointSource(fh, stands, src, nFrames, mode='TBN', CentralFreq=49.0e6, filter=7, bits=12, tStart=0, phaseCenter='z', verbose=False):
+def pointSource(fh, stands, src, nFrames, mode='TBN', CentralFreq=49.0e6, filter=7, bits=12, tStart=0, phaseCenter='z', noiseStrength=0.1, verbose=False):
 	"""
 	Generate a collection of frames with a point source signal for TBW
 	and TBN.  The point source is specified as a aipy.src object.
@@ -449,14 +466,18 @@ def pointSource(fh, stands, src, nFrames, mode='TBN', CentralFreq=49.0e6, filter
 	frames to generate.  TBW also needs to `bits' keyword set to generate 
 	either 12-bit or 4-bit data.  The TBN frames need the `filter' keyword 
 	set to specify the filter width.
+	
+	.. versionchanged:: 0.4.4
+		Added the `noiseStrength` keyword to control how much noise is added to 
+		the data.
 	"""
 
 	if tStart == 0:
 		tStart = time.time()
 
 	if mode == 'TBW':
-		__pointSourceTBW(fh, stands, src, nFrames, bits=bits, tStart=tStart, phaseCenter=phaseCenter, verbose=verbose)
+		__pointSourceTBW(fh, stands, src, nFrames, bits=bits, tStart=tStart, phaseCenter=phaseCenter, noiseStrength=noiseStrength, verbose=verbose)
 	elif mode == 'TBN':
-		__pointSourceTBN(fh, stands, src, nFrames, CentralFreq=CentralFreq, filter=filter, tStart=tStart, phaseCenter=phaseCenter, verbose=verbose)
+		__pointSourceTBN(fh, stands, src, nFrames, CentralFreq=CentralFreq, filter=filter, tStart=tStart, phaseCenter=phaseCenter, noiseStrength=noiseStrength, verbose=verbose)
 	else:
 		raise RuntimeError("Unknown observations mode: %s" % mode)
