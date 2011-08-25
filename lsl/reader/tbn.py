@@ -221,17 +221,17 @@ class Frame(object):
 
 	def getCentralFreq(self):
 		"""
-		Convenience wrapper for the Frame.FrameData.setCentralFreq function.
+		Convenience wrapper for the Frame.FrameHeader.getCentralFreq function.
 		"""
 
-		self.header.getCentralFreq()
+		return self.header.getCentralFreq()
 
 	def getGain(self):
 		"""
-		Convenience wrapper for the Frame.FrameData.setGain function.
+		Convenience wrapper for the Frame.FrameHeader.getGain function.
 		"""
 
-		self.header.getGain()
+		return self.header.getGain()
 			
 	def __add__(self, y):
 		"""

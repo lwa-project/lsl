@@ -78,7 +78,6 @@ class simdp_tests(unittest.TestCase):
 		frame = tbn.readFrame(fh)
 		fh.close()
 		self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
-		self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
 
 	def test_point_tbw(self):
 		"""Test building a point source TBW signal"""
@@ -129,7 +128,6 @@ class simdp_tests(unittest.TestCase):
 		frame = tbn.readFrame(fh)
 		fh.close()
 		self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
-		self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
 
 	def test_basic_drx(self):
 		"""Test building a basic DRX signal"""
