@@ -62,8 +62,6 @@ class sdfits_tests(unittest.TestCase):
 		if not vanilla:
 			# Set some values for the other meta-data
 			for frame in frames:
-				frame.setCentralFreq(40e6)
-				frame.setGain(22)
 				frame.setSampleRate(100000)
 
 		return frames
@@ -204,7 +202,6 @@ class sdfits_tests(unittest.TestCase):
 		# Load it in
 		fits = sdfits.TBN(testFile, LFFT=256, UseQueue=False)
 		fits.setSampleRate(100000)
-		fits.setCentralFrequency(49.0e6)
 		for frame in frames:
 			fits.addStandData(frame)
 		fits.close()
@@ -266,7 +263,6 @@ class sdfits_tests(unittest.TestCase):
 		# Load it in
 		fits = sdfits.TBN(testFile, LFFT=256, UseQueue=False)
 		fits.setSampleRate(100000)
-		fits.setCentralFrequency(49.0e6)
 		for frame in frames:
 			fits.addStandData(frame)
 		fits.close()

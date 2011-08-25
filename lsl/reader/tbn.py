@@ -210,14 +210,14 @@ class Frame(object):
 		Convenience wrapper for the Frame.FrameData.getFilterCode function.
 		"""
 
-		return self.data.getFilterCode()
+		return self.header.getFilterCode()
 
 	def setSampleRate(self, sampleRate):
 		"""
 		Convenience wrapper for the Frame.FrameData.setSampleRate function.
 		"""
 
-		self.data.setSampleRate(sampleRate)
+		self.header.setSampleRate(sampleRate)
 
 	def getCentralFreq(self):
 		"""

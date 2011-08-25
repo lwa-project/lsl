@@ -32,7 +32,7 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 	tStart = kwargs['tStart']
 	bits = kwargs['bits']
 	verbose = kwargs['verbose']
-	noiseStrength = kwarg['noiseStrength']
+	noiseStrength = kwargs['noiseStrength']
 	
 	if bits == 12:
 		maxValue = 2047
@@ -83,7 +83,7 @@ def __basicTBN(fh, stands, nFrames, **kwargs):
 	tStart = kwargs['tStart']
 	filter = kwargs['filter']
 	verbose = kwargs['verbose']
-	noiseStrength = kwarg['noiseStrength']
+	noiseStrength = kwargs['noiseStrength']
 	sampleRate = TBNFilters[filter]
 	
 	maxValue = 127
@@ -123,7 +123,7 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 	filter = kwargs['filter']
 	nTuning = kwargs['nTuning']
 	verbose = kwargs['verbose']
-	noiseStrength = kwarg['noiseStrength']
+	noiseStrength = kwargs['noiseStrength']
 	sampleRate = DRXFilters[filter]
 	
 	maxValue = 7
@@ -176,7 +176,7 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 					cFrame.writeRawFrame(fh)
 
 
-def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, tStart=0, noiseStength=0.1, verbose=False):
+def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, tStart=0, noiseStrength=0.1, verbose=False):
 	"""
 	Generate a collection of frames with a basic test signal for TBW, TBN, 
 	and DRX.  The signals for the three modes are:
@@ -214,11 +214,11 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, t
 		tStart = time.time()
 
 	if mode == 'TBW':
-		__basicTBW(fh, stands, nFrames, bits=bits, tStart=tStart, noiseStrengh=noiseStrength, verbose=verbose)
+		__basicTBW(fh, stands, nFrames, bits=bits, tStart=tStart, noiseStrength=noiseStrength, verbose=verbose)
 	elif mode == 'TBN':
-		__basicTBN(fh, stands, nFrames, filter=filter, tStart=tStart, noiseStrengh=noiseStrength, verbose=verbose)
+		__basicTBN(fh, stands, nFrames, filter=filter, tStart=tStart, noiseStrength=noiseStrength, verbose=verbose)
 	elif mode == 'DRX':
-		__basicDRX(fh, stands, nFrames, filter=filter, nTuning=nTuning, tStart=tStart, noiseStrengh=noiseStrength, verbose=verbose)
+		__basicDRX(fh, stands, nFrames, filter=filter, nTuning=nTuning, tStart=tStart, noiseStrength=noiseStrength, verbose=verbose)
 	else:
 		raise RuntimeError("Unknown observations mode: %s" % mode)
 
@@ -388,7 +388,7 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 				cFrame.xy = numpy.random.randn(2, samplesPerFrame)
 				cFrame.xy *= maxValue*noiseStrength
 				cFrame.xy[0,:] += maxValue*tdSignalsX.real[j,:]
-				cFrame.xy[1,:] += maxvalue*tdSignalsY.real[j,:]
+				cFrame.xy[1,:] += maxValue*tdSignalsY.real[j,:]
 				
 				cFrame.writeRawFrame(fh)
 

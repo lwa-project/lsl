@@ -302,7 +302,7 @@ class fake_TBN_tests(unittest.TestCase):
 		# Test raw header values
 		self.assertTrue(fakeFrame.header.isTBN())
 		self.assertEqual(fakeFrame.header.frameCount, origFrame.header.frameCount)
-		self.assertEqual(fakeFrame.header.secondsCount, origFrame.header.secondsCount)
+		self.assertEqual(fakeFrame.header.tuningWord, origFrame.header.tuningWord)
 		
 		# Test raw data values
 		self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
