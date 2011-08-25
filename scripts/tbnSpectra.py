@@ -185,6 +185,7 @@ def main(args):
 	# of the frame.  This is needed to get the list of stands.
 	junkFrame = tbn.readFrame(fh)
 	fh.seek(0)
+	centralFreq = junkFrame.getCentralFreq()
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
 
 	# File summary
@@ -192,6 +193,7 @@ def main(args):
 	print "Date of First Frame: %s" % str(beginDate)
 	print "Ant/Pols: %i" % antpols
 	print "Sample Rate: %i Hz" % srate
+	print "Tuning Frequency: %.3f Hz" % centralFreq
 	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate)
 	print "---"
 	print "Offset: %.3f s (%i frames)" % (config['offset'], offset)
@@ -319,6 +321,7 @@ def main(args):
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
 	# Put the frequencies in the best units possible
+	freq += centralFreq
 	freq, units = bestFreqUnits(freq)
 	
 	# Deal with the `keep` options

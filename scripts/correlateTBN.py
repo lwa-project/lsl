@@ -53,7 +53,6 @@ Usage: correlateTBN.py [OPTIONS] file
 Options:
 -h, --help             Display this help information
 -m, --metadata         Name of SSMIF file to use for mappings
--c, --central-freq     Central frequency of the observations in MHz
 -f, --fft-length       Set FFT length (default = 512)
 -t, --avg-time         Window to average visibilities in time (seconds; 
                        default = 6 s)
@@ -80,7 +79,6 @@ def parseConfig(args):
 	config['SSMIF'] = ''
 	config['avgTime'] = 6
 	config['LFFT'] = 256
-	config['cFreq'] = 77.0e6
 	config['samples'] = 10
 	config['offset'] = 0
 	config['verbose'] = True
@@ -89,7 +87,7 @@ def parseConfig(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hm:qc:l:t:s:o:24xy", ["help", "metadata=", "quiet", "central-freq=", "fft-length=", "avg-time=", "samples=", "offset=", "two-products", "four-products", "xx", "yy"])
+		opts, arg = getopt.getopt(args, "hm:ql:t:s:o:24xy", ["help", "metadata=", "quiet", "fft-length=", "avg-time=", "samples=", "offset=", "two-products", "four-products", "xx", "yy"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -103,8 +101,6 @@ def parseConfig(args):
 			config['SSMIF'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
-		elif opt in ('-c', '--central-freq'):
-			config['cFreq'] = float(value)*1e6
 		elif opt in ('-l', '--fft-length'):
 			config['LFFT'] = int(value)
 		elif opt in ('-t', '--avg-time'):
@@ -288,6 +284,7 @@ def main(args):
 	test = tbn.readFrame(fh)
 	if not test.header.isTBN():
 		raise errors.notTBNError()
+	centralFreq = test.getCentralFreq()
 	fh.seek(0)
 
 	jd = astro.unix_to_utcjd(test.getTime())
@@ -336,8 +333,9 @@ def main(args):
 
 	print "TBN Data:  %s" % test.header.isTBN()
 	print "Samples per observations: %i per pol." % (nFpO/2)
-	print "Filter code is: %i" % tbn.getSampleRate(fh, nFrames=nFpO, FilterCode=True)
-	print "Sampling rate is: %i Hz" % sampleRate
+	print "Filter code: %i" % tbn.getSampleRate(fh, nFrames=nFpO, FilterCode=True)
+	print "Sampling rate: %i Hz" % sampleRate
+	print "Tuning frequency: %.3f Hz" % centralFreq
 	print "Captures in file: %i (%.1f s)" % (nInts, nInts*512 / sampleRate)
 	print "=="
 	print "Station: %s" % station.name
@@ -364,7 +362,7 @@ def main(args):
 			chunk = leftToDo
 		
 		processChunk(fh, station, good, fitsFilename, intTime=config['avgTime'], LFFT=config['LFFT'], 
-					Overlap=1, CentralFreq=config['cFreq'], SampleRate=sampleRate, 
+					Overlap=1, CentralFreq=centralFreq, SampleRate=sampleRate, 
 					pols=config['products'], ChunkSize=chunk)
 
 		s += 1

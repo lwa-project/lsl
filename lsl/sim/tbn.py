@@ -86,7 +86,7 @@ class SimFrame(tbn.Frame):
 		needed are:
 		  * stand id (>0 & <259)
 		  * polarization (0 for x, or 1 for y)
-                  * central frequency of tuning in (Hz)
+		  * central frequency of tuning in (Hz)
 		  * TBN gain
 		  * which frame number to create
 		  * observation time in samples at fS since the epoch
@@ -104,7 +104,7 @@ class SimFrame(tbn.Frame):
 		
 		self.stand = stand
 		self.pol = pol
-		self.freq = freq
+		self.freq = centralFreq
 		self.gain = gain
 		self.frameCount = frameCount
 		self.obsTime = obsTime

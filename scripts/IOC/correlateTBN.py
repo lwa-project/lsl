@@ -304,6 +304,7 @@ def main(args):
 	test = tbn.readFrame(fh)
 	if not test.header.isTBN():
 		raise errors.notTBNError()
+	centralFreq = test.getCentralFreq()
 	fh.seek(0)
 
 	jd = astro.unix_to_utcjd(test.getTime())
@@ -352,9 +353,9 @@ def main(args):
 
 	print "TBN Data:  %s" % test.header.isTBN()
 	print "Samples per observations: %i per pol." % (nFpO/2)
-	print "Filter code is: %i" % tbn.getSampleRate(fh, nFrames=nFpO, FilterCode=True)
-	print "Sampling rate is: %i Hz" % sampleRate
-	print "Tuning: %.4f MHz" % (cObs.frequency1/1e6,)
+	print "Filter code: %i" % tbn.getSampleRate(fh, nFrames=nFpO, FilterCode=True)
+	print "Sampling rate: %i Hz" % sampleRate
+	print "Tuning frequency: %.3f Hz" % centralFreq
 	print "Captures in file: %i (%.1f s)" % (nInts, nInts*512 / sampleRate)
 	print "=="
 	print "Station: %s" % station.name
@@ -381,7 +382,7 @@ def main(args):
 			chunk = leftToDo
 		
 		processChunk(fh, station, good, fitsFilename, intTime=config['avgTime'], LFFT=config['LFFT'], 
-					Overlap=1, CentralFreq=cObs.frequency1, SampleRate=sampleRate, 
+					Overlap=1, CentralFreq=centralFreq, SampleRate=sampleRate, 
 					pols=config['products'], ChunkSize=chunk)
 
 		s += 1

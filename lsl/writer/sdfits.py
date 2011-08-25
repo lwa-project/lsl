@@ -111,15 +111,6 @@ class SDFITS(object):
 		if self.mode != 'TBW':
 			self.sampleRate = sampleRate
 
-	def setCentralFrequency(self, centralFreq):
-		"""
-		Set the central frequency in Hz of the data for TBN and DRX 
-		observations.
-		"""
-
-		if self.mode != 'TBW':
-			self.centralFreq = centralFreq
-
 	def __findExtension(self, stand):
 		"""
 		Private function to find out which extension stores the stand in 
@@ -185,9 +176,11 @@ class SDFITS(object):
 				# Time
 				c3 = pyfits.Column(name='time', format='1D', array=numpy.array([0, 0], dtype=numpy.int16))
 			else:
+				centralFreq = frame.getCentralFreq()
 				data = frame.data.iq
 				data.shape = (1,data.shape[0])
 				freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
+				freq += centralFreq
 				framePS.shape = (1,framePS.shape[0])
 
 				# Data - power spectrum
@@ -258,9 +251,11 @@ class SDFITS(object):
 				tempHDU.data.field('pol')[nrows+1] = numpy.array([1], dtype=numpy.int16)
 				tempHDU.data.field('time')[nrows+1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
 			else:
+				centralFreq = frame.getCentralFreq()
 				data = frame.data.iq
 				data.shape = (1,data.shape[0])
 				freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
+				freq += centralFreq
 				framePS.shape = (1,framePS.shape[0])
 
 				tempHDU = self.__makeAppendTable(extension, AddRows=1)
@@ -305,9 +300,11 @@ class SDFITS(object):
 					# Time
 					c3 = pyfits.Column(name='time', format='1D', array=numpy.array([0, 0], dtype=numpy.int16))
 				else:
+					centralFreq = frame.getCentralFreq()
 					data = frame.data.iq
 					data.shape = (1,data.shape[0])
 					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
+					freq += centralFreq
 					framePS.shape = (1,framePS.shape[0])
 
 					# Data - power spectrum
@@ -384,9 +381,11 @@ class SDFITS(object):
 			else:
 				tempHDU = self.__makeAppendTable(extension, AddRows=(self.queueLimit-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
+					centralFreq = frame.getCentralFreq()
 					data = frame.data.iq
 					data.shape = (1,data.shape[0])
 					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
+					freq += centralFreq
 					framePS.shape = (1,framePS.shape[0])
 
 					stand,pol = frame.parseID()
@@ -428,9 +427,11 @@ class SDFITS(object):
 					# Time
 					c3 = pyfits.Column(name='time', format='1D', array=numpy.array([0, 0], dtype=numpy.int16))
 				else:
+					centralFreq = frame.getCentralFreq()
 					data = frame.data.iq
 					data.shape = (1,data.shape[0])
 					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
+					freq += centralFreq
 
 					# Data - power spectrum
 					c1 = pyfits.Column(name='data', format='%iD' % (self.fftLength-1), array=framePS.astype(numpy.float_))
@@ -510,9 +511,11 @@ class SDFITS(object):
 			else:
 				tempHDU = self.__makeAppendTable(extension, AddRows=(queueSize-start))
 				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
+					centralFreq = frame.getCentralFreq()
 					data = frame.data.iq
 					data.shape = (1,data.shape[0])
 					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
+					freq += centralFreq
 					framePS.shape = (1,framePS.shape[0])
 
 					stand,pol = frame.parseID()

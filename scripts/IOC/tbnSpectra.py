@@ -197,6 +197,7 @@ def main(args):
 	# of the frame.  This is needed to get the list of stands.
 	junkFrame = tbn.readFrame(fh)
 	fh.seek(0)
+	centralFreq = junkFrame.getCentralFreq()
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
 
 	# File summary
@@ -204,8 +205,7 @@ def main(args):
 	print "Date of First Frame: %s" % str(beginDate)
 	print "Ant/Pols: %i" % antpols
 	print "Sample Rate: %i Hz" % srate
-	if cObs is not None:
-		print "Tuning: %.4f MHz" % (cObs.frequency1/1e6,)
+	print "Tuning Frequency: %.3f Hz" % centralFreq
 	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate)
 	print "---"
 	print "Offset: %.3f s (%i frames)" % (config['offset'], offset)
@@ -332,11 +332,8 @@ def main(args):
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
 
-	# Apply what we know from the meta-data bundle to the frequencies
-	if cObs is not None:
-		freq = freq + cObs.frequency1
-
 	# Put the frequencies in the best units possible
+	freq += centralFreq
 	freq, units = bestFreqUnits(freq)
 	
 	for i in xrange(int(numpy.ceil(antpols/20))):

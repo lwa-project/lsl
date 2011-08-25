@@ -63,8 +63,6 @@ class tsfits_tests(unittest.TestCase):
 		if not vanilla:
 			# Set some values for the other meta-data
 			for frame in frames:
-				frame.setCentralFreq(40e6)
-				frame.setGain(22)
 				frame.setSampleRate(100000)
 
 		return frames
