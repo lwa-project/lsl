@@ -503,8 +503,8 @@ class TSFITS(object):
 			except:
 				if frame.getFilterCode() is not None:
 					self.hdulist[0].header.update('FILTER', frame.getFilterCode())
-				if frame.data.gain is not None:
-					self.hdulist[0].header.update('GAIN', frame.data.gain)
+				if frame.header.gain is not None:
+					self.hdulist[0].header.update('GAIN', frame.header.gain)
 				if frame.header.tuningWord is not None:
 					self.hdulist[0].header.update('FREQ', frame.getCentralFreq())
 				self.flush()

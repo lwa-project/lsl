@@ -438,7 +438,7 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 		
 		j = 0
 		for stand in stands:
-			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=0, freq=CentralFreq, gain=19, frameCount=i+1, obsTime=t)
+			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=0, centralFreq=CentralFreq, gain=19, frameCount=i+1, obsTime=t)
 			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
 			cFrame.iq *= maxValue*noiseStrength
@@ -446,7 +446,7 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 			
 			cFrame.writeRawFrame(fh)
 
-			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=1, freq=CentralFreq, gain=19, frameCount=i+1, obsTime=t)
+			cFrame = tbn.SimFrame(stand=stand.stand.id, pol=1, centralFreq=CentralFreq, gain=19, frameCount=i+1, obsTime=t)
 			cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
 			cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
 			cFrame.iq *= maxValue*noiseStrength
