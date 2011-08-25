@@ -40,6 +40,8 @@ Options:
 -l, --fft-length            Set FFT length (default = 4096)
 -d, --disable-chunks        Display plotting chunks in addition to the global 
                             average
+-k, --keep                  Only display the following comma-seperated list of 
+                            stands (default = show all 260 dual pol)
 -o, --output                Output file name for spectra image
 """
 
@@ -62,11 +64,12 @@ def parseOptions(args):
 	config['output'] = None
 	config['displayChunks'] = True
 	config['verbose'] = True
+	config['keep'] = None
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hm:qtbnl:go:s:a:d", ["help", "metadata=", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output=", "skip=", "average=", "disable-chunks"])
+		opts, args = getopt.getopt(args, "hm:qtbnl:go:s:a:dk:", ["help", "metadata=", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "output=", "skip=", "average=", "disable-chunks", "keep="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -100,6 +103,8 @@ def parseOptions(args):
 			config['average'] = float(value)
 		elif opt in ('-d', '--disable-chunks'):
 			config['displayChunks'] = False
+		elif opt in ('-k', '--keep'):
+			config['keep'] = [int(i) for i in value.split(',')]
 		else:
 			assert False
 	
@@ -315,20 +320,35 @@ def main(args):
 
 	# Put the frequencies in the best units possible
 	freq, units = bestFreqUnits(freq)
-
 	
-	for i in xrange(int(numpy.ceil(antpols/20))):
+	# Deal with the `keep` options
+	if config['keep'] is None:
+		antpolsDisp = int(numpy.ceil(antpols/20))
+		js = [i for i in xrange(antpols)]
+	else:
+		antpolsDisp = int(numpy.ceil(len(config['keep'])*2/20))
+		if antpolsDisp < 1:
+			antpolsDisp = 1
+		
+		js = []
+		for k in config['keep']:
+			for i,ant in enumerate(antennas):
+				if ant.stand.id == k:
+					js.append(i)
+
+	for i in xrange(antpolsDisp):
 		# Normal plotting
 		fig = plt.figure()
 		figsY = 4
 		figsX = 5
 		fig.subplots_adjust(left=0.06, bottom=0.06, right=0.94, top=0.94, wspace=0.20, hspace=0.50)
-		for j in xrange(i*20, i*20+20):
-			ax = fig.add_subplot(figsX, figsY, (j%20)+1)
+		for k in xrange(i*20, i*20+20):
 			try:
+				j = js[k]
 				currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
 			except IndexError:
 				break
+			ax = fig.add_subplot(figsX, figsY, (k%20)+1)
 			ax.plot(freq, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
 
 			# If there is more than one chunk, plot the difference between the global 
@@ -357,7 +377,7 @@ def main(args):
 			fig.savefig(outFigure)
 			
 		plt.draw()
-
+			
 	print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
 	plt.show()
 

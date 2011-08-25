@@ -424,7 +424,7 @@ file cannot be found on the device.");
 
 
 static PyObject *listFiles(PyObject *self, PyObject *args) {
-	PyObject *fileClass, *file, *files;
+	PyObject *fileClass, *file, *files, *temp;
 	char *device;
 	int index;
 
@@ -468,19 +468,43 @@ static PyObject *listFiles(PyObject *self, PyObject *args) {
 		file = PyObject_CallObject(fileClass, Py_BuildValue("(ssl)", device, fs->fileSystemHeaderData->fileInfo[index].name, fs->fileSystemHeaderData->fileInfo[index].size));
 		
 		// Set file times
-		PyObject_SetAttrString(file, "ctime", Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].ctime.tv_sec));
-		PyObject_SetAttrString(file, "mtime", Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].mtime.tv_sec));
-		PyObject_SetAttrString(file, "atime", Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].atime.tv_sec));
+		temp = PyLong_FromLong(fs->fileSystemHeaderData->fileInfo[index].ctime.tv_sec);
+		PyObject_SetAttrString(file, "ctime", temp);
+		Py_XDECREF(temp);
+
+		temp = PyLong_FromLong(fs->fileSystemHeaderData->fileInfo[index].mtime.tv_sec);
+		PyObject_SetAttrString(file, "mtime", temp);
+		Py_XDECREF(temp);
+
+		temp = PyLong_FromLong(fs->fileSystemHeaderData->fileInfo[index].atime.tv_sec);
+		PyObject_SetAttrString(file, "atime", temp);
+		Py_XDECREF(temp);
 		
 		// Set file start/stop/chunk sizes
-		PyObject_SetAttrString(file, "start", Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].startPosition + _CHUNKSIZE_));
-		PyObject_SetAttrString(file, "stop", Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].stopPosition - _CHUNKSIZE_));
-		PyObject_SetAttrString(file, "chunkSize", Py_BuildValue("l", _CHUNKSIZE_));
+		temp = PyLong_FromSize_t(fs->fileSystemHeaderData->fileInfo[index].startPosition + _CHUNKSIZE_);
+		PyObject_SetAttrString(file, "start", temp);
+		Py_XDECREF(temp);
+
+		temp = PyLong_FromSize_t(fs->fileSystemHeaderData->fileInfo[index].stopPosition - _CHUNKSIZE_);
+		PyObject_SetAttrString(file, "stop", temp);
+		Py_XDECREF(temp);
+
+		temp = PyLong_FromSize_t(_CHUNKSIZE_);
+		PyObject_SetAttrString(file, "chunkSize", temp);
+		Py_XDECREF(temp);
 		
 		// Meta data
-		PyObject_SetAttrString(file, "mjd", PyLong_FromString(fs->fileSystemHeaderData->fileInfo[index].metaData.StartMJD, NULL, 10));
-		PyObject_SetAttrString(file, "mpm", PyLong_FromString(fs->fileSystemHeaderData->fileInfo[index].metaData.StartMPM, NULL, 10));
-		PyObject_SetAttrString(file, "mode", Py_BuildValue("s", trim(fs->fileSystemHeaderData->fileInfo[index].metaData.format)));
+		temp = PyLong_FromString(fs->fileSystemHeaderData->fileInfo[index].metaData.StartMJD, NULL, 10);
+		PyObject_SetAttrString(file, "mjd", temp);
+		Py_XDECREF(temp);
+
+		temp = PyLong_FromString(fs->fileSystemHeaderData->fileInfo[index].metaData.StartMPM, NULL, 10);
+		PyObject_SetAttrString(file, "mpm", temp);
+		Py_XDECREF(temp);
+
+		temp = PyString_FromString(trim(fs->fileSystemHeaderData->fileInfo[index].metaData.format));
+		PyObject_SetAttrString(file, "mode", temp);
+		Py_XDECREF(temp);
 		
 		PyList_SetItem(files, (Py_ssize_t) index-1, file);
 		index++;

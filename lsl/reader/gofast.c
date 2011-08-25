@@ -38,7 +38,7 @@ int validSync(unsigned char w1, unsigned char w2, unsigned char w3, unsigned cha
 */
 
 static PyObject *readTBW(PyObject *self, PyObject *args) {
-	PyObject *ph, *output, *frame, *fHeader, *fData;
+	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
 	PyArrayObject *data;
 	int i;
 	
@@ -94,7 +94,6 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 
 	// Create the output data array
 	npy_intp dims[2];
-	short int temp;
 	if(bits == 0) {
 		// 12-bit Data -> 400 samples in the data section
 		dims[0] = 2;
@@ -107,16 +106,17 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		}
 	
 		// Fill the data array
+		short int tempR;
 		short int *a;
 		a = (short int *) data->data;
 		for(i=0; i<400; i++) {
-			temp = (bytes[24+3*i]<<4) | ((bytes[24+3*i+1]>>4)&15);
-			temp -= ((temp&2048)<<1);
-			*(a + i) = (short int) temp;
+			tempR = (bytes[24+3*i]<<4) | ((bytes[24+3*i+1]>>4)&15);
+			tempR -= ((tempR&2048)<<1);
+			*(a + i) = (short int) tempR;
 
-			temp = ((bytes[24+3*i+1]&15)<<8) | bytes[24+3*i+2];
-			temp -= ((temp&2048)<<1);
-			*(a + 400 + i) = (short int) temp;
+			tempR = ((bytes[24+3*i+1]&15)<<8) | bytes[24+3*i+2];
+			tempR -= ((tempR&2048)<<1);
+			*(a + 400 + i) = (short int) tempR;
 		}
 	} else {
 		// 4-bit Data -> 1200 samples in the data section
@@ -130,16 +130,17 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		}
 	
 		// Fill the data array
+		short int tempR;
 		short int *a;
 		a = (short int *) data->data;
 		for(i=0; i<1200; i++) {
-			temp = (bytes[i+24]>>4)&15;
-			temp -= ((temp&8)<<1);
-			*(a + i) = (short int) temp;
+			tempR = (bytes[i+24]>>4)&15;
+			tempR -= ((tempR&8)<<1);
+			*(a + i) = (short int) tempR;
 
-			temp = bytes[i+24]&15;
-			temp -= ((temp&8)<<1);
-			*(a + 1200 + i) = (short int) temp;
+			tempR = bytes[i+24]&15;
+			tempR -= ((tempR&8)<<1);
+			*(a + 1200 + i) = (short int) tempR;
 		}
 
 	}
@@ -147,13 +148,28 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	// Save the data to the frame object
 	// 1.  Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
-	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
-	PyObject_SetAttrString(fHeader, "tbwID", Py_BuildValue("H", tbwID));
+
+	temp = PyLong_FromUnsignedLong(frameCount);
+	PyObject_SetAttrString(fHeader, "frameCount", temp);
+	Py_XDECREF(temp);
+
+	temp = PyLong_FromUnsignedLong(secondsCount);
+	PyObject_SetAttrString(fHeader, "secondsCount", temp);
+	Py_XDECREF(temp);
+
+	temp = Py_BuildValue("H", tbwID);
+	PyObject_SetAttrString(fHeader, "tbwID", temp);
+	Py_XDECREF(temp);
+
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
+
+	temp = PyLong_FromUnsignedLongLong(timeTag);
+	PyObject_SetAttrString(fData, "timeTag", temp);
+	Py_XDECREF(temp);
+
 	PyObject_SetAttrString(fData, "xy", PyArray_Return(data));
+
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
@@ -199,7 +215,7 @@ are sub-classes of IOError.\n\
 */
 
 static PyObject *readTBN(PyObject *self, PyObject *args) {
-	PyObject *ph, *output, *frame, *fHeader, *fData;
+	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
 	PyArrayObject *data;
 	int i;
 	
@@ -277,13 +293,28 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	// Save the data to the frame object
 	// 1.  Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
-	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
-	PyObject_SetAttrString(fHeader, "tbnID", Py_BuildValue("H", tbnID));
+
+	temp = PyLong_FromUnsignedLong(frameCount);
+	PyObject_SetAttrString(fHeader, "frameCount", temp);
+	Py_XDECREF(temp);
+
+	temp = PyLong_FromUnsignedLong(secondsCount);
+	PyObject_SetAttrString(fHeader, "secondsCount", temp);
+	Py_XDECREF(temp);
+
+	temp = Py_BuildValue("H", tbnID);
+	PyObject_SetAttrString(fHeader, "tbnID", temp);
+	Py_XDECREF(temp);
+
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
+
+	temp = PyLong_FromUnsignedLongLong(timeTag);
+	PyObject_SetAttrString(fData, "timeTag", temp);
+	Py_XDECREF(temp);
+
 	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
+
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
@@ -329,7 +360,7 @@ are sub-classes of IOError.\n\
 */
 
 static PyObject *readDRX(PyObject *self, PyObject *args) {
-	PyObject *ph, *output, *frame, *fHeader, *fData;
+	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
 	PyArrayObject *data;
 	int i;
 	
@@ -420,16 +451,40 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	// Save the data to the frame object
 	// 1. Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-	PyObject_SetAttrString(fHeader, "frameCount", PyLong_FromUnsignedLong(frameCount));
-	PyObject_SetAttrString(fHeader, "drxID", Py_BuildValue("B", drxID));
-	PyObject_SetAttrString(fHeader, "secondsCount", PyLong_FromUnsignedLong(secondsCount));
-	PyObject_SetAttrString(fHeader, "decimation", Py_BuildValue("H", decimation));
-	PyObject_SetAttrString(fHeader, "timeOffset", Py_BuildValue("H", timeOffset));
+
+	temp = PyLong_FromUnsignedLong(frameCount);
+	PyObject_SetAttrString(fHeader, "frameCount", temp);
+	Py_XDECREF(temp);
+
+	temp = Py_BuildValue("B", drxID);
+	PyObject_SetAttrString(fHeader, "drxID", temp);
+	Py_XDECREF(temp);
+
+	temp = PyLong_FromUnsignedLong(secondsCount);
+	PyObject_SetAttrString(fHeader, "secondsCount", temp);
+	Py_XDECREF(temp);
+
+	temp = Py_BuildValue("H", decimation);
+	PyObject_SetAttrString(fHeader, "decimation", temp);
+	Py_XDECREF(temp);
+	
+	temp = Py_BuildValue("H", timeOffset);
+	PyObject_SetAttrString(fHeader, "timeOffset", temp);
+	Py_XDECREF(temp);
+
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-	PyObject_SetAttrString(fData, "timeTag", PyLong_FromUnsignedLongLong(timeTag));
-	PyObject_SetAttrString(fData, "flags", PyLong_FromUnsignedLongLong(flags));
+
+	temp = PyLong_FromUnsignedLongLong(timeTag);
+	PyObject_SetAttrString(fData, "timeTag", temp);
+	Py_XDECREF(temp);
+
+	temp = PyLong_FromUnsignedLongLong(flags);
+	PyObject_SetAttrString(fData, "flags", temp);
+	Py_XDECREF(temp);
+
 	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
+
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
@@ -530,4 +585,5 @@ PyMODINIT_FUNC init_gofast(void) {
 	// Version and revision information
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+	
 }

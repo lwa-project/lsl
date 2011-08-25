@@ -23,9 +23,9 @@ class dp_tests(unittest.TestCase):
 		junk = fnc(1e3)
 
 	def test_drx_bandpass(self):
-		"""Test that the TBN bandpass generator actually runs."""
+		"""Test that the DRX bandpass generator actually runs."""
 		
-		fnc = dp.drxFilter(sampleRate=1e5)
+		fnc = dp.drxFilter(sampleRate=19.6e6)
 		junk = fnc(1e3)
 
 

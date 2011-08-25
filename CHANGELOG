@@ -9,12 +9,14 @@
   * Added functions to generate the TBN and DRX filter magnitude response
   * Added versions of the spectra plotters, the correlations, and the stand plotters that use MCS meta-data bundles
   * Added a basic SSMIF file for the north arm site (LWA-2)
-  * Worked on trying to remove the memory leak in the DRX reader
   * Added a preliminary module for incoherent dedispersion
 
 0.4.4
   * Added an id number attribute to lsl.common.stations.FEE objects
   * Updated LWA-1 SSMIF to 2011-08-10 version
+  * Added `keep` option to tbnSpectra.py to only display a certain collection of stands
+  * Possibly cleared up a install problem on some systems that prevents testing
+  * Fixed various memory leaks in the readers and the direct DRSU access module
 
 0.4.3
   * Cleaned up the various __init__.py scripts

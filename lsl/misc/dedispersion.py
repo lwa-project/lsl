@@ -51,3 +51,60 @@ def incoherent(freq, waterfall, tInt, dm):
 		
 	# Return
 	return ddWaterfall
+
+
+def __chirpFunction(freq, dm):
+	"""
+	Chip function for coherent dedispersion for a given set of frequencies (in Hz).  
+	Based on Equation (6) of "Pulsar Observations II -- Coherent Dedispersion, 
+	Polarimetry, and Timing" By Stairs, I. H.
+	"""
+	
+	freqMHz = freq / 1e6
+	fMHz0 = freqMHz.mean()
+	fMHz1 = freqMHz - fMHz0
+	BW = fMHz1.max() - fMHz1.min()
+	
+	chirp = numpy.exp(2j*numpy.pi*dm/2.41e-10 * (fMHz1**2 / (fMHz0**2*(fMHz0 + fMHz1)))) / len(freq)
+	
+	return chirp
+
+
+def coherent(timeseries, centralFreq, sampleRate, dm):
+	"""
+	Simple coherent dedispersion of complex-valued time-series data at a given central
+	frequency and sample rate.
+	"""
+	
+	# Roughly estimate the number of points we need to look at to do the dedispersion 
+	# correctrly.  Based on the GMRT coherent dedispersion pipeline
+	N = 4*(centralFreq/202e6)**3*dm*(sampleRate/1e6)**2
+	N = 2**int(numpy.ceil(numpy.log10(N)/numpy.log10(2.0)))
+	if N < 2048:
+		N = 2048
+	
+	# Compute the chirp function
+	freq = numpy.fft.fftfreq(N, d=1/sampleRate) + centralFreq
+	chirp = __chirpFunction(freq, dm)
+	
+	# Figure out the output array size
+	nSets = len(timeseries) / N
+	nDM = N / 4
+	out = numpy.zeros(nSets*(N-nDM), dtype=timeseries.dtype)
+	
+	# Go!
+	for i in xrange(nSets):
+		start = i*N - nDM
+		if start < 0:
+			start = 0
+		stop = start + N
+		
+		dataIn = timeseries[start:stop]
+		dataOut = numpy.fft.fft(dataIn) #* chirp
+		dataOut = numpy.fft.ifft(dataOut)
+		
+		out[i*(N-nDM):(i+1)*(N-nDM)] = dataOut[nDM/2:N-nDM/2]
+	
+	return out
+	
+	
