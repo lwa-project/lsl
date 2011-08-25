@@ -120,7 +120,7 @@ class SimFrame(tbn.Frame):
 		"""
 		
 		self.header.frameCount = self.frameCount
-		self.header.tuningWOrd = long( round(self.freq/fS*2**32) )
+		self.header.tuningWord = long( round(self.freq/fS*2**32) )
 		self.header.tbnID = 2*(self.stand-1) + self.pol + 1
 		self.header.gain = self.gain
 		

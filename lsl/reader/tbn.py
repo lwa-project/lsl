@@ -454,7 +454,7 @@ class ObservingBlock(object):
 			self.y[i].data.setGain(gain)
 
 
-def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):
+def readFrame(filehandle, SampleRate=None, Verbose=False):
 	"""
 	Function to read in a single TBN frame (header+data) and store the 
 	contents as a Frame object.
@@ -470,15 +470,11 @@ def readFrame(filehandle, SampleRate=None, CentralFreq=None, Gain=None, Verbose=
 	
 	if SampleRate is not None:
 		newFrame.setSampleRate(SampleRate)
-	if CentralFreq is not None:
-		newFrame.setCentralFreq(CentralFreq)
-	if Gain is not None:
-		newFrame.setGain(Gain)
 
 	return newFrame
 
 
-def readBlock(filehandle, nFrames=520, SampleRate=None, CentralFreq=None, Gain=None, Verbose=False):
+def readBlock(filehandle, nFrames=520, SampleRate=None, Verbose=False):
 	"""
 	Function to read in a single TBN block (frames set by the nFrames 
 	keyword) and store the contents as a ObservingBlock object.  This function 
@@ -495,7 +491,7 @@ def readBlock(filehandle, nFrames=520, SampleRate=None, CentralFreq=None, Gain=N
 	frames = []
 	for i in range(0, nFrames):
 		try:
-			frame = readFrame(filehandle, SampleRate=SampleRate, CentralFreq=CentralFreq, Gain=Gain, Verbose=Verbose)
+			frame = readFrame(filehandle, SampleRate=SampleRate, Verbose=Verbose)
 		except baseReaderError:
 			frame = None
 		frames.append( frame )
