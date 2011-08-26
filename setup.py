@@ -5,6 +5,7 @@ ez_setup.use_setuptools()
 
 import os
 import imp
+import sys
 import glob
 import unittest
 import commands
