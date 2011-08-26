@@ -63,7 +63,35 @@ def get_fftw():
 		outLIBS = ['-lfftw3', '-lm']
 
 	return outCFLAGS, outLIBS
-		
+
+
+def get_atlas():
+	"""Use ldconfig's verbose output to find the location of ATLAS (and cblas).  
+	If ATLAS cannot be found, some 'sane' values are returned."""
+	
+	outLibs = ['-lcblas', '-latlas']
+	if sys.platform.find('linux') == -1:
+		return outLibs
+	else:
+		status, output = commands.getstatusoutput('ldconfig -v 2>/dev/null')
+		lines = output.split('\n')
+
+		libPath = ''
+		found = False
+		for line in lines:
+			if line[0] != '\t':
+				libPath = line.replace(':', '')
+			else:
+				if line.find('cblas') != -1:
+					found = True
+					break
+					
+		if found:
+			outLibs.insert(0, '-L%s' % libPath)
+		else:
+			print "WARNING:  ATLAS and CBLAS cannot be found, using defaults"
+		return outLibs
+
 
 class LSLDist(Distribution):
 	"""Sub-class of setupuptools (distutils.core) Distribution class that fixes
@@ -84,10 +112,12 @@ class LSLDist(Distribution):
 # correlator._core appropriately.  This will, hopefully, fix the build
 # problems on Mac
 cflags, libs = get_fftw()
+atlasLibs = get_atlas()
 coreExtraFlags = ['-fopenmp',]
 coreExtraFlags.extend(cflags)
-coreExtraLibs = ['-fopenmp', '-lcblas', '-latlas']
+coreExtraLibs = ['-fopenmp']
 coreExtraLibs.extend(libs)
+coreExtraLibs.extend(atlasLibs)
 
 drsuExtraFlags = ['-D_GNU_SOURCE', '-O3', '-fmessage-length=0', '-MMD', '-MP']
 drsuExtraLibs = ['-lrt', '-lgdbm']
