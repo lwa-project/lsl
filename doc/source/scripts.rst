@@ -90,10 +90,6 @@ splitTBW.py
 
             -d, --date             	Label the split files with a date rather than a sequence number
 
-  .. note::
-	This script does not use a :mod:`lsl.reader.buffer` buffer to try to re-order or verify all
-	packets and simply splits files based on size.
-
 splitTBN.py
   :Description: Split a TBN file containing multiple seconds into several files
 
@@ -110,6 +106,19 @@ splitTBN.py
   .. note::
 	This script does not use a :mod:`lsl.reader.buffer` buffer to try to re-order or verify all
 	packets and simply splits files based on size.
+
+splitDRX.py
+  :Description: Split a DRX file containing multiple seconds into several files
+
+  :Usage: splitDRX.py [options] file
+
+  :Options: -h, --help             	Display this help information
+
+            -c, --count            	Number of seconds to keep
+
+            -o, --offset           	Number of seconds to skip before splitting
+
+            -d, --date             	Label the split files with a date rather than a squence number
 
 readTBW.py
   :Description: Example script for reading in TBW data and writing it to a TSFITS file.
