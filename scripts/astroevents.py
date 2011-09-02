@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -360,4 +361,37 @@ if __name__ == '__main__':
 	print('Altitude:          %0.3f' % cyga_hrz.alt)
 	print('Zenith:            %0.3f' % cyga_hrz.zen())
 	print('Sun angle:         %0.3f' % cyga_sun_ang)
+	
+	
+	# calculate TauA phenomena
+	
+	taua_j2000_equ = equ_posn(hms(5, 34, 32.0), dms(False, 22, 00, 52.1))
+	taua_equ = get_apparent_posn(taua_j2000_equ, utc)
+	taua_rst = get_object_rst(utc, lwa1_lnlat, taua_equ)
+	(taua_utc_rise, taua_utc_set, taua_utc_trans) = taua_rst.format()
+	taua_lcl_rise = taua_utc_rise.to_zone()
+	taua_lcl_trans = taua_utc_trans.to_zone()
+	taua_lcl_set = taua_utc_set.to_zone()
+	
+	(taua_ra, taua_dec) = taua_equ.format()
+	taua_hrz = taua_equ.to_hrz(lwa1_lnlat, utc)
+	taua_gal = taua_equ.to_gal(utc)
+	(taua_l, taua_b) = taua_gal.format()
+	
+	taua_sun_ang = sun_equ.angular_separation(taua_equ)
+	
+	print('---------------------------------------------------------------')
+	print('TauA')
+	print('---------------------------------------------------------------')
+	print('RA:                %s (%0.3f)' % (taua_ra, taua_equ.ra))
+	print('DEC:               %s (%0.3f)' % (taua_dec, taua_equ.dec)) 
+	print('Gal longitude:     %s (%0.3f)' % (taua_l, taua_gal.l))
+	print('Gal latitude:      %s (%0.3f)' % (taua_b, taua_gal.b))           
+	print('Rise:              %s (%0.3f) [%s]' % (taua_utc_rise, taua_rst.rise, taua_lcl_rise))
+	print('Transit:           %s (%0.3f) [%s]' % (taua_utc_trans, taua_rst.transit, taua_lcl_trans))
+	print('Set:               %s (%0.3f) [%s]' % (taua_utc_set, taua_rst.set, taua_lcl_set))
+	print('Azimuth:           %0.3f %s' % (taua_hrz.az, hrz_to_nswe(taua_hrz)))
+	print('Altitude:          %0.3f' % taua_hrz.alt)
+	print('Zenith:            %0.3f' % taua_hrz.zen())
+	print('Sun angle:         %0.3f' % taua_sun_ang)
     

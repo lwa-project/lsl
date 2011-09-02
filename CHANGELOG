@@ -19,6 +19,7 @@
   * Fixed various memory leaks in the readers and the direct DRSU access module
   * Added `documentation support` for accessing the central frequency of a TBN frame
   * Added support for variable noise level in the various lsl.sim.dp functions
+  * Worked on improving ATLAS library detection on Redhat-based distributions
 
 0.4.3
   * Cleaned up the various __init__.py scripts
