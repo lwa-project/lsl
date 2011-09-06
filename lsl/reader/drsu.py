@@ -14,6 +14,10 @@ import os
 try:
 	import _drsu
 except ImportError:
+	import sys
+	import platform
+	sys.stderr.write("ERROR: Could not import the _drsu extension\n")
+	sys.stderr.write("       System:  %s, Bitness: %s\n" % (platform.system(), platform.architecture()[0]))
 	pass
 from lsl.reader import errors
 

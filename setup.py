@@ -9,6 +9,7 @@ import sys
 import glob
 import unittest
 import commands
+import platform
 
 from setuptools import setup, Extension, Distribution, find_packages
 try:
@@ -134,9 +135,14 @@ ExtensionModules = [Extension('_libnova', ['lsl/libnova.i']),
 
 # Check if we have linux or not.  If we don't, I don't think we can compile the
 # DRSU direct access module. 
-if os.uname()[0] != 'Linux':
+if platform.system() != 'Linux':
 	print "WARNING: OS does not appear to be linux, skipping _drsu extension"
 	del(ExtensionModules[-1])
+else:
+	# Now, check if we are 64-bit or not
+	if platform.architecture()[0] != '64bit':
+		print "WARNING: python build does not appear to be 64-bit, skipping _drsu extension"
+		del(ExtensionModules[-1])
 
 setup(
 	distclass = LSLDist, 
