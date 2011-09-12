@@ -21,6 +21,8 @@
   * Added support for variable noise level in the various lsl.sim.dp functions
   * Worked on improving ATLAS library detection on Redhat-based distributions
   * Improved detection of potential build problems with the DRSU direct-access extension
+  * Updated the coordinates of stand #148 to be consistent with the revised LWA-1 survey
+  * Fixed the digitizer to board mapping to account for DP2 boards
 
 0.4.3
   * Cleaned up the various __init__.py scripts

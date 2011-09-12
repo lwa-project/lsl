@@ -1079,12 +1079,13 @@ def parseSSMIF(filename):
 		i += 1
 	
 	
-	# Associate DP 1 board and digitizer numbers with Antennas
+	# Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
+	# with DP2 boards at 1 and 15.
 	i = 1
 	j = 1
 	for brd in dp1Ant:
 		for ant in brd:
-			antennas[ant-1].board = i
+			antennas[ant-1].board = i + 1 + (i/14)
 			antennas[ant-1].digitizer = j
 			j += 1
 		i += 1
