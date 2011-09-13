@@ -29,6 +29,8 @@ General Utilities
 
    consts
    astro
+   kurtosis
+   dedispersion
    catalog
    transform
    mathutils
