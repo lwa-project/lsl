@@ -310,6 +310,13 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 	for name,src in srcs.iteritems():
 		## Update the source's coordinates
 		src.compute(aa)
+		
+		## Remove sources below the horizon
+		srcAzAlt = aipy.coord.top2azalt(src.get_crds(crdsys='top', ncrd=3))
+		if srcAzAlt[1] < 0:
+				if verbose:
+					print "  %s: below horizon" % name
+				continue
 
 		## RA/dec -> equitorial 
 		srcEQ = src.get_crds(crdsys='eq', ncrd=3)
@@ -330,13 +337,6 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 		shp = n.array(src.srcshape)
 		shp.shape = (3,1)
 		srcs_sh.append( shp )
-
-		if verbose:
-			srcAzAlt = aipy.coord.top2azalt(src.get_crds(crdsys='top', ncrd=3))
-			if srcAzAlt[1] < 0:
-				print "  %s: below horizon" % name
-			else:
-				print "  %s: %+.2f altitude; flux mean %.2f kJy" % (name, srcAzAlt[1]*180.0/math.pi, jys.mean()/1e3)
 
 	# Build the simulation cache
 	aa.sim_cache( n.concatenate(srcs_eq, axis=1), 

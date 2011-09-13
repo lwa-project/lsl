@@ -47,7 +47,7 @@ def parseOptions(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
-		elif opt in ('-r', '--index-only'):
+		elif opt in ('-i', '--index-only'):
 			config['order'] = 1
 		elif opt in ('-r', '--ref-freq'):
 			config['f0'] = float(value)
