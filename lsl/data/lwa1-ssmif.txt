@@ -2647,6 +2647,25 @@ RPD_DD[516]  2.0 # this is SE's guess; see comment below
 # RPD_DD[519]
 # RPD_DD[520]
 
+# Cable gain model from M.170.  For most of the cables, the model is A0 = 0.00428 and  
+# A1 = 0.00000.  For the cables to Stand 258 (RTA), the cable is differnent and both 
+# A0 and A1 are different.  Note:  All measurements are made relative to 10 MHz 
+RPD_A0 0.00428 
+RPD_A0[515] 0.00185 
+RPD_A0[516] 0.00185 
+RPD_A1 0.00000 
+RPD_A1[515] 0.00000 
+RPD_A1[516] 0.00000 
+RPD_FREF 10000000 
+
+# Cable stretching is set to 0.5% based on the average TDR measurements (except for 
+# stands 257 and 258 which are left alone) 
+RPD_STR 1.005 
+RPD_STR[513] 1.000 
+RPD_STR[514] 1.000 
+RPD_STR[515] 1.000 
+RPD_STR[516] 1.000 
+
 # This will be set to 1 for any cables not identified below
 # You should set it to 0 if different / not known, or >1 if appropriate
 # "2" is LMR400
