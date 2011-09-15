@@ -12,6 +12,9 @@
   * Added a preliminary module for incoherent dedispersion lsl.misc.dedispersion
   * Added support for spectral kurtosis via lsl.statistics.kurtosis
 
+0.4.5
+  * Tweaked how the averaing in drxSpectra and tbnSpectra is performed
+
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF
 

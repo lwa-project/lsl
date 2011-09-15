@@ -222,7 +222,6 @@ def main(args):
 	buffer = TBNFrameBuffer(stands=range(1,antpols/2+1), pols=[0, 1])
 
 	# Master loop over all of the file chunks
-	masterCount = [0 for a in xrange(len(antennas))]
 	masterWeight = numpy.zeros((nChunks, antpols, LFFT-1))
 	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
 
@@ -278,10 +277,7 @@ def main(args):
 				aStand = 2*(stand-1)+pol
 				
 				data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
-				
-				# Update the counters so that we can average properly later on
-				count[aStand] = count[aStand] + 1
-				masterCount[aStand] = masterCount[aStand] + 1
+				count[aStand] += 1
 			
 			j += 1
 		
@@ -290,7 +286,7 @@ def main(args):
 		freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
 		for stand in xrange(len(count)):
 			masterSpectra[i,stand,:] = tempSpec[stand,:]
-			masterWeight[i,stand,:] = count[stand]
+			masterWeight[i,stand,:] = int(count[stand] * 512 / LFFT)
 	
 	# Empty the remaining portion of the buffer and integrate what's left
 	for cFrames in buffer.flush():
@@ -306,17 +302,14 @@ def main(args):
 			aStand = 2*(stand-1)+pol
 			
 			data[aStand, count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
-				
-			# Update the counters so that we can average properly later on
-			count[aStand] = count[aStand] + 1
-			masterCount[aStand] = masterCount[aStand] + 1
+			count[aStand] += 1
 			
 	# Calculate the spectra for this block of data and then weight the results by 
 	# the total number of frames read.  This is needed to keep the averages correct.
 	freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
 	for stand in xrange(len(count)):
 		masterSpectra[i,stand,:] = tempSpec[stand,:]
-		masterWeight[i,stand,:] = count[stand]
+		masterWeight[i,stand,:] = int(count[stand] * 512 / LFFT)
 
 	# We don't really need the data array anymore, so delete it
 	del(data)
