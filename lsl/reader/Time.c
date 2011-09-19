@@ -143,7 +143,7 @@ char* mnames[]={
 };
 char* HumanTime(){
 	TimeStamp ts=getTimestamp();
-	sprintf(HumanTimeBuffer, "%02lu %3s %04lu %02lu:%02lu:%02lu:%09lu", ts.day,mnames[ts.month-1],ts.year,ts.hour,ts.minute,ts.second,ts.millisecond);
+	sprintf(HumanTimeBuffer, "%02lu %3s %04lu %02lu:%02lu:%02lu:%03lu", ts.day,mnames[ts.month-1],ts.year,ts.hour,ts.minute,ts.second,ts.millisecond);
 	return HumanTimeBuffer;
 }
 int compareDates(size_t mjda, size_t mpma, size_t mjdb, size_t mpmb){

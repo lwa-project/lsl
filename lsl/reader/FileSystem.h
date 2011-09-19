@@ -38,7 +38,7 @@ typedef int FILEMODE;
 #define FILE_HEADER_SIZE 				4096
 //#define FILE_HEADER_RESERVED_SPACE      2944
 #define FILE_MAX_NAME_LENGTH 		    1023
-#define MAX_NUMBER_FILES 			    1023
+#define MAX_NUMBER_FILES 			    8191
 #define DEFAULT_VOLUME_NAME				"MCS-DRSU-Storage"
 
 

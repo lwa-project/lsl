@@ -130,8 +130,56 @@ StatusCode DiskUnlockDevice(char * deviceName){
 char * getDevShortName(char*deviceName){
 	return &deviceName[5];
 }
+/**********************************************************************************
+new code to prevent CV12 firmware drives from being used as DRSUs (C.N.W. 27MAY11)
+**********************************************************************************/
+boolean partitionIsOnCV12FirmwareDrive(const char* linuxPartitionDeviceIdentifier){
+	char cmd[2048];
+	sprintf(cmd,"hdparm -I %s | grep CV12 | wc -l",linuxPartitionDeviceIdentifier);
+	size_t linecount;
+	ShellGetNumber(cmd,&linecount);
+	if (linecount==1)
+		return TRUE;
+	else
+		return FALSE;
+}
+boolean arrayContainsCV12FirmwareDrives(const char* id){
+	char cmd[2048];
+	sprintf(cmd,"for x in `cat /proc/mdstat | grep %s | cut -d \" \" -f 5- | sed -e 's/\\[[0-9]\\]//g'`; do hdparm -I /dev/$x | grep CV12; done | wc -l",id);
+	size_t linecount;
+	ShellGetNumber(cmd,&linecount);
+	if (linecount==1)
+		return TRUE;
+	else
+		return FALSE;
+}
+DriveType detectMultidiskFileSystemType(const char* id){
+	char fullDeviceName[1024];	bzero((void*)fullDeviceName, 1024);
+	char cmd[2048];				bzero((void*)cmd, 2048);
+	char typeName[1024];		bzero((void*)typeName, 1024);
+	sprintf(fullDeviceName,"/dev/%s",id);
+	sprintf(cmd,"blkid -s TYPE -o value %s",fullDeviceName);
+	ShellGetString(cmd,typeName,1024);
+	if ((strncmp(typeName, "ext3", 4)==0) || (strncmp(typeName, "ext3", 4)==0)){
+		return DRIVETYPE_UNKNOWN;
+	} else if (strncmp(typeName, "ext2", 4)==0){
+		return DRIVETYPE_EXTERNAL_MULTIDISK_DEVICE;
+	} else if (strlen(typeName)==0){
+		if (arrayContainsCV12FirmwareDrives(id)){
+			return DRIVETYPE_UNKNOWN;
+		} else {
+			// note that there is no need to actually contain an LWAFS filesystem since we
+			// can initialize the drives later
+			return DRIVETYPE_INTERNAL_MULTIDISK_DEVICE;
+		}
+	} else {
+		return DRIVETYPE_UNKNOWN;
+	}
 
-
+}
+/**********************************************************************************
+ end new code
+**********************************************************************************/
 
 StatusCode Disk_IdentifyAll(){
 	if (deviceRecordLocked) return FAILURE;
@@ -162,13 +210,30 @@ StatusCode Disk_IdentifyAll(){
 		if((strncmp(token, "sd", 2)==0) || (strncmp(token, "hd", 2)==0) || (strncmp(token, "loop", 4)==0)){
 			devices[devicesCount].type = DRIVETYPE_SYSTEM_BLOCK_DEVICE;
 			//printf("00FOUND: %s setting to DRIVETYPE_SYSTEM_BLOCK_DEVICE\n",token);
-		} else if(matchStringInStringList(token, IntMultiDiskDevs, NumIntMultiDiskDevs)) {
+		}
+		/********************************************************************************
+			New drive detection semantics. previously assumed md0 .. md6 were internal storage.
+			unfortunately, managing linux device identifiers is not as straightforward as it should be.
+			therefore, we must detect the filesystems (ext2/3/4 vs. LWAFS) directly
+		********************************************************************************/
+		else if(strncmp(token, "md", 2)==0){
+			// detectMultidiskFileSystemType() will return one of :
+			//    A) DRIVETYPE_INTERNAL_MULTIDISK_DEVICE
+			//    B) DRIVETYPE_EXTERNAL_MULTIDISK_DEVICE
+			//    C) DRIVETYPE_UNKNOWN
+			devices[devicesCount].type = detectMultidiskFileSystemType(token);
+		/********************************************************************************
+		 * Old detection semantics follow:
+		else if(matchStringInStringList(token, IntMultiDiskDevs, NumIntMultiDiskDevs)) {
 			devices[devicesCount].type = DRIVETYPE_INTERNAL_MULTIDISK_DEVICE;
 			//printf("01FOUND: %s setting to DRIVETYPE_INTERNAL_MULTIDISK_DEVICE\n",token);
 		} else if(strncmp(token, "md", 2)==0){
 			//by this point, all of the legal DRSU names have been accounted for, and remaining should be external arrays
 			devices[devicesCount].type = DRIVETYPE_EXTERNAL_MULTIDISK_DEVICE;
 			//printf("02FOUND: %s setting to DRIVETYPE_EXTERNAL_MULTIDISK_DEVICE\n",token);
+		********************************************************************************/
+
+
 		}
 
 /*

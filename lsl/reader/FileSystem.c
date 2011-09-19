@@ -540,7 +540,6 @@ StatusCode FileSystem_Open(FileSystem* fs, Disk * disk){
 				return FAILURE;
 			}
 			fs->fileSystemHeaderData=(FileSystemBlock *)fs->IMFS_ptr;
-			/*
 			printf( "                   [FILE SYSTEM] %s: "
 					"\n                   [FILE SYSTEM] \tVolume name: %s"
 					"\n                   [FILE SYSTEM] \t%13lu chunk size"
@@ -560,7 +559,6 @@ StatusCode FileSystem_Open(FileSystem* fs, Disk * disk){
 					(unsigned long)FILE_MAX_NAME_LENGTH,
 					sizeof(FileSystemBlock)
 			);
-			*/
 			if (FileSystem_Verify(fs)==FAILURE){
 				Log_Add("[FILE SYSTEM] FileSystemVerify failure");
 				return FAILURE;
@@ -778,6 +776,57 @@ boolean    FileSystem_IsFileCreatable(FileSystem * fs, char* name, size_t size, 
 		return false;
 	}
 }
+StatusCode _WriteStartTag(FileSystem * fs, FileInfo* fi){
+	void * patternBuff=mmap(
+			NULL,
+			fs->fileSystemHeaderData->filesystemInfo.chunkSize,
+			PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE | MAP_LOCKED,
+			-1,
+			0);
+	if ((patternBuff==NULL)||(patternBuff==MAP_FAILED)){
+		Log_Add("[FILE SYSTEM] Error: can't allocate memory for file creation.");
+		perror("[FILE SYSTEM] mmap(...)");
+		return FAILURE;
+	}
+	_FileSystem_CreatePattern(patternBuff, fs->fileSystemHeaderData->filesystemInfo.chunkSize);
+	//printf("Check  pattern of create: %d",checkPattern(patternBuff, fs.filesystemInfo.chunkSize));
+	//printf("writing pattern at %lu",fi.startPosition);
+	ssize_t bytesWritten=0;
+	if(	_FileSystem_SynchronousWrite(	fs,patternBuff,fi->startPosition,fs->fileSystemHeaderData->filesystemInfo.chunkSize,&bytesWritten) == FAILURE ||
+		 bytesWritten != fs->fileSystemHeaderData->filesystemInfo.chunkSize) {
+		Log_Add("[FILE SYSTEM] Error: can't write file start tag.");
+		perror("[FILE SYSTEM] mmap(...)");
+		return FAILURE;
+	}
+	munmap(patternBuff,fs->fileSystemHeaderData->filesystemInfo.chunkSize);
+	return SUCCESS;
+}
+StatusCode _WriteStopTag(FileSystem * fs, FileInfo* fi){
+	void * patternBuff=mmap(
+			NULL,
+			fs->fileSystemHeaderData->filesystemInfo.chunkSize,
+			PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE | MAP_LOCKED,
+			-1,
+			0);
+	if ((patternBuff==NULL)||(patternBuff==MAP_FAILED)){
+		Log_Add("[FILE SYSTEM] Error: can't allocate memory for file creation.");
+		perror("[FILE SYSTEM] mmap(...)");
+		return FAILURE;
+	}
+	_FileSystem_CreatePattern(patternBuff, fs->fileSystemHeaderData->filesystemInfo.chunkSize);
+	//printf("Check  pattern of create: %d",checkPattern(patternBuff, fs.filesystemInfo.chunkSize));
+	//printf("writing pattern at %lu",fi.startPosition);
+	ssize_t bytesWritten=0;
+	if(	_FileSystem_SynchronousWrite(fs, patternBuff, fi->stopPosition-fs->fileSystemHeaderData->filesystemInfo.chunkSize,fs->fileSystemHeaderData->filesystemInfo.chunkSize, &bytesWritten)==FAILURE ||
+		bytesWritten !=fs->fileSystemHeaderData->filesystemInfo.chunkSize){
+		Log_Add("[FILE SYSTEM] Error: can't write file stop tag.");
+		perror("[FILE SYSTEM] mmap(...)");
+		return FAILURE;
+	}
+	munmap(patternBuff,fs->fileSystemHeaderData->filesystemInfo.chunkSize);
+	return SUCCESS;
+}
+
 StatusCode FileSystem_CreateFile(FileSystem * fs, char* name, size_t size, boolean overwrite, int* fileIndex){
 	struct timeval dt;
 
@@ -849,49 +898,27 @@ StatusCode FileSystem_CreateFile(FileSystem * fs, char* name, size_t size, boole
 			(fi.stopPosition<fs->fileSystemHeaderData->filesystemInfo.diskSize))){
 		fi.currentPosition=fi.startPosition;
 		//need to add start and stop tags to make it official
-		void * patternBuff=mmap(
-				NULL,
-				fs->fileSystemHeaderData->filesystemInfo.chunkSize,
-				PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE | MAP_LOCKED,
-				-1,
-				0);
-		if ((patternBuff==NULL)||(patternBuff==MAP_FAILED)){
-			Log_Add("[FILE SYSTEM] Error: can't allocate memory for file creation.");
-			perror("[FILE SYSTEM] mmap(...)");
+		if (_WriteStartTag(fs,&fi) == FAILURE) {
 			*fileIndex = -1;
 			return FAILURE;
 		}
-		_FileSystem_CreatePattern(patternBuff, fs->fileSystemHeaderData->filesystemInfo.chunkSize);
-		//printf("Check  pattern of create: %d",checkPattern(patternBuff, fs.filesystemInfo.chunkSize));
-		//printf("writing pattern at %lu",fi.startPosition);
-		ssize_t bytesWritten=0;
-		if(	_FileSystem_SynchronousWrite(	fs,patternBuff,fi.startPosition,fs->fileSystemHeaderData->filesystemInfo.chunkSize,&bytesWritten) == FAILURE ||
-			 bytesWritten != fs->fileSystemHeaderData->filesystemInfo.chunkSize) {
-			Log_Add("[FILE SYSTEM] Error: can't write file start tag.");
-			perror("[FILE SYSTEM] mmap(...)");
+		if (_WriteStopTag(fs,&fi) == FAILURE) {
 			*fileIndex = -1;
 			return FAILURE;
 		}
-		//printf("writing pattern at %lu",fi.stopPosition-fs.filesystemInfo.chunkSize);
-		if(	_FileSystem_SynchronousWrite(fs, patternBuff, fi.stopPosition-fs->fileSystemHeaderData->filesystemInfo.chunkSize,fs->fileSystemHeaderData->filesystemInfo.chunkSize, &bytesWritten)==FAILURE ||
-				bytesWritten !=fs->fileSystemHeaderData->filesystemInfo.chunkSize){
-			Log_Add("[FILE SYSTEM] Error: can't write file stop tag.");
-			perror("[FILE SYSTEM] mmap(...)");
-			*fileIndex = -1;
-			return FAILURE;
-		}
+
 		//file is now created, so update filesystem records
+		ssize_t bytesWritten=0;
 		fs->fileSystemHeaderData->fileInfo[index]=fi;
 		fs->fileSystemHeaderData->filesystemInfo.number_files_present++;
 		if (_FileSystem_SynchronousWrite(fs,fs->IMFS_ptr,0,fs->IMFS_Size, &bytesWritten)==FAILURE ||
-				bytesWritten !=fs->IMFS_Size){
-				Log_Add("[FILE SYSTEM] Error: can't synch file system after create file.");
-				*fileIndex = -1;
-				return FAILURE;
+			bytesWritten !=fs->IMFS_Size){
+			Log_Add("[FILE SYSTEM] Error: can't synch file system after create file.");
+			*fileIndex = -1;
+			return FAILURE;
 		}
 		Log_Add("[FILE SYSTEM] File created successfully");
 		*fileIndex = index;
-
 		return SUCCESS;
 	} else {
 		Log_Add("[FILE SYSTEM] Error could not create file, insufficient contiguous drive space.");
@@ -945,16 +972,21 @@ StatusCode FileSystem_OpenFile(FileSystem * fs, MyFile* fileptr,const char* file
 		fs->fileSystemHeaderData->fileInfo[fileptr->index].currentPosition = 0;
 		fs->fileSystemHeaderData->fileInfo[fileptr->index].isOpen=1;
 		fs->fileSystemHeaderData->fileInfo[fileptr->index].mode=mode;
-		StatusCode s;
 		ssize_t bytesWritten=0;
-		s=_FileSystem_SynchronousWrite(fs, fs->IMFS_ptr,0,fs->IMFS_Size, &bytesWritten);
+		StatusCode s = _FileSystem_SynchronousWrite(fs, fs->IMFS_ptr,0,fs->IMFS_Size, &bytesWritten);
 		if (bytesWritten!=fs->IMFS_Size || s!=SUCCESS){
 			Log_Add("[FILE SYSTEM] Error: can't synch file system after open file.");
 			return FAILURE;
 		} else {
-			return s;
+			return _WriteStartTag(fs, &(fs->fileSystemHeaderData->fileInfo[fileptr->index]));
+			/*
+			if (FileSystem_Seek(fileptr, 0))
+				return FAILURE;
+			else
+				return SUCCESS;
+			*/
 		}
-		return SUCCESS;
+
 	}
 }
 
@@ -1029,7 +1061,6 @@ size_t FileSystem_Seek(MyFile* file, size_t offset){
 	assert(isAligned(offset));
 	assert(file!=NULL);
 	assert(file->isOpen);
-	assert(file->mode==READ);
 	assert(file->index!=-1);
 	assert(file->fs!=NULL);
 	assert(file->fs->rawDeviceHandle!=-1);
@@ -1300,8 +1331,12 @@ void FileSystem_GetFileMetaData(FileSystem * fs, int index, FileMetaData** data)
 		return;
 	}
 	size_t size=fs->fileSystemHeaderData->fileInfo[index].size;
+	size_t AllocatedSize =
+		fs->fileSystemHeaderData->fileInfo[index].stopPosition -
+		fs->fileSystemHeaderData->fileInfo[index].startPosition;
+
 	sprintf(fs->fileSystemHeaderData->fileInfo[index].metaData.size,"%015lu",size);
-	sprintf(fs->fileSystemHeaderData->fileInfo[index].metaData.usage,"%015lu",size + sizeof(FileInfo));
+	sprintf(fs->fileSystemHeaderData->fileInfo[index].metaData.usage,"%015lu",AllocatedSize);
 	*data = &(fs->fileSystemHeaderData->fileInfo[index].metaData);
 	Log_Add("[FILE SYSTEM] Get File Metadata for '%s'.",fs->fileSystemHeaderData->fileInfo[index].name);
 }

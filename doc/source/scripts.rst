@@ -75,6 +75,19 @@ plotUVCoverage.py
 
   :Options: None
 
+lsDRSU.py
+  :Description:  Simple `ls` type script for DRSUs.
+
+  :Usage: lsDRSU.py [OPTIONS] md_device
+
+  :Options: -h, --help              Display this help information
+
+            -l                      Long listing format of size, mtime, and name
+
+            -t                      Sort by modification time
+
+            -1                      List one file per line
+
 Data Reading and Writing
 ========================
 splitTBW.py
