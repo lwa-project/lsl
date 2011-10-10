@@ -394,4 +394,36 @@ if __name__ == '__main__':
 	print('Altitude:          %0.3f' % taua_hrz.alt)
 	print('Zenith:            %0.3f' % taua_hrz.zen())
 	print('Sun angle:         %0.3f' % taua_sun_ang)
+
+	# calculate B1919+21 phenomena
+	
+	b1919_j2000_equ = equ_posn(hms(19, 21, 44.80), dms(False, 21, 53, 1.8))
+	b1919_equ = get_apparent_posn(b1919_j2000_equ, utc)
+	b1919_rst = get_object_rst(utc, lwa1_lnlat, b1919_equ)
+	(b1919_utc_rise, b1919_utc_set, b1919_utc_trans) = b1919_rst.format()
+	b1919_lcl_rise = b1919_utc_rise.to_zone()
+	b1919_lcl_trans = b1919_utc_trans.to_zone()
+	b1919_lcl_set = b1919_utc_set.to_zone()
+	
+	(b1919_ra, b1919_dec) = b1919_equ.format()
+	b1919_hrz = b1919_equ.to_hrz(lwa1_lnlat, utc)
+	b1919_gal = b1919_equ.to_gal(utc)
+	(b1919_l, b1919_b) = b1919_gal.format()
+	
+	b1919_sun_ang = sun_equ.angular_separation(b1919_equ)
+	
+	print('---------------------------------------------------------------')
+	print('B1919+21')
+	print('---------------------------------------------------------------')
+	print('RA:                %s (%0.3f)' % (b1919_ra, b1919_equ.ra))
+	print('DEC:               %s (%0.3f)' % (b1919_dec, b1919_equ.dec)) 
+	print('Gal longitude:     %s (%0.3f)' % (b1919_l, b1919_gal.l))
+	print('Gal latitude:      %s (%0.3f)' % (b1919_b, b1919_gal.b))           
+	print('Rise:              %s (%0.3f) [%s]' % (b1919_utc_rise, b1919_rst.rise, b1919_lcl_rise))
+	print('Transit:           %s (%0.3f) [%s]' % (b1919_utc_trans, b1919_rst.transit, b1919_lcl_trans))
+	print('Set:               %s (%0.3f) [%s]' % (b1919_utc_set, b1919_rst.set, b1919_lcl_set))
+	print('Azimuth:           %0.3f %s' % (b1919_hrz.az, hrz_to_nswe(b1919_hrz)))
+	print('Altitude:          %0.3f' % b1919_hrz.alt)
+	print('Zenith:            %0.3f' % b1919_hrz.zen())
+	print('Sun angle:         %0.3f' % b1919_sun_ang)
     

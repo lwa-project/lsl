@@ -271,8 +271,6 @@ def main(args):
 
 	fh = open(filename, "rb", buffering=tbw.FrameSize*10000)
 	test = tbw.readFrame(fh)
-	if not test.header.isTBW():
-		raise errors.notTBWError()
 	fh.seek(0)
 
 	jd = astro.unix_to_utcjd(test.getTime())

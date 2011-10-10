@@ -298,9 +298,9 @@ def main(args):
 	goodY = []
 	for i in xrange(len(antennas)):
 		ant = antennas[i]
-		if ant.stand.id > 255:
+		if ant.stand.id > 255 and ant.stand.id != 258:
 			pass
-		elif ant.getStatus() != 33:
+		elif ant.getStatus() != 33 and ant.stand.id != 258:
 			pass
 		else:
 			if ant.pol == 0:

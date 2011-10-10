@@ -11,6 +11,7 @@ Module to provide direct access to the files stored on a DRSU.
 
 
 import os
+import fnmatch
 try:
 	import _drsu
 except ImportError:
@@ -149,6 +150,26 @@ def listFiles(device):
 	except NameError:
 		if os.uname()[0] != 'Linux':
 			raise RuntimeError("Direct DRSU access is not supported on non-linux OSes")
+
+def globFiles(device, pattern):
+	"""
+	Function to return a list of File instances that match a particular UNIX shell-style
+	wildcard pattern.
+
+	.. note::
+		Currently, the user needs to have read/write privileges to the device in
+		question.  This typically means running the script calling this function
+		via `sudo`.
+	"""
+	
+	# Get the list of all files
+	avaliableFiles = listFiles(device)
+
+	# Glob via fnmatch.fmmatch
+	matches = [f for f in avaliableFiles if fnmatch.fnmatch(f.name, pattern)]
+
+	# Return
+	return matches
 
 
 def getFileByName(device, filename):

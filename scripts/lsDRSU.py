@@ -80,8 +80,13 @@ def sortFilesMTime(x, y):
 def main(args):
 	config = parseOptions(args)
 	device = config['args'][0]
+	patterns = config['args'][1:]
+	if len(patterns) == 0:
+		patterns = ['*',]
 
-	files = drsu.listFiles(device)
+	files = []
+	for pattern in patterns:
+		files.extend( drsu.globFiles(device, pattern) )
 	if config['mtimes']:
 		files.sort(sortFilesMTime)
 	

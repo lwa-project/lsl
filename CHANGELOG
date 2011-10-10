@@ -16,6 +16,7 @@
   * Tweaked how the averaing in drxSpectra and tbnSpectra is performed
   * Upgraded the lsl.reader.drsu module to work with larger file count LWAFS
   * Added a ls-style script, lsDRSU.py, to list the contents of a DRSU
+  * Added a glob-style function to the DRSU module
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF
