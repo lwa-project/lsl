@@ -23,6 +23,7 @@ import os
 import sys
 import numpy
 
+from lsl.common.constants import c as vLight
 from lsl.common import dp as dp_common
 from lsl.common.constants import *
 from lsl.common.warns import warnDeprecated
@@ -360,8 +361,8 @@ def correlate(signal1, signal2, antenna1, antenna2, LFFT=64, Overlap=1, window=n
 	freq = freq[1:LFFT]
 	delayRef = len(freq)/2
 
-	delay1 = antenna1.cable.delay(freq)
-	delay2 = antenna2.cable.delay(freq)
+	delay1 = antenna1.cable.delay(freq) - antenna1.stand.z / vLight
+	delay2 = antenna2.cable.delay(freq) - antenna2.stand.z / vLight
 
 	if delay2[delayRef] > delay1[delayRef]:
 		delay1 = delay2 - delay1
@@ -605,8 +606,8 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	delays1 = numpy.zeros((nStands,LFFT-1))
 	delays2 = numpy.zeros((nStands,LFFT-1))
 	for i in list(range(nStands)):
-		delays1[i,:] = antennas1[i].cable.delay(freq)
-		delays2[i,:] = antennas2[i].cable.delay(freq)
+		delays1[i,:] = antennas1[i].cable.delay(freq) - antennas1[i].stand.z / vLight
+		delays2[i,:] = antennas2[i].cable.delay(freq) - antennas2[i].stand.z / vLight
 	if delays1[:,dlyRef].max() > delays2[:,dlyRef].max():
 		maxDelay = delays1[:,dlyRef].max()
 	else:
