@@ -77,12 +77,13 @@ def main(args):
 	# Set the LWA Station
 	station = stations.lwa1
 	stands = station.getStands()
+	stands.sort()
 
 	# Load in the stand position data
 	data = numpy.zeros((len(stands),3))
 	
 	i = 0
-	for stand in stands:
+	for stand in stands[::2]:
 		data[i,0] = stand.x
 		data[i,1] = stand.y
 		data[i,2] = stand.z

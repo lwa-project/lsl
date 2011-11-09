@@ -6,12 +6,15 @@ Requirements
  * fftw3 >= 3.2
  * gdbm >= 1.8
  * swig >= 1.3
+ * setuptools >= 0.6.10
  * numpy >= 1.2
  * scipy >= 0.7
+ * jinja2 >= 2.3
  * pyfits >= 2.1
  * ephem >= 3.7.3
  * aipy >= 0.9.1
  * matplotlib >= 0.98.3 [#]_
+ * paramiko >= 1.7.6 [#]_
 
 .. [#] Required for some of the included scripts
 

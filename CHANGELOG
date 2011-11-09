@@ -11,13 +11,18 @@
   * Added a basic SSMIF file for the north arm site (LWA-2)
   * Added a preliminary module for incoherent dedispersion lsl.misc.dedispersion
   * Added support for spectral kurtosis via lsl.statistics.kurtosis
+  * Updated the dependency list
 
 0.4.5
-  * Tweaked how the averaing in drxSpectra and tbnSpectra is performed
+  * Tweaked how the averaging in drxSpectra and tbnSpectra is performed
   * Upgraded the lsl.reader.drsu module to work with larger file count LWAFS
   * Added a ls-style script, lsDRSU.py, to list the contents of a DRSU
   * Added a glob-style function to the DRSU module
   * Added an array-geometry correction to the correlator to phase up on zenith
+  * Updated the dependency list
+  * Added ARX channel mapping information to lsl.common.stations.Antenna instances
+  * Added a new versioning system to make it easier to access the LSL version in python
+  * Fixed a mapping problem in plotStands.py that mapped by digitizer, not stand
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF

@@ -220,8 +220,9 @@ class Antenna(object):
 	  * 3 == OK
 	"""
 	
-	def __init__(self, id, board=0, digitizer=0, stand=None, pol=0, theta=0.0, phi=0.0, fee=None, feePort=1, cable=None, status=0):
+	def __init__(self, id, arx=0, board=0, digitizer=0, stand=None, pol=0, theta=0.0, phi=0.0, fee=None, feePort=1, cable=None, status=0):
 		self.id = int(id)
+		self.arx = int(arx)
 		self.board = int(board)
 		self.digitizer = int(digitizer)
 		
@@ -1078,6 +1079,13 @@ def parseSSMIF(filename):
 		antennas[ant-1].cable = cbl
 		i += 1
 	
+	# Associate ARX channels with Antennas
+	for i in xrange(len(arxAnt)):
+		for j in xrange(len(arxAnt[i])):
+			ant = arxAnt[i][j]
+			if ant > 520:
+				continue
+			antennas[ant-1].arx = i*nChanARX + j + 1
 	
 	# Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
 	# with DP2 boards at 1 and 15.
