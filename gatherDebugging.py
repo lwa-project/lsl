@@ -64,8 +64,11 @@ def main(args):
 			currPath = None
 			
 			for line in o:
-				if line[0] != '\t':
+				if len(line) == 0:
+					continue				
+				elif line[0] != '\t':
 					currPath, junk = line.split(':', 1)
+					continue
 				elif line.find(lib) != -1:
 					found = True
 					break
