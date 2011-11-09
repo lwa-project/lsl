@@ -15,6 +15,11 @@ import subprocess
 
 def main(args):
 	#
+	# Clean the path
+	#
+	sys.path = sys.path[1:]
+
+	#
 	# Python interpreter
 	#
 	print "Executable path: %s" % sys.executable
