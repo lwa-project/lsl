@@ -23,6 +23,7 @@
   * Added ARX channel mapping information to lsl.common.stations.Antenna instances
   * Added a new versioning system to make it easier to access the LSL version in python
   * Fixed a mapping problem in plotStands.py that mapped by digitizer, not stand
+  * Added a gatherDebugging.py script alongside setup.py to help with debugging and installation problems
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF
