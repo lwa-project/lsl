@@ -47,7 +47,7 @@ allows for both temporal and spatial averaging.
 import copy
 import numpy
 
-from  lsl.common import dp as dp_common
+from lsl.common import dp as dp_common
 from _gofast import readDRX
 from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError

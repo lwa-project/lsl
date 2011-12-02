@@ -486,7 +486,7 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	PyObject_SetAttrString(fData, "timeTag", temp);
 	Py_XDECREF(temp);
 
-	temp = PyLogFromUnsignedLong(tuningWord);
+	temp = PyLong_FromUnsignedLong(tuningWord);
 	PyObject_SetAttrString(fData, "tuningWord", temp);
 	Py_XDECREF(temp);
 	
