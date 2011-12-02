@@ -11,8 +11,14 @@ Buffer for dealing with out-of-order/missing frames.
 """
 
 import copy
+from collections import deque
+try:
+	from collections import OrderedDict
+except ImportError:
+	from lsl.misc.OrderedDict import OrderedDict
 
-__version__ = '0.6'
+
+__version__ = '0.7'
 __revision__ = '$Rev$'
 __all__ = ['FrameBuffer', 'TBNFrameBuffer', '__version__', '__revision__', '__all__']
 
@@ -104,8 +110,8 @@ class FrameBuffer(object):
 
 		# The buffer itself
 		self.nSegments = nSegments
-		self.buffer = {}
-		self.done = [0,]
+		self.buffer = OrderedDict()
+		self.done = deque([0,], maxlen=self.nSegments)
 		
 		# Buffer statistics
 		self.full = 0		# Number of times a full buffer was emptied
@@ -167,7 +173,7 @@ class FrameBuffer(object):
 		
 		pass
 
-	def append(self, frame):
+	def append(self, frames):
 		"""
 		Append a new frame to the buffer with the appropriate time tag.  
 		True is returned if the frame was added to the buffer and False if 
@@ -175,19 +181,37 @@ class FrameBuffer(object):
 		already been returned.
 		"""
 
-		# Make sure that it is not in the `done' list.  If it is,
-		# disgaurd the frame and make a note of it.
-		fom = self.figureOfMerit(frame)
-		if fom in self.done or fom < self.done[0]:
-			self.dropped += 1
-			return False
+		# Convert input to a deque (if needed)
+		typeName = type(frames).__name__
+		if typeName == 'deque':
+			pass
+		elif typeName == 'list':
+			frames = deque(frames)
+		else:
+			frames = deque([frames,])
 
-		# If that time tag hasn't been done yet, add it to the 
-		# buffer in the correct place.
-		try:
-			self.buffer[fom].append(frame)
-		except KeyError:
-			self.buffer[fom] = [frame,]
+		# Loop over frames
+		while True:
+			try:
+				frame = frames.popleft()
+			except IndexError:
+				break
+
+			# Make sure that it is not in the `done' list.  If it is,
+			# disgaurd the frame and make a note of it.
+			fom = self.figureOfMerit(frame)
+			if fom < self.done[-1]:
+				self.dropped += 1
+				continue
+
+			# If that time tag hasn't been done yet, add it to the 
+			# buffer in the correct place.
+			try:
+				self.buffer[fom].append(frame)
+			except KeyError:
+				self.buffer[fom] = deque()
+				self.buffer[fom].append(frame)
+				
 		return True
 
 	def get(self):
@@ -200,43 +224,34 @@ class FrameBuffer(object):
 
 		# Get the current status of the buffer
 		keys = self.buffer.keys()
-		keys.sort()
 		
 		# If the ring is full, dump the oldest
-		if len(keys) >= self.nSegments:
-			oldestKey = keys[0]
-			oldestCount = len(self.buffer[oldestKey])
+		if len(keys) < self.nSegments:
+			return None
+		
+		oldestKey = keys[0]
+		oldestCount = len(self.buffer[oldestKey])
+		
+		if oldestCount == self.nFrames:
+			self.full = self.full + 1
 			
-			if oldestCount == self.nFrames:
-				self.full = self.full + 1
-				
-				output = self.buffer[oldestKey]
-			else:
-				self.partial = self.partial + 1
-				self.missing = self.missing + (self.nFrames - len(self.buffer[oldestKey]))
-				
-				output = self.buffer[oldestKey]
-				for frame in self.__missingList(oldestKey):
-					output.append( self.__createFill(oldestKey, frame) )
-			
-			del(self.buffer[oldestKey])
-			self.done.append(oldestKey)
-			try:
-				self.done = self.done[-2*self.nSegments+1:]
-			except:
-				pass
-			
+			output = self.buffer[oldestKey]
 		else:
-			output = None
+			self.partial = self.partial + 1
+			self.missing = self.missing + (self.nFrames - len(self.buffer[oldestKey]))
+			
+			output = self.buffer[oldestKey]
+			for frame in self.__missingList(oldestKey):
+				output.append( self.__createFill(oldestKey, frame) )
+		
+		del(self.buffer[oldestKey])
+		self.done.append(oldestKey)
 		
 		# Sort and return
-		if output is None:
-			return output
-		else:
-			if self.reorder:
-				output.sort(cmp=_cmpStands)
-			return output
-			
+		if self.reorder:
+			output.sort(cmp=_cmpStands)
+		return output
+		
 	def flush(self):
 		"""
 		Return a list of lists containing all remaining frames in the 

@@ -53,7 +53,7 @@ from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
 from errors import *
 
-__version__ = '0.6'
+__version__ = '0.7'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 'getSampleRate', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
@@ -115,19 +115,20 @@ class FrameData(object):
 	frame.  All three fields listed in the DP ICD version H are stored.
 	"""
 
-	def __init__(self, timeTag=None, flags=None, iq=None):
+	def __init__(self, timeTag=None, tuningWord=None, flags=None, iq=None):
 		self.centralFreq = None
 		self.gain = None
 		self.timeTag = timeTag
+		self.tuningWord = tuningWord
 		self.flags = flags
 		self.iq = iq
 		
-	def setCentralFreq(self, centralFreq):
+	def getCentralFreq(self):
 		"""
 		Function to set the central frequency of the DRX data in Hz.
 		"""
 
-		self.centralFreq = centralFreq
+		return dp_common.fS * self.tuningWord / 2**32
 
 	def setGain(self, gain):
 		"""
@@ -189,12 +190,12 @@ class Frame(object):
 		
 		return seconds
 	
-	def setCentralFreq(self, centralFreq):
+	def getCentralFreq(self):
 		"""
-		Convenience wrapper for the Frame.FrameData.setCentralFreq function.
+		Convenience wrapper for the Frame.FrameData.getCentralFreq function.
 		"""
 
-		self.data.setCentralFreq(centralFreq)
+		return self.data.getCentralFreq()
 
 	def setGain(self, gain):
 		"""
@@ -408,16 +409,16 @@ class ObservingBlock(object):
 
 		return self.x1.data.getFilterCode()
 
-	def setCentralFreq(self, centralFreq):
+	def getCentralFreq(self):
 		"""
-		Convenience wrapper for the Frame.FrameData.setCentralFreq function.
+		Convenience wrapper for the Frame.FrameData.getCentralFreq function.
+		
+		.. note::
+			This returned a two-element tuple giving the frequncies for 
+			both tunings.
 		"""
 
-		self.x1.data.setCentralFreq(centralFreq)
-		self.y1.data.setCentralFreq(centralFreq)
-			
-		self.x2.data.setCentralFreq(centralFreq)
-		self.y2.data.setCentralFreq(centralFreq)
+		return self.x1.data.getCentralFreq(), self.x2.data.getCentralFreq()
 
 	def setGain(self, gain):
 		"""
@@ -431,7 +432,7 @@ class ObservingBlock(object):
 		self.y2.data.setGain(gain)
 
 
-def readFrame(filehandle, CentralFreq=None, Gain=None, Verbose=False):
+def readFrame(filehandle, Gain=None, Verbose=False):
 	"""
 	Function to read in a single DRX frame (header+data) and store the 
 	contents as a Frame object.  This function wraps readerHeader and 
@@ -446,8 +447,6 @@ def readFrame(filehandle, CentralFreq=None, Gain=None, Verbose=False):
 	except geofError:
 		raise eofError
 	
-	if CentralFreq is not None:
-		newFrame.setCentralFreq(CentralFreq)
 	if Gain is not None:
 		newFrame.setGain(Gain)
 

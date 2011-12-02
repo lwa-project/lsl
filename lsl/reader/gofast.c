@@ -422,14 +422,15 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 			((unsigned long long) bytes[21])<<16 | \
 			((unsigned long long) bytes[22])<<8 | \
 			bytes[23];
-	unsigned long long flags;
-	flags  =  ((unsigned long long) bytes[24])<<56 | \
-			((unsigned long long) bytes[25])<<48 | \
-			((unsigned long long) bytes[26])<<40 | \
-			((unsigned long long) bytes[27])<<32 | \
-			((unsigned long long) bytes[28])<<24 | \
-			((unsigned long long) bytes[29])<<16 | \
-			((unsigned long long) bytes[30])<<8 | \
+	unsigned long tuningWord;
+	tuningWord = ((unsigned long) bytes[24])<<24 | \
+			   ((unsigned long) bytes[25])<<16 | \
+			   ((unsigned long) bytes[26])<<8 | \
+			   bytes[27];
+	unsigned long flags;
+	flags  =  ((unsigned long) bytes[28])<<24 | \
+			((unsigned long) bytes[29])<<16 | \
+			((unsigned long) bytes[30])<<8 | \
 			bytes[31];
 	
 	// Create the output data array
@@ -485,7 +486,11 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	PyObject_SetAttrString(fData, "timeTag", temp);
 	Py_XDECREF(temp);
 
-	temp = PyLong_FromUnsignedLongLong(flags);
+	temp = PyLogFromUnsignedLong(tuningWord);
+	PyObject_SetAttrString(fData, "tuningWord", temp);
+	Py_XDECREF(temp);
+	
+	temp = PyLong_FromUnsignedLong(flags);
 	PyObject_SetAttrString(fData, "flags", temp);
 	Py_XDECREF(temp);
 
@@ -589,7 +594,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "eofError", eofError);
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 }

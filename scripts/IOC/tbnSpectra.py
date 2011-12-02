@@ -19,6 +19,7 @@ from lsl.common import stations
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 import matplotlib.pyplot as plt
+from collections import deque
 
 
 def usage(exitCode=None):
@@ -250,16 +251,19 @@ def main(args):
 		fillsWork = framesWork / antpols
 		# Inner loop that actually reads the frames into the data array
 		while j < fillsWork:
-			try:
-				cFrame = tbn.readFrame(fh)
-				k = k + 1
-			except errors.eofError:
-				break
-			except errors.syncError:
-				#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
-				continue
+			# Read in the next frame and anticipate any problems that could occur
+			cFrames = deque()
+			for l in xrange(520):
+				try:
+					cFrame = tbn.readFrame(fh)
+					k = k + 1
+				except errors.eofError:
+					break
+				except errors.syncError:
+					#print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
+					continue
 					
-			buffer.append(cFrame)
+			buffer.append(cFrames)
 			cFrames = buffer.get()
 
 			if cFrames is None:

@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
 import random
+from collections import deque
 
 
 class UTC(tzinfo):
@@ -168,16 +169,18 @@ def processChunk(fh, site, good, filename, intTime=6.0, LFFT=64, Overlap=1, Cent
 		doFlush = False
 		while i < nFrames:
 			# Read in the next frame and anticipate any problems that could occur
-			try:
-				cFrame = tbn.readFrame(fh)
-			except errors.eofError:
-				doFlush = True
-				break
-			except errors.syncError:
-				print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
-				continue
+			cFrames = deque()
+			for l in xrange(520):
+				try:
+					cFrame = tbn.readFrame(fh)
+				except errors.eofError:
+					doFlush = True
+					break
+				except errors.syncError:
+					print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbn.FrameSize-1)
+					continue
 
-			buffer.append(cFrame)
+			buffer.append(cFrames)
 			cFrames = buffer.get()
 			
 			# Continue adding frames if nothing comes out.

@@ -12,6 +12,7 @@
   * Added a preliminary module for incoherent dedispersion lsl.misc.dedispersion
   * Added support for spectral kurtosis via lsl.statistics.kurtosis
   * Updated the dependency list
+  * Cleaned up the TBN ring buffer using deques and OrderedDicts
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed
