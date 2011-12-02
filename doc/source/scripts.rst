@@ -1,5 +1,12 @@
 General Utilities
 =================
+gatherDebugging.py
+  :Description: Script to gather information about the Pytho/numpy/LSL install to help with troubleshooting.
+
+  :Usage: gatherDebugging.py
+
+  :Options: None
+
 astroevents.py
   :Description: Application to display rise, transit, and set times for various astronomical sources from LWA-1 for the current date.
 
