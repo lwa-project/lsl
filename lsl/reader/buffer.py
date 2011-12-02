@@ -249,6 +249,7 @@ class FrameBuffer(object):
 		
 		# Sort and return
 		if self.reorder:
+			output = list(output)
 			output.sort(cmp=_cmpStands)
 		return output
 		
@@ -265,7 +266,6 @@ class FrameBuffer(object):
 		"""
 		
 		keys = self.buffer.keys()
-		keys.sort()
 		
 		output = []
 		for key in keys:
@@ -285,14 +285,11 @@ class FrameBuffer(object):
 					output2.append( self.__createFill(key, frame) )
 			
 			if self.reorder:
+				output2 = list(output2)
 				output2.sort(cmp=_cmpStands)
 			output.append( output2 )
 			del(self.buffer[key])
 			self.done.append(key)
-			try:
-				self.done = self.done[-2*self.nSegments+1:]
-			except:
-				pass
 				
 		return output
 
