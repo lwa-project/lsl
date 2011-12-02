@@ -163,8 +163,20 @@ def main(args):
 	# Number of remaining chunks
 	nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
 	
-	# Date
+	# Date & Central Frequnecy
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
+	centralFreq1 = 0.0
+	centralFreq2 = 0.0
+	for i in xrange(4):
+		junkFrame = drx.readFrame(fh)
+		b,t,p = junkFrame.parseID()
+		if p == 0 and t == 1:
+			centralFreq1 = junkFrame.getCentralFreq()
+		elif p == 0 and t == 2:
+			centralFreq2 = junkFrame.getCentralFreq()
+		else:
+			pass
+	fh.seek(-4*drx.FrameSize, 1)
 
 	# File summary
 	print "Filename: %s" % config['args'][0]
@@ -172,6 +184,7 @@ def main(args):
 	print "Beams: %i" % beams
 	print "Tune/Pols: %i %i %i %i" % tunepols
 	print "Sample Rate: %i Hz" % srate
+	print "Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (centralFreq1, centralFreq2)
 	print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate)
 	print "---"
 	print "Offset: %.3f s (%i frames)" % (config['offset'], offset)
@@ -247,17 +260,28 @@ def main(args):
 	# Now that we have read through all of the chunks, perform the final averaging by
 	# dividing by all of the chunks
 	spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
+	
+	# Frequencies
+	freq1 = freq + centralFreq1
+	freq2 = freq + centralFreq2
 
 	# The plots:  This is setup for the current configuration of 20 beampols
 	fig = plt.figure()
 	figsX = int(round(math.sqrt(beampols)))
 	figsY = beampols / figsX
 	# Put the frequencies in the best units possible
-	freq, units = bestFreqUnits(freq)
+	freq1, units1 = bestFreqUnits(freq1)
+	freq2, units2 = bestFreqUnits(freq2)
 
 	sortedMapper = sorted(standMapper)
 	for k, aStand in enumerate(sortedMapper):
 		i = standMapper.index(aStand)
+		if standMapper[i]%4/2+1 == 1:
+			freq = freq1
+			units = units1
+		else:
+			freq = freq2
+			units = units2
 
 		ax = fig.add_subplot(figsX,figsY,k+1)
 		currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
@@ -278,7 +302,7 @@ def main(args):
 				ax.plot(freq, diff, label='%i' % j)
 
 		ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2))
-		ax.set_xlabel('Frequency Offset [%s]' % units)
+		ax.set_xlabel('Frequency [%s]' % units)
 		ax.set_ylabel('P.S.D. [dB/RBW]')
 		ax.set_xlim([freq.min(), freq.max()])
 		ax.legend(loc=0)

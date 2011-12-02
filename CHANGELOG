@@ -13,6 +13,8 @@
   * Added support for spectral kurtosis via lsl.statistics.kurtosis
   * Updated the dependency list
   * Cleaned up the TBN ring buffer using deques and OrderedDicts
+  * Added support for reading the TBN tuning word/frequency and gain from a TBN frame
+  * Added support for reading the DRX tuning word/frequency from a DRX frame
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed
@@ -26,6 +28,7 @@
   * Fixed a mapping problem in plotStands.py that mapped by digitizer, not stand
   * Added a gatherDebugging.py script alongside setup.py to help with debugging and installation problems
   * Moved gatherDebugging.py to the script directory to have it installed with LSL
+  * Added `documentation support` for accessing the central frequency of a DRX frame
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF
