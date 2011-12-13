@@ -608,7 +608,7 @@ def __parseTextSSMIF(filename):
 			else:
 				rpdVF[ids[0]-1] = float(value)
 			continue
-		if keyword == 'RDP_DD':
+		if keyword == 'RPD_DD':
 			if ids[0] == -1:
 				rpdDD = [float(value) for n in xrange(nRPD)]
 			else:
@@ -643,11 +643,11 @@ def __parseTextSSMIF(filename):
 				rpdStr[ids[0]-1] = float(value)
 			continue
 		
-		if keyword == 'RDP_DESI':
+		if keyword == 'RPD_DESI':
 			rpdDesi[ids[0]-1] = value
 			continue
 		
-		if keyword == 'RDP_ANT':
+		if keyword == 'RPD_ANT':
 			rpdAnt[ids[0]-1] = int(value)
 			continue
 		

@@ -29,6 +29,7 @@
   * Added a gatherDebugging.py script alongside setup.py to help with debugging and installation problems
   * Moved gatherDebugging.py to the script directory to have it installed with LSL
   * Added `documentation support` for accessing the central frequency of a DRX frame
+  * Fixed a RPD_DD mapping problem in lsl.common.stations.parseSSMIF()
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF
