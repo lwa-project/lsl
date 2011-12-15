@@ -173,6 +173,7 @@ def processChunk(fh, site, good, filename, intTime=6.0, LFFT=64, Overlap=1, Cent
 			for l in xrange(520):
 				try:
 					cFrame = tbn.readFrame(fh)
+					cFrames.append(cFrame)
 				except errors.eofError:
 					doFlush = True
 					break
@@ -280,7 +281,10 @@ def main(args):
 	LFFT = config['LFFT']
 
 	# Setup the LWA station information
-	station = stations.lwa1
+	if config['SSMIF'] != '':
+		station = stations.parseSSMIF(config['SSMIF'])
+	else:
+		station = stations.lwa1
 	antennas = station.getAntennas()
 
 	fh = open(filename, "rb", buffering=tbn.FrameSize*10000)

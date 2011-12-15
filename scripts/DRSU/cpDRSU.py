@@ -64,8 +64,11 @@ def main(args):
 	pattern = config['args'][1]
 	dest = config['args'][2]
 
+	# Get files to copy off the DRSU
+	toCopy = drsu.globFiles(device, pattern)
+
 	# Make sure we can get the file
-	if len(toCopy):
+	if not len(toCopy):
 		print "ERROR:  cannot find '%s' on device '%s'" % (pattern, device)
 		sys.exit(1)
 	
