@@ -172,8 +172,7 @@ def processChunk(fh, site, good, filename, intTime=6.0, LFFT=64, Overlap=1, Cent
 			cFrames = deque()
 			for l in xrange(520):
 				try:
-					cFrame = tbn.readFrame(fh)
-					cFrames.append(cFrame)
+					cFrames.append( tbn.readFrame(fh) )
 				except errors.eofError:
 					doFlush = True
 					break

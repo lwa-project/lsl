@@ -255,7 +255,7 @@ def main(args):
 			cFrames = deque()
 			for l in xrange(520):
 				try:
-					cFrame = tbn.readFrame(fh)
+					cFrames.append( tbn.readFrame(fh) )
 					k = k + 1
 				except errors.eofError:
 					break
