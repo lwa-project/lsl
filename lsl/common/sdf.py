@@ -1110,7 +1110,7 @@ class BeamStep(object):
 			return False
 
 
-def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
+def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=True):
 	"""Given a obsTemp dictionary of observation parameters and, optionally, a list of
 	beamTemp step parametes, return a complete Observation object corresponding to 
 	those values."""
@@ -1144,6 +1144,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	mode = obsTemp['mode']
 	if verbose:
 		print "[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode)
+		
 	if mode == 'TBW':
 		obsOut = TBW(obsTemp['name'], obsTemp['target'], utcString, 12000000, comments=obsTemp['comments'])
 	elif mode == 'TBN':
@@ -1157,6 +1158,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	else:
 		if verbose:
 			print "[%i] -> found %i steps" % (os.getpid(), len(beamTemps))
+			
 		obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], steps=[], comments=obsTemp['comments'])
 		for beamTemp in beamTemps:
 			f1 = beamTemp['freq1']*fS / 2**32
@@ -1167,7 +1169,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	return obsOut
 
 
-def parseSDF(filename, verbose=False):
+def parseSDF(filename, verbose=True):
 	"""
 	Given a filename, read the file's contents into the SDM instance and return
 	that instance.
@@ -1289,8 +1291,10 @@ def parseSDF(filename, verbose=False):
 				beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False}
 				beamTemps = []
 			obsTemp['id'] = int(value)
+			
 			if verbose:
 				print "[%i] Started obs %i" % (os.getpid(), int(value))
+				
 			continue
 		if keyword == 'OBS_TITLE':
 			obsTemp['name'] = value
@@ -1446,7 +1450,7 @@ def parseSDF(filename, verbose=False):
 	
 	# Create the final observation
 	if obsTemp['id'] != 0:
-		project.sessions[0].observations.append( __parseCreateObsObject(obsTemp, beamTemps=beamTemps) )
+		project.sessions[0].observations.append( __parseCreateObsObject(obsTemp, beamTemps=beamTemps, verbose=verbose) )
 		beamTemps = []
 		
 	# Apply session-wide observation values to the individual observations
