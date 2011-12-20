@@ -768,7 +768,7 @@ def __parseTextSSMIF(filename):
 			continue
 		
 		if keyword == 'DP1_SLOT':
-			dp1Slot[ids[0]-1] = int(value)
+			dp1Slot[ids[0]-1] = value
 			continue
 		
 		if keyword == 'DP1_DESI':
