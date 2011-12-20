@@ -1110,7 +1110,7 @@ class BeamStep(object):
 			return False
 
 
-def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=True):
+def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	"""Given a obsTemp dictionary of observation parameters and, optionally, a list of
 	beamTemp step parametes, return a complete Observation object corresponding to 
 	those values."""
@@ -1169,7 +1169,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=True):
 	return obsOut
 
 
-def parseSDF(filename, verbose=True):
+def parseSDF(filename, verbose=False):
 	"""
 	Given a filename, read the file's contents into the SDM instance and return
 	that instance.
