@@ -1,7 +1,7 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
-# 2011 AUG 10 by J. Craig
+# 2011 DEC 16 by J. Craig & J. Dowell
 # See MCS0031 for format info 
 # Search "FIXME" for things that need work
 
@@ -804,7 +804,7 @@ STD_LZ[258]    +1.670
 # --- Antenna # -> Stand # mapping ---
 # ------------------------------------
 # This will be set to floor((n-1)/2)+1 for any antenna n <= 2*N_STD not identified
-# Strongly recommmended to leave this alone, so that antennas 1 & 2 are on stand 1,
+# Strongly recommended to leave this alone, so that antennas 1 & 2 are on stand 1,
 #   antennas 3 & 4 are on stand 2, and so on.
 # *** ANT_STD[antenna_id] goes here:
 
@@ -823,112 +823,57 @@ STD_LZ[258]    +1.670
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
+
+# The below antennas have no signal
+ANT_STAT[18] 1
+ANT_STAT[25] 1
+ANT_STAT[43] 1
+ANT_STAT[68] 1
+ANT_STAT[94] 1
+ANT_STAT[132] 1
+ANT_STAT[169] 1
+ANT_STAT[194] 1
+ANT_STAT[196] 1
+ANT_STAT[246] 1
+ANT_STAT[247] 1
+ANT_STAT[306] 1
+ANT_STAT[362] 1
+ANT_STAT[374] 1
+ANT_STAT[384] 1
+ANT_STAT[406] 1
+ANT_STAT[464] 1
+ANT_STAT[488] 1
+ANT_STAT[492] 1
+
+The below antennas are installed, but not cabled to receivers
+ANT_STAT[513] 1
+ANT_STAT[514] 1
+
+# The below antennas failed the TBN calibration, but spectra and drift scan look ok 
+ANT_STAT[17] 2
+ANT_STAT[71] 2
+ANT_STAT[72] 2
+ANT_STAT[295] 2
+ANT_STAT[296] 2
+ANT_STAT[487] 2
+
+# The below antennas failed drift scan, but calibration passed
+ANT_STAT[48] 2
+ANT_STAT[62] 2
+ANT_STAT[74] 2
+ANT_STAT[116] 2
+ANT_STAT[147] 2
+ANT_STAT[189] 2
+ANT_STAT[191] 2
+ANT_STAT[228] 2
+ANT_STAT[367] 2
+ANT_STAT[449] 2
+
+# The below antennas are not installed
 ANT_STAT[517] 0
 ANT_STAT[518] 0
 ANT_STAT[519] 0
 ANT_STAT[520] 0
-# Identify antennas that are "1" ("Bad") or "2" (Suspect).  
-# "1" is no signal, "2" is signal, but unexpected antenna response 
-# ID'd as unexpected antenna response from 055782_002401597_5_TBW.dat TBW capture
-ANT_STAT[515] 2
-ANT_STAT[516] 2
-ANT_STAT[300] 2
-ANT_STAT[310] 2
-ANT_STAT[283] 2
-ANT_STAT[483] 2
-ANT_STAT[173] 2
-ANT_STAT[34] 2
-ANT_STAT[318] 2
-ANT_STAT[66] 2
-ANT_STAT[147] 2
-ANT_STAT[74] 2
-ANT_STAT[134] 2
-ANT_STAT[211] 2
-ANT_STAT[62] 2
-ANT_STAT[382] 2
-ANT_STAT[479] 2
-ANT_STAT[162] 2
-ANT_STAT[189] 2
-ANT_STAT[332] 2
-ANT_STAT[275] 2
-ANT_STAT[415] 2
-ANT_STAT[447] 2
-ANT_STAT[387] 2
-ANT_STAT[388] 2
-ANT_STAT[272] 2
-ANT_STAT[54] 2
-ANT_STAT[53] 2
-ANT_STAT[181] 2
-ANT_STAT[182] 2
-ANT_STAT[366] 2
-ANT_STAT[412] 2
-ANT_STAT[459] 2
-ANT_STAT[92] 2
-ANT_STAT[446] 2
-ANT_STAT[499] 2
-ANT_STAT[500] 2
-ANT_STAT[227] 2
-ANT_STAT[333] 2
-ANT_STAT[179] 2
-ANT_STAT[256] 2
-ANT_STAT[42] 2
-ANT_STAT[113] 2
-ANT_STAT[472] 2
-ANT_STAT[48] 2
-ANT_STAT[441] 2
-ANT_STAT[36] 2
-ANT_STAT[282] 2
-ANT_STAT[492] 2
-ANT_STAT[430] 2
-ANT_STAT[326] 2
-ANT_STAT[116] 2
-ANT_STAT[478] 2
-ANT_STAT[509] 2
-ANT_STAT[510] 2
-ANT_STAT[505] 2
-ANT_STAT[12] 2
-ANT_STAT[364] 2
-ANT_STAT[191] 2
-ANT_STAT[210] 2
-ANT_STAT[251] 2
-ANT_STAT[252] 2
-ANT_STAT[457] 2
-ANT_STAT[469] 2
-ANT_STAT[470] 2
-ANT_STAT[56] 2
-ANT_STAT[67] 2
-ANT_STAT[75] 2
-ANT_STAT[76] 2
-ANT_STAT[489] 2
-ANT_STAT[490] 2
-ANT_STAT[367] 2
-ANT_STAT[123] 2
-ANT_STAT[124] 2
-ANT_STAT[144] 2
-ANT_STAT[140] 2
-ANT_STAT[168] 2
-# ID'd as no signal from 055782_002401597_5_TBW.dat TBW capture
-ANT_STAT[517] 1
-ANT_STAT[518] 1
-ANT_STAT[336] 1
-ANT_STAT[406] 1
-ANT_STAT[488] 1
-ANT_STAT[306] 1
-ANT_STAT[374] 1
-ANT_STAT[246] 1
-ANT_STAT[384] 1
-ANT_STAT[362] 1
-ANT_STAT[513] 1
-ANT_STAT[514] 1
-ANT_STAT[519] 1
-ANT_STAT[520] 1
-ANT_STAT[228] 1
-ANT_STAT[503] 1
-ANT_STAT[94] 1
-ANT_STAT[25] 1
-ANT_STAT[43] 1
-ANT_STAT[195] 1
-ANT_STAT[18] 1
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -965,10 +910,11 @@ N_FEE 260
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any FEE #'s <= N_FEE not identified
 # *** FEE_STAT[fee_id] goes here: 
-# FIXME JC: Need to enter lines "FEE_STAT[#] 0" for FEEs not installed
+
+# The below FEEs are not installed
+FEE_STAT[257] 0
 FEE_STAT[259] 0
 FEE_STAT[260] 0
-
 
 # This will be set to 1 for any FEEs not identified below
 # You should set it to 0 if different but not known, or >1 if appropriate
@@ -976,13 +922,9 @@ FEE_STAT[260] 0
 
 # FEE_GAI1[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
 # *** FEE_GAI1[fee_id] goes here:
-# FIXME JC: Need to set to actual values to the extent that these are known to be significantly different from 35.7 dB 
-# none known
 
 # FEE_GAI2[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
 # *** FEE_GAI2[fee_id] goes here:
-# FIXME JC: Need to set to actual values to the extent that these are known to be significantly different from 35.7 dB 
-# none known
 
 # ------------------------------------
 # --- Antenna # -> FEE # mapping -----
@@ -990,7 +932,7 @@ FEE_STAT[260] 0
 # Format (example) "FEE_ANT1[2] 3" means antenna 3 is connected to port 1 of FEE 2.
 # If not specified, then FEE_ANT1[1] will be 1, FEE_ANT2[1] will be 2,
 #   FEE_ANT1[2] will be 3, FEE_ANT2[2] will be 4, and so on.
-# Strongly recommmended to leave this alone, and that only exceptions are noted.
+# Strongly recommended to leave this alone, and that only exceptions are noted.
 # *** FEE_ANT1[fee_id] goes here:
 # *** FEE_ANT2[fee_id] goes here:
 
@@ -1006,8 +948,8 @@ FEE_STAT[260] 0
 # FEE_PORT[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
 # *** FEE_RACK[fee_id] goes here:
 # *** FEE_PORT[fee_id] goes here:
-# All FEEs are currently on Rack 1, Port 1:
-# FIX_ME JC: verify port numbers
+
+# All FEEs are on Rack 1, Port 1
 FEE_RACK[1] 1
 FEE_PORT[1] 1
 FEE_RACK[1] 1
@@ -2050,31 +1992,20 @@ RPD_ID[509] EXK-255-057 (Gray)
 RPD_ID[510] EXK-255-057 (Black)
 RPD_ID[511] EXK-256-131 (Gray)
 RPD_ID[512] EXK-256-131 (Black)
-# FIXME JC: If you know how the cables for Stands 257 are labeled, they go here:
-# labeling unknown, but installed
-RPD_ID[513] UNK
-RPD_ID[514] UNK 
-# FIXME JC: If you know how the cables for Stands 258 are labeled, they go here:
-# no labels
-RPD_ID[515] UNK
-RPD_ID[516] UNK  
-# Stand 259 doesn't exist yet:
-RPD_ID[517] UNK
-RPD_ID[518] UNK 
-# Stand 260 doesn't exist yet:
-RPD_ID[519] UNK
-RPD_ID[520] UNK 
+# no labels for stands 257 & 258
+# Stands 259 & 260 don't exist yet
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
 # *** RPD_STAT[cable#] goes here:
-# Cables to Stand 257 are not currently installed:
+
+# Cables to Stand 257 are not currently installed
 RPD_STAT[513] 0
 RPD_STAT[514] 0
-# Cables to Stand 259 are not currently installed (since 259 doesn't exist):
+
+# Cables to Stands 259 & 260 are not currently installed (259 & 260 don't exist)
 RPD_STAT[517] 0
 RPD_STAT[518] 0
-# Cables to Stand 260 are not currently installed (since 260 doesn't exist):
 RPD_STAT[519] 0
 RPD_STAT[520] 0
 
@@ -2593,21 +2524,20 @@ RPD_LENG[510]  57.00
 RPD_LENG[511] 131.00
 RPD_LENG[512] 131.00
 
-# Cables to Stand 257 are not currently installed, but would go here: FIXME JC
-# the below is an educated guess
-RPD_LENG[513] 120 
-RPD_LENG[514] 120
-
+# FIXME JD
 # Length of cables to Stand 258 (old RTA): 
-RPD_LENG[515] 311.2  # SE's guess; see comment below
-RPD_LENG[516] 311.2  # SE's guess; see comment below
+RPD_LENG[515] 311.4  # JD's guess; see comment below
+RPD_LENG[516] 315.3  # JD's guess; see comment below
 # FIXME SE: Here's how I came up with this length: 
 # ... I started by assuming RPD_VF=85 [%] and RPD_DD=2 [ns]; see those entries for more info.
 # ... On or about July 9, 2010, JC and I measured the one-way prop time to be about 1222.5 ns.
 # ... ... using the TenTec VNA. 
 # ... I then assumed the M.170 model assuming 50 MHz center frequency, and solved for length. 
 # FIXME JC: Make sure you're on board with the above about Stand 258.  If you have better info, please provide
-# no better info currently known
+# On December 12, 2011, JC and JD remeasured both outlier polarizations using a signal
+# ... generator and an oscilliscope.  The round trip times were 2472 ns for N-S and 
+# ... 2503 ns for E-W.  I used SE method described above to come up with the new lengths 
+# ... for both cables (listed above).
 # Cables to Stand 259 are not currently installed (since 259 doesn't exist):
 # RPD_STAT[517] 
 # RPD_STAT[518] 
@@ -2621,7 +2551,6 @@ RPD_LENG[516] 311.2  # SE's guess; see comment below
 # so only stands using cable other than the KingSignal stuff need entries here.
 # *** RPD_VF[cable#] goes here:
 # *** RPD_DD[cable#] goes here:
-# Cables to Stand 257 are not currently installed, but info would go here: FIXME JC
 # not installed
 # RPD_VF[513]
 # RPD_VF[514]
@@ -2658,25 +2587,549 @@ RPD_A1[515] 0.00000
 RPD_A1[516] 0.00000 
 RPD_FREF 10000000 
 
-# Cable stretching is set to 0.5% based on the average TDR measurements (except for 
-# stands 257 and 258 which are left alone) 
-RPD_STR 1.005 
-RPD_STR[513] 1.000 
-RPD_STR[514] 1.000 
-RPD_STR[515] 1.000 
-RPD_STR[516] 1.000 
+# Cable stretching is set with TBN calibration results.  The assumptions that go into
+# ... this are:
+# ...  1) The cable velocity factors and dispersion delays in RPD_VF and RPD_DD as well  
+# ...     as the M.170 cable model are correct
+# ...  2) The length of the outlier cables is accurately known
+# ...  3) The fringe stopping applied to the data for ~1.5 Cyg A fringe rotation periods 
+# ...     is sufficient to supress the contributions of all source but Cyg A.
+# ... The results of the cable stretch factor fitting seem roughtly in agreement with the 
+# ... ~0.5% stretch reported by SE from TDR measurments.  For the stretch factors reported
+# ... here, the mean is ~1.2%, the median is ~1.0%, and the mode is ~0.6%.  These values 
+# ... most likely too large because they include the DP digitizer delays (~1-2 ns) which 
+# ... have not been independantly determined.
+RPD_STR[1]  1.0065
+RPD_STR[2]  0.9970
+RPD_STR[3]  1.0028
+RPD_STR[4]  0.9902
+RPD_STR[5]  1.0037
+RPD_STR[6]  0.9938
+RPD_STR[7]  1.0095
+RPD_STR[8]  1.0010
+RPD_STR[9]  1.0083
+RPD_STR[10]  1.0063
+RPD_STR[11]  1.0110
+RPD_STR[12]  1.0110
+RPD_STR[13]  1.0040
+RPD_STR[14]  1.0063
+RPD_STR[15]  1.0123
+RPD_STR[16]  1.0120
+RPD_STR[17]  1.0155
+RPD_STR[18]  1.0060
+RPD_STR[19]  1.0143
+RPD_STR[20]  1.0143
+RPD_STR[21]  1.0105
+RPD_STR[22]  0.9960
+RPD_STR[23]  1.0137
+RPD_STR[24]  1.0108
+RPD_STR[25]  1.0945
+RPD_STR[26]  1.0108
+RPD_STR[27]  1.0132
+RPD_STR[28]  1.0110
+RPD_STR[29]  1.0157
+RPD_STR[30]  1.0125
+RPD_STR[31]  1.0177
+RPD_STR[32]  1.0108
+RPD_STR[33]  1.0212
+RPD_STR[34]  1.0177
+RPD_STR[35]  1.0275
+RPD_STR[36]  1.0232
+RPD_STR[37]  1.0357
+RPD_STR[38]  1.0130
+RPD_STR[39]  1.0057
+RPD_STR[40]  1.0052
+RPD_STR[41]  1.0043
+RPD_STR[42]  0.9998
+RPD_STR[43]  0.9718
+RPD_STR[44]  0.9992
+RPD_STR[45]  1.0010
+RPD_STR[46]  0.9988
+RPD_STR[47]  1.0050
+RPD_STR[48]  0.9995
+RPD_STR[49]  1.0130
+RPD_STR[50]  1.0095
+RPD_STR[51]  1.0030
+RPD_STR[52]  1.0072
+RPD_STR[53]  1.0180
+RPD_STR[54]  1.0112
+RPD_STR[55]  1.0068
+RPD_STR[56]  1.0177
+RPD_STR[57]  1.0028
+RPD_STR[58]  0.9998
+RPD_STR[59]  1.0125
+RPD_STR[60]  1.0050
+RPD_STR[61]  1.0043
+RPD_STR[62]  1.0095
+RPD_STR[63]  1.0117
+RPD_STR[64]  1.0068
+RPD_STR[65]  1.0048
+RPD_STR[66]  1.0125
+RPD_STR[67]  1.0212
+RPD_STR[68]  1.0895
+RPD_STR[69]  1.0077
+RPD_STR[70]  1.0040
+RPD_STR[71]  1.0088
+RPD_STR[72]  1.0077
+RPD_STR[73]  1.0035
+RPD_STR[74]  0.9938
+RPD_STR[75]  1.0135
+RPD_STR[76]  1.0192
+RPD_STR[77]  1.0097
+RPD_STR[78]  1.0095
+RPD_STR[79]  1.0055
+RPD_STR[80]  1.0020
+RPD_STR[81]  1.0097
+RPD_STR[82]  1.0030
+RPD_STR[83]  1.0172
+RPD_STR[84]  1.0128
+RPD_STR[85]  1.0148
+RPD_STR[86]  0.9985
+RPD_STR[87]  1.0397
+RPD_STR[88]  1.0125
+RPD_STR[89]  1.0105
+RPD_STR[90]  1.0135
+RPD_STR[91]  1.0132
+RPD_STR[92]  1.0105
+RPD_STR[93]  1.0120
+RPD_STR[94]  0.9353
+RPD_STR[95]  1.0110
+RPD_STR[96]  1.0148
+RPD_STR[97]  1.0143
+RPD_STR[98]  1.0075
+RPD_STR[99]  1.0117
+RPD_STR[100]  1.0095
+RPD_STR[101]  1.0057
+RPD_STR[102]  0.9910
+RPD_STR[103]  1.0228
+RPD_STR[104]  1.0185
+RPD_STR[105]  1.0195
+RPD_STR[106]  1.0103
+RPD_STR[107]  1.0303
+RPD_STR[108]  1.0305
+RPD_STR[109]  1.0220
+RPD_STR[110]  1.0115
+RPD_STR[111]  1.0057
+RPD_STR[112]  1.0015
+RPD_STR[113]  1.0123
+RPD_STR[114]  0.9968
+RPD_STR[115]  1.0028
+RPD_STR[116]  1.0060
+RPD_STR[117]  1.0072
+RPD_STR[118]  1.0015
+RPD_STR[119]  1.0035
+RPD_STR[120]  1.0005
+RPD_STR[121]  1.0037
+RPD_STR[122]  0.9985
+RPD_STR[123]  1.0160
+RPD_STR[124]  1.0010
+RPD_STR[125]  1.0075
+RPD_STR[126]  0.9975
+RPD_STR[127]  1.0170
+RPD_STR[128]  1.0017
+RPD_STR[129]  1.0043
+RPD_STR[130]  1.0092
+RPD_STR[131]  1.0292
+RPD_STR[132]  0.9960
+RPD_STR[133]  1.0155
+RPD_STR[134]  0.9982
+RPD_STR[135]  1.0065
+RPD_STR[136]  1.0063
+RPD_STR[137]  1.0112
+RPD_STR[138]  1.0068
+RPD_STR[139]  1.0090
+RPD_STR[140]  1.0097
+RPD_STR[141]  1.0055
+RPD_STR[142]  1.0115
+RPD_STR[143]  1.0322
+RPD_STR[144]  1.0208
+RPD_STR[145]  1.0060
+RPD_STR[146]  1.0030
+RPD_STR[147]  1.0353
+RPD_STR[148]  1.0140
+RPD_STR[149]  1.0333
+RPD_STR[150]  1.0080
+RPD_STR[151]  1.0180
+RPD_STR[152]  1.0112
+RPD_STR[153]  1.0110
+RPD_STR[154]  1.0088
+RPD_STR[155]  1.0140
+RPD_STR[156]  1.0240
+RPD_STR[157]  1.0070
+RPD_STR[158]  1.0060
+RPD_STR[159]  1.0208
+RPD_STR[160]  1.0148
+RPD_STR[161]  1.0077
+RPD_STR[162]  1.0055
+RPD_STR[163]  1.0230
+RPD_STR[164]  1.0208
+RPD_STR[165]  1.0103
+RPD_STR[166]  1.0070
+RPD_STR[167]  1.0303
+RPD_STR[168]  1.0005
+RPD_STR[169]  1.0608
+RPD_STR[170]  1.0123
+RPD_STR[171]  1.0195
+RPD_STR[172]  1.0085
+RPD_STR[173]  1.0137
+RPD_STR[174]  1.0048
+RPD_STR[175]  1.0295
+RPD_STR[176]  1.0232
+RPD_STR[177]  1.0160
+RPD_STR[178]  1.0095
+RPD_STR[179]  1.0312
+RPD_STR[180]  1.0080
+RPD_STR[181]  1.0210
+RPD_STR[182]  0.9925
+RPD_STR[183]  1.0092
+RPD_STR[184]  0.9952
+RPD_STR[185]  1.0012
+RPD_STR[186]  0.9952
+RPD_STR[187]  1.0123
+RPD_STR[188]  1.0088
+RPD_STR[189]  1.0088
+RPD_STR[190]  1.0037
+RPD_STR[191]  1.0030
+RPD_STR[192]  1.0060
+RPD_STR[193]  1.0020
+RPD_STR[194]  1.0505
+RPD_STR[195]  1.0070
+RPD_STR[196]  1.0522
+RPD_STR[197]  1.0045
+RPD_STR[198]  1.0025
+RPD_STR[199]  1.0205
+RPD_STR[200]  1.0085
+RPD_STR[201]  1.0060
+RPD_STR[202]  1.0032
+RPD_STR[203]  1.0180
+RPD_STR[204]  1.0050
+RPD_STR[205]  1.0100
+RPD_STR[206]  1.0040
+RPD_STR[207]  1.0265
+RPD_STR[208]  1.0108
+RPD_STR[209]  1.0112
+RPD_STR[210]  1.0068
+RPD_STR[211]  1.0345
+RPD_STR[212]  1.0128
+RPD_STR[213]  1.0060
+RPD_STR[214]  1.0048
+RPD_STR[215]  1.0217
+RPD_STR[216]  1.0197
+RPD_STR[217]  1.0110
+RPD_STR[218]  1.0060
+RPD_STR[219]  1.0228
+RPD_STR[220]  1.0263
+RPD_STR[221]  1.0060
+RPD_STR[222]  1.0095
+RPD_STR[223]  1.0290
+RPD_STR[224]  1.0135
+RPD_STR[225]  1.0055
+RPD_STR[226]  0.9985
+RPD_STR[227]  1.0223
+RPD_STR[228]  1.0172
+RPD_STR[229]  1.0045
+RPD_STR[230]  1.0092
+RPD_STR[231]  1.0300
+RPD_STR[232]  1.0268
+RPD_STR[233]  1.0217
+RPD_STR[234]  1.0037
+RPD_STR[235]  1.0295
+RPD_STR[236]  1.0310
+RPD_STR[237]  1.0085
+RPD_STR[238]  0.9978
+RPD_STR[239]  1.0368
+RPD_STR[240]  1.0348
+RPD_STR[241]  1.0232
+RPD_STR[242]  1.0055
+RPD_STR[243]  1.0037
+RPD_STR[244]  1.0005
+RPD_STR[245]  1.0032
+RPD_STR[246]  1.0240
+RPD_STR[247]  0.9573
+RPD_STR[248]  1.0068
+RPD_STR[249]  0.9988
+RPD_STR[250]  0.9978
+RPD_STR[251]  1.0165
+RPD_STR[252]  1.0068
+RPD_STR[253]  1.0055
+RPD_STR[254]  0.9998
+RPD_STR[255]  1.0075
+RPD_STR[256]  1.0155
+RPD_STR[257]  1.0123
+RPD_STR[258]  1.0043
+RPD_STR[259]  1.0108
+RPD_STR[260]  1.0068
+RPD_STR[261]  1.0072
+RPD_STR[262]  1.0035
+RPD_STR[263]  1.0145
+RPD_STR[264]  1.0140
+RPD_STR[265]  1.0097
+RPD_STR[266]  1.0000
+RPD_STR[267]  1.0210
+RPD_STR[268]  1.0152
+RPD_STR[269]  1.0070
+RPD_STR[270]  1.0192
+RPD_STR[271]  1.0188
+RPD_STR[272]  1.0160
+RPD_STR[273]  1.0100
+RPD_STR[274]  0.9990
+RPD_STR[275]  1.0297
+RPD_STR[276]  1.0203
+RPD_STR[277]  1.0077
+RPD_STR[278]  1.0065
+RPD_STR[279]  1.0280
+RPD_STR[280]  1.0177
+RPD_STR[281]  1.0112
+RPD_STR[282]  1.0080
+RPD_STR[283]  1.0370
+RPD_STR[284]  1.0250
+RPD_STR[285]  1.0068
+RPD_STR[286]  1.0043
+RPD_STR[287]  1.0183
+RPD_STR[288]  1.0223
+RPD_STR[289]  1.0088
+RPD_STR[290]  1.0080
+RPD_STR[291]  1.0228
+RPD_STR[292]  1.0145
+RPD_STR[293]  1.0075
+RPD_STR[294]  1.0117
+RPD_STR[295]  1.0008
+RPD_STR[296]  1.0810
+RPD_STR[297]  1.0103
+RPD_STR[298]  1.0097
+RPD_STR[299]  1.0297
+RPD_STR[300]  1.0280
+RPD_STR[301]  1.0105
+RPD_STR[302]  1.0028
+RPD_STR[303]  1.0123
+RPD_STR[304]  1.0072
+RPD_STR[305]  0.9985
+RPD_STR[306]  0.9830
+RPD_STR[307]  1.0077
+RPD_STR[308]  1.0100
+RPD_STR[309]  1.0015
+RPD_STR[310]  1.0015
+RPD_STR[311]  1.0077
+RPD_STR[312]  1.0060
+RPD_STR[313]  1.0040
+RPD_STR[314]  1.0028
+RPD_STR[315]  1.0232
+RPD_STR[316]  1.0015
+RPD_STR[317]  1.0080
+RPD_STR[318]  1.0023
+RPD_STR[319]  1.0168
+RPD_STR[320]  1.0060
+RPD_STR[321]  1.0040
+RPD_STR[322]  1.0057
+RPD_STR[323]  1.0208
+RPD_STR[324]  1.0108
+RPD_STR[325]  1.0103
+RPD_STR[326]  1.0017
+RPD_STR[327]  1.0188
+RPD_STR[328]  1.0143
+RPD_STR[329]  1.0088
+RPD_STR[330]  1.0063
+RPD_STR[331]  1.0225
+RPD_STR[332]  1.0315
+RPD_STR[333]  1.0057
+RPD_STR[334]  1.0035
+RPD_STR[335]  1.0337
+RPD_STR[336]  1.0197
+RPD_STR[337]  1.0100
+RPD_STR[338]  1.0048
+RPD_STR[339]  1.0257
+RPD_STR[340]  1.0208
+RPD_STR[341]  1.0070
+RPD_STR[342]  1.0075
+RPD_STR[343]  1.0305
+RPD_STR[344]  1.0255
+RPD_STR[345]  1.0080
+RPD_STR[346]  1.0235
+RPD_STR[347]  1.0442
+RPD_STR[348]  1.0308
+RPD_STR[349]  1.0117
+RPD_STR[350]  0.9978
+RPD_STR[351]  1.0397
+RPD_STR[352]  1.0390
+RPD_STR[353]  1.0075
+RPD_STR[354]  1.0135
+RPD_STR[355]  1.0395
+RPD_STR[356]  1.0375
+RPD_STR[357]  1.0083
+RPD_STR[358]  1.0028
+RPD_STR[359]  1.0080
+RPD_STR[360]  1.0095
+RPD_STR[361]  1.0012
+RPD_STR[362]  0.9748
+RPD_STR[363]  1.0088
+RPD_STR[364]  1.0015
+RPD_STR[365]  0.9998
+RPD_STR[366]  0.9972
+RPD_STR[367]  1.0270
+RPD_STR[368]  1.0063
+RPD_STR[369]  1.0028
+RPD_STR[370]  0.9992
+RPD_STR[371]  1.0243
+RPD_STR[372]  1.0145
+RPD_STR[373]  1.0045
+RPD_STR[374]  1.0940
+RPD_STR[375]  1.0192
+RPD_STR[376]  1.0090
+RPD_STR[377]  1.0048
+RPD_STR[378]  0.9992
+RPD_STR[379]  1.0157
+RPD_STR[380]  1.0037
+RPD_STR[381]  0.9988
+RPD_STR[382]  0.9962
+RPD_STR[383]  1.0297
+RPD_STR[384]  1.0110
+RPD_STR[385]  1.0170
+RPD_STR[386]  1.0048
+RPD_STR[387]  1.0410
+RPD_STR[388]  1.0268
+RPD_STR[389]  1.0040
+RPD_STR[390]  1.0075
+RPD_STR[391]  1.0292
+RPD_STR[392]  1.0272
+RPD_STR[393]  1.0075
+RPD_STR[394]  1.0025
+RPD_STR[395]  1.0268
+RPD_STR[396]  1.0265
+RPD_STR[397]  1.0037
+RPD_STR[398]  0.9975
+RPD_STR[399]  1.0388
+RPD_STR[400]  1.0365
+RPD_STR[401]  1.0052
+RPD_STR[402]  1.0028
+RPD_STR[403]  1.0545
+RPD_STR[404]  1.0542
+RPD_STR[405]  1.0120
+RPD_STR[406]  1.0845
+RPD_STR[407]  1.0312
+RPD_STR[408]  1.0265
+RPD_STR[409]  1.0080
+RPD_STR[410]  1.0030
+RPD_STR[411]  1.0035
+RPD_STR[412]  0.9998
+RPD_STR[413]  1.0072
+RPD_STR[414]  1.0050
+RPD_STR[415]  1.0075
+RPD_STR[416]  0.9945
+RPD_STR[417]  1.0170
+RPD_STR[418]  1.0148
+RPD_STR[419]  1.0135
+RPD_STR[420]  0.9928
+RPD_STR[421]  1.0165
+RPD_STR[422]  1.0157
+RPD_STR[423]  0.9988
+RPD_STR[424]  0.9925
+RPD_STR[425]  1.0200
+RPD_STR[426]  1.0140
+RPD_STR[427]  1.0017
+RPD_STR[428]  1.0005
+RPD_STR[429]  1.0317
+RPD_STR[430]  1.0128
+RPD_STR[431]  0.9995
+RPD_STR[432]  0.9982
+RPD_STR[433]  1.0395
+RPD_STR[434]  1.0172
+RPD_STR[435]  0.9998
+RPD_STR[436]  0.9990
+RPD_STR[437]  1.0290
+RPD_STR[438]  1.0225
+RPD_STR[439]  1.0057
+RPD_STR[440]  0.9992
+RPD_STR[441]  1.0477
+RPD_STR[442]  1.0340
+RPD_STR[443]  1.0045
+RPD_STR[444]  1.0012
+RPD_STR[445]  1.0308
+RPD_STR[446]  1.0245
+RPD_STR[447]  1.0005
+RPD_STR[448]  1.0040
+RPD_STR[449]  1.0662
+RPD_STR[450]  1.0528
+RPD_STR[451]  1.0112
+RPD_STR[452]  0.9995
+RPD_STR[453]  1.0095
+RPD_STR[454]  1.0070
+RPD_STR[455]  1.0032
+RPD_STR[456]  0.9975
+RPD_STR[457]  1.0237
+RPD_STR[458]  1.0117
+RPD_STR[459]  1.0028
+RPD_STR[460]  0.9958
+RPD_STR[461]  1.0192
+RPD_STR[462]  1.0203
+RPD_STR[463]  0.9998
+RPD_STR[464]  0.9463
+RPD_STR[465]  1.0152
+RPD_STR[466]  1.0160
+RPD_STR[467]  1.0015
+RPD_STR[468]  0.9925
+RPD_STR[469]  1.0353
+RPD_STR[470]  1.0108
+RPD_STR[471]  1.0025
+RPD_STR[472]  0.9970
+RPD_STR[473]  1.0453
+RPD_STR[474]  1.0408
+RPD_STR[475]  0.9992
+RPD_STR[476]  0.9960
+RPD_STR[477]  1.0292
+RPD_STR[478]  1.0300
+RPD_STR[479]  1.0030
+RPD_STR[480]  0.9960
+RPD_STR[481]  1.0400
+RPD_STR[482]  1.0353
+RPD_STR[483]  1.0170
+RPD_STR[484]  1.0105
+RPD_STR[485]  1.0283
+RPD_STR[486]  1.0205
+RPD_STR[487]  0.9948
+RPD_STR[488]  1.0010
+RPD_STR[489]  1.0185
+RPD_STR[490]  1.0212
+RPD_STR[491]  1.0048
+RPD_STR[492]  1.0005
+RPD_STR[493]  1.0217
+RPD_STR[494]  1.0200
+RPD_STR[495]  1.0132
+RPD_STR[496]  0.9972
+RPD_STR[497]  1.0243
+RPD_STR[498]  1.0172
+RPD_STR[499]  1.0003
+RPD_STR[500]  1.0028
+RPD_STR[501]  1.0257
+RPD_STR[502]  1.0128
+RPD_STR[503]  1.0140
+RPD_STR[504]  0.9958
+RPD_STR[505]  1.0410
+RPD_STR[506]  1.0257
+RPD_STR[507]  1.0037
+RPD_STR[508]  0.9972
+RPD_STR[509]  1.0517
+RPD_STR[510]  1.0428
+RPD_STR[511]  1.0085
+RPD_STR[512]  1.0010
+RPD_STR[513]  1.0938
+RPD_STR[514]  1.0152
+RPD_STR[515]  1.0000 # The outlier antenna is the reference
+RPD_STR[516]  1.0000 # The outlier antenna is the reference
+RPD_STR[517]  0.9000 # Not installed
+RPD_STR[518]  0.9000 # Not installed
+RPD_STR[519]  0.9000 # Not installed
+RPD_STR[520]  0.9000 # Not installed
 
 # This will be set to 1 for any cables not identified below
 # You should set it to 0 if different / not known, or >1 if appropriate
 # "2" is LMR400
 # *** RPD_DESI[cable#] goes here:
-# Cables to Stand 257 are not currently installed, but would go here: FIXME JC
 # not installed
 RPD_DESI[513] 0
 RPD_DESI[514] 0
 # Electrical length of cables to Stand 258: 
-RPD_DESI[515] 2 # LMR400 (possibly with some short jumpers near shelter
-RPD_DESI[516] 2 # LMR400 (possibly with some short jumpers near shelter
+RPD_DESI[515] 2 # LMR400 (with some short jumpers near shelter)
+RPD_DESI[516] 2 # LMR400 (with some short jumpers near shelter)
 # Cables to Stand 259 are not currently installed (since 259 doesn't exist):
 # RPD_DESI[517] 
 # RPD_DESI[518] 
@@ -2700,8 +3153,6 @@ N_SEP 520
 
 # SEP_ID[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
 # *** SEP_ID[port#] goes here:
-# FIXME JC: I think we agreed Steve Tremblay was going to provide this
-# Still working on it
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any port #'s <= N_SEP not identified
@@ -3259,20 +3710,84 @@ N_ARBCH 16
 
 # ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
 # *** ARB_ID[arb#] goes here:
-ARB_ID[1] 0103
-ARB_ID[2] 0106
-ARB_ID[3] 0107
-ARB_ID[4] 0101
+ARB_ID[1] 0112
+ARB_ID[2] 0139
+ARB_ID[3] 0142
+ARB_ID[4] 0119
+ARB_ID[5] 0138
+ARB_ID[6] 0129
+ARB_ID[7] 0130
+ARB_ID[8] 0136
+ARB_ID[9] 0143
+ARB_ID[10] 0126
+ARB_ID[11] 0121
+ARB_ID[12] 0117
+ARB_ID[13] 0118
+ARB_ID[14] 0132
+ARB_ID[15] 0116
+ARB_ID[16] 0111
+ARB_ID[17] 0114
+ARB_ID[18] 0113
+ARB_ID[19] 0125
+ARB_ID[20] 0124
+ARB_ID[21] 0127
+ARB_ID[22] 0128
+ARB_ID[23] 0115
+ARB_ID[24] 0133
+ARB_ID[25] 0141
+ARB_ID[26] 0120
+ARB_ID[27] 0134
+ARB_ID[28] 0122
+ARB_ID[29] 0123
+ARB_ID[30] 0109
+ARB_ID[31] 0140
+ARB_ID[32] 0135
+ARB_ID[33] 0137
 
 # ARB_SLOT[] will be set to 0 (not known/not applicable) for any ARX board #'s <= N_ARB not identified
 # *** ARB_SLOT[arb#] goes here:
+# Format is <chassis>-<slot-from-left>
+# Chassis 1 is bottom-most chassis in the rack
+ARB_ID[1] 1-1
+ARB_ID[2] 1-2
+ARB_ID[3] 1-3
+ARB_ID[4] 1-4
+ARB_ID[5] 1-5
+ARB_ID[6] 1-6
+ARB_ID[7] 1-7
+ARB_ID[8] 1-8
+ARB_ID[9] 2-1
+ARB_ID[10] 2-2
+ARB_ID[11] 2-3
+ARB_ID[12] 2-4
+ARB_ID[13] 2-5
+ARB_ID[14] 2-6
+ARB_ID[15] 2-7
+ARB_ID[16] 2-8
+ARB_ID[17] 3-1
+ARB_ID[18] 3-2
+ARB_ID[19] 3-3
+ARB_ID[20] 3-4
+ARB_ID[21] 3-5
+ARB_ID[22] 3-6
+ARB_ID[23] 3-7
+ARB_ID[24] 3-8
+ARB_ID[25] 4-1
+ARB_ID[26] 4-2
+ARB_ID[27] 4-3
+ARB_ID[28] 4-4
+ARB_ID[29] 4-5
+ARB_ID[30] 4-6
+ARB_ID[31] 4-7
+ARB_ID[32] 4-8
+ARB_ID[33] 4-9
 
 # ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
 # *** ARB_DESI[arb#] goes here:
-ARB_DESI[1] 1
-ARB_DESI[2] 1
-ARB_DESI[3] 1
-ARB_DESI[4] 1
+ARB_DESI[1] 2
+ARB_DESI[2] 2
+ARB_DESI[3] 2
+ARB_DESI[4] 2
 ARB_DESI[5] 2
 ARB_DESI[6] 2
 ARB_DESI[7] 2
@@ -3382,8 +3897,6 @@ ARB_PORT[33] 2
 
 # ARB_GAIN[][] will be set to 67.0 for any boards/channels not identified
 # *** ARB_GAIN[arb#][ch#] goes here:
-# ARB_STAT[4][12] 66.0 # FIXME JC: I believe this is what you told me?
-# The above, has since been fixed.
 
 # ----------------------------------------------
 # --- Antenna # -> ARX board-channel mapping ---
@@ -3905,12 +4418,20 @@ ARB_ANT[32][13] 375
 ARB_ANT[32][14] 376
 ARB_ANT[32][15] 123
 ARB_ANT[32][16] 124
+
+# antenna not installed, but internally cabled in ASP
 ARB_ANT[33][1] 513
 ARB_ANT[33][2] 514
+
+# antenna not installed, but internally cabled in ASP
 ARB_ANT[33][3] 519
 ARB_ANT[33][4] 520
+
+# test signal input
 ARB_ANT[33][5] 517
 ARB_ANT[33][6] 518
+
+# outrigger antenna
 ARB_ANT[33][7] 515
 ARB_ANT[33][8] 516
 
@@ -3920,8 +4441,8 @@ ARB_ANT[33][8] 516
 # ARB_IN[][] will be set to "UNK" ("unknown") for any boards/channels not identified
 # ARB_OUT[][] will be set to "UNK" ("unknown") for any boards/channels not identified
 # *** ARB_IN[][] goes here:
-# FIXME JC:  Joe provides this
 # label = panel#_input#
+# panel 1 is top, input 1 is upper left
 
 ARB_IN[1][1] 4_1
 ARB_IN[1][2] 4_2
@@ -4437,9 +4958,8 @@ ARB_IN[32][15] 1_127
 ARB_IN[32][16] 1_128
 
 # *** ARB_OUT[][] goes here:
-# FIXME JC:  Joe provides this
-# label = panel#_input#_pair#
-
+# label = panel#_output#_pair#
+# panel 1 is top, output 1 is upper right
 ARB_OUT[1][1] 4_1_1
 ARB_OUT[1][2] 4_1_2
 ARB_OUT[1][3] 4_1_3
@@ -4963,13 +5483,91 @@ N_DP1CH 20
 
 # DP1_ID[] will be set to "UNK" (no identification) for any DP1 boards not identified
 # *** DP1_ID[dp1#] goes here:
-# FIXME JC: I strongly recommend using this, to allow trouble-tracking of boards over time
+DP1_ID[1] lwa27
+DP1_ID[2] lwa24
+DP1_ID[3] lwa23
+DP1_ID[4] lwa18
+DP1_ID[5] lwa10
+DP1_ID[6] lwa32
+DP1_ID[7] lwa11
+DP1_ID[8] lwa30
+DP1_ID[9] lwa12
+DP1_ID[10] lwa8
+DP1_ID[11] lwa13
+DP1_ID[12] lwa26
+DP1_ID[13] lwa14
+DP1_ID[14] lwa22
+DP1_ID[15] lwa20
+DP1_ID[16] lwa1
+DP1_ID[17] lwa5
+DP1_ID[18] lwa25
+DP1_ID[19] lwa35
+DP1_ID[20] lwa19
+DP1_ID[21] lwa21
+DP1_ID[22] lwa6
+DP1_ID[23] lwa7
+DP1_ID[24] lwa33
+DP1_ID[25] lwa15
+DP1_ID[26] lwa28
 
 # DP1_SLOT[] will be set to 0 (not known/not applicable) for any DP1 boards not identified
 # *** DP1_SLOT[dp1#] goes here:
+# format = <chassis>-<slot from left>
+DP1_SLOT[1] 1-8
+DP1_SLOT[2] 1-6
+DP1_SLOT[3] 1-9
+DP1_SLOT[4] 1-5
+DP1_SLOT[5] 1-10
+DP1_SLOT[6] 1-4
+DP1_SLOT[7] 1-11
+DP1_SLOT[8] 1-3
+DP1_SLOT[9] 1-12
+DP1_SLOT[10] 1-2
+DP1_SLOT[11] 1-13
+DP1_SLOT[12] 1-1
+DP1_SLOT[13] 1-14
+DP1_SLOT[14] 2-8
+DP1_SLOT[15] 2-6
+DP1_SLOT[16] 2-9
+DP1_SLOT[17] 2-5
+DP1_SLOT[18] 2-10
+DP1_SLOT[19] 2-4
+DP1_SLOT[20] 2-11
+DP1_SLOT[21] 2-3
+DP1_SLOT[22] 2-12
+DP1_SLOT[23] 2-2
+DP1_SLOT[24] 2-13
+DP1_SLOT[25] 2-1
+DP1_SLOT[26] 2-14
 
 # DP1_DESI[] be set to 1 for any DP1 boards not identified
 # *** DP1_DESI[dp1#] goes here:
+DP1_DESI[1] 1
+DP1_DESI[2] 1
+DP1_DESI[3] 1
+DP1_DESI[4] 1
+DP1_DESI[5] 1
+DP1_DESI[6] 1
+DP1_DESI[7] 1
+DP1_DESI[8] 1
+DP1_DESI[9] 1
+DP1_DESI[10] 1
+DP1_DESI[11] 1
+DP1_DESI[12] 1
+DP1_DESI[13] 1
+DP1_DESI[14] 1
+DP1_DESI[15] 1
+DP1_DESI[16] 1
+DP1_DESI[17] 1
+DP1_DESI[18] 1
+DP1_DESI[19] 1
+DP1_DESI[20] 1
+DP1_DESI[21] 1
+DP1_DESI[22] 1
+DP1_DESI[23] 1
+DP1_DESI[24] 1
+DP1_DESI[25] 1
+DP1_DESI[26] 1
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DP1 board-channels not identified
@@ -4977,21 +5575,538 @@ N_DP1CH 20
 
 # DP1_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
 # *** DP1_INR[dp1#][ch#] goes here:
-# FIXME JC: Here's where the rack labels go...
-# unknown at this time
+# label = panel#_input#_pair#
+# panel 1 is top, input 1 is upper left
+DP1_INR[1][1] 4_31_1
+DP1_INR[1][2] 4_31_2
+DP1_INR[1][3] 4_31_3
+DP1_INR[1][4] 4_31_4
+DP1_INR[1][5] 4_32_1
+DP1_INR[1][6] 4_32_2
+DP1_INR[1][7] 4_32_3
+DP1_INR[1][8] 4_32_4
+DP1_INR[1][9] 4_33_1
+DP1_INR[1][10] 4_33_2
+DP1_INR[1][11] 2_33_1
+DP1_INR[1][12] 2_33_2
+DP1_INR[1][13] 3_1_1
+DP1_INR[1][14] 3_1_2
+DP1_INR[1][15] 3_1_3
+DP1_INR[1][16] 3_1_4
+DP1_INR[1][17] 3_2_1
+DP1_INR[1][18] 3_2_2
+DP1_INR[1][19] 3_2_3
+DP1_INR[1][20] 3_2_4
+DP1_INR[2][1] 3_3_1
+DP1_INR[2][2] 3_3_2
+DP1_INR[2][3] 3_3_3
+DP1_INR[2][4] 3_3_4
+DP1_INR[2][5] 3_4_1
+DP1_INR[2][6] 3_4_2
+DP1_INR[2][7] 3_4_3
+DP1_INR[2][8] 3_4_4
+DP1_INR[2][9] 3_5_1
+DP1_INR[2][10] 3_5_2
+DP1_INR[2][11] 3_5_3
+DP1_INR[2][12] 3_5_4
+DP1_INR[2][13] 3_6_1
+DP1_INR[2][14] 3_6_2
+DP1_INR[2][15] 3_6_3
+DP1_INR[2][16] 3_6_4
+DP1_INR[2][17] 3_7_1
+DP1_INR[2][18] 3_7_2
+DP1_INR[2][19] 3_7_3
+DP1_INR[2][20] 3_7_4
+DP1_INR[3][1] 4_26_1
+DP1_INR[3][2] 4_26_2
+DP1_INR[3][3] 4_26_3
+DP1_INR[3][4] 4_26_4
+DP1_INR[3][5] 4_27_1
+DP1_INR[3][6] 4_27_2
+DP1_INR[3][7] 4_27_3
+DP1_INR[3][8] 4_27_4
+DP1_INR[3][9] 4_28_1
+DP1_INR[3][10] 4_28_2
+DP1_INR[3][11] 4_28_3
+DP1_INR[3][12] 4_28_4
+DP1_INR[3][13] 4_29_1
+DP1_INR[3][14] 4_29_2
+DP1_INR[3][15] 4_29_3
+DP1_INR[3][16] 4_29_4
+DP1_INR[3][17] 4_30_1
+DP1_INR[3][18] 4_30_2
+DP1_INR[3][19] 4_30_3
+DP1_INR[3][20] 4_30_4
+DP1_INR[4][1] 3_8_1
+DP1_INR[4][2] 3_8_2
+DP1_INR[4][3] 3_8_3
+DP1_INR[4][4] 3_8_4
+DP1_INR[4][5] 3_9_1
+DP1_INR[4][6] 3_9_2
+DP1_INR[4][7] 3_9_3
+DP1_INR[4][8] 3_9_4
+DP1_INR[4][9] 3_10_1
+DP1_INR[4][10] 3_10_2
+DP1_INR[4][11] 3_10_3
+DP1_INR[4][12] 3_10_4
+DP1_INR[4][13] 3_11_1
+DP1_INR[4][14] 3_11_2
+DP1_INR[4][15] 3_11_3
+DP1_INR[4][16] 3_11_4
+DP1_INR[4][17] 3_12_1
+DP1_INR[4][18] 3_12_2
+DP1_INR[4][19] 3_12_3
+DP1_INR[4][20] 3_12_4
+DP1_INR[5][1] 4_21_1
+DP1_INR[5][2] 4_21_2
+DP1_INR[5][3] 4_21_3
+DP1_INR[5][4] 4_21_4
+DP1_INR[5][5] 4_22_1
+DP1_INR[5][6] 4_22_2
+DP1_INR[5][7] 4_22_3
+DP1_INR[5][8] 4_22_4
+DP1_INR[5][9] 4_23_1
+DP1_INR[5][10] 4_23_2
+DP1_INR[5][11] 4_23_3
+DP1_INR[5][12] 4_23_4
+DP1_INR[5][13] 4_24_1
+DP1_INR[5][14] 4_24_2
+DP1_INR[5][15] 4_24_3
+DP1_INR[5][16] 4_24_4
+DP1_INR[5][17] 4_25_1
+DP1_INR[5][18] 4_25_2
+DP1_INR[5][19] 4_25_3
+DP1_INR[5][20] 4_25_4
+DP1_INR[6][1] 3_13_1
+DP1_INR[6][2] 3_13_2
+DP1_INR[6][3] 3_13_3
+DP1_INR[6][4] 3_13_4
+DP1_INR[6][5] 3_14_1
+DP1_INR[6][6] 3_14_2
+DP1_INR[6][7] 3_14_3
+DP1_INR[6][8] 3_14_4
+DP1_INR[6][9] 3_15_1
+DP1_INR[6][10] 3_15_2
+DP1_INR[6][11] 3_15_3
+DP1_INR[6][12] 3_15_4
+DP1_INR[6][13] 3_16_1
+DP1_INR[6][14] 3_16_2
+DP1_INR[6][15] 3_16_3
+DP1_INR[6][16] 3_16_4
+DP1_INR[6][17] 3_17_1
+DP1_INR[6][18] 3_17_2
+DP1_INR[6][19] 3_17_3
+DP1_INR[6][20] 3_17_4
+DP1_INR[7][1] 4_16_1
+DP1_INR[7][2] 4_16_2
+DP1_INR[7][3] 4_16_3
+DP1_INR[7][4] 4_16_4
+DP1_INR[7][5] 4_17_1
+DP1_INR[7][6] 4_17_2
+DP1_INR[7][7] 4_17_3
+DP1_INR[7][8] 4_17_4
+DP1_INR[7][9] 4_18_1
+DP1_INR[7][10] 4_18_2
+DP1_INR[7][11] 4_18_3
+DP1_INR[7][12] 4_18_4
+DP1_INR[7][13] 4_19_1
+DP1_INR[7][14] 4_19_2
+DP1_INR[7][15] 4_19_3
+DP1_INR[7][16] 4_19_4
+DP1_INR[7][17] 4_20_1
+DP1_INR[7][18] 4_20_2
+DP1_INR[7][19] 4_20_3
+DP1_INR[7][20] 4_20_4
+DP1_INR[8][1] 3_18_1
+DP1_INR[8][2] 3_18_2
+DP1_INR[8][3] 3_18_3
+DP1_INR[8][4] 3_18_4
+DP1_INR[8][5] 3_19_1
+DP1_INR[8][6] 3_19_2
+DP1_INR[8][7] 3_19_3
+DP1_INR[8][8] 3_19_4
+DP1_INR[8][9] 3_20_1
+DP1_INR[8][10] 3_20_2
+DP1_INR[8][11] 3_20_3
+DP1_INR[8][12] 3_20_4
+DP1_INR[8][13] 3_21_1
+DP1_INR[8][14] 3_21_2
+DP1_INR[8][15] 3_21_3
+DP1_INR[8][16] 3_21_4
+DP1_INR[8][17] 3_22_1
+DP1_INR[8][18] 3_22_2
+DP1_INR[8][19] 3_22_3
+DP1_INR[8][20] 3_22_4
+DP1_INR[9][1] 4_11_1
+DP1_INR[9][2] 4_11_2
+DP1_INR[9][3] 4_11_3
+DP1_INR[9][4] 4_11_4
+DP1_INR[9][5] 4_12_1
+DP1_INR[9][6] 4_12_2
+DP1_INR[9][7] 4_12_3
+DP1_INR[9][8] 4_12_4
+DP1_INR[9][9] 4_13_1
+DP1_INR[9][10] 4_13_2
+DP1_INR[9][11] 4_13_3
+DP1_INR[9][12] 4_13_4
+DP1_INR[9][13] 4_14_1
+DP1_INR[9][14] 4_14_2
+DP1_INR[9][15] 4_14_3
+DP1_INR[9][16] 4_14_4
+DP1_INR[9][17] 4_15_1
+DP1_INR[9][18] 4_15_2
+DP1_INR[9][19] 4_15_3
+DP1_INR[9][20] 4_15_4
+DP1_INR[10][1] 3_23_1
+DP1_INR[10][2] 3_23_2
+DP1_INR[10][3] 3_23_3
+DP1_INR[10][4] 3_23_4
+DP1_INR[10][5] 3_24_1
+DP1_INR[10][6] 3_24_2
+DP1_INR[10][7] 3_24_3
+DP1_INR[10][8] 3_24_4
+DP1_INR[10][9] 3_25_1
+DP1_INR[10][10] 3_25_2
+DP1_INR[10][11] 3_25_3
+DP1_INR[10][12] 3_25_4
+DP1_INR[10][13] 3_26_1
+DP1_INR[10][14] 3_26_2
+DP1_INR[10][15] 3_26_3
+DP1_INR[10][16] 3_26_4
+DP1_INR[10][17] 3_27_1
+DP1_INR[10][18] 3_27_2
+DP1_INR[10][19] 3_27_3
+DP1_INR[10][20] 3_27_4
+DP1_INR[11][1] 4_6_1
+DP1_INR[11][2] 4_6_2
+DP1_INR[11][3] 4_6_3
+DP1_INR[11][4] 4_6_4
+DP1_INR[11][5] 4_7_1
+DP1_INR[11][6] 4_7_2
+DP1_INR[11][7] 4_7_3
+DP1_INR[11][8] 4_7_4
+DP1_INR[11][9] 4_8_1
+DP1_INR[11][10] 4_8_2
+DP1_INR[11][11] 4_8_3
+DP1_INR[11][12] 4_8_4
+DP1_INR[11][13] 4_9_1
+DP1_INR[11][14] 4_9_2
+DP1_INR[11][15] 4_9_3
+DP1_INR[11][16] 4_9_4
+DP1_INR[11][17] 4_10_1
+DP1_INR[11][18] 4_10_2
+DP1_INR[11][19] 4_10_3
+DP1_INR[11][20] 4_10_4
+DP1_INR[12][1] 3_28_1
+DP1_INR[12][2] 3_28_2
+DP1_INR[12][3] 3_28_3
+DP1_INR[12][4] 3_28_4
+DP1_INR[12][5] 3_29_1
+DP1_INR[12][6] 3_29_2
+DP1_INR[12][7] 3_29_3
+DP1_INR[12][8] 3_29_4
+DP1_INR[12][9] 3_30_1
+DP1_INR[12][10] 3_30_2
+DP1_INR[12][11] 3_30_3
+DP1_INR[12][12] 3_30_4
+DP1_INR[12][13] 3_31_1
+DP1_INR[12][14] 3_31_2
+DP1_INR[12][15] 3_31_3
+DP1_INR[12][16] 3_31_4
+DP1_INR[12][17] 3_32_1
+DP1_INR[12][18] 3_32_2
+DP1_INR[12][19] 3_32_3
+DP1_INR[12][20] 3_32_4
+DP1_INR[13][1] 4_1_1
+DP1_INR[13][2] 4_1_2
+DP1_INR[13][3] 4_1_3
+DP1_INR[13][4] 4_1_4
+DP1_INR[13][5] 4_2_1
+DP1_INR[13][6] 4_2_2
+DP1_INR[13][7] 4_2_3
+DP1_INR[13][8] 4_2_4
+DP1_INR[13][9] 4_3_1
+DP1_INR[13][10] 4_3_2
+DP1_INR[13][11] 4_3_3
+DP1_INR[13][12] 4_3_4
+DP1_INR[13][13] 4_4_1
+DP1_INR[13][14] 4_4_2
+DP1_INR[13][15] 4_4_3
+DP1_INR[13][16] 4_4_4
+DP1_INR[13][17] 4_5_1
+DP1_INR[13][18] 4_5_2
+DP1_INR[13][19] 4_5_3
+DP1_INR[13][20] 4_5_4
+DP1_INR[14][1] 2_31_1
+DP1_INR[14][2] 2_31_2
+DP1_INR[14][3] 2_31_3
+DP1_INR[14][4] 2_31_4
+DP1_INR[14][5] 2_32_1
+DP1_INR[14][6] 2_32_2
+DP1_INR[14][7] 2_32_3
+DP1_INR[14][8] 2_32_4
+DP1_INR[14][9] 2_33_3
+DP1_INR[14][10] 2_33_4
+DP1_INR[14][11] 4_33_3
+DP1_INR[14][12] 4_33_4
+DP1_INR[14][13] 1_1_1
+DP1_INR[14][14] 1_1_2
+DP1_INR[14][15] 1_1_3
+DP1_INR[14][16] 1_1_4
+DP1_INR[14][17] 1_2_1
+DP1_INR[14][18] 1_2_2
+DP1_INR[14][19] 1_2_3
+DP1_INR[14][20] 1_2_4
+DP1_INR[15][1] 1_3_1
+DP1_INR[15][2] 1_3_2
+DP1_INR[15][3] 1_3_3
+DP1_INR[15][4] 1_3_4
+DP1_INR[15][5] 1_4_1
+DP1_INR[15][6] 1_4_2
+DP1_INR[15][7] 1_4_3
+DP1_INR[15][8] 1_4_4
+DP1_INR[15][9] 1_5_3
+DP1_INR[15][10] 1_5_4
+DP1_INR[15][11] 1_5_3
+DP1_INR[15][12] 1_5_4
+DP1_INR[15][13] 1_6_1
+DP1_INR[15][14] 1_6_2
+DP1_INR[15][15] 1_6_3
+DP1_INR[15][16] 1_6_4
+DP1_INR[15][17] 1_7_1
+DP1_INR[15][18] 1_7_2
+DP1_INR[15][19] 1_7_3
+DP1_INR[15][20] 1_7_4
+DP1_INR[16][1] 2_26_1
+DP1_INR[16][2] 2_26_2
+DP1_INR[16][3] 2_26_3
+DP1_INR[16][4] 2_26_4
+DP1_INR[16][5] 2_27_1
+DP1_INR[16][6] 2_27_2
+DP1_INR[16][7] 2_27_3
+DP1_INR[16][8] 2_27_4
+DP1_INR[16][9] 2_28_1
+DP1_INR[16][10] 2_28_2
+DP1_INR[16][11] 2_28_3
+DP1_INR[16][12] 2_28_4
+DP1_INR[16][13] 2_29_1
+DP1_INR[16][14] 2_29_2
+DP1_INR[16][15] 2_29_3
+DP1_INR[16][16] 2_29_4
+DP1_INR[16][17] 2_30_1
+DP1_INR[16][18] 2_30_2
+DP1_INR[16][19] 2_30_3
+DP1_INR[16][20] 2_30_4
+DP1_INR[17][1] 1_8_1
+DP1_INR[17][2] 1_8_2
+DP1_INR[17][3] 1_8_3
+DP1_INR[17][4] 1_8_4
+DP1_INR[17][5] 1_9_1
+DP1_INR[17][6] 1_9_2
+DP1_INR[17][7] 1_9_3
+DP1_INR[17][8] 1_9_4
+DP1_INR[17][9] 1_10_1
+DP1_INR[17][10] 1_10_2
+DP1_INR[17][11] 1_10_3
+DP1_INR[17][12] 1_10_4
+DP1_INR[17][13] 1_11_1
+DP1_INR[17][14] 1_11_2
+DP1_INR[17][15] 1_11_3
+DP1_INR[17][16] 1_11_4
+DP1_INR[17][17] 1_12_1
+DP1_INR[17][18] 1_12_2
+DP1_INR[17][19] 1_12_3
+DP1_INR[17][20] 1_12_4
+DP1_INR[18][1] 2_21_1
+DP1_INR[18][2] 2_21_2
+DP1_INR[18][3] 2_21_3
+DP1_INR[18][4] 2_21_4
+DP1_INR[18][5] 2_22_1
+DP1_INR[18][6] 2_22_2
+DP1_INR[18][7] 2_22_3
+DP1_INR[18][8] 2_22_4
+DP1_INR[18][9] 2_23_1
+DP1_INR[18][10] 2_23_2
+DP1_INR[18][11] 2_23_3
+DP1_INR[18][12] 2_23_4
+DP1_INR[18][13] 2_24_1
+DP1_INR[18][14] 2_24_2
+DP1_INR[18][15] 2_24_3
+DP1_INR[18][16] 2_24_4
+DP1_INR[18][17] 2_25_1
+DP1_INR[18][18] 2_25_2
+DP1_INR[18][19] 2_25_3
+DP1_INR[18][20] 2_25_4
+DP1_INR[19][1] 1_13_1
+DP1_INR[19][2] 1_13_2
+DP1_INR[19][3] 1_13_3
+DP1_INR[19][4] 1_13_4
+DP1_INR[19][5] 1_14_1
+DP1_INR[19][6] 1_14_2
+DP1_INR[19][7] 1_14_3
+DP1_INR[19][8] 1_14_4
+DP1_INR[19][9] 1_15_1
+DP1_INR[19][10] 1_15_2
+DP1_INR[19][11] 1_15_3
+DP1_INR[19][12] 1_15_4
+DP1_INR[19][13] 1_16_1
+DP1_INR[19][14] 1_16_2
+DP1_INR[19][15] 1_16_3
+DP1_INR[19][16] 1_16_4
+DP1_INR[19][17] 1_17_1
+DP1_INR[19][18] 1_17_2
+DP1_INR[19][19] 1_17_3
+DP1_INR[19][20] 1_17_4
+DP1_INR[20][1] 2_16_1
+DP1_INR[20][2] 2_16_2
+DP1_INR[20][3] 2_16_3
+DP1_INR[20][4] 2_16_4
+DP1_INR[20][5] 2_17_1
+DP1_INR[20][6] 2_17_2
+DP1_INR[20][7] 2_17_3
+DP1_INR[20][8] 2_17_4
+DP1_INR[20][9] 2_18_1
+DP1_INR[20][10] 2_18_2
+DP1_INR[20][11] 2_18_3
+DP1_INR[20][12] 2_18_4
+DP1_INR[20][13] 2_19_1
+DP1_INR[20][14] 2_19_2
+DP1_INR[20][15] 2_19_3
+DP1_INR[20][16] 2_19_4
+DP1_INR[20][17] 2_20_1
+DP1_INR[20][18] 2_20_2
+DP1_INR[20][19] 2_20_3
+DP1_INR[20][20] 2_20_4
+DP1_INR[21][1] 1_18_1
+DP1_INR[21][2] 1_18_2
+DP1_INR[21][3] 1_18_3
+DP1_INR[21][4] 1_18_4
+DP1_INR[21][5] 1_19_1
+DP1_INR[21][6] 1_19_2
+DP1_INR[21][7] 1_19_3
+DP1_INR[21][8] 1_19_4
+DP1_INR[21][9] 1_20_1
+DP1_INR[21][10] 1_20_2
+DP1_INR[21][11] 1_20_3
+DP1_INR[21][12] 1_20_4
+DP1_INR[21][13] 1_21_1
+DP1_INR[21][14] 1_21_2
+DP1_INR[21][15] 1_21_3
+DP1_INR[21][16] 1_21_4
+DP1_INR[21][17] 1_22_1
+DP1_INR[21][18] 1_22_2
+DP1_INR[21][19] 1_22_3
+DP1_INR[21][20] 1_22_4
+DP1_INR[22][1] 2_11_1
+DP1_INR[22][2] 2_11_2
+DP1_INR[22][3] 2_11_3
+DP1_INR[22][4] 2_11_4
+DP1_INR[22][5] 2_12_1
+DP1_INR[22][6] 2_12_2
+DP1_INR[22][7] 2_12_3
+DP1_INR[22][8] 2_12_4
+DP1_INR[22][9] 2_13_1
+DP1_INR[22][10] 2_13_2
+DP1_INR[22][11] 2_13_3
+DP1_INR[22][12] 2_13_4
+DP1_INR[22][13] 2_14_1
+DP1_INR[22][14] 2_14_2
+DP1_INR[22][15] 2_14_3
+DP1_INR[22][16] 2_14_4
+DP1_INR[22][17] 2_15_1
+DP1_INR[22][18] 2_15_2
+DP1_INR[22][19] 2_15_3
+DP1_INR[22][20] 2_15_4
+DP1_INR[23][1] 1_23_1
+DP1_INR[23][2] 1_23_2
+DP1_INR[23][3] 1_23_3
+DP1_INR[23][4] 1_23_4
+DP1_INR[23][5] 1_24_1
+DP1_INR[23][6] 1_24_2
+DP1_INR[23][7] 1_24_3
+DP1_INR[23][8] 1_24_4
+DP1_INR[23][9] 1_25_1
+DP1_INR[23][10] 1_25_2
+DP1_INR[23][11] 1_25_3
+DP1_INR[23][12] 1_25_4
+DP1_INR[23][13] 1_26_1
+DP1_INR[23][14] 1_26_2
+DP1_INR[23][15] 1_26_3
+DP1_INR[23][16] 1_26_4
+DP1_INR[23][17] 1_27_1
+DP1_INR[23][18] 1_27_2
+DP1_INR[23][19] 1_27_3
+DP1_INR[23][20] 1_27_4
+DP1_INR[24][1] 2_6_1
+DP1_INR[24][2] 2_6_2
+DP1_INR[24][3] 2_6_3
+DP1_INR[24][4] 2_6_4
+DP1_INR[24][5] 2_7_1
+DP1_INR[24][6] 2_7_2
+DP1_INR[24][7] 2_7_3
+DP1_INR[24][8] 2_7_4
+DP1_INR[24][9] 2_8_1
+DP1_INR[24][10] 2_8_2
+DP1_INR[24][11] 2_8_3
+DP1_INR[24][12] 2_8_4
+DP1_INR[24][13] 2_9_1
+DP1_INR[24][14] 2_9_2
+DP1_INR[24][15] 2_9_3
+DP1_INR[24][16] 2_9_4
+DP1_INR[24][17] 2_10_1
+DP1_INR[24][18] 2_10_2
+DP1_INR[24][19] 2_10_3
+DP1_INR[24][20] 2_10_4
+DP1_INR[25][1] 1_28_1
+DP1_INR[25][2] 1_28_2
+DP1_INR[25][3] 1_28_3
+DP1_INR[25][4] 1_28_4
+DP1_INR[25][5] 1_29_1
+DP1_INR[25][6] 1_29_2
+DP1_INR[25][7] 1_29_3
+DP1_INR[25][8] 1_29_4
+DP1_INR[25][9] 1_30_1
+DP1_INR[25][10] 1_30_2
+DP1_INR[25][11] 1_30_3
+DP1_INR[25][12] 1_30_4
+DP1_INR[25][13] 1_31_1
+DP1_INR[25][14] 1_31_2
+DP1_INR[25][15] 1_31_3
+DP1_INR[25][16] 1_31_4
+DP1_INR[25][17] 1_32_1
+DP1_INR[25][18] 1_32_2
+DP1_INR[25][19] 1_32_3
+DP1_INR[25][20] 1_32_4
+DP1_INR[26][1] 2_1_1
+DP1_INR[26][2] 2_1_2
+DP1_INR[26][3] 2_1_3
+DP1_INR[26][4] 2_1_4
+DP1_INR[26][5] 2_2_1
+DP1_INR[26][6] 2_2_2
+DP1_INR[26][7] 2_2_3
+DP1_INR[26][8] 2_2_4
+DP1_INR[26][9] 2_3_1
+DP1_INR[26][10] 2_3_2
+DP1_INR[26][11] 2_3_3
+DP1_INR[26][12] 2_3_4
+DP1_INR[26][13] 2_4_1
+DP1_INR[26][14] 2_4_2
+DP1_INR[26][15] 2_4_3
+DP1_INR[26][16] 2_4_4
+DP1_INR[26][17] 2_5_1
+DP1_INR[26][18] 2_5_2
+DP1_INR[26][19] 2_5_3
+DP1_INR[26][20] 2_5_4
 
 # DP1_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
 # *** DP1_INC[dp1#][ch#] goes here:
-# FIXME JC: Here's where the chassis labels go...
-# unknown at this time
 
 # ----------------------------------------------
 # --- Antenna # -> DP1 board channel mapping ---
 # ----------------------------------------------
 # Format (example) "DP1_ANT[2][3] 4" means antenna 4 is connected to DP1 Board 2, channel 3.
 # DP1_ANT[1][1] will be set to 1, DP1_ANT[1][2] will be set to 2, etc., if not indicated otherwise
-#   ... so best is to note only the exceptions below.
-# DP1_ANT[][] will be set to 0 (no connection, or only connected at outout) for any boards/channels not identified
+# DP1_ANT[][] will be set to 0 (no connection, or only connected at output) for any boards/channels not identified
 # *** DP1_ANT[dp1#][ch#] goes here:
 DP1_ANT[1][1] 345
 DP1_ANT[1][2] 346
@@ -5523,18 +6638,23 @@ N_DP2 2
 
 # DP2_ID[] will be set to "UNK" (no identification) for any DP2 boards not identified
 # *** DP2_ID[dp2#] goes here:
+DP2_ID[1] lwa16
+DP2_ID[2] lwa34
 
 # DP2_SLOT[] will be set to 0 (not known/not applicable) for any DP2 boards not identified
 # *** DP2_SLOT[dp2#] goes here:
+# format = <chassis>-<slot from left>
+DP2_ID[1] 1-7
+DP2_ID[2] 2-7
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DP2 board-channels not identified
 # *** DP2_STAT[dp2#] goes here:
-DP2_STAT[1] 0
-DP2_STAT[2] 0
 
 # DP2_DESI[] be set to 1 for any DP2 boards not identified
 # *** DP2_DESI[dp2#] goes here:
+DP2_DESI[1] 1
+DP2_DESI[2] 1
 
 # ----------------------
 # --- DR ---------------
@@ -5548,8 +6668,8 @@ N_DR 5
 DR_STAT[1] 3
 DR_STAT[2] 3
 DR_STAT[3] 0
-DR_STAT[4] 0
-DR_STAT[5] 0
+DR_STAT[4] 3
+DR_STAT[5] 3
 
 # DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
 # *** DR_ID[dr#] goes here:
@@ -5564,13 +6684,18 @@ DR_ID[5] DR5
 
 # DR_PC[] will be set to "UNK" (not known/not applicable) for any DRs not identified
 # *** DR_PC[dr#] goes here:
-DR_PC[1] T1500
-DR_PC[2] XPS435
+DR_PC[1] XPS435
+DR_PC[2] T1500
+DR_PC[4] T1500
+DR_PC[5] T1500 
 
 # 1-4 are the beam outputs, 5 is TBW/TBN
 # DR_DP[] will be set to 0 (no connection) for any DPs not identified
 # *** DR_DP[] goes here:
-DR_DP[1] 5
+DR_DP[1] 1
+DR_DP[2] 2
+DR_DP[4] 4
+DR_DP[5] 5
 
 # ----------------------
 # --- Power ------------
@@ -5579,8 +6704,6 @@ N_PWR_RACK 6
 
 # N_PWR_PORT[] will be set to 0 (no ports) for any rack power supplies not identified
 # *** _N_PWR_PORT[rack#] goes here:
-# FIXME JC: Note below we just have rack 1 defined, with 8 ports.  Is that it?
-# changed for IOC config
 N_PWR_PORT[1] 8
 N_PWR_PORT[2] 8
 N_PWR_PORT[3] 8
@@ -5600,81 +6723,94 @@ N_PWR_PORT[6] 8
 # PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
 # *** PWR_SS[rack#][port#] goes here:
 # *** PWR_NAME[rack#][port#] goes here:
+
 PWR_SS[1][1] ASP
-PWR_NAME[1][1] FEE  
+PWR_NAME[1][1] ARX  
 
 PWR_SS[1][2] ASP
-PWR_NAME[1][2] ARX  
+PWR_NAME[1][2] FEE  
 
-PWR_SS[1][3] ASP
-PWR_NAME[1][3] FAN  
+PWR_SS[1][4] ASP
+PWR_NAME[1][4] FAN  
 
 PWR_SS[1][7] ASP
 PWR_NAME[1][7] MCS 
 
-# FIXME JC: Rack 1, Ports 4,5,6 are UNK?
-# yes.  
-# FIXME JC: Racks 2,3,...?
-# updated for IOC config
-# DPC1/2: chassis 1 & 2, SYN: synthesizer module, SWI: TBN/W 1-10 GbE switch
-  
-PWR_SS[2][1] DP
-PWR_NAME[2][1] DPC1
+# Each DP chassis has 3 plugs, denoted C23 for chassis 2, plug 3; C12 for chassis 1, plug 2, etc.
+# SYN: synthesizer module, SWI: TBN/W switch
+ 
+PWR_SS[2][2] DP_
+PWR_NAME[2][2] SWI
 
-PWR_SS[2][2] DP
-PWR_NAME[2][2] DPC2
+PWR_SS[2][3] DP_
+PWR_NAME[2][3] SYN
 
-PWR_SS[2][3] DP
-PWR_NAME[2][3] FAN
+PWR_SS[2][8] DP_
+PWR_NAME[2][8] FAN
 
-PWR_SS[2][4] DP
-PWR_NAME[2][4] MCS
 
-PWR_SS[3][1] DP
-PWR_NAME[3][1] SYN
+PWR_SS[3][1] DP_
+PWR_NAME[3][1] C21
 
-PWR_SS[3][2] DP
-PWR_NAME[3][2] SWI
+PWR_SS[3][2] DP_
+PWR_NAME[3][2] C22
 
-PWR_SS[4][1] MCS
-PWR_NAME[4][1] SCH
+PWR_SS[3][3] DP_
+PWR_NAME[3][3] C23
 
-PWR_SS[4][2] MCS
-PWR_NAME[4][2] EXE
+PWR_SS[3][4] DP_
+PWR_NAME[3][4] C11
 
-PWR_SS[4][3] MCS
-PWR_NAME[4][3] TP
+PWR_SS[3][5] DP_
+PWR_NAME[3][5] C12
 
-PWR_SS[4][4] MCS
-PWR_NAME[4][4] CH
+PWR_SS[3][6] DP_
+PWR_NAME[3][6] C13
 
-PWR_SS[4][5] MCS
-PWR_NAME[4][5] GW
 
-PWR_SS[4][6] DR1
-PWR_NAME[4][6] PC
-PWR_SS[4][7] DR1
-PWR_NAME[4][7] DS1
+PWR_SS[4][2] DR1
+PWR_NAME[4][2] PC
 
-PWR_SS[5][1] DR2
+PWR_SS[4][3] DR2
+PWR_NAME[4][3] PC
+
+PWR_SS[4][4] DR3
+PWR_NAME[4][4] PC
+
+PWR_SS[4][5] DR4
+PWR_NAME[4][5] PC
+
+# 3BY: is the 3-bay rack, value is FAN
+# ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
+
+PWR_SS[4][6] 3BY
+PWR_NAME[4][6] FAN
+
+PWR_SS[4][7] 3BY
+PWR_NAME[4][7] ACC
+
+PWR_SS[4][8] DP_
+PWR_NAME[4][8] MCS
+
+PWR_SS[5][1] DR5
 PWR_NAME[5][1] PC
-PWR_SS[5][2] DR2
-PWR_NAME[5][2] DS1
 
-PWR_SS[5][3] DR3
-PWR_NAME[5][3] PC
-PWR_SS[5][4] DR3
-PWR_NAME[5][4] DS1
+PWR_SS[5][2] MCS
+PWR_NAME[5][2] EXE
 
-PWR_SS[5][5] DR4
-PWR_NAME[5][5] PC
-PWR_SS[5][6] DR4
-PWR_NAME[5][6] DS1
+PWR_SS[5][3] MCS
+PWR_NAME[5][3] SCH
 
-PWR_SS[5][7] DR5
-PWR_NAME[5][7] PC
-PWR_SS[5][8] DR5
-PWR_NAME[5][8] DS1
+PWR_SS[5][4] MCS
+PWR_NAME[5][4] TP
+
+PWR_SS[5][5] SHL
+PWR_NAME[5][5] MCS
+
+# DRS DSU is all of the DR Storage Units (combined on power strip)
+
+PWR_SS[5][8] DRS
+PWR_NAME[5][8] DSU
 
   
  

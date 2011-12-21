@@ -31,6 +31,7 @@
   * Added `documentation support` for accessing the central frequency of a DRX frame
   * Fixed a RPD_DD mapping problem in lsl.common.stations.parseSSMIF()
   * Fixed a DP1_SLOT parsing problem in lsl.common.stations.parseSSMIF()
+  * Updated LWA-1 SSMIF to 12/20/2011 to include calibration information
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF
