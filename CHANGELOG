@@ -15,6 +15,7 @@
   * Cleaned up the TBN ring buffer using deques and OrderedDicts
   * Added support for reading the TBN tuning word/frequency and gain from a TBN frame
   * Added support for reading the DRX tuning word/frequency from a DRX frame
+  * Added support for stepped SDF files that specify the delays and gains to use
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed

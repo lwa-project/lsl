@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Module that contains all of the relevant class to build up a representation 
-of a session definition file as defined in MCS0030v2.  The hierarchy of classes
+of a session definition file as defined in MCS0030v5.  The hierarchy of classes
 is:
   * Project - class that holds all of the information about the project (including
     the observer) and one or more sessions.  Technically, a SD file has only one
@@ -32,9 +32,9 @@ this module also includes a simple parser for SD file.  It is mostly complete bu
 not currently support some of the extended session/observation parameters.  This 
 includes:
   * SESSION_DRX_BEAM
-  * OBS_BEAM_DELAY[n][p]
-  * BEAM_GAIN[n][p][q][r]
-Thus, stepped observations using OBS_STP_B[n] = SPEC_DELAYS_GAINS is not supported.
+  
+Also included as part of this module are utilties to convert delays (in ns) and gains
+into the data formated expected by DP and required for MCS0030v5
 """
 
 import os
@@ -59,9 +59,9 @@ from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
-__version__ = '0.5'
+__version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  '__version__', '__revision__', '__all__']
+__all__ = ['delaytoDPD', 'DPDtodelay', 'gaintoDPG', 'DPGtogain', 'Observer', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?)$')
 _UTC = pytz.utc
@@ -70,7 +70,69 @@ _CST = pytz.timezone('US/Central')
 _MST = pytz.timezone('US/Mountain')
 _PST = pytz.timezone('US/Pacific')
 _nStands = 260
-_DRSUCapacityTB = 5
+_DRSUCapacityTB = 10
+
+
+def delaytoDPD(delay):
+	"""Given a delay in ns, convert it to a course and fine portion and into the 
+	final format expected by DP (big endian 16.12 unsigned integer)."""
+	
+	# Convert the delay to a combination of FIFO delays (~5.1 ns) and 
+	# FIR delays (~0.3 ns)
+	sample = int(round(delay * fS * 16 / 1e9))
+	course = sample // 16
+	fine   = sample % 16
+	
+	# Combine into one value
+	combined = (course << 4) | fine
+	
+	# Convert to big-endian
+	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
+	
+	return combined
+
+
+def DPDtodelay(combined):
+	"""Given a delay value in the final format expect by DP, return the delay in ns."""
+	
+	# Convert to little-endian
+	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
+	
+	# Split
+	fine = combined & 15;
+	course = (combined >> 4) & 4095
+	
+	# Convert to time
+	delay = (course + fine/16.0) / fS
+	delay *= 1e9
+	
+	return delay
+
+
+def gaintoDPG(gain):
+	"""Given a gain (between 0 and 1), convert it to a gain in the final form 
+	expected by DP (big endian 16.1 signed integer)."""
+	
+	# Convert
+	combined = int(32767*gain)
+	
+	# Convert to big-endian
+	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
+	
+	return combined
+
+
+def DPGtogain(combined):
+	"""Given a gain value in the final format expected by DP, return the gain
+	as a decimal value (0 to 1)."""
+	
+	# Convert to little-endian
+	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
+	
+	# Convert back
+	gain = combined / 32767.0
+	
+	return gain
 
 
 def parseTimeString(s):
@@ -214,11 +276,11 @@ class Project(object):
 		else:
 			return False
 			
-	def render(self, session=0):
+	def render(self, session=0, verbose=False):
 		"""Create a session definition file that corresponds to the specified 
 		session.  Returnes the SD file's contents as a string."""
 		
-		if not self.validate() :
+		if not self.validate(verbose=verbose) :
 			raise RuntimeError("Invalid session/observation parameters.  Aborting.")
 		if session >= len(self.sessions):
 			raise IndexError("Invalid session index")
@@ -968,7 +1030,7 @@ class BeamStep(object):
 	  * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
 	    (default = False)
 	  * SpecDelays - 520 list of delays to apply for each antenna
-	  * SpecGains - 260 by 2 by 2 list of gains to apply for each antenna
+	  * SpecGains - 260 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
 	  
 	.. note::
 	   If `SpecDelays` is specified, `SpecGains` must also be specified.
@@ -983,8 +1045,8 @@ class BeamStep(object):
 		self.frequency1 = float(frequency1)
 		self.frequency2 = float(frequency2)
 		self.MaxSNR = bool(MaxSNR)
-		self.delays = self.SpecDelays
-		self.gains = self.SpecGains
+		self.delays = SpecDelays
+		self.gains = SpecGains
 		
 		self.dur = self.getDuration()
 		self.freq1 = self.getFrequency1()
@@ -1029,10 +1091,13 @@ class BeamStep(object):
 		"""Return a valid value for beam type based on whether maximum S/N beam 
 		forming has been requested."""
 		
-		if self.MaxSNR:
-			return 'MAX_SNR'
+		if self.delays is not None and self.gains is not None:
+			return 'SPEC_DELAYS_GAINS'
 		else:
-			return 'SIMPLE'
+			if self.MaxSNR:
+				return 'MAX_SNR'
+			else:
+				return 'SIMPLE'
 			
 	def getFixedBody(self):
 		"""Return an ephem.Body object corresponding to where the observation is 
@@ -1074,6 +1139,8 @@ class BeamStep(object):
 					print "[%i] Error: Gains specified but delays were not" % os.getpid()
 		# Basic - Observation time
 		if self.dur < 5:
+			if verbose:
+				print "[%i] Error: step dwell time is too short" % os.getpid()
 			failures += 1
 	     # Basic - Frequency and filter code values
 		if self.freq1 < 219130984 or self.freq1 > 1928352663:
@@ -1163,7 +1230,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 		for beamTemp in beamTemps:
 			f1 = beamTemp['freq1']*fS / 2**32
 			f2 = beamTemp['freq2']*fS / 2**32
-			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], beamTemp['duration'], f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR']) )
+			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], beamTemp['duration'], f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
 
 	# Return the newly created Observation object
 	return obsOut
@@ -1194,7 +1261,7 @@ def parseSDF(filename, verbose=False):
 	obsTemp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
 				'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
 				'stpRADec': True, }
-	beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False}
+	beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
 	beamTemps = []
 	sessionBits = 12
 	sessionSamples = 12000000
@@ -1288,7 +1355,7 @@ def parseSDF(filename, verbose=False):
 		if keyword == 'OBS_ID':
 			if obsTemp['id'] != 0:
 				project.sessions[0].observations.append( __parseCreateObsObject(obsTemp, beamTemps=beamTemps, verbose=verbose) )
-				beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False}
+				beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
 				beamTemps = []
 			obsTemp['id'] = int(value)
 			
@@ -1411,14 +1478,56 @@ def parseSDF(filename, verbose=False):
 			if len(beamTemps) == 0:
 				beamTemps.append( copy.deepcopy(beamTemp) )
 				beamTemps[-1]['id'] = ids[0]
+				
 				if value == 'MAX_SNR':
 					beamTemps[-1]['MaxSNR'] = True
+					
+				elif value == 'SPEC_DELAYS_GAINS':
+					beamTemps[-1]['delays'] = []
+					beamTemps[-1]['gains'] = []
+					for bdi in xrange(2*_nStands):
+						beamTemps[-1]['delays'].append( 0 )
+						if bdi < _nStands:
+							beamTemps[-1]['gains'].append( [0, 0, 0, 0] )
 			else:
 				if beamTemps[-1]['id'] != ids[0]:
 					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
 					beamTemps[-1]['id'] = ids[0]
+					
 				if value == 'MAX_SNR':
 					beamTemps[-1]['MaxSNR'] = True
+					
+				elif value == 'SPEC_DELAYS_GAINS':
+					beamTemps[-1]['delays'] = []
+					beamTemps[-1]['gains'] = []
+					for bdi in xrange(2*_nStands):
+						beamTemps[-1]['delays'].append( 0 )
+						if bdi < _nStands:
+							beamTemps[-1]['gains'].append( [[0, 0], [0, 0]] )
+			continue
+			
+		if keyword == 'OBS_BEAM_DELAY':
+			if len(beamTemps) == 0:
+				beamTemps.append( copy.deepcopy(beamTemp) )
+				beamTemps[-1]['id'] = ids[0]
+				beamTemps[-1]['delays'][ids[1]-1] = int(value)
+			else:
+				if beamTemps[-1]['id'] != ids[0]:
+					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
+					beamTemps[-1]['id'] = ids[0]
+				beamTemps[-1]['delays'][ids[1]-1] = int(value)
+			continue
+			
+		if keyword == 'OBS_BEAM_GAIN':
+			if len(beamTemps) == 0:
+				beamTemps.append( copy.deepcopy(beamTemp) )
+				beamTemps[-1]['id'] = ids[0]
+				beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+			else:
+				if beamTemps[-1]['id'] != ids[0]:
+					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
+					beamTemps[-1]['id'] = ids[0]
+				beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
 			continue
 		
 		# Session wide settings at the end of the observations
@@ -1483,11 +1592,12 @@ PROJECT_REMPI    {{ project.comments|default('None provided', boolean=True)|trun
 PROJECT_REMPO    {{ poComment }}
 
 {% set session = project.sessions[whichSession] -%}
-{% set poComment = project.projectOffice.sessions[whichSession]|default('None', boolean=True) -%}
+{% set poCommentS = project.projectOffice.sessions[whichSession]|default('None', boolean=True) -%}
+{% set poCommentO = project.projectOffice.observations[whichSession]|default('None', boolean=True) -%}
 SESSION_ID       {{ session.id }}
 SESSION_TITLE    {{ session.name|default('None provided', boolean=True) }}
 SESSION_REMPI    {{ session.comments|default('None provided', boolean=True)|truncate(4090, killwords=True) }}
-SESSION_REMPO    {{ "Requested data return method is %s"|format(session.dataReturnMethod) if poComment == 'None' else poComment }}
+SESSION_REMPO    {{ "Requested data return method is %s"|format(session.dataReturnMethod) if poCommentS == 'None' else poCommentS }}
 {{- "\nSESSION_CRA      %i"|format(session.cra) if session.cra != 0 }}
 {%- for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS'] -%}
 {{- "\nSESSION_MRP_%s  %i"|format(component, session.recordMIB[component]) if session.recordMIB[component] != -1 }}
@@ -1505,7 +1615,7 @@ OBS_ID           {{ loop.index }}
 OBS_TITLE        {{ obs.name|default('None provided', boolean=True) }}
 OBS_TARGET       {{ obs.target|default('None provided', boolean=True) }}
 OBS_REMPI        {{ obs.comments|default('None provided', boolean=True)|truncate(4090, killwords=True) }}
-OBS_REMPO        {{ "Estimated data volume for this observation is %s"|format(obs.dataVolume|filesizeformat) if poComment == 'None' else poComment }}
+OBS_REMPO        {{ "Estimated data volume for this observation is %s"|format(obs.dataVolume|filesizeformat) if poCommentO[loop.index0] == 'None' else poCommentO[loop.index0] }}
 OBS_START_MJD    {{ obs.mjd }}
 OBS_START_MPM    {{ obs.mpm }}
 OBS_START        {{ obs.start }}
@@ -1544,19 +1654,35 @@ OBS_FREQ2+       {{ "%.9f MHz"|format(obs.frequency2/1000000) }}
 OBS_BW           {{ obs.filter }}
 OBS_BW+          {{ renderBW(obs) }}
 {% elif obs.mode == 'STEPPED' -%}
+OBS_FREQ1        {{ obs.steps[0].freq1 }}
+OBS_FREQ1+       {{ "%.9f MHz"|format(obs.steps[0].frequency1/1000000) }}
+OBS_FREQ2        {{ obs.steps[0].freq2 }}
+OBS_FREQ2+       {{ "%.9f MHz"|format(obs.steps[0].frequency2/1000000) }}
 OBS_BW           {{ obs.filter }}
 OBS_BW+          {{ renderBW(obs) }}
 OBS_STP_N        {{ obs.steps|length }}
 OBS_STP_RADEC    {{ "%i"|format(obs.steps[0].RADec) }}
 {% for step in obs.steps -%}
 OBS_STP_C1[{{ loop.index }}]      {{ step.c1 }}
-OBS_STP_C2[{{ loop.index }}]      {{ step.c2 }}
+OBS_STP_C2[{{ loop.index }}]      {{ "%+f"|format(step.c2) }}
 OBS_STP_T[{{ loop.index }}]       {{ step.dur }}
 OBS_STP_FREQ1[{{ loop.index }}]   {{ step.freq1 }}
 OBS_STP_FREQ1+[{{ loop.index }}]  {{ "%.9f MHz"|format(step.frequency1/1000000) }}
 OBS_STP_FREQ2[{{ loop.index }}]   {{ step.freq2 }}
 OBS_STP_FREQ2+[{{ loop.index }}]  {{ "%.9f MHz"|format(step.frequency2/1000000) }}
 OBS_STP_B[{{ loop.index }}]       {{ step.beam }}
+{% if step.beam == 'SPEC_DELAYS_GAINS' -%}
+{% set steploop = loop %}
+{% for delay in step.delays -%}
+OBS_BEAM_DELAY[{{steploop.index}}][{{loop.index}}] {{step.delays[loop.index0]}}
+{% endfor %}
+{% for gain in step.gains -%}
+OBS_BEAM_GAIN[{{steploop.index}}][{{loop.index}}][1][1] {{step.gains[loop.index0][0][0]}}
+OBS_BEAM_GAIN[{{steploop.index}}][{{loop.index}}][1][2] {{step.gains[loop.index0][0][1]}}
+OBS_BEAM_GAIN[{{steploop.index}}][{{loop.index}}][2][1] {{step.gains[loop.index0][1][0]}}
+OBS_BEAM_GAIN[{{steploop.index}}][{{loop.index}}][2][2] {{step.gains[loop.index0][1][1]}}
+{% endfor %}
+{%- endif %}
 {% endfor %}
 {%- endif %}
 {% endfor %}
