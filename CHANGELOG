@@ -16,6 +16,8 @@
   * Added support for reading the TBN tuning word/frequency and gain from a TBN frame
   * Added support for reading the DRX tuning word/frequency from a DRX frame
   * Added support for stepped SDF files that specify the delays and gains to use
+  * Added support for ARX board/channel responses via a new common.stations.ARX class
+  * Removed the misc.beamformer.fftDelayAndSum functions in favor of phase-and-sum beamforming
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed
@@ -32,7 +34,7 @@
   * Added `documentation support` for accessing the central frequency of a DRX frame
   * Fixed a RPD_DD mapping problem in lsl.common.stations.parseSSMIF()
   * Fixed a DP1_SLOT parsing problem in lsl.common.stations.parseSSMIF()
-  * Updated LWA-1 SSMIF to 12/20/2011 to include calibration information
+  * Updated LWA-1 SSMIF to 12/26/2011 to include calibration information
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF

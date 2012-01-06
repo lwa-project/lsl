@@ -1,25 +1,23 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
-# 2011 DEC 16 by J. Craig & J. Dowell
-# See MCS0031 for format info 
+# 2011 DEC 26 by S. Ellingson
+# Clean-up of version dated 12/20 by J. Craig & J. Dowell
 # Search "FIXME" for things that need work
 
-FORMAT_VERSION 4
+FORMAT_VERSION 5
 STATION_ID VL
-GEO_N   +34.070
-GEO_E  -107.628
-GEO_EL 2133.6
+GEO_N   +34.070 # N Lat [deg]
+GEO_E  -107.628 # E Lat [deg]
+GEO_EL 2133.6   # [m] above MSL
 N_STD 260
 
 # --------------------------------------
 # --- Stand Positions  -----------------
 # --------------------------------------
-# from M.170 v.2
 # includes 1-256, plus:
 #   257 (close to the SW edge of the array)
-#   RTA is included as stand 258.
-# Stands 259, 260 do not yet exist, and are not specified.   
+#   RTA is included as stand 258.  
 # --------------------------------------
 # These will be set to 0.0 for any stand #'s <= N_STD not identified
 # *** STD_LX[stand_id] [m] goes here 
@@ -799,6 +797,12 @@ STD_LZ[257]    +2.867
 STD_LX[258]  +338.911
 STD_LY[258]   +19.778
 STD_LZ[258]    +1.670
+STD_LX[259]     0.0
+STD_LY[259]     0.0
+STD_LZ[259]     0.0
+STD_LX[260]     0.0
+STD_LY[260]     0.0
+STD_LZ[260]     0.0
 
 # ------------------------------------
 # --- Antenna # -> Stand # mapping ---
@@ -823,57 +827,47 @@ STD_LZ[258]    +1.670
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-
-# The below antennas have no signal
-ANT_STAT[18] 1
-ANT_STAT[25] 1
-ANT_STAT[43] 1
-ANT_STAT[68] 1
-ANT_STAT[94] 1
-ANT_STAT[132] 1
-ANT_STAT[169] 1
-ANT_STAT[194] 1
-ANT_STAT[196] 1
-ANT_STAT[246] 1
-ANT_STAT[247] 1
-ANT_STAT[306] 1
-ANT_STAT[362] 1
-ANT_STAT[374] 1
-ANT_STAT[384] 1
-ANT_STAT[406] 1
-ANT_STAT[464] 1
-ANT_STAT[488] 1
-ANT_STAT[492] 1
-
-The below antennas are installed, but not cabled to receivers
-ANT_STAT[513] 1
-ANT_STAT[514] 1
-
-# The below antennas failed the TBN calibration, but spectra and drift scan look ok 
-ANT_STAT[17] 2
-ANT_STAT[71] 2
-ANT_STAT[72] 2
-ANT_STAT[295] 2
-ANT_STAT[296] 2
-ANT_STAT[487] 2
-
-# The below antennas failed drift scan, but calibration passed
-ANT_STAT[48] 2
-ANT_STAT[62] 2
-ANT_STAT[74] 2
-ANT_STAT[116] 2
-ANT_STAT[147] 2
-ANT_STAT[189] 2
-ANT_STAT[191] 2
-ANT_STAT[228] 2
-ANT_STAT[367] 2
-ANT_STAT[449] 2
-
-# The below antennas are not installed
-ANT_STAT[517] 0
-ANT_STAT[518] 0
-ANT_STAT[519] 0
-ANT_STAT[520] 0
+ANT_STAT[17] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
+ANT_STAT[18] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[25] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[43] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[48] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[62] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[68] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[71] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
+ANT_STAT[72] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
+ANT_STAT[74] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[94] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[116] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[132] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[147] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[169] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[189] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[191] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[194] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[196] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[228] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[246] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[247] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[295] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
+ANT_STAT[296] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
+ANT_STAT[306] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[362] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[367] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[374] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[384] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[406] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[449] 2  # 111220: JC says "failed drift scan, but calibration passed"
+ANT_STAT[464] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[487] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
+ANT_STAT[488] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[492] 1  # 111220: JC says this antenna has no signal
+ANT_STAT[513] 1  # 111220: JC says "this antenna is installed, but not cabled to receiver"
+ANT_STAT[514] 1  # 111220: JC says "this antenna is installed, but not cabled to receiver"
+ANT_STAT[517] 0  # 111220: JC says "not installed"
+ANT_STAT[518] 0  # 111220: JC says "not installed"
+ANT_STAT[519] 0  # 111220: JC says "not installed"
+ANT_STAT[520] 0  # 111220: JC says "not installed"
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -910,11 +904,9 @@ N_FEE 260
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any FEE #'s <= N_FEE not identified
 # *** FEE_STAT[fee_id] goes here: 
-
-# The below FEEs are not installed
-FEE_STAT[257] 0
-FEE_STAT[259] 0
-FEE_STAT[260] 0
+FEE_STAT[257] 0 # 111220: JC says "not installed"
+FEE_STAT[259] 0 # 111220: JC says "not installed"
+FEE_STAT[260] 0 # 111220: JC says "not installed"
 
 # This will be set to 1 for any FEEs not identified below
 # You should set it to 0 if different but not known, or >1 if appropriate
@@ -950,8 +942,6 @@ FEE_STAT[260] 0
 # *** FEE_PORT[fee_id] goes here:
 
 # All FEEs are on Rack 1, Port 1
-FEE_RACK[1] 1
-FEE_PORT[1] 1
 FEE_RACK[1] 1
 FEE_PORT[1] 1
 FEE_RACK[2] 1
@@ -1992,8 +1982,14 @@ RPD_ID[509] EXK-255-057 (Gray)
 RPD_ID[510] EXK-255-057 (Black)
 RPD_ID[511] EXK-256-131 (Gray)
 RPD_ID[512] EXK-256-131 (Black)
-# no labels for stands 257 & 258
-# Stands 259 & 260 don't exist yet
+RPD_ID[513] UNK # no labels for stand 257 
+RPD_ID[514] UNK # no labels for stand 257 
+RPD_ID[515] UNK # no labels for stand 258 
+RPD_ID[516] UNK # no labels for stand 258 
+RPD_ID[517] UNK # stand 259 doesn't exist yet
+RPD_ID[518] UNK # stand 259 doesn't exist yet
+RPD_ID[519] UNK # stand 260 doesn't exist yet
+RPD_ID[520] UNK # stand 260 doesn't exist yet
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
@@ -2008,6 +2004,23 @@ RPD_STAT[517] 0
 RPD_STAT[518] 0
 RPD_STAT[519] 0
 RPD_STAT[520] 0
+
+# This will be set to 1 for any cables not identified below
+# You should set it to 0 if different / not known, or >1 if appropriate
+# "2" is LMR400
+# *** RPD_DESI[cable#] goes here:
+# Stand 257 not installed
+RPD_DESI[513] 0
+RPD_DESI[514] 0
+# Electrical length of cables to Stand 258: 
+RPD_DESI[515] 2 # LMR400 (with some short jumpers near shelter)
+RPD_DESI[516] 2 # LMR400 (with some short jumpers near shelter)
+# Cables to Stand 259 are not currently installed (since 259 doesn't exist):
+RPD_DESI[517] 0
+RPD_DESI[518] 0
+# Cables to Stand 260 are not currently installed (since 260 doesn't exist):
+RPD_DESI[519] 0
+RPD_DESI[520] 0
 
 # RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
 # *** RPD_LENG[cable#] [m] goes here:
@@ -2524,68 +2537,29 @@ RPD_LENG[510]  57.00
 RPD_LENG[511] 131.00
 RPD_LENG[512] 131.00
 
-# FIXME JD
+# FIXME
+# not much known about cables to stand 257 
+RPD_LENG[513]   0.00 
+RPD_LENG[514]   0.00 
+
+# FIXME
 # Length of cables to Stand 258 (old RTA): 
-RPD_LENG[515] 311.4  # JD's guess; see comment below
-RPD_LENG[516] 315.3  # JD's guess; see comment below
-# FIXME SE: Here's how I came up with this length: 
+# SE Comments from earlier version of SSMIF: Here's how I came up with this length: 
 # ... I started by assuming RPD_VF=85 [%] and RPD_DD=2 [ns]; see those entries for more info.
 # ... On or about July 9, 2010, JC and I measured the one-way prop time to be about 1222.5 ns.
 # ... ... using the TenTec VNA. 
 # ... I then assumed the M.170 model assuming 50 MHz center frequency, and solved for length. 
-# FIXME JC: Make sure you're on board with the above about Stand 258.  If you have better info, please provide
 # On December 12, 2011, JC and JD remeasured both outlier polarizations using a signal
 # ... generator and an oscilliscope.  The round trip times were 2472 ns for N-S and 
 # ... 2503 ns for E-W.  I used SE method described above to come up with the new lengths 
-# ... for both cables (listed above).
-# Cables to Stand 259 are not currently installed (since 259 doesn't exist):
-# RPD_STAT[517] 
-# RPD_STAT[518] 
-# Cables to Stand 260 are not currently installed (since 260 doesn't exist):
-# RPD_STAT[519] 
-# RPD_STAT[520] 
+# ... for both cables 
+RPD_LENG[515] 311.4  # JD's guess; see comment above
+RPD_LENG[516] 315.3  # JD's guess; see comment above
 
-# Cable propagation time will be calculated from RPD_VF and RPD_DD using the M.170 model
-# RPD_VF[] assumed to be 83.0 [%] for any cable #'s <= N_RPD not identified
-# RPD_DD[] assumed to be 2.4 [ns] for any cable #'s <= N_RPD not identified
-# so only stands using cable other than the KingSignal stuff need entries here.
-# *** RPD_VF[cable#] goes here:
-# *** RPD_DD[cable#] goes here:
-# not installed
-# RPD_VF[513]
-# RPD_VF[514]
-# RPD_DD[513]
-# RPD_DD[514]
-
-# Cables to Stand 258 (RTA)
-RPD_VF[515] 85.0 # this is the known value for LMR-400
-RPD_VF[516] 85.0 # this is the known value for LMR-400
-RPD_DD[515]  2.0 # this is SE's guess; see comment below 
-RPD_DD[516]  2.0 # this is SE's guess; see comment below 
-# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
-# ... a LMR-200-like cable, but I'm not sure by how much.  
-# Cables to Stand 259 are not currently installed (since 259 doesn't exist):
-# RPD_VF[517]
-# RPD_VF[518]
-# RPD_DD[517]
-# RPD_DD[518]
-
-# Cables to Stand 260 are not currently installed (since 260 doesn't exist):
-# RPD_VF[519]
-# RPD_VF[520]
-# RPD_DD[519]
-# RPD_DD[520]
-
-# Cable gain model from M.170.  For most of the cables, the model is A0 = 0.00428 and  
-# A1 = 0.00000.  For the cables to Stand 258 (RTA), the cable is differnent and both 
-# A0 and A1 are different.  Note:  All measurements are made relative to 10 MHz 
-RPD_A0 0.00428 
-RPD_A0[515] 0.00185 
-RPD_A0[516] 0.00185 
-RPD_A1 0.00000 
-RPD_A1[515] 0.00000 
-RPD_A1[516] 0.00000 
-RPD_FREF 10000000 
+RPD_LENG[517]   0.00 # Stand 259 not installed
+RPD_LENG[518]   0.00 # Stand 259 not installed
+RPD_LENG[519]   0.00 # Stand 260 not installed
+RPD_LENG[520]   0.00 # Stand 260 not installed
 
 # Cable stretching is set with TBN calibration results.  The assumptions that go into
 # ... this are:
@@ -2599,6 +2573,7 @@ RPD_FREF 10000000
 # ... here, the mean is ~1.2%, the median is ~1.0%, and the mode is ~0.6%.  These values 
 # ... most likely too large because they include the DP digitizer delays (~1-2 ns) which 
 # ... have not been independantly determined.
+
 RPD_STR[1]  1.0065
 RPD_STR[2]  0.9970
 RPD_STR[3]  1.0028
@@ -3111,31 +3086,27 @@ RPD_STR[509]  1.0517
 RPD_STR[510]  1.0428
 RPD_STR[511]  1.0085
 RPD_STR[512]  1.0010
+
+# Stand 257 (RPD_ID's 513-514) is not installed
 RPD_STR[513]  1.0938
 RPD_STR[514]  1.0152
-RPD_STR[515]  1.0000 # The outlier antenna is the reference
-RPD_STR[516]  1.0000 # The outlier antenna is the reference
-RPD_STR[517]  0.9000 # Not installed
-RPD_STR[518]  0.9000 # Not installed
-RPD_STR[519]  0.9000 # Not installed
-RPD_STR[520]  0.9000 # Not installed
 
-# This will be set to 1 for any cables not identified below
-# You should set it to 0 if different / not known, or >1 if appropriate
-# "2" is LMR400
-# *** RPD_DESI[cable#] goes here:
-# not installed
-RPD_DESI[513] 0
-RPD_DESI[514] 0
-# Electrical length of cables to Stand 258: 
-RPD_DESI[515] 2 # LMR400 (with some short jumpers near shelter)
-RPD_DESI[516] 2 # LMR400 (with some short jumpers near shelter)
-# Cables to Stand 259 are not currently installed (since 259 doesn't exist):
-# RPD_DESI[517] 
-# RPD_DESI[518] 
-# Cables to Stand 260 are not currently installed (since 260 doesn't exist):
-# RPD_DESI[519] 
-# RPD_DESI[520] 
+# Cables to Stand 258 (RTA)
+RPD_VF[515] 85.0 # this is the known value for LMR-400
+RPD_DD[515]  2.0 # this is SE's guess; see comment below 
+RPD_A0[515] 0.00185 
+RPD_A1[515] 0.00000 
+RPD_STR[515]  1.0000 # The outlier antenna is the reference
+RPD_VF[516] 85.0 # this is the known value for LMR-400
+RPD_DD[516]  2.0 # this is SE's guess; see comment below 
+RPD_A0[516] 0.00185 
+RPD_A1[516] 0.00000 
+RPD_STR[516]  1.0000 # The outlier antenna is the reference
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
+# ... a LMR-200-like cable, but I'm not sure by how much.  
+
+# Cables to Stand 259 are not currently installed (since 259 doesn't exist)
+# Cables to Stand 260 are not currently installed (since 260 doesn't exist)
 
 # --------------------------------------
 # --- Antenna # -> cable # mapping -----
@@ -3748,39 +3719,39 @@ ARB_ID[33] 0137
 # *** ARB_SLOT[arb#] goes here:
 # Format is <chassis>-<slot-from-left>
 # Chassis 1 is bottom-most chassis in the rack
-ARB_ID[1] 1-1
-ARB_ID[2] 1-2
-ARB_ID[3] 1-3
-ARB_ID[4] 1-4
-ARB_ID[5] 1-5
-ARB_ID[6] 1-6
-ARB_ID[7] 1-7
-ARB_ID[8] 1-8
-ARB_ID[9] 2-1
-ARB_ID[10] 2-2
-ARB_ID[11] 2-3
-ARB_ID[12] 2-4
-ARB_ID[13] 2-5
-ARB_ID[14] 2-6
-ARB_ID[15] 2-7
-ARB_ID[16] 2-8
-ARB_ID[17] 3-1
-ARB_ID[18] 3-2
-ARB_ID[19] 3-3
-ARB_ID[20] 3-4
-ARB_ID[21] 3-5
-ARB_ID[22] 3-6
-ARB_ID[23] 3-7
-ARB_ID[24] 3-8
-ARB_ID[25] 4-1
-ARB_ID[26] 4-2
-ARB_ID[27] 4-3
-ARB_ID[28] 4-4
-ARB_ID[29] 4-5
-ARB_ID[30] 4-6
-ARB_ID[31] 4-7
-ARB_ID[32] 4-8
-ARB_ID[33] 4-9
+ARB_SLOT[1] 11
+ARB_SLOT[2] 12
+ARB_SLOT[3] 13
+ARB_SLOT[4] 14
+ARB_SLOT[5] 15
+ARB_SLOT[6] 16
+ARB_SLOT[7] 17
+ARB_SLOT[8] 18
+ARB_SLOT[9] 21
+ARB_SLOT[10] 22
+ARB_SLOT[11] 23
+ARB_SLOT[12] 24
+ARB_SLOT[13] 25
+ARB_SLOT[14] 26
+ARB_SLOT[15] 27
+ARB_SLOT[16] 28
+ARB_SLOT[17] 31
+ARB_SLOT[18] 32
+ARB_SLOT[19] 33
+ARB_SLOT[20] 34
+ARB_SLOT[21] 35
+ARB_SLOT[22] 36
+ARB_SLOT[23] 37
+ARB_SLOT[24] 38
+ARB_SLOT[25] 41
+ARB_SLOT[26] 42
+ARB_SLOT[27] 43
+ARB_SLOT[28] 44
+ARB_SLOT[29] 45
+ARB_SLOT[30] 46
+ARB_SLOT[31] 47
+ARB_SLOT[32] 48
+ARB_SLOT[33] 49
 
 # ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
 # *** ARB_DESI[arb#] goes here:
@@ -4443,7 +4414,6 @@ ARB_ANT[33][8] 516
 # *** ARB_IN[][] goes here:
 # label = panel#_input#
 # panel 1 is top, input 1 is upper left
-
 ARB_IN[1][1] 4_1
 ARB_IN[1][2] 4_2
 ARB_IN[1][3] 4_3
@@ -6629,7 +6599,6 @@ DP1_ANT[26][18] 80
 DP1_ANT[26][19] 167
 DP1_ANT[26][20] 168
 
-
 # ----------------------
 # --- DP2 --------------
 # ----------------------
@@ -6644,8 +6613,8 @@ DP2_ID[2] lwa34
 # DP2_SLOT[] will be set to 0 (not known/not applicable) for any DP2 boards not identified
 # *** DP2_SLOT[dp2#] goes here:
 # format = <chassis>-<slot from left>
-DP2_ID[1] 1-7
-DP2_ID[2] 2-7
+DP2_SLOT[1] 1-7
+DP2_SLOT[2] 2-7
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DP2 board-channels not identified
@@ -6712,12 +6681,12 @@ N_PWR_PORT[5] 8
 N_PWR_PORT[6] 8
 
 # Format (example) "PWR_SS[2][3] SHL" means power from Rack 2 Port 3 goes to SHL.
-# Valid values are SHL, ASP, DP , MCS, DR1, DR2, DR3, DR4, and DR5.
+# Valid values are SHL, ASP, DP_, MCS, DR1, DR2, DR3, DR4, and DR5.
 # PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
 # Format (example) "PWR_NAME[2][3] MCS", assuming "PWR_SS[2][3] SHL", means power from Rack 2 Port 3 goes to SHL-MCS.
 #   For PWR SS[m][p] = SHL, valid values are MCS, others TBD
 #   For PWR SS[m][p] = ASP, valid values are MCS, FEE, ARX, FAN 
-#   For PWR SS[m][p] = DP , valid values are MCS, others TBD
+#   For PWR SS[m][p] = DP , valid values are MCS, DC1, DC2, FAN, SYN, SWI
 #   For PWR SS[m][p] = MCS, valid values are SCH, EXE, TP, CH, and GW.
 #   For PWR SS[m][p] = DR1, DR2, DR3, DR4, and DR5; valid values are PC, DS1 (DRSU 1), and DS2 (DRSU 2)
 # PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
@@ -6736,9 +6705,8 @@ PWR_NAME[1][4] FAN
 PWR_SS[1][7] ASP
 PWR_NAME[1][7] MCS 
 
-# Each DP chassis has 3 plugs, denoted C23 for chassis 2, plug 3; C12 for chassis 1, plug 2, etc.
-# SYN: synthesizer module, SWI: TBN/W switch
- 
+###
+
 PWR_SS[2][2] DP_
 PWR_NAME[2][2] SWI
 
@@ -6748,25 +6716,20 @@ PWR_NAME[2][3] SYN
 PWR_SS[2][8] DP_
 PWR_NAME[2][8] FAN
 
-
-PWR_SS[3][1] DP_
-PWR_NAME[3][1] C21
-
-PWR_SS[3][2] DP_
-PWR_NAME[3][2] C22
-
-PWR_SS[3][3] DP_
-PWR_NAME[3][3] C23
-
-PWR_SS[3][4] DP_
-PWR_NAME[3][4] C11
-
-PWR_SS[3][5] DP_
-PWR_NAME[3][5] C12
-
-PWR_SS[3][6] DP_
-PWR_NAME[3][6] C13
-
+# FIXME -- using undefined keywords below -- need to revise software to recognize them
+# Each DP chassis has 3 plugs, denoted C23 for chassis 2, plug 3; C12 for chassis 1, plug 2, etc.
+#PWR_SS[3][1] DP_
+#PWR_NAME[3][1] C21 
+#PWR_SS[3][2] DP_
+#PWR_NAME[3][2] C22
+#PWR_SS[3][3] DP_
+#PWR_NAME[3][3] C23 
+#PWR_SS[3][4] DP_
+#PWR_NAME[3][4] C11
+#PWR_SS[3][5] DP_
+#PWR_NAME[3][5] C12
+#PWR_SS[3][6] DP_
+#PWR_NAME[3][6] C13
 
 PWR_SS[4][2] DR1
 PWR_NAME[4][2] PC
@@ -6780,14 +6743,13 @@ PWR_NAME[4][4] PC
 PWR_SS[4][5] DR4
 PWR_NAME[4][5] PC
 
+# FIXME -- using undefined keywords below -- need to revise software to recognize them
 # 3BY: is the 3-bay rack, value is FAN
 # ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
-
-PWR_SS[4][6] 3BY
-PWR_NAME[4][6] FAN
-
-PWR_SS[4][7] 3BY
-PWR_NAME[4][7] ACC
+#PWR_SS[4][6] 3BY
+#PWR_NAME[4][6] FAN
+#PWR_SS[4][7] 3BY
+#PWR_NAME[4][7] ACC
 
 PWR_SS[4][8] DP_
 PWR_NAME[4][8] MCS
@@ -6807,13 +6769,16 @@ PWR_NAME[5][4] TP
 PWR_SS[5][5] SHL
 PWR_NAME[5][5] MCS
 
+# FIXME -- using undefined keywords below -- need to revise software to recognize them
 # DRS DSU is all of the DR Storage Units (combined on power strip)
+#PWR_SS[5][8] DRS
+#PWR_NAME[5][8] DSU
 
-PWR_SS[5][8] DRS
-PWR_NAME[5][8] DSU
+MCS_CRA 1
 
-  
- 
+TBN_GAIN 7    # FIXME
+DRX_GAIN 10   # FIXME
+
 # ====================
 # === STATUS CODES ===
 # ====================
@@ -6821,4 +6786,6 @@ PWR_NAME[5][8] DSU
 # 2 = "Suspect; possibly bad (If used, provide warning)"
 # 1 = "Bad (Don't use)"
 # 0 = "Not Installed"
+
+
 
