@@ -3,6 +3,7 @@
 
 import os
 import re
+import csv
 import copy
 import numpy
 import ephem
@@ -13,7 +14,7 @@ from lsl.common.constants import *
 
 __version__ = '0.7'
 __revision__ = '$Rev$'
-__all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
+__all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
 _id2name = {'VL': 'LWA-1', 'NA': 'LWA-2'}
@@ -433,6 +434,64 @@ class Cable(object):
 		return 1.0 / self.attenuation(frequency=frequency)
 
 
+class ARX(object):
+	"""
+	Object to store information about a ARX board/channel combination.  Stores ARX:
+	  * ID name (id)
+	  * Channel number (channel; 1-16)
+	  * ASP channel number (aspChannel; 1-520)
+	
+	The object also as a functional attribute named 'delay' that computes the
+	cable delay for a particular frequency or collection of frequencies in 
+	Hz.
+	"""
+	
+	def __init__(self, id, channel=0, aspChannel=0):
+		self.id = id
+		self.channel = int(channel)
+		self.aspChannel = int(aspChannel)
+		
+	def response(self, filter='full'):
+		"""
+		Return a two-element tuple (freq in Hz, S21 magnitude in dB) for the ARX response for
+		the current board/channel.
+		
+		Filter options are:
+		  * 1 or 'full'
+		  * 2 or 'reduced'
+		  * 3 or 'split'
+		"""
+		
+		# Find the filename to use
+		filename = 'ARX_board_%4s_filters_ch%i.xls' % (self.id, self.channel)
+		filename = os.path.join(dataPath, 'arx', filename)
+		
+		# Read in the file and convert it to a numpy array
+		fh = open(filename, 'rb')
+		reader = csv.reader(fh, dialect='excel-tab')
+
+		data = []
+		for row in reader:
+			data.append(row)
+		fh.close()
+
+		# Add the `dtype` here to stop ndarrays from forming and split out
+		# the various columns
+		data = numpy.array(data, dtype=numpy.float32)
+		freq = data[:,1]
+		data = data[:,[0,2,4]]
+		
+		# Return or raise an error
+		if filter == 1 or filter == 'full':
+			return (freq, data[:,0])
+		elif filter == 2 or filter == 'reduced':
+			return (freq, data[:,1])
+		elif filter == 3 or filter == 'split':
+			return (freq, data[:,2])
+		else:
+			raise ValueError("Unknown ARX filter '%s'" % filter)
+
+
 def __parseTextSSMIF(filename):
 	"""
 	Given a human-readable (text) SSMIF file and return a collection of
@@ -711,6 +770,9 @@ def __parseTextSSMIF(filename):
 		if keyword == 'ARB_ID':
 			arxID[ids[0]-1] = value
 			continue
+		
+		if keyword == 'ARB_SLOT':
+			arxSlot[ids[0]-1] = int(value)
 		
 		if keyword == 'ARB_DESI':
 			arxDesi[ids[0]-1] = int(value)
@@ -1079,13 +1141,16 @@ def parseSSMIF(filename):
 		antennas[ant-1].cable = cbl
 		i += 1
 	
-	# Associate ARX channels with Antennas
+	# Associate ARX boards/channels with Antennas
 	for i in xrange(len(arxAnt)):
 		for j in xrange(len(arxAnt[i])):
 			ant = arxAnt[i][j]
 			if ant > 520:
 				continue
-			antennas[ant-1].arx = i*nChanARX + j + 1
+			
+			boardID = arxID[i]
+			channel = j + 1
+			antennas[ant-1].arx = ARX(boardID, channel=channel, aspChannel=i*nChanARX + j + 1)
 	
 	# Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
 	# with DP2 boards at 1 and 15.
