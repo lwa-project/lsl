@@ -3,7 +3,6 @@
 
 import os
 import re
-import csv
 import copy
 import numpy
 import ephem
@@ -463,26 +462,17 @@ class ARX(object):
 		"""
 		
 		# Find the filename to use
-		filename = 'ARX_board_%4s_filters_ch%i.xls' % (self.id, self.channel)
+		filename = 'ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
 		filename = os.path.join(dataPath, 'arx', filename)
 		
 		# Read in the file and convert it to a numpy array
 		try:
-			fh = open(filename, 'rb')
-			reader = csv.reader(fh, dialect='excel-tab')
-
-			data = []
-			for row in reader:
-				data.append(row)
-			fh.close()
+			dataDict = numpy.load(filename)
 		except IOError:
 			raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
 
-		# Add the `dtype` here to stop ndarrays from forming and split out
-		# the various columns
-		data = numpy.array(data, dtype=numpy.float32)
-		freq = data[:,1]
-		data = data[:,[0,2,4]]
+		freq = dataDict['freq']
+		data = dataDict['data']
 		
 		# Return or raise an error
 		if filter == 1 or filter == 'full':

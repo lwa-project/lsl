@@ -67,6 +67,9 @@ def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	Calculate the time delays for delay-and-sum beam forming a collection of 
 	stands looking in at a particular azimuth and elevation (both in degrees).  
 	A numpy array of the geometric + cable delays in seconds is returned.
+	
+	.. versionchanged:: 0.5.0
+		Changed the computed array center to exclude stands #257 through #260
 	"""
 
 	# Make sure the pointing coordinates make sense
@@ -78,15 +81,19 @@ def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	# Get the positions of the stands and compute the mean center of the array
 	xyz = numpy.zeros((len(antennas),3))
 	i = 0
+	good = []
 	for ant in antennas:
+		if ant.stand.id <= 256:
+			good.append(i)
+			
 		xyz[i,0] = ant.stand.x
 		xyz[i,1] = ant.stand.y
 		xyz[i,2] = ant.stand.z
 		i += 1
 
-	arrayX = xyz[:,0].mean()
-	arrayY = xyz[:,1].mean()
-	arrayZ = xyz[:,2].mean()
+	arrayX = xyz[good,0].mean()
+	arrayY = xyz[good,1].mean()
+	arrayZ = xyz[good,2].mean()
 
 	# Build up a unit vector that points in the direction azimuth,elevation
 	rAz = azimuth*numpy.pi/180.0
@@ -365,8 +372,7 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 	# Loop over stands to compute the formed beam
 	output = numpy.zeros((2, data.shape[1]), dtype=numpy.complex64)
 	for b,s,p in zip(bln, xrange(len(antennas)), pols):
-		output[p,s,:] += data[s,:]*b
-	output = output.sum(axis=1)
+		output[p,:] += data[s,:]*b
 
 	# Check for empty polarization data.  Always return a 3-D array for the data
 	if len(pol0) == 0:
@@ -401,11 +407,21 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 	# Build up a base time array, load in the cable delays, and get the stand 
 	# positions for geometric delay calculations.
 	t = numpy.arange(0,1000)/sampleRate
-	dlyCache = uvUtils.CableCache(CentralFreq, applyDispersion=True)
-	xyz = uvUtils.getXYZ(stands)
-	arrayX = xyz[:,0].mean()
-	arrayY = xyz[:,1].mean()
-	arrayZ = xyz[:,2].mean()
+	xyz = numpy.zeros((len(antennas),3))
+	i = 0
+	good = []
+	for ant in antennas:
+		if ant.stand.id <= 256:
+			good.append(i)
+		
+		xyz[i,0] = ant.stand.x
+		xyz[i,1] = ant.stand.y
+		xyz[i,2] = ant.stand.z
+		i += 1
+
+	arrayX = xyz[good,0].mean()
+	arrayY = xyz[good,1].mean()
+	arrayZ = xyz[good,2].mean()
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
 
 	# Load in the respoonse of a single isolated stand

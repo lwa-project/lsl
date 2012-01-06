@@ -11,7 +11,7 @@ from lsl.common import stations
 
 
 __revision__ = "$Revision:1 $"
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -79,6 +79,21 @@ class beamformer_tests(unittest.TestCase):
 		data = numpy.random.rand(3, 1000)
 		
 		beam = beamformer.phaseAndSum(antennas[:3], data, azimuth=45.0, elevation=30.0)
+		
+	def test_phaseBeamShape(self):
+		"""Check that the beamformer.intBeamShape function actually runs"""
+
+		station = stations.lwa1
+		antennas = station.getAntennas()
+
+		out = beamformer.phaseBeamShape(antennas[0:60:2], azimuth=135.0, elevation=60.0)
+
+		i = out.argmax()
+		azDiff = numpy.abs(135.0 - i / 90)
+		elDiff = numpy.abs(60.0 - i % 90)
+		self.assertTrue(azDiff <= 1)
+		self.assertTrue(elDiff <= 1)
+
 
 class  beamformer_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.sim.vis units 
