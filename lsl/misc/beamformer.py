@@ -355,7 +355,7 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 	# streams.  Then, get the beamforming coefficients (b^l_n (a la Steve's 
 	# "Fun with TBN" memo).
 	delays = delays.max() - delays
-	bln = numpy.exp(-2j*numpy.pi*centralFreq*delays)
+	bln = numpy.exp(-2j*numpy.pi*CentralFreq*delays)
 	
 	# Figure out the polarizations
 	pols = numpy.array([ant.pol for ant in antennas])

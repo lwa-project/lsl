@@ -12,7 +12,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
 from lsl.common.constants import *
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
 __all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
@@ -467,13 +467,16 @@ class ARX(object):
 		filename = os.path.join(dataPath, 'arx', filename)
 		
 		# Read in the file and convert it to a numpy array
-		fh = open(filename, 'rb')
-		reader = csv.reader(fh, dialect='excel-tab')
+		try:
+			fh = open(filename, 'rb')
+			reader = csv.reader(fh, dialect='excel-tab')
 
-		data = []
-		for row in reader:
-			data.append(row)
-		fh.close()
+			data = []
+			for row in reader:
+				data.append(row)
+			fh.close()
+		except IOError:
+			raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
 
 		# Add the `dtype` here to stop ndarrays from forming and split out
 		# the various columns
