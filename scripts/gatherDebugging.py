@@ -84,6 +84,7 @@ def main(args):
 		import numpy
 		nfp,junk = os.path.split(numpy.__file__)
 		nfp = os.path.join(nfp, 'core', 'umath.so')
+		nfp = os.path.realpath(nfp)
 
 		p = subprocess.Popen(['file', nfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		o, e = p.communicate()
@@ -106,6 +107,7 @@ def main(args):
 		import lsl
 		lfp,junk = os.path.split(lsl.__file__)
 		lfp = os.path.join(lfp, 'correlator', '_core.so')
+		lfp = os.path.realpath(lfp)
 
 		p = subprocess.Popen(['file', lfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		o, e = p.communicate()
