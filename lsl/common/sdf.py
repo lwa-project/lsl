@@ -1273,7 +1273,10 @@ def parseSDF(filename, verbose=False):
 
 		# Split into a keyword, value pair and run it through the regular expression
 		# to deal with any indicies present
-		keywordSection, value = line.split(None, 1)
+		try:
+			keywordSection, value = line.split(None, 1)
+		except:
+			continue
 		
 		mtch = kwdRE.match(keywordSection)
 		keyword = mtch.group('keyword')
