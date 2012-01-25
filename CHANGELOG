@@ -19,6 +19,7 @@
   * Added support for ARX board/channel responses via a new common.stations.ARX class
   * Removed the misc.beamformer.fftDelayAndSum functions in favor of phase-and-sum beamforming
   * Fixed a problem on some platforms with Numpy/LSL version determination in gatherDebugging.py
+  * Cleared the post-interpreter multiprocessing/logging errors during 'test'
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed

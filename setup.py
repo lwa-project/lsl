@@ -16,6 +16,11 @@ try:
 	import numpy
 except ImportError:
 	pass
+try:
+	import multiprocessing
+except ImportError:
+	pass
+import logging
 
 
 def get_version():
