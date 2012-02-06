@@ -12,15 +12,16 @@ import glob
 import shutil
 import tarfile
 import tempfile
+from datetime import datetime, timedelta
 
 from lsl.common.dp import fS, word2freq
 from lsl.common import stations, sdm, sdf
-from lsl.common.mcs import guidedBinaryRead
+from lsl.common.mcs import *
 from lsl.transform import Time
 
-__version__ = '0.1'
+__version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['readSESFile', 'readOBSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', '__version__', '__revision__', '__all__']
+__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
@@ -35,30 +36,55 @@ def readSESFile(filename):
 	# Read the SES
 	fh = open(filename, 'rb')
 
-	version = guidedBinaryRead(fh, "<H")
-	projectID, sessionID = guidedBinaryRead(fh, "<9sI")
-	cra = guidedBinaryRead(fh, "<h")
-	drxBeam = guidedBinaryRead(fh, "<h")
-	sessionMJD, sessionMPM = guidedBinaryRead(fh, "<QQ")
-	sessionDur = guidedBinaryRead(fh, "<Q")
-	sessionObs = guidedBinaryRead(fh, "<I")
-	
-	record = {}
-	for k in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-		record[k] = guidedBinaryRead(fh, "<h")
-	update = {}
-	for k in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-		update[k] = guidedBinaryRead(fh, "<h")
-	
-	logSch, logExe = guidedBinaryRead(fh, "<bb")
-	incSMIF, incDesi = guidedBinaryRead(fh, "<bb")
+	ses = parseCStruct("""
+	unsigned short int FORMAT_VERSION;
+	char PROJECT_ID[9];
+	unsigned int SESSION_ID;
+	unsigned short int SESSION_CRA;
+	signed short int SESSION_DRX_BEAM;
+	unsigned long int SESSION_START_MJD;
+	unsigned long int SESSION_START_MPM;
+	unsigned long int SESSION_DUR;
+	unsigned int SESSION_NOBS;
+	signed short int SESSION_MRP_ASP;
+	signed short int SESSION_MRP_DP_;
+	signed short int SESSION_MRP_DR1;
+	signed short int SESSION_MRP_DR2;
+	signed short int SESSION_MRP_DR3;
+	signed short int SESSION_MRP_DR4;
+	signed short int SESSION_MRP_DR5;
+	signed short int SESSION_MRP_SHL;
+	signed short int SESSION_MRP_MCS;
+	signed short int SESSION_MUP_ASP;
+	signed short int SESSION_MUP_DP_;
+	signed short int SESSION_MUP_DR1;
+	signed short int SESSION_MUP_DR2;
+	signed short int SESSION_MUP_DR3;
+	signed short int SESSION_MUP_DR4;
+	signed short int SESSION_MUP_DR5;
+	signed short int SESSION_MUP_SHL;
+	signed short int SESSION_MUP_MCS;
+	signed char SESSION_LOG_SCH;
+	signed char SESSION_LOG_EXE;
+	signed char SESSION_INC_SMIB;
+	signed char SESSION_INC_DES;
+	""", endianness='little')
 
+	fh.readinto(ses)
 	fh.close()
 	
-	return {'version': version, 'projectID': projectID, 'sessionID': sessionID, 'CRA': cra, 
-		   'MJD': sessionmjd, 'MPM': sessionMPM, 'Dur': sessionDur, 'nObs': sessionObs, 
-		   'record': record, 'update': update, 'logSch': logSch, 'logExe': logExe, 
-		   'incSMIF': incSMIF, 'incDesi': incDesi}
+	record = {'ASP': ses.SESSION_MRP_ASP, 'DP_': ses.SESSION_MRP_DP_, 'SHL': ses.SESSION_MRP_SHL, 
+			'MCS': ses.SESSION_MRP_MCS, 'DR1': ses.SESSION_MRP_DR1, 'DR2': ses.SESSION_MRP_DR2, 
+			'DR3': ses.SESSION_MRP_DR3, 'DR4': ses.SESSION_MRP_DR4, 'DR5': ses.SESSION_MRP_DR5}
+	
+	update = {'ASP': ses.SESSION_MUP_ASP, 'DP_': ses.SESSION_MUP_DP_, 'SHL': ses.SESSION_MUP_SHL, 
+			'MCS': ses.SESSION_MUP_MCS, 'DR1': ses.SESSION_MUP_DR1, 'DR2': ses.SESSION_MUP_DR2, 
+			'DR3': ses.SESSION_MUP_DR3, 'DR4': ses.SESSION_MUP_DR4, 'DR5': ses.SESSION_MUP_DR5}
+	
+	return {'version': ses.FORMAT_VERSION, 'projectID': ses.PROJECT_ID, 'sessionID': ses.SESSION_ID, 
+		   'CRA': ses.SESSION_CRA, 'MJD': ses.SESSION_START_MJD, 'MPM': ses.SESSION_START_MPM, 
+		   'Dur': ses.SESSION_DUR, 'nObs': ses.SESSION_NOBS, 'record': record, 'update': update, 
+		   'logSch': ses.SESSION_LOG_SCH, 'logExe': ses.SESSION_LOG_EXE, 'incSMIF': ses.SESSION_INC_SMIB, 'incDesi': ses.SESSION_INC_DES}
 
 
 def readOBSFile(filename):
@@ -70,55 +96,141 @@ def readOBSFile(filename):
 	# Read the OBS
 	fh = open(filename, 'rb')
 	
-	version = guidedBinaryRead(fh, "<H")
-	projectID, sessionID = guidedBinaryRead(fh, "<9sI")
-	obsID = guidedBinaryRead(fh, "<I")
-	obsMJD, obsMPM = guidedBinaryRead(fh, "<QQ")
-	obsDur = guidedBinaryRead(fh, "<Q")
-	obsMode = guidedBinaryRead(fh, "<H")
-	obsRA, obsDec = guidedBinaryRead(fh, "<ff")
-	obsB = guidedBinaryRead(fh, "<H")
-	obsFreq1, obsFreq2, obsBW = guidedBinaryRead(fh, "<IIH")
-	nSteps, stepRADec = guidedBinaryRead(fh, "<IH")
+	header = parseCStruct("""
+	unsigned short int FORMAT_VERSION;
+	char               PROJECT_ID[9];
+	unsigned int       SESSION_ID;
+	signed short int   SESSION_DRX_BEAM;
+	unsigned int       OBS_ID; 
+	unsigned long int  OBS_START_MJD;
+	unsigned long int  OBS_START_MPM;
+	unsigned long int  OBS_DUR;
+	unsigned short int OBS_MODE;
+	float              OBS_RA;
+	float              OBS_DEC;
+	unsigned short int OBS_B;
+	unsigned int       OBS_FREQ1;
+	unsigned int       OBS_FREQ2;
+	unsigned short int OBS_BW;
+	unsigned int       OBS_STP_N;
+	unsigned short int OBS_STP_RADEC;
+	""", endianness='little')
+	
+	fh.readinto(header)
 
 	steps = []
-	for n in xrange(nSteps):
-		c1, c2 = guidedBinaryRead(fh, "<ff")
-		t = guidedBinaryRead(fh, "<I")
-		f1, f2 = guidedBinaryRead(fh, "<II")
-		b = guidedBinaryRead(fh, "<H")
-		if b == 3:
-			delay = guidedBinaryRead(fh, "<520H")
-			gain = guidedBinaryRead(fh, "<1040h")
+	for n in xrange(header.OBS_STP_N):
+		obsStep = parseCStruct("""
+		float              OBS_STP_C1;
+		float              OBS_STP_C2;
+		unsigned int       OBS_STP_T;
+		unsigned int       OBS_STP_FREQ1;
+		unsigned int       OBS_STP_FREQ2;
+		unsigned short int OBS_STP_B;
+		""", endianness='little')
+		
+		fh.readinto(obsStep)
+		if obsStep.OBS_STP_B == 3:
+			beamBlock = parseCStruct("""
+			unsigned short int OBS_BEAM_DELAY[2*LWA_MAX_NSTD];
+			signed short int   OBS_BEAM_GAIN[LWA_MAX_NSTD][2][2];
+			""", endianness='little')
+			
+			fh.readinto(beamBlock)
+			obsStep.delay = beamBlock.OBS_BEAM_DELAY
+			obsStep.gain  = single2multi(beamBlock.OBS_BEAM_GAIN, *beamBlock.dims['OBS_BEAM_GAIN'])
 		else:
-			delay = []
-			gain = []
+			obsStep.delay = []
+			obsStep.gain  = []
 		
-		steps.append([c1, c2, t, f1, f2, b, delay, gain])
+		steps.append(obsStep)
 		
-		alignment = __guidedBinayRead(fh, "<I")
-		if alignment != (2**32 - 2):
+		alignment = parseCStruct("""
+		unsigned int block;
+		""", endianness='little')
+		
+		fh.readinto(alignment)
+		
+		if alignment.block != (2**32 - 2):
 			raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
 
-	fee = guidedBinaryRead(fh, "<520h")
-	flt = guidedBinaryRead(fh, "<260h")
-	at1 = guidedBinaryRead(fh, "<260h")
-	at2 = guidedBinaryRead(fh, "<260h")
-	ats = guidedBinaryRead(fh, "<260h")
-
-	tbwBits, tbwSamps = guidedBinaryRead(fh, "<HI")
-	tbnGain, drxGain = guidedBinaryRead(fh, "<hh")
-	alignment = guidedBinaryRead(fh, "<I")
-	if aligment != (2**32 - 1):
-		raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
-
+	footer = parseCStruct("""
+	signed short int   OBS_FEE[LWA_MAX_NSTD][2];
+	signed short int   OBS_ASP_FLT[LWA_MAX_NSTD];
+	signed short int   OBS_ASP_AT1[LWA_MAX_NSTD];
+	signed short int   OBS_ASP_AT2[LWA_MAX_NSTD];
+	signed short int   OBS_ASP_ATS[LWA_MAX_NSTD];
+	unsigned short int OBS_TBW_BITS;
+	unsigned int       OBS_TBW_SAMPLES;
+	signed short int   OBS_TBN_GAIN;
+	signed short int   OBS_DRX_GAIN;
+	unsigned int alignment;
+	""", endianness='little')
+	
+	fh.readinto(footer)
 	fh.close()
 	
-	return {'version': version, 'projectID': projectID, 'sessionID': sessionID, 'obsID': obsID, 'MJD': obsMJD, 'MPM': obsMPM, 
-		   'Dur': obsDur, 'Mode': obsMode, 'RA': obsRA, 'Dec': obsDec, 'Beam': obsB, 'Freq1': word2freq(obsFreq1), 
-		   'Freq2': word2freq(obsFreq2), 'BW': obsBW, 'nSteps': nSteps, 'StepRADec': stepRADec,  'steps': steps, 
-		   'fee': fee, 'flt': flt, 'at1': at1, 'at2': at2, 'ats': ats, 'tbwBits': tbwBits, 'tbwSamples': tbwSamps, 
-		   'tbnGain': tbnGain, 'drxGain': drxGain}
+	if footer.alignment != (2**32 - 1):
+		raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
+	
+	return {'version': header.FORMAT_VERSION, 'projectID': header.PROJECT_ID, 'sessionID': header.SESSION_ID, 
+		   'drxBeam': header.SESSION_DRX_BEAM, 'obsID': header.OBS_ID, 'MJD': header.OBS_START_MJD, 
+		   'MPM': header.OBS_START_MPM, 'Dur': header.OBS_DUR, 'Mode': header.OBS_MODE, 'RA': header.OBS_RA, 'Dec': header.OBS_DEC, 'Beam': header.OBS_B, 'Freq1': word2freq(header.OBS_FREQ1), 
+		   'Freq2': word2freq(header.OBS_FREQ2), 'BW': header.OBS_BW, 'nSteps': header.OBS_STP_N, 
+		   'StepRADec': header.OBS_STP_RADEC,  'steps': steps, 
+		   'fee': footer.OBS_FEE, 'flt': footer.OBS_ASP_FLT, 'at1': footer.OBS_ASP_AT1, 
+		   'at2': footer.OBS_ASP_AT2, 'ats': footer.OBS_ASP_ATS, 'tbwBits': footer.OBS_TBW_BITS, 
+		   'tbwSamples': footer.OBS_TBW_SAMPLES, 'tbnGain': footer.OBS_TBN_GAIN,  
+		   'drxGain': footer.OBS_DRX_GAIN}
+
+
+def readCSFile(filename):
+	"""
+	Read in a command script file (MCS0030, currently undocumented) and return the
+	data as a list of dictionaries.
+	"""
+	
+	# Read the CS file
+	fh = open(filename, 'rb')
+	
+	commands = []
+	while True:
+		action = parseCStruct("""
+		long int tv[2];
+		int bASAP;
+		int sid;
+		int cid;
+		int len;
+		""", endianness='little')
+		
+		try:
+			fh.readinto(action)
+			
+			if action.tv[0] == 0:
+				break
+			
+			if action.len > 0:
+				data = parseCStruct("""
+				char data[%i];
+				""" % action.len, endianness='little')
+				
+				fh.readinto(data)
+				data = data.data
+			else:
+				data = None
+			
+			actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
+						'ignoreTime': True if action.bASAP else False, 
+						'subsystemID': sid2string(action.sid), 'commandID': cid2string(action.cid), 
+						'commandLength': action.len, 'data': data}
+						
+			commands.append( actionPrime )
+		except IOError:
+			break
+			
+	fh.close()
+	
+	return commands
 
 
 def getSDM(tarname):
@@ -205,10 +317,16 @@ def getSessionMetaData(tarname):
 	
 	# Extract the session meta-data file
 	tf = tarfile.open(tarname, mode='r:gz')
-	ti = tf.getmember('%s_metadata.txt' % basename)
+	try:
+		ti = tf.getmember('%s_metadata.txt' % basename)
+	except KeyError:
+		for ti in tf.getmembers():
+			if ti.name[-13:] == '_metadata.txt':
+				break
 	tf.extractall(path=tempDir, members=[ti,])
 	
 	# Read in the SMF
+	filename = os.path.join(tempDir, ti.name)
 	fh = open(filename, 'r')
 
 	result = {}
@@ -222,8 +340,13 @@ def getSessionMetaData(tarname):
 		try:
 			obsID, opTag, obsOutcome, msg = line.split(None, 3)
 		except ValueError:
-			obsID, opTag, obsOutcome = line.split(None, 2)
-			msg = ''
+			try:
+				obsID, opTag, obsOutcome = line.split(None, 2)
+				msg = ''
+			except ValueError:
+				obsID, obsOutcome = line.split(None, 1)
+				opTag = '-1'
+				msg = ''
 
 		obsID = int(obsID)
 		obsOutcome = int(obsOutcome)
@@ -250,11 +373,16 @@ def getSessionSpec(tarname):
 	
 	# Extract the session specification file
 	tf = tarfile.open(tarname, mode='r:gz')
-	ti = tf.getmember('%s.ses' % basename)
+	try:
+		ti = tf.getmember('%s.ses' % basename)
+	except KeyError:
+		for ti in tf.getmembers():
+			if ti.name[-4:] == '.ses':
+				break
 	tf.extractall(path=tempDir, members=[ti,])
 	
 	# Read in the SES
-	ses = readSESFile(os.path.join(tempDir, '%s.ses' % basename))
+	ses = readSESFile(os.path.join(tempDir, ti.name))
 	
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
@@ -279,21 +407,28 @@ def getObservationSpec(tarname, selectObs=None):
 	tf = tarfile.open(tarname, mode='r:gz')
 	tis = []
 	for ti in tf.getmembers():
-		if ti.name.find('.obs') != -1:
+		if ti.name[-4:] == '.obs':
 			tis.append(ti)
 	tf.extractall(path=tempDir, members=tis)
 	
 	# Read in the OBS files
 	obsList = []
-	for of in glob.glob(tempDir, '*.obs'):
+	for of in glob.glob(os.path.join(tempDir, '*.obs')):
 		obsList.append( readOBSFile(of) )
 		
 	# Cull the list based on the observation ID selection
 	if selectObs is not None:
 		outObs = []
 		for o in obsList:
-			if o['obsID'] in selectObs:
-				outObs.append(o)
+			try:
+				if o['obsID'] in selectObs:
+					outObs.append(o)
+			except TypeError:
+				if o['obsID'] == selectObs:
+					outObs.append(o)
+					
+		if len(outObs) == 1:
+			outObs = outObs[0]
 	else:
 		outObs = obsList
 		
@@ -355,7 +490,7 @@ def getSessionDefinition(tarname):
 		
 		## Convert the start MJD and MPM values into a string for use with sdf.Observation
 		cStart = Time(o['MJD'] + o['MPM'] / 1000.0 / 3600.0 / 24.0, format='MJD').utc_py_date
-		cStart += timedelta(microseconds=(int(round(start.microsecond/1000.0)*1000.0)-start.microsecond))
+		cStart += timedelta(microseconds=(int(round(cStart.microsecond/1000.0)*1000.0)-cStart.microsecond))
 		cStart = cStart.strftime("UTC %Y %m %d %H:%M:%S.%f")
 		cStart = cStart[:-3]
 		
@@ -387,14 +522,22 @@ def getSessionDefinition(tarname):
 		cFilter = o['BW']
 		
 		## Beam control for DRX observing modes
-		if c['Beam'] == 2:
+		if o['Beam'] == 2:
 			cMaxSNR = True
 		else:
 			cMaxSNR = False
 		
 		## Create the (normal) observation entries or deal with Stepped observations
-		if cMode != 'STEPPED':
-			cObs = sdf.Observation(cName, cTarget, cStart, cDur, cMode, cRA, cDec, cFreq1, cFreq2, cFfilter, MaxSNR=cMaxSNR)
+		if cMode == 'TBW':
+			cObs = sdf.TBW(cName, cTarget, cStart, cDur, o['tbwSamples'], bits=o['tbwBits'])
+		elif cMode == 'TBN':
+			cObs = sdf.TBN(cName, cTarget, cStart, cDur, cFreq1, cFilter)
+		elif cMode == 'TRK_RADEC':
+			cObs = sdf.DRX(cName, cTarget, cStart, cDur, cRA, cDec, cFreq1, cFreq2, cFilter, MaxSNR=cMaxSNR)
+		elif cMode == 'TRK_SOL':
+			cObs = sdf.Solar(cName, cTarget, cStart, cDur, cFreq1, cFreq2, cFilter, MaxSNR=cMaxSNR)
+		elif cMode == 'TRK_JOV':
+			cObs = sdf.Jovian(cName, cTarget, cStart, cDur, cFreq1, cFreq2, cFilter, MaxSNR=cMaxSNR)
 		else:
 			### Decode the steps
 			steps = []
@@ -422,6 +565,7 @@ def getSessionDefinition(tarname):
 		## Run the update on the observation to make sure everything gets filled in
 		cObs.update()
 		
+		
 		## Add the observation to the session and update its ID number
 		project.sessions[0].observations.append( cObs )
 		project.sessions[0].observations[-1].id = o['obsID']
@@ -436,3 +580,29 @@ def getSessionDefinition(tarname):
 	
 	# Return the filled-in SDF instance
 	return project
+
+
+def getCommandScript(tarname):
+	"""
+	Given a MCS meta-data tarball, extract the command script and parse it.
+	"""
+	
+	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
+	path, basename = os.path.split(tarname)
+	basename, ext = os.path.splitext(basename)
+	
+	# Find all of the obs files and extract them
+	tf = tarfile.open(tarname, mode='r:gz')
+	for ti in tf.getmembers():
+		if ti.name[-3:] == '.cs':
+			break
+	tf.extractall(path=tempDir, members=[ti,])
+	
+	# Read in the CS
+	cs = readCSFile(os.path.join(tempDir, ti.name))
+	
+	# Cleanup
+	shutil.rmtree(tempDir, ignore_errors=True)
+	
+	# Return
+	return cs

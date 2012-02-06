@@ -11,32 +11,12 @@ from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
 from lsl.common.constants import *
 
-__version__ = '0.8'
+__version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['status2string', 'geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
+__all__ = ['geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
 _id2name = {'VL': 'LWA-1', 'NA': 'LWA-2'}
-
-def status2string(code):
-	"""
-	Convert a numerical SSMIF status code to a string.
-	"""
-	
-	# Make sure we have an integer
-	code = int(code)
-	
-	# Loop through the options
-	if code == 0:
-		return "Not installed"
-	elif code == 1:
-		return "Bad"
-	elif code == 2:
-		return "Suspect, possibly bad"
-	elif code == 3:
-		return "OK"
-	else:
-		return "Unknown status code '%i'" % code
 
 
 def geo2ecef(lat, lon, elev):
@@ -353,7 +333,7 @@ class FEE(object):
 			return 0
 	
 	def __str__(self):
-		return "Fee '%s': gain1=%.2f, gain2=%.2f; status is %i" % (self.id, self.gain1, self.gain2, self.status)
+		return "FEE '%s': gain1=%.2f, gain2=%.2f; status is %i" % (self.id, self.gain1, self.gain2, self.status)
 
 
 class Cable(object):
@@ -449,6 +429,9 @@ class ARX(object):
 		self.id = id
 		self.channel = int(channel)
 		self.aspChannel = int(aspChannel)
+		
+	def __str__(self):
+		return "ARX Board %s, channel %i (ASP Channel %i)" % (self.id, self.channel, self.aspChannel)
 		
 	def response(self, filter='full'):
 		"""
@@ -920,145 +903,223 @@ def __parseBinarySSMIF(filename):
 	
 	fh = open(filename, 'rb')
 	
-	#
-	# General station information
-	#
+	bssmif = parseCStruct("""
+	int    iFormatVersion;           /* FORMAT_VERSION */
+	char   sStationID[3];            /* STATION_ID */
+	double fGeoN;                    /* GEO_N */
+	double fGeoE;                    /* GEO_E */
+	double fGeoEl;                   /* GEO_EL */
+	int    nStd;                     /* N_STD */
+	double fStdLx[ME_MAX_NSTD];      /* STD_LX[] */
+	double fStdLy[ME_MAX_NSTD];      /* STD_LY[] */
+	double fStdLz[ME_MAX_NSTD];      /* STD_LZ[] */
+	int    iAntStd[2*ME_MAX_NSTD];   /* ANT_STD[] */
+	int    iAntOrie[2*ME_MAX_NSTD];  /* ANT_ORIE[] */
+	int    iAntStat[2*ME_MAX_NSTD];  /* ANT_STAT[] */
+	float  fAntTheta[2*ME_MAX_NSTD]; /* ANT_THETA[] */
+	float  fAntPhi[2*ME_MAX_NSTD];   /* ANT_PHI[] */
+	int    eAntDesi[2*ME_MAX_NSTD];  /* ANT_DESI[] */
+	int    nFEE;                     /* N_FEE */
+	char   sFEEID[ME_MAX_NFEE][ME_MAX_FEEID_LENGTH+1]; /* FEE_ID[] */
+	int    iFEEStat[ME_MAX_NFEE];    /* FEE_STAT[] */
+	int    eFEEDesi[ME_MAX_NFEE];    /* FEE_DESI[] */
+	float  fFEEGai1[ME_MAX_NFEE];    /* FEE_GAI1[] */
+	float  fFEEGai2[ME_MAX_NFEE];    /* FEE_GAI2[] */
+	int    iFEEAnt1[ME_MAX_NFEE];    /* FEE_ANT1[] */
+	int    iFEEAnt2[ME_MAX_NFEE];    /* FEE_ANT2[] */
+	int    iFEERack[ME_MAX_NFEE];    /* FEE_RACK[] */
+	int    iFEEPort[ME_MAX_NFEE];    /* FEE_PORT[] */
+	int    nRPD;                     /* N_RPD */
+	char   sRPDID[ME_MAX_NRPD][ME_MAX_RPDID_LENGTH+1]; /* RPD_ID[] */
+	int    iRPDStat[ME_MAX_NRPD];    /* RPD_STAT[] */
+	int    eRPDDesi[ME_MAX_NRPD];    /* RPD_DESI[] */
+	float  fRPDLeng[ME_MAX_NRPD];    /* RPD_LENG[] */
+	float  fRPDVF[ME_MAX_NRPD];      /* RPD_VF[] */
+	float  fRPDDD[ME_MAX_NRPD];      /* RPD_DD[] */
+	float  fRPDA0[ME_MAX_NRPD];      /* RPD_A0[] */
+	float  fRPDA1[ME_MAX_NRPD];      /* RPD_A1[] */
+	float  fRPDFref[ME_MAX_NRPD];    /* RPD_FREF[] */
+	float  fRPDStr[ME_MAX_NRPD];     /* RPD_STR[] */
+	int    iRPDAnt[ME_MAX_NRPD];     /* RPD_ANT[] */
+	int    nSEP;                     /* N_SEP */
+	char   sSEPID[ME_MAX_NSEP][ME_MAX_SEPID_LENGTH+1]; /* SEP_ID[] */
+	int    iSEPStat[ME_MAX_NSEP];    /* SEP_STAT[] */
+	char   sSEPCabl[ME_MAX_NSEP][ME_MAX_SEPCABL_LENGTH+1]; /* SEP_Cabl[] */
+	float  fSEPLeng[ME_MAX_NSEP];    /* SEP_LENG[] */
+	int    eSEPDesi[ME_MAX_NSEP];    /* SEP_DESI[] */
+	float  fSEPGain[ME_MAX_NSEP];    /* SEP_GAIN[] */
+	int    iSEPAnt[ME_MAX_NSEP];     /* SEP_ANT[] */
+	int    nARB;                     /* N_ARB */
+	int    nARBCH;                   /* N_ARBCH */
+	char   sARBID[ME_MAX_NARB][ME_MAX_ARBID_LENGTH+1]; /* ARB_ID[] */
+	int    iARBSlot[ME_MAX_NARB];    /* ARB_SLOT[] */
+	int    eARBDesi[ME_MAX_NARB];    /* ARB_DESI[] */
+	int    iARBRack[ME_MAX_NARB];    /* ARB_RACK[] */
+	int    iARBPort[ME_MAX_NARB];    /* ARB_PORT[] */
+	int    eARBStat[ME_MAX_NARB][ME_MAX_NARBCH];       /* ARB_STAT[][] */
+	float  fARBGain[ME_MAX_NARB][ME_MAX_NARBCH];        /* ARB_GAIN[][] */
+	int    iARBAnt[ME_MAX_NARB][ME_MAX_NARBCH];        /* ARB_ANT[][] */
+	char   sARBIN[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_IN[][] */
+	char   sARBOUT[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_OUT[][] */
+	int    nDP1;                     /* N_DP1 */
+	int    nDP1Ch;                     /* N_DP1CH */
+	char   sDP1ID[ME_MAX_NDP1][ME_MAX_DP1ID_LENGTH+1]; /* DP1_ID[] */
+	char   sDP1Slot[ME_MAX_NDP1][ME_MAX_DP1ID_LENGTH+1]; /* DP1_SLOT[] */
+	int    eDP1Desi[ME_MAX_NDP1]; /* DP1_DESI[] */
+	int    eDP1Stat[ME_MAX_NDP1][ME_MAX_NDP1CH];       /* DP1_STAT[][] */
+	char   sDP1INR[ME_MAX_NDP1][ME_MAX_NDP1CH][ME_MAX_DP1ID_LENGTH+1]; /* DP1_INR[][] */
+	char   sDP1INC[ME_MAX_NDP1][ME_MAX_NDP1CH][ME_MAX_DP1ID_LENGTH+1]; /* DP1_INC[][] */
+	int    iDP1Ant[ME_MAX_NDP1][ME_MAX_NDP1CH];        /* DP1_ANT[][] */
+	int    nDP2;                     /* N_DP2 */
+	char   sDP2ID[ME_MAX_NDP2][ME_MAX_DP2ID_LENGTH+1]; /* DP2_ID[] */
+	char   sDP2Slot[ME_MAX_NDP2][ME_MAX_DP2ID_LENGTH+1]; /* DP1_SLOT[] */
+	int    eDP2Stat[ME_MAX_NDP2];       /* DP2_STAT[] */
+	int    eDP2Desi[ME_MAX_NDP2];       /* DP2_DESI[] */
+	int    nDR;                     /* N_DR */
+	int    eDRStat[ME_MAX_NDR];       /* DR_STAT[] */
+	char   sDRID[ME_MAX_NDR][ME_MAX_DRID_LENGTH+1]; /* DR_ID[] */
+	char   sDRPC[ME_MAX_NDR][ME_MAX_DRID_LENGTH+1]; /* DR_PC[] */
+	int    iDRDP[ME_MAX_NDR];       /* DR_DP[] */
+	int    nPwrRack;                /* N_PWR_RACK */
+	int    nPwrPort[ME_MAX_RACK];   /* N_PWR_PORT[] */
+	int    ePwrSS[ME_MAX_RACK][ME_MAX_NPWRPORT]; /* PWR_SS[][], converted to a LWA_SID_ value */
+	char   sPwrName[ME_MAX_RACK][ME_MAX_NPWRPORT][ME_MAX_SSNAME_LENGTH+1]; /* PWR_NAME[][] */
+	int    eCRA;                /* MCS_CRA */
+	""", charMode='int', endianness='little')
 	
-	version = guidedBinaryRead(fh, "<i")
-	idn = guidedBinaryRead(fh, "<3s")
-	lat, lon, elv = guidedBinaryRead(fh, "<3d")
-	
-	#
-	# Stand information
-	#
-	
-	nStand   = guidedBinaryRead(fh, "<i")
-	stdX     = guidedBinaryRead(fh, "<%id" % ME_MAX_NSTD)
-	stdY     = guidedBinaryRead(fh, "<%id" % ME_MAX_NSTD)
-	stdZ     = guidedBinaryRead(fh, "<%id" % ME_MAX_NSTD)
-	stdPos   = [[stdX[i], stdY[i], stdZ[i]] for i in xrange(ME_MAX_NSTD)]
-	stdAnt   = guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
-	stdOrie  = guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
-	stdStat  = guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
-	stdTheta = guidedBinaryRead(fh, "<%if" % (2*ME_MAX_NSTD,))
-	stdPhi   = guidedBinaryRead(fh, "<%if" % (2*ME_MAX_NSTD,))
-	stdDesi  = guidedBinaryRead(fh, "<%ii" % (2*ME_MAX_NSTD,))
-	
-	#
-	# FEE information
-	#
-	
-	nFee    = guidedBinaryRead(fh, "<i")
-	feeID   = guidedBinaryRead(fh, "<%is" % ((ME_MAX_FEEID_LENGTH+1)*ME_MAX_NFEE,))
-	feeID   = [feeID[i*(ME_MAX_FEEID_LENGTH+1):(i+1)*(ME_MAX_FEEID_LENGTH+1)] for i in xrange(ME_MAX_NFEE)]
-	feeStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
-	feeDesi = guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
-	feeGai1 = guidedBinaryRead(fh, "<%if" % ME_MAX_NFEE)
-	feeGai2 = guidedBinaryRead(fh, "<%if" % ME_MAX_NFEE)
-	feeAnt1 = guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
-	feeAnt2 = guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
-	feeRack = guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
-	feePort = guidedBinaryRead(fh, "<%ii" % ME_MAX_NFEE)
-	
-	#
-	# RPD information
-	#
-	
-	nRPD    = guidedBinaryRead(fh, "<i")
-	rpdID   = guidedBinaryRead(fh, "<%is" % ((ME_MAX_RPDID_LENGTH+1)*ME_MAX_NRPD),)
-	rpdID   = [rpdID[i*(ME_MAX_RPDID_LENGTH+1):(i+1)*(ME_MAX_RPDID_LENGTH+1)] for i in xrange(ME_MAX_NRPD)]
-	rpdStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
-	rpdDesi = guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
-	rpdLeng = guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
-	rpdVF   = guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
-	rpdDD   = guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
-	rpdA0   = guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
-	rpdA1   = guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
-	rpdFre  = guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
-	rpdStr  = guidedBinaryRead(fh, "<%if" % ME_MAX_NRPD)
-	rpdAnt  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NRPD)
-	
-	#
-	# SEP information
-	#
-	
-	nSEP    = guidedBinaryRead(fh, "<i")
-	sepID   = guidedBinaryRead(fh, "<%is" % ((ME_MAX_SEPID_LENGTH+1)*ME_MAX_NSEP),)
-	sepID   = [sepID[i*(ME_MAX_SEPID_LENGTH+1):(i+1)*(ME_MAX_SEPID_LENGTH+1)] for i in xrange(ME_MAX_NSEP)]
-	sepStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
-	sepCbl  = guidedBinaryRead(fh, "<%is" % ((ME_MAX_SEPCABL_LENGTH+1)*ME_MAX_NSEP,))
-	sepCbl  = [sepCbl[i*(ME_MAX_SEPCABL_LENGTH+1):(i+1)*(ME_MAX_SEPCABL_LENGTH+1)] for i in xrange(ME_MAX_NSEP)]
-	sepLeng = guidedBinaryRead(fh, "<%if" % ME_MAX_NSEP)
-	sepDesi = guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
-	sepGain = guidedBinaryRead(fh, "<%if" % ME_MAX_NSEP)
-	sepAnt  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NSEP)
-	
-	#
-	# ARX (ARB) information
-	#
-	
-	nARX     = guidedBinaryRead(fh, "<i")
-	nChanARX = guidedBinaryRead(fh, "<i")
-	arxID    = guidedBinaryRead(fh, "<%is" % ((ME_MAX_ARBID_LENGTH+1)*ME_MAX_NARB,))
-	arxID    = [arxID[i*(ME_MAX_ARBID_LENGTH+1):(i+1)*(ME_MAX_ARBID_LENGTH+1)] for i in xrange(ME_MAX_NARB)]
-	arxSlot  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
-	arxDesi  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
-	arxRack  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
-	arxPort  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NARB)
-	arxStat  = guidedBinaryRead(fh, "<%ii" % (ME_MAX_NARB*ME_MAX_NARBCH,))
-	arxStat  = [arxStat[i*ME_MAX_NARBCH:(i+1)*ME_MAX_NARBCH] for i in xrange(ME_MAX_NARB)]
-	arxGain  = guidedBinaryRead(fh, "<%if" % (ME_MAX_NARB*ME_MAX_NARBCH,))
-	arxGain  = [arxGain[i*ME_MAX_NARBCH:(i+1)*ME_MAX_NARBCH] for i in xrange(ME_MAX_NARB)]
-	arxAnt   = guidedBinaryRead(fh, "<%ii" % (ME_MAX_NARB*ME_MAX_NARBCH,))
-	arxAnt   = [arxAnt[i*ME_MAX_NARBCH:(i+1)*ME_MAX_NARBCH] for i in xrange(ME_MAX_NARB)]
-	arxIn    = guidedBinaryRead(fh, "<%is" % (ME_MAX_NARB*ME_MAX_NARBCH,))
-	arxIn    = [arxIn[i*(ME_MAX_ARBID_LENGTH+1):(i+1)*(ME_MAX_ARBID_LENGTH+1)] for i in xrange(ME_MAX_NARB)]
-	arxOut   = guidedBinaryRead(fh, "<%is" % (ME_MAX_NARB*ME_MAX_NARBCH,))
-	arxOut   = [arxOut[i*(ME_MAX_ARBID_LENGTH+1):(i+1)*(ME_MAX_ARBID_LENGTH+1)] for i in xrange(ME_MAX_NARB)]
+	fh.readinto(bssmif)
 	
 	#
-	# DP1 information
+	# Station Data
 	#
-	
-	nDP1     = guidedBinaryRead(fh, "<i")
-	nChanDP1 = guidedBinaryRead(fh, "<i")
-	dp1ID    = guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP1*(ME_MAX_DP1ID_LENGTH+1),))
-	dp1ID    = [dp1ID[i*(ME_MAX_DP1ID_LENGTH+1):(i+1)*(ME_MAX_DP1ID_LENGTH+1)] for i in xrange(ME_MAX_NDP1)]
-	dp1Slot  = guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP1*(ME_MAX_DP1ID_LENGTH+1),))
-	dp1Slot  = [dp1Slot[i*(ME_MAX_DP1ID_LENGTH+1):(i+1)*(ME_MAX_DP1ID_LENGTH+1)] for i in xrange(ME_MAX_NDP1)]
-	dp1Desi  = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP1)
-	dp1Stat  = guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH,))
-	dp1Stat  = [dp1Stat[i*ME_MAX_NDP1CH:(i+1)*ME_MAX_NDP1CH] for i in xrange(ME_MAX_NDP1)]
-	dp1Inr   = guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1),))
-	dp1Inr   = [[dp1Inr[i*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1):(i+1)*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1)][j*(ME_MAX_DP1ID_LENGTH+1):(j+1)*(ME_MAX_DP1ID_LENGTH+1)] for j in xrange(ME_MAX_NDP1CH)] for i in xrange(maxDP)]
-	dp1Inc   = guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1),))
-	dp1Inc   = [[dp1Inc[i*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1):(i+1)*ME_MAX_NDP1CH*(ME_MAX_DP1ID_LENGTH+1)][j*(ME_MAX_DP1ID_LENGTH+1):(j+1)*(ME_MAX_DP1ID_LENGTH+1)] for j in xrange(ME_MAX_NDP1CH)] for i in xrange(maxDP)]
-	dp1Ant   = guidedBinaryRead(fh, "<%ii" % (ME_MAX_NDP1*ME_MAX_NDP1CH,))
-	dp1Ant   = [dp1Ant[i*ME_MAX_NDP1CH:(i+1)*ME_MAX_NDP1CH] for i in xrange(ME_MAX_NDP1)]
+	idn = [chr(i) for i in bssmif.sStationID]
+	idn = ''.join([i for i in idn if i != '\x00'])
+	lat = bssmif.fGeoN
+	lon = bssmif.fGeoE
+	elv = bssmif.fGeoEl
 	
 	#
-	# DP2 information
+	# Stand & Antenna Data
 	#
-	
-	nDP2    = guidedBinaryRead(fh, "<i")
-	dp2ID   = guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP2*(ME_MAX_DP2ID_LENGTH+1),))
-	dp2ID   = [dp2ID[i*(ME_MAX_DP2ID_LENGTH+1):(i+1)*(ME_MAX_DP2ID_LENGTH+1)] for i in xrange(ME_MAX_NDP2)]
-	dp2Slot = guidedBinaryRead(fh, "<%is" % (ME_MAX_NDP2*(ME_MAX_DP2ID_LENGTH+1),))
-	dp2Slot = [dp2Slot[i*(ME_MAX_DP2ID_LENGTH+1):(i+1)*(ME_MAX_DP2ID_LENGTH+1)] for i in xrange(ME_MAX_NDP2)]
-	dp2Stat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP2)
-	dp2Desi = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDP2)
+	stdPos   = [list(i) for i in zip(bssmif.fStdLx, bssmif.fStdLy, bssmif.fStdLz)]
+	stdAnt   = list(bssmif.iAntStd)
+	stdOrie  = list(bssmif.iAntOrie)
+	stdStat  = list(bssmif.iAntStat)
+	stdTheta = list(bssmif.fAntTheta)
+	stdPhi   = list(bssmif.fAntPhi)
+	stdDesi  = list(bssmif.eAntDesi)
 	
 	#
-	# DR information
+	# FEE, Cable, & SEP Data
 	#
+	feeID   = single2multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
+	feeID   = [''.join([k for k in i if k != '\x00']) for i in feeID]
+	feeStat = list(bssmif.iFEEStat)
+	feeDesi = list(bssmif.eFEEDesi)
+	feeGai1 = list(bssmif.fFEEGai1)
+	feeGai2 = list(bssmif.fFEEGai2)
+	feeAnt1 = list(bssmif.iFEEAnt1)
+	feeAnt2 = list(bssmif.iFEEAnt2)
 	
-	nDR = guidedBinaryRead(fh, "<i")
-	drStat = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
-	drID = guidedBinaryRead(fh, "<%is" % (ME_MAX_NDR*(ME_MAX_DRID_LENGTH+1),))
-	drID = [drID[i*(ME_MAX_DRID_LENGTH+1):(i+1)*(ME_MAX_DRID_LENGTH+1)] for i in xrange(ME_MAX_NDR)]
-	drPC = guidedBinaryRead(fh, "<%is" % (ME_MAX_NDR*(ME_MAX_DRID_LENGTH+1),))
-	drPC = [drPC[i*(ME_MAX_DRID_LENGTH+1):(i+1)*(ME_MAX_DRID_LENGTH+1)] for i in xrange(ME_MAX_NDR)]
-	drDP = guidedBinaryRead(fh, "<%ii" % ME_MAX_NDR)
+	rpdID   = single2multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
+	rpdID   = [''.join([k for k in i if k != '\x00']) for i in rpdID]
+	rpdStat = list(bssmif.iRPDStat)
+	rpdDesi = list(bssmif.eRPDDesi)
+	rpdLeng = list(bssmif.fRPDLeng)
+	rpdVF   = list(bssmif.fRPDVF)
+	rpdDD   = list(bssmif.fRPDDD)
+	rpdA0   = list(bssmif.fRPDA0)
+	rpdA1   = list(bssmif.fRPDA1)
+	rpdFre  = list(bssmif.fRPDFref)
+	rpdStr  = list(bssmif.fRPDStr)
+	rpdAnt  = list(bssmif.iRPDAnt)
+	
+	sepCbl  = single2multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
+	sepCbl  = [''.join([k for k in i if k != '\x00']) for i in sepCbl]
+	sepLeng = list(bssmif.fSEPLeng)
+	sepDesi = list(bssmif.eSEPDesi)
+	sepGain = list(bssmif.fSEPGain)
+	sepAnt  = list(bssmif.iSEPAnt)
+	
+	#
+	# ARX (ARB) Data
+	#
+	nChanARX = bssmif.nARBCH
+	arxID    = single2multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
+	arxID    = [''.join([k for k in i if k != '\x00']) for i in arxID]
+	arxSlot  = list(bssmif.iARBSlot)
+	arxDesi  = list(bssmif.eARBDesi)
+	arxRack  = list(bssmif.iARBRack)
+	arxPort  = list(bssmif.iARBPort)
+	arxStat  = single2multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
+	arxAnt   = single2multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
+	arxIn    = single2multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
+	arxIn    = [[''.join(i) for i in j] for j in arxIn]
+	arxOut   = single2multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
+	arxOUt   = [[''.join(i) for i in j] for j in arxOut]
+	
+	#
+	# DP 1 & 2 Data
+	#
+	dp1ID   = single2multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
+	dp1ID   = [''.join([k for k in i if k != '\x00']) for i in dp1ID]
+	dp1Slot = single2multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
+	dp1Slot = [''.join([k for k in i if k != '\x00']) for i in dp1Slot]
+	dp1Desi = list(bssmif.eDP1Desi)
+	dp1Stat = list(bssmif.eDP1Stat)
+	dp1InR  = single2multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
+	dp1InR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InR]
+	dp1InC  = single2multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
+	dp1InC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InC]
+	dp1Ant  = single2multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
+	
+	dp2ID   = single2multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
+	dp2ID   = [''.join([k for k in i if k != '\x00']) for i in dp2ID]
+	dp2Slot = single2multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
+	dp2Slot = [''.join([k for k in i if k != '\x00']) for i in dp2Slot]
+	dp2Stat = list(bssmif.eDP2Stat)
+	dp2Desi = list(bssmif.eDP2Desi)
+	
+	#
+	# DR Data
+	#
+	drStat = list(bssmif.eDRStat)
+	drID   = single2multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
+	drID   = [''.join([k for k in i if k != '\x00']) for i in drID]
+	drShlf = [0 for i in xrange(bssmif.nDR)]
+	drPC   = single2multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
+	drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
+	drDP   = list(bssmif.iDRDP)
+	
+	settings = parseCStruct("""
+	signed short int mrp_asp; // SESSION_MRP_ASP // MRP_ASP
+	signed short int mrp_dp;  // SESSION_MRP_DP_ // MRP_DP_
+	signed short int mrp_dr1; // SESSION_MRP_DR1 // MRP_DR1
+	signed short int mrp_dr2; // SESSION_MRP_DR2 // MRP_DR2
+	signed short int mrp_dr3; // SESSION_MRP_DR3 // MRP_DR3
+	signed short int mrp_dr4; // SESSION_MRP_DR4 // MRP_DR4
+	signed short int mrp_dr5; // SESSION_MRP_DR5 // MRP_DR5
+	signed short int mrp_shl; // SESSION_MRP_SHL // MRP_SHL
+	signed short int mrp_mcs; // SESSION_MRP_MCS // MRP_MCS
+	signed short int mup_asp; // SESSION_MUP_ASP // MUP_ASP
+	signed short int mup_dp;  // SESSION_MUP_DP_ // MUP_DP_
+	signed short int mup_dr1; // SESSION_MUP_DR1 // MUP_DR1
+	signed short int mup_dr2; // SESSION_MUP_DR2 // MUP_DR2
+	signed short int mup_dr3; // SESSION_MUP_DR3 // MUP_DR3
+	signed short int mup_dr4; // SESSION_MUP_DR4 // MUP_DR4
+	signed short int mup_dr5; // SESSION_MUP_DR5 // MUP_DR5
+	signed short int mup_shl; // SESSION_MUP_SHL // MUP_SHL
+	signed short int mup_mcs; // SESSION_MUP_MCS // MUP_MCS
+	signed short int fee[LWA_MAX_NSTD];     // OBS_FEE[LWA_MAX_NSTD][2]  // FEE[LWA_MAX_NSTD]
+	signed short int asp_flt[LWA_MAX_NSTD]; // OBS_ASP_FLT[LWA_MAX_NSTD] // ASP_FLT[LWA_MAX_NSTD]
+	signed short int asp_at1[LWA_MAX_NSTD]; // OBS_ASP_AT1[LWA_MAX_NSTD] // ASP_AT1[LWA_MAX_NSTD]
+	signed short int asp_at2[LWA_MAX_NSTD]; // OBS_ASP_AT2[LWA_MAX_NSTD] // ASP_AT2[LWA_MAX_NSTD]
+	signed short int asp_ats[LWA_MAX_NSTD]; // OBS_ASP_ATS[LWA_MAX_NSTD] // ASP_ATS[LWA_MAX_NSTD]
+	signed short int tbn_gain; // OBS_TBN_GAIN // TBN_GAIN
+	signed short int drx_gain; // OBS_DRX_GAIN // DRX_GAIN
+	""", endianness='little')
+	
+	fh.readinto(settings)
 	
 	fh.close()
 	
@@ -1138,7 +1199,7 @@ def parseSSMIF(filename):
 	for i in xrange(len(arxAnt)):
 		for j in xrange(len(arxAnt[i])):
 			ant = arxAnt[i][j]
-			if ant > 520:
+			if ant == 0 or ant > 520:
 				continue
 			
 			boardID = arxID[i]
