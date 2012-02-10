@@ -7,9 +7,13 @@ incoherent dedispersion.
 
 import numpy
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['delay', 'incoherent', '__version__', '__revision__', '__all__']
+__all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', '__version__', '__revision__', '__all__']
+
+
+# Dispersion constant in MHz^2 s / pc cm^-3
+_D = 4.148808e3
 
 
 def delay(freq, dm):
@@ -19,11 +23,8 @@ def delay(freq, dm):
 	the dispersive delay in seconds.
 	"""
 	
-	# Dispersion constant in MHz^2 s / pc cm^-3
-	D = 4.148808e3
-	
 	# Delay in s
-	tDelay = dm*D*((1e6/freq)**2 - (1e6/freq.max())**2)
+	tDelay = dm*_D*((1e6/freq)**2 - (1e6/freq.max())**2)
 	
 	return tDelay
 
@@ -49,6 +50,25 @@ def incoherent(freq, waterfall, tInt, dm):
 		
 	# Return
 	return ddWaterfall
+
+
+def getCoherentSampleSize(centralFreq, sampleRate, dm):
+	"""
+	Estimate the number of samples needed to successfully apply coherent 
+	dedispersion to a data stream.
+	"""
+	
+	# Roughly estimate the number of points we need to look at to do the dedispersion 
+	# correctrly.  Based on the the relative dispersion delay between the high and low
+	# ends of an observational band.
+	F0 = centralFreq
+	BW = sampleRate
+
+	delay = 4*dm*_D / (F0**3/BW - 2*BW*F0 + BW**3/F0) * (1e6)**2	# Dispersion delay across the band
+	samples = delay*BW						# Conversion to samples
+	samples = 2**(numpy.ceil(numpy.log(samples)/numpy.log(2)))	# Conversion to next largest power of 2
+	samples *= 2							# Correction for the 'wings' of the convolution
+	return int(samples)
 
 
 def __taperFunction(freq):
@@ -79,7 +99,7 @@ def __chirpFunction(freq, dm, taper=False):
 	fMHz1 = freqMHz - fMHz0
 	BW = fMHz1.max() - fMHz1.min()
 	
-	chirp = numpy.exp(-2j*numpy.pi*dm/2.41033087e-10 * (fMHz1**2/ (fMHz0**2*(fMHz0 + fMHz1))))
+	chirp = numpy.exp(-2j*numpy.pi*_D*1e6 / (fMHz0**2*(fMHz0 + fMHz1)) * dm*fMHz1**2)
 	if taper:
 		chirp *= __taperFunction(freq)
 	
@@ -92,12 +112,8 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
 	frequency and sample rate.
 	"""
 	
-	# Roughly estimate the number of points we need to look at to do the dedispersion 
-	# correctrly.  Based on the GMRT coherent dedispersion pipeline
-	N = 4*(202e6/centralFreq)**3*dm*(sampleRate/1e6)**2
-	N = 2**int(numpy.ceil(numpy.log10(N)/numpy.log10(2.0)))
-	if N < 2048:
-		N = 2048
+	# Get an idea of how many samples we need to do the dedispersion correctly
+	N = getCoherentSampleSize(centralFreq, sampleRate, dm)
 	
 	# Compute the chirp function
 	freq = numpy.fft.fftfreq(N, d=1/sampleRate) + centralFreq
@@ -105,20 +121,32 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
 	
 	# Figure out the output array size
 	nSets = len(timeseries) / N
-	nDM = N / 8
 	out = numpy.zeros(timeseries.size, dtype=timeseries.dtype)
 	
 	# Go!
-	for i in xrange(nSets):
-		start = i*N - nDM
-		if start < 0:
-			start = 0
+	last = False
+	for i in xrange(2*nSets+1):
+		start = i*N/2 - N/4
 		stop = start + N
-		
-		dataIn = timeseries[start:stop]
-		dataOut = numpy.fft.ifft( numpy.fft.fft(dataIn) * chirp )
-		
-		out[(nDM/2 + i*(N-nDM)):(nDM/2 + (i+1)*(N-nDM))] = dataOut[nDM/2:N-nDM/2]
+
+		if start < 0:
+			dataIn = numpy.zeros(N, dtype=numpy.complex64)
+			dataIn[-start:N] = timeseries[0:N+start]
+		elif stop > timeseries.size:
+			dataIn = numpy.zeros(N, dtype=numpy.complex64)
+			dataIn[0:timeseries.size-start] = timeseries[start:]
+			# If this is it, end after saving the data
+			last = True
+		else:
+			dataIn = timeseries[start:stop]
+
+		dataOut = numpy.fft.fft( dataIn )
+		dataOut *= chirp
+		dataOut = numpy.fft.ifft( dataOut )
+
+		out[i*N/2:(i+1)*N/2] = dataOut[N/4:3*N/4]
+		if last:
+			break
 	
 	return out
 	
