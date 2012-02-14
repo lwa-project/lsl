@@ -385,14 +385,11 @@ class Session(object):
 			
 			observationCount += 1
 
-		# Make sure that the observations don't overlap (TBW and TBN)
+		# Make sure that the observations don't overlap
 		sObs = self.observations
 		
 		for i in xrange(len(sObs)):
-			if self.observations[i].mode in ('TBW', 'TBN'):
-				maxOverlaps = 1
-			else:
-				maxOverlaps = 4
+			maxOverlaps = 1
 			overlaps = []
 			nOverlaps = 0
 
