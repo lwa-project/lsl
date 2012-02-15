@@ -42,7 +42,7 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
 			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'status2string', 'summary2string', 
-			'sid2string', 'cid2string', 'parseCStruct', 'single2multi', 
+			'sid2string', 'cid2string', 'mode2string', 'parseCStruct', 'single2multi', 
 			'__version__', '__revision__', '__all__']
 
 
@@ -236,6 +236,28 @@ def cid2string(cid):
 		return "OBS"
 	else:
 		return "OBE"
+
+
+def mode2string(mode):
+	"""
+	Convert a MCS numeric observing mode into a string.
+	"""
+	
+	if mode < 1 or mode > 6:
+		raise ValueError("Invalid observing mode %i" % mode)
+	
+	if mode == 1:
+		return "TRK_RADEC"
+	elif mode == 2:
+		return "TRK_SOL"
+	elif mode == 3:
+		return "TRK_JOV"
+	elif mode == 4:
+		return "STEPPED"
+	elif mode == 5:
+		return "TBW"
+	else:
+		return "TBN"
 
 
 def parseCStruct(cStruct, charMode='str', endianness='native'):

@@ -178,9 +178,11 @@ def readOBSFile(filename):
 		   'MPM': header.OBS_START_MPM, 'Dur': header.OBS_DUR, 'Mode': header.OBS_MODE, 'RA': header.OBS_RA, 'Dec': header.OBS_DEC, 'Beam': header.OBS_B, 'Freq1': word2freq(header.OBS_FREQ1), 
 		   'Freq2': word2freq(header.OBS_FREQ2), 'BW': header.OBS_BW, 'nSteps': header.OBS_STP_N, 
 		   'StepRADec': header.OBS_STP_RADEC,  'steps': steps, 
-		   'fee': footer.OBS_FEE, 'flt': footer.OBS_ASP_FLT, 'at1': footer.OBS_ASP_AT1, 
-		   'at2': footer.OBS_ASP_AT2, 'ats': footer.OBS_ASP_ATS, 'tbwBits': footer.OBS_TBW_BITS, 
-		   'tbwSamples': footer.OBS_TBW_SAMPLES, 'tbnGain': footer.OBS_TBN_GAIN,  
+		   'fee': single2multi(footer.OBS_FEE, *footer.dims['OBS_FEE']), 
+		   'flt': list(footer.OBS_ASP_FLT), 'at1': list(footer.OBS_ASP_AT1), 
+		   'at2': list(footer.OBS_ASP_AT2), 'ats': list(footer.OBS_ASP_ATS), 
+		   'tbwBits': footer.OBS_TBW_BITS, 'tbwSamples': footer.OBS_TBW_SAMPLES, 
+		   'tbnGain': footer.OBS_TBN_GAIN,  
 		   'drxGain': footer.OBS_DRX_GAIN}
 
 
