@@ -34,6 +34,31 @@ int validSync(unsigned char w1, unsigned char w2, unsigned char w3, unsigned cha
 
 
 /*
+  DR Spectrometer header format
+*/
+
+#pragma pack(push)
+#pragma pack(1)
+typedef struct {
+	unsigned int MAGIC1; 			// must always equal 0xC0DEC0DE
+	unsigned long long timeTag0; 		// time tag of first frame in ``block''
+	unsigned short int timeOffset;	// time offset reported by DP
+	unsigned short int decFactor; 	// decimation factor
+	unsigned int freqCode[2]; 		// DP frequency codes for each tuning
+								// //indexing: 0..1 = Tuning 1..2
+	unsigned int fills[4]; 			// fills for each pol/tuning combination
+								// indexing: 0..3 = X0, Y0 X1, Y1
+	unsigned char errors[4]; 		// error flag for each pol/tuning combo
+								// indexing: 0..3 = X0, Y0 X1, Y1
+	unsigned char beam;				// beam number
+	unsigned int nFreqs;			// <Transform Length>
+	unsigned int nInts;				// <Integration Count>
+	unsigned int MAGIC2;			// must always equal 0xED0CED0C
+} DRSpecHeader;
+#pragma pack(pop)
+
+
+/*
   TBW Reader (12-bit and 4-bit samples)
 */
 
@@ -537,6 +562,215 @@ are sub-classes of IOError.\n\
 
 
 /*
+  DR Spectrometer Reader
+*/
+
+static PyObject *readDRSpec(PyObject *self, PyObject *args) {
+	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
+	PyObject *tuningWords, *fills, *errors;
+	PyArrayObject *dataX0, *dataY0, *dataX1, *dataY1;
+	int i;
+	
+	if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
+		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
+		return NULL;
+	}
+
+	// Read in a single header
+	FILE *fh = PyFile_AsFile(ph);
+	PyFile_IncUseCount((PyFileObject *) ph);
+	DRSpecHeader header;
+	i = fread(&header, sizeof(DRSpecHeader), 1, fh);
+	if(ferror(fh)) {
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		return NULL;
+	}
+	if(feof(fh)) {
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		return NULL;
+	}
+	
+	// Check the header's magic numbers
+	if( header.MAGIC1 != 0xC0DEC0DE || header.MAGIC2 != 0xED0CED0C) {
+		PyErr_Format(syncError, "Sync word differs from expected");
+		return NULL;
+	}
+	
+	// Read in the data section
+	float XY[4*header.nFreqs];
+	i = fread(XY, sizeof(float), 4*header.nFreqs, fh);
+	if(ferror(fh)) {
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		return NULL;
+	}
+	if(feof(fh)) {
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		return NULL;
+	}
+	PyFile_DecUseCount((PyFileObject *) ph);
+	
+	// Create the output data arrays
+	npy_intp dims[1];
+	dims[0] = header.nFreqs;
+	dataX0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataX0 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - X0");
+		Py_XDECREF(dataX0);
+		return NULL;
+	}
+	dataY0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataY0 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - Y0");
+		Py_XDECREF(dataX0);
+		Py_XDECREF(dataY0);
+		return NULL;
+	}
+	dataX1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataX1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - X1");
+		Py_XDECREF(dataX0);
+		Py_XDECREF(dataY0);
+		Py_XDECREF(dataX1);
+		return NULL;
+	}
+	dataY1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataY1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - Y1");
+		Py_XDECREF(dataX0);
+		Py_XDECREF(dataY0);
+		Py_XDECREF(dataX1);
+		Py_XDECREF(dataY1);
+		return NULL;
+	}
+
+	// Fill the data arrays
+	float *a, *b, *c, *d;
+	a = (float *) dataX0->data;
+	b = (float *) dataY0->data;
+	c = (float *) dataX1->data;
+	d = (float *) dataY1->data;
+	for(i=0; i<header.nFreqs; i++) {
+		*(a + i) = XY[0*header.nFreqs + i];
+		*(b + i) = XY[1*header.nFreqs + i];
+		*(c + i) = XY[2*header.nFreqs + i];
+		*(d + i) = XY[3*header.nFreqs + i];
+	}
+	
+	// Fill in the multi-value fields (tuningWords, fills, errors)
+	tuningWords = PyList_New(2);
+	if(tuningWords == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output list - tuningWords");
+		Py_XDECREF(dataX0);
+		Py_XDECREF(dataY0);
+		Py_XDECREF(dataX1);
+		Py_XDECREF(dataY1);
+		Py_XDECREF(tuningWords);
+		return NULL;
+	}
+	for(i=0; i<2; i++) {
+		temp = Py_BuildValue("I", header.freqCode[i]);
+		PyList_SetItem(tuningWords, i, temp);
+		Py_XDECREF(temp);
+	}
+	
+	fills = PyList_New(4);
+	if(fills == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output list - fills");
+		Py_XDECREF(dataX0);
+		Py_XDECREF(dataY0);
+		Py_XDECREF(dataX1);
+		Py_XDECREF(dataY1);
+		Py_XDECREF(tuningWords);
+		Py_XDECREF(fills);
+		return NULL;
+	}
+	for(i=0; i<4; i++) {
+		temp = Py_BuildValue("I", header.fills[i]);
+		PyList_SetItem(fills, i, temp);
+		Py_XDECREF(temp);
+	}
+	
+	errors = PyList_New(4);
+	if(errors == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output list - flags");
+		Py_XDECREF(dataX0);
+		Py_XDECREF(dataY0);
+		Py_XDECREF(dataX1);
+		Py_XDECREF(dataY1);
+		Py_XDECREF(tuningWords);
+		Py_XDECREF(fills);
+		Py_XDECREF(errors);
+		return NULL;
+	}
+	for(i=0; i<4; i++) {
+		temp = Py_BuildValue("H", header.errors[i]);
+		PyList_SetItem(errors, i, temp);
+		Py_XDECREF(temp);
+	}
+	
+	// Save the data to the frame object
+	// 1. Header
+	fHeader = PyObject_GetAttrString(frame, "header");
+	
+	temp = Py_BuildValue("H", header.beam);
+	PyObject_SetAttrString(fHeader, "beam", temp);
+	Py_XDECREF(temp);
+	
+	temp = Py_BuildValue("H", header.decFactor);
+	PyObject_SetAttrString(fHeader, "decimation", temp);
+	Py_XDECREF(temp);
+	
+	temp = Py_BuildValue("H", header.timeOffset);
+	PyObject_SetAttrString(fHeader, "timeOffset", temp);
+	Py_XDECREF(temp);
+	
+	temp = Py_BuildValue("I", header.nInts);
+	PyObject_SetAttrString(fHeader, "nInts", temp);
+	Py_XDECREF(temp);
+	
+	// 2. Data
+	fData = PyObject_GetAttrString(frame, "data");
+
+	temp = PyLong_FromUnsignedLongLong(header.timeTag0);
+	PyObject_SetAttrString(fData, "timeTag", temp);
+	Py_XDECREF(temp);
+
+	PyObject_SetAttrString(fData, "tuningWords", tuningWords);
+	
+	PyObject_SetAttrString(fData, "fills", fills);
+	
+	PyObject_SetAttrString(fData, "flags", errors);
+
+	PyObject_SetAttrString(fData, "X0", PyArray_Return(dataX0));
+	PyObject_SetAttrString(fData, "Y0", PyArray_Return(dataY0));
+	PyObject_SetAttrString(fData, "X1", PyArray_Return(dataX1));
+	PyObject_SetAttrString(fData, "Y1", PyArray_Return(dataY1));
+
+	// 3. Frame
+	PyObject_SetAttrString(frame, "header", fHeader);
+	PyObject_SetAttrString(frame, "data", fData);
+	
+	Py_XDECREF(fHeader);
+	Py_XDECREF(fData);
+	Py_XDECREF(dataX0);
+	Py_XDECREF(dataY0);
+	Py_XDECREF(dataX1);
+	Py_XDECREF(dataY1);
+
+	output = Py_BuildValue("O", frame);
+	return output;
+}
+
+PyDoc_STRVAR(readDRSpec_doc, \
+"Function to read in a DR spectrometer header structure and data and retrun\n\
+a drspec.Frame instance.");
+
+
+/*
   Module Setup - Function Definitions and Documentation
 */
 
@@ -544,6 +778,7 @@ static PyMethodDef GoFastMethods[] = {
 	{"readTBW", readTBW, METH_VARARGS, readTBW_doc}, 
 	{"readTBN", readTBN, METH_VARARGS, readTBN_doc}, 
 	{"readDRX", readDRX, METH_VARARGS, readDRX_doc}, 
+	{"readDRSpec", readDRSpec, METH_VARARGS, readDRSpec_doc},
 	{NULL, NULL, 0, NULL}
 };
 
@@ -594,7 +829,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "eofError", eofError);
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.4"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 }

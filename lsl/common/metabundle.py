@@ -415,7 +415,7 @@ def getObservationSpec(tarname, selectObs=None):
 	
 	# Read in the OBS files
 	obsList = []
-	for of in glob.glob(os.path.join(tempDir, '*.obs')):
+	for of in sorted(glob.glob(os.path.join(tempDir, '*.obs'))):
 		obsList.append( readOBSFile(of) )
 		
 	# Cull the list based on the observation ID selection
