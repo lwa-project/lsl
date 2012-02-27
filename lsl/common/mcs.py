@@ -155,7 +155,7 @@ def cid2string(cid):
 	Convert a MCS command code into a string.
 	"""
 	
-	if cid < 0 or cid > 38:
+	if cid < 0 or cid > 39:
 		raise ValueError("Invalid cid code %i" % cid)
 	
 	if cid == 0:
@@ -234,8 +234,10 @@ def cid2string(cid):
 		return "ESF"
 	elif cid == 37:
 		return "OBS"
-	else:
+	elif cid == 38:
 		return "OBE"
+	else:
+		return "SPC"
 
 
 def mode2string(mode):
