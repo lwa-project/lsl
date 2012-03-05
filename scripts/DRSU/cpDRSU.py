@@ -87,7 +87,7 @@ def main(args):
 	
 		# Verbosity
 		if config['verbose']:
-			print "%s on %s -> %s" % (tag, device, outname)
+			print "%s on %s -> %s" % (fileObject.name, device, outname)
 	
 		# Actually perform the copy
 		nSections = fileObject.size / fileObject.chunkSize

@@ -39,6 +39,8 @@
   * Fixed a DP1_SLOT parsing problem in lsl.common.stations.parseSSMIF()
   * Updated LWA-1 SSMIF to 12/26/2011 to include calibration information
   * Added the June 30, 2012 leap second into the TAI-UTC file
+  * Fixed a problem in cpDRSU.py with the verbose output
+  * Cleaned up the `sfdisk` calls with the DRSU direct-access module
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF

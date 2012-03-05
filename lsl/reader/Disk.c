@@ -199,7 +199,7 @@ StatusCode Disk_IdentifyAll(){
 	// pass 1 finds instantly recognizable drive device IDs and assigns type/size information
 	while (token!=NULL){
 		sprintf(devices[devicesCount].deviceName,"/dev/%s",token);
-		sprintf(cmdTemp,"sfdisk -s \"/dev/%s\"",token);
+		sprintf(cmdTemp,"sfdisk -s \"/dev/%s\" 2>/dev/null",token);
 		ShellGetNumber(cmdTemp,&devices[devicesCount].bytesTotal);
 		devices[devicesCount].bytesTotal *= 1024l;
 		sprintf(cmdTemp,"stat \"/dev/%s\" | grep Device | nawk '{print $2}' | sed -e's/.*\\///' | tr -d 'd'",token);
