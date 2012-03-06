@@ -82,11 +82,12 @@ def readSESFile(filename):
 			'MCS': ses.SESSION_MUP_MCS, 'DR1': ses.SESSION_MUP_DR1, 'DR2': ses.SESSION_MUP_DR2, 
 			'DR3': ses.SESSION_MUP_DR3, 'DR4': ses.SESSION_MUP_DR4, 'DR5': ses.SESSION_MUP_DR5}
 	
-	return {'version': ses.FORMAT_VERSION, 'projectID': ses.PROJECT_ID, 'sessionID': ses.SESSION_ID, 
-		   'CRA': ses.SESSION_CRA,  'drxBeam': ses.SESSION_DRX_BEAM, 'spcSetup': ses.SESSION_SPC, 
-		   'MJD': ses.SESSION_START_MJD, 'MPM': ses.SESSION_START_MPM, 'Dur': ses.SESSION_DUR, 
-		   'nObs': ses.SESSION_NOBS, 'record': record, 'update': update, 
-		   'logSch': ses.SESSION_LOG_SCH, 'logExe': ses.SESSION_LOG_EXE, 'incSMIF': ses.SESSION_INC_SMIB, 'incDesi': ses.SESSION_INC_DES}
+	return {'version': ses.FORMAT_VERSION, 'projectID': ses.PROJECT_ID.lstrip().rstrip(), 
+		   'sessionID': ses.SESSION_ID,  'CRA': ses.SESSION_CRA,  'drxBeam': ses.SESSION_DRX_BEAM,
+		   'spcSetup': ses.SESSION_SPC, 'MJD': ses.SESSION_START_MJD, 'MPM': ses.SESSION_START_MPM, 
+		   'Dur': ses.SESSION_DUR, 'nObs': ses.SESSION_NOBS, 'record': record, 'update': update, 
+		   'logSch': ses.SESSION_LOG_SCH, 'logExe': ses.SESSION_LOG_EXE, 'incSMIF': ses.SESSION_INC_SMIB,
+		   'incDesi': ses.SESSION_INC_DES}
 
 
 def readOBSFile(filename):
@@ -176,8 +177,9 @@ def readOBSFile(filename):
 	if footer.alignment != (2**32 - 1):
 		raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
 	
-	return {'version': header.FORMAT_VERSION, 'projectID': header.PROJECT_ID, 'sessionID': header.SESSION_ID, 
-		   'drxBeam': header.SESSION_DRX_BEAM, 'spcSetup': header.SESSION_SPC, 'obsID': header.OBS_ID,
+	return {'version': header.FORMAT_VERSION, 'projectID': header.PROJECT_ID.lstrip().rstrip(), 
+		   'sessionID': header.SESSION_ID, 'drxBeam': header.SESSION_DRX_BEAM, 
+		   'spcSetup': header.SESSION_SPC, 'obsID': header.OBS_ID,
 		   'MJD': header.OBS_START_MJD, 'MPM': header.OBS_START_MPM, 'Dur': header.OBS_DUR, 
 		   'Mode': header.OBS_MODE, 'RA': header.OBS_RA, 'Dec': header.OBS_DEC, 'Beam': header.OBS_B, 'Freq1': word2freq(header.OBS_FREQ1), 
 		   'Freq2': word2freq(header.OBS_FREQ2), 'BW': header.OBS_BW, 'nSteps': header.OBS_STP_N, 

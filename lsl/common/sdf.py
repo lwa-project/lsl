@@ -305,6 +305,7 @@ class Session(object):
 		self.comments = comments
 		
 		self.cra = 0
+		self.drxBeam = -1
 		
 		self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
 		self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
@@ -330,6 +331,11 @@ class Session(object):
 		parameters."""
 		
 		self.cra = int(value)
+		
+	def setDRXBeam(self, value):
+		"""Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
+		
+		self.drxBeam = int(value)
 	
 	def setMIBRecordInterval(self, component, interval):
 		"""Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
@@ -363,7 +369,9 @@ class Session(object):
 		failures = 0
 		totalData = 0.0
 		if self.cra < 0 or self.cra > 65535:
-			failues += 1
+			failures += 1
+		if self.drxBeam not in (-1, 1, 2, 3, 4):
+			failures += 1
 		for key in self.recordMIB.keys():
 			if self.recordMIB[key] < -1:
 				if verbose:
@@ -1355,6 +1363,10 @@ def parseSDF(filename, verbose=False):
 		if keyword == 'SESSION_INC_DES':
 			project.sessions[0].includeDesign = bool(value)
 			continue
+		if keyword == 'SESSION_DRX_BEAM':
+			project.sessions[0].drxBeam = int(value)
+		if keyword == 'SESSION_SPC':
+			project.sessions[0].spcSetup = value
 		
 		# Observation Info
 		if keyword == 'OBS_ID':
@@ -1614,6 +1626,7 @@ SESSION_REMPO    {{ "Requested data return method is %s"|format(session.dataRetu
 {{- "\nSESSION_LOG_EXE  %i"|format(session.logExecutive) if not session.logExecutive }}
 {{- "\nSESSION_INC_SMIB %i"|format(session.includeStationStatic) if session.includeStationStatic }}
 {{- "\nSESSION_INC_DES  %i"|format(session.includeDesign) if session.includeDesign }}
+{{- "\nSESSION_DRX_BEAM %i"|format(session.drxBeam if session.drxBeam != -1 }}
 
 {% for obs in session.observations -%}
 OBS_ID           {{ loop.index }}
