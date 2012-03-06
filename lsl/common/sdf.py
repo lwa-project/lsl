@@ -1626,7 +1626,7 @@ SESSION_REMPO    {{ "Requested data return method is %s"|format(session.dataRetu
 {{- "\nSESSION_LOG_EXE  %i"|format(session.logExecutive) if not session.logExecutive }}
 {{- "\nSESSION_INC_SMIB %i"|format(session.includeStationStatic) if session.includeStationStatic }}
 {{- "\nSESSION_INC_DES  %i"|format(session.includeDesign) if session.includeDesign }}
-{{- "\nSESSION_DRX_BEAM %i"|format(session.drxBeam if session.drxBeam != -1 }}
+{{- "\nSESSION_DRX_BEAM %i"|format(session.drxBeam) if session.drxBeam != -1 }}
 
 {% for obs in session.observations -%}
 OBS_ID           {{ loop.index }}
