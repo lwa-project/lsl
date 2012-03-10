@@ -829,8 +829,8 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	// Bring the data into C and make it usable
 	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_COMPLEX64, 3, 3);
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 3, 3);
-	validX = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidX, NPY_BOOL, 2, 2);
-	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_BOOL, 2, 2);
+	validX = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidX, NPY_UINT8, 2, 2);
+	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_UINT8, 2, 2);
 
 	// Get channel count and number of FFTs stored
 	nStand = (long) dataX->dimensions[0];
@@ -874,9 +874,9 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	
 	// Time-domain blanking control
 	long nActVis;
-	bool *u1, *u2;
-	u1 = (bool *) validX->data;
-	u2 = (bool *) validY->data;
+	unsigned char *u1, *u2;
+	u1 = (unsigned char *) validX->data;
+	u2 = (unsigned char *) validY->data;
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(c, f, nActVis, tempVis1, tempVis2)
@@ -934,9 +934,9 @@ Input arguments are:\n\
    data from an F engine.\n\
  * fsignals2: 3-D numpy.cdouble (stand by channels by FFT_set) array of FFTd\n\
    data from an F engine.\n\
- * sigValid1: 1-D numpy.int16 (FFT_set) array of whether or not the FFT_set is\n\
+ * sigValid1: 1-D numpy.uint8 (FFT_set) array of whether or not the FFT_set is\n\
    valid (1) or not (0) for the first signal.\n\
- * sigValid2: 1-D numpy.int16 (FFT_set) array of whether or not the FFT_set is\n\
+ * sigValid2: 1-D numpy.uint8 (FFT_set) array of whether or not the FFT_set is\n\
    valid (1) or not (0) for the second signal.\n\
 \n\
 Ouputs:\n\

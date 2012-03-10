@@ -130,7 +130,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -201,7 +201,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
+				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -247,7 +247,7 @@ Input keywords are:\n\
 Outputs:\n\
  * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.uint8 (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -359,7 +359,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -432,7 +432,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
+				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -480,7 +480,7 @@ Input keywords are:\n\
 Outputs:\n\
  * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.uint8 (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -575,7 +575,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -646,7 +646,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
+				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -692,7 +692,7 @@ Input keywords are:\n\
 Outputs:\n\
  * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.uint8 (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -804,7 +804,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -877,7 +877,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
+				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -925,7 +925,7 @@ Input keywords are:\n\
 Outputs:\n\
  * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.uint8 (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -948,8 +948,8 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	// Bring the data into C and make it usable
 	data1 = (PyArrayObject *) PyArray_ContiguousFromObject(signals1, NPY_COMPLEX64, 3, 3);
 	data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signals2, NPY_COMPLEX64, 3, 3);
-	valid1 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid1, NPY_BOOL, 2, 2);
-	valid2 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid2, NPY_BOOL, 2, 2);
+	valid1 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid1, NPY_UINT8, 2, 2);
+	valid2 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid2, NPY_UINT8, 2, 2);
 
 	// Get channel count and number of FFTs stored
 	nStand = (long) data1->dimensions[0];
@@ -992,9 +992,9 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	
 	// Time-domain blanking control
 	long nActVis;
-	bool *u1, *u2;
-	u1 = (bool *) valid1->data;
-	u2 = (bool *) valid2->data;
+	unsigned char *u1, *u2;
+	u1 = (unsigned char *) valid1->data;
+	u2 = (unsigned char *) valid2->data;
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(c, f, nActVis, tempVis)
@@ -1038,9 +1038,9 @@ Input arguments are:\n\
    data from an F engine.\n\
  * fsignals2: 3-D numpy.complex64 (stand by channels by FFT_set) array of\n\
    FFTd data from an F engine.\n\
- * sigValid1: 1-D numpy.bool (FFT_set) array of whether or not the FFT_set is\n\
+ * sigValid1: 1-D numpy.uint8 (FFT_set) array of whether or not the FFT_set is\n\
    valid (1) or not (0) for the first signal.\n\
- * sigValid2: 1-D numpy.bool (FFT_set) array of whether or not the FFT_set is\n\
+ * sigValid2: 1-D numpy.uint8 (FFT_set) array of whether or not the FFT_set is\n\
    valid (1) or not (0) for the second signal.\n\
 \n\
 Ouputs:\n\
