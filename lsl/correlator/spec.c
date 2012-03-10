@@ -49,6 +49,15 @@ double sinc(double x) {
 	}
 }
 
+
+/*
+  FFT Functions
+    1. FPSDR2 - FFT a real-valued collection of signals
+    2. FPSDR3 - window the data and FFT a real-valued collection of signals
+    3. FPSDC2 - FFT a complex-valued collection of signals
+    4. FPSDC3 - window the data and FFT a complex-valued collection of signals
+*/
+
 static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *signalsF;
 	PyArrayObject *data, *dataF;
@@ -601,6 +610,14 @@ Outputs:\n\
  * psd: 2-D numpy.double (stands by channels) of PSD data\n\
 ");
 
+
+/*
+  Polyphase Filterbank (PFB) Functions
+    1. PPSDR2 - PFB a real-valued collection of signals
+    2. PPSDR3 - window the data and PFB a real-valued collection of signals
+    3. PPSDC2 - PFB a complex-valued collection of signals
+    4. PPSDC3 - window the data and PFB a complex-valued collection of signals
+*/
 
 static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *signalsF;
@@ -1271,7 +1288,31 @@ static PyMethodDef SpecMethods[] = {
 };
 
 PyDoc_STRVAR(spec_doc, \
-"Test extension to replace lsl.correlator.fx.calcSpectra");
+"Extension to take timeseries data and convert it to the frequency domain.\n\
+\n\
+The functions defined in this module are:\n\
+  * FPSDR2 -  FFT and integrate function for computing a series of overlapped\n\
+    Fourier transforms for a real-valued (TBW) signal from a collection of\n\
+    stands all at once.\n\
+  * FPSDR3 - Similar to FPSDR2, but allows for a window function to be applied\n\
+    to the data.\n\
+  * FPSDC2 - FFT and integrate function for computing a series of overlapped\n\
+    Fourier transforms for a complex-valued (TBN and DRX) signal from a \n\
+    collection of stands/beams all at once.\n\
+  * FPSDC3 - Similar to FPSDC2, but allows for a window function to be applied\n\
+    to the data.\n\
+  * PPSDR2 - Polyphase filterband (PFB) and integration function for computing\n\
+    a series of overlapped PFB transforms for a real-valued (TBW) signal from\n\
+    a collection of stands all at once.\n\
+  * PPSDR3 - Similar to PPSDR2, but allows for a window function to be applied\n\
+    to the data.\n\
+  * PPSDC2 - PFB and integrate function for computing a series of overlapped\n\
+    PFB transforms for a complex-valued (TBN and DRX) signal from a collection\n\
+    of stands/beams all at once.\n\
+  * PPSDC3 - Similar to PPSDC2, but allows for a window function to be applied\n\
+    to the data.\n\
+\n\
+See the inidividual functions for more details.");
 
 
 /*

@@ -101,7 +101,7 @@ def main(args):
 	sys.stdout.flush()
 
 	fileObject.open()
-	scpin, scpout, scperr = ssh.exec_command("dd of=%s" % outname)
+	scpin, scpout, scperr = ssh.exec_command("dd bs=%i of=%s" % (fileObject.chunkSize, outname), bufsize=10*fileObject.chunkSize)
 	for c in xrange(nSections):
 		part = fileObject.fh.read(fileObject.chunkSize)
 		scpin.write(part)

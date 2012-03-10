@@ -21,6 +21,9 @@
   * Fixed a problem on some platforms with Numpy/LSL version determination in gatherDebugging.py
   * Cleared the post-interpreter multiprocessing/logging errors during 'test'
   * Added support for the DR spectrometer output data format
+  * Added support for computing Stokes parameters from timeseries data
+  * Removed deprecated and unused functions from lsl.correlator.fx
+  * Added support for computing Stokes parameters in the FX correlator
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed
