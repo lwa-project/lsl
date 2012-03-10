@@ -117,7 +117,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -130,7 +130,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_INT16);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -197,11 +197,11 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
+				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -245,9 +245,9 @@ Input keywords are:\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
- * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+ * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.int16 (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -345,7 +345,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -359,7 +359,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_INT16);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -428,11 +428,11 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
+				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -478,9 +478,9 @@ Input keywords are:\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
- * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+ * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.int16 (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -562,7 +562,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -575,7 +575,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_INT16);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -642,11 +642,11 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
+				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -690,9 +690,9 @@ Input keywords are:\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
- * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+ * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.int16 (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -790,7 +790,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
+	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -804,7 +804,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_INT16);
+	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_BOOL);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
 		Py_XDECREF(data);
@@ -873,11 +873,11 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(double complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
 				}
 				
-				*(short int *) PyArray_GetPtr(validF, vLoc) = (short int) cleanFactor;
+				*(bool *) PyArray_GetPtr(validF, vLoc) = (bool) cleanFactor;
 			}
 			
 			PyDimMem_FREE(dLoc);
@@ -923,9 +923,9 @@ Input keywords are:\n\
    to zero disables time-domain blanking\n\
 \n\
 Outputs:\n\
- * fsignals: 3-D numpy.cdouble (stands by channels by FFT_set) of FFTd\n\
+ * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
    data\n\
- * valid: 2-D numpy.int16 (stands by FFT_set) of whether or not the FFT\n\
+ * valid: 2-D numpy.bool (stands by FFT_set) of whether or not the FFT\n\
    set is valid (1) or not (0)\n\
 ");
 
@@ -946,10 +946,10 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	}
 
 	// Bring the data into C and make it usable
-	data1 = (PyArrayObject *) PyArray_ContiguousFromObject(signals1, NPY_CDOUBLE, 3, 3);
-	data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signals2, NPY_CDOUBLE, 3, 3);
-	valid1 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid1, NPY_INT16, 2, 2);
-	valid2 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid2, NPY_INT16, 2, 2);
+	data1 = (PyArrayObject *) PyArray_ContiguousFromObject(signals1, NPY_COMPLEX64, 3, 3);
+	data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signals2, NPY_COMPLEX64, 3, 3);
+	valid1 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid1, NPY_BOOL, 2, 2);
+	valid2 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid2, NPY_BOOL, 2, 2);
 
 	// Get channel count and number of FFTs stored
 	nStand = (long) data1->dimensions[0];
@@ -961,7 +961,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nBL;
 	dims[1] = (npy_intp) nChan;
-	vis = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_CDOUBLE);
+	vis = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_COMPLEX64);
 	if(vis == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data1);
@@ -984,17 +984,17 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	
 	// Cross-multiplication and accumulation
 	long bl, c, f;
-	double complex tempVis;
-	double complex *a, *b, *v;
-	a = (double complex *) data1->data;
-	b = (double complex *) data2->data;
-	v = (double complex *) vis->data;
+	float complex tempVis;
+	float complex *a, *b, *v;
+	a = (float complex *) data1->data;
+	b = (float complex *) data2->data;
+	v = (float complex *) vis->data;
 	
 	// Time-domain blanking control
 	long nActVis;
-	short int *u1, *u2;
-	u1 = (short int *) valid1->data;
-	u2 = (short int *) valid2->data;
+	bool *u1, *u2;
+	u1 = (bool *) valid1->data;
+	u2 = (bool *) valid2->data;
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(c, f, nActVis, tempVis)
@@ -1010,7 +1010,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 			}
 			
 			for(c=0; c<nChan; c++) {
-				cblas_zdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+				cblas_cdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
 				*(v + bl*nChan + c) = tempVis / nActVis;
 			}
 		}
@@ -1034,17 +1034,17 @@ PyDoc_STRVAR(XEngine2_doc, \
 \tthe conjucation is performed as part of the cross-correlation.\n\
 \n\
 Input arguments are:\n\
- * fsignals1: 3-D numpy.cdouble (stand by channels by FFT_set) array of FFTd\n\
+ * fsignals1: 3-D numpy.complex64 (stand by channels by FFT_set) array of FFTd\n\
    data from an F engine.\n\
- * fsignals2: 3-D numpy.cdouble (stand by channels by FFT_set) array of\n\
+ * fsignals2: 3-D numpy.complex64 (stand by channels by FFT_set) array of\n\
    FFTd data from an F engine.\n\
- * sigValid1: 1-D numpy.int16 (FFT_set) array of whether or not the FFT_set is\n\
+ * sigValid1: 1-D numpy.bool (FFT_set) array of whether or not the FFT_set is\n\
    valid (1) or not (0) for the first signal.\n\
- * sigValid2: 1-D numpy.int16 (FFT_set) array of whether or not the FFT_set is\n\
+ * sigValid2: 1-D numpy.bool (FFT_set) array of whether or not the FFT_set is\n\
    valid (1) or not (0) for the second signal.\n\
 \n\
 Ouputs:\n\
-  * visibility: 2-D numpy.cdouble (baseline by channel) array of cross-\n\
+  * visibility: 2-D numpy.complex64 (baseline by channel) array of cross-\n\
     correlated and averaged visibility data.\n\
 ");
 

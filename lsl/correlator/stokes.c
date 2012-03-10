@@ -827,10 +827,10 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	}
 
 	// Bring the data into C and make it usable
-	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_CDOUBLE, 3, 3);
-	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_CDOUBLE, 3, 3);
-	validX = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidX, NPY_INT16, 2, 2);
-	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_INT16, 2, 2);
+	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_COMPLEX64, 3, 3);
+	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 3, 3);
+	validX = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidX, NPY_BOOL, 2, 2);
+	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_BOOL, 2, 2);
 
 	// Get channel count and number of FFTs stored
 	nStand = (long) dataX->dimensions[0];
@@ -843,7 +843,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nBL;
 	dims[2] = (npy_intp) nChan;
-	vis = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_CDOUBLE);
+	vis = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(vis == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(dataX);
@@ -866,17 +866,17 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	
 	// Cross-multiplication and accumulation
 	long bl, c, f;
-	double complex tempVis1, tempVis2;
-	double complex *a, *b, *v;
-	a = (double complex *) dataX->data;
-	b = (double complex *) dataY->data;
-	v = (double complex *) vis->data;
+	float complex tempVis1, tempVis2;
+	float complex *a, *b, *v;
+	a = (float complex *) dataX->data;
+	b = (float complex *) dataY->data;
+	v = (float complex *) vis->data;
 	
 	// Time-domain blanking control
 	long nActVis;
-	short int *u1, *u2;
-	u1 = (short int *) validX->data;
-	u2 = (short int *) validY->data;
+	bool *u1, *u2;
+	u1 = (bool *) validX->data;
+	u2 = (bool *) validY->data;
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(c, f, nActVis, tempVis1, tempVis2)
@@ -893,23 +893,23 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 			
 			for(c=0; c<nChan; c++) {
 				// I
-				cblas_zdotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
-				cblas_zdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis2);
+				cblas_cdotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
+				cblas_cdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis2);
 				*(v + 0*nBL*nChan + bl*nChan + c) = (tempVis1 + tempVis2) / nActVis;
 				
 				// Q
-				cblas_zdotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
-				cblas_zdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis2);
+				cblas_cdotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
+				cblas_cdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis2);
 				*(v + 1*nBL*nChan + bl*nChan + c) = (tempVis1 - tempVis2) / nActVis;
 				
 				// U
-				cblas_zdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
-				cblas_zdotc_sub(nFFT, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, &tempVis2);
+				cblas_cdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
+				cblas_cdotc_sub(nFFT, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, &tempVis2);
 				*(v + 2*nBL*nChan + bl*nChan + c) = (tempVis1 + tempVis2) / nActVis;
 				
 				// V
-				cblas_zdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
-				cblas_zdotc_sub(nFFT, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, &tempVis2);
+				cblas_cdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
+				cblas_cdotc_sub(nFFT, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, &tempVis2);
 				*(v + 3*nBL*nChan + bl*nChan + c) = (tempVis1 - tempVis2) / nActVis / _Complex_I;
 			}
 		}

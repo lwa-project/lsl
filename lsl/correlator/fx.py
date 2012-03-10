@@ -608,11 +608,10 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	# Create antenna baseline list (if needed)
 	if ReturnBaselines:
 		antennaBaselines = []
-		for bl in xrange(output.shape[0]):
+		for bl in xrange(output.shape[1]):
 			antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
 		returnValues = (antennaBaselines, freq, output)
 	else:
 		returnValues = (freq, output)
 
-	return returnValues
-	
+	return returnValues	
