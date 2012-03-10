@@ -18,7 +18,6 @@ import test_reader
 import test_buffer
 import test_uvUtils
 import test_fx
-import test_fx_old
 import test_filterbank
 import test_visUtils
 import test_fakedata
@@ -63,7 +62,6 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_buffer.buffer_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())
 		self.addTest(test_fx.fx_test_suite())
-		self.addTest(test_fx_old.fx_old_test_suite())
 		self.addTest(test_filterbank.filterbank_test_suite())
 		self.addTest(test_visUtils.visUtils_test_suite())
 		self.addTest(test_fakedata.fakedata_test_suite())
