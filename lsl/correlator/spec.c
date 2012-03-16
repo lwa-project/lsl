@@ -382,7 +382,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	p = fftw_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
 
 	// Integer delay, FFT, and fractional delay
-	long secStart, fftIndex;
+	long secStart;
 	float complex *a;
 	double *b;
 	a = (float complex *) data->data;
@@ -396,7 +396,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex, cleanFactor)
+		#pragma omp parallel default(shared) private(in, secStart, i, j, k, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
@@ -421,10 +421,13 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				fftw_execute_dft(p, in, in);
 				
-				for(k=0; k<(nChan-1); k++) {
-					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
+				for(k=0; k<nChan/2; k++) {
+					*(b + (nChan-1)*i + k) += cleanFactor*in[k][0]*in[k][0];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[k][1]*in[k][1];
+				}
+				for(k=nChan/2+1; k<nChan; k++) {
+					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][0]*in[k][0];
+					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][1]*in[k][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -435,10 +438,18 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 
-	// cblas_dscal((nChan-1)*nStand, 1.0/(nChan*nFFT), b, 1);
+	// Shift and scale FFTs
+	double *temp, *temp2;
+	temp2 = (double *) malloc(sizeof(double)*nChan/2);
 	for(i=0; i<nStand; i++) {
+		temp = b + (nChan-1)*i;
+		memcpy(temp2, temp, sizeof(double)*nChan/2);
+		memmove(temp, temp+nChan/2, sizeof(double)*nChan/2-1);
+		memcpy(temp+nChan/2-1, temp2, sizeof(double)*nChan/2);
+		
 		cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
 	}
+	free(temp2);
 
 	Py_XDECREF(data);
 	
@@ -523,7 +534,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	p = fftw_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
 
 	// Integer delay, FFT, and fractional delay
-	long secStart, fftIndex;
+	long secStart;
 	float complex *a;
 	double *b, *c;
 	a = (float complex *) data->data;
@@ -538,7 +549,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(in, secStart, i, j, k, fftIndex, cleanFactor)
+		#pragma omp parallel default(shared) private(in, secStart, i, j, k, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
@@ -563,10 +574,13 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				fftw_execute_dft(p, in, in);
 				
-				for(k=0; k<(nChan-1); k++) {
-					fftIndex = ((k+1) + nChan/2) % nChan;
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
+				for(k=0; k<nChan/2; k++) {
+					*(b + (nChan-1)*i + k) += cleanFactor*in[k][0]*in[k][0];
+					*(b + (nChan-1)*i + k) += cleanFactor*in[k][1]*in[k][1];
+				}
+				for(k=nChan/2+1; k<nChan; k++) {
+					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][0]*in[k][0];
+					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][1]*in[k][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -576,11 +590,19 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	fftw_destroy_plan(p);
 	fftw_free(inP);
-
-	// cblas_dscal((nChan-1)*nStand, 1.0/(nChan*nFFT), b, 1);
+	
+	// Shift and scale FFTs
+	double *temp, *temp2;
+	temp2 = (double *) malloc(sizeof(double)*nChan/2);
 	for(i=0; i<nStand; i++) {
+		temp = b + (nChan-1)*i;
+		memcpy(temp2, temp, sizeof(double)*nChan/2);
+		memmove(temp, temp+nChan/2, sizeof(double)*nChan/2-1);
+		memcpy(temp+nChan/2-1, temp2, sizeof(double)*nChan/2);
+		
 		cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
 	}
+	free(temp2);
 	
 	Py_XDECREF(data);
 	Py_XDECREF(windowData);

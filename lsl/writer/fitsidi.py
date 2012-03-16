@@ -190,9 +190,10 @@ class IDI(object):
 			if numericPol not in self.stokes:
 				self.stokes.append(numericPol)
 				
-		# Sort into order of 'XX', 'YY', 'XY', and 'YX'
+		# Sort into order of 'XX', 'YY', 'XY', and 'YX' or 'I', 'Q', 'U', and 'V'
 		self.stokes.sort()
-		self.stokes.reverse()
+		if self.stokes[0] < 0:
+			self.stokes.reverse()
 
 		self.nStokes = len(self.stokes)
 
@@ -984,7 +985,10 @@ class IDI(object):
 		
 		uv.header.update('MAXIS2', self.nStokes, 'number of pixels in STOKES axis')
 		uv.header.update('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)')
-		uv.header.update('CDELT2', -1.0)
+		if self.stokes[0] < 0:
+			uv.header.update('CDELT2', -1.0)
+		else:
+			uv.header.update('CDELT2', 1.0)
 		uv.header.update('CRPIX2', 1.0)
 		uv.header.update('CRVAL2', float(self.stokes[0]))
 		

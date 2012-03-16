@@ -75,6 +75,66 @@ __all__ = ['srcs', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', '
 srcs = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
 
 
+class BeamAlm(aipy.amp.BeamAlm):
+	def __init__(self, freqs, lmax=8, mmax=8, deg=7, nside=64, coeffs={}):
+		"""
+		AIPY __init__() function.
+		"""
+		
+		aipy.phs.Beam.__init__(self, freqs)
+		self.alm = [aipy.healpix.Alm(lmax,mmax) for i in range(deg+1)]
+		self.hmap = [aipy.healpix.HealpixMap(nside,scheme='RING',interp=True)
+			for a in self.alm]
+		for c in coeffs:
+			if c < len(self.alm): self.alm[-1-c].set_data(coeffs[c])
+		self._update_hmap()
+		
+	def __responsePrimitive(self, top):
+		"""
+		Copy of the original aipy.amp.BeamAlm.response function.
+		"""
+		
+		top = [aipy.healpix.mk_arr(c, dtype=n.double) for c in top]
+		px,wgts = self.hmap[0].crd2px(*top, **{'interpolate':1})
+		poly = n.array([n.sum(h.map[px] * wgts, axis=-1) for h in self.hmap])
+		rv = n.polyval(poly, n.reshape(self.afreqs, (self.afreqs.size, 1)))
+		return rv
+	
+	def response(self, top):
+		"""
+		Return beam response across active band for specified topocentric 
+		coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
+		Returns 'x' pol (rotate pi/2 for 'y').
+		
+		.. note::
+			This function also accepts two and three-dimensions arrays of 
+			topocentric coordinates, similar to what img.ImgW.get_top() 
+			produces, and computes the beam response at all points
+		"""
+		
+		test = n.array(top)
+		x,y,z = top
+		
+		if len(test.shape) == 1:
+			temp = self.__responsePrimitive((x,y,z))
+			
+		elif len(test.shape) == 2:
+			temp = n.zeros(((len(self.afreqs),)+test.shape[1:]))
+			for i in xrange(temp.shape[1]):
+				temp[:,i] = n.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+				
+		elif len(test.shape) == 3:
+			temp = n.zeros(((len(self.afreqs),)+test.shape[1:]))
+			for i in xrange(temp.shape[1]):
+				for j in xrange(temp.shape[2]):
+					temp[:,i,j] = n.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+					
+		else:
+			raise ValueError("Cannot compute response for %s" % str(test.shape))
+		
+		return temp
+
+
 class Antenna(aipy.amp.Antenna):
 	"""
 	Modification to the aipy.amp.Antenna class to also store the stand ID 
@@ -102,6 +162,51 @@ class Antenna(aipy.amp.Antenna):
 		self.amp = amp
 		self.stand = stand
 		self._update_gain()
+		
+	def bm_response(self, top, pol='x'):
+		"""
+		Return response of beam for specified polarization.
+		
+		.. note::
+			This differs from the AIPY implementatoin in that the LWA X-pol.
+			is oriented N-S, not E-W.
+			
+		.. note::
+			This function also accepts two and three-dimensions arrays of 
+			topocentric coordinates, similar to what img.ImgW.get_top() 
+			produces, and computes the beam response at all points.
+		"""
+		top = n.array(top)
+		
+		def robustDot(a, b):
+			"""
+			Dot product that operations on multi-dimensional coordinate sets.
+			"""
+			
+			if len(b.shape) == 1:
+				temp = n.dot(a, b)
+				
+			elif len(b.shape) == 2:
+				temp = n.zeros_like(b)
+				for i in xrange(b.shape[1]):
+					temp[:,i] = n.dot(a, b[:,i])
+					
+			elif len(b.shape) == 3:
+				temp = n.zeros_like(b)
+				for i in xrange(b.shape[1]):
+					for j in xrange(top.shape[2]):
+						temp[:,i,j] = n.dot(a, b[:,i,j])
+						
+			else:
+				raise ValueError("Cannot dot a (%s) with b (%s)" % (str(a.shape), str(b.shape)))
+			
+			return temp
+			
+		top = {'y':robustDot(self.rot_pol_x, top), 
+			  'x':robustDot(self.rot_pol_y, top)}[pol]
+		x,y,z = top
+		
+		return self.beam.response((x,y,z))
 
 	def get_beam_shape(self, pol='x'):
 		"""
@@ -237,7 +342,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 
 		if verbose:
 			print "Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax)
-		beam = aipy.amp.BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
+		beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
 	else:
 		if verbose:
 			print "Using flat beam model"

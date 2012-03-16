@@ -23,7 +23,7 @@
   * Added support for the DR spectrometer output data format
   * Added support for computing Stokes parameters from timeseries data
   * Removed deprecated and unused functions from lsl.correlator.fx
-  * Added support for computing Stokes parameters in the FX correlator
+  * Added support for computing Stokes parameters in the FX correlator and fixed the FITS IDI writer to save the data
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed
@@ -44,6 +44,8 @@
   * Added the June 30, 2012 leap second into the TAI-UTC file
   * Fixed a problem in cpDRSU.py with the verbose output
   * Cleaned up the `sfdisk` calls with the DRSU direct-access module
+  * Added a BeamAlm class to lsl.sim.vis to help with polarization difference between LWA1 and what is implemented in AIPY
+
 
 0.4.4.1
   * Fixed the missing cable attenuation parameters in the SSMIF

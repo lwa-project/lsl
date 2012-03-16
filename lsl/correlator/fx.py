@@ -515,7 +515,8 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	"""
 	
 	# Since we want to compute Stokes parameters, we need both pols
-	pol1, pol2 = 0, 1
+	pol1 = 0
+	pol2 = 1
 	
 	antennas1 = [a for a in antennas if a.pol == pol1]
 	signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == pol1]
