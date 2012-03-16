@@ -119,12 +119,12 @@ class BeamAlm(aipy.amp.BeamAlm):
 			temp = self.__responsePrimitive((x,y,z))
 			
 		elif len(test.shape) == 2:
-			temp = n.zeros(((len(self.afreqs),)+test.shape[1:]))
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
 			for i in xrange(temp.shape[1]):
 				temp[:,i] = n.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
 				
 		elif len(test.shape) == 3:
-			temp = n.zeros(((len(self.afreqs),)+test.shape[1:]))
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
 			for i in xrange(temp.shape[1]):
 				for j in xrange(temp.shape[2]):
 					temp[:,i,j] = n.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
