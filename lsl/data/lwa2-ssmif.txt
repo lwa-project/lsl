@@ -1,7 +1,7 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
-# 2011 AUG 16 by J. Dowell
+# 2012 MAR 16 by J. Craig
 # See MCS0031 for format info 
 # Search "FIXME" for things that need work
 
@@ -105,26 +105,7 @@ STD_LZ[20]    1.260
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-ANT_STAT[2]   0
-ANT_STAT[4]   0
-ANT_STAT[6]   0
-ANT_STAT[8]   0
-ANT_STAT[10]  0
-ANT_STAT[12]  0
-ANT_STAT[14]  0
-ANT_STAT[16]  0
-ANT_STAT[18]  0
-ANT_STAT[20]  0
-ANT_STAT[22]  0
-ANT_STAT[24]  0
-ANT_STAT[26]  0
-ANT_STAT[28]  0
-ANT_STAT[30]  0
-ANT_STAT[32]  0
-ANT_STAT[34]  0
-ANT_STAT[36]  0
-ANT_STAT[38]  0
-ANT_STAT[40]  0
+ANT_STAT[26] 1
 
 
 # -------------------------------
@@ -251,8 +232,50 @@ N_RPD 40
 # RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
 # *** RPD_LENG[cable#] [m] goes here:
 
+RPD_LENG[1] 144.39
+RPD_LENG[2] 140.47
+RPD_LENG[3] 144.28
+RPD_LENG[4] 144.86
+RPD_LENG[5] 143.70
+RPD_LENG[6] 145.32
+RPD_LENG[7] 140.00
+RPD_LENG[8] 140.00
+RPD_LENG[9] 143.82
+RPD_LENG[10] 146.13
+RPD_LENG[11] 144.05
+RPD_LENG[12] 143.59
+RPD_LENG[13] 166.79
+RPD_LENG[14] 144.28
+RPD_LENG[15] 143.36
+RPD_LENG[16] 142.20
+RPD_LENG[17] 147.28
+RPD_LENG[18] 143.93
+RPD_LENG[19] 140.00
+RPD_LENG[20] 140.00
+RPD_LENG[21] 143.47
+RPD_LENG[22] 143.70
+RPD_LENG[23] 147.63
+RPD_LENG[24] 145.66
+RPD_LENG[25] 143.34
+RPD_LENG[26] 143.47
+RPD_LENG[27] 140.00
+RPD_LENG[28] 140.00
+RPD_LENG[29] 142.78
+RPD_LENG[30] 143.01
+RPD_LENG[31] 144.86
+RPD_LENG[32] 143.70
+RPD_LENG[33] 140.00
+RPD_LENG[34] 140.00
+RPD_LENG[35] 143.36
+RPD_LENG[36] 145.32
+RPD_LENG[37] 153.97
+RPD_LENG[38] 117.50
+RPD_LENG[39] 143.93
+RPD_LENG[40] 140.00
 
-
+# note: cable 24 is wrong; was reconnectorized and never TDR'd
+# cables for antennas 7, 8, 19, 20, 27, 28 are not installed
+ 
 # --------------------------------------
 # --- Antenna # -> cable # mapping -----
 # --------------------------------------
@@ -466,26 +489,26 @@ N_DP1CH 20
 #   ... so best is to note only the exceptions below.
 # DP1_ANT[][] will be set to 0 (no connection, or only connected at outout) for any boards/channels not identified
 # *** DP1_ANT[dp1#][ch#] goes here:
-DP1_ANT[1][1]    1
-DP1_ANT[1][2]    3
-DP1_ANT[1][3]    5
-DP1_ANT[1][4]    7
-DP1_ANT[1][5]    9
-DP1_ANT[1][6]   11
-DP1_ANT[1][7]   13
-DP1_ANT[1][8]   15
-DP1_ANT[1][9]   17
-DP1_ANT[1][10]  19
-DP1_ANT[1][11]  21
-DP1_ANT[1][12]  23
-DP1_ANT[1][13]  25
-DP1_ANT[1][14]  27
-DP1_ANT[1][15]  29
-DP1_ANT[1][16]  31
-DP1_ANT[1][17]  33
-DP1_ANT[1][18]  35
-DP1_ANT[1][19]  37
-DP1_ANT[1][20]  39
+DP1_ANT[1][1] 9
+DP1_ANT[1][2] 10
+DP1_ANT[1][3] 38
+DP1_ANT[1][4] 37
+DP1_ANT[1][5] 36
+DP1_ANT[1][6] 35
+DP1_ANT[1][7] 25
+DP1_ANT[1][8] 26
+DP1_ANT[1][9] 30
+DP1_ANT[1][10] 29
+DP1_ANT[1][11] 11
+DP1_ANT[1][12] 12
+DP1_ANT[1][13] 18
+DP1_ANT[1][14] 17
+DP1_ANT[1][15] 1
+DP1_ANT[1][16] 2
+DP1_ANT[1][17] 14
+DP1_ANT[1][18] 13
+DP1_ANT[1][19] 32
+DP1_ANT[1][20] 31
 
 
 # ----------------------
