@@ -107,6 +107,12 @@ def main(args):
 			if c % 10 == 0:
 				sys.stdout.write(pb.show()+'\r')
 				sys.stdout.flush()
+				
+		leftover = fileObject.size - nSections*fileObject.chunkSize
+		if leftover > 0:
+			part = fileObject.fh.read(fileObject.chunkSize)
+			ofh.write(part[:leftover])
+			ofh.flush()
 		
 		fileObject.close()
 		ofh.close()
