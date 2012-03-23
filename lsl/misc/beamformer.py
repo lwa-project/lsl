@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Module to allow for post-acquisition delay-and-sum beamforming with TBW 
-and TBN data using both integer sample delays for time series data 
-(intDelayAndSum) and fractional delays for time series data transformed to 
-the frequency domain (fftDelayAndSum).  fftDelayAndSum is still under 
-development.
+Module to allow for post-acquisition delay-and-sum beamforming with integer 
+sample delays for TBW time series data (intDelayAndSum) and phase-and-sum 
+beamforming for TBN time series data (delayAndSum).
 """
 
 import os
@@ -40,7 +38,7 @@ class BeamformingError(Exception):
 
 def __loadStandResponse(freq=49.0e6):
 	"""
-	Create an aipy.amp.beam object that holds the reponse for a single 
+	Create an aipy.amp.beam object that holds the response for a single 
 	isolated stand.  The stand response is based on NEC4 models at a variety
 	of frequencies within the LWA frequency range.
 	"""
@@ -51,7 +49,7 @@ def __loadStandResponse(freq=49.0e6):
 	coeffs = dd['coeffs']
 
 	# Calculate how many harmonics are stored in the data set and reorder the data
-	# to aipy's liking
+	# to AIPY's liking
 	deg = coeffs.shape[0]-1
 	lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
 	beamShapeDict = {}
@@ -214,7 +212,7 @@ def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamShape
 def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, progress=False, DisablePool=False):
 	"""
 	Given a list of antennas, compute the on-sky response of the delay-and-sum
-	scheme implemented in intDelayAndSum.  A 360x90 numpy array spaning azimuth
+	scheme implemented in intDelayAndSum.  A 360x90 numpy array spanning azimuth
 	and elevation is returned.
 	
 	.. versionchanged:: 0.4.0
@@ -223,7 +221,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 		numbers.
 		
 	.. versionchanged:: 0.4.2
-		Allowed for multiple polarization data to be delayed-and-sumed correctly 
+		Allowed for multiple polarization data to be delayed-and-summed correctly 
 		and insured that a 2-D array is always returned (pol(s) by samples)
 	"""
 
@@ -250,7 +248,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 	arrayZ = xyz[:,2].mean()
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
 
-	# Load in the respoonse of a single isolated stand
+	# Load in the response of a single isolated stand
 	standBeam = __loadStandResponse(freq)
 
 	# The multiprocessing module allows for the creation of worker pools to help speed
@@ -261,7 +259,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 		
 		# To get results pack from the pool, you need to keep up with the workers.  
 		# In addition, we need to keep up with which workers goes with which 
-		# baseline since the workers are called asychronisly.  Thus, we need a 
+		# baseline since the workers are called asynchronously.  Thus, we need a 
 		# taskList array to hold tuples of baseline ('count') and workers.
 		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
 		taskList = []
@@ -309,14 +307,14 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 				task = taskPool.apply_async(__intBeepAndSweep, args=(antennas, arrayXYZ, t, freq, az, el), kwds={'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
 				taskList.append((az,el,task))
 			else:
-				# Unit vector for the currect on-sky location
+				# Unit vector for the current on-sky location
 				currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
 								numpy.cos(rEl)*numpy.cos(rAz), 
 								numpy.sin(rEl)])
 				# Stand response in this direction
 				currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
-				# Loop over stands to build the simulated singnals
+				# Loop over stands to build the simulated signals
 				signals = numpy.zeros((len(antennas), 1000))
 				for i in list(range(len(antennas))):
 					currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
@@ -352,7 +350,7 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 	of the time series data associated with the formed beam.
 	
 	.. note:
-		This task is inteted to be used with TBN data streams.
+		This task is intended to be used with TBN data streams.
 	"""
 
 	# Get the stand delays in seconds
@@ -391,7 +389,7 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimuth=0.0, elevation=90.0, progress=False):
 	"""
 	Given a list of antennas, compute the on-sky response of the delay-and-sum
-	scheme implemented in intDelayAndSum.  A 360x90 numpy array spaning azimuth
+	scheme implemented in intDelayAndSum.  A 360x90 numpy array spanning azimuth
 	and elevation is returned.
 	
 	.. versionchanged:: 0.4.0
@@ -424,7 +422,7 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 	arrayZ = xyz[good,2].mean()
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
 
-	# Load in the respoonse of a single isolated stand
+	# Load in the response of a single isolated stand
 	standBeam = __loadStandResponse(freq=CentralFreq)
 
 	# Build the output array and loop over all azimuths and elevations
@@ -449,14 +447,14 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 					pass
 				sys.stdout.flush()
 
-			# Unit vector for the currect on-sky location
+			# Unit vector for the current on-sky location
 			currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
 							numpy.cos(rEl)*numpy.cos(rAz), 
 							numpy.sin(rEl)])
 			# Stand response in this direction
 			currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
-			# Loop over stands to build the simulated singnals
+			# Loop over stands to build the simulated signals
 			signals = numpy.zeros((len(antennas), 1000))
 			for i in list(range(len(antennas))):
 				currDelay = antennas[i].cable.delay(CentralFreq) - numpy.dot(currPos, arrayXYZ[i,:]) / c

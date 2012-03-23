@@ -45,10 +45,10 @@ In the above code, line 3 reads the raw DRX frame into a :class:`lsl.reader.drx.
 Plot Spectra
 ------------
 After the DRX data have been read in, spectra can by computed and plotted using the function
-:func:`lsl.correlator.fx.calcSpectra`.  For example::
+:func:`lsl.correlator.fx.SpecMaster`.  For example::
 
 	>>> from lsl.correlator import fx as fxc
-	>>> freq, spec = fxc.calcSpectra(data, LFFT=2048, SampleRate=19.6e6, CentralFreq=38e6, DisablePool=True)
+	>>> freq, spec = fxc.SpecMaster(data, LFFT=2048, SampleRate=19.6e6, CentralFreq=38e6)
 
 Where data is a 2-D array of where the first dimension loops through stands  and the second samples.  Unlike TBW data,
 the additional keywords 'SampleRate' and 'CentralFreq' are needed to create the correct frequencies associated with
@@ -57,13 +57,28 @@ the FFTs.  The sample rate can be obtained from the data using::
 	>>> frame = drx.readFrame(fh)
 	>>> sampleRate = frame.getSampleRate()
 
-Currently there is not a way to determine the central frequency of the observations from the data frames.
+The central frequency of the observations from the data frames with::
 
-LSL 0.4.0 introduces a new way to compute spectra with the :func:`lsl.correlator.fx.SpecMaster`
-function.  This function uses a C extension and OpenMP to provide better overall performance.  SpecMaster
-is called in the same way as the original calcSpectra function::
+	>>> frame = drx.readFrame(fh)
+	>>> cFreq = frame.getCentralFreq()
 
-	>>> freq, spec = fxc.SpecMaster(data, LFFT=2048, SampleRate=1e5, CentralFreq=38e6)
+.. note::
+	Each of the DRX tunings may be at different frequecies so more than one frame will need to be inspected.  The following
+	loop::
+
+		>>> cFreq1, cFreq2 = 0, 0
+		>>> for i in xrange(4):
+		...      frame = drx.readFrame(fh)
+		...      beam,tune,pol = frame.parseID()
+		...      if tune == 1 and pol == 0:
+		...           cFreq1 = frame.getCentralFreq()
+		...      elif tune == 2 and pol == 1:
+		...           cFreq1 = frame.getCentralFreq()
+		...      else:
+		...           pass
+		...
+
+	will determine both frequencies.
 
 Once the spectra have been computed, they can be plotted via *matplotlib* via::
 
@@ -75,9 +90,39 @@ Once the spectra have been computed, they can be plotted via *matplotlib* via::
 	>>> ax.set_xlabel('Frequency [MHz]')
 	>>> ax.set_ylabel('PSD [Arb. dB]')
 
-.. note::
-	In the above example, the thread pool has been disabled for :func:`lsl.correlator.fx.calcSpectra` which
-	forces the function to run single-threaded.  By default, calcSpectra runs with 4 threads and this can
-	cause problems if a Ctrl-C is issued.  Ctrl-C kills the main python thread but leaves the worker 
-	threads running. 
+Computing Stokes Parameters
+---------------------------
+The :func:`lsl.correlator.fx.SpecMaster` computes only linear polarization combination, e.g., XX and YY, for the data.  To compute
+the Stokes parameters for the data use the :func:`lsl.correlator.fx.StokesMaster` function.  To generate the Stokes parameters for 
+a dataset::
 
+	>>> antennas = []
+	>>> for i in xrange(4):
+	...      if i / 2 == 0:
+	...           newAnt = stations.Antenna(1)
+	...      else:
+	...           newAnt = stations.Antenna(2)
+	...      if i % 2 == 0:
+	...           newAnt.pol = 0
+	...      else:
+	...           newAnt.pol = 0
+	...      antennas.append(newAnt)
+	...
+	>>> freq, spec = fxc.StokesMaster(data, antennas, LFFT=2048, SampleRate=19.6e6, CentralFreq=38e6)
+
+This function differs from :func:`lsl.correlator.fx.SpecMaster` in that it requires a list of :class:`lsl.common.stations.Antenna` instances to match the polarization data for the two tunings.  This is accomplished on lines 1 through 11 where a list of psuedo-antennas is created.  The output of array
+spec is three dimensional with the Stokes parameters on the first access.  The parameter order is I, Q, U, and V.  
+
+Once the spectra have been computed, they can be plotted with *mathplotlib*::
+
+	>>> import numpy
+	>>> from matplotlib import pyplot as plt
+	>>> fig = plt.figure()
+	>>> ax = fig.gca()
+	>>> for i,p in enumerate(('I', 'Q', 'U', 'V')):
+	...      ax.plot(freq/1e6, numpy.log10(spec[i,0,:])*10.0, label='Stokes %i' % p)
+	...
+	>>> ax.set_xlabel('Frequency [MHz]')
+	>>> ax.set_ylabel('PSD [Arb. dB]')
+
+The loop in lines 5 and 6 plots all four parameters for tuning 1.

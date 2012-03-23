@@ -42,7 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'LWA Software Library'
-copyright = u'2011, Jayce Dowell'
+copyright = u'2012, Jayce Dowell'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

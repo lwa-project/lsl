@@ -13,10 +13,10 @@ Requirements
  * pyfits >= 2.1
  * ephem >= 3.7.3
  * aipy >= 0.9.1
- * matplotlib >= 0.98.3 [#]_
- * paramiko >= 1.7.6 [#]_
+ * matplotlib >= 0.98.3 [1]_
+ * paramiko >= 1.7.6 [1]_
 
-.. [#] Required for some of the included scripts
+.. [1] Required for some of the included scripts
 
 In addition, the libnova C library is required.  This is an astronomical
 calculation and ephemeris library.  The lsl.libnova python module is built 

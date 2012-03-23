@@ -81,7 +81,7 @@ def mean(inputData, Cut=3.0):
 	resistant_mean function from the AstroIDL User's Library.
 
 	.. seealso::
-		:func:`lsl.misc.mathutil.mean`
+		:func:`lsl.misc.mathutil.robustmean`
 	"""
 
 	data = inputData.ravel()

@@ -46,9 +46,8 @@ filterCodes = drxFilterCodes
 
 class FrameHeader(object):
 	"""
-	Class that stores the information found in the header of a DRX 
-	frame.  All six fields listed in the DP ICD version H are stored as 
-	well as the original binary header data.
+	Class that stores the information found in the header of a DR spectrometer/DRX 
+	frame.
 	"""
 	
 	def __init__(self, beam=0, decimation=None, timeOffset=None, nInts=None):
@@ -90,8 +89,8 @@ class FrameHeader(object):
 
 class FrameData(object):
 	"""
-	Class that stores the information found in the data section of a DRX
-	frame.  All three fields listed in the DP ICD version H are stored.
+	Class that stores the information found in the data section of a DR spectrometer/
+	DRX frame.
 	"""
 
 	def __init__(self, timeTag=None, tuningWords=None, fills=None, flags=None, X0=None, Y0=None, X1=None, Y1=None):
@@ -129,8 +128,8 @@ class FrameData(object):
 
 class Frame(object):
 	"""
-	Class that stores the information contained within a single DRX 
-	frame.  It's properties are FrameHeader and FrameData objects.
+	Class that stores the information contained within a single DR spectrometer/
+	DRX frame.  It's properties are FrameHeader and FrameData objects.
 	"""
 
 	def __init__(self, header=None, data=None):
@@ -371,7 +370,7 @@ class Frame(object):
 
 def readFrame(filehandle, Gain=None, Verbose=False):
 	"""
-	Function to read in a single DR spectrometer frame (header+data) and 
+	Function to read in a single DR spectrometer/DRX frame (header+data) and 
 	store the contents as a Frame object.
 	"""
 	

@@ -16,6 +16,12 @@ DRX
 .. automodule:: lsl.reader.drx
    :members:
 
+DR Spectrometer
+---------------
+.. versionadded:: 0.5
+.. automodule:: lsl.reader.drspec
+   :members:
+
 Reader Error Codes
 ------------------
 .. automodule:: lsl.reader.errors

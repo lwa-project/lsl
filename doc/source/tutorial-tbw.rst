@@ -68,14 +68,8 @@ In the above code, line 3 reads the raw TBW frame into a :class:`lsl.reader.tbw.
 Plot Spectra
 ------------
 After the TBW data have been read in, spectra can by computed and plotted using the function
-:func:`lsl.correlator.fx.calcSpectra`.  For example::
-
-	>>> from lsl.correlator import fx as fxc
-	>>> freq, spec = fxc.calcSpectra(data, LFFT=2048, DisablePool=True)
-
-LSL 0.4.0 introduces a new way to compute spectra with the :func:`lsl.correlator.fx.SpecMaster`
-function.  This function uses a C extension and OpenMP to provide better overall performance.  SpecMaster
-is called in the same way as the original calcSpectra function::
+:func:`lsl.correlator.fx.fx.SpecMaster` function.  This function uses a C extension and OpenMP to 
+provide better overall performance::
 
 	>>> freq, spec = fxc.SpecMaster(data, LFFT=2048)
 
@@ -89,12 +83,6 @@ Once the spectra have been computed, they can be plotted via *matplotlib* via::
 	>>> ax.plot(freq/1e6, numpy.log10(spec[0,:])*10.0)
 	>>> ax.set_xlabel('Frequency [MHz]')
 	>>> ax.set_ylabel('PSD [Arb. dB]')
-
-.. note::
-	In the above example, the thread pool has been disabled for :func:`lsl.correlator.fx.calcSpectra` which
-	forces the function to run single-threaded.  By default, calcSpectra runs with 4 threads and this can
-	cause problems if a Ctrl-C is issued.  Ctrl-C kills the main python thread but leaves the worker 
-	threads running. 
 
 Post-Acquisition Beam Form
 --------------------------

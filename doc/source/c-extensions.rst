@@ -19,10 +19,24 @@ DRSU Direct Access Module
 
 Power Spectral Density Calculation
 ----------------------------------
+
+Linear Polarization
++++++++++++++++++++
 .. automodule:: lsl.correlator._spec
    :members:
+
+Stokes Parameters
++++++++++++++++++
+.. automodule:: lsl.correlator._stokes
+
+.. autofunction:: lsl.correlator._stokes.FPSDR2
+.. autofunction:: lsl.correlator._stokes.FPSDR3
+.. autofunction:: lsl.correlator._stokes.FPSDC2
+.. autofunction:: lsl.correlator._stokes.FPSDC3
 
 FX Correlator Core
 ------------------
 .. automodule:: lsl.correlator._core
    :members:
+.. autofunction:: lsl.correlator._stokes.XEngine2
+

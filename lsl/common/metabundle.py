@@ -273,7 +273,7 @@ def getSDM(tarname):
 def getStation(tarname, ApplySDM=True):
 	"""
 	Given a MCS meta-data tarball, extract the information stored in the ssmif.dat 
-	file and return a :class:`lsl.common.stations.LWAStation` object.  Optionaly, 
+	file and return a :class:`lsl.common.stations.LWAStation` object.  Optionally, 
 	update the :class:`lsl.common.stations.Antenna` instances associated whith the
 	LWAStation object using the included SDM file.
 	
@@ -454,7 +454,7 @@ def getSessionDefinition(tarname):
 	a SDF-representation of the session.
 	
 	.. note::
-		This functionn returned a full :class:`lsl.common.sdf.project` instance 
+		This function returns a full :class:`lsl.common.sdf.Project` instance 
 		with the session in question stored under `project.sessions[0]` and the 
 		observations under `project.sessions[0].observations`.
 	"""
@@ -592,7 +592,8 @@ def getSessionDefinition(tarname):
 
 def getCommandScript(tarname):
 	"""
-	Given a MCS meta-data tarball, extract the command script and parse it.
+	Given a MCS meta-data tarball, extract the command script and parse it.  The
+	commands are returned as a list of dictionaries (one dictionary per command).
 	"""
 	
 	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')

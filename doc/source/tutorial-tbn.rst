@@ -45,6 +45,19 @@ For files that contain more data than can fit in the machine's memory at once, t
 the relative difference between the average within each of the chunks and the global average is show in the spectra 
 plot as variations around 0 dB.
 
+Image the Sky
++++++++++++++
+The correlateTBN.py script correlates a TBN data file and writes the resulting visibility data to a FITS IDI file.  
+After correlation, the FITS IDI file can be passed to the imageIDI.py script to grid the data and produce an image.
+To use correlateTBN.py::
+
+	python correlateTBN.py -t 2 -s 1 -2 TBN_file.dat
+
+This command correlates the XX and YY polarizations for a single two second integration.  The output is written to 
+TBN_file.FITS_1.  The image is created with::
+
+	python imageIDI.py TBN_file.FITS_1
+
 Read in Data
 ------------
 Here is a Python code snippet for reading in TBN data::
@@ -74,10 +87,10 @@ In the above code, line 3 reads the raw TBN frame into a :class:`lsl.reader.tbn.
 Plot Spectra
 ------------
 After the TBN data have been read in, spectra can by computed and plotted using the function
-:func:`lsl.correlator.fx.calcSpectra`.  For example::
+:func:`lsl.correlator.fx.SpecMaster`.  For example::
 
 	>>> from lsl.correlator import fx as fxc
-	>>> freq, spec = fxc.calcSpectra(data, LFFT=2048, SampleRate=1e5, CentralFreq=38e6, DisablePool=True)
+	>>> freq, spec = fxc.SpecMaster(data, LFFT=2048, SampleRate=1e5, CentralFreq=38e6)
 
 Where data is a 2-D array of where the first dimension loops through stands  and the second samples.  Unlike TBW data,
 the additional keywords 'SampleRate' and 'CentralFreq' are needed to create the correct frequencies associated with
@@ -85,14 +98,11 @@ the FFTs.  The sample rate can be obtained from the data using::
 
 	>>> sampleRate = tbn.getSampleRate(fh)
 
-which uses the time tags of sequetial frames to determine the sample rate.  Currently there is not a way to determine
-the central frequency of the observations from the data frames.
+which uses the time tags of sequetial frames to determine the sample rate.  For a given TBN frame, the central 
+frequency of the observation can be determined via::
 
-LSL 0.4.0 introduces a new way to compute spectra with the :func:`lsl.correlator.fx.SpecMaster`
-function.  This function uses a C extension and OpenMP to provide better overall performance.  SpecMaster
-is called in the same way as the original calcSpectra function::
-
-	>>> freq, spec = fxc.SpecMaster(data, LFFT=2048, SampleRate=1e5, CentralFreq=38e6)
+	>>> frame = tbn.readFrame(fh)
+	>>> cFreq = frame.getCentralFreq()
 
 Once the spectra have been computed, they can be plotted via *matplotlib* via::
 
@@ -103,12 +113,6 @@ Once the spectra have been computed, they can be plotted via *matplotlib* via::
 	>>> ax.plot(freq/1e3, numpy.log10(spec[0,:])*10.0)
 	>>> ax.set_xlabel('Frequency [kHz]')
 	>>> ax.set_ylabel('PSD [Arb. dB]')
-
-.. note::
-	In the above example, the thread pool has been disabled for :func:`lsl.correlator.fx.calcSpectra` which
-	forces the function to run single-threaded.  By default, calcSpectra runs with 4 threads and this can
-	cause problems if a Ctrl-C is issued.  Ctrl-C kills the main python thread but leaves the worker 
-	threads running. 
 
 Post-Acquisition Beam Form
 --------------------------
@@ -144,8 +148,9 @@ For fixed positions, use::
 	... cyga.alt*180/math.pi)
 	Cygnus A:  az -> 10.0, el -> 83.2
 
-After TBN data have been read in and a pointing position has been found, a beam can be 
-formed.  For example, forming a N-S beam via integer sample delay-and-sum on Cygnus A for 
+After TBN data have been read in and a pointing position has been found, a beam can be formed through phase-and-sum beamforming. [1]_
+
+For example, forming a N-S beam via integer sample delay-and-sum on Cygnus A for 
 data taken on JD 2,455,548.38787::
 
 	>>> from lsl.misc import beamformer
@@ -154,12 +159,12 @@ data taken on JD 2,455,548.38787::
 	...     if ant.pol == 0:
 	...         antennas.append(ant)
 	...
-	>>> beamdata = beamformer.intDelayAndSum(antennas, data, sampleRate=1e5, 
+	>>> beamdata = beamformer.phaseAndSum(antennas, data, sampleRate=1e5, 
 	... azimuth=10.0, elevation=83.2)
 
 Lines 2 through 5 retrieves the list of antennas used for observations and selects only antennas with N-S polarization.  This information is needed in order to get the correct delays geometric and cable delays to use for the beam forming.
-
-	
+ 
+.. [1] Delay-and-sum beamforming does not work on TBN data due to the fact that the time-of-flight across the array is less than the time between TBN samples. 
 
 
 

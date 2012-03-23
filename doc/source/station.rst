@@ -11,11 +11,6 @@ Station Dynamic MIB Data
 .. automodule:: lsl.common.sdm
    :members:
 
-MCS Meta-Data Tarball Utilities
-+++++++++++++++++++++++++++++++
-.. automodule:: lsl.common.metabundle
-   :members:
-
 Stand-Level Data
 ----------------
 .. automodule:: lsl.correlator.uvUtils

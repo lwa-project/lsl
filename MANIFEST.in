@@ -1,5 +1,7 @@
 include README
+include LICENSE
 include VERSION
+include PKG-INFO
 include setup.cfg
 recursive-include lsl *
 recursive-include doc *

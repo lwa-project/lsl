@@ -4,6 +4,7 @@
 
 import os
 import time
+import warnings
 import unittest
 import numpy
 
@@ -17,6 +18,12 @@ __author__    = "Jayce Dowell"
 class robust_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.statistics.robust
 	module."""
+	
+	def setUp(self):
+		"""Turn off all numpy and python warnings."""
+
+		numpy.seterr(all='ignore')
+		warnings.simplefilter('ignore')
 
 	def test_mean(self):
 		"""Test the outlier-resistant mean function."""

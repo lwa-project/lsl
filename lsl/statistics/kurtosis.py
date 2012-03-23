@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Module for computing spectral kurtosis.
+Module for computing spectral kurtosis both for instantaneous PSDs and spectrometer 
+output.  This module also provides functions to estimate the spectral kurtosis
+limits for a given confidence interval in sigma.
 
 This module is based on:
 
@@ -22,7 +24,7 @@ __all__ = ['mean', 'std', 'var', 'skew', 'getLimits', 'spectralFFT', 'spectralPo
 def mean(M, N=1):
 	"""
 	Return the expected mean spectral kurtosis value for M points each composed
-	of N measurments.
+	of N measurements.
 	"""
 	
 	return 1.0
@@ -31,7 +33,7 @@ def mean(M, N=1):
 def std(M, N=1):
 	"""
 	Return the expected standard deviation of the spectral kurtosis for M points 
-	each composed of N measurments.
+	each composed of N measurements.
 	"""
 	
 	return numpy.sqrt( var(M, N) )
@@ -40,7 +42,7 @@ def std(M, N=1):
 def var(M, N=1):
 	"""
 	Return the expected variance (second central moment) of the spectral kurtosis 
-	for M points each composed of N measurments.
+	for M points each composed of N measurements.
 	"""
 
 	return 2.0*N*(N+1)*M**2/ float( (M-1)*(M*N+3)*(M*N+2) )
@@ -48,8 +50,8 @@ def var(M, N=1):
 
 def skew(M, N=1):
 	"""
-	Return the expected skewness (thrird central moment) of the spectral kurtosis 
-	for M points each composed of N measurments.
+	Return the expected skewness (third central moment) of the spectral kurtosis 
+	for M points each composed of N measurements.
 	"""
 	
 	m2 = var(M, N)
@@ -60,7 +62,10 @@ def skew(M, N=1):
 def _alpha(M, N):
 	"""
 	Determine the value of alpha needed to reproduce the spectral kurtosis PDF via a
-	Pearson Type VI distribution (betaprime in scipy.stats world).
+	Pearson Type VI distribution (betaprime in scipy.stats world).  
+	
+	.. note::
+		This corresponds to Equation (14) in Nita & Gary (2010, MNRAS 406, L60)
 	"""
 	
 	m2 = var(M, N)
@@ -73,6 +78,9 @@ def _beta(M, N):
 	"""
 	Determine the value of beta needed to reproduce the spectral kurtosis PDF via a
 	Pearson Type VI distribution (betaprime in scipy.stats world).
+	
+	.. note::
+		This corresponds to Equation (14) in Nita & Gary (2010, MNRAS 406, L60)
 	"""
 	
 	m2 = var(M, N)
@@ -96,8 +104,11 @@ def _delta(M, N):
 def getLimits(sigma, M, N=1):
 	"""
 	Return the limits on the spectral kurtosis value to exclude the specified confidence
-	interval in sigma.  The return value is a two-element tuple of lower limit, upper 
-	limit.
+	interval in sigma using a Pearson Type VI distribution (betaprime in scipy.stats world).
+	The return value is a two-element tuple of lower limit, upper limit.
+	
+	.. note::
+		This corresponds to Section 3.1 in Nita & Gary (2010, MNRAS 406, L60)
 	"""
 
 	# Convert the sigma to a fraction for the high and low clip levels
@@ -140,7 +151,7 @@ def spectralFFT(x):
 
 def spectralPower(x, N=1):
 	"""
-	Compute the spectral kurtosis for a set of power measurments averaged over 
+	Compute the spectral kurtosis for a set of power measurements averaged over 
 	N FFT windows.  For a distribution consistent with Gaussian noise, this value 
 	should be ~1.
 	"""

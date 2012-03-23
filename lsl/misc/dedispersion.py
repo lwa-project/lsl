@@ -18,7 +18,7 @@ _D = 4.148808e3
 
 def delay(freq, dm):
 	"""
-	Calculate the relative delay due to dispersion over a given frequnecy
+	Calculate the relative delay due to dispersion over a given frequency
 	range in Hz for a particular dispersion measure in pc cm^-3.  Return 
 	the dispersive delay in seconds.
 	"""
@@ -59,7 +59,7 @@ def getCoherentSampleSize(centralFreq, sampleRate, dm):
 	"""
 	
 	# Roughly estimate the number of points we need to look at to do the dedispersion 
-	# correctrly.  Based on the the relative dispersion delay between the high and low
+	# correctly.  Based on the the relative dispersion delay between the high and low
 	# ends of an observational band.
 	F0 = centralFreq
 	BW = sampleRate
@@ -109,7 +109,18 @@ def __chirpFunction(freq, dm, taper=False):
 def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
 	"""
 	Simple coherent dedispersion of complex-valued time-series data at a given central
-	frequency and sample rate.
+	frequency and sample rate.  A tapering function can also be applied to the chirp of 
+	the form:
+	
+		:math: \\sqrt{1 + \\left(\\frac{\\Delta f_{MHz}}{0.47 \\times \\mbox{BW}}\\right)^{80}}, 
+		
+	where :math: \\Delta f_{MHz} is the frequency difference in MHz from the band 
+	center and BW is the bandwidth in MHz.
+	
+	.. note::
+		At the large fractional bandwidths of LWA, the window size needed for coherent 
+		dedispersion can be prohibitive.  For example, at 74 MHz with 19.6 MS/s and a
+		DM or 10 pc / cm^3 this function uses a window size of about 537 million point.
 	"""
 	
 	# Get an idea of how many samples we need to do the dedispersion correctly

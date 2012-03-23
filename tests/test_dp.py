@@ -2,7 +2,9 @@
 
 """Unit test for lsl.common.dp module."""
 
+import warnings
 import unittest
+import numpy
 
 from lsl.common import dp
 
@@ -15,6 +17,12 @@ __author__    = "Jayce Dowell"
 class dp_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.common.dp
 	module."""
+	
+	def setUp(self):
+		"""Turn off all numpy and python warnings."""
+
+		numpy.seterr(all='ignore')
+		warnings.simplefilter('ignore')
 	
 	def test_tbn_bandpass(self):
 		"""Test that the TBN bandpass generator actually runs."""

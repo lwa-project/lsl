@@ -9,8 +9,6 @@ import tempfile
 import numpy
 
 from lsl.common.paths import dataBuild as dataPath
-from lsl.reader import s60 as s60Reader
-from lsl.sim import s60 as s60Writer
 from lsl.reader import tbw as tbwReader
 from lsl.sim import tbw as tbwWriter
 from lsl.reader import tbn as tbnReader
@@ -21,115 +19,13 @@ from lsl.sim import errors
 
 
 __revision__ = "$ Revision: 4 $"
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
-s60File = os.path.join(dataPath, 'tests', 's60-test.dat')
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
-
-
-class fake_S60_tests(unittest.TestCase):
-	"""A unittest.TestCase collection of unit tests for the lsl.sim.s60
-	module."""
-
-	testPath = None
-
-	def setUp(self):
-		"""Turn off all numpy warnings and create the temporary file directory."""
-
-		numpy.seterr(all='ignore')
-		self.testPath = tempfile.mkdtemp(prefix='test-fakedata-', suffix='.tmp')
-
-	def test_write_frame(self):
-		"""Test that the S60 data writer works for frames."""
-
-		testFile = os.path.join(self.testPath, 's60-test-W.dat')
-
-		# Read in a S60 frame from the test file
-		fh = open(s60File, 'rb')
-		origData = s60Reader.readFrame(fh)
-		fh.close()
-		# Write the data to a S60 test frame
-		fh = open(testFile, 'wb')
-		rawFrame = s60Writer.frame2frame(origData)
-		rawFrame.tofile(fh)
-		fh.close()
-		# Read in the 
-		fh = open(testFile, 'rb')
-		fakeData = s60Reader.readFrame(fh)
-		fh.close()
-
-		# Test the array size and values
-		self.assertEqual(len(fakeData), s60Reader.FrameSize/2)
-		for i in range(s60Reader.FrameSize/2):
-			self.assertAlmostEqual(fakeData[i].real, origData[i].real, 4)
-			self.assertAlmostEqual(fakeData[i].imag, origData[i].imag, 4)
-
-	def test_write_chunk(self):
-		"""Test that the S60 data writer works for chunks."""
-
-		testFile = os.path.join(self.testPath, 's60-test-C.dat')
-
-		# Read in a S60 frame from the test file
-		fh = open(s60File, 'rb')
-		origData = s60Reader.readChunk(fh, Chunk=2202)
-		fh.close()
-		
-		# Write the data to a S60 test frame
-		fh = open(testFile, 'wb')
-		rawFrame = s60Writer.chunk2frame(origData)
-		rawFrame.tofile(fh)
-		fh.close()
-		
-		# Read in the 
-		fh = open(testFile, 'rb')
-		fakeData = s60Reader.readChunk(fh, Chunk=2202)
-		fh.close()
-
-		# Test the array size and values
-		self.assertEqual(len(fakeData), len(origData))
-		for i in range(2202):
-			self.assertAlmostEqual(fakeData[i].real, origData[i].real, 4)
-			self.assertAlmostEqual(fakeData[i].imag, origData[i].imag, 4)
-
-	def test_frame_data_errors(self):
-		"""Test the different error scenarios in s60.frame2frame."""
-		
-		# Read in a S60 frame from the test file
-		fh = open(s60File, 'rb')
-		origData = s60Reader.readChunk(fh, Chunk=2202)
-		fh.close()
-		
-		# Try to write a chunk using frame2frame
-		self.assertRaises(errors.invalidDataSize, s60Writer.frame2frame, origData)
-		
-		# Try to write using only real data with frame2frame
-		origData = origData.real
-		self.assertRaises(errors.invalidDataType, s60Writer.frame2frame, origData)
-	
-	def test_chunk_data_errors(self):
-		"""Test the different error scenarios in s60.chunk2frame."""
-
-		# Read in a S60 frame from the test file
-		fh = open(s60File, 'rb')
-		origData = s60Reader.readChunk(fh, Chunk=2202)
-		fh.close()
-		
-		# Try to write using only real data with chunk2frame
-		origData = origData.real
-		self.assertRaises(errors.invalidDataType, s60Writer.chunk2frame, origData)
-
-	def tearDown(self):
-		"""Remove the test path directory and its contents"""
-
-		tempFiles = os.listdir(self.testPath)
-		for tempFile in tempFiles:
-			os.unlink(os.path.join(self.testPath, tempFile))
-		os.rmdir(self.testPath)
-		self.testPath = None
 
 
 class fake_TBW_tests(unittest.TestCase):
@@ -484,7 +380,6 @@ class fakedata_test_suite(unittest.TestSuite):
 		unittest.TestSuite.__init__(self)
 		
 		loader = unittest.TestLoader()
-		self.addTests(loader.loadTestsFromTestCase(fake_S60_tests))
 		self.addTests(loader.loadTestsFromTestCase(fake_TBW_tests))
 		self.addTests(loader.loadTestsFromTestCase(fake_TBN_tests))
 		self.addTests(loader.loadTestsFromTestCase(fake_DRX_tests))

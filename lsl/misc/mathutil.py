@@ -243,7 +243,7 @@ def robustmean(arr):
 	passes discarding outliers >3 sigma ABOVE (not below) the mean.
 
 	.. seealso::
-		:func:`lsl.statistics.robust.robustMean`
+		:func:`lsl.statistics.robust.mean`
 	"""
 	
 	# First pass discarding points >3 sigma above mean

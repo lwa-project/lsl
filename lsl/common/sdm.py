@@ -282,7 +282,7 @@ class SDM(object):
 		
 	def updateAntennas(self, antennas):
 		"""
-		Given a list of :mod:`ls.common.stations.Antenna` instances, return a new list 
+		Given a list of :class:`lsl.common.stations.Antenna` instances, return a new list 
 		of Antenna instances with updated antenna status codes.
 		"""
 		

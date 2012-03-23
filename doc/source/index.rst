@@ -43,6 +43,8 @@ LWA-Specific Utilites
 .. toctree::
    :maxdepth: 2
 
+   observations
+
    station
    sdf
    readers

@@ -2,6 +2,7 @@
 
 """Unit test for the lsl.correlator.uvUtils module."""
 
+import warnings
 import unittest
 import numpy
 
@@ -17,6 +18,12 @@ __author__    = "Jayce Dowell"
 class uvUtils_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.correlator.uvUtils
 	module."""
+	
+	def setUp(self):
+		"""Turn off all numpy and python warnings."""
+
+		numpy.seterr(all='ignore')
+		warnings.simplefilter('ignore')
 
 	def test_baseline_gen(self):
 		"""Test that the generated baselines contain the correct numbers of elements."""

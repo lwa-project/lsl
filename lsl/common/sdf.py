@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains all of the relevant class to build up a representation 
+"""
+Module that contains all of the relevant class to build up a representation 
 of a session definition file as defined in MCS0030v5.  The hierarchy of classes
 is:
   * Project - class that holds all of the information about the project (including
@@ -17,7 +18,7 @@ is:
     - TBN - class for TBN observations
     - DRX - class for general DRX observation, with sub-classes:
       * Solar - class for solar tracking
-      * Jovian - class for jovian tracking
+      * Jovian - class for Jovian tracking
     - Stepped - class for stepped observations
   * BeamStep - class that holds the information about a particular step in a Stepped
     Observation
@@ -27,13 +28,11 @@ addition, most class contain 'validate' attribute functions that can be used to
 determine if the project/session/observation are valid or not given the constraints of
 the DP system.
 
-In adition to providing the means for creating session deifinition files from scratch, 
+In addition to providing the means for creating session definition files from scratch, 
 this module also includes a simple parser for SD file.  It is mostly complete but does
-not currently support some of the extended session/observation parameters.  This 
-includes:
-  * SESSION_DRX_BEAM
+not currently support some of the extended session/observation parameters.
   
-Also included as part of this module are utilties to convert delays (in ns) and gains
+Also included as part of this module are utilities to convert delays (in ns) and gains
 into the data formated expected by DP and required for MCS0030v5
 """
 
@@ -138,8 +137,8 @@ def DPGtogain(combined):
 def parseTimeString(s):
 	"""Given a string in the format of (UTC) YYYY MM DD HH:MM:SS.SSS, return
 	the corresponding datetime object.  This function goes a little beyond what
-	datetime.strptime does in the since that it handle both interger and float
-	seconds as well as does the appropriate rounding to get millisecond precission."""
+	datetime.strptime does in the since that it handle both integer and float
+	seconds as well as does the appropriate rounding to get millisecond precision."""
 	
 	mtch = _dtRE.match(s)
 	if mtch is None:
@@ -278,7 +277,7 @@ class Project(object):
 			
 	def render(self, session=0, verbose=False):
 		"""Create a session definition file that corresponds to the specified 
-		session.  Returnes the SD file's contents as a string."""
+		session.  Returns the SD file's contents as a string."""
 		
 		if not self.validate(verbose=verbose) :
 			raise RuntimeError("Invalid session/observation parameters.  Aborting.")
@@ -306,6 +305,7 @@ class Session(object):
 		
 		self.cra = 0
 		self.drxBeam = -1
+		self.spcSetup = [0, 0]
 		
 		self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
 		self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
@@ -336,6 +336,16 @@ class Session(object):
 		"""Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
 		
 		self.drxBeam = int(value)
+		
+	def setSpectrometerChannels(self, value):
+		"""Set the number of spectrometer channels to generate, 0 to disable."""
+		
+		self.spcSetup[0] = int(value)
+		
+	def setSpectrometerIntegration(self, value):
+		"""Set the number of spectrometer FFT integrations to use, 0 to disable."""
+		
+		self.spcSetup[1] = int(value)
 	
 	def setMIBRecordInterval(self, component, interval):
 		"""Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
@@ -371,6 +381,8 @@ class Session(object):
 		if self.cra < 0 or self.cra > 65535:
 			failures += 1
 		if self.drxBeam not in (-1, 1, 2, 3, 4):
+			failures += 1
+		if self.spcSetup[0] < 0 or self.spcSetup[1] < 0:
 			failures += 1
 		for key in self.recordMIB.keys():
 			if self.recordMIB[key] < -1:
@@ -1030,7 +1042,7 @@ class BeamStep(object):
 	
 	Required Keywords:
 	  * pointing coordinate 1 (RA or azimuth)
-	  * pointing coorindate 2 (dec or elevation/altitiude)\
+	  * pointing coordinate 2 (dec or elevation/altitude)\
 	  * observation duration (HH:MM.SS.SSS string)
 	  * observation tuning frequency 1 (Hz)
 	  * observation tuning frequency 1 (Hz)
@@ -1189,7 +1201,7 @@ class BeamStep(object):
 
 def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	"""Given a obsTemp dictionary of observation parameters and, optionally, a list of
-	beamTemp step parametes, return a complete Observation object corresponding to 
+	beamTemp step parameters, return a complete Observation object corresponding to 
 	those values."""
 	
 	# If the observation ID is 0, do nothing.
@@ -1365,8 +1377,10 @@ def parseSDF(filename, verbose=False):
 			continue
 		if keyword == 'SESSION_DRX_BEAM':
 			project.sessions[0].drxBeam = int(value)
+			continue
 		if keyword == 'SESSION_SPC':
-			project.sessions[0].spcSetup = value
+			project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
+			continue
 		
 		# Observation Info
 		if keyword == 'OBS_ID':
@@ -1627,6 +1641,7 @@ SESSION_REMPO    {{ "Requested data return method is %s"|format(session.dataRetu
 {{- "\nSESSION_INC_SMIB %i"|format(session.includeStationStatic) if session.includeStationStatic }}
 {{- "\nSESSION_INC_DES  %i"|format(session.includeDesign) if session.includeDesign }}
 {{- "\nSESSION_DRX_BEAM %i"|format(session.drxBeam) if session.drxBeam != -1 }}
+{{- "\nSESSION_SPC      %i %i"|format(session.spcSetup[0], session.spcSetup[1]) if session.spcSetup[0] != 0 and session.spcSetup[1] != 0 }}
 
 {% for obs in session.observations -%}
 OBS_ID           {{ loop.index }}

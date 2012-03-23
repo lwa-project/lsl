@@ -195,22 +195,6 @@ readDRX.py
 
   :Options: None
 
-readS60.py
-  :Description: Python script to read in a S60 file and average it in time.  The output is a
-                npz file of the time-averaged spectra and a PNG of the bandpass/waterfall diagram.
-
-  :Usage: readS60.py [OPTIONS] file
-
-  :Options: -h, --help                  Display this help information
-
-            -e, --enable-model          Use the CFTOOL bandpass model if it is present in the current directory
-
-            -q, --quiet                 Run readS60 in silent mode
-
-            -l, --fft-length            Set FFT length (default = 4096)
-
-            -t, --avg-time              Window to average spectra in time
-
 plotMapper.py
   :Description: Read and plot the NOSTA_MAPPER table in a FITS IDI file writen by
                 :mod:`lsl.writer.fitsidi` if it exists.
@@ -280,21 +264,6 @@ tbnSpectra.py
 
             -o, --output                Output file name for spectra image
 
-drxTimeseries.py
-  :Description: Read in DRX files and create a collection of timeseries (I/Q) plots.
-
-  :Usage: drxTimeseries.py [OPTIONS] file
-
-  :Options: -h, --help                  Display this help information
-
-            -s, --skip                  Skip the specified number of seconds at the beginning of the file (default = 0)
-
-            -p, --plot-range            Number of seconds of data to show in the I/Q plots (default = 0.0001)
-
-            -q, --quiet                 Run drxSpectra in silent mode
-
-            -o, --output                Output file name for time series image
-
 drxSpectra.py
   :Description: Given a DRX file, plot the time averaged spectra for each beam output.
 
@@ -359,6 +328,12 @@ possm.py
 
   :Options: None
 
+imageIDI.py
+  :Description: Script that takes a FITS IDI file and images the data.
+
+  :Usage: imageIDI.py file
+
+  :Options: None
 
 Post-IOC Compatible Scripts
 ============================

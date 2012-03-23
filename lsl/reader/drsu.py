@@ -4,8 +4,7 @@
 Module to provide direct access to the files stored on a DRSU.
 
 .. warning::
-	Direct access to DRSU is currently an experimental feature that has only
-	been tested to a limited extent.  The direct access module also only 
+	The direct access module also only 
 	compiles on Linux systems and may not work with 32-bit Linux installation.
 """
 
@@ -165,7 +164,7 @@ def globFiles(device, pattern):
 	# Get the list of all files
 	avaliableFiles = listFiles(device)
 
-	# Glob via fnmatch.fmmatch
+	# Glob via fnmatch.fnmatch
 	matches = [f for f in avaliableFiles if fnmatch.fnmatch(f.name, pattern)]
 
 	# Return
