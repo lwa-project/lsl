@@ -25,6 +25,7 @@
   * Removed deprecated and unused functions from lsl.correlator.fx
   * Added support for computing Stokes parameters in the FX correlator and fixed the FITS IDI writer to save the data
   * Removed S60 reader/simulator
+  * Reworked the SDFITS writer to make it more like the FITS IDI writer
 
 0.4.5
   * Tweaked how the averaging in drxSpectra and tbnSpectra is performed

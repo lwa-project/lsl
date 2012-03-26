@@ -3,24 +3,19 @@
 """Unit test for the lsl.writer.sdfits module."""
 
 import os
+import time
 import unittest
 import numpy
 import tempfile
 import pyfits
 
-from lsl.common.paths import dataBuild as dataPath
-from lsl.reader import tbw
-from lsl.reader import tbn
-from lsl.reader import errors
+from lsl.common import stations as lwa_common
 from lsl.writer import sdfits
 
 
 __revision__ = "$Revision:1 $"
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
-
-tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
-tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 
 
 class sdfits_tests(unittest.TestCase):
@@ -28,276 +23,100 @@ class sdfits_tests(unittest.TestCase):
 	module."""
 
 	testPath = None
-
+	
 	def setUp(self):
 		"""Turn off all numpy warnings and create the temporary file directory."""
 
 		numpy.seterr(all='ignore')
 		self.testPath = tempfile.mkdtemp(prefix='test-sdfits-', suffix='.tmp')
 
-	def __getTBW(self):
-		"""Private function to load in the test TBW data and get the frames."""
+	def __initData(self):
+		"""Private function to generate a random set of data for writing a SDFITS 
+		file.  The data is returned as a dictionary with keys:
+		* freq - frequency array in Hz
+		* site - lwa.common.stations object
+		* stands - array of stand numbers
+		* spec - array of spectrometer data stand x freq format
+		"""
 
-		fh = open(tbwFile, 'rb')
+		# Frequency range
+		freq = numpy.arange(0,512)*20e6/512 + 40e6
+		# Site and stands
+		site = lwa_common.lwa1
+		antennas = site.getAntennas()[0:40:2]
+		
+		# Set data
+		specData = numpy.random.rand(len(antennas), len(freq))
+		specData = specData.astype(numpy.float32)
 
-		# Frames 1 through 8
-		frames = []
-		for i in range(1,9):
-			frames.append(tbw.readFrame(fh))
-
-		return frames
-
-	def __getTBN(self, vanilla=False):
-		"""Private function to load in the test TBN data and get the frames.  If 
-		the keyword 'vanilla' is set to True, gain, sample rate, and frequency meta-
-		data are not added to the frames."""
-
-		fh = open(tbnFile, 'rb')
-
-		# Frames 1 through 8
-		frames = []
-		for i in range(1,9):
-			frames.append(tbn.readFrame(fh))
-
-		if not vanilla:
-			# Set some values for the other meta-data
-			for frame in frames:
-				frame.setSampleRate(100000)
-
-		return frames
-
-	#def test_write_tbw_single(self):
-		#"""Test that TBW data can be written to a SD FITS file one at a time."""
-
-		## Setup the file names
-		#testFile = os.path.join(self.testPath, 'tbw-test-WS.fits')
-
-		## Get some data and organize it into a nice numpy array
-		#frames = self.__getTBW()
-		#junk = [frame.parseID() for frame in frames]
-		#stands = []
-		#for j in junk:
-			#if j not in stands:
-				#stands.append(j)
-		#count = {1: 0, 2: 0}
-		#frameData = numpy.zeros((len(stands), 4, 2, 400), dtype=numpy.int16)
-		#for frame in frames:
-			#frameData[frame.parseID()-1, count[frame.parseID()], :, :] = frame.data.xy
-			#count[frame.parseID()] = count[frame.parseID()] + 1
-
-		## Load it in
-		#fits = sdfits.TBW(testFile, LFFT=128, UseQueue=False)
-		#for frame in frames:
-			#fits.addStandData(frame)
-		#fits.close()
+		return {'freq': freq, 'site': site, 'antennas': antennas, 'spec': specData}
 	
-		## Read it back in
-		#hdulist = pyfits.open(testFile)
-		## Check if we have the correct number of extensions
-		#self.assertEqual(len(stands)+1, len(hdulist))
+	def test_write_tables(self):
+		"""Test if the SDFITS writer writes all of the tables."""
+
+		testTime = time.time()
+		testFile = os.path.join(self.testPath, 'sd-test-W.fits')
 		
-		#for hdu in hdulist[1:]:
-			#stand = hdu.data
-			#sNumb = hdu.header['STAND']
-
-			## Check the pol. values
-			#for pol in stand.field('pol'):
-				#self.assertTrue(pol in [0, 1])
-
-			## Check the data length
-			#x, y = stand.field('data').shape
-			#self.assertEqual(x, 8, "Shape mis-match on dimension 1: %i != 8" % x)
-			#self.assertEqual(y, 127, "Shape mis-match on dimension 2: %i != 127" % y)
-
-			#for data in stand.field('data'):
-				#self.assertEqual(data.dtype.kind, 'f')
-				#self.assertEqual(len(data), 127)
-			
-			### Check the data itself
-			##count = {0: 0, 1: 0}
-			##for pol, data in zip(stand.field('pol'), stand.field('data')):
-				##for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
-					##self.assertAlmostEqual(ts, fs, 6)
-				##count[pol] = count[pol] + 1
-		
-		#hdulist.close
-
-	def test_write_tbw_queue(self):
-		"""Test that TBW data can be written to a SD FITS file with a queue."""
-
-		# Setup the file names
-		testFile = os.path.join(self.testPath, 'tbw-test-WQ.fits')
-
-		# Get some data and organize it into a nice numpy array
-		frames = self.__getTBW()
-		junk = [frame.parseID() for frame in frames]
-		stands = []
-		for j in junk:
-			if j not in stands:
-				stands.append(j)
-		count = {1: 0, 2: 0}
-		frameData = numpy.zeros((len(stands), 4, 2, 400), dtype=numpy.int16)
-		for frame in frames:
-			frameData[frame.parseID()-1, count[frame.parseID()], :, :] = frame.data.xy
-			count[frame.parseID()] = count[frame.parseID()] + 1
-
-		# Load it in
-		fits = sdfits.TBW(testFile, LFFT=128, UseQueue=True)
-		for frame in frames:
-			fits.addStandData(frame)
-		fits.close()
-
-		# Read it back in
-		hdulist = pyfits.open(testFile)
-		# Check if we have the correct number of extensions
-		self.assertEqual(len(stands)+1, len(hdulist))
-		
-		for hdu in hdulist[1:]:
-			stand = hdu.data
-			sNumb = hdu.header['STAND']
-
-			# Check the pol. values
-			for pol in stand.field('pol'):
-				self.assertTrue(pol in [0, 1])
-
-			# Check the data length
-			x, y = stand.field('data').shape
-			self.assertEqual(x, 8, "Shape mis-match on dimension 1: %i != 8" % x)
-			self.assertEqual(y, 127, "Shape mis-match on dimension 2: %i != 127" % y)
-
-			for data in stand.field('data'):
-				self.assertEqual(data.dtype.kind, 'f')
-				self.assertEqual(len(data), 127)
-			
-			## Check the data itself
-			#count = {0: 0, 1: 0}
-			#for pol, data in zip(stand.field('pol'), stand.field('data')):
-				#for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
-					#self.assertAlmostEqual(ts, fs, 6)
-				#count[pol] = count[pol] + 1
-		
-		hdulist.close
-
-	def test_write_tbn_single(self):
-		"""Test that TBN data can be written to a SD FITS file one at a time."""
-
-		# Setup the file names
-		testFile = os.path.join(self.testPath, 'tbn-test-WS.fits')
-
-		# Get some data and organize it into a nice numpy array
-		frames = self.__getTBN()
-		junk = [frame.parseID()[0] for frame in frames]
-		stands = []
-		for j in junk:
-			if j not in stands:
-				stands.append(j)
-		count = {1: 0, 2: 0, 3: 0, 4: 0}
-		frameData = numpy.zeros((len(stands), 4, 2, 512), dtype=numpy.singlecomplex)
-		for frame in frames:
-			stand, pol = frame.parseID()
-			frameData[stand-1, count[stand], pol, :] = frame.data.iq
-			if pol == 1:
-				count[stand] = count[stand] + 1
-
-		# Load it in
-		fits = sdfits.TBN(testFile, LFFT=256, UseQueue=False)
-		fits.setSampleRate(100000)
-		for frame in frames:
-			fits.addStandData(frame)
-		fits.close()
-
-		# Read it back in
-		hdulist = pyfits.open(testFile)
-		# Check if we have the correct number of extensions
-		self.assertEqual(len(stands)+1, len(hdulist))
-		
-		for hdu in hdulist[1:]:
-			stand = hdu.data
-			sNumb = hdu.header['STAND']
-
-			# Check the pol. values
-			for pol in stand.field('pol'):
-				self.assertTrue(pol in [0, 1])
-
-			# Check the data length
-			x, y = stand.field('data').shape
-			self.assertEqual(x, 2, "Shape mis-match on dimension 1: %i != 2" % x)
-			self.assertEqual(y, 255, "Shape mis-match on dimension 2: %i != 255" % y)
-
-			for data in stand.field('data'):
-				self.assertEqual(data.dtype.kind, 'f')
-				self.assertEqual(len(data), 255)
-			
-			## Check the data itself
-			#count = {0: 0, 1: 0}
-			#for pol, data in zip(stand.field('pol'), stand.field('data')):
-				#for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
-					#self.assertAlmostEqual(ts, fs, 6)
-				#count[pol] = count[pol] + 1
-		
-		hdulist.close
-
-	def test_write_tbn_queue(self):
-		"""Test that TBN data can be written to a SD FITS file with a queue"""
-		
-		# Setup the file names
-		testFile = os.path.join(self.testPath, 'tbn-test-WQ.fits')
-
 		# Get some data
-		frames = self.__getTBN()
+		data = self.__initData()
+		
+		# Start the file
+		fits = sdfits.SD(testFile, refTime=testTime)
+		fits.setStokes(['xx'])
+		fits.setFrequency(data['freq'])
+		fits.addDataSet(testTime, 6.0, data['antennas'], data['spec'])
+		fits.write()
 
-		# Load it in
-		junk = [frame.parseID()[0] for frame in frames]
-		stands = []
-		for j in junk:
-			if j not in stands:
-				stands.append(j)
-		count = {1: 0, 2: 0, 3: 0, 4: 0}
-		frameData = numpy.zeros((len(stands), 4, 2, 512), dtype=numpy.singlecomplex)
-		for frame in frames:
-			stand, pol = frame.parseID()
-			frameData[stand-1, count[stand], pol, :] = frame.data.iq
-			if pol == 1:
-				count[stand] = count[stand] + 1
-
-		# Load it in
-		fits = sdfits.TBN(testFile, LFFT=256, UseQueue=False)
-		fits.setSampleRate(100000)
-		for frame in frames:
-			fits.addStandData(frame)
-		fits.close()
-
-		# Read it back in
+		# Open the file and examine
 		hdulist = pyfits.open(testFile)
-		# Check if we have the correct number of extensions
-		self.assertEqual(len(stands)+1, len(hdulist))
+		# Check that all of the extensions are there
+		extNames = [hdu.name for hdu in hdulist]
+		for ext in ['SINGLE DISH',]:
+			self.assertTrue(ext in extNames)
+
+		hdulist.close()
+	
+	def test_data(self):
+		"""Test the data table in the SINGLE DISH extension"""
+
+		testTime = time.time()
+		testFile = os.path.join(self.testPath, 'sd-test-data.fits')
 		
-		for hdu in hdulist[1:]:
-			stand = hdu.data
-			sNumb = hdu.header['STAND']
+		# Get some data
+		data = self.__initData()
+		
+		# Start the file
+		fits = sdfits.SD(testFile, refTime=testTime)
+		fits.setStokes(['xx'])
+		fits.setFrequency(data['freq'])
+		fits.addDataSet(testTime, 6.0, data['antennas'], data['spec'])
+		fits.write()
 
-			# Check the pol. values
-			for pol in stand.field('pol'):
-				self.assertTrue(pol in [0, 1])
+		# Open the file and examine
+		hdulist = pyfits.open(testFile)
+		sd = hdulist['SINGLE DISH'].data
 
-			# Check the data length
-			x, y = stand.field('data').shape
-			self.assertEqual(x, 2, "Shape mis-match on dimension 1: %i != 2" % x)
-			self.assertEqual(y, 255, "Shape mis-match on dimension 2: %i != 255" % y)
-
-			for data in stand.field('data'):
-				self.assertEqual(data.dtype.kind, 'f')
-				self.assertEqual(len(data), 255)
+		# Correct number of elements
+		self.assertEqual(len(sd.field('DATA')), len(data['antennas']))
+		
+		# Correct values
+		for beam, spec in zip(sd.field('BEAM'), sd.field('DATA')):
+			# Find out which visibility set in the random data corresponds to the 
+			# current visibility
+			i = 0
+			for ant in data['antennas']:
+				if ant.id == beam:
+					break
+				else:
+					i = i + 1
 			
-			## Check the data itself
-			#count = {0: 0, 1: 0}
-			#for pol, data in zip(stand.field('pol'), stand.field('data')):
-				#for ts, fs in zip(data, frameData[sNumb-1,count[pol],pol,:]):
-					#self.assertAlmostEqual(ts, fs, 6)
-				#count[pol] = count[pol] + 1
+			# Extract the data and run the comparison
+			for fd, sd in zip(spec, data['spec'][i,:]):
+				self.assertAlmostEqual(fd, sd, 8)
+			i = i + 1
 		
-		hdulist.close
-
+		hdulist.close()
+	
 	def tearDown(self):
 		"""Remove the test path directory and its contents"""
 

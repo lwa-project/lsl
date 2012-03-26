@@ -331,9 +331,9 @@ def main(args):
 			if jd not in jdList:
 				jdList.append(jd)
 		
-		# Sort and pull out the middle channels
+		# Sort and pull out the middle channels (inner 2/3 of the band)
 		dataDict = sortDataDict(dataDict)
-		toWork = range(60, 190)
+		toWork = range(freq.size/6, 5*freq.size/6)
 
 		# Build up the images for each polarization
 		print "    Gridding"

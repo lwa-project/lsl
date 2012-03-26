@@ -1,132 +1,259 @@
 # -*- coding: utf-8 -*-
 
 """
-Modules to take DRX/TBW/TBN data and write it to a SDFITS file.
+Module for writing spectrometer output to a SDFITS file.  The SDFITS created by this 
+modulefiles closely follow the Parkes variant of the SDFITS convention 
+(see [http://fits.gsfc.nasa.gov/registry/sdfits.html]).  The main differences between 
+the two is that the LWA SDFITS do not contain calbration or weather information.  This,
+however, should not stop the files from being loaded into CASA with the ATNF Spectral 
+Analysis Package (ASAP).
 
-.. warning::
-	The FITS files created by this module to not strictly conform to the
-	SDFITS convention.
+.. versionchanged:: 0.5.0
+	The classes and functions defined in this module are based heavily off 
+	the :mod:`lsl.writer.fitsidi` writer.
 """
 
 import os
+import gc
+import re
 import sys
+import math
 import numpy
 import pyfits
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime
 
+from lsl import astro
+from lsl.common import constants
 from lsl.common import dp as dp_common
-from lsl.common.warns import warnDeprecated
-from lsl.correlator import fx as correlate
+from lsl.common.stations import lwa1
+from lsl.misc import mathutil
 
-__version__ = '0.4'
+__version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['SDFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all__']
+__all__ = ['SDFITS', '__version__', '__revision__', '__all__']
 
 
-class SDFITS(object):
+SDVersion = (1, 6)
+
+StokesCodes = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
+			'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 
+			'XX': -5, 'YY': -6, 'XY': -7, 'YX': -8}
+
+NumericStokes = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
+			  -1: 'RR', -2: 'LL', -3: 'RL', -4: 'RL', 
+			  -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
+
+
+class SD(object):
 	"""
-	Class that holds TSFITS data until it is ready to be writen to disk.
+	Class for storing spectrometer data and writing the data, along with array
+	frequency setup, etc., to a SDFITS file that can be read into CASA via the
+	sd.scantable() function.
 	"""
-
-	def __init__(self, filename, mode, LFFT=128, Overwrite=False, UseQueue=True, verbose=False):
+	
+	class _Frequency:
 		"""
-		Initialize a SDFITS object using a filename, an observation mode (TBW,  
-		TBN, or DRX), and a FFT length in channels.  Optionally, SDFITS can be 
-		told to overwrite the file if it already exists using the 'Overwrite' keyword.
+		Holds information about the frequency setup used in the file.
 		"""
 
-		assert(mode in ['TBW', 'TBN', 'DRX'])
+		def __init__(self, offset, channelWidth, bandwidth):
+			self.id = 1
+			self.bandFreq = offset
+			self.chWidth = channelWidth
+			self.totalBW = bandwidth
+			self.sideBand = 1
+			self.baseBand = 0
+	
+	class _SpectrometerData(object):
+		"""
+		Representns one spectrum for a given observation time.
+		"""
+		
+		def __init__(self, obsTime, intTime, dataDict, pol=StokesCodes['XX']):
+			self.obsTime = obsTime
+			self.intTime = intTime
+			self.dataDict = dataDict
+			self.pol = pol
+		
+		def time(self):
+			return self.obsTime
+	
+	def parseRefTime(self, refTime):
+		"""
+		Given a time as either a integer, float, string, or datetime object, 
+		convert it to a string in the formation 'YYYY-MM-DDTHH:MM:SS'.
+		"""
 
+		# Valid time string (modulo the 'T')
+		timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
+
+		if type(refTime).__name__ in ['int', 'long', 'float']:
+			refDateTime = datetime.utcfromtimestamp(refTime)
+			refTime = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
+		elif type(refTime).__name__ in ['datetime']:
+			refTime = refTime.strftime("%Y-%m-%dT%H:%M:%S")
+		elif type(refTime).__name__ in ['str']:
+			# Make sure that the string times are of the correct format
+			if re.match(timeRE, refTime) is None:
+				raise RuntimeError("Malformed date/time provided: %s" % refTime)
+			else:
+				refTime = refTime.replace(' ', 'T', 1)
+		else:
+			raise RuntimeError("Unknown time format provided.")
+
+		return refTime
+
+	def refTime2AstroDate(self):
+		"""
+		Convert a reference time string to an :class:`lsl.astro.date` object.
+		"""
+
+		dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
+		return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
+
+	def __init__(self, filename, refTime=0.0, verbose=False):
+		"""
+		Initialize a new SDFITS object using a filename and a reference time 
+		given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+		string in the format of 'YYYY-MM-DDTHH:MM:SS'.
+		"""
+
+		# File-specific information
 		self.filename = filename
-		self.mode = mode
-		self.hdulist = None
-		self.fftLength = LFFT
-		self.UseQueue = UseQueue
-		self.queue = {}
-		self.queueLimit = 10000
-		self.site = 'LWA'
-		self.sampleRate = dp_common.fS
-		self.firstSamples = {}
 		self.verbose = verbose
 
-		if os.path.exists(filename) and not Overwrite:
-			self.hdulist = pyfits.open(self.filename, mode="update", memmap=0)
-			self.standCount = self.hdulist[0].header['nstand']
-		else:
-			if os.path.exists(filename):
-				os.path.delete(filename)
+		# Observation-specific information
+		self.site = lwa1
+		self.refTime = self.parseRefTime(refTime)
+		self.nChan = 0
+		self.nStokes = 0
+		self.refVal = 0
+		self.refPix = 0
+		self.channelWidth = 0
 
-			self.standCount = 0
-			primary = pyfits.PrimaryHDU()
-			primary.header.update('TELESCOP', self.site)
-			primary.header.update('NSTAND', self.standCount)
+		# Parameters that store the meta-data and data
+		self.freq = []
+		self.stokes = []
+		self.data = []
 
-			hdulist = pyfits.HDUList([primary])
-			hdulist.writeto(filename)
+		# Misc.
+		self.tSys = 250
+		self.observer = 'UKNOWN'
+		self.project = 'UNKNOWN'
+		self.mode = 'UNKNOWN'
+		
 
-			self.hdulist = pyfits.open(self.filename, mode="update", memmap=0)
-
-	def info(self):
-		"""
-		Short-cut to the pyfits.info() function on an opened FITS file.
-		"""
-
-		self.hdulist.info()
-
-	def flush(self):
-		"""
-		Short-cut to the pyfits.flush() function on an opened FITS file.
-		"""
-
-		self.hdulist.flush()
-
-	def close(self):
-		"""
-		Empty the data queue (if it exists) and write all changes to disk 
-		using flush.
-		"""
-
-		if self.UseQueue:
-			self.__emptyQueue()
-		self.flush()
+		# Open the file and get going
+		self.FITS = pyfits.open(filename, mode='append')
 
 	def setSite(self, site):
 		"""
-		Set the TELESCOP keyword in the primary HDU using an lsl.common.stations
+		Set the TELESCOP keyword in the primary HDU using an :class:`lsl.common.stations.LWAStation`
 		object.
 		"""
 
-		self.site = site.name
-
-		for hdu in self.hdulist:
-			hdu.header.update('TELESCOP', self.site)
-
-		self.flush()
-
-	def setSampleRate(self, sampleRate):
+		self.site = site
+		
+	def setStokes(self, polList):
 		"""
-		Set the sample rate in Hz of the data for TBN and DRX observations.
+		Given a list of Stokes parameters, update the object's parameters.
 		"""
 
-		if self.mode != 'TBW':
-			self.sampleRate = sampleRate
+		for pol in polList:
+			if type(pol).__name__ == 'str':
+				numericPol = StokesCodes[pol.upper()]
+			else:
+				numericPol = pol
+				
+			if numericPol not in self.stokes:
+				self.stokes.append(numericPol)
+				
+		# Sort into order of 'XX', 'YY', 'XY', and 'YX' or 'I', 'Q', 'U', and 'V'
+		self.stokes.sort()
+		if self.stokes[0] < 0:
+			self.stokes.reverse()
 
-	def __findExtension(self, stand):
+		self.nStokes = len(self.stokes)
+
+	def setFrequency(self, freq):
 		"""
-		Private function to find out which extension stores the stand in 
-		question.  None is returned is that stand is not in the SDFITS file.
+		Given a numpy array of frequencies, set the relevant common observation
+		parameters and add an entry to the self.freq list.
 		"""
 
-		extension = None
+		self.nChan = len(freq)
+		self.refVal = freq[0]
+		self.refPix = 1
+		self.channelWidth = numpy.abs(freq[1] - freq[0])
+		totalWidth = numpy.abs(freq[-1] - freq[0])
 
-		i = 1
-		for hdu in self.hdulist[1:]:
-			if int(hdu.header['stand']) == int(stand):
-				extension = i
-				break
-			i = i + 1
+		freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
+		self.freq.append(freqSetup)
+		
+	def setObserver(self, observer, project='UNKNOWN', mode='UNKNOWN'):
+		"""
+		Set the observer name, project, and observation mode (if given) to the 
+		self.observer, self.project, and self.mode attributes, respectively.
+		"""
+		
+		self.observer = observer
+		self.project = project
+		self.mode = mode
 
-		return extension
+	def addDataSet(self, obsTime, intTime, beam, data, pol='XX'):
+		"""
+		Create a SpectrometerData object to store a collection of spectra.
+		"""
+		
+		if type(pol).__name__ == 'str':
+			numericPol = StokesCodes[pol.upper()]
+		else:
+			numericPol = pol
+		
+		dataDict = {}
+		for i,b in enumerate(beam):
+			dataDict[b] = data[i,:]
+
+		self.data.append( self._SpectrometerData(obsTime, intTime, dataDict, pol=numericPol) )
+
+	def write(self):
+		"""
+		Fill in the SDFITS file will all of the tables in the correct order.
+		"""
+		
+		def __sortData(x, y):
+			"""
+			Function to sort the self.data list in order of time and then 
+			polarization code.
+			"""
+			
+			xID = x.obsTime*10000000 + abs(x.pol)
+			yID = y.obsTime*10000000 + abs(y.pol)
+			
+			if xID > yID:
+				return 1
+			elif xID < yID:
+				return -1
+			else:
+				return 0
+				
+		# Sort the data set
+		self.data.sort(cmp=__sortData)
+		
+		self.__writePrimary()
+		self.__writeData()
+		
+		# Clear out the data section
+		del(self.data[:])
+		gc.collect()
+
+	def close(self):
+		"""
+		Close out the file.
+		"""
+
+		self.FITS.flush()
+		self.FITS.close()
 
 	def __makeAppendTable(self, extension, AddRows=1):
 		"""
@@ -135,7 +262,8 @@ class SDFITS(object):
 
 		nrows = self.hdulist[extension].data.shape[0]
 		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
-		tempHDU.header = self.hdulist[extension].header.copy()
+		for key in list(self.hdulist[extension].header.keys()):
+			tempHDU.header.update(key, self.hdulist[extension].header[key])
 	
 		return tempHDU
 
@@ -148,448 +276,277 @@ class SDFITS(object):
 		self.hdulist[extension] = tempHDU
 		self.flush()
 
-	def __addDataSingle(self, frame):
+	def __writePrimary(self):
 		"""
-		Private function to add a single data entry to a SDFITS file.  This 
-		method is not particular fast since the existing file needs to be copied
-		to append data to the end of a particular extension.
+		Write the primary HDU to file.
 		"""
 
-		if self.mode == 'TBW':
-			stand = frame.parseID()
-		else:
-			stand, pol = frame.parseID()
-		extension = self.__findExtension(stand)
-
-		if extension is None:
-			if self.verbose:
-				print "Stand '%i' not found, creating new binary table extension" % stand
-			self.standCount = self.standCount + 1
-
-			if self.mode == 'TBW':
-				freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength, SampleRate=self.sampleRate)
-
-				# Data - power spectrum
-				c1 = pyfits.Column(name='data', format='%iD' % (self.fftLength-1), array=framePS.astype(numpy.float_))
-				# Polarization
-				c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0, 1], dtype=numpy.int16))
-				# Time
-				c3 = pyfits.Column(name='time', format='1D', array=numpy.array([0, 0], dtype=numpy.int16))
-			else:
-				centralFreq = frame.getCentralFreq()
-				data = frame.data.iq
-				data.shape = (1,data.shape[0])
-				freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
-				freq += centralFreq
-				framePS.shape = (1,framePS.shape[0])
-
-				# Data - power spectrum
-				c1 = pyfits.Column(name='data', format='%iD' % (self.fftLength-1), array=framePS.astype(numpy.float_))
-				# Polarization
-				c2 = pyfits.Column(name='pol', format='1I')
-				# Time
-				c3 = pyfits.Column(name='time', format='1D')
-
-			# Define the collection of columns
-			colDefs = pyfits.ColDefs([c1, c2, c3])
-
-			# Get the time of the first sample and convert it to a datetime
-			self.firstSamples[stand] = long(frame.data.timeTag / dp_common.fS)
-			firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
-
-			sdfits = pyfits.new_table(colDefs)
-			sdfits.header.update('EXTNAME', 'SINGLE DISH', after='tfields')
-			sdfits.header.update('EXTVER', self.standCount, after='EXTNAME')
-			sdfits.header.update('STAND', stand, after='EXTVER')
-
-			# Define static fields - core
-			sdfits.header.update('OBJECT', 'zenith')
-			sdfits.header.update('TELESCOP', self.site)
-			sdfits.header.update('BANDWID', 78.0e6)
-			sdfits.header.update('DATE-OBS', firstSample.isoformat('T'))
-			sdfits.header.update('EXPOSURE', 0.0)
-			sdfits.header.update('TSYS', 1.0)
-			# Define static fields - virtual columns
-			sdfits.header.update('CTYPE1', 'FREQ-OBS')
-			sdfits.header.update('CRVAL1', freq[0])
-			sdfits.header.update('CRPIX1', 1)
-			sdfits.header.update('CDELT1', (freq[1]-freq[0]))
-			sdfits.header.update('CTYPE2', 'HA')
-			sdfits.header.update('CRVAL2', 0.0)
-			sdfits.header.update('CUNIT2', 'degrees')
-			sdfits.header.update('CTYPE3', 'DEC')
-			sdfits.header.update('CRVAL3', 0.0)
-			sdfits.header.update('CUNIT3', 'degrees')
-			sdfits.header.update('OBSMODE', self.mode)
-			sdfits.header.update('NCHAN', len(freq))
-
-			self.hdulist.append(sdfits)
-			self.hdulist[0].header.update('NSTAND', self.standCount)
-			self.flush()
-			
-			self.hdulist[-1].data.field('pol')[0] = 0
-			self.hdulist[-1].data.field('time')[0] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-			if self.mode == 'TBW':
-				self.hdulist[-1].data.field('pol')[1] = 1
-				self.hdulist[-1].data.field('time')[1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-		else:
-			# Make sure that we have a first sample time to reference to if 
-			# we are adding on to the end of a file
-			if stand not in self.firstSamples.keys():
-				firstSample = datetime.strptime(self.hdulist[extension].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
-				self.firstSamples[stand] = long(time.mktime(firstSample.timetuple()))
-
-			nrows = self.hdulist[extension].data.shape[0]
-			if self.mode == 'TBW':
-				freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength, SampleRate=self.sampleRate)
-
-				tempHDU = self.__makeAppendTable(extension, AddRows=2)
-				tempHDU.data.field('data')[nrows] = numpy.squeeze(framePS.astype(numpy.float_)[0,:])
-				tempHDU.data.field('pol')[nrows] = numpy.array([0], dtype=numpy.int16)
-				tempHDU.data.field('time')[nrows] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-				tempHDU.data.field('data')[nrows+1] = numpy.squeeze(framePS.astype(numpy.float_)[1,:])
-				tempHDU.data.field('pol')[nrows+1] = numpy.array([1], dtype=numpy.int16)
-				tempHDU.data.field('time')[nrows+1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-			else:
-				centralFreq = frame.getCentralFreq()
-				data = frame.data.iq
-				data.shape = (1,data.shape[0])
-				freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
-				freq += centralFreq
-				framePS.shape = (1,framePS.shape[0])
-
-				tempHDU = self.__makeAppendTable(extension, AddRows=1)
-				tempHDU.data.field('data')[nrows:] = framePS.astype(numpy.float_)
-				tempHDU.data.field('pol')[nrows:] = numpy.array([pol], dtype=numpy.int16)
-				tempHDU.data.field('time')[nrows:] = numpy.array([frame.data.timeTag]) / dp_common.fS - self.firstSamples[stand]
-
-			self.__applyAppendTable(extension, tempHDU)
-
-		self.flush()
-
-	def __addDataQueue(self, frame):
-		"""
-		Private function similar to __addDataSignle, but it saves the data to 
-		memory (self.queue) to be written once the queue fills up.
-		"""
-
-		if self.mode == 'TBW':
-			stand = frame.parseID()
-		else:
-			stand, pol = frame.parseID()
-		if stand not in self.queue.keys():
-			self.queue[stand] = []
-		self.queue[stand].append(frame)
-
-		if len(self.queue[stand]) >= self.queueLimit:
-			start = 0
-			extension = self.__findExtension(stand)
-
-			if extension is None:
-				if self.verbose:
-					print "Stand '%i' not found, creating new binary table extension" % stand
-				self.standCount = self.standCount + 1
-
-				if self.mode == 'TBW':
-					freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength, SampleRate=self.sampleRate)
-
-					# Data - power spectrum
-					c1 = pyfits.Column(name='data', format='%iD' % (self.fftLength-1), array=framePS.astype(numpy.float_))
-					# Polarization
-					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0, 1], dtype=numpy.int16))
-					# Time
-					c3 = pyfits.Column(name='time', format='1D', array=numpy.array([0, 0], dtype=numpy.int16))
-				else:
-					centralFreq = frame.getCentralFreq()
-					data = frame.data.iq
-					data.shape = (1,data.shape[0])
-					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
-					freq += centralFreq
-					framePS.shape = (1,framePS.shape[0])
-
-					# Data - power spectrum
-					c1 = pyfits.Column(name='data', format='%iD' % (self.fftLength-1), array=framePS.astype(numpy.float_))
-					# Polarization
-					c2 = pyfits.Column(name='pol', format='1I')
-					# Time
-					c3 = pyfits.Column(name='time', format='1D')
-
-				# Define the collection of columns
-				colDefs = pyfits.ColDefs([c1, c2, c3])
-
-				# Get the time of the first sample and convert it to a datetime
-				self.firstSamples[stand] = long(frame.data.timeTag / dp_common.fS)
-				firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
-
-				sdfits = pyfits.new_table(colDefs)
-				sdfits.header.update('EXTNAME', 'SINGLE DISH', after='tfields')
-				sdfits.header.update('EXTVER', self.standCount, after='EXTNAME')
-				sdfits.header.update('STAND', stand, after='EXTVER')
-
-				# Define static fields - core
-				sdfits.header.update('OBJECT', 'zenith')
-				sdfits.header.update('TELESCOP', self.site)
-				sdfits.header.update('BANDWID', 78.0e6)
-				sdfits.header.update('DATE-OBS', firstSample.isoformat('T'))
-				sdfits.header.update('EXPOSURE', 0.0)
-				sdfits.header.update('TSYS', 1.0)
-				# Define static fields - virtual columns
-				sdfits.header.update('CTYPE1', 'FREQ-OBS')
-				sdfits.header.update('CRVAL1', freq[0])
-				sdfits.header.update('CRPIX1', 1)
-				sdfits.header.update('CDELT1', (freq[1]-freq[0]))
-				sdfits.header.update('CTYPE2', 'HA')
-				sdfits.header.update('CRVAL2', 0.0)
-				sdfits.header.update('CUNIT2', 'degrees')
-				sdfits.header.update('CTYPE3', 'DEC')
-				sdfits.header.update('CRVAL3', 0.0)
-				sdfits.header.update('CUNIT3', 'degrees')
-				sdfits.header.update('OBSMODE', self.mode)
-				sdfits.header.update('NCHAN', len(freq))
-
-				self.hdulist.append(sdfits)
-				self.hdulist[0].header.update('NSTAND', self.standCount)
-				self.flush()
-				
-				self.hdulist[-1].data.field('pol')[0] = 0
-				self.hdulist[-1].data.field('time')[0] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-				if self.mode == 'TBW':
-					self.hdulist[-1].data.field('pol')[1] = 1
-					self.hdulist[-1].data.field('time')[1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-
-				self.flush()
-				extension = self.__findExtension(stand)
-
-			# Make sure that we have a first sample time to reference to if 
-			# we are adding on to the end of a file
-			if stand not in self.firstSamples.keys():
-				firstSample = long(datetime.strptime(self.hdulist[extension].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
-				self.firstSamples[stand] = time.mktime(firstSample.timetuple())
-
-			nrows = self.hdulist[extension].data.shape[0]
-			if self.mode == 'TBW':
-				tempHDU = self.__makeAppendTable(extension, AddRows=2*(self.queueLimit-start))
-				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
-					freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength)
-
-					tempHDU.data.field('data')[nrows+2*count] = numpy.squeeze(framePS.astype(numpy.float_)[0,:])
-					tempHDU.data.field('pol')[nrows+2*count] = 0
-					tempHDU.data.field('time')[nrows+2*count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-					tempHDU.data.field('data')[nrows+2*count+1] = numpy.squeeze(framePS.astype(numpy.float_)[1,:])
-					tempHDU.data.field('pol')[nrows+2*count+1] = 1
-					tempHDU.data.field('time')[nrows+2*count+1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-			else:
-				tempHDU = self.__makeAppendTable(extension, AddRows=(self.queueLimit-start))
-				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
-					centralFreq = frame.getCentralFreq()
-					data = frame.data.iq
-					data.shape = (1,data.shape[0])
-					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
-					freq += centralFreq
-					framePS.shape = (1,framePS.shape[0])
-
-					stand,pol = frame.parseID()
-					tempHDU.data.field('data')[nrows+2*count] = numpy.squeeze(framePS.astype(numpy.float_)[0,:])
-					tempHDU.data.field('pol')[nrows+2*count] = pol
-					tempHDU.data.field('time')[nrows+2*count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-
-			self.__applyAppendTable(extension, tempHDU)
-			del(self.queue[stand])
-
-	def __emptyQueue(self):
-		"""
-		Private function to empty a empty the self.queue dictionary on demand
-		if it exists.
-		"""
-
-		for stand in self.queue.keys():
-			if len(self.queue[stand]) == 0:
-				continue
-			queueSize = len(self.queue[stand])
-			start = 0
-			extension = self.__findExtension(stand)
-
-			if extension is None:
-				start = 1
-				frame = self.queue[stand][0]
-				
-				if self.verbose:
-					print "Stand '%i' not found, creating new binary table extension" % stand
-				self.standCount = self.standCount + 1
-
-				if self.mode == 'TBW':
-					freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength, SampleRate=self.sampleRate)
-
-					# Data - power spectrum
-					c1 = pyfits.Column(name='data', format='%iD' % (self.fftLength-1), array=framePS.astype(numpy.float_))
-					# Polarization
-					c2 = pyfits.Column(name='pol', format='1I', array=numpy.array([0, 1], dtype=numpy.int16))
-					# Time
-					c3 = pyfits.Column(name='time', format='1D', array=numpy.array([0, 0], dtype=numpy.int16))
-				else:
-					centralFreq = frame.getCentralFreq()
-					data = frame.data.iq
-					data.shape = (1,data.shape[0])
-					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
-					freq += centralFreq
-
-					# Data - power spectrum
-					c1 = pyfits.Column(name='data', format='%iD' % (self.fftLength-1), array=framePS.astype(numpy.float_))
-					# Polarization
-					c2 = pyfits.Column(name='pol', format='1I')
-					# Time
-					c3 = pyfits.Column(name='time', format='1D')
-
-				# Define the collection of columns
-				colDefs = pyfits.ColDefs([c1, c2, c3])
-
-				# Get the time of the first sample and convert it to a datetime
-				self.firstSamples[stand] = long(frame.data.timeTag / dp_common.fS)
-				firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
-
-				# Get the time of the first sample and convert it to a datetime
-				self.firstSamples[stand] = long(frame.data.timeTag / dp_common.fS)
-				firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
-
-				sdfits = pyfits.new_table(colDefs)
-				sdfits.header.update('EXTNAME', 'SINGLE DISH', after='tfields')
-				sdfits.header.update('EXTVER', self.standCount, after='EXTNAME')
-				sdfits.header.update('STAND', stand, after='EXTVER')
-
-				# Define static fields - core
-				sdfits.header.update('OBJECT', 'zenith')
-				sdfits.header.update('TELESCOP', 'LWA-1')
-				sdfits.header.update('BANDWID', 78.0e6)
-				sdfits.header.update('DATE-OBS', firstSample.isoformat('T'))
-				sdfits.header.update('EXPOSURE', 0.0)
-				sdfits.header.update('TSYS', 1.0)
-				# Define static fields - virtual columns
-				sdfits.header.update('CTYPE1', 'FREQ-OBS')
-				sdfits.header.update('CRVAL1', freq[0])
-				sdfits.header.update('CRPIX1', 1)
-				sdfits.header.update('CDELT1', (freq[1]-freq[0]))
-				sdfits.header.update('CTYPE2', 'HA')
-				sdfits.header.update('CRVAL2', 0.0)
-				sdfits.header.update('CUNIT2', 'degrees')
-				sdfits.header.update('CTYPE3', 'DEC')
-				sdfits.header.update('CRVAL3', 0.0)
-				sdfits.header.update('CUNIT3', 'degrees')
-				sdfits.header.update('OBSMODE', self.mode)
-				sdfits.header.update('NCHAN', len(freq))
-
-				self.hdulist.append(sdfits)
-				self.hdulist[0].header.update('NSTAND', self.standCount)
-				self.flush()
-				
-				self.hdulist[-1].data.field('pol')[0] = 0
-				self.hdulist[-1].data.field('time')[0] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-				if self.mode == 'TBW':
-					self.hdulist[-1].data.field('pol')[1] = 1
-					self.hdulist[-1].data.field('time')[1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-
-				self.flush()
-				extension = self.__findExtension(stand)
-
-			# Make sure that we have a first sample time to reference to if 
-			# we are adding on to the end of a file
-			if stand not in self.firstSamples.keys():
-				firstSample = long(datetime.strptime(self.hdulist[extension].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
-				self.firstSamples[stand] = time.mktime(firstSample.timetuple())
-
-			nrows = self.hdulist[extension].data.shape[0]
-			if self.mode == 'TBW':
-				tempHDU = self.__makeAppendTable(extension, AddRows=2*(queueSize-start))
-				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
-					freq, framePS = correlate.calcSpectra(frame.data.xy, LFFT=self.fftLength)
-
-					tempHDU.data.field('data')[nrows+2*count] = numpy.squeeze(framePS.astype(numpy.float_)[0,:])
-					tempHDU.data.field('pol')[nrows+2*count] = 0
-					tempHDU.data.field('time')[nrows+2*count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-					tempHDU.data.field('data')[nrows+2*count+1] = numpy.squeeze(framePS.astype(numpy.float_)[1,:])
-					tempHDU.data.field('pol')[nrows+2*count+1] = 1
-					tempHDU.data.field('time')[nrows+2*count+1] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-			else:
-				tempHDU = self.__makeAppendTable(extension, AddRows=(queueSize-start))
-				for count,frame in zip(range(len(self.queue[stand][start:])), self.queue[stand][start:]):
-					centralFreq = frame.getCentralFreq()
-					data = frame.data.iq
-					data.shape = (1,data.shape[0])
-					freq, framePS = correlate.calcSpectra(data, LFFT=self.fftLength, SampleRate=self.sampleRate)
-					freq += centralFreq
-					framePS.shape = (1,framePS.shape[0])
-
-					stand,pol = frame.parseID()
-					tempHDU.data.field('data')[nrows+2*count] = numpy.squeeze(framePS.astype(numpy.float_)[0,:])
-					tempHDU.data.field('pol')[nrows+2*count] = pol
-					tempHDU.data.field('time')[nrows+2*count] = frame.data.timeTag / dp_common.fS - self.firstSamples[stand]
-
-			self.__applyAppendTable(extension, tempHDU)
-			del(self.queue[stand])
-
-	def addStandData(self, frame):
-		"""
-		Add a frame object to the SDFITS file.  This function takes care of 
-		figuring out which extension the data goes to and how it should be formated.
-		This function also updates the primary HDU with information about the data, 
-		i.e., TBW data bits.
-		"""
-
-		if self.mode == 'TBW':
-			try:
-				self.hdulist[0].header['TBWBITS']
-			except:
-				self.hdulist[0].header.update('TBWBITS', frame.getDataBits())
-				self.flush()
-
-		if self.UseQueue:
-			self.__addDataQueue(frame)
-		else:
-			self.__addDataSingle(frame)
-
-	def getStandData(self, stand):
-		"""
-		Retrieve a dictionary of all data stored for a particular stand.  The 
-		dictionary keys are:
-		  * *data* - numpy array of data
-		  * *pol* - numpy array of polarizations
-		  * *time* - numpy array of times in samples at f_S since DATE-OBS
-		"""
-
-		extension = self.__findExtension(stand)
+		primary = pyfits.PrimaryHDU()
 		
-		if extension is None:
-			output = {}
-			for key in ['data', 'pol', 'time']:
-				output[key] = None
+		primary.header.update('NAXIS', 0, 'indicates SD file')
+		primary.header.update('EXTEND', True, 'indicates SD file')
+		ts = str(astro.get_date_from_sys())
+		primary.header.update('DATE', ts.split()[0], 'IDI file creation date')
+		primary.header.update('ORIGIN', 'LSL SDFITS writer')
+		primary.header.update('TELESCOP', self.site.name, 'Telescope name')
+		
+		self.FITS.append(primary)
+		self.FITS.flush()
+		
+	def __writeData(self):
+		"""
+		Define the SINGLE DISH table.
+		"""
+		
+		scanList = []
+		dateList = []
+		timeList = []
+		intTimeList = []
+		beamList = []
+		mList = []
+		rawList = []
+		scanCount = 1
+		for i,dataSet in enumerate(self.data):
+			if dataSet.pol == self.stokes[0]:
+				tempMList = {}
+				for stokes in self.stokes:
+					tempMList[stokes] = {}
+		
+			beams = list(dataSet.dataDict.keys())
+			beams.sort()
+			for b in beams:
+				specData = dataSet.dataDict[b]
+				
+				# Load the data into a matrix
+				tempMList[dataSet.pol][b] = specData.ravel()
+				
+				if dataSet.pol == self.stokes[0]:
+					# Observation date and time
+					utc = astro.taimjd_to_utcjd(dataSet.obsTime)
+					date = astro.get_date(utc)
+					date.hours = 0
+					date.minutes = 0
+					date.seconds = 0
+					utc0 = date.to_jd()
+						
+					scanList.append(scanCount)
+					dateList.append('%4i-%02i-%02i' % (date.years, date.months, date.days))
+					timeList.append((utc - utc0)*24*3600)
+					intTimeList.append(dataSet.intTime)
+					beamList.append(b.id)
+					rawList.append(b)
+			
+			if dataSet.pol == self.stokes[-1]:
+				for b in rawList:
+					matrix = numpy.zeros((self.nStokes,self.nChan), dtype=numpy.float32)
+					for p in xrange(self.nStokes):
+						try:
+							print matrix.shape, tempMList[self.stokes[p]][b].shape
+							matrix[p,:] = tempMList[self.stokes[p]][b]
+						except KeyError:
+							print b, tempMList[self.stokes[p]].keys()
+						
+					mList.append(matrix.ravel())
+				scanCount += 1
+				rawList = []
+		
+		# Scan number
+		c1  = pyfits.Column(name='SCAN', format='1I', 
+						array=numpy.array(scanList))
+		## Cycle
+		#c2 = pyfits.Column(name='CYCLE', format='1J', 
+						#array=numpy.array([1 for s in scanList]))
+		# DATE-OBS
+		c3  = pyfits.Column(name='DATE-OBS', format='10A', 
+						array = numpy.array(dateList))
+		# Time elapsed since 0h
+		c4  = pyfits.Column(name='TIME', format='1D', unit = 's', 
+						array = numpy.array(timeList))
+		# Integration time (seconds)
+		c5  = pyfits.Column(name='EXPOSURE', format='1E', unit='s', 
+						array=numpy.array(intTimeList, dtype=numpy.float32))
+		# Object name
+		c6  = pyfits.Column(name='OBJECT', format='16A', 
+						array=numpy.array(['LWA_OBS' for s in scanList]))
+		# Object position (deg and deg)
+		c7  = pyfits.Column(name='OBJ-RA', format='1D', unit='deg', 
+						array=numpy.array([0.0 for s in scanList]))
+		c8  = pyfits.Column(name='OBJ-DEC', format='1D', unit='deg', 
+						array=numpy.array([0.0 for s in scanList]))
+		# Rest frequency (Hz)
+		c9  = pyfits.Column(name='RESTFRQ', format='1D', unit='Hz', 
+						array=numpy.array([0.0 for s in scanList]))
+		# Observation mode
+		c10 = pyfits.Column(name='OBSMODE', format='16A', 
+						array=numpy.array([self.mode for s in scanList]))
+		# Beam (tuning)
+		c11 = pyfits.Column(name='BEAM', format='1I', 
+						array=numpy.array(beamList))
+		# IF
+		c12 = pyfits.Column(name='IF', format='1I', 
+						array=numpy.array([self.freq[0].id for s in scanList]))
+		# Frequency resolution (Hz)
+		c13 = pyfits.Column(name='FREQRES', format='1D', unit='Hz', 
+						array=numpy.array([self.freq[0].chWidth for s in scanList]))
+		# Bandwidth of the system (Hz)
+		c14 = pyfits.Column(name='BANDWID', format='1D', unit='Hz', 
+						array=numpy.array([self.freq[0].totalBW for s in scanList]))
+		# Frequency axis - 1
+		c15 = pyfits.Column(name='CRPIX1', format='1E',
+						array=numpy.array([self.refPix for s in scanList]))
+		c16 = pyfits.Column(name='CRVAL1', format='1D', unit='Hz', 
+						array=numpy.array([self.refVal for s in scanList]))
+		c17 = pyfits.Column(name='CDELT1', format='1D', unit='Hz', 
+						array=numpy.array([self.freq[0].chWidth for s in scanList]))
+		c18 = pyfits.Column(name='CRVAL3', format='1D', unit='deg', 
+						array=numpy.array([0.0 for s in scanList]))
+		# Dec. axis - 4
+		c19 = pyfits.Column(name='CRVAL4', format='1D', unit='deg', 
+						array=numpy.array([0.0 for s in scanList]))
+		## Scan rate
+		#c20 = pyfits.Column(name='SCANRATE', format='2E', unit='deg/s', 
+						#array=numpy.array([[0,0] for s in scanList]))
+						
+		#
+		# Calibration information (currently not implemented)
+		#
+		## System temperature  *** UNKNOWN ***
+		#c21 =  pyfits.Column(name='TSYS', format='2E', unit='K', 
+						#array=numpy.array([[self.tSys,self.tSys] for s in scanList]))
+		## CALFCTR *** UNKNOWN ***
+		#c22 =  pyfits.Column(name='CALFCTR', format='2E', unit='K', 
+						#array=numpy.array([[1,1] for s in scanList]))
+		
+		# Data
+		c23 = pyfits.Column(name='DATA', format='%iE' % (self.nStokes*self.nChan), unit='UNCALIB', 
+						array=numpy.array(mList))
+						
+		#
+		# Data masking table (currently not implemented)
+		#
+		# Flag table
+		#c24 = pyfits.Column(name='FLAGGED', format='%iB' % (self.nStokes*self.nChan), 
+						#array=numpy.array([[0,]*self.nStokes*self.nChan for s in scanList]))
+		
+		#
+		# Calibration information (currently not implemented)
+		#
+		## TCAL *** UNKNOWN ***
+		#c25 = pyfits.Column(name='TCAL', format='2E', unit='Jy', 
+						#array=numpy.array([[1,1] for s in scanList]))
+		## TCALTIME *** UNKNOWN ***
+		#c26 = pyfits.Column(name='TCALTIME', format='16A', 
+						#array=numpy.array(['UNKNOWN' for s in scanList]))
+		
+		#
+		# Pointing information (currently not implemented)
+		#
+		## Azimuth *** UNKNOWN ***
+		#c27 = pyfits.Column(name='AZIMUTH', format='1E', unit='deg', 
+						#array=numpy.array([0 for s in scanList]))
+		## Elevation *** UNKNOWN ***
+		#c28 = pyfits.Column(name='ELEVATIO', format='1E', unit='deg', 
+						#array=numpy.array([0 for s in scanList]))
+		## Parallactic angle *** UNKNOWN ***
+		#c29 = pyfits.Column(name='PARANGLE', format='1E', unit='deg', 
+						#array=numpy.array([0 for s in scanList]))
+		
+		#
+		# Focusing information (currently not implemented and probably never will be)
+		#
+		## FOCUSAXI *** NOT NEEDED ***
+		#c30 = pyfits.Column(name='FOCUSAXI', format='1E', unit='m', 
+						#array=numpy.array([0 for s in scanList]))
+		## FOCUSTAN *** NOT NEEDED ***
+		#c31 = pyfits.Column(name='FOCUSTAN', format='1E', unit='m', 
+						#array=numpy.array([0 for s in scanList]))
+		## FOCUSROT *** NOT NEEDED ***
+		#c32 = pyfits.Column(name='FOCUSROT', format='1E', unit='deg', 
+						#array=numpy.array([0 for s in scanList]))
+		
+		#
+		# Weather information (currently not implemented)
+		#
+		## Ambient temperature *** UNKNOWN ***
+		#c33 = pyfits.Column(name='TAMBIENT', format='1E', unit='C', 
+						#array=numpy.array([0 for s in scanList]))
+		## Air pressure *** UNKNOWN ***
+		#c34 = pyfits.Column(name='PRESSURE', format='1E', unit='Pa', 
+						#array=numpy.array([0 for s in scanList]))
+		## Humidity *** UNKNOWN ***
+		#c35 = pyfits.Column(name='HUMIDITY', format='1E', unit='%', 
+						#array=numpy.array([0 for s in scanList]))
+		## Wind speed *** UNKNOWN ***
+		#c36 = pyfits.Column(name='WINDSPEE', format='1E', unit='m/s', 
+						#array=numpy.array([0 for s in scanList]))
+		## Wind direction *** UNKNOWN ***
+		#c37 = pyfits.Column(name='WINDDIRE', format='1E', unit='deg', 
+						#array=numpy.array([0 for s in scanList]))
+		
+		# Gather together all of the needed columns and figure out which ones
+		# store the data and flag tables.  This information is needed later to
+		# set the appropriate TDIM keywords.
+		cs = []
+		dataIndex = 0
+		#flagIndex = 0
+		n = 1
+		for i in xrange(1, 38):
+			try:
+				cs.append(eval('c%i' % i))
+				if eval('c%i.name' %i) == 'DATA':
+					dataIndex = n
+				#if eval('c%i.name' %i) == 'FLAGGED':
+					#flagIndex = n
+				n += 1
+			except NameError:
+				pass
+		colDefs = pyfits.ColDefs(cs)
+
+		# Create the SINGLE DISH table and update its header
+		sd = pyfits.new_table(colDefs)
+		
+		## Single disk keywords - order seems to matter
+		sd.header.update('EXTNAME', 'SINGLE DISH', 'SDFITS table name', after='TFIELDS')
+		sd.header.update('NMATRIX', 1, after='EXTNAME')
+		sd.header.update('OBSERVER', self.observer, 'Observer name(s)', before='TTYPE1')
+		sd.header.update('PROJID', self.project, 'Project name', before='TTYPE1')
+		sd.header.update('TELESCOP', self.site.name, 'Telescope name', before='TTYPE1')
+		x,y,z = self.site.getGeocentricLocation()
+		sd.header.update('OBSGEO-X', x, '[m] Antenna ECEF X-coordinate', before='TTYPE1')
+		sd.header.update('OBSGEO-Y', y, '[m] Antenna ECEF Y-coordinate', before='TTYPE1')
+		sd.header.update('OBSGEO-Z', z, '[m] Antenna ECEF Z-coordinate', before='TTYPE1')
+		
+		sd.header.update('SPECSYS', 'LSRK', 'Doppler reference frame (transformed)')
+		sd.header.update('SSYSOBS', 'TOPOCENT', 'Doppler reference frame of observation')
+		sd.header.update('EQUINOX', 2000.0, 'Equinox of equatorial coordinates')
+		sd.header.update('RADESYS', 'FK5', 'Equatorial coordinate system frame')
+		
+		## Data and flag table dimensionality
+		sd.header.update('TDIM%i' % dataIndex, '(%i,2,2,%i)' % (self.nChan, self.nStokes), after='TFORM%i' % dataIndex)
+		#sd.header.update('TDIM%i' % flagIndex, '(%i,1,1,%i)' % (self.nChan, self.nStokes), after='TFORM%i' % flagIndex)
+		
+		## Data and flag table axis descriptions
+		### Frequency
+		sd.header.update('CTYPE1', 'FREQ', 'axis 1 is FREQ (frequency)', before='TTYPE1')
+		sd.header.update('CDELT1', self.freq[0].chWidth, before='TTYPE1')
+		sd.header.update('CRPIX1', self.refPix, before='TTYPE1')
+		sd.header.update('CRVAL1', self.refVal, before='TTYPE1')
+		### Stokes
+		sd.header.update('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)', before='TTYPE1')
+		if self.stokes[0] < 0:
+			sd.header.update('CDELT2', -1.0, before='TTYPE1')
 		else:
-			output = {}
-			for key in ['data', 'pol', 'time']:
-				output[key] = self.hdulist[extension].data.field(key)
-		return output
-
-
-class TBW(SDFITS):
-	"""
-	Sub-class of SDFITS for dealing with TBW data in particular.
-	"""
-
-	def __init__(self, filename, LFFT=128, Overwrite=False, UseQueue=True, verbose=False):
-		super(TBW, self).__init__(filename, 'TBW', LFFT=LFFT, Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
-
-
-class TBN(SDFITS):
-	"""
-	Sub-class of SDFITS for dealing with TBN data in particular.
-	"""
-
-	def __init__(self, filename, LFFT=128, Overwrite=False, UseQueue=True, verbose=False):
-		super(TBN, self).__init__(filename, 'TBN', LFFT=LFFT, Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
-
-
-#class DRX(SDFITS):
-	#"""
-	#Sub-class of SDFITS for dealing with DRX data in particular.
-	#"""
-
-	#def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
-		#super(DRX, self).__init__(filename, 'DRX', LFFT=4096, Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
+			sd.header.update('CDELT2', 1.0, before='TTYPE1')
+		sd.header.update('CRPIX2', 1.0, before='TTYPE1')
+		sd.header.update('CRVAL2', float(self.stokes[0]), before='TTYPE1')
+		### RA
+		sd.header.update('CTYPE3', 'RA', 'axis 3 is RA axis (pointing)', before='TTYPE1')
+		sd.header.update('CRPIX3', 1.0, before='TTYPE1')
+		sd.header.update('CDELT3', -1.0, before='TTYPE1')
+		### Dec
+		sd.header.update('CTYPE4', 'DEC', 'axis 4 is Dec. axis (pointing)', before='TTYPE1')
+		sd.header.update('CRPIX4', 1.0, before='TTYPE1')
+		sd.header.update('CDELT4', 1.0, before='TTYPE1')
+		
+		self.FITS.append(sd)
+		self.FITS.flush()

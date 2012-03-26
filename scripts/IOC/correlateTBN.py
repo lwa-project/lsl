@@ -102,7 +102,7 @@ def parseConfig(args):
 		elif opt in ('-l', '--fft-length'):
 			config['LFFT'] = int(value)
 		elif opt in ('-t', '--avg-time'):
-			config['avgTime'] = int(value)
+			config['avgTime'] = float(value)
 		elif opt in ('-s', '--samples'):
 			config['samples'] = int(value)
 		elif opt in ('-o', '--offset'):

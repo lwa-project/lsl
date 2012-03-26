@@ -46,7 +46,7 @@ NumericStokes = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V',
 
 def mergeBaseline(ant1, ant2, shift=16):
 	"""
-	Merage two stand ID numbers into a single baseline using the specified bit 
+	Merge two stand ID numbers into a single baseline using the specified bit 
 	shift size.
 	"""
 	
@@ -54,7 +54,7 @@ def mergeBaseline(ant1, ant2, shift=16):
 
 def splitBaseline(baseline, shift=16):
 	"""
-	Given a baseline, split it into it consitnet stand ID numbers.
+	Given a baseline, split it into it consistent stand ID numbers.
 	"""
 	
 	part = 2**shift - 1
@@ -158,7 +158,7 @@ class IDI(object):
 		self.filename = filename
 		self.verbose = verbose
 
-		# Observation-specifc information
+		# Observation-specific information
 		self.refTime = self.parseRefTime(refTime)
 		self.nAnt = 0
 		self.nChan = 0
@@ -547,7 +547,7 @@ class IDI(object):
 		# Central time of period covered by record in days
 		c1 = pyfits.Column(name='TIME', unit='DAYS', format='1D', 
 						array=numpy.zeros((self.nAnt,), dtype=numpy.float64))
-		# Durration of period covered by record in days
+		# Duration of period covered by record in days
 		c2 = pyfits.Column(name='TIME_INTERVAL', unit='DAYS', format='1E', 
 						array=(2*numpy.ones((self.nAnt,), dtype=numpy.float32)))
 		# Antenna name
@@ -606,7 +606,7 @@ class IDI(object):
 		# Central time of period covered by record in days
 		c1 = pyfits.Column(name='TIME', unit='DAYS', format='1D', 
 						array=numpy.zeros((self.nAnt,), dtype=numpy.float64))
-		# Durration of period covered by record in days
+		# Duration of period covered by record in days
 		c2 = pyfits.Column(name='TIME_INTERVAL', unit='DAYS', format='1E',
 						array=(2*numpy.ones((self.nAnt,), dtype=numpy.float32)))
 		# Source ID
@@ -627,22 +627,22 @@ class IDI(object):
 		# Band frequency in Hz
 		c8 = pyfits.Column(name='BAND_FREQ', unit='HZ', format='1D',
 						array=(numpy.zeros((self.nAnt,), dtype=numpy.float64)+self.freq[0].bandFreq))
-		# Referance antenna number (pol. 1)
+		# Reference antenna number (pol. 1)
 		c9 = pyfits.Column(name='REFANT_1', format='1J',
 						array=numpy.ones((self.nAnt,), dtype=numpy.int32))
 		# Real part of the bandpass (pol. 1)
 		c10 = pyfits.Column(name='BREAL_1', format='%dE' % self.nChan,
 						array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
-		# Imagniary part of the bandpass (pol. 1)
+		# Imaginary part of the bandpass (pol. 1)
 		c11 = pyfits.Column(name='BIMAG_1', format='%dE' % self.nChan,
 						array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
-		# Referance antenna number (pol. 2)
+		# Reference antenna number (pol. 2)
 		c12 = pyfits.Column(name='REFANT_2', format='1J',
 						array=numpy.ones((self.nAnt,), dtype=numpy.int32))
 		# Real part of the bandpass (pol. 2)
 		c13 = pyfits.Column(name='BREAL_2', format='%dE' % self.nChan,
 						array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
-		# Imagniary part of the bandpass (pol. 2)
+		# Imaginary part of the bandpass (pol. 2)
 		c14 = pyfits.Column(name='BIMAG_2', format='%dE' % self.nChan,
 						array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
 
@@ -742,7 +742,7 @@ class IDI(object):
 						array=numpy.array(('J2000',)).repeat(nSource))
 		c13 = pyfits.Column(name='EPOCH', format='1D', 
 						array=numpy.zeros((nSource,), dtype=numpy.float64) + 2000.0)
-		# Appearrent right ascension in degrees
+		# Apparent right ascension in degrees
 		c14 = pyfits.Column(name='RAAPP', format='1D', 
 						array=numpy.array(raList))
 		# Apparent declination in degrees
@@ -799,7 +799,7 @@ class IDI(object):
 		(mapper, inverseMapper) = self.readArrayMapper()
 		ids = ag.keys()
 
-		# Retrive the original list of Antenna objects and convert them to
+		# Retrieve the original list of Antenna objects and convert them to
 		# a dictionary index by the stand ID number
 		inputAnts = {}
 		for ant in self.array[0]['inputAnts']:
@@ -863,7 +863,7 @@ class IDI(object):
 				if mapper is not None:
 					stand1 = mapper[stand1]
 					stand2 = mapper[stand2]
-				# Recontruct the baseline in FITS IDI format
+				# Reconstruct the baseline in FITS IDI format
 				baselineMapped = mergeBaseline(stand1, stand2, shift=8)
 
 				if (stand1 not in ids) or (stand2 not in ids):
@@ -938,7 +938,7 @@ class IDI(object):
 		# Time elapsed since 0h
 		c4 = pyfits.Column(name='TIME', format='1D', unit = 'DAYS', 
 						array = numpy.array(timeList))
-		# Inegration time (seconds)
+		# Integration time (seconds)
 		c5 = pyfits.Column(name='INTTIM', format='1D', unit='SECONDS', 
 						array=numpy.array(intTimeList, dtype=numpy.float32))
 		# U coordinate (light seconds)
