@@ -9,17 +9,19 @@ from lsl.common.paths import dataBuild as dataPath
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
+from lsl.reader import drspec
 from lsl.reader import errors
 
 
 __revision__ = "$ Revision: 2 $"
-__version__  = "0.3"
+__version__  = "0.4"
 __author__    = "Jayce Dowell"
 
 
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
+drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
 
 
 class reader_tests(unittest.TestCase):
@@ -365,6 +367,7 @@ class reader_tests(unittest.TestCase):
 		
 		# Filter code
 		self.assertEqual(cFrame.getFilterCode(), drx.getSampleRate(fh, FilterCode=True))
+		fh.close()
 
 	def test_drx_comps(self):
 		"""Test the DRX frame comparison operators (>, <, etc.) for time tags."""
@@ -432,6 +435,123 @@ class reader_tests(unittest.TestCase):
 		for i in range(4096):
 			self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 6)
 
+	### DR Spectrometer ###
+
+	def test_drspec_read(self):
+		"""Test reading in a frame from a DR spectrometer file."""
+
+		fh = open(drspecFile, 'rb')
+		# First frame is really DR spectrometer and stores the IDs
+		frame1 = drspec.readFrame(fh)
+		beam = frame1.parseID()
+		self.assertEqual(beam, 3)
+
+		# Second frame
+		frame2 = drspec.readFrame(fh)
+		beam = frame2.parseID()
+		self.assertEqual(beam, 3)
+		fh.close()
+
+	#def test_drspec_errors(self):
+		#"""Test reading in all frames from a truncated DR spectrometer file."""
+
+		#fh = open(drspecFile, 'rb')
+		## Frames 1 through 8
+		#for i in range(1,8):
+			#frame = drspec.readFrame(fh)
+
+		## Last frame should be an error (errors.eofError)
+		#self.assertRaises(errors.eofError, drspec.readFrame, fh)
+		#fh.close()
+		
+		## If we offset in the file by 1 byte, we should be a 
+		## sync error (errors.syncError).
+		#fh = open(drspecFile, 'rb')
+		#fh.seek(1)
+		#self.assertRaises(errors.syncError, drspec.readFrame, fh)
+		#fh.close()
+		
+	#def test_drspec_rate(self):
+		#"""Test finding out the DR spectrometer sample rate."""
+		
+		#fh = open(drspecFile, 'rb')
+		#cFrame = drspec.readFrame(fh)
+		#fh.seek(0)
+		
+		## Sample rate
+		#self.assertEqual(cFrame.getSampleRate(), drspec.getSampleRate(fh))
+		
+		## Filter code
+		#self.assertEqual(cFrame.getFilterCode(), drspec.getSampleRate(fh, FilterCode=True))
+		#fh.close()
+
+	#def test_drspec_comps(self):
+		#"""Test the DR spectrometer frame comparison operators (>, <, etc.) for time tags."""
+
+		#fh = open(drspecFile, 'rb')
+		## Frames 1 through 7
+		#frames = []
+		#for i in range(1,8):
+			#frames.append(drspec.readFrame(fh))
+		#fh.close()
+
+		#self.assertTrue(0 < frames[0])
+		#self.assertFalse(0 > frames[0])
+		#self.assertTrue(frames[-1] >= frames[0])
+		#self.assertFalse(frames[-1] <= frames[0])
+		#self.assertTrue(frames[0] == frames[0])
+		#self.assertFalse(frames[0] == frames[-1])
+		#self.assertFalse(frames[0] != frames[0])
+		
+	#def test_drspec_sort(self):
+		#"""Test sorting DR spectrometer frames by time tags."""
+		
+		#fh = open(drspecFile, 'rb')
+		## Frames 1 through 7
+		#frames = []
+		#for i in range(1,8):
+			#frames.append(drspec.readFrame(fh))
+		
+		#frames.sort()
+		#frames = frames[::-1]
+		
+		#for i in xrange(1,len(frames)):
+			#self.assertTrue( frames[i-1] >= frames[i] )
+		#fh.close()
+
+	#def test_drspec_math(self):
+		#"""Test mathematical operations on DR spectrometer frame data via frames."""
+
+		#fh = open(drspecFile, 'rb')
+		## Frames 1 through 7
+		#frames = []
+		#for i in range(1,8):
+			#frames.append(drspec.readFrame(fh))
+		#fh.close()
+
+		#nPts = frames[0].data.X0.size
+
+		## Multiplication
+		#frameT = frames[0] * 2.0
+		#for i in xrange(nPts):
+			#self.assertAlmostEqual(frameT.data.X0[i], 2*frames[0].data.X0[i], 6)
+		#frameT *= 2.0
+		#for i in xrange(nPts):
+			#self.assertAlmostEqual(frameT.data.X1[i], 4*frames[0].data.X1[i], 6)
+		#frameT = frames[0] * frames[1]
+		#for i in xrange(nPts):
+			#self.assertAlmostEqual(frameT.data.Y0[i], frames[0].data.Y0[i]*frames[1].data.Y0[i], 6)
+		
+		## Addition
+		#frameA = frames[0] + 2.0
+		#for i in xrange(nPts):
+			#self.assertAlmostEqual(frameA.data.X0[i], 2+frames[0].data.X0[i], 6)
+		#frameA += 2.0
+		#for i in xrange(nPts):
+			#self.assertAlmostEqual(frameA.data.X1[i], 4+frames[0].data.X1[i], 6)
+		#frameA = frames[0] + frames[1]
+		#for i in xrange(nPts):
+			#self.assertAlmostEqual(frameA.data.Y0[i], frames[0].data.Y0[i]+frames[1].data.Y0[i], 6)
 
 class reader_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.reader units 

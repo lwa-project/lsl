@@ -1,3 +1,8 @@
+Software Digitial Processor
+===========================
+.. autoclass:: lsl.common.dp.SoftwareDP
+   :members:
+
 Simulated Stand Response
 ========================
 .. automodule:: lsl.sim.nec_util
@@ -9,4 +14,5 @@ Geodesy
 
 .. automodule:: lsl.misc.geodesy
    :members: 
+
 

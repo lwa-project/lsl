@@ -909,7 +909,7 @@ class IDI(object):
 						except KeyError:
 							stand1, stand2 = splitBaseline(bl, shift=16)
 							newBL = mergeBaseline(stand2, stand1, shift=16)
-							print bl, bl in tempMList[self.stokes[p]], stand1, stand2, newBL, newBL in tempMList[self.stokes[p]]
+							print 'WARNING: Keyerror', bl, bl in tempMList[self.stokes[p]], stand1, stand2, newBL, newBL in tempMList[self.stokes[p]]
 							
 							#
 							#print stand1, stand2

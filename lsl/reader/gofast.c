@@ -594,6 +594,7 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	
 	// Check the header's magic numbers
 	if( header.MAGIC1 != 0xC0DEC0DE || header.MAGIC2 != 0xED0CED0C) {
+		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(syncError, "Sync word differs from expected");
 		return NULL;
 	}

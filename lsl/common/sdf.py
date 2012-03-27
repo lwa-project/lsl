@@ -49,7 +49,7 @@ from jinja2 import Template
 from lsl.transform import Time
 from lsl.astro import MJD_OFFSET, DJD_OFFSET
 
-from lsl.common.dp import fS
+from lsl.common.dp import freq2word, word2freq
 from lsl.common.stations import lwa1
 from lsl.reader.tbn import filterCodes as TBNFilters
 from lsl.reader.drx import filterCodes as DRXFilters
@@ -58,9 +58,9 @@ from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
-__version__ = '0.6'
+__version__ = '0.7'
 __revision__ = '$Rev$'
-__all__ = ['delaytoDPD', 'DPDtodelay', 'gaintoDPG', 'DPGtogain', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?)$')
 _UTC = pytz.utc
@@ -70,68 +70,6 @@ _MST = pytz.timezone('US/Mountain')
 _PST = pytz.timezone('US/Pacific')
 _nStands = 260
 _DRSUCapacityTB = 10
-
-
-def delaytoDPD(delay):
-	"""Given a delay in ns, convert it to a course and fine portion and into the 
-	final format expected by DP (big endian 16.12 unsigned integer)."""
-	
-	# Convert the delay to a combination of FIFO delays (~5.1 ns) and 
-	# FIR delays (~0.3 ns)
-	sample = int(round(delay * fS * 16 / 1e9))
-	course = sample // 16
-	fine   = sample % 16
-	
-	# Combine into one value
-	combined = (course << 4) | fine
-	
-	# Convert to big-endian
-	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
-	
-	return combined
-
-
-def DPDtodelay(combined):
-	"""Given a delay value in the final format expect by DP, return the delay in ns."""
-	
-	# Convert to little-endian
-	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
-	
-	# Split
-	fine = combined & 15;
-	course = (combined >> 4) & 4095
-	
-	# Convert to time
-	delay = (course + fine/16.0) / fS
-	delay *= 1e9
-	
-	return delay
-
-
-def gaintoDPG(gain):
-	"""Given a gain (between 0 and 1), convert it to a gain in the final form 
-	expected by DP (big endian 16.1 signed integer)."""
-	
-	# Convert
-	combined = int(32767*gain)
-	
-	# Convert to big-endian
-	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
-	
-	return combined
-
-
-def DPGtogain(combined):
-	"""Given a gain value in the final format expected by DP, return the gain
-	as a decimal value (0 to 1)."""
-	
-	# Convert to little-endian
-	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
-	
-	# Convert back
-	gain = combined / 32767.0
-	
-	return gain
 
 
 def parseTimeString(s):
@@ -542,15 +480,15 @@ class Observation(object):
 	def getFrequency1(self):
 		"""Return the number of "tuning words" corresponding to the first frequency."""
 		
-		freq1 = int(round(self.frequency1 * 2**32 / fS))
-		self.frequency1 = freq1*fS / 2**32
+		freq1 = freq2word(self.frequency1)
+		self.frequency1 = word2freq(freq1)
 		return freq1
 
 	def getFrequency2(self):
 		"""Return the number of "tuning words" corresponding to the second frequency."""
 		
-		freq2 = int(round(self.frequency2 * 2**32 / fS))
-		self.frequency2 = freq2*fS / 2**32
+		freq2 = freq2word(self.frequency2)
+		self.frequency2 = word2freq(freq2)
 		return freq2
 		
 	def getBeamType(self):
@@ -1098,15 +1036,15 @@ class BeamStep(object):
 	def getFrequency1(self):
 		"""Return the number of "tuning words" corresponding to the first frequency."""
 		
-		freq1 = int(round(self.frequency1 * 2**32 / fS))
-		self.frequency1 = freq1*fS / 2**32
+		freq1 = freq2word(self.frequency1)
+		self.frequency1 = word2freq(freq1)
 		return freq1
 
 	def getFrequency2(self):
 		"""Return the number of "tuning words" corresponding to the second frequency."""
 		
-		freq2 = int(round(self.frequency2 * 2**32 / fS))
-		self.frequency2 = freq2*fS / 2**32
+		freq2 = freq2word(self.frequency2)
+		self.frequency2 = word2freq(freq2)
 		return freq2
 		
 	def getBeamType(self):
@@ -1226,8 +1164,8 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 		pass
 
 	# Convert the frequencies from "tuning words" to Hz
-	f1 = obsTemp['freq1']*fS / 2**32
-	f2 = obsTemp['freq2']*fS / 2**32
+	f1 = word2freq(obsTemp['freq1'])
+	f2 = word2freq(obsTemp['freq2'])
 	
 	# Get the mode and run through the various cases
 	mode = obsTemp['mode']
@@ -1250,8 +1188,8 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 			
 		obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], steps=[], comments=obsTemp['comments'])
 		for beamTemp in beamTemps:
-			f1 = beamTemp['freq1']*fS / 2**32
-			f2 = beamTemp['freq2']*fS / 2**32
+			f1 = word2freq(beamTemp['freq1'])
+			f2 = word2freq(beamTemp['freq2'])
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], beamTemp['duration'], f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
 
 	# Return the newly created Observation object

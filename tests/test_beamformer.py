@@ -81,7 +81,7 @@ class beamformer_tests(unittest.TestCase):
 		beam = beamformer.phaseAndSum(antennas[:3], data, azimuth=45.0, elevation=30.0)
 		
 	def test_phaseBeamShape(self):
-		"""Check that the beamformer.intBeamShape function actually runs"""
+		"""Check that the beamformer.phaseBeamShape function actually runs"""
 
 		station = stations.lwa1
 		antennas = station.getAntennas()

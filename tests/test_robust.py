@@ -24,6 +24,21 @@ class robust_tests(unittest.TestCase):
 
 		numpy.seterr(all='ignore')
 		warnings.simplefilter('ignore')
+		
+	def test_biweight(self):
+		"""Test the biweight mean function."""
+		
+		# Make sure that it can do simple averages
+		a = numpy.random.rand(512)
+		self.assertAlmostEqual(a.mean(), robust.biweightMean(a), 1)
+
+		b = numpy.random.randn(512)
+		self.assertAlmostEqual(b.mean(), robust.biweightMean(b), 1)
+
+		# Make sure it can reject obvious points
+		b = 1.0*a
+		b[10] = 1e6
+		self.assertTrue(robust.biweightMean(b) < b.mean())
 
 	def test_mean(self):
 		"""Test the outlier-resistant mean function."""

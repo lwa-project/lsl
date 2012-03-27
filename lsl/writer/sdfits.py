@@ -341,10 +341,9 @@ class SD(object):
 					matrix = numpy.zeros((self.nStokes,self.nChan), dtype=numpy.float32)
 					for p in xrange(self.nStokes):
 						try:
-							print matrix.shape, tempMList[self.stokes[p]][b].shape
 							matrix[p,:] = tempMList[self.stokes[p]][b]
 						except KeyError:
-							print b, tempMList[self.stokes[p]].keys()
+							print 'WARNING: Keyerror', b, tempMList[self.stokes[p]].keys()
 						
 					mList.append(matrix.ravel())
 				scanCount += 1
