@@ -261,7 +261,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 		# In addition, we need to keep up with which workers goes with which 
 		# baseline since the workers are called asynchronously.  Thus, we need a 
 		# taskList array to hold tuples of baseline ('count') and workers.
-		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
+		taskPool = Pool(processes=cpu_count())
 		taskList = []
 
 		usePool = True
@@ -467,7 +467,7 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 		# In addition, we need to keep up with which workers goes with which 
 		# baseline since the workers are called asynchronously.  Thus, we need a 
 		# taskList array to hold tuples of baseline ('count') and workers.
-		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
+		taskPool = Pool(processes=cpu_count())
 		taskList = []
 
 		usePool = True

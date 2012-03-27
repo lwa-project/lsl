@@ -437,4 +437,3 @@ def getTransformSize(filehandle):
 	filehandle.seek(cPos)
 	
 	return frame.data.X0.size
-	

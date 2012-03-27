@@ -11,7 +11,7 @@ import numpy
 from lsl.statistics import robust
 
 
-__revision__ = "$Revision: 4 $"
+__revision__ = "$Revision$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 

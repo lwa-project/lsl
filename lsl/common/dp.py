@@ -20,7 +20,7 @@ from scipy.interpolate import interp1d
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'delaytoDPD', 'DPDtodelay', 'gaintoDPG', 'DPGtogain', 'tbnFilter', 'drxFilter', '__version__', '__revision__', '__all__']
+__all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'delaytoDPD', 'DPDtodelay', 'gaintoDPG', 'DPGtogain', 'tbnFilter', 'drxFilter', 'SoftwareDP', '__version__', '__revision__', '__all__']
 
 fS = 196.0e6	# Hz
 T = 1.0		# seconds
@@ -574,4 +574,3 @@ class SoftwareDP(object):
 			output = numpy.array(output)
 			
 		return output
-		

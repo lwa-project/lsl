@@ -165,7 +165,7 @@ def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePo
 		# In addition, we need to keep up with which workers goes with which 
 		# signal since the workers are called asynchronously.  Thus, we need a 
 		# taskList array to hold tuples of signal ('count') and workers.
-		taskPool = Pool(processes=int(numpy.ceil(cpu_count()*0.70)))
+		taskPool = Pool(processes=cpu_count())
 		taskList = []
 
 		usePool = True
