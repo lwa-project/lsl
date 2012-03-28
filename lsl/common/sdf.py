@@ -352,7 +352,7 @@ class Session(object):
 			nOverlaps = 0
 
 			for j in xrange(len(sObs)):
-				if verbose:
+				if verbose and i != j:
 					print "[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1)
 
 				cStart = sObs[j].mjd*24 + sObs[j].mpm/1000.0/3600.0
@@ -1288,7 +1288,12 @@ def parseSDF(filename, verbose=False):
 			continue
 		if keyword == 'SESSION_REMPO':
 			project.projectOffice.sessions.append( '' )
-			project.projectOffice.sessions[0] = value
+			if value[:31] == 'Requested data return method is':
+				# Catch for project office comments that are data return related
+				project.sessions[0].dataReturnMethod = value[32:]
+			else:
+				# Catch for standard (not data related) project office comments
+				project.projectOffice.sessions[0] = value
 			continue
 		if keyword == 'SESSION_CRA':
 			project.sessions[0].cra = int(value)
