@@ -81,6 +81,11 @@ class metabundle_tests(unittest.TestCase):
 		# Make sure all of the observations are done
 		self.assertEqual(len(sm.keys()), 1)
 		
+	def test_sdf(self):
+		"""Test building a SDF from a tarball."""
+		
+		sdf = metabundle.getSessionDefintion(mdbFile)
+		
 	def test_sdm(self):
 		"""Test the station dynamic MIB utilties."""
 		

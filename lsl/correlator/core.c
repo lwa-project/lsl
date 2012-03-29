@@ -94,8 +94,9 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
-	double frac[nStand][nChan];
+	double *frac;
 	tLoc = PyDimMem_NEW(2);
+	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -106,7 +107,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			frac[i][j] = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -123,6 +124,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
+		free(frac);
 		return NULL;
 	}
 	
@@ -137,6 +139,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
 		Py_XDECREF(dataF);
+		free(frac);
 		return NULL;
 	}
 	
@@ -198,7 +201,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -214,6 +217,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	fftw_destroy_plan(p);
 	fftw_free(inP);
+	free(frac);
 
 	Py_XDECREF(data);
 	Py_XDECREF(fq);
@@ -322,8 +326,9 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
-	double frac[nStand][nChan];
+	double *frac;
 	tLoc = PyDimMem_NEW(2);
+	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -334,7 +339,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			frac[i][j] = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -352,6 +357,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
 		Py_XDECREF(windowData);
+		free(frac);
 		return NULL;
 	}
 	
@@ -367,6 +373,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(times);
 		Py_XDECREF(dataF);
 		Py_XDECREF(windowData);
+		free(frac);
 		return NULL;
 	}
 	
@@ -429,7 +436,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -445,6 +452,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	fftw_destroy_plan(p);
 	fftw_free(inP);
+	free(frac);
 
 	Py_XDECREF(data);
 	Py_XDECREF(fq);
@@ -539,8 +547,9 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
-	double frac[nStand][nChan];
+	double *frac;
 	tLoc = PyDimMem_NEW(2);
+	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -551,7 +560,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			frac[i][j] = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -568,6 +577,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
+		free(frac);
 		return NULL;
 	}
 	
@@ -582,6 +592,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
 		Py_XDECREF(dataF);
+		free(frac);
 		return NULL;
 	}
 
@@ -643,7 +654,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -659,6 +670,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	fftw_destroy_plan(p);
 	fftw_free(inP);
+	free(frac);
 
 	Py_XDECREF(data);
 	Py_XDECREF(fq);
@@ -767,8 +779,9 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp *tLoc;
 	long start[nStand];
 	long startMax = 0;
-	double frac[nStand][nChan];
+	double *frac;
 	tLoc = PyDimMem_NEW(2);
+	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -779,7 +792,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 
 		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			frac[i][j] = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -797,6 +810,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(fq);
 		Py_XDECREF(times);
 		Py_XDECREF(windowData);
+		free(frac);
 		return NULL;
 	}
 	
@@ -812,6 +826,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(times);
 		Py_XDECREF(windowData);
 		Py_XDECREF(dataF);
+		free(frac);
 		return NULL;
 	}
 
@@ -874,7 +889,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * frac[i][k]);
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -890,6 +905,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	fftw_destroy_plan(p);
 	fftw_free(inP);
+	free(frac);
 
 	Py_XDECREF(data);
 	Py_XDECREF(fq);
