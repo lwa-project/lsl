@@ -9,7 +9,7 @@ from lsl.common import metabundle
 from lsl.common.paths import dataBuild as dataPath
 
 
-__revision__ = "$ Revision: 2 $"
+__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
@@ -84,7 +84,7 @@ class metabundle_tests(unittest.TestCase):
 	def test_sdf(self):
 		"""Test building a SDF from a tarball."""
 		
-		sdf = metabundle.getSessionDefintion(mdbFile)
+		sdf = metabundle.getSessionDefinition(mdbFile)
 		
 	def test_sdm(self):
 		"""Test the station dynamic MIB utilties."""
