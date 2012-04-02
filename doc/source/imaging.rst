@@ -3,12 +3,12 @@ Imaging
 
 Imaging
 -------
-.. automodule: lsl.imaging.utils
+.. automodule:: lsl.imaging.utils
    :members:
 
 Deconvolution
 -------------
-.. automodule: lsl.imaging.deconv
+.. automodule:: lsl.imaging.deconv
    :members:
 
 

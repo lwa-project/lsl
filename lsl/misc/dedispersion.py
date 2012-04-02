@@ -111,10 +111,10 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
 	Simple coherent dedispersion of complex-valued time-series data at a given central
 	frequency and sample rate.  A tapering function can also be applied to the chirp of 
 	the form:
-	
-		:math: \\sqrt{1 + \\left(\\frac{\\Delta f_{MHz}}{0.47 \\times \\mbox{BW}}\\right)^{80}}, 
 		
-	where :math: \\Delta f_{MHz} is the frequency difference in MHz from the band 
+		:math:`\\sqrt{1 + \\left(\\frac{\\Delta f_{MHz}}{0.47 \\times \\mbox{BW}}\\right)^{80}}`, 
+		
+	where :math:`\\Delta f_{MHz}` is the frequency difference in MHz from the band 
 	center and BW is the bandwidth in MHz.
 	
 	.. note::
