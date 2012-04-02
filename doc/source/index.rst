@@ -54,6 +54,8 @@ LWA-Specific Utilites
 
    correlator
 
+   imaging
+
    beamformer
 
    fakedata

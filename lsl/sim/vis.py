@@ -53,6 +53,9 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
 
 .. versionchanged:: 0.3.0
 	This module was formerly called lsl.sim.sim
+	
+.. versionchanged:: 0.5.0
+	Moved buildGriddedImage to the :mod:`lsl.imaging.utils` module.
 """
 
 import os
@@ -66,9 +69,9 @@ from lsl.common import dp as dp_common
 from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 
-__version__ = '0.2'
+__version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['srcs', 'BeamAlm', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+__all__ = ['srcs', 'BeamAlm', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', '__version__', '__revision__', '__all__']
 
 
 # A dictionary of bright sources in the sky to use for simulations
@@ -641,45 +644,3 @@ def shiftData(dataDict, aa):
 			sftUVData['uvw'][pol].append( crds )
 
 	return sftUVData
-
-
-def buildGriddedImage(dataDict, MapSize=30, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None):
-	"""
-	Given a data dictionary, build an aipy.img.ImgW object of gridded uv data 
-	which can be used for imaging.  The ImgW object itself is returned by this 
-	function to make it more versatile.
-	"""
-
-	im = aipy.img.ImgW(size=MapSize, res=MapRes, wres=MapWRes)
-
-	if chan is not None:
-		# Make sure that `chan' is an array by trying to find its length
-		try:
-			junk = len(chan)
-		except TypeError:
-			chan = [chan]
-
-		# Build up the data using only the specified channels
-		uvw = []
-		vis = []
-		wgt = []
-		for (i,j),d,u,w,m in zip(dataDict['bls'][pol], dataDict['vis'][pol], dataDict['uvw'][pol], dataDict['wgt'][pol], dataDict['msk'][pol]):
-			u = u[:,chan]
-			u.shape = (3, len(chan))
-
-			uvw.append(u)
-			vis.append(n.array([d[chan]]))
-			wgt.append(n.array([w[chan]]))
-	else:
-		uvw = dataDict['uvw'][pol]
-		vis = dataDict['vis'][pol]
-		wgt = dataDict['wgt'][pol]
-
-	uvw = n.concatenate(uvw, axis=1)
-	vis = n.concatenate(vis)
-	wgt = n.concatenate(wgt)
-
-	uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
-	im.put(uvw, vis, wgts=wgt)
-
-	return im
