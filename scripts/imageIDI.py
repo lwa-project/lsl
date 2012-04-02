@@ -16,6 +16,7 @@ from lsl.statistics.robust import *
 from lsl.correlator import uvUtils
 from lsl.writer.fitsidi import NumericStokes
 
+from lsl.imaging import utils
 from lsl.sim import vis as simVis
 
 from matplotlib.mlab import griddata
@@ -26,44 +27,6 @@ from matplotlib.ticker import NullFormatter
 MST = pytz.timezone('US/Mountain')
 UTC = pytz.UTC
 
-def baselineOrder(bls):
-	"""
-	Like numpy.argsort(), but for a list of two-element tuples of baseline 
-	pairs.  The resulting lists can then be used to sort a data dictionary
-	a la sortDataDict().
-	"""
-	
-	def __cmpBaseline(bl):
-		return 1024*bl[0] + bl[1]
-	
-	return [i for (v, i) in sorted((v, i) for (i, v) in enumerate([__cmpBaseline(bl) for bl in bls]))]
-
-
-def sortDataDict(dataDict, order=None):
-	"""
-	Sort a data dictionary by the specified order.  If no order is supplied, 
-	the data dictionary is sorted by baseline using baselineOrder().
-	"""
-	
-	if order is None:
-		for pol in ['xx', 'yy']:
-			try:
-				if len(dataDict['bls'][pol]) == 0:
-					continue
-				order = baselineOrder(dataDict['bls'][pol])
-				break
-			except KeyError:
-				pass
-	
-	for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-		for pol in ['xx', 'yy', 'xy', 'yx']:
-			try:
-				newList = [dataDict[key][pol][i] for i in order]
-				dataDict[key][pol] = newList
-			except (KeyError, IndexError):
-				pass
-			
-	return dataDict
 
 def graticle(ax, lst, lat, label=True):
 	"""
@@ -158,172 +121,27 @@ def graticle(ax, lst, lat, label=True):
 
 def main(args):
 	filename = args[0]
-	seqNum = 0
-	hdulist = pyfits.open(filename)
-	uvData = hdulist['UV_DATA']
-
-	refDate = UTC.localize(datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
-	refJD = astro.unix_to_utcjd(timegm(refDate.timetuple()))
-	print "Date Observered:", hdulist[0].header['DATE-OBS']
-
-	station = stations.lwa1
-
-	# Figure out how the stands are mapped in the FITS IDI file
-	try:
-		mapper = hdulist['NOSTA_MAPPER']
-		
-		nosta = mapper.data.field('NOSTA')
-		noact = mapper.data.field('NOACT')
-		anname = mapper.data.field('ANNAME')
-	except KeyError:
-		ag = hdulist['ARRAY_GEOMETRY']
-
-		nosta = ag.data.field('NOSTA')
-		noact = ag.data.field('NOSTA')
-		anname = ag.data.field('ANNAME')
 	
-	standMap = {}
-	stands = []
-	for nosta, noact in zip(nosta, noact):
-		standMap[nosta] = noact
-		stands.append(noact)
-	
-	antennaMap = {}
-	antennas = []
-	for ant in station.getAntennas():
-		if ant.stand.id in stands and ant.pol == 0:
-			antennas.append(ant)
-			antennaMap[ant.stand.id] = ant
-	
-	# Determine the contents (number of polarization, frequencies, etc.) in the FITS IDI file
-	nPol = uvData.header['MAXIS2']
-	firstStokes = uvData.header['CRVAL2']
-	freq = numpy.arange(0, uvData.header['NO_CHAN'], 1)*uvData.header['CHAN_BW'] + uvData.header['REF_FREQ']
-	aa = simVis.buildSimArray(stations.lwa1, antennas, freq/1e9, jd=refJD)
-	lo = stations.lwa1.getObserver()
-	lo.date = refDate.strftime("%Y/%m/%d %H:%M:%S")
+	idi = utils.CorrelatedData(filename)
+	aa = idi.getAntennaArray()
+	lo = idi.getObserver()
+	lo.date = idi.dateObs.strftime("%Y/%m/%d %H:%M:%S")
 	lst = str(lo.sidereal_time())
 
-	# Report
-	nStand = len(stands)
-	nBaseline = nStand*(nStand-1)/2
-	print "Raw Stand Count: %i" % len(stands)
-	print "Final Baseline Count: %i" % nBaseline
-	print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, len(freq), (freq[-1]/1e3 - freq[0]/1e3)/len(freq))
-	print "Polarization Products: %i starting with %s" % (nPol, NumericStokes[firstStokes])
-	print " "
+	nStand = len(idi.stands)
+	nChan = len(idi.freq)
+	freq = idi.freq
 	
-	print "Reading in FITS IDI data..."
-	nSets = len(uvData.data['BASELINE']) / (nStand*(nStand+1)/2)
+	print "Raw Stand Count: %i" % nStand
+	print "Final Baseline Count: %i" % (nStand*(nStand-1)/2,)
+	print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nChan, (freq[-1] - freq[0])/1e3/nChan)
+	print "Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0])
+	
+	print "Reading in FITS IDI data"
+	nSets = idi.totalBaselineCount / (nStand*(nStand+1)/2)
 	for set in range(1, nSets+1):
-		print "  Set #%i of %i" % (set, nSets)
-		dataDict = {'freq': freq, 
-					'isMasked': False, 
-					'uvw': {'xx':[], 'yy': [], 'xy':[], 'yx':[]},
-					'vis': {'xx':[], 'yy': [], 'xy':[], 'yx':[]},
-					'wgt': {'xx':[], 'yy': [], 'xy':[], 'yx':[]},
-					'msk': {'xx':[], 'yy': [], 'xy':[], 'yx':[]},
-					'bls': {'xx':[], 'yy': [], 'xy':[], 'yx':[]}, 
-					'jd':  {'xx':[], 'yy': [], 'xy':[], 'yx':[]}
-				}
-
-		sourceID = range(set,set+1)
-		print "    Loading data"
-		for row in uvData.data:
-			if row['SOURCE'] in sourceID:
-				bl = row['BASELINE']
-				i = standMap[(bl >> 8) & 255]
-				j = standMap[bl & 255]
-				if i == j:
-					## Skip auto-correlations
-					continue
-				ri = numpy.where(stands == i)[0][0]
-				rj = numpy.where(stands == j)[0][0]
-
-				uvw = numpy.array([row['UU'], row['VV'], row['WW']])
-				
-				jd = row['DATE'] + row['TIME']
-				uvw = numpy.array([numpy.dot(uvw[0], freq), numpy.dot(uvw[1], freq), numpy.dot(uvw[2], freq)])
-				flux = row['FLUX']
-				
-				## Unravel the data
-				if nPol == 1:
-					if firstStokes == -5:
-						visXX = numpy.zeros(len(flux)/2/nPol, dtype=numpy.complex64)
-						visXX.real = flux[0::(2*nPol)]
-						visXX.imag = flux[1::(2*nPol)]
-						wgtXX = numpy.ones(visXX.size)
-						
-						dataDict['uvw']['xx'].append( uvw ) 
-						dataDict['vis']['xx'].append( visXX )
-						dataDict['wgt']['xx'].append( wgtXX )
-						dataDict['msk']['xx'].append( numpy.zeros(len(visXX), dtype=numpy.int16) )
-						dataDict['bls']['xx'].append( (ri,rj) )
-						dataDict['jd' ]['xx'].append( jd )
-					else:
-						visYY = numpy.zeros(len(flux)/2/nPol, dtype=numpy.complex64)
-						visYY.real = flux[0::(2*nPol)]
-						visYY.imag = flux[1::(2*nPol)]
-						wgtYY = numpy.ones(visYY.size)
-						
-						dataDict['uvw']['yy'].append( uvw ) 
-						dataDict['vis']['yy'].append( visYY )
-						dataDict['wgt']['yy'].append( wgtYY )
-						dataDict['msk']['yy'].append( numpy.zeros(len(visYY), dtype=numpy.int16) )
-						dataDict['bls']['yy'].append( (ri,rj) )
-						dataDict['jd' ]['yy'].append( jd )
-						
-				else:
-					visXX = numpy.zeros(len(flux)/2/nPol, dtype=numpy.complex64)
-					visXX.real = flux[0::(2*nPol)]
-					visXX.imag = flux[1::(2*nPol)]
-					wgtXX = numpy.ones(visXX.size)
-					
-					dataDict['uvw']['xx'].append( uvw ) 
-					dataDict['vis']['xx'].append( visXX )
-					dataDict['wgt']['xx'].append( wgtXX )
-					dataDict['msk']['xx'].append( numpy.zeros(len(visXX), dtype=numpy.int16) )
-					dataDict['bls']['xx'].append( (ri,rj) )
-					dataDict['jd' ]['xx'].append( jd )
-				
-				if nPol > 1:
-					visYY = numpy.zeros(len(flux)/2/nPol, dtype=numpy.complex64)
-					visYY.real = flux[2::(2*nPol)]
-					visYY.imag = flux[3::(2*nPol)]
-					wgtYY = numpy.ones(visYY.size)
-					
-					dataDict['uvw']['yy'].append( uvw ) 
-					dataDict['vis']['yy'].append( visYY )
-					dataDict['wgt']['yy'].append( wgtYY )
-					dataDict['msk']['yy'].append( numpy.zeros(len(visYY), dtype=numpy.int16) )
-					dataDict['bls']['yy'].append( (ri,rj) )
-					dataDict['jd' ]['yy'].append( jd )
-				
-				if nPol > 2:
-					visXY =  numpy.zeros(len(flux)/2/nPol, dtype=numpy.complex64)
-					visXY.real = flux[4::(2*nPol)]
-					visXY.imag = flux[5::(2*nPol)]
-					wgtXY = numpy.ones(visXY.size)
-					
-					dataDict['uvw']['xy'].append( uvw ) 
-					dataDict['vis']['xy'].append( visXY )
-					dataDict['wgt']['xy'].append( wgtXY )
-					dataDict['msk']['xy'].append( numpy.zeros(len(visXY), dtype=numpy.int16) )
-					dataDict['bls']['xy'].append( (ri,rj) )
-					dataDict['jd' ]['xy'].append( jd )
-				
-				if nPol > 3:
-					visYX =  numpy.zeros(len(flux)/2/nPol, dtype=numpy.complex64)
-					visYX.real = flux[6::(2*nPol)]
-					visYX.imag = flux[7::(2*nPol)]
-					wgtYX = numpy.ones(visYX.size)
-					
-					dataDict['uvw']['yx'].append( uvw ) 
-					dataDict['vis']['yx'].append( visYX )
-					dataDict['wgt']['yx'].append( wgtYX )
-					dataDict['msk']['yx'].append( numpy.zeros(len(visYX), dtype=numpy.int16) )
-					dataDict['bls']['yx'].append( (ri,rj) )
-					dataDict['jd' ]['yx'].append( jd )
+		print "Set #%i of %i" % (set, nSets)
+		dataDict = idi.getDataSet(set)
 				
 		# Build a list of unique JDs for the data
 		jdList = []
@@ -331,29 +149,28 @@ def main(args):
 			if jd not in jdList:
 				jdList.append(jd)
 		
-		# Sort and pull out the middle channels (inner 2/3 of the band)
-		dataDict = sortDataDict(dataDict)
+		# Pull out the middle channels (inner 2/3 of the band)
 		toWork = range(freq.size/6, 5*freq.size/6)
 
 		# Build up the images for each polarization
 		print "    Gridding"
 		try:
-			imgXX = simVis.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='xx', chan=toWork)
+			imgXX = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='xx', chan=toWork)
 		except:
 			imgXX = None
 			
 		try:
-			imgYY = simVis.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='yy', chan=toWork)
+			imgYY = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='yy', chan=toWork)
 		except:
 			imgYY = None
 			
 		try:
-			imgXY = simVis.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='xy', chan=toWork)
+			imgXY = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='xy', chan=toWork)
 		except:
 			imgXY = None
 			
 		try:
-			imgYX = simVis.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='yx', chan=toWork)
+			imgYX = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='yx', chan=toWork)
 		except:
 			imgYX = None
 		
@@ -404,7 +221,6 @@ def main(args):
 		plt.show()
 
 	print "...Done"
-	hdulist.close()
 
 
 if __name__ == "__main__":
