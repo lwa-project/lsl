@@ -1,4 +1,4 @@
-0.5-dev
+0.5.0
   * Worked on adding better polarization support to correlator.fx and correlator.uvUtils
   * Updated the correlateTBN script to make full polarization support possible
   * Added a crude deconvolution routine that should work with the AIPY ImgW images
