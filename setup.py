@@ -194,7 +194,7 @@ setup(
 	packages = find_packages(), 
 	scripts = glob.glob('scripts/*.py'), 
 	setup_requires = ['numpy>=1.2'], 
-	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.3', 'aipy>=0.9.1'], 
+	install_requires = ['pyfits>=2.1', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.3', 'aipy>=0.9.1', 'jinja2>=2.3'], 
 	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits/Download'], 
 	include_package_data = True,  
 	ext_package = 'lsl', 

@@ -675,7 +675,6 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	for(i=0; i<2; i++) {
 		temp = Py_BuildValue("I", header.freqCode[i]);
 		PyList_SetItem(tuningWords, i, temp);
-		Py_XDECREF(temp);
 	}
 	
 	fills = PyList_New(4);
@@ -692,7 +691,6 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	for(i=0; i<4; i++) {
 		temp = Py_BuildValue("I", header.fills[i]);
 		PyList_SetItem(fills, i, temp);
-		Py_XDECREF(temp);
 	}
 	
 	errors = PyList_New(4);
@@ -710,7 +708,6 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	for(i=0; i<4; i++) {
 		temp = Py_BuildValue("H", header.errors[i]);
 		PyList_SetItem(errors, i, temp);
-		Py_XDECREF(temp);
 	}
 	
 	// Save the data to the frame object
@@ -756,6 +753,9 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	PyObject_SetAttrString(frame, "data", fData);
 	
 	Py_XDECREF(fHeader);
+	Py_XDECREF(tuningWords);
+	Py_XDECREF(fills);
+	Py_XDECREF(errors);
 	Py_XDECREF(fData);
 	Py_XDECREF(dataX0);
 	Py_XDECREF(dataY0);
