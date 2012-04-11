@@ -106,15 +106,13 @@ def main(args):
 		frame = drx.readFrame(fh)
 		beam, tune, pol = frame.parseID()
 		skip += 1
-	fh.seek(fh.tell() - drx.FrameSize)
 
 	if skip != 0:
+		fh.seek(fh.tell() - drx.FrameSize)
 		print "Skipped %i frames at the beginning of the file" % skip
 	
-	for c in list(range(nSkip)):
-		if c < nSkip:
-			fh.seek(fh.tell() + drx.FrameSize*tunepols)
-			continue
+	# Offset
+	fh.seek(fh.tell() + nSkips*drx.FrameSize*tunepols)
 
 	if config['date']:
 		filePos = fh.tell()

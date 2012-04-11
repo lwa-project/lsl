@@ -122,19 +122,6 @@ md5sum.py
 
 Data Reading and Writing
 ========================
-splitTBW.py
-  :Description: Split a TBW file containing multiple captures into several single capture files.
-
-  :Usage: splitTBW.py [options] file
-
-  :Options: -h, --help             	Display this help information
-
-            -c, --count            	Number of capturs to split off
-
-            -o, --offset           	Number of captures to skip before splitting
-
-            -d, --date             	Label the split files with a date rather than a sequence number
-
 splitTBN.py
   :Description: Split a TBN file containing multiple seconds into several files
 
