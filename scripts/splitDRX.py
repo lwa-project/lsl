@@ -112,7 +112,7 @@ def main(args):
 		print "Skipped %i frames at the beginning of the file" % skip
 	
 	# Offset
-	fh.seek(fh.tell() + nSkips*drx.FrameSize*tunepols)
+	fh.seek(fh.tell() + nSkip*drx.FrameSize*tunepols)
 
 	if config['date']:
 		filePos = fh.tell()
