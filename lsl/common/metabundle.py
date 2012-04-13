@@ -323,7 +323,7 @@ def getSessionMetaData(tarname):
 	path, basename = os.path.split(tarname)
 	basename, ext = os.path.splitext(basename)
 	
-	# Extract the session meta-data file
+	# Extract the session meta-data file (_metadata.txt)
 	tf = tarfile.open(tarname, mode='r:gz')
 	try:
 		ti = tf.getmember('%s_metadata.txt' % basename)
@@ -379,7 +379,7 @@ def getSessionSpec(tarname):
 	path, basename = os.path.split(tarname)
 	basename, ext = os.path.splitext(basename)
 	
-	# Extract the session specification file
+	# Extract the session specification file (.ses)
 	tf = tarfile.open(tarname, mode='r:gz')
 	try:
 		ti = tf.getmember('%s.ses' % basename)
@@ -411,7 +411,7 @@ def getObservationSpec(tarname, selectObs=None):
 	path, basename = os.path.split(tarname)
 	basename, ext = os.path.splitext(basename)
 	
-	# Find all of the obs files and extract them
+	# Find all of the .obs files and extract them
 	tf = tarfile.open(tarname, mode='r:gz')
 	tis = []
 	for ti in tf.getmembers():
@@ -459,132 +459,23 @@ def getSessionDefinition(tarname):
 		observations under `project.sessions[0].observations`.
 	"""
 	
-	ses = getSessionSpec(tarname)
-	sem = getSessionMetaData(tarname)
-	obs = getObservationSpec(tarname)
+	# Find the SDF file contained in the tarball
+	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
+	path, basename = os.path.split(tarname)
+	basename, ext = os.path.splitext(basename)
 	
-	observer = sdf.Observer(tarname, 0)
-	project = sdf.Project(observer, tarname, ses['projectID'])
-	session = sdf.Session(tarname, ses['sessionID'], observations=[])
-	project.sessions = [session,]
+	# Find the right .txt file (not the metadata one) and extract it
+	tf = tarfile.open(tarname, mode='r:gz')
+	for ti in tf.getmembers():
+		if ti.name[-4:] == '.txt' and ti.name.find('metadata') == -1:
+			break
+	tf.extractall(path=tempDir, members=[ti,])
 	
-	# Session-wide parameters from the SES file
-	project.sessions[0].cra = ses['CRA']
-	project.sessions[0].recordMIB = ses['record']
-	project.sessions[0].updateMIB = ses['update']
-	project.sessions[0].logScheduler = bool(ses['logSch'])
-	project.sessions[0].logExecutive = bool(ses['logExe'])
-	project.sessions[0].includeStationStatic= bool(ses['incSMIF'])
-	project.sessions[0].includeDesign = bool(ses['incDesi'])
+	# Parse it
+	project = sdf.parseSDF(os.path.join(tempDir, ti.name))
 	
-	# Session-wide parameters from the first OBS file that we find
-	fee = obs[0]['fee']
-	project.sessions[0].obsFEE = [[fee[i], fee[i+1]] for i in xrange(0, len(fee), 2)]
-	project.sessions[0].aspFlt = obs[0]['flt']
-	project.sessions[0].aspAT1 = obs[0]['at1']
-	project.sessions[0].aspAT2 = obs[0]['at2']
-	project.sessions[0].aspATS = obs[0]['ats']
-	project.sessions[0].tbnGain = obs[0]['tbnGain']
-	project.sessions[0].drxGain = obs[0]['drxGain']
-	
-	# Load in the various OBS files and create the needed sdf.Observation instances
-	#
-	# WARNING: This probably isn't going to work with stepped observations
-	#
-	for o in obs:
-		## Generic observation name and target
-		cName = 'obs_%i' % o['obsID']
-		cTarget = 'target_%i' % o['obsID']
-		
-		## Convert the start MJD and MPM values into a string for use with sdf.Observation
-		cStart = Time(o['MJD'] + o['MPM'] / 1000.0 / 3600.0 / 24.0, format='MJD').utc_py_date
-		cStart += timedelta(microseconds=(int(round(cStart.microsecond/1000.0)*1000.0)-cStart.microsecond))
-		cStart = cStart.strftime("UTC %Y %m %d %H:%M:%S.%f")
-		cStart = cStart[:-3]
-		
-		## Convert the duration value into a string for use with sdf.Observation
-		cDur = float(o['Dur']) / 1000.0
-		cDur = '%02i:%02i:%06.3f' % (cDur/3600.0, (cDur%3600.0)/60.0, cDur%60.0)
-		
-		## Switch statement for the observing mode
-		if o['Mode'] == 1:
-			cMode = 'TRK_RADEC'
-		elif o['Mode'] == 2:
-			cMode = 'TRK_SOL'
-		elif o['Mode'] == 3:
-			cMode = 'TRK_JOV'
-		elif o['Mode'] == 4:
-			cMode = 'STEPPED'
-		elif o['Mode'] == 5:
-			cMode = 'TBW'
-		else:
-			cMode = 'TBN'
-		
-		## RA and Dec values
-		cRA = o['RA']
-		cDec = o['Dec']
-		
-		## Tuning and BW setup
-		cFreq1 = o['Freq1']
-		cFreq2 = o['Freq2']
-		cFilter = o['BW']
-		
-		## Beam control for DRX observing modes
-		if o['Beam'] == 2:
-			cMaxSNR = True
-		else:
-			cMaxSNR = False
-		
-		## Create the (normal) observation entries or deal with Stepped observations
-		if cMode == 'TBW':
-			cObs = sdf.TBW(cName, cTarget, cStart, cDur, o['tbwSamples'], bits=o['tbwBits'])
-		elif cMode == 'TBN':
-			cObs = sdf.TBN(cName, cTarget, cStart, cDur, cFreq1, cFilter)
-		elif cMode == 'TRK_RADEC':
-			cObs = sdf.DRX(cName, cTarget, cStart, cDur, cRA, cDec, cFreq1, cFreq2, cFilter, MaxSNR=cMaxSNR)
-		elif cMode == 'TRK_SOL':
-			cObs = sdf.Solar(cName, cTarget, cStart, cDur, cFreq1, cFreq2, cFilter, MaxSNR=cMaxSNR)
-		elif cMode == 'TRK_JOV':
-			cObs = sdf.Jovian(cName, cTarget, cStart, cDur, cFreq1, cFreq2, cFilter, MaxSNR=cMaxSNR)
-		else:
-			### Decode the steps
-			steps = []
-			for i in xrange(o['nSteps']):
-				c1, c2, t, f1, f2, b, delay, gain = o['steps'][i]
-				
-				sDur = float(t) / 1000.0
-				sDur = '%02i:%02i:%06.3f' % (sDur/3600.0, (sDur%3600.0)/60.0, sDur%60.0)
-				
-				if b == 2:
-					sMaxSNR = True
-				else:
-					sMaxSNR = False
-				
-				steps.append(sdf.BeamStep(c1, c2, sDur, f1, f2, RADec=bool(o['StepRADec']), MaxSNR=sMaxSNR))
-			
-			### Create the complete observation
-			cObs = sdf.Stepped(cName, cTarget, cStart, cFilter, steps=steps)
-			
-		## Apply additional information for TBW captures
-		if cMode == 'TBW':
-			cObs.samples = o['tbwSamples']
-			cObs.bits = o['tbwBits']
-		
-		## Run the update on the observation to make sure everything gets filled in
-		cObs.update()
-		
-		
-		## Add the observation to the session and update its ID number
-		project.sessions[0].observations.append( cObs )
-		project.sessions[0].observations[-1].id = o['obsID']
-		
-	# Set the opcode, outcome, and message for each observation using the contents of the station
-	# meta-data file
-	for i in xrange(len(project.sessions[0].observations)):
-		obsID = project.sessions[0].observations[i].id
-		project.sessions[0].observations[i].opcode  = sem[obsID]['tag']
-		project.sessions[0].observations[i].outcome = sem[obsID]['outcome']
-		project.sessions[0].observations[i].message = sem[obsID]['msg']
+	# Clean up
+	shutil.rmtree(tempDir, ignore_errors=True)
 	
 	# Return the filled-in SDF instance
 	return project
@@ -600,7 +491,7 @@ def getCommandScript(tarname):
 	path, basename = os.path.split(tarname)
 	basename, ext = os.path.splitext(basename)
 	
-	# Find all of the obs files and extract them
+	# Find the .cs file and extract it
 	tf = tarfile.open(tarname, mode='r:gz')
 	for ti in tf.getmembers():
 		if ti.name[-3:] == '.cs':

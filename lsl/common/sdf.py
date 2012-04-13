@@ -1307,10 +1307,10 @@ def parseSDF(filename, verbose=False):
 			project.sessions[0].updateMIB[component] = int(value)
 			continue
 		if keyword == 'SESSION_LOG_SCH':
-			project.sesssions[0].logScheduler = bool(value)
+			project.sessions[0].logScheduler = bool(value)
 			continue
 		if keyword == 'SESSION_LOG_EXE':
-			project.sesssions[0].logExecutive = bool(value)
+			project.sessions[0].logExecutive = bool(value)
 			continue
 		if keyword == 'SESSION_INC_SMIB':
 			project.sessions[0].includeStationStatic = bool(value)
@@ -1322,7 +1322,13 @@ def parseSDF(filename, verbose=False):
 			project.sessions[0].drxBeam = int(value)
 			continue
 		if keyword == 'SESSION_SPC':
+			# Remove the ' marks
+			value = value.replace("'", "")
 			project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
+			# If the input field is '' the value of spcSetup is [].  This
+			# isn't good for the SDF render so reset [] to [0, 0]
+			if project.sessions[0].spcSetup == []:
+				project.sessions[0].spcSetup = [0, 0]
 			continue
 		
 		# Observation Info

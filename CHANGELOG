@@ -3,6 +3,8 @@
   * Fixed the segfault associated with the DR spectrometer reader
   * Cleaned up how splitDRX.py offsets in a file
   * Removed splitTBW.py since it is no longer needed
+  * Fixed a few bugs in the SDF parser dealing the logging keywords
+  * Modified lsl.common.metabundle.getSessionDefinition to use the SDF in the tarball rather than generate it from the session and observation specification files
 
 0.5.0
   * Worked on adding better polarization support to correlator.fx and correlator.uvUtils
