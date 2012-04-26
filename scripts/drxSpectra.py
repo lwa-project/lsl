@@ -134,10 +134,16 @@ def main(args):
 
 	fh = open(config['args'][0], "rb")
 	nFramesFile = os.path.getsize(config['args'][0]) / drx.FrameSize
-	junkFrame = drx.readFrame(fh)
 	
-	fh.seek(0)
-	srate = junkFrame.getSampleRate()
+	while True:
+		junkFrame = drx.readFrame(fh)
+		try:
+			srate = junkFrame.getSampleRate()
+			break
+		except ZeroDivisionError:
+			pass
+	fh.seek(-drx.FrameSize, 1)
+	
 	beams = drx.getBeamCount(fh)
 	tunepols = drx.getFramesPerObs(fh)
 	tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]

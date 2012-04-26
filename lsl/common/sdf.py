@@ -153,10 +153,17 @@ class Observer(object):
 		self.id = int(id)
 
 	def joinName(self):
-		self.name = ', '.join([self.last, self.first])
+		if self.first != '':
+			self.name = ', '.join([self.last, self.first])
+		else:
+			self.name = self.last
 		
 	def splitName(self):
-		self.last, self.first = self.name.split(', ', 1)
+		try:
+			self.last, self.first = self.name.split(', ', 1)
+		except ValueError:
+			self.last = self.name
+			self.first = ''
 
 
 class ProjectOffice(object):
