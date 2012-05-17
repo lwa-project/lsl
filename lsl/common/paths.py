@@ -34,7 +34,7 @@ data = os.path.join(module, 'data')
 # source directory, moduleBuild points to module and dataBuild 
 # points to data.
 currentDir = os.path.abspath(os.getcwd())
-if os.path.exists(os.path.join(currentDir, 'setup.py')):
+if os.path.exists(os.path.join(currentDir, 'setup.py')) and os.path.exists(os.path.join(currentDir, 'lsl')):
 	modInfoBuild = imp.find_module('lsl', [currentDir])
 	moduleBuild =  os.path.abspath(modInfoBuild[1])
 	dataBuild = os.path.join(moduleBuild, 'data')

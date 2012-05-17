@@ -33,6 +33,7 @@ def main(args):
 	#
 	# Python Module Check
 	#
+	notFound = 0
 	for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy', 'jinja2'):
 		try:
 			exec "import %s" % mod

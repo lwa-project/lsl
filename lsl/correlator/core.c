@@ -97,6 +97,14 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
 	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	if(frac == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
+		Py_XDECREF(data);
+		Py_XDECREF(fq);
+		Py_XDECREF(times);
+		return NULL;
+	}
+	
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -105,7 +113,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<nChan; j++) {
+		for(j=0; j<(nChan-1); j++) {
 			tLoc[1] = (npy_intp) j;
 			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
@@ -329,6 +337,14 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
 	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	if(frac == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
+		Py_XDECREF(data);
+		Py_XDECREF(fq);
+		Py_XDECREF(times);
+		return NULL;
+	}
+	
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -337,7 +353,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<nChan; j++) {
+		for(j=0; j<(nChan-1); j++) {
 			tLoc[1] = (npy_intp) j;
 			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
@@ -550,6 +566,14 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
 	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	if(frac == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
+		Py_XDECREF(data);
+		Py_XDECREF(fq);
+		Py_XDECREF(times);
+		return NULL;
+	}
+	
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -558,7 +582,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<nChan; j++) {
+		for(j=0; j<(nChan-1); j++) {
 			tLoc[1] = (npy_intp) j;
 			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
@@ -782,6 +806,14 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
 	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	if(frac == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
+		Py_XDECREF(data);
+		Py_XDECREF(fq);
+		Py_XDECREF(times);
+		return NULL;
+	}
+	
 	for(i=0; i<nStand; i++) {
 		tLoc[0] = (npy_intp) i;
 		tLoc[1] = (npy_intp) (nChan / 2);
@@ -790,7 +822,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<nChan; j++) {
+		for(j=0; j<(nChan-1); j++) {
 			tLoc[1] = (npy_intp) j;
 			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
