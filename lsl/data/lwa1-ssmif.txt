@@ -1,8 +1,7 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
-# 2011 DEC 26 by S. Ellingson
-# Clean-up of version dated 12/20 by J. Craig & J. Dowell
+# 2012 MAY 16 by J. Dowell
 # Search "FIXME" for things that need work
 
 FORMAT_VERSION 5
@@ -827,47 +826,111 @@ STD_LZ[260]     0.0
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-ANT_STAT[17] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
-ANT_STAT[18] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[25] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[43] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[48] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[62] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[68] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[71] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
-ANT_STAT[72] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
-ANT_STAT[74] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[94] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[116] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[132] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[147] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[169] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[189] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[191] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[194] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[196] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[228] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[246] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[247] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[295] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
-ANT_STAT[296] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
-ANT_STAT[306] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[362] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[367] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[374] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[384] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[406] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[449] 2  # 111220: JC says "failed drift scan, but calibration passed"
-ANT_STAT[464] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[487] 2  # 111220: JC says "failed the TBN calibration, but spectra and drift scan look ok"
-ANT_STAT[488] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[492] 1  # 111220: JC says this antenna has no signal
-ANT_STAT[513] 1  # 111220: JC says "this antenna is installed, but not cabled to receiver"
-ANT_STAT[514] 1  # 111220: JC says "this antenna is installed, but not cabled to receiver"
-ANT_STAT[517] 0  # 111220: JC says "not installed"
-ANT_STAT[518] 0  # 111220: JC says "not installed"
-ANT_STAT[519] 0  # 111220: JC says "not installed"
-ANT_STAT[520] 0  # 111220: JC says "not installed"
+ANT_STAT[16]  2
+ANT_STAT[17]  2
+ANT_STAT[18]  1
+ANT_STAT[25]  1
+ANT_STAT[27]  2
+ANT_STAT[30]  2
+ANT_STAT[36]  2
+ANT_STAT[42]  2
+ANT_STAT[43]  1
+ANT_STAT[48]  2
+ANT_STAT[53]  2
+ANT_STAT[54]  2
+ANT_STAT[56]  2
+ANT_STAT[62]  2
+ANT_STAT[66]  2
+ANT_STAT[67]  2
+ANT_STAT[68]  1
+ANT_STAT[71]  2
+ANT_STAT[72]  2
+ANT_STAT[74]  2
+ANT_STAT[75]  2
+ANT_STAT[76]  2
+ANT_STAT[79]  2
+ANT_STAT[94]  1
+ANT_STAT[113]  2
+ANT_STAT[116]  2
+ANT_STAT[132]  1
+ANT_STAT[143]  2
+ANT_STAT[144]  2
+ANT_STAT[147]  2
+ANT_STAT[148]  2
+ANT_STAT[168]  2
+ANT_STAT[169]  1
+ANT_STAT[172]  2
+ANT_STAT[173]  2
+ANT_STAT[189]  2
+ANT_STAT[191]  2
+ANT_STAT[194]  1
+ANT_STAT[196]  1
+ANT_STAT[197]  2
+ANT_STAT[209]  2
+ANT_STAT[210]  2
+ANT_STAT[211]  2
+ANT_STAT[215]  2
+ANT_STAT[217]  2
+ANT_STAT[226]  2
+ANT_STAT[228]  2
+ANT_STAT[237]  2
+ANT_STAT[244]  2
+ANT_STAT[246]  1
+ANT_STAT[247]  1
+ANT_STAT[248]  2
+ANT_STAT[251]  2
+ANT_STAT[256]  2
+ANT_STAT[272]  2
+ANT_STAT[275]  2
+ANT_STAT[282]  2
+ANT_STAT[283]  2
+ANT_STAT[288]  2
+ANT_STAT[295]  2
+ANT_STAT[296]  2
+ANT_STAT[302]  2
+ANT_STAT[306]  1
+ANT_STAT[317]  2
+ANT_STAT[333]  2
+ANT_STAT[335]  2
+ANT_STAT[349]  2
+ANT_STAT[351]  2
+ANT_STAT[352]  2
+ANT_STAT[362]  1
+ANT_STAT[363]  1
+ANT_STAT[364]  2
+ANT_STAT[366]  2
+ANT_STAT[367]  2
+ANT_STAT[372]  2
+ANT_STAT[374]  1
+ANT_STAT[379]  2
+ANT_STAT[384]  1
+ANT_STAT[387]  2
+ANT_STAT[388]  2
+ANT_STAT[395]  2
+ANT_STAT[396]  2
+ANT_STAT[397]  2
+ANT_STAT[404]  2
+ANT_STAT[406]  1
+ANT_STAT[415]  2
+ANT_STAT[429]  2
+ANT_STAT[441]  2
+ANT_STAT[449]  2
+ANT_STAT[457]  2
+ANT_STAT[458]  2
+ANT_STAT[459]  2
+ANT_STAT[464]  1
+ANT_STAT[469]  2
+ANT_STAT[487]  2
+ANT_STAT[488]  1
+ANT_STAT[489]  2
+ANT_STAT[490]  2
+ANT_STAT[492]  1
+ANT_STAT[505]  2
+ANT_STAT[513]  1
+ANT_STAT[514]  1
+ANT_STAT[517]  0
+ANT_STAT[518]  0
+ANT_STAT[519]  0
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -6636,7 +6699,7 @@ N_DR 5
 # *** DR_STAT[dr#] goes here:
 DR_STAT[1] 3
 DR_STAT[2] 3
-DR_STAT[3] 0
+DR_STAT[3] 3
 DR_STAT[4] 3
 DR_STAT[5] 3
 
@@ -6655,6 +6718,7 @@ DR_ID[5] DR5
 # *** DR_PC[dr#] goes here:
 DR_PC[1] XPS435
 DR_PC[2] T1500
+DR_PC[3] T1500
 DR_PC[4] T1500
 DR_PC[5] T1500 
 
@@ -6663,6 +6727,7 @@ DR_PC[5] T1500
 # *** DR_DP[] goes here:
 DR_DP[1] 1
 DR_DP[2] 2
+DR_DP[3] 3
 DR_DP[4] 4
 DR_DP[5] 5
 

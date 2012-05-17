@@ -5,6 +5,7 @@
   * Fixed a bug in gatherDebugging.py that caused the script to crash on missing modules
   * Fixed a bug in FEnginep[RC][23] that caused segmentation faults in Python 2.7
   * Made the module path finder a little more robust
+  * Updated the LWA1 SSMIF to the May 16, 2012 version to include the latest antenna status codes
 
 0.5.1
   * Added jinja2 to the list of install dependencies
