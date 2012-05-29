@@ -99,7 +99,7 @@ class dp_software_tests(unittest.TestCase):
 		sdp.setFilter(7)
 		sdp.setCentralFreq(40e6)
 		
-		output = sdp.apply(time, data)
+		output = sdp.applyFilter(time, data)
 		self.assertEqual(output.size, nPts/10)
 
 

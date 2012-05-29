@@ -6,6 +6,9 @@
   * Fixed a bug in FEnginep[RC][23] that caused segmentation faults in Python 2.7
   * Made the module path finder a little more robust
   * Updated the LWA1 SSMIF to the May 16, 2012 version to include the latest antenna status codes
+  * Added a beamformer to lsl.common.dp.SoftwareDP
+  * Changed lsl.common.dp.SoftwareDP.apply() to lsl.commondp.SoftwareDP.applyFilter()
+  * Fixed multi-threading in the lsl.common.dp.SoftwareDP class
 
 0.5.1
   * Added jinja2 to the list of install dependencies
