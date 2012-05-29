@@ -49,9 +49,7 @@ Usage: correlateTBW.py [OPTIONS] metaData data
 
 Options:
 -h, --help             Display this help information
--f, --fft-length       Set FFT length (default = 512)
--s, --samples          Number of average visibilities to generate
-                       (default = 10)
+-l, --fft-length       Set FFT length (default = 4096)
 -q, --quiet            Run correlateTBW in silent mode
 -x, --xx               Compute only the XX polarization product (default)
 -y, --yy               Compute only the YY polarization product
@@ -66,8 +64,8 @@ Options:
 def parseConfig(args):
 	config = {}
 	# Command line flags - default values
-	config['LFFT'] = 512
-	config['samples'] = 10
+	config['LFFT'] = 4096
+	config['samples'] = 1
 	config['offset'] = 0
 	config['verbose'] = True
 	config['products'] = ['xx',]
@@ -75,7 +73,7 @@ def parseConfig(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hql:s:xy", ["help", "quiet", "fft-length=", "samples=", "xx", "yy"])
+		opts, arg = getopt.getopt(args, "hql:xy", ["help", "quiet", "fft-length=", "xx", "yy"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -89,8 +87,6 @@ def parseConfig(args):
 			config['verbose'] = False
 		elif opt in ('-l', '--fft-length'):
 			config['LFFT'] = int(value)
-		elif opt in ('-s', '--samples'):
-			config['samples'] = int(value)
 		elif opt in ('-x', '--xx'):
 			config['products'] = ['xx',]
 		elif opt in ('-y', '--yy'):
@@ -268,7 +264,7 @@ def main(args):
 	jd = astro.unix_to_utcjd(test.getTime())
 	date = str(ephem.Date(jd - astro.DJD_OFFSET))
 	sampleRate = dp_common.fS
-	nInts = os.path.getsize(filename) / tbw.FrameSize / 30000 / len(antennas) / 2
+	nInts = os.path.getsize(filename) / tbw.FrameSize / (30000 * len(antennas) / 2)
 
 	# Get valid stands for both polarizations
 	goodX = []
@@ -299,7 +295,7 @@ def main(args):
 
 	# Number of frames to read in at once and average
 	nFrames = 30000
-	nSets = os.path.getsize(filename) / tbw.FrameSize / 300000
+	nSets = os.path.getsize(filename) / tbw.FrameSize / (30000*len(antennas)/2)
 
 	print "TBW Data:  %s" % test.header.isTBW()
 	print "Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sampleRate)
