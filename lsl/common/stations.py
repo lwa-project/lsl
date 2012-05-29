@@ -347,6 +347,7 @@ class Cable(object):
 	  * Gain term that goes as frequency (a1)
 	  * Gain term reference frequency (Hz, aFreq)
 	  * Cable length stretch factor (stretch)
+	  * Clock offset (seconds, clockOffset)
 	
 	The object also as a functional attribute named 'delay' that computes the
 	cable delay for a particular frequency or collection of frequencies in 
@@ -362,6 +363,7 @@ class Cable(object):
 		self.a0 = float(a0)
 		self.a1 = float(a1)
 		self.aFreq = float(aFreq)
+		self.clockOffset = 0.0
 
 	def __cmp__(self):
 		if self.id > y.id:
@@ -374,6 +376,20 @@ class Cable(object):
 	def __str__(self):
 		return "Cable '%s' with length %.2f m (stretched to %.2f m)" % (self.id, self.length, self.length*self.stretch)
 		
+	def setClockOffset(self, offset):
+		"""
+		Add a clock offset (in seconds) to the cable model.
+		"""
+		
+		self.clockOffset = float(offset)
+		
+	def clearClockOffset(self):
+		"""
+		Clear the clock offset of the cable model.
+		"""
+		
+		self.clockOffset = 0.0
+		
 	def delay(self, frequency=49e6, ns=False):
 		"""Get the delay associated with the cable in second (or nanoseconds 
 		if the 'ns' keyword is set to True) for a particular frequency or 
@@ -385,7 +401,7 @@ class Cable(object):
 		# Dispersize delay in 
 		dispDelay = self.dd * (self.length*self.stretch / 100.0) * numpy.sqrt(frequency / numpy.array(10e6))
 		
-		totlDelay = bulkDelay + dispDelay
+		totlDelay = bulkDelay + dispDelay + self.clockOffset
 		
 		if ns:
 			return totlDelay*1e9

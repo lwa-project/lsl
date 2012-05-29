@@ -9,6 +9,7 @@
   * Added a beamformer to lsl.common.dp.SoftwareDP
   * Changed lsl.common.dp.SoftwareDP.apply() to lsl.commondp.SoftwareDP.applyFilter()
   * Fixed multi-threading in the lsl.common.dp.SoftwareDP class
+  * Added a clock offset parameter to the cable model (lsl.common.stations.Cable)
 
 0.5.1
   * Added jinja2 to the list of install dependencies
