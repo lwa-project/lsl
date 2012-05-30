@@ -121,7 +121,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax) / 2 / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax - 2*nChan) / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
@@ -209,7 +209,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -361,7 +361,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax) / 2 / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax - 2*nChan) / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
@@ -452,7 +452,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = k + 1;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -590,7 +590,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax) / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax - nChan) / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
@@ -678,7 +678,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -830,7 +830,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax) / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax - nChan) / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) (nChan - 1);
@@ -921,7 +921,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					qLoc[0] = (npy_intp) k;
 					fftIndex = ((k+1) + nChan/2) % nChan;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(-2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;

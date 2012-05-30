@@ -11,6 +11,7 @@
   * Fixed multi-threading in the lsl.common.dp.SoftwareDP class
   * Added a clock offset parameter to the cable model (lsl.common.stations.Cable)
   * Cleaned up the correlateTBW.py scripts
+  * Fixed a bug in the correlator integer sample delays
 
 0.5.1
   * Added jinja2 to the list of install dependencies

@@ -435,12 +435,12 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	for i in list(range(nStands)):
 		delays1[i,:] = antennas1[i].cable.delay(freq) - antennas1[i].stand.z / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - antennas2[i].stand.z / vLight
-	if delays1[:,dlyRef].max() > delays2[:,dlyRef].max():
-		maxDelay = delays1[:,dlyRef].max()
+	if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
+		minDelay = delays1[:,dlyRef].min()
 	else:
-		maxDelay = delays2[:,dlyRef].max()
-	delays1 = maxDelay - delays1
-	delays2 = maxDelay - delays2
+		minDelay = delays2[:,dlyRef].min()
+	delays1 -= minDelay
+	delays2 -= minDelay
 
 	# F - defaults to running parallel in C via OpenMP
 	if window is noWindow:
@@ -551,12 +551,12 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	for i in list(range(nStands)):
 		delays1[i,:] = antennas1[i].cable.delay(freq) - antennas1[i].stand.z / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - antennas2[i].stand.z / vLight
-	if delays1[:,dlyRef].max() > delays2[:,dlyRef].max():
-		maxDelay = delays1[:,dlyRef].max()
+	if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
+		minDelay = delays1[:,dlyRef].min()
 	else:
-		maxDelay = delays2[:,dlyRef].max()
-	delays1 = maxDelay - delays1
-	delays2 = maxDelay - delays2
+		minDelay = delays2[:,dlyRef].min()
+	delays1 -= minDelay
+	delays2 -= minDelay
 
 	# F - defaults to running parallel in C via OpenMP
 	if window is noWindow:
