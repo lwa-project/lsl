@@ -17,6 +17,7 @@ from lsl.common.constants import c
 from lsl.common import dp as dp_common
 from lsl.correlator import uvUtils
 
+
 __version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['BeamformingError', 'calcDelay', 'intDelayAndSum', 'intBeamShape', 'phaseAndSum', 'phaseBeamShape', '__version__', '__revision__', '__all__']
@@ -152,11 +153,17 @@ def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, azimuth=0.0, elevati
 
 	# Make the delays into something meaningful for the shifting of the data 
 	# streams
-	delays = delays.max() - delays
+	delays -= delays.min()
+	
+	antennas = antennas[:20]
+	data = data[:20,:]
+	delays = delays[:20]
 
 	# Delay and sum by looping over stands inside of looping over times
-	output = numpy.zeros((2, (data.shape[1]-delays.max())), dtype=data.dtype)
+	output = numpy.zeros((2, (data.shape[1]-delays.max())), dtype=numpy.float32)
 	for s,p in zip(range(len(antennas)), pols):
+		if antennas[s].getStatus() != 33:
+			continue
 		start = delays[s]
 		stop = data.shape[1] - delays.max() + start
 		output[p,:] += data[s,start:stop]
@@ -196,7 +203,7 @@ def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamShape
 	signals = numpy.zeros((len(antennas), len(t)))
 	for i in list(range(len(antennas))):
 		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t + currDelay))
+		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
 
 	# Beamform with delay-and-sum and store the RMS result
 	beamHere = intDelayAndSum(antennas, signals, sampleRate=sampleRate, azimuth=direction[0], elevation=direction[1])
@@ -234,7 +241,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 
 	# Build up a base time array, load in the cable delays, and get the stand 
 	# positions for geometric delay calculations.
-	t = numpy.arange(0,1000)/sampleRate
+	t = numpy.arange(0,1500)/sampleRate
 	xyz = numpy.zeros((len(antennas),3))
 	i = 0
 	for ant in antennas:
@@ -318,7 +325,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 				signals = numpy.zeros((len(antennas), 1000))
 				for i in list(range(len(antennas))):
 					currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t + currDelay))
+					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
 
 				# Beamform with delay-and-sum and store the RMS result
 				beam = intDelayAndSum(antennas, signals, sampleRate=sampleRate, azimuth=azimuth, elevation=elevation)
@@ -359,14 +366,14 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 	# Make the delays into something meaningful for the shifting of the data 
 	# streams.  Then, get the beamforming coefficients (b^l_n (a la Steve's 
 	# "Fun with TBN" memo).
-	delays = delays.max() - delays
-	bln = numpy.exp(-2j*numpy.pi*CentralFreq*delays)
+	delays -= delays.min()
+	bln = numpy.exp(2j*numpy.pi*CentralFreq*delays)
 	
 	# Figure out the polarizations
 	pols = numpy.array([ant.pol for ant in antennas])
 	pol0 = numpy.where( pols == 0 )[0]
 	pol1 = numpy.where( pols == 1 )[0]
-
+	
 	# Loop over stands to compute the formed beam
 	output = numpy.zeros((2, data.shape[1]), dtype=numpy.complex64)
 	for b,s,p in zip(bln, xrange(len(antennas)), pols):
@@ -407,7 +414,7 @@ def __phaseBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamSha
 	signals = numpy.zeros((len(antennas), len(t)))
 	for i in list(range(len(antennas))):
 		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t + currDelay))
+		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
 
 	# Beamform with delay-and-sum and store the RMS result
 	beam = phaseAndSum(antennas, signals, sampleRate=sampleRate, CentralFreq=freq, 
@@ -436,7 +443,7 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 
 	# Build up a base time array, load in the cable delays, and get the stand 
 	# positions for geometric delay calculations.
-	t = numpy.arange(0,1000)/sampleRate
+	t = numpy.arange(0,1500)/sampleRate
 	xyz = numpy.zeros((len(antennas),3))
 	i = 0
 	good = []
@@ -524,7 +531,7 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 				signals = numpy.zeros((len(antennas), 1000))
 				for i in list(range(len(antennas))):
 					currDelay = antennas[i].cable.delay(CentralFreq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*CentralFreq*(t + currDelay))
+					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*CentralFreq*(t - currDelay))
 
 				# Beamform with delay-and-sum and store the RMS result
 				beam = phaseAndSum(antennas, signals, sampleRate=sampleRate, CentralFreq=CentralFreq, 
