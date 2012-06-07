@@ -66,8 +66,12 @@ def get_fftw():
 
 	else:
 		print "WARNING:  FFTW3 cannot be found, using defaults"
-		outCFLAGS = []
-		outLIBS = ['-lfftw3', '-lm']
+		if os.platform() != 'FreeBSD':
+			outCFLAGS = []
+			outLIBS = ['-lfftw3', '-lm']
+		else:
+			outCFLAGS = ['-I/usr/local/include',]
+			outLIBS = ['-L/usr/local/lib', '-lfftw3', '-lm']
 
 	return outCFLAGS, outLIBS
 

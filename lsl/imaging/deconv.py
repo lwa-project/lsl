@@ -6,7 +6,7 @@ Deconvolution support for images made with :func:`lsl.imaging.utils.buildGridded
 
 import numpy
 from aipy.img import ImgW
-from aipy.coord import eq2radec
+from aipy.coord import eq2radec, top2azalt
 from aipy.fit import RadioFixedBody
 from scipy.signal import fftconvolve as convolve
 from scipy.signal import convolve2d
@@ -33,7 +33,7 @@ def estimateBeam(aa, HA, dec, MapSize=80, MapRes=0.50, MapWRes=0.10, freq=49e6):
 	"""
 	
 	# Build the point source
-	src = {'pnt': RadioFixedBody(HA*15/180.0*numpy.pi, dec/180.0*numpy.pi, jys=1, mfreq=freq/1e9, index=0)}
+	src = {'pnt': RadioFixedBody(HA*15/180.0*numpy.pi, dec/180.0*numpy.pi, jys=1e3, mfreq=freq/1e9, index=0)}
 	
 	# Simulate the source - the JD value shouldn't matter
 	simDict = simVis.buildSimData(aa, src, jd=2455659.25544, pols=['xx',])
@@ -63,6 +63,8 @@ def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, f
 	# Get a grid of hour angle and dec values for the image we are working with
 	xyz = aipyImg.get_eq(0.0, lat*numpy.pi/180.0, center=(MapSize,MapSize))
 	HA, dec = eq2radec(xyz)
+	top = aipyImg.get_top(center=(MapSize,MapSize))
+	az,alt = top2azalt(top)
 	
 	# Get the actual image out of the ImgW instance
 	img = aipyImg.image(center=(MapSize,MapSize))
@@ -84,8 +86,15 @@ def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, f
 		peakV = working[peakX,peakY]
 		
 		# Pixel coordinates to hour angle, dec.
-		peakHA = HA[peakX, peakY]*180/numpy.pi / 15.0
-		peakDec = dec[peakX, peakY]*180/numpy.pi
+		##peakHA = (HA[peakX-2:peakX+2,peakY-2:peakY+2]*working[peakX-2:peakX+2,peakY-2:peakY+2]).sum()
+		##peakHA /= working[peakX-2:peakX+2,peakY-2:peakY+2].sum()
+		##peakHA *= 180/numpy.pi / 15.0
+		peakHA = HA[peakX, peakY] * 180/numpy.pi / 15.0
+		
+		##peakDec = (dec[peakX-2:peakX+2,peakY-2:peakY+2]*working[peakX-2:peakX+2,peakY-2:peakY+2]).sum()
+		##peakDec /= working[peakX-2:peakX+2,peakY-2:peakY+2].sum()
+		##peakDec *= 180/numpy.pi
+		peakDec = dec[peakX,peakY] * 180/numpy.pi
 		
 		if verbose:
 			currHA  = deg_to_hms(peakHA*15.0)
@@ -93,6 +102,7 @@ def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, f
 			
 			print "Iteration %i:  Log peak of %.2f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peakX, peakY)
 			print "               -> HA: %s, Dec: %s" % (currHA, currDec)
+			print "               -> %.1f, %.1f" % (az[peakX, peakY]*180/numpy.pi, alt[peakX, peakY]*180/numpy.pi)
 		
 		# Check for the exit criteria
 		if peakV < 0:
@@ -109,14 +119,19 @@ def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, f
 			beam = estimateBeam(aa, peakHA, peakDec, 
 						MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, freq=freq)
 			beam /= beam.max()
+			print beam.mean(), beam.min(), beam.max(), beam.sum()
 			prevBeam[beamIndex] = beam
 		
 		# Calculate how much signal needs to be removed...
 		toRemove = gain*peakV*beam
 		
+		if i == 0:
+			globalMax = working.max()
+			calib = working.max()/beam.max()
+		
 		# And then remove it and add it into list of CLEAN components
 		working -= toRemove
-		cleaned[peakX,peakY] += gain*peakV
+		cleaned[peakX,peakY] += gain*peakV*calib/globalMax
 	
 	# Calculate what the restore beam should look like
 	beam = estimateBeam(aa, 0.0, lat, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, freq=freq)
@@ -146,19 +161,19 @@ def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, f
 		ax3 = fig.add_subplot(2, 2, 3)
 		ax4 = fig.add_subplot(2, 2, 4)
 		
-		c = ax1.imshow(img)
+		c = ax1.imshow(img, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(c, ax=ax1)
 		ax1.set_title('Input')
 		
-		d = ax2.imshow(cleaned)
+		d = ax2.imshow(cleaned, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(d, ax=ax2)
 		ax2.set_title('CLEAN Comps.')
 		
-		e = ax3.imshow(working)
+		e = ax3.imshow(working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(e, ax=ax3)
 		ax3.set_title('Residuals')
 		
-		f = ax4.imshow(conv + working)
+		f = ax4.imshow(conv + working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(f, ax=ax4)
 		ax4.set_title('Final')
 		

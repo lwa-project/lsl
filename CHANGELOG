@@ -13,6 +13,8 @@
   * Cleaned up the correlateTBW.py scripts
   * Fixed a bug in the correlator integer sample delays
   * Fixed bugs in the lsl.misc.beamformer module related to delays
+  * Fixed the URL used by lsl.misc.geodesy.__loadHistoric1992()
+  * Added support for FreeBSD
 
 0.5.1
   * Added jinja2 to the list of install dependencies

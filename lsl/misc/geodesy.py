@@ -9,18 +9,23 @@ import os
 import gzip
 import ephem
 import numpy
-import urllib
+import socket
+import urllib2
+import logging
 
 import lsl.astro as astro
 import lsl.common.paths as paths
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['EOP', 'getEOP', 'getEOPRange', '__version__', '__revision__', '__all__']
 
 # Last valid MJD in the historic EOP data included with LSL
 # MJD 55518 == November 18, 2010.
 Historic1973Limit = 55518.0
+
+# Logger for capturing problems with downloading EOP data
+__logger = logging.getLogger('__main__')
 
 
 class EOP(object):
@@ -119,7 +124,7 @@ class EOP(object):
 			return 0
 
 
-def __loadHistoric1973():
+def __loadHistoric1973(timeout=20):
 	"""
 	Load in historical values.  The file included with LSL contains values 
 	from January 2, 1973 to November 18, 2010.
@@ -144,14 +149,21 @@ def __loadHistoric1973():
 	return heops
 
 
-def __loadHistoric1992():
+def __loadHistoric1992(timeout=120):
 	"""
 	Load in historical values from the web.  The downloaded file includes 
 	values from January 1, 1992 until today (usually).
 	"""
 
-	eopFH = urllib.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.daily')
-	lines = eopFH.readlines()
+	try:
+		eopFH = urllib2.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.data', timeout=timeout)
+		lines = eopFH.readlines()
+	except IOError as e:
+		__logger.error('Error downloading historic EOP data: %s', str(e))
+		lines = []
+	except socket.timeout:
+		__logger.error('Timeout after %i seconds downloading historic EOP data', timeout)
+		lines = []
 	eopFH.close()
 
 	eops = []
@@ -165,13 +177,20 @@ def __loadHistoric1992():
 	return eops
 
 
-def __loadCurrent90():
+def __loadCurrent90(timeout=120):
 	"""
 	Load data for the current 90-day period from MAIA via the web.
 	"""
 
-	eopFH = urllib.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.daily')
-	lines = eopFH.readlines()
+	try:
+		eopFH = urllib2.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.daily', timeout=timeout)
+		lines = eopFH.readlines()
+	except IOError as e:
+		__logger.error('Error downloading recent EOP data: %s', str(e))
+		lines = []
+	except socket.timeout:
+		__logger.error('Timeout after %i seconds downloading recent EOP data', timeout)
+		lines = []
 	eopFH.close()
 
 	eops = []
@@ -183,10 +202,14 @@ def __loadCurrent90():
 	return eops
 
 
-def getEOP(mjd=None):
+def getEOP(mjd=None, timeout=120):
 	"""
 	Return a list of earth orientation parameter objects for the specified 
 	MJDs.  A MJD of 'None' returns the values for today's date.
+	
+	.. versionchanged:: 0.5.2
+		Added the `timeout' keyword to deal with failures download EOP data.
+		The default value is 120 seconds.
 	"""
 	
 	try:
@@ -201,13 +224,13 @@ def getEOP(mjd=None):
 			mjd = [int(mjd)]
 	mjd = numpy.array(mjd)
 
-	oldEOPs = __loadHistoric1973()
+	oldEOPs = __loadHistoric1973(timeout=timeout)
 	if mjd.max() > Historic1973Limit:
-		newEOPs = __loadCurrent90()
+		newEOPs = __loadCurrent90(timeout=timeout)
 	else:
 		newEOPs = []
 	if mjd.min() > Historic1973Limit and mjd.min() < newEOPs[0]:
-		oldEOPs.extend(__loadHistoric1992())
+		oldEOPs.extend(__loadHistoric1992(timeout=timeout))
 		oldEOPs.sort()
 
 	outEOPs = []
@@ -222,10 +245,14 @@ def getEOP(mjd=None):
 	return outEOPs
 		
 
-def getEOPRange(start=None, stop=None):
+def getEOPRange(start=None, stop=None, timeout=120):
 	"""
 	Return a list of orientation parameter objects that span the start and 
 	stop (inclusive) MJDs provided.  Values of 'None' indicate today's date.
+	
+	.. versionchanged:: 0.5.2
+		Added the `timeout' keyword to deal with failures download EOP data.
+		The default value is 120 seconds.
 	"""
 
 	if start is None:
@@ -240,4 +267,4 @@ def getEOPRange(start=None, stop=None):
 			stop = int(float(ephem.now()) + 2415020.0 - astro.MJD_OFFSET)
 
 	mjdList = numpy.arange(start, stop+1)
-	return getEOP(mjdList)
+	return getEOP(mjdList, timeout=timeout)
