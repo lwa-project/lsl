@@ -7,6 +7,7 @@ import unittest
 import numpy
 
 from lsl.common import dp
+from lsl.common import stations
 
 
 __revision__ = "$Rev$"
@@ -87,7 +88,7 @@ class dp_software_tests(unittest.TestCase):
 				sdp.setCentralFreq(f*1e6)
 				
 	def test_input(self):
-		"""Test the SoftwareDP on some data."""
+		"""Test the SoftwareDP filtering on some data."""
 		
 		sdp = dp.SoftwareDP()
 		
@@ -101,6 +102,36 @@ class dp_software_tests(unittest.TestCase):
 		
 		output = sdp.applyFilter(time, data)
 		self.assertEqual(output.size, nPts/10)
+		
+	def test_beam(self):
+		"""Test the SoftwareDP beamformer on some data."""
+		
+		sdp = dp.SoftwareDP()
+		
+		antennas = stations.lwa1.getAntennas()
+		
+		nPts = 10000
+		time = numpy.arange(nPts)
+		data = numpy.random.rand(len(antennas), nPts)*2048 - 1024
+		data = data.astype(numpy.int16)
+		
+		course = numpy.zeros(data.shape[0])
+		course[0] = 2
+		fine = numpy.zeros(data.shape[0])
+		gains = numpy.zeros((data.shape[0]/2, 4))
+		gains[0,0] = 1
+		gains[1,1] = 1
+		
+		sdp.setMode("DRX")
+		sdp.setFilter(7)
+		sdp.setCentralFreq(40e6)
+		
+		beamX, beamY = sdp.formBeam(antennas, time, data, course, fine, gains)
+		beamX = numpy.round(beamX).astype(numpy.int16)
+		beamY = numpy.round(beamY).astype(numpy.int16)
+		
+		self.assertEqual(beamX[0], data[0,0])
+		self.assertEqual(beamY[0], data[2,2])
 
 
 class dp_test_suite(unittest.TestSuite):

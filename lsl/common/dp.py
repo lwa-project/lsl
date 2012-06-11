@@ -17,8 +17,10 @@ import numpy
 from scipy.signal import freqz, lfilter
 from scipy.interpolate import interp1d
 
+import _fir
 
-__version__ = '0.5'
+
+__version__ = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'delaytoDPD', 'DPDtodelay', 'gaintoDPG', 'DPGtogain', 'tbnFilter', 'drxFilter', 'SoftwareDP', '__version__', '__revision__', '__all__']
 
@@ -175,22 +177,22 @@ _drxCIC3 = [1, 5, 15, 35, 70, 126, 210, 330, 495, 715, 1001, 1365, 1820, 2380, 3
 
 # FIR Filters
 ## Default beamformer delay FIR filters
-_delayFIRs = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32767, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-			[-15, 16, -41, 45, -89, 99, -168, 196, -308, 385, -605, 904, -1896, 32515, 2148, -1051, 630, -477, 316, -267, 171, -152, 90, -82, 42, -39, 15, -15, 0, 0, 0, 0], 
-			[-30, 32, -81, 88, -173, 193, -327, 381, -597, 744, -1163, 1719, -3513, 31851, 4515, -2128, 1263, -949, 627, -528, 339, -301, 177, -162, 83, -77, 30, -29, 0, 0, 0, 0], 
-			[-43, 46, -117, 127, -249, 278, -472, 547, -857, 1063, -1656, 2422, -4833, 30791, 7060, -3191, 1875, -1398, 922, -773, 496, -439, 259, -237, 120, -113, 44, -42, 0, 0, 0, 0],
-			[-55, 58, -148, 161, -315, 351, -595, 689, -1079, 1332, -2069, 2995, -5845, 29362, 9737, -4202, 2441, -1806, 1189, -993, 637, -563, 331, -303, 154, -144, 56, -53, 0, 0, 0, 0], 
-			[-64, 68, -174, 188, -369, 410, -695, 801, -1254, 1543, -2388, 3424, -6549, 27594, 12494, -5118, 2937, -2157, 1416, -1179, 756, -666, 392, -357, 182, -170, 66, -63, 0, 0, 0, 0], 
-			[-71, 75, -192, 208, -407, 452, -766, 881, -1379, 1689, -2606, 3701, -6950, 25528, 15277, -5900, 3342, -2436, 1595, -1323, 848, -745, 439, -399, 203, -189, 74, -70, 0, 0, 0, 0], 
-			[-75, 79, -203, 220, -430, 476, -808, 926, -1448, 1766, -2719, 3826, -7062, 23211, 18030, -6508, 3636, -2628, 1717, -1419, 908, -796, 469, -426, 217, -202, 79, -75, 0, 0, 0, 0], 
-			[-76, 81, -206, 223, -436, 482, -818, 935, -1461, 1775, -2725, 3801, -6906, 20693, 20693, -6906, 3801, -2725, 1775, -1461, 935, -818, 482, -436, 223, -206, 81, -76, 0, 0, 0, 0], 
-			[-75, 79, -202, 217, -426, 469, -796, 908, -1419, 1717, -2628, 3636, -6508, 18030, 23211, -7062, 3826, -2719, 1766, -1448, 926, -808, 476, -430, 220, -203, 79, -75, 0, 0, 0, 0], 
-			[-70, 74, -189, 203, -399, 439, -745, 848, -1323, 1595, -2436, 3342, -5900, 15277, 25528, -6950, 3701, -2606, 1689, -1379, 881, -766, 452, -407, 208, -192, 75, -71, 0, 0, 0, 0], 
-			[-63, 66, -170, 182, -357, 392, -666, 756, -1179, 1416, -2157, 2937, -5118, 12494, 27594, -6549, 3424, -2388, 1543, -1254, 801, -695, 410, -369, 188, -174, 68, -64, 0, 0, 0, 0], 
-			[-53, 56, -144, 154, -303, 331, -563, 637, -993, 1189, -1806, 2441, -4202, 9737, 29362, -5845, 2995, -2069, 1332, -1079, 689, -595, 351, -315, 161, -148, 58, -55, 0, 0, 0, 0], 
-			[-42, 44, -113, 120, -237, 259, -439, 496, -773, 922, -1398, 1875, -3191, 7060, 30791, -4833, 2422, -1656, 1063, -857, 547, -472, 278, -249, 127, -117, 46, -43, 0, 0, 0, 0], 
-			[-29, 30, -77, 83, -162, 177, -301, 339, -528, 627, -949, 1263, -2128, 4515, 31851, -3513, 1719, -1163, 744, -597, 381, -327, 193, -173, 88, -81, 32, -30, 0, 0, 0, 0], 
-			[-15, 15, -39, 42, -82, 90, -152, 171, -267, 316, -477, 630, -1051, 2148, 32515, -1896, 904, -605, 385, -308, 196, -168, 99, -89, 45, -41, 16, -15, 0, 0, 0, 0]]
+_delayFIRs = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32767, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+			[-15, 16, -41, 45, -89, 99, -168, 196, -308, 385, -605, 904, -1896, 32515, 2148, -1051, 630, -477, 316, -267, 171, -152, 90, -82, 42, -39, 15, -15], 
+			[-30, 32, -81, 88, -173, 193, -327, 381, -597, 744, -1163, 1719, -3513, 31851, 4515, -2128, 1263, -949, 627, -528, 339, -301, 177, -162, 83, -77, 30, -29], 
+			[-43, 46, -117, 127, -249, 278, -472, 547, -857, 1063, -1656, 2422, -4833, 30791, 7060, -3191, 1875, -1398, 922, -773, 496, -439, 259, -237, 120, -113, 44, -42],
+			[-55, 58, -148, 161, -315, 351, -595, 689, -1079, 1332, -2069, 2995, -5845, 29362, 9737, -4202, 2441, -1806, 1189, -993, 637, -563, 331, -303, 154, -144, 56, -53], 
+			[-64, 68, -174, 188, -369, 410, -695, 801, -1254, 1543, -2388, 3424, -6549, 27594, 12494, -5118, 2937, -2157, 1416, -1179, 756, -666, 392, -357, 182, -170, 66, -63], 
+			[-71, 75, -192, 208, -407, 452, -766, 881, -1379, 1689, -2606, 3701, -6950, 25528, 15277, -5900, 3342, -2436, 1595, -1323, 848, -745, 439, -399, 203, -189, 74, -70], 
+			[-75, 79, -203, 220, -430, 476, -808, 926, -1448, 1766, -2719, 3826, -7062, 23211, 18030, -6508, 3636, -2628, 1717, -1419, 908, -796, 469, -426, 217, -202, 79, -75], 
+			[-76, 81, -206, 223, -436, 482, -818, 935, -1461, 1775, -2725, 3801, -6906, 20693, 20693, -6906, 3801, -2725, 1775, -1461, 935, -818, 482, -436, 223, -206, 81, -76], 
+			[-75, 79, -202, 217, -426, 469, -796, 908, -1419, 1717, -2628, 3636, -6508, 18030, 23211, -7062, 3826, -2719, 1766, -1448, 926, -808, 476, -430, 220, -203, 79, -75], 
+			[-70, 74, -189, 203, -399, 439, -745, 848, -1323, 1595, -2436, 3342, -5900, 15277, 25528, -6950, 3701, -2606, 1689, -1379, 881, -766, 452, -407, 208, -192, 75, -71], 
+			[-63, 66, -170, 182, -357, 392, -666, 756, -1179, 1416, -2157, 2937, -5118, 12494, 27594, -6549, 3424, -2388, 1543, -1254, 801, -695, 410, -369, 188, -174, 68, -64], 
+			[-53, 56, -144, 154, -303, 331, -563, 637, -993, 1189, -1806, 2441, -4202, 9737, 29362, -5845, 2995, -2069, 1332, -1079, 689, -595, 351, -315, 161, -148, 58, -55], 
+			[-42, 44, -113, 120, -237, 259, -439, 496, -773, 922, -1398, 1875, -3191, 7060, 30791, -4833, 2422, -1656, 1063, -857, 547, -472, 278, -249, 127, -117, 46, -43], 
+			[-29, 30, -77, 83, -162, 177, -301, 339, -528, 627, -949, 1263, -2128, 4515, 31851, -3513, 1719, -1163, 744, -597, 381, -327, 193, -173, 88, -81, 32, -30], 
+			[-15, 15, -39, 42, -82, 90, -152, 171, -267, 316, -477, 630, -1051, 2148, 32515, -1896, 904, -605, 385, -308, 196, -168, 99, -89, 45, -41, 16, -15]]
 
 
 ## TBN FIR filter with decimation of 20
@@ -427,35 +429,6 @@ def drxFilter(sampleRate=19.6e6, nPts=_nPts):
 	return interp1d(h, w/w.max(), kind='cubic', bounds_error=False)
 
 
-def _processStreamBeam(data, intDelay, firFilter, gains, pol):
-	"""
-	Backend worker function for SoftwareDP for actually doing the beamforming.
-	"""
-	
-	# Split out the gains
-	XofX, XofY, YofX, YofY = gains
-	
-	# Delay
-	## Integer
-	temp = numpy.roll(data, intDelay)
-	temp = temp.astype(numpy.float32)
-	### FIR filter
-	temp = lfilter(firFilter, 32767, temp)
-	
-	# Gain
-	if pol is 0:
-		## If the input is an X pol...
-		contributionX = XofX*temp
-		contributionY = XofY*temp
-	else:
-		## If the input is a Y pol...
-		contributionX = YofX*temp
-		contributionY = YofY*temp
-		
-	# Return
-	return contributionX, contributionY
-
-
 def _processStreamFilter(time, data, filterPack, centralFreq):
 	"""
 	Backend worker function for SoftwareDP for actually doing the DSP filtering.
@@ -595,81 +568,18 @@ class SoftwareDP(object):
 		else:
 			self.delayFIRs[channel-1] = coeffs
 			
-	def formBeam(self, antennas, time, data, courseDelays=None, fineDelays=None, gains=None, DisablePool=False):
+	def formBeam(self, antennas, time, data, courseDelays=None, fineDelays=None, gains=None):
 		"""
 		Process a given batch of TBW data using the provided delay and gain information to
-		form a beam.
+		form a beam.  Returns a two-element tuple, one for each beam polarization.
 		"""
 		
-		try:
-			from multiprocessing import Pool, cpu_count
-			
-			# To get results pack from the pool, you need to keep up with the workers.  
-			# In addition, we need to keep up with which workers goes with which 
-			# baseline since the workers are called asynchronously.  Thus, we need a 
-			# taskList array to hold tuples of baseline ('count') and workers.
-			taskPool = Pool(processes=cpu_count())
-			taskList = []
+		filters = numpy.array(self.delayFIRs, dtype=numpy.int16)
+		course  = numpy.array(courseDelays, dtype=numpy.int16)
+		fine    = numpy.array(fineDelays, dtype=numpy.int16)
+		gain    = (numpy.array(gains)*32767).astype(numpy.int16)		
+		return _fir.integerBeamformer(data, filters, course, fine, gain)
 
-			usePool = True
-			progress = False
-		except ImportError:
-			usePool = False
-			
-		# Turn off the thread pool if we are explicitly told not to use it.
-		if DisablePool:
-			usePool = False
-		
-		# Output arrays
-		beamX = numpy.zeros(data.shape[1])
-		beamY = numpy.zeros(data.shape[1])
-		
-		# Loop over inputs to form the beam
-		toCut = 0
-		for i in xrange(data.shape[0]):
-			pol = antennas[i].pol
-			channel = antennas[i].digitizer
-			stand = channel/2 + channel%2
-			
-			intDelay = courseDelays[i]
-			firFilter = self.delayFIRs[channel-1][fineDelays[i]]
-			gain = gains[i/2]
-			
-			if sum(gain) == 0:
-				continue
-			
-			if intDelay > toCut:
-				toCut = intDelay
-			
-			if usePool:
-				# Use the pool
-				task = taskPool.apply_async(_processStreamBeam, args=(data[i,:], intDelay, firFilter, gain, pol))
-				taskList.append((i,task))
-			else:
-				# The pool is closed
-				contributionX, contributionY = _processStreamBeam(data[i,:], intDelay, firFilter, gain, pol)
-				beamX += contributionX
-				beamY += contributionY
-				
-		if usePool:
-			taskPool.close()
-			taskPool.join()
-
-			# This is where he taskList list comes in handy.  We now know who did what
-			# when we unpack the various results
-			for i,task in taskList:
-				contributionX, contributionY = task.get()
-				beamX += contributionX
-				beamY += contributionY
-				
-			# Destroy the taskPool
-			del(taskPool)
-			
-		# Trim the beams based on the FIFO delays
-		beamX = beamX[toCut:]
-		beamY = beamY[toCut:]
-			
-		return beamX, beamY
 		
 	def applyFilter(self, time, data, DisablePool=False):
 		"""
