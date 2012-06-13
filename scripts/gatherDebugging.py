@@ -105,7 +105,7 @@ def main(args):
 	# LSL
 	#
 	try:
-		import lsl
+		import lsl, lsl.version
 		lfp,junk = os.path.split(lsl.__file__)
 		lfp = os.path.join(lfp, 'correlator', '_core.so')
 		lfp = os.path.realpath(lfp)
@@ -117,7 +117,7 @@ def main(args):
 
 		lfp, junk = os.path.split(lsl.__file__)
 		print "LSL Path: %s" % lfp
-		print "LSL Base Version: %s" % lsl.__version__
+		print "LSL Version: %s" % lsl.version.version
 		print "LSL Linkage: %s" % lslLinkage
 	except ImportError, e:
 		print "LSL Import Error: %s" % str(e)

@@ -44,7 +44,7 @@ def estimateBeam(aa, HA, dec, MapSize=80, MapRes=0.50, MapWRes=0.10, freq=49e6):
 	return beamImg.image(center=(MapSize,MapSize))
 
 
-def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, freq=49e6, gain=0.1, maxIter=150, verbose=True):
+def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, freq=49e6, gain=0.3, maxIter=150, verbose=True):
 	"""
 	Given a AIPY antenna array instance and an AIPY ImgW instance filled 
 	with data, return a deconvolved image.  This function uses a CLEAN-like
@@ -169,7 +169,7 @@ def deconvolve(aa, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, lat=34.070, f
 		fig.colorbar(d, ax=ax2)
 		ax2.set_title('CLEAN Comps.')
 		
-		e = ax3.imshow(working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		e = ax3.imshow(working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest', vmin=-working.max(), vmax=working.max())
 		fig.colorbar(e, ax=ax3)
 		ax3.set_title('Residuals')
 		
