@@ -2,7 +2,8 @@
 
 """
 Module that contains common values found in the MCS Joint Release 5 header file
-src/exec/me.h.  The values are:
+src/exec/me.h and other functions useful for working with the MCS metadata.  
+The header file values are:
   * ME_SSMIF_FORMAT_VERSION - SSMIF format version code
   * ME_MAX_NSTD - Maximum number of stands that can be described
   * ME_MAX_NFEE - Maximum number of FEEs that can be described
@@ -28,22 +29,34 @@ src/exec/me.h.  The values are:
   * ME_MAX_SSNAME_LENGTH - Number of characters in the power port ID names, for 
     codes used for PWR_NAME
   * LWA_MAX_NSTD - Maximum number of stands for the LWA
+  
+The other functions:
+  * Convert MCS code s(status, summary, command ID, etc.) to human readable strings, 
+  * Parse the binary packed metadata, and
+  * Convert datetime instances to MJD and MPM values.
 """
 
 import re
+import math
+import pytz
 import struct
 from ctypes import *
+from datetime import datetime
 
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
-			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'status2string', 'summary2string', 
-			'sid2string', 'cid2string', 'mode2string', 'parseCStruct', 'single2multi', 
-			'__version__', '__revision__', '__all__']
+			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'mjdmpm2datetime', 'datetime2mjdmpm', 
+			'status2string', 'summary2string', 'sid2string', 'cid2string', 'mode2string', 
+			'parseCStruct', 'single2multi', '__version__', '__revision__', '__all__']
+
+
+# Time zones
+_UTC = pytz.utc
 
 
 ME_SSMIF_FORMAT_VERSION = 5	# SSMIF format version code
@@ -73,6 +86,53 @@ LWA_MAX_NSTD = 260			# Maximum number of stands for the LWA
 
 
 cDeclRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
+
+
+def mjdmpm2datetime(mjd, mpm):
+	"""
+	Convert a MJD, MPM pair to a UTC-aware datetime instance.
+	
+	.. versionadded:: 0.5.2
+	"""
+	
+	unix = mjd*86400.0 + mpm/1000.0 - 3506716800.0
+	return _UTC.localize(datetime.utcfromtimestamp(unix))
+
+
+def datetime2mjdmpm(dt):
+	"""
+	Convert a UTC datetime instance to a MJD, MPM pair (returned as a 
+	two-element tuple).
+	
+	Based off: http://paste.lisp.org/display/73536
+	
+	.. versionadded:: 0.5.2
+	"""
+	
+	year        = dt.year             
+	month       = dt.month      
+	day         = dt.day    
+
+	hour        = dt.hour
+	minute      = dt.minute
+	second      = dt.second     
+	millisecond = dt.microsecond / 1000
+
+	# compute MJD         
+	# adapted from http://paste.lisp.org/display/73536
+	# can check result using http://www.csgnetwork.com/julianmodifdateconv.html
+	a = (14 - month) // 12
+	y = year + 4800 - a          
+	m = month + (12 * a) - 3                    
+	p = day + (((153 * m) + 2) // 5) + (365 * y)   
+	q = (y // 4) - (y // 100) + (y // 400) - 32045
+	mjdi = int(math.floor( (p+q) - 2400000.5))
+	mjd = mjdi
+
+	# compute MPM
+	mpmi = int(math.floor( (hour*3600 + minute*60 + second)*1000 + millisecond ))
+	mpm = mpmi
+	return (mjd, mpm)
 
 
 def status2string(code):
