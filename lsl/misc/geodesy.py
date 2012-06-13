@@ -173,6 +173,8 @@ def __loadHistoric1992(timeout=120):
 		# Only include "final" values, not predictions
 		if newEOP.type == 'final':
 			eops.append(newEOP)
+	if len(eops) == 0:
+		eops.append(None)
 	
 	return eops
 
@@ -198,6 +200,8 @@ def __loadCurrent90(timeout=120):
 		newEOP = EOP()
 		newEOP.fromMAIA(line) 
 		eops.append(newEOP)
+	if len(eops) == 0:
+		eops.append(None)
 	
 	return eops
 
