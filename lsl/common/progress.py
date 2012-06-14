@@ -39,6 +39,7 @@ class ProgressBar(object):
 		self.max = max
 		self.span = span
 		self.sym = sym
+		self.rotations = ['-', '\\', '|', '/', '-', '\\', '|', '/', self.sym]
 		self.printP = printP
 	
 	def inc(self, amount=1):
@@ -66,20 +67,34 @@ class ProgressBar(object):
 			# If we want the percentage also displayed, trim a little 
 			# more from the progress bar's wdith
 			barSpan = self.span - 9
-			nMarks = int(round(float(self.amount)/self.max * barSpan))
-			bar = self.sym * nMarks
-			bar = bar+(' ' * (barSpan-nMarks))
+			nMarks = float(self.amount)/self.max * barSpan
+			nMarksFull = int(nMarks)
+			if nMarksFull < barSpan:
+				partial = nMarks - nMarksFull
+				lastMark = self.rotations[int(partial*len(self.rotations))]
+			else:
+				lastMark = ''
+			bar = self.sym * nMarksFull
+			bar = bar + lastMark
+			bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
 			nte = "%5.1f%%" % (float(self.amount)/self.max*100)
 
-			out = "|%s| %s" % (bar, nte)
+			out = "[%s] %s" % (bar, nte)
 		else:
 			# Progress bar only
 			barSpan = self.span - 2
-			nMarks = int(round(float(self.amount)/self.max * barSpan))
-			bar = self.sym * nMarks
-			bar = bar+(' ' * (barSpan-nMarks))
+			nMarks = float(self.amount)/self.max * barSpan
+			nMarksFull = int(nMarks)
+			if nMarksFull < barSpan:
+				partial = nMarks - nMarksFull
+				lastMark = self.rotations[int(partial*len(self.rotations))]
+			else:
+				lastMark = ''
+			bar = self.sym * nMarksFull
+			bar = bar + lastMark
+			bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
 
-			out = "|%s|" % bar
+			out = "[%s]" % bar
 
 		return out
 		

@@ -16,6 +16,7 @@
   * Fixed the URL used by lsl.misc.geodesy.__loadHistoric1992()
   * Added support for FreeBSD
   * Added datetime <-> MJD/MPM conversion functions to lsl.common.mcs
+  * Converted lsl.common.progress.ProgressBar to a rotating progress bar
 
 0.5.1
   * Added jinja2 to the list of install dependencies
