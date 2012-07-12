@@ -53,6 +53,14 @@ MCS Metadata Tarball Utilities
 Supporting Functions
 --------------------
 
+Conversion to/from MJD and MPM
+++++++++++++++++++++++++++++++
+These functions convert Python datetime instances to modified Julian Data (MJD) and
+milliseconds past midnight (MPM) pairs.
+
+.. autofunction:: lsl.common.mcs.datetime2mjdmpm
+.. autofunction:: lsl.common.mcs.mjdmpm2datetime
+
 Specifiying Delay and Gains for the Digital Processor
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 These functions are intended to help define observations that are run in Stepped mode with 

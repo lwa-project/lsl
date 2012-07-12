@@ -471,3 +471,11 @@ correlateTBN.py
             -s, --samples          Number of average visibilities to generate (default = 10)
 
             -q, --quiet            Run correlateTBN in silent mode
+
+splitSession.py
+  :Description: Given a MCS metadata tarball and a session DRX recording, split the session
+                recording into the individual observations.
+
+  :Usage: splitSession.py metaData data
+
+  :Options: None

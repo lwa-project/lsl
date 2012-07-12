@@ -35,9 +35,9 @@ import _spec
 import _stokes
 import _core
 
-__version__ = '0.6'
+__version__ = '0.7'
 __revision__ = '$Rev$'
-__all__ = ['pol2pol', 'noWindow', 'calcSpectrum', 'calcSpectra', 'SpecMaster', 'SpecMasterP', 'StokesMaster', 'FXMaster', 'FXStokes', '__version__', '__revision__', '__all__']
+__all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'SpecMasterP', 'StokesMaster', 'FXMaster', 'FXStokes', '__version__', '__revision__', '__all__']
 
 
 def pol2pol(pol):
@@ -68,169 +68,11 @@ def noWindow(L):
 	return numpy.ones(L)
 
 
-def calcSpectrum(signal, LFFT=64, window=noWindow, verbose=False):
-	"""
-	Worker function for calcSpectra.
-	"""
-
-	# Figure out if we are working with complex (I/Q) data or only real.  This
-	# will determine how the FFTs are done since the real data mirrors the pos-
-	# itive and negative Fourier frequencies.
-	if signal.dtype.kind == 'c':
-		lFactor = 1
-	else:
-		lFactor = 2
-
-	out = numpy.zeros(LFFT-1)
-
-	# Remove the mean
-	intSignal = 1.0*signal
-	intSignal -= intSignal.mean()
-
-	nChunks = intSignal.shape[0]/lFactor/LFFT
-	if verbose:
-		print "  %i samples -> %i chunks" % (intSignal.shape[0], nChunks)
-
-	for i in range(nChunks):
-		cs = intSignal[i*lFactor*LFFT:(i+1)*lFactor*LFFT]
-		cs *= window(lFactor*LFFT)
-		cf = numpy.fft.fft(cs, lFactor*LFFT)
-		cp = numpy.abs(cf)**2.0 / lFactor / LFFT
-			
-		out += cp[1:LFFT]
-	out /= float(nChunks)
-
-	return out
-
-
-def calcSpectra(signals, LFFT=64, SampleAverage=None, window=noWindow, DisablePool=False, verbose=False, SampleRate=None, CentralFreq=0.0):
-	"""
-	Given a collection of time series data with inputs on the first dimension
-	and data on the second, compute the spectra for all inputs.  By default, 
-	all data in the time series are average into a single spectrum.  However, this 
-	behavior can be modified if the SampleAverage keyword is set.  SampleAverage 
-	specifies how many individual spectra of length LFFT are to be averaged.
-
-	.. versionchanged:: 0.3.4
-		Prior to LSL version 0.3.4, the window functions available for calcSpectra 
-		were limited to Blackman and an (untested) Polyphase filter.  With version
-		0.4.0, the window to be used is passed to the function call via the 'window'
-		keyword and an "empty" window is provided by the module.  This allows for
-		the various window function defined in numpy (i.e., bartlett, blackman, 
-		hamming, etc.) to be used.  It also makes it easier to filter the data using
-		a custom window.  For example, a Kaiser window with a shape factor of 5 
-		could be made with:
-			
-			>>> import numpy
-			>>> def newWindow(L):
-			...      return numpy.kaiser(L, 5)
-	"""
-
-	# Figure out if we are working with complex (I/Q) data or only real.  This
-	# will determine how the FFTs are done since the real data mirrors the pos-
-	# itive and negative Fourier frequencies.
-	if signals.dtype.kind == 'c':
-		lFactor = 1
-		doFFTShift = True
-		CentralFreq = float(CentralFreq)
-	else:
-		lFactor = 2
-		doFFTShift = False
-
-	# Calculate the frequencies of the FFTs.  We do this for twice the FFT length
-	# because the real-valued signal only occupies the positive part of the 
-	# frequency space.
-	if SampleRate is None:
-		SampleRate = dp_common.fS
-	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
-	# Deal with TBW and TBN data in the correct way
-	if doFFTShift:
-		freq += CentralFreq
-		freq = numpy.fft.fftshift(freq)
-	freq = freq[1:LFFT]
-
-	# Calculate the number of output bins with respect to time.  If SampleAverage 
-	# is None, average up everything.
-	if SampleAverage is None:
-		SampleAverage = signals.shape[1] / lFactor / LFFT
-	nSamples = signals.shape[1] / lFactor / LFFT / int(SampleAverage)
-
-	# The multiprocessing module allows for the creation of worker pools to help speed
-	# things along.  If the processing module is found, use it.  Otherwise, set
-	# the 'usePool' variable to false and run single threaded.
-	try:
-		from multiprocessing import Pool, cpu_count
-		
-		# To get results pack from the pool, you need to keep up with the workers.  
-		# In addition, we need to keep up with which workers goes with which 
-		# signal since the workers are called asynchronously.  Thus, we need a 
-		# taskList array to hold tuples of signal ('count') and workers.
-		taskPool = Pool(processes=cpu_count())
-		taskList = []
-
-		usePool = True
-	except ImportError:
-		usePool = False
-	
-	# Turn off the thread pool if we are explicitly told not to use it.
-	if DisablePool:
-		usePool = False
-
-	output = numpy.zeros( (signals.shape[0], nSamples, freq.shape[0]) )
-	for i in range(signals.shape[0]):
-		for j in range(nSamples):
-			# Figure out which section of each signal to average
-			bchan = j*lFactor*LFFT*SampleAverage
-			echan = (j+1)*lFactor*LFFT*SampleAverage
-			if echan >= signals.shape[1]:
-				echan = -1
-
-			if verbose:
-				print "Working on signal %i of %i, section %i to %i" % (i+1, signals.shape[0], bchan, echan)
-
-			# If pool, pool...  Otherwise don't
-			if usePool:
-				task = taskPool.apply_async(calcSpectrum, args=(signals[i,bchan:echan], ), 
-									kwds={'LFFT': LFFT, 'window': window, 'verbose': verbose})
-				taskList.append((i,j,task))
-			else:
-				tempPS = calcSpectrum(signals[i,bchan:echan], LFFT=LFFT, window=window, verbose=verbose)
-
-				if doFFTShift:
-					output[i,j,:] = numpy.fft.fftshift(tempPS)
-				else:
-					output[i,j,:] = tempPS
-
-	# If pooling... Close the pool so that it knows that no ones else is joining.  
-	# Then, join the workers together and wait on the last one to finish before 
-	# saving the results.
-	if usePool:
-		taskPool.close()
-		taskPool.join()
-
-		# This is where he taskList list comes in handy.  We now know who did what
-		# when we unpack the various results
-		for i,j,task in taskList:
-			if doFFTShift:
-				output[i,j,:] = numpy.fft.fftshift(task.get())
-			else:
-				output[i,j,:] = task.get()
-
-		# Destroy the taskPool
-		del(taskPool)
-
-	# Trim single dimensions from the output if they are found.  This is the 
-	# default behavior
-	output = numpy.squeeze(output)
-
-	return (freq, output)
-
-
 def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0, ClipLevel=0):
 	"""
 	A more advanced version of calcSpectra that uses the _spec C extension 
 	to handle all of the P.S.D. calculations in parallel.  Returns a two-
-	element tuple of the frequencies (in Hz) and PSDs in dB/RBW.
+	element tuple of the frequencies (in Hz) and PSDs in linear power/RBW.
 	
 	.. note::
 		SpecMaster currently average all data given and does not support the
@@ -280,7 +122,7 @@ def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=Non
 	"""
 	Similar to SpecMaster but uses a 4-tap polyphase filter bank instead
 	of a FFT.  Returns a two-element tuple of the frequencies (in Hz) and 
-	PSDs in dB/RBW.
+	PSDs in linear power/RBW.
 	
 	.. note::
 		SpecMaster currently average all data given and does not support the
@@ -331,8 +173,8 @@ def StokesMaster(signals, antennas, LFFT=64, window=noWindow, verbose=False, Sam
 	Similar to SpecMaster, but accepts an array of signals and a list of 
 	antennas in order to compute the PSDs for the four Stokes parameters: 
 	I, Q, U, and V.  Returns a two-element tuple of the frequencies (in Hz) 
-	and PSDs in dB/RBW.  The PSD are three dimensional with dimensions 
-	Stokes parameter (0=I, 1=Q, 2=U, 3=V) by stand by channel).
+	and PSDs in linear power/RBW.  The PSD are three dimensional with 
+	dimensions Stokes parameter (0=I, 1=Q, 2=U, 3=V) by stand by channel).
 	"""
 	
 	# Figure out if we are working with complex (I/Q) data or only real.  This

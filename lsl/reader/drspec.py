@@ -22,6 +22,11 @@ For describing the format of data in the file, three function are provided:
   * getSampleRate - get the sample rate in the file
   * getFrameSize - get the total (header + data) frame size
   * getTransformSize - get the FFT length
+
+.. note::
+	This reader works with the most current version of the DR spectrometer data
+	format as specified in the version 1.7.  To read data created with previous
+	versions of the DR spectrometer, use LSL version 0.5.2.
 """
 
 import copy
@@ -91,9 +96,12 @@ class FrameData(object):
 	"""
 	Class that stores the information found in the data section of a DR spectrometer/
 	DRX frame.
+	
+	.. versionchanged:: 0.5.3
+		Added the saturations field to keep up with saturation counts.
 	"""
 
-	def __init__(self, timeTag=None, tuningWords=None, fills=None, flags=None, X0=None, Y0=None, X1=None, Y1=None):
+	def __init__(self, timeTag=None, tuningWords=None, fills=None, flags=None, saturations=None, X0=None, Y0=None, X1=None, Y1=None):
 		self.timeTag = timeTag
 		if tuningWords is None:
 			self.tuningWords = [0, 0]
@@ -107,6 +115,10 @@ class FrameData(object):
 			self.flags = [0, 0, 0, 0]
 		else:
 			self.flags = flags
+		if saturations is None:
+			self.saturations = [0, 0, 0, 0]
+		else:
+			self.saturations = saturations
 		self.X0 = X0
 		self.Y0 = Y0
 		self.X1 = X1

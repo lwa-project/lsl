@@ -45,14 +45,16 @@ typedef struct {
 	unsigned short int timeOffset;	// time offset reported by DP
 	unsigned short int decFactor; 	// decimation factor
 	unsigned int freqCode[2]; 		// DP frequency codes for each tuning
-								// //indexing: 0..1 = Tuning 1..2
+								//   indexing: 0..1 = Tuning 1..2
 	unsigned int fills[4]; 			// fills for each pol/tuning combination
-								// indexing: 0..3 = X0, Y0 X1, Y1
+								//   indexing: 0..3 = X0, Y0 X1, Y1
 	unsigned char errors[4]; 		// error flag for each pol/tuning combo
-								// indexing: 0..3 = X0, Y0 X1, Y1
+								//   indexing: 0..3 = X0, Y0 X1, Y1
 	unsigned char beam;				// beam number
 	unsigned int nFreqs;			// <Transform Length>
 	unsigned int nInts;				// <Integration Count>
+	unsigned int satCount[4];		// saturation count for each pol/tuning combo
+								//   indexing: 0..3 = X0, Y0 X1, Y1
 	unsigned int MAGIC2;			// must always equal 0xED0CED0C
 } DRSpecHeader;
 #pragma pack(pop)
@@ -567,7 +569,7 @@ are sub-classes of IOError.\n\
 
 static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
-	PyObject *tuningWords, *fills, *errors;
+	PyObject *tuningWords, *fills, *errors, *saturations;
 	PyArrayObject *dataX0, *dataY0, *dataX1, *dataY1;
 	int i;
 	
@@ -710,6 +712,24 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		PyList_SetItem(errors, i, temp);
 	}
 	
+	saturations = PyList_New(4);
+	if(saturations == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output list - saturations");
+		Py_XDECREF(dataX0);
+		Py_XDECREF(dataY0);
+		Py_XDECREF(dataX1);
+		Py_XDECREF(dataY1);
+		Py_XDECREF(tuningWords);
+		Py_XDECREF(fills);
+		Py_XDECREF(errors);
+		Py_XDECREF(saturations);
+		return NULL;
+	}
+	for(i=0; i<4; i++) {
+		temp = Py_BuildValue("H", header.satCount[i]);
+		PyList_SetItem(saturations, i, temp);
+	}
+	
 	// Save the data to the frame object
 	// 1. Header
 	fHeader = PyObject_GetAttrString(frame, "header");
@@ -742,6 +762,8 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	PyObject_SetAttrString(fData, "fills", fills);
 	
 	PyObject_SetAttrString(fData, "flags", errors);
+	
+	PyObject_SetAttrString(fData, "saturations", saturations);
 
 	PyObject_SetAttrString(fData, "X0", PyArray_Return(dataX0));
 	PyObject_SetAttrString(fData, "Y0", PyArray_Return(dataY0));
@@ -756,6 +778,7 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	Py_XDECREF(tuningWords);
 	Py_XDECREF(fills);
 	Py_XDECREF(errors);
+	Py_XDECREF(saturations);
 	Py_XDECREF(fData);
 	Py_XDECREF(dataX0);
 	Py_XDECREF(dataY0);

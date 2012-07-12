@@ -5,3 +5,6 @@ Post-Acquisition Beam Forming
 
 .. automodule:: lsl.misc.beamformer
    :members:
+
+.. autoclass:: lsl.common.dp.SoftwareDP
+   :members:

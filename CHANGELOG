@@ -1,5 +1,11 @@
 0.6.0
-  * Nothing yet
+  * Removed the correlator.fx.calcSpectra()/calcSpectrum() functions
+
+0.5.3
+  * Changed the DROS spectrometer reader to match the new format
+  * Fixed the documentation for the various correlator.fx spectra functions
+  * Updated the sphinx documentation to address Ticket #25
+  * Added the session splitting script to IOC to address Ticket #24
 
 0.5.2
   * Fixed a bug in gatherDebugging.py that caused the script to crash on missing modules
