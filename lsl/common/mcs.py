@@ -38,7 +38,6 @@ The other functions:
 
 import re
 import math
-import pytz
 import struct
 from ctypes import *
 from datetime import datetime
@@ -53,10 +52,6 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
 			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'mjdmpm2datetime', 'datetime2mjdmpm', 
 			'status2string', 'summary2string', 'sid2string', 'cid2string', 'mode2string', 
 			'parseCStruct', 'single2multi', '__version__', '__revision__', '__all__']
-
-
-# Time zones
-_UTC = pytz.utc
 
 
 ME_SSMIF_FORMAT_VERSION = 5	# SSMIF format version code
@@ -96,7 +91,7 @@ def mjdmpm2datetime(mjd, mpm):
 	"""
 	
 	unix = mjd*86400.0 + mpm/1000.0 - 3506716800.0
-	return _UTC.localize(datetime.utcfromtimestamp(unix))
+	return datetime.utcfromtimestamp(unix)
 
 
 def datetime2mjdmpm(dt):

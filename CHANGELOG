@@ -6,6 +6,8 @@
   * Fixed the documentation for the various correlator.fx spectra functions
   * Updated the sphinx documentation to address Ticket #25
   * Added the session splitting script to IOC to address Ticket #24
+  * Changed lsl.common.mcs.mjdmpm2datetime() to return naive datetime instances (Ticket #26)
+  * Fixed a bug in lsl.common.sdf.Project that causes some observation non-overlaps to be reported as overlaps
 
 0.5.2
   * Fixed a bug in gatherDebugging.py that caused the script to crash on missing modules

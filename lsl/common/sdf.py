@@ -362,10 +362,10 @@ class Session(object):
 				if verbose and i != j:
 					print "[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1)
 
-				cStart = sObs[j].mjd*24 + sObs[j].mpm/1000.0/3600.0
-				cStop = cStart + sObs[j].dur/1000.0/3600.0
-				pStart = sObs[i].mjd*24 + sObs[i].mpm/1000.0/3600.0
-				pStop = pStart + sObs[i].dur/1000.0/3600.0
+				cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
+				cStop = cStart + int(sObs[j].dur)
+				pStart = int(sObs[i].mjd)*24*3600*1000 + int(sObs[i].mpm)
+				pStop = pStart + int(sObs[i].dur)
 
 				if pStart >= cStart and pStart < cStop:
 					nOverlaps += 1

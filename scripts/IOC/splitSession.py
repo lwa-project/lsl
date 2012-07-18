@@ -3,36 +3,19 @@
 
 import os
 import sys
+import getopt
 from datetime import datetime, timedelta
 
-from lsl.common.mcs import mjdmpm2datetime
+from lsl.common.mcs import mjdmpm2datetime, mode2string
 from lsl.common import metabundle
 from lsl.reader import tbw,tbn,drx,errors
 
 
-def mode2string(mode):
-	"""
-	Convert a MCS numeric observing mode into a string.
-	"""
-	
-	if mode < 1 or mode > 6:
-		raise ValueError("Invalid observing mode %i" % mode)
-	
-	if mode == 1:
-		return "TRK_RADEC"
-	elif mode == 2:
-		return "TRK_SOL"
-	elif mode == 3:
-		return "TRK_JOV"
-	elif mode == 4:
-		return "STEPPED"
-	elif mode == 5:
-		return "TBW"
-	else:
-		return "TBN"
-
-
 def obsComp(x, y):
+	"""
+	Function to help sort observations in time.
+	"""
+	
 	tX = mjdmpm2datetime(x['MJD'], x['MPM'])
 	tY = mjdmpm2datetime(y['MJD'], y['MPM'])
 	if tX < tY:
@@ -43,10 +26,59 @@ def obsComp(x, y):
 		return 0
 
 
+def usage(exitCode=None):
+	print """splitSession.py - Given a MCS metadata tarball and a session data file, 
+split the data file into individual observations.
+
+Usage:
+splitSession.py [OPTIONS] MetaData DataFile
+
+Options:
+-h, --help             Display this help information
+"""
+
+	if exitCode is not None:
+		sys.exit(exitCode)
+	else:
+		return True
+
+
+def parseConfig(args):
+	config = {}
+	# Command line flags - default values
+
+	# Read in and process the command line flags
+	try:
+		opts, arg = getopt.getopt(args, "h", ["help",])
+	except getopt.GetoptError, err:
+		# Print help information and exit:
+		print str(err) # will print something like "option -a not recognized"
+		usage(exitCode=2)
+	
+	# Work through opts
+	for opt, value in opts:
+		if opt in ('-h', '--help'):
+			usage(exitCode=0)
+		else:
+			assert False
+			
+	# Add in arguments
+	config['args'] = arg
+	
+	# Validate
+	if len(config['args']) < 2:
+		raise RuntimeError("Must specify both a metadata and data file")
+
+	# Return configuration
+	return config
+
+
 def main(args):
 	# Get the file names
-	meta = args[0]
-	data = args[1]
+	config = parseConfig(args)
+	
+	meta = config['args'][0]
+	data = config['args'][1]
 
 	# Get all observations and their start times
 	sdf = metabundle.getSessionDefinition(meta)
