@@ -72,9 +72,14 @@ def main(args):
 
 	# Open the file and get some basic info about the data contained
 	fh = open(filename, 'rb')
-	junkFrame = drx.readFrame(fh)
-	sampleRate = junkFrame.getSampleRate()
-	fh.seek(0)
+	while True:
+		junkFrame = drx.readFrame(fh)
+		try:
+			sampleRate = junkFrame.getSampleRate()
+			break
+		except ZeroDivisionError:
+			pass
+	fh.seek(-drx.FrameSize, 1)
 
 	tunepols = drx.getFramesPerObs(fh)
 	tunepols = (tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3])

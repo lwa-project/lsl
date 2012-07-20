@@ -242,7 +242,7 @@ class Session(object):
 		self.name = name
 		self.id = int(id)
 		if observations is None:
-			self.observations = None
+			self.observations = []
 		else:
 			self.observations = observations
 		self.dataReturnMethod = dataReturnMethod
@@ -1223,6 +1223,7 @@ def parseSDF(filename, verbose=False):
 	project = Project(observer, 'project_name', 'project_id', projectOffice=po)
 	session = Session('session_name', 0, observations=[])
 	project.sessions = [session,]
+	project.projectOffice.observations = [[],]
 	
 	# Loop over the file
 	obsTemp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
@@ -1542,6 +1543,12 @@ def parseSDF(filename, verbose=False):
 			continue
 		if keyword == 'OBS_TBW_SAMPLES':
 			sessionSamples = int(value)
+			continue
+		if keyword == 'OBS_TBN_GAIN':
+			project.sessions[0].tbnGain = int(value)
+			continue
+		if keyword == 'OBS_DRX_GAIN':
+			project.sessions[0].drxGain = int(value)
 			continue
 	
 	# Create the final observation
