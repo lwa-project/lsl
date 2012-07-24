@@ -158,13 +158,13 @@ def __loadHistoric1992(timeout=120):
 	try:
 		eopFH = urllib2.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.data', timeout=timeout)
 		lines = eopFH.readlines()
+		eopFH.close()
 	except IOError as e:
 		__logger.error('Error downloading historic EOP data: %s', str(e))
 		lines = []
 	except socket.timeout:
 		__logger.error('Timeout after %i seconds downloading historic EOP data', timeout)
 		lines = []
-	eopFH.close()
 
 	eops = []
 	for line in lines:
@@ -187,13 +187,13 @@ def __loadCurrent90(timeout=120):
 	try:
 		eopFH = urllib2.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.daily', timeout=timeout)
 		lines = eopFH.readlines()
+		eopFH.close()
 	except IOError as e:
 		__logger.error('Error downloading recent EOP data: %s', str(e))
 		lines = []
 	except socket.timeout:
 		__logger.error('Timeout after %i seconds downloading recent EOP data', timeout)
 		lines = []
-	eopFH.close()
 
 	eops = []
 	for line in lines:
