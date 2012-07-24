@@ -12,6 +12,7 @@
   * Modified splitDRX.py to cope with DRX data that begins with frames that list a decimation of zero
   * Added support for parsing the OBS_DRX_GAIN and OBS_TBN_GAIN keywords in the SDF parser
   * Cleaned up drxSpectra.py to better deal with files that have a tuning missing at the beginning or where the sample rate changes at the beginning of the file
+  * Added a module to lsl.misc to generate autostereograms from 2-D NumPy arrays
 
 0.5.2
   * Fixed a bug in gatherDebugging.py that caused the script to crash on missing modules

@@ -38,7 +38,7 @@ def getASG(data, patternWidth=100, patternPad=1, maxDepth=30):
 	pattern = pattern.astype(numpy.int16)
 	
 	# Number of tiles of the pattern needed to cover the autostereogram
-	nTiles = 1.0*x/patternWidth
+	nTiles = 1.0*y/patternWidth
 	
 	# Base image and fill
 	orig = numpy.zeros((x,y,3), dtype=numpy.int16)
