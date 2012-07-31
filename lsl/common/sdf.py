@@ -58,7 +58,7 @@ from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  '__version__', '__revision__', '__all__']
 
@@ -70,6 +70,34 @@ _MST = pytz.timezone('US/Mountain')
 _PST = pytz.timezone('US/Pacific')
 _nStands = 260
 _DRSUCapacityTB = 10
+
+
+def _getEquinoxEquation(jd):
+	"""
+	Compute the equation of the equinoxes (nutation in right ascension) in 
+	hours for the specified Julian Date.
+	
+	From:
+	http://aa.usno.navy.mil/faq/docs/GAST.php
+	"""
+	
+	# Get the number of days since January 1, 2000 @ 12:00 UT
+	D = jd - 2451545.0
+
+	# Compute the obliquity
+	epsilon = 23.4393 - 0.0000004*D
+	
+	# Compute the mean longitude of the Sun
+	L = 280.47 + 0.98565*D
+	
+	# Compute the longitude of the Moon's ascending node
+	Omega = 125.04 - 0.052954*D
+	
+	# The nutation in the longitude (hours)
+	deltaPsi = -0.000319*math.sin(Omega*math.pi/180) - 0.000024*math.sin(2*L*math.pi/180)
+
+	# Return the equation of the equinoxes
+	return deltaPsi * math.cos(epsilon*math.pi/180.0)
 
 
 def parseTimeString(s):
@@ -96,6 +124,8 @@ def parseTimeString(s):
 				tz = _MST
 			elif tzName in ['PST', 'PDT']:
 				tz = _PST
+			elif tzName in ['LST',]:
+				tz = 'LST'
 			else:
 				raise ValueError("Unknown time zone: '%s'" % tzName)
 		
@@ -139,7 +169,69 @@ def parseTimeString(s):
 			else:
 				raise ValueError("Unknown month abbreviation: '%s'" % monthName)
 		
+		if tz == 'LST':
+			# Deal with sidereal times...
+			#
+			# NOTE:
+			# The RMS on this method is ~0.4 seconds over the years 
+			# 2000 to 2100.  This should be "good enough" for scheduling
+			# purposes.
+			
+			# Get the position of the observer on the Earth and the Julian 
+			# Date of midnight UT for the day we want to map LST to
+			obs = site.getObserver()
+			dt = astro.date(year, month, day, 0, 0, 0)
+			jd = dt.to_jd()
+			
+			# Get the LST in hours
+			LST = hour + minute/60.0 + (second + microsecond/1e6)/3600.0
+			
+			# Get the Greenwich apparent ST for LST using the longitude of 
+			# the site.  The site longitude is stored as radians, so convert
+			# to hours first.
+			GAST = LST - site.long*12/math.pi
+			
+			# Get the Greenwich mean ST by removing the equation of the 
+			# equinoxes (or some approximation thereof)
+			GMST = GAST - _getEquinoxEquation(jd)
+			
+			# Get the value of D0, days since January 1, 2000 @ 12:00 UT, 
+			# and T, the number of centuries since the year 2000.  The value
+			# of T isn't terribly important but it is nice to include
+			D0 = jd - 2451545.0
+			T = D0 / 36525.0
+			
+			# Solve for the UT hour for this LST and map onto 0 -> 24 hours
+			# From: http://aa.usno.navy.mil/faq/docs/GAST.php
+			H  = GMST - 6.697374558 - 0.06570982441908*D0 - 0.000026*T**2
+			H /= 1.002737909350795
+			while H < 0:
+				H += 24/1.002737909350795
+			while H > 24:
+				H -= 24/1.002737909350795
+				
+			# Get the full Julian Day that this corresponds to
+			jd += H/24.0
+			
+			# Convert the JD back to a time and extract the relevant 
+			# quantities needed to build a datetime instance
+			dt = astro.get_date(jd)
+			
+			tz = _UTC
+			year = dt.years
+			month = dt.months
+			day = dt.days
+			hour = dt.hours
+			minute = dt.minutes
+			second = int(dt.seconds)
+			microsecond = int((dt.seconds - second)*1e6)
+			## Trim the microsecond down to the millisecond level
+			microsecond = int(int(microsecond/1000.0)*1000)
+			
+		# Localize as the appropriate time zone
 		dtObject = tz.localize(datetime(year, month, day, hour, minute, second, microsecond))
+		
+		# Return as UTC
 		return dtObject.astimezone(_UTC)
 
 

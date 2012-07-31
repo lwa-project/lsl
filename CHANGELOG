@@ -14,6 +14,7 @@
   * Cleaned up drxSpectra.py to better deal with files that have a tuning missing at the beginning or where the sample rate changes at the beginning of the file
   * Added a module to lsl.misc to generate autostereograms from 2-D NumPy arrays
   * Fixed a bug in lsl.misc.geodesy related to an exception that is thrown when the URL cannot be reached
+  * Added support for parsing LST times at LWA-1 in lsl.common.sdf.parseTimeString()
 
 0.5.2
   * Fixed a bug in gatherDebugging.py that caused the script to crash on missing modules
