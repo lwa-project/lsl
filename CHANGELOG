@@ -1,6 +1,9 @@
 0.6.0
   * Removed the correlator.fx.calcSpectra()/calcSpectrum() functions
 
+0.5.4
+  * Switched over to transparent compression in the lsl.common.metabundle functions
+
 0.5.3
   * Changed the DROS spectrometer reader to match the new format
   * Fixed the documentation for the various correlator.fx spectra functions

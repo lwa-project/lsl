@@ -254,7 +254,7 @@ def getSDM(tarname):
 	
 	# Extract the SDM file.  If the dynamic/sdm.dat file cannot be found, None
 	# is returned via the try...except block.
-	tf = tarfile.open(tarname, mode='r:gz')
+	tf = tarfile.open(tarname, mode='r:*')
 	try:
 		ti = tf.getmember('dynamic/sdm.dat')
 	except KeyError:
@@ -284,7 +284,7 @@ def getStation(tarname, ApplySDM=True):
 	
 	# Extract the SSMIF and SDM files.  If the ssmif.dat file cannot be found, None
 	# is returned via the try...except block
-	tf = tarfile.open(tarname, mode='r:gz')
+	tf = tarfile.open(tarname, mode='r:*')
 	try:
 		ti = tf.getmember('ssmif.dat')
 	except KeyError:
@@ -324,7 +324,7 @@ def getSessionMetaData(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Extract the session meta-data file (_metadata.txt)
-	tf = tarfile.open(tarname, mode='r:gz')
+	tf = tarfile.open(tarname, mode='r:*')
 	try:
 		ti = tf.getmember('%s_metadata.txt' % basename)
 	except KeyError:
@@ -380,7 +380,7 @@ def getSessionSpec(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Extract the session specification file (.ses)
-	tf = tarfile.open(tarname, mode='r:gz')
+	tf = tarfile.open(tarname, mode='r:*')
 	try:
 		ti = tf.getmember('%s.ses' % basename)
 	except KeyError:
@@ -412,7 +412,7 @@ def getObservationSpec(tarname, selectObs=None):
 	basename, ext = os.path.splitext(basename)
 	
 	# Find all of the .obs files and extract them
-	tf = tarfile.open(tarname, mode='r:gz')
+	tf = tarfile.open(tarname, mode='r:*')
 	tis = []
 	for ti in tf.getmembers():
 		if ti.name[-4:] == '.obs':
@@ -465,7 +465,7 @@ def getSessionDefinition(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Find the right .txt file (not the metadata one) and extract it
-	tf = tarfile.open(tarname, mode='r:gz')
+	tf = tarfile.open(tarname, mode='r:*')
 	for ti in tf.getmembers():
 		if ti.name[-4:] == '.txt' and ti.name.find('metadata') == -1:
 			break
@@ -492,7 +492,7 @@ def getCommandScript(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Find the .cs file and extract it
-	tf = tarfile.open(tarname, mode='r:gz')
+	tf = tarfile.open(tarname, mode='r:*')
 	for ti in tf.getmembers():
 		if ti.name[-3:] == '.cs':
 			break
