@@ -1000,11 +1000,11 @@ Ouputs:\n\
 */
 
 static PyMethodDef StokesMethods[] = {
-	{"FPSDR2",   FPSDR2,    METH_VARARGS|METH_KEYWORDS, FPSDR2_doc   }, 
-	{"FPSDR3",   FPSDR3,    METH_VARARGS|METH_KEYWORDS, FPSDR3_doc   }, 
-	{"FPSDC2",   FPSDC2,    METH_VARARGS|METH_KEYWORDS, FPSDC2_doc   }, 
-	{"FPSDC3",   FPSDC3,    METH_VARARGS|METH_KEYWORDS, FPSDC3_doc   }, 
-	{"XEngine2", XEngine2,  METH_VARARGS,               XEngine2_doc }, 
+	{"FPSDR2",   (PyCFunction) FPSDR2,    METH_VARARGS|METH_KEYWORDS, FPSDR2_doc   }, 
+	{"FPSDR3",   (PyCFunction) FPSDR3,    METH_VARARGS|METH_KEYWORDS, FPSDR3_doc   }, 
+	{"FPSDC2",   (PyCFunction) FPSDC2,    METH_VARARGS|METH_KEYWORDS, FPSDC2_doc   }, 
+	{"FPSDC3",   (PyCFunction) FPSDC3,    METH_VARARGS|METH_KEYWORDS, FPSDC3_doc   }, 
+	{"XEngine2", (PyCFunction) XEngine2,  METH_VARARGS,               XEngine2_doc }, 
 	{NULL,       NULL,      0,                          NULL         }
 };
 

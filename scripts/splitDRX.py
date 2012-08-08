@@ -6,7 +6,7 @@ import sys
 import getopt
 from datetime import datetime
 
-from lsl.reader import drx
+from lsl.reader import drx, errors
 from lsl.common.progress import ProgressBar
 
 
@@ -72,31 +72,76 @@ def main(args):
 
 	# Open the file and get some basic info about the data contained
 	fh = open(filename, 'rb')
-	while True:
-		junkFrame = drx.readFrame(fh)
-		try:
-			sampleRate = junkFrame.getSampleRate()
-			break
-		except ZeroDivisionError:
-			pass
-	fh.seek(-drx.FrameSize, 1)
+	nFramesFile = sizeB / drx.FrameSize
 
+	while True:
+		try:
+			junkFrame = drx.readFrame(fh)
+			try:
+				srate = junkFrame.getSampleRate()
+				t0 = junkFrame.getTime()
+				break
+			except ZeroDivisionError:
+				pass
+		except errors.syncError:
+			fh.seek(-drx.FrameSize+1, 1)
+			
+	fh.seek(-drx.FrameSize, 1)
+	
+	beams = drx.getBeamCount(fh)
 	tunepols = drx.getFramesPerObs(fh)
-	tunepols = (tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3])
-	nCaptures = sizeB / drx.FrameSize / tunepols
+	tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
+	beampols = tunepol
+
+	# Offset in frames for beampols beam/tuning/pol. sets
+	offset = int(round(config['offset'] * srate / 4096 * beampols))
+	offset = int(1.0 * offset / beampols) * beampols
+	fh.seek(offset*drx.FrameSize, 1)
+	
+	# Iterate on the offsets until we reach the right point in the file.  This
+	# is needed to deal with files that start with only one tuning and/or a 
+	# different sample rate.  
+	while True:
+		## Figure out where in the file we are and what the current tuning/sample 
+		## rate is
+		junkFrame = drx.readFrame(fh)
+		srate = junkFrame.getSampleRate()
+		t1 = junkFrame.getTime()
+		tunepols = drx.getFramesPerObs(fh)
+		tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
+		beampols = tunepol
+		fh.seek(-drx.FrameSize, 1)
+		
+		## See how far off the current frame is from the target
+		tDiff = t1 - (t0 + config['offset'])
+		
+		## Half that to come up with a new seek parameter
+		tCorr = -tDiff / 2.0
+		cOffset = int(tCorr * srate / 4096 * beampols)
+		cOffset = int(1.0 * cOffset / beampols) * beampols
+		offset += cOffset
+		
+		## If the offset is zero, we are done.  Otherwise, apply the offset
+		## and check the location in the file again/
+		if cOffset is 0:
+			break
+		fh.seek(cOffset*drx.FrameSize, 1)
+	
+	# Update the offset actually used
+	config['offset'] = t1 - t0
 
 	print "Filename:     %s" % filename
 	print "Size:         %.1f MB" % (float(sizeB)/1024/1024)
-	print "Captures:     %i (%.2f seconds)" % (nCaptures, nCaptures*4096/sampleRate)
-	print "Tuning/Pols.: %i " % tunepols
-	print "Sample Rate: %.2f MHz" % (sampleRate/1e6)
+	print "Captures:     %i (%.2f seconds)" % (nFramesFile/beampols, nFramesFile/beampols*4096/srate)
+	print "Tuning/Pols.: %i " % tunepol
+	print "Sample Rate: %.2f MHz" % (srate/1e6)
 	print "==="
 
 	if config['count'] > 0:
-		nCaptures = config['count'] * sampleRate / 4096
+		nCaptures = config['count'] * srate / 4096
 	else:
-		config['count'] = nCaptures * 4096 / sampleRate
-	nSkip = int(config['offset'] * sampleRate / 4096 )
+		config['count'] = nCaptures * 4096 / srate
+	nSkip = int(config['offset'] * srate / 4096 )
 
 	print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], nSkip)
 	print "Seconds to Split: %.2f (%i captures)" % (config['count'], nCaptures)
@@ -111,13 +156,9 @@ def main(args):
 		frame = drx.readFrame(fh)
 		beam, tune, pol = frame.parseID()
 		skip += 1
-
-	if skip != 0:
-		fh.seek(fh.tell() - drx.FrameSize)
-		print "Skipped %i frames at the beginning of the file" % skip
 	
 	# Offset
-	fh.seek(fh.tell() + nSkip*drx.FrameSize*tunepols)
+	fh.seek(fh.tell() + nSkip*drx.FrameSize*tunepol)
 
 	if config['date']:
 		filePos = fh.tell()
@@ -129,11 +170,11 @@ def main(args):
 	else:
 		captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'])
 
-	print "Writing %.2f s to file '%s'" % (nCaptures*4096/sampleRate, captFilename)
+	print "Writing %.2f s to file '%s'" % (nCaptures*4096/srate, captFilename)
 	fhOut = open(captFilename, 'wb')
 	pb = ProgressBar(max=nCaptures)
 	for c in xrange(int(nCaptures)):
-		for i in xrange(tunepols):
+		for i in xrange(tunepol):
 			cFrame = fh.read(drx.FrameSize)
 			fhOut.write(cFrame)
 

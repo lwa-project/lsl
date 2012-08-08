@@ -123,7 +123,7 @@ StatusCode Log_DumpToFile(FILE * stream){
 	return SUCCESS;
 }
 
-void Log_Close(){
+void Log_Close(void){
 	if (isLogOpen){
 		isLogOpen=false;
 		Persistence_Close(&logDb);

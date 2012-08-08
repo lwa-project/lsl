@@ -182,7 +182,7 @@ StatusCode _FileSystem_DeallocateIMFS(FileSystem * fs);
 int        _FileSystem_GetFileIndex(FileSystem * fs, const char* name);
 void 	   _FileSystem_RegisterActiveFilesystem(FileSystem * fs);
 void 	   _FileSystem_UnregisterActiveFilesystem(FileSystem * fs);
-void 	   _FiLeSystem_CloseAllActiveSystems();
+void 	   _FiLeSystem_CloseAllActiveSystems(void);
 boolean    _FileSystem_CheckPattern(void* ptr, size_t size);
 void 	   _FileSystem_CreatePattern(void* ptr, size_t size);
 size_t 	   _FileSystem_RangeConflicts(FileSystem * fs, size_t start, size_t stop);

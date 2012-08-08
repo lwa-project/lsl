@@ -1102,11 +1102,11 @@ Ouputs:\n\
 */
 
 static PyMethodDef CorrelatorMethods[] = {
-	{"FEngineR2", FEngineR2, METH_VARARGS|METH_KEYWORDS, FEngineR2_doc}, 
-	{"FEngineR3", FEngineR3, METH_VARARGS|METH_KEYWORDS, FEngineR3_doc}, 
-	{"FEngineC2", FEngineC2, METH_VARARGS|METH_KEYWORDS, FEngineC2_doc}, 
-	{"FEngineC3", FEngineC3, METH_VARARGS|METH_KEYWORDS, FEngineC3_doc}, 
-	{"XEngine2",  XEngine2,  METH_VARARGS,               XEngine2_doc }, 
+	{"FEngineR2", (PyCFunction) FEngineR2, METH_VARARGS|METH_KEYWORDS, FEngineR2_doc}, 
+	{"FEngineR3", (PyCFunction) FEngineR3, METH_VARARGS|METH_KEYWORDS, FEngineR3_doc}, 
+	{"FEngineC2", (PyCFunction) FEngineC2, METH_VARARGS|METH_KEYWORDS, FEngineC2_doc}, 
+	{"FEngineC3", (PyCFunction) FEngineC3, METH_VARARGS|METH_KEYWORDS, FEngineC3_doc}, 
+	{"XEngine2",  (PyCFunction) XEngine2,  METH_VARARGS,               XEngine2_doc }, 
 	{NULL,        NULL,      0,                          NULL         }
 };
 

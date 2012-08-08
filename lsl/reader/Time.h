@@ -41,16 +41,16 @@ typedef struct __timestamp {
 	size_t day;
 } TimeStamp;
 
-TimeStamp getTimestamp();
-size_t    getMPM();
-size_t    getMJD();
+TimeStamp getTimestamp(void);
+size_t    getMPM(void);
+size_t    getMJD(void);
 size_t    getElapsedMilliseconds(TimeStamp start, TimeStamp stop);
 boolean   before (size_t MJDa, size_t MPMa, size_t MJDb, size_t MPMb); // a is before b
 boolean   after (size_t MJDa, size_t MPMa, size_t MJDb, size_t MPMb);  // a is after b
 boolean   equal (size_t MJDa, size_t MPMa, size_t MJDb, size_t MPMb);  // a is equal to b
 void      addTime(size_t MJD, size_t MPM, size_t milliseconds, size_t* resultMJD, size_t* resultMPM);
 void      subTime(size_t MJD, size_t MPM, size_t milliseconds, size_t* resultMJD, size_t* resultMPM);
-char* HumanTime();
+char* HumanTime(void);
 int compareDates(size_t mjda, size_t mpma, size_t mjdb, size_t mpmb);
 
 #endif /* TIME_H_ */

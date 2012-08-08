@@ -173,7 +173,7 @@ as a list of filenames.");
 
 
 static PyObject *getDeviceChunkSize(PyObject *self, PyObject *args) {
-	PyLongObject *chunksize;
+	PyObject *chunksize;
 	char *device;
 
 	if(!PyArg_ParseTuple(args, "s", &device)) {
@@ -198,7 +198,7 @@ static PyObject *getDeviceChunkSize(PyObject *self, PyObject *args) {
 	}
 	
 	// Get chunksize
-	chunksize = (PyLongObject *) Py_BuildValue("l", _CHUNKSIZE_);
+	chunksize = Py_BuildValue("l", _CHUNKSIZE_);
 	
 	closeDevice(device, disk, fs);
 	free(fs);
@@ -212,7 +212,7 @@ PyDoc_STRVAR(getDeviceChunkSize_doc, \
 
 
 static PyObject *getFileSize(PyObject *self, PyObject *args) {
-	PyLongObject *filesize;
+	PyObject *filesize;
 	char *device, *filename;
 	int index;
 
@@ -249,7 +249,7 @@ static PyObject *getFileSize(PyObject *self, PyObject *args) {
 	index = _FileSystem_GetFileIndex(fs, filename);
 	
 	// Get the file size
-	filesize = (PyLongObject *) Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].size);
+	filesize = Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].size);
 	
 	closeDevice(device, disk, fs);
 	free(fs);
@@ -265,7 +265,7 @@ on the device.");
 
 
 static PyObject *getFileStart(PyObject *self, PyObject *args) {
-	PyLongObject *filestart;
+	PyObject *filestart;
 	char *device, *filename;
 	int index;
 
@@ -302,7 +302,7 @@ static PyObject *getFileStart(PyObject *self, PyObject *args) {
 	index = _FileSystem_GetFileIndex(fs, filename);
 	
 	// Get the file start in bytes from the beginning of the disk
-	filestart = (PyLongObject *) Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].startPosition + _CHUNKSIZE_);
+	filestart = Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].startPosition + _CHUNKSIZE_);
 	
 	closeDevice(device, disk, fs);
 	free(fs);
@@ -318,7 +318,7 @@ DRSU device.  An IOError is raised if the file cannot be found on the device.");
 
 
 static PyObject *getFileType(PyObject *self, PyObject *args) {
-	PyStringObject *filetype;
+	PyObject *filetype;
 	char *device, *filename;
 	int index;
 
@@ -355,7 +355,7 @@ static PyObject *getFileType(PyObject *self, PyObject *args) {
 	index = _FileSystem_GetFileIndex(fs, filename);
 	
 	// Get the file start in bytes from the beginning of the disk
-	filetype = (PyStringObject *) Py_BuildValue("s", trim(fs->fileSystemHeaderData->fileInfo[index].metaData.format));
+	filetype = Py_BuildValue("s", trim(fs->fileSystemHeaderData->fileInfo[index].metaData.format));
 	
 	closeDevice(device, disk, fs);
 	free(fs);
@@ -371,7 +371,7 @@ file cannot be found on the device.");
 
 
 static PyObject *getFileTime(PyObject *self, PyObject *args) {
-	PyLongObject *filemtime;
+	PyObject *filemtime;
 	char *device, *filename;
 	int index;
 
@@ -408,7 +408,7 @@ static PyObject *getFileTime(PyObject *self, PyObject *args) {
 	index = _FileSystem_GetFileIndex(fs, filename);
 	
 	// Get the file creation time
-	filemtime = (PyLongObject *) Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].mtime.tv_sec);
+	filemtime = Py_BuildValue("l", fs->fileSystemHeaderData->fileInfo[index].mtime.tv_sec);
 	
 	closeDevice(device, disk, fs);
 	free(fs);
@@ -529,13 +529,13 @@ file for reading.");
 
 
 static PyMethodDef DRSUMethods[] = {
-	{"listDevice",         listDevice,         METH_VARARGS, listDevice_doc}, 
-	{"getDeviceChunkSize", getDeviceChunkSize, METH_VARARGS, getDeviceChunkSize_doc}, 
-	{"getFileSize",        getFileSize,        METH_VARARGS, getFileSize_doc}, 
-	{"getFileStart",       getFileStart,       METH_VARARGS, getFileStart_doc}, 
-	{"getFileType",        getFileType,        METH_VARARGS, getFileType_doc}, 
-	{"getFileTime",        getFileTime,        METH_VARARGS, getFileTime_doc}, 
-	{"listFiles",          listFiles,          METH_VARARGS, listFiles_doc}, 
+	{"listDevice",         (PyCFunction) listDevice,         METH_VARARGS, listDevice_doc}, 
+	{"getDeviceChunkSize", (PyCFunction) getDeviceChunkSize, METH_VARARGS, getDeviceChunkSize_doc}, 
+	{"getFileSize",        (PyCFunction) getFileSize,        METH_VARARGS, getFileSize_doc}, 
+	{"getFileStart",       (PyCFunction) getFileStart,       METH_VARARGS, getFileStart_doc}, 
+	{"getFileType",        (PyCFunction) getFileType,        METH_VARARGS, getFileType_doc}, 
+	{"getFileTime",        (PyCFunction) getFileTime,        METH_VARARGS, getFileTime_doc}, 
+	{"listFiles",          (PyCFunction) listFiles,          METH_VARARGS, listFiles_doc}, 
 	{NULL,                 NULL,               0,            NULL}
 };
 

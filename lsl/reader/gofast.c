@@ -799,9 +799,9 @@ a drspec.Frame instance.");
 */
 
 static PyMethodDef GoFastMethods[] = {
-	{"readTBW", readTBW, METH_VARARGS, readTBW_doc}, 
-	{"readTBN", readTBN, METH_VARARGS, readTBN_doc}, 
-	{"readDRX", readDRX, METH_VARARGS, readDRX_doc}, 
+	{"readTBW", (PyCFunction) readTBW, METH_VARARGS, readTBW_doc}, 
+	{"readTBN", (PyCFunction) readTBN, METH_VARARGS, readTBN_doc}, 
+	{"readDRX", (PyCFunction) readDRX, METH_VARARGS, readDRX_doc}, 
 	{"readDRSpec", readDRSpec, METH_VARARGS, readDRSpec_doc},
 	{NULL, NULL, 0, NULL}
 };
@@ -828,7 +828,6 @@ PyMODINIT_FUNC init_gofast(void) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
 		Py_XDECREF(dict1);
 		Py_XDECREF(m);
-		return NULL;
 	}
 	PyDict_SetItemString(dict1, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
@@ -844,7 +843,6 @@ PyMODINIT_FUNC init_gofast(void) {
 		Py_XDECREF(syncError);
 		Py_XDECREF(dict2);
 		Py_XDECREF(m);
-		return NULL;
 	}
 	PyDict_SetItemString(dict2, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters the end-of-file while reading."));

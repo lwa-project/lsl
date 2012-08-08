@@ -59,7 +59,7 @@ typedef struct __Disk{
 } Disk;
 #define DiskSize sizeof(Disk)
 
-StatusCode Disk_IdentifyAll();
+StatusCode Disk_IdentifyAll(void);
 StatusCode Disk_GetDiskInfo(char *  deviceName, Disk* disk);
 StatusCode Disk_CreateArray(Disk disksToUse[], int count);
 StatusCode Disk_Format(char* deviceName);
@@ -78,7 +78,7 @@ size_t Disk_GetArrayChunkSize(Disk* disk);
 
 extern const char *DriveTypeString[];
 
-int    DiskGetUsableCount();
+int    DiskGetUsableCount(void);
 char * DiskGetUsableName(int index);
 size_t DiskGetUsableFreeSpace(int index);
 size_t DiskGetUsableTotalSpace(int index);

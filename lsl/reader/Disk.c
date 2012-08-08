@@ -105,12 +105,12 @@ boolean matchStringInStringList(char* string, const char** matchList, int matchL
 	}
 	return false;
 }
-StatusCode DiskLockDeviceInfo(){
+StatusCode DiskLockDeviceInfo(void){
 	if (deviceRecordLocked) return FAILURE;
 	deviceRecordLocked=true;
 	return SUCCESS;
 }
-StatusCode DiskUnlockDeviceInfo(){
+StatusCode DiskUnlockDeviceInfo(void){
 	deviceRecordLocked=false;
 	return SUCCESS;
 }
@@ -181,7 +181,7 @@ DriveType detectMultidiskFileSystemType(const char* id){
  end new code
 **********************************************************************************/
 
-StatusCode Disk_IdentifyAll(){
+StatusCode Disk_IdentifyAll(void){
 	if (deviceRecordLocked) return FAILURE;
 	char buffer[2048];
 	int i=0;
@@ -666,7 +666,7 @@ size_t Disk_GetArrayChunkSize(Disk* disk){
 }
 
 
-int    DiskGetUsableCount(){
+int    DiskGetUsableCount(void){
 	int i,count=0;
 	if (devicesCount<=0) return 0;
 	for(i=0; i<devicesCount; i++){

@@ -39,7 +39,7 @@ StatusCode Log_GetCount(int * count);
 StatusCode Log_GetEntry(int whichEntry, char* result);
 StatusCode Log_DumpToFile(FILE * stream);
 
-void Log_Close();
+void Log_Close(void);
 
 
 #endif /* LOG_H_ */

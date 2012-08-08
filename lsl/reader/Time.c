@@ -29,7 +29,7 @@
 #include <sys/time.h>
 #include <stdio.h>
 
-size_t getMPM(){
+size_t getMPM(void){
 	struct timeval dt;
 	gettimeofday(&dt, NULL);
 	struct tm timeStruct;
@@ -42,7 +42,7 @@ size_t getMPM(){
     return (hour*3600 + minute*60 + second)*1000 + millisecond;
 }
 
-size_t getMJD(){
+size_t getMJD(void){
 	struct timeval dt;
 	gettimeofday(&dt, NULL);
 	struct tm timeStruct;
@@ -62,7 +62,7 @@ size_t getMJD(){
 
 }
 
-TimeStamp getTimestamp(){
+TimeStamp getTimestamp(void){
 	TimeStamp rv;
 	struct timeval dt;
 	gettimeofday(&dt, NULL);
@@ -141,7 +141,7 @@ char HumanTimeBuffer[1024];
 char* mnames[]={
 		"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
 };
-char* HumanTime(){
+char* HumanTime(void){
 	TimeStamp ts=getTimestamp();
 	sprintf(HumanTimeBuffer, "%02lu %3s %04lu %02lu:%02lu:%02lu:%03lu", ts.day,mnames[ts.month-1],ts.year,ts.hour,ts.minute,ts.second,ts.millisecond);
 	return HumanTimeBuffer;

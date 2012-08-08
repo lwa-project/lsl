@@ -67,7 +67,7 @@ void _FileSystem_UnregisterActiveFilesystem(FileSystem * fs){
 		}
 	}
 }
-void _FiLeSystem_CloseAllActiveSystems(){
+void _FiLeSystem_CloseAllActiveSystems(void){
 	while (NumActiveFilesystems>0){
 		Log_Add("[FILE SYSTEM] FileSystem_Close(ActiveFileSystems[0]);");
 		FileSystem_Close(ActiveFileSystems[0]);

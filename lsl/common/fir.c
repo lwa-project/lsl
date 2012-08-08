@@ -331,8 +331,8 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
 	c = (short int *) course->data;
 	w = (short int *) fine->data;
 	g = (short int *) gain->data;
-	x = (int *) dataFX->data;
-	y = (int *) dataFY->data;
+	x = (float *) dataFX->data;
+	y = (float *) dataFY->data;
 	
 	float *t1, *t2, *tX, *tY;
 	
@@ -358,10 +358,10 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
 			    * tX -> temporary beam for X pol.
 			    * tY -> temporary beam for Y pol.
 			*/
-			t1 = (int *) malloc(sizeof(float)*nSamps);
-			t2 = (int *) malloc(sizeof(float)*nSamps);
-			tX = (int *) malloc(sizeof(float)*nSamps);
-			tY = (int *) malloc(sizeof(float)*nSamps);
+			t1 = (float *) malloc(sizeof(float)*nSamps);
+			t2 = (float *) malloc(sizeof(float)*nSamps);
+			tX = (float *) malloc(sizeof(float)*nSamps);
+			tY = (float *) malloc(sizeof(float)*nSamps);
 			
 			/*
 			  Delay + FIR
@@ -442,9 +442,9 @@ Outputs:\n\
 
 
 static PyMethodDef FIRMethods[] = {
-	{"integer16",         integerFIR,        METH_VARARGS, integerFIR_doc       }, 
-	{"integer16Delayed",  integerFIRDelayed, METH_VARARGS, integerFIRDelayed_doc}, 
-	{"integerBeamformer", integerBeamformer, METH_VARARGS, integerBeamformer_doc}, 
+	{"integer16",         (PyCFunction) integerFIR,        METH_VARARGS, integerFIR_doc       }, 
+	{"integer16Delayed",  (PyCFunction) integerFIRDelayed, METH_VARARGS, integerFIRDelayed_doc}, 
+	{"integerBeamformer", (PyCFunction) integerBeamformer, METH_VARARGS, integerBeamformer_doc}, 
 	{NULL,                NULL,              0,            NULL                 }
 };
 
