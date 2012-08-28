@@ -6,6 +6,8 @@
   * Added support for '/' seperated YYYY/MM/DD in lsl.common.sdf.parseTimeString()
   * Removed the 'return' values from the _gofast module import call
   * Various cleanups in the C extentions to remove compile time warnings
+  * Tweaked the splitDRX.py script to be more robust
+  * Added support for libnova version 0.15.0
 
 0.5.3
   * Changed the DROS spectrometer reader to match the new format

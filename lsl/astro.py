@@ -47,7 +47,7 @@ def _hexversion(version):
     
 
 _MIN_LIBNOVA_VER = _hexversion((0, 12, 0))
-_MAX_LIBNOVA_VER = _hexversion((0, 13, 0))
+_MAX_LIBNOVA_VER = _hexversion((0, 15, 0))
 
 _CUR_LIBNOVA_VER = _hexversion(get_libnova_version())
 
