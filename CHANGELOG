@@ -8,6 +8,8 @@
   * Various cleanups in the C extentions to remove compile time warnings
   * Tweaked the splitDRX.py script to be more robust
   * Added support for libnova version 0.15.0
+  * Improved support for STEPPED observations in lsl.common.sdf
+  * Made the TBW read-out duration calculation consistent with the current version of MCS
 
 0.5.3
   * Changed the DROS spectrometer reader to match the new format

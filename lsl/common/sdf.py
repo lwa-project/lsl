@@ -70,6 +70,10 @@ _MST = pytz.timezone('US/Mountain')
 _PST = pytz.timezone('US/Pacific')
 _nStands = 260
 _DRSUCapacityTB = 10
+# Factors for computing the time it takes to read out a TBW from the number 
+# of samples
+_TBW_TIME_SCALE = 196000
+_TBW_TIME_GAIN = 5000
 
 
 def _getEquinoxEquation(jd):
@@ -639,6 +643,10 @@ class TBW(Observation):
 	reduced number of parameters needed to setup the observation and provides extra
 	information about the number of data bits and the number of samples.
 	
+	.. note::
+		TBW read-out times in ms are calculated using (samples/196000+1)*5000 per
+		MCS
+	
 	Required Arguments:
 	  * observation name
 	  * observation target
@@ -653,8 +661,9 @@ class TBW(Observation):
 	def __init__(self, name, target, start, samples, bits=12, comments=None):
 		self.samples = samples
 		self.bits = bits
-		duration = (int(samples) / 196000 + 1)*1100 / 1000.0 * 3.5
-		Observation.__init__(self, name, target, start, str(duration), 'TBW', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
+		duration = (int(samples) / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
+		durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
+		Observation.__init__(self, name, target, start, durStr, 'TBW', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
 
 	def estimateBytes(self):
 		"""Estimate the data volume for the specified type and duration of 
@@ -963,7 +972,8 @@ class Stepped(Observation):
 	  * comments - comments about the observation
 	"""
 	
-	def __init__(self, name, target, start, filter, steps=[], comments=None):
+	def __init__(self, name, target, start, filter, steps=[], RADec=True, comments=None):
+		self.RADec = bool(RADec)
 		self.steps = steps
 		self.filterCodes = DRXFilters
 		Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, MaxSNR=False, comments=comments)
@@ -1048,8 +1058,12 @@ class Stepped(Observation):
 		stepCount = 1
 		for step in self.steps:
 			if verbose:
-				print "[%i] Validation step %i" % (os.getpid(), stepCount)
+				print "[%i] Validating step %i" % (os.getpid(), stepCount)
 			if not step.validate(verbose=verbose):
+				failures += 1
+			if step.RADec != self.RADec:
+				if verbose:
+					print "[%i] Error: Step is not of the same coordinate type as observation" % os.getpid()
 				failures += 1
 				
 			stepCount += 1
@@ -1106,6 +1120,18 @@ class BeamStep(object):
 		self.MaxSNR = bool(MaxSNR)
 		self.delays = SpecDelays
 		self.gains = SpecGains
+		
+		self.update()
+		
+	def __str__(self):
+		c1s = "RA" if self.RADec else "Az"
+		c2s = "Dec" if self.RADec else "Alt"
+		return "Step of %s %.3f, %s %.3f for %s at %.3f and %.3f MHz" % (c1s, self.c1, c2s, self.c2, self.duration, self.frequency1/1e6, self.frequency2/1e6)
+		
+	def update(self):
+		"""
+		Update the settings.
+		"""
 		
 		self.dur = self.getDuration()
 		self.freq1 = self.getFrequency1()
@@ -1199,7 +1225,7 @@ class BeamStep(object):
 		# Basic - Observation time
 		if self.dur < 5:
 			if verbose:
-				print "[%i] Error: step dwell time is too short" % os.getpid()
+				print "[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur)
 			failures += 1
 	     # Basic - Frequency and filter code values
 		if self.freq1 < 219130984 or self.freq1 > 1928352663:
@@ -1256,7 +1282,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	# Build up a string representing the observation duration.  For TBW observations 
 	# this needs to be wrapped in a try...expect statement to catch errors.
 	try:
-		dur = obsTemp['dur']
+		dur = obsTemp['duration']
 		dur = float(dur) / 1000.0
 		durString = '%02i:%02i:%06.3f' % (dur/3600.0, (dur%3600.0)/60.0, dur%60.0)
 	except:
@@ -1285,11 +1311,18 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 		if verbose:
 			print "[%i] -> found %i steps" % (os.getpid(), len(beamTemps))
 			
-		obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], steps=[], comments=obsTemp['comments'])
+		obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], RADec=obsTemp['stpRADec'], steps=[], comments=obsTemp['comments'])
 		for beamTemp in beamTemps:
+			try:
+				dur = beamTemp['duration']
+				dur = float(dur) / 1000.0
+				durString = '%02i:%02i:%06.3f' % (dur/3600.0, (dur%3600.0)/60.0, dur%60.0)
+			except:
+				pass
+			
 			f1 = word2freq(beamTemp['freq1'])
 			f2 = word2freq(beamTemp['freq2'])
-			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], beamTemp['duration'], f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
+			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
 
 	# Return the newly created Observation object
 	return obsOut
@@ -1463,7 +1496,7 @@ def parseSDF(filename, verbose=False):
 			obsTemp['mpm'] = int(value)
 			continue
 		if keyword == 'OBS_DUR':
-			obsTemp['dur'] = int(value)
+			obsTemp['duration'] = int(value)
 			continue
 		if keyword == 'OBS_MODE':
 			obsTemp['mode'] = value
@@ -1653,8 +1686,8 @@ def parseSDF(filename, verbose=False):
 		for obs in project.sessions[0].observations:
 			obs.bits = sessionBits
 			obs.samples = int(sessionSamples)
-			obs.dur = (obs.samples / 196000 + 1)*1100 * 3.5
-			obs.duration = str(obs.dur / 1000.0)
+			obs.dur = (obs.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
+			obs.duration = '%02i:%02i:%06.3f' % (int(obs.dur/1000.0)/3600, int(obs.dur/1000.0)%3600/60, obs.dur/1000.0%60)
 
 	# Close the file
 	fh.close()
