@@ -1602,6 +1602,9 @@ def parseSDF(filename, verbose=False):
 						beamTemps[-1]['delays'].append( 0 )
 						if bdi < _nStands:
 							beamTemps[-1]['gains'].append( [0, 0, 0, 0] )
+							
+				else:
+					beamTemps[-1]['MaxSNR'] = False
 			else:
 				if beamTemps[-1]['id'] != ids[0]:
 					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
@@ -1617,6 +1620,9 @@ def parseSDF(filename, verbose=False):
 						beamTemps[-1]['delays'].append( 0 )
 						if bdi < _nStands:
 							beamTemps[-1]['gains'].append( [[0, 0], [0, 0]] )
+							
+				else:
+					beamTemps[-1]['MaxSNR'] = False
 			continue
 			
 		if keyword == 'OBS_BEAM_DELAY':
