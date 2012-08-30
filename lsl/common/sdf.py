@@ -1790,7 +1790,7 @@ OBS_BW+          {{ renderBW(obs) }}
 OBS_STP_N        {{ obs.steps|length }}
 OBS_STP_RADEC    {{ "%i"|format(obs.steps[0].RADec) }}
 {% for step in obs.steps -%}
-OBS_STP_C1[{{ loop.index }}]      {{ step.c1 }}
+OBS_STP_C1[{{ loop.index }}]      {{ "%f"|format(step.c1) }}
 OBS_STP_C2[{{ loop.index }}]      {{ "%+f"|format(step.c2) }}
 OBS_STP_T[{{ loop.index }}]       {{ step.dur }}
 OBS_STP_FREQ1[{{ loop.index }}]   {{ step.freq1 }}
