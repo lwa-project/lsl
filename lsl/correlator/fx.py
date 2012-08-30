@@ -28,7 +28,6 @@ import numpy
 from lsl.common.constants import c as vLight
 from lsl.common import dp as dp_common
 from lsl.common.constants import *
-from lsl.common.warns import warnDeprecated
 from lsl.correlator import uvUtils
 
 import _spec

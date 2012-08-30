@@ -51,7 +51,6 @@ from datetime import datetime, timedelta, tzinfo
 
 from lsl.common import dp as dp_common
 from lsl.reader.tbn import filterCodes as tbnCodes
-from lsl.common.warns import warnDeprecated
 
 __version__ = '0.5'
 __revision__ = '$Rev$'

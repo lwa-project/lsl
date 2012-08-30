@@ -26,7 +26,6 @@ from lsl.common.stations import geo2ecef
 from lsl.correlator import uvUtils
 from lsl.misc import mathutil
 from lsl.misc import geodesy
-from lsl.common.warns import warnExperimental
 
 __version__ = '0.6'
 __revision__ = '$Rev$'

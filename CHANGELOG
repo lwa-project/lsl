@@ -1,5 +1,6 @@
 0.6.0
   * Removed the correlator.fx.calcSpectra()/calcSpectrum() functions
+  * Removed the lsl.common.warns module
 
 0.5.4
   * Switched over to transparent compression in the lsl.common.metabundle functions
