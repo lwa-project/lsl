@@ -159,7 +159,7 @@ class sdf_tests(unittest.TestCase):
 		
 		# Bad frequency
 		project.sessions[0].observations[0].filter = 7
-		project.sessions[0].observations[0].frequency1 = 90.0e6
+		project.sessions[0].observations[0].frequency1 = 95.0e6
 		project.sessions[0].observations[0].update()
 		self.assertFalse(project.validate())
 		

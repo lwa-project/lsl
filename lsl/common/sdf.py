@@ -747,7 +747,11 @@ class TBN(Observation):
 		
 	def validate(self, verbose=False):
 		"""Evaluate the observation and return True if it is valid, False
-		otherwise."""
+		otherwise.
+		
+		..note::
+			This version of sdf allows for TBN tuning between 5 and 93 MHz.
+		"""
 		
 		failures = 0
 		# Basic - Duration, frequency, and filter code values
@@ -755,7 +759,7 @@ class TBN(Observation):
 			if verbose:
 				print "[%i] Error: Specified a duration of length zero" % os.getpid()
 			failures += 1
-		if self.freq1 < 219130984 or self.freq1 > 1928352663:
+		if self.freq1 < 109565492 or self.freq1 > 2037918156:
 			if verbose:
 				print "[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid()
 			failures += 1
