@@ -12,6 +12,8 @@
   * Improved support for STEPPED observations in lsl.common.sdf
   * Made the TBW read-out duration calculation consistent with the current version of MCS
   * Changed the allowed TBN tuning from 10 to 88 MHz to 5 to 93 MHz
+  * Tweaked lsl.common.beamformer.phaseAndSum() to automatically exclude bad stands
+  * Removed a testing block from lsl.common.beamformer.intDelayAndSum() which only sums the first 20 antennas
 
 0.5.3
   * Changed the DROS spectrometer reader to match the new format
