@@ -34,16 +34,19 @@ The other functions:
   * Convert MCS code s(status, summary, command ID, etc.) to human readable strings, 
   * Parse the binary packed metadata, and
   * Convert datetime instances to MJD and MPM values.
+  * Apply a rotation axis-based pointing corretion to a azimuth/elevation pair
 """
 
 import re
 import math
+import numpy
 import struct
 from ctypes import *
+from aipy import coord
 from datetime import datetime
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
@@ -51,7 +54,7 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
 			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'mjdmpm2datetime', 'datetime2mjdmpm', 
 			'status2string', 'summary2string', 'sid2string', 'cid2string', 'mode2string', 
-			'parseCStruct', 'single2multi', '__version__', '__revision__', '__all__']
+			'parseCStruct', 'single2multi', 'applyPointingCorrection', '__version__', '__revision__', '__all__']
 
 
 ME_SSMIF_FORMAT_VERSION = 5	# SSMIF format version code
@@ -565,3 +568,55 @@ def _single2four(inputList, dim1, dim2, dim3, dim4):
 						pass
 	
 	return outputList
+
+
+def _getRotationMatrix(theta, phi, psi, degrees=True):
+	"""
+	Generate the rotation matrix for a rotation about a specified axis.
+
+	http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+	"""
+
+	if degrees:
+		theta = theta * numpy.pi/180.0
+		phi   = phi * numpy.pi/180.0
+		psi   = psi * numpy.pi/180.0
+
+	# Axis
+	u = numpy.array([numpy.cos(phi)*numpy.sin(theta), numpy.sin(phi)*numpy.sin(theta), numpy.cos(theta)])
+	ux, uy, uz = u
+
+	# Rotation matrix
+	rot  = numpy.eye(3)*numpy.cos(psi) 
+	rot += numpy.sin(psi)*numpy.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]]) 
+	rot += (1-numpy.cos(psi))*numpy.tensordot(u, u, axes=0)
+	
+	return rot
+
+
+def applyPointingCorrection(az, el, theta, phi, psi, lat=34.070, degrees=True):
+	"""
+	Given a azimuth and elevation pair, and an axis to rotate about, 
+	perform the rotation.
+
+	http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+	"""
+
+	# Get the rotation matrix
+	rot = _getRotationMatrix(theta, phi, psi, degrees=degrees)
+
+	# Convert the az,alt coordinates to the unit vector
+	if degrees:
+		xyz = coord.azalt2top((az*numpy.pi/180.0, el*numpy.pi/180.0))
+	else:
+		xyz = coord.azalt2top((az, el))
+		
+	# Rotate
+	xyzP = numpy.dot(rot, xyz)
+	
+	azP, elP = coord.top2azalt(xyzP)
+	if degrees:
+		azP *= 180/numpy.pi
+		elP *= 180/numpy.pi
+
+	return azP, elP
