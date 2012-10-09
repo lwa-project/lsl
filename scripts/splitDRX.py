@@ -3,6 +3,7 @@
 
 import os
 import sys
+import math
 import getopt
 from datetime import datetime
 
@@ -22,6 +23,7 @@ Options:
 -o, --offset           Number of seconds to skip before splitting
 -d, --date             Label the split files with a date rather than a 
                        sequence number
+-r, --recurvsive       Recursively split the file.
 """
 
 	if exitCode is not None:
@@ -29,16 +31,18 @@ Options:
 	else:
 		return True
 
+
 def parseConfig(args):
 	config = {}
 	# Command line flags - default values
 	config['offset'] = 0
 	config['count'] = 0
 	config['date'] = False
+	config['recursive'] = False
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hc:o:d", ["help", "count=", "offset=", "date"])
+		opts, arg = getopt.getopt(args, "hc:o:dr", ["help", "count=", "offset=", "date", "recursive"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -54,6 +58,8 @@ def parseConfig(args):
 			config['offset'] = float(value)
 		elif opt in ('-d', '--date'):
 			config['date'] = True
+		elif opt in ('-r', '--recursive'):
+			config['recursive'] = True
 		else:
 			assert False
 	
@@ -62,6 +68,24 @@ def parseConfig(args):
 
 	# Return configuration
 	return config
+
+
+def fileSplitFunction(fhIn, fhOut, nCaptures, nBeampols):
+	pb = ProgressBar(max=nCaptures)
+	
+	for c in xrange(int(nCaptures)):
+		for i in xrange(nBeampols):
+			cFrame = fhIn.read(drx.FrameSize)
+			fhOut.write(cFrame)
+			
+		pb.inc(amount=1)
+		if c != 0 and c % 100 == 0:
+			sys.stdout.write(pb.show()+'\r')
+			sys.stdout.flush()
+			
+	sys.stdout.write(pb.show()+'\r')
+	sys.stdout.write('\n')
+	sys.stdout.flush()
 
 
 def main(args):
@@ -141,7 +165,6 @@ def main(args):
 		nCaptures = config['count'] * srate / 4096
 	else:
 		config['count'] = nCaptures * 4096 / srate
-	nSkip = int(config['offset'] * srate / 4096 )
 
 	print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], nSkip)
 	print "Seconds to Split: %.2f (%i captures)" % (config['count'], nCaptures)
@@ -156,38 +179,34 @@ def main(args):
 		frame = drx.readFrame(fh)
 		beam, tune, pol = frame.parseID()
 		skip += 1
+
+	nFramesRemaining = (sizeB - fh.tell()) / drx.FrameSize
+	nRecursions = int(nFramesRemaining / (nCaptures*beampols))
+	if not config['recursive']:
+		nRecursions = 1
+		
+	scale = int(math.log10(nRecursions)) + 1
+	ifString = "#%%%ii of %i (%%s)" % (scale, nRecursions)
 	
-	# Offset
-	fh.seek(fh.tell() + nSkip*drx.FrameSize*tunepol)
+	for r in xrange(nRecursions):
+		if config['date']:
+			filePos = fh.tell()
+			junkFrame = drx.readFrame(fh)
+			fh.seek(filePos)
 
-	if config['date']:
-		filePos = fh.tell()
-		junkFrame = drx.readFrame(fh)
-		fh.seek(filePos)
-
-		dt = datetime.utcfromtimestamp(junkFrame.getTime())
-		captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
-	else:
-		captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'])
-
-	print "Writing %.2f s to file '%s'" % (nCaptures*4096/srate, captFilename)
-	fhOut = open(captFilename, 'wb')
-	pb = ProgressBar(max=nCaptures)
-	for c in xrange(int(nCaptures)):
-		for i in xrange(tunepol):
-			cFrame = fh.read(drx.FrameSize)
-			fhOut.write(cFrame)
-
-		pb.inc(amount=1)
-		if c != 0 and c % 100 == 0:
-			sys.stdout.write(pb.show()+'\r')
-			sys.stdout.flush()
-
-	sys.stdout.write(pb.show()+'\r')
-	sys.stdout.write('\n')
-	sys.stdout.flush()
-	fhOut.close()
-
+			dt = datetime.utcfromtimestamp(junkFrame.getTime())
+			captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
+		else:
+			captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'], scale)
+			captFilename = captFilename % r
+			if not config['recursive']:
+				captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'])
+			
+		print ifString % (r+1, captFilename)
+		fhOut = open(captFilename, 'wb')
+		fileSplitFunction(fh, fhOut, nCaptures, beampols)
+		fhOut.close()
+		
 	fh.close()
 	
 	
