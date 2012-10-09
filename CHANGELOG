@@ -4,6 +4,10 @@
 
 0.5.5
   * Added in the pointing correction rotation code to lsl.common.mcs as applyPointingCorrecton()
+  * Made the visibility simulations consistent with the output of lsl.correlator.fx.FXMaster()
+  * Added a new lsl.writer.fitsidi.ExtendedIDI class to deal with more than 255 antennas
+  * Updated lsl.imaging.utils to deal with the new ExtendedIDI class
+  * Added in the self-calibration routines to lsl.imaging.selfCal
 
 0.5.4
   * Switched over to transparent compression in the lsl.common.metabundle functions

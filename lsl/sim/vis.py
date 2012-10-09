@@ -482,9 +482,9 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 					print "Simulating data for baseline %i-%i, pol. %s" % (i,j,pol)
 
 				try:
-					crd = aa.gen_uvw(i, j, src=phaseCenter)
-					d = aa.sim(i, j, pol=pol)
-					d = aa.phs2src(d, phaseCenter, i, j)
+					crd = aa.gen_uvw(j, i, src=phaseCenter)
+					d = aa.sim(j, i, pol=pol)
+					d = aa.phs2src(d, phaseCenter, j, i)
 				except aipy.phs.PointingError:
 					continue
 
@@ -500,13 +500,13 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 					print "Simulating data for baseline %i-%i, pol. %s" % (i,j,pol)
 				
 				try:
-					crd = aa.gen_uvw(i, j, src=phaseCenter)
-					d = aa.sim(i, j, pol=pol)
-					d = aa.phs2src(d, phaseCenter, i, j)
+					crd = aa.gen_uvw(j, i, src=phaseCenter)
+					d = aa.sim(j, i, pol=pol)
+					d = aa.phs2src(d, phaseCenter, j, i)
 				except aipy.phs.PointingError:
 					continue
 
-				uvw = aa.gen_uvw(i, j, src=phaseCenter)
+				uvw = aa.gen_uvw(j, i, src=phaseCenter)
 				uvw = n.squeeze(crd.compress(n.logical_not(msk), axis=2))
 				vis = d.compress(n.logical_not(msk))
 				wgt = n.ones_like(vis) * len(vis)
@@ -595,18 +595,24 @@ def scaleData(dataDict, amps, delays):
 	else:
 		sclUVData['isMasked'] = False
 	fq = dataDict['freq'] / 1e9
+	
+	cGains = []
+	for i in xrange(len(amps)):
+		cGains.append( amps[i]*n.exp(2j*n.pi*fq*delays[i]) )
 
 	# Apply the scales and delays for all polarization pairs found in the original data
 	for pol in dataDict['vis'].keys():
-		sclUVData['bls'][pol] = copy.copy(dataDict['bls'][pol])
-		sclUVData['uvw'][pol] = copy.copy(dataDict['uvw'][pol])
+		sclUVData['bls'][pol] = []
+		sclUVData['uvw'][pol] = []
 		sclUVData['vis'][pol] = []
 		sclUVData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
 		sclUVData['msk'][pol] = copy.copy(dataDict['msk'][pol])
 		sclUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
 
-		for (i,j),vis in zip(dataDict['bls'][pol], dataDict['vis'][pol]):
-			sclUVData['vis'][pol].append( vis*amps[i]*amps[j]*n.exp(2j*math.pi*fq*(delays[j]-delays[i])) )
+		for (i,j),uvw,vis in zip(dataDict['bls'][pol], dataDict['uvw'][pol], dataDict['vis'][pol]):
+			sclUVData['bls'][pol].append( (i,j) )
+			sclUVData['uvw'][pol].append( uvw )
+			sclUVData['vis'][pol].append( vis*cGains[j].conj()*cGains[i] )
 
 	return sclUVData
 	
@@ -637,7 +643,7 @@ def shiftData(dataDict, aa):
 		sftUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
 
 		for (i,j),m in zip(dataDict['bls'][pol], dataDict['msk'][pol]):
-			crds = aa.gen_uvw(i, j, src='z')
+			crds = aa.gen_uvw(j, i, src='z')
 			if dataDict['isMasked']:
 				crds = crds.compress(n.logical_not(n.logical_not(m), axis=2))
 			crds = n.squeeze(crds)

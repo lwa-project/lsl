@@ -128,6 +128,9 @@ class CorrelatedData(object):
 			if tbl not in tbls:
 				raise RuntimeError("Cannot find table '%s' in '%s'" % (tbl, self.filename))
 		
+		self.extended = False
+		if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
+			self.extended = True
 		uvData = hdulist['UV_DATA']
 		
 		# Station/telescope information
@@ -231,8 +234,12 @@ class CorrelatedData(object):
 				
 				# Load it.
 				bl = row['BASELINE']
-				i = self.standMap[(bl >> 8) & 255]
-				j = self.standMap[bl & 255]
+				if not self.extended:
+					i = self.standMap[(bl >> 8) & 255]
+					j = self.standMap[bl & 255]
+				else:
+					i = self.standMap[(bl >> 16) & 65535]
+					j = self.standMap[bl & 65535]
 				if i == j and not includeAuto:
 					## Skip auto-correlations
 					continue
