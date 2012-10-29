@@ -9,6 +9,7 @@
   * Updated lsl.imaging.utils to deal with the new ExtendedIDI class
   * Added in the self-calibration routines to lsl.imaging.selfCal
   * Updated the LWA1 and LWA2 SSMIFs
+  * Fixed the observatory/instrument specific header values in lsl.writer.fitsidi so that they relflect the different sites
 
 0.5.4
   * Switched over to transparent compression in the lsl.common.metabundle functions

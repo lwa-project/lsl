@@ -156,7 +156,10 @@ class IDI(object):
 		# File-specific information
 		self.filename = filename
 		self.verbose = verbose
-
+		
+		# Observator-specific information
+		self.siteName = 'Unknown'
+		
 		# Observation-specific information
 		self.refTime = self.parseRefTime(refTime)
 		self.nAnt = 0
@@ -225,6 +228,9 @@ class IDI(object):
 		# Make sure that we have been passed 255 or fewer stands
 		if len(antennas) > 255:
 			raise RuntimeError("FITS IDI supports up to 255 antennas only, given %i" % len(antennas))
+		
+		# Update the observatory-specific information
+		self.siteName = site.name
 		
 		stands = []
 		for ant in antennas:
@@ -355,7 +361,7 @@ class IDI(object):
 		name = "ZA%s%s%s" % (date[0][2:], date[1], date[2])
 		hdr.update('OBSCODE', name, 'zenith all-sky image')
 	
-		hdr.update('ARRNAM', 'LWA-1')      
+		hdr.update('ARRNAM', self.siteName)      
 		hdr.update('RDATE', self.refTime, 'file data reference date')
 
 	def _makeAppendTable(self, extension, AddRows=1):
@@ -392,8 +398,8 @@ class IDI(object):
 		primary.header.update('GCOUNT', 0)
 		primary.header.update('PCOUNT', 0)
 		primary.header.update('OBJECT', 'BINARYTB')
-		primary.header.update('TELESCOP', 'LWA-1')
-		primary.header.update('INSTRUME', 'LWA-1')
+		primary.header.update('TELESCOP', self.siteName)
+		primary.header.update('INSTRUME', self.siteName)
 		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
 		primary.header.update('ORIGIN', 'LSL')
 		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
@@ -451,7 +457,7 @@ class IDI(object):
 		self._addCommonKeywords(ag.header, 'ARRAY_GEOMETRY', 1)
 
 		ag.header.update('EXTVER', 1, 'array ID')
-		ag.header.update('ARRNAM', 'LWA-1')
+		ag.header.update('ARRNAM', self.siteName)
 		ag.header.update('FRAME', 'GEOCENTRIC', 'coordinate system')
 		ag.header.update('NUMORB', 0, 'number of orbital parameters')
 		ag.header.update('FREQ', self.refVal, 'reference frequency (Hz)')
@@ -1007,7 +1013,7 @@ class IDI(object):
 		uv.header.update('CRPIX6', 1.0)
 		uv.header.update('CRVAL6', 0.0)
 		
-		uv.header.update('TELESCOP', 'LWA')
+		uv.header.update('TELESCOP', self.siteName)
 		uv.header.update('OBSERVER', 'ZASKY')
 		uv.header.update('SORT', 'TB', 'data is sorted in [time,baseline] order')
 		
@@ -1134,6 +1140,9 @@ class AIPS(IDI):
 		if len(antennas) > 99:
 			raise RuntimeError("FITS IDI for AIPS supports up to 99 antennas only, given %i" % len(antennas))
 		
+		# Update the observatory-specific information
+		self.siteName = site.name
+		
 		stands = []
 		for ant in antennas:
 			stands.append(ant.stand.id)
@@ -1189,8 +1198,8 @@ class AIPS(IDI):
 		primary.header.update('GCOUNT', 0)
 		primary.header.update('PCOUNT', 0)
 		primary.header.update('OBJECT', 'BINARYTB')
-		primary.header.update('TELESCOP', 'LWA-1')
-		primary.header.update('INSTRUME', 'LWA-1')
+		primary.header.update('TELESCOP', self.siteName)
+		primary.header.update('INSTRUME', self.siteName)
 		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
 		primary.header.update('ORIGIN', 'LSL')
 		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
@@ -1249,6 +1258,9 @@ class ExtendedIDI(IDI):
 		if len(antennas) > 65535:
 			raise RuntimeError("Extended FITS IDI supports up to 65535 antennas only, given %i" % len(antennas))
 		
+		# Update the observatory-specific information
+		self.siteName = site.name
+		
 		stands = []
 		for ant in antennas:
 			stands.append(ant.stand.id)
@@ -1300,8 +1312,8 @@ class ExtendedIDI(IDI):
 		primary.header.update('GCOUNT', 0)
 		primary.header.update('PCOUNT', 0)
 		primary.header.update('OBJECT', 'BINARYTB')
-		primary.header.update('TELESCOP', 'LWA-1')
-		primary.header.update('INSTRUME', 'LWA-1')
+		primary.header.update('TELESCOP', self.siteName)
+		primary.header.update('INSTRUME', self.siteName)
 		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
 		primary.header.update('ORIGIN', 'LSL')
 		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
@@ -1543,7 +1555,7 @@ class ExtendedIDI(IDI):
 		uv.header.update('CRPIX6', 1.0)
 		uv.header.update('CRVAL6', 0.0)
 		
-		uv.header.update('TELESCOP', 'LWA')
+		uv.header.update('TELESCOP', self.siteName)
 		uv.header.update('OBSERVER', 'ZASKY')
 		uv.header.update('SORT', 'TB', 'data is sorted in [time,baseline] order')
 		

@@ -1,6 +1,8 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2012 Oct 24 by J. Dowell
+#  -- Incorporated the latest info. on the status of good dipoles;  removed 12
 # 2012 Sep 24 by J. Dowell
 #  -- Updated the "PC_" values with the results of the new pointing correction
 # 2012 Aug 29 by J. Dowell
@@ -837,6 +839,7 @@ STD_LZ[260]     0.0
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
+ANT_STAT[17]   1        # No Signal as of 2012/10/23
 ANT_STAT[18]   1	# No Signal
 ANT_STAT[25]   0	# LEDA-32 Stand 13, pol 0; Failed calibration, round 2
 ANT_STAT[26]   0	# LEDA-32 Stand 13, pol 1
@@ -851,16 +854,24 @@ ANT_STAT[115]  0	# LEDA-32 Stand 58, pol 0
 ANT_STAT[116]  0	# LEDA-32 Stand 58, pol 1
 ANT_STAT[131]  0	# LEDA-32 Stand 66, pol 0
 ANT_STAT[132]  0	# LEDA-32 Stand 66, pol 1; Failed calibration, round 2
+ANT_STAT[149]  1        # No Signal as of 2012/10/23
+ANT_STAT[150]  1        # No Signal as of 2012/10/23
 ANT_STAT[167]  0	# LEDA-32 Stand 84, pol 0
 ANT_STAT[168]  0	# LEDA-32 Stand 84, pol 1
+ANT_STAT[171]  1        # No Signal as of 2012/10/23
+ANT_STAT[172]  1        # No Signal as of 2012/10/23
 ANT_STAT[191]  1	# No Signal
 ANT_STAT[196]  1	# No Signal
+ANT_STAT[213]  1        # No Signal as of 2012/10/23
+ANT_STAT[214]  1        # No Signal as of 2012/10/23
 ANT_STAT[241]  0	# LEDA-32 Stand 121, pol 0
 ANT_STAT[242]  0	# LEDA-32 Stand 121, pol 1
 ANT_STAT[246]  1	# No Signal
 ANT_STAT[247]  1	# No Signal
 ANT_STAT[265]  0	# LEDA-32 Stand 133, pol 0
 ANT_STAT[266]  0 	# LEDA-32 Stand 133, pol 1
+ANT_STAT[287]  1        # No Signal as of 2012/10/23
+ANT_STAT[288]  1        # No Signal as of 2012/10/23
 ANT_STAT[295]  0	# LEDA-32 Stand 148, pol 0
 ANT_STAT[296]  0	# LEDA-32 Stand 148, pol 1
 ANT_STAT[325]  0	# LEDA-32 Stand 163, pol 0
@@ -877,9 +888,12 @@ ANT_STAT[434]  1	# No Signal
 ANT_STAT[461]  0	# LEDA-32 Stand 231, pol 0
 ANT_STAT[462]  0	# LEDA-32 Stand 231, pol 1
 ANT_STAT[464]  1	# No Signal
+ANT_STAT[467]  1        # No Signal as of 2012/10/23
+ANT_STAT[468]  1        # No Signal as of 2012/10/23
 ANT_STAT[473]  0	# LEDA-32 Stand 237, pol 0
 ANT_STAT[474]  0	# LEDA-32 Stand 237, pol 1
 ANT_STAT[488]  1	# Failed calibration, round 2
+ANT_STAT[489]  1        # No Signal as of 2012/10/23
 ANT_STAT[513]  0	# Not installed
 ANT_STAT[514]  0	# Not installed
 ANT_STAT[517]  0	# Not installed
