@@ -1,7 +1,7 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
-# 2012 MAR 16 by J. Craig
+# 2012 OCT 26 by J. Craig
 # See MCS0031 for format info 
 # Search "FIXME" for things that need work
 
@@ -105,6 +105,9 @@ STD_LZ[20]    1.260
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
+#ANT_STAT[4]  1
+ANT_STAT[9]  1
+ANT_STAT[13] 1
 ANT_STAT[26] 1
 
 
@@ -232,48 +235,48 @@ N_RPD 40
 # RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
 # *** RPD_LENG[cable#] [m] goes here:
 
-RPD_LENG[1] 144.39
-RPD_LENG[2] 140.47
-RPD_LENG[3] 144.28
-RPD_LENG[4] 144.86
-RPD_LENG[5] 143.70
-RPD_LENG[6] 145.32
+RPD_LENG[1] 144.74
+RPD_LENG[2] 144.51
+RPD_LENG[3] 144.74
+RPD_LENG[4] 147.05
+RPD_LENG[5] 148.20
+RPD_LENG[6] 144.74
 RPD_LENG[7] 140.00
 RPD_LENG[8] 140.00
-RPD_LENG[9] 143.82
-RPD_LENG[10] 146.13
-RPD_LENG[11] 144.05
-RPD_LENG[12] 143.59
-RPD_LENG[13] 166.79
-RPD_LENG[14] 144.28
-RPD_LENG[15] 143.36
-RPD_LENG[16] 142.20
-RPD_LENG[17] 147.28
-RPD_LENG[18] 143.93
+RPD_LENG[9] 145.78
+RPD_LENG[10] 145.32
+RPD_LENG[11] 148.43
+RPD_LENG[12] 146.59
+RPD_LENG[13] 144.28
+RPD_LENG[14] 146.24
+RPD_LENG[15] 143.82
+RPD_LENG[16] 143.93
+RPD_LENG[17] 144.51
+RPD_LENG[18] 146.13
 RPD_LENG[19] 140.00
 RPD_LENG[20] 140.00
-RPD_LENG[21] 143.47
-RPD_LENG[22] 143.70
-RPD_LENG[23] 147.63
-RPD_LENG[24] 145.66
-RPD_LENG[25] 143.34
-RPD_LENG[26] 143.47
+RPD_LENG[21] 145.32
+RPD_LENG[22] 118.31
+RPD_LENG[23] 144.86
+RPD_LENG[24] 144.51
+RPD_LENG[25] 145.66
+RPD_LENG[26] 144.51
 RPD_LENG[27] 140.00
 RPD_LENG[28] 140.00
-RPD_LENG[29] 142.78
-RPD_LENG[30] 143.01
-RPD_LENG[31] 144.86
-RPD_LENG[32] 143.70
+RPD_LENG[29] 144.28
+RPD_LENG[30] 143.12
+RPD_LENG[31] 144.28
+RPD_LENG[32] 144.28
 RPD_LENG[33] 140.00
 RPD_LENG[34] 140.00
-RPD_LENG[35] 143.36
-RPD_LENG[36] 145.32
-RPD_LENG[37] 153.97
-RPD_LENG[38] 117.50
-RPD_LENG[39] 143.93
+RPD_LENG[35] 167.83
+RPD_LENG[36] 145.09
+RPD_LENG[37] 142.78
+RPD_LENG[38] 144.28
+RPD_LENG[39] 140.00
 RPD_LENG[40] 140.00
 
-# note: cable 24 is wrong; was reconnectorized and never TDR'd
+# note: cable length for 39 & 40 is unknown
 # cables for antennas 7, 8, 19, 20, 27, 28 are not installed
  
 # --------------------------------------
@@ -289,7 +292,7 @@ RPD_LENG[40] 140.00
 # ----------------------
 # --- SEP --------------
 # ----------------------
-N_SEP 520
+N_SEP 40
 
 # SEP_ID[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
 # *** SEP_ID[port#] goes here:
@@ -372,26 +375,39 @@ ARB_PORT[2] 2
 #   ... so best is to note only the exceptions below.
 # Set ARB_ANT[][] to the corresponding negative value to indicated that only the input is connected.
 # *** ARB_ANT[arb#][ch#] goes here:
-ARB_ANT[1][1]    1
-ARB_ANT[1][2]    3
-ARB_ANT[1][3]    5
-ARB_ANT[1][4]    7
+# FIXME
+ARB_ANT[1][1]    5
+ARB_ANT[1][2]    6
+ARB_ANT[1][3]    31
+ARB_ANT[1][4]    32
 ARB_ANT[1][5]    9
-ARB_ANT[1][6]   11
-ARB_ANT[1][7]   13
-ARB_ANT[1][8]   15
-ARB_ANT[1][9]   17
-ARB_ANT[1][10]  19
-ARB_ANT[1][11]  21
-ARB_ANT[1][12]  23
-ARB_ANT[1][13]  25
-ARB_ANT[1][14]  27
-ARB_ANT[1][15]  29
-ARB_ANT[1][16]  31
-ARB_ANT[2][1]   33
-ARB_ANT[2][2]   35
-ARB_ANT[2][3]   37
-ARB_ANT[2][4]   39
+ARB_ANT[1][6]   10
+ARB_ANT[1][7]   38
+ARB_ANT[1][8]   37
+ARB_ANT[1][9]   36
+ARB_ANT[1][10]  35
+ARB_ANT[1][11]  25
+ARB_ANT[1][12]  26
+ARB_ANT[1][13]  30
+ARB_ANT[1][14]  29
+ARB_ANT[1][15]  11
+ARB_ANT[1][16]  12
+ARB_ANT[2][1]   18
+ARB_ANT[2][2]   17
+ARB_ANT[2][3]   13
+ARB_ANT[2][4]   14
+ARB_ANT[2][5]   4
+ARB_ANT[2][6]   3
+ARB_ANT[2][7]   21
+ARB_ANT[2][8]   40
+ARB_ANT[2][9]   2
+ARB_ANT[2][10]   1
+ARB_ANT[2][11]   22
+ARB_ANT[2][12]   39
+ARB_ANT[2][13]   15
+ARB_ANT[2][14]   16
+ARB_ANT[2][15]   24
+ARB_ANT[2][16]   23
 
 # ----------------------------------------------
 # --- ASP input/output labeling ----------------
@@ -489,26 +505,26 @@ N_DP1CH 20
 #   ... so best is to note only the exceptions below.
 # DP1_ANT[][] will be set to 0 (no connection, or only connected at outout) for any boards/channels not identified
 # *** DP1_ANT[dp1#][ch#] goes here:
-DP1_ANT[1][1] 9
-DP1_ANT[1][2] 10
-DP1_ANT[1][3] 38
-DP1_ANT[1][4] 37
-DP1_ANT[1][5] 36
-DP1_ANT[1][6] 35
-DP1_ANT[1][7] 25
-DP1_ANT[1][8] 26
-DP1_ANT[1][9] 30
-DP1_ANT[1][10] 29
-DP1_ANT[1][11] 11
-DP1_ANT[1][12] 12
-DP1_ANT[1][13] 18
-DP1_ANT[1][14] 17
-DP1_ANT[1][15] 1
-DP1_ANT[1][16] 2
-DP1_ANT[1][17] 14
-DP1_ANT[1][18] 13
-DP1_ANT[1][19] 32
-DP1_ANT[1][20] 31
+DP1_ANT[1][1] 1
+DP1_ANT[1][2] 2
+DP1_ANT[1][3] 3
+DP1_ANT[1][4] 4
+DP1_ANT[1][5] 23
+DP1_ANT[1][6] 24
+DP1_ANT[1][7] 21
+DP1_ANT[1][8] 22
+DP1_ANT[1][9] 13
+DP1_ANT[1][10] 14
+DP1_ANT[1][11] 15
+DP1_ANT[1][12] 16
+DP1_ANT[1][13] 5
+DP1_ANT[1][14] 6
+DP1_ANT[1][15] 29
+DP1_ANT[1][16] 30
+DP1_ANT[1][17] 9
+DP1_ANT[1][18] 10
+DP1_ANT[1][19] 11
+DP1_ANT[1][20] 12
 
 
 # ----------------------
