@@ -82,44 +82,6 @@ plotUVCoverage.py
 
   :Options: None
 
-lsDRSU.py
-  :Description:  Simple `ls` type script for DRSUs.
-
-  :Usage: lsDRSU.py [OPTIONS] md_device [pattern]
-
-  :Options: -h, --help              Display this help information
-
-            -l                      Long listing format of size, mtime, and name
-
-            -t                      Sort by modification time
-
-            -1                      List one file per line
-
-cpDRSU.py
-  :Description: Simple `cp` type script for DRSUs.
-
-  :Usage: cpDRSU.py md_device drsu_file destination
-
-  :Options: -h, --help              Display this help information
-
-            -v, --verbose           Be verbose
-
-scpDRSU.py
-  :Description: Simple `scp` type script for DRSUs.
-
-  :Usage: scpDRSU.py md_device drsu_file user@host:destination
-
-  :Options: -h, --help              Display this help information
-
-            -v, --verbose           Be verbose
-
-md5sum.py
-  :Description: Simple `md5sum` type script for DRSUs.
-
-  :Usage: md5sum.py [OPTIONS] md_device file1 [file2 [...]]
-
-  :Options: -h, --help              Display this help information
-
 Data Reading and Writing
 ========================
 splitTBN.py

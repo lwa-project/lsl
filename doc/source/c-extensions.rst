@@ -12,11 +12,6 @@ Go-Fast! Readers
 .. autoexception:: lsl.reader._gofast.eofError
 .. autoexception:: lsl.reader._gofast.syncError
 
-DRSU Direct Access Module
--------------------------
-.. automodule:: lsl.reader._drsu
-   :members:
-
 Power Spectral Density Calculation
 ----------------------------------
 

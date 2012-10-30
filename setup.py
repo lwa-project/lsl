@@ -166,19 +166,7 @@ ExtensionModules = [Extension('_libnova', ['lsl/libnova.i']),
 libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
 			Extension('correlator._spec', ['lsl/correlator/spec.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
 			Extension('correlator._stokes', ['lsl/correlator/stokes.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
-			Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
-			Extension('reader._drsu', ['lsl/reader/Disk.c', 'lsl/reader/FileSystem.c', 'lsl/reader/HostInterface.c', 'lsl/reader/Log.c', 'lsl/reader/Persistence.c', 'lsl/reader/Time.c', 'lsl/reader/drsu.c'], extra_compile_args=drsuExtraFlags, extra_link_args=drsuExtraLibs)]
-
-# Check if we have linux or not.  If we don't, I don't think we can compile the
-# DRSU direct access module. 
-if platform.system() != 'Linux':
-	print "WARNING: OS does not appear to be linux, skipping _drsu extension"
-	del(ExtensionModules[-1])
-else:
-	# Now, check if we are 64-bit or not
-	if platform.architecture()[0] != '64bit':
-		print "WARNING: python build does not appear to be 64-bit, skipping _drsu extension"
-		del(ExtensionModules[-1])
+			Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs)]
 
 # Update the version information
 write_version_info()

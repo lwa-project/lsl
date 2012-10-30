@@ -1,6 +1,7 @@
 0.6.0
   * Removed the correlator.fx.calcSpectra()/calcSpectrum() functions
   * Removed the lsl.common.warns module
+  * Removed the LWAFS-specific modules since they are not needed for the new DROS v2
 
 0.5.5
   * Added in the pointing correction rotation code to lsl.common.mcs as applyPointingCorrecton()
