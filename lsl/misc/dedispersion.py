@@ -106,7 +106,7 @@ def __chirpFunction(freq, dm, taper=False):
 	return chirp
 
 
-def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
+def coherent(timeseries, centralFreq, sampleRate, dm, taper=False, previousData=None, nextData=None):
 	"""
 	Simple coherent dedispersion of complex-valued time-series data at a given central
 	frequency and sample rate.  A tapering function can also be applied to the chirp of 
@@ -134,6 +134,9 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
 	nSets = len(timeseries) / N
 	out = numpy.zeros(timeseries.size, dtype=timeseries.dtype)
 	
+	if nSets == 0:
+		RuntimeWarning("Too few data samples for proper dedispersion")
+	
 	# Go!
 	last = False
 	for i in xrange(2*nSets+1):
@@ -142,9 +145,19 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
 
 		if start < 0:
 			dataIn = numpy.zeros(N, dtype=numpy.complex64)
+			if previousData is not None:
+				dataIn[:-start] = previousData[start:]
 			dataIn[-start:N] = timeseries[0:N+start]
 		elif stop > timeseries.size:
 			dataIn = numpy.zeros(N, dtype=numpy.complex64)
+			if nextData is not None:
+				ns = nextData.size
+				df = dataIn.size - (timeseries.size-start)
+				
+				try:
+					dataIn[timeseries.size-start:] = nextData[:(dataIn.size-(timeseries.size-start))]
+				except ValueError:
+					pass
 			dataIn[0:timeseries.size-start] = timeseries[start:]
 			# If this is it, end after saving the data
 			last = True
@@ -154,8 +167,20 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False):
 		dataOut = numpy.fft.fft( dataIn )
 		dataOut *= chirp
 		dataOut = numpy.fft.ifft( dataOut )
-
-		out[i*N/2:(i+1)*N/2] = dataOut[N/4:3*N/4]
+		
+		# Get the output data ranges
+		outStart  = i*N/2
+		outStop   = outStart + N/2
+		dataStart = N/4
+		dataStop  = dataStart + N/2
+		
+		# Make sure we don't fall off the end of the array
+		if outStop >= out.size:
+			diff = outStop - out.size
+			outStop  -= diff
+			dataStop -= diff
+			
+		out[outStart:outStop] = dataOut[dataStart:dataStop]
 		if last:
 			break
 	
