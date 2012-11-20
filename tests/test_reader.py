@@ -444,12 +444,12 @@ class reader_tests(unittest.TestCase):
 		# First frame is really DR spectrometer and stores the IDs
 		frame1 = drspec.readFrame(fh)
 		beam = frame1.parseID()
-		self.assertEqual(beam, 3)
+		self.assertEqual(beam, 1)
 
 		# Second frame
 		frame2 = drspec.readFrame(fh)
 		beam = frame2.parseID()
-		self.assertEqual(beam, 3)
+		self.assertEqual(beam, 1)
 		fh.close()
 
 	def test_drspec_errors(self):
@@ -529,29 +529,29 @@ class reader_tests(unittest.TestCase):
 			frames.append(drspec.readFrame(fh))
 		fh.close()
 
-		nPts = frames[0].data.X0.size
+		nPts = frames[0].data.XX0.size
 
 		# Multiplication
 		frameT = frames[0] * 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameT.data.X0[i], 2*frames[0].data.X0[i], 2)
+			self.assertAlmostEqual(frameT.data.XX0[i], 2*frames[0].data.XX0[i], 2)
 		frameT *= 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameT.data.X1[i], 4*frames[0].data.X1[i], 2)
+			self.assertAlmostEqual(frameT.data.XX1[i], 4*frames[0].data.XX1[i], 2)
 		frameT = frames[0] * frames[1]
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameT.data.Y0[i], frames[0].data.Y0[i]*frames[1].data.Y0[i], 2)
+			self.assertAlmostEqual(frameT.data.YY0[i], frames[0].data.YY0[i]*frames[1].data.YY0[i], 2)
 		
 		# Addition
 		frameA = frames[0] + 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameA.data.X0[i], 2+frames[0].data.X0[i], 2)
+			self.assertAlmostEqual(frameA.data.XX0[i], 2+frames[0].data.XX0[i], 2)
 		frameA += 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameA.data.X1[i], 4+frames[0].data.X1[i], 2)
+			self.assertAlmostEqual(frameA.data.XX1[i], 4+frames[0].data.XX1[i], 2)
 		frameA = frames[0] + frames[1]
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameA.data.Y0[i], frames[0].data.Y0[i]+frames[1].data.Y0[i], 2)
+			self.assertAlmostEqual(frameA.data.YY0[i], frames[0].data.YY0[i]+frames[1].data.YY0[i], 2)
 
 class reader_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.reader units 
