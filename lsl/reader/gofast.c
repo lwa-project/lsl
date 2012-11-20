@@ -9,6 +9,13 @@
 #define PI 3.1415926535898
 #define imaginary _Complex_I
 
+
+/*
+  Minimum function for two values
+*/
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+
+
 /*
   Exceptions for the Go Fast! Readers
 */
@@ -51,6 +58,9 @@ typedef struct {
 	unsigned char errors[4]; 		// error flag for each pol/tuning combo
 								//   indexing: 0..3 = X0, Y0 X1, Y1
 	unsigned char beam;				// beam number
+	unsigned char stokes_format; 		// ouptut format
+	unsigned char spec_version;		// version of the spectrometer data file
+	unsigned char flags;			// flag bit-field
 	unsigned int nFreqs;			// <Transform Length>
 	unsigned int nInts;				// <Integration Count>
 	unsigned int satCount[4];		// saturation count for each pol/tuning combo
@@ -570,8 +580,10 @@ are sub-classes of IOError.\n\
 static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
 	PyObject *tuningWords, *fills, *errors, *saturations;
-	PyArrayObject *dataX0, *dataY0, *dataX1, *dataY1;
-	int i;
+	PyArrayObject *dataA0, *dataB0, *dataC0, *dataD0;
+	PyArrayObject *dataA1, *dataB1, *dataC1, *dataD1;
+	
+	int i, nSets;
 	
 	if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
@@ -601,9 +613,36 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 	
+	// Get the data format
+	i = (int) header.stokes_format;
+	nSets = 0;
+	if( header.stokes_format < 0x10 ) {
+		// Linear
+		if( header.stokes_format < 0x09 ) {
+			nSets = 2;
+		} else {
+			if( header.stokes_format == 0x09 ) {
+				nSets = 4;
+			} else {
+				nSets = 8;
+			}
+		}
+	} else {
+		// Stokes
+		if( header.stokes_format < 0x90 ) {
+			nSets = 2;
+		} else {
+			if( header.stokes_format == 0x90 ) {
+				nSets = 4;
+			} else {
+				nSets = 8;
+			}
+		}
+	}
+	
 	// Read in the data section
-	float XY[4*header.nFreqs];
-	i = fread(XY, sizeof(float), 4*header.nFreqs, fh);
+	float data[nSets*header.nFreqs];
+	i = fread(&data, sizeof(float), nSets*header.nFreqs, fh);
 	if(ferror(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
@@ -618,59 +657,196 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	
 	// Create the output data arrays
 	npy_intp dims[1];
-	dims[0] = header.nFreqs;
-	dataX0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
-	if(dataX0 == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array - X0");
-		Py_XDECREF(dataX0);
+	dims[0] = (npy_intp) header.nFreqs;
+	
+	dataA0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataA0 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XX0/I0");
+		Py_XDECREF(dataA0);
 		return NULL;
 	}
-	dataY0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
-	if(dataY0 == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array - Y0");
-		Py_XDECREF(dataX0);
-		Py_XDECREF(dataY0);
+	
+	dataB0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataB0 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XY0/Q0");
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
 		return NULL;
 	}
-	dataX1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
-	if(dataX1 == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array - X1");
-		Py_XDECREF(dataX0);
-		Py_XDECREF(dataY0);
-		Py_XDECREF(dataX1);
+	
+	dataC0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataC0 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YX0/U0");
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
 		return NULL;
 	}
-	dataY1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
-	if(dataY1 == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array - Y1");
-		Py_XDECREF(dataX0);
-		Py_XDECREF(dataY0);
-		Py_XDECREF(dataX1);
-		Py_XDECREF(dataY1);
+	
+	dataD0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataD0 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YY0/V0");
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
 		return NULL;
 	}
-
+	
+	dataA1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataA1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XX1/I1");
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		return NULL;
+	}
+	
+	dataB1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataB1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XY1/Q1");
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		Py_XDECREF(dataB1);
+		return NULL;
+	}
+	
+	dataC1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataC1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YX1/U1");
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		Py_XDECREF(dataB1);
+		Py_XDECREF(dataC1);
+		return NULL;
+	}
+	
+	dataD1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	if(dataD1 == NULL) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YY1/V1");
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		Py_XDECREF(dataB1);
+		Py_XDECREF(dataC1);
+		Py_XDECREF(dataD1);
+		return NULL;
+	}
+	
 	// Fill the data arrays
-	float *a, *b, *c, *d;
-	a = (float *) dataX0->data;
-	b = (float *) dataY0->data;
-	c = (float *) dataX1->data;
-	d = (float *) dataY1->data;
+	float *a0, *b0, *c0, *d0, *a1, *b1, *c1, *d1;
+	a0 = (float *) dataA0->data;
+	b0 = (float *) dataB0->data;
+	c0 = (float *) dataC0->data;
+	d0 = (float *) dataD0->data;
+	a1 = (float *) dataA1->data;
+	b1 = (float *) dataB1->data;
+	c1 = (float *) dataC1->data;
+	d1 = (float *) dataD1->data;
 	for(i=0; i<header.nFreqs; i++) {
-		*(a + i) = XY[0*header.nFreqs + i];
-		*(b + i) = XY[1*header.nFreqs + i];
-		*(c + i) = XY[2*header.nFreqs + i];
-		*(d + i) = XY[3*header.nFreqs + i];
+		// Linear
+		if( header.stokes_format == 0x01 ) {
+			// XX* only
+			*(a0 + i) = data[0*header.nFreqs + i] / (float) header.fills[0];
+			*(a1 + i) = data[1*header.nFreqs + i] / (float) header.fills[2];
+		} 
+		if( header.stokes_format == 0x02 ) {
+			// XY* only
+			*(b0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
+			*(b1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+		}
+		if( header.stokes_format == 0x04 ) {
+			// YX* only
+			*(c0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
+			*(c1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+		}
+		if( header.stokes_format == 0x08 ) {
+			// YY* only
+			*(d0 + i) = data[0*header.nFreqs + i] / (float) header.fills[1];
+			*(d1 + i) = data[1*header.nFreqs + i] / (float) header.fills[3];
+		}
+		if( header.stokes_format == 0x09 ) {
+			// XX* and YY*
+			*(a0 + i) = data[0*header.nFreqs + 2*i + 0] / (float) header.fills[0];
+			*(d0 + i) = data[0*header.nFreqs + 2*i + 1] / (float) header.fills[1];
+			*(a1 + i) = data[2*header.nFreqs + 2*i + 0] / (float) header.fills[2];
+			*(d1 + i) = data[2*header.nFreqs + 2*i + 1] / (float) header.fills[3];
+		}
+		if( header.stokes_format == 0x0f ) {
+			// XX*, XY*, YX*, and YY*
+			*(a0 + i) = data[0*header.nFreqs + 4*i + 0] / (float) header.fills[0];
+			*(b0 + i) = data[0*header.nFreqs + 4*i + 1] / (float) min(header.fills[0], header.fills[1]);
+			*(c0 + i) = data[0*header.nFreqs + 4*i + 2] / (float) min(header.fills[0], header.fills[1]);
+			*(d0 + i) = data[0*header.nFreqs + 4*i + 3] / (float) header.fills[1];
+			*(a1 + i) = data[4*header.nFreqs + 4*i + 0] / (float) header.fills[2];
+			*(b1 + i) = data[4*header.nFreqs + 4*i + 1] / (float) min(header.fills[2], header.fills[3]);
+			*(c1 + i) = data[4*header.nFreqs + 4*i + 2] / (float) min(header.fills[2], header.fills[3]);
+			*(d1 + i) = data[4*header.nFreqs + 4*i + 3] / (float) header.fills[3];
+		}
+		
+		// Stokes
+		if( header.stokes_format == 0x10 ) {
+			// I only
+			*(a0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
+			*(a1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+		} 
+		if( header.stokes_format == 0x10 ) {
+			// Q only
+			*(b0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
+			*(b1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+		}
+		if( header.stokes_format == 0x04 || header.stokes_format == 0x40 ) {
+			// U only
+			*(c0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
+			*(c1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+		}
+		if( header.stokes_format == 0x08 || header.stokes_format == 0x80 ) {
+			// V only
+			*(d0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
+			*(d1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+		}
+		if( header.stokes_format == 0x09 || header.stokes_format == 0x90 ) {
+			// I and V
+			*(a0 + i) = data[0*header.nFreqs + 2*i + 0] / (float) min(header.fills[0], header.fills[1]);
+			*(d0 + i) = data[0*header.nFreqs + 2*i + 1] / (float) min(header.fills[0], header.fills[1]);
+			*(a1 + i) = data[2*header.nFreqs + 2*i + 0] / (float) min(header.fills[2], header.fills[3]);
+			*(d1 + i) = data[2*header.nFreqs + 2*i + 1] / (float) min(header.fills[2], header.fills[3]);
+		}
+		if( header.stokes_format == 0x0f || header.stokes_format == 0xf0 ) {
+			// I, Q, U, and V
+			*(a0 + i) = data[0*header.nFreqs + 4*i + 0] / (float) min(header.fills[0], header.fills[1]);
+			*(b0 + i) = data[0*header.nFreqs + 4*i + 1] / (float) min(header.fills[0], header.fills[1]);
+			*(c0 + i) = data[0*header.nFreqs + 4*i + 2] / (float) min(header.fills[0], header.fills[1]);
+			*(d0 + i) = data[0*header.nFreqs + 4*i + 3] / (float) min(header.fills[0], header.fills[1]);
+			*(a1 + i) = data[4*header.nFreqs + 4*i + 0] / (float) min(header.fills[2], header.fills[3]);
+			*(b1 + i) = data[4*header.nFreqs + 4*i + 1] / (float) min(header.fills[2], header.fills[3]);
+			*(c1 + i) = data[4*header.nFreqs + 4*i + 2] / (float) min(header.fills[2], header.fills[3]);
+			*(d1 + i) = data[4*header.nFreqs + 4*i + 3] / (float) min(header.fills[2], header.fills[3]);
+		}
 	}
 	
 	// Fill in the multi-value fields (tuningWords, fills, errors)
 	tuningWords = PyList_New(2);
 	if(tuningWords == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - tuningWords");
-		Py_XDECREF(dataX0);
-		Py_XDECREF(dataY0);
-		Py_XDECREF(dataX1);
-		Py_XDECREF(dataY1);
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		Py_XDECREF(dataB1);
+		Py_XDECREF(dataC1);
+		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
 		return NULL;
 	}
@@ -682,10 +858,14 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	fills = PyList_New(4);
 	if(fills == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - fills");
-		Py_XDECREF(dataX0);
-		Py_XDECREF(dataY0);
-		Py_XDECREF(dataX1);
-		Py_XDECREF(dataY1);
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		Py_XDECREF(dataB1);
+		Py_XDECREF(dataC1);
+		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
 		Py_XDECREF(fills);
 		return NULL;
@@ -698,10 +878,14 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	errors = PyList_New(4);
 	if(errors == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - flags");
-		Py_XDECREF(dataX0);
-		Py_XDECREF(dataY0);
-		Py_XDECREF(dataX1);
-		Py_XDECREF(dataY1);
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		Py_XDECREF(dataB1);
+		Py_XDECREF(dataC1);
+		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
 		Py_XDECREF(fills);
 		Py_XDECREF(errors);
@@ -715,10 +899,14 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	saturations = PyList_New(4);
 	if(saturations == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - saturations");
-		Py_XDECREF(dataX0);
-		Py_XDECREF(dataY0);
-		Py_XDECREF(dataX1);
-		Py_XDECREF(dataY1);
+		Py_XDECREF(dataA0);
+		Py_XDECREF(dataB0);
+		Py_XDECREF(dataC0);
+		Py_XDECREF(dataD0);
+		Py_XDECREF(dataA1);
+		Py_XDECREF(dataB1);
+		Py_XDECREF(dataC1);
+		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
 		Py_XDECREF(fills);
 		Py_XDECREF(errors);
@@ -736,6 +924,10 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	
 	temp = Py_BuildValue("H", header.beam);
 	PyObject_SetAttrString(fHeader, "beam", temp);
+	Py_XDECREF(temp);
+	
+	temp = Py_BuildValue("H", header.stokes_format);
+	PyObject_SetAttrString(fHeader, "format", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", header.decFactor);
@@ -761,15 +953,46 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	
 	PyObject_SetAttrString(fData, "fills", fills);
 	
-	PyObject_SetAttrString(fData, "flags", errors);
+	PyObject_SetAttrString(fData, "errors", errors);
 	
 	PyObject_SetAttrString(fData, "saturations", saturations);
-
-	PyObject_SetAttrString(fData, "X0", PyArray_Return(dataX0));
-	PyObject_SetAttrString(fData, "Y0", PyArray_Return(dataY0));
-	PyObject_SetAttrString(fData, "X1", PyArray_Return(dataX1));
-	PyObject_SetAttrString(fData, "Y1", PyArray_Return(dataY1));
-
+	
+	// Linear
+	if( header.stokes_format & 0x01 ) {
+		PyObject_SetAttrString(fData, "XX0", PyArray_Return(dataA0));
+		PyObject_SetAttrString(fData, "XX1", PyArray_Return(dataA1));
+	}
+	if( header.stokes_format & 0x02 ) {
+		PyObject_SetAttrString(fData, "XY0", PyArray_Return(dataB0));
+		PyObject_SetAttrString(fData, "XY1", PyArray_Return(dataB1));
+	}
+	if( header.stokes_format & 0x04 ) {
+		PyObject_SetAttrString(fData, "YX0", PyArray_Return(dataC0));
+		PyObject_SetAttrString(fData, "YX1", PyArray_Return(dataC1));
+	}
+	if( header.stokes_format & 0x08 ) {
+		PyObject_SetAttrString(fData, "YY0", PyArray_Return(dataD0));
+		PyObject_SetAttrString(fData, "YY1", PyArray_Return(dataD1));
+	}
+	
+	// Stokes
+	if( header.stokes_format & 0x10 ) {
+		PyObject_SetAttrString(fData, "I0", PyArray_Return(dataA0));
+		PyObject_SetAttrString(fData, "I1", PyArray_Return(dataA1));
+	}
+	if( header.stokes_format & 0x20 ) {
+		PyObject_SetAttrString(fData, "Q0", PyArray_Return(dataB0));
+		PyObject_SetAttrString(fData, "Q1", PyArray_Return(dataB1));
+	}
+	if( header.stokes_format & 0x40 ) {
+		PyObject_SetAttrString(fData, "U0", PyArray_Return(dataC0));
+		PyObject_SetAttrString(fData, "U1", PyArray_Return(dataC1));
+	}
+	if( header.stokes_format & 0x80 ) {
+		PyObject_SetAttrString(fData, "V0", PyArray_Return(dataD0));
+		PyObject_SetAttrString(fData, "V1", PyArray_Return(dataD1));
+	}
+	
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
@@ -780,18 +1003,27 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	Py_XDECREF(errors);
 	Py_XDECREF(saturations);
 	Py_XDECREF(fData);
-	Py_XDECREF(dataX0);
-	Py_XDECREF(dataY0);
-	Py_XDECREF(dataX1);
-	Py_XDECREF(dataY1);
+	Py_XDECREF(dataA0);
+	Py_XDECREF(dataB0);
+	Py_XDECREF(dataC0);
+	Py_XDECREF(dataD0);
+	Py_XDECREF(dataA1);
+	Py_XDECREF(dataB1);
+	Py_XDECREF(dataC1);
+	Py_XDECREF(dataD1);
 
 	output = Py_BuildValue("O", frame);
 	return output;
 }
 
 PyDoc_STRVAR(readDRSpec_doc, \
-"Function to read in a DR spectrometer header structure and data and retrun\n\
-a drspec.Frame instance.");
+"Function to read in a DR spectrometer header structure and data and return\n\
+a drspec.Frame instance.\n\
+\n\
+.. note::\n\
+\tThis function normalizes the spectra by the number of relevant fills.  For\n\
+\tproducts that are a function of more than one primary input, i.e., XY* or\n\
+\tI, the minimum fill of X and Y are used for normalization.");
 
 
 /*
@@ -806,7 +1038,7 @@ static PyMethodDef GoFastMethods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, and DRX readers written in C");
+PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, and DR Spectrometer readers written in C");
 
 
 /*
@@ -851,7 +1083,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "eofError", eofError);
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.4"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.5"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 }

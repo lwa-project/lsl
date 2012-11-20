@@ -120,24 +120,24 @@ class reader_tests(unittest.TestCase):
 		# Multiplication
 		frameT = frames[0] * 2.0
 		for i in range(800):
-			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 2*frames[0].data.xy[i%2, i/2], 6)
+			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 2*frames[0].data.xy[i%2, i/2], 2)
 		frameT *= 2.0
 		for i in range(800):
-			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 4*frames[0].data.xy[i%2, i/2], 6)
+			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 4*frames[0].data.xy[i%2, i/2], 2)
 		frameT = frames[0] * frames[1]
 		for i in range(800):
-			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]*frames[1].data.xy[i%2, i/2], 6)
+			self.assertAlmostEqual(frameT.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]*frames[1].data.xy[i%2, i/2], 2)
 		
 		# Addition
 		frameA = frames[0] + 2.0
 		for i in range(800):
-			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 2+frames[0].data.xy[i%2, i/2], 6)
+			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 2+frames[0].data.xy[i%2, i/2], 2)
 		frameA += 2.0
 		for i in range(800):
-			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 4+frames[0].data.xy[i%2, i/2], 6)
+			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 4+frames[0].data.xy[i%2, i/2], 2)
 		frameA = frames[0] + frames[1]
 		for i in range(800):
-			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]+frames[1].data.xy[i%2, i/2], 6)
+			self.assertAlmostEqual(frameA.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]+frames[1].data.xy[i%2, i/2], 2)
 
 	### TBN ###
 
@@ -242,24 +242,24 @@ class reader_tests(unittest.TestCase):
 		# Multiplication
 		frameT = frames[0] * 2.0
 		for i in range(512):
-			self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 2)
 		frameT *= 2.0
 		for i in range(512):
-			self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 2)
 		frameT = frames[0] * frames[1]
 		for i in range(512):
-			self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 6)
+			self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 2)
 		
 		# Addition
 		frameA = frames[0] + 2.0
 		for i in range(512):
-			self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 2)
 		frameA += 2.0
 		for i in range(512):
-			self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 2)
 		frameA = frames[0] + frames[1]
 		for i in range(512):
-			self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 6)
+			self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 2)
 
 	### TBW/TBN Mix-up ###
 
@@ -416,24 +416,24 @@ class reader_tests(unittest.TestCase):
 		# Multiplication
 		frameT = frames[0] * 2.0
 		for i in range(4096):
-			self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 2)
 		frameT *= 2.0
 		for i in range(4096):
-			self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 2)
 		frameT = frames[0] * frames[1]
 		for i in range(4096):
-			self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 6)
+			self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 2)
 		
 		# Addition
 		frameA = frames[0] + 2.0
 		for i in range(4096):
-			self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 2)
 		frameA += 2.0
 		for i in range(4096):
-			self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 6)
+			self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 2)
 		frameA = frames[0] + frames[1]
 		for i in range(4096):
-			self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 6)
+			self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 2)
 
 	### DR Spectrometer ###
 
@@ -534,24 +534,24 @@ class reader_tests(unittest.TestCase):
 		# Multiplication
 		frameT = frames[0] * 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameT.data.X0[i], 2*frames[0].data.X0[i], 6)
+			self.assertAlmostEqual(frameT.data.X0[i], 2*frames[0].data.X0[i], 2)
 		frameT *= 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameT.data.X1[i], 4*frames[0].data.X1[i], 6)
+			self.assertAlmostEqual(frameT.data.X1[i], 4*frames[0].data.X1[i], 2)
 		frameT = frames[0] * frames[1]
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameT.data.Y0[i], frames[0].data.Y0[i]*frames[1].data.Y0[i], 6)
+			self.assertAlmostEqual(frameT.data.Y0[i], frames[0].data.Y0[i]*frames[1].data.Y0[i], 2)
 		
 		# Addition
 		frameA = frames[0] + 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameA.data.X0[i], 2+frames[0].data.X0[i], 6)
+			self.assertAlmostEqual(frameA.data.X0[i], 2+frames[0].data.X0[i], 2)
 		frameA += 2.0
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameA.data.X1[i], 4+frames[0].data.X1[i], 6)
+			self.assertAlmostEqual(frameA.data.X1[i], 4+frames[0].data.X1[i], 2)
 		frameA = frames[0] + frames[1]
 		for i in xrange(nPts):
-			self.assertAlmostEqual(frameA.data.Y0[i], frames[0].data.Y0[i]+frames[1].data.Y0[i], 6)
+			self.assertAlmostEqual(frameA.data.Y0[i], frames[0].data.Y0[i]+frames[1].data.Y0[i], 2)
 
 class reader_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.reader units 

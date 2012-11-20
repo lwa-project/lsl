@@ -39,9 +39,10 @@ from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
 from errors import *
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getSampleRate', 'getFrameSize', 'getTransformSize', 'filterCodes', '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getDataProducts', 'containsLinearData', 'containsStokesData', 
+		 'getSampleRate', 'getFrameSize', 'getTransformSize', 'filterCodes', '__version__', '__revision__', '__all__']
 
 # List of filter codes and their corresponding sample rates in Hz.  
 # .. note::
@@ -55,8 +56,9 @@ class FrameHeader(object):
 	frame.
 	"""
 	
-	def __init__(self, beam=0, decimation=None, timeOffset=None, nInts=None):
+	def __init__(self, beam=0, format=0, decimation=None, timeOffset=None, nInts=None):
 		self.beam = beam
+		self.format = format
 		self.decimation = decimation
 		self.timeOffset = timeOffset
 		
@@ -71,6 +73,63 @@ class FrameHeader(object):
 		"""
 		
 		return self.beam
+		
+	def getDataProducts(self):
+		"""
+		Return a list of data products contained in the file.
+		
+		.. versionadded:: 0.6.0
+		"""
+		
+		products = []
+		
+		# Linear
+		if self.format & 0x01:
+			products.append('XX')
+		if self.format & 0x02:
+			products.append('XY')
+		if self.format & 0x04:
+			products.append('YX')
+		if self.format & 0x08:
+			products.append('YY')
+			
+		# Stokes
+		if self.format & 0x10:
+			products.append('I')
+		if self.format & 0x20:
+			products.append('Q')
+		if self.format & 0x40:
+			products.append('U')
+		if self.format & 0x80:
+			products.append('V')
+		
+		return products
+		
+	def containsLinearData(self):
+		"""
+		Return whether or not the frame contains linear polarization 
+		products or not.
+		
+		.. versionadded:: 0.6.0
+		"""
+		
+		if self.format < 0x10:
+			return True
+		else:
+			return False
+			
+	def containsStokesData(self):
+		"""
+		Return whether or not the frame contains Stokes polarization
+		parameters or not.
+		
+		.. versionadded:: 0.6.0
+		"""
+		
+		if self.format < 0x10:
+			return False
+		else:
+			return True
 		
 	def getSampleRate(self):
 		"""
@@ -99,9 +158,14 @@ class FrameData(object):
 	
 	.. versionchanged:: 0.5.3
 		Added the saturations field to keep up with saturation counts.
+		
+	.. versionchanged:: 0.6.0
+		The attributes that store the data are not defined until a frame is read in order
+		to account for the fact that spectrometer files can store either linear or Stokes
+		data.
 	"""
 
-	def __init__(self, timeTag=None, tuningWords=None, fills=None, flags=None, saturations=None, X0=None, Y0=None, X1=None, Y1=None):
+	def __init__(self, timeTag=None, tuningWords=None, fills=None, errors=None, saturations=None):
 		self.timeTag = timeTag
 		if tuningWords is None:
 			self.tuningWords = [0, 0]
@@ -111,19 +175,15 @@ class FrameData(object):
 			self.fills = [0, 0, 0, 0]
 		else:
 			self.fills = fills
-		if flags is None:
-			self.flags = [0, 0, 0, 0]
+		if errors is None:
+			self.errors = [0, 0, 0, 0]
 		else:
-			self.flags = flags
+			self.errors = errors
 		if saturations is None:
 			self.saturations = [0, 0, 0, 0]
 		else:
 			self.saturations = saturations
-		self.X0 = X0
-		self.Y0 = Y0
-		self.X1 = X1
-		self.Y1 = Y1
-		
+			
 	def getCentralFreq(self, which=None):
 		"""
 		Function to set the central frequency of the DRX data in Hz.
@@ -141,7 +201,14 @@ class FrameData(object):
 class Frame(object):
 	"""
 	Class that stores the information contained within a single DR spectrometer/
-	DRX frame.  It's properties are FrameHeader and FrameData objects.
+	DRX frame.  It's properties are FrameHeader and FrameDataLinear/FrameDataStokes
+	objects.
+	
+	.. versionchanged:: 0.6.0
+		By default the data contained with in a frame is normalized by the number of
+		fills (header.fills parameter).  For data products that are a function of more
+		than one primary input, i.e., XY* or I, the minimum fill of X and Y are used 
+		for normalization.
 	"""
 
 	def __init__(self, header=None, data=None):
@@ -156,7 +223,7 @@ class Frame(object):
 			self.data = data
 			
 		self.valid = True
-
+		
 	def parseID(self):
 		"""
 		Convenience wrapper for the Frame.FrameHeader.parseID 
@@ -164,7 +231,31 @@ class Frame(object):
 		"""
 		
 		return self.header.parseID()
-
+		
+	def getDataProducts(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeder.getDataProducts
+		function.
+		"""
+		
+		return self.header.getDataProducts()
+		
+	def containsLinearData(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeder.containsLinearData
+		function.
+		"""
+		
+		return self.header.containsLinearData()
+		
+	def containsStokesData(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeder.containsStokesData
+		function.
+		"""
+		
+		return self.header.containsStokesData()
+		
 	def getSampleRate(self):
 		"""
 		Convenience wrapper for the Frame.FrameHeader.getSampleRate 
@@ -177,59 +268,62 @@ class Frame(object):
 		"""
 		Convenience wrapper for the Frame.FrameHeader.getFilterCode function.
 		"""
-
+		
 		return self.header.getFilterCode()
-
+		
 	def getTime(self):
 		"""
 		Function to convert the time tag from samples since the UNIX epoch
 		(UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
 		"""
-
+		
 		seconds = (self.data.timeTag - self.header.timeOffset) / dp_common.fS
 		
 		return seconds
-	
+		
 	def getCentralFreq(self, which=None):
 		"""
 		Convenience wrapper for the Frame.FrameData.getCentralFreq function.
 		"""
-
+		
 		return self.data.getCentralFreq(which=which)
-
+		
 	def setGain(self, gain):
 		"""
 		Convenience wrapper for the Frame.FrameData.setGain function.
 		"""
-
+		
 		self.data.setGain(gain)
-
+		
 	def __add__(self, y):
 		"""
 		Add the data sections of two frames together or add a number 
 		to every element in the data section.
 		"""
-	
+		
 		newFrame = copy.deepcopy(self)
-		newFrame += y	
+		newFrame += y
 		return newFrame
-			
+		
 	def __iadd__(self, y):
 		"""
 		In-place add the data sections of two frames together or add 
 		a number to every element in the data section.
 		"""
 		
-		try:
-			self.data.X0 += y.data.X0
-			self.data.Y0 += y.data.Y0
-			self.data.X1 += y.data.X1
-			self.data.Y1 += y.data.Y1
-		except AttributeError:
-			self.data.X0 += y
-			self.data.Y0 += y
-			self.data.X1 += y
-			self.data.Y1 += y
+		attrs = self.header.getDataProducts()
+		
+		for attrBase in attrs:
+			for tuning in (0, 1):
+				attr = "%s%i" % (attrBase, tuning)
+				try:
+					temp = getattr(self.data, attr, None) + getattr(y.data, attr, None)
+				except TypeError:
+					raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.getDataProducts())))
+				except AttributeError:
+					temp = getattr(self.data, attr, None) + y
+				setattr(self.data, attr, temp)
+			
 		return self
 		
 	def __mul__(self, y):
@@ -248,16 +342,19 @@ class Frame(object):
 		multiply a number to every element in the data section.
 		"""
 		
-		try:
-			self.data.X0 *= y.data.X0
-			self.data.Y0 *= y.data.Y0
-			self.data.X1 *= y.data.X1
-			self.data.Y1 *= y.data.Y1
-		except AttributeError:
-			self.data.X0 *= y
-			self.data.Y0 *= y
-			self.data.X1 *= y
-			self.data.Y1 *= y
+		attrs = self.header.getDataProducts()
+		
+		for attrBase in attrs:
+			for tuning in (0, 1):
+				attr = "%s%i" % (attrBase, tuning)
+				try:
+					temp = getattr(self.data, attr, None) * getattr(y.data, attr, None)
+				except TypeError:
+					raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.getDataProducts())))
+				except AttributeError:
+					temp = getattr(self.data, attr, None) * y
+				setattr(self.data, attr, temp)
+			
 		return self
 			
 	def __eq__(self, y):
@@ -400,6 +497,59 @@ def readFrame(filehandle, Gain=None, Verbose=False):
 	return newFrame
 
 
+def getDataProducts(filehandle):
+	"""
+	Find out the data products contained in the file by looking at a frame.
+	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+
+	# Read in one frame
+	newFrame = readFrame(filehandle)
+	
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Return the data products
+	return newFrame.header.getDataProducts()
+
+
+def containsLinearData(filehandle):
+	"""
+	Find out if the file contains linear polarization products or not.
+	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+
+	# Read in one frame
+	newFrame = readFrame(filehandle)
+	
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Return the verdict
+	return newFrame.header.containsLinearData()
+
+
+def containsStokesData(filehandle):
+	"""
+	Find out if the file contains Stokes parameters or not.
+	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+
+	# Read in one frame
+	newFrame = readFrame(filehandle)
+	
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Return the verdict
+	return newFrame.header.containsStokesData()
+
 
 def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 	"""
@@ -448,4 +598,6 @@ def getTransformSize(filehandle):
 	frame = readFrame(filehandle)
 	filehandle.seek(cPos)
 	
-	return frame.data.X0.size
+	p = frame.getDataProducts()[0]
+	
+	return getattr(frame.data, "%s0" % p, None).size
