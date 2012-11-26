@@ -892,7 +892,7 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 	for(i=0; i<4; i++) {
-		temp = Py_BuildValue("H", header.errors[i]);
+		temp = Py_BuildValue("B", header.errors[i]);
 		PyList_SetItem(errors, i, temp);
 	}
 	
@@ -914,7 +914,7 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 	for(i=0; i<4; i++) {
-		temp = Py_BuildValue("H", header.satCount[i]);
+		temp = Py_BuildValue("I", header.satCount[i]);
 		PyList_SetItem(saturations, i, temp);
 	}
 	
@@ -922,11 +922,11 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	// 1. Header
 	fHeader = PyObject_GetAttrString(frame, "header");
 	
-	temp = Py_BuildValue("H", header.beam);
+	temp = Py_BuildValue("B", header.beam);
 	PyObject_SetAttrString(fHeader, "beam", temp);
 	Py_XDECREF(temp);
 	
-	temp = Py_BuildValue("H", header.stokes_format);
+	temp = Py_BuildValue("B", header.stokes_format);
 	PyObject_SetAttrString(fHeader, "format", temp);
 	Py_XDECREF(temp);
 	
