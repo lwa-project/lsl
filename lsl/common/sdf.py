@@ -347,6 +347,7 @@ class Session(object):
 		self.cra = 0
 		self.drxBeam = -1
 		self.spcSetup = [0, 0]
+		self.spcMetatag = None
 		
 		self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
 		self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
@@ -1345,6 +1346,9 @@ def parseSDF(filename, verbose=False):
 	# in the keywords
 	kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9\+]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?(\[(?P<id4>[0-9]+?)\])?')
 	
+	# Create the metatag regular expression to deal with spectrometer mode settings
+	metaRE = re.compile(r'\{.*\}')
+	
 	# Create empty objects to get things started.  Values will get filled in as they
 	# are found in the file
 	po = ProjectOffice()
@@ -1461,11 +1465,21 @@ def parseSDF(filename, verbose=False):
 		if keyword == 'SESSION_SPC':
 			# Remove the ' marks
 			value = value.replace("'", "")
+			# Excise the metatags
+			mtch = metaRE.search(value)
+			if mtch is not None:
+				metatag = mtch.group(0)
+				value = metaRE.sub('', value)
+			else:
+				metatag = None
+			
 			project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
+			project.sessions[0].spcMetatag = metatag
 			# If the input field is '' the value of spcSetup is [].  This
 			# isn't good for the SDF render so reset [] to [0, 0]
 			if project.sessions[0].spcSetup == []:
 				project.sessions[0].spcSetup = [0, 0]
+				project.sessions[0].spcMetatag = None
 			continue
 		
 		# Observation Info
@@ -1739,7 +1753,7 @@ SESSION_REMPO    {{ "Requested data return method is %s"|format(session.dataRetu
 {{- "\nSESSION_INC_SMIB %i"|format(session.includeStationStatic) if session.includeStationStatic }}
 {{- "\nSESSION_INC_DES  %i"|format(session.includeDesign) if session.includeDesign }}
 {{- "\nSESSION_DRX_BEAM %i"|format(session.drxBeam) if session.drxBeam != -1 }}
-{{- "\nSESSION_SPC      %i %i"|format(session.spcSetup[0], session.spcSetup[1]) if session.spcSetup[0] != 0 and session.spcSetup[1] != 0 }}
+{{- "\nSESSION_SPC      %i %i%s"|format(session.spcSetup[0], session.spcSetup[1], '' if session.spcMetatag == None else session.spcMetatag) if session.spcSetup[0] != 0 and session.spcSetup[1] != 0 }}
 
 {% for obs in session.observations -%}
 OBS_ID           {{ loop.index }}

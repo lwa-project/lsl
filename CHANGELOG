@@ -1,5 +1,8 @@
 0.7.0
-  * Add in LWA Development Primitives (lsl.reader.ldp)
+  * Added in LWA Development Primitives module (lsl.reader.ldp)
+
+0.6.1
+  * Added support for DROS metatags in the SESSION_SPC SDF keyword
 
 0.6.0
   * Removed the correlator.fx.calcSpectra()/calcSpectrum() functions
@@ -14,7 +17,7 @@
   * Updated lsl.imaging.utils to deal with the new ExtendedIDI class
   * Added in the self-calibration routines to lsl.imaging.selfCal
   * Updated the LWA1 and LWA2 SSMIFs
-  * Fixed the observatory/instrument specific header values in lsl.writer.fitsidi so that they relflect the different sites
+  * Fixed the observatory/instrument specific header values in lsl.writer.fitsidi so that they reflect the different sites
   * Updated lsl.misc.dedispersion.coherent() to deal with the padding better
 
 0.5.4
