@@ -1,5 +1,5 @@
 0.7.0
-  * No changes yet
+  * Add in LWA Development Primitives (lsl.reader.ldp)
 
 0.6.0
   * Removed the correlator.fx.calcSpectra()/calcSpectrum() functions
