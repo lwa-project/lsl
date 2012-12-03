@@ -18,9 +18,9 @@ from lsl.common import dp as dp_common
 from lsl.correlator import uvUtils
 
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['BeamformingError', 'calcDelay', 'intDelayAndSum', 'intBeamShape', 'phaseAndSum', 'phaseBeamShape', '__version__', '__revision__', '__all__']
+__all__ = ['BeamformingError', 'calcDelay', 'intDelayAndSum', 'intBeamShape', 'phaseAndSum', 'phaseBeamShape', 'circularize', '__version__', '__revision__', '__all__']
 
 class BeamformingError(Exception):
 	"""
@@ -563,3 +563,20 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 		
 	# Done
 	return output
+
+
+def circularize(x, y):
+	"""
+	Given a 1-D Numpy array of X polarization timeseries data and Y 
+	polarization timeseries data, generate the two circular polarization.
+	Returns a two-element tuple of L and R.
+
+	.. versionadded:: 0.7.0
+	"""
+
+	# Compute the circular terms
+	l = (x + j*y) / numpy.sqrt(2)
+	r = (x - j*y) / numpy.sqrt(2)
+
+	# Done
+	return l, r

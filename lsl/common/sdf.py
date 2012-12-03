@@ -1329,6 +1329,9 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 			f2 = word2freq(beamTemp['freq2'])
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
 
+	# Force the observation to be updated
+        obsOut.update()	
+
 	# Return the newly created Observation object
 	return obsOut
 
