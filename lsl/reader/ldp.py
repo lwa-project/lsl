@@ -36,7 +36,7 @@ from scipy.stats import norm
 from collections import deque
 
 from lsl.common.dp import fS
-from lsl.reader import tbw, tbn, drx, errors
+from lsl.reader import tbw, tbn, drx, drspec, errors
 from lsl.reader.buffer import TBNFrameBuffer
 
 __version__ = '0.1'
@@ -44,6 +44,7 @@ __revision__ = '$Rev$'
 __all__ = ['tbwReadyFile', 
 		 'tbnReadyFile', 'tbnOffsetFile', 'tbnInitializeBuffer', 'tbnReadFrames', 'tbnEstimateLevels', 
 		 'drxReadyFile', 'drxOffsetFile', 'drxReadFrames', 'drxEstimateLevels', 
+		 'drspecOffsetFile', 'drspecReadFrames', 
 		 '__version__', '__revision__', '__all__']
 
 
@@ -359,10 +360,10 @@ def drxOffsetFile(fh, offset):
 
 def drxReadFrames(fh, duration, timeInSamples=False):
 	"""
-	Given an open DRX file and a count of the number of frames per tuning/
-	polarization to read in, read in the data and return a three-element tuple
-	of the actual duration read in, the times at the beginning of each stream, 
-	and the data as numpy array.
+	Given an open DRX file and an amount of data to read in in seconds, read 
+	in the data and return a three-element tuple of the actual duration read 
+	in, the times at the beginning of each stream, and the data as numpy 
+	array.
 	
 	..note::
 		This function always returns a 2-D array with the first dimension
@@ -490,4 +491,134 @@ def drxEstimateLevels(fh, nFrames=100, Sigma=5.0):
 		levels[i] = data2[index]
 		
 	return levels
+
+
+def drspecOffsetFile(fh, offset):
+	"""
+	Offset a specified number of seconds in an open DR spectrometer file.  This 
+	function returns the exact offset time.
+	"""
 	
+	# Gather some basic information and read in the first frame
+	FrameSize = drspec.getFrameSize(fh)
+	LFFT = drspec.getTransformSize(fh)
+	junkFrame = drspec.readFrame(fh)
+	fh.seek(-FrameSize, 1)
+	
+	# Get the initial time, sample rate, and integration time
+	t0 = junkFrame.getTime()
+	sampleRate = junkFrame.getSampleRate()
+	tInt = junkFrame.header.nInts*LFFT/sampleRate
+	
+	# Offset in frames for beampols beam/tuning/pol. sets
+	offset = int(round(offset / tInt))
+	fh.seek(offset*FrameSize, 1)
+	
+	# Iterate on the offsets until we reach the right point in the file.  This
+	# is needed to deal with files that start with only one tuning and/or a 
+	# different sample rate.  
+	while True:
+		junkFrame = drspec.readFrame(fh)
+		fh.seek(-drx.FrameSize, 1)
+		
+		## Figure out where in the file we are and what the current tuning/sample 
+		## rate is
+		t1 = junkFrame.getTime()
+		sampleRate = junkFrame.getSampleRate()
+		tInt = junkFrame.header.nInts*LFFT/sampleRate
+		
+		## See how far off the current frame is from the target
+		tDiff = t1 - (t0 + offset)
+		
+		## Half that to come up with a new seek parameter
+		tCorr   = -tDiff / 2.0
+		cOffset = int(round(tCorr / tInt))
+		offset += cOffset
+		
+		## If the offset is zero, we are done.  Otherwise, apply the offset
+		## and check the location in the file again/
+		if cOffset is 0:
+			break
+		fh.seek(cOffset*FrameSize, 1)
+	
+	return t1 - t0
+
+
+def drspecReadFrames(fh, duration, timeInSamples=False):
+	"""
+	Given an open DR spectrometer file and an amount of data read in in 
+	seconds, read in the data and return a three-element tuple of the actual 
+	duration read in, the times at the beginning of each stream, and the 
+	data as numpy array.
+	
+	..note::
+		This function always returns a 3-D array with the first dimension
+		indexing over data product, the second over time and the third over
+		frequency channel.
+	"""
+	
+	# Make sure there is file left to read
+	if fh.tell() == os.fstat(fh.fileno()).st_size:
+		raise errors.eofError()
+	
+	# Sample the data
+	FrameSize = drspec.getFrameSize(fh)
+	LFFT = drspec.getTransformSize(fh)
+	junkFrame = drspec.readFrame(fh)
+	fh.seek(-FrameSize, 1)
+	
+	# Figure out the sample rate, integration time, and number of data products
+	sampleRate = junkFrame.getSampleRate()
+	tInt = junkFrame.header.nInts*LFFT/sampleRate
+	dataProducts = junkFrame.getDataProducts()
+	nProducts = len(dataProducts)
+	
+	# Covert the sample rate to an expected timetag skip
+	timetagSkip = int(tInt * fS)
+	
+	# Setup the counter variables:  frame count and time tag count
+	count = 0
+	timetag = 0
+	junkFrame = drspec.readFrame(fh)
+	timetag = junkFrame.data.timeTag - timetagSkip
+	fh.seek(-FrameSize, 1)
+	
+	# Find out how many frames to read in
+	frameCount = int(round(1.0 * duration / tInt))
+	duration = frameCount * tInt
+	
+	# Setup the output arrays
+	if timeInSamples:
+		times = numpy.zeros(2*nProducts, dtype=numpy.int64) - 1
+	else:
+		times = numpy.zeros(2*nProducts, dtype=numpy.float64) - 1
+	data = numpy.zeros((2*nProducts,frameCount,LFFT), dtype=numpy.complex64)
+	
+	# Go!
+	for i in xrange(frameCount):
+		# Read in the next frame and anticipate any problems that could occur
+		try:
+			cFrame = drspec.readFrame(fh, Verbose=False)
+		except errors.eofError:
+			break
+		except errors.syncError:
+			continue
+			
+		cTimetag = cFrame.data.timeTag
+		if cTimetag != timetag[aStand]+timetagSkip:
+			actStep = cTimetag - timetag[aStand]
+			raise RuntimeError("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep))
+			
+		if times[aStand] < 0:
+			if timeInSamples:
+				times[:] = cFrame.data.timeTag - cFrame.header.timeOffset
+			else:
+				times[:] = cFrame.getTime()
+				
+		for j,p in enumerate(dataProducts):
+			data[j+0,         count, :] = getattr(cFrame.data, '%s0' % p, None)
+			data[j+nProducts, count, :] = getattr(cFrame.data, '%s1' % p, None)
+		count +=  1
+		timetag = cTimetag
+		
+	return duration, times, data
