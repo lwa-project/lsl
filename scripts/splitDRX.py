@@ -166,7 +166,7 @@ def main(args):
 	else:
 		config['count'] = nCaptures * 4096 / srate
 
-	print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], offset)
+	print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], offset/beampols)
 	print "Seconds to Split: %.2f (%i captures)" % (config['count'], nCaptures)
 
 	# Make sure that the first frame in the file is the first frame of a capture 
