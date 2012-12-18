@@ -2,6 +2,10 @@
   * Added in LWA Development Primitives module (lsl.reader.ldp)
   * Added a function to lsl.misc.beamformer to convert X and Y linear pols. to circular L and R pols.
 
+0.6.2
+  * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed
+ in
+
 0.6.1
   * Added support for DROS metatags in the SESSION_SPC SDF keyword
 
