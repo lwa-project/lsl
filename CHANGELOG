@@ -5,6 +5,7 @@
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed
  in
+  * Fixed a bug in lsl.common.mcs that caused binary packed files to be read in incorrectly on 32-bit installs
 
 0.6.1
   * Added support for DROS metatags in the SESSION_SPC SDF keyword

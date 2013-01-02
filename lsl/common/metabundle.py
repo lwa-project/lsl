@@ -156,8 +156,8 @@ def readOBSFile(filename):
 		fh.readinto(alignment)
 		
 		if alignment.block != (2**32 - 2):
-			raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
-
+			raise IOError("Byte alignment lost at byte %i" % fh.tell())
+			
 	footer = parseCStruct("""
 	signed short int   OBS_FEE[LWA_MAX_NSTD][2];
 	signed short int   OBS_ASP_FLT[LWA_MAX_NSTD];
@@ -172,10 +172,11 @@ def readOBSFile(filename):
 	""", endianness='little')
 	
 	fh.readinto(footer)
-	fh.close()
 	
 	if footer.alignment != (2**32 - 1):
-		raise IOError("Bytes alignment lost at bytes %i" % fh.tell())
+		raise IOError("Byte alignment lost at byte %i" % fh.tell())
+		
+	fh.close()
 	
 	return {'version': header.FORMAT_VERSION, 'projectID': header.PROJECT_ID.lstrip().rstrip(), 
 		   'sessionID': header.SESSION_ID, 'drxBeam': header.SESSION_DRX_BEAM, 

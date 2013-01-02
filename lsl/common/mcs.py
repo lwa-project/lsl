@@ -461,6 +461,7 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 		origC = '\n'.join(cStruct)
 		
 		_fields_ = fields
+		_pack_ = 8	# Pack it like we are 64-bit
 		dims = dims2
 		
 		def __str__(self):
