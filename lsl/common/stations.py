@@ -497,6 +497,7 @@ def __parseTextSSMIF(filename):
 	# Loop over the lines in the file
 	for line in fh:
 		line = line.replace('\n', '')
+		line = line.replace('\r', '')
 		if len(line) == 0 or line.isspace():
 			continue
 		if line[0] == '#':
