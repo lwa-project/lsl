@@ -323,7 +323,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 				currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
 				# Loop over stands to build the simulated signals
-				signals = numpy.zeros((len(antennas), 1000))
+				signals = numpy.zeros((len(antennas), 1500))
 				for i in list(range(len(antennas))):
 					currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
 					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
@@ -536,7 +536,7 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 				currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
 
 				# Loop over stands to build the simulated signals
-				signals = numpy.zeros((len(antennas), 1000))
+				signals = numpy.zeros((len(antennas), 1500))
 				for i in list(range(len(antennas))):
 					currDelay = antennas[i].cable.delay(CentralFreq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
 					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*CentralFreq*(t - currDelay))
