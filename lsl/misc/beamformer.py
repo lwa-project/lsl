@@ -18,7 +18,7 @@ from lsl.common import dp as dp_common
 from lsl.correlator import uvUtils
 
 
-__version__ = '0.4'
+__version__ = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['BeamformingError', 'calcDelay', 'intDelayAndSum', 'intBeamShape', 'phaseAndSum', 'phaseBeamShape', 'circularize', '__version__', '__revision__', '__all__']
 
@@ -116,7 +116,7 @@ def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	return delays
 
 
-def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0):
+def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elevation=90.0):
 	"""
 	Given a list of antennas and a 2-D data stream with stands enumerated
 	along the first axis and time series samples along the second axis, 
@@ -147,7 +147,7 @@ def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, azimuth=0.0, elevati
 	"""
 
 	# Get the stand delays and convert the delay times from seconds to samples
-	delays = calcDelay(antennas, azimuth=azimuth, elevation=elevation)
+	delays = calcDelay(antennas, freq=freq, azimuth=azimuth, elevation=elevation)
 	delays = numpy.round(delays*sampleRate).astype(numpy.int16)
 
 	# Figure out the polarizations
@@ -207,17 +207,17 @@ def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamShape
 		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
 
 	# Beamform with delay-and-sum and store the RMS result
-	beamHere = intDelayAndSum(antennas, signals, sampleRate=sampleRate, azimuth=direction[0], elevation=direction[1])
+	beamHere = intDelayAndSum(antennas, signals, sampleRate=sampleRate, freq=freq, azimuth=direction[0], elevation=direction[1])
 	
 	# Reduce the array dimensions
 	beamHere = beamHere[0,:]
 
 	# Return
-	sigHere = numpy.sqrt((beamHere**2).mean())
+	sigHere = (beamHere**2).mean()
 	return sigHere
 
 
-def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0, progress=False, DisablePool=False):
+def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elevation=90.0, progress=False, DisablePool=False):
 	"""
 	Given a list of antennas, compute the on-sky response of the delay-and-sum
 	scheme implemented in intDelayAndSum.  A 360x90 numpy array spanning azimuth
@@ -232,9 +232,6 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 		Allowed for multiple polarization data to be delayed-and-summed correctly 
 		and insured that a 2-D array is always returned (pol(s) by samples)
 	"""
-
-	# Set the frequency
-	freq = 49.0e6
 
 	# Get the stand delays and convert the delay times from seconds to samples
 	delays = calcDelay(antennas, freq=freq, azimuth=azimuth, elevation=elevation)
@@ -329,8 +326,8 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, azimuth=0.0, elevation=90.0,
 					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
 
 				# Beamform with delay-and-sum and store the RMS result
-				beam = intDelayAndSum(antennas, signals, sampleRate=sampleRate, azimuth=azimuth, elevation=elevation)
-				output[az,el] = numpy.sqrt((beam**2).mean())
+				beam = intDelayAndSum(antennas, signals, sampleRate=sampleRate, freq=freq, azimuth=azimuth, elevation=elevation)
+				output[az,el] = (beam**2).mean()
 
 	# If pooling... Close the pool so that it knows that no ones else is joining.
 	# Then, join the workers together and wait on the last one to finish before
@@ -366,7 +363,7 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 	"""
 
 	# Get the stand delays in seconds
-	delays = calcDelay(antennas, azimuth=azimuth, elevation=elevation)
+	delays = calcDelay(antennas, freq=CentralFreq, azimuth=azimuth, elevation=elevation)
 
 	# Make the delays into something meaningful for the shifting of the data 
 	# streams.  Then, get the beamforming coefficients (b^l_n (a la Steve's 
