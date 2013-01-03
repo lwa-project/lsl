@@ -242,15 +242,19 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 	t = numpy.arange(0,1500)/sampleRate
 	xyz = numpy.zeros((len(antennas),3))
 	i = 0
+	good = []
 	for ant in antennas:
+		if ant.stand.id <= 256:
+			good.append(i)
+			
 		xyz[i,0] = ant.stand.x
 		xyz[i,1] = ant.stand.y
 		xyz[i,2] = ant.stand.z
 		i += 1
 
-	arrayX = xyz[:,0].mean()
-	arrayY = xyz[:,1].mean()
-	arrayZ = xyz[:,2].mean()
+	arrayX = xyz[good,0].mean()
+	arrayY = xyz[good,1].mean()
+	arrayZ = xyz[good,2].mean()
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
 
 	# Load in the response of a single isolated stand
