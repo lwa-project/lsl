@@ -46,13 +46,13 @@ from aipy import coord
 from datetime import datetime
 
 
-__version__ = '0.5'
+__version__ = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
-			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'mjdmpm2datetime', 'datetime2mjdmpm', 
+			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'IS_32BIT_PYTHON', 'mjdmpm2datetime', 'datetime2mjdmpm', 
 			'status2string', 'summary2string', 'sid2string', 'cid2string', 'mode2string', 
 			'parseCStruct', 'single2multi', 'applyPointingCorrection', '__version__', '__revision__', '__all__']
 
@@ -81,6 +81,9 @@ ME_MAX_DRID_LENGTH = 10		# Number of characters in the DR ID name
 ME_MAX_NPWRPORT = 50		# Maximum number of power ports
 ME_MAX_SSNAME_LENGTH = 3		# Number of characters in the power port ID names, for codes used for PWR_NAME
 LWA_MAX_NSTD = 260			# Maximum number of stands for the LWA
+
+
+IS_32BIT_PYTHON = True if struct.calcsize("P") == 4 else False
 
 
 cDeclRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
@@ -389,9 +392,15 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 		elif dec in ('unsigned short int', 'unsigned short'):
 			typ = c_ushort
 		elif dec in ('signed long int', 'signed long', 'long int', 'long'):
-			typ = c_long
+			if IS_32BIT_PYTHON:
+				typ = c_longlong
+			else:
+				typ = c_long
 		elif dec in ('unsigned long int', 'unsigned long'):
-			typ = c_ulong
+			if IS_32BIT_PYTHON:
+				typ = c_uint64
+			else:
+				typ = c_ulong
 		elif dec in ('signed long long', 'long long'):
 			typ = c_longlong
 		elif dec == 'unsigned long long':

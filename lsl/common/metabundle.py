@@ -19,7 +19,7 @@ from lsl.common import stations, sdm, sdf
 from lsl.common.mcs import *
 from lsl.transform import Time
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', '__version__', '__revision__', '__all__']
 
@@ -43,6 +43,7 @@ def readSESFile(filename):
 	unsigned short int SESSION_CRA;
 	signed short int SESSION_DRX_BEAM;
 	char SESSION_SPC[32];
+	%s
 	unsigned long int SESSION_START_MJD;
 	unsigned long int SESSION_START_MPM;
 	unsigned long int SESSION_DUR;
@@ -69,7 +70,7 @@ def readSESFile(filename):
 	signed char SESSION_LOG_EXE;
 	signed char SESSION_INC_SMIB;
 	signed char SESSION_INC_DES;
-	""", endianness='little')
+	""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), endianness='little')
 
 	fh.readinto(ses)
 	fh.close()
@@ -121,6 +122,12 @@ def readOBSFile(filename):
 	""", endianness='little')
 	
 	fh.readinto(header)
+
+	if IS_32BIT_PYTHON:
+		skip = parseCStruct("""
+		int junk;
+		""", endianness='little')
+		fh.readinto(skip)
 
 	steps = []
 	for n in xrange(header.OBS_STP_N):
