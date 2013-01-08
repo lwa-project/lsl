@@ -63,13 +63,17 @@ class beamformer_tests(unittest.TestCase):
 		station = stations.lwa1
 		antennas = station.getAntennas()
 
-		out = beamformer.intBeamShape(antennas[0:60:2], azimuth=135.0, elevation=60.0)
+		# Multithreaded test for accuracy
+		out = beamformer.intBeamShape(antennas[0:30:2], azimuth=135.0, elevation=60.0)
 
 		i = out.argmax()
 		azDiff = numpy.abs(135.0 - i / 90)
 		elDiff = numpy.abs(60.0 - i % 90)
 		self.assertTrue(azDiff <= 1)
 		self.assertTrue(elDiff <= 1)
+
+		# Single threaded test for coverage
+		out = beamformer.intBeamShape(antennas[0:2:2], azimuth=135.0, elevation=60.0, DisablePool=True)
 	
 	def test_phaseAndSum(self):
 		"""Check that the beamformer.phaseAndSum function actually runs"""
@@ -86,13 +90,17 @@ class beamformer_tests(unittest.TestCase):
 		station = stations.lwa1
 		antennas = station.getAntennas()
 
-		out = beamformer.phaseBeamShape(antennas[0:60:2], azimuth=135.0, elevation=60.0)
+		# Multithreaded test for accuracy
+		out = beamformer.phaseBeamShape(antennas[0:30:2], azimuth=135.0, elevation=60.0)
 
 		i = out.argmax()
 		azDiff = numpy.abs(135.0 - i / 90)
 		elDiff = numpy.abs(60.0 - i % 90)
 		self.assertTrue(azDiff <= 1)
 		self.assertTrue(elDiff <= 1)
+
+		# Single threaded test for coverage
+		out = beamformer.phaseBeamShape(antennas[0:2:2], azimuth=135.0, elevation=60.0, DisablePool=True)
 
 
 class  beamformer_test_suite(unittest.TestSuite):

@@ -316,22 +316,7 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 				task = taskPool.apply_async(__intBeepAndSweep, args=(antennas, arrayXYZ, t, freq, az, el), kwds={'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
 				taskList.append((az,el,task))
 			else:
-				# Unit vector for the current on-sky location
-				currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
-								numpy.cos(rEl)*numpy.cos(rAz), 
-								numpy.sin(rEl)])
-				# Stand response in this direction
-				currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
-
-				# Loop over stands to build the simulated signals
-				signals = numpy.zeros((len(antennas), 1500))
-				for i in list(range(len(antennas))):
-					currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
-
-				# Beamform with delay-and-sum and store the RMS result
-				beam = intDelayAndSum(antennas, signals, sampleRate=sampleRate, freq=freq, azimuth=azimuth, elevation=elevation)
-				output[az,el] = (beam**2).mean()
+				output[az,el] = __intBeepAndSweep(antennas, arrayXYZ, t, freq, az, el, beamShape=beamShape[az,el], sampleRate=sampleRate, direction=(azimuth, elevation))
 
 	# If pooling... Close the pool so that it knows that no ones else is joining.
 	# Then, join the workers together and wait on the last one to finish before
@@ -529,24 +514,8 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 				task = taskPool.apply_async(__phaseBeepAndSweep, args=(antennas, arrayXYZ, t, CentralFreq, az, el), kwds={'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
 				taskList.append((az,el,task))
 			else:
-				# Unit vector for the current on-sky location
-				currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
-								numpy.cos(rEl)*numpy.cos(rAz), 
-								numpy.sin(rEl)])
-				# Stand response in this direction
-				currResponse = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
-
-				# Loop over stands to build the simulated signals
-				signals = numpy.zeros((len(antennas), 1500))
-				for i in list(range(len(antennas))):
-					currDelay = antennas[i].cable.delay(CentralFreq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
-					signals[i,:] = currResponse * numpy.cos(2*numpy.pi*CentralFreq*(t - currDelay))
-
-				# Beamform with delay-and-sum and store the RMS result
-				beam = phaseAndSum(antennas, signals, sampleRate=sampleRate, CentralFreq=CentralFreq, 
-									azimuth=azimuth, elevation=elevation)
-				output[az,el] = (numpy.abs(beam)**2).mean()
-			
+				output[az,el] = __phaseBeepAndSweep(antennas, arrayXYZ, t, CentralFreq, az, el, beamShape=beamShape[az,el], sampleRate=sampleRate, direction=(azimuth, elevation))
+				
 	# If pooling... Close the pool so that it knows that no ones else is joining.
 	# Then, join the workers together and wait on the last one to finish before
 	# saving the results.
