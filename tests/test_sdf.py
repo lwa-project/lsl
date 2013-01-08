@@ -9,16 +9,20 @@ import unittest
 
 from lsl.common.paths import dataBuild as dataPath
 from lsl.common import sdf
+from lsl.common.stations import lwa1
 
 
 __revision__ = "$Rev$"
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-sdf.txt')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-sdf.txt')
 drxFile = os.path.join(dataPath, 'tests', 'drx-sdf.txt')
+solFile = os.path.join(dataPath, 'tests', 'sol-sdf.txt')
+jovFile = os.path.join(dataPath, 'tests', 'jov-sdf.txt')
+stpFile = os.path.join(dataPath, 'tests', 'stp-sdf.txt')
 
 
 class sdf_tests(unittest.TestCase):
@@ -69,6 +73,11 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(out.minute, 4)
 		self.assertEqual(out.second, 5)
 		self.assertEqual(out.microsecond, 678000)
+		
+		# LST at LWA1
+		s1 = "LST 2013-01-08 19:42:00.000"
+		s2 = "UTC 2013-01-08 19:38:26.639"
+		self.assertEqual(sdf.parseTimeString(s1, site=lwa1), sdf.parseTimeString(s2))
 
 	### TBW ###
 
@@ -169,10 +178,10 @@ class sdf_tests(unittest.TestCase):
 		project.sessions[0].observations[0].update()
 		self.assertFalse(project.validate())
 	
-	### DRX ###
+	### DRX - TRK_RADEC ###
 	
 	def test_drx_parse(self):
-		"""Test reading in a DRX SDF file."""
+		"""Test reading in a TRK_RADEC SDF file."""
 		
 		project = sdf.parseSDF(drxFile)
 		
@@ -203,13 +212,13 @@ class sdf_tests(unittest.TestCase):
 		self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.0, 6)
 		
 	def test_drx_write(self):
-		"""Test writing a DRX SDF file."""
+		"""Test writing a TRK_RADEC SDF file."""
 		
 		project = sdf.parseSDF(drxFile)
 		out = project.render()
 		
 	def test_drx_errors(self):
-		"""Test various DRX SDF errors."""
+		"""Test various TRK_RADEC SDF errors."""
 		
 		project = sdf.parseSDF(drxFile)
 		
@@ -239,7 +248,221 @@ class sdf_tests(unittest.TestCase):
 		project.sessions[0].observations[0].dec = -72.0
 		project.sessions[0].observations[0].update()
 		self.assertFalse(project.validate())
-
+		
+	### DRX - TRK_SOL ###
+	
+	def test_sol_parse(self):
+		"""Test reading in a TRK_SOL SDF file."""
+		
+		project = sdf.parseSDF(solFile)
+		
+		# Basic file structure
+		self.assertEqual(len(project.sessions), 1)
+		self.assertEqual(len(project.sessions[0].observations), 2)
+		
+		# Observational setup - 1
+		self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_SOL')
+		self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[0].mpm,      0)
+		self.assertEqual(project.sessions[0].observations[0].dur,  10000)
+		self.assertEqual(project.sessions[0].observations[0].freq1,  438261968)
+		self.assertEqual(project.sessions[0].observations[0].freq2, 1928352663)
+		self.assertEqual(project.sessions[0].observations[0].filter,   7)
+		
+		# Observational setup - 2
+		self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_SOL')
+		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
+		self.assertEqual(project.sessions[0].observations[1].dur,  10000)
+		self.assertEqual(project.sessions[0].observations[1].freq1,  832697741)
+		self.assertEqual(project.sessions[0].observations[1].freq2, 1621569285)
+		self.assertEqual(project.sessions[0].observations[1].filter,   7)
+		
+	def test_sol_write(self):
+		"""Test writing a TRK_SOL SDF file."""
+		
+		project = sdf.parseSDF(solFile)
+		out = project.render()
+		
+	def test_sol_errors(self):
+		"""Test various TRK_SOL SDF errors."""
+		
+		project = sdf.parseSDF(solFile)
+		
+		# Bad filter
+		project.sessions[0].observations[0].filter = 10
+		self.assertFalse(project.validate())
+		
+		# Bad frequency
+		project.sessions[0].observations[0].filter = 7
+		project.sessions[0].observations[0].frequency1 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+		project.sessions[0].observations[0].frequency1 = 38.0e6
+		project.sessions[0].observations[0].frequency2 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+		# Bad duration
+		project.sessions[0].observations[0].frequency2 = 38.0e6
+		project.sessions[0].observations[0].duration = '96:00:00.000'
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+	### DRX - TRK_JOV ###
+	
+	def test_jov_parse(self):
+		"""Test reading in a TRK_JOV SDF file."""
+		
+		project = sdf.parseSDF(jovFile)
+		
+		# Basic file structure
+		self.assertEqual(len(project.sessions), 1)
+		self.assertEqual(len(project.sessions[0].observations), 2)
+		
+		# Observational setup - 1
+		self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_JOV')
+		self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[0].mpm,      0)
+		self.assertEqual(project.sessions[0].observations[0].dur,  10000)
+		self.assertEqual(project.sessions[0].observations[0].freq1,  438261968)
+		self.assertEqual(project.sessions[0].observations[0].freq2, 1928352663)
+		self.assertEqual(project.sessions[0].observations[0].filter,   7)
+		
+		# Observational setup - 2
+		self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_JOV')
+		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
+		self.assertEqual(project.sessions[0].observations[1].dur,  10000)
+		self.assertEqual(project.sessions[0].observations[1].freq1,  832697741)
+		self.assertEqual(project.sessions[0].observations[1].freq2, 1621569285)
+		self.assertEqual(project.sessions[0].observations[1].filter,   7)
+		
+	def test_jov_write(self):
+		"""Test writing a TRK_JOV SDF file."""
+		
+		project = sdf.parseSDF(jovFile)
+		out = project.render()
+		
+	def test_jov_errors(self):
+		"""Test various TRK_JOV SDF errors."""
+		
+		project = sdf.parseSDF(jovFile)
+		
+		# Bad filter
+		project.sessions[0].observations[0].filter = 10
+		self.assertFalse(project.validate())
+		
+		# Bad frequency
+		project.sessions[0].observations[0].filter = 7
+		project.sessions[0].observations[0].frequency1 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+		project.sessions[0].observations[0].frequency1 = 38.0e6
+		project.sessions[0].observations[0].frequency2 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+		# Bad duration
+		project.sessions[0].observations[0].frequency2 = 38.0e6
+		project.sessions[0].observations[0].duration = '96:00:00.000'
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+	### DRX - STEPPED ###
+	
+	def test_stp_parse(self):
+		"""Test reading in a STEPPED SDF file."""
+		
+		project = sdf.parseSDF(stpFile)
+		
+		# Basic file structure
+		self.assertEqual(len(project.sessions), 1)
+		self.assertEqual(len(project.sessions[0].observations), 2)
+		
+		# Observational setup - 1
+		self.assertEqual(project.sessions[0].observations[0].mode, 'STEPPED')
+		self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[0].mpm, 440000)
+		self.assertEqual(project.sessions[0].observations[0].dur, 300000)
+		self.assertEqual(project.sessions[0].observations[0].filter,   7)
+		self.assertEqual(project.sessions[0].observations[0].obsFEE[0], [1,1])
+		self.assertEqual(project.sessions[0].observations[0].aspFlt[0], 2)
+		self.assertEqual(project.sessions[0].observations[0].aspAT1[0], 10)
+		self.assertEqual(project.sessions[0].observations[0].aspAT2[0], 12)
+		self.assertEqual(project.sessions[0].observations[0].aspATS[0], 14)
+		
+		# Steps - 1
+		self.assertEqual(len(project.sessions[0].observations[0].steps), 4)
+		for i in xrange(4):
+			self.assertEqual(project.sessions[0].observations[0].steps[i].RADec, project.sessions[0].observations[0].RADec)
+			self.assertEqual(project.sessions[0].observations[0].steps[i].freq1,  832697741)
+			self.assertEqual(project.sessions[0].observations[0].steps[i].freq2, 1621569285)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c1, 90.0, 6)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c2, 45.0, 6)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].dur, 60000)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[-1].c1, 0.0, 6)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[-1].c2, 1.0, 6)
+		self.assertEqual(project.sessions[0].observations[0].steps[-1].dur, 120000)
+		
+		# Observational setup - 2
+		self.assertEqual(project.sessions[0].observations[1].mode, 'STEPPED')
+		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[1].mpm, 800000)
+		self.assertEqual(project.sessions[0].observations[1].dur, 180000)
+		self.assertEqual(project.sessions[0].observations[1].filter,   7)
+		self.assertEqual(project.sessions[0].observations[1].obsFEE[0], [1,0])
+		self.assertEqual(project.sessions[0].observations[1].aspFlt[0], 1)
+		self.assertEqual(project.sessions[0].observations[1].aspAT1[0], 11)
+		self.assertEqual(project.sessions[0].observations[1].aspAT2[0], 13)
+		self.assertEqual(project.sessions[0].observations[1].aspATS[0], 15)
+		
+		# Steps - 2
+		self.assertEqual(len(project.sessions[0].observations[1].steps), 2)
+		for i in xrange(2):
+			self.assertEqual(project.sessions[0].observations[1].steps[i].RADec, project.sessions[0].observations[1].RADec)
+			self.assertEqual(project.sessions[0].observations[1].steps[i].freq1,  832697741)
+			self.assertEqual(project.sessions[0].observations[1].steps[i].freq2, 1621569285)
+		self.assertAlmostEqual(project.sessions[0].observations[1].steps[0].c1, 0.0, 6)
+		self.assertAlmostEqual(project.sessions[0].observations[1].steps[0].c2, 90.0, 6)
+		self.assertEqual(project.sessions[0].observations[1].steps[0].dur, 60000)
+		self.assertAlmostEqual(project.sessions[0].observations[1].steps[-1].c1, 12.0, 6)
+		self.assertAlmostEqual(project.sessions[0].observations[1].steps[-1].c2, 80.0, 6)
+		self.assertEqual(project.sessions[0].observations[1].steps[-1].dur, 120000)
+		
+	def test_stp_write(self):
+		"""Test writing a STEPPED SDF file."""
+		
+		project = sdf.parseSDF(stpFile)
+		out = project.render()
+		
+	def test_stp_errors(self):
+		"""Test various STEPPED SDF errors."""
+		
+		project = sdf.parseSDF(stpFile)
+		
+		# Bad filter
+		project.sessions[0].observations[0].filter = 10
+		self.assertFalse(project.validate())
+		
+		# Bad frequency
+		project.sessions[0].observations[0].filter = 7
+		project.sessions[0].observations[0].steps[0].frequency1 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+		project.sessions[0].observations[0].steps[0].frequency1 = 38.0e6
+		project.sessions[0].observations[0].steps[1].frequency2 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+		# Bad duration
+		project.sessions[0].observations[0].steps[1].frequency2 = 38.0e6
+		project.sessions[0].observations[0].steps[2].duration = '96:00:00.000'
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
 
 class sdf_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.common.sdf units 

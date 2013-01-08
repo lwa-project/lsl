@@ -34,6 +34,36 @@ class mcs_tests(unittest.TestCase):
 		dt = mcs.mjdmpm2datetime(mjd, mpm)
 		
 		self.assertEqual(dt.strftime("%Y-%m-%d %H:%M:%S"), "2012-06-15 06:34:09")
+		
+	def test_pointing_correction(self):
+		"""Test the pointing correction function"""
+		
+		az = 63.4
+		el = 34.2
+		
+		# No rotation
+		theta = 0.0
+		phi = 0.0
+		psi = 0.0
+		azP, elP = mcs.applyPointingCorrection(az, el, theta, phi, psi, degrees=True)
+		self.assertAlmostEqual(azP, az, 1)
+		self.assertAlmostEqual(elP, el, 1)
+		
+		# Azimuth only
+		theta = 0.0
+		phi = 0.0
+		psi = 1.0
+		azP, elP = mcs.applyPointingCorrection(az, el, theta, phi, psi, degrees=True)
+		self.assertAlmostEqual(azP, az-1.0, 1)
+		self.assertAlmostEqual(elP, el, 1)
+		
+		# Something random
+		theta = 23.0
+		phi = 10.0
+		psi = 1.5
+		azP, elP = mcs.applyPointingCorrection(az, el, theta, phi, psi, degrees=True)
+		self.assertAlmostEqual(azP, 62.40, 1)
+		self.assertAlmostEqual(elP, 34.37, 1)
 
     
 class mcs_test_suite(unittest.TestSuite):

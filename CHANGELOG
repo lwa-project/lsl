@@ -10,6 +10,7 @@
   * Fixed a problem with the beam power pattern measured by lsl.misc.beamformer.intBeamShape
   * Overhaul of the lsl.common.sdf module to address Ticket #40 (OBS_DRX_GAIN problem) and to improve the render
   * Removed jinja2 as a dependency
+  * Fixed a bug in lsl.common.sdf dealing with parsing LST times
 
 0.6.1
   * Added support for DROS metatags in the SESSION_SPC SDF keyword

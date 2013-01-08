@@ -46,6 +46,7 @@ from datetime import datetime, timedelta
 
 from lsl.transform import Time
 from lsl.astro import MJD_OFFSET, DJD_OFFSET
+from lsl.astro import date as astroDate, get_date as astroGetDate
 
 from lsl.common.dp import freq2word, word2freq
 from lsl.common.stations import lwa1
@@ -102,7 +103,7 @@ def _getEquinoxEquation(jd):
 	return deltaPsi * math.cos(epsilon*math.pi/180.0)
 
 
-def parseTimeString(s):
+def parseTimeString(s, site=lwa1):
 	"""Given a string in the format of (UTC) YYYY MM DD HH:MM:SS.SSS, return
 	the corresponding datetime object.  This function goes a little beyond what
 	datetime.strptime does in the since that it handle both integer and float
@@ -182,7 +183,7 @@ def parseTimeString(s):
 			# Get the position of the observer on the Earth and the Julian 
 			# Date of midnight UT for the day we want to map LST to
 			obs = site.getObserver()
-			dt = astro.date(year, month, day, 0, 0, 0)
+			dt = astroDate(year, month, day, 0, 0, 0)
 			jd = dt.to_jd()
 			
 			# Get the LST in hours
@@ -217,7 +218,7 @@ def parseTimeString(s):
 			
 			# Convert the JD back to a time and extract the relevant 
 			# quantities needed to build a datetime instance
-			dt = astro.get_date(jd)
+			dt = astroGetDate(jd)
 			
 			tz = _UTC
 			year = dt.years
@@ -459,10 +460,6 @@ class Project(object):
 				output = "%sOBS_BW           %i\n" % (output, obs.filter)
 				output = "%sOBS_BW+          %s\n" % (output, self._renderBandwidth(obs.filter, obs.filterCodes))
 			elif obs.mode == 'STEPPED':
-				output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-				output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-				output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-				output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
 				output = "%sOBS_BW           %i\n" % (output, obs.filter)
 				output = "%sOBS_BW+          %s\n" % (output, self._renderBandwidth(obs.filter, obs.filterCodes))
 				output = "%sOBS_STP_N        %i\n" % (output, len(obs.steps))
@@ -1233,6 +1230,21 @@ class Stepped(Observation):
 		self.steps = steps
 		self.filterCodes = DRXFilters
 		Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, MaxSNR=False, comments=comments)
+		
+	def update(self):
+		"""Update the computed parameters from the string values."""
+		
+		self.mjd = self.getMJD()
+		self.mpm = self.getMPM()
+		self.dur = self.getDuration()
+		self.freq1 = self.getFrequency1()
+		self.freq2 = self.getFrequency2()
+		self.beam = self.getBeamType()
+		
+		for step in self.steps:
+			step.update()
+			
+		self.dataVolume = self.estimateBytes()
 		
 	def getDuration(self):
 		"""Parse the list of BeamStep objects to get the total observation 
