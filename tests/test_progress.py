@@ -36,6 +36,21 @@ class progress_tests(unittest.TestCase):
 			pbar2 = pbar2 - 1
 			
 			self.assertEqual(pbar2.amount, i+1)
+			
+	def test_bar_show(self):
+		"""Test the progress bar's rendering."""
+		
+		# With percentage
+		pbar = progress.ProgressBar()
+		for i in range(101):
+			pbar.inc(1)
+			pbar.show()
+			
+		# Without percentage
+		pbar = progress.ProgressBar(printP=False)
+		for i in range(101):
+			pbar.inc(1)
+			pbar.show()
 
 
 class progress_test_suite(unittest.TestSuite):

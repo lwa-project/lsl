@@ -7,6 +7,7 @@ import unittest
 import test_paths
 import test_astro
 import test_skymap
+import test_transform
 import test_mathutil
 import test_nec_util
 import test_catalog
@@ -52,6 +53,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_paths.paths_test_suite())
 		self.addTest(test_astro.astro_test_suite())
 		self.addTest(test_skymap.skymap_test_suite())
+		self.addTest(test_transform.transform_test_suite())
 		self.addTest(test_mathutil.mathutil_test_suite())
 		self.addTest(test_nec_util.nec_util_test_suite())
 		self.addTest(test_catalog.catalog_test_suite())

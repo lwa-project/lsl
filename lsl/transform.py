@@ -78,7 +78,7 @@ class Time(object):
     'format' describes the type of 'value'
       Time.FORMAT_LN_DATE - libnova astro.date class calendar format
       Time.FORMAT_PY_DATE - python datetime.datetime class calendar format
-      Time.FORMAT_STR     - ISO 8601 (YYYY:MM:DD hh:mm:ss.s) calendar format 
+      Time.FORMAT_STR     - ISO 8601 (YYYY-MM-DD hh:mm:ss.s) calendar format 
                             string 
       Time.FORMAT_JD      - standard julian day as float
       Time.FORMAT_MJD     - modified julian day as float
