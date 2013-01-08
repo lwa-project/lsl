@@ -936,6 +936,7 @@ def __parseBinarySSMIF(filename):
 	float  fAntTheta[2*ME_MAX_NSTD]; /* ANT_THETA[] */
 	float  fAntPhi[2*ME_MAX_NSTD];   /* ANT_PHI[] */
 	int    eAntDesi[2*ME_MAX_NSTD];  /* ANT_DESI[] */
+	%s
 	int    nFEE;                     /* N_FEE */
 	char   sFEEID[ME_MAX_NFEE][ME_MAX_FEEID_LENGTH+1]; /* FEE_ID[] */
 	int    iFEEStat[ME_MAX_NFEE];    /* FEE_STAT[] */
@@ -1002,7 +1003,7 @@ def __parseBinarySSMIF(filename):
 	int    ePwrSS[ME_MAX_RACK][ME_MAX_NPWRPORT]; /* PWR_SS[][], converted to a LWA_SID_ value */
 	char   sPwrName[ME_MAX_RACK][ME_MAX_NPWRPORT][ME_MAX_SSNAME_LENGTH+1]; /* PWR_NAME[][] */
 	int    eCRA;                /* MCS_CRA */
-	""", charMode='int', endianness='little')
+	""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), charMode='int', endianness='little')
 	
 	fh.readinto(bssmif)
 	

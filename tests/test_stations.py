@@ -68,12 +68,11 @@ class stations_tests(unittest.TestCase):
 		ssmifFile = os.path.join(dataPath, 'lwa1-ssmif.txt')
 		out = stations.parseSSMIF(ssmifFile)
 	
-	#def test_ssmif_binary(self):
-		#"""Test the binary SSMIF parser."""
+	def test_ssmif_binary(self):
+		"""Test the binary SSMIF parser."""
 		
-		## This is pretty fake down here.  We need a *real* binary SSMIF file to do this
-		#ssmifFile = os.path.join(dataPath, 'lwa1-ssmif.txt')
-		#out = stations.parseSSMIF(ssmifFile)
+		ssmifFile = os.path.join(dataPath, 'tests', 'ssmif.dat')
+		out = stations.parseSSMIF(ssmifFile)
 
 
 class stations_test_suite(unittest.TestSuite):

@@ -34,7 +34,7 @@ def main(args):
 	# Python Module Check
 	#
 	notFound = 0
-	for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy', 'jinja2'):
+	for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy'):
 		try:
 			exec "import %s" % mod
 		except ImportError, e:

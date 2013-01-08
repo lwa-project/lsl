@@ -38,9 +38,10 @@ class SubSystemStatus(object):
 		
 		sssStruct = parseCStruct("""
 		int summary;
+		%s
 		char info[256];
 		long tv[2];
-		""", endianness='little')
+		""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), endianness='little')
 		
 		fh.readinto(sssStruct)
 		
