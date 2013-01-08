@@ -357,9 +357,21 @@ class Project(object):
 			obs.dur = obs.getDuration()
 			
 		ses = self.sessions[session]
-		pos = self.projectOffice.sessions[session]
-		poo = self.projectOffice.observations[session]
-		
+		try:
+			# Try to pull out the project office comments about the session
+			pos = self.projectOffice.sessions[session]
+		except:
+			pos = None
+		try:
+			# Try to pull out the project office comments about the observations
+			poo = self.projectOffice.observations[session]
+		except:
+			poo = []
+		# Enforce that the number of project office observation comments match the
+		# actual number of observations
+		while (len(ses.observations) - len(poo)) > 0:
+			poo.append(None)
+			
 		## PI Information
 		output = ""
 		output = "%sPI_ID            %s\n" % (output, self.observer.id)
