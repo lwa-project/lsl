@@ -23,6 +23,7 @@ drxFile = os.path.join(dataPath, 'tests', 'drx-sdf.txt')
 solFile = os.path.join(dataPath, 'tests', 'sol-sdf.txt')
 jovFile = os.path.join(dataPath, 'tests', 'jov-sdf.txt')
 stpFile = os.path.join(dataPath, 'tests', 'stp-sdf.txt')
+spcFile = os.path.join(dataPath, 'tests', 'spc-sdf.txt')
 
 
 class sdf_tests(unittest.TestCase):
@@ -463,6 +464,51 @@ class sdf_tests(unittest.TestCase):
 		project.sessions[0].observations[0].steps[2].duration = '96:00:00.000'
 		project.sessions[0].observations[0].update()
 		self.assertFalse(project.validate())
+		
+	### DRX - STEPPED with delays and gains ###
+	
+	def test_spc_parse(self):
+		"""Test reading in a STEPPED Delay and Gain SDF file."""
+		
+		project = sdf.parseSDF(spcFile)
+		
+		# Basic file structure
+		self.assertEqual(len(project.sessions), 1)
+		self.assertEqual(len(project.sessions[0].observations), 1)
+		
+		# Observational setup - 1
+		self.assertEqual(project.sessions[0].observations[0].mode, 'STEPPED')
+		self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[0].mpm, 440000)
+		self.assertEqual(project.sessions[0].observations[0].dur,  60000)
+		self.assertEqual(project.sessions[0].observations[0].filter,   7)
+		
+		# Steps - 1
+		self.assertEqual(len(project.sessions[0].observations[0].steps), 1)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].RADec, project.sessions[0].observations[0].RADec)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c1, 90.0, 6)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c2, 45.0, 6)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].freq1,  832697741)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].freq2, 1621569285)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].dur, 60000)
+		
+		# Delays - 1
+		for i in xrange(260):
+			self.assertEqual(project.sessions[0].observations[0].steps[0].delays[i], 0)
+			
+		# Gains - 1
+		for i in xrange(260):
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][0], 1)
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][1], 1)
+			
+	def test_spc_write(self):
+		"""Test writing a STEPPED Delay and Gain SDF file."""
+		
+		project = sdf.parseSDF(spcFile)
+		out = project.render()
+
 
 class sdf_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.common.sdf units 
