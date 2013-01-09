@@ -160,9 +160,6 @@ def cmagnitude(cmplx):
 def cphase(cmplx):
 	"""
 	Return the polar phases of complex values as radians.
-
-	.. seealso::
-		:func:`lsl.correlator.visUtils.argument`
 	"""
 	
 	return numpy.angle(cmplx)

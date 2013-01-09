@@ -24,8 +24,3 @@ FX Correlator
 .. autofunction:: lsl.correlator.fx.FXMaster
 .. autofunction:: lsl.correlator.fx.FXStokes
 
-Visibility Visualization
-------------------------
-.. automodule:: lsl.correlator.visUtils
-   :members:
-

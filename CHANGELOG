@@ -1,6 +1,7 @@
 0.7.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)
   * Added a function to lsl.misc.beamformer to convert X and Y linear pols. to circular L and R pols.
+  * Removed the lsl.correlator.visUtils module since it isn't used by any other modules or scripts.
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in

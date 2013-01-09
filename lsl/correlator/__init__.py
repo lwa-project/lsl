@@ -6,7 +6,4 @@ the results.  Modules included are:
               etc.,
  * fx       - calculate spectra from LWA observations and correlate data using 
               and FX-style correlator, and
- * visUtils - visualize visibility data in various ways with matplotlib."""
-
-
-
+"""
