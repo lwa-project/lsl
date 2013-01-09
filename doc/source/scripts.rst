@@ -434,6 +434,13 @@ correlateTBN.py
 
             -q, --quiet            Run correlateTBN in silent mode
 
+inspectTarball.py
+  :Description: Given a MCS metadata tarball, print out details of the associated observations.
+
+  :Usage: inspectTarball.py metaData
+
+  :Options: None
+
 splitSession.py
   :Description: Given a MCS metadata tarball and a session DRX recording, split the session
                 recording into the individual observations.
