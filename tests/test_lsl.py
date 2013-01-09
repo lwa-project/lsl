@@ -20,7 +20,6 @@ import test_buffer
 import test_uvUtils
 import test_fx
 import test_filterbank
-import test_visUtils
 import test_fakedata
 import test_simdp
 import test_simvis
@@ -37,7 +36,7 @@ import test_meta
 
 
 __revision__  = "$Rev$"
-__version__   = "0.2"
+__version__   = "0.3"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
@@ -66,7 +65,6 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_uvUtils.uvUtils_test_suite())
 		self.addTest(test_fx.fx_test_suite())
 		self.addTest(test_filterbank.filterbank_test_suite())
-		self.addTest(test_visUtils.visUtils_test_suite())
 		self.addTest(test_fakedata.fakedata_test_suite())
 		self.addTest(test_simdp.simdp_test_suite())
 		self.addTest(test_simvis.simvis_test_suite())
