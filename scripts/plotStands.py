@@ -80,7 +80,7 @@ def main(args):
 	stands.sort()
 
 	# Load in the stand position data
-	data = numpy.zeros((len(stands),3))
+	data = numpy.zeros((len(stands)/2,3))
 	
 	i = 0
 	for stand in stands[::2]:
