@@ -23,7 +23,7 @@ from lsl.writer.fitsidi import NumericStokes
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['baselineOrder', 'sortDataDict', 'removeBaselineRange', 'CorrelatedData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'CorrelatedData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
 def baselineOrder(bls):
@@ -66,9 +66,9 @@ def sortDataDict(dataDict, order=None):
 	return dataDict
 
 
-def removeBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
+def pruneBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
 	"""
-	Remove baselines from a data dictionary that are less than uvMin or
+	Prune baselines from a data dictionary that are less than uvMin or
 	greater than or equal to uvMax.
 
 	.. note::
@@ -85,28 +85,29 @@ def removeBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
 	newDict = {}
 	for key in dataDict.keys():
 		if key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-			continue
-		newDict[key] = dataDict[key]
+			newDict[key] = {}
+			for pol in dataDict[key].keys():
+				newDict[key][pol] = []
+		else:
+			newDict[key] = dataDict[key]
 
 	# Find out the baseline lengths and create a list of good ones
 	good = {}
 	freq = dataDict['freq']
-	for k in dataDict['uvw'].keys():
+	for pol in dataDict['uvw'].keys():
 		sizes = []
-		for bl in dataDict['uvw'][k]:
+		for bl in dataDict['uvw'][pol]:
 			uvw = bl[:,freq.size/2]
 			sizes.append( numpy.sqrt((uvw**2).sum()) )
 		sizes = numpy.array(sizes)
-		good[k] = list(numpy.where( (sizes >= uvMin) & (sizes < uvMax) )[0])
+		good[pol] = list(numpy.where( (sizes >= uvMin) & (sizes < uvMax) )[0])
 		
 	# Prune
-	for k in dataDict.keys():
-		try:
-			for p in dataDict[k].keys():
-				newDict[k][p] = itemgetter(*good[p])(dataDict[k][p])
-		except AttributeError, e:
-			pass
-			
+	if key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+		for pol in dataDict[key].keys():
+			if len(good[pol]) > 0:
+				newDict[key][pol] = itemgetter(*good[pol])(dataDict[key][pol])
+				
 	# Return
 	return newDict
 
@@ -326,15 +327,16 @@ class CorrelatedData(object):
 		if not found:
 			raise RuntimeError("Cannot find baseline set %i in FITS IDI file", set)
 		
+		# Sort
+		if sort:
+			sortDataDict(dataDict)
+			
 		# Prune
 		if uvMin != 0 or uvMax != numpy.inf:
-			dataDict = removeBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
+			dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
 			
-		# Sort and return
-		if sort:
-			return sortDataDict(dataDict)
-		else:
-			return dataDict
+		# Return
+		return dataDict
 
 
 def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None):

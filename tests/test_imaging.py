@@ -3,6 +3,7 @@
 """Unit test for lsl.imaging modules"""
 
 import os
+import copy
 import unittest
 
 from lsl.common.paths import dataBuild as dataPath
@@ -41,7 +42,50 @@ class imaging_tests(unittest.TestCase):
 
 		# Error checking
 		self.assertRaises(RuntimeError, idi.getDataSet, 2)
+
+	def test_sort(self):
+		"""Test the utils.sortDataDict function."""
 		
+		# Open the FITS IDI file
+		idi = utils.CorrelatedData(idiFile)
+		
+		# Get some data to sort
+		ds = idi.getDataSet(1, sort=False)
+		
+		# Sort
+		dss = copy.deepcopy(ds)
+		utils.sortDataDict(dss)
+		for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			for pol in ds['bls'].keys():
+				self.assertEqual(len(dss[prop][pol]), len(ds[prop][pol]))
+		
+	def test_prune(self):
+		"""Test the utils.pruneBaselineRange function."""
+		
+		# Open the FITS IDI file
+		idi = utils.CorrelatedData(idiFile)
+		
+		# Get some data to sort
+		ds = idi.getDataSet(1)
+		
+		# Prune
+		dsp1 = utils.pruneBaselineRange(ds, uvMin=10)
+		for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			for pol in ds['bls'].keys():
+				self.assertTrue(len(dsp1[prop][pol]) < len(ds[prop][pol]))
+				
+		# Auto-prune
+		dsp2 = idi.getDataSet(1, uvMin=10)
+		for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			for pol in ds['bls'].keys():
+				self.assertEqual(len(dsp1[prop][pol]), len(dsp2[prop][pol]))
+
+		# Auto-prune that should result in no baselines
+		dsp3 = idi.getDataSet(1, uvMin=100)
+		for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			for pol in ds['bls'].keys():
+				self.assertEqual(len(dsp3[prop][pol]), 0)
+				
 	def test_gridding(self):
 		"""Test building a image from a visibility data set."""
 		
@@ -65,6 +109,10 @@ class imaging_tests(unittest.TestCase):
 		aa = idi.getAntennaArray()
 		ds = idi.getDataSet(1)
 		junk = selfCal.selfCal(aa, ds, ds, 173, 'xx')
+		
+		# Error checking
+		self.assertRaises(RuntimeError, selfCal.selfCal, aa, ds, ds, 173, 'yx', refAnt=0  )
+		self.assertRaises(RuntimeError, selfCal.selfCal, aa, ds, ds, 173, 'yx', refAnt=564)
 
 
 class imaging_test_suite(unittest.TestSuite):
