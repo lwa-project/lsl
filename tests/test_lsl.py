@@ -29,6 +29,7 @@ import test_tsfits
 import test_sdfits
 import test_vdif
 import test_beamformer
+import test_imaging
 import test_progress
 import test_mcs
 import test_sdf
@@ -74,6 +75,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_sdfits.sdfits_test_suite())
 		self.addTest(test_vdif.vdif_test_suite())
 		self.addTest(test_beamformer.beamformer_test_suite())
+		self.addTest(test_imaging.imaging_test_suite())
 		self.addTest(test_progress.progress_test_suite())
 		self.addTest(test_mcs.mcs_test_suite())
 		self.addTest(test_sdf.sdf_test_suite())

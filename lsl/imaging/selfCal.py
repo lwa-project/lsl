@@ -162,12 +162,30 @@ def selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, returnDelays=False):
 	readUVData dictionary and a model sky stored in a lsl.sim.vis.buildSimSky 
 	dictionary for a given polarization and channel(s)."""
 
+	# Make sure we have the right polarization
+	if pol not in dataDict['bls'].keys() and pol.lower() not in dataDict['bls'].keys():
+		raise RuntimeError("Data dictionary does not have data for polarization '%s'" % pol)
+	if pol not in simDict['bls'].keys() and pol.lower() not in simDict['bls'].keys():
+		raise RuntimeError("Simulation dictionary does not have data for polarization '%s'" % pol)
+
+	# Make sure that `chan' is an array by trying to find its length
+	try:
+		junk = len(chan)
+	except TypeError:
+		chan = [chan]
+
 	N = len(aa.ants)
+	found = False
 	if refAnt != 0:
 		for i,ant in enumerate(aa.ants):
 			if refAnt == ant.stand:
 				refAnt = i
+				found = True
 				break;
+	else:
+		found = True
+	if not found:
+		raise RuntimeError("Stand #%i not found in the array provided" % refAnt)
 	print "Using antenna #%i as a reference (Stand #%i)" % (refAnt, aa.ants[refAnt].stand)
 
 	tempGains = numpy.ones(N)
