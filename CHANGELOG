@@ -14,7 +14,7 @@
   * Fixed a bug in lsl.common.sdf dealing with parsing LST times
   * Added the inspectTarball.py script
   * Added an option to the lsl.imaging.utils.CorrelatedData class to only return baselines in a certain uv range
-  * Updated the LWA1 SSMIF to the 2013/1/22 version to include the LEDA outriggers
+  * Updated the LWA1 SSMIF to the 2013/1/23 version to include the LEDA outriggers
 
 0.6.1
   * Added support for DROS metatags in the SESSION_SPC SDF keyword

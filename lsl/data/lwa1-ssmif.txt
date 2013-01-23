@@ -1,6 +1,8 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2013 Jan 23 by J. Dowell
+#  -- Removed the extra ARB_ANT lines that filled out the last half of ARX board #33
 # 2013 Jan 22 by J. Dowell
 #  -- Added back in the LEDA-32 antennas
 #  -- Added in LEDA outriggers #1 (stand #257), #2 (stand #260), and #3 (stand #259)
@@ -4508,17 +4510,6 @@ ARB_ANT[33][6] 518
 # RTA antenna (LEDA Outrigger #4)
 ARB_ANT[33][7] 515
 ARB_ANT[33][8] 516
-
-# FIXME
-# Fill in the last half of board #33 to keep MCS happy
-ARB_ANT[33][9] 287
-ARB_ANT[33][10] 288
-ARB_ANT[33][11] 287
-ARB_ANT[33][12] 288
-ARB_ANT[33][13] 287
-ARB_ANT[33][14] 288
-ARB_ANT[33][15] 287
-ARB_ANT[33][16] 288
 
 # ----------------------------------------------
 # --- ASP input/output labeling ----------------
