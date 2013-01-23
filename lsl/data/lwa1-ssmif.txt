@@ -1,6 +1,13 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2013 Jan 22 by J. Dowell
+#  -- Added back in the LEDA-32 antennas
+#  -- Added in LEDA outriggers #1 (stand #257), #2 (stand #260), and #3 (stand #259)
+#  -- Replaced Stand #25 with LEDA outrigger #5
+#  -- Updated the RPD and SEP cable names for the outriggers
+#  -- Updated the PDU port mappings to be consistent with the July 2012 reorganization 
+#     e-mail from J. Craig
 # 2012 Oct 24 by J. Dowell
 #  -- Incorporated the latest info. on the status of good dipoles;  removed 12
 # 2012 Sep 24 by J. Dowell
@@ -8,13 +15,14 @@
 # 2012 Aug 29 by J. Dowell
 #  -- Updated the "PC_" values with the results of the new pointing correction
 # 2012 Aug 06 by J. Dowell
-#  -- set the "PC_" values to something that works for CygA
-#  -- updated the ARB_ID listings for the ARX board swaps
-#  -- updated the ANT_STAT listsings for antennas that have no signal and/or calibration
+#  -- Set the "PC_" values to something that works for CygA
+#  -- Updated the ARB_ID listings for the ARX board swaps
+#  -- Updated the ANT_STAT listsings for antennas that have no signal and/or calibration
 # 2012 July 02 by S. Ellingson 
-# -- added "PC_" (pointing correction) keywords, set to defaults
-# -- updated FORMAT_VERSION to 7
-# 2012 MAY 16 by J. Dowell
+#  -- Added "PC_" (pointing correction) keywords, set to defaults
+#  -- Updated FORMAT_VERSION to 7
+# 2012 May 16 by J. Dowell
+#
 # Search "FIXME" for things that need work
 
 FORMAT_VERSION 7
@@ -24,13 +32,15 @@ GEO_E  -107.628 # E Lat [deg]
 GEO_EL 2133.6   # [m] above MSL
 N_STD 260
 
-# --------------------------------------
-# --- Stand Positions  -----------------
-# --------------------------------------
+# ---------------------------------------
+# --- Stand Positions  ------------------
+# ---------------------------------------
 # includes 1-256, plus:
-#   257 (close to the SW edge of the array)
-#   RTA is included as stand 258.  
-# --------------------------------------
+#   LEDA Outrigger #1 as stand 257
+#   LEDA Outrigger #2 as stand 260
+#   LEDA Outrigger #3 as stand 259
+#   RTA (LEDA Outrigger #4) as stand 258.  
+# ---------------------------------------
 # These will be set to 0.0 for any stand #'s <= N_STD not identified
 # *** STD_LX[stand_id] [m] goes here 
 # *** STD_LY[stand_id] [m] goes here 
@@ -137,9 +147,17 @@ STD_LZ[33]    +1.995
 STD_LX[34]    +5.390
 STD_LY[34]    -8.226
 STD_LZ[34]    +1.763
-STD_LX[35]    -5.805
-STD_LY[35]    -9.953
-STD_LZ[35]    +1.844
+
+# FIXME
+# This is the *real* Stand #35
+#STD_LX[35]    -5.805
+#STD_LY[35]    -9.953
+#STD_LZ[35]    +1.844
+# This is LEDA Outrigger #5
+STD_LX[35]  +241.373
+STD_LY[35]   -58.617
+STD_LZ[35]    +2.882
+
 STD_LX[36]    +4.340
 STD_LY[36]    -3.499
 STD_LZ[36]    +1.591
@@ -803,18 +821,18 @@ STD_LZ[255]    +1.178
 STD_LX[256]   -47.094
 STD_LY[256]   +18.685
 STD_LZ[256]    +1.081
-STD_LX[257]   -45.580
-STD_LY[257]   -44.470
-STD_LZ[257]    +2.867
-STD_LX[258]  +338.911
+STD_LX[257]   -56.028    # LEDA Outrigger #1
+STD_LY[257]  +202.187
+STD_LZ[257]    -5.687 
+STD_LX[258]  +338.911    # RTA (LEDA Outrigger #4)
 STD_LY[258]   +19.778
 STD_LZ[258]    +1.670
-STD_LX[259]     0.0
-STD_LY[259]     0.0
-STD_LZ[259]     0.0
-STD_LX[260]     0.0
-STD_LY[260]     0.0
-STD_LZ[260]     0.0
+STD_LX[259]  +405.278    # LEDA Outrigger #3
+STD_LY[259]  +167.840
+STD_LZ[259]    -1.462
+STD_LX[260]  +167.559    # LEDA Outrigger #2
+STD_LY[260]  +295.101
+STD_LZ[260]    -5.692
 
 # ------------------------------------
 # --- Antenna # -> Stand # mapping ---
@@ -840,66 +858,32 @@ STD_LZ[260]     0.0
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
 ANT_STAT[17]   1        # No Signal as of 2012/10/23
-ANT_STAT[18]   1	# No Signal
-ANT_STAT[25]   0	# LEDA-32 Stand 13, pol 0; Failed calibration, round 2
-ANT_STAT[26]   0	# LEDA-32 Stand 13, pol 1
-ANT_STAT[29]   1	# No Signal
-ANT_STAT[67]   0	# LEDA-32 Stand 34, pol 0
-ANT_STAT[68]   0	# LEDA-32 Stand 34, pol 1
-ANT_STAT[71]   0	# LEDA-32 Stand 36, pol 0; Failed calibration, round 2
-ANT_STAT[72]   0	# LEDA-32 Stand 36, pol 1; Failed calibration, round 2
-ANT_STAT[79]   0	# LEDA-32 Stand 40, pol 0
-ANT_STAT[80]   0	# LEDA-32 Stand 40, pol 1
-ANT_STAT[115]  0	# LEDA-32 Stand 58, pol 0
-ANT_STAT[116]  0	# LEDA-32 Stand 58, pol 1
-ANT_STAT[131]  0	# LEDA-32 Stand 66, pol 0
-ANT_STAT[132]  0	# LEDA-32 Stand 66, pol 1; Failed calibration, round 2
+ANT_STAT[18]   1        # No Signal
+ANT_STAT[25]   0        # Failed calibration, round 2
+ANT_STAT[29]   1        # No Signal
+ANT_STAT[71]   0        # Failed calibration, round 2
+ANT_STAT[72]   0        # Failed calibration, round 2
+ANT_STAT[132]  0        # Failed calibration, round 2
 ANT_STAT[149]  1        # No Signal as of 2012/10/23
 ANT_STAT[150]  1        # No Signal as of 2012/10/23
-ANT_STAT[167]  0	# LEDA-32 Stand 84, pol 0
-ANT_STAT[168]  0	# LEDA-32 Stand 84, pol 1
 ANT_STAT[171]  1        # No Signal as of 2012/10/23
 ANT_STAT[172]  1        # No Signal as of 2012/10/23
-ANT_STAT[191]  1	# No Signal
-ANT_STAT[196]  1	# No Signal
+ANT_STAT[191]  1        # No Signal
+ANT_STAT[196]  1        # No Signal
 ANT_STAT[213]  1        # No Signal as of 2012/10/23
 ANT_STAT[214]  1        # No Signal as of 2012/10/23
-ANT_STAT[241]  0	# LEDA-32 Stand 121, pol 0
-ANT_STAT[242]  0	# LEDA-32 Stand 121, pol 1
-ANT_STAT[246]  1	# No Signal
-ANT_STAT[247]  1	# No Signal
-ANT_STAT[265]  0	# LEDA-32 Stand 133, pol 0
-ANT_STAT[266]  0 	# LEDA-32 Stand 133, pol 1
+ANT_STAT[246]  1        # No Signal
+ANT_STAT[247]  1        # No Signal
 ANT_STAT[287]  1        # No Signal as of 2012/10/23
 ANT_STAT[288]  1        # No Signal as of 2012/10/23
-ANT_STAT[295]  0	# LEDA-32 Stand 148, pol 0
-ANT_STAT[296]  0	# LEDA-32 Stand 148, pol 1
-ANT_STAT[325]  0	# LEDA-32 Stand 163, pol 0
-ANT_STAT[326]  0	# LEDA-32 Stand 163, pol 1
-ANT_STAT[329]  0	# LEDA-32 Stand 165, pol 0
-ANT_STAT[330]  0	# LEDA-32 Stand 165, pol 1
-ANT_STAT[363]  1	# No Signal
-ANT_STAT[374]  1	# No Signal
-ANT_STAT[405]  0	# LEDA-32 Stand 203, pol 0
-ANT_STAT[406]  0	# LEDA-32 Stand 203, pol 1
-ANT_STAT[427]  0	# LEDA-32 Stand 214, pol 0
-ANT_STAT[428]  0	# LEDA-32 Stand 214, pol 1
-ANT_STAT[434]  1	# No Signal
-ANT_STAT[461]  0	# LEDA-32 Stand 231, pol 0
-ANT_STAT[462]  0	# LEDA-32 Stand 231, pol 1
-ANT_STAT[464]  1	# No Signal
+ANT_STAT[363]  1        # No Signal
+ANT_STAT[374]  1        # No Signal
+ANT_STAT[434]  1        # No Signal
+ANT_STAT[464]  1        # No Signal
 ANT_STAT[467]  1        # No Signal as of 2012/10/23
 ANT_STAT[468]  1        # No Signal as of 2012/10/23
-ANT_STAT[473]  0	# LEDA-32 Stand 237, pol 0
-ANT_STAT[474]  0	# LEDA-32 Stand 237, pol 1
-ANT_STAT[488]  1	# Failed calibration, round 2
+ANT_STAT[488]  1        # Failed calibration, round 2
 ANT_STAT[489]  1        # No Signal as of 2012/10/23
-ANT_STAT[513]  0	# Not installed
-ANT_STAT[514]  0	# Not installed
-ANT_STAT[517]  0	# Not installed
-ANT_STAT[518]  0	# Not installed
-ANT_STAT[519]  0	# Not installed
-ANT_STAT[520]  0	# Not installed
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -936,9 +920,6 @@ N_FEE 260
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any FEE #'s <= N_FEE not identified
 # *** FEE_STAT[fee_id] goes here: 
-FEE_STAT[257] 0 # 111220: JC says "not installed"
-FEE_STAT[259] 0 # 111220: JC says "not installed"
-FEE_STAT[260] 0 # 111220: JC says "not installed"
 
 # This will be set to 1 for any FEEs not identified below
 # You should set it to 0 if different but not known, or >1 if appropriate
@@ -1571,8 +1552,15 @@ RPD_ID[65] EXK-033-103 (Gray)
 RPD_ID[66] EXK-033-103 (Black)
 RPD_ID[67] EXK-034-092 (Gray)
 RPD_ID[68] EXK-034-092 (Black)
-RPD_ID[69] EXK-035-099 (Gray)
-RPD_ID[70] EXK-035-099 (Black)
+
+# FIXME
+# This is the *real* Stand #35
+#RPD_ID[69] EXK-035-099 (Gray)
+#RPD_ID[70] EXK-035-099 (Black)
+# This is LEDA Outrigger #5
+RPD_ID[69] 5
+RPD_ID[70] 5
+
 RPD_ID[71] EXK-036-088 (Gray)
 RPD_ID[72] EXK-036-088 (Black)
 RPD_ID[73] EXK-037-101 (Gray)
@@ -2015,45 +2003,41 @@ RPD_ID[509] EXK-255-057 (Gray)
 RPD_ID[510] EXK-255-057 (Black)
 RPD_ID[511] EXK-256-131 (Gray)
 RPD_ID[512] EXK-256-131 (Black)
-RPD_ID[513] UNK # no labels for stand 257 
-RPD_ID[514] UNK # no labels for stand 257 
-RPD_ID[515] UNK # no labels for stand 258 
+RPD_ID[513] 1 # (LEDA Outrigger #1)
+RPD_ID[514] 1
+
+# FIXME
+RPD_ID[515] UNK # no labels for stand 258 (RTA / LEDA Outrigger #4
 RPD_ID[516] UNK # no labels for stand 258 
-RPD_ID[517] UNK # stand 259 doesn't exist yet
-RPD_ID[518] UNK # stand 259 doesn't exist yet
-RPD_ID[519] UNK # stand 260 doesn't exist yet
-RPD_ID[520] UNK # stand 260 doesn't exist yet
+
+RPD_ID[517] 3 # (LEDA Outrigger #3)
+RPD_ID[518] 3
+RPD_ID[519] 2 # (LEDA Outrigger #2)
+RPD_ID[520] 2
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
 # *** RPD_STAT[cable#] goes here:
 
-# Cables to Stand 257 are not currently installed
-RPD_STAT[513] 0
-RPD_STAT[514] 0
-
-# Cables to Stands 259 & 260 are not currently installed (259 & 260 don't exist)
-RPD_STAT[517] 0
-RPD_STAT[518] 0
-RPD_STAT[519] 0
-RPD_STAT[520] 0
-
 # This will be set to 1 for any cables not identified below
 # You should set it to 0 if different / not known, or >1 if appropriate
 # "2" is LMR400
 # *** RPD_DESI[cable#] goes here:
-# Stand 257 not installed
-RPD_DESI[513] 0
-RPD_DESI[514] 0
-# Electrical length of cables to Stand 258: 
+# Stand 35 (as LEDA Outrigger #5):
+RPD_DESI[69] 2
+RPD_DESI[70] 2
+# Stand 257:
+RPD_DESI[513] 2
+RPD_DESI[514] 2
+# Stand 258: 
 RPD_DESI[515] 2 # LMR400 (with some short jumpers near shelter)
 RPD_DESI[516] 2 # LMR400 (with some short jumpers near shelter)
-# Cables to Stand 259 are not currently installed (since 259 doesn't exist):
-RPD_DESI[517] 0
-RPD_DESI[518] 0
-# Cables to Stand 260 are not currently installed (since 260 doesn't exist):
-RPD_DESI[519] 0
-RPD_DESI[520] 0
+# Stand 259:
+RPD_DESI[517] 2
+RPD_DESI[518] 2
+# Stand 260:
+RPD_DESI[519] 2
+RPD_DESI[520] 2
 
 # RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
 # *** RPD_LENG[cable#] [m] goes here:
@@ -2125,8 +2109,15 @@ RPD_LENG[65] 103.00
 RPD_LENG[66] 103.00
 RPD_LENG[67]  92.00
 RPD_LENG[68]  92.00
-RPD_LENG[69]  99.00
-RPD_LENG[70]  99.00
+
+# FIXME
+# This is the *real* Stand #35
+#RPD_LENG[69]  99.00
+#RPD_LENG[70]  99.00
+# This is LEDA Outrigger #5
+RPD_LENG[69] 252.456
+RPD_LENG[70] 251.826
+
 RPD_LENG[71]  88.00
 RPD_LENG[72]  88.00
 RPD_LENG[73] 101.00
@@ -2571,28 +2562,46 @@ RPD_LENG[511] 131.00
 RPD_LENG[512] 131.00
 
 # FIXME
-# not much known about cables to stand 257 
-RPD_LENG[513]   0.00 
-RPD_LENG[514]   0.00 
+# Stand 257 (LEDA Outrigger #1):
+# Measured by J. Craig on January 9, 2013 to have delays of 1.922 and 1.922 
+# ... microseconds.  The results have been adjusted so that the RTA value matches 
+# ... that previously determined for the RTA.  See the section on the RTA cable 
+# ... for details of the length determination.
+RPD_LENG[513] 242.630  # JD's guess; see comment above
+RPD_LENG[514] 242.756  # JD's guess; see comment above
 
 # FIXME
-# Length of cables to Stand 258 (old RTA): 
+# Stand 258 (old RTA / LEDA Outrigger #4): 
 # SE Comments from earlier version of SSMIF: Here's how I came up with this length: 
-# ... I started by assuming RPD_VF=85 [%] and RPD_DD=2 [ns]; see those entries for more info.
-# ... On or about July 9, 2010, JC and I measured the one-way prop time to be about 1222.5 ns.
-# ... ... using the TenTec VNA. 
-# ... I then assumed the M.170 model assuming 50 MHz center frequency, and solved for length. 
-# On December 12, 2011, JC and JD remeasured both outlier polarizations using a signal
-# ... generator and an oscilliscope.  The round trip times were 2472 ns for N-S and 
-# ... 2503 ns for E-W.  I used SE method described above to come up with the new lengths 
-# ... for both cables 
-RPD_LENG[515] 311.4  # JD's guess; see comment above
-RPD_LENG[516] 315.3  # JD's guess; see comment above
+# ... I started by assuming RPD_VF=85 [%] and RPD_DD=2 [ns]; see those entries for 
+# ... more info.  On or about July 9, 2010, JC and I measured the one-way prop time 
+# ... to be about 1222.5 ns using the TenTec VNA.  I then assumed the M.170 model 
+# ... assuming 50 MHz center frequency, and solved for length. 
+# On December 12, 2011, JC and JD remeasured both outlier polarizations using a 
+# ... signal generator and an oscilliscope.  The round trip times were 2472 ns for 
+# ... N-S and 2503 ns for E-W.  JD used SE method described above to come up with 
+# ... the new lengths for both cables.
+# On January 9, 2013, J. Craig remeasured the round trip time to the RTA as part
+# ... of determing the cable lengths for the LEDA outriggers.  The delays were
+# ... 2.468 and 2.498 microseconds.
+RPD_LENG[515] 311.413  # JD's guess; see comment above
+RPD_LENG[516] 315.318  # JD's guess; see comment above
 
-RPD_LENG[517]   0.00 # Stand 259 not installed
-RPD_LENG[518]   0.00 # Stand 259 not installed
-RPD_LENG[519]   0.00 # Stand 260 not installed
-RPD_LENG[520]   0.00 # Stand 260 not installed
+# Stand 259 (LEDA Outrigger #3):
+# Measured by J. Craig on January 9, 2013 to have delays of 3.646 and 3.638 
+# ... microseconds.  The results have been adjusted so that the RTA value matches 
+# ... that previously determined for the RTA.  See the section on the RTA cable 
+# ... for details of the length determination.
+RPD_LENG[517]  459.813  # JD's guess; see comment above
+RPD_LENG[518]  458.931  # JD's guess; see comment above
+
+# Stand 260 (LEDA Outrigger #2):
+# Measured by J. Craig on January 9, 2013 to have delays of 2.446 and 2.446 
+# ... microseconds.  The results have been adjusted so that the RTA value matches 
+# ... that previously determined for the RTA.  See the section on the RTA cable 
+# ... for details of the length determination.
+RPD_LENG[519]   308.642  # JD's guess; see comment above
+RPD_LENG[520]   308.768  # JD's guess; see comment above
 
 # Cable stretching is set with TBN calibration results.  The assumptions that go into
 # ... this are:
@@ -2675,8 +2684,25 @@ RPD_STR[65]  1.0097
 RPD_STR[66]  1.0128
 RPD_STR[67]  1.0188
 RPD_STR[68]  1.0097
-RPD_STR[69]  1.0184
-RPD_STR[70]  1.0094
+
+# FIXME
+# This is the *real* Stand #35
+#RPD_STR[69]  1.0184
+#RPD_STR[70]  1.0094
+# Cables to Stand 35 (LEDA Outrigger #5)
+RPD_VF[69] 85.0 # this is the known value for LMR-400
+RPD_DD[69]  2.0 # this is SE's guess; see comment below
+RPD_A0[69] 0.00185
+RPD_A1[69] 0.00000
+RPD_STR[69]  1.0000 # Measured by TDR
+RPD_VF[70] 85.0 # this is the known value for LMR-400
+RPD_DD[70]  2.0 # this is SE's guess; see comment below
+RPD_A0[70] 0.00185
+RPD_A1[70] 0.00000
+RPD_STR[70]  1.0000 # Measured by TDR
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
+
 RPD_STR[71]  0.9992
 RPD_STR[72]  0.9978
 RPD_STR[73]  1.0094
@@ -3120,9 +3146,19 @@ RPD_STR[510]  1.0428
 RPD_STR[511]  1.0086
 RPD_STR[512]  1.0008
 
-# Stand 257 (RPD_ID's 513-514) is not installed
-RPD_STR[513]  1.0938
-RPD_STR[514]  1.0152
+# Cables to Stand 257 (LEDA Outrigger #1)
+RPD_VF[513] 85.0 # this is the known value for LMR-400
+RPD_DD[513]  2.0 # this is SE's guess; see comment below
+RPD_A0[513] 0.00185
+RPD_A1[513] 0.00000
+RPD_STR[513]  1.0000 # Measured by TDR
+RPD_VF[514] 85.0 # this is the known value for LMR-400
+RPD_DD[514]  2.0 # this is SE's guess; see comment below
+RPD_A0[514] 0.00185
+RPD_A1[514] 0.00000
+RPD_STR[514]  1.0000 # Measured by TDR
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
 
 # Cables to Stand 258 (RTA)
 RPD_VF[515] 85.0 # this is the known value for LMR-400
@@ -3138,10 +3174,34 @@ RPD_STR[516]  1.0000 # The outlier antenna is the reference
 # FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
 # ... a LMR-200-like cable, but I'm not sure by how much.  
 
-# Cables to Stand 259 are not currently installed (since 259 doesn't exist)
-# Cables to Stand 260 are not currently installed (since 260 doesn't exist)
+# Cables to Stand 259 (LEDA Outrigger #3)
+RPD_VF[517] 85.0 # this is the known value for LMR-400
+RPD_DD[517]  2.0 # this is SE's guess; see comment below
+RPD_A0[517] 0.00185
+RPD_A1[517] 0.00000
+RPD_STR[517]  1.0000 # Measured by TDR
+RPD_VF[518] 85.0 # this is the known value for LMR-400
+RPD_DD[518]  2.0 # this is SE's guess; see comment below
+RPD_A0[518] 0.00185
+RPD_A1[518] 0.00000
+RPD_STR[518]  1.0000 # Measured by TDR
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
 
-# --------------------------------------
+# Cables to Stand 260 (LEDA Outrigger #2)
+RPD_VF[519] 85.0 # this is the known value for LMR-400
+RPD_DD[519]  2.0 # this is SE's guess; see comment below
+RPD_A0[519] 0.00185
+RPD_A1[519] 0.00000
+RPD_STR[519]  1.0000 # Measured by TDR
+RPD_VF[520] 85.0 # this is the known value for LMR-400
+RPD_DD[520]  2.0 # this is SE's guess; see comment below
+RPD_A0[520] 0.00185
+RPD_A1[520] 0.00000
+RPD_STR[520]  1.0000 # Measured by TDR
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
+
 # --- Antenna # -> cable # mapping -----
 # --------------------------------------
 # Format (example) "RPD_ANT[2] 3" means antenna 3 is connected to cable 2.
@@ -3232,8 +3292,15 @@ SEP_CABL[65] 033-NS
 SEP_CABL[66] 033-EW
 SEP_CABL[67] 034-NS
 SEP_CABL[68] 034-EW
-SEP_CABL[69] 035-NS
-SEP_CABL[70] 035-EW
+
+# FIXME
+# This is the *real* Stand #35
+#SEP_CABL[69] 035-NS
+#SEP_CABL[70] 035-EW
+# SEP cables to Stand 35 (LEDA Outrigger #5)
+SEP_CABL[69] Outrigger 5 NS
+SEP_CABL[70] Outrigger 5 EW
+
 SEP_CABL[71] 036-NS
 SEP_CABL[72] 036-EW
 SEP_CABL[73] 037-NS
@@ -3676,14 +3743,14 @@ SEP_CABL[509] 255-NS
 SEP_CABL[510] 255-EW
 SEP_CABL[511] 256-NS
 SEP_CABL[512] 256-EW
-SEP_CABL[513] 257-NS
-SEP_CABL[514] 257-EW
+SEP_CABL[513] Outrigger 1 NS
+SEP_CABL[514] Outrigger 1 EW
 SEP_CABL[515] 258-NS
 SEP_CABL[516] 258-EW
-SEP_CABL[517] 259-NS
-SEP_CABL[518] 259-EW
-SEP_CABL[519] 260-NS
-SEP_CABL[520] 260-EW
+SEP_CABL[517] Outrigger 3 NS
+SEP_CABL[518] Outrigger 3 EW
+SEP_CABL[519] Outrigger 2 NS
+SEP_CABL[520] Outrigger 2 EW
 
 # SEP_LENG[] will be set to 0 for any SEP port #'s <= N_SEP not identified
 # *** SEP_LENG[port#] goes here:
@@ -4038,8 +4105,11 @@ ARB_ANT[8][13] 443
 ARB_ANT[8][14] 444
 ARB_ANT[8][15] 299
 ARB_ANT[8][16] 300
+
+# LEDA Outrigger #5
 ARB_ANT[9][1] 69
 ARB_ANT[9][2] 70
+
 ARB_ANT[9][3] 215
 ARB_ANT[9][4] 216
 ARB_ANT[9][5] 197
@@ -4423,21 +4493,32 @@ ARB_ANT[32][14] 376
 ARB_ANT[32][15] 123
 ARB_ANT[32][16] 124
 
-# antenna not installed, but internally cabled in ASP
+# LEDA Outrigger #1
 ARB_ANT[33][1] 513
 ARB_ANT[33][2] 514
 
-# antenna not installed, but internally cabled in ASP
+# LEDA Outrigger #2
 ARB_ANT[33][3] 519
 ARB_ANT[33][4] 520
 
-# test signal input
+# LEDA Outrigger #3
 ARB_ANT[33][5] 517
 ARB_ANT[33][6] 518
 
-# outrigger antenna
+# RTA antenna (LEDA Outrigger #4)
 ARB_ANT[33][7] 515
 ARB_ANT[33][8] 516
+
+# FIXME
+# Fill in the last half of board #33 to keep MCS happy
+ARB_ANT[33][9] 287
+ARB_ANT[33][10] 288
+ARB_ANT[33][11] 287
+ARB_ANT[33][12] 288
+ARB_ANT[33][13] 287
+ARB_ANT[33][14] 288
+ARB_ANT[33][15] 287
+ARB_ANT[33][16] 288
 
 # ----------------------------------------------
 # --- ASP input/output labeling ----------------
@@ -5248,7 +5329,6 @@ ARB_OUT[18][10] 2_7_2
 ARB_OUT[18][11] 2_7_3
 ARB_OUT[18][12] 2_7_4
 ARB_OUT[18][13] 2_8_1
-
 ARB_OUT[18][14] 2_8_2
 ARB_OUT[18][15] 2_8_3
 ARB_OUT[18][16] 2_8_4
@@ -5610,7 +5690,6 @@ DP1_INR[2][6] 3_4_2
 DP1_INR[2][7] 3_4_3
 DP1_INR[2][8] 3_4_4
 DP1_INR[2][9] 3_5_1
-
 DP1_INR[2][10] 3_5_2
 DP1_INR[2][11] 3_5_3
 DP1_INR[2][12] 3_5_4
@@ -6121,12 +6200,17 @@ DP1_ANT[1][5] 443
 DP1_ANT[1][6] 444
 DP1_ANT[1][7] 299
 DP1_ANT[1][8] 300
+
+# LEDA Outrigger #3
 DP1_ANT[1][9] 517
 DP1_ANT[1][10] 518
+# RTA antenna (LEDA Outrigger #4)
 DP1_ANT[1][11] 515
 DP1_ANT[1][12] 516
+# LEDA Outrigger #5
 DP1_ANT[1][13] 69
 DP1_ANT[1][14] 70
+
 DP1_ANT[1][15] 215
 DP1_ANT[1][16] 216
 DP1_ANT[1][17] 197
@@ -6383,10 +6467,14 @@ DP1_ANT[14][5] 183
 DP1_ANT[14][6] 184
 DP1_ANT[14][7] 445
 DP1_ANT[14][8] 446
+
+# LEDA Outrigger #1
 DP1_ANT[14][9] 513
 DP1_ANT[14][10] 514
+# LEDA Outrigger #2
 DP1_ANT[14][11] 519
 DP1_ANT[14][12] 520
+
 DP1_ANT[14][13] 285
 DP1_ANT[14][14] 286
 DP1_ANT[14][15] 389
@@ -6708,6 +6796,38 @@ DR_DP[5] 5
 # ----------------------
 # --- Power ------------
 # ----------------------
+
+# From J. Craig on July 2, 2012:  Below are the notes post-reorg. of the 3-bay 
+# ... which Frank and I did a few months ago.
+# ... 
+# ... PDU on UPS1 (00-06-67-21-88)
+# ... Rack 4 PDU - 172.16.1.112
+# ...   Port 1:  DR1
+# ...   Port 2:  DR2
+# ...   Port 3:  DR3
+# ...   Port 4:  DR4
+# ...   Port 5:  Task Processor
+# ...   Port 6:  blank
+# ...   Port 7:  DP-MCS, Powerstrip
+# ...   Port 8:  blank
+# ... 
+# ... PDU w/o UPS (00-06-67-22-61-BD)
+# ... Rack 5 PDU - 172.16.1.115
+# ...   Port 1:  DRSUs, DR4-DR5
+# ...   Port 2:  ASP-MCS (Updated by J. Dowell on December 16, 2012)
+# ...   Port 3:  Fans
+# ...   Port4:  DRSUs DR1-DR3
+# ...   Port 5:  Timing Distribution
+# ...   Port 6:  Wall warts
+# ...   Port 7:  KVM
+# ...   Port 8:  Display/Keyboard
+# ... 
+# ... UPS #2 (00-06-67-22-81-F0)
+# ... UPS2 - 172.16.1.118
+# ...   Port 1:  Sch
+# ...   Port 2:  SHL-MCS
+# ...   Port 3:  Switches
+
 N_PWR_RACK 6
 
 # N_PWR_PORT[] will be set to 0 (no ports) for any rack power supplies not identified
@@ -6741,9 +6861,6 @@ PWR_NAME[1][2] FEE
 PWR_SS[1][4] ASP
 PWR_NAME[1][4] FAN  
 
-PWR_SS[1][7] ASP
-PWR_NAME[1][7] MCS 
-
 ###
 
 PWR_SS[2][2] DP_
@@ -6754,6 +6871,8 @@ PWR_NAME[2][3] SYN
 
 PWR_SS[2][8] DP_
 PWR_NAME[2][8] FAN
+
+###
 
 # FIXME -- using undefined keywords below -- need to revise software to recognize them
 # Each DP chassis has 3 plugs, denoted C23 for chassis 2, plug 3; C12 for chassis 1, plug 2, etc.
@@ -6770,48 +6889,53 @@ PWR_NAME[2][8] FAN
 #PWR_SS[3][6] DP_
 #PWR_NAME[3][6] C13
 
-PWR_SS[4][2] DR1
+###
+
+PWR_SS[4][1] DR1
+PWR_NAME[4][1] PC
+
+PWR_SS[4][2] DR2
 PWR_NAME[4][2] PC
 
-PWR_SS[4][3] DR2
+PWR_SS[4][3] DR3
 PWR_NAME[4][3] PC
 
-PWR_SS[4][4] DR3
+PWR_SS[4][4] DR4
 PWR_NAME[4][4] PC
 
-PWR_SS[4][5] DR4
-PWR_NAME[4][5] PC
+PWR_SS[4][5] MCS
+PWR_NAME[4][5] TP
+
+PWR_SS[4][7] DP_
+PWR_NAME[4][7] MCS
+
+###
 
 # FIXME -- using undefined keywords below -- need to revise software to recognize them
 # 3BY: is the 3-bay rack, value is FAN
-# ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
-#PWR_SS[4][6] 3BY
-#PWR_NAME[4][6] FAN
-#PWR_SS[4][7] 3BY
-#PWR_NAME[4][7] ACC
+# DSU: are DRSU for multiple DRs
+#PWR_SS[5][1] 3BY
+#PWR_NAME[5][1] DSU	# DRSUs for DR4 and DR5
 
-PWR_SS[4][8] DP_
-PWR_NAME[4][8] MCS
-
-PWR_SS[5][1] DR5
-PWR_NAME[5][1] PC
-
-PWR_SS[5][2] MCS
-PWR_NAME[5][2] EXE
-
-PWR_SS[5][3] MCS
-PWR_NAME[5][3] SCH
-
-PWR_SS[5][4] MCS
-PWR_NAME[5][4] TP
-
-PWR_SS[5][5] SHL
-PWR_NAME[5][5] MCS
+PWR_SS[5][2] ASP
+PWR_NAME[5][2] MCS
 
 # FIXME -- using undefined keywords below -- need to revise software to recognize them
-# DRS DSU is all of the DR Storage Units (combined on power strip)
-#PWR_SS[5][8] DRS
-#PWR_NAME[5][8] DSU
+# 3BY: is the 3-bay rack, value is FAN
+# DSU: are DRSU for multiple DRs
+# ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
+#PWR_SS[5][3] 3BY
+#PWR_NAME[5][3] FAN
+#PWR_SS[5][4] 3BY	# DRSUs for DR1, DR2, and DR3
+#PWR_NAME[5][4] DSU
+#PWR_SS[5][5] 3BY	# Timing distribution
+#PWR_NAME[5][5] ACC
+#PWR_SS[5][6] 3BY	# Wall warts
+#PWR_NAME[5][6] ACC
+#PWR_SS[5][7] 3BY	# KVM
+#PWR_NAME[5][7] ACC
+#PWR_SS[5][8] 3BY	# Display/keyboard
+#PWR_NAME[5][8] ACC
 
 MCS_CRA 1
 
@@ -6822,8 +6946,8 @@ PC_AXIS_TH  64.9 # [deg] theta pointing for axis of rotation (theta = zenith ang
 PC_AXIS_PH 127.4 # [deg] phi pointing for axis of rotation (0=E, 90=N)
 PC_ROT       1.9 # [deg] rotation (right hand rule) around axis
 
-TBN_GAIN 7    # FIXME
-DRX_GAIN 10   # FIXME
+TBN_GAIN 20  # FIXME
+DRX_GAIN 7   # FIXME
 
 # ====================
 # === STATUS CODES ===
@@ -6832,6 +6956,4 @@ DRX_GAIN 10   # FIXME
 # 2 = "Suspect; possibly bad (If used, provide warning)"
 # 1 = "Bad (Don't use)"
 # 0 = "Not Installed"
-
-
 
