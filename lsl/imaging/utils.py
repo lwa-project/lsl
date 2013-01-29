@@ -105,10 +105,13 @@ def pruneBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
 	# Prune
 	for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
 		for pol in dataDict[key].keys():
-			if len(good[pol]) > 0:
-				newDict[key][pol] = itemgetter(*good[pol])(dataDict[key][pol])
-				if not isinstance(newDict[key][pol], list):
-					newDict[key][pol] = [newDict[key][pol],]
+			lgp = len(good[pol])
+			if lgp == 0:
+				newDict[key][pol] = []
+			elif lgp == 1:
+				newDict[key][pol] = [dataDict[key][pol][good[pol][0]],]
+			else:
+				newDict[key][pol] = list(itemgetter(*good[pol])(dataDict[key][pol]))
 				
 	# Return
 	return newDict
