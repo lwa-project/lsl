@@ -103,7 +103,7 @@ def pruneBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
 		good[pol] = list(numpy.where( (sizes >= uvMin) & (sizes < uvMax) )[0])
 		
 	# Prune
-	if key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+	for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
 		for pol in dataDict[key].keys():
 			if len(good[pol]) > 0:
 				newDict[key][pol] = itemgetter(*good[pol])(dataDict[key][pol])
