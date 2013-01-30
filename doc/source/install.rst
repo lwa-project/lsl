@@ -9,9 +9,8 @@ Requirements
  * setuptools >= 0.6.10
  * numpy >= 1.2
  * scipy >= 0.7
- * jinja2 >= 2.3
- * pyfits >= 2.1
- * ephem >= 3.7.3
+ * pyfits >= 3.0
+ * ephem >= 3.7.5
  * aipy >= 0.9.1
  * matplotlib >= 0.98.3 [1]_
  * paramiko >= 1.7.6 [1]_
