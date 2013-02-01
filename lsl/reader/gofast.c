@@ -757,81 +757,81 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		// Linear
 		if( header.stokes_format == 0x01 ) {
 			// XX* only
-			*(a0 + i) = data[0*header.nFreqs + i] / (float) header.fills[0];
-			*(a1 + i) = data[1*header.nFreqs + i] / (float) header.fills[2];
+			*(a0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) header.fills[0];
+			*(a1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) header.fills[2];
 		} 
 		if( header.stokes_format == 0x02 ) {
 			// XY* only
-			*(b0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
-			*(b1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+			*(b0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(b1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
 		if( header.stokes_format == 0x04 ) {
 			// YX* only
-			*(c0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
-			*(c1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+			*(c0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(c1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
 		if( header.stokes_format == 0x08 ) {
 			// YY* only
-			*(d0 + i) = data[0*header.nFreqs + i] / (float) header.fills[1];
-			*(d1 + i) = data[1*header.nFreqs + i] / (float) header.fills[3];
+			*(d0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) header.fills[1];
+			*(d1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) header.fills[3];
 		}
 		if( header.stokes_format == 0x09 ) {
 			// XX* and YY*
-			*(a0 + i) = data[0*header.nFreqs + 2*i + 0] / (float) header.fills[0];
-			*(d0 + i) = data[0*header.nFreqs + 2*i + 1] / (float) header.fills[1];
-			*(a1 + i) = data[2*header.nFreqs + 2*i + 0] / (float) header.fills[2];
-			*(d1 + i) = data[2*header.nFreqs + 2*i + 1] / (float) header.fills[3];
+			*(a0 + i) = data[0*header.nFreqs + 2*i + 0] / (float) header.nFreqs / (float) header.fills[0];
+			*(d0 + i) = data[0*header.nFreqs + 2*i + 1] / (float) header.nFreqs / (float) header.fills[1];
+			*(a1 + i) = data[2*header.nFreqs + 2*i + 0] / (float) header.nFreqs / (float) header.fills[2];
+			*(d1 + i) = data[2*header.nFreqs + 2*i + 1] / (float) header.nFreqs / (float) header.fills[3];
 		}
 		if( header.stokes_format == 0x0f ) {
 			// XX*, XY*, YX*, and YY*
-			*(a0 + i) = data[0*header.nFreqs + 4*i + 0] / (float) header.fills[0];
-			*(b0 + i) = data[0*header.nFreqs + 4*i + 1] / (float) min(header.fills[0], header.fills[1]);
-			*(c0 + i) = data[0*header.nFreqs + 4*i + 2] / (float) min(header.fills[0], header.fills[1]);
-			*(d0 + i) = data[0*header.nFreqs + 4*i + 3] / (float) header.fills[1];
-			*(a1 + i) = data[4*header.nFreqs + 4*i + 0] / (float) header.fills[2];
-			*(b1 + i) = data[4*header.nFreqs + 4*i + 1] / (float) min(header.fills[2], header.fills[3]);
-			*(c1 + i) = data[4*header.nFreqs + 4*i + 2] / (float) min(header.fills[2], header.fills[3]);
-			*(d1 + i) = data[4*header.nFreqs + 4*i + 3] / (float) header.fills[3];
+			*(a0 + i) = data[0*header.nFreqs + 4*i + 0] / (float) header.nFreqs / (float) header.fills[0];
+			*(b0 + i) = data[0*header.nFreqs + 4*i + 1] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(c0 + i) = data[0*header.nFreqs + 4*i + 2] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(d0 + i) = data[0*header.nFreqs + 4*i + 3] / (float) header.nFreqs / (float) header.fills[1];
+			*(a1 + i) = data[4*header.nFreqs + 4*i + 0] / (float) header.nFreqs / (float) header.fills[2];
+			*(b1 + i) = data[4*header.nFreqs + 4*i + 1] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
+			*(c1 + i) = data[4*header.nFreqs + 4*i + 2] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
+			*(d1 + i) = data[4*header.nFreqs + 4*i + 3] / (float) header.nFreqs / (float) header.fills[3];
 		}
 		
 		// Stokes
 		if( header.stokes_format == 0x10 ) {
 			// I only
-			*(a0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
-			*(a1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+			*(a0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(a1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		} 
 		if( header.stokes_format == 0x10 ) {
 			// Q only
-			*(b0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
-			*(b1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+			*(b0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(b1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
 		if( header.stokes_format == 0x04 || header.stokes_format == 0x40 ) {
 			// U only
-			*(c0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
-			*(c1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+			*(c0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(c1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
 		if( header.stokes_format == 0x08 || header.stokes_format == 0x80 ) {
 			// V only
-			*(d0 + i) = data[0*header.nFreqs + i] / (float) min(header.fills[0], header.fills[1]);
-			*(d1 + i) = data[1*header.nFreqs + i] / (float) min(header.fills[2], header.fills[3]);
+			*(d0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(d1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
 		if( header.stokes_format == 0x09 || header.stokes_format == 0x90 ) {
 			// I and V
-			*(a0 + i) = data[0*header.nFreqs + 2*i + 0] / (float) min(header.fills[0], header.fills[1]);
-			*(d0 + i) = data[0*header.nFreqs + 2*i + 1] / (float) min(header.fills[0], header.fills[1]);
-			*(a1 + i) = data[2*header.nFreqs + 2*i + 0] / (float) min(header.fills[2], header.fills[3]);
-			*(d1 + i) = data[2*header.nFreqs + 2*i + 1] / (float) min(header.fills[2], header.fills[3]);
+			*(a0 + i) = data[0*header.nFreqs + 2*i + 0] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(d0 + i) = data[0*header.nFreqs + 2*i + 1] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(a1 + i) = data[2*header.nFreqs + 2*i + 0] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
+			*(d1 + i) = data[2*header.nFreqs + 2*i + 1] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
 		if( header.stokes_format == 0x0f || header.stokes_format == 0xf0 ) {
 			// I, Q, U, and V
-			*(a0 + i) = data[0*header.nFreqs + 4*i + 0] / (float) min(header.fills[0], header.fills[1]);
-			*(b0 + i) = data[0*header.nFreqs + 4*i + 1] / (float) min(header.fills[0], header.fills[1]);
-			*(c0 + i) = data[0*header.nFreqs + 4*i + 2] / (float) min(header.fills[0], header.fills[1]);
-			*(d0 + i) = data[0*header.nFreqs + 4*i + 3] / (float) min(header.fills[0], header.fills[1]);
-			*(a1 + i) = data[4*header.nFreqs + 4*i + 0] / (float) min(header.fills[2], header.fills[3]);
-			*(b1 + i) = data[4*header.nFreqs + 4*i + 1] / (float) min(header.fills[2], header.fills[3]);
-			*(c1 + i) = data[4*header.nFreqs + 4*i + 2] / (float) min(header.fills[2], header.fills[3]);
-			*(d1 + i) = data[4*header.nFreqs + 4*i + 3] / (float) min(header.fills[2], header.fills[3]);
+			*(a0 + i) = data[0*header.nFreqs + 4*i + 0] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(b0 + i) = data[0*header.nFreqs + 4*i + 1] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(c0 + i) = data[0*header.nFreqs + 4*i + 2] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(d0 + i) = data[0*header.nFreqs + 4*i + 3] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
+			*(a1 + i) = data[4*header.nFreqs + 4*i + 0] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
+			*(b1 + i) = data[4*header.nFreqs + 4*i + 1] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
+			*(c1 + i) = data[4*header.nFreqs + 4*i + 2] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
+			*(d1 + i) = data[4*header.nFreqs + 4*i + 3] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
 	}
 	
