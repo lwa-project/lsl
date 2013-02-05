@@ -6,6 +6,7 @@
 0.6.3
   * Fixed a typo. in lsl.imaing.utils.pruneBaselineRange() function
   * Added normalization by the transform length to the lsl.reader._gofast module
+  * Added back in the "import lsl; lsl.test()" fixture
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in

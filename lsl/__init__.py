@@ -21,8 +21,20 @@ Provided modules:
 See the individual package descriptions for more information.
 """
 
-__version__ = '0.5'
+import os
+from lsl.common import paths
+
+__version__ = '0.7'
 __revision__ = '$Rev$'
 __author__ = "Jayce Dowell"
 
+
+def test():
+	"""
+	Internal test fixture
+	"""
+
+	eggPath = os.path.split(paths.module)[0]
+	testPath = os.path.join(eggPath, 'tests', 'test_lsl.py')
+	os.system("python %s -v" % testPath)
 
