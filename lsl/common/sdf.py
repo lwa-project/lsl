@@ -1263,6 +1263,7 @@ class Stepped(Observation):
 		"""Add a new BeamStep step to the list of steps."""
 		
 		self.steps.append(newStep)
+		self.update()
 		
 	def estimateBytes(self):
 		"""Estimate the data volume for the specified type and duration of 
@@ -1271,10 +1272,11 @@ class Stepped(Observation):
 			bytes = duration * sampleRate / 4096 * 4128 bytes * 2 tunings * 2 pols.
 		"""
 		
-		try:
-			nFrames = self.getDuration()/1000.0 * self.filterCodes[self.filter] / 4096
-		except KeyError:
-			nFrames = 0
+		dur = 0
+		for step in self.steps:
+			dur += step.dur
+		nFrames = dur/1000.0 * self.filterCodes[self.filter] / 4096
+		
 		nBytes = nFrames * DRXSize * 4
 		return nBytes
 		
