@@ -29,7 +29,7 @@ Options:
 -l, --label            Label the stands with their ID numbers
                        (default = No)
 -v, --verbose          Run plotStands in vebose mode
--o, --output           Filename to save the plot to (defulat = do not save)
+-o, --output           Filename to save the plot to (default = do not save)
 """
 
 	if exitCode is not None:
@@ -45,6 +45,7 @@ def parseOptions(args):
 	config['metadata'] = ''
 	config['label'] = False
 	config['verbose'] = False
+	config['output'] = None
 	config['args'] = []
 
 	# Read in and process the command line flags

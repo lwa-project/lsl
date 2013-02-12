@@ -8,6 +8,7 @@ debugging and install issues.
 """
 
 import os
+import re
 import sys
 import platform
 import subprocess
@@ -47,7 +48,12 @@ def main(args):
 			try:
 				version = eval("%s.__version__" % mod)
 			except AttributeError:
-				version = "unknown"
+				try:	
+					versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
+					mtch = versionRE.search(eval("%s.__file__" % mod))
+					version = mtch.group('version')
+				except:
+					version = "unknown"
 			print "%s:  version %s" % (mod.capitalize(), version)
 			
 	print " "
