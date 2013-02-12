@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Example script for reading in TBW data and writing it to a TS-FITS file.
-This version differs from the regular readTBN script in that it uses a frame
-buffer to reorder out-of-order packets and dropped frames."""
+"""
+Example script for reading in TBW data and writing it to a TS-FITS file.
+This version differs from the regular readTBN script in that it uses a 
+frame buffer to reorder out-of-order packets and dropped frames.
+"""
 
 import os
 import sys

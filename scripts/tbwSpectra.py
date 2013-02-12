@@ -27,7 +27,8 @@ Usage: tbwSpectra.py [OPTIONS] file
 
 Options:
 -h, --help                  Display this help information
--m, --metadata              Name of SSMIF file to use for mappings
+-m, --metadata              Name of SSMIF or metadata tarball file to use for 
+                            mappings
 -t, --bartlett              Apply a Bartlett window to the data
 -b, --blackman              Apply a Blackman window to the data
 -n, --hanning               Apply a Hanning window to the data
@@ -47,7 +48,7 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
-	config['SSMIF'] = ''
+	config['metadata'] = ''
 	config['LFFT'] = 4096
 	config['maxFrames'] = 30000*260
 	config['window'] = fxc.noWindow
@@ -70,7 +71,7 @@ def parseOptions(args):
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
 		elif opt in ('-m', '--metadata'):
-			config['SSMIF'] = value
+			config['metadata'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
 		elif opt in ('-t', '--bartlett'):
@@ -100,9 +101,12 @@ def main(args):
 	# Parse command line options
 	config = parseOptions(args)
 
-	# Set the station
-	if config['SSMIF'] != '':
-		station = stations.parseSSMIF(config['SSMIF'])
+	# Setup the LWA station information
+	if config['metadata'] != '':
+		try:
+			station = stations.parseSSMIF(config['metadata'])
+		except ValueError:
+			station = metabundle.getStation(config['metadata'], ApplySDM=True)
 	else:
 		station = stations.lwa1
 	antennas = station.getAntennas()
@@ -284,7 +288,7 @@ def main(args):
 				fig.savefig(outFigure)
 				
 		plt.draw()
-	
+		
 	print "RBW: %.1f Hz" % (freq[1]-freq[0])
 	plt.show()
 	

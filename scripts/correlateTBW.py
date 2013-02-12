@@ -49,7 +49,8 @@ Usage: correlateTBW.py [OPTIONS] file
 
 Options:
 -h, --help             Display this help information
--m, --metadata         Name of SSMIF file to use for mappings
+-m, --metadata         Name of SSMIF or metadata tarball file to use for 
+                       mappings
 -l, --fft-length       Set FFT length (default = 4096)
 -q, --quiet            Run correlateTBW in silent mode
 -x, --xx               Compute only the XX polarization product (default)
@@ -65,7 +66,7 @@ Options:
 def parseConfig(args):
 	config = {}
 	# Command line flags - default values
-	config['SSMIF'] = ''
+	config['metadata'] = ''
 	config['LFFT'] = 4096
 	config['samples'] = 1
 	config['offset'] = 0
@@ -86,7 +87,7 @@ def parseConfig(args):
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
 		elif opt in ('-m', '--metadata'):
-			config['SSMIF'] = value
+			config['metadata'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
 		elif opt in ('-l', '--fft-length'):
@@ -262,7 +263,13 @@ def main(args):
 	LFFT = config['LFFT']
 
 	# Setup the LWA station information
-	station = stations.lwa1
+	if config['metadata'] != '':
+		try:
+			station = stations.parseSSMIF(config['metadata'])
+		except ValueError:
+			station = metabundle.getStation(config['metadata'], ApplySDM=True)
+	else:
+		station = stations.lwa1
 	antennas = station.getAntennas()
 
 	fh = open(filename, "rb", buffering=tbw.FrameSize*10000)

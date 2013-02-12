@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, tzinfo
 
 from lsl.reader.buffer import TBNFrameBuffer
 from lsl import astro
-from lsl.common import stations
+from lsl.common import stations, metabundle
 from lsl.common import dp as dp_common
 from lsl.statistics import robust
 from lsl.reader import tbn
@@ -53,7 +53,8 @@ Usage: correlateTBN.py [OPTIONS] file
 
 Options:
 -h, --help             Display this help information
--m, --metadata         Name of SSMIF file to use for mappings
+-m, --metadata         Name of SSMIF or metadata tarball file to use for 
+                       mappings
 -f, --fft-length       Set FFT length (default = 512)
 -t, --avg-time         Window to average visibilities in time (seconds; 
                        default = 6 s)
@@ -77,7 +78,7 @@ Options:
 def parseConfig(args):
 	config = {}
 	# Command line flags - default values
-	config['SSMIF'] = ''
+	config['metadata'] = ''
 	config['avgTime'] = 6
 	config['LFFT'] = 256
 	config['samples'] = 10
@@ -99,7 +100,7 @@ def parseConfig(args):
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
 		elif opt in ('-m', '--metadata'):
-			config['SSMIF'] = value
+			config['metadata'] = value
 		elif opt in ('-q', '--quiet'):
 			config['verbose'] = False
 		elif opt in ('-l', '--fft-length'):
@@ -280,8 +281,11 @@ def main(args):
 	LFFT = config['LFFT']
 
 	# Setup the LWA station information
-	if config['SSMIF'] != '':
-		station = stations.parseSSMIF(config['SSMIF'])
+	if config['metadata'] != '':
+		try:
+			station = stations.parseSSMIF(config['metadata'])
+		except ValueError:
+			station = metabundle.getStation(config['metadata'], ApplySDM=True)
 	else:
 		station = stations.lwa1
 	antennas = station.getAntennas()
@@ -304,9 +308,7 @@ def main(args):
 	goodY = []
 	for i in xrange(len(antennas)):
 		ant = antennas[i]
-		if ant.stand.id > 255 and ant.stand.id != 258:
-			pass
-		elif ant.getStatus() != 33 and ant.stand.id != 258:
+		if ant.getStatus() != 33:
 			pass
 		else:
 			if ant.pol == 0:
@@ -332,10 +334,14 @@ def main(args):
 
 	# Number of frames to read in at once and average
 	nFrames = int(config['avgTime']*sampleRate/512)
-	nSkip = 0*int(config['offset']*sampleRate/512)
+	nSkip = int(config['offset']*sampleRate/512)
 	fh.seek(nSkip*len(antennas)*tbn.FrameSize)
 	nSets = os.path.getsize(filename) / tbn.FrameSize / nFpO / nFrames
 	nSets = nSets - nSkip / nFrames
+	
+	test = tbn.readFrame(fh)
+	fh.seek(-tbn.FrameSize, 1)
+	centralFreq = test.getCentralFreq()
 
 	print "TBN Data:  %s" % test.header.isTBN()
 	print "Samples per observations: %i per pol." % (nFpO/2)
@@ -347,6 +353,7 @@ def main(args):
 	print "Station: %s" % station.name
 	print "Date observed: %s" % date
 	print "Julian day: %.5f" % jd
+	print "Offset: %.3f s (%i frames)" % (config['offset'], nSkip*len(antennas))
 	print "Integration Time: %.3f s" % (512*nFrames/sampleRate)
 	print "Number of integrations in file: %i" % nSets
 
