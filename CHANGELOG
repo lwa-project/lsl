@@ -9,6 +9,7 @@
   * Added back in the "import lsl; lsl.test()" fixture
   * Updated the plotUVcoverage.py script to work with all 260 stands
   * Fixed the data volume computation for lsl.common.sdf.Stepped observations
+  * Updated the imageIDI.py script to work with either correlated TBW or TBN files
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in

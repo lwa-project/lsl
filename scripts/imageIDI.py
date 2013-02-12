@@ -6,6 +6,7 @@ import sys
 import aipy
 import pytz
 import numpy
+import getopt
 import pyfits
 from calendar import timegm
 from datetime import datetime
@@ -26,6 +27,73 @@ from matplotlib.ticker import NullFormatter
 
 MST = pytz.timezone('US/Mountain')
 UTC = pytz.UTC
+
+
+def usage(exitCode=None):
+	print """imageIDI.py - Create images from a FITS-IDI file
+
+Usage: imageIDI.py [OPTIONS] file
+
+Options:
+-h, --help             Display this help information
+-1, --freq-start       First frequency to image in MHz (Default = 10 MHz)
+-2, --freq-stop        Last frequency to image in MHz (Default = 88 MHz)
+-s, --dataset          Data set to image (Default = All)
+-m, --uv-min           Minimun baseline uvw length to inlucde 
+                       (Default = 0 lambda at midpoint frequency)
+-n, --no-labels        Disable source and grid labels
+-g, --no-grid          Disable the RA/Dec grid
+"""
+
+	if exitCode is not None:
+		sys.exit(exitCode)
+	else:
+		return True
+
+
+def parseConfig(args):
+	config = {}
+	# Command line flags - default values
+	config['freq1'] = 10e6
+	config['freq2'] = 88e6
+	config['dataset'] = 0
+	config['uvMin'] = 0.0
+	config['label'] = True
+	config['grid'] = True
+	config['args'] = []
+
+	# Read in and process the command line flags
+	try:
+		opts, arg = getopt.getopt(args, "h1:2:s:m:ng", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "no-labels", "no-grid"])
+	except getopt.GetoptError, err:
+		# Print help information and exit:
+		print str(err) # will print something like "option -a not recognized"
+		usage(exitCode=2)
+	
+	# Work through opts
+	for opt, value in opts:
+		if opt in ('-h', '--help'):
+			usage(exitCode=0)
+		elif opt in ('-1', '--freq-start'):
+			config['freq1'] = float(value)*1e6
+		elif opt in ('-2', '--freq-stop'):
+			config['freq2'] = float(value)*1e6
+		elif opt in ('-s', '--dataset'):
+			config['dataset'] = int(value)
+		elif opt in ('-m', '--uv-min'):
+			config['uvMin'] = float(value)
+		elif opt in ('-n', '--no-labels'):
+			config['label'] = False
+		elif opt in ('-g', '--no-grid'):
+			config['grid'] = False
+		else:
+			assert False
+	
+	# Add in arguments
+	config['args'] = arg
+
+	# Return configuration
+	return config
 
 
 def graticle(ax, lst, lat, label=True):
@@ -120,7 +188,8 @@ def graticle(ax, lst, lat, label=True):
 
 
 def main(args):
-	filename = args[0]
+	config = parseConfig(args)
+	filename = config['args'][0]
 	
 	idi = utils.CorrelatedData(filename)
 	aa = idi.getAntennaArray()
@@ -140,8 +209,11 @@ def main(args):
 	print "Reading in FITS IDI data"
 	nSets = idi.totalBaselineCount / (nStand*(nStand+1)/2)
 	for set in range(1, nSets+1):
+		if config['dataset'] != 0 and config['dataset'] != set:
+			continue
+			
 		print "Set #%i of %i" % (set, nSets)
-		dataDict = idi.getDataSet(set)
+		dataDict = idi.getDataSet(set, uvMin=config['uvMin'])
 				
 		# Build a list of unique JDs for the data
 		jdList = []
@@ -149,8 +221,10 @@ def main(args):
 			if jd not in jdList:
 				jdList.append(jd)
 		
-		# Pull out the middle channels (inner 2/3 of the band)
-		toWork = range(freq.size/6, 5*freq.size/6)
+		# Pull out the right channels
+		toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]
+		if len(toWork) == 0:
+			raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (config['freq1']/1e6, config['freq2']/1e6))
 
 		# Build up the images for each polarization
 		print "    Gridding"
@@ -198,6 +272,9 @@ def main(args):
 			fig.colorbar(cb, ax=ax)
 			ax.set_title("%s @ %s LST" % (pol, lst))
 
+			junk = img.image(center=(80,80))
+			print "%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean())
+
 			# Turn off tick marks
 			ax.xaxis.set_major_formatter( NullFormatter() )
 			ax.yaxis.set_major_formatter( NullFormatter() )
@@ -213,10 +290,21 @@ def main(args):
 					continue
 				ax.plot(top[0], top[1], marker='x', markerfacecolor='None', markeredgecolor='w', 
 						linewidth=10.0, markersize=10)
-				ax.text(top[0], top[1], name, color='white', size=12)
-				
+				if config['label']:
+					ax.text(top[0], top[1], name, color='white', size=12)
+					
+			# Add in the horizon
+			x = numpy.zeros(361)
+			y = numpy.zeros(361)
+			for i in xrange(361):
+				xyz = aipy.coord.azalt2top([i*numpy.pi/180.0, 0])
+				x[i] = xyz[0]
+				y[i] = xyz[1]
+			ax.plot(x, y, color='white')
+
 			# Add lines of constant RA and dec.
-			graticle(ax, lo.sidereal_time(), lo.lat)
+			if config['grid']:
+				graticle(ax, lo.sidereal_time(), lo.lat, label=config['label'])
 
 		plt.show()
 
