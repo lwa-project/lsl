@@ -31,7 +31,7 @@ Options:
                        50 MHz)
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
                        mappings
--o, --output           Filename to save the plot to (defulat = do not save)
+-o, --output           Filename to save the plot to (default = do not save)
 """
 
 	if exitCode is not None:

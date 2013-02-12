@@ -55,7 +55,7 @@ Options:
 -h, --help             Display this help information
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
                        mappings
--f, --fft-length       Set FFT length (default = 512)
+-f, --fft-length       Set FFT length (default = 256)
 -t, --avg-time         Window to average visibilities in time (seconds; 
                        default = 6 s)
 -s, --samples          Number of average visibilities to generate

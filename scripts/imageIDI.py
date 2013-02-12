@@ -39,7 +39,7 @@ Options:
 -1, --freq-start       First frequency to image in MHz (Default = 10 MHz)
 -2, --freq-stop        Last frequency to image in MHz (Default = 88 MHz)
 -s, --dataset          Data set to image (Default = All)
--m, --uv-min           Minimun baseline uvw length to inlucde 
+-m, --uv-min           Minimun baseline uvw length to include 
                        (Default = 0 lambda at midpoint frequency)
 -n, --no-labels        Disable source and grid labels
 -g, --no-grid          Disable the RA/Dec grid
