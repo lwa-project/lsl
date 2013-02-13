@@ -11,7 +11,7 @@ import ephem
 import getopt
 
 from lsl.common import stations
-from lsl.reader import tbw
+from lsl.reader import tbw, tbn
 from lsl.reader import errors
 from lsl.correlator import fx as fxc
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
@@ -156,7 +156,18 @@ def main(args):
 	i = 0
 	junkFrame = tbw.readFrame(fh)
 	while not junkFrame.header.isTBW():
-		junkFrame = tbw.readFrame(fh)
+		try:
+			junkFrame = tbw.readFrame(fh)
+		except errors.syncError:
+			fh.seek(0)
+			while True:
+				try:
+					junkFrame = tbn.readFrame(fh)
+					i += 1
+				except errors.syncError:
+					break
+			fh.seek(-2*tbn.FrameSize, 1)
+			junkFrame = tbw.readFrame(fh)
 		i += 1
 	fh.seek(-tbw.FrameSize, 1)
 	print "Skipped %i non-TBW frames at the beginning of the file" % i

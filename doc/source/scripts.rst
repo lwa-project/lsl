@@ -230,7 +230,6 @@ tbnSpectra.py
             -m, --metadata              Name of SSMIF or metadata tarball file to use for 
                                         mappings
 
-
             -t, --bartlett              Apply a Bartlett window to the data
 
             -b, --blackman              Apply a Blackman window to the data
@@ -281,11 +280,18 @@ correlateTBW.py
 
   :Options: -h, --help             Display this help information
 
-            -f, --fft-length       Set FFT length (default = 512)
+            -m, --metadata         Name of SSMIF or metadata tarball file to use for 
+                                   mappings
 
-            -s, --samples          Number of average visibilities to generate (default = 10)
+            -l, --fft-length       Set FFT length (default = 2048)
 
             -q, --quiet            Run correlateTBW in silent mode
+
+            -x, --xx               Compute only the XX polarization product (default)
+
+            -y, --yy               Compute only the YY polarization product
+
+            -2, --two-products     Compute both the XX and YY polarization products
 
 correlateTBN.py
   :Description: Example script that reads in TBN data and runs a cross-correlation on it.
