@@ -148,7 +148,7 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 			aStandX = 2*(stand-1)+0 + 1
 			aStandY = 2*(stand-1)+1 + 1
 				
-			if i == 0:
+			if j == 0:
 				setTime = cFrame.getTime()
 				if s == 0:
 					refTime = setTime
@@ -230,7 +230,8 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 			sys.stdout.write('\n')
 			sys.stdout.flush()
 		print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
-		
+		s += 1
+
 	fits.write()
 	fits.close()
 	del(fits)
