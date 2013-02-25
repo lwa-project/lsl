@@ -588,8 +588,8 @@ class Session(object):
 		self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
 		self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
 		
-		self.logScheduler = True
-		self.logExecutive = True
+		self.logScheduler = False
+		self.logExecutive = False
 		
 		self.includeStationStatic= False
 		self.includeDesign = False

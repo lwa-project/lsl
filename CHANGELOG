@@ -11,6 +11,7 @@
   * Fixed the data volume computation for lsl.common.sdf.Stepped observations
   * Updated the imageIDI.py script to work with either correlated TBW or TBN files
   * Reorganized the scripts to better handle metadata and removed the IOC scripts
+  * Changed the default values of SESSION_LOG_SCH and SESSION_LOG_EXE in lsl.common.sdf to False
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in
