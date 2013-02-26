@@ -1225,9 +1225,12 @@ class Stepped(Observation):
 	  * comments - comments about the observation
 	"""
 	
-	def __init__(self, name, target, start, filter, steps=[], RADec=True, gain=-1, comments=None):
+	def __init__(self, name, target, start, filter, steps=None, RADec=True, gain=-1, comments=None):
 		self.RADec = bool(RADec)
-		self.steps = steps
+		if steps is None:
+			self.steps = []
+		else:
+			self.steps = steps
 		self.filterCodes = DRXFilters
 		Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, MaxSNR=False, comments=comments)
 		
