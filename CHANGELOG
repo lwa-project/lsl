@@ -13,6 +13,8 @@
   * Reorganized the scripts to better handle metadata and removed the IOC scripts
   * Changed the default values of SESSION_LOG_SCH and SESSION_LOG_EXE in lsl.common.sdf to False
   * Fixed the lsl.common.sdf.Stepped class so that the step lists of independent
+  * Added the pointing correction keywords to the binary SSMIF reader
+  * Fixed a bug in the calculation of cable delays
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in

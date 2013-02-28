@@ -11,7 +11,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
 from lsl.common.constants import *
 
-__version__ = '0.9'
+__version__ = '1.0'
 __revision__ = '$Rev$'
 __all__ = ['geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
@@ -399,7 +399,7 @@ class Cable(object):
 		bulkDelay = self.length*self.stretch / (self.vf * c)
 		
 		# Dispersize delay in 
-		dispDelay = self.dd * (self.length*self.stretch / 100.0) * numpy.sqrt(frequency / numpy.array(10e6))
+		dispDelay = self.dd * (self.length*self.stretch / 100.0) / numpy.sqrt(frequency / numpy.array(self.aFreq))
 		
 		totlDelay = bulkDelay + dispDelay + self.clockOffset
 		
@@ -1003,6 +1003,9 @@ def __parseBinarySSMIF(filename):
 	int    ePwrSS[ME_MAX_RACK][ME_MAX_NPWRPORT]; /* PWR_SS[][], converted to a LWA_SID_ value */
 	char   sPwrName[ME_MAX_RACK][ME_MAX_NPWRPORT][ME_MAX_SSNAME_LENGTH+1]; /* PWR_NAME[][] */
 	int    eCRA;                /* MCS_CRA */
+	float  fPCAxisTh; /* PC_AXIS_TH */
+	float  fPCAxisPh; /* PC_AXIS_PH */
+	float  fPCRot;    /* PC_ROT */
 	""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), charMode='int', endianness='little')
 	
 	fh.readinto(bssmif)
