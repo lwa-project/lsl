@@ -393,6 +393,10 @@ class Project(object):
 		output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos)
 		if ses.cra != 0:
 			output = "%sSESSION_CRA      %i\n" % (output, ses.cra)
+		if ses.drxBeam != -1:
+			output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drxBeam)
+		if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
+			output = "%sSESSION_SPC      %i %i%s\n" % (output, ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
 		for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
 			if ses.recordMIB[component] != -1:
 				output = "%sSESSION_MRP_%s  %i\n" % (output, component, ses.recordMIB[component])
@@ -407,10 +411,6 @@ class Project(object):
 			output = "%sSESSION_INC_SMIB %i\n" % (output, ses.includeStationStatic)
 		if ses.includeDesign:
 			output = "%sSESSION_INC_DES  %i\n" % (output, ses.includeDesign)
-		if ses.drxBeam != -1:
-			output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drxBeam)
-		if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-			output = "%sSESSION_SPC      %i %i%s\n" % (output, ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
 		output = "%s\n" % output
 		
 		## Observations
