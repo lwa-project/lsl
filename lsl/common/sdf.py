@@ -1896,16 +1896,16 @@ def parseSDF(filename, verbose=False):
 				beamTemps.append( copy.deepcopy(beamTemp) )
 				beamTemps[-1]['id'] = ids[0]
 				
-				if value == 'MAX_SNR':
+				if value in ('MAX_SNR', '2'):
 					beamTemps[-1]['MaxSNR'] = True
 					
-				elif value == 'SPEC_DELAYS_GAINS':
+				elif value in ('SPEC_DELAYS_GAINS', '3'):
 					beamTemps[-1]['delays'] = []
 					beamTemps[-1]['gains'] = []
 					for bdi in xrange(2*_nStands):
 						beamTemps[-1]['delays'].append( 0 )
 						if bdi < _nStands:
-							beamTemps[-1]['gains'].append( [0, 0, 0, 0] )
+							beamTemps[-1]['gains'].append( [[0, 0], [0, 0]] )
 							
 				else:
 					beamTemps[-1]['MaxSNR'] = False
@@ -1914,10 +1914,10 @@ def parseSDF(filename, verbose=False):
 					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
 					beamTemps[-1]['id'] = ids[0]
 					
-				if value == 'MAX_SNR':
+				if value in ('MAX_SNR', '2'):
 					beamTemps[-1]['MaxSNR'] = True
 					
-				elif value == 'SPEC_DELAYS_GAINS':
+				elif value in ('SPEC_DELAYS_GAINS', '3'):
 					beamTemps[-1]['delays'] = []
 					beamTemps[-1]['gains'] = []
 					for bdi in xrange(2*_nStands):
@@ -1945,12 +1945,18 @@ def parseSDF(filename, verbose=False):
 			if len(beamTemps) == 0:
 				beamTemps.append( copy.deepcopy(beamTemp) )
 				beamTemps[-1]['id'] = ids[0]
-				beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+				try:
+					beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+				except IndexError:
+					pass
 			else:
 				if beamTemps[-1]['id'] != ids[0]:
 					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
 					beamTemps[-1]['id'] = ids[0]
-				beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+				try:
+					beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+				except IndexError:
+					pass
 			continue
 		
 		# Session wide settings at the end of the observations

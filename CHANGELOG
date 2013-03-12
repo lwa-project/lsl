@@ -16,6 +16,7 @@
   * Added the pointing correction keywords to the binary SSMIF reader
   * Fixed a bug in the calculation of cable delays
   * Fixed the order of the optional SESSION_* keywords in the SDF renderer
+  * Updated the SDF parser to better work with SDFs that contain custom beamforming
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in
