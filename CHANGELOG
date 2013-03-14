@@ -18,6 +18,7 @@
   * Fixed the order of the optional SESSION_* keywords in the SDF renderer
   * Updated the SDF parser to better work with SDFs that contain custom beamforming
   * Added convenience functions to the lsl.common.mcs module to help pack delays and gains for custom beamforming SDFs
+  * Updated the included LWA1 SSMIF to the March 10, 2013 version
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in
