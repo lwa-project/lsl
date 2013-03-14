@@ -32,7 +32,8 @@ The header file values are:
   
 The other functions:
   * Convert MCS code s(status, summary, command ID, etc.) to human readable strings, 
-  * Parse the binary packed metadata, and
+  * Parse the binary packed metadata, 
+  * Ready delays and gains for a custom beamforming SDF, and
   * Convert datetime instances to MJD and MPM values.
   * Apply a rotation axis-based pointing corretion to a azimuth/elevation pair
 """
@@ -45,16 +46,18 @@ from ctypes import *
 from aipy import coord
 from datetime import datetime
 
+from lsl.common.dp import gaintoDPG, DPGtogain, delaytoDPD, DPDtodelay
 
-__version__ = '0.6'
+
+__version__ = '0.7'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
-			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'IS_32BIT_PYTHON', 'mjdmpm2datetime', 'datetime2mjdmpm', 
-			'status2string', 'summary2string', 'sid2string', 'cid2string', 'mode2string', 
-			'parseCStruct', 'single2multi', 'applyPointingCorrection', '__version__', '__revision__', '__all__']
+			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'IS_32BIT_PYTHON', 'delaytoMCSD', 'MCSDtodelay', 'gaintoMCSG', 'MCSGtogain',
+			'mjdmpm2datetime', 'datetime2mjdmpm', 'status2string', 'summary2string', 'sid2string', 'cid2string', 
+			'mode2string', 'parseCStruct', 'single2multi', 'applyPointingCorrection', '__version__', '__revision__', '__all__']
 
 
 ME_SSMIF_FORMAT_VERSION = 5	# SSMIF format version code
@@ -86,7 +89,49 @@ LWA_MAX_NSTD = 260			# Maximum number of stands for the LWA
 IS_32BIT_PYTHON = True if struct.calcsize("P") == 4 else False
 
 
-cDeclRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
+_cDecRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
+
+
+def _twoByteSwap(value):
+	return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF)
+
+
+def delaytoMCSD(delay):
+	"""
+	Given a delay in ns, convert it to a course and fine portion and into 
+	the form expected by MCS in a custom beamforming SDF (little endian 
+	16.12 unsigned integer).
+	"""
+	
+	return _twoByteSwap( delaytoDPD(delay) )
+
+
+def MCSDtodelay(delay):
+	"""
+	Given delay value from an OBS_BEAM_DELAY field in a custom beamforming 
+	SDF, return the delay in ns.
+	"""
+	
+	return DPDtodelay( _twoByteSwap(delay) )
+
+
+def gaintoMCSG(gain):
+	"""
+	Given a gain (between 0 and 1), convert it to a gain in the form 
+	expected by MCS in a custom beamforming SDF (little endian 16.1 
+	signed integer).
+	"""
+	
+	return _twoByteSwap( gaintoDPG(gain) )
+
+
+def MCSGtogain(gain):
+	"""
+	Given a gain value from an OBS_BEAM_GAIN field in a custom beamforming
+	SDF, return the decimal equivalent.
+	"""
+	
+	return DPGtogain( _twoByteSwap(gain) )
 
 
 def mjdmpm2datetime(mjd, mpm):
@@ -358,7 +403,7 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 		
 		## RegEx the line to find the type, name, and dimensions (if needed) for
 		## the next structure variable
-		mtch = cDeclRE.search(line)
+		mtch = _cDecRE.search(line)
 		if mtch is None:
 			raise RuntimeError("Unparseable line: '%s'" % line)
 		
