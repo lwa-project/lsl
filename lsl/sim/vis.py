@@ -61,6 +61,7 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
 import os
 import sys
 import aipy
+import copy
 import math
 import numpy as n
 
@@ -258,7 +259,7 @@ class AntennaArray(aipy.amp.AntennaArray):
 		for ant in self.ants:
 			stands.append(ant.stand)
 		
-		return numpy.array(stands)
+		return n.array(stands)
 
 	def set_unixtime(self, timestamp):
 		"""
@@ -573,21 +574,21 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter='
 				UVData['wgt'][pol].append( w )
 				UVData['msk'][pol].append( m )
 				UVData['jd'][pol].append( j )
-
+				
 	return UVData
 
 
-def scaleData(dataDict, amps, delays):
+def scaleData(dataDict, amps, delays, phaseOffsets=None):
 	"""
 	Apply a set of antenna-based real gain values and phase delays in ns to a 
 	data dictionary.  Returned the new scaled and delayed dictionary.
 	
+	..versionchanged:: 0.6.3
+		Added a keyword so that phase offsets (in radians) can also be specified
 	..versionchanged:: 0.4.0
 		The delays are now expected to be in nanoseconds rather than radians.
 	"""
-
-	import copy
-
+	
 	# Build the data dictionary to hold the scaled and delayed data
 	sclUVData = {'freq': (dataDict['freq']).copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
 	if dataDict['isMasked']:
@@ -596,10 +597,13 @@ def scaleData(dataDict, amps, delays):
 		sclUVData['isMasked'] = False
 	fq = dataDict['freq'] / 1e9
 	
+	if phaseOffsets is None:
+		phaseOffsets = n.zeros_like(delays)
+		
 	cGains = []
 	for i in xrange(len(amps)):
-		cGains.append( amps[i]*n.exp(2j*n.pi*fq*delays[i]) )
-
+		cGains.append( amps[i]*n.exp(2j*n.pi*fq*delays[i] +1j*phaseOffsets[i]) )
+		
 	# Apply the scales and delays for all polarization pairs found in the original data
 	for pol in dataDict['vis'].keys():
 		sclUVData['bls'][pol] = []
@@ -613,7 +617,7 @@ def scaleData(dataDict, amps, delays):
 			sclUVData['bls'][pol].append( (i,j) )
 			sclUVData['uvw'][pol].append( uvw )
 			sclUVData['vis'][pol].append( vis*cGains[j].conj()*cGains[i] )
-
+			
 	return sclUVData
 	
 
@@ -623,8 +627,6 @@ def shiftData(dataDict, aa):
 	coordinates that correspond to a new AntennaArray object.  This is useful
 	for looking at how positional errors in the array affect the data.
 	"""
-
-	import copy
 	
 	# Build the data dictionary to hold the shifted data
 	sftUVData = {'freq': (dataDict['freq']).copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
@@ -648,5 +650,5 @@ def shiftData(dataDict, aa):
 				crds = crds.compress(n.logical_not(n.logical_not(m), axis=2))
 			crds = n.squeeze(crds)
 			sftUVData['uvw'][pol].append( crds )
-
+			
 	return sftUVData
