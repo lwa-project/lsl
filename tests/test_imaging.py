@@ -108,11 +108,11 @@ class imaging_tests(unittest.TestCase):
 		# Go for it!
 		aa = idi.getAntennaArray()
 		ds = idi.getDataSet(1)
-		junk = selfCal.selfCal(aa, ds, ds, 173, 'xx')
+		junk = selfCal.phaseOnly(aa, ds, ds, 173, 'xx', nIter=1)
 		
 		# Error checking
-		self.assertRaises(RuntimeError, selfCal.selfCal, aa, ds, ds, 173, 'yx', refAnt=0  )
-		self.assertRaises(RuntimeError, selfCal.selfCal, aa, ds, ds, 173, 'yx', refAnt=564)
+		self.assertRaises(RuntimeError, selfCal.phaseOnly, aa, ds, ds, 173, 'yx', refAnt=0  )
+		self.assertRaises(RuntimeError, selfCal.phaseOnly, aa, ds, ds, 173, 'yx', refAnt=564)
 
 
 class imaging_test_suite(unittest.TestSuite):
