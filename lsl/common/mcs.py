@@ -101,6 +101,8 @@ def delaytoMCSD(delay):
 	Given a delay in ns, convert it to a course and fine portion and into 
 	the form expected by MCS in a custom beamforming SDF (little endian 
 	16.12 unsigned integer).
+	
+	.. versionadded:: 0.6.3
 	"""
 	
 	return _twoByteSwap( delaytoDPD(delay) )
@@ -110,6 +112,8 @@ def MCSDtodelay(delay):
 	"""
 	Given delay value from an OBS_BEAM_DELAY field in a custom beamforming 
 	SDF, return the delay in ns.
+	
+	.. versionadded:: 0.6.3
 	"""
 	
 	return DPDtodelay( _twoByteSwap(delay) )
@@ -120,6 +124,8 @@ def gaintoMCSG(gain):
 	Given a gain (between 0 and 1), convert it to a gain in the form 
 	expected by MCS in a custom beamforming SDF (little endian 16.1 
 	signed integer).
+	
+	.. versionadded:: 0.6.3
 	"""
 	
 	return _twoByteSwap( gaintoDPG(gain) )
@@ -129,6 +135,8 @@ def MCSGtogain(gain):
 	"""
 	Given a gain value from an OBS_BEAM_GAIN field in a custom beamforming
 	SDF, return the decimal equivalent.
+	
+	.. versionadded:: 0.6.3
 	"""
 	
 	return DPGtogain( _twoByteSwap(gain) )
