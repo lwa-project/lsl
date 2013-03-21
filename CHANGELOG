@@ -21,6 +21,7 @@
   * Updated the included LWA1 SSMIF to the March 10, 2013 version
   * Added support for phase offsets to the lsl.sim.vis.scaleData() function
   * Improved the lsl.imaging.selfCal module by added in new methods
+  * Fixed the decimation values for the TBN and DRX CIC filters
 
 0.6.2
   * Fixed a bug in splitDRX.py that caused the script to die if an --offset was passed in

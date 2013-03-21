@@ -366,7 +366,7 @@ def tbnFilter(sampleRate=1e5, nPts=_nPts):
 	
 	# CIC settings
 	N =  2
-	R = 98
+	R = decimationCIC
 	
 	# Part 1 - CIC filter
 	h = numpy.linspace(0, numpy.pi/decimationCIC/2, num=nPts, endpoint=True)
@@ -404,7 +404,7 @@ def drxFilter(sampleRate=19.6e6, nPts=_nPts):
 	
 	# CIC settings
 	N = 5
-	R = 5
+	R = decimationCIC
 	     
 	# Part 1 - CIC filter
 	h = numpy.linspace(0, numpy.pi/decimationCIC/2, num=nPts, endpoint=True)
