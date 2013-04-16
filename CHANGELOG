@@ -3,6 +3,9 @@
   * Added a function to lsl.misc.beamformer to convert X and Y linear pols. to circular L and R pols.
   * Removed the lsl.correlator.visUtils module since it isn't used by any other modules or scripts.
 
+0.6.4
+  * Cleaned up the coherent part of the dedispersion module
+
 0.6.3
   * Fixed a typo. in lsl.imaing.utils.pruneBaselineRange() function
   * Added normalization by the transform length to the lsl.reader._gofast module

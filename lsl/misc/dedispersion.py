@@ -2,12 +2,12 @@
 
 """
 Module for calculating dispersion delay due to an ionized ISM and performing
-incoherent dedispersion.
+incoherent/coherent dedispersion.
 """
 
 import numpy
 
-__version__ = '0.2'
+__version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', '__version__', '__revision__', '__all__']
 
@@ -64,10 +64,11 @@ def getCoherentSampleSize(centralFreq, sampleRate, dm):
 	F0 = centralFreq
 	BW = sampleRate
 
-	delay = 4*dm*_D / (F0**3/BW - 2*BW*F0 + BW**3/F0) * (1e6)**2	# Dispersion delay across the band
-	samples = delay*BW						# Conversion to samples
-	samples = 2**(numpy.ceil(numpy.log(samples)/numpy.log(2)))	# Conversion to next largest power of 2
-	samples *= 2							# Correction for the 'wings' of the convolution
+	delayBand = dm*_D *((1e6/(F0-BW/2.0))**2 - (1e6/(F0+BW/2.0))**2)	# Dispersion delay across the band
+	samples = delayBand*BW									# Conversion to samples
+	samples = 2**(numpy.ceil(numpy.log(samples)/numpy.log(2)))		# Conversion to next largest power of 2
+	samples *= 2											# Correction for the 'wings' of the convolution
+	
 	return int(samples)
 
 
@@ -106,7 +107,7 @@ def __chirpFunction(freq, dm, taper=False):
 	return chirp
 
 
-def coherent(timeseries, centralFreq, sampleRate, dm, taper=False, previousData=None, nextData=None):
+def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTime=None, previousData=None, nextTime=None, nextData=None):
 	"""
 	Simple coherent dedispersion of complex-valued time-series data at a given central
 	frequency and sample rate.  A tapering function can also be applied to the chirp of 
@@ -120,7 +121,10 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False, previousData=
 	.. note::
 		At the large fractional bandwidths of LWA, the window size needed for coherent 
 		dedispersion can be prohibitive.  For example, at 74 MHz with 19.6 MS/s and a
-		DM or 10 pc / cm^3 this function uses a window size of about 537 million point.
+		DM or 10 pc / cm^3 this function uses a window size of about 268 million points.
+		
+	.. versionchanged:: 0.6.4
+		Added support for keeping track of time through the dedispersion process.
 	"""
 	
 	# Get an idea of how many samples we need to do the dedispersion correctly
@@ -132,38 +136,61 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False, previousData=
 	
 	# Figure out the output array size
 	nSets = len(timeseries) / N
-	out = numpy.zeros(timeseries.size, dtype=timeseries.dtype)
+	outT = numpy.zeros(timeseries.size, dtype=t.dtype)
+	outD = numpy.zeros(timeseries.size, dtype=timeseries.dtype)
 	
 	if nSets == 0:
 		RuntimeWarning("Too few data samples for proper dedispersion")
-	
+		
 	# Go!
-	last = False
+	endBuffered = False
 	for i in xrange(2*nSets+1):
 		start = i*N/2 - N/4
 		stop = start + N
+		print '@', i, start, stop, timeseries.size
 
 		if start < 0:
-			dataIn = numpy.zeros(N, dtype=numpy.complex64)
+			timeIn = numpy.zeros(N, dtype=t.dtype)
+			dataIn = numpy.zeros(N, dtype=timeseries.dtype)
+			
 			if previousData is not None:
-				dataIn[:-start] = previousData[start:]
+				try:
+					timeIn[:-start] = previousTime[start:]
+					dataIn[:-start] = previousData[start:]
+				except ValueError:
+					raise RuntimeError("Too few data samples for proper start buffering")
+					
+			timeIn[-start:N] = t[0:N+start]
 			dataIn[-start:N] = timeseries[0:N+start]
+			
 		elif stop > timeseries.size:
-			dataIn = numpy.zeros(N, dtype=numpy.complex64)
+			timeIn = numpy.zeros(N, dtype=t.dtype)
+			dataIn = numpy.zeros(N, dtype=timeseries.dtype)
+			
 			if nextData is not None:
 				ns = nextData.size
 				df = dataIn.size - (timeseries.size-start)
 				
+				if endBuffered:
+					raise RuntimeError("Too few data samples for proper end buffering")
+					
 				try:
+					timeIn[timeseries.size-start:] = nextTime[:(dataIn.size-(timeseries.size-start))]
 					dataIn[timeseries.size-start:] = nextData[:(dataIn.size-(timeseries.size-start))]
+					
+					endBuffered = True
 				except ValueError:
-					pass
-			dataIn[0:timeseries.size-start] = timeseries[start:]
-			# If this is it, end after saving the data
-			last = True
+					raise RuntimeError("Too few data samples for proper end buffering")
+					
+			if start < timeseries.size:
+				timeIn[0:(timeseries.size-start)] = t[start:]
+				dataIn[0:(timeseries.size-start)] = timeseries[start:]
+				
 		else:
+			timeIn = t[start:stop]
 			dataIn = timeseries[start:stop]
-
+			
+		timeOut = timeIn
 		dataOut = numpy.fft.fft( dataIn )
 		dataOut *= chirp
 		dataOut = numpy.fft.ifft( dataOut )
@@ -175,15 +202,19 @@ def coherent(timeseries, centralFreq, sampleRate, dm, taper=False, previousData=
 		dataStop  = dataStart + N/2
 		
 		# Make sure we don't fall off the end of the array
-		if outStop >= out.size:
-			diff = outStop - out.size
+		if outStop >= outD.size:
+			diff = outStop - outD.size
 			outStop  -= diff
 			dataStop -= diff
 			
-		out[outStart:outStop] = dataOut[dataStart:dataStop]
-		if last:
-			break
-	
-	return out
+		if i == 0 and previousData is None:
+			continue
+		if i == (2*nSets) and nextData is None:
+			continue
+			
+		outT[outStart:outStop] = timeOut[dataStart:dataStop]
+		outD[outStart:outStop] = dataOut[dataStart:dataStop]
+		
+	return outT, outD
 	
 	
