@@ -6,6 +6,7 @@
 0.6.4
   * Cleaned up the coherent part of the dedispersion module
   * Added a time estimating progress bar to lsl.common.progress
+  * Fixed the data scaling in the SoftwareDP _processStreamFilter() function
 
 0.6.3
   * Fixed a typo. in lsl.imaing.utils.pruneBaselineRange() function

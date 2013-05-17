@@ -435,14 +435,17 @@ def _processStreamFilter(time, data, filterPack, centralFreq):
 	"""
 	
 	# Mix with the NCO
-	temp = data*numpy.exp(-2j*numpy.pi*centralFreq*time/fS)
-	temp -= temp.mean()
+	temp = data*numpy.exp(-2j*numpy.pi*centralFreq*(time/fS))
 
 	# CIC filter + decimation
 	temp = lfilter(filterPack['CIC'], 1, temp)[::filterPack['cicD']] / filterPack['cicD']
+	scale = numpy.round( numpy.log10(numpy.array(filterPack['CIC']).sum()) / numpy.log10(2.0) )
+	temp /= 2**scale
 	
 	# FIR filter + decimation
-	temp = lfilter(filterPack['FIR'], 1, temp)[::filterPack['firD']]
+	temp = lfilter(filterPack['FIR'], 1, temp)[::filterPack['firD']] / filterPack['firD']
+	scale = numpy.round( numpy.log10(numpy.array(filterPack['FIR']).sum()) / numpy.log10(2.0) )
+	temp /= 2**scale
 	
 	return temp
 
