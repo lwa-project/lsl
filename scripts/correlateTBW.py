@@ -152,6 +152,11 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 				setTime = cFrame.getTime()
 				if s == 0:
 					refTime = setTime
+					
+				# Get the data frame size
+				dataSize = 400
+				if cFrame.getDataBits() == 4:
+					dataSize = 1200
 				
 			#if cFrame.header.frameCount % 1000:
 				#print "Skipping stand %i -> %i" % (stand, aStand)
@@ -225,7 +230,7 @@ def processChunk(fh, site, good, filename, LFFT=64, Overlap=1, CentralFreq=49.0e
 			
 			# Add the visibilities
 			obsTime = astro.unix_to_taimjd(setTime)
-			fits.addDataSet(obsTime, 512*nFrames/SampleRate, blList, vis[:,toUse], pol=pol)
+			fits.addDataSet(obsTime, dataSize*nFrames/SampleRate, blList, vis[:,toUse], pol=pol)
 			sys.stdout.write(pb.show()+'\r')
 			sys.stdout.write('\n')
 			sys.stdout.flush()
