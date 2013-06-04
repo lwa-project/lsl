@@ -800,29 +800,29 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 			*(a0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
 			*(a1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		} 
-		if( header.stokes_format == 0x10 ) {
+		if( header.stokes_format == 0x20 ) {
 			// Q only
 			*(b0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
 			*(b1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
-		if( header.stokes_format == 0x04 || header.stokes_format == 0x40 ) {
+		if( header.stokes_format == 0x40 ) {
 			// U only
 			*(c0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
 			*(c1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
-		if( header.stokes_format == 0x08 || header.stokes_format == 0x80 ) {
+		if( header.stokes_format == 0x80 ) {
 			// V only
 			*(d0 + i) = data[0*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
 			*(d1 + i) = data[1*header.nFreqs + i] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
-		if( header.stokes_format == 0x09 || header.stokes_format == 0x90 ) {
+		if( header.stokes_format == 0x90 ) {
 			// I and V
 			*(a0 + i) = data[0*header.nFreqs + 2*i + 0] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
 			*(d0 + i) = data[0*header.nFreqs + 2*i + 1] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
 			*(a1 + i) = data[2*header.nFreqs + 2*i + 0] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 			*(d1 + i) = data[2*header.nFreqs + 2*i + 1] / (float) header.nFreqs / (float) min(header.fills[2], header.fills[3]);
 		}
-		if( header.stokes_format == 0x0f || header.stokes_format == 0xf0 ) {
+		if( header.stokes_format == 0xf0 ) {
 			// I, Q, U, and V
 			*(a0 + i) = data[0*header.nFreqs + 4*i + 0] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
 			*(b0 + i) = data[0*header.nFreqs + 4*i + 1] / (float) header.nFreqs / (float) min(header.fills[0], header.fills[1]);
