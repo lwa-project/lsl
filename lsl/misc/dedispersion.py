@@ -147,8 +147,7 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 	for i in xrange(2*nSets+1):
 		start = i*N/2 - N/4
 		stop = start + N
-		print '@', i, start, stop, timeseries.size
-
+		
 		if start < 0:
 			timeIn = numpy.zeros(N, dtype=t.dtype)
 			dataIn = numpy.zeros(N, dtype=timeseries.dtype)
