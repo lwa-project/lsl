@@ -521,8 +521,8 @@ class SD(object):
 		sd.header.update('RADESYS', 'FK5', 'Equatorial coordinate system frame')
 		
 		## Data and flag table dimensionality
-		sd.header.update('TDIM%i' % dataIndex, '(%i,2,2,%i)' % (self.nChan, self.nStokes), after='TFORM%i' % dataIndex)
-		#sd.header.update('TDIM%i' % flagIndex, '(%i,1,1,%i)' % (self.nChan, self.nStokes), after='TFORM%i' % flagIndex)
+		sd.header.update('TDIM%i' % dataIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % dataIndex)
+		#sd.header.update('TDIM%i' % flagIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % flagIndex)
 		
 		## Data and flag table axis descriptions
 		### Frequency

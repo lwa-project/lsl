@@ -111,7 +111,7 @@ class sdfits_tests(unittest.TestCase):
 					i = i + 1
 			
 			# Extract the data and run the comparison
-			for fd, sd in zip(spec, data['spec'][i,:]):
+			for fd, sd in zip(spec[0,0,0,:], data['spec'][i,:]):
 				self.assertAlmostEqual(fd, sd, 8)
 			i = i + 1
 		

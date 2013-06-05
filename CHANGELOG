@@ -11,6 +11,7 @@
   * Added validation for the DR spectrometer channels/integration count/mode in an SDF
   * Fixed a couple of typos in the DR spectrometer reader that mixed the I-only and Q-only output modes
   * Fixed the 'fills' normalization in the DR spectrometer reader for the YX-only, YY-only, XX/YY, and XX/XY/YX/YY modes
+  * Fixed the axis order in the SDFITS writer
 
 0.6.3
   * Fixed a typo. in lsl.imaing.utils.pruneBaselineRange() function
