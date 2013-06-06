@@ -663,7 +663,7 @@ class Session(object):
 					print "[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key])
 				failures += 1
 				
-		if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag is not None:
+		if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
 			if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
 				if verbose:
 					print "[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0])
@@ -672,7 +672,7 @@ class Session(object):
 				if verbose:
 					print "[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1])
 				failures += 1
-			if self.spcMetatag not in (None, '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+			if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
 				if verbose:
 					print "[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag)
 				failures += 1
