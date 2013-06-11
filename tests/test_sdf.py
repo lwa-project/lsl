@@ -13,7 +13,7 @@ from lsl.common.stations import lwa1
 
 
 __revision__ = "$Rev$"
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -508,6 +508,35 @@ class sdf_tests(unittest.TestCase):
 		
 		project = sdf.parseSDF(spcFile)
 		out = project.render()
+		
+	def test_spectrometer(self):
+		"""Test parsing DR spectrometer configurations."""
+		project = sdf.parseSDF(drxFile)
+		
+		# Good spectrometer settings
+		for channels in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+			for ints in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+				for mode in (None, '', 'XXYY', 'IV', 'IQUV'):
+					project.sessions[0].spcSetup = [channels, ints]
+					if mode in (None, ''):
+						project.sessions[0].spcMetatag = mode
+					else:
+						project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+					self.assertTrue(project.validate())
+					
+		# Bad channel count
+		project.sessions[0].spcSetup = [31, 6144]
+		self.assertFalse(project.validate())
+		
+		# Bad integration count
+		project.sessions[0].spcSetup = [32, 6145]
+		self.assertFalse(project.validate())
+		
+		# Unsupported mode
+		for mode in ('XX', 'XY', 'YX', 'YY', 'XXXYYXYY', 'I', 'Q', 'U', 'V'):
+			project.sessions[0].spcSetup = [32, 6144]
+			project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+			self.assertFalse(project.validate())
 
 
 class sdf_test_suite(unittest.TestSuite):
