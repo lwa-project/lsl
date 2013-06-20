@@ -167,6 +167,13 @@ class ProgressBarPlus(ProgressBar):
 	t0 = None
 	t1 = None
 	
+	def startTimer(self):
+		"""
+		Initialize the timer.
+		"""
+		
+		self.t0 = time.time()
+	
 	def inc(self, amount=1):
 		"""
 		Increment the progress bar's internal counter by some amount.  The
@@ -209,7 +216,7 @@ class ProgressBarPlus(ProgressBar):
 			cte = self.t1 - self.t0
 			cte = '%4im%02is' % (cte/60, cte%60)
 		else:
-			cte = (self.max - self.amount)* self.amount/(self.t1 - self.t0)
+			cte = (self.max - self.amount) * (self.t1 - self.t0)/self.amount
 			cte = '%4im%02is' % (cte/60, cte%60)
 			
 		if self.printP:
