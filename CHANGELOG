@@ -5,6 +5,8 @@
 
 0.6.5
   * Fixed the time remaining computation in lsl.common.progress.ProgressBarPlus
+  * Fixed a bug in imageIDI.py that caused the LST not to update on subsequent integra
+tions
 
 0.6.4
   * Cleaned up the coherent part of the dedispersion module

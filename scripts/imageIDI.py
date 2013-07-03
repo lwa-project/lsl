@@ -61,7 +61,7 @@ def parseConfig(args):
 	config['label'] = True
 	config['grid'] = True
 	config['args'] = []
-
+	
 	# Read in and process the command line flags
 	try:
 		opts, arg = getopt.getopt(args, "h1:2:s:m:ng", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "no-labels", "no-grid"])
@@ -91,7 +91,7 @@ def parseConfig(args):
 	
 	# Add in arguments
 	config['args'] = arg
-
+	
 	# Return configuration
 	return config
 
@@ -101,16 +101,16 @@ def graticle(ax, lst, lat, label=True):
 	For a matplotlib axis instance showing an image of the sky, plot lines of
 	constant declinate and RA.  Declinations are spaced at 20 degree intervals
 	and RAs are spaced at 2 hour intervals.
-
+	
 	.. note::
 		LST and latitude values should be passed as radians.  This is the default
 		for lwa1.getObserver.sidereal_time() and lwa1.getObserver().lat.
 	"""
-
+	
 	# Lines of constant declination first
 	decs = range(-80, 90, 20)
 	ras = numpy.linspace(0, 360, 800)
-
+	
 	x = numpy.zeros(ras.size)
 	x = numpy.ma.array(x, mask=numpy.zeros(ras.size))
 	y = numpy.zeros(ras.size)
@@ -119,7 +119,7 @@ def graticle(ax, lst, lat, label=True):
 	for dec in decs:
 		x *= 0
 		y *= 0
-
+		
 		# Loop over RA to compute the topocentric coordinates (used by the image) for
 		# the lines.  Also, figure out the elevation for each point on the line so
 		# we can mask those below the horizon
@@ -127,7 +127,7 @@ def graticle(ax, lst, lat, label=True):
 			eq = aipy.coord.radec2eq((-lst + ra*numpy.pi/180,dec*numpy.pi/180))
 			xyz = numpy.dot(aipy.coord.eq2top_m(0, lat), eq)
 			az,alt = aipy.coord.top2azalt(xyz)
-					
+			
 			x[i] = xyz[0]
 			y[i] = xyz[1]
 			if alt <= 0:
@@ -136,25 +136,25 @@ def graticle(ax, lst, lat, label=True):
 			else:
 				x.mask[i] = 0
 				y.mask[i] = 0
-	
+				
 		ax.plot(x, y, color='white', alpha=0.75)
-			
+		
 		eq = aipy.coord.radec2eq((-lst + lst,(dec+5)*numpy.pi/180))
 		xyz = numpy.dot(aipy.coord.eq2top_m(0, lat), eq)
 		az,alt = aipy.coord.top2azalt(xyz)
-			
+		
 		if alt > 15*numpy.pi/180 and label:
 			ax.text(xyz[0], xyz[1], '%+i$^\circ$' % dec, color='white')
-
+			
 	# Lines of constant RA			
 	decs = numpy.linspace(-80, 80, 400)
 	ras = range(0,360,30)
-
+	
 	x = numpy.zeros(decs.size)
 	x = numpy.ma.array(x, mask=numpy.zeros(decs.size))
 	y = numpy.zeros(decs.size)
 	y = numpy.ma.array(y, mask=numpy.zeros(decs.size))
-
+	
 	for ra in ras:
 		x *= 0
 		y *= 0
@@ -175,13 +175,13 @@ def graticle(ax, lst, lat, label=True):
 			else:
 				x.mask[i] = 0
 				y.mask[i] = 0
-		
+				
 		ax.plot(x, y, color='white', alpha=0.75)
-
+		
 		eq = aipy.coord.radec2eq((-lst + ra*numpy.pi/180,0))
 		xyz = numpy.dot(aipy.coord.eq2top_m(0, lat), eq)
 		az,alt = aipy.coord.top2azalt(xyz)
-
+		
 		if alt > 20*numpy.pi/180 and label:
 			ax.text(xyz[0], xyz[1], '%i$^h$' % (ra/15,), color='white')
 
@@ -194,9 +194,7 @@ def main(args):
 	idi = utils.CorrelatedData(filename)
 	aa = idi.getAntennaArray()
 	lo = idi.getObserver()
-	lo.date = idi.dateObs.strftime("%Y/%m/%d %H:%M:%S")
-	lst = str(lo.sidereal_time())
-
+	
 	nStand = len(idi.stands)
 	nChan = len(idi.freq)
 	freq = idi.freq
@@ -214,12 +212,16 @@ def main(args):
 			
 		print "Set #%i of %i" % (set, nSets)
 		dataDict = idi.getDataSet(set, uvMin=config['uvMin'])
-				
+		
 		# Build a list of unique JDs for the data
 		jdList = []
 		for jd in dataDict['jd']['xx']:
 			if jd not in jdList:
 				jdList.append(jd)
+				
+		# Find the LST
+		lo.date = jdList[0] - astro.DJD_OFFSET
+		lst = str(lo.sidereal_time())
 		
 		# Pull out the right channels
 		toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]
@@ -247,7 +249,7 @@ def main(args):
 			imgYX = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='yx', chan=toWork)
 		except:
 			imgYX = None
-		
+			
 		# Plots
 		print "    Plotting"
 		fig = plt.figure()
@@ -265,20 +267,20 @@ def main(args):
 
 				ax.set_title("%s @ %s LST" % (pol, lst))
 				continue
-			
+				
 			# Display the image and label with the polarization/LST
 			cb = ax.imshow(img.image(center=(80,80)), extent=(1,-1,-1,1), origin='lower', 
 					vmin=img.image().min(), vmax=img.image().max())
 			fig.colorbar(cb, ax=ax)
 			ax.set_title("%s @ %s LST" % (pol, lst))
-
+			
 			junk = img.image(center=(80,80))
 			print "%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean())
-
+			
 			# Turn off tick marks
 			ax.xaxis.set_major_formatter( NullFormatter() )
 			ax.yaxis.set_major_formatter( NullFormatter() )
-
+			
 			# Compute the positions of major sources and label the images
 			compSrc = {}
 			for name,src in simVis.srcs.iteritems():
@@ -301,13 +303,13 @@ def main(args):
 				x[i] = xyz[0]
 				y[i] = xyz[1]
 			ax.plot(x, y, color='white')
-
+			
 			# Add lines of constant RA and dec.
 			if config['grid']:
 				graticle(ax, lo.sidereal_time(), lo.lat, label=config['label'])
-
+				
 		plt.show()
-
+		
 	print "...Done"
 
 
