@@ -129,7 +129,8 @@ def main(args):
 			cb.ax.set_ylabel('Relative Response')
 			
 		i += 1
-
+	beamDict.close()
+	
 	# Display
 	plt.show()
 

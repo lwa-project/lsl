@@ -472,6 +472,7 @@ class ARX(object):
 
 		freq = dataDict['freq']
 		data = dataDict['data']
+		dataDict.close()
 		
 		# Return or raise an error
 		if filter == 1 or filter == 'full':

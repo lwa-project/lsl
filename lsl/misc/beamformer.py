@@ -48,6 +48,7 @@ def __loadStandResponse(freq=49.0e6):
 	# LSL
 	dd = numpy.load(os.path.join(dataPath, 'beam-shape.npz'))
 	coeffs = dd['coeffs']
+	dd.close()
 
 	# Calculate how many harmonics are stored in the data set and reorder the data
 	# to AIPY's liking
