@@ -55,7 +55,7 @@ def get_description(filename):
 	return desc
 
 
-def check_for_openmp():
+def get_openmp():
 	"""Try to compile/link an example program to check for OpenMP support.
 	
 	Based on:
@@ -90,10 +90,14 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 	shutil.rmtree(tmpdir)
 	
 	if status == 0:
-		return True
+		outCFLAGS = ['-fopenmp',]
+		outLIBS = ['-lgomp',]
 	else:
-		print "WARNING:  OpenMP does not appear to be supported by your compiler, disabling"
-		return False
+		print "WARNING:  OpenMP does not appear to be supported by %s, disabling" % cc[0]
+		outCFLAGS = []
+		outLIBS = []
+		
+	return outCFLAGS, outLIBS
 
 
 def get_fftw():
@@ -144,7 +148,7 @@ def get_atlas():
 			outLibs.insert(0, '-L%s' % libPath)
 		else:
 			print "WARNING:  ATLAS and CBLAS cannot be found, using defaults"
-		return outLibs
+		return [], outLibs
 
 
 def write_version_info():
@@ -190,15 +194,15 @@ class LSLDist(Distribution):
 # correlator._core appropriately.  This will, hopefully, fix the build
 # problems on Mac
 cflags, libs = get_fftw()
-atlasLibs = get_atlas()
-useOpenMP = check_for_openmp()
-if useOpenMP:
-	coreExtraFlags = ['-fopenmp',]
-	coreExtraLibs = ['-lgomp',]
-else:
-	coreExtraFlags = []
-	coreExtraLibs = []
+atlasFlags, atlasLibs = get_atlas()
+openmpFlags, openmpLibs = get_openmp()
+
+coreExtraFlags = []
+coreExtraFlags.extend(openmpFlags)
 coreExtraFlags.extend(cflags)
+coreExtraFlags.extend(atlasFlags)
+coreExtraLibs = []
+coreExtraLibs.extend(openmpLibs)
 coreExtraLibs.extend(libs)
 coreExtraLibs.extend(atlasLibs)
 
