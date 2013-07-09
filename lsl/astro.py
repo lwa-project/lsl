@@ -16,7 +16,7 @@ import numpy
 from calendar import timegm
 
 
-__version__   = '0.3'
+__version__   = '0.4'
 __revision__ = '$Rev$'
 __author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'

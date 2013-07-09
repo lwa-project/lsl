@@ -794,8 +794,6 @@ class astro_tests(unittest.TestCase):
 	def test_get_hrz_from_equ(self):
 		"""Test astro.get_hrz_from_equ() function."""
 		
-		from pyslalib.slalib import sla_e2h, sla_gmst
-		
 		ACCURACY_AZ = 0
 		ACCURACY_ALT = 0
 			
@@ -823,8 +821,6 @@ class astro_tests(unittest.TestCase):
             
 	def test_get_equ_from_hrz(self):
 		"""Test astro.get_equ_from_hrz() function."""
-		
-		from pyslalib.slalib import sla_h2e, sla_gmst
 		
 		ACCURACY_RA = 0
 		ACCURACY_DEC = 0
@@ -909,8 +905,6 @@ class astro_tests(unittest.TestCase):
             
 	def test_get_nutation(self):
 		"""Test astro.get_nutation() function."""
-		
-		from pyslalib.slalib import sla_nutc
 		
 		ACCURACY_LNG = 4
 		ACCURACY_OBL = 4
@@ -1107,8 +1101,6 @@ class astro_tests(unittest.TestCase):
 	def test_get_ecl_from_equ(self):
 		"""Test astro.get_ecl_from_equ() function."""
 		
-		from pyslalib.slalib import sla_eqecl
-		
 		ACCURACY_LNG = 1
 		ACCURACY_LAT = 2
 			
@@ -1158,8 +1150,6 @@ class astro_tests(unittest.TestCase):
             
 	def test_get_equ_from_ecl(self):
 		"""Test astro.get_equ_from_ecl() function."""
-		
-		from pyslalib.slalib import sla_ecleq
 		
 		ACCURACY_RA = 1
 		ACCURACY_DEC = 2
@@ -1212,8 +1202,6 @@ class astro_tests(unittest.TestCase):
 	def test_get_gal_from_equ(self):
 		"""Test astro.get_gal_from_equ() function."""
 		
-		from pyslalib.slalib import sla_eqgal
-		
 		ACCURACY_L = 1
 		ACCURACY_B = 1
 			
@@ -1250,8 +1238,6 @@ class astro_tests(unittest.TestCase):
 				
 	def test_get_equ_from_gal(self):
 		"""Test astro.get_equ_from_gal() function."""
-		
-		from pyslalib.slalib import sla_galeq
 		
 		ACCURACY_RA = 0
 		ACCURACY_DEC = 1

@@ -14,7 +14,7 @@ import pyfits
 
 from lsl import astro
 
-__version__   = '0.1'
+__version__   = '0.2'
 __revision__ = '$Rev$'
 __author__    = 'J. York'
 __maintainer__ = 'Jayce Dowell'

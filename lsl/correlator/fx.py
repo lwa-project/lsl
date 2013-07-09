@@ -19,6 +19,9 @@ The main python/C extension functions in this module are:
 Each function is set up to process the signals in parallel using the 
 multiprocessing module and accepts a variety of options controlling the processing
 of the data, including various window functions and time averaging.
+
+.. versionchanged:: 0.7.0
+	All of the functions here now return all 'LFFT' channels.
 """
 
 import os
