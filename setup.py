@@ -175,21 +175,6 @@ short_version = '%s'
 	return True
 
 
-class LSLDist(Distribution):
-	"""Sub-class of setupuptools (distutils.core) Distribution class that fixes
-	problems building the libnova extension."""
-
-	def parse_config_files(self, filenames=None):
-		# parse cfg file, but remove any pacakge specific options
-		# otherwise distutils complains
-		
-		Distribution.parse_config_files(self, filenames)
-		self.get_option_dict('build_ext').pop('libnova_prefix')
-		try:
-			self.get_option_dict('egg_info').pop('libnova_prefix')
-		except:
-			pass
-
 # Get the FFTW flags/libs and manipulate the flags and libraries for 
 # correlator._core appropriately.  This will, hopefully, fix the build
 # problems on Mac
@@ -211,8 +196,7 @@ drsuExtraLibs = ['-lrt', '-lgdbm']
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
-ExtensionModules = [Extension('_libnova', ['lsl/libnova.i']), 
-			Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
+ExtensionModules = [Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
 			Extension('reader._gofast', ['lsl/reader/gofast.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-funroll-loops']),
 			Extension('common._fir', ['lsl/common/fir.c'], include_dirs=[numpy.get_include()], 
 libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
@@ -224,7 +208,6 @@ libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLib
 write_version_info()
 
 setup(
-	distclass = LSLDist, 
 	name = "lsl", 
 	version = get_version(), 
 	description = "LWA Software Library", 

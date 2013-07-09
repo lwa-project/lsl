@@ -11,59 +11,19 @@ Astronomical utility functions and classes based on libnova library.
 
 import time
 import math
+import ephem
+import numpy
+from calendar import timegm
 
-from lsl import libnova
 
-
-__version__   = '0.1'
+__version__   = '0.3'
 __revision__ = '$Rev$'
 __author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'
 
 
-######################################################################
-# version helper functions
-######################################################################
-
-
-def get_libnova_version():
+class dms(object):
   """
-  Get version of libnova C library in use.
-  
-  Returns: A tuple of version numbers for libnova C library.
-  """
-    
-  vs = libnova.ln_get_version()
-  vs = vs.split('.')
-  return (int(vs[0]), int(vs[1]), int(vs[2]))
-    
-
-def _hexversion(version):
-  """
-  Convert tuple of version numbers to flat integer for comparisons.
-  """
-  
-  return (version[0] << 16) + (version[1] << 8) + version[2]
-    
-
-_MIN_LIBNOVA_VER = _hexversion((0, 12, 0))
-_MAX_LIBNOVA_VER = _hexversion((0, 15, 0))
-
-_CUR_LIBNOVA_VER = _hexversion(get_libnova_version())
-
-if (_CUR_LIBNOVA_VER < _MIN_LIBNOVA_VER) or (_CUR_LIBNOVA_VER > _MAX_LIBNOVA_VER):
-  raise ImportError("libnova version %s not supported" % libnova.ln_get_version())
-    
-    
-
-######################################################################
-# python class wrappers for libnova C structures
-######################################################################
-
-
-class dms(libnova.ln_dms):
-  """
-  Wrapper for libnova ln_dms structure.
   Represents angles in degrees, minutes, seconds.
   
   Public members:
@@ -75,7 +35,7 @@ class dms(libnova.ln_dms):
   """
   
 	
-  def __init__(self, neg = None, degrees = None, minutes = None, seconds = None):
+  def __init__(self, neg = False, degrees = 0, minutes = 0, seconds = 0.0):
     """
     Create a dms object.
     
@@ -85,8 +45,6 @@ class dms(libnova.ln_dms):
     Param: minutes  - Angle minutes (integer [0, 59]).
     Param: seconds  - Angle seconds (float [0.0, 60.0)).
     """
-          
-    libnova.ln_dms.__init__(self)
 
     if neg is not None:
       self.neg = neg
@@ -186,9 +144,8 @@ class dms(libnova.ln_dms):
 		
 
 
-class hms(libnova.ln_hms):
+class hms(object):
   """
-  Wrapper for libnova ln_hms structure.
   Represents times/angles in hours, minutes, seconds.
   
   Public members:
@@ -198,7 +155,7 @@ class hms(libnova.ln_hms):
   """
   
 	
-  def __init__(self, hours = None, minutes = None, seconds = None):
+  def __init__(self, hours = 0, minutes = 0, seconds = 0.0):
     """
     Create a hms object.
     
@@ -206,8 +163,6 @@ class hms(libnova.ln_hms):
     Param: minutes  - Angle/time minutes (integer [0, 59]).
     Param: seconds  - Angle/time seconds (float [0.0, 60.0)).
     """
-        
-    libnova.ln_hms.__init__(self)
 
     if hours is not None:
       if hours < 0 or hours > 23:
@@ -303,9 +258,8 @@ class hms(libnova.ln_hms):
         
             
 
-class date(libnova.ln_date):
+class date(object):
   """
-  Wrapper for libnova ln_date structure.
   Represents UT time in calendar units.
   
   Public members:
@@ -318,8 +272,8 @@ class date(libnova.ln_date):
   """
 
 
-  def __init__(self, years = None, months = None, days = None, hours = None,
-                     minutes = None, seconds = None):
+  def __init__(self, years = 2000, months = 1, days = 1, hours = 0,
+                     minutes = 0, seconds = 0.0):
     """
     Create a date object.
     
@@ -330,8 +284,6 @@ class date(libnova.ln_date):
     Param: minutes  - Date minutes (integer [0, 59]).
     Param: seconds  - Date seconds (float [0.0, 60.0)).
     """
-
-    libnova.ln_date.__init__(self)
 
     if years is not None:
       self.years = years
@@ -501,9 +453,8 @@ class date(libnova.ln_date):
 
 
 
-class zonedate(libnova.ln_zonedate):
+class zonedate(object):
   """
-  Wrapper for libnova ln_zonedate structure.
   Represents local time in calendar units.
   
   Public members:
@@ -517,8 +468,8 @@ class zonedate(libnova.ln_zonedate):
   """
 	
   
-  def __init__(self, years = None, months = None, days = None, hours = None,
-                     minutes = None, seconds = None, gmtoff = None):
+  def __init__(self, years = 2000, months = 1, days = 1, hours = 0,
+                     minutes = 0, seconds = 0.0, gmtoff = 0):
     """
     Create a zonedate object.
     
@@ -530,8 +481,6 @@ class zonedate(libnova.ln_zonedate):
     Param: seconds  - Date seconds (float [0.0, 60.0)).
     Param: gmtoff   - Seconds offset from GM (integer [-43200, 43200]).  
     """
-
-    libnova.ln_zonedate.__init__(self)
             
     if years is not None:
       self.years = years
@@ -626,9 +575,8 @@ class zonedate(libnova.ln_zonedate):
             
 
 
-class rst_time(libnova.ln_rst_time):
+class rst_time(object):
   """
-  Wrapper for libnova ln_rst_time structure.
   Represents ephemeris rist, set, and transit times.
   
   Public members:
@@ -646,8 +594,6 @@ class rst_time(libnova.ln_rst_time):
     Param: set      - Set time as date object or float UTC Julian days.
     Param: transit  - Transit time as date object or float UTC Julian days.
     """
-
-    libnova.ln_rst_time.__init__(self)
 
     if rise is not None:
       if isinstance(rise, date):
@@ -704,33 +650,28 @@ class rst_time(libnova.ln_rst_time):
 
 
         
-class hrz_posn(libnova.ln_hrz_posn):
+class hrz_posn(object):
   """
-  Wrapper for libnova ln_hrz_posn structure.
-  Represents horizontal local position coordinates.  The original libnova convention has been
-  modified for the LWA wrapper.  libnova measures azimuth angle clockwise from south to
-  west, with due south equal to 0 degrees.  LWA measures azimuth angle clockwise from north
-  to east, with due north equal to 0 degrees.  Also, method for using zenith angle instead
-  of altitude angle have been added.
+  Represents horizontal local position coordinates.  LWA measures azimuth angle clockwise 
+  from north to east, with due north equal to 0 degrees.  Also, method for using zenith 
+  angle instead of altitude angle have been added.
     
   Public members:
     az  - Position azimuth angle (float degrees).
     alt - Position altitude angle (float degrees)
-        
+    
   Members may also be accessed by subscript:
     hrz_posn[0] = az
-    hrz_posn[1] = alt    
+    hrz_posn[1] = alt 
   """
 
-  def __init__(self, az = None, alt = None):
+  def __init__(self, az = 0.0, alt = 0.0):
     """
     Create a hrz_posn object.
     
     Param: az   - Position azimuth angle (float degrees [0.0, 360.0), 0 = N, 90 = E).
-    Param: alt  - Position altitude angle (float degress [-90.0, 90.0]).
+    Param: alt  - Position altitude angle (float degrees [-90.0, 90.0]).
     """
-
-    libnova.ln_hrz_posn.__init__(self)
 
     if az is not None:
       if az < 0.0 or az >= 360.0:
@@ -741,16 +682,6 @@ class hrz_posn(libnova.ln_hrz_posn):
       if alt < -90.0 or alt > 90.0:
         raise ValueError("alt paramerer range is [-90.0, 90.0], is set to %0.3f" % alt)
       self.alt = alt
-
-
-  def __setattr__(self, name, value):
-    """
-    Returns position azimuth angle (float degrees [0.0, 360.0), 0 = N, 90 = E).
-    """
-    
-    if name == 'az':
-      value = range_degrees(value + 180.0)
-    libnova.ln_hrz_posn.__setattr__(self, name, value)
 
         
   def zen(self, value = None):
@@ -790,17 +721,6 @@ class hrz_posn(libnova.ln_hrz_posn):
     """
 
     return (hrz_posn, (self.az, self.alt))
-
-
-  def __getattribute__(self, name):
-    """
-    Set position azimuth angle (float degrees [0.0, 360.0), 0 = N, 90 = E).
-    """
-
-    value = libnova.ln_hrz_posn.__getattribute__(self, name)
-    if name == 'az':
-      value = range_degrees(value - 180.0)
-    return value
         
         
   def __getitem__(self, key):
@@ -878,9 +798,8 @@ class hrz_posn(libnova.ln_hrz_posn):
                
 
 
-class equ_posn(libnova.ln_equ_posn):
+class equ_posn(object):
   """
-  Wrapper for libnova ln_equ_posn structure.
   Represents equatoral/celestial position coordinates.
     
   Public members:
@@ -892,7 +811,7 @@ class equ_posn(libnova.ln_equ_posn):
     equ_posn[1] = dec
   """
 
-  def __init__(self, ra = None, dec = None):
+  def __init__(self, ra = 0.0, dec = 0.0):
     """
     Create a equ_posn object.
     
@@ -901,8 +820,6 @@ class equ_posn(libnova.ln_equ_posn):
     Param: dec  - Position declination angle
                   Object of type dms or float degrees [-90.0, 90.0].
     """
-
-    libnova.ln_equ_posn.__init__(self)
 
     if ra is not None:
       if isinstance(ra, hms):
@@ -1066,9 +983,8 @@ class equ_posn(libnova.ln_equ_posn):
 
 
 
-class gal_posn(libnova.ln_gal_posn):
+class gal_posn(object):
   """
-  Wrapper for libnova ln_gal_posn structure.
   Represents galactic position coordinates.
     
   Public members:
@@ -1080,7 +996,7 @@ class gal_posn(libnova.ln_gal_posn):
     gal_posn[1] = b
   """
 
-  def __init__(self, l = None, b = None):
+  def __init__(self, l = 0.0, b = 0.0):
     """
     Create a gal_posn object.
     
@@ -1089,8 +1005,6 @@ class gal_posn(libnova.ln_gal_posn):
     Param: b - Position latitude angle. 
                Object of type dms or float degrees [-90.0, 90.0].
     """
-
-    libnova.ln_gal_posn.__init__(self)
 
     if l is not None:
       if isinstance(l, dms):
@@ -1205,9 +1119,8 @@ class gal_posn(libnova.ln_gal_posn):
 
 	
 
-class rect_posn(libnova.ln_rect_posn):
+class rect_posn(object):
   """
-  Wrapper for libnova ln_rect_posn structure.
   Represents rectangular/Cartesian position coordinates.
     
   Public members:
@@ -1221,15 +1134,13 @@ class rect_posn(libnova.ln_rect_posn):
     rect_posn[2] = Z
   """	
 
-  def __init__(self, X = None, Y = None, Z = None): 
+  def __init__(self, X = 0.0, Y = 0.0, Z = 0.0): 
     """
     Create a rect_posn object
     Param: X - Position X coordinate (float).
     Param: Y - Position Y coordinate (float).
     Param: Z - Position Z coordinate (float).
     """
-
-    libnova.ln_rect_posn.__init__(self)
             
     if X is not None:
       self.X = X
@@ -1317,9 +1228,8 @@ class rect_posn(libnova.ln_rect_posn):
         
         
 
-class lnlat_posn(libnova.ln_lnlat_posn):
+class lnlat_posn(object):
   """
-  Wrapper for libnova ln_lnlat_posn structure.
   Represents position coordinates in latitude and longitude.
   When representing a geographical location, the longitude is negative
   when measured west of GM and positive is measured east of GM.
@@ -1333,31 +1243,29 @@ class lnlat_posn(libnova.ln_lnlat_posn):
     lnlat_posn[1] = lat
   """
     
-  def __init__(self, lng = None, lat = None):
+  def __init__(self, lng = 0.0, lat = 0.0):
     """
     Create a lnlat_posn object.
     
     Param: lng - Position longitude coordinate
-                 Object of type dms or float degress (-360.0, 360.0).
+                 Object of type dms or float degrees (-360.0, 360.0).
     Param: lat - Position latitude coordinate
                  Object of type dms or float degrees [-90.0, 90.0].
     """
-        
-    libnova.ln_lnlat_posn.__init__(self)
             
     if lng is not None:
       if isinstance(lng, dms):
         lng = lng.to_deg()
       if lng <= -360.0 or lng >= 360.0:
         raise ValueError("lng parameter range is (-360.0, 360.0), is set to %0.3f" % lng)
-      self.lng = lng
+    self.lng = lng
                 
     if lat is not None:
       if isinstance(lat, dms):
         lat = lat.to_deg()
       if lat < -90.0 or lat > 90.0:
         raise ValueError("lat paramerer range is [-90.0, 90.0], is set to %0.3f" % lat)
-      self.lat = lat
+    self.lat = lat
         
         
   def __str__(self):
@@ -1444,7 +1352,7 @@ class lnlat_posn(libnova.ln_lnlat_posn):
     
 
 
-class ecl_posn(lnlat_posn):
+class ecl_posn(object):
   """
   Represents position as ecliptic longitude and latitude.
     
@@ -1457,6 +1365,9 @@ class ecl_posn(lnlat_posn):
     ecl_posn[1] = lat
   """
     
+  def __init__(self, lng = 0.0, lat = 0.0):
+    self.lng = lng
+    self.lat = lat
     
   def to_equ(self, jD):
     """
@@ -1476,12 +1387,20 @@ class ecl_posn(lnlat_posn):
     """
         
     return (ecl_posn, (self.lng, self.lat))
+
+  def format(self):
+    """
+    Return a tuple (lng, lat) where lng is an dms object and
+    lat is a dms object representing longitude and latitude
+    position coordinates.
+    """
+        
+    return (deg_to_dms(self.lng), deg_to_dms(self.lat))  
         
         
         
-class nutation(libnova.ln_nutation):
+class nutation(object):
   """
-  Wrapper for libnova ln_nutation structure.
   Provides nutation information in longitude and obliquity.
   
   Public members:
@@ -1491,40 +1410,38 @@ class nutation(libnova.ln_nutation):
   """
     
     
-  def __init__(self, longitude = None, obliquity = None, ecliptic = None):
+  def __init__(self, longitude = 0.0, obliquity = 0.0, ecliptic = 0.0):
     """
     Create a nutation object.
     
     Param: longitude  - Nutation in longitude.
-                        Object of type dms or float degress (-360.0, 360.0).
+                        Object of type dms or float degrees (-360.0, 360.0).
     Param: obliquity  - Nutation in obliquity.
                         Object of type dms or float degrees [-90.0, 90.0].
     Param: ecliptic   - Obliquity of the ecliptic.
                         Object of type dms or float degrees [-90.0, 90.0].
     """
         
-    libnova.ln_nutation.__init__(self)
-        
     if longitude is not None:
       if isinstance(longitude, dms):
         longitude = longitude.to_deg()
       if longitude <= -360.0 or longitude >= 360.0:
         raise ValueError("longitude parameter range is (-360.0, 360.0), is set to %0.3f" % longitude)
-      self.longitude = longitude
+    self.longitude = longitude
                 
     if obliquity is not None:
       if isinstance(obliquity, dms):
         obliquity = obliquity.to_deg()
       if obliquity < -90.0 or obliquity > 90.0:
         raise ValueError("obliquity paramerer range is [-90.0, 90.0], is set to %0.3f" % obliquity)
-      self.obliquity = obliquity
+    self.obliquity = obliquity
                 
     if ecliptic is not None:
       if isinstance(ecliptic, dms):
         ecliptic = ecliptic.to_deg()
       if ecliptic < -90.0 or ecliptic > 90.0:
         raise ValueError("ecliptic paramerer range is [-90.0, 90.0], is set to %0.3f" % ecliptic)
-      self.ecliptic = ecliptic  
+    self.ecliptic = ecliptic  
                 
                 
   def __str__(self):
@@ -1541,7 +1458,7 @@ class nutation(libnova.ln_nutation):
     """
         
     return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__,
-      repr(self.longitude), repr(self.obliquity), repr(ecliptic))
+      repr(self.longitude), repr(self.obliquity), repr(self.ecliptic))
     
      
   def __reduce__(self):
@@ -1583,14 +1500,13 @@ def get_gmtoff():
                                                                    
 		
 ######################################################################
-# python fucntion wrappers for libnova C General Conversion Functions
+# General Conversion Functions
 ######################################################################
 
 
 
 def date_to_zonedate(date, gmtoff):
   """
-  Wrapper for for libnova ln_date_to_zonedate() function.
   Convert UTC calendar time to local calendar time.
   
   Param: date   - A date object representing UTC time.
@@ -1599,15 +1515,25 @@ def date_to_zonedate(date, gmtoff):
   Returns object of type zonedate representing local time.
   """
 	
+  t0 = time.strptime(str(date), "%Y-%m-%d %H:%M:%S.%f")
+  fracSec = date.seconds - int(date.seconds)
+  t1 = timegm(t0) + gmtoff
+  years, months, days, hours, minutes, seconds, wday, yday, dst = time.gmtime(t1)
+  
   _zdate = zonedate()
-  libnova.ln_date_to_zonedate(date, _zdate, gmtoff)
+  _zdate.years = years
+  _zdate.months = months
+  _zdate.days = days
+  _zdate.hours = hours
+  _zdate.minutes = minutes
+  _zdate.seconds = seconds + fracSec
+  _zdate.gmtoff = 1*gmtoff
   return _zdate
 	
 	
 	
 def zonedate_to_date(zonedate):
   """
-  Wrapper for for libnova ln_zonedate_to_date() function.
   Convert local calendar time to UTC calendar time.
   
   Param: zonedate - Object of type zonedate representing local time.  
@@ -1615,40 +1541,48 @@ def zonedate_to_date(zonedate):
   Returns object of type date representing UTC time.
   """
 	
+  t0, junk = str(zonedate).rsplit(None, 1)
+  t0 = time.strptime(t0, "%Y-%m-%d %H:%M:%S.%f")
+  fracSec = zonedate.seconds - int(zonedate.seconds)
+  t1 = timegm(t0) - zonedate.gmtoff
+  years, months, days, hours, minutes, seconds, wday, yday, dst = time.gmtime(t1)
+  
   _date = date()
-  libnova.ln_zonedate_to_date(zonedate, _date)
+  _date.years = years
+  _date.months = months
+  _date.days = days
+  _date.hours = hours
+  _date.minutes = minutes
+  _date.seconds = seconds + fracSec
   return _date	
 
 
 def rad_to_deg(radians):
   """
-  Wrapper for libnova ln_rad_to_deg() function.
-  Convert radians to degress.
+  Convert radians to degrees.
   
   Param: radians - Angle in radians (float).
   
-  Returns angle in degress (float).
+  Returns angle in degrees (float).
   """
 	
-  return libnova.ln_rad_to_deg(radians)
+  return radians * 180.0/math.pi
 	
 	
 def deg_to_rad(degrees):
   """
-  Wrapper for libnova ln_deg_to_rad() function.
-  Convert degress to radians.
+  Convert degres to radians.
   
   Param: degrees - Angle in degrees (float).
   
   Returns angle in radians (float).
   """
 	
-  return libnova.ln_deg_to_rad(degrees)
+  return degrees * math.pi/180.0
 	
 
 def dms_to_rad(dms):
   """
-  Wrapper for libnova ln_dms_to_rad() function.
   Convert angles degrees, minutes, seconds to radians.
   
   Param: dms - Object of type dms representing angle.
@@ -1656,12 +1590,12 @@ def dms_to_rad(dms):
   Returns angle in radians (float).
   """
 	
-  return libnova.ln_dms_to_rad(dms)
+  degrees = dms_to_rad(dms)
+  return deg_to_rad(degrees)
 	
 
 def dms_to_deg(dms):
   """
-  Wrapper for libnova ln_dms_to_deg() function.
   Convert angles degrees, minutes, seconds to float degrees.
   
   Param: dms - Object of type dms representing angle.
@@ -1669,12 +1603,25 @@ def dms_to_deg(dms):
   Returns angle in degrees (float).
   """
 	
-  return libnova.ln_dms_to_deg(dms)
+  degrees = dms.degrees + dms.minutes/60.0 + dms.seconds/3600.0
+  if dms.neg:
+    degrees *= -1
+  return degrees
 
+def _float_to_sexa(value):
+  sgn = 1.0
+  if value < 0:
+    sgn = -1.0
+    value *= -1
+    
+  d = int(value)
+  m = int(value * 60) % 60
+  s = (value * 3600.0) % 60.0
+  
+  return sgn, d, m, s
 
 def deg_to_dms(degrees):
   """
-  Wrapper for libnova ln_deg_to_dms() function.
   Convert angles float degrees to degrees, minutes, seconds.
   
   Param: degrees - Angle in degrees (float). 
@@ -1683,13 +1630,19 @@ def deg_to_dms(degrees):
   """
 	
   _dms = dms()
-  libnova.ln_deg_to_dms(degrees, _dms)
+  
+  sgn,d,m,s = _float_to_sexa(degrees)
+  
+  _dms.degrees = d
+  _dms.minutes = m
+  _dms.seconds = s
+  _dms.neg = True if sgn < 0 else False
+  
   return _dms
 
 
 def rad_to_dms(radians):
   """
-  Wrapper for libnova ln_rad_to_dms() function.
   Convert angles float radians to degrees, minutes, seconds.
   
   Param: radians - Angle in radians (float). 
@@ -1697,14 +1650,12 @@ def rad_to_dms(radians):
   Returns object of type dms representing angle.
   """
 	
-  _dms = dms()
-  libnova.ln_rad_to_dms(radians, _dms)
-  return _dms
+  degrees = rad_to_deg(radians)
+  return deg_to_dms(degrees)
 	
 
 def hms_to_deg(hms):
   """
-  Wrapper for libnova ln_hms_to_deg() function.
   Convert angles hours, minutes, seconds to float degrees.
   
   Param: hms - Object of type hms representing angle.
@@ -1712,12 +1663,13 @@ def hms_to_deg(hms):
   Returns angle in degrees (float).
   """
 	
-  return libnova.ln_hms_to_deg(hms)
+  hours = hms.hours + hms.minutes/60.0 + hms.seconds/3600.0
+  degrees = hours * 15.0
+  return degrees
 	
-	
+
 def hms_to_rad(hms):
   """
-  Wrapper for libnova ln_hms_to_rad() function.
   Convert angles hours, minutes, seconds to float radians.
   
   Param: hms - Object of type hms representing angle.
@@ -1725,12 +1677,12 @@ def hms_to_rad(hms):
   Returns angle in radians (float).
   """
 	
-  return libnova.ln_hms_to_rad(hms)	
+  degrees = hms_to_deg(hms)
+  return deg_to_rad(degrees)
 	
 
 def deg_to_hms(degrees):
   """
-  Wrapper for libnova ln_deg_to_hms() function.
   Convert angles float degrees to hours, minutes, seconds.
   
   Param: degrees - Angle in degrees (float). 
@@ -1738,14 +1690,13 @@ def deg_to_hms(degrees):
   Returns object of type hms representing angle.
   """
 	
-  _hms = hms()
-  libnova.ln_deg_to_hms(degrees, _hms)
-  return _hms
+  
+  sgn,h,m,s = _float_to_sexa(degrees / 15.0)
+  return hms(h, m, s)
 
 
 def rad_to_hms(radians):
   """
-  Wrapper for libnova ln_rad_to_hms() function.
   Convert angles float radians to hours, minutes, seconds.
   
   Param: radians - Angle in radians (float). 
@@ -1753,14 +1704,12 @@ def rad_to_hms(radians):
   Returns object of type hms representing angle.
   """
 	
-  _hms = hms()
-  libnova.ln_rad_to_hms(radians, _hms)
-  return _hms
+  degrees = rad_to_deg(radians)
+  return deg_to_hms(degrees)
 
 
 def add_secs_hms(hms, seconds):
   """
-  Wrapper for libnova ln_add_secs_hms() function.
   Add seconds to time/angle hours, minutes, seconds.
   
   Param: hms      - Object of type hms representing angle.
@@ -1769,13 +1718,13 @@ def add_secs_hms(hms, seconds):
   Returns object of type hms representing angle + offset.
   """
 	
-  libnova.ln_add_secs_hms(hms, seconds)
-  return hms
+  degrees = hms_to_deg(hms)
+  degrees += (seconds/3600.0) * 15.0
+  return deg_to_hms(degrees)
 	
 	
 def add_hms(source, dest):
   """
-  Wrapper for libnova ln_add_hms() function.
   Adds time/angle hours, minutes, seconds.
   
   Param: source - Object of type hms represeting angle 1.
@@ -1784,22 +1733,37 @@ def add_hms(source, dest):
   Returns object of type hms representing sum of angles.
   """
 	
-  libnova.ln_add_hms(source, dest)
+  degrees1 = hms_to_deg(source)
+  degrees2 = hms_to_deg(dest)
+  degrees1 += degrees2
+  _hms = deg_to_hms(degrees1)
+  
+  dest.degrees = 1*_hms.hours
+  dest.minutes = 1*_hms.minutes
+  dest.seconds = 1*_hms.seconds
+  
   return dest
 
 
 def hrz_to_nswe(pos):
   """
-  Wrapper for libnova ln_hrz_to_nswe() function.
   Get cardinal/ordinal azimuth direction.
   
   Param: pos - Object of type hrz_posn giving local position.
   
   Returns string giving direction.
   """
-    
-  return libnova.ln_hrz_to_nswe(pos)
-    	
+	
+  az = pos.az % 360.0
+  if az < 45 or az >= 315:
+    return 'N'
+  elif az >= 45 and az < 135:
+    return 'E'
+  elif az >= 135 and az < 225:
+    return 'S'
+  else:
+    return 'W'
+
 
 def range_degrees(degrees):
   """
@@ -1810,19 +1774,18 @@ def range_degrees(degrees):
   Returns: angle in range (float degrees)
   """
 
-  return libnova.ln_range_degrees(degrees)		
+  return degrees % 360.0
 
 
 
 ######################################################################
-# python fucntion wrappers for libnova C General Calendar Functions
+# General Calendar Functions
 ######################################################################
 
 
 
 def get_julian_day(date):
   """
-  Wrapper for libnova ln_get_julian_day() function.
   Convert calendar time to Julian day.
   
   Param: date - Object of type date representing UTC time.
@@ -1830,12 +1793,13 @@ def get_julian_day(date):
   Returns UTC time in Julian days (float).
   """
 	
-  return libnova.ln_get_julian_day(date)
+  _date = ephem.Date("%i/%02i/%02i %02i:%02i:%09.6f" % (date.years, date.months, date.days, date.hours, date.minutes, date.seconds))
+  jd = float(_date)+DJD_OFFSET
+  return jd
     
     
 def get_julian_local_date(zonedate):
   """
-  Wrapper for libnova ln_get_julian_local_date() function.
   Convert local calendar time to Julian day.
   
   Param: zonedate - Object of type zonedate representing local time.
@@ -1843,12 +1807,12 @@ def get_julian_local_date(zonedate):
   Returns UTC time in Julian days (float).
   """
     
-  return libnova.ln_get_julian_local_date(zonedate)   
+  _date = zonedate_to_date(zonedate)
+  return get_julian_day(_date)
 
 
 def get_date(jD):
   """
-  Wrapper for libnova ln_get_date() function.
   Convert Julian day to calendar time.
   
   Param: jD - UTC time in Julian days (float).
@@ -1857,14 +1821,21 @@ def get_date(jD):
   """
 	
   _date = date()
-  libnova.ln_get_date(jD, _date)
+  d = ephem.Date(jD-DJD_OFFSET)
+  
+  years,months,days,hours,minutes,seconds = d.tuple()
+  _date.years = years
+  _date.months = months
+  _date.days = days
+  _date.hours = hours
+  _date.minutes = minutes
+  _date.seconds = seconds
   return _date
 	
 	
 	
 def get_day_of_week(date):
   """
-  Wrapper for libnova ln_get_day_of_week() function.
   Gets day of week from calendar time.
   
   Param: date - Object of type date representing UTC time.
@@ -1872,38 +1843,36 @@ def get_day_of_week(date):
   Returns day of week (0 = Sunday, 6 = Saturday).
   """
 	
-  return libnova.ln_get_day_of_week(date)
+  jd = date.to_jd()
+  return (int(round(jd)) + 1) % 7
 	
 		
 	
 def get_julian_from_sys():
   """
-  Wrapper for libnova ln_get_julian_from_sys() function.
-  
   Returns UTC Julian day (float) from system clock.
   """
 	
-  return libnova.ln_get_julian_from_sys()
+  t0 = time.time()
+  return unix_to_utcjd(t0)
 	
 	
 
 def get_date_from_sys():
   """
-  Wrapper for libnova ln_get_date_from_sys() function.
   Gets calendar time from system clock.
   
   Returns object of type date representing UTC time.
   """
 	
-  _date = date()
-  libnova.ln_get_date_from_sys(_date)
+  jD = get_julian_from_sys()
+  _date = get_date(jD)
   return _date
 
 
 
 def get_julian_from_timet(time_):
   """
-  Wrapper for libnova ln_get_julian_from_timet() function.
   Gets Julian day from Unix time.
   
   Param: time_ - Unix timet in seconds (integer)
@@ -1911,17 +1880,13 @@ def get_julian_from_timet(time_):
   Returns UTC Julian day (float).
   """
 	
-  tt = libnova.new_time_t()
-  libnova.time_t_assign(tt, time_)
-  jD = libnova.ln_get_julian_from_timet(tt)
-  libnova.delete_time_t(tt)
+  jD = float(time_) / SECS_IN_DAY + UNIX_OFFSET
   return jD
 	
 	
 	
 def get_timet_from_julian(jD):
   """
-  Wrapper for libnova ln_get_timet_from_julian() function.
   Gets Unix time from Julian day.
   
   Param: jD - UTC Julian day (float).
@@ -1929,23 +1894,18 @@ def get_timet_from_julian(jD):
   Returns Unix timet in seconds (integer).
   """
 	
-  tt = libnova.new_time_t()
-  libnova.ln_get_timet_from_julian(jD, tt)
-  time_ = libnova.time_t_value(tt)
-  libnova.delete_time_t(tt)
+  time_ = int((jD - UNIX_OFFSET) * SECS_IN_DAY)
   return time_
 
 
 
 ######################################################################
-# python fucntion wrappers for libnova C Transformation of Coordinates 
-# Functions
+# Transformation of Coordinates Functions
 ######################################################################
 
 
 def get_hrz_from_equ(object_, observer, jD):
   """
-  Wrapper for libnova ln_get_hrz_from_equ() function.
   Get local horizontal coordinates from equatorial/celestial coordinates.
   
   Param: object_  - Object of type equ_posn representing celestial position.
@@ -1956,13 +1916,29 @@ def get_hrz_from_equ(object_, observer, jD):
   """
 
   _posn = hrz_posn()
-  libnova.ln_get_hrz_from_equ(object_, observer, jD, _posn)
+  b = ephem.FixedBody()
+  b._ra = deg_to_rad(object_.ra)
+  b._dec = deg_to_rad(object_.dec)
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+  b.compute(o)
+  az = rad_to_deg(b.az)
+  alt = rad_to_deg(b.alt)
+  
+  _posn.az = az
+  _posn.alt = alt
   return _posn
     
     
 def get_equ_from_hrz(object_, observer, jD):
   """
-  Wrapper for libnova ln_get_equ_from_hrz() function.
   Get equatorial/celestial coordinates from local horizontal coordinates.
   
   Param: object_  - Object of type hrz_posn representing horizontal position.
@@ -1973,13 +1949,26 @@ def get_equ_from_hrz(object_, observer, jD):
   """
     
   _posn = equ_posn()
-  libnova.ln_get_equ_from_hrz(object_, observer, jD, _posn)
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+
+  ra,dec = o.radec_of(deg_to_rad(object_.az), deg_to_rad(object_.alt))
+  ra = rad_to_deg(ra)
+  dec = rad_to_deg(dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
   return _posn     
 
 
 def get_ecl_from_rect(rect):
   """
-  Wrapper for libnova ln_get_ecl_from_rect() function.
   Get ecliptical coordinates from rectangular coordinates.
   
   Param: rect - Object of type rect_posn representing position.
@@ -1987,14 +1976,14 @@ def get_ecl_from_rect(rect):
   Returns object of type lnlat_posn representing ecliptical position.
   """
     
-  _posn = lnlat_posn()
-  libnova.ln_get_ecl_from_rect(rect, _posn)
+  _posn = ecl_posn()
+  _posn.lng = 1*rect.lng
+  _posn.lat = 1*rect.lat
   return _posn
     
     
 def get_equ_from_ecl(object_, jD):
   """
-  Wrapper for libnova ln_get_equ_from_ecl() function.
   Get equatorial coordinates from ecliptical coordinates for a given time.
   
   Param: object_  - Object of type lnlat_posn representing ecliptic position.
@@ -2004,13 +1993,18 @@ def get_equ_from_ecl(object_, jD):
   """
     
   _posn = equ_posn()
-  libnova.ln_get_equ_from_ecl(object_, jD, _posn)
+  ecl = ephem.Ecliptic(deg_to_rad(object_.lng), deg_to_rad(object_.lat))
+  equ = ephem.Equatorial(ecl)
+  ra = rad_to_deg(equ.ra)
+  dec = rad_to_deg(equ.dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
   return _posn
     
     
 def get_ecl_from_equ(object_, jD):
   """
-  Wrapper for libnova ln_ecl_from_equ() function.
   Get ecliptical coordinates from equatorial coordinates for a given time.
   
   Param: object_  - Object of type equ_posn representing equatorial position.
@@ -2020,13 +2014,18 @@ def get_ecl_from_equ(object_, jD):
   """
     
   _posn = ecl_posn()
-  libnova.ln_get_ecl_from_equ(object_, jD, _posn)
+  equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec))
+  ecl = ephem.Ecliptic(equ)
+  l = rad_to_deg(ecl.lon)
+  b = rad_to_deg(ecl.lat)
+  
+  _posn.lng = l
+  _posn.lat = b
   return _posn    
          
 
 def get_equ_from_gal(object_):
   """
-  Wrapper for libnova ln_get_equ_from_gal() function.
   Get B1950 equatorial coordinates from galactic coordinates.
   
   Param: object_ - Object of type gal_posn representing galactic position.
@@ -2035,13 +2034,19 @@ def get_equ_from_gal(object_):
   """
 
   _posn = equ_posn()
-  libnova.ln_get_equ_from_gal(object_, _posn)
+  gal = ephem.Galactic(deg_to_rad(object_.l), deg_to_rad(object_.b))
+  equ = ephem.Equatorial(gal)
+  equ = ephem.Equatorial(equ, epoch=ephem.B1950)
+  ra = rad_to_deg(equ.ra)
+  dec = rad_to_deg(equ.dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
   return _posn
 
 
 def get_gal_from_equ(object_):
   """
-  Wrapper for libnova ln_gal_from_equ() function.
   Get galactic coordinates from B1950 equatorial coordinates.
   
   Param: object_ - Object of type equ_posn representing B1950 equatorial 
@@ -2051,15 +2056,18 @@ def get_gal_from_equ(object_):
   """
 
   _posn = gal_posn()
-  libnova.ln_get_gal_from_equ(object_, _posn)
+  equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=ephem.B1950)
+  ecl = ephem.Galactic(equ)
+  l = rad_to_deg(ecl.lon)
+  b = rad_to_deg(ecl.lat)
+  
+  _posn.l = l
+  _posn.b = b
   return _posn
         
         
-_LN_GET_EQU2000_FROM_GAL_MIN = _hexversion((0, 12, 0))        
-    
 def get_equ2000_from_gal(object_):
   """
-  Wrapper for libnova ln_get_equ2000_from_gal() function.
   Get J2000 equatorial coordinates from galactic coordinates.
   
   Param: object_ - Object of type gal_posn representing galactic position.
@@ -2067,23 +2075,19 @@ def get_equ2000_from_gal(object_):
   Returns object of type equ_posn representing J2000 equatorial position.
   """
     
-  if _CUR_LIBNOVA_VER < _LN_GET_EQU2000_FROM_GAL_MIN:
-        
-    _posn = get_equ_from_gal(object_)
-    return B1950_to_J2000(_posn)
-        
-  else:
-
-    _posn = equ_posn()
-    libnova.ln_get_equ2000_from_gal(object_, _posn)
-    return _posn
+  _posn = equ_posn()
+  gal = ephem.Galactic(deg_to_rad(object_.l), deg_to_rad(object_.b))
+  equ = ephem.Equatorial(gal, epoch=ephem.J2000)
+  ra = rad_to_deg(equ.ra)
+  dec = rad_to_deg(equ.dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
+  return _posn
     
-    
-_LN_GET_GAL_FROM_EQU2000_MIN = _hexversion((0, 12, 0))    
     
 def get_gal_from_equ2000(object_):
   """
-  Wrapper for libnova ln_gal_from_equ2000() function.
   Get galactic coordinates from J2000 equatorial coordinates.
   
   Param: object_ - Object of type equ_posn representing J2000 equatorial 
@@ -2091,60 +2095,75 @@ def get_gal_from_equ2000(object_):
   
   Returns object of type gal_posn representing galactic position.
   """
-    
-  if _CUR_LIBNOVA_VER < _LN_GET_GAL_FROM_EQU2000_MIN:
-   
-    _posn = J2000_to_B1950(object_)
-    return get_gal_from_equ(_posn)
-        
-  else:
-
-    _posn = gal_posn()
-    libnova.ln_get_gal_from_equ2000(object_, _posn)
-    return _posn
+  
+  _posn = gal_posn()
+  equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=ephem.J2000)
+  ecl = ephem.Galactic(equ)
+  l = rad_to_deg(ecl.lon)
+  b = rad_to_deg(ecl.lat)
+  
+  _posn.l = l
+  _posn.b = b
+  return _posn
 
 
 
 ######################################################################
-# python fucntion wrappers for libnova C Sidereal Time Functions
+# Sidereal Time Functions
 ######################################################################
 
 
 def get_apparent_sidereal_time(jD):
   """
-  Wrapper for libnova ln_get_apparent_sidereal_time() function.
   Get apparent sidereal time from Julian day.
   
   Param: jD - UTC Julian day (float).
   
   Returns GM apparent sidereal time (float hours).
+  
+  From: http://aa.usno.navy.mil/faq/docs/GAST.php
   """
     
-  return libnova.ln_get_apparent_sidereal_time(jD)
+  gmst = get_mean_sidereal_time(jD)
+  
+  D = jD - 2451545.0
+  Omega = 125.04 - 0.052954*D
+  L = 280.47 + 0.98565*D
+  epsilon = 23.4393 - 0.0000004*D
+  deltaPhi = -0.000319*math.sin(deg_to_rad(Omega)) - 0.000024*math.sin(2*deg_to_rad(L))
+  eqeq = deltaPhi*math.cos(deg_to_rad(epsilon))
+  gast = gmst + eqeq
+  return gast
 
 
 def get_mean_sidereal_time(jD):
   """
-  Wrapper for libnova ln_get_mean_sidereal_time() function.
   Get mean sidereal time from Julian day.
   
   Param: jD - UTC Julian day (float).
   
   Returns GM mean sidereal time (float hours).
+  
+  From: http://aa.usno.navy.mil/faq/docs/GAST.php
   """
     
-  return libnova.ln_get_mean_sidereal_time(jD)
+  D = jD - 2451545.0
+  D0 = (int(jD) - 0.5) - 2451545.0
+  H = (D - D0) * 24.0
+  T = D / 36525.0
+  gmst =  6.697374558 + 0.06570982441908*D0 + 1.00273790935*H + 0.000026*T*T
+  gmst %= 24
+  return gmst
 
 
 
 ######################################################################
-# python fucntion wrappers for libnova C Angular Separation Functions
+# Angular Separation Functions
 ######################################################################
 
 
 def get_angular_separation(posn1, posn2):
   """  
-  Wrapper for libnova ln_get_angular_separation() function.
   Get angular separation from equatorial positions.
   
   Param: posn1 - Object of type equ_posn representing body 1 position.
@@ -2152,39 +2171,58 @@ def get_angular_separation(posn1, posn2):
   
   Returns angular separation in degrees (float).
   """
-    
-  return libnova.ln_get_angular_separation(posn1, posn2)
+  
+  sep = ephem.separation((deg_to_rad(posn1.ra), deg_to_rad(posn1.dec)), (deg_to_rad(posn2.ra), deg_to_rad(posn2.dec)))
+  sep = rad_to_deg(sep)
+  
+  return sep
      
 
 
 def get_rel_posn_angle(posn1, posn2):
   """
-  Wrapper for libnova ln_get_rel_posn_angle() function.
   Get relative position angle from equatorial positions.
   
   Param: posn1 - Object of type equ_posn representing body 1 position.
   Param: posn2 - Object of type equ_posn representing body 2 position.
   
   Returns position angle in degrees (float).
+
+  Based on dpav.f from SLALIB.
   """
     
-  return libnova.ln_get_rel_posn_angle(posn1, posn2)
+  d1 = dir_cos(posn1)
+  d2 = dir_cos(posn2)
+  
+  w1 = math.sqrt( d1[0]**2 + d1[1]**2 + d1[2]**2 )
+  if w1 != 0:
+    d1[0] /= w1
+    d1[1] /= w1
+    d1[2] /= w1
+  w2 = math.sqrt( d2[0]**2 + d2[1]**2 + d2[2]**2 )
+  if w2 != 0:
+    d2[0] /= w2
+    d2[1] /= w2
+    d2[2] /= w2
+    
+  sq = d2[1]*d1[0] - d2[0]*d1[1]
+  cq = d2[2]*(d1[0]**2+d1[1]**2) - d1[2]*(d2[0]*d1[0]+d2[1]*d1[1])
+  if sq == 0 and cq == 0:
+    cq = 1.0
+  ang = math.atan2(sq, cq)
+  ang = rad_to_deg(ang)
+  return ang
     
     
 ######################################################################
-# python fucntion wrappers for libnova C Apparent Position Functions
+# Apparent Position Functions
 ######################################################################
 
 
 _DEFAULT_PROPER_MOTION = equ_posn(0.0, 0.0)
 
-_LN_GET_APPARENT_POSN_FIX_MIN = _hexversion((0, 12, 0))
-_LN_GET_APPARENT_POSN_FIX_MAX = _hexversion((0, 12, 1))
-
-
 def get_apparent_posn(mean_position, jD, proper_motion = None):
   """
-  Wrapper for libnova ln_get_apparent_posn() function.
   Get apparent position of celestial object accounting for precession, nutation, 
   aberration, and optionally proper motion.
   
@@ -2200,35 +2238,18 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
   if proper_motion is None:
     proper_motion = _DEFAULT_PROPER_MOTION  
     
-  # libnova ln_get_equ_pm is broken for version 0.12.0
-  # internally, ln_get_apparent_posn() calls this function, breaking this also
-  # use copy of version 0.11.0 code
-    
-  if (_CUR_LIBNOVA_VER >= _LN_GET_APPARENT_POSN_FIX_MIN) and \
-    (_CUR_LIBNOVA_VER <= _LN_GET_APPARENT_POSN_FIX_MAX):
-    
-    _posn = get_equ_pm(mean_position, proper_motion, jD)
-    _posn = get_equ_aber(_posn, jD)
-    return get_equ_prec(_posn, jD)
-    
-  # let ln_get_apparent_posn() do the work
-    
-  else:
-    
-    _posn = equ_posn() 
-    libnova.ln_get_apparent_posn(mean_position, proper_motion, jD, _posn)
-    _posn.ra = range_degrees(_posn.ra)
-    return _posn
+  _posn = get_equ_pm(mean_position, proper_motion, jD)
+  _posn = get_equ_aber(_posn, jD)
+  return get_equ_prec(_posn, jD)
                
     
 ######################################################################
-# python fucntion wrappers for libnova C Precession Functions
+# Precession Functions
 ######################################################################
 
 
 def get_equ_prec(mean_position, jD):
   """
-  Wrapper for libnova ln_get_equ_prec() function.
   Get position of celestial object accounting for precession.
   Only works for converting to and from J2000 epoch.
   
@@ -2237,22 +2258,32 @@ def get_equ_prec(mean_position, jD):
   
   Returns: Adjusted equatorial position of object as type equ_posn.
   """    
-    
+  
+  from pyslalib.slalib import sla_preces, sla_epj
+  
   _posn = equ_posn()    
-  libnova.ln_get_equ_prec(mean_position, jD, _posn)
-  _posn.ra = range_degrees(_posn.ra)
+  ra,dec = sla_preces('FK5', 2000.0, sla_epj(jD - MJD_OFFSET), deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec))
+  ra = rad_to_deg(ra)
+  dec = rad_to_deg(dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
   return _posn
-    
-    
-_LN_GET_EQU_PREC_2_MIN = _hexversion((0, 12, 0))
+  
+  #_posn = equ_posn() 
+  #equ = ephem.Equatorial(deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec), epoch=ephem.J2000)
+  #equ = ephem.Equatorial(equ, epoch=jD-DJD_OFFSET)
+  #ra = rad_to_deg(equ.ra)
+  #dec = rad_to_deg(equ.dec)
+  
+  #_posn.ra = ra
+  #_posn.dec = dec
+  #return _posn
+
 
 def get_equ_prec2(mean_position, fromJD, toJD):
   """
-  Wrapper for libnova ln_get_equ_prec2() function.
-  Get position of celestial object accounting for precession.
-  If libnova has a version lower than 0.12.0, the ln_get_equ_prec_2()
-  function is not available and the NOVAS C library adoptation 
-  of precession() is called instead.
+  Get position of celestial object accounting for precessio.
   
   Param: mean_position  - equatorial first position of object as type equ_posn.
   Param: fromJD         - UTC Julian day (float) of first time.
@@ -2261,45 +2292,128 @@ def get_equ_prec2(mean_position, fromJD, toJD):
   Returns: Equatorial position of object as type equ_posn converted from
            time 1 to time 2.
   """  
-    
-  if _CUR_LIBNOVA_VER < _LN_GET_EQU_PREC_2_MIN:
-    return get_precession(fromJD, mean_position, toJD)
-    
-  _posn = equ_posn()
-  libnova.ln_get_equ_prec2(mean_position, fromJD, toJD, _posn)
+  
+  _posn = equ_posn() 
+  equ = ephem.Equatorial(deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec), epoch=fromJD-DJD_OFFSET)
+  equ = ephem.Equatorial(equ, epoch=toJD-DJD_OFFSET)
+  ra = rad_to_deg(equ.ra)
+  dec = rad_to_deg(equ.dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
   return _posn
     
     
     
 ######################################################################
-# python fucntion wrappers for libnova C Nutation Functions
+# Nutation Functions
 ######################################################################
 
 
 def get_nutation(jD):
   """
-  Wrapper for libnova ln_get_nutation() function.
   Get nutation corrections for a given time.
   
   Param: jD - UTC Julian day (float) to measure nutation.
   
   Returns: Nutation corrections as object of type nutation.
+  
+  Based on the nutate.pro and co_nutate.pro from the AstroIDL
+  library.
   """
-    
+  
+  # form time in Julian centuries from 1900.0
+  t = (jD - 2451545.0) / 36525.
+
+  # Mean elongation of the Moon
+  coeff1 = numpy.array([297.85036, 445267.111480, -0.0019142, 1.0/189474])
+  d = deg_to_rad(numpy.polyval(coeff1[::-1], t))
+  d %= (2*math.pi)
+  
+  # Sun's mean anomaly
+  coeff2 = numpy.array([357.52772, 35999.050340, -0.0001603, -1.0/3e5])
+  M = deg_to_rad(numpy.polyval(coeff2[::-1], t))
+  M %= (2*math.pi)
+  
+  # Moon's mean anomaly
+  coeff3 = numpy.array([134.96298, 477198.867398, 0.0086972, 1.0/5.625e4])
+  Mprime = deg_to_rad(numpy.polyval(coeff3[::-1], t))
+  Mprime %= (2*math.pi)
+
+  # Moon's argument of latitude
+  coeff4 = numpy.array([93.27191, 483202.017538, -0.0036825, -1.0/3.27270e5])
+  F = deg_to_rad(numpy.polyval(coeff4[::-1], t)) 
+  F %= (2*math.pi)
+
+  # Longitude of the ascending node of the Moon's mean orbit on the ecliptic,
+  # measured from the mean equinox of the date
+  coeff5 = numpy.array([125.04452, -1934.136261, 0.0020708, 1.0/4.5e5])
+  omega = deg_to_rad(numpy.polyval(coeff5[::-1], t))
+  omega %= (2*math.pi)
+
+  d_lng = numpy.array([0,-2,0,0,0,0,-2,0,0,-2,-2,-2,0,2,0,2,0,0,-2,0,2,0,0,-2,
+                       0,-2,0,0,2,-2,0,-2,0,0,2,2,0,-2,0,2,2,-2,-2,2,2,0,-2,-2,
+                       0,-2,-2,0,-1,-2,1,0,0,-1,0,0,2,0,2])
+
+  m_lng = numpy.array([0,0,0,0,1,0,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                       2,0,2,1,0,-1,0,0,0,1,1,-1,0,0,0,0,0,0,-1,-1,0,0,0,1,0,0,
+                       1,0,0,0,-1,1,-1,-1,0,-1])
+
+  mp_lng = numpy.array([0,0,0,0,0,1,0,0,1,0,1,0,-1,0,1,-1,-1,1,2,-2,0,2,2,1,0,0,
+                        -1,0,-1,0,0,1,0,2,-1,1,0,1,0,0,1,2,1,-2,0,1,0,0,2,2,0,1,
+                        1,0,0,1,-2,1,1,1,-1,3,0])
+
+  f_lng = numpy.array([0,2,2,0,0,0,2,2,2,2,0,2,2,0,0,2,0,2,0,2,2,2,0,2,2,2,2,0,0,
+                       2,0,0,0,-2,2,2,2,0,2,2,0,2,2,0,0,0,2,0,2,0,2,-2,0,0,0,2,2,
+                       0,0,2,2,2,2])
+
+  om_lng = numpy.array([1,2,2,2,0,0,2,1,2,2,0,1,2,0,1,2,1,1,0,1,2,2,0,2,0,0,1,0,1,
+                        2,1,1,1,0,1,2,2,0,2,1,0,2,1,1,1,0,1,1,1,1,1,0,0,0,0,0,2,0,
+                        0,2,2,2,2])
+
+  sin_lng = numpy.array([-171996, -13187, -2274, 2062, 1426, 712, -517, -386, -301, 217, 
+                         -158, 129, 123, 63, 63, -59, -58, -51, 48, 46, -38, -31, 29, 29, 
+                         26, -22, 21, 17, 16, -16, -15, -13, -12, 11, -10, -8, 7, -7, -7, 
+                         -7, 6,6,6,-6,-6,5,-5,-5,-5,4,4,4,-4,-4,-4,3,-3,-3,-3,-3,-3,-3,-3])
+ 
+  sdelt = numpy.array([-174.2, -1.6, -0.2, 0.2, -3.4, 0.1, 1.2, -0.4, 0, -0.5, 0, 0.1, 
+                       0,0,0.1, 0,-0.1,0,0,0,0,0,0,0,0,0,0, -0.1, 0, 0.1,0,0,0,0,0,0,0,
+                       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]) 
+
+  cos_lng = numpy.array([92025, 5736, 977, -895, 54, -7, 224, 200, 129, -95,0,-70,-53,0, 
+                         -33, 26, 32, 27, 0, -24, 16,13,0,-12,0,0,-10,0,-8,7,9,7,6,0,5,3,
+                         -3,0,3,3,0,-3,-3,3,3,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+
+  cdelt = numpy.array([8.9, -3.1, -0.5, 0.5, -0.1, 0.0, -0.6, 0.0, -0.1, 0.3,0,0,0,0,
+                       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+
+  # Sum the periodic terms 
+  arg = d_lng*d + m_lng*M + mp_lng*Mprime + f_lng*F + om_lng*omega
+  sarg = numpy.sin(arg)
+  carg = numpy.cos(arg)
+  lng = 0.0001*( (sdelt*t + sin_lng)*sarg ).sum()
+  obl = 0.0001*( (cdelt*t + cos_lng)*carg ).sum()
+
+  T = (jD -2451545.0) / 36525.0
+  ecl = 23.4392911*3600. - 46.8150*T - 0.00059*T*T + 0.001813*T*T*T
+  ecl = (ecl + obl)/3600
+  
   _nut = nutation()
-  libnova.ln_get_nutation(jD, _nut)
+  _nut.longitude = lng / 3600.0
+  _nut.obliquity = obl / 3600.0
+  _nut.ecliptic = ecl
   return _nut
     
 
   
 ######################################################################
-# python fucntion wrappers for libnova C Aberration Functions
+# Aberration Functions
 ######################################################################
 
 
 def get_equ_aber(mean_position, jD): 
   """
-  Wrapper for libnova ln_get_equ_aber() function.
   Get position of celestial object accounting for aberration.
   
   Param: mean_position  - J2000 equatorial mean position of object as type 
@@ -2307,24 +2421,213 @@ def get_equ_aber(mean_position, jD):
   Param: jD             - UTC Julian day (float) to measure aberration.
   
   Returns: Adjusted equatorial position of object as type equ_posn.
+  
+  Based on the libnova ln_get_equ_aber() function.
   """    
-    
+  
   _posn = equ_posn()
-  libnova.ln_get_equ_aber(mean_position, jD, _posn)
-  return _posn
+  # speed of light in 10-8 au per day
+  c = 17314463350.0;
 
+  # calc T
+  T = (jD - 2451545.0) / 36525.0;
+
+  # calc planetary perturbutions
+  L2 = 3.1761467 + 1021.3285546 * T
+  L3 = 1.7534703 + 628.3075849 * T
+  L4 = 6.2034809 + 334.0612431 * T
+  L5 = 0.5995464 + 52.9690965 * T
+  L6 = 0.8740168 + 21.329909095 * T
+  L7 = 5.4812939 + 7.4781599 * T
+  L8 = 5.3118863 + 3.8133036 * T
+  LL = 3.8103444 + 8399.6847337 * T
+  D = 5.1984667 + 7771.3771486 * T
+  MM = 2.3555559 + 8328.6914289 * T
+  F = 1.6279052 + 8433.4661601 * T
+
+  X = 0.0
+  Y = 0.0
+  Z = 0.0
+
+  # terms
+  TERMS = 36
+
+  arguments = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+               [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+               [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+               [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+               [0, 2, 0, -1, 0, 0, 0, 0, 0, 0, 0],
+               [0, 3, -8, 3, 0, 0, 0, 0, 0, 0, 0],
+               [0, 5, -8, 3, 0, 0, 0, 0, 0, 0, 0],
+               [2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+               [0, 1, 0, -2, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+               [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+               [2, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0],
+               [0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 3, 0, -2, 0, 0, 0, 0, 0, 0, 0],
+               [1, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [2, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0],
+               [2, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 3, -2, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 1, 2, -1, 0],
+               [8, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [8, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+               [3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 2, 0, -2, 0, 0, 0, 0, 0, 0, 0],
+               [3, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 2, -2, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 1, -2, 0, 0]]
+  
+  x_coefficients = [[-1719914, -2, -25, 0],
+                    [6434, 141, 28007, -107],
+                    [715, 0, 0, 0],
+                    [715, 0, 0, 0],
+                    [486, -5, -236, -4],
+                    [159, 0, 0, 0],
+                    [0, 0, 0, 0],
+                    [39, 0, 0, 0],
+                    [33, 0, -10, 0],
+                    [31, 0, 1, 0],
+                    [8, 0, -28, 0],
+                    [8, 0, -28, 0],
+                    [21, 0, 0, 0],
+                    [-19, 0, 0, 0],
+                    [17, 0, 0, 0],
+                    [16, 0, 0, 0],
+                    [16, 0, 0, 0],
+                    [11, 0, -1, 0],
+                    [0, 0, -11, 0],
+                    [-11, 0, -2, 0],
+                    [-7, 0, -8, 0],
+                    [-10, 0, 0, 0],
+                    [-9, 0, 0, 0], 
+                    [-9, 0, 0, 0],
+                    [0, 0, -9, 0],
+                    [0, 0, -9, 0],
+                    [8, 0, 0, 0],
+                    [8, 0, 0, 0], 
+                    [-4, 0, -7, 0],
+                    [-4, 0, -7, 0],
+                    [-6, 0, -5, 0],
+                    [-1, 0, -1, 0],
+                    [4, 0, -6, 0],
+                    [0, 0, -7, 0],
+                    [5, 0, -5, 0],
+                    [5, 0, 0, 0]]
+
+  y_coefficients = [[25, -13, 1578089, 156],
+                    [25697, -95, -5904, -130],
+                    [6, 0, -657, 0], 
+                    [0, 0, -656, 0],
+                    [-216, -4, -446, 5],
+                    [2, 0, -147, 0],
+                    [0, 0, 26, 0],
+                    [0, 0, -36, 0],
+                    [-9, 0, -30, 0],
+                    [1, 0, -28, 0],
+                    [25, 0, 8, 0],
+                    [-25, 0, -8, 0],
+                    [0, 0, -19, 0],
+                    [0, 0, 17, 0],
+                    [0, 0, -16, 0],
+                    [0, 0, 15, 0],
+                    [1, 0, -15, 0],
+                    [-1, 0, -10, 0],
+                    [-10, 0, 0, 0],
+                    [-2, 0, 9, 0],
+                    [-8, 0, 6, 0], 
+                    [0, 0, 9, 0], 
+                    [0, 0, -9, 0], 
+                    [0, 0, -8, 0],
+                    [-8, 0, 0, 0],
+                    [8, 0, 0, 0],
+                    [0, 0, -8, 0],
+                    [0, 0, -7, 0], 
+                    [-6, 0, -4, 0],
+                    [6, 0, -4, 0],
+                    [-4, 0, 5, 0],
+                    [-2, 0, -7, 0],
+                    [-5, 0, -4, 0],
+                    [-6, 0, 0, 0], 
+                    [-4, 0, -5, 0],
+                    [0, 0, -5, 0]]
+
+  z_coefficients = [[10, 32, 684185, -358],
+                    [11141, -48, -2559, -55],
+                    [-15, 0, -282, 0],
+                    [0, 0, -285, 0],
+                    [-94, 0, -193, 0],
+                    [-6, 0, -61, 0],
+                    [0, 0, 59, 0],
+                    [0, 0, 16, 0],
+                    [-5, 0, -13, 0],
+                    [0, 0, -12, 0],
+                    [11, 0, 3, 0],
+                    [-11, 0, -3, 0],
+                    [0, 0, -8, 0],
+                    [0, 0, 8, 0],
+                    [0, 0, -7, 0],
+                    [1, 0, 7, 0],
+                    [-3, 0, -6, 0],
+                    [-1, 0, 5, 0],
+                    [-4, 0, 0, 0],
+                    [-1, 0, 4, 0],
+                    [-3, 0, 3, 0],
+                    [0, 0, 4, 0],
+                    [0, 0, -4, 0],
+                    [0, 0, -4, 0],
+                    [-3, 0, 0, 0],
+                    [3, 0, 0, 0],
+                    [0, 0, -3, 0],
+                    [0, 0, -3, 0],
+                    [-3, 0, 2, 0],
+                    [3, 0, -2, 0],
+                    [-2, 0, 2, 0],
+                    [1, 0, -4, 0],
+                    [-2, 0, -2, 0],
+                    [-3, 0, 0, 0],
+                    [-2, 0, -2, 0],
+                    [0, 0, -2, 0]]
+
+  # sum the terms
+  for i in xrange(TERMS):
+    A = arguments[i][0]*L2 + arguments[i][1]*L3 + arguments[i][2]*L4 + arguments[i][3]*L5 + arguments[i][4]*L6 + \
+		arguments[i][5]*L7 + arguments[i][6]*L8 + arguments[i][7]*LL + arguments[i][8]*D + arguments[i][9]*MM + \
+		arguments[i][10]*F
+    X += (x_coefficients[i][0] + x_coefficients[i][1]*T) * math.sin(A) + (x_coefficients[i][2] + x_coefficients[i][3]*T) * math.cos(A)
+    Y += (y_coefficients[i][0] + y_coefficients[i][1]*T) * math.sin(A) + (y_coefficients[i][2] + y_coefficients[i][3]*T) * math.cos(A)
+    Z += (z_coefficients[i][0] + z_coefficients[i][1]*T) * math.sin(A) + (z_coefficients[i][2] + z_coefficients[i][3]*T) * math.cos(A)
+
+  # Equ 22.4
+  mean_ra = deg_to_rad(mean_position.ra)
+  mean_dec = deg_to_rad(mean_position.dec)
+  
+  delta_ra = (Y * math.cos(mean_ra) - X * math.sin(mean_ra)) / (c * math.cos(mean_dec));
+  delta_dec = (X * math.cos(mean_ra) + Y * math.sin(mean_ra)) * math.sin(mean_dec) - Z * math.cos(mean_dec);
+  delta_dec /= -c;
+  
+  _posn.ra = rad_to_deg(mean_ra + delta_ra)
+  _posn.dec = rad_to_deg(mean_dec + delta_dec)
+  return _posn
     
 ######################################################################
-# python fucntion wrappers for libnova C Proper Motion Functions
+# Proper Motion Functions
 ######################################################################   
-    
 
-_LN_GET_EQU_PM_FIX_MIN = _hexversion((0, 12, 0))
-_LN_GET_EQU_PM_FIX_MAX = _hexversion((0, 12, 1))
 
 def get_equ_pm(mean_position, proper_motion, jD):
   """
-  Wrapper for libnova ln_get_equ_pm() function.
   Adjusts equatorial position of a stellar object accouting for proper motion.
   
   Param: mean_position - J2000 equatorial mean position of object as type equ_posn.
@@ -2333,52 +2636,53 @@ def get_equ_pm(mean_position, proper_motion, jD):
   Param: jD - UTC Julian day (float) to measure position.
   
   Returns: Adjusted equatorial position of object as type equ_posn.
+  
+  Based on pm.f, dcs2c.f, and dcc2s.f from SLALIB.
   """
-    
-  # libnova ln_get_equ_pm is broken for version 0.12.0
-  # use copy of version 0.11.0 code
    
-  if (_CUR_LIBNOVA_VER >= _LN_GET_EQU_PM_FIX_MIN) and \
-    (_CUR_LIBNOVA_VER <= _LN_GET_EQU_PM_FIX_MAX):
+  _posn = equ_posn()
+  ra = ephem.degrees(str(mean_position.ra))
+  dec = ephem.degrees(str(mean_position.dec))
+  pmRA = ephem.degrees(str(proper_motion.ra))
+  pmDec = ephem.degrees(str(proper_motion.dec))
+  
+  p = [math.cos(ra)*math.cos(dec), 
+       math.sin(ra)*math.cos(dec), 
+       math.sin(dec)]
+  em = [-pmRA*p[1] - pmDec*math.cos(ra)*math.sin(dec), 
+        pmRA*p[0]  - pmDec*math.sin(ra)*math.sin(dec), 
+        pmDec*math.cos(dec)]
         
-     T = (jD - J2000_UTC_JD) / 365.25
-	
-     # change original ra and dec to radians
-            
-     mean_ra = math.radians(mean_position.ra)
-     mean_dec = math.radians(mean_position.dec)
-
-     # calc proper motion
-	
-     mean_ra += T * math.radians(proper_motion.ra)
-     mean_dec += T * math.radians(proper_motion.dec)
-	
-     # change to degrees 
-	    
-     mean_ra = range_degrees(math.degrees(mean_ra))
-     mean_dec = math.degrees(mean_dec)
-            
-     return equ_posn(mean_ra, mean_dec)
-   
-    
-  # otherwise, let ln_get_equ_pm do the work
-    
+  t = jD - (ephem.J2000+DJD_OFFSET)
+  p[0] += em[0]*t
+  p[1] += em[1]*t
+  p[2] += em[2]*t
+  
+  r = math.sqrt(p[0]**2 + p[1]**2)
+  if r == 0:
+    ra = 0.0 % (2*math.pi)
   else:
+    ra = math.atan2(p[1], p[0])
+  if p[2] == 0:
+    dec = 0.0
+  else:
+    dec = math.atan2(p[2], r)
     
-    _posn = equ_posn()
-    libnova.ln_get_equ_pm(mean_position, proper_motion, jD, _posn)
-    return _posn
-    
+  ra = rad_to_deg(ra)
+  dec = rad_to_deg(dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
+  return _posn
     
 
 ######################################################################
-# python fucntion wrappers for libnova C Rise, Set, Transit functions
+# Rise, Set, Transit functions
 ######################################################################
 
 
 def get_object_rst(jD, observer, object_):
   """
-  Wrapper for libnova ln_get_object_rst() function.
   Get rise, set, and transit times of a celstial object.
   
   Param: jD       - UTC Julian day (float) target time.
@@ -2390,21 +2694,36 @@ def get_object_rst(jD, observer, object_):
   """
 
   _rst = rst_time()
-  if libnova.ln_get_object_rst(jD, observer, object_, _rst) != 0:
-    return None
-  return _rst
-
+  b = ephem.FixedBody()
+  b._ra = deg_to_rad(object_.ra)
+  b._dec = deg_to_rad(object_.dec)
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
     
+  b.compute(o)
+  if b.circumpolar or b.neverup:
+    return None
+    
+  _rst.rise = o.next_rising(b)+DJD_OFFSET
+  _rst.transit = o.next_transit(b)+DJD_OFFSET
+  _rst.set = o.next_setting(b)+DJD_OFFSET
+  return _rst
 
 
 ######################################################################
-# python fucntion wrappers for libnova C Solar Functions
+#  Solar Functions
 ######################################################################
 
 
 def get_solar_equ_coords(jD):
   """
-  Wrapper for libnova ln_get_solar_equ_coords() function.
   Get Sun's apparent equatorial coordinates from Julian day.
   Accounts for aberration and precession, and nutation.
   
@@ -2414,13 +2733,16 @@ def get_solar_equ_coords(jD):
   """
 
   _posn = equ_posn()
-  libnova.ln_get_solar_equ_coords(jD, _posn)
-  return get_equ_prec(_posn, jD)
+  b = ephem.Sun()
+  b.compute(jD-DJD_OFFSET)
+  
+  _posn.ra = rad_to_deg(b.g_ra)
+  _posn.dec = rad_to_deg(b.g_dec)
+  return _posn
 
 
 def get_solar_rst(jD, observer):
   """
-  Wrapper for libnova ln_get_solar_rst() function.
   Get Sun's rise, transit, set times from Julian day.
   
   Param: jD       - UTC Julian day (float).
@@ -2431,21 +2753,36 @@ def get_solar_rst(jD, observer):
   """
 
   _rst = rst_time()
-  if libnova.ln_get_solar_rst(jD, observer, _rst) != 0:
+  b = ephem.Sun()
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+    
+  b.compute(o)
+  if b.circumpolar or b.neverup:
     return None
+    
+  _rst.rise = o.next_rising(b)+DJD_OFFSET
+  _rst.transit = o.next_transit(b)+DJD_OFFSET
+  _rst.set = o.next_setting(b)+DJD_OFFSET
   return _rst
     
 
 
 
 ######################################################################
-# python fucntion wrappers for libnova C Jupiter Functions
+#  Jupiter Functions
 ######################################################################
 
 
 def get_jupiter_equ_coords(jD):
   """
-  Wrapper for libnova ln_get_jupiter_equ_coords() function.
   Get Jupiter's apparent equatorial coordinates from Julian day.
   Accounts for aberration and precession, but not nutation.
   
@@ -2455,8 +2792,12 @@ def get_jupiter_equ_coords(jD):
   """
 
   _posn = equ_posn()
-  libnova.ln_get_jupiter_equ_coords(jD, _posn)
-  return get_equ_prec(_posn, jD)
+  b = ephem.Jupiter()
+  b.compute(jD-DJD_OFFSET)
+  
+  _posn.ra = rad_to_deg(b.g_ra)
+  _posn.dec = rad_to_deg(b.g_dec)
+  return _posn
 
 
 def get_jupiter_rst(jD, observer):
@@ -2471,20 +2812,35 @@ def get_jupiter_rst(jD, observer):
   """
 
   _rst = rst_time()
-  if libnova.ln_get_jupiter_rst(jD, observer, _rst) != 0:
+  b = ephem.Jupiter()
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+    
+  b.compute(o)
+  if b.circumpolar or b.neverup:
     return None
+    
+  _rst.rise = o.next_rising(b)+DJD_OFFSET
+  _rst.transit = o.next_transit(b)+DJD_OFFSET
+  _rst.set = o.next_setting(b)+DJD_OFFSET
   return _rst
 
 
 
 ######################################################################
-# python fucntion wrappers for libnova C Saturn Functions
+# Saturn Functions
 ######################################################################
 
 
 def get_saturn_equ_coords(jD):
-  """
-  Wrapper for libnova ln_get_saturn_equ_coords() function.    
+  """   
   Get Saturn's apparent equatorial coordinates from Julian day.
   Accounts for aberration and precession, but not nutation.
   
@@ -2494,8 +2850,12 @@ def get_saturn_equ_coords(jD):
   """
 
   _posn = equ_posn()
-  libnova.ln_get_saturn_equ_coords(jD, _posn)
-  return get_equ_prec(_posn, jD)
+  b = ephem.Saturn()
+  b.compute(jD-DJD_OFFSET)
+  
+  _posn.ra = rad_to_deg(b.g_ra)
+  _posn.dec = rad_to_deg(b.g_dec)
+  return _posn
 
 
 def get_saturn_rst(jD, observer):
@@ -2510,20 +2870,35 @@ def get_saturn_rst(jD, observer):
   """
 
   _rst = rst_time()
-  if libnova.ln_get_saturn_rst(jD, observer, _rst) != 0:
-    return None 
+  b = ephem.Saturn()
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+    
+  b.compute(o)
+  if b.circumpolar or b.neverup:
+    return None
+    
+  _rst.rise = o.next_rising(b)+DJD_OFFSET
+  _rst.transit = o.next_transit(b)+DJD_OFFSET
+  _rst.set = o.next_setting(b)+DJD_OFFSET
   return _rst
 
 
 
 ######################################################################
-# python fucntion wrappers for libnova C Lunar Functions
+# Lunar Functions
 ######################################################################
 
 
 def get_lunar_equ_coords(jD):
   """
-  Wrapper for libnova ln_get_lunar_equ_coords() function.
   Get the Moon's apparent equatorial coordinates from Julian day.
   Accounts for aberration and precession, but not nutation.
   
@@ -2533,8 +2908,12 @@ def get_lunar_equ_coords(jD):
   """
 
   _posn = equ_posn()
-  libnova.ln_get_lunar_equ_coords(jD, _posn)
-  return get_equ_prec(_posn, jD)
+  b = ephem.Moon()
+  b.compute(jD-DJD_OFFSET)
+  
+  _posn.ra = rad_to_deg(b.g_ra)
+  _posn.dec = rad_to_deg(b.g_dec)
+  return _posn
 
 
 def get_lunar_rst(jD, observer):
@@ -2549,20 +2928,34 @@ def get_lunar_rst(jD, observer):
   """
 
   _rst = rst_time()
-  if libnova.ln_get_lunar_rst(jD, observer, _rst) != 0:
+  b = ephem.Moon()
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+    
+  b.compute(o)
+  if b.circumpolar or b.neverup:
     return None
+    
+  _rst.rise = o.next_rising(b)+DJD_OFFSET
+  _rst.transit = o.next_transit(b)+DJD_OFFSET
+  _rst.set = o.next_setting(b)+DJD_OFFSET
   return _rst
 
 
-
 ######################################################################
-# python fucntion wrappers for libnova C Venus Functions
+# Venus Functions
 ######################################################################
 
 
 def get_venus_equ_coords(jD):
   """
-  Wrapper for libnova ln_get_venus_equ_coords() function.
   Get Venus' apparent equatorial coordinates from Julian day.
   Accounts for aberration and precession, but not nutation.
   
@@ -2572,8 +2965,12 @@ def get_venus_equ_coords(jD):
   """
 
   _posn = equ_posn()
-  libnova.ln_get_venus_equ_coords(jD, _posn)
-  return get_equ_prec(_posn, jD)
+  b = ephem.Venus()
+  b.compute(jD-DJD_OFFSET)
+  
+  _posn.ra = rad_to_deg(b.g_ra)
+  _posn.dec = rad_to_deg(b.g_dec)
+  return _posn
 
 
 def get_venus_rst(jD, observer):
@@ -2588,21 +2985,36 @@ def get_venus_rst(jD, observer):
   """
 
   _rst = rst_time()
-  if libnova.ln_get_venus_rst(jD, observer, _rst) != 0:
+  b = ephem.Venus()
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+    
+  b.compute(o)
+  if b.circumpolar or b.neverup:
     return None
+    
+  _rst.rise = o.next_rising(b)+DJD_OFFSET
+  _rst.transit = o.next_transit(b)+DJD_OFFSET
+  _rst.set = o.next_setting(b)+DJD_OFFSET
   return _rst
     
     
     
     
 ######################################################################
-# python fucntion wrappers for libnova C Mars Functions
+# Mars Functions
 ######################################################################
 
 
 def get_mars_equ_coords(jD):
   """
-  Wrapper for libnova ln_get_mars_equ_coords() function.
   Get Mars' apparent equatorial coordinates from Julian day.
   Accounts for aberration and precession, but not nutation.
   
@@ -2612,8 +3024,12 @@ def get_mars_equ_coords(jD):
   """
 
   _posn = equ_posn()
-  libnova.ln_get_mars_equ_coords(jD, _posn)
-  return get_equ_prec(_posn, jD)
+  b = ephem.Mars()
+  b.compute(jD-DJD_OFFSET)
+  
+  _posn.ra = rad_to_deg(b.g_ra)
+  _posn.dec = rad_to_deg(b.g_dec)
+  return _posn
 
 
 def get_mars_rst(jD, observer):
@@ -2628,8 +3044,24 @@ def get_mars_rst(jD, observer):
   """
 
   _rst = rst_time()
-  if libnova.ln_get_mars_rst(jD, observer, _rst) != 0:
+  b = ephem.Mars()
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(observer.lng)
+  o.lat = deg_to_rad(observer.lat)
+  try:
+    o.elev = observer.elv
+  except:
+    pass
+    
+  b.compute(o)
+  if b.circumpolar or b.neverup:
     return None
+    
+  _rst.rise = o.next_rising(b)+DJD_OFFSET
+  _rst.transit = o.next_transit(b)+DJD_OFFSET
+  _rst.set = o.next_setting(b)+DJD_OFFSET
   return _rst
 
 
@@ -2661,12 +3093,12 @@ SECS_IN_DAY = 86400.0
 """
 UTC Julian day of B1950.0 coordinate epoch.
 """
-B1950_UTC_JD =  libnova.B1950
+B1950_UTC_JD =  2433282.4235
 
 """
 UTC Julian day of J2000.0 coordinate epoch.
 """
-J2000_UTC_JD = libnova.JD2000
+J2000_UTC_JD = 2451545.0
 
 """
 Difference in seconds between TT and TAI times.
@@ -3106,7 +3538,7 @@ def hms_to_sec(hms):
   Returns: Seconds (float) offset of time/angle.
   """
     
-  return ((hms.hours * 60.0 * 60.0) + (hms.minutes * 60.0) + hms.seconds)  
+  return hms.hours*3600.0 + hms.minutes*60.0 + hms.seconds
 
 
 
@@ -3119,7 +3551,8 @@ def deg_to_sec(degrees):
   Returns: Seconds (float) offset in time for longitude.
   """
     
-  return (degrees * 3600.0) / 15.0
+  hours = degrees / 15.0
+  return hours*3600.0
  
     
     
@@ -3130,12 +3563,12 @@ def get_local_sidereal_time(lng, jD):
   Param: lng  - longitude degrees (float), E = positive, W = negative 
   Param: jD   - UTC Julian day (float).
   
-  Returns: Local apparent sidereal time (float hours).
+  Returns: Local mean sidereal time (float hours).
   """
     
-  gast = get_apparent_sidereal_time(jD)    
+  gmst = get_mean_sidereal_time(jD)    
   off = lng / 15.0
-  return range_hours(gast + off)
+  return range_hours(gmst + off)
 
 
 
@@ -3160,7 +3593,7 @@ class geo_posn(lnlat_posn):
     geo_posn[2] = elv
   """
 
-  def __init__(self, lng = None, lat = None, elv = 0.0):
+  def __init__(self, lng = 0.0, lat = 0.0, elv = 0.0):
     """
     Create a geo_posn object.
     
@@ -3390,9 +3823,7 @@ def get_rect_from_geo(posn):
   z = ((1.0 - e2) * rad_cur + h) * slat
     
   return rect_posn(x, y, z)
-    
-    
-    
+
 
 def get_precession(jD1, pos, jD2):
   """
@@ -3526,7 +3957,7 @@ def _precession(tjd1, pos, tjd2):
     zr = xz * pos[0] + yz * pos[1] + zz * pos[2];
 
     return (xr, yr, zr)
-                    
+
 
 def B1950_to_J2000(pos):
   """
@@ -3536,8 +3967,16 @@ def B1950_to_J2000(pos):
   
   Returns: object of type equ_posn giving J2000 coordinates.
   """
-
-  return get_equ_prec2(pos, B1950_UTC_JD, J2000_UTC_JD)
+  
+  _posn = equ_posn()
+  coord = ephem.Equatorial(deg_to_rad(pos.ra), deg_to_rad(pos.dec), epoch=ephem.B1950)
+  coord = ephem.Equatorial(coord, epoch=ephem.J2000)
+  ra = rad_to_deg(coord.ra)
+  dec = rad_to_deg(coord.dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
+  return _posn
 
 
 def J2000_to_B1950(pos):
@@ -3549,4 +3988,14 @@ def J2000_to_B1950(pos):
   Returns: object of type equ_posn giving B1950 coordinates.
   """   
 
-  return get_equ_prec2(pos, J2000_UTC_JD, B1950_UTC_JD)
+  _posn = equ_posn()
+  coord = ephem.Equatorial(deg_to_rad(pos.ra), deg_to_rad(pos.dec), epoch=ephem.J2000)
+  coord = ephem.Equatorial(coord, epoch=ephem.B1950)
+  ra = rad_to_deg(coord.ra)
+  dec = rad_to_deg(coord.dec)
+  ra = rad_to_deg(ra)
+  dec = rad_to_deg(dec)
+  
+  _posn.ra = ra
+  _posn.dec = dec
+  return _posn

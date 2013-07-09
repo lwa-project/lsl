@@ -8,7 +8,7 @@ import math
 import pickle
 import operator
 
-from lsl import astro
+import astro
 
 
 __revision__  = "$Revision$"
@@ -264,8 +264,8 @@ class astro_tests(unittest.TestCase):
 		"""Test astro.date.__cmp__() method."""
 		
 		d1 = astro.date(2004, 5, 9, 12, 34, 22)
-		d2 = astro.date(2009, 2, 6, 9, 2, 6)
-		d3 = astro.date(2009, 2, 6, 9, 2, 6)
+		d2 = astro.date(2009, 2, 6,  9,  2,  6)
+		d3 = astro.date(2009, 2, 6,  9,  2,  6)
 		self.assertTrue(operator.lt(d1, d2))
 		self.assertTrue(operator.gt(d2, d1))
 		self.assertTrue(operator.eq(d2, d3))
@@ -793,9 +793,11 @@ class astro_tests(unittest.TestCase):
             
 	def test_get_hrz_from_equ(self):
 		"""Test astro.get_hrz_from_equ() function."""
-			
-		ACCURACY_AZ = 3
-		ACCURACY_ALT = 6
+		
+		from pyslalib.slalib import sla_e2h, sla_gmst
+		
+		ACCURACY_AZ = 0
+		ACCURACY_ALT = 0
 			
 		ra_aa = (\
 			astro.hms( 8,  5, 38.2531).to_deg(), 
@@ -808,17 +810,24 @@ class astro_tests(unittest.TestCase):
 			
 		ira = iter(ra_aa)
 		for t in self.times:
+			ra = ira.next()
+			
 			j = t.to_jd()
-			equ = astro.equ_posn(ira.next(), 30.0)
+			equ = astro.equ_posn(ra, 30.0)
 			hrz = astro.get_hrz_from_equ(equ, obs, j)
-			self.assertAlmostEqual(math.radians(hrz.az), math.radians(360.0), ACCURACY_AZ)
+                        az = hrz.az
+			if az > 180:
+                             az -= 360
+			self.assertAlmostEqual(math.radians(az), 0.0, ACCURACY_AZ)
 			self.assertAlmostEqual(hrz.alt, 60.0, ACCURACY_ALT)               
             
 	def test_get_equ_from_hrz(self):
 		"""Test astro.get_equ_from_hrz() function."""
-			
-		ACCURACY_RA = 3
-		ACCURACY_DEC = 6
+		
+		from pyslalib.slalib import sla_h2e, sla_gmst
+		
+		ACCURACY_RA = 0
+		ACCURACY_DEC = 0
 			
 		ra_aa = (\
 			astro.hms( 8,  5, 38.2531).to_deg(), 
@@ -829,12 +838,14 @@ class astro_tests(unittest.TestCase):
 				
 		hrz = astro.hrz_posn(0.0, 60.0)
 		obs = astro.lnlat_posn(0.0, 0.0)
-			
+		
 		ira = iter(ra_aa)
 		for t in self.times:
+			ra = ira.next()
+			
 			j = t.to_jd()
 			equ = astro.get_equ_from_hrz(hrz, obs, j)
-			self.assertAlmostEqual(math.radians(equ.ra), math.radians(ira.next()), ACCURACY_RA)
+			self.assertAlmostEqual(math.radians(equ.ra), math.radians(ra), ACCURACY_RA)
 			self.assertAlmostEqual(equ.dec, 30.0, ACCURACY_DEC)
             
 	def test_get_equ_prec(self):
@@ -898,10 +909,12 @@ class astro_tests(unittest.TestCase):
             
 	def test_get_nutation(self):
 		"""Test astro.get_nutation() function."""
-			
+		
+		from pyslalib.slalib import sla_nutc
+		
 		ACCURACY_LNG = 4
 		ACCURACY_OBL = 4
-		ACCURACY_ECL = 2
+		ACCURACY_ECL = 4
 			
 		lng_aa = (\
 			astro.dms(True,  0, 0, 15.453).to_deg(),
@@ -929,11 +942,15 @@ class astro_tests(unittest.TestCase):
 		iobl = iter(obl_aa)
 		iecl = iter(ecl_aa)
 		for t in self.times:
+			lng = ilng.next()
+			obl = iobl.next()
+			ecl = iecl.next()
+			
 			j = t.to_jd()
 			nut = astro.get_nutation(j)
-			self.assertAlmostEqual(nut.longitude, ilng.next(), ACCURACY_LNG)      
-			self.assertAlmostEqual(nut.obliquity, iobl.next(), ACCURACY_OBL)
-			self.assertAlmostEqual(nut.ecliptic, iecl.next(), ACCURACY_ECL)
+			self.assertAlmostEqual(nut.longitude, lng, ACCURACY_LNG)      
+			self.assertAlmostEqual(nut.obliquity, obl, ACCURACY_OBL)
+			self.assertAlmostEqual(nut.ecliptic, ecl, ACCURACY_ECL)
     
 	def test_rst_time_init(self):
 		"""Test astro.rst_time constructor method."""
@@ -968,7 +985,7 @@ class astro_tests(unittest.TestCase):
 	def test_get_solar_equ_coords(self):
 		"""Test astro.get_solar_equ_coords() function."""
 			
-		ACCURACY_RA  = 1
+		ACCURACY_RA  = 2
 		ACCURACY_DEC = 2
 			
 		ra_aa = (\
@@ -1015,7 +1032,7 @@ class astro_tests(unittest.TestCase):
 	def test_get_jupiter_equ_coord(self):
 		"""Test astro.get_jupiter_equ_coords() function."""
 			
-		ACCURACY_RA  = 1
+		ACCURACY_RA  = 2
 		ACCURACY_DEC = 2
 			
 		ra_aa = (\
@@ -1089,7 +1106,9 @@ class astro_tests(unittest.TestCase):
             
 	def test_get_ecl_from_equ(self):
 		"""Test astro.get_ecl_from_equ() function."""
-			
+		
+		from pyslalib.slalib import sla_eqecl
+		
 		ACCURACY_LNG = 1
 		ACCURACY_LAT = 2
 			
@@ -1126,15 +1145,22 @@ class astro_tests(unittest.TestCase):
 		ira = iter(ra_aa)
 		idec = iter(dec_aa)
 		for t in self.times:
+			lng = ilng.next()
+			lat = ilat.next()
+			ra = ira.next()
+			dec = idec.next()
+			
 			j = t.to_jd()
-			equ = astro.equ_posn(ira.next(), idec.next())
+			equ = astro.equ_posn(ra, dec)
 			ecl = astro.get_ecl_from_equ(equ, j)
-			self.assertAlmostEqual(ecl.lng, ilng.next(), ACCURACY_LNG)
-			self.assertAlmostEqual(ecl.lat, ilat.next(), ACCURACY_LAT)
+			self.assertAlmostEqual(ecl.lng, lng, ACCURACY_LNG)
+			self.assertAlmostEqual(ecl.lat, lat, ACCURACY_LAT)
             
 	def test_get_equ_from_ecl(self):
 		"""Test astro.get_equ_from_ecl() function."""
-			
+		
+		from pyslalib.slalib import sla_ecleq
+		
 		ACCURACY_RA = 1
 		ACCURACY_DEC = 2
 			
@@ -1171,15 +1197,23 @@ class astro_tests(unittest.TestCase):
 		ira = iter(ra_aa)
 		idec = iter(dec_aa)
 		for t in self.times:
+			lng = ilng.next()
+			lat = ilat.next()
+			ra = ira.next()
+			dec = idec.next()
+			
 			j = t.to_jd()
-			ecl = astro.ecl_posn(ilng.next(), ilat.next())
+			
+			ecl = astro.ecl_posn(lng, lat)
 			equ = astro.get_equ_from_ecl(ecl, j)
-			self.assertAlmostEqual(equ.ra, ira.next(), ACCURACY_RA)
-			self.assertAlmostEqual(equ.dec, idec.next(), ACCURACY_DEC)
+			self.assertAlmostEqual(equ.ra, ra, ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, dec, ACCURACY_DEC)
             
 	def test_get_gal_from_equ(self):
 		"""Test astro.get_gal_from_equ() function."""
-			
+		
+		from pyslalib.slalib import sla_eqgal
+		
 		ACCURACY_L = 1
 		ACCURACY_B = 1
 			
@@ -1204,14 +1238,21 @@ class astro_tests(unittest.TestCase):
 		il = iter(l_4c)
 		ib = iter(b_4c)
 		for i in range(len(ra_4c)):
-			equ = astro.equ_posn(ira.next(), idec.next())
+			ra = ira.next()
+			dec = idec.next()
+			l = il.next()
+			b = ib.next()
+			
+			equ = astro.equ_posn(ra, dec)
 			gal = astro.get_gal_from_equ(equ)
-			self.assertAlmostEqual(gal.l, il.next(), ACCURACY_L)
-			self.assertAlmostEqual(gal.b, ib.next(), ACCURACY_B)
+			self.assertAlmostEqual(gal.l, l, ACCURACY_L)
+			self.assertAlmostEqual(gal.b, b, ACCURACY_B)
 				
 	def test_get_equ_from_gal(self):
 		"""Test astro.get_equ_from_gal() function."""
-			
+		
+		from pyslalib.slalib import sla_galeq
+		
 		ACCURACY_RA = 0
 		ACCURACY_DEC = 1
 			
@@ -1236,10 +1277,15 @@ class astro_tests(unittest.TestCase):
 		il = iter(l_4c)
 		ib = iter(b_4c)
 		for i in range(len(ra_4c)):
-			gal = astro.gal_posn(il.next(), ib.next())
+			ra = ira.next()
+			dec = idec.next()
+			l = il.next()
+			b = ib.next()
+			
+			gal = astro.gal_posn(l, b)
 			equ = astro.get_equ_from_gal(gal)
-			self.assertAlmostEqual(equ.ra, ira.next(), ACCURACY_RA)
-			self.assertAlmostEqual(equ.dec, idec.next(), ACCURACY_DEC)
+			self.assertAlmostEqual(equ.ra, ra, ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, dec, ACCURACY_DEC)
 
 	def test_get_apparent_posn(self):
 		"""Test astro.get_apparent_posn() function."""
