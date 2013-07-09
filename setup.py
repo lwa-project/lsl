@@ -196,8 +196,7 @@ drsuExtraLibs = ['-lrt', '-lgdbm']
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
-ExtensionModules = [Extension('astro_array', ['lsl/astro_array.c'], include_dirs=[numpy.get_include()]),
-			Extension('reader._gofast', ['lsl/reader/gofast.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-funroll-loops']),
+ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-funroll-loops']),
 			Extension('common._fir', ['lsl/common/fir.c'], include_dirs=[numpy.get_include()], 
 libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
 			Extension('correlator._spec', ['lsl/correlator/spec.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 

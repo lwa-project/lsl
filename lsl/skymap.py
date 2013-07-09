@@ -12,7 +12,7 @@ import os,sys
 
 import pyfits
 
-from lsl import astro_array
+from lsl import astro
 
 __version__   = '0.1'
 __revision__ = '$Rev$'
@@ -192,7 +192,7 @@ class ProjectedSkyMap(object):
 		self.time=utc_jd
 
 		# Compute the ra and dec locations to a altitude and azimuth. This requires a lat/lon and a time (UTC). Alt and Az are compressed to show only the visible source.
-		self.alt,self.az=astro_array.hrz_from_equ(self.lon, self.lat, self.time, self.skyMapObject.ra, self.skyMapObject.dec)  ### Replace me with a dot product instead of astro_array
+		self.alt,self.az=astro.hrz_from_equ(self.lon, self.lat, self.time, self.skyMapObject.ra, self.skyMapObject.dec)  ### Replace me with a dot product instead of astro
 
 		# Compress the az/alt so that only the visible sources are available. "
 		visibleMask = self.alt > 0.0

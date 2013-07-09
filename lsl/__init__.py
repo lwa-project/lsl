@@ -12,7 +12,6 @@ Provided packages:
   * lsl.misc
 
 Provided modules:
-  * lsl.astro_array
   * lsl.astro
   * lsl.catalog
   * lsl.skymap

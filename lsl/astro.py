@@ -3999,3 +3999,32 @@ def J2000_to_B1950(pos):
   _posn.ra = ra
   _posn.dec = dec
   return _posn
+
+
+######################################################################
+# Python versions of the astro_array functions
+######################################################################
+def hrz_from_equ(lng, lat, jD, ra, dec):
+  """
+  Given an observator longitude/latitude, a Julian date, and an array 
+  of RA/Dec.values in degrees, return the azimuth and elevation of each 
+  point as a two-element tuple.
+  """
+  
+  o = ephem.Observer()
+  o.date = jD-DJD_OFFSET
+  o.lon = deg_to_rad(lng)
+  o.lat = deg_to_rad(lat)
+
+  az  = ra*0.0
+  alt = ra*0.0
+  for i in xrange(ra.size):
+    b = ephem.FixedBody()
+    b._ra = deg_to_rad(ra[i])
+    b._dec = deg_to_rad(dec[i])
+    
+    b.compute(o)
+    az[i] = rad_to_deg(b.az)
+    alt[i] = rad_to_deg(b.alt)
+  
+  return az, alt
