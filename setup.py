@@ -129,7 +129,7 @@ def get_atlas():
 	
 	outLibs = ['-lcblas', '-latlas']
 	if sys.platform.find('linux') == -1:
-		return outLibs
+		return [], outLibs
 	else:
 		status, output = commands.getstatusoutput('ldconfig -v 2>/dev/null')
 		lines = output.split('\n')
