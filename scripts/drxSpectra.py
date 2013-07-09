@@ -237,8 +237,8 @@ def main(args):
 
 	# Master loop over all of the file chunks
 	standMapper = []
-	masterWeight = numpy.zeros((nChunks, beampols, LFFT-1))
-	masterSpectra = numpy.zeros((nChunks, beampols, LFFT-1))
+	masterWeight = numpy.zeros((nChunks, beampols, LFFT))
+	masterSpectra = numpy.zeros((nChunks, beampols, LFFT))
 	for i in range(nChunks):
 		# Find out how many frames remain in the file.  If this number is larger
 		# than the maximum of frames we can work with at a time (maxFrames),

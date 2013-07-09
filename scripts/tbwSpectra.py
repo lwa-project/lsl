@@ -173,7 +173,7 @@ def main(args):
 	print "Skipped %i non-TBW frames at the beginning of the file" % i
 
 	# Master loop over all of the file chunks
-	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
+	masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
 	for i in range(nChunks):
 		# Find out how many frames remain in the file.  If this number is larger
 		# than the maximum of frames we can work with at a time (maxFrames),

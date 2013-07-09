@@ -70,7 +70,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 	
-	if(nChan != (fq->dimensions[0]+1)) {
+	if(nChan != fq->dimensions[0]) {
 		PyErr_Format(PyExc_RuntimeError, "freq has a different channel count than nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
@@ -96,7 +96,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	long startMax = 0;
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
-	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	frac = (double*) malloc(nStand*nChan * sizeof(double));
 	if(frac == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
 		Py_XDECREF(data);
@@ -113,9 +113,9 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<(nChan-1); j++) {
+		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + nChan*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -124,7 +124,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nSamps - startMax - 2*nChan) / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
@@ -204,12 +204,12 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 				fLoc[2] = (npy_intp) j;
 				vLoc[1] = (npy_intp) j;
-				for(k=0; k<(nChan-1); k++) {
+				for(k=0; k<nChan; k++) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
-					fftIndex = k + 1;
+					fftIndex = k;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + nChan*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -308,7 +308,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 	
-	if(nChan != (fq->dimensions[0]+1)) {
+	if(nChan != fq->dimensions[0]) {
 		PyErr_Format(PyExc_RuntimeError, "freq has a different channel count than nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
@@ -336,7 +336,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	long startMax = 0;
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
-	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	frac = (double*) malloc(nStand*nChan * sizeof(double));
 	if(frac == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
 		Py_XDECREF(data);
@@ -353,9 +353,9 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<(nChan-1); j++) {
+		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + nChan*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -364,7 +364,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nSamps - startMax - 2*nChan) / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
@@ -447,12 +447,12 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 				fLoc[2] = (npy_intp) j;
 				vLoc[1] = (npy_intp) j;
-				for(k=0; k<(nChan-1); k++) {
+				for(k=0; k<nChan; k++) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
-					fftIndex = k + 1;
+					fftIndex = k;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + nChan*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -539,7 +539,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 	
-	if(nChan != (fq->dimensions[0]+1)) {
+	if(nChan != fq->dimensions[0]) {
 		PyErr_Format(PyExc_RuntimeError, "freq has a different channel count than nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
@@ -565,7 +565,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	long startMax = 0;
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
-	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	frac = (double*) malloc(nStand*nChan * sizeof(double));
 	if(frac == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
 		Py_XDECREF(data);
@@ -582,9 +582,9 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<(nChan-1); j++) {
+		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + nChan*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -593,7 +593,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nSamps - startMax - nChan) / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
@@ -673,12 +673,12 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 				fLoc[2] = (npy_intp) j;
 				vLoc[1] = (npy_intp) j;
-				for(k=0; k<(nChan-1); k++) {
+				for(k=0; k<nChan; k++) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
-					fftIndex = ((k+1) + nChan/2) % nChan;
+					fftIndex = (k + nChan/2) % nChan;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + nChan*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;
@@ -777,7 +777,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		return NULL;
 	}
 	
-	if(nChan != (fq->dimensions[0]+1)) {
+	if(nChan != fq->dimensions[0]) {
 		PyErr_Format(PyExc_RuntimeError, "freq has a different channel count than nChan");
 		Py_XDECREF(data);
 		Py_XDECREF(fq);
@@ -805,7 +805,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	long startMax = 0;
 	double *frac;
 	tLoc = PyDimMem_NEW(2);
-	frac = (double*) malloc(nStand*(nChan-1) * sizeof(double));
+	frac = (double*) malloc(nStand*nChan * sizeof(double));
 	if(frac == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fractional delay array");
 		Py_XDECREF(data);
@@ -822,9 +822,9 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 			startMax = start[i];
 		}
 
-		for(j=0; j<(nChan-1); j++) {
+		for(j=0; j<nChan; j++) {
 			tLoc[1] = (npy_intp) j;
-			*(frac + (nChan-1)*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
+			*(frac + nChan*i + j) = *(double *) PyArray_GetPtr(times, tLoc) - (double) start[i]/SampleRate;
 		}
 	}
 	PyDimMem_FREE(tLoc);
@@ -833,7 +833,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nSamps - startMax - nChan) / nChan * Overlap - Overlap + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
 	if(dataF == NULL) {
@@ -916,12 +916,12 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 				fLoc[2] = (npy_intp) j;
 				vLoc[1] = (npy_intp) j;
-				for(k=0; k<(nChan-1); k++) {
+				for(k=0; k<nChan; k++) {
 					fLoc[1] = (npy_intp) k;
 					qLoc[0] = (npy_intp) k;
-					fftIndex = ((k+1) + nChan/2) % nChan;
+					fftIndex = (k + nChan/2) % nChan;
 					*(float complex *) PyArray_GetPtr(dataF, fLoc) = (cleanFactor*in[fftIndex][0] + imaginary*cleanFactor*in[fftIndex][1]);
-					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + (nChan-1)*i + k));
+					*(float complex *) PyArray_GetPtr(dataF, fLoc) *= cexp(2*imaginary*PI* *(double *) PyArray_GetPtr(fq, qLoc) * *(frac + nChan*i + k));
 				}
 				
 				*(unsigned char *) PyArray_GetPtr(validF, vLoc) = (unsigned char) cleanFactor;

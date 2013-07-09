@@ -216,8 +216,8 @@ def main(args):
 	buffer = TBNFrameBuffer(stands=range(1,antpols/2+1), pols=[0, 1])
 
 	# Master loop over all of the file chunks
-	masterWeight = numpy.zeros((nChunks, antpols, LFFT-1))
-	masterSpectra = numpy.zeros((nChunks, antpols, LFFT-1))
+	masterWeight = numpy.zeros((nChunks, antpols, LFFT))
+	masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
 
 	k = 0
 	for i in xrange(nChunks):
@@ -239,7 +239,7 @@ def main(args):
 		# If there are fewer frames than we need to fill an FFT, skip this chunk
 		if data.shape[1] < LFFT:
 			break
-		
+			
 		j = 0
 		fillsWork = framesWork / antpols
 		# Inner loop that actually reads the frames into the data array

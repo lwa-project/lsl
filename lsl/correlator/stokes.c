@@ -73,7 +73,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
-	dims[2] = (npy_intp) (nChan - 1);
+	dims[2] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -154,28 +154,28 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				fftw_execute_dft(pX, inX, inX);
 				fftw_execute_dft(pY, inY, inY);
 				
-				for(k=0; k<(nChan-1); k++) {
-					fftIndex = k + 1;
+				for(k=0; k<nChan; k++) {
+					fftIndex = k;
 					
 					// I
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
 					
 					// Q
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
 					
 					// U
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][0];
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][1];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][0];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][1];
 					
 					// V
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][0];
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) -= 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][1];
+					*(b + 3*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][0];
+					*(b + 3*nChan*nStand + nChan*i + k) -= 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -189,10 +189,10 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_free(inPX);
 	fftw_free(inPY);
 	
-	// cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, 1.0/(2*nChan*nFFT), b, 1);
 	for(i=0; i<4; i++) {
 		for(j=0; j<nStand; j++) {
-			cblas_dscal((nChan-1), 1.0/(2*nChan*nActFFT[j]), (b + i*(nChan-1)*nStand + j*(nChan-1)), 1);
+			cblas_dscal(nChan, 1.0/(2*nChan*nActFFT[j]), (b + i*nChan*nStand + j*nChan), 1);
 		}
 	}
 
@@ -279,7 +279,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
-	dims[2] = (npy_intp) (nChan - 1);
+	dims[2] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -362,28 +362,28 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				fftw_execute_dft(pX, inX, inX);
 				fftw_execute_dft(pY, inY, inY);
 				
-				for(k=0; k<(nChan-1); k++) {
-					fftIndex = k + 1;
+				for(k=0; k<nChan; k++) {
+					fftIndex = k;
 					
 					// I
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
 					
 					// Q
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][0]*inX[fftIndex][0];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[fftIndex][1]*inX[fftIndex][1];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[fftIndex][0]*inY[fftIndex][0];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[fftIndex][1]*inY[fftIndex][1];
 					
 					// U
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][0];
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][1];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][0];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][1];
 					
 					// V
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][0];
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) -= 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][1];
+					*(b + 3*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[fftIndex][1]*inY[fftIndex][0];
+					*(b + 3*nChan*nStand + nChan*i + k) -= 2*cleanFactor*inX[fftIndex][0]*inY[fftIndex][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -397,10 +397,10 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_free(inPX);
 	fftw_free(inPY);
 	
-	// cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, 1.0/(2*nChan*nFFT), b, 1);
 	for(i=0; i<4; i++) {
 		for(j=0; j<nStand; j++) {
-			cblas_dscal((nChan-1), 1.0/(2*nChan*nActFFT[j]), (b + i*(nChan-1)*nStand + j*(nChan-1)), 1);
+			cblas_dscal(nChan, 1.0/(2*nChan*nActFFT[j]), (b + i*nChan*nStand + j*nChan), 1);
 		}
 	}
 
@@ -476,7 +476,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
-	dims[2] = (npy_intp) (nChan - 1);
+	dims[2] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -544,47 +544,26 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				fftw_execute_dft(pX, inX, inX);
 				fftw_execute_dft(pY, inY, inY);
 				
-				for(k=0; k<nChan/2; k++) {
+				for(k=0; k<nChan; k++) {
 					// I
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[k][1]*inY[k][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][0]*inX[k][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][1]*inX[k][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[k][0]*inY[k][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[k][1]*inY[k][1];
 					
 					// Q
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[k][1]*inY[k][1];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][0]*inX[k][0];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][1]*inX[k][1];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[k][0]*inY[k][0];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[k][1]*inY[k][1];
 					
 					// U
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[k][0]*inY[k][0];
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[k][1]*inY[k][1];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k][0]*inY[k][0];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k][1]*inY[k][1];
 					
 					// V
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[k][1]*inY[k][0];
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) -= 2*cleanFactor*inX[k][0]*inY[k][1];
-				}
-				for(k=nChan/2+1; k<nChan; k++) {
-					// I
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inY[k][1]*inY[k][1];
-					
-					// Q
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) -= cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) -= cleanFactor*inY[k][1]*inY[k][1];
-					
-					// U
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k-1) += 2*cleanFactor*inX[k][0]*inY[k][0];
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k-1) += 2*cleanFactor*inX[k][1]*inY[k][1];
-					
-					// V
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k-1) += 2*cleanFactor*inX[k][1]*inY[k][0];
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k-1) -= 2*cleanFactor*inX[k][0]*inY[k][1];
+					*(b + 3*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k][1]*inY[k][0];
+					*(b + 3*nChan*nStand + nChan*i + k) -= 2*cleanFactor*inX[k][0]*inY[k][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -603,12 +582,12 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	temp2 = (double *) malloc(sizeof(double)*nChan/2);
 	for(i=0; i<4; i++) {
 		for(j=0; j<nStand; j++) {
-			temp = b + (nChan-1)*nStand*i + (nChan-1)*j;
+			temp = b + nChan*nStand*i + nChan*j;
 			memcpy(temp2, temp, sizeof(double)*nChan/2);
-			memmove(temp, temp+nChan/2, sizeof(double)*nChan/2-1);
-			memcpy(temp+nChan/2-1, temp2, sizeof(double)*nChan/2);
+			memmove(temp, temp+nChan/2, sizeof(double)*nChan/2);
+			memcpy(temp+nChan/2, temp2, sizeof(double)*nChan/2);
 			
-			cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[j]), (b + i*(nChan-1)*nStand + j*(nChan-1)), 1);
+			cblas_dscal(nChan, 1.0/(nChan*nActFFT[j]), (b + i*nChan*nStand + j*nChan), 1);
 		}
 	}
 	free(temp2);
@@ -696,7 +675,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
-	dims[2] = (npy_intp) (nChan - 1);
+	dims[2] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -766,47 +745,26 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				fftw_execute_dft(pX, inX, inX);
 				fftw_execute_dft(pY, inY, inY);
 				
-				for(k=0; k<nChan/2; k++) {
+				for(k=0; k<nChan; k++) {
 					// I
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inY[k][1]*inY[k][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][0]*inX[k][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][1]*inX[k][1];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[k][0]*inY[k][0];
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*inY[k][1]*inY[k][1];
 					
 					// Q
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k) -= cleanFactor*inY[k][1]*inY[k][1];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][0]*inX[k][0];
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*inX[k][1]*inX[k][1];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[k][0]*inY[k][0];
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*inY[k][1]*inY[k][1];
 					
 					// U
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[k][0]*inY[k][0];
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[k][1]*inY[k][1];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k][0]*inY[k][0];
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k][1]*inY[k][1];
 					
 					// V
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) += 2*cleanFactor*inX[k][1]*inY[k][0];
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k) -= 2*cleanFactor*inX[k][0]*inY[k][1];
-				}
-				for(k=nChan/2+1; k<nChan; k++) {
-					// I
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 0*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inY[k][1]*inY[k][1];
-					
-					// Q
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][0]*inX[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) += cleanFactor*inX[k][1]*inX[k][1];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) -= cleanFactor*inY[k][0]*inY[k][0];
-					*(b + 1*(nChan-1)*nStand + (nChan-1)*i + k-1) -= cleanFactor*inY[k][1]*inY[k][1];
-					
-					// U
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k-1) += 2*cleanFactor*inX[k][0]*inY[k][0];
-					*(b + 2*(nChan-1)*nStand + (nChan-1)*i + k-1) += 2*cleanFactor*inX[k][1]*inY[k][1];
-					
-					// V
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k-1) += 2*cleanFactor*inX[k][1]*inY[k][0];
-					*(b + 3*(nChan-1)*nStand + (nChan-1)*i + k-1) -= 2*cleanFactor*inX[k][0]*inY[k][1];
+					*(b + 3*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k][1]*inY[k][0];
+					*(b + 3*nChan*nStand + nChan*i + k) -= 2*cleanFactor*inX[k][0]*inY[k][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -825,12 +783,12 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	temp2 = (double *) malloc(sizeof(double)*nChan/2);
 	for(i=0; i<4; i++) {
 		for(j=0; j<nStand; j++) {
-			temp = b + (nChan-1)*nStand*i + (nChan-1)*j;
+			temp = b + nChan*nStand*i + nChan*j;
 			memcpy(temp2, temp, sizeof(double)*nChan/2);
-			memmove(temp, temp+nChan/2, sizeof(double)*nChan/2-1);
-			memcpy(temp+nChan/2-1, temp2, sizeof(double)*nChan/2);
+			memmove(temp, temp+nChan/2, sizeof(double)*nChan/2);
+			memcpy(temp+nChan/2, temp2, sizeof(double)*nChan/2);
 			
-			cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[j]), (b + i*(nChan-1)*nStand + j*(nChan-1)), 1);
+			cblas_dscal(nChan, 1.0/(nChan*nActFFT[j]), (b + i*nChan*nStand + j*nChan), 1);
 		}
 	}
 	free(temp2);

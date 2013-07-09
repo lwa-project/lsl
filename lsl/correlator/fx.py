@@ -34,7 +34,7 @@ import _spec
 import _stokes
 import _core
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
 __all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'SpecMasterP', 'StokesMaster', 'FXMaster', 'FXStokes', '__version__', '__revision__', '__all__']
 
@@ -99,8 +99,8 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
 	if doFFTShift:
 		freq += CentralFreq
 		freq = numpy.fft.fftshift(freq)
-	freq = freq[1:LFFT]
-	
+	freq = freq[:LFFT]
+		
 	if window is noWindow:
 		# Data without a window function provided
 		if signals.dtype.kind == 'c':
@@ -149,8 +149,8 @@ def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=Non
 	if doFFTShift:
 		freq += CentralFreq
 		freq = numpy.fft.fftshift(freq)
-	freq = freq[1:LFFT]
-	
+	freq = freq[:LFFT]
+		
 	if window is noWindow:
 		# Data without a window function provided
 		if signals.dtype.kind == 'c':
@@ -205,7 +205,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=noWindow, verbose=False, Sam
 	if doFFTShift:
 		freq += CentralFreq
 		freq = numpy.fft.fftshift(freq)
-	freq = freq[1:LFFT]
+	freq = freq[:LFFT]
 	
 	if window is noWindow:
 		# Data without a window function provided
@@ -259,20 +259,20 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	else:
 		lFactor = 2
 		doFFTShift = False
-
+			
 	if SampleRate is None:
 		SampleRate = dp_common.fS
 	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
 	if doFFTShift:
 		freq += CentralFreq
 		freq = numpy.fft.fftshift(freq)
-	freq = freq[1:LFFT]
-
+	freq = freq[:LFFT]
+		
 	# Define the cable/signal delay caches to help correlate along and compute 
 	# the delays that we need to apply to align the signals
 	dlyRef = len(freq)/2
-	delays1 = numpy.zeros((nStands,LFFT-1))
-	delays2 = numpy.zeros((nStands,LFFT-1))
+	delays1 = numpy.zeros((nStands,LFFT))
+	delays2 = numpy.zeros((nStands,LFFT))
 	for i in list(range(nStands)):
 		delays1[i,:] = antennas1[i].cable.delay(freq) - antennas1[i].stand.z / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - antennas2[i].stand.z / vLight
@@ -382,13 +382,13 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	if doFFTShift:
 		freq += CentralFreq
 		freq = numpy.fft.fftshift(freq)
-	freq = freq[1:LFFT]
-
+	freq = freq[:LFFT]
+	
 	# Define the cable/signal delay caches to help correlate along and compute 
 	# the delays that we need to apply to align the signals
 	dlyRef = len(freq)/2
-	delays1 = numpy.zeros((nStands,LFFT-1))
-	delays2 = numpy.zeros((nStands,LFFT-1))
+	delays1 = numpy.zeros((nStands,LFFT))
+	delays2 = numpy.zeros((nStands,LFFT))
 	for i in list(range(nStands)):
 		delays1[i,:] = antennas1[i].cable.delay(freq) - antennas1[i].stand.z / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - antennas2[i].stand.z / vLight

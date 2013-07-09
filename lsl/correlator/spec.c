@@ -84,7 +84,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -145,10 +145,10 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				fftw_execute_dft(p, in, in);
 				
-				for(k=0; k<(nChan-1); k++) {
-					fftIndex = k + 1;
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
+				for(k=0; k<nChan; k++) {
+					fftIndex = k;
+					*(b + nChan*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
+					*(b + nChan*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -159,9 +159,9 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	// cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, 1.0/(2*nChan*nFFT), b, 1);
 	for(i=0; i<nStand; i++) {
-		cblas_dscal((nChan-1), 1.0/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, 1.0/(2*nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 
 	Py_XDECREF(data);
@@ -229,7 +229,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -292,10 +292,10 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				fftw_execute_dft(p, in, in);
 				
-				for(k=0; k<(nChan-1); k++) {
-					fftIndex = k + 1;
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
-					*(b + (nChan-1)*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
+				for(k=0; k<nChan; k++) {
+					fftIndex = k;
+					*(b + nChan*i + k) += cleanFactor*in[fftIndex][0]*in[fftIndex][0];
+					*(b + nChan*i + k) += cleanFactor*in[fftIndex][1]*in[fftIndex][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -306,9 +306,9 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	// cblas_dscal((nChan-1)*nStand, 1.0/(2*nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, 1.0/(2*nChan*nFFT), b, 1);
 	for(i=0; i<nStand; i++) {
-		cblas_dscal((nChan-1), 1.0/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, 1.0/(2*nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 
 	Py_XDECREF(data);
@@ -366,7 +366,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -421,13 +421,9 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				fftw_execute_dft(p, in, in);
 				
-				for(k=0; k<nChan/2; k++) {
-					*(b + (nChan-1)*i + k) += cleanFactor*in[k][0]*in[k][0];
-					*(b + (nChan-1)*i + k) += cleanFactor*in[k][1]*in[k][1];
-				}
-				for(k=nChan/2+1; k<nChan; k++) {
-					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][0]*in[k][0];
-					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][1]*in[k][1];
+				for(k=0; k<nChan; k++) {
+					*(b + nChan*i + k) += cleanFactor*in[k][0]*in[k][0];
+					*(b + nChan*i + k) += cleanFactor*in[k][1]*in[k][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -442,12 +438,12 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *temp, *temp2;
 	temp2 = (double *) malloc(sizeof(double)*nChan/2);
 	for(i=0; i<nStand; i++) {
-		temp = b + (nChan-1)*i;
+		temp = b + nChan*i;
 		memcpy(temp2, temp, sizeof(double)*nChan/2);
-		memmove(temp, temp+nChan/2, sizeof(double)*nChan/2-1);
-		memcpy(temp+nChan/2-1, temp2, sizeof(double)*nChan/2);
+		memmove(temp, temp+nChan/2, sizeof(double)*nChan/2);
+		memcpy(temp+nChan/2, temp2, sizeof(double)*nChan/2);
 		
-		cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, 1.0/(nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 	free(temp2);
 
@@ -517,7 +513,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = nSamps / nChan * Overlap - Overlap + 1;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -574,13 +570,9 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				fftw_execute_dft(p, in, in);
 				
-				for(k=0; k<nChan/2; k++) {
-					*(b + (nChan-1)*i + k) += cleanFactor*in[k][0]*in[k][0];
-					*(b + (nChan-1)*i + k) += cleanFactor*in[k][1]*in[k][1];
-				}
-				for(k=nChan/2+1; k<nChan; k++) {
-					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][0]*in[k][0];
-					*(b + (nChan-1)*i + k-1) += cleanFactor*in[k][1]*in[k][1];
+				for(k=0; k<nChan; k++) {
+					*(b + nChan*i + k) += cleanFactor*in[k][0]*in[k][0];
+					*(b + nChan*i + k) += cleanFactor*in[k][1]*in[k][1];
 				}
 				
 				nActFFT[i] += (long) cleanFactor;
@@ -595,12 +587,12 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *temp, *temp2;
 	temp2 = (double *) malloc(sizeof(double)*nChan/2);
 	for(i=0; i<nStand; i++) {
-		temp = b + (nChan-1)*i;
+		temp = b + nChan*i;
 		memcpy(temp2, temp, sizeof(double)*nChan/2);
-		memmove(temp, temp+nChan/2, sizeof(double)*nChan/2-1);
-		memcpy(temp+nChan/2-1, temp2, sizeof(double)*nChan/2);
+		memmove(temp, temp+nChan/2, sizeof(double)*nChan/2);
+		memcpy(temp+nChan/2, temp2, sizeof(double)*nChan/2);
 		
-		cblas_dscal((nChan-1), 1.0/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, 1.0/(nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 	free(temp2);
 	
@@ -676,7 +668,7 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -718,8 +710,8 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 			for(j=0; j<nFFT; j+=nTaps) {
 				cleanFactor = 1.0;
-				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
-				cblas_dscal((nChan-1), 0.0, tempB, 1);
+				cblas_zdscal(nChan, 0.0, tempFB, 1);
+				cblas_dscal(nChan, 0.0, tempB, 1);
 				
 				for(m=0; m<nTaps; m++) {
 					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
@@ -741,19 +733,19 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 					fftw_execute_dft(p, in, in);
 				
-					for(k=0; k<(nChan-1); k++) {
-						fftIndex = k + 1;
+					for(k=0; k<nChan; k++) {
+						fftIndex = k;
 						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary *  cleanFactor*in[fftIndex][1];
 					}
 				}
 				
 				#ifdef _MKL
-					vzAbs((nChan-1), tempFB, tempB);
-					vdSqr((nChan-1), tempB, tempB);
-					vdAdd((nChan-1), (b+(nChan-1)*i), tempB, (b+(nChan-1)*i));
+					vzAbs(nChan, tempFB, tempB);
+					vdSqr(nChan, tempB, tempB);
+					vdAdd(nChan, (b+nChan*i), tempB, (b+nChan*i));
 				#else
-					for(k=0; k<(nChan-1); k++) {
-						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
+					for(k=0; k<nChan; k++) {
+						*(b + nChan*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
 				
@@ -765,9 +757,9 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
 	for(i=0; i<nStand; i++) {
-		cblas_dscal((nChan-1), ((float) nTaps)/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, ((float) nTaps)/(2*nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 
 	Py_XDECREF(data);
@@ -850,7 +842,7 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -893,8 +885,8 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 			for(j=0; j<nFFT; j+=nTaps) {
 				cleanFactor = 1.0;
-				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
-				cblas_dscal((nChan-1), 0.0, tempB, 1);
+				cblas_zdscal(nChan, 0.0, tempFB, 1);
+				cblas_dscal(nChan, 0.0, tempB, 1);
 				
 				for(m=0; m<nTaps; m++) {
 					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
@@ -916,19 +908,19 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 					fftw_execute_dft(p, in, in);
 				
-					for(k=0; k<(nChan-1); k++) {
-						fftIndex = k + 1;
+					for(k=0; k<nChan; k++) {
+						fftIndex = k;
 						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary * cleanFactor*in[fftIndex][1];
 					}
 				}
 				
 				#ifdef _MKL
-					vzAbs((nChan-1), tempFB, tempB);
-					vdSqr((nChan-1), tempB, tempB);
-					vdAdd((nChan-1), (b+(nChan-1)*i), tempB, (b+(nChan-1)*i));
+					vzAbs(nChan, tempFB, tempB);
+					vdSqr(nChan, tempB, tempB);
+					vdAdd(nChan, (b+nChan*i), tempB, (b+nChan*i));
 				#else
-					for(k=0; k<(nChan-1); k++) {
-						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
+					for(k=0; k<nChan; k++) {
+						*(b + nChan*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
 				
@@ -940,9 +932,9 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 	
-	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, ((float) nTaps)/(2*nChan*nFFT), b, 1);
 	for(i=0; i<nStand; i++) {
-		cblas_dscal((nChan-1), ((float) nTaps)/(2*nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, ((float) nTaps)/(2*nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 
 	Py_XDECREF(data);
@@ -1009,7 +1001,7 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -1051,8 +1043,8 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 			for(j=0; j<nFFT; j+=nTaps) {
 				cleanFactor = 1.0;
-				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
-				cblas_dscal((nChan-1), 0.0, tempB, 1);
+				cblas_zdscal(nChan, 0.0, tempFB, 1);
+				cblas_dscal(nChan, 0.0, tempB, 1);
 
 				for(m=0; m<nTaps; m++) {
 					secStart = nSamps * i + nChan*(j+m)/Overlap;
@@ -1068,19 +1060,19 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 					fftw_execute_dft(p, in, in);
 				
-					for(k=0; k<(nChan-1); k++) {
-						fftIndex = ((k+1) + nChan/2) % nChan;
+					for(k=0; k<nChan; k++) {
+						fftIndex = (k + nChan/2) % nChan;
 						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary * cleanFactor*in[fftIndex][1];
 					}
 				}
 				
 				#ifdef _MKL
-					vzAbs((nChan-1), tempFB, tempB);
-					vdSqr((nChan-1), tempB, tempB);
-					vdAdd((nChan-1), (b+(nChan-1)*i), tempB, (b+(nChan-1)*i));
+					vzAbs(nChan, tempFB, tempB);
+					vdSqr(nChan, tempB, tempB);
+					vdAdd(nChan, (b+nChan*i), tempB, (b+nChan*i));
 				#else
-					for(k=0; k<(nChan-1); k++) {
-						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
+					for(k=0; k<nChan; k++) {
+						*(b + nChan*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
 				
@@ -1092,9 +1084,9 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 
-	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
 	for(i=0; i<nStand; i++) {
-		cblas_dscal((nChan-1), ((float) nTaps)/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, ((float) nTaps)/(nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 	
 	Py_XDECREF(data);
@@ -1175,7 +1167,7 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	nFFT = (nFFT / nTaps) * nTaps;
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) (nChan - 1);
+	dims[1] = (npy_intp) nChan;
 	dataF = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
@@ -1218,8 +1210,8 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 			for(j=0; j<nFFT; j+=nTaps) {
 				cleanFactor = 1.0;
-				cblas_zdscal((nChan-1), 0.0, tempFB, 1);
-				cblas_dscal((nChan-1), 0.0, tempB, 1);
+				cblas_zdscal(nChan, 0.0, tempFB, 1);
+				cblas_dscal(nChan, 0.0, tempB, 1);
 
 				for(m=0; m<nTaps; m++) {
 					secStart = nSamps * i + nChan*(j+m)/Overlap;
@@ -1235,19 +1227,19 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 					fftw_execute_dft(p, in, in);
 				
-					for(k=0; k<(nChan-1); k++) {
-						fftIndex = ((k+1) + nChan/2) % nChan;
+					for(k=0; k<nChan; k++) {
+						fftIndex = (k + nChan/2) % nChan;
 						tempFB[k] += cleanFactor*in[fftIndex][0] + imaginary * cleanFactor*in[fftIndex][1];
 					}
 				}
 				
 				#ifdef _MKL
-					vzAbs((nChan-1), tempFB, tempB);
-					vdSqr((nChan-1), tempB, tempB);
-					vdAdd((nChan-1), (b+(nChan-1)*i), tempB, (b+(nChan-1)*i));
+					vzAbs(nChan, tempFB, tempB);
+					vdSqr(nChan, tempB, tempB);
+					vdAdd(nChan, (b+nChan*i), tempB, (b+nChan*i));
 				#else
-					for(k=0; k<(nChan-1); k++) {
-						*(b + (nChan-1)*i + k) += pow(cabs(tempFB[k]), 2);
+					for(k=0; k<nChan; k++) {
+						*(b + nChan*i + k) += pow(cabs(tempFB[k]), 2);
 					}
 				#endif
 				
@@ -1259,9 +1251,9 @@ static PyObject *PPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_destroy_plan(p);
 	fftw_free(inP);
 
-	// cblas_dscal((nChan-1)*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
+	// cblas_dscal(nChan*nStand, ((float) nTaps)/(nChan*nFFT), b, 1);
 	for(i=0; i<nStand; i++) {
-		cblas_dscal((nChan-1), ((float) nTaps)/(nChan*nActFFT[i]), (b + i*(nChan-1)), 1);
+		cblas_dscal(nChan, ((float) nTaps)/(nChan*nActFFT[i]), (b + i*nChan), 1);
 	}
 	
 	Py_XDECREF(data);

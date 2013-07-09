@@ -1,12 +1,15 @@
 0.7.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)
-  * Added a function to lsl.misc.beamformer to convert X and Y linear pols. to circular L and R pols.
-  * Removed the lsl.correlator.visUtils module since it isn't used by any other modules or scripts.
+  * Added a function to lsl.misc.beamformer to convert X and Y linear pols. to circular L and R pols
+  * Removed the lsl.correlator.visUtils module since it isn't used by any other modules or scripts
+  * Switched the lsl.correlator modules over to returned all 'LFFT' channels
+  
 
 0.6.5
   * Fixed the time remaining computation in lsl.common.progress.ProgressBarPlus
   * Fixed a bug in imageIDI.py that caused the LST not to update on subsequent integrations
   * Added in a call to close() after numpy.load() is used
+  * Updated the setup.py script to help deal with clang/OpenMP on OSX
 
 0.6.4
   * Cleaned up the coherent part of the dedispersion module
