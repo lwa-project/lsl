@@ -8,7 +8,7 @@ import math
 import pickle
 import operator
 
-import astro
+from lsl import astro
 
 
 __revision__  = "$Revision$"
