@@ -7,6 +7,7 @@ import os
 import imp
 import sys
 import glob
+import tempfile
 import unittest
 import commands
 import platform
@@ -27,6 +28,7 @@ def get_version():
 	"""Read the VERSION file and return the version number as a string."""
 
 	return open('VERSION').read().strip()
+
 
 def get_description(filename):
 	"""Read in a README-type file and return the contents of the DESCRIPTION
@@ -51,6 +53,47 @@ def get_description(filename):
 			desc = ' '.join([desc, line])
 
 	return desc
+
+
+def check_for_openmp():
+	"""Try to compile/link an example program to check for OpenMP support.
+	
+	Based on:
+	  1) http://stackoverflow.com/questions/16549893/programatically-testing-for-openmp-support-from-a-python-setup-script
+	  2) https://github.com/lpsinger/healpy/blob/6c3aae58b5f3281e260ef7adce17b1ffc68016f0/setup.py
+	"""
+	
+	import shutil
+	from distutils import sysconfig
+	from distutils import ccompiler
+	compiler = ccompiler.new_compiler()
+	sysconfig.customize_compiler(compiler)
+	cc = compiler.compiler
+	
+	tmpdir = tempfile.mkdtemp()
+	curdir = os.getcwd()
+	os.chdir(tmpdir)
+	
+	fh = open('test.c', 'w')
+	fh.write(r"""#include <omp.h>
+#include <stdio.h>
+int main() {
+#pragma omp parallel
+printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_threads());
+}
+""")
+	fh.close()
+	
+	status, output = commands.getstatusoutput('%s -fopenmp test.c -o test -lgomp' % ' '.join(cc))
+	
+	os.chdir(curdir)
+	shutil.rmtree(tmpdir)
+	
+	if status == 0:
+		return True
+	else:
+		print "WARNING:  OpenMP does not appear to be supported by your compiler, disabling"
+		return False
 
 
 def get_fftw():
@@ -148,9 +191,14 @@ class LSLDist(Distribution):
 # problems on Mac
 cflags, libs = get_fftw()
 atlasLibs = get_atlas()
-coreExtraFlags = ['-fopenmp',]
+useOpenMP = check_for_openmp()
+if useOpenMP:
+	coreExtraFlags = ['-fopenmp',]
+	coreExtraLibs = ['-lgomp',]
+else:
+	coreExtraFlags = []
+	coreExtraLibs = []
 coreExtraFlags.extend(cflags)
-coreExtraLibs = ['-fopenmp']
 coreExtraLibs.extend(libs)
 coreExtraLibs.extend(atlasLibs)
 

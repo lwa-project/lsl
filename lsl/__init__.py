@@ -22,6 +22,7 @@ See the individual package descriptions for more information.
 """
 
 import os
+from lsl import version
 from lsl.common import paths
 
 __version__ = '0.7'
