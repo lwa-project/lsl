@@ -2259,31 +2259,20 @@ def get_equ_prec(mean_position, jD):
   Returns: Adjusted equatorial position of object as type equ_posn.
   """    
   
-  from pyslalib.slalib import sla_preces, sla_epj
-  
-  _posn = equ_posn()    
-  ra,dec = sla_preces('FK5', 2000.0, sla_epj(jD - MJD_OFFSET), deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec))
-  ra = rad_to_deg(ra)
-  dec = rad_to_deg(dec)
+  _posn = equ_posn() 
+  equ = ephem.Equatorial(deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec), epoch=ephem.J2000)
+  equ = ephem.Equatorial(equ, epoch=jD-DJD_OFFSET)
+  ra = rad_to_deg(equ.ra)
+  dec = rad_to_deg(equ.dec)
   
   _posn.ra = ra
   _posn.dec = dec
   return _posn
-  
-  #_posn = equ_posn() 
-  #equ = ephem.Equatorial(deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec), epoch=ephem.J2000)
-  #equ = ephem.Equatorial(equ, epoch=jD-DJD_OFFSET)
-  #ra = rad_to_deg(equ.ra)
-  #dec = rad_to_deg(equ.dec)
-  
-  #_posn.ra = ra
-  #_posn.dec = dec
-  #return _posn
 
 
 def get_equ_prec2(mean_position, fromJD, toJD):
   """
-  Get position of celestial object accounting for precessio.
+  Get position of celestial object accounting for precession.
   
   Param: mean_position  - equatorial first position of object as type equ_posn.
   Param: fromJD         - UTC Julian day (float) of first time.
@@ -4016,8 +4005,8 @@ def hrz_from_equ(lng, lat, jD, ra, dec):
   o.lon = deg_to_rad(lng)
   o.lat = deg_to_rad(lat)
 
-  az  = ra*0.0
-  alt = ra*0.0
+  az  = numpy.zeros_like(ra)
+  alt = numpy.zeros_like(ra)
   for i in xrange(ra.size):
     b = ephem.FixedBody()
     b._ra = deg_to_rad(ra[i])
