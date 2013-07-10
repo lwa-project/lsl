@@ -138,9 +138,14 @@ class transform_tests(unittest.TestCase):
 		
 		lon = lwa1.long * 180.0/math.pi
 		lat = lwa1.lat  * 180.0/math.pi
+		elv = lwa1.elev
 		obs = lwa1.getObserver()
 		
 		g0 = transform.GeographicalPosition([lon,lat,elv])
+		
+		# The astro.get_apparent_sidereal_time() function doesn't care about
+		# elevation
+		obs.elev = 0.0
 		
 		obs.date = t0.utc_str
 		self.assertAlmostEqual(g0.sidereal(t0), obs.sidereal_time()*12.0/math.pi, 4)
