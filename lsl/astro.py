@@ -3359,9 +3359,9 @@ def get_local_sidereal_time(lng, jD):
 	Returns: Local mean sidereal time (float hours).
 	"""
 	
-	gmst = get_mean_sidereal_time(jD)    
+	gast = get_apparent_sidereal_time(jD)    
 	off = lng / 15.0
-	return range_hours(gmst + off)
+	return range_hours(gast + off)
 
 
 ######################################################################
@@ -3734,6 +3734,9 @@ def B1950_to_J2000(pos):
 	Param: pos - object of type equ_posn giving B1950 coordinates
 	
 	Returns: object of type equ_posn giving J2000 coordinates.
+	
+	.. note::
+		The accuracy of this function is about 0.01 degrees.
 	"""
 	
 	_posn = equ_posn()
@@ -3754,6 +3757,9 @@ def J2000_to_B1950(pos):
 	Param: pos - object of type equ_posn giving J2000 coordinates
 	
 	Returns: object of type equ_posn giving B1950 coordinates.
+	
+	.. note::
+		The accuracy of this function is about 0.01 degrees.
 	"""   
 	
 	_posn = equ_posn()
@@ -3761,8 +3767,6 @@ def J2000_to_B1950(pos):
 	coord = ephem.Equatorial(coord, epoch=ephem.B1950)
 	ra = rad_to_deg(coord.ra)
 	dec = rad_to_deg(coord.dec)
-	ra = rad_to_deg(ra)
-	dec = rad_to_deg(dec)
 	
 	_posn.ra = ra
 	_posn.dec = dec

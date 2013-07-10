@@ -204,7 +204,7 @@ class LWA_Catalog(Catalog):
 				sign = False
 			dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
 			
-			entry = CatalogEntry(name, transform.CelestialPosition((ra, dec), name = name))
+			entry = CatalogEntry(name, transform.CelestialPosition((ra, dec), name=name))
 			self.source_map[name] = entry
 			
 			aliasList = line[34:].split()
@@ -316,7 +316,7 @@ class PSR_Catalog(Catalog):
 				# Add source to list if good.
 				if not bad:                    
 					sourcePos = astro.equ_posn(ra, dec) 
-					entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name = name))
+					entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
 					self.source_map[name] = entry
 					if debug: print('Added ',name)
 					
@@ -627,7 +627,7 @@ class F1FGL_Catalog(Catalog):
 			ra = float(row.field('RA'))
 			dec = float(row.field('DEC'))
 			entry = CatalogEntry(name, 
-			transform.CelestialPosition((ra, dec), name = name))
+			transform.CelestialPosition((ra, dec), name=name))
 			self.source_map[name] = entry
 			
 			alias = str(row.field('0FGL_Name'))
@@ -691,13 +691,19 @@ class F2FGL_Catalog(Catalog):
 		
 		for row in sourceTable:
 			name = str(row.field('Source_Name')).replace(' ', '_')
-			ra = float(row.field('RA'))
-			dec = float(row.field('DEC'))
+			ra = float(row.field('RAJ2000'))
+			dec = float(row.field('DEJ2000'))
 			entry = CatalogEntry(name, 
-			transform.CelestialPosition((ra, dec), name = name))
+			transform.CelestialPosition((ra, dec), name=name))
 			self.source_map[name] = entry
 			
 			alias = str(row.field('0FGL_Name'))
+			if len(alias):
+				alias = alias.replace(' ', '_')
+				self.alias_map[alias] = entry
+				entry.alias_list.append(alias)
+				
+			alias = str(row.field('1FGL_Name'))
 			if len(alias):
 				alias = alias.replace(' ', '_')
 				self.alias_map[alias] = entry

@@ -1114,36 +1114,25 @@ class astro_tests(unittest.TestCase):
 	def test_get_ecl_from_equ(self):
 		"""Test astro.get_ecl_from_equ() function."""
 		
-		ACCURACY_LNG = 1
-		ACCURACY_LAT = 2
-			
-		lng_aa = (\
-			astro.dms(False, 302,  2,  1.10).to_deg(),
-			astro.dms(False,  26,  4, 29.34).to_deg(),
-			astro.dms(False, 129, 47, 20.92).to_deg(),
-			astro.dms(False, 196, 45, 44.61).to_deg(),
-			astro.dms(False, 338, 48, 21.55).to_deg())
-			
-		lat_aa = (\
-			astro.dms(False, 0, 0, 0.14).to_deg(),
-			astro.dms(True,  0, 0, 0.39).to_deg(),
-			astro.dms(True,  0, 0, 0.45).to_deg(),
-			astro.dms(False, 0, 0, 0.11).to_deg(),
-			astro.dms(False, 0, 0, 0.07).to_deg())
-			
+		ACCURACY_LNG = 4
+		ACCURACY_LAT = 4
+		
+		# Data set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+		lng_aa = (302.1000, 26.3000, 129.5000, 196.7000, 338.9000)
+		lat_aa = (  0.0000, -1.0000,   3.0000,  -5.0000,   7.0000)
+		
 		ra_aa = (\
-			astro.hms(20, 17,  7.63).to_deg(),
-			astro.hms( 1, 36, 40.54).to_deg(),
-			astro.hms( 8, 48, 53.15).to_deg(),
-			astro.hms(13,  1, 45.13).to_deg(),
-			astro.hms(22, 41, 38.54).to_deg())
-			
+			astro.hms(20, 17, 26.67).to_deg(),
+			astro.hms( 1, 39,  2.11).to_deg(),
+			astro.hms( 8, 51,  9.97).to_deg(),
+			astro.hms(12, 53, 44.99).to_deg(),
+			astro.hms(22, 31, 32.23).to_deg())
 		dec_aa = (\
-			astro.dms(True,  19, 42, 30.7).to_deg(),
-			astro.dms(False, 10,  3, 55.1).to_deg(),
-			astro.dms(False, 17, 47, 59.1).to_deg(),
-			astro.dms(True,   6, 34, 59.9).to_deg(),
-			astro.dms(True,   8, 16, 14.4).to_deg()) 
+			astro.dms(True,  19, 41, 31.6).to_deg(),
+			astro.dms(False,  9, 13,  7.6).to_deg(),
+			astro.dms(False, 20, 45, 53.0).to_deg(),
+			astro.dms(True,  11, 10, 35.9).to_deg(),
+			astro.dms(True,   1, 44, 14.5).to_deg()) 
 			
 		ilng = iter(lng_aa)
 		ilat = iter(lat_aa)
@@ -1164,36 +1153,25 @@ class astro_tests(unittest.TestCase):
 	def test_get_equ_from_ecl(self):
 		"""Test astro.get_equ_from_ecl() function."""
 		
-		ACCURACY_RA = 1
-		ACCURACY_DEC = 2
-			
-		lng_aa = (\
-			astro.dms(False, 302,  2,  1.10).to_deg(),
-			astro.dms(False,  26,  4, 29.34).to_deg(),
-			astro.dms(False, 129, 47, 20.92).to_deg(),
-			astro.dms(False, 196, 45, 44.61).to_deg(),
-			astro.dms(False, 338, 48, 21.55).to_deg())
-			
-		lat_aa = (\
-			astro.dms(False, 0, 0, 0.14).to_deg(),
-			astro.dms(True,  0, 0, 0.39).to_deg(),
-			astro.dms(True,  0, 0, 0.45).to_deg(),
-			astro.dms(False, 0, 0, 0.11).to_deg(),
-			astro.dms(False, 0, 0, 0.07).to_deg())
-			
+		ACCURACY_RA = 4
+		ACCURACY_DEC = 4
+		
+		# Data set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+		lng_aa = (302.1000, 26.3000, 129.5000, 196.7000, 338.9000)
+		lat_aa = (  0.0000, -1.0000,   3.0000,  -5.0000,   7.0000)
+		
 		ra_aa = (\
-			astro.hms(20, 17,  7.63).to_deg(),
-			astro.hms( 1, 36, 40.54).to_deg(),
-			astro.hms( 8, 48, 53.15).to_deg(),
-			astro.hms(13,  1, 45.13).to_deg(),
-			astro.hms(22, 41, 38.54).to_deg())
-			
+			astro.hms(20, 17, 26.67).to_deg(),
+			astro.hms( 1, 39,  2.11).to_deg(),
+			astro.hms( 8, 51,  9.97).to_deg(),
+			astro.hms(12, 53, 44.99).to_deg(),
+			astro.hms(22, 31, 32.23).to_deg())
 		dec_aa = (\
-			astro.dms(True,  19, 42, 30.7).to_deg(),
-			astro.dms(False, 10,  3, 55.1).to_deg(),
-			astro.dms(False, 17, 47, 59.1).to_deg(),
-			astro.dms(True,   6, 34, 59.9).to_deg(),
-			astro.dms(True,   8, 16, 14.4).to_deg()) 
+			astro.dms(True,  19, 41, 31.6).to_deg(),
+			astro.dms(False,  9, 13,  7.6).to_deg(),
+			astro.dms(False, 20, 45, 53.0).to_deg(),
+			astro.dms(True,  11, 10, 35.9).to_deg(),
+			astro.dms(True,   1, 44, 14.5).to_deg()) 
 			
 		ilng = iter(lng_aa)
 		ilat = iter(lat_aa)
@@ -1215,24 +1193,23 @@ class astro_tests(unittest.TestCase):
 	def test_get_gal_from_equ(self):
 		"""Test astro.get_gal_from_equ() function."""
 		
-		ACCURACY_L = 1
-		ACCURACY_B = 1
+		ACCURACY_L = 2
+		ACCURACY_B = 2
 		
+		# Test set generated at http://fuse.pha.jhu.edu/support/tools/eqtogal.html
 		ra_4c = (\
-			astro.hms(13, 35, 29.8).to_deg(),
-			astro.hms(15, 55, 48.9).to_deg(),
-			astro.hms( 1, 35, 28.1).to_deg(),
-			astro.hms(19, 46, 15.2).to_deg())  
-			
+			astro.hms(13, 35, 31.41).to_deg(),
+			astro.hms(15, 56,  3.01).to_deg(),
+			astro.hms( 1, 35, 19.19).to_deg(),
+			astro.hms(19, 45, 35.25).to_deg())  
 		dec_4c = (\
-			astro.dms(True,   6,  6, 0.6 * 60).to_deg(),
-			astro.dms(False,  1, 49, 0.4 * 60).to_deg(),
-			astro.dms(False, 22, 46, 0.7 * 60).to_deg(),
-			astro.dms(False, 78, 37, 0.5 * 60).to_deg())
+			astro.dms(True,   6,  3, 38.0).to_deg(),
+			astro.dms(False,  1, 49, 36.9).to_deg(),
+			astro.dms(False, 22, 46,  3.9).to_deg(),
+			astro.dms(False, 78, 37,  8.5).to_deg())
 			
-		l_4c = (323.3, 11.5, 136.7, 110.9)  
-		
-		b_4c = (54.7, 38.5, -38.6, 24.1)
+		l_4c = (323.3000, 11.5000, 136.7000, 110.9000)  
+		b_4c = ( 54.7000, 38.5000, -38.6000,  24.1000)
 		
 		ira = iter(ra_4c)
 		idec = iter(dec_4c)
@@ -1252,24 +1229,23 @@ class astro_tests(unittest.TestCase):
 	def test_get_equ_from_gal(self):
 		"""Test astro.get_equ_from_gal() function."""
 		
-		ACCURACY_RA = 0
-		ACCURACY_DEC = 1
+		ACCURACY_RA = 2
+		ACCURACY_DEC = 2
 		
+		# Test set generated at http://fuse.pha.jhu.edu/support/tools/eqtogal.html
 		ra_4c = (\
-			astro.hms(13, 35, 29.8).to_deg(),
-			astro.hms(15, 55, 48.9).to_deg(),
-			astro.hms( 1, 35, 28.1).to_deg(),
-			astro.hms(19, 46, 15.2).to_deg())  
-			
+			astro.hms(13, 35, 31.41).to_deg(),
+			astro.hms(15, 56,  3.01).to_deg(),
+			astro.hms( 1, 35, 19.19).to_deg(),
+			astro.hms(19, 45, 35.25).to_deg())  
 		dec_4c = (\
-			astro.dms(True,   6,  6, 0.6 * 60).to_deg(),
-			astro.dms(False,  1, 49, 0.4 * 60).to_deg(),
-			astro.dms(False, 22, 46, 0.7 * 60).to_deg(),
-			astro.dms(False, 78, 37, 0.5 * 60).to_deg())
+			astro.dms(True,   6,  3, 38.0).to_deg(),
+			astro.dms(False,  1, 49, 36.9).to_deg(),
+			astro.dms(False, 22, 46,  3.9).to_deg(),
+			astro.dms(False, 78, 37,  8.5).to_deg())
 			
-		l_4c = (323.3, 11.5, 136.7, 110.9)  
-		
-		b_4c = (54.7, 38.5, -38.6, 24.1)
+		l_4c = (323.3000, 11.5000, 136.7000, 110.9000)  
+		b_4c = ( 54.7000, 38.5000, -38.6000,  24.1000)
 		
 		ira = iter(ra_4c)
 		idec = iter(dec_4c)
@@ -1286,14 +1262,89 @@ class astro_tests(unittest.TestCase):
 			self.assertAlmostEqual(equ.ra, ra, ACCURACY_RA)
 			self.assertAlmostEqual(equ.dec, dec, ACCURACY_DEC)
 			
+	def test_get_gal_from_equ2000(self):
+		"""Test astro.get_gal_from_equ2000() function."""
+		
+		ACCURACY_L = 2
+		ACCURACY_B = 2
+		
+		# Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+		ra_4c = (\
+			astro.hms(13, 35, 31.41).to_deg(),
+			astro.hms(15, 56,  3.01).to_deg(),
+			astro.hms( 1, 35, 19.19).to_deg(),
+			astro.hms(19, 45, 35.25).to_deg())  
+		dec_4c = (\
+			astro.dms(True,   6,  3, 38.0).to_deg(),
+			astro.dms(False,  1, 49, 36.9).to_deg(),
+			astro.dms(False, 22, 46,  3.9).to_deg(),
+			astro.dms(False, 78, 37,  8.5).to_deg())
+			
+		l_4c = (322.3585, 11.1982, 135.9796, 110.8142)  
+		b_4c = ( 55.1396, 39.1055, -38.9896,  23.9482)
+		
+		ira = iter(ra_4c)
+		idec = iter(dec_4c)
+		il = iter(l_4c)
+		ib = iter(b_4c)
+		for i in range(len(ra_4c)):
+			ra = ira.next()
+			dec = idec.next()
+			l = il.next()
+			b = ib.next()
+			
+			equ = astro.equ_posn(ra, dec)
+			gal = astro.get_gal_from_equ2000(equ)
+			self.assertAlmostEqual(gal.l, l, ACCURACY_L)
+			self.assertAlmostEqual(gal.b, b, ACCURACY_B)
+			
+	def test_get_equ2000_from_gal(self):
+		"""Test astro.get_equ2000_from_gal() function."""
+		
+		ACCURACY_RA = 2
+		ACCURACY_DEC = 2
+		
+		# Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+		ra_4c = (\
+			astro.hms(13, 35, 31.41).to_deg(),
+			astro.hms(15, 56,  3.01).to_deg(),
+			astro.hms( 1, 35, 19.19).to_deg(),
+			astro.hms(19, 45, 35.25).to_deg())  
+		dec_4c = (\
+			astro.dms(True,   6,  3, 38.0).to_deg(),
+			astro.dms(False,  1, 49, 36.9).to_deg(),
+			astro.dms(False, 22, 46,  3.9).to_deg(),
+			astro.dms(False, 78, 37,  8.5).to_deg())
+			
+		l_4c = (322.3585, 11.1982, 135.9796, 110.8142)  
+		b_4c = ( 55.1396, 39.1055, -38.9896,  23.9482)
+		
+		ira = iter(ra_4c)
+		idec = iter(dec_4c)
+		il = iter(l_4c)
+		ib = iter(b_4c)
+		for i in range(len(ra_4c)):
+			ra = ira.next()
+			dec = idec.next()
+			l = il.next()
+			b = ib.next()
+			
+			gal = astro.gal_posn(l, b)
+			equ = astro.get_equ2000_from_gal(gal)
+			self.assertAlmostEqual(equ.ra, ra, ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, dec, ACCURACY_DEC)
+			
 	def test_get_apparent_posn(self):
 		"""Test astro.get_apparent_posn() function."""
 		
-		ra_in = (201.2500, 69.2517)  
+		ACCURACY_RA = 4
+		ACCURACY_DEC = 4
+		
+		ra_in  = (201.2500, 69.2517)  
 		dec_in = (-43.0667,   29.6708)
 		
-		ra_out = (201.26667354335814, 69.272553809987997)
-		dec_out = (-43.069253133853664, 29.673988993695787)
+		ra_out  = (201.26667, 69.27255)
+		dec_out = (-43.06925, 29.67399)
 		
 		idec_in = iter(dec_in)
 		ira_out = iter(ra_out)
@@ -1302,8 +1353,36 @@ class astro_tests(unittest.TestCase):
 		for ra in ra_in:
 			equ = astro.equ_posn(ra, idec_in.next())
 			equ = astro.get_apparent_posn(equ, j)
-			self.assertAlmostEqual(equ.ra, ira_out.next())
-			self.assertAlmostEqual(equ.dec, idec_out.next())
+			self.assertAlmostEqual(equ.ra, ira_out.next(), ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, idec_out.next(), ACCURACY_DEC)
+			
+	def test_B1950_to_J2000(self):
+		"""Test astro.B1950_to_J2000() function."""
+		
+		ACCURACY_RA = 2
+		ACCURACY_DEC = 2
+		
+		# Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+		pos_J2000 = astro.equ_posn(296.39687500, 78.61902778)
+		pos_B1950 = astro.equ_posn(296.98456518, 78.49400140)
+		
+		equ = astro.B1950_to_J2000(pos_B1950)
+		self.assertAlmostEqual(equ.ra,  pos_J2000.ra,  ACCURACY_RA)
+		self.assertAlmostEqual(equ.dec, pos_J2000.dec, ACCURACY_DEC)
+		
+	def test_J2000_to_B1950(self):
+		"""Test astro.J2000_to_B1950() function."""
+		
+		ACCURACY_RA = 2
+		ACCURACY_DEC = 2
+		
+		# Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+		pos_J2000 = astro.equ_posn(296.39687500, 78.61902778)
+		pos_B1950 = astro.equ_posn(296.98456518, 78.49400140)
+		
+		equ = astro.J2000_to_B1950(pos_J2000)
+		self.assertAlmostEqual(equ.ra,  pos_B1950.ra,  ACCURACY_RA)
+		self.assertAlmostEqual(equ.dec, pos_B1950.dec, ACCURACY_DEC)
 
 
 class astro_test_suite(unittest.TestSuite):
