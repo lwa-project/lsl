@@ -11,17 +11,11 @@ Moved out of the lsl.astro module into this script and updated for LWA-1
 import time
 import math
 
-from lsl import libnova
 from lsl.common import stations
 from lsl.astro import *
 
 
 if __name__ == '__main__':
-	# get libnova version
-	
-	ver = get_libnova_version()
-	print("Using libnova version %d.%d.%d" % (ver[0], ver[1], ver[2]))
-
 	# input NRL longitude and latitude
 	
 	station = stations.lwa1
