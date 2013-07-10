@@ -15,7 +15,7 @@ from lsl import astro
 from lsl import transform
 from lsl.common.paths import data as dataPath
 
-__version__   = '0.1'
+__version__   = '0.2'
 __revision__ = '$Rev$'
 __author__    = 'D. L .Wood'
 __maintainer__ = 'Jayce Dowell'
@@ -596,73 +596,6 @@ class C4C_Catalog(Catalog):
 		catFile.close()
 
 
-class F1FGL_Catalog(Catalog):
-	"""
-	Specific definition for Fermi LAT first point source catalog.
-	"""
-	
-	def __init__(self):
-		"""
-		Create a 1FGL catalog instance.
-		"""
-		
-		Catalog.__init__(self, '1FGL')
-		
-	def parse_file(self):
-		"""
-		Read a source catalogue data file.
-		"""
-		
-		import pyfits
-		
-		# open data file
-		fileName = os.path.join(self.get_directory(), 'gll_psc_v02.fit')
-		catFile = pyfits.open(fileName)
-		
-		# read source info
-		sourceTable = catFile['LAT_POINT_SOURCE_CATALOG'].data
-		
-		for row in sourceTable:
-			name = str(row.field('Source_Name')).replace(' ', '_')
-			ra = float(row.field('RA'))
-			dec = float(row.field('DEC'))
-			entry = CatalogEntry(name, 
-			transform.CelestialPosition((ra, dec), name=name))
-			self.source_map[name] = entry
-			
-			alias = str(row.field('0FGL_Name'))
-			if len(alias):
-				alias = alias.replace(' ', '_')
-				self.alias_map[alias] = entry
-				entry.alias_list.append(alias)
-				
-			alias = str(row.field('ASSOC_GAM1'))
-			if len(alias):
-				alias = alias.replace(' ', '_')
-				self.alias_map[alias] = entry
-				entry.alias_list.append(alias)
-				
-			alias = str(row.field('ASSOC_GAM2'))
-			if len(alias):
-				alias = alias.replace(' ', '_')
-				self.alias_map[alias] = entry
-				entry.alias_list.append(alias)
-				
-			alias = str(row.field('ASSOC1'))
-			if len(alias):
-				alias = alias.replace(' ', '_')
-				self.alias_map[alias] = entry
-				entry.alias_list.append(alias)
-				
-			alias = str(row.field('ASSOC2'))
-			if len(alias):
-				alias = alias.replace(' ', '_')
-				self.alias_map[alias] = entry
-				entry.alias_list.append(alias)
-				
-		catFile.close()
-
-
 class F2FGL_Catalog(Catalog):
 	"""
 	Specific definition for Fermi LAT 2-year point source catalog.
@@ -751,7 +684,6 @@ class CatalogFactory(object):
 						'PKS90' : PKS90_Catalog,
 						'3C'    : C3C_Catalog,
 						'4C'    : C4C_Catalog,
-						'1FGL'  : F1FGL_Catalog,
 						'2FGL'  : F2FGL_Catalog,
 					}
 					

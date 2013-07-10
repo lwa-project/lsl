@@ -1,15 +1,17 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Simple LWDA astronomical source catalogue display application."""
+"""Simple LWA1 astronomical source catalogue display application."""
 
 import sys
+import math
 import optparse
 import Tkinter
 
 from lsl import astro
 from lsl import transform
 from lsl import catalog
+from lsl.common.stations import lwa1
 
 
 __revision__  = "$Revision: 96 $"
@@ -26,7 +28,7 @@ class CatalogViewer(object):
         self.period = opts.period * 1000
         self.catalog = None
         self.cursor = self.root.cget("cursor")
-        self.site = transform.GeographicalPosition((252.372, 34.069), name = 'LWDA')
+        self.site = transform.GeographicalPosition((lwa1.long*180/math.pi, lwa1.lat*180/math.pi), name='LWA1')
         
         self.root.title('LWA Catalog Viewer')
 
@@ -299,7 +301,7 @@ if __name__ == '__main__':
     parser = optparse.OptionParser(usage = usage, description = __doc__)
     
     parser.add_option("-s", "--site", action = "store", type = "str",
-        dest = "site", default = 'LWDA', help = "site name (default LWDA)")
+        dest = "site", default = 'LWA1', help = "site name (default LWA1)")
     
     parser.add_option('-p', '--period', action = 'store', dest = 'period',
         type = 'int', default = 5, help = 'update period in seconds (default 5)')

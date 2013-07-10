@@ -47,11 +47,6 @@ class catalog_tests(unittest.TestCase):
 		
 		catalog.CatalogFactory.get_catalog('4C')
 		
-	def test_1FGL(self):
-		"""Test catalog.F1FGL_Catalog constructor."""
-		
-		catalog.CatalogFactory.get_catalog('1FGL')
-		
 	def test_2FGL(self):
 		"""Test catalog.F2FGL_Catalog constructor."""
 		
