@@ -44,7 +44,7 @@ class LWAStation(object):
 	  * Name (name)
 	  * ID code (id)
 	  * Latitiude in radians [but initialized as degrees] (N is positive, lat)
-	  * Longitude in radians [but initialized as degrees] (W is negative, lon)
+	  * Longitude in radians [but initialized as degrees] (W is negative, long)
 	  * Elevation in meters (elev)
 	  * List of Antenna instances (antennas)
 	  

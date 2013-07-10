@@ -5,7 +5,6 @@ Requirements
  * blas >= 1.2
  * fftw3 >= 3.2
  * gdbm >= 1.8
- * swig >= 1.3
  * setuptools >= 0.6.10
  * numpy >= 1.2
  * scipy >= 0.7
@@ -13,23 +12,8 @@ Requirements
  * ephem >= 3.7.5
  * aipy >= 0.9.1
  * matplotlib >= 0.98.3 [1]_
- * paramiko >= 1.7.6 [1]_
 
 .. [1] Required for some of the included scripts
-
-In addition, the libnova C library is required.  This is an astronomical
-calculation and ephemeris library.  The lsl.libnova python module is built 
-as a SWIG wrapper around the libnova library, and this provides the basis 
-of the astronomical code contained in the package.  If you are using binary 
-packages, be sure to install the libnova-dev version, as the library header 
-include files are required for the build.  Some issues have arisen with the 
-system version of swig for some platforms: this default version is too old 
-to correctly generate wrapper code for python 2.6.
-
-.. warning::
-	Use libnova version 0.13.0 or later; version 0.12 is known to contain errors.
-
-The libnova C library can be found `here <http://libnova.sourceforge.net/>`_.
 
 Building
 ========
@@ -40,32 +24,8 @@ the source distribution tree.
 
 A setup configuration script is required to run the build process.  A sample 
 config file may be found in the root directory of the source distribution as 
-'setup.cfg'.  This file must be edited to specify the location of the 
-libnova library files if that location is not in '/usr/local'.  Edit the 
-following lines::
-
-	***********************************************************************
-	[DEFAULT]
-	
-	# The libnova_prefix value should point to the platform installation of
-	# the libnova libraries and header files
-		
-	libnova_prefix = /usr/local
-	***********************************************************************
-	and change to to the location where libnova is installed on your machine:
-	***********************************************************************
-	[DEFAULT]
-		
-	# The libnova_prefix value should point to the platform installation of
-	# the libnova libraries and header files
-		
-	libnova_prefix = /Software/libnova/0.13.0
-	***********************************************************************
-
-The setup process will expect to find the libnova library C header files in 
-'<libnova_prefix>/include/libnova' and the share library object file in 
-'<libnova_prefix>/lib'.  Do not modify any of the lines in the [build_ext] 
-section of the config file.
+'setup.cfg'.  Do not modify any of the lines in the [build_ext] section of 
+the config file.
 
 To build the LSL package, run::
 
