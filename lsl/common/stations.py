@@ -284,7 +284,7 @@ class Antenna(object):
 		return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
 		
 	def __reduce__(self):
-		return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.stand, self.pol, self.theta, self.phi, self.fee, self.cable, self.status))
+		return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.stand, self.pol, self.theta, self.phi, self.fee, self.feePort, self.cable, self.status))
 		
 	def __cmp__(self, y):
 		if self.id > y.id:

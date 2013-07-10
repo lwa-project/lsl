@@ -37,12 +37,12 @@ class stations_tests(unittest.TestCase):
 		lwa1.compute(jov)
 		
 		# RA/Dec
-		self.assertAlmostEqual(jov.ra,  ephem.hours('6:14:41.01'))
-		self.assertAlmostEqual(jov.dec, ephem.degrees('23:11:49.1'))
+		self.assertAlmostEqual(jov.ra,  ephem.hours('6:14:41.01'), 6)
+		self.assertAlmostEqual(jov.dec, ephem.degrees('23:11:49.1'), 6)
 		
 		#Az/Alt
-		self.assertAlmostEqual(jov.az,  ephem.degrees('274:40:25.3'))
-		self.assertAlmostEqual(jov.alt, ephem.degrees('37:24:09.8'))
+		self.assertAlmostEqual(jov.az,  ephem.degrees('274:40:25.3'), 6)
+		self.assertAlmostEqual(jov.alt, ephem.degrees( '37:24:09.8'), 6)
 		
 	def test_pickle(self):
 		"""Test pickling of LWAStation instances."""
