@@ -10,8 +10,9 @@ import ephem
 from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
 from lsl.common.constants import *
+from lsl.misc.mathutil import to_dB, from_dB
 
-__version__ = '1.0'
+__version__ = '2.0'
 __revision__ = '$Rev$'
 __all__ = ['geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
@@ -36,35 +37,19 @@ def geo2ecef(lat, lon, elev):
 	return (x, y, z)
 
 
-class LWAStation(object):
+class LWAStationBase(object):
 	"""
-	Object to hold information about the a LWA station.  This object can
-	create a ephem.Observer representation of itself and identify which stands
-	were in use at a given time.  Stores station:
+	Base object to hold information about the a LWA station.  Stores station:
 	  * Name (name)
 	  * ID code (id)
-	  * Latitiude in radians [but initialized as degrees] (N is positive, lat)
-	  * Longitude in radians [but initialized as degrees] (W is negative, long)
-	  * Elevation in meters (elev)
 	  * List of Antenna instances (antennas)
 	  
-	LWAStation also provides several functional attributes for dealing with
-	the station's location on Earth.  These include:
-	  * getObserver: Return an ephem.Observer instance representing the station
-	  * getAIPYLocation: Return a tuple for setting the location of an AIPY
-	    AntennaArray instance
-	  * getGeocentricLocation: Return a tuple of the EC-EF coordinates of the 
-	    station
-	  * getECEFTransform: Return a 3x3 tranformation matrix to convert antenna
-	    positions to EC-EF coordinates
+	.. versionadded:: 0.7.0
 	"""
-
-	def __init__(self, name, lat, long, elev, id='', antennas=None):
+	
+	def __init__(self, name, id='', antennas=None):
 		self.name = name
 		self.id = id
-		self.lat = lat*numpy.pi/180.0
-		self.long = long*numpy.pi/180.0
-		self.elev = elev
 		
 		if antennas is None:
 			self.antennas = []
@@ -72,54 +57,11 @@ class LWAStation(object):
 			self.antennas = antennas
 			
 	def __str__(self):
-		return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
-
-	def getObserver(self, date=None, JD=False):
-		"""
-		Return a ephem.Observer object for this site.
-		"""
-
-		oo = ephem.Observer()
-		oo.lat = self.lat
-		oo.long = self.long
-		oo.elev = self.elev
-		oo.pressure = 0.0
-		if date is not None:
-			if JD:
-				# If the date is Julian, convert to Dublin Julian Date 
-				# which is used by ephem
-				date -= 2415020.0
-			oo.date = date
-
-		return oo
-
-	def getAIPYLocation(self):
-		"""
-		Return a tuple that can be used by AIPY for specifying a array
-		location.
-		"""
-
-		return (self.lat, self.long, self.elev)
-
-	def getGeocentricLocation(self):
-		"""
-		Return a tuple with earth-centered, earth-fixed coordinates for the station.
-		"""
-
-		return geo2ecef(self.lat, self.long, self.elev)
-
-	def getECEFTransform(self):
-		"""
-		Return a 3x3 tranformation matrix that converts a baseline in 
-		[east, north, elevation] to earh-centered, earth-fixed coordinates
-		for that baseline [x, y, z].  Based off the 'local_to_eci' function
-		in the lwda_fits-dev library.
-		"""
-
-		return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
-						[1.0, 0.0,                  0.0], 
-						[0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
-						
+		return "%s (%s) with %i antennas" % (self.name, self.id, len(self.antennas))
+		
+	def __reduce__(self):
+		return (LWAStationBase, (self.name, self.id, self.antennas))
+		
 	def __sortAntennas(self, attr='digitizer'):
 		"""
 		Sort the antennas list by the specified attribute.  The default
@@ -134,9 +76,115 @@ class LWAStation(object):
 				return -1
 			else:
 				return 0
-		
+				
 		self.antennas.sort(cmp=sortFcn)
+
+
+class LWAStation(ephem.Observer, LWAStationBase):
+	"""
+	Object to hold information about the a LWA station.  This object can
+	create a ephem.Observer representation of itself and identify which stands
+	were in use at a given time.  Stores station:
+	  * Name (name)
+	  * ID code (id)
+	  * Latitiude in radians [but initialized as degrees] (N is positive, lat)
+	  * Longitude in radians [but initialized as degrees] (W is negative, long)
+	  * Elevation in meters (elev)
+	  * List of Antenna instances (antennas)
+	  
+	LWAStation provides several functional attributes for dealing with the 
+	station's location on Earth.  These include:
+	  * getObserver: Return an ephem.Observer instance representing the station
+	  * getAIPYLocation: Return a tuple for setting the location of an AIPY
+	    AntennaArray instance
+	  * getGeocentricLocation: Return a tuple of the EC-EF coordinates of the 
+	    station
+	  * getECEFTransform: Return a 3x3 tranformation matrix to convert antenna
+	    positions to EC-EF coordinates
+	    
+	LWAStation also provides several functional attributes for dealing with
+	the station's antennas.  These include:
+	  * getAntennas:  Return a list of antennas
+	  * getStands: Return a list of stands
+	  * getPols:  Return a list of polarizations
+	  * getCables: Return a list of cables
+	  
+	.. versionchanged:: 0.7.0
+		Converted LWAStation to be an instance of LWAStationBase and ephem.Observer
+		to make it easier to work with ephem.Body objects.
+	"""
+	
+	def __init__(self, name, lat, long, elev, id='', antennas=None):
+		LWAStationBase.__init__(self, name, id=id, antennas=antennas)
+		ephem.Observer.__init__(self)
 		
+		self.lat = lat * numpy.pi/180.0
+		self.long = long * numpy.pi/180.0
+		self.elev = self.elev
+		self.pressure = 0.0
+		
+	def __str__(self):
+		return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
+		
+	def __reduce__(self):
+		return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, self.antennas))
+		
+	def compute(self, body):
+		"""
+		Update the provided ephem.Body instance with the current location as 
+		viewed from the site.
+		
+		.. versionadded:: 0.7.0
+		"""
+		
+		body.compute(self)
+		
+	def getObserver(self, date=None, JD=False):
+		"""
+		Return a ephem.Observer object for this site.
+		"""
+		
+		oo = ephem.Observer()
+		oo.lat = 1.0*self.lat
+		oo.long = 1.0*self.long
+		oo.elev = 1.0*self.elev
+		oo.pressure = 0.0
+		if date is not None:
+			if JD:
+				# If the date is Julian, convert to Dublin Julian Date 
+				# which is used by ephem
+				date -= 2415020.0
+			oo.date = date
+			
+		return oo
+		
+	def getAIPYLocation(self):
+		"""
+		Return a tuple that can be used by AIPY for specifying a array
+		location.
+		"""
+		
+		return (self.lat, self.long, self.elev)
+		
+	def getGeocentricLocation(self):
+		"""
+		Return a tuple with earth-centered, earth-fixed coordinates for the station.
+		"""
+		
+		return geo2ecef(self.lat, self.long, self.elev)
+		
+	def getECEFTransform(self):
+		"""
+		Return a 3x3 tranformation matrix that converts a baseline in 
+		[east, north, elevation] to earh-centered, earth-fixed coordinates
+		for that baseline [x, y, z].  Based off the 'local_to_eci' function
+		in the lwda_fits-dev library.
+		"""
+		
+		return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
+						[1.0, 0.0,                  0.0], 
+						[0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
+						
 	def getAntennas(self):
 		"""
 		Return the list of Antenna instances for the station, sorted by 
@@ -182,6 +230,7 @@ class Antenna(object):
 	"""
 	Object to store the information about an antenna.  Stores antenna:
 	  * ID number (id)
+	  * ARX instance the antenna is attached to (arx)
 	  * DP1 board number (board)
 	  * DP1 digitizer number (digiziter)
 	  * Stand instance the antenna is part of (stand)
@@ -200,9 +249,12 @@ class Antenna(object):
 	  * 3 == OK
 	"""
 	
-	def __init__(self, id, arx=0, board=0, digitizer=0, stand=None, pol=0, theta=0.0, phi=0.0, fee=None, feePort=1, cable=None, status=0):
+	def __init__(self, id, arx=None, board=0, digitizer=0, stand=None, pol=0, theta=0.0, phi=0.0, fee=None, feePort=1, cable=None, status=0):
 		self.id = int(id)
-		self.arx = int(arx)
+		if arx is None:
+			self.arx = ARX(0, 0, 0)
+		else:
+			self.arx = arx
 		self.board = int(board)
 		self.digitizer = int(digitizer)
 		
@@ -228,6 +280,12 @@ class Antenna(object):
 			
 		self.status = int(status)
 		
+	def __str__(self):
+		return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
+		
+	def __reduce__(self):
+		return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.stand, self.pol, self.theta, self.phi, self.fee, self.cable, self.status))
+		
 	def __cmp__(self, y):
 		if self.id > y.id:
 			return 1
@@ -235,9 +293,27 @@ class Antenna(object):
 			return -1
 		else:
 			return 0
+			
+	def response(self, dB=False):
+		"""
+		Return a two-element tuple (freq in Hz, mis-match loss) for a model LWA1 
+		antenna.
 		
-	def __str__(self):
-		return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
+		.. versionadded:: 0.7.0
+		"""
+		
+		# Find the filename to use
+		filename = os.path.join(dataPath, 'BurnsZ.txt')
+		
+		# Read in the data
+		data = numpy.loadtxt(filename)
+		freq = data[:,0]*1e6
+		ime = data[:,3]
+		if dB:
+			ime = to_dB(ime)
+			
+		# Return
+		return (freq, ime)
 		
 	def getStatus(self):
 		"""
@@ -255,6 +331,14 @@ class Stand(object):
 	Stores stand:
 	  * ID number (id)
 	  * Position relative to the center stake in meters (x,y,z)
+	  
+	The x, y, and z positions can also be accessed through subscripts:
+	  Stand[0] = x
+	  Stand[1] = y
+	  Stand[2] = z
+	  
+	.. versionchanged:: 0.7.0
+		Added the option to get the positions via subscripts.
 	"""
 	
 	def __init__(self, id, x, y, z):
@@ -262,7 +346,7 @@ class Stand(object):
 		self.x = float(x)
 		self.y = float(y)
 		self.z = float(z)
-	
+		
 	def __cmp__(self, y):
 		if self.id > y.id:
 			return 1
@@ -270,10 +354,33 @@ class Stand(object):
 			return -1
 		else:
 			return 0
-		
+			
 	def __str__(self):
 		return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
-
+		
+	def __reduce__(self):
+		return (Stand, (self.id, self.x, self.y, self.z))
+		
+	def __getitem__(self, key):
+		if key == 0:
+			return self.x
+		elif key == 1:
+			return self.y
+		elif key == 2:
+			return self.z
+		else:
+			raise ValueError("Subscript %i out of range" % key)
+			
+	def __setitem__(self, key, value):
+		if key == 0:
+			self.x = float(value)
+		elif key == 1:
+			self.y = float(value)
+		elif key == 2:
+			self.z = float(value)
+		else:
+			raise ValueError("Subscript %i out of range" % key)
+			
 	def __add__(self, std):
 		try:
 			# If its a Stand instance, do this
@@ -323,7 +430,13 @@ class FEE(object):
 		self.gain1 = float(gain1)
 		self.gain2 = float(gain2)
 		self.status = int(status)
-	
+		
+	def __str__(self):
+		return "FEE '%s': gain1=%.2f, gain2=%.2f; status is %i" % (self.id, self.gain1, self.gain2, self.status)
+		
+	def __reduce__(self):
+		return (FEE, (self.id, self.idNumber, self.gain1, self.gain2, self.status))
+		
 	def __cmp__(self, y):
 		if self.id > y.id:
 			return 1
@@ -331,9 +444,6 @@ class FEE(object):
 			return -1
 		else:
 			return 0
-	
-	def __str__(self):
-		return "FEE '%s': gain1=%.2f, gain2=%.2f; status is %i" % (self.id, self.gain1, self.gain2, self.status)
 
 
 class Cable(object):
@@ -364,7 +474,13 @@ class Cable(object):
 		self.a1 = float(a1)
 		self.aFreq = float(aFreq)
 		self.clockOffset = 0.0
-
+		
+	def __str__(self):
+		return "Cable '%s' with length %.2f m (stretched to %.2f m)" % (self.id, self.length, self.length*self.stretch)
+		
+	def __reduce__(self):
+		return (Cable, (self.id, self.length, self.vf, self.dd, self.a0, self.a1, self.aFreq, self.stretch))
+		
 	def __cmp__(self):
 		if self.id > y.id:
 			return 1
@@ -372,10 +488,7 @@ class Cable(object):
 			return -1
 		else:
 			return 0
-
-	def __str__(self):
-		return "Cable '%s' with length %.2f m (stretched to %.2f m)" % (self.id, self.length, self.length*self.stretch)
-		
+			
 	def setClockOffset(self, offset):
 		"""
 		Add a clock offset (in seconds) to the cable model.
@@ -408,25 +521,40 @@ class Cable(object):
 		else:
 			return totlDelay
 
-	def attenuation(self, frequency=49e6):
+	def attenuation(self, frequency=49e6, dB=False):
 		"""Get the multiplicative factor needed to correct for the cable 
 		loss for a specific frequency (in Hz).  If attenuations for more 
 		than one frequency are needed, the frequencies can be passed in as 
 		a numpy array.
+		
+		.. versionchanged:: 0.7.0
+			Added the `dB' keyword to allow dB to be returned.
 		"""
 	
 		atten = 2 * self.a0 * self.length*self.stretch * numpy.sqrt(frequency / numpy.array(self.aFreq)) 
 		atten += self.a1 * self.length*self.stretch * (frequency / numpy.array(self.aFreq))
 		atten = numpy.exp(atten)
+		
+		if dB:
+			atten = to_dB(atten)
+			
 		return atten
 		
-	def gain(self, frequency=49e6):
+	def gain(self, frequency=49e6, dB=False):
 		"""Get the cable gain ("inverse loss") for a specific frequency (in 
 		Hz).  If gains for more than one frequency are needed, the 
 		frequencies can be passed in as a numpy array.
+		
+		.. versionchanged:: 0.7.0
+			Added the `dB' keyword to allow dB to be returned.
 		"""
 		
-		return 1.0 / self.attenuation(frequency=frequency)
+		gai = 1.0 / self.attenuation(frequency=frequency, dB=False)
+		
+		if dB:
+			gai = to_dB(gai)
+			
+		return gai
 
 
 class ARX(object):
@@ -449,7 +577,10 @@ class ARX(object):
 	def __str__(self):
 		return "ARX Board %s, channel %i (ASP Channel %i)" % (self.id, self.channel, self.aspChannel)
 		
-	def response(self, filter='full'):
+	def __reduce__(self):
+		return (ARX, (self.id, self.channel, self.aspChannel))
+		
+	def response(self, filter='full', dB=True):
 		"""
 		Return a two-element tuple (freq in Hz, S21 magnitude in dB) for the ARX response for
 		the current board/channel.
@@ -458,6 +589,10 @@ class ARX(object):
 		  * 1 or 'full'
 		  * 2 or 'reduced'
 		  * 3 or 'split'
+		  
+		.. versionchanged:: 0.7.0
+			Add an option to specify whether the magnitude should be 
+			returned in dB or not.
 		"""
 		
 		# Find the filename to use
@@ -474,6 +609,9 @@ class ARX(object):
 		data = dataDict['data']
 		dataDict.close()
 		
+		if not dB:
+			data = from_dB(data)
+			
 		# Return or raise an error
 		if filter == 1 or filter == 'full':
 			return (freq, data[:,0])

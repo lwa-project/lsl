@@ -9,6 +9,9 @@
   * Removed the lsl.astro_array module
   * Removed the lsl.libnova module and the associated swig file
   * Updated the documentation to reflect the reduced dependencies
+  * Update lsl.common.stations.LWAStation to be a sub-class to ephem.Observer
+  * Added a function to lsl.common.stations.Antenna to access information about the impedence mis-match
+  * Added an option to the various response functions in lsl.common.stations to return values in dB
 
 0.6.5
   * Fixed the time remaining computation in lsl.common.progress.ProgressBarPlus
