@@ -35,6 +35,21 @@ class transform_tests(unittest.TestCase):
 		p0 = transform.PlanetaryPosition('Jupiter')
 		p1 = transform.PlanetaryPosition('Sun')
 		
+	def test_planetaryposition_saturn(self):
+		"""Test the location of Saturn."""
+		
+		t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+		
+		obs = lwa1.getObserver()
+		obs.date = t0.utc_str
+		sat = ephem.Saturn()
+		sat.compute(obs)
+		
+		p0 = transform.PlanetaryPosition('Saturn')
+		
+		self.assertAlmostEqual(p0.apparent_equ(t0)[0], sat.g_ra *180.0/math.pi, 4)
+		self.assertAlmostEqual(p0.apparent_equ(t0)[1], sat.g_dec*180.0/math.pi, 4)
+		
 	def test_planetaryposition_jupiter(self):
 		"""Test the location of Jupiter."""
 		
@@ -47,8 +62,38 @@ class transform_tests(unittest.TestCase):
 		
 		p0 = transform.PlanetaryPosition('Jupiter')
 		
-		self.assertAlmostEqual(p0.apparent_equ(t0)[0], jove.g_ra *180.0/math.pi, 1)
-		self.assertAlmostEqual(p0.apparent_equ(t0)[1], jove.g_dec*180.0/math.pi, 1)
+		self.assertAlmostEqual(p0.apparent_equ(t0)[0], jove.g_ra *180.0/math.pi, 4)
+		self.assertAlmostEqual(p0.apparent_equ(t0)[1], jove.g_dec*180.0/math.pi, 4)
+		
+	def test_planetaryposition_mars(self):
+		"""Test the location of Mars."""
+		
+		t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+		
+		obs = lwa1.getObserver()
+		obs.date = t0.utc_str
+		mars = ephem.Mars()
+		mars.compute(obs)
+		
+		p0 = transform.PlanetaryPosition('Mars')
+		
+		self.assertAlmostEqual(p0.apparent_equ(t0)[0], mars.g_ra *180.0/math.pi, 4)
+		self.assertAlmostEqual(p0.apparent_equ(t0)[1], mars.g_dec*180.0/math.pi, 4)
+		
+	def test_planetaryposition_venus(self):
+		"""Test the location of Venus."""
+		
+		t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+		
+		obs = lwa1.getObserver()
+		obs.date = t0.utc_str
+		venu = ephem.Venus()
+		venu.compute(obs)
+		
+		p0 = transform.PlanetaryPosition('Venus')
+		
+		self.assertAlmostEqual(p0.apparent_equ(t0)[0], venu.g_ra *180.0/math.pi, 4)
+		self.assertAlmostEqual(p0.apparent_equ(t0)[1], venu.g_dec*180.0/math.pi, 4)
 		
 	def test_planetaryposition_sun(self):
 		"""Test the location of the Sun."""
@@ -62,8 +107,8 @@ class transform_tests(unittest.TestCase):
 		
 		p0 = transform.PlanetaryPosition('Sun')
 		
-		self.assertAlmostEqual(p0.apparent_equ(t0)[0], sol.g_ra *180.0/math.pi, 1)
-		self.assertAlmostEqual(p0.apparent_equ(t0)[1], sol.g_dec*180.0/math.pi, 1)
+		self.assertAlmostEqual(p0.apparent_equ(t0)[0], sol.g_ra *180.0/math.pi, 4)
+		self.assertAlmostEqual(p0.apparent_equ(t0)[1], sol.g_dec*180.0/math.pi, 4)
 		
 	def test_geographicalposition_init(self):
 		"""Test the transform.GeographicalPosition constructor."""
@@ -93,7 +138,6 @@ class transform_tests(unittest.TestCase):
 		
 		lon = lwa1.long * 180.0/math.pi
 		lat = lwa1.lat  * 180.0/math.pi
-		elv = lwa1.elev
 		obs = lwa1.getObserver()
 		
 		g0 = transform.GeographicalPosition([lon,lat,elv])
