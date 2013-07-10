@@ -3,6 +3,8 @@
 """Unit test for lsl.common.stations module."""
 
 import os
+import ephem
+import pickle
 import unittest
 from datetime import datetime
 
@@ -10,8 +12,8 @@ from lsl.common.paths import dataBuild as dataPath
 from lsl.common import stations
 
 
-__revision__ = "$ Revision: 2 $"
-__version__  = "0.2"
+__revision__ = "$Rev$"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -24,7 +26,46 @@ class stations_tests(unittest.TestCase):
 
 		lwa1 = stations.lwa1
 		self.assertTrue(isinstance(lwa1, stations.LWAStation))
-
+		
+	def test_observer(self):
+		"""Test the ephem.Observer portion of an LWAStation."""
+		
+		lwa1 = stations.lwa1
+		jov = ephem.Jupiter()
+		
+		lwa1.date = '2013/7/10 22:07:07'
+		lwa1.compute(jov)
+		
+		# RA/Dec
+		self.assertAlmostEqual(jov.ra,  ephem.hours('6:14:41.01'))
+		self.assertAlmostEqual(jov.dec, ephem.degrees('23:11:49.1'))
+		
+		#Az/Alt
+		self.assertAlmostEqual(jov.az,  ephem.degrees('274:40:25.3'))
+		self.assertAlmostEqual(jov.alt, ephem.degrees('37:24:09.8'))
+		
+	def test_pickle(self):
+		"""Test pickling of LWAStation instances."""
+		
+		lwa1 = stations.lwa1
+		
+		# Pickle and re-load
+		out  = pickle.dumps(lwa1)
+		lwa1Prime = pickle.loads(out)
+		
+		# Test similarity
+		self.assertAlmostEqual(lwa1.lat, lwa1Prime.lat)
+		self.assertAlmostEqual(lwa1.long, lwa1Prime.long)
+		self.assertAlmostEqual(lwa1.elev, lwa1Prime.elev)
+		for i in xrange(520):
+			self.assertEqual(lwa1.antennas[i].id, lwa1Prime.antennas[i].id)
+			self.assertEqual(lwa1.antennas[i].stand.id, lwa1Prime.antennas[i].stand.id)
+			self.assertEqual(lwa1.antennas[i].digitizer, lwa1Prime.antennas[i].digitizer)
+			
+		# Check independence
+		lwa1Prime.antennas[100].stand.id = 888
+		self.assertTrue(lwa1.antennas[100].stand.id != lwa1Prime.antennas[100].stand.id)
+		
 	def test_ecef_conversion(self):
 		"""Test the stations.geo2ecef() function."""
 
