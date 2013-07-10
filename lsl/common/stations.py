@@ -62,7 +62,7 @@ class LWAStationBase(object):
 	def __reduce__(self):
 		return (LWAStationBase, (self.name, self.id, self.antennas))
 		
-	def __sortAntennas(self, attr='digitizer'):
+	def _sortAntennas(self, attr='digitizer'):
 		"""
 		Sort the antennas list by the specified attribute.  The default
 		attribute is the digitizer number.
@@ -192,7 +192,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		"""
 		
 		# Sort and return
-		self.__sortAntennas()
+		self._sortAntennas()
 		return self.antennas
 		
 	def getStands(self):
@@ -202,7 +202,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		"""
 		
 		# Sort and return
-		self.__sortAntennas()
+		self._sortAntennas()
 		return [ant.stand for ant in self.antennas]
 	
 	def getPols(self):
@@ -212,7 +212,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		"""
 		
 		# Sort and return
-		self.__sortAntennas()
+		self._sortAntennas()
 		return [ant.pol for ant in self.antennas]
 		
 	def getCables(self):
@@ -222,7 +222,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		"""
 		
 		# Sort and return
-		self.__sortAntennas()
+		self._sortAntennas()
 		return [ant.cable for ant in self.antennas]
 
 
