@@ -663,6 +663,73 @@ class F1FGL_Catalog(Catalog):
 		catFile.close()
 
 
+class F2FGL_Catalog(Catalog):
+	"""
+	Specific definition for Fermi LAT 2-year point source catalog.
+	"""
+	
+	def __init__(self):
+		"""
+		Create a 2FGL catalog instance.
+		"""
+		
+		Catalog.__init__(self, '2FGL')
+		
+	def parse_file(self):
+		"""
+		Read a source catalogue data file.
+		"""
+		
+		import pyfits
+		
+		# open data file
+		fileName = os.path.join(self.get_directory(), 'gll_psc_v08.fit')
+		catFile = pyfits.open(fileName)
+		
+		# read source info
+		sourceTable = catFile['LAT_POINT_SOURCE_CATALOG'].data
+		
+		for row in sourceTable:
+			name = str(row.field('Source_Name')).replace(' ', '_')
+			ra = float(row.field('RA'))
+			dec = float(row.field('DEC'))
+			entry = CatalogEntry(name, 
+			transform.CelestialPosition((ra, dec), name = name))
+			self.source_map[name] = entry
+			
+			alias = str(row.field('0FGL_Name'))
+			if len(alias):
+				alias = alias.replace(' ', '_')
+				self.alias_map[alias] = entry
+				entry.alias_list.append(alias)
+				
+			alias = str(row.field('ASSOC_GAM1'))
+			if len(alias):
+				alias = alias.replace(' ', '_')
+				self.alias_map[alias] = entry
+				entry.alias_list.append(alias)
+				
+			alias = str(row.field('ASSOC_GAM2'))
+			if len(alias):
+				alias = alias.replace(' ', '_')
+				self.alias_map[alias] = entry
+				entry.alias_list.append(alias)
+				
+			alias = str(row.field('ASSOC1'))
+			if len(alias):
+				alias = alias.replace(' ', '_')
+				self.alias_map[alias] = entry
+				entry.alias_list.append(alias)
+				
+			alias = str(row.field('ASSOC2'))
+			if len(alias):
+				alias = alias.replace(' ', '_')
+				self.alias_map[alias] = entry
+				entry.alias_list.append(alias)
+				
+		catFile.close()
+
+
 class CatalogFactory(object):
 	"""
 	Get catalog objects by name.  Caches the catalog data so that
@@ -679,6 +746,7 @@ class CatalogFactory(object):
 						'3C'    : C3C_Catalog,
 						'4C'    : C4C_Catalog,
 						'1FGL'  : F1FGL_Catalog,
+						'2FGL'  : F2FGL_Catalog,
 					}
 					
 	# a mapping of catalog names to instances

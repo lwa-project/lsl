@@ -51,7 +51,12 @@ class catalog_tests(unittest.TestCase):
 		"""Test catalog.F1FGL_Catalog constructor."""
 		
 		catalog.CatalogFactory.get_catalog('1FGL')
-	
+		
+	def test_2FGL(self):
+		"""Test catalog.F2FGL_Catalog constructor."""
+		
+		catalog.CatalogFactory.get_catalog('2FGL')
+		
 	def test_get_names(self):
 		"""Test catalog.CatalogFactory.get_names() method."""
 		
@@ -65,9 +70,8 @@ class catalog_tests(unittest.TestCase):
 		cat = catalog.CatalogFactory.get_catalog('LWA')
 		self.assertTrue(isinstance(cat, catalog.LWA_Catalog))
 		
-		self.assertRaises(ValueError, catalog.CatalogFactory.get_catalog, 
-			'NONSENSE')
-	
+		self.assertRaises(ValueError, catalog.CatalogFactory.get_catalog, 'NONSENSE')
+		
 	def test_lookup(self):
 		"""Test catalog.Catalog.lookup() method."""
 		
