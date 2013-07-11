@@ -18,9 +18,9 @@ except ImportError:
 	from lsl.misc.OrderedDict import OrderedDict
 
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
-__all__ = ['FrameBuffer', 'TBNFrameBuffer', '__version__', '__revision__', '__all__']
+__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', '__version__', '__revision__', '__all__']
 
 
 def _cmpStands(x, y):
@@ -78,7 +78,7 @@ class FrameBuffer(object):
 		are, effectively, on different networks.
 	"""
 
-	def __init__(self, mode='TBN', stands=[], pols=[], samples=12000000, bits=12, nSegments=6, ReorderFrames=False):
+	def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], samples=12000000, bits=12, nSegments=6, ReorderFrames=False):
 		"""
 		Initialize the buffer with a list of:
 		  * TBW:
@@ -87,12 +87,16 @@ class FrameBuffer(object):
 		  * TBN
 		      * list of stands
 		      * list of pols
+		  * DRX
+		      * list of beams
+		      * list of tunings
+		      * list of pols.
 		By doing this, we should be able to keep up with when the buffer 
 		is full and to help figure out which stands are missing.
 		"""
 
 		# Input validation
-		if mode.upper() not in ('TBW', 'TBN'):
+		if mode.upper() not in ('TBW', 'TBN', 'DRX'):
 			raise RuntimeError("Invalid observing mode '%s'" % mode)
 		
 		if mode.upper() == 'TBW':
@@ -103,7 +107,15 @@ class FrameBuffer(object):
 				if samples > 36000000:
 					raise RuntimeError('Invalid number of samples for 4-bit TBW')
 				
+		elif mode.upper == 'TBN':
+			for pol in pols:
+				if pol not in (0, 1):
+					raise RuntimeError("Invalid polarization '%i'" % pol)
+				
 		else:
+			for tune in tunes:
+				if tune not in (1, 2):
+					raise RuntimeError("Invalid tuning '%i'" % tune)
 			for pol in pols:
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
@@ -122,6 +134,8 @@ class FrameBuffer(object):
 		# Information describing the observations
 		self.mode = mode.upper()
 		self.stands = stands
+		self.beams = beams
+		self.tunes = tunes
 		self.pols = pols
 		self.bits = bits
 		self.samples = samples
@@ -154,13 +168,21 @@ class FrameBuffer(object):
 			for stand in self.stands:
 				frameList.append(stand)
 			
-		else:
+		elif self.mode == 'TBN':
 			# TBN mode
 			nFrames = len(self.stands)*len(self.pols)
 				
 			for stand in self.stands:
 				for pol in self.pols:
 					frameList.append((stand,pol))
+					
+		else:
+			# DRX mode
+			nFrames = len(self.beams)*len(self.tunes)*len(self.pols)
+			for beam in self.beams:
+				for tune in self.tunes:
+					for pol in self.pols:
+						frameList.append((beam,tune,pol))
 			
 		return (nFrames, frameList)
 		
@@ -324,15 +346,20 @@ class FrameBuffer(object):
 		# Get out the frame parameters
 		if self.mode == 'TBW':
 			stand = frameParameters
-		else:
+		elif self.mode == 'TBN':
 			stand, pol = frameParameters
-		
+		else:
+			beam, tune, pol = frameParameters
+		print frameParameters, fillFrame.data.timeTag
+			
 		# Fix-up the header
 		if self.mode == 'TBW':
 			fillFrame.header.tbwID = (fillFrame.header.tbwID&64512)|stand
-		else:
+		elif self.mode == 'TBN':
 			fillFrame.header.tbnID = 2*(stand-1) + pol + 1
-		
+		else:
+			fillFrame.header.drxID = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
+			
 		# Zero the data for the fill packet
 		if self.mode == 'TBW':
 			fillFrame.data.xy *= 0
@@ -418,6 +445,65 @@ class TBNFrameBuffer(FrameBuffer):
 	def figureOfMerit(self, frame):
 		"""
 		Figure of merit for sorting frames.  For TBN it is:
+		    <frame count of frame>
+		"""
+		
+		return frame.data.timeTag
+		#return frame.header.frameCount
+
+
+class DRXFrameBuffer(FrameBuffer):
+	"""
+	A sub-type of FrameBuffer specifically for dealing with DRX frames.
+	See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+	buffering is implemented.
+	
+	Keywords:
+	beams
+	  list of beam to expect packets for
+	  
+	tunes
+	  list of tunings to expect packets for
+	  
+	pols
+	  list of polarizations to expect packets for
+	  
+	nSegments
+	  number of ring segments to use for the buffer (default is 20)
+	  
+	ReorderFrames
+	  whether or not to reorder frames returned by get() or flush() by 
+	  stand/polarization (default is False)
+	  
+	The number of segements in the ring can be converted to a buffer time in 
+	seconds:
+	
+	+----------+--------------------------------------------------+
+	|          |                 DRX Filter Code                  |
+	| Segments +------+------+------+------+------+-------+-------+
+	|          |  1   |  2   |  3   |  4   |  5   |  6    |  7    |
+	+----------+------+------+------+------+------+-------+-------+
+	|    10    | 0.16 | 0.08 | 0.04 | 0.02 | 0.01 | 0.004 | 0.002 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    20    | 0.33 | 0.16 | 0.08 | 0.04 | 0.02 | 0.008 | 0.004 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    30    | 0.49 | 0.25 | 0.12 | 0.06 | 0.03 | 0.013 | 0.006 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    40    | 0.66 | 0.33 | 0.16 | 0.08 | 0.03 | 0.017 | 0.008 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    50    | 0.82 | 0.41 | 0.20 | 0.10 | 0.04 | 0.021 | 0.010 |
+	+----------+------+------+------+------+------+-------+-------+
+	|   100    | 1.64 | 0.82 | 0.41 | 0.20 | 0.08 | 0.042 | 0.021 |
+	+----------+------+------+------+------+------+-------+-------+
+	
+	"""
+	
+	def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nSegments=20, ReorderFrames=False):
+		super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
+		
+	def figureOfMerit(self, frame):
+		"""
+		Figure of merit for sorting frames.  For DRX it is:
 		    <frame count of frame>
 		"""
 		
