@@ -8,6 +8,10 @@ Buffer for dealing with out-of-order/missing frames.
 	
 .. versionchanged:: 0.6
 	Removed support for TBW FrameBuffers since they didn't really work.
+	
+.. versionchanged:: 0.7.0
+	Added back in the DRX FrameBuffers since they might be useful.
+	Dropped TBW support from within the FrameBuffer class.
 """
 
 import copy
@@ -26,7 +30,7 @@ __all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', '__version__', '__
 def _cmpStands(x, y):
 	"""
 	Function to compare two frames and sort by stand/beam number.  This 
-	should work TBW, TBN, and DRX.
+	should work for TBN and DRX.
 	"""
 	
 	# Parse if frame IDs to extract the stand/beam, tunning, and polarization
@@ -58,7 +62,7 @@ def _cmpStands(x, y):
 
 class FrameBuffer(object):
 	"""
-	Frame buffer for re-ordering TBW and TBN frames in time order.  
+	Frame buffer for re-ordering TBN and DRX frames in time order.  
 	This class is filled with frames and a returns a frame list when 
 	the 'nSegments' starts filling.  In that case, the oldest segment 
 	is returned.
@@ -72,18 +76,11 @@ class FrameBuffer(object):
 		still be 'nSegments'-1 segements in the buffer that are either
 		full or partially full.  This can be retrieved using the buffer's 
 		'flush()' function.
-		
-	.. note::
-		DRX should _not_ need a ring buffer since the four beam outputs
-		are, effectively, on different networks.
 	"""
-
-	def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], samples=12000000, bits=12, nSegments=6, ReorderFrames=False):
+	
+	def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], nSegments=6, ReorderFrames=False):
 		"""
 		Initialize the buffer with a list of:
-		  * TBW:
-		      * list of stands
-		      * number of data samples (default of 12,000,000)
 		  * TBN
 		      * list of stands
 		      * list of pols
@@ -92,26 +89,19 @@ class FrameBuffer(object):
 		      * list of tunings
 		      * list of pols.
 		By doing this, we should be able to keep up with when the buffer 
-		is full and to help figure out which stands are missing.
+		is full and to help figure out which stands/beam/tunings/pols. are 
+		missing.
 		"""
-
-		# Input validation
-		if mode.upper() not in ('TBW', 'TBN', 'DRX'):
-			raise RuntimeError("Invalid observing mode '%s'" % mode)
 		
-		if mode.upper() == 'TBW':
-			if bits == 12:
-				if samples > 12000000:
-					raise RuntimeError('Invalid number of samples for 12-bit TBW')
-			else:
-				if samples > 36000000:
-					raise RuntimeError('Invalid number of samples for 4-bit TBW')
-				
-		elif mode.upper == 'TBN':
+		# Input validation
+		if mode.upper() not in ('TBN', 'DRX'):
+			raise RuntimeError("Invalid observing mode '%s'" % mode)
+			
+		if mode.upper() == 'TBN':
 			for pol in pols:
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
-				
+					
 		else:
 			for tune in tunes:
 				if tune not in (1, 2):
@@ -119,7 +109,7 @@ class FrameBuffer(object):
 			for pol in pols:
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
-
+					
 		# The buffer itself
 		self.nSegments = nSegments
 		self.buffer = OrderedDict()
@@ -128,7 +118,7 @@ class FrameBuffer(object):
 		# Buffer statistics
 		self.full = 0		# Number of times a full buffer was emptied
 		self.partial = 0	# Number of times a partial buffer was emptied
-		self.dropped = 0	# Number of late frames dropped
+		self.dropped = 0	# Number of late or duplicate frames dropped
 		self.missing = 0	# Number of missing frames
 		
 		# Information describing the observations
@@ -137,54 +127,24 @@ class FrameBuffer(object):
 		self.beams = beams
 		self.tunes = tunes
 		self.pols = pols
-		self.bits = bits
-		self.samples = samples
 		
 		# If we should reorder the returned frames by stand/pol or not
 		self.reorder = ReorderFrames
 		
 		# Figure out how many frames fill the buffer and the list of all
 		# possible frames in the data set
-		calcFramesOut = self.__calcFrames()
-		self.nFrames = calcFramesOut[0]
-		self.possibleFrames = calcFramesOut[1]
+		self.nFrames, self.possibleFrames = self.calcFrames()
 		
-	def __calcFrames(self):
+	def calcFrames(self):
 		"""
 		Calculate the maximum number of frames that we expect from 
 		the setup of the observations and a list of tuples that describes
 		all of the possible stand/pol combination.
+		
+		This will be overridden by sub-classes of FrameBuffer.
 		"""
 		
-		nFrames = 0
-		frameList = []
-		if self.mode == 'TBW':
-			# TBW mode
-			if self.bits == 12:
-				nFrames = self.samples / 400
-			else:
-				nFrames = self.samples / 1200
-				
-			for stand in self.stands:
-				frameList.append(stand)
-			
-		elif self.mode == 'TBN':
-			# TBN mode
-			nFrames = len(self.stands)*len(self.pols)
-				
-			for stand in self.stands:
-				for pol in self.pols:
-					frameList.append((stand,pol))
-					
-		else:
-			# DRX mode
-			nFrames = len(self.beams)*len(self.tunes)*len(self.pols)
-			for beam in self.beams:
-				for tune in self.tunes:
-					for pol in self.pols:
-						frameList.append((beam,tune,pol))
-			
-		return (nFrames, frameList)
+		pass
 		
 	def figureOfMerit(self, frame):
 		"""
@@ -194,7 +154,17 @@ class FrameBuffer(object):
 		"""
 		
 		pass
-
+		
+	def createFill(self, key, frameParameters):
+		"""
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+		
+		This will be overridden by sub-classes of FrameBuffer.
+		"""
+		
+		pass
+		
 	def append(self, frames):
 		"""
 		Append a new frame to the buffer with the appropriate time tag.  
@@ -202,7 +172,7 @@ class FrameBuffer(object):
 		the frame was dropped because it belongs to a buffer that has 
 		already been returned.
 		"""
-
+		
 		# Convert input to a deque (if needed)
 		typeName = type(frames).__name__
 		if typeName == 'deque':
@@ -211,21 +181,21 @@ class FrameBuffer(object):
 			frames = deque(frames)
 		else:
 			frames = deque([frames,])
-
+			
 		# Loop over frames
 		while True:
 			try:
 				frame = frames.popleft()
 			except IndexError:
 				break
-
+				
 			# Make sure that it is not in the `done' list.  If it is,
 			# disgaurd the frame and make a note of it.
 			fom = self.figureOfMerit(frame)
 			if fom < self.done[-1]:
 				self.dropped += 1
 				continue
-
+				
 			# If that time tag hasn't been done yet, add it to the 
 			# buffer in the correct place.
 			try:
@@ -235,39 +205,55 @@ class FrameBuffer(object):
 				self.buffer[fom].append(frame)
 				
 		return True
-
-	def get(self):
+		
+	def get(self, keyToReturn=None):
 		"""
 		Return a list of frames that consitute a 'full' buffer.  Afterwards, 
 		delete that buffer and mark it as closed so that any missing frames that
 		are recieved late are dropped.  If none of the buffers are ready to be 
 		dumped, None is returned.
 		"""
-
+		
 		# Get the current status of the buffer
 		keys = self.buffer.keys()
 		
 		# If the ring is full, dump the oldest
 		if len(keys) < self.nSegments:
 			return None
+			
+		if keyToReturn is None:
+			keyToReturn = keys[0]
+		returnCount = len(self.buffer[keyToReturn])
 		
-		oldestKey = keys[0]
-		oldestCount = len(self.buffer[oldestKey])
-		
-		if oldestCount == self.nFrames:
+		if returnCount == self.nFrames:
+			## Everything is good (Is it really???)
 			self.full = self.full + 1
 			
-			output = self.buffer[oldestKey]
-		else:
+			output = self.buffer[keyToReturn]
+		elif returnCount < self.nFrames:
+			## There are too few frames
 			self.partial = self.partial + 1
-			self.missing = self.missing + (self.nFrames - len(self.buffer[oldestKey]))
+			self.missing = self.missing + (self.nFrames - returnCount)
 			
-			output = self.buffer[oldestKey]
-			for frame in self.__missingList(oldestKey):
-				output.append( self.__createFill(oldestKey, frame) )
-		
-		del(self.buffer[oldestKey])
-		self.done.append(oldestKey)
+			output = self.buffer[keyToReturn]
+			for frame in self._missingList(keyToReturn):
+				output.append( self.createFill(keyToReturn, frame) )
+		else:
+			## There are too many frames
+			self.full = self.full + 1
+			
+			output = []
+			frameIDs = []
+			for frame in self.buffer[keyToReturn]:
+				newID = frame.parseID()
+				if newID not in frameIDs:
+					output.append(frame)
+					frameIDs.append(newID)
+				else:
+					self.dropped += 1
+					
+		del(self.buffer[keyToReturn])
+		self.done.append(keyToReturn)
 		
 		# Sort and return
 		if self.reorder:
@@ -287,35 +273,16 @@ class FrameBuffer(object):
 			are mostly invalid.
 		"""
 		
-		keys = self.buffer.keys()
+		remainingKeys = self.buffer.keys()
 		
 		output = []
-		for key in keys:
-			keySize = len(self.buffer[key])
-			
-			if keySize == self.nFrames:
-				self.full = self.full + 1
-				
-				output2 = self.buffer[key]
-			
-			else:
-				self.partial = self.partial + 1
-				self.missing = self.missing + (self.nFrames - len(self.buffer[key]))
-				
-				output2 = self.buffer[key]
-				for frame in self.__missingList(key):
-					output2.append( self.__createFill(key, frame) )
-			
-			if self.reorder:
-				output2 = list(output2)
-				output2.sort(cmp=_cmpStands)
+		for key in remainingKeys:
+			output2 = self.get(keyToReturn=key)
 			output.append( output2 )
-			del(self.buffer[key])
-			self.done.append(key)
-				
+			
 		return output
-
-	def __missingList(self, key):
+		
+	def _missingList(self, key):
 		"""
 		Create a list of tuples of missing frame information.
 		"""
@@ -333,43 +300,6 @@ class FrameBuffer(object):
 				missingList.append(frame)
 				
 		return missingList
-
-	def __createFill(self, key, frameParameters):
-		"""
-		Create a 'fill' frame of zeros using an existing good
-		packet as a template.
-		"""
-
-		# Get a template based on the first frame for the current buffer
-		fillFrame = copy.deepcopy(self.buffer[key][0])
-		
-		# Get out the frame parameters
-		if self.mode == 'TBW':
-			stand = frameParameters
-		elif self.mode == 'TBN':
-			stand, pol = frameParameters
-		else:
-			beam, tune, pol = frameParameters
-		print frameParameters, fillFrame.data.timeTag
-			
-		# Fix-up the header
-		if self.mode == 'TBW':
-			fillFrame.header.tbwID = (fillFrame.header.tbwID&64512)|stand
-		elif self.mode == 'TBN':
-			fillFrame.header.tbnID = 2*(stand-1) + pol + 1
-		else:
-			fillFrame.header.drxID = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
-			
-		# Zero the data for the fill packet
-		if self.mode == 'TBW':
-			fillFrame.data.xy *= 0
-		else:
-			fillFrame.data.iq *= 0
-		
-		# Invalidate the frame
-		fillFrame.valid = False
-		
-		return fillFrame
 		
 	def status(self):
 		"""
@@ -392,7 +322,7 @@ class FrameBuffer(object):
 		outString = '\n'.join([outString, "--"])
 		outString = '\n'.join([outString, "Missing frames:  %i" % self.missing])
 		outString = '\n'.join([outString, "Dropped frames:  %i" % self.dropped])
-
+		
 		print outString
 
 
@@ -442,14 +372,51 @@ class TBNFrameBuffer(FrameBuffer):
 	def __init__(self, stands=[], pols=[0, 1], nSegments=20, ReorderFrames=False):
 		super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
 		
+	def calcFrames(self):
+		"""
+		Calculate the maximum number of frames that we expect from 
+		the setup of the observations and a list of tuples that describes
+		all of the possible stand/pol combination.
+		"""
+		
+		nFrames = 0
+		frameList = []
+		
+		nFrames = len(self.stands)*len(self.pols)
+		for stand in self.stands:
+			for pol in self.pols:
+				frameList.append((stand,pol))
+				
+		return (nFrames, frameList)
+		
 	def figureOfMerit(self, frame):
 		"""
 		Figure of merit for sorting frames.  For TBN it is:
-		    <frame count of frame>
+		    <frame timetag in ticks>
 		"""
 		
 		return frame.data.timeTag
-		#return frame.header.frameCount
+		
+	def createFill(self, key, frameParameters):
+		"""
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+		"""
+
+		# Get a template based on the first frame for the current buffer
+		fillFrame = copy.deepcopy(self.buffer[key][0])
+		
+		# Get out the frame parameters and fix-up the header
+		stand, pol = frameParameters
+		fillFrame.header.tbnID = 2*(stand-1) + pol + 1
+		
+		# Zero the data for the fill packet
+		fillFrame.data.iq *= 0
+		
+		# Invalidate the frame
+		fillFrame.valid = False
+		
+		return fillFrame
 
 
 class DRXFrameBuffer(FrameBuffer):
@@ -501,11 +468,49 @@ class DRXFrameBuffer(FrameBuffer):
 	def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nSegments=20, ReorderFrames=False):
 		super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
 		
+	def calcFrames(self):
+		"""
+		Calculate the maximum number of frames that we expect from 
+		the setup of the observations and a list of tuples that describes
+		all of the possible stand/pol combination.
+		"""
+		
+		nFrames = 0
+		frameList = []
+		
+		nFrames = len(self.beams)*len(self.tunes)*len(self.pols)
+		for beam in self.beams:
+			for tune in self.tunes:
+				for pol in self.pols:
+					frameList.append((beam,tune,pol))
+					
+		return (nFrames, frameList)
+		
 	def figureOfMerit(self, frame):
 		"""
 		Figure of merit for sorting frames.  For DRX it is:
-		    <frame count of frame>
+		    <frame timetag in ticks>
 		"""
 		
 		return frame.data.timeTag
-		#return frame.header.frameCount
+		
+	def createFill(self, key, frameParameters):
+		"""
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+		"""
+
+		# Get a template based on the first frame for the current buffer
+		fillFrame = copy.deepcopy(self.buffer[key][0])
+		
+		# Get out the frame parameters and fix-up the header
+		beam, tune, pol = frameParameters
+		fillFrame.header.drxID = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
+		
+		# Zero the data for the fill packet
+		fillFrame.data.iq *= 0
+		
+		# Invalidate the frame
+		fillFrame.valid = False
+		
+		return fillFrame
