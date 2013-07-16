@@ -112,11 +112,27 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 	fh.close()
 	
 	cmd = cc
-	cmd.extend(['-fopenmp', 'test.c', '-o test', '-lgomp'])
+	cmd.extend(['-fopenmp', 'test.c', '-o', 'test', '-lgomp'])
 	p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	o, e = p.communicate()
 	print "Compiler OpenMP Support: %s" % ("Yes" if p.returncode == 0 else "No",)
-	
+	if p.returncode != 0:
+		o = o.split('\n')[:-1]
+		for i in xrange(len(o)):
+			o[i] = '  %s' % o[i]
+		o = '\n'.join(o)
+		e = e.split('\n')[:-1]
+		for i in xrange(len(e)):
+			e[i] = '  %s' % e[i]
+		e = '\n'.join(e)
+		
+		print "Compiler OpenMP Test Command:"
+		print "  %s" % ' '.join(cmd)
+		print "Compiler OpenMP Test Output:"
+		print o
+		print "Compiler OpenMP Test Errors:"
+		print e
+		
 	os.chdir(curdir)
 	shutil.rmtree(tmpdir)
 	
