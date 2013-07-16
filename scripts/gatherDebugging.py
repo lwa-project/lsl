@@ -66,7 +66,7 @@ def main(args):
 		o, e = p.communicate()
 		o = o.split('\n')
 		
-		for lib in ('libatlas', 'libcblas', 'libfftw3', 'libnova', 'libgdbm'):
+		for lib in ('libatlas', 'libcblas', 'libfftw3', 'libgdbm'):
 			found = False
 			currPath = None
 			
@@ -83,6 +83,52 @@ def main(args):
 			print "%s: %s" % (lib, "found in %s" % currPath if found else "not found")
 			
 		print " "
+		
+	#
+	# Compiler check
+	#
+	import shutil
+	import tempfile
+	from distutils import sysconfig
+	from distutils import ccompiler
+	compiler = ccompiler.new_compiler()
+	sysconfig.customize_compiler(compiler)
+	cc = compiler.compiler
+	
+	print "Compiler: %s" % cc[0]
+	
+	tmpdir = tempfile.mkdtemp()
+	curdir = os.getcwd()
+	os.chdir(tmpdir)
+	
+	fh = open('test.c', 'w')
+	fh.write(r"""#include <omp.h>
+#include <stdio.h>
+int main() {
+#pragma omp parallel
+printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_threads());
+}
+""")
+	fh.close()
+	
+	cmd = cc
+	cmd.extend(['-fopenmp', 'test.c', '-o test', '-lgomp'])
+	p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	o, e = p.communicate()
+	print "Compiler OpenMP Support: %s" % ("Yes" if p.returncode == 0 else "No",)
+	
+	os.chdir(curdir)
+	shutil.rmtree(tmpdir)
+	
+	p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	o, e = p.communicate()
+	e = e.split('\n')[:-1]
+	for i in xrange(len(e)):
+		e[i] = '  %s' % e[i]
+	e = '\n'.join(e)
+	print "Compiler Version:"
+	print e
+	print " "
 	
 	#
 	# Numpy

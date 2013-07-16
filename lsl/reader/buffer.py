@@ -216,7 +216,7 @@ class FrameBuffer(object):
 		
 		# Get the current status of the buffer
 		keys = self.buffer.keys()
-			
+		
 		if keyToReturn is None:
 			# If the ring is full, dump the oldest
 			if len(keys) < self.nSegments:
