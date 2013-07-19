@@ -18,6 +18,8 @@
   * Fixed a bug in imageIDI.py that caused the LST not to update on subsequent integrations
   * Added in a call to close() after numpy.load() is used
   * Updated the setup.py script to help deal with clang/OpenMP on OSX
+  * Updated the lsl.common.metabundle module to deal with the new _metadata.txt file f
+ormat
 
 0.6.4
   * Cleaned up the coherent part of the dedispersion module

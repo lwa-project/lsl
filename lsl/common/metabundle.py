@@ -19,7 +19,7 @@ from lsl.common import stations, sdm, sdf
 from lsl.common.mcs import *
 from lsl.transform import Time
 
-__version__ = '0.4'
+__version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', '__version__', '__revision__', '__all__']
 
@@ -324,7 +324,11 @@ def getSessionMetaData(tarname):
 	"""
 	Given a MCS meta-data tarball, extract the session meta-data file (MCS0030, 
 	Section 7) and return a dictionary of observations that contain dictionaries 
-	of the OP_TAG (tag), OBS_OUTCOME (outcome), and the MSG (msg).
+	of the OP_TAG (tag), DRSU Barcode (drsu), OBS_OUTCOME (outcome), and the 
+	MSG (msg).
+	
+	.. versionchanged:: 0.6.5
+		Update to the new _metadata.txt format
 	"""
 	
 	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
@@ -354,19 +358,26 @@ def getSessionMetaData(tarname):
 		## I don't really know how the messages will look so we use this try...except
 		## block should take care of the various situations.
 		try:
-			obsID, opTag, obsOutcome, msg = line.split(None, 3)
+			obsID, opTag, drsuBarcode, obsOutcome, msg = line.split(None, 4)
 		except ValueError:
 			try:
-				obsID, opTag, obsOutcome = line.split(None, 2)
+				obsID, opTag, drsuBarcode, obsOutcome = line.split(None, 3)
 				msg = ''
 			except ValueError:
-				obsID, obsOutcome = line.split(None, 1)
-				opTag = '-1'
-				msg = ''
-
+				try:
+					obsID, opTag, obsOutcome = line.split(None, 2)
+					drsuBarcode = 'UNK'
+					obsOutcome = '-1'
+					msg = ''
+				except ValueError:
+					obsID, obsOutcome = line.split(None, 1)
+					drsuBarcode = 'UNK'
+					opTag = '-1'
+					msg = ''
+					
 		obsID = int(obsID)
 		obsOutcome = int(obsOutcome)
-		result[obsID] = {'tag': opTag, 'outcome': obsOutcome, 'msg': msg}
+		result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
 		
 	fh.close()
 	
