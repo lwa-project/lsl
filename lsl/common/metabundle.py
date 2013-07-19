@@ -19,9 +19,9 @@ from lsl.common import stations, sdm, sdf
 from lsl.common.mcs import *
 from lsl.transform import Time
 
-__version__ = '0.5'
+__version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', '__version__', '__revision__', '__all__']
+__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 'getASPConfiguration', 'getASPConfigurationSummary', '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
@@ -348,33 +348,51 @@ def getSessionMetaData(tarname):
 	# Read in the SMF
 	filename = os.path.join(tempDir, ti.name)
 	fh = open(filename, 'r')
-
+	
+	# Define a regular expresion to match the latest format
+	lineRE = re.compile(r"\s*(?P<id>\d{1,}?)\s+\[(?P<tag>[\d_]+?)\]\s+\['(?P<barcode>\w+?)'\]\s+(?P<outcome>\d)\s+\[(?P<msg>.*?)\]")
+	
 	result = {}
 	for line in fh:
 		line = line.replace('\n', '')
 		if len(line) == 0:
 			continue
-
-		## I don't really know how the messages will look so we use this try...except
-		## block should take care of the various situations.
-		try:
-			obsID, opTag, drsuBarcode, obsOutcome, msg = line.split(None, 4)
-		except ValueError:
+			
+		mtch = lineRE.search(line)
+		if mtch is not None:
+			## If it matches the new format
+			obsID = mtch.group('id')
+			opTag = mtch.group('tag')
+			drsuBarcode = mtch.group('barcode')
+			obsOutcome = mtch.group('outcome')
+			msg = mtch.group('msg')
+			
+		else:
+			## Otherwise, I don't really know how the messages will look so we use this try...except
+			## block should take care of the various situations.
 			try:
-				obsID, opTag, drsuBarcode, obsOutcome = line.split(None, 3)
-				msg = ''
+				obsID, opTag, drsuBarcode, obsOutcome, msg = line.split(None, 4)
+				opTag = opTag.replace('[', '')
+				opTag = opTag.replace(']', '')
+				drsuBarcode = drsuBarcode.replace('[', '')
+				drsuBarcode = drsuBarcode.replace(']', '')
+				drsuBarcode = drsuBarcode.replace("'", '')
 			except ValueError:
 				try:
-					obsID, opTag, obsOutcome = line.split(None, 2)
-					drsuBarcode = 'UNK'
-					obsOutcome = '-1'
-					msg = ''
+					obsID, opTag, drsuBarcode, obsOutcome = line.split(None, 3)
+					msg = 'UNK'
 				except ValueError:
-					obsID, obsOutcome = line.split(None, 1)
-					drsuBarcode = 'UNK'
-					opTag = '-1'
-					msg = ''
-					
+					try:
+						obsID, opTag, obsOutcome = line.split(None, 2)
+						drsuBarcode = 'UNK'
+						obsOutcome = '-1'
+						msg = 'UNK'
+					except ValueError:
+						obsID, obsOutcome = line.split(None, 1)
+						drsuBarcode = 'UNK'
+						opTag = 'UNK'
+						msg = 'UNK'
+						
 		obsID = int(obsID)
 		obsOutcome = int(obsOutcome)
 		result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
@@ -525,3 +543,120 @@ def getCommandScript(tarname):
 	
 	# Return
 	return cs
+
+
+def getASPConfiguration(tarname, which='beginning'):
+	"""
+	Given a MCS meta-data tarball, extract the ASP MIB contained in it and return 
+	a dictionary of values for the filter, AT1, AT2, and ATSplit.  The 'which'
+	keyword is used to specify whether or not the configuration returned is at the
+	beginning (default) or end of the session.
+	
+	.. versionadded:: 0.6.5
+	"""
+	
+	which = which.lower()
+	if which not in ('beginning', 'end'):
+		raise ValueError("Unknown configuration time '%s'" % which)
+		
+	# Stub ASP configuration
+	aspConfig = {'filter': [-1 for i in xrange(264)],
+			   'at1': [-1 for i in xrange(264)],
+			   'at2': [-1 for i in xrange(264)],
+			   'atsplit': [-1 for i in xrange(264)]}
+	
+	tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
+	path, basename = os.path.split(tarname)
+	basename, ext = os.path.splitext(basename)
+	
+	# Find the .dir/.pag file and extract it
+	tf = tarfile.open(tarname, mode='r:*')
+	mibs = []
+	for ti in tf.getmembers():
+		if ti.name.find('_ASP_') != -1:
+			if ti.name[-4:] == '.pag' or ti.name[-4:] == '.dir':
+				mibs.append(ti)
+				
+	if len(mibs) > 0:
+		tf.extractall(path=tempDir, members=mibs)
+		
+		# Read in the right MIB
+		for mib in mibs:
+			if mib.name[-4:] == '.dir':
+				continue
+			if which == 'beginning' and mib.name.find('_ASP_begin') == -1:
+				continue
+			if which == 'end' and mib.name.find('_ASP_end') == -1:
+				continue
+				
+			aspMIB = MIB()
+			aspMIB.fromFile(os.path.join(tempDir, mib.name))
+			break
+			
+		# Extract the configuration
+		for key in aspMIB.keys():
+			values = [int(v) for v in key.split('.')]
+			
+			if values[0] == 3:
+				## Filter
+				aspConfig['filter'][values[1]-1] = int(aspMIB[key].value)
+				
+			elif values[0] == 4:
+				## Attenuators
+				if values[1] == 1:
+					### AT1
+					aspConfig['at1'][values[2]-1] = int(aspMIB[key].value)
+				elif values[1] == 2:
+					### AT2
+					aspConfig['at2'][values[2]-1] = int(aspMIB[key].value)
+				elif values[1] == 3:
+					### ATSPLIT
+					aspConfig['atsplit'][values[2]-1] = int(aspMIB[key].value)
+				else:
+					pass
+					
+			else:
+				pass
+				
+	# Cleanup
+	shutil.rmtree(tempDir, ignore_errors=True)
+	
+	return aspConfig
+
+
+def getASPConfigurationSummary(tarname, which='beginning'):
+	"""
+	Similar to getASPConfiguration, but returns only a single value for each
+	of the four ASP paramters:  filter, AT, AT2, and ATSplit.  The values
+	are based off the mode of parameter.
+	
+	.. versionadded:: 0.6.5
+	"""
+	
+	# Get the full configuration
+	aspConfig = getASPConfiguration(tarname, which=which)
+	
+	# Count
+	count = {}
+	for param in aspConfig.keys():
+		count[param] = {}
+		for ant in xrange(len(aspConfig[param])):
+			value = aspConfig[param][ant]
+			try:
+				count[param][value] += 1
+			except KeyError:
+				count[param][value] = 1
+				
+	# Modes
+	mode = {}
+	for param in count.keys():
+		best = 0
+		mode[param] = 0
+		
+		for value,num in count[param].iteritems():
+			if num > best:
+				best = num
+				mode[param] = value
+				
+	# Done
+	return mode

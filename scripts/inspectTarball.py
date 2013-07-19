@@ -16,7 +16,7 @@ from lsl.astro import utcjd_to_unix, MJD_OFFSET
 from lsl.common import sdf, metabundle
 
 
-__version__ = "0.1"
+__version__ = "0.2"
 __revision__ = "$Rev: 941 $"
 
 # Date/time manipulation
@@ -96,7 +96,22 @@ def main(args):
 	print " DR Spectrometer used? %s" % drspec
 	if drspec == 'Yes':
 		print " -> %i channels, %i windows/integration" % tuple(project.sessions[0].spcSetup)
+		
+	print " "
+	print "File Information:"
+	fileInfo = metabundle.getSessionMetaData(inputTGZ)
+	for obsID in fileInfo.keys():
+		print " Obs. #%i: %s" % (obsID, fileInfo[obsID]['tag'])
 	
+	print " "
+	print "ASP Configuration:"
+	for which in ('Beginning', 'End'):
+		aspConfig = metabundle.getASPConfigurationSummary(inputTGZ, which=which)
+		
+		print '  %s' % which
+		for k in aspConfig.keys():
+			print '    %s: %i' % (k, aspConfig[k])
+			
 	print " "
 	print " Number of observations: %i" % nObs
 	print " Observation Detail:"

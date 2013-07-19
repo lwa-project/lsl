@@ -29,9 +29,14 @@ The header file values are:
   * ME_MAX_SSNAME_LENGTH - Number of characters in the power port ID names, for 
     codes used for PWR_NAME
   * LWA_MAX_NSTD - Maximum number of stands for the LWA
+  * MIB_REC_TYPE_BRANCH - eType for MIB branch entries
+  * MIB_REC_TYPE_VALUE - etype for MIB value entries
+  * MIB_INDEX_FIELD_LENGTH - Number of characters in a MIB index field
+  * MIB_LABEL_FIELD_LENGTH - Number of characters in a MIB label field
+  * MIB_VAL_FIELD_LENGTH - Number of characters in a MIB value field
   
 The other functions:
-  * Convert MCS code s(status, summary, command ID, etc.) to human readable strings, 
+  * Convert MCS codes (status, summary, command ID, etc.) to human readable strings, 
   * Parse the binary packed metadata, 
   * Ready delays and gains for a custom beamforming SDF, and
   * Convert datetime instances to MJD and MPM values.
@@ -42,6 +47,7 @@ import re
 import math
 import numpy
 import struct
+import anydbm
 from ctypes import *
 from aipy import coord
 from datetime import datetime
@@ -49,15 +55,18 @@ from datetime import datetime
 from lsl.common.dp import gaintoDPG, DPGtogain, delaytoDPD, DPDtodelay
 
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
-			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'IS_32BIT_PYTHON', 'delaytoMCSD', 'MCSDtodelay', 'gaintoMCSG', 'MCSGtogain',
+			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
+			'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'IS_32BIT_PYTHON', 
+			'delaytoMCSD', 'MCSDtodelay', 'gaintoMCSG', 'MCSGtogain',
 			'mjdmpm2datetime', 'datetime2mjdmpm', 'status2string', 'summary2string', 'sid2string', 'cid2string', 
-			'mode2string', 'parseCStruct', 'single2multi', 'applyPointingCorrection', '__version__', '__revision__', '__all__']
+			'mode2string', 'parseCStruct', 'single2multi', 'applyPointingCorrection', 'MIB', 'MIBEntry', 
+			'__version__', '__revision__', '__all__']
 
 
 ME_SSMIF_FORMAT_VERSION = 5	# SSMIF format version code
@@ -84,6 +93,11 @@ ME_MAX_DRID_LENGTH = 10		# Number of characters in the DR ID name
 ME_MAX_NPWRPORT = 50		# Maximum number of power ports
 ME_MAX_SSNAME_LENGTH = 3		# Number of characters in the power port ID names, for codes used for PWR_NAME
 LWA_MAX_NSTD = 260			# Maximum number of stands for the LWA
+MIB_REC_TYPE_BRANCH = 0 		# eType for MIB branch entries
+MIB_REC_TYPE_VALUE = 1 		# etype for MIB value entries
+MIB_INDEX_FIELD_LENGTH = 12	# Number of characters in a MIB index field
+MIB_LABEL_FIELD_LENGTH = 32	# Number of characters in a MIB label field
+MIB_VAL_FIELD_LENGTH = 8192	# Number of characters in a MIB value field
 
 
 IS_32BIT_PYTHON = True if struct.calcsize("P") == 4 else False
@@ -101,7 +115,7 @@ def delaytoMCSD(delay):
 	Given a delay in ns, convert it to a course and fine portion and into 
 	the form expected by MCS in a custom beamforming SDF (little endian 
 	16.12 unsigned integer).
-	
+
 	.. versionadded:: 0.6.3
 	"""
 	
@@ -112,7 +126,7 @@ def MCSDtodelay(delay):
 	"""
 	Given delay value from an OBS_BEAM_DELAY field in a custom beamforming 
 	SDF, return the delay in ns.
-	
+
 	.. versionadded:: 0.6.3
 	"""
 	
@@ -124,8 +138,8 @@ def gaintoMCSG(gain):
 	Given a gain (between 0 and 1), convert it to a gain in the form 
 	expected by MCS in a custom beamforming SDF (little endian 16.1 
 	signed integer).
-	
-	.. versionadded:: 0.6.3
+
+	.. versionadded::0.6.3
 	"""
 	
 	return _twoByteSwap( gaintoDPG(gain) )
@@ -135,7 +149,7 @@ def MCSGtogain(gain):
 	"""
 	Given a gain value from an OBS_BEAM_GAIN field in a custom beamforming
 	SDF, return the decimal equivalent.
-	
+
 	.. versionadded:: 0.6.3
 	"""
 	
@@ -636,19 +650,19 @@ def _single2four(inputList, dim1, dim2, dim3, dim4):
 def _getRotationMatrix(theta, phi, psi, degrees=True):
 	"""
 	Generate the rotation matrix for a rotation about a specified axis.
-
+	
 	http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
 	"""
-
+	
 	if degrees:
 		theta = theta * numpy.pi/180.0
 		phi   = phi * numpy.pi/180.0
 		psi   = psi * numpy.pi/180.0
-
+		
 	# Axis
 	u = numpy.array([numpy.cos(phi)*numpy.sin(theta), numpy.sin(phi)*numpy.sin(theta), numpy.cos(theta)])
 	ux, uy, uz = u
-
+	
 	# Rotation matrix
 	rot  = numpy.eye(3)*numpy.cos(psi) 
 	rot += numpy.sin(psi)*numpy.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]]) 
@@ -661,13 +675,13 @@ def applyPointingCorrection(az, el, theta, phi, psi, lat=34.070, degrees=True):
 	"""
 	Given a azimuth and elevation pair, and an axis to rotate about, 
 	perform the rotation.
-
+	
 	http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
 	"""
-
+	
 	# Get the rotation matrix
 	rot = _getRotationMatrix(theta, phi, psi, degrees=degrees)
-
+	
 	# Convert the az,alt coordinates to the unit vector
 	if degrees:
 		xyz = coord.azalt2top((az*numpy.pi/180.0, el*numpy.pi/180.0))
@@ -681,5 +695,248 @@ def applyPointingCorrection(az, el, theta, phi, psi, lat=34.070, degrees=True):
 	if degrees:
 		azP *= 180/numpy.pi
 		elP *= 180/numpy.pi
-
+		
 	return azP, elP
+
+
+class MIB(object):
+	"""
+	Class to represent an entire MCS MIB.
+	
+	.. versionadded:: 0.6.5
+	"""
+	
+	def __init__(self):
+		self.entries = {}
+		self.mapper = {}
+		self.invMapper = {}
+		
+	def __str__(self):
+		"""
+		Describe the MIB as a string.
+		"""
+		
+		nEntry = len(self.entries.keys())
+		times = [self.entries[k].updateTime for k in self.entries.keys()]
+		return "MIB containing %i entries from %s to %s" % (nEntry, min(times), max(times))
+		
+	def __getitem__(self, key):
+		"""
+		Allow access to the MIB through either the index of name.
+		"""
+		
+		try:
+			return self.entries[key]
+		except KeyError:
+			return self.entries[self.invMapper[key]]
+			
+	def keys(self, name=False):
+		"""
+		Return a list of entry indicies (or names if the 'name' keyword is set 
+		to True) for the MIB.
+		"""
+		
+		if name:
+			# Index -> Name
+			output = []
+			for k in self.entries.keys():
+				try:
+					output.append( self.mapper[k] )
+				except KeyError:
+					output.append(k)
+			return output
+		else:
+			# Index
+			return self.entries.keys()
+			
+	def parseInitFile(self, filename):
+		"""
+		Given a MCS MIB initialization file, i.e., ASP_MIB_init.dat, create a 
+		dictionary that maps indicies to human-readable names that can be used
+		to clarify a MIBEntry.  Return this dictionary.
+		"""
+		
+		# Open the file
+		fh = open(filename)
+		
+		# Go!
+		self.mapper = {}
+		self.invMapper = {}
+		for line in fh:
+			## Parse out the line
+			line = line.replace('\n', '')
+			eType, index, name, default, dbmType, icdType = line.split(None, 5)
+			
+			## Skip over branches
+			if eType == 'B':
+				continue
+				
+			## Remember the mapping
+			self.mapper[index] = name
+			self.invMapper[name] = index
+			
+		# Done
+		fh.close()
+		return True
+		
+	def fromFile(self, filename, initFilename=None):
+		"""
+		Given the name of a GDBM database file, initialize the MIB.  
+		Optionally, use the name of the MCS MIB initialization file to
+		help convert indicies to names.
+		"""
+		
+		# Parse the init. file (if we have one)
+		if initFilename is not None:
+			self.parseInitFile(initFilename)
+			
+		# Make sure we have the .pag file
+		if filename[-4:] == '.dir':
+			filename = filename.replace('.dir', '.pag')
+			
+		# Open the database
+		db = anydbm.open(filename, 'ru')
+		
+		# Go!
+		entry = db.firstkey()
+		while entry is not None:
+			value = db[entry]
+			
+			try:
+				record = MIBEntry()
+				record.fromEntry(value)
+				self.entries[record.index] = record
+				
+			except ValueError:
+				pass
+				
+			entry = db.nextkey(entry)
+		db.close()
+		
+		# Done
+		return True
+
+
+class MIBEntry(object):
+	"""
+	Class for accessing and storing MCS MIB information contained in a GDBM 
+	database.
+	
+	.. versionadded:: 0.6.5
+	"""
+	
+	def __init__(self):
+		"""
+		Create the MIBEntry instance and fill with dummy values.
+		"""
+		
+		# Basic information straight out of the mcs.h/record structure
+		self.eType = 0
+		self.index = ''
+		self.value = ''
+		self.dbmType = ''
+		self.icdType = ''
+		self._tv = (0, 0)
+		
+		# Additional information determined from the basic information
+		self.updateTime = datetime.utcfromtimestamp(0)
+		
+	def __str__(self):
+		"""
+		Represent the class as a string for display purposes.
+		"""
+		
+		return "Index: %s; Value: %s; Updated at %s" % (self.index, self.value, self.updateTime)
+		
+	def _parseValue(self, value, dataType):
+		"""
+		Convert an encoded value to something Pythonic (if possible).
+		
+		Understood codes:
+		  * NUL:   No data stored (e.g., branch head entry)
+		  * a####: printable (i.e., ASCII minus escape codes), #### = number of characters
+		           e.g., "a3" means 3 printable ASCII-encoded characters
+		  * r####: raw data (not printable), #### = number of bytes
+		           e.g., "r1024" means 1024 bytes of raw data
+		  * i1u:   integer, 1 byte,  unsigned, big-endian (=uint8)
+		  * i2u:   integer, 2 bytes, unsigned, big-endian (=uint16)
+		  * i4u:   integer, 4 bytes, unsigned, big-endian (=uint32)
+		  * f4:    float, 4 bytes, big-endian (=float32)
+		"""
+		
+		if dataType == 'NUL':
+			return str(value)
+		elif dataType[0] == 'a':
+			return str(value)
+		elif dataType[0] == 'r':
+			return str(value)
+		elif dataType[:3] == 'i1u':
+			try:
+				return struct.unpack('>1B', value)[0]
+			except struct.error:
+				return 0
+		elif dataType[:3] == 'i2u':
+			try:
+				return struct.unpack('>1H', value)[0]
+			except struct.error:
+				return 0
+		elif dataType[:3] == 'i4u':
+			try:
+				return struct.unpack('>1I', value)[0]
+			except struct.error:
+				return 0
+		elif dataType[:2] == 'f4':
+			try:
+				return struct.unpack('>1f', value)[0]
+			except struct.error:
+				return 0.0
+		else:
+			raise ValueError("Unknown data type '%s'" % dataType)
+			
+	def fromEntry(self, value):
+		"""
+		Given an MIB entry straight out of a GDBM database, populate the 
+		MIBEntry instance.
+		
+		.. note::
+			The MIBEntry class does not currently support branch entries.  
+			Entries of this type will raise a ValueError.
+			
+		.. note::
+			The MIBEntry class currently only support entries with indicies
+			that start with a number.  All other indicies will raise a 
+			ValueError.
+		"""
+		
+		# Initialize a new structure to parse the binary string
+		record = parseCStruct("""
+			int eType;
+			char index[%i];
+			char val[%i];
+			char type_dbm[6];
+			char type_icd[6];
+			long tv[2];
+			""" % (MIB_INDEX_FIELD_LENGTH, MIB_VAL_FIELD_LENGTH), endianness='little')
+			
+		# Squeeze the binary string into the structure using ctypes magic
+		temp = create_string_buffer(value)
+		memmove(addressof(record), addressof(temp), sizeof(record))
+		
+		# Validate
+		if record.eType == MIB_REC_TYPE_BRANCH:
+			raise ValueError("Cannot interpret MIB branch entries")
+		if record.index[0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+			raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
+			
+		# Basic information
+		self.eType = int(record.eType)
+		self.index = str(record.index)
+		self.value = self._parseValue(record.val, record.type_dbm)
+		self.dbmType = str(record.type_dbm)
+		self.icdType = str(record.type_icd)
+		self._tv = (int(record.tv[0]), int(record.tv[1]))
+		
+		# Time
+		self.updateTime = datetime.utcfromtimestamp(record.tv[0] + record.tv[1]/1e9)
+		
+		return True

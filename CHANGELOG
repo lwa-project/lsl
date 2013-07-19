@@ -20,6 +20,8 @@
   * Updated the setup.py script to help deal with clang/OpenMP on OSX
   * Updated the lsl.common.metabundle module to deal with the new _metadata.txt file f
 ormat
+* Added a method to read in MCS MIB files in the GDBM format
+  * Added new functions to lsl.common.metabundle to retrieve the ASP configuration from a new metadata tarball
 
 0.6.4
   * Cleaned up the coherent part of the dedispersion module

@@ -10,7 +10,7 @@ from lsl.common.paths import dataBuild as dataPath
 
 
 __revision__ = "$Rev$"
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(dataPath, 'tests', 'metadata.tgz')
@@ -27,8 +27,8 @@ class metabundle_tests(unittest.TestCase):
 		obs = metabundle.getObservationSpec(mdbFile)
 		
 		# Check session start time
-		self.assertEqual(ses['MJD'], 56013)
-		self.assertEqual(ses['MPM'], 25855000)
+		self.assertEqual(ses['MJD'], 56492)
+		self.assertEqual(ses['MPM'], 68995000)
 		
 		# Check the duration
 		self.assertEqual(ses['Dur'], obs[0]['Dur'] + 10000)
@@ -49,17 +49,16 @@ class metabundle_tests(unittest.TestCase):
 		self.assertEqual(obs2['Mode'], 1)
 		
 		# Check the time
-		self.assertEqual(obs2['MJD'], 56013)
-		self.assertEqual(obs2['MPM'], 25860000)
+		self.assertEqual(obs2['MJD'], 56492)
+		self.assertEqual(obs2['MPM'], 69000000)
 		
-	
 	def test_cs(self):
 		"""Test the command script utilities."""
 		
 		cmnds = metabundle.getCommandScript(mdbFile)
 		
 		# Check number of command
-		self.assertEqual(len(cmnds), 491)
+		self.assertEqual(len(cmnds), 8)
 		
 		# Check the first and last commands
 		self.assertEqual(cmnds[ 0]['commandID'], 'NUL')
@@ -71,7 +70,7 @@ class metabundle_tests(unittest.TestCase):
 		for cmnd in cmnds:
 			if cmnd['commandID'] == 'BAM':
 				nBAM += 1
-		self.assertEqual(nBAM, 484)
+		self.assertEqual(nBAM, 1)
 		
 	def test_sm(self):
 		"""Test the session metadata utilties."""
@@ -90,6 +89,38 @@ class metabundle_tests(unittest.TestCase):
 		"""Test the station dynamic MIB utilties."""
 		
 		sm = metabundle.getSDM(mdbFile)
+		
+	def test_metadata(self):
+		"""Test the observation metadata utility."""
+		
+		fileInfo = metabundle.getSessionMetaData(mdbFile)
+		self.assertEqual(len(fileInfo.keys()), 1)
+		
+		# File tag
+		self.assertEqual(fileInfo[1]['tag'], '056492_000000094')
+		
+		# DRSU barcode
+		self.assertEqual(fileInfo[1]['barcode'], 'S10TCC13S0007')
+		
+	def test_aspconfig(self):
+		"""Test retrieving the ASP configuration."""
+		
+		# Beginning config.
+		aspConfig = metabundle.getASPConfigurationSummary(mdbFile, which='beginning')
+		self.assertEqual(aspConfig['filter'],  3)
+		self.assertEqual(aspConfig['at1'],     0)
+		self.assertEqual(aspConfig['at2'],     0)
+		self.assertEqual(aspConfig['atsplit'], 0)
+		
+		# End config.
+		aspConfig = metabundle.getASPConfigurationSummary(mdbFile, which='End')
+		self.assertEqual(aspConfig['filter'],  1)
+		self.assertEqual(aspConfig['at1'],    13)
+		self.assertEqual(aspConfig['at2'],    13)
+		self.assertEqual(aspConfig['atsplit'], 0)
+		
+		# Unknown code
+		self.assertRaises(ValueError, metabundle.getASPConfigurationSummary, mdbFile, 'middle')
 
     
 class metabundle_test_suite(unittest.TestSuite):
