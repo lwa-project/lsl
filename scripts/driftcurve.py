@@ -117,7 +117,10 @@ def main(args):
 		beamCoeff = beamDict['fitX']
 	else:
 		beamCoeff = beamDict['fitY']
-	beamDict.close()
+	try:
+		beamDict.close()
+	except AttributeError:
+		pass
 	alphaE = numpy.polyval(beamCoeff[0,0,:], config['freq'])
 	betaE =  numpy.polyval(beamCoeff[0,1,:], config['freq'])
 	gammaE = numpy.polyval(beamCoeff[0,2,:], config['freq'])

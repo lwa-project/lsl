@@ -607,8 +607,11 @@ class ARX(object):
 
 		freq = dataDict['freq']
 		data = dataDict['data']
-		dataDict.close()
-		
+		try:
+			dataDict.close()
+		except AttributeError:
+			pass
+			
 		if not dB:
 			data = from_dB(data)
 			

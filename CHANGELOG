@@ -13,6 +13,9 @@
   * Added a function to lsl.common.stations.Antenna to access information about the impedence mis-match
   * Added an option to the various response functions in lsl.common.stations to return values in dB
 
+0.6.6
+  * Fixed a problem with older NumPy installs not having a close() function
+
 0.6.5
   * Fixed the time remaining computation in lsl.common.progress.ProgressBarPlus
   * Fixed a bug in imageIDI.py that caused the LST not to update on subsequent integrations

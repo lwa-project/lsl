@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Module for working with a MCS meta-data tarball and extracting the useful bits out 
+Module for working with an MCS meta-data tarball and extracting the useful bits out 
 it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.LWAStation` 
 and :class:`lsl.common.sdm.SDM`.
 """
@@ -251,7 +251,7 @@ def readCSFile(filename):
 
 def getSDM(tarname):
 	"""
-	Given a MCS meta-data tarball, extract the information stored in the 
+	Given an MCS meta-data tarball, extract the information stored in the 
 	dynamic/sdm.dat file and return a :class:`lsl.common.sdm.SDM` instance
 	describing the dynamic condition of the station.
 	
@@ -280,7 +280,7 @@ def getSDM(tarname):
 
 def getStation(tarname, ApplySDM=True):
 	"""
-	Given a MCS meta-data tarball, extract the information stored in the ssmif.dat 
+	Given an MCS meta-data tarball, extract the information stored in the ssmif.dat 
 	file and return a :class:`lsl.common.stations.LWAStation` object.  Optionally, 
 	update the :class:`lsl.common.stations.Antenna` instances associated whith the
 	LWAStation object using the included SDM file.
@@ -322,7 +322,7 @@ def getStation(tarname, ApplySDM=True):
 
 def getSessionMetaData(tarname):
 	"""
-	Given a MCS meta-data tarball, extract the session meta-data file (MCS0030, 
+	Given an MCS meta-data tarball, extract the session meta-data file (MCS0030, 
 	Section 7) and return a dictionary of observations that contain dictionaries 
 	of the OP_TAG (tag), DRSU Barcode (drsu), OBS_OUTCOME (outcome), and the 
 	MSG (msg).
@@ -408,7 +408,7 @@ def getSessionMetaData(tarname):
 
 def getSessionSpec(tarname):
 	"""
-	Given a MCS meta-data tarball, extract the session specification file (MCS0030, 
+	Given an MCS meta-data tarball, extract the session specification file (MCS0030, 
 	Section 5) and return a dictionary of parameters.
 	"""
 	
@@ -438,7 +438,7 @@ def getSessionSpec(tarname):
 
 def getObservationSpec(tarname, selectObs=None):
 	"""
-	Given a MCS meta-data tarball, extract one or more observation specification 
+	Given an MCS meta-data tarball, extract one or more observation specification 
 	file (MCS0030, Section 6) and return a list of dictionaries corresponding to
 	each OBS file.  If the `selectObs` keyword is set to a list of observation
 	numbers, only observations matching the numbers in `selectObs` are returned.
@@ -486,7 +486,7 @@ def getObservationSpec(tarname, selectObs=None):
 
 def getSessionDefinition(tarname):
 	"""
-	Given a MCS meta-data tarball, extract the session specification file, the 
+	Given an MCS meta-data tarball, extract the session specification file, the 
 	session meta-data file, and all observation specification files to build up
 	a SDF-representation of the session.
 	
@@ -520,7 +520,7 @@ def getSessionDefinition(tarname):
 
 def getCommandScript(tarname):
 	"""
-	Given a MCS meta-data tarball, extract the command script and parse it.  The
+	Given an MCS meta-data tarball, extract the command script and parse it.  The
 	commands are returned as a list of dictionaries (one dictionary per command).
 	"""
 	
@@ -547,7 +547,7 @@ def getCommandScript(tarname):
 
 def getASPConfiguration(tarname, which='beginning'):
 	"""
-	Given a MCS meta-data tarball, extract the ASP MIB contained in it and return 
+	Given an MCS meta-data tarball, extract the ASP MIB contained in it and return 
 	a dictionary of values for the filter, AT1, AT2, and ATSplit.  The 'which'
 	keyword is used to specify whether or not the configuration returned is at the
 	beginning (default) or end of the session.
@@ -628,7 +628,7 @@ def getASPConfigurationSummary(tarname, which='beginning'):
 	"""
 	Similar to getASPConfiguration, but returns only a single value for each
 	of the four ASP paramters:  filter, AT, AT2, and ATSplit.  The values
-	are based off the mode of parameter.
+	are based off the mode of the parameter.
 	
 	.. versionadded:: 0.6.5
 	"""
