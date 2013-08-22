@@ -79,7 +79,7 @@ def main(args):
 
 	print "Filename:    %s" % filename
 	print "Size:        %.1f MB" % (float(sizeB)/1024/1024)
-	print "Captures:    %i" % nCaptures
+	print "Captures:    %i (%.2f seconds)" % (nCaptures, nCaptures*512/sampleRate)
 	print "Stands:      %i (%i x pol., %i y pol.)" % ((nFramesX+nFramesY), nFramesX, nFramesY)
 	print "Sample Rate: %.2f kHz" % (sampleRate/1000.0)
 	print "==="
@@ -87,6 +87,7 @@ def main(args):
 	if config['count'] > 0:
 		nCaptures = config['count'] * sampleRate / 512
 	else:
+		nCaptures -= config['offset'] * sampleRate / 512
 		config['count'] = nCaptures * 512 / sampleRate
 	nSkip = int(config['offset'] * sampleRate / 512)
 

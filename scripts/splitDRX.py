@@ -153,10 +153,12 @@ def main(args):
 	
 	# Update the offset actually used
 	config['offset'] = t1 - t0
+	
+	nCaptures = nFramesFile/beampols
 
 	print "Filename:     %s" % filename
 	print "Size:         %.1f MB" % (float(sizeB)/1024/1024)
-	print "Captures:     %i (%.2f seconds)" % (nFramesFile/beampols, nFramesFile/beampols*4096/srate)
+	print "Captures:     %i (%.2f seconds)" % (nCaptures, nCaptures*4096/srate)
 	print "Tuning/Pols.: %i " % tunepol
 	print "Sample Rate: %.2f MHz" % (srate/1e6)
 	print "==="
@@ -164,6 +166,8 @@ def main(args):
 	if config['count'] > 0:
 		nCaptures = config['count'] * srate / 4096
 	else:
+		nCaptures -= config['offset'] * srate / 4096
+		
 		config['count'] = nCaptures * 4096 / srate
 
 	print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], offset/beampols)
