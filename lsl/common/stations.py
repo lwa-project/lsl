@@ -14,7 +14,7 @@ from lsl.misc.mathutil import to_dB, from_dB
 
 __version__ = '2.0'
 __revision__ = '$Rev$'
-__all__ = ['geo2ecef', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
+__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
 _id2name = {'VL': 'LWA-1', 'NA': 'LWA-2'}
@@ -25,16 +25,50 @@ def geo2ecef(lat, lon, elev):
 	Convert latitude (rad), longitude (rad), elevation (m) to earth-
 	centered, earth-fixed coordinates.
 	"""
-
+	
 	WGS84_a = 6378137.000000
 	WGS84_b = 6356752.314245
 	N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
- 
+	
 	x = (N+elev)*numpy.cos(lat)*numpy.cos(lon)
 	y = (N+elev)*numpy.cos(lat)*numpy.sin(lon)
 	z = ((WGS84_b**2/WGS84_a**2)*N+elev)*numpy.sin(lat)
-
+	
 	return (x, y, z)
+
+
+def ecef2geo(x, y, z):
+	"""
+	Convert earth-centered, earth-fixed coordinates to (rad), longitude 
+	(rad), elevation (m) using Bowring's method.
+	"""
+	
+	WGS84_a = 6378137.000000
+	WGS84_b = 6356752.314245
+	e2 = (WGS84_a**2 - WGS84_b**2) / WGS84_a**2
+	ep2 = (WGS84_a**2 - WGS84_b**2) / WGS84_b**2
+	
+	# Distance from rotation axis
+	p = numpy.sqrt(x**2 + y**2)
+	
+	# Longitude
+	lon = numpy.arctan2(y, x)
+	p = numpy.sqrt(x**2 + y**2)
+	
+	# Latitude (first approximation)
+	lat = numpy.arctan2(z, p)
+	
+	# Latitude (refined using Bowring's method)
+	psi = numpy.arctan2(WGS84_a*z, WGS84_b*p)
+	num = z + WGS84_b*ep2*numpy.sin(psi)**3
+	den = p - WGS84_a*e2*numpy.cos(psi)**3
+	lat = numpy.arctan2(num, den)
+	
+	# Elevation
+	N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
+	elev = p / numpy.cos(lat) - N
+	
+	return lat, lon, elev
 
 
 class LWAStationBase(object):
@@ -120,7 +154,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		
 		self.lat = lat * numpy.pi/180.0
 		self.long = long * numpy.pi/180.0
-		self.elev = self.elev
+		self.elev = elev
 		self.pressure = 0.0
 		
 	def __str__(self):
@@ -185,6 +219,35 @@ class LWAStation(ephem.Observer, LWAStationBase):
 						[1.0, 0.0,                  0.0], 
 						[0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
 						
+	def getPointingAndDirection(self, locTo):
+		"""
+		Given another location on the surface of the Earth, either as a 
+		LWAStation instance or a three-element tuple of latitude (deg.), 
+		longitude (deg.), and elevation (m), return the bearing azimuth/
+		elevation in radians and distance in meters to the location.
+		"""
+		
+		ecefFrom = self.getGeocentricLocation()
+		try:
+			ecefTo = locTo.getGeocentricLocation()
+		except AttributeError:
+			ecefTo = geo2ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
+			
+		ecefFrom = numpy.array(ecefFrom)
+		ecefTo = numpy.array(ecefTo)
+		
+		rho = ecefTo - ecefFrom
+		rot = numpy.array([[ numpy.sin(self.lat)*numpy.cos(self.long), numpy.sin(self.lat)*numpy.sin(self.long), -numpy.cos(self.lat)], 
+					    [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
+					    [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
+		sez = numpy.dot(rot, rho)
+		
+		d = numpy.sqrt( (rho**2).sum() )
+		el = numpy.arcsin(sez[2] / d)
+		az = numpy.arctan2(sez[1], -sez[0])
+
+		return az, el, d
+		
 	def getAntennas(self):
 		"""
 		Return the list of Antenna instances for the station, sorted by 
