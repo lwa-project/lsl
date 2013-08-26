@@ -12,6 +12,7 @@
   * Update lsl.common.stations.LWAStation to be a sub-class to ephem.Observer
   * Added a function to lsl.common.stations.Antenna to access information about the impedence mis-match
   * Added an option to the various response functions in lsl.common.stations to return values in dB
+  * Switch the information/SSMIF for the north arm site to lwana instead of lwa2 to avoid confusion with the SV site
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function

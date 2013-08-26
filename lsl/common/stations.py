@@ -14,7 +14,7 @@ from lsl.misc.mathutil import to_dB, from_dB
 
 __version__ = '2.0'
 __revision__ = '$Rev$'
-__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwa2', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
+__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwana', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
 _id2name = {'VL': 'LWA-1', 'NA': 'LWA-2'}
@@ -1456,8 +1456,8 @@ def parseSSMIF(filename):
 _ssmif1 = os.path.join(dataPath, 'lwa1-ssmif.txt')
 lwa1 = parseSSMIF(_ssmif1)
 
-_ssmif2 = os.path.join(dataPath, 'lwa2-ssmif.txt')
-lwa2 = parseSSMIF(_ssmif2)
+_ssmifna = os.path.join(dataPath, 'lwana-ssmif.txt')
+lwana = parseSSMIF(_ssmifna)
 
 
 class PrototypeStation(LWAStation):
