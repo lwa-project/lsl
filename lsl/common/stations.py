@@ -17,7 +17,7 @@ __revision__ = '$Rev$'
 __all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwana', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
 
 
-_id2name = {'VL': 'LWA-1', 'NA': 'LWA-2'}
+_id2name = {'VL': 'LWA1', 'NA': 'LWANA'}
 
 
 def geo2ecef(lat, lon, elev):
