@@ -256,7 +256,7 @@ class IDI(object):
 			enableMapper = False
 
 		ants = []
-		topo2eci = site.getECEFTransform()
+		topo2eci = site.getECITransform()
 		for i in xrange(len(stands)):
 			eci = numpy.dot(topo2eci, xyz[i,:])
 			ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
@@ -1167,7 +1167,7 @@ class AIPS(IDI):
 			enableMapper = False
 
 		ants = []
-		topo2eci = site.getECEFTransform()
+		topo2eci = site.getECITransform()
 		for i in xrange(len(stands)):
 			eci = numpy.dot(topo2eci, xyz[i,:])
 			ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
@@ -1281,7 +1281,7 @@ class ExtendedIDI(IDI):
 		enableMapper = False
 
 		ants = []
-		topo2eci = site.getECEFTransform()
+		topo2eci = site.getECITransform()
 		for i in xrange(len(stands)):
 			eci = numpy.dot(topo2eci, xyz[i,:])
 			ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )

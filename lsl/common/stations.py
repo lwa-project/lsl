@@ -133,8 +133,10 @@ class LWAStation(ephem.Observer, LWAStationBase):
 	    AntennaArray instance
 	  * getGeocentricLocation: Return a tuple of the EC-EF coordinates of the 
 	    station
-	  * getECEFTransform: Return a 3x3 tranformation matrix to convert antenna
-	    positions to EC-EF coordinates
+	  * getECITransform: Return a 3x3 tranformation matrix to convert antenna
+	    positions to ECI coordinates
+	  * getECIInverseTransform: Return a 3x3 tranformation matrix to convert antenna
+	    positions from ECI coordinates
 	    
 	LWAStation also provides several functional attributes for dealing with
 	the station's antennas.  These include:
@@ -207,17 +209,28 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		
 		return geo2ecef(self.lat, self.long, self.elev)
 		
-	def getECEFTransform(self):
+	def getECITransform(self):
 		"""
 		Return a 3x3 tranformation matrix that converts a baseline in 
-		[east, north, elevation] to earh-centered, earth-fixed coordinates
-		for that baseline [x, y, z].  Based off the 'local_to_eci' function
-		in the lwda_fits-dev library.
+		[east, north, elevation] to earth-centered inertial coordinates
+		for that baseline [x, y, z].  Based off the 'local_to_eci' 
+		function in the lwda_fits-dev library.
 		"""
 		
 		return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
 						[1.0, 0.0,                  0.0], 
 						[0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
+						
+	def getECIInverseTransform(self):
+		"""
+		Return a 3x3 tranformation matrix that converts a baseline in 
+		earth-centered inertial coordinates [x, y, z] to [east, north, 
+		elevation] for that baseline.
+		"""
+		
+		return numpy.array([[ 0.0,                 1.0, 0.0                ],
+						[-numpy.sin(self.lat), 0.0, numpy.cos(self.lat)],
+						[ numpy.cos(self.lat), 0.0, numpy.sin(self.lat)]])
 						
 	def getPointingAndDirection(self, locTo):
 		"""
