@@ -13,6 +13,8 @@
   * Added a function to lsl.common.stations.Antenna to access information about the impedence mis-match
   * Added an option to the various response functions in lsl.common.stations to return values in dB
   * Switch the information/SSMIF for the north arm site to lwana instead of lwa2 to avoid confusion with the SV site
+  * Renamed the lsl.common.stations.LWAStation.getECEFTransform() function to getECITransform() to reflect what is really happening
+  * Added a function to lsl.imaging.utils to make it easy to re-phase a data dictionary to a new pointing center
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function

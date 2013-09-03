@@ -21,9 +21,9 @@ from lsl.common import stations
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NumericStokes
 
-__version__ = '0.2'
+__version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'CorrelatedData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
 def baselineOrder(bls):
@@ -115,6 +115,76 @@ def pruneBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
 				
 	# Return
 	return newDict
+
+
+def rephaseData(aa, dataDict, currentPhaseCenter='z', newPhaseCenter='z'):
+	"""
+	Given an AntennaArray instance and a data dictionary, re-phase the data 
+	to change the pointing center.
+	"""
+	
+	# Load in basic information about the data
+	freq = dataDict['freq']*1.0
+	isMasked = dataDict['isMasked']
+	pols = dataDict['bls'].keys()
+	
+	# Create the data dictionary that will hold the re-phased data
+	dataDict2 = {}
+	dataDict2['freq'] = freq 
+	dataDict2['isMasked'] = isMasked
+	for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
+		dataDict2[key] = {}
+		for p in pols:
+			dataDict2[key][p] = []
+			
+	# Go!
+	for p in pols:
+		lastJD = None
+		
+		## Loop over baselines
+		for k in xrange(len(dataDict['bls'][p])):
+			### Load in the data
+			i,j = dataDict['bls'][p][k]
+			d   = dataDict['vis'][p][k]
+			msk = dataDict['msk'][p][k]
+			jd  = dataDict[ 'jd'][p][k]
+			
+			### Update the source positions if needed
+			if jd != lastJD:
+				# Update the time for the AntennaArray
+				aa.set_jultime(jd)
+				
+				# Recompute
+				if currentPhaseCenter is not 'z':
+					currentPhaseCenter.compute(aa)
+				if newPhaseCenter is not 'z':
+					newPhaseCenter.compute(aa)
+					
+				lastJD = jd
+				
+			### Compute the uvw coordinates and the new phasing
+			try:
+				crd = aa.gen_uvw(j, i, src=newPhaseCenter)
+				d = aa.unphs2src(d, currentPhaseCenter, j, i)
+				d = aa.phs2src(d, newPhaseCenter, j, i)
+			except aipy.phs.PointingError:
+				continue
+				
+			### Save
+			uvw = aa.gen_uvw(j, i, src=newPhaseCenter)
+			uvw = numpy.squeeze(crd.compress(numpy.logical_not(msk), axis=2))
+			vis = d.compress(numpy.logical_not(msk))
+			wgt = numpy.ones_like(vis) * len(vis)
+
+			dataDict2['bls'][p].append( (i,j) )
+			dataDict2['uvw'][p].append( uvw )
+			dataDict2['vis'][p].append( vis )
+			dataDict2['wgt'][p].append( wgt )
+			dataDict2['msk'][p].append( msk )
+			dataDict2[ 'jd'][p].append( jd )
+			
+	# Done
+	return dataDict2
 
 
 class CorrelatedData(object):
@@ -350,13 +420,13 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
 	which can be used for imaging.  The ImgW object itself is returned by this 
 	function to make it more versatile.
 	"""
-
+	
 	im = aipy.img.ImgW(size=MapSize, res=MapRes, wres=MapWRes)
-
+	
 	# Make sure we have the right polarization
 	if pol not in dataDict['bls'].keys() and pol.lower() not in dataDict['bls'].keys():
 		raise RuntimeError("Data dictionary does not have data for polarization '%s'" % pol)
-
+		
 	if chan is not None:
 		# Make sure that `chan' is an array by trying to find its length
 		try:
@@ -371,7 +441,7 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
 		for (i,j),d,u,w,m in zip(dataDict['bls'][pol], dataDict['vis'][pol], dataDict['uvw'][pol], dataDict['wgt'][pol], dataDict['msk'][pol]):
 			u = u[:,chan]
 			u.shape = (3, len(chan))
-
+			
 			uvw.append(u)
 			vis.append(numpy.array([d[chan]]))
 			wgt.append(numpy.array([w[chan]]))
@@ -379,12 +449,12 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
 		uvw = dataDict['uvw'][pol]
 		vis = dataDict['vis'][pol]
 		wgt = dataDict['wgt'][pol]
-
+		
 	uvw = numpy.concatenate(uvw, axis=1)
 	vis = numpy.concatenate(vis)
 	wgt = numpy.concatenate(wgt)
-
+	
 	uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
 	im.put(uvw, vis, wgts=wgt)
-
+	
 	return im
