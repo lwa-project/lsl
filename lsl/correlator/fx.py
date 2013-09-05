@@ -290,8 +290,8 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	delays1 = numpy.zeros((nStands,LFFT))
 	delays2 = numpy.zeros((nStands,LFFT))
 	for i in list(range(nStands)):
-		xyz1 = numpy.array([antenna1[i].stand.x, antenna1[i].stand.y, antenna1[i].stand.z])
-		xyz2 = numpy.array([antenna2[i].stand.x, antenna2[i].stand.y, antenna2[i].stand.z])
+		xyz1 = numpy.array([antennas1[i].stand.x, antennas1[i].stand.y, antennas1[i].stand.z])
+		xyz2 = numpy.array([antennas2[i].stand.x, antennas2[i].stand.y, antennas2[i].stand.z])
 		
 		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / vLight
@@ -422,8 +422,8 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	delays1 = numpy.zeros((nStands,LFFT))
 	delays2 = numpy.zeros((nStands,LFFT))
 	for i in list(range(nStands)):
-		xyz1 = numpy.array([antenna1[i].stand.x, antenna1[i].stand.y, antenna1[i].stand.z])
-		xyz2 = numpy.array([antenna2[i].stand.x, antenna2[i].stand.y, antenna2[i].stand.z])
+		xyz1 = numpy.array([antennas1[i].stand.x, antennas1[i].stand.y, antennas1[i].stand.z])
+		xyz2 = numpy.array([antennas2[i].stand.x, antennas2[i].stand.y, antennas2[i].stand.z])
 		
 		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / vLight

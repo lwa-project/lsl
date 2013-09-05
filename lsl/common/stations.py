@@ -137,6 +137,10 @@ class LWAStation(ephem.Observer, LWAStationBase):
 	    positions to ECI coordinates
 	  * getECIInverseTransform: Return a 3x3 tranformation matrix to convert antenna
 	    positions from ECI coordinates
+	  * getENZOffset: Return the east, north, and vertial offsets to a point on
+	    the surface of the Earth
+	  * getPointingAndDirection: Return the pointing direction and distance to 
+	    another location on the surface of the Earth
 	    
 	LWAStation also provides several functional attributes for dealing with
 	the station's antennas.  These include:
@@ -148,6 +152,11 @@ class LWAStation(ephem.Observer, LWAStationBase):
 	.. versionchanged:: 0.7.0
 		Converted LWAStation to be an instance of LWAStationBase and ephem.Observer
 		to make it easier to work with ephem.Body objects.
+		
+		Added additional functions for dealing with other locations.
+		
+		Changed getECEFTransform() to getECITransform() to make the function name
+		consistent with its purpose.
 	"""
 	
 	def __init__(self, name, lat, long, elev, id='', antennas=None):
@@ -232,6 +241,35 @@ class LWAStation(ephem.Observer, LWAStationBase):
 						[-numpy.sin(self.lat), 0.0, numpy.cos(self.lat)],
 						[ numpy.cos(self.lat), 0.0, numpy.sin(self.lat)]])
 						
+	def getENZOffset(self, locTo):
+		"""
+		Given another location on the surface of the Earth, either as a 
+		LWAStation instance or a three-element tuple of latitude (deg.), 
+		longitude (deg.), and elevation (m), return the topocentric offset
+		in meter along the east, north, and veritcal directions.
+		"""
+		
+		ecefFrom = self.getGeocentricLocation()
+		try:
+			ecefTo = locTo.getGeocentricLocation()
+		except AttributeError:
+			ecefTo = geo2ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
+			
+		ecefFrom = numpy.array(ecefFrom)
+		ecefTo = numpy.array(ecefTo)
+		
+		rho = ecefTo - ecefFrom
+		rot = numpy.array([[ numpy.sin(self.lat)*numpy.cos(self.long), numpy.sin(self.lat)*numpy.sin(self.long), -numpy.cos(self.lat)], 
+					    [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
+					    [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
+		sez = numpy.dot(rot, rho)
+		
+		# Convert from south, east, zenith to east, north, zenith
+		enz = 1.0*sez[[1,0,2]]
+		enz[1] *= -1.0
+		
+		return enz
+		
 	def getPointingAndDirection(self, locTo):
 		"""
 		Given another location on the surface of the Earth, either as a 
@@ -258,7 +296,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		d = numpy.sqrt( (rho**2).sum() )
 		el = numpy.arcsin(sez[2] / d)
 		az = numpy.arctan2(sez[1], -sez[0])
-
+		
 		return az, el, d
 		
 	def getAntennas(self):
