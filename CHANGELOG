@@ -16,6 +16,7 @@
   * Renamed the lsl.common.stations.LWAStation.getECEFTransform() function to getECITransform() to reflect what is really happening
   * Added a function to lsl.imaging.utils to make it easy to re-phase a data dictionary to a new pointing center
   * Added new functions to the LWAStation class to deal with direction and distance to other stations/points on the Earth
+  * Generalized the computeUVW() and computeUVTrack() functions
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function
