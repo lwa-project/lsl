@@ -21,6 +21,7 @@
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function
   * Fixed a bug in the splitTBN.py and splitDRX.py scripts when a 'count' is not provided
+  * Fixed the try...except blocks in lsl.statistics.kurtosis.getLimits() to catch the appropriate error
 
 0.6.5
   * Fixed the time remaining computation in lsl.common.progress.ProgressBarPlus

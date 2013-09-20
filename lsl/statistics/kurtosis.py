@@ -110,7 +110,11 @@ def getLimits(sigma, M, N=1):
 	.. note::
 		This corresponds to Section 3.1 in Nita & Gary (2010, MNRAS 406, L60)
 	"""
-
+	
+	# Adjust the NumPy error levels so that we know when ppf() may be suspect
+	errLevels = numpy.geterr()
+	numpy.seterr(all='raise')
+	
 	# Convert the sigma to a fraction for the high and low clip levels
 	percentClip = ( 1.0 - erf(sigma/numpy.sqrt(2)) ) / 2.0
 	
@@ -124,15 +128,18 @@ def getLimits(sigma, M, N=1):
 	# Try to get a realistic lower limit, giving up if we hit an overflow error
 	try:
 		lower = rv.ppf(percentClip)
-	except OverflowError:
+	except FloatingPointError:
 		lower = mean(M, N) - sigma*std(M, N)
 		
 	# Try to get a realistic upper limit, giving up if we hit an overflow error
 	try:
 		upper = rv.ppf(1.0-percentClip)
-	except OverflowError:
+	except FloatingPointError:
 		upper = mean(M, N) + sigma*std(M, N)
 		
+	# Restore the NumPy error levels
+	numpy.seterr(**errLevels)
+	
 	return lower, upper
 
 
