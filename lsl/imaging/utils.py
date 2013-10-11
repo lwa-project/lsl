@@ -6,6 +6,9 @@ into data dictionaries (as described in :mod:`lsl.sim.vis`) and build AIPY ImgW 
 data dictionaries.  Also included is a utility to sort data dictionaries by baselines.
 
 .. versionadded:: 0.5.0
+
+.. versionchanged:: 0.7.0
+	Added support for UVFITS files.
 """
 
 import aipy
@@ -21,9 +24,9 @@ from lsl.common import stations
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NumericStokes
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 'CorrelateDataIDI', 'CorrelatedDataUV', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
 def baselineOrder(bls):
@@ -187,7 +190,31 @@ def rephaseData(aa, dataDict, currentPhaseCenter='z', newPhaseCenter='z'):
 	return dataDict2
 
 
-class CorrelatedData(object):
+def CorrelatedData(filename):
+	"""
+	Read in and work with FITS IDI and UVFITS files.  Returns either a 
+	CorrelateDataIDI or CorrelatedDataUV instance.
+	"""
+	
+	valid = False
+	
+	# FITS IDI
+	try:
+		return CorrelatedDataIDI(filename)
+	except:
+		pass
+		
+	# UVFITS
+	try:
+		return CorrelatedDataUV(filename)
+	except:
+		pass
+		
+	if not valid:
+		raise RuntimeError("File '%s' does not appear to be either a FITS IDI or UV FITS file" % filename)
+
+
+class CorrelatedDataIDI(object):
 	"""
 	Class to make accessing information about a FITS IDI easy.  This wraps 
 	all of the "messy" machinery needed to extract both the metadata and data 
@@ -237,7 +264,7 @@ class CorrelatedData(object):
 	
 	def __init__(self, filename):
 		"""
-		Initialize a new CorrelatedData instance from a FITS IDI file and 
+		Initialize a new CorrelatedDataIDI instance from a FITS IDI file and 
 		fill in the metadata.
 		"""
 		
@@ -253,7 +280,22 @@ class CorrelatedData(object):
 		self.extended = False
 		if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
 			self.extended = True
+		ag = hdulist['ARRAY_GEOMETRY']
 		uvData = hdulist['UV_DATA']
+		
+		# Antennas
+		try:
+			mapper = hdulist['NOSTA_MAPPER']
+			
+			nosta = mapper.data.field('NOSTA')
+			noact = mapper.data.field('NOACT')
+			stabxyz = ag.data.field('STABXYZ')
+			anname = mapper.data.field('ANNAME')
+		except KeyError:
+			nosta = ag.data.field('NOSTA')
+			noact = ag.data.field('NOSTA')
+			stabxyz = ag.data.field('STABXYZ')
+			anname = ag.data.field('ANNAME')
 		
 		# Station/telescope information
 		self.telescope = hdulist[0].header['TELESCOP']
@@ -263,22 +305,23 @@ class CorrelatedData(object):
 		elif self.telescope == 'LWA-2':
 			self.station = stations.lwa2
 		else:
-			self.station = None
-		
-		# Antennas
-		try:
-			mapper = hdulist['NOSTA_MAPPER']
+			geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
+			site = stations.ecef2geo(*geo)
 			
-			nosta = mapper.data.field('NOSTA')
-			noact = mapper.data.field('NOACT')
-			anname = mapper.data.field('ANNAME')
-		except KeyError:
-			ag = hdulist['ARRAY_GEOMETRY']
-
-			nosta = ag.data.field('NOSTA')
-			noact = ag.data.field('NOSTA')
-			anname = ag.data.field('ANNAME')
-		
+			lat  = site[0]
+			ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
+							[-numpy.sin(lat), 0.0, numpy.cos(lat)],
+							[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
+							
+			antennas = []
+			for line in ag.data:
+				enz = numpy.dot(ecii, line['STABXYZ'])
+				
+				stand = stations.Stand(line['NOSTA'], *enz)
+				antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
+				
+			self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+			
 		self.standMap = {}
 		self.stands = []
 		for nosta, noact in zip(nosta, noact):
@@ -401,6 +444,236 @@ class CorrelatedData(object):
 		# Make sure we found something
 		if not found:
 			raise RuntimeError("Cannot find baseline set %i in FITS IDI file", set)
+		
+		# Sort
+		if sort:
+			sortDataDict(dataDict)
+			
+		# Prune
+		if uvMin != 0 or uvMax != numpy.inf:
+			dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
+			
+		# Return
+		return dataDict
+
+
+class CorrelatedDataUV(object):
+	"""
+	Class to make accessing information about a UVFITS file easy.  This wraps 
+	all of the "messy" machinery needed to extract both the metadata and data 
+	from the file and return them as common LSL objects.
+	
+	This class has three main attributes to interact with:
+	  * getAntennaArray - Return a :class:`lsl.sim.vim.AntennaArray` instance
+	    that represents the array where the data was obtained.  This is useful
+	    for simulation proposes and computing source positions.
+	  * getObserver - Return a ephem.Observer instance representing the array
+	  * getDataSet - Return a data dictionary of all baselines for a given set
+	    of observations
+	    
+	The class also includes a variety of useful metadata attributes:
+	  * pols - Numpy array of polarization product codes
+	  * freq - Numpy array of frequency channels in Hz
+	  * station - LSL :class:`lsl.common.stations.LWAStation` instance for the
+	    array
+	  * dateObs - Datetime object for the reference date of the FIT IDI file
+	  * antennas - List of :class:`lsl.common.stations.Antenna` instances
+	  
+	.. note::
+		The CorrelatedData.antennas attribute should be used over 
+		CorrelatedData.station.getAntennas() since the mapping in the FITS IDI
+		file may not be the same as the digitizer order.
+	"""
+	
+	def _createEmptyDataDict(self):
+		"""
+		Create an empty data dictionary that is appropriate for the current file.
+		"""
+		
+		dataDict = {}
+		dataDict['freq'] = self.freq 
+		dataDict['isMasked'] = False
+		for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
+			dataDict[key] = {}
+			
+		for p in self.pols:
+			name = NumericStokes[p]
+			if len(name) == 2:
+				name = name.lower()
+			for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
+				dataDict[key][name] = []
+				
+		return dataDict
+	
+	def __init__(self, filename):
+		"""
+		Initialize a new CorrelatedDataUV instance from a FITS IDI file and 
+		fill in the metadata.
+		"""
+		
+		self.filename = filename
+		
+		# Open the various tables that we need
+		hdulist = pyfits.open(filename)
+		
+		uvData = hdulist[0]
+		ag = hdulist['AIPS AN']
+		
+		# Station/telescope information
+		self.telescope = hdulist[0].header['TELESCOP']
+		dt = hdulist[0].header['DATE-OBS']
+		dt = dt.rsplit('.', 1)[0]
+		self.dateObs = pytz.UTC.localize(datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S"))
+		if self.telescope == 'LWA-1' or self.telescope == 'LWA1':
+			self.station = stations.lwa1
+		elif self.telescope == 'LWA-2' or self.telescope == 'LWA2':
+			self.station = stations.lwa2
+		else:
+			geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
+			site = stations.ecef2geo(*geo)
+			
+			lat  = site[0]
+			ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
+							[-numpy.sin(lat), 0.0, numpy.cos(lat)],
+							[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
+							
+			antennas = []
+			for line in ag.data:
+				enz = numpy.dot(ecii, line['STABXYZ'])
+				
+				stand = stations.Stand(line['NOSTA'], *enz)
+				antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
+				
+			self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+			
+		# Antennas
+		nosta = ag.data.field('NOSTA')
+		noact = ag.data.field('NOSTA')
+		anname = ag.data.field('ANNAME')
+			
+		self.standMap = {}
+		self.stands = []
+		for nosta, noact in zip(nosta, noact):
+			self.standMap[nosta] = noact
+			self.stands.append(noact)
+			
+		self.antennaMap = {}
+		self.antennas = []
+		if self.station is not None:
+			for ant in self.station.getAntennas():
+				if ant.stand.id in self.stands and ant.pol == 0:
+					self.antennas.append(ant)
+					self.antennaMap[ant.stand.id] = ant
+		
+		# Polarization and frequency
+		self.pols  = numpy.arange(1, uvData.header['NAXIS3']+1) - uvData.header['CRPIX3']
+		self.pols *= uvData.header['CDELT3'] 
+		self.pols += uvData.header['CRVAL3']
+		self.freq  = numpy.arange(1, uvData.header['NAXIS4']+1) - uvData.header['CRPIX4']
+		self.freq *= uvData.header['CDELT4']
+		self.freq += uvData.header['CRVAL4']
+		
+		# Total baseline count
+		self.totalBaselineCount = len(hdulist[0].data['BASELINE'])
+		
+		# Close
+		hdulist.close()
+	
+	def getAntennaArray(self):
+		"""
+		Return an AIPY AntennaArray instance for the array that made the 
+		observations contained here.
+		"""
+		
+		# Get the date of observations
+		refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
+		
+		# Return
+		return simVis.buildSimArray(self.station, self.antennas, self.freq/1e9, jd=refJD)
+		
+	def getObserver(self):
+		"""
+		Return a ephem.Observer instances for the array described in the file.
+		"""
+		
+		return self.station.getObserver()
+		
+	def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
+		"""
+		Return a baseline sorted data dictionary for the specified data set.  
+		By default this excludes the autocorrelations.  To include 
+		autocorrelations set the value of 'includeAuto' to True.  Setting the
+		'sort' keyword to False will disable the baseline sorting.  Optionally,
+		baselines with lengths between uvMin and uvMax can only be returned.
+
+		.. note::
+			uvMin and uvMax should be specified in lambda
+		"""
+		
+		# Open the file
+		hdulist = pyfits.open(self.filename)
+		uvData = hdulist[0]
+		
+		# We need this a lot...
+		nPol = len(self.pols)
+		
+		# Define the dictionary to return
+		dataDict = self._createEmptyDataDict()
+
+		# Set the source ID to look for (this is LWA specific)
+		sourceID = range(set,set+1)
+		
+		# Loop over data rows
+		found = False
+		for row in uvData.data:
+			# Load it.
+			bl = int(row['BASELINE'])
+			if bl >= 65536:
+				a1 = int((bl - 65536) / 2048)
+				a2 = int((bl - 65536) % 2048)
+			else:
+				a1 = int(bl / 256)
+				a2 = int(bl % 256)
+			i = self.standMap[a1]
+			j = self.standMap[a2]
+			
+			if i == j and not includeAuto:
+				## Skip auto-correlations
+				continue
+			ri = numpy.where(self.stands == i)[0][0]
+			rj = numpy.where(self.stands == j)[0][0]
+			
+			uvw = numpy.array([row['UU'], row['VV'], row['WW']])
+			
+			jd = row['DATE']
+			uvw = numpy.array([numpy.dot(uvw[0], self.freq), numpy.dot(uvw[1], self.freq), numpy.dot(uvw[2], self.freq)])
+			flux = row['DATA'][0,0,:,:,:]
+			
+			for c,p in enumerate(self.pols):
+				name = NumericStokes[p]
+				if len(name) == 2:
+					name = name.lower()
+					
+				vis = numpy.zeros(flux.shape[0], dtype=numpy.complex64)
+				vis.real = flux[:,c,0]
+				vis.imag = flux[:,c,1]
+				wgt = numpy.ones(vis.size)
+				msk = numpy.zeros(vis.size, dtype=numpy.int16)
+			
+				dataDict['uvw'][name].append( uvw ) 
+				dataDict['vis'][name].append( vis )
+				dataDict['wgt'][name].append( wgt )
+				dataDict['msk'][name].append( msk )
+				dataDict['bls'][name].append( (ri,rj) )
+				dataDict['jd' ][name].append( jd )
+			found = True
+		
+		# Close
+		hdulist.close()
+		
+		# Make sure we found something
+		if not found:
+			raise RuntimeError("Cannot find baseline set %i in UVFITS file", set)
 		
 		# Sort
 		if sort:

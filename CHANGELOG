@@ -18,7 +18,7 @@
   * Added new functions to the LWAStation class to deal with direction and distance to other stations/points on the Earth
   * Generalized the computeUVW() and computeUVTrack() functions
   * Added a disk-based cache to the lsl.misc.geodesy module to help keep network traffic down
-  * Added support to write UVFITS files
+  * Added support for reading and writing UVFITS files
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function
