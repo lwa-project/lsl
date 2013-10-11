@@ -7,25 +7,31 @@ of dates.
 
 import os
 import gzip
+import time
 import ephem
 import numpy
 import socket
 import urllib2
 import logging
+import tempfile
 
 import lsl.astro as astro
 import lsl.common.paths as paths
 
-__version__ = '0.2'
+__version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['EOP', 'getEOP', 'getEOPRange', '__version__', '__revision__', '__all__']
 
-# Last valid MJD in the historic EOP data included with LSL
-# MJD 55518 == November 18, 2010.
-Historic1973Limit = 55518.0
-
 # Logger for capturing problems with downloading EOP data
 __logger = logging.getLogger('__main__')
+
+
+# Create the cache directory
+if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
+	os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
+_CacheDir = os.path.join(os.path.expanduser('~'), '.lsl', 'geodesy_cache')
+if not os.path.exists(_CacheDir):
+	os.mkdir(_CacheDir)
 
 
 class EOP(object):
@@ -44,10 +50,12 @@ class EOP(object):
 	    predicted.
 	"""
 
-	def __init__(self, mjd=0.0, x=0.0, y=0.0, utDiff=0.0, type='final'):
+	def __init__(self, mjd=0.0, x=0.0, y=0.0, dx=0.0, dy=0.0, utDiff=0.0, type='final'):
 		self.mjd = mjd
 		self.x = x
 		self.y = y
+		self.dx = dx
+		self.dy = dy
 		self.utDiff = utDiff
 		self.type = type
 
@@ -55,13 +63,15 @@ class EOP(object):
 
 	def fromMAIA(self, line):
 		"""
-		Given a line from a MAIA standard rapiod EOP data (IAU2000) file, fill
+		Given a line from a MAIA standard rapid EOP data (IAU2000) file, fill
 		in the object's values with the needed information.
 		"""
 
 		self.mjd = float(line[7:15])
 		self.x = float(line[18:27])
-		self.y = float(line[38:46])
+		self.y = float(line[37:46])
+		self.dx = float(line[97:106]) / 1000.0
+		self.dy = float(line[116:125]) / 1000.0
 		self.utDiff = float(line[58:68])
 		if line[57] == 'I':
 			self.type = 'final'
@@ -124,29 +134,59 @@ class EOP(object):
 			return 0
 
 
-def __loadHistoric1973(timeout=20):
+def __downloadFile(filename, baseURL='http://maia.usno.navy.mil/ser7/', timeout=120):
+	try:
+		eopFH = urllib2.urlopen('%s%s' % (baseURL, filename), timeout=timeout)
+		lines = eopFH.readlines()
+		eopFH.close()
+	except IOError as e:
+		__logger.error('Error downloading file \'%s\': %s', filename, str(e))
+		lines = []
+	except socket.timeout:
+		__logger.error('Timeout after %i seconds downloading historic EOP data', timeout)
+		lines = []
+		
+	if len(lines) == 0:
+		return False
+	else:
+		fh = open(os.path.join(_CacheDir, filename), 'w')
+		for line in lines:
+			fh.write(line)
+		fh.close()
+		return True
+
+
+def __loadHistoric1973(timeout=120):
 	"""
 	Load in historical values.  The file included with LSL contains values 
 	from January 2, 1973 to November 18, 2010.
 	"""
-
-	# Open the file and read in via the gzip.GzipFile object
-	heopFH = gzip.GzipFile(os.path.join(paths.data, 'astro', 'eop-historical.dat.gz'), 'rb')
-	lines = heopFH.readlines()
-	heopFH.close()
-
-	heops = []
+	
+	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.all')):
+		__downloadFile('finals2000A.all', timeout=timeout)
+	else:
+		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.all')).st_mtime
+		if age > (3600*24*7):
+			__downloadFile('finals2000A.all', timeout=timeout)
+			
+	fh = open(os.path.join(_CacheDir, 'finals2000A.all'), 'r')
+	lines = fh.readlines()
+	fh.close()
+	
+	eops = []
 	for line in lines:
+		newEOP = EOP()
 		try:
-			newEOP = EOP()
-			newEOP.fromMAIA(line)
+			newEOP.fromMAIA(line) 
 			# Only include "final" values, not predictions
 			if newEOP.type == 'final':
-				heops.append(newEOP)
-		except ValueError:
+				eops.append(newEOP)
+		except:
 			pass
+	if len(eops) == 0:
+		eops.append(None)
 	
-	return heops
+	return eops
 
 
 def __loadHistoric1992(timeout=120):
@@ -154,25 +194,28 @@ def __loadHistoric1992(timeout=120):
 	Load in historical values from the web.  The downloaded file includes 
 	values from January 1, 1992 until today (usually).
 	"""
-
-	try:
-		eopFH = urllib2.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.data', timeout=timeout)
-		lines = eopFH.readlines()
-		eopFH.close()
-	except IOError as e:
-		__logger.error('Error downloading historic EOP data: %s', str(e))
-		lines = []
-	except socket.timeout:
-		__logger.error('Timeout after %i seconds downloading historic EOP data', timeout)
-		lines = []
-
+	
+	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.data')):
+		__downloadFile('finals2000A.data', timeout=timeout)
+	else:
+		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.data')).st_mtime
+		if age > (3600*24*7):
+			__downloadFile('finals2000A.data', timeout=timeout)
+			
+	fh = open(os.path.join(_CacheDir, 'finals2000A.data'), 'r')
+	lines = fh.readlines()
+	fh.close()
+	
 	eops = []
 	for line in lines:
 		newEOP = EOP()
-		newEOP.fromMAIA(line) 
-		# Only include "final" values, not predictions
-		if newEOP.type == 'final':
-			eops.append(newEOP)
+		try:
+			newEOP.fromMAIA(line) 
+			# Only include "final" values, not predictions
+			if newEOP.type == 'final':
+				eops.append(newEOP)
+		except:
+			pass
 	if len(eops) == 0:
 		eops.append(None)
 	
@@ -184,22 +227,25 @@ def __loadCurrent90(timeout=120):
 	Load data for the current 90-day period from MAIA via the web.
 	"""
 
-	try:
-		eopFH = urllib2.urlopen('http://maia.usno.navy.mil/ser7/finals2000A.daily', timeout=timeout)
-		lines = eopFH.readlines()
-		eopFH.close()
-	except IOError as e:
-		__logger.error('Error downloading recent EOP data: %s', str(e))
-		lines = []
-	except socket.timeout:
-		__logger.error('Timeout after %i seconds downloading recent EOP data', timeout)
-		lines = []
-
+	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.daily')):
+		__downloadFile('finals2000A.daily', timeout=timeout)
+	else:
+		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.daily')).st_mtime
+		if age > (3600*24):
+			__downloadFile('finals2000A.daily', timeout=timeout)
+			
+	fh = open(os.path.join(_CacheDir, 'finals2000A.daily'), 'r')
+	lines = fh.readlines()
+	fh.close()
+	
 	eops = []
 	for line in lines:
 		newEOP = EOP()
-		newEOP.fromMAIA(line) 
-		eops.append(newEOP)
+		try:
+			newEOP.fromMAIA(line) 
+			eops.append(newEOP)
+		except:
+			pass
 	if len(eops) == 0:
 		eops.append(None)
 	
@@ -214,6 +260,9 @@ def getEOP(mjd=None, timeout=120):
 	.. versionchanged:: 0.5.2
 		Added the `timeout' keyword to deal with failures download EOP data.
 		The default value is 120 seconds.
+		
+	.. versionchanged:: 0.7.0
+		Added caching of EOP values to speed up subsequent calls
 	"""
 	
 	try:
@@ -226,26 +275,29 @@ def getEOP(mjd=None, timeout=120):
 				mjd = [int(float(ephem.now()) + 2415020.0 - astro.MJD_OFFSET)]
 		else:
 			mjd = [int(mjd)]
-	mjd = numpy.array(mjd)
+	mjd = numpy.array(mjd).astype(numpy.int32)
 
-	oldEOPs = __loadHistoric1973(timeout=timeout)
-	if mjd.max() > Historic1973Limit:
-		newEOPs = __loadCurrent90(timeout=timeout)
-	else:
-		newEOPs = []
-	if mjd.min() > Historic1973Limit and mjd.min() < newEOPs[0]:
-		oldEOPs.extend(__loadHistoric1992(timeout=timeout))
-		oldEOPs.sort()
-
+	oldEOPs = []
+	midEOPs = []
+	newEOPs = __loadCurrent90()
+	if mjd.min() < 48622:
+		oldEOPs = __loadHistoric1973()
+	if mjd.min() < newEOPs[0].mjd:
+		midEOPs = __loadHistoric1992()
+		
 	outEOPs = []
 	for day in mjd:
-		if day in oldEOPs:
-			outEOPs.append(oldEOPs[oldEOPs.index(day)])
-		elif day in newEOPs:
+		if day in newEOPs:
 			outEOPs.append(newEOPs[newEOPs.index(day)])
+		elif day in midEOPs:
+			outEOPs.append(midEOPs[midEOPs.index(day)])
+		elif day in oldEOPs:
+			outEOPs.append(oldEOPs[oldEOPs.index(day)])
 		else:
 			outEOPs.append(None)
 	
+	if len(mjd) == 1:
+		outEOPs = outEOPs[0]
 	return outEOPs
 		
 
