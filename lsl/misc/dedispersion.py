@@ -143,7 +143,6 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 		RuntimeWarning("Too few data samples for proper dedispersion")
 		
 	# Go!
-	endBuffered = False
 	for i in xrange(2*nSets+1):
 		start = i*N/2 - N/4
 		stop = start + N
@@ -170,14 +169,9 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 				ns = nextData.size
 				df = dataIn.size - (timeseries.size-start)
 				
-				if endBuffered:
-					raise RuntimeError("Too few data samples for proper end buffering")
-					
 				try:
 					timeIn[timeseries.size-start:] = nextTime[:(dataIn.size-(timeseries.size-start))]
 					dataIn[timeseries.size-start:] = nextData[:(dataIn.size-(timeseries.size-start))]
-					
-					endBuffered = True
 				except ValueError:
 					raise RuntimeError("Too few data samples for proper end buffering")
 					
