@@ -263,7 +263,7 @@ class fitsidi_tests(unittest.TestCase):
 		except KeyError:
 			ag = hdulist['ARRAY_GEOMETRY'].data
 			nosta = ag.field('NOSTA')
-			noact = ag.field('NOACT')
+			noact = ag.field('NOSTA')
 		mapper = {}
 		for s,a in zip(nosta, noact):
 			mapper[s] = a
@@ -594,7 +594,7 @@ class aipsidi_tests(unittest.TestCase):
 		except KeyError:
 			ag = hdulist['ARRAY_GEOMETRY'].data
 			nosta = ag.field('NOSTA')
-			noact = ag.field('NOACT')
+			noact = ag.field('NOSTA')
 		mapper = {}
 		for s,a in zip(nosta, noact):
 			mapper[s] = a

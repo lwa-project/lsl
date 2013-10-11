@@ -25,6 +25,7 @@ import test_simdp
 import test_simvis
 import test_geodesy
 import test_fitsidi
+import test_uvfits
 import test_tsfits
 import test_sdfits
 import test_vdif
@@ -71,6 +72,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_simvis.simvis_test_suite())
 		self.addTest(test_geodesy.geodesy_test_suite())
 		self.addTest(test_fitsidi.fitsidi_test_suite())
+		self.addTest(test_uvfits.uvfits_test_suite())
 		self.addTest(test_tsfits.tsfits_test_suite())
 		self.addTest(test_sdfits.sdfits_test_suite())
 		self.addTest(test_vdif.vdif_test_suite())
