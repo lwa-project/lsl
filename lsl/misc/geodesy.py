@@ -3,6 +3,10 @@
 """
 Module for querying the earth orientation parameters for a given date/list
 of dates.
+
+.. versionchanged:: 0.7.0
+	Added caching of MAIA results to speed up subsequent calls to getEOP() 
+	and getEOPRange().
 """
 
 import os
@@ -44,10 +48,15 @@ class EOP(object):
 	    meridian [arc seconds]
 	  * y - difference between the CEP and IRP in the direction of 90 degrees 
 	    west longitude [arc seconds]
+	  * dx - dX with respect to IAU2000A Nutation [arc seconds]
+	  * dy - dY with respect to IAU2000A Nutation [arc seconds]
 	  * UT1-UTC - difference between rotation angle about the pole and UTC
 	    [seconds]
 	  * type - whether the values for the given MJD are observed (final/IERS) or
 	    predicted.
+	    
+	.. versionchanged:: 0.7.0
+		Added extra attributes to store dX (dx) and dY (dy) in arc seconds.
 	"""
 
 	def __init__(self, mjd=0.0, x=0.0, y=0.0, dx=0.0, dy=0.0, utDiff=0.0, type='final'):
@@ -158,8 +167,8 @@ def __downloadFile(filename, baseURL='http://maia.usno.navy.mil/ser7/', timeout=
 
 def __loadHistoric1973(timeout=120):
 	"""
-	Load in historical values.  The file included with LSL contains values 
-	from January 2, 1973 to November 18, 2010.
+	Load in historical values from the web.  The downloaded file includes 
+	values from January 2, 1973 until today (usually).
 	"""
 	
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.all')):
@@ -224,7 +233,7 @@ def __loadHistoric1992(timeout=120):
 
 def __loadCurrent90(timeout=120):
 	"""
-	Load data for the current 90-day period from MAIA via the web.
+	Load data for the current 90-day period from the web.
 	"""
 
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.daily')):
@@ -262,7 +271,7 @@ def getEOP(mjd=None, timeout=120):
 		The default value is 120 seconds.
 		
 	.. versionchanged:: 0.7.0
-		Added caching of EOP values to speed up subsequent calls
+		Added caching of EOP values to speed up subsequent calls.
 	"""
 	
 	try:
