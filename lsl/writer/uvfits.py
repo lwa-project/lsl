@@ -492,7 +492,6 @@ class UV(object):
 		
 		# Create the UV Data table and update its header
 		test = numpy.array(mList, dtype=numpy.float32)
-		print test.shape, self.nStokes, self.nChan
 		uv = pyfits.GroupData(numpy.array(mList, dtype=numpy.float32), parnames=['UU', 'VV', 'WW', 'BASELINE', 'DATE'], 
 							pardata=[numpy.array(uList, dtype=numpy.float32), numpy.array(vList, dtype=numpy.float32), 
 									numpy.array(wList, dtype=numpy.float32), numpy.array(blineList), 

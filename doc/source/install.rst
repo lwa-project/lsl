@@ -8,7 +8,7 @@ Requirements
  * setuptools >= 0.6.10
  * numpy >= 1.2
  * scipy >= 0.7
- * pyfits >= 3.0
+ * pyfits >= 3.1
  * ephem >= 3.7.5
  * aipy >= 0.9.1
  * matplotlib >= 0.98.3 [1]_
