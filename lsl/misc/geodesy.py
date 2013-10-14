@@ -175,7 +175,7 @@ def __loadHistoric1973(timeout=120):
 		__downloadFile('finals2000A.all', timeout=timeout)
 	else:
 		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.all')).st_mtime
-		if age > (3600*24*7):
+		if age > (3600*24*180):
 			__downloadFile('finals2000A.all', timeout=timeout)
 			
 	fh = open(os.path.join(_CacheDir, 'finals2000A.all'), 'r')
