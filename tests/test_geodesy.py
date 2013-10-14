@@ -58,14 +58,6 @@ class geodesy_tests(unittest.TestCase):
 		self.assertEqual(len(eops), 3)
 		for i in range(3):
 			self.assertTrue(mjdList[i] in eops)
-			
-	def test_read_range(self):
-		"""Test that the rangeing in getEOPRange is correct."""
-		
-		eops = geodesy.getEOPRange(start=55500.0, stop=55505.0)
-		self.assertEqual(len(eops), 6)
-		for i in range(55500, 55505+1):
-			self.assertTrue(i in eops)
 
 
 class geodesy_test_suite(unittest.TestSuite):

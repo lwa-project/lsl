@@ -5,8 +5,8 @@ Module for querying the earth orientation parameters for a given date/list
 of dates.
 
 .. versionchanged:: 0.7.0
-	Added caching of MAIA results to speed up subsequent calls to getEOP() 
-	and getEOPRange().
+	Added caching of MAIA results to speed up subsequent calls to getEOP().
+	Removed getEOPRange() since getEOP() can do the same thing.
 """
 
 import os
@@ -24,7 +24,7 @@ import lsl.common.paths as paths
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['EOP', 'getEOP', 'getEOPRange', '__version__', '__revision__', '__all__']
+__all__ = ['EOP', 'getEOP', '__version__', '__revision__', '__all__']
 
 # Logger for capturing problems with downloading EOP data
 __logger = logging.getLogger('__main__')
@@ -308,28 +308,3 @@ def getEOP(mjd=None, timeout=120):
 	if len(mjd) == 1:
 		outEOPs = outEOPs[0]
 	return outEOPs
-		
-
-def getEOPRange(start=None, stop=None, timeout=120):
-	"""
-	Return a list of orientation parameter objects that span the start and 
-	stop (inclusive) MJDs provided.  Values of 'None' indicate today's date.
-	
-	.. versionchanged:: 0.5.2
-		Added the `timeout' keyword to deal with failures download EOP data.
-		The default value is 120 seconds.
-	"""
-
-	if start is None:
-		try:
-			start = int(float(ephem.now()) + astro.DJD_OFFSET - astro.MJD_OFFSET)
-		except AttributeError:
-			start = int(float(ephem.now()) + 2415020.0 - astro.MJD_OFFSET)
-	if stop is None:
-		try:
-			stop = int(float(ephem.now()) + astro.DJD_OFFSET - astro.MJD_OFFSET)
-		except AttributeError:
-			stop = int(float(ephem.now()) + 2415020.0 - astro.MJD_OFFSET)
-
-	mjdList = numpy.arange(start, stop+1)
-	return getEOP(mjdList, timeout=timeout)
