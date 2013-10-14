@@ -8,13 +8,14 @@ data dictionaries.  Also included is a utility to sort data dictionaries by base
 .. versionadded:: 0.5.0
 
 .. versionchanged:: 0.7.0
-	Added support for UVFITS files.
+	Added support for UVFITS files and CASA measurement sets
 """
 
 import aipy
 import pytz
 import numpy
 import pyfits
+import string
 from calendar import timegm
 from datetime import datetime
 from operator import itemgetter
@@ -26,7 +27,7 @@ from lsl.writer.fitsidi import NumericStokes
 
 __version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 'CorrelateDataIDI', 'CorrelatedDataUV', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'buildGriddedImage', '__version__', '__revision__', '__all__']
 
 
 def baselineOrder(bls):
@@ -210,8 +211,14 @@ def CorrelatedData(filename):
 	except:
 		pass
 		
+	# Measurment Set
+	try:
+		return CorrelateDataMS(filename)
+	except:
+		pass
+		
 	if not valid:
-		raise RuntimeError("File '%s' does not appear to be either a FITS IDI or UV FITS file" % filename)
+		raise RuntimeError("File '%s' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet" % filename)
 
 
 class CorrelatedDataIDI(object):
@@ -480,8 +487,8 @@ class CorrelatedDataUV(object):
 	  * antennas - List of :class:`lsl.common.stations.Antenna` instances
 	  
 	.. note::
-		The CorrelatedData.antennas attribute should be used over 
-		CorrelatedData.station.getAntennas() since the mapping in the FITS IDI
+		The CorrelatedDataUV.antennas attribute should be used over 
+		CorrelatedDataUV.station.getAntennas() since the mapping in the UVFITS
 		file may not be the same as the digitizer order.
 	"""
 	
@@ -685,6 +692,277 @@ class CorrelatedDataUV(object):
 			
 		# Return
 		return dataDict
+
+
+try:
+	from pyrap.tables import *
+	
+	# Stokes codes for CASA Measurement Sets
+	NumericStokesMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
+				    9:'XX', 10:'XY', 11:'YX', 12:'YY'}
+	
+	class CorrelatedDataMS(object):
+		"""
+		Class to make accessing information about a MS easy.  This wraps 
+		all of the "messy" machinery needed to extract both the metadata and data 
+		from the file and return them as common LSL objects.
+		
+		This class has three main attributes to interact with:
+		* getAntennaArray - Return a :class:`lsl.sim.vim.AntennaArray` instance
+		that represents the array where the data was obtained.  This is useful
+		for simulation proposes and computing source positions.
+		* getObserver - Return a ephem.Observer instance representing the array
+		* getDataSet - Return a data dictionary of all baselines for a given set
+		of observations
+		
+		The class also includes a variety of useful metadata attributes:
+		* pols - Numpy array of polarization product codes
+		* freq - Numpy array of frequency channels in Hz
+		* station - LSL :class:`lsl.common.stations.LWAStation` instance for the
+		array
+		* dateObs - Datetime object for the reference date of the FIT IDI file
+		* antennas - List of :class:`lsl.common.stations.Antenna` instances
+		
+		.. note::
+			The CorrelatedDataMS.antennas attribute should be used over 
+			CorrelatedDataMS.station.getAntennas() since the mapping in the MS
+			may not be the same as the digitizer order.
+		"""
+		
+		def _createEmptyDataDict(self):
+			"""
+			Create an empty data dictionary that is appropriate for the current file.
+			"""
+			
+			dataDict = {}
+			dataDict['freq'] = self.freq 
+			dataDict['isMasked'] = False
+			for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
+				dataDict[key] = {}
+				
+			for p in self.pols:
+				name = NumericStokesMS[p]
+				if len(name) == 2:
+					name = name.lower()
+				for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
+					dataDict[key][name] = []
+					
+			return dataDict
+		
+		def __init__(self, filename):
+			"""
+			Initialize a new CorrelatedData instance from a MS and fill 
+			in the metadata.
+			"""
+			
+			self.filename = filename
+			
+			# Open the various tables that we need
+			data = table(self.filename, ack=False)
+			try:
+				ants = table(os.path.join(self.filename, 'ANTENNA'), ack=False)
+			except:
+				raise RuntimeError("Cannot find table 'ANTENNA' in '%s'" % self.filename)
+			try:
+				pols = table(os.path.join(self.filename, 'POLARIZATION'), ack=False)
+			except:
+				raise RuntimeError("Cannot find table 'POLARIZATION' in '%s'" % self.filename)
+			try:
+				obs = table(os.path.join(self.filename, 'OBSERVATION'), ack=False)
+			except:
+				raise RuntimeError("Cannot find table 'OBSERVATION' in '%s'" % self.filename)
+			try:
+				spw = table(os.path.join(self.filename, 'SPECTRAL_WINDOW'), ack=False)
+			except:
+				raise RuntimeError("Cannot find table 'SPECTRAL_WINDOW' in '%s'" % self.filename)
+				
+			# Station/telescope information
+			self.telescope = obs.col('TELESCOPE_NAME')[0]
+			if self.telescope == 'LWA-1' or self.telescope == 'LWA1':
+				self.station = stations.lwa1
+			elif self.telescope == 'LWA-2' or self.telescope == 'LWA2':
+				self.station = stations.lwa2
+			else:
+				## Get latitude and longitude for all antennas
+				lat = numpy.array([], dtype=numpy.float64)
+				lng = numpy.array([], dtype=numpy.float64)
+				elv = numpy.array([], dtype=numpy.float64)
+				for row in ants.col('POSITION'):
+					la,ln,el = stations.ecef2geo(*row)
+					lat = numpy.append(lat, la*180/numpy.pi)
+					lng = numpy.append(lng, ln*180/numpy.pi)
+					elv = numpy.append(elv, el)
+					
+				## Estimate the center of the station
+				sLat = robust.mean(lat)
+				sLng = robust.mean(lng)
+				sElv = robust.mean(elv)
+				
+				## Build a preliminayr represenation of the station
+				self.station = stations.LWAStation(ants.col('STATION')[0], sLat, sLng, sElv)
+				
+				## Fill in the antennas instances
+				antennas = []
+				for i in xrange(lat.size):
+					enz = self.station.getENZOffset((lat[i], lng[i], elv[i]))
+					sid = int(ants.col('NAME')[i].translate(None, string.letters))
+					
+					stand = stations.Stand(sid, *enz)
+					antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
+				self.station.antennas = antennas
+				
+			# Antennas
+			self.standMap = {}
+			self.stands = []
+			for i,noact in enumerate(ants.col('NAME')):
+				noact = int(noact[3:])
+				self.standMap[i] = noact
+				self.stands.append(noact)
+				
+			self.antennaMap = {}
+			self.antennas = []
+			if self.station is not None:
+				for ant in self.station.getAntennas():
+					if ant.stand.id in self.stands and ant.pol == 0:
+						self.antennas.append(ant)
+						self.antennaMap[ant.stand.id] = ant
+			
+			# Polarization and frequency
+			self.pols = pols.col('CORR_TYPE')[0]
+			self.freq  = numpy.array( spw.col('CHAN_FREQ')[0] )
+			
+			# Total baseline count
+			self.totalBaselineCount = data.nrows()
+			
+			# Data set times
+			self._times = []
+			for t in data.col('TIME'):
+				if t not in self._times:
+					self._times.append(t)
+			jd = self._times[0] / 3600.0 / 24.0 + astro.MJD_OFFSET
+			self.dateObs = pytz.UTC.localize(datetime.utcfromtimestamp(astro.utcjd_to_unix(jd)))
+			
+			# Close
+			data.close()
+			ants.close()
+			pols.close()
+			obs.close()
+			spw.close()
+		
+		def getAntennaArray(self):
+			"""
+			Return an AIPY AntennaArray instance for the array that made the 
+			observations contained here.
+			"""
+			
+			# Get the date of observations
+			refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
+			
+			# Return
+			return simVis.buildSimArray(self.station, self.antennas, self.freq/1e9, jd=refJD)
+			
+		def getObserver(self):
+			"""
+			Return a ephem.Observer instances for the array described in the file.
+			"""
+			
+			return self.station.getObserver()
+			
+		def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
+			"""
+			Return a baseline sorted data dictionary for the specified data set.  
+			By default this excludes the autocorrelations.  To include 
+			autocorrelations set the value of 'includeAuto' to True.  Setting the
+			'sort' keyword to False will disable the baseline sorting.  Optionally,
+			baselines with lengths between uvMin and uvMax can only be returned.
+
+			.. note::
+				uvMin and uvMax should be specified in lambda
+			"""
+			
+			# Open the data table
+			data = table(self.filename, ack=False)
+			
+			# We need this a lot...
+			nPol = len(self.pols)
+			
+			# Define the dictionary to return
+			dataDict = self._createEmptyDataDict()
+
+			# Load in something we can iterate over
+			uvw  = data.col('UVW')
+			ant1 = data.col('ANTENNA1')
+			ant2 = data.col('ANTENNA2')
+			vis  = data.col('DATA')
+			time = data.col('TIME')
+			
+			# Set the time to look for
+			targetTime = self._times[set-1]
+			
+			# Loop over data rows
+			found = False
+			for u,a1,a2,v,t in zip(uvw, ant1, ant2, vis, time):
+				if t != targetTime:
+					continue
+				found = True
+
+				if a1 == a2 and not includeAuto:
+					## Skip auto-correlations
+					continue
+				r1 = numpy.where(self.stands == a1)
+				r2 = numpy.where(self.stands == a2)
+				
+				jd = t / 3600.0 / 24.0 + astro.MJD_OFFSET
+				u = numpy.array(u)
+				v = numpy.array(v)
+				w = numpy.ones(v.shape)
+				m = numpy.zeros(v.shape, dtype=numpy.int16)
+				
+				u2 = numpy.zeros((u.size, v.shape[0]), dtype=u.dtype)
+				for c in xrange(v.shape[0]):
+					u2[:,c] = u * (self.freq[c] / vLight)
+					
+				for c,p in enumerate(self.pols):
+					name = NumericStokesMS[p]
+					if len(name) == 2:
+						name = name.lower()
+						
+					dataDict['uvw'][name].append( u2 ) 
+					dataDict['vis'][name].append( v[:,c] )
+					dataDict['wgt'][name].append( w[:,c] )
+					dataDict['msk'][name].append( m[:,c] )
+					dataDict['bls'][name].append( (r1,r2) )
+					dataDict['jd' ][name].append( jd )
+			data.close()
+			
+			# Make sure we found something
+			if not found:
+				raise RuntimeError("Cannot find baseline set %i in MS", set)
+			
+			# Sort
+			if sort:
+				sortDataDict(dataDict)
+				
+			# Prune
+			if uvMin != 0 or uvMax != numpy.inf:
+				dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
+				
+			# Return
+			return dataDict
+			
+except ImportError:
+	import warnings
+	warnings.warn('Cannot import pyrap.tables, MS support disabled')
+	
+	class CorrelatedMS(object):
+		"""
+		Class to make accessing information about a MS easy.  This wraps 
+		all of the "messy" machinery needed to extract both the metadata and data 
+		from the file and return them as common LSL objects.
+		"""
+		
+		def __init__(self, filename):
+			raise RuntimeError("Cannot import pyrap.tables, MS support disabled")
 
 
 def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None):
