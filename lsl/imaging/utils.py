@@ -11,6 +11,7 @@ data dictionaries.  Also included is a utility to sort data dictionaries by base
 	Added support for UVFITS files and CASA measurement sets
 """
 
+import os
 import aipy
 import pytz
 import numpy
@@ -24,6 +25,7 @@ from lsl import astro
 from lsl.common import stations
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NumericStokes
+from lsl.common.constants import c as vLight
 
 __version__ = '0.4'
 __revision__ = '$Rev$'
@@ -213,7 +215,7 @@ def CorrelatedData(filename):
 		
 	# Measurment Set
 	try:
-		return CorrelateDataMS(filename)
+		return CorrelatedDataMS(filename)
 	except:
 		pass
 		
