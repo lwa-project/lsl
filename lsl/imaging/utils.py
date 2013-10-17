@@ -307,10 +307,10 @@ class CorrelatedDataIDI(object):
 		# Station/telescope information
 		self.telescope = hdulist[0].header['TELESCOP']
 		self.dateObs = pytz.UTC.localize(datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
-		if self.telescope == 'LWA-1':
+		if self.telescope == 'LWA-1' or self.telescope == 'LWA1':
 			self.station = stations.lwa1
-		elif self.telescope == 'LWA-2':
-			self.station = stations.lwa2
+		elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
+			self.station = stations.lwana
 		else:
 			geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
 			site = stations.ecef2geo(*geo)
@@ -321,28 +321,26 @@ class CorrelatedDataIDI(object):
 							[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
 							
 			antennas = []
-			for line in ag.data:
+			for line,act in zip(ag.data, noact):
 				enz = numpy.dot(ecii, line['STABXYZ'])
 				
-				stand = stations.Stand(line['NOSTA'], *enz)
-				antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
+				stand = stations.Stand(act, *enz)
+				antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
 				
 			self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
-			
 		self.standMap = {}
 		self.stands = []
-		for nosta, noact in zip(nosta, noact):
-			self.standMap[nosta] = noact
-			self.stands.append(noact)
+		for sta, act in zip(nosta, noact):
+			self.standMap[sta] = act
+			self.stands.append(act)
 			
 		self.antennaMap = {}
 		self.antennas = []
-		if self.station is not None:
-			for ant in self.station.getAntennas():
-				if ant.stand.id in self.stands and ant.pol == 0:
-					self.antennas.append(ant)
-					self.antennaMap[ant.stand.id] = ant
-		
+		for ant in self.station.getAntennas():
+			if ant.stand.id in self.stands and ant.pol == 0:
+				self.antennas.append(ant)
+				self.antennaMap[ant.stand.id] = ant
+				
 		# Polarization and frequency
 		self.pols  = numpy.arange(1, uvData.header['MAXIS2']+1) - uvData.header['CRPIX2']
 		self.pols *= uvData.header['CDELT2'] 
