@@ -84,10 +84,11 @@ Tutorial
 .. toctree::
    :maxdepth: 2
 
-   tutorial-gen
-   tutorial-tbw
-   tutorial-tbn
-   tutorial-drx
+   
+   `General LSL Routines<>`_
+   `Working with TBW/TBN Data <>`_
+   `Working with DRX Data <>`_
+   `Observation Metadata <>_`
 
 Advanced
 ========
