@@ -20,6 +20,9 @@
   * Added a disk-based cache to the lsl.misc.geodesy module to help keep network traffic down
   * Added support for reading and writing UVFITS files
   * Added support for reading CASA measurement sets via pyrap
+  * Added a function to rephase a visibility data dictionary to a new pointing center
+  * Improved the visibility simulation speed in lsl.sim.vis
+  * Added try...except blocks to lsl.common.metabundle to clean up after failed functions
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function

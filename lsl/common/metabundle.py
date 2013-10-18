@@ -269,9 +269,13 @@ def getSDM(tarname):
 		return None
 	tf.extractall(path=tempDir, members=[ti,])
 	
-	# Parse the SDM file and build the SDM instance
-	dynamic = sdm.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
-	
+	try:
+		# Parse the SDM file and build the SDM instance
+		dynamic = sdm.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+	except Exception, e:
+		shutil.rmtree(tempDir, ignore_errors=True)
+		raise e
+		
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
 	
@@ -299,20 +303,24 @@ def getStation(tarname, ApplySDM=True):
 		return None
 	tf.extractall(path=tempDir, members=[ti,])
 	
-	# Read in the SSMIF
-	station = stations.parseSSMIF(os.path.join(tempDir, 'ssmif.dat'))
-	
-	# Get the SDM (if we need to)
-	if ApplySDM:
-		dynamic = getSDM(tarname)
-	else:
-		dynamic = None
-	
-	# Update the SSMIF entries
-	if dynamic is not None:
-		newAnts = dynamic.updateAntennas(station.getAntennas())
-		station.antennas = newAnts
-	
+	try:
+		# Read in the SSMIF
+		station = stations.parseSSMIF(os.path.join(tempDir, 'ssmif.dat'))
+		
+		# Get the SDM (if we need to)
+		if ApplySDM:
+			dynamic = getSDM(tarname)
+		else:
+			dynamic = None
+		
+		# Update the SSMIF entries
+		if dynamic is not None:
+			newAnts = dynamic.updateAntennas(station.getAntennas())
+			station.antennas = newAnts
+	except Exception, e:
+		shutil.rmtree(tempDir, ignore_errors=True)
+		raise e
+		
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
 	
@@ -345,60 +353,64 @@ def getSessionMetaData(tarname):
 				break
 	tf.extractall(path=tempDir, members=[ti,])
 	
-	# Read in the SMF
-	filename = os.path.join(tempDir, ti.name)
-	fh = open(filename, 'r')
-	
-	# Define a regular expresion to match the latest format
-	lineRE = re.compile(r"\s*(?P<id>\d{1,}?)\s+\[(?P<tag>[\d_]+?)\]\s+\['(?P<barcode>\w+?)'\]\s+(?P<outcome>\d)\s+\[(?P<msg>.*?)\]")
-	
-	result = {}
-	for line in fh:
-		line = line.replace('\n', '')
-		if len(line) == 0:
-			continue
-			
-		mtch = lineRE.search(line)
-		if mtch is not None:
-			## If it matches the new format
-			obsID = mtch.group('id')
-			opTag = mtch.group('tag')
-			drsuBarcode = mtch.group('barcode')
-			obsOutcome = mtch.group('outcome')
-			msg = mtch.group('msg')
-			
-		else:
-			## Otherwise, I don't really know how the messages will look so we use this try...except
-			## block should take care of the various situations.
-			try:
-				obsID, opTag, drsuBarcode, obsOutcome, msg = line.split(None, 4)
-				opTag = opTag.replace('[', '')
-				opTag = opTag.replace(']', '')
-				drsuBarcode = drsuBarcode.replace('[', '')
-				drsuBarcode = drsuBarcode.replace(']', '')
-				drsuBarcode = drsuBarcode.replace("'", '')
-			except ValueError:
+	try:
+		# Read in the SMF
+		filename = os.path.join(tempDir, ti.name)
+		fh = open(filename, 'r')
+		
+		# Define a regular expresion to match the latest format
+		lineRE = re.compile(r"\s*(?P<id>\d{1,}?)\s+\[(?P<tag>[\d_]+?)\]\s+\['(?P<barcode>\w+?)'\]\s+(?P<outcome>\d)\s+\[(?P<msg>.*?)\]")
+		
+		result = {}
+		for line in fh:
+			line = line.replace('\n', '')
+			if len(line) == 0:
+				continue
+				
+			mtch = lineRE.search(line)
+			if mtch is not None:
+				## If it matches the new format
+				obsID = mtch.group('id')
+				opTag = mtch.group('tag')
+				drsuBarcode = mtch.group('barcode')
+				obsOutcome = mtch.group('outcome')
+				msg = mtch.group('msg')
+				
+			else:
+				## Otherwise, I don't really know how the messages will look so we use this try...except
+				## block should take care of the various situations.
 				try:
-					obsID, opTag, drsuBarcode, obsOutcome = line.split(None, 3)
-					msg = 'UNK'
+					obsID, opTag, drsuBarcode, obsOutcome, msg = line.split(None, 4)
+					opTag = opTag.replace('[', '')
+					opTag = opTag.replace(']', '')
+					drsuBarcode = drsuBarcode.replace('[', '')
+					drsuBarcode = drsuBarcode.replace(']', '')
+					drsuBarcode = drsuBarcode.replace("'", '')
 				except ValueError:
 					try:
-						obsID, opTag, obsOutcome = line.split(None, 2)
-						drsuBarcode = 'UNK'
-						obsOutcome = '-1'
+						obsID, opTag, drsuBarcode, obsOutcome = line.split(None, 3)
 						msg = 'UNK'
 					except ValueError:
-						obsID, obsOutcome = line.split(None, 1)
-						drsuBarcode = 'UNK'
-						opTag = 'UNK'
-						msg = 'UNK'
-						
-		obsID = int(obsID)
-		obsOutcome = int(obsOutcome)
-		result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
+						try:
+							obsID, opTag, obsOutcome = line.split(None, 2)
+							drsuBarcode = 'UNK'
+							obsOutcome = '-1'
+							msg = 'UNK'
+						except ValueError:
+							obsID, obsOutcome = line.split(None, 1)
+							drsuBarcode = 'UNK'
+							opTag = 'UNK'
+							msg = 'UNK'
+							
+			obsID = int(obsID)
+			obsOutcome = int(obsOutcome)
+			result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
+			
+		fh.close()
+	except Exception, e:
+		shutil.rmtree(tempDir, ignore_errors=True)
+		raise e
 		
-	fh.close()
-	
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
 	
@@ -426,9 +438,13 @@ def getSessionSpec(tarname):
 				break
 	tf.extractall(path=tempDir, members=[ti,])
 	
-	# Read in the SES
-	ses = readSESFile(os.path.join(tempDir, ti.name))
-	
+	try:
+		# Read in the SES
+		ses = readSESFile(os.path.join(tempDir, ti.name))
+	except Exception, e:
+		shutil.rmtree(tempDir, ignore_errors=True)
+		raise e
+		
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
 	
@@ -456,26 +472,30 @@ def getObservationSpec(tarname, selectObs=None):
 			tis.append(ti)
 	tf.extractall(path=tempDir, members=tis)
 	
-	# Read in the OBS files
-	obsList = []
-	for of in sorted(glob.glob(os.path.join(tempDir, '*.obs'))):
-		obsList.append( readOBSFile(of) )
-		
-	# Cull the list based on the observation ID selection
-	if selectObs is not None:
-		outObs = []
-		for o in obsList:
-			try:
-				if o['obsID'] in selectObs:
-					outObs.append(o)
-			except TypeError:
-				if o['obsID'] == selectObs:
-					outObs.append(o)
-					
-		if len(outObs) == 1:
-			outObs = outObs[0]
-	else:
-		outObs = obsList
+	try:
+		# Read in the OBS files
+		obsList = []
+		for of in sorted(glob.glob(os.path.join(tempDir, '*.obs'))):
+			obsList.append( readOBSFile(of) )
+			
+		# Cull the list based on the observation ID selection
+		if selectObs is not None:
+			outObs = []
+			for o in obsList:
+				try:
+					if o['obsID'] in selectObs:
+						outObs.append(o)
+				except TypeError:
+					if o['obsID'] == selectObs:
+						outObs.append(o)
+						
+			if len(outObs) == 1:
+				outObs = outObs[0]
+		else:
+			outObs = obsList
+	except Exception, e:
+		shutil.rmtree(tempDir, ignore_errors=True)
+		raise e
 		
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
@@ -508,9 +528,13 @@ def getSessionDefinition(tarname):
 			break
 	tf.extractall(path=tempDir, members=[ti,])
 	
-	# Parse it
-	project = sdf.parseSDF(os.path.join(tempDir, ti.name))
-	
+	try:
+		# Parse it
+		project = sdf.parseSDF(os.path.join(tempDir, ti.name))
+	except Exception, e:
+		shutil.rmtree(tempDir, ignore_errors=True)
+		raise e
+		
 	# Clean up
 	shutil.rmtree(tempDir, ignore_errors=True)
 	
@@ -535,9 +559,13 @@ def getCommandScript(tarname):
 			break
 	tf.extractall(path=tempDir, members=[ti,])
 	
-	# Read in the CS
-	cs = readCSFile(os.path.join(tempDir, ti.name))
-	
+	try:
+		# Read in the CS
+		cs = readCSFile(os.path.join(tempDir, ti.name))
+	except Exception, e:
+		shutil.rmtree(tempDir, ignore_errors=True)
+		raise e
+		
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
 	
@@ -580,44 +608,48 @@ def getASPConfiguration(tarname, which='beginning'):
 	if len(mibs) > 0:
 		tf.extractall(path=tempDir, members=mibs)
 		
-		# Read in the right MIB
-		for mib in mibs:
-			if mib.name[-4:] == '.dir':
-				continue
-			if which == 'beginning' and mib.name.find('_ASP_begin') == -1:
-				continue
-			if which == 'end' and mib.name.find('_ASP_end') == -1:
-				continue
+		try:
+			# Read in the right MIB
+			for mib in mibs:
+				if mib.name[-4:] == '.dir':
+					continue
+				if which == 'beginning' and mib.name.find('_ASP_begin') == -1:
+					continue
+				if which == 'end' and mib.name.find('_ASP_end') == -1:
+					continue
+					
+				aspMIB = MIB()
+				aspMIB.fromFile(os.path.join(tempDir, mib.name))
+				break
 				
-			aspMIB = MIB()
-			aspMIB.fromFile(os.path.join(tempDir, mib.name))
-			break
-			
-		# Extract the configuration
-		for key in aspMIB.keys():
-			values = [int(v) for v in key.split('.')]
-			
-			if values[0] == 3:
-				## Filter
-				aspConfig['filter'][values[1]-1] = int(aspMIB[key].value)
+			# Extract the configuration
+			for key in aspMIB.keys():
+				values = [int(v) for v in key.split('.')]
 				
-			elif values[0] == 4:
-				## Attenuators
-				if values[1] == 1:
-					### AT1
-					aspConfig['at1'][values[2]-1] = int(aspMIB[key].value)
-				elif values[1] == 2:
-					### AT2
-					aspConfig['at2'][values[2]-1] = int(aspMIB[key].value)
-				elif values[1] == 3:
-					### ATSPLIT
-					aspConfig['atsplit'][values[2]-1] = int(aspMIB[key].value)
+				if values[0] == 3:
+					## Filter
+					aspConfig['filter'][values[1]-1] = int(aspMIB[key].value)
+					
+				elif values[0] == 4:
+					## Attenuators
+					if values[1] == 1:
+						### AT1
+						aspConfig['at1'][values[2]-1] = int(aspMIB[key].value)
+					elif values[1] == 2:
+						### AT2
+						aspConfig['at2'][values[2]-1] = int(aspMIB[key].value)
+					elif values[1] == 3:
+						### ATSPLIT
+						aspConfig['atsplit'][values[2]-1] = int(aspMIB[key].value)
+					else:
+						pass
+						
 				else:
 					pass
-					
-			else:
-				pass
-				
+		except Exception, e:
+			shutil.rmtree(tempDir, ignore_errors=True)
+			raise e
+			
 	# Cleanup
 	shutil.rmtree(tempDir, ignore_errors=True)
 	
