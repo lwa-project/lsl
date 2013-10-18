@@ -103,7 +103,7 @@ class BeamAlm(aipy.amp.BeamAlm):
 		poly = n.array([n.sum(h.map[px] * wgts, axis=-1) for h in self.hmap])
 		rv = n.polyval(poly, n.reshape(self.afreqs, (self.afreqs.size, 1)))
 		return rv
-	
+		
 	def response(self, top):
 		"""
 		Return beam response across active band for specified topocentric 
@@ -135,7 +135,7 @@ class BeamAlm(aipy.amp.BeamAlm):
 					
 		else:
 			raise ValueError("Cannot compute response for %s" % str(test.shape))
-		
+			
 		return temp
 
 
@@ -158,7 +158,7 @@ class Antenna(aipy.amp.Antenna):
 		  * amp = overall multiplicative scaling of gain
 		  * pointing = antenna pointing (az,alt).  Default is zenith.
 		"""
-
+		
 		aipy.phs.Antenna.__init__(self, x,y,z, beam=beam, phsoff=phsoff)
 		self.set_pointing(*pointing)
 		self.bp_r = bp_r
@@ -211,7 +211,7 @@ class Antenna(aipy.amp.Antenna):
 		x,y,z = top
 		
 		return self.beam.response((x,y,z))
-
+		
 	def get_beam_shape(self, pol='x'):
 		"""
 		Return a 360 by 90 by nFreqs numpy array showning the beam pattern of a
@@ -219,7 +219,7 @@ class Antenna(aipy.amp.Antenna):
 		array contain the azimuth (from 0 to 359 degrees in 1 degree steps) and 
 		altitlude (from 0 to 89 degrees in 1 degree steps).
 		"""
-
+		
 		# Build azimuth and altitude arrays.  Be sure to convert to radians
 		az = n.zeros((360,90))
 		for i in range(360):
@@ -227,7 +227,7 @@ class Antenna(aipy.amp.Antenna):
 		alt = n.zeros((360,90))
 		for i in range(90):
 			alt[:,i] = i*n.pi/180.0
-
+			
 		# The beam model is computed in terms of topocentric coordinates, so make that
 		# converseion right quick using the aipy.coord module.
 		xyz = aipy.coord.azalt2top(n.concatenate([[az],[alt]]))
@@ -238,7 +238,7 @@ class Antenna(aipy.amp.Antenna):
 		for i in range(360):
 			for j in range(90):
 				resp[i,j,:] = n.squeeze( self.bm_response(n.squeeze(xyz[:,i,j]), pol=pol) )
-
+				
 		return resp
 
 
@@ -268,13 +268,93 @@ class AntennaArray(aipy.amp.AntennaArray):
 		
 		self.set_jultime(astro.unix_to_utcjd(timestamp))
 		
+	def get_baseline_fast(self, i, j, src='z', map=None):
+		"""Return the baseline corresponding to i,j in various coordinate 
+		projections: src='e' for current equatorial, 'z' for zenith 
+		topocentric, 'r' for unrotated equatorial, or a RadioBody for
+		projection toward that source - fast."""
+		bl = self[j] - self[i]
+		
+		if type(src) == str:
+			if src == 'e':
+				return n.dot(self._eq2now, bl)
+			elif src == 'z':
+				return n.dot(self._eq2zen, bl)
+			elif src == 'r':
+				return bl
+			else:
+				raise ValueError('Unrecognized source:' + src)
+		try:
+			if src.alt < 0:
+				raise PointingError('%s below horizon' % src.src_name)
+			m = src.map
+		except AttributeError:
+			if map is None:
+				ra,dec = aipy.coord.eq2radec(src)
+				m = aipy.coord.eq2top_m(self.sidereal_time() - ra, dec)
+			else:
+				m = map
+		return n.dot(m, bl).transpose()
+		
+	def gen_uvw_fast(self, i, j, src='z', w_only=False, map=None):
+		"""Compute uvw coordinates of baseline relative to provided RadioBody, 
+		or 'z' for zenith uvw coordinates.  If w_only is True, only w (instead
+		of (u,v,w) will be returned) - fast."""
+		
+		x,y,z = self.get_baseline_fast(i,j, src=src, map=map)
+		
+		afreqs = self.get_afreqs()
+		afreqs = n.reshape(afreqs, (1,afreqs.size))
+		if len(x.shape) == 0:
+			if w_only:
+				return z*afreqs
+			else:
+				return n.array([x*afreqs, y*afreqs, z*afreqs])
+				
+		#afreqs = n.reshape(afreqs, (1,afreqs.size))
+		x.shape += (1,); y.shape += (1,); z.shape += (1,)
+		
+		if w_only:
+			out = n.dot(z,afreqs)
+		else:
+			out = n.array([n.dot(x,afreqs), n.dot(y,afreqs), n.dot(z,afreqs)])
+			
+		return out
+		
+	def gen_phs_fast(self, src, i, j, mfreq=.150, ionref=None, srcshape=None, resolve_src=False, u=None, v=None, w=None):
+		"""Return phasing that is multiplied to data to point to src - fast."""
+		if ionref is None:
+			try:
+				ionref = src.ionref
+			except AttributeError:
+				pass
+		if ionref is not None or resolve_src:
+			if u is None or v is None or w is None:
+				u,v,w = self.gen_uvw(i,j,src=src)
+		else:
+			if w is None:
+				w = self.gen_uvw(i,j,src=src, w_only=True)
+		if ionref is not None:
+			w += self.refract(u, v, mfreq=mfreq, ionref=ionref)
+		o = self.get_phs_offset(i,j)
+		phs = n.exp(-1j*2*n.pi*(w + o))
+		if resolve_src:
+			if srcshape is None:
+				try:
+					srcshape = src.srcshape
+				except AttributeError:
+					pass
+		if srcshape is not None:
+			  phs *= self.resolve_src(u, v, srcshape=srcshape)
+		return phs.squeeze()
+		
 	def sim(self, i, j, pol='xx'):
 		"""
 		Simulate visibilites for the specified (i,j) baseline and 
 		polarization.  sim_cache() must be called at each time step before 
 		this will return valid results.
 		
-		This function differs from aipy.amp.AntennaArray.sim in the fast that
+		This function differs from aipy.amp.AntennaArray.sim in the fact that
 		*ionref* and *srcshape* are both None in the call to gen_phs and that
 		*resolve_src* is set to False.
 		"""
@@ -287,7 +367,8 @@ class AntennaArray(aipy.amp.AntennaArray):
 			return n.zeros_like(self.passband(i,j))
 			
 		s_eqs = self._cache['s_eqs']
-		u,v,w = self.gen_uvw(i, j, src=s_eqs)
+		s_map = self._cache['s_map']
+		w = self.gen_uvw_fast(i, j, src=s_eqs, map=s_map, w_only=True)
 		I_sf = self._cache['jys']
 		Gij_sf = self.passband(i,j)
 		Bij_sf = self.bm_response(i, j, pol=pol)
@@ -295,12 +376,12 @@ class AntennaArray(aipy.amp.AntennaArray):
 			Gij_sf = n.reshape(Gij_sf, (1, Gij_sf.size))
 			
 		# Get the phase of each src vs. freq, also does resolution effects
-		E_sf = n.conjugate( self.gen_phs(s_eqs, i, j, mfreq=self._cache['mfreq'], resolve_src=False) )
+		E_sf = n.conjugate( self.gen_phs_fast(s_eqs, i, j, mfreq=self._cache['mfreq'], resolve_src=False, w=w) )
 		try:
 			E_sf.shape = I_sf.shape
 		except(AttributeError):
 			pass
-		
+			
 		# Combine and sum over sources
 		GBIE_sf = Gij_sf * Bij_sf * I_sf * E_sf
 		Vij_f = GBIE_sf.sum(axis=0)
@@ -395,9 +476,9 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 	Helper function for buildSimData so that buildSimData can be called with 
 	a list of Julian Dates and reconstruct the data appropriately.
 	"""
-
+	
 	nFreq = (n.squeeze((aa.get_afreqs()))).shape[0]
-
+	
 	# Update the JD if necessary
 	if jd is not None:
 		if verbose:
@@ -408,9 +489,10 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 		aa.set_jultime(jd)
 	else:
 		jd = aa.get_jultime()
-
+		
 	# Compute the source parameters
 	srcs_eq = []
+	srcs_mp = []
 	srcs_jy = []
 	srcs_fq = []
 	srcs_sh = []
@@ -426,49 +508,55 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 				if verbose:
 					print "  %s: below horizon" % name
 				continue
-
+				
 		## RA/dec -> equitorial 
 		srcEQ = src.get_crds(crdsys='eq', ncrd=3)
 		srcEQ.shape = (3,1)
 		srcs_eq.append( srcEQ )
-
+		
+		## Topocentric rotation matrix
+		srcRA,srcDec = aipy.coord.eq2radec(srcEQ)
+		srcMap = aipy.coord.eq2top_m(aa.sidereal_time() - srcRA, srcDec)
+		srcs_mp.append( srcMap )
+		
 		## Source flux over the bandpass
 		jys = src.get_jys()
 		jys.shape = (1,nFreq)
 		srcs_jy.append( jys )
-
+		
 		## Frequencies that the fluxes correspond to
 		frq = aa.get_afreqs()
 		frq.shape = (1,nFreq)
 		srcs_fq.append( frq )
-
+		
 		## Source shape parameters
 		shp = n.array(src.srcshape)
 		shp.shape = (3,1)
 		srcs_sh.append( shp )
-
+		
 	# Build the simulation cache
 	aa.sim_cache( n.concatenate(srcs_eq, axis=1), 
 				jys=n.concatenate(srcs_jy, axis=0),
 				mfreqs=n.concatenate(srcs_fq, axis=0),
 				srcshapes=n.concatenate(srcs_sh, axis=1) )
-
+	aa._cache['s_map'] = n.concatenate(srcs_mp, axis=0)
+	
 	# Build the simulated data.  If no baseline list is provided, build all 
 	# baselines avaliable
 	if baselines is None:
 		baselines = uvUtils.getBaselines(n.zeros(len(aa.ants)), Indicies=True)
-
+		
 	# Define output data structure
 	UVData = {'freq': n.squeeze(aa.get_afreqs()*1e9), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
 	if mask is None:
 		UVData['isMasked'] = False
 	else:
 		UVData['isMasked'] = True
-
+		
 	# Go!
 	if phaseCenter is not 'z':
 		phaseCenter.compute(aa)
-
+		
 	for pol in pols:
 		UVData['bls'][pol] = []
 		UVData['uvw'][pol] = []
@@ -476,7 +564,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 		UVData['wgt'][pol] = []
 		UVData['msk'][pol] = []
 		UVData['jd'][pol] = []
-
+		
 		if mask is None:
 			for (i,j) in baselines:
 				if verbose:
@@ -488,7 +576,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 					d = aa.phs2src(d, phaseCenter, j, i)
 				except aipy.phs.PointingError:
 					continue
-
+					
 				UVData['bls'][pol].append( (i,j) )
 				UVData['uvw'][pol].append( n.squeeze(crd) )
 				UVData['vis'][pol].append( d )
@@ -499,26 +587,26 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, phaseCenter
 			for (i,j),msk in zip(baselines,mask):
 				if verbose:
 					print "Simulating data for baseline %i-%i, pol. %s" % (i,j,pol)
-				
+					
 				try:
 					crd = aa.gen_uvw(j, i, src=phaseCenter)
 					d = aa.sim(j, i, pol=pol)
 					d = aa.phs2src(d, phaseCenter, j, i)
 				except aipy.phs.PointingError:
 					continue
-
+					
 				uvw = aa.gen_uvw(j, i, src=phaseCenter)
 				uvw = n.squeeze(crd.compress(n.logical_not(msk), axis=2))
 				vis = d.compress(n.logical_not(msk))
 				wgt = n.ones_like(vis) * len(vis)
-
+				
 				UVData['bls'][pol].append( (i,j) )
 				UVData['uvw'][pol].append( uvw )
 				UVData['vis'][pol].append( vis )
 				UVData['wgt'][pol].append( wgt )
 				UVData['msk'][pol].append( msk )
 				UVData['jd'][pol].append( jd )
-
+				
 	return UVData
 
 
