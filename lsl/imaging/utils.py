@@ -174,7 +174,7 @@ def rephaseData(aa, dataDict, currentPhaseCenter='z', newPhaseCenter='z'):
 				d = aa.unphs2src(d, currentPhaseCenter, j, i)
 				d = aa.phs2src(d, newPhaseCenter, j, i)
 			except aipy.phs.PointingError:
-				continue
+				raise RuntimeError("Rephasing center is below the horizon")
 				
 			### Save
 			uvw = aa.gen_uvw(j, i, src=newPhaseCenter)
