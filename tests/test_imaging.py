@@ -16,33 +16,55 @@ __author__    = "Jayce Dowell"
 
 
 idiFile = os.path.join(dataPath, 'tests', 'idi-test.fits')
+uvFile = os.path.join(dataPath, 'tests', 'uv-test.fits')
 
 
 class imaging_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.imaging
 	modules."""
 	
-	def test_CorrelatedData(self):
-		"""Test the utils.CorrelatedData class."""
+	def test_CorrelatedDataIDI(self):
+		"""Test the utils.CorrelatedDataIDI class."""
 		
 		# Open the FITS IDI file
 		idi = utils.CorrelatedData(idiFile)
 		
 		# Dates
-		self.assertEqual(idi.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-01-14T23:30:37")
-
+		self.assertEqual(idi.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
+		
 		# Stand and baseline counts
 		self.assertEqual(len(idi.stands), 5)
 		self.assertEqual(idi.totalBaselineCount, 5*(5+1)/2)
-
+		
 		# Basic functions (just to see that they run)
 		junk = idi.getAntennaArray()
 		junk = idi.getObserver()
 		junk = idi.getDataSet(1)
-
+		
 		# Error checking
 		self.assertRaises(RuntimeError, idi.getDataSet, 2)
-
+		
+	def test_CorrelatedDataUV(self):
+		"""Test the utils.CorrelatedDataUV class."""
+		
+		# Open the UVFITS file
+		uv = utils.CorrelatedData(idiFile)
+		
+		# Dates
+		self.assertEqual(uv.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
+		
+		# Stand and baseline counts
+		self.assertEqual(len(uv.stands), 5)
+		self.assertEqual(uv.totalBaselineCount, 5*(5+1)/2)
+		
+		# Basic functions (just to see that they run)
+		junk = uv.getAntennaArray()
+		junk = uv.getObserver()
+		junk = uv.getDataSet(1)
+		
+		# Error checking
+		self.assertRaises(RuntimeError, uv.getDataSet, 2)
+		
 	def test_sort(self):
 		"""Test the utils.sortDataDict function."""
 		
