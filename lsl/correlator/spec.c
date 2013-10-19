@@ -128,17 +128,11 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				cleanFactor = 1.0;
 				secStart = (long) (nSamps * i) + 2*nChan*j/Overlap;
 				
-				for(k=0; k<(nChan<<1); k+=2) {
+				for(k=0; k<2*nChan; k++) {
 					in[k][0] = (double) *(a + secStart + k);
 					in[k][1] = 0.0;
 					
-					in[k+1][0] = (double) *(a + secStart + k+1);
-					in[k+1][1] = 0.0;
-					
 					if( Clip && (in[k][0] >= Clip || in[k][0] <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (in[k+1][0] >= Clip || in[k+1][0] <= -Clip) ) {
 						cleanFactor = 0.0;
 					}
 				}
@@ -275,17 +269,11 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				cleanFactor = 1.0;
 				secStart = nSamps * i + 2*nChan*j/Overlap;
 				
-				for(k=0; k<(nChan<<1); k+=2) {
+				for(k=0; k<2*nChan; k++) {
 					in[k][0] = (double) *(a + secStart + k) * *(c + k);
 					in[k][1] = 0.0;
 					
-					in[k+1][0] = (double) *(a + secStart + k+1) * *(c + k+1);
-					in[k+1][1] = 0.0;
-					
 					if( Clip && (*(a + secStart + k) >= Clip || *(a + secStart + k) <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (*(a + secStart + k+1) >= Clip || *(a + secStart + k+1) <= -Clip) ) {
 						cleanFactor = 0.0;
 					}
 				}
@@ -716,17 +704,11 @@ static PyObject *PPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				for(m=0; m<nTaps; m++) {
 					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
 					
-					for(k=0; k<(nChan<<1); k+=2) {
+					for(k=0; k<2*nChan; k++) {
 						in[k][0] = (double) *(a + secStart + k) * fbWindow[2*nChan*m + k];
 						in[k][1] = 0.0;
 						
-						in[k+1][0] = (double) *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
-						in[k+1][1] = 0.0;
-						
 						if( Clip && (*(a + secStart + k) >= Clip || *(a + secStart + k) <= -Clip) ) {
-							cleanFactor = 0.0;
-						}
-						if( Clip && (*(a + secStart + k+1) >= Clip || *(a + secStart + k+1) <= -Clip) ) {
 							cleanFactor = 0.0;
 						}
 					}
@@ -891,17 +873,11 @@ static PyObject *PPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				for(m=0; m<nTaps; m++) {
 					secStart = nSamps * i + 2*nChan*(j+m)/Overlap;
 					
-					for(k=0; k<(nChan<<1); k+=2) {
+					for(k=0; k<2*nChan; k++) {
 						in[k][0] = (double) *(a + secStart + k) * fbWindow[2*nChan*m + k];
 						in[k][1] = 0.0;
 						
-						in[k+1][0] = (double) *(a + secStart + k+1) * fbWindow[2*nChan*m + k+1];
-						in[k+1][1] = 0.0;
-						
 						if( Clip && (*(a + secStart + k) >= Clip || *(a + secStart + k) <= -Clip) ) {
-							cleanFactor = 0.0;
-						}
-						if( Clip && (*(a + secStart + k+1) >= Clip || *(a + secStart + k+1) <= -Clip) ) {
 							cleanFactor = 0.0;
 						}
 					}

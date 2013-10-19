@@ -123,30 +123,18 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				cleanFactor = 1.0;
 				secStart = (long) (nSamps * i) + 2*nChan*j/Overlap;
 				
-				for(k=0; k<(nChan<<1); k+=2) {
+				for(k=0; k<2*nChan; k++) {
 					inX[k][0] = (double) *(aX + secStart + k);
 					inX[k][1] = 0.0;
 					
-					inX[k+1][0] = (double) *(aX + secStart + k+1);
-					inX[k+1][1] = 0.0;
-					
 					if( Clip && (inX[k][0] >= Clip || inX[k][0] <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (inX[k+1][0] >= Clip || inX[k+1][0] <= -Clip) ) {
 						cleanFactor = 0.0;
 					}
 					
 					inY[k][0] = (double) *(aY + secStart + k);
 					inY[k][1] = 0.0;
 					
-					inY[k+1][0] = (double) *(aY + secStart + k+1);
-					inY[k+1][1] = 0.0;
-					
 					if( Clip && (inY[k][0] >= Clip || inY[k][0] <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (inY[k+1][0] >= Clip || inY[k+1][0] <= -Clip) ) {
 						cleanFactor = 0.0;
 					}
 				}
@@ -331,30 +319,18 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				cleanFactor = 1.0;
 				secStart = nSamps * i + 2*nChan*j/Overlap;
 				
-				for(k=0; k<(nChan<<1); k+=2) {
+				for(k=0; k<2*nChan; k++) {
 					inX[k][0] = (double) *(aX + secStart + k) * *(c + k);
 					inX[k][1] = 0.0;
 					
-					inX[k+1][0] = (double) *(aX + secStart + k+1) * *(c + k+1);
-					inX[k+1][1] = 0.0;
-					
 					if( Clip && (inX[k][0] >= Clip || inX[k][0] <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (inX[k+1][0] >= Clip || inX[k+1][0] <= -Clip) ) {
 						cleanFactor = 0.0;
 					}
 					
 					inY[k][0] = (double) *(aY + secStart + k) * *(c + k);
 					inY[k][1] = 0.0;
 					
-					inY[k+1][0] = (double) *(aY + secStart + k+1) * *(c + k+1);
-					inY[k+1][1] = 0.0;
-					
 					if( Clip && (inY[k][0] >= Clip || inY[k][0] <= -Clip) ) {
-						cleanFactor = 0.0;
-					}
-					if( Clip && (inY[k+1][0] >= Clip || inY[k+1][0] <= -Clip) ) {
 						cleanFactor = 0.0;
 					}
 				}
