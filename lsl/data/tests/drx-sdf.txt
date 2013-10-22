@@ -10,6 +10,7 @@ SESSION_ID       1
 SESSION_TITLE    tp_session_sch SDF test #1
 SESSION_REMPI    Test SDF consisting of 2 short TRK_RADEC observations
 SESSION_REMPO    Session REMPO
+SESSION_DRX_BEAM 1
 
 OBS_ID           1
 OBS_TITLE        Observation 1 Title
