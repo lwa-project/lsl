@@ -223,6 +223,14 @@ class sdf_tests(unittest.TestCase):
 		
 		project = sdf.parseSDF(drxFile)
 		
+		# Bad beam
+		project.sessions[0].drxBeam = 6
+		self.assertFalse(project.validate())
+		
+		# No beam
+		project.sessions[0].drxBeam = -1
+		self.assertFalse(project.validate())
+		
 		# Bad filter
 		project.sessions[0].observations[0].filter = 10
 		self.assertFalse(project.validate())
@@ -290,6 +298,14 @@ class sdf_tests(unittest.TestCase):
 		
 		project = sdf.parseSDF(solFile)
 		
+		# Bad beam
+		project.sessions[0].drxBeam = 6
+		self.assertFalse(project.validate())
+		
+		# No beam
+		project.sessions[0].drxBeam = -1
+		self.assertFalse(project.validate())
+		
 		# Bad filter
 		project.sessions[0].observations[0].filter = 10
 		self.assertFalse(project.validate())
@@ -350,6 +366,14 @@ class sdf_tests(unittest.TestCase):
 		"""Test various TRK_JOV SDF errors."""
 		
 		project = sdf.parseSDF(jovFile)
+		
+		# Bad beam
+		project.sessions[0].drxBeam = 6
+		self.assertFalse(project.validate())
+		
+		# No beam
+		project.sessions[0].drxBeam = -1
+		self.assertFalse(project.validate())
 		
 		# Bad filter
 		project.sessions[0].observations[0].filter = 10
@@ -443,6 +467,14 @@ class sdf_tests(unittest.TestCase):
 		"""Test various STEPPED SDF errors."""
 		
 		project = sdf.parseSDF(stpFile)
+		
+		# Bad beam
+		project.sessions[0].drxBeam = 6
+		self.assertFalse(project.validate())
+		
+		# No beam
+		project.sessions[0].drxBeam = -1
+		self.assertFalse(project.validate())
 		
 		# Bad filter
 		project.sessions[0].observations[0].filter = 10
