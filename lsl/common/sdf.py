@@ -648,10 +648,12 @@ class Session(object):
 		failures = 0
 		totalData = 0.0
 		if self.cra < 0 or self.cra > 65535:
+			if verbose:
+				print "[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra)
 			failures += 1
 		if self.drxBeam not in (-1, 1, 2, 3, 4):
-			failures += 1
-		if self.spcSetup[0] < 0 or self.spcSetup[1] < 0:
+			if verbose:
+				print "[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam)
 			failures += 1
 		for key in self.recordMIB.keys():
 			if self.recordMIB[key] < -1:
@@ -677,6 +679,14 @@ class Session(object):
 					print "[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag)
 				failures += 1
 				
+		# Validate beam number
+		if len(self.observations) > 0:
+			if self.observations[0].mode not in ('TBW', 'TBN'):
+				if self.drxBeam == -1:
+					if verbose:
+						print "[%i] Error: Beam not assigned for this session" % os.getpid()
+					failures += 1
+					
 		observationCount = 1
 		for obs in self.observations:
 			if verbose:
