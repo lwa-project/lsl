@@ -33,7 +33,10 @@ this module also includes a simple parser for SD file.  It is mostly complete bu
 not currently support some of the extended session/observation parameters.
   
 Also included as part of this module are utilities to convert delays (in ns) and gains
-into the data formated expected by DP and required for MCS0030v5
+into the data formated expected by DP and required for MCS0030v5.
+
+.. versionchanged:: 0.7.0
+	Added the getObservationStartStop() function.
 """
 
 import os
@@ -45,7 +48,7 @@ import ephem
 from datetime import datetime, timedelta
 
 from lsl.transform import Time
-from lsl.astro import MJD_OFFSET, DJD_OFFSET
+from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
 
 from lsl.common.dp import freq2word, word2freq
@@ -59,7 +62,7 @@ from lsl.reader.drx import FrameSize as DRXSize
 
 __version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?)$')
 _UTC = pytz.utc
@@ -1567,7 +1570,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	# If the observation ID is 0, do nothing.
 	if obsTemp['id'] == 0:
 		return None
-	
+		
 	# Create a time string for the start time in UTC.  This is a little tricky 
 	# because of the rounding to the nearest millisecond which has to be done
 	# to the datetime object.
@@ -1584,7 +1587,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 		durString = '%02i:%02i:%06.3f' % (dur/3600.0, (dur%3600.0)/60.0, dur%60.0)
 	except:
 		pass
-
+		
 	# Convert the frequencies from "tuning words" to Hz
 	f1 = word2freq(obsTemp['freq1'])
 	f2 = word2freq(obsTemp['freq2'])
@@ -1635,7 +1638,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	
 	# Force the observation to be updated
 	obsOut.update()
-
+	
 	# Return the newly created Observation object
 	return obsOut
 
@@ -1681,14 +1684,14 @@ def parseSDF(filename, verbose=False):
 		line = line.replace('\n', '')
 		if len(line) == 0 or line.isspace():
 			continue
-
+			
 		# Split into a keyword, value pair and run it through the regular expression
 		# to deal with any indicies present
 		try:
 			keywordSection, value = line.split(None, 1)
 		except:
 			continue
-		
+			
 		mtch = kwdRE.match(keywordSection)
 		keyword = mtch.group('keyword')
 		
@@ -1698,12 +1701,12 @@ def parseSDF(filename, verbose=False):
 				ids[i] = int(mtch.group('id%i' % (i+1)))
 			except TypeError:
 				pass
-			
+				
 		# Skip over the observer comment lines (denoted by a plus sign at the end) 
 		# of the keyword
 		if keyword[-1] == '+':
 			continue
-		
+			
 		# Observer Info
 		if keyword == 'PI_ID':
 			project.observer.id = int(value)
@@ -1712,7 +1715,7 @@ def parseSDF(filename, verbose=False):
 			project.observer.name = value
 			project.observer.splitName()
 			continue
-		
+			
 		# Project/Proposal Info
 		if keyword == 'PROJECT_ID':
 			project.id = value
@@ -1726,7 +1729,7 @@ def parseSDF(filename, verbose=False):
 		if keyword == 'PROJECT_REMPO':
 			project.projectOffice.project = value
 			continue
-		
+			
 		# Session Info
 		if keyword == 'SESSION_ID':
 			project.sessions[0].id = int(value)
@@ -1791,7 +1794,7 @@ def parseSDF(filename, verbose=False):
 				project.sessions[0].spcSetup = [0, 0]
 				project.sessions[0].spcMetatag = None
 			continue
-		
+			
 		# Observation Info
 		if keyword == 'OBS_ID':
 			if obsTemp['id'] != 0:
@@ -1866,7 +1869,7 @@ def parseSDF(filename, verbose=False):
 					beamTemps[-1]['id'] = ids[0]
 				beamTemps[-1]['c1'] = float(value)
 			continue
-				
+			
 		if keyword == 'OBS_STP_C2':
 			if len(beamTemps) == 0:
 				beamTemps.append( copy.deepcopy(beamTemp) )
@@ -1890,7 +1893,7 @@ def parseSDF(filename, verbose=False):
 					beamTemps[-1]['id'] = ids[0]
 				beamTemps[-1]['duration'] = int(value)
 			continue
-				
+			
 		if keyword == 'OBS_STP_FREQ1':
 			if len(beamTemps) == 0:
 				beamTemps.append( copy.deepcopy(beamTemp) )
@@ -1902,7 +1905,7 @@ def parseSDF(filename, verbose=False):
 					beamTemps[-1]['id'] = ids[0]
 				beamTemps[-1]['freq1'] = int(value)
 			continue
-					
+			
 		if keyword == 'OBS_STP_FREQ2':
 			if len(beamTemps) == 0:
 				beamTemps.append( copy.deepcopy(beamTemp) )
@@ -1914,7 +1917,7 @@ def parseSDF(filename, verbose=False):
 					beamTemps[-1]['id'] = ids[0]
 				beamTemps[-1]['freq2'] = int(value)
 			continue
-					
+			
 		if keyword == 'OBS_STP_B':
 			if len(beamTemps) == 0:
 				beamTemps.append( copy.deepcopy(beamTemp) )
@@ -1982,7 +1985,7 @@ def parseSDF(filename, verbose=False):
 				except IndexError:
 					pass
 			continue
-		
+			
 		# Session wide settings at the end of the observations
 		if keyword == 'OBS_FEE':
 			if ids[0] == 0:
@@ -2031,7 +2034,7 @@ def parseSDF(filename, verbose=False):
 		if keyword == 'OBS_DRX_GAIN':
 			obsTemp['gain'] = int(value)
 			continue
-	
+			
 	# Create the final observation
 	if obsTemp['id'] != 0:
 		project.sessions[0].observations.append( __parseCreateObsObject(obsTemp, beamTemps=beamTemps, verbose=verbose) )
@@ -2039,6 +2042,29 @@ def parseSDF(filename, verbose=False):
 		
 	# Close the file
 	fh.close()
-
+	
 	# Return the project
 	return project
+
+
+def getObservationStartStop(obs):
+	"""
+	Given an observation, get the start and stop times (returned as a two-
+	element tuple of UTC datetime instances).
+	
+	.. versionadded:: 0.7.0
+	"""
+	
+	# UNIX timestamp for the start
+	tStart = utcjd_to_unix(obs.mjd + MJD_OFFSET)
+	tStart += obs.mpm / 1000.0
+	
+	# UNIX timestamp for the stop
+	tStop = tStart +  obs.dur / 1000.0
+	
+	# Conversion to a timezone-aware datetime instance
+	tStart = _UTC.localize( datetime.utcfromtimestamp(tStart) )
+	tStop  = _UTC.localize( datetime.utcfromtimestamp(tStop ) )
+	
+	# Return
+	return tStart, tStop

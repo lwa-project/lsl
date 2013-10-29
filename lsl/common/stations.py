@@ -347,6 +347,7 @@ class Antenna(object):
 	  * ARX instance the antenna is attached to (arx)
 	  * DP1 board number (board)
 	  * DP1 digitizer number (digiziter)
+	  * DP rack input connector (input)
 	  * Stand instance the antenna is part of (stand)
 	  * Polarization (0 == N-S; pol)
 	  * Antenna vertial mis-alignment in degrees (theta)
@@ -361,9 +362,12 @@ class Antenna(object):
 	  * 1 == Bad
 	  * 2 == Suspect, possibly bad
 	  * 3 == OK
+	
+	.. versionchanged:: 0.7.0
+		Added an attribute to hold the DP rack input connector label.
 	"""
 	
-	def __init__(self, id, arx=None, board=0, digitizer=0, stand=None, pol=0, theta=0.0, phi=0.0, fee=None, feePort=1, cable=None, status=0):
+	def __init__(self, id, arx=None, board=0, digitizer=0, input='', stand=None, pol=0, theta=0.0, phi=0.0, fee=None, feePort=1, cable=None, status=0):
 		self.id = int(id)
 		if arx is None:
 			self.arx = ARX(0, 0, 0)
@@ -371,6 +375,7 @@ class Antenna(object):
 			self.arx = arx
 		self.board = int(board)
 		self.digitizer = int(digitizer)
+		self.input = input
 		
 		if stand is None:
 			self.stand = Stand(0, 0, 0, 0)
@@ -398,7 +403,7 @@ class Antenna(object):
 		return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
 		
 	def __reduce__(self):
-		return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.stand, self.pol, self.theta, self.phi, self.fee, self.feePort, self.cable, self.status))
+		return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.input, self.stand, self.pol, self.theta, self.phi, self.fee, self.feePort, self.cable, self.status))
 		
 	def __cmp__(self, y):
 		if self.id > y.id:
@@ -677,22 +682,30 @@ class ARX(object):
 	  * ID name (id)
 	  * Channel number (channel; 1-16)
 	  * ASP channel number (aspChannel; 1-520)
+	  * ASP rack input connector label (input)
+	  * ASP rack output connector label (output)
 	
 	The object also as a functional attribute named 'delay' that computes the
 	cable delay for a particular frequency or collection of frequencies in 
 	Hz.
+	
+	.. versionchanged:: 0.7.0
+		Added attributes to hold the ASP rack input and output connector 
+		labels.
 	"""
 	
-	def __init__(self, id, channel=0, aspChannel=0):
+	def __init__(self, id, channel=0, aspChannel=0, input='', output=''):
 		self.id = id
 		self.channel = int(channel)
 		self.aspChannel = int(aspChannel)
+		self.input = input
+		self.output = output
 		
 	def __str__(self):
 		return "ARX Board %s, channel %i (ASP Channel %i)" % (self.id, self.channel, self.aspChannel)
 		
 	def __reduce__(self):
-		return (ARX, (self.id, self.channel, self.aspChannel))
+		return (ARX, (self.id, self.channel, self.aspChannel, self.input, self.output))
 		
 	def response(self, filter='full', dB=True):
 		"""
@@ -1481,16 +1494,17 @@ def parseSSMIF(filename):
 			
 			boardID = arxID[i]
 			channel = j + 1
-			antennas[ant-1].arx = ARX(boardID, channel=channel, aspChannel=i*nChanARX + j + 1)
-	
+			antennas[ant-1].arx = ARX(boardID, channel=channel, aspChannel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
+			
 	# Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
 	# with DP2 boards at 1 and 15.
 	i = 1
 	j = 1
-	for brd in dp1Ant:
-		for ant in brd:
+	for brd,inp in zip(dp1Ant,dp1InR):
+		for ant,con in zip(brd,inp):
 			antennas[ant-1].board = i + 1 + (i/14)
 			antennas[ant-1].digitizer = j
+			antennas[ant-1].input = con
 			j += 1
 		i += 1
 		
