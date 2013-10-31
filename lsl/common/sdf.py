@@ -347,6 +347,11 @@ class Project(object):
 		else:
 			return "%.3f Hz" % (filterCodes[filter],)
 			
+	def append(self, newSession):
+		"""Add a new Session to the list of sessions."""
+		
+		self.sessions.append(newSession)
+		
 	def render(self, session=0, verbose=False):
 		"""Create a session definition file that corresponds to the specified 
 		session.  Returns the SD file's contents as a string."""
@@ -597,6 +602,11 @@ class Session(object):
 		self.includeStationStatic= False
 		self.includeDesign = False
 		
+	def append(self, newObservation):
+		"""Add a new Observation to the list of observations."""
+		
+		self.observations.append(newObservation)
+		
 	def setConfigurationAuthority(self, value):
 		"""Set the configuration request authority to a particular value in the range of
 		0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
@@ -618,7 +628,19 @@ class Session(object):
 		"""Set the number of spectrometer FFT integrations to use, 0 to disable."""
 		
 		self.spcSetup[1] = int(value)
-	
+		
+	def setSpectrometerMetatag(self, value):
+		"""Set the spectrometer metatag, '' to disable."""
+		
+		if value == '':
+			self.spcMetatag = None
+		else:
+			self.spcMetatag = value
+			if self.spcMetatag[0] != '{':
+				self.spcMetatag = '{'+self.spcMetatag
+			if self.spcMetatag[-1] != '}':
+				self.spcMetatag = self.spcMetatag+'}'
+				
 	def setMIBRecordInterval(self, component, interval):
 		"""Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
 		a particular value in minutes.  A KeyError is raised if an invalid sub-system is
