@@ -25,6 +25,7 @@
   * Added try...except blocks to lsl.common.metabundle to clean up after failed functions
   * Added append() functions to Project and Session in lsl.common.sdf to make it easier to add sessions and observations
   * Added a setSpectrometerMetatag() function to lsl.common.sdf.Session to make setting the metatag easier
+  * lsl.common.sdf.Project.render() now calls update() to make sure everything is up-to-date before rendering
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function

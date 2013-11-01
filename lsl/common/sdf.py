@@ -29,14 +29,15 @@ determine if the project/session/observation are valid or not given the constrai
 the DP system.
 
 In addition to providing the means for creating session definition files from scratch, 
-this module also includes a simple parser for SD file.  It is mostly complete but does
-not currently support some of the extended session/observation parameters.
-  
-Also included as part of this module are utilities to convert delays (in ns) and gains
-into the data formated expected by DP and required for MCS0030v5.
+this module also includes a simple parser for SD files.
 
 .. versionchanged:: 0.7.0
 	Added the getObservationStartStop() function.
+	Renamed parseTimeString() to parseTime()
+	parseTime() can now accept dates/times as timezone-aware datetime instances
+	Observations can now be initialized with durations as timedelta instances
+	Observations can now be initialized with RA/dec/az/alt as ephem.hours and 
+	ephem.degrees instances
 """
 
 import os
@@ -45,7 +46,7 @@ import copy
 import math
 import pytz
 import ephem
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
@@ -64,7 +65,7 @@ __version__ = '0.9'
 __revision__ = '$Rev$'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', '__version__', '__revision__', '__all__']
 
-_dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?)$')
+_dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
 _UTC = pytz.utc
 _EST = pytz.timezone('US/Eastern')
 _CST = pytz.timezone('US/Central')
@@ -89,7 +90,7 @@ def _getEquinoxEquation(jd):
 	
 	# Get the number of days since January 1, 2000 @ 12:00 UT
 	D = jd - 2451545.0
-
+	
 	# Compute the obliquity
 	epsilon = 23.4393 - 0.0000004*D
 	
@@ -100,145 +101,187 @@ def _getEquinoxEquation(jd):
 	Omega = 125.04 - 0.052954*D
 	
 	# The nutation in the longitude (hours)
-	deltaPsi = -0.000319*math.sin(Omega*math.pi/180) - 0.000024*math.sin(2*L*math.pi/180)
-
+	deltaPsi = -0.000319*math.sin(Omega*math.pi/180.0) - 0.000024*math.sin(2*L*math.pi/180.0)
+	
 	# Return the equation of the equinoxes
 	return deltaPsi * math.cos(epsilon*math.pi/180.0)
 
 
-def parseTimeString(s, site=lwa1):
-	"""Given a string in the format of (UTC) YYYY MM DD HH:MM:SS.SSS, return
-	the corresponding datetime object.  This function goes a little beyond what
-	datetime.strptime does in the since that it handle both integer and float
-	seconds as well as does the appropriate rounding to get millisecond precision."""
+def parseTime(s, site=lwa1):
+	"""
+	Given a timezone-aware datetime instance or a string in the format of 
+	(UTC) YYYY MM DD HH:MM:SS.SSS, return the corresponding UTC datetime object.
+	This function goes a little beyond what datetime.strptime does in the 
+	since that it handle both integer and float seconds as well as does the 
+	appropriate rounding to get millisecond precision.
 	
-	mtch = _dtRE.match(s)
-	if mtch is None:
-		raise ValueError("Unparsable time string: '%s'" % s)
+	.. versionchanged:: 0.7.0
+		Renamed to parseTime()
+		Added support for timezone-aware datetime instances
+	"""
+	
+	if type(s).__name__ == 'datetime':
+		if s.tzinfo is None:
+			raise ValueError("Only aware datetime instances are supported.")
+			
+		# Round the microsecond value to milliseconds
+		us = s.microsecond
+		us = int(round(us/1000.0))*1000
+		dtObject = s.replace(microsecond=us)
+		
 	else:
-		if mtch.group('tz') is None:
-			tz = _UTC
+		mtch = _dtRE.match(s)
+		if mtch is None:
+			raise ValueError("Unparsable time string: '%s'" % s)
 		else:
-			tzName = mtch.group('tz')
-			if tzName in ['UT', 'UTC']:
+			year = int(mtch.group('year'))
+			day = int(mtch.group('day'))
+			
+			hour = int(mtch.group('hour'))
+			minute = int(mtch.group('minute'))
+			second = math.floor(float(mtch.group('second')))
+			microsecond = int(round((float(mtch.group('second')) - second)*1000.0))*1000
+			second = int(second)
+			
+			if mtch.group('mname') is None:
+				month = int(mtch.group('month'))
+			else:
+				monthName = mtch.group('mname').lower()
+				if monthName == 'jan':
+					month = 1
+				elif monthName == 'feb':
+					month = 2
+				elif monthName == 'mar':
+					month = 3
+				elif monthName == 'apr':
+					month = 4
+				elif monthName == 'may':
+					month = 5
+				elif monthName == 'jun':
+					month = 6
+				elif monthName == 'jul':
+					month = 7
+				elif monthName == 'aug':
+					month = 8
+				elif monthName == 'sep':
+					month = 9
+				elif monthName == 'oct':
+					month = 10
+				elif monthName == 'nov':
+					month = 11
+				elif monthName == 'dec':
+					month = 12
+				else:
+					raise ValueError("Unknown month abbreviation: '%s'" % monthName)
+					
+			if mtch.group('tz') is None and mtch.group('tzOffset') is None:
 				tz = _UTC
-			elif tzName in ['EST', 'EDT']:
-				tz = _EST
-			elif tzName in ['CST', 'CDT']:
-				tz = _CST
-			elif tzName in ['MST', 'MDT']:
-				tz = _MST
-			elif tzName in ['PST', 'PDT']:
-				tz = _PST
-			elif tzName in ['LST',]:
-				tz = 'LST'
-			else:
-				raise ValueError("Unknown time zone: '%s'" % tzName)
-		
-		year = int(mtch.group('year'))
-		day = int(mtch.group('day'))
-		
-		hour = int(mtch.group('hour'))
-		minute = int(mtch.group('minute'))
-		second = math.floor(float(mtch.group('second')))
-		microsecond = int(round((float(mtch.group('second')) - second)*1000)*1000)
-		second = int(second)
-		
-		if mtch.group('mname') is None:
-			month = int(mtch.group('month'))
-		else:
-			monthName = mtch.group('mname').lower()
-			if monthName == 'jan':
-				month = 1
-			elif monthName == 'feb':
-				month = 2
-			elif monthName == 'mar':
-				month = 3
-			elif monthName == 'apr':
-				month = 4
-			elif monthName == 'may':
-				month = 5
-			elif monthName == 'jun':
-				month = 6
-			elif monthName == 'jul':
-				month = 7
-			elif monthName == 'aug':
-				month = 8
-			elif monthName == 'sep':
-				month = 9
-			elif monthName == 'oct':
-				month = 10
-			elif monthName == 'nov':
-				month = 11
-			elif monthName == 'dec':
-				month = 12
-			else:
-				raise ValueError("Unknown month abbreviation: '%s'" % monthName)
-		
-		if tz == 'LST':
-			# Deal with sidereal times...
-			#
-			# NOTE:
-			# The RMS on this method is ~0.4 seconds over the years 
-			# 2000 to 2100.  This should be "good enough" for scheduling
-			# purposes.
-			
-			# Get the position of the observer on the Earth and the Julian 
-			# Date of midnight UT for the day we want to map LST to
-			obs = site.getObserver()
-			dt = astroDate(year, month, day, 0, 0, 0)
-			jd = dt.to_jd()
-			
-			# Get the LST in hours
-			LST = hour + minute/60.0 + (second + microsecond/1e6)/3600.0
-			
-			# Get the Greenwich apparent ST for LST using the longitude of 
-			# the site.  The site longitude is stored as radians, so convert
-			# to hours first.
-			GAST = LST - site.long*12/math.pi
-			
-			# Get the Greenwich mean ST by removing the equation of the 
-			# equinoxes (or some approximation thereof)
-			GMST = GAST - _getEquinoxEquation(jd)
-			
-			# Get the value of D0, days since January 1, 2000 @ 12:00 UT, 
-			# and T, the number of centuries since the year 2000.  The value
-			# of T isn't terribly important but it is nice to include
-			D0 = jd - 2451545.0
-			T = D0 / 36525.0
-			
-			# Solve for the UT hour for this LST and map onto 0 -> 24 hours
-			# From: http://aa.usno.navy.mil/faq/docs/GAST.php
-			H  = GMST - 6.697374558 - 0.06570982441908*D0 - 0.000026*T**2
-			H /= 1.002737909350795
-			while H < 0:
-				H += 24/1.002737909350795
-			while H > 24:
-				H -= 24/1.002737909350795
+			elif mtch.group('tzOffset') is not None:
+				tzOffsetSign = 1
+				if mtch.group('tzOffset')[0] == '-':
+					tzOffsetSign = -1
+				tzOffsetHours = int( mtch.group('tzOffset').replace(':', '')[1:3] )
+				tzOffsetMinutes = int( mtch.group('tzOffset').replace(':', '')[3:5] )
 				
-			# Get the full Julian Day that this corresponds to
-			jd += H/24.0
+				tz = pytz.FixedOffset(tzOffsetSign*(tzOffsetHours*60+tzOffsetMinutes), {})
+			else:
+				tzName = mtch.group('tz')
+				if tzName in ['UT', 'UTC']:
+					tz = _UTC
+				elif tzName in ['EST', 'EDT']:
+					tz = _EST
+				elif tzName in ['CST', 'CDT']:
+					tz = _CST
+				elif tzName in ['MST', 'MDT']:
+					tz = _MST
+				elif tzName in ['PST', 'PDT']:
+					tz = _PST
+				elif tzName in ['LST',]:
+					tz = 'LST'
+				else:
+					## Exhaustive search through pytz.  This may yield strange matches...
+					import warnings
+					warnings.warn("Entering pytz search mode for '%s'" % tzName, RuntimeWarning)
+					
+					tzFound = False
+					tzNormal = datetime(year, month, day)
+					for tzi in pytz.common_timezones[::-1]:
+						tz = pytz.timezone(tzi)
+						try:
+							cTZName = tz.tzname(tzNormal, is_dst=False)
+						except TypeError:
+							cTZName = tz.tzname(tzNormal)
+						if cTZName == tzName:
+							tzFound = True
+							break
+							
+					if not tzFound:
+						raise ValueError("Unknown time zone: '%s'" % tzName)
+						
+			if tz == 'LST':
+				# Deal with sidereal times...
+				#
+				# NOTE:
+				# The RMS on this method is ~0.4 seconds over the years 
+				# 2000 to 2100.  This should be "good enough" for scheduling
+				# purposes.
+				
+				# Get the position of the observer on the Earth and the Julian 
+				# Date of midnight UT for the day we want to map LST to
+				obs = site.getObserver()
+				dt = astroDate(year, month, day, 0, 0, 0)
+				jd = dt.to_jd()
+				
+				# Get the LST in hours
+				LST = hour + minute/60.0 + (second + microsecond/1e6)/3600.0
+				
+				# Get the Greenwich apparent ST for LST using the longitude of 
+				# the site.  The site longitude is stored as radians, so convert
+				# to hours first.
+				GAST = LST - site.long*12/math.pi
+				
+				# Get the Greenwich mean ST by removing the equation of the 
+				# equinoxes (or some approximation thereof)
+				GMST = GAST - _getEquinoxEquation(jd)
+				
+				# Get the value of D0, days since January 1, 2000 @ 12:00 UT, 
+				# and T, the number of centuries since the year 2000.  The value
+				# of T isn't terribly important but it is nice to include
+				D0 = jd - 2451545.0
+				T = D0 / 36525.0
+				
+				# Solve for the UT hour for this LST and map onto 0 -> 24 hours
+				# From: http://aa.usno.navy.mil/faq/docs/GAST.php
+				H  = GMST - 6.697374558 - 0.06570982441908*D0 - 0.000026*T**2
+				H /= 1.002737909350795
+				while H < 0:
+					H += 24/1.002737909350795
+				while H > 24:
+					H -= 24/1.002737909350795
+					
+				# Get the full Julian Day that this corresponds to
+				jd += H/24.0
+				
+				# Convert the JD back to a time and extract the relevant 
+				# quantities needed to build a datetime instance
+				dt = astroGetDate(jd)
+				
+				tz = _UTC
+				year = dt.years
+				month = dt.months
+				day = dt.days
+				hour = dt.hours
+				minute = dt.minutes
+				second = int(dt.seconds)
+				microsecond = int(round((dt.seconds - second)*1e6))
+				## Trim the microsecond down to the millisecond level
+				microsecond = int(round(microsecond/1000.0))*1000
+				
+			# Localize as the appropriate time zone
+			dtObject = tz.localize(datetime(year, month, day, hour, minute, second, microsecond))
 			
-			# Convert the JD back to a time and extract the relevant 
-			# quantities needed to build a datetime instance
-			dt = astroGetDate(jd)
-			
-			tz = _UTC
-			year = dt.years
-			month = dt.months
-			day = dt.days
-			hour = dt.hours
-			minute = dt.minutes
-			second = int(dt.seconds)
-			microsecond = int((dt.seconds - second)*1e6)
-			## Trim the microsecond down to the millisecond level
-			microsecond = int(int(microsecond/1000.0)*1000)
-			
-		# Localize as the appropriate time zone
-		dtObject = tz.localize(datetime(year, month, day, hour, minute, second, microsecond))
-		
-		# Return as UTC
-		return dtObject.astimezone(_UTC)
+	# Return as UTC
+	return dtObject.astimezone(_UTC)
 
 
 class Observer(object):
@@ -298,6 +341,12 @@ class Project(object):
 		else:
 			self.projectOffice = projectOffice
 		
+	def update(self):
+		"""Update the various sessions that are part of this project."""
+		
+		for ses in self.sessions:
+			ses.update()
+			
 	def validate(self, verbose=False):
 		"""Examine all of the sessions and all of their observations to check
 		for validity.  If everything is valid, return True.  Otherwise, return
@@ -361,6 +410,7 @@ class Project(object):
 		if session >= len(self.sessions):
 			raise IndexError("Invalid session index")
 		
+		self.sessions[session].update()
 		self.sessions[session].observations.sort()
 		for obs in self.sessions[session].observations:
 			obs.dur = obs.getDuration()
@@ -432,7 +482,7 @@ class Project(object):
 			output = "%sOBS_REMPO        %s\n" % (output, "Estimated data volume for this observation is %s" % self._renderFileSize(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
 			output = "%sOBS_START_MJD    %i\n" % (output, obs.mjd)
 			output = "%sOBS_START_MPM    %i\n" % (output, obs.mpm)
-			output = "%sOBS_START        %s\n" % (output, obs.start)
+			output = "%sOBS_START        %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if type(obs.start).__name__ == 'datetime' else obs.start)
 			output = "%sOBS_DUR          %i\n" % (output, obs.dur)
 			output = "%sOBS_DUR+         %s\n" % (output, obs.duration)
 			output = "%sOBS_MODE         %s\n" % (output, obs.mode)
@@ -632,7 +682,7 @@ class Session(object):
 	def setSpectrometerMetatag(self, value):
 		"""Set the spectrometer metatag, '' to disable."""
 		
-		if value == '':
+		if value == '' or value is None:
 			self.spcMetatag = None
 		else:
 			self.spcMetatag = value
@@ -665,6 +715,12 @@ class Session(object):
 		
 		self.updateMIB[component] = int(interval)
 		
+	def update(self):
+		"""Update the various observations in the session."""
+		
+		for obs in self.observations:
+			obs.update()
+			
 	def validate(self, verbose=False):
 		"""Examine all of the observations associated with the session to check
 		for validity.  If everything is valid, return True.  Otherwise, return
@@ -776,17 +832,26 @@ class Session(object):
 
 
 class Observation(object):
-	"""Class to hold the specifics of an observations.  It currently
-	handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped"""
+	"""
+	Class to hold the specifics of an observations.  It currently
+	handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped
+	
+	.. versionchanged:: 0.7.0
+		Added support for RA/dec values as ephem.hours/ephem.degrees instances
+	"""
 	
 	id = 1
 
 	def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
 		self.name = name
 		self.target = target
-		self.ra = float(ra)
-		self.dec = float(dec)
+		self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
+		self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
 		self.start = start
+		if type(duration).__name__ == 'timedelta':
+			# Make sure the number of microseconds agree with milliseconds
+			us = int(round(duration.microseconds/1000.0))*1000
+			duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
 		self.duration = str(duration)
 		self.mode = mode
 		self.frequency1 = float(frequency1)
@@ -821,6 +886,14 @@ class Observation(object):
 	def update(self):
 		"""Update the computed parameters from the string values."""
 		
+		# If we have a datetime instance, make sure we have an integer
+		# number of milliseconds
+		if type(self.start).__name__ == 'datetime':
+			us = self.start.microsecond
+			us = int(round(us/1000.0))*1000
+			self.start = self.start.replace(microsecond=us)
+		self.duration = str(self.duration)
+		
 		self.mjd = self.getMJD()
 		self.mpm = self.getMPM()
 		self.dur = self.getDuration()
@@ -828,12 +901,18 @@ class Observation(object):
 		self.freq2 = self.getFrequency2()
 		self.beam = self.getBeamType()
 		self.dataVolume = self.estimateBytes()
-
+		
+	def setStart(self, start):
+		"""Set the observation start time."""
+		
+		self.start = start
+		self.update()
+		
 	def getMJD(self):
 		"""Return the modified Julian Date corresponding to the date/time of the
 		self.start string."""
 		
-		utc = parseTimeString(self.start)
+		utc = parseTime(self.start)
 		utc = Time(utc, format=Time.FORMAT_PY_DATE)
 		return int(utc.utc_mjd)
 
@@ -841,7 +920,7 @@ class Observation(object):
 		"""Return the number of milliseconds between the date/time specified in the
 		self.start string and the previous UT midnight."""
 		
-		utc = parseTimeString(self.start)
+		utc = parseTime(self.start)
 		utcMidnight = datetime(utc.year, utc.month, utc.day, 0, 0, 0, tzinfo=_UTC)
 		diff = utc - utcMidnight
 		return int(round((diff.seconds + diff.microseconds/1000000.0)*1000.0))
@@ -860,6 +939,7 @@ class Observation(object):
 			out += float(fields[1])
 		else:
 			out = float(fields[0])
+			
 		return int(round(out*1000.0))
 
 	def getFrequency1(self):
@@ -953,7 +1033,10 @@ class TBW(Observation):
 		
 		# Update the duration based on the number of bits and samples used
 		duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
-		self.duration = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
+		sc = int(duration/1000.0)
+		ms = int(round((duration/1000.0 - sc)*1000))
+		us = ms*1000
+		self.duration = str(timedelta(seconds=sc, microseconds=us))
 		
 		self.mjd = self.getMJD()
 		self.mpm = self.getMPM()
@@ -1016,8 +1099,9 @@ class TBN(Observation):
 	Required Arguments:
 	  * observation name
 	  * observation target
-	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
-	  * observation duration (HH:MM:SS.SSS string)
+	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+	    aware datetime instance)
+	  * observation duration (HH:MM:SS.SSS string or timedelta instance)
 	  * observation frequency (Hz)
 	  * integer filter code
 	  
@@ -1028,7 +1112,23 @@ class TBN(Observation):
 	def __init__(self, name, target, start, duration, frequency, filter, gain=-1, comments=None):
 		self.filterCodes = TBNFilters
 		Observation.__init__(self, name, target, start, duration, 'TBN', 0.0, 0.0, frequency, 0.0, filter, gain=gain, comments=comments)
-
+		
+	def setDuration(self, duration):
+		"""Set the observation duration."""
+		
+		if type(duration).__name__ == 'timedelta':
+			# Make sure the number of microseconds agree with milliseconds
+			us = int(round(duration.microseconds/1000.0))*1000
+			duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
+		self.duration = str(duration)
+		self.update()
+		
+	def setFrequency1(self, frequency1):
+		"""Set the frequency in Hz corresponding to tuning 1."""
+		
+		self.frequency1 = float(frequency1)
+		self.update()
+		
 	def estimateBytes(self):
 		"""Estimate the data volume for the specified type and duration of 
 		observations.  For TBN:
@@ -1078,30 +1178,37 @@ class TBN(Observation):
 		else:
 			return False
 
-class DRX(Observation):
-	"""Sub-class of Observation specifically for DRX observations.
-	
-	Required Arguments:
-	  * observation name
-	  * observation target
-	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
-	  * observation duration (HH:MM:SS.SSS string)
-	  * observation RA in hours, J2000.0
-	  * observation Dec in degrees, J2000.0
-	  * observation tuning frequency 1 (Hz)
-	  * observation tuning frequency 1 (Hz)
-	  * integer filter code
-	  
-	Optional Keywords:
-	  * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-	    (default = False)
-	  * comments - comments about the observation
-	"""
-	
-	def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
-		self.filterCodes = DRXFilters
-		Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
 
+class _DRXBase(Observation):
+	"""Sub-class of Observation specifically for DRX-style observations."""
+	
+	filterCodes = DRXFilters
+	
+	def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
+		Observation.__init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
+		
+	def setDuration(self, duration):
+		"""Set the observation duration."""
+		
+		if type(duration).__name__ == 'timedelta':
+			# Make sure the number of microseconds agree with milliseconds
+			us = int(round(duration.microseconds/1000.0))*1000
+			duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
+		self.duration = str(duration)
+		self.update()
+		
+	def setFrequency1(self, frequency1):
+		"""Set the frequency in Hz corresponding to tuning 1."""
+		
+		self.frequency1 = float(frequency1)
+		self.update()
+		
+	def setFrequency2(self, frequency2):
+		"""Set the frequency in Hz correpsonding to tuning 2."""
+		
+		self.frequency2 = float(frequency2)
+		self.update()
+		
 	def estimateBytes(self):
 		"""Estimate the data volume for the specified type and duration of 
 		observations.  For DRX:
@@ -1122,7 +1229,7 @@ class DRX(Observation):
 		
 		pnt = ephem.FixedBody()
 		pnt._ra = self.ra / 12.0 * math.pi
-		pnt._dec = self.dec / 180 * math.pi
+		pnt._dec = self.dec / 180.0 * math.pi
 		pnt._epoch = '2000'
 		return pnt
 		
@@ -1198,15 +1305,50 @@ class DRX(Observation):
 			return False
 
 
-class Solar(DRX):
+class DRX(_DRXBase):
+	"""
+	Required Arguments:
+	  * observation name
+	  * observation target
+	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+	    aware datetime instance)
+	  * observation duration (HH:MM:SS.SSS string or timedelta instance)
+	  * observation RA in hours, J2000.0 or ephem.hours instance
+	  * observation Dec in degrees, J2000.0 or ephem.hours instance
+	  * observation tuning frequency 1 (Hz)
+	  * observation tuning frequency 1 (Hz)
+	  * integer filter code
+	  
+	Optional Keywords:
+	  * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
+	    (default = False)
+	  * comments - comments about the observation
+	"""
+	
+	def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
+		Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
+		
+	def setRA(self, ra):
+		"""Set the pointing RA."""
+		
+		self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
+		
+	def setDec(self, dec):
+		"""Set the pointing Dec."""
+		
+		self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+
+
+class Solar(_DRXBase):
 	"""Sub-class of DRX specifically for Solar DRX observations.   It features a
 	reduced number of parameters needed to setup the observation.
 	
 	Required Arguments:
 	  * observation name
 	  * observation target
-	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
-	  * observation duration (HH:MM:SS.SSS string)
+	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+	    aware datetime instance)
+	  * observation duration (HH:MM:SS.SSS string or timedelta instance)
 	  * observation tuning frequency 1 (Hz)
 	  * observation tuning frequency 1 (Hz)
 	  * integer filter code
@@ -1218,7 +1360,6 @@ class Solar(DRX):
 	"""
 	
 	def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
-		self.filterCodes = DRXFilters
 		Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
 		
 	def getFixedBody(self):
@@ -1228,15 +1369,16 @@ class Solar(DRX):
 		return ephem.Sun()
 
 
-class Jovian(DRX):
+class Jovian(_DRXBase):
 	"""Sub-class of DRX specifically for Jovian DRX observations.   It features a
 	reduced number of parameters needed to setup the observation.
 	
 	Required Arguments:
 	  * observation name
 	  * observation target
-	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
-	  * observation duration (HH:MM:SS.SSS string)
+	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+	    aware datetime instance)
+	  * observation duration (HH:MM:SS.SSS string or timedelta instance)
 	  * observation tuning frequency 1 (Hz)
 	  * observation tuning frequency 1 (Hz)
 	  * integer filter code
@@ -1248,7 +1390,6 @@ class Jovian(DRX):
 	"""
 	
 	def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
-		self.filterCodes = DRXFilters
 		Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
 
 	def getFixedBody(self):
@@ -1266,7 +1407,8 @@ class Stepped(Observation):
 	Required Arguments:
 	  * observation name
 	  * observation target
-	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
+	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+	    aware datetime instance)
 	  * integer filter code
 	  
 	Optional Keywords:
@@ -1285,6 +1427,14 @@ class Stepped(Observation):
 		
 	def update(self):
 		"""Update the computed parameters from the string values."""
+		
+		# If we have a datetime instance, make sure we have an integer
+		# number of milliseconds
+		if type(self.start).__name__ == 'datetime':
+			us = self.start.microsecond
+			us = int(round(us/1000.0))*1000
+			self.start = self.start.replace(microsecond=us)
+		self.duration = str(self.duration)
 		
 		self.mjd = self.getMJD()
 		self.mpm = self.getMPM()
@@ -1307,7 +1457,10 @@ class Stepped(Observation):
 			duration += step.dur
 			
 		# Update the actual duration string
-		self.duration = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
+		sc = int(duration/1000.0)
+		ms = int(round(duration/1000.0 - sc)*1000)
+		us = ms*1000
+		self.duration = str(timedelta(seconds=sc, microseconds=us))
 		
 		return duration
 		
@@ -1414,9 +1567,10 @@ class BeamStep(object):
 	etc.)associated with a particular step.  
 	
 	Required Keywords:
-	  * pointing coordinate 1 (RA or azimuth)
-	  * pointing coordinate 2 (dec or elevation/altitude)\
-	  * observation duration (HH:MM.SS.SSS string)
+	  * pointing coordinate 1 (RA [hours] or azimuth [degrees] or ephem.hours/ephem.degrees 
+	    instance)
+	  * pointing coordinate 2 (dec or elevation/altitude [degrees] or ephem.degrees instance)
+	  * observation duration (HH:MM:SS.SSS string or timedelta instance)
 	  * observation tuning frequency 1 (Hz)
 	  * observation tuning frequency 1 (Hz)
 	  
@@ -1430,13 +1584,25 @@ class BeamStep(object):
 	.. note::
 	   If `SpecDelays` is specified, `SpecGains` must also be specified.
 	   Specifying both `SpecDelays` and `SpecGains` overrides the `MaxSNR` keyword.
+	   
+	.. versionchanged:: 0.7.0
+		Added support for azimuth/altitude and RA/dec values as ephem.hours/ephem.degrees 
+		instances
 	"""
 	
 	def __init__(self, c1, c2, duration, frequency1, frequency2, RADec=True, MaxSNR=False, SpecDelays=None, SpecGains=None):
 		self.RADec = bool(RADec)
-		self.c1 = float(c1)
-		self.c2 = float(c2)
-		self.duration = duration
+		if self.RADec:
+			convFactor = 12.0/math.pi
+		else:
+			convFactor = 180.0/math.pi
+		self.c1 = float(c1) * (convFactor if type(c1).__name__ == 'Angle' else 1.0)
+		self.c2 = float(c2) * (180.0/math.pi if type(c2).__name__ == 'Angle' else 1.0)
+		if type(duration).__name__ == 'timedelta':
+			# Make sure the number of microseconds agree with milliseconds
+			us = int(round(duration.microseconds/1000.0))*1000
+			duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
+		self.duration = str(duration)
 		self.frequency1 = float(frequency1)
 		self.frequency2 = float(frequency2)
 		self.MaxSNR = bool(MaxSNR)
@@ -1450,11 +1616,48 @@ class BeamStep(object):
 		c2s = "Dec" if self.RADec else "Alt"
 		return "Step of %s %.3f, %s %.3f for %s at %.3f and %.3f MHz" % (c1s, self.c1, c2s, self.c2, self.duration, self.frequency1/1e6, self.frequency2/1e6)
 		
+	def setDuration(self, duration):
+		"""Set the observation duration."""
+		
+		if type(duration).__name__ == 'timedelta':
+			# Make sure the number of microseconds agree with milliseconds
+			us = int(round(duration.microseconds/1000.0))*1000
+			duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
+		self.duration = str(duration)
+		self.update()
+		
+	def setFrequency1(self, frequency1):
+		"""Set the frequency in Hz corresponding to tuning 1."""
+		
+		self.frequency1 = float(frequency1)
+		self.update()
+		
+	def setFrequency2(self, frequency2):
+		"""Set the frequency in Hz correpsonding to tuning 2."""
+		
+		self.frequency2 = float(frequency2)
+		self.update()
+		
+	def setC1(self, c1):
+		"""Set the pointing c1."""
+		
+		if self.RADec:
+			convFactor = 12.0/math.pi
+		else:
+			convFactor = 180.0/math.pi
+		self.c1 = float(c1) * (convFactor if type(c1).__name__ == 'Angle' else 1.0)
+		
+	def setC2(self, c2):
+		"""Set the pointing c2"""
+		
+		self.c2 = float(c2) * (180.0/math.pi if type(c2).__name__ == 'Angle' else 1.0)
+		
 	def update(self):
 		"""
 		Update the settings.
 		"""
 		
+		self.duration = str(self.duration)
 		self.dur = self.getDuration()
 		self.freq1 = self.getFrequency1()
 		self.freq2 = self.getFrequency2()
@@ -1464,21 +1667,18 @@ class BeamStep(object):
 		"""Parse the self.duration string with the format of HH:MM:SS.SSS to return the
 		number of milliseconds in that period."""
 		
-		if type(self.duration).__name__ == 'int':
-			return self.duration
+		fields = self.duration.split(':')
+		if len(fields) == 3:
+			out = int(fields[0])*3600.0
+			out += int(fields[1])*60.0
+			out += float(fields[2])
+		elif len(fields) == 2:
+			out = int(fields[0])*60.0
+			out += float(fields[1])
 		else:
+			out = float(fields[0])
 			
-			fields = self.duration.split(':')
-			if len(fields) == 3:
-				out = int(fields[0])*3600.0
-				out += int(fields[1])*60.0
-				out += float(fields[2])
-			elif len(fields) == 2:
-				out = int(fields[0])*60.0
-				out += float(fields[1])
-			else:
-				out = float(fields[0])
-			return int(round(out*1000.0))
+		return int(round(out*1000.0))
 		
 	def getFrequency1(self):
 		"""Return the number of "tuning words" corresponding to the first frequency."""
@@ -1513,7 +1713,7 @@ class BeamStep(object):
 		if self.RADec:
 			pnt = ephem.FixedBody()
 			pnt._ra = self.c1 / 12.0 * math.pi
-			pnt._dec = self.c2 / 180 * math.pi
+			pnt._dec = self.c2 / 180.0 * math.pi
 			pnt._epoch = '2000'
 			
 		else:
@@ -2087,6 +2287,16 @@ def getObservationStartStop(obs):
 	# Conversion to a timezone-aware datetime instance
 	tStart = _UTC.localize( datetime.utcfromtimestamp(tStart) )
 	tStop  = _UTC.localize( datetime.utcfromtimestamp(tStop ) )
+	
+	# Make sure we have an integer number of milliseconds
+	## Start
+	us = tStart.microsecond
+	us = int(round(us/1000.0))*1000
+	tStart = tStart.replace(microsecond=us)
+	## Stop
+	us = tStop.microsecond
+	us = int(round(us/1000.0))*1000
+	tStop = tStop.replace(microsecond=us)
 	
 	# Return
 	return tStart, tStop
