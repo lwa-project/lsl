@@ -32,6 +32,7 @@
   * Fixed a bug in the splitTBN.py and splitDRX.py scripts when a 'count' is not provided
   * Fixed the try...except blocks in lsl.statistics.kurtosis.getLimits() to catch the appropriate error
   * Improved the end buffering the in lsl.misc.dedispersion.coherent() function
+  * Updated the LWA1 SSMIF to the 131031 version
 
 0.6.5
   * Fixed the time remaining computation in lsl.common.progress.ProgressBarPlus

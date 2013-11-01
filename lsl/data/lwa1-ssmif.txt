@@ -1,28 +1,39 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2013 Oct 31 by J. Dowell
+#  -- Swapped the ARX_ANT/DP1_ANT values for stand #259 (LEDA Outrigger #3) 
+#     with #203.
+#  -- Swapped the ARX_ANT/DP1_ANT values for stand #257 (LEDA Outrigger #1)
+#     with #198.
+#  -- The FEE installed Stand #9 *may* be bad.
+# 2013 Aug 15 by J. Dowell
+#  -- Marked stand #86 as suspect (promoted from bad).
+#  -- Swapped the ARX_ANT/DP1_ANT values for stands #257 and #260 
+#     since they are swapped at the site.
 # 2013 Mar 10 by J. Dowell
 #  -- Updated the pointing correction terms
 # 2013 Mar 06 by J. Dowell
-#  -- Looks like there was a mixup in the prevous version with the lengths of the
-#     LEDA outrigger cables.  This corrects that.
+#  -- Looks like there was a mixup in the prevous version with the lengths of
+#     the LEDA outrigger cables.  This corrects that.
 # 2013 Mar 05 by J. Dowell
 #  -- Updated the stretch factors to take into account the LEDA64 spitter
 # 2013 Feb 28 by J. Dowell
-#  -- Looks like there was a bug in the LSL common.stations.Cable model with regards
-#     to the calculation of the dispersive delay.  Updated the values for the five 
-#     outrigger cable lengths
+#  -- Looks like there was a bug in the LSL common.stations.Cable model with
+#     regards to the calculation of the dispersive delay.  Updated the values 
+#     for the five outrigger cable lengths.
 #  -- Applied a new calibration solution using self-cal. on TBW data
 #  -- Zeroed out the pointing correction
 # 2013 Jan 23 by J. Dowell
-#  -- Removed the extra ARB_ANT lines that filled out the last half of ARX board #33
+#  -- Removed the extra ARB_ANT lines that filled out the last half of ARX 
+#     board #33
 # 2013 Jan 22 by J. Dowell
 #  -- Added back in the LEDA-32 antennas
 #  -- Added in LEDA outriggers #1 (stand #257), #2 (stand #260), and #3 (stand #259)
 #  -- Replaced Stand #25 with LEDA outrigger #5
 #  -- Updated the RPD and SEP cable names for the outriggers
-#  -- Updated the PDU port mappings to be consistent with the July 2012 reorganization 
-#     e-mail from J. Craig
+#  -- Updated the PDU port mappings to be consistent with the July 2012 
+#     reorganization e-mail from J. Craig
 # 2012 Oct 24 by J. Dowell
 #  -- Incorporated the latest info. on the status of good dipoles;  removed 12
 # 2012 Sep 24 by J. Dowell
@@ -32,7 +43,8 @@
 # 2012 Aug 06 by J. Dowell
 #  -- Set the "PC_" values to something that works for CygA
 #  -- Updated the ARB_ID listings for the ARX board swaps
-#  -- Updated the ANT_STAT listsings for antennas that have no signal and/or calibration
+#  -- Updated the ANT_STAT listsings for antennas that have no signal and/or 
+#     calibration
 # 2012 July 02 by S. Ellingson 
 #  -- Added "PC_" (pointing correction) keywords, set to defaults
 #  -- Updated FORMAT_VERSION to 7
@@ -881,8 +893,8 @@ ANT_STAT[72]   0        # Failed calibration, round 2
 ANT_STAT[132]  0        # Failed calibration, round 2
 ANT_STAT[149]  1        # No Signal as of 2012/10/23
 ANT_STAT[150]  1        # No Signal as of 2012/10/23
-ANT_STAT[171]  1        # No Signal as of 2012/10/23
-ANT_STAT[172]  1        # No Signal as of 2012/10/23
+ANT_STAT[171]  2        # Suspect Signal as of 2013/08/15
+ANT_STAT[172]  2        # Suspect Signal as of 2013/08/15
 ANT_STAT[191]  1        # No Signal
 ANT_STAT[196]  1        # No Signal
 ANT_STAT[213]  1        # No Signal as of 2012/10/23
@@ -929,12 +941,13 @@ ANT_PHI[508] +15.0
 # -------------------------------------------------------
 N_FEE 260
 
-# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identified
+# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identifiedf
 # *** FEE_ID[fee_id] goes here:
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any FEE #'s <= N_FEE not identified
 # *** FEE_STAT[fee_id] goes here: 
+FEE_STAT[9]  2        # May be bad in one or both pols. as of 2013/10/31
 
 # This will be set to 1 for any FEEs not identified below
 # You should set it to 0 if different but not known, or >1 if appropriate
@@ -4105,8 +4118,11 @@ ARB_ANT[7][13] 393
 ARB_ANT[7][14] 394
 ARB_ANT[7][15] 33
 ARB_ANT[7][16] 34
-ARB_ANT[8][1] 405
-ARB_ANT[8][2] 406
+
+# LEDA Outrigger #3
+ARB_ANT[8][1] 517
+ARB_ANT[8][2] 518
+
 ARB_ANT[8][3] 241
 ARB_ANT[8][4] 242
 ARB_ANT[8][5] 397
@@ -4362,8 +4378,11 @@ ARB_ANT[23][11] 41
 ARB_ANT[23][12] 42
 ARB_ANT[23][13] 39
 ARB_ANT[23][14] 40
-ARB_ANT[23][15] 395
-ARB_ANT[23][16] 396
+
+# LEDA Outrigger #1
+ARB_ANT[23][15] 513
+ARB_ANT[23][16] 514
+
 ARB_ANT[24][1] 319
 ARB_ANT[24][2] 320
 ARB_ANT[24][3] 113
@@ -4509,17 +4528,17 @@ ARB_ANT[32][14] 376
 ARB_ANT[32][15] 123
 ARB_ANT[32][16] 124
 
-# LEDA Outrigger #1
-ARB_ANT[33][1] 513
-ARB_ANT[33][2] 514
-
 # LEDA Outrigger #2
-ARB_ANT[33][3] 519
-ARB_ANT[33][4] 520
+ARB_ANT[33][1] 519
+ARB_ANT[33][2] 520
 
-# LEDA Outrigger #3
-ARB_ANT[33][5] 517
-ARB_ANT[33][6] 518
+# Stand #198
+ARB_ANT[33][3] 395
+ARB_ANT[33][4] 396
+
+# Stand #203
+ARB_ANT[33][5] 405
+ARB_ANT[33][6] 406
 
 # RTA antenna (LEDA Outrigger #4)
 ARB_ANT[33][7] 515
@@ -6205,10 +6224,9 @@ DP1_ANT[1][5] 443
 DP1_ANT[1][6] 444
 DP1_ANT[1][7] 299
 DP1_ANT[1][8] 300
+DP1_ANT[1][9] 405
+DP1_ANT[1][10] 406
 
-# LEDA Outrigger #3
-DP1_ANT[1][9] 517
-DP1_ANT[1][10] 518
 # RTA antenna (LEDA Outrigger #4)
 DP1_ANT[1][11] 515
 DP1_ANT[1][12] 516
@@ -6254,8 +6272,11 @@ DP1_ANT[3][9] 393
 DP1_ANT[3][10] 394
 DP1_ANT[3][11] 33
 DP1_ANT[3][12] 34
-DP1_ANT[3][13] 405
-DP1_ANT[3][14] 406
+
+# LEDA Outrigger #3
+DP1_ANT[3][13] 517
+DP1_ANT[3][14] 518
+
 DP1_ANT[3][15] 241
 DP1_ANT[3][16] 242
 DP1_ANT[3][17] 397
@@ -6446,10 +6467,8 @@ DP1_ANT[13][1] 365
 DP1_ANT[13][2] 366
 DP1_ANT[13][3] 399
 DP1_ANT[13][4] 400
-
 DP1_ANT[13][5] 377
 DP1_ANT[13][6] 378
-
 DP1_ANT[13][7] 235
 DP1_ANT[13][8] 236
 DP1_ANT[13][9] 411
@@ -6473,13 +6492,12 @@ DP1_ANT[14][6] 184
 DP1_ANT[14][7] 445
 DP1_ANT[14][8] 446
 
-# LEDA Outrigger #1
-DP1_ANT[14][9] 513
-DP1_ANT[14][10] 514
 # LEDA Outrigger #2
-DP1_ANT[14][11] 519
-DP1_ANT[14][12] 520
+DP1_ANT[14][9] 519
+DP1_ANT[14][10] 520
 
+DP1_ANT[14][11] 395
+DP1_ANT[14][12] 396
 DP1_ANT[14][13] 285
 DP1_ANT[14][14] 286
 DP1_ANT[14][15] 389
@@ -6518,8 +6536,11 @@ DP1_ANT[16][7] 41
 DP1_ANT[16][8] 42
 DP1_ANT[16][9] 39
 DP1_ANT[16][10] 40
-DP1_ANT[16][11] 395
-DP1_ANT[16][12] 396
+
+# LEDA Outrigger #1
+DP1_ANT[16][11] 513
+DP1_ANT[16][12] 514
+
 DP1_ANT[16][13] 319
 DP1_ANT[16][14] 320
 DP1_ANT[16][15] 113
