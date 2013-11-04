@@ -205,8 +205,10 @@ class ProjectedSkyMap(object):
 		
 		## HA, dec, and lat in degrees to alt and az in radians
 		sinAlt = sin(dec*pi/180)*sin(self.lat*pi/180) + cos(dec*pi/180)*cos(lat*pi/180)*cos(ha*pi/180)
+		sinAlt = clip(sinAlt, -1.0, 1.0)
 		alt = arcsin(sinAlt)
 		cosAz = (sin(dec*pi/180)-sinAlt*sin(self.lat*pi/180))/(cos(alt)*cos(lat*pi/180))
+		cosAz = clip(cosAz, -1.0, 1.0)
 		az = arccos(cosAz)
 		swap = where(sin(ha*pi/180) < 0)
 		az[swap] = 2*pi-az[swap]
