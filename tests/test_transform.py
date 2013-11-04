@@ -200,9 +200,9 @@ class transform_tests(unittest.TestCase):
 		d0 = transform.PointingDirection(p0, g0)
 		
 		rst = d0.rst(t0)
-		self.assertAlmostEqual(rst.rise, jove.rise_time*1.0+DJD_OFFSET, 2)
-		self.assertAlmostEqual(rst.transit, jove.transit_time*1.0+DJD_OFFSET, 2)
-		self.assertAlmostEqual(rst.set, jove.set_time*1.0+DJD_OFFSET, 2)
+		self.assertAlmostEqual(rst.rise, obs.next_rising(jove)*1.0+DJD_OFFSET, 2)
+		self.assertAlmostEqual(rst.transit, obs.next_transit(jove)*1.0+DJD_OFFSET, 2)
+		self.assertAlmostEqual(rst.set, obs.next_setting(jove)*1.0+DJD_OFFSET, 2)
 
 
 class transform_test_suite(unittest.TestSuite):
