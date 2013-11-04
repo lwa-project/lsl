@@ -10,6 +10,7 @@ from lsl.common.paths import dataBuild as dataPath
 from lsl.imaging import utils, selfCal
 from lsl.writer.fitsidi import NumericStokes
 from lsl.sim.vis import srcs as simSrcs
+from lsl.common.stations import parseSSMIF
 
 
 __revision__ = "$Rev$"
@@ -20,6 +21,7 @@ __author__    = "Jayce Dowell"
 uvFile = os.path.join(dataPath, 'tests', 'uv-test.fits')
 idiFile = os.path.join(dataPath, 'tests', 'idi-test.fits')
 idiAltFile = os.path.join(dataPath, 'tests', 'idi-test-alt.fits')
+idiSSMIFFile = os.path.join(dataPath, 'tests', 'idi-test-alt.txt')
 
 
 class imaging_tests(unittest.TestCase):
@@ -87,7 +89,7 @@ class imaging_tests(unittest.TestCase):
 			self.assertEqual(s1, s2)
 			
 		# Check stations
-		station1 = idi1.station
+		station1 = parseSSMIF(idiSSMIFFile)
 		station2 = idi2.station
 		self.assertAlmostEqual(station1.lat, station2.lat, 3)
 		self.assertAlmostEqual(station1.lon, station2.lon, 3)
@@ -351,7 +353,7 @@ class imaging_tests(unittest.TestCase):
 		
 		# Build the image
 		ds = idi.getDataSet(1)
-		junk = utils.buildGriddedImage(ds)
+		junk = utils.buildGriddedImage(ds, verbose=False)
 
 		# Error checking
 		self.assertRaises(RuntimeError, utils.buildGriddedImage, ds, pol='xy')
@@ -364,7 +366,7 @@ class imaging_tests(unittest.TestCase):
 		
 		# Build the image
 		ds = idi.getDataSet(1)
-		junk = utils.buildGriddedImage(ds)
+		junk = utils.buildGriddedImage(ds, verbose=False)
 
 		# Error checking
 		self.assertRaises(RuntimeError, utils.buildGriddedImage, ds, pol='xy')
@@ -376,9 +378,10 @@ class imaging_tests(unittest.TestCase):
 		uv = utils.CorrelatedData(uvFile)
 		
 		# Build the image
+		
 		ds = uv.getDataSet(1)
-		junk = utils.buildGriddedImage(ds)
-
+		junk = utils.buildGriddedImage(ds, verbose=False)
+		
 		# Error checking
 		self.assertRaises(RuntimeError, utils.buildGriddedImage, ds, pol='xy')
 		
@@ -391,7 +394,7 @@ class imaging_tests(unittest.TestCase):
 		# Go for it!
 		aa = idi.getAntennaArray()
 		ds = idi.getDataSet(1)
-		junk = selfCal.phaseOnly(aa, ds, ds, 173, 'xx', nIter=1)
+		junk = selfCal.phaseOnly(aa, ds, ds, 173, 'xx', nIter=1, verbose=False)
 		
 		# Error checking
 		self.assertRaises(RuntimeError, selfCal.phaseOnly, aa, ds, ds, 173, 'yx', refAnt=0  )
@@ -406,7 +409,7 @@ class imaging_tests(unittest.TestCase):
 		# Go for it!
 		aa = idi.getAntennaArray()
 		ds = idi.getDataSet(1)
-		junk = selfCal.phaseOnly(aa, ds, ds, 173, 'xx', nIter=1)
+		junk = selfCal.phaseOnly(aa, ds, ds, 173, 'xx', nIter=1, verbose=False)
 		
 		# Error checking
 		self.assertRaises(RuntimeError, selfCal.phaseOnly, aa, ds, ds, 173, 'yx', refAnt=0  )
@@ -421,7 +424,7 @@ class imaging_tests(unittest.TestCase):
 		# Go for it!
 		aa = uv.getAntennaArray()
 		ds = uv.getDataSet(1)
-		junk = selfCal.phaseOnly(aa, ds, ds, 173, 'xx', nIter=1)
+		junk = selfCal.phaseOnly(aa, ds, ds, 173, 'xx', nIter=1, verbose=False)
 		
 		# Error checking
 		self.assertRaises(RuntimeError, selfCal.phaseOnly, aa, ds, ds, 173, 'yx', refAnt=0  )

@@ -1,0 +1,6962 @@
+# ----------------------------------------------
+# --- Station Static MIB Initialization File ---
+# ----------------------------------------------
+# 2013 Mar 10 by J. Dowell
+#  -- Updated the pointing correction terms
+# 2013 Mar 06 by J. Dowell
+#  -- Looks like there was a mixup in the prevous version with the lengths of the
+#     LEDA outrigger cables.  This corrects that.
+# 2013 Mar 05 by J. Dowell
+#  -- Updated the stretch factors to take into account the LEDA64 spitter
+# 2013 Feb 28 by J. Dowell
+#  -- Looks like there was a bug in the LSL common.stations.Cable model with regards
+#     to the calculation of the dispersive delay.  Updated the values for the five 
+#     outrigger cable lengths
+#  -- Applied a new calibration solution using self-cal. on TBW data
+#  -- Zeroed out the pointing correction
+# 2013 Jan 23 by J. Dowell
+#  -- Removed the extra ARB_ANT lines that filled out the last half of ARX board #33
+# 2013 Jan 22 by J. Dowell
+#  -- Added back in the LEDA-32 antennas
+#  -- Added in LEDA outriggers #1 (stand #257), #2 (stand #260), and #3 (stand #259)
+#  -- Replaced Stand #25 with LEDA outrigger #5
+#  -- Updated the RPD and SEP cable names for the outriggers
+#  -- Updated the PDU port mappings to be consistent with the July 2012 reorganization 
+#     e-mail from J. Craig
+# 2012 Oct 24 by J. Dowell
+#  -- Incorporated the latest info. on the status of good dipoles;  removed 12
+# 2012 Sep 24 by J. Dowell
+#  -- Updated the "PC_" values with the results of the new pointing correction
+# 2012 Aug 29 by J. Dowell
+#  -- Updated the "PC_" values with the results of the new pointing correction
+# 2012 Aug 06 by J. Dowell
+#  -- Set the "PC_" values to something that works for CygA
+#  -- Updated the ARB_ID listings for the ARX board swaps
+#  -- Updated the ANT_STAT listsings for antennas that have no signal and/or calibration
+# 2012 July 02 by S. Ellingson 
+#  -- Added "PC_" (pointing correction) keywords, set to defaults
+#  -- Updated FORMAT_VERSION to 7
+# 2012 May 16 by J. Dowell
+#
+# Search "FIXME" for things that need work
+
+FORMAT_VERSION 7
+STATION_ID VL
+GEO_N   +34.070 # N Lat [deg]
+GEO_E  -107.628 # E Lat [deg]
+GEO_EL 2133.6   # [m] above MSL
+N_STD 260
+
+# ---------------------------------------
+# --- Stand Positions  ------------------
+# ---------------------------------------
+# includes 1-256, plus:
+#   LEDA Outrigger #1 as stand 257
+#   LEDA Outrigger #2 as stand 260
+#   LEDA Outrigger #3 as stand 259
+#   RTA (LEDA Outrigger #4) as stand 258.  
+# ---------------------------------------
+# These will be set to 0.0 for any stand #'s <= N_STD not identified
+# *** STD_LX[stand_id] [m] goes here 
+# *** STD_LY[stand_id] [m] goes here 
+# *** STD_LZ[stand_id] [m] goes here 
+STD_LX[1]    -0.653
+STD_LY[1]   -54.595
+STD_LZ[1]    +3.204
+STD_LX[2]    +0.550
+STD_LY[2]   -49.298
+STD_LZ[2]    +3.075
+STD_LX[3]    -2.340
+STD_LY[3]   -43.476
+STD_LZ[3]    +2.802
+STD_LX[4]    +1.604
+STD_LY[4]   -39.395
+STD_LZ[4]    +2.707
+STD_LX[5]    -3.176
+STD_LY[5]   -31.597
+STD_LZ[5]    +2.503
+STD_LX[6]    +1.885
+STD_LY[6]   -26.034
+STD_LZ[6]    +2.298
+STD_LX[7]    +0.047
+STD_LY[7]   -16.578
+STD_LZ[7]    +2.020
+STD_LX[8]    +0.386
+STD_LY[8]   -10.796
+STD_LZ[8]    +1.817
+STD_LX[9]    -0.759
+STD_LY[9]    -4.375
+STD_LZ[9]    +1.683
+STD_LX[10]    +1.887
+STD_LY[10]    +0.875
+STD_LZ[10]    +1.536
+STD_LX[11]    -0.678
+STD_LY[11]    +5.662
+STD_LZ[11]    +1.403
+STD_LX[12]    -1.338
+STD_LY[12]   +14.429
+STD_LZ[12]    +1.052
+STD_LX[13]    -0.941
+STD_LY[13]   +19.819
+STD_LZ[13]    +0.893
+STD_LX[14]    -0.218
+STD_LY[14]   +25.201
+STD_LZ[14]    +0.683
+STD_LX[15]    +1.768
+STD_LY[15]   +29.751
+STD_LZ[15]    +0.511
+STD_LX[16]    +2.643
+STD_LY[16]   +35.450
+STD_LZ[16]    +0.284
+STD_LX[17]    -1.444
+STD_LY[17]   +42.261
+STD_LZ[17]    +0.163
+STD_LX[18]    -1.004
+STD_LY[18]   +47.373
+STD_LZ[18]    +0.142
+STD_LX[19]    -2.476
+STD_LY[19]   +53.401
+STD_LZ[19]    +0.058
+STD_LX[20]    +7.905
+STD_LY[20]   -51.405
+STD_LZ[20]    +3.153
+STD_LX[21]    -8.825
+STD_LY[21]   -53.680
+STD_LZ[21]    +3.148
+STD_LX[22]    +7.110
+STD_LY[22]   -46.343
+STD_LZ[22]    +3.008
+STD_LX[23]    -6.881
+STD_LY[23]   -49.085
+STD_LZ[23]    +3.046
+STD_LX[24]    +6.204
+STD_LY[24]   -41.284
+STD_LZ[24]    +2.759
+STD_LX[25]    -3.054
+STD_LY[25]   -36.569
+STD_LZ[25]    +2.660
+STD_LX[26]    +4.203
+STD_LY[26]   -32.959
+STD_LZ[26]    +2.552
+STD_LX[27]    -8.155
+STD_LY[27]   -32.186
+STD_LZ[27]    +2.532
+STD_LX[28]    +6.964
+STD_LY[28]   -26.062
+STD_LZ[28]    +2.364
+STD_LX[29]    -6.762
+STD_LY[29]   -27.368
+STD_LZ[29]    +2.394
+STD_LX[30]    +5.986
+STD_LY[30]   -21.063
+STD_LZ[30]    +2.167
+STD_LX[31]    -3.856
+STD_LY[31]   -21.789
+STD_LZ[31]    +2.183
+STD_LX[32]    +4.505
+STD_LY[32]   -13.821
+STD_LZ[32]    +1.962
+STD_LX[33]    -4.929
+STD_LY[33]   -14.887
+STD_LZ[33]    +1.995
+STD_LX[34]    +5.390
+STD_LY[34]    -8.226
+STD_LZ[34]    +1.763
+
+# FIXME
+# This is the *real* Stand #35
+#STD_LX[35]    -5.805
+#STD_LY[35]    -9.953
+#STD_LZ[35]    +1.844
+# This is LEDA Outrigger #5
+STD_LX[35]  +241.373
+STD_LY[35]   -58.617
+STD_LZ[35]    +2.882
+
+STD_LX[36]    +4.340
+STD_LY[36]    -3.499
+STD_LZ[36]    +1.591
+STD_LX[37]    -7.935
+STD_LY[37]    -5.207
+STD_LZ[37]    +1.738
+STD_LX[38]    +7.086
+STD_LY[38]    +0.991
+STD_LZ[38]    +1.434
+STD_LX[39]    -6.795
+STD_LY[39]    +2.810
+STD_LZ[39]    +1.467
+STD_LX[40]    +3.345
+STD_LY[40]   +11.245
+STD_LZ[40]    +1.127
+STD_LX[41]    -4.704
+STD_LY[41]    +8.751
+STD_LZ[41]    +1.328
+STD_LX[42]    +6.985
+STD_LY[42]   +15.420
+STD_LZ[42]    +1.006
+STD_LX[43]    -5.886
+STD_LY[43]   +16.536
+STD_LZ[43]    +1.048
+STD_LX[44]    +4.042
+STD_LY[44]   +19.519
+STD_LZ[44]    +0.930
+STD_LX[45]    -7.739
+STD_LY[45]   +21.112
+STD_LZ[45]    +0.829
+STD_LX[46]    +4.926
+STD_LY[46]   +25.539
+STD_LZ[46]    +0.706
+STD_LX[47]    -5.252
+STD_LY[47]   +25.474
+STD_LZ[47]    +0.664
+STD_LX[48]    +6.988
+STD_LY[48]   +30.120
+STD_LZ[48]    +0.450
+STD_LX[49]    -4.715
+STD_LY[49]   +31.308
+STD_LZ[49]    +0.406
+STD_LX[50]    +7.595
+STD_LY[50]   +37.069
+STD_LZ[50]    +0.215
+STD_LX[51]    -5.881
+STD_LY[51]   +38.483
+STD_LZ[51]    +0.299
+STD_LX[52]    +6.035
+STD_LY[52]   +41.813
+STD_LZ[52]    +0.147
+STD_LX[53]    -6.039
+STD_LY[53]   +44.339
+STD_LZ[53]    +0.157
+STD_LX[54]    +5.269
+STD_LY[54]   +54.707
+STD_LZ[54]    -0.031
+STD_LX[55]    -7.524
+STD_LY[55]   +53.539
+STD_LZ[55]    -0.047
+STD_LX[56]   +13.010
+STD_LY[56]   -51.997
+STD_LZ[56]    +3.181
+STD_LX[57]   -12.820
+STD_LY[57]   -50.553
+STD_LZ[57]    +3.058
+STD_LX[58]   +12.505
+STD_LY[58]   -46.580
+STD_LZ[58]    +2.984
+STD_LX[59]    -9.738
+STD_LY[59]   -45.061
+STD_LZ[59]    +2.892
+STD_LX[60]   +10.251
+STD_LY[60]   -38.298
+STD_LZ[60]    +2.769
+STD_LX[61]   -10.361
+STD_LY[61]   -39.940
+STD_LZ[61]    +2.641
+STD_LX[62]    +9.697
+STD_LY[62]   -30.120
+STD_LZ[62]    +2.514
+STD_LX[63]   -14.792
+STD_LY[63]   -30.479
+STD_LZ[63]    +2.474
+STD_LX[64]   +11.743
+STD_LY[64]   -24.907
+STD_LZ[64]    +2.300
+STD_LX[65]   -10.112
+STD_LY[65]   -23.690
+STD_LZ[65]    +2.258
+STD_LX[66]   +12.878
+STD_LY[66]   -18.180
+STD_LZ[66]    +2.119
+STD_LX[67]   -10.507
+STD_LY[67]   -18.680
+STD_LZ[67]    +2.140
+STD_LX[68]    +9.074
+STD_LY[68]   -11.835
+STD_LZ[68]    +1.859
+STD_LX[69]   -11.091
+STD_LY[69]   -13.709
+STD_LZ[69]    +2.005
+STD_LX[70]   +10.509
+STD_LY[70]    -7.090
+STD_LZ[70]    +1.736
+STD_LX[71]   -11.530
+STD_LY[71]    -8.714
+STD_LZ[71]    +1.814
+STD_LX[72]   +11.094
+STD_LY[72]    -2.057
+STD_LZ[72]    +1.524
+STD_LX[73]   -12.109
+STD_LY[73]    +1.252
+STD_LZ[73]    +1.469
+STD_LX[74]    +6.613
+STD_LY[74]    +6.787
+STD_LZ[74]    +1.312
+STD_LX[75]    -9.575
+STD_LY[75]    +6.940
+STD_LZ[75]    +1.326
+STD_LX[76]    +9.266
+STD_LY[76]   +10.992
+STD_LZ[76]    +1.097
+STD_LX[77]    -9.136
+STD_LY[77]   +12.893
+STD_LZ[77]    +1.158
+STD_LX[78]   +11.308
+STD_LY[78]   +17.891
+STD_LZ[78]    +0.866
+STD_LX[79]   -11.051
+STD_LY[79]   +17.503
+STD_LZ[79]    +0.933
+STD_LX[80]   +10.741
+STD_LY[80]   +23.116
+STD_LZ[80]    +0.714
+STD_LX[81]   -12.771
+STD_LY[81]   +24.871
+STD_LZ[81]    +0.653
+STD_LX[82]   +11.968
+STD_LY[82]   +30.376
+STD_LZ[82]    +0.408
+STD_LX[83]   -10.945
+STD_LY[83]   +29.392
+STD_LZ[83]    +0.542
+STD_LX[84]   +13.301
+STD_LY[84]   +36.010
+STD_LZ[84]    +0.275
+STD_LX[85]    -8.671
+STD_LY[85]   +34.357
+STD_LZ[85]    +0.385
+STD_LX[86]   +11.979
+STD_LY[86]   +44.328
+STD_LZ[86]    +0.012
+STD_LX[87]   -10.996
+STD_LY[87]   +41.927
+STD_LZ[87]    +0.181
+STD_LX[88]   +13.665
+STD_LY[88]   +51.406
+STD_LZ[88]    -0.077
+STD_LX[89]   -15.599
+STD_LY[89]   +52.298
+STD_LZ[89]    -0.079
+STD_LX[90]   +18.794
+STD_LY[90]   -46.282
+STD_LZ[90]    +2.945
+STD_LX[91]   -16.106
+STD_LY[91]   -46.721
+STD_LZ[91]    +2.961
+STD_LX[92]   +14.620
+STD_LY[92]   -42.065
+STD_LZ[92]    +2.837
+STD_LX[93]   -17.631
+STD_LY[93]   -40.957
+STD_LZ[93]    +2.712
+STD_LX[94]   +14.402
+STD_LY[94]   -33.730
+STD_LZ[94]    +2.739
+STD_LX[95]   -16.275
+STD_LY[95]   -36.134
+STD_LZ[95]    +2.644
+STD_LX[96]   +16.806
+STD_LY[96]   -27.875
+STD_LZ[96]    +2.401
+STD_LX[97]   -17.441
+STD_LY[97]   -26.162
+STD_LZ[97]    +2.377
+STD_LX[98]   +17.446
+STD_LY[98]   -20.610
+STD_LZ[98]    +2.172
+STD_LX[99]   -14.845
+STD_LY[99]   -21.896
+STD_LZ[99]    +2.209
+STD_LX[100]   +16.662
+STD_LY[100]   -14.851
+STD_LZ[100]    +1.983
+STD_LX[101]   -15.178
+STD_LY[101]   -16.874
+STD_LZ[101]    +2.119
+STD_LX[102]   +13.970
+STD_LY[102]   -10.716
+STD_LZ[102]    +1.842
+STD_LX[103]   -16.177
+STD_LY[103]   -11.568
+STD_LZ[103]    +1.998
+STD_LX[104]   +15.712
+STD_LY[104]    -5.347
+STD_LZ[104]    +1.656
+STD_LX[105]   -14.922
+STD_LY[105]    -5.034
+STD_LZ[105]    +1.808
+STD_LX[106]   +13.427
+STD_LY[106]    +2.680
+STD_LZ[106]    +1.405
+STD_LX[107]   -16.280
+STD_LY[107]    +3.998
+STD_LZ[107]    +1.499
+STD_LX[108]   +13.358
+STD_LY[108]    +7.672
+STD_LZ[108]    +1.216
+STD_LX[109]   -13.511
+STD_LY[109]   +10.058
+STD_LZ[109]    +1.210
+STD_LX[110]   +13.775
+STD_LY[110]   +13.474
+STD_LZ[110]    +1.026
+STD_LX[111]   -16.685
+STD_LY[111]   +15.504
+STD_LZ[111]    +1.131
+STD_LX[112]   +15.708
+STD_LY[112]   +22.027
+STD_LZ[112]    +0.745
+STD_LX[113]   -16.086
+STD_LY[113]   +20.967
+STD_LZ[113]    +0.901
+STD_LX[114]   +16.652
+STD_LY[114]   +28.583
+STD_LZ[114]    +0.485
+STD_LX[115]   -16.439
+STD_LY[115]   +29.244
+STD_LZ[115]    +0.554
+STD_LX[116]   +17.948
+STD_LY[116]   +33.397
+STD_LZ[116]    +0.262
+STD_LX[117]   -13.763
+STD_LY[117]   +33.480
+STD_LZ[117]    +0.455
+STD_LX[118]   +15.412
+STD_LY[118]   +40.551
+STD_LZ[118]    +0.147
+STD_LX[119]   -15.968
+STD_LY[119]   +38.293
+STD_LZ[119]    +0.311
+STD_LX[120]   +17.366
+STD_LY[120]   +47.853
+STD_LZ[120]    -0.084
+STD_LX[121]   -18.961
+STD_LY[121]   +44.288
+STD_LZ[121]    +0.092
+STD_LX[122]   +23.622
+STD_LY[122]   -44.916
+STD_LZ[122]    +2.828
+STD_LX[123]   -25.670
+STD_LY[123]   -43.331
+STD_LZ[123]    +2.794
+STD_LX[124]   +18.950
+STD_LY[124]   -36.970
+STD_LZ[124]    +2.747
+STD_LX[125]   -22.331
+STD_LY[125]   -36.527
+STD_LZ[125]    +2.677
+STD_LX[126]   +20.664
+STD_LY[126]   -32.370
+STD_LZ[126]    +2.500
+STD_LX[127]   -19.651
+STD_LY[127]   -32.303
+STD_LZ[127]    +2.562
+STD_LX[128]   +23.475
+STD_LY[128]   -25.306
+STD_LZ[128]    +2.288
+STD_LX[129]   -21.645
+STD_LY[129]   -21.140
+STD_LZ[129]    +2.257
+STD_LX[130]   +22.422
+STD_LY[130]   -19.809
+STD_LZ[130]    +2.108
+STD_LX[131]   -19.840
+STD_LY[131]   -14.932
+STD_LZ[131]    +2.070
+STD_LX[132]   +21.780
+STD_LY[132]   -14.856
+STD_LZ[132]    +1.955
+STD_LX[133]   -22.692
+STD_LY[133]   -10.753
+STD_LZ[133]    +1.969
+STD_LX[134]   +21.946
+STD_LY[134]    -7.931
+STD_LZ[134]    +1.749
+STD_LX[135]   -22.081
+STD_LY[135]    -5.310
+STD_LZ[135]    +1.715
+STD_LX[136]   +19.897
+STD_LY[136]    -2.647
+STD_LZ[136]    +1.550
+STD_LX[137]   -19.641
+STD_LY[137]    +0.323
+STD_LZ[137]    +1.614
+STD_LX[138]   +19.740
+STD_LY[138]    +3.627
+STD_LZ[138]    +1.314
+STD_LX[139]   -22.366
+STD_LY[139]    +6.818
+STD_LZ[139]    +1.432
+STD_LX[140]   +19.485
+STD_LY[140]   +10.000
+STD_LZ[140]    +1.145
+STD_LX[141]   -20.834
+STD_LY[141]   +11.593
+STD_LZ[141]    +1.289
+STD_LX[142]   +18.517
+STD_LY[142]   +15.186
+STD_LZ[142]    +1.010
+STD_LX[143]   -20.876
+STD_LY[143]   +18.723
+STD_LZ[143]    +1.056
+STD_LX[144]   +20.924
+STD_LY[144]   +25.277
+STD_LZ[144]    +0.577
+STD_LX[145]   -21.605
+STD_LY[145]   +26.403
+STD_LZ[145]    +0.806
+STD_LX[146]   +22.693
+STD_LY[146]   +29.929
+STD_LZ[146]    +0.380
+STD_LX[147]   -21.761
+STD_LY[147]   +31.566
+STD_LZ[147]    +0.600
+STD_LX[148]   +22.412
+STD_LY[148]   +35.842
+STD_LZ[148]    +0.151
+STD_LX[149]   -20.809
+STD_LY[149]   +36.612
+STD_LZ[149]    +0.390
+STD_LX[150]   +24.620
+STD_LY[150]   +46.137
+STD_LZ[150]    -0.129
+STD_LX[151]   -25.058
+STD_LY[151]   +47.762
+STD_LZ[151]    +0.135
+STD_LX[152]   +29.047
+STD_LY[152]   -38.425
+STD_LZ[152]    +2.669
+STD_LX[153]   -28.816
+STD_LY[153]   -37.441
+STD_LZ[153]    +2.704
+STD_LX[154]   +26.813
+STD_LY[154]   -33.107
+STD_LZ[154]    +2.598
+STD_LX[155]   -27.056
+STD_LY[155]   -30.533
+STD_LZ[155]    +2.403
+STD_LX[156]   +28.348
+STD_LY[156]   -28.265
+STD_LZ[156]    +2.377
+STD_LX[157]   -22.802
+STD_LY[157]   -26.433
+STD_LZ[157]    +2.369
+STD_LX[158]   +28.127
+STD_LY[158]   -23.055
+STD_LZ[158]    +2.197
+STD_LX[159]   -26.421
+STD_LY[159]   -23.003
+STD_LZ[159]    +2.331
+STD_LX[160]   +27.095
+STD_LY[160]   -16.707
+STD_LZ[160]    +2.017
+STD_LX[161]   -24.456
+STD_LY[161]   -17.033
+STD_LZ[161]    +2.087
+STD_LX[162]   +25.519
+STD_LY[162]   -11.556
+STD_LZ[162]    +1.848
+STD_LX[163]   -26.537
+STD_LY[163]    -7.510
+STD_LZ[163]    +1.847
+STD_LX[164]   +24.916
+STD_LY[164]    -2.778
+STD_LZ[164]    +1.555
+STD_LX[165]   -28.128
+STD_LY[165]    -2.681
+STD_LZ[165]    +1.707
+STD_LX[166]   +25.451
+STD_LY[166]    +3.755
+STD_LZ[166]    +1.348
+STD_LX[167]   -25.552
+STD_LY[167]    +2.857
+STD_LZ[167]    +1.571
+STD_LX[168]   +24.262
+STD_LY[168]    +8.614
+STD_LZ[168]    +1.177
+STD_LX[169]   -26.024
+STD_LY[169]   +12.446
+STD_LZ[169]    +1.385
+STD_LX[170]   +25.142
+STD_LY[170]   +14.432
+STD_LZ[170]    +0.975
+STD_LX[171]   -26.500
+STD_LY[171]   +17.386
+STD_LZ[171]    +1.151
+STD_LX[172]   +29.113
+STD_LY[172]   +22.236
+STD_LZ[172]    +0.739
+STD_LX[173]   -25.149
+STD_LY[173]   +22.994
+STD_LZ[173]    +0.909
+STD_LX[174]   +26.906
+STD_LY[174]   +26.732
+STD_LZ[174]    +0.474
+STD_LX[175]   -26.497
+STD_LY[175]   +28.278
+STD_LZ[175]    +0.737
+STD_LX[176]   +29.087
+STD_LY[176]   +31.171
+STD_LZ[176]    +0.302
+STD_LX[177]   -27.757
+STD_LY[177]   +33.677
+STD_LZ[177]    +0.540
+STD_LX[178]   +29.309
+STD_LY[178]   +37.954
+STD_LZ[178]    +0.012
+STD_LX[179]   -30.180
+STD_LY[179]   +40.293
+STD_LZ[179]    +0.327
+STD_LX[180]   +35.185
+STD_LY[180]   -39.441
+STD_LZ[180]    +2.680
+STD_LX[181]   -32.816
+STD_LY[181]   -41.843
+STD_LZ[181]    +2.752
+STD_LX[182]   +34.381
+STD_LY[182]   -32.168
+STD_LZ[182]    +2.472
+STD_LX[183]   -33.813
+STD_LY[183]   -32.414
+STD_LZ[183]    +2.483
+STD_LX[184]   +32.637
+STD_LY[184]   -25.632
+STD_LZ[184]    +2.274
+STD_LX[185]   -31.386
+STD_LY[185]   -25.415
+STD_LZ[185]    +2.307
+STD_LX[186]   +31.991
+STD_LY[186]   -17.750
+STD_LZ[186]    +2.070
+STD_LX[187]   -29.403
+STD_LY[187]   -17.674
+STD_LZ[187]    +2.138
+STD_LX[188]   +30.670
+STD_LY[188]   -11.448
+STD_LZ[188]    +1.854
+STD_LX[189]   -31.532
+STD_LY[189]   -11.586
+STD_LZ[189]    +2.035
+STD_LX[190]   +29.095
+STD_LY[190]    -5.376
+STD_LZ[190]    +1.619
+STD_LX[191]   -34.995
+STD_LY[191]    -6.982
+STD_LZ[191]    +1.812
+STD_LX[192]   +30.901
+STD_LY[192]    -0.666
+STD_LZ[192]    +1.549
+STD_LX[193]   -30.592
+STD_LY[193]    +1.801
+STD_LZ[193]    +1.581
+STD_LX[194]   +29.695
+STD_LY[194]    +6.443
+STD_LZ[194]    +1.238
+STD_LX[195]   -29.187
+STD_LY[195]    +8.463
+STD_LZ[195]    +1.476
+STD_LX[196]   +30.853
+STD_LY[196]   +11.314
+STD_LZ[196]    +1.074
+STD_LX[197]   -33.489
+STD_LY[197]   +13.103
+STD_LZ[197]    +1.322
+STD_LX[198]   +31.936
+STD_LY[198]   +16.216
+STD_LZ[198]    +0.928
+STD_LX[199]   -32.462
+STD_LY[199]   +18.038
+STD_LZ[199]    +1.211
+STD_LX[200]   +33.023
+STD_LY[200]   +27.100
+STD_LZ[200]    +0.480
+STD_LX[201]   -30.597
+STD_LY[201]   +25.631
+STD_LZ[201]    +0.883
+STD_LX[202]   +33.327
+STD_LY[202]   +35.012
+STD_LZ[202]    +0.184
+STD_LX[203]   -32.628
+STD_LY[203]   +32.437
+STD_LZ[203]    +0.567
+STD_LX[204]   +33.893
+STD_LY[204]   +39.949
+STD_LZ[204]    -0.006
+STD_LX[205]   -35.119
+STD_LY[205]   +39.387
+STD_LZ[205]    +0.354
+STD_LX[206]   -36.649
+STD_LY[206]   -36.472
+STD_LZ[206]    +2.667
+STD_LX[207]   +37.328
+STD_LY[207]   -27.243
+STD_LZ[207]    +2.292
+STD_LX[208]   -39.699
+STD_LY[208]   -29.825
+STD_LZ[208]    +2.455
+STD_LX[209]   +35.807
+STD_LY[209]   -21.016
+STD_LZ[209]    +2.092
+STD_LX[210]   -35.504
+STD_LY[210]   -22.660
+STD_LZ[210]    +2.285
+STD_LX[211]   +37.040
+STD_LY[211]   -14.397
+STD_LZ[211]    +1.937
+STD_LX[212]   -35.087
+STD_LY[212]   -17.617
+STD_LZ[212]    +2.152
+STD_LX[213]   +36.166
+STD_LY[213]    -8.423
+STD_LZ[213]    +1.766
+STD_LX[214]   -37.205
+STD_LY[214]   -12.673
+STD_LZ[214]    +1.980
+STD_LX[215]   +38.546
+STD_LY[215]    -2.728
+STD_LZ[215]    +1.561
+STD_LX[216]   -34.062
+STD_LY[216]    -2.057
+STD_LZ[216]    +1.753
+STD_LX[217]   +36.542
+STD_LY[217]    +3.168
+STD_LZ[217]    +1.357
+STD_LX[218]   -35.740
+STD_LY[218]    +3.757
+STD_LZ[218]    +1.621
+STD_LX[219]   +36.994
+STD_LY[219]   +10.021
+STD_LZ[219]    +1.194
+STD_LX[220]   -36.796
+STD_LY[220]    +8.816
+STD_LZ[220]    +1.446
+STD_LX[221]   +38.696
+STD_LY[221]   +15.921
+STD_LZ[221]    +0.955
+STD_LX[222]   -38.937
+STD_LY[222]   +14.198
+STD_LZ[222]    +1.270
+STD_LX[223]   +36.721
+STD_LY[223]   +20.530
+STD_LZ[223]    +0.764
+STD_LX[224]   -35.601
+STD_LY[224]   +22.362
+STD_LZ[224]    +0.961
+STD_LX[225]   +37.370
+STD_LY[225]   +30.007
+STD_LZ[225]    +0.440
+STD_LX[226]   -35.852
+STD_LY[226]   +28.440
+STD_LZ[226]    +0.763
+STD_LX[227]   +43.097
+STD_LY[227]   -27.588
+STD_LZ[227]    +2.396
+STD_LX[228]   -40.542
+STD_LY[228]   -22.447
+STD_LZ[228]    +2.282
+STD_LX[229]   +40.879
+STD_LY[229]   -22.745
+STD_LZ[229]    +2.163
+STD_LX[230]   -41.573
+STD_LY[230]   -17.393
+STD_LZ[230]    +2.115
+STD_LX[231]   +41.945
+STD_LY[231]   -15.744
+STD_LZ[231]    +1.991
+STD_LX[232]   -44.608
+STD_LY[232]   -12.214
+STD_LZ[232]    +2.032
+STD_LX[233]   +40.928
+STD_LY[233]   -10.160
+STD_LZ[233]    +1.862
+STD_LX[234]   -40.810
+STD_LY[234]    -8.142
+STD_LZ[234]    +1.885
+STD_LX[235]   +43.975
+STD_LY[235]    -2.184
+STD_LZ[235]    +1.507
+STD_LX[236]   -39.629
+STD_LY[236]    +0.256
+STD_LZ[236]    +1.699
+STD_LX[237]   +42.425
+STD_LY[237]    +3.460
+STD_LZ[237]    +1.286
+STD_LX[238]   -41.951
+STD_LY[238]    +4.692
+STD_LZ[238]    +1.528
+STD_LX[239]   +41.849
+STD_LY[239]   +11.139
+STD_LZ[239]    +1.153
+STD_LX[240]   -43.194
+STD_LY[240]   +10.904
+STD_LZ[240]    +1.395
+STD_LX[241]   +43.542
+STD_LY[241]   +16.927
+STD_LZ[241]    +0.881
+STD_LX[242]   -40.579
+STD_LY[242]   +20.175
+STD_LZ[242]    +1.050
+STD_LX[243]   +41.488
+STD_LY[243]   +23.720
+STD_LZ[243]    +0.624
+STD_LX[244]   -39.793
+STD_LY[244]   +25.152
+STD_LZ[244]    +0.940
+STD_LX[245]   +46.720
+STD_LY[245]   -19.949
+STD_LZ[245]    +2.091
+STD_LX[246]   -47.722
+STD_LY[246]   -16.779
+STD_LZ[246]    +2.159
+STD_LX[247]   +47.370
+STD_LY[247]   -12.401
+STD_LZ[247]    +1.854
+STD_LX[248]   -49.222
+STD_LY[248]    -7.222
+STD_LZ[248]    +1.913
+STD_LX[249]   +47.043
+STD_LY[249]    -7.410
+STD_LZ[249]    +1.677
+STD_LX[250]   -48.592
+STD_LY[250]    -2.249
+STD_LZ[250]    +1.717
+STD_LX[251]   +49.283
+STD_LY[251]    -0.376
+STD_LZ[251]    +1.415
+STD_LX[252]   -48.237
+STD_LY[252]    +2.938
+STD_LZ[252]    +1.572
+STD_LX[253]   +48.643
+STD_LY[253]    +5.271
+STD_LZ[253]    +1.278
+STD_LX[254]   -47.373
+STD_LY[254]   +13.705
+STD_LZ[254]    +1.345
+STD_LX[255]   +48.814
+STD_LY[255]   +11.217
+STD_LZ[255]    +1.178
+STD_LX[256]   -47.094
+STD_LY[256]   +18.685
+STD_LZ[256]    +1.081
+STD_LX[257]   -56.028    # LEDA Outrigger #1
+STD_LY[257]  +202.187
+STD_LZ[257]    -5.687 
+STD_LX[258]  +338.911    # RTA (LEDA Outrigger #4)
+STD_LY[258]   +19.778
+STD_LZ[258]    +1.670
+STD_LX[259]  +405.278    # LEDA Outrigger #3
+STD_LY[259]  +167.840
+STD_LZ[259]    -1.462
+STD_LX[260]  +167.559    # LEDA Outrigger #2
+STD_LY[260]  +295.101
+STD_LZ[260]    -5.692
+
+# ------------------------------------
+# --- Antenna # -> Stand # mapping ---
+# ------------------------------------
+# This will be set to floor((n-1)/2)+1 for any antenna n <= 2*N_STD not identified
+# Strongly recommended to leave this alone, so that antennas 1 & 2 are on stand 1,
+#   antennas 3 & 4 are on stand 2, and so on.
+# *** ANT_STD[antenna_id] goes here:
+
+# ----------------------------
+# --- Antenna orientations ---
+# ----------------------------
+# For any antenna n <= 2*N_STD not identified, this will be set to (n-1) mod 2
+# Strongly recommended to leave this alone, so that antennas 1 & 2 are 0 (N-S) and
+#   and 1 (E-W) respectively, and so on.
+# *** ANT_ORIE[antenna_id] goes here: (0 = N-S, 1 = E-W)
+
+# ----------------------
+# --- Antenna Status ---
+# ----------------------
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This refers to the *antenna*, not the FEE or some combination of the two.
+# This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
+# *** ANT_STAT[antenna_id] goes here:
+ANT_STAT[17]   1        # No Signal as of 2012/10/23
+ANT_STAT[18]   1        # No Signal
+ANT_STAT[25]   0        # Failed calibration, round 2
+ANT_STAT[29]   1        # No Signal
+ANT_STAT[71]   0        # Failed calibration, round 2
+ANT_STAT[72]   0        # Failed calibration, round 2
+ANT_STAT[132]  0        # Failed calibration, round 2
+ANT_STAT[149]  1        # No Signal as of 2012/10/23
+ANT_STAT[150]  1        # No Signal as of 2012/10/23
+ANT_STAT[171]  1        # No Signal as of 2012/10/23
+ANT_STAT[172]  1        # No Signal as of 2012/10/23
+ANT_STAT[191]  1        # No Signal
+ANT_STAT[196]  1        # No Signal
+ANT_STAT[213]  1        # No Signal as of 2012/10/23
+ANT_STAT[214]  1        # No Signal as of 2012/10/23
+ANT_STAT[246]  1        # No Signal
+ANT_STAT[247]  1        # No Signal
+ANT_STAT[287]  1        # No Signal as of 2012/10/23
+ANT_STAT[288]  1        # No Signal as of 2012/10/23
+ANT_STAT[363]  1        # No Signal
+ANT_STAT[374]  1        # No Signal
+ANT_STAT[434]  1        # No Signal
+ANT_STAT[464]  1        # No Signal
+ANT_STAT[467]  1        # No Signal as of 2012/10/23
+ANT_STAT[468]  1        # No Signal as of 2012/10/23
+ANT_STAT[488]  1        # Failed calibration, round 2
+ANT_STAT[489]  1        # No Signal as of 2012/10/23
+
+# -------------------------------
+# --- Antenna mis-orientation ---
+# -------------------------------
+# These will be set to 0.0 (no error) for any antenna n <= 2*N_STD not identified
+# *** ANT_THETA[antenna_id] in degrees goes here:
+# *** ANT_PHI[antenna_id] in degrees goes here: 
+ANT_PHI[7]   +15.0
+ANT_PHI[8]   +15.0
+ANT_PHI[315] +15.0
+ANT_PHI[316] +15.0
+ANT_PHI[409] +15.0
+ANT_PHI[410] +15.0
+ANT_PHI[491] +15.0
+ANT_PHI[492] +15.0
+ANT_PHI[507] +15.0
+ANT_PHI[508] +15.0
+
+# ----------------------------------
+# --- Antenna design information ---
+# ----------------------------------
+# This will be set to 1 for any antenna #'s <= 2*N_STD not identified
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** ANT_DESI[antenna_id] goes here:
+
+# -------------------------------------------------------
+# --- FEEs (number, status, design, nominal gain) -------
+# -------------------------------------------------------
+N_FEE 260
+
+# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identified
+# *** FEE_ID[fee_id] goes here:
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any FEE #'s <= N_FEE not identified
+# *** FEE_STAT[fee_id] goes here: 
+
+# This will be set to 1 for any FEEs not identified below
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** FEE_DESI[fee_id] goes here:
+
+# FEE_GAI1[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
+# *** FEE_GAI1[fee_id] goes here:
+
+# FEE_GAI2[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
+# *** FEE_GAI2[fee_id] goes here:
+
+# ------------------------------------
+# --- Antenna # -> FEE # mapping -----
+# ------------------------------------
+# Format (example) "FEE_ANT1[2] 3" means antenna 3 is connected to port 1 of FEE 2.
+# If not specified, then FEE_ANT1[1] will be 1, FEE_ANT2[1] will be 2,
+#   FEE_ANT1[2] will be 3, FEE_ANT2[2] will be 4, and so on.
+# Strongly recommended to leave this alone, and that only exceptions are noted.
+# *** FEE_ANT1[fee_id] goes here:
+# *** FEE_ANT2[fee_id] goes here:
+
+# ----------------------------------------
+# --- FEE Power Source Identification ----
+# ----------------------------------------
+# Note that FEE_RACK[] and FEE_PORT[] are used by MCS only to identify power sources;
+#  the control of application of power to FEEs is controlled using ARX 
+# Format (example) "FEE_RACK[2] 3" means FEE 2 is powered via a supply in Rack 3.
+# FEE_RACK[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
+# Format (example) "FEE_PORT[2] 7" means FEE 2 is powered via port 7 on whatever rack 
+#   is specified by FEE_RACK[2].
+# FEE_PORT[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
+# *** FEE_RACK[fee_id] goes here:
+# *** FEE_PORT[fee_id] goes here:
+
+
+# All FEEs are on Rack 1, Port 1
+FEE_RACK[1] 1
+FEE_PORT[1] 1
+FEE_RACK[2] 1
+FEE_PORT[2] 1
+FEE_RACK[3] 1
+FEE_PORT[3] 1
+FEE_RACK[4] 1
+FEE_PORT[4] 1
+FEE_RACK[5] 1
+FEE_PORT[5] 1
+FEE_RACK[6] 1
+FEE_PORT[6] 1
+FEE_RACK[7] 1
+FEE_PORT[7] 1
+FEE_RACK[8] 1
+FEE_PORT[8] 1
+FEE_RACK[9] 1
+FEE_PORT[9] 1
+FEE_RACK[10] 1
+FEE_PORT[10] 1
+FEE_RACK[11] 1
+FEE_PORT[11] 1
+FEE_RACK[12] 1
+FEE_PORT[12] 1
+FEE_RACK[13] 1
+FEE_PORT[13] 1
+FEE_RACK[14] 1
+FEE_PORT[14] 1
+FEE_RACK[15] 1
+FEE_PORT[15] 1
+FEE_RACK[16] 1
+FEE_PORT[16] 1
+FEE_RACK[17] 1
+FEE_PORT[17] 1
+FEE_RACK[18] 1
+FEE_PORT[18] 1
+FEE_RACK[19] 1
+FEE_PORT[19] 1
+FEE_RACK[20] 1
+FEE_PORT[20] 1
+FEE_RACK[21] 1
+FEE_PORT[21] 1
+FEE_RACK[22] 1
+FEE_PORT[22] 1
+FEE_RACK[23] 1
+FEE_PORT[23] 1
+FEE_RACK[24] 1
+FEE_PORT[24] 1
+FEE_RACK[25] 1
+FEE_PORT[25] 1
+FEE_RACK[26] 1
+FEE_PORT[26] 1
+FEE_RACK[27] 1
+FEE_PORT[27] 1
+FEE_RACK[28] 1
+FEE_PORT[28] 1
+FEE_RACK[29] 1
+FEE_PORT[29] 1
+FEE_RACK[30] 1
+FEE_PORT[30] 1
+FEE_RACK[31] 1
+FEE_PORT[31] 1
+FEE_RACK[32] 1
+FEE_PORT[32] 1
+FEE_RACK[33] 1
+FEE_PORT[33] 1
+FEE_RACK[34] 1
+FEE_PORT[34] 1
+FEE_RACK[35] 1
+FEE_PORT[35] 1
+FEE_RACK[36] 1
+FEE_PORT[36] 1
+FEE_RACK[37] 1
+FEE_PORT[37] 1
+FEE_RACK[38] 1
+FEE_PORT[38] 1
+FEE_RACK[39] 1
+FEE_PORT[39] 1
+FEE_RACK[40] 1
+FEE_PORT[40] 1
+FEE_RACK[41] 1
+FEE_PORT[41] 1
+FEE_RACK[42] 1
+FEE_PORT[42] 1
+FEE_RACK[43] 1
+FEE_PORT[43] 1
+FEE_RACK[44] 1
+FEE_PORT[44] 1
+FEE_RACK[45] 1
+FEE_PORT[45] 1
+FEE_RACK[46] 1
+FEE_PORT[46] 1
+FEE_RACK[47] 1
+FEE_PORT[47] 1
+FEE_RACK[48] 1
+FEE_PORT[48] 1
+FEE_RACK[49] 1
+FEE_PORT[49] 1
+FEE_RACK[50] 1
+FEE_PORT[50] 1
+FEE_RACK[51] 1
+FEE_PORT[51] 1
+FEE_RACK[52] 1
+FEE_PORT[52] 1
+FEE_RACK[53] 1
+FEE_PORT[53] 1
+FEE_RACK[54] 1
+FEE_PORT[54] 1
+FEE_RACK[55] 1
+FEE_PORT[55] 1
+FEE_RACK[56] 1
+FEE_PORT[56] 1
+FEE_RACK[57] 1
+FEE_PORT[57] 1
+FEE_RACK[58] 1
+FEE_PORT[58] 1
+FEE_RACK[59] 1
+FEE_PORT[59] 1
+FEE_RACK[60] 1
+FEE_PORT[60] 1
+FEE_RACK[61] 1
+FEE_PORT[61] 1
+FEE_RACK[62] 1
+FEE_PORT[62] 1
+FEE_RACK[63] 1
+FEE_PORT[63] 1
+FEE_RACK[64] 1
+FEE_PORT[64] 1
+FEE_RACK[65] 1
+FEE_PORT[65] 1
+FEE_RACK[66] 1
+FEE_PORT[66] 1
+FEE_RACK[67] 1
+FEE_PORT[67] 1
+FEE_RACK[68] 1
+FEE_PORT[68] 1
+FEE_RACK[69] 1
+FEE_PORT[69] 1
+FEE_RACK[70] 1
+FEE_PORT[70] 1
+FEE_RACK[71] 1
+FEE_PORT[71] 1
+FEE_RACK[72] 1
+FEE_PORT[72] 1
+FEE_RACK[73] 1
+FEE_PORT[73] 1
+FEE_RACK[74] 1
+FEE_PORT[74] 1
+FEE_RACK[75] 1
+FEE_PORT[75] 1
+FEE_RACK[76] 1
+FEE_PORT[76] 1
+FEE_RACK[77] 1
+FEE_PORT[77] 1
+FEE_RACK[78] 1
+FEE_PORT[78] 1
+FEE_RACK[79] 1
+FEE_PORT[79] 1
+FEE_RACK[80] 1
+FEE_PORT[80] 1
+FEE_RACK[81] 1
+FEE_PORT[81] 1
+FEE_RACK[82] 1
+FEE_PORT[82] 1
+FEE_RACK[83] 1
+FEE_PORT[83] 1
+FEE_RACK[84] 1
+FEE_PORT[84] 1
+FEE_RACK[85] 1
+FEE_PORT[85] 1
+FEE_RACK[86] 1
+FEE_PORT[86] 1
+FEE_RACK[87] 1
+FEE_PORT[87] 1
+FEE_RACK[88] 1
+FEE_PORT[88] 1
+FEE_RACK[89] 1
+FEE_PORT[89] 1
+FEE_RACK[90] 1
+FEE_PORT[90] 1
+FEE_RACK[91] 1
+FEE_PORT[91] 1
+FEE_RACK[92] 1
+FEE_PORT[92] 1
+FEE_RACK[93] 1
+FEE_PORT[93] 1
+FEE_RACK[94] 1
+FEE_PORT[94] 1
+FEE_RACK[95] 1
+FEE_PORT[95] 1
+FEE_RACK[96] 1
+FEE_PORT[96] 1
+FEE_RACK[97] 1
+FEE_PORT[97] 1
+FEE_RACK[98] 1
+FEE_PORT[98] 1
+FEE_RACK[99] 1
+FEE_PORT[99] 1
+FEE_RACK[100] 1
+FEE_PORT[100] 1
+FEE_RACK[101] 1
+FEE_PORT[101] 1
+FEE_RACK[102] 1
+FEE_PORT[102] 1
+FEE_RACK[103] 1
+FEE_PORT[103] 1
+FEE_RACK[104] 1
+FEE_PORT[104] 1
+FEE_RACK[105] 1
+FEE_PORT[105] 1
+FEE_RACK[106] 1
+FEE_PORT[106] 1
+FEE_RACK[107] 1
+FEE_PORT[107] 1
+FEE_RACK[108] 1
+FEE_PORT[108] 1
+FEE_RACK[109] 1
+FEE_PORT[109] 1
+FEE_RACK[110] 1
+FEE_PORT[110] 1
+FEE_RACK[111] 1
+FEE_PORT[111] 1
+FEE_RACK[112] 1
+FEE_PORT[112] 1
+FEE_RACK[113] 1
+FEE_PORT[113] 1
+FEE_RACK[114] 1
+FEE_PORT[114] 1
+FEE_RACK[115] 1
+FEE_PORT[115] 1
+FEE_RACK[116] 1
+FEE_PORT[116] 1
+FEE_RACK[117] 1
+FEE_PORT[117] 1
+FEE_RACK[118] 1
+FEE_PORT[118] 1
+FEE_RACK[119] 1
+FEE_PORT[119] 1
+FEE_RACK[120] 1
+FEE_PORT[120] 1
+FEE_RACK[121] 1
+FEE_PORT[121] 1
+FEE_RACK[122] 1
+FEE_PORT[122] 1
+FEE_RACK[123] 1
+FEE_PORT[123] 1
+FEE_RACK[124] 1
+FEE_PORT[124] 1
+FEE_RACK[125] 1
+FEE_PORT[125] 1
+FEE_RACK[126] 1
+FEE_PORT[126] 1
+FEE_RACK[127] 1
+FEE_PORT[127] 1
+FEE_RACK[128] 1
+FEE_PORT[128] 1
+FEE_RACK[129] 1
+FEE_PORT[129] 1
+FEE_RACK[130] 1
+FEE_PORT[130] 1
+FEE_RACK[131] 1
+FEE_PORT[131] 1
+FEE_RACK[132] 1
+FEE_PORT[132] 1
+FEE_RACK[133] 1
+FEE_PORT[133] 1
+FEE_RACK[134] 1
+FEE_PORT[134] 1
+FEE_RACK[135] 1
+FEE_PORT[135] 1
+FEE_RACK[136] 1
+FEE_PORT[136] 1
+FEE_RACK[137] 1
+FEE_PORT[137] 1
+FEE_RACK[138] 1
+FEE_PORT[138] 1
+FEE_RACK[139] 1
+FEE_PORT[139] 1
+FEE_RACK[140] 1
+FEE_PORT[140] 1
+FEE_RACK[141] 1
+FEE_PORT[141] 1
+FEE_RACK[142] 1
+FEE_PORT[142] 1
+FEE_RACK[143] 1
+FEE_PORT[143] 1
+FEE_RACK[144] 1
+FEE_PORT[144] 1
+FEE_RACK[145] 1
+FEE_PORT[145] 1
+FEE_RACK[146] 1
+FEE_PORT[146] 1
+FEE_RACK[147] 1
+FEE_PORT[147] 1
+FEE_RACK[148] 1
+FEE_PORT[148] 1
+FEE_RACK[149] 1
+FEE_PORT[149] 1
+FEE_RACK[150] 1
+FEE_PORT[150] 1
+FEE_RACK[151] 1
+FEE_PORT[151] 1
+FEE_RACK[152] 1
+FEE_PORT[152] 1
+FEE_RACK[153] 1
+FEE_PORT[153] 1
+FEE_RACK[154] 1
+FEE_PORT[154] 1
+FEE_RACK[155] 1
+FEE_PORT[155] 1
+FEE_RACK[156] 1
+FEE_PORT[156] 1
+FEE_RACK[157] 1
+FEE_PORT[157] 1
+FEE_RACK[158] 1
+FEE_PORT[158] 1
+FEE_RACK[159] 1
+FEE_PORT[159] 1
+FEE_RACK[160] 1
+FEE_PORT[160] 1
+FEE_RACK[161] 1
+FEE_PORT[161] 1
+FEE_RACK[162] 1
+FEE_PORT[162] 1
+FEE_RACK[163] 1
+FEE_PORT[163] 1
+FEE_RACK[164] 1
+FEE_PORT[164] 1
+FEE_RACK[165] 1
+FEE_PORT[165] 1
+FEE_RACK[166] 1
+FEE_PORT[166] 1
+FEE_RACK[167] 1
+FEE_PORT[167] 1
+FEE_RACK[168] 1
+FEE_PORT[168] 1
+FEE_RACK[169] 1
+FEE_PORT[169] 1
+FEE_RACK[170] 1
+FEE_PORT[170] 1
+FEE_RACK[171] 1
+FEE_PORT[171] 1
+FEE_RACK[172] 1
+FEE_PORT[172] 1
+FEE_RACK[173] 1
+FEE_PORT[173] 1
+FEE_RACK[174] 1
+FEE_PORT[174] 1
+FEE_RACK[175] 1
+FEE_PORT[175] 1
+FEE_RACK[176] 1
+FEE_PORT[176] 1
+FEE_RACK[177] 1
+FEE_PORT[177] 1
+FEE_RACK[178] 1
+FEE_PORT[178] 1
+FEE_RACK[179] 1
+FEE_PORT[179] 1
+FEE_RACK[180] 1
+FEE_PORT[180] 1
+FEE_RACK[181] 1
+FEE_PORT[181] 1
+FEE_RACK[182] 1
+FEE_PORT[182] 1
+FEE_RACK[183] 1
+FEE_PORT[183] 1
+FEE_RACK[184] 1
+FEE_PORT[184] 1
+FEE_RACK[185] 1
+FEE_PORT[185] 1
+FEE_RACK[186] 1
+FEE_PORT[186] 1
+FEE_RACK[187] 1
+FEE_PORT[187] 1
+FEE_RACK[188] 1
+FEE_PORT[188] 1
+FEE_RACK[189] 1
+FEE_PORT[189] 1
+FEE_RACK[190] 1
+FEE_PORT[190] 1
+FEE_RACK[191] 1
+FEE_PORT[191] 1
+FEE_RACK[192] 1
+FEE_PORT[192] 1
+FEE_RACK[193] 1
+FEE_PORT[193] 1
+FEE_RACK[194] 1
+FEE_PORT[194] 1
+FEE_RACK[195] 1
+FEE_PORT[195] 1
+FEE_RACK[196] 1
+FEE_PORT[196] 1
+FEE_RACK[197] 1
+FEE_PORT[197] 1
+FEE_RACK[198] 1
+FEE_PORT[198] 1
+FEE_RACK[199] 1
+FEE_PORT[199] 1
+FEE_RACK[200] 1
+FEE_PORT[200] 1
+FEE_RACK[201] 1
+FEE_PORT[201] 1
+FEE_RACK[202] 1
+FEE_PORT[202] 1
+FEE_RACK[203] 1
+FEE_PORT[203] 1
+FEE_RACK[204] 1
+FEE_PORT[204] 1
+FEE_RACK[205] 1
+FEE_PORT[205] 1
+FEE_RACK[206] 1
+FEE_PORT[206] 1
+FEE_RACK[207] 1
+FEE_PORT[207] 1
+FEE_RACK[208] 1
+FEE_PORT[208] 1
+FEE_RACK[209] 1
+FEE_PORT[209] 1
+FEE_RACK[210] 1
+FEE_PORT[210] 1
+FEE_RACK[211] 1
+FEE_PORT[211] 1
+FEE_RACK[212] 1
+FEE_PORT[212] 1
+FEE_RACK[213] 1
+FEE_PORT[213] 1
+FEE_RACK[214] 1
+FEE_PORT[214] 1
+FEE_RACK[215] 1
+FEE_PORT[215] 1
+FEE_RACK[216] 1
+FEE_PORT[216] 1
+FEE_RACK[217] 1
+FEE_PORT[217] 1
+FEE_RACK[218] 1
+FEE_PORT[218] 1
+FEE_RACK[219] 1
+FEE_PORT[219] 1
+FEE_RACK[220] 1
+FEE_PORT[220] 1
+FEE_RACK[221] 1
+FEE_PORT[221] 1
+FEE_RACK[222] 1
+FEE_PORT[222] 1
+FEE_RACK[223] 1
+FEE_PORT[223] 1
+FEE_RACK[224] 1
+FEE_PORT[224] 1
+FEE_RACK[225] 1
+FEE_PORT[225] 1
+FEE_RACK[226] 1
+FEE_PORT[226] 1
+FEE_RACK[227] 1
+FEE_PORT[227] 1
+FEE_RACK[228] 1
+FEE_PORT[228] 1
+FEE_RACK[229] 1
+FEE_PORT[229] 1
+FEE_RACK[230] 1
+FEE_PORT[230] 1
+FEE_RACK[231] 1
+FEE_PORT[231] 1
+FEE_RACK[232] 1
+FEE_PORT[232] 1
+FEE_RACK[233] 1
+FEE_PORT[233] 1
+FEE_RACK[234] 1
+FEE_PORT[234] 1
+FEE_RACK[235] 1
+FEE_PORT[235] 1
+FEE_RACK[236] 1
+FEE_PORT[236] 1
+FEE_RACK[237] 1
+FEE_PORT[237] 1
+FEE_RACK[238] 1
+FEE_PORT[238] 1
+FEE_RACK[239] 1
+FEE_PORT[239] 1
+FEE_RACK[240] 1
+FEE_PORT[240] 1
+FEE_RACK[241] 1
+FEE_PORT[241] 1
+FEE_RACK[242] 1
+FEE_PORT[242] 1
+FEE_RACK[243] 1
+FEE_PORT[243] 1
+FEE_RACK[244] 1
+FEE_PORT[244] 1
+FEE_RACK[245] 1
+FEE_PORT[245] 1
+FEE_RACK[246] 1
+FEE_PORT[246] 1
+FEE_RACK[247] 1
+FEE_PORT[247] 1
+FEE_RACK[248] 1
+FEE_PORT[248] 1
+FEE_RACK[249] 1
+FEE_PORT[249] 1
+FEE_RACK[250] 1
+FEE_PORT[250] 1
+FEE_RACK[251] 1
+FEE_PORT[251] 1
+FEE_RACK[252] 1
+FEE_PORT[252] 1
+FEE_RACK[253] 1
+FEE_PORT[253] 1
+FEE_RACK[254] 1
+FEE_PORT[254] 1
+FEE_RACK[255] 1
+FEE_PORT[255] 1
+FEE_RACK[256] 1
+FEE_PORT[256] 1
+FEE_RACK[257] 1
+FEE_PORT[257] 1
+FEE_RACK[258] 1
+FEE_PORT[258] 1
+FEE_RACK[259] 1
+FEE_PORT[259] 1
+FEE_RACK[260] 1
+FEE_PORT[260] 1
+
+# ----------------------
+# --- RPD --------------
+# ----------------------
+N_RPD 520
+
+# RPD_ID[] will be set to "UNK" (no identification) for any cables #'s <= N_RPD not identified
+# *** RPD_ID[cable#] goes here:
+RPD_ID[1] EXK-001-138 (Gray)
+RPD_ID[2] EXK-001-138 (Black)
+RPD_ID[3] EXK-002-133 (Gray)
+RPD_ID[4] EXK-002-133 (Black)
+RPD_ID[5] EXK-003-134 (Gray)
+RPD_ID[6] EXK-003-134 (Black)
+RPD_ID[7] EXK-004-126 (Gray)
+RPD_ID[8] EXK-004-126 (Black)
+RPD_ID[9] EXK-005-117 (Gray)
+RPD_ID[10] EXK-005-117 (Black)
+RPD_ID[11] EXK-006-121 (Gray)
+RPD_ID[12] EXK-006-121 (Black)
+RPD_ID[13] EXK-007-105 (Gray)
+RPD_ID[14] EXK-007-105 (Black)
+RPD_ID[15] EXK-008-100 (Gray)
+RPD_ID[16] EXK-008-100 (Black)
+RPD_ID[17] EXK-009-091 (Gray)
+RPD_ID[18] EXK-009-091 (Black)
+RPD_ID[19] EXK-010-086 (Gray)
+RPD_ID[20] EXK-010-086 (Black)
+RPD_ID[21] EXK-011-096 (Gray)
+RPD_ID[22] EXK-011-096 (Black)
+RPD_ID[23] EXK-012-089 (Gray)
+RPD_ID[24] EXK-012-089 (Black)
+RPD_ID[25] EXK-013-083 (Gray)
+RPD_ID[26] EXK-013-083 (Black)
+RPD_ID[27] EXK-014-081 (Gray)
+RPD_ID[28] EXK-014-081 (Black)
+RPD_ID[29] EXK-015-082 (Gray)
+RPD_ID[30] EXK-015-082 (Black)
+RPD_ID[31] EXK-016-077 (Gray)
+RPD_ID[32] EXK-016-077 (Black)
+RPD_ID[33] EXK-017-076 (Gray)
+RPD_ID[34] EXK-017-076 (Black)
+RPD_ID[35] EXK-018-076 (Gray)
+RPD_ID[36] EXK-018-076 (Black)
+RPD_ID[37] EXK-019-074 (Gray)
+RPD_ID[38] EXK-019-074 (Black)
+RPD_ID[39] EXK-020-132 (Gray)
+RPD_ID[40] EXK-020-132 (Black)
+RPD_ID[41] EXK-021-141 (Gray)
+RPD_ID[42] EXK-021-141 (Black)
+RPD_ID[43] EXK-022-131 (Gray)
+RPD_ID[44] EXK-022-131 (Black)
+RPD_ID[45] EXK-023-137 (Gray)
+RPD_ID[46] EXK-023-137 (Black)
+RPD_ID[47] EXK-024-133 (Gray)
+RPD_ID[48] EXK-024-133 (Black)
+RPD_ID[49] EXK-025-122 (Gray)
+RPD_ID[50] EXK-025-122 (Black)
+RPD_ID[51] EXK-026-124 (Gray)
+RPD_ID[52] EXK-026-124 (Black)
+RPD_ID[53] EXK-027-120 (Gray)
+RPD_ID[54] EXK-027-120 (Black)
+RPD_ID[55] EXK-028-116 (Gray)
+RPD_ID[56] EXK-028-116 (Black)
+RPD_ID[57] EXK-029-119 (Gray)
+RPD_ID[58] EXK-029-119 (Black)
+RPD_ID[59] EXK-030-119 (Gray)
+RPD_ID[60] EXK-030-119 (Black)
+RPD_ID[61] EXK-031-120 (Gray)
+RPD_ID[62] EXK-031-120 (Black)
+RPD_ID[63] EXK-032-105 (Gray)
+RPD_ID[64] EXK-032-105 (Black)
+RPD_ID[65] EXK-033-103 (Gray)
+RPD_ID[66] EXK-033-103 (Black)
+RPD_ID[67] EXK-034-092 (Gray)
+RPD_ID[68] EXK-034-092 (Black)
+
+# FIXME
+# This is the *real* Stand #35
+#RPD_ID[69] EXK-035-099 (Gray)
+#RPD_ID[70] EXK-035-099 (Black)
+# This is LEDA Outrigger #5
+RPD_ID[69] 5
+RPD_ID[70] 5
+
+RPD_ID[71] EXK-036-088 (Gray)
+RPD_ID[72] EXK-036-088 (Black)
+RPD_ID[73] EXK-037-101 (Gray)
+RPD_ID[74] EXK-037-101 (Black)
+RPD_ID[75] EXK-038-083 (Gray)
+RPD_ID[76] EXK-038-083 (Black)
+RPD_ID[77] EXK-039-100 (Gray)
+RPD_ID[78] EXK-039-100 (Black)
+RPD_ID[79] EXK-040-094 (Gray)
+RPD_ID[80] EXK-040-094 (Black)
+RPD_ID[81] EXK-041-093 (Gray)
+RPD_ID[82] EXK-041-093 (Black)
+RPD_ID[83] EXK-042-082 (Gray)
+RPD_ID[84] EXK-042-082 (Black)
+RPD_ID[85] EXK-043-092 (Gray)
+RPD_ID[86] EXK-043-092 (Black)
+RPD_ID[87] EXK-044-079 (Gray)
+RPD_ID[88] EXK-044-079 (Black)
+RPD_ID[89] EXK-045-097 (Gray)
+RPD_ID[90] EXK-045-097 (Black)
+RPD_ID[91] EXK-046-076 (Gray)
+RPD_ID[92] EXK-046-076 (Black)
+RPD_ID[93] EXK-047-091 (Gray)
+RPD_ID[94] EXK-047-091 (Black)
+RPD_ID[95] EXK-048-071 (Gray)
+RPD_ID[96] EXK-048-071 (Black)
+RPD_ID[97] EXK-049-087 (Gray)
+RPD_ID[98] EXK-049-087 (Black)
+RPD_ID[99] EXK-050-076 (Gray)
+RPD_ID[100] EXK-050-076 (Black)
+RPD_ID[101] EXK-051-101 (Gray)
+RPD_ID[102] EXK-051-101 (Black)
+RPD_ID[103] EXK-052-071 (Gray)
+RPD_ID[104] EXK-052-071 (Black)
+RPD_ID[105] EXK-053-081 (Gray)
+RPD_ID[106] EXK-053-081 (Black)
+RPD_ID[107] EXK-054-064 (Gray)
+RPD_ID[108] EXK-054-064 (Black)
+RPD_ID[109] EXK-055-078 (Gray)
+RPD_ID[110] EXK-055-078 (Black)
+RPD_ID[111] EXK-056-129 (Gray)
+RPD_ID[112] EXK-056-129 (Black)
+RPD_ID[113] EXK-057-143 (Gray)
+RPD_ID[114] EXK-057-143 (Black)
+RPD_ID[115] EXK-058-126 (Gray)
+RPD_ID[116] EXK-058-126 (Black)
+RPD_ID[117] EXK-059-134 (Gray)
+RPD_ID[118] EXK-059-134 (Black)
+RPD_ID[119] EXK-060-131 (Gray)
+RPD_ID[120] EXK-060-131 (Black)
+RPD_ID[121] EXK-061-130 (Gray)
+RPD_ID[122] EXK-061-130 (Black)
+RPD_ID[123] EXK-062-113 (Gray)
+RPD_ID[124] EXK-062-113 (Black)
+RPD_ID[125] EXK-063-127 (Gray)
+RPD_ID[126] EXK-063-127 (Black)
+RPD_ID[127] EXK-064-113 (Gray)
+RPD_ID[128] EXK-064-113 (Black)
+RPD_ID[129] EXK-065-116 (Gray)
+RPD_ID[130] EXK-065-116 (Black)
+RPD_ID[131] EXK-066-105 (Gray)
+RPD_ID[132] EXK-066-105 (Black)
+RPD_ID[133] EXK-067-113 (Gray)
+RPD_ID[134] EXK-067-113 (Black)
+RPD_ID[135] EXK-068-094 (Gray)
+RPD_ID[136] EXK-068-094 (Black)
+RPD_ID[137] EXK-069-106 (Gray)
+RPD_ID[138] EXK-069-106 (Black)
+RPD_ID[139] EXK-070-091 (Gray)
+RPD_ID[140] EXK-070-091 (Black)
+RPD_ID[141] EXK-071-105 (Gray)
+RPD_ID[142] EXK-071-105 (Black)
+RPD_ID[143] EXK-072-086 (Gray)
+RPD_ID[144] EXK-072-086 (Black)
+RPD_ID[145] EXK-073-114 (Gray)
+RPD_ID[146] EXK-073-114 (Black)
+RPD_ID[147] EXK-074-084 (Gray)
+RPD_ID[148] EXK-074-084 (Black)
+RPD_ID[149] EXK-075-097 (Gray)
+RPD_ID[150] EXK-075-097 (Black)
+RPD_ID[151] EXK-076-074 (Gray)
+RPD_ID[152] EXK-076-074 (Black)
+RPD_ID[153] EXK-077-095 (Gray)
+RPD_ID[154] EXK-077-095 (Black)
+RPD_ID[155] EXK-078-081 (Gray)
+RPD_ID[156] EXK-078-081 (Black)
+RPD_ID[157] EXK-079-106 (Gray)
+RPD_ID[158] EXK-079-106 (Black)
+RPD_ID[159] EXK-080-078 (Gray)
+RPD_ID[160] EXK-080-078 (Black)
+RPD_ID[161] EXK-081-094 (Gray)
+RPD_ID[162] EXK-081-094 (Black)
+RPD_ID[163] EXK-082-066 (Gray)
+RPD_ID[164] EXK-082-066 (Black)
+RPD_ID[165] EXK-083-091 (Gray)
+RPD_ID[166] EXK-083-091 (Black)
+RPD_ID[167] EXK-084-063 (Gray)
+RPD_ID[168] EXK-084-063 (Black)
+RPD_ID[169] EXK-085-089 (Gray)
+RPD_ID[170] EXK-085-089 (Black)
+RPD_ID[171] EXK-086-076 (Gray)
+RPD_ID[172] EXK-086-076 (Black)
+RPD_ID[173] EXK-087-095 (Gray)
+RPD_ID[174] EXK-087-095 (Black)
+RPD_ID[175] EXK-088-057 (Gray)
+RPD_ID[176] EXK-088-057 (Black)
+RPD_ID[177] EXK-089-086 (Gray)
+RPD_ID[178] EXK-089-086 (Black)
+RPD_ID[179] EXK-090-124 (Gray)
+RPD_ID[180] EXK-090-124 (Black)
+RPD_ID[181] EXK-091-137 (Gray)
+RPD_ID[182] EXK-091-137 (Black)
+RPD_ID[183] EXK-092-126 (Gray)
+RPD_ID[184] EXK-092-126 (Black)
+RPD_ID[185] EXK-093-133 (Gray)
+RPD_ID[186] EXK-093-133 (Black)
+RPD_ID[187] EXK-094-110 (Gray)
+RPD_ID[188] EXK-094-110 (Black)
+RPD_ID[189] EXK-095-132 (Gray)
+RPD_ID[190] EXK-095-132 (Black)
+RPD_ID[191] EXK-096-107 (Gray)
+RPD_ID[192] EXK-096-107 (Black)
+RPD_ID[193] EXK-097-123 (Gray)
+RPD_ID[194] EXK-097-123 (Black)
+RPD_ID[195] EXK-098-100 (Gray)
+RPD_ID[196] EXK-098-100 (Black)
+RPD_ID[197] EXK-099-114 (Gray)
+RPD_ID[198] EXK-099-114 (Black)
+RPD_ID[199] EXK-100-091 (Gray)
+RPD_ID[200] EXK-100-091 (Black)
+RPD_ID[201] EXK-101-113 (Gray)
+RPD_ID[202] EXK-101-113 (Black)
+RPD_ID[203] EXK-102-089 (Gray)
+RPD_ID[204] EXK-102-089 (Black)
+RPD_ID[205] EXK-103-111 (Gray)
+RPD_ID[206] EXK-103-111 (Black)
+RPD_ID[207] EXK-104-085 (Gray)
+RPD_ID[208] EXK-104-085 (Black)
+RPD_ID[209] EXK-105-113 (Gray)
+RPD_ID[210] EXK-105-113 (Black)
+RPD_ID[211] EXK-106-086 (Gray)
+RPD_ID[212] EXK-106-086 (Black)
+RPD_ID[213] EXK-107-114 (Gray)
+RPD_ID[214] EXK-107-114 (Black)
+RPD_ID[215] EXK-108-073 (Gray)
+RPD_ID[216] EXK-108-073 (Black)
+RPD_ID[217] EXK-109-100 (Gray)
+RPD_ID[218] EXK-109-100 (Black)
+RPD_ID[219] EXK-110-069 (Gray)
+RPD_ID[220] EXK-110-069 (Black)
+RPD_ID[221] EXK-111-105 (Gray)
+RPD_ID[222] EXK-111-105 (Black)
+RPD_ID[223] EXK-112-082 (Gray)
+RPD_ID[224] EXK-112-082 (Black)
+RPD_ID[225] EXK-113-102 (Gray)
+RPD_ID[226] EXK-113-102 (Black)
+RPD_ID[227] EXK-114-066 (Gray)
+RPD_ID[228] EXK-114-066 (Black)
+RPD_ID[229] EXK-115-096 (Gray)
+RPD_ID[230] EXK-115-096 (Black)
+RPD_ID[231] EXK-116-061 (Gray)
+RPD_ID[232] EXK-116-061 (Black)
+RPD_ID[233] EXK-117-094 (Gray)
+RPD_ID[234] EXK-117-094 (Black)
+RPD_ID[235] EXK-118-067 (Gray)
+RPD_ID[236] EXK-118-067 (Black)
+RPD_ID[237] EXK-119-095 (Gray)
+RPD_ID[238] EXK-119-095 (Black)
+RPD_ID[239] EXK-120-062 (Gray)
+RPD_ID[240] EXK-120-062 (Black)
+RPD_ID[241] EXK-121-094 (Gray)
+RPD_ID[242] EXK-121-094 (Black)
+RPD_ID[243] EXK-122-129 (Gray)
+RPD_ID[244] EXK-122-129 (Black)
+RPD_ID[245] EXK-123-142 (Gray)
+RPD_ID[246] EXK-123-142 (Black)
+RPD_ID[247] EXK-124-114 (Gray)
+RPD_ID[248] EXK-124-114 (Black)
+RPD_ID[249] EXK-125-140 (Gray)
+RPD_ID[250] EXK-125-140 (Black)
+RPD_ID[251] EXK-126-110 (Gray)
+RPD_ID[252] EXK-126-110 (Black)
+RPD_ID[253] EXK-127-127 (Gray)
+RPD_ID[254] EXK-127-127 (Black)
+RPD_ID[255] EXK-128-098 (Gray)
+RPD_ID[256] EXK-128-098 (Black)
+RPD_ID[257] EXK-129-119 (Gray)
+RPD_ID[258] EXK-129-119 (Black)
+RPD_ID[259] EXK-130-096 (Gray)
+RPD_ID[260] EXK-130-096 (Black)
+RPD_ID[261] EXK-131-118 (Gray)
+RPD_ID[262] EXK-131-118 (Black)
+RPD_ID[263] EXK-132-090 (Gray)
+RPD_ID[264] EXK-132-090 (Black)
+RPD_ID[265] EXK-133-119 (Gray)
+RPD_ID[266] EXK-133-119 (Black)
+RPD_ID[267] EXK-134-083 (Gray)
+RPD_ID[268] EXK-134-083 (Black)
+RPD_ID[269] EXK-135-115 (Gray)
+RPD_ID[270] EXK-135-115 (Black)
+RPD_ID[271] EXK-136-081 (Gray)
+RPD_ID[272] EXK-136-081 (Black)
+RPD_ID[273] EXK-137-111 (Gray)
+RPD_ID[274] EXK-137-111 (Black)
+RPD_ID[275] EXK-138-077 (Gray)
+RPD_ID[276] EXK-138-077 (Black)
+RPD_ID[277] EXK-139-121 (Gray)
+RPD_ID[278] EXK-139-121 (Black)
+RPD_ID[279] EXK-140-068 (Gray)
+RPD_ID[280] EXK-140-068 (Black)
+RPD_ID[281] EXK-141-110 (Gray)
+RPD_ID[282] EXK-141-110 (Black)
+RPD_ID[283] EXK-142-064 (Gray)
+RPD_ID[284] EXK-142-064 (Black)
+RPD_ID[285] EXK-143-106 (Gray)
+RPD_ID[286] EXK-143-106 (Black)
+RPD_ID[287] EXK-144-070 (Gray)
+RPD_ID[288] EXK-144-070 (Black)
+RPD_ID[289] EXK-145-114 (Gray)
+RPD_ID[290] EXK-145-114 (Black)
+RPD_ID[291] EXK-146-067 (Gray)
+RPD_ID[292] EXK-146-067 (Black)
+RPD_ID[293] EXK-147-108 (Gray)
+RPD_ID[294] EXK-147-108 (Black)
+RPD_ID[295] EXK-148-066 (Gray)
+RPD_ID[296] EXK-148-066 (Black)
+RPD_ID[297] EXK-149-099 (Gray)
+RPD_ID[298] EXK-149-099 (Black)
+RPD_ID[299] EXK-150-069 (Gray)
+RPD_ID[300] EXK-150-069 (Black)
+RPD_ID[301] EXK-151-101 (Gray)
+RPD_ID[302] EXK-151-101 (Black)
+RPD_ID[303] EXK-152-109 (Gray)
+RPD_ID[304] EXK-152-109 (Black)
+RPD_ID[305] EXK-153-136 (Gray)
+RPD_ID[306] EXK-153-136 (Black)
+RPD_ID[307] EXK-154-106 (Gray)
+RPD_ID[308] EXK-154-106 (Black)
+RPD_ID[309] EXK-155-129 (Gray)
+RPD_ID[310] EXK-155-129 (Black)
+RPD_ID[311] EXK-156-102 (Gray)
+RPD_ID[312] EXK-156-102 (Black)
+RPD_ID[313] EXK-157-123 (Gray)
+RPD_ID[314] EXK-157-123 (Black)
+RPD_ID[315] EXK-158-094 (Gray)
+RPD_ID[316] EXK-158-094 (Black)
+RPD_ID[317] EXK-159-127 (Gray)
+RPD_ID[318] EXK-159-127 (Black)
+RPD_ID[319] EXK-160-090 (Gray)
+RPD_ID[320] EXK-160-090 (Black)
+RPD_ID[321] EXK-161-123 (Gray)
+RPD_ID[322] EXK-161-123 (Black)
+RPD_ID[323] EXK-162-087 (Gray)
+RPD_ID[324] EXK-162-087 (Black)
+RPD_ID[325] EXK-163-120 (Gray)
+RPD_ID[326] EXK-163-120 (Black)
+RPD_ID[327] EXK-164-083 (Gray)
+RPD_ID[328] EXK-164-083 (Black)
+RPD_ID[329] EXK-165-120 (Gray)
+RPD_ID[330] EXK-165-120 (Black)
+RPD_ID[331] EXK-166-072 (Gray)
+RPD_ID[332] EXK-166-072 (Black)
+RPD_ID[333] EXK-167-122 (Gray)
+RPD_ID[334] EXK-167-122 (Black)
+RPD_ID[335] EXK-168-070 (Gray)
+RPD_ID[336] EXK-168-070 (Black)
+RPD_ID[337] EXK-169-120 (Gray)
+RPD_ID[338] EXK-169-120 (Black)
+RPD_ID[339] EXK-170-065 (Gray)
+RPD_ID[340] EXK-170-065 (Black)
+RPD_ID[341] EXK-171-111 (Gray)
+RPD_ID[342] EXK-171-111 (Black)
+RPD_ID[343] EXK-172-052 (Gray)
+RPD_ID[344] EXK-172-052 (Black)
+RPD_ID[345] EXK-173-115 (Gray)
+RPD_ID[346] EXK-173-115 (Black)
+RPD_ID[347] EXK-174-051 (Gray)
+RPD_ID[348] EXK-174-051 (Black)
+RPD_ID[349] EXK-175-110 (Gray)
+RPD_ID[350] EXK-175-110 (Black)
+RPD_ID[351] EXK-176-047 (Gray)
+RPD_ID[352] EXK-176-047 (Black)
+RPD_ID[353] EXK-177-107 (Gray)
+RPD_ID[354] EXK-177-107 (Black)
+RPD_ID[355] EXK-178-050 (Gray)
+RPD_ID[356] EXK-178-050 (Black)
+RPD_ID[357] EXK-179-113 (Gray)
+RPD_ID[358] EXK-179-113 (Black)
+RPD_ID[359] EXK-180-108 (Gray)
+RPD_ID[360] EXK-180-108 (Black)
+RPD_ID[361] EXK-181-141 (Gray)
+RPD_ID[362] EXK-181-141 (Black)
+RPD_ID[363] EXK-182-101 (Gray)
+RPD_ID[364] EXK-182-101 (Black)
+RPD_ID[365] EXK-183-139 (Gray)
+RPD_ID[366] EXK-183-139 (Black)
+RPD_ID[367] EXK-184-099 (Gray)
+RPD_ID[368] EXK-184-099 (Black)
+RPD_ID[369] EXK-185-132 (Gray)
+RPD_ID[370] EXK-185-132 (Black)
+RPD_ID[371] EXK-186-091 (Gray)
+RPD_ID[372] EXK-186-091 (Black)
+RPD_ID[373] EXK-187-130 (Gray)
+RPD_ID[374] EXK-187-130 (Black)
+RPD_ID[375] EXK-188-083 (Gray)
+RPD_ID[376] EXK-188-083 (Black)
+RPD_ID[377] EXK-189-131 (Gray)
+RPD_ID[378] EXK-189-131 (Black)
+RPD_ID[379] EXK-190-088 (Gray)
+RPD_ID[380] EXK-190-088 (Black)
+RPD_ID[381] EXK-191-136 (Gray)
+RPD_ID[382] EXK-191-136 (Black)
+RPD_ID[383] EXK-192-072 (Gray)
+RPD_ID[384] EXK-192-072 (Black)
+RPD_ID[385] EXK-193-124 (Gray)
+RPD_ID[386] EXK-193-124 (Black)
+RPD_ID[387] EXK-194-067 (Gray)
+RPD_ID[388] EXK-194-067 (Black)
+RPD_ID[389] EXK-195-119 (Gray)
+RPD_ID[390] EXK-195-119 (Black)
+RPD_ID[391] EXK-196-062 (Gray)
+RPD_ID[392] EXK-196-062 (Black)
+RPD_ID[393] EXK-197-131 (Gray)
+RPD_ID[394] EXK-197-131 (Black)
+RPD_ID[395] EXK-198-060 (Gray)
+RPD_ID[396] EXK-198-060 (Black)
+RPD_ID[397] EXK-199-128 (Gray)
+RPD_ID[398] EXK-199-128 (Black)
+RPD_ID[399] EXK-200-046 (Gray)
+RPD_ID[400] EXK-200-046 (Black)
+RPD_ID[401] EXK-201-114 (Gray)
+RPD_ID[402] EXK-201-114 (Black)
+RPD_ID[403] EXK-202-044 (Gray)
+RPD_ID[404] EXK-202-044 (Black)
+RPD_ID[405] EXK-203-111 (Gray)
+RPD_ID[406] EXK-203-111 (Black)
+RPD_ID[407] EXK-204-049 (Gray)
+RPD_ID[408] EXK-204-049 (Black)
+RPD_ID[409] EXK-205-117 (Gray)
+RPD_ID[410] EXK-205-117 (Black)
+RPD_ID[411] EXK-206-141 (Gray)
+RPD_ID[412] EXK-206-141 (Black)
+RPD_ID[413] EXK-207-100 (Gray)
+RPD_ID[414] EXK-207-100 (Black)
+RPD_ID[415] EXK-208-145 (Gray)
+RPD_ID[416] EXK-208-145 (Black)
+RPD_ID[417] EXK-209-092 (Gray)
+RPD_ID[418] EXK-209-092 (Black)
+RPD_ID[419] EXK-210-137 (Gray)
+RPD_ID[420] EXK-210-137 (Black)
+RPD_ID[421] EXK-211-082 (Gray)
+RPD_ID[422] EXK-211-082 (Black)
+RPD_ID[423] EXK-212-133 (Gray)
+RPD_ID[424] EXK-212-133 (Black)
+RPD_ID[425] EXK-213-077 (Gray)
+RPD_ID[426] EXK-213-077 (Black)
+RPD_ID[427] EXK-214-135 (Gray)
+RPD_ID[428] EXK-214-135 (Black)
+RPD_ID[429] EXK-215-073 (Gray)
+RPD_ID[430] EXK-215-073 (Black)
+RPD_ID[431] EXK-216-129 (Gray)
+RPD_ID[432] EXK-216-129 (Black)
+RPD_ID[433] EXK-217-071 (Gray)
+RPD_ID[434] EXK-217-071 (Black)
+RPD_ID[435] EXK-218-127 (Gray)
+RPD_ID[436] EXK-218-127 (Black)
+RPD_ID[437] EXK-219-058 (Gray)
+RPD_ID[438] EXK-219-058 (Black)
+RPD_ID[439] EXK-220-126 (Gray)
+RPD_ID[440] EXK-220-126 (Black)
+RPD_ID[441] EXK-221-053 (Gray)
+RPD_ID[442] EXK-221-053 (Black)
+RPD_ID[443] EXK-222-129 (Gray)
+RPD_ID[444] EXK-222-129 (Black)
+RPD_ID[445] EXK-223-057 (Gray)
+RPD_ID[446] EXK-223-057 (Black)
+RPD_ID[447] EXK-224-123 (Gray)
+RPD_ID[448] EXK-224-123 (Black)
+RPD_ID[449] EXK-225-043 (Gray)
+RPD_ID[450] EXK-225-043 (Black)
+RPD_ID[451] EXK-226-116 (Gray)
+RPD_ID[452] EXK-226-116 (Black)
+RPD_ID[453] EXK-227-094 (Gray)
+RPD_ID[454] EXK-227-094 (Black)
+RPD_ID[455] EXK-228-140 (Gray)
+RPD_ID[456] EXK-228-140 (Black)
+RPD_ID[457] EXK-229-089 (Gray)
+RPD_ID[458] EXK-229-089 (Black)
+RPD_ID[459] EXK-230-139 (Gray)
+RPD_ID[460] EXK-230-139 (Black)
+RPD_ID[461] EXK-231-085 (Gray)
+RPD_ID[462] EXK-231-085 (Black)
+RPD_ID[463] EXK-232-144 (Gray)
+RPD_ID[464] EXK-232-144 (Black)
+RPD_ID[465] EXK-233-076 (Gray)
+RPD_ID[466] EXK-233-076 (Black)
+RPD_ID[467] EXK-234-138 (Gray)
+RPD_ID[468] EXK-234-138 (Black)
+RPD_ID[469] EXK-235-071 (Gray)
+RPD_ID[470] EXK-235-071 (Black)
+RPD_ID[471] EXK-236-141 (Gray)
+RPD_ID[472] EXK-236-141 (Black)
+RPD_ID[473] EXK-237-065 (Gray)
+RPD_ID[474] EXK-237-065 (Black)
+RPD_ID[475] EXK-238-146 (Gray)
+RPD_ID[476] EXK-238-146 (Black)
+RPD_ID[477] EXK-239-055 (Gray)
+RPD_ID[478] EXK-239-055 (Black)
+RPD_ID[479] EXK-240-134 (Gray)
+RPD_ID[480] EXK-240-134 (Black)
+RPD_ID[481] EXK-241-052 (Gray)
+RPD_ID[482] EXK-241-052 (Black)
+RPD_ID[483] EXK-242-125 (Gray)
+RPD_ID[484] EXK-242-125 (Black)
+RPD_ID[485] EXK-243-057 (Gray)
+RPD_ID[486] EXK-243-057 (Black)
+RPD_ID[487] EXK-244-125 (Gray)
+RPD_ID[488] EXK-244-125 (Black)
+RPD_ID[489] EXK-245-085 (Gray)
+RPD_ID[490] EXK-245-085 (Black)
+RPD_ID[491] EXK-246-149 (Gray)
+RPD_ID[492] EXK-246-149 (Black)
+RPD_ID[493] EXK-247-081 (Gray)
+RPD_ID[494] EXK-247-081 (Black)
+RPD_ID[495] EXK-248-145 (Gray)
+RPD_ID[496] EXK-248-145 (Black)
+RPD_ID[497] EXK-249-076 (Gray)
+RPD_ID[498] EXK-249-076 (Black)
+RPD_ID[499] EXK-250-145 (Gray)
+RPD_ID[500] EXK-250-145 (Black)
+RPD_ID[501] EXK-251-063 (Gray)
+RPD_ID[502] EXK-251-063 (Black)
+RPD_ID[503] EXK-252-147 (Gray)
+RPD_ID[504] EXK-252-147 (Black)
+RPD_ID[505] EXK-253-059 (Gray)
+RPD_ID[506] EXK-253-059 (Black)
+RPD_ID[507] EXK-254-134 (Gray)
+RPD_ID[508] EXK-254-134 (Black)
+RPD_ID[509] EXK-255-057 (Gray)
+RPD_ID[510] EXK-255-057 (Black)
+RPD_ID[511] EXK-256-131 (Gray)
+RPD_ID[512] EXK-256-131 (Black)
+RPD_ID[513] 1 # (LEDA Outrigger #1)
+RPD_ID[514] 1
+
+# FIXME
+RPD_ID[515] UNK # no labels for stand 258 (RTA / LEDA Outrigger #4
+RPD_ID[516] UNK # no labels for stand 258 
+
+RPD_ID[517] 3 # (LEDA Outrigger #3)
+RPD_ID[518] 3
+RPD_ID[519] 2 # (LEDA Outrigger #2)
+RPD_ID[520] 2
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
+# *** RPD_STAT[cable#] goes here:
+
+# This will be set to 1 for any cables not identified below
+# You should set it to 0 if different / not known, or >1 if appropriate
+# "2" is LMR400
+# *** RPD_DESI[cable#] goes here:
+# Stand 35 (as LEDA Outrigger #5):
+RPD_DESI[69] 2
+RPD_DESI[70] 2
+# Stand 257:
+RPD_DESI[513] 2
+RPD_DESI[514] 2
+# Stand 258: 
+RPD_DESI[515] 2 # LMR400 (with some short jumpers near shelter)
+RPD_DESI[516] 2 # LMR400 (with some short jumpers near shelter)
+# Stand 259:
+RPD_DESI[517] 2
+RPD_DESI[518] 2
+# Stand 260:
+RPD_DESI[519] 2
+RPD_DESI[520] 2
+
+# RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
+# *** RPD_LENG[cable#] [m] goes here:
+RPD_LENG[1] 138.00
+RPD_LENG[2] 138.00
+RPD_LENG[3] 133.00
+RPD_LENG[4] 133.00
+RPD_LENG[5] 134.00
+RPD_LENG[6] 134.00
+RPD_LENG[7] 126.00
+RPD_LENG[8] 126.00
+RPD_LENG[9] 117.00
+RPD_LENG[10] 117.00
+RPD_LENG[11] 121.00
+RPD_LENG[12] 121.00
+RPD_LENG[13] 105.00
+RPD_LENG[14] 105.00
+RPD_LENG[15] 100.00
+RPD_LENG[16] 100.00
+RPD_LENG[17]  91.00
+RPD_LENG[18]  91.00
+RPD_LENG[19]  86.00
+RPD_LENG[20]  86.00
+RPD_LENG[21]  96.00
+RPD_LENG[22]  96.00
+RPD_LENG[23]  89.00
+RPD_LENG[24]  89.00
+RPD_LENG[25]  83.00
+RPD_LENG[26]  83.00
+RPD_LENG[27]  81.00
+RPD_LENG[28]  81.00
+RPD_LENG[29]  82.00
+RPD_LENG[30]  82.00
+RPD_LENG[31]  77.00
+RPD_LENG[32]  77.00
+RPD_LENG[33]  76.00
+RPD_LENG[34]  76.00
+RPD_LENG[35]  76.00
+RPD_LENG[36]  76.00
+RPD_LENG[37]  74.00
+RPD_LENG[38]  74.00
+RPD_LENG[39] 132.00
+RPD_LENG[40] 132.00
+RPD_LENG[41] 141.00
+RPD_LENG[42] 141.00
+RPD_LENG[43] 131.00
+RPD_LENG[44] 131.00
+RPD_LENG[45] 137.00
+RPD_LENG[46] 137.00
+RPD_LENG[47] 133.00
+RPD_LENG[48] 133.00
+RPD_LENG[49] 122.00
+RPD_LENG[50] 122.00
+RPD_LENG[51] 124.00
+RPD_LENG[52] 124.00
+RPD_LENG[53] 120.00
+RPD_LENG[54] 120.00
+RPD_LENG[55] 116.00
+RPD_LENG[56] 116.00
+RPD_LENG[57] 119.00
+RPD_LENG[58] 119.00
+RPD_LENG[59] 119.00
+RPD_LENG[60] 119.00
+RPD_LENG[61] 120.00
+RPD_LENG[62] 120.00
+RPD_LENG[63] 105.00
+RPD_LENG[64] 105.00
+RPD_LENG[65] 103.00
+RPD_LENG[66] 103.00
+RPD_LENG[67]  92.00
+RPD_LENG[68]  92.00
+
+# FIXME
+# This is the *real* Stand #35
+#RPD_LENG[69]  99.00
+#RPD_LENG[70]  99.00
+# FIXME
+# Stand 35 (LEDA Outrigger #5):
+# Measured by J. Craig on January 9, 2013 to have delays of 2.000 and 1.994
+# ... microseconds.  See the section on the RTA cable for details of the 
+# ... length determination.
+RPD_LENG[69] 254.244  # JD's guess; see comment above
+RPD_LENG[70] 253.481  # JD's guess; see comment above
+
+RPD_LENG[71]  88.00
+RPD_LENG[72]  88.00
+RPD_LENG[73] 101.00
+RPD_LENG[74] 101.00
+RPD_LENG[75]  83.00
+RPD_LENG[76]  83.00
+RPD_LENG[77] 100.00
+RPD_LENG[78] 100.00
+RPD_LENG[79]  94.00
+RPD_LENG[80]  94.00
+RPD_LENG[81]  93.00
+RPD_LENG[82]  93.00
+RPD_LENG[83]  82.00
+RPD_LENG[84]  82.00
+RPD_LENG[85]  92.00
+RPD_LENG[86]  92.00
+RPD_LENG[87]  79.00
+RPD_LENG[88]  79.00
+RPD_LENG[89]  97.00
+RPD_LENG[90]  97.00
+RPD_LENG[91]  76.00
+RPD_LENG[92]  76.00
+RPD_LENG[93]  91.00
+RPD_LENG[94]  91.00
+RPD_LENG[95]  71.00
+RPD_LENG[96]  71.00
+RPD_LENG[97]  87.00
+RPD_LENG[98]  87.00
+RPD_LENG[99]  76.00
+RPD_LENG[100]  76.00
+RPD_LENG[101] 101.00
+RPD_LENG[102] 101.00
+RPD_LENG[103]  71.00
+RPD_LENG[104]  71.00
+RPD_LENG[105]  81.00
+RPD_LENG[106]  81.00
+RPD_LENG[107]  64.00
+RPD_LENG[108]  64.00
+RPD_LENG[109]  78.00
+RPD_LENG[110]  78.00
+RPD_LENG[111] 129.00
+RPD_LENG[112] 129.00
+RPD_LENG[113] 143.00
+RPD_LENG[114] 143.00
+RPD_LENG[115] 126.00
+RPD_LENG[116] 126.00
+RPD_LENG[117] 134.00
+RPD_LENG[118] 134.00
+RPD_LENG[119] 131.00
+RPD_LENG[120] 131.00
+RPD_LENG[121] 130.00
+RPD_LENG[122] 130.00
+RPD_LENG[123] 113.00
+RPD_LENG[124] 113.00
+RPD_LENG[125] 127.00
+RPD_LENG[126] 127.00
+RPD_LENG[127] 113.00
+RPD_LENG[128] 113.00
+RPD_LENG[129] 116.00
+RPD_LENG[130] 116.00
+RPD_LENG[131] 105.00
+RPD_LENG[132] 105.00
+RPD_LENG[133] 113.00
+RPD_LENG[134] 113.00
+RPD_LENG[135]  94.00
+RPD_LENG[136]  94.00
+RPD_LENG[137] 106.00
+RPD_LENG[138] 106.00
+RPD_LENG[139]  91.00
+RPD_LENG[140]  91.00
+RPD_LENG[141] 105.00
+RPD_LENG[142] 105.00
+RPD_LENG[143]  86.00
+RPD_LENG[144]  86.00
+RPD_LENG[145] 114.00
+RPD_LENG[146] 114.00
+RPD_LENG[147]  84.00
+RPD_LENG[148]  84.00
+RPD_LENG[149]  97.00
+RPD_LENG[150]  97.00
+RPD_LENG[151]  74.00
+RPD_LENG[152]  74.00
+RPD_LENG[153]  95.00
+RPD_LENG[154]  95.00
+RPD_LENG[155]  81.00
+RPD_LENG[156]  81.00
+RPD_LENG[157] 106.00
+RPD_LENG[158] 106.00
+RPD_LENG[159]  78.00
+RPD_LENG[160]  78.00
+RPD_LENG[161]  94.00
+RPD_LENG[162]  94.00
+RPD_LENG[163]  66.00
+RPD_LENG[164]  66.00
+RPD_LENG[165]  91.00
+RPD_LENG[166]  91.00
+RPD_LENG[167]  63.00
+RPD_LENG[168]  63.00
+RPD_LENG[169]  89.00
+RPD_LENG[170]  89.00
+RPD_LENG[171]  76.00
+RPD_LENG[172]  76.00
+RPD_LENG[173]  95.00
+RPD_LENG[174]  95.00
+RPD_LENG[175]  57.00
+RPD_LENG[176]  57.00
+RPD_LENG[177]  86.00
+RPD_LENG[178]  86.00
+RPD_LENG[179] 124.00
+RPD_LENG[180] 124.00
+RPD_LENG[181] 137.00
+RPD_LENG[182] 137.00
+RPD_LENG[183] 126.00
+RPD_LENG[184] 126.00
+RPD_LENG[185] 133.00
+RPD_LENG[186] 133.00
+RPD_LENG[187] 110.00
+RPD_LENG[188] 110.00
+RPD_LENG[189] 132.00
+RPD_LENG[190] 132.00
+RPD_LENG[191] 107.00
+RPD_LENG[192] 107.00
+RPD_LENG[193] 123.00
+RPD_LENG[194] 123.00
+RPD_LENG[195] 100.00
+RPD_LENG[196] 100.00
+RPD_LENG[197] 114.00
+RPD_LENG[198] 114.00
+RPD_LENG[199]  91.00
+RPD_LENG[200]  91.00
+RPD_LENG[201] 113.00
+RPD_LENG[202] 113.00
+RPD_LENG[203]  89.00
+RPD_LENG[204]  89.00
+RPD_LENG[205] 111.00
+RPD_LENG[206] 111.00
+RPD_LENG[207]  85.00
+RPD_LENG[208]  85.00
+RPD_LENG[209] 113.00
+RPD_LENG[210] 113.00
+RPD_LENG[211]  86.00
+RPD_LENG[212]  86.00
+RPD_LENG[213] 114.00
+RPD_LENG[214] 114.00
+RPD_LENG[215]  73.00
+RPD_LENG[216]  73.00
+RPD_LENG[217] 100.00
+RPD_LENG[218] 100.00
+RPD_LENG[219]  69.00
+RPD_LENG[220]  69.00
+RPD_LENG[221] 105.00
+RPD_LENG[222] 105.00
+RPD_LENG[223]  82.00
+RPD_LENG[224]  82.00
+RPD_LENG[225] 102.00
+RPD_LENG[226] 102.00
+RPD_LENG[227]  66.00
+RPD_LENG[228]  66.00
+RPD_LENG[229]  96.00
+RPD_LENG[230]  96.00
+RPD_LENG[231]  61.00
+RPD_LENG[232]  61.00
+RPD_LENG[233]  94.00
+RPD_LENG[234]  94.00
+RPD_LENG[235]  67.00
+RPD_LENG[236]  67.00
+RPD_LENG[237]  95.00
+RPD_LENG[238]  95.00
+RPD_LENG[239]  62.00
+RPD_LENG[240]  62.00
+RPD_LENG[241]  94.00
+RPD_LENG[242]  94.00
+RPD_LENG[243] 129.00
+RPD_LENG[244] 129.00
+RPD_LENG[245] 142.00
+RPD_LENG[246] 142.00
+RPD_LENG[247] 114.00
+RPD_LENG[248] 114.00
+RPD_LENG[249] 140.00
+RPD_LENG[250] 140.00
+RPD_LENG[251] 110.00
+RPD_LENG[252] 110.00
+RPD_LENG[253] 127.00
+RPD_LENG[254] 127.00
+RPD_LENG[255]  98.00
+RPD_LENG[256]  98.00
+RPD_LENG[257] 119.00
+RPD_LENG[258] 119.00
+RPD_LENG[259]  96.00
+RPD_LENG[260]  96.00
+RPD_LENG[261] 118.00
+RPD_LENG[262] 118.00
+RPD_LENG[263]  90.00
+RPD_LENG[264]  90.00
+RPD_LENG[265] 119.00
+RPD_LENG[266] 119.00
+RPD_LENG[267]  83.00
+RPD_LENG[268]  83.00
+RPD_LENG[269] 115.00
+RPD_LENG[270] 115.00
+RPD_LENG[271]  81.00
+RPD_LENG[272]  81.00
+RPD_LENG[273] 111.00
+RPD_LENG[274] 111.00
+RPD_LENG[275]  77.00
+RPD_LENG[276]  77.00
+RPD_LENG[277] 121.00
+RPD_LENG[278] 121.00
+RPD_LENG[279]  68.00
+RPD_LENG[280]  68.00
+RPD_LENG[281] 110.00
+RPD_LENG[282] 110.00
+RPD_LENG[283]  64.00
+RPD_LENG[284]  64.00
+RPD_LENG[285] 106.00
+RPD_LENG[286] 106.00
+RPD_LENG[287]  70.00
+RPD_LENG[288]  70.00
+RPD_LENG[289] 114.00
+RPD_LENG[290] 114.00
+RPD_LENG[291]  67.00
+RPD_LENG[292]  67.00
+RPD_LENG[293] 108.00
+RPD_LENG[294] 108.00
+RPD_LENG[295]  66.00
+RPD_LENG[296]  66.00
+RPD_LENG[297]  99.00
+RPD_LENG[298]  99.00
+RPD_LENG[299]  69.00
+RPD_LENG[300]  69.00
+RPD_LENG[301] 101.00
+RPD_LENG[302] 101.00
+RPD_LENG[303] 109.00
+RPD_LENG[304] 109.00
+RPD_LENG[305] 136.00
+RPD_LENG[306] 136.00
+RPD_LENG[307] 106.00
+RPD_LENG[308] 106.00
+RPD_LENG[309] 129.00
+RPD_LENG[310] 129.00
+RPD_LENG[311] 102.00
+RPD_LENG[312] 102.00
+RPD_LENG[313] 123.00
+RPD_LENG[314] 123.00
+RPD_LENG[315]  94.00
+RPD_LENG[316]  94.00
+RPD_LENG[317] 127.00
+RPD_LENG[318] 127.00
+RPD_LENG[319]  90.00
+RPD_LENG[320]  90.00
+RPD_LENG[321] 123.00
+RPD_LENG[322] 123.00
+RPD_LENG[323]  87.00
+RPD_LENG[324]  87.00
+RPD_LENG[325] 120.00
+RPD_LENG[326] 120.00
+RPD_LENG[327]  83.00
+RPD_LENG[328]  83.00
+RPD_LENG[329] 120.00
+RPD_LENG[330] 120.00
+RPD_LENG[331]  72.00
+RPD_LENG[332]  72.00
+RPD_LENG[333] 122.00
+RPD_LENG[334] 122.00
+RPD_LENG[335]  70.00
+RPD_LENG[336]  70.00
+RPD_LENG[337] 120.00
+RPD_LENG[338] 120.00
+RPD_LENG[339]  65.00
+RPD_LENG[340]  65.00
+RPD_LENG[341] 111.00
+RPD_LENG[342] 111.00
+RPD_LENG[343]  52.00
+RPD_LENG[344]  52.00
+RPD_LENG[345] 115.00
+RPD_LENG[346] 115.00
+RPD_LENG[347]  51.00
+RPD_LENG[348]  51.00
+RPD_LENG[349] 110.00
+RPD_LENG[350] 110.00
+RPD_LENG[351]  47.00
+RPD_LENG[352]  47.00
+RPD_LENG[353] 107.00
+RPD_LENG[354] 107.00
+RPD_LENG[355]  50.00
+RPD_LENG[356]  50.00
+RPD_LENG[357] 113.00
+RPD_LENG[358] 113.00
+RPD_LENG[359] 108.00
+RPD_LENG[360] 108.00
+RPD_LENG[361] 141.00
+RPD_LENG[362] 141.00
+RPD_LENG[363] 101.00
+RPD_LENG[364] 101.00
+RPD_LENG[365] 139.00
+RPD_LENG[366] 139.00
+RPD_LENG[367]  99.00
+RPD_LENG[368]  99.00
+RPD_LENG[369] 132.00
+RPD_LENG[370] 132.00
+RPD_LENG[371]  91.00
+RPD_LENG[372]  91.00
+RPD_LENG[373] 130.00
+RPD_LENG[374] 130.00
+RPD_LENG[375]  83.00
+RPD_LENG[376]  83.00
+RPD_LENG[377] 131.00
+RPD_LENG[378] 131.00
+RPD_LENG[379]  88.00
+RPD_LENG[380]  88.00
+RPD_LENG[381] 136.00
+RPD_LENG[382] 136.00
+RPD_LENG[383]  72.00
+RPD_LENG[384]  72.00
+RPD_LENG[385] 124.00
+RPD_LENG[386] 124.00
+RPD_LENG[387]  67.00
+RPD_LENG[388]  67.00
+RPD_LENG[389] 119.00
+RPD_LENG[390] 119.00
+RPD_LENG[391]  62.00
+RPD_LENG[392]  62.00
+RPD_LENG[393] 131.00
+RPD_LENG[394] 131.00
+RPD_LENG[395]  60.00
+RPD_LENG[396]  60.00
+RPD_LENG[397] 128.00
+RPD_LENG[398] 128.00
+RPD_LENG[399]  46.00
+RPD_LENG[400]  46.00
+RPD_LENG[401] 114.00
+RPD_LENG[402] 114.00
+RPD_LENG[403]  44.00
+RPD_LENG[404]  44.00
+RPD_LENG[405] 111.00
+RPD_LENG[406] 111.00
+RPD_LENG[407]  49.00
+RPD_LENG[408]  49.00
+RPD_LENG[409] 117.00
+RPD_LENG[410] 117.00
+RPD_LENG[411] 141.00
+RPD_LENG[412] 141.00
+RPD_LENG[413] 100.00
+RPD_LENG[414] 100.00
+RPD_LENG[415] 145.00
+RPD_LENG[416] 145.00
+RPD_LENG[417]  92.00
+RPD_LENG[418]  92.00
+RPD_LENG[419] 137.00
+RPD_LENG[420] 137.00
+RPD_LENG[421]  82.00
+RPD_LENG[422]  82.00
+RPD_LENG[423] 133.00
+RPD_LENG[424] 133.00
+RPD_LENG[425]  77.00
+RPD_LENG[426]  77.00
+RPD_LENG[427] 135.00
+RPD_LENG[428] 135.00
+RPD_LENG[429]  73.00
+RPD_LENG[430]  73.00
+RPD_LENG[431] 129.00
+RPD_LENG[432] 129.00
+RPD_LENG[433]  71.00
+RPD_LENG[434]  71.00
+RPD_LENG[435] 127.00
+RPD_LENG[436] 127.00
+RPD_LENG[437]  58.00
+RPD_LENG[438]  58.00
+RPD_LENG[439] 126.00
+RPD_LENG[440] 126.00
+RPD_LENG[441]  53.00
+RPD_LENG[442]  53.00
+RPD_LENG[443] 129.00
+RPD_LENG[444] 129.00
+RPD_LENG[445]  57.00
+RPD_LENG[446]  57.00
+RPD_LENG[447] 123.00
+RPD_LENG[448] 123.00
+RPD_LENG[449]  43.00
+RPD_LENG[450]  43.00
+RPD_LENG[451] 116.00
+RPD_LENG[452] 116.00
+RPD_LENG[453]  94.00
+RPD_LENG[454]  94.00
+RPD_LENG[455] 140.00
+RPD_LENG[456] 140.00
+RPD_LENG[457]  89.00
+RPD_LENG[458]  89.00
+RPD_LENG[459] 139.00
+RPD_LENG[460] 139.00
+RPD_LENG[461]  85.00
+RPD_LENG[462]  85.00
+RPD_LENG[463] 144.00
+RPD_LENG[464] 144.00
+RPD_LENG[465]  76.00
+RPD_LENG[466]  76.00
+RPD_LENG[467] 138.00
+RPD_LENG[468] 138.00
+RPD_LENG[469]  71.00
+RPD_LENG[470]  71.00
+RPD_LENG[471] 141.00
+RPD_LENG[472] 141.00
+RPD_LENG[473]  65.00
+RPD_LENG[474]  65.00
+RPD_LENG[475] 146.00
+RPD_LENG[476] 146.00
+RPD_LENG[477]  55.00
+RPD_LENG[478]  55.00
+RPD_LENG[479] 134.00
+RPD_LENG[480] 134.00
+RPD_LENG[481]  52.00
+RPD_LENG[482]  52.00
+RPD_LENG[483] 125.00
+RPD_LENG[484] 125.00
+RPD_LENG[485]  57.00
+RPD_LENG[486]  57.00
+RPD_LENG[487] 125.00
+RPD_LENG[488] 125.00
+RPD_LENG[489]  85.00
+RPD_LENG[490]  85.00
+RPD_LENG[491] 149.00
+RPD_LENG[492] 149.00
+RPD_LENG[493]  81.00
+RPD_LENG[494]  81.00
+RPD_LENG[495] 145.00
+RPD_LENG[496] 145.00
+RPD_LENG[497]  76.00
+RPD_LENG[498]  76.00
+RPD_LENG[499] 145.00
+RPD_LENG[500] 145.00
+RPD_LENG[501]  63.00
+RPD_LENG[502]  63.00
+RPD_LENG[503] 147.00
+RPD_LENG[504] 147.00
+RPD_LENG[505]  59.00
+RPD_LENG[506]  59.00
+RPD_LENG[507] 134.00
+RPD_LENG[508] 134.00
+RPD_LENG[509]  57.00
+RPD_LENG[510]  57.00
+RPD_LENG[511] 131.00
+RPD_LENG[512] 131.00
+
+# FIXME
+# Stand 257 (LEDA Outrigger #1):
+# Measured by J. Craig on January 9, 2013 to have delays of 1.922 and 1.922 
+# ... microseconds.  See the section on the RTA cable for details of the 
+# ... length determination.
+RPD_LENG[513] 244.329  # JD's guess; see comment above
+RPD_LENG[514] 244.329  # JD's guess; see comment above
+
+# FIXME
+# Stand 258 (old RTA / LEDA Outrigger #4): 
+# SE Comments from earlier version of SSMIF: Here's how I came up with this length: 
+# ... I started by assuming RPD_VF=85 [%] and RPD_DD=2 [ns]; see those entries for 
+# ... more info.  On or about July 9, 2010, JC and I measured the one-way prop time 
+# ... to be about 1222.5 ns using the TenTec VNA.  I then assumed the M.170 model 
+# ... assuming 50 MHz center frequency, and solved for length. 
+# On December 12, 2011, JC and JD remeasured both outlier polarizations using a 
+# ... signal generator and an oscilliscope.  The round trip times were 2472 ns for 
+# ... N-S and 2503 ns for E-W.  JD used SE method described above to come up with 
+# ... the new lengths for both cables.
+# On January 9, 2013, J. Craig remeasured the round trip time to the RTA as part
+# ... of determing the cable lengths for the LEDA outriggers.  The delays were
+# ... 2.468 and 2.498 microseconds.
+RPD_LENG[515] 313.737  # JD's guess; see comment above
+RPD_LENG[516] 317.551  # JD's guess; see comment above
+
+# Stand 259 (LEDA Outrigger #3):
+# Measured by J. Craig on January 9, 2013 to have delays of 3.646 and 3.638 
+# ... microseconds.  See the section on the RTA cable for details of the 
+# ... length determination.
+RPD_LENG[517] 463.487  # JD's guess; see comment above
+RPD_LENG[518] 462.470  # JD's guess; see comment above
+
+# Stand 260 (LEDA Outrigger #2):
+# Measured by J. Craig on January 9, 2013 to have delays of 2.446 and 2.446 
+# ... microseconds.  See the section on the RTA cable for details of the 
+# ... length determination.
+RPD_LENG[519] 310.941  # JD's guess; see comment above
+RPD_LENG[520] 310.941  # JD's guess; see comment above
+
+# Cable stretching is set with TBN calibration results.  The assumptions that go into
+# ... this are:
+# ...  1) The cable velocity factors and dispersion delays in RPD_VF and RPD_DD as well  
+# ...     as the M.170 cable model are correct
+# ...  2) The length of the outlier cables is accurately known
+# ...  3) The fringe stopping applied to the data for ~1.5 Cyg A fringe rotation periods 
+# ...     is sufficient to supress the contributions of all source but Cyg A.
+# ... The results of the cable stretch factor fitting seem roughtly in agreement with the 
+# ... ~0.5% stretch reported by SE from TDR measurments.  For the stretch factors reported
+# ... here, the mean is ~1.2%, the median is ~1.0%, and the mode is ~0.6%.  These values 
+# ... most likely too large because they include the DP digitizer delays (~1-2 ns) which 
+# ... have not been independantly determined.
+
+RPD_STR[1]  1.0110
+RPD_STR[2]  1.0040
+RPD_STR[3]  1.0075
+RPD_STR[4]  0.9965
+RPD_STR[5]  1.0090
+RPD_STR[6]  1.0015
+RPD_STR[7]  1.0150
+RPD_STR[8]  1.0080
+RPD_STR[9]  1.0110
+RPD_STR[10]  1.0120
+RPD_STR[11]  1.0290
+RPD_STR[12]  1.0265
+RPD_STR[13]  1.0065
+RPD_STR[14]  1.0095
+RPD_STR[15]  1.0155
+RPD_STR[16]  1.0105
+RPD_STR[17]  1.0000
+RPD_STR[18]  1.0000
+RPD_STR[19]  1.0090
+RPD_STR[20]  1.0150
+RPD_STR[21]  1.0115
+RPD_STR[22]  0.9965
+RPD_STR[23]  1.0320
+RPD_STR[24]  1.0280
+RPD_STR[25]  1.0000
+RPD_STR[26]  1.0000
+RPD_STR[27]  1.0075
+RPD_STR[28]  1.0100
+RPD_STR[29]  1.0000
+RPD_STR[30]  1.0000
+RPD_STR[31]  1.0120
+RPD_STR[32]  1.0130
+RPD_STR[33]  1.0175
+RPD_STR[34]  1.0160
+RPD_STR[35]  1.0380
+RPD_STR[36]  1.0305
+RPD_STR[37]  1.0330
+RPD_STR[38]  1.0155
+RPD_STR[39]  1.0290
+RPD_STR[40]  1.0280
+RPD_STR[41]  1.0100
+RPD_STR[42]  1.0025
+RPD_STR[43]  1.0080
+RPD_STR[44]  1.0045
+RPD_STR[45]  1.0065
+RPD_STR[46]  1.0040
+RPD_STR[47]  1.0120
+RPD_STR[48]  0.9950
+RPD_STR[49]  1.0170
+RPD_STR[50]  1.0140
+RPD_STR[51]  1.0075
+RPD_STR[52]  1.0140
+RPD_STR[53]  1.0040
+RPD_STR[54]  1.0105
+RPD_STR[55]  1.0110
+RPD_STR[56]  1.0075
+RPD_STR[57]  1.0075
+RPD_STR[58]  1.0060
+RPD_STR[59]  1.0180
+RPD_STR[60]  1.0090
+RPD_STR[61]  1.0100
+RPD_STR[62]  1.0160
+RPD_STR[63]  1.0100
+RPD_STR[64]  1.0090
+RPD_STR[65]  1.0005
+RPD_STR[66]  1.0055
+RPD_STR[67]  1.0155
+RPD_STR[68]  1.0050
+
+# FIXME
+# This is the *real* Stand #35
+#RPD_STR[69]  1.0184
+#RPD_STR[70]  1.0094
+# Cables to Stand 35 (LEDA Outrigger #5)
+RPD_VF[69] 85.0 # this is the known value for LMR-400
+RPD_DD[69]  2.0 # this is SE's guess; see comment below
+RPD_A0[69] 0.00185
+RPD_A1[69] 0.00000
+RPD_STR[69]  0.9935 #   Updated based on TBW self-cal. results
+RPD_VF[70] 85.0 # this is the known value for LMR-400
+RPD_DD[70]  2.0 # this is SE's guess; see comment below
+RPD_A0[70] 0.00185
+RPD_A1[70] 0.00000
+RPD_STR[70]  1.0020 #   Updated based on TBW self-cal. results
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
+
+RPD_STR[71]  1.0000
+RPD_STR[72]  1.0000
+RPD_STR[73]  1.0075
+RPD_STR[74]  0.9900
+RPD_STR[75]  1.0020
+RPD_STR[76]  1.0060
+RPD_STR[77]  1.0100
+RPD_STR[78]  1.0115
+RPD_STR[79]  1.0025
+RPD_STR[80]  1.0015
+RPD_STR[81]  1.0080
+RPD_STR[82]  1.0025
+RPD_STR[83]  1.0330
+RPD_STR[84]  1.0290
+RPD_STR[85]  1.0145
+RPD_STR[86]  1.0000
+RPD_STR[87]  1.0355
+RPD_STR[88]  1.0130
+RPD_STR[89]  1.0125
+RPD_STR[90]  1.0140
+RPD_STR[91]  1.0125
+RPD_STR[92]  1.0095
+RPD_STR[93]  1.0135
+RPD_STR[94]  1.0085
+RPD_STR[95]  1.0225
+RPD_STR[96]  1.0170
+RPD_STR[97]  1.0155
+RPD_STR[98]  1.0090
+RPD_STR[99]  1.0115
+RPD_STR[100]  1.0065
+RPD_STR[101]  1.0105
+RPD_STR[102]  0.9955
+RPD_STR[103]  1.0195
+RPD_STR[104]  1.0140
+RPD_STR[105]  1.0125
+RPD_STR[106]  1.0115
+RPD_STR[107]  1.0130
+RPD_STR[108]  1.0150
+RPD_STR[109]  1.0220
+RPD_STR[110]  1.0145
+RPD_STR[111]  1.0100
+RPD_STR[112]  1.0070
+RPD_STR[113]  1.0180
+RPD_STR[114]  1.0030
+RPD_STR[115]  1.0075
+RPD_STR[116]  1.0065
+RPD_STR[117]  1.0125
+RPD_STR[118]  1.0030
+RPD_STR[119]  1.0095
+RPD_STR[120]  1.0070
+RPD_STR[121]  1.0085
+RPD_STR[122]  1.0060
+RPD_STR[123]  1.0190
+RPD_STR[124]  1.0065
+RPD_STR[125]  1.0135
+RPD_STR[126]  1.0040
+RPD_STR[127]  1.0340
+RPD_STR[128]  1.0195
+RPD_STR[129]  1.0085
+RPD_STR[130]  1.0085
+RPD_STR[131]  1.0000
+RPD_STR[132]  1.0000
+RPD_STR[133]  1.0205
+RPD_STR[134]  1.0040
+RPD_STR[135]  1.0115
+RPD_STR[136]  1.0070
+RPD_STR[137]  1.0085
+RPD_STR[138]  1.0115
+RPD_STR[139]  1.0120
+RPD_STR[140]  1.0055
+RPD_STR[141]  1.0095
+RPD_STR[142]  1.0105
+RPD_STR[143]  1.0230
+RPD_STR[144]  0.9990
+RPD_STR[145]  1.0105
+RPD_STR[146]  1.0095
+RPD_STR[147]  1.0610
+RPD_STR[148]  1.0030
+RPD_STR[149]  1.0000
+RPD_STR[150]  1.0000
+RPD_STR[151]  1.0180
+RPD_STR[152]  1.0090
+RPD_STR[153]  1.0135
+RPD_STR[154]  1.0120
+RPD_STR[155]  1.0150
+RPD_STR[156]  1.0240
+RPD_STR[157]  1.0110
+RPD_STR[158]  1.0115
+RPD_STR[159]  1.0210
+RPD_STR[160]  1.0155
+RPD_STR[161]  1.0130
+RPD_STR[162]  1.0075
+RPD_STR[163]  1.0165
+RPD_STR[164]  1.0150
+RPD_STR[165]  1.0135
+RPD_STR[166]  1.0075
+RPD_STR[167]  1.0210
+RPD_STR[168]  1.0030
+RPD_STR[169]  1.0150
+RPD_STR[170]  1.0140
+RPD_STR[171]  1.0000
+RPD_STR[172]  1.0000
+RPD_STR[173]  1.0085
+RPD_STR[174]  1.0070
+RPD_STR[175]  1.0185
+RPD_STR[176]  1.0150
+RPD_STR[177]  1.0170
+RPD_STR[178]  1.0145
+RPD_STR[179]  1.0380
+RPD_STR[180]  1.0150
+RPD_STR[181]  1.0255
+RPD_STR[182]  0.9970
+RPD_STR[183]  1.0145
+RPD_STR[184]  1.0015
+RPD_STR[185]  1.0080
+RPD_STR[186]  1.0015
+RPD_STR[187]  1.0175
+RPD_STR[188]  1.0130
+RPD_STR[189]  1.0085
+RPD_STR[190]  1.0065
+RPD_STR[191]  1.0000
+RPD_STR[192]  1.0000
+RPD_STR[193]  1.0070
+RPD_STR[194]  1.0085
+RPD_STR[195]  1.0000
+RPD_STR[196]  1.0000
+RPD_STR[197]  1.0085
+RPD_STR[198]  1.0090
+RPD_STR[199]  1.0230
+RPD_STR[200]  1.0090
+RPD_STR[201]  1.0115
+RPD_STR[202]  1.0025
+RPD_STR[203]  1.0170
+RPD_STR[204]  1.0055
+RPD_STR[205]  1.0155
+RPD_STR[206]  1.0070
+RPD_STR[207]  1.0245
+RPD_STR[208]  1.0070
+RPD_STR[209]  1.0045
+RPD_STR[210]  1.0015
+RPD_STR[211]  1.0250
+RPD_STR[212]  1.0130
+RPD_STR[213]  1.0000
+RPD_STR[214]  1.0000
+RPD_STR[215]  0.9650
+RPD_STR[216]  1.0435
+RPD_STR[217]  1.0045
+RPD_STR[218]  1.0075
+RPD_STR[219]  1.0210
+RPD_STR[220]  1.0220
+RPD_STR[221]  1.0100
+RPD_STR[222]  1.0120
+RPD_STR[223]  1.0275
+RPD_STR[224]  1.0155
+RPD_STR[225]  1.0085
+RPD_STR[226]  1.0025
+RPD_STR[227]  1.0350
+RPD_STR[228]  1.0370
+RPD_STR[229]  1.0095
+RPD_STR[230]  1.0090
+RPD_STR[231]  1.0250
+RPD_STR[232]  1.0190
+RPD_STR[233]  1.0245
+RPD_STR[234]  1.0060
+RPD_STR[235]  1.0240
+RPD_STR[236]  1.0205
+RPD_STR[237]  1.0030
+RPD_STR[238]  1.0000
+RPD_STR[239]  1.0305
+RPD_STR[240]  1.0275
+RPD_STR[241]  1.0475
+RPD_STR[242]  1.0305
+RPD_STR[243]  1.0065
+RPD_STR[244]  1.0045
+RPD_STR[245]  1.0000
+RPD_STR[246]  1.0000
+RPD_STR[247]  1.0000
+RPD_STR[248]  1.0000
+RPD_STR[249]  1.0050
+RPD_STR[250]  1.0045
+RPD_STR[251]  1.0150
+RPD_STR[252]  1.0135
+RPD_STR[253]  1.0285
+RPD_STR[254]  1.0220
+RPD_STR[255]  1.0075
+RPD_STR[256]  1.0070
+RPD_STR[257]  1.0165
+RPD_STR[258]  1.0055
+RPD_STR[259]  1.0130
+RPD_STR[260]  1.0120
+RPD_STR[261]  1.0120
+RPD_STR[262]  1.0090
+RPD_STR[263]  1.0140
+RPD_STR[264]  1.0110
+RPD_STR[265]  1.0145
+RPD_STR[266]  1.0050
+RPD_STR[267]  1.0165
+RPD_STR[268]  1.0145
+RPD_STR[269]  1.0115
+RPD_STR[270]  1.0250
+RPD_STR[271]  1.0170
+RPD_STR[272]  1.0015
+RPD_STR[273]  1.0105
+RPD_STR[274]  1.0055
+RPD_STR[275]  1.0150
+RPD_STR[276]  1.0125
+RPD_STR[277]  1.0120
+RPD_STR[278]  1.0135
+RPD_STR[279]  1.0230
+RPD_STR[280]  1.0145
+RPD_STR[281]  1.0160
+RPD_STR[282]  1.0070
+RPD_STR[283]  1.0235
+RPD_STR[284]  1.0110
+RPD_STR[285]  1.0105
+RPD_STR[286]  1.0090
+RPD_STR[287]  1.0000
+RPD_STR[288]  1.0000
+RPD_STR[289]  1.0135
+RPD_STR[290]  1.0110
+RPD_STR[291]  1.0165
+RPD_STR[292]  1.0120
+RPD_STR[293]  1.0130
+RPD_STR[294]  1.0135
+RPD_STR[295]  1.0285
+RPD_STR[296]  1.0475
+RPD_STR[297]  1.0120
+RPD_STR[298]  1.0140
+RPD_STR[299]  1.0250
+RPD_STR[300]  1.0245
+RPD_STR[301]  1.0130
+RPD_STR[302]  1.0000
+RPD_STR[303]  1.0155
+RPD_STR[304]  1.0105
+RPD_STR[305]  1.0205
+RPD_STR[306]  1.0210
+RPD_STR[307]  1.0310
+RPD_STR[308]  1.0325
+RPD_STR[309]  1.0080
+RPD_STR[310]  1.0075
+RPD_STR[311]  1.0125
+RPD_STR[312]  1.0085
+RPD_STR[313]  1.0275
+RPD_STR[314]  1.0270
+RPD_STR[315]  1.0270
+RPD_STR[316]  1.0035
+RPD_STR[317]  1.0100
+RPD_STR[318]  1.0095
+RPD_STR[319]  1.0190
+RPD_STR[320]  1.0080
+RPD_STR[321]  1.0080
+RPD_STR[322]  1.0130
+RPD_STR[323]  1.0190
+RPD_STR[324]  1.0165
+RPD_STR[325]  1.0160
+RPD_STR[326]  1.0075
+RPD_STR[327]  1.0205
+RPD_STR[328]  1.0155
+RPD_STR[329]  1.0135
+RPD_STR[330]  1.0045
+RPD_STR[331]  1.0140
+RPD_STR[332]  1.0160
+RPD_STR[333]  1.0065
+RPD_STR[334]  1.0075
+RPD_STR[335]  1.0185
+RPD_STR[336]  1.0115
+RPD_STR[337]  1.0170
+RPD_STR[338]  1.0095
+RPD_STR[339]  1.0935
+RPD_STR[340]  1.0120
+RPD_STR[341]  1.0115
+RPD_STR[342]  1.0130
+RPD_STR[343]  1.0425
+RPD_STR[344]  1.0375
+RPD_STR[345]  1.0105
+RPD_STR[346]  1.0260
+RPD_STR[347]  1.0765
+RPD_STR[348]  1.0620
+RPD_STR[349]  1.0145
+RPD_STR[350]  1.0035
+RPD_STR[351]  1.1000
+RPD_STR[352]  1.0105
+RPD_STR[353]  1.0120
+RPD_STR[354]  1.0135
+RPD_STR[355]  1.0270
+RPD_STR[356]  1.0220
+RPD_STR[357]  1.0120
+RPD_STR[358]  1.0085
+RPD_STR[359]  1.0115
+RPD_STR[360]  1.0135
+RPD_STR[361]  1.0060
+RPD_STR[362]  1.0020
+RPD_STR[363]  1.0000
+RPD_STR[364]  1.0000
+RPD_STR[365]  1.0065
+RPD_STR[366]  1.0055
+RPD_STR[367]  1.0250
+RPD_STR[368]  1.0090
+RPD_STR[369]  1.0050
+RPD_STR[370]  1.0045
+RPD_STR[371]  1.0270
+RPD_STR[372]  1.0110
+RPD_STR[373]  1.0000
+RPD_STR[374]  1.0000
+RPD_STR[375]  1.0185
+RPD_STR[376]  1.0100
+RPD_STR[377]  1.0135
+RPD_STR[378]  1.0075
+RPD_STR[379]  1.0070
+RPD_STR[380]  1.0035
+RPD_STR[381]  1.0065
+RPD_STR[382]  1.0050
+RPD_STR[383]  1.0265
+RPD_STR[384]  1.0185
+RPD_STR[385]  1.0240
+RPD_STR[386]  1.0120
+RPD_STR[387]  1.0180
+RPD_STR[388]  1.0120
+RPD_STR[389]  1.0090
+RPD_STR[390]  1.0135
+RPD_STR[391]  1.0190
+RPD_STR[392]  1.0130
+RPD_STR[393]  1.0130
+RPD_STR[394]  1.0085
+RPD_STR[395]  0.9605
+RPD_STR[396]  1.0460
+RPD_STR[397]  1.0080
+RPD_STR[398]  1.0040
+RPD_STR[399]  1.0275
+RPD_STR[400]  1.0245
+RPD_STR[401]  1.0105
+RPD_STR[402]  1.0075
+RPD_STR[403]  1.0375
+RPD_STR[404]  1.0255
+RPD_STR[405]  1.0350
+RPD_STR[406]  1.0225
+RPD_STR[407]  1.0170
+RPD_STR[408]  1.0115
+RPD_STR[409]  1.0135
+RPD_STR[410]  1.0085
+RPD_STR[411]  1.0110
+RPD_STR[412]  1.0040
+RPD_STR[413]  1.0225
+RPD_STR[414]  1.0230
+RPD_STR[415]  1.0025
+RPD_STR[416]  1.0025
+RPD_STR[417]  1.0160
+RPD_STR[418]  1.0170
+RPD_STR[419]  1.0195
+RPD_STR[420]  0.9995
+RPD_STR[421]  1.0150
+RPD_STR[422]  1.0150
+RPD_STR[423]  1.0055
+RPD_STR[424]  0.9980
+RPD_STR[425]  1.0160
+RPD_STR[426]  1.0130
+RPD_STR[427]  1.0095
+RPD_STR[428]  1.0060
+RPD_STR[429]  1.0345
+RPD_STR[430]  1.0280
+RPD_STR[431]  1.0070
+RPD_STR[432]  1.0065
+RPD_STR[433]  1.0000
+RPD_STR[434]  1.0000
+RPD_STR[435]  1.0050
+RPD_STR[436]  1.0065
+RPD_STR[437]  1.0205
+RPD_STR[438]  1.0145
+RPD_STR[439]  1.0135
+RPD_STR[440]  1.0065
+RPD_STR[441]  1.0185
+RPD_STR[442]  1.0110
+RPD_STR[443]  1.0120
+RPD_STR[444]  1.0080
+RPD_STR[445]  1.0230
+RPD_STR[446]  1.0190
+RPD_STR[447]  1.0070
+RPD_STR[448]  1.0110
+RPD_STR[449]  1.1000
+RPD_STR[450]  1.0230
+RPD_STR[451]  1.0320
+RPD_STR[452]  1.0235
+RPD_STR[453]  1.0115
+RPD_STR[454]  1.0090
+RPD_STR[455]  1.0105
+RPD_STR[456]  1.0030
+RPD_STR[457]  1.0355
+RPD_STR[458]  1.0260
+RPD_STR[459]  1.0105
+RPD_STR[460]  1.0030
+RPD_STR[461]  1.0205
+RPD_STR[462]  1.0145
+RPD_STR[463]  1.0000
+RPD_STR[464]  1.0000
+RPD_STR[465]  1.0130
+RPD_STR[466]  1.0145
+RPD_STR[467]  1.0000
+RPD_STR[468]  1.0000
+RPD_STR[469]  1.0195
+RPD_STR[470]  1.0055
+RPD_STR[471]  1.0105
+RPD_STR[472]  1.0045
+RPD_STR[473]  1.0300
+RPD_STR[474]  1.0190
+RPD_STR[475]  1.0065
+RPD_STR[476]  1.0055
+RPD_STR[477]  1.0180
+RPD_STR[478]  1.0155
+RPD_STR[479]  1.0240
+RPD_STR[480]  1.0195
+RPD_STR[481]  1.0270
+RPD_STR[482]  1.0240
+RPD_STR[483]  1.0210
+RPD_STR[484]  1.0160
+RPD_STR[485]  1.0175
+RPD_STR[486]  1.0150
+RPD_STR[487]  1.0000
+RPD_STR[488]  1.0000
+RPD_STR[489]  1.0000
+RPD_STR[490]  1.0000
+RPD_STR[491]  1.0125
+RPD_STR[492]  1.0045
+RPD_STR[493]  1.0195
+RPD_STR[494]  1.0170
+RPD_STR[495]  1.0190
+RPD_STR[496]  1.0030
+RPD_STR[497]  1.0210
+RPD_STR[498]  1.0160
+RPD_STR[499]  1.0175
+RPD_STR[500]  1.0195
+RPD_STR[501]  1.0205
+RPD_STR[502]  1.0095
+RPD_STR[503]  1.0325
+RPD_STR[504]  1.0140
+RPD_STR[505]  1.0445
+RPD_STR[506]  1.0385
+RPD_STR[507]  1.0095
+RPD_STR[508]  1.0030
+RPD_STR[509]  1.0505
+RPD_STR[510]  1.0385
+RPD_STR[511]  1.0140
+RPD_STR[512]  1.0085
+
+# Cables to Stand 257 (LEDA Outrigger #1)
+RPD_VF[513] 85.0 # this is the known value for LMR-400
+RPD_DD[513]  2.0 # this is SE's guess; see comment below
+RPD_A0[513] 0.00185
+RPD_A1[513] 0.00000
+RPD_STR[513]  1.0005 #   Updated based on TBW self-cal. results
+RPD_VF[514] 85.0 # this is the known value for LMR-400
+RPD_DD[514]  2.0 # this is SE's guess; see comment below
+RPD_A0[514] 0.00185
+RPD_A1[514] 0.00000
+RPD_STR[514]  1.0005 #   Updated based on TBW self-cal. results
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
+
+# Cables to Stand 258 (RTA)
+RPD_VF[515] 85.0 # this is the known value for LMR-400
+RPD_DD[515]  2.0 # this is SE's guess; see comment below 
+RPD_A0[515] 0.00185 
+RPD_A1[515] 0.00000 
+RPD_STR[515]  0.9945 #   Updated based on TBW self-cal. results
+RPD_VF[516] 85.0 # this is the known value for LMR-400
+RPD_DD[516]  2.0 # this is SE's guess; see comment below 
+RPD_A0[516] 0.00185 
+RPD_A1[516] 0.00000 
+RPD_STR[516]  0.9975 #   Updated based on TBW self-cal. results
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
+# ... a LMR-200-like cable, but I'm not sure by how much.  
+
+# Cables to Stand 259 (LEDA Outrigger #3)
+RPD_VF[517] 85.0 # this is the known value for LMR-400
+RPD_DD[517]  2.0 # this is SE's guess; see comment below
+RPD_A0[517] 0.00185
+RPD_A1[517] 0.00000
+RPD_STR[517]  0.9990 #   Updated based on TBW self-cal. results
+RPD_VF[518] 85.0 # this is the known value for LMR-400
+RPD_DD[518]  2.0 # this is SE's guess; see comment below
+RPD_A0[518] 0.00185
+RPD_A1[518] 0.00000
+RPD_STR[518]  0.9980 #   Updated based on TBW self-cal. results
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
+
+# Cables to Stand 260 (LEDA Outrigger #2)
+RPD_VF[519] 85.0 # this is the known value for LMR-400
+RPD_DD[519]  2.0 # this is SE's guess; see comment below
+RPD_A0[519] 0.00185
+RPD_A1[519] 0.00000
+RPD_STR[519]  1.0000 #   Updated based on TBW self-cal. results
+RPD_VF[520] 85.0 # this is the known value for LMR-400
+RPD_DD[520]  2.0 # this is SE's guess; see comment below
+RPD_A0[520] 0.00185
+RPD_A1[520] 0.00000
+RPD_STR[520]  1.0000 #   Updated based on TBW self-cal. results
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# ... a LMR-200-like cable, but I'm not sure by how much.
+
+# --- Antenna # -> cable # mapping -----
+# --------------------------------------
+# Format (example) "RPD_ANT[2] 3" means antenna 3 is connected to cable 2.
+# RPD_ANT[n] will be set to n for any cables #'s <= N_RPD not identified
+#   ...so you should only need to note exceptions here
+# Set RPD_ANT[] to the corresponding negative value to indicated that only the input is connected.
+# *** RPD_ANT[cable#] goes here:
+
+# ----------------------
+# --- SEP --------------
+# ----------------------
+N_SEP 520
+
+# SEP_ID[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
+# *** SEP_ID[port#] goes here:
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any port #'s <= N_SEP not identified
+# *** SEP_STAT[port#] goes here:
+
+# SEP_CABL[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
+# *** SEP_CABL[port#] goes here:
+SEP_CABL[1] 001-NS
+SEP_CABL[2] 001-EW
+SEP_CABL[3] 002-NS
+SEP_CABL[4] 002-EW
+SEP_CABL[5] 003-NS
+SEP_CABL[6] 003-EW
+SEP_CABL[7] 004-NS
+SEP_CABL[8] 004-EW
+SEP_CABL[9] 005-NS
+SEP_CABL[10] 005-EW
+SEP_CABL[11] 006-NS
+SEP_CABL[12] 006-EW
+SEP_CABL[13] 007-NS
+SEP_CABL[14] 007-EW
+SEP_CABL[15] 008-NS
+SEP_CABL[16] 008-EW
+SEP_CABL[17] 009-NS
+SEP_CABL[18] 009-EW
+SEP_CABL[19] 010-NS
+SEP_CABL[20] 010-EW
+SEP_CABL[21] 011-NS
+SEP_CABL[22] 011-EW
+SEP_CABL[23] 012-NS
+SEP_CABL[24] 012-EW
+SEP_CABL[25] 013-NS
+SEP_CABL[26] 013-EW
+SEP_CABL[27] 014-NS
+SEP_CABL[28] 014-EW
+SEP_CABL[29] 015-NS
+SEP_CABL[30] 015-EW
+SEP_CABL[31] 016-NS
+SEP_CABL[32] 016-EW
+SEP_CABL[33] 017-NS
+SEP_CABL[34] 017-EW
+SEP_CABL[35] 018-NS
+SEP_CABL[36] 018-EW
+SEP_CABL[37] 019-NS
+SEP_CABL[38] 019-EW
+SEP_CABL[39] 020-NS
+SEP_CABL[40] 020-EW
+SEP_CABL[41] 021-NS
+SEP_CABL[42] 021-EW
+SEP_CABL[43] 022-NS
+SEP_CABL[44] 022-EW
+SEP_CABL[45] 023-NS
+SEP_CABL[46] 023-EW
+SEP_CABL[47] 024-NS
+SEP_CABL[48] 024-EW
+SEP_CABL[49] 025-NS
+SEP_CABL[50] 025-EW
+SEP_CABL[51] 026-NS
+SEP_CABL[52] 026-EW
+SEP_CABL[53] 027-NS
+SEP_CABL[54] 027-EW
+SEP_CABL[55] 028-NS
+SEP_CABL[56] 028-EW
+SEP_CABL[57] 029-NS
+SEP_CABL[58] 029-EW
+SEP_CABL[59] 030-NS
+SEP_CABL[60] 030-EW
+SEP_CABL[61] 031-NS
+SEP_CABL[62] 031-EW
+SEP_CABL[63] 032-NS
+SEP_CABL[64] 032-EW
+SEP_CABL[65] 033-NS
+SEP_CABL[66] 033-EW
+SEP_CABL[67] 034-NS
+SEP_CABL[68] 034-EW
+
+# FIXME
+# This is the *real* Stand #35
+#SEP_CABL[69] 035-NS
+#SEP_CABL[70] 035-EW
+# SEP cables to Stand 35 (LEDA Outrigger #5)
+SEP_CABL[69] Outrigger 5 NS
+SEP_CABL[70] Outrigger 5 EW
+
+SEP_CABL[71] 036-NS
+SEP_CABL[72] 036-EW
+SEP_CABL[73] 037-NS
+SEP_CABL[74] 037-EW
+SEP_CABL[75] 038-NS
+SEP_CABL[76] 038-EW
+SEP_CABL[77] 039-NS
+SEP_CABL[78] 039-EW
+SEP_CABL[79] 040-NS
+SEP_CABL[80] 040-EW
+SEP_CABL[81] 041-NS
+SEP_CABL[82] 041-EW
+SEP_CABL[83] 042-NS
+SEP_CABL[84] 042-EW
+SEP_CABL[85] 043-NS
+SEP_CABL[86] 043-EW
+SEP_CABL[87] 044-NS
+SEP_CABL[88] 044-EW
+SEP_CABL[89] 045-NS
+SEP_CABL[90] 045-EW
+SEP_CABL[91] 046-NS
+SEP_CABL[92] 046-EW
+SEP_CABL[93] 047-NS
+SEP_CABL[94] 047-EW
+SEP_CABL[95] 048-NS
+SEP_CABL[96] 048-EW
+SEP_CABL[97] 049-NS
+SEP_CABL[98] 049-EW
+SEP_CABL[99] 050-NS
+SEP_CABL[100] 050-EW
+SEP_CABL[101] 051-NS
+SEP_CABL[102] 051-EW
+SEP_CABL[103] 052-NS
+SEP_CABL[104] 052-EW
+SEP_CABL[105] 053-NS
+SEP_CABL[106] 053-EW
+SEP_CABL[107] 054-NS
+SEP_CABL[108] 054-EW
+SEP_CABL[109] 055-NS
+SEP_CABL[110] 055-EW
+SEP_CABL[111] 056-NS
+SEP_CABL[112] 056-EW
+SEP_CABL[113] 057-NS
+SEP_CABL[114] 057-EW
+SEP_CABL[115] 058-NS
+SEP_CABL[116] 058-EW
+SEP_CABL[117] 059-NS
+SEP_CABL[118] 059-EW
+SEP_CABL[119] 060-NS
+SEP_CABL[120] 060-EW
+SEP_CABL[121] 061-NS
+SEP_CABL[122] 061-EW
+SEP_CABL[123] 062-NS
+SEP_CABL[124] 062-EW
+SEP_CABL[125] 063-NS
+SEP_CABL[126] 063-EW
+SEP_CABL[127] 064-NS
+SEP_CABL[128] 064-EW
+SEP_CABL[129] 065-NS
+SEP_CABL[130] 065-EW
+SEP_CABL[131] 066-NS
+SEP_CABL[132] 066-EW
+SEP_CABL[133] 067-NS
+SEP_CABL[134] 067-EW
+SEP_CABL[135] 068-NS
+SEP_CABL[136] 068-EW
+SEP_CABL[137] 069-NS
+SEP_CABL[138] 069-EW
+SEP_CABL[139] 070-NS
+SEP_CABL[140] 070-EW
+SEP_CABL[141] 071-NS
+SEP_CABL[142] 071-EW
+SEP_CABL[143] 072-NS
+SEP_CABL[144] 072-EW
+SEP_CABL[145] 073-NS
+SEP_CABL[146] 073-EW
+SEP_CABL[147] 074-NS
+SEP_CABL[148] 074-EW
+SEP_CABL[149] 075-NS
+SEP_CABL[150] 075-EW
+SEP_CABL[151] 076-NS
+SEP_CABL[152] 076-EW
+SEP_CABL[153] 077-NS
+SEP_CABL[154] 077-EW
+SEP_CABL[155] 078-NS
+SEP_CABL[156] 078-EW
+SEP_CABL[157] 079-NS
+SEP_CABL[158] 079-EW
+SEP_CABL[159] 080-NS
+SEP_CABL[160] 080-EW
+SEP_CABL[161] 081-NS
+SEP_CABL[162] 081-EW
+SEP_CABL[163] 082-NS
+SEP_CABL[164] 082-EW
+SEP_CABL[165] 083-NS
+SEP_CABL[166] 083-EW
+SEP_CABL[167] 084-NS
+SEP_CABL[168] 084-EW
+SEP_CABL[169] 085-NS
+SEP_CABL[170] 085-EW
+SEP_CABL[171] 086-NS
+SEP_CABL[172] 086-EW
+SEP_CABL[173] 087-NS
+SEP_CABL[174] 087-EW
+SEP_CABL[175] 088-NS
+SEP_CABL[176] 088-EW
+SEP_CABL[177] 089-NS
+SEP_CABL[178] 089-EW
+SEP_CABL[179] 090-NS
+SEP_CABL[180] 090-EW
+SEP_CABL[181] 091-NS
+SEP_CABL[182] 091-EW
+SEP_CABL[183] 092-NS
+SEP_CABL[184] 092-EW
+SEP_CABL[185] 093-NS
+SEP_CABL[186] 093-EW
+SEP_CABL[187] 094-NS
+SEP_CABL[188] 094-EW
+SEP_CABL[189] 095-NS
+SEP_CABL[190] 095-EW
+SEP_CABL[191] 096-NS
+SEP_CABL[192] 096-EW
+SEP_CABL[193] 097-NS
+SEP_CABL[194] 097-EW
+SEP_CABL[195] 098-NS
+SEP_CABL[196] 098-EW
+SEP_CABL[197] 099-NS
+SEP_CABL[198] 099-EW
+SEP_CABL[199] 100-NS
+SEP_CABL[200] 100-EW
+SEP_CABL[201] 101-NS
+SEP_CABL[202] 101-EW
+SEP_CABL[203] 102-NS
+SEP_CABL[204] 102-EW
+SEP_CABL[205] 103-NS
+SEP_CABL[206] 103-EW
+SEP_CABL[207] 104-NS
+SEP_CABL[208] 104-EW
+SEP_CABL[209] 105-NS
+SEP_CABL[210] 105-EW
+SEP_CABL[211] 106-NS
+SEP_CABL[212] 106-EW
+SEP_CABL[213] 107-NS
+SEP_CABL[214] 107-EW
+SEP_CABL[215] 108-NS
+SEP_CABL[216] 108-EW
+SEP_CABL[217] 109-NS
+SEP_CABL[218] 109-EW
+SEP_CABL[219] 110-NS
+SEP_CABL[220] 110-EW
+SEP_CABL[221] 111-NS
+SEP_CABL[222] 111-EW
+SEP_CABL[223] 112-NS
+SEP_CABL[224] 112-EW
+SEP_CABL[225] 113-NS
+SEP_CABL[226] 113-EW
+SEP_CABL[227] 114-NS
+SEP_CABL[228] 114-EW
+SEP_CABL[229] 115-NS
+SEP_CABL[230] 115-EW
+SEP_CABL[231] 116-NS
+SEP_CABL[232] 116-EW
+SEP_CABL[233] 117-NS
+SEP_CABL[234] 117-EW
+SEP_CABL[235] 118-NS
+SEP_CABL[236] 118-EW
+SEP_CABL[237] 119-NS
+SEP_CABL[238] 119-EW
+SEP_CABL[239] 120-NS
+SEP_CABL[240] 120-EW
+SEP_CABL[241] 121-NS
+SEP_CABL[242] 121-EW
+SEP_CABL[243] 122-NS
+SEP_CABL[244] 122-EW
+SEP_CABL[245] 123-NS
+SEP_CABL[246] 123-EW
+SEP_CABL[247] 124-NS
+SEP_CABL[248] 124-EW
+SEP_CABL[249] 125-NS
+SEP_CABL[250] 125-EW
+SEP_CABL[251] 126-NS
+SEP_CABL[252] 126-EW
+SEP_CABL[253] 127-NS
+SEP_CABL[254] 127-EW
+SEP_CABL[255] 128-NS
+SEP_CABL[256] 128-EW
+SEP_CABL[257] 129-NS
+SEP_CABL[258] 129-EW
+SEP_CABL[259] 130-NS
+SEP_CABL[260] 130-EW
+SEP_CABL[261] 131-NS
+SEP_CABL[262] 131-EW
+SEP_CABL[263] 132-NS
+SEP_CABL[264] 132-EW
+SEP_CABL[265] 133-NS
+SEP_CABL[266] 133-EW
+SEP_CABL[267] 134-NS
+SEP_CABL[268] 134-EW
+SEP_CABL[269] 135-NS
+SEP_CABL[270] 135-EW
+SEP_CABL[271] 136-NS
+SEP_CABL[272] 136-EW
+SEP_CABL[273] 137-NS
+SEP_CABL[274] 137-EW
+SEP_CABL[275] 138-NS
+SEP_CABL[276] 138-EW
+SEP_CABL[277] 139-NS
+SEP_CABL[278] 139-EW
+SEP_CABL[279] 140-NS
+SEP_CABL[280] 140-EW
+SEP_CABL[281] 141-NS
+SEP_CABL[282] 141-EW
+SEP_CABL[283] 142-NS
+SEP_CABL[284] 142-EW
+SEP_CABL[285] 143-NS
+SEP_CABL[286] 143-EW
+SEP_CABL[287] 144-NS
+SEP_CABL[288] 144-EW
+SEP_CABL[289] 145-NS
+SEP_CABL[290] 145-EW
+SEP_CABL[291] 146-NS
+SEP_CABL[292] 146-EW
+SEP_CABL[293] 147-NS
+SEP_CABL[294] 147-EW
+SEP_CABL[295] 148-NS
+SEP_CABL[296] 148-EW
+SEP_CABL[297] 149-NS
+SEP_CABL[298] 149-EW
+SEP_CABL[299] 150-NS
+SEP_CABL[300] 150-EW
+SEP_CABL[301] 151-NS
+SEP_CABL[302] 151-EW
+SEP_CABL[303] 152-NS
+SEP_CABL[304] 152-EW
+SEP_CABL[305] 153-NS
+SEP_CABL[306] 153-EW
+SEP_CABL[307] 154-NS
+SEP_CABL[308] 154-EW
+SEP_CABL[309] 155-NS
+SEP_CABL[310] 155-EW
+SEP_CABL[311] 156-NS
+SEP_CABL[312] 156-EW
+SEP_CABL[313] 157-NS
+SEP_CABL[314] 157-EW
+SEP_CABL[315] 158-NS
+SEP_CABL[316] 158-EW
+SEP_CABL[317] 159-NS
+SEP_CABL[318] 159-EW
+SEP_CABL[319] 160-NS
+SEP_CABL[320] 160-EW
+SEP_CABL[321] 161-NS
+SEP_CABL[322] 161-EW
+SEP_CABL[323] 162-NS
+SEP_CABL[324] 162-EW
+SEP_CABL[325] 163-NS
+SEP_CABL[326] 163-EW
+SEP_CABL[327] 164-NS
+SEP_CABL[328] 164-EW
+SEP_CABL[329] 165-NS
+SEP_CABL[330] 165-EW
+SEP_CABL[331] 166-NS
+SEP_CABL[332] 166-EW
+SEP_CABL[333] 167-NS
+SEP_CABL[334] 167-EW
+SEP_CABL[335] 168-NS
+SEP_CABL[336] 168-EW
+SEP_CABL[337] 169-NS
+SEP_CABL[338] 169-EW
+SEP_CABL[339] 170-NS
+SEP_CABL[340] 170-EW
+SEP_CABL[341] 171-NS
+SEP_CABL[342] 171-EW
+SEP_CABL[343] 172-NS
+SEP_CABL[344] 172-EW
+SEP_CABL[345] 173-NS
+SEP_CABL[346] 173-EW
+SEP_CABL[347] 174-NS
+SEP_CABL[348] 174-EW
+SEP_CABL[349] 175-NS
+SEP_CABL[350] 175-EW
+SEP_CABL[351] 176-NS
+SEP_CABL[352] 176-EW
+SEP_CABL[353] 177-NS
+SEP_CABL[354] 177-EW
+SEP_CABL[355] 178-NS
+SEP_CABL[356] 178-EW
+SEP_CABL[357] 179-NS
+SEP_CABL[358] 179-EW
+SEP_CABL[359] 180-NS
+SEP_CABL[360] 180-EW
+SEP_CABL[361] 181-NS
+SEP_CABL[362] 181-EW
+SEP_CABL[363] 182-NS
+SEP_CABL[364] 182-EW
+SEP_CABL[365] 183-NS
+SEP_CABL[366] 183-EW
+SEP_CABL[367] 184-NS
+SEP_CABL[368] 184-EW
+SEP_CABL[369] 185-NS
+SEP_CABL[370] 185-EW
+SEP_CABL[371] 186-NS
+SEP_CABL[372] 186-EW
+SEP_CABL[373] 187-NS
+SEP_CABL[374] 187-EW
+SEP_CABL[375] 188-NS
+SEP_CABL[376] 188-EW
+SEP_CABL[377] 189-NS
+SEP_CABL[378] 189-EW
+SEP_CABL[379] 190-NS
+SEP_CABL[380] 190-EW
+SEP_CABL[381] 191-NS
+SEP_CABL[382] 191-EW
+SEP_CABL[383] 192-NS
+SEP_CABL[384] 192-EW
+SEP_CABL[385] 193-NS
+SEP_CABL[386] 193-EW
+SEP_CABL[387] 194-NS
+SEP_CABL[388] 194-EW
+SEP_CABL[389] 195-NS
+SEP_CABL[390] 195-EW
+SEP_CABL[391] 196-NS
+SEP_CABL[392] 196-EW
+SEP_CABL[393] 197-NS
+SEP_CABL[394] 197-EW
+SEP_CABL[395] 198-NS
+SEP_CABL[396] 198-EW
+SEP_CABL[397] 199-NS
+SEP_CABL[398] 199-EW
+SEP_CABL[399] 200-NS
+SEP_CABL[400] 200-EW
+SEP_CABL[401] 201-NS
+SEP_CABL[402] 201-EW
+SEP_CABL[403] 202-NS
+SEP_CABL[404] 202-EW
+SEP_CABL[405] 203-NS
+SEP_CABL[406] 203-EW
+SEP_CABL[407] 204-NS
+SEP_CABL[408] 204-EW
+SEP_CABL[409] 205-NS
+SEP_CABL[410] 205-EW
+SEP_CABL[411] 206-NS
+SEP_CABL[412] 206-EW
+SEP_CABL[413] 207-NS
+SEP_CABL[414] 207-EW
+SEP_CABL[415] 208-NS
+SEP_CABL[416] 208-EW
+SEP_CABL[417] 209-NS
+SEP_CABL[418] 209-EW
+SEP_CABL[419] 210-NS
+SEP_CABL[420] 210-EW
+SEP_CABL[421] 211-NS
+SEP_CABL[422] 211-EW
+SEP_CABL[423] 212-NS
+SEP_CABL[424] 212-EW
+SEP_CABL[425] 213-NS
+SEP_CABL[426] 213-EW
+SEP_CABL[427] 214-NS
+SEP_CABL[428] 214-EW
+SEP_CABL[429] 215-NS
+SEP_CABL[430] 215-EW
+SEP_CABL[431] 216-NS
+SEP_CABL[432] 216-EW
+SEP_CABL[433] 217-NS
+SEP_CABL[434] 217-EW
+SEP_CABL[435] 218-NS
+SEP_CABL[436] 218-EW
+SEP_CABL[437] 219-NS
+SEP_CABL[438] 219-EW
+SEP_CABL[439] 220-NS
+SEP_CABL[440] 220-EW
+SEP_CABL[441] 221-NS
+SEP_CABL[442] 221-EW
+SEP_CABL[443] 222-NS
+SEP_CABL[444] 222-EW
+SEP_CABL[445] 223-NS
+SEP_CABL[446] 223-EW
+SEP_CABL[447] 224-NS
+SEP_CABL[448] 224-EW
+SEP_CABL[449] 225-NS
+SEP_CABL[450] 225-EW
+SEP_CABL[451] 226-NS
+SEP_CABL[452] 226-EW
+SEP_CABL[453] 227-NS
+SEP_CABL[454] 227-EW
+SEP_CABL[455] 228-NS
+SEP_CABL[456] 228-EW
+SEP_CABL[457] 229-NS
+SEP_CABL[458] 229-EW
+SEP_CABL[459] 230-NS
+SEP_CABL[460] 230-EW
+SEP_CABL[461] 231-NS
+SEP_CABL[462] 231-EW
+SEP_CABL[463] 232-NS
+SEP_CABL[464] 232-EW
+SEP_CABL[465] 233-NS
+SEP_CABL[466] 233-EW
+SEP_CABL[467] 234-NS
+SEP_CABL[468] 234-EW
+SEP_CABL[469] 235-NS
+SEP_CABL[470] 235-EW
+SEP_CABL[471] 236-NS
+SEP_CABL[472] 236-EW
+SEP_CABL[473] 237-NS
+SEP_CABL[474] 237-EW
+SEP_CABL[475] 238-NS
+SEP_CABL[476] 238-EW
+SEP_CABL[477] 239-NS
+SEP_CABL[478] 239-EW
+SEP_CABL[479] 240-NS
+SEP_CABL[480] 240-EW
+SEP_CABL[481] 241-NS
+SEP_CABL[482] 241-EW
+SEP_CABL[483] 242-NS
+SEP_CABL[484] 242-EW
+SEP_CABL[485] 243-NS
+SEP_CABL[486] 243-EW
+SEP_CABL[487] 244-NS
+SEP_CABL[488] 244-EW
+SEP_CABL[489] 245-NS
+SEP_CABL[490] 245-EW
+SEP_CABL[491] 246-NS
+SEP_CABL[492] 246-EW
+SEP_CABL[493] 247-NS
+SEP_CABL[494] 247-EW
+SEP_CABL[495] 248-NS
+SEP_CABL[496] 248-EW
+SEP_CABL[497] 249-NS
+SEP_CABL[498] 249-EW
+SEP_CABL[499] 250-NS
+SEP_CABL[500] 250-EW
+SEP_CABL[501] 251-NS
+SEP_CABL[502] 251-EW
+SEP_CABL[503] 252-NS
+SEP_CABL[504] 252-EW
+SEP_CABL[505] 253-NS
+SEP_CABL[506] 253-EW
+SEP_CABL[507] 254-NS
+SEP_CABL[508] 254-EW
+SEP_CABL[509] 255-NS
+SEP_CABL[510] 255-EW
+SEP_CABL[511] 256-NS
+SEP_CABL[512] 256-EW
+SEP_CABL[513] Outrigger 1 NS
+SEP_CABL[514] Outrigger 1 EW
+SEP_CABL[515] 258-NS
+SEP_CABL[516] 258-EW
+SEP_CABL[517] Outrigger 3 NS
+SEP_CABL[518] Outrigger 3 EW
+SEP_CABL[519] Outrigger 2 NS
+SEP_CABL[520] Outrigger 2 EW
+
+# SEP_LENG[] will be set to 0 for any SEP port #'s <= N_SEP not identified
+# *** SEP_LENG[port#] goes here:
+
+# SEP_DESI[] be set to 1 for any SEP port #'s <= N_SEP not identified
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** SEP_DESI[port#] goes here:
+
+# SEP_GAIN[] be set to 0.0 for any SEP port #'s <= N_SEP not identified
+# *** SEP_GAIN[port] [dB] goes here:
+
+# -----------------------------------------
+# --- Antenna # -> SEP port # mapping -----
+# -----------------------------------------
+# Format (example) "SEP_ANT[2] 3" means antenna 3 is connected to SEP port 2.
+# SEP_ANT[n] will be set to n for any port #'s <= N_SEP not identified
+#   ... so only need to note exceptions below
+# Set SEP_ANT[] to the corresponding negative value to indicated that only the input is connected.
+# *** SEP_ANT[port#] goes here:
+
+# ----------------------
+# --- ASP --------------
+# ----------------------
+# Maximum (not necessarily actual) number of ARX boards:
+N_ARB 33
+# Maximum (not necessarily actual) number or channels per ARX board:
+N_ARBCH 16
+
+# ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
+# *** ARB_ID[arb#] goes here:
+ARB_ID[1] 0112
+ARB_ID[2] 0101
+ARB_ID[3] 0142
+ARB_ID[4] 0130
+ARB_ID[5] 0138
+ARB_ID[6] 0127
+ARB_ID[7] 0103
+ARB_ID[8] 0136
+ARB_ID[9] 0129
+ARB_ID[10] 0126
+ARB_ID[11] 0121
+ARB_ID[12] 0117
+ARB_ID[13] 0118
+ARB_ID[14] 0132
+ARB_ID[15] 0116
+ARB_ID[16] 0106
+ARB_ID[17] 0114
+ARB_ID[18] 0113
+ARB_ID[19] 0119
+ARB_ID[20] 0124
+ARB_ID[21] 0108
+ARB_ID[22] 0128
+ARB_ID[23] 0115
+ARB_ID[24] 0133
+ARB_ID[25] 0141
+ARB_ID[26] 0120
+ARB_ID[27] 0134
+ARB_ID[28] 0139
+ARB_ID[29] 0123
+ARB_ID[30] 0109
+ARB_ID[31] 0140
+ARB_ID[32] 0135
+ARB_ID[33] 0137
+
+# ARB_SLOT[] will be set to 0 (not known/not applicable) for any ARX board #'s <= N_ARB not identified
+# *** ARB_SLOT[arb#] goes here:
+# Format is <chassis>-<slot-from-left>
+# Chassis 1 is bottom-most chassis in the rack
+ARB_SLOT[1] 11
+ARB_SLOT[2] 12
+ARB_SLOT[3] 13
+ARB_SLOT[4] 14
+ARB_SLOT[5] 15
+ARB_SLOT[6] 16
+ARB_SLOT[7] 17
+ARB_SLOT[8] 18
+ARB_SLOT[9] 21
+ARB_SLOT[10] 22
+ARB_SLOT[11] 23
+ARB_SLOT[12] 24
+ARB_SLOT[13] 25
+ARB_SLOT[14] 26
+ARB_SLOT[15] 27
+ARB_SLOT[16] 28
+ARB_SLOT[17] 31
+ARB_SLOT[18] 32
+ARB_SLOT[19] 33
+ARB_SLOT[20] 34
+ARB_SLOT[21] 35
+ARB_SLOT[22] 36
+ARB_SLOT[23] 37
+ARB_SLOT[24] 38
+ARB_SLOT[25] 41
+ARB_SLOT[26] 42
+ARB_SLOT[27] 43
+ARB_SLOT[28] 44
+ARB_SLOT[29] 45
+ARB_SLOT[30] 46
+ARB_SLOT[31] 47
+ARB_SLOT[32] 48
+ARB_SLOT[33] 49
+
+# ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
+# *** ARB_DESI[arb#] goes here:
+ARB_DESI[1] 2
+ARB_DESI[2] 2
+ARB_DESI[3] 2
+ARB_DESI[4] 2
+ARB_DESI[5] 2
+ARB_DESI[6] 2
+ARB_DESI[7] 2
+ARB_DESI[8] 2
+ARB_DESI[9] 2
+ARB_DESI[10] 2
+ARB_DESI[11] 2
+ARB_DESI[12] 2
+ARB_DESI[13] 2
+ARB_DESI[14] 2
+ARB_DESI[15] 2
+ARB_DESI[16] 2
+ARB_DESI[17] 2
+ARB_DESI[18] 2
+ARB_DESI[19] 2
+ARB_DESI[20] 2
+ARB_DESI[21] 2
+ARB_DESI[22] 2
+ARB_DESI[23] 2
+ARB_DESI[24] 2
+ARB_DESI[25] 2
+ARB_DESI[26] 2
+ARB_DESI[27] 2
+ARB_DESI[28] 2
+ARB_DESI[29] 2
+ARB_DESI[30] 2
+ARB_DESI[31] 2
+ARB_DESI[32] 2
+ARB_DESI[33] 2
+
+# Format (example) "ARB_RACK[2] 3" means ARX board 2 is powered via a supply in Rack 2.
+# ARB_RACK[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
+# Format (example) "ARB_PORT[2] 7" means ARX board 2 is powered via port 7 (on whatever rack is specified elsewhere).
+# ARB_PORT[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
+# *** ARB_RACK[arb#] goes here:
+# *** ARB_PORT[arb#] goes here:
+ARB_RACK[1] 1
+ARB_PORT[1] 2
+ARB_RACK[2] 1
+ARB_PORT[2] 2
+ARB_RACK[3] 1
+ARB_PORT[3] 2
+ARB_RACK[4] 1
+ARB_PORT[4] 2
+ARB_RACK[5] 1
+ARB_PORT[5] 2
+ARB_RACK[6] 1
+ARB_PORT[6] 2
+ARB_RACK[7] 1
+ARB_PORT[7] 2
+ARB_RACK[8] 1
+ARB_PORT[8] 2
+ARB_RACK[9] 1
+ARB_PORT[9] 2
+ARB_RACK[10] 1
+ARB_PORT[10] 2
+ARB_RACK[11] 1
+ARB_PORT[11] 2
+ARB_RACK[12] 1
+ARB_PORT[12] 2
+ARB_RACK[13] 1
+ARB_PORT[13] 2
+ARB_RACK[14] 1
+ARB_PORT[14] 2
+ARB_RACK[15] 1
+ARB_PORT[15] 2
+ARB_RACK[16] 1
+ARB_PORT[16] 2
+ARB_RACK[17] 1
+ARB_PORT[17] 2
+ARB_RACK[18] 1
+ARB_PORT[18] 2
+ARB_RACK[19] 1
+ARB_PORT[19] 2
+ARB_RACK[20] 1
+ARB_PORT[20] 2
+ARB_RACK[21] 1
+ARB_PORT[21] 2
+ARB_RACK[22] 1
+ARB_PORT[22] 2
+ARB_RACK[23] 1
+ARB_PORT[23] 2
+ARB_RACK[24] 1
+ARB_PORT[24] 2
+ARB_RACK[25] 1
+ARB_PORT[25] 2
+ARB_RACK[26] 1
+ARB_PORT[26] 2
+ARB_RACK[27] 1
+ARB_PORT[27] 2
+ARB_RACK[28] 1
+ARB_PORT[28] 2
+ARB_RACK[29] 1
+ARB_PORT[29] 2
+ARB_RACK[30] 1
+ARB_PORT[30] 2
+ARB_RACK[31] 1
+ARB_PORT[31] 2
+ARB_RACK[32] 1
+ARB_PORT[32] 2
+ARB_RACK[33] 1
+ARB_PORT[33] 2
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any ARX board-channels not identified
+# *** ARB_STAT[arb#][ch#] goes here:
+
+# ARB_GAIN[][] will be set to 67.0 for any boards/channels not identified
+# *** ARB_GAIN[arb#][ch#] goes here:
+
+# ----------------------------------------------
+# --- Antenna # -> ARX board-channel mapping ---
+# ----------------------------------------------
+# Format (example) "ARB_ANT[2][3] 4" means antenna 4 is connected to ARX Board 2, channel 3.
+# If not indicated otherwise, ARB_ANT[1][1] will be set to 1, ARB_ANT[1][2] will be set to 2, etc.
+#   ... so best is to note only the exceptions below.
+# Set ARB_ANT[][] to the corresponding negative value to indicated that only the input is connected.
+# *** ARB_ANT[arb#][ch#] goes here:
+ARB_ANT[1][1] 365
+ARB_ANT[1][2] 366
+ARB_ANT[1][3] 399
+ARB_ANT[1][4] 400
+ARB_ANT[1][5] 377
+ARB_ANT[1][6] 378
+ARB_ANT[1][7] 235
+ARB_ANT[1][8] 236
+ARB_ANT[1][9] 411
+ARB_ANT[1][10] 412
+ARB_ANT[1][11] 355
+ARB_ANT[1][12] 356
+ARB_ANT[1][13] 459
+ARB_ANT[1][14] 460
+ARB_ANT[1][15] 91
+ARB_ANT[1][16] 92
+ARB_ANT[2][1] 361
+ARB_ANT[2][2] 362
+ARB_ANT[2][3] 407
+ARB_ANT[2][4] 408
+ARB_ANT[2][5] 373
+ARB_ANT[2][6] 374
+ARB_ANT[2][7] 223
+ARB_ANT[2][8] 224
+ARB_ANT[2][9] 245
+ARB_ANT[2][10] 246
+ARB_ANT[2][11] 343
+ARB_ANT[2][12] 344
+ARB_ANT[2][13] 427
+ARB_ANT[2][14] 428
+ARB_ANT[2][15] 295
+ARB_ANT[2][16] 296
+ARB_ANT[3][1] 415
+ARB_ANT[3][2] 416
+ARB_ANT[3][3] 351
+ARB_ANT[3][4] 352
+ARB_ANT[3][5] 423
+ARB_ANT[3][6] 424
+ARB_ANT[3][7] 27
+ARB_ANT[3][8] 28
+ARB_ANT[3][9] 249
+ARB_ANT[3][10] 250
+ARB_ANT[3][11] 449
+ARB_ANT[3][12] 450
+ARB_ANT[3][13] 419
+ARB_ANT[3][14] 420
+ARB_ANT[3][15] 159
+ARB_ANT[3][16] 160
+ARB_ANT[4][1] 313
+ARB_ANT[4][2] 314
+ARB_ANT[4][3] 347
+ARB_ANT[4][4] 348
+ARB_ANT[4][5] 455
+ARB_ANT[4][6] 456
+ARB_ANT[4][7] 29
+ARB_ANT[4][8] 30
+ARB_ANT[4][9] 253
+ARB_ANT[4][10] 254
+ARB_ANT[4][11] 305
+ARB_ANT[4][12] 306
+ARB_ANT[4][13] 403
+ARB_ANT[4][14] 404
+ARB_ANT[4][15] 381
+ARB_ANT[4][16] 382
+ARB_ANT[5][1] 101
+ARB_ANT[5][2] 102
+ARB_ANT[5][3] 507
+ARB_ANT[5][4] 508
+ARB_ANT[5][5] 175
+ARB_ANT[5][6] 176
+ARB_ANT[5][7] 165
+ARB_ANT[5][8] 166
+ARB_ANT[5][9] 451
+ARB_ANT[5][10] 452
+ARB_ANT[5][11] 479
+ARB_ANT[5][12] 480
+ARB_ANT[5][13] 107
+ARB_ANT[5][14] 108
+ARB_ANT[5][15] 161
+ARB_ANT[5][16] 162
+ARB_ANT[6][1] 357
+ARB_ANT[6][2] 358
+ARB_ANT[6][3] 447
+ARB_ANT[6][4] 448
+ARB_ANT[6][5] 239
+ARB_ANT[6][6] 240
+ARB_ANT[6][7] 89
+ARB_ANT[6][8] 90
+ARB_ANT[6][9] 37
+ARB_ANT[6][10] 38
+ARB_ANT[6][11] 511
+ARB_ANT[6][12] 512
+ARB_ANT[6][13] 487
+ARB_ANT[6][14] 488
+ARB_ANT[6][15] 97
+ARB_ANT[6][16] 98
+ARB_ANT[7][1] 349
+ARB_ANT[7][2] 350
+ARB_ANT[7][3] 237
+ARB_ANT[7][4] 238
+ARB_ANT[7][5] 483
+ARB_ANT[7][6] 484
+ARB_ANT[7][7] 169
+ARB_ANT[7][8] 170
+ARB_ANT[7][9] 409
+ARB_ANT[7][10] 410
+ARB_ANT[7][11] 173
+ARB_ANT[7][12] 174
+ARB_ANT[7][13] 393
+ARB_ANT[7][14] 394
+ARB_ANT[7][15] 33
+ARB_ANT[7][16] 34
+ARB_ANT[8][1] 405
+ARB_ANT[8][2] 406
+ARB_ANT[8][3] 241
+ARB_ANT[8][4] 242
+ARB_ANT[8][5] 397
+ARB_ANT[8][6] 398
+ARB_ANT[8][7] 31
+ARB_ANT[8][8] 32
+ARB_ANT[8][9] 345
+ARB_ANT[8][10] 346
+ARB_ANT[8][11] 301
+ARB_ANT[8][12] 302
+ARB_ANT[8][13] 443
+ARB_ANT[8][14] 444
+ARB_ANT[8][15] 299
+ARB_ANT[8][16] 300
+
+# LEDA Outrigger #5
+ARB_ANT[9][1] 69
+ARB_ANT[9][2] 70
+
+ARB_ANT[9][3] 215
+ARB_ANT[9][4] 216
+ARB_ANT[9][5] 197
+ARB_ANT[9][6] 198
+ARB_ANT[9][7] 193
+ARB_ANT[9][8] 194
+ARB_ANT[9][9] 15
+ARB_ANT[9][10] 16
+ARB_ANT[9][11] 335
+ARB_ANT[9][12] 336
+ARB_ANT[9][13] 257
+ARB_ANT[9][14] 258
+ARB_ANT[9][15] 309
+ARB_ANT[9][16] 310
+ARB_ANT[10][1] 63
+ARB_ANT[10][2] 64
+ARB_ANT[10][3] 137
+ARB_ANT[10][4] 138
+ARB_ANT[10][5] 201
+ARB_ANT[10][6] 202
+ARB_ANT[10][7] 369
+ARB_ANT[10][8] 370
+ARB_ANT[10][9] 283
+ARB_ANT[10][10] 284
+ARB_ANT[10][11] 13
+ARB_ANT[10][12] 14
+ARB_ANT[10][13] 321
+ARB_ANT[10][14] 322
+ARB_ANT[10][15] 317
+ARB_ANT[10][16] 318
+ARB_ANT[11][1] 339
+ARB_ANT[11][2] 340
+ARB_ANT[11][3] 65
+ARB_ANT[11][4] 66
+ARB_ANT[11][5] 261
+ARB_ANT[11][6] 262
+ARB_ANT[11][7] 125
+ARB_ANT[11][8] 126
+ARB_ANT[11][9] 147
+ARB_ANT[11][10] 148
+ARB_ANT[11][11] 73
+ARB_ANT[11][12] 74
+ARB_ANT[11][13] 151
+ARB_ANT[11][14] 152
+ARB_ANT[11][15] 133
+ARB_ANT[11][16] 134
+ARB_ANT[12][1] 19
+ARB_ANT[12][2] 20
+ARB_ANT[12][3] 205
+ARB_ANT[12][4] 206
+ARB_ANT[12][5] 219
+ARB_ANT[12][6] 220
+ARB_ANT[12][7] 129
+ARB_ANT[12][8] 130
+ARB_ANT[12][9] 211
+ARB_ANT[12][10] 212
+ARB_ANT[12][11] 141
+ARB_ANT[12][12] 142
+ARB_ANT[12][13] 279
+ARB_ANT[12][14] 280
+ARB_ANT[12][15] 61
+ARB_ANT[12][16] 62
+ARB_ANT[13][1] 207
+ARB_ANT[13][2] 208
+ARB_ANT[13][3] 57
+ARB_ANT[13][4] 58
+ARB_ANT[13][5] 189
+ARB_ANT[13][6] 190
+ARB_ANT[13][7] 353
+ARB_ANT[13][8] 354
+ARB_ANT[13][9] 323
+ARB_ANT[13][10] 324
+ARB_ANT[13][11] 9
+ARB_ANT[13][12] 10
+ARB_ANT[13][13] 117
+ARB_ANT[13][14] 118
+ARB_ANT[13][15] 293
+ARB_ANT[13][16] 294
+ARB_ANT[14][1] 379
+ARB_ANT[14][2] 380
+ARB_ANT[14][3] 331
+ARB_ANT[14][4] 332
+ARB_ANT[14][5] 121
+ARB_ANT[14][6] 122
+ARB_ANT[14][7] 401
+ARB_ANT[14][8] 402
+ARB_ANT[14][9] 267
+ARB_ANT[14][10] 268
+ARB_ANT[14][11] 275
+ARB_ANT[14][12] 276
+ARB_ANT[14][13] 185
+ARB_ANT[14][14] 186
+ARB_ANT[14][15] 289
+ARB_ANT[14][16] 290
+ARB_ANT[15][1] 327
+ARB_ANT[15][2] 328
+ARB_ANT[15][3] 199
+ARB_ANT[15][4] 200
+ARB_ANT[15][5] 51
+ARB_ANT[15][6] 52
+ARB_ANT[15][7] 109
+ARB_ANT[15][8] 110
+ARB_ANT[15][9] 135
+ARB_ANT[15][10] 136
+ARB_ANT[15][11] 263
+ARB_ANT[15][12] 264
+ARB_ANT[15][13] 49
+ARB_ANT[15][14] 50
+ARB_ANT[15][15] 177
+ARB_ANT[15][16] 178
+ARB_ANT[16][1] 383
+ARB_ANT[16][2] 384
+ARB_ANT[16][3] 203
+ARB_ANT[16][4] 204
+ARB_ANT[16][5] 7
+ARB_ANT[16][6] 8
+ARB_ANT[16][7] 297
+ARB_ANT[16][8] 298
+ARB_ANT[16][9] 387
+ARB_ANT[16][10] 388
+ARB_ANT[16][11] 271
+ARB_ANT[16][12] 272
+ARB_ANT[16][13] 53
+ARB_ANT[16][14] 54
+ARB_ANT[16][15] 181
+ARB_ANT[16][16] 182
+ARB_ANT[17][1] 23
+ARB_ANT[17][2] 24
+ARB_ANT[17][3] 83
+ARB_ANT[17][4] 84
+ARB_ANT[17][5] 145
+ARB_ANT[17][6] 146
+ARB_ANT[17][7] 143
+ARB_ANT[17][8] 144
+ARB_ANT[17][9] 21
+ARB_ANT[17][10] 22
+ARB_ANT[17][11] 87
+ARB_ANT[17][12] 88
+ARB_ANT[17][13] 273
+ARB_ANT[17][14] 274
+ARB_ANT[17][15] 139
+ARB_ANT[17][16] 140
+ARB_ANT[18][1] 79
+ARB_ANT[18][2] 80
+ARB_ANT[18][3] 167
+ARB_ANT[18][4] 168
+ARB_ANT[18][5] 329
+ARB_ANT[18][6] 330
+ARB_ANT[18][7] 67
+ARB_ANT[18][8] 68
+ARB_ANT[18][9] 153
+ARB_ANT[18][10] 154
+ARB_ANT[18][11] 231
+ARB_ANT[18][12] 232
+ARB_ANT[18][13] 269
+ARB_ANT[18][14] 270
+ARB_ANT[18][15] 75
+ARB_ANT[18][16] 76
+ARB_ANT[19][1] 81
+ARB_ANT[19][2] 82
+ARB_ANT[19][3] 217
+ARB_ANT[19][4] 218
+ARB_ANT[19][5] 265
+ARB_ANT[19][6] 266
+ARB_ANT[19][7] 71
+ARB_ANT[19][8] 72
+ARB_ANT[19][9] 287
+ARB_ANT[19][10] 288
+ARB_ANT[19][11] 149
+ARB_ANT[19][12] 150
+ARB_ANT[19][13] 213
+ARB_ANT[19][14] 214
+ARB_ANT[19][15] 17
+ARB_ANT[19][16] 18
+ARB_ANT[20][1] 163
+ARB_ANT[20][2] 164
+ARB_ANT[20][3] 77
+ARB_ANT[20][4] 78
+ARB_ANT[20][5] 155
+ARB_ANT[20][6] 156
+ARB_ANT[20][7] 209
+ARB_ANT[20][8] 210
+ARB_ANT[20][9] 291
+ARB_ANT[20][10] 292
+ARB_ANT[20][11] 85
+ARB_ANT[20][12] 86
+ARB_ANT[20][13] 25
+ARB_ANT[20][14] 26
+ARB_ANT[20][15] 325
+ARB_ANT[20][16] 326
+ARB_ANT[21][1] 131
+ARB_ANT[21][2] 132
+ARB_ANT[21][3] 115
+ARB_ANT[21][4] 116
+ARB_ANT[21][5] 481
+ARB_ANT[21][6] 482
+ARB_ANT[21][7] 433
+ARB_ANT[21][8] 434
+ARB_ANT[21][9] 195
+ARB_ANT[21][10] 196
+ARB_ANT[21][11] 243
+ARB_ANT[21][12] 244
+ARB_ANT[21][13] 43
+ARB_ANT[21][14] 44
+ARB_ANT[21][15] 477
+ARB_ANT[21][16] 478
+ARB_ANT[22][1] 259
+ARB_ANT[22][2] 260
+ARB_ANT[22][3] 1
+ARB_ANT[22][4] 2
+ARB_ANT[22][5] 47
+ARB_ANT[22][6] 48
+ARB_ANT[22][7] 441
+ARB_ANT[22][8] 442
+ARB_ANT[22][9] 371
+ARB_ANT[22][10] 372
+ARB_ANT[22][11] 5
+ARB_ANT[22][12] 6
+ARB_ANT[22][13] 119
+ARB_ANT[22][14] 120
+ARB_ANT[22][15] 437
+ARB_ANT[22][16] 438
+ARB_ANT[23][1] 315
+ARB_ANT[23][2] 316
+ARB_ANT[23][3] 3
+ARB_ANT[23][4] 4
+ARB_ANT[23][5] 179
+ARB_ANT[23][6] 180
+ARB_ANT[23][7] 391
+ARB_ANT[23][8] 392
+ARB_ANT[23][9] 255
+ARB_ANT[23][10] 256
+ARB_ANT[23][11] 41
+ARB_ANT[23][12] 42
+ARB_ANT[23][13] 39
+ARB_ANT[23][14] 40
+ARB_ANT[23][15] 395
+ARB_ANT[23][16] 396
+ARB_ANT[24][1] 319
+ARB_ANT[24][2] 320
+ARB_ANT[24][3] 113
+ARB_ANT[24][4] 114
+ARB_ANT[24][5] 111
+ARB_ANT[24][6] 112
+ARB_ANT[24][7] 485
+ARB_ANT[24][8] 486
+ARB_ANT[24][9] 59
+ARB_ANT[24][10] 60
+ARB_ANT[24][11] 45
+ARB_ANT[24][12] 46
+ARB_ANT[24][13] 183
+ARB_ANT[24][14] 184
+ARB_ANT[24][15] 445
+ARB_ANT[24][16] 446
+ARB_ANT[25][1] 285
+ARB_ANT[25][2] 286
+ARB_ANT[25][3] 389
+ARB_ANT[25][4] 390
+ARB_ANT[25][5] 495
+ARB_ANT[25][6] 496
+ARB_ANT[25][7] 95
+ARB_ANT[25][8] 96
+ARB_ANT[25][9] 221
+ARB_ANT[25][10] 222
+ARB_ANT[25][11] 337
+ARB_ANT[25][12] 338
+ARB_ANT[25][13] 499
+ARB_ANT[25][14] 500
+ARB_ANT[25][15] 227
+ARB_ANT[25][16] 228
+ARB_ANT[26][1] 341
+ARB_ANT[26][2] 342
+ARB_ANT[26][3] 333
+ARB_ANT[26][4] 334
+ARB_ANT[26][5] 105
+ARB_ANT[26][6] 106
+ARB_ANT[26][7] 475
+ARB_ANT[26][8] 476
+ARB_ANT[26][9] 225
+ARB_ANT[26][10] 226
+ARB_ANT[26][11] 431
+ARB_ANT[26][12] 432
+ARB_ANT[26][13] 171
+ARB_ANT[26][14] 172
+ARB_ANT[26][15] 467
+ARB_ANT[26][16] 468
+ARB_ANT[27][1] 157
+ARB_ANT[27][2] 158
+ARB_ANT[27][3] 277
+ARB_ANT[27][4] 278
+ARB_ANT[27][5] 103
+ARB_ANT[27][6] 104
+ARB_ANT[27][7] 463
+ARB_ANT[27][8] 464
+ARB_ANT[27][9] 233
+ARB_ANT[27][10] 234
+ARB_ANT[27][11] 435
+ARB_ANT[27][12] 436
+ARB_ANT[27][13] 99
+ARB_ANT[27][14] 100
+ARB_ANT[27][15] 471
+ARB_ANT[27][16] 472
+ARB_ANT[28][1] 229
+ARB_ANT[28][2] 230
+ARB_ANT[28][3] 439
+ARB_ANT[28][4] 440
+ARB_ANT[28][5] 35
+ARB_ANT[28][6] 36
+ARB_ANT[28][7] 503
+ARB_ANT[28][8] 504
+ARB_ANT[28][9] 93
+ARB_ANT[28][10] 94
+ARB_ANT[28][11] 281
+ARB_ANT[28][12] 282
+ARB_ANT[28][13] 385
+ARB_ANT[28][14] 386
+ARB_ANT[28][15] 491
+ARB_ANT[28][16] 492
+ARB_ANT[29][1] 413
+ARB_ANT[29][2] 414
+ARB_ANT[29][3] 429
+ARB_ANT[29][4] 430
+ARB_ANT[29][5] 509
+ARB_ANT[29][6] 510
+ARB_ANT[29][7] 127
+ARB_ANT[29][8] 128
+ARB_ANT[29][9] 303
+ARB_ANT[29][10] 304
+ARB_ANT[29][11] 425
+ARB_ANT[29][12] 426
+ARB_ANT[29][13] 505
+ARB_ANT[29][14] 506
+ARB_ANT[29][15] 11
+ARB_ANT[29][16] 12
+ARB_ANT[30][1] 363
+ARB_ANT[30][2] 364
+ARB_ANT[30][3] 501
+ARB_ANT[30][4] 502
+ARB_ANT[30][5] 465
+ARB_ANT[30][6] 466
+ARB_ANT[30][7] 191
+ARB_ANT[30][8] 192
+ARB_ANT[30][9] 461
+ARB_ANT[30][10] 462
+ARB_ANT[30][11] 473
+ARB_ANT[30][12] 474
+ARB_ANT[30][13] 493
+ARB_ANT[30][14] 494
+ARB_ANT[30][15] 251
+ARB_ANT[30][16] 252
+ARB_ANT[31][1] 457
+ARB_ANT[31][2] 458
+ARB_ANT[31][3] 307
+ARB_ANT[31][4] 308
+ARB_ANT[31][5] 469
+ARB_ANT[31][6] 470
+ARB_ANT[31][7] 55
+ARB_ANT[31][8] 56
+ARB_ANT[31][9] 453
+ARB_ANT[31][10] 454
+ARB_ANT[31][11] 359
+ARB_ANT[31][12] 360
+ARB_ANT[31][13] 497
+ARB_ANT[31][14] 498
+ARB_ANT[31][15] 187
+ARB_ANT[31][16] 188
+ARB_ANT[32][1] 417
+ARB_ANT[32][2] 418
+ARB_ANT[32][3] 311
+ARB_ANT[32][4] 312
+ARB_ANT[32][5] 421
+ARB_ANT[32][6] 422
+ARB_ANT[32][7] 247
+ARB_ANT[32][8] 248
+ARB_ANT[32][9] 489
+ARB_ANT[32][10] 490
+ARB_ANT[32][11] 367
+ARB_ANT[32][12] 368
+ARB_ANT[32][13] 375
+ARB_ANT[32][14] 376
+ARB_ANT[32][15] 123
+ARB_ANT[32][16] 124
+
+# LEDA Outrigger #1
+ARB_ANT[33][1] 513
+ARB_ANT[33][2] 514
+
+# LEDA Outrigger #2
+ARB_ANT[33][3] 519
+ARB_ANT[33][4] 520
+
+# LEDA Outrigger #3
+ARB_ANT[33][5] 517
+ARB_ANT[33][6] 518
+
+# RTA antenna (LEDA Outrigger #4)
+ARB_ANT[33][7] 515
+ARB_ANT[33][8] 516
+
+# ----------------------------------------------
+# --- ASP input/output labeling ----------------
+# ----------------------------------------------
+# ARB_IN[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# ARB_OUT[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** ARB_IN[][] goes here:
+# label = panel#_input#
+# panel 1 is top, input 1 is upper left
+ARB_IN[1][1] 4_1
+ARB_IN[1][2] 4_2
+ARB_IN[1][3] 4_3
+ARB_IN[1][4] 4_4
+ARB_IN[1][5] 4_5
+ARB_IN[1][6] 4_6
+ARB_IN[1][7] 4_7
+ARB_IN[1][8] 4_8
+ARB_IN[1][9] 4_9
+ARB_IN[1][10] 4_10
+ARB_IN[1][11] 4_11
+ARB_IN[1][12] 4_12
+ARB_IN[1][13] 4_13
+ARB_IN[1][14] 4_14
+ARB_IN[1][15] 4_15
+ARB_IN[1][16] 4_16
+ARB_IN[2][1] 4_17
+ARB_IN[2][2] 4_18
+ARB_IN[2][3] 4_19
+ARB_IN[2][4] 4_20
+ARB_IN[2][5] 4_21
+ARB_IN[2][6] 4_22
+ARB_IN[2][7] 4_23
+ARB_IN[2][8] 4_24
+ARB_IN[2][9] 4_25
+ARB_IN[2][10] 4_26
+ARB_IN[2][11] 4_27
+ARB_IN[2][12] 4_28
+ARB_IN[2][13] 4_29
+ARB_IN[2][14] 4_30
+ARB_IN[2][15] 4_31
+ARB_IN[2][16] 4_32
+ARB_IN[3][1] 4_33
+ARB_IN[3][2] 4_34
+ARB_IN[3][3] 4_35
+ARB_IN[3][4] 4_36
+ARB_IN[3][5] 4_37
+ARB_IN[3][6] 4_38
+ARB_IN[3][7] 4_39
+ARB_IN[3][8] 4_40
+ARB_IN[3][9] 4_41
+ARB_IN[3][10] 4_42
+ARB_IN[3][11] 4_43
+ARB_IN[3][12] 4_44
+ARB_IN[3][13] 4_45
+ARB_IN[3][14] 4_46
+ARB_IN[3][15] 4_47
+ARB_IN[3][16] 4_48
+ARB_IN[4][1] 4_49
+ARB_IN[4][2] 4_50
+ARB_IN[4][3] 4_51
+ARB_IN[4][4] 4_52
+ARB_IN[4][5] 4_53
+ARB_IN[4][6] 4_54
+ARB_IN[4][7] 4_55
+ARB_IN[4][8] 4_56
+ARB_IN[4][9] 4_57
+ARB_IN[4][10] 4_58
+ARB_IN[4][11] 4_59
+ARB_IN[4][12] 4_60
+ARB_IN[4][13] 4_61
+ARB_IN[4][14] 4_62
+ARB_IN[4][15] 4_63
+ARB_IN[4][16] 4_64
+ARB_IN[5][1] 4_65
+ARB_IN[5][2] 4_66
+ARB_IN[5][3] 4_67
+ARB_IN[5][4] 4_68
+ARB_IN[5][5] 4_69
+ARB_IN[5][6] 4_70
+ARB_IN[5][7] 4_71
+ARB_IN[5][8] 4_72
+ARB_IN[5][9] 4_73
+ARB_IN[5][10] 4_74
+ARB_IN[5][11] 4_75
+ARB_IN[5][12] 4_76
+ARB_IN[5][13] 4_77
+ARB_IN[5][14] 4_78
+ARB_IN[5][15] 4_79
+ARB_IN[5][16] 4_80
+ARB_IN[6][1] 4_81
+ARB_IN[6][2] 4_82
+ARB_IN[6][3] 4_83
+ARB_IN[6][4] 4_84
+ARB_IN[6][5] 4_85
+ARB_IN[6][6] 4_86
+ARB_IN[6][7] 4_87
+ARB_IN[6][8] 4_88
+ARB_IN[6][9] 4_89
+ARB_IN[6][10] 4_90
+ARB_IN[6][11] 4_91
+ARB_IN[6][12] 4_92
+ARB_IN[6][13] 4_93
+ARB_IN[6][14] 4_94
+ARB_IN[6][15] 4_95
+ARB_IN[6][16] 4_96
+ARB_IN[7][1] 4_97
+ARB_IN[7][2] 4_98
+ARB_IN[7][3] 4_99
+ARB_IN[7][4] 4_100
+ARB_IN[7][5] 4_101
+ARB_IN[7][6] 4_102
+ARB_IN[7][7] 4_103
+ARB_IN[7][8] 4_104
+ARB_IN[7][9] 4_105
+ARB_IN[7][10] 4_106
+ARB_IN[7][11] 4_107
+ARB_IN[7][12] 4_108
+ARB_IN[7][13] 4_109
+ARB_IN[7][14] 4_110
+ARB_IN[7][15] 4_111
+ARB_IN[7][16] 4_112
+ARB_IN[8][1] 4_113
+ARB_IN[8][2] 4_114
+ARB_IN[8][3] 4_115
+ARB_IN[8][4] 4_116
+ARB_IN[8][5] 4_117
+ARB_IN[8][6] 4_118
+ARB_IN[8][7] 4_119
+ARB_IN[8][8] 4_120
+ARB_IN[8][9] 4_121
+ARB_IN[8][10] 4_122
+ARB_IN[8][11] 4_123
+ARB_IN[8][12] 4_124
+ARB_IN[8][13] 4_125
+ARB_IN[8][14] 4_126
+ARB_IN[8][15] 4_127
+ARB_IN[8][16] 4_128
+ARB_IN[9][1] 3_1
+ARB_IN[9][2] 3_2
+ARB_IN[9][3] 3_3
+ARB_IN[9][4] 3_4
+ARB_IN[9][5] 3_5
+ARB_IN[9][6] 3_6
+ARB_IN[9][7] 3_7
+ARB_IN[9][8] 3_8
+ARB_IN[9][9] 3_9
+ARB_IN[9][10] 3_10
+ARB_IN[9][11] 3_11
+ARB_IN[9][12] 3_12
+ARB_IN[9][13] 3_13
+ARB_IN[9][14] 3_14
+ARB_IN[9][15] 3_15
+ARB_IN[9][16] 3_16
+ARB_IN[10][1] 3_17
+ARB_IN[10][2] 3_18
+ARB_IN[10][3] 3_19
+ARB_IN[10][4] 3_20
+ARB_IN[10][5] 3_21
+ARB_IN[10][6] 3_22
+ARB_IN[10][7] 3_23
+ARB_IN[10][8] 3_24
+ARB_IN[10][9] 3_25
+ARB_IN[10][10] 3_26
+ARB_IN[10][11] 3_27
+ARB_IN[10][12] 3_28
+ARB_IN[10][13] 3_29
+ARB_IN[10][14] 3_30
+ARB_IN[10][15] 3_31
+ARB_IN[10][16] 3_32
+ARB_IN[11][1] 3_33
+ARB_IN[11][2] 3_34
+ARB_IN[11][3] 3_35
+ARB_IN[11][4] 3_36
+ARB_IN[11][5] 3_37
+ARB_IN[11][6] 3_38
+ARB_IN[11][7] 3_39
+ARB_IN[11][8] 3_40
+ARB_IN[11][9] 3_41
+ARB_IN[11][10] 3_42
+ARB_IN[11][11] 3_43
+ARB_IN[11][12] 3_44
+ARB_IN[11][13] 3_45
+ARB_IN[11][14] 3_46
+ARB_IN[11][15] 3_47
+ARB_IN[11][16] 3_48
+ARB_IN[12][1] 3_49
+ARB_IN[12][2] 3_50
+ARB_IN[12][3] 3_51
+ARB_IN[12][4] 3_52
+ARB_IN[12][5] 3_53
+ARB_IN[12][6] 3_54
+ARB_IN[12][7] 3_55
+ARB_IN[12][8] 3_56
+ARB_IN[12][9] 3_57
+ARB_IN[12][10] 3_58
+ARB_IN[12][11] 3_59
+ARB_IN[12][12] 3_60
+ARB_IN[12][13] 3_61
+ARB_IN[12][14] 3_62
+ARB_IN[12][15] 3_63
+ARB_IN[12][16] 3_64
+ARB_IN[13][1] 3_65
+ARB_IN[13][2] 3_66
+ARB_IN[13][3] 3_67
+ARB_IN[13][4] 3_68
+ARB_IN[13][5] 3_69
+ARB_IN[13][6] 3_70
+ARB_IN[13][7] 3_71
+ARB_IN[13][8] 3_72
+ARB_IN[13][9] 3_73
+ARB_IN[13][10] 3_74
+ARB_IN[13][11] 3_75
+ARB_IN[13][12] 3_76
+ARB_IN[13][13] 3_77
+ARB_IN[13][14] 3_78
+ARB_IN[13][15] 3_79
+ARB_IN[13][16] 3_80
+ARB_IN[14][1] 3_81
+ARB_IN[14][2] 3_82
+ARB_IN[14][3] 3_83
+ARB_IN[14][4] 3_84
+ARB_IN[14][5] 3_85
+ARB_IN[14][6] 3_86
+ARB_IN[14][7] 3_87
+ARB_IN[14][8] 3_88
+ARB_IN[14][9] 3_89
+ARB_IN[14][10] 3_90
+ARB_IN[14][11] 3_91
+ARB_IN[14][12] 3_92
+ARB_IN[14][13] 3_93
+ARB_IN[14][14] 3_94
+ARB_IN[14][15] 3_95
+ARB_IN[14][16] 3_96
+ARB_IN[15][1] 3_97
+ARB_IN[15][2] 3_98
+ARB_IN[15][3] 3_99
+ARB_IN[15][4] 3_100
+ARB_IN[15][5] 3_101
+ARB_IN[15][6] 3_102
+ARB_IN[15][7] 3_103
+ARB_IN[15][8] 3_104
+ARB_IN[15][9] 3_105
+ARB_IN[15][10] 3_106
+ARB_IN[15][11] 3_107
+ARB_IN[15][12] 3_108
+ARB_IN[15][13] 3_109
+ARB_IN[15][14] 3_110
+ARB_IN[15][15] 3_111
+ARB_IN[15][16] 3_112
+ARB_IN[16][1] 3_113
+ARB_IN[16][2] 3_114
+ARB_IN[16][3] 3_115
+ARB_IN[16][4] 3_116
+ARB_IN[16][5] 3_117
+ARB_IN[16][6] 3_118
+ARB_IN[16][7] 3_119
+ARB_IN[16][8] 3_120
+ARB_IN[16][9] 3_121
+ARB_IN[16][10] 3_122
+ARB_IN[16][11] 3_123
+ARB_IN[16][12] 3_124
+ARB_IN[16][13] 3_125
+ARB_IN[16][14] 3_126
+ARB_IN[16][15] 3_127
+ARB_IN[16][16] 3_128
+ARB_IN[17][1] 2_1
+ARB_IN[17][2] 2_2
+ARB_IN[17][3] 2_3
+ARB_IN[17][4] 2_4
+ARB_IN[17][5] 2_5
+ARB_IN[17][6] 2_6
+ARB_IN[17][7] 2_7
+ARB_IN[17][8] 2_8
+ARB_IN[17][9] 2_9
+ARB_IN[17][10] 2_10
+ARB_IN[17][11] 2_11
+ARB_IN[17][12] 2_12
+ARB_IN[17][13] 2_13
+ARB_IN[17][14] 2_14
+ARB_IN[17][15] 2_15
+ARB_IN[17][16] 2_16
+ARB_IN[18][1] 2_17
+ARB_IN[18][2] 2_18
+ARB_IN[18][3] 2_19
+ARB_IN[18][4] 2_20
+ARB_IN[18][5] 2_21
+ARB_IN[18][6] 2_22
+ARB_IN[18][7] 2_23
+ARB_IN[18][8] 2_24
+ARB_IN[18][9] 2_25
+ARB_IN[18][10] 2_26
+ARB_IN[18][11] 2_27
+ARB_IN[18][12] 2_28
+ARB_IN[18][13] 2_29
+ARB_IN[18][14] 2_30
+ARB_IN[18][15] 2_31
+ARB_IN[18][16] 2_32
+ARB_IN[19][1] 2_33
+ARB_IN[19][2] 2_34
+ARB_IN[19][3] 2_35
+ARB_IN[19][4] 2_36
+ARB_IN[19][5] 2_37
+ARB_IN[19][6] 2_38
+ARB_IN[19][7] 2_39
+ARB_IN[19][8] 2_40
+ARB_IN[19][9] 2_41
+ARB_IN[19][10] 2_42
+ARB_IN[19][11] 2_43
+ARB_IN[19][12] 2_44
+ARB_IN[19][13] 2_45
+ARB_IN[19][14] 2_46
+ARB_IN[19][15] 2_47
+ARB_IN[19][16] 2_48
+ARB_IN[20][1] 2_49
+ARB_IN[20][2] 2_50
+ARB_IN[20][3] 2_51
+ARB_IN[20][4] 2_52
+ARB_IN[20][5] 2_53
+ARB_IN[20][6] 2_54
+ARB_IN[20][7] 2_55
+ARB_IN[20][8] 2_56
+ARB_IN[20][9] 2_57
+ARB_IN[20][10] 2_58
+ARB_IN[20][11] 2_59
+ARB_IN[20][12] 2_60
+ARB_IN[20][13] 2_61
+ARB_IN[20][14] 2_62
+ARB_IN[20][15] 2_63
+ARB_IN[20][16] 2_64
+ARB_IN[21][1] 2_65
+ARB_IN[21][2] 2_66
+ARB_IN[21][3] 2_67
+ARB_IN[21][4] 2_68
+ARB_IN[21][5] 2_69
+ARB_IN[21][6] 2_70
+ARB_IN[21][7] 2_71
+ARB_IN[21][8] 2_72
+ARB_IN[21][9] 2_73
+ARB_IN[21][10] 2_74
+ARB_IN[21][11] 2_75
+ARB_IN[21][12] 2_76
+ARB_IN[21][13] 2_77
+ARB_IN[21][14] 2_78
+ARB_IN[21][15] 2_79
+ARB_IN[21][16] 2_80
+ARB_IN[22][1] 2_81
+ARB_IN[22][2] 2_82
+ARB_IN[22][3] 2_83
+ARB_IN[22][4] 2_84
+ARB_IN[22][5] 2_85
+ARB_IN[22][6] 2_86
+ARB_IN[22][7] 2_87
+ARB_IN[22][8] 2_88
+ARB_IN[22][9] 2_89
+ARB_IN[22][10] 2_90
+ARB_IN[22][11] 2_91
+ARB_IN[22][12] 2_92
+ARB_IN[22][13] 2_93
+ARB_IN[22][14] 2_94
+ARB_IN[22][15] 2_95
+ARB_IN[22][16] 2_96
+ARB_IN[23][1] 2_97
+ARB_IN[23][2] 2_98
+ARB_IN[23][3] 2_99
+ARB_IN[23][4] 2_100
+ARB_IN[23][5] 2_101
+ARB_IN[23][6] 2_102
+ARB_IN[23][7] 2_103
+ARB_IN[23][8] 2_104
+ARB_IN[23][9] 2_105
+ARB_IN[23][10] 2_106
+ARB_IN[23][11] 2_107
+ARB_IN[23][12] 2_108
+ARB_IN[23][13] 2_109
+ARB_IN[23][14] 2_110
+ARB_IN[23][15] 2_111
+ARB_IN[23][16] 2_112
+ARB_IN[24][1] 2_113
+ARB_IN[24][2] 2_114
+ARB_IN[24][3] 2_115
+ARB_IN[24][4] 2_116
+ARB_IN[24][5] 2_117
+ARB_IN[24][6] 2_118
+ARB_IN[24][7] 2_119
+ARB_IN[24][8] 2_120
+ARB_IN[24][9] 2_121
+ARB_IN[24][10] 2_122
+ARB_IN[24][11] 2_123
+ARB_IN[24][12] 2_124
+ARB_IN[24][13] 2_125
+ARB_IN[24][14] 2_126
+ARB_IN[24][15] 2_127
+ARB_IN[24][16] 2_128
+ARB_IN[25][1] 1_1
+ARB_IN[25][2] 1_2
+ARB_IN[25][3] 1_3
+ARB_IN[25][4] 1_4
+ARB_IN[25][5] 1_5
+ARB_IN[25][6] 1_6
+ARB_IN[25][7] 1_7
+ARB_IN[25][8] 1_8
+ARB_IN[25][9] 1_9
+ARB_IN[25][10] 1_10
+ARB_IN[25][11] 1_11
+ARB_IN[25][12] 1_12
+ARB_IN[25][13] 1_13
+ARB_IN[25][14] 1_14
+ARB_IN[25][15] 1_15
+ARB_IN[25][16] 1_16
+ARB_IN[26][1] 1_17
+ARB_IN[26][2] 1_18
+ARB_IN[26][3] 1_19
+ARB_IN[26][4] 1_20
+ARB_IN[26][5] 1_21
+ARB_IN[26][6] 1_22
+ARB_IN[26][7] 1_23
+ARB_IN[26][8] 1_24
+ARB_IN[26][9] 1_25
+ARB_IN[26][10] 1_26
+ARB_IN[26][11] 1_27
+ARB_IN[26][12] 1_28
+ARB_IN[26][13] 1_29
+ARB_IN[26][14] 1_30
+ARB_IN[26][15] 1_31
+ARB_IN[26][16] 1_32
+ARB_IN[27][1] 1_33
+ARB_IN[27][2] 1_34
+ARB_IN[27][3] 1_35
+ARB_IN[27][4] 1_36
+ARB_IN[27][5] 1_37
+ARB_IN[27][6] 1_38
+ARB_IN[27][7] 1_39
+ARB_IN[27][8] 1_40
+ARB_IN[27][9] 1_41
+ARB_IN[27][10] 1_42
+ARB_IN[27][11] 1_43
+ARB_IN[27][12] 1_44
+ARB_IN[27][13] 1_45
+ARB_IN[27][14] 1_46
+ARB_IN[27][15] 1_47
+ARB_IN[27][16] 1_48
+ARB_IN[28][1] 1_49
+ARB_IN[28][2] 1_50
+ARB_IN[28][3] 1_51
+ARB_IN[28][4] 1_52
+ARB_IN[28][5] 1_53
+ARB_IN[28][6] 1_54
+ARB_IN[28][7] 1_55
+ARB_IN[28][8] 1_56
+ARB_IN[28][9] 1_57
+ARB_IN[28][10] 1_58
+ARB_IN[28][11] 1_59
+ARB_IN[28][12] 1_60
+ARB_IN[28][13] 1_61
+ARB_IN[28][14] 1_62
+ARB_IN[28][15] 1_63
+ARB_IN[28][16] 1_64
+ARB_IN[29][1] 1_65
+ARB_IN[29][2] 1_66
+ARB_IN[29][3] 1_67
+ARB_IN[29][4] 1_68
+ARB_IN[29][5] 1_69
+ARB_IN[29][6] 1_70
+ARB_IN[29][7] 1_71
+ARB_IN[29][8] 1_72
+ARB_IN[29][9] 1_73
+ARB_IN[29][10] 1_74
+ARB_IN[29][11] 1_75
+ARB_IN[29][12] 1_76
+ARB_IN[29][13] 1_77
+ARB_IN[29][14] 1_78
+ARB_IN[29][15] 1_79
+ARB_IN[29][16] 1_80
+ARB_IN[30][1] 1_81
+ARB_IN[30][2] 1_82
+ARB_IN[30][3] 1_83
+ARB_IN[30][4] 1_84
+ARB_IN[30][5] 1_85
+ARB_IN[30][6] 1_86
+ARB_IN[30][7] 1_87
+ARB_IN[30][8] 1_88
+ARB_IN[30][9] 1_89
+ARB_IN[30][10] 1_90
+ARB_IN[30][11] 1_91
+ARB_IN[30][12] 1_92
+ARB_IN[30][13] 1_93
+ARB_IN[30][14] 1_94
+ARB_IN[30][15] 1_95
+ARB_IN[30][16] 1_96
+ARB_IN[31][1] 1_97
+ARB_IN[31][2] 1_98
+ARB_IN[31][3] 1_99
+ARB_IN[31][4] 1_100
+ARB_IN[31][5] 1_101
+ARB_IN[31][6] 1_102
+ARB_IN[31][7] 1_103
+ARB_IN[31][8] 1_104
+ARB_IN[31][9] 1_105
+ARB_IN[31][10] 1_106
+ARB_IN[31][11] 1_107
+ARB_IN[31][12] 1_108
+ARB_IN[31][13] 1_109
+ARB_IN[31][14] 1_110
+ARB_IN[31][15] 1_111
+ARB_IN[31][16] 1_112
+ARB_IN[32][1] 1_113
+ARB_IN[32][2] 1_114
+ARB_IN[32][3] 1_115
+ARB_IN[32][4] 1_116
+ARB_IN[32][5] 1_117
+ARB_IN[32][6] 1_118
+ARB_IN[32][7] 1_119
+ARB_IN[32][8] 1_120
+ARB_IN[32][9] 1_121
+ARB_IN[32][10] 1_122
+ARB_IN[32][11] 1_123
+ARB_IN[32][12] 1_124
+ARB_IN[32][13] 1_125
+ARB_IN[32][14] 1_126
+ARB_IN[32][15] 1_127
+ARB_IN[32][16] 1_128
+
+# *** ARB_OUT[][] goes here:
+# label = panel#_output#_pair#
+# panel 1 is top, output 1 is upper right
+ARB_OUT[1][1] 4_1_1
+ARB_OUT[1][2] 4_1_2
+ARB_OUT[1][3] 4_1_3
+ARB_OUT[1][4] 4_1_4
+ARB_OUT[1][5] 4_2_1
+ARB_OUT[1][6] 4_2_2
+ARB_OUT[1][7] 4_2_3
+ARB_OUT[1][8] 4_2_4
+ARB_OUT[1][9] 4_3_1
+ARB_OUT[1][10] 4_3_2
+ARB_OUT[1][11] 4_3_3
+ARB_OUT[1][12] 4_3_4
+ARB_OUT[1][13] 4_4_1
+ARB_OUT[1][14] 4_4_2
+ARB_OUT[1][15] 4_4_3
+ARB_OUT[1][16] 4_4_4
+ARB_OUT[2][1] 4_5_1
+ARB_OUT[2][2] 4_5_2
+ARB_OUT[2][3] 4_5_3
+ARB_OUT[2][4] 4_5_4
+ARB_OUT[2][5] 4_6_1
+ARB_OUT[2][6] 4_6_2
+ARB_OUT[2][7] 4_6_3
+ARB_OUT[2][8] 4_6_4
+ARB_OUT[2][9] 4_7_1
+ARB_OUT[2][10] 4_7_2
+ARB_OUT[2][11] 4_7_3
+ARB_OUT[2][12] 4_7_4
+ARB_OUT[2][13] 4_8_1
+ARB_OUT[2][14] 4_8_2
+ARB_OUT[2][15] 4_8_3
+ARB_OUT[2][16] 4_8_4
+ARB_OUT[3][1] 4_9_1
+ARB_OUT[3][2] 4_9_2
+ARB_OUT[3][3] 4_9_3
+ARB_OUT[3][4] 4_9_4
+ARB_OUT[3][5] 4_10_1
+ARB_OUT[3][6] 4_10_2
+ARB_OUT[3][7] 4_10_3
+ARB_OUT[3][8] 4_10_4
+ARB_OUT[3][9] 4_11_1
+ARB_OUT[3][10] 4_11_2
+ARB_OUT[3][11] 4_11_3
+ARB_OUT[3][12] 4_11_4
+ARB_OUT[3][13] 4_12_1
+ARB_OUT[3][14] 4_12_2
+ARB_OUT[3][15] 4_12_3
+ARB_OUT[3][16] 4_12_4
+ARB_OUT[4][1] 4_13_1
+ARB_OUT[4][2] 4_13_2
+ARB_OUT[4][3] 4_13_3
+ARB_OUT[4][4] 4_13_4
+ARB_OUT[4][5] 4_14_1
+ARB_OUT[4][6] 4_14_2
+ARB_OUT[4][7] 4_14_3
+ARB_OUT[4][8] 4_14_4
+ARB_OUT[4][9] 4_15_1
+ARB_OUT[4][10] 4_15_2
+ARB_OUT[4][11] 4_15_3
+ARB_OUT[4][12] 4_15_4
+ARB_OUT[4][13] 4_16_1
+ARB_OUT[4][14] 4_16_2
+ARB_OUT[4][15] 4_16_3
+ARB_OUT[4][16] 4_16_4
+ARB_OUT[5][1] 4_17_1
+ARB_OUT[5][2] 4_17_2
+ARB_OUT[5][3] 4_17_3
+ARB_OUT[5][4] 4_17_4
+ARB_OUT[5][5] 4_18_1
+ARB_OUT[5][6] 4_18_2
+ARB_OUT[5][7] 4_18_3
+ARB_OUT[5][8] 4_18_4
+ARB_OUT[5][9] 4_19_1
+ARB_OUT[5][10] 4_19_2
+ARB_OUT[5][11] 4_19_3
+ARB_OUT[5][12] 4_19_4
+ARB_OUT[5][13] 4_20_1
+ARB_OUT[5][14] 4_20_2
+ARB_OUT[5][15] 4_20_3
+ARB_OUT[5][16] 4_20_4
+ARB_OUT[6][1] 4_21_1
+ARB_OUT[6][2] 4_21_2
+ARB_OUT[6][3] 4_21_3
+ARB_OUT[6][4] 4_21_4
+ARB_OUT[6][5] 4_22_1
+ARB_OUT[6][6] 4_22_2
+ARB_OUT[6][7] 4_22_3
+ARB_OUT[6][8] 4_22_4
+ARB_OUT[6][9] 4_23_1
+ARB_OUT[6][10] 4_23_2
+ARB_OUT[6][11] 4_23_3
+ARB_OUT[6][12] 4_23_4
+ARB_OUT[6][13] 4_24_1
+ARB_OUT[6][14] 4_24_2
+ARB_OUT[6][15] 4_24_3
+ARB_OUT[6][16] 4_24_4
+ARB_OUT[7][1] 4_25_1
+ARB_OUT[7][2] 4_25_2
+ARB_OUT[7][3] 4_25_3
+ARB_OUT[7][4] 4_25_4
+ARB_OUT[7][5] 4_26_1
+ARB_OUT[7][6] 4_26_2
+ARB_OUT[7][7] 4_26_3
+ARB_OUT[7][8] 4_26_4
+ARB_OUT[7][9] 4_27_1
+ARB_OUT[7][10] 4_27_2
+ARB_OUT[7][11] 4_27_3
+ARB_OUT[7][12] 4_27_4
+ARB_OUT[7][13] 4_28_1
+ARB_OUT[7][14] 4_28_2
+ARB_OUT[7][15] 4_28_3
+ARB_OUT[7][16] 4_28_4
+ARB_OUT[8][1] 4_29_1
+ARB_OUT[8][2] 4_29_2
+ARB_OUT[8][3] 4_29_3
+ARB_OUT[8][4] 4_29_4
+ARB_OUT[8][5] 4_30_1
+ARB_OUT[8][6] 4_30_2
+ARB_OUT[8][7] 4_30_3
+ARB_OUT[8][8] 4_30_4
+ARB_OUT[8][9] 4_31_1
+ARB_OUT[8][10] 4_31_2
+ARB_OUT[8][11] 4_31_3
+ARB_OUT[8][12] 4_31_4
+ARB_OUT[8][13] 4_32_1
+ARB_OUT[8][14] 4_32_2
+ARB_OUT[8][15] 4_32_3
+ARB_OUT[8][16] 4_32_4
+ARB_OUT[9][1] 3_1_1
+ARB_OUT[9][2] 3_1_2
+ARB_OUT[9][3] 3_1_3
+ARB_OUT[9][4] 3_1_4
+ARB_OUT[9][5] 3_2_1
+ARB_OUT[9][6] 3_2_2
+ARB_OUT[9][7] 3_2_3
+ARB_OUT[9][8] 3_2_4
+ARB_OUT[9][9] 3_3_1
+ARB_OUT[9][10] 3_3_2
+ARB_OUT[9][11] 3_3_3
+ARB_OUT[9][12] 3_3_4
+ARB_OUT[9][13] 3_4_1
+ARB_OUT[9][14] 3_4_2
+ARB_OUT[9][15] 3_4_3
+ARB_OUT[9][16] 3_4_4
+ARB_OUT[10][1] 3_5_1
+ARB_OUT[10][2] 3_5_2
+ARB_OUT[10][3] 3_5_3
+ARB_OUT[10][4] 3_5_4
+ARB_OUT[10][5] 3_6_1
+ARB_OUT[10][6] 3_6_2
+ARB_OUT[10][7] 3_6_3
+ARB_OUT[10][8] 3_6_4
+ARB_OUT[10][9] 3_7_1
+ARB_OUT[10][10] 3_7_2
+ARB_OUT[10][11] 3_7_3
+ARB_OUT[10][12] 3_7_4
+ARB_OUT[10][13] 3_8_1
+ARB_OUT[10][14] 3_8_2
+ARB_OUT[10][15] 3_8_3
+ARB_OUT[10][16] 3_8_4
+ARB_OUT[11][1] 3_9_1
+ARB_OUT[11][2] 3_9_2
+ARB_OUT[11][3] 3_9_3
+ARB_OUT[11][4] 3_9_4
+ARB_OUT[11][5] 3_10_1
+ARB_OUT[11][6] 3_10_2
+ARB_OUT[11][7] 3_10_3
+ARB_OUT[11][8] 3_10_4
+ARB_OUT[11][9] 3_11_1
+ARB_OUT[11][10] 3_11_2
+ARB_OUT[11][11] 3_11_3
+ARB_OUT[11][12] 3_11_4
+ARB_OUT[11][13] 3_12_1
+ARB_OUT[11][14] 3_12_2
+ARB_OUT[11][15] 3_12_3
+ARB_OUT[11][16] 3_12_4
+ARB_OUT[12][1] 3_13_1
+ARB_OUT[12][2] 3_13_2
+ARB_OUT[12][3] 3_13_3
+ARB_OUT[12][4] 3_13_4
+ARB_OUT[12][5] 3_14_1
+ARB_OUT[12][6] 3_14_2
+ARB_OUT[12][7] 3_14_3
+ARB_OUT[12][8] 3_14_4
+ARB_OUT[12][9] 3_15_1
+ARB_OUT[12][10] 3_15_2
+ARB_OUT[12][11] 3_15_3
+ARB_OUT[12][12] 3_15_4
+ARB_OUT[12][13] 3_16_1
+ARB_OUT[12][14] 3_16_2
+ARB_OUT[12][15] 3_16_3
+ARB_OUT[12][16] 3_16_4
+ARB_OUT[13][1] 3_17_1
+ARB_OUT[13][2] 3_17_2
+ARB_OUT[13][3] 3_17_3
+ARB_OUT[13][4] 3_17_4
+ARB_OUT[13][5] 3_18_1
+ARB_OUT[13][6] 3_18_2
+ARB_OUT[13][7] 3_18_3
+ARB_OUT[13][8] 3_18_4
+ARB_OUT[13][9] 3_19_1
+ARB_OUT[13][10] 3_19_2
+ARB_OUT[13][11] 3_19_3
+ARB_OUT[13][12] 3_19_4
+ARB_OUT[13][13] 3_20_1
+ARB_OUT[13][14] 3_20_2
+ARB_OUT[13][15] 3_20_3
+ARB_OUT[13][16] 3_20_4
+ARB_OUT[14][1] 3_21_1
+ARB_OUT[14][2] 3_21_2
+ARB_OUT[14][3] 3_21_3
+ARB_OUT[14][4] 3_21_4
+ARB_OUT[14][5] 3_22_1
+ARB_OUT[14][6] 3_22_2
+ARB_OUT[14][7] 3_22_3
+ARB_OUT[14][8] 3_22_4
+ARB_OUT[14][9] 3_23_1
+ARB_OUT[14][10] 3_23_2
+ARB_OUT[14][11] 3_23_3
+ARB_OUT[14][12] 3_23_4
+ARB_OUT[14][13] 3_24_1
+ARB_OUT[14][14] 3_24_2
+ARB_OUT[14][15] 3_24_3
+ARB_OUT[14][16] 3_24_4
+ARB_OUT[15][1] 3_25_1
+ARB_OUT[15][2] 3_25_2
+ARB_OUT[15][3] 3_25_3
+ARB_OUT[15][4] 3_25_4
+ARB_OUT[15][5] 3_26_1
+ARB_OUT[15][6] 3_26_2
+ARB_OUT[15][7] 3_26_3
+ARB_OUT[15][8] 3_26_4
+ARB_OUT[15][9] 3_27_1
+ARB_OUT[15][10] 3_27_2
+ARB_OUT[15][11] 3_27_3
+ARB_OUT[15][12] 3_27_4
+ARB_OUT[15][13] 3_28_1
+ARB_OUT[15][14] 3_28_2
+ARB_OUT[15][15] 3_28_3
+ARB_OUT[15][16] 3_28_4
+ARB_OUT[16][1] 3_29_1
+ARB_OUT[16][2] 3_29_2
+ARB_OUT[16][3] 3_29_3
+ARB_OUT[16][4] 3_29_4
+ARB_OUT[16][5] 3_30_1
+ARB_OUT[16][6] 3_30_2
+ARB_OUT[16][7] 3_30_3
+ARB_OUT[16][8] 3_30_4
+ARB_OUT[16][9] 3_31_1
+ARB_OUT[16][10] 3_31_2
+ARB_OUT[16][11] 3_31_3
+ARB_OUT[16][12] 3_31_4
+ARB_OUT[16][13] 3_32_1
+ARB_OUT[16][14] 3_32_2
+ARB_OUT[16][15] 3_32_3
+ARB_OUT[16][16] 3_32_4
+ARB_OUT[17][1] 2_1_1
+ARB_OUT[17][2] 2_1_2
+ARB_OUT[17][3] 2_1_3
+ARB_OUT[17][4] 2_1_4
+ARB_OUT[17][5] 2_2_1
+ARB_OUT[17][6] 2_2_2
+ARB_OUT[17][7] 2_2_3
+ARB_OUT[17][8] 2_2_4
+ARB_OUT[17][9] 2_3_1
+ARB_OUT[17][10] 2_3_2
+ARB_OUT[17][11] 2_3_3
+ARB_OUT[17][12] 2_3_4
+ARB_OUT[17][13] 2_4_1
+ARB_OUT[17][14] 2_4_2
+ARB_OUT[17][15] 2_4_3
+ARB_OUT[17][16] 2_4_4
+ARB_OUT[18][1] 2_5_1
+ARB_OUT[18][2] 2_5_2
+ARB_OUT[18][3] 2_5_3
+ARB_OUT[18][4] 2_5_4
+ARB_OUT[18][5] 2_6_1
+ARB_OUT[18][6] 2_6_2
+ARB_OUT[18][7] 2_6_3
+ARB_OUT[18][8] 2_6_4
+ARB_OUT[18][9] 2_7_1
+ARB_OUT[18][10] 2_7_2
+ARB_OUT[18][11] 2_7_3
+ARB_OUT[18][12] 2_7_4
+ARB_OUT[18][13] 2_8_1
+ARB_OUT[18][14] 2_8_2
+ARB_OUT[18][15] 2_8_3
+ARB_OUT[18][16] 2_8_4
+ARB_OUT[19][1] 2_9_1
+ARB_OUT[19][2] 2_9_2
+ARB_OUT[19][3] 2_9_3
+ARB_OUT[19][4] 2_9_4
+ARB_OUT[19][5] 2_10_1
+ARB_OUT[19][6] 2_10_2
+ARB_OUT[19][7] 2_10_3
+ARB_OUT[19][8] 2_10_4
+ARB_OUT[19][9] 2_11_1
+ARB_OUT[19][10] 2_11_2
+ARB_OUT[19][11] 2_11_3
+ARB_OUT[19][12] 2_11_4
+ARB_OUT[19][13] 2_12_1
+ARB_OUT[19][14] 2_12_2
+ARB_OUT[19][15] 2_12_3
+ARB_OUT[19][16] 2_12_4
+ARB_OUT[20][1] 2_13_1
+ARB_OUT[20][2] 2_13_2
+ARB_OUT[20][3] 2_13_3
+ARB_OUT[20][4] 2_13_4
+ARB_OUT[20][5] 2_14_1
+ARB_OUT[20][6] 2_14_2
+ARB_OUT[20][7] 2_14_3
+ARB_OUT[20][8] 2_14_4
+ARB_OUT[20][9] 2_15_1
+ARB_OUT[20][10] 2_15_2
+ARB_OUT[20][11] 2_15_3
+ARB_OUT[20][12] 2_15_4
+ARB_OUT[20][13] 2_16_1
+ARB_OUT[20][14] 2_16_2
+ARB_OUT[20][15] 2_16_3
+ARB_OUT[20][16] 2_16_4
+ARB_OUT[21][1] 2_17_1
+ARB_OUT[21][2] 2_17_2
+ARB_OUT[21][3] 2_17_3
+ARB_OUT[21][4] 2_17_4
+ARB_OUT[21][5] 2_18_1
+ARB_OUT[21][6] 2_18_2
+ARB_OUT[21][7] 2_18_3
+ARB_OUT[21][8] 2_18_4
+ARB_OUT[21][9] 2_19_1
+ARB_OUT[21][10] 2_19_2
+ARB_OUT[21][11] 2_19_3
+ARB_OUT[21][12] 2_19_4
+ARB_OUT[21][13] 2_20_1
+ARB_OUT[21][14] 2_20_2
+ARB_OUT[21][15] 2_20_3
+ARB_OUT[21][16] 2_20_4
+ARB_OUT[22][1] 2_21_1
+ARB_OUT[22][2] 2_21_2
+ARB_OUT[22][3] 2_21_3
+ARB_OUT[22][4] 2_21_4
+ARB_OUT[22][5] 2_22_1
+ARB_OUT[22][6] 2_22_2
+ARB_OUT[22][7] 2_22_3
+ARB_OUT[22][8] 2_22_4
+ARB_OUT[22][9] 2_23_1
+ARB_OUT[22][10] 2_23_2
+ARB_OUT[22][11] 2_23_3
+ARB_OUT[22][12] 2_23_4
+ARB_OUT[22][13] 2_24_1
+ARB_OUT[22][14] 2_24_2
+ARB_OUT[22][15] 2_24_3
+ARB_OUT[22][16] 2_24_4
+ARB_OUT[23][1] 2_25_1
+ARB_OUT[23][2] 2_25_2
+ARB_OUT[23][3] 2_25_3
+ARB_OUT[23][4] 2_25_4
+ARB_OUT[23][5] 2_26_1
+ARB_OUT[23][6] 2_26_2
+ARB_OUT[23][7] 2_26_3
+ARB_OUT[23][8] 2_26_4
+ARB_OUT[23][9] 2_27_1
+ARB_OUT[23][10] 2_27_2
+ARB_OUT[23][11] 2_27_3
+ARB_OUT[23][12] 2_27_4
+ARB_OUT[23][13] 2_28_1
+ARB_OUT[23][14] 2_28_2
+ARB_OUT[23][15] 2_28_3
+ARB_OUT[23][16] 2_28_4
+ARB_OUT[24][1] 2_29_1
+ARB_OUT[24][2] 2_29_2
+ARB_OUT[24][3] 2_29_3
+ARB_OUT[24][4] 2_29_4
+ARB_OUT[24][5] 2_30_1
+ARB_OUT[24][6] 2_30_2
+ARB_OUT[24][7] 2_30_3
+ARB_OUT[24][8] 2_30_4
+ARB_OUT[24][9] 2_31_1
+ARB_OUT[24][10] 2_31_2
+ARB_OUT[24][11] 2_31_3
+ARB_OUT[24][12] 2_31_4
+ARB_OUT[24][13] 2_32_1
+ARB_OUT[24][14] 2_32_2
+ARB_OUT[24][15] 2_32_3
+ARB_OUT[24][16] 2_32_4
+ARB_OUT[25][1] 1_1_1
+ARB_OUT[25][2] 1_1_2
+ARB_OUT[25][3] 1_1_3
+ARB_OUT[25][4] 1_1_4
+ARB_OUT[25][5] 1_2_1
+ARB_OUT[25][6] 1_2_2
+ARB_OUT[25][7] 1_2_3
+ARB_OUT[25][8] 1_2_4
+ARB_OUT[25][9] 1_3_1
+ARB_OUT[25][10] 1_3_2
+ARB_OUT[25][11] 1_3_3
+ARB_OUT[25][12] 1_3_4
+ARB_OUT[25][13] 1_4_1
+ARB_OUT[25][14] 1_4_2
+ARB_OUT[25][15] 1_4_3
+ARB_OUT[25][16] 1_4_4
+ARB_OUT[26][1] 1_5_1
+ARB_OUT[26][2] 1_5_2
+ARB_OUT[26][3] 1_5_3
+ARB_OUT[26][4] 1_5_4
+ARB_OUT[26][5] 1_6_1
+ARB_OUT[26][6] 1_6_2
+ARB_OUT[26][7] 1_6_3
+ARB_OUT[26][8] 1_6_4
+ARB_OUT[26][9] 1_7_1
+ARB_OUT[26][10] 1_7_2
+ARB_OUT[26][11] 1_7_3
+ARB_OUT[26][12] 1_7_4
+ARB_OUT[26][13] 1_8_1
+ARB_OUT[26][14] 1_8_2
+ARB_OUT[26][15] 1_8_3
+ARB_OUT[26][16] 1_8_4
+ARB_OUT[27][1] 1_9_1
+ARB_OUT[27][2] 1_9_2
+ARB_OUT[27][3] 1_9_3
+ARB_OUT[27][4] 1_9_4
+ARB_OUT[27][5] 1_10_1
+ARB_OUT[27][6] 1_10_2
+ARB_OUT[27][7] 1_10_3
+ARB_OUT[27][8] 1_10_4
+ARB_OUT[27][9] 1_11_1
+ARB_OUT[27][10] 1_11_2
+ARB_OUT[27][11] 1_11_3
+ARB_OUT[27][12] 1_11_4
+ARB_OUT[27][13] 1_12_1
+ARB_OUT[27][14] 1_12_2
+ARB_OUT[27][15] 1_12_3
+ARB_OUT[27][16] 1_12_4
+ARB_OUT[28][1] 1_13_1
+ARB_OUT[28][2] 1_13_2
+ARB_OUT[28][3] 1_13_3
+ARB_OUT[28][4] 1_13_4
+ARB_OUT[28][5] 1_14_1
+ARB_OUT[28][6] 1_14_2
+ARB_OUT[28][7] 1_14_3
+ARB_OUT[28][8] 1_14_4
+ARB_OUT[28][9] 1_15_1
+ARB_OUT[28][10] 1_15_2
+ARB_OUT[28][11] 1_15_3
+ARB_OUT[28][12] 1_15_4
+ARB_OUT[28][13] 1_16_1
+ARB_OUT[28][14] 1_16_2
+ARB_OUT[28][15] 1_16_3
+ARB_OUT[28][16] 1_16_4
+ARB_OUT[29][1] 1_17_1
+ARB_OUT[29][2] 1_17_2
+ARB_OUT[29][3] 1_17_3
+ARB_OUT[29][4] 1_17_4
+ARB_OUT[29][5] 1_18_1
+ARB_OUT[29][6] 1_18_2
+ARB_OUT[29][7] 1_18_3
+ARB_OUT[29][8] 1_18_4
+ARB_OUT[29][9] 1_19_1
+ARB_OUT[29][10] 1_19_2
+ARB_OUT[29][11] 1_19_3
+ARB_OUT[29][12] 1_19_4
+ARB_OUT[29][13] 1_20_1
+ARB_OUT[29][14] 1_20_2
+ARB_OUT[29][15] 1_20_3
+ARB_OUT[29][16] 1_20_4
+ARB_OUT[30][1] 1_21_1
+ARB_OUT[30][2] 1_21_2
+ARB_OUT[30][3] 1_21_3
+ARB_OUT[30][4] 1_21_4
+ARB_OUT[30][5] 1_22_1
+ARB_OUT[30][6] 1_22_2
+ARB_OUT[30][7] 1_22_3
+ARB_OUT[30][8] 1_22_4
+ARB_OUT[30][9] 1_23_1
+ARB_OUT[30][10] 1_23_2
+ARB_OUT[30][11] 1_23_3
+ARB_OUT[30][12] 1_23_4
+ARB_OUT[30][13] 1_24_1
+ARB_OUT[30][14] 1_24_2
+ARB_OUT[30][15] 1_24_3
+ARB_OUT[30][16] 1_24_4
+ARB_OUT[31][1] 1_25_1
+ARB_OUT[31][2] 1_25_2
+ARB_OUT[31][3] 1_25_3
+ARB_OUT[31][4] 1_25_4
+ARB_OUT[31][5] 1_26_1
+ARB_OUT[31][6] 1_26_2
+ARB_OUT[31][7] 1_26_3
+ARB_OUT[31][8] 1_26_4
+ARB_OUT[31][9] 1_27_1
+ARB_OUT[31][10] 1_27_2
+ARB_OUT[31][11] 1_27_3
+ARB_OUT[31][12] 1_27_4
+ARB_OUT[31][13] 1_28_1
+ARB_OUT[31][14] 1_28_2
+ARB_OUT[31][15] 1_28_3
+ARB_OUT[31][16] 1_28_4
+ARB_OUT[32][1] 1_29_1
+ARB_OUT[32][2] 1_29_2
+ARB_OUT[32][3] 1_29_3
+ARB_OUT[32][4] 1_29_4
+ARB_OUT[32][5] 1_30_1
+ARB_OUT[32][6] 1_30_2
+ARB_OUT[32][7] 1_30_3
+ARB_OUT[32][8] 1_30_4
+ARB_OUT[32][9] 1_31_1
+ARB_OUT[32][10] 1_31_2
+ARB_OUT[32][11] 1_31_3
+ARB_OUT[32][12] 1_31_4
+ARB_OUT[32][13] 1_32_1
+ARB_OUT[32][14] 1_32_2
+ARB_OUT[32][15] 1_32_3
+ARB_OUT[32][16] 1_32_4
+
+# ----------------------
+# --- DP1 --------------
+# ----------------------
+# Maximum number of DP1 boards:
+N_DP1 26
+# Maximum number or channels per DP1 board
+N_DP1CH 20
+
+# DP1_ID[] will be set to "UNK" (no identification) for any DP1 boards not identified
+# *** DP1_ID[dp1#] goes here:
+DP1_ID[1] lwa27
+DP1_ID[2] lwa24
+DP1_ID[3] lwa23
+DP1_ID[4] lwa18
+DP1_ID[5] lwa10
+DP1_ID[6] lwa32
+DP1_ID[7] lwa11
+DP1_ID[8] lwa30
+DP1_ID[9] lwa12
+DP1_ID[10] lwa8
+DP1_ID[11] lwa13
+DP1_ID[12] lwa26
+DP1_ID[13] lwa14
+DP1_ID[14] lwa22
+DP1_ID[15] lwa20
+DP1_ID[16] lwa1
+DP1_ID[17] lwa5
+DP1_ID[18] lwa25
+DP1_ID[19] lwa35
+DP1_ID[20] lwa19
+DP1_ID[21] lwa21
+DP1_ID[22] lwa6
+DP1_ID[23] lwa7
+DP1_ID[24] lwa33
+DP1_ID[25] lwa15
+DP1_ID[26] lwa28
+
+# DP1_SLOT[] will be set to 0 (not known/not applicable) for any DP1 boards not identified
+# *** DP1_SLOT[dp1#] goes here:
+# format = <chassis>-<slot from left>
+DP1_SLOT[1] 1-8
+DP1_SLOT[2] 1-6
+DP1_SLOT[3] 1-9
+DP1_SLOT[4] 1-5
+DP1_SLOT[5] 1-10
+DP1_SLOT[6] 1-4
+DP1_SLOT[7] 1-11
+DP1_SLOT[8] 1-3
+DP1_SLOT[9] 1-12
+DP1_SLOT[10] 1-2
+DP1_SLOT[11] 1-13
+DP1_SLOT[12] 1-1
+DP1_SLOT[13] 1-14
+DP1_SLOT[14] 2-8
+DP1_SLOT[15] 2-6
+DP1_SLOT[16] 2-9
+DP1_SLOT[17] 2-5
+DP1_SLOT[18] 2-10
+DP1_SLOT[19] 2-4
+DP1_SLOT[20] 2-11
+DP1_SLOT[21] 2-3
+DP1_SLOT[22] 2-12
+DP1_SLOT[23] 2-2
+DP1_SLOT[24] 2-13
+DP1_SLOT[25] 2-1
+DP1_SLOT[26] 2-14
+
+# DP1_DESI[] be set to 1 for any DP1 boards not identified
+# *** DP1_DESI[dp1#] goes here:
+DP1_DESI[1] 1
+DP1_DESI[2] 1
+DP1_DESI[3] 1
+DP1_DESI[4] 1
+DP1_DESI[5] 1
+DP1_DESI[6] 1
+DP1_DESI[7] 1
+DP1_DESI[8] 1
+DP1_DESI[9] 1
+DP1_DESI[10] 1
+DP1_DESI[11] 1
+DP1_DESI[12] 1
+DP1_DESI[13] 1
+DP1_DESI[14] 1
+DP1_DESI[15] 1
+DP1_DESI[16] 1
+DP1_DESI[17] 1
+DP1_DESI[18] 1
+DP1_DESI[19] 1
+DP1_DESI[20] 1
+DP1_DESI[21] 1
+DP1_DESI[22] 1
+DP1_DESI[23] 1
+DP1_DESI[24] 1
+DP1_DESI[25] 1
+DP1_DESI[26] 1
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any DP1 board-channels not identified
+# *** DP1_STAT[dp1#][ch#] goes here:
+
+# DP1_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** DP1_INR[dp1#][ch#] goes here:
+# label = panel#_input#_pair#
+# panel 1 is top, input 1 is upper left
+DP1_INR[1][1] 4_31_1
+DP1_INR[1][2] 4_31_2
+DP1_INR[1][3] 4_31_3
+DP1_INR[1][4] 4_31_4
+DP1_INR[1][5] 4_32_1
+DP1_INR[1][6] 4_32_2
+DP1_INR[1][7] 4_32_3
+DP1_INR[1][8] 4_32_4
+DP1_INR[1][9] 4_33_1
+DP1_INR[1][10] 4_33_2
+DP1_INR[1][11] 2_33_1
+DP1_INR[1][12] 2_33_2
+DP1_INR[1][13] 3_1_1
+DP1_INR[1][14] 3_1_2
+DP1_INR[1][15] 3_1_3
+DP1_INR[1][16] 3_1_4
+DP1_INR[1][17] 3_2_1
+DP1_INR[1][18] 3_2_2
+DP1_INR[1][19] 3_2_3
+DP1_INR[1][20] 3_2_4
+DP1_INR[2][1] 3_3_1
+DP1_INR[2][2] 3_3_2
+DP1_INR[2][3] 3_3_3
+DP1_INR[2][4] 3_3_4
+DP1_INR[2][5] 3_4_1
+DP1_INR[2][6] 3_4_2
+DP1_INR[2][7] 3_4_3
+DP1_INR[2][8] 3_4_4
+DP1_INR[2][9] 3_5_1
+DP1_INR[2][10] 3_5_2
+DP1_INR[2][11] 3_5_3
+DP1_INR[2][12] 3_5_4
+DP1_INR[2][13] 3_6_1
+DP1_INR[2][14] 3_6_2
+DP1_INR[2][15] 3_6_3
+DP1_INR[2][16] 3_6_4
+DP1_INR[2][17] 3_7_1
+DP1_INR[2][18] 3_7_2
+DP1_INR[2][19] 3_7_3
+DP1_INR[2][20] 3_7_4
+DP1_INR[3][1] 4_26_1
+DP1_INR[3][2] 4_26_2
+DP1_INR[3][3] 4_26_3
+DP1_INR[3][4] 4_26_4
+DP1_INR[3][5] 4_27_1
+DP1_INR[3][6] 4_27_2
+DP1_INR[3][7] 4_27_3
+DP1_INR[3][8] 4_27_4
+DP1_INR[3][9] 4_28_1
+DP1_INR[3][10] 4_28_2
+DP1_INR[3][11] 4_28_3
+DP1_INR[3][12] 4_28_4
+DP1_INR[3][13] 4_29_1
+DP1_INR[3][14] 4_29_2
+DP1_INR[3][15] 4_29_3
+DP1_INR[3][16] 4_29_4
+DP1_INR[3][17] 4_30_1
+DP1_INR[3][18] 4_30_2
+DP1_INR[3][19] 4_30_3
+DP1_INR[3][20] 4_30_4
+DP1_INR[4][1] 3_8_1
+DP1_INR[4][2] 3_8_2
+DP1_INR[4][3] 3_8_3
+DP1_INR[4][4] 3_8_4
+DP1_INR[4][5] 3_9_1
+DP1_INR[4][6] 3_9_2
+DP1_INR[4][7] 3_9_3
+DP1_INR[4][8] 3_9_4
+DP1_INR[4][9] 3_10_1
+DP1_INR[4][10] 3_10_2
+DP1_INR[4][11] 3_10_3
+DP1_INR[4][12] 3_10_4
+DP1_INR[4][13] 3_11_1
+DP1_INR[4][14] 3_11_2
+DP1_INR[4][15] 3_11_3
+DP1_INR[4][16] 3_11_4
+DP1_INR[4][17] 3_12_1
+DP1_INR[4][18] 3_12_2
+DP1_INR[4][19] 3_12_3
+DP1_INR[4][20] 3_12_4
+DP1_INR[5][1] 4_21_1
+DP1_INR[5][2] 4_21_2
+DP1_INR[5][3] 4_21_3
+DP1_INR[5][4] 4_21_4
+DP1_INR[5][5] 4_22_1
+DP1_INR[5][6] 4_22_2
+DP1_INR[5][7] 4_22_3
+DP1_INR[5][8] 4_22_4
+DP1_INR[5][9] 4_23_1
+DP1_INR[5][10] 4_23_2
+DP1_INR[5][11] 4_23_3
+DP1_INR[5][12] 4_23_4
+DP1_INR[5][13] 4_24_1
+DP1_INR[5][14] 4_24_2
+DP1_INR[5][15] 4_24_3
+DP1_INR[5][16] 4_24_4
+DP1_INR[5][17] 4_25_1
+DP1_INR[5][18] 4_25_2
+DP1_INR[5][19] 4_25_3
+DP1_INR[5][20] 4_25_4
+DP1_INR[6][1] 3_13_1
+DP1_INR[6][2] 3_13_2
+DP1_INR[6][3] 3_13_3
+DP1_INR[6][4] 3_13_4
+DP1_INR[6][5] 3_14_1
+DP1_INR[6][6] 3_14_2
+DP1_INR[6][7] 3_14_3
+DP1_INR[6][8] 3_14_4
+DP1_INR[6][9] 3_15_1
+DP1_INR[6][10] 3_15_2
+DP1_INR[6][11] 3_15_3
+DP1_INR[6][12] 3_15_4
+DP1_INR[6][13] 3_16_1
+DP1_INR[6][14] 3_16_2
+DP1_INR[6][15] 3_16_3
+DP1_INR[6][16] 3_16_4
+DP1_INR[6][17] 3_17_1
+DP1_INR[6][18] 3_17_2
+DP1_INR[6][19] 3_17_3
+DP1_INR[6][20] 3_17_4
+DP1_INR[7][1] 4_16_1
+DP1_INR[7][2] 4_16_2
+DP1_INR[7][3] 4_16_3
+DP1_INR[7][4] 4_16_4
+DP1_INR[7][5] 4_17_1
+DP1_INR[7][6] 4_17_2
+DP1_INR[7][7] 4_17_3
+DP1_INR[7][8] 4_17_4
+DP1_INR[7][9] 4_18_1
+DP1_INR[7][10] 4_18_2
+DP1_INR[7][11] 4_18_3
+DP1_INR[7][12] 4_18_4
+DP1_INR[7][13] 4_19_1
+DP1_INR[7][14] 4_19_2
+DP1_INR[7][15] 4_19_3
+DP1_INR[7][16] 4_19_4
+DP1_INR[7][17] 4_20_1
+DP1_INR[7][18] 4_20_2
+DP1_INR[7][19] 4_20_3
+DP1_INR[7][20] 4_20_4
+DP1_INR[8][1] 3_18_1
+DP1_INR[8][2] 3_18_2
+DP1_INR[8][3] 3_18_3
+DP1_INR[8][4] 3_18_4
+DP1_INR[8][5] 3_19_1
+DP1_INR[8][6] 3_19_2
+DP1_INR[8][7] 3_19_3
+DP1_INR[8][8] 3_19_4
+DP1_INR[8][9] 3_20_1
+DP1_INR[8][10] 3_20_2
+DP1_INR[8][11] 3_20_3
+DP1_INR[8][12] 3_20_4
+DP1_INR[8][13] 3_21_1
+DP1_INR[8][14] 3_21_2
+DP1_INR[8][15] 3_21_3
+DP1_INR[8][16] 3_21_4
+DP1_INR[8][17] 3_22_1
+DP1_INR[8][18] 3_22_2
+DP1_INR[8][19] 3_22_3
+DP1_INR[8][20] 3_22_4
+DP1_INR[9][1] 4_11_1
+DP1_INR[9][2] 4_11_2
+DP1_INR[9][3] 4_11_3
+DP1_INR[9][4] 4_11_4
+DP1_INR[9][5] 4_12_1
+DP1_INR[9][6] 4_12_2
+DP1_INR[9][7] 4_12_3
+DP1_INR[9][8] 4_12_4
+DP1_INR[9][9] 4_13_1
+DP1_INR[9][10] 4_13_2
+DP1_INR[9][11] 4_13_3
+DP1_INR[9][12] 4_13_4
+DP1_INR[9][13] 4_14_1
+DP1_INR[9][14] 4_14_2
+DP1_INR[9][15] 4_14_3
+DP1_INR[9][16] 4_14_4
+DP1_INR[9][17] 4_15_1
+DP1_INR[9][18] 4_15_2
+DP1_INR[9][19] 4_15_3
+DP1_INR[9][20] 4_15_4
+DP1_INR[10][1] 3_23_1
+DP1_INR[10][2] 3_23_2
+DP1_INR[10][3] 3_23_3
+DP1_INR[10][4] 3_23_4
+DP1_INR[10][5] 3_24_1
+DP1_INR[10][6] 3_24_2
+DP1_INR[10][7] 3_24_3
+DP1_INR[10][8] 3_24_4
+DP1_INR[10][9] 3_25_1
+DP1_INR[10][10] 3_25_2
+DP1_INR[10][11] 3_25_3
+DP1_INR[10][12] 3_25_4
+DP1_INR[10][13] 3_26_1
+DP1_INR[10][14] 3_26_2
+DP1_INR[10][15] 3_26_3
+DP1_INR[10][16] 3_26_4
+DP1_INR[10][17] 3_27_1
+DP1_INR[10][18] 3_27_2
+DP1_INR[10][19] 3_27_3
+DP1_INR[10][20] 3_27_4
+DP1_INR[11][1] 4_6_1
+DP1_INR[11][2] 4_6_2
+DP1_INR[11][3] 4_6_3
+DP1_INR[11][4] 4_6_4
+DP1_INR[11][5] 4_7_1
+DP1_INR[11][6] 4_7_2
+DP1_INR[11][7] 4_7_3
+DP1_INR[11][8] 4_7_4
+DP1_INR[11][9] 4_8_1
+DP1_INR[11][10] 4_8_2
+DP1_INR[11][11] 4_8_3
+DP1_INR[11][12] 4_8_4
+DP1_INR[11][13] 4_9_1
+DP1_INR[11][14] 4_9_2
+DP1_INR[11][15] 4_9_3
+DP1_INR[11][16] 4_9_4
+DP1_INR[11][17] 4_10_1
+DP1_INR[11][18] 4_10_2
+DP1_INR[11][19] 4_10_3
+DP1_INR[11][20] 4_10_4
+DP1_INR[12][1] 3_28_1
+DP1_INR[12][2] 3_28_2
+DP1_INR[12][3] 3_28_3
+DP1_INR[12][4] 3_28_4
+DP1_INR[12][5] 3_29_1
+DP1_INR[12][6] 3_29_2
+DP1_INR[12][7] 3_29_3
+DP1_INR[12][8] 3_29_4
+DP1_INR[12][9] 3_30_1
+DP1_INR[12][10] 3_30_2
+DP1_INR[12][11] 3_30_3
+DP1_INR[12][12] 3_30_4
+DP1_INR[12][13] 3_31_1
+DP1_INR[12][14] 3_31_2
+DP1_INR[12][15] 3_31_3
+DP1_INR[12][16] 3_31_4
+DP1_INR[12][17] 3_32_1
+DP1_INR[12][18] 3_32_2
+DP1_INR[12][19] 3_32_3
+DP1_INR[12][20] 3_32_4
+DP1_INR[13][1] 4_1_1
+DP1_INR[13][2] 4_1_2
+DP1_INR[13][3] 4_1_3
+DP1_INR[13][4] 4_1_4
+DP1_INR[13][5] 4_2_1
+DP1_INR[13][6] 4_2_2
+DP1_INR[13][7] 4_2_3
+DP1_INR[13][8] 4_2_4
+DP1_INR[13][9] 4_3_1
+DP1_INR[13][10] 4_3_2
+DP1_INR[13][11] 4_3_3
+DP1_INR[13][12] 4_3_4
+DP1_INR[13][13] 4_4_1
+DP1_INR[13][14] 4_4_2
+DP1_INR[13][15] 4_4_3
+DP1_INR[13][16] 4_4_4
+DP1_INR[13][17] 4_5_1
+DP1_INR[13][18] 4_5_2
+DP1_INR[13][19] 4_5_3
+DP1_INR[13][20] 4_5_4
+DP1_INR[14][1] 2_31_1
+DP1_INR[14][2] 2_31_2
+DP1_INR[14][3] 2_31_3
+DP1_INR[14][4] 2_31_4
+DP1_INR[14][5] 2_32_1
+DP1_INR[14][6] 2_32_2
+DP1_INR[14][7] 2_32_3
+DP1_INR[14][8] 2_32_4
+DP1_INR[14][9] 2_33_3
+DP1_INR[14][10] 2_33_4
+DP1_INR[14][11] 4_33_3
+DP1_INR[14][12] 4_33_4
+DP1_INR[14][13] 1_1_1
+DP1_INR[14][14] 1_1_2
+DP1_INR[14][15] 1_1_3
+DP1_INR[14][16] 1_1_4
+DP1_INR[14][17] 1_2_1
+DP1_INR[14][18] 1_2_2
+DP1_INR[14][19] 1_2_3
+DP1_INR[14][20] 1_2_4
+DP1_INR[15][1] 1_3_1
+DP1_INR[15][2] 1_3_2
+DP1_INR[15][3] 1_3_3
+DP1_INR[15][4] 1_3_4
+DP1_INR[15][5] 1_4_1
+DP1_INR[15][6] 1_4_2
+DP1_INR[15][7] 1_4_3
+DP1_INR[15][8] 1_4_4
+DP1_INR[15][9] 1_5_3
+DP1_INR[15][10] 1_5_4
+DP1_INR[15][11] 1_5_3
+DP1_INR[15][12] 1_5_4
+DP1_INR[15][13] 1_6_1
+DP1_INR[15][14] 1_6_2
+DP1_INR[15][15] 1_6_3
+DP1_INR[15][16] 1_6_4
+DP1_INR[15][17] 1_7_1
+DP1_INR[15][18] 1_7_2
+DP1_INR[15][19] 1_7_3
+DP1_INR[15][20] 1_7_4
+DP1_INR[16][1] 2_26_1
+DP1_INR[16][2] 2_26_2
+DP1_INR[16][3] 2_26_3
+DP1_INR[16][4] 2_26_4
+DP1_INR[16][5] 2_27_1
+DP1_INR[16][6] 2_27_2
+DP1_INR[16][7] 2_27_3
+DP1_INR[16][8] 2_27_4
+DP1_INR[16][9] 2_28_1
+DP1_INR[16][10] 2_28_2
+DP1_INR[16][11] 2_28_3
+DP1_INR[16][12] 2_28_4
+DP1_INR[16][13] 2_29_1
+DP1_INR[16][14] 2_29_2
+DP1_INR[16][15] 2_29_3
+DP1_INR[16][16] 2_29_4
+DP1_INR[16][17] 2_30_1
+DP1_INR[16][18] 2_30_2
+DP1_INR[16][19] 2_30_3
+DP1_INR[16][20] 2_30_4
+DP1_INR[17][1] 1_8_1
+DP1_INR[17][2] 1_8_2
+DP1_INR[17][3] 1_8_3
+DP1_INR[17][4] 1_8_4
+DP1_INR[17][5] 1_9_1
+DP1_INR[17][6] 1_9_2
+DP1_INR[17][7] 1_9_3
+DP1_INR[17][8] 1_9_4
+DP1_INR[17][9] 1_10_1
+DP1_INR[17][10] 1_10_2
+DP1_INR[17][11] 1_10_3
+DP1_INR[17][12] 1_10_4
+DP1_INR[17][13] 1_11_1
+DP1_INR[17][14] 1_11_2
+DP1_INR[17][15] 1_11_3
+DP1_INR[17][16] 1_11_4
+DP1_INR[17][17] 1_12_1
+DP1_INR[17][18] 1_12_2
+DP1_INR[17][19] 1_12_3
+DP1_INR[17][20] 1_12_4
+DP1_INR[18][1] 2_21_1
+DP1_INR[18][2] 2_21_2
+DP1_INR[18][3] 2_21_3
+DP1_INR[18][4] 2_21_4
+DP1_INR[18][5] 2_22_1
+DP1_INR[18][6] 2_22_2
+DP1_INR[18][7] 2_22_3
+DP1_INR[18][8] 2_22_4
+DP1_INR[18][9] 2_23_1
+DP1_INR[18][10] 2_23_2
+DP1_INR[18][11] 2_23_3
+DP1_INR[18][12] 2_23_4
+DP1_INR[18][13] 2_24_1
+DP1_INR[18][14] 2_24_2
+DP1_INR[18][15] 2_24_3
+DP1_INR[18][16] 2_24_4
+DP1_INR[18][17] 2_25_1
+DP1_INR[18][18] 2_25_2
+DP1_INR[18][19] 2_25_3
+DP1_INR[18][20] 2_25_4
+DP1_INR[19][1] 1_13_1
+DP1_INR[19][2] 1_13_2
+DP1_INR[19][3] 1_13_3
+DP1_INR[19][4] 1_13_4
+DP1_INR[19][5] 1_14_1
+DP1_INR[19][6] 1_14_2
+DP1_INR[19][7] 1_14_3
+DP1_INR[19][8] 1_14_4
+DP1_INR[19][9] 1_15_1
+DP1_INR[19][10] 1_15_2
+DP1_INR[19][11] 1_15_3
+DP1_INR[19][12] 1_15_4
+DP1_INR[19][13] 1_16_1
+DP1_INR[19][14] 1_16_2
+DP1_INR[19][15] 1_16_3
+DP1_INR[19][16] 1_16_4
+DP1_INR[19][17] 1_17_1
+DP1_INR[19][18] 1_17_2
+DP1_INR[19][19] 1_17_3
+DP1_INR[19][20] 1_17_4
+DP1_INR[20][1] 2_16_1
+DP1_INR[20][2] 2_16_2
+DP1_INR[20][3] 2_16_3
+DP1_INR[20][4] 2_16_4
+DP1_INR[20][5] 2_17_1
+DP1_INR[20][6] 2_17_2
+DP1_INR[20][7] 2_17_3
+DP1_INR[20][8] 2_17_4
+DP1_INR[20][9] 2_18_1
+DP1_INR[20][10] 2_18_2
+DP1_INR[20][11] 2_18_3
+DP1_INR[20][12] 2_18_4
+DP1_INR[20][13] 2_19_1
+DP1_INR[20][14] 2_19_2
+DP1_INR[20][15] 2_19_3
+DP1_INR[20][16] 2_19_4
+DP1_INR[20][17] 2_20_1
+DP1_INR[20][18] 2_20_2
+DP1_INR[20][19] 2_20_3
+DP1_INR[20][20] 2_20_4
+DP1_INR[21][1] 1_18_1
+DP1_INR[21][2] 1_18_2
+DP1_INR[21][3] 1_18_3
+DP1_INR[21][4] 1_18_4
+DP1_INR[21][5] 1_19_1
+DP1_INR[21][6] 1_19_2
+DP1_INR[21][7] 1_19_3
+DP1_INR[21][8] 1_19_4
+DP1_INR[21][9] 1_20_1
+DP1_INR[21][10] 1_20_2
+DP1_INR[21][11] 1_20_3
+DP1_INR[21][12] 1_20_4
+DP1_INR[21][13] 1_21_1
+DP1_INR[21][14] 1_21_2
+DP1_INR[21][15] 1_21_3
+DP1_INR[21][16] 1_21_4
+DP1_INR[21][17] 1_22_1
+DP1_INR[21][18] 1_22_2
+DP1_INR[21][19] 1_22_3
+DP1_INR[21][20] 1_22_4
+DP1_INR[22][1] 2_11_1
+DP1_INR[22][2] 2_11_2
+DP1_INR[22][3] 2_11_3
+DP1_INR[22][4] 2_11_4
+DP1_INR[22][5] 2_12_1
+DP1_INR[22][6] 2_12_2
+DP1_INR[22][7] 2_12_3
+DP1_INR[22][8] 2_12_4
+DP1_INR[22][9] 2_13_1
+DP1_INR[22][10] 2_13_2
+DP1_INR[22][11] 2_13_3
+DP1_INR[22][12] 2_13_4
+DP1_INR[22][13] 2_14_1
+DP1_INR[22][14] 2_14_2
+DP1_INR[22][15] 2_14_3
+DP1_INR[22][16] 2_14_4
+DP1_INR[22][17] 2_15_1
+DP1_INR[22][18] 2_15_2
+DP1_INR[22][19] 2_15_3
+DP1_INR[22][20] 2_15_4
+DP1_INR[23][1] 1_23_1
+DP1_INR[23][2] 1_23_2
+DP1_INR[23][3] 1_23_3
+DP1_INR[23][4] 1_23_4
+DP1_INR[23][5] 1_24_1
+DP1_INR[23][6] 1_24_2
+DP1_INR[23][7] 1_24_3
+DP1_INR[23][8] 1_24_4
+DP1_INR[23][9] 1_25_1
+DP1_INR[23][10] 1_25_2
+DP1_INR[23][11] 1_25_3
+DP1_INR[23][12] 1_25_4
+DP1_INR[23][13] 1_26_1
+DP1_INR[23][14] 1_26_2
+DP1_INR[23][15] 1_26_3
+DP1_INR[23][16] 1_26_4
+DP1_INR[23][17] 1_27_1
+DP1_INR[23][18] 1_27_2
+DP1_INR[23][19] 1_27_3
+DP1_INR[23][20] 1_27_4
+DP1_INR[24][1] 2_6_1
+DP1_INR[24][2] 2_6_2
+DP1_INR[24][3] 2_6_3
+DP1_INR[24][4] 2_6_4
+DP1_INR[24][5] 2_7_1
+DP1_INR[24][6] 2_7_2
+DP1_INR[24][7] 2_7_3
+DP1_INR[24][8] 2_7_4
+DP1_INR[24][9] 2_8_1
+DP1_INR[24][10] 2_8_2
+DP1_INR[24][11] 2_8_3
+DP1_INR[24][12] 2_8_4
+DP1_INR[24][13] 2_9_1
+DP1_INR[24][14] 2_9_2
+DP1_INR[24][15] 2_9_3
+DP1_INR[24][16] 2_9_4
+DP1_INR[24][17] 2_10_1
+DP1_INR[24][18] 2_10_2
+DP1_INR[24][19] 2_10_3
+DP1_INR[24][20] 2_10_4
+DP1_INR[25][1] 1_28_1
+DP1_INR[25][2] 1_28_2
+DP1_INR[25][3] 1_28_3
+DP1_INR[25][4] 1_28_4
+DP1_INR[25][5] 1_29_1
+DP1_INR[25][6] 1_29_2
+DP1_INR[25][7] 1_29_3
+DP1_INR[25][8] 1_29_4
+DP1_INR[25][9] 1_30_1
+DP1_INR[25][10] 1_30_2
+DP1_INR[25][11] 1_30_3
+DP1_INR[25][12] 1_30_4
+DP1_INR[25][13] 1_31_1
+DP1_INR[25][14] 1_31_2
+DP1_INR[25][15] 1_31_3
+DP1_INR[25][16] 1_31_4
+DP1_INR[25][17] 1_32_1
+DP1_INR[25][18] 1_32_2
+DP1_INR[25][19] 1_32_3
+DP1_INR[25][20] 1_32_4
+DP1_INR[26][1] 2_1_1
+DP1_INR[26][2] 2_1_2
+DP1_INR[26][3] 2_1_3
+DP1_INR[26][4] 2_1_4
+DP1_INR[26][5] 2_2_1
+DP1_INR[26][6] 2_2_2
+DP1_INR[26][7] 2_2_3
+DP1_INR[26][8] 2_2_4
+DP1_INR[26][9] 2_3_1
+DP1_INR[26][10] 2_3_2
+DP1_INR[26][11] 2_3_3
+DP1_INR[26][12] 2_3_4
+DP1_INR[26][13] 2_4_1
+DP1_INR[26][14] 2_4_2
+DP1_INR[26][15] 2_4_3
+DP1_INR[26][16] 2_4_4
+DP1_INR[26][17] 2_5_1
+DP1_INR[26][18] 2_5_2
+DP1_INR[26][19] 2_5_3
+DP1_INR[26][20] 2_5_4
+
+# DP1_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** DP1_INC[dp1#][ch#] goes here:
+
+# ----------------------------------------------
+# --- Antenna # -> DP1 board channel mapping ---
+# ----------------------------------------------
+# Format (example) "DP1_ANT[2][3] 4" means antenna 4 is connected to DP1 Board 2, channel 3.
+# DP1_ANT[1][1] will be set to 1, DP1_ANT[1][2] will be set to 2, etc., if not indicated otherwise
+# DP1_ANT[][] will be set to 0 (no connection, or only connected at output) for any boards/channels not identified
+# *** DP1_ANT[dp1#][ch#] goes here:
+DP1_ANT[1][1] 345
+DP1_ANT[1][2] 346
+DP1_ANT[1][3] 301
+DP1_ANT[1][4] 302
+DP1_ANT[1][5] 443
+DP1_ANT[1][6] 444
+DP1_ANT[1][7] 299
+DP1_ANT[1][8] 300
+
+# LEDA Outrigger #3
+DP1_ANT[1][9] 517
+DP1_ANT[1][10] 518
+# RTA antenna (LEDA Outrigger #4)
+DP1_ANT[1][11] 515
+DP1_ANT[1][12] 516
+# LEDA Outrigger #5
+DP1_ANT[1][13] 69
+DP1_ANT[1][14] 70
+
+DP1_ANT[1][15] 215
+DP1_ANT[1][16] 216
+DP1_ANT[1][17] 197
+DP1_ANT[1][18] 198
+DP1_ANT[1][19] 193
+DP1_ANT[1][20] 194
+DP1_ANT[2][1] 15
+DP1_ANT[2][2] 16
+DP1_ANT[2][3] 335
+DP1_ANT[2][4] 336
+DP1_ANT[2][5] 257
+DP1_ANT[2][6] 258
+DP1_ANT[2][7] 309
+DP1_ANT[2][8] 310
+DP1_ANT[2][9] 63
+DP1_ANT[2][10] 64
+DP1_ANT[2][11] 137
+DP1_ANT[2][12] 138
+DP1_ANT[2][13] 201
+DP1_ANT[2][14] 202
+DP1_ANT[2][15] 369
+DP1_ANT[2][16] 370
+DP1_ANT[2][17] 283
+DP1_ANT[2][18] 284
+DP1_ANT[2][19] 13
+DP1_ANT[2][20] 14
+DP1_ANT[3][1] 483
+DP1_ANT[3][2] 484
+DP1_ANT[3][3] 169
+DP1_ANT[3][4] 170
+DP1_ANT[3][5] 409
+DP1_ANT[3][6] 410
+DP1_ANT[3][7] 173
+DP1_ANT[3][8] 174
+DP1_ANT[3][9] 393
+DP1_ANT[3][10] 394
+DP1_ANT[3][11] 33
+DP1_ANT[3][12] 34
+DP1_ANT[3][13] 405
+DP1_ANT[3][14] 406
+DP1_ANT[3][15] 241
+DP1_ANT[3][16] 242
+DP1_ANT[3][17] 397
+DP1_ANT[3][18] 398
+DP1_ANT[3][19] 31
+DP1_ANT[3][20] 32
+DP1_ANT[4][1] 321
+DP1_ANT[4][2] 322
+DP1_ANT[4][3] 317
+DP1_ANT[4][4] 318
+DP1_ANT[4][5] 339
+DP1_ANT[4][6] 340
+DP1_ANT[4][7] 65
+DP1_ANT[4][8] 66
+DP1_ANT[4][9] 261
+DP1_ANT[4][10] 262
+DP1_ANT[4][11] 125
+DP1_ANT[4][12] 126
+DP1_ANT[4][13] 147
+DP1_ANT[4][14] 148
+DP1_ANT[4][15] 73
+DP1_ANT[4][16] 74
+DP1_ANT[4][17] 151
+DP1_ANT[4][18] 152
+DP1_ANT[4][19] 133
+DP1_ANT[4][20] 134
+DP1_ANT[5][1] 357
+DP1_ANT[5][2] 358
+DP1_ANT[5][3] 447
+DP1_ANT[5][4] 448
+DP1_ANT[5][5] 239
+DP1_ANT[5][6] 240
+DP1_ANT[5][7] 89
+DP1_ANT[5][8] 90
+DP1_ANT[5][9] 37
+DP1_ANT[5][10] 38
+DP1_ANT[5][11] 511
+DP1_ANT[5][12] 512
+DP1_ANT[5][13] 487
+DP1_ANT[5][14] 488
+DP1_ANT[5][15] 97
+DP1_ANT[5][16] 98
+DP1_ANT[5][17] 349
+DP1_ANT[5][18] 350
+DP1_ANT[5][19] 237
+DP1_ANT[5][20] 238
+DP1_ANT[6][1] 19
+DP1_ANT[6][2] 20
+DP1_ANT[6][3] 205
+DP1_ANT[6][4] 206
+DP1_ANT[6][5] 219
+DP1_ANT[6][6] 220
+DP1_ANT[6][7] 129
+DP1_ANT[6][8] 130
+DP1_ANT[6][9] 211
+DP1_ANT[6][10] 212
+DP1_ANT[6][11] 141
+DP1_ANT[6][12] 142
+DP1_ANT[6][13] 279
+DP1_ANT[6][14] 280
+DP1_ANT[6][15] 61
+DP1_ANT[6][16] 62
+DP1_ANT[6][17] 207
+DP1_ANT[6][18] 208
+DP1_ANT[6][19] 57
+DP1_ANT[6][20] 58
+DP1_ANT[7][1] 403
+DP1_ANT[7][2] 404
+DP1_ANT[7][3] 381
+DP1_ANT[7][4] 382
+DP1_ANT[7][5] 101
+DP1_ANT[7][6] 102
+DP1_ANT[7][7] 507
+DP1_ANT[7][8] 508
+DP1_ANT[7][9] 175
+DP1_ANT[7][10] 176
+DP1_ANT[7][11] 165
+DP1_ANT[7][12] 166
+DP1_ANT[7][13] 451
+DP1_ANT[7][14] 452
+DP1_ANT[7][15] 479
+DP1_ANT[7][16] 480
+DP1_ANT[7][17] 107
+DP1_ANT[7][18] 108
+DP1_ANT[7][19] 161
+DP1_ANT[7][20] 162
+DP1_ANT[8][1] 189
+DP1_ANT[8][2] 190
+DP1_ANT[8][3] 353
+DP1_ANT[8][4] 354
+DP1_ANT[8][5] 323
+DP1_ANT[8][6] 324
+DP1_ANT[8][7] 9
+DP1_ANT[8][8] 10
+DP1_ANT[8][9] 117
+DP1_ANT[8][10] 118
+DP1_ANT[8][11] 293
+DP1_ANT[8][12] 294
+DP1_ANT[8][13] 379
+DP1_ANT[8][14] 380
+DP1_ANT[8][15] 331
+DP1_ANT[8][16] 332
+DP1_ANT[8][17] 121
+DP1_ANT[8][18] 122
+DP1_ANT[8][19] 401
+DP1_ANT[8][20] 402
+DP1_ANT[9][1] 249
+DP1_ANT[9][2] 250
+DP1_ANT[9][3] 449
+DP1_ANT[9][4] 450
+DP1_ANT[9][5] 419
+DP1_ANT[9][6] 420
+DP1_ANT[9][7] 159
+DP1_ANT[9][8] 160
+DP1_ANT[9][9] 313
+DP1_ANT[9][10] 314
+DP1_ANT[9][11] 347
+DP1_ANT[9][12] 348
+DP1_ANT[9][13] 455
+DP1_ANT[9][14] 456
+DP1_ANT[9][15] 29
+DP1_ANT[9][16] 30
+DP1_ANT[9][17] 253
+DP1_ANT[9][18] 254
+DP1_ANT[9][19] 305
+DP1_ANT[9][20] 306
+DP1_ANT[10][1] 267
+DP1_ANT[10][2] 268
+DP1_ANT[10][3] 275
+DP1_ANT[10][4] 276
+DP1_ANT[10][5] 185
+DP1_ANT[10][6] 186
+DP1_ANT[10][7] 289
+DP1_ANT[10][8] 290
+DP1_ANT[10][9] 327
+DP1_ANT[10][10] 328
+DP1_ANT[10][11] 199
+DP1_ANT[10][12] 200
+DP1_ANT[10][13] 51
+DP1_ANT[10][14] 52
+DP1_ANT[10][15] 109
+DP1_ANT[10][16] 110
+DP1_ANT[10][17] 135
+DP1_ANT[10][18] 136
+DP1_ANT[10][19] 263
+DP1_ANT[10][20] 264
+DP1_ANT[11][1] 373
+DP1_ANT[11][2] 374
+DP1_ANT[11][3] 223
+DP1_ANT[11][4] 224
+DP1_ANT[11][5] 245
+DP1_ANT[11][6] 246
+DP1_ANT[11][7] 343
+DP1_ANT[11][8] 344
+DP1_ANT[11][9] 427
+DP1_ANT[11][10] 428
+DP1_ANT[11][11] 295
+DP1_ANT[11][12] 296
+DP1_ANT[11][13] 415
+DP1_ANT[11][14] 416
+DP1_ANT[11][15] 351
+DP1_ANT[11][16] 352
+DP1_ANT[11][17] 423
+DP1_ANT[11][18] 424
+DP1_ANT[11][19] 27
+DP1_ANT[11][20] 28
+DP1_ANT[12][1] 49
+DP1_ANT[12][2] 50
+DP1_ANT[12][3] 177
+DP1_ANT[12][4] 178
+DP1_ANT[12][5] 383
+DP1_ANT[12][6] 384
+DP1_ANT[12][7] 203
+DP1_ANT[12][8] 204
+DP1_ANT[12][9] 7
+DP1_ANT[12][10] 8
+DP1_ANT[12][11] 297
+DP1_ANT[12][12] 298
+DP1_ANT[12][13] 387
+DP1_ANT[12][14] 388
+DP1_ANT[12][15] 271
+DP1_ANT[12][16] 272
+DP1_ANT[12][17] 53
+DP1_ANT[12][18] 54
+DP1_ANT[12][19] 181
+DP1_ANT[12][20] 182
+DP1_ANT[13][1] 365
+DP1_ANT[13][2] 366
+DP1_ANT[13][3] 399
+DP1_ANT[13][4] 400
+
+DP1_ANT[13][5] 377
+DP1_ANT[13][6] 378
+
+DP1_ANT[13][7] 235
+DP1_ANT[13][8] 236
+DP1_ANT[13][9] 411
+DP1_ANT[13][10] 412
+DP1_ANT[13][11] 355
+DP1_ANT[13][12] 356
+DP1_ANT[13][13] 459
+DP1_ANT[13][14] 460
+DP1_ANT[13][15] 91
+DP1_ANT[13][16] 92
+DP1_ANT[13][17] 361
+DP1_ANT[13][18] 362
+DP1_ANT[13][19] 407
+DP1_ANT[13][20] 408
+DP1_ANT[14][1] 59
+DP1_ANT[14][2] 60
+DP1_ANT[14][3] 45
+DP1_ANT[14][4] 46
+DP1_ANT[14][5] 183
+DP1_ANT[14][6] 184
+DP1_ANT[14][7] 445
+DP1_ANT[14][8] 446
+
+# LEDA Outrigger #1
+DP1_ANT[14][9] 513
+DP1_ANT[14][10] 514
+# LEDA Outrigger #2
+DP1_ANT[14][11] 519
+DP1_ANT[14][12] 520
+
+DP1_ANT[14][13] 285
+DP1_ANT[14][14] 286
+DP1_ANT[14][15] 389
+DP1_ANT[14][16] 390
+DP1_ANT[14][17] 495
+DP1_ANT[14][18] 496
+DP1_ANT[14][19] 95
+DP1_ANT[14][20] 96
+DP1_ANT[15][1] 221
+DP1_ANT[15][2] 222
+DP1_ANT[15][3] 337
+DP1_ANT[15][4] 338
+DP1_ANT[15][5] 499
+DP1_ANT[15][6] 500
+DP1_ANT[15][7] 227
+DP1_ANT[15][8] 228
+DP1_ANT[15][9] 341
+DP1_ANT[15][10] 342
+DP1_ANT[15][11] 333
+DP1_ANT[15][12] 334
+DP1_ANT[15][13] 105
+DP1_ANT[15][14] 106
+DP1_ANT[15][15] 475
+DP1_ANT[15][16] 476
+DP1_ANT[15][17] 225
+DP1_ANT[15][18] 226
+DP1_ANT[15][19] 431
+DP1_ANT[15][20] 432
+DP1_ANT[16][1] 179
+DP1_ANT[16][2] 180
+DP1_ANT[16][3] 391
+DP1_ANT[16][4] 392
+DP1_ANT[16][5] 255
+DP1_ANT[16][6] 256
+DP1_ANT[16][7] 41
+DP1_ANT[16][8] 42
+DP1_ANT[16][9] 39
+DP1_ANT[16][10] 40
+DP1_ANT[16][11] 395
+DP1_ANT[16][12] 396
+DP1_ANT[16][13] 319
+DP1_ANT[16][14] 320
+DP1_ANT[16][15] 113
+DP1_ANT[16][16] 114
+DP1_ANT[16][17] 111
+DP1_ANT[16][18] 112
+DP1_ANT[16][19] 485
+DP1_ANT[16][20] 486
+DP1_ANT[17][1] 171
+DP1_ANT[17][2] 172
+DP1_ANT[17][3] 467
+DP1_ANT[17][4] 468
+DP1_ANT[17][5] 157
+DP1_ANT[17][6] 158
+DP1_ANT[17][7] 277
+DP1_ANT[17][8] 278
+DP1_ANT[17][9] 103
+DP1_ANT[17][10] 104
+DP1_ANT[17][11] 463
+DP1_ANT[17][12] 464
+DP1_ANT[17][13] 233
+DP1_ANT[17][14] 234
+DP1_ANT[17][15] 435
+DP1_ANT[17][16] 436
+DP1_ANT[17][17] 99
+DP1_ANT[17][18] 100
+DP1_ANT[17][19] 471
+DP1_ANT[17][20] 472
+DP1_ANT[18][1] 259
+DP1_ANT[18][2] 260
+DP1_ANT[18][3] 1
+DP1_ANT[18][4] 2
+DP1_ANT[18][5] 47
+DP1_ANT[18][6] 48
+DP1_ANT[18][7] 441
+DP1_ANT[18][8] 442
+DP1_ANT[18][9] 371
+DP1_ANT[18][10] 372
+DP1_ANT[18][11] 5
+DP1_ANT[18][12] 6
+DP1_ANT[18][13] 119
+DP1_ANT[18][14] 120
+DP1_ANT[18][15] 437
+DP1_ANT[18][16] 438
+DP1_ANT[18][17] 315
+DP1_ANT[18][18] 316
+DP1_ANT[18][19] 3
+DP1_ANT[18][20] 4
+DP1_ANT[19][1] 229
+DP1_ANT[19][2] 230
+DP1_ANT[19][3] 439
+DP1_ANT[19][4] 440
+DP1_ANT[19][5] 35
+DP1_ANT[19][6] 36
+DP1_ANT[19][7] 503
+DP1_ANT[19][8] 504
+DP1_ANT[19][9] 93
+DP1_ANT[19][10] 94
+DP1_ANT[19][11] 281
+DP1_ANT[19][12] 282
+DP1_ANT[19][13] 385
+DP1_ANT[19][14] 386
+DP1_ANT[19][15] 491
+DP1_ANT[19][16] 492
+DP1_ANT[19][17] 413
+DP1_ANT[19][18] 414
+DP1_ANT[19][19] 429
+DP1_ANT[19][20] 430
+DP1_ANT[20][1] 25
+DP1_ANT[20][2] 26
+DP1_ANT[20][3] 325
+DP1_ANT[20][4] 326
+DP1_ANT[20][5] 131
+DP1_ANT[20][6] 132
+DP1_ANT[20][7] 115
+DP1_ANT[20][8] 116
+DP1_ANT[20][9] 481
+DP1_ANT[20][10] 482
+DP1_ANT[20][11] 433
+DP1_ANT[20][12] 434
+DP1_ANT[20][13] 195
+DP1_ANT[20][14] 196
+DP1_ANT[20][15] 243
+DP1_ANT[20][16] 244
+DP1_ANT[20][17] 43
+DP1_ANT[20][18] 44
+DP1_ANT[20][19] 477
+DP1_ANT[20][20] 478
+DP1_ANT[21][1] 509
+DP1_ANT[21][2] 510
+DP1_ANT[21][3] 127
+DP1_ANT[21][4] 128
+DP1_ANT[21][5] 303
+DP1_ANT[21][6] 304
+DP1_ANT[21][7] 425
+DP1_ANT[21][8] 426
+DP1_ANT[21][9] 505
+DP1_ANT[21][10] 506
+DP1_ANT[21][11] 11
+DP1_ANT[21][12] 12
+DP1_ANT[21][13] 363
+DP1_ANT[21][14] 364
+DP1_ANT[21][15] 501
+DP1_ANT[21][16] 502
+DP1_ANT[21][17] 465
+DP1_ANT[21][18] 466
+DP1_ANT[21][19] 191
+DP1_ANT[21][20] 192
+DP1_ANT[22][1] 287
+DP1_ANT[22][2] 288
+DP1_ANT[22][3] 149
+DP1_ANT[22][4] 150
+DP1_ANT[22][5] 213
+DP1_ANT[22][6] 214
+DP1_ANT[22][7] 17
+DP1_ANT[22][8] 18
+DP1_ANT[22][9] 163
+DP1_ANT[22][10] 164
+DP1_ANT[22][11] 77
+DP1_ANT[22][12] 78
+DP1_ANT[22][13] 155
+DP1_ANT[22][14] 156
+DP1_ANT[22][15] 209
+DP1_ANT[22][16] 210
+DP1_ANT[22][17] 291
+DP1_ANT[22][18] 292
+DP1_ANT[22][19] 85
+DP1_ANT[22][20] 86
+DP1_ANT[23][1] 461
+DP1_ANT[23][2] 462
+DP1_ANT[23][3] 473
+DP1_ANT[23][4] 474
+DP1_ANT[23][5] 493
+DP1_ANT[23][6] 494
+DP1_ANT[23][7] 251
+DP1_ANT[23][8] 252
+DP1_ANT[23][9] 457
+DP1_ANT[23][10] 458
+DP1_ANT[23][11] 307
+DP1_ANT[23][12] 308
+DP1_ANT[23][13] 469
+DP1_ANT[23][14] 470
+DP1_ANT[23][15] 55
+DP1_ANT[23][16] 56
+DP1_ANT[23][17] 453
+DP1_ANT[23][18] 454
+DP1_ANT[23][19] 359
+DP1_ANT[23][20] 360
+DP1_ANT[24][1] 329
+DP1_ANT[24][2] 330
+DP1_ANT[24][3] 67
+DP1_ANT[24][4] 68
+DP1_ANT[24][5] 153
+DP1_ANT[24][6] 154
+DP1_ANT[24][7] 231
+DP1_ANT[24][8] 232
+DP1_ANT[24][9] 269
+DP1_ANT[24][10] 270
+DP1_ANT[24][11] 75
+DP1_ANT[24][12] 76
+DP1_ANT[24][13] 81
+DP1_ANT[24][14] 82
+DP1_ANT[24][15] 217
+DP1_ANT[24][16] 218
+DP1_ANT[24][17] 265
+DP1_ANT[24][18] 266
+DP1_ANT[24][19] 71
+DP1_ANT[24][20] 72
+DP1_ANT[25][1] 497
+DP1_ANT[25][2] 498
+DP1_ANT[25][3] 187
+DP1_ANT[25][4] 188
+DP1_ANT[25][5] 417
+DP1_ANT[25][6] 418
+DP1_ANT[25][7] 311
+DP1_ANT[25][8] 312
+DP1_ANT[25][9] 421
+DP1_ANT[25][10] 422
+DP1_ANT[25][11] 247
+DP1_ANT[25][12] 248
+DP1_ANT[25][13] 489
+DP1_ANT[25][14] 490
+DP1_ANT[25][15] 367
+DP1_ANT[25][16] 368
+DP1_ANT[25][17] 375
+DP1_ANT[25][18] 376
+DP1_ANT[25][19] 123
+DP1_ANT[25][20] 124
+DP1_ANT[26][1] 23
+DP1_ANT[26][2] 24
+DP1_ANT[26][3] 83
+DP1_ANT[26][4] 84
+DP1_ANT[26][5] 145
+DP1_ANT[26][6] 146
+DP1_ANT[26][7] 143
+DP1_ANT[26][8] 144
+DP1_ANT[26][9] 21
+DP1_ANT[26][10] 22
+DP1_ANT[26][11] 87
+DP1_ANT[26][12] 88
+DP1_ANT[26][13] 273
+DP1_ANT[26][14] 274
+DP1_ANT[26][15] 139
+DP1_ANT[26][16] 140
+DP1_ANT[26][17] 79
+DP1_ANT[26][18] 80
+DP1_ANT[26][19] 167
+DP1_ANT[26][20] 168
+
+# ----------------------
+# --- DP2 --------------
+# ----------------------
+# Maximum number of DP2 boards:
+N_DP2 2
+
+# DP2_ID[] will be set to "UNK" (no identification) for any DP2 boards not identified
+# *** DP2_ID[dp2#] goes here:
+DP2_ID[1] lwa16
+DP2_ID[2] lwa34
+
+# DP2_SLOT[] will be set to 0 (not known/not applicable) for any DP2 boards not identified
+# *** DP2_SLOT[dp2#] goes here:
+# format = <chassis>-<slot from left>
+DP2_SLOT[1] 1-7
+DP2_SLOT[2] 2-7
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any DP2 board-channels not identified
+# *** DP2_STAT[dp2#] goes here:
+
+# DP2_DESI[] be set to 1 for any DP2 boards not identified
+# *** DP2_DESI[dp2#] goes here:
+DP2_DESI[1] 1
+DP2_DESI[2] 1
+
+# ----------------------
+# --- DR ---------------
+# ----------------------
+# Maximum number of DR subsystems:
+N_DR 5
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any DRs not identified
+# *** DR_STAT[dr#] goes here:
+DR_STAT[1] 3
+DR_STAT[2] 3
+DR_STAT[3] 3
+DR_STAT[4] 3
+DR_STAT[5] 3
+
+# DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
+# *** DR_ID[dr#] goes here:
+DR_ID[1] DR1
+DR_ID[2] DR2
+DR_ID[3] DR3
+DR_ID[4] DR4
+DR_ID[5] DR5
+
+# DR_SHLF[] will be set to 0 (not known/not applicable) for any DRs not identified
+# *** DR_SHLF[dr#] goes here:
+
+# DR_PC[] will be set to "UNK" (not known/not applicable) for any DRs not identified
+# *** DR_PC[dr#] goes here:
+DR_PC[1] XPS435
+DR_PC[2] T1500
+DR_PC[3] T1500
+DR_PC[4] T1500
+DR_PC[5] T1500 
+
+# 1-4 are the beam outputs, 5 is TBW/TBN
+# DR_DP[] will be set to 0 (no connection) for any DPs not identified
+# *** DR_DP[] goes here:
+DR_DP[1] 1
+DR_DP[2] 2
+DR_DP[3] 3
+DR_DP[4] 4
+DR_DP[5] 5
+
+# ----------------------
+# --- Power ------------
+# ----------------------
+
+# From J. Craig on July 2, 2012:  Below are the notes post-reorg. of the 3-bay 
+# ... which Frank and I did a few months ago.
+# ... 
+# ... PDU on UPS1 (00-06-67-21-88)
+# ... Rack 4 PDU - 172.16.1.112
+# ...   Port 1:  DR1
+# ...   Port 2:  DR2
+# ...   Port 3:  DR3
+# ...   Port 4:  DR4
+# ...   Port 5:  Task Processor
+# ...   Port 6:  blank
+# ...   Port 7:  DP-MCS, Powerstrip
+# ...   Port 8:  blank
+# ... 
+# ... PDU w/o UPS (00-06-67-22-61-BD)
+# ... Rack 5 PDU - 172.16.1.115
+# ...   Port 1:  DRSUs, DR4-DR5
+# ...   Port 2:  ASP-MCS (Updated by J. Dowell on December 16, 2012)
+# ...   Port 3:  Fans
+# ...   Port4:  DRSUs DR1-DR3
+# ...   Port 5:  Timing Distribution
+# ...   Port 6:  Wall warts
+# ...   Port 7:  KVM
+# ...   Port 8:  Display/Keyboard
+# ... 
+# ... UPS #2 (00-06-67-22-81-F0)
+# ... UPS2 - 172.16.1.118
+# ...   Port 1:  Sch
+# ...   Port 2:  SHL-MCS
+# ...   Port 3:  Switches
+
+N_PWR_RACK 6
+
+# N_PWR_PORT[] will be set to 0 (no ports) for any rack power supplies not identified
+# *** _N_PWR_PORT[rack#] goes here:
+N_PWR_PORT[1] 8
+N_PWR_PORT[2] 8
+N_PWR_PORT[3] 8
+N_PWR_PORT[4] 8
+N_PWR_PORT[5] 8
+N_PWR_PORT[6] 8
+
+# Format (example) "PWR_SS[2][3] SHL" means power from Rack 2 Port 3 goes to SHL.
+# Valid values are SHL, ASP, DP_, MCS, DR1, DR2, DR3, DR4, and DR5.
+# PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
+# Format (example) "PWR_NAME[2][3] MCS", assuming "PWR_SS[2][3] SHL", means power from Rack 2 Port 3 goes to SHL-MCS.
+#   For PWR SS[m][p] = SHL, valid values are MCS, others TBD
+#   For PWR SS[m][p] = ASP, valid values are MCS, FEE, ARX, FAN 
+#   For PWR SS[m][p] = DP , valid values are MCS, DC1, DC2, FAN, SYN, SWI
+#   For PWR SS[m][p] = MCS, valid values are SCH, EXE, TP, CH, and GW.
+#   For PWR SS[m][p] = DR1, DR2, DR3, DR4, and DR5; valid values are PC, DS1 (DRSU 1), and DS2 (DRSU 2)
+# PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
+# *** PWR_SS[rack#][port#] goes here:
+# *** PWR_NAME[rack#][port#] goes here:
+
+PWR_SS[1][1] ASP
+PWR_NAME[1][1] ARX  
+
+PWR_SS[1][2] ASP
+PWR_NAME[1][2] FEE  
+
+PWR_SS[1][4] ASP
+PWR_NAME[1][4] FAN  
+
+###
+
+PWR_SS[2][2] DP_
+PWR_NAME[2][2] SWI
+
+PWR_SS[2][3] DP_
+PWR_NAME[2][3] SYN
+
+PWR_SS[2][8] DP_
+PWR_NAME[2][8] FAN
+
+###
+
+# FIXME -- using undefined keywords below -- need to revise software to recognize them
+# Each DP chassis has 3 plugs, denoted C23 for chassis 2, plug 3; C12 for chassis 1, plug 2, etc.
+#PWR_SS[3][1] DP_
+#PWR_NAME[3][1] C21 
+#PWR_SS[3][2] DP_
+#PWR_NAME[3][2] C22
+#PWR_SS[3][3] DP_
+#PWR_NAME[3][3] C23 
+#PWR_SS[3][4] DP_
+#PWR_NAME[3][4] C11
+#PWR_SS[3][5] DP_
+#PWR_NAME[3][5] C12
+#PWR_SS[3][6] DP_
+#PWR_NAME[3][6] C13
+
+###
+
+PWR_SS[4][1] DR1
+PWR_NAME[4][1] PC
+
+PWR_SS[4][2] DR2
+PWR_NAME[4][2] PC
+
+PWR_SS[4][3] DR3
+PWR_NAME[4][3] PC
+
+PWR_SS[4][4] DR4
+PWR_NAME[4][4] PC
+
+PWR_SS[4][5] MCS
+PWR_NAME[4][5] TP
+
+PWR_SS[4][7] DP_
+PWR_NAME[4][7] MCS
+
+###
+
+# FIXME -- using undefined keywords below -- need to revise software to recognize them
+# 3BY: is the 3-bay rack, value is FAN
+# DSU: are DRSU for multiple DRs
+#PWR_SS[5][1] 3BY
+#PWR_NAME[5][1] DSU	# DRSUs for DR4 and DR5
+
+PWR_SS[5][2] ASP
+PWR_NAME[5][2] MCS
+
+# FIXME -- using undefined keywords below -- need to revise software to recognize them
+# 3BY: is the 3-bay rack, value is FAN
+# DSU: are DRSU for multiple DRs
+# ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
+#PWR_SS[5][3] 3BY
+#PWR_NAME[5][3] FAN
+#PWR_SS[5][4] 3BY	# DRSUs for DR1, DR2, and DR3
+#PWR_NAME[5][4] DSU
+#PWR_SS[5][5] 3BY	# Timing distribution
+#PWR_NAME[5][5] ACC
+#PWR_SS[5][6] 3BY	# Wall warts
+#PWR_NAME[5][6] ACC
+#PWR_SS[5][7] 3BY	# KVM
+#PWR_NAME[5][7] ACC
+#PWR_SS[5][8] 3BY	# Display/keyboard
+#PWR_NAME[5][8] ACC
+
+MCS_CRA 1
+
+# DRX beam pointing correction
+PC_AXIS_TH  28.9 #   [deg] theta pointing for axis of rotation (theta = zenith angle)
+PC_AXIS_PH 127.6 #   [deg] phi pointing for axis of rotation (0=E, 90=N)
+PC_ROT       0.6 #   [deg] rotation (right hand rule) around axis
+
+TBN_GAIN 20  # FIXME
+DRX_GAIN 7   # FIXME
+
+# ====================
+# === STATUS CODES ===
+# ====================
+# 3 = "OK"
+# 2 = "Suspect; possibly bad (If used, provide warning)"
+# 1 = "Bad (Don't use)"
+# 0 = "Not Installed"
+

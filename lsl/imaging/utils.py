@@ -12,11 +12,16 @@ data dictionaries.  Also included is a utility to sort data dictionaries by base
 """
 
 import os
+import sys
 import aipy
 import pytz
 import numpy
 import pyfits
 import string
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
 from calendar import timegm
 from datetime import datetime
 from operator import itemgetter
@@ -965,7 +970,7 @@ except ImportError:
 			raise RuntimeError("Cannot import pyrap.tables, MS support disabled")
 
 
-def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None):
+def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, verbose=True):
 	"""
 	Given a data dictionary, build an aipy.img.ImgW object of gridded uv data 
 	which can be used for imaging.  The ImgW object itself is returned by this 
@@ -1005,7 +1010,14 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
 	vis = numpy.concatenate(vis)
 	wgt = numpy.concatenate(wgt)
 	
+	if not verbose:
+		sys.stdout = StringIO.StringIO()
+		
 	uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
 	im.put(uvw, vis, wgts=wgt)
+	
+	if not verbose:
+		sys.stdout.close()
+		sys.stdout = sys.__stdout__
 	
 	return im
