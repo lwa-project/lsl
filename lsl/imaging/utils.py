@@ -957,7 +957,7 @@ try:
 			
 except ImportError:
 	import warnings
-	warnings.warn('Cannot import pyrap.tables, MS support disabled')
+	warnings.warn('Cannot import pyrap.tables, MS support disabled', ImportWarning)
 	
 	class CorrelatedMS(object):
 		"""
