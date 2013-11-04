@@ -7,7 +7,8 @@ import copy
 import unittest
 
 from lsl.common.paths import dataBuild as dataPath
-from lsl.imaging import utils, selfCal
+from lsl.imaging import utils
+from lsl.imaging import selfCal
 from lsl.writer.fitsidi import NumericStokes
 from lsl.sim.vis import srcs as simSrcs
 from lsl.common.stations import parseSSMIF
