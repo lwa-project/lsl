@@ -970,6 +970,37 @@ class astro_tests(unittest.TestCase):
 		self.assertAlmostEqual(rst.transit, transit)
 		self.assertAlmostEqual(rst.set, set)
 		
+	def test_get_object_rst(self):
+		"""Test astro.get_object_rst() function."""
+		
+		body = astro.equ_posn(0, 33.0)
+		
+		ACCURACY = 2
+		transit_aa = (\
+			astro.date(2001,  1, 22, 21, 50, 48.04).to_jd(),
+			astro.date(2001,  4, 16, 16, 20, 31.74).to_jd(),
+			astro.date(2001,  8,  2,  9, 15, 56.73).to_jd(),
+			astro.date(2001, 10, 10,  4, 44, 39.94).to_jd(),
+			astro.date(1979,  2, 28, 19, 26, 50.45).to_jd())
+			
+		itr = iter(transit_aa) 
+		for t in self.times:
+			j = t.to_jd()
+			trns = astro.get_object_rst(j, self.geo, body)
+			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), itr.next(), ACCURACY)
+			
+		body = astro.equ_posn(0, 89.0)
+		for t in self.times:
+			j = t.to_jd()
+			trns = astro.get_object_rst(j, self.geo, body)
+			self.assertTrue(trns is None)
+			
+		body = astro.equ_posn(0, -89.0)
+		for t in self.times:
+			j = t.to_jd()
+			trns = astro.get_object_rst(j, self.geo, body)
+			self.assertTrue(trns is None)
+			
 	def test_get_solar_rst(self):
 		"""Test astro.get_solar_rst() function."""
 		

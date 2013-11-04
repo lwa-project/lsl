@@ -2545,13 +2545,14 @@ def get_object_rst(jD, observer, object_):
 		pass
 	
 	b.compute(o)
-	if b.circumpolar or b.neverup:
+	
+	try:
+		_rst.rise = o.next_rising(b)+DJD_OFFSET
+		_rst.transit = o.next_transit(b)+DJD_OFFSET
+		_rst.set = o.next_setting(b)+DJD_OFFSET
+		return _rst
+	except (ephem.NeverUpError, ephem.AlwaysUpError):
 		return None
-		
-	_rst.rise = o.next_rising(b)+DJD_OFFSET
-	_rst.transit = o.next_transit(b)+DJD_OFFSET
-	_rst.set = o.next_setting(b)+DJD_OFFSET
-	return _rst
 
 
 ######################################################################
@@ -2601,13 +2602,14 @@ def get_solar_rst(jD, observer):
 		pass
 		
 	b.compute(o)
-	if b.circumpolar or b.neverup:
+	
+	try:
+		_rst.rise = o.next_rising(b)+DJD_OFFSET
+		_rst.transit = o.next_transit(b)+DJD_OFFSET
+		_rst.set = o.next_setting(b)+DJD_OFFSET
+		return _rst
+	except (ephem.NeverUpError, ephem.AlwaysUpError):
 		return None
-		
-	_rst.rise = o.next_rising(b)+DJD_OFFSET
-	_rst.transit = o.next_transit(b)+DJD_OFFSET
-	_rst.set = o.next_setting(b)+DJD_OFFSET
-	return _rst
 
 
 ######################################################################
@@ -2657,13 +2659,14 @@ def get_jupiter_rst(jD, observer):
 		pass
 		
 	b.compute(o)
-	if b.circumpolar or b.neverup:
+	
+	try:
+		_rst.rise = o.next_rising(b)+DJD_OFFSET
+		_rst.transit = o.next_transit(b)+DJD_OFFSET
+		_rst.set = o.next_setting(b)+DJD_OFFSET
+		return _rst
+	except (ephem.NeverUpError, ephem.AlwaysUpError):
 		return None
-		
-	_rst.rise = o.next_rising(b)+DJD_OFFSET
-	_rst.transit = o.next_transit(b)+DJD_OFFSET
-	_rst.set = o.next_setting(b)+DJD_OFFSET
-	return _rst
 
 
 ######################################################################
@@ -2713,13 +2716,14 @@ def get_saturn_rst(jD, observer):
 		pass
 		
 	b.compute(o)
-	if b.circumpolar or b.neverup:
+	
+	try:
+		_rst.rise = o.next_rising(b)+DJD_OFFSET
+		_rst.transit = o.next_transit(b)+DJD_OFFSET
+		_rst.set = o.next_setting(b)+DJD_OFFSET
+		return _rst
+	except (ephem.NeverUpError, ephem.AlwaysUpError):
 		return None
-		
-	_rst.rise = o.next_rising(b)+DJD_OFFSET
-	_rst.transit = o.next_transit(b)+DJD_OFFSET
-	_rst.set = o.next_setting(b)+DJD_OFFSET
-	return _rst
 
 
 ######################################################################
@@ -2769,13 +2773,14 @@ def get_lunar_rst(jD, observer):
 		pass
 		
 	b.compute(o)
-	if b.circumpolar or b.neverup:
+	
+	try:
+		_rst.rise = o.next_rising(b)+DJD_OFFSET
+		_rst.transit = o.next_transit(b)+DJD_OFFSET
+		_rst.set = o.next_setting(b)+DJD_OFFSET
+		return _rst
+	except (ephem.NeverUpError, ephem.AlwaysUpError):
 		return None
-		
-	_rst.rise = o.next_rising(b)+DJD_OFFSET
-	_rst.transit = o.next_transit(b)+DJD_OFFSET
-	_rst.set = o.next_setting(b)+DJD_OFFSET
-	return _rst
 
 
 ######################################################################
@@ -2825,13 +2830,14 @@ def get_venus_rst(jD, observer):
 		pass
 		
 	b.compute(o)
-	if b.circumpolar or b.neverup:
+	
+	try:
+		_rst.rise = o.next_rising(b)+DJD_OFFSET
+		_rst.transit = o.next_transit(b)+DJD_OFFSET
+		_rst.set = o.next_setting(b)+DJD_OFFSET
+		return _rst
+	except (ephem.NeverUpError, ephem.AlwaysUpError):
 		return None
-		
-	_rst.rise = o.next_rising(b)+DJD_OFFSET
-	_rst.transit = o.next_transit(b)+DJD_OFFSET
-	_rst.set = o.next_setting(b)+DJD_OFFSET
-	return _rst
 
 
 ######################################################################
@@ -2881,13 +2887,14 @@ def get_mars_rst(jD, observer):
 		pass
 		
 	b.compute(o)
-	if b.circumpolar or b.neverup:
+	
+	try:
+		_rst.rise = o.next_rising(b)+DJD_OFFSET
+		_rst.transit = o.next_transit(b)+DJD_OFFSET
+		_rst.set = o.next_setting(b)+DJD_OFFSET
+		return _rst
+	except (ephem.NeverUpError, ephem.AlwaysUpError):
 		return None
-		
-	_rst.rise = o.next_rising(b)+DJD_OFFSET
-	_rst.transit = o.next_transit(b)+DJD_OFFSET
-	_rst.set = o.next_setting(b)+DJD_OFFSET
-	return _rst
 
 
 ######################################################################
