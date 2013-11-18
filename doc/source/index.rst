@@ -36,6 +36,7 @@ General Utilities
    mathutils
    robust
    paths
+   busy
    progress
 
 LWA-Specific Utilites
