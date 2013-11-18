@@ -27,6 +27,7 @@
   * Added a setSpectrometerMetatag() function to lsl.common.sdf.Session to make setting the metatag easier
   * lsl.common.sdf.Project.render() now calls update() to make sure everything is up-to-date before rendering
   * Added 'verbose' keywords to lsl.imaging.utils.buildGriddedImage() and the lsl.imaging.selfCal functions
+  * Added a ASCII busy indicator for long running tasks
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function

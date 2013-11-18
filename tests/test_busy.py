@@ -1,0 +1,48 @@
+# -*- coding: utf-8 -*-
+
+"""Unit test for regressions in the lsl.common.busy module."""
+
+import sys
+import time
+import unittest
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
+
+from lsl.common import busy
+
+__revision__ = "$Rev$"
+__version__  = "0.1"
+__author__    = "Jayce Dowell"
+
+
+class busy_tests(unittest.TestCase):
+	"""A unittest.TestCase collection of unit tests for the regressions in LSL."""
+	
+	def test_default(self):
+		"""Test the busy indicator, default options."""
+		
+		bi = busy.BusyIndicator()
+		
+		sys.stdout = StringIO.StringIO()
+		
+		bi.start()
+		time.sleep(1)
+		bi.stop()
+		
+		sys.stdout = sys.__stdout__
+
+
+class busy_test_suite(unittest.TestSuite):
+	"""A unittest.TestSuite class which contains all of the lsl.common.busy unit tests."""
+	
+	def __init__(self):
+		unittest.TestSuite.__init__(self)
+		
+		loader = unittest.TestLoader()
+		self.addTests(loader.loadTestsFromTestCase(busy_tests)) 
+
+
+if __name__ == '__main__':
+	unittest.main()
