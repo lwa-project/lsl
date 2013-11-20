@@ -4,7 +4,7 @@
 Module for querying the earth orientation parameters for a given date/list
 of dates.
 
-.. versionchanged:: 0.7.0
+.. versionchanged:: 1.0.0
 	Added caching of MAIA results to speed up subsequent calls to getEOP().
 	Removed getEOPRange() since getEOP() can do the same thing.
 """
@@ -55,7 +55,7 @@ class EOP(object):
 	  * type - whether the values for the given MJD are observed (final/IERS) or
 	    predicted.
 	    
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added extra attributes to store dX (dx) and dY (dy) in arc seconds.
 	"""
 
@@ -270,7 +270,7 @@ def getEOP(mjd=None, timeout=120):
 		Added the `timeout' keyword to deal with failures download EOP data.
 		The default value is 120 seconds.
 		
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added caching of EOP values to speed up subsequent calls.
 	"""
 	

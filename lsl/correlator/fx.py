@@ -20,7 +20,7 @@ Each function is set up to process the signals in parallel using the
 multiprocessing module and accepts a variety of options controlling the processing
 of the data, including various window functions and time averaging.
 
-.. versionchanged:: 0.7.0
+.. versionchanged:: 1.0.0
 	All of the functions here now return all 'LFFT' channels.
 """
 
@@ -238,7 +238,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		:mod:`lsl.common.stations` module instead of a list of stand ID
 		numbers.
 		
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added a phase-center keyword that accept a two-element tuple of 
 		azimuth and elelvation (in degrees) to change where the 
 		correlations are phased to
@@ -370,7 +370,7 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	the cross-correlation of the data for all baselines.  Return the frequencies 
 	and visibilities as a two-elements tuple.
 	
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added a phase-center keyword that accept a two-element tuple of 
 		azimuth and elelvation (in degrees) to change where the 
 		correlations are phased to

@@ -13,7 +13,7 @@ coverage and time delays.  The functions in the module:
 	for individual stands since these are wrapped in the new :mod:`lsl.common.stations`
 	module.
 	
-.. versionchanged:: 0.7.0
+.. versionchanged:: 1.0.0
 	Generalized the computeUVW() and computeUVTrack() functions.
 """
 
@@ -132,7 +132,7 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
 		:mod:`lsl.common.station` module instead of a list of stand ID
 		numbers.
 		
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added a keyword (site) to specify the station used for the 
 		observation.
 	"""
@@ -193,7 +193,7 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6, site=lwa1):
 		:mod:`lsl.common.station` module instead of a list of stand ID
 		numbers.
 		
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added a keyword (site) to specify the station used for the 
 		observation.
 	"""

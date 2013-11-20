@@ -28,6 +28,7 @@
   * lsl.common.sdf.Project.render() now calls update() to make sure everything is up-to-date before rendering
   * Added 'verbose' keywords to lsl.imaging.utils.buildGriddedImage() and the lsl.imaging.selfCal functions
   * Added a ASCII busy indicator for long running tasks
+  * Added a script to make it easier to update the internal LWA1 SSMIF used by LSL
 
 0.6.6
   * Fixed a problem with older NumPy installs not having a close() function
@@ -35,6 +36,7 @@
   * Fixed the try...except blocks in lsl.statistics.kurtosis.getLimits() to catch the appropriate error
   * Improved the end buffering the in lsl.misc.dedispersion.coherent() function
   * Updated the LWA1 SSMIF to the 131031 version
+  * Fixed a typo in the help for correlateTBN.py
 
 0.6.5
   * Fixed the time remaining computation in lsl.common.progress.ProgressBarPlus

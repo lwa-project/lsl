@@ -545,7 +545,7 @@ def circularize(x, y):
 	polarization timeseries data, generate the two circular polarization.
 	Returns a two-element tuple of L and R.
 
-	.. versionadded:: 0.7.0
+	.. versionadded:: 1.0.0
 	"""
 
 	# Compute the circular terms

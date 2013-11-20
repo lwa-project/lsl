@@ -7,6 +7,17 @@ gatherDebugging.py
 
   :Options: None
 
+updateLSLSSMIF.py
+  :Description: Update the internal LWA1 SSMIF used by LSL.
+
+  :Usage: updateLSLSSMIF.py [options]
+
+  :Options: -h, --help          Display this help information
+
+            -u, --update        Update the default LWA1 SSMIF
+
+            -r, --revert        Revert the default LWA1 SSMIF to an older version
+
 astroevents.py
   :Description: Application to display rise, transit, and set times for various astronomical sources from LWA-1 for the current date.
 

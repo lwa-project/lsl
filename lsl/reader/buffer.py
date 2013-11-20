@@ -9,7 +9,7 @@ Buffer for dealing with out-of-order/missing frames.
 .. versionchanged:: 0.6
 	Removed support for TBW FrameBuffers since they didn't really work.
 	
-.. versionchanged:: 0.7.0
+.. versionchanged:: 1.0.0
 	Added back in the DRX FrameBuffers since they might be useful.
 	Dropped TBW support from within the FrameBuffer class.
 """

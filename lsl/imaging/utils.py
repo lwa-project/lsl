@@ -7,7 +7,7 @@ data dictionaries.  Also included is a utility to sort data dictionaries by base
 
 .. versionadded:: 0.5.0
 
-.. versionchanged:: 0.7.0
+.. versionchanged:: 1.0.0
 	Added support for UVFITS files and CASA measurement sets
 """
 

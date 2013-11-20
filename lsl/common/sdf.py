@@ -31,7 +31,7 @@ the DP system.
 In addition to providing the means for creating session definition files from scratch, 
 this module also includes a simple parser for SD files.
 
-.. versionchanged:: 0.7.0
+.. versionchanged:: 1.0.0
 	Added the getObservationStartStop() function.
 	Renamed parseTimeString() to parseTime()
 	parseTime() can now accept dates/times as timezone-aware datetime instances
@@ -115,7 +115,7 @@ def parseTime(s, site=lwa1):
 	since that it handle both integer and float seconds as well as does the 
 	appropriate rounding to get millisecond precision.
 	
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Renamed to parseTime()
 		Added support for timezone-aware datetime instances
 	"""
@@ -836,7 +836,7 @@ class Observation(object):
 	Class to hold the specifics of an observations.  It currently
 	handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped
 	
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added support for RA/dec values as ephem.hours/ephem.degrees instances
 	"""
 	
@@ -1585,7 +1585,7 @@ class BeamStep(object):
 	   If `SpecDelays` is specified, `SpecGains` must also be specified.
 	   Specifying both `SpecDelays` and `SpecGains` overrides the `MaxSNR` keyword.
 	   
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added support for azimuth/altitude and RA/dec values as ephem.hours/ephem.degrees 
 		instances
 	"""
@@ -2274,7 +2274,7 @@ def getObservationStartStop(obs):
 	Given an observation, get the start and stop times (returned as a two-
 	element tuple of UTC datetime instances).
 	
-	.. versionadded:: 0.7.0
+	.. versionadded:: 1.0.0
 	"""
 	
 	# UNIX timestamp for the start

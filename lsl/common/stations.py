@@ -78,7 +78,7 @@ class LWAStationBase(object):
 	  * ID code (id)
 	  * List of Antenna instances (antennas)
 	  
-	.. versionadded:: 0.7.0
+	.. versionadded:: 1.0.0
 	"""
 	
 	def __init__(self, name, id='', antennas=None):
@@ -149,7 +149,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 	  * getPols:  Return a list of polarizations
 	  * getCables: Return a list of cables
 	  
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Converted LWAStation to be an instance of LWAStationBase and ephem.Observer
 		to make it easier to work with ephem.Body objects.
 		
@@ -179,7 +179,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		Update the provided ephem.Body instance with the current location as 
 		viewed from the site.
 		
-		.. versionadded:: 0.7.0
+		.. versionadded:: 1.0.0
 		"""
 		
 		body.compute(self)
@@ -363,7 +363,7 @@ class Antenna(object):
 	  * 2 == Suspect, possibly bad
 	  * 3 == OK
 	
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added an attribute to hold the DP rack input connector label.
 	"""
 	
@@ -418,7 +418,7 @@ class Antenna(object):
 		Return a two-element tuple (freq in Hz, mis-match loss) for a model LWA1 
 		antenna.
 		
-		.. versionadded:: 0.7.0
+		.. versionadded:: 1.0.0
 		"""
 		
 		# Find the filename to use
@@ -456,7 +456,7 @@ class Stand(object):
 	  Stand[1] = y
 	  Stand[2] = z
 	  
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added the option to get the positions via subscripts.
 	"""
 	
@@ -646,7 +646,7 @@ class Cable(object):
 		than one frequency are needed, the frequencies can be passed in as 
 		a numpy array.
 		
-		.. versionchanged:: 0.7.0
+		.. versionchanged:: 1.0.0
 			Added the `dB' keyword to allow dB to be returned.
 		"""
 	
@@ -664,7 +664,7 @@ class Cable(object):
 		Hz).  If gains for more than one frequency are needed, the 
 		frequencies can be passed in as a numpy array.
 		
-		.. versionchanged:: 0.7.0
+		.. versionchanged:: 1.0.0
 			Added the `dB' keyword to allow dB to be returned.
 		"""
 		
@@ -689,7 +689,7 @@ class ARX(object):
 	cable delay for a particular frequency or collection of frequencies in 
 	Hz.
 	
-	.. versionchanged:: 0.7.0
+	.. versionchanged:: 1.0.0
 		Added attributes to hold the ASP rack input and output connector 
 		labels.
 	"""
@@ -717,7 +717,7 @@ class ARX(object):
 		  * 2 or 'reduced'
 		  * 3 or 'split'
 		  
-		.. versionchanged:: 0.7.0
+		.. versionchanged:: 1.0.0
 			Add an option to specify whether the magnitude should be 
 			returned in dB or not.
 		"""
