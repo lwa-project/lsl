@@ -43,9 +43,8 @@
   * Fixed a bug in imageIDI.py that caused the LST not to update on subsequent integrations
   * Added in a call to close() after numpy.load() is used
   * Updated the setup.py script to help deal with clang/OpenMP on OSX
-  * Updated the lsl.common.metabundle module to deal with the new _metadata.txt file f
-ormat
-* Added a method to read in MCS MIB files in the GDBM format
+  * Updated the lsl.common.metabundle module to deal with the new _metadata.txt file format
+  * Added a method to read in MCS MIB files in the GDBM format
   * Added new functions to lsl.common.metabundle to retrieve the ASP configuration from a new metadata tarball
 
 0.6.4
@@ -206,13 +205,13 @@ ormat
   * Fixed a mapping problem in plotStands.py that mapped by digitizer, not stand
   * Added a gatherDebugging.py script alongside setup.py to help with debugging and installation problems
   * Moved gatherDebugging.py to the script directory to have it installed with LSL
-  * Added `documentation support` for accessing the central frequency of a DRX frame
+  * Added 'documentation support' for accessing the central frequency of a DRX frame
   * Fixed a RPD_DD mapping problem in lsl.common.stations.parseSSMIF()
   * Fixed a DP1_SLOT parsing problem in lsl.common.stations.parseSSMIF()
   * Updated LWA-1 SSMIF to 12/26/2011 to include calibration information
   * Added the June 30, 2012 leap second into the TAI-UTC file
   * Fixed a problem in cpDRSU.py with the verbose output
-  * Cleaned up the `sfdisk` calls with the DRSU direct-access module
+  * Cleaned up the 'sfdisk' calls with the DRSU direct-access module
   * Added a BeamAlm class to lsl.sim.vis to help with polarization difference between LWA1 and what is implemented in AIPY
 
 
@@ -222,17 +221,17 @@ ormat
 0.4.4
   * Added an id number attribute to lsl.common.stations.FEE objects
   * Updated LWA-1 SSMIF to 2011-08-10 version
-  * Added `keep` option to tbnSpectra.py to only display a certain collection of stands
+  * Added 'keep' option to tbnSpectra.py to only display a certain collection of stands
   * Possibly cleared up a install problem on some systems that prevents testing
   * Fixed various memory leaks in the readers and the direct DRSU access module
-  * Added `documentation support` for accessing the central frequency of a TBN frame
+  * Added 'documentation support' for accessing the central frequency of a TBN frame
   * Added support for variable noise level in the various lsl.sim.dp functions
   * Worked on improving ATLAS library detection on Redhat-based distributions
   * Improved detection of potential build problems with the DRSU direct-access extension
   * Updated the coordinates of stand #148 to be consistent with the revised LWA-1 survey
   * Fixed the digitizer to board mapping to account for DP2 boards
   * Fixed a bug simulating visibilities that could include sources below the horizon
-  * Fixed the `-i` option in gsmnpz2map.py
+  * Fixed the '-i' option in gsmnpz2map.py
 
 0.4.3
   * Cleaned up the various __init__.py scripts
@@ -344,7 +343,7 @@ ormat
   * Added post-acquisition beam forming module
   * Added in modules for writing simulated data to the S60, TBW, TBN, and DRX raw data formats
   * Added a module for simulated basic test signals in TBW, TBN, and DRX data
-  * Moved the lwa_user script `astrostatus.py' into the scripts directory
+  * Moved the lwa_user script 'astrostatus.py' into the scripts directory
   * Fixed the FITS IDI writer
   * Fixed a couple of bugs dealing with incorrect chunking of data in scripts/tbwSpectra.py and scripts/tbnSpectra.py
 

@@ -33,7 +33,7 @@ Observing Modes
 .. autoclass:: lsl.common.sdf.TBW
    :members:
 .. autoclass:: lsl.common.sdf.TBN
-   :members
+   :members:
 .. autoclass:: lsl.common.sdf.DRX
    :members:
 .. autoclass:: lsl.common.sdf.Solar

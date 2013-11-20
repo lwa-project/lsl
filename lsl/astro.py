@@ -26,6 +26,7 @@ class dms(object):
 	  degrees - Angle degrees (integer).
 	  minutes - Angle minutes (integer).
 	  seconds - Angle seconds (float).
+	
 	"""
 	
 	def __init__(self, neg = False, degrees = 0, minutes = 0, seconds = 0.0):
