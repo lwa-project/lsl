@@ -35,3 +35,7 @@ FX Correlator Core
    :members:
 .. autofunction:: lsl.correlator._stokes.XEngine2
 
+DP-Style Signal Processing
+--------------------------
+.. automodule:: lsl.common._fir
+   :members:
