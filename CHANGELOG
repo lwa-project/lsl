@@ -1,3 +1,8 @@
+1.1.0
+  
+1.0.1
+  * Added an option to updateLSLSSMIF.py to update the LWA1 SSMIF using a local file
+
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)
   * Added a function to lsl.misc.beamformer to convert X and Y linear pols. to circular L and R pols

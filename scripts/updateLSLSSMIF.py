@@ -25,6 +25,7 @@ Options:
 -h, --help          Display this help information
 -u, --update        Update the default LWA1 SSMIF
 -r, --revert        Revert the default LWA1 SSMIF to an older version
+-f, --file          Update the default LWA1 SSMIF using the specified file
 """
 	
 	if exitCode is not None:
@@ -38,10 +39,11 @@ def parseOptions(args):
 	config['show'] = True
 	config['update'] = False
 	config['revert'] = False
+	config['filename'] = None
 	
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hur", ["help", "update", "revert"])
+		opts, args = getopt.getopt(args, "hurf:", ["help", "update", "revert", "file="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -53,8 +55,19 @@ def parseOptions(args):
 			usage(exitCode=0)
 		elif opt in ('-u', '--update'):
 			config['update'] = True
+			
+			config['revert'] = False
+			config['filename'] = None
 		elif opt in ('-r', '--revert'):
 			config['revert'] = True
+			
+			config['update'] = False
+			config['filename'] = None
+		elif opt in ('-f', '--file'):
+			config['filename'] = value
+			
+			config['update'] = False
+			config['revert'] = False
 		else:
 			assert False
 			
@@ -173,6 +186,11 @@ def main(args):
 		# Update to the latest version
 		
 		urlToDownload = "http://lda10g.alliance.unm.edu/metadata/ssmif/SSMIF_CURRENT.txt"
+		
+	elif config['filename'] is not None:
+		# Use the specified file
+		
+		urlToDownload = os.path.abspath(config['filename'])
 		
 	# Put the new SSMIF in place
 	if urlToDownload is not None:
