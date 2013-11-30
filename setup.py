@@ -67,6 +67,7 @@ def get_openmp():
 	from distutils import sysconfig
 	from distutils import ccompiler
 	compiler = ccompiler.new_compiler()
+	sysconfig.get_config_vars()
 	sysconfig.customize_compiler(compiler)
 	cc = compiler.compiler
 	
