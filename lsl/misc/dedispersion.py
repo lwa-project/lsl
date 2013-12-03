@@ -10,6 +10,24 @@ incoherent/coherent dedispersion.
 
 import numpy
 
+try:
+	import pyfftw
+	from multiprocessing import cpu_count
+	
+	# Enable the PyFFTW cache
+	if not pyfftw.interfaces.cache.is_enabled():
+		pyfftw.interfaces.cache.enable()
+		pyfftw.interfaces.cache.set_keepalive_time(60)
+		
+	nThreads = cpu_count()
+	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, threads=nThreads, planner_effort='FFTW_ESTIMATE')
+	ifftFunction = lambda x: pyfftw.interfaces.numpy_fft.ifft(x, threads=nThreads, planner_effort='FFTW_ESTIMATE', overwrite_input=True)
+	
+except ImportError:
+	fftFunction = numpy.fft.fft
+	ifftFunction = numpy.fft.ifft
+
+
 __version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', '__version__', '__revision__', '__all__']
@@ -144,16 +162,6 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 	if nSets == 0:
 		RuntimeWarning("Too few data samples for proper dedispersion")
 		
-	# Try to use PyFFTW
-	try:
-		import pyfftw
-		from multiprocessing import cpu_count
-		useFFTW = True
-		nThreads = cpu_count()
-	except ImportError:
-		userFFTW = False
-		nTreads = 1
-		
 	# Go!
 	for i in xrange(2*nSets+1):
 		start = i*N/2 - N/4
@@ -196,20 +204,10 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 			dataIn = timeseries[start:stop]
 			
 		timeOut = timeIn
-		if useFFTW:
-			# Enable the PyFFTW cache
-			if i == 0 and not pyfftw.interfaces.cache.is_enabled():
-				pyfftw.interfaces.cache.enable()
-				pyfftw.interfaces.cache.set_keepalive_time(60)
-				
-			dataOut = pyfftw.interfaces.numpy_fft.fft( dataIn, threads=nThreads, planner_effort='FFTW_ESTIMATE' )
-			dataOut *= chirp
-			dataOut = pyfftw.interfaces.numpy_fft.ifft( dataOut, threads=nThreads, planner_effort='FFTW_ESTIMATE', overwrite_input=True )
-		else:
-			dataOut = numpy.fft.fft( dataIn )
-			dataOut *= chirp
-			dataOut = numpy.fft.ifft( dataOut )
-			
+		dataOut = fftFunction( dataIn )
+		dataOut *= chirp
+		dataOut = ifftFunction( dataOut )
+		
 		# Get the output data ranges
 		outStart  = i*N/2
 		outStop   = outStart + N/2

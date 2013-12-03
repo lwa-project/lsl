@@ -4,12 +4,31 @@
 This module implements a uniform DFT filter bank for use in calculating 
 spectra as an alternative to a simple FFT.  The implementation here is based 
 on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
+
+.. versionchanged:: 1.0.1
+	Added support for using PyFFTW instead of NumPy for the FFTs
 """
 
 import numpy
 from fx import noWindow
 
-__version__ = '0.1'
+try:
+	import pyfftw
+	from multiprocessing import cpu_count
+	
+	# Enable the PyFFTW cache
+	if not pyfftw.interfaces.cache.is_enabled():
+		pyfftw.interfaces.cache.enable()
+		pyfftw.interfaces.cache.set_keepalive_time(60)
+		
+	nThreads = cpu_count()
+	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, threads=nThreads, planner_effort='FFTW_ESTIMATE')
+	
+except ImportError:
+	fftFunction = numpy.fft.fft
+
+
+__version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['fft', 'fft2', 'fft4', 'fft8', 'fft16', 'fft32', '__version__', '__revision__', '__all__']
 
@@ -33,9 +52,9 @@ def fft(signal, N, P=1, window=noWindow):
 
 	filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N,P)
 	
-	fbOutput = numpy.fft.fft(filteredSignal[0:N])
+	fbOutput = fftFunction(filteredSignal[0:N])
 	for i in range(1,P):
-		fbOutput += numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
+		fbOutput += fftFunction(filteredSignal[i*N:(i+1)*N])
 
 	return fbOutput
 

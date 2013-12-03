@@ -4,6 +4,7 @@
   * Added an option to updateLSLSSMIF.py to update the LWA1 SSMIF using a local file
   * Fixed a build problem on OS X with Python 2.7
   * Added support for using PyFFTW in the lsl.misc.dedispersion module
+  * Added support for using PyFFTW in the lsl.correlator.filterbank module
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)
