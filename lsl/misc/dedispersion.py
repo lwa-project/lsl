@@ -3,11 +3,14 @@
 """
 Module for calculating dispersion delay due to an ionized ISM and performing
 incoherent/coherent dedispersion.
+
+.. versionchanged:: 1.0.1
+	Added support for using PyFFTW instead of NumPy for the FFTs and iFFTs.
 """
 
 import numpy
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', '__version__', '__revision__', '__all__']
 
@@ -123,16 +126,15 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 		dedispersion can be prohibitive.  For example, at 74 MHz with 19.6 MS/s and a
 		DM or 10 pc / cm^3 this function uses a window size of about 268 million points.
 		
+	.. versionchanged:: 1.0.1
+		Added support for using PyFFTW instead of NumPy for the FFTs and iFFTs.
+		
 	.. versionchanged:: 0.6.4
 		Added support for keeping track of time through the dedispersion process.
 	"""
 	
 	# Get an idea of how many samples we need to do the dedispersion correctly
 	N = getCoherentSampleSize(centralFreq, sampleRate, dm)
-	
-	# Compute the chirp function
-	freq = numpy.fft.fftfreq(N, d=1/sampleRate) + centralFreq
-	chirp = __chirpFunction(freq, dm, taper=taper)
 	
 	# Figure out the output array size
 	nSets = len(timeseries) / N
@@ -141,6 +143,16 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 	
 	if nSets == 0:
 		RuntimeWarning("Too few data samples for proper dedispersion")
+		
+	# Try to use PyFFTW
+	try:
+		import pyfftw
+		from multiprocessing import cpu_count
+		useFFTW = True
+		nThreads = cpu_count()
+	except ImportError:
+		userFFTW = False
+		nTreads = 1
 		
 	# Go!
 	for i in xrange(2*nSets+1):
@@ -184,10 +196,20 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 			dataIn = timeseries[start:stop]
 			
 		timeOut = timeIn
-		dataOut = numpy.fft.fft( dataIn )
-		dataOut *= chirp
-		dataOut = numpy.fft.ifft( dataOut )
-		
+		if useFFTW:
+			# Enable the PyFFTW cache
+			if i == 0 and not pyfftw.interfaces.cache.is_enabled():
+				pyfftw.interfaces.cache.enable()
+				pyfftw.interfaces.cache.set_keepalive_time(60)
+				
+			dataOut = pyfftw.interfaces.numpy_fft.fft( dataIn, threads=nThreads, planner_effort='FFTW_ESTIMATE' )
+			dataOut *= chirp
+			dataOut = pyfftw.interfaces.numpy_fft.ifft( dataOut, threads=nThreads, planner_effort='FFTW_ESTIMATE', overwrite_input=True )
+		else:
+			dataOut = numpy.fft.fft( dataIn )
+			dataOut *= chirp
+			dataOut = numpy.fft.ifft( dataOut )
+			
 		# Get the output data ranges
 		outStart  = i*N/2
 		outStop   = outStart + N/2
@@ -209,5 +231,3 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 		outD[outStart:outStop] = dataOut[dataStart:dataStop]
 		
 	return outT, outD
-	
-	
