@@ -210,7 +210,7 @@ class ProjectedSkyMap(object):
 		cosAz = (sin(dec*pi/180)-sinAlt*sin(self.lat*pi/180))/(cos(alt)*cos(lat*pi/180))
 		cosAz = clip(cosAz, -1.0, 1.0)
 		az = arccos(cosAz)
-		swap = where(sin(ha*pi/180) < 0)
+		swap = where(sin(ha*pi/180) > 0)
 		az[swap] = 2*pi-az[swap]
 		
 		## Convert to alt and az to degrees
