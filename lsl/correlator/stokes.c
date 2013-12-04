@@ -25,6 +25,21 @@
 
 
 /*
+ Load in FFTW wisdom.  Based on the read_wisdom function in PRESTO.
+*/
+
+void read_wisdom(char *filename) {
+	FILE *wisdomfile;
+	
+	wisdomfile = fopen(filename, "r");
+	if( wisdomfile != NULL ) {
+		fftw_import_wisdom_from_file(wisdomfile);
+		fclose(wisdomfile);
+	}
+}
+
+
+/*
   Holder for window function callback
 */
 
@@ -969,7 +984,8 @@ See the inidividual functions for more details.");
 */
 
 PyMODINIT_FUNC init_stokes(void) {
-	PyObject *m;
+	char filename[256];
+	PyObject *m, *pModule, *pDataPath;
 
 	// Module definitions and functions
 	m = Py_InitModule3("_stokes", StokesMethods, stokes_doc);
@@ -979,4 +995,9 @@ PyMODINIT_FUNC init_stokes(void) {
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
+	// LSL FFTW Wisdom
+	pModule = PyImport_ImportModule("lsl.common.paths");
+	pDataPath = PyObject_GetAttrString(pModule, "data");
+	sprintf(filename, "%s/fftw_wisdom.txt", PyString_AsString(pDataPath));
+	read_wisdom(filename);
 }

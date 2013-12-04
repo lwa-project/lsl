@@ -31,6 +31,21 @@
 
 
 /*
+ Load in FFTW wisdom.  Based on the read_wisdom function in PRESTO.
+*/
+
+void read_wisdom(char *filename) {
+	FILE *wisdomfile;
+	
+	wisdomfile = fopen(filename, "r");
+	if( wisdomfile != NULL ) {
+		fftw_import_wisdom_from_file(wisdomfile);
+		fclose(wisdomfile);
+	}
+}
+
+
+/*
   Holder for window function callback
 */
 
@@ -237,7 +252,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_complex *inP, *in;                          
 	inP = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
 	fftw_plan p;
-	p = fftw_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
+	p = fftw_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -990,7 +1005,7 @@ static PyObject *PPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftw_complex *inP, *in;
 	inP = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
 	fftw_plan p;
-	p = fftw_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
+	p = fftw_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -1310,7 +1325,8 @@ See the inidividual functions for more details.");
 */
 
 PyMODINIT_FUNC init_spec(void) {
-	PyObject *m;
+	char filename[256];
+	PyObject *m, *pModule, *pDataPath;
 
 	// Module definitions and functions
 	m = Py_InitModule3("_spec", SpecMethods, spec_doc);
@@ -1320,4 +1336,9 @@ PyMODINIT_FUNC init_spec(void) {
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
+	// LSL FFTW Wisdom
+	pModule = PyImport_ImportModule("lsl.common.paths");
+	pDataPath = PyObject_GetAttrString(pModule, "data");
+	sprintf(filename, "%s/fftw_wisdom.txt", PyString_AsString(pDataPath));
+	read_wisdom(filename);
 }

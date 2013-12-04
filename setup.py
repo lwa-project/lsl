@@ -202,7 +202,8 @@ ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c'], include
 libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
 			Extension('correlator._spec', ['lsl/correlator/spec.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
 			Extension('correlator._stokes', ['lsl/correlator/stokes.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
-			Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs)]
+			Extension('correlator._core', ['lsl/correlator/core.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
+			Extension('misc._wisdom', ['lsl/misc/wisdom.c'],include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), ]
 
 # Update the version information
 write_version_info()
