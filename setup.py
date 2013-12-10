@@ -103,12 +103,12 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 
 def get_fftw():
 	"""Use pkg-config (if installed) to figure out the C flags and linker flags
-	needed to compile a C program with FFTW3.  If FFTW3 cannot be found via
-	pkg-config, some 'sane' values are returned."""
+	needed to compile a C program with FFTW3 (floating point version).  If FFTW3 
+	cannot be found via pkg-config, some 'sane' values are returned."""
 
-	status, output = commands.getstatusoutput('pkg-config fftw3 --exists')
+	status, output = commands.getstatusoutput('pkg-config fftw3f --exists')
 	if status == 0:
-		configCommand = 'pkg-config fftw3'
+		configCommand = 'pkg-config fftw3f'
 		outCFLAGS = os.popen('%s --cflags' % configCommand, 'r').readline().rstrip().split()
 		outLIBS = os.popen('%s --libs' % configCommand, 'r').readline().rstrip().split()
 
@@ -116,10 +116,10 @@ def get_fftw():
 		print "WARNING:  FFTW3 cannot be found, using defaults"
 		if platform.system() != 'FreeBSD':
 			outCFLAGS = []
-			outLIBS = ['-lfftw3', '-lm']
+			outLIBS = ['-lfftw3f', '-lm']
 		else:
 			outCFLAGS = ['-I/usr/local/include',]
-			outLIBS = ['-L/usr/local/lib', '-lfftw3', '-lm']
+			outLIBS = ['-L/usr/local/lib', '-lfftw3f', '-lm']
 
 	return outCFLAGS, outLIBS
 

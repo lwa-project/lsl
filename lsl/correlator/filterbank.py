@@ -13,16 +13,27 @@ import numpy
 from fx import noWindow
 
 try:
+	import os
+	import pickle
 	import pyfftw
-	from multiprocessing import cpu_count
+	
+	from lsl.common.paths import data as dataPath
 	
 	# Enable the PyFFTW cache
 	if not pyfftw.interfaces.cache.is_enabled():
 		pyfftw.interfaces.cache.enable()
 		pyfftw.interfaces.cache.set_keepalive_time(60)
 		
-	nThreads = cpu_count()
-	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, threads=nThreads, planner_effort='FFTW_ESTIMATE')
+	# Read in the wisdom (if it exists)
+	wisdomFilename = os.path.join(dataPath, 'pyfftw-widsom.pkl')
+	if os.path.exists(wisdomFilename):
+		fh = open(wisdomeFilename, 'r')
+		wisdom = pickle.load(fh)
+		fh.close()
+		
+		pyfftw.import_wisdom(wisdom)
+		
+	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, planner_effort='FFTW_MEASURE')
 	
 except ImportError:
 	fftFunction = numpy.fft.fft

@@ -33,7 +33,7 @@ void read_wisdom(char *filename) {
 	
 	wisdomfile = fopen(filename, "r");
 	if( wisdomfile != NULL ) {
-		fftw_import_wisdom_from_file(wisdomfile);
+		fftwf_import_wisdom_from_file(wisdomfile);
 		fclose(wisdomfile);
 	}
 }
@@ -99,13 +99,13 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArray_FILLWBYTE(dataF, 0);
 	
 	// Create the FFTW plan                          
-	fftw_complex *inPX, *inPY, *inX, *inY;                          
-	inPX = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-	inPY = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-	fftw_plan pX;
-	fftw_plan pY;
-	pX = fftw_plan_dft_1d(2*nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
-	pY = fftw_plan_dft_1d(2*nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
+	fftwf_complex *inPX, *inPY, *inX, *inY;                          
+	inPX = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
+	inPY = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
+	fftwf_plan pX;
+	fftwf_plan pY;
+	pX = fftwf_plan_dft_1d(2*nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
+	pY = fftwf_plan_dft_1d(2*nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -131,8 +131,8 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT[i] = 0;
-			inX = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-			inY = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
+			inX = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
+			inY = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
@@ -154,8 +154,8 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					}
 				}
 				
-				fftw_execute_dft(pX, inX, inX);
-				fftw_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(pX, inX, inX);
+				fftwf_execute_dft(pY, inY, inY);
 				
 				for(k=0; k<nChan; k++) {
 					fftIndex = k;
@@ -183,14 +183,14 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				nActFFT[i] += (long) cleanFactor;
 			}
-			fftw_free(inX);
-			fftw_free(inY);
+			fftwf_free(inX);
+			fftwf_free(inY);
 		}
 	}
-	fftw_destroy_plan(pX);
-	fftw_destroy_plan(pY);
-	fftw_free(inPX);
-	fftw_free(inPY);
+	fftwf_destroy_plan(pX);
+	fftwf_destroy_plan(pY);
+	fftwf_free(inPX);
+	fftwf_free(inPY);
 	
 	// cblas_dscal(nChan*nStand, 1.0/(2*nChan*nFFT), b, 1);
 	for(i=0; i<4; i++) {
@@ -294,13 +294,13 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArray_FILLWBYTE(dataF, 0);
 	
 	// Create the FFTW plan                          
-	fftw_complex *inPX, *inPY, *inX, *inY;                          
-	inPX = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-	inPY = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-	fftw_plan pX;
-	fftw_plan pY;
-	pX = fftw_plan_dft_1d(2*nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
-	pY = fftw_plan_dft_1d(2*nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
+	fftwf_complex *inPX, *inPY, *inX, *inY;                          
+	inPX = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
+	inPY = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
+	fftwf_plan pX;
+	fftwf_plan pY;
+	pX = fftwf_plan_dft_1d(2*nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
+	pY = fftwf_plan_dft_1d(2*nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -327,8 +327,8 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT[i] = 0;
-			inX = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
-			inY = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * 2*nChan);
+			inX = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
+			inY = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
@@ -350,8 +350,8 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					}
 				}
 				
-				fftw_execute_dft(pX, inX, inX);
-				fftw_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(pX, inX, inX);
+				fftwf_execute_dft(pY, inY, inY);
 				
 				for(k=0; k<nChan; k++) {
 					fftIndex = k;
@@ -379,14 +379,14 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				nActFFT[i] += (long) cleanFactor;
 			}
-			fftw_free(inX);
-			fftw_free(inY);
+			fftwf_free(inX);
+			fftwf_free(inY);
 		}
 	}
-	fftw_destroy_plan(pX);
-	fftw_destroy_plan(pY);
-	fftw_free(inPX);
-	fftw_free(inPY);
+	fftwf_destroy_plan(pX);
+	fftwf_destroy_plan(pY);
+	fftwf_free(inPX);
+	fftwf_free(inPY);
 	
 	// cblas_dscal(nChan*nStand, 1.0/(2*nChan*nFFT), b, 1);
 	for(i=0; i<4; i++) {
@@ -478,12 +478,12 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArray_FILLWBYTE(dataF, 0);
 
 	// Create the FFTW plan
-	fftw_complex *inPX, *inPY, *inX, *inY;
-	inPX = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-	inPY = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-	fftw_plan pX, pY;
-	pX = fftw_plan_dft_1d(nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
-	pY = fftw_plan_dft_1d(nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
+	fftwf_complex *inPX, *inPY, *inX, *inY;
+	inPX = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+	inPY = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+	fftwf_plan pX, pY;
+	pX = fftwf_plan_dft_1d(nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
+	pY = fftwf_plan_dft_1d(nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
 
 	// Integer delay, FFT, and fractional delay
 	long secStart;
@@ -509,8 +509,8 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT[i] = 0;
-			inX = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-			inY = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
+			inX = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+			inY = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
@@ -532,8 +532,8 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					}
 				}
 				
-				fftw_execute_dft(pX, inX, inX);
-				fftw_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(pX, inX, inX);
+				fftwf_execute_dft(pY, inY, inY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
@@ -559,14 +559,14 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				nActFFT[i] += (long) cleanFactor;
 			}
-			fftw_free(inX);
-			fftw_free(inY);
+			fftwf_free(inX);
+			fftwf_free(inY);
 		}
 	}
-	fftw_destroy_plan(pX);
-	fftw_destroy_plan(pY);
-	fftw_free(inPX);
-	fftw_free(inPY);
+	fftwf_destroy_plan(pX);
+	fftwf_destroy_plan(pY);
+	fftwf_free(inPX);
+	fftwf_free(inPY);
 
 	// Shift and scale FFTs
 	double *temp, *temp2;
@@ -678,12 +678,12 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyArray_FILLWBYTE(dataF, 0);
 
 	// Create the FFTW plan
-	fftw_complex *inPX, *inPY, *inX, *inY;
-	inPX = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-	inPY = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-	fftw_plan pX, pY;
-	pX = fftw_plan_dft_1d(nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
-	pY = fftw_plan_dft_1d(nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
+	fftwf_complex *inPX, *inPY, *inX, *inY;
+	inPX = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+	inPY = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+	fftwf_plan pX, pY;
+	pX = fftwf_plan_dft_1d(nChan, inPX, inPX, FFTW_FORWARD, FFTW_MEASURE);
+	pY = fftwf_plan_dft_1d(nChan, inPY, inPY, FFTW_FORWARD, FFTW_MEASURE);
 
 	// Integer delay, FFT, and fractional delay
 	long secStart;
@@ -710,8 +710,8 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT[i] = 0;
-			inX = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
-			inY = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nChan);
+			inX = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+			inY = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
@@ -733,8 +733,8 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					}
 				}
 				
-				fftw_execute_dft(pX, inX, inX);
-				fftw_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(pX, inX, inX);
+				fftwf_execute_dft(pY, inY, inY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
@@ -760,14 +760,14 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				nActFFT[i] += (long) cleanFactor;
 			}
-			fftw_free(inX);
-			fftw_free(inY);
+			fftwf_free(inX);
+			fftwf_free(inY);
 		}
 	}
-	fftw_destroy_plan(pX);
-	fftw_destroy_plan(pY);
-	fftw_free(inPX);
-	fftw_free(inPY);
+	fftwf_destroy_plan(pX);
+	fftwf_destroy_plan(pY);
+	fftwf_free(inPX);
+	fftwf_free(inPY);
 
 	// Shift and scale FFTs
 	double *temp, *temp2;
@@ -998,6 +998,6 @@ PyMODINIT_FUNC init_stokes(void) {
 	// LSL FFTW Wisdom
 	pModule = PyImport_ImportModule("lsl.common.paths");
 	pDataPath = PyObject_GetAttrString(pModule, "data");
-	sprintf(filename, "%s/fftw_wisdom.txt", PyString_AsString(pDataPath));
+	sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
 	read_wisdom(filename);
 }

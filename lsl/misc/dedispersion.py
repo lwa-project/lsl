@@ -8,20 +8,32 @@ incoherent/coherent dedispersion.
 	Added support for using PyFFTW instead of NumPy for the FFTs and iFFTs.
 """
 
+import os
 import numpy
 
 try:
+	import os
+	import pickle
 	import pyfftw
-	from multiprocessing import cpu_count
+	
+	from lsl.common.paths import data as dataPath
 	
 	# Enable the PyFFTW cache
 	if not pyfftw.interfaces.cache.is_enabled():
 		pyfftw.interfaces.cache.enable()
 		pyfftw.interfaces.cache.set_keepalive_time(60)
 		
-	nThreads = cpu_count()
-	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, threads=nThreads, planner_effort='FFTW_ESTIMATE')
-	ifftFunction = lambda x: pyfftw.interfaces.numpy_fft.ifft(x, threads=nThreads, planner_effort='FFTW_ESTIMATE', overwrite_input=True)
+	# Read in the wisdom (if it exists)
+	wisdomFilename = os.path.join(dataPath, 'pyfftw-widsom.pkl')
+	if os.path.exists(wisdomFilename):
+		fh = open(wisdomeFilename, 'r')
+		wisdom = pickle.load(fh)
+		fh.close()
+		
+		pyfftw.import_wisdom(wisdom)
+		
+	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, planner_effort='FFTW_MEASURE')
+	ifftFunction = lambda x: pyfftw.interfaces.numpy_fft.ifft(x, planner_effort='FFTW_MEASURE', overwrite_input=True)
 	
 except ImportError:
 	fftFunction = numpy.fft.fft

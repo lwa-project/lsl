@@ -35,8 +35,8 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 	PyObject *output;
 	int fftlen = 2;
 	FILE *fh;
-	fftw_plan plan;
-	fftw_complex *inout;
+	fftwf_plan plan;
+	fftwf_complex *inout;
 	char *filename;
 	
 	if(!PyArg_ParseTuple(args, "s", &filename)) {
@@ -46,43 +46,43 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 	
 	Py_BEGIN_ALLOW_THREADS
 	
-	if(!fftw_import_system_wisdom()) {
+	if(!fftwf_import_system_wisdom()) {
 		printf("Warning: system wisdom file not found, continuing\n");
 	}
 	
 	// Powers of 2
-	inout = fftw_malloc(sizeof(fftw_complex) * MAXTRANSFORM + 2);
+	inout = fftwf_malloc(sizeof(fftwf_complex) * MAXTRANSFORM + 2);
 	while(fftlen <= MAXTRANSFORM) {
 		// Forward
-		plan = fftw_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
-		fftw_destroy_plan(plan);
+		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
+		fftwf_destroy_plan(plan);
 		
 		// Backward
-		plan = fftw_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
-		fftw_destroy_plan(plan);
+		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
+		fftwf_destroy_plan(plan);
 		
 		// Next
 		fftlen *= 2;
 	}
-	fftw_free(inout);
+	fftwf_free(inout);
 	
 	// Powers of 10
 	fftlen = 10;
 	while(fftlen <= MAXTRANSFORM) {
 		// Setup
-		inout = fftw_malloc(sizeof(fftw_complex) * fftlen + 2);
+		inout = fftwf_malloc(sizeof(fftwf_complex) * fftlen + 2);
 		
 		// Forward
-		plan = fftw_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
-		fftw_destroy_plan(plan);
+		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
+		fftwf_destroy_plan(plan);
 		
 		// Backward
-		plan = fftw_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
-		fftw_destroy_plan(plan);
+		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
+		fftwf_destroy_plan(plan);
 		
 		// Next
 		fftlen *= 10;
-		fftw_free(inout);
+		fftwf_free(inout);
 	}
 	
 	// Save the wisdom
@@ -91,7 +91,7 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 		PyErr_Format(PyExc_IOError, "An error occurred while opening the file for writing");
 		return NULL;
 	}
-	fftw_export_wisdom_to_file(fh);
+	fftwf_export_wisdom_to_file(fh);
 	fclose(fh);
 	
 	Py_END_ALLOW_THREADS
