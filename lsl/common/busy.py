@@ -42,6 +42,7 @@ class BusyIndicator(object):
 		
 		self.thread = None
 		self.alive = threading.Event()
+		self._i = 0
 		
 	def start(self):
 		"""
@@ -65,23 +66,22 @@ class BusyIndicator(object):
 		"""
 		
 		if self.thread is not None:
-			sys.stdout.write('%s\r' % (' '*(len(self.message)+self.dots)))
-			sys.stdout.write("Done\n")
+			sys.stdout.write('%s%sDone%s\n' % (self.message, '.'*self._i, ' '*self.dots))
 			
 			self.alive.clear()
 			self.thread.join()
 			self.thread = None
+			self._i = 0
 			
 	def _run(self):
 		"""
 		Internal function used by the thread to make/change the displayed text.
 		"""
 		
-		i = 0
 		while self.alive.isSet():
-			sys.stdout.write('%s%s%s\r' % (self.message, '.'*i, ' '*(self.dots-i)))
+			sys.stdout.write('%s%s%s\r' % (self.message, '.'*self._i, ' '*(self.dots-self._i)))
 			sys.stdout.flush()
 			
-			i += 1
-			i %= (self.dots+1)
+			self._i += 1
+			self._i %= (self.dots+1)
 			time.sleep(self.interval)

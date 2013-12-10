@@ -81,11 +81,11 @@ Included Scripts
 
 Tutorials
 =========
-* `General LSL Routines <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%2520General%2520Tutorial.ipynb>`_
-* `Building SDFs Programmatically <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%2520SDF%2520Generation.ipynb>`_
-* `Observation Metadata <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%2520MCS%2520Metadata%2520Tutorial.ipynb>`_
-* `Working with TBW/TBN Data <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%2520TBW%2520%26%2520TBN%2520Tutorial.ipynb>`_
-* `Working with DRX Data <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%2520DRX%2520Tutorial.ipynb>`_
+* `General LSL Routines <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20General%20Tutorial.ipynb>`_
+* `Building SDFs Programmatically <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20SDF%20Generation.ipynb>`_
+* `Observation Metadata <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20MCS%20Metadata%20Tutorial.ipynb>`_
+* `Working with TBW/TBN Data <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20TBW%20%26%20TBN%20Tutorial.ipynb>`_
+* `Working with DRX Data <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20DRX%20Tutorial.ipynb>`_
 
 Advanced
 ========
