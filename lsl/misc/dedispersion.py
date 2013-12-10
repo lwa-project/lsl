@@ -166,6 +166,10 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 	# Get an idea of how many samples we need to do the dedispersion correctly
 	N = getCoherentSampleSize(centralFreq, sampleRate, dm)
 	
+	 # Compute the chirp function 
+	freq = numpy.fft.fftfreq(N, d=1/sampleRate) + centralFreq 
+	chirp = __chirpFunction(freq, dm, taper=taper) 
+	
 	# Figure out the output array size
 	nSets = len(timeseries) / N
 	outT = numpy.zeros(timeseries.size, dtype=t.dtype)
