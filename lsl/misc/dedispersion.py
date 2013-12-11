@@ -24,29 +24,36 @@ try:
 		pyfftw.interfaces.cache.set_keepalive_time(60)
 		
 	# Read in the wisdom (if it exists)
-	wisdomFilename = os.path.join(dataPath, 'pyfftw-widsom.pkl')
+	wisdomFilename = os.path.join(dataPath, 'pyfftw-wisdom.pkl')
+	print wisdomFilename, os.path.exists(wisdomFilename)
 	if os.path.exists(wisdomFilename):
-		fh = open(wisdomeFilename, 'r')
+		fh = open(wisdomFilename, 'r')
 		wisdom = pickle.load(fh)
 		fh.close()
 		
 		pyfftw.import_wisdom(wisdom)
+		useWisdom = True
+	else:
+		useWisdom = False
 		
-	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, planner_effort='FFTW_MEASURE')
-	ifftFunction = lambda x: pyfftw.interfaces.numpy_fft.ifft(x, planner_effort='FFTW_MEASURE', overwrite_input=True)
+	usePyFFTW = True
 	
 except ImportError:
-	fftFunction = numpy.fft.fft
-	ifftFunction = numpy.fft.ifft
+	usePyFFTW = False
+	useWisdom = False
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', '__version__', '__revision__', '__all__']
 
 
 # Dispersion constant in MHz^2 s / pc cm^-3
 _D = 4.148808e3
+
+
+# Coherent dedispersion N and chirp cache
+_coherentCache = {}
 
 
 def delay(freq, dm):
@@ -140,7 +147,7 @@ def __chirpFunction(freq, dm, taper=False):
 	return chirp
 
 
-def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTime=None, previousData=None, nextTime=None, nextData=None):
+def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTime=None, previousData=None, nextTime=None, nextData=None, enableCaching=True):
 	"""
 	Simple coherent dedispersion of complex-valued time-series data at a given central
 	frequency and sample rate.  A tapering function can also be applied to the chirp of 
@@ -158,18 +165,31 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 		
 	.. versionchanged:: 1.0.1
 		Added support for using PyFFTW instead of NumPy for the FFTs and iFFTs.
+		Added a cache for storing the chrip function between subsequent calls
 		
 	.. versionchanged:: 0.6.4
 		Added support for keeping track of time through the dedispersion process.
 	"""
 	
-	# Get an idea of how many samples we need to do the dedispersion correctly
-	N = getCoherentSampleSize(centralFreq, sampleRate, dm)
-	
-	 # Compute the chirp function 
-	freq = numpy.fft.fftfreq(N, d=1/sampleRate) + centralFreq 
-	chirp = __chirpFunction(freq, dm, taper=taper) 
-	
+	# Caching for N and the chirp function
+	try:
+		pair = (centralFreq, sampleRate, dm, taper)
+		
+		# Get an idea of how many samples we need to do the dedispersion correctly
+		# Compute the chirp function 
+		N, chirp = _coherentCache[pair]
+	except KeyError:
+		# Get an idea of how many samples we need to do the dedispersion correctly
+		N = getCoherentSampleSize(centralFreq, sampleRate, dm)
+		
+		# Compute the chirp function 
+		freq = numpy.fft.fftfreq(N, d=1.0/sampleRate) + centralFreq 
+		chirp = __chirpFunction(freq, dm, taper=taper) 
+		
+		# Update the cache
+		if enableCaching:
+			_coherentCache[pair] = (N, chirp)
+			
 	# Figure out the output array size
 	nSets = len(timeseries) / N
 	outT = numpy.zeros(timeseries.size, dtype=t.dtype)
@@ -177,6 +197,26 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 	
 	if nSets == 0:
 		RuntimeWarning("Too few data samples for proper dedispersion")
+		
+	if usePyFFTW:
+		if timeseries.dtype == numpy.complex64:
+			di1 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
+			do1 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
+			di2 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
+			do2 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
+		elif timeseries.dtype == numpy.complex128:
+			di1 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
+			do1 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
+			di2 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
+			do2 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
+		else:
+			raise RuntimeError("Unsupported data type for timeseries: %s" % str(timeseries.dtype))
+			
+		forwardPlan = pyfftw.FFTW(di1, do1, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE',))
+		backwardPlan = pyfftw.FFTW(di2, do2, direction='FFTW_BACKWARD', flags=('FFTW_ESTIMATE',))
+		
+		dataTmp = numpy.empty(N, dtype=timeseries.dtype)
+		dataOut = numpy.empty(N, dtype=timeseries.dtype)
 		
 	# Go!
 	for i in xrange(2*nSets+1):
@@ -220,10 +260,18 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 			dataIn = timeseries[start:stop]
 			
 		timeOut = timeIn
-		dataOut = fftFunction( dataIn )
-		dataOut *= chirp
-		dataOut = ifftFunction( dataOut )
-		
+		if usePyFFTW:
+			forwardPlan.update_arrays(dataIn, dataTmp)
+			forwardPlan.execute()
+			dataTmp *= chirp
+			backwardPlan.update_arrays(dataTmp, dataOut)
+			backwardPlan.execute()
+			
+		else:
+			dataOut = numpy.fft.fft( dataIn )
+			dataOut *= chirp
+			dataOut = numpy.fft.ifft( dataOut )
+			
 		# Get the output data ranges
 		outStart  = i*N/2
 		outStop   = outStart + N/2

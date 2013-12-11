@@ -25,18 +25,22 @@ try:
 		pyfftw.interfaces.cache.set_keepalive_time(60)
 		
 	# Read in the wisdom (if it exists)
-	wisdomFilename = os.path.join(dataPath, 'pyfftw-widsom.pkl')
+	wisdomFilename = os.path.join(dataPath, 'pyfftw-wisdom.pkl')
 	if os.path.exists(wisdomFilename):
-		fh = open(wisdomeFilename, 'r')
+		fh = open(wisdomFilename, 'r')
 		wisdom = pickle.load(fh)
 		fh.close()
 		
 		pyfftw.import_wisdom(wisdom)
+		useWisdom = True
+	else:
+		useWisdom = False
 		
-	fftFunction = lambda x: pyfftw.interfaces.numpy_fft.fft(x, planner_effort='FFTW_MEASURE')
+	usePyFFTW = True
 	
 except ImportError:
-	fftFunction = numpy.fft.fft
+	usePyFFTW = False
+	useWisdom = False
 
 
 __version__ = '0.2'
@@ -60,13 +64,38 @@ def fft(signal, N, P=1, window=noWindow):
 	'window' keyword.  See :mod:`lsl.correlator.fx.calcSpectra` for 
 	details on using window functions.
 	"""
-
+	
 	filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N,P)
 	
-	fbOutput = fftFunction(filteredSignal[0:N])
-	for i in range(1,P):
-		fbOutput += fftFunction(filteredSignal[i*N:(i+1)*N])
-
+	if usePyFFTW and filteredSignal.dtype in (numpy.complex64, numpy.complex128):
+		if filteredSignal.dtype == numpy.complex64:
+			di = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
+			do = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
+		elif filteredSignal.dtype == numpy.complex128:
+			di = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
+			do = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
+			
+		forwardPlan = pyfftw.FFTW(di, do, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE',))
+		
+		fbInput = numpy.empty(N, dtype=filteredSignal.dtype)
+		fbTemp = numpy.empty(N, dtype=do.dtype)
+		
+		fbInput[:] = filteredSignal[0:N]
+		forwardPlan.update_arrays(fbInput, fbTemp)
+		forwardPlan.execute()
+		fbOutput = fbTemp*1.0
+		
+		for i in range(1,P):
+			fbInput[:] = filteredSignal[i*N:(i+1)*N]
+			forwardPlan.update_arrays(fbInput, fbTemp)
+			forwardPlan.execute()
+			fbOutput += fbTemp
+			
+	else:
+		fbOutput = numpy.fft.fft(filteredSignal[0:N])
+		for i in range(1,P):
+			fbOutput += numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
+			
 	return fbOutput
 
 def fft2(signal, N, window=noWindow):
