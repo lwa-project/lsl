@@ -28,13 +28,17 @@
  Load in FFTW wisdom.  Based on the read_wisdom function in PRESTO.
 */
 
-void read_wisdom(char *filename) {
+void read_wisdom(char *filename, PyObject *m) {
+	int status = 0;
 	FILE *wisdomfile;
 	
 	wisdomfile = fopen(filename, "r");
 	if( wisdomfile != NULL ) {
-		fftwf_import_wisdom_from_file(wisdomfile);
+		status = fftwf_import_wisdom_from_file(wisdomfile);
+		PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));
 		fclose(wisdomfile);
+	} else {
+		PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));
 	}
 }
 
@@ -170,7 +174,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_complex *inP, *in;                          
 	inP = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
 	fftwf_plan p;
-	p = fftwf_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
+	p = fftwf_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -412,7 +416,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_complex *inP, *in;                          
 	inP = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 2*nChan);
 	fftwf_plan p;
-	p = fftwf_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
+	p = fftwf_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
 	
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -639,7 +643,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_complex *inP, *in;
 	inP = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
 	fftwf_plan p;
-	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
+	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -881,7 +885,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_complex *inP, *in;
 	inP = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
 	fftwf_plan p;
-	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_MEASURE);
+	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
 
 	// Integer delay, FFT, and fractional delay
 	long secStart, fftIndex;
@@ -1167,6 +1171,6 @@ PyMODINIT_FUNC init_core(void) {
 	pModule = PyImport_ImportModule("lsl.common.paths");
 	pDataPath = PyObject_GetAttrString(pModule, "data");
 	sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
-	read_wisdom(filename);
+	read_wisdom(filename, m);
 }
 
