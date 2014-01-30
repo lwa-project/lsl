@@ -72,7 +72,7 @@ def fft(signal, N, P=1, window=noWindow):
 		di = numpy.empty(N, dtype=dd)
 		do = numpy.empty(N, dtype=dd)
 		
-		forwardPlan = pyfftw.FFTW(di1, do1, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
+		forwardPlan = pyfftw.FFTW(di, do, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
 		
 		fbInput = numpy.empty(N, dtype=dd)
 		fbTemp = numpy.empty(N, dtype=dd)
