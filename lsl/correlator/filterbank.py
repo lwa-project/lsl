@@ -68,29 +68,22 @@ def fft(signal, N, P=1, window=noWindow):
 	filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N,P)
 	
 	if usePyFFTW and filteredSignal.dtype in (numpy.complex64, numpy.complex128):
-		if filteredSignal.dtype == numpy.complex64:
-			di = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
-			do = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
-		elif filteredSignal.dtype == numpy.complex128:
-			di = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
-			do = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
-			
-		forwardPlan = pyfftw.FFTW(di, do, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE',))
+		dd = filteredSignal.dtype
+		di = numpy.empty(N, dtype=dd)
+		do = numpy.empty(N, dtype=dd)
 		
-		fbInput = numpy.empty(N, dtype=filteredSignal.dtype)
-		fbTemp = numpy.empty(N, dtype=do.dtype)
+		forwardPlan = pyfftw.FFTW(di1, do1, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
 		
-		fbInput[:] = filteredSignal[0:N]
-		forwardPlan.update_arrays(fbInput, fbTemp)
-		forwardPlan.execute()
-		fbOutput = fbTemp*1.0
-		
-		for i in range(1,P):
+		fbInput = numpy.empty(N, dtype=dd)
+		fbTemp = numpy.empty(N, dtype=dd)
+		for i in range(0,P):
 			fbInput[:] = filteredSignal[i*N:(i+1)*N]
-			forwardPlan.update_arrays(fbInput, fbTemp)
-			forwardPlan.execute()
-			fbOutput += fbTemp
-			
+			forwardPlan(fbInput, fbTemp)
+			try:
+				fbOutput += fbTemp[:]
+			except NameError:
+				fbOutput = fbTemp[:]
+				
 	else:
 		fbOutput = numpy.fft.fft(filteredSignal[0:N])
 		for i in range(1,P):

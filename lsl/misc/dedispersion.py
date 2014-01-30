@@ -173,7 +173,7 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 	
 	# Caching for N and the chirp function
 	try:
-		pair = (centralFreq, sampleRate, dm, taper)
+		pair = (centralFreq*1.0, sampleRate*1.0, dm*1.0, taper, timeseries.dtype)
 		
 		# Get an idea of how many samples we need to do the dedispersion correctly
 		# Compute the chirp function 
@@ -185,6 +185,7 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 		# Compute the chirp function 
 		freq = numpy.fft.fftfreq(N, d=1.0/sampleRate) + centralFreq 
 		chirp = __chirpFunction(freq, dm, taper=taper) 
+		chirp = chirp.astype(timeseries.dtype)
 		
 		# Update the cache
 		if enableCaching:
@@ -199,24 +200,16 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 		RuntimeWarning("Too few data samples for proper dedispersion")
 		
 	if usePyFFTW:
-		if timeseries.dtype == numpy.complex64:
-			di1 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
-			do1 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
-			di2 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
-			do2 = pyfftw.n_byte_align_empty(N, 8, dtype=numpy.complex64)
-		elif timeseries.dtype == numpy.complex128:
-			di1 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
-			do1 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
-			di2 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
-			do2 = pyfftw.n_byte_align_empty(N, 16, dtype=numpy.complex128)
-		else:
+		if timeseries.dtype not in (numpy.complex64, numpy.complex128):
 			raise RuntimeError("Unsupported data type for timeseries: %s" % str(timeseries.dtype))
 			
-		forwardPlan = pyfftw.FFTW(di1, do1, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE',))
-		backwardPlan = pyfftw.FFTW(di2, do2, direction='FFTW_BACKWARD', flags=('FFTW_ESTIMATE',))
-		
-		dataTmp = numpy.empty(N, dtype=timeseries.dtype)
-		dataOut = numpy.empty(N, dtype=timeseries.dtype)
+		dd = timeseries.dtype
+		di1 = numpy.empty(N, dtype=dd)
+		do1 = numpy.empty(N, dtype=dd)
+		do2 = numpy.empty(N, dtype=dd)
+			
+		forwardPlan = pyfftw.FFTW(di1, do1, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
+		backwardPlan = pyfftw.FFTW(do1, do2, direction='FFTW_BACKWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
 		
 	# Go!
 	for i in xrange(2*nSets+1):
@@ -261,11 +254,10 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 			
 		timeOut = timeIn
 		if usePyFFTW:
-			forwardPlan.update_arrays(dataIn, dataTmp)
-			forwardPlan.execute()
-			dataTmp *= chirp
-			backwardPlan.update_arrays(dataTmp, dataOut)
-			backwardPlan.execute()
+			forwardPlan(dataIn, do1)
+			do1 *= chirp
+			backwardPlan(do1, do2)
+			dataOut = do2
 			
 		else:
 			dataOut = numpy.fft.fft( dataIn )
