@@ -139,7 +139,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 	    positions from ECI coordinates
 	  * getENZOffset: Return the east, north, and vertial offsets to a point on
 	    the surface of the Earth
-	  * getPointingAndDirection: Return the pointing direction and distance to 
+	  * getPointingAndDistance: Return the pointing direction and distance to 
 	    another location on the surface of the Earth
 	    
 	LWAStation also provides several functional attributes for dealing with
@@ -270,12 +270,15 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		
 		return enz
 		
-	def getPointingAndDirection(self, locTo):
+	def getPointingAndDistance(self, locTo):
 		"""
 		Given another location on the surface of the Earth, either as a 
 		LWAStation instance or a three-element tuple of latitude (deg.), 
 		longitude (deg.), and elevation (m), return the bearing azimuth/
 		elevation in radians and distance in meters to the location.
+		
+		.. versionchanged:: 1.0.1
+			Renamed from getPointingAndDirection to getPointingAndDistance
 		"""
 		
 		ecefFrom = self.getGeocentricLocation()

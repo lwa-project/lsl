@@ -7,7 +7,8 @@
   * Added support for using PyFFTW in the lsl.correlator.filterbank module
   * Fixed a sign problem in the rewritten lsl.skymap.ProjectedSky class that caused the sky to invert in azimuth
   * Added support for FFTW wisdom
-  * Switched the various C extensions over to used the floating point versio of FFTW
+  * Switched the various C extensions over to used the floating point version of FFTW
+  * Changed the name of the lsl.stations.LWAStation method for finding the distance and direction to another point on surface of the Earth from 'getPointingAndDirection' to 'getPointingAndDistance'
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)
