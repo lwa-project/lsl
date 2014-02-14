@@ -9,6 +9,9 @@
   * Added support for FFTW wisdom
   * Switched the various C extensions over to used the floating point version of FFTW
   * Changed the name of the lsl.stations.LWAStation method for finding the distance and direction to another point on surface of the Earth from 'getPointingAndDirection' to 'getPointingAndDistance'
+  * Updated the lsl.misc.gaussparams function to imporve the 2-D fits
+  * Removed the requirement for a BANDPASS table in the lsl.imaging.utils.CorrelatedDataIDI class
+  * Reworked the lsl.reader.ldp module to provide a more object oriented way to access data files
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)

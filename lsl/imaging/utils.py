@@ -287,7 +287,7 @@ class CorrelatedDataIDI(object):
 		# Open the file, check if it looks like FITS IDI, and pull out the UV_DATA table
 		hdulist = pyfits.open(self.filename)
 		tbls = [i.header['EXTNAME'] for i in hdulist[1:]]
-		for tbl in ('ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA'):
+		for tbl in ('ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'SOURCE', 'UV_DATA'):
 			if tbl not in tbls:
 				raise RuntimeError("Cannot find table '%s' in '%s'" % (tbl, self.filename))
 		

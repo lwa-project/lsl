@@ -377,25 +377,30 @@ def gaussparams(data, x=None, y=None):
 	return order is:
 	  1-D: height, center, width
 	  2-D: height, center x, center y, width x, width y, position angle
+	  
+	.. note:: 
+		The 2-D fits always return a position angle of zero since the
+		routine decomposes the process into two 1-D fits.
 	"""
-
+	
 	total = data.sum()
 	height = data.max()
-
+	
 	if len(data.shape) == 2:
 		# 2-D Data
 		if x is None or y is None:
 			x, y = numpy.indices(data.shape)
-		centerX = (x*data).sum() / total
-		centerY = (y*data).sum() / total
-		bestX = (numpy.where( numpy.abs(centerX - x) == numpy.min(numpy.abs(centerX - x)) ))[0][0]
-		bestY = (numpy.where( numpy.abs(centerY - y) == numpy.min(numpy.abs(centerY - y)) ))[0][0]
-		col = data[:, bestY]
-		widthX = numpy.sqrt(abs((x[:,bestY]-centerX)**2*col).sum()/col.sum())
-		row = data[bestX, :]
-		widthY = numpy.sqrt(abs((y[bestX,:]-centerY)**2*row).sum()/row.sum())
+			
+		# Break the problem down into two 1-D filts
+		profileX = data.sum(axis=1)
+		profileX *= height/profileX.max()
+		profileY = data.sum(axis=0)
+		profileY *= height/profileY.max()
+		
+		hx, centerX, widthX = gaussparams(profileX, x[:,0])
+		hy, centerY, widthY = gaussparams(profileY, y[0,:])
 		return height, centerX, centerY, widthX, widthY, 0.0
-
+		
 	else:
 		# 1-D Data
 		if x is None:

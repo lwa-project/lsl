@@ -285,14 +285,14 @@ class reader_tests(unittest.TestCase):
 		# First frame is really DRX and stores the IDs
 		frame1 = drx.readFrame(fh)
 		beam, tune, pol = frame1.parseID()
-		self.assertEqual(beam, 2)
-		self.assertEqual(tune, 2)
+		self.assertEqual(beam, 4)
+		self.assertEqual(tune, 1)
 		self.assertEqual(pol,  1)
 		# Second frame
 		frame2 = drx.readFrame(fh)
 		beam, tune, pol = frame2.parseID()
-		self.assertEqual(beam, 2)
-		self.assertEqual(tune, 1)
+		self.assertEqual(beam, 4)
+		self.assertEqual(tune, 2)
 		self.assertEqual(pol,  0)
 		fh.close()
 		
@@ -310,10 +310,10 @@ class reader_tests(unittest.TestCase):
 		cFrames = drx.readBlock(fh)
 		
 		# Make sure everthing is in the right place
-		self.assertEqual(cFrames.x1.parseID(), (2,1,0))
-		self.assertEqual(cFrames.x2.parseID(), (2,2,0))
-		self.assertEqual(cFrames.y1.parseID(), (2,1,1))
-		self.assertEqual(cFrames.y2.parseID(), (2,2,1))
+		self.assertEqual(cFrames.x1.parseID(), (4,1,0))
+		self.assertEqual(cFrames.x2.parseID(), (4,2,0))
+		self.assertEqual(cFrames.y1.parseID(), (4,1,1))
+		self.assertEqual(cFrames.y2.parseID(), (4,2,1))
 		
 		fh.close()
 
@@ -321,8 +321,8 @@ class reader_tests(unittest.TestCase):
 		"""Test reading in all frames from a truncated DRX file."""
 
 		fh = open(drxFile, 'rb')
-		# Frames 1 through 16
-		for i in range(1,17):
+		# Frames 1 through 32
+		for i in range(1,33):
 			frame = drx.readFrame(fh)
 
 		# Last frame should be an error (errors.eofError)
@@ -350,9 +350,9 @@ class reader_tests(unittest.TestCase):
 		fh = open(drxFile, 'rb')
 		b1, b2, b3, b4 = drx.getFramesPerObs(fh)
 		self.assertEqual(b1, 0)
-		self.assertEqual(b2, 4)
+		self.assertEqual(b2, 0)
 		self.assertEqual(b3, 0)
-		self.assertEqual(b4, 0)
+		self.assertEqual(b4, 4)
 		fh.close()
 		
 	def test_drx_rate(self):
