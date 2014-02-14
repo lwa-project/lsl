@@ -12,6 +12,8 @@
   * Updated the lsl.misc.gaussparams function to imporve the 2-D fits
   * Removed the requirement for a BANDPASS table in the lsl.imaging.utils.CorrelatedDataIDI class
   * Reworked the lsl.reader.ldp module to provide a more object oriented way to access data files
+  * Fixed a packing bug in the lsl.sim.drx.frame2frame function
+  * Fixed a bug in lsl.imaging.utils.CorrelatedDataUV that cause getDataSet to always return all data
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)

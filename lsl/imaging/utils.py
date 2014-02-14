@@ -637,49 +637,57 @@ class CorrelatedDataUV(object):
 		
 		# Loop over data rows
 		found = False
+		setCounter = 0
 		for row in uvData.data:
-			# Load it.
-			bl = int(row['BASELINE'])
-			if bl >= 65536:
-				a1 = int((bl - 65536) / 2048)
-				a2 = int((bl - 65536) % 2048)
-			else:
-				a1 = int(bl / 256)
-				a2 = int(bl % 256)
-			i = self.standMap[a1]
-			j = self.standMap[a2]
+			if setCounter == 0:
+				blCheck = row['baseline']
+			if row['BASELINE'] == blCheck:
+				setCounter += 1
+				
+			# If we are on the right set...
+			if setCounter in sourceID:
+				found = True	
+				# Load it.
+				bl = int(row['BASELINE'])
+				if bl >= 65536:
+					a1 = int((bl - 65536) / 2048)
+					a2 = int((bl - 65536) % 2048)
+				else:
+					a1 = int(bl / 256)
+					a2 = int(bl % 256)
+				i = self.standMap[a1]
+				j = self.standMap[a2]
 			
-			if i == j and not includeAuto:
-				## Skip auto-correlations
-				continue
-			ri = numpy.where(self.stands == i)[0][0]
-			rj = numpy.where(self.stands == j)[0][0]
+				if i == j and not includeAuto:
+					## Skip auto-correlations
+					continue
+				ri = numpy.where(self.stands == i)[0][0]
+				rj = numpy.where(self.stands == j)[0][0]
 			
-			uvw = numpy.array([row['UU'], row['VV'], row['WW']])
+				uvw = numpy.array([row['UU'], row['VV'], row['WW']])
 			
-			jd = row['DATE']
-			uvw = numpy.array([numpy.dot(uvw[0], self.freq), numpy.dot(uvw[1], self.freq), numpy.dot(uvw[2], self.freq)])
-			flux = row['DATA'][0,0,:,:,:]
+				jd = row['DATE']
+				uvw = numpy.array([numpy.dot(uvw[0], self.freq), numpy.dot(uvw[1], self.freq), numpy.dot(uvw[2], self.freq)])
+				flux = row['DATA'][0,0,:,:,:]
 			
-			for c,p in enumerate(self.pols):
-				name = NumericStokes[p]
-				if len(name) == 2:
-					name = name.lower()
+				for c,p in enumerate(self.pols):
+					name = NumericStokes[p]
+					if len(name) == 2:
+						name = name.lower()
 					
-				vis = numpy.zeros(flux.shape[0], dtype=numpy.complex64)
-				vis.real = flux[:,c,0]
-				vis.imag = flux[:,c,1]
-				wgt = numpy.ones(vis.size)
-				msk = numpy.zeros(vis.size, dtype=numpy.int16)
+					vis = numpy.zeros(flux.shape[0], dtype=numpy.complex64)
+					vis.real = flux[:,c,0]
+					vis.imag = flux[:,c,1]
+					wgt = numpy.ones(vis.size)
+					msk = numpy.zeros(vis.size, dtype=numpy.int16)
 			
-				dataDict['uvw'][name].append( uvw ) 
-				dataDict['vis'][name].append( vis )
-				dataDict['wgt'][name].append( wgt )
-				dataDict['msk'][name].append( msk )
-				dataDict['bls'][name].append( (ri,rj) )
-				dataDict['jd' ][name].append( jd )
-			found = True
-		
+					dataDict['uvw'][name].append( uvw ) 
+					dataDict['vis'][name].append( vis )
+					dataDict['wgt'][name].append( wgt )
+					dataDict['msk'][name].append( msk )
+					dataDict['bls'][name].append( (ri,rj) )
+					dataDict['jd' ][name].append( jd )
+					
 		# Close
 		hdulist.close()
 		

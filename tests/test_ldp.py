@@ -24,9 +24,9 @@ drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
 class ldp_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.reader
 	modules."""
-
+	
 	### TBW ###
-
+	
 	def test_ldp_tbw(self):
 		"""Test the LDP interface for a TBW file."""
 		
@@ -47,7 +47,7 @@ class ldp_tests(unittest.TestCase):
 		f.close()
 		
 	### TBN ###
-
+	
 	def test_ldp_tbn(self):
 		"""Test the LDP interface for a TBN file."""
 		
@@ -71,7 +71,7 @@ class ldp_tests(unittest.TestCase):
 	
 	def test_ldp_drx(self):
 		"""Test the LDP interface for a DRX file."""
-
+		
 		f = ldp.DRXFile(drxFile)
 		
 		# File info
@@ -97,9 +97,9 @@ class ldp_tests(unittest.TestCase):
 		
 		# Close it out
 		f.close()
-
+		
 	### DR Spectrometer ###
-
+	
 	def test_ldp_drspec(self):
 		"""Test the LDP interface for a DR Spectrometer file."""
 		
@@ -129,6 +129,33 @@ class ldp_tests(unittest.TestCase):
 		
 		# Close it out
 		f.close()
+		
+	### File Type Discovery ###
+	
+	def test_ldp_discover_tbw(self):
+		"""Test the LDP LWA1DataFile function of TBW."""
+		
+		# TBW
+		f = ldp.LWA1DataFile(tbwFile)
+		self.assertEqual(type(f), ldp.TBWFile)
+		
+	def test_ldp_discover_tbn(self):
+		"""Test the LDP LWA1DataFile function of TBN."""
+		# TBN
+		f = ldp.LWA1DataFile(tbnFile)
+		self.assertEqual(type(f), ldp.TBNFile)
+		
+	def test_ldp_discover_drx(self):
+		"""Test the LDP LWA1DataFile function of DRX."""
+		# DRX
+		f = ldp.LWA1DataFile(drxFile)
+		self.assertEqual(type(f), ldp.DRXFile)
+		
+	def test_ldp_discover_drspec(self):
+		"""Test the LDP LWA1DataFile function of DR Spectrometer."""
+		# DR Spectrometer
+		f = ldp.LWA1DataFile(drspecFile)
+		self.assertEqual(type(f), ldp.DRSpecFile)
 
 
 class ldp_test_suite(unittest.TestSuite):

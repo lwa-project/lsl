@@ -33,7 +33,7 @@ class imaging_tests(unittest.TestCase):
 		"""Test the utils.CorrelatedDataIDI class."""
 		
 		# Open the FITS IDI file
-		idi = utils.CorrelatedData(idiFile)
+		idi = utils.CorrelatedDataIDI(idiFile)
 		
 		# Dates
 		self.assertEqual(idi.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
@@ -54,7 +54,7 @@ class imaging_tests(unittest.TestCase):
 		"""Test the utils.CorrelatedDataIDI class on a file with an unusual telescope."""
 		
 		# Open the FITS IDI file
-		idi = utils.CorrelatedData(idiAltFile)
+		idi = utils.CorrelatedDataIDI(idiAltFile)
 		
 		# Dates
 		self.assertEqual(idi.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
@@ -110,7 +110,7 @@ class imaging_tests(unittest.TestCase):
 		"""Test the utils.CorrelatedDataUV class."""
 		
 		# Open the UVFITS file
-		uv = utils.CorrelatedData(idiFile)
+		uv = utils.CorrelatedDataUV(uvFile)
 		
 		# Dates
 		self.assertEqual(uv.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")

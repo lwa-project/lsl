@@ -9,7 +9,9 @@ Data format objects included are:
   * TBNFile
   * DRXFile
   * DRSpecFile
-  * LWADataFile
+  
+Also included is the LWA1DataFile function that take a filename and tries to determine the 
+correct data format object to use.
 """
 
 import os
@@ -23,7 +25,7 @@ from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', '__version__', '__revision__', '__all__']
+__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'LWA1DataFile', '__version__', '__revision__', '__all__']
 
 
 class LDPFileBase(object):
@@ -881,3 +883,86 @@ class DRSpecFile(LDPFileBase):
 		duration = nFrameSets * self.description['tInt']
 		
 		return duration, setTime, data
+
+
+def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
+	"""
+	Wrapper around the various classes defined here that takes a file, 
+	determines the data type, and initializes and returns the appropriate
+	LDP class.
+	"""
+	
+	# Open the file as appropriate
+	if fh is None:
+		fh = open(filename, 'rb')
+	else:
+		filename = fh.name
+		if fh.mode.find('b') == -1:
+			fh.close()
+			fh = open(self.filename, 'rb')
+			
+	# Read a bit of data to try to find the right type
+	for mode in (drx, tbn, tbw, drspec):
+		## Set if we find a valid frame marker
+		foundMatch = False
+		## Set if we can read more than one valid successfully
+		foundMode = False
+		
+		## Sort out the frame size.  This is tricky because DR spectrometer files
+		## have frames of different sizes depending on the mode
+		if mode == drspec:
+			try:
+				mfs = drspec.getFrameSize(fh)
+			except:
+				mfs = 0
+		else:
+			mfs = mode.FrameSize
+			
+		## Loop over the frame size to try and find what looks like valid data.  If
+		## is is found, set 'foundMatch' to True.
+		for i in xrange(mfs):
+			try:
+				junkFrame = mode.readFrame(fh)
+				foundMatch = True
+				break
+			except errors.syncError:
+				fh.seek(-mfs+1, 1)
+				
+		## Did we strike upon a valid frame?
+		if foundMatch:
+			### Is so, we now need to try and read more frames to make sure we have 
+			### the correct type of file
+			fh.seek(-mfs, 1)
+			
+			try:
+				for i in xrange(2):
+					junkFrame = mode.readFrame(fh)
+				foundMode = True
+			except errors.syncError:
+				### Reset for the next mode...
+				fh.seek(0)
+		else:
+			### Reset for the next mode...
+			fh.seek(0)
+			
+		## Did we read more than one valid frame?
+		if foundMode:
+			break
+	fh.close()
+	
+	# Raise an error if nothing is found
+	if not foundMode:
+		raise RuntimeError("File '%s' does not appear to be a valid LWA1 data file" % filename)
+		
+	# Otherwise, build and return the correct LDPFileBase sub-class
+	if mode == drx:
+		ldpInstance = DRXFile(filename)
+	elif mode == tbn:
+		ldpInstance = TBNFile(filename)
+	elif mode == tbw:
+		ldpInstance = TBWFile(filename)
+	else:
+		ldpInstance = DRSpecFile(filename)
+		
+	# Done
+	return ldpInstance

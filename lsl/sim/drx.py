@@ -73,13 +73,15 @@ def frame2frame(drxFrame):
 	### Round, clip, and convert to unsigned integers
 	i = i.round()
 	i = i.clip(-8, 7)
-	i = i.astype(numpy.uint8)
+	i = i.astype(numpy.int8)
+	i += ((i & 8) << 1)
 	q = q.round()
 	q = q.clip(-8, 7)
-	q = q.astype(numpy.uint8)
-
-	rawFrame[32:] = (i << 4) | q
-
+	q = q.astype(numpy.int8)
+	q += ((q & 8) << 1)
+	
+	rawFrame[32:] = (((i &  0xF) << 4) | (q & 0xF))
+	
 	return rawFrame
 
 

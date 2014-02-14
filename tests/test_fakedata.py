@@ -31,15 +31,15 @@ drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
 class fake_TBW_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.sim.tbw
 	module."""
-
+	
 	testPath = None
-
+	
 	def setUp(self):
 		"""Turn off all numpy warnings and create the temporary file directory."""
-
+		
 		numpy.seterr(all='ignore')
 		self.testPath = tempfile.mkdtemp(prefix='test-fakedata-', suffix='.tmp')
-
+		
 	def test_sim_frame(self):
 		"""Test the tbw.SimFrame class."""
 		
@@ -52,43 +52,51 @@ class fake_TBW_tests(unittest.TestCase):
 		fakeFrame.loadFrame(origFrame)
 		# Test the validity of the SimFrame
 		self.assertTrue(fakeFrame.isValid())
-
+		
 	def test_write_frame(self):
 		"""Test that the TBW data writer works."""
-
+		
 		testFile = os.path.join(self.testPath, 'tbw-test-W.dat')
-
+		
+		nFrames = os.path.getsize(tbwFile) / tbwReader.FrameSize
+		
 		# Read in a TBW frame from the test file
 		fh = open(tbwFile, 'rb')
-		origFrame = tbwReader.readFrame(fh)
+		origFrames = []
+		for i in xrange(nFrames):
+			origFrames.append( tbwReader.readFrame(fh) )
 		fh.close()
 		
-		# Write the data to a TBW test frame
+		# Write the data to a TBN test frame
 		fh = open(testFile, 'wb')
-		rawFrame = tbwWriter.frame2frame(origFrame)
-		rawFrame.tofile(fh)
+		for origFrame in origFrames:
+			rawFrame = tbwWriter.frame2frame(origFrame)
+			rawFrame.tofile(fh)
 		fh.close()
 		
 		# Read in the 
 		fh = open(testFile, 'rb')
-		fakeFrame = tbwReader.readFrame(fh)
+		fakeFrames = []
+		for i in xrange(nFrames):
+			fakeFrames.append( tbwReader.readFrame(fh) )
 		fh.close()
-
-		# Test values returned by info functions
-		self.assertEqual(fakeFrame.parseID(), origFrame.parseID())
-		self.assertEqual(fakeFrame.getDataBits(), origFrame.getDataBits())
 		
-		# Test raw header values
-		self.assertTrue(fakeFrame.header.isTBW())
-		self.assertEqual(fakeFrame.header.frameCount, origFrame.header.frameCount)
-		self.assertEqual(fakeFrame.header.secondsCount, origFrame.header.secondsCount)
-		
-		# Test raw data values
-		self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
-		for i in range(400):
-			self.assertEqual(fakeFrame.data.xy[0,i], origFrame.data.xy[0,i])
-			self.assertEqual(fakeFrame.data.xy[1,i], origFrame.data.xy[1,i])
-
+		for fakeFrame,origFrame in zip(fakeFrames, origFrames):
+			# Test values returned by info functions
+			self.assertEqual(fakeFrame.parseID(), origFrame.parseID())
+			self.assertEqual(fakeFrame.getDataBits(), origFrame.getDataBits())
+			
+			# Test raw header values
+			self.assertTrue(fakeFrame.header.isTBW())
+			self.assertEqual(fakeFrame.header.frameCount, origFrame.header.frameCount)
+			self.assertEqual(fakeFrame.header.secondsCount, origFrame.header.secondsCount)
+			
+			# Test raw data values
+			self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
+			for i in range(400):
+				self.assertEqual(fakeFrame.data.xy[0,i], origFrame.data.xy[0,i])
+				self.assertEqual(fakeFrame.data.xy[1,i], origFrame.data.xy[1,i])
+				
 	def test_frame_data_errors(self):
 		"""Test the data error scenarios when validating a TBW SimFrame ."""
 		
@@ -134,10 +142,10 @@ class fake_TBW_tests(unittest.TestCase):
 		fakeFrame.loadFrame(copy.deepcopy(origFrame))
 		fakeFrame.stand = 300
 		self.assertRaises(errors.invalidStand, fakeFrame.isValid, raiseErrors=True)
-
+		
 	def tearDown(self):
 		"""Remove the test path directory and its contents"""
-
+		
 		tempFiles = os.listdir(self.testPath)
 		for tempFile in tempFiles:
 			os.unlink(os.path.join(self.testPath, tempFile))
@@ -148,15 +156,15 @@ class fake_TBW_tests(unittest.TestCase):
 class fake_TBN_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.sim.tbn
 	module."""
-
+	
 	testPath = None
-
+	
 	def setUp(self):
 		"""Turn off all numpy warnings and create the temporary file directory."""
-
+		
 		numpy.seterr(all='ignore')
 		self.testPath = tempfile.mkdtemp(prefix='test-fakedata-', suffix='.tmp')
-
+		
 	def test_sim_frame(self):
 		"""Test the tbn.SimFrame class."""
 		
@@ -169,43 +177,51 @@ class fake_TBN_tests(unittest.TestCase):
 		fakeFrame.loadFrame(origFrame)
 		# Test the validity of the SimFrame
 		self.assertTrue(fakeFrame.isValid())
-
+		
 	def test_write_frame(self):
 		"""Test that the TBN data writer works."""
 		
 		testFile = os.path.join(self.testPath, 'tbn-test-W.dat')
-
+		
+		nFrames = os.path.getsize(tbnFile) / tbnReader.FrameSize
+		
 		# Read in a TBN frame from the test file
 		fh = open(tbnFile, 'rb')
-		origFrame = tbnReader.readFrame(fh)
+		origFrames = []
+		for i in xrange(nFrames):
+			origFrames.append( tbnReader.readFrame(fh) )
 		fh.close()
 		
 		# Write the data to a TBN test frame
 		fh = open(testFile, 'wb')
-		rawFrame = tbnWriter.frame2frame(origFrame)
-		rawFrame.tofile(fh)
+		for origFrame in origFrames:
+			rawFrame = tbnWriter.frame2frame(origFrame)
+			rawFrame.tofile(fh)
 		fh.close()
 		
 		# Read in the 
 		fh = open(testFile, 'rb')
-		fakeFrame = tbnReader.readFrame(fh)
+		fakeFrames = []
+		for i in xrange(nFrames):
+			fakeFrames.append( tbnReader.readFrame(fh) )
 		fh.close()
-
-		# Test values returned by info functions
-		self.assertEqual(fakeFrame.parseID()[0], origFrame.parseID()[0])
-		self.assertEqual(fakeFrame.parseID()[1], origFrame.parseID()[1])
 		
-		# Test raw header values
-		self.assertTrue(fakeFrame.header.isTBN())
-		self.assertEqual(fakeFrame.header.frameCount, origFrame.header.frameCount)
-		self.assertEqual(fakeFrame.header.tuningWord, origFrame.header.tuningWord)
-		
-		# Test raw data values
-		self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
-		for i in range(512):
-			self.assertEqual(fakeFrame.data.iq[i].real, origFrame.data.iq[i].real)
-			self.assertEqual(fakeFrame.data.iq[i].imag, origFrame.data.iq[i].imag)
-
+		for fakeFrame,origFrame in zip(fakeFrames, origFrames):
+			# Test values returned by info functions
+			self.assertEqual(fakeFrame.parseID()[0], origFrame.parseID()[0])
+			self.assertEqual(fakeFrame.parseID()[1], origFrame.parseID()[1])
+			
+			# Test raw header values
+			self.assertTrue(fakeFrame.header.isTBN())
+			self.assertEqual(fakeFrame.header.frameCount, origFrame.header.frameCount)
+			self.assertEqual(fakeFrame.header.tuningWord, origFrame.header.tuningWord)
+			
+			# Test raw data values
+			self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
+			for i in range(512):
+				self.assertEqual(fakeFrame.data.iq[i].real, origFrame.data.iq[i].real)
+				self.assertEqual(fakeFrame.data.iq[i].imag, origFrame.data.iq[i].imag)
+				
 	def test_frame_data_errors(self):
 		"""Test the data error scenarios when validating a TBN SimFrame."""
 		
@@ -243,10 +259,10 @@ class fake_TBN_tests(unittest.TestCase):
 		fakeFrame.loadFrame(copy.deepcopy(origFrame))
 		fakeFrame.stand = 300
 		self.assertRaises(errors.invalidStand, fakeFrame.isValid, raiseErrors=True)
-
+		
 	def tearDown(self):
 		"""Remove the test path directory and its contents"""
-
+		
 		tempFiles = os.listdir(self.testPath)
 		for tempFile in tempFiles:
 			os.unlink(os.path.join(self.testPath, tempFile))
@@ -257,15 +273,15 @@ class fake_TBN_tests(unittest.TestCase):
 class fake_DRX_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.sim.drx
 	module."""
-
+	
 	testPath = None
-
+	
 	def setUp(self):
 		"""Turn off all numpy warnings and create the temporary file directory."""
-
+		
 		numpy.seterr(all='ignore')
 		self.testPath = tempfile.mkdtemp(prefix='test-fakedata-', suffix='.tmp')
-
+		
 	def test_sim_frame(self):
 		"""Test the drx.SimFrame class."""
 		
@@ -278,46 +294,54 @@ class fake_DRX_tests(unittest.TestCase):
 		fakeFrame.loadFrame(origFrame)
 		# Test the validity of the SimFrame
 		self.assertTrue(fakeFrame.isValid())
-
+		
 	def test_write_frame(self):
 		"""Test that the DRX data writer works."""
 		
 		testFile = os.path.join(self.testPath, 'drx-test-W.dat')
-
+		
+		nFrames = os.path.getsize(drxFile) / drxReader.FrameSize
+		
 		# Read in a TBN frame from the test file
 		fh = open(drxFile, 'rb')
-		origFrame = drxReader.readFrame(fh)
+		origFrames = []
+		for i in xrange(nFrames):
+			origFrames.append( drxReader.readFrame(fh) )
 		fh.close()
 		
 		# Write the data to a TBN test frame
 		fh = open(testFile, 'wb')
-		rawFrame = drxWriter.frame2frame(origFrame)
-		rawFrame.tofile(fh)
+		for origFrame in origFrames:
+			rawFrame = drxWriter.frame2frame(origFrame)
+			rawFrame.tofile(fh)
 		fh.close()
 		
 		# Read in the 
 		fh = open(testFile, 'rb')
-		fakeFrame = drxReader.readFrame(fh)
+		fakeFrames = []
+		for i in xrange(nFrames):
+			fakeFrames.append( drxReader.readFrame(fh) )
 		fh.close()
-
-		# Test values returned by info functions
-		self.assertEqual(fakeFrame.parseID()[0], origFrame.parseID()[0])
-		self.assertEqual(fakeFrame.parseID()[1], origFrame.parseID()[1])
-		self.assertEqual(fakeFrame.parseID()[2], origFrame.parseID()[2])
-		self.assertAlmostEqual(fakeFrame.getSampleRate(), origFrame.getSampleRate(), 4)
 		
-		# Test raw header values
-		self.assertEqual(fakeFrame.header.secondsCount, origFrame.header.secondsCount)
-		self.assertEqual(fakeFrame.header.decimation, origFrame.header.decimation)
-		self.assertEqual(fakeFrame.header.timeOffset, origFrame.header.timeOffset)
-		
-		# Test raw data values
-		self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
-		self.assertEqual(fakeFrame.data.flags, origFrame.data.flags)
-		for i in range(4096):
-			self.assertEqual(fakeFrame.data.iq[i].real, origFrame.data.iq[i].real)
-			self.assertEqual(fakeFrame.data.iq[i].imag, origFrame.data.iq[i].imag)
-
+		for fakeFrame,origFrame in zip(fakeFrames, origFrames):
+			# Test values returned by info functions
+			self.assertEqual(fakeFrame.parseID()[0], origFrame.parseID()[0])
+			self.assertEqual(fakeFrame.parseID()[1], origFrame.parseID()[1])
+			self.assertEqual(fakeFrame.parseID()[2], origFrame.parseID()[2])
+			self.assertAlmostEqual(fakeFrame.getSampleRate(), origFrame.getSampleRate(), 4)
+			
+			# Test raw header values
+			self.assertEqual(fakeFrame.header.secondsCount, origFrame.header.secondsCount)
+			self.assertEqual(fakeFrame.header.decimation, origFrame.header.decimation)
+			self.assertEqual(fakeFrame.header.timeOffset, origFrame.header.timeOffset)
+			
+			# Test raw data values
+			self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
+			self.assertEqual(fakeFrame.data.flags, origFrame.data.flags)
+			for i in range(4096):
+				self.assertEqual(fakeFrame.data.iq[i].real, origFrame.data.iq[i].real)
+				self.assertEqual(fakeFrame.data.iq[i].imag, origFrame.data.iq[i].imag)
+				
 	def test_frame_data_errors(self):
 		"""Test the data error scenarios when validating a DRX SimFrame."""
 		
@@ -355,16 +379,16 @@ class fake_DRX_tests(unittest.TestCase):
 		fakeFrame.loadFrame(copy.deepcopy(origFrame))
 		fakeFrame.beam = 5
 		self.assertRaises(errors.invalidBeam, fakeFrame.isValid, raiseErrors=True)
-
+		
 		# Try to validate frame with the wrong tuning number
 		fakeFrame = drxWriter.SimFrame()
 		fakeFrame.loadFrame(copy.deepcopy(origFrame))
 		fakeFrame.tune = 3
 		self.assertRaises(errors.invalidTune, fakeFrame.isValid, raiseErrors=True)
-
+		
 	def tearDown(self):
 		"""Remove the test path directory and its contents"""
-
+		
 		tempFiles = os.listdir(self.testPath)
 		for tempFile in tempFiles:
 			os.unlink(os.path.join(self.testPath, tempFile))
