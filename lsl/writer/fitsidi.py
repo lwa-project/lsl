@@ -850,9 +850,28 @@ class IDI(object):
 				for stokes in self.stokes:
 					tempMList[stokes] = {}
 					
+			def _baselineSortMapped(x, y, mapper=mapper, shift=8):
+				x1, x2 = splitBaseline(x, shift=16)
+				y1, y2 = splitBaseline(y, shift=16)
+				if mapper is not None:
+					x1 = mapper[x1]
+					x2 = mapper[x2]
+					y1 = mapper[y1]
+					y2 = mapper[y2]
+				# Reconstruct the baseline in FITS IDI format
+				xPrime = mergeBaseline(x1, x2, shift=shift)
+				yPrime = mergeBaseline(y1, y2, shift=shift)
+				
+				if xPrime > yPrime:
+					return 1
+				elif xPrime < yPrime:
+					return -1
+				else:
+					return 0
+				
 			# Loop over the data store in the dataDict and extract each baseline
 			baselines = list(dataSet.dataDict.keys())
-			baselines.sort()
+			baselines.sort(cmp=_baselineSortMapped)
 			for baseline in baselines: 
 				# validate baseline antenna ID's
 				stand1, stand2 = splitBaseline(baseline, shift=16)
@@ -1384,9 +1403,28 @@ class ExtendedIDI(IDI):
 				for stokes in self.stokes:
 					tempMList[stokes] = {}
 					
+			def _baselineSortMapped(x, y, mapper=mapper, shift=16):
+				x1, x2 = splitBaseline(x, shift=16)
+				y1, y2 = splitBaseline(y, shift=16)
+				if mapper is not None:
+					x1 = mapper[x1]
+					x2 = mapper[x2]
+					y1 = mapper[y1]
+					y2 = mapper[y2]
+				# Reconstruct the baseline in FITS IDI format
+				xPrime = mergeBaseline(x1, x2, shift=shift)
+				yPrime = mergeBaseline(y1, y2, shift=shift)
+				
+				if xPrime > yPrime:
+					return 1
+				elif xPrime < yPrime:
+					return -1
+				else:
+					return 0
+				
 			# Loop over the data store in the dataDict and extract each baseline
 			baselines = list(dataSet.dataDict.keys())
-			baselines.sort()
+			baselines.sort(cmp=_baselineSortMapped)
 			for baseline in baselines: 
 				# validate baseline antenna ID's
 				stand1, stand2 = splitBaseline(baseline, shift=16)

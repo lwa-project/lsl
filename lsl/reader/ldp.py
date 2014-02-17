@@ -90,6 +90,13 @@ class LDPFileBase(object):
 			except KeyError:
 				raise ValueError("Unknown key '%d'" % key)
 				
+	def getRemainingFrameCount(self):
+		"""
+		Return the number of frames left in the file.
+		"""
+		
+		return (self.description['size'] - self.fh.tell()) / self.description['FrameSize']
+		
 	def reset(self):
 		"""
 		Reset the file to the beginning.
@@ -110,8 +117,9 @@ class LDPFileBase(object):
 
 class TBWFile(LDPFileBase):
 	"""
-	Class to make it easy to interface with a TBW file.  Method defined for this class are:
+	Class to make it easy to interface with a TBW file.  Methods defined for this class are:
 	  * getInfo - Get information about the file's contents
+	  * getRemainingFrameCount - Get the number of frames remaining in the file
 	  * readFrame - Read and return a single `lsl.reader.tbw.Frame` instance
 	"""
 	
@@ -151,7 +159,7 @@ class TBWFile(LDPFileBase):
 		bits = junkFrame.getDataBits()
 		start = junkFrame.getTime()
 		
-		self.description = {'size': filesize, 'nFrames': nFramesFile, 
+		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbw.FrameSize,
 						'sampleRate': srate, 'dataBits': bits, 
 						'tStart': start}
 						
@@ -165,8 +173,9 @@ class TBWFile(LDPFileBase):
 
 class TBNFile(LDPFileBase):
 	"""
-	Class to make it easy to interface with a TBN file.  Method defined for this class are:
+	Class to make it easy to interface with a TBN file.  Methods defined for this class are:
 	  * getInfo - Get information about the file's contents
+	  * getRemainingFrameCount - Get the number of frames remaining in the file
 	  * offset - Offset a specified number of seconds into the file
 	  * readFrame - Read and return a single `lsl.reader.tbn.Frame` instance
 	  * read - Read a chunk of data in and return it as a numpy array
@@ -212,7 +221,7 @@ class TBNFile(LDPFileBase):
 		tuning1 = junkFrame.getCentralFreq()
 		start = junkFrame.getTime()
 		
-		self.description = {'size': filesize, 'nFrames': nFramesFile, 
+		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbn.FrameSize,
 						'nAntenna': framesPerObsX+framesPerObsY, 
 						'sampleRate': srate, 'dataBits': bits, 
 						'tStart': start, 'freq1': tuning1}
@@ -240,6 +249,9 @@ class TBNFile(LDPFileBase):
 		frameOffset = int(offset * self.description['sampleRate'] / 512 * self.description['nAntenna'])
 		frameOffset = int(1.0 * frameOffset / self.description['nAntenna']) * self.description['nAntenna']
 		self.fh.seek(frameOffset*tbn.FrameSize)
+		
+		# Update the file metadata
+		self._describeFile()
 		
 		return 1.0 * frameOffset / self.description['nAntenna'] * 512 / self.description['sampleRate']
 		
@@ -389,8 +401,9 @@ class TBNFile(LDPFileBase):
 
 class DRXFile(LDPFileBase):
 	"""
-	Class to make it easy to interface with a DRX file.  Method defined for this class are:
+	Class to make it easy to interface with a DRX file.  Methods defined for this class are:
 	  * getInfo - Get information about the file's contents
+	  * getRemainingFrameCount - Get the number of frames remaining in the file
 	  * offset - Offset a specified number of seconds into the file
 	  * readFrame - Read and return a single `lsl.reader.drx.Frame` instance
 	  * read - Read a chunk of data in and return it as a numpy array
@@ -483,7 +496,7 @@ class DRXFile(LDPFileBase):
 				start = junkFrame.getTime()
 		self.fh.seek(-drx.FrameSize*4, 1)
 		
-		self.description = {'size': filesize, 'nFrames': nFramesFile, 
+		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': drx.FrameSize,
 						'beampols': beampols, 'beam': b, 
 						'sampleRate': srate, 'dataBits': bits, 
 						'tStart': start, 'freq1': tuning1, 'freq2': tuning2}
@@ -540,8 +553,8 @@ class DRXFile(LDPFileBase):
 				break
 			self.fh.seek(cOffset*drx.FrameSize, 1)
 			
-		self.description['beampols'] = beampols
-		self.description['sampleRate'] = sampleRate
+		# Update the file metadata
+		self._describeFile()
 		
 		return t1 - t0
 		
@@ -722,6 +735,16 @@ class DRXFile(LDPFileBase):
 
 
 class DRSpecFile(LDPFileBase):
+	"""
+	Class to make it easy to interface with a DR Spectrometer file.  
+	Methods defined for this class are:
+	  * getInfo - Get information about the file's contents
+	  * getRemainingFrameCount - Get the number of frames remaining in the file
+	  * offset - Offset a specified number of seconds into the file
+	  * readFrame - Read and return a single `lsl.reader.drspec.Frame` instance
+	  * read - Read a chunk of data in and return it as a numpy array
+	 """
+	
 	def _readyFile(self):
 		"""
 		Ready the DRSpec file.
@@ -803,6 +826,9 @@ class DRSpecFile(LDPFileBase):
 				break
 			self.fh.seek(cOffset*self.description['FrameSize'], 1)
 			
+		# Update the file metadata
+		self._describeFile()
+		
 		return t1 - t0
 		
 	def readFrame(self):

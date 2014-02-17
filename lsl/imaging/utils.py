@@ -292,8 +292,12 @@ class CorrelatedDataIDI(object):
 				raise RuntimeError("Cannot find table '%s' in '%s'" % (tbl, self.filename))
 		
 		self.extended = False
-		if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
-			self.extended = True
+		try:
+			if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
+				self.extended = True
+		except KeyError:
+			## Catch for LEDA64-NM data
+			pass
 		ag = hdulist['ARRAY_GEOMETRY']
 		uvData = hdulist['UV_DATA']
 		
@@ -312,9 +316,15 @@ class CorrelatedDataIDI(object):
 			anname = ag.data.field('ANNAME')
 		
 		# Station/telescope information
-		self.telescope = hdulist[0].header['TELESCOP']
-		self.dateObs = pytz.UTC.localize(datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
-		if self.telescope == 'LWA-1' or self.telescope == 'LWA1':
+		try:
+			self.telescope = hdulist[0].header['TELESCOP']
+			self.dateObs = pytz.UTC.localize(datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
+		except KeyError:
+			## Catch for LEDA64-NM data
+			self.telescope = uvData.header['TELESCOP']
+			self.dateObs = pytz.UTC.localize(datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
+			
+		if self.telescope == 'LWA-1' or self.telescope == 'LWA1' and ag.header['ARRNAM'] != 'LEDA64-NM':
 			self.station = stations.lwa1
 		elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
 			self.station = stations.lwana
@@ -408,9 +418,19 @@ class CorrelatedDataIDI(object):
 		
 		# Loop over data rows
 		found = False
+		setCounter = 0
 		for row in uvData.data:
+			if setCounter == 0:
+				blCheck = row['baseline']
+			if row['BASELINE'] == blCheck:
+				setCounter += 1
+				
+			# If we've passed the correct set
+			if setCounter > max(sourceID):
+				break
+				
 			# If we are on the right set...
-			if row['SOURCE'] in sourceID:
+			if setCounter in sourceID:
 				found = True
 				
 				# Load it.
@@ -449,7 +469,7 @@ class CorrelatedDataIDI(object):
 					dataDict['msk'][name].append( numpy.zeros(len(vis), dtype=numpy.int16) )
 					dataDict['bls'][name].append( (ri,rj) )
 					dataDict['jd' ][name].append( jd )
-		
+					
 		# Close
 		hdulist.close()
 		
@@ -644,9 +664,13 @@ class CorrelatedDataUV(object):
 			if row['BASELINE'] == blCheck:
 				setCounter += 1
 				
+			# If we've passed the correct set
+			if setCounter > max(sourceID):
+				break
+				
 			# If we are on the right set...
 			if setCounter in sourceID:
-				found = True	
+				found = True
 				# Load it.
 				bl = int(row['BASELINE'])
 				if bl >= 65536:

@@ -14,6 +14,8 @@
   * Reworked the lsl.reader.ldp module to provide a more object oriented way to access data files
   * Fixed a packing bug in the lsl.sim.drx.frame2frame function
   * Fixed a bug in lsl.imaging.utils.CorrelatedDataUV that cause getDataSet to always return all data
+  * Fixed the baseline ordering in FITS IDI files that use the stand number mapper
+  * Updated the FITS IDI reader to use the UVFITS  scheme for determining baseline sets
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)
