@@ -12,9 +12,9 @@ data dictionaries.  Also included is a utility to sort data dictionaries by base
 """
 
 import os
+import re
 import sys
 import aipy
-import pytz
 import numpy
 import pyfits
 import string
@@ -35,6 +35,11 @@ from lsl.common.constants import c as vLight
 __version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'buildGriddedImage', '__version__', '__revision__', '__all__']
+
+
+# Regular expression for trying to get the stand number out of an antenna
+# name
+_annameRE = re.compile('^.*?(?P<id>\d{1,3})$')
 
 
 def baselineOrder(bls):
@@ -318,25 +323,40 @@ class CorrelatedDataIDI(object):
 		# Station/telescope information
 		try:
 			self.telescope = hdulist[0].header['TELESCOP']
-			self.dateObs = pytz.UTC.localize(datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
+			self.dateObs = datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
 		except KeyError:
 			## Catch for LEDA64-NM data
 			self.telescope = uvData.header['TELESCOP']
-			self.dateObs = pytz.UTC.localize(datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S"))
+			self.dateObs = datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
 			
 		if self.telescope == 'LWA-1' or self.telescope == 'LWA1' and ag.header['ARRNAM'] != 'LEDA64-NM':
 			self.station = stations.lwa1
 		elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
 			self.station = stations.lwana
 		else:
+			## Extract the site position
 			geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
 			site = stations.ecef2geo(*geo)
 			
+			## Try to back out the "real" stand names
+			noact2 = []
+			for nam in anname:
+				try:
+					mtch =  _annameRE.match(nam)
+					id = int(mtch.group('id'))
+					noact2.append(id)
+				except ValueError, AttributeError:
+					break
+			if len(noact2) == len(noact):
+				noact = numpy.array(noact2)
+				
+			## Create the ECI -> topocentric transform
 			lat  = site[0]
 			ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
 							[-numpy.sin(lat), 0.0, numpy.cos(lat)],
 							[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
 							
+			## Build up the list of antennas
 			antennas = []
 			for line,act in zip(ag.data, noact):
 				enz = numpy.dot(ecii, line['STABXYZ'])
@@ -344,6 +364,7 @@ class CorrelatedDataIDI(object):
 				stand = stations.Stand(act, *enz)
 				antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
 				
+			## Build up the station
 			self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
 		self.standMap = {}
 		self.stands = []
@@ -389,7 +410,12 @@ class CorrelatedDataIDI(object):
 		Return a ephem.Observer instances for the array described in the file.
 		"""
 		
-		return self.station.getObserver()
+		# Get the date of observations
+		refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
+		
+		obs = self.station.getObserver()
+		obs.date = refJD - astro.DJD_OFFSET
+		return obs
 		
 	def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
 		"""
@@ -539,7 +565,7 @@ class CorrelatedDataUV(object):
 	
 	def __init__(self, filename):
 		"""
-		Initialize a new CorrelatedDataUV instance from a FITS IDI file and 
+		Initialize a new CorrelatedDataUV instance from a UVFITS file and 
 		fill in the metadata.
 		"""
 		
@@ -551,37 +577,53 @@ class CorrelatedDataUV(object):
 		uvData = hdulist[0]
 		ag = hdulist['AIPS AN']
 		
+		# Antennas
+		nosta = ag.data.field('NOSTA')
+		noact = ag.data.field('NOSTA')
+		anname = ag.data.field('ANNAME')
+		
 		# Station/telescope information
 		self.telescope = hdulist[0].header['TELESCOP']
 		dt = hdulist[0].header['DATE-OBS']
 		dt = dt.rsplit('.', 1)[0]
-		self.dateObs = pytz.UTC.localize(datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S"))
-		if self.telescope == 'LWA-1' or self.telescope == 'LWA1':
+		self.dateObs = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
+		if self.telescope == 'LWA-1' or self.telescope == 'LWA1' and ag.header['ARRNAM'] != 'LEDA64-NM':
 			self.station = stations.lwa1
-		elif self.telescope == 'LWA-2' or self.telescope == 'LWA2':
+		elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
 			self.station = stations.lwa2
 		else:
+			## Extract the site position
 			geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
 			site = stations.ecef2geo(*geo)
 			
+			## Try to back out the "real" stand names
+			noact2 = []
+			for nam in anname:
+				try:
+					mtch =  _annameRE.match(nam)
+					id = int(mtch.group('id'))
+					noact2.append(id)
+				except ValueError, AttributeError:
+					break
+			if len(noact2) == len(noact):
+				noact = numpy.array(noact2)
+				
+			## Create the ECI -> topocentric transform
 			lat  = site[0]
 			ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
 							[-numpy.sin(lat), 0.0, numpy.cos(lat)],
 							[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
 							
+			## Build up the list of antennas
 			antennas = []
-			for line in ag.data:
+			for line,act in zip(ag.data, noact):
 				enz = numpy.dot(ecii, line['STABXYZ'])
 				
-				stand = stations.Stand(line['NOSTA'], *enz)
-				antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
+				stand = stations.Stand(act, *enz)
+				antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
 				
+			## Build up the station
 			self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
-			
-		# Antennas
-		nosta = ag.data.field('NOSTA')
-		noact = ag.data.field('NOSTA')
-		anname = ag.data.field('ANNAME')
 			
 		self.standMap = {}
 		self.stands = []
@@ -628,7 +670,12 @@ class CorrelatedDataUV(object):
 		Return a ephem.Observer instances for the array described in the file.
 		"""
 		
-		return self.station.getObserver()
+		# Get the date of observations
+		refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
+		
+		obs = self.station.getObserver()
+		obs.date = refJD - astro.DJD_OFFSET
+		return obs
 		
 	def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
 		"""
@@ -817,7 +864,7 @@ try:
 			self.telescope = obs.col('TELESCOPE_NAME')[0]
 			if self.telescope == 'LWA-1' or self.telescope == 'LWA1':
 				self.station = stations.lwa1
-			elif self.telescope == 'LWA-2' or self.telescope == 'LWA2':
+			elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
 				self.station = stations.lwa2
 			else:
 				## Get latitude and longitude for all antennas
@@ -877,7 +924,7 @@ try:
 				if t not in self._times:
 					self._times.append(t)
 			jd = self._times[0] / 3600.0 / 24.0 + astro.MJD_OFFSET
-			self.dateObs = pytz.UTC.localize(datetime.utcfromtimestamp(astro.utcjd_to_unix(jd)))
+			self.dateObs = datetime.utcfromtimestamp(astro.utcjd_to_unix(jd))
 			
 			# Close
 			data.close()
@@ -903,7 +950,12 @@ try:
 			Return a ephem.Observer instances for the array described in the file.
 			"""
 			
-			return self.station.getObserver()
+			# Get the date of observations
+			refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
+			
+			obs = self.station.getObserver()
+			obs.date = refJD - astro.DJD_OFFSET
+			return obs
 			
 		def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
 			"""
