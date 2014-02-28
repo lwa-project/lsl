@@ -129,8 +129,10 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 	} else {
 		chanMax += 1;
 	}
+	/*
 	printf("Found nAnt: %li\n      nBL: %li\n      nFreq: %li\n      nSrc: %li\n", nAnt, nBL, nFreq, nSrc);
 	printf("Channel Range: %li to %li\n", chanMin, chanMax);
+	*/
 	
 	// Find out how large the output array needs to be and initialize it
 	npy_intp dims1[3];
