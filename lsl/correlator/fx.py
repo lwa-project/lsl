@@ -20,6 +20,9 @@ Each function is set up to process the signals in parallel using the
 multiprocessing module and accepts a variety of options controlling the processing
 of the data, including various window functions and time averaging.
 
+.. versionchanged:: 1.0.1
+	Removed SpecMasterP.
+
 .. versionchanged:: 1.0.0
 	All of the functions here now return all 'LFFT' channels.
 """
@@ -37,9 +40,9 @@ import _spec
 import _stokes
 import _core
 
-__version__ = '0.8'
+__version__ = '0.7'
 __revision__ = '$Rev$'
-__all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'SpecMasterP', 'StokesMaster', 'FXMaster', 'FXStokes', '__version__', '__revision__', '__all__']
+__all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes', '__version__', '__revision__', '__all__']
 
 
 def pol2pol(pol):
@@ -116,56 +119,6 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
 			output = _spec.FPSDC3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 		else:
 			output = _spec.FPSDR3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
-	
-	return (freq, output)
-
-
-def SpecMasterP(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0, ClipLevel=0):
-	"""
-	Similar to SpecMaster but uses a 4-tap polyphase filter bank instead
-	of a FFT.  Returns a two-element tuple of the frequencies (in Hz) and 
-	PSDs in linear power/RBW.
-	
-	.. note::
-		SpecMaster currently average all data given and does not support the
-		SampleAverage keyword that calcSpectra does.
-	"""
-	
-	# Figure out if we are working with complex (I/Q) data or only real.  This
-	# will determine how the FFTs are done since the real data mirrors the pos-
-	# itive and negative Fourier frequencies.
-	if signals.dtype.kind == 'c':
-		lFactor = 1
-		doFFTShift = True
-		CentralFreq = float(CentralFreq)
-	else:
-		lFactor = 2
-		doFFTShift = False
-
-	# Calculate the frequencies of the FFTs.  We do this for twice the FFT length
-	# because the real-valued signal only occupies the positive part of the 
-	# frequency space.
-	if SampleRate is None:
-		SampleRate = dp_common.fS
-	freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
-	# Deal with TBW and TBN data in the correct way
-	if doFFTShift:
-		freq += CentralFreq
-		freq = numpy.fft.fftshift(freq)
-	freq = freq[:LFFT]
-		
-	if window is noWindow:
-		# Data without a window function provided
-		if signals.dtype.kind == 'c':
-			output = _spec.PPSDC2(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel)
-		else:
-			output = _spec.PPSDR2(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel)
-	else:
-		# Data with a window function provided
-		if signals.dtype.kind == 'c':
-			output = _spec.PPSDC3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
-		else:
-			output = _spec.PPSDR3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 	
 	return (freq, output)
 
@@ -301,7 +254,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		minDelay = delays2[:,dlyRef].min()
 	delays1 -= minDelay
 	delays2 -= minDelay
-
+	
 	# F - defaults to running parallel in C via OpenMP
 	if window is noWindow:
 		# Data without a window function provided

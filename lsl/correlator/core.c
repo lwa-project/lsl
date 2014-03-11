@@ -140,7 +140,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax - 2*nChan) / 2 / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / ((2*nChan)/Overlap) - (2*nChan)/((2*nChan)/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
@@ -380,7 +380,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax - 2*nChan) / 2 / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / ((2*nChan)/Overlap) - (2*nChan)/((2*nChan)/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
@@ -609,7 +609,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax - nChan) / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / (nChan/Overlap) - nChan/(nChan/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
@@ -656,7 +656,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, vLoc, in, secStart, j, k, fftIndex)
+		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, vLoc, in, secStart, j, k, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP
@@ -849,7 +849,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyDimMem_FREE(tLoc);
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - startMax - nChan) / nChan * Overlap - Overlap + 1;
+	nFFT = (nSamps - startMax) / (nChan/Overlap) - nChan/(nChan/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
@@ -898,7 +898,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		#ifdef _MKL
 			fftw3_mkl.number_of_user_threads = omp_get_num_threads();
 		#endif
-		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, vLoc, in, secStart, j, k, fftIndex)
+		#pragma omp parallel default(shared) private(dLoc, fLoc, qLoc, vLoc, in, secStart, j, k, fftIndex, cleanFactor)
 	#endif
 	{
 		#ifdef _OPENMP

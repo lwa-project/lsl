@@ -88,7 +88,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
+	nFFT = nSamps / ((2*nChan)/Overlap) - (2*nChan)/((2*nChan)/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
@@ -282,7 +282,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / 2 / nChan * Overlap - Overlap + 1;
+	nFFT = nSamps / ((2*nChan)/Overlap) - (2*nChan)/((2*nChan)/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
@@ -467,7 +467,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / nChan * Overlap - Overlap + 1;
+	nFFT = nSamps / (nChan/Overlap) - nChan/(nChan/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
@@ -666,7 +666,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / nChan * Overlap - Overlap + 1;
+	nFFT = nSamps / (nChan/Overlap) - nChan/(nChan/Overlap) + 1;
 	npy_intp dims[3];
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
