@@ -1212,14 +1212,14 @@ class _DRXBase(Observation):
 		self.frequency2 = float(frequency2)
 		self.update()
 		
-	def setBeamDipoleMode(self, stand, beamGain=0.01, dipoleGain=1.0, pol='X', station=lwa1):
+	def setBeamDipoleMode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwa1):
 		"""Convert the current observation to a 'beam-dipole mode' 
 		observation with the specified stand.  Setting the stand to zero
 		will disable the 'beam-dipole mode' for this observation'.
 		
 		Keywords:
 		 * beamGain - BAM gain to use for each dipole in the beam
-		              default: 0.01; range: 0.0 to 1.0
+		              default: 0.04; range: 0.0 to 1.0
 		 * dipoleGain - BAM gain to use for the single dipole
 		                default: 1.0; range: 0.0 to 1.0
 		 * pol - Polarization to record  default: "X"
@@ -1518,14 +1518,14 @@ class Stepped(Observation):
 		self.steps.append(newStep)
 		self.update()
 		
-	def setBeamDipoleMode(self, stand, beamGain=0.01, dipoleGain=1.0, pol='X', station=lwa1):
+	def setBeamDipoleMode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwa1):
 		"""Convert the current observation to a 'beam-dipole mode' 
 		observation with the specified stand.  Setting the stand to zero
 		will disable the 'beam-dipole mode' for this observation'.
 		
 		Keywords:
 		 * beamGain - BAM gain to use for each dipole in the beam
-		              default: 0.01; range: 0.0 to 1.0
+		              default: 0.04; range: 0.0 to 1.0
 		 * dipoleGain - BAM gain to use for the single dipole
 		                default: 1.0; range: 0.0 to 1.0
 		 * pol - Polarization to record  default: "X"
