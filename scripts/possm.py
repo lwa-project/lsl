@@ -36,7 +36,7 @@ def main(args):
 	print "JD: %.3f" % jd
 
 	print "Reading in FITS IDI data"
-	nSets = idi.totalBaselineCount / (nStand*(nStand+1)/2)
+	nSets = idi.integrationCount
 	for set in range(1, nSets+1):
 		print "Set #%i of %i" % (set, nSets)
 		dataDict = idi.getDataSet(set)

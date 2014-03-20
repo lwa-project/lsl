@@ -20,6 +20,8 @@
   * Fixed a bug in lsl.correlator.fx that caused the number of overlapped FFTs to be calculated incorrectly
   * Fixed a bug in lsl.correlator.fx.FXMaster/FXStokes that caused the last FFT window to be excluded from the integration
   * Removed the lsl.correlator.fx.SpecMasterP function
+  * Updated the lsl.imaging.utils module to better deal with sparse FITS IDI/UVFITS files
+  * Added support for the new MCS beam-dipole mode via the SDF keyword OBS_BDM
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)

@@ -486,6 +486,8 @@ class Project(object):
 			output = "%sOBS_DUR          %i\n" % (output, obs.dur)
 			output = "%sOBS_DUR+         %s\n" % (output, obs.duration)
 			output = "%sOBS_MODE         %s\n" % (output, obs.mode)
+			if obs.beamDipole is not None:
+				output = "%sOBS_BDM          %i %6.4f %6.4f %s\n" % tuple(obs.beamDipole)
 			if obs.mode == 'TBN':
 				output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
 				output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
@@ -854,6 +856,7 @@ class Observation(object):
 			duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
 		self.duration = str(duration)
 		self.mode = mode
+		self.beamDipole = None
 		self.frequency1 = float(frequency1)
 		self.frequency2 = float(frequency2)
 		self.filter = int(filter)
@@ -1209,6 +1212,43 @@ class _DRXBase(Observation):
 		self.frequency2 = float(frequency2)
 		self.update()
 		
+	def setBeamDipoleMode(self, stand, beamGain=0.01, dipoleGain=1.0, pol='X', station=lwa1):
+		"""Convert the current observation to a 'beam-dipole mode' 
+		observation with the specified stand.  Setting the stand to zero
+		will disable the 'beam-dipole mode' for this observation'.
+		
+		Keywords:
+		 * beamGain - BAM gain to use for each dipole in the beam
+		              default: 0.01; range: 0.0 to 1.0
+		 * dipoleGain - BAM gain to use for the single dipole
+		                default: 1.0; range: 0.0 to 1.0
+		 * pol - Polarization to record  default: "X"
+		 * station - lsl.common.stations instance to use for mapping
+		             default: lsl.common.stations.lwa1
+		"""
+		
+		# Validate
+		if stand < 0 or stand > 260:
+			raise ValueError("Stand number %i is out of range: 0 <= stand <= 260" % stand)
+		if beamGain < 0.0 or beamGain > 1.0:
+			raise ValueError("Beam BAM gain is out of range: 0.0 <= beamGain <= 1.0" % beamGain)
+		if dipoleGain < 0.0 or dipoleGain > 1.0:
+			raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipoleGain <= 1.0" % beamGain)
+		if pol.upper() not in ('X', 'Y'):
+			raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
+		
+		# Go
+		if stand == 0:
+			## Disable beam-dipole mode
+			self.beamDipole = None
+		else:
+			## Stand -> DP Stand
+			for ant in station.getAntennas():
+				if ant.stand.id == stand:
+					dpStand = (ant.digitizer+1)/2
+					
+			self.beamDipole = [dpStand, beamGain, dipoleGain, pol.upper]
+			
 	def estimateBytes(self):
 		"""Estimate the data volume for the specified type and duration of 
 		observations.  For DRX:
@@ -1443,9 +1483,17 @@ class Stepped(Observation):
 		self.freq2 = self.getFrequency2()
 		self.beam = self.getBeamType()
 		
+		disabledBeamDipole = False
 		for step in self.steps:
 			step.update()
 			
+			## Disable beam-dipole mode for STEPPED-mode observations that 
+			## use custom delays and gains
+			if step.delays is not None and step.gains is not None:
+				if not disabledBeamDipole:
+					self.setBeamDipoleMode(0)
+					disabledBeamDipole = True
+					
 		self.dataVolume = self.estimateBytes()
 		
 	def getDuration(self):
@@ -1470,6 +1518,43 @@ class Stepped(Observation):
 		self.steps.append(newStep)
 		self.update()
 		
+	def setBeamDipoleMode(self, stand, beamGain=0.01, dipoleGain=1.0, pol='X', station=lwa1):
+		"""Convert the current observation to a 'beam-dipole mode' 
+		observation with the specified stand.  Setting the stand to zero
+		will disable the 'beam-dipole mode' for this observation'.
+		
+		Keywords:
+		 * beamGain - BAM gain to use for each dipole in the beam
+		              default: 0.01; range: 0.0 to 1.0
+		 * dipoleGain - BAM gain to use for the single dipole
+		                default: 1.0; range: 0.0 to 1.0
+		 * pol - Polarization to record  default: "X"
+		 * station - lsl.common.stations instance to use for mapping
+		             default: lsl.common.stations.lwa1
+		"""
+		
+		# Validate
+		if stand < 0 or stand > 260:
+			raise ValueError("Stand number %i is out of range: 0 <= stand <= 260" % stand)
+		if beamGain < 0.0 or beamGain > 1.0:
+			raise ValueError("Beam BAM gain is out of range: 0.0 <= beamGain <= 1.0" % beamGain)
+		if dipoleGain < 0.0 or dipoleGain > 1.0:
+			raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipoleGain <= 1.0" % beamGain)
+		if pol.upper() not in ('X', 'Y'):
+			raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
+		
+		# Go
+		if stand == 0:
+			## Disable beam-dipole mode
+			self.beamDipole = None
+		else:
+			## Stand -> DP Stand
+			for ant in station.getAntennas():
+				if ant.stand.id == stand:
+					dpStand = (ant.digitizer+1)/2
+					
+			self.beamDipole = [dpStand, beamGain, dipoleGain, pol.upper]
+			
 	def estimateBytes(self):
 		"""Estimate the data volume for the specified type and duration of 
 		observations.  For DRX:
@@ -1851,6 +1936,10 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 			f2 = word2freq(beamTemp['freq2'])
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
 			
+	# Set the beam-dipole mode information (if applicable)
+	if obsTemp['beamDipole'] is not None:
+		obsOut.beamDipole = obsTemp['beamDipole']
+		
 	# Set the ASP/FEE values
 	obsOut.obsFEE = copy.deepcopy(obsTemp['obsFEE'])
 	obsOut.aspFlt = copy.deepcopy(obsTemp['aspFlt'])
@@ -1893,7 +1982,7 @@ def parseSDF(filename, verbose=False):
 	
 	# Loop over the file
 	obsTemp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
-			 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
+			 'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
 			 'stpRADec': True, 'tbwBits': 12, 'tbwSamples': 0, 'gain': -1, 
 			 'obsFEE': [[-1,-1] for n in xrange(260)], 
 			 'aspFlt': [-1 for n in xrange(260)], 'aspAT1': [-1 for n in xrange(260)], 
@@ -2054,6 +2143,9 @@ def parseSDF(filename, verbose=False):
 		if keyword == 'OBS_MODE':
 			obsTemp['mode'] = value
 			continue
+		if keyword == 'OBS_BDM':
+			stand, beamGain, dipoleGain, pol = value.split(None, 3)
+			obsTemp['beamDipole'] = [int(stand), float(beamGain), float(dipoleGain), pol]
 		if keyword == 'OBS_RA':
 			obsTemp['ra'] = float(value)
 			continue

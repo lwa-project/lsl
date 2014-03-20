@@ -390,6 +390,10 @@ class CorrelatedDataIDI(object):
 		# Total baseline count
 		self.totalBaselineCount = len(uvData.data['BASELINE'])
 		
+		# Integration count
+		jd = uvData.data['DATE'] + uvData.data['TIME']
+		self.integrationCount = len(numpy.unique(jd))
+		
 		# Close
 		hdulist.close()
 	
@@ -649,6 +653,10 @@ class CorrelatedDataUV(object):
 		
 		# Total baseline count
 		self.totalBaselineCount = len(hdulist[0].data['BASELINE'])
+		
+		# Integration count
+		jd = hdulist[0].data['DATE']
+		self.integrationCount = len(numpy.unique(jd))
 		
 		# Close
 		hdulist.close()
@@ -925,6 +933,10 @@ try:
 					self._times.append(t)
 			jd = self._times[0] / 3600.0 / 24.0 + astro.MJD_OFFSET
 			self.dateObs = datetime.utcfromtimestamp(astro.utcjd_to_unix(jd))
+			
+			# Integration count
+			jd = numpy.array(self._times) / 3600.0 / 24.0 + astro.MJD_OFFSET
+			self.integrationCount = len(numpy.unique(jd))
 			
 			# Close
 			data.close()

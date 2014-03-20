@@ -205,7 +205,7 @@ def main(args):
 	print "Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0])
 	
 	print "Reading in FITS IDI data"
-	nSets = idi.totalBaselineCount / (nStand*(nStand+1)/2)
+	nSets = idi.integrationCount
 	for set in range(1, nSets+1):
 		if config['dataset'] != 0 and config['dataset'] != set:
 			continue

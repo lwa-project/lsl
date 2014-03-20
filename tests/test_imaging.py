@@ -41,6 +41,7 @@ class imaging_tests(unittest.TestCase):
 		# Stand and baseline counts
 		self.assertEqual(len(idi.stands), 5)
 		self.assertEqual(idi.totalBaselineCount, 5*(5+1)/2)
+		print idi.integrationCount
 		
 		# Basic functions (just to see that they run)
 		junk = idi.getAntennaArray()
@@ -62,6 +63,7 @@ class imaging_tests(unittest.TestCase):
 		# Stand and baseline counts
 		self.assertEqual(len(idi.stands), 5)
 		self.assertEqual(idi.totalBaselineCount, 5*(5+1)/2)
+		self.assertEqual(idi.integrationCount, 1)
 		
 		# Basic functions (just to see that they run)
 		junk = idi.getAntennaArray()
@@ -84,6 +86,7 @@ class imaging_tests(unittest.TestCase):
 		# Stand and baseline counts
 		self.assertEqual(len(idi1.stands), len(idi2.stands))
 		self.assertEqual(idi1.totalBaselineCount, idi2.totalBaselineCount)
+		self.assertEqual(idi1.integrationCount, idi2.integrationCount)
 		
 		# Check stands
 		for s1,s2 in zip(idi1.stands, idi2.stands):
@@ -118,6 +121,7 @@ class imaging_tests(unittest.TestCase):
 		# Stand and baseline counts
 		self.assertEqual(len(uv.stands), 5)
 		self.assertEqual(uv.totalBaselineCount, 5*(5+1)/2)
+		self.assertEqual(uv.integrationCount, 1)
 		
 		# Basic functions (just to see that they run)
 		junk = uv.getAntennaArray()
