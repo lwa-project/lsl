@@ -487,7 +487,7 @@ class Project(object):
 			output = "%sOBS_DUR+         %s\n" % (output, obs.duration)
 			output = "%sOBS_MODE         %s\n" % (output, obs.mode)
 			if obs.beamDipole is not None:
-				output = "%sOBS_BDM          %i %6.4f %6.4f %s\n" % tuple(obs.beamDipole)
+				output = "%sOBS_BDM          %i %6.4f %6.4f %s\n" % ((output,) + tuple(obs.beamDipole))
 			if obs.mode == 'TBN':
 				output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
 				output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
@@ -1247,7 +1247,7 @@ class _DRXBase(Observation):
 				if ant.stand.id == stand:
 					dpStand = (ant.digitizer+1)/2
 					
-			self.beamDipole = [dpStand, beamGain, dipoleGain, pol.upper]
+			self.beamDipole = [dpStand, beamGain, dipoleGain, pol.upper()]
 			
 	def estimateBytes(self):
 		"""Estimate the data volume for the specified type and duration of 
