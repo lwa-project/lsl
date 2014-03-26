@@ -2144,8 +2144,13 @@ def parseSDF(filename, verbose=False):
 			obsTemp['mode'] = value
 			continue
 		if keyword == 'OBS_BDM':
-			stand, beamGain, dipoleGain, pol = value.split(None, 3)
-			obsTemp['beamDipole'] = [int(stand), float(beamGain), float(dipoleGain), pol]
+			# Remove the ' marks
+			value = value.replace("'", "")
+			try:
+				stand, beamGain, dipoleGain, pol = value.lstrip().rstrip().split(None, 3)
+				obsTemp['beamDipole'] = [int(stand), float(beamGain), float(dipoleGain), pol]
+			except ValueError:
+				pass
 		if keyword == 'OBS_RA':
 			obsTemp['ra'] = float(value)
 			continue

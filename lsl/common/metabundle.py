@@ -111,6 +111,7 @@ def readOBSFile(filename):
 	unsigned long int  OBS_START_MPM;
 	unsigned long int  OBS_DUR;
 	unsigned short int OBS_MODE;
+	char               OBS_BDM[32];  /* added 140310 */
 	float              OBS_RA;
 	float              OBS_DEC;
 	unsigned short int OBS_B;
@@ -189,7 +190,8 @@ def readOBSFile(filename):
 		   'sessionID': header.SESSION_ID, 'drxBeam': header.SESSION_DRX_BEAM, 
 		   'spcSetup': header.SESSION_SPC, 'obsID': header.OBS_ID,
 		   'MJD': header.OBS_START_MJD, 'MPM': header.OBS_START_MPM, 'Dur': header.OBS_DUR, 
-		   'Mode': header.OBS_MODE, 'RA': header.OBS_RA, 'Dec': header.OBS_DEC, 'Beam': header.OBS_B, 'Freq1': word2freq(header.OBS_FREQ1), 
+		   'Mode': header.OBS_MODE, 'beamDipole': header.OBS_BDM, 
+		   'RA': header.OBS_RA, 'Dec': header.OBS_DEC, 'Beam': header.OBS_B, 'Freq1': word2freq(header.OBS_FREQ1), 
 		   'Freq2': word2freq(header.OBS_FREQ2), 'BW': header.OBS_BW, 'nSteps': header.OBS_STP_N, 
 		   'StepRADec': header.OBS_STP_RADEC,  'steps': steps, 
 		   'fee': single2multi(footer.OBS_FEE, *footer.dims['OBS_FEE']), 
