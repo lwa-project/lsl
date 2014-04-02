@@ -539,16 +539,18 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 	return simAA
 
 
-def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None):
+def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None, flatResponse=False):
 	"""
 	Helper function for buildSimData so that buildSimData can be called with 
 	a list of Julian Dates and reconstruct the data appropriately.
 	
 	.. versionchanged:: 1.0.1
-		Moved the simulation code over from AIPY to the new _simFast module.  
-		This should be much faster but under the caveats that the bandpass
-		and antenna gain patterns are the same for all antennas.  This 
-		should be a reasonable assumption for large-N arrays.
+		* Moved the simulation code over from AIPY to the new _simFast module.  
+		  This should be much faster but under the caveats that the bandpass
+		  and antenna gain patterns are the same for all antennas.  This 
+		  should be a reasonable assumption for large-N arrays.
+		* Added a 'flatResponse' keyword to make it easy to toggle on and off
+		  the spectral and spatial response of the array for the simulation
 	"""
 	
 	nFreq = (n.squeeze((aa.get_afreqs()))).shape[0]
@@ -576,6 +578,9 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		Bj = aa[1].bm_response(xyz, pol=pol[1]).transpose()
 		Bij = Bi*Bj.conj()
 		return Bij.squeeze()
+	if flatResponse:
+		Gij_sf *= 0.0
+		Gij_sf += 1.0
 		
 	# Compute the source parameters
 	srcs_tp = []
@@ -662,17 +667,23 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		
 	for p,pol in enumerate(pols):
 		## Apply the antenna gain pattern for each source
-		if p == 0:
-			for i in xrange(aa._cache['jys'].shape[0]):
-				aa._cache['jys'][i,:] *= Bij_sf(aa._cache['s_top'][i,:], pol)
-		else:
-			for i in xrange(aa._cache['jys'].shape[0]):
-				aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[p-1])	# Remove the old pol
-				aa._cache['jys'][i,:] *=  Bij_sf(aa._cache['s_top'][i,:], pol)
-				
+		if not flatResponse:
+			if p == 0:
+				for i in xrange(aa._cache['jys'].shape[0]):
+					aa._cache['jys'][i,:] *= Bij_sf(aa._cache['s_top'][i,:], pol)
+			else:
+				for i in xrange(aa._cache['jys'].shape[0]):
+					aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[p-1])	# Remove the old pol
+					aa._cache['jys'][i,:] *=  Bij_sf(aa._cache['s_top'][i,:], pol)
+					
 		## Simulate
-		uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl)
-		
+		if not flatResponse:
+			uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl)
+		else:
+			currentVars = locals().keys()
+			if 'uvw1' not in currentVars or 'vis1' not in currentVars:
+				uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl)
+				
 		## Unpack the data and repack it into a data dictionary
 		UVData['bls'][pol] = []
 		UVData['uvw'][pol] = []
@@ -702,21 +713,26 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 				UVData['jd'][pol].append( jd )
 				
 	# Cleanup
-	for i in xrange(aa._cache['jys'].shape[0]):
-		aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[-1])	# Remove the old pol
-		aa._cache['jys'][i,:] /= Gij_sf								# Remove the bandpass
-		
+	if not flatResponse:
+		for i in xrange(aa._cache['jys'].shape[0]):
+			aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[-1])	# Remove the old pol
+			aa._cache['jys'][i,:] /= Gij_sf								# Remove the bandpass
+			
 	# Return
 	return UVData
 
 
-def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None, verbose=False):
+def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None,  flatResponse=False, verbose=False):
 	"""
 	Given an AIPY AntennaArray object and a dictionary of sources from 
 	aipy.src.get_catalog, returned a data dictionary of simulated data taken at 
 	zenith.  Optinally, the data can be masked using some referenced (observed) 
 	data set or only a specific sub-set of baselines.
 	
+	.. versionchanged:: 1.0.1
+		Added a 'flatResponse' keyword to make it easy to toggle on and off
+		the spectral and spatial response of the array for the simulation
+		
 	..versionchanged:: 0.4.0
 		Added the 'pols' keyword to only compute certain polarization components
 	"""
@@ -751,7 +767,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
 	# Loop over Julian days to fill in the simulated data set
 	jdCounter = 1
 	for juldate in jd:
-		oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, chan=chan, phaseCenter=phaseCenter, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd))
+		oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, chan=chan, phaseCenter=phaseCenter, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flatResponse=flatResponse)
 		jdCounter = jdCounter + 1
 
 		for pol in oBlk['bls']:
