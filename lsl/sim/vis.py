@@ -56,6 +56,9 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
 	
 .. versionchanged:: 0.5.0
 	Moved buildGriddedImage to the :mod:`lsl.imaging.utils` module.
+
+.. versionchanged:: 1.0.1
+	Switched over to a new C-based simulation package
 """
 
 import os
@@ -84,9 +87,28 @@ srcs = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her',
 
 
 class BeamAlm(aipy.amp.BeamAlm):
+	"""
+	AIPY-based representation of a beam model where each pointing has a 
+	response defined as a polynomial in frequency, and the spatial 
+	distributions of these coefficients decomposed into spherical 
+	harmonics.
+	
+	This differs from the AIPY version in that the reponse() method 
+	accepts two and three-dimensions arrays of topocentric coordinates, 
+	similar to what aipy.img.ImgW.get_top() produces, and computes the 
+	beam response at all points.
+	"""
+	
 	def __init__(self, freqs, lmax=8, mmax=8, deg=7, nside=64, coeffs={}):
 		"""
 		AIPY __init__() function.
+		
+		lmax = maximum spherical harmonic term
+		mmax = maximum spherical harmonic term in the z direction
+		deg = order of polynomial to used for mapping response of each pointing
+		nside = resolution of underlying HealpixMap to use
+		coeffs = dictionary of polynomial term (integer) and corresponding Alm 
+		coefficients (see healpix.py doc).
 		"""
 		
 		aipy.phs.Beam.__init__(self, freqs)
@@ -100,6 +122,10 @@ class BeamAlm(aipy.amp.BeamAlm):
 	def __responsePrimitive(self, top):
 		"""
 		Copy of the original aipy.amp.BeamAlm.response function.
+		
+		Return beam response across active band for specified topocentric 
+		coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
+		Returns 'x' pol (rotate pi/2 for 'y').
 		"""
 		
 		top = [aipy.healpix.mk_arr(c, dtype=n.double) for c in top]
@@ -116,7 +142,213 @@ class BeamAlm(aipy.amp.BeamAlm):
 		
 		.. note::
 			This function also accepts two and three-dimensions arrays of 
-			topocentric coordinates, similar to what img.ImgW.get_top() 
+			topocentric coordinates, similar to what aipy.img.ImgW.get_top() 
+			produces, and computes the beam response at all points
+		"""
+		
+		test = n.array(top)
+		x,y,z = top
+		
+		if len(test.shape) == 1:
+			temp = self.__responsePrimitive((x,y,z))
+			
+		elif len(test.shape) == 2:
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
+			for i in xrange(temp.shape[1]):
+				temp[:,i] = n.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+				
+		elif len(test.shape) == 3:
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
+			for i in xrange(temp.shape[1]):
+				for j in xrange(temp.shape[2]):
+					temp[:,i,j] = n.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+					
+		else:
+			raise ValueError("Cannot compute response for %s" % str(test.shape))
+			
+		return temp
+
+
+class Beam2DGaussian(aipy.amp.Beam2DGaussian):
+	"""
+	AIPY-based representation of a 2-D Gaussian beam pattern, with default 
+	setting for a flat beam.
+	
+	This differs from the AIPY version in that the reponse() method 
+	accepts two and three-dimensions arrays of topocentric coordinates, 
+	similar to what aipy.img.ImgW.get_top() produces, and computes the 
+	beam response at all points.
+	"""
+	
+	def __init__(self, freqs, xwidth=n.Inf, ywidth=n.Inf):
+		"""
+		AIPY __init__() function.
+		
+		xwidth = angular width (radians) in EW direction
+		ywidth = angular width (radians) in NS direction
+		"""
+		
+		aipy.phs.Beam.__init__(self, freqs)
+		self.xwidth, self.ywidth = xwidth, ywidth
+		
+	def __responsePrimitive(self, top):
+		"""
+		Copy of the original aipy.amp.Beam2DGaussian.response function.
+		
+		Return beam response across active band for specified topocentric 
+		coordinates: (x=E,y=N,z=UP). x,y,z may be arrays of multiple 
+		coordinates.  Returns 'x' linear polarization (rotate pi/2 for 'y').
+		"""
+		
+		x,y,z = top
+		x,y = n.arcsin(x)/self.xwidth, n.arcsin(y)/self.ywidth
+		resp = n.sqrt(n.exp(-(x**2 + y**2)))
+		resp = n.resize(resp, (self.afreqs.size, resp.size))
+		return resp
+		
+	def response(self, top):
+		"""
+		Return beam response across active band for specified topocentric 
+		coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
+		Returns 'x' pol (rotate pi/2 for 'y').
+		
+		.. note::
+			This function also accepts two and three-dimensions arrays of 
+			topocentric coordinates, similar to what aipy.img.ImgW.get_top() 
+			produces, and computes the beam response at all points
+		"""
+		
+		test = n.array(top)
+		x,y,z = top
+		
+		if len(test.shape) == 1:
+			temp = self.__responsePrimitive((x,y,z))
+			
+		elif len(test.shape) == 2:
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
+			for i in xrange(temp.shape[1]):
+				temp[:,i] = n.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+				
+		elif len(test.shape) == 3:
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
+			for i in xrange(temp.shape[1]):
+				for j in xrange(temp.shape[2]):
+					temp[:,i,j] = n.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+					
+		else:
+			raise ValueError("Cannot compute response for %s" % str(test.shape))
+			
+		return temp
+
+
+class BeamPolynomial(aipy.amp.BeamPolynomial):
+	"""
+	AIPY-based representation of a Gaussian beam model whose width varies 
+	with azimuth angle and with frequency.
+	
+	This differs from the AIPY version in that the reponse() method 
+	accepts two and three-dimensions arrays of topocentric coordinates, 
+	similar to what aipy.img.ImgW.get_top() produces, and computes the 
+	beam response at all points.
+	"""
+	def __init__(self, freqs, poly_azfreq=n.array([[.5]])):
+		"""
+		AIPY __init__() function.
+		
+		poly_azfreq = a 2D polynomial in cos(2*n*az) for first axis and 
+		in freq**n for second axis.
+		"""
+		
+		self.poly = poly_azfreq
+		aipy.phs.Beam.__init__(self, freqs)
+		self.poly = poly_azfreq
+		self._update_sigma()
+		
+	def __responsePrimitive(self, top):
+		"""
+		Copy of the original aipy.amp.Beam2DGaussian.response function.
+		
+		Return beam response across active band for specified topocentric 
+		coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
+		Returns 'x' pol (rotate pi/2 for 'y').
+		"""
+		
+		az,alt = coord.top2azalt(top)
+		zang = n.pi/2 - alt
+		if zang.size == 1:
+			zang = n.array([zang]); zang.shape = (1,)
+			az = n.array([az]); az.shape = (1,)
+		a = 2 * n.arange(self.poly.shape[0], dtype=n.float)
+		a.shape = (1,) + a.shape; az.shape += (1,); zang.shape += (1,)
+		a = n.cos(n.dot(az, a))
+		a[:,0] = 0.5
+		s = n.dot(a, self.sigma)
+		return n.sqrt(n.exp(-(zang/s)**2)).transpose()
+		
+	def response(self, top):
+		"""
+		Return beam response across active band for specified topocentric 
+		coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
+		Returns 'x' pol (rotate pi/2 for 'y').
+		
+		.. note::
+			This function also accepts two and three-dimensions arrays of 
+			topocentric coordinates, similar to what aipy.img.ImgW.get_top() 
+			produces, and computes the beam response at all points
+		"""
+		
+		test = n.array(top)
+		x,y,z = top
+		
+		if len(test.shape) == 1:
+			temp = self.__responsePrimitive((x,y,z))
+			
+		elif len(test.shape) == 2:
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
+			for i in xrange(temp.shape[1]):
+				temp[:,i] = n.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+				
+		elif len(test.shape) == 3:
+			temp = n.zeros((self.afreqs.size,)+test.shape[1:])
+			for i in xrange(temp.shape[1]):
+				for j in xrange(temp.shape[2]):
+					temp[:,i,j] = n.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+					
+		else:
+			raise ValueError("Cannot compute response for %s" % str(test.shape))
+			
+		return temp
+
+
+class Beam(aipy.amp.Beam):
+	"""
+	AIPY-based representation of a flat (gain=1) antenna beam pattern.
+	
+	This differs from the AIPY version in that the reponse() method 
+	accepts two and three-dimensions arrays of topocentric coordinates, 
+	similar to what aipy.img.ImgW.get_top() produces, and computes the 
+	beam response at all points.
+	"""
+	
+	def __responsePrimitive(self, top):
+		"""
+		Copy of the original aipy.amp.Beam.response function.
+		
+		Return the (unity) beam response as a function of position.
+		"""
+		
+		x,y,z = n.array(top)
+		return n.ones((self.afreqs.size, x.size))
+		
+	def response(self, top):
+		"""
+		Return beam response across active band for specified topocentric 
+		coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
+		Returns 'x' pol (rotate pi/2 for 'y').
+		
+		.. note::
+			This function also accepts two and three-dimensions arrays of 
+			topocentric coordinates, similar to what aipy.img.ImgW.get_top() 
 			produces, and computes the beam response at all points
 		"""
 		
@@ -297,8 +529,9 @@ class AntennaArray(aipy.amp.AntennaArray):
 		
 		# Get the frequencies we need to estimate the bandpass for
 		freqs = self.get_afreqs()*1e9
-		freqs = freqs.squeeze()
-		
+		if len(freqs.shape) == 2:
+			freqs = freqs[0,:]
+			
 		if filter == 'none' or filter is None:
 			# Build up the bandpass - of ones
 			resp = n.ones(freqs.size)
@@ -392,10 +625,10 @@ class AntennaArray(aipy.amp.AntennaArray):
 				pass
 		if ionref is not None or resolve_src:
 			if u is None or v is None or w is None:
-				u,v,w = self.gen_uvw(i,j,src=src)
+				u,v,w = self.gen_uvw_fast(i,j,src=src)
 		else:
 			if w is None:
-				w = self.gen_uvw(i,j,src=src, w_only=True)
+				w = self.gen_uvw_fast(i,j,src=src, w_only=True)
 		if ionref is not None:
 			w += self.refract(u, v, mfreq=mfreq, ionref=ionref)
 		o = self.get_phs_offset(i,j)
@@ -451,7 +684,7 @@ class AntennaArray(aipy.amp.AntennaArray):
 		return Vij_f
 
 
-def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=False, verbose=False):
+def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=False, ForceGaussian=False, verbose=False):
 	"""
 	Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
 	object defined from the lwa_common module, a numpy array of stand numbers, 
@@ -459,9 +692,10 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 	a Julian Date to set the array to and a positional error terms that perturbs
 	each of the stands in x, y, and z.  The output of this module is an AIPY
 	AntennaArray object.
-
+	
 	The shape of the antenna response is either flat (gain of 1 in all 
-	directions) or modeled by a collection of spherical harmonics that are poly-
+	directions), modeled by a 2-D Gaussian with the specified widths in
+	degrees, or modeled by a collection of spherical harmonics that are poly-
 	nomials in frequency.  The spherical harmonics are used if the file 
 	'beam_shape.npz' is found in the current directory.
 	
@@ -470,37 +704,59 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 		This should be much faster but under the caveats that the bandpass
 		and antenna gain patterns are the same for all antennas.  This 
 		should be a reasonable assumption for large-N arrays.
-	
+		
+		Added an option to use a 2-D Gaussian beam pattern via the ForceGaussian
+		keyword.
+		
 	.. versionchanged:: 0.4.0
 		Switched over to passing in Antenna instances generated by the
 		:mod:`lsl.common.station` module instead of a list of stand ID numbers.
 	"""
-
+	
 	# If the frequencies are in Hz, we need to convert to GHz
 	freqs = freq.copy()
 	if freqs.min() > 1e6:
 		freqs /= 1.0e9
-	
+		
 	# If the beam Alm coefficient file is present, build a more relatistc beam 
 	# response.  Otherwise, assume a flat beam
-	if not ForceFlat and os.path.exists(os.path.join(dataPath, 'beam-shape.npz')):
-		dd = n.load(os.path.join(dataPath, 'beam-shape.npz'))
-		coeffs = dd['coeffs']
-
-		deg = coeffs.shape[0]-1
-		lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
-		beamShapeDict = {}
-		for i in range(deg+1):
-			beamShapeDict[i] = n.squeeze(coeffs[-1-i,:])
-
+	if ForceGaussian:
+		try:
+			xw, yw = ForceGaussian
+		except TypeError, ValueError:
+			xw = float(ForceGaussian)
+			yw = xw
+			
+		xw *= n.pi/180
+		yw *= n.pi/180
 		if verbose:
-			print "Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax)
-		beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
-	else:
+			print "Using a 2-D Gaussian beam with widths %.1f by %.1f degrees" % (xw*180/n.pi, yw*180/n.pi)
+		beam = Beam2DGaussian(freqs, xw, yw)
+		
+	elif ForceFlat:
 		if verbose:
 			print "Using flat beam model"
-		beam = aipy.amp.Beam(freqs)
-
+		beam = Beam(freqs)
+		
+	else:
+		if os.path.exists(os.path.join(dataPath, 'beam-shape.npz')):
+			dd = n.load(os.path.join(dataPath, 'beam-shape.npz'))
+			coeffs = dd['coeffs']
+			
+			deg = coeffs.shape[0]-1
+			lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
+			beamShapeDict = {}
+			for i in range(deg+1):
+				beamShapeDict[i] = n.squeeze(coeffs[-1-i,:])
+				
+			if verbose:
+				print "Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax)
+			beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
+		else:
+			if verbose:
+				print "Using flat beam model"
+			beam = Beam(freqs)
+			
 	if PosError != 0:
 		print "WARNING:  Creating array with positional errors between %.3f and %.3f m" % (-PosError, PosError)
 
@@ -539,7 +795,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 	return simAA
 
 
-def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None, flatResponse=False):
+def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None, flatResponse=False, resolve_src=False):
 	"""
 	Helper function for buildSimData so that buildSimData can be called with 
 	a list of Julian Dates and reconstruct the data appropriately.
@@ -551,9 +807,15 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		  should be a reasonable assumption for large-N arrays.
 		* Added a 'flatResponse' keyword to make it easy to toggle on and off
 		  the spectral and spatial response of the array for the simulation
+		* Added a 'resolve_src' keyword to turn on source resolution effects
 	"""
 	
-	nFreq = (n.squeeze((aa.get_afreqs()))).shape[0]
+	rawFreqs = aa.get_afreqs()
+	
+	if len(rawFreqs.shape) == 2:
+		nFreq = rawFreqs.shape[1]
+	else:
+		nFreq = rawFreqs.size
 	if chan is None:
 		chanMin = 0
 		chanMax = -1
@@ -571,7 +833,6 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		aa.set_jultime(jd)
 	else:
 		jd = aa.get_jultime()
-		
 	Gij_sf = aa.passband(0,1)
 	def Bij_sf(xyz, pol):
 		Bi = aa[0].bm_response(xyz, pol=pol[0]).transpose()
@@ -650,7 +911,10 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		baselines = uvUtils.getBaselines(n.zeros(len(aa.ants)), Indicies=True)
 		
 	# Define output data structure
-	UVData = {'freq': n.squeeze(aa.get_afreqs()*1e9), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
+	freq = aa.get_afreqs()*1e9
+	if len(freq.shape) == 2:
+		freq = freq[0,:]
+	UVData = {'freq': freq, 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
 	if mask is None:
 		UVData['isMasked'] = False
 	else:
@@ -678,11 +942,11 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 					
 		## Simulate
 		if not flatResponse:
-			uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl)
+			uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl, resolve_src=resolve_src)
 		else:
 			currentVars = locals().keys()
 			if 'uvw1' not in currentVars or 'vis1' not in currentVars:
-				uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl)
+				uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl, resolve_src=resolve_src)
 				
 		## Unpack the data and repack it into a data dictionary
 		UVData['bls'][pol] = []
@@ -695,7 +959,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		if mask is None:
 			for i in xrange(uvw1.shape[0]):
 				UVData['bls'][pol].append( baselines[i] )
-				UVData['uvw'][pol].append( n.squeeze(uvw1[i,:,:]) )
+				UVData['uvw'][pol].append( uvw1[i,:,:] )
 				UVData['vis'][pol].append( vis1[i,:] )
 				UVData['wgt'][pol].append( n.ones_like(vis1[i,:])*len(UVData['vis'][pol][-1]) )
 				UVData['msk'][pol].append( n.zeros_like(UVData['vis'][pol][-1]) )
@@ -706,7 +970,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 				msk = mask[i]
 				
 				UVData['bls'][pol].append( baselines[i] )
-				UVData['uvw'][pol].append( n.squeeze(uvw1[i,:,:].compress(n.logical_not(msk), axis=2)) )
+				UVData['uvw'][pol].append( uvw1[i,:,:].compress(n.logical_not(msk), axis=2) )
 				UVData['vis'][pol].append( vis1[i,:].compress(n.logical_not(msk)) )
 				UVData['wgt'][pol].append( n.ones_like(UVData['vis'][pol][-1])*len(UVData['vis'][pol][-1]) )
 				UVData['msk'][pol].append( msk )
@@ -722,7 +986,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 	return UVData
 
 
-def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None,  flatResponse=False, verbose=False):
+def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None,  flatResponse=False, resolve_src=False, verbose=False):
 	"""
 	Given an AIPY AntennaArray object and a dictionary of sources from 
 	aipy.src.get_catalog, returned a data dictionary of simulated data taken at 
@@ -730,14 +994,13 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
 	data set or only a specific sub-set of baselines.
 	
 	.. versionchanged:: 1.0.1
-		Added a 'flatResponse' keyword to make it easy to toggle on and off
-		the spectral and spatial response of the array for the simulation
+		* Added a 'flatResponse' keyword to make it easy to toggle on and off
+		  the spectral and spatial response of the array for the simulation
+		* Added a 'resolve_src' keyword to turn on source resolution effects
 		
 	..versionchanged:: 0.4.0
 		Added the 'pols' keyword to only compute certain polarization components
 	"""
-
-	nFreq = (aa.get_afreqs()).shape[0]
 
 	# Update the JD if necessary
 	if jd is not None:
@@ -749,7 +1012,10 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
 			jd = [aa.get_jultime()]
 
 	# Build up output dictionary
-	UVData = {'freq': n.squeeze(aa.get_afreqs()*1e9), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
+	freq = aa.get_afreqs()*1e9
+	if len(freq.shape) == 2:
+		freq = freq[0,:]
+	UVData = {'freq': freq, 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
 	if mask is None:
 		UVData['isMasked'] = False
 	else:
@@ -767,7 +1033,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
 	# Loop over Julian days to fill in the simulated data set
 	jdCounter = 1
 	for juldate in jd:
-		oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, chan=chan, phaseCenter=phaseCenter, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flatResponse=flatResponse)
+		oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, chan=chan, phaseCenter=phaseCenter, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flatResponse=flatResponse, resolve_src=resolve_src)
 		jdCounter = jdCounter + 1
 
 		for pol in oBlk['bls']:
@@ -849,10 +1115,9 @@ def shiftData(dataDict, aa):
 		sftUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
 
 		for (i,j),m in zip(dataDict['bls'][pol], dataDict['msk'][pol]):
-			crds = aa.gen_uvw(j, i, src='z')
+			crds = aa.gen_uvw(j, i, src='z')[:,0,:]
 			if dataDict['isMasked']:
 				crds = crds.compress(n.logical_not(n.logical_not(m), axis=2))
-			crds = n.squeeze(crds)
 			sftUVData['uvw'][pol].append( crds )
 			
 	return sftUVData

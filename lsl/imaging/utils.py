@@ -7,11 +7,11 @@ data dictionaries.  Also included is a utility to sort data dictionaries by base
 
 .. versionadded:: 0.5.0
 
-.. versionchanged:: 1.0.1
-	Added the plotGriddedImage() function
-
 .. versionchanged:: 1.0.0
 	Added support for UVFITS files and CASA measurement sets
+
+.. versionchanged:: 1.0.1
+	Added the plotGriddedImage() function
 """
 
 import os
@@ -183,20 +183,20 @@ def rephaseData(aa, dataDict, currentPhaseCenter='z', newPhaseCenter='z'):
 				
 			### Compute the uvw coordinates and the new phasing
 			try:
-				crd = aa.gen_uvw(j, i, src=newPhaseCenter)
+				crd = aa.gen_uvw(j, i, src=newPhaseCenter)[:,0,:]
 				d = aa.unphs2src(d, currentPhaseCenter, j, i)
 				d = aa.phs2src(d, newPhaseCenter, j, i)
 			except aipy.phs.PointingError:
 				raise RuntimeError("Rephasing center is below the horizon")
 				
 			### Save
-			uvw = aa.gen_uvw(j, i, src=newPhaseCenter)
-			uvw = numpy.squeeze(crd.compress(numpy.logical_not(msk), axis=2))
+			if isMasked:
+				crd = crd.compress(numpy.logical_not(msk), axis=2)
 			vis = d.compress(numpy.logical_not(msk))
 			wgt = numpy.ones_like(vis) * len(vis)
 
 			dataDict2['bls'][p].append( (i,j) )
-			dataDict2['uvw'][p].append( uvw )
+			dataDict2['uvw'][p].append( crd )
 			dataDict2['vis'][p].append( vis )
 			dataDict2['wgt'][p].append( wgt )
 			dataDict2['msk'][p].append( msk )

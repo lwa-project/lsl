@@ -81,7 +81,110 @@ class simvis_tests(unittest.TestCase):
 			secondaryKeyList = out[key].keys()
 			for key2 in ['xx', 'yy', 'xy', 'yx']:
 				self.assertTrue(type(out[key][key2]).__name__ == 'list')
+				
+		#
+		# Single-channel test
+		#
 		
+		# Setup
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
+		freqs = numpy.array([30e6,])
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
+
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs)
+
+		# Do a check of keys
+		keyList = out.keys()
+		for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			self.assertTrue(key in keyList)
+
+		# Do a check of frequencies
+		for fa, fq in zip(out['freq'], freqs):
+			self.assertAlmostEqual(fa, fq, 6)
+
+		# Do a check to make sure that the entries with secondary keys have them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(key2 in secondaryKeyList)
+
+		# Do a check to make sure that the entries with secondary keys also 
+		# have lists in them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(type(out[key][key2]).__name__ == 'list')
+				
+	def test_build_data_res(self):
+		"""Test building simulated visibility data with resolved sources"""
+
+		# Setup
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
+		freqs = numpy.arange(30e6, 50e6, 1e6)
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
+
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs, resolve_src=True)
+
+		# Do a check of keys
+		keyList = out.keys()
+		for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			self.assertTrue(key in keyList)
+
+		# Do a check of frequencies
+		for fa, fq in zip(out['freq'], freqs):
+			self.assertAlmostEqual(fa, fq, 6)
+
+		# Do a check to make sure that the entries with secondary keys have them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(key2 in secondaryKeyList)
+
+		# Do a check to make sure that the entries with secondary keys also 
+		# have lists in them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(type(out[key][key2]).__name__ == 'list')
+				
+		#
+		# Single-channel test
+		#
+		
+		# Setup
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
+		freqs = numpy.array([30e6,])
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
+
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs, resolve_src=True)
+
+		# Do a check of keys
+		keyList = out.keys()
+		for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			self.assertTrue(key in keyList)
+
+		# Do a check of frequencies
+		for fa, fq in zip(out['freq'], freqs):
+			self.assertAlmostEqual(fa, fq, 6)
+
+		# Do a check to make sure that the entries with secondary keys have them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(key2 in secondaryKeyList)
+
+		# Do a check to make sure that the entries with secondary keys also 
+		# have lists in them
+		for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+			secondaryKeyList = out[key].keys()
+			for key2 in ['xx', 'yy', 'xy', 'yx']:
+				self.assertTrue(type(out[key][key2]).__name__ == 'list')
 	def test_scale_data(self):
 		"""Test that we can scale a data dictionary without error"""
 
@@ -89,6 +192,24 @@ class simvis_tests(unittest.TestCase):
 		lwa1 = lwa_common.lwa1
 		antennas = lwa1.getAntennas()[0:20]
 		freqs = numpy.arange(30e6, 50e6, 1e6)
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
+
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs)
+
+		# Scale
+		amp = vis.scaleData(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
+		# Delay
+		phs = vis.scaleData(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
+		
+		#
+		# Single-channel test
+		#
+		
+		# Setup
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
+		freqs = numpy.array([30e6,])
 		aa = vis.buildSimArray(lwa1, antennas, freqs)
 
 		# Build the data dictionary
@@ -109,6 +230,22 @@ class simvis_tests(unittest.TestCase):
 		freqs = numpy.arange(30e6, 50e6, 1e6)
 		aa = vis.buildSimArray(lwa1, antennas, freqs)
 
+		# Build the data dictionary
+		out = vis.buildSimData(aa, vis.srcs)
+
+		# Shift
+		sft = vis.shiftData(out, aa)
+		
+		#
+		# Single-channel test
+		#
+		
+		# Setup
+		lwa1 = lwa_common.lwa1
+		antennas = lwa1.getAntennas()[0:20]
+		freqs = numpy.array([30e6,])
+		aa = vis.buildSimArray(lwa1, antennas, freqs)
+		
 		# Build the data dictionary
 		out = vis.buildSimData(aa, vis.srcs)
 

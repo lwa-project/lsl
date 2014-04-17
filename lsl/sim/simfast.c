@@ -10,22 +10,26 @@
 
 #include "numpy/arrayobject.h"
 
+#include "protos.h"
+
 #define PI 3.1415926535898
 #define imaginary _Complex_I
 
 
-static PyObject *FastVis(PyObject *self, PyObject *args) {
+static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *antarray, *bls, *output, *temp, *temp2, *temp3;
-	PyArrayObject *freq, *ha, *dec, *flux, *uvwF, *visF, *tempA;
+	PyArrayObject *freq, *ha, *dec, *flux, *shape, *uvwF, *visF, *tempA;
 	long int i, j, k;
-	long int nAnt, nSrc, nFreq, nBL, chanMin, chanMax;
+	long int resolve, nAnt, nSrc, nFreq, nBL, chanMin, chanMax;
 	double lat, pcAz, pcEl, pcHA, pcDec;
 	
 	chanMin = 0;
 	chanMax = -1;
 	pcAz = 0.0;
 	pcEl = 90.0;
-	if(!PyArg_ParseTuple(args, "OOlldd", &antarray, &bls, &chanMin, &chanMax, &pcAz, &pcEl)) {
+	resolve = 0;
+	static char *kwlist[] = {"aa", "bls", "chanMin", "chanMax", "pcAz", "pcEl", "resolve_src", NULL};
+	if( !PyArg_ParseTupleAndKeywords(args, kwds, "OOlldd|i", kwlist, &antarray, &bls, &chanMin, &chanMax, &pcAz, &pcEl, &resolve) ) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
@@ -39,10 +43,13 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 	/* Frequencies (GHz) */
 	temp = PyObject_CallMethod(antarray, "get_afreqs", NULL);
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(temp, NPY_DOUBLE, 1, 2);
-	Py_DECREF(temp);
-	temp = PyArray_Squeeze(freq);
-	Py_XDECREF(freq);
-	freq = (PyArrayObject *) PyArray_ContiguousFromObject(temp, NPY_DOUBLE, 1, 1);
+	if( PyArray_NDIM(freq) == 2 ) {
+		// Flatten 2-D arrays since the first dimension is one
+		Py_DECREF(temp);
+		temp = PyArray_Flatten(freq, NPY_ANYORDER);
+		Py_XDECREF(freq);
+		freq = (PyArrayObject *) PyArray_ContiguousFromAny(temp, NPY_DOUBLE, 1, 1);
+	}
 	Py_DECREF(temp);
 	
 	/* Source cache and properties */
@@ -75,6 +82,17 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 	flux = (PyArrayObject *) PyArray_ContiguousFromObject(temp2, NPY_COMPLEX128, 2, 2);
+	/** Source shape **/
+	temp2 = PyDict_GetItemString(temp, "s_shp");
+	if( temp2 == NULL ) {
+		PyErr_Format(PyExc_TypeError, "Cannot find source shape array 's_shp' in the simulation cache");
+		Py_XDECREF(freq);
+		Py_XDECREF(ha);
+		Py_XDECREF(dec);
+		Py_XDECREF(flux);
+		return NULL;
+	}
+	shape = (PyArrayObject *) PyArray_ContiguousFromObject(temp2, NPY_DOUBLE, 2, 2);
 	Py_DECREF(temp);
 	
 	/* Pointing center */
@@ -94,6 +112,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 		Py_XDECREF(ha);
 		Py_XDECREF(dec);
 		Py_XDECREF(flux);
+		Py_XDECREF(shape);
 		return NULL;
 	}
 	
@@ -103,6 +122,26 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 		Py_XDECREF(ha);
 		Py_XDECREF(dec);
 		Py_XDECREF(flux);
+		Py_XDECREF(shape);
+		return NULL;
+	}
+	
+	if(shape->dimensions[0] != 3) {
+		PyErr_Format(PyExc_TypeError, "Source shape dimensions do not agree with number of required parameters");
+		Py_XDECREF(freq);
+		Py_XDECREF(ha);
+		Py_XDECREF(dec);
+		Py_XDECREF(flux);
+		Py_XDECREF(shape);
+		return NULL;
+	}
+	if(shape->dimensions[1] != ha->dimensions[0]) {
+		PyErr_Format(PyExc_TypeError, "Source shape dimensions do not agree with number of sources");
+		Py_XDECREF(freq);
+		Py_XDECREF(ha);
+		Py_XDECREF(dec);
+		Py_XDECREF(flux);
+		Py_XDECREF(shape);
 		return NULL;
 	}
 	
@@ -112,6 +151,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 		Py_XDECREF(ha);
 		Py_XDECREF(dec);
 		Py_XDECREF(flux);
+		Py_XDECREF(shape);
 		return NULL;
 	}
 	
@@ -146,6 +186,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 		Py_XDECREF(ha);
 		Py_XDECREF(dec);
 		Py_XDECREF(flux);
+		Py_XDECREF(shape);
 		return NULL;
 	}
 	PyArray_FILLWBYTE(uvwF, 0);
@@ -160,6 +201,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 		Py_XDECREF(ha);
 		Py_XDECREF(dec);
 		Py_XDECREF(flux);
+		Py_XDECREF(shape);
 		Py_XDECREF(uvwF);
 		return NULL;
 	}
@@ -215,9 +257,9 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 	// Setup variables for the loop
 	int a1, a2;
 	double blx, bly, blz, x, y, z, u, v, w;
-	double tempHA, tempDec;
+	double tempHA, tempDec, tempA0, tempA1, tempTheta, tempX;
 	float complex *tempVis;
-	double *a, *b, *c, *e;
+	double *a, *b, *c, *e, *g;
 	double complex *d;
 	float complex *f;
 	a = (double *) freq->data;
@@ -226,9 +268,10 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 	d = (double complex *) flux->data;
 	e = (double *) uvwF->data;
 	f = (float complex *) visF->data;
+	g = (double *) shape->data;
 	
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempVis, x, y, z, u, v, w, i, j, k)
+		#pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempA0, tempA1, tempTheta, tempX, tempVis, x, y, z, u, v, w, i, j, k)
 	#endif
 	{
 		#ifdef _OPENMP
@@ -249,23 +292,43 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 			memset(tempVis, 0, nFreq*sizeof(float complex));
 			
 			for(j=0; j<nSrc; j++) {
-				if( cabs(*(d + nFreq*j + nFreq/2)) <= 0 ) {
-					continue;
-				}
-				
 				// Source pointing
 				tempHA = *(b + j);
 				tempDec = *(c + j);
 				
-				// Baseline to topocentric coordinates - z only
+				// Shape
+				tempA0 = *(g + 0*nSrc + j);
+				tempA1 = *(g + 1*nSrc + j);
+				tempTheta = *(g + 2*nSrc + j);
+				
+				// Baseline to topocentric coordinates
+				x =  sin(tempHA)*blx +              cos(tempHA)*bly;
+				y = -sin(tempDec)*cos(tempHA)*blx + sin(tempDec)*sin(tempHA)*bly + cos(tempDec)*blz;
 				z =  cos(tempDec)*cos(tempHA)*blx - cos(tempDec)*sin(tempHA)*bly + sin(tempDec)*blz;
 				
 				for(k=chanMin; k<chanMax; k++) {
 					// Compute w
+					u = *(a + k) * x;
+					v = *(a + k) * y;
 					w = *(a + k) * z;
 					
+					// Correction for the source shape
+					if( resolve && tempA0 != 0.0 && tempA1 != 0.0 ) {
+						tempX  = tempA0*(u*cos(tempTheta) - v*sin(tempTheta)) * tempA0*(u*cos(tempTheta) - v*sin(tempTheta));
+						tempX += tempA1*(u*sin(tempTheta) + v*cos(tempTheta)) * tempA1*(u*sin(tempTheta) + v*cos(tempTheta));
+						tempX = 2.0*PI * sqrt(tempX);
+						
+						if( tempX != 0.0 ) {
+							tempX = 2.0 * j1(tempX)/tempX;
+						} else {
+							tempX = 1.0;
+						}
+					} else {
+						tempX = 1.0;
+					}
+					
 					// Compute the contribution of this source to the baseline visibility (with the conjugation)
-					*(tempVis + k) += *(d + nFreq*j + k) * cexp(2*PI*imaginary*w);
+					*(tempVis + k) += tempX * *(d + nFreq*j + k) * cexp(2*PI*imaginary*w);
 				}
 			}
 			
@@ -300,6 +363,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 	Py_XDECREF(ha);
 	Py_XDECREF(dec);
 	Py_XDECREF(flux);
+	Py_XDECREF(shape);
 	
 	output = Py_BuildValue("(OO)", PyArray_Return(uvwF), PyArray_Return(visF));
 	Py_XDECREF(uvwF);
@@ -309,7 +373,29 @@ static PyObject *FastVis(PyObject *self, PyObject *args) {
 }
 
 PyDoc_STRVAR(FastVis_doc, \
-"\n\
+"Fast visibility simulation package based on the AIPY amp.AntennaArray.sum()\n\
+method.  This function differs from sim() in the sense that it does not\n\
+support the ionospheric refraction terms.  However, it is implemtned using\n\
+OpenMP and should be significantly faster for larger simulations.\n\
+\n\
+Inputs arguements are:\n\
+  * aa: AntennaArray instances generated by lsl.sim.vis.buildAntennaArray()\n\
+  * bls: A list of baseline pairs to compute visibilities for\n\
+  * chanMin: The first frequency channel to calculate the visibilities for\n\
+  * chanMax: The last frequency channel to calculate the visbilities for\n\
+  * pcAz: The azimuth of the phase center in degrees\n\
+  * pcEl: The elevation of the phase center in degrees\n\
+\n\
+Input keywords are:\n\
+  * resolve_src: Boolean of whether or not source sizes should be used in\n\
+    the simulation.  If this is set to False, all sources are treated as\n\
+    unresolved.\n\
+\n\
+Outputs:\n\
+  * uvw: A 3-D numpy.float64 array of uvw coordinates (baselines by (u,v,w)\n\
+    by channels)\n\
+  * vis: A 2-D numpy.complex64 array of complex visibilities (baselines by\n\
+    channels)\n\
 ");
 
 
@@ -318,13 +404,22 @@ PyDoc_STRVAR(FastVis_doc, \
 */
 
 static PyMethodDef SimMethods[] = {
-	{"FastVis", (PyCFunction) FastVis, METH_VARARGS, FastVis_doc}, 
-	{NULL,      NULL,                  0,            NULL       }
+	{"FastVis", (PyCFunction) FastVis, METH_VARARGS|METH_KEYWORDS, FastVis_doc}, 
+	{NULL,      NULL,                  0,                          NULL       }
 };
 
 PyDoc_STRVAR(sim_doc, \
-"\n\
-");
+"C-based visibility simulation engine.  These functions are meant to provide\n\
+an alternative to the AIPY simulation methods and a much-needed speed boost\n\
+to simulation-heavy tasks.\n\
+\n\
+The functions defined in this modulae are:\n\
+  * FastVis - Compute uvw coordinates and visibilities for the provided array\n\
+    and baseline list.\n\
+\n\
+See the inidividual functions for more details.\n\
+\n\
+.. versionadded:: 1.0.1");
 
 
 /*
@@ -340,6 +435,6 @@ PyMODINIT_FUNC init_simfast(void) {
 	
 	// Version and revision information
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
-	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev: 1639 $"));
 }
 
