@@ -265,7 +265,7 @@ def main(args):
 
 	fh = open(filename, "rb", buffering=tbw.FrameSize*10000)
 	test = tbw.readFrame(fh)
-	fh.seek(0)
+	fh.seek(-tbw.FrameSize, 1)
 	
 	jd = astro.unix_to_utcjd(test.getTime())
 	date = str(ephem.Date(jd - astro.DJD_OFFSET))

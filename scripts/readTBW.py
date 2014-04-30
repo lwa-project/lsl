@@ -28,7 +28,7 @@ def main(args):
 		nData = 400
 	else:
 		nData = 1200
-	fh.seek(0)
+	fh.seek(-tbw.FrameSize, 1)
 
 	# Due to the size of the FITS files being generated, the number of frames that 
 	# can be read in is limited to 300,000, or 30,000 frames for 10 stands.  Getting

@@ -295,7 +295,7 @@ def main(args):
 	if not test.header.isTBN():
 		raise errors.notTBNError()
 	centralFreq = test.getCentralFreq()
-	fh.seek(0)
+	fh.seek(-tbn.FrameSize, 1)
 
 	jd = astro.unix_to_utcjd(test.getTime())
 	date = str(ephem.Date(jd - astro.DJD_OFFSET))

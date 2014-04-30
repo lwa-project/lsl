@@ -138,7 +138,7 @@ def main(args):
 	# Read in the first frame and get the date/time of the first sample 
 	# of the frame.  This is needed to get the list of stands.
 	junkFrame = tbw.readFrame(fh)
-	fh.seek(0)
+	fh.seek(-tbw.FrameSize, 1)
 	beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
 
 	# File summary

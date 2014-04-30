@@ -21,7 +21,7 @@ def main(args):
 	print "TBN Data:  %s" % test.header.isTBN()
 	if not test.header.isTBN():
 		raise notTBNError()
-	fh.seek(0)
+	fh.seek(-tbn.FrameSize, 1)
 
 	nFpO = tbn.getFramesPerObs(fh)
 	print "Samples per observations: %i in x pol., %i in y pol." % nFpO

@@ -17,7 +17,7 @@ def main(args):
 	nFramesFile = os.path.getsize(args[0]) / drx.FrameSize
 	junkFrame = drx.readFrame(fh)
 	
-	fh.seek(0)
+	fh.seek(-drx.FrameSize, 1)
 	srate = junkFrame.getSampleRate()
 	beams = drx.getBeamCount(fh)
 	tunepols = drx.getFramesPerObs(fh)
