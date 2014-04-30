@@ -365,7 +365,8 @@ def main(args):
 	# the FITS IDI memory buffer
 	s = 0
 	leftToDo = config['samples']
-	basename, ext = os.path.splitext(filename)
+	basename = os.path.split(filename)[1]
+	basename, ext = os.path.splitext(basename)
 	while leftToDo > 0:
 		fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
 		
