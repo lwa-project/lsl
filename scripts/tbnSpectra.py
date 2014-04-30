@@ -107,10 +107,16 @@ def parseOptions(args):
 		elif opt in ('-d', '--disable-chunks'):
 			config['displayChunks'] = False
 		elif opt in ('-k', '--keep'):
-			config['keep'] = [int(i) for i in value.split(',')]
+			config['keep'] = []
+			for entry in value.split(','):
+				if entry.find('-') != -1:
+					start, stop = entry.split('-', 1)
+					config['keep'].extend( range(int(start), int(stop)+1) )
+				else:
+					config['keep'].append( int(entry) )
 		else:
 			assert False
-	
+			
 	# Add in arguments
 	config['args'] = args
 
@@ -340,20 +346,28 @@ def main(args):
 			for i,ant in enumerate(antennas):
 				if ant.stand.id == k:
 					js.append(i)
-
+					
+	nPlot = len(config['keep'])*2
+	if nPlot < 20:
+		if nPlot % 4 == 0 and nPlot != 4:
+			figsY = 4
+		else:
+			figsY = 2
+		figsX = int(numpy.ceil(1.0*nPlot/figsY))
+	else:
+		figsY = 4
+		figsX = 5
+	figsN = figsX*figsY
 	for i in xrange(antpolsDisp):
 		# Normal plotting
 		fig = plt.figure()
-		figsY = 4
-		figsX = 5
-		fig.subplots_adjust(left=0.06, bottom=0.06, right=0.94, top=0.94, wspace=0.20, hspace=0.50)
-		for k in xrange(i*20, i*20+20):
+		for k in xrange(i*figsN, i*figsN+figsN):
 			try:
 				j = js[k]
 				currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
 			except IndexError:
 				break
-			ax = fig.add_subplot(figsX, figsY, (k%20)+1)
+			ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)
 			ax.plot(freq, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
 
 			# If there is more than one chunk, plot the difference between the global 
