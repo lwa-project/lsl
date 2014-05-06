@@ -43,6 +43,7 @@ Options:
                        (Default = 0 lambda at midpoint frequency)
 -n, --no-labels        Disable source and grid labels
 -g, --no-grid          Disable the RA/Dec grid
+-f, --fits             Save the images to the specified FITS image file
 """
 
 	if exitCode is not None:
@@ -60,11 +61,12 @@ def parseConfig(args):
 	config['uvMin'] = 0.0
 	config['label'] = True
 	config['grid'] = True
+	config['fits'] = None
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "h1:2:s:m:ng", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "no-labels", "no-grid"])
+		opts, arg = getopt.getopt(args, "h1:2:s:m:ngf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "no-labels", "no-grid", "fits="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -86,6 +88,8 @@ def parseConfig(args):
 			config['label'] = False
 		elif opt in ('-g', '--no-grid'):
 			config['grid'] = False
+		elif opt in ('-f', '--fits'):
+			config['fits'] = str(value)
 		else:
 			assert False
 	
@@ -310,6 +314,46 @@ def main(args):
 				
 		plt.show()
 		
+		if config['fits'] is not None:
+			## Loop over the images to build up the FITS file
+			hdulist = [pyfits.PrimaryHDU(),]
+			for img,pol in zip((imgXX,imgYY,imgXY,imgXY), ('XX','YY','XY','YX')):
+				if img is None:
+					continue
+					
+				### Create the HDU
+				try:
+					hdu = pyfits.ImageHDU(data=img.image(center=(80,80)), name=pol)
+				except AttributeError:
+					hdu = pyfits.ImageHDU(data=img, name=pol)
+					
+				### Add in the coordinate information
+				hdu.header['CTYPE1'] = 'RA---SIN'
+				hdu.header['CRPIX1'] = 80
+				hdu.header['CDELT1'] = -360.0/160.0/numpy.pi
+				hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi
+				hdu.header['CTYPE2'] = 'DEC--SIN'
+				hdu.header['CRPIX2'] = 80
+				hdu.header['CDELT2'] = 360.0/160.0/numpy.pi
+				hdu.header['CRVAL2'] = lo.lat*180/numpy.pi
+				hdu.header['LONPOLE'] = 180.0
+				hdu.header['LATPOLE'] = 90.0
+				
+				### Add the HDU to the list
+				hdulist.append(hdu)
+				
+		## Save the FITS file to disk
+		hdulist = pyfits.HDUList(hdulist)
+		clobber = False
+		if os.path.exists(config['fits']):
+			yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % config['fits'])
+			if yn not in ('n', 'N'):
+				clobber = True
+		try:
+			hdulist.writeto(config['fits'], clobber=clobber)
+		except IOError, e:
+			print "WARNING: FITS image file not saved"
+			
 	print "...Done"
 
 
