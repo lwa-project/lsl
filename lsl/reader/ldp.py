@@ -107,6 +107,14 @@ class LDPFileBase(object):
 		# Ready the file
 		self._readyFile()
 		
+		# Reset any buffers
+		if getattr(self, "buffer", None) is not None:
+			self.buffer.flush()
+			
+		# Reset the timetag checker
+		if getattr(self, "_timetag", None) is not None:
+			self._timetag = None
+			
 		# Describe the contents of the file
 		self.description = {}
 		self._describeFile()
@@ -121,6 +129,7 @@ class TBWFile(LDPFileBase):
 	  * getInfo - Get information about the file's contents
 	  * getRemainingFrameCount - Get the number of frames remaining in the file
 	  * readFrame - Read and return a single `lsl.reader.tbw.Frame` instance
+	  * read - Read in the capture and return it as a numpy array
 	"""
 	
 	def _readyFile(self):
@@ -153,14 +162,32 @@ class TBWFile(LDPFileBase):
 		junkFrame = self.readFrame()
 		self.fh.seek(-tbw.FrameSize, 1)
 		
+		# Basic file information
 		filesize = os.fstat(self.fh.fileno()).st_size
 		nFramesFile = filesize / tbw.FrameSize
 		srate = 196e6
 		bits = junkFrame.getDataBits()
 		start = junkFrame.getTime()
 		
+		# Trick to figure out how many antennas are in a file
+		idsFound = []
+		filePosRef = self.fh.tell()
+		while True:
+			try:
+				for i in xrange(26):
+					frame = tbw.readFrame(self.fh)
+					while not frame.header.isTBW():
+						frame = tbw.readFrame(self.fh)
+					stand = frame.parseID()
+					if stand not in idsFound:
+						idsFound.append(stand)
+				self.fh.seek(tbw.FrameSize*(30000-26), 1)
+			except:
+				break
+		self.fh.seek(filePosRef)
+		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbw.FrameSize,
-						'sampleRate': srate, 'dataBits': bits, 
+						'sampleRate': srate, 'dataBits': bits, 'nAntenna': 2*len(idsFound), 
 						'tStart': start}
 						
 	def readFrame(self):
@@ -168,7 +195,83 @@ class TBWFile(LDPFileBase):
 		Read and return a single `lsl.reader.tbw.Frame` instance.
 		"""
 		
-		return tbw.readFrame(self.fh)
+		frame = tbw.readFrame(self.fh)
+		while not frame.header.isTBW():
+			frame = tbw.readFrame(self.fh)
+			
+		return frame
+		
+	def read(self, duration=None, timeInSamples=False):
+		"""
+		Read and return the entire TBW capture.  This function returns 
+		a three-element tuple with elements of:
+		  0) the actual duration of data read in, 
+		  1) the time tag for the first sample, and
+		  2) a 2-D Numpy array of data.
+		  
+		The time tag is returned as seconds since the UNIX epoch by default.
+		However, the time tags can be returns as samples at fS if the 
+		timeInSamples keyword is set.
+		
+		The sorting order of the output data array is by 
+		digitizer number - 1.
+		
+		.. note::
+			Setting the 'duration' keyword has no effect on the read 
+			process because the entire capture is always read in.
+		"""
+		
+		# Make sure there is file left to read
+		if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+			raise errors.eofError()
+			
+		# Get the data frame size
+		dataSize = 400
+		if self.description['dataBits'] == 4:
+			dataSize = 1200
+			
+		# Find out how many frames to work with at a time
+		nFrames = int(30000)
+		
+		# Initialize the output data array
+		data = numpy.zeros((self.description['nAntenna'], nFrames*dataSize), dtype=numpy.int16)
+		
+		# Read in the next frame and anticipate any problems that could occur
+		i = 0
+		while i < ((self.description['nAntenna']/2)*nFrames):
+			try:
+				cFrame = tbw.readFrame(self.fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+				
+			if not cFrame.header.isTBW():
+				continue
+				
+			stand = cFrame.header.parseID()
+			aStandX = 2*(stand-1) + 0
+			aStandY = 2*(stand-1) + 1
+				
+			if i == 0:
+				if timeInSamples:
+					setTime = cFrame.data.timeTag
+				else:
+					setTime = cFrame.getTime()
+					
+			try:
+				cnt = cFrame.header.frameCount - 1
+				data[aStandX, cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[0,:]
+				data[aStandY, cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[1,:]
+				
+				i += 1
+			except ValueError:
+				pass
+				
+		# Calculate the duration
+		duration = data.shape[1]/self.getInfo('sampleRate')
+		
+		return duration, setTime, data
 
 
 class TBNFile(LDPFileBase):
@@ -253,6 +356,9 @@ class TBNFile(LDPFileBase):
 		# Update the file metadata
 		self._describeFile()
 		
+		# Reset the timetag checker
+		self._timetag = None
+		
 		return 1.0 * frameOffset / self.description['nAntenna'] * 512 / self.description['sampleRate']
 		
 	def readFrame(self):
@@ -273,11 +379,24 @@ class TBNFile(LDPFileBase):
 		The time tag is returned as seconds since the UNIX epoch by default.
 		However, the time tags can be returns as samples at fS if the 
 		timeInSamples keyword is set.
+		
+		The sorting order of the output data array is by 
+		digitizer number - 1.
 		""" 
 		
 		# Make sure there is file left to read
 		if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
 			raise errors.eofError()
+			
+		# Covert the sample rate to an expected timetag skip
+		timetagSkip = int(512 / self.description['sampleRate'] * fS)
+		
+		# Setup the counter variables:  frame count and time tag count
+		if getattr(self, "_timetag", None) is None:
+			self._timetag = 0
+			junkFrame = tbn.readFrame(self.fh)
+			self._timetag = junkFrame.data.timeTag - timetagSkip
+			self.fh.seek(-tbn.FrameSize, 1)
 			
 		# Find out how many frames to read in
 		frameCount = int(round(1.0 * duration * self.description['sampleRate'] / 512))
@@ -299,6 +418,7 @@ class TBNFile(LDPFileBase):
 					cFrames.append( tbn.readFrame(self.fh, Verbose=False) )
 				except errors.eofError:
 					eofFound = True
+					self.buffer.append(cFrames)
 					break
 				except errors.syncError:
 					continue
@@ -311,6 +431,13 @@ class TBNFile(LDPFileBase):
 				continue
 				
 			# If something comes out, add it to the data array
+			cTimetag = cFrames[0].data.timeTag
+			if not self.ignoreTimeTagErrors:
+				if cTimetag != self._timetag+timetagSkip:
+					actStep = cTimetag - self._timetag
+					raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, t, p, actStep))
+			self._timetag = cFrames[0].data.timeTag
+			
 			for cFrame in cFrames:
 				stand,pol = cFrame.header.parseID()
 				aStand = 2*(stand-1)+pol
@@ -329,6 +456,13 @@ class TBNFile(LDPFileBase):
 		# flush the buffer
 		if eofFound or nFrameSets != frameCount:
 			for cFrames in self.buffer.flush():
+				cTimetag = cFrames[0].data.timeTag
+				if not self.ignoreTimeTagErrors:
+					if cTimetag != self._timetag+timetagSkip:
+						actStep = cTimetag - self._timetag
+						raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, t, p, actStep))
+				self._timetag = cFrames[0].data.timeTag
+				
 				for cFrame in cFrames:
 					stand,pol = cFrame.header.parseID()
 					aStand = 2*(stand-1)+pol
@@ -520,9 +654,9 @@ class DRXFile(LDPFileBase):
 		beampols = reduce(int.__add__, beampols)
 		
 		# Offset in frames for beampols beam/tuning/pol. sets
-		offset = int(offset * sampleRate / 4096 * beampols)
-		offset = int(1.0 * offset / beampols) * beampols
-		self.fh.seek(offset*drx.FrameSize, 1)
+		ioffset = int(offset * sampleRate / 4096 * beampols)
+		ioffset = int(1.0 * ioffset / beampols) * beampols
+		self.fh.seek(ioffset*drx.FrameSize, 1)
 		
 		# Iterate on the offsets until we reach the right point in the file.  This
 		# is needed to deal with files that start with only one tuning and/or a 
@@ -545,7 +679,7 @@ class DRXFile(LDPFileBase):
 			tCorr   = -tDiff / 2.0
 			cOffset = int(tCorr * sampleRate / 4096 * beampols)
 			cOffset = int(1.0 * cOffset / beampols) * beampols
-			offset += cOffset
+			ioffset += cOffset
 			
 			## If the offset is zero, we are done.  Otherwise, apply the offset
 			## and check the location in the file again/
@@ -555,6 +689,9 @@ class DRXFile(LDPFileBase):
 			
 		# Update the file metadata
 		self._describeFile()
+		
+		# Zero out the time tag checker
+		self._timetag = None
 		
 		return t1 - t0
 		
@@ -574,7 +711,11 @@ class DRXFile(LDPFileBase):
 		
 		..note::
 			This function always returns a 2-D array with the first dimension
-			holding four elements.
+			holding four elements.  These elements contain, in order:
+			  * Tuning 1, polarization X
+			  * Tuning 1, polarization Y
+			  * Tuning 2, polarization X
+			  * Tuning 2, polarization Y
 		"""
 		
 		# Make sure there is file left to read
@@ -585,14 +726,15 @@ class DRXFile(LDPFileBase):
 		timetagSkip = int(4096 / self.description['sampleRate'] * fS)
 		
 		# Setup the counter variables:  frame count and time tag count
-		timetag = {0:0, 1:0, 2:0, 3:0}
-		for i in xrange(self.description['beampols']):
-			junkFrame = drx.readFrame(self.fh)
-			b,t,p = junkFrame.parseID()
-			aStand = 2*(t-1) + p
-			timetag[aStand] = junkFrame.data.timeTag - timetagSkip
-		self.fh.seek(-drx.FrameSize*self.description['beampols'], 1)
-		
+		if getattr(self, "_timetag", None) is None:
+			self._timetag = {0:0, 1:0, 2:0, 3:0}
+			for i in xrange(self.description['beampols']):
+				junkFrame = drx.readFrame(self.fh)
+				b,t,p = junkFrame.parseID()
+				aStand = 2*(t-1) + p
+				self._timetag[aStand] = junkFrame.data.timeTag - timetagSkip
+			self.fh.seek(-drx.FrameSize*self.description['beampols'], 1)
+			
 		# Find out how many frames to read in
 		frameCount = int(round(1.0 * duration * self.description['sampleRate'] / 4096))
 		frameCount = frameCount if frameCount else 1
@@ -616,6 +758,7 @@ class DRXFile(LDPFileBase):
 					cFrames.append( drx.readFrame(self.fh, Verbose=False) )
 				except errors.eofError:
 					eofFound = True
+					self.buffer.append(cFrames)
 					break
 				except errors.syncError:
 					continue
@@ -631,10 +774,10 @@ class DRXFile(LDPFileBase):
 			for cFrame in cFrames:
 				b,t,p = cFrame.parseID()
 				aStand = 2*(t-1) + p
+				cTimetag = cFrame.data.timeTag
 				if not self.ignoreTimeTagErrors:
-					cTimetag = cFrame.data.timeTag
-					if cTimetag != timetag[aStand]+timetagSkip:
-						actStep = cTimetag - timetag[aStand]
+					if cTimetag != self._timetag[aStand]+timetagSkip:
+						actStep = cTimetag - self._timetag[aStand]
 						raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep))
 						
 				if setTime is None:
@@ -645,7 +788,7 @@ class DRXFile(LDPFileBase):
 						
 				data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
 				count[aStand] +=  1
-				timetag[aStand] = cTimetag
+				self._timetag[aStand] = cTimetag
 			nFrameSets += 1
 			
 		# If we've hit the end of the file and haven't read in enough frames, 
@@ -655,10 +798,10 @@ class DRXFile(LDPFileBase):
 				for cFrame in cFrames:
 					b,t,p = cFrame.parseID()
 					aStand = 2*(t-1) + p
+					cTimetag = cFrame.data.timeTag
 					if not self.ignoreTimeTagErrors:
-						cTimetag = cFrame.data.timeTag
-						if cTimetag != timetag[aStand]+timetagSkip:
-							actStep = cTimetag - timetag[aStand]
+						if cTimetag != self._timetag[aStand]+timetagSkip:
+							actStep = cTimetag - self._timetag[aStand]
 							raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep))
 							
 					if setTime is None:
@@ -669,7 +812,7 @@ class DRXFile(LDPFileBase):
 							
 					data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
 					count[aStand] +=  1
-					timetag[aStand] = cTimetag
+					self._timetag[aStand] = cTimetag
 				nFrameSets += 1
 				
 				if nFrameSets == frameCount:
@@ -795,8 +938,8 @@ class DRSpecFile(LDPFileBase):
 		t0 = junkFrame.getTime()
 		
 		# Offset in frames for beampols beam/tuning/pol. sets
-		offset = int(round(offset / self.description['tInt']))
-		self.fh.seek(offset*FrameSize, 1)
+		ioffset = int(round(offset / self.description['tInt']))
+		self.fh.seek(ioffset*FrameSize, 1)
 		
 		# Iterate on the offsets until we reach the right point in the file.  This
 		# is needed to deal with files that start with only one tuning and/or a 
@@ -818,7 +961,7 @@ class DRSpecFile(LDPFileBase):
 			## Half that to come up with a new seek parameter
 			tCorr   = -tDiff / 2.0
 			cOffset = int(round(tCorr / tInt))
-			offset += cOffset
+			ioffset += cOffset
 			
 			## If the offset is zero, we are done.  Otherwise, apply the offset
 			## and check the location in the file again/
@@ -828,6 +971,9 @@ class DRSpecFile(LDPFileBase):
 			
 		# Update the file metadata
 		self._describeFile()
+		
+		# Zero out the timetag checker
+		self._timetag = None
 		
 		return t1 - t0
 		
@@ -860,10 +1006,11 @@ class DRSpecFile(LDPFileBase):
 		
 		# Setup the counter variables:  frame count and time tag count
 		count = 0
-		timetag = 0
-		junkFrame = drspec.readFrame(self.fh)
-		timetag = junkFrame.getTime() - timetagSkip
-		self.fh.seek(-self.description['FrameSize'], 1)
+		if getattr(self, "_timetag", None) is None:
+			self._timetag = 0
+			junkFrame = drspec.readFrame(self.fh)
+			self._timetag = junkFrame.getTime() - timetagSkip
+			self.fh.seek(-self.description['FrameSize'], 1)
 		
 		# Find out how many frames to read in
 		frameCount = int(round(1.0 * duration / self.description['tInt']))
@@ -885,10 +1032,10 @@ class DRSpecFile(LDPFileBase):
 			except errors.syncError:
 				continue
 				
+			cTimetag = cFrame.getTime()
 			if not self.ignoreTimeTagErrors:
-				cTimetag = cFrame.getTime()
-				if cTimetag > timetag + 1.001*timetagSkip:
-					actStep = cTimetag - timetag
+				if cTimetag > self._timetag + 1.001*timetagSkip:
+					actStep = cTimetag - self._timetag
 					raise RuntimeError("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep))
 					
 			if setTime is None:
@@ -901,7 +1048,7 @@ class DRSpecFile(LDPFileBase):
 				data[j+0,                             count, :] = getattr(cFrame.data, '%s0' % p, None)
 				data[j+self.description['nProducts'], count, :] = getattr(cFrame.data, '%s1' % p, None)
 			count +=  1
-			timetag = cTimetag
+			self._timetag = cTimetag
 			nFrameSets += 1
 			
 		# Adjust the duration to account for all of the things that could 

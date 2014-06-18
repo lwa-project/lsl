@@ -25,7 +25,6 @@ try:
 		
 	# Read in the wisdom (if it exists)
 	wisdomFilename = os.path.join(dataPath, 'pyfftw-wisdom.pkl')
-	print wisdomFilename, os.path.exists(wisdomFilename)
 	if os.path.exists(wisdomFilename):
 		fh = open(wisdomFilename, 'r')
 		wisdom = pickle.load(fh)

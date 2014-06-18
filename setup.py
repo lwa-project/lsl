@@ -109,9 +109,13 @@ def get_fftw():
 	status, output = commands.getstatusoutput('pkg-config fftw3f --exists')
 	if status == 0:
 		configCommand = 'pkg-config fftw3f'
+		outVersion = os.popen('%s --modversion' % configCommand, 'r').readline().rstrip().split()
 		outCFLAGS = os.popen('%s --cflags' % configCommand, 'r').readline().rstrip().split()
 		outLIBS = os.popen('%s --libs' % configCommand, 'r').readline().rstrip().split()
-
+		
+		if len(outVersion) > 0:
+			print "Found FFTW3, version %s" % outVersion[0]
+			
 	else:
 		print "WARNING:  FFTW3 cannot be found, using defaults"
 		if platform.system() != 'FreeBSD':
@@ -120,36 +124,28 @@ def get_fftw():
 		else:
 			outCFLAGS = ['-I/usr/local/include',]
 			outLIBS = ['-L/usr/local/lib', '-lfftw3f', '-lm']
-
+			
 	return outCFLAGS, outLIBS
 
 
 def get_atlas():
-	"""Use ldconfig's verbose output to find the location of ATLAS (and cblas).  
-	If ATLAS cannot be found, some 'sane' values are returned."""
+	"""Use NumPy's system_info module to find the location of ATLAS (and 
+	cblas)."""
 	
-	outLibs = ['-lcblas', '-latlas']
-	if sys.platform.find('linux') == -1:
-		return [], outLibs
-	else:
-		status, output = commands.getstatusoutput('ldconfig -v 2>/dev/null')
-		lines = output.split('\n')
-
-		libPath = ''
-		found = False
-		for line in lines:
-			if line[0] != '\t':
-				libPath = line.replace(':', '')
-			else:
-				if line.find('cblas') != -1:
-					found = True
-					break
-					
-		if found:
-			outLibs.insert(0, '-L%s' % libPath)
-		else:
-			print "WARNING:  ATLAS and CBLAS cannot be found, using defaults"
-		return [], outLibs
+	from numpy.distutils.system_info import get_info
+	
+	atlas_info = get_info('atlas_blas', notfound_action=2)
+	
+	atlas_version = ([v[3:-3] for k,v in atlas_info.get('define_macros',[])
+					if k == 'ATLAS_INFO']+[None])[0]
+	if atlas_version:
+		print "Found ATLAS, version %s" % atlas_version
+		
+	outCFLAGS = ['-I%s' % idir for idir in atlas_info['include_dirs']]
+	outLIBS = ['-L%s' % ldir for ldir in atlas_info['library_dirs']]
+	outLIBS.extend(['-l%s' % lib for lib in atlas_info['libraries']])
+	
+	return outCFLAGS, outLIBS
 
 
 def write_version_info():
@@ -225,7 +221,7 @@ setup(
 	packages = find_packages(), 
 	scripts = glob.glob('scripts/*.py'), 
 	setup_requires = ['numpy>=1.2'], 
-	install_requires = ['pyfits>=3.1', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.5', 'aipy>=0.9.1'], 
+	install_requires = ['pyfits>=3.1', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.5', 'aipy>=0.9.1', 'pytz>=2011k'], 
 	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits/Download'], 
 	include_package_data = True,  
 	ext_package = 'lsl', 

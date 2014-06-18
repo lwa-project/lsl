@@ -49,12 +49,56 @@ class ldp_tests(unittest.TestCase):
 		# Close it out
 		f.close()
 		
+	def test_ldp_tbw_nocheck(self):
+		"""Test the LDP interface for a TBW file."""
+		
+		f = ldp.TBWFile(tbwFile, ignoreTimeTagErrors=True)
+		
+		# File info
+		self.assertEqual(f.getInfo("sampleRate"), 196e6)
+		self.assertEqual(f.getInfo("dataBits"), 12)
+		self.assertEqual(f.getInfo("nFrames"), 8)
+		
+		# Read a frame
+		frame = f.readFrame()
+		
+		# Get the remaining frame count
+		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+		
+		# Reset
+		f.reset()
+		
+		# Close it out
+		f.close()
+		
 	### TBN ###
 	
 	def test_ldp_tbn(self):
 		"""Test the LDP interface for a TBN file."""
 		
 		f = ldp.TBNFile(tbnFile)
+		
+		# File info
+		self.assertEqual(f.getInfo("sampleRate"), 100e3)
+		self.assertEqual(f.getInfo("dataBits"), 8)
+		self.assertEqual(f.getInfo("nFrames"), 29)
+		
+		# Read a frame
+		frame = f.readFrame()
+		
+		# Get the remaining frame count
+		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+		
+		# Reset
+		f.reset()
+		
+		# Close it out
+		f.close()
+		
+	def test_ldp_tbn_nocheck(self):
+		"""Test the LDP interface for a TBN file."""
+		
+		f = ldp.TBNFile(tbnFile, ignoreTimeTagErrors=True)
 		
 		# File info
 		self.assertEqual(f.getInfo("sampleRate"), 100e3)
@@ -97,7 +141,40 @@ class ldp_tests(unittest.TestCase):
 		f.reset()
 		
 		# Read a chunk - short
-		tInt, tStart, data = f.read(0.01)
+		tInt, tStart, data = f.read(0.005)
+		
+		# Reset
+		f.reset()
+		
+		# Read a chunk - long
+		tInt, tStart, data = f.read(1.00)
+		
+		# Close it out
+		f.close()
+		
+	def test_ldp_drx_nocheck(self):
+		"""Test the LDP interface for a DRX file."""
+		
+		f = ldp.DRXFile(drxFile, ignoreTimeTagErrors=True)
+		
+		# File info
+		self.assertEqual(f.getInfo("sampleRate"), 19.6e6)
+		self.assertEqual(f.getInfo("dataBits"), 4)
+		self.assertEqual(f.getInfo("nFrames"), 32)
+		self.assertEqual(f.getInfo("beampols"), 4)
+		
+		# Read a frame
+		frame = f.readFrame()
+		
+		# Get the remaining frame count - the extra -3 here is for the timetag
+		# alignemnt that happens when the drx-test.dat file is made ready.
+		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-3-1)
+		
+		# Reset
+		f.reset()
+		
+		# Read a chunk - short
+		tInt, tStart, data = f.read(0.005)
 		
 		# Reset
 		f.reset()
@@ -114,6 +191,39 @@ class ldp_tests(unittest.TestCase):
 		"""Test the LDP interface for a DR Spectrometer file."""
 		
 		f = ldp.DRSpecFile(drspecFile)
+		
+		# File info
+		self.assertEqual(f.getInfo("sampleRate"), 19.6e6)
+		self.assertEqual(f.getInfo("dataBits"), 32)
+		self.assertEqual(f.getInfo("nFrames"), 7)
+		self.assertEqual(f.getInfo("beampols"), 4)
+		self.assertEqual(f.getInfo("nProducts"), 2)
+		
+		# Read a frame
+		frame = f.readFrame()
+		
+		# Get the remaining frame count
+		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+		
+		# Reset
+		f.reset()
+		
+		# Read a chunk - short
+		tInt, tStart, data = f.read(0.01)
+		
+		# Reset
+		f.reset()
+		
+		# Read a chunk - long
+		tInt, tStart, data = f.read(5.00)
+		
+		# Close it out
+		f.close()
+		
+	def test_ldp_drspec_nocheck(self):
+		"""Test the LDP interface for a DR Spectrometer file."""
+		
+		f = ldp.DRSpecFile(drspecFile, ignoreTimeTagErrors=True)
 		
 		# File info
 		self.assertEqual(f.getInfo("sampleRate"), 19.6e6)

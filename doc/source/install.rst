@@ -11,6 +11,7 @@ Requirements
  * pyfits >= 3.1
  * ephem >= 3.7.5
  * aipy >= 0.9.1
+ * pytz >= 2011k
  * matplotlib >= 0.98.3 [1]_
 
 .. [1] Required for some of the included scripts
