@@ -288,6 +288,15 @@ class Frame(object):
 		
 		return self.data.getCentralFreq(which=which)
 		
+			
+	def getTransformSize(self):
+		"""
+		Find out what the transform size is.
+		"""
+		
+		p = self.getDataProducts()[0]
+		return getattr(self.data, "%s0" % p, None).size
+		
 	def setGain(self, gain):
 		"""
 		Convenience wrapper for the Frame.FrameData.setGain function.
@@ -598,6 +607,5 @@ def getTransformSize(filehandle):
 	frame = readFrame(filehandle)
 	filehandle.seek(cPos)
 	
-	p = frame.getDataProducts()[0]
+	return frame.getTransformSize()
 	
-	return getattr(frame.data, "%s0" % p, None).size

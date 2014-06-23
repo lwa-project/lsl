@@ -356,6 +356,9 @@ class TBNFile(LDPFileBase):
 		# Update the file metadata
 		self._describeFile()
 		
+		# Reset the buffer
+		self.buffer.flush()
+		
 		# Reset the timetag checker
 		self._timetag = None
 		
@@ -690,6 +693,9 @@ class DRXFile(LDPFileBase):
 		# Update the file metadata
 		self._describeFile()
 		
+		# Reset the buffer
+		self.buffer.flush()
+		
 		# Zero out the time tag checker
 		self._timetag = None
 		
@@ -939,7 +945,7 @@ class DRSpecFile(LDPFileBase):
 		
 		# Offset in frames for beampols beam/tuning/pol. sets
 		ioffset = int(round(offset / self.description['tInt']))
-		self.fh.seek(ioffset*FrameSize, 1)
+		self.fh.seek(ioffset*self.description['FrameSize'], 1)
 		
 		# Iterate on the offsets until we reach the right point in the file.  This
 		# is needed to deal with files that start with only one tuning and/or a 

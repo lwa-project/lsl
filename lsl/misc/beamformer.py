@@ -26,13 +26,13 @@ class BeamformingError(Exception):
 	"""
 	Base class for all exceptions in this file.
 	"""
-
+	
 	def __init__(self, strerror, errno='-1'):
 		self.errno = errno
 		self.strerror = strerror
 		self.filename = None
 		self.args = (errno, strerror)
-
+		
 	def __str__(self):
 		return "%s" % self.strerror
 
@@ -43,7 +43,7 @@ def __loadStandResponse(freq=49.0e6):
 	isolated stand.  The stand response is based on NEC4 models at a variety
 	of frequencies within the LWA frequency range.
 	"""
-
+	
 	# Read in the spherical harmonic representation of the beam distributed with
 	# LSL
 	dd = numpy.load(os.path.join(dataPath, 'beam-shape.npz'))
@@ -60,7 +60,7 @@ def __loadStandResponse(freq=49.0e6):
 	beamShapeDict = {}
 	for i in range(deg+1):
 		beamShapeDict[i] = numpy.squeeze(coeffs[-1-i,:])
-
+		
 	# Build the beam object and done
 	return aipy.amp.BeamAlm(numpy.array([freq/1e9]), lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
 
@@ -74,13 +74,13 @@ def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	.. versionchanged:: 0.5.0
 		Changed the computed array center to exclude stands #257 through #260
 	"""
-
+	
 	# Make sure the pointing coordinates make sense
 	if elevation < 0 or elevation > 90:
 		raise BeamformingError("Pointing elevation (%.2f deg) is out of range [0, 90]" % elevation)
 	if azimuth < 0 or azimuth > 360:
 		raise BeamformingError("Pointing azimuth (%.2f deg) is out of range [0, 360]" % azimuth)
-
+		
 	# Get the positions of the stands and compute the mean center of the array
 	xyz = numpy.zeros((len(antennas),3))
 	i = 0
@@ -93,29 +93,29 @@ def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 		xyz[i,1] = ant.stand.y
 		xyz[i,2] = ant.stand.z
 		i += 1
-
+		
 	arrayX = xyz[good,0].mean()
 	arrayY = xyz[good,1].mean()
 	arrayZ = xyz[good,2].mean()
-
+	
 	# Build up a unit vector that points in the direction azimuth,elevation
 	rAz = azimuth*numpy.pi/180.0
 	rEl = elevation*numpy.pi/180.0
 	source = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
 						numpy.cos(rEl)*numpy.cos(rAz), 
 						numpy.sin(rEl)])
-
+						
 	# Compute the stand positions relative to the average and loop over stands
 	# to compute the time delays in seconds
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
 	delays = numpy.zeros((len(antennas),))
 	for i in list(range(len(antennas))):
 		delays[i] = numpy.dot(source, arrayXYZ[i,:]) / c
-
+		
 	# Get the cable delays for each stand and add that in as well
 	for i in list(range(len(antennas))):
 		delays[i] = antennas[i].cable.delay(freq) - delays[i]
-
+		
 	# Done
 	return delays
 
@@ -127,7 +127,7 @@ def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, freq=49e6, azimuth=0
 	delay and sum the data stream into one beam.  The delays applied are 
 	integer sample delays.  Return a 1-D numpy array of the time series data 
 	associated with the formed beam.
-
+	
 	.. note:
 		This task is primarily intended for use with TBW data.  The time resolution of
 		TBN data, even at the highest bandwidth, has an integer sample delay of zero
@@ -149,16 +149,16 @@ def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, freq=49e6, azimuth=0
 		:mod:`lsl.common.stations` module instead of a list of stand ID
 		numbers.
 	"""
-
+	
 	# Get the stand delays and convert the delay times from seconds to samples
 	delays = calcDelay(antennas, freq=freq, azimuth=azimuth, elevation=elevation)
 	delays = numpy.round(delays*sampleRate).astype(numpy.int16)
-
+	
 	# Figure out the polarizations
 	pols = numpy.array([ant.pol for ant in antennas])
 	pol0 = numpy.where( pols == 0 )[0]
 	pol1 = numpy.where( pols == 1 )[0]
-
+	
 	# Make the delays into something meaningful for the shifting of the data 
 	# streams
 	delays -= delays.min()
@@ -172,7 +172,7 @@ def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, freq=49e6, azimuth=0
 		start = delays[s]
 		stop = data.shape[1] - delays.max() + start
 		output[p,:] += data[s,start:stop]
-
+		
 	# Check for empty polarization data.  Always return a 2-D array for the data
 	if len(pol0) == 0:
 		output = output[1,:]
@@ -182,7 +182,7 @@ def intDelayAndSum(antennas, data, sampleRate=dp_common.fS, freq=49e6, azimuth=0
 		output.shape = (1,) + output.shape
 	else:
 		pass
-
+		
 	# Done
 	return output
 
@@ -192,30 +192,30 @@ def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamShape
 	Worker function for intBeamShape that 'beep's (makes a simulated signals) and
 	'sweep's (delays it appropriately).
 	"""
-
+	
 	# Convert from degrees to radian
 	rAz = azimuth*numpy.pi/180.0
 	rEl = elevation*numpy.pi/180.0
-
+	
 	# Unit vector for the currect on-sky location
 	currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
 						numpy.cos(rEl)*numpy.cos(rAz), 
 						numpy.sin(rEl)])
 	# Stand response in this direction
 	currResponse = beamShape
-
+	
 	# Loop over stands to build the simulated singnals
 	signals = numpy.zeros((len(antennas), len(t)))
 	for i in list(range(len(antennas))):
 		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
 		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
-
+		
 	# Beamform with delay-and-sum and store the RMS result
 	beamHere = intDelayAndSum(antennas, signals, sampleRate=sampleRate, freq=freq, azimuth=direction[0], elevation=direction[1])
 	
 	# Reduce the array dimensions
 	beamHere = beamHere[0,:]
-
+	
 	# Return
 	sigHere = (beamHere**2).mean()
 	return sigHere
@@ -236,11 +236,11 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 		Allowed for multiple polarization data to be delayed-and-summed correctly 
 		and insured that a 2-D array is always returned (pol(s) by samples)
 	"""
-
+	
 	# Get the stand delays and convert the delay times from seconds to samples
 	delays = calcDelay(antennas, freq=freq, azimuth=azimuth, elevation=elevation)
 	delays = numpy.round(delays*sampleRate).astype(numpy.int16)
-
+	
 	# Build up a base time array, load in the cable delays, and get the stand 
 	# positions for geometric delay calculations.
 	t = numpy.arange(0,1500)/sampleRate
@@ -255,15 +255,15 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 		xyz[i,1] = ant.stand.y
 		xyz[i,2] = ant.stand.z
 		i += 1
-
+		
 	arrayX = xyz[good,0].mean()
 	arrayY = xyz[good,1].mean()
 	arrayZ = xyz[good,2].mean()
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
-
+	
 	# Load in the response of a single isolated stand
 	standBeam = __loadStandResponse(freq)
-
+	
 	# The multiprocessing module allows for the creation of worker pools to help speed
 	# things along.  If the processing module is found, use it.  Otherwise, set
 	# the 'usePool' variable to false and run single threaded.
@@ -276,16 +276,16 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 		# taskList array to hold tuples of baseline ('count') and workers.
 		taskPool = Pool(processes=cpu_count())
 		taskList = []
-
+		
 		usePool = True
 		progress = False
 	except ImportError:
 		usePool = False
-
+		
 	# Turn off the thread pool if we are explicitly told not to use it.
 	if DisablePool:
 		usePool = False
-
+		
 	# Build up the beam shape over all azimuths and elevations
 	beamShape =  numpy.zeros((360,90))
 	for az in list(range(360)):
@@ -293,14 +293,14 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 		for el in list(range(90)):
 			rEl = el*numpy.pi/180.0
 			beamShape[az,el] = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
-
+			
 	# Build the output array and loop over all azimuths and elevations
 	output = numpy.zeros((360,90))
 	for az in list(range(360)):
 		rAz = az*numpy.pi/180.0
 		for el in list(range(90)):
 			rEl = el*numpy.pi/180.0
-
+			
 			# Display the progress meter if the `progress' keyword is set to True.  The
 			# progress meter displays a `.' every 2% complete and the percentages every
 			# 10%.  At 100%, `Done' is displayed.
@@ -315,28 +315,28 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 				else:
 					pass
 				sys.stdout.flush()
-
+				
 			if usePool:
 				task = taskPool.apply_async(__intBeepAndSweep, args=(antennas, arrayXYZ, t, freq, az, el), kwds={'beamShape': beamShape[az,el], 'sampleRate': sampleRate, 'direction': (azimuth, elevation)})
 				taskList.append((az,el,task))
 			else:
 				output[az,el] = __intBeepAndSweep(antennas, arrayXYZ, t, freq, az, el, beamShape=beamShape[az,el], sampleRate=sampleRate, direction=(azimuth, elevation))
-
+				
 	# If pooling... Close the pool so that it knows that no ones else is joining.
 	# Then, join the workers together and wait on the last one to finish before
 	# saving the results.
 	if usePool:
 		taskPool.close()
 		taskPool.join()
-
+		
 		# This is where he taskList list comes in handy.  We now know who did what
 		# when we unpack the various results
 		for az,el,task in taskList:
 			output[az,el] = task.get()
-
+			
 		# Destroy the taskPool
 		del(taskPool)
-
+		
 	# Done
 	return output
 
@@ -354,10 +354,10 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 		"Bad" antennas (those with antenna.getStatus() != 33) are automatically
 		excluded from the beam.
 	"""
-
+	
 	# Get the stand delays in seconds
 	delays = calcDelay(antennas, freq=CentralFreq, azimuth=azimuth, elevation=elevation)
-
+	
 	# Make the delays into something meaningful for the shifting of the data 
 	# streams.  Then, get the beamforming coefficients (b^l_n (a la Steve's 
 	# "Fun with TBN" memo).
@@ -376,7 +376,7 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 			continue
 			
 		output[p,:] += data[s,:]*b
-
+		
 	# Check for empty polarization data.  Always return a 3-D array for the data
 	if len(pol0) == 0:
 		output = output[1,:]
@@ -386,7 +386,7 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 		output.shape = (1,) + output.shape
 	else:
 		pass
-
+		
 	# Done
 	return output
 
@@ -396,7 +396,7 @@ def __phaseBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamSha
 	Worker function for phaseBeamShape that 'beep's (makes a simulated signals) and
 	'sweep's (phases it appropriately).
 	"""
-
+	
 	# Convert from degrees to radian
 	rAz = azimuth*numpy.pi/180.0
 	rEl = elevation*numpy.pi/180.0
@@ -407,17 +407,17 @@ def __phaseBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamSha
 					numpy.sin(rEl)])
 	# Stand response in this direction
 	currResponse = beamShape
-
+	
 	# Loop over stands to build the simulated signals
 	signals = numpy.zeros((len(antennas), len(t)))
 	for i in list(range(len(antennas))):
 		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
 		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
-
+		
 	# Beamform with delay-and-sum and store the RMS result
 	beam = phaseAndSum(antennas, signals, sampleRate=sampleRate, CentralFreq=freq, 
 						azimuth=direction[0], elevation=direction[1])
-	
+						
 	# Return
 	sigHere = (numpy.abs(beam)**2).mean()
 	return sigHere
@@ -434,11 +434,11 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 		:mod:`lsl.common.stations` module instead of a list of stand ID
 		numbers.
 	"""
-
+	
 	# Get the stand delays and convert the delay times from seconds to samples
 	delays = calcDelay(antennas, freq=CentralFreq, azimuth=azimuth, elevation=elevation)
 	delays = numpy.round(delays*sampleRate).astype(numpy.int16)
-
+	
 	# Build up a base time array, load in the cable delays, and get the stand 
 	# positions for geometric delay calculations.
 	t = numpy.arange(0,1500)/sampleRate
@@ -448,17 +448,17 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 	for ant in antennas:
 		if ant.stand.id <= 256:
 			good.append(i)
-		
+			
 		xyz[i,0] = ant.stand.x
 		xyz[i,1] = ant.stand.y
 		xyz[i,2] = ant.stand.z
 		i += 1
-
+		
 	arrayX = xyz[good,0].mean()
 	arrayY = xyz[good,1].mean()
 	arrayZ = xyz[good,2].mean()
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
-
+	
 	# Load in the response of a single isolated stand
 	standBeam = __loadStandResponse(freq=CentralFreq)
 	
@@ -474,12 +474,12 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 		# taskList array to hold tuples of baseline ('count') and workers.
 		taskPool = Pool(processes=cpu_count())
 		taskList = []
-
+		
 		usePool = True
 		progress = False
 	except ImportError:
 		usePool = False
-
+		
 	# Turn off the thread pool if we are explicitly told not to use it.
 	if DisablePool:
 		usePool = False
@@ -491,14 +491,14 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 		for el in list(range(90)):
 			rEl = el*numpy.pi/180.0
 			beamShape[az,el] = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
-
+			
 	# Build the output array and loop over all azimuths and elevations
 	output = numpy.zeros((360,90))
 	for az in list(range(360)):
 		rAz = az*numpy.pi/180.0
 		for el in list(range(90)):
 			rEl = el*numpy.pi/180.0
-
+			
 			# Display the progress meter if the `progress' keyword is set to True.  The
 			# progress meter displays a `.' every 2% complete and the percentages every
 			# 10%.  At 100%, `Done' is displayed.
@@ -526,12 +526,12 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 	if usePool:
 		taskPool.close()
 		taskPool.join()
-
+		
 		# This is where he taskList list comes in handy.  We now know who did what
 		# when we unpack the various results
 		for az,el,task in taskList:
 			output[az,el] = task.get()
-
+			
 		# Destroy the taskPool
 		del(taskPool)
 		
@@ -539,18 +539,26 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 	return output
 
 
-def circularize(x, y):
+def circularize(x, y, iauConvention=True):
 	"""
 	Given a 1-D Numpy array of X polarization timeseries data and Y 
 	polarization timeseries data, generate the two circular polarization.
 	Returns a two-element tuple of L and R.
-
+	
+	.. versionchanged:: 1.0.1
+		Added the 'iauConvention' keyword to help define the convention 
+		of positive Stokes V.  V = RCP - LCP.
+		
 	.. versionadded:: 1.0.0
 	"""
-
+	
+	lrSign = 1.0
+	if not iauConvention:
+		lrSign = -1.0
+		
 	# Compute the circular terms
-	l = (x + j*y) / numpy.sqrt(2)
-	r = (x - j*y) / numpy.sqrt(2)
-
+	l = (x + lrSign*j*y) / numpy.sqrt(2)
+	r = (x - lrSignj*y) / numpy.sqrt(2)
+	
 	# Done
 	return l, r

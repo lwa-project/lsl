@@ -30,6 +30,7 @@
   * Small bugfix to the lsl.writer.tsfits module with regards to processing DRX frames
   * Cleaned up the setup.py script to uses NumPy's internal facilities to identify ATLAS
   * Updated the list of dependencies to include pytz
+  * Added the 'iauConvention' keyword to the lsl.misc.beamformer.circularize() function
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)

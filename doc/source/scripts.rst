@@ -171,15 +171,6 @@ readTBN.py
 
   :Options: None
 
-readTBN_buffered.py
-  :Description: Example script for reading in TBW data and writing it to a TSFITS file.
-                This version differs from the regular readTBN script in that it uses a frame
-                buffer to reorder out-of-order packets and dropped frames.
-
-  :Usage: readTBN_buffered.py file
-
-  :Options: None
-
 readDRX.py
   :Description: Example script for reading in DRX data and writing it to a SD-FITS file.
 
@@ -288,6 +279,26 @@ drxSpectra.py
             -l, --fft-length            Set FFT length (default = 4096)
 
             -d, --disable-chunks        Display plotting chunks in addition to the global average
+
+            -o, --output                Output file name for spectra image
+
+drSpecSpectra.py
+  :Description: Given a DR spectrometer file, plot the time averaged spectra for each beam output.
+
+  :Usage: drSpecSpectra.py [OPTIONS] file
+
+  :Options: -h, --help                  Display this help information
+            
+            -s, --skip                  Skip the specified number of seconds at the beginning
+                                        of the file (default = 0)
+
+            -a, --average               Number of seconds of data to average for spectra 
+                                        (default = 10)
+
+            -q, --quiet                 Run drSpecSpectra in silent mode
+
+            -d, --disable-chunks        Display plotting chunks in addition to the global 
+                                        average
 
             -o, --output                Output file name for spectra image
 

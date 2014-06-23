@@ -190,14 +190,21 @@ class Frame(object):
 			self.data = data
 			
 		self.valid = True
-
+		
+	def isTBN(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeader.isTBN function.
+		"""
+		
+		return self.header.isTBN()
+		
 	def parseID(self):
 		"""
 		Convenience wrapper for the Frame.FrameHeader.parseID function.
 		"""
 		
 		return self.header.parseID()
-
+		
 	def getTime(self):
 		"""
 		Convenience wrapper for the Frame.FrameData.getTime function.

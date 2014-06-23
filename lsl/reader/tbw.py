@@ -145,7 +145,14 @@ class Frame(object):
 			self.data = data
 			
 		self.valid = True
-
+		
+	def isTBW(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeader.isTBW function.
+		"""
+		
+		return self.header.isTBW()
+		
 	def parseID(self):
 		"""
 		Convenience wrapper for the Frame.FrameHeader.parseID 
