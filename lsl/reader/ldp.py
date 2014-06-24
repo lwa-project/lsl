@@ -1135,13 +1135,13 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		
 	# Otherwise, build and return the correct LDPFileBase sub-class
 	if mode == drx:
-		ldpInstance = DRXFile(filename)
+		ldpInstance = DRXFile(filename, ignoreTimeTagErrors=ignoreTimeTagErrors)
 	elif mode == tbn:
-		ldpInstance = TBNFile(filename)
+		ldpInstance = TBNFile(filename, ignoreTimeTagErrors=ignoreTimeTagErrors)
 	elif mode == tbw:
-		ldpInstance = TBWFile(filename)
+		ldpInstance = TBWFile(filename, ignoreTimeTagErrors=ignoreTimeTagErrors)
 	else:
-		ldpInstance = DRSpecFile(filename)
+		ldpInstance = DRSpecFile(filename, ignoreTimeTagErrors=ignoreTimeTagErrors)
 		
 	# Done
 	return ldpInstance
