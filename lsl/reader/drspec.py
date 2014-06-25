@@ -21,12 +21,18 @@ handle as an input and returns a fully-filled Frame object
 For describing the format of data in the file, three function are provided:
   * getSampleRate - get the sample rate in the file
   * getFrameSize - get the total (header + data) frame size
+  * getFFTsPerIntegration - get the number of FFT windows per integration
   * getTransformSize - get the FFT length
+  * getIntegrationTime - get the integration time
 
 .. note::
 	This reader works with the most current version of the DR spectrometer data
 	format as specified in the version 1.7.  To read data created with previous
 	versions of the DR spectrometer, use LSL version 0.5.2.
+	
+.. versionchanged:: 1.0.1
+	Added in new functions to help better describe the contents of a DR 
+	spectrometer file.
 """
 
 import copy
@@ -39,10 +45,11 @@ from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
 from errors import *
 
-__version__ = '0.2'
+__version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getDataProducts', 'containsLinearData', 'containsStokesData', 
-		 'getSampleRate', 'getFrameSize', 'getTransformSize', 'filterCodes', '__version__', '__revision__', '__all__']
+		 'getSampleRate', 'getFrameSize', 'getFFTsPerIntegration', 'getTransformSize', 'getIntegrationTime', 'filterCodes', 
+		 '__version__', '__revision__', '__all__']
 
 # List of filter codes and their corresponding sample rates in Hz.  
 # .. note::
@@ -147,8 +154,17 @@ class FrameHeader(object):
 		sampleCodes = {}
 		for key,value in filterCodes.iteritems():
 			sampleCodes[value] = key
-
+			
 		return sampleCodes[self.getSampleRate()]
+		
+	def getFFTsPerIntegration(self):
+		"""
+		Return the number of FFT windows per integration.
+		
+		.. versionadded:: 1.0.1
+		"""
+		
+		return self.nInts
 
 
 class FrameData(object):
@@ -164,7 +180,7 @@ class FrameData(object):
 		to account for the fact that spectrometer files can store either linear or Stokes
 		data.
 	"""
-
+	
 	def __init__(self, timeTag=None, tuningWords=None, fills=None, errors=None, saturations=None):
 		self.timeTag = timeTag
 		if tuningWords is None:
@@ -188,7 +204,7 @@ class FrameData(object):
 		"""
 		Function to set the central frequency of the DRX data in Hz.
 		"""
-
+		
 		if which is None:
 			return [dp_common.fS * i / 2**32 for i in self.tuningWords]
 		elif which == 1:
@@ -210,7 +226,7 @@ class Frame(object):
 		than one primary input, i.e., XY* or I, the minimum fill of X and Y are used 
 		for normalization.
 	"""
-
+	
 	def __init__(self, header=None, data=None):
 		if header is None:
 			self.header = FrameHeader()
@@ -271,6 +287,16 @@ class Frame(object):
 		
 		return self.header.getFilterCode()
 		
+	def getFFTsPerIntegration(self):
+		"""
+		Conveinence wrapper for the Frame.FrameHeader.getFFTsPerIntegration 
+		function.
+		
+		.. versionadded:: 1.0.1
+		"""
+		
+		return self.header.getFFTsPerIntegration()
+		
 	def getTime(self):
 		"""
 		Function to convert the time tag from samples since the UNIX epoch
@@ -288,14 +314,28 @@ class Frame(object):
 		
 		return self.data.getCentralFreq(which=which)
 		
-			
 	def getTransformSize(self):
 		"""
 		Find out what the transform size is.
+		
+		.. versionadded:: 1.0.1
 		"""
 		
 		p = self.getDataProducts()[0]
 		return getattr(self.data, "%s0" % p, None).size
+		
+	def getIntegrationTime(self):
+		"""
+		Return the integration time for data in seconds.
+		
+		.. versionadded:: 1.0.1
+		"""
+		
+		LFFT = self.getTransformSize()
+		srate = self.getSampleRate()
+		nInts = self.getFFTsPerIntegration()
+		
+		return nInts*LFFT/srate
 		
 	def setGain(self, gain):
 		"""
@@ -499,10 +539,10 @@ def readFrame(filehandle, Gain=None, Verbose=False):
 		raise syncError
 	except geofError:
 		raise eofError
-	
+		
 	if Gain is not None:
 		newFrame.setGain(Gain)
-
+		
 	return newFrame
 
 
@@ -513,7 +553,7 @@ def getDataProducts(filehandle):
 	
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-
+	
 	# Read in one frame
 	newFrame = readFrame(filehandle)
 	
@@ -531,7 +571,7 @@ def containsLinearData(filehandle):
 	
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-
+	
 	# Read in one frame
 	newFrame = readFrame(filehandle)
 	
@@ -549,7 +589,7 @@ def containsStokesData(filehandle):
 	
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-
+	
 	# Read in one frame
 	newFrame = readFrame(filehandle)
 	
@@ -566,16 +606,16 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 	By default, the rate in Hz is returned.  However, the corresponding filter 
 	code can be returned instead by setting the FilterCode keyword to true.
 	"""
-
+	
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
-
+	
 	# Read in one frame
 	newFrame = readFrame(filehandle)
 	
 	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
-
+	
 	if not FilterCode:
 		return newFrame.getSampleRate()
 	else:
@@ -584,8 +624,8 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 def getFrameSize(filehandle):
 	"""
-	Find out what the frame size in a file is at the current file location.  Returns 
-	the frame size in bytes.
+	Find out what the frame size in a file is at the current file location.
+	Returns the frame size in bytes.
 	"""
 	
 	cPos = filehandle.tell()
@@ -598,9 +638,25 @@ def getFrameSize(filehandle):
 	return FrameSize
 
 
+def getFFTsPerIntegration(filehandle):
+	"""
+	Find out what the number of FFT windows per integration is at the 
+	current file location.
+	
+	.. versionadded:: 1.0.1
+	"""
+	
+	cPos = filehandle.tell()
+	frame = readFrame(filehandle)
+	filehandle.seek(cPos)
+	
+	return frame.getFFTsPerIntegration()
+
+
 def getTransformSize(filehandle):
 	"""
-	Find out what the transform size in a file is at the current file location.  
+	Find out what the transform size in a file is at the current file 
+	location.  
 	"""
 	
 	cPos = filehandle.tell()
@@ -608,4 +664,15 @@ def getTransformSize(filehandle):
 	filehandle.seek(cPos)
 	
 	return frame.getTransformSize()
+
+
+def getIntegrationTime(filehandle):
+	"""
+	Find out what the integration time is at the current file location.
+	"""
 	
+	cPos = filehandle.tell()
+	frame = readFrame(filehandle)
+	filehandle.seek(cPos)
+	
+	return frame.getIntegrationTime()
