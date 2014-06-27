@@ -149,7 +149,32 @@ class TBWFile(LDPFileBase):
 				
 		# Jump over any TBN data in the file
 		while not junkFrame.header.isTBW():
-			junkFrame = tbw.readFrame(self.fh)
+			try:
+				junkFrame = tbw.readFrame(self.fh)
+			except errors.syncError:
+				## If we reached this then we are probably in an old TBW file that has
+				## a bunch of TBN frames at the beginning.  We need to seek backwards,
+				## realign on the sync word, and read forwards again.
+				
+				## Jump back a TBW frame
+				self.fh.seek(-tbw.FrameSize, 1)
+				
+				## Find the sync word again
+				while True:
+					try:
+						junkFrame = tbn.readFrame(self.fh)
+						break
+					except errors.syncError:
+						self.fh.seek(-tbn.FrameSize+1, 1)
+						
+				## Find the end of the TBN data
+				while True:
+					try:
+						junkFrame = tbn.readFrame(self.fh)
+					except errors.syncError:
+						break
+				self.fh.seek(-2*tbn.FrameSize, 1)
+				junkFrame = tbw.readFrame(self.fh)
 		self.fh.seek(-tbw.FrameSize, 1)
 		
 		return True
@@ -1127,6 +1152,59 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		## Did we read more than one valid frame?
 		if foundMode:
 			break
+			
+	# There is an ambiguity that can arise for TBW data such that it *looks* 
+	# like TBN.  If the identified mode is TBN, skip halfway into the file and 
+	# veryfiy that it is still TBN.
+	if mode == tbn:
+		## Sort out the frame size
+		mfs = mode.FrameSize
+		
+		## Seek half-way in
+		nFrames = os.path.getsize(filename)/mfs
+		fh.seek(nFrames/2*mfs)
+		
+		## Read a bit of data to try to find the right type
+		for mode in (tbn, tbw):
+			### Set if we find a valid frame marker
+			foundMatch = False
+			### Set if we can read more than one valid successfully
+			foundMode = False
+			
+			### Sort out the frame size.
+			mfs = mode.FrameSize
+			
+			### Loop over the frame size to try and find what looks like valid data.  If
+			### is is found, set 'foundMatch' to True.
+			for i in xrange(mfs):
+				try:
+					junkFrame = mode.readFrame(fh)
+					foundMatch = True
+					break
+				except errors.syncError:
+					fh.seek(-mfs+1, 1)
+					
+			### Did we strike upon a valid frame?
+			if foundMatch:
+				#### Is so, we now need to try and read more frames to make sure we have 
+				#### the correct type of file
+				fh.seek(-mfs, 1)
+				
+				try:
+					for i in xrange(4):
+						junkFrame = mode.readFrame(fh)
+					foundMode = True
+				except errors.syncError:
+					#### Reset for the next mode...
+					fh.seek(nFrames/2*mfs)
+			else:
+				#### Reset for the next mode...
+				fh.seek(nFrames/2*mfs)
+				
+			### Did we read more than one valid frame?
+			if foundMode:
+				break
+				
 	fh.close()
 	
 	# Raise an error if nothing is found
