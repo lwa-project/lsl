@@ -418,8 +418,8 @@ class Antenna(object):
 			
 	def response(self, dB=False):
 		"""
-		Return a two-element tuple (freq in Hz, mis-match loss) for a model LWA1 
-		antenna.
+		Return a two-element tuple (freq in Hz, mis-match efficiency) for a model LWA1 
+		antenna from Hicks et al. (2012, PASP, 124, 1090).
 		
 		.. versionadded:: 1.0.0
 		"""
@@ -566,6 +566,28 @@ class FEE(object):
 			return -1
 		else:
 			return 0
+			
+	def response(self, dB=False):
+		"""
+		Return a two-element tuple (freq in Hz, gain) for the frequency-
+		dependent gain for a v1.7 FEE from LWA Memo #190, FEE0010, 
+		Figure 3.
+		
+		.. versionadded:: 1.0.1
+		"""
+		
+		# Find the filename to use
+		filename = os.path.join(dataPath, 'fee.txt')
+		
+		# Read in the data
+		data = numpy.loadtxt(filename)
+		freq = data[:,0]*1e6
+		gai = data[:,3]
+		if not dB:
+			gai = from_dB(gain)
+			
+		# Return
+		return (freq, gai)
 
 
 class Cable(object):
@@ -642,7 +664,7 @@ class Cable(object):
 			return totlDelay*1e9
 		else:
 			return totlDelay
-
+			
 	def attenuation(self, frequency=49e6, dB=False):
 		"""Get the multiplicative factor needed to correct for the cable 
 		loss for a specific frequency (in Hz).  If attenuations for more 
@@ -677,6 +699,24 @@ class Cable(object):
 			gai = to_dB(gai)
 			
 		return gai
+		
+	def response(self, dB=False):
+		"""
+		Return a two-element tuple (freq in Hz, attenuation) for the cable
+		using the model from LWA Memo #170.
+		
+		.. versionadded:: 1.0.1
+		"""
+		
+		# Generate the frequencies to use
+		freq = numpy.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+		freq = freq*1e6
+		
+		# Compute the attenuation
+		attn = self.attenuation(frequency=freq, dB=dB)
+		
+		# Return
+		return (freq, attn)
 
 
 class ARX(object):
@@ -712,8 +752,9 @@ class ARX(object):
 		
 	def response(self, filter='full', dB=True):
 		"""
-		Return a two-element tuple (freq in Hz, S21 magnitude in dB) for the ARX response for
-		the current board/channel.
+		Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
+		the ARX response for the current board/channel from the "ARX0026" 
+		memo on the "LWA Engineering Documents" wiki.
 		
 		Filter options are:
 		  * 1 or 'full'

@@ -126,7 +126,6 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
 	
 	wallTime = time.time()
 	readT, t, data = idf.read()
-	data = data[toKeep,:]
 	setTime = t
 	refTime = t
 	
@@ -156,7 +155,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
 		
 		# Loop over sub-integrations (set by nSec)
 		for k in xrange(nSec):
-			blList, freq, vis = fxc.FXMaster(data[:,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False, SampleRate=sampleRate, CentralFreq=0.0, Pol=pol, ReturnBaselines=True, GainCorrect=True)
+			blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False, SampleRate=sampleRate, CentralFreq=0.0, Pol=pol, ReturnBaselines=True, GainCorrect=True)
 			
 			toUse = numpy.where( (freq>=5.0e6) & (freq<=93.0e6) )
 			toUse = toUse[0]
@@ -243,6 +242,7 @@ def main(args):
 			if antX.stand.id == antY.stand.id:
 				good.append(antX.digitizer-1)
 				good.append(antY.digitizer-1)
+				break
 				
 	# Report on the valid stands found.  This is a little verbose,
 	# but nice to see.
