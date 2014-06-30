@@ -463,7 +463,7 @@ class TBNFile(LDPFileBase):
 			if not self.ignoreTimeTagErrors:
 				if cTimetag != self._timetag+timetagSkip:
 					actStep = cTimetag - self._timetag
-					raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, t, p, actStep))
+					raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
 			self._timetag = cFrames[0].data.timeTag
 			
 			for cFrame in cFrames:
@@ -488,7 +488,7 @@ class TBNFile(LDPFileBase):
 				if not self.ignoreTimeTagErrors:
 					if cTimetag != self._timetag+timetagSkip:
 						actStep = cTimetag - self._timetag
-						raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, t, p, actStep))
+						raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
 				self._timetag = cFrames[0].data.timeTag
 				
 				for cFrame in cFrames:
