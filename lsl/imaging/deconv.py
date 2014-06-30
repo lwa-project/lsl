@@ -8,127 +8,149 @@ import numpy
 from aipy.img import ImgW
 from aipy.coord import eq2radec, top2azalt
 from aipy.fit import RadioFixedBody
-from scipy.signal import fftconvolve as convolve
-from scipy.signal import convolve2d
+from scipy.signal import fftconvolve as convolve, convolve2d
+
+import pylab
+from matplotlib import pyplot as plt
 
 from lsl.sim import vis as simVis
 from lsl.imaging import utils
 from lsl.common import stations
 from lsl.correlator import uvUtils
 from lsl.astro import deg_to_dms, deg_to_hms
+from lsl.statistics.robust import std as rStd
 from lsl.misc.mathutil import gaussparams, gaussian2d
 
-__version__ = '0.1'
+__version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['estimateBeam', 'deconvolve', '__version__', '__revision__', '__all__']
+__all__ = ['clean', 'cleanSources', 'lsq', '__version__', '__revision__', '__all__']
 
 
-def estimateBeam(aa, HA, dec, MapSize=80, MapRes=0.50, MapWRes=0.10, chan=None, baselines=None, scale=0.0):
-	"""
-	Compute the beam shape for a specified pointing and array configuration.  To 
-	get the scale of the beam and the gridding correct, the MapSize, MapRes, and 
-	MapWRes for the image all need to be specified.
+def _interpolateValues(data, peakX, peakY):
+	x1 = int(peakX)
+	x2 = x1 + 1
+	y1 = int(peakY)
+	y2 = y1 + 1
 	
-	Returns a numpy array of the beam response.
-	"""
-	
-	# Build the point source
-	src = {'pnt': RadioFixedBody(HA*15/180.0*numpy.pi, dec/180.0*numpy.pi, jys=1e3, mfreq=0.050, index=0)}
-	
-	# Simulate the source - the JD value shouldn't matter
-	simDict = simVis.buildSimData(aa, src, jd=2455659.25544, pols=['xx',], baselines=baselines)
-	
-	# Break out what is needed
-	beamImg = utils.buildGriddedImage(simDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, pol='xx', chan=chan)
-	
-	return beamImg.image(center=(MapSize,MapSize))
-
-
-def estimateBeam2(aa, HA, dec, MapSize=80, MapRes=0.50, MapWRes=0.10, chan=None, baselines=None, scale=0.0):
-	"""
-	Compute the beam shape for a specified pointing and array configuration.  To 
-	get the scale of the beam and the gridding correct, the MapSize, MapRes, and 
-	MapWRes for the image all need to be specified.
-	
-	Returns a numpy array of the beam response.
-	"""
-	
-	if chan is None:
-		chan = range( len(aa.get_afreqs()) )
-	freq = aa.get_afreqs().ravel()
-	print freq.shape
-	freq = freq[chan]
+	x = peakX
+	if x < 0:
+		raise IndexError("Invalid x")
+	y = peakY
+	if y < 0:
+		raise IndexError("Invalid y")
 		
-	# Build the point source
-	srcshape = (scale*numpy.pi/180.0, scale*numpy.pi/180.0, 0.0)
-	src = {'pnt': RadioFixedBody(HA*15/180.0*numpy.pi, dec/180.0*numpy.pi, jys=1e3, mfreq=50e6/1e9, index=0, srcshape=srcshape)}
-	
-	# Simulate the source - the JD value shouldn't matter
-	#simDict = simVis.buildSimData(aa, src, jd=2455659.25544, pols=['xx',], baselines=baselines)
-	antennas = []
-	for a in stations.lwa1.getAntennas()[::2]:
-		if a.stand.id in aa.get_stands():
-			antennas.append(a)
-	uvws  = uvUtils.computeUVW(antennas, -HA, dec, freq=freq.mean()*1e9)
-	uvwsZ = uvUtils.computeUVW(antennas, freq=freq.mean()*1e9)
-	simDict = {}
-	simDict['bls'] = {'xx':[]}
-	simDict['uvw'] = {'xx':[]}
-	simDict['vis'] = {'xx':[]}
-	simDict['wgt'] = {'xx':[]}
-	simDict['msk'] = {'xx':[]}
-	print uvws.shape
-	for i in xrange(uvws.shape[0]):
-		simDict['bls']['xx'].append((i,i))
-		simDict['uvw']['xx'].append(uvwsZ[i,:,:])
-		simDict['vis']['xx'].append(numpy.exp(2j*numpy.pi*uvws[i,2,:])*numpy.exp(-2j*numpy.pi*uvwsZ[i,2,:]))
-		simDict['wgt']['xx'].append(numpy.array([1,]))
-		simDict['msk']['xx'].append(numpy.array([0,]))
-	
-	# Break out what is needed
-	beamImg = utils.buildGriddedImage(simDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, pol='xx')
-	
-	im = beamImg.image(center=(MapSize,MapSize))
-	bm = beamImg.bm_image(center=(MapSize,MapSize), term=0)
-	print im.min(), im.mean(), im.max(), im.sum()
-	print bm.min(), bm.mean(), bm.max(), bm.sum()
-	
-	#from matplotlib import pyplot as plt
-	#fig = plt.figure()
-	#ax1 = fig.add_subplot(1, 2, 1)
-	#ax2 = fig.add_subplot(1, 2, 2)
-	#ax1.imshow(im)
-	#ax2.imshow(bm)
-	#plt.show()
-	
-	return beamImg.image(center=(MapSize,MapSize))
+	dataPrime  = data[x1,y1]*(x2-x)*(y2-y)
+	dataPrime += data[x2,y1]*(x-x1)*(y2-y)
+	dataPrime += data[x1,y2]*(x2-x)*(y-y1)
+	dataPrime += data[x2,y2]*(x-x1)*(y-y1)
+	dataPrime /= (x2-x1)*(y2-y1)
+	return dataPrime
 
 
-def deconvolve(aa, dataDict, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, chan=None, gain=0.3, maxIter=150, scales=[0,], verbose=True):
+def _fit2DGaussian(data):
 	"""
-	Given a AIPY antenna array instance and an AIPY ImgW instance filled 
-	with data, return a deconvolved image.  This function uses a CLEAN-like
-	method that computes the array beam for each peak in the flux.  Thus the
-	CLEAN loop becomes:
+	Fit a 2D Gaussian to the provided data.  This function returns a
+	five-element tuple of:
+	  * height
+	  * center - X and Y
+	  * sigma - X and Y
+	"""
+	
+	from scipy.optimize import leastsq
+	
+	def gaussian(height, center_x, center_y, width_x, width_y):
+		"""
+		Returns a gaussian function with the given parameters
+		
+		From:  http://wiki.scipy.org/Cookbook/FittingData
+		"""
+		
+		width_x = float(width_x)
+		width_y = float(width_y)
+		return lambda x,y: height*numpy.exp(
+					-(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
+
+	def moments(data):
+		"""
+		Returns (height, x, y, width_x, width_y) the gaussian parameters 
+		of a 2D distribution by calculating its moments
+		
+		From:  http://wiki.scipy.org/Cookbook/FittingData
+		"""
+		
+		total = data.sum()
+		X, Y = numpy.indices(data.shape)
+		x = (X*data).sum()/total
+		y = (Y*data).sum()/total
+		col = data[:, int(y)]
+		width_x = numpy.sqrt(abs((numpy.arange(col.size)-y)**2*col).sum()/col.sum())
+		row = data[int(x), :]
+		width_y = numpy.sqrt(abs((numpy.arange(row.size)-x)**2*row).sum()/row.sum())
+		height = data.max()
+		return height, x, y, width_x, width_y
+
+	def fitgaussian(data):
+		"""
+		Returns (height, x, y, width_x, width_y) the gaussian parameters 
+		of a 2D distribution found by a fit
+		
+		From:  http://wiki.scipy.org/Cookbook/FittingData
+		"""
+		
+		params = moments(data)
+		errorfunction = lambda p: numpy.ravel(gaussian(*p)(*numpy.indices(data.shape)) -
+								data)
+		p, success = leastsq(errorfunction, params)
+		return p
+		
+	params = fitgaussian(data)
+	fit = gaussian(*params)
+	
+	#pylab.matshow(data, cmap=pylab.cm.gist_earth_r)
+	#pylab.contour(fit(*numpy.indices(data.shape)), cmap=pylab.cm.copper)
+	#pylab.show()
+	
+	return params
+
+
+def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, gain=0.2, maxIter=150, sigma=3.0, verbose=True, plot=False):
+	"""
+	Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
+	instance filled with data, return a deconvolved image.  This function 
+	uses a CLEAN-like method that computes the array beam for each peak in 
+	the flux.  Thus the CLEAN loop becomes:
 	  1.  Find the peak flux in the residual image
 	  2.  Compute the systems response to a point source at that location
 	  3.  Remove the scaled porition of this beam from the residuals
 	  4.  Go to 1.
 	
 	CLEAN tuning parameters:
-	  * gain - CLEAN loop gain (default 0.1)
+	  * gain - CLEAN loop gain (default 0.2)
 	  * maxIter - Maximum number of iteration (default 150)
+	  * sigma - Threshold in sigma to stop cleaning (default 3.0)
 	"""
 	
-	# Get a grid of hour angle and dec values for the image we are working with
-	xyz = aipyImg.get_eq(0.0, aa.lat*numpy.pi/180.0, center=(MapSize,MapSize))
-	HA, dec = eq2radec(xyz)
+	# Sort out the channels to work on
+	if chan is None:
+		chan = range(dataDict['freq'].size)
+		
+	# Get a grid of right ascensions and dec values for the image we are working with
+	xyz = aipyImg.get_eq(0.0, aa.lat, center=(MapSize,MapSize))
+	RA, dec = eq2radec(xyz)
+	RA += aa.sidereal_time()
+	RA %= (2*numpy.pi)
 	top = aipyImg.get_top(center=(MapSize,MapSize))
 	az,alt = top2azalt(top)
 	
-	# Get the actual image out of the ImgW instance
-	img = aipyImg.image(center=(MapSize,MapSize))
+	# Get the list of baselines to generate visibilites for
+	baselines = dataDict['bls'][pol]
 	
+	# Get the actual image out of the ImgW instance
+	if imageInput is None:
+		img = aipyImg.image(center=(MapSize,MapSize))
+	else:
+		img = imageInput*1.0
+		
 	# Setup the arrays to hold the point sources and the residual.
 	cleaned = numpy.zeros_like(img)
 	working = numpy.zeros_like(img)
@@ -137,133 +159,165 @@ def deconvolve(aa, dataDict, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, cha
 	# Setup the dictionary that will hold the beams as they are computed
 	prevBeam = {}
 	
-	beamClean = estimateBeam(aa, 0.0, lat, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, baselines=dataDict['bls']['xx'])
-	beamClean /= beamClean.max()
-	
-	#import pylab
-	#pylab.imshow(beamClean)
-	#pylab.show()
+	# Estimate the zenith beam response
+	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0)}
+	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
+	psf = psf.image(center=(MapSize,MapSize))
+	psf /= psf.max()
 	
 	# Fit a Guassian to the zenith beam response and use that for the restore beam
-	profileX = beamClean[MapSize/2:3*MapSize/2,MapSize]
-	profileY = beamClean[MapSize,MapSize/2:3*MapSize/2]
-	goodX = numpy.where( profileX >= 0.5 )[0]
-	goodY = numpy.where( profileY >= 0.5 )[0]
-	print goodX.max()-goodX.min(), goodY.max()-goodY.min()
-	width = ((goodX.max() - goodX.min()) + (goodY.max() - goodY.min())) / 2.0
-	print 'width', width
+	beamCutout = psf[MapSize/2:3*MapSize/2, MapSize/2:3*MapSize/2]
+	beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+	h, cx, cy, sx, sy = _fit2DGaussian( beamCutout )
+	gauGen = gaussian2d(1.0, MapSize/2+cx, MapSize/2+cy, sx, sy)
+	FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
+	beamClean = psf * 0.0
+	for i in xrange(beamClean.shape[0]):
+		for j in xrange(beamClean.shape[1]):
+			beamClean[i,j] = gauGen(i,j)
+	beamClean /= beamClean.sum()
+	convMask = xyz.mask[0,:,:]
 	
 	# Go!
-	import pylab
-	pylab.ion()
+	if plot:
+		pylab.ion()
+		
+	exitStatus = 'iteration limit'
 	for i in xrange(maxIter):
 		# Find the location of the peak in the flux density
 		peak = numpy.where( working == working.max() )
 		peakX = peak[0][0]
 		peakY = peak[1][0]
 		peakV = working[peakX,peakY]
-		print i, working.max(), peakV
 		
-		# Pixel coordinates to hour angle, dec.
-		##peakHA = (HA[peakX-2:peakX+2,peakY-2:peakY+2]*working[peakX-2:peakX+2,peakY-2:peakY+2]).sum()
-		##peakHA /= working[peakX-2:peakX+2,peakY-2:peakY+2].sum()
-		##peakHA *= 180/numpy.pi / 15.0
-		xStart = peakX - width/2
-		xStop  = peakX + width/2
-		yStart = peakY - width/2
-		yStop  = peakY + width/2
-		peakHA = (HA[xStart:xStop,yStart:yStop]*working[xStart:xStop,yStart:yStop]).sum() / working[xStart:xStop,yStart:yStop].sum() * 180/numpy.pi / 15.0
-		print peakHA
+		# Optimize the location
+		peakParams = _fit2DGaussian(working[peakX-FWHM/2:peakX+FWHM/2+1, peakY-FWHM/2:peakY+FWHM/2+1])
+		peakVO = peakParams[0]
+		peakXO = peakX - FWHM/2 + peakParams[1]
+		peakYO = peakY - FWHM/2 + peakParams[2]
 		
-		peakHA = HA[peakX, peakY] * 180/numpy.pi / 15.0
-		print peakHA
+		# Quantize to try and keep the computation down without over-simplifiying things
+		subpixelationLevel = 5
+		peakXO = round(peakXO*subpixelationLevel)/float(subpixelationLevel)
+		peakYO = round(peakYO*subpixelationLevel)/float(subpixelationLevel)
+		#print 'X', peakX, peakXO
+		#print 'Y', peakY, peakYO
 		
-		#peakDec = (dec[xStart:xStop,yStart:yStop]*working[xStart:xStop,yStart:yStop]).sum() / working[xStart:xStop,yStart:yStop].sum() * 180/numpy.pi
+		# Pixel coordinates to right ascension, dec.
+		try:
+			peakRA = _interpolateValues(RA, peakXO, peakYO)
+		except IndexError:
+			peakRA = RA[peakX, peakY]
+		try:
+			peakDec = _interpolateValues(dec, peakXO, peakYO)
+		except IndexError:
+			peakDec = dec[peakX, peakY]
+		#print 'R', peakRA, RA[peakX, peakY], peakRA - RA[peakX, peakY]
+		#print 'D', peakDec, dec[peakX, peakY], peakDec - dec[peakX, peakY]
 		
-		##peakDec *= 180/numpy.pi
-		peakDec = dec[peakX,peakY] * 180/numpy.pi
-		#print peakDec
-		#peakDec = (dec[xStart:xStop,yStart:yStop]*working[xStart:xStop,yStart:yStop]).sum() / working[xStart:xStop,yStart:yStop].sum() * 180/numpy.pi
-		#print peakDec
-		
+		# Pixel coordinates to az, el
+		try:
+			peakAz = _interpolateValues(az, peakXO, peakYO)
+		except IndexError:
+			peakAz = az[peakX, peakY]
+		try:
+			peakEl = _interpolateValues(alt, peakX, peakY)
+		except IndexError:
+			peakEl = alt[peakX, peakY]
+			
 		if verbose:
-			currHA  = deg_to_hms(peakHA*15.0)
-			currDec = deg_to_dms(peakDec)
+			currRA  = deg_to_hms(peakRA * 180/numpy.pi)
+			currDec = deg_to_dms(peakDec * 180/numpy.pi)
+			currAz  = deg_to_dms(peakAz * 180/numpy.pi)
+			currEl  = deg_to_dms(peakEl * 180/numpy.pi)
 			
 			print "Iteration %i:  Log peak of %.2f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peakX, peakY)
-			print "               -> HA: %s, Dec: %s" % (currHA, currDec)
-			print "               -> %.1f, %.1f" % (az[peakX, peakY]*180/numpy.pi, alt[peakX, peakY]*180/numpy.pi)
-		
+			print "               -> RA: %s, Dec: %s" % (currRA, currDec)
+			print "               -> az: %s, el: %s" % (currAz, currEl)
+			
 		# Check for the exit criteria
 		if peakV < 0:
+			exitStatus = 'peak value is negative'
+			
 			break
 		
 		# Find the beam index and see if we need to compute the beam or not
-		beamIndex = (peakX,peakY)
-		#template = beamClean*1.0
-		#template = numpy.roll(template, -MapSize+peakX, axis=0)
-		#template = numpy.roll(template, -MapSize+peakY, axis=1)
-		#beams = [template,]
+		beamIndex = (int(peakXO*subpixelationLevel), int(peakYO*subpixelationLevel))
 		try:
-			beams = prevBeam[beamIndex]
+			beam = prevBeam[beamIndex]
+			
 		except KeyError:
 			if verbose:
 				print "               -> Computing beam(s)"
 				
-			beams = []
-			for scale in scales:
-				beam = estimateBeam(aa, peakHA, peakDec, 
-								MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, baselines=dataDict['bls']['xx'], scale=scale)
-				beam /= beam.max()
-				print "                  ", scale, beam.mean(), beam.min(), beam.max(), beam.sum()
-				beams.append(beam)
-			prevBeam[beamIndex] = beams
-		
-		# Calculate how much signal needs to be removed...
-		bestScale = 0
-		bestValue = 1e9
-		for scale in xrange(len(scales)):
-			temp = 1.0*working
-			toRemove = gain*peakV*beams[scale]
+			beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0)}
+			beamDict = simVis.buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+			beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
+			beam = beam.image(center=(MapSize,MapSize))
+			beam /= beam.max()
+			print "                  ", beam.mean(), beam.min(), beam.max(), beam.sum()
 			
-			# And then remove it and add it into list of CLEAN components
-			temp -= toRemove
-			value = temp.std()
-			print "-> ", scale, value
-			if value < bestValue:
-				bestScale = scale
-				bestValue = value
+			prevBeam[beamIndex] = beam
+			if verbose:
+				print "               -> Beam cache contains %i entries" % len(prevBeam.keys())
 				
-		print " @ ", bestScale, scales[bestScale], bestValue
-		toRemove = gain*peakV*beams[bestScale]
+		# Calculate how much signal needs to be removed...
+		toRemove = gain*peakV*beam
 		working -= toRemove
-		cleaned[peakX,peakY] += toRemove.sum()
+		asum = 0.0
+		for l in xrange(int(peakXO), int(peakXO)+2):
+			if l > peakXO:
+				side1 = (peakXO+0.5) - (l-0.5)
+			else:
+				side1 = (l+0.5) - (peakXO-0.5)
+				
+			for m in xrange(int(peakYO), int(peakYO)+2):
+				if m > peakYO:
+					side2 = (peakYO+0.5) - (m-0.5)
+				else:
+					side2 = (m+0.5) - (peakYO-0.5)
+					
+				area = side1*side2
+				asum += area
+				#print 'II', l, m, area, asum
+				cleaned[l,m] += gain*area*peakV
+				
+		#print working.min(), working.max(), working.std(), working.max()/working.std(), toRemove.sum()
 		
-		print working.min(), working.max(), working.std(), working.max()/working.std(), toRemove.sum()
-		pylab.imshow(working, origin='lower')
-		pylab.draw()
-		
-		if working.max()/working.std() < 3:
+		if plot:
+			pylab.subplot(2, 2, 1)
+			pylab.imshow(working+toRemove, origin='lower')
+			pylab.title('Before')
+			
+			pylab.subplot(2, 2, 2)
+			pylab.imshow(working, origin='lower')
+			pylab.title('After')
+			
+			pylab.subplot(2, 2, 3)
+			pylab.imshow(toRemove, origin='lower')
+			pylab.title('CLEAN Comps.')
+			
+			pylab.subplot(2, 2, 4)
+			pylab.imshow(convolve(cleaned, beamClean, mode='same'), origin='lower')
+			
+			pylab.draw()
+			
+		if working.max()/working.std() < sigma:
+			exitStatus = 'peak is less than %.3f-sigma' % sigma
+			
 			break
 			
-	# Calculate what the restore beam should look like
-	gauGen = gaussian2d(1.0, MapSize, MapSize, width/numpy.sqrt(8*numpy.log(2)), width/numpy.sqrt(8*numpy.log(2)))
-	beamClean *= 0
-	for i in xrange(beamClean.shape[0]):
-		for j in xrange(beamClean.shape[1]):
-			beamClean[i,j] = gauGen(i,j)
-	beamClean /= beamClean.sum()
+	# Summary
+	print "Exited after %i iteration with status '%s'" % (i+1, exitStatus)
 	
 	# Restore
 	conv = convolve(cleaned, beamClean, mode='same')
-	conv = numpy.ma.array(conv, mask=mask)
-	conv /= conv.max()
-	conv *= (img.sum() - working.sum())
+	conv = numpy.ma.array(conv, mask=convMask)
+	conv *= ((img-working).max() / conv.max())
 	
-	if verbose:
+	if plot:
 		# Make an image for comparison purposes if we are verbose
-		from matplotlib import pyplot as plt
-		
 		fig = plt.figure()
 		ax1 = fig.add_subplot(2, 2, 1)
 		ax2 = fig.add_subplot(2, 2, 2)
@@ -273,211 +327,491 @@ def deconvolve(aa, dataDict, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, cha
 		c = ax1.imshow(img, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(c, ax=ax1)
 		ax1.set_title('Input')
-		#ax1.plot(profileX/profileX.max())
-		#ax1.plot(profileY/profileY.max())
-		#ax1.plot(beamClean[MapSize,MapSize/2:3*MapSize/2]/beamClean.max())
-		print img.sum()
 		
 		d = ax2.imshow(conv, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(d, ax=ax2)
 		ax2.set_title('CLEAN Comps.')
-		print cleaned.sum(), conv.sum()
 		
 		e = ax3.imshow(working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(e, ax=ax3)
 		ax3.set_title('Residuals')
-		print working.sum()
 		
 		f = ax4.imshow(conv + working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
 		fig.colorbar(f, ax=ax4)
 		ax4.set_title('Final')
-		print (conv + working).sum()
 		
 		plt.show()
-	
+		
+	if plot:
+		pylab.ioff()
+		
 	# Return
-	pylab.ioff()
-	return conv + working
+	conv = conv + working
+	return conv
 
 
-def buildSky(aa, jd, MapSize=80, MapRes=0.50, MapWRes=0.10):
-	import aipy
-	import math
-	from lsl import skymap
+def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, gain=0.1, maxIter=150, sigma=2.0, verbose=True, plot=False):
+	"""
+	Given a AIPY antenna array instance, a data dictionary, an AIPY ImgW 
+	instance filled with data, and a dictionary of sources, return the CLEAN
+	components and the residuals map.  This function uses a CLEAN-like method
+	that computes the array beam for each peak in the flux.  Thus the CLEAN 
+	loop becomes: 
+	  1.  Find the peak flux in the residual image
+	  2.  Compute the systems response to a point source at that location
+	  3.  Remove the scaled porition of this beam from the residuals
+	  4.  Go to 1.
+	  
+	This function differs from clean() in that it only cleans localized 
+	regions around each source rather than the whole image.  This is
+	intended to help the mem() function along.
 	
-	f = aa.get_afreqs()*1e9/1e6
-	smap = skymap.SkyMapGSM(freqMHz=f.mean())
-	pmap = skymap.ProjectedSkyMap(smap, aa.lat*180.0/math.pi, aa.long*180.0/math.pi, aa.get_jultime())
+	CLEAN tuning parameters:
+	  * gain - CLEAN loop gain (default 0.1)
+	  * maxIter - Maximum number of iteration (default 150)
+	  * sigma - Threshold in sigma to stop cleaning (default 2.0)
+	"""
 	
-	az  = pmap.visibleAz*math.pi/180.0
-	alt = pmap.visibleAlt*math.pi/180.0
-	pwr = pmap.visiblePower
-	
-	img = aipy.img.ImgW(MapSize, MapRes, MapWRes)
-	iTop = img.get_top(center=(MapSize,MapSize))
-	iAz,iAlt = aipy.coord.top2azalt(iTop)
-	
-	output = numpy.zeros((MapSize*2, MapSize*2))
-	for i in xrange(iAz.shape[0]):
-		for j in xrange(iAlt.shape[1]):
-			if iAlt.mask[i,j]:
-				continue
-				
-			diff = numpy.sqrt( (iAz[i,j]-az)**2 + (iAlt[i,j]-alt)**2 )
-			output[i,j] += pwr[diff.argmin()] * math.sin(iAlt[i,j])**1.5
-			
-	return output
-
-
-def mem(aa, dataDict, aipyImg, MapSize=80, MapRes=0.50, MapWRes=0.10, chan=None, maxIter=150, verbose=True):
-	import aipy
-	
-	image = aipyImg.image(center=(MapSize,MapSize))
-	xyz = aipyImg.get_eq(aa.sidereal_time(), aa.lat, center=(MapSize,MapSize))
+	# Sort out the channels to work on
+	if chan is None:
+		chan = range(dataDict['freq'].size)
+		
+	# Get a grid of right ascensions and dec values for the image we are working with
+	xyz = aipyImg.get_eq(0.0, aa.lat, center=(MapSize,MapSize))
+	RA, dec = eq2radec(xyz)
+	RA += aa.sidereal_time()
+	RA %= (2*numpy.pi)
 	top = aipyImg.get_top(center=(MapSize,MapSize))
-	ra, dec = eq2radec(xyz)
-	az,alt = aipy.coord.top2azalt(top)
+	az,alt = top2azalt(top)
 	
-	baselines = dataDict['bls']['xx']
-	psfSrcs = {'z': aipy.amp.RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0)}
-	simDict = simVis.buildSimData(aa, psfSrcs, jd=aa.get_jultime(), pols=['xx',], baselines=baselines)
-	psf = utils.buildGriddedImage(simDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=[0,], pol='xx')
+	# Get the list of baselines to generate visibilites for
+	baselines = dataDict['bls'][pol]
+	
+	# Get the actual image out of the ImgW instance
+	if imageInput is None:
+		img = aipyImg.image(center=(MapSize,MapSize))
+	else:
+		img = imageInput*1.0
+		
+	# Setup the arrays to hold the point sources and the residual.
+	cleaned = numpy.zeros_like(img)
+	working = numpy.zeros_like(img)
+	working += img
+	
+	# Setup the dictionary that will hold the beams as they are computed
+	prevBeam = {}
+	
+	# Estimate the zenith beam response
+	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0)}
+	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 	psf = psf.image(center=(MapSize,MapSize))
 	psf /= psf.max()
 	
 	# Fit a Guassian to the zenith beam response and use that for the restore beam
-	profileX = psf[MapSize/2:3*MapSize/2,MapSize]
-	profileY = psf[MapSize,MapSize/2:3*MapSize/2]
-	goodX = numpy.where( profileX >= 0.5 )[0]
-	goodY = numpy.where( profileY >= 0.5 )[0]
-	print goodX.max()-goodX.min(), goodY.max()-goodY.min()
-	width = ((goodX.max() - goodX.min()) + (goodY.max() - goodY.min())) / 2.0
-	print 'width', width
+	beamCutout = psf[MapSize/2:3*MapSize/2, MapSize/2:3*MapSize/2]
+	beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+	h, cx, cy, sx, sy = _fit2DGaussian( beamCutout )
+	gauGen = gaussian2d(1.0, MapSize/2+cx, MapSize/2+cy, sx, sy)
+	FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
+	beamClean = psf * 0.0
+	for i in xrange(beamClean.shape[0]):
+		for j in xrange(beamClean.shape[1]):
+			beamClean[i,j] = gauGen(i,j)
+	beamClean /= beamClean.sum()
+	convMask = xyz.mask[0,:,:]
 	
-	# Calculate what the restore beam should look like
-	gauGen = gaussian2d(1.0, MapSize, MapSize, width/numpy.sqrt(8*numpy.log(2)), width/numpy.sqrt(8*numpy.log(2)))
-	psf *= 0
-	for i in xrange(psf.shape[0]):
-		for j in xrange(psf.shape[1]):
-			psf[i,j] = gauGen(i,j)
-	psf /= psf.sum()
-	
-	d_i = image.flatten()
-	q = numpy.sqrt( (psf**2).sum() )
-	minus_two_q = -2*q
-	two_q_sq = 2*q**2
-	
-	#model = buildSky(aa, aa.get_jultime(), MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes)
-	#model *= image.sum() / model.sum()
-	model = numpy.ones(image.shape, dtype=image.dtype)
-	for n,src in simVis.srcs.iteritems():
+	# Go!
+	if plot:
+		pylab.ion()
+		
+	for name in srcs.keys():
+		src = srcs[name]
+		
+		# Make sure the source is up
 		src.compute(aa)
-		if src.alt > 0:
-			print n, src.az, src.alt, src.jys.mean()
-			d = numpy.sqrt( (az-src.az)**2 + (alt-src.alt)**2 )
-			best = numpy.where( d == d.min() )
-			newPSF = numpy.roll(psf, best[0][0]-MapSize, axis=0)
-			newPSF = numpy.roll(newPSF, best[1][0]-MapSize, axis=1)
-			model += src.jys.mean()/1e2 * numpy.sin(src.alt) * newPSF
-	model[numpy.where(ra.mask == 1)] = 0
-	model *= image.mean() / psf.sum()
+		print 'Source: %s @ %s degrees elevation' % (name, src.alt)
+		if src.alt <= 10*numpy.pi/180.0:
+			continue
+			
+		# Locate the approximate position of the source
+		srcDist = (src.ra-RA)**2 + (src.dec-dec)**2
+		srcPeak = numpy.where( srcDist == srcDist.min() )
+		
+		# Define the clean box - this is fixed at 2*FWHM in width on each side
+		rx0 = srcPeak[0][0] - FWHM/2
+		rx1 = rx0 + FWHM + 1
+		ry0 = srcPeak[1][0] - FWHM/2
+		ry1 = ry0 + FWHM + 1
+		#print rx0, rx1, ry0, ry1, '@', FWHM
+		
+		# Define the background box - this lies outside the clean box and serves
+		# as a reference for the background
+		X, Y = numpy.indices(working.shape)
+		R = numpy.sqrt( (X-srcPeak[0][0])**2 + (Y-srcPeak[1][0])**2 )
+		background = numpy.where( (R <= 2*FWHM+3) & (R > 2*FWHM) )
+		
+		px0 = min(background[0])-1
+		px1 = max(background[0])+2
+		py0 = min(background[1])-1
+		py1 = max(background[1])+2
+		
+		exitStatus = 'iteration'
+		for i in xrange(maxIter):
+			# Find the location of the peak in the flux density
+			peak = numpy.where( working[rx0:rx1,ry0:ry1] == working[rx0:rx1,ry0:ry1].max() )
+			peakX = peak[0][0] + rx0
+			peakY = peak[1][0] + ry0
+			peakV = working[peakX,peakY]
+			
+			# Optimize the location
+			try:
+				peakParams = _fit2DGaussian(working[peakX-FWHM/2:peakX+FWHM/2+1, peakY-FWHM/2:peakY+FWHM/2+1])
+			except IndexError:
+				peakParams = [peakV, peakX, peakY]
+			peakVO = peakParams[0]
+			peakXO = peakX - FWHM/2 + peakParams[1]
+			peakYO = peakY - FWHM/2 + peakParams[2]
+			
+			# Quantize to try and keep the computation down without over-simplifiying things
+			subpixelationLevel = 5
+			peakXO = round(peakXO*subpixelationLevel)/float(subpixelationLevel)
+			peakYO = round(peakYO*subpixelationLevel)/float(subpixelationLevel)
+			#print 'X', peakX, peakXO, srcPeak[0][0]
+			#print 'Y', peakY, peakYO, srcPeak[1][0]
+			
+			# Pixel coordinates to right ascension, dec.
+			try:
+				peakRA = _interpolateValues(RA, peakXO, peakYO)
+			except IndexError:
+				peakXO, peakY0 = peakX, peakY
+				peakRA = RA[peakX, peakY]
+			try:
+				peakDec = _interpolateValues(dec, peakXO, peakYO)
+			except IndexError:
+				peakDec = dec[peakX, peakY]
+			#print 'R', peakRA, RA[peakX, peakY], peakRA - RA[peakX, peakY]
+			#print 'D', peakDec, dec[peakX, peakY], peakDec - dec[peakX, peakY]
+			
+			# Pixel coordinates to az, el
+			try:
+				peakAz = _interpolateValues(az, peakXO, peakYO)
+			except IndexError:
+				peakXO, peakYO = peakX, peakY
+				peakAz = az[peakX, peakY]
+			try:
+				peakEl = _interpolateValues(alt, peakX, peakY)
+			except IndexError:
+				peakEl = alt[peakX, peakY]
+				
+			if verbose:
+				currRA  = deg_to_hms(peakRA * 180/numpy.pi)
+				currDec = deg_to_dms(peakDec * 180/numpy.pi)
+				currAz  = deg_to_dms(peakAz * 180/numpy.pi)
+				currEl  = deg_to_dms(peakEl * 180/numpy.pi)
+				
+				print "%s - Iteration %i:  Log peak of %.2f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peakX, peakY)
+				print "               -> RA: %s, Dec: %s" % (currRA, currDec)
+				print "               -> az: %s, el: %s" % (currAz, currEl)
+				
+			# Check for the exit criteria
+			if peakV < 0:
+				exitStatus = 'peak value is negative'
+				
+				break
+			
+			# Find the beam index and see if we need to compute the beam or not
+			beamIndex = (int(peakXO*subpixelationLevel), int(peakYO*subpixelationLevel))
+			try:
+				beam = prevBeam[beamIndex]
+				
+			except KeyError:
+				if verbose:
+					print "               -> Computing beam(s)"
+					
+				beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0)}
+				beamDict = simVis.buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+				beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
+				beam = beam.image(center=(MapSize,MapSize))
+				beam /= beam.max()
+				print "                  ", beam.mean(), beam.min(), beam.max(), beam.sum()
+				
+				prevBeam[beamIndex] = beam
+				if verbose:
+					print "               -> Beam cache contains %i entries" % len(prevBeam.keys())
+					
+			# Calculate how much signal needs to be removed...
+			toRemove = gain*peakV*beam
+			working -= toRemove
+			asum = 0.0
+			for l in xrange(int(peakXO), int(peakXO)+2):
+				if l > peakXO:
+					side1 = (peakXO+0.5) - (l-0.5)
+				else:
+					side1 = (l+0.5) - (peakXO-0.5)
+					
+				for m in xrange(int(peakYO), int(peakYO)+2):
+					if m > peakYO:
+						side2 = (peakYO+0.5) - (m-0.5)
+					else:
+						side2 = (m+0.5) - (peakYO-0.5)
+						
+					area = side1*side2
+					asum += area
+					#print 'II', l, m, area, asum
+					cleaned[l,m] += gain*area*peakV
+					
+			#print 'S1', numpy.max(working[rx0:rx1,ry0:ry1]), numpy.median(working[background]), numpy.std(working[background])
+			#print 'S2', numpy.abs(numpy.max(working[rx0:rx1,ry0:ry1])-numpy.median(working[background]))/rStd(working[background])
+			
+			if plot:
+				try:
+					pylab.subplot(2, 2, 1)
+					pylab.imshow((working+toRemove)[px0:px1,py0:py1], origin='lower', interpolation='nearest')
+					pylab.title('Before')
+					
+					pylab.subplot(2, 2, 2)
+					pylab.imshow(working[px0:px1,py0:py1], origin='lower', interpolation='nearest')
+					pylab.title('After')
+					
+					pylab.subplot(2, 2, 3)
+					pylab.imshow(toRemove[px0:px1,py0:py1], origin='lower', interpolation='nearest')
+					pylab.title('Removed')
+					
+					pylab.subplot(2, 2, 4)
+					pylab.imshow(convolve(cleaned, beamClean, mode='same')[px0:px1,py0:py1], origin='lower', interpolation='nearest')
+					pylab.title('CLEAN Comps.')
+				except:
+					pass
+					
+				try:
+					st.set_text('%s @ %i' % (name, i+1))
+				except NameError:
+					st = pylab.suptitle('%s @ %i' % (name, i+1))
+				pylab.draw()
+				
+			if numpy.abs(numpy.max(working[rx0:rx1,ry0:ry1])-numpy.median(working[background]))/rStd(working[background]) <= sigma:
+				exitStatus = 'peak is less than %.3f-sigma' % sigma
+				
+				break
+				
+		# Summary
+		print "Exited after %i iteration with status '%s'" % (i+1, exitStatus)
+		
+	# Restore
+	conv = convolve(cleaned, beamClean, mode='same')
+	conv = numpy.ma.array(conv, mask=convMask)
+	conv *= ((img-working).max() / conv.max())
 	
-	#import pylab
-	#pylab.imshow(model, origin='lower')
-	#pylab.show()
+	if plot:
+		# Make an image for comparison purposes if we are verbose
+		fig = plt.figure()
+		ax1 = fig.add_subplot(2, 2, 1)
+		ax2 = fig.add_subplot(2, 2, 2)
+		ax3 = fig.add_subplot(2, 2, 3)
+		ax4 = fig.add_subplot(2, 2, 4)
+		
+		c = ax1.imshow(img, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(c, ax=ax1)
+		ax1.set_title('Input')
+		
+		d = ax2.imshow(conv, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(d, ax=ax2)
+		ax2.set_title('CLEAN Comps.')
+		
+		e = ax3.imshow(working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(e, ax=ax3)
+		ax3.set_title('Residuals')
+		
+		f = ax4.imshow(conv + working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(f, ax=ax4)
+		ax4.set_title('Final')
+		
+		plt.show()
+		
+	if plot:
+		pylab.ioff()
+		
+	# Return
+	return conv, working
+
+
+def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, gain=0.2, maxIter=150, verbose=True, plot=False):
+	"""
+	Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
+	instance filled with data, return a deconvolved image.  This function 
+	implements a least squares deconvolution.
 	
-	valid = numpy.where( ra.mask.flatten() == 0 )[0]
-	valid2 = numpy.where( ra.mask == 0 )
-	print 'V', valid.shape
+	Least squares tuning parameters:
+	  * gain - least squares loop gain (default 0.2)
+	  * maxIter - Maximum number of iteration (default 150)
+	"""
 	
-	var0 = 0
-	Nvar0 = d_i.size * var0
-	m_i = model.flatten()
-	print 'I', model.shape, m_i.shape, image.shape
-	def next_step(b_i, alpha, verbose=True):
-		b_i.shape = image.shape
+	# Sort out the channels to work on
+	if chan is None:
+		chan = range(dataDict['freq'].size)
+		
+	# Get a grid of right ascensions and dec values for the image we are working with
+	xyz = aipyImg.get_eq(aa.sidereal_time(), aa.lat, center=(MapSize,MapSize))
+	top = aipyImg.get_top(center=(MapSize,MapSize))
+	ra, dec = eq2radec(xyz)
+	
+	# Get the list of baselines to generate visibilites for
+	baselines = dataDict['bls'][pol]
+	
+	# Estimate the zenith beam response
+	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0)}
+	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
+	psf = psf.image(center=(MapSize,MapSize))
+	psf /= psf.max()
+	
+	# Fit a Guassian to the zenith beam response and use that for the restore beam
+	beamCutout = psf[MapSize/2:3*MapSize/2, MapSize/2:3*MapSize/2]
+	beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+	h, cx, cy, sx, sy = _fit2DGaussian( beamCutout )
+	gauGen = gaussian2d(1.0, MapSize/2+cx, MapSize/2+cy, sx, sy)
+	FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
+	beamClean = psf * 0.0
+	for i in xrange(beamClean.shape[0]):
+		for j in xrange(beamClean.shape[1]):
+			beamClean[i,j] = gauGen(i,j)
+	beamClean /= beamClean.sum()
+	convMask = xyz.mask[0,:,:]
+	
+	# Get the actual image out of the ImgW instance
+	if imageInput is None:
+		img = aipyImg.image(center=(MapSize,MapSize))
+	else:
+		img = imageInput*1.0
+		
+	# Build the initial model
+	mdl = img*40
+	mdl[numpy.where(mdl < 0)] = 0
+	mdl[numpy.where(ra.mask == 1)] = 0
+	
+	# Go!
+	if plot:
+		pylab.ion()
+		
+	rChan = [chan[0], chan[-1]]
+	diff = img - mdl
+	diffScaled = diff/gain
+	oldRMS = diff.std()
+	rHist = []
+	exitStatus = 'iteration'
+	for k in xrange(maxIter):
+		## Update the model image but don't allow negative flux
+		mdl += diffScaled * gain
+		mdl[numpy.where( mdl <= 0 )] = 0.0
+		
+		## Convert the model image to an ensemble of point sources for forward 
+		## modeling
 		bSrcs = {}
-		for i in xrange(b_i.shape[0]):
-			for j in xrange(b_i.shape[1]):
+		for i in xrange(mdl.shape[0]):
+			for j in xrange(mdl.shape[1]):
 				if dec.mask[i,j]:
 					continue
+				if mdl[i,j] <= 0:
+					continue
+					
 				nm = '%i-%i' % (i,j)
-				bSrcs[nm] = aipy.amp.RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=b_i[i,j], index=0)
+				bSrcs[nm] = RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=mdl[i,j], index=0)
 				
-		import time
-		t0 = time.time()
-		simDict = simVis.buildSimData(aa, bSrcs, jd=aa.get_jultime(), pols=['xx',], baselines=baselines)
-		b_i_conv_ker = utils.buildGriddedImage(simDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, pol='xx')
-		b_i_conv_ker = b_i_conv_ker.image(center=(MapSize,MapSize))
-		b_i_conv_ker *= image.sum()/b_i_conv_ker.sum()
-		print 'Sim. Time:  %.1f s' % (time.time() - t0)
+		## Model the visibilities
+		simDict = simVis.buildSimData(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flatResponse=True)
 		
-		b_i.shape = m_i.shape
-		diff = (image - b_i_conv_ker).flatten()
-		chi2 = numpy.dot(diff[valid],diff[valid]) - Nvar0
-		g_chi2 = minus_two_q*(diff[valid])
-		g_J = (-numpy.log(b_i[valid]/m_i[valid]) - 1) - alpha * g_chi2
-		g_J = numpy.where( numpy.isfinite(g_J), g_J, 100 )
-		gg_J = (-1/b_i[valid]) - alpha * two_q_sq
-		# Define dot product using the metric of -gg_J^-1
-		def dot(x, y):
-			return (x*y/-gg_J).sum()
-		score = dot(g_J, g_J) / dot(1,1)
-		d_alpha = (chi2 + dot(g_chi2,g_J)) / dot(g_chi2,g_chi2)
-		print chi2, dot(g_chi2,g_J), dot(g_chi2,g_chi2)
+		## Form the simulated image
+		simImg = utils.buildGriddedImage(simDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=rChan, pol=pol, verbose=verbose)
+		simImg = simImg.image(center=(MapSize,MapSize))
 		
-		# For especially clean images, gg_J in some components can go to 0.
-		# This check makes lsq a little slower for most images, though...
-		d_b_i = numpy.where(abs(gg_J) > 0, -1/gg_J * (g_J - d_alpha*g_chi2), 0)
+		## Difference the image and the simulated image and scale it to the 
+		## model's peak flux
+		diff = img - simImg
+		diffScaled = diff * (mdl.max() / img.max())
+		
+		## Compute the RMS and create an appropriately scaled version of the model
+		RMS = diff.std()
+		mdl2 = mdl*(img-diff).max()/mdl.max()
+		
+		## Status report
 		if verbose:
-			print '    score', score, 'fit', numpy.dot(diff,diff)
-			print '    alpha', alpha, 'd_alpha', d_alpha
+			print "Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS)
+			print "               -> maximum residual: %.4e (%.2f%% of peak)" % (max, 100.0*max/img.max())
+			print "               -> delta RMS: %.4e" % (RMS-oldRMS,)
+			print "               -> delta max residual: %.4e" % (max-oldMax)
 			
-		return d_b_i, d_alpha, score, b_i_conv_ker
-		
-	alpha = 0.
-	b_i = m_i.copy()
-	info = {'success':True, 'term':'maxiter', 'var0':var0, 'tol':1e-3}
-	for i in range(maxIter):
-		if verbose:
-			print 'Step %d:' % i
-		d_b_i, d_alpha, score, b_i_conv_ker = next_step(b_i, alpha, verbose=verbose)
-		
-		import pylab
-		pylab.ion()
-		pylab.subplot(2, 2, 1)
-		pylab.imshow(image, origin='lower')
-		pylab.subplot(2, 2, 2)
-		pylab.imshow(b_i_conv_ker, origin='lower')
-		pylab.subplot(2, 2, 3)
-		pylab.imshow(image-b_i_conv_ker, origin='lower')
-		pylab.subplot(2, 2, 4)
-		temp = b_i.copy()
-		temp.shape = image.shape
-		pylab.imshow(temp, origin='lower')
-		pylab.draw()
-		
-		if score < 1e-3 and score > 0:
-			info['term'] = 'tol'
+		## Has the RMS gone up?  If so, it is time to exit.  But first, restore 
+		## the previous iteration
+		if RMS-oldRMS > 0:
+			mdl = oldModel
+			diff = oldDiff
+			
+			exitStatus = 'residuals'
+			
 			break
-		elif score > 1e10 or numpy.isnan(score) or score <= 0:
-			info.update({'term':'divergence', 'success':False})
-			break
-		print b_i.size, d_b_i.size
-		b_i[valid] = numpy.clip(b_i[valid] + 0.1 * d_b_i, numpy.finfo(numpy.float).tiny , numpy.Inf)
-		alpha += 0.1 * d_alpha
+			
+		## Save the current iteration as the previous state
+		rHist.append(RMS)
+		oldRMS = RMS
+		oldModel = mdl
+		oldDiff = diff
+		oldMax = max
 		
-	b_i.shape = image.shape
-	info.update({'res':b_i_conv_ker, 'score': score, 'alpha': alpha, 'iter':i+1})
+		if plot:
+			pylab.subplot(3, 2, 1)
+			pylab.imshow(img, origin='lower', interpolation='nearest', vmin=img.min(), vmax=img.max())
+			pylab.subplot(3, 2, 2)
+			pylab.imshow(simImg, origin='lower', interpolation='nearest', vmin=img.min(), vmax=img.max())
+			pylab.subplot(3, 2, 3)
+			pylab.imshow(diff, origin='lower', interpolation='nearest')
+			pylab.subplot(3, 2, 4)
+			pylab.imshow(mdl, origin='lower', interpolation='nearest')
+			pylab.subplot(3, 1, 3)
+			pylab.cla()
+			pylab.semilogy(rHist)
+			pylab.draw()
+			
+		## Jump start the next iteration if this is our first pass through the data
+		if k == 0:
+			scaleRatio = 0.75 * img.max() / simImg.max()
+			diffScaled *= scaleRatio / gain
+			
+	# Summary
+	print "Exited after %i iteration with status '%s'" % (k+1, exitStatus)
 	
-	import pylab
-	pylab.ioff()
-	pylab.subplot(1, 3, 1)
-	pylab.imshow(image, origin='lower')
-	pylab.subplot(1, 3, 2)
-	pylab.imshow(b_i_conv_ker, origin='lower')
-	pylab.subplot(1, 3, 3)
-	pylab.imshow(b_i, origin='lower')
-	pylab.draw()
+	# Restore
+	conv = convolve(mdl2, beamClean, mode='same')
+	conv = numpy.ma.array(conv, mask=convMask)
+	conv *= ((img-diff).max() / conv.max())
 	
-	return b_i, info
+	if plot:
+		# Make an image for comparison purposes if we are verbose
+		fig = plt.figure()
+		ax1 = fig.add_subplot(2, 2, 1)
+		ax2 = fig.add_subplot(2, 2, 2)
+		ax3 = fig.add_subplot(2, 2, 3)
+		ax4 = fig.add_subplot(2, 2, 4)
+		
+		c = ax1.imshow(img, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(c, ax=ax1)
+		ax1.set_title('Input')
+		
+		d = ax2.imshow(simImg, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(d, ax=ax2)
+		ax2.set_title('Realized Model')
+		
+		e = ax3.imshow(diff, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(e, ax=ax3)
+		ax3.set_title('Residuals')
+		
+		f = ax4.imshow(conv + diff, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
+		fig.colorbar(f, ax=ax4)
+		ax4.set_title('Final')
+		
+		plt.show()
+		
+	if plot:
+		pylab.ioff()
+		
+	return conv + diff
