@@ -1,4 +1,5 @@
 1.1.0
+  * Updated the lsl.imaging.deconv module to include a source-based CLEAN method and a forward-modeling/least squares method
   
 1.0.1
   * Added an option to updateLSLSSMIF.py to update the LWA1 SSMIF using a local file
@@ -34,6 +35,7 @@
   * Added a few new convenience functions to the lsl.reader.drspec module
   * Added 'lwavl' as an alias to 'lwa1' in the lsl.common.stations module
   * Added methods to return the response curves of the FEE and Cable to the lsl.common.stations module
+  * Fixed a bug in lsl.imaging.utils.CorrelatedData() that caused IOErrors to be get masked
 
 1.0.0
   * Added in LWA Development Primitives module (lsl.reader.ldp)
