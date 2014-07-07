@@ -1,23 +1,28 @@
 Data Readers
 ============
 
-TBW
----
+LSL Developer Primitives
+------------------------
+.. automodule:: lsl.reader.ldp
+   :members:
+
+Low-Level TBW
+-------------
 .. automodule:: lsl.reader.tbw
    :members:
 
-TBN
----
+Low-Level TBN
+-------------
 .. automodule:: lsl.reader.tbn
    :members:
 
-DRX
----
+Low-Level DRX
+-------------
 .. automodule:: lsl.reader.drx
    :members:
 
-DR Spectrometer
----------------
+Low-Level DR Spectrometer
+-------------------------
 .. versionadded:: 0.5
 .. automodule:: lsl.reader.drspec
    :members:
