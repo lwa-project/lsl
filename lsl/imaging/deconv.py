@@ -10,9 +10,6 @@ from aipy.coord import eq2radec, top2azalt
 from aipy.fit import RadioFixedBody
 from scipy.signal import fftconvolve as convolve, convolve2d
 
-import pylab
-from matplotlib import pyplot as plt
-
 from lsl.sim import vis as simVis
 from lsl.imaging import utils
 from lsl.common import stations
@@ -126,7 +123,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 	
 	CLEAN tuning parameters:
 	  * gain - CLEAN loop gain (default 0.2)
-	  * maxIter - Maximum number of iteration (default 150)
+	  * maxIter - Maximum number of iterations (default 150)
 	  * sigma - Threshold in sigma to stop cleaning (default 3.0)
 	"""
 	
@@ -181,6 +178,9 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 	
 	# Go!
 	if plot:
+		import pylab
+		from matplotlib import pyplot as plt
+		
 		pylab.ion()
 		
 	exitStatus = 'iteration limit'
@@ -309,7 +309,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 			break
 			
 	# Summary
-	print "Exited after %i iteration with status '%s'" % (i+1, exitStatus)
+	print "Exited after %i iterations with status '%s'" % (i+1, exitStatus)
 	
 	# Restore
 	conv = convolve(cleaned, beamClean, mode='same')
@@ -368,7 +368,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 	
 	CLEAN tuning parameters:
 	  * gain - CLEAN loop gain (default 0.1)
-	  * maxIter - Maximum number of iteration (default 150)
+	  * maxIter - Maximum number of iterations (default 150)
 	  * sigma - Threshold in sigma to stop cleaning (default 2.0)
 	"""
 	
@@ -423,6 +423,9 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 	
 	# Go!
 	if plot:
+		import pylab
+		from matplotlib import pyplot as plt
+		
 		pylab.ion()
 		
 	for name in srcs.keys():
@@ -596,7 +599,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 				break
 				
 		# Summary
-		print "Exited after %i iteration with status '%s'" % (i+1, exitStatus)
+		print "Exited after %i iterations with status '%s'" % (i+1, exitStatus)
 		
 	# Restore
 	conv = convolve(cleaned, beamClean, mode='same')
@@ -692,6 +695,9 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 	
 	# Go!
 	if plot:
+		import pylab
+		from matplotlib import pyplot as plt
+		
 		pylab.ion()
 		
 	rChan = [chan[0], chan[-1]]
@@ -778,7 +784,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 			diffScaled *= scaleRatio / gain
 			
 	# Summary
-	print "Exited after %i iteration with status '%s'" % (k+1, exitStatus)
+	print "Exited after %i iterations with status '%s'" % (k+1, exitStatus)
 	
 	# Restore
 	conv = convolve(mdl2, beamClean, mode='same')
