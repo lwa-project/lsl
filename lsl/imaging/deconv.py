@@ -743,9 +743,8 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 		## Status report
 		if verbose:
 			print "Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS)
-			print "               -> maximum residual: %.4e (%.2f%% of peak)" % (max, 100.0*max/img.max())
+			print "               -> maximum residual: %.4e (%.2f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max())
 			print "               -> delta RMS: %.4e" % (RMS-oldRMS,)
-			print "               -> delta max residual: %.4e" % (max-oldMax)
 			
 		## Has the RMS gone up?  If so, it is time to exit.  But first, restore 
 		## the previous iteration
@@ -762,7 +761,6 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 		oldRMS = RMS
 		oldModel = mdl
 		oldDiff = diff
-		oldMax = max
 		
 		if plot:
 			pylab.subplot(3, 2, 1)

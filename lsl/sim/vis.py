@@ -748,7 +748,8 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 			beamShapeDict = {}
 			for i in range(deg+1):
 				beamShapeDict[i] = n.squeeze(coeffs[-1-i,:])
-				
+			dd.close()
+			
 			if verbose:
 				print "Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax)
 			beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
