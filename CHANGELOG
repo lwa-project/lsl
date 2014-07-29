@@ -4,6 +4,7 @@
 1.0.2
   * Added documentation for LDP to the Sphinx build system
   * Added a call to close() for the data dictionary used in lsl.sim.vis.buildSimArray
+  * Fixed a version number regression in lsl.correlator.fx
 
 1.0.1
   * Added an option to updateLSLSSMIF.py to update the LWA1 SSMIF using a local file

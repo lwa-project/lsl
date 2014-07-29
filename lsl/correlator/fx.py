@@ -40,7 +40,7 @@ import _spec
 import _stokes
 import _core
 
-__version__ = '0.7'
+__version__ = '0.9'
 __revision__ = '$Rev$'
 __all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes', '__version__', '__revision__', '__all__']
 
