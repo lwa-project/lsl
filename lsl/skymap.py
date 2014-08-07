@@ -156,6 +156,12 @@ class SkyMapGSM(SkyMap):
 		fRatio = freqMHz / dataDict['f0']
 		self._power = dataDict['T0']*fRatio**(dataDict['alpha']+dataDict['beta']*log10(fRatio))
 		
+		# Close out the dictionary
+		try:
+			dataDict.close()
+		except AttributeError:
+			pass
+			
 	def NormalizePower(self):
 		"""
 		Compute the skymap power (total power radiated into 4 pi steradians) into 
