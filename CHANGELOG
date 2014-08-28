@@ -1,6 +1,9 @@
 1.1.0
   * Updated the lsl.imaging.deconv module to include a source-based CLEAN method and a forward-modeling/least squares method
 
+1.0.3
+  * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata
+
 1.0.2
   * Added documentation for LDP to the Sphinx build system
   * Added a call to close() for the data dictionary used in lsl.sim.vis.buildSimArray
