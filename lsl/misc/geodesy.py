@@ -4,6 +4,10 @@
 Module for querying the earth orientation parameters for a given date/list
 of dates.
 
+.. versionchanged:: 1.0.3
+	Added a fallback to the backup MAIA server 'toshi.nofs.navy.mil' if the
+	primary server at 'toshi.nofs.navy.mil' cannot be reached
+
 .. versionchanged:: 1.0.0
 	Added caching of MAIA results to speed up subsequent calls to getEOP().
 	Removed getEOPRange() since getEOP() can do the same thing.
@@ -152,7 +156,7 @@ def __downloadFile(filename, baseURL='http://maia.usno.navy.mil/ser7/', timeout=
 		__logger.error('Error downloading file \'%s\': %s', filename, str(e))
 		lines = []
 	except socket.timeout:
-		__logger.error('Timeout after %i seconds downloading historic EOP data', timeout)
+		__logger.error('Timeout after %i seconds downloading file \'%s\'', timeout, filename)
 		lines = []
 		
 	if len(lines) == 0:
@@ -172,12 +176,16 @@ def __loadHistoric1973(timeout=120):
 	"""
 	
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.all')):
-		__downloadFile('finals2000A.all', timeout=timeout)
+		status = __downloadFile('finals2000A.all', timeout=timeout)
+		if not status:
+			__downloadFile('finals2000A.all', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
 	else:
 		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.all')).st_mtime
 		if age > (3600*24*180):
-			__downloadFile('finals2000A.all', timeout=timeout)
-			
+			status = __downloadFile('finals2000A.all', timeout=timeout)
+			if not status:
+				__downloadFile('finals2000A.all', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+				
 	fh = open(os.path.join(_CacheDir, 'finals2000A.all'), 'r')
 	lines = fh.readlines()
 	fh.close()
@@ -205,12 +213,16 @@ def __loadHistoric1992(timeout=120):
 	"""
 	
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.data')):
-		__downloadFile('finals2000A.data', timeout=timeout)
+		status = __downloadFile('finals2000A.data', timeout=timeout)
+		if not status:
+			__downloadFile('finals2000A.data', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
 	else:
 		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.data')).st_mtime
 		if age > (3600*24*7):
-			__downloadFile('finals2000A.data', timeout=timeout)
-			
+			status = __downloadFile('finals2000A.data', timeout=timeout)
+			if not status:
+				__downloadFile('finals2000A.data', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+				
 	fh = open(os.path.join(_CacheDir, 'finals2000A.data'), 'r')
 	lines = fh.readlines()
 	fh.close()
@@ -237,12 +249,16 @@ def __loadCurrent90(timeout=120):
 	"""
 
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.daily')):
-		__downloadFile('finals2000A.daily', timeout=timeout)
+		status = __downloadFile('finals2000A.daily', timeout=timeout)
+		if not status:
+			__downloadFile('finals2000A.daily', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
 	else:
 		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.daily')).st_mtime
 		if age > (3600*24):
-			__downloadFile('finals2000A.daily', timeout=timeout)
-			
+			status = __downloadFile('finals2000A.daily', timeout=timeout)
+			if not status:
+				__downloadFile('finals2000A.daily', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+				
 	fh = open(os.path.join(_CacheDir, 'finals2000A.daily'), 'r')
 	lines = fh.readlines()
 	fh.close()
