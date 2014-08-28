@@ -92,11 +92,24 @@ def main(args):
 			drxBeam = "MCS decides"
 		else:
 			drxBeam = "%i" % drxBeam
-	print " DRX Beam: %s" % drxBeam
-	print " DR Spectrometer used? %s" % drspec
-	if drspec == 'Yes':
-		print " -> %i channels, %i windows/integration" % tuple(project.sessions[0].spcSetup)
-		
+		print " DRX Beam: %s" % drxBeam
+		print " DR Spectrometer used? %s" % drspec
+		if drspec == 'Yes':
+			print " -> %i channels, %i windows/integration" % tuple(project.sessions[0].spcSetup)
+	else:
+		tbnCount = 0
+		tbwCount = 0
+		for obs in project.sessions[0].observations:
+			if obs.mode == 'TBW':
+				tbwCount += 1
+			else:
+				tbnCount += 1
+		if tbwCount > 0 and tbnCount == 0:
+			print " Transient Buffer Mode: TBW"
+		elif tbwCount == 0 and tbnCount > 0:
+			print " Transient Buffer Mode: TBN"
+		else:
+			print " Transient Buffer Mode: both TBW and TBN"
 	print " "
 	print "File Information:"
 	fileInfo = metabundle.getSessionMetaData(inputTGZ)
