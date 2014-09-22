@@ -342,18 +342,18 @@ def main(args):
 				### Add the HDU to the list
 				hdulist.append(hdu)
 				
-		## Save the FITS file to disk
-		hdulist = pyfits.HDUList(hdulist)
-		clobber = False
-		if os.path.exists(config['fits']):
-			yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % config['fits'])
-			if yn not in ('n', 'N'):
-				clobber = True
-		try:
-			hdulist.writeto(config['fits'], clobber=clobber)
-		except IOError, e:
-			print "WARNING: FITS image file not saved"
-			
+			## Save the FITS file to disk
+			hdulist = pyfits.HDUList(hdulist)
+			clobber = False
+			if os.path.exists(config['fits']):
+				yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % config['fits'])
+				if yn not in ('n', 'N'):
+					clobber = True
+			try:
+				hdulist.writeto(config['fits'], clobber=clobber)
+			except IOError, e:
+				print "WARNING: FITS image file not saved"
+				
 	print "...Done"
 
 
