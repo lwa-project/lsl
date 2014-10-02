@@ -9,6 +9,8 @@ lsl.misc - Miscellanous modules including:
  * scattering     - multi-path scattering module, 
  * autostereogram - make random dot autostereograms from 2-D NumPy arrays, and
  * OrderedDict    - backport of the OrderedDict class from Python 2.7.
+ * rfutil         - convert RF engineering lingo into radio astrnomy lingo
+ * wisdom         - build LSL-specific FFTW and PyFFTW wisdom
 """
 
 
