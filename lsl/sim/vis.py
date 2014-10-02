@@ -66,6 +66,8 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
 	
 .. versionchanged:: 1.0.3
 	Moved the calculateSEFD function into lsl.misc.rfutils
+	Changed the meaning of the ForceGaussian parameter of the buildSimArray()
+	function to be the Gaussian full width at half maximum in degrees
 """
 
 import os
@@ -179,12 +181,16 @@ class BeamAlm(aipy.amp.BeamAlm):
 class Beam2DGaussian(aipy.amp.Beam2DGaussian):
 	"""
 	AIPY-based representation of a 2-D Gaussian beam pattern, with default 
-	setting for a flat beam.
+	setting for a flat beam.  The width parameters denote the 'sigma' of
+	the Gaussian in radians.
 	
 	This differs from the AIPY version in that the response() method 
 	accepts two and three-dimensions arrays of topocentric coordinates, 
 	similar to what aipy.img.ImgW.get_top() produces, and computes the 
 	beam response at all points.
+	
+	.. versionchanged:: 1.0.3
+		Clarified what 'xwidth' and 'ywidth' are.
 	"""
 	
 	def __init__(self, freqs, xwidth=numpy.Inf, ywidth=numpy.Inf):
@@ -209,7 +215,7 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
 		
 		x,y,z = top
 		x,y = numpy.arcsin(x)/self.xwidth, numpy.arcsin(y)/self.ywidth
-		resp = numpy.sqrt(numpy.exp(-(x**2 + y**2)))
+		resp = numpy.sqrt(numpy.exp(-(x**2 + y**2)/2.0))
 		resp = numpy.resize(resp, (self.afreqs.size, resp.size))
 		return resp
 		
@@ -694,18 +700,22 @@ class AntennaArray(aipy.amp.AntennaArray):
 def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=False, ForceGaussian=False, verbose=False):
 	"""
 	Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
-	object defined from the lwa_common module, a numpy array of stand numbers, 
-	and a numpy array of frequencies in either Hz of GHz.  Optional inputs are
-	a Julian Date to set the array to and a positional error terms that perturbs
-	each of the stands in x, y, and z.  The output of this module is an AIPY
-	AntennaArray object.
+	object defined from the lwa_common module, a numpy array of stand 
+	numbers, and a numpy array of frequencies in either Hz of GHz.  Optional 
+	inputs are a Julian Date to set the array to and a positional error terms 
+	that perturbs each of the stands in x, y, and z.  The output of this 
+	module is an AIPY AntennaArray object.
 	
 	The shape of the antenna response is either flat (gain of 1 in all 
-	directions), modeled by a 2-D Gaussian with the specified widths in
-	degrees, or modeled by a collection of spherical harmonics that are poly-
-	nomials in frequency.  The spherical harmonics are used if the file 
-	'beam_shape.npz' is found in the current directory.
+	directions), modeled by a 2-D Gaussian with the specified full width at
+	half maximum in degrees, or modeled by a collection of spherical 
+	harmonics that are polynomials in frequency.  The spherical harmonics 
+	are used if the file 'beam_shape.npz' is found in the current directory.
 	
+	.. versionchanged:: 1.0.3
+		Changed the meaning of the ForceGaussian parameters so that the
+		Gaussian full width at half maximum in degrees is passed in.
+		
 	.. versionchanged:: 1.0.1
 		Moved the simulation code over from AIPY to the new _simFast module.  
 		This should be much faster but under the caveats that the bandpass
@@ -730,14 +740,21 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 	if ForceGaussian:
 		try:
 			xw, yw = ForceGaussian
+			xw, yw = float(xw), float(yw)
 		except TypeError, ValueError:
 			xw = float(ForceGaussian)
-			yw = xw
+			yw = 1.0*xw
 			
+		# FWHM to sigma
+		xw /= 2.0*numpy.sqrt(2.0*numpy.log(2.0))
+		yw /= 2.0*numpy.sqrt(2.0*numpy.log(2.0))
+		
+		# Degrees to radians
 		xw *= numpy.pi/180
 		yw *= numpy.pi/180
+		
 		if verbose:
-			print "Using a 2-D Gaussian beam with widths %.1f by %.1f degrees" % (xw*180/numpy.pi, yw*180/numpy.pi)
+			print "Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/numpy.pi, yw*180/numpy.pi)
 		beam = Beam2DGaussian(freqs, xw, yw)
 		
 	elif ForceFlat:

@@ -7,6 +7,7 @@
   * Fixed a bug in imageIDI.py that caused it to crash if a FITS image is not saved
   * Added a new module, lsl.misc.rfutil, to help with understanding commercial antenna properties
   * Moved the calculateSEFD() function out of lsl.sim.vis and into lsl.misc.rfutil
+  * Changed the meaning of the 'ForceGaussian' keyword in lsl.sim.vis.buildSimArray to contain the Gaussian full widths at half maximum in degrees
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system
