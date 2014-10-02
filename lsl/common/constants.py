@@ -7,6 +7,9 @@ The constants defined in this file are:
 c
   the speed of light in m/s
 
+kB
+  Boltzmann's constant in Jy m^2 / K
+  
 deg2rad
   the conversion factor for degrees to radians
 
@@ -16,10 +19,11 @@ tpi
 
 import math
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['c', 'deg2rad', 'tpi', '__version__', '__revision__', '__all__']
+__all__ = ['c', 'kB', 'deg2rad', 'tpi', '__version__', '__revision__', '__all__']
 
 c = 2.9979245800e8			# speed of light in m/s
+kB = 1380.6488				# Boltzmann's constant in Jy m^2 / K
 deg2rad = math.pi / 180.0	# degrees to radians conversion
 tpi = 2j*math.pi			# two pi i
