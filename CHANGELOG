@@ -5,6 +5,8 @@
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata
   * Added fallbacks to lsl.misc.geodesy to use a backup EOP server if the primary is unreachable
   * Fixed a bug in imageIDI.py that caused it to crash if a FITS image is not saved
+  * Added a new module, lsl.misc.rfutil, to help with understanding commercial antenna properties
+  * Moved the calculateSEFD() function out of lsl.sim.vis and into lsl.misc.rfutil
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system
