@@ -1,6 +1,7 @@
 1.1.0
   * Updated the lsl.imaging.deconv module to include a source-based CLEAN method and a forward-modeling/least squares method
-  * Added support for phase centers other than zenith to the varous functions in lsl.imaging.overlay
+  * Added support for phase centers other than zenith to the various functions in lsl.imaging.overlay
+  * Added support for determining coordinates for images with phase centers other than zenith to the lsl.imaging.utils module
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata

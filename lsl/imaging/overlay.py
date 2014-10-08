@@ -13,7 +13,7 @@ is used for plotting.
 
 .. versionadded:: 1.0.1
 
-.. versionchanged:: 1.0.3
+.. versionchanged:: 1.1.0
 	Added support for overlaying on images with non-zenith phase centers
 """
 
@@ -33,8 +33,12 @@ def _radec_of(aa, az, alt):
 	dec = numpy.arcsin( numpy.clip(sinDec, -1, 1) )
 	cosHA = (numpy.sin(alt) - numpy.sin(dec)*numpy.sin(aa.lat)) / (numpy.cos(dec)*numpy.cos(aa.lat))
 	HA = numpy.arccos( numpy.clip(cosHA, -1, 1) )
-	if numpy.sin(az) > 0:
-		HA = 2*numpy.pi - HA
+	try:
+		if numpy.sin(az) > 0:
+			HA = 2*numpy.pi - HA
+	except ValueError:
+		toShift = numpy.where( numpy.sin(az) > 0 )
+		HA[toShift] = 2*numpy.pi - HA[toShift]	
 	RA = aa.sidereal_time() - HA
 	return RA, dec 
 
@@ -70,7 +74,7 @@ def horizon(ax, aa, phaseCenter='z'):
 	"""
 	For a matplotlib axis instance showing an image of the sky, plot the horizon.
 	
-	.. versionchanged:: 1.0.3
+	.. versionchanged:: 1.1.0
 		Added a new argument for the AntennaArray instance to provide a 
 		uniform default call for all functions.
 	"""
