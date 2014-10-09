@@ -11,6 +11,8 @@
   * Moved the calculateSEFD() function out of lsl.sim.vis and into lsl.misc.rfutil
   * Changed the meaning of the 'ForceGaussian' keyword in lsl.sim.vis.buildSimArray to contain the Gaussian full widths at half maximum in degrees
   * Added Boltzmann's constant to lsl.common.constants
+  * Added a 'color' keyword to the various functions in lsl.imaging.overlay to change the color of the overlay
+  * Added a 'marker' keyword to the lsl.imaging.overlay.source() to change symbol of the source overlay
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system

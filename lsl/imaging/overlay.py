@@ -22,7 +22,7 @@ import ephem
 import numpy
 
 
-__version__ = "0.1"
+__version__ = "0.3"
 __revision__ = "$Rev$"
 __all__ = ["sources", "horizon", "graticleRADec", "graticleAzEl", 
 		 "__version__", "__revision__", "__all__"]
@@ -43,7 +43,7 @@ def _radec_of(aa, az, alt):
 	return RA, dec 
 
 
-def sources(ax, aa, srcs, phaseCenter='z', label=True):
+def sources(ax, aa, srcs, phaseCenter='z', label=True, marker='x', color='white'):
 	"""
 	For a matplotlib axis instance showing an image of the sky, plot the
 	locations of the srcs given in the 'srcs' dictionary.
@@ -64,13 +64,13 @@ def sources(ax, aa, srcs, phaseCenter='z', label=True):
 		top = numpy.dot(rot, eq)
 		junk,alt = aipy.coord.top2azalt(top)
 		if alt >= 0:
-			ax.plot(top[0], top[1], marker='x', markerfacecolor='None', markeredgecolor='w', 
+			ax.plot(top[0], top[1], marker=marker, markerfacecolor='None', markeredgecolor=color, 
 				linewidth=10.0, markersize=10)
 			if label:
-				ax.text(top[0], top[1], name, color='white', size=12)
+				ax.text(top[0], top[1], name, color=color, size=12)
 
 
-def horizon(ax, aa, phaseCenter='z'):
+def horizon(ax, aa, phaseCenter='z', color='white'):
 	"""
 	For a matplotlib axis instance showing an image of the sky, plot the horizon.
 	
@@ -98,10 +98,10 @@ def horizon(ax, aa, phaseCenter='z'):
 		if alt >= -1e-5:
 			x[i] = top[0]
 			y[i] = top[1]
-	ax.plot(x, y, color='white')
+	ax.plot(x, y, color=color)
 
 
-def graticleRADec(ax, aa, phaseCenter='z', label=True):
+def graticleRADec(ax, aa, phaseCenter='z', label=True, color='white'):
 	"""
 	For a matplotlib axis instance showing an image of the sky, plot lines of
 	constant declinate and RA.  Declinations are spaced at 20 degree intervals
@@ -137,13 +137,13 @@ def graticleRADec(ax, aa, phaseCenter='z', label=True):
 				x[i] = top[0]
 				y[i] = top[1]
 				
-		ax.plot(x, y, color='white', alpha=0.75)
+		ax.plot(x, y, color=color, alpha=0.75)
 		
 		eq = aipy.coord.radec2eq((pcRA-pcRA, (dec+5)*numpy.pi/180))
 		top = numpy.dot(rot, eq)
 		az,alt = aipy.coord.top2azalt(top)
 		if alt > 15*numpy.pi/180 and label:
-			ax.text(top[0], top[1], '%+i$^\circ$' % dec, color='white')
+			ax.text(top[0], top[1], '%+i$^\circ$' % dec, color=color)
 			
 	# Lines of constant RA			
 	decs = numpy.linspace(-80, 80, 400)
@@ -166,16 +166,16 @@ def graticleRADec(ax, aa, phaseCenter='z', label=True):
 				x[i] = top[0]
 				y[i] = top[1]
 				
-		ax.plot(x, y, color='white', alpha=0.75)
+		ax.plot(x, y, color=color, alpha=0.75)
 		
 		eq = aipy.coord.radec2eq((ra*numpy.pi/180-pcRA, 0))
 		top = numpy.dot(rot, eq)
 		az,alt = aipy.coord.top2azalt(top)
 		if alt > 20*numpy.pi/180 and label:
-			ax.text(top[0], top[1], '%i$^h$' % (ra/15,), color='white')
+			ax.text(top[0], top[1], '%i$^h$' % (ra/15,), color=color)
 
 
-def graticleAzEl(ax, aa, phaseCenter='z', label=True):
+def graticleAzEl(ax, aa, phaseCenter='z', label=True, color='white'):
 	"""
 	For a matplotlib axis instance showing an image of the sky, plot lines of
 	constant azimuth and elevation.  Elevations are spaced at 20 degree intervals
@@ -208,13 +208,13 @@ def graticleAzEl(ax, aa, phaseCenter='z', label=True):
 				x[i] = top[0]
 				y[i] = top[1]
 				
-		ax.plot(x, y, color='white')
+		ax.plot(x, y, color=color)
 		
 		if el > 0 or phaseCenter is not 'z':
 			valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
 			pos = valid.size / 2 - valid.size / 5
 			if valid.size > 10:
-				ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % el, color='white')
+				ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % el, color=color)
 			
 	# Lines of constant azimuth
 	azs = range(0, 360, 45)
@@ -234,9 +234,9 @@ def graticleAzEl(ax, aa, phaseCenter='z', label=True):
 				x[i] = top[0]
 				y[i] = top[1]
 				
-		ax.plot(x, y, color='white')
+		ax.plot(x, y, color=color)
 		
 		valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
 		pos = valid.size / 2 - valid.size / 5
 		if valid.size > 10:
-			ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % az, color='white')
+			ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % az, color=color)
