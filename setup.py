@@ -11,6 +11,11 @@ import tempfile
 import unittest
 import commands
 import platform
+import warnings
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
 
 from setuptools import setup, Extension, Distribution, find_packages
 try:
@@ -134,8 +139,12 @@ def get_atlas():
 	
 	from numpy.distutils.system_info import get_info
 	
-	atlas_info = get_info('atlas_blas', notfound_action=2)
-	
+	with warnings.catch_warnings():
+		warnings.filterwarnings("ignore",category=DeprecationWarning)
+		sys.stdout = StringIO.StringIO()
+		atlas_info = get_info('atlas_blas', notfound_action=2)
+		sys.stdout = sys.__stdout__
+		
 	atlas_version = ([v[3:-3] for k,v in atlas_info.get('define_macros',[])
 					if k == 'ATLAS_INFO']+[None])[0]
 	if atlas_version:

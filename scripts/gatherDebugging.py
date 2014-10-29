@@ -11,7 +11,12 @@ import os
 import re
 import sys
 import platform
+import warnings
 import subprocess
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
 
 
 def main(args):
@@ -28,62 +33,135 @@ def main(args):
 	print "Version: %s" % sys.version
 	print "API: %s" % sys.api_version
 	print "Bits: %s\nLinkage: %s" % platform.architecture()
-
 	print " "
 	
 	#
 	# Python Module Check
 	#
-	notFound = 0
-	for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy'):
+	
+	## Required
+	for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy', 'pytz'):
 		try:
 			exec "import %s" % mod
 		except ImportError, e:
-			notFound += 1
 			if (str(e)).find('not found') != -1:
-				print "%s: not found" % mod
+				print  "%s: not found" % mod
 			else:
-				print "%s: import error '%s'" % (mod, str(e))
+				print "%s: WARNING import error '%s'" % (mod, str(e))
 		else:
 			try:
-				version = eval("%s.__version__" % mod)
+				version = eval("%s.version.version" % mod)
 			except AttributeError:
-				try:	
-					versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
-					mtch = versionRE.search(eval("%s.__file__" % mod))
-					version = mtch.group('version')
-				except:
-					version = "unknown"
+				try:
+					version = eval("%s.__version__" % mod)
+				except AttributeError:
+					try:	
+						versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
+						mtch = versionRE.search(eval("%s.__file__" % mod))
+						version = mtch.group('version')
+					except:
+						version = "unknown"
+			print "%s:  version %s" % (mod, version)
+			
+	## Optional
+	for mod in ('matplotlib', 'h5py', 'psrfits_utils'):
+		try:
+			exec "import %s" % mod
+		except ImportError, e:
+			if (str(e)).find('not found') != -1:
+				print  "%s: not found" % mod
+			#else:
+				#print "%s: WARNING import error '%s'" % (mod, str(e))
+		else:
+			try:
+				version = eval("%s.version.version" % mod)
+			except AttributeError:
+				try:
+					version = eval("%s.__version__" % mod)
+				except AttributeError:
+					try:	
+						versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
+						mtch = versionRE.search(eval("%s.__file__" % mod))
+						version = mtch.group('version')
+					except:
+						version = "unknown"
 			print "%s:  version %s" % (mod.capitalize(), version)
 			
+	
 	print " "
 	
+	
 	#
-	# C library check (linux only)
+	# Library checks
 	#
-	if platform.system() == 'Linux':
+	
+	##  Via 'pkg-config'
+	libsFound = []
+	for pkgName in ('fftw3f',):
+		try:
+			pkgQuery = subprocess.Popen(['pkg-config', '--exists', pkgName])
+			o, e = pkgQuery.communicate()
+			if pkgQuery.returncode == 0:
+				pkgQuery = subprocess.Popen(['pkg-config', '--modversion', pkgName], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+				o, e = pkgQuery.communicate()
+				o = o.replace('\n', '')
+				
+				print "%s:  version %s" % (pkgName, o)
+				libsFound.append( pkgName )
+				
+		except OSError:
+			pass
+			
+	## Via 'numpy'
+	try:
+		from numpy.distutils.system_info import get_info
+		
+		with warnings.catch_warnings():
+			warnings.filterwarnings("ignore",category=DeprecationWarning)
+			sys.stdout = StringIO.StringIO()
+			atlas_info = get_info('atlas_blas', notfound_action=0)
+			sys.stdout = sys.__stdout__
+			
+		atlas_version = ([v[3:-3] for k,v in atlas_info.get('define_macros',[])
+						if k == 'ATLAS_INFO']+[None])[0]
+		if atlas_version:
+			libsFound.append( 'atlas' )
+			libsFound.append( 'cblas' )
+			
+	except ImportError:
+		pass
+		
+	## Via 'ldconfig'
+	try:
 		p = subprocess.Popen(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		o, e = p.communicate()
 		o = o.split('\n')
 		
-		for lib in ('libatlas', 'libcblas', 'libfftw3', 'libgdbm'):
+		for lib in ('libatlas', 'libcblas', 'libfftw3f', 'libgdbm', 'librt'):
+			libBaseName = lib.replace('lib', '')
+			if libBaseName in libsFound:
+				continue
+				
 			found = False
 			currPath = None
 			
 			for line in o:
 				if len(line) == 0:
-					continue				
+					continue
 				elif line[0] != '\t':
 					currPath, junk = line.split(':', 1)
 					continue
 				elif line.find(lib) != -1:
 					found = True
-					break
-					
-			print "%s: %s" % (lib, "found in %s" % currPath if found else "not found")
+					libFilename = line.split(None, 1)[0]
+					print "%s: found %s" % (lib, os.path.join(currPath, libFilename))
+			if not found:
+				print "%s: WARNING - not found" % lib
 			
-		print " "
-		
+	except OSError:
+		pass
+	print " "
+	
 	#
 	# Compiler check
 	#
@@ -166,9 +244,8 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 		print "Numpy Linkage: %s" % numpyLinkage
 	except ImportError, e:
 		print "Numpy Import Error: %s" % str(e)
-
 	print " "
-
+	
 	#
 	# LSL
 	#
@@ -189,6 +266,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 		print "LSL Linkage: %s" % lslLinkage
 	except ImportError, e:
 		print "LSL Import Error: %s" % str(e)
+	print " "
 
 
 if __name__ == "__main__":
