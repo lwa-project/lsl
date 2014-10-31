@@ -6,6 +6,8 @@ Henry Freudenriech (Hughes STX) statistics library (called ROBLIB) that have
 been incorporated into the AstroIDL User's Library.  Function included are:
   * biweightMean - biweighted mean estimator
   * mean - robust estimator of the mean of a data set
+  * mode - robust estimate of the mode of a data set using the half-sample
+    method
   * std - robust estimator of the standard deviation of a data set
   * checkfit - return the standard deviation and biweights for a fit in order 
     to determine its quality
@@ -22,9 +24,9 @@ For additional information about the original IDL routines, see:
 import math
 import numpy
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['biweightMean', 'mean', 'std', 'checkfit', 'linefit', 'polyfit', '__version__', '__revision__', '__all__']
+__all__ = ['biweightMean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit', '__version__', '__revision__', '__all__']
 
 __iterMax = 25
 __delta = 5.0e-7
@@ -79,20 +81,20 @@ def mean(inputData, Cut=3.0):
 	"""
 	Robust estimator of the mean of a data set.  Based on the 
 	resistant_mean function from the AstroIDL User's Library.
-
+	
 	.. seealso::
 		:func:`lsl.misc.mathutil.robustmean`
 	"""
-
+	
 	data = inputData.ravel()
 	if type(data).__name__ == "MaskedArray":
 		data = data.compressed()
-
+		
 	data0 = numpy.median(data)
 	maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
 	if maxAbsDev < __epsilon:
 		maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
-
+		
 	cutOff = Cut*maxAbsDev
 	good = numpy.where( numpy.abs(data-data0) <= cutOff )
 	good = good[0]
@@ -105,24 +107,66 @@ def mean(inputData, Cut=3.0):
 		sigmaCut = 1.0
 	if sigmaCut <= 4.5:
 		dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
-
+		
 	cutOff = Cut*dataSigma
 	good = numpy.where(  numpy.abs(data-data0) <= cutOff )
 	good = good[0]
 	dataMean = data[good].mean()
 	if len(good) > 3:
 		dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
-
+		
 	if Cut > 1.0:
 		sigmaCut = Cut
 	else:
 		sigmaCut = 1.0
 	if sigmaCut <= 4.5:
 		dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
-
+		
 	dataSigma = dataSigma / math.sqrt(len(good)-1)
-
+	
 	return dataMean
+
+
+def mode(inputData):
+	"""
+	Robust estimator of the mode of a data set using the half-sample mode.
+	
+	.. versionadded: 1.0.3
+	"""
+	
+	# Create the function that we can use for the half-sample mode
+	def _hsm(data):
+		if data.size == 1:
+			return data[0]
+		elif data.size == 2:
+			return data.mean()
+		elif data.size == 3:
+			i1 = data[1] - data[0]
+			i2 = data[2] - data[1]
+			if i1 < i2:
+				return data[:2].mean()
+			elif i2 > i1:
+				return data[1:].mean()
+			else:
+				return data[1]
+		else:
+			wMin = data[-1] - data[0]
+			N = data.size/2 + data.size%2 
+			for i in xrange(0, N):
+				w = data[i+N-1] - data[i] 
+				if w < wMin:
+					wMin = w
+					j = i
+			return _hsm(data[j:j+N])
+			
+	data = inputData.ravel()
+	if type(data).__name__ == "MaskedArray":
+		data = data.compressed()
+		
+	# The data need to be sorted for this to work
+	data = numpy.sort(data)
+	
+	return _hsm(data)
 
 
 def std(inputData, Zero=False):
@@ -131,11 +175,11 @@ def std(inputData, Zero=False):
 	
 	Based on the robust_sigma function from the AstroIDL User's Library.
 	"""
-
+	
 	data = inputData.ravel()
 	if type(data).__name__ == "MaskedArray":
 		data = data.compressed()
-
+		
 	if Zero:
 		data0 = 0.0
 	else:
@@ -146,7 +190,7 @@ def std(inputData, Zero=False):
 	if maxAbsDev < __epsilon:
 		sigma = 0.0
 		return sigma
-
+		
 	u = (data-data0) / 6.0 / maxAbsDev
 	u2 = u**2.0
 	good = numpy.where( u2 <= 1.0 )
@@ -155,7 +199,7 @@ def std(inputData, Zero=False):
 		print "WARNING:  Distribution is too strange to compute standard deviation"
 		sigma = -1.0
 		return sigma
-
+		
 	numerator = ((data[good]-data0)**2.0 * (1.0-u2[good])**2.0).sum()
 	nElements = (data.ravel()).shape[0]
 	denominator = ((1.0-u2[good])*(1.0-5.0*u2[good])).sum()
@@ -164,7 +208,7 @@ def std(inputData, Zero=False):
 		sigma = math.sqrt(sigma)
 	else:
 		sigma = 0.0
-
+		
 	return sigma
 
 
@@ -262,7 +306,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
 		sigma, fracDev, nGood, biweights, scaledResids = checkfit(yp, yFit, __epsilon, __delta)
 		if nGood < 2:
 			lsq = 1.0
-		
+			
 	if lsq == 1 or n < 6:
 		sx = x.sum()
 		sy = y.sum()
@@ -397,7 +441,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
 			diff = diff1
 		else:
 			diff = diff2
-				
+			
 	cc[0] = cc[0] + y0 - cc[1]*x0
 	return cc[::-1]
 
@@ -435,7 +479,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 	y0 = y.sum() / n
 	u = x
 	v = y
-		
+	
 	nSeg = order + 2
 	if (nSeg/2)*2 == nSeg:
 		nSeg = nSeg + 1
@@ -478,7 +522,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 			nGood = n - nGood
 		if nGood < minPts:
 			return 0
-		
+			
 	closeEnough = 0.03*numpy.sqrt(0.5/(n-1))
 	if closeEnough < __delta:
 		closeEnough = __delta

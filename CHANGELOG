@@ -14,6 +14,7 @@
   * Added Boltzmann's constant to lsl.common.constants
   * Added a 'color' keyword to the various functions in lsl.imaging.overlay to change the color of the overlay
   * Added a 'marker' keyword to the lsl.imaging.overlay.source() to change symbol of the source overlay
+  * Added a function to lsl.statistics.robust to help estimate the mode of a data set using the half-sample method
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system
