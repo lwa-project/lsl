@@ -18,7 +18,7 @@ from lsl.astro import deg_to_dms, deg_to_hms
 from lsl.statistics.robust import std as rStd
 from lsl.misc.mathutil import gaussparams, gaussian2d
 
-__version__ = '0.4'
+__version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['clean', 'cleanSources', 'lsq', '__version__', '__revision__', '__all__']
 
@@ -201,8 +201,6 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 		subpixelationLevel = 5
 		peakXO = round(peakXO*subpixelationLevel)/float(subpixelationLevel)
 		peakYO = round(peakYO*subpixelationLevel)/float(subpixelationLevel)
-		#print 'X', peakX, peakXO
-		#print 'Y', peakY, peakYO
 		
 		# Pixel coordinates to right ascension, dec.
 		try:
@@ -213,9 +211,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 			peakDec = _interpolateValues(dec, peakXO, peakYO)
 		except IndexError:
 			peakDec = dec[peakX, peakY]
-		#print 'R', peakRA, RA[peakX, peakY], peakRA - RA[peakX, peakY]
-		#print 'D', peakDec, dec[peakX, peakY], peakDec - dec[peakX, peakY]
-		
+			
 		# Pixel coordinates to az, el
 		try:
 			peakAz = _interpolateValues(az, peakXO, peakYO)
@@ -232,7 +228,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 			currAz  = deg_to_dms(peakAz * 180/numpy.pi)
 			currEl  = deg_to_dms(peakEl * 180/numpy.pi)
 			
-			print "Iteration %i:  Log peak of %.2f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peakX, peakY)
+			print "Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peakX, peakY)
 			print "               -> RA: %s, Dec: %s" % (currRA, currDec)
 			print "               -> az: %s, el: %s" % (currAz, currEl)
 			
@@ -283,8 +279,6 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 				#print 'II', l, m, area, asum
 				cleaned[l,m] += gain*area*peakV
 				
-		#print working.min(), working.max(), working.std(), working.max()/working.std(), toRemove.sum()
-		
 		if plot:
 			pylab.subplot(2, 2, 1)
 			pylab.imshow(working+toRemove, origin='lower')
@@ -446,7 +440,6 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 		rx1 = rx0 + FWHM + 1
 		ry0 = srcPeak[1][0] - FWHM/2
 		ry1 = ry0 + FWHM + 1
-		#print rx0, rx1, ry0, ry1, '@', FWHM
 		
 		# Define the background box - this lies outside the clean box and serves
 		# as a reference for the background
@@ -480,8 +473,6 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 			subpixelationLevel = 5
 			peakXO = round(peakXO*subpixelationLevel)/float(subpixelationLevel)
 			peakYO = round(peakYO*subpixelationLevel)/float(subpixelationLevel)
-			#print 'X', peakX, peakXO, srcPeak[0][0]
-			#print 'Y', peakY, peakYO, srcPeak[1][0]
 			
 			# Pixel coordinates to right ascension, dec.
 			try:
@@ -493,9 +484,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 				peakDec = _interpolateValues(dec, peakXO, peakYO)
 			except IndexError:
 				peakDec = dec[peakX, peakY]
-			#print 'R', peakRA, RA[peakX, peakY], peakRA - RA[peakX, peakY]
-			#print 'D', peakDec, dec[peakX, peakY], peakDec - dec[peakX, peakY]
-			
+				
 			# Pixel coordinates to az, el
 			try:
 				peakAz = _interpolateValues(az, peakXO, peakYO)
@@ -513,7 +502,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 				currAz  = deg_to_dms(peakAz * 180/numpy.pi)
 				currEl  = deg_to_dms(peakEl * 180/numpy.pi)
 				
-				print "%s - Iteration %i:  Log peak of %.2f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peakX, peakY)
+				print "%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peakX, peakY)
 				print "               -> RA: %s, Dec: %s" % (currRA, currDec)
 				print "               -> az: %s, el: %s" % (currAz, currEl)
 				
@@ -564,9 +553,6 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 					#print 'II', l, m, area, asum
 					cleaned[l,m] += gain*area*peakV
 					
-			#print 'S1', numpy.max(working[rx0:rx1,ry0:ry1]), numpy.median(working[background]), numpy.std(working[background])
-			#print 'S2', numpy.abs(numpy.max(working[rx0:rx1,ry0:ry1])-numpy.median(working[background]))/rStd(working[background])
-			
 			if plot:
 				try:
 					pylab.subplot(2, 2, 1)
@@ -639,15 +625,48 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 	return conv, working
 
 
-def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, gain=0.2, maxIter=150, verbose=True, plot=False):
+def _minorCycle(img, beam, gain=0.2, nIter=150):
+	"""
+	Function for performing the minor cycle part of lsq().
+	"""
+	
+	cleaned = img*0.0
+	working = img*1.0
+	
+	for i in xrange(nIter):
+		# Find the location of the peak in the flux density
+		aw = numpy.abs( working )
+		peak = numpy.where( aw == aw.max() )
+		peakX = peak[0][0]
+		peakY = peak[1][0]
+		peakV = working[peakX,peakY]
+		
+		if numpy.abs(peakV - working.mean()) < 2*working.std():
+			break
+			
+		# Build the beam
+		beam2 = numpy.roll(beam,  peakX-beam.shape[0]/2, axis=0)
+		beam2 = numpy.roll(beam2, peakY-beam.shape[1]/2, axis=1) 
+		
+		# Calculate how much signal needs to be removed...
+		toRemove = gain*peakV*beam2
+		working -= toRemove
+		cleaned[peakX,peakY] += toRemove.sum()
+		
+	return  cleaned + working
+
+
+def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, gain=0.05, maxIter=150, rtol=1e-9, verbose=True, plot=False):
 	"""
 	Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
 	instance filled with data, return a deconvolved image.  This function 
 	implements a least squares deconvolution.
 	
 	Least squares tuning parameters:
-	  * gain - least squares loop gain (default 0.2)
+	  * gain - least squares loop gain (default 0.05)
 	  * maxIter - Maximum number of iteration (default 150)
+	  * rtol - Minimum change in the residual RMS between iterations
+         (default 1e-9)
 	"""
 	
 	# Sort out the channels to work on
@@ -702,8 +721,9 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 		
 	rChan = [chan[0], chan[-1]]
 	diff = img - mdl
-	diffScaled = diff/gain
-	oldRMS = diff.std()
+	diffScaled = 0.0*diff/gain
+	oldRMS = diff.std()*1e6
+	oldDiff = diff*0.0
 	rHist = []
 	exitStatus = 'iteration'
 	for k in xrange(maxIter):
@@ -734,7 +754,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 		## Difference the image and the simulated image and scale it to the 
 		## model's peak flux
 		diff = img - simImg
-		diffScaled = diff * (mdl.max() / img.max())
+		diff2 = _minorCycle(diff, beamClean, gain=0.1, nIter=2000)
 		
 		## Compute the RMS and create an appropriately scaled version of the model
 		RMS = diff.std()
@@ -743,9 +763,14 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 		## Status report
 		if verbose:
 			print "Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS)
-			print "               -> maximum residual: %.4e (%.2f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max())
-			print "               -> delta RMS: %.4e" % (RMS-oldRMS,)
+			print "               -> maximum residual: %.4e (%.3f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max())
+			print "               -> minimum residual: %.4e (%.3f%% of peak)" % (diff.min(), 100.0*diff.min()/img.max())
+			print "               -> delta RMS: %.4e (%.3f%%)" % (RMS-oldRMS, 100.0*(RMS-oldRMS)/RMS)
 			
+		## Make the cleaned residuals map ready for updating the model
+		diff = diff2
+		diffScaled = diff * mdl.max() / simImg.max()
+		
 		## Has the RMS gone up?  If so, it is time to exit.  But first, restore 
 		## the previous iteration
 		if RMS-oldRMS > 0:
@@ -753,6 +778,16 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 			diff = oldDiff
 			
 			exitStatus = 'residuals'
+			
+			break
+			
+		## Is the RMS still changing in an acceptable manner?
+		if abs(RMS-oldRMS) < rtol:
+			# No need to go back a step			
+			#mdl = oldModel
+			#diff = oldDiff
+			
+			exitStatus = 'tolerance'
 			
 			break
 			
@@ -775,11 +810,6 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 			pylab.cla()
 			pylab.semilogy(rHist)
 			pylab.draw()
-			
-		## Jump start the next iteration if this is our first pass through the data
-		if k == 0:
-			scaleRatio = 0.75 * img.max() / simImg.max()
-			diffScaled *= scaleRatio / gain
 			
 	# Summary
 	print "Exited after %i iterations with status '%s'" % (k+1, exitStatus)
