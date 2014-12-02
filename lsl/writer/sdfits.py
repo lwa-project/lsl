@@ -30,7 +30,7 @@ from lsl.misc import mathutil
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['SDFITS', '__version__', '__revision__', '__all__']
+__all__ = ['SD', '__version__', '__revision__', '__all__']
 
 
 SDVersion = (1, 6)
