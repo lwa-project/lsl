@@ -174,16 +174,6 @@ class ProgressBarPlus(ProgressBar):
 		
 		self.t0 = time.time()
 		
-	def __add__(self, amount):
-		"""
-		Increment the internal counter by a certain amount, return a new
-		ProgressBar object.
-		"""
-		
-		newBar = copy.deepcopy(self)
-		newBar += amount
-		return newBar
-		
 	def __iadd__(self, amount):
 		"""
 		Increment the internal counter by a certain amount.
@@ -196,17 +186,6 @@ class ProgressBarPlus(ProgressBar):
 		self.t1 = time.time()
 		
 		return self
-		
-	def __sub__(self, amount):
-		"""
-		Decrement the internal counter by a certain amount, return a new
-		ProgressBar object.
-		"""
-		
-		newBar = copy.deepcopy(self)
-		if newBar.amount >= amount:
-			newBar -= amount
-		return newBar
 		
 	def __isub__(self, amount):
 		"""
