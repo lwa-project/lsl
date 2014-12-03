@@ -16,7 +16,7 @@ class ProgressBar(object):
 	"""
 	Object to make a ASCII progress bar for use with various long-
 	run tasks.
-
+	
 	Example Usage:
 		>>> import sys
 		>>> from progess import ProgressBar
@@ -25,7 +25,7 @@ class ProgressBar(object):
 		>>> sys.stdout.write(pb.show())
 		>>> sys.stdout.flush()
 	"""
-
+	
 	def __init__(self, max=100, span=70, sym='=', printP=True):
 		"""
 		Initialize the ProgressBar class with various parameters:
@@ -35,22 +35,22 @@ class ProgressBar(object):
 		  * printP: whether or not to print the percentage in addition to
 		    the bar or not (default: True)
 		"""
-
+		
 		self.amount = 0
 		self.max = max
 		self.span = span
 		self.sym = sym
 		self.rotations = ['-', '\\', '|', '/', '-', '\\', '|', '/', self.sym]
 		self.printP = printP
-	
+		
 	def inc(self, amount=1):
 		"""
 		Increment the progress bar's internal counter by some amount.  The
 		default is one.
 		"""
-
+		
 		self.__iadd__(amount)
-
+		
 	def dec(self, amount=1):
 		"""
 		Decrement the progress bar's internal counter by some amount.  The
@@ -58,12 +58,12 @@ class ProgressBar(object):
 		"""
 			
 		self.__isub__(amount)
-
+		
 	def show(self):
 		"""
 		Build a string representation of the progress bar and return it.
 		"""
-
+		
 		if self.printP:
 			# If we want the percentage also displayed, trim a little 
 			# more from the progress bar's wdith
@@ -79,7 +79,7 @@ class ProgressBar(object):
 			bar = bar + lastMark
 			bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
 			nte = "%5.1f%%" % (float(self.amount)/self.max*100)
-
+			
 			out = "[%s] %s" % (bar, nte)
 		else:
 			# Progress bar only
@@ -94,9 +94,9 @@ class ProgressBar(object):
 			bar = self.sym * nMarksFull
 			bar = bar + lastMark
 			bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
-
+			
 			out = "[%s]" % bar
-
+			
 		return out
 		
 	def __add__(self, amount):
@@ -108,12 +108,12 @@ class ProgressBar(object):
 		newBar = copy.deepcopy(self)
 		newBar += amount
 		return newBar
-
+		
 	def __iadd__(self, amount):
 		"""
 		Increment the internal counter by a certain amount.
 		"""
-
+		
 		self.amount += amount
 		return self
 		
@@ -127,21 +127,21 @@ class ProgressBar(object):
 		if newBar.amount >= amount:
 			newBar -= amount
 		return newBar
-
+		
 	def __isub__(self, amount):
 		"""
 		Decrement the internal counter by a certain amount.
 		"""
-
+		
 		if self.amount >= amount:
 			self.amount -= amount
 		return self
-
+		
 	def __str__(self):
 		"""
 		Alternative to self.show().
 		"""
-
+		
 		return self.show()
 
 
@@ -173,29 +173,54 @@ class ProgressBarPlus(ProgressBar):
 		"""
 		
 		self.t0 = time.time()
-	
-	def inc(self, amount=1):
+		
+	def __add__(self, amount):
 		"""
-		Increment the progress bar's internal counter by some amount.  The
-		default is one.
+		Increment the internal counter by a certain amount, return a new
+		ProgressBar object.
 		"""
-
-		self.__iadd__(amount)
+		
+		newBar = copy.deepcopy(self)
+		newBar += amount
+		return newBar
+		
+	def __iadd__(self, amount):
+		"""
+		Increment the internal counter by a certain amount.
+		"""
+		
+		self.amount += amount
 		
 		if self.t0 is None:
 			self.t0 = time.time()
 		self.t1 = time.time()
 		
-	def dec(self, amount=1):
+		return self
+		
+	def __sub__(self, amount):
 		"""
-		Decrement the progress bar's internal counter by some amount.  The
-		default is one.
+		Decrement the internal counter by a certain amount, return a new
+		ProgressBar object.
 		"""
+		
+		newBar = copy.deepcopy(self)
+		if newBar.amount >= amount:
+			newBar -= amount
+		return newBar
+		
+	def __isub__(self, amount):
+		"""
+		Decrement the internal counter by a certain amount.
+		"""
+		
+		if self.amount >= amount:
+			self.amount -= amount
 			
-		self.__isub__(amount)
 		if self.t0 is None:
 			self.t0 = time.time()
 		self.t1 = time.time()
+		
+		return self
 		
 	def show(self):
 		"""
