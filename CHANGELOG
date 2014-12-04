@@ -17,6 +17,7 @@
   * Added a function to lsl.statistics.robust to help estimate the mode of a data set using the half-sample method
   * Fixed the __all__ declaration in the lsl.writer.sdfits module
   * Fixed a bug in the lsl.common.progress.ProgressBarPlus class that caused the time estimates not to get updated when using __iadd__
+  * Fixed a bug in the splitSession.py script that caused it to die on truncated data files (Ticket #60)
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system

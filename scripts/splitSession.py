@@ -147,10 +147,8 @@ def main(args):
 			nFramesSkip = int(pDur*bwKey[pBW]*bwMult)
 			fh.seek(nFramesSkip*reader.FrameSize, 1)
 			if fh.tell() >= os.path.getsize(data):
-				print "At file's end"
 				fh.seek(-10*reader.FrameSize, 2)
-			
-
+				
 		## Figure out where we are and make sure we line up on a frame
 		## NOTE: This should never be needed
 		fail = True
@@ -174,8 +172,8 @@ def main(args):
 					frame = reader.readFrame(fh)
 				except errors.syncError:		
 					fh.seek(1, 1)
-				#except errors.eofError:
-				#	break
+				except errors.eofError:
+					break
 				#print datetime.utcfromtimestamp(frame.getTime()), oStart
 
 		elif datetime.utcfromtimestamp(frame.getTime()) > oStart:
@@ -197,13 +195,16 @@ def main(args):
 		else:
 			### We're there already
 			print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.getTime()), oStart)
-
+			
 		## Jump back exactly one frame so that the filehandle is in a position 
 		## to read the first frame that is part of the observation
-		frame = reader.readFrame(fh)
-		print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.getTime()), oStart)
-		fh.seek(-reader.FrameSize, 1)
-		
+		try:
+			frame = reader.readFrame(fh)
+			print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.getTime()), oStart)
+			fh.seek(-reader.FrameSize, 1)
+		except errors.eofError:
+			pass
+			
 		## Update the bytes ranges
 		if fh.tell() < os.path.getsize(data):
 			oDetails[i]['b'] = fh.tell()
@@ -216,7 +217,10 @@ def main(args):
 			oDetails[i-1]['e'] = fh.tell()
 
 		## Progress report
-		print '-> Obs.', oDetails[i]['o'], 'starts at byte', oDetails[i]['b']
+		if oDetails[i]['b'] >= 0:
+			print '-> Obs.', oDetails[i]['o'], 'starts at byte', oDetails[i]['b']
+		else:
+			print '-> Obs.', oDetails[i]['o'], 'starts after the end of the file'
 	print " "
 
 	# Report
