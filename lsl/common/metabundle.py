@@ -19,7 +19,7 @@ from lsl.common import stations, sdm, sdf
 from lsl.common.mcs import *
 from lsl.transform import Time
 
-__version__ = '0.6'
+__version__ = '0.7'
 __revision__ = '$Rev$'
 __all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 'getASPConfiguration', 'getASPConfigurationSummary', '__version__', '__revision__', '__all__']
 
@@ -73,6 +73,47 @@ def readSESFile(filename):
 	""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), endianness='little')
 
 	fh.readinto(ses)
+	
+	if ses.SESSION_NOBS > 150:
+		fh.seek(0)
+		
+		ses = parseCStruct("""
+		unsigned short int FORMAT_VERSION;
+		char PROJECT_ID[9];
+		unsigned int SESSION_ID;
+		unsigned short int SESSION_CRA;
+		signed short int SESSION_DRX_BEAM;
+		%s
+		unsigned long int SESSION_START_MJD;
+		unsigned long int SESSION_START_MPM;
+		unsigned long int SESSION_DUR;
+		unsigned int SESSION_NOBS;
+		signed short int SESSION_MRP_ASP;
+		signed short int SESSION_MRP_DP_;
+		signed short int SESSION_MRP_DR1;
+		signed short int SESSION_MRP_DR2;
+		signed short int SESSION_MRP_DR3;
+		signed short int SESSION_MRP_DR4;
+		signed short int SESSION_MRP_DR5;
+		signed short int SESSION_MRP_SHL;
+		signed short int SESSION_MRP_MCS;
+		signed short int SESSION_MUP_ASP;
+		signed short int SESSION_MUP_DP_;
+		signed short int SESSION_MUP_DR1;
+		signed short int SESSION_MUP_DR2;
+		signed short int SESSION_MUP_DR3;
+		signed short int SESSION_MUP_DR4;
+		signed short int SESSION_MUP_DR5;
+		signed short int SESSION_MUP_SHL;
+		signed short int SESSION_MUP_MCS;
+		signed char SESSION_LOG_SCH;
+		signed char SESSION_LOG_EXE;
+		signed char SESSION_INC_SMIB;
+		signed char SESSION_INC_DES;
+		""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), endianness='little')
+
+		fh.readinto(ses)
+		ses.SESSION_SPC = ''
 	fh.close()
 	
 	record = {'ASP': ses.SESSION_MRP_ASP, 'DP_': ses.SESSION_MRP_DP_, 'SHL': ses.SESSION_MRP_SHL, 
@@ -123,7 +164,61 @@ def readOBSFile(filename):
 	""", endianness='little')
 	
 	fh.readinto(header)
-
+	
+	if header.OBS_ID > 150:
+		fh.seek(0)
+		
+		header = parseCStruct("""
+		unsigned short int FORMAT_VERSION;
+		char               PROJECT_ID[9];
+		unsigned int       SESSION_ID;
+		signed short int   SESSION_DRX_BEAM;
+		unsigned int       OBS_ID; 
+		unsigned long int  OBS_START_MJD;
+		unsigned long int  OBS_START_MPM;
+		unsigned long int  OBS_DUR;
+		unsigned short int OBS_MODE;
+		float              OBS_RA;
+		float              OBS_DEC;
+		unsigned short int OBS_B;
+		unsigned int       OBS_FREQ1;
+		unsigned int       OBS_FREQ2;
+		unsigned short int OBS_BW;
+		unsigned int       OBS_STP_N;
+		unsigned short int OBS_STP_RADEC;
+		""", endianness='little')
+		
+		fh.readinto(header)
+		header.SESSION_SPC = ''
+		header.OBS_BDM = ''
+		
+	elif header.OBS_B > 2:
+		fh.seek(0)
+		
+		header = parseCStruct("""
+		unsigned short int FORMAT_VERSION;
+		char               PROJECT_ID[9];
+		unsigned int       SESSION_ID;
+		signed short int   SESSION_DRX_BEAM;
+		char               SESSION_SPC[32];
+		unsigned int       OBS_ID; 
+		unsigned long int  OBS_START_MJD;
+		unsigned long int  OBS_START_MPM;
+		unsigned long int  OBS_DUR;
+		unsigned short int OBS_MODE;
+		float              OBS_RA;
+		float              OBS_DEC;
+		unsigned short int OBS_B;
+		unsigned int       OBS_FREQ1;
+		unsigned int       OBS_FREQ2;
+		unsigned short int OBS_BW;
+		unsigned int       OBS_STP_N;
+		unsigned short int OBS_STP_RADEC;
+		""", endianness='little')
+		
+		fh.readinto(header)
+		header.OBS_BDM = ''
+		
 	if IS_32BIT_PYTHON:
 		skip = parseCStruct("""
 		int junk;
@@ -612,6 +707,7 @@ def getASPConfiguration(tarname, which='beginning'):
 		
 		try:
 			# Read in the right MIB
+			aspMIB = {}
 			for mib in mibs:
 				if mib.name[-4:] == '.dir':
 					continue
