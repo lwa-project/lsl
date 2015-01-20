@@ -41,8 +41,9 @@ Options:
 -s, --dataset          Data set to image (Default = All)
 -m, --uv-min           Minimun baseline uvw length to include 
                        (Default = 0 lambda at midpoint frequency)
+-t, --topo             Display an az/el grid instead of a RA/Dec grid
 -n, --no-labels        Disable source and grid labels
--g, --no-grid          Disable the RA/Dec grid
+-g, --no-grid          Disable the grid
 -f, --fits             Save the images to the specified FITS image file
 """
 
@@ -61,12 +62,13 @@ def parseConfig(args):
 	config['uvMin'] = 0.0
 	config['label'] = True
 	config['grid'] = True
+	config['coord'] = 'RADec'
 	config['fits'] = None
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "h1:2:s:m:ngf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "no-labels", "no-grid", "fits="])
+		opts, arg = getopt.getopt(args, "h1:2:s:m:tngf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "topo", "no-labels", "no-grid", "fits="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -84,6 +86,8 @@ def parseConfig(args):
 			config['dataset'] = int(value)
 		elif opt in ('-m', '--uv-min'):
 			config['uvMin'] = float(value)
+		elif opt in ('-t', '--topo'):
+			config['coord'] = 'AzEl'
 		elif opt in ('-n', '--no-labels'):
 			config['label'] = False
 		elif opt in ('-g', '--no-grid'):
@@ -98,97 +102,6 @@ def parseConfig(args):
 	
 	# Return configuration
 	return config
-
-
-def graticle(ax, lst, lat, label=True):
-	"""
-	For a matplotlib axis instance showing an image of the sky, plot lines of
-	constant declinate and RA.  Declinations are spaced at 20 degree intervals
-	and RAs are spaced at 2 hour intervals.
-	
-	.. note::
-		LST and latitude values should be passed as radians.  This is the default
-		for lwa1.getObserver.sidereal_time() and lwa1.getObserver().lat.
-	"""
-	
-	# Lines of constant declination first
-	decs = range(-80, 90, 20)
-	ras = numpy.linspace(0, 360, 800)
-	
-	x = numpy.zeros(ras.size)
-	x = numpy.ma.array(x, mask=numpy.zeros(ras.size))
-	y = numpy.zeros(ras.size)
-	y = numpy.ma.array(y, mask=numpy.zeros(ras.size))
-	
-	for dec in decs:
-		x *= 0
-		y *= 0
-		
-		# Loop over RA to compute the topocentric coordinates (used by the image) for
-		# the lines.  Also, figure out the elevation for each point on the line so
-		# we can mask those below the horizon
-		for i,ra in enumerate(ras):
-			eq = aipy.coord.radec2eq((-lst + ra*numpy.pi/180,dec*numpy.pi/180))
-			xyz = numpy.dot(aipy.coord.eq2top_m(0, lat), eq)
-			az,alt = aipy.coord.top2azalt(xyz)
-			
-			x[i] = xyz[0]
-			y[i] = xyz[1]
-			if alt <= 0:
-				x.mask[i] = 1
-				y.mask[i] = 1
-			else:
-				x.mask[i] = 0
-				y.mask[i] = 0
-				
-		ax.plot(x, y, color='white', alpha=0.75)
-		
-		eq = aipy.coord.radec2eq((-lst + lst,(dec+5)*numpy.pi/180))
-		xyz = numpy.dot(aipy.coord.eq2top_m(0, lat), eq)
-		az,alt = aipy.coord.top2azalt(xyz)
-		
-		if alt > 15*numpy.pi/180 and label:
-			ax.text(xyz[0], xyz[1], '%+i$^\circ$' % dec, color='white')
-			
-	# Lines of constant RA			
-	decs = numpy.linspace(-80, 80, 400)
-	ras = range(0,360,30)
-	
-	x = numpy.zeros(decs.size)
-	x = numpy.ma.array(x, mask=numpy.zeros(decs.size))
-	y = numpy.zeros(decs.size)
-	y = numpy.ma.array(y, mask=numpy.zeros(decs.size))
-	
-	for ra in ras:
-		x *= 0
-		y *= 0
-		
-		# Loop over dec to compute the topocentric coordinates (used by the image) for
-		# the lines.  Also, figure out the elevation for each point on the line so
-		# we can mask those below the horizon
-		for i,dec in enumerate(decs):
-			eq = aipy.coord.radec2eq((-lst + ra*numpy.pi/180,dec*numpy.pi/180))
-			xyz = numpy.dot(aipy.coord.eq2top_m(0, lat), eq)
-			az,alt = aipy.coord.top2azalt(xyz)
-			
-			x[i] = xyz[0]
-			y[i] = xyz[1]
-			if alt <= 0:
-				x.mask[i] = 1
-				y.mask[i] = 1
-			else:
-				x.mask[i] = 0
-				y.mask[i] = 0
-				
-		ax.plot(x, y, color='white', alpha=0.75)
-		
-		eq = aipy.coord.radec2eq((-lst + ra*numpy.pi/180,0))
-		xyz = numpy.dot(aipy.coord.eq2top_m(0, lat), eq)
-		az,alt = aipy.coord.top2azalt(xyz)
-		
-		if alt > 20*numpy.pi/180 and label:
-			ax.text(xyz[0], xyz[1], '%i$^h$' % (ra/15,), color='white')
-
 
 
 def main(args):
@@ -311,8 +224,11 @@ def main(args):
 			
 			# Add lines of constant RA and dec.
 			if config['grid']:
-				graticle(ax, lo.sidereal_time(), lo.lat, label=config['label'])
-				
+				if config['coord'] == 'RADec':
+					overlay.graticleRADec(ax, aa)
+				else:
+					overlay.graticleAzEl(ax, aa)
+					
 		plt.show()
 		
 		if config['fits'] is not None:
