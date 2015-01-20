@@ -218,8 +218,9 @@ def main(args):
 		dataDict = idi.getDataSet(set, uvMin=config['uvMin'])
 		
 		# Build a list of unique JDs for the data
+		pols = dataDict['bls'].keys()
 		jdList = []
-		for jd in dataDict['jd']['xx']:
+		for jd in dataDict['jd'][pols[0]]:
 			if jd not in jdList:
 				jdList.append(jd)
 				
