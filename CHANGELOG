@@ -6,6 +6,7 @@
   * Added backward compatiability for older metadata tarball formats to the lsl.common.metabundle module (Ticket #61)
   * Added preliminary support for working with circular polarizations in the correlator (lsl.correlator.fx) and imaging (lsl.imaging.utils) modules
   * Added an option of imageIDI.py to overlay a topocentric graticle rather than a equatorial one
+  * Added better support for non-linear polarizations to imageIDI.py
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata

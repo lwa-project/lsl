@@ -17,8 +17,9 @@ from lsl.statistics.robust import *
 from lsl.correlator import uvUtils
 from lsl.writer.fitsidi import NumericStokes
 
-from lsl.imaging import utils
+from lsl.imaging import utils, overlay
 from lsl.sim import vis as simVis
+from lsl.writer.fitsidi import NumericStokes
 
 from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
@@ -119,7 +120,7 @@ def main(args):
 	print "Raw Stand Count: %i" % nStand
 	print "Final Baseline Count: %i" % (nStand*(nStand-1)/2,)
 	print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nChan, (freq[-1] - freq[0])/1e3/nChan)
-	print "Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0])
+	print "Polarization Products: %s" % ' '.join([NumericStokes[p] for p in idi.pols])
 	
 	print "Reading in FITS IDI data"
 	nSets = idi.integrationCount
@@ -148,26 +149,42 @@ def main(args):
 
 		# Build up the images for each polarization
 		print "    Gridding"
-		try:
-			imgXX = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='xx', chan=toWork)
-		except:
-			imgXX = None
-			
-		try:
-			imgYY = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='yy', chan=toWork)
-		except:
-			imgYY = None
-			
-		try:
-			imgXY = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='xy', chan=toWork)
-		except:
-			imgXY = None
-			
-		try:
-			imgYX = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol='yx', chan=toWork)
-		except:
-			imgYX = None
-			
+		img1 = None
+		lbl1 = 'XX'
+		for p in ('xx', 'rr', 'I'):
+			try:
+				img1 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				lbl1 = p.upper()
+			except:
+				pass
+				
+		img2 = None
+		lbl2 = 'YY'
+		for p in ('yy', 'll', 'Q'):
+			try:
+				img2 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				lbl2 = p.upper()
+			except:
+				pass
+				
+		img3 = None
+		lbl3 = 'XY'
+		for p in ('xy', 'rl', 'U'):
+			try:
+				img3 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				lbl3 = p.upper()
+			except:
+				pass
+				
+		img4 = None
+		lbl4 = 'YY'
+		for p in ('yx', 'lr', 'V'):
+			try:
+				img4 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				lbl4 = p.upper()
+			except:
+				pass
+				
 		# Plots
 		print "    Plotting"
 		fig = plt.figure()
@@ -175,7 +192,7 @@ def main(args):
 		ax2 = fig.add_subplot(2, 2, 2)
 		ax3 = fig.add_subplot(2, 2, 3)
 		ax4 = fig.add_subplot(2, 2, 4)
-		for ax, img, pol in zip([ax1, ax2, ax3, ax4], [imgXX, imgYY, imgXY, imgYX], ['XX', 'YY', 'XY', 'YX']):
+		for ax, img, pol in zip([ax1, ax2, ax3, ax4], [img1, img2, img3, img4], [lbl1, lbl2, lbl3, lbl4]):
 			# Skip missing images
 			if img is None:
 				ax.text(0.5, 0.5, 'Not found in file', color='black', size=12, horizontalalignment='center')
