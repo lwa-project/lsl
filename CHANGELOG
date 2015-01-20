@@ -4,6 +4,7 @@
   * Added support for determining coordinates for images with phase centers other than zenith to the lsl.imaging.utils module
   * Added a new image analysis module, lsl.imaging.analysis, that allows one to find point sources in a 2-D image
   * Added backward compatiability for older metadata tarball formats to the lsl.common.metabundle module (Ticket #61)
+  * Added preliminary support for working with circular polarizations in the correlator (lsl.correlator.fx) and imaging (lsl.imaging.utils) modules
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata
@@ -19,7 +20,7 @@
   * Fixed the __all__ declaration in the lsl.writer.sdfits module
   * Fixed a bug in the lsl.common.progress.ProgressBarPlus class that caused the time estimates not to get updated when using __iadd__
   * Fixed a bug in the splitSession.py script that caused it to die on truncated data files (Ticket #60)
-    * Fixed a bug in imageIDI.py that assumed that 'xx' was always present in the data
+  * Fixed a bug in imageIDI.py that assumed that 'xx' was always present in the data
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system

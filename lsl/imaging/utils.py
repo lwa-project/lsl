@@ -71,7 +71,7 @@ def sortDataDict(dataDict, order=None):
 	"""
 	
 	if order is None:
-		for pol in ['xx', 'yy', 'I']:
+		for pol in ['xx', 'yy', 'rr', 'll', 'I']:
 			try:
 				if len(dataDict['bls'][pol]) == 0:
 					continue

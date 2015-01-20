@@ -47,16 +47,16 @@ __all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXS
 
 def pol2pol(pol):
 	"""
-	Convert a polarization string, e.g., XX or XY, to a numeric :class:`lsl.common.stations.Antenna`
+	Convert a polarization string, e.g., XX/XY or RR/LL, to a numeric :class:`lsl.common.stations.Antenna`
 	instance polarization.
 	"""
 	
 	pol = pol.upper()
 	out = []
 	for p in pol:
-		if p == 'X':
+		if p in ('X', 'R'):
 			out.append(0)
-		elif p == 'Y':
+		elif p in ('Y', 'L'):
 			out.append(1)
 		else:
 			raise RuntimeError("Unknown polarization code '%s'" % pol)
