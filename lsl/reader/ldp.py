@@ -193,6 +193,7 @@ class TBWFile(LDPFileBase):
 		srate = 196e6
 		bits = junkFrame.getDataBits()
 		start = junkFrame.getTime()
+		startRaw = junkFrame.data.timeTag
 		
 		# Trick to figure out how many antennas are in a file
 		idsFound = []
@@ -213,7 +214,7 @@ class TBWFile(LDPFileBase):
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbw.FrameSize,
 						'sampleRate': srate, 'dataBits': bits, 'nAntenna': 2*len(idsFound), 
-						'tStart': start}
+						'tStart': start, 'tStartSamples': startRaw}
 						
 	def readFrame(self):
 		"""
@@ -348,11 +349,12 @@ class TBNFile(LDPFileBase):
 		self.fh.seek(-tbn.FrameSize, 1)
 		tuning1 = junkFrame.getCentralFreq()
 		start = junkFrame.getTime()
+		startRaw = junkFrame.data.timeTag
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbn.FrameSize,
 						'nAntenna': framesPerObsX+framesPerObsY, 
 						'sampleRate': srate, 'dataBits': bits, 
-						'tStart': start, 'freq1': tuning1}
+						'tStart': start, 'tStartSamples': startRaw, 'freq1': tuning1}
 						
 		# Initialize the buffer as part of the description process
 		pols = []
@@ -652,16 +654,17 @@ class DRXFile(LDPFileBase):
 			if t == 1:
 				tuning1 = junkFrame.getCentralFreq()
 			else:
-				tuning1 = junkFrame.getCentralFreq()
+				tuning2 = junkFrame.getCentralFreq()
 				
 			if i == 0:
 				start = junkFrame.getTime()
+				startRaw = junkFrame.data.timeTag - junkFrame.header.timeOffset
 		self.fh.seek(-drx.FrameSize*4, 1)
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': drx.FrameSize,
 						'beampols': beampols, 'beam': b, 
 						'sampleRate': srate, 'dataBits': bits, 
-						'tStart': start, 'freq1': tuning1, 'freq2': tuning2}
+						'tStart': start, 'tStartSamples': startRaw, 'freq1': tuning1, 'freq2': tuning2}
 						
 		# Initialize the buffer as part of the description process
 		self.buffer = DRXFrameBuffer(beams=beams, tunes=tunes, pols=pols)
@@ -945,13 +948,14 @@ class DRSpecFile(LDPFileBase):
 		nInt = junkFrame.header.nInts
 		tInt = nInt*LFFT/srate
 		start = junkFrame.getTime()
+		startRaw = junkFrame.data.timeTag - junkFrame.header.timeOffset
 		tuning1, tuning2 = junkFrame.getCentralFreq()
 		prod = junkFrame.getDataProducts()
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': FrameSize, 
 						'beampols': beampols, 'beam': beam, 
 						'sampleRate': srate, 'dataBits': bits, 
-						'tStart': start, 'freq1': tuning1, 'freq2': tuning2, 
+						'tStart': start, 'tStartSamples': startRaw, 'freq1': tuning1, 'freq2': tuning2, 
 						'nInt': nInt, 'tInt': tInt, 'LFFT': LFFT, 
 						'nProducts': len(prod), 'dataProducts': prod}
 						
