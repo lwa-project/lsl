@@ -193,7 +193,6 @@ class TBWFile(LDPFileBase):
 		srate = 196e6
 		bits = junkFrame.getDataBits()
 		start = junkFrame.getTime()
-		startRaw = junkFrame.data.timeTag
 		
 		# Trick to figure out how many antennas are in a file
 		idsFound = []
@@ -214,7 +213,7 @@ class TBWFile(LDPFileBase):
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbw.FrameSize,
 						'sampleRate': srate, 'dataBits': bits, 'nAntenna': 2*len(idsFound), 
-						'tStart': start, 'tStartSamples': startRaw}
+						'tStart': start}
 						
 	def readFrame(self):
 		"""
@@ -349,12 +348,11 @@ class TBNFile(LDPFileBase):
 		self.fh.seek(-tbn.FrameSize, 1)
 		tuning1 = junkFrame.getCentralFreq()
 		start = junkFrame.getTime()
-		startRaw = junkFrame.data.timeTag
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbn.FrameSize,
 						'nAntenna': framesPerObsX+framesPerObsY, 
 						'sampleRate': srate, 'dataBits': bits, 
-						'tStart': start, 'tStartSamples': startRaw, 'freq1': tuning1}
+						'tStart': start, 'freq1': tuning1}
 						
 		# Initialize the buffer as part of the description process
 		pols = []
@@ -395,6 +393,13 @@ class TBNFile(LDPFileBase):
 		"""
 		Read and return a single `lsl.reader.tbn.Frame` instance.
 		"""
+		
+		# Reset the buffer
+		if getattr(self, "buffer", None) is not None:
+			self.buffer.flush()
+			
+		# Reset the timetag checker
+		self._timetag = None
 		
 		return tbn.readFrame(self.fh)
 		
@@ -658,13 +663,12 @@ class DRXFile(LDPFileBase):
 				
 			if i == 0:
 				start = junkFrame.getTime()
-				startRaw = junkFrame.data.timeTag - junkFrame.header.timeOffset
 		self.fh.seek(-drx.FrameSize*4, 1)
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': drx.FrameSize,
 						'beampols': beampols, 'beam': b, 
 						'sampleRate': srate, 'dataBits': bits, 
-						'tStart': start, 'tStartSamples': startRaw, 'freq1': tuning1, 'freq2': tuning2}
+						'tStart': start, 'freq1': tuning1, 'freq2': tuning2}
 						
 		# Initialize the buffer as part of the description process
 		self.buffer = DRXFrameBuffer(beams=beams, tunes=tunes, pols=pols)
@@ -733,6 +737,13 @@ class DRXFile(LDPFileBase):
 		"""
 		Read and return a single `lsl.reader.drx.Frame` instance.
 		"""
+		
+		# Reset the buffer
+		if getattr(self, "buffer", None) is not None:
+			self.buffer.flush()
+			
+		# Zero out the time tag checker
+		self._timetag = None
 		
 		return drx.readFrame(self.fh)
 		
@@ -948,14 +959,13 @@ class DRSpecFile(LDPFileBase):
 		nInt = junkFrame.header.nInts
 		tInt = nInt*LFFT/srate
 		start = junkFrame.getTime()
-		startRaw = junkFrame.data.timeTag - junkFrame.header.timeOffset
 		tuning1, tuning2 = junkFrame.getCentralFreq()
 		prod = junkFrame.getDataProducts()
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': FrameSize, 
 						'beampols': beampols, 'beam': beam, 
 						'sampleRate': srate, 'dataBits': bits, 
-						'tStart': start, 'tStartSamples': startRaw, 'freq1': tuning1, 'freq2': tuning2, 
+						'tStart': start, 'freq1': tuning1, 'freq2': tuning2, 
 						'nInt': nInt, 'tInt': tInt, 'LFFT': LFFT, 
 						'nProducts': len(prod), 'dataProducts': prod}
 						
@@ -1016,6 +1026,9 @@ class DRSpecFile(LDPFileBase):
 		"""
 		Read and return a single `lsl.reader.drspec.Frame` instance.
 		"""
+		
+		# Update the timetag checker
+		self._timetag = None
 		
 		return drspec.readFrame(self.fh)
 		

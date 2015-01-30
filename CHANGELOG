@@ -25,6 +25,7 @@
   * Fixed a bug in the splitSession.py script that caused it to die on truncated data files (Ticket #60)
   * Fixed a bug in imageIDI.py that assumed that 'xx' was always present in the data
   * Fixed a bug in the lsl.reader.ldp.DRXFile class that caused the tuning frequencies to be reported wrong by getInfo()
+  * Changed how the lsl.reader.ldp.*.readFrame() functions interact with the time tag checker
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system
