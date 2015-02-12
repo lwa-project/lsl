@@ -507,8 +507,8 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
 			pass
 			
 	# Make sure the phase is (-pi, pi]
-	tempPhaseOffsets[numpy.where( tempPhaseOffsets <= -numpy.pi )] += 2*numpy.pi
-	tempPhaseOffsets[numpy.where( tempPhaseOffsets >   numpy.pi )] -= 2*numpy.pi
+	tempPhaseOffsets %= 2*numpy.pi
+	tempPhaseOffsets[numpy.where( tempPhaseOffsets >  numpy.pi )] -= 2*numpy.pi
 	
 	if verbose:
 		print 'Best Gains: ', tempGains

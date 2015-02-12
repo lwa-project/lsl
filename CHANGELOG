@@ -26,6 +26,7 @@
   * Fixed a bug in imageIDI.py that assumed that 'xx' was always present in the data
   * Fixed a bug in the lsl.reader.ldp.DRXFile class that caused the tuning frequencies to be reported wrong by getInfo()
   * Changed how the lsl.reader.ldp.*.readFrame() functions interact with the time tag checker
+  * Fixed the ranging of phases coming out of the lsl.imaging.selfCal module
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system
