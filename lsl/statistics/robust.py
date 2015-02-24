@@ -33,182 +33,217 @@ __delta = 5.0e-7
 __epsilon = 1.0e-20
 
 
-def biweightMean(inputData):
+def biweightMean(inputData, axis=None, dtype=None):
 	"""
 	Calculate the mean of a data set using bisquare weighting.  
 	
 	Based on the biweight_mean routine from the AstroIDL User's 
 	Library.
+	
+	.. versionchanged:: 1.0.3
+		Added the 'axis' and 'dtype' keywords to make this function more
+		compatible with numpy.mean()
 	"""
 	
-	y = inputData.ravel()
-	if type(y).__name__ == "MaskedArray":
-		y = y.compressed()
-	
-	n = len(y)
-	closeEnough = 0.03*numpy.sqrt(0.5/(n-1))
-	
-	diff = 1.0e30
-	nIter = 0
-	
-	y0 = numpy.median(y)
-	deviation = y - y0
-	sigma = std(deviation)
-	
-	if sigma < __epsilon:
-		diff = 0
-	while diff > closeEnough:
-		nIter = nIter + 1
-		if nIter > __iterMax:
-			break
-		uu = ((y-y0)/(6.0*sigma))**2.0
-		uu = numpy.where(uu > 1.0, 1.0, uu)
-		weights = (1.0-uu)**2.0
-		weights /= weights.sum()
-		y0 = (weights*y).sum()
-		deviation = y - y0
-		prevSigma = sigma
-		sigma = std(deviation, Zero=True)
-		if sigma > __epsilon:
-			diff = numpy.abs(prevSigma - sigma) / prevSigma
-		else:
-			diff = 0.0
+	if axis is not None:
+		y0 = numpy.apply_along_axis(biweightMean, axis, inputData, dtype=dtype)
+	else:
+		y = inputData.ravel()
+		if type(y).__name__ == "MaskedArray":
+			y = y.compressed()
+		if dtype is not None:
+			y = y.astype(dtype)
 			
+		n = len(y)
+		closeEnough = 0.03*numpy.sqrt(0.5/(n-1))
+		
+		diff = 1.0e30
+		nIter = 0
+		
+		y0 = numpy.median(y)
+		deviation = y - y0
+		sigma = std(deviation)
+		
+		if sigma < __epsilon:
+			diff = 0
+		while diff > closeEnough:
+			nIter = nIter + 1
+			if nIter > __iterMax:
+				break
+			uu = ((y-y0)/(6.0*sigma))**2.0
+			uu = numpy.where(uu > 1.0, 1.0, uu)
+			weights = (1.0-uu)**2.0
+			weights /= weights.sum()
+			y0 = (weights*y).sum()
+			deviation = y - y0
+			prevSigma = sigma
+			sigma = std(deviation, Zero=True)
+			if sigma > __epsilon:
+				diff = numpy.abs(prevSigma - sigma) / prevSigma
+			else:
+				diff = 0.0
+				
 	return y0
 
 
-def mean(inputData, Cut=3.0):
+def mean(inputData, Cut=3.0, axis=None, dtype=None):
 	"""
 	Robust estimator of the mean of a data set.  Based on the 
 	resistant_mean function from the AstroIDL User's Library.
 	
 	.. seealso::
 		:func:`lsl.misc.mathutil.robustmean`
+		
+	.. versionchanged:: 1.0.3
+		Added the 'axis' and 'dtype' keywords to make this function more
+		compatible with numpy.mean()
 	"""
 	
-	data = inputData.ravel()
-	if type(data).__name__ == "MaskedArray":
-		data = data.compressed()
-		
-	data0 = numpy.median(data)
-	maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
-	if maxAbsDev < __epsilon:
-		maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
-		
-	cutOff = Cut*maxAbsDev
-	good = numpy.where( numpy.abs(data-data0) <= cutOff )
-	good = good[0]
-	dataMean = data[good].mean()
-	dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
-
-	if Cut > 1.0:
-		sigmaCut = Cut
+	if axis is not None:
+		dataMean = numpy.apply_along_axis(mean, axis, inputData, dtype=dtype)
 	else:
-		sigmaCut = 1.0
-	if sigmaCut <= 4.5:
-		dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
-		
-	cutOff = Cut*dataSigma
-	good = numpy.where(  numpy.abs(data-data0) <= cutOff )
-	good = good[0]
-	dataMean = data[good].mean()
-	if len(good) > 3:
+		data = inputData.ravel()
+		if type(data).__name__ == "MaskedArray":
+			data = data.compressed()
+		if dtype is not None:
+			data = data.astype(dtype)
+			
+		data0 = numpy.median(data)
+		maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
+		if maxAbsDev < __epsilon:
+			maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
+			
+		cutOff = Cut*maxAbsDev
+		good = numpy.where( numpy.abs(data-data0) <= cutOff )
+		good = good[0]
+		dataMean = data[good].mean()
 		dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
+
+		if Cut > 1.0:
+			sigmaCut = Cut
+		else:
+			sigmaCut = 1.0
+		if sigmaCut <= 4.5:
+			dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
+			
+		cutOff = Cut*dataSigma
+		good = numpy.where(  numpy.abs(data-data0) <= cutOff )
+		good = good[0]
+		dataMean = data[good].mean()
+		if len(good) > 3:
+			dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
+			
+		if Cut > 1.0:
+			sigmaCut = Cut
+		else:
+			sigmaCut = 1.0
+		if sigmaCut <= 4.5:
+			dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
+			
+		dataSigma = dataSigma / math.sqrt(len(good)-1)
 		
-	if Cut > 1.0:
-		sigmaCut = Cut
-	else:
-		sigmaCut = 1.0
-	if sigmaCut <= 4.5:
-		dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
-		
-	dataSigma = dataSigma / math.sqrt(len(good)-1)
-	
 	return dataMean
 
 
-def mode(inputData):
+def mode(inputData, axis=None, dtype=None):
 	"""
 	Robust estimator of the mode of a data set using the half-sample mode.
 	
 	.. versionadded: 1.0.3
 	"""
 	
-	# Create the function that we can use for the half-sample mode
-	def _hsm(data):
-		if data.size == 1:
-			return data[0]
-		elif data.size == 2:
-			return data.mean()
-		elif data.size == 3:
-			i1 = data[1] - data[0]
-			i2 = data[2] - data[1]
-			if i1 < i2:
-				return data[:2].mean()
-			elif i2 > i1:
-				return data[1:].mean()
+	if axis is not None:
+		dataMode = numpy.apply_along_axis(mode, axis, inputData, dtype=dtype)
+	else:
+		# Create the function that we can use for the half-sample mode
+		def _hsm(data):
+			if data.size == 1:
+				return data[0]
+			elif data.size == 2:
+				return data.mean()
+			elif data.size == 3:
+				i1 = data[1] - data[0]
+				i2 = data[2] - data[1]
+				if i1 < i2:
+					return data[:2].mean()
+				elif i2 > i1:
+					return data[1:].mean()
+				else:
+					return data[1]
 			else:
-				return data[1]
-		else:
-			wMin = data[-1] - data[0]
-			N = data.size/2 + data.size%2 
-			for i in xrange(0, N):
-				w = data[i+N-1] - data[i] 
-				if w < wMin:
-					wMin = w
-					j = i
-			return _hsm(data[j:j+N])
+				wMin = data[-1] - data[0]
+				N = data.size/2 + data.size%2 
+				for i in xrange(0, N):
+					w = data[i+N-1] - data[i] 
+					if w < wMin:
+						wMin = w
+						j = i
+				return _hsm(data[j:j+N])
+				
+		data = inputData.ravel()
+		if type(data).__name__ == "MaskedArray":
+			data = data.compressed()
+		if dtype is not None:
+			data = data.astype(dtype)
 			
-	data = inputData.ravel()
-	if type(data).__name__ == "MaskedArray":
-		data = data.compressed()
+		# The data need to be sorted for this to work
+		data = numpy.sort(data)
 		
-	# The data need to be sorted for this to work
-	data = numpy.sort(data)
-	
-	return _hsm(data)
+		# Find the mode
+		dataMode = _hsm(data)
+		
+	return dataMode
 
 
-def std(inputData, Zero=False):
+def std(inputData, Zero=False, axis=None, dtype=None):
 	"""
 	Robust estimator of the standard deviation of a data set.  
 	
 	Based on the robust_sigma function from the AstroIDL User's Library.
+	
+	.. versionchanged:: 1.0.3
+		Added the 'axis' and 'dtype' keywords to make this function more
+		compatible with numpy.std()
 	"""
 	
-	data = inputData.ravel()
-	if type(data).__name__ == "MaskedArray":
-		data = data.compressed()
-		
-	if Zero:
-		data0 = 0.0
+	if axis is not None:
+		sigma = numpy.apply_along_axis(std, axis, inputData, dtype=dtype)
 	else:
-		data0 = numpy.median(data)
-	maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
-	if maxAbsDev < __epsilon:
-		maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
-	if maxAbsDev < __epsilon:
-		sigma = 0.0
-		return sigma
-		
-	u = (data-data0) / 6.0 / maxAbsDev
-	u2 = u**2.0
-	good = numpy.where( u2 <= 1.0 )
-	good = good[0]
-	if len(good) < 3:
-		print "WARNING:  Distribution is too strange to compute standard deviation"
-		sigma = -1.0
-		return sigma
-		
-	numerator = ((data[good]-data0)**2.0 * (1.0-u2[good])**2.0).sum()
-	nElements = (data.ravel()).shape[0]
-	denominator = ((1.0-u2[good])*(1.0-5.0*u2[good])).sum()
-	sigma = nElements*numerator / (denominator*(denominator-1.0))
-	if sigma > 0:
-		sigma = math.sqrt(sigma)
-	else:
-		sigma = 0.0
-		
+		data = inputData.ravel()
+		if type(data).__name__ == "MaskedArray":
+			data = data.compressed()
+		if dtype is not None:
+			data = data.astype(dtype)
+			
+		if Zero:
+			data0 = 0.0
+		else:
+			data0 = numpy.median(data)
+		maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
+		if maxAbsDev < __epsilon:
+			maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
+		if maxAbsDev < __epsilon:
+			sigma = 0.0
+			return sigma
+			
+		u = (data-data0) / 6.0 / maxAbsDev
+		u2 = u**2.0
+		good = numpy.where( u2 <= 1.0 )
+		good = good[0]
+		if len(good) < 3:
+			print "WARNING:  Distribution is too strange to compute standard deviation"
+			sigma = -1.0
+			return sigma
+			
+		numerator = ((data[good]-data0)**2.0 * (1.0-u2[good])**2.0).sum()
+		nElements = (data.ravel()).shape[0]
+		denominator = ((1.0-u2[good])*(1.0-5.0*u2[good])).sum()
+		sigma = nElements*numerator / (denominator*(denominator-1.0))
+		if sigma > 0:
+			sigma = math.sqrt(sigma)
+		else:
+			sigma = 0.0
+			
 	return sigma
 
 

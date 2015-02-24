@@ -68,13 +68,26 @@ def delay(freq, dm):
 	return tDelay
 
 
-def incoherent(freq, waterfall, tInt, dm):
+def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=numpy.nan):
 	"""
 	Given a list of frequencies in Hz, a 2-D array of spectra as a function of
 	time (time by frequency), and an integration time in seconds, perform 
 	incoherent dedispersion on the data.
+	
+	The 'boundary' keyword is used to control how the boundary is treated.  The
+	two options are:
+	  * wrap - Wrap the time boundary for each frequency (default)
+	  * fill - Fill the data not within the dedispersed time range with
+	    the value specified by the 'fill_value' keyword
+	
+	.. versionchanged:: 1.0.3
+		Added in options for handling the boundary conditions
 	"""
 	
+	# Validate the boundary mode
+	if boundary not in ('wrap', 'fill'):
+		raise ValueError("Unknown boundary handling type '%s'" % boundary)
+		
 	# Compute the dispersive delay for the given frequency range
 	tDelay = delay(freq, dm)
 	
@@ -86,7 +99,9 @@ def incoherent(freq, waterfall, tInt, dm):
 	ddWaterfall = waterfall*0.0
 	for i,d in enumerate(tDelay):
 		ddWaterfall[:,i] = numpy.roll(waterfall[:,i], -d)
-		
+		if boundary == 'fill' and d > 0:
+			ddWaterfall[-d:,i] = fill_value
+			
 	# Return
 	return ddWaterfall
 

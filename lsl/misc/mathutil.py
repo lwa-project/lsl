@@ -49,7 +49,7 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
 		raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
 	if newx.max() > x.max():
 		raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
-
+		
 	return numpy.interp(newx, x, y)
 
 
@@ -67,9 +67,9 @@ def _regrid_spline(x, y, newx, allow_extrapolation=False):
 			raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
 	spl = interpolate.splrep(x, y)
 	newy = interpolate.splev(newx, spl)
-
+	
 	return newy
-  
+
 
 def downsample(vector, factor, rescale=True):
 	"""
@@ -88,10 +88,10 @@ def downsample(vector, factor, rescale=True):
 		newvector = numpy.reshape(vector, (len(vector)/factor, factor))/float(factor)
 	else:
 		newvector = numpy.reshape(vector, (len(vector)/factor, factor))
-
+		
 	return numpy.add.reduce(newvector, 1)
-    
-    
+
+
 def smooth(x,window_len=10,window='hanning'):
 	"""
 	Smooth the data using a window with requested size.  Stolen from SciPy 
@@ -155,7 +155,7 @@ def cmagnitude(cmplx):
 	"""
 	
 	return abs(cmplx)
-    
+
 
 def cphase(cmplx):
 	"""
@@ -163,8 +163,8 @@ def cphase(cmplx):
 	"""
 	
 	return numpy.angle(cmplx)
-    
-    
+
+
 def cpolar(cmplx):
 	"""
 	Return the polar (magnitude, phase) representation of complex
@@ -176,7 +176,7 @@ def cpolar(cmplx):
 		return numpy.array(list(zip(cmagnitude(cmplx), cphase(cmplx))))
 	else:
 		return (cmagnitude(cmplx), cphase(cmplx))
-    
+
 
 def creal(cmplx):
 	"""
@@ -187,9 +187,9 @@ def creal(cmplx):
 	if isinstance(cmplx, numpy.ndarray):
 		return (cmplx[...,0] * numpy.cos(cmplx[...,1]))
 	else:
-		return (cmplx[0] * math.cos(cmplx[1]))   
+		return (cmplx[0] * math.cos(cmplx[1]))
 
-  
+
 def cimag(cmplx):
 	"""
 	Return the imaginary rectilinear component from complex values
@@ -199,8 +199,8 @@ def cimag(cmplx):
 	if isinstance(cmplx, numpy.ndarray):
 		return (cmplx[...,0] * numpy.sin(cmplx[...,1]))
 	else:
-		return (cmplx[0] * math.sin(cmplx[1]))    
-    
+		return (cmplx[0] * math.sin(cmplx[1]))
+
 
 def crect(cmplx):
 	"""
@@ -215,25 +215,25 @@ def crect(cmplx):
 		return ret         
 	else:
 		return complex(creal(cmplx), cimag(cmplx))
-        
-    
+
+
 def to_dB(factor):
 	"""
 	Convert from linear units to decibels.
 	"""
 	
 	return 10.0 * numpy.log10(factor)
-    
-    
+
+
 def from_dB(dB):
 	"""
 	Convert from decibels to linear units.
 	"""
 	
 	return numpy.power(10.0, (dB/10.0))
-    
-    
-def robustmean(arr):
+
+
+def robustmean(arr, axis=None, dtype=None):
 	"""
 	Take the robust mean of an array, normally a small section of a 
 	spectrum, over which the mean can be assumed to be constant.  Makes two 
@@ -241,32 +241,45 @@ def robustmean(arr):
 
 	.. seealso::
 		:func:`lsl.statistics.robust.mean`
+		
+	.. versionchanged:: 1.0.3
+		Added the 'axis' and 'dtype' keywords to make this function more
+		compatible with numpy.mean()
 	"""
 	
-	# First pass discarding points >3 sigma above mean
-	mean = arr.mean()
-	sd = arr.std()
-	thresh = mean + 3.0*sd
-	idx = numpy.where(arr < thresh)
-	newarr = arr[idx]
-	
-	if len(newarr) == 0:
-		# Warning, all points discarded.  Just return array mean
-		_MATHUTIL_LOG.warning("All points discarded!, %f, %f", mean, sd)
-		finalmean = mean
+	if axis is not None:
+		finalMean = numpy.apply_along_axis(robustmean, axis, arr, dtype=dtype)
 	else:
-		# Second pass discarding points >3 sigma above mean
-		newmean = newarr.mean()
-		newsd = newarr.std()
-		newthresh = newmean+3.0*newsd
-		newidx = numpy.where(newarr < newthresh)
-		finalarr = newarr[newidx]
-		if len(finalarr) == 0:
-			finalmean = newmean
+		arr = arr.ravel()
+		if type(arr).__name__ == "MaskedArray":
+			arr = arr.compressed()
+		if dtype is not None:
+			arr = arr.astype(dtype)
+			
+		# First pass discarding points >3 sigma above mean
+		mean = arr.mean()
+		sd = arr.std()
+		thresh = mean + 3.0*sd
+		idx = numpy.where(arr < thresh)
+		newarr = arr[idx]
+		
+		if len(newarr) == 0:
+			# Warning, all points discarded.  Just return array mean
+			_MATHUTIL_LOG.warning("All points discarded!, %f, %f", mean, sd)
+			finalmean = mean
 		else:
-			# Final mean of good points
-			finalmean = finalarr.mean()
-
+			# Second pass discarding points >3 sigma above mean
+			newmean = newarr.mean()
+			newsd = newarr.std()
+			newthresh = newmean+3.0*newsd
+			newidx = numpy.where(newarr < newthresh)
+			finalarr = newarr[newidx]
+			if len(finalarr) == 0:
+				finalmean = newmean
+			else:
+				# Final mean of good points
+				finalmean = finalarr.mean()
+				
 	return finalmean
 
 
@@ -343,15 +356,15 @@ def gaussian1d(height, center, width):
 	height, mean, and standard deviation.  
 	
 	Example:
-		>>> height = 1
-		>>> center = 5.0
-		>>> width = 2.1
-		>>> gauFnc = guassian1d(height, center, width)
-		>>> value = gauFnc(numpy.arange(0, 100))
-
+	  >>> height = 1
+	  >>> center = 5.0
+	  >>> width = 2.1
+	  >>> gauFnc = guassian1d(height, center, width)
+	  >>> value = gauFnc(numpy.arange(0, 100))
+	
 	Based on: http://code.google.com/p/agpy/source/browse/trunk/agpy/gaussfitter.py
 	"""
-
+	
 	width = float(width)
 	return lambda x: height*numpy.exp(-(center-x)**2/2.0/width**2)
 
@@ -434,7 +447,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
 	(0,0), (1,-1), (1,0), (1,1), (2,-2), etc.  If the `realOnly` keyword has been 
 	set, the negative coefficients for the negative modes are excluded from the 
 	output array.
-
+	
 	.. note::
 		sphfit was designed to fit the LWA dipole response pattern as a function of
 		azimuth and elevation.  Elevation angles are mapped to theta angles by adding
@@ -442,7 +455,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
 		To fit in terms of spherical coordianates, subtract pi/2 from the theta values
 		before running.
 	"""
-
+	
 	if degrees:
 		rAz = az*numpy.pi/180.0
 		rAlt = alt*numpy.pi/180.0
@@ -451,29 +464,29 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
 		rAlt = 1.0*alt
 	rAlt += numpy.pi/2
 	sinAlt = numpy.sin(rAlt)
-
+	
 	if realOnly:
 		nTerms = (lmax*(lmax+3)+2)/2
 		terms = numpy.zeros(nTerms, dtype=numpy.complex64)
-
+		
 		t = 0
 		for l in range(lmax+1):
 			for m in range(0, l+1):
 				Ylm = sph_harm(m, l, rAz, rAlt)
 				terms[t] = (data*sinAlt*Ylm.conj()).sum() * (rAz[1,0]-rAz[0,0])*(rAlt[0,1]-rAlt[0,0])
 				t += 1
-	
+				
 	else:
 		nTerms = (lmax+1)**2
 		terms = numpy.zeros(nTerms, dtype=numpy.complex64)
-
+		
 		t = 0
 		for l in range(lmax+1):
 			for m in range(-l, l+1):
 				Ylm = sph_harm(m, l, rAz, rAlt)
 				terms[t] = (data*sinAlt*Ylm.conj()).sum()
 				t += 1
-	
+				
 	return terms
 
 
@@ -505,7 +518,7 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
 		To spherical harmonics in terms of spherical coordianates, subtract pi/2 from 
 		the theta values before running.
 	"""
-
+	
 	if degrees:
 		rAz = az*numpy.pi/180.0
 		rAlt = alt*numpy.pi/180.0
@@ -513,7 +526,7 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
 		rAz = 1.0*az
 		rAlt = 1.0*alt
 	rAlt += numpy.pi/2
-
+	
 	nTerms = terms.size
 	if realOnly:
 		lmax = int((numpy.sqrt(1+8*nTerms)-3)/2)
@@ -529,7 +542,7 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
 				out += numpy.real(terms[t]*Ylm)
 				out += numpy.real(terms[t]*Ylm.conj()/(-1)**m)
 				t += 1
-	
+				
 	else:
 		lmax = int(numpy.sqrt(nTerms)-1)
 		print lmax
@@ -541,5 +554,5 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
 				Ylm = sph_harm(m, l, rAz, rAlt)
 				out += terms[t]*Ylm
 				t += 1
-
+				
 	return out
