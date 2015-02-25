@@ -10,9 +10,9 @@ import math
 import numpy
 from scipy.special import sph_harm
 
-__version__   = '0.3'
+__version__   = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'robustmean', 'savitzky_golay', 'gaussian1d', 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', '__version__', '__revision__', '__all__']
+__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'savitzky_golay', 'gaussian1d', 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', '__version__', '__revision__', '__all__']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
 
@@ -231,56 +231,6 @@ def from_dB(dB):
 	"""
 	
 	return numpy.power(10.0, (dB/10.0))
-
-
-def robustmean(arr, axis=None, dtype=None):
-	"""
-	Take the robust mean of an array, normally a small section of a 
-	spectrum, over which the mean can be assumed to be constant.  Makes two 
-	passes discarding outliers >3 sigma ABOVE (not below) the mean.
-
-	.. seealso::
-		:func:`lsl.statistics.robust.mean`
-		
-	.. versionchanged:: 1.0.3
-		Added the 'axis' and 'dtype' keywords to make this function more
-		compatible with numpy.mean()
-	"""
-	
-	if axis is not None:
-		finalMean = numpy.apply_along_axis(robustmean, axis, arr, dtype=dtype)
-	else:
-		arr = arr.ravel()
-		if type(arr).__name__ == "MaskedArray":
-			arr = arr.compressed()
-		if dtype is not None:
-			arr = arr.astype(dtype)
-			
-		# First pass discarding points >3 sigma above mean
-		mean = arr.mean()
-		sd = arr.std()
-		thresh = mean + 3.0*sd
-		idx = numpy.where(arr < thresh)
-		newarr = arr[idx]
-		
-		if len(newarr) == 0:
-			# Warning, all points discarded.  Just return array mean
-			_MATHUTIL_LOG.warning("All points discarded!, %f, %f", mean, sd)
-			finalmean = mean
-		else:
-			# Second pass discarding points >3 sigma above mean
-			newmean = newarr.mean()
-			newsd = newarr.std()
-			newthresh = newmean+3.0*newsd
-			newidx = numpy.where(newarr < newthresh)
-			finalarr = newarr[newidx]
-			if len(finalarr) == 0:
-				finalmean = newmean
-			else:
-				# Final mean of good points
-				finalmean = finalarr.mean()
-				
-	return finalmean
 
 
 def savitzky_golay(y, window_size, order, deriv=0):

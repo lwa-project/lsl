@@ -91,9 +91,6 @@ def mean(inputData, Cut=3.0, axis=None, dtype=None):
 	Robust estimator of the mean of a data set.  Based on the 
 	resistant_mean function from the AstroIDL User's Library.
 	
-	.. seealso::
-		:func:`lsl.misc.mathutil.robustmean`
-		
 	.. versionchanged:: 1.0.3
 		Added the 'axis' and 'dtype' keywords to make this function more
 		compatible with numpy.mean()

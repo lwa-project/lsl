@@ -8,6 +8,7 @@
   * Added an option of imageIDI.py to overlay a topocentric graticle rather than a equatorial one
   * Added better support for non-linear polarizations to imageIDI.py
   * Added support for retrieving the file start time in samples to the various lsl.reader.ldp.LDPFileBase sub-classes
+  * Removed the lsl.misc.mathutil.robustmean() function in favor of lsl.statistics.robust.mean()
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata
@@ -32,6 +33,7 @@
   * Added options to the imageIDI.py script to make it easy to change which dipoles are used for imaging
   * Added an option to the correlateTBW/correlateTBN scripts to correlate all dipoles, regardless of status in the SSMIF
   * Fixed a bug in lsl.imaging.utils.CorrelatedData() that makes the IOErrors more transparent
+  * Added a deprecation warning to the lsl.misc.mathutil.robustmean() function since it will be removed in 1.1.x
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system
