@@ -186,15 +186,6 @@ class mathutil_tests(unittest.TestCase):
 		x = numpy.arange(1, 100, dtype = numpy.float_)
 		mathutil.from_dB(x)
 		
-	def test_robustmean(self):
-		"""Test mathutil.robustmean() function."""
-		
-		x = numpy.random.randn(100)
-		x[0] = 1000.0
-		x[-5] = 3000.0
-		
-		self.assert_(mathutil.robustmean(x) < x.mean())
-		
 	def test_savitzky_golay(self):
 		"""Test Savitzky-Golay smoothing."""
 		
