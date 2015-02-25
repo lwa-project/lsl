@@ -35,6 +35,10 @@ splitSession.py [OPTIONS] MetaData DataFile
 
 Options:
 -h, --help             Display this help information
+-l, --list             List source names
+-s, --source           Split by source name instead of observation 
+                       ID
+-f, --force            Force overwritting of existing split files
 """
 
 	if exitCode is not None:
@@ -46,10 +50,14 @@ Options:
 def parseConfig(args):
 	config = {}
 	# Command line flags - default values
-
+	config['list'] = False
+	config['source'] = False
+	config['force'] = False
+	config['args'] = []
+	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "h", ["help",])
+		opts, args = getopt.getopt(args, "hlsf", ["help", "list", "source", "force"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -59,6 +67,12 @@ def parseConfig(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
+		elif opt in ('-l', '--list'):
+			config['list'] = True
+		elif opt in ('-s', '--source'):
+			config['source'] = True
+		elif opt in ('-f', '--force'):
+			config['force'] = True
 		else:
 			assert False
 			
@@ -66,7 +80,7 @@ def parseConfig(args):
 	config['args'] = arg
 	
 	# Validate
-	if len(config['args']) < 2:
+	if len(config['args']) != 2:
 		raise RuntimeError("Must specify both a metadata and data file")
 
 	# Return configuration
@@ -233,38 +247,55 @@ def main(args):
 	print " "
 
 	# Split
-	for i in xrange(len(tStart)):
-		if oDetails[i]['b'] < 0:
-			continue
-		outname = '%s_%i_%i_%s.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'], oDetails[i]['t'].replace(' ', ''))
-		oMode = mode2string(oDetails[i]['m'])
+	if not config['list']:
+		for i in xrange(len(tStart)):
+			if oDetails[i]['b'] < 0:
+				continue
+				
+			if config['source']:
+				outname = '%s_%i_%i.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
+			else:
+				outname = '%s_%i_%s.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['t'].replace(' ', '').replace('/','').replace('&','and'))
+			oMode = mode2string(oDetails[i]['m'])
 
-		## Get the correct reader to use
-		if oMode == 'TBW':
-			reader = tbw
+			## Get the correct reader to use
+			if oMode == 'TBW':
+				reader = tbw
 
-		elif oMode == 'TBN':
-			reader = tbn
-		else:
-			reader = drx
+			elif oMode == 'TBN':
+				reader = tbn
+			else:
+				reader = drx
 
-		## Get the number of frames
-		if oDetails[i]['e'] > 0:
-			nFramesRead = (oDetails[i]['e'] - oDetails[i]['b']) / reader.FrameSize
-		else:
-			nFramesRead = (os.path.getsize(data) - oDetails[i]['b']) / reader.FrameSize
+			## Get the number of frames
+			if oDetails[i]['e'] > 0:
+				nFramesRead = (oDetails[i]['e'] - oDetails[i]['b']) / reader.FrameSize
+			else:
+				nFramesRead = (os.path.getsize(data) - oDetails[i]['b']) / reader.FrameSize
 
-		## Split
-		oh = open(outname, 'wb')
-		fh.seek(oDetails[i]['b'])
-		for sl in [2**i for i in range(17)[::-1]]:
-			while nFramesRead >= sl:
-				temp = fh.read(sl*reader.FrameSize)
-				oh.write(temp)
-				nFramesRead -= sl
-		oh.close()
-	
-	
+			## Split
+			if os.path.exists(outname):
+				if not config['force']:
+					yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n] " % outname)
+				else:
+					yn = 'y'
+					
+				if yn not in ('n', 'N'):
+					os.unlink(outname)
+				else:
+					print "WARNING: output file '%s' already exists, skipping" % outname
+					continue
+					
+			oh = open(outname, 'wb')
+			fh.seek(oDetails[i]['b'])
+			for sl in [2**i for i in range(17)[::-1]]:
+				while nFramesRead >= sl:
+					temp = fh.read(sl*reader.FrameSize)
+					oh.write(temp)
+					nFramesRead -= sl
+			oh.close()
+
+
 if __name__ == "__main__":
 	main(sys.argv[1:])
 	

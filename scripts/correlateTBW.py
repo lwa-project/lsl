@@ -181,7 +181,10 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
 		if pol == pols[0]:
 			pol1, pol2 = fxc.pol2pol(pol)
 			
-			fits = fitsidi.IDI(filename, refTime=refTime)
+			if len(mapper) > 255:
+				fits = fitsidi.ExtendedIDI(filename, refTime=refTime)
+			else:
+				fits = fitsidi.IDI(filename, refTime=refTime)
 			fits.setStokes(pols)
 			fits.setFrequency(freq[toUse])
 			fits.setGeometry(site, [a for a in mapper if a.pol == pol1])
