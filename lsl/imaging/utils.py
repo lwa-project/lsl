@@ -223,7 +223,7 @@ def CorrelatedData(filename):
 	# FITS IDI
 	try:
 		return CorrelatedDataIDI(filename)
-	except IOError, e:
+	except IOError as e:
 		raise e
 	except:
 		pass
@@ -231,7 +231,7 @@ def CorrelatedData(filename):
 	# UVFITS
 	try:
 		return CorrelatedDataUV(filename)
-	except IOError, e:
+	except IOError as e:
 		raise e
 	except:
 		pass
@@ -239,7 +239,7 @@ def CorrelatedData(filename):
 	# Measurment Set
 	try:
 		return CorrelatedDataMS(filename)
-	except IOError, e:
+	except IOError as e:
 		raise e
 	except:
 		pass

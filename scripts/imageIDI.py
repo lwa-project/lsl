@@ -42,10 +42,17 @@ Options:
 -s, --dataset          Data set to image (Default = All)
 -m, --uv-min           Minimun baseline uvw length to include 
                        (Default = 0 lambda at midpoint frequency)
+-i, --include          Comma seperated list of dipoles to include 
+                       (Default = All)
+-e, --exclude          Comma seperated list of dipoles to exclude
+                       (Default = None)
 -t, --topo             Display an az/el grid instead of a RA/Dec grid
 -n, --no-labels        Disable source and grid labels
 -g, --no-grid          Disable the grid
 -f, --fits             Save the images to the specified FITS image file
+
+NOTE:  If both -i/--include and -e/--exclude are specified the include list
+       has priority.
 """
 
 	if exitCode is not None:
@@ -61,6 +68,8 @@ def parseConfig(args):
 	config['freq2'] = 88e6
 	config['dataset'] = 0
 	config['uvMin'] = 0.0
+	config['include'] = None
+	config['exclude'] = None
 	config['label'] = True
 	config['grid'] = True
 	config['coord'] = 'RADec'
@@ -69,7 +78,7 @@ def parseConfig(args):
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "h1:2:s:m:tngf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "topo", "no-labels", "no-grid", "fits="])
+		opts, arg = getopt.getopt(args, "h1:2:s:m:i:e:tngf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "include=", "exclude=", "topo", "no-labels", "no-grid", "fits="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -87,6 +96,10 @@ def parseConfig(args):
 			config['dataset'] = int(value)
 		elif opt in ('-m', '--uv-min'):
 			config['uvMin'] = float(value)
+		elif opt in ('-i', '--include'):
+			config['include'] = [int(v) for v in value.split(',')]
+		elif opt in ('-e', '--exclude'):
+			config['exclude'] = [int(v) for v in value.split(',')]
 		elif opt in ('-t', '--topo'):
 			config['coord'] = 'AzEl'
 		elif opt in ('-n', '--no-labels'):
@@ -131,6 +144,46 @@ def main(args):
 		print "Set #%i of %i" % (set, nSets)
 		dataDict = idi.getDataSet(set, uvMin=config['uvMin'])
 		
+		# Prune out what needs to go
+		if config['include'] is not None or config['exclude'] is not None:
+			print "    Processing include/exclude lists"
+			
+			## Create an empty output data dictionary
+			newDict = {}
+			for key in dataDict.keys():
+				if key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+					newDict[key] = {}
+					for pol in dataDict[key].keys():
+						newDict[key][pol] = []
+				else:
+					newDict[key] = dataDict[key]
+					
+			## Fill it
+			for pol in dataDict['bls'].keys():
+				for b in xrange(len(dataDict['bls'][pol])):
+					a0,a1 = dataDict['bls'][pol][b]
+					
+					if config['include'] is not None:
+						if idi.stands[a0] in config['include'] and idi.stands[a1] in config['include']:
+							for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+								newDict[key][pol].append( dataDict[key][pol][b] )
+						else:
+							continue
+							
+					if config['exclude'] is not None:
+						if idi.stands[a0] in config['exclude'] or idi.stands[a1] in config['exclude']:
+							continue
+						else:
+							for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
+								newDict[key][pol].append( dataDict[key][pol][b] )
+								
+			## Make the substitution so that we are working with the right data now
+			dataDict = newDict
+			
+			## Report
+			for pol in dataDict['bls'].keys():
+				print "        %s now has %i baselines" % (pol, len(dataDict['bls'][pol]))
+				
 		# Build a list of unique JDs for the data
 		pols = dataDict['bls'].keys()
 		jdList = []

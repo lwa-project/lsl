@@ -53,6 +53,8 @@ Options:
                        (default = 10)
 -o, --offset           Seconds to skip from the beginning of the file
 -q, --quiet            Run correlateTBN in silent mode
+-a, --all              Correlated all dipoles regardless of their status 
+                       (default = no)
 -x, --xx               Compute only the XX polarization product (default)
 -y, --yy               Compute only the YY polarization product
 -2, --two-products     Compute both the XX and YY polarization products
@@ -75,12 +77,13 @@ def parseConfig(args):
 	config['samples'] = 10
 	config['offset'] = 0
 	config['verbose'] = True
+	config['all'] = False
 	config['products'] = ['xx',]
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hm:ql:t:s:o:24xy", ["help", "metadata=", "quiet", "fft-length=", "avg-time=", "samples=", "offset=", "two-products", "four-products", "xx", "yy"])
+		opts, arg = getopt.getopt(args, "hm:ql:t:s:o:a24xy", ["help", "metadata=", "quiet", "fft-length=", "avg-time=", "samples=", "offset=", "all", "two-products", "four-products", "xx", "yy"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -102,6 +105,8 @@ def parseConfig(args):
 			config['samples'] = int(value)
 		elif opt in ('-o', '--offset'):
 			config['offset'] = int(value)
+		elif opt in ('-a', '--all'):
+			config['all'] = True
 		elif opt in ('-2', '--two-products'):
 			config['products'] = ['xx', 'yy']
 		elif opt in ('-4', '--four-products'):
@@ -230,7 +235,7 @@ def main(args):
 	goodY = []
 	for i in xrange(len(antennas)):
 		ant = antennas[i]
-		if ant.getStatus() != 33:
+		if ant.getStatus() != 33 and not config['all']:
 			pass
 		else:
 			if ant.pol == 0:

@@ -29,6 +29,9 @@
   * Fixed the ranging of phases coming out of the lsl.imaging.selfCal module
   * Added 'axis' and 'dtype' keywords to the various statistical functions in lsl.statistics.robust and lsl.misc.mathutil to make the functions more compatible with their numpy counterparts
   * Added 'boundary' and 'fill_value' keyword to the lsl.misc.dedispersion.incoherent() function to make it clear how the time boundary is handled
+  * Added options to the imageIDI.py script to make it easy to change which dipoles are used for imaging
+  * Added an option to the correlateTBW/correlateTBN scripts to correlate all dipoles, regardless of status in the SSMIF
+  * Fixed a bug in lsl.imaging.utils.CorrelatedData() that makes the IOErrors more transparent
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system

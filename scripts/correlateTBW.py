@@ -49,6 +49,8 @@ Options:
                        mappings
 -l, --fft-length       Set FFT length (default = 2048)
 -q, --quiet            Run correlateTBW in silent mode
+-a, --all              Correlated all dipoles regardless of their status 
+                       (default = no)
 -x, --xx               Compute only the XX polarization product (default)
 -y, --yy               Compute only the YY polarization product
 -2, --two-products     Compute both the XX and YY polarization products
@@ -68,12 +70,13 @@ def parseConfig(args):
 	config['samples'] = 1
 	config['offset'] = 0
 	config['verbose'] = True
+	config['all'] = False
 	config['products'] = ['xx',]
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hm:ql:xy2", ["help", "metadata=", "quiet", "fft-length=", "xx", "yy", "two-products"])
+		opts, arg = getopt.getopt(args, "hm:ql:axy2", ["help", "metadata=", "quiet", "fft-length=", "all", "xx", "yy", "two-products"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -89,6 +92,8 @@ def parseConfig(args):
 			config['verbose'] = False
 		elif opt in ('-l', '--fft-length'):
 			config['LFFT'] = int(value)
+		elif opt in ('-a', '--all'):
+			config['all'] = True
 		elif opt in ('-x', '--xx'):
 			config['products'] = ['xx',]
 		elif opt in ('-y', '--yy'):
@@ -227,7 +232,7 @@ def main(args):
 	goodY = []
 	for i in xrange(len(antennas)):
 		ant = antennas[i]
-		if ant.getStatus() != 33:
+		if ant.getStatus() != 33 and not config['all']:
 			pass
 		else:
 			if ant.pol == 0:
