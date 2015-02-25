@@ -77,7 +77,7 @@ def parseConfig(args):
 			assert False
 			
 	# Add in arguments
-	config['args'] = arg
+	config['args'] = args
 	
 	# Validate
 	if len(config['args']) != 2:
@@ -253,9 +253,10 @@ def main(args):
 				continue
 				
 			if config['source']:
-				outname = '%s_%i_%i.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
-			else:
 				outname = '%s_%i_%s.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['t'].replace(' ', '').replace('/','').replace('&','and'))
+			else:
+				outname = '%s_%i_%i.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
+				
 			oMode = mode2string(oDetails[i]['m'])
 
 			## Get the correct reader to use

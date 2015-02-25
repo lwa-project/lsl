@@ -35,6 +35,7 @@
   * Fixed a bug in lsl.imaging.utils.CorrelatedData() that makes the IOErrors more transparent
   * Added a deprecation warning to the lsl.misc.mathutil.robustmean() function since it will be removed in 1.1.x
   * Added options to the splitSession script to give better control over the output
+  * Added options to the possm script that makes it behave more like imageIDI
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system
