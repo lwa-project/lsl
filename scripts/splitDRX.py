@@ -4,6 +4,7 @@
 import os
 import sys
 import math
+import time
 import getopt
 from datetime import datetime
 
@@ -15,7 +16,7 @@ def usage(exitCode=None):
 	print """splitDRX.py - split a DRX file containing multiple seconds into
 several files
 
-Usage: splitTBN.py [OPTIONS] file
+Usage: splitDRX.py [OPTIONS] file
 
 Options:
 -h, --help             Display this help information
@@ -23,9 +24,9 @@ Options:
 -o, --offset           Number of seconds to skip before splitting
 -d, --date             Label the split files with a date rather than a 
                        sequence number
--r, --recurvsive       Recursively split the file.
+-r, --recurvsive       Recursively split the file
 """
-
+	
 	if exitCode is not None:
 		sys.exit(exitCode)
 	else:
@@ -39,7 +40,7 @@ def parseConfig(args):
 	config['count'] = 0
 	config['date'] = False
 	config['recursive'] = False
-
+	
 	# Read in and process the command line flags
 	try:
 		opts, arg = getopt.getopt(args, "hc:o:dr", ["help", "count=", "offset=", "date", "recursive"])
@@ -47,7 +48,7 @@ def parseConfig(args):
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
 		usage(exitCode=2)
-	
+		
 	# Work through opts
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
@@ -62,10 +63,10 @@ def parseConfig(args):
 			config['recursive'] = True
 		else:
 			assert False
-	
+			
 	# Add in arguments
 	config['args'] = arg
-
+	
 	# Return configuration
 	return config
 
@@ -190,7 +191,7 @@ def main(args):
 		nRecursions = 1
 		
 	scale = int(math.log10(nRecursions)) + 1
-	ifString = "#%%%ii of %i (%%s)" % (scale, nRecursions)
+	ifString = "Working on #%%%ii of %i (%%s)" % (scale, nRecursions)
 	
 	for r in xrange(nRecursions):
 		if config['date']:
@@ -207,9 +208,13 @@ def main(args):
 				captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'])
 			
 		print ifString % (r+1, captFilename)
+		
+		t0 = time.time()
 		fhOut = open(captFilename, 'wb')
 		fileSplitFunction(fh, fhOut, nCaptures, beampols)
 		fhOut.close()
+		t1 = time.time()
+		print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.getsize(captFilename), t1-t0, os.getsize(captFilename)/1024.0**2/(t1-t0))
 		
 	fh.close()
 	

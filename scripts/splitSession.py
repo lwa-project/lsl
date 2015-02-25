@@ -3,6 +3,7 @@
 
 import os
 import sys
+import time
 import getopt
 from datetime import datetime, timedelta
 
@@ -252,6 +253,10 @@ def main(args):
 			if oDetails[i]['b'] < 0:
 				continue
 				
+			## Report
+			print "Working on Observation %i" % (i+1,)
+			
+			## Create the output name
 			if config['source']:
 				outname = '%s_%i_%s.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['t'].replace(' ', '').replace('/','').replace('&','and'))
 			else:
@@ -287,14 +292,19 @@ def main(args):
 					print "WARNING: output file '%s' already exists, skipping" % outname
 					continue
 					
-			oh = open(outname, 'wb')
 			fh.seek(oDetails[i]['b'])
+			
+			t0 = time.time()
+			oh = open(outname, 'wb')
 			for sl in [2**i for i in range(17)[::-1]]:
 				while nFramesRead >= sl:
 					temp = fh.read(sl*reader.FrameSize)
 					oh.write(temp)
 					nFramesRead -= sl
 			oh.close()
+			t1 = time.time()
+			print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.getsize(outname), t1-t0, os.getsize(outname)/1024.0**2/(t1-t0))
+	print " "
 
 
 if __name__ == "__main__":
