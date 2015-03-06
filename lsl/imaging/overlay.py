@@ -21,6 +21,7 @@ import aipy
 import ephem
 import numpy
 
+from lsl import astro
 
 __version__ = "0.3"
 __revision__ = "$Rev$"
@@ -29,17 +30,26 @@ __all__ = ["sources", "horizon", "graticleRADec", "graticleAzEl",
 
 
 def _radec_of(aa, az, alt):
-	sinDec = numpy.sin(alt)*numpy.sin(aa.lat) + numpy.cos(alt)*numpy.cos(aa.lat)*numpy.cos(az)
-	dec = numpy.arcsin( numpy.clip(sinDec, -1, 1) )
-	cosHA = (numpy.sin(alt) - numpy.sin(dec)*numpy.sin(aa.lat)) / (numpy.cos(dec)*numpy.cos(aa.lat))
-	HA = numpy.arccos( numpy.clip(cosHA, -1, 1) )
-	try:
-		if numpy.sin(az) > 0:
-			HA = 2*numpy.pi - HA
-	except ValueError:
-		toShift = numpy.where( numpy.sin(az) > 0 )
-		HA[toShift] = 2*numpy.pi - HA[toShift]	
+	# az/el -> HA/dec
+	HA = numpy.arctan2(numpy.sin(az-numpy.pi), (numpy.cos(az-numpy.pi)*numpy.sin(aa.lat) + numpy.tan(alt)*numpy.cos(aa.lat)))
+	dec = numpy.arcsin(numpy.sin(aa.lat)*numpy.sin(alt) - numpy.cos(aa.lat)*numpy.cos(alt)*numpy.cos(az-numpy.pi))
+	
+	# HA -> RA
 	RA = aa.sidereal_time() - HA
+	
+	# radians -> degrees
+	RA = RA * 180.0/numpy.pi
+	dec = dec * 180.0/numpy.pi
+	
+	# Precess back to J2000
+	pos = astro.equ_posn(RA, dec)
+	pos = astro.get_precession(aa.date+astro.DJD_OFFSET, pos, ephem.J2000+astro.DJD_OFFSET)
+	RA, dec = pos.ra, pos.dec
+	
+	# degrees -> radians
+	RA = RA * numpy.pi/180.0
+	dec = dec * numpy.pi/180.0
+	
 	return RA, dec 
 
 
