@@ -10,7 +10,7 @@ import ephem
 import numpy
 from calendar import timegm
 
-__version__   = '0.4'
+__version__   = '0.5'
 __revision__ = '$Rev$'
 __author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'
@@ -2244,6 +2244,58 @@ def get_nutation(jD):
 	_nut.obliquity = obl / 3600.0
 	_nut.ecliptic = ecl
 	return _nut
+
+
+def get_equ_nut(position, jD):
+	"""
+	Get the position of a celesital object accounting for nutation.
+	
+	Param: mean_position  -  Equatorial position of object as type 
+						equ_posn.
+	Param: jD             - UTC Julian day (float) to measure nutation.
+	
+	Returns: Adjusted equatorial position of object as type equ_posn.
+	
+	Based on the AstroIDL co_nutate.pro procedure
+	"""    
+	
+	# Get the nutation
+	nut = get_nutation(jD)
+	
+	# Convert RA/dec into cartesian
+	ra  = deg_to_rad(position.ra)
+	dec = deg_to_rad(position.dec)
+	x = numpy.cos(dec) * numpy.cos(ra)
+	y = numpy.cos(dec) * numpy.sin(ra)
+	z = numpy.sin(dec)
+	
+	# Apply the nutation
+	ecl = deg_to_rad(nut.ecliptic)
+	obl = deg_to_rad(nut.obliquity)
+	lng = deg_to_rad(nut.longitude)
+	
+	x2 = x - (y*numpy.cos(ecl)*lng + z*numpy.sin(ecl)*lng)
+	y2 = y + (x*numpy.cos(ecl)*lng - z*obl)
+	z2 = z + (x*numpy.sin(ecl)*lng + y*obl)
+	
+	# Back to RA/dec
+	r = numpy.sqrt(x2**2 + y2**2 + z2**2)
+	xyproj = numpy.sqrt(x2**2 + y2**2)
+	
+	ra, dec = 0.0, 0.0
+	if xyproj == 0.0 and z != 0.0:
+		ra = 0.0
+		dec = numpy.arcsin(y2/x2)
+	if xyproj != 0.0:
+		ra = numpy.arctan2(y2, x2)
+		dec = numpy.arcsin(z2/r)
+		
+	# Create the output object and update it
+	_posn = equ_posn()
+	_posn.ra = rad_to_deg(ra)
+	_posn.dec = rad_to_deg(dec)
+	
+	return _posn
 
 
 ######################################################################

@@ -41,8 +41,24 @@ def _radec_of(aa, az, alt):
 	RA = RA * 180.0/numpy.pi
 	dec = dec * 180.0/numpy.pi
 	
-	# Precess back to J2000
+	# RA/dec -> astro.eqn_posn()
 	pos = astro.equ_posn(RA, dec)
+	
+	# Correct for aberration
+	pos2 = astro.get_equ_aber(pos, site.date+astro.DJD_OFFSET)
+	dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
+	pos.ra = (pos.ra - dRA) % 360.0
+	pos.ra %= 360.0
+	pos.dec = pos.dec - dDec
+	
+	# Correct for nutation
+	pos2 = astro.get_equ_nut(pos, site.date+astro.DJD_OFFSET)
+	dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
+	pos.ra = (pos.ra - dRA) % 360.0
+	pos.ra %= 360.0
+	pos.dec = pos.dec - dDec
+	
+	# Precess back to J2000
 	pos = astro.get_precession(aa.date+astro.DJD_OFFSET, pos, ephem.J2000+astro.DJD_OFFSET)
 	RA, dec = pos.ra, pos.dec
 	

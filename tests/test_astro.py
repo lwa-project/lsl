@@ -959,6 +959,34 @@ class astro_tests(unittest.TestCase):
 			self.assertAlmostEqual(nut.obliquity, obl, ACCURACY_OBL)
 			self.assertAlmostEqual(nut.ecliptic, ecl, ACCURACY_ECL)
 			
+	def test_get_equ_nut(self):
+		"""Test astro.get_equ_nut() function."""
+		
+		body = astro.equ_posn(41.547213, 49.348483)
+		JD = 2462088.7
+		
+		ACCURARY = 3
+		deltaRA = 15.842766509979356
+		deltaDec = 6.2164102884679551
+		
+		body2 = astro.get_equ_nut(body, JD)
+		self.assertAlmostEqual((body2.ra -body.ra )*3600, deltaRA,  ACCURACY)
+		self.assertAlmostEqual((body2.dec-body.dec)*3600, deltaDec, ACCURACY)
+		
+	def get_equ_aber(self):
+		"""Test astro.get_equ_aber() funciton."""
+		
+		body = astro.equ_posn(41.547213, 49.348483)
+		JD = 2462088.7
+		
+		ACCURARY = 3
+		deltaRA = 30.09128661282716
+		deltaDec = 6.621256621590987
+		
+		body2 = astro.get_equ_aber(body, JD)
+		self.assertAlmostEqual((body2.ra -body.ra )*3600, deltaRA,  ACCURACY)
+		self.assertAlmostEqual((body2.dec-body.dec)*3600, deltaDec, ACCURACY)
+		
 	def test_rst_time_init(self):
 		"""Test astro.rst_time constructor method."""
 		
