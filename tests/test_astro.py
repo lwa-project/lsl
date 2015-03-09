@@ -965,7 +965,7 @@ class astro_tests(unittest.TestCase):
 		body = astro.equ_posn(41.547213, 49.348483)
 		JD = 2462088.7
 		
-		ACCURARY = 3
+		ACCURACY = 3
 		deltaRA = 15.842766509979356
 		deltaDec = 6.2164102884679551
 		
@@ -979,7 +979,7 @@ class astro_tests(unittest.TestCase):
 		body = astro.equ_posn(41.547213, 49.348483)
 		JD = 2462088.7
 		
-		ACCURARY = 3
+		ACCURACY = 3
 		deltaRA = 30.09128661282716
 		deltaDec = 6.621256621590987
 		
