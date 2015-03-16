@@ -14,7 +14,7 @@ from lsl.sim import vis as simVis
 from lsl.imaging import utils
 from lsl.common import stations
 from lsl.correlator import uvUtils
-from lsl.astro import deg_to_dms, deg_to_hms
+from lsl.astro import deg_to_dms, deg_to_hms, DJD_OFFSET
 from lsl.statistics.robust import std as rStd
 from lsl.misc.mathutil import gaussparams, gaussian2d
 
@@ -157,7 +157,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 	prevBeam = {}
 	
 	# Estimate the zenith beam response
-	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0)}
+	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
 	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 	psf = psf.image(center=(MapSize,MapSize))
@@ -247,7 +247,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 			if verbose:
 				print "               -> Computing beam(s)"
 				
-			beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0)}
+			beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
 			beamDict = simVis.buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 			beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 			beam = beam.image(center=(MapSize,MapSize))
@@ -396,7 +396,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 	prevBeam = {}
 	
 	# Estimate the zenith beam response
-	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0)}
+	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
 	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 	psf = psf.image(center=(MapSize,MapSize))
@@ -521,7 +521,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 				if verbose:
 					print "               -> Computing beam(s)"
 					
-				beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0)}
+				beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
 				beamDict = simVis.buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 				beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 				beam = beam.image(center=(MapSize,MapSize))
@@ -682,7 +682,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 	baselines = dataDict['bls'][pol]
 	
 	# Estimate the zenith beam response
-	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0)}
+	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
 	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 	psf = psf.image(center=(MapSize,MapSize))
@@ -742,7 +742,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 					continue
 					
 				nm = '%i-%i' % (i,j)
-				bSrcs[nm] = RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=mdl[i,j], index=0)
+				bSrcs[nm] = RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=mdl[i,j], index=0, epoch=aa.date)
 				
 		## Model the visibilities
 		simDict = simVis.buildSimData(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flatResponse=True)
