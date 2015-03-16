@@ -14,7 +14,7 @@ from lsl.sim import vis as simVis
 from lsl.imaging import utils
 from lsl.common import stations
 from lsl.correlator import uvUtils
-from lsl.astro import deg_to_dms, deg_to_hms, DJD_OFFSET
+from lsl.astro import deg_to_dms, deg_to_hms
 from lsl.statistics.robust import std as rStd
 from lsl.misc.mathutil import gaussparams, gaussian2d
 
