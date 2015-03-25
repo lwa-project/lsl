@@ -38,6 +38,7 @@
   * Added options to the splitSession script to give better control over the output
   * Added options to the possm script that makes it behave more like imageIDI
   * Fixed a problem in the lsl.imaging.deconv module when computing the positions of RadioFixedBody instances
+  * Fixed a bug in the lsl.sim.vis.buildSimArray() function that caused the simulation array date not to match the input if 'jd=None'
 
 1.0.2
   * Added documentation for LDP to the Sphinx build system

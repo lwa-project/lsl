@@ -811,7 +811,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 	
 	# Set the Julian Data for the AntennaArray object if it is provided.  The try...except
 	# clause is used to deal with people who may want to pass an array of JDs in rather than
-	# just one.
+	# just one.  If one isn't provided, use the date set for the input 'station'.
 	if jd is not None:
 		try:
 			junk = len(jd)
@@ -819,7 +819,9 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 			simAA.set_jultime(jd)
 		else:
 			simAA.set_jultime(jd[0])
-
+	else:
+		simAA.date = station.date
+		
 	return simAA
 
 
