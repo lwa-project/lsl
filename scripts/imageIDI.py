@@ -132,7 +132,7 @@ def main(args):
 	
 	print "Raw Stand Count: %i" % nStand
 	print "Final Baseline Count: %i" % (nStand*(nStand-1)/2,)
-	print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nChan, (freq[-1] - freq[0])/1e3/nChan)
+	print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nChan, (freq[1] - freq[0])/1e3)
 	print "Polarization Products: %s" % ' '.join([NumericStokes[p] for p in idi.pols])
 	
 	print "Reading in FITS IDI data"

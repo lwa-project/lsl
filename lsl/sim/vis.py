@@ -456,7 +456,9 @@ class Antenna(aipy.amp.Antenna):
 			return temp
 			
 		top = {'y':robustDot(self.rot_pol_x, top), 
-			  'x':robustDot(self.rot_pol_y, top)}[pol]
+			  'x':robustDot(self.rot_pol_y, top), 
+			  'l':robustDot(self.rot_pol_x, top), 
+			  'r':robustDot(self.rot_pol_y, top)}[pol]
 		x,y,z = top
 		
 		return self.beam.response((x,y,z))

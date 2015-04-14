@@ -199,7 +199,7 @@ def findPointSources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.
 	for i in xrange(pixels):
 		ox = ix + xx[i]
 		oy = iy + yy[i]
-		stars, = numpy.where( convImage[ix,iy] >= convImage[ox,oy])
+		stars, = numpy.where( convImage[ix,iy] >= convImage[ox,oy] )
 		ix, iy = ix[stars], iy[stars]
 	nGood = len(ix)       
 	
