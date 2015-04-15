@@ -39,20 +39,21 @@ def _radec_of(aa, az, alt):
 	
 	# radians -> degrees
 	RA = RA * 180.0/numpy.pi
+	RA %= 360.0
 	dec = dec * 180.0/numpy.pi
 	
 	# RA/dec -> astro.eqn_posn()
 	pos = astro.equ_posn(RA, dec)
 	
 	# Correct for aberration
-	pos2 = astro.get_equ_aber(pos, site.date+astro.DJD_OFFSET)
+	pos2 = astro.get_equ_aber(pos, aa.date+astro.DJD_OFFSET)
 	dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
 	pos.ra = (pos.ra - dRA) % 360.0
 	pos.ra %= 360.0
 	pos.dec = pos.dec - dDec
 	
 	# Correct for nutation
-	pos2 = astro.get_equ_nut(pos, site.date+astro.DJD_OFFSET)
+	pos2 = astro.get_equ_nut(pos, aa.date+astro.DJD_OFFSET)
 	dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
 	pos.ra = (pos.ra - dRA) % 360.0
 	pos.ra %= 360.0
