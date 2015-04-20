@@ -10,6 +10,8 @@
   * Added support for retrieving the file start time in samples to the various lsl.reader.ldp.LDPFileBase sub-classes
   * Removed the lsl.misc.mathutil.robustmean() function in favor of lsl.statistics.robust.mean()
   * Added a function to the lsl.astro module to help deal with correcting a celestial coordinate for nutation
+  * Added support for image weighting and tapering with the new lsl.imaging.utils.ImgWPlus class
+  * Switched lsl.imaging.utils.buildGriddedImage() over to using the new ImgWPlus class
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata

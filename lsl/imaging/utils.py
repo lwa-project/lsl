@@ -17,7 +17,8 @@ Also included is a utility to sort data dictionaries by baselines.
 .. versionchanged:: 1.1.0
 	Added the getImageRADec() and getImageAzEl() functions to complement
 	plotGriddedImage() and make it easier to work with phase centers 
-	that are not at zenith.
+	that are not at zenith.  Added in the ImgWPlus class to add support
+	for imaging weighting and tapering.
 """
 
 import os
@@ -42,9 +43,26 @@ from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NumericStokes
 from lsl.common.constants import c as vLight
 
-__version__ = '0.5'
+try:
+	import pyfftw
+	
+	# Enable the PyFFTW cache
+	if not pyfftw.interfaces.cache.is_enabled():
+		pyfftw.interfaces.cache.enable()
+		pyfftw.interfaces.cache.set_keepalive_time(60)
+		
+	fft2Function = lambda x: pyfftw.interfaces.numpy_fft.fft2(x)
+	ifft2Function = lambda x: pyfftw.interfaces.numpy_fft.ifft2(x)
+
+except ImportError:
+	fft2Function = numpy.fft.fft2
+	ifft2Function = numpy.fft.ifft2
+
+__version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'buildGriddedImage', 'plotGriddedImage', 'getImageRADec', 'getImageAzEl', '__version__', '__revision__', '__all__']
+__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 
+		 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'ImgWPlus', 'buildGriddedImage', 
+		 'plotGriddedImage', 'getImageRADec', 'getImageAzEl', '__version__', '__revision__', '__all__']
 
 
 # Regular expression for trying to get the stand number out of an antenna
@@ -1082,6 +1100,196 @@ except ImportError:
 			raise RuntimeError("Cannot import pyrap.tables, MS support disabled")
 
 
+class ImgWPlus(aipy.img.ImgW):
+	"""
+	Sub-class of the aipy.img.ImgW class that adds support for different 
+	visibility weighting scheme and uv plane tapering.  This class also
+	adds in a couple of additional methods that help determine the size of
+	the field of view and the pixels near the phase center.
+	"""
+	
+	def getFieldOfView(self):
+		"""
+		Return the approximate size of the field of view in radians.  The 
+		field of view calculate is based off the maximum and minimum values
+		of L found for the inverted uv matrix.
+		"""
+		
+		# Get the L and M coordinates
+		l,m = self.get_LM()
+		
+		# Find the maximum and minimum values of L
+		lMax = numpy.where( l == l.max() )
+		lMin = numpy.where( l == l.min() )
+		#print lMax, lMin, l[lMax], l[lMin], m[lMax], m[lMin]
+		
+		# Convert these locations into topocentric
+		xMax, xMin = l.data[lMax], l.data[lMin]
+		yMax, yMin = m.data[lMax], m.data[lMin]
+		zMax, zMin = numpy.sqrt(1 - xMax**2 - yMax**2), numpy.sqrt(1 - xMin**2 - yMin**2)
+		azAltMax = aipy.coord.top2azalt((xMax,yMax,zMax))
+		azAltMin = aipy.coord.top2azalt((xMin,yMin,zMin))
+		
+		# Get the separation between the two
+		d = 2*numpy.arcsin( numpy.sqrt( numpy.sin((azAltMax[1]-azAltMin[1])/2)**2+numpy.cos(azAltMax[1])*numpy.cos(azAltMin[1])*numpy.sin((azAltMax[0]-azAltMin[0])/2)**2 ) )
+		
+		return d.max()
+		
+	def getPixelSize(self):
+		"""
+		Return the approximate size of pixels at the phase center in radians.
+		The pixel size is averaged over the four pixels that neighboor the 
+		phase center.
+		"""
+		
+		# Get the L and M coordinates
+		l,m = self.get_LM()
+		
+		sizes = []
+		x0, y0 = l[0,0], m[0,0]
+		z0 = numpy.sqrt(1 - x0**2 - y0**2)
+		for offX,offY in ((0,1), (1,0), (0,-1), (-1,0)):
+			x1, y1 = l[offX,offY], m[offX,offY]
+			z1 = numpy.sqrt(1 - x1**2 - y1**2)
+			
+			# Convert these locations into topocentric
+			azAlt0 = aipy.coord.top2azalt((x0,y0,z0))
+			azAlt1 = aipy.coord.top2azalt((x1,y1,z1))
+			
+			# Get the separation between the two
+			d = 2*numpy.arcsin( numpy.sqrt( numpy.sin((azAlt1[1]-azAlt0[1])/2)**2+numpy.cos(azAlt0[1])*numpy.cos(azAlt1[1])*numpy.sin((azAlt1[0]-azAlt0[0])/2)**2 ) )
+			
+			# Save
+			sizes.append(d)
+		sizes = numpy.array(sizes)
+		
+		return sizes.mean()
+		
+	def _gen_img(self, data, center=(0,0), weighting='natural', localFraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+		"""
+		Return the inverse FFT of the provided data, with the 0,0 point 
+		moved to 'center'.  In the images return north is up and east is 
+		to the left.
+		
+		There are a few keywords that control how the image is formed.  
+		There are:
+		 * weighting - The weighting scheme ('natural', 'uniform', or 
+		               'briggs') used on the data;
+		 * localFraction - The fraction of the uv grid that is consider 
+		                   "local" for the 'uniform' and 'briggs' methods;
+		 * robust - The value for the weighting robustness under the 
+		            'briggs' method; and
+		 * taper - The size of u and v Gaussian tapers at the 30% level.
+		"""
+		
+		# Make sure that we have a valid weighting scheme to use
+		if weighting not in ('natural', 'uniform', 'briggs'):
+			raise ValueError("Unknown weighting scheme '%s'" % weighting)
+			
+		# Make sure that we have a valid localFraction value
+		if localFraction <= 0 or localFraction > 1:
+			raise ValueError("Invalid localFraction value")
+			
+		# Apply the weighting
+		if weighting == 'natural':
+			## Natural weighting - we already have it
+			pass
+		
+		elif weighting == 'uniform':
+			## Uniform weighting - we need to calculate it
+			dens = numpy.abs(self.bm[0])
+			size = dens.shape[0]
+			
+			from scipy.ndimage import uniform_filter
+			dens = uniform_filter(dens, size=size*localFraction)
+			dens /= dens.max()
+			dens[numpy.where( dens < 1e-8 )] = 0
+			
+			data = data/dens
+			data[numpy.where(dens == 0)] = 0.0
+			
+		elif weighting == 'briggs':
+			## Robust weighting - we need to calculate it
+			dens = numpy.abs(self.bm[0])
+			size = dens.shape[0]
+			
+			from scipy.ndimage import uniform_filter
+			dens = uniform_filter(dens, size=size*localFraction)
+			dens /= dens.max()
+			dens[numpy.where( dens < 1e-8 )] = 0
+			
+			f2 = (5*10**-robust)**2 / (dens**2).mean()
+			dens = 1.0 / (1.0 + f2/dens)
+			data = data/dens*dens.max()
+			data[numpy.where(dens == 0)] = 0.0
+			
+		# Make sure that we have the right type to taper with
+		try:
+			taper1 = taper[0]
+			taper2 = taper[1]
+			taper = (taper1, taper2)
+		except TypeError:
+			taper = (taper, taper)
+			
+		# Apply the taper
+		if taper[0] > 0.0 or taper[1] > 0.0:
+			u,v = self.get_uv()
+			
+			taper1 = 1.0
+			if taper[0] > 0.0:
+				cu = numpy.log(0.3) / taper[0]**2
+				taper1 = numpy.exp(cu*u**2)
+				
+			taper2 = 1.0
+			if taper[1] > 0.0:
+				cv = numpy.log(0.3) / taper[1]**2
+				taper2 = numpy.exp(cv*v**2)
+				
+			data = data*taper1*taper2
+			
+		return aipy.img.recenter(ifft2Function(data).real.astype(numpy.float32), center)
+		
+	def image(self, center=(0,0), weighting='natural', localFraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+		"""Return the inverse FFT of the UV matrix, with the 0,0 point moved
+		to 'center'.  In the images return north is up and east is 
+		to the left.
+		
+		There are a few keywords that control how the image is formed.  
+		There are:
+		 * weighting - The weighting scheme ('natural', 'uniform', or 
+		               'briggs') used on the data;
+		 * localFraction - The fraction of the uv grid that is consider 
+		                   "local" for the 'uniform' and 'briggs' methods;
+		 * robust - The value for the weighting robustness under the 
+		            'briggs' method; and
+		 * taper - The size of u and v Gaussian tapers at the 30% level.
+		"""
+		
+		return self._gen_img(self.uv, center=center, weighting=weighting, localFraction=localFraction, robust=robust, taper=taper)
+		
+	def bm_image(self, center=(0,0), term=None, weighting='natural', localFraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+		"""Return the inverse FFT of the sample weightings (for all mf_order
+		terms, or the specified term if supplied), with the 0,0 point
+		moved to 'center'.  In the images return north is up and east is 
+		to the left.
+		
+		There are a few keywords that control how the image is formed.  
+		There are:
+		 * weighting - The weighting scheme ('natural', 'uniform', or 
+		               'briggs') used on the data;
+		 * localFraction - The fraction of the uv grid that is consider 
+		                   "local" for the 'uniform' and 'briggs' methods;
+		 * robust - The value for the weighting robustness under the 
+		            'briggs' method; and
+		 * taper - The size of u and v Gaussian tapers at the 30% level.
+		"""
+		
+		if not term is None:
+			return self._gen_img(self.bm[term], center=center, weighting=weighting, localFraction=localFraction, robust=robust, taper=taper)
+		else:
+			return [self._gen_img(b, center=center, weighting=weighting, localFraction=localFraction, robust=robust, taper=taper) for b in self.bm]
+
+
 def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, verbose=True):
 	"""
 	Given a data dictionary, build an aipy.img.ImgW object of gridded uv data 
@@ -1089,7 +1297,7 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
 	function to make it more versatile.
 	"""
 	
-	im = aipy.img.ImgW(size=MapSize, res=MapRes, wres=MapWRes)
+	im = ImgWPlus(size=MapSize, res=MapRes, wres=MapWRes)
 	
 	# Make sure we have the right polarization
 	if pol not in dataDict['bls'].keys() and pol.lower() not in dataDict['bls'].keys():
