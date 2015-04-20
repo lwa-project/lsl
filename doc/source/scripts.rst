@@ -60,6 +60,25 @@ driftcurve.py
 
             -v, --verbose          Run driftcurve in vebose mode
 
+
+getIonosphericRM.py
+  :Description: Estimate the ionospheric contribution to the RM for an observation using the IGS final product and the IGRF.
+
+  :Usage: getIonosphericRM.py [options] RA Dec Start Stop
+
+          RA:     J2000 right ascension in HH:MM:SS[.SSS]
+
+          Dec:    J2000 declination in sDD:MM:SS[.SSS]
+
+          Start:  YYYY/MM/DD HH:MM:SS start time in UTC
+
+          Stop:   YYYY/MM/DD HH:MM:SS stop time in UTC
+
+  
+  :Options: -h, --help             Display this help information
+
+            -n, --n-samples        Number of samples to take between the start and stop times (default = 11)
+
 lwa_cat_view.py
   :Description: Simple LWDA astronomical source catalogue display application.
 

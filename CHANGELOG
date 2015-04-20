@@ -13,6 +13,8 @@
   * Added support for image weighting and tapering with the new lsl.imaging.utils.ImgWPlus class
   * Switched lsl.imaging.utils.buildGriddedImage() over to using the new ImgWPlus class
   * Added a new RadioEarthSatellite class to lsl.sim.vis help with simulating satellites that may be transmitting within the observing band
+  * Added the lsl.misc.ionosphere module to help with computing the dispersion and rotation measure of the ionosphere
+  * Added a new script, getIonosphericRM.py, that uses the lsl.misc.ionosphere module to estimate the rotation measure during an observation
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata
