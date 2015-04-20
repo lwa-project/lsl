@@ -83,16 +83,131 @@ from lsl.common import dp as dp_common
 from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 from lsl.common.stations import lwa1
+from lsl.constants import c as speedOfLight
 
 from _simfast import FastVis
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['srcs', 'BeamAlm', 'Antenna', 'AntennaArray', 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'addBaselineNoise', '__version__', '__revision__', '__all__']
+__all__ = ['srcs', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
+		 'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'addBaselineNoise', 
+		 '__version__', '__revision__', '__all__']
 
 
 # A dictionary of bright sources in the sky to use for simulations
 srcs = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
+
+
+class RadioEarthSatellite(object):
+	"""
+	Implement a aipy.amp.RadioBody-lime simulation object for an Earth-
+	orbiting satellite using a two-line element set.
+	"""
+	
+	def __init__(self, tle, tfreq, tpower=0.0, tbw=1.0e6, ionref=(0.,0.)):
+		"""
+		Initialize the class using:
+		 * a three-element list of strings that specify the two-line element
+		   set of the satellite,
+		 * a list of frequencies (in GHz) where the satellite transmits, 
+		 * the transmitter power in W, and
+		 * the transmission bandwidth in Hz.
+		 
+		.. note::
+			For calculating the power received on the ground this class 
+			assumes that the signal is emitted isotropically.
+		"""
+		
+		# Location
+		self.Body = ephem.readtle(*tle)
+		self.src_name = self.Body.name
+		
+		# Transmitter - tuning, power, and bandwidth
+		try:
+			self.tfreq = list(tfreq)
+		except TypeError:
+			self.tfreq = [tfreq,]
+		self.tpower = tpower
+		self.tbw = tbw
+		
+		# Ionospheric distortion
+		self.ionref = list(ionref)
+		
+		# Shape (unresolved)
+		self.srcshape = list((0.,0.,0.))
+		
+	def __getattr__(self, nm):
+		"""
+		First try to access attribute from this class, but if that fails, 
+		try to get it from the underlying PyEphem object.
+		"""
+		
+		try:
+			return object.__getattr__(self, nm)
+		except AttributeError:
+			return self.Body.__getattribute__(nm)
+			
+	def compute(self, observer):
+		"""
+		Update coordinates relative to the provided observer.  Must be
+		called at each time step before accessing information.
+		"""
+		
+		self.Body.compute(observer)
+		self.update_jys(observer.get_afreqs())
+		
+	def get_crds(self, crdsys, ncrd=3):
+		"""
+		Return the coordinates of this location in the desired coordinate
+		system ('eq','top') in the current epoch.  If ncrd=2, angular
+		coordinates (ra/dec or az/alt) are returned, and if ncrd=3,
+		xyz coordinates are returned.
+		"""
+		
+		assert(crdsys in ('eq','top'))
+		assert(ncrd in (2,3))
+		if crdsys == 'eq':
+			if ncrd == 2: return (self.ra, self.dec)
+			return aipy.coord.radec2eq((self.ra, self.dec))
+		else:
+			if ncrd == 2: return (self.az, self.alt)
+			return aipy.coord.azalt2top((self.az, self.alt))
+			
+	def update_jys(self, afreqs):
+		"""
+		Update fluxes relative to the provided observer.  Must be
+		called at each time step before accessing information.
+		"""
+		
+		# Setup
+		r = self.Body.range				# m
+		v = self.Body.range_velocity		# m/s
+		self.jys = numpy.zeros_like(afreqs)
+		
+		# Compute the flux coming from the satellite assuming isotropic emission
+		self._jys = self.tpower / (4*numpy.pi*r**2) / self.tbw		# W / m^2 / Hz
+		self._jys /= 10**-26								# Jy
+		
+		try:
+			dFreq = afreqs[1]-afreqs[0]
+		except IndexError:
+			dFreq = afreqs[0,1]-afreqs[0,0]
+		for f in self.tfreq:
+			## Apply the Doppler shift
+			fPrime = f / (1 + v/speedOfLight)
+			
+			## Figure out which frequency bin is within one channel of the
+			## shifted signal.  If it's close, set it to a 
+			diff = numpy.abs(fPrime - afreqs)*1e9
+			good = numpy.where( diff <= self.tbw/2.0 )
+			self.jys[good] = self._jys * min([1.0, dFreq*1e9/self.tbw])
+				
+	def get_jys(self):
+		"""
+		Return the fluxes vs. freq that should be used for simulation.
+		"""
+		
+		return self.jys
 
 
 class BeamAlm(aipy.amp.BeamAlm):

@@ -12,6 +12,7 @@
   * Added a function to the lsl.astro module to help deal with correcting a celestial coordinate for nutation
   * Added support for image weighting and tapering with the new lsl.imaging.utils.ImgWPlus class
   * Switched lsl.imaging.utils.buildGriddedImage() over to using the new ImgWPlus class
+  * Added a new RadioEarthSatellite class to lsl.sim.vis help with simulating satellites that may be transmitting within the observing band
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata
