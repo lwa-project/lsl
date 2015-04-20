@@ -83,7 +83,7 @@ from lsl.common import dp as dp_common
 from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 from lsl.common.stations import lwa1
-from lsl.constants import c as speedOfLight
+from lsl.common.constants import c as speedOfLight
 
 from _simfast import FastVis
 
