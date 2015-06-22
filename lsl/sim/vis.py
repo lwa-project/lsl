@@ -984,7 +984,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 	def Bij_sf(xyz, pol):
 		Bi = aa[0].bm_response(xyz, pol=pol[0]).transpose()
 		Bj = aa[1].bm_response(xyz, pol=pol[1]).transpose()
-		Bij = Bi*Bj.conj()
+		Bij = n.sqrt( Bi*Bj.conj() )
 		return Bij.squeeze()
 	if flatResponse:
 		Gij_sf *= 0.0
