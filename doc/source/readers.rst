@@ -27,6 +27,11 @@ Low-Level DR Spectrometer
 .. automodule:: lsl.reader.drspec
    :members:
 
+Low-Level VIDF
+--------------
+.. automodule:: lsl.reader.vdif
+   :members:
+
 Reader Error Codes
 ------------------
 .. automodule:: lsl.reader.errors

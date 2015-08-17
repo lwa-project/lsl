@@ -5,6 +5,7 @@
  * tbn
  * drx
  * drspec
+ * vdif
 
 A ring buffer for re-ordering TBN data is included in the 'buffer'
 module.
