@@ -10,9 +10,9 @@ import math
 import numpy
 from scipy.special import sph_harm
 
-__version__   = '0.4'
+__version__   = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'savitzky_golay', 'gaussian1d', 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', '__version__', '__revision__', '__all__']
+__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'ndft',  'savitzky_golay', 'gaussian1d', 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', '__version__', '__revision__', '__all__']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
 
@@ -231,6 +231,38 @@ def from_dB(dB):
 	"""
 	
 	return numpy.power(10.0, (dB/10.0))
+
+
+def ndft(t, x):
+	"""
+	Given a list of times and a list of data values, compute a non-uniform 
+	discrete Fourier transform (NDFT) of the data.  Returns a two element 
+	tuple of frequency and the complex NDFT result.
+	"""
+	
+	# Setup the output dtype to make sure that we have enough precision
+	if x.dtype in (numpy.complex128, numpy.float64):
+		dtype = numpy.complex128
+	else:
+		dtype = numpy.complex64
+		
+	# Create the output NDFT array and fill it
+	out = numpy.zeros(x.shape, dtype=dtype)
+	for m in xrange(out.size):
+		mPrime = out.size/2 - m
+		s = 0.0j
+		for n in xrange(out.size):
+			s += x[n]*numpy.exp(-2j*numpy.pi*t[n]*mPrime / (t.max() - t.min()))
+		out[m] = s
+		
+	# Create the output frequency array and fill it
+	f = numpy.zeros_like(t)
+	for m in xrange(out.size):
+		mPrime = out.size/2 - m
+		f[m] = mPrime / (t.max() - t.min())
+		
+	# Done
+	return f, out
 
 
 def savitzky_golay(y, window_size, order, deriv=0):
