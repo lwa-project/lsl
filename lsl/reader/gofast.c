@@ -30,15 +30,54 @@ static PyObject *eofError;
 */
 
 int validSync(unsigned char w1, unsigned char w2, unsigned char w3, unsigned char w4) {
-	int valid = 1;
+	int valid = 0;
 	
-	if( w1 != 92 || w2 != 222 || w3 != 192 || w4 != 222 ) {
-		valid = 0;
+	if( w1 == 92 && w2 == 222 && w3 == 192 && w4 == 222 ) {
+		valid = 1;
 	}
 	
 	return valid;
 }
 
+
+/* 
+  Look-up Tables
+*/
+
+static short int tbw4LUT[256][2];
+static float tbnLUT[256];
+static float drxLUT[256][2];
+
+static void initLUTs() {
+	// Look-up table inialization function from the VDIFIO library
+	
+	int i,j;
+	short int t;
+	
+	//TBW - 4 bit
+	for(i=0; i<256; i++) {
+		for(j=0; j<2; j++) {
+			t = (i >> 4*(1-j)) & 15;
+			tbw4LUT[i][j] = t;
+			tbw4LUT[i][j] -= ((t&8)<<1);
+		}
+	}
+	
+	// TBN
+	for(i=0; i<256; i++) {
+		tbnLUT[i] = i;
+		tbnLUT[i] -= ((i&128)<<1);
+	}
+	
+	// DRX
+	for(i=0; i<256; i++) {
+		for(j=0; j<2; j++) {
+			t = (i >> 4*(1-j)) & 15;
+			drxLUT[i][j] = t;
+			drxLUT[i][j] -= ((t&8)<<1);
+		}
+	}
+}
 
 /*
   DR Spectrometer header format
@@ -167,46 +206,42 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 		}
 	
 		// Fill the data array
-		short int tempR;
+		const short int *fp;
 		short int *a;
 		a = (short int *) data->data;
 		for(i=0; i<1200; i++) {
-			tempR = (bytes[i+24]>>4)&15;
-			tempR -= ((tempR&8)<<1);
-			*(a + i) = (short int) tempR;
-
-			tempR = bytes[i+24]&15;
-			tempR -= ((tempR&8)<<1);
-			*(a + 1200 + i) = (short int) tempR;
+			fp = tbw4LUT[ bytes[i+24] ];
+			*(a + i) = (short int) fp[0];
+			*(a + 1200 + i) = (short int) fp[1];
 		}
-
+		
 	}
-
+	
 	// Save the data to the frame object
 	// 1.  Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-
+	
 	temp = PyLong_FromUnsignedLong(frameCount);
 	PyObject_SetAttrString(fHeader, "frameCount", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = PyLong_FromUnsignedLong(secondsCount);
 	PyObject_SetAttrString(fHeader, "secondsCount", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = Py_BuildValue("H", tbwID);
 	PyObject_SetAttrString(fHeader, "tbwID", temp);
 	Py_XDECREF(temp);
-
+	
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-
+	
 	temp = PyLong_FromUnsignedLongLong(timeTag);
 	PyObject_SetAttrString(fData, "timeTag", temp);
 	Py_XDECREF(temp);
-
+	
 	PyObject_SetAttrString(fData, "xy", PyArray_Return(data));
-
+	
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
@@ -214,7 +249,7 @@ static PyObject *readTBW(PyObject *self, PyObject *args) {
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
-
+	
 	output = Py_BuildValue("O", frame);
 	return output;
 }
@@ -260,7 +295,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
-
+	
 	// Read in a single 1048 byte frame
 	FILE *fh = PyFile_AsFile(ph);
 	PyFile_IncUseCount((PyFileObject *) ph);
@@ -277,7 +312,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 	PyFile_DecUseCount((PyFileObject *) ph);
-
+	
 	// Decode the header
 	unsigned char sync1, sync2, sync3, sync4;
 	sync1 = bytes[3];
@@ -296,7 +331,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	tbnID = bytes[12]<<8 | bytes[13];
 	unsigned short int gain;
 	gain = bytes[14]<<8 | bytes[15];
-
+	
 	unsigned long long timeTag;
 	timeTag = ((unsigned long long) bytes[16])<<56 | \
 			((unsigned long long) bytes[17])<<48 | \
@@ -306,10 +341,9 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 			((unsigned long long) bytes[21])<<16 | \
 			((unsigned long long) bytes[22])<<8 | \
 			bytes[23];
-
+			
 	// Create the output data array
 	npy_intp dims[1];
-	short int tempR, tempI;
 	dims[0] = 512;
 	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_COMPLEX64);
 	if(data == NULL) {
@@ -322,42 +356,38 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	float complex *a;
 	a = (float complex *) data->data;
 	for(i=0; i<512; i++) {
-		tempR = bytes[24+2*i];
-		tempR -= ((tempR&128)<<1);
-		tempI = bytes[24+2*i+1];
-		tempI -= ((tempI&128)<<1);
-		*(a + i) = (float) tempR + imaginary * (float) tempI;
+		*(a + i) = tbnLUT[ bytes[24+2*i] ] + imaginary * tbnLUT[ bytes[24+2*i+1] ];
 	}
-
+	
 	// Save the data to the frame object
 	// 1.  Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-
+	
 	temp = PyLong_FromUnsignedLong(frameCount);
 	PyObject_SetAttrString(fHeader, "frameCount", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = PyLong_FromUnsignedLong(tuningWord);
 	PyObject_SetAttrString(fHeader, "tuningWord", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = Py_BuildValue("H", tbnID);
 	PyObject_SetAttrString(fHeader, "tbnID", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = Py_BuildValue("H", gain);
 	PyObject_SetAttrString(fHeader, "gain", temp);
 	Py_XDECREF(temp);
-
+	
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-
+	
 	temp = PyLong_FromUnsignedLongLong(timeTag);
 	PyObject_SetAttrString(fData, "timeTag", temp);
 	Py_XDECREF(temp);
-
+	
 	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
-
+	
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
@@ -365,7 +395,7 @@ static PyObject *readTBN(PyObject *self, PyObject *args) {
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
-
+	
 	output = Py_BuildValue("O", frame);
 	return output;
 }
@@ -411,7 +441,7 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
-
+	
 	// Read in a single 4128 byte frame
 	FILE *fh = PyFile_AsFile(ph);
 	PyFile_IncUseCount((PyFileObject *) ph);
@@ -428,7 +458,7 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 	PyFile_DecUseCount((PyFileObject *) ph);
-
+	
 	// Decode the header
 	unsigned char sync1, sync2, sync3, sync4;
 	sync1 = bytes[3];
@@ -469,7 +499,7 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 			((unsigned long) bytes[29])<<16 | \
 			((unsigned long) bytes[30])<<8 | \
 			bytes[31];
-	
+			
 	// Create the output data array
 	npy_intp dims[1];
 	dims[0] = 4096;
@@ -479,35 +509,32 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 		Py_XDECREF(data);
 		return NULL;
 	}
-
+	
 	// Fill the data array
-	short int tempR, tempI;
+	const float *fp;
 	float complex *a;
 	a = (float complex *) data->data;
 	for(i=0; i<4096; i++) {
-		tempR = (bytes[i+32]>>4)&15;
-		tempR -= ((tempR&8)<<1);
-		tempI = bytes[i+32]&15;
-		tempI -= ((tempI&8)<<1);
-		*(a + i) = (float) tempR + imaginary * (float) tempI;
+		fp = drxLUT[ bytes[i+32] ];
+		*(a + i) = fp[0] + imaginary * fp[1];
 	}
-
+	
 	// Save the data to the frame object
 	// 1. Header
 	fHeader = PyObject_GetAttrString(frame, "header");
-
+	
 	temp = PyLong_FromUnsignedLong(frameCount);
 	PyObject_SetAttrString(fHeader, "frameCount", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = Py_BuildValue("B", drxID);
 	PyObject_SetAttrString(fHeader, "drxID", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = PyLong_FromUnsignedLong(secondsCount);
 	PyObject_SetAttrString(fHeader, "secondsCount", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = Py_BuildValue("H", decimation);
 	PyObject_SetAttrString(fHeader, "decimation", temp);
 	Py_XDECREF(temp);
@@ -515,14 +542,14 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	temp = Py_BuildValue("H", timeOffset);
 	PyObject_SetAttrString(fHeader, "timeOffset", temp);
 	Py_XDECREF(temp);
-
+	
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-
+	
 	temp = PyLong_FromUnsignedLongLong(timeTag);
 	PyObject_SetAttrString(fData, "timeTag", temp);
 	Py_XDECREF(temp);
-
+	
 	temp = PyLong_FromUnsignedLong(tuningWord);
 	PyObject_SetAttrString(fData, "tuningWord", temp);
 	Py_XDECREF(temp);
@@ -530,9 +557,9 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	temp = PyLong_FromUnsignedLong(flags);
 	PyObject_SetAttrString(fData, "flags", temp);
 	Py_XDECREF(temp);
-
+	
 	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
-
+	
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
@@ -540,7 +567,7 @@ static PyObject *readDRX(PyObject *self, PyObject *args) {
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
-
+	
 	output = Py_BuildValue("O", frame);
 	return output;
 }
@@ -589,7 +616,7 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
-
+	
 	// Read in a single header
 	FILE *fh = PyFile_AsFile(ph);
 	PyFile_IncUseCount((PyFileObject *) ph);
@@ -944,11 +971,11 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
-
+	
 	temp = PyLong_FromUnsignedLongLong(header.timeTag0);
 	PyObject_SetAttrString(fData, "timeTag", temp);
 	Py_XDECREF(temp);
-
+	
 	PyObject_SetAttrString(fData, "tuningWords", tuningWords);
 	
 	PyObject_SetAttrString(fData, "fills", fills);
@@ -1011,7 +1038,7 @@ static PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	Py_XDECREF(dataB1);
 	Py_XDECREF(dataC1);
 	Py_XDECREF(dataD1);
-
+	
 	output = Py_BuildValue("O", frame);
 	return output;
 }
@@ -1047,7 +1074,10 @@ PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, and DR Spectrometer rea
 
 PyMODINIT_FUNC init_gofast(void) {
 	PyObject *m, *dict1, *dict2;
-
+	
+	// Initialize the look-up tables
+	initLUTs();
+	
 	// Module definitions and functions
 	m = Py_InitModule3("_gofast", GoFastMethods, GoFast_doc);
 	import_array();
@@ -1083,7 +1113,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "eofError", eofError);
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.5"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.6"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 }
