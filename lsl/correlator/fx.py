@@ -231,8 +231,12 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	
 	# Get the location of the phase center in radians and create a 
 	# pointing vector
-	azPC = phaseCenter[0]*numpy.pi/180.0
-	elPC = phaseCenter[1]*numpy.pi/180.0
+	if phaseCenter == 'z':
+		azPC = 0.0
+		elPC = numpy.pi/2.0
+	else:
+		azPC = phaseCenter[0]*numpy.pi/180.0
+		elPC = phaseCenter[1]*numpy.pi/180.0
 	source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
 					  numpy.cos(elPC)*numpy.cos(azPC), 
 					  numpy.sin(elPC)])
@@ -363,8 +367,12 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	
 	# Get the location of the phase center in radians and create a 
 	# pointing vector
-	azPC = phaseCenter[0]*numpy.pi/180.0
-	elPC = phaseCenter[1]*numpy.pi/180.0
+	if phaseCenter == 'z':
+		azPC = 0.0
+		elPC = numpy.pi/2.0
+	else:
+		azPC = phaseCenter[0]*numpy.pi/180.0
+		elPC = phaseCenter[1]*numpy.pi/180.0
 	source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
 					  numpy.cos(elPC)*numpy.cos(azPC), 
 					  numpy.sin(elPC)])
