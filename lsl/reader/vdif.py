@@ -551,5 +551,4 @@ def getThreadCount(filehandle):
 	filehandle.seek(fhStart)
 	
 	# Return the number of threads found
-	return len(threads)
-	
+	return len(threads)	
