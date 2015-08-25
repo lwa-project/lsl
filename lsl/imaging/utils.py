@@ -58,7 +58,7 @@ except ImportError:
 	fft2Function = numpy.fft.fft2
 	ifft2Function = numpy.fft.ifft2
 
-__version__ = '0.6'
+__version__ = '0.7'
 __revision__ = '$Rev$'
 __all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 
 		 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'ImgWPlus', 'buildGriddedImage', 
@@ -465,6 +465,10 @@ class CorrelatedDataIDI(object):
 
 		.. note::
 			uvMin and uvMax should be specified in lambda
+			
+		.. versionchanged:: 1.1.0
+			'set' can now be either an integer or a list to pull back multiple 
+			integrations.
 		"""
 		
 		# Open the file
@@ -478,8 +482,11 @@ class CorrelatedDataIDI(object):
 		dataDict = self._createEmptyDataDict()
 
 		# Set the source ID to look for (this is LWA specific)
-		sourceID = range(set,set+1)
-		
+		if type(set) == list:
+			sourceID = set
+		else:
+			sourceID = range(set,set+1)
+			
 		# Loop over data rows
 		found = False
 		setCounter = 0
@@ -624,7 +631,11 @@ class CorrelatedDataUV(object):
 		self.telescope = hdulist[0].header['TELESCOP']
 		dt = hdulist[0].header['DATE-OBS']
 		dt = dt.rsplit('.', 1)[0]
-		self.dateObs = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
+		try:
+			self.dateObs = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
+		except ValueError:
+			## Catch for AIPS UVFITS files which only have a date set
+			self.dateObs = datetime.strptime(dt, "%Y-%m-%d")
 		if self.telescope == 'LWA-1' or self.telescope == 'LWA1' and ag.header['ARRNAM'] != 'LEDA64-NM':
 			self.station = stations.lwa1
 		elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
@@ -641,7 +652,7 @@ class CorrelatedDataUV(object):
 					mtch =  _annameRE.match(nam)
 					id = int(mtch.group('id'))
 					noact2.append(id)
-				except ValueError, AttributeError:
+				except (ValueError, AttributeError):
 					break
 			if len(noact2) == len(noact):
 				noact = numpy.array(noact2)
@@ -729,6 +740,10 @@ class CorrelatedDataUV(object):
 
 		.. note::
 			uvMin and uvMax should be specified in lambda
+			
+		.. versionchanged:: 1.1.0
+			'set' can now be either an integer or a list to pull back multiple 
+			integrations.
 		"""
 		
 		# Open the file
@@ -742,8 +757,11 @@ class CorrelatedDataUV(object):
 		dataDict = self._createEmptyDataDict()
 
 		# Set the source ID to look for (this is LWA specific)
-		sourceID = range(set,set+1)
-		
+		if type(set) == list:
+			sourceID = set
+		else:
+			sourceID = range(set,set+1)
+			
 		# Loop over data rows
 		found = False
 		setCounter = 0
@@ -776,13 +794,27 @@ class CorrelatedDataUV(object):
 					continue
 				ri = numpy.where(self.stands == i)[0][0]
 				rj = numpy.where(self.stands == j)[0][0]
-			
-				uvw = numpy.array([row['UU'], row['VV'], row['WW']])
-			
+				
+				try:
+					uvw = numpy.array([row['UU'], row['VV'], row['WW']])
+				except KeyError:
+					### Catch for AIPS UVFITS data which calls them **---SIN
+					uvw = numpy.array([row['UU---SIN'], row['VV---SIN'], row['WW---SIN']])
+					
 				jd = row['DATE']
 				uvw = numpy.array([numpy.dot(uvw[0], self.freq), numpy.dot(uvw[1], self.freq), numpy.dot(uvw[2], self.freq)])
-				flux = row['DATA'][0,0,:,:,:]
-			
+				if len(row['DATA'].shape) == 6:
+					## Fix for AIPS UVFITS data which includes an 'IF' column
+					flux = row['DATA'][0,0,0,:,:,:]
+				else:
+					flux = row['DATA'][0,0,:,:,:]
+				if flux.shape[-1] == 3:
+					## Catch for AIPS UVFITS which has a third entry in COMPLEX which includes the weight
+					wgt = flux[:,:,2]
+					flux = flux[:,:,:2]
+				else:
+					wgt = None
+					
 				for c,p in enumerate(self.pols):
 					name = NumericStokes[p]
 					if len(name) == 2:
@@ -791,9 +823,10 @@ class CorrelatedDataUV(object):
 					vis = numpy.zeros(flux.shape[0], dtype=numpy.complex64)
 					vis.real = flux[:,c,0]
 					vis.imag = flux[:,c,1]
-					wgt = numpy.ones(vis.size)
+					if wgt is None:
+						wgt = numpy.ones(vis.size)
 					msk = numpy.zeros(vis.size, dtype=numpy.int16)
-			
+					
 					dataDict['uvw'][name].append( uvw ) 
 					dataDict['vis'][name].append( vis )
 					dataDict['wgt'][name].append( wgt )
@@ -1013,6 +1046,10 @@ try:
 
 			.. note::
 				uvMin and uvMax should be specified in lambda
+				
+			.. versionchanged:: 1.1.0
+				'set' can now be either an integer or a list to pull back multiple 
+				integrations.
 			"""
 			
 			# Open the data table
