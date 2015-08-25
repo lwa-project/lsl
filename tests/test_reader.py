@@ -9,18 +9,20 @@ from lsl.common.paths import dataBuild as dataPath
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
+from lsl.reader import vdif
 from lsl.reader import drspec
 from lsl.reader import errors
 
 
 __revision__ = "$ Revision: 2 $"
-__version__  = "0.5"
+__version__  = "0.6"
 __author__    = "Jayce Dowell"
 
 
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
+vdifFile = os.path.join(datapath, 'tests', 'vdif-test.dat')
 drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
 
 
@@ -570,6 +572,110 @@ class reader_tests(unittest.TestCase):
 		frameA = frames[0] + frames[1]
 		for i in xrange(nPts):
 			self.assertAlmostEqual(frameA.data.YY0[i], frames[0].data.YY0[i]+frames[1].data.YY0[i], 2)
+			
+	### VDIF ###
+	
+	def test_vdif_read(self):
+		"""Test reading in a frame from a VDIF file."""
+		
+		fh = open(vdifFile, 'rb')
+		# First frame
+		frame1 = vdif.readFrame(fh)
+		
+		# Validate header
+		station, thread = frame1.parseID()
+		self.assertEqual(station, 19284)
+		self.assertEqual(thread, 0)
+		self.assertEqual(frame1.header.isLegacy, 0)
+		self.assertEqual(frame1.header.isInvalid, 0)
+		self.assertEqual(frame1.header.refEpoch, 30)
+		self.assertEqual(frame1.header.secondsFromEpoch, 9106862)
+		self.assertEqual(frame1.header.frameInSecond, 59866)
+		self.assertEqual(frame1.header.frameLength, 8224/8)
+		self.assertEqual(frame1.header.nChan, 4)
+		self.assertEqual(frame1.header.bitsPerSample, 2)
+		self.assertEqual(frame1.header.isComplex, 0)
+		
+		# Validate (some) data
+		for i,d in enumerate(1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0):
+			self.assertAlmostEqual(frame1.data.data[i], d, 5)
+			
+		# Second frame
+		frame2 = tbn.readFrame(fh)
+		
+		# Validate header
+		station, thread = frame2.parseID()
+		self.assertEqual(station, 19284)
+		self.assertEqual(thread, 0)
+		self.assertEqual(frame2.header.isLegacy, 0)
+		self.assertEqual(frame2.header.isInvalid, 0)
+		self.assertEqual(frame2.header.refEpoch, 30)
+		self.assertEqual(frame2.header.secondsFromEpoch, 9106862)
+		self.assertEqual(frame2.header.frameInSecond, 59867)
+		self.assertEqual(frame2.header.frameLength, 8224/8)
+		self.assertEqual(frame2.header.nChan, 4)
+		self.assertEqual(frame2.header.bitsPerSample, 2)
+		self.assertEqual(frame2.header.isComplex, 0)
+		
+		# Validate (some) data
+		for i,d in enumerate(-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0):
+			self.assertAlmostEqual(frame1.data.data[i], d, 5)
+			
+		fh.close()
+		
+	def test_vdif_errors(self):
+		"""Test reading in all frames from a truncated VDIF file."""
+		
+		fh = open(vdifFile, 'rb')
+		# Frames 1 through 10
+		for i in range(1,10):
+			frame = vdif.readFrame(fh)
+			
+		# Last frame should be an error (errors.eofError)
+		self.assertRaises(errors.eofError, vdif.readFrame, fh)
+		fh.close()
+		
+	def test_vdif_threads(self):
+		"""Test finding out how many threads file."""
+		
+		fh = open(vdifFile, 'rb')
+		nt = vdif.getThreadCount()
+		self.assertEqual(nt, 1)
+		fh.close()
+		
+	def test_vdif_math(self):
+		"""Test mathematical operations on VDIF frame data via frames."""
+		
+		fh = open(vdifFile, 'rb')
+		# Frames 1 through 10
+		frames = []
+		for i in range(1,10):
+			frames.append(vdif.readFrame(fh))
+		fh.close()
+		
+		nSamples = frames[0].data.data.size
+		
+		# Multiplication
+		frameT = frames[0] * 2.0
+		for i in range(nSamples):
+			self.assertAlmostEqual(frameT.data.data[i], 2*frames[0].data.data[i], 2)
+		frameT *= 2.0
+		for i in range(nSamples):
+			self.assertAlmostEqual(frameT.data.data[i], 4*frames[0].data.data[i], 2)
+		frameT = frames[0] * frames[1]
+		for i in range(nSamples):
+			self.assertAlmostEqual(frameT.data.data[i], frames[0].data.data[i]*frames[1].data.data[i], 2)
+			
+		# Addition
+		frameA = frames[0] + 2.0
+		for i in range(nSamples):
+			self.assertAlmostEqual(frameA.data.data[i], 2+frames[0].data.data[i], 2)
+		frameA += 2.0
+		for i in range(nSamples):
+			self.assertAlmostEqual(frameA.data.data[i], 4+frames[0].data.data[i], 2)
+		frameA = frames[0] + frames[1]
+		for i in range(nSamples):
+			self.assertAlmostEqual(frameA.data.data[i], frames[0].data.data[i]+frames[1].data.data[i], 2)
 
 
 class reader_test_suite(unittest.TestSuite):

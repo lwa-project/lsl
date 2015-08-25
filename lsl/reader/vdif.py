@@ -18,7 +18,7 @@ The functions defined in this module fall into two class:
 
 For reading in data, use the readFrame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.  The readBlock
-function reads in a (user-defined) number of DRX frames and returns a 
+function reads in a (user-defined) number of VDIF frames and returns a 
 ObservingBlock object.
 
 For describing the format of data in the file, two function are provided:
@@ -33,15 +33,18 @@ import numpy
 import struct
 from datetime import datetime
 
+from _gofast import readVDIF
+from _gofast import syncError as gsyncError
+from _gofast import eofError as geofError
 from errors import *
 
 from lsl import astro
 from lsl.common.mcs import datetime2mjdmpm
 
 
-__version__ = '0.1'
+__version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getThreadCount', '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getFrameSize', 'getThreadCount', '__version__', '__revision__', '__all__']
 
 
 
@@ -71,7 +74,7 @@ class FrameHeader(object):
 	frame.  Most fields in the VDIF version 1.1.1 header are stored.
 	"""
 	
-	def __init__(self, isInvalid=0, isLegacy=0, secondsFromEpoch=0, refEpoch=0, frameInSecond=0, version=1, nChan=0, frameLength=0, isComplex='C', bitsPerSample=0, threadID=0, stationID=0, extendedData1=None, extendedData2=None, extendedData3=None, extendedData4=None):
+	def __init__(self, isInvalid=0, isLegacy=0, secondsFromEpoch=0, refEpoch=0, frameInSecond=0, version=1, nChan=0, frameLength=0, isComplex='C', bitsPerSample=0, threadID=0, stationID=0, extendedData1=None, extendedData2=None, extendedData3=None, extendedData4=None, sampleRate=0.0, centralFreq=0.0):
 		self.isInvalid = isInvalid
 		self.isLegacy = isLegacy
 		self.secondsFromEpoch = secondsFromEpoch
@@ -93,6 +96,9 @@ class FrameHeader(object):
 		self.extendedData3 = extendedData3
 		self.extendedData4 = extendedData4
 		
+		self.sampleRate = sampleRate
+		self.centralFreq = centralFreq
+		
 	def getTime(self):
 		"""
 		Function to convert the time tag to seconds since the UNIX epoch.
@@ -102,30 +108,44 @@ class FrameHeader(object):
 		# and convert it to a MJD
 		epochDT = datetime(2000+self.refEpoch/2, (self.refEpoch % 2)*6+1, 1, 0, 0, 0, 0)
 		epochMJD, epochMPM = datetime2mjdmpm(epochDT)
+		epochMJD = epochMJD + epochMPM/1000.0/86400.0
 		
 		# Get the frame MJD by adding the secondsFromEpoch value to the epoch
 		frameMJD = epochMJD + self.secondsFromEpoch / 86400.0
 		
-		# Try to get the sub-second time by parsing the extended user data
-		try:
-			## Is there a sample rate to grab?
-			eud = self.parseExtendedUserData()
-			sampleRate = eud['sampleRate']
-			sampleRate *= 1e6 if eud['sampleRateUnits'] == 'MHz' else 1.0
+		if self.sampleRate == 0.0:
+			# Try to get the sub-second time by parsing the extended user data
+			try:
+				## Is there a sample rate to grab?
+				eud = self.parseExtendedUserData()
+				sampleRate = eud['sampleRate']
+				sampleRate *= 1e6 if eud['sampleRateUnits'] == 'MHz' else 1.0
 			
+				## How many samples are in each frame?
+				dataSize = self.frameLength*8 - 32 + 16*self.isLegacy		# 8-byte chunks -> bytes - full header + legacy offset
+				samplesPerWord = 32 / self.bitsPerSample					# dimensionless
+				nSamples = dataSize / 4 * samplesPerWord					# bytes -> words -> samples
+			
+				## What is the frame rate?
+				frameRate = sampleRate / nSamples
+			
+				frameMJD += 1.0*self.frame/frameRate/86400.0
+			
+			except KeyError:
+				pass
+				
+		else:
+			# Use what we already have been told
 			## How many samples are in each frame?
 			dataSize = self.frameLength*8 - 32 + 16*self.isLegacy		# 8-byte chunks -> bytes - full header + legacy offset
 			samplesPerWord = 32 / self.bitsPerSample				# dimensionless
 			nSamples = dataSize / 4 * samplesPerWord				# bytes -> words -> samples
-			
+		
 			## What is the frame rate?
-			frameRate = sampleRate / nSamples
+			frameRate = self.sampleRate / nSamples
 			
-			frameMJD += 1.0*self.frame/frameRate
-			
-		except KeyError:
-			pass
-			
+			frameMJD += 1.0*self.frameInSecond/frameRate/86400.0
+
 		# Convert from MJD to UNIX time
 		seconds = astro.utcjd_to_unix(frameMJD + astro.MJD_OFFSET)
 		
@@ -133,10 +153,12 @@ class FrameHeader(object):
 		
 	def parseID(self):
 		"""
-		Parse the thread ID into a...  thread ID.
-		"""
+		Return a two-element tuple of the station ID and thread ID.
 		
-		return self.threadID
+		.. note::
+			The station ID is always returned as numeric.
+		"""
+		return (self.stationID, self.threadID)
 		
 	def parseExtendedUserData(self):
 		"""
@@ -216,12 +238,30 @@ class FrameHeader(object):
 			raise RuntimeError("Unknown extended user data version: %i" % edv)
 			
 		return fields
+		
+	def getSampleRate(self):
+		"""
+		Return the sample rate of the data in samples/second.
+		"""
+		
+		return self.sampleRate*1.0
+		
+	def getCentralFreq(self):
+		"""
+		Function to get the central frequency of the VDIF data in Hz.
+		"""
+		
+		return self.centralFreq*1.0
 
 
 class FrameData(object):
 	"""
 	Class that stores the information found in the data section of a VDIF
 	frame.
+	
+	.. note::
+		Unlike the other readers in the :mod:`lsl.reader` module the
+		data are stored as numpy.float32 values.
 	"""
 	
 	def __init__(self, data=None):
@@ -230,7 +270,7 @@ class FrameData(object):
 
 class Frame(object):
 	"""
-	Class that stores the information contained within a single DRX 
+	Class that stores the information contained within a single VDIF 
 	frame.  It's properties are FrameHeader and FrameData objects.
 	"""
 
@@ -270,6 +310,20 @@ class Frame(object):
 		
 		return self.header.getTime()
 		
+	def getSampleRate(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeader.getSampleRate function.
+		"""
+		
+		return self.header.getSampleRate()
+		
+	def getCentralFreq(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeader.getCentralFreq function.
+		"""
+		
+		return self.header.getCentralFreq()
+		
 	def __add__(self, y):
 		"""
 		Add the data sections of two frames together or add a number 
@@ -287,9 +341,9 @@ class Frame(object):
 		"""
 		
 		try:
-			self.data.iq += y.data.iq
+			self.data.data += y.data.data
 		except AttributeError:
-			self.data.iq += y
+			self.data.data += y
 		return self
 		
 	def __mul__(self, y):
@@ -301,7 +355,7 @@ class Frame(object):
 		newFrame = copy.deepcopy(self)
 		newFrame *= y
 		return newFrame
-			
+		
 	def __imul__(self, y):
 		"""
 		In-place multiple the data sections of two frames together or 
@@ -309,279 +363,165 @@ class Frame(object):
 		"""
 		
 		try:
-			self.data.iq *= y.data.iq
+			self.data.data *= y.data.data
 		except AttributeError:
-			self.data.iq *= y
+			self.data.data *= y
 		return self
-			
-	def __eq__(self, y):
-		"""
-		Check if the time tags of two frames are equal or if the time
-		tag is equal to a particular value.
-		"""
 		
-		tX = self.data.timeTag
-		try:
-			tY = y.data.timeTag
-		except AttributeError:
-			tY = y
-		
-		if tX == tY:
-			return True
-		else:
-			return False
-			
-	def __ne__(self, y):
-		"""
-		Check if the time tags of two frames are not equal or if the time
-		tag is not equal to a particular value.
-		"""
-		
-		tX = self.data.timeTag
-		try:
-			tY = y.data.timeTag
-		except AttributeError:
-			tY = y
-		
-		if tX != tY:
-			return True
-		else:
-			return False
-			
-	def __gt__(self, y):
-		"""
-		Check if the time tag of the first frame is greater than that of a
-		second frame or if the time tag is greater than a particular value.
-		"""
-		
-		tX = self.data.timeTag
-		try:
-			tY = y.data.timeTag
-		except AttributeError:
-			tY = y
-		
-		if tX > tY:
-			return True
-		else:
-			return False
-			
-	def __ge__(self, y):
-		"""
-		Check if the time tag of the first frame is greater than or equal to 
-		that of a second frame or if the time tag is greater than a particular 
-		value.
-		"""
-		
-		tX = self.data.timeTag
-		try:
-			tY = y.data.timeTag
-		except AttributeError:
-			tY = y
-		
-		if tX >= tY:
-			return True
-		else:
-			return False
-			
-	def __lt__(self, y):
-		"""
-		Check if the time tag of the first frame is less than that of a
-		second frame or if the time tag is greater than a particular value.
-		"""
-		
-		tX = self.data.timeTag
-		try:
-			tY = y.data.timeTag
-		except AttributeError:
-			tY = y
-		
-		if tX < tY:
-			return True
-		else:
-			return False
-			
-	def __le__(self, y):
-		"""
-		Check if the time tag of the first frame is less than or equal to 
-		that of a second frame or if the time tag is greater than a particular 
-		value.
-		"""
-		
-		tX = self.data.timeTag
-		try:
-			tY = y.data.timeTag
-		except AttributeError:
-			tY = y
-		
-		if tX <= tY:
-			return True
-		else:
-			return False
-			
-	def __cmp__(self, y):
-		"""
-		Compare two frames based on the time tags.  This is helpful for 
-		sorting things.
-		"""
-		
-		tX = self.data.timeTag
-		tY = y.data.timeTag
-		if tY > tX:
-			return -1
-		elif tX > tY:
-			return 1
-		else:
-			return 0
+	#def __eq__(self, y):
+	#	"""
+	#	Check if the time tags of two frames are equal or if the time
+	#	tag is equal to a particular value.
+	#	"""
+	#	
+	#	tX = self.data.timeTag
+	#	try:
+	#		tY = y.data.timeTag
+	#	except AttributeError:
+	#		tY = y
+	#	
+	#	if tX == tY:
+	#		return True
+	#	else:
+	#		return False
+	#		
+	#def __ne__(self, y):
+	#	"""
+	#	Check if the time tags of two frames are not equal or if the time
+	#	tag is not equal to a particular value.
+	#	"""
+	#	
+	#	tX = self.data.timeTag
+	#	try:
+	#		tY = y.data.timeTag
+	#	except AttributeError:
+	#		tY = y
+	#	
+	#	if tX != tY:
+	#		return True
+	#	else:
+	#		return False
+	#		
+	#def __gt__(self, y):
+	#	"""
+	#	Check if the time tag of the first frame is greater than that of a
+	#	second frame or if the time tag is greater than a particular value.
+	#	"""
+	#	
+	#	tX = self.data.timeTag
+	#	try:
+	#		tY = y.data.timeTag
+	#	except AttributeError:
+	#		tY = y
+	#	
+	#	if tX > tY:
+	#		return True
+	#	else:
+	#		return False
+	#		
+	#def __ge__(self, y):
+	#	"""
+	#	Check if the time tag of the first frame is greater than or equal to 
+	#	that of a second frame or if the time tag is greater than a particular 
+	#	value.
+	#	"""
+	#	
+	#	tX = self.data.timeTag
+	#	try:
+	#		tY = y.data.timeTag
+	#	except AttributeError:
+	#		tY = y
+	#	
+	#	if tX >= tY:
+	#		return True
+	#	else:
+	#		return False
+	#		
+	#def __lt__(self, y):
+	#	"""
+	#	Check if the time tag of the first frame is less than that of a
+	#	second frame or if the time tag is greater than a particular value.
+	#	"""
+	#	
+	#	tX = self.data.timeTag
+	#	try:
+	#		tY = y.data.timeTag
+	#	except AttributeError:
+	#		tY = y
+	#	
+	#	if tX < tY:
+	#		return True
+	#	else:
+	#		return False
+	#		
+	#def __le__(self, y):
+	#	"""
+	#	Check if the time tag of the first frame is less than or equal to 
+	#	that of a second frame or if the time tag is greater than a particular 
+	#	value.
+	#	"""
+	#	
+	#	tX = self.data.timeTag
+	#	try:
+	#		tY = y.data.timeTag
+	#	except AttributeError:
+	#		tY = y
+	#	
+	#	if tX <= tY:
+	#		return True
+	#	else:
+	#		return False
+	#		
+	#def __cmp__(self, y):
+	#	"""
+	#	Compare two frames based on the time tags.  This is helpful for 
+	#	sorting things.
+	#	"""
+	#	
+	#	tX = self.data.timeTag
+	#	tY = y.data.timeTag
+	#	if tY > tX:
+	#		return -1
+	#	elif tX > tY:
+	#		return 1
+	#	else:
+	#		return 0
 
 
-def _readHeader(filehandle):
-	"""
-	Function to read in a header block and parse it.  This function returns 
-	a fully-populated FrameHeader instance.
-	"""
-	
-	# Base header that is common to both standard and legacy formats
-	baseHeaderData = filehandle.read(16)
-	word0, word1, word2, word3 = struct.unpack('<4I', baseHeaderData)
-	
-	## First word:  invalid, legacy, and seconds from the reference epoch
-	isInvalid = (word0 >> 31) & 1
-	isLegacy = (word0 >> 30) & 1
-	secondsFromEpoch = int(word0 & (2**30-1))
-	
-	## Second word: reference epoch and the frame number within the second
-	refEpoch = int((word1>>24) & (2**6-1))
-	frameInSecond = int(word1 & (2**24-1))
-	
-	## Third word: VIDF version, the number of channels in the frame, and 
-	## the frame lenght in units of 8 bytes
-	version = int((word2 >> 29) & 0x7)
-	log2nChan = int((word2 >> 24) & (2**5-1))
-	nChan = 2**log2nChan
-	frameLength = int(word2 & (2**23-1))
-	
-	## Fourth word: Data type/size, thread ID, and station ID
-	isComplex = int((word3 >> 31) & 1)
-	bitsPerSample = int((word3 >> 26) & (2**5-1))
-	threadID = int((word3 >> 16) & (2**10-1))
-	stationID = word3 & 0xFFFF
-	if int(stationID & 0xFF) < 48:
-		### If ord(of the first character) is less than 48 then this is a numeric ID
-		stationID = int(stationID)
-	else:
-		### Otherwise this is a string
-		stationID = "%s%s" % (chr((stationID >> 8) & 0xFF), chr(stationID & 0xFF))
-		
-	# Legacy vs. Standard headers
-	if isLegacy:
-		## For legacy headers we don't have any extended user data
-		extendedData1, extendedData2, extendedData3, extendedData4 = None, None, None, None
-	else:
-		## For standard headers there is an additional 16 bytes (4  words) 
-		## that contain various other information.  The parseing of this 
-		## data is EDV-specific and is offloaded to the FrameHeader class.
-		extHeaderData = filehandle.read(16)
-		extendedData1, extendedData2, extendedData3, extendedData4 = struct.unpack('<4I', extHeaderData)
-		
-	# Build the FrameHeader instance
-	header = FrameHeader(isInvalid=isInvalid, isLegacy=isLegacy, secondsFromEpoch=secondsFromEpoch, 
-					 refEpoch=refEpoch, frameInSecond=frameInSecond, 
-					 version=version, nChan=nChan, frameLength=frameLength, 
-					 isComplex=isComplex, bitsPerSample=bitsPerSample, threadID=threadID, stationID=stationID, 
-					 extendedData1=extendedData1, extendedData2=extendedData2, extendedData3=extendedData3, extendedData4=extendedData4)
-					 
-	# Done
-	return header
-
-
-def _readData(filehandle, header):
-	"""
-	Function to read in a data block and parse it.  This function returns 
-	a fully-populated FrameData instance.
-	
-	.. note::
-		In order to correctly unpack the data the frame header needs to also
-		by supplied.
-	"""
-	
-	# Take the frame length, legacy header flag, and bits per sample and use them
-	# to figure out how many samples are in the data section of the frame
-	dataSize = header.frameLength*8 - 32 + 16*header.isLegacy		# 8-byte chunks -> bytes - full header + legacy offset
-	samplesPerWord = 32 / header.bitsPerSample					# dimensionless
-	nSamples = dataSize / 4 * samplesPerWord					# bytes -> words -> samples
-	
-	# Loop over the 4-bytes words in the data second to read in and parse the data
-	samples = []
-	for i in xrange(dataSize/4):
-		## Read in the word and interpret it as an unsigned integer
-		dataWord = filehandle.read(4)
-		dataWord, = struct.unpack('>I', dataWord)
-		
-		## Loop over the samples in the word and unpack
-		for j in xrange(samplesPerWord):
-			### Unpack
-			sample = int((dataWord>>(header.bitsPerSample*j)) & (2**header.bitsPerSample-1))
-			### Converted to signed (if we have more than a bit) using the 
-			### fixed binary offset scheme
-			if header.bitsPerSample > 1:
-				sample = sample - (2**(header.bitsPerSample-1) - 1)
-			### Save
-			samples.append( sample)
-	samples = numpy.array(samples)
-	
-	# Re-arrange the data as needed.
-	## Real vs. Complex
-	if header.isComplex:
-		### For complex data this involves separating I and Q and then converting 
-		### the data to numpy.complex64
-		data = samples[0::2] + 1j*samples[1::2]
-		data = data.astype(numpy.complex64)
-		
-	else:
-		### For real data we need to play some games to make sure that the data
-		### are cast to the correct times
-		if header.bitsPerSample > 16:
-			dtype = numpy.int32
-		elif header.bitsPerSample > 8:
-			dtype = numpy.int16
-		elif header.bitsPerSample > 1:
-			dtype = numpy.int8
-		else:
-			dtype = numpy.bool
-		data = samples.astype(dtype)
-	## Multi-channel vs. single channel
-	if header.nChan > 1:
-		### For multi-channel data convert the data into a 2-D array with
-		### channel number running over the first axis
-		data.shape = (data.size/header.nChan, header.nChan)
-		data = data.T
-		
-	# Build the FrameData instance
-	payload = FrameData(data=data)
-	
-	# Done
-	return payload
-
-
-def readFrame(filehandle, Verbose=False):
+def readFrame(filehandle, sampleRate=0.0, centralFreq=0.0, Verbose=False):
 	"""
 	Function to read in a single VDIF frame (header+data) and store the 
 	contents as a Frame object.  This function wraps the _readerHeader and 
 	_readData functions.
 	"""
 	
-	# Read in the header and data payload
+	# New _vdif method
 	try:
-		header = _readHeader(filehandle)
-		payload = _readData(filehandle, header)
-	except (OSError, struct.error):
-		raise eofError()
+		newFrame = readVDIF(filehandle, Frame(), centralFreq=centralFreq, sampleRate=sampleRate)
+	except gsyncError:
+		raise syncError
+	except geofError:
+		raise eofError
 		
-	# Build up the Frame instance
-	frame = Frame(header, payload)
+	return newFrame
+
+
+
+def getFrameSize(filehandle, nFrames=None):
+	"""
+	Find out what the frame size is in bytes from a single observation.
+	"""
 	
-	# Done
-	return frame
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+
+	# Read in one frame
+	newFrame = readFrame(filehandle)
+	
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	return newFrame.header.frameLength*8
 
 
 def getThreadCount(filehandle):
