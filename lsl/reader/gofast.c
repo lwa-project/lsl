@@ -1218,9 +1218,9 @@ PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLength, unsi
 	}
 	
 	// Fill the data
-	bool *a;
+	float *a;
 	
-	a = (bool *) data->data;
+	a = (float *) data->data;
 	
 	unsigned int i;
 	float *fp;
@@ -1558,14 +1558,15 @@ are sub-classes of IOError.\n\
 */
 
 static PyMethodDef GoFastMethods[] = {
-	{"readTBW", (PyCFunction) readTBW, METH_VARARGS, readTBW_doc}, 
-	{"readTBN", (PyCFunction) readTBN, METH_VARARGS, readTBN_doc}, 
-	{"readDRX", (PyCFunction) readDRX, METH_VARARGS, readDRX_doc}, 
-	{"readDRSpec", readDRSpec, METH_VARARGS, readDRSpec_doc},
+	{"readTBW",    (PyCFunction) readTBW,    METH_VARARGS,               readTBW_doc   }, 
+	{"readTBN",    (PyCFunction) readTBN,    METH_VARARGS,               readTBN_doc   }, 
+	{"readDRX",    (PyCFunction) readDRX,    METH_VARARGS,               readDRX_doc   }, 
+	{"readDRSpec", (PyCFunction) readDRSpec, METH_VARARGS,               readDRSpec_doc},
+	{"readVDIF",   (PyCFunction) readVDIF,   METH_VARARGS|METH_KEYWORDS, readVDIF_doc  }, 
 	{NULL, NULL, 0, NULL}
 };
 
-PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, and DR Spectrometer readers written in C");
+PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VDIF readers written in C");
 
 
 /*
@@ -1614,7 +1615,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "eofError", eofError);
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.6"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.7"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 }
