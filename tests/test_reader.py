@@ -14,7 +14,7 @@ from lsl.reader import drspec
 from lsl.reader import errors
 
 
-__revision__ = "$ Revision: 2 $"
+__revision__ = "$Rev$"
 __version__  = "0.6"
 __author__    = "Jayce Dowell"
 
@@ -22,7 +22,7 @@ __author__    = "Jayce Dowell"
 tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
-vdifFile = os.path.join(datapath, 'tests', 'vdif-test.dat')
+vdifFile = os.path.join(dataPath, 'tests', 'vdif-test.dat')
 drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
 
 
