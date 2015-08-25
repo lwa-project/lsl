@@ -597,8 +597,10 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(frame1.header.isComplex, 0)
 		
 		# Validate (some) data
-		for i,d in enumerate((1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0)):
-			self.assertAlmostEqual(frame1.data.data[i], d, 5)
+		for k,d in enumerate((1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0)):
+			i = k % frame1.header.nChan
+			j = k / frame1.header.nChan
+			self.assertAlmostEqual(frame1.data.data[i,j], d, 5)
 			
 		# Second frame
 		frame2 = tbn.readFrame(fh)
@@ -618,8 +620,10 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(frame2.header.isComplex, 0)
 		
 		# Validate (some) data
-		for i,d in enumerate((-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0)):
-			self.assertAlmostEqual(frame1.data.data[i], d, 5)
+		for k,d in enumerate((-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0)):
+			i = k % frame1.header.nChan
+			j = k / frame1.header.nChan
+			self.assertAlmostEqual(frame1.data.data[i,j], d, 5)
 			
 		fh.close()
 		
