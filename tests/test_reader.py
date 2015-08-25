@@ -603,7 +603,7 @@ class reader_tests(unittest.TestCase):
 			self.assertAlmostEqual(frame1.data.data[i,j], d, 5)
 			
 		# Second frame
-		frame2 = tbn.readFrame(fh)
+		frame2 = vdif.readFrame(fh)
 		
 		# Validate header
 		station, thread = frame2.parseID()
