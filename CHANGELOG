@@ -20,6 +20,7 @@
   * Improved support for UVFITS files written by AIPS
   * Added multiple integration selection to the various readers in lsl.imaging.utils
   * Added support for phase centers other than zenith in the FITS-IDI writer
+  * Made the 'phaseCenter' keyword in lsl.correlator.fx.FXMaster and lsl.correlator.fx.FXStokes more flexible by allowing other data types
 
 1.0.3
   * Fixed a bug in the inspectTarball.py script that caused it to crash on TBN/TBW metadata
