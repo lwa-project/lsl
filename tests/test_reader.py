@@ -597,7 +597,7 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(frame1.header.isComplex, 0)
 		
 		# Validate (some) data
-		for i,d in enumerate(1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0):
+		for i,d in enumerate((1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0)):
 			self.assertAlmostEqual(frame1.data.data[i], d, 5)
 			
 		# Second frame
@@ -618,7 +618,7 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(frame2.header.isComplex, 0)
 		
 		# Validate (some) data
-		for i,d in enumerate(-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0):
+		for i,d in enumerate((-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0)):
 			self.assertAlmostEqual(frame1.data.data[i], d, 5)
 			
 		fh.close()
@@ -628,7 +628,7 @@ class reader_tests(unittest.TestCase):
 		
 		fh = open(vdifFile, 'rb')
 		# Frames 1 through 10
-		for i in range(1,10):
+		for i in range(1,11):
 			frame = vdif.readFrame(fh)
 			
 		# Last frame should be an error (errors.eofError)
@@ -639,7 +639,7 @@ class reader_tests(unittest.TestCase):
 		"""Test finding out how many threads file."""
 		
 		fh = open(vdifFile, 'rb')
-		nt = vdif.getThreadCount()
+		nt = vdif.getThreadCount(fh)
 		self.assertEqual(nt, 1)
 		fh.close()
 		
@@ -649,33 +649,39 @@ class reader_tests(unittest.TestCase):
 		fh = open(vdifFile, 'rb')
 		# Frames 1 through 10
 		frames = []
-		for i in range(1,10):
+		for i in range(1,11):
 			frames.append(vdif.readFrame(fh))
 		fh.close()
 		
-		nSamples = frames[0].data.data.size
+		nChan, nSamples = frames[0].data.data.shape
 		
 		# Multiplication
 		frameT = frames[0] * 2.0
-		for i in range(nSamples):
-			self.assertAlmostEqual(frameT.data.data[i], 2*frames[0].data.data[i], 2)
+		for i in range(nChan):
+			for j in range(nSamples):
+				self.assertAlmostEqual(frameT.data.data[i,j], 2*frames[0].data.data[i,j], 2)
 		frameT *= 2.0
-		for i in range(nSamples):
-			self.assertAlmostEqual(frameT.data.data[i], 4*frames[0].data.data[i], 2)
+		for i in range(nChan):
+			for j in range(nSamples):
+				self.assertAlmostEqual(frameT.data.data[i,j], 4*frames[0].data.data[i,j], 2)
 		frameT = frames[0] * frames[1]
-		for i in range(nSamples):
-			self.assertAlmostEqual(frameT.data.data[i], frames[0].data.data[i]*frames[1].data.data[i], 2)
+		for i in range(nChan):
+			for j in range(nSamples):
+				self.assertAlmostEqual(frameT.data.data[i,j], frames[0].data.data[i,j]*frames[1].data.data[i,j], 2)
 			
 		# Addition
 		frameA = frames[0] + 2.0
-		for i in range(nSamples):
-			self.assertAlmostEqual(frameA.data.data[i], 2+frames[0].data.data[i], 2)
+		for i in range(nChan):
+			for j in range(nSamples):
+				self.assertAlmostEqual(frameA.data.data[i,j], 2+frames[0].data.data[i,j], 2)
 		frameA += 2.0
-		for i in range(nSamples):
-			self.assertAlmostEqual(frameA.data.data[i], 4+frames[0].data.data[i], 2)
+		for i in range(nChan):
+			for j in range(nSamples):
+				self.assertAlmostEqual(frameA.data.data[i,j], 4+frames[0].data.data[i,j], 2)
 		frameA = frames[0] + frames[1]
-		for i in range(nSamples):
-			self.assertAlmostEqual(frameA.data.data[i], frames[0].data.data[i]+frames[1].data.data[i], 2)
+		for i in range(nChan):
+			for j in range(nSamples):
+				self.assertAlmostEqual(frameA.data.data[i,j], frames[0].data.data[i,j]+frames[1].data.data[i,j], 2)
 
 
 class reader_test_suite(unittest.TestSuite):
