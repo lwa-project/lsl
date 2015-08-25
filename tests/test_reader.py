@@ -621,9 +621,9 @@ class reader_tests(unittest.TestCase):
 		
 		# Validate (some) data
 		for k,d in enumerate((-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0)):
-			i = k % frame1.header.nChan
-			j = k / frame1.header.nChan
-			self.assertAlmostEqual(frame1.data.data[i,j], d, 5)
+			i = k % frame2.header.nChan
+			j = k / frame2.header.nChan
+			self.assertAlmostEqual(frame2.data.data[i,j], d, 5)
 			
 		fh.close()
 		
