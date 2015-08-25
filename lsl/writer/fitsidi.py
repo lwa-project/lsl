@@ -675,8 +675,8 @@ class IDI(object):
 		
 		obs = ephem.Observer()
 		obs.lat = arrPos.lat * numpy.pi/180
-		obs.lon = arrLog.lng * numpy.pi/180
-		obs.elev = arrLog.elv * numpy.pi/180
+		obs.lon = arrPos.lng * numpy.pi/180
+		obs.elev = arrPos.elv * numpy.pi/180
 		
 		nameList = []
 		raList = []
@@ -830,8 +830,8 @@ class IDI(object):
 		
 		obs = ephem.Observer()
 		obs.lat = arrPos.lat * numpy.pi/180
-		obs.lon = arrLog.lng * numpy.pi/180
-		obs.elev = arrLog.elv * numpy.pi/180
+		obs.lon = arrPos.lng * numpy.pi/180
+		obs.elev = arrPos.elv * numpy.pi/180
 		
 		# Retrieve the original list of Antenna objects and convert them to
 		# a dictionary index by the stand ID number
@@ -1400,8 +1400,8 @@ class ExtendedIDI(IDI):
 		
 		obs = ephem.Observer()
 		obs.lat = arrPos.lat * numpy.pi/180
-		obs.lon = arrLog.lng * numpy.pi/180
-		obs.elev = arrLog.elv * numpy.pi/180
+		obs.lon = arrPos.lng * numpy.pi/180
+		obs.elev = arrPos.elv * numpy.pi/180
 		
 		# Retrieve the original list of Antenna objects and convert them to
 		# a dictionary index by the stand ID number
