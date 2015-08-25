@@ -11,7 +11,7 @@ from lsl.common import stations
 
 
 __version__  = "0.4"
-__revision__ = "$ Revision: 2 $"
+__revision__ = "$Rev$"
 __author__    = "Jayce Dowell"
 
 

@@ -13,7 +13,7 @@ from scipy.special import sph_harm
 from lsl.misc import mathutil
 
 
-__revision__  = "$ Revision: 89 $"
+__revision__  = "$Rev$"
 __version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"

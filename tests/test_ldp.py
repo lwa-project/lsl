@@ -10,7 +10,7 @@ from lsl.reader import ldp
 from lsl.reader import errors
 
 
-__revision__ = "$ Revision: 2 $"
+__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 

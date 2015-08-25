@@ -18,7 +18,7 @@ from lsl.common import stations as lwa_common
 
 
 __version__  = "0.3"
-__revision__ = "$ Revision: 2 $"
+__revision__ = "$Rev$"
 __author__    = "Jayce Dowell"
 
 

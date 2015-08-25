@@ -15,7 +15,7 @@ from lsl.correlator import fx
 _SSMIF = os.path.join(dataPath, 'lwa1-ssmif.txt')
 
 __version__  = "0.5"
-__revision__ = "$ Revision: 6 $"
+__revision__ = "$Rev$"
 __author__    = "Jayce Dowell"
 
 class SpecMaster_tests(unittest.TestCase):

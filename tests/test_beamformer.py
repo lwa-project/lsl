@@ -10,7 +10,7 @@ from lsl.misc import beamformer
 from lsl.common import stations
 
 
-__revision__ = "$Revision:1 $"
+__revision__ = "$Rev$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 

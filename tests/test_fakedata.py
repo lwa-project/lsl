@@ -18,7 +18,7 @@ from lsl.sim import drx as drxWriter
 from lsl.sim import errors
 
 
-__revision__ = "$ Revision: 4 $"
+__revision__ = "$Rev$"
 __version__  = "0.3"
 __author__    = "Jayce Dowell"
 

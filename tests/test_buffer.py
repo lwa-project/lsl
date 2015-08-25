@@ -13,7 +13,7 @@ from lsl.reader import errors
 from lsl.reader import buffer
 
 
-__revision__ = "$ Revision: 1 $"
+__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 

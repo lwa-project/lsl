@@ -9,7 +9,7 @@ import unittest
 from lsl.correlator import filterbank
 
 
-__revision__ = "$ Revision: 2 $"
+__revision__ = "$Rev$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 

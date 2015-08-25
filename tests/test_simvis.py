@@ -10,7 +10,7 @@ from lsl.sim import vis
 from lsl.common import stations as lwa_common
 
 
-__revision__ = "$Revision:1 $"
+__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 

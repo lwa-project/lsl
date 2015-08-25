@@ -10,7 +10,7 @@ import numpy
 from lsl.statistics import stattests
 
 
-__revision__ = "$Revision:1 $"
+__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 

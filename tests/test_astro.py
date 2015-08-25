@@ -11,7 +11,7 @@ import operator
 from lsl import astro
 
 
-__revision__  = "$Revision$"
+__revision__  = "$Rev$"
 __version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"

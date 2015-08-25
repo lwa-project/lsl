@@ -13,7 +13,7 @@ from lsl.common import stations as lwa_common
 from lsl.writer import sdfits
 
 
-__revision__ = "$Revision:1 $"
+__revision__ = "$Rev$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 

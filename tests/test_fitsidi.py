@@ -15,7 +15,7 @@ from lsl.writer import fitsidi
 
 
 __version__  = "0.2"
-__revision__ = "$ Revision: 5 $"
+__revision__ = "$Rev$"
 __author__   = "Jayce Dowell"
 
 
