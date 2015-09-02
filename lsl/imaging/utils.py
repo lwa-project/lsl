@@ -358,6 +358,9 @@ class CorrelatedDataIDI(object):
 		try:
 			self.telescope = hdulist[0].header['TELESCOP']
 			self.dateObs = datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
+		except ValueError:
+			## Catch for DiFX FITS-IDI files
+			self.dateObs = datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%d")
 		except KeyError:
 			## Catch for LEDA64-NM data
 			self.telescope = uvData.header['TELESCOP']
@@ -379,7 +382,7 @@ class CorrelatedDataIDI(object):
 					mtch =  _annameRE.match(nam)
 					id = int(mtch.group('id'))
 					noact2.append(id)
-				except ValueError, AttributeError:
+				except (ValueError, AttributeError):
 					break
 			if len(noact2) == len(noact):
 				noact = numpy.array(noact2)
@@ -517,9 +520,13 @@ class CorrelatedDataIDI(object):
 					continue
 				ri = numpy.where(self.stands == i)[0][0]
 				rj = numpy.where(self.stands == j)[0][0]
-
-				uvw = numpy.array([row['UU'], row['VV'], row['WW']])
 				
+				try:
+					uvw = numpy.array([row['UU'], row['VV'], row['WW']])
+				except KeyError:
+					## Catch for DiFX FITS-IDI files that call them **---SIN
+					uvw = numpy.array([row['UU---SIN'], row['VV---SIN'], row['WW---SIN']])
+					
 				jd = row['DATE'] + row['TIME']
 				uvw = numpy.array([numpy.dot(uvw[0], self.freq), numpy.dot(uvw[1], self.freq), numpy.dot(uvw[2], self.freq)])
 				flux = row['FLUX']
