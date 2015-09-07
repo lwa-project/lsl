@@ -46,7 +46,8 @@ def biweightMean(inputData, axis=None, dtype=None):
 	"""
 	
 	if axis is not None:
-		y0 = numpy.apply_along_axis(biweightMean, axis, inputData, dtype=dtype)
+		fnc = lambda x: biweightMean(x, dtype=dtype)
+		y0 = numpy.apply_along_axis(fnc, axis, inputData)
 	else:
 		y = inputData.ravel()
 		if type(y).__name__ == "MaskedArray":
@@ -97,7 +98,8 @@ def mean(inputData, Cut=3.0, axis=None, dtype=None):
 	"""
 	
 	if axis is not None:
-		dataMean = numpy.apply_along_axis(mean, axis, inputData, dtype=dtype)
+		fnc = lambda x: mean(x, dtype=dtype)
+		dataMean = numpy.apply_along_axis(fnc, axis, inputData)
 	else:
 		data = inputData.ravel()
 		if type(data).__name__ == "MaskedArray":
@@ -150,7 +152,8 @@ def mode(inputData, axis=None, dtype=None):
 	"""
 	
 	if axis is not None:
-		dataMode = numpy.apply_along_axis(mode, axis, inputData, dtype=dtype)
+		fnc = lambda x: mode(x, dtype=dtype)
+		dataMode = numpy.apply_along_axis(fnc, axis, inputData)
 	else:
 		# Create the function that we can use for the half-sample mode
 		def _hsm(data):
@@ -204,7 +207,8 @@ def std(inputData, Zero=False, axis=None, dtype=None):
 	"""
 	
 	if axis is not None:
-		sigma = numpy.apply_along_axis(std, axis, inputData, dtype=dtype)
+		fnc = lambda x: std(x, dtype=dtype)
+		sigma = numpy.apply_along_axis(fnc, axis, inputData)
 	else:
 		data = inputData.ravel()
 		if type(data).__name__ == "MaskedArray":
