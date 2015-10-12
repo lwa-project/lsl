@@ -411,11 +411,13 @@ class CorrelatedDataIDI(object):
 			
 		self.antennaMap = {}
 		self.antennas = []
-		for ant in self.station.getAntennas():
-			if ant.stand.id in self.stands and ant.pol == 0:
-				self.antennas.append(ant)
-				self.antennaMap[ant.stand.id] = ant
-				
+		for stand in self.stands:
+			for ant in self.station.getAntennas():
+				if ant.stand.id == stand and ant.pol == 0:
+					self.antennas.append(ant)
+					self.antennaMap[ant.stand.id] = ant
+					break
+					
 		# Polarization and frequency
 		self.pols  = numpy.arange(1, uvData.header['MAXIS2']+1) - uvData.header['CRPIX2']
 		self.pols *= uvData.header['CDELT2'] 
@@ -689,12 +691,13 @@ class CorrelatedDataUV(object):
 			
 		self.antennaMap = {}
 		self.antennas = []
-		if self.station is not None:
+		for stand in self.stands:
 			for ant in self.station.getAntennas():
-				if ant.stand.id in self.stands and ant.pol == 0:
+				if ant.stand.id == stand and ant.pol == 0:
 					self.antennas.append(ant)
 					self.antennaMap[ant.stand.id] = ant
-		
+					break
+					
 		# Polarization and frequency
 		self.pols  = numpy.arange(1, uvData.header['NAXIS3']+1) - uvData.header['CRPIX3']
 		self.pols *= uvData.header['CDELT3'] 
@@ -987,12 +990,13 @@ try:
 				
 			self.antennaMap = {}
 			self.antennas = []
-			if self.station is not None:
+			for stand in self.stands:
 				for ant in self.station.getAntennas():
-					if ant.stand.id in self.stands and ant.pol == 0:
+					if ant.stand.id == stand and ant.pol == 0:
 						self.antennas.append(ant)
 						self.antennaMap[ant.stand.id] = ant
-			
+						break
+						
 			# Polarization and frequency
 			self.pols = pols.col('CORR_TYPE')[0]
 			self.freq  = numpy.array( spw.col('CHAN_FREQ')[0] )
