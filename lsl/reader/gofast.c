@@ -1252,6 +1252,7 @@ static PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	float cFreq, sRate;
 	cFreq = 0.0;
 	sRate = 0.0;
+	char message[256];
 	
 	static char *kwlist[] = {"fh", "frame", "centralFreq", "sampleRate", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|ff", kwlist, &ph, &frame, &cFreq, &sRate)) {
@@ -1301,7 +1302,15 @@ static PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	bitsPerSample = ((bytes[15] >> 2) & 0x1F) + 1;
 	threadID = ((bytes[15] & 3) <<  8) | bytes[14];
 	stationID = (bytes[13] << 8) | bytes[12];
-
+	
+	// Does this frame look like it is valid?
+	if( frameLength < sizeof(bytes)/8 ) {
+		fseek(fh, -sizeof(bytes), SEEK_CUR);
+		PyFile_DecUseCount((PyFileObject *) ph);
+		PyErr_Format(syncError, "Frame size is zero, zero-filled frame?");
+		return NULL;
+	}
+	
 	unsigned int extendedData1, extendedData2, extendedData3, extendedData4;
 	if( isLegacy == 0 ) {
 		// Deal with the extra information in standard (non-legacy) headers
@@ -1370,7 +1379,8 @@ static PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 				if( bitsPerSample == 1 ) {
 					data = parseVDIF1(rawData, dataLength, samplesPerWord, bitsPerSample);
 				} else {
-					PyErr_Format(PyExc_RuntimeError, "Cannot parse data with this number of bits per sample");
+					sprintf(message, "Cannot parse data with %i bits per sample", bitsPerSample);
+					PyErr_Format(PyExc_RuntimeError, message);
 					free(rawData);
 					return NULL;
 				}
