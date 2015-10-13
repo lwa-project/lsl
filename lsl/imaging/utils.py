@@ -366,43 +366,39 @@ class CorrelatedDataIDI(object):
 			self.telescope = uvData.header['TELESCOP']
 			self.dateObs = datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
 			
-		if self.telescope == 'LWA-1' or self.telescope == 'LWA1' and ag.header['ARRNAM'] != 'LEDA64-NM':
-			self.station = stations.lwa1
-		elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
-			self.station = stations.lwana
-		else:
-			## Extract the site position
-			geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
-			site = stations.ecef2geo(*geo)
+		## Extract the site position
+		geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
+		site = stations.ecef2geo(*geo)
+		
+		## Try to back out the "real" stand names
+		noact2 = []
+		for nam in anname:
+			try:
+				mtch =  _annameRE.match(nam)
+				id = int(mtch.group('id'))
+				noact2.append(id)
+			except (ValueError, AttributeError):
+				break
+		if len(noact2) == len(noact):
+			noact = numpy.array(noact2)
 			
-			## Try to back out the "real" stand names
-			noact2 = []
-			for nam in anname:
-				try:
-					mtch =  _annameRE.match(nam)
-					id = int(mtch.group('id'))
-					noact2.append(id)
-				except (ValueError, AttributeError):
-					break
-			if len(noact2) == len(noact):
-				noact = numpy.array(noact2)
-				
-			## Create the ECI -> topocentric transform
-			lat  = site[0]
-			ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
-							[-numpy.sin(lat), 0.0, numpy.cos(lat)],
-							[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
-							
-			## Build up the list of antennas
-			antennas = []
-			for line,act in zip(ag.data, noact):
-				enz = numpy.dot(ecii, line['STABXYZ'])
-				
-				stand = stations.Stand(act, *enz)
-				antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
-				
-			## Build up the station
-			self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+		## Create the ECI -> topocentric transform
+		lat  = site[0]
+		ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
+						[-numpy.sin(lat), 0.0, numpy.cos(lat)],
+						[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
+						
+		## Build up the list of antennas
+		antennas = []
+		for line,act in zip(ag.data, noact):
+			enz = numpy.dot(ecii, line['STABXYZ'])
+			
+			stand = stations.Stand(act, *enz)
+			antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
+			
+		## Build up the station
+		self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+		
 		self.standMap = {}
 		self.stands = []
 		for sta, act in zip(nosta, noact):
@@ -645,44 +641,40 @@ class CorrelatedDataUV(object):
 		except ValueError:
 			## Catch for AIPS UVFITS files which only have a date set
 			self.dateObs = datetime.strptime(dt, "%Y-%m-%d")
-		if self.telescope == 'LWA-1' or self.telescope == 'LWA1' and ag.header['ARRNAM'] != 'LEDA64-NM':
-			self.station = stations.lwa1
-		elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
-			self.station = stations.lwa2
-		else:
-			## Extract the site position
-			geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
-			site = stations.ecef2geo(*geo)
 			
-			## Try to back out the "real" stand names
-			noact2 = []
-			for nam in anname:
-				try:
-					mtch =  _annameRE.match(nam)
-					id = int(mtch.group('id'))
-					noact2.append(id)
-				except (ValueError, AttributeError):
-					break
-			if len(noact2) == len(noact):
-				noact = numpy.array(noact2)
-				
-			## Create the ECI -> topocentric transform
-			lat  = site[0]
-			ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
-							[-numpy.sin(lat), 0.0, numpy.cos(lat)],
-							[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
-							
-			## Build up the list of antennas
-			antennas = []
-			for line,act in zip(ag.data, noact):
-				enz = numpy.dot(ecii, line['STABXYZ'])
-				
-				stand = stations.Stand(act, *enz)
-				antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
-				
-			## Build up the station
-			self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+		## Extract the site position
+		geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
+		site = stations.ecef2geo(*geo)
+		
+		## Try to back out the "real" stand names
+		noact2 = []
+		for nam in anname:
+			try:
+				mtch =  _annameRE.match(nam)
+				id = int(mtch.group('id'))
+				noact2.append(id)
+			except (ValueError, AttributeError):
+				break
+		if len(noact2) == len(noact):
+			noact = numpy.array(noact2)
 			
+		## Create the ECI -> topocentric transform
+		lat  = site[0]
+		ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
+						[-numpy.sin(lat), 0.0, numpy.cos(lat)],
+						[ numpy.cos(lat), 0.0, numpy.sin(lat)]])
+						
+		## Build up the list of antennas
+		antennas = []
+		for line,act in zip(ag.data, noact):
+			enz = numpy.dot(ecii, line['STABXYZ'])
+			
+			stand = stations.Stand(act, *enz)
+			antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
+			
+		## Build up the station
+		self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+		
 		self.standMap = {}
 		self.stands = []
 		for nosta, noact in zip(nosta, noact):
@@ -947,39 +939,35 @@ try:
 				
 			# Station/telescope information
 			self.telescope = obs.col('TELESCOPE_NAME')[0]
-			if self.telescope == 'LWA-1' or self.telescope == 'LWA1':
-				self.station = stations.lwa1
-			elif self.telescope == 'LWA-NA' or self.telescope == 'LWANA':
-				self.station = stations.lwa2
-			else:
-				## Get latitude and longitude for all antennas
-				lat = numpy.array([], dtype=numpy.float64)
-				lng = numpy.array([], dtype=numpy.float64)
-				elv = numpy.array([], dtype=numpy.float64)
-				for row in ants.col('POSITION'):
-					la,ln,el = stations.ecef2geo(*row)
-					lat = numpy.append(lat, la*180/numpy.pi)
-					lng = numpy.append(lng, ln*180/numpy.pi)
-					elv = numpy.append(elv, el)
-					
-				## Estimate the center of the station
-				sLat = robust.mean(lat)
-				sLng = robust.mean(lng)
-				sElv = robust.mean(elv)
+			
+			## Get latitude and longitude for all antennas
+			lat = numpy.array([], dtype=numpy.float64)
+			lng = numpy.array([], dtype=numpy.float64)
+			elv = numpy.array([], dtype=numpy.float64)
+			for row in ants.col('POSITION'):
+				la,ln,el = stations.ecef2geo(*row)
+				lat = numpy.append(lat, la*180/numpy.pi)
+				lng = numpy.append(lng, ln*180/numpy.pi)
+				elv = numpy.append(elv, el)
 				
-				## Build a preliminayr represenation of the station
-				self.station = stations.LWAStation(ants.col('STATION')[0], sLat, sLng, sElv)
+			## Estimate the center of the station
+			sLat = robust.mean(lat)
+			sLng = robust.mean(lng)
+			sElv = robust.mean(elv)
+			
+			## Build a preliminayr represenation of the station
+			self.station = stations.LWAStation(ants.col('STATION')[0], sLat, sLng, sElv)
+			
+			## Fill in the antennas instances
+			antennas = []
+			for i in xrange(lat.size):
+				enz = self.station.getENZOffset((lat[i], lng[i], elv[i]))
+				sid = int(ants.col('NAME')[i].translate(None, string.letters))
 				
-				## Fill in the antennas instances
-				antennas = []
-				for i in xrange(lat.size):
-					enz = self.station.getENZOffset((lat[i], lng[i], elv[i]))
-					sid = int(ants.col('NAME')[i].translate(None, string.letters))
-					
-					stand = stations.Stand(sid, *enz)
-					antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
-				self.station.antennas = antennas
-				
+				stand = stations.Stand(sid, *enz)
+				antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
+			self.station.antennas = antennas
+			
 			# Antennas
 			self.standMap = {}
 			self.stands = []
