@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <complex.h>
-#include <byteswap.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
 #include "numpy/arrayobject.h"
@@ -24,17 +23,7 @@ PyObject *eofError;
   valid.
 */
 
-int validSync(unsigned char w1, unsigned char w2, unsigned char w3, unsigned char w4) {
-	int valid = 0;
-	
-	if( w1 == 92 && w2 == 222 && w3 == 192 && w4 == 222 ) {
-		valid = 1;
-	}
-	
-	return valid;
-}
-
-int validSync2(unsigned int syncWord) {
+int validSync5C(unsigned int syncWord) {
 	int valid = 0;
 	
 	if( syncWord == 0x5CDEC0DE ) {

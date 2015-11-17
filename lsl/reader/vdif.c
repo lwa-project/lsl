@@ -3,7 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <complex.h>
+#if defined(__APPLE__)
+#include <libkern/OSByteOrder.h>
+#define __bswap_16 OSSwapInt16
+#define __bswap_32 OSSwapInt32
+#define __bswap_64 OSSwapInt64
+#else
 #include <byteswap.h>
+#endif
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API

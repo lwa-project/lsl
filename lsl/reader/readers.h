@@ -42,8 +42,7 @@ extern float drx8LUT[256];
 */
 
 // gofast.c
-extern int validSync(unsigned char, unsigned char, unsigned char, unsigned char);
-extern int validSync2(unsigned int);
+extern int validSync5C(unsigned int);
 // vdif.c
 extern void initVDIFLUTs(void);
 
