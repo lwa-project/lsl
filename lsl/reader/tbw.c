@@ -4,21 +4,21 @@
 #include <stdlib.h>
 #include <complex.h>
 
+#if defined(__linux__)
+/* Linux */
+#include <byteswap.h>
 #if defined(__APPLE__) && defined(__MACH__)
 /* OSX */
 #include <libkern/OSByteOrder.h>
 #define __bswap_16 OSSwapInt16
 #define __bswap_32 OSSwapInt32
 #define __bswap_64 OSSwapInt64
-#elif defined(__unix__)
-/* FreeBSD */
+#else
+/* BSD */
 #include <sys/endian.h>
 #define __bswap_16 __bswap16_var
 #define __bswap_32 __bswap32_var
 #define __bswap_64 __bswap64_var
-#else
-/* Linux */
-#include <byteswap.h>
 #endif
 
 #define NO_IMPORT_ARRAY
