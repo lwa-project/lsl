@@ -1,3 +1,5 @@
+1.2.0
+
 1.1.0
   * Updated the lsl.imaging.deconv module to include a source-based CLEAN method and a forward-modeling/least squares method
   * Added support for phase centers other than zenith to the various functions in lsl.imaging.overlay
