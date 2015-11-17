@@ -69,15 +69,5 @@ extern char readDRSpec_doc[];
 extern PyObject *readVDIF(PyObject*, PyObject*, PyObject*);
 extern char readVDIF_doc[];
 
-// tbf.c
-extern PyObject *readTBF(PyObject*, PyObject*);
-extern char readTBF_doc[];
-// cor.c
-extern PyObject *readCOR(PyObject*, PyObject*);
-extern char readCOR_doc[];
-// drx8.c
-extern PyObject *readDRX8(PyObject*, PyObject*);
-extern char readDRX8_doc[];
-
 
 #endif	// __READERS_H
