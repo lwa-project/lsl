@@ -140,7 +140,7 @@ class Frame(object):
 		"""
 		
 		newFrame = copy.deepcopy(self)
-		newFrame += numpy.complex64(y)
+		newFrame += y
 		return newFrame
 		
 	def __iadd__(self, y):
@@ -162,7 +162,7 @@ class Frame(object):
 		"""
 		
 		newFrame = copy.deepcopy(self)
-		newFrame *= numpy.complex64(y)
+		newFrame *= y
 		return newFrame
 			
 	def __imul__(self, y):
