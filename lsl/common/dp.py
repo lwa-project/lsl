@@ -3,7 +3,7 @@
 """
 Module that contains common values found in the DP ICD, revision I.  The values 
 are:
-  * f_S - Sampleng rate in samples per second
+  * f_S - Sampling rate in samples per second
   * T - Slot duration in seconds
   * T_2 - Sub-slot duration
   * N_MAX_UDP - Maximum UDP packet size

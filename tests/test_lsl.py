@@ -16,6 +16,7 @@ import test_stations
 import test_robust
 import test_stattests
 import test_reader
+import test_reader_adp
 import test_buffer
 import test_ldp
 import test_uvUtils
@@ -65,6 +66,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_robust.robust_test_suite())
 		self.addTest(test_stattests.stattests_test_suite())
 		self.addTest(test_reader.reader_test_suite())
+		self.addTest(test_reader_adp.reader_adp_test_suite())
 		self.addTest(test_buffer.buffer_test_suite())
 		self.addTest(test_ldp.ldp_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())

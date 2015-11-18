@@ -68,5 +68,9 @@ extern char readDRSpec_doc[];
 extern PyObject *readVDIF(PyObject*, PyObject*, PyObject*);
 extern char readVDIF_doc[];
 
+// tbf.c
+extern PyObject *readTBF(PyObject*, PyObject*);
+extern char readTBF_doc[];
+
 
 #endif	// __READERS_H

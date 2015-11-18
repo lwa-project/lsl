@@ -6,23 +6,29 @@ LSL Developer Primitives
 .. automodule:: lsl.reader.ldp
    :members:
 
-Low-Level TBW
--------------
+Low-Level TBW -- DP
+-------------------
 .. automodule:: lsl.reader.tbw
    :members:
 
-Low-Level TBN
--------------
+Low-Level TBF -- ADP
+--------------------
+.. versionadded:: 1.2
+.. automodule:: lsl.reader.tbf
+   :members:
+
+Low-Level TBN -- DP and ADP
+---------------------------
 .. automodule:: lsl.reader.tbn
    :members:
 
-Low-Level DRX
--------------
+Low-Level DRX -- DP and ADP
+---------------------------
 .. automodule:: lsl.reader.drx
    :members:
 
-Low-Level DR Spectrometer
--------------------------
+Low-Level DR Spectrometer -- DP and ADP
+---------------------------------------
 .. versionadded:: 0.5
 .. automodule:: lsl.reader.drspec
    :members:

@@ -91,6 +91,7 @@ static PyMethodDef GoFastMethods[] = {
 	{"readDRX",    (PyCFunction) readDRX,    METH_VARARGS,               readDRX_doc   }, 
 	{"readDRSpec", (PyCFunction) readDRSpec, METH_VARARGS,               readDRSpec_doc},
 	{"readVDIF",   (PyCFunction) readVDIF,   METH_VARARGS|METH_KEYWORDS, readVDIF_doc  }, 
+	{"readTBF",    (PyCFunction) readTBF,    METH_VARARGS,               readTBF_doc   }, 
 	{NULL,         NULL,                     0,                          NULL          }
 };
 
@@ -143,7 +144,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "eofError", eofError);
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.7"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 }
