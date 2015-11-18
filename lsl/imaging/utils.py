@@ -418,7 +418,7 @@ class CorrelatedDataIDI(object):
 		self.pols  = numpy.arange(1, uvData.header['MAXIS2']+1) - uvData.header['CRPIX2']
 		self.pols *= uvData.header['CDELT2'] 
 		self.pols += uvData.header['CRVAL2']
-		self.freq  = numpy.arange(1, uvData.header['NO_CHAN']+1) - uvData.header['REF_PIXL']
+		self.freq  = numpy.arange(1, uvData.header['NO_CHAN']+1, dtype=numpy.float64) - uvData.header['REF_PIXL']
 		self.freq *= uvData.header['CHAN_BW']
 		self.freq += uvData.header['REF_FREQ']
 		
@@ -694,7 +694,7 @@ class CorrelatedDataUV(object):
 		self.pols  = numpy.arange(1, uvData.header['NAXIS3']+1) - uvData.header['CRPIX3']
 		self.pols *= uvData.header['CDELT3'] 
 		self.pols += uvData.header['CRVAL3']
-		self.freq  = numpy.arange(1, uvData.header['NAXIS4']+1) - uvData.header['CRPIX4']
+		self.freq  = numpy.arange(1, uvData.header['NAXIS4']+1, dtype=numpy.float64) - uvData.header['CRPIX4']
 		self.freq *= uvData.header['CDELT4']
 		self.freq += uvData.header['CRVAL4']
 		

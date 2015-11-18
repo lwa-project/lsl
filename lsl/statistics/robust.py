@@ -275,7 +275,7 @@ def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
 		return (sigma, 0.0, 0, 0.0, 0.0)
 	
 	toUse = (numpy.where( numpy.abs(fit) > epsilon ))[0]
-	if len(toUse) > 3:
+	if len(toUse) < 3:
 		fracDev = 0.0
 	else:
 		fracDev = numpy.median(numpy.abs(deviation[toUse]/fit[toUse]))
@@ -576,10 +576,15 @@ def polyfit(inputX, inputY, order, iterMax=25):
 			u = u[g]
 			v = v[g]
 			biweights = biweights[g]
-		data = odr.RealData(u, v, sy=1.0/biweights)
-		fit = odr.ODR(data, model, beta0=cc[::-1])
-		out = fit.run()
-		cc = out.beta[::-1]
+		try:
+			## Try the fancy method...
+			data = odr.RealData(u, v, sy=1.0/biweights)
+			fit = odr.ODR(data, model, beta0=cc[::-1])
+			out = fit.run()
+			cc = out.beta[::-1]
+		except:
+			## And then give up when it doesn't work
+			cc = numpy.polyfit(u, v, order)
 		yFit = numpy.polyval(cc, u)
 		sigma, fracDev, nGood, biweights, scaledResids = checkfit(v, yFit, __epsilon, __delta)
 		if nGood < minPts:

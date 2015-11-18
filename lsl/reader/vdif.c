@@ -7,7 +7,7 @@
 #if defined(__linux__)
 /* Linux */
 #include <byteswap.h>
-#if defined(__APPLE__) && defined(__MACH__)
+#elif defined(__APPLE__) && defined(__MACH__)
 /* OSX */
 #include <libkern/OSByteOrder.h>
 #define __bswap_16 OSSwapInt16

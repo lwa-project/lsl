@@ -211,7 +211,7 @@ class Frame(object):
 		"""
 	
 		newFrame = copy.deepcopy(self)
-		newFrame += y	
+		newFrame += y
 		return newFrame
 			
 	def __iadd__(self, y):
@@ -223,7 +223,7 @@ class Frame(object):
 		try:
 			self.data.iq += y.data.iq
 		except AttributeError:
-			self.data.iq += y
+			self.data.iq += numpy.complex64(y)
 		return self
 		
 	def __mul__(self, y):
@@ -245,7 +245,7 @@ class Frame(object):
 		try:
 			self.data.iq *= y.data.iq
 		except AttributeError:
-			self.data.iq *= y
+			self.data.iq *= numpy.complex64(y)
 		return self
 			
 	def __eq__(self, y):

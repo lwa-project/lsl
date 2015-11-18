@@ -195,7 +195,7 @@ class Frame(object):
 		try:
 			self.data.xy += y.data.xy
 		except AttributeError:
-			self.data.xy += y
+			self.data.xy += numpy.int16(y)
 		return self
 		
 	def __mul__(self, y):
@@ -205,7 +205,7 @@ class Frame(object):
 		"""
 
 		newFrame = copy.deepcopy(self)
-		newFrame *= y		
+		newFrame *= y
 		return newFrame
 			
 	def __imul__(self, y):
@@ -217,7 +217,7 @@ class Frame(object):
 		try:
 			self.data.xy *= y.data.xy
 		except AttributeError:
-			self.data.xy *= y
+			self.data.xy *= numpy.int16(y)
 		return self
 			
 	def __eq__(self, y):

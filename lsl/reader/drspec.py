@@ -370,7 +370,7 @@ class Frame(object):
 				except TypeError:
 					raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.getDataProducts())))
 				except AttributeError:
-					temp = getattr(self.data, attr, None) + y
+					temp = getattr(self.data, attr, None) + numpy.float32(y)
 				setattr(self.data, attr, temp)
 			
 		return self
@@ -401,7 +401,7 @@ class Frame(object):
 				except TypeError:
 					raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.getDataProducts())))
 				except AttributeError:
-					temp = getattr(self.data, attr, None) * y
+					temp = getattr(self.data, attr, None) * numpy.float32(y)
 				setattr(self.data, attr, temp)
 			
 		return self

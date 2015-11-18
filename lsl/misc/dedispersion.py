@@ -60,11 +60,29 @@ def delay(freq, dm):
 	Calculate the relative delay due to dispersion over a given frequency
 	range in Hz for a particular dispersion measure in pc cm^-3.  Return 
 	the dispersive delay in seconds.
+	
+	.. versionchanged:: 1.1.1
+		If only a single frequency is provided, the returned delay is 
+		relative to infinite frequency.
 	"""
 	
+	# Validate in input frequencies
+	## Right Type?
+	if type(freq) != numpy.ndarray:
+		freq = numpy.array(freq)
+	## Right size?
+	singleFreq = False
+	if freq.size == 1:
+		singleFreq = True
+		freq = numpy.append(freq, numpy.inf)
+		
 	# Delay in s
 	tDelay = dm*_D*((1e6/freq)**2 - (1e6/freq.max())**2)
 	
+	# Cleanup
+	if singleFreq:
+		tDelay = tDelay[0]
+		
 	return tDelay
 
 

@@ -1,11 +1,16 @@
 1.2.0
 
+1.1.1
+  * Fixed a bug in the lsl.statistics.robust.checkfit function
+  * Fixed a few modules that caused problems with automatic recasting in newer versions of NumPy
+  * Cleaned up the lsl.misc.dedispersion.delay() function so that it will work with lists of single frequency values
+
 1.1.0
   * Updated the lsl.imaging.deconv module to include a source-based CLEAN method and a forward-modeling/least squares method
   * Added support for phase centers other than zenith to the various functions in lsl.imaging.overlay
   * Added support for determining coordinates for images with phase centers other than zenith to the lsl.imaging.utils module
   * Added a new image analysis module, lsl.imaging.analysis, that allows one to find point sources in a 2-D image
-  * Added backward compatiability for older metadata tarball formats to the lsl.common.metabundle module (Ticket #61)
+  * Added backward compatibility for older metadata tarball formats to the lsl.common.metabundle module (Ticket #61)
   * Added preliminary support for working with circular polarizations in the correlator (lsl.correlator.fx) and imaging (lsl.imaging.utils) modules
   * Added an option of imageIDI.py to overlay a topocentric graticle rather than a equatorial one
   * Added better support for non-linear polarizations to imageIDI.py
