@@ -6,6 +6,9 @@ import sys
 if sys.version_info > (3,):
 	xrange = range
 	long = int
+	import dbm
+else:
+	import anydbm as dbm
 
 """
 Module that contains common values found in the MCS Joint Release 5 header file
