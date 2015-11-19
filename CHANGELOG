@@ -2,6 +2,7 @@
   * Added a new lsl.common.adp module to help describe ADP
   * Added support for ADP TBF data
   * Added support for ADP COR data
+  * Added support for ADP 8+8-bit DRX data, also know as DRX8
 
 1.1.1
   * Fixed a bug in the lsl.statistics.robust.checkfit function

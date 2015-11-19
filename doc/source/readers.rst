@@ -33,6 +33,11 @@ Low-Level DRX -- DP and ADP
 .. automodule:: lsl.reader.drx
    :members:
 
+Low-Level DRX8 -- ADP
+---------------------
+.. automodule:: lsl.reader.drx8
+   :members:
+
 Low-Level DR Spectrometer -- DP and ADP
 ---------------------------------------
 .. versionadded:: 0.5
