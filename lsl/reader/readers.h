@@ -71,6 +71,8 @@ extern char readVDIF_doc[];
 // tbf.c
 extern PyObject *readTBF(PyObject*, PyObject*);
 extern char readTBF_doc[];
-
+// cor.c
+extern PyObject *readCOR(PyObject*, PyObject*);
+extern char readCOR_doc[];
 
 #endif	// __READERS_H

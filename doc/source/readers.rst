@@ -22,6 +22,12 @@ Low-Level TBN -- DP and ADP
 .. automodule:: lsl.reader.tbn
    :members:
 
+Low-Level COR -- ADP
+--------------------
+.. versionadded:: 1.2
+.. automodule:: lsl.reader.cor
+   :members:
+
 Low-Level DRX -- DP and ADP
 ---------------------------
 .. automodule:: lsl.reader.drx

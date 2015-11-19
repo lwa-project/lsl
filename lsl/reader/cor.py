@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Python module to reading in data from TBF files.  This module defines the 
-following classes for storing the TBF data found in a file:
+Python module to reading in data from COR files.  This module defines the 
+following classes for storing the COR data found in a file:
 
 Frame
-  object that contains all data associated with a particular TBF frame.  The 
+  object that contains all data associated with a particular COR frame.  The 
   primary consituents of each frame are:
-    * FrameHeader - the TBF frame header object and
-    * FrameData   - the TBF frame data object.  
+    * FrameHeader - the COR frame header object and
+    * FrameData   - the COR frame data object.  
   Combined, these two objects contain all of the information found in the 
-  original TBF frame.
+  original COR frame.
 
 The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
@@ -26,7 +26,7 @@ import copy
 import numpy
 
 from  lsl.common import adp as adp_common
-from _gofast import readTBF
+from _gofast import readCOR
 from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
 from errors import *
@@ -34,31 +34,32 @@ from errors import *
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getChannelCount',
-		 '__version__', '__revision__', '__all__']
+		 'getBaselineCount', '__version__', '__revision__', '__all__']
 
-FrameSize = 6168
+FrameSize = 4640
 
 
 class FrameHeader(object):
 	"""
-	Class that stores the information found in the header of a TBF 
+	Class that stores the information found in the header of a COR 
 	frame.  All three fields listed in the DP ICD version H are stored as 
 	well as the original binary header data.
 	"""
 	
-	def __init__(self, id=None, frameCount=None, secondsCount=None, firstChan=None):
+	def __init__(self, id=None, frameCount=None, secondsCount=None, firstChan=None, gain=None):
 		self.id = id
 		self.frameCount = frameCount
 		self.secondsCount = secondsCount
 		self.firstChan = firstChan
+		self.gain = gain
 		
-	def isTBF(self):
+	def isCOR(self):
 		"""
-		Function to check if the data is really TBF.  Returns True if the 
-		data is TBF, false otherwise.
+		Function to check if the data is really COR.  Returns True if the 
+		data is COR, false otherwise.
 		"""
 		
-		if self.id == 0x01:
+		if self.id == 0x02:
 			return True
 		else:
 			return False
@@ -69,18 +70,36 @@ class FrameHeader(object):
 		each channel in the data.
 		"""
 		
-		return (numpy.arange(12, dtype=numpy.float32)+self.firstChan) * adp_common.fC
+		return (numpy.arange(144, dtype=numpy.float32)+self.firstChan) * adp_common.fC
+		
+	def getGain(self):
+		"""
+		Get the current TBN gain for this frame.
+		"""
+		
+		return self.gain
 
 
 class FrameData(object):
 	"""
-	Class that stores the information found in the data section of a TBF
-	frame.  Both fields listed in the DP ICD version H are stored.
+	Class that stores the information found in the data section of a COR
+	frame.
 	"""
 	
-	def __init__(self, timeTag=None, fDomain=None):
+	def __init__(self, timeTag=None, nAvg=None, stand0=None, stand1=None, vis=None, wgt=None):
 		self.timeTag = timeTag
-		self.fDomain = fDomain
+		self.nAvg = nAvg
+		self.stand0 = stand0
+		self.stand1 = stand1
+		self.vis = vis
+		self.wgt = wgt
+		
+	def parseID(self):
+		"""
+		Return a tuple of the two stands that contribute the this frame.
+		"""
+		
+		return (self.stand0, self.stand1)
 		
 	def getTime(self):
 		"""
@@ -91,11 +110,18 @@ class FrameData(object):
 		seconds = self.timeTag / adp_common.fS
 		
 		return seconds
+		
+	def getIntegrationTime(self):
+		"""
+		Return the integration time of the visibility in seconds.
+		"""
+		
+		return self.nAvg * adp_common.T2
 
 
 class Frame(object):
 	"""
-	Class that stores the information contained within a single TBF 
+	Class that stores the information contained within a single COR 
 	frame.  It's properties are FrameHeader and FrameData objects.
 	"""
 	
@@ -112,19 +138,26 @@ class Frame(object):
 			
 		self.valid = True
 		
-	def isTBF(self):
+	def isCOR(self):
 		"""
-		Convenience wrapper for the Frame.FrameHeader.isTBF function.
-		"""
-		
-		return self.header.isTBF()
-		
-	def getChannelFreqqs(self):
-		"""
-		Convenience wrapper for the Frame.FrameHeader.getChannelFreq function.
+		Convenience wrapper for the Frame.FrameHeader.isCOR function.
 		"""
 		
-		return self.header.getFrequencies()
+		return self.header.isCOR()
+		
+	def getChannelFreqs(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeader.getChannelFreqs function.
+		"""
+		
+		return self.header.getChannelFreqs()
+		
+	def getGain(self):
+		"""
+		Convenience wrapper for the Frame.FrameHeader.getGain function.
+		"""
+
+		return self.header.getGain()
 		
 	def getTime(self):
 		"""
@@ -133,10 +166,29 @@ class Frame(object):
 		
 		return self.data.getTime()
 		
+	def parseID(self):
+		"""
+		Convenience wrapper for the Frame.FrameData.parseID function.
+		"""
+		
+		return self.data.parseID()
+		
+	def getIntegrationTime(self):
+		"""
+		Convenience wrapper for the Frame.FrameData.getIntegrationTime
+		function.
+		"""
+		
+		return self.data.getIntegrationTime()
+		
 	def __add__(self, y):
 		"""
 		Add the data sections of two frames together or add a number 
 		to every element in the data section.
+		
+		.. note::
+			In the case where a frame is given the weights are
+			ignored.
 		"""
 		
 		newFrame = copy.deepcopy(self)
@@ -147,18 +199,26 @@ class Frame(object):
 		"""
 		In-place add the data sections of two frames together or add 
 		a number to every element in the data section.
+		
+		.. note::
+			In the case where a frame is given the weights are
+			ignored.
 		"""
 		
 		try:
-			self.data.fDomain += y.data.fDomain
+			self.data.vis += y.data.vis
 		except AttributeError:
-			self.data.fDomain += numpy.complex64(y)
+			self.data.vis += numpy.complex64(y)
 		return self
 		
 	def __mul__(self, y):
 		"""
 		Multiple the data sections of two frames together or multiply 
 		a number to every element in the data section.
+		
+		.. note::
+			In the case where a frame is given the weights are
+			ignored.
 		"""
 		
 		newFrame = copy.deepcopy(self)
@@ -169,12 +229,16 @@ class Frame(object):
 		"""
 		In-place multiple the data sections of two frames together or 
 		multiply a number to every element in the data section.
+		
+		.. note::
+			In the case where a frame is given the weights are
+			ignored.
 		"""
 		
 		try:
-			self.data.fDomain *= y.data.fDomain
+			self.data.vis *= y.data.vis
 		except AttributeError:
-			self.data.fDomain *= numpy.complex64(y)
+			self.data.vis *= numpy.complex64(y)
 		return self
 			
 	def __eq__(self, y):
@@ -299,13 +363,13 @@ class Frame(object):
 
 def readFrame(filehandle, Verbose=False):
 	"""
-	Function to read in a single TBF frame (header+data) and store the 
+	Function to read in a single COR frame (header+data) and store the 
 	contents as a Frame object.
 	"""
 	
 	# New Go Fast! (TM) method
 	try:
-		newFrame = readTBF(filehandle, Frame())
+		newFrame = readCOR(filehandle, Frame())
 	except gsyncError:
 		raise syncError
 	except geofError:
@@ -317,7 +381,8 @@ def readFrame(filehandle, Verbose=False):
 def getFramesPerObs(filehandle):
 	"""
 	Find out how many frames are present per time stamp by examining the 
-	first 250 TBF records.  Return the number of frames per observation.
+	first several thousand COR records.  Return the number of frames per 
+	observation.
 	"""
 	
 	# Save the current position in the file so we can return to that point
@@ -325,8 +390,36 @@ def getFramesPerObs(filehandle):
 	
 	# Build up the list-of-lists that store the index of the first frequency
 	# channel in each frame.
+	channelBaselinePairs = []
+	for i in range(32896*2):
+		try:
+			cFrame = readFrame(filehandle)
+		except:
+			break
+			
+		chan = cFrame.header.firstChan
+		baseline = cFrame.parseID()
+		pair = (chan, baseline[0], baseline[1])
+		if pair not in channelBaselinePairs:
+			channelBaselinePairs.append( pair )
+			
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Return the number of channel/baseline pairs
+	return len(channelBaselinePairs)
+
+
+def getChannelCount(filehandle):
+	"""
+	Find out the total number of channels that are present by examining 
+	the first several thousand COR records.  Return the number of channels found.
+	"""
+	
+	# Build up the list-of-lists that store the index of the first frequency
+	# channel in each frame.
 	channels = []
-	for i in range(250):
+	for i in range(32896*2):
 		try:
 			cFrame = readFrame(filehandle)
 		except:
@@ -343,17 +436,31 @@ def getFramesPerObs(filehandle):
 	return len(channels)
 
 
-def getChannelCount(filehandle):
+def getBaselineCount(filehandle):
 	"""
-	Find out the total number of channels that are present by examining 
-	the first 250 TBF records.  Return the number of channels found.
+	Find out the total number of baselines that are present by examining the 
+	first several thousand COR records.  Return the number of baselines found.
+	observation.
 	"""
 	
-	# Find out how many frames there are per observation
-	nFrames = getFramesPerObs(filehandle)
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
 	
-	# Convert to channels
-	nChannels = nFrames * 12
+	# Build up the list-of-lists that store the index of the first frequency
+	# channel in each frame.
+	baselines = []
+	for i in range(32896*2):
+		try:
+			cFrame = readFrame(filehandle)
+		except:
+			break
+			
+		baseline = cFrame.parseID()
+		if baseline not in baselines:
+			baselines.append( baseline )
+			
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
 	
-	# Return the number of channels
-	return nChannels
+	# Return the number of baselines
+	return len(baselines)

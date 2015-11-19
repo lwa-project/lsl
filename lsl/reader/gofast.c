@@ -92,6 +92,7 @@ static PyMethodDef GoFastMethods[] = {
 	{"readDRSpec", (PyCFunction) readDRSpec, METH_VARARGS,               readDRSpec_doc},
 	{"readVDIF",   (PyCFunction) readVDIF,   METH_VARARGS|METH_KEYWORDS, readVDIF_doc  }, 
 	{"readTBF",    (PyCFunction) readTBF,    METH_VARARGS,               readTBF_doc   }, 
+	{"readCOR",    (PyCFunction) readCOR,    METH_VARARGS,               readCOR_doc   }, 
 	{NULL,         NULL,                     0,                          NULL          }
 };
 

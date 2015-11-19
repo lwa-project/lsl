@@ -1,6 +1,7 @@
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
   * Added support for ADP TBF data
+  * Added support for ADP COR data
 
 1.1.1
   * Fixed a bug in the lsl.statistics.robust.checkfit function
