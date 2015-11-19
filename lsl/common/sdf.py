@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Module that contains all of the relevant class to build up a representation 
 of a session definition file as defined in MCS0030v5.  The hierarchy of classes
@@ -356,7 +363,7 @@ class Project(object):
 		sessionCount = 1
 		for session in self.sessions:
 			if verbose:
-				print "[%i] Validating session %i" % (os.getpid(), sessionCount)
+				print("[%i] Validating session %i" % (os.getpid(), sessionCount))
 			if not session.validate(verbose=verbose):
 				failures += 1
 				
@@ -732,34 +739,34 @@ class Session(object):
 		totalData = 0.0
 		if self.cra < 0 or self.cra > 65535:
 			if verbose:
-				print "[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra)
+				print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
 			failures += 1
 		if self.drxBeam not in (-1, 1, 2, 3, 4):
 			if verbose:
-				print "[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam)
+				print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
 			failures += 1
-		for key in self.recordMIB.keys():
+		for key in list(self.recordMIB.keys()):
 			if self.recordMIB[key] < -1:
 				if verbose:
-					print "[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key])
+					print("[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key]))
 				failures += 1
 			if self.updateMIB[key] < -1:
 				if verbose:
-					print "[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key])
+					print("[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key]))
 				failures += 1
 				
 		if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
 			if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
 				if verbose:
-					print "[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0])
+					print("[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0]))
 				failures += 1
 			if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
 				if verbose:
-					print "[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1])
+					print("[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1]))
 				failures += 1
 			if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
 				if verbose:
-					print "[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag)
+					print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
 				failures += 1
 				
 		# Validate beam number
@@ -767,13 +774,13 @@ class Session(object):
 			if self.observations[0].mode not in ('TBW', 'TBN'):
 				if self.drxBeam == -1:
 					if verbose:
-						print "[%i] Error: Beam not assigned for this session" % os.getpid()
+						print("[%i] Error: Beam not assigned for this session" % os.getpid())
 					failures += 1
 					
 		observationCount = 1
 		for obs in self.observations:
 			if verbose:
-				print "[%i] Validating observation %i" % (os.getpid(), observationCount)
+				print("[%i] Validating observation %i" % (os.getpid(), observationCount))
 			
 			if not obs.validate(verbose=verbose):
 				failures += 1
@@ -791,7 +798,7 @@ class Session(object):
 
 			for j in xrange(len(sObs)):
 				if verbose and i != j:
-					print "[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1)
+					print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
 
 				cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
 				cStop = cStart + int(sObs[j].dur)
@@ -806,12 +813,12 @@ class Session(object):
 			
 			if nOverlaps > maxOverlaps:
 				if verbose:
-					print "[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps]))
+					print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
 				failures += 1
 			
 		if totalData >= (2*_DRSUCapacityTB*1024**4):
 			if verbose:
-				print "[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), 2*_DRSUCapacityTB,)
+				print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), 2*_DRSUCapacityTB,))
 			failures += 1
 		
 		if failures == 0:
@@ -1071,21 +1078,21 @@ class TBW(Observation):
 		# Basic - Sample size and data bits agreement
 		if self.bits not in [4, 12]:
 			if verbose:
-				print "[%i] Error: Invalid number of data bits '%i'" % (os.getpid(), self.bits)
+				print("[%i] Error: Invalid number of data bits '%i'" % (os.getpid(), self.bits))
 			failures += 1
 		if self.bits == 12 and self.samples > 12000000:
 			if verbose:
-				print "[%i] Error: Invalid number of samples for 12-bit data (%i > 12000000)" % (os.getpid(), self.samples)
+				print("[%i] Error: Invalid number of samples for 12-bit data (%i > 12000000)" % (os.getpid(), self.samples))
 			failures += 1
 		if self.bits == 4 and self.samples > 36000000:
 			if verbose:
-				print "[%i] Error: Invalid number of samples for 4-bit data (%i > 36000000)" % (os.getpid(), self.samples)
+				print("[%i] Error: Invalid number of samples for 4-bit data (%i > 36000000)" % (os.getpid(), self.samples))
 			failures += 1
 			
 		# Advanced - Data Volume
 		if self.dataVolume >= (_DRSUCapacityTB*1024**4):
 			if verbose:
-				print "[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB)
+				print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
 			failures += 1
 			
 		# Any failures indicates a bad observation
@@ -1158,21 +1165,21 @@ class TBN(Observation):
 		# Basic - Duration, frequency, and filter code values
 		if self.dur < 1:
 			if verbose:
-				print "[%i] Error: Specified a duration of length zero" % os.getpid()
+				print("[%i] Error: Specified a duration of length zero" % os.getpid())
 			failures += 1
 		if self.freq1 < 109565492 or self.freq1 > 2037918156:
 			if verbose:
-				print "[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid()
+				print("[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid())
 			failures += 1
 		if self.filter not in [1,2,3,4,5,6,7]:
 			if verbose:
-				print "[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter)
+				print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
 			failures += 1
 			
 		# Advanced - Data Volume
 		if self.dataVolume >= (_DRSUCapacityTB*1024**4):
 			if verbose:
-				print "[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB)
+				print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
 			failures += 1
 			
 		# Any failures indicates a bad observation
@@ -1303,39 +1310,39 @@ class _DRXBase(Observation):
 		# Basic - Duration, frequency, and filter code values
 		if self.dur < 1:
 			if verbose:
-				print "[%i] Error: Specified a duration of length zero" % os.getpid()
+				print("[%i] Error: Specified a duration of length zero" % os.getpid())
 			failures += 1
 		if self.freq1 < 219130984 or self.freq1 > 1928352663:
 			if verbose:
-				print "[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid()
+				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
 			failures += 1
 		if self.freq2 < 219130984 or self.freq2 > 1928352663:
 			if verbose:
-				print "[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid()
+				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1
 		if self.filter not in [1,2,3,4,5,6,7]:
 			if verbose:
-				print "[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter)
+				print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
 			failures += 1
 			
 		# Advanced - Target Visibility
 		if self.ra < 0 or self.ra >=24:
 			if verbose:
-				print "[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra)
+				print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra))
 			failures += 1
 		if self.dec < -90 or self.dec > 90:
 			if verbose:
-				print "[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec)
+				print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
 			failures += 1
 		if self.computeVisibility() < 1.0:
 			if verbose:
-				print "[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility()*100.0)
+				print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility()*100.0))
 			failures += 1
 			
 		# Advanced - Data Volume
 		if self.dataVolume >= (_DRSUCapacityTB*1024**4):
 			if verbose:
-				print "[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB)
+				print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
 			failures += 1
 			
 		# Any failures indicates a bad observation
@@ -1611,19 +1618,19 @@ class Stepped(Observation):
 		# Basic - filter setup
 		if self.filter not in [1,2,3,4,5,6,7]:
 			if verbose:
-				print "[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter)
+				print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
 			failures += 1
 			
 		# Basic - steps
 		stepCount = 1
 		for step in self.steps:
 			if verbose:
-				print "[%i] Validating step %i" % (os.getpid(), stepCount)
+				print("[%i] Validating step %i" % (os.getpid(), stepCount))
 			if not step.validate(verbose=verbose):
 				failures += 1
 			if step.RADec != self.RADec:
 				if verbose:
-					print "[%i] Error: Step is not of the same coordinate type as observation" % os.getpid()
+					print("[%i] Error: Step is not of the same coordinate type as observation" % os.getpid())
 				failures += 1
 				
 			stepCount += 1
@@ -1631,13 +1638,13 @@ class Stepped(Observation):
 		# Advanced - Target Visibility
 		if self.computeVisibility() < 1.0:
 			if verbose:
-				print "[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility()*100.0)
+				print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility()*100.0))
 			failures += 1
 			
 		# Advanced - Data Volume
 		if self.dataVolume >= (_DRSUCapacityTB*1024**4):
 			if verbose:
-				print "[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB)
+				print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
 			failures += 1
 			
 		# Any failures indicates a bad observation
@@ -1815,52 +1822,52 @@ class BeamStep(object):
 			if len(self.delays) != 520:
 				failures += 1
 				if verbose:
-					print "[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid()
+					print("[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid())
 			if self.gains is None:
 				failures += 1
 				if verbose:
-					print "[%i] Error: Delays specified but gains were not" % os.getpid()
+					print("[%i] Error: Delays specified but gains were not" % os.getpid())
 		if self.gains is not None:
 			if len(self.gains) != 260:
 				failures += 1
 				if verbose:
-					print "[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid()
+					print("[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid())
 			if self.delays is None:
 				failures += 1
 				if verbose:
-					print "[%i] Error: Gains specified but delays were not" % os.getpid()
+					print("[%i] Error: Gains specified but delays were not" % os.getpid())
 		# Basic - Observation time
 		if self.dur < 5:
 			if verbose:
-				print "[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur)
+				print("[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur))
 			failures += 1
 	     # Basic - Frequency and filter code values
 		if self.freq1 < 219130984 or self.freq1 > 1928352663:
 			if verbose:
-				print "[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid()
+				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
 			failures += 1
 		if self.freq2 < 219130984 or self.freq2 > 1928352663:
 			if verbose:
-				print "[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid()
+				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1
 		# Advanced - Target Visibility via RA/Dec & Az/El ranging
 		if self.RADec:
 			if self.c1 < 0 or self.c1 >=24:
 				if verbose:
-					print "[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.c1)
+					print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.c1))
 				failures += 1
 			if self.c2 < -90 or self.c2 > 90:
 				if verbose:
-					print "[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.c2)
+					print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.c2))
 				failures += 1
 		else:
 			if self.c1 < 0 or self.c1 > 360:
 				if verbose:
-					print "[%i] Error: Invalid value for azimuth '%.6f'" % (os.getpid(), self.c1)
+					print("[%i] Error: Invalid value for azimuth '%.6f'" % (os.getpid(), self.c1))
 				failures += 1
 			if self.c2 < 0 or self.c2 > 90:
 				if verbose:
-					print "[%i] Error: Invalid value for elevation '%.6f'" % (os.getpid(), self.c2)
+					print("[%i] Error: Invalid value for elevation '%.6f'" % (os.getpid(), self.c2))
 				failures += 1
 		# Any failures indicates a bad observation
 		if failures == 0:
@@ -1902,7 +1909,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	# Get the mode and run through the various cases
 	mode = obsTemp['mode']
 	if verbose:
-		print "[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode)
+		print("[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
 		
 	if mode == 'TBW':
 		obsOut = TBW(obsTemp['name'], obsTemp['target'], utcString, 12000000, comments=obsTemp['comments'])
@@ -1921,7 +1928,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 		obsOut = Jovian(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
 	else:
 		if verbose:
-			print "[%i] -> found %i steps" % (os.getpid(), len(beamTemps))
+			print("[%i] -> found %i steps" % (os.getpid(), len(beamTemps)))
 			
 		obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], RADec=obsTemp['stpRADec'], steps=[], gain=obsTemp['gain'], comments=obsTemp['comments'])
 		for beamTemp in beamTemps:
@@ -2116,7 +2123,7 @@ def parseSDF(filename, verbose=False):
 			project.projectOffice.observations[0].append( None )
 			
 			if verbose:
-				print "[%i] Started obs %i" % (os.getpid(), int(value))
+				print("[%i] Started obs %i" % (os.getpid(), int(value)))
 				
 			continue
 		if keyword == 'OBS_TITLE':

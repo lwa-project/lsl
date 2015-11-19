@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
+
 """
 Module that contains common values found in the DP ICD, revision I.  The values 
 are:

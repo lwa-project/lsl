@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Module that contains common values found in the MCS Joint Release 5 header file
 src/exec/me.h and other functions useful for working with the MCS metadata.  
@@ -47,7 +54,6 @@ import re
 import math
 import numpy
 import struct
-import anydbm
 from ctypes import *
 from aipy import coord
 from datetime import datetime
@@ -795,7 +801,7 @@ class MIB(object):
 			filename = filename.replace('.dir', '.pag')
 			
 		# Open the database
-		db = anydbm.open(filename, 'ru')
+		db = dbm.open(filename, 'ru')
 		
 		# Go!
 		entry = db.firstkey()

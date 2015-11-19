@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Module for working with an MCS meta-data tarball and extracting the useful bits out 
 it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.LWAStation` 
@@ -369,7 +376,7 @@ def getSDM(tarname):
 	try:
 		# Parse the SDM file and build the SDM instance
 		dynamic = sdm.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
-	except Exception, e:
+	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
 		
@@ -414,7 +421,7 @@ def getStation(tarname, ApplySDM=True):
 		if dynamic is not None:
 			newAnts = dynamic.updateAntennas(station.getAntennas())
 			station.antennas = newAnts
-	except Exception, e:
+	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
 		
@@ -504,7 +511,7 @@ def getSessionMetaData(tarname):
 			result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
 			
 		fh.close()
-	except Exception, e:
+	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
 		
@@ -538,7 +545,7 @@ def getSessionSpec(tarname):
 	try:
 		# Read in the SES
 		ses = readSESFile(os.path.join(tempDir, ti.name))
-	except Exception, e:
+	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
 		
@@ -590,7 +597,7 @@ def getObservationSpec(tarname, selectObs=None):
 				outObs = outObs[0]
 		else:
 			outObs = obsList
-	except Exception, e:
+	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
 		
@@ -628,7 +635,7 @@ def getSessionDefinition(tarname):
 	try:
 		# Parse it
 		project = sdf.parseSDF(os.path.join(tempDir, ti.name))
-	except Exception, e:
+	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
 		
@@ -659,7 +666,7 @@ def getCommandScript(tarname):
 	try:
 		# Read in the CS
 		cs = readCSFile(os.path.join(tempDir, ti.name))
-	except Exception, e:
+	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
 		
@@ -744,7 +751,7 @@ def getASPConfiguration(tarname, which='beginning'):
 						
 				else:
 					pass
-		except Exception, e:
+		except Exception as e:
 			shutil.rmtree(tempDir, ignore_errors=True)
 			raise e
 			
@@ -783,7 +790,8 @@ def getASPConfigurationSummary(tarname, which='beginning'):
 		best = 0
 		mode[param] = 0
 		
-		for value,num in count[param].iteritems():
+		for value in count[param].keys():
+			num = count[param][value]
 			if num > best:
 				best = num
 				mode[param] = value

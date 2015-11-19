@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Module to simulate observations made with the DP system.
 """
@@ -42,18 +49,18 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 		samplesPerFrame = 1200
 
 	if verbose:
-		print "Simulating %i captures of %i-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands))
+		print("Simulating %i captures of %i-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands)))
 
 	nCaptures = int(numpy.ceil(nFrames / 30000.0))
-	for capture in range(nCaptures):
+	for capture in xrange(nCaptures):
 		for stand1, stand2 in zip(stands[0::2], stands[1::2]):
 			FramesThisBatch = nFrames - capture*30000
 			if FramesThisBatch > 30000:
 				FramesThisBatch = 30000
 			if verbose:
-				print " capture %i, stands %i and %i" % (capture+1, stand1, stand2)
+				print(" capture %i, stands %i and %i" % (capture+1, stand1, stand2))
 
-			for i in range(FramesThisBatch):
+			for i in xrange(FramesThisBatch):
 				t = long(tStart*dp_common.fS) + i*samplesPerFrame
 				t += long(60*dp_common.fS*capture)
 				tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / dp_common.fS
@@ -92,11 +99,11 @@ def __basicTBN(fh, stands, nFrames, **kwargs):
 	lowerSpike = -sampleRate / 4.0
 	
 	if verbose:
-		print "Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands))
+		print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands)))
 	
-	for i in range(nFrames):
+	for i in xrange(nFrames):
 		if i % 1000 == 0 and verbose:
-			print " frame %i" % (i+1)
+			print(" frame %i" % (i+1))
 		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
 		tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 		for stand in stands:
@@ -134,12 +141,12 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 	lowerSpike2 = -sampleRate / 3.0
 
 	if verbose:
-		print "Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % (nFrames, sampleRate/1e6, len(stands), nTuning)
+		print("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % (nFrames, sampleRate/1e6, len(stands), nTuning))
 
 	beams = stands
 	for i in range(nFrames):
 		if i % 1000 == 0 and verbose:
-			print " frame %i" % i
+			print(" frame %i" % i)
 		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
 		tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 		for beam in beams:
@@ -359,7 +366,7 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 		samplesPerFrame = 1200
 
 	if verbose:
-		print "Simulating %i captures of %-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands))
+		print("Simulating %i captures of %-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands)))
 
 	nCaptures = int(numpy.ceil(nFrames / 30000.0))
 	for capture in range(nCaptures):
@@ -370,7 +377,7 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 			if FramesThisBatch > 30000:
 				FramesThisBatch = 30000
 			if verbose:
-				print " capture %i, stands %i and %i" % (capture+1, stand1, stand2)
+				print(" capture %i, stands %i and %i" % (capture+1, stand1, stand2))
 
 			for i in range(FramesThisBatch):
 				t = long(tStart*dp_common.fS) + i*samplesPerFrame
@@ -421,11 +428,11 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 	aa = __getAntennaArray(lwa_common.lwa1, stands, tStart, freqs)
 	
 	if verbose:
-		print "Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands))
+		print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands)))
 	
 	for i in range(nFrames):
 		if i % 1000 == 0 and verbose:
-			print " frame %i" % (i+1)
+			print(" frame %i" % (i+1))
 		t = long(tStart*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
 		tFrame = t/dp_common.fS - tStart + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
 		

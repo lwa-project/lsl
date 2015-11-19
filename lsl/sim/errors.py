@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Module that contains the error classes for the DRX, TBN, and TBW simulated
 data writers.  These errors are currently meant to deal with things that can 
@@ -122,16 +129,16 @@ def listErrorCodes(errno=None):
 			listErrorCodes(errno=i)
 	else:
 		if errno == 1:
-			print "1: Stand number is out of range (==0 or >258)"
+			print("1: Stand number is out of range (==0 or >258)")
 		elif errno == 2:
-			print "2: Polarization is out of range (!=0 and !=1)"
+			print("2: Polarization is out of range (!=0 and !=1)")
 		elif errno == 3:
-			print "3: Beam is out of range (==0 or >4)"
+			print("3: Beam is out of range (==0 or >4)")
 		elif errno == 4:
-			print "4: Tunning is out of range (!=1 and !=2)"
+			print("4: Tunning is out of range (!=1 and !=2)")
 		elif errno == 5:
-			print "5: Data array size is not consistent with frame type"
+			print("5: Data array size is not consistent with frame type")
 		elif errno == 6:
-			print "6: Data array has the wrong general kind"
+			print("6: Data array has the wrong general kind")
 		else:
-			print "Unknown error code '%i'" % errno
+			print("Unknown error code '%i'" % errno)

@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
+"""
+Module for creating object oriented representations of the LWA stations.
+"""
 
 import os
 import re

@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Module for generating simulated arrays and visibility data.  The chief 
 functions of this module are:
@@ -871,12 +878,12 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 		yw *= numpy.pi/180
 		
 		if verbose:
-			print "Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/numpy.pi, yw*180/numpy.pi)
+			print("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/numpy.pi, yw*180/numpy.pi))
 		beam = Beam2DGaussian(freqs, xw, yw)
 		
 	elif ForceFlat:
 		if verbose:
-			print "Using flat beam model"
+			print("Using flat beam model")
 		beam = Beam(freqs)
 		
 	else:
@@ -895,15 +902,15 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 				pass
 				
 			if verbose:
-				print "Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax)
+				print("Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax))
 			beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
 		else:
 			if verbose:
-				print "Using flat beam model"
+				print("Using flat beam model")
 			beam = Beam(freqs)
 			
 	if PosError != 0:
-		print "WARNING:  Creating array with positional errors between %.3f and %.3f m" % (-PosError, PosError)
+		print("WARNING:  Creating array with positional errors between %.3f and %.3f m" % (-PosError, PosError))
 
 	# Build an array of AIPY Antenna objects
 	ants = []
@@ -974,9 +981,9 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 	if jd is not None:
 		if verbose:
 			if count is not None and max is not None:
-				print "Setting Julian Date to %.5f (%i of %i)" % (jd, count, max)
+				print("Setting Julian Date to %.5f (%i of %i)" % (jd, count, max))
 			else:
-				print "Setting Julian Date to %.5f" % jd
+				print("Setting Julian Date to %.5f" % jd)
 		aa.set_jultime(jd)
 	else:
 		jd = aa.get_jultime()
@@ -999,7 +1006,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 	srcs_fq = []
 	srcs_sh = []
 	if verbose:
-		print "Sources Used for Simulation:"
+		print("Sources Used for Simulation:")
 	for name,src in srcs.iteritems():
 		## Update the source's coordinates
 		src.compute(aa)
@@ -1009,7 +1016,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		srcAzAlt = aipy.coord.top2azalt(srcTop)
 		if srcAzAlt[1] < 0:
 				if verbose:
-					print "  %s: below horizon" % name
+					print("  %s: below horizon" % name)
 				continue
 				
 		## Topocentric coordinates for the gain pattern calculations

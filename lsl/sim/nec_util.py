@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 This module contains a set of convenience functions to parse the output 
 of NEC2, modify the input (.nec) file, and rerun NEC as necessary.
@@ -64,7 +71,7 @@ def open_and_get_nec_freq(fname):
 		if line.find('FREQUENCY') >= 0:
 			break
 	for line in f:
-		#print line
+		#print(line)
 		if line.find('FREQUENCY=') >= 0:
 			freq = float(line[line.find('=')+1:].split()[0])
 			break
@@ -230,7 +237,7 @@ class NECPattern:
 		try:
 			f, filefreq = open_and_get_nec_freq(outname)
 		except:
-			print("NEC .out file not found! Running NEC")
+			print("NEC .out file not found!  Running NEC")
 			f = None
 		
 		if f is None or not CloseTo(filefreq,freq):
@@ -303,10 +310,10 @@ class NECPattern:
 			theta = 90-int(cols[0].split('.')[0])
 			phi = int(cols[1].split('.')[0])
 			if theta < 0 or theta > 89 or phi > 359:
-				#print "Skipping ",phi,theta
+				#print("Skipping ",phi,theta)
 				continue
 			powgain= float(cols[4])
-			#print phi, theta, powgain
+			#print(phi, theta, powgain)
 			self.antenna_pat_dB[phi,theta] = powgain
 			n += 1
 			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f", theta,phi,powgain)
@@ -342,7 +349,7 @@ class NECPattern:
 					# Get the absolute value and put it on a dB scale
 					powcurr = float(fieldsCurrent[8])
 					powcurr = 10.0*log10(powcurr)
-					#print phi, theta, powcurr
+					#print(phi, theta, powcurr)
 					self.antenna_pat_dB[phi,theta] = powcurr
 					n += 1
 					_NEC_UTIL_LOG.debug("theta %d phi %d current %f", theta,phi,powcurr)
