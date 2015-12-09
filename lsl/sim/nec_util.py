@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
+# Python3 compatibility
 from __future__ import print_function
 import sys
 if sys.version_info > (3,):
@@ -27,7 +27,8 @@ import logging
 
 __version__   = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['CloseTo', 'open_and_get_nec_freq', 'change_nec_freq', 'calcIME', 'NECImpedance', 'NECPattern', 'whichNEC4', '__version__', '__revision__', '__all__']
+__all__ = ['CloseTo', 'open_and_get_nec_freq', 'change_nec_freq', 'calcIME', 'NECImpedance', 'NECPattern', 'whichNEC4', 
+	   '__version__', '__revision__', '__all__']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
 

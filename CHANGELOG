@@ -3,7 +3,7 @@
   * Added support for ADP TBF data
   * Added support for ADP COR data
   * Added support for ADP 8+8-bit DRX data, also know as DRX8
-  * Added support for complex antenna responce to lsl.sim.nec_util.NECPattern
+  * Added support for complex antenna response to lsl.sim.nec_util.NECPattern
 
 1.1.1
   * Fixed a bug in the lsl.statistics.robust.checkfit function
