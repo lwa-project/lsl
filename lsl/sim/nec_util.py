@@ -322,7 +322,7 @@ class NECPattern:
 			phsgain= float(cols[6])
 			#print phi, theta, powgain
 			self.antenna_pat_dB[phi,theta] = powgain
-			self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*numpy.exp(1j*phsgain*180/pi)
+			self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*exp(1j*phsgain*180/pi)
 			n += 1
 			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f @ %f deg", theta,phi,powgain,phsgain)
 
@@ -360,7 +360,7 @@ class NECPattern:
 					phscurr = float(fieldsCurrent[9])
 					#print phi, theta, powcurr
 					self.antenna_pat_dB[phi,theta] = powcurr
-					self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*numpy.exp(1j*phscurr*pi/180)
+					self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*exp(1j*phscurr*pi/180)
 					n += 1
 					_NEC_UTIL_LOG.debug("theta %d phi %d current %f @ %f deg", theta,phi,powcurr,phscurr)
 
