@@ -262,7 +262,7 @@ def sid2string(sid):
 	Convert a MCS subsystem ID code into a string.
 	"""
 	
-	if sid < 1 or sid > 18:
+	if sid < 1 or sid > 19:
 		raise ValueError("Invalid sid code %i" % sid)
 	
 	if sid < 9:
@@ -283,8 +283,10 @@ def sid2string(sid):
 		return "DR #3"
 	elif sid == 17:
 		return "DR #4"
-	else:
+	elif sid == 18:
 		return "DR #5"
+	else:
+		return "ADP"
 
 
 def cid2string(cid):
@@ -292,7 +294,7 @@ def cid2string(cid):
 	Convert a MCS command code into a string.
 	"""
 	
-	if cid < 0 or cid > 39:
+	if cid < 0 or cid > 41:
 		raise ValueError("Invalid cid code %i" % cid)
 	
 	if cid == 0:
@@ -373,8 +375,12 @@ def cid2string(cid):
 		return "OBS"
 	elif cid == 38:
 		return "OBE"
-	else:
+	elif cid == 39:
 		return "SPC"
+	elif cid == 40:
+		return "TBF"
+	else:
+		return "COR"
 
 
 def mode2string(mode):
@@ -382,7 +388,7 @@ def mode2string(mode):
 	Convert a MCS numeric observing mode into a string.
 	"""
 	
-	if mode < 1 or mode > 6:
+	if mode < 1 or mode > 8:
 		raise ValueError("Invalid observing mode %i" % mode)
 	
 	if mode == 1:
@@ -395,8 +401,12 @@ def mode2string(mode):
 		return "STEPPED"
 	elif mode == 5:
 		return "TBW"
-	else:
+	elif mode == 6:
 		return "TBN"
+	elif mode == 7:
+		return "DIAG1"
+	else:
+		return "TBF"
 
 
 def parseCStruct(cStruct, charMode='str', endianness='native'):
@@ -870,6 +880,7 @@ class MIBEntry(object):
 		  * i1u:   integer, 1 byte,  unsigned, big-endian (=uint8)
 		  * i2u:   integer, 2 bytes, unsigned, big-endian (=uint16)
 		  * i4u:   integer, 4 bytes, unsigned, big-endian (=uint32)
+		  * i8u:   integer, 8 bytes, unsigned, big-endian (=uint64)
 		  * f4:    float, 4 bytes, big-endian (=float32)
 		"""
 		
@@ -892,6 +903,11 @@ class MIBEntry(object):
 		elif dataType[:3] == 'i4u':
 			try:
 				return struct.unpack('>1I', value)[0]
+			except struct.error:
+				return 0
+		elif dateType[:3] == 'i8u':
+			try:
+				return struct.unpack('>1Q', value)[0]
 			except struct.error:
 				return 0
 		elif dataType[:2] == 'f4':
