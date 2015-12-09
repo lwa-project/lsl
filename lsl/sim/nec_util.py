@@ -25,7 +25,7 @@ import re
 import logging
 
 
-__version__   = '0.1'
+__version__   = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['CloseTo', 'open_and_get_nec_freq', 'change_nec_freq', 'calcIME', 'NECImpedance', 'NECPattern', 'whichNEC4', '__version__', '__revision__', '__all__']
 __author__    = 'P. S. Ray'
@@ -197,7 +197,7 @@ class NECImpedance:
 				break
 
 			# Here we need to add a space before - signs that
-			# are not preceeded by an E, so it will parse
+			# are not preceded by an E, so it will parse
 			line = re.sub(r'(\d)-',r'\1 -',line)
 			re_z = float(line.split()[6])
 			im_z = float(line.split()[7])
@@ -212,14 +212,18 @@ class NECPattern:
 	"""
 	NECPattern:
 	Python class to read the pattern from a NEC2 .out file.  Note that the 
-	.nec file should have an RP card to run over the full pattern, like this:
+	.nec file should have an RP or EX card to run over the full pattern, 
+	like this:
 
 		RP 0,91,360,1000,0.,0.,1.0,1.0,0.
 
 	The FR card should be a simple single frequency run:
 
 		FR 0,1,0,0,74.0,1
-
+		
+	.. versionchanged:: 1.2.0
+		Added a new "antenna_pat_complex attribute to store the 
+		complex antenna pattern
 	"""
         
 	def __init__(self, necname, freq, rerun = True):
@@ -232,6 +236,7 @@ class NECPattern:
 		# where 0 is the horizon The default pattern is all zeros (isotropic 
 		# response)
 		self.antenna_pat_dB=zeros(shape=(360,90),dtype=float_)
+		self.antenna_pat_complex=zeros(shape=(360,90),dtype=complex_)
 
 		outname = os.path.splitext(necname)[0] + '.out'
 		try:
@@ -313,10 +318,12 @@ class NECPattern:
 				#print("Skipping ",phi,theta)
 				continue
 			powgain= float(cols[4])
-			#print(phi, theta, powgain)
+			phsgain= float(cols[6])
+			#print phi, theta, powgain
 			self.antenna_pat_dB[phi,theta] = powgain
+			self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*numpy.exp(1j*phsgain*180/pi)
 			n += 1
-			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f", theta,phi,powgain)
+			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f @ %f deg", theta,phi,powgain,phsgain)
 
 
 	def __readEXCITATION(self, f):
@@ -328,7 +335,7 @@ class NECPattern:
 		n = 0
 		# We have already read the first line of the first entry, so start there
 		# The information we need is stored across the 15 lines following the 
-		# EXCITATAION heading.  Read those lines into parts and then deal with the
+		# EXCITATION heading.  Read those lines into parts and then deal with the
 		# results.  The keys lines are #2 (theta and phi) and #12 (induced currents)
 		lineCount = 0
 		for line in f:
@@ -349,10 +356,12 @@ class NECPattern:
 					# Get the absolute value and put it on a dB scale
 					powcurr = float(fieldsCurrent[8])
 					powcurr = 10.0*log10(powcurr)
-					#print(phi, theta, powcurr)
+					phscurr = float(fieldsCurrent[9])
+					#print phi, theta, powcurr
 					self.antenna_pat_dB[phi,theta] = powcurr
+					self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*numpy.exp(1j*phscurr*pi/180)
 					n += 1
-					_NEC_UTIL_LOG.debug("theta %d phi %d current %f", theta,phi,powcurr)
+					_NEC_UTIL_LOG.debug("theta %d phi %d current %f @ %f deg", theta,phi,powcurr,phscurr)
 
 
 def whichNEC4():
