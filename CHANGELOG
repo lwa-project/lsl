@@ -8,6 +8,7 @@
   * Fixed a bug in the lsl.statistics.robust.checkfit function
   * Fixed a few modules that caused problems with automatic recasting in newer versions of NumPy
   * Cleaned up the lsl.misc.dedispersion.delay() function so that it will work with lists of single frequency values
+  * Small fix to the lsl.imaging.selfCal module to make it more robust when not all antennas are present
 
 1.1.0
   * Updated the lsl.imaging.deconv module to include a source-based CLEAN method and a forward-modeling/least squares method

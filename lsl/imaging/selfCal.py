@@ -402,7 +402,8 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
 			bestGains = numpy.exp(bestGains)
 			tempGains *= bestGains
 			
-			metric = (numpy.abs(bestGains)).max()
+			valid = numpy.where( numpy.abs(bestGains) < 1e6 )[0]
+			metric = (numpy.abs(bestGains[valid])).max()
 			if verbose:
 				print '    ', metric
 			if metric < amplitudeCutoff:
@@ -433,7 +434,8 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
 			bestPhaseOffsets = numpy.array(bestPhaseOffsets)
 			tempPhaseOffsets += bestPhaseOffsets
 			
-			metric = (numpy.abs(bestPhaseOffsets)).max()
+			valid = valid = numpy.where( numpy.abs(bestPhaseOffsets) < 1e6 )[0]
+			metric = (numpy.abs(bestPhaseOffsets[valid])).max()
 			if verbose:
 				print '    ', metric
 			if metric < phaseCutoff:
@@ -461,7 +463,8 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
 			bestDelays = numpy.array(bestDelays)
 			tempDelays += bestDelays
 			
-			metric = (numpy.abs(bestDelays)).max()
+			valid = numpy.where( numpy.abs(bestDelays) < 1e6 )[0]
+			metric = (numpy.abs(bestDelays[valid])).max()
 			if verbose:
 				print '    ', metric
 			if metric < delayCutoff:
@@ -494,8 +497,9 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
 			bestPhaseOffsets = numpy.array(bestPhaseOffsets)
 			tempPhaseOffsets += bestPhaseOffsets
 			
-			metric1 = (numpy.abs(bestDelays)).max()
-			metric2 = (numpy.abs(bestPhaseOffsets)).max()
+			valid = numpy.where( numpy.abs(bestDelays) < 1e6 )[0]
+			metric1 = (numpy.abs(bestDelays[valid])).max()
+			metric2 = (numpy.abs(bestPhaseOffsets[valid])).max()
 			if verbose:
 				print '    ', metric1, metric2
 			if metric1 < delayCutoff and metric2 < phaseCutoff:
