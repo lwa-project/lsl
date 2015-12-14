@@ -19,7 +19,7 @@ import ephem
 
 from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
-from lsl.commom.mcs import dpCompatibility, adpCompatibility
+from lsl.common.mcs import dpCompatibility, adpCompatibility
 from lsl.common.constants import *
 from lsl.misc.mathutil import to_dB, from_dB
 
