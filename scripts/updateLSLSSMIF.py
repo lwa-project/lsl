@@ -157,7 +157,7 @@ def main(args):
 		
 		try:
 			## Retrieve the list
-			ah = urllib.urlopen("http://lda10g.alliance.unm.edu/metadata/ssmif/")
+			ah = urllib.urlopen("http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/")
 			index = ah.read()
 			ah.close()
 			
@@ -178,14 +178,14 @@ def main(args):
 			print " "
 			
 			## Build the URL
-			urlToDownload = "http://lda10g.alliance.unm.edu/metadata/ssmif/%s" % versions[i][0]
+			urlToDownload = "http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/%s" % versions[i][0]
 		except Exception, e:
 			print "Error:  Cannot process reversion, %s" % str(e)
 			
 	elif config['update']:
 		# Update to the latest version
 		
-		urlToDownload = "http://lda10g.alliance.unm.edu/metadata/ssmif/SSMIF_CURRENT.txt"
+		urlToDownload = "http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/SSMIF_CURRENT.txt"
 		
 	elif config['filename'] is not None:
 		# Use the specified file
