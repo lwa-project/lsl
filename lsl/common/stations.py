@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
+# Python3 compatibility
 from __future__ import print_function
 import sys
 if sys.version_info > (3,):
@@ -19,15 +19,18 @@ import ephem
 
 from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *
+from lsl.commom.mcs import dpCompatibility, adpCompatibility
 from lsl.common.constants import *
 from lsl.misc.mathutil import to_dB, from_dB
 
-__version__ = '2.0'
+__version__ = '2.1'
 __revision__ = '$Rev$'
-__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 'lwa1', 'lwavl', 'lwana', 'PrototypeStation', 'prototypeSystem', '__version__', '__revision__', '__all__']
+__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 
+	   'lwa1', 'lwavl', 'lwana', 'lwasv',  'PrototypeStation', 'prototypeSystem', 
+	   '__version__', '__revision__', '__all__']
 
 
-_id2name = {'VL': 'LWA1', 'NA': 'LWANA'}
+_id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
 
 
 def geo2ecef(lat, lon, elev):
@@ -143,11 +146,11 @@ class LWAStation(ephem.Observer, LWAStationBase):
 	    AntennaArray instance
 	  * getGeocentricLocation: Return a tuple of the EC-EF coordinates of the 
 	    station
-	  * getECITransform: Return a 3x3 tranformation matrix to convert antenna
+	  * getECITransform: Return a 3x3 transformation matrix to convert antenna
 	    positions to ECI coordinates
-	  * getECIInverseTransform: Return a 3x3 tranformation matrix to convert antenna
+	  * getECIInverseTransform: Return a 3x3 transformation matrix to convert antenna
 	    positions from ECI coordinates
-	  * getENZOffset: Return the east, north, and vertial offsets to a point on
+	  * getENZOffset: Return the east, north, and vertical offsets to a point on
 	    the surface of the Earth
 	  * getPointingAndDistance: Return the pointing direction and distance to 
 	    another location on the surface of the Earth
@@ -230,7 +233,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		
 	def getECITransform(self):
 		"""
-		Return a 3x3 tranformation matrix that converts a baseline in 
+		Return a 3x3 transformation matrix that converts a baseline in 
 		[east, north, elevation] to earth-centered inertial coordinates
 		for that baseline [x, y, z].  Based off the 'local_to_eci' 
 		function in the lwda_fits-dev library.
@@ -242,7 +245,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 						
 	def getECIInverseTransform(self):
 		"""
-		Return a 3x3 tranformation matrix that converts a baseline in 
+		Return a 3x3 transformation matrix that converts a baseline in 
 		earth-centered inertial coordinates [x, y, z] to [east, north, 
 		elevation] for that baseline.
 		"""
@@ -256,7 +259,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		Given another location on the surface of the Earth, either as a 
 		LWAStation instance or a three-element tuple of latitude (deg.), 
 		longitude (deg.), and elevation (m), return the topocentric offset
-		in meter along the east, north, and veritcal directions.
+		in meter along the east, north, and vertical directions.
 		"""
 		
 		ecefFrom = self.getGeocentricLocation()
@@ -358,12 +361,12 @@ class Antenna(object):
 	Object to store the information about an antenna.  Stores antenna:
 	  * ID number (id)
 	  * ARX instance the antenna is attached to (arx)
-	  * DP1 board number (board)
-	  * DP1 digitizer number (digiziter)
-	  * DP rack input connector (input)
+	  * DP1/ROAQCH board number (board)
+	  * DP1/ROACH  digitizer number (digitizer)
+	  * DP/ADP rack input connector (input)
 	  * Stand instance the antenna is part of (stand)
 	  * Polarization (0 == N-S; pol)
-	  * Antenna vertial mis-alignment in degrees (theta)
+	  * Antenna vertical mis-alignment in degrees (theta)
 	  * Antenna rotation mis-alignment in degrees (phi)
 	  * Fee instance the antenna is attached to (fee)
 	  * Port of the FEE used for the antenna (feePort)
@@ -665,7 +668,7 @@ class Cable(object):
 		# Bulk delay for the cable
 		bulkDelay = self.length*self.stretch / (self.vf * c)
 		
-		# Dispersize delay in 
+		# Dispersion delay
 		dispDelay = self.dd * (self.length*self.stretch / 100.0) / numpy.sqrt(frequency / numpy.array(self.aFreq))
 		
 		totlDelay = bulkDelay + dispDelay + self.clockOffset
@@ -1119,7 +1122,7 @@ def __parseTextSSMIF(filename):
 			continue
 		
 		#
-		# DP 1 & 2 Data
+		# DP 1 & 2 Data - LWA1
 		#
 		
 		if keyword == 'N_DP1':
@@ -1196,6 +1199,83 @@ def __parseTextSSMIF(filename):
 			continue
 		
 		#
+		# ROACH & Server Data - LWA-SV
+		#
+		
+		if keyword == 'N_ROACH':
+			nRoach = int(value)
+			
+			roachID = ["UNK" for n in xrange(nRoach)]
+			roachSlot = [0 for n in xrange(nRoach)]
+			roachDesi = [1 for n in xrange(nRoach)]
+			
+			continue
+		
+		if keyword == 'N_ROACHCH':
+			nChanRoach = int(value)
+			
+			roachStat = [[3 for c in xrange(nChanRoach)] for n in xrange(nRoach)]
+			roachInR = [["UNK" for c in xrange(nChanRoach)] for n in xrange(nRoach)]
+			roachInC = [["UNK" for c in xrange(nChanRoach)] for n in xrange(nRoach)]
+			roachAnt = [[n*nChanRoach+c+1 for c in xrange(nChanRoach)] for n in xrange(nRoach)]
+			
+			continue
+		
+		if keyword == 'ROACH_ID':
+			roachID[ids[0]-1] = value
+			continue
+		
+		if keyword == 'ROACH_SLOT':
+			roachSlot[ids[0]-1] = value
+			continue
+		
+		if keyword == 'ROACH_DESI':
+			roachDesi[ids[0]-1] = int(value)
+			continue
+		
+		if keyword == 'ROACH_STAT':
+			roachStat[ids[0]-1][ids[1]-1] = int(value)
+			continue
+		
+		if keyword == 'ROACH_INR':
+			roachInR[ids[0]-1][ids[1]-1] = value
+			continue
+		
+		if keyword == 'ROACH_INC':
+			roachInC[ids[0]-1][ids[1]-1] = value
+			continue
+		
+		if keyword == 'ROACH_ANT':
+			roachAnt[ids[0]-1][ids[1]-1] = int(value)
+		
+		
+		if keyword == 'N_SERVER':
+			nServer = int(value)
+			
+			serverID = ["UNK" for n in xrange(nServer)]
+			serverSlot = ["UNK" for n in xrange(nServer)]
+			serverStat = [3 for n in xrange(nServer)]
+			serverDesi = [1 for n in xrange(nServer)]
+			
+			continue
+		
+		if keyword == 'SERVER_ID':
+			serverID[ids[0]-1] = value
+			continue
+		
+		if keyword == 'SERVER_SLOT':
+			serverSlot[ids[0]-1] = value
+			continue
+		
+		if keyword == 'SERVER_STAT':
+			serverStat[ids[0]-1] = int(value)
+			continue
+		
+		if keyword == 'SERVER_DESI':
+			serverDesi[ids[0]-1] = int(value)
+			continue
+		
+		#
 		# DR Data
 		#
 		
@@ -1243,93 +1323,19 @@ def __parseBinarySSMIF(filename):
 	
 	fh = open(filename, 'rb')
 	
-	bssmif = parseCStruct("""
-	int    iFormatVersion;           /* FORMAT_VERSION */
-	char   sStationID[3];            /* STATION_ID */
-	double fGeoN;                    /* GEO_N */
-	double fGeoE;                    /* GEO_E */
-	double fGeoEl;                   /* GEO_EL */
-	int    nStd;                     /* N_STD */
-	double fStdLx[ME_MAX_NSTD];      /* STD_LX[] */
-	double fStdLy[ME_MAX_NSTD];      /* STD_LY[] */
-	double fStdLz[ME_MAX_NSTD];      /* STD_LZ[] */
-	int    iAntStd[2*ME_MAX_NSTD];   /* ANT_STD[] */
-	int    iAntOrie[2*ME_MAX_NSTD];  /* ANT_ORIE[] */
-	int    iAntStat[2*ME_MAX_NSTD];  /* ANT_STAT[] */
-	float  fAntTheta[2*ME_MAX_NSTD]; /* ANT_THETA[] */
-	float  fAntPhi[2*ME_MAX_NSTD];   /* ANT_PHI[] */
-	int    eAntDesi[2*ME_MAX_NSTD];  /* ANT_DESI[] */
-	%s
-	int    nFEE;                     /* N_FEE */
-	char   sFEEID[ME_MAX_NFEE][ME_MAX_FEEID_LENGTH+1]; /* FEE_ID[] */
-	int    iFEEStat[ME_MAX_NFEE];    /* FEE_STAT[] */
-	int    eFEEDesi[ME_MAX_NFEE];    /* FEE_DESI[] */
-	float  fFEEGai1[ME_MAX_NFEE];    /* FEE_GAI1[] */
-	float  fFEEGai2[ME_MAX_NFEE];    /* FEE_GAI2[] */
-	int    iFEEAnt1[ME_MAX_NFEE];    /* FEE_ANT1[] */
-	int    iFEEAnt2[ME_MAX_NFEE];    /* FEE_ANT2[] */
-	int    iFEERack[ME_MAX_NFEE];    /* FEE_RACK[] */
-	int    iFEEPort[ME_MAX_NFEE];    /* FEE_PORT[] */
-	int    nRPD;                     /* N_RPD */
-	char   sRPDID[ME_MAX_NRPD][ME_MAX_RPDID_LENGTH+1]; /* RPD_ID[] */
-	int    iRPDStat[ME_MAX_NRPD];    /* RPD_STAT[] */
-	int    eRPDDesi[ME_MAX_NRPD];    /* RPD_DESI[] */
-	float  fRPDLeng[ME_MAX_NRPD];    /* RPD_LENG[] */
-	float  fRPDVF[ME_MAX_NRPD];      /* RPD_VF[] */
-	float  fRPDDD[ME_MAX_NRPD];      /* RPD_DD[] */
-	float  fRPDA0[ME_MAX_NRPD];      /* RPD_A0[] */
-	float  fRPDA1[ME_MAX_NRPD];      /* RPD_A1[] */
-	float  fRPDFref[ME_MAX_NRPD];    /* RPD_FREF[] */
-	float  fRPDStr[ME_MAX_NRPD];     /* RPD_STR[] */
-	int    iRPDAnt[ME_MAX_NRPD];     /* RPD_ANT[] */
-	int    nSEP;                     /* N_SEP */
-	char   sSEPID[ME_MAX_NSEP][ME_MAX_SEPID_LENGTH+1]; /* SEP_ID[] */
-	int    iSEPStat[ME_MAX_NSEP];    /* SEP_STAT[] */
-	char   sSEPCabl[ME_MAX_NSEP][ME_MAX_SEPCABL_LENGTH+1]; /* SEP_Cabl[] */
-	float  fSEPLeng[ME_MAX_NSEP];    /* SEP_LENG[] */
-	int    eSEPDesi[ME_MAX_NSEP];    /* SEP_DESI[] */
-	float  fSEPGain[ME_MAX_NSEP];    /* SEP_GAIN[] */
-	int    iSEPAnt[ME_MAX_NSEP];     /* SEP_ANT[] */
-	int    nARB;                     /* N_ARB */
-	int    nARBCH;                   /* N_ARBCH */
-	char   sARBID[ME_MAX_NARB][ME_MAX_ARBID_LENGTH+1]; /* ARB_ID[] */
-	int    iARBSlot[ME_MAX_NARB];    /* ARB_SLOT[] */
-	int    eARBDesi[ME_MAX_NARB];    /* ARB_DESI[] */
-	int    iARBRack[ME_MAX_NARB];    /* ARB_RACK[] */
-	int    iARBPort[ME_MAX_NARB];    /* ARB_PORT[] */
-	int    eARBStat[ME_MAX_NARB][ME_MAX_NARBCH];       /* ARB_STAT[][] */
-	float  fARBGain[ME_MAX_NARB][ME_MAX_NARBCH];        /* ARB_GAIN[][] */
-	int    iARBAnt[ME_MAX_NARB][ME_MAX_NARBCH];        /* ARB_ANT[][] */
-	char   sARBIN[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_IN[][] */
-	char   sARBOUT[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_OUT[][] */
-	int    nDP1;                     /* N_DP1 */
-	int    nDP1Ch;                     /* N_DP1CH */
-	char   sDP1ID[ME_MAX_NDP1][ME_MAX_DP1ID_LENGTH+1]; /* DP1_ID[] */
-	char   sDP1Slot[ME_MAX_NDP1][ME_MAX_DP1ID_LENGTH+1]; /* DP1_SLOT[] */
-	int    eDP1Desi[ME_MAX_NDP1]; /* DP1_DESI[] */
-	int    eDP1Stat[ME_MAX_NDP1][ME_MAX_NDP1CH];       /* DP1_STAT[][] */
-	char   sDP1INR[ME_MAX_NDP1][ME_MAX_NDP1CH][ME_MAX_DP1ID_LENGTH+1]; /* DP1_INR[][] */
-	char   sDP1INC[ME_MAX_NDP1][ME_MAX_NDP1CH][ME_MAX_DP1ID_LENGTH+1]; /* DP1_INC[][] */
-	int    iDP1Ant[ME_MAX_NDP1][ME_MAX_NDP1CH];        /* DP1_ANT[][] */
-	int    nDP2;                     /* N_DP2 */
-	char   sDP2ID[ME_MAX_NDP2][ME_MAX_DP2ID_LENGTH+1]; /* DP2_ID[] */
-	char   sDP2Slot[ME_MAX_NDP2][ME_MAX_DP2ID_LENGTH+1]; /* DP1_SLOT[] */
-	int    eDP2Stat[ME_MAX_NDP2];       /* DP2_STAT[] */
-	int    eDP2Desi[ME_MAX_NDP2];       /* DP2_DESI[] */
-	int    nDR;                     /* N_DR */
-	int    eDRStat[ME_MAX_NDR];       /* DR_STAT[] */
-	char   sDRID[ME_MAX_NDR][ME_MAX_DRID_LENGTH+1]; /* DR_ID[] */
-	char   sDRPC[ME_MAX_NDR][ME_MAX_DRID_LENGTH+1]; /* DR_PC[] */
-	int    iDRDP[ME_MAX_NDR];       /* DR_DP[] */
-	int    nPwrRack;                /* N_PWR_RACK */
-	int    nPwrPort[ME_MAX_RACK];   /* N_PWR_PORT[] */
-	int    ePwrSS[ME_MAX_RACK][ME_MAX_NPWRPORT]; /* PWR_SS[][], converted to a LWA_SID_ value */
-	char   sPwrName[ME_MAX_RACK][ME_MAX_NPWRPORT][ME_MAX_SSNAME_LENGTH+1]; /* PWR_NAME[][] */
-	int    eCRA;                /* MCS_CRA */
-	float  fPCAxisTh; /* PC_AXIS_TH */
-	float  fPCAxisPh; /* PC_AXIS_PH */
-	float  fPCRot;    /* PC_ROT */
-	""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), charMode='int', endianness='little')
+	# Read in the first four bytes to get the version code and go from there
+	version = fh.read(4)
+	version = struct.unpack('<i', version)[0]
+	fh.seek(0)
+	
+	if version in (8,):
+		## ADP
+		mode = adpCompatibility
+	else:
+		## DP
+		mode = dpCompatibility
+	bssmif = mode.parseCStruct(mode.SSMIF_STRUCT, charMode='int', endianness='little')
+	bsettings = mode.parseCStruct(mode.STATION_SETTINGS_STRUCT, endianness='little')
 	
 	fh.readinto(bssmif)
 	
@@ -1402,28 +1408,51 @@ def __parseBinarySSMIF(filename):
 	arxOut   = single2multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
 	arxOUt   = [[''.join(i) for i in j] for j in arxOut]
 	
-	#
-	# DP 1 & 2 Data
-	#
-	dp1ID   = single2multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
-	dp1ID   = [''.join([k for k in i if k != '\x00']) for i in dp1ID]
-	dp1Slot = single2multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
-	dp1Slot = [''.join([k for k in i if k != '\x00']) for i in dp1Slot]
-	dp1Desi = list(bssmif.eDP1Desi)
-	dp1Stat = list(bssmif.eDP1Stat)
-	dp1InR  = single2multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
-	dp1InR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InR]
-	dp1InC  = single2multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
-	dp1InC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InC]
-	dp1Ant  = single2multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
-	
-	dp2ID   = single2multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
-	dp2ID   = [''.join([k for k in i if k != '\x00']) for i in dp2ID]
-	dp2Slot = single2multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
-	dp2Slot = [''.join([k for k in i if k != '\x00']) for i in dp2Slot]
-	dp2Stat = list(bssmif.eDP2Stat)
-	dp2Desi = list(bssmif.eDP2Desi)
-	
+	try:
+		#
+		# DP 1 & 2 Data
+		#
+		dp1ID   = single2multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
+		dp1ID   = [''.join([k for k in i if k != '\x00']) for i in dp1ID]
+		dp1Slot = single2multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
+		dp1Slot = [''.join([k for k in i if k != '\x00']) for i in dp1Slot]
+		dp1Desi = list(bssmif.eDP1Desi)
+		dp1Stat = list(bssmif.eDP1Stat)
+		dp1InR  = single2multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
+		dp1InR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InR]
+		dp1InC  = single2multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
+		dp1InC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InC]
+		dp1Ant  = single2multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
+		
+		dp2ID   = single2multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
+		dp2ID   = [''.join([k for k in i if k != '\x00']) for i in dp2ID]
+		dp2Slot = single2multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
+		dp2Slot = [''.join([k for k in i if k != '\x00']) for i in dp2Slot]
+		dp2Stat = list(bssmif.eDP2Stat)
+		dp2Desi = list(bssmif.eDP2Desi)
+	except AttributeError:
+		#
+		# ROACH & Server Data
+		#
+		roachID   = single2multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
+		roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
+		roachSlot = single2multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
+		roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
+		roachDesi = list(bssmif.eRoachDesi)
+		roachStat = list(bssmif.eROoachStat)
+		roachInR  = single2multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
+		roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
+		roachInC  = single2multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
+		roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
+		roachAnt  = single2multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
+		
+		serverID   = single2multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+		serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
+		serverSlot = single2multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+		serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
+		serverStat = list(bssmif.eServerStat)
+		serverDesi = list(bssmif.eServerDesi)
+		
 	#
 	# DR Data
 	#
@@ -1435,35 +1464,7 @@ def __parseBinarySSMIF(filename):
 	drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
 	drDP   = list(bssmif.iDRDP)
 	
-	settings = parseCStruct("""
-	signed short int mrp_asp; // SESSION_MRP_ASP // MRP_ASP
-	signed short int mrp_dp;  // SESSION_MRP_DP_ // MRP_DP_
-	signed short int mrp_dr1; // SESSION_MRP_DR1 // MRP_DR1
-	signed short int mrp_dr2; // SESSION_MRP_DR2 // MRP_DR2
-	signed short int mrp_dr3; // SESSION_MRP_DR3 // MRP_DR3
-	signed short int mrp_dr4; // SESSION_MRP_DR4 // MRP_DR4
-	signed short int mrp_dr5; // SESSION_MRP_DR5 // MRP_DR5
-	signed short int mrp_shl; // SESSION_MRP_SHL // MRP_SHL
-	signed short int mrp_mcs; // SESSION_MRP_MCS // MRP_MCS
-	signed short int mup_asp; // SESSION_MUP_ASP // MUP_ASP
-	signed short int mup_dp;  // SESSION_MUP_DP_ // MUP_DP_
-	signed short int mup_dr1; // SESSION_MUP_DR1 // MUP_DR1
-	signed short int mup_dr2; // SESSION_MUP_DR2 // MUP_DR2
-	signed short int mup_dr3; // SESSION_MUP_DR3 // MUP_DR3
-	signed short int mup_dr4; // SESSION_MUP_DR4 // MUP_DR4
-	signed short int mup_dr5; // SESSION_MUP_DR5 // MUP_DR5
-	signed short int mup_shl; // SESSION_MUP_SHL // MUP_SHL
-	signed short int mup_mcs; // SESSION_MUP_MCS // MUP_MCS
-	signed short int fee[LWA_MAX_NSTD];     // OBS_FEE[LWA_MAX_NSTD][2]  // FEE[LWA_MAX_NSTD]
-	signed short int asp_flt[LWA_MAX_NSTD]; // OBS_ASP_FLT[LWA_MAX_NSTD] // ASP_FLT[LWA_MAX_NSTD]
-	signed short int asp_at1[LWA_MAX_NSTD]; // OBS_ASP_AT1[LWA_MAX_NSTD] // ASP_AT1[LWA_MAX_NSTD]
-	signed short int asp_at2[LWA_MAX_NSTD]; // OBS_ASP_AT2[LWA_MAX_NSTD] // ASP_AT2[LWA_MAX_NSTD]
-	signed short int asp_ats[LWA_MAX_NSTD]; // OBS_ASP_ATS[LWA_MAX_NSTD] // ASP_ATS[LWA_MAX_NSTD]
-	signed short int tbn_gain; // OBS_TBN_GAIN // TBN_GAIN
-	signed short int drx_gain; // OBS_DRX_GAIN // DRX_GAIN
-	""", endianness='little')
-	
-	fh.readinto(settings)
+	fh.readinto(bsettings)
 	
 	fh.close()
 	
@@ -1550,18 +1551,30 @@ def parseSSMIF(filename):
 			channel = j + 1
 			antennas[ant-1].arx = ARX(boardID, channel=channel, aspChannel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
 			
-	# Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
-	# with DP2 boards at 1 and 15.
-	i = 1
-	j = 1
-	for brd,inp in zip(dp1Ant,dp1InR):
-		for ant,con in zip(brd,inp):
-			antennas[ant-1].board = i + 1 + (i/14)
-			antennas[ant-1].digitizer = j
-			antennas[ant-1].input = con
-			j += 1
-		i += 1
-		
+	try:
+		# Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
+		# with DP2 boards at 1 and 15.
+		i = 1
+		j = 1
+		for brd,inp in zip(dp1Ant,dp1InR):
+			for ant,con in zip(brd,inp):
+				antennas[ant-1].board = i + 1 + (i/14)
+				antennas[ant-1].digitizer = j
+				antennas[ant-1].input = con
+				j += 1
+			i += 1
+	except NameError:
+		# Associate ROACH board and digitizer numbers with Antennas.
+		i = 1
+		j = 1
+		for brd,inp in zip(roachAnt,roachInR):
+			for ant,con in zip(brd,inp):
+				antennas[ant-1].board = i
+				antennas[ant-1].digitizer = j
+				antennas[ant-1].input = con
+				j += 1
+			i += 1
+			
 	# Build a Station
 	try:
 		station = LWAStation(_id2name[idn], lat, lon, elv, id=idn, antennas=antennas)
@@ -1582,6 +1595,10 @@ lwa1 = lwavl
 # LWANA
 _ssmifna = os.path.join(dataPath, 'lwana-ssmif.txt')
 lwana = parseSSMIF(_ssmifna)
+
+# LWASV
+_ssmifsv = os.path.join(dataPath, 'lwasv-ssmif.txt')
+lwasv = parseSSMIF(_ssmifsv)
 
 
 class PrototypeStation(LWAStation):

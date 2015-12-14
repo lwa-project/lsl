@@ -15,18 +15,20 @@ and :class:`lsl.common.sdm.SDM`.
 
 import os
 import re
+import copy
 import glob
 import shutil
 import tarfile
 import tempfile
 from datetime import datetime, timedelta
 
-from lsl.common.dp import fS, word2freq
+from lsl.common import dp as dpCommon
+from lsl.common import adp as adpCommon
 from lsl.common import stations, sdm, sdf
 from lsl.common.mcs import *
 from lsl.transform import Time
 
-__version__ = '0.7'
+__version__ = '1.0'
 __revision__ = '$Rev$'
 __all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 'getASPConfiguration', 'getASPConfigurationSummary', '__version__', '__revision__', '__all__']
 
@@ -42,101 +44,62 @@ def readSESFile(filename):
 	
 	# Read the SES
 	fh = open(filename, 'rb')
-
-	ses = parseCStruct("""
-	unsigned short int FORMAT_VERSION;
-	char PROJECT_ID[9];
-	unsigned int SESSION_ID;
-	unsigned short int SESSION_CRA;
-	signed short int SESSION_DRX_BEAM;
-	char SESSION_SPC[32];
-	%s
-	unsigned long int SESSION_START_MJD;
-	unsigned long int SESSION_START_MPM;
-	unsigned long int SESSION_DUR;
-	unsigned int SESSION_NOBS;
-	signed short int SESSION_MRP_ASP;
-	signed short int SESSION_MRP_DP_;
-	signed short int SESSION_MRP_DR1;
-	signed short int SESSION_MRP_DR2;
-	signed short int SESSION_MRP_DR3;
-	signed short int SESSION_MRP_DR4;
-	signed short int SESSION_MRP_DR5;
-	signed short int SESSION_MRP_SHL;
-	signed short int SESSION_MRP_MCS;
-	signed short int SESSION_MUP_ASP;
-	signed short int SESSION_MUP_DP_;
-	signed short int SESSION_MUP_DR1;
-	signed short int SESSION_MUP_DR2;
-	signed short int SESSION_MUP_DR3;
-	signed short int SESSION_MUP_DR4;
-	signed short int SESSION_MUP_DR5;
-	signed short int SESSION_MUP_SHL;
-	signed short int SESSION_MUP_MCS;
-	signed char SESSION_LOG_SCH;
-	signed char SESSION_LOG_EXE;
-	signed char SESSION_INC_SMIB;
-	signed char SESSION_INC_DES;
-	""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), endianness='little')
-
-	fh.readinto(ses)
 	
-	if ses.SESSION_NOBS > 150:
+	# Read in the first four bytes to get the version code and go from there
+	version = fh.read(4)
+	version = struct.unpack('<i', version)[0]
+	fh.seek(0)
+	
+	if version in (8,):
+		## ADP
+		mode = adpCompatibility
+	else:
+		## DP
+		mode = dpCompatibility
+	bses = mode.parseCStruct(mode.SSF_STRUCT, endianness='little')
+	
+	fh.readinto(bses)
+	
+	if bses.SESSION_NOBS > 150:
+		## Pre SESSION_SPC
 		fh.seek(0)
 		
-		ses = parseCStruct("""
-		unsigned short int FORMAT_VERSION;
-		char PROJECT_ID[9];
-		unsigned int SESSION_ID;
-		unsigned short int SESSION_CRA;
-		signed short int SESSION_DRX_BEAM;
-		%s
-		unsigned long int SESSION_START_MJD;
-		unsigned long int SESSION_START_MPM;
-		unsigned long int SESSION_DUR;
-		unsigned int SESSION_NOBS;
-		signed short int SESSION_MRP_ASP;
-		signed short int SESSION_MRP_DP_;
-		signed short int SESSION_MRP_DR1;
-		signed short int SESSION_MRP_DR2;
-		signed short int SESSION_MRP_DR3;
-		signed short int SESSION_MRP_DR4;
-		signed short int SESSION_MRP_DR5;
-		signed short int SESSION_MRP_SHL;
-		signed short int SESSION_MRP_MCS;
-		signed short int SESSION_MUP_ASP;
-		signed short int SESSION_MUP_DP_;
-		signed short int SESSION_MUP_DR1;
-		signed short int SESSION_MUP_DR2;
-		signed short int SESSION_MUP_DR3;
-		signed short int SESSION_MUP_DR4;
-		signed short int SESSION_MUP_DR5;
-		signed short int SESSION_MUP_SHL;
-		signed short int SESSION_MUP_MCS;
-		signed char SESSION_LOG_SCH;
-		signed char SESSION_LOG_EXE;
-		signed char SESSION_INC_SMIB;
-		signed char SESSION_INC_DES;
-		""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",), endianness='little')
-
-		fh.readinto(ses)
-		ses.SESSION_SPC = ''
+		newStruct = []
+		for line in mode.SSF_STRUCT.split('\n'):
+			if line.find('SESSION_SPC') != -1:
+				continue
+			newStruct.append(line)
+		newStruct = '\n'.join(newStruct)
+		
+		bses = mode.parseCStruct(newStruct, endianness='little')
+		
+		fh.readinto(bses)
+		bses.SESSION_SPC = ''
 	fh.close()
 	
-	record = {'ASP': ses.SESSION_MRP_ASP, 'DP_': ses.SESSION_MRP_DP_, 'SHL': ses.SESSION_MRP_SHL, 
-			'MCS': ses.SESSION_MRP_MCS, 'DR1': ses.SESSION_MRP_DR1, 'DR2': ses.SESSION_MRP_DR2, 
-			'DR3': ses.SESSION_MRP_DR3, 'DR4': ses.SESSION_MRP_DR4, 'DR5': ses.SESSION_MRP_DR5}
+	if mode == adpCompatibility:
+		record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
+				'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2, 
+				'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4, 'DR5': bses.SESSION_MRP_DR5}
+		
+		update = {'ASP': bses.SESSION_MUP_ASP, 'ADP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
+				'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2, 
+				'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4, 'DR5': bses.SESSION_MUP_DR5}
+	else:
+		record = {'ASP': bses.SESSION_MRP_ASP, 'DP_': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
+				'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2, 
+				'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4, 'DR5': bses.SESSION_MRP_DR5}
+		
+		update = {'ASP': bses.SESSION_MUP_ASP, 'DP_': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
+				'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2, 
+				'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4, 'DR5': bses.SESSION_MUP_DR5}
 	
-	update = {'ASP': ses.SESSION_MUP_ASP, 'DP_': ses.SESSION_MUP_DP_, 'SHL': ses.SESSION_MUP_SHL, 
-			'MCS': ses.SESSION_MUP_MCS, 'DR1': ses.SESSION_MUP_DR1, 'DR2': ses.SESSION_MUP_DR2, 
-			'DR3': ses.SESSION_MUP_DR3, 'DR4': ses.SESSION_MUP_DR4, 'DR5': ses.SESSION_MUP_DR5}
-	
-	return {'version': ses.FORMAT_VERSION, 'projectID': ses.PROJECT_ID.lstrip().rstrip(), 
-		   'sessionID': ses.SESSION_ID,  'CRA': ses.SESSION_CRA,  'drxBeam': ses.SESSION_DRX_BEAM,
-		   'spcSetup': ses.SESSION_SPC, 'MJD': ses.SESSION_START_MJD, 'MPM': ses.SESSION_START_MPM, 
-		   'Dur': ses.SESSION_DUR, 'nObs': ses.SESSION_NOBS, 'record': record, 'update': update, 
-		   'logSch': ses.SESSION_LOG_SCH, 'logExe': ses.SESSION_LOG_EXE, 'incSMIF': ses.SESSION_INC_SMIB,
-		   'incDesi': ses.SESSION_INC_DES}
+	return {'version': bses.FORMAT_VERSION, 'projectID': bses.PROJECT_ID.lstrip().rstrip(), 
+		   'sessionID': bses.SESSION_ID,  'CRA': bses.SESSION_CRA,  'drxBeam': bses.SESSION_DRX_BEAM,
+		   'spcSetup': bses.SESSION_SPC, 'MJD': bses.SESSION_START_MJD, 'MPM': bses.SESSION_START_MPM, 
+		   'Dur': bses.SESSION_DUR, 'nObs': bses.SESSION_NOBS, 'record': record, 'update': update, 
+		   'logSch': bses.SESSION_LOG_SCH, 'logExe': bses.SESSION_LOG_EXE, 'incSMIF': bses.SESSION_INC_SMIB,
+		   'incDesi': bses.SESSION_INC_DES}
 
 
 def readOBSFile(filename):
@@ -148,118 +111,81 @@ def readOBSFile(filename):
 	# Read the OBS
 	fh = open(filename, 'rb')
 	
-	header = parseCStruct("""
-	unsigned short int FORMAT_VERSION;
-	char               PROJECT_ID[9];
-	unsigned int       SESSION_ID;
-	signed short int   SESSION_DRX_BEAM;
-	char               SESSION_SPC[32];
-	unsigned int       OBS_ID; 
-	unsigned long int  OBS_START_MJD;
-	unsigned long int  OBS_START_MPM;
-	unsigned long int  OBS_DUR;
-	unsigned short int OBS_MODE;
-	char               OBS_BDM[32];  /* added 140310 */
-	float              OBS_RA;
-	float              OBS_DEC;
-	unsigned short int OBS_B;
-	unsigned int       OBS_FREQ1;
-	unsigned int       OBS_FREQ2;
-	unsigned short int OBS_BW;
-	unsigned int       OBS_STP_N;
-	unsigned short int OBS_STP_RADEC;
-	""", endianness='little')
+	# Read in the first four bytes to get the version code and go from there
+	version = fh.read(4)
+	version = struct.unpack('<i', version)[0]
+	fh.seek(0)
 	
-	fh.readinto(header)
+	if version in (8,):
+		## ADP
+		mode = adpCompatibility
+		word2freq = adpCommon.word2freq
+	else:
+		## DP
+		mode = dpCompatibility
+		word2freq = dpCommon.word2freq
+	bheader = mode.parseCStruct(mode.OSF_STRUCT, endianness='little')
+	bstep   = mode.parseCStruct(mode.OSFS_STRUCT, endianness='little')
+	bbeam   = mode.parseCStruct(mode.BEAM_STRUCT, endianness='little')
+	bfooter = mode.parseCStruct(mode.OSFS2_STRUCT, endianness='little')
 	
-	if header.OBS_ID > 150:
+	fh.readinto(bheader)
+	
+	if bheader.OBS_ID > 150:
+		## Pre SESSION_SPC and OBS_BDM
 		fh.seek(0)
 		
-		header = parseCStruct("""
-		unsigned short int FORMAT_VERSION;
-		char               PROJECT_ID[9];
-		unsigned int       SESSION_ID;
-		signed short int   SESSION_DRX_BEAM;
-		unsigned int       OBS_ID; 
-		unsigned long int  OBS_START_MJD;
-		unsigned long int  OBS_START_MPM;
-		unsigned long int  OBS_DUR;
-		unsigned short int OBS_MODE;
-		float              OBS_RA;
-		float              OBS_DEC;
-		unsigned short int OBS_B;
-		unsigned int       OBS_FREQ1;
-		unsigned int       OBS_FREQ2;
-		unsigned short int OBS_BW;
-		unsigned int       OBS_STP_N;
-		unsigned short int OBS_STP_RADEC;
-		""", endianness='little')
+		newStruct = []
+		for line in mode.OSF_STRUCT.split('\n'):
+			if line.find('OBS_BDM') != -1:
+				continue
+			if line.find('SESSION_SPC') != -1:
+				continue
+			newStruct.append(line)
+		newStruct = '\n'.join(newStruct)
 		
-		fh.readinto(header)
-		header.SESSION_SPC = ''
-		header.OBS_BDM = ''
+		bheader = mode.parseCStruct(newStruct, endianness='little')
 		
-	elif header.OBS_B > 2:
+		fh.readinto(bheader)
+		bheader.SESSION_SPC = ''
+		bheader.OBS_BDM = ''
+		
+	elif bheader.OBS_B > 2:
+		## Pre OBS_BDM
 		fh.seek(0)
 		
-		header = parseCStruct("""
-		unsigned short int FORMAT_VERSION;
-		char               PROJECT_ID[9];
-		unsigned int       SESSION_ID;
-		signed short int   SESSION_DRX_BEAM;
-		char               SESSION_SPC[32];
-		unsigned int       OBS_ID; 
-		unsigned long int  OBS_START_MJD;
-		unsigned long int  OBS_START_MPM;
-		unsigned long int  OBS_DUR;
-		unsigned short int OBS_MODE;
-		float              OBS_RA;
-		float              OBS_DEC;
-		unsigned short int OBS_B;
-		unsigned int       OBS_FREQ1;
-		unsigned int       OBS_FREQ2;
-		unsigned short int OBS_BW;
-		unsigned int       OBS_STP_N;
-		unsigned short int OBS_STP_RADEC;
-		""", endianness='little')
+		newStruct = []
+		for line in mode.OSF_STRUCT.split('\n'):
+			if line.find('OBS_BDM') != -1:
+				continue
+			newStruct.append(line)
+		newStruct = '\n'.join(newStruct)
 		
-		fh.readinto(header)
-		header.OBS_BDM = ''
+		bheader = mode.parseCStruct(newStruct, endianness='little')
+		
+		fh.readinto(bheader)
+		bheader.OBS_BDM = ''
 		
 	if IS_32BIT_PYTHON:
-		skip = parseCStruct("""
+		skip = mode.parseCStruct("""
 		int junk;
 		""", endianness='little')
 		fh.readinto(skip)
 
 	steps = []
 	for n in xrange(header.OBS_STP_N):
-		obsStep = parseCStruct("""
-		float              OBS_STP_C1;
-		float              OBS_STP_C2;
-		unsigned int       OBS_STP_T;
-		unsigned int       OBS_STP_FREQ1;
-		unsigned int       OBS_STP_FREQ2;
-		unsigned short int OBS_STP_B;
-		""", endianness='little')
-		
-		fh.readinto(obsStep)
+		fh.readinto(bstep)
 		if obsStep.OBS_STP_B == 3:
-			beamBlock = parseCStruct("""
-			unsigned short int OBS_BEAM_DELAY[2*LWA_MAX_NSTD];
-			signed short int   OBS_BEAM_GAIN[LWA_MAX_NSTD][2][2];
-			""", endianness='little')
-			
-			fh.readinto(beamBlock)
-			obsStep.delay = beamBlock.OBS_BEAM_DELAY
-			obsStep.gain  = single2multi(beamBlock.OBS_BEAM_GAIN, *beamBlock.dims['OBS_BEAM_GAIN'])
+			fh.readinto(bbeam)
+			obsStep.delay = copy.deepcopy(bbeam.OBS_BEAM_DELAY)
+			obsStep.gain  = copy.deepcopy(single2multi(bbeam.OBS_BEAM_GAIN, *bbeam.dims['OBS_BEAM_GAIN']))
 		else:
 			obsStep.delay = []
 			obsStep.gain  = []
 		
-		steps.append(obsStep)
+		steps.append(copy.deepcopy(bstep))
 		
-		alignment = parseCStruct("""
+		alignment = mode.parseCStruct("""
 		unsigned int block;
 		""", endianness='little')
 		
@@ -268,40 +194,33 @@ def readOBSFile(filename):
 		if alignment.block != (2**32 - 2):
 			raise IOError("Byte alignment lost at byte %i" % fh.tell())
 			
-	footer = parseCStruct("""
-	signed short int   OBS_FEE[LWA_MAX_NSTD][2];
-	signed short int   OBS_ASP_FLT[LWA_MAX_NSTD];
-	signed short int   OBS_ASP_AT1[LWA_MAX_NSTD];
-	signed short int   OBS_ASP_AT2[LWA_MAX_NSTD];
-	signed short int   OBS_ASP_ATS[LWA_MAX_NSTD];
-	unsigned short int OBS_TBW_BITS;
-	unsigned int       OBS_TBW_SAMPLES;
-	signed short int   OBS_TBN_GAIN;
-	signed short int   OBS_DRX_GAIN;
-	unsigned int alignment;
-	""", endianness='little')
+	fh.readinto(bfooter)
 	
-	fh.readinto(footer)
-	
-	if footer.alignment != (2**32 - 1):
+	if bfooter.alignment != (2**32 - 1):
 		raise IOError("Byte alignment lost at byte %i" % fh.tell())
 		
 	fh.close()
 	
-	return {'version': header.FORMAT_VERSION, 'projectID': header.PROJECT_ID.lstrip().rstrip(), 
-		   'sessionID': header.SESSION_ID, 'drxBeam': header.SESSION_DRX_BEAM, 
-		   'spcSetup': header.SESSION_SPC, 'obsID': header.OBS_ID,
-		   'MJD': header.OBS_START_MJD, 'MPM': header.OBS_START_MPM, 'Dur': header.OBS_DUR, 
-		   'Mode': header.OBS_MODE, 'beamDipole': header.OBS_BDM, 
-		   'RA': header.OBS_RA, 'Dec': header.OBS_DEC, 'Beam': header.OBS_B, 'Freq1': word2freq(header.OBS_FREQ1), 
-		   'Freq2': word2freq(header.OBS_FREQ2), 'BW': header.OBS_BW, 'nSteps': header.OBS_STP_N, 
-		   'StepRADec': header.OBS_STP_RADEC,  'steps': steps, 
-		   'fee': single2multi(footer.OBS_FEE, *footer.dims['OBS_FEE']), 
-		   'flt': list(footer.OBS_ASP_FLT), 'at1': list(footer.OBS_ASP_AT1), 
-		   'at2': list(footer.OBS_ASP_AT2), 'ats': list(footer.OBS_ASP_ATS), 
-		   'tbwBits': footer.OBS_TBW_BITS, 'tbwSamples': footer.OBS_TBW_SAMPLES, 
-		   'tbnGain': footer.OBS_TBN_GAIN,  
-		   'drxGain': footer.OBS_DRX_GAIN}
+	output = {'version': bheader.FORMAT_VERSION, 'projectID': bheader.PROJECT_ID.lstrip().rstrip(), 
+		     'sessionID': bheader.SESSION_ID, 'drxBeam': bheader.SESSION_DRX_BEAM, 
+		     'spcSetup': bheader.SESSION_SPC, 'obsID': bheader.OBS_ID,
+		     'MJD': bheader.OBS_START_MJD, 'MPM': bheader.OBS_START_MPM, 'Dur': bheader.OBS_DUR, 
+		     'Mode': bheader.OBS_MODE, 'beamDipole': bheader.OBS_BDM, 
+		     'RA': bheader.OBS_RA, 'Dec': bheader.OBS_DEC, 'Beam': bheader.OBS_B, 
+		     'Freq1': word2freq(bheader.OBS_FREQ1), 'Freq2': word2freq(bheader.OBS_FREQ2), 'BW': bheader.OBS_BW, 'nSteps': bheader.OBS_STP_N, 'StepRADec': bheader.OBS_STP_RADEC,  'steps': steps, 
+		     'fee': single2multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
+		     'flt': list(bfooter.OBS_ASP_FLT), 'at1': list(bfooter.OBS_ASP_AT1), 
+		     'at2': list(bfooter.OBS_ASP_AT2), 'ats': list(bfooter.OBS_ASP_ATS)}
+	if mode == adpCompatibility:
+		output['tbfSamples'] = bfooter.OBS_TBF_SAMPLES
+		output['tbfGain'] = bfooter.OBS_TBF_GAIN
+	else:
+		output['tbwBits'] = bfooter.OBS_TBW_BITS
+		output['tbwSamples'] = bfooter.OBS_TBW_SAMPLES
+	output['tbnGain'] = bfooter.OBS_TBN_GAIN
+	output['drxGain'] = bfooter.OBS_DRX_GAIN
+	
+	return output
 
 
 def readCSFile(filename):

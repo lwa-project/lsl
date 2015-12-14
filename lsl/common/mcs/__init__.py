@@ -61,58 +61,28 @@ from ctypes import *
 from aipy import coord
 from datetime import datetime
 
-from lsl.common.dp import gaintoDPG, DPGtogain, delaytoDPD, DPDtodelay
+from lsl.common import dp as dpCommon
+from lsl.common import adp as adpCommon
 
 
-__version__ = '0.8'
-__revision__ = '$Rev$'
-__all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
+__version__ = '1.0'
+__revision__ = '$Rev: -1 $'
+__all__ = ['COMPATIBILITY_MODE', 'setCompatibilityMode', 
+			'ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
 			'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
 			'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
-			'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'IS_32BIT_PYTHON', 
+			'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'IS_32BIT_PYTHON', 'SSMIF_STRUCT', 
 			'delaytoMCSD', 'MCSDtodelay', 'gaintoMCSG', 'MCSGtogain',
 			'mjdmpm2datetime', 'datetime2mjdmpm', 'status2string', 'summary2string', 'sid2string', 'cid2string', 
 			'mode2string', 'parseCStruct', 'single2multi', 'applyPointingCorrection', 'MIB', 'MIBEntry', 
 			'__version__', '__revision__', '__all__']
 
 
-ME_SSMIF_FORMAT_VERSION = 5	# SSMIF format version code
-ME_MAX_NSTD = 260			# Maximum number of stands that can be described
-ME_MAX_NFEE = 260			# Maximum number of FEEs that can be described
-ME_MAX_FEEID_LENGTH = 10		# Number of characters in FEE ID name
-ME_MAX_RACK = 6			# Maximum number of racks?
-ME_MAX_PORT = 50			# Maximum number of ports?
-ME_MAX_NRPD = 520			# Maxmimum number of RPD cables
-ME_MAX_RPDID_LENGTH = 25		# Number of characters in the RPD ID name
-ME_MAX_NSEP = 520			# Maximum number of SEP cable connections
-ME_MAX_SEPID_LENGTH = 25		# Number of characters in the SEP ID name
-ME_MAX_SEPCABL_LENGTH = 25	# Number of characters in the SEP cable ID name
-ME_MAX_NARB = 33			# Maximum number of ARX boards
-ME_MAX_NARBCH = 16			# Number of ARX channels per board
-ME_MAX_ARBID_LENGTH = 10		# Number of characters in the ARX ID name
-ME_MAX_NDP1 = 26			# Maximum number of DP1 boards
-ME_MAX_NDP1CH = 20			# Number of channels per DP1 board
-ME_MAX_DP1ID_LENGTH = 10		# Number of characters in the DP1 board ID name
-ME_MAX_NDP2 = 2			# Maximum number of DP2 boards
-ME_MAX_DP2ID_LENGTH = 10		# Number of characters in the DP2 board ID name
-ME_MAX_NDR = 5				# Maximum number of data recorders
-ME_MAX_DRID_LENGTH = 10		# Number of characters in the DR ID name
-ME_MAX_NPWRPORT = 50		# Maximum number of power ports
-ME_MAX_SSNAME_LENGTH = 3		# Number of characters in the power port ID names, for codes used for PWR_NAME
-LWA_MAX_NSTD = 260			# Maximum number of stands for the LWA
-MIB_REC_TYPE_BRANCH = 0 		# eType for MIB branch entries
-MIB_REC_TYPE_VALUE = 1 		# etype for MIB value entries
-MIB_INDEX_FIELD_LENGTH = 12	# Number of characters in a MIB index field
-MIB_LABEL_FIELD_LENGTH = 32	# Number of characters in a MIB label field
-MIB_VAL_FIELD_LENGTH = 8192	# Number of characters in a MIB value field
-
-
-IS_32BIT_PYTHON = True if struct.calcsize("P") == 4 else False
-
-
-_cDecRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
+# Compatibility mode for MCS - DP or ADP
+COMPATIBILITY_MODE = 'DP'
+from dpCompatibility import *
 
 
 def _twoByteSwap(value):
@@ -128,7 +98,10 @@ def delaytoMCSD(delay):
 	.. versionadded:: 0.6.3
 	"""
 	
-	return _twoByteSwap( delaytoDPD(delay) )
+	if COMPATIBILITY_MODE == 'ADP':
+		return _twoByteSwap( adpCommon.delaytoDPD(delay) )
+	else:
+		return _twoByteSwap( dpCommon.delaytoDPD(delay) )
 
 
 def MCSDtodelay(delay):
@@ -151,7 +124,10 @@ def gaintoMCSG(gain):
 	.. versionadded::0.6.3
 	"""
 	
-	return _twoByteSwap( gaintoDPG(gain) )
+	if COMPATIBILITY_MODE == 'ADP':
+		return _twoByteSwap( adpCommon.gaintoDPG(gain) )
+	else:
+		return _twoByteSwap( dpCommon.gaintoDPG(gain) )
 
 
 def MCSGtogain(gain):
@@ -407,183 +383,6 @@ def mode2string(mode):
 		return "DIAG1"
 	else:
 		return "TBF"
-
-
-def parseCStruct(cStruct, charMode='str', endianness='native'):
-	"""
-	Function to take a C structure declaration and build a ctypes.Structure out 
-	of it with the appropriate alignment, character interpretation*, and endianness
-	(little, big, network, or native).
-	
-	*:  ctypes converts character arrays to Python strings until the first null is
-	incountered.  This behavior causes problems for multi-dimension arrays of null
-	filled strings.  By setting charMode to 'int', all char types are retuned as 
-	bytes which can be converted to strings via chr().
-	"""
-	
-	# Figure out how to deal with character arrays
-	if charMode not in ('str', 'int'):
-		raise RuntimeError("Unknown character mode: '%s'" % charMode)
-	if charMode == 'str':
-		baseCharType = c_char
-	else:
-		baseCharType = c_byte
-	
-	# Hold the basic fields and dimensions
-	fields = []
-	dims2 = {}
-	
-	# Split into lines and go!
-	cStruct = cStruct.split('\n')
-	for line in cStruct:
-		## Skip structure declaration and lines too short to hold a declaration
-		if '{' in line or '}' in line:
-			continue
-		if len(line) < 5:
-			continue
-		
-		## RegEx the line to find the type, name, and dimensions (if needed) for
-		## the next structure variable
-		mtch = _cDecRE.search(line)
-		if mtch is None:
-			raise RuntimeError("Unparseable line: '%s'" % line)
-		
-		dec = mtch.group('type')
-		dec = dec.rstrip()
-		name = mtch.group('name')
-		
-		try:
-			d1 = mtch.group('d1')
-			if d1 is not None:
-				d1 = eval(d1)
-			d2 = mtch.group('d2')
-			if d2 is not None:
-				d2 = eval(d2)
-			d3 = mtch.group('d3')
-			if d3 is not None:
-				d3 = eval(d3)
-			d4 = mtch.group('d4')
-			if d4 is not None:
-				d4 = eval(d4)
-		except NameError:
-			raise RuntimeError("Unknown value in array index: '%s'" % line)
-		
-		## Basic data types
-		if dec in ('signed int', 'int'):
-			typ = c_int
-		elif dec == 'unsigned int':
-			typ = c_uint
-		elif dec in ('signed short int', 'signed short', 'short int', 'short'):
-			typ = c_short
-		elif dec in ('unsigned short int', 'unsigned short'):
-			typ = c_ushort
-		elif dec in ('signed long int', 'signed long', 'long int', 'long'):
-			if IS_32BIT_PYTHON:
-				typ = c_longlong
-			else:
-				typ = c_long
-		elif dec in ('unsigned long int', 'unsigned long'):
-			if IS_32BIT_PYTHON:
-				typ = c_uint64
-			else:
-				typ = c_ulong
-		elif dec in ('signed long long', 'long long'):
-			typ = c_longlong
-		elif dec == 'unsigned long long':
-			typ = c_uint64
-		elif dec == 'float':
-			typ = c_float
-		elif dec == 'double':
-			typ = c_double
-		elif dec == 'char':
-			typ = baseCharType
-		elif dec == 'signed char':
-			typ = c_byte
-		elif dec == 'unsigned char':
-			typ = c_ubyte
-		else:
-			raise RuntimeError("Unparseable line: '%s' -> type: %s, name: %s, dims: %s, %s, %s %s" % (line, dec, name, d1, d2, d3, d4))
-		
-		## Array identification and construction
-		dims2[name] = []
-		if d1 is not None:
-			count = d1
-			dims2[name].append(d1)
-			
-			if d2 is not None:
-				count *= d2
-				dims2[name].append(d2)
-			if d3 is not None:
-				count *= d3
-				dims2[name].append(d3)
-			if d4 is not None:
-				count *= d4
-				dims2[name].append(d4)
-				
-			typ *= count
-		
-		## Append
-		fields.append( (name, typ) )
-	
-	# ctypes creation - endianess
-	endianness = endianness.lower()
-	if endianness not in ('little', 'big', 'network', 'native'):
-		raise RuntimeError("Unknown endianness: '%s'" % endianness)
-	
-	if endianness == 'little':
-		endianness = LittleEndianStructure
-	elif endianness == 'big':
-		endianness = BigEndianStructure
-	elif endianness == 'network':
-		endianness = BigEndianStructure
-	else:
-		endiannes = Structure
-	
-	# ctypes creation - actual
-	class MyStruct(endianness):
-		"""
-		ctypes.Structure of the correct endianness for the provided
-		C structure.  
-		
-		In addition to the standard attributes defined for a ctypes.Structure 
-		instance there are a few additional attributes related to the parsed C
-		structure.  They are:
-		  * origC - String containing the original C structure
-		  * dims  - Dictionary of the dimensionallity of the data, if needed, 
-		            keyed by variable name
-		"""
-		
-		origC = '\n'.join(cStruct)
-		
-		_fields_ = fields
-		_pack_ = 8	# Pack it like we are 64-bit
-		dims = dims2
-		
-		def __str__(self):
-			"""
-			Print out the structure in a nice easy-to-read formation that
-			captures the various structure elements, their data types, and 
-			their values.
-			"""
-			
-			out = ''
-			for f,d in self._fields_:
-				out += '%s (%s): %s\n' % (f, d, eval("self.%s" % f))
-			return out
-			
-		def returnDict(self):
-			"""
-			Return the structure as a simple Python dictionary keyed off the
-			structure elements.
-			"""
-			
-			output = {}
-			for f,d in self._fields_:
-				output[f] = eval("self.%s" % f)
-			return output
-	
-	# Create and return
-	return MyStruct()
 
 
 def single2multi(inputList, dim1, dim2=None, dim3=None, dim4=None):
@@ -877,11 +676,13 @@ class MIBEntry(object):
 		           e.g., "a3" means 3 printable ASCII-encoded characters
 		  * r####: raw data (not printable), #### = number of bytes
 		           e.g., "r1024" means 1024 bytes of raw data
-		  * i1u:   integer, 1 byte,  unsigned, big-endian (=uint8)
-		  * i2u:   integer, 2 bytes, unsigned, big-endian (=uint16)
-		  * i4u:   integer, 4 bytes, unsigned, big-endian (=uint32)
-		  * i8u:   integer, 8 bytes, unsigned, big-endian (=uint64)
-		  * f4:    float, 4 bytes, big-endian (=float32)
+		  * i1u:   integer, 1 byte,  unsigned, little-endian (=uint8)
+		  * i2u:   integer, 2 bytes, unsigned, litte-endian (=uint16)
+		  * i4u:   integer, 4 bytes, unsigned, little-endian (=uint32)
+		  * i4s:   integer, 4 bytes, signed, little-endian (=int32)
+		  * i8u:   integer, 8 bytes, unsigned, litte-endian (=uint64)
+		  * f4:    float, 4 bytes, little-endian (=float32)
+		  * f4r:   float, 4 bytes, big-ending (=float32)
 		"""
 		
 		if dataType == 'NUL':
@@ -892,27 +693,37 @@ class MIBEntry(object):
 			return str(value)
 		elif dataType[:3] == 'i1u':
 			try:
-				return struct.unpack('>1B', value)[0]
+				return struct.unpack('<1B', value)[0]
 			except struct.error:
 				return 0
 		elif dataType[:3] == 'i2u':
 			try:
-				return struct.unpack('>1H', value)[0]
+				return struct.unpack('<1H', value)[0]
 			except struct.error:
 				return 0
 		elif dataType[:3] == 'i4u':
 			try:
-				return struct.unpack('>1I', value)[0]
+				return struct.unpack('<1I', value)[0]
+			except struct.error:
+				return 0
+		elif dataType[:3] == 'i4s':
+			try:
+				return struct.unpack('<1i', value)[0]
 			except struct.error:
 				return 0
 		elif dateType[:3] == 'i8u':
 			try:
-				return struct.unpack('>1Q', value)[0]
+				return struct.unpack('<1Q', value)[0]
 			except struct.error:
 				return 0
-		elif dataType[:2] == 'f4':
+		elif dataType[:3] == 'f4r':
 			try:
 				return struct.unpack('>1f', value)[0]
+			except struct.error:
+				return 0.0
+		elif dataType[:2] == 'f4':
+			try:
+				return struct.unpack('<1f', value)[0]
 			except struct.error:
 				return 0.0
 		else:
