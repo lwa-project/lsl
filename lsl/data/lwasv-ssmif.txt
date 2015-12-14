@@ -1,0 +1,7072 @@
+# ----------------------------------------------
+# --- Station Static MIB Initialization File ---
+# ----------------------------------------------
+# 2015 Dec 8 by J. Dowell
+#  Update the stand positions using the survey information
+# 2015 Oct 7 by J. Dowell
+#  Updated the listing of ARX and ROACH boards
+# 2015 Sep 22 by J. Dowell
+#  Updated for various labeling conventions being used
+#  Updated for 16 ROACH boards and seven servers.
+# 2015 Jul 13 by J. Dowell
+#  Initial version based on what currently exists at LWA-SV.
+#
+# See MCS0031 for format info 
+#
+# Search "FIXME" for things that need work
+
+FORMAT_VERSION 8
+STATION_ID SV
+GEO_N   +34.352 # N Lat [deg]
+GEO_E  -106.882 # E Lat [deg]
+GEO_EL 1478.3	#  [m] above MSL - FIXME
+N_STD  256
+
+# ---------------------------------------
+# --- Stand Positions  ------------------
+# ---------------------------------------
+# These will be set to 0.0 for any stand #'s <= N_STD not identified
+# *** STD_LX[stand_id] [m] goes here 
+# *** STD_LY[stand_id] [m] goes here 
+# *** STD_LZ[stand_id] [m] goes here 
+STD_LX[1]    -40.415
+STD_LY[1]     20.740
+STD_LZ[1]      2.503
+STD_LX[2]    -37.441
+STD_LY[2]     11.846
+STD_LZ[2]      2.089
+STD_LX[3]    -35.425
+STD_LY[3]      3.056
+STD_LZ[3]      1.733
+STD_LX[4]    -37.315
+STD_LY[4]     -3.087
+STD_LZ[4]      1.510
+STD_LX[5]    -34.455
+STD_LY[5]     -7.848
+STD_LZ[5]      1.295
+STD_LX[6]    -32.301
+STD_LY[6]    -14.520
+STD_LZ[6]      1.047
+STD_LX[7]    -31.245
+STD_LY[7]      6.508
+STD_LZ[7]      1.770
+STD_LX[8]    -28.487
+STD_LY[8]     -0.249
+STD_LZ[8]      1.349
+STD_LX[9]    -27.983
+STD_LY[9]     -6.424
+STD_LZ[9]      1.279
+STD_LX[10]    -28.433
+STD_LY[10]    -11.383
+STD_LZ[10]      1.060
+STD_LX[11]    -22.390
+STD_LY[11]     -6.509
+STD_LZ[11]      1.072
+STD_LX[12]    -23.092
+STD_LY[12]    -12.335
+STD_LZ[12]      1.037
+STD_LX[13]    -25.719
+STD_LY[13]    -16.604
+STD_LZ[13]      0.912
+STD_LX[14]    -26.261
+STD_LY[14]    -22.562
+STD_LZ[14]      0.768
+STD_LX[15]    -17.747
+STD_LY[15]    -12.994
+STD_LZ[15]      0.848
+STD_LX[16]    -12.510
+STD_LY[16]    -14.719
+STD_LZ[16]      0.602
+STD_LX[17]    -19.792
+STD_LY[17]    -21.214
+STD_LZ[17]      0.622
+STD_LX[18]    -22.624
+STD_LY[18]    -26.053
+STD_LZ[18]      0.752
+STD_LX[19]    -15.030
+STD_LY[19]    -23.874
+STD_LZ[19]      0.428
+STD_LX[20]    -15.872
+STD_LY[20]    -29.725
+STD_LZ[20]      0.624
+STD_LX[21]     -9.748
+STD_LY[21]    -22.417
+STD_LZ[21]      0.396
+STD_LX[22]     -4.731
+STD_LY[22]    -23.324
+STD_LZ[22]      0.253
+STD_LX[23]     -8.492
+STD_LY[23]    -29.682
+STD_LZ[23]      0.408
+STD_LX[24]    -12.184
+STD_LY[24]    -33.114
+STD_LZ[24]      0.582
+STD_LX[25]     -4.238
+STD_LY[25]    -36.086
+STD_LZ[25]      0.236
+STD_LX[26]     -3.560
+STD_LY[26]    -30.335
+STD_LZ[26]      0.216
+STD_LX[27]      2.252
+STD_LY[27]    -35.000
+STD_LZ[27]      0.030
+STD_LX[28]      5.745
+STD_LY[28]    -38.738
+STD_LZ[28]      0.067
+STD_LX[29]    -38.087
+STD_LY[29]     33.962
+STD_LZ[29]      2.572
+STD_LX[30]    -39.622
+STD_LY[30]     27.620
+STD_LZ[30]      2.497
+STD_LX[31]    -34.762
+STD_LY[31]     28.858
+STD_LZ[31]      2.320
+STD_LX[32]    -30.117
+STD_LY[32]     26.907
+STD_LZ[32]      2.149
+STD_LX[33]    -33.832
+STD_LY[33]     21.700
+STD_LZ[33]      2.272
+STD_LX[34]    -35.773
+STD_LY[34]     16.544
+STD_LZ[34]      2.149
+STD_LX[35]    -28.545
+STD_LY[35]     22.139
+STD_LZ[35]      2.000
+STD_LX[36]    -23.142
+STD_LY[36]     22.497
+STD_LZ[36]      1.875
+STD_LX[37]    -30.831
+STD_LY[37]     17.704
+STD_LZ[37]      2.042
+STD_LX[38]    -29.308
+STD_LY[38]     12.904
+STD_LZ[38]      1.743
+STD_LX[39]    -24.289
+STD_LY[39]     16.532
+STD_LZ[39]      1.716
+STD_LX[40]    -19.355
+STD_LY[40]     17.453
+STD_LZ[40]      1.588
+STD_LX[41]    -22.406
+STD_LY[41]      9.071
+STD_LZ[41]      1.470
+STD_LX[42]    -24.071
+STD_LY[42]      3.574
+STD_LZ[42]      1.356
+STD_LX[43]    -22.736
+STD_LY[43]     -1.278
+STD_LZ[43]      1.229
+STD_LX[44]    -18.553
+STD_LY[44]     12.506
+STD_LZ[44]      1.474
+STD_LX[45]    -13.366
+STD_LY[45]     11.404
+STD_LZ[45]      1.653
+STD_LX[46]    -16.782
+STD_LY[46]      7.777
+STD_LZ[46]      1.518
+STD_LX[47]    -16.193
+STD_LY[47]      2.748
+STD_LZ[47]      1.289
+STD_LX[48]    -17.806
+STD_LY[48]     -1.913
+STD_LZ[48]      1.051
+STD_LX[49]    -16.939
+STD_LY[49]     -7.043
+STD_LZ[49]      0.915
+STD_LX[50]    -11.089
+STD_LY[50]      7.163
+STD_LZ[50]      1.514
+STD_LX[51]    -12.631
+STD_LY[51]     -2.167
+STD_LZ[51]      1.157
+STD_LX[52]    -12.369
+STD_LY[52]     -9.050
+STD_LZ[52]      0.830
+STD_LX[53]    -10.174
+STD_LY[53]      2.185
+STD_LZ[53]      1.303
+STD_LX[54]     -5.578
+STD_LY[54]     -1.056
+STD_LZ[54]      1.266
+STD_LX[55]     -0.149
+STD_LY[55]     -4.007
+STD_LZ[55]      1.176
+STD_LX[56]     -8.429
+STD_LY[56]     -5.209
+STD_LZ[56]      1.073
+STD_LX[57]     -5.976
+STD_LY[57]    -10.245
+STD_LZ[57]      0.817
+STD_LX[58]     -6.071
+STD_LY[58]    -17.364
+STD_LZ[58]      0.445
+STD_LX[59]     -0.564
+STD_LY[59]     -9.724
+STD_LZ[59]      0.922
+STD_LX[60]     -1.641
+STD_LY[60]    -14.851
+STD_LZ[60]      0.666
+STD_LX[61]      0.210
+STD_LY[61]    -19.577
+STD_LZ[61]      0.398
+STD_LX[62]      3.928
+STD_LY[62]    -12.529
+STD_LZ[62]      0.935
+STD_LX[63]      8.805
+STD_LY[63]    -13.576
+STD_LZ[63]      0.943
+STD_LX[64]      5.788
+STD_LY[64]    -17.717
+STD_LZ[64]      0.558
+STD_LX[65]      5.193
+STD_LY[65]    -25.157
+STD_LZ[65]      0.026
+STD_LX[66]      3.615
+STD_LY[66]    -29.945
+STD_LZ[66]      0.012
+STD_LX[67]      9.607
+STD_LY[67]    -21.064
+STD_LZ[67]      0.294
+STD_LX[68]     14.616
+STD_LY[68]    -21.360
+STD_LZ[68]      0.186
+STD_LX[69]      8.566
+STD_LY[69]    -31.238
+STD_LZ[69]     -0.165
+STD_LX[70]     12.407
+STD_LY[70]    -26.436
+STD_LZ[70]     -0.075
+STD_LX[71]     16.466
+STD_LY[71]    -29.530
+STD_LZ[71]     -0.269
+STD_LX[72]     13.637
+STD_LY[72]    -34.100
+STD_LZ[72]     -0.225
+STD_LX[73]     12.922
+STD_LY[73]    -39.003
+STD_LZ[73]      0.031
+STD_LX[74]     18.833
+STD_LY[74]    -37.737
+STD_LZ[74]     -0.262
+STD_LX[75]     21.250
+STD_LY[75]    -31.301
+STD_LZ[75]     -0.409
+STD_LX[76]     25.154
+STD_LY[76]    -34.662
+STD_LZ[76]     -0.519
+STD_LX[77]    -36.697
+STD_LY[77]     42.464
+STD_LZ[77]      2.637
+STD_LX[78]    -33.036
+STD_LY[78]     49.618
+STD_LZ[78]      2.372
+STD_LX[79]    -33.624
+STD_LY[79]     38.459
+STD_LZ[79]      2.559
+STD_LX[80]    -30.763
+STD_LY[80]     32.486
+STD_LZ[80]      2.299
+STD_LX[81]    -29.485
+STD_LY[81]     43.242
+STD_LZ[81]      2.545
+STD_LX[82]    -25.280
+STD_LY[82]     36.035
+STD_LZ[82]      2.091
+STD_LX[83]    -23.462
+STD_LY[83]     28.456
+STD_LZ[83]      1.853
+STD_LX[84]    -17.965
+STD_LY[84]     29.651
+STD_LZ[84]      1.810
+STD_LX[85]    -16.479
+STD_LY[85]     22.955
+STD_LZ[85]      1.760
+STD_LX[86]    -12.169
+STD_LY[86]     26.129
+STD_LZ[86]      1.795
+STD_LX[87]    -14.377
+STD_LY[87]     17.842
+STD_LZ[87]      1.732
+STD_LX[88]    -10.768
+STD_LY[88]     21.354
+STD_LZ[88]      1.686
+STD_LX[89]     -9.747
+STD_LY[89]     14.976
+STD_LZ[89]      1.530
+STD_LX[90]     -8.064
+STD_LY[90]     11.076
+STD_LZ[90]      1.579
+STD_LX[91]     -3.285
+STD_LY[91]     14.265
+STD_LZ[91]      1.167
+STD_LX[92]     -3.264
+STD_LY[92]      9.166
+STD_LZ[92]      1.317
+STD_LX[93]     -5.650
+STD_LY[93]      4.296
+STD_LZ[93]      1.512
+STD_LX[94]      1.291
+STD_LY[94]     12.565
+STD_LZ[94]      0.773
+STD_LX[95]     -0.889
+STD_LY[95]      2.905
+STD_LZ[95]      1.365
+STD_LX[96]      1.470
+STD_LY[96]      7.566
+STD_LZ[96]      0.849
+STD_LX[97]      5.982
+STD_LY[97]      5.515
+STD_LZ[97]      0.738
+STD_LX[98]      3.720
+STD_LY[98]      0.931
+STD_LZ[98]      0.906
+STD_LX[99]      6.900
+STD_LY[99]     -3.102
+STD_LZ[99]      1.000
+STD_LX[100]      5.446
+STD_LY[100]     -7.780
+STD_LZ[100]      1.111
+STD_LX[101]     10.374
+STD_LY[101]     -6.930
+STD_LZ[101]      0.843
+STD_LX[102]     11.675
+STD_LY[102]     -2.149
+STD_LZ[102]      0.648
+STD_LX[103]     13.686
+STD_LY[103]    -11.234
+STD_LZ[103]      0.928
+STD_LX[104]     16.211
+STD_LY[104]    -15.270
+STD_LZ[104]      0.599
+STD_LX[105]     16.735
+STD_LY[105]     -6.679
+STD_LZ[105]      0.404
+STD_LX[106]     19.221
+STD_LY[106]    -11.033
+STD_LZ[106]      0.306
+STD_LX[107]     20.667
+STD_LY[107]    -19.642
+STD_LZ[107]      0.030
+STD_LX[108]     25.543
+STD_LY[108]    -14.052
+STD_LZ[108]     -0.085
+STD_LX[109]     26.220
+STD_LY[109]    -22.352
+STD_LZ[109]     -0.417
+STD_LX[110]     21.980
+STD_LY[110]    -26.341
+STD_LZ[110]     -0.280
+STD_LX[111]     26.016
+STD_LY[111]    -29.253
+STD_LZ[111]     -0.555
+STD_LX[112]     32.161
+STD_LY[112]    -23.934
+STD_LZ[112]     -0.704
+STD_LX[113]     34.058
+STD_LY[113]    -29.465
+STD_LZ[113]     -0.758
+STD_LX[114]     29.456
+STD_LY[114]    -17.274
+STD_LZ[114]     -0.485
+STD_LX[115]    -28.253
+STD_LY[115]     52.176
+STD_LZ[115]      2.144
+STD_LX[116]    -25.597
+STD_LY[116]     57.808
+STD_LZ[116]      1.975
+STD_LX[117]    -22.532
+STD_LY[117]     53.813
+STD_LZ[117]      1.783
+STD_LX[118]    -23.947
+STD_LY[118]     43.458
+STD_LZ[118]      2.365
+STD_LX[119]    -20.944
+STD_LY[119]     49.109
+STD_LZ[119]      1.850
+STD_LX[120]    -16.528
+STD_LY[120]     50.652
+STD_LZ[120]      1.647
+STD_LX[121]    -18.593
+STD_LY[121]     42.237
+STD_LZ[121]      2.025
+STD_LX[122]    -12.956
+STD_LY[122]     47.134
+STD_LZ[122]      1.516
+STD_LX[123]    -16.441
+STD_LY[123]     34.493
+STD_LZ[123]      1.871
+STD_LX[124]    -11.634
+STD_LY[124]     39.082
+STD_LZ[124]      1.687
+STD_LX[125]     -4.638
+STD_LY[125]     38.547
+STD_LZ[125]      1.437
+STD_LX[126]     -1.556
+STD_LY[126]     34.645
+STD_LZ[126]      1.432
+STD_LX[127]    -11.552
+STD_LY[127]     31.836
+STD_LZ[127]      1.827
+STD_LX[128]     -7.719
+STD_LY[128]     28.599
+STD_LZ[128]      1.713
+STD_LX[129]     -6.686
+STD_LY[129]     33.492
+STD_LZ[129]      1.632
+STD_LX[130]     -5.226
+STD_LY[130]     24.201
+STD_LZ[130]      1.287
+STD_LX[131]     -4.014
+STD_LY[131]     19.235
+STD_LZ[131]      1.164
+STD_LX[132]     -2.118
+STD_LY[132]     28.891
+STD_LZ[132]      1.266
+STD_LX[133]     -0.179
+STD_LY[133]     22.426
+STD_LZ[133]      0.957
+STD_LX[134]      0.736
+STD_LY[134]     17.641
+STD_LZ[134]      0.775
+STD_LX[135]      2.647
+STD_LY[135]     26.902
+STD_LZ[135]      0.953
+STD_LX[136]      5.812
+STD_LY[136]     21.831
+STD_LZ[136]      0.491
+STD_LX[137]      5.327
+STD_LY[137]     15.567
+STD_LZ[137]      0.542
+STD_LX[138]      5.823
+STD_LY[138]     10.620
+STD_LZ[138]      0.615
+STD_LX[139]      9.252
+STD_LY[139]     18.660
+STD_LZ[139]      0.421
+STD_LX[140]     14.061
+STD_LY[140]     16.730
+STD_LZ[140]      0.210
+STD_LX[141]      9.877
+STD_LY[141]     13.645
+STD_LZ[141]      0.302
+STD_LX[142]     10.481
+STD_LY[142]      8.569
+STD_LZ[142]      0.321
+STD_LX[143]     10.484
+STD_LY[143]      3.404
+STD_LZ[143]      0.431
+STD_LX[144]     14.872
+STD_LY[144]     11.752
+STD_LZ[144]      0.143
+STD_LX[145]     14.867
+STD_LY[145]      6.241
+STD_LZ[145]      0.122
+STD_LX[146]     15.343
+STD_LY[146]      1.320
+STD_LZ[146]      0.313
+STD_LX[147]     19.064
+STD_LY[147]      9.024
+STD_LZ[147]      0.061
+STD_LX[148]     24.213
+STD_LY[148]      5.570
+STD_LZ[148]     -0.016
+STD_LX[149]     18.885
+STD_LY[149]     -2.233
+STD_LZ[149]      0.177
+STD_LX[150]     20.157
+STD_LY[150]      2.658
+STD_LZ[150]      0.005
+STD_LX[151]     24.370
+STD_LY[151]     -0.041
+STD_LZ[151]     -0.019
+STD_LX[152]     23.423
+STD_LY[152]     -7.588
+STD_LZ[152]      0.084
+STD_LX[153]     28.141
+STD_LY[153]     -3.344
+STD_LZ[153]     -0.173
+STD_LX[154]     33.117
+STD_LY[154]     -2.481
+STD_LZ[154]     -0.189
+STD_LX[155]     28.181
+STD_LY[155]     -9.287
+STD_LZ[155]     -0.207
+STD_LX[156]     32.825
+STD_LY[156]     -7.506
+STD_LZ[156]     -0.337
+STD_LX[157]     32.699
+STD_LY[157]    -13.756
+STD_LZ[157]     -0.503
+STD_LX[158]     37.516
+STD_LY[158]    -21.330
+STD_LZ[158]     -0.695
+STD_LX[159]     39.191
+STD_LY[159]    -12.779
+STD_LZ[159]     -0.603
+STD_LX[160]     44.913
+STD_LY[160]    -15.819
+STD_LZ[160]     -0.754
+STD_LX[161]    -18.041
+STD_LY[161]     58.280
+STD_LZ[161]      1.726
+STD_LX[162]    -15.889
+STD_LY[162]     65.467
+STD_LZ[162]      1.904
+STD_LX[163]     -8.432
+STD_LY[163]     67.556
+STD_LZ[163]      1.914
+STD_LX[164]    -11.812
+STD_LY[164]     60.813
+STD_LZ[164]      1.722
+STD_LX[165]    -10.765
+STD_LY[165]     54.105
+STD_LZ[165]      1.508
+STD_LX[166]     -7.536
+STD_LY[166]     50.367
+STD_LZ[166]      1.430
+STD_LX[167]     -8.386
+STD_LY[167]     45.447
+STD_LZ[167]      1.394
+STD_LX[168]     -2.901
+STD_LY[168]     53.419
+STD_LZ[168]      1.406
+STD_LX[169]     -2.383
+STD_LY[169]     47.346
+STD_LZ[169]      1.275
+STD_LX[170]      0.218
+STD_LY[170]     41.667
+STD_LZ[170]      1.209
+STD_LX[171]      1.760
+STD_LY[171]     49.923
+STD_LZ[171]      1.182
+STD_LX[172]      6.006
+STD_LY[172]     46.230
+STD_LZ[172]      0.949
+STD_LX[173]      2.817
+STD_LY[173]     36.929
+STD_LZ[173]      1.082
+STD_LX[174]      2.596
+STD_LY[174]     31.844
+STD_LZ[174]      1.160
+STD_LX[175]      5.210
+STD_LY[175]     41.323
+STD_LZ[175]      0.966
+STD_LX[176]     10.128
+STD_LY[176]     39.313
+STD_LZ[176]      0.790
+STD_LX[177]      7.937
+STD_LY[177]     34.298
+STD_LZ[177]      0.716
+STD_LX[178]      7.002
+STD_LY[178]     29.275
+STD_LZ[178]      0.586
+STD_LX[179]      8.061
+STD_LY[179]     24.320
+STD_LZ[179]      0.440
+STD_LX[180]     13.324
+STD_LY[180]     34.990
+STD_LZ[180]      0.603
+STD_LX[181]     19.069
+STD_LY[181]     35.118
+STD_LZ[181]      0.527
+STD_LX[182]     11.838
+STD_LY[182]     27.568
+STD_LZ[182]      0.395
+STD_LX[183]     12.665
+STD_LY[183]     22.411
+STD_LZ[183]      0.321
+STD_LX[184]     16.655
+STD_LY[184]     29.992
+STD_LZ[184]      0.426
+STD_LX[185]     22.480
+STD_LY[185]     29.714
+STD_LZ[185]      0.371
+STD_LX[186]     17.439
+STD_LY[186]     23.844
+STD_LZ[186]      0.399
+STD_LX[187]     18.664
+STD_LY[187]     18.834
+STD_LZ[187]      0.203
+STD_LX[188]     20.092
+STD_LY[188]     13.940
+STD_LZ[188]      0.082
+STD_LX[189]     22.892
+STD_LY[189]     24.035
+STD_LZ[189]      0.214
+STD_LX[190]     27.841
+STD_LY[190]     24.698
+STD_LZ[190]      0.195
+STD_LX[191]     23.792
+STD_LY[191]     17.481
+STD_LZ[191]      0.141
+STD_LX[192]     24.219
+STD_LY[192]     11.120
+STD_LZ[192]      0.011
+STD_LX[193]     28.167
+STD_LY[193]     19.655
+STD_LZ[193]      0.103
+STD_LX[194]     34.114
+STD_LY[194]     19.650
+STD_LZ[194]      0.087
+STD_LX[195]     29.447
+STD_LY[195]     14.867
+STD_LZ[195]      0.020
+STD_LX[196]     35.813
+STD_LY[196]     14.889
+STD_LZ[196]     -0.059
+STD_LX[197]     42.003
+STD_LY[197]     12.211
+STD_LZ[197]     -0.221
+STD_LX[198]     31.896
+STD_LY[198]     10.476
+STD_LZ[198]     -0.057
+STD_LX[199]     31.782
+STD_LY[199]      3.069
+STD_LZ[199]     -0.119
+STD_LX[200]     37.428
+STD_LY[200]      8.456
+STD_LZ[200]     -0.182
+STD_LX[200]     37.427
+STD_LY[200]      8.460
+STD_LZ[200]     -0.184
+STD_LX[201]     44.763
+STD_LY[201]      7.959
+STD_LZ[201]     -0.286
+STD_LX[202]     49.728
+STD_LY[202]      8.465
+STD_LZ[202]     -0.450
+STD_LX[203]     48.943
+STD_LY[203]     13.352
+STD_LZ[203]     -0.365
+STD_LX[204]     39.161
+STD_LY[204]     -3.673
+STD_LZ[204]     -0.379
+STD_LX[205]     39.216
+STD_LY[205]      3.746
+STD_LZ[205]     -0.226
+STD_LX[206]     43.313
+STD_LY[206]      0.903
+STD_LZ[206]     -0.330
+STD_LX[207]     49.455
+STD_LY[207]      1.944
+STD_LZ[207]     -0.636
+STD_LX[208]     43.804
+STD_LY[208]     -5.348
+STD_LZ[208]     -0.593
+STD_LX[209]     47.067
+STD_LY[209]     -9.588
+STD_LZ[209]     -0.756
+STD_LX[210]     49.638
+STD_LY[210]     -3.349
+STD_LZ[210]     -0.599
+STD_LX[211]     -3.243
+STD_LY[211]     69.833
+STD_LZ[211]      1.752
+STD_LX[212]     -0.795
+STD_LY[212]     65.521
+STD_LZ[212]      1.673
+STD_LX[213]     -3.718
+STD_LY[213]     61.556
+STD_LZ[213]      1.582
+STD_LX[214]      2.127
+STD_LY[214]     69.758
+STD_LZ[214]      1.575
+STD_LX[215]      4.090
+STD_LY[215]     62.035
+STD_LZ[215]      1.397
+STD_LX[216]      0.369
+STD_LY[216]     58.627
+STD_LZ[216]      1.390
+STD_LX[217]      3.746
+STD_LY[217]     54.929
+STD_LZ[217]      1.256
+STD_LX[218]     10.355
+STD_LY[218]     62.171
+STD_LZ[218]      1.315
+STD_LX[219]      8.733
+STD_LY[219]     57.092
+STD_LZ[219]      1.212
+STD_LX[220]      8.673
+STD_LY[220]     50.468
+STD_LZ[220]      0.998
+STD_LX[221]     14.054
+STD_LY[221]     48.811
+STD_LZ[221]      0.871
+STD_LX[222]     11.590
+STD_LY[222]     44.442
+STD_LZ[222]      0.861
+STD_LX[223]     13.842
+STD_LY[223]     55.223
+STD_LZ[223]      1.115
+STD_LX[224]     19.335
+STD_LY[224]     54.583
+STD_LZ[224]      0.948
+STD_LX[225]     16.846
+STD_LY[225]     40.682
+STD_LZ[225]      0.679
+STD_LX[226]     21.812
+STD_LY[226]     41.406
+STD_LZ[226]      0.616
+STD_LX[227]     20.867
+STD_LY[227]     46.610
+STD_LZ[227]      0.713
+STD_LX[228]     28.571
+STD_LY[228]     44.743
+STD_LZ[228]      0.589
+STD_LX[229]     24.555
+STD_LY[229]     34.286
+STD_LZ[229]      0.395
+STD_LX[230]     27.983
+STD_LY[230]     29.990
+STD_LZ[230]      0.277
+STD_LX[231]     28.310
+STD_LY[231]     39.742
+STD_LZ[231]      0.523
+STD_LX[232]     32.866
+STD_LY[232]     36.801
+STD_LZ[232]      0.344
+STD_LX[233]     32.667
+STD_LY[233]     31.595
+STD_LZ[233]      0.309
+STD_LX[234]     34.833
+STD_LY[234]     24.541
+STD_LZ[234]      0.113
+STD_LX[235]     37.422
+STD_LY[235]     33.161
+STD_LZ[235]      0.212
+STD_LX[236]     38.763
+STD_LY[236]     21.522
+STD_LZ[236]     -0.002
+STD_LX[237]     40.998
+STD_LY[237]     17.092
+STD_LZ[237]     -0.124
+STD_LX[238]     40.765
+STD_LY[238]     26.490
+STD_LZ[238]      0.006
+STD_LX[239]     46.672
+STD_LY[239]     26.878
+STD_LZ[239]     -0.060
+STD_LX[240]     48.522
+STD_LY[240]     22.115
+STD_LZ[240]     -0.230
+STD_LX[241]      9.567
+STD_LY[241]     68.388
+STD_LZ[241]      1.377
+STD_LX[242]     14.516
+STD_LY[242]     67.879
+STD_LZ[242]      1.284
+STD_LX[243]     16.696
+STD_LY[243]     63.086
+STD_LZ[243]      1.145
+STD_LX[244]     20.623
+STD_LY[244]     59.456
+STD_LZ[244]      1.043
+STD_LX[245]     24.402
+STD_LY[245]     62.703
+STD_LZ[245]      1.053
+STD_LX[246]     26.851
+STD_LY[246]     58.397
+STD_LZ[246]      0.929
+STD_LX[247]     24.563
+STD_LY[247]     53.270
+STD_LZ[247]      0.850
+STD_LX[248]     29.858
+STD_LY[248]     50.186
+STD_LZ[248]      0.733
+STD_LX[249]     30.040
+STD_LY[249]     63.346
+STD_LZ[249]      1.039
+STD_LX[250]     35.627
+STD_LY[250]     54.175
+STD_LZ[250]      0.772
+STD_LX[251]     35.862
+STD_LY[251]     49.352
+STD_LZ[251]      0.548
+STD_LX[252]     34.334
+STD_LY[252]     43.330
+STD_LZ[252]      0.489
+STD_LX[253]     39.335
+STD_LY[253]     39.115
+STD_LZ[253]      0.427
+STD_LX[254]     45.246
+STD_LY[254]     31.755
+STD_LZ[254]     -0.064
+STD_LX[255]     42.485
+STD_LY[255]     43.603
+STD_LZ[255]      0.300
+STD_LX[256]     46.153
+STD_LY[256]     38.167
+STD_LZ[256]      0.210
+# Outrigger
+#STD_LX[257]	-291.780
+#STD_LY[257]	-31.632
+#STD_LZ[257]	10.212
+
+# ------------------------------------
+# --- Antenna # -> Stand # mapping ---
+# ------------------------------------
+# This will be set to floor((n-1)/2)+1 for any antenna n <= 2*N_STD not identified
+# Strongly recommended to leave this alone, so that antennas 1 & 2 are on stand 1,
+#   antennas 3 & 4 are on stand 2, and so on.
+# *** ANT_STD[antenna_id] goes here:
+
+# ----------------------------
+# --- Antenna orientations ---
+# ----------------------------
+# For any antenna n <= 2*N_STD not identified, this will be set to (n-1) mod 2
+# Strongly recommended to leave this alone, so that antennas 1 & 2 are 0 (N-S) and
+#   and 1 (E-W) respectively, and so on.
+# *** ANT_ORIE[antenna_id] goes here: (0 = N-S, 1 = E-W)
+
+# ----------------------
+# --- Antenna Status ---
+# ----------------------
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This refers to the *antenna*, not the FEE or some combination of the two.
+# This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
+# *** ANT_STAT[antenna_id] goes here:
+ANT_STAT[17]   1        # No Signal as of 2012/10/23
+ANT_STAT[18]   1        # No Signal
+ANT_STAT[25]   0        # Failed calibration, round 2
+ANT_STAT[29]   1        # No Signal
+ANT_STAT[71]   0        # Failed calibration, round 2
+ANT_STAT[72]   0        # Failed calibration, round 2
+ANT_STAT[132]  0        # Failed calibration, round 2
+ANT_STAT[149]  1        # No Signal as of 2012/10/23
+ANT_STAT[150]  1        # No Signal as of 2012/10/23
+ANT_STAT[171]  2        # Suspect Signal as of 2013/08/15
+ANT_STAT[172]  2        # Suspect Signal as of 2013/08/15
+ANT_STAT[191]  1        # No Signal
+ANT_STAT[196]  1        # No Signal
+ANT_STAT[213]  1        # No Signal as of 2012/10/23
+ANT_STAT[214]  1        # No Signal as of 2012/10/23
+ANT_STAT[246]  1        # No Signal
+ANT_STAT[247]  1        # No Signal
+ANT_STAT[287]  1        # No Signal as of 2012/10/23
+ANT_STAT[288]  1        # No Signal as of 2012/10/23
+ANT_STAT[363]  1        # No Signal
+ANT_STAT[374]  1        # No Signal
+ANT_STAT[434]  1        # No Signal
+ANT_STAT[464]  1        # No Signal
+ANT_STAT[467]  1        # No Signal as of 2012/10/23
+ANT_STAT[468]  1        # No Signal as of 2012/10/23
+ANT_STAT[488]  1        # Failed calibration, round 2
+ANT_STAT[489]  1        # No Signal as of 2012/10/23
+
+# -------------------------------
+# --- Antenna mis-orientation ---
+# -------------------------------
+# These will be set to 0.0 (no error) for any antenna n <= 2*N_STD not identified
+# *** ANT_THETA[antenna_id] in degrees goes here:
+# *** ANT_PHI[antenna_id] in degrees goes here: 
+
+# ----------------------------------
+# --- Antenna design information ---
+# ----------------------------------
+# This will be set to 1 for any antenna #'s <= 2*N_STD not identified
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** ANT_DESI[antenna_id] goes here:
+
+# -------------------------------------------------------
+# --- FEEs (number, status, design, nominal gain) -------
+# -------------------------------------------------------
+N_FEE 256
+
+# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identifiedf
+# *** FEE_ID[fee_id] goes here:
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any FEE #'s <= N_FEE not identified
+# *** FEE_STAT[fee_id] goes here: 
+
+# This will be set to 1 for any FEEs not identified below
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** FEE_DESI[fee_id] goes here:
+
+# FEE_GAI1[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
+# *** FEE_GAI1[fee_id] goes here:
+
+# FEE_GAI2[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
+# *** FEE_GAI2[fee_id] goes here:
+
+# ------------------------------------
+# --- Antenna # -> FEE # mapping -----
+# ------------------------------------
+# Format (example) "FEE_ANT1[2] 3" means antenna 3 is connected to port 1 of FEE 2.
+# If not specified, then FEE_ANT1[1] will be 1, FEE_ANT2[1] will be 2,
+#   FEE_ANT1[2] will be 3, FEE_ANT2[2] will be 4, and so on.
+# Strongly recommended to leave this alone, and that only exceptions are noted.
+# *** FEE_ANT1[fee_id] goes here:
+# *** FEE_ANT2[fee_id] goes here:
+
+# ----------------------------------------
+# --- FEE Power Source Identification ----
+# ----------------------------------------
+# Note that FEE_RACK[] and FEE_PORT[] are used by MCS only to identify power sources;
+#  the control of application of power to FEEs is controlled using ARX 
+# Format (example) "FEE_RACK[2] 3" means FEE 2 is powered via a supply in Rack 3.
+# FEE_RACK[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
+# Format (example) "FEE_PORT[2] 7" means FEE 2 is powered via port 7 on whatever rack 
+#   is specified by FEE_RACK[2].
+# FEE_PORT[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
+# *** FEE_RACK[fee_id] goes here:
+# *** FEE_PORT[fee_id] goes here:
+
+
+# All FEEs are on Rack 1, Port 1
+FEE_RACK[1] 1
+FEE_PORT[1] 1
+FEE_RACK[2] 1
+FEE_PORT[2] 1
+FEE_RACK[3] 1
+FEE_PORT[3] 1
+FEE_RACK[4] 1
+FEE_PORT[4] 1
+FEE_RACK[5] 1
+FEE_PORT[5] 1
+FEE_RACK[6] 1
+FEE_PORT[6] 1
+FEE_RACK[7] 1
+FEE_PORT[7] 1
+FEE_RACK[8] 1
+FEE_PORT[8] 1
+FEE_RACK[9] 1
+FEE_PORT[9] 1
+FEE_RACK[10] 1
+FEE_PORT[10] 1
+FEE_RACK[11] 1
+FEE_PORT[11] 1
+FEE_RACK[12] 1
+FEE_PORT[12] 1
+FEE_RACK[13] 1
+FEE_PORT[13] 1
+FEE_RACK[14] 1
+FEE_PORT[14] 1
+FEE_RACK[15] 1
+FEE_PORT[15] 1
+FEE_RACK[16] 1
+FEE_PORT[16] 1
+FEE_RACK[17] 1
+FEE_PORT[17] 1
+FEE_RACK[18] 1
+FEE_PORT[18] 1
+FEE_RACK[19] 1
+FEE_PORT[19] 1
+FEE_RACK[20] 1
+FEE_PORT[20] 1
+FEE_RACK[21] 1
+FEE_PORT[21] 1
+FEE_RACK[22] 1
+FEE_PORT[22] 1
+FEE_RACK[23] 1
+FEE_PORT[23] 1
+FEE_RACK[24] 1
+FEE_PORT[24] 1
+FEE_RACK[25] 1
+FEE_PORT[25] 1
+FEE_RACK[26] 1
+FEE_PORT[26] 1
+FEE_RACK[27] 1
+FEE_PORT[27] 1
+FEE_RACK[28] 1
+FEE_PORT[28] 1
+FEE_RACK[29] 1
+FEE_PORT[29] 1
+FEE_RACK[30] 1
+FEE_PORT[30] 1
+FEE_RACK[31] 1
+FEE_PORT[31] 1
+FEE_RACK[32] 1
+FEE_PORT[32] 1
+FEE_RACK[33] 1
+FEE_PORT[33] 1
+FEE_RACK[34] 1
+FEE_PORT[34] 1
+FEE_RACK[35] 1
+FEE_PORT[35] 1
+FEE_RACK[36] 1
+FEE_PORT[36] 1
+FEE_RACK[37] 1
+FEE_PORT[37] 1
+FEE_RACK[38] 1
+FEE_PORT[38] 1
+FEE_RACK[39] 1
+FEE_PORT[39] 1
+FEE_RACK[40] 1
+FEE_PORT[40] 1
+FEE_RACK[41] 1
+FEE_PORT[41] 1
+FEE_RACK[42] 1
+FEE_PORT[42] 1
+FEE_RACK[43] 1
+FEE_PORT[43] 1
+FEE_RACK[44] 1
+FEE_PORT[44] 1
+FEE_RACK[45] 1
+FEE_PORT[45] 1
+FEE_RACK[46] 1
+FEE_PORT[46] 1
+FEE_RACK[47] 1
+FEE_PORT[47] 1
+FEE_RACK[48] 1
+FEE_PORT[48] 1
+FEE_RACK[49] 1
+FEE_PORT[49] 1
+FEE_RACK[50] 1
+FEE_PORT[50] 1
+FEE_RACK[51] 1
+FEE_PORT[51] 1
+FEE_RACK[52] 1
+FEE_PORT[52] 1
+FEE_RACK[53] 1
+FEE_PORT[53] 1
+FEE_RACK[54] 1
+FEE_PORT[54] 1
+FEE_RACK[55] 1
+FEE_PORT[55] 1
+FEE_RACK[56] 1
+FEE_PORT[56] 1
+FEE_RACK[57] 1
+FEE_PORT[57] 1
+FEE_RACK[58] 1
+FEE_PORT[58] 1
+FEE_RACK[59] 1
+FEE_PORT[59] 1
+FEE_RACK[60] 1
+FEE_PORT[60] 1
+FEE_RACK[61] 1
+FEE_PORT[61] 1
+FEE_RACK[62] 1
+FEE_PORT[62] 1
+FEE_RACK[63] 1
+FEE_PORT[63] 1
+FEE_RACK[64] 1
+FEE_PORT[64] 1
+FEE_RACK[65] 1
+FEE_PORT[65] 1
+FEE_RACK[66] 1
+FEE_PORT[66] 1
+FEE_RACK[67] 1
+FEE_PORT[67] 1
+FEE_RACK[68] 1
+FEE_PORT[68] 1
+FEE_RACK[69] 1
+FEE_PORT[69] 1
+FEE_RACK[70] 1
+FEE_PORT[70] 1
+FEE_RACK[71] 1
+FEE_PORT[71] 1
+FEE_RACK[72] 1
+FEE_PORT[72] 1
+FEE_RACK[73] 1
+FEE_PORT[73] 1
+FEE_RACK[74] 1
+FEE_PORT[74] 1
+FEE_RACK[75] 1
+FEE_PORT[75] 1
+FEE_RACK[76] 1
+FEE_PORT[76] 1
+FEE_RACK[77] 1
+FEE_PORT[77] 1
+FEE_RACK[78] 1
+FEE_PORT[78] 1
+FEE_RACK[79] 1
+FEE_PORT[79] 1
+FEE_RACK[80] 1
+FEE_PORT[80] 1
+FEE_RACK[81] 1
+FEE_PORT[81] 1
+FEE_RACK[82] 1
+FEE_PORT[82] 1
+FEE_RACK[83] 1
+FEE_PORT[83] 1
+FEE_RACK[84] 1
+FEE_PORT[84] 1
+FEE_RACK[85] 1
+FEE_PORT[85] 1
+FEE_RACK[86] 1
+FEE_PORT[86] 1
+FEE_RACK[87] 1
+FEE_PORT[87] 1
+FEE_RACK[88] 1
+FEE_PORT[88] 1
+FEE_RACK[89] 1
+FEE_PORT[89] 1
+FEE_RACK[90] 1
+FEE_PORT[90] 1
+FEE_RACK[91] 1
+FEE_PORT[91] 1
+FEE_RACK[92] 1
+FEE_PORT[92] 1
+FEE_RACK[93] 1
+FEE_PORT[93] 1
+FEE_RACK[94] 1
+FEE_PORT[94] 1
+FEE_RACK[95] 1
+FEE_PORT[95] 1
+FEE_RACK[96] 1
+FEE_PORT[96] 1
+FEE_RACK[97] 1
+FEE_PORT[97] 1
+FEE_RACK[98] 1
+FEE_PORT[98] 1
+FEE_RACK[99] 1
+FEE_PORT[99] 1
+FEE_RACK[100] 1
+FEE_PORT[100] 1
+FEE_RACK[101] 1
+FEE_PORT[101] 1
+FEE_RACK[102] 1
+FEE_PORT[102] 1
+FEE_RACK[103] 1
+FEE_PORT[103] 1
+FEE_RACK[104] 1
+FEE_PORT[104] 1
+FEE_RACK[105] 1
+FEE_PORT[105] 1
+FEE_RACK[106] 1
+FEE_PORT[106] 1
+FEE_RACK[107] 1
+FEE_PORT[107] 1
+FEE_RACK[108] 1
+FEE_PORT[108] 1
+FEE_RACK[109] 1
+FEE_PORT[109] 1
+FEE_RACK[110] 1
+FEE_PORT[110] 1
+FEE_RACK[111] 1
+FEE_PORT[111] 1
+FEE_RACK[112] 1
+FEE_PORT[112] 1
+FEE_RACK[113] 1
+FEE_PORT[113] 1
+FEE_RACK[114] 1
+FEE_PORT[114] 1
+FEE_RACK[115] 1
+FEE_PORT[115] 1
+FEE_RACK[116] 1
+FEE_PORT[116] 1
+FEE_RACK[117] 1
+FEE_PORT[117] 1
+FEE_RACK[118] 1
+FEE_PORT[118] 1
+FEE_RACK[119] 1
+FEE_PORT[119] 1
+FEE_RACK[120] 1
+FEE_PORT[120] 1
+FEE_RACK[121] 1
+FEE_PORT[121] 1
+FEE_RACK[122] 1
+FEE_PORT[122] 1
+FEE_RACK[123] 1
+FEE_PORT[123] 1
+FEE_RACK[124] 1
+FEE_PORT[124] 1
+FEE_RACK[125] 1
+FEE_PORT[125] 1
+FEE_RACK[126] 1
+FEE_PORT[126] 1
+FEE_RACK[127] 1
+FEE_PORT[127] 1
+FEE_RACK[128] 1
+FEE_PORT[128] 1
+FEE_RACK[129] 1
+FEE_PORT[129] 1
+FEE_RACK[130] 1
+FEE_PORT[130] 1
+FEE_RACK[131] 1
+FEE_PORT[131] 1
+FEE_RACK[132] 1
+FEE_PORT[132] 1
+FEE_RACK[133] 1
+FEE_PORT[133] 1
+FEE_RACK[134] 1
+FEE_PORT[134] 1
+FEE_RACK[135] 1
+FEE_PORT[135] 1
+FEE_RACK[136] 1
+FEE_PORT[136] 1
+FEE_RACK[137] 1
+FEE_PORT[137] 1
+FEE_RACK[138] 1
+FEE_PORT[138] 1
+FEE_RACK[139] 1
+FEE_PORT[139] 1
+FEE_RACK[140] 1
+FEE_PORT[140] 1
+FEE_RACK[141] 1
+FEE_PORT[141] 1
+FEE_RACK[142] 1
+FEE_PORT[142] 1
+FEE_RACK[143] 1
+FEE_PORT[143] 1
+FEE_RACK[144] 1
+FEE_PORT[144] 1
+FEE_RACK[145] 1
+FEE_PORT[145] 1
+FEE_RACK[146] 1
+FEE_PORT[146] 1
+FEE_RACK[147] 1
+FEE_PORT[147] 1
+FEE_RACK[148] 1
+FEE_PORT[148] 1
+FEE_RACK[149] 1
+FEE_PORT[149] 1
+FEE_RACK[150] 1
+FEE_PORT[150] 1
+FEE_RACK[151] 1
+FEE_PORT[151] 1
+FEE_RACK[152] 1
+FEE_PORT[152] 1
+FEE_RACK[153] 1
+FEE_PORT[153] 1
+FEE_RACK[154] 1
+FEE_PORT[154] 1
+FEE_RACK[155] 1
+FEE_PORT[155] 1
+FEE_RACK[156] 1
+FEE_PORT[156] 1
+FEE_RACK[157] 1
+FEE_PORT[157] 1
+FEE_RACK[158] 1
+FEE_PORT[158] 1
+FEE_RACK[159] 1
+FEE_PORT[159] 1
+FEE_RACK[160] 1
+FEE_PORT[160] 1
+FEE_RACK[161] 1
+FEE_PORT[161] 1
+FEE_RACK[162] 1
+FEE_PORT[162] 1
+FEE_RACK[163] 1
+FEE_PORT[163] 1
+FEE_RACK[164] 1
+FEE_PORT[164] 1
+FEE_RACK[165] 1
+FEE_PORT[165] 1
+FEE_RACK[166] 1
+FEE_PORT[166] 1
+FEE_RACK[167] 1
+FEE_PORT[167] 1
+FEE_RACK[168] 1
+FEE_PORT[168] 1
+FEE_RACK[169] 1
+FEE_PORT[169] 1
+FEE_RACK[170] 1
+FEE_PORT[170] 1
+FEE_RACK[171] 1
+FEE_PORT[171] 1
+FEE_RACK[172] 1
+FEE_PORT[172] 1
+FEE_RACK[173] 1
+FEE_PORT[173] 1
+FEE_RACK[174] 1
+FEE_PORT[174] 1
+FEE_RACK[175] 1
+FEE_PORT[175] 1
+FEE_RACK[176] 1
+FEE_PORT[176] 1
+FEE_RACK[177] 1
+FEE_PORT[177] 1
+FEE_RACK[178] 1
+FEE_PORT[178] 1
+FEE_RACK[179] 1
+FEE_PORT[179] 1
+FEE_RACK[180] 1
+FEE_PORT[180] 1
+FEE_RACK[181] 1
+FEE_PORT[181] 1
+FEE_RACK[182] 1
+FEE_PORT[182] 1
+FEE_RACK[183] 1
+FEE_PORT[183] 1
+FEE_RACK[184] 1
+FEE_PORT[184] 1
+FEE_RACK[185] 1
+FEE_PORT[185] 1
+FEE_RACK[186] 1
+FEE_PORT[186] 1
+FEE_RACK[187] 1
+FEE_PORT[187] 1
+FEE_RACK[188] 1
+FEE_PORT[188] 1
+FEE_RACK[189] 1
+FEE_PORT[189] 1
+FEE_RACK[190] 1
+FEE_PORT[190] 1
+FEE_RACK[191] 1
+FEE_PORT[191] 1
+FEE_RACK[192] 1
+FEE_PORT[192] 1
+FEE_RACK[193] 1
+FEE_PORT[193] 1
+FEE_RACK[194] 1
+FEE_PORT[194] 1
+FEE_RACK[195] 1
+FEE_PORT[195] 1
+FEE_RACK[196] 1
+FEE_PORT[196] 1
+FEE_RACK[197] 1
+FEE_PORT[197] 1
+FEE_RACK[198] 1
+FEE_PORT[198] 1
+FEE_RACK[199] 1
+FEE_PORT[199] 1
+FEE_RACK[200] 1
+FEE_PORT[200] 1
+FEE_RACK[201] 1
+FEE_PORT[201] 1
+FEE_RACK[202] 1
+FEE_PORT[202] 1
+FEE_RACK[203] 1
+FEE_PORT[203] 1
+FEE_RACK[204] 1
+FEE_PORT[204] 1
+FEE_RACK[205] 1
+FEE_PORT[205] 1
+FEE_RACK[206] 1
+FEE_PORT[206] 1
+FEE_RACK[207] 1
+FEE_PORT[207] 1
+FEE_RACK[208] 1
+FEE_PORT[208] 1
+FEE_RACK[209] 1
+FEE_PORT[209] 1
+FEE_RACK[210] 1
+FEE_PORT[210] 1
+FEE_RACK[211] 1
+FEE_PORT[211] 1
+FEE_RACK[212] 1
+FEE_PORT[212] 1
+FEE_RACK[213] 1
+FEE_PORT[213] 1
+FEE_RACK[214] 1
+FEE_PORT[214] 1
+FEE_RACK[215] 1
+FEE_PORT[215] 1
+FEE_RACK[216] 1
+FEE_PORT[216] 1
+FEE_RACK[217] 1
+FEE_PORT[217] 1
+FEE_RACK[218] 1
+FEE_PORT[218] 1
+FEE_RACK[219] 1
+FEE_PORT[219] 1
+FEE_RACK[220] 1
+FEE_PORT[220] 1
+FEE_RACK[221] 1
+FEE_PORT[221] 1
+FEE_RACK[222] 1
+FEE_PORT[222] 1
+FEE_RACK[223] 1
+FEE_PORT[223] 1
+FEE_RACK[224] 1
+FEE_PORT[224] 1
+FEE_RACK[225] 1
+FEE_PORT[225] 1
+FEE_RACK[226] 1
+FEE_PORT[226] 1
+FEE_RACK[227] 1
+FEE_PORT[227] 1
+FEE_RACK[228] 1
+FEE_PORT[228] 1
+FEE_RACK[229] 1
+FEE_PORT[229] 1
+FEE_RACK[230] 1
+FEE_PORT[230] 1
+FEE_RACK[231] 1
+FEE_PORT[231] 1
+FEE_RACK[232] 1
+FEE_PORT[232] 1
+FEE_RACK[233] 1
+FEE_PORT[233] 1
+FEE_RACK[234] 1
+FEE_PORT[234] 1
+FEE_RACK[235] 1
+FEE_PORT[235] 1
+FEE_RACK[236] 1
+FEE_PORT[236] 1
+FEE_RACK[237] 1
+FEE_PORT[237] 1
+FEE_RACK[238] 1
+FEE_PORT[238] 1
+FEE_RACK[239] 1
+FEE_PORT[239] 1
+FEE_RACK[240] 1
+FEE_PORT[240] 1
+FEE_RACK[241] 1
+FEE_PORT[241] 1
+FEE_RACK[242] 1
+FEE_PORT[242] 1
+FEE_RACK[243] 1
+FEE_PORT[243] 1
+FEE_RACK[244] 1
+FEE_PORT[244] 1
+FEE_RACK[245] 1
+FEE_PORT[245] 1
+FEE_RACK[246] 1
+FEE_PORT[246] 1
+FEE_RACK[247] 1
+FEE_PORT[247] 1
+FEE_RACK[248] 1
+FEE_PORT[248] 1
+FEE_RACK[249] 1
+FEE_PORT[249] 1
+FEE_RACK[250] 1
+FEE_PORT[250] 1
+FEE_RACK[251] 1
+FEE_PORT[251] 1
+FEE_RACK[252] 1
+FEE_PORT[252] 1
+FEE_RACK[253] 1
+FEE_PORT[253] 1
+FEE_RACK[254] 1
+FEE_PORT[254] 1
+FEE_RACK[255] 1
+FEE_PORT[255] 1
+FEE_RACK[256] 1
+FEE_PORT[256] 1
+
+# ----------------------
+# --- RPD --------------
+# ----------------------
+N_RPD 512
+
+# RPD_ID[] will be set to "UNK" (no identification) for any cables #'s <= N_RPD not identified
+# *** RPD_ID[cable#] goes here:
+RPD_ID[1]  EXK-001-083 (Gray)
+RPD_ID[2]  EXK-001-083 (Black)
+RPD_ID[3]  EXK-002-090 (Gray)
+RPD_ID[4]  EXK-002-090 (Black)
+RPD_ID[5]  EXK-003-097 (Gray)
+RPD_ID[6]  EXK-003-097 (Black)
+RPD_ID[7]  EXK-004-103 (Gray)
+RPD_ID[8]  EXK-004-103 (Black)
+RPD_ID[9]  EXK-005-108 (Gray)
+RPD_ID[10]  EXK-005-108 (Black)
+RPD_ID[11]  EXK-006-115 (Gray)
+RPD_ID[12]  EXK-006-115 (Black)
+RPD_ID[13]  EXK-007-099 (Gray)
+RPD_ID[14]  EXK-007-099 (Black)
+RPD_ID[15]  EXK-008-105 (Gray)
+RPD_ID[16]  EXK-008-105 (Black)
+RPD_ID[17]  EXK-009-110 (Gray)
+RPD_ID[18]  EXK-009-110 (Black)
+RPD_ID[19]  EXK-010-115 (Gray)
+RPD_ID[20]  EXK-010-115 (Black)
+RPD_ID[21]  EXK-011-113 (Gray)
+RPD_ID[22]  EXK-011-113 (Black)
+RPD_ID[23]  EXK-012-117 (Gray)
+RPD_ID[24]  EXK-012-117 (Black)
+RPD_ID[25]  EXK-013-122 (Gray)
+RPD_ID[26]  EXK-013-122 (Black)
+RPD_ID[27]  EXK-014-127 (Gray)
+RPD_ID[28]  EXK-014-127 (Black)
+RPD_ID[29]  EXK-015-121 (Gray)
+RPD_ID[30]  EXK-015-121 (Black)
+RPD_ID[31]  EXK-016-126 (Gray)
+RPD_ID[32]  EXK-016-126 (Black)
+RPD_ID[33]  EXK-017-129 (Gray)
+RPD_ID[34]  EXK-017-129 (Black)
+RPD_ID[35]  EXK-018-134 (Gray)
+RPD_ID[36]  EXK-018-134 (Black)
+RPD_ID[37]  EXK-019-132 (Gray)
+RPD_ID[38]  EXK-019-132 (Black)
+RPD_ID[39]  EXK-020-137 (Gray)
+RPD_ID[40]  EXK-020-137 (Black)
+RPD_ID[41]  EXK-021-133 (Gray)
+RPD_ID[42]  EXK-021-133 (Black)
+RPD_ID[43]  EXK-022-138 (Gray)
+RPD_ID[44]  EXK-022-138 (Black)
+RPD_ID[45]  EXK-023-140 (Gray)
+RPD_ID[46]  EXK-023-140 (Black)
+RPD_ID[47]  EXK-024-145 (Gray)
+RPD_ID[48]  EXK-024-145 (Black)
+RPD_ID[49]  EXK-025-147 (Gray)
+RPD_ID[50]  EXK-025-147 (Black)
+RPD_ID[51]  EXK-026-143 (Gray)
+RPD_ID[52]  EXK-026-143 (Black)
+RPD_ID[53]  EXK-027-151 (Gray)
+RPD_ID[54]  EXK-027-151 (Black)
+RPD_ID[55]  EXK-028-155 (Gray)
+RPD_ID[56]  EXK-028-155 (Black)
+RPD_ID[57]  EXK-029-063 (Gray)
+RPD_ID[58]  EXK-029-063 (Black)
+RPD_ID[59]  EXK-030-068 (Gray)
+RPD_ID[60]  EXK-030-068 (Black)
+RPD_ID[61]  EXK-031-069 (Gray)
+RPD_ID[62]  EXK-031-069 (Black)
+RPD_ID[63]  EXK-032-074 (Gray)
+RPD_ID[64]  EXK-032-074 (Black)
+RPD_ID[65]  EXK-033-076 (Gray)
+RPD_ID[66]  EXK-033-076 (Black)
+RPD_ID[67]  EXK-034-082 (Gray)
+RPD_ID[68]  EXK-034-082 (Black)
+RPD_ID[69]  EXK-035-078 (Gray)
+RPD_ID[70]  EXK-035-078 (Black)
+RPD_ID[71]  EXK-036-084 (Gray)
+RPD_ID[72]  EXK-036-084 (Black)
+RPD_ID[73]  EXK-037-081 (Gray)
+RPD_ID[74]  EXK-037-081 (Black)
+RPD_ID[75]  EXK-038-086 (Gray)
+RPD_ID[76]  EXK-038-086 (Black)
+RPD_ID[77]  EXK-039-086 (Gray)
+RPD_ID[78]  EXK-039-086 (Black)
+RPD_ID[79]  EXK-040-090 (Gray)
+RPD_ID[80]  EXK-040-090 (Black)
+RPD_ID[81]  EXK-041-093 (Gray)
+RPD_ID[82]  EXK-041-093 (Black)
+RPD_ID[83]  EXK-042-099 (Gray)
+RPD_ID[84]  EXK-042-099 (Black)
+RPD_ID[85]  EXK-043-103 (Gray)
+RPD_ID[86]  EXK-043-103 (Black)
+RPD_ID[87]  EXK-044-094 (Gray)
+RPD_ID[88]  EXK-044-094 (Black)
+RPD_ID[89]  EXK-045-099 (Gray)
+RPD_ID[90]  EXK-045-099 (Black)
+RPD_ID[91]  EXK-046-097 (Gray)
+RPD_ID[92]  EXK-046-097 (Black)
+RPD_ID[93]  EXK-047-102 (Gray)
+RPD_ID[94]  EXK-047-102 (Black)
+RPD_ID[95]  EXK-048-106 (Gray)
+RPD_ID[96]  EXK-048-106 (Black)
+RPD_ID[97]  EXK-049-111 (Gray)
+RPD_ID[98]  EXK-049-111 (Black)
+RPD_ID[99]  EXK-050-104 (Gray)
+RPD_ID[100]  EXK-050-104 (Black)
+RPD_ID[101]  EXK-051-108 (Gray)
+RPD_ID[102]  EXK-051-108 (Black)
+RPD_ID[103]  EXK-052-114 (Gray)
+RPD_ID[104]  EXK-052-114 (Black)
+RPD_ID[105]  EXK-053-106 (Gray)
+RPD_ID[106]  EXK-053-106 (Black)
+RPD_ID[107]  EXK-054-113 (Gray)
+RPD_ID[108]  EXK-054-113 (Black)
+RPD_ID[109]  EXK-055-119 (Gray)
+RPD_ID[110]  EXK-055-119 (Black)
+RPD_ID[111]  EXK-056-112 (Gray)
+RPD_ID[112]  EXK-056-112 (Black)
+RPD_ID[113]  EXK-057-119 (Gray)
+RPD_ID[114]  EXK-057-119 (Black)
+RPD_ID[115]  EXK-058-126 (Gray)
+RPD_ID[116]  EXK-058-126 (Black)
+RPD_ID[117]  EXK-059-121 (Gray)
+RPD_ID[118]  EXK-059-121 (Black)
+RPD_ID[119]  EXK-060-125 (Gray)
+RPD_ID[120]  EXK-060-125 (Black)
+RPD_ID[121]  EXK-061-130 (Gray)
+RPD_ID[122]  EXK-061-130 (Black)
+RPD_ID[123]  EXK-062-128 (Gray)
+RPD_ID[124]  EXK-062-128 (Black)
+RPD_ID[125]  EXK-063-133 (Gray)
+RPD_ID[126]  EXK-063-133 (Black)
+RPD_ID[127]  EXK-064-132 (Gray)
+RPD_ID[128]  EXK-064-132 (Black)
+RPD_ID[129]  EXK-065-138 (Gray)
+RPD_ID[130]  EXK-065-138 (Black)
+RPD_ID[131]  EXK-066-143 (Gray)
+RPD_ID[132]  EXK-066-143 (Black)
+RPD_ID[133]  EXK-067-137 (Gray)
+RPD_ID[134]  EXK-067-137 (Black)
+RPD_ID[135]  EXK-068-142 (Gray)
+RPD_ID[136]  EXK-068-142 (Black)
+RPD_ID[137]  EXK-069-146 (Gray)
+RPD_ID[138]  EXK-069-146 (Black)
+RPD_ID[139]  EXK-070-142 (Gray)
+RPD_ID[140]  EXK-070-142 (Black)
+RPD_ID[141]  EXK-071-148 (Gray)
+RPD_ID[142]  EXK-071-148 (Black)
+RPD_ID[143]  EXK-072-150 (Gray)
+RPD_ID[144]  EXK-072-150 (Black)
+RPD_ID[145]  EXK-073-155 (Gray)
+RPD_ID[146]  EXK-073-155 (Black)
+RPD_ID[147]  EXK-074-156 (Gray)
+RPD_ID[148]  EXK-074-156 (Black)
+RPD_ID[149]  EXK-075-154 (Gray)
+RPD_ID[150]  EXK-075-154 (Black)
+RPD_ID[151]  EXK-076-158 (Gray)
+RPD_ID[152]  EXK-076-158 (Black)
+RPD_ID[153]  EXK-077-051 (Gray)
+RPD_ID[154]  EXK-077-051 (Black)
+RPD_ID[155]  EXK-078-050 (Gray)
+RPD_ID[156]  EXK-078-050 (Black)
+RPD_ID[157]  EXK-079-057 (Gray)
+RPD_ID[158]  EXK-079-057 (Black)
+RPD_ID[159]  EXK-080-064 (Gray)
+RPD_ID[160]  EXK-080-064 (Black)
+RPD_ID[161]  EXK-081-056 (Gray)
+RPD_ID[162]  EXK-081-056 (Black)
+RPD_ID[163]  EXK-082-063 (Gray)
+RPD_ID[164]  EXK-082-063 (Black)
+RPD_ID[165]  EXK-083-071 (Gray)
+RPD_ID[166]  EXK-083-071 (Black)
+RPD_ID[167]  EXK-084-074 (Gray)
+RPD_ID[168]  EXK-084-074 (Black)
+RPD_ID[169]  EXK-085-079 (Gray)
+RPD_ID[170]  EXK-085-079 (Black)
+RPD_ID[171]  EXK-086-081 (Gray)
+RPD_ID[172]  EXK-086-081 (Black)
+RPD_ID[173]  EXK-087-085 (Gray)
+RPD_ID[174]  EXK-087-085 (Black)
+RPD_ID[175]  EXK-088-084 (Gray)
+RPD_ID[176]  EXK-088-084 (Black)
+RPD_ID[177]  EXK-089-089 (Gray)
+RPD_ID[178]  EXK-089-089 (Black)
+RPD_ID[179]  EXK-090-095 (Gray)
+RPD_ID[180]  EXK-090-095 (Black)
+RPD_ID[181]  EXK-091-094 (Gray)
+RPD_ID[182]  EXK-091-094 (Black)
+RPD_ID[183]  EXK-092-098 (Gray)
+RPD_ID[184]  EXK-092-098 (Black)
+RPD_ID[185]  EXK-093-103 (Gray)
+RPD_ID[186]  EXK-093-103 (Black)
+RPD_ID[187]  EXK-094-101 (Gray)
+RPD_ID[188]  EXK-094-101 (Black)
+RPD_ID[189]  EXK-095-106 (Gray)
+RPD_ID[190]  EXK-095-106 (Black)
+RPD_ID[191]  EXK-096-102 (Gray)
+RPD_ID[192]  EXK-096-102 (Black)
+RPD_ID[193]  EXK-097-108 (Gray)
+RPD_ID[194]  EXK-097-108 (Black)
+RPD_ID[195]  EXK-098-109 (Gray)
+RPD_ID[196]  EXK-098-109 (Black)
+RPD_ID[197]  EXK-099-114 (Gray)
+RPD_ID[198]  EXK-099-114 (Black)
+RPD_ID[199]  EXK-100-119 (Gray)
+RPD_ID[200]  EXK-100-119 (Black)
+RPD_ID[201]  EXK-101-119 (Gray)
+RPD_ID[202]  EXK-101-119 (Black)
+RPD_ID[203]  EXK-102-117 (Gray)
+RPD_ID[204]  EXK-102-117 (Black)
+RPD_ID[205]  EXK-103-125 (Gray)
+RPD_ID[206]  EXK-103-125 (Black)
+RPD_ID[207]  EXK-104-130 (Gray)
+RPD_ID[208]  EXK-104-130 (Black)
+RPD_ID[209]  EXK-105-124 (Gray)
+RPD_ID[210]  EXK-105-124 (Black)
+RPD_ID[211]  EXK-106-129 (Gray)
+RPD_ID[212]  EXK-106-129 (Black)
+RPD_ID[213]  EXK-107-136 (Gray)
+RPD_ID[214]  EXK-107-136 (Black)
+RPD_ID[215]  EXK-108-137 (Gray)
+RPD_ID[216]  EXK-108-137 (Black)
+RPD_ID[217]  EXK-109-141 (Gray)
+RPD_ID[218]  EXK-109-141 (Black)
+RPD_ID[219]  EXK-110-146 (Gray)
+RPD_ID[220]  EXK-110-146 (Black)
+RPD_ID[221]  EXK-111-147 (Gray)
+RPD_ID[222]  EXK-111-147 (Black)
+RPD_ID[223]  EXK-112-146 (Gray)
+RPD_ID[224]  EXK-112-146 (Black)
+RPD_ID[225]  EXK-113-152 (Gray)
+RPD_ID[226]  EXK-113-152 (Black)
+RPD_ID[227]  EXK-114-142 (Gray)
+RPD_ID[228]  EXK-114-142 (Black)
+RPD_ID[229]  EXK-115-042 (Gray)
+RPD_ID[230]  EXK-115-042 (Black)
+RPD_ID[231]  EXK-116-042 (Gray)
+RPD_ID[232]  EXK-116-042 (Black)
+RPD_ID[233]  EXK-117-047 (Gray)
+RPD_ID[234]  EXK-117-047 (Black)
+RPD_ID[235]  EXK-118-054 (Gray)
+RPD_ID[236]  EXK-118-054 (Black)
+RPD_ID[237]  EXK-119-050 (Gray)
+RPD_ID[238]  EXK-119-050 (Black)
+RPD_ID[239]  EXK-120-054 (Gray)
+RPD_ID[240]  EXK-120-054 (Black)
+RPD_ID[241]  EXK-121-057 (Gray)
+RPD_ID[242]  EXK-121-057 (Black)
+RPD_ID[243]  EXK-122-060 (Gray)
+RPD_ID[244]  EXK-122-060 (Black)
+RPD_ID[245]  EXK-123-067 (Gray)
+RPD_ID[246]  EXK-123-067 (Black)
+RPD_ID[247]  EXK-124-064 (Gray)
+RPD_ID[248]  EXK-124-064 (Black)
+RPD_ID[249]  EXK-125-071 (Gray)
+RPD_ID[250]  EXK-125-071 (Black)
+RPD_ID[251]  EXK-126-075 (Gray)
+RPD_ID[252]  EXK-126-075 (Black)
+RPD_ID[253]  EXK-127-071 (Gray)
+RPD_ID[254]  EXK-127-071 (Black)
+RPD_ID[255]  EXK-128-074 (Gray)
+RPD_ID[256]  EXK-128-074 (Black)
+RPD_ID[257]  EXK-129-071 (Gray)
+RPD_ID[258]  EXK-129-071 (Black)
+RPD_ID[259]  EXK-130-081 (Gray)
+RPD_ID[260]  EXK-130-081 (Black)
+RPD_ID[261]  EXK-131-086 (Gray)
+RPD_ID[262]  EXK-131-086 (Black)
+RPD_ID[263]  EXK-132-078 (Gray)
+RPD_ID[264]  EXK-132-078 (Black)
+RPD_ID[265]  EXK-133-084 (Gray)
+RPD_ID[266]  EXK-133-084 (Black)
+RPD_ID[267]  EXK-134-089 (Gray)
+RPD_ID[268]  EXK-134-089 (Black)
+RPD_ID[269]  EXK-135-085 (Gray)
+RPD_ID[270]  EXK-135-085 (Black)
+RPD_ID[271]  EXK-136-088 (Gray)
+RPD_ID[272]  EXK-136-088 (Black)
+RPD_ID[273]  EXK-137-094 (Gray)
+RPD_ID[274]  EXK-137-094 (Black)
+RPD_ID[275]  EXK-138-098 (Gray)
+RPD_ID[276]  EXK-138-098 (Black)
+RPD_ID[277]  EXK-139-094 (Gray)
+RPD_ID[278]  EXK-139-094 (Black)
+RPD_ID[279]  EXK-140-098 (Gray)
+RPD_ID[280]  EXK-140-098 (Black)
+RPD_ID[281]  EXK-141-097 (Gray)
+RPD_ID[282]  EXK-141-097 (Black)
+RPD_ID[283]  EXK-142-102 (Gray)
+RPD_ID[284]  EXK-142-102 (Black)
+RPD_ID[285]  EXK-143-107 (Gray)
+RPD_ID[286]  EXK-143-107 (Black)
+RPD_ID[287]  EXK-144-103 (Gray)
+RPD_ID[288]  EXK-144-103 (Black)
+RPD_ID[289]  EXK-145-107 (Gray)
+RPD_ID[290]  EXK-145-107 (Black)
+RPD_ID[291]  EXK-146-111 (Gray)
+RPD_ID[292]  EXK-146-111 (Black)
+RPD_ID[293]  EXK-147-108 (Gray)
+RPD_ID[294]  EXK-147-108 (Black)
+RPD_ID[295]  EXK-148-112 (Gray)
+RPD_ID[296]  EXK-148-112 (Black)
+RPD_ID[297]  EXK-149-116 (Gray)
+RPD_ID[298]  EXK-149-116 (Black)
+RPD_ID[299]  EXK-150-115 (Gray)
+RPD_ID[300]  EXK-150-115 (Black)
+RPD_ID[301]  EXK-151-116 (Gray)
+RPD_ID[302]  EXK-151-116 (Black)
+RPD_ID[303]  EXK-152-125 (Gray)
+RPD_ID[304]  EXK-152-125 (Black)
+RPD_ID[305]  EXK-153-122 (Gray)
+RPD_ID[306]  EXK-153-122 (Black)
+RPD_ID[307]  EXK-154-126 (Gray)
+RPD_ID[308]  EXK-154-126 (Black)
+RPD_ID[309]  EXK-155-128 (Gray)
+RPD_ID[310]  EXK-155-128 (Black)
+RPD_ID[311]  EXK-156-128 (Gray)
+RPD_ID[312]  EXK-156-128 (Black)
+RPD_ID[313]  EXK-157-134 (Gray)
+RPD_ID[314]  EXK-157-134 (Black)
+RPD_ID[315]  EXK-158-142 (Gray)
+RPD_ID[316]  EXK-158-142 (Black)
+RPD_ID[317]  EXK-159-137 (Gray)
+RPD_ID[318]  EXK-159-137 (Black)
+RPD_ID[319]  EXK-160-143 (Gray)
+RPD_ID[320]  EXK-160-143 (Black)
+RPD_ID[321]  EXK-161-038 (Gray)
+RPD_ID[322]  EXK-161-038 (Black)
+RPD_ID[323]  EXK-162-033 (Gray)
+RPD_ID[324]  EXK-162-033 (Black)
+RPD_ID[325]  EXK-163-040 (Gray)
+RPD_ID[326]  EXK-163-040 (Black)
+RPD_ID[327]  EXK-164-039 (Gray)
+RPD_ID[328]  EXK-164-039 (Black)
+RPD_ID[329]  EXK-165-046 (Gray)
+RPD_ID[330]  EXK-165-046 (Black)
+RPD_ID[331]  EXK-166-051 (Gray)
+RPD_ID[332]  EXK-166-051 (Black)
+RPD_ID[333]  EXK-167-055 (Gray)
+RPD_ID[334]  EXK-167-055 (Black)
+RPD_ID[335]  EXK-168-051 (Gray)
+RPD_ID[336]  EXK-168-051 (Black)
+RPD_ID[337]  EXK-169-056 (Gray)
+RPD_ID[338]  EXK-169-056 (Black)
+RPD_ID[339]  EXK-170-061 (Gray)
+RPD_ID[340]  EXK-170-061 (Black)
+RPD_ID[341]  EXK-171-059 (Gray)
+RPD_ID[342]  EXK-171-059 (Black)
+RPD_ID[343]  EXK-172-064 (Gray)
+RPD_ID[344]  EXK-172-064 (Black)
+RPD_ID[345]  EXK-173-069 (Gray)
+RPD_ID[346]  EXK-173-069 (Black)
+RPD_ID[347]  EXK-174-073 (Gray)
+RPD_ID[348]  EXK-174-073 (Black)
+RPD_ID[349]  EXK-175-065 (Gray)
+RPD_ID[350]  EXK-175-065 (Black)
+RPD_ID[351]  EXK-176-070 (Gray)
+RPD_ID[352]  EXK-176-070 (Black)
+RPD_ID[353]  EXK-177-072 (Gray)
+RPD_ID[354]  EXK-177-072 (Black)
+RPD_ID[355]  EXK-178-077 (Gray)
+RPD_ID[356]  EXK-178-077 (Black)
+RPD_ID[357]  EXK-179-082 (Gray)
+RPD_ID[358]  EXK-179-082 (Black)
+RPD_ID[359]  EXK-180-075 (Gray)
+RPD_ID[360]  EXK-180-075 (Black)
+RPD_ID[361]  EXK-181-081 (Gray)
+RPD_ID[362]  EXK-181-081 (Black)
+RPD_ID[363]  EXK-182-081 (Gray)
+RPD_ID[364]  EXK-182-081 (Black)
+RPD_ID[365]  EXK-183-086 (Gray)
+RPD_ID[366]  EXK-183-086 (Black)
+RPD_ID[367]  EXK-184-081 (Gray)
+RPD_ID[368]  EXK-184-081 (Black)
+RPD_ID[369]  EXK-185-087 (Gray)
+RPD_ID[370]  EXK-185-087 (Black)
+RPD_ID[371]  EXK-186-086 (Gray)
+RPD_ID[372]  EXK-186-086 (Black)
+RPD_ID[373]  EXK-187-092 (Gray)
+RPD_ID[374]  EXK-187-092 (Black)
+RPD_ID[375]  EXK-188-096 (Gray)
+RPD_ID[376]  EXK-188-096 (Black)
+RPD_ID[377]  EXK-189-090 (Gray)
+RPD_ID[378]  EXK-189-090 (Black)
+RPD_ID[379]  EXK-190-094 (Gray)
+RPD_ID[380]  EXK-190-094 (Black)
+RPD_ID[381]  EXK-191-095 (Gray)
+RPD_ID[382]  EXK-191-095 (Black)
+RPD_ID[383]  EXK-192-101 (Gray)
+RPD_ID[384]  EXK-192-101 (Black)
+RPD_ID[385]  EXK-193-098 (Gray)
+RPD_ID[386]  EXK-193-098 (Black)
+RPD_ID[387]  EXK-194-104 (Gray)
+RPD_ID[388]  EXK-194-104 (Black)
+RPD_ID[389]  EXK-195-102 (Gray)
+RPD_ID[390]  EXK-195-102 (Black)
+RPD_ID[391]  EXK-196-108 (Gray)
+RPD_ID[392]  EXK-196-108 (Black)
+RPD_ID[393]  EXK-197-114 (Gray)
+RPD_ID[394]  EXK-197-114 (Black)
+RPD_ID[395]  EXK-198-105 (Gray)
+RPD_ID[396]  EXK-198-105 (Black)
+RPD_ID[397]  EXK-199-113 (Gray)
+RPD_ID[398]  EXK-199-113 (Black)
+RPD_ID[399]  EXK-200-112 (Gray)
+RPD_ID[400]  EXK-200-112 (Black)
+RPD_ID[401]  EXK-201-120 (Gray)
+RPD_ID[402]  EXK-201-120 (Black)
+RPD_ID[403]  EXK-202-124 (Gray)
+RPD_ID[404]  EXK-202-124 (Black)
+RPD_ID[405]  EXK-203-125 (Gray)
+RPD_ID[406]  EXK-203-125 (Black)
+RPD_ID[407]  EXK-204-121 (Gray)
+RPD_ID[408]  EXK-204-121 (Black)
+RPD_ID[409]  EXK-205-116 (Gray)
+RPD_ID[410]  EXK-205-116 (Black)
+RPD_ID[411]  EXK-206-121 (Gray)
+RPD_ID[412]  EXK-206-121 (Black)
+RPD_ID[413]  EXK-207-127 (Gray)
+RPD_ID[414]  EXK-207-127 (Black)
+RPD_ID[415]  EXK-208-125 (Gray)
+RPD_ID[416]  EXK-208-125 (Black)
+RPD_ID[417]  EXK-209-130 (Gray)
+RPD_ID[418]  EXK-209-130 (Black)
+RPD_ID[419]  EXK-210-131 (Gray)
+RPD_ID[420]  EXK-210-131 (Black)
+RPD_ID[421]  EXK-211-044 (Gray)
+RPD_ID[422]  EXK-211-044 (Black)
+RPD_ID[423]  EXK-212-050 (Gray)
+RPD_ID[424]  EXK-212-050 (Black)
+RPD_ID[425]  EXK-213-055 (Gray)
+RPD_ID[426]  EXK-213-055 (Black)
+RPD_ID[427]  EXK-214-048 (Gray)
+RPD_ID[428]  EXK-214-048 (Black)
+RPD_ID[429]  EXK-215-055 (Gray)
+RPD_ID[430]  EXK-215-055 (Black)
+RPD_ID[431]  EXK-216-060 (Gray)
+RPD_ID[432]  EXK-216-060 (Black)
+RPD_ID[433]  EXK-217-064 (Gray)
+RPD_ID[434]  EXK-217-064 (Black)
+RPD_ID[435]  EXK-218-059 (Gray)
+RPD_ID[436]  EXK-218-059 (Black)
+RPD_ID[437]  EXK-219-062 (Gray)
+RPD_ID[438]  EXK-219-062 (Black)
+RPD_ID[439]  EXK-220-068 (Gray)
+RPD_ID[440]  EXK-220-068 (Black)
+RPD_ID[441]  EXK-221-071 (Gray)
+RPD_ID[442]  EXK-221-071 (Black)
+RPD_ID[443]  EXK-222-076 (Gray)
+RPD_ID[444]  EXK-222-076 (Black)
+RPD_ID[445]  EXK-223-067 (Gray)
+RPD_ID[446]  EXK-223-067 (Black)
+RPD_ID[447]  EXK-224-072 (Gray)
+RPD_ID[448]  EXK-224-072 (Black)
+RPD_ID[449]  EXK-225-084 (Gray)
+RPD_ID[450]  EXK-225-084 (Black)
+RPD_ID[451]  EXK-226-082 (Gray)
+RPD_ID[452]  EXK-226-082 (Black)
+RPD_ID[453]  EXK-227-078 (Gray)
+RPD_ID[454]  EXK-227-078 (Black)
+RPD_ID[455]  EXK-228-085 (Gray)
+RPD_ID[456]  EXK-228-085 (Black)
+RPD_ID[457]  EXK-229-092 (Gray)
+RPD_ID[458]  EXK-229-092 (Black)
+RPD_ID[459]  EXK-230-097 (Gray)
+RPD_ID[460]  EXK-230-097 (Black)
+RPD_ID[461]  EXK-231-088 (Gray)
+RPD_ID[462]  EXK-231-088 (Black)
+RPD_ID[463]  EXK-232-093 (Gray)
+RPD_ID[464]  EXK-232-093 (Black)
+RPD_ID[465]  EXK-233-097 (Gray)
+RPD_ID[466]  EXK-233-097 (Black)
+RPD_ID[467]  EXK-234-103 (Gray)
+RPD_ID[468]  EXK-234-103 (Black)
+RPD_ID[469]  EXK-235-100 (Gray)
+RPD_ID[470]  EXK-235-100 (Black)
+RPD_ID[471]  EXK-236-109 (Gray)
+RPD_ID[472]  EXK-236-109 (Black)
+RPD_ID[473]  EXK-237-113 (Gray)
+RPD_ID[474]  EXK-237-113 (Black)
+RPD_ID[475]  EXK-238-106 (Gray)
+RPD_ID[476]  EXK-238-106 (Black)
+RPD_ID[477]  EXK-239-111 (Gray)
+RPD_ID[478]  EXK-239-111 (Black)
+RPD_ID[479]  EXK-240-116 (Gray)
+RPD_ID[480]  EXK-240-116 (Black)
+RPD_ID[481]  EXK-241-059 (Gray)
+RPD_ID[482]  EXK-241-059 (Black)
+RPD_ID[483]  EXK-242-061 (Gray)
+RPD_ID[484]  EXK-242-061 (Black)
+RPD_ID[485]  EXK-243-067 (Gray)
+RPD_ID[486]  EXK-243-067 (Black)
+RPD_ID[487]  EXK-244-072 (Gray)
+RPD_ID[488]  EXK-244-072 (Black)
+RPD_ID[489]  EXK-245-074 (Gray)
+RPD_ID[490]  EXK-245-074 (Black)
+RPD_ID[491]  EXK-246-078 (Gray)
+RPD_ID[492]  EXK-246-078 (Black)
+RPD_ID[493]  EXK-247-083 (Gray)
+RPD_ID[494]  EXK-247-083 (Black)
+RPD_ID[495]  EXK-248-088 (Gray)
+RPD_ID[496]  EXK-248-088 (Black)
+RPD_ID[497]  EXK-249-083 (Gray)
+RPD_ID[498]  EXK-249-083 (Black)
+RPD_ID[499]  EXK-250-088 (Gray)
+RPD_ID[500]  EXK-250-088 (Black)
+RPD_ID[501]  EXK-251-092 (Gray)
+RPD_ID[502]  EXK-251-092 (Black)
+RPD_ID[503]  EXK-252-097 (Gray)
+RPD_ID[504]  EXK-252-097 (Black)
+RPD_ID[505]  EXK-253-102 (Gray)
+RPD_ID[506]  EXK-253-102 (Black)
+RPD_ID[507]  EXK-254-112 (Gray)
+RPD_ID[508]  EXK-254-112 (Black)
+RPD_ID[509]  EXK-255-099 (Gray)
+RPD_ID[510]  EXK-255-099 (Black)
+RPD_ID[511]  EXK-256-106 (Gray)
+RPD_ID[512]  EXK-256-106 (Black)
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
+# *** RPD_STAT[cable#] goes here:
+
+# RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
+# *** RPD_LENG[cable#] [m] goes here:
+RPD_LENG[1]   83.00
+RPD_LENG[2]   83.00
+RPD_LENG[3]   90.00
+RPD_LENG[4]   90.00
+RPD_LENG[5]   97.00
+RPD_LENG[6]   97.00
+RPD_LENG[7]  103.00
+RPD_LENG[8]  103.00
+RPD_LENG[9]  108.00
+RPD_LENG[10]  108.00
+RPD_LENG[11]  115.00
+RPD_LENG[12]  115.00
+RPD_LENG[13]   99.00
+RPD_LENG[14]   99.00
+RPD_LENG[15]  105.00
+RPD_LENG[16]  105.00
+RPD_LENG[17]  110.00
+RPD_LENG[18]  110.00
+RPD_LENG[19]  115.00
+RPD_LENG[20]  115.00
+RPD_LENG[21]  113.00
+RPD_LENG[22]  113.00
+RPD_LENG[23]  117.00
+RPD_LENG[24]  117.00
+RPD_LENG[25]  122.00
+RPD_LENG[26]  122.00
+RPD_LENG[27]  127.00
+RPD_LENG[28]  127.00
+RPD_LENG[29]  121.00
+RPD_LENG[30]  121.00
+RPD_LENG[31]  126.00
+RPD_LENG[32]  126.00
+RPD_LENG[33]  129.00
+RPD_LENG[34]  129.00
+RPD_LENG[35]  134.00
+RPD_LENG[36]  134.00
+RPD_LENG[37]  132.00
+RPD_LENG[38]  132.00
+RPD_LENG[39]  137.00
+RPD_LENG[40]  137.00
+RPD_LENG[41]  133.00
+RPD_LENG[42]  133.00
+RPD_LENG[43]  138.00
+RPD_LENG[44]  138.00
+RPD_LENG[45]  140.00
+RPD_LENG[46]  140.00
+RPD_LENG[47]  145.00
+RPD_LENG[48]  145.00
+RPD_LENG[49]  147.00
+RPD_LENG[50]  147.00
+RPD_LENG[51]  143.00
+RPD_LENG[52]  143.00
+RPD_LENG[53]  151.00
+RPD_LENG[54]  151.00
+RPD_LENG[55]  155.00
+RPD_LENG[56]  155.00
+RPD_LENG[57]   63.00
+RPD_LENG[58]   63.00
+RPD_LENG[59]   68.00
+RPD_LENG[60]   68.00
+RPD_LENG[61]   69.00
+RPD_LENG[62]   69.00
+RPD_LENG[63]   74.00
+RPD_LENG[64]   74.00
+RPD_LENG[65]   76.00
+RPD_LENG[66]   76.00
+RPD_LENG[67]   82.00
+RPD_LENG[68]   82.00
+RPD_LENG[69]   78.00
+RPD_LENG[70]   78.00
+RPD_LENG[71]   84.00
+RPD_LENG[72]   84.00
+RPD_LENG[73]   81.00
+RPD_LENG[74]   81.00
+RPD_LENG[75]   86.00
+RPD_LENG[76]   86.00
+RPD_LENG[77]   86.00
+RPD_LENG[78]   86.00
+RPD_LENG[79]   90.00
+RPD_LENG[80]   90.00
+RPD_LENG[81]   93.00
+RPD_LENG[82]   93.00
+RPD_LENG[83]   99.00
+RPD_LENG[84]   99.00
+RPD_LENG[85]  103.00
+RPD_LENG[86]  103.00
+RPD_LENG[87]   94.00
+RPD_LENG[88]   94.00
+RPD_LENG[89]   99.00
+RPD_LENG[90]   99.00
+RPD_LENG[91]   97.00
+RPD_LENG[92]   97.00
+RPD_LENG[93]  102.00
+RPD_LENG[94]  102.00
+RPD_LENG[95]  106.00
+RPD_LENG[96]  106.00
+RPD_LENG[97]  111.00
+RPD_LENG[98]  111.00
+RPD_LENG[99]  104.00
+RPD_LENG[100]  104.00
+RPD_LENG[101]  108.00
+RPD_LENG[102]  108.00
+RPD_LENG[103]  114.00
+RPD_LENG[104]  114.00
+RPD_LENG[105]  106.00
+RPD_LENG[106]  106.00
+RPD_LENG[107]  113.00
+RPD_LENG[108]  113.00
+RPD_LENG[109]  119.00
+RPD_LENG[110]  119.00
+RPD_LENG[111]  112.00
+RPD_LENG[112]  112.00
+RPD_LENG[113]  119.00
+RPD_LENG[114]  119.00
+RPD_LENG[115]  126.00
+RPD_LENG[116]  126.00
+RPD_LENG[117]  121.00
+RPD_LENG[118]  121.00
+RPD_LENG[119]  125.00
+RPD_LENG[120]  125.00
+RPD_LENG[121]  130.00
+RPD_LENG[122]  130.00
+RPD_LENG[123]  128.00
+RPD_LENG[124]  128.00
+RPD_LENG[125]  133.00
+RPD_LENG[126]  133.00
+RPD_LENG[127]  132.00
+RPD_LENG[128]  132.00
+RPD_LENG[129]  138.00
+RPD_LENG[130]  138.00
+RPD_LENG[131]  143.00
+RPD_LENG[132]  143.00
+RPD_LENG[133]  137.00
+RPD_LENG[134]  137.00
+RPD_LENG[135]  142.00
+RPD_LENG[136]  142.00
+RPD_LENG[137]  146.00
+RPD_LENG[138]  146.00
+RPD_LENG[139]  142.00
+RPD_LENG[140]  142.00
+RPD_LENG[141]  148.00
+RPD_LENG[142]  148.00
+RPD_LENG[143]  150.00
+RPD_LENG[144]  150.00
+RPD_LENG[145]  155.00
+RPD_LENG[146]  155.00
+RPD_LENG[147]  156.00
+RPD_LENG[148]  156.00
+RPD_LENG[149]  154.00
+RPD_LENG[150]  154.00
+RPD_LENG[151]  158.00
+RPD_LENG[152]  158.00
+RPD_LENG[153]   51.00
+RPD_LENG[154]   51.00
+RPD_LENG[155]   50.00
+RPD_LENG[156]   50.00
+RPD_LENG[157]   57.00
+RPD_LENG[158]   57.00
+RPD_LENG[159]   64.00
+RPD_LENG[160]   64.00
+RPD_LENG[161]   56.00
+RPD_LENG[162]   56.00
+RPD_LENG[163]   63.00
+RPD_LENG[164]   63.00
+RPD_LENG[165]   71.00
+RPD_LENG[166]   71.00
+RPD_LENG[167]   74.00
+RPD_LENG[168]   74.00
+RPD_LENG[169]   79.00
+RPD_LENG[170]   79.00
+RPD_LENG[171]   81.00
+RPD_LENG[172]   81.00
+RPD_LENG[173]   85.00
+RPD_LENG[174]   85.00
+RPD_LENG[175]   84.00
+RPD_LENG[176]   84.00
+RPD_LENG[177]   89.00
+RPD_LENG[178]   89.00
+RPD_LENG[179]   95.00
+RPD_LENG[180]   95.00
+RPD_LENG[181]   94.00
+RPD_LENG[182]   94.00
+RPD_LENG[183]   98.00
+RPD_LENG[184]   98.00
+RPD_LENG[185]  103.00
+RPD_LENG[186]  103.00
+RPD_LENG[187]  101.00
+RPD_LENG[188]  101.00
+RPD_LENG[189]  106.00
+RPD_LENG[190]  106.00
+RPD_LENG[191]  102.00
+RPD_LENG[192]  102.00
+RPD_LENG[193]  108.00
+RPD_LENG[194]  108.00
+RPD_LENG[195]  109.00
+RPD_LENG[196]  109.00
+RPD_LENG[197]  114.00
+RPD_LENG[198]  114.00
+RPD_LENG[199]  119.00
+RPD_LENG[200]  119.00
+RPD_LENG[201]  119.00
+RPD_LENG[202]  119.00
+RPD_LENG[203]  117.00
+RPD_LENG[204]  117.00
+RPD_LENG[205]  125.00
+RPD_LENG[206]  125.00
+RPD_LENG[207]  130.00
+RPD_LENG[208]  130.00
+RPD_LENG[209]  124.00
+RPD_LENG[210]  124.00
+RPD_LENG[211]  129.00
+RPD_LENG[212]  129.00
+RPD_LENG[213]  136.00
+RPD_LENG[214]  136.00
+RPD_LENG[215]  137.00
+RPD_LENG[216]  137.00
+RPD_LENG[217]  141.00
+RPD_LENG[218]  141.00
+RPD_LENG[219]  146.00
+RPD_LENG[220]  146.00
+RPD_LENG[221]  147.00
+RPD_LENG[222]  147.00
+RPD_LENG[223]  146.00
+RPD_LENG[224]  146.00
+RPD_LENG[225]  152.00
+RPD_LENG[226]  152.00
+RPD_LENG[227]  142.00
+RPD_LENG[228]  142.00
+RPD_LENG[229]   42.00
+RPD_LENG[230]   42.00
+RPD_LENG[231]   42.00
+RPD_LENG[232]   42.00
+RPD_LENG[233]   47.00
+RPD_LENG[234]   47.00
+RPD_LENG[235]   54.00
+RPD_LENG[236]   54.00
+RPD_LENG[237]   50.00
+RPD_LENG[238]   50.00
+RPD_LENG[239]   54.00
+RPD_LENG[240]   54.00
+RPD_LENG[241]   57.00
+RPD_LENG[242]   57.00
+RPD_LENG[243]   60.00
+RPD_LENG[244]   60.00
+RPD_LENG[245]   67.00
+RPD_LENG[246]   67.00
+RPD_LENG[247]   64.00
+RPD_LENG[248]   64.00
+RPD_LENG[249]   71.00
+RPD_LENG[250]   71.00
+RPD_LENG[251]   75.00
+RPD_LENG[252]   75.00
+RPD_LENG[253]   71.00
+RPD_LENG[254]   71.00
+RPD_LENG[255]   74.00
+RPD_LENG[256]   74.00
+RPD_LENG[257]   71.00
+RPD_LENG[258]   71.00
+RPD_LENG[259]   81.00
+RPD_LENG[260]   81.00
+RPD_LENG[261]   86.00
+RPD_LENG[262]   86.00
+RPD_LENG[263]   78.00
+RPD_LENG[264]   78.00
+RPD_LENG[265]   84.00
+RPD_LENG[266]   84.00
+RPD_LENG[267]   89.00
+RPD_LENG[268]   89.00
+RPD_LENG[269]   85.00
+RPD_LENG[270]   85.00
+RPD_LENG[271]   88.00
+RPD_LENG[272]   88.00
+RPD_LENG[273]   94.00
+RPD_LENG[274]   94.00
+RPD_LENG[275]   98.00
+RPD_LENG[276]   98.00
+RPD_LENG[277]   94.00
+RPD_LENG[278]   94.00
+RPD_LENG[279]   98.00
+RPD_LENG[280]   98.00
+RPD_LENG[281]   97.00
+RPD_LENG[282]   97.00
+RPD_LENG[283]  102.00
+RPD_LENG[284]  102.00
+RPD_LENG[285]  107.00
+RPD_LENG[286]  107.00
+RPD_LENG[287]  103.00
+RPD_LENG[288]  103.00
+RPD_LENG[289]  107.00
+RPD_LENG[290]  107.00
+RPD_LENG[291]  111.00
+RPD_LENG[292]  111.00
+RPD_LENG[293]  108.00
+RPD_LENG[294]  108.00
+RPD_LENG[295]  112.00
+RPD_LENG[296]  112.00
+RPD_LENG[297]  116.00
+RPD_LENG[298]  116.00
+RPD_LENG[299]  115.00
+RPD_LENG[300]  115.00
+RPD_LENG[301]  116.00
+RPD_LENG[302]  116.00
+RPD_LENG[303]  125.00
+RPD_LENG[304]  125.00
+RPD_LENG[305]  122.00
+RPD_LENG[306]  122.00
+RPD_LENG[307]  126.00
+RPD_LENG[308]  126.00
+RPD_LENG[309]  128.00
+RPD_LENG[310]  128.00
+RPD_LENG[311]  128.00
+RPD_LENG[312]  128.00
+RPD_LENG[313]  134.00
+RPD_LENG[314]  134.00
+RPD_LENG[315]  142.00
+RPD_LENG[316]  142.00
+RPD_LENG[317]  137.00
+RPD_LENG[318]  137.00
+RPD_LENG[319]  143.00
+RPD_LENG[320]  143.00
+RPD_LENG[321]   38.00
+RPD_LENG[322]   38.00
+RPD_LENG[323]   33.00
+RPD_LENG[324]   33.00
+RPD_LENG[325]   40.00
+RPD_LENG[326]   40.00
+RPD_LENG[327]   39.00
+RPD_LENG[328]   39.00
+RPD_LENG[329]   46.00
+RPD_LENG[330]   46.00
+RPD_LENG[331]   51.00
+RPD_LENG[332]   51.00
+RPD_LENG[333]   55.00
+RPD_LENG[334]   55.00
+RPD_LENG[335]   51.00
+RPD_LENG[336]   51.00
+RPD_LENG[337]   56.00
+RPD_LENG[338]   56.00
+RPD_LENG[339]   61.00
+RPD_LENG[340]   61.00
+RPD_LENG[341]   59.00
+RPD_LENG[342]   59.00
+RPD_LENG[343]   64.00
+RPD_LENG[344]   64.00
+RPD_LENG[345]   69.00
+RPD_LENG[346]   69.00
+RPD_LENG[347]   73.00
+RPD_LENG[348]   73.00
+RPD_LENG[349]   65.00
+RPD_LENG[350]   65.00
+RPD_LENG[351]   70.00
+RPD_LENG[352]   70.00
+RPD_LENG[353]   72.00
+RPD_LENG[354]   72.00
+RPD_LENG[355]   77.00
+RPD_LENG[356]   77.00
+RPD_LENG[357]   82.00
+RPD_LENG[358]   82.00
+RPD_LENG[359]   75.00
+RPD_LENG[360]   75.00
+RPD_LENG[361]   81.00
+RPD_LENG[362]   81.00
+RPD_LENG[363]   81.00
+RPD_LENG[364]   81.00
+RPD_LENG[365]   86.00
+RPD_LENG[366]   86.00
+RPD_LENG[367]   81.00
+RPD_LENG[368]   81.00
+RPD_LENG[369]   87.00
+RPD_LENG[370]   87.00
+RPD_LENG[371]   86.00
+RPD_LENG[372]   86.00
+RPD_LENG[373]   92.00
+RPD_LENG[374]   92.00
+RPD_LENG[375]   96.00
+RPD_LENG[376]   96.00
+RPD_LENG[377]   90.00
+RPD_LENG[378]   90.00
+RPD_LENG[379]   94.00
+RPD_LENG[380]   94.00
+RPD_LENG[381]   95.00
+RPD_LENG[382]   95.00
+RPD_LENG[383]  101.00
+RPD_LENG[384]  101.00
+RPD_LENG[385]   98.00
+RPD_LENG[386]   98.00
+RPD_LENG[387]  104.00
+RPD_LENG[388]  104.00
+RPD_LENG[389]  102.00
+RPD_LENG[390]  102.00
+RPD_LENG[391]  108.00
+RPD_LENG[392]  108.00
+RPD_LENG[393]  114.00
+RPD_LENG[394]  114.00
+RPD_LENG[395]  105.00
+RPD_LENG[396]  105.00
+RPD_LENG[397]  113.00
+RPD_LENG[398]  113.00
+RPD_LENG[399]  112.00
+RPD_LENG[400]  112.00
+RPD_LENG[401]  120.00
+RPD_LENG[402]  120.00
+RPD_LENG[403]  124.00
+RPD_LENG[404]  124.00
+RPD_LENG[405]  125.00
+RPD_LENG[406]  125.00
+RPD_LENG[407]  121.00
+RPD_LENG[408]  121.00
+RPD_LENG[409]  116.00
+RPD_LENG[410]  116.00
+RPD_LENG[411]  121.00
+RPD_LENG[412]  121.00
+RPD_LENG[413]  127.00
+RPD_LENG[414]  127.00
+RPD_LENG[415]  125.00
+RPD_LENG[416]  125.00
+RPD_LENG[417]  130.00
+RPD_LENG[418]  130.00
+RPD_LENG[419]  131.00
+RPD_LENG[420]  131.00
+RPD_LENG[421]   44.00
+RPD_LENG[422]   44.00
+RPD_LENG[423]   50.00
+RPD_LENG[424]   50.00
+RPD_LENG[425]   55.00
+RPD_LENG[426]   55.00
+RPD_LENG[427]   48.00
+RPD_LENG[428]   48.00
+RPD_LENG[429]   55.00
+RPD_LENG[430]   55.00
+RPD_LENG[431]   60.00
+RPD_LENG[432]   60.00
+RPD_LENG[433]   64.00
+RPD_LENG[434]   64.00
+RPD_LENG[435]   59.00
+RPD_LENG[436]   59.00
+RPD_LENG[437]   62.00
+RPD_LENG[438]   62.00
+RPD_LENG[439]   68.00
+RPD_LENG[440]   68.00
+RPD_LENG[441]   71.00
+RPD_LENG[442]   71.00
+RPD_LENG[443]   76.00
+RPD_LENG[444]   76.00
+RPD_LENG[445]   67.00
+RPD_LENG[446]   67.00
+RPD_LENG[447]   72.00
+RPD_LENG[448]   72.00
+RPD_LENG[449]   84.00
+RPD_LENG[450]   84.00
+RPD_LENG[451]   82.00
+RPD_LENG[452]   82.00
+RPD_LENG[453]   78.00
+RPD_LENG[454]   78.00
+RPD_LENG[455]   85.00
+RPD_LENG[456]   85.00
+RPD_LENG[457]   92.00
+RPD_LENG[458]   92.00
+RPD_LENG[459]   97.00
+RPD_LENG[460]   97.00
+RPD_LENG[461]   88.00
+RPD_LENG[462]   88.00
+RPD_LENG[463]   93.00
+RPD_LENG[464]   93.00
+RPD_LENG[465]   97.00
+RPD_LENG[466]   97.00
+RPD_LENG[467]  103.00
+RPD_LENG[468]  103.00
+RPD_LENG[469]  100.00
+RPD_LENG[470]  100.00
+RPD_LENG[471]  109.00
+RPD_LENG[472]  109.00
+RPD_LENG[473]  113.00
+RPD_LENG[474]  113.00
+RPD_LENG[475]  106.00
+RPD_LENG[476]  106.00
+RPD_LENG[477]  111.00
+RPD_LENG[478]  111.00
+RPD_LENG[479]  116.00
+RPD_LENG[480]  116.00
+RPD_LENG[481]   59.00
+RPD_LENG[482]   59.00
+RPD_LENG[483]   61.00
+RPD_LENG[484]   61.00
+RPD_LENG[485]   67.00
+RPD_LENG[486]   67.00
+RPD_LENG[487]   72.00
+RPD_LENG[488]   72.00
+RPD_LENG[489]   74.00
+RPD_LENG[490]   74.00
+RPD_LENG[491]   78.00
+RPD_LENG[492]   78.00
+RPD_LENG[493]   83.00
+RPD_LENG[494]   83.00
+RPD_LENG[495]   88.00
+RPD_LENG[496]   88.00
+RPD_LENG[497]   83.00
+RPD_LENG[498]   83.00
+RPD_LENG[499]   88.00
+RPD_LENG[500]   88.00
+RPD_LENG[501]   92.00
+RPD_LENG[502]   92.00
+RPD_LENG[503]   97.00
+RPD_LENG[504]   97.00
+RPD_LENG[505]  102.00
+RPD_LENG[506]  102.00
+RPD_LENG[507]  112.00
+RPD_LENG[508]  112.00
+RPD_LENG[509]   99.00
+RPD_LENG[510]   99.00
+RPD_LENG[511]  106.00
+RPD_LENG[512]  106.00
+
+# Cable stretching as determined by TDR measurements made by F. Schinzel.
+#############################################################################
+#                                                                           #
+# NOTE:  These were measured from inside the ARX rack so the stretch factor #
+#        includes the lengths of the SEP and internal ARX cabling.          #
+#                                                                           #
+#############################################################################
+RPD_STR[1]  1.0402
+RPD_STR[2]  1.0466
+RPD_STR[3]  1.0398
+RPD_STR[4]  1.0514
+RPD_STR[5]  1.0341
+RPD_STR[6]  1.0341
+RPD_STR[7]  1.0290
+RPD_STR[8]  1.0290
+RPD_STR[9]  1.0293
+RPD_STR[10]  1.0341
+RPD_STR[11]  1.0251
+RPD_STR[12]  1.0476
+RPD_STR[13]  1.0341
+RPD_STR[14]  1.0393
+RPD_STR[15]  1.0341
+RPD_STR[16]  1.0390
+RPD_STR[17]  1.0294
+RPD_STR[18]  1.0435
+RPD_STR[19]  1.0341
+RPD_STR[20]  1.0341
+RPD_STR[21]  1.0296
+RPD_STR[22]  1.0387
+RPD_STR[23]  1.0297
+RPD_STR[24]  1.0341
+RPD_STR[25]  1.0256
+RPD_STR[26]  1.0299
+RPD_STR[27]  1.0260
+RPD_STR[28]  1.0301
+RPD_STR[29]  1.0256
+RPD_STR[30]  1.0341
+RPD_STR[31]  1.0259
+RPD_STR[32]  1.0300
+RPD_STR[33]  1.0541
+RPD_STR[34]  1.0301
+RPD_STR[35]  1.0264
+RPD_STR[36]  1.0303
+RPD_STR[37]  1.0419
+RPD_STR[38]  1.0263
+RPD_STR[39]  1.0455
+RPD_STR[40]  1.0265
+RPD_STR[41]  1.0303
+RPD_STR[42]  1.0303
+RPD_STR[43]  1.0229
+RPD_STR[44]  1.0266
+RPD_STR[45]  1.0231
+RPD_STR[46]  1.0267
+RPD_STR[47]  1.0199
+RPD_STR[48]  1.0270
+RPD_STR[49]  1.0482
+RPD_STR[50]  1.0341
+RPD_STR[51]  1.0268
+RPD_STR[52]  1.0268
+RPD_STR[53]  1.0204
+RPD_STR[54]  1.0273
+RPD_STR[55]  1.0208
+RPD_STR[56]  1.0208
+RPD_STR[57]  1.0669
+RPD_STR[58]  1.0586
+RPD_STR[59]  1.0492
+RPD_STR[60]  1.0720
+RPD_STR[61]  1.0491
+RPD_STR[62]  1.0565
+RPD_STR[63]  1.0482
+RPD_STR[64]  1.0621
+RPD_STR[65]  1.0410
+RPD_STR[66]  1.0410
+RPD_STR[67]  1.0467
+RPD_STR[68]  1.0467
+RPD_STR[69]  1.0606
+RPD_STR[70]  1.0474
+RPD_STR[71]  1.0402
+RPD_STR[72]  1.0402
+RPD_STR[73]  1.0405
+RPD_STR[74]  1.0469
+RPD_STR[75]  1.0401
+RPD_STR[76]  1.0462
+RPD_STR[77]  1.0401
+RPD_STR[78]  1.0401
+RPD_STR[79]  1.0342
+RPD_STR[80]  1.0398
+RPD_STR[81]  1.0396
+RPD_STR[82]  1.0508
+RPD_STR[83]  1.0341
+RPD_STR[84]  1.0393
+RPD_STR[85]  1.0392
+RPD_STR[86]  1.0392
+RPD_STR[87]  1.0506
+RPD_STR[88]  1.0397
+RPD_STR[89]  1.0341
+RPD_STR[90]  1.0393
+RPD_STR[91]  1.0447
+RPD_STR[92]  1.0395
+RPD_STR[93]  1.0391
+RPD_STR[94]  1.0341
+RPD_STR[95]  1.0292
+RPD_STR[96]  1.0341
+RPD_STR[97]  1.0294
+RPD_STR[98]  1.0341
+RPD_STR[99]  1.0590
+RPD_STR[100]  1.0391
+RPD_STR[101]  1.0341
+RPD_STR[102]  1.0341
+RPD_STR[103]  1.0296
+RPD_STR[104]  1.0341
+RPD_STR[105]  1.0292
+RPD_STR[106]  1.0341
+RPD_STR[107]  1.0296
+RPD_STR[108]  1.0341
+RPD_STR[109]  1.0428
+RPD_STR[110]  1.0341
+RPD_STR[111]  1.0294
+RPD_STR[112]  1.0341
+RPD_STR[113]  1.0384
+RPD_STR[114]  1.0254
+RPD_STR[115]  1.0300
+RPD_STR[116]  1.0383
+RPD_STR[117]  1.0298
+RPD_STR[118]  1.0298
+RPD_STR[119]  1.0258
+RPD_STR[120]  1.0258
+RPD_STR[121]  1.0262
+RPD_STR[122]  1.0302
+RPD_STR[123]  1.0301
+RPD_STR[124]  1.0381
+RPD_STR[125]  1.0263
+RPD_STR[126]  1.0303
+RPD_STR[127]  1.0263
+RPD_STR[128]  1.0302
+RPD_STR[129]  1.0303
+RPD_STR[130]  1.0379
+RPD_STR[131]  1.0233
+RPD_STR[132]  1.0268
+RPD_STR[133]  1.0417
+RPD_STR[134]  1.0265
+RPD_STR[135]  1.0414
+RPD_STR[136]  1.0268
+RPD_STR[137]  1.0235
+RPD_STR[138]  1.0270
+RPD_STR[139]  1.0232
+RPD_STR[140]  1.0414
+RPD_STR[141]  1.0236
+RPD_STR[142]  1.0166
+RPD_STR[143]  1.0444
+RPD_STR[144]  1.0272
+RPD_STR[145]  1.0208
+RPD_STR[146]  1.0241
+RPD_STR[147]  1.0407
+RPD_STR[148]  1.0275
+RPD_STR[149]  1.0240
+RPD_STR[150]  1.0240
+RPD_STR[151]  1.0308
+RPD_STR[152]  1.0243
+RPD_STR[153]  1.0644
+RPD_STR[154]  1.0644
+RPD_STR[155]  1.0857
+RPD_STR[156]  1.0755
+RPD_STR[157]  1.0523
+RPD_STR[158]  1.0704
+RPD_STR[159]  1.0663
+RPD_STR[160]  1.0584
+RPD_STR[161]  1.0618
+RPD_STR[162]  1.0711
+RPD_STR[163]  1.0506
+RPD_STR[164]  1.0586
+RPD_STR[165]  1.0486
+RPD_STR[166]  1.0486
+RPD_STR[167]  1.0482
+RPD_STR[168]  1.0482
+RPD_STR[169]  1.0407
+RPD_STR[170]  1.0472
+RPD_STR[171]  1.0469
+RPD_STR[172]  1.0469
+RPD_STR[173]  1.0402
+RPD_STR[174]  1.0402
+RPD_STR[175]  1.0402
+RPD_STR[176]  1.0464
+RPD_STR[177]  1.0399
+RPD_STR[178]  1.0341
+RPD_STR[179]  1.0395
+RPD_STR[180]  1.0450
+RPD_STR[181]  1.0340
+RPD_STR[182]  1.0397
+RPD_STR[183]  1.0394
+RPD_STR[184]  1.0341
+RPD_STR[185]  1.0341
+RPD_STR[186]  1.0392
+RPD_STR[187]  1.0187
+RPD_STR[188]  1.0341
+RPD_STR[189]  1.0292
+RPD_STR[190]  1.0341
+RPD_STR[191]  1.0290
+RPD_STR[192]  1.0391
+RPD_STR[193]  1.0341
+RPD_STR[194]  1.0341
+RPD_STR[195]  1.0293
+RPD_STR[196]  1.0341
+RPD_STR[197]  1.0341
+RPD_STR[198]  1.0341
+RPD_STR[199]  1.0254
+RPD_STR[200]  1.0341
+RPD_STR[201]  1.0298
+RPD_STR[202]  1.0298
+RPD_STR[203]  1.0429
+RPD_STR[204]  1.0341
+RPD_STR[205]  1.0258
+RPD_STR[206]  1.0342
+RPD_STR[207]  1.0302
+RPD_STR[208]  1.0302
+RPD_STR[209]  1.0258
+RPD_STR[210]  1.0258
+RPD_STR[211]  1.0261
+RPD_STR[212]  1.0301
+RPD_STR[213]  1.0303
+RPD_STR[214]  1.0265
+RPD_STR[215]  1.0190
+RPD_STR[216]  1.0341
+RPD_STR[217]  1.0231
+RPD_STR[218]  1.0304
+RPD_STR[219]  1.0164
+RPD_STR[220]  1.0270
+RPD_STR[221]  1.0200
+RPD_STR[222]  1.0236
+RPD_STR[223]  1.0199
+RPD_STR[224]  1.0270
+RPD_STR[225]  1.0239
+RPD_STR[226]  1.0205
+RPD_STR[227]  1.0523
+RPD_STR[228]  1.0268
+RPD_STR[229]  1.0834
+RPD_STR[230]  1.0834
+RPD_STR[231]  1.0958
+RPD_STR[232]  1.0834
+RPD_STR[233]  1.0782
+RPD_STR[234]  1.0782
+RPD_STR[235]  1.0724
+RPD_STR[236]  1.0627
+RPD_STR[237]  1.0755
+RPD_STR[238]  1.0651
+RPD_STR[239]  1.0724
+RPD_STR[240]  1.0724
+RPD_STR[241]  1.0612
+RPD_STR[242]  1.0704
+RPD_STR[243]  1.0514
+RPD_STR[244]  1.0599
+RPD_STR[245]  1.0880
+RPD_STR[246]  1.0573
+RPD_STR[247]  1.0502
+RPD_STR[248]  1.0663
+RPD_STR[249]  1.0486
+RPD_STR[250]  1.0559
+RPD_STR[251]  1.0410
+RPD_STR[252]  1.0479
+RPD_STR[253]  1.0414
+RPD_STR[254]  1.0486
+RPD_STR[255]  1.0482
+RPD_STR[256]  1.0621
+RPD_STR[257]  1.0486
+RPD_STR[258]  1.0633
+RPD_STR[259]  1.0405
+RPD_STR[260]  1.0469
+RPD_STR[261]  1.0401
+RPD_STR[262]  1.0462
+RPD_STR[263]  1.0407
+RPD_STR[264]  1.0474
+RPD_STR[265]  1.0402
+RPD_STR[266]  1.0587
+RPD_STR[267]  1.0632
+RPD_STR[268]  1.0399
+RPD_STR[269]  1.0402
+RPD_STR[270]  1.0402
+RPD_STR[271]  1.0634
+RPD_STR[272]  1.0458
+RPD_STR[273]  1.0341
+RPD_STR[274]  1.0397
+RPD_STR[275]  1.0341
+RPD_STR[276]  1.0447
+RPD_STR[277]  1.0397
+RPD_STR[278]  1.0397
+RPD_STR[279]  1.0341
+RPD_STR[280]  1.0447
+RPD_STR[281]  1.0341
+RPD_STR[282]  1.0501
+RPD_STR[283]  1.0290
+RPD_STR[284]  1.0391
+RPD_STR[285]  1.0293
+RPD_STR[286]  1.0341
+RPD_STR[287]  1.0341
+RPD_STR[288]  1.0341
+RPD_STR[289]  1.0293
+RPD_STR[290]  1.0341
+RPD_STR[291]  1.0574
+RPD_STR[292]  1.0341
+RPD_STR[293]  1.0341
+RPD_STR[294]  1.0341
+RPD_STR[295]  1.0294
+RPD_STR[296]  1.0294
+RPD_STR[297]  1.0297
+RPD_STR[298]  1.0341
+RPD_STR[299]  1.0251
+RPD_STR[300]  1.0341
+RPD_STR[301]  1.0252
+RPD_STR[302]  1.0519
+RPD_STR[303]  1.0382
+RPD_STR[304]  1.0466
+RPD_STR[305]  1.0256
+RPD_STR[306]  1.0299
+RPD_STR[307]  1.0259
+RPD_STR[308]  1.0300
+RPD_STR[309]  1.0301
+RPD_STR[310]  1.0301
+RPD_STR[311]  1.0301
+RPD_STR[312]  1.0301
+RPD_STR[313]  1.0264
+RPD_STR[314]  1.0264
+RPD_STR[315]  1.0341
+RPD_STR[316]  1.0268
+RPD_STR[317]  1.0530
+RPD_STR[318]  1.0303
+RPD_STR[319]  1.0233
+RPD_STR[320]  1.0305
+RPD_STR[321]  1.1295
+RPD_STR[322]  1.1020
+RPD_STR[323]  1.1126
+RPD_STR[324]  1.1126
+RPD_STR[325]  1.1245
+RPD_STR[326]  1.0988
+RPD_STR[327]  1.1136
+RPD_STR[328]  1.1005
+RPD_STR[329]  1.0790
+RPD_STR[330]  1.0790
+RPD_STR[331]  1.0644
+RPD_STR[332]  1.0747
+RPD_STR[333]  1.0716
+RPD_STR[334]  1.0811
+RPD_STR[335]  1.0948
+RPD_STR[336]  1.0747
+RPD_STR[337]  1.0618
+RPD_STR[338]  1.0618
+RPD_STR[339]  1.0679
+RPD_STR[340]  1.0596
+RPD_STR[341]  1.0604
+RPD_STR[342]  1.0604
+RPD_STR[343]  1.0502
+RPD_STR[344]  1.0584
+RPD_STR[345]  1.0491
+RPD_STR[346]  1.0565
+RPD_STR[347]  1.0482
+RPD_STR[348]  1.0482
+RPD_STR[349]  1.0898
+RPD_STR[350]  1.0579
+RPD_STR[351]  1.0489
+RPD_STR[352]  1.0563
+RPD_STR[353]  1.0485
+RPD_STR[354]  1.0556
+RPD_STR[355]  1.0408
+RPD_STR[356]  1.0476
+RPD_STR[357]  1.0467
+RPD_STR[358]  1.0467
+RPD_STR[359]  1.0479
+RPD_STR[360]  1.0549
+RPD_STR[361]  1.0469
+RPD_STR[362]  1.0469
+RPD_STR[363]  1.0405
+RPD_STR[364]  1.0469
+RPD_STR[365]  1.0401
+RPD_STR[366]  1.0462
+RPD_STR[367]  1.0405
+RPD_STR[368]  1.0469
+RPD_STR[369]  1.0400
+RPD_STR[370]  1.0400
+RPD_STR[371]  1.0462
+RPD_STR[372]  1.0462
+RPD_STR[373]  1.0397
+RPD_STR[374]  1.0397
+RPD_STR[375]  1.0341
+RPD_STR[376]  1.0394
+RPD_STR[377]  1.0514
+RPD_STR[378]  1.0398
+RPD_STR[379]  1.0397
+RPD_STR[380]  1.0451
+RPD_STR[381]  1.0341
+RPD_STR[382]  1.0504
+RPD_STR[383]  1.0392
+RPD_STR[384]  1.0392
+RPD_STR[385]  1.0341
+RPD_STR[386]  1.0394
+RPD_STR[387]  1.0292
+RPD_STR[388]  1.0341
+RPD_STR[389]  1.0290
+RPD_STR[390]  1.0290
+RPD_STR[391]  1.0293
+RPD_STR[392]  1.0388
+RPD_STR[393]  1.0296
+RPD_STR[394]  1.0341
+RPD_STR[395]  1.0341
+RPD_STR[396]  1.0439
+RPD_STR[397]  1.0296
+RPD_STR[398]  1.0341
+RPD_STR[399]  1.0294
+RPD_STR[400]  1.0294
+RPD_STR[401]  1.0384
+RPD_STR[402]  1.0298
+RPD_STR[403]  1.0258
+RPD_STR[404]  1.0341
+RPD_STR[405]  1.0466
+RPD_STR[406]  1.0300
+RPD_STR[407]  1.0213
+RPD_STR[408]  1.0298
+RPD_STR[409]  1.0297
+RPD_STR[410]  1.0474
+RPD_STR[411]  1.0298
+RPD_STR[412]  1.0341
+RPD_STR[413]  1.0260
+RPD_STR[414]  1.0301
+RPD_STR[415]  1.0300
+RPD_STR[416]  1.0342
+RPD_STR[417]  1.0302
+RPD_STR[418]  1.0302
+RPD_STR[419]  1.0302
+RPD_STR[420]  1.0420
+RPD_STR[421]  1.0812
+RPD_STR[422]  1.0812
+RPD_STR[423]  1.0651
+RPD_STR[424]  1.0755
+RPD_STR[425]  1.0716
+RPD_STR[426]  1.0624
+RPD_STR[427]  1.0880
+RPD_STR[428]  1.0772
+RPD_STR[429]  1.0624
+RPD_STR[430]  1.0716
+RPD_STR[431]  1.0599
+RPD_STR[432]  1.0599
+RPD_STR[433]  1.0663
+RPD_STR[434]  1.0584
+RPD_STR[435]  1.0604
+RPD_STR[436]  1.0604
+RPD_STR[437]  1.0591
+RPD_STR[438]  1.0591
+RPD_STR[439]  1.0492
+RPD_STR[440]  1.0569
+RPD_STR[441]  1.0486
+RPD_STR[442]  1.0486
+RPD_STR[443]  1.0410
+RPD_STR[444]  1.0477
+RPD_STR[445]  1.0649
+RPD_STR[446]  1.0573
+RPD_STR[447]  1.0485
+RPD_STR[448]  1.0628
+RPD_STR[449]  1.0464
+RPD_STR[450]  1.0402
+RPD_STR[451]  1.0405
+RPD_STR[452]  1.0530
+RPD_STR[453]  1.0474
+RPD_STR[454]  1.0606
+RPD_STR[455]  1.0402
+RPD_STR[456]  1.0402
+RPD_STR[457]  1.0397
+RPD_STR[458]  1.0454
+RPD_STR[459]  1.0341
+RPD_STR[460]  1.0395
+RPD_STR[461]  1.0341
+RPD_STR[462]  1.0400
+RPD_STR[463]  1.0563
+RPD_STR[464]  1.0396
+RPD_STR[465]  1.0341
+RPD_STR[466]  1.0395
+RPD_STR[467]  1.0542
+RPD_STR[468]  0.9958
+RPD_STR[469]  1.0186
+RPD_STR[470]  1.0341
+RPD_STR[471]  1.0293
+RPD_STR[472]  1.0341
+RPD_STR[473]  1.0296
+RPD_STR[474]  1.0341
+RPD_STR[475]  1.0390
+RPD_STR[476]  1.0341
+RPD_STR[477]  1.0294
+RPD_STR[478]  1.0341
+RPD_STR[479]  1.0297
+RPD_STR[480]  1.0385
+RPD_STR[481]  1.0604
+RPD_STR[482]  1.0604
+RPD_STR[483]  1.0596
+RPD_STR[484]  1.0596
+RPD_STR[485]  1.0573
+RPD_STR[486]  1.0417
+RPD_STR[487]  1.0700
+RPD_STR[488]  1.0556
+RPD_STR[489]  1.0411
+RPD_STR[490]  1.0550
+RPD_STR[491]  1.0606
+RPD_STR[492]  1.0474
+RPD_STR[493]  1.0341
+RPD_STR[494]  1.0466
+RPD_STR[495]  1.0458
+RPD_STR[496]  1.0400
+RPD_STR[497]  1.0653
+RPD_STR[498]  1.0466
+RPD_STR[499]  1.0341
+RPD_STR[500]  1.0400
+RPD_STR[501]  1.0341
+RPD_STR[502]  1.0454
+RPD_STR[503]  1.0395
+RPD_STR[504]  1.0395
+RPD_STR[505]  1.0391
+RPD_STR[506]  1.0391
+RPD_STR[507]  1.0294
+RPD_STR[508]  1.0387
+RPD_STR[509]  1.0236
+RPD_STR[510]  1.0341
+RPD_STR[511]  1.0390
+RPD_STR[512]  1.0341
+
+# --- Antenna # -> cable # mapping -----
+# --------------------------------------
+# Format (example) "RPD_ANT[2] 3" means antenna 3 is connected to cable 2.
+# RPD_ANT[n] will be set to n for any cables #'s <= N_RPD not identified
+#   ...so you should only need to note exceptions here
+# Set RPD_ANT[] to the corresponding negative value to indicated that only the input is connected.
+# *** RPD_ANT[cable#] goes here:
+
+# ----------------------
+# --- SEP --------------
+# ----------------------
+N_SEP 512
+
+# SEP_ID[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
+# *** SEP_ID[port#] goes here:
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any port #'s <= N_SEP not identified
+# *** SEP_STAT[port#] goes here:
+
+# SEP_CABL[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
+# *** SEP_CABL[port#] goes here:
+SEP_CABL[1]  001NS
+SEP_CABL[2]  001EW
+SEP_CABL[3]  002NS
+SEP_CABL[4]  002EW
+SEP_CABL[5]  003NS
+SEP_CABL[6]  003EW
+SEP_CABL[7]  004NS
+SEP_CABL[8]  004EW
+SEP_CABL[9]  005NS
+SEP_CABL[10]  005EW
+SEP_CABL[11]  006NS
+SEP_CABL[12]  006EW
+SEP_CABL[13]  007NS
+SEP_CABL[14]  007EW
+SEP_CABL[15]  008NS
+SEP_CABL[16]  008EW
+SEP_CABL[17]  009NS
+SEP_CABL[18]  009EW
+SEP_CABL[19]  010NS
+SEP_CABL[20]  010EW
+SEP_CABL[21]  011NS
+SEP_CABL[22]  011EW
+SEP_CABL[23]  012NS
+SEP_CABL[24]  012EW
+SEP_CABL[25]  013NS
+SEP_CABL[26]  013EW
+SEP_CABL[27]  014NS
+SEP_CABL[28]  014EW
+SEP_CABL[29]  015NS
+SEP_CABL[30]  015EW
+SEP_CABL[31]  016NS
+SEP_CABL[32]  016EW
+SEP_CABL[33]  017NS
+SEP_CABL[34]  017EW
+SEP_CABL[35]  018NS
+SEP_CABL[36]  018EW
+SEP_CABL[37]  019NS
+SEP_CABL[38]  019EW
+SEP_CABL[39]  020NS
+SEP_CABL[40]  020EW
+SEP_CABL[41]  021NS
+SEP_CABL[42]  021EW
+SEP_CABL[43]  022NS
+SEP_CABL[44]  022EW
+SEP_CABL[45]  023NS
+SEP_CABL[46]  023EW
+SEP_CABL[47]  024NS
+SEP_CABL[48]  024EW
+SEP_CABL[49]  025NS
+SEP_CABL[50]  025EW
+SEP_CABL[51]  026NS
+SEP_CABL[52]  026EW
+SEP_CABL[53]  027NS
+SEP_CABL[54]  027EW
+SEP_CABL[55]  028NS
+SEP_CABL[56]  028EW
+SEP_CABL[57]  029NS
+SEP_CABL[58]  029EW
+SEP_CABL[59]  030NS
+SEP_CABL[60]  030EW
+SEP_CABL[61]  031NS
+SEP_CABL[62]  031EW
+SEP_CABL[63]  032NS
+SEP_CABL[64]  032EW
+SEP_CABL[65]  033NS
+SEP_CABL[66]  033EW
+SEP_CABL[67]  034NS
+SEP_CABL[68]  034EW
+SEP_CABL[69]  035NS
+SEP_CABL[70]  035EW
+SEP_CABL[71]  036NS
+SEP_CABL[72]  036EW
+SEP_CABL[73]  037NS
+SEP_CABL[74]  037EW
+SEP_CABL[75]  038NS
+SEP_CABL[76]  038EW
+SEP_CABL[77]  039NS
+SEP_CABL[78]  039EW
+SEP_CABL[79]  040NS
+SEP_CABL[80]  040EW
+SEP_CABL[81]  041NS
+SEP_CABL[82]  041EW
+SEP_CABL[83]  042NS
+SEP_CABL[84]  042EW
+SEP_CABL[85]  043NS
+SEP_CABL[86]  043EW
+SEP_CABL[87]  044NS
+SEP_CABL[88]  044EW
+SEP_CABL[89]  045NS
+SEP_CABL[90]  045EW
+SEP_CABL[91]  046NS
+SEP_CABL[92]  046EW
+SEP_CABL[93]  047NS
+SEP_CABL[94]  047EW
+SEP_CABL[95]  048NS
+SEP_CABL[96]  048EW
+SEP_CABL[97]  049NS
+SEP_CABL[98]  049EW
+SEP_CABL[99]  050NS
+SEP_CABL[100]  050EW
+SEP_CABL[101]  051NS
+SEP_CABL[102]  051EW
+SEP_CABL[103]  052NS
+SEP_CABL[104]  052EW
+SEP_CABL[105]  053NS
+SEP_CABL[106]  053EW
+SEP_CABL[107]  054NS
+SEP_CABL[108]  054EW
+SEP_CABL[109]  055NS
+SEP_CABL[110]  055EW
+SEP_CABL[111]  056NS
+SEP_CABL[112]  056EW
+SEP_CABL[113]  057NS
+SEP_CABL[114]  057EW
+SEP_CABL[115]  058NS
+SEP_CABL[116]  058EW
+SEP_CABL[117]  059NS
+SEP_CABL[118]  059EW
+SEP_CABL[119]  060NS
+SEP_CABL[120]  060EW
+SEP_CABL[121]  061NS
+SEP_CABL[122]  061EW
+SEP_CABL[123]  062NS
+SEP_CABL[124]  062EW
+SEP_CABL[125]  063NS
+SEP_CABL[126]  063EW
+SEP_CABL[127]  064NS
+SEP_CABL[128]  064EW
+SEP_CABL[129]  065NS
+SEP_CABL[130]  065EW
+SEP_CABL[131]  066NS
+SEP_CABL[132]  066EW
+SEP_CABL[133]  067NS
+SEP_CABL[134]  067EW
+SEP_CABL[135]  068NS
+SEP_CABL[136]  068EW
+SEP_CABL[137]  069NS
+SEP_CABL[138]  069EW
+SEP_CABL[139]  070NS
+SEP_CABL[140]  070EW
+SEP_CABL[141]  071NS
+SEP_CABL[142]  071EW
+SEP_CABL[143]  072NS
+SEP_CABL[144]  072EW
+SEP_CABL[145]  073NS
+SEP_CABL[146]  073EW
+SEP_CABL[147]  074NS
+SEP_CABL[148]  074EW
+SEP_CABL[149]  075NS
+SEP_CABL[150]  075EW
+SEP_CABL[151]  076NS
+SEP_CABL[152]  076EW
+SEP_CABL[153]  077NS
+SEP_CABL[154]  077EW
+SEP_CABL[155]  078NS
+SEP_CABL[156]  078EW
+SEP_CABL[157]  079NS
+SEP_CABL[158]  079EW
+SEP_CABL[159]  080NS
+SEP_CABL[160]  080EW
+SEP_CABL[161]  081NS
+SEP_CABL[162]  081EW
+SEP_CABL[163]  082NS
+SEP_CABL[164]  082EW
+SEP_CABL[165]  083NS
+SEP_CABL[166]  083EW
+SEP_CABL[167]  084NS
+SEP_CABL[168]  084EW
+SEP_CABL[169]  085NS
+SEP_CABL[170]  085EW
+SEP_CABL[171]  086NS
+SEP_CABL[172]  086EW
+SEP_CABL[173]  087NS
+SEP_CABL[174]  087EW
+SEP_CABL[175]  088NS
+SEP_CABL[176]  088EW
+SEP_CABL[177]  089NS
+SEP_CABL[178]  089EW
+SEP_CABL[179]  090NS
+SEP_CABL[180]  090EW
+SEP_CABL[181]  091NS
+SEP_CABL[182]  091EW
+SEP_CABL[183]  092NS
+SEP_CABL[184]  092EW
+SEP_CABL[185]  093NS
+SEP_CABL[186]  093EW
+SEP_CABL[187]  094NS
+SEP_CABL[188]  094EW
+SEP_CABL[189]  095NS
+SEP_CABL[190]  095EW
+SEP_CABL[191]  096NS
+SEP_CABL[192]  096EW
+SEP_CABL[193]  097NS
+SEP_CABL[194]  097EW
+SEP_CABL[195]  098NS
+SEP_CABL[196]  098EW
+SEP_CABL[197]  099NS
+SEP_CABL[198]  099EW
+SEP_CABL[199]  100NS
+SEP_CABL[200]  100EW
+SEP_CABL[201]  101NS
+SEP_CABL[202]  101EW
+SEP_CABL[203]  102NS
+SEP_CABL[204]  102EW
+SEP_CABL[205]  103NS
+SEP_CABL[206]  103EW
+SEP_CABL[207]  104NS
+SEP_CABL[208]  104EW
+SEP_CABL[209]  105NS
+SEP_CABL[210]  105EW
+SEP_CABL[211]  106NS
+SEP_CABL[212]  106EW
+SEP_CABL[213]  107NS
+SEP_CABL[214]  107EW
+SEP_CABL[215]  108NS
+SEP_CABL[216]  108EW
+SEP_CABL[217]  109NS
+SEP_CABL[218]  109EW
+SEP_CABL[219]  110NS
+SEP_CABL[220]  110EW
+SEP_CABL[221]  111NS
+SEP_CABL[222]  111EW
+SEP_CABL[223]  112NS
+SEP_CABL[224]  112EW
+SEP_CABL[225]  113NS
+SEP_CABL[226]  113EW
+SEP_CABL[227]  114NS
+SEP_CABL[228]  114EW
+SEP_CABL[229]  115NS
+SEP_CABL[230]  115EW
+SEP_CABL[231]  116NS
+SEP_CABL[232]  116EW
+SEP_CABL[233]  117NS
+SEP_CABL[234]  117EW
+SEP_CABL[235]  118NS
+SEP_CABL[236]  118EW
+SEP_CABL[237]  119NS
+SEP_CABL[238]  119EW
+SEP_CABL[239]  120NS
+SEP_CABL[240]  120EW
+SEP_CABL[241]  121NS
+SEP_CABL[242]  121EW
+SEP_CABL[243]  122NS
+SEP_CABL[244]  122EW
+SEP_CABL[245]  123NS
+SEP_CABL[246]  123EW
+SEP_CABL[247]  124NS
+SEP_CABL[248]  124EW
+SEP_CABL[249]  125NS
+SEP_CABL[250]  125EW
+SEP_CABL[251]  126NS
+SEP_CABL[252]  126EW
+SEP_CABL[253]  127NS
+SEP_CABL[254]  127EW
+SEP_CABL[255]  128NS
+SEP_CABL[256]  128EW
+SEP_CABL[257]  129NS
+SEP_CABL[258]  129EW
+SEP_CABL[259]  130NS
+SEP_CABL[260]  130EW
+SEP_CABL[261]  131NS
+SEP_CABL[262]  131EW
+SEP_CABL[263]  132NS
+SEP_CABL[264]  132EW
+SEP_CABL[265]  133NS
+SEP_CABL[266]  133EW
+SEP_CABL[267]  134NS
+SEP_CABL[268]  134EW
+SEP_CABL[269]  135NS
+SEP_CABL[270]  135EW
+SEP_CABL[271]  136NS
+SEP_CABL[272]  136EW
+SEP_CABL[273]  137NS
+SEP_CABL[274]  137EW
+SEP_CABL[275]  138NS
+SEP_CABL[276]  138EW
+SEP_CABL[277]  139NS
+SEP_CABL[278]  139EW
+SEP_CABL[279]  140NS
+SEP_CABL[280]  140EW
+SEP_CABL[281]  141NS
+SEP_CABL[282]  141EW
+SEP_CABL[283]  142NS
+SEP_CABL[284]  142EW
+SEP_CABL[285]  143NS
+SEP_CABL[286]  143EW
+SEP_CABL[287]  144NS
+SEP_CABL[288]  144EW
+SEP_CABL[289]  145NS
+SEP_CABL[290]  145EW
+SEP_CABL[291]  146NS
+SEP_CABL[292]  146EW
+SEP_CABL[293]  147NS
+SEP_CABL[294]  147EW
+SEP_CABL[295]  148NS
+SEP_CABL[296]  148EW
+SEP_CABL[297]  149NS
+SEP_CABL[298]  149EW
+SEP_CABL[299]  150NS
+SEP_CABL[300]  150EW
+SEP_CABL[301]  151NS
+SEP_CABL[302]  151EW
+SEP_CABL[303]  152NS
+SEP_CABL[304]  152EW
+SEP_CABL[305]  153NS
+SEP_CABL[306]  153EW
+SEP_CABL[307]  154NS
+SEP_CABL[308]  154EW
+SEP_CABL[309]  155NS
+SEP_CABL[310]  155EW
+SEP_CABL[311]  156NS
+SEP_CABL[312]  156EW
+SEP_CABL[313]  157NS
+SEP_CABL[314]  157EW
+SEP_CABL[315]  158NS
+SEP_CABL[316]  158EW
+SEP_CABL[317]  159NS
+SEP_CABL[318]  159EW
+SEP_CABL[319]  160NS
+SEP_CABL[320]  160EW
+SEP_CABL[321]  161NS
+SEP_CABL[322]  161EW
+SEP_CABL[323]  162NS
+SEP_CABL[324]  162EW
+SEP_CABL[325]  163NS
+SEP_CABL[326]  163EW
+SEP_CABL[327]  164NS
+SEP_CABL[328]  164EW
+SEP_CABL[329]  165NS
+SEP_CABL[330]  165EW
+SEP_CABL[331]  166NS
+SEP_CABL[332]  166EW
+SEP_CABL[333]  167NS
+SEP_CABL[334]  167EW
+SEP_CABL[335]  168NS
+SEP_CABL[336]  168EW
+SEP_CABL[337]  169NS
+SEP_CABL[338]  169EW
+SEP_CABL[339]  170NS
+SEP_CABL[340]  170EW
+SEP_CABL[341]  171NS
+SEP_CABL[342]  171EW
+SEP_CABL[343]  172NS
+SEP_CABL[344]  172EW
+SEP_CABL[345]  173NS
+SEP_CABL[346]  173EW
+SEP_CABL[347]  174NS
+SEP_CABL[348]  174EW
+SEP_CABL[349]  175NS
+SEP_CABL[350]  175EW
+SEP_CABL[351]  176NS
+SEP_CABL[352]  176EW
+SEP_CABL[353]  177NS
+SEP_CABL[354]  177EW
+SEP_CABL[355]  178NS
+SEP_CABL[356]  178EW
+SEP_CABL[357]  179NS
+SEP_CABL[358]  179EW
+SEP_CABL[359]  180NS
+SEP_CABL[360]  180EW
+SEP_CABL[361]  181NS
+SEP_CABL[362]  181EW
+SEP_CABL[363]  182NS
+SEP_CABL[364]  182EW
+SEP_CABL[365]  183NS
+SEP_CABL[366]  183EW
+SEP_CABL[367]  184NS
+SEP_CABL[368]  184EW
+SEP_CABL[369]  185NS
+SEP_CABL[370]  185EW
+SEP_CABL[371]  186NS
+SEP_CABL[372]  186EW
+SEP_CABL[373]  187NS
+SEP_CABL[374]  187EW
+SEP_CABL[375]  188NS
+SEP_CABL[376]  188EW
+SEP_CABL[377]  189NS
+SEP_CABL[378]  189EW
+SEP_CABL[379]  190NS
+SEP_CABL[380]  190EW
+SEP_CABL[381]  191NS
+SEP_CABL[382]  191EW
+SEP_CABL[383]  192NS
+SEP_CABL[384]  192EW
+SEP_CABL[385]  193NS
+SEP_CABL[386]  193EW
+SEP_CABL[387]  194NS
+SEP_CABL[388]  194EW
+SEP_CABL[389]  195NS
+SEP_CABL[390]  195EW
+SEP_CABL[391]  196NS
+SEP_CABL[392]  196EW
+SEP_CABL[393]  197NS
+SEP_CABL[394]  197EW
+SEP_CABL[395]  198NS
+SEP_CABL[396]  198EW
+SEP_CABL[397]  199NS
+SEP_CABL[398]  199EW
+SEP_CABL[399]  200NS
+SEP_CABL[400]  200EW
+SEP_CABL[401]  201NS
+SEP_CABL[402]  201EW
+SEP_CABL[403]  202NS
+SEP_CABL[404]  202EW
+SEP_CABL[405]  203NS
+SEP_CABL[406]  203EW
+SEP_CABL[407]  204NS
+SEP_CABL[408]  204EW
+SEP_CABL[409]  205NS
+SEP_CABL[410]  205EW
+SEP_CABL[411]  206NS
+SEP_CABL[412]  206EW
+SEP_CABL[413]  207NS
+SEP_CABL[414]  207EW
+SEP_CABL[415]  208NS
+SEP_CABL[416]  208EW
+SEP_CABL[417]  209NS
+SEP_CABL[418]  209EW
+SEP_CABL[419]  210NS
+SEP_CABL[420]  210EW
+SEP_CABL[421]  211NS
+SEP_CABL[422]  211EW
+SEP_CABL[423]  212NS
+SEP_CABL[424]  212EW
+SEP_CABL[425]  213NS
+SEP_CABL[426]  213EW
+SEP_CABL[427]  214NS
+SEP_CABL[428]  214EW
+SEP_CABL[429]  215NS
+SEP_CABL[430]  215EW
+SEP_CABL[431]  216NS
+SEP_CABL[432]  216EW
+SEP_CABL[433]  217NS
+SEP_CABL[434]  217EW
+SEP_CABL[435]  218NS
+SEP_CABL[436]  218EW
+SEP_CABL[437]  219NS
+SEP_CABL[438]  219EW
+SEP_CABL[439]  220NS
+SEP_CABL[440]  220EW
+SEP_CABL[441]  221NS
+SEP_CABL[442]  221EW
+SEP_CABL[443]  222NS
+SEP_CABL[444]  222EW
+SEP_CABL[445]  223NS
+SEP_CABL[446]  223EW
+SEP_CABL[447]  224NS
+SEP_CABL[448]  224EW
+SEP_CABL[449]  225NS
+SEP_CABL[450]  225EW
+SEP_CABL[451]  226NS
+SEP_CABL[452]  226EW
+SEP_CABL[453]  227NS
+SEP_CABL[454]  227EW
+SEP_CABL[455]  228NS
+SEP_CABL[456]  228EW
+SEP_CABL[457]  229NS
+SEP_CABL[458]  229EW
+SEP_CABL[459]  230NS
+SEP_CABL[460]  230EW
+SEP_CABL[461]  231NS
+SEP_CABL[462]  231EW
+SEP_CABL[463]  232NS
+SEP_CABL[464]  232EW
+SEP_CABL[465]  233NS
+SEP_CABL[466]  233EW
+SEP_CABL[467]  234NS
+SEP_CABL[468]  234EW
+SEP_CABL[469]  235NS
+SEP_CABL[470]  235EW
+SEP_CABL[471]  236NS
+SEP_CABL[472]  236EW
+SEP_CABL[473]  237NS
+SEP_CABL[474]  237EW
+SEP_CABL[475]  238NS
+SEP_CABL[476]  238EW
+SEP_CABL[477]  239NS
+SEP_CABL[478]  239EW
+SEP_CABL[479]  240NS
+SEP_CABL[480]  240EW
+SEP_CABL[481]  241NS
+SEP_CABL[482]  241EW
+SEP_CABL[483]  242NS
+SEP_CABL[484]  242EW
+SEP_CABL[485]  243NS
+SEP_CABL[486]  243EW
+SEP_CABL[487]  244NS
+SEP_CABL[488]  244EW
+SEP_CABL[489]  245NS
+SEP_CABL[490]  245EW
+SEP_CABL[491]  246NS
+SEP_CABL[492]  246EW
+SEP_CABL[493]  247NS
+SEP_CABL[494]  247EW
+SEP_CABL[495]  248NS
+SEP_CABL[496]  248EW
+SEP_CABL[497]  249NS
+SEP_CABL[498]  249EW
+SEP_CABL[499]  250NS
+SEP_CABL[500]  250EW
+SEP_CABL[501]  251NS
+SEP_CABL[502]  251EW
+SEP_CABL[503]  252NS
+SEP_CABL[504]  252EW
+SEP_CABL[505]  253NS
+SEP_CABL[506]  253EW
+SEP_CABL[507]  254NS
+SEP_CABL[508]  254EW
+SEP_CABL[509]  255NS
+SEP_CABL[510]  255EW
+SEP_CABL[511]  256NS
+SEP_CABL[512]  256EW
+
+# SEP_LENG[] will be set to 0 for any SEP port #'s <= N_SEP not identified
+# *** SEP_LENG[port#] goes here:
+
+# SEP_DESI[] be set to 1 for any SEP port #'s <= N_SEP not identified
+# You should set it to 0 if different but not known, or >1 if appropriate
+# *** SEP_DESI[port#] goes here:
+
+# SEP_GAIN[] be set to 0.0 for any SEP port #'s <= N_SEP not identified
+# *** SEP_GAIN[port] [dB] goes here:
+
+# -----------------------------------------
+# --- Antenna # -> SEP port # mapping -----
+# -----------------------------------------
+# Format (example) "SEP_ANT[2] 3" means antenna 3 is connected to SEP port 2.
+# SEP_ANT[n] will be set to n for any port #'s <= N_SEP not identified
+#   ... so only need to note exceptions below
+# Set SEP_ANT[] to the corresponding negative value to indicated that only the input is connected.
+# *** SEP_ANT[port#] goes here:
+
+# ----------------------
+# --- ASP --------------
+# ----------------------
+# Maximum (not necessarily actual) number of ARX boards:
+N_ARB 32
+# Maximum (not necessarily actual) number or channels per ARX board:
+N_ARBCH 16
+
+# ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
+# *** ARB_ID[arb#] goes here:
+ARB_ID[1]  0210
+ARB_ID[2]  0202
+ARB_ID[3]  0203
+ARB_ID[4]  0204
+ARB_ID[5]  0205
+ARB_ID[6]  0206
+ARB_ID[7]  0207
+ARB_ID[8]  0208
+ARB_ID[9]  0209
+ARB_ID[10] 0221
+ARB_ID[11] 0217
+ARB_ID[12] 0212
+ARB_ID[13] 0213
+ARB_ID[14] 0214
+ARB_ID[15] 0215
+ARB_ID[16] 0216
+ARB_ID[17] 0211
+ARB_ID[18] 0218
+ARB_ID[19] 0219
+ARB_ID[20] 0220
+ARB_ID[21] 0226
+ARB_ID[22] 0222
+ARB_ID[23] 0223
+ARB_ID[24] 0230
+ARB_ID[25] 0224
+ARB_ID[26] 0225
+ARB_ID[27] 0227
+ARB_ID[28] 0228
+ARB_ID[29] 0231
+ARB_ID[30] 0232
+ARB_ID[31] 0233
+ARB_ID[32] 0234
+
+# ARB_SLOT[] will be set to 0 (not known/not applicable) for any ARX board #'s <= N_ARB not identified
+# *** ARB_SLOT[arb#] goes here:
+# Format is <chassis>-<slot-from-left>
+# Chassis 1 is bottom-most chassis in the rack
+ARB_SLOT[1]  4-8
+ARB_SLOT[2]  4-7
+ARB_SLOT[3]  4-6
+ARB_SLOT[4]  4-5
+ARB_SLOT[5]  4-4
+ARB_SLOT[6]  4-3
+ARB_SLOT[7]  4-2
+ARB_SLOT[8]  4-1
+ARB_SLOT[9]  3-8
+ARB_SLOT[10] 3-7
+ARB_SLOT[11] 3-6
+ARB_SLOT[12] 3-5
+ARB_SLOT[13] 3-4
+ARB_SLOT[14] 3-3
+ARB_SLOT[15] 3-2
+ARB_SLOT[16] 3-1
+ARB_SLOT[17] 2-8
+ARB_SLOT[18] 2-7
+ARB_SLOT[19] 2-6
+ARB_SLOT[20] 2-5
+ARB_SLOT[21] 2-4
+ARB_SLOT[22] 2-3
+ARB_SLOT[23] 2-2
+ARB_SLOT[24] 2-1
+ARB_SLOT[25] 1-8
+ARB_SLOT[26] 1-7
+ARB_SLOT[27] 1-6
+ARB_SLOT[28] 1-5
+ARB_SLOT[29] 1-4
+ARB_SLOT[30] 1-3
+ARB_SLOT[31] 1-2
+ARB_SLOT[32] 1-1
+
+# ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
+# *** ARB_DESI[arb#] goes here:
+# Code are 1: rev C
+#          2: rev D
+#          3: rev F
+#          4: ref G
+ARB_DESI[1]  4
+ARB_DESI[2]  4
+ARB_DESI[3]  4
+ARB_DESI[4]  4
+ARB_DESI[5]  4
+ARB_DESI[6]  4
+ARB_DESI[7]  4
+ARB_DESI[8]  4
+ARB_DESI[9]  4
+ARB_DESI[10] 4
+ARB_DESI[11] 4
+ARB_DESI[12] 4
+ARB_DESI[13] 4
+ARB_DESI[14] 4
+ARB_DESI[15] 4
+ARB_DESI[16] 4
+ARB_DESI[17] 4
+ARB_DESI[18] 4
+ARB_DESI[19] 4
+ARB_DESI[20] 4
+ARB_DESI[21] 4
+ARB_DESI[22] 4
+ARB_DESI[23] 4
+ARB_DESI[24] 4
+ARB_DESI[25] 4
+ARB_DESI[26] 4
+ARB_DESI[27] 4
+ARB_DESI[28] 4
+ARB_DESI[29] 4
+ARB_DESI[30] 4
+ARB_DESI[31] 4
+ARB_DESI[32] 4
+
+# Format (example) "ARB_RACK[2] 3" means ARX board 2 is powered via a supply in Rack 2.
+# ARB_RACK[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
+# Format (example) "ARB_PORT[2] 7" means ARX board 2 is powered via port 7 (on whatever rack is specified elsewhere).
+# ARB_PORT[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
+# *** ARB_RACK[arb#] goes here:
+# *** ARB_PORT[arb#] goes here:
+ARB_RACK[1]  1
+ARB_PORT[1]  7
+ARB_RACK[2]  1
+ARB_PORT[2]  7
+ARB_RACK[3]  1
+ARB_PORT[3]  7
+ARB_RACK[4]  1
+ARB_PORT[4]  7
+ARB_RACK[5]  1
+ARB_PORT[5]  7
+ARB_RACK[6]  1
+ARB_PORT[6]  7
+ARB_RACK[7]  1
+ARB_PORT[7]  7
+ARB_RACK[8]  1
+ARB_PORT[8]  7
+ARB_RACK[9]  1
+ARB_PORT[9]  7
+ARB_RACK[10] 1
+ARB_PORT[10] 7
+ARB_RACK[11] 1
+ARB_PORT[11] 7
+ARB_RACK[12] 1
+ARB_PORT[12] 7
+ARB_RACK[13] 1
+ARB_PORT[13] 7
+ARB_RACK[14] 1
+ARB_PORT[14] 7
+ARB_RACK[15] 1
+ARB_PORT[15] 7
+ARB_RACK[16] 1
+ARB_PORT[16] 7
+ARB_RACK[17] 1
+ARB_PORT[17] 7
+ARB_RACK[18] 1
+ARB_PORT[18] 7
+ARB_RACK[19] 1
+ARB_PORT[19] 7
+ARB_RACK[20] 1
+ARB_PORT[20] 7
+ARB_RACK[21] 1
+ARB_PORT[21] 7
+ARB_RACK[22] 1
+ARB_PORT[22] 7
+ARB_RACK[23] 1
+ARB_PORT[23] 7
+ARB_RACK[24] 1
+ARB_PORT[24] 7
+ARB_RACK[25] 1
+ARB_PORT[25] 7
+ARB_RACK[26] 1
+ARB_PORT[26] 7
+ARB_RACK[27] 1
+ARB_PORT[27] 7
+ARB_RACK[28] 1
+ARB_PORT[28] 7
+ARB_RACK[29] 1
+ARB_PORT[29] 7
+ARB_RACK[30] 1
+ARB_PORT[30] 7
+ARB_RACK[31] 1
+ARB_PORT[31] 7
+ARB_RACK[32] 1
+ARB_PORT[32] 7
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") for any ARX board-channels not identified
+# *** ARB_STAT[arb#][ch#] goes here:
+
+# ARB_GAIN[][] will be set to 67.0 for any boards/channels not identified
+# *** ARB_GAIN[arb#][ch#] goes here:
+
+# ----------------------------------------------
+# --- Antenna # -> ARX board-channel mapping ---
+# ----------------------------------------------
+# Format (example) "ARB_ANT[2][3] 4" means antenna 4 is connected to ARX Board 2, channel 3.
+# If not indicated otherwise, ARB_ANT[1][1] will be set to 1, ARB_ANT[1][2] will be set to 2, etc.
+#   ... so best is to note only the exceptions below.
+# Set ARB_ANT[][] to the corresponding negative value to indicated that only the input is connected.
+# *** ARB_ANT[arb#][ch#] goes here:
+ARB_ANT[1][1]    1
+ARB_ANT[1][2]    2
+ARB_ANT[1][3]    3
+ARB_ANT[1][4]    4
+ARB_ANT[1][5]    5
+ARB_ANT[1][6]    6
+ARB_ANT[1][7]    7
+ARB_ANT[1][8]    8
+ARB_ANT[1][9]    9
+ARB_ANT[1][10]   10
+ARB_ANT[1][11]   11
+ARB_ANT[1][12]   12
+ARB_ANT[1][13]   13
+ARB_ANT[1][14]   14
+ARB_ANT[1][15]   15
+ARB_ANT[1][16]   16
+ARB_ANT[2][1]    17
+ARB_ANT[2][2]    18
+ARB_ANT[2][3]    19
+ARB_ANT[2][4]    20
+ARB_ANT[2][5]    21
+ARB_ANT[2][6]    22
+ARB_ANT[2][7]    23
+ARB_ANT[2][8]    24
+ARB_ANT[2][9]    25
+ARB_ANT[2][10]   26
+ARB_ANT[2][11]   27
+ARB_ANT[2][12]   28
+ARB_ANT[2][13]   29
+ARB_ANT[2][14]   30
+ARB_ANT[2][15]   31
+ARB_ANT[2][16]   32
+ARB_ANT[3][1]    33
+ARB_ANT[3][2]    34
+ARB_ANT[3][3]    35
+ARB_ANT[3][4]    36
+ARB_ANT[3][5]    37
+ARB_ANT[3][6]    38
+ARB_ANT[3][7]    39
+ARB_ANT[3][8]    40
+ARB_ANT[3][9]    41
+ARB_ANT[3][10]   42
+ARB_ANT[3][11]   43
+ARB_ANT[3][12]   44
+ARB_ANT[3][13]   45
+ARB_ANT[3][14]   46
+ARB_ANT[3][15]   47
+ARB_ANT[3][16]   48
+ARB_ANT[4][1]    49
+ARB_ANT[4][2]    50
+ARB_ANT[4][3]    51
+ARB_ANT[4][4]    52
+ARB_ANT[4][5]    53
+ARB_ANT[4][6]    54
+ARB_ANT[4][7]    55
+ARB_ANT[4][8]    56
+ARB_ANT[4][9]    57
+ARB_ANT[4][10]   58
+ARB_ANT[4][11]   59
+ARB_ANT[4][12]   60
+ARB_ANT[4][13]   61
+ARB_ANT[4][14]   62
+ARB_ANT[4][15]   63
+ARB_ANT[4][16]   64
+ARB_ANT[5][1]    65
+ARB_ANT[5][2]    66
+ARB_ANT[5][3]    67
+ARB_ANT[5][4]    68
+ARB_ANT[5][5]    69
+ARB_ANT[5][6]    70
+ARB_ANT[5][7]    71
+ARB_ANT[5][8]    72
+ARB_ANT[5][9]    73
+ARB_ANT[5][10]   74
+ARB_ANT[5][11]   75
+ARB_ANT[5][12]   76
+ARB_ANT[5][13]   77
+ARB_ANT[5][14]   78
+ARB_ANT[5][15]   79
+ARB_ANT[5][16]   80
+ARB_ANT[6][1]    81
+ARB_ANT[6][2]    82
+ARB_ANT[6][3]    83
+ARB_ANT[6][4]    84
+ARB_ANT[6][5]    85
+ARB_ANT[6][6]    86
+ARB_ANT[6][7]    87
+ARB_ANT[6][8]    88
+ARB_ANT[6][9]    89
+ARB_ANT[6][10]   90
+ARB_ANT[6][11]   91
+ARB_ANT[6][12]   92
+ARB_ANT[6][13]   93
+ARB_ANT[6][14]   94
+ARB_ANT[6][15]   95
+ARB_ANT[6][16]   96
+ARB_ANT[7][1]    97
+ARB_ANT[7][2]    98
+ARB_ANT[7][3]    99
+ARB_ANT[7][4]    100
+ARB_ANT[7][5]    101
+ARB_ANT[7][6]    102
+ARB_ANT[7][7]    103
+ARB_ANT[7][8]    104
+ARB_ANT[7][9]    105
+ARB_ANT[7][10]   106
+ARB_ANT[7][11]   107
+ARB_ANT[7][12]   108
+ARB_ANT[7][13]   109
+ARB_ANT[7][14]   110
+ARB_ANT[7][15]   111
+ARB_ANT[7][16]   112
+ARB_ANT[8][1]    113
+ARB_ANT[8][2]    114
+ARB_ANT[8][3]    115
+ARB_ANT[8][4]    116
+ARB_ANT[8][5]    117
+ARB_ANT[8][6]    118
+ARB_ANT[8][7]    119
+ARB_ANT[8][8]    120
+ARB_ANT[8][9]    121
+ARB_ANT[8][10]   122
+ARB_ANT[8][11]   123
+ARB_ANT[8][12]   124
+ARB_ANT[8][13]   125
+ARB_ANT[8][14]   126
+ARB_ANT[8][15]   127
+ARB_ANT[8][16]   128
+ARB_ANT[9][1]    129
+ARB_ANT[9][2]    130
+ARB_ANT[9][3]    131
+ARB_ANT[9][4]    132
+ARB_ANT[9][5]    133
+ARB_ANT[9][6]    134
+ARB_ANT[9][7]    135
+ARB_ANT[9][8]    136
+ARB_ANT[9][9]    137
+ARB_ANT[9][10]   138
+ARB_ANT[9][11]   139
+ARB_ANT[9][12]   140
+ARB_ANT[9][13]   141
+ARB_ANT[9][14]   142
+ARB_ANT[9][15]   143
+ARB_ANT[9][16]   144
+ARB_ANT[10][1]   145
+ARB_ANT[10][2]   146
+ARB_ANT[10][3]   147
+ARB_ANT[10][4]   148
+ARB_ANT[10][5]   149
+ARB_ANT[10][6]   150
+ARB_ANT[10][7]   151
+ARB_ANT[10][8]   152
+ARB_ANT[10][9]   153
+ARB_ANT[10][10]  154
+ARB_ANT[10][11]  155
+ARB_ANT[10][12]  156
+ARB_ANT[10][13]  157
+ARB_ANT[10][14]  158
+ARB_ANT[10][15]  159
+ARB_ANT[10][16]  160
+ARB_ANT[11][1]   161
+ARB_ANT[11][2]   162
+ARB_ANT[11][3]   163
+ARB_ANT[11][4]   164
+ARB_ANT[11][5]   165
+ARB_ANT[11][6]   166
+ARB_ANT[11][7]   167
+ARB_ANT[11][8]   168
+ARB_ANT[11][9]   169
+ARB_ANT[11][10]  170
+ARB_ANT[11][11]  171
+ARB_ANT[11][12]  172
+ARB_ANT[11][13]  173
+ARB_ANT[11][14]  174
+ARB_ANT[11][15]  175
+ARB_ANT[11][16]  176
+ARB_ANT[12][1]   177
+ARB_ANT[12][2]   178
+ARB_ANT[12][3]   179
+ARB_ANT[12][4]   180
+ARB_ANT[12][5]   181
+ARB_ANT[12][6]   182
+ARB_ANT[12][7]   183
+ARB_ANT[12][8]   184
+ARB_ANT[12][9]   185
+ARB_ANT[12][10]  186
+ARB_ANT[12][11]  187
+ARB_ANT[12][12]  188
+ARB_ANT[12][13]  189
+ARB_ANT[12][14]  190
+ARB_ANT[12][15]  191
+ARB_ANT[12][16]  192
+ARB_ANT[13][1]   193
+ARB_ANT[13][2]   194
+ARB_ANT[13][3]   195
+ARB_ANT[13][4]   196
+ARB_ANT[13][5]   197
+ARB_ANT[13][6]   198
+ARB_ANT[13][7]   199
+ARB_ANT[13][8]   200
+ARB_ANT[13][9]   201
+ARB_ANT[13][10]  202
+ARB_ANT[13][11]  203
+ARB_ANT[13][12]  204
+ARB_ANT[13][13]  205
+ARB_ANT[13][14]  206
+ARB_ANT[13][15]  207
+ARB_ANT[13][16]  208
+ARB_ANT[14][1]   209
+ARB_ANT[14][2]   210
+ARB_ANT[14][3]   211
+ARB_ANT[14][4]   212
+ARB_ANT[14][5]   213
+ARB_ANT[14][6]   214
+ARB_ANT[14][7]   215
+ARB_ANT[14][8]   216
+ARB_ANT[14][9]   217
+ARB_ANT[14][10]  218
+ARB_ANT[14][11]  219
+ARB_ANT[14][12]  220
+ARB_ANT[14][13]  221
+ARB_ANT[14][14]  222
+ARB_ANT[14][15]  223
+ARB_ANT[14][16]  224
+ARB_ANT[15][1]   225
+ARB_ANT[15][2]   226
+ARB_ANT[15][3]   227
+ARB_ANT[15][4]   228
+ARB_ANT[15][5]   229
+ARB_ANT[15][6]   230
+ARB_ANT[15][7]   231
+ARB_ANT[15][8]   232
+ARB_ANT[15][9]   233
+ARB_ANT[15][10]  234
+ARB_ANT[15][11]  235
+ARB_ANT[15][12]  236
+ARB_ANT[15][13]  237
+ARB_ANT[15][14]  238
+ARB_ANT[15][15]  239
+ARB_ANT[15][16]  240
+ARB_ANT[16][1]   241
+ARB_ANT[16][2]   242
+ARB_ANT[16][3]   243
+ARB_ANT[16][4]   244
+ARB_ANT[16][5]   245
+ARB_ANT[16][6]   246
+ARB_ANT[16][7]   247
+ARB_ANT[16][8]   248
+ARB_ANT[16][9]   249
+ARB_ANT[16][10]  250
+ARB_ANT[16][11]  251
+ARB_ANT[16][12]  252
+ARB_ANT[16][13]  253
+ARB_ANT[16][14]  254
+ARB_ANT[16][15]  255
+ARB_ANT[16][16]  256
+ARB_ANT[17][1]   257
+ARB_ANT[17][2]   258
+ARB_ANT[17][3]   259
+ARB_ANT[17][4]   260
+ARB_ANT[17][5]   261
+ARB_ANT[17][6]   262
+ARB_ANT[17][7]   263
+ARB_ANT[17][8]   264
+ARB_ANT[17][9]   265
+ARB_ANT[17][10]  266
+ARB_ANT[17][11]  267
+ARB_ANT[17][12]  268
+ARB_ANT[17][13]  269
+ARB_ANT[17][14]  270
+ARB_ANT[17][15]  271
+ARB_ANT[17][16]  272
+ARB_ANT[18][1]   273
+ARB_ANT[18][2]   274
+ARB_ANT[18][3]   275
+ARB_ANT[18][4]   276
+ARB_ANT[18][5]   277
+ARB_ANT[18][6]   278
+ARB_ANT[18][7]   279
+ARB_ANT[18][8]   280
+ARB_ANT[18][9]   281
+ARB_ANT[18][10]  282
+ARB_ANT[18][11]  283
+ARB_ANT[18][12]  284
+ARB_ANT[18][13]  285
+ARB_ANT[18][14]  286
+ARB_ANT[18][15]  287
+ARB_ANT[18][16]  288
+ARB_ANT[19][1]   289
+ARB_ANT[19][2]   290
+ARB_ANT[19][3]   291
+ARB_ANT[19][4]   292
+ARB_ANT[19][5]   293
+ARB_ANT[19][6]   294
+ARB_ANT[19][7]   295
+ARB_ANT[19][8]   296
+ARB_ANT[19][9]   297
+ARB_ANT[19][10]  298
+ARB_ANT[19][11]  299
+ARB_ANT[19][12]  300
+ARB_ANT[19][13]  301
+ARB_ANT[19][14]  302
+ARB_ANT[19][15]  303
+ARB_ANT[19][16]  304
+ARB_ANT[20][1]   305
+ARB_ANT[20][2]   306
+ARB_ANT[20][3]   307
+ARB_ANT[20][4]   308
+ARB_ANT[20][5]   309
+ARB_ANT[20][6]   310
+ARB_ANT[20][7]   311
+ARB_ANT[20][8]   312
+ARB_ANT[20][9]   313
+ARB_ANT[20][10]  314
+ARB_ANT[20][11]  315
+ARB_ANT[20][12]  316
+ARB_ANT[20][13]  317
+ARB_ANT[20][14]  318
+ARB_ANT[20][15]  319
+ARB_ANT[20][16]  320
+ARB_ANT[21][1]   321
+ARB_ANT[21][2]   322
+ARB_ANT[21][3]   323
+ARB_ANT[21][4]   324
+ARB_ANT[21][5]   325
+ARB_ANT[21][6]   326
+ARB_ANT[21][7]   327
+ARB_ANT[21][8]   328
+ARB_ANT[21][9]   329
+ARB_ANT[21][10]  330
+ARB_ANT[21][11]  331
+ARB_ANT[21][12]  332
+ARB_ANT[21][13]  333
+ARB_ANT[21][14]  334
+ARB_ANT[21][15]  335
+ARB_ANT[21][16]  336
+ARB_ANT[22][1]   337
+ARB_ANT[22][2]   338
+ARB_ANT[22][3]   339
+ARB_ANT[22][4]   340
+ARB_ANT[22][5]   341
+ARB_ANT[22][6]   342
+ARB_ANT[22][7]   343
+ARB_ANT[22][8]   344
+ARB_ANT[22][9]   345
+ARB_ANT[22][10]  346
+ARB_ANT[22][11]  347
+ARB_ANT[22][12]  348
+ARB_ANT[22][13]  349
+ARB_ANT[22][14]  350
+ARB_ANT[22][15]  351
+ARB_ANT[22][16]  352
+ARB_ANT[23][1]   353
+ARB_ANT[23][2]   354
+ARB_ANT[23][3]   355
+ARB_ANT[23][4]   356
+ARB_ANT[23][5]   357
+ARB_ANT[23][6]   358
+ARB_ANT[23][7]   359
+ARB_ANT[23][8]   360
+ARB_ANT[23][9]   361
+ARB_ANT[23][10]  362
+ARB_ANT[23][11]  363
+ARB_ANT[23][12]  364
+ARB_ANT[23][13]  365
+ARB_ANT[23][14]  366
+ARB_ANT[23][15]  367
+ARB_ANT[23][16]  368
+ARB_ANT[24][1]   369
+ARB_ANT[24][2]   370
+ARB_ANT[24][3]   371
+ARB_ANT[24][4]   372
+ARB_ANT[24][5]   373
+ARB_ANT[24][6]   374
+ARB_ANT[24][7]   375
+ARB_ANT[24][8]   376
+ARB_ANT[24][9]   377
+ARB_ANT[24][10]  378
+ARB_ANT[24][11]  379
+ARB_ANT[24][12]  380
+ARB_ANT[24][13]  381
+ARB_ANT[24][14]  382
+ARB_ANT[24][15]  383
+ARB_ANT[24][16]  384
+ARB_ANT[25][1]   385
+ARB_ANT[25][2]   386
+ARB_ANT[25][3]   387
+ARB_ANT[25][4]   388
+ARB_ANT[25][5]   389
+ARB_ANT[25][6]   390
+ARB_ANT[25][7]   391
+ARB_ANT[25][8]   392
+ARB_ANT[25][9]   393
+ARB_ANT[25][10]  394
+ARB_ANT[25][11]  395
+ARB_ANT[25][12]  396
+ARB_ANT[25][13]  397
+ARB_ANT[25][14]  398
+ARB_ANT[25][15]  399
+ARB_ANT[25][16]  400
+ARB_ANT[26][1]   401
+ARB_ANT[26][2]   402
+ARB_ANT[26][3]   403
+ARB_ANT[26][4]   404
+ARB_ANT[26][5]   405
+ARB_ANT[26][6]   406
+ARB_ANT[26][7]   407
+ARB_ANT[26][8]   408
+ARB_ANT[26][9]   409
+ARB_ANT[26][10]  410
+ARB_ANT[26][11]  411
+ARB_ANT[26][12]  412
+ARB_ANT[26][13]  413
+ARB_ANT[26][14]  414
+ARB_ANT[26][15]  415
+ARB_ANT[26][16]  416
+ARB_ANT[27][1]   417
+ARB_ANT[27][2]   418
+ARB_ANT[27][3]   419
+ARB_ANT[27][4]   420
+ARB_ANT[27][5]   421
+ARB_ANT[27][6]   422
+ARB_ANT[27][7]   423
+ARB_ANT[27][8]   424
+ARB_ANT[27][9]   425
+ARB_ANT[27][10]  426
+ARB_ANT[27][11]  427
+ARB_ANT[27][12]  428
+ARB_ANT[27][13]  429
+ARB_ANT[27][14]  430
+ARB_ANT[27][15]  431
+ARB_ANT[27][16]  432
+ARB_ANT[28][1]   433
+ARB_ANT[28][2]   434
+ARB_ANT[28][3]   435
+ARB_ANT[28][4]   436
+ARB_ANT[28][5]   437
+ARB_ANT[28][6]   438
+ARB_ANT[28][7]   439
+ARB_ANT[28][8]   440
+ARB_ANT[28][9]   441
+ARB_ANT[28][10]  442
+ARB_ANT[28][11]  443
+ARB_ANT[28][12]  444
+ARB_ANT[28][13]  445
+ARB_ANT[28][14]  446
+ARB_ANT[28][15]  447
+ARB_ANT[28][16]  448
+ARB_ANT[29][1]   449
+ARB_ANT[29][2]   450
+ARB_ANT[29][3]   451
+ARB_ANT[29][4]   452
+ARB_ANT[29][5]   453
+ARB_ANT[29][6]   454
+ARB_ANT[29][7]   455
+ARB_ANT[29][8]   456
+ARB_ANT[29][9]   457
+ARB_ANT[29][10]  458
+ARB_ANT[29][11]  459
+ARB_ANT[29][12]  460
+ARB_ANT[29][13]  461
+ARB_ANT[29][14]  462
+ARB_ANT[29][15]  463
+ARB_ANT[29][16]  464
+ARB_ANT[30][1]   465
+ARB_ANT[30][2]   466
+ARB_ANT[30][3]   467
+ARB_ANT[30][4]   468
+ARB_ANT[30][5]   469
+ARB_ANT[30][6]   470
+ARB_ANT[30][7]   471
+ARB_ANT[30][8]   472
+ARB_ANT[30][9]   473
+ARB_ANT[30][10]  474
+ARB_ANT[30][11]  475
+ARB_ANT[30][12]  476
+ARB_ANT[30][13]  477
+ARB_ANT[30][14]  478
+ARB_ANT[30][15]  479
+ARB_ANT[30][16]  480
+ARB_ANT[31][1]   481
+ARB_ANT[31][2]   482
+ARB_ANT[31][3]   483
+ARB_ANT[31][4]   484
+ARB_ANT[31][5]   485
+ARB_ANT[31][6]   486
+ARB_ANT[31][7]   487
+ARB_ANT[31][8]   488
+ARB_ANT[31][9]   489
+ARB_ANT[31][10]  490
+ARB_ANT[31][11]  491
+ARB_ANT[31][12]  492
+ARB_ANT[31][13]  493
+ARB_ANT[31][14]  494
+ARB_ANT[31][15]  495
+ARB_ANT[31][16]  496
+ARB_ANT[32][1]   497
+ARB_ANT[32][2]   498
+ARB_ANT[32][3]   499
+ARB_ANT[32][4]   500
+ARB_ANT[32][5]   501
+ARB_ANT[32][6]   502
+ARB_ANT[32][7]   503
+ARB_ANT[32][8]   504
+ARB_ANT[32][9]   505
+ARB_ANT[32][10]  506
+ARB_ANT[32][11]  507
+ARB_ANT[32][12]  508
+ARB_ANT[32][13]  509
+ARB_ANT[32][14]  510
+ARB_ANT[32][15]  511
+ARB_ANT[32][16]  512
+
+# ----------------------------------------------
+# --- ASP input/output labeling ----------------
+# ----------------------------------------------
+# ARB_IN[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# ARB_OUT[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** ARB_IN[][] goes here:
+# label = panel#_rowLabel_connector#
+# panel 1 is top, input 1 is upper front (towards main door)
+ARB_IN[1][1]    1_1-7_1
+ARB_IN[1][2]    1_1-7_2
+ARB_IN[1][3]    1_1-7_3
+ARB_IN[1][4]    1_1-7_4
+ARB_IN[1][5]    1_1-7_5
+ARB_IN[1][6]    1_1-7_6
+ARB_IN[1][7]    1_1-7_7
+ARB_IN[1][8]    1_1-7_8
+ARB_IN[1][9]    1_1-7_9
+ARB_IN[1][10]   1_1-7_10
+ARB_IN[1][11]   1_1-7_11
+ARB_IN[1][12]   1_1-7_12
+ARB_IN[1][13]   1_7-13_1
+ARB_IN[1][14]   1_7-13_2
+ARB_IN[1][15]   1_7-13_3
+ARB_IN[1][16]   1_7-13_4
+ARB_IN[2][1]    1_7-13_5
+ARB_IN[2][2]    1_7-13_6
+ARB_IN[2][3]    1_7-13_7
+ARB_IN[2][4]    1_7-13_8
+ARB_IN[2][5]    1_7-13_9
+ARB_IN[2][6]    1_7-13_10
+ARB_IN[2][7]    1_7-13_11
+ARB_IN[2][8]    1_7-13_12
+ARB_IN[2][9]    1_13-19_1
+ARB_IN[2][10]   1_13-19_2
+ARB_IN[2][11]   1_13-19_3
+ARB_IN[2][12]   1_13-19_4
+ARB_IN[2][13]   1_13-19_5
+ARB_IN[2][14]   1_13-19_6
+ARB_IN[2][15]   1_13-19_7
+ARB_IN[2][16]   1_13-19_8
+ARB_IN[3][1]    1_13-19_9
+ARB_IN[3][2]    1_13-19_10
+ARB_IN[3][3]    1_13-19_11
+ARB_IN[3][4]    1_13-19_12
+ARB_IN[3][5]    1_19-25_1
+ARB_IN[3][6]    1_19-25_2
+ARB_IN[3][7]    1_19-25_3
+ARB_IN[3][8]    1_19-25_4
+ARB_IN[3][9]    1_19-25_5
+ARB_IN[3][10]   1_19-25_6
+ARB_IN[3][11]   1_19-25_7
+ARB_IN[3][12]   1_19-25_8
+ARB_IN[3][13]   1_19-25_9
+ARB_IN[3][14]   1_19-25_10
+ARB_IN[3][15]   1_19-25_11
+ARB_IN[3][16]   1_19-25_12
+ARB_IN[4][1]    1_25-31_1
+ARB_IN[4][2]    1_25-31_2
+ARB_IN[4][3]    1_25-31_3
+ARB_IN[4][4]    1_25-31_4
+ARB_IN[4][5]    1_25-31_5
+ARB_IN[4][6]    1_25-31_6
+ARB_IN[4][7]    1_25-31_7
+ARB_IN[4][8]    1_25-31_8
+ARB_IN[4][9]    1_25-31_9
+ARB_IN[4][10]   1_25-31_10
+ARB_IN[4][11]   1_25-31_11
+ARB_IN[4][12]   1_25-31_12
+ARB_IN[4][13]   1_31-37_1
+ARB_IN[4][14]   1_31-37_2
+ARB_IN[4][15]   1_31-37_3
+ARB_IN[4][16]   1_31-37_4
+ARB_IN[5][1]    1_31-37_5
+ARB_IN[5][2]    1_31-37_6
+ARB_IN[5][3]    1_31-37_7
+ARB_IN[5][4]    1_31-37_8
+ARB_IN[5][5]    1_31-37_9
+ARB_IN[5][6]    1_31-37_10
+ARB_IN[5][7]    1_31-37_11
+ARB_IN[5][8]    1_31-37_12
+ARB_IN[5][9]    1_37-43_1
+ARB_IN[5][10]   1_37-43_2
+ARB_IN[5][11]   1_37-43_3
+ARB_IN[5][12]   1_37-43_4
+ARB_IN[5][13]   1_37-43_5
+ARB_IN[5][14]   1_37-43_6
+ARB_IN[5][15]   1_37-43_7
+ARB_IN[5][16]   1_37-43_8
+ARB_IN[6][1]    1_37-43_9
+ARB_IN[6][2]    1_37-43_10
+ARB_IN[6][3]    1_37-43_11
+ARB_IN[6][4]    1_37-43_12
+ARB_IN[6][5]    1_43-49_1
+ARB_IN[6][6]    1_43-49_2
+ARB_IN[6][7]    1_43-49_3
+ARB_IN[6][8]    1_43-49_4
+ARB_IN[6][9]    1_43-49_5
+ARB_IN[6][10]   1_43-49_6
+ARB_IN[6][11]   1_43-49_7
+ARB_IN[6][12]   1_43-49_8
+ARB_IN[6][13]   1_43-49_9
+ARB_IN[6][14]   1_43-49_10
+ARB_IN[6][15]   1_43-49_11
+ARB_IN[6][16]   1_43-49_12
+ARB_IN[7][1]    1_49-55_1
+ARB_IN[7][2]    1_49-55_2
+ARB_IN[7][3]    1_49-55_3
+ARB_IN[7][4]    1_49-55_4
+ARB_IN[7][5]    1_49-55_5
+ARB_IN[7][6]    1_49-55_6
+ARB_IN[7][7]    1_49-55_7
+ARB_IN[7][8]    1_49-55_8
+ARB_IN[7][9]    1_49-55_9
+ARB_IN[7][10]   1_49-55_10
+ARB_IN[7][11]   1_49-55_11
+ARB_IN[7][12]   1_49-55_12
+ARB_IN[7][13]   1_55-61_1
+ARB_IN[7][14]   1_55-61_2
+ARB_IN[7][15]   1_55-61_3
+ARB_IN[7][16]   1_55-61_4
+ARB_IN[8][1]    1_55-61_5
+ARB_IN[8][2]    1_55-61_6
+ARB_IN[8][3]    1_55-61_7
+ARB_IN[8][4]    1_55-61_8
+ARB_IN[8][5]    1_55-61_9
+ARB_IN[8][6]    1_55-61_10
+ARB_IN[8][7]    1_55-61_11
+ARB_IN[8][8]    1_55-61_12
+ARB_IN[8][9]    1_61-64_1
+ARB_IN[8][10]   1_61-64_2
+ARB_IN[8][11]   1_61-64_3
+ARB_IN[8][12]   1_61-64_4
+ARB_IN[8][13]   1_61-64_5
+ARB_IN[8][14]   1_61-64_6
+ARB_IN[8][15]   1_61-64_7
+ARB_IN[8][16]   1_61-64_8
+ARB_IN[9][1]    2_65-71_1
+ARB_IN[9][2]    2_65-71_2
+ARB_IN[9][3]    2_65-71_3
+ARB_IN[9][4]    2_65-71_4
+ARB_IN[9][5]    2_65-71_5
+ARB_IN[9][6]    2_65-71_6
+ARB_IN[9][7]    2_65-71_7
+ARB_IN[9][8]    2_65-71_8
+ARB_IN[9][9]    2_65-71_9
+ARB_IN[9][10]   2_65-71_10
+ARB_IN[9][11]   2_65-71_11
+ARB_IN[9][12]   2_65-71_12
+ARB_IN[9][13]   2_71-77_1
+ARB_IN[9][14]   2_71-77_2
+ARB_IN[9][15]   2_71-77_3
+ARB_IN[9][16]   2_71-77_4
+ARB_IN[10][1]   2_71-77_5
+ARB_IN[10][2]   2_71-77_6
+ARB_IN[10][3]   2_71-77_7
+ARB_IN[10][4]   2_71-77_8
+ARB_IN[10][5]   2_71-77_9
+ARB_IN[10][6]   2_71-77_10
+ARB_IN[10][7]   2_71-77_11
+ARB_IN[10][8]   2_71-77_12
+ARB_IN[10][9]   2_77-83_1
+ARB_IN[10][10]  2_77-83_2
+ARB_IN[10][11]  2_77-83_3
+ARB_IN[10][12]  2_77-83_4
+ARB_IN[10][13]  2_77-83_5
+ARB_IN[10][14]  2_77-83_6
+ARB_IN[10][15]  2_77-83_7
+ARB_IN[10][16]  2_77-83_8
+ARB_IN[11][1]   2_77-83_9
+ARB_IN[11][2]   2_77-83_10
+ARB_IN[11][3]   2_77-83_11
+ARB_IN[11][4]   2_77-83_12
+ARB_IN[11][5]   2_83-89_1
+ARB_IN[11][6]   2_83-89_2
+ARB_IN[11][7]   2_83-89_3
+ARB_IN[11][8]   2_83-89_4
+ARB_IN[11][9]   2_83-89_5
+ARB_IN[11][10]  2_83-89_6
+ARB_IN[11][11]  2_83-89_7
+ARB_IN[11][12]  2_83-89_8
+ARB_IN[11][13]  2_83-89_9
+ARB_IN[11][14]  2_83-89_10
+ARB_IN[11][15]  2_83-89_11
+ARB_IN[11][16]  2_83-89_12
+ARB_IN[12][1]   2_89-95_1
+ARB_IN[12][2]   2_89-95_2
+ARB_IN[12][3]   2_89-95_3
+ARB_IN[12][4]   2_89-95_4
+ARB_IN[12][5]   2_89-95_5
+ARB_IN[12][6]   2_89-95_6
+ARB_IN[12][7]   2_89-95_7
+ARB_IN[12][8]   2_89-95_8
+ARB_IN[12][9]   2_89-95_9
+ARB_IN[12][10]  2_89-95_10
+ARB_IN[12][11]  2_89-95_11
+ARB_IN[12][12]  2_89-95_12
+ARB_IN[12][13]  2_95-101_1
+ARB_IN[12][14]  2_95-101_2
+ARB_IN[12][15]  2_95-101_3
+ARB_IN[12][16]  2_95-101_4
+ARB_IN[13][1]   2_95-101_5
+ARB_IN[13][2]   2_95-101_6
+ARB_IN[13][3]   2_95-101_7
+ARB_IN[13][4]   2_95-101_8
+ARB_IN[13][5]   2_95-101_9
+ARB_IN[13][6]   2_95-101_10
+ARB_IN[13][7]   2_95-101_11
+ARB_IN[13][8]   2_95-101_12
+ARB_IN[13][9]   2_101-107_1
+ARB_IN[13][10]  2_101-107_2
+ARB_IN[13][11]  2_101-107_3
+ARB_IN[13][12]  2_101-107_4
+ARB_IN[13][13]  2_101-107_5
+ARB_IN[13][14]  2_101-107_6
+ARB_IN[13][15]  2_101-107_7
+ARB_IN[13][16]  2_101-107_8
+ARB_IN[14][1]   2_101-107_9
+ARB_IN[14][2]   2_101-107_10
+ARB_IN[14][3]   2_101-107_11
+ARB_IN[14][4]   2_101-107_12
+ARB_IN[14][5]   2_107-113_1
+ARB_IN[14][6]   2_107-113_2
+ARB_IN[14][7]   2_107-113_3
+ARB_IN[14][8]   2_107-113_4
+ARB_IN[14][9]   2_107-113_5
+ARB_IN[14][10]  2_107-113_6
+ARB_IN[14][11]  2_107-113_7
+ARB_IN[14][12]  2_107-113_8
+ARB_IN[14][13]  2_107-113_9
+ARB_IN[14][14]  2_107-113_10
+ARB_IN[14][15]  2_107-113_11
+ARB_IN[14][16]  2_107-113_12
+ARB_IN[15][1]   2_113-119_1
+ARB_IN[15][2]   2_113-119_2
+ARB_IN[15][3]   2_113-119_3
+ARB_IN[15][4]   2_113-119_4
+ARB_IN[15][5]   2_113-119_5
+ARB_IN[15][6]   2_113-119_6
+ARB_IN[15][7]   2_113-119_7
+ARB_IN[15][8]   2_113-119_8
+ARB_IN[15][9]   2_113-119_9
+ARB_IN[15][10]  2_113-119_10
+ARB_IN[15][11]  2_113-119_11
+ARB_IN[15][12]  2_113-119_12
+ARB_IN[15][13]  2_119-125_1
+ARB_IN[15][14]  2_119-125_2
+ARB_IN[15][15]  2_119-125_3
+ARB_IN[15][16]  2_119-125_4
+ARB_IN[16][1]   2_119-125_5
+ARB_IN[16][2]   2_119-125_6
+ARB_IN[16][3]   2_119-125_7
+ARB_IN[16][4]   2_119-125_8
+ARB_IN[16][5]   2_119-125_9
+ARB_IN[16][6]   2_119-125_10
+ARB_IN[16][7]   2_119-125_11
+ARB_IN[16][8]   2_119-125_12
+ARB_IN[16][9]   2_125-128_1
+ARB_IN[16][10]  2_125-128_2
+ARB_IN[16][11]  2_125-128_3
+ARB_IN[16][12]  2_125-128_4
+ARB_IN[16][13]  2_125-128_5
+ARB_IN[16][14]  2_125-128_6
+ARB_IN[16][15]  2_125-128_7
+ARB_IN[16][16]  2_125-128_8
+ARB_IN[17][1]   3_129-135_1
+ARB_IN[17][2]   3_129-135_2
+ARB_IN[17][3]   3_129-135_3
+ARB_IN[17][4]   3_129-135_4
+ARB_IN[17][5]   3_129-135_5
+ARB_IN[17][6]   3_129-135_6
+ARB_IN[17][7]   3_129-135_7
+ARB_IN[17][8]   3_129-135_8
+ARB_IN[17][9]   3_129-135_9
+ARB_IN[17][10]  3_129-135_10
+ARB_IN[17][11]  3_129-135_11
+ARB_IN[17][12]  3_129-135_12
+ARB_IN[17][13]  3_135-141_1
+ARB_IN[17][14]  3_135-141_2
+ARB_IN[17][15]  3_135-141_3
+ARB_IN[17][16]  3_135-141_4
+ARB_IN[18][1]   3_135-141_5
+ARB_IN[18][2]   3_135-141_6
+ARB_IN[18][3]   3_135-141_7
+ARB_IN[18][4]   3_135-141_8
+ARB_IN[18][5]   3_135-141_9
+ARB_IN[18][6]   3_135-141_10
+ARB_IN[18][7]   3_135-141_11
+ARB_IN[18][8]   3_135-141_12
+ARB_IN[18][9]   3_141-147_1
+ARB_IN[18][10]  3_141-147_2
+ARB_IN[18][11]  3_141-147_3
+ARB_IN[18][12]  3_141-147_4
+ARB_IN[18][13]  3_141-147_5
+ARB_IN[18][14]  3_141-147_6
+ARB_IN[18][15]  3_141-147_7
+ARB_IN[18][16]  3_141-147_8
+ARB_IN[19][1]   3_141-147_9
+ARB_IN[19][2]   3_141-147_10
+ARB_IN[19][3]   3_141-147_11
+ARB_IN[19][4]   3_141-147_12
+ARB_IN[19][5]   3_147-153_1
+ARB_IN[19][6]   3_147-153_2
+ARB_IN[19][7]   3_147-153_3
+ARB_IN[19][8]   3_147-153_4
+ARB_IN[19][9]   3_147-153_5
+ARB_IN[19][10]  3_147-153_6
+ARB_IN[19][11]  3_147-153_7
+ARB_IN[19][12]  3_147-153_8
+ARB_IN[19][13]  3_147-153_9
+ARB_IN[19][14]  3_147-153_10
+ARB_IN[19][15]  3_147-153_11
+ARB_IN[19][16]  3_147-153_12
+ARB_IN[20][1]   3_153-159_1
+ARB_IN[20][2]   3_153-159_2
+ARB_IN[20][3]   3_153-159_3
+ARB_IN[20][4]   3_153-159_4
+ARB_IN[20][5]   3_153-159_5
+ARB_IN[20][6]   3_153-159_6
+ARB_IN[20][7]   3_153-159_7
+ARB_IN[20][8]   3_153-159_8
+ARB_IN[20][9]   3_153-159_9
+ARB_IN[20][10]  3_153-159_10
+ARB_IN[20][11]  3_153-159_11
+ARB_IN[20][12]  3_153-159_12
+ARB_IN[20][13]  3_159-165_1
+ARB_IN[20][14]  3_159-165_2
+ARB_IN[20][15]  3_159-165_3
+ARB_IN[20][16]  3_159-165_4
+ARB_IN[21][1]   3_159-165_5
+ARB_IN[21][2]   3_159-165_6
+ARB_IN[21][3]   3_159-165_7
+ARB_IN[21][4]   3_159-165_8
+ARB_IN[21][5]   3_159-165_9
+ARB_IN[21][6]   3_159-165_10
+ARB_IN[21][7]   3_159-165_11
+ARB_IN[21][8]   3_159-165_12
+ARB_IN[21][9]   3_165-171_1
+ARB_IN[21][10]  3_165-171_2
+ARB_IN[21][11]  3_165-171_3
+ARB_IN[21][12]  3_165-171_4
+ARB_IN[21][13]  3_165-171_5
+ARB_IN[21][14]  3_165-171_6
+ARB_IN[21][15]  3_165-171_7
+ARB_IN[21][16]  3_165-171_8
+ARB_IN[22][1]   3_165-171_9
+ARB_IN[22][2]   3_165-171_10
+ARB_IN[22][3]   3_165-171_11
+ARB_IN[22][4]   3_165-171_12
+ARB_IN[22][5]   3_171-177_1
+ARB_IN[22][6]   3_171-177_2
+ARB_IN[22][7]   3_171-177_3
+ARB_IN[22][8]   3_171-177_4
+ARB_IN[22][9]   3_171-177_5
+ARB_IN[22][10]  3_171-177_6
+ARB_IN[22][11]  3_171-177_7
+ARB_IN[22][12]  3_171-177_8
+ARB_IN[22][13]  3_171-177_9
+ARB_IN[22][14]  3_171-177_10
+ARB_IN[22][15]  3_171-177_11
+ARB_IN[22][16]  3_171-177_12
+ARB_IN[23][1]   3_177-183_1
+ARB_IN[23][2]   3_177-183_2
+ARB_IN[23][3]   3_177-183_3
+ARB_IN[23][4]   3_177-183_4
+ARB_IN[23][5]   3_177-183_5
+ARB_IN[23][6]   3_177-183_6
+ARB_IN[23][7]   3_177-183_7
+ARB_IN[23][8]   3_177-183_8
+ARB_IN[23][9]   3_177-183_9
+ARB_IN[23][10]  3_177-183_10
+ARB_IN[23][11]  3_177-183_11
+ARB_IN[23][12]  3_177-183_12
+ARB_IN[23][13]  3_183-189_1
+ARB_IN[23][14]  3_183-189_2
+ARB_IN[23][15]  3_183-189_3
+ARB_IN[23][16]  3_183-189_4
+ARB_IN[24][1]   3_183-189_5
+ARB_IN[24][2]   3_183-189_6
+ARB_IN[24][3]   3_183-189_7
+ARB_IN[24][4]   3_183-189_8
+ARB_IN[24][5]   3_183-189_9
+ARB_IN[24][6]   3_183-189_10
+ARB_IN[24][7]   3_183-189_11
+ARB_IN[24][8]   3_183-189_12
+ARB_IN[24][9]   3_189-192_1
+ARB_IN[24][10]  3_189-192_2
+ARB_IN[24][11]  3_189-192_3
+ARB_IN[24][12]  3_189-192_4
+ARB_IN[24][13]  3_189-192_5
+ARB_IN[24][14]  3_189-192_6
+ARB_IN[24][15]  3_189-192_7
+ARB_IN[24][16]  3_189-192_8
+ARB_IN[25][1]   4_193-199_1
+ARB_IN[25][2]   4_193-199_2
+ARB_IN[25][3]   4_193-199_3
+ARB_IN[25][4]   4_193-199_4
+ARB_IN[25][5]   4_193-199_5
+ARB_IN[25][6]   4_193-199_6
+ARB_IN[25][7]   4_193-199_7
+ARB_IN[25][8]   4_193-199_8
+ARB_IN[25][9]   4_193-199_9
+ARB_IN[25][10]  4_193-199_10
+ARB_IN[25][11]  4_193-199_11
+ARB_IN[25][12]  4_193-199_12
+ARB_IN[25][13]  4_199-205_1
+ARB_IN[25][14]  4_199-205_2
+ARB_IN[25][15]  4_199-205_3
+ARB_IN[25][16]  4_199-205_4
+ARB_IN[26][1]   4_199-205_5
+ARB_IN[26][2]   4_199-205_6
+ARB_IN[26][3]   4_199-205_7
+ARB_IN[26][4]   4_199-205_8
+ARB_IN[26][5]   4_199-205_9
+ARB_IN[26][6]   4_199-205_10
+ARB_IN[26][7]   4_199-205_11
+ARB_IN[26][8]   4_199-205_12
+ARB_IN[26][9]   4_205-211_1
+ARB_IN[26][10]  4_205-211_2
+ARB_IN[26][11]  4_205-211_3
+ARB_IN[26][12]  4_205-211_4
+ARB_IN[26][13]  4_205-211_5
+ARB_IN[26][14]  4_205-211_6
+ARB_IN[26][15]  4_205-211_7
+ARB_IN[26][16]  4_205-211_8
+ARB_IN[27][1]   4_205-211_9
+ARB_IN[27][2]   4_205-211_10
+ARB_IN[27][3]   4_205-211_11
+ARB_IN[27][4]   4_205-211_12
+ARB_IN[27][5]   4_211-217_1
+ARB_IN[27][6]   4_211-217_2
+ARB_IN[27][7]   4_211-217_3
+ARB_IN[27][8]   4_211-217_4
+ARB_IN[27][9]   4_211-217_5
+ARB_IN[27][10]  4_211-217_6
+ARB_IN[27][11]  4_211-217_7
+ARB_IN[27][12]  4_211-217_8
+ARB_IN[27][13]  4_211-217_9
+ARB_IN[27][14]  4_211-217_10
+ARB_IN[27][15]  4_211-217_11
+ARB_IN[27][16]  4_211-217_12
+ARB_IN[28][1]   4_217-223_1
+ARB_IN[28][2]   4_217-223_2
+ARB_IN[28][3]   4_217-223_3
+ARB_IN[28][4]   4_217-223_4
+ARB_IN[28][5]   4_217-223_5
+ARB_IN[28][6]   4_217-223_6
+ARB_IN[28][7]   4_217-223_7
+ARB_IN[28][8]   4_217-223_8
+ARB_IN[28][9]   4_217-223_9
+ARB_IN[28][10]  4_217-223_10
+ARB_IN[28][11]  4_217-223_11
+ARB_IN[28][12]  4_217-223_12
+ARB_IN[28][13]  4_223-229_1
+ARB_IN[28][14]  4_223-229_2
+ARB_IN[28][15]  4_223-229_3
+ARB_IN[28][16]  4_223-229_4
+ARB_IN[29][1]   4_223-229_5
+ARB_IN[29][2]   4_223-229_6
+ARB_IN[29][3]   4_223-229_7
+ARB_IN[29][4]   4_223-229_8
+ARB_IN[29][5]   4_223-229_9
+ARB_IN[29][6]   4_223-229_10
+ARB_IN[29][7]   4_223-229_11
+ARB_IN[29][8]   4_223-229_12
+ARB_IN[29][9]   4_229-235_1
+ARB_IN[29][10]  4_229-235_2
+ARB_IN[29][11]  4_229-235_3
+ARB_IN[29][12]  4_229-235_4
+ARB_IN[29][13]  4_229-235_5
+ARB_IN[29][14]  4_229-235_6
+ARB_IN[29][15]  4_229-235_7
+ARB_IN[29][16]  4_229-235_8
+ARB_IN[30][1]   4_229-235_9
+ARB_IN[30][2]   4_229-235_10
+ARB_IN[30][3]   4_229-235_11
+ARB_IN[30][4]   4_229-235_12
+ARB_IN[30][5]   4_235-241_1
+ARB_IN[30][6]   4_235-241_2
+ARB_IN[30][7]   4_235-241_3
+ARB_IN[30][8]   4_235-241_4
+ARB_IN[30][9]   4_235-241_5
+ARB_IN[30][10]  4_235-241_6
+ARB_IN[30][11]  4_235-241_7
+ARB_IN[30][12]  4_235-241_8
+ARB_IN[30][13]  4_235-241_9
+ARB_IN[30][14]  4_235-241_10
+ARB_IN[30][15]  4_235-241_11
+ARB_IN[30][16]  4_235-241_12
+ARB_IN[31][1]   4_241-247_1
+ARB_IN[31][2]   4_241-247_2
+ARB_IN[31][3]   4_241-247_3
+ARB_IN[31][4]   4_241-247_4
+ARB_IN[31][5]   4_241-247_5
+ARB_IN[31][6]   4_241-247_6
+ARB_IN[31][7]   4_241-247_7
+ARB_IN[31][8]   4_241-247_8
+ARB_IN[31][9]   4_241-247_9
+ARB_IN[31][10]  4_241-247_10
+ARB_IN[31][11]  4_241-247_11
+ARB_IN[31][12]  4_241-247_12
+ARB_IN[31][13]  4_247-253_1
+ARB_IN[31][14]  4_247-253_2
+ARB_IN[31][15]  4_247-253_3
+ARB_IN[31][16]  4_247-253_4
+ARB_IN[32][1]   4_247-253_5
+ARB_IN[32][2]   4_247-253_6
+ARB_IN[32][3]   4_247-253_7
+ARB_IN[32][4]   4_247-253_8
+ARB_IN[32][5]   4_247-253_9
+ARB_IN[32][6]   4_247-253_10
+ARB_IN[32][7]   4_247-253_11
+ARB_IN[32][8]   4_247-253_12
+ARB_IN[32][9]   4_253-256_1
+ARB_IN[32][10]  4_253-256_2
+ARB_IN[32][11]  4_253-256_3
+ARB_IN[32][12]  4_253-256_4
+ARB_IN[32][13]  4_253-256_5
+ARB_IN[32][14]  4_253-256_6
+ARB_IN[32][15]  4_253-256_7
+ARB_IN[32][16]  4_253-256_8
+
+# *** ARB_OUT[][] goes here:
+# label = panel#_label_pair#
+# panel 1 is top, output 1 is upper front (towards main door)
+ARX_OUT[1][1]    1_1/2_1
+ARX_OUT[1][2]    1_1/2_2
+ARX_OUT[1][3]    1_1/2_3
+ARX_OUT[1][4]    1_1/2_4
+ARX_OUT[1][5]    1_3/4_1
+ARX_OUT[1][6]    1_3/4_2
+ARX_OUT[1][7]    1_3/4_3
+ARX_OUT[1][8]    1_3/4_4
+ARX_OUT[1][9]    1_5/6_1
+ARX_OUT[1][10]   1_5/6_2
+ARX_OUT[1][11]   1_5/6_3
+ARX_OUT[1][12]   1_5/6_4
+ARX_OUT[1][13]   1_7/8_1
+ARX_OUT[1][14]   1_7/8_2
+ARX_OUT[1][15]   1_7/8_3
+ARX_OUT[1][16]   1_7/8_4
+ARX_OUT[2][1]    1_9/10_1
+ARX_OUT[2][2]    1_9/10_2
+ARX_OUT[2][3]    1_9/10_3
+ARX_OUT[2][4]    1_9/10_4
+ARX_OUT[2][5]    1_11/12_1
+ARX_OUT[2][6]    1_11/12_2
+ARX_OUT[2][7]    1_11/12_3
+ARX_OUT[2][8]    1_11/12_4
+ARX_OUT[2][9]    1_13/14_1
+ARX_OUT[2][10]   1_13/14_2
+ARX_OUT[2][11]   1_13/14_3
+ARX_OUT[2][12]   1_13/14_4
+ARX_OUT[2][13]   1_15/16_1
+ARX_OUT[2][14]   1_15/16_2
+ARX_OUT[2][15]   1_15/16_3
+ARX_OUT[2][16]   1_15/16_4
+ARX_OUT[3][1]    1_17/18_1
+ARX_OUT[3][2]    1_17/18_2
+ARX_OUT[3][3]    1_17/18_3
+ARX_OUT[3][4]    1_17/18_4
+ARX_OUT[3][5]    1_19/20_1
+ARX_OUT[3][6]    1_19/20_2
+ARX_OUT[3][7]    1_19/20_3
+ARX_OUT[3][8]    1_19/20_4
+ARX_OUT[3][9]    1_21/22_1
+ARX_OUT[3][10]   1_21/22_2
+ARX_OUT[3][11]   1_21/22_3
+ARX_OUT[3][12]   1_21/22_4
+ARX_OUT[3][13]   1_23/24_1
+ARX_OUT[3][14]   1_23/24_2
+ARX_OUT[3][15]   1_23/24_3
+ARX_OUT[3][16]   1_23/24_4
+ARX_OUT[4][1]    1_25/26_1
+ARX_OUT[4][2]    1_25/26_2
+ARX_OUT[4][3]    1_25/26_3
+ARX_OUT[4][4]    1_25/26_4
+ARX_OUT[4][5]    1_27/28_1
+ARX_OUT[4][6]    1_27/28_2
+ARX_OUT[4][7]    1_27/28_3
+ARX_OUT[4][8]    1_27/28_4
+ARX_OUT[4][9]    1_29/30_1
+ARX_OUT[4][10]   1_29/30_2
+ARX_OUT[4][11]   1_29/30_3
+ARX_OUT[4][12]   1_29/30_4
+ARX_OUT[4][13]   1_31/32_1
+ARX_OUT[4][14]   1_31/32_2
+ARX_OUT[4][15]   1_31/32_3
+ARX_OUT[4][16]   1_31/32_4
+ARX_OUT[5][1]    1_33/34_1
+ARX_OUT[5][2]    1_33/34_2
+ARX_OUT[5][3]    1_33/34_3
+ARX_OUT[5][4]    1_33/34_4
+ARX_OUT[5][5]    1_35/36_1
+ARX_OUT[5][6]    1_35/36_2
+ARX_OUT[5][7]    1_35/36_3
+ARX_OUT[5][8]    1_35/36_4
+ARX_OUT[5][9]    1_37/38_1
+ARX_OUT[5][10]   1_37/38_2
+ARX_OUT[5][11]   1_37/38_3
+ARX_OUT[5][12]   1_37/38_4
+ARX_OUT[5][13]   1_39/40_1
+ARX_OUT[5][14]   1_39/40_2
+ARX_OUT[5][15]   1_39/40_3
+ARX_OUT[5][16]   1_39/40_4
+ARX_OUT[6][1]    1_41/42_1
+ARX_OUT[6][2]    1_41/42_2
+ARX_OUT[6][3]    1_41/42_3
+ARX_OUT[6][4]    1_41/42_4
+ARX_OUT[6][5]    1_43/44_1
+ARX_OUT[6][6]    1_43/44_2
+ARX_OUT[6][7]    1_43/44_3
+ARX_OUT[6][8]    1_43/44_4
+ARX_OUT[6][9]    1_45/46_1
+ARX_OUT[6][10]   1_45/46_2
+ARX_OUT[6][11]   1_45/46_3
+ARX_OUT[6][12]   1_45/46_4
+ARX_OUT[6][13]   1_47/48_1
+ARX_OUT[6][14]   1_47/48_2
+ARX_OUT[6][15]   1_47/48_3
+ARX_OUT[6][16]   1_47/48_4
+ARX_OUT[7][1]    1_49/50_1
+ARX_OUT[7][2]    1_49/50_2
+ARX_OUT[7][3]    1_49/50_3
+ARX_OUT[7][4]    1_49/50_4
+ARX_OUT[7][5]    1_51/52_1
+ARX_OUT[7][6]    1_51/52_2
+ARX_OUT[7][7]    1_51/52_3
+ARX_OUT[7][8]    1_51/52_4
+ARX_OUT[7][9]    1_53/54_1
+ARX_OUT[7][10]   1_53/54_2
+ARX_OUT[7][11]   1_53/54_3
+ARX_OUT[7][12]   1_53/54_4
+ARX_OUT[7][13]   1_55/56_1
+ARX_OUT[7][14]   1_55/56_2
+ARX_OUT[7][15]   1_55/56_3
+ARX_OUT[7][16]   1_55/56_4
+ARX_OUT[8][1]    1_57/58_1
+ARX_OUT[8][2]    1_57/58_2
+ARX_OUT[8][3]    1_57/58_3
+ARX_OUT[8][4]    1_57/58_4
+ARX_OUT[8][5]    1_59/60_1
+ARX_OUT[8][6]    1_59/60_2
+ARX_OUT[8][7]    1_59/60_3
+ARX_OUT[8][8]    1_59/60_4
+ARX_OUT[8][9]    1_61/62_1
+ARX_OUT[8][10]   1_61/62_2
+ARX_OUT[8][11]   1_61/62_3
+ARX_OUT[8][12]   1_61/62_4
+ARX_OUT[8][13]   1_63/64_1
+ARX_OUT[8][14]   1_63/64_2
+ARX_OUT[8][15]   1_63/64_3
+ARX_OUT[8][16]   1_63/64_4
+ARX_OUT[9][1]    2_65/66_1
+ARX_OUT[9][2]    2_65/66_2
+ARX_OUT[9][3]    2_65/66_3
+ARX_OUT[9][4]    2_65/66_4
+ARX_OUT[9][5]    2_67/68_1
+ARX_OUT[9][6]    2_67/68_2
+ARX_OUT[9][7]    2_67/68_3
+ARX_OUT[9][8]    2_67/68_4
+ARX_OUT[9][9]    2_69/70_1
+ARX_OUT[9][10]   2_69/70_2
+ARX_OUT[9][11]   2_69/70_3
+ARX_OUT[9][12]   2_69/70_4
+ARX_OUT[9][13]   2_71/72_1
+ARX_OUT[9][14]   2_71/72_2
+ARX_OUT[9][15]   2_71/72_3
+ARX_OUT[9][16]   2_71/72_4
+ARX_OUT[10][1]   2_73/74_1
+ARX_OUT[10][2]   2_73/74_2
+ARX_OUT[10][3]   2_73/74_3
+ARX_OUT[10][4]   2_73/74_4
+ARX_OUT[10][5]   2_75/76_1
+ARX_OUT[10][6]   2_75/76_2
+ARX_OUT[10][7]   2_75/76_3
+ARX_OUT[10][8]   2_75/76_4
+ARX_OUT[10][9]   2_77/78_1
+ARX_OUT[10][10]  2_77/78_2
+ARX_OUT[10][11]  2_77/78_3
+ARX_OUT[10][12]  2_77/78_4
+ARX_OUT[10][13]  2_79/80_1
+ARX_OUT[10][14]  2_79/80_2
+ARX_OUT[10][15]  2_79/80_3
+ARX_OUT[10][16]  2_79/80_4
+ARX_OUT[11][1]   2_81/82_1
+ARX_OUT[11][2]   2_81/82_2
+ARX_OUT[11][3]   2_81/82_3
+ARX_OUT[11][4]   2_81/82_4
+ARX_OUT[11][5]   2_83/84_1
+ARX_OUT[11][6]   2_83/84_2
+ARX_OUT[11][7]   2_83/84_3
+ARX_OUT[11][8]   2_83/84_4
+ARX_OUT[11][9]   2_85/86_1
+ARX_OUT[11][10]  2_85/86_2
+ARX_OUT[11][11]  2_85/86_3
+ARX_OUT[11][12]  2_85/86_4
+ARX_OUT[11][13]  2_87/88_1
+ARX_OUT[11][14]  2_87/88_2
+ARX_OUT[11][15]  2_87/88_3
+ARX_OUT[11][16]  2_87/88_4
+ARX_OUT[12][1]   2_89/90_1
+ARX_OUT[12][2]   2_89/90_2
+ARX_OUT[12][3]   2_89/90_3
+ARX_OUT[12][4]   2_89/90_4
+ARX_OUT[12][5]   2_91/92_1
+ARX_OUT[12][6]   2_91/92_2
+ARX_OUT[12][7]   2_91/92_3
+ARX_OUT[12][8]   2_91/92_4
+ARX_OUT[12][9]   2_93/94_1
+ARX_OUT[12][10]  2_93/94_2
+ARX_OUT[12][11]  2_93/94_3
+ARX_OUT[12][12]  2_93/94_4
+ARX_OUT[12][13]  2_95/96_1
+ARX_OUT[12][14]  2_95/96_2
+ARX_OUT[12][15]  2_95/96_3
+ARX_OUT[12][16]  2_95/96_4
+ARX_OUT[13][1]   2_97/98_1
+ARX_OUT[13][2]   2_97/98_2
+ARX_OUT[13][3]   2_97/98_3
+ARX_OUT[13][4]   2_97/98_4
+ARX_OUT[13][5]   2_99/100_1
+ARX_OUT[13][6]   2_99/100_2
+ARX_OUT[13][7]   2_99/100_3
+ARX_OUT[13][8]   2_99/100_4
+ARX_OUT[13][9]   2_101/102_1
+ARX_OUT[13][10]  2_101/102_2
+ARX_OUT[13][11]  2_101/102_3
+ARX_OUT[13][12]  2_101/102_4
+ARX_OUT[13][13]  2_103/104_1
+ARX_OUT[13][14]  2_103/104_2
+ARX_OUT[13][15]  2_103/104_3
+ARX_OUT[13][16]  2_103/104_4
+ARX_OUT[14][1]   2_105/106_1
+ARX_OUT[14][2]   2_105/106_2
+ARX_OUT[14][3]   2_105/106_3
+ARX_OUT[14][4]   2_105/106_4
+ARX_OUT[14][5]   2_107/108_1
+ARX_OUT[14][6]   2_107/108_2
+ARX_OUT[14][7]   2_107/108_3
+ARX_OUT[14][8]   2_107/108_4
+ARX_OUT[14][9]   2_109/110_1
+ARX_OUT[14][10]  2_109/110_2
+ARX_OUT[14][11]  2_109/110_3
+ARX_OUT[14][12]  2_109/110_4
+ARX_OUT[14][13]  2_111/112_1
+ARX_OUT[14][14]  2_111/112_2
+ARX_OUT[14][15]  2_111/112_3
+ARX_OUT[14][16]  2_111/112_4
+ARX_OUT[15][1]   2_113/114_1
+ARX_OUT[15][2]   2_113/114_2
+ARX_OUT[15][3]   2_113/114_3
+ARX_OUT[15][4]   2_113/114_4
+ARX_OUT[15][5]   2_115/116_1
+ARX_OUT[15][6]   2_115/116_2
+ARX_OUT[15][7]   2_115/116_3
+ARX_OUT[15][8]   2_115/116_4
+ARX_OUT[15][9]   2_117/118_1
+ARX_OUT[15][10]  2_117/118_2
+ARX_OUT[15][11]  2_117/118_3
+ARX_OUT[15][12]  2_117/118_4
+ARX_OUT[15][13]  2_119/120_1
+ARX_OUT[15][14]  2_119/120_2
+ARX_OUT[15][15]  2_119/120_3
+ARX_OUT[15][16]  2_119/120_4
+ARX_OUT[16][1]   2_121/122_1
+ARX_OUT[16][2]   2_121/122_2
+ARX_OUT[16][3]   2_121/122_3
+ARX_OUT[16][4]   2_121/122_4
+ARX_OUT[16][5]   2_123/124_1
+ARX_OUT[16][6]   2_123/124_2
+ARX_OUT[16][7]   2_123/124_3
+ARX_OUT[16][8]   2_123/124_4
+ARX_OUT[16][9]   2_125/126_1
+ARX_OUT[16][10]  2_125/126_2
+ARX_OUT[16][11]  2_125/126_3
+ARX_OUT[16][12]  2_125/126_4
+ARX_OUT[16][13]  2_127/128_1
+ARX_OUT[16][14]  2_127/128_2
+ARX_OUT[16][15]  2_127/128_3
+ARX_OUT[16][16]  2_127/128_4
+ARX_OUT[17][1]   3_129/130_1
+ARX_OUT[17][2]   3_129/130_2
+ARX_OUT[17][3]   3_129/130_3
+ARX_OUT[17][4]   3_129/130_4
+ARX_OUT[17][5]   3_131/132_1
+ARX_OUT[17][6]   3_131/132_2
+ARX_OUT[17][7]   3_131/132_3
+ARX_OUT[17][8]   3_131/132_4
+ARX_OUT[17][9]   3_133/134_1
+ARX_OUT[17][10]  3_133/134_2
+ARX_OUT[17][11]  3_133/134_3
+ARX_OUT[17][12]  3_133/134_4
+ARX_OUT[17][13]  3_135/136_1
+ARX_OUT[17][14]  3_135/136_2
+ARX_OUT[17][15]  3_135/136_3
+ARX_OUT[17][16]  3_135/136_4
+ARX_OUT[18][1]   3_137/138_1
+ARX_OUT[18][2]   3_137/138_2
+ARX_OUT[18][3]   3_137/138_3
+ARX_OUT[18][4]   3_137/138_4
+ARX_OUT[18][5]   3_139/140_1
+ARX_OUT[18][6]   3_139/140_2
+ARX_OUT[18][7]   3_139/140_3
+ARX_OUT[18][8]   3_139/140_4
+ARX_OUT[18][9]   3_141/142_1
+ARX_OUT[18][10]  3_141/142_2
+ARX_OUT[18][11]  3_141/142_3
+ARX_OUT[18][12]  3_141/142_4
+ARX_OUT[18][13]  3_143/144_1
+ARX_OUT[18][14]  3_143/144_2
+ARX_OUT[18][15]  3_143/144_3
+ARX_OUT[18][16]  3_143/144_4
+ARX_OUT[19][1]   3_145/146_1
+ARX_OUT[19][2]   3_145/146_2
+ARX_OUT[19][3]   3_145/146_3
+ARX_OUT[19][4]   3_145/146_4
+ARX_OUT[19][5]   3_147/148_1
+ARX_OUT[19][6]   3_147/148_2
+ARX_OUT[19][7]   3_147/148_3
+ARX_OUT[19][8]   3_147/148_4
+ARX_OUT[19][9]   3_149/150_1
+ARX_OUT[19][10]  3_149/150_2
+ARX_OUT[19][11]  3_149/150_3
+ARX_OUT[19][12]  3_149/150_4
+ARX_OUT[19][13]  3_151/152_1
+ARX_OUT[19][14]  3_151/152_2
+ARX_OUT[19][15]  3_151/152_3
+ARX_OUT[19][16]  3_151/152_4
+ARX_OUT[20][1]   3_153/154_1
+ARX_OUT[20][2]   3_153/154_2
+ARX_OUT[20][3]   3_153/154_3
+ARX_OUT[20][4]   3_153/154_4
+ARX_OUT[20][5]   3_155/156_1
+ARX_OUT[20][6]   3_155/156_2
+ARX_OUT[20][7]   3_155/156_3
+ARX_OUT[20][8]   3_155/156_4
+ARX_OUT[20][9]   3_157/158_1
+ARX_OUT[20][10]  3_157/158_2
+ARX_OUT[20][11]  3_157/158_3
+ARX_OUT[20][12]  3_157/158_4
+ARX_OUT[20][13]  3_159/160_1
+ARX_OUT[20][14]  3_159/160_2
+ARX_OUT[20][15]  3_159/160_3
+ARX_OUT[20][16]  3_159/160_4
+ARX_OUT[21][1]   3_161/162_1
+ARX_OUT[21][2]   3_161/162_2
+ARX_OUT[21][3]   3_161/162_3
+ARX_OUT[21][4]   3_161/162_4
+ARX_OUT[21][5]   3_163/164_1
+ARX_OUT[21][6]   3_163/164_2
+ARX_OUT[21][7]   3_163/164_3
+ARX_OUT[21][8]   3_163/164_4
+ARX_OUT[21][9]   3_165/166_1
+ARX_OUT[21][10]  3_165/166_2
+ARX_OUT[21][11]  3_165/166_3
+ARX_OUT[21][12]  3_165/166_4
+ARX_OUT[21][13]  3_167/168_1
+ARX_OUT[21][14]  3_167/168_2
+ARX_OUT[21][15]  3_167/168_3
+ARX_OUT[21][16]  3_167/168_4
+ARX_OUT[22][1]   3_169/170_1
+ARX_OUT[22][2]   3_169/170_2
+ARX_OUT[22][3]   3_169/170_3
+ARX_OUT[22][4]   3_169/170_4
+ARX_OUT[22][5]   3_171/172_1
+ARX_OUT[22][6]   3_171/172_2
+ARX_OUT[22][7]   3_171/172_3
+ARX_OUT[22][8]   3_171/172_4
+ARX_OUT[22][9]   3_173/174_1
+ARX_OUT[22][10]  3_173/174_2
+ARX_OUT[22][11]  3_173/174_3
+ARX_OUT[22][12]  3_173/174_4
+ARX_OUT[22][13]  3_175/176_1
+ARX_OUT[22][14]  3_175/176_2
+ARX_OUT[22][15]  3_175/176_3
+ARX_OUT[22][16]  3_175/176_4
+ARX_OUT[23][1]   3_177/178_1
+ARX_OUT[23][2]   3_177/178_2
+ARX_OUT[23][3]   3_177/178_3
+ARX_OUT[23][4]   3_177/178_4
+ARX_OUT[23][5]   3_179/180_1
+ARX_OUT[23][6]   3_179/180_2
+ARX_OUT[23][7]   3_179/180_3
+ARX_OUT[23][8]   3_179/180_4
+ARX_OUT[23][9]   3_181/182_1
+ARX_OUT[23][10]  3_181/182_2
+ARX_OUT[23][11]  3_181/182_3
+ARX_OUT[23][12]  3_181/182_4
+ARX_OUT[23][13]  3_183/184_1
+ARX_OUT[23][14]  3_183/184_2
+ARX_OUT[23][15]  3_183/184_3
+ARX_OUT[23][16]  3_183/184_4
+ARX_OUT[24][1]   3_185/186_1
+ARX_OUT[24][2]   3_185/186_2
+ARX_OUT[24][3]   3_185/186_3
+ARX_OUT[24][4]   3_185/186_4
+ARX_OUT[24][5]   3_187/188_1
+ARX_OUT[24][6]   3_187/188_2
+ARX_OUT[24][7]   3_187/188_3
+ARX_OUT[24][8]   3_187/188_4
+ARX_OUT[24][9]   3_189/190_1
+ARX_OUT[24][10]  3_189/190_2
+ARX_OUT[24][11]  3_189/190_3
+ARX_OUT[24][12]  3_189/190_4
+ARX_OUT[24][13]  3_191/192_1
+ARX_OUT[24][14]  3_191/192_2
+ARX_OUT[24][15]  3_191/192_3
+ARX_OUT[24][16]  3_191/192_4
+ARX_OUT[25][1]   4_193/194_1
+ARX_OUT[25][2]   4_193/194_2
+ARX_OUT[25][3]   4_193/194_3
+ARX_OUT[25][4]   4_193/194_4
+ARX_OUT[25][5]   4_195/196_1
+ARX_OUT[25][6]   4_195/196_2
+ARX_OUT[25][7]   4_195/196_3
+ARX_OUT[25][8]   4_195/196_4
+ARX_OUT[25][9]   4_197/198_1
+ARX_OUT[25][10]  4_197/198_2
+ARX_OUT[25][11]  4_197/198_3
+ARX_OUT[25][12]  4_197/198_4
+ARX_OUT[25][13]  4_199/200_1
+ARX_OUT[25][14]  4_199/200_2
+ARX_OUT[25][15]  4_199/200_3
+ARX_OUT[25][16]  4_199/200_4
+ARX_OUT[26][1]   4_201/202_1
+ARX_OUT[26][2]   4_201/202_2
+ARX_OUT[26][3]   4_201/202_3
+ARX_OUT[26][4]   4_201/202_4
+ARX_OUT[26][5]   4_203/204_1
+ARX_OUT[26][6]   4_203/204_2
+ARX_OUT[26][7]   4_203/204_3
+ARX_OUT[26][8]   4_203/204_4
+ARX_OUT[26][9]   4_205/206_1
+ARX_OUT[26][10]  4_205/206_2
+ARX_OUT[26][11]  4_205/206_3
+ARX_OUT[26][12]  4_205/206_4
+ARX_OUT[26][13]  4_207/208_1
+ARX_OUT[26][14]  4_207/208_2
+ARX_OUT[26][15]  4_207/208_3
+ARX_OUT[26][16]  4_207/208_4
+ARX_OUT[27][1]   4_209/210_1
+ARX_OUT[27][2]   4_209/210_2
+ARX_OUT[27][3]   4_209/210_3
+ARX_OUT[27][4]   4_209/210_4
+ARX_OUT[27][5]   4_211/212_1
+ARX_OUT[27][6]   4_211/212_2
+ARX_OUT[27][7]   4_211/212_3
+ARX_OUT[27][8]   4_211/212_4
+ARX_OUT[27][9]   4_213/214_1
+ARX_OUT[27][10]  4_213/214_2
+ARX_OUT[27][11]  4_213/214_3
+ARX_OUT[27][12]  4_213/214_4
+ARX_OUT[27][13]  4_215/216_1
+ARX_OUT[27][14]  4_215/216_2
+ARX_OUT[27][15]  4_215/216_3
+ARX_OUT[27][16]  4_215/216_4
+ARX_OUT[28][1]   4_217/218_1
+ARX_OUT[28][2]   4_217/218_2
+ARX_OUT[28][3]   4_217/218_3
+ARX_OUT[28][4]   4_217/218_4
+ARX_OUT[28][5]   4_219/220_1
+ARX_OUT[28][6]   4_219/220_2
+ARX_OUT[28][7]   4_219/220_3
+ARX_OUT[28][8]   4_219/220_4
+ARX_OUT[28][9]   4_221/222_1
+ARX_OUT[28][10]  4_221/222_2
+ARX_OUT[28][11]  4_221/222_3
+ARX_OUT[28][12]  4_221/222_4
+ARX_OUT[28][13]  4_223/224_1
+ARX_OUT[28][14]  4_223/224_2
+ARX_OUT[28][15]  4_223/224_3
+ARX_OUT[28][16]  4_223/224_4
+ARX_OUT[29][1]   4_225/226_1
+ARX_OUT[29][2]   4_225/226_2
+ARX_OUT[29][3]   4_225/226_3
+ARX_OUT[29][4]   4_225/226_4
+ARX_OUT[29][5]   4_227/228_1
+ARX_OUT[29][6]   4_227/228_2
+ARX_OUT[29][7]   4_227/228_3
+ARX_OUT[29][8]   4_227/228_4
+ARX_OUT[29][9]   4_229/230_1
+ARX_OUT[29][10]  4_229/230_2
+ARX_OUT[29][11]  4_229/230_3
+ARX_OUT[29][12]  4_229/230_4
+ARX_OUT[29][13]  4_231/232_1
+ARX_OUT[29][14]  4_231/232_2
+ARX_OUT[29][15]  4_231/232_3
+ARX_OUT[29][16]  4_231/232_4
+ARX_OUT[30][1]   4_233/234_1
+ARX_OUT[30][2]   4_233/234_2
+ARX_OUT[30][3]   4_233/234_3
+ARX_OUT[30][4]   4_233/234_4
+ARX_OUT[30][5]   4_235/236_1
+ARX_OUT[30][6]   4_235/236_2
+ARX_OUT[30][7]   4_235/236_3
+ARX_OUT[30][8]   4_235/236_4
+ARX_OUT[30][9]   4_237/238_1
+ARX_OUT[30][10]  4_237/238_2
+ARX_OUT[30][11]  4_237/238_3
+ARX_OUT[30][12]  4_237/238_4
+ARX_OUT[30][13]  4_239/240_1
+ARX_OUT[30][14]  4_239/240_2
+ARX_OUT[30][15]  4_239/240_3
+ARX_OUT[30][16]  4_239/240_4
+ARX_OUT[31][1]   4_241/242_1
+ARX_OUT[31][2]   4_241/242_2
+ARX_OUT[31][3]   4_241/242_3
+ARX_OUT[31][4]   4_241/242_4
+ARX_OUT[31][5]   4_243/244_1
+ARX_OUT[31][6]   4_243/244_2
+ARX_OUT[31][7]   4_243/244_3
+ARX_OUT[31][8]   4_243/244_4
+ARX_OUT[31][9]   4_245/246_1
+ARX_OUT[31][10]  4_245/246_2
+ARX_OUT[31][11]  4_245/246_3
+ARX_OUT[31][12]  4_245/246_4
+ARX_OUT[31][13]  4_247/248_1
+ARX_OUT[31][14]  4_247/248_2
+ARX_OUT[31][15]  4_247/248_3
+ARX_OUT[31][16]  4_247/248_4
+ARX_OUT[32][1]   4_249/250_1
+ARX_OUT[32][2]   4_249/250_2
+ARX_OUT[32][3]   4_249/250_3
+ARX_OUT[32][4]   4_249/250_4
+ARX_OUT[32][5]   4_251/252_1
+ARX_OUT[32][6]   4_251/252_2
+ARX_OUT[32][7]   4_251/252_3
+ARX_OUT[32][8]   4_251/252_4
+ARX_OUT[32][9]   4_253/254_1
+ARX_OUT[32][10]  4_253/254_2
+ARX_OUT[32][11]  4_253/254_3
+ARX_OUT[32][12]  4_253/254_4
+ARX_OUT[32][13]  4_255/256_1
+ARX_OUT[32][14]  4_255/256_2
+ARX_OUT[32][15]  4_255/256_3
+ARX_OUT[32][16]  4_255/256_4
+
+# ----------------------
+# --- ROACH ------------
+# ----------------------
+# Maximum number of ROACH boards:
+N_ROACH 16
+
+# Maximum number or channels per ROACH board
+N_ROACHCH 32
+
+# ROACH_ID[] will be set to "UNK" (no identification) for any ROACH boards not identified
+# *** ROACH_ID[roach#] goes here:
+ROACH_ID[1]  1147
+ROACH_ID[2]  1214
+ROACH_ID[3]  1215
+ROACH_ID[4]  1206
+ROACH_ID[5]  1212
+ROACH_ID[6]  1210
+ROACH_ID[7]  1209
+ROACH_ID[8]  1207
+ROACH_ID[9]  1216
+ROACH_ID[10] 1213
+ROACH_ID[11] 1204
+ROACH_ID[12] 1150
+ROACH_ID[13] 1211
+ROACH_ID[14] 1319
+ROACH_ID[15] 1205
+ROACH_ID[16] 1144
+
+# ROACH_SLOT[] will be set to 0 (not known/not applicable) for any ROACH boards not identified
+# *** ROACH_SLOT[roach#] goes here:
+# format = <slot from top>
+ROACH_SLOT[1]  1
+ROACH_SLOT[2]  2
+ROACH_SLOT[3]  3
+ROACH_SLOT[4]  4
+ROACH_SLOT[5]  5
+ROACH_SLOT[6]  6
+ROACH_SLOT[7]  7
+ROACH_SLOT[8]  8
+ROACH_SLOT[9]  9
+ROACH_SLOT[10] 10
+ROACH_SLOT[11] 11
+ROACH_SLOT[12] 12
+ROACH_SLOT[13] 13
+ROACH_SLOT[14] 14
+ROACH_SLOT[15] 15
+ROACH_SLOT[16] 16
+
+# ROACH_DESI[] be set to 1 for any ROACH boards not identified
+# *** ROACH_DESI[roach#] goes here:
+ROACH_DESI[1]  2
+ROACH_DESI[2]  2
+ROACH_DESI[3]  2
+ROACH_DESI[4]  2
+ROACH_DESI[5]  2
+ROACH_DESI[6]  2
+ROACH_DESI[7]  2
+ROACH_DESI[8]  2
+ROACH_DESI[9]  2
+ROACH_DESI[10] 2
+ROACH_DESI[11] 2
+ROACH_DESI[12] 2
+ROACH_DESI[13] 2
+ROACH_DESI[14] 2
+ROACH_DESI[15] 2
+ROACH_DESI[16] 2
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any ROACH board-channels not identified
+# *** ROACH_STAT[roach#][ch#] goes here:
+
+# ROACH_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** ROACH_INR[roach#][ch#] goes here:
+# label = panel#_label_pair#
+# panel 1 is top, input 1 is upper front (towards main door)
+ROACH_INR[1][1]    1_1/2_1
+ROACH_INR[1][2]    1_1/2_2
+ROACH_INR[1][3]    1_1/2_3
+ROACH_INR[1][4]    1_1/2_4
+ROACH_INR[1][5]    1_3/4_1
+ROACH_INR[1][6]    1_3/4_2
+ROACH_INR[1][7]    1_3/4_3
+ROACH_INR[1][8]    1_3/4_4
+ROACH_INR[1][9]    1_5/6_1
+ROACH_INR[1][10]   1_5/6_2
+ROACH_INR[1][11]   1_5/6_3
+ROACH_INR[1][12]   1_5/6_4
+ROACH_INR[1][13]   1_7/8_1
+ROACH_INR[1][14]   1_7/8_2
+ROACH_INR[1][15]   1_7/8_3
+ROACH_INR[1][16]   1_7/8_4
+ROACH_INR[1][17]   1_9/10_1
+ROACH_INR[1][18]   1_9/10_2
+ROACH_INR[1][19]   1_9/10_3
+ROACH_INR[1][20]   1_9/10_4
+ROACH_INR[1][21]   1_11/12_1
+ROACH_INR[1][22]   1_11/12_2
+ROACH_INR[1][23]   1_11/12_3
+ROACH_INR[1][24]   1_11/12_4
+ROACH_INR[1][25]   1_13/14_1
+ROACH_INR[1][26]   1_13/14_2
+ROACH_INR[1][27]   1_13/14_3
+ROACH_INR[1][28]   1_13/14_4
+ROACH_INR[1][29]   1_15/16_1
+ROACH_INR[1][30]   1_15/16_2
+ROACH_INR[1][31]   1_15/16_3
+ROACH_INR[1][32]   1_15/16_4
+ROACH_INR[2][1]    1_17/18_1
+ROACH_INR[2][2]    1_17/18_2
+ROACH_INR[2][3]    1_17/18_3
+ROACH_INR[2][4]    1_17/18_4
+ROACH_INR[2][5]    1_19/20_1
+ROACH_INR[2][6]    1_19/20_2
+ROACH_INR[2][7]    1_19/20_3
+ROACH_INR[2][8]    1_19/20_4
+ROACH_INR[2][9]    1_21/22_1
+ROACH_INR[2][10]   1_21/22_2
+ROACH_INR[2][11]   1_21/22_3
+ROACH_INR[2][12]   1_21/22_4
+ROACH_INR[2][13]   1_23/24_1
+ROACH_INR[2][14]   1_23/24_2
+ROACH_INR[2][15]   1_23/24_3
+ROACH_INR[2][16]   1_23/24_4
+ROACH_INR[2][17]   1_25/26_1
+ROACH_INR[2][18]   1_25/26_2
+ROACH_INR[2][19]   1_25/26_3
+ROACH_INR[2][20]   1_25/26_4
+ROACH_INR[2][21]   1_27/28_1
+ROACH_INR[2][22]   1_27/28_2
+ROACH_INR[2][23]   1_27/28_3
+ROACH_INR[2][24]   1_27/28_4
+ROACH_INR[2][25]   1_29/30_1
+ROACH_INR[2][26]   1_29/30_2
+ROACH_INR[2][27]   1_29/30_3
+ROACH_INR[2][28]   1_29/30_4
+ROACH_INR[2][29]   1_31/32_1
+ROACH_INR[2][30]   1_31/32_2
+ROACH_INR[2][31]   1_31/32_3
+ROACH_INR[2][32]   1_31/32_4
+ROACH_INR[3][1]    1_33/34_1
+ROACH_INR[3][2]    1_33/34_2
+ROACH_INR[3][3]    1_33/34_3
+ROACH_INR[3][4]    1_33/34_4
+ROACH_INR[3][5]    1_35/36_1
+ROACH_INR[3][6]    1_35/36_2
+ROACH_INR[3][7]    1_35/36_3
+ROACH_INR[3][8]    1_35/36_4
+ROACH_INR[3][9]    1_37/38_1
+ROACH_INR[3][10]   1_37/38_2
+ROACH_INR[3][11]   1_37/38_3
+ROACH_INR[3][12]   1_37/38_4
+ROACH_INR[3][13]   1_39/40_1
+ROACH_INR[3][14]   1_39/40_2
+ROACH_INR[3][15]   1_39/40_3
+ROACH_INR[3][16]   1_39/40_4
+ROACH_INR[3][17]   1_41/42_1
+ROACH_INR[3][18]   1_41/42_2
+ROACH_INR[3][19]   1_41/42_3
+ROACH_INR[3][20]   1_41/42_4
+ROACH_INR[3][21]   1_43/44_1
+ROACH_INR[3][22]   1_43/44_2
+ROACH_INR[3][23]   1_43/44_3
+ROACH_INR[3][24]   1_43/44_4
+ROACH_INR[3][25]   1_45/46_1
+ROACH_INR[3][26]   1_45/46_2
+ROACH_INR[3][27]   1_45/46_3
+ROACH_INR[3][28]   1_45/46_4
+ROACH_INR[3][29]   1_47/48_1
+ROACH_INR[3][30]   1_47/48_2
+ROACH_INR[3][31]   1_47/48_3
+ROACH_INR[3][32]   1_47/48_4
+ROACH_INR[4][1]    1_49/50_1
+ROACH_INR[4][2]    1_49/50_2
+ROACH_INR[4][3]    1_49/50_3
+ROACH_INR[4][4]    1_49/50_4
+ROACH_INR[4][5]    1_51/52_1
+ROACH_INR[4][6]    1_51/52_2
+ROACH_INR[4][7]    1_51/52_3
+ROACH_INR[4][8]    1_51/52_4
+ROACH_INR[4][9]    1_53/54_1
+ROACH_INR[4][10]   1_53/54_2
+ROACH_INR[4][11]   1_53/54_3
+ROACH_INR[4][12]   1_53/54_4
+ROACH_INR[4][13]   1_55/56_1
+ROACH_INR[4][14]   1_55/56_2
+ROACH_INR[4][15]   1_55/56_3
+ROACH_INR[4][16]   1_55/56_4
+ROACH_INR[4][17]   1_57/58_1
+ROACH_INR[4][18]   1_57/58_2
+ROACH_INR[4][19]   1_57/58_3
+ROACH_INR[4][20]   1_57/58_4
+ROACH_INR[4][21]   1_59/60_1
+ROACH_INR[4][22]   1_59/60_2
+ROACH_INR[4][23]   1_59/60_3
+ROACH_INR[4][24]   1_59/60_4
+ROACH_INR[4][25]   1_61/62_1
+ROACH_INR[4][26]   1_61/62_2
+ROACH_INR[4][27]   1_61/62_3
+ROACH_INR[4][28]   1_61/62_4
+ROACH_INR[4][29]   1_63/64_1
+ROACH_INR[4][30]   1_63/64_2
+ROACH_INR[4][31]   1_63/64_3
+ROACH_INR[4][32]   1_63/64_4
+ROACH_INR[5][1]    2_65/66_1
+ROACH_INR[5][2]    2_65/66_2
+ROACH_INR[5][3]    2_65/66_3
+ROACH_INR[5][4]    2_65/66_4
+ROACH_INR[5][5]    2_67/68_1
+ROACH_INR[5][6]    2_67/68_2
+ROACH_INR[5][7]    2_67/68_3
+ROACH_INR[5][8]    2_67/68_4
+ROACH_INR[5][9]    2_69/70_1
+ROACH_INR[5][10]   2_69/70_2
+ROACH_INR[5][11]   2_69/70_3
+ROACH_INR[5][12]   2_69/70_4
+ROACH_INR[5][13]   2_71/72_1
+ROACH_INR[5][14]   2_71/72_2
+ROACH_INR[5][15]   2_71/72_3
+ROACH_INR[5][16]   2_71/72_4
+ROACH_INR[5][17]   2_73/74_1
+ROACH_INR[5][18]   2_73/74_2
+ROACH_INR[5][19]   2_73/74_3
+ROACH_INR[5][20]   2_73/74_4
+ROACH_INR[5][21]   2_75/76_1
+ROACH_INR[5][22]   2_75/76_2
+ROACH_INR[5][23]   2_75/76_3
+ROACH_INR[5][24]   2_75/76_4
+ROACH_INR[5][25]   2_77/78_1
+ROACH_INR[5][26]   2_77/78_2
+ROACH_INR[5][27]   2_77/78_3
+ROACH_INR[5][28]   2_77/78_4
+ROACH_INR[5][29]   2_79/80_1
+ROACH_INR[5][30]   2_79/80_2
+ROACH_INR[5][31]   2_79/80_3
+ROACH_INR[5][32]   2_79/80_4
+ROACH_INR[6][1]    2_81/82_1
+ROACH_INR[6][2]    2_81/82_2
+ROACH_INR[6][3]    2_81/82_3
+ROACH_INR[6][4]    2_81/82_4
+ROACH_INR[6][5]    2_83/84_1
+ROACH_INR[6][6]    2_83/84_2
+ROACH_INR[6][7]    2_83/84_3
+ROACH_INR[6][8]    2_83/84_4
+ROACH_INR[6][9]    2_85/86_1
+ROACH_INR[6][10]   2_85/86_2
+ROACH_INR[6][11]   2_85/86_3
+ROACH_INR[6][12]   2_85/86_4
+ROACH_INR[6][13]   2_87/88_1
+ROACH_INR[6][14]   2_87/88_2
+ROACH_INR[6][15]   2_87/88_3
+ROACH_INR[6][16]   2_87/88_4
+ROACH_INR[6][17]   2_89/90_1
+ROACH_INR[6][18]   2_89/90_2
+ROACH_INR[6][19]   2_89/90_3
+ROACH_INR[6][20]   2_89/90_4
+ROACH_INR[6][21]   2_91/92_1
+ROACH_INR[6][22]   2_91/92_2
+ROACH_INR[6][23]   2_91/92_3
+ROACH_INR[6][24]   2_91/92_4
+ROACH_INR[6][25]   2_93/94_1
+ROACH_INR[6][26]   2_93/94_2
+ROACH_INR[6][27]   2_93/94_3
+ROACH_INR[6][28]   2_93/94_4
+ROACH_INR[6][29]   2_95/96_1
+ROACH_INR[6][30]   2_95/96_2
+ROACH_INR[6][31]   2_95/96_3
+ROACH_INR[6][32]   2_95/96_4
+ROACH_INR[7][1]    2_97/98_1
+ROACH_INR[7][2]    2_97/98_2
+ROACH_INR[7][3]    2_97/98_3
+ROACH_INR[7][4]    2_97/98_4
+ROACH_INR[7][5]    2_99/100_1
+ROACH_INR[7][6]    2_99/100_2
+ROACH_INR[7][7]    2_99/100_3
+ROACH_INR[7][8]    2_99/100_4
+ROACH_INR[7][9]    2_101/102_1
+ROACH_INR[7][10]   2_101/102_2
+ROACH_INR[7][11]   2_101/102_3
+ROACH_INR[7][12]   2_101/102_4
+ROACH_INR[7][13]   2_103/104_1
+ROACH_INR[7][14]   2_103/104_2
+ROACH_INR[7][15]   2_103/104_3
+ROACH_INR[7][16]   2_103/104_4
+ROACH_INR[7][17]   2_105/106_1
+ROACH_INR[7][18]   2_105/106_2
+ROACH_INR[7][19]   2_105/106_3
+ROACH_INR[7][20]   2_105/106_4
+ROACH_INR[7][21]   2_107/108_1
+ROACH_INR[7][22]   2_107/108_2
+ROACH_INR[7][23]   2_107/108_3
+ROACH_INR[7][24]   2_107/108_4
+ROACH_INR[7][25]   2_109/110_1
+ROACH_INR[7][26]   2_109/110_2
+ROACH_INR[7][27]   2_109/110_3
+ROACH_INR[7][28]   2_109/110_4
+ROACH_INR[7][29]   2_111/112_1
+ROACH_INR[7][30]   2_111/112_2
+ROACH_INR[7][31]   2_111/112_3
+ROACH_INR[7][32]   2_111/112_4
+ROACH_INR[8][1]    2_113/114_1
+ROACH_INR[8][2]    2_113/114_2
+ROACH_INR[8][3]    2_113/114_3
+ROACH_INR[8][4]    2_113/114_4
+ROACH_INR[8][5]    2_115/116_1
+ROACH_INR[8][6]    2_115/116_2
+ROACH_INR[8][7]    2_115/116_3
+ROACH_INR[8][8]    2_115/116_4
+ROACH_INR[8][9]    2_117/118_1
+ROACH_INR[8][10]   2_117/118_2
+ROACH_INR[8][11]   2_117/118_3
+ROACH_INR[8][12]   2_117/118_4
+ROACH_INR[8][13]   2_119/120_1
+ROACH_INR[8][14]   2_119/120_2
+ROACH_INR[8][15]   2_119/120_3
+ROACH_INR[8][16]   2_119/120_4
+ROACH_INR[8][17]   2_121/122_1
+ROACH_INR[8][18]   2_121/122_2
+ROACH_INR[8][19]   2_121/122_3
+ROACH_INR[8][20]   2_121/122_4
+ROACH_INR[8][21]   2_123/124_1
+ROACH_INR[8][22]   2_123/124_2
+ROACH_INR[8][23]   2_123/124_3
+ROACH_INR[8][24]   2_123/124_4
+ROACH_INR[8][25]   2_125/126_1
+ROACH_INR[8][26]   2_125/126_2
+ROACH_INR[8][27]   2_125/126_3
+ROACH_INR[8][28]   2_125/126_4
+ROACH_INR[8][29]   2_127/128_1
+ROACH_INR[8][30]   2_127/128_2
+ROACH_INR[8][31]   2_127/128_3
+ROACH_INR[8][32]   2_127/128_4
+ROACH_INR[9][1]    3_129/130_1
+ROACH_INR[9][2]    3_129/130_2
+ROACH_INR[9][3]    3_129/130_3
+ROACH_INR[9][4]    3_129/130_4
+ROACH_INR[9][5]    3_131/132_1
+ROACH_INR[9][6]    3_131/132_2
+ROACH_INR[9][7]    3_131/132_3
+ROACH_INR[9][8]    3_131/132_4
+ROACH_INR[9][9]    3_133/134_1
+ROACH_INR[9][10]   3_133/134_2
+ROACH_INR[9][11]   3_133/134_3
+ROACH_INR[9][12]   3_133/134_4
+ROACH_INR[9][13]   3_135/136_1
+ROACH_INR[9][14]   3_135/136_2
+ROACH_INR[9][15]   3_135/136_3
+ROACH_INR[9][16]   3_135/136_4
+ROACH_INR[9][17]   3_137/138_1
+ROACH_INR[9][18]   3_137/138_2
+ROACH_INR[9][19]   3_137/138_3
+ROACH_INR[9][20]   3_137/138_4
+ROACH_INR[9][21]   3_139/140_1
+ROACH_INR[9][22]   3_139/140_2
+ROACH_INR[9][23]   3_139/140_3
+ROACH_INR[9][24]   3_139/140_4
+ROACH_INR[9][25]   3_141/142_1
+ROACH_INR[9][26]   3_141/142_2
+ROACH_INR[9][27]   3_141/142_3
+ROACH_INR[9][28]   3_141/142_4
+ROACH_INR[9][29]   3_143/144_1
+ROACH_INR[9][30]   3_143/144_2
+ROACH_INR[9][31]   3_143/144_3
+ROACH_INR[9][32]   3_143/144_4
+ROACH_INR[10][1]   3_145/146_1
+ROACH_INR[10][2]   3_145/146_2
+ROACH_INR[10][3]   3_145/146_3
+ROACH_INR[10][4]   3_145/146_4
+ROACH_INR[10][5]   3_147/148_1
+ROACH_INR[10][6]   3_147/148_2
+ROACH_INR[10][7]   3_147/148_3
+ROACH_INR[10][8]   3_147/148_4
+ROACH_INR[10][9]   3_149/150_1
+ROACH_INR[10][10]  3_149/150_2
+ROACH_INR[10][11]  3_149/150_3
+ROACH_INR[10][12]  3_149/150_4
+ROACH_INR[10][13]  3_151/152_1
+ROACH_INR[10][14]  3_151/152_2
+ROACH_INR[10][15]  3_151/152_3
+ROACH_INR[10][16]  3_151/152_4
+ROACH_INR[10][17]  3_153/154_1
+ROACH_INR[10][18]  3_153/154_2
+ROACH_INR[10][19]  3_153/154_3
+ROACH_INR[10][20]  3_153/154_4
+ROACH_INR[10][21]  3_155/156_1
+ROACH_INR[10][22]  3_155/156_2
+ROACH_INR[10][23]  3_155/156_3
+ROACH_INR[10][24]  3_155/156_4
+ROACH_INR[10][25]  3_157/158_1
+ROACH_INR[10][26]  3_157/158_2
+ROACH_INR[10][27]  3_157/158_3
+ROACH_INR[10][28]  3_157/158_4
+ROACH_INR[10][29]  3_159/160_1
+ROACH_INR[10][30]  3_159/160_2
+ROACH_INR[10][31]  3_159/160_3
+ROACH_INR[10][32]  3_159/160_4
+ROACH_INR[11][1]   3_161/162_1
+ROACH_INR[11][2]   3_161/162_2
+ROACH_INR[11][3]   3_161/162_3
+ROACH_INR[11][4]   3_161/162_4
+ROACH_INR[11][5]   3_163/164_1
+ROACH_INR[11][6]   3_163/164_2
+ROACH_INR[11][7]   3_163/164_3
+ROACH_INR[11][8]   3_163/164_4
+ROACH_INR[11][9]   3_165/166_1
+ROACH_INR[11][10]  3_165/166_2
+ROACH_INR[11][11]  3_165/166_3
+ROACH_INR[11][12]  3_165/166_4
+ROACH_INR[11][13]  3_167/168_1
+ROACH_INR[11][14]  3_167/168_2
+ROACH_INR[11][15]  3_167/168_3
+ROACH_INR[11][16]  3_167/168_4
+ROACH_INR[11][17]  3_169/170_1
+ROACH_INR[11][18]  3_169/170_2
+ROACH_INR[11][19]  3_169/170_3
+ROACH_INR[11][20]  3_169/170_4
+ROACH_INR[11][21]  3_171/172_1
+ROACH_INR[11][22]  3_171/172_2
+ROACH_INR[11][23]  3_171/172_3
+ROACH_INR[11][24]  3_171/172_4
+ROACH_INR[11][25]  3_173/174_1
+ROACH_INR[11][26]  3_173/174_2
+ROACH_INR[11][27]  3_173/174_3
+ROACH_INR[11][28]  3_173/174_4
+ROACH_INR[11][29]  3_175/176_1
+ROACH_INR[11][30]  3_175/176_2
+ROACH_INR[11][31]  3_175/176_3
+ROACH_INR[11][32]  3_175/176_4
+ROACH_INR[12][1]   3_177/178_1
+ROACH_INR[12][2]   3_177/178_2
+ROACH_INR[12][3]   3_177/178_3
+ROACH_INR[12][4]   3_177/178_4
+ROACH_INR[12][5]   3_179/180_1
+ROACH_INR[12][6]   3_179/180_2
+ROACH_INR[12][7]   3_179/180_3
+ROACH_INR[12][8]   3_179/180_4
+ROACH_INR[12][9]   3_181/182_1
+ROACH_INR[12][10]  3_181/182_2
+ROACH_INR[12][11]  3_181/182_3
+ROACH_INR[12][12]  3_181/182_4
+ROACH_INR[12][13]  3_183/184_1
+ROACH_INR[12][14]  3_183/184_2
+ROACH_INR[12][15]  3_183/184_3
+ROACH_INR[12][16]  3_183/184_4
+ROACH_INR[12][17]  3_185/186_1
+ROACH_INR[12][18]  3_185/186_2
+ROACH_INR[12][19]  3_185/186_3
+ROACH_INR[12][20]  3_185/186_4
+ROACH_INR[12][21]  3_187/188_1
+ROACH_INR[12][22]  3_187/188_2
+ROACH_INR[12][23]  3_187/188_3
+ROACH_INR[12][24]  3_187/188_4
+ROACH_INR[12][25]  3_189/190_1
+ROACH_INR[12][26]  3_189/190_2
+ROACH_INR[12][27]  3_189/190_3
+ROACH_INR[12][28]  3_189/190_4
+ROACH_INR[12][29]  3_191/192_1
+ROACH_INR[12][30]  3_191/192_2
+ROACH_INR[12][31]  3_191/192_3
+ROACH_INR[12][32]  3_191/192_4
+ROACH_INR[13][1]   4_193/194_1
+ROACH_INR[13][2]   4_193/194_2
+ROACH_INR[13][3]   4_193/194_3
+ROACH_INR[13][4]   4_193/194_4
+ROACH_INR[13][5]   4_195/196_1
+ROACH_INR[13][6]   4_195/196_2
+ROACH_INR[13][7]   4_195/196_3
+ROACH_INR[13][8]   4_195/196_4
+ROACH_INR[13][9]   4_197/198_1
+ROACH_INR[13][10]  4_197/198_2
+ROACH_INR[13][11]  4_197/198_3
+ROACH_INR[13][12]  4_197/198_4
+ROACH_INR[13][13]  4_199/200_1
+ROACH_INR[13][14]  4_199/200_2
+ROACH_INR[13][15]  4_199/200_3
+ROACH_INR[13][16]  4_199/200_4
+ROACH_INR[13][17]  4_201/202_1
+ROACH_INR[13][18]  4_201/202_2
+ROACH_INR[13][19]  4_201/202_3
+ROACH_INR[13][20]  4_201/202_4
+ROACH_INR[13][21]  4_203/204_1
+ROACH_INR[13][22]  4_203/204_2
+ROACH_INR[13][23]  4_203/204_3
+ROACH_INR[13][24]  4_203/204_4
+ROACH_INR[13][25]  4_205/206_1
+ROACH_INR[13][26]  4_205/206_2
+ROACH_INR[13][27]  4_205/206_3
+ROACH_INR[13][28]  4_205/206_4
+ROACH_INR[13][29]  4_207/208_1
+ROACH_INR[13][30]  4_207/208_2
+ROACH_INR[13][31]  4_207/208_3
+ROACH_INR[13][32]  4_207/208_4
+ROACH_INR[14][1]   4_209/210_1
+ROACH_INR[14][2]   4_209/210_2
+ROACH_INR[14][3]   4_209/210_3
+ROACH_INR[14][4]   4_209/210_4
+ROACH_INR[14][5]   4_211/212_1
+ROACH_INR[14][6]   4_211/212_2
+ROACH_INR[14][7]   4_211/212_3
+ROACH_INR[14][8]   4_211/212_4
+ROACH_INR[14][9]   4_213/214_1
+ROACH_INR[14][10]  4_213/214_2
+ROACH_INR[14][11]  4_213/214_3
+ROACH_INR[14][12]  4_213/214_4
+ROACH_INR[14][13]  4_215/216_1
+ROACH_INR[14][14]  4_215/216_2
+ROACH_INR[14][15]  4_215/216_3
+ROACH_INR[14][16]  4_215/216_4
+ROACH_INR[14][17]  4_217/218_1
+ROACH_INR[14][18]  4_217/218_2
+ROACH_INR[14][19]  4_217/218_3
+ROACH_INR[14][20]  4_217/218_4
+ROACH_INR[14][21]  4_219/220_1
+ROACH_INR[14][22]  4_219/220_2
+ROACH_INR[14][23]  4_219/220_3
+ROACH_INR[14][24]  4_219/220_4
+ROACH_INR[14][25]  4_221/222_1
+ROACH_INR[14][26]  4_221/222_2
+ROACH_INR[14][27]  4_221/222_3
+ROACH_INR[14][28]  4_221/222_4
+ROACH_INR[14][29]  4_223/224_1
+ROACH_INR[14][30]  4_223/224_2
+ROACH_INR[14][31]  4_223/224_3
+ROACH_INR[14][32]  4_223/224_4
+ROACH_INR[15][1]   4_225/226_1
+ROACH_INR[15][2]   4_225/226_2
+ROACH_INR[15][3]   4_225/226_3
+ROACH_INR[15][4]   4_225/226_4
+ROACH_INR[15][5]   4_227/228_1
+ROACH_INR[15][6]   4_227/228_2
+ROACH_INR[15][7]   4_227/228_3
+ROACH_INR[15][8]   4_227/228_4
+ROACH_INR[15][9]   4_229/230_1
+ROACH_INR[15][10]  4_229/230_2
+ROACH_INR[15][11]  4_229/230_3
+ROACH_INR[15][12]  4_229/230_4
+ROACH_INR[15][13]  4_231/232_1
+ROACH_INR[15][14]  4_231/232_2
+ROACH_INR[15][15]  4_231/232_3
+ROACH_INR[15][16]  4_231/232_4
+ROACH_INR[15][17]  4_233/234_1
+ROACH_INR[15][18]  4_233/234_2
+ROACH_INR[15][19]  4_233/234_3
+ROACH_INR[15][20]  4_233/234_4
+ROACH_INR[15][21]  4_235/236_1
+ROACH_INR[15][22]  4_235/236_2
+ROACH_INR[15][23]  4_235/236_3
+ROACH_INR[15][24]  4_235/236_4
+ROACH_INR[15][25]  4_237/238_1
+ROACH_INR[15][26]  4_237/238_2
+ROACH_INR[15][27]  4_237/238_3
+ROACH_INR[15][28]  4_237/238_4
+ROACH_INR[15][29]  4_239/240_1
+ROACH_INR[15][30]  4_239/240_2
+ROACH_INR[15][31]  4_239/240_3
+ROACH_INR[15][32]  4_239/240_4
+ROACH_INR[16][1]   4_241/242_1
+ROACH_INR[16][2]   4_241/242_2
+ROACH_INR[16][3]   4_241/242_3
+ROACH_INR[16][4]   4_241/242_4
+ROACH_INR[16][5]   4_243/244_1
+ROACH_INR[16][6]   4_243/244_2
+ROACH_INR[16][7]   4_243/244_3
+ROACH_INR[16][8]   4_243/244_4
+ROACH_INR[16][9]   4_245/246_1
+ROACH_INR[16][10]  4_245/246_2
+ROACH_INR[16][11]  4_245/246_3
+ROACH_INR[16][12]  4_245/246_4
+ROACH_INR[16][13]  4_247/248_1
+ROACH_INR[16][14]  4_247/248_2
+ROACH_INR[16][15]  4_247/248_3
+ROACH_INR[16][16]  4_247/248_4
+ROACH_INR[16][17]  4_249/250_1
+ROACH_INR[16][18]  4_249/250_2
+ROACH_INR[16][19]  4_249/250_3
+ROACH_INR[16][20]  4_249/250_4
+ROACH_INR[16][21]  4_251/252_1
+ROACH_INR[16][22]  4_251/252_2
+ROACH_INR[16][23]  4_251/252_3
+ROACH_INR[16][24]  4_251/252_4
+ROACH_INR[16][25]  4_253/254_1
+ROACH_INR[16][26]  4_253/254_2
+ROACH_INR[16][27]  4_253/254_3
+ROACH_INR[16][28]  4_253/254_4
+ROACH_INR[16][29]  4_255/256_1
+ROACH_INR[16][30]  4_255/256_2
+ROACH_INR[16][31]  4_255/256_3
+ROACH_INR[16][32]  4_255/256_4
+
+# ROACH_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** ROACH_INC[roach#][ch#] goes here:
+# label = cable#_pair#
+# cable 1 is leftmost when looking at the front of the roach board
+ROACH_INC[1][1]    5_1
+ROACH_INC[1][2]    5_2
+ROACH_INC[1][3]    5_3
+ROACH_INC[1][4]    5_4
+ROACH_INC[1][5]    6_1
+ROACH_INC[1][6]    6_2
+ROACH_INC[1][7]    6_3
+ROACH_INC[1][8]    6_4
+ROACH_INC[1][9]    7_1
+ROACH_INC[1][10]   7_2
+ROACH_INC[1][11]   7_3
+ROACH_INC[1][12]   7_4
+ROACH_INC[1][13]   8_1
+ROACH_INC[1][14]   8_2
+ROACH_INC[1][15]   8_3
+ROACH_INC[1][16]   8_4
+ROACH_INC[1][17]   1_1
+ROACH_INC[1][18]   1_2
+ROACH_INC[1][19]   1_3
+ROACH_INC[1][20]   1_4
+ROACH_INC[1][21]   2_1
+ROACH_INC[1][22]   2_2
+ROACH_INC[1][23]   2_3
+ROACH_INC[1][24]   2_4
+ROACH_INC[1][25]   3_1
+ROACH_INC[1][26]   3_2
+ROACH_INC[1][27]   3_3
+ROACH_INC[1][28]   3_4
+ROACH_INC[1][29]   4_1
+ROACH_INC[1][30]   4_2
+ROACH_INC[1][31]   4_3
+ROACH_INC[1][32]   4_4
+ROACH_INC[2][1]    5_1
+ROACH_INC[2][2]    5_2
+ROACH_INC[2][3]    5_3
+ROACH_INC[2][4]    5_4
+ROACH_INC[2][5]    6_1
+ROACH_INC[2][6]    6_2
+ROACH_INC[2][7]    6_3
+ROACH_INC[2][8]    6_4
+ROACH_INC[2][9]    7_1
+ROACH_INC[2][10]   7_2
+ROACH_INC[2][11]   7_3
+ROACH_INC[2][12]   7_4
+ROACH_INC[2][13]   8_1
+ROACH_INC[2][14]   8_2
+ROACH_INC[2][15]   8_3
+ROACH_INC[2][16]   8_4
+ROACH_INC[2][17]   1_1
+ROACH_INC[2][18]   1_2
+ROACH_INC[2][19]   1_3
+ROACH_INC[2][20]   1_4
+ROACH_INC[2][21]   2_1
+ROACH_INC[2][22]   2_2
+ROACH_INC[2][23]   2_3
+ROACH_INC[2][24]   2_4
+ROACH_INC[2][25]   3_1
+ROACH_INC[2][26]   3_2
+ROACH_INC[2][27]   3_3
+ROACH_INC[2][28]   3_4
+ROACH_INC[2][29]   4_1
+ROACH_INC[2][30]   4_2
+ROACH_INC[2][31]   4_3
+ROACH_INC[2][32]   4_4
+ROACH_INC[3][1]    5_1
+ROACH_INC[3][2]    5_2
+ROACH_INC[3][3]    5_3
+ROACH_INC[3][4]    5_4
+ROACH_INC[3][5]    6_1
+ROACH_INC[3][6]    6_2
+ROACH_INC[3][7]    6_3
+ROACH_INC[3][8]    6_4
+ROACH_INC[3][9]    7_1
+ROACH_INC[3][10]   7_2
+ROACH_INC[3][11]   7_3
+ROACH_INC[3][12]   7_4
+ROACH_INC[3][13]   8_1
+ROACH_INC[3][14]   8_2
+ROACH_INC[3][15]   8_3
+ROACH_INC[3][16]   8_4
+ROACH_INC[3][17]   1_1
+ROACH_INC[3][18]   1_2
+ROACH_INC[3][19]   1_3
+ROACH_INC[3][20]   1_4
+ROACH_INC[3][21]   2_1
+ROACH_INC[3][22]   2_2
+ROACH_INC[3][23]   2_3
+ROACH_INC[3][24]   2_4
+ROACH_INC[3][25]   3_1
+ROACH_INC[3][26]   3_2
+ROACH_INC[3][27]   3_3
+ROACH_INC[3][28]   3_4
+ROACH_INC[3][29]   4_1
+ROACH_INC[3][30]   4_2
+ROACH_INC[3][31]   4_3
+ROACH_INC[3][32]   4_4
+ROACH_INC[4][1]    5_1
+ROACH_INC[4][2]    5_2
+ROACH_INC[4][3]    5_3
+ROACH_INC[4][4]    5_4
+ROACH_INC[4][5]    6_1
+ROACH_INC[4][6]    6_2
+ROACH_INC[4][7]    6_3
+ROACH_INC[4][8]    6_4
+ROACH_INC[4][9]    7_1
+ROACH_INC[4][10]   7_2
+ROACH_INC[4][11]   7_3
+ROACH_INC[4][12]   7_4
+ROACH_INC[4][13]   8_1
+ROACH_INC[4][14]   8_2
+ROACH_INC[4][15]   8_3
+ROACH_INC[4][16]   8_4
+ROACH_INC[4][17]   1_1
+ROACH_INC[4][18]   1_2
+ROACH_INC[4][19]   1_3
+ROACH_INC[4][20]   1_4
+ROACH_INC[4][21]   2_1
+ROACH_INC[4][22]   2_2
+ROACH_INC[4][23]   2_3
+ROACH_INC[4][24]   2_4
+ROACH_INC[4][25]   3_1
+ROACH_INC[4][26]   3_2
+ROACH_INC[4][27]   3_3
+ROACH_INC[4][28]   3_4
+ROACH_INC[4][29]   4_1
+ROACH_INC[4][30]   4_2
+ROACH_INC[4][31]   4_3
+ROACH_INC[4][32]   4_4
+ROACH_INC[5][1]    5_1
+ROACH_INC[5][2]    5_2
+ROACH_INC[5][3]    5_3
+ROACH_INC[5][4]    5_4
+ROACH_INC[5][5]    6_1
+ROACH_INC[5][6]    6_2
+ROACH_INC[5][7]    6_3
+ROACH_INC[5][8]    6_4
+ROACH_INC[5][9]    7_1
+ROACH_INC[5][10]   7_2
+ROACH_INC[5][11]   7_3
+ROACH_INC[5][12]   7_4
+ROACH_INC[5][13]   8_1
+ROACH_INC[5][14]   8_2
+ROACH_INC[5][15]   8_3
+ROACH_INC[5][16]   8_4
+ROACH_INC[5][17]   1_1
+ROACH_INC[5][18]   1_2
+ROACH_INC[5][19]   1_3
+ROACH_INC[5][20]   1_4
+ROACH_INC[5][21]   2_1
+ROACH_INC[5][22]   2_2
+ROACH_INC[5][23]   2_3
+ROACH_INC[5][24]   2_4
+ROACH_INC[5][25]   3_1
+ROACH_INC[5][26]   3_2
+ROACH_INC[5][27]   3_3
+ROACH_INC[5][28]   3_4
+ROACH_INC[5][29]   4_1
+ROACH_INC[5][30]   4_2
+ROACH_INC[5][31]   4_3
+ROACH_INC[5][32]   4_4
+ROACH_INC[6][1]    5_1
+ROACH_INC[6][2]    5_2
+ROACH_INC[6][3]    5_3
+ROACH_INC[6][4]    5_4
+ROACH_INC[6][5]    6_1
+ROACH_INC[6][6]    6_2
+ROACH_INC[6][7]    6_3
+ROACH_INC[6][8]    6_4
+ROACH_INC[6][9]    7_1
+ROACH_INC[6][10]   7_2
+ROACH_INC[6][11]   7_3
+ROACH_INC[6][12]   7_4
+ROACH_INC[6][13]   8_1
+ROACH_INC[6][14]   8_2
+ROACH_INC[6][15]   8_3
+ROACH_INC[6][16]   8_4
+ROACH_INC[6][17]   1_1
+ROACH_INC[6][18]   1_2
+ROACH_INC[6][19]   1_3
+ROACH_INC[6][20]   1_4
+ROACH_INC[6][21]   2_1
+ROACH_INC[6][22]   2_2
+ROACH_INC[6][23]   2_3
+ROACH_INC[6][24]   2_4
+ROACH_INC[6][25]   3_1
+ROACH_INC[6][26]   3_2
+ROACH_INC[6][27]   3_3
+ROACH_INC[6][28]   3_4
+ROACH_INC[6][29]   4_1
+ROACH_INC[6][30]   4_2
+ROACH_INC[6][31]   4_3
+ROACH_INC[6][32]   4_4
+ROACH_INC[7][1]    5_1
+ROACH_INC[7][2]    5_2
+ROACH_INC[7][3]    5_3
+ROACH_INC[7][4]    5_4
+ROACH_INC[7][5]    6_1
+ROACH_INC[7][6]    6_2
+ROACH_INC[7][7]    6_3
+ROACH_INC[7][8]    6_4
+ROACH_INC[7][9]    7_1
+ROACH_INC[7][10]   7_2
+ROACH_INC[7][11]   7_3
+ROACH_INC[7][12]   7_4
+ROACH_INC[7][13]   8_1
+ROACH_INC[7][14]   8_2
+ROACH_INC[7][15]   8_3
+ROACH_INC[7][16]   8_4
+ROACH_INC[7][17]   1_1
+ROACH_INC[7][18]   1_2
+ROACH_INC[7][19]   1_3
+ROACH_INC[7][20]   1_4
+ROACH_INC[7][21]   2_1
+ROACH_INC[7][22]   2_2
+ROACH_INC[7][23]   2_3
+ROACH_INC[7][24]   2_4
+ROACH_INC[7][25]   3_1
+ROACH_INC[7][26]   3_2
+ROACH_INC[7][27]   3_3
+ROACH_INC[7][28]   3_4
+ROACH_INC[7][29]   4_1
+ROACH_INC[7][30]   4_2
+ROACH_INC[7][31]   4_3
+ROACH_INC[7][32]   4_4
+ROACH_INC[8][1]    5_1
+ROACH_INC[8][2]    5_2
+ROACH_INC[8][3]    5_3
+ROACH_INC[8][4]    5_4
+ROACH_INC[8][5]    6_1
+ROACH_INC[8][6]    6_2
+ROACH_INC[8][7]    6_3
+ROACH_INC[8][8]    6_4
+ROACH_INC[8][9]    7_1
+ROACH_INC[8][10]   7_2
+ROACH_INC[8][11]   7_3
+ROACH_INC[8][12]   7_4
+ROACH_INC[8][13]   8_1
+ROACH_INC[8][14]   8_2
+ROACH_INC[8][15]   8_3
+ROACH_INC[8][16]   8_4
+ROACH_INC[8][17]   1_1
+ROACH_INC[8][18]   1_2
+ROACH_INC[8][19]   1_3
+ROACH_INC[8][20]   1_4
+ROACH_INC[8][21]   2_1
+ROACH_INC[8][22]   2_2
+ROACH_INC[8][23]   2_3
+ROACH_INC[8][24]   2_4
+ROACH_INC[8][25]   3_1
+ROACH_INC[8][26]   3_2
+ROACH_INC[8][27]   3_3
+ROACH_INC[8][28]   3_4
+ROACH_INC[8][29]   4_1
+ROACH_INC[8][30]   4_2
+ROACH_INC[8][31]   4_3
+ROACH_INC[8][32]   4_4
+ROACH_INC[9][1]    5_1
+ROACH_INC[9][2]    5_2
+ROACH_INC[9][3]    5_3
+ROACH_INC[9][4]    5_4
+ROACH_INC[9][5]    6_1
+ROACH_INC[9][6]    6_2
+ROACH_INC[9][7]    6_3
+ROACH_INC[9][8]    6_4
+ROACH_INC[9][9]    7_1
+ROACH_INC[9][10]   7_2
+ROACH_INC[9][11]   7_3
+ROACH_INC[9][12]   7_4
+ROACH_INC[9][13]   8_1
+ROACH_INC[9][14]   8_2
+ROACH_INC[9][15]   8_3
+ROACH_INC[9][16]   8_4
+ROACH_INC[9][17]   1_1
+ROACH_INC[9][18]   1_2
+ROACH_INC[9][19]   1_3
+ROACH_INC[9][20]   1_4
+ROACH_INC[9][21]   2_1
+ROACH_INC[9][22]   2_2
+ROACH_INC[9][23]   2_3
+ROACH_INC[9][24]   2_4
+ROACH_INC[9][25]   3_1
+ROACH_INC[9][26]   3_2
+ROACH_INC[9][27]   3_3
+ROACH_INC[9][28]   3_4
+ROACH_INC[9][29]   4_1
+ROACH_INC[9][30]   4_2
+ROACH_INC[9][31]   4_3
+ROACH_INC[9][32]   4_4
+ROACH_INC[10][1]   5_1
+ROACH_INC[10][2]   5_2
+ROACH_INC[10][3]   5_3
+ROACH_INC[10][4]   5_4
+ROACH_INC[10][5]   6_1
+ROACH_INC[10][6]   6_2
+ROACH_INC[10][7]   6_3
+ROACH_INC[10][8]   6_4
+ROACH_INC[10][9]   7_1
+ROACH_INC[10][10]  7_2
+ROACH_INC[10][11]  7_3
+ROACH_INC[10][12]  7_4
+ROACH_INC[10][13]  8_1
+ROACH_INC[10][14]  8_2
+ROACH_INC[10][15]  8_3
+ROACH_INC[10][16]  8_4
+ROACH_INC[10][17]  1_1
+ROACH_INC[10][18]  1_2
+ROACH_INC[10][19]  1_3
+ROACH_INC[10][20]  1_4
+ROACH_INC[10][21]  2_1
+ROACH_INC[10][22]  2_2
+ROACH_INC[10][23]  2_3
+ROACH_INC[10][24]  2_4
+ROACH_INC[10][25]  3_1
+ROACH_INC[10][26]  3_2
+ROACH_INC[10][27]  3_3
+ROACH_INC[10][28]  3_4
+ROACH_INC[10][29]  4_1
+ROACH_INC[10][30]  4_2
+ROACH_INC[10][31]  4_3
+ROACH_INC[10][32]  4_4
+ROACH_INC[11][1]   5_1
+ROACH_INC[11][2]   5_2
+ROACH_INC[11][3]   5_3
+ROACH_INC[11][4]   5_4
+ROACH_INC[11][5]   6_1
+ROACH_INC[11][6]   6_2
+ROACH_INC[11][7]   6_3
+ROACH_INC[11][8]   6_4
+ROACH_INC[11][9]   7_1
+ROACH_INC[11][10]  7_2
+ROACH_INC[11][11]  7_3
+ROACH_INC[11][12]  7_4
+ROACH_INC[11][13]  8_1
+ROACH_INC[11][14]  8_2
+ROACH_INC[11][15]  8_3
+ROACH_INC[11][16]  8_4
+ROACH_INC[11][17]  1_1
+ROACH_INC[11][18]  1_2
+ROACH_INC[11][19]  1_3
+ROACH_INC[11][20]  1_4
+ROACH_INC[11][21]  2_1
+ROACH_INC[11][22]  2_2
+ROACH_INC[11][23]  2_3
+ROACH_INC[11][24]  2_4
+ROACH_INC[11][25]  3_1
+ROACH_INC[11][26]  3_2
+ROACH_INC[11][27]  3_3
+ROACH_INC[11][28]  3_4
+ROACH_INC[11][29]  4_1
+ROACH_INC[11][30]  4_2
+ROACH_INC[11][31]  4_3
+ROACH_INC[11][32]  4_4
+ROACH_INC[12][1]   5_1
+ROACH_INC[12][2]   5_2
+ROACH_INC[12][3]   5_3
+ROACH_INC[12][4]   5_4
+ROACH_INC[12][5]   6_1
+ROACH_INC[12][6]   6_2
+ROACH_INC[12][7]   6_3
+ROACH_INC[12][8]   6_4
+ROACH_INC[12][9]   7_1
+ROACH_INC[12][10]  7_2
+ROACH_INC[12][11]  7_3
+ROACH_INC[12][12]  7_4
+ROACH_INC[12][13]  8_1
+ROACH_INC[12][14]  8_2
+ROACH_INC[12][15]  8_3
+ROACH_INC[12][16]  8_4
+ROACH_INC[12][17]  1_1
+ROACH_INC[12][18]  1_2
+ROACH_INC[12][19]  1_3
+ROACH_INC[12][20]  1_4
+ROACH_INC[12][21]  2_1
+ROACH_INC[12][22]  2_2
+ROACH_INC[12][23]  2_3
+ROACH_INC[12][24]  2_4
+ROACH_INC[12][25]  3_1
+ROACH_INC[12][26]  3_2
+ROACH_INC[12][27]  3_3
+ROACH_INC[12][28]  3_4
+ROACH_INC[12][29]  4_1
+ROACH_INC[12][30]  4_2
+ROACH_INC[12][31]  4_3
+ROACH_INC[12][32]  4_4
+ROACH_INC[13][1]   5_1
+ROACH_INC[13][2]   5_2
+ROACH_INC[13][3]   5_3
+ROACH_INC[13][4]   5_4
+ROACH_INC[13][5]   6_1
+ROACH_INC[13][6]   6_2
+ROACH_INC[13][7]   6_3
+ROACH_INC[13][8]   6_4
+ROACH_INC[13][9]   7_1
+ROACH_INC[13][10]  7_2
+ROACH_INC[13][11]  7_3
+ROACH_INC[13][12]  7_4
+ROACH_INC[13][13]  8_1
+ROACH_INC[13][14]  8_2
+ROACH_INC[13][15]  8_3
+ROACH_INC[13][16]  8_4
+ROACH_INC[13][17]  1_1
+ROACH_INC[13][18]  1_2
+ROACH_INC[13][19]  1_3
+ROACH_INC[13][20]  1_4
+ROACH_INC[13][21]  2_1
+ROACH_INC[13][22]  2_2
+ROACH_INC[13][23]  2_3
+ROACH_INC[13][24]  2_4
+ROACH_INC[13][25]  3_1
+ROACH_INC[13][26]  3_2
+ROACH_INC[13][27]  3_3
+ROACH_INC[13][28]  3_4
+ROACH_INC[13][29]  4_1
+ROACH_INC[13][30]  4_2
+ROACH_INC[13][31]  4_3
+ROACH_INC[13][32]  4_4
+ROACH_INC[14][1]   5_1
+ROACH_INC[14][2]   5_2
+ROACH_INC[14][3]   5_3
+ROACH_INC[14][4]   5_4
+ROACH_INC[14][5]   6_1
+ROACH_INC[14][6]   6_2
+ROACH_INC[14][7]   6_3
+ROACH_INC[14][8]   6_4
+ROACH_INC[14][9]   7_1
+ROACH_INC[14][10]  7_2
+ROACH_INC[14][11]  7_3
+ROACH_INC[14][12]  7_4
+ROACH_INC[14][13]  8_1
+ROACH_INC[14][14]  8_2
+ROACH_INC[14][15]  8_3
+ROACH_INC[14][16]  8_4
+ROACH_INC[14][17]  1_1
+ROACH_INC[14][18]  1_2
+ROACH_INC[14][19]  1_3
+ROACH_INC[14][20]  1_4
+ROACH_INC[14][21]  2_1
+ROACH_INC[14][22]  2_2
+ROACH_INC[14][23]  2_3
+ROACH_INC[14][24]  2_4
+ROACH_INC[14][25]  3_1
+ROACH_INC[14][26]  3_2
+ROACH_INC[14][27]  3_3
+ROACH_INC[14][28]  3_4
+ROACH_INC[14][29]  4_1
+ROACH_INC[14][30]  4_2
+ROACH_INC[14][31]  4_3
+ROACH_INC[14][32]  4_4
+ROACH_INC[15][1]   5_1
+ROACH_INC[15][2]   5_2
+ROACH_INC[15][3]   5_3
+ROACH_INC[15][4]   5_4
+ROACH_INC[15][5]   6_1
+ROACH_INC[15][6]   6_2
+ROACH_INC[15][7]   6_3
+ROACH_INC[15][8]   6_4
+ROACH_INC[15][9]   7_1
+ROACH_INC[15][10]  7_2
+ROACH_INC[15][11]  7_3
+ROACH_INC[15][12]  7_4
+ROACH_INC[15][13]  8_1
+ROACH_INC[15][14]  8_2
+ROACH_INC[15][15]  8_3
+ROACH_INC[15][16]  8_4
+ROACH_INC[15][17]  1_1
+ROACH_INC[15][18]  1_2
+ROACH_INC[15][19]  1_3
+ROACH_INC[15][20]  1_4
+ROACH_INC[15][21]  2_1
+ROACH_INC[15][22]  2_2
+ROACH_INC[15][23]  2_3
+ROACH_INC[15][24]  2_4
+ROACH_INC[15][25]  3_1
+ROACH_INC[15][26]  3_2
+ROACH_INC[15][27]  3_3
+ROACH_INC[15][28]  3_4
+ROACH_INC[15][29]  4_1
+ROACH_INC[15][30]  4_2
+ROACH_INC[15][31]  4_3
+ROACH_INC[15][32]  4_4
+ROACH_INC[16][1]   5_1
+ROACH_INC[16][2]   5_2
+ROACH_INC[16][3]   5_3
+ROACH_INC[16][4]   5_4
+ROACH_INC[16][5]   6_1
+ROACH_INC[16][6]   6_2
+ROACH_INC[16][7]   6_3
+ROACH_INC[16][8]   6_4
+ROACH_INC[16][9]   7_1
+ROACH_INC[16][10]  7_2
+ROACH_INC[16][11]  7_3
+ROACH_INC[16][12]  7_4
+ROACH_INC[16][13]  8_1
+ROACH_INC[16][14]  8_2
+ROACH_INC[16][15]  8_3
+ROACH_INC[16][16]  8_4
+ROACH_INC[16][17]  1_1
+ROACH_INC[16][18]  1_2
+ROACH_INC[16][19]  1_3
+ROACH_INC[16][20]  1_4
+ROACH_INC[16][21]  2_1
+ROACH_INC[16][22]  2_2
+ROACH_INC[16][23]  2_3
+ROACH_INC[16][24]  2_4
+ROACH_INC[16][25]  3_1
+ROACH_INC[16][26]  3_2
+ROACH_INC[16][27]  3_3
+ROACH_INC[16][28]  3_4
+ROACH_INC[16][29]  4_1
+ROACH_INC[16][30]  4_2
+ROACH_INC[16][31]  4_3
+ROACH_INC[16][32]  4_4
+
+# ------------------------------------------------
+# --- Antenna # -> ROACH board channel mapping ---
+# ------------------------------------------------
+# Format (example) "ROACH_ANT[2][3] 4" means antenna 4 is connected to DP1 Board 2, channel 3.
+# ROACH_ANT[1][1] will be set to 1, ROACH_ANT[1][2] will be set to 2, etc., if not indicated otherwise
+# ROACH_ANT[][] will be set to 0 (no connection, or only connected at output) for any boards/channels not identified
+# *** ROACH_ANT[roach#][ch#] goes here:
+ROACH_ANT[1][1]    1
+ROACH_ANT[1][2]    2
+ROACH_ANT[1][3]    3
+ROACH_ANT[1][4]    4
+ROACH_ANT[1][5]    5
+ROACH_ANT[1][6]    6
+ROACH_ANT[1][7]    7
+ROACH_ANT[1][8]    8
+ROACH_ANT[1][9]    9
+ROACH_ANT[1][10]   10
+ROACH_ANT[1][11]   11
+ROACH_ANT[1][12]   12
+ROACH_ANT[1][13]   13
+ROACH_ANT[1][14]   14
+ROACH_ANT[1][15]   15
+ROACH_ANT[1][16]   16
+ROACH_ANT[1][17]   17
+ROACH_ANT[1][18]   18
+ROACH_ANT[1][19]   19
+ROACH_ANT[1][20]   20
+ROACH_ANT[1][21]   21
+ROACH_ANT[1][22]   22
+ROACH_ANT[1][23]   23
+ROACH_ANT[1][24]   24
+ROACH_ANT[1][25]   25
+ROACH_ANT[1][26]   26
+ROACH_ANT[1][27]   27
+ROACH_ANT[1][28]   28
+ROACH_ANT[1][29]   29
+ROACH_ANT[1][30]   30
+ROACH_ANT[1][31]   31
+ROACH_ANT[1][32]   32
+ROACH_ANT[2][1]    33
+ROACH_ANT[2][2]    34
+ROACH_ANT[2][3]    35
+ROACH_ANT[2][4]    36
+ROACH_ANT[2][5]    37
+ROACH_ANT[2][6]    38
+ROACH_ANT[2][7]    39
+ROACH_ANT[2][8]    40
+ROACH_ANT[2][9]    41
+ROACH_ANT[2][10]   42
+ROACH_ANT[2][11]   43
+ROACH_ANT[2][12]   44
+ROACH_ANT[2][13]   45
+ROACH_ANT[2][14]   46
+ROACH_ANT[2][15]   47
+ROACH_ANT[2][16]   48
+ROACH_ANT[2][17]   49
+ROACH_ANT[2][18]   50
+ROACH_ANT[2][19]   51
+ROACH_ANT[2][20]   52
+ROACH_ANT[2][21]   53
+ROACH_ANT[2][22]   54
+ROACH_ANT[2][23]   55
+ROACH_ANT[2][24]   56
+ROACH_ANT[2][25]   57
+ROACH_ANT[2][26]   58
+ROACH_ANT[2][27]   59
+ROACH_ANT[2][28]   60
+ROACH_ANT[2][29]   61
+ROACH_ANT[2][30]   62
+ROACH_ANT[2][31]   63
+ROACH_ANT[2][32]   64
+ROACH_ANT[3][1]    65
+ROACH_ANT[3][2]    66
+ROACH_ANT[3][3]    67
+ROACH_ANT[3][4]    68
+ROACH_ANT[3][5]    69
+ROACH_ANT[3][6]    70
+ROACH_ANT[3][7]    71
+ROACH_ANT[3][8]    72
+ROACH_ANT[3][9]    73
+ROACH_ANT[3][10]   74
+ROACH_ANT[3][11]   75
+ROACH_ANT[3][12]   76
+ROACH_ANT[3][13]   77
+ROACH_ANT[3][14]   78
+ROACH_ANT[3][15]   79
+ROACH_ANT[3][16]   80
+ROACH_ANT[3][17]   81
+ROACH_ANT[3][18]   82
+ROACH_ANT[3][19]   83
+ROACH_ANT[3][20]   84
+ROACH_ANT[3][21]   85
+ROACH_ANT[3][22]   86
+ROACH_ANT[3][23]   87
+ROACH_ANT[3][24]   88
+ROACH_ANT[3][25]   89
+ROACH_ANT[3][26]   90
+ROACH_ANT[3][27]   91
+ROACH_ANT[3][28]   92
+ROACH_ANT[3][29]   93
+ROACH_ANT[3][30]   94
+ROACH_ANT[3][31]   95
+ROACH_ANT[3][32]   96
+ROACH_ANT[4][1]    97
+ROACH_ANT[4][2]    98
+ROACH_ANT[4][3]    99
+ROACH_ANT[4][4]    100
+ROACH_ANT[4][5]    101
+ROACH_ANT[4][6]    102
+ROACH_ANT[4][7]    103
+ROACH_ANT[4][8]    104
+ROACH_ANT[4][9]    105
+ROACH_ANT[4][10]   106
+ROACH_ANT[4][11]   107
+ROACH_ANT[4][12]   108
+ROACH_ANT[4][13]   109
+ROACH_ANT[4][14]   110
+ROACH_ANT[4][15]   111
+ROACH_ANT[4][16]   112
+ROACH_ANT[4][17]   113
+ROACH_ANT[4][18]   114
+ROACH_ANT[4][19]   115
+ROACH_ANT[4][20]   116
+ROACH_ANT[4][21]   117
+ROACH_ANT[4][22]   118
+ROACH_ANT[4][23]   119
+ROACH_ANT[4][24]   120
+ROACH_ANT[4][25]   121
+ROACH_ANT[4][26]   122
+ROACH_ANT[4][27]   123
+ROACH_ANT[4][28]   124
+ROACH_ANT[4][29]   125
+ROACH_ANT[4][30]   126
+ROACH_ANT[4][31]   127
+ROACH_ANT[4][32]   128
+ROACH_ANT[5][1]    129
+ROACH_ANT[5][2]    130
+ROACH_ANT[5][3]    131
+ROACH_ANT[5][4]    132
+ROACH_ANT[5][5]    133
+ROACH_ANT[5][6]    134
+ROACH_ANT[5][7]    135
+ROACH_ANT[5][8]    136
+ROACH_ANT[5][9]    137
+ROACH_ANT[5][10]   138
+ROACH_ANT[5][11]   139
+ROACH_ANT[5][12]   140
+ROACH_ANT[5][13]   141
+ROACH_ANT[5][14]   142
+ROACH_ANT[5][15]   143
+ROACH_ANT[5][16]   144
+ROACH_ANT[5][17]   145
+ROACH_ANT[5][18]   146
+ROACH_ANT[5][19]   147
+ROACH_ANT[5][20]   148
+ROACH_ANT[5][21]   149
+ROACH_ANT[5][22]   150
+ROACH_ANT[5][23]   151
+ROACH_ANT[5][24]   152
+ROACH_ANT[5][25]   153
+ROACH_ANT[5][26]   154
+ROACH_ANT[5][27]   155
+ROACH_ANT[5][28]   156
+ROACH_ANT[5][29]   157
+ROACH_ANT[5][30]   158
+ROACH_ANT[5][31]   159
+ROACH_ANT[5][32]   160
+ROACH_ANT[6][1]    161
+ROACH_ANT[6][2]    162
+ROACH_ANT[6][3]    163
+ROACH_ANT[6][4]    164
+ROACH_ANT[6][5]    165
+ROACH_ANT[6][6]    166
+ROACH_ANT[6][7]    167
+ROACH_ANT[6][8]    168
+ROACH_ANT[6][9]    169
+ROACH_ANT[6][10]   170
+ROACH_ANT[6][11]   171
+ROACH_ANT[6][12]   172
+ROACH_ANT[6][13]   173
+ROACH_ANT[6][14]   174
+ROACH_ANT[6][15]   175
+ROACH_ANT[6][16]   176
+ROACH_ANT[6][17]   177
+ROACH_ANT[6][18]   178
+ROACH_ANT[6][19]   179
+ROACH_ANT[6][20]   180
+ROACH_ANT[6][21]   181
+ROACH_ANT[6][22]   182
+ROACH_ANT[6][23]   183
+ROACH_ANT[6][24]   184
+ROACH_ANT[6][25]   185
+ROACH_ANT[6][26]   186
+ROACH_ANT[6][27]   187
+ROACH_ANT[6][28]   188
+ROACH_ANT[6][29]   189
+ROACH_ANT[6][30]   190
+ROACH_ANT[6][31]   191
+ROACH_ANT[6][32]   192
+ROACH_ANT[7][1]    193
+ROACH_ANT[7][2]    194
+ROACH_ANT[7][3]    195
+ROACH_ANT[7][4]    196
+ROACH_ANT[7][5]    197
+ROACH_ANT[7][6]    198
+ROACH_ANT[7][7]    199
+ROACH_ANT[7][8]    200
+ROACH_ANT[7][9]    201
+ROACH_ANT[7][10]   202
+ROACH_ANT[7][11]   203
+ROACH_ANT[7][12]   204
+ROACH_ANT[7][13]   205
+ROACH_ANT[7][14]   206
+ROACH_ANT[7][15]   207
+ROACH_ANT[7][16]   208
+ROACH_ANT[7][17]   209
+ROACH_ANT[7][18]   210
+ROACH_ANT[7][19]   211
+ROACH_ANT[7][20]   212
+ROACH_ANT[7][21]   213
+ROACH_ANT[7][22]   214
+ROACH_ANT[7][23]   215
+ROACH_ANT[7][24]   216
+ROACH_ANT[7][25]   217
+ROACH_ANT[7][26]   218
+ROACH_ANT[7][27]   219
+ROACH_ANT[7][28]   220
+ROACH_ANT[7][29]   221
+ROACH_ANT[7][30]   222
+ROACH_ANT[7][31]   223
+ROACH_ANT[7][32]   224
+ROACH_ANT[8][1]    225
+ROACH_ANT[8][2]    226
+ROACH_ANT[8][3]    227
+ROACH_ANT[8][4]    228
+ROACH_ANT[8][5]    229
+ROACH_ANT[8][6]    230
+ROACH_ANT[8][7]    231
+ROACH_ANT[8][8]    232
+ROACH_ANT[8][9]    233
+ROACH_ANT[8][10]   234
+ROACH_ANT[8][11]   235
+ROACH_ANT[8][12]   236
+ROACH_ANT[8][13]   237
+ROACH_ANT[8][14]   238
+ROACH_ANT[8][15]   239
+ROACH_ANT[8][16]   240
+ROACH_ANT[8][17]   241
+ROACH_ANT[8][18]   242
+ROACH_ANT[8][19]   243
+ROACH_ANT[8][20]   244
+ROACH_ANT[8][21]   245
+ROACH_ANT[8][22]   246
+ROACH_ANT[8][23]   247
+ROACH_ANT[8][24]   248
+ROACH_ANT[8][25]   249
+ROACH_ANT[8][26]   250
+ROACH_ANT[8][27]   251
+ROACH_ANT[8][28]   252
+ROACH_ANT[8][29]   253
+ROACH_ANT[8][30]   254
+ROACH_ANT[8][31]   255
+ROACH_ANT[8][32]   256
+ROACH_ANT[9][1]    257
+ROACH_ANT[9][2]    258
+ROACH_ANT[9][3]    259
+ROACH_ANT[9][4]    260
+ROACH_ANT[9][5]    261
+ROACH_ANT[9][6]    262
+ROACH_ANT[9][7]    263
+ROACH_ANT[9][8]    264
+ROACH_ANT[9][9]    265
+ROACH_ANT[9][10]   266
+ROACH_ANT[9][11]   267
+ROACH_ANT[9][12]   268
+ROACH_ANT[9][13]   269
+ROACH_ANT[9][14]   270
+ROACH_ANT[9][15]   271
+ROACH_ANT[9][16]   272
+ROACH_ANT[9][17]   273
+ROACH_ANT[9][18]   274
+ROACH_ANT[9][19]   275
+ROACH_ANT[9][20]   276
+ROACH_ANT[9][21]   277
+ROACH_ANT[9][22]   278
+ROACH_ANT[9][23]   279
+ROACH_ANT[9][24]   280
+ROACH_ANT[9][25]   281
+ROACH_ANT[9][26]   282
+ROACH_ANT[9][27]   283
+ROACH_ANT[9][28]   284
+ROACH_ANT[9][29]   285
+ROACH_ANT[9][30]   286
+ROACH_ANT[9][31]   287
+ROACH_ANT[9][32]   288
+ROACH_ANT[10][1]   289
+ROACH_ANT[10][2]   290
+ROACH_ANT[10][3]   291
+ROACH_ANT[10][4]   292
+ROACH_ANT[10][5]   293
+ROACH_ANT[10][6]   294
+ROACH_ANT[10][7]   295
+ROACH_ANT[10][8]   296
+ROACH_ANT[10][9]   297
+ROACH_ANT[10][10]  298
+ROACH_ANT[10][11]  299
+ROACH_ANT[10][12]  300
+ROACH_ANT[10][13]  301
+ROACH_ANT[10][14]  302
+ROACH_ANT[10][15]  303
+ROACH_ANT[10][16]  304
+ROACH_ANT[10][17]  305
+ROACH_ANT[10][18]  306
+ROACH_ANT[10][19]  307
+ROACH_ANT[10][20]  308
+ROACH_ANT[10][21]  309
+ROACH_ANT[10][22]  310
+ROACH_ANT[10][23]  311
+ROACH_ANT[10][24]  312
+ROACH_ANT[10][25]  313
+ROACH_ANT[10][26]  314
+ROACH_ANT[10][27]  315
+ROACH_ANT[10][28]  316
+ROACH_ANT[10][29]  317
+ROACH_ANT[10][30]  318
+ROACH_ANT[10][31]  319
+ROACH_ANT[10][32]  320
+ROACH_ANT[11][1]   321
+ROACH_ANT[11][2]   322
+ROACH_ANT[11][3]   323
+ROACH_ANT[11][4]   324
+ROACH_ANT[11][5]   325
+ROACH_ANT[11][6]   326
+ROACH_ANT[11][7]   327
+ROACH_ANT[11][8]   328
+ROACH_ANT[11][9]   329
+ROACH_ANT[11][10]  330
+ROACH_ANT[11][11]  331
+ROACH_ANT[11][12]  332
+ROACH_ANT[11][13]  333
+ROACH_ANT[11][14]  334
+ROACH_ANT[11][15]  335
+ROACH_ANT[11][16]  336
+ROACH_ANT[11][17]  337
+ROACH_ANT[11][18]  338
+ROACH_ANT[11][19]  339
+ROACH_ANT[11][20]  340
+ROACH_ANT[11][21]  341
+ROACH_ANT[11][22]  342
+ROACH_ANT[11][23]  343
+ROACH_ANT[11][24]  344
+ROACH_ANT[11][25]  345
+ROACH_ANT[11][26]  346
+ROACH_ANT[11][27]  347
+ROACH_ANT[11][28]  348
+ROACH_ANT[11][29]  349
+ROACH_ANT[11][30]  350
+ROACH_ANT[11][31]  351
+ROACH_ANT[11][32]  352
+ROACH_ANT[12][1]   353
+ROACH_ANT[12][2]   354
+ROACH_ANT[12][3]   355
+ROACH_ANT[12][4]   356
+ROACH_ANT[12][5]   357
+ROACH_ANT[12][6]   358
+ROACH_ANT[12][7]   359
+ROACH_ANT[12][8]   360
+ROACH_ANT[12][9]   361
+ROACH_ANT[12][10]  362
+ROACH_ANT[12][11]  363
+ROACH_ANT[12][12]  364
+ROACH_ANT[12][13]  365
+ROACH_ANT[12][14]  366
+ROACH_ANT[12][15]  367
+ROACH_ANT[12][16]  368
+ROACH_ANT[12][17]  369
+ROACH_ANT[12][18]  370
+ROACH_ANT[12][19]  371
+ROACH_ANT[12][20]  372
+ROACH_ANT[12][21]  373
+ROACH_ANT[12][22]  374
+ROACH_ANT[12][23]  375
+ROACH_ANT[12][24]  376
+ROACH_ANT[12][25]  377
+ROACH_ANT[12][26]  378
+ROACH_ANT[12][27]  379
+ROACH_ANT[12][28]  380
+ROACH_ANT[12][29]  381
+ROACH_ANT[12][30]  382
+ROACH_ANT[12][31]  383
+ROACH_ANT[12][32]  384
+ROACH_ANT[13][1]   385
+ROACH_ANT[13][2]   386
+ROACH_ANT[13][3]   387
+ROACH_ANT[13][4]   388
+ROACH_ANT[13][5]   389
+ROACH_ANT[13][6]   390
+ROACH_ANT[13][7]   391
+ROACH_ANT[13][8]   392
+ROACH_ANT[13][9]   393
+ROACH_ANT[13][10]  394
+ROACH_ANT[13][11]  395
+ROACH_ANT[13][12]  396
+ROACH_ANT[13][13]  397
+ROACH_ANT[13][14]  398
+ROACH_ANT[13][15]  399
+ROACH_ANT[13][16]  400
+ROACH_ANT[13][17]  401
+ROACH_ANT[13][18]  402
+ROACH_ANT[13][19]  403
+ROACH_ANT[13][20]  404
+ROACH_ANT[13][21]  405
+ROACH_ANT[13][22]  406
+ROACH_ANT[13][23]  407
+ROACH_ANT[13][24]  408
+ROACH_ANT[13][25]  409
+ROACH_ANT[13][26]  410
+ROACH_ANT[13][27]  411
+ROACH_ANT[13][28]  412
+ROACH_ANT[13][29]  413
+ROACH_ANT[13][30]  414
+ROACH_ANT[13][31]  415
+ROACH_ANT[13][32]  416
+ROACH_ANT[14][1]   417
+ROACH_ANT[14][2]   418
+ROACH_ANT[14][3]   419
+ROACH_ANT[14][4]   420
+ROACH_ANT[14][5]   421
+ROACH_ANT[14][6]   422
+ROACH_ANT[14][7]   423
+ROACH_ANT[14][8]   424
+ROACH_ANT[14][9]   425
+ROACH_ANT[14][10]  426
+ROACH_ANT[14][11]  427
+ROACH_ANT[14][12]  428
+ROACH_ANT[14][13]  429
+ROACH_ANT[14][14]  430
+ROACH_ANT[14][15]  431
+ROACH_ANT[14][16]  432
+ROACH_ANT[14][17]  433
+ROACH_ANT[14][18]  434
+ROACH_ANT[14][19]  435
+ROACH_ANT[14][20]  436
+ROACH_ANT[14][21]  437
+ROACH_ANT[14][22]  438
+ROACH_ANT[14][23]  439
+ROACH_ANT[14][24]  440
+ROACH_ANT[14][25]  441
+ROACH_ANT[14][26]  442
+ROACH_ANT[14][27]  443
+ROACH_ANT[14][28]  444
+ROACH_ANT[14][29]  445
+ROACH_ANT[14][30]  446
+ROACH_ANT[14][31]  447
+ROACH_ANT[14][32]  448
+ROACH_ANT[15][1]   449
+ROACH_ANT[15][2]   450
+ROACH_ANT[15][3]   451
+ROACH_ANT[15][4]   452
+ROACH_ANT[15][5]   453
+ROACH_ANT[15][6]   454
+ROACH_ANT[15][7]   455
+ROACH_ANT[15][8]   456
+ROACH_ANT[15][9]   457
+ROACH_ANT[15][10]  458
+ROACH_ANT[15][11]  459
+ROACH_ANT[15][12]  460
+ROACH_ANT[15][13]  461
+ROACH_ANT[15][14]  462
+ROACH_ANT[15][15]  463
+ROACH_ANT[15][16]  464
+ROACH_ANT[15][17]  465
+ROACH_ANT[15][18]  466
+ROACH_ANT[15][19]  467
+ROACH_ANT[15][20]  468
+ROACH_ANT[15][21]  469
+ROACH_ANT[15][22]  470
+ROACH_ANT[15][23]  471
+ROACH_ANT[15][24]  472
+ROACH_ANT[15][25]  473
+ROACH_ANT[15][26]  474
+ROACH_ANT[15][27]  475
+ROACH_ANT[15][28]  476
+ROACH_ANT[15][29]  477
+ROACH_ANT[15][30]  478
+ROACH_ANT[15][31]  479
+ROACH_ANT[15][32]  480
+ROACH_ANT[16][1]   481
+ROACH_ANT[16][2]   482
+ROACH_ANT[16][3]   483
+ROACH_ANT[16][4]   484
+ROACH_ANT[16][5]   485
+ROACH_ANT[16][6]   486
+ROACH_ANT[16][7]   487
+ROACH_ANT[16][8]   488
+ROACH_ANT[16][9]   489
+ROACH_ANT[16][10]  490
+ROACH_ANT[16][11]  491
+ROACH_ANT[16][12]  492
+ROACH_ANT[16][13]  493
+ROACH_ANT[16][14]  494
+ROACH_ANT[16][15]  495
+ROACH_ANT[16][16]  496
+ROACH_ANT[16][17]  497
+ROACH_ANT[16][18]  498
+ROACH_ANT[16][19]  499
+ROACH_ANT[16][20]  500
+ROACH_ANT[16][21]  501
+ROACH_ANT[16][22]  502
+ROACH_ANT[16][23]  503
+ROACH_ANT[16][24]  504
+ROACH_ANT[16][25]  505
+ROACH_ANT[16][26]  506
+ROACH_ANT[16][27]  507
+ROACH_ANT[16][28]  508
+ROACH_ANT[16][29]  509
+ROACH_ANT[16][30]  510
+ROACH_ANT[16][31]  511
+ROACH_ANT[16][32]  512
+
+
+# ---------------------
+# --- Server ----------
+#----------------------
+# Maximum number of servers
+N_SERVER 7
+
+# SERVER_ID[] will be set to "UNK" (no identification) for any servers not identified
+# *** SERVER_ID[server#] goes here:
+SERVER_ID[1]  adp0
+SERVER_ID[2]  adp1
+SERVER_ID[3]  adp2
+SERVER_ID[4]  adp3
+SERVER_ID[5]  adp4
+SERVER_ID[6]  adp5
+SERVER_ID[7]  adp6
+
+# SERVER_SLOT[] will be set to 0 (not known/not applicable) for any servers not identified
+# *** SERVER_SLOT[server#] goes here:
+# format = <slot from top>
+SERVER_SLOT[1]  1
+SERVER_SLOT[2]  2
+SERVER_SLOT[3]  3
+SERVER_SLOT[4]  4
+SERVER_SLOT[5]  5
+SERVER_SLOT[6]  6
+SERVER_SLOT[7]  7
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any servers not identified
+# *** SERVER_STAT[server#] goes here:
+
+# SERVER_DESI[] be set to 1 for any servers not identified
+# *** SERVER_DESI[server#] goes here:
+SERVER_DESI[1]  1
+SERVER_DESI[2]  2
+SERVER_DESI[3]  2
+SERVER_DESI[4]  2
+SERVER_DESI[5]  2
+SERVER_DESI[6]  2
+SERVER_DESI[7]  2
+
+# ----------------------
+# --- DR ---------------
+# ----------------------
+# Maximum number of DR subsystems:
+N_DR 1
+
+# Status codes 0-3 summarized defined at end of this document (and in MCS0031)
+# This will be set to 3 ("OK") or any DRs not identified
+# *** DR_STAT[dr#] goes here:
+
+# DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
+# *** DR_ID[dr#] goes here:
+DR_ID[1]  DR1
+
+# DR_SHLF[] will be set to 0 (not known/not applicable) for any DRs not identified
+# *** DR_SHLF[dr#] goes here:
+DR_SHLF[1]  1
+
+# DR_PC[] will be set to "UNK" (not known/not applicable) for any DRs not identified
+# *** DR_PC[dr#] goes here:
+DR_PC[1]  T1500
+
+# 1-4 are the beam outputs, 5 is TBW/TBN
+# DR_DP[] will be set to 0 (no connection) for any DPs not identified
+# *** DR_DP[] goes here:
+DR_DP[1] 1
+
+# ----------------------
+# --- Power ------------
+# ----------------------
+
+N_PWR_RACK 5
+
+# N_PWR_PORT[] will be set to 0 (no ports) for any rack power supplies not identified
+# *** _N_PWR_PORT[rack#] goes here:
+N_PWR_PORT[1] 8
+N_PWR_PORT[2] 8
+N_PWR_PORT[3] 8
+N_PWR_PORT[4] 3
+N_PWR_PORT[5] 3
+
+# Format (example) "PWR_SS[2][3] SHL" means power from Rack 2 Port 3 goes to SHL.
+# Valid values are SHL, ASP, DP_, MCS, DR1, DR2, DR3, DR4, and DR5.
+# PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
+# Format (example) "PWR_NAME[2][3] MCS", assuming "PWR_SS[2][3] SHL", means power from Rack 2 Port 3 goes to SHL-MCS.
+#   For PWR SS[m][p] = SHL, valid values are MCS, others TBD
+#   For PWR SS[m][p] = ASP, valid values are MCS, FEE, ARX, FAN 
+#   For PWR SS[m][p] = DP , valid values are MCS, DC1, DC2, FAN, SYN, SWI
+#   For PWR SS[m][p] = MCS, valid values are SCH, EXE, TP, CH, and GW.
+#   For PWR SS[m][p] = DR1, DR2, DR3, DR4, and DR5; valid values are PC, DS1 (DRSU 1), and DS2 (DRSU 2)
+# PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
+# *** PWR_SS[rack#][port#] goes here:
+# *** PWR_NAME[rack#][port#] goes here:
+PWR_SS[1][6]   ASP
+PWR_NAME[1][6] FEE
+PWR_SS[1][7]   ASP
+PWR_NAME[1][7] ARX
+PWR_SS[1][8]   ASP
+PWR_NAME[1][8] MCS	# SUB-20 USB hub
+
+PWR_SS[2][1]   ADP
+PWR_NAME[2][1] MCS
+
+PWR_SS[3][1]   ADP
+PWR_NAME[3][1] MCS
+
+PWR_SS[4][1]   ADP
+PWR_NAME[4][1] DC1
+PWR_NAME[4][2] ADP
+PWR_NAME[4][2] DC2
+PWR_SS[4][3]   ADP
+PWR_NAME[4][3] SYN # and the GPS
+
+PWR_SS[5][1]   MCS
+PWR_NAME[5][1] SCH # and exec, SHL-MCS, ASP-MCS
+PWR_SS[5][2]   MCS
+PWR_NAME[5][2] CH # and the fiber switch, DR1
+PWR_SS[5][3]   DR1
+PWR_NAME[5][3] DS1 # and DS2
+
+
+# -----------------------------
+# --- Station Configuration ---
+# -----------------------------
+
+# MCS configuration request authority
+MCS_CRA 1
+
+# DRX beam pointing correction
+PC_AXIS_TH   0.0 #   [deg] theta pointing for axis of rotation (theta = zenith angle)
+PC_AXIS_PH   0.0 #   [deg] phi pointing for axis of rotation (0=E, 90=N)
+PC_ROT       0.0 #   [deg] rotation (right hand rule) around axis
+
+# Default gain values for various data products
+TBF_GAIN 6   # FIXME
+TBN_GAIN 20  # FIXME
+DRX_GAIN 6   # FIXME
+
+# ====================
+# === STATUS CODES ===
+# ====================
+# 3 = "OK"
+# 2 = "Suspect; possibly bad (If used, provide warning)"
+# 1 = "Bad (Don't use)"
+# 0 = "Not Installed"
