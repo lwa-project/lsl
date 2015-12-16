@@ -67,7 +67,7 @@ from lsl.common import adp as adpCommon
 
 __version__ = '1.0'
 __revision__ = '$Rev: -1 $'
-__all__ = ['COMPATIBILITY_MODE', 'setCompatibilityMode', 
+__all__ = ['COMPATIBILITY_MODE', 'setCompatibilityMode', 'adpCompatibility', 'dpCompatibility', 
 			'ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
 			'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
 			'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
@@ -82,7 +82,21 @@ __all__ = ['COMPATIBILITY_MODE', 'setCompatibilityMode',
 
 # Compatibility mode for MCS - DP or ADP
 COMPATIBILITY_MODE = 'DP'
-from dpCompatibility import *
+from dpCompatibility import ME_SSMIF_FORMAT_VERSION, ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_FEEID_LENGTH, ME_MAX_RACK, ME_MAX_PORT, ME_MAX_NRPD, ME_MAX_RPDID_LENGTH, ME_MAX_NSEP, ME_MAX_SEPID_LENGTH, ME_MAX_SEPCABL_LENGTH, ME_MAX_NARB, ME_MAX_NARBCH, ME_MAX_ARBID_LENGTH, ME_MAX_NDP1, ME_MAX_NDP1CH, ME_MAX_DP1ID_LENGTH, ME_MAX_NDP2, ME_MAX_DP2ID_LENGTH, ME_MAX_NDR, ME_MAX_DRID_LENGTH, ME_MAX_NPWRPORT, ME_MAX_SSNAME_LENGTH, LWA_MAX_NSTD, MIB_REC_TYPE_BRANCH, MIB_REC_TYPE_VALUE, MIB_INDEX_FIELD_LENGTH, MIB_LABEL_FIELD_LENGTH, MIB_VAL_FIELD_LENGTH, IS_32BIT_PYTHON, SSMIF_STRUCT, STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, SSF_STRUCT, OSF_STRUCT, OSFS_STRUCT, BEAM_STRUCT, OSF2_STRUCT, parseCStruct
+
+import dpCompatibility
+import adpCompatibility
+
+
+def setCompatibilityMode(mode):
+	if mode.lower() in ('lwasv', 'lwa-sv', 'adp'):
+		COMPATIBILITY_MODE = 'ADP'
+		from adpCompatibility import *
+	else:
+		COMPATIBILITY_MODE = 'DP'
+		from dpCompatibility import *
+		
+	return True
 
 
 def _twoByteSwap(value):
@@ -711,7 +725,7 @@ class MIBEntry(object):
 				return struct.unpack('<1i', value)[0]
 			except struct.error:
 				return 0
-		elif dateType[:3] == 'i8u':
+		elif dataType[:3] == 'i8u':
 			try:
 				return struct.unpack('<1Q', value)[0]
 			except struct.error:

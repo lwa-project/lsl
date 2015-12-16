@@ -18,6 +18,7 @@ import re
 import copy
 import glob
 import shutil
+import struct
 import tarfile
 import tempfile
 from datetime import datetime, timedelta
@@ -79,12 +80,10 @@ def readSESFile(filename):
 	
 	if mode == adpCompatibility:
 		record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
-				'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2, 
-				'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4, 'DR5': bses.SESSION_MRP_DR5}
+				'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1}
 		
 		update = {'ASP': bses.SESSION_MUP_ASP, 'ADP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
-				'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2, 
-				'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4, 'DR5': bses.SESSION_MUP_DR5}
+				'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1}
 	else:
 		record = {'ASP': bses.SESSION_MRP_ASP, 'DP_': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
 				'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2, 
@@ -127,7 +126,7 @@ def readOBSFile(filename):
 	bheader = mode.parseCStruct(mode.OSF_STRUCT, endianness='little')
 	bstep   = mode.parseCStruct(mode.OSFS_STRUCT, endianness='little')
 	bbeam   = mode.parseCStruct(mode.BEAM_STRUCT, endianness='little')
-	bfooter = mode.parseCStruct(mode.OSFS2_STRUCT, endianness='little')
+	bfooter = mode.parseCStruct(mode.OSF2_STRUCT, endianness='little')
 	
 	fh.readinto(bheader)
 	
@@ -173,7 +172,7 @@ def readOBSFile(filename):
 		fh.readinto(skip)
 
 	steps = []
-	for n in xrange(header.OBS_STP_N):
+	for n in xrange(bheader.OBS_STP_N):
 		fh.readinto(bstep)
 		if obsStep.OBS_STP_B == 3:
 			fh.readinto(bbeam)

@@ -1091,7 +1091,10 @@ def __parseTextSSMIF(filename):
 			continue
 		
 		if keyword == 'ARB_SLOT':
-			arxSlot[ids[0]-1] = int(value)
+			try:
+				arxSlot[ids[0]-1] = int(value)
+			except ValueError:
+				arxSlot[ids[0]-1] = value
 		
 		if keyword == 'ARB_DESI':
 			arxDesi[ids[0]-1] = int(value)

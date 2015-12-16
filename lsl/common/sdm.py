@@ -5,6 +5,7 @@ Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM)
 files (as defined in MCS0031, v5).
 """
 
+import os
 import copy
 
 from lsl.common.mcs import single2multi, dpCompatibility, adpCompatibility
@@ -21,14 +22,7 @@ class SubSystemStatus(object):
 	file.
 	"""
 	
-	def __init__(self, name, summary=6, info='UNK', time=0, ADPCompatibleStation=False):
-		# DP vs. ADP selection
-		self.ADPCompatibleStation = ADPCompatibleStation
-		if self.ADPCompatibleStation:
-			self.mcsRef = adpCompatibility
-		else:
-			self.mcsRef = dpCompatibility
-			
+	def __init__(self, name, summary=6, info='UNK', time=0):
 		self.name = name
 		self.summary = int(summary)
 		self.info = str(info)
@@ -43,7 +37,8 @@ class SubSystemStatus(object):
 		subsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
-		sssStruct = self.mcsRef.parseCStruct(self.mcsRef.SUBSYSTEM_STATUS_STRUCT, endianness='little')
+		## They are the same size so this really doesn't matter
+		sssStruct = dpCompatibility.parseCStruct(dpCompatibility.SUBSYSTEM_STATUS_STRUCT, endianness='little')
 		
 		fh.readinto(sssStruct)
 		
@@ -58,10 +53,8 @@ class SubSubSystemStatus(object):
 	Python object that holds the status for the sub-subsystems in a SDM file.
 	"""
 	
-	def __init__(self, fee=None, rpd=None, sep=None, arb=None, dp1=None, dp2=None, dr=None, ADPCompatibleStation=False):
-		# DP vs. ADP selection
-		self.ADPCompatibleStation = ADPCompatibleStation
-		if self.ADPCompatibleStation:
+	def __init__(self, fee=None, rpd=None, sep=None, arb=None, dp1=None, dp2=None, dr=None, isADP=False):
+		if isADP:
 			self.mcsRef = adpCompatibility
 		else:
 			self.mcsRef = dpCompatibility
@@ -86,22 +79,27 @@ class SubSubSystemStatus(object):
 		else:
 			self.arb = arb
 			
-		if dp1 is None:
-			if self.ADPCompatibleStation:
+		if self.mcsRef is dpCompatibility:
+			if dp1 is None:
+				self.dp1 = [0 for n in xrange(self.mcsRef.ME_MAX_NDP1)]
+			else:
+				self.dp1 = dp1
+		
+			if dp2 is None:
+				self.dp2 = [0 for n in xrange(self.mcsRef.ME_MAX_NDP2)]
+			else:
+				self.dp2 = dp2
+		else:
+			if dp1 is None:
 				self.dp1 = [0 for n in xrange(self.mcsRef.ME_MAX_NROACH)]
 			else:
-				self.dp1 = [0 for n in xrange(self.mcsRef.ME_MAX_NDP1)]
-		else:
-			self.dp1 = dp1
+				self.dp1 = dp1
 		
-		if dp2 is None:
-			if self.ADPCompatibleStation:
+			if dp2 is None:
 				self.dp2 = [0 for n in xrange(self.mcsRef.ME_MAX_NSERVER)]
 			else:
-				self.dp2 = [0 for n in xrange(self.mcsRef.ME_MAX_NDP2)]
-		else:
-			self.dp2 = dp2
-			
+				self.dp2 = dp2
+				
 		if dr is None:
 			self.dr = [0 for n in xrange(self.mcsRef.ME_MAX_NDR)]
 		else:
@@ -113,18 +111,21 @@ class SubSubSystemStatus(object):
 		subsubsystem_status_struct C structure and update the Python instance accordingly.
 		"""
 		
+		# Figure out what to do
 		ssssStruct = self.mcsRef.parseCStruct(self.mcsRef.SUBSUBSYSTEM_STATUS_STRUCT, endianness='little')
 		
+		# Read
 		fh.readinto(ssssStruct)
 		
+		# Parse and save
 		self.fee = list(ssssStruct.eFEEStat)
 		self.rpd = list(ssssStruct.eRPDStat)
 		self.sep = list(ssssStruct.eSEPStat)
 		self.arb = single2multi(ssssStruct.eARBStat, *ssssStruct.dims['eARBStat'])
-		try:
+		if self.mcsRef is dpCompatibility:
 			self.dp1 = single2multi(ssssStruct.eDP1Stat, *ssssStruct.dims['eDP1Stat'])
 			self.dp2 = list(ssssStruct.eDP2Stat)
-		except AttributeError:
+		else:
 			self.dp1 = single2multi(ssssStruct.eRoachStat, *ssssStruct.dims['eRoachStat'])
 			self.dp2 = list(ssssStruct.eServerStat)
 		self.dr  = list(ssssStruct.eDRStat)
@@ -136,10 +137,8 @@ class StationSettings(object):
 	"""
 	
 	def __init__(self, report=None, update=None, fee=None, aspFlt=None, aspAT1=None, aspAT2=None, aspATS=None, 
-				tbnGain=-1, drxGain=-1, ADPCompatibleStation=False):
-		# DP vs. ADP selection
-		self.ADPCompatibleStation = ADPCompatibleStation
-		if self.ADPCompatibleStation:
+				tbnGain=-1, drxGain=-1, isADP=False):
+		if isADP:
 			self.mcsRef = adpCompatibility
 		else:
 			self.mcsRef = dpCompatibility
@@ -188,32 +187,39 @@ class StationSettings(object):
 		station_settings_struct C structure and update the Python instance accordingly.
 		"""
 		
+		# Figure out what to do
 		ssStruct = self.mcsRef.parseCStruct(self.mcsRef.STATION_SETTINGS_STRUCT, endianness='little')
 		
+		# Read
 		fh.readinto(ssStruct)
-
+		
+		# Parse and save
+		## Common
 		self.report['ASP'] = ssStruct.mrp_asp
 		self.report['DP_'] = ssStruct.mrp_dp
 		self.report['DR1'] = ssStruct.mrp_dr1
-		self.report['DR2'] = ssStruct.mrp_dr2
-		self.report['DR3'] = ssStruct.mrp_dr3
-		self.report['DR4'] = ssStruct.mrp_dr4
-		self.report['DR5'] = ssStruct.mrp_dr5
 		self.report['SHL'] = ssStruct.mrp_shl
 		self.report['MCS'] = ssStruct.mrp_mcs
 		
 		self.update['ASP'] = ssStruct.mup_asp
 		self.update['DP_'] = ssStruct.mup_dp
 		self.update['DR1'] = ssStruct.mup_dr1
-		self.update['DR2'] = ssStruct.mup_dr2
-		self.update['DR3'] = ssStruct.mup_dr3
-		self.update['DR4'] = ssStruct.mup_dr4
-		self.update['DR5'] = ssStruct.mup_dr5
 		self.update['SHL'] = ssStruct.mup_shl
 		self.update['MCS'] = ssStruct.mup_mcs
 		
+		if ssStruct is ssStructDP:
+			self.report['DR2'] = ssStruct.mrp_dr2
+			self.report['DR3'] = ssStruct.mrp_dr3
+			self.report['DR4'] = ssStruct.mrp_dr4
+			self.report['DR5'] = ssStruct.mrp_dr5
+			
+			self.update['DR2'] = ssStruct.mup_dr2
+			self.update['DR3'] = ssStruct.mup_dr3
+			self.update['DR4'] = ssStruct.mup_dr4
+			self.update['DR5'] = ssStruct.mup_dr5
+			
 		self.fee = single2multi(ssStruct.fee, *ssStruct.dims['fee'])
-
+		
 		self.aspFlt = list(ssStruct.asp_flt)
 		self.aspAT1 = list(ssStruct.asp_at1)
 		self.aspAT2 = list(ssStruct.asp_at2)
@@ -221,6 +227,8 @@ class StationSettings(object):
 		
 		self.tbnGain = ssStruct.tbn_gain
 		self.drxgain = ssStruct.drx_gain
+		if self.mcsRef is adpCompatibility:
+			self.tbfGain = ssStruct.tbf_gain
 
 
 class SDM(object):
@@ -229,51 +237,49 @@ class SDM(object):
 	Dynamic MIB file (SDM file).
 	"""
 	
-	def __init__(self, station=None, shl=None, asp=None, dp=None, dr=None, status=None, antStatus=None, dpoStatus=None, settings=None, ADPCompatibleStation=False):
-		# DP vs. ADP selection
-		self.ADPCompatibleStation = ADPCompatibleStation
-		if self.ADPCompatibleStation:
-			self.mcsRef = adpCompatibility
+	def __init__(self, station=None, shl=None, asp=None, dp=None, dr=None, status=None, antStatus=None, dpoStatus=None, settings=None, isADP=False):
+		if isADP:
+			mcsRef = adpCompatibility
 		else:
-			self.mcsRef = dpCompatibility
+			mcsRef = dpCompatibility
 			
 		if station is None:
-			self.station = SubSystemStatus('station', ADPCompatibleStation=self.ADPCompatibleStation)
+			self.station = SubSystemStatus('station')
 		else:
 			self.station = station
 		if shl is None:
-			self.shl = SubSystemStatus('shl', ADPCompatibleStation=self.ADPCompatibleStation)
+			self.shl = SubSystemStatus('shl')
 		else:
 			self.shl = shl
 		if asp is None:
-			self.asp = SubSystemStatus('asp', ADPCompatibleStation=self.ADPCompatibleStation)
+			self.asp = SubSystemStatus('asp')
 		else:
 			self.asp = asp
 		if dp is None:
-			self.dp  = SubSystemStatus('dp', ADPCompatibleStation=self.ADPCompatibleStation)
+			self.dp  = SubSystemStatus('dp')
 		else:
 			self.dp = dp
 		if dr is None:
-			self.dr  = [SubSystemStatus('dr%i' % (n+1,), ADPCompatibleStation=self.ADPCompatibleStation) for n in xrange(self.mcsRef.ME_MAX_NDR)]
+			self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(mcsRef.ME_MAX_NDR)]
 		else:
 			self.dr = dr
 		
 		if status is None:
-			self.status = SubSubSystemStatus(ADPCompatibleStation=self.ADPCompatibleStation)
+			self.status = SubSubSystemStatus(isADP=isADP)
 		else:
 			self.status = status
 		
 		if antStatus is None:
-			self.antStatus = [[0,0] for n in xrange(self.mcsRef.ME_MAX_NSTD)]
+			self.antStatus = [[0,0] for n in xrange(mcsRef.ME_MAX_NSTD)]
 		else:
 			self.antStatus = antStatus
 		if dpoStatus is None:
-			self.dpoStatus = [0 for n in xrange(self.mcsRef.ME_MAX_NDR)]
+			self.dpoStatus = [0 for n in xrange(mcsRef.ME_MAX_NDR)]
 		else:
 			self.dpoStatus = dpoStatus
 			
 		if settings is None:
-			self.settings = StationSettings(ADPCompatibleStation=self.ADPCompatibleStation)
+			self.settings = StationSettings(isADP=isADP)
 		else:
 			self.settings = settings
 			
@@ -293,22 +299,28 @@ class SDM(object):
 		return updatedAntennas
 
 
-def parseSDM(filename, ADPCompatibleStation=False):
+def parseSDM(filename):
 	"""
 	Given a filename, read the file's contents into the SDM instance and return
 	that instance.
 	"""
 	
-	# DP vs. ADP compatible station
-	if ADPCompatibleStation:
-		mcsRef = adpCompatibility
-	else:
-		mcsRef = dpCompatibility
-		
+	# Open the file
 	fh = open(filename, 'rb')
 	
+	# Figure out how to deal with this fil
+	fsize = os.path.getsize(filename)
+	if fsize == 16680:
+		## This file size is based on the sdm.dat file in all three 
+		## metadata*.tgz files from LWA1 used for testing LSL.
+		isADP = False
+		mcsRef = dpCompatibility
+	else:
+		isADP = True
+		mcsRef = adpCompatibility
+		
 	# Create a new SDM instance
-	dynamic = SDM(ADPCompatibleStation=ADPCompatibleStation)
+	dynamic = SDM(isADP=isADP)
 	
 	# Sub-system status sections
 	dynamic.station._binaryRead(fh)

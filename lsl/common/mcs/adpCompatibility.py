@@ -496,6 +496,13 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 				out += '%s (%s): %s\n' % (f, d, eval("self.%s" % f))
 			return out
 			
+		def sizeof(self):
+			"""
+			Return the size, in bytes, of the structure.
+			"""
+			
+			return sizeof(self)
+			
 		def returnDict(self):
 			"""
 			Return the structure as a simple Python dictionary keyed off the
