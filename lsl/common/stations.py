@@ -16,6 +16,7 @@ import re
 import copy
 import numpy
 import ephem
+import struct
 
 from lsl.common.paths import data as dataPath
 from lsl.common.mcs import *

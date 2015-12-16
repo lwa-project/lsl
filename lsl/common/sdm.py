@@ -207,7 +207,7 @@ class StationSettings(object):
 		self.update['SHL'] = ssStruct.mup_shl
 		self.update['MCS'] = ssStruct.mup_mcs
 		
-		if ssStruct is ssStructDP:
+		if self.mcsRef is dpCompatibility:
 			self.report['DR2'] = ssStruct.mrp_dr2
 			self.report['DR3'] = ssStruct.mrp_dr3
 			self.report['DR4'] = ssStruct.mrp_dr4
