@@ -303,7 +303,7 @@ def main(args):
 					nFramesRead -= sl
 			oh.close()
 			t1 = time.time()
-			print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.getsize(outname), t1-t0, os.getsize(outname)/1024.0**2/(t1-t0))
+			print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(outname), t1-t0, os.path.getsize(outname)/1024.0**2/(t1-t0))
 	print " "
 
 
