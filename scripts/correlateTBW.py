@@ -129,6 +129,9 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
 	toKeep = [antennas[i].digitizer-1 for i in good]
 	mapper = [antennas[i] for i in good]
 	
+	# Create a list of unqiue stands to know what style of IDI file to create
+	stands = set( [antennas[i].stand.id for i in good] )
+	
 	wallTime = time.time()
 	readT, t, data = idf.read()
 	setTime = t
@@ -181,7 +184,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
 		if pol == pols[0]:
 			pol1, pol2 = fxc.pol2pol(pol)
 			
-			if len(mapper) > 255:
+			if len(stands) > 255:
 				fits = fitsidi.ExtendedIDI(filename, refTime=refTime)
 			else:
 				fits = fitsidi.IDI(filename, refTime=refTime)
