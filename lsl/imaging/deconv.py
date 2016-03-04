@@ -10,7 +10,7 @@ from aipy.coord import eq2radec, top2azalt
 from aipy.fit import RadioFixedBody
 from scipy.signal import fftconvolve as convolve, convolve2d
 
-from lsl.sim import vis as simVis
+from lsl.sim.vis import buildSimData
 from lsl.imaging import utils
 from lsl.common import stations
 from lsl.correlator import uvUtils
@@ -158,7 +158,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 	
 	# Estimate the zenith beam response
 	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
-	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+	psfDict = buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 	psf = psf.image(center=(MapSize,MapSize))
 	psf /= psf.max()
@@ -248,7 +248,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
 				print "               -> Computing beam(s)"
 				
 			beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
-			beamDict = simVis.buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+			beamDict = buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 			beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 			beam = beam.image(center=(MapSize,MapSize))
 			beam /= beam.max()
@@ -397,7 +397,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 	
 	# Estimate the zenith beam response
 	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
-	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+	psfDict = buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 	psf = psf.image(center=(MapSize,MapSize))
 	psf /= psf.max()
@@ -522,7 +522,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
 					print "               -> Computing beam(s)"
 					
 				beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
-				beamDict = simVis.buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+				beamDict = buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 				beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 				beam = beam.image(center=(MapSize,MapSize))
 				beam /= beam.max()
@@ -683,7 +683,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 	
 	# Estimate the zenith beam response
 	psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
-	psfDict = simVis.buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+	psfDict = buildSimData(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
 	psf = utils.buildGriddedImage(psfDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
 	psf = psf.image(center=(MapSize,MapSize))
 	psf /= psf.max()
@@ -711,6 +711,17 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 	mdl = img*40
 	mdl[numpy.where(mdl < 0)] = 0
 	mdl[numpy.where(ra.mask == 1)] = 0
+	
+	# Determine the overall image->model scale factor
+	bSrcs = {}
+	rChan = [chan[0], chan[-1]]
+	bSrcs['zenith'] = RadioFixedBody(aa.sidereal_time(), aa.lat, name='zenith', jys=1, index=0)
+	simDict = buildSimData(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flatResponse=True)
+	simImg = utils.buildGriddedImage(simDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=rChan, pol=pol, verbose=verbose)
+	simImg = simImg.image(center=(MapSize,MapSize))
+	
+	simToModel = 1.0 / simImg.max()
+	modelToSim = simImg.max() / 1.0
 	
 	# Go!
 	if plot:
@@ -745,7 +756,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 				bSrcs[nm] = RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=mdl[i,j], index=0, epoch=aa.date)
 				
 		## Model the visibilities
-		simDict = simVis.buildSimData(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flatResponse=True)
+		simDict = buildSimData(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flatResponse=True)
 		
 		## Form the simulated image
 		simImg = utils.buildGriddedImage(simDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=rChan, pol=pol, verbose=verbose)
@@ -758,7 +769,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 		
 		## Compute the RMS and create an appropriately scaled version of the model
 		RMS = diff.std()
-		mdl2 = mdl*(img-diff).max()/mdl.max()
+		mdl2 = mdl*modelToSim
 		
 		## Status report
 		if verbose:
@@ -769,7 +780,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 			
 		## Make the cleaned residuals map ready for updating the model
 		diff = diff2
-		diffScaled = diff * mdl.max() / simImg.max()
+		diffScaled = diff * simToModel
 		
 		## Has the RMS gone up?  If so, it is time to exit.  But first, restore 
 		## the previous iteration
@@ -817,7 +828,6 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 	# Restore
 	conv = convolve(mdl2, beamClean, mode='same')
 	conv = numpy.ma.array(conv, mask=convMask)
-	conv *= ((img-diff).max() / conv.max())
 	
 	if plot:
 		# Make an image for comparison purposes if we are verbose
