@@ -29,6 +29,10 @@ Options:
 -h, --help             Display this help information
 -n, --n-samples        Number of samples to take between the start and stop
                        times (default = 11)
+-i, --igs              Use the IGS data products (default)
+-j, --jpl              Use the JPL data prodcuts
+-c, --code             Use the CODE data products
+-u, --ustec            Use the USTEC data products
 """
 
 	if exitCode is not None:
@@ -41,11 +45,12 @@ def parseConfig(args):
 	config = {}
 	# Command line flags - default values
 	config['nSamples'] = 11
+	config['type'] = 'IGS'
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hn:", ["help", "n-samples"])
+		opts, arg = getopt.getopt(args, "hn:ijcu", ["help", "n-samples", "igs", "jpl", "code", "ustec"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -57,6 +62,14 @@ def parseConfig(args):
 			usage(exitCode=0)
 		elif opt in ('-n', '--n-samples'):
 			config['nSamples'] = int(value)
+		elif opt in ('-i', '--igs'):
+			config['type'] = 'IGS'
+		elif opt in ('-j', '--jpl'):
+			config['type'] = 'JPL'
+		elif opt in ('-c', '--code'):
+			config['type'] = 'CODE'
+		elif opt in ('-u', '--ustec'):
+			config['type'] = 'USTEC'
 		else:
 			assert False
 	
@@ -115,7 +128,7 @@ def main(args):
 			ippLat, ippLon, ippElv = ionosphere.getIonosphericPiercePoint(lwa1, az, el)
 			
 			# Load in the TEC value and the RMS from the IGS final data product
-			tec, rms = ionosphere.getTECValue(mjd, lat=ippLat, lng=ippLon, includeRMS=True, type='IGS')
+			tec, rms = ionosphere.getTECValue(mjd, lat=ippLat, lng=ippLon, includeRMS=True, type=config['type'])
 			tec, rms = tec[0][0], rms[0][0]
 			
 			# Use the IGRF to compute the ECEF components of the Earth's magnetic field

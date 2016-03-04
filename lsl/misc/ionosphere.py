@@ -6,10 +6,15 @@ for ionospheric corrections.
 
 import os
 import sys
+import glob
+import gzip
 import numpy
 import socket
+import shutil
 import logging
+import tarfile
 import urllib2
+import tempfile
 from datetime import datetime
 
 from scipy.special import lpmv
@@ -22,7 +27,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.mcs import mjdmpm2datetime, datetime2mjdmpm
 
 
-__version__ = "0.3"
+__version__ = "0.4"
 __revision__ = "$Rev$"
 __all__ = ['getMagneticField', 'computeMagneticDeclination', 'computeMagneticInclination', 
 		 'getTECValue', 'getIonosphericPiercePoint', 
@@ -275,7 +280,6 @@ def getMagneticField(lat, lng, elev, mjd=None, ecef=False):
 	try:
 		coeffs = _Cache['IGRF']
 	except KeyError:
-		dataPath = '.'
 		filename = os.path.join(dataPath, 'igrf12coeffs.txt')
 		_Cache['IGRF'] = _loadIGRFModel(filename)
 		
@@ -436,7 +440,66 @@ def _downloadTECMapIGS(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 		fh.write(data)
 		fh.close()
 		
-		os.system('gunzip %s' % os.path.join(_CacheDir, filename))
+		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
+		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
+		
+		return True
+
+
+def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+	"""
+	Given an MJD value, download the corresponding JPL final data product 
+	for that day.
+	
+	.. note::
+		By default the "final" product is downloaded.  However, the "rapid" 
+		data product may be downloaded if the 'type' keyword is set to 
+		"rapid".
+	"""
+	
+	# Convert the MJD to a datetime instance so that we can pull out the year
+	# and the day-of-year
+	mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
+	dt = mjdmpm2datetime(int(mjd), mpm)
+	
+	year = dt.year
+	dayOfYear = int(dt.strftime('%j'), 10)
+	
+	# Figure out which file we need to download
+	if type == 'final':
+		## Final
+		filename = 'jplg%03i0.%02ii.Z' % (dayOfYear, year%100)
+	elif type == 'rapid':
+		## Rapid
+		filename = 'jprg%03i0.%02ii.Z' % (dayOfYear, year%100)
+	else:
+		## ???
+		raise ValueError("Unknown TEC file type '%s'" % type)
+		
+	# Attempt to download the data
+	try:
+		tecFH = urllib2.urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+		data= tecFH.read()
+		tecFH.close()
+	except IOError as e:
+		__logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
+		data = ''
+	except socket.timeout:
+		data = ''
+		
+	# Did we get anything?
+	if len(data) == 0:
+		## Fail
+		return False
+	else:
+		## Success!  Save it to a file and then decompress it with 'gunzip' 
+		## since I can't figure out how to decompress this in Python.
+		fh = open(os.path.join(_CacheDir, filename), 'wb')
+		fh.write(data)
+		fh.close()
+		
+		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
+		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
 		
 		return True
 
@@ -484,7 +547,55 @@ def _downloadTECMapCODE(mjd, baseURL='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeo
 		fh.write(data)
 		fh.close()
 		
-		os.system('gunzip %s' % os.path.join(_CacheDir, filename))
+		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
+		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
+		
+		return True
+
+
+def _downloadTECMapUSTEC(mjd, baseURL='http://www.ngdc.noaa.gov/stp/iono/ustec/products/', timeout=120):
+	"""
+	Given an MJD value, download the corresponding JPL final data product 
+	for that day.
+	
+	.. note::
+		By default the "final" product is downloaded.  However, the "rapid" 
+		data product may be downloaded if the 'type' keyword is set to 
+		"rapid".
+	"""
+	
+	# Convert the MJD to a datetime instance so that we can pull out the year
+	# and the day-of-year
+	mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
+	dt = mjdmpm2datetime(int(mjd), mpm)
+	
+	year = dt.year
+	month = dt.month
+	dateStr = dt.strftime("%Y%m%d")
+	# Build up the filename
+	filename = '%s_ustec.tar.gz' % dateStr
+	
+	# Attempt to download the data
+	try:
+		tecFH = urllib2.urlopen('%s/%04i/%02i/%s' % (baseURL, year, month, filename), timeout=timeout)
+		data= tecFH.read()
+		tecFH.close()
+	except IOError as e:
+		__logger.error('Error downloading file for %s: %s', dateStr, str(e))
+		data = ''
+	except socket.timeout:
+		data = ''
+		
+	# Did we get anything?
+	if len(data) == 0:
+		## Fail
+		return False
+	else:
+		## Success!  Save it to a file and then decompress it with 'gunzip' 
+		## since I can't figure out how to decompress this in Python.
+		fh = open(os.path.join(_CacheDir, filename), 'wb')
+		fh.write(data)
+		fh.close()
 		
 		return True
 
@@ -515,7 +626,7 @@ def _parseTECMap(filename):
 	inBlock = False
 	
 	# Go
-	fh = open(filename, 'r')
+	fh = gzip.open(filename, 'r')
 	
 	for line in fh:
 		## Are we beginning a map?
@@ -607,6 +718,252 @@ def _parseTECMap(filename):
 	return output
 
 
+def _parseUSTECMapIndividual(filename):
+	"""
+	Parse an individual TEC map from the USTEC project.  This returns a five-
+	element tuple of:
+	  * datetime for the start of the map
+	  * 2-D array of latitude values for the maps in degrees
+	  * 2-D array of longitude values for the maps in degrees
+	  * 2-D array of TEC values in TECU.  The dimensions are latitude by 
+	    longitude
+	  * 2-D array of TEC RMS values in TECU.  The dimensions are latitude 
+	    by longitude.
+	
+	Format Reference:
+	  https://www.ngdc.noaa.gov/stp/iono/ustec/README.html
+	"""
+	
+	# Get the date/time from the filename
+	dt = os.path.basename(filename).split('_')[0]
+	dt = datetime.strptime(dt, "%Y%m%d%H%M")
+	
+	# Open the TEC file for reading
+	fh = open(filename, 'r')
+	
+	# Go!
+	inBlock = False
+	lats = []
+	data= []
+	for line in fh:
+		if line[0] in ('#', ':'):
+			## Comments
+			continue
+		elif len(line) < 3:
+			## Blank lines
+			continue
+			
+		## Start the parsing
+		if not inBlock:
+			### The first row consists of a list of longitudes
+			fields = line.split()
+			lngs = [float(f)/10.0 for f in fields[1:]]
+			inBlock = True
+			continue
+		else:
+			### Slant TEC values are stored at the end of the file
+			if line[:3] == '999':
+				inBlock = False
+				break
+				
+			### Before the satellite we have the TEC values, one for each latitude
+			fields = line.split()
+			lats.append( float(fields[0])/10 )
+			data.append( [float(f)/10 for f in fields[1:]] )
+	fh.close()
+	
+	# Bring it into NumPy
+	lats = numpy.array(lats)
+	lngs = numpy.array(lngs)
+	lngs,lats = numpy.meshgrid(lngs,lats)
+	data = numpy.array(data)
+	
+	# Check for an associated RMS file
+	rmsname = filename.replace('_TEC', '_ERR')
+	if os.path.exists(rmsname):
+		## Oh good, we have one
+		fh = open(rmsname, 'r')
+		
+		## Go! (again)
+		inBlock = False
+		rlats = []
+		rdata = []
+		for line in fh:
+			if line[0] in ('#', ':'):
+				## Comments
+				continue
+			elif len(line) < 3:
+				## Blank lines
+				continue
+				
+			## Start the parsing
+			if not inBlock:
+				### The first row consists of a list of longitudes
+				fields = line.split()
+				rlngs = [float(f)/10.0 for f in fields[1:]]
+				inBlock = True
+				continue
+			else:
+				### Slant TEC values are stored at the end of the file
+				if line[:3] == '999':
+					inBlock = False
+					break
+					
+				### Before the satellite we have the TEC RMS values, one for each latitude
+				fields = line.split()
+				rlats.append( float(fields[0])/10 )
+				rdata.append( [float(f)/10 for f in fields[1:]] )
+		fh.close()
+		
+		# Bring it into NumPy
+		rlats = numpy.array(rlats)
+		rlngs = numpy.array(rlngs)
+		rdata = numpy.array(rdata)
+		
+		# For some reason the RMS map has a lower resolution than the actual TEC map.
+		# Interpolate up the the resolution of the actual TEC map so that we have an
+		# uncertainty at each point
+		interpFunction = RectBivariateSpline(rlats, rlngs, rdata, kx=1, ky=1)
+		rms = data*0.0
+		for i in xrange(lats.shape[0]):
+			for j in xrange(lats.shape[0]):
+				rms[i,j] = interpFunction(lats[i,j], lngs[i,j])
+	else:
+		## Sadness, no RMS file found...
+		rms = data*0.05
+		
+	# Reverse
+	lats = lats[::-1,:]
+	lngs = lngs[::-1,:]
+	data = data[::-1,:]
+	rms  = rms[::-1,:]
+	
+	# Done
+	return dt, lats, lngs, data, rms
+
+
+def _parseUSTECMapHeight(filename):
+	"""
+	Parse emperical orthonormal functions to come up with an effective 
+	height for the ionosphere.
+	
+	Format Reference:
+	  https://www.ngdc.noaa.gov/stp/iono/ustec/README.html
+	"""
+	
+	# Open the EOF file for reading
+	fh = open(filename, 'r')
+	
+	# Go!
+	inBlock = False
+	heights = []
+	data= []
+	for line in fh:
+		if line[0] in ('#', ':'):
+			## Comments
+			continue
+		elif len(line) < 3:
+			## Blank lines
+			continue
+			
+		## Start the parsing
+		if not inBlock:
+			fields = line.split()
+			height = float(fields[2])
+			step = float(fields[3])
+			inBlock = True
+		else:
+			fields = line.split()
+			heights.append( height - 6371)
+			height += step
+			data.append( float(fields[0]) )
+			
+	# Done
+	fh.close()
+	
+	# Bring it into Numpy and get an average height
+	heights = numpy.array(heights)
+	data = numpy.array(data)
+	height = (heights*data).sum() / data.sum()
+	
+	# Done
+	return height
+
+
+def _parseUSTECMap(filename):
+	"""
+	Given the name of a file containing a TEC map from the USTEC project, 
+	parse it and return a dictionary containing the files data.
+	
+	The dictionary keys are:
+	  * dates - array of MJD values for each time step in the map
+	  * lats - 2-D array of latitude values for the maps in degrees
+	  * lngs - 2-D array of longitude values for the maps in degrees
+	  * height - height for the ionospheric pierce point in km
+	  * tec - 3-D array of TEC values in TECU.  The dimensions are time by
+	    latitude by longitude.
+	  * rms - 3-D array of TEC RMS values in TECU.  The dimensions are time
+	    by latitude by longitude.
+	"""
+	
+	tempDir = tempfile.mkdtemp(prefix='ionosphere-')
+	
+	tf = tarfile.open(filename, 'r:*')
+	tecFiles = [tio for tio in tf.getmembers() if tio.name.find('_TEC.txt') != -1]
+	errFiles = [tio for tio in tf.getmembers() if tio.name.find('_ERR.txt') != -1]
+	eofFiles = [tio for tio in tf.getmembers() if tio.name.find('_EOF.txt') != -1]
+	tf.extractall(path=tempDir, members=tecFiles)
+	tf.extractall(path=tempDir, members=errFiles)
+	tf.extractall(path=tempDir, members=eofFiles)
+	
+	# Variables to hold the map sequences
+	dates = []
+	tecMaps = []
+	rmsMaps = []
+	
+	# Get all of the TEC map files and load them in
+	tecfilenames = glob.glob(os.path.join(tempDir, '*_TEC.txt'))
+	tecfilenames.sort()
+	for tecfilename in tecfilenames:
+		#try:
+		dt, lats, lngs, tec, rms = _parseUSTECMapIndividual(tecfilename)
+		
+		### Figure out the MJD
+		mjd, mpm = datetime2mjdmpm(dt)
+		mjd = mjd + mpm/1000.0/3600.0/24.0
+		if mjd not in dates:
+			dates.append( mjd )
+			
+		# Stack on the new TEC and RMS maps
+		tecMaps.append( tec )
+		rmsMaps.append( rms )
+			
+		#except Exception as e:
+			#pass
+			
+	# Get the mean ionospheric height
+	eoffilename = glob.glob(os.path.join(tempDir, '*_EOF.txt'))[0]
+	#try:
+	height = _parseUSTECMapHeight(eoffilename)
+	#except:
+	#	height = 450
+		
+	# Cleanup
+	tf.close()
+	shutil.rmtree(tempDir, ignore_errors=True)
+	
+	# Combine everything together
+	dates = numpy.array(dates, dtype=numpy.float64)
+	tec = numpy.array(tecMaps, dtype=numpy.float32)
+	rms = numpy.array(rmsMaps, dtype=numpy.float32)
+	
+	# Build up the output
+	output = {'dates': dates, 'lats': lats, 'lngs': lngs, 'height': height, 'tec': tec, 'rms': rms}
+	
+	# Done
+	return output
+
+
 def _loadTECMap(mjd, timeout=120, type='IGS'):
 	"""
 	Given an MJD value, load the corresponding TEC map.  If the map is not
@@ -622,8 +979,19 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
 		downloader = _downloadTECMapIGS
 		
 		## Filename templates
-		filenameTemplate = 'igsg%03i0.%02ii'
-		filenameAltTemplate = 'igrg%03i0.%02ii'
+		filenameTemplate = 'igsg%03i0.%02ii.gz'
+		filenameAltTemplate = 'igrg%03i0.%02ii.gz'
+		
+	elif type == 'JPL':
+		## Cache entry name
+		cacheName = 'TEC-JPL-%i' % mjd
+		
+		## Download helper
+		downloader = _downloadTECMapJPL
+		
+		## Filename templates
+		filenameTemplate = 'jplg%03i0.%02ii.gz'
+		filenameAltTemplate = 'jprg%03i0.%02ii.gz'
 		
 	elif type == 'CODE':
 		## Cache entry name
@@ -633,8 +1001,19 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
 		downloader = _downloadTECMapCODE
 		
 		## Filename templates
-		filenameTemplate = 'CKMG%03i0.%02iI'
-		filenameAltTemplate = 'CKMG%03i0.%02iI'
+		filenameTemplate = 'CKMG%03i0.%02iI.gz'
+		filenameAltTemplate = 'CKMG%03i0.%02iI.gz'
+		
+	elif type == 'USTEC':
+		## Cache entry name
+		cacheName = 'TEC-USTEC-%i' % mjd
+		
+		## Download helper
+		downloader = _downloadTECMapUSTEC
+		
+		## Filename templates
+		filenameTemplate = '%s_ustec.tar.gz'
+		filenameAltTemplate = '%s_ustec.tar.gz'
 		
 	else:
 		raise ValueError("Unknown data source '%s'" % type)
@@ -650,36 +1029,59 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
 		mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
 		dt = mjdmpm2datetime(int(mjd), mpm)
 		
-		year = dt.year
-		dayOfYear = int(dt.strftime('%j'), 10)
-		
-		# Figure out the filenames in order of preference.  We'd rather have
-		# final values than rapid values
-		filename = filenameTemplate % (dayOfYear, year%100)
-		filenameAlt = filenameAltTemplate % (dayOfYear, year%100)
-		
-		# Is the primary file in the disk cache?
-		if not os.path.exists(os.path.join(_CacheDir, filename)):
-			## Can we download it?
-			status = downloader(mjd, timeout=timeout, type='final')
-			if not status:
-				## Nope, now check for the secondary file on disk
-				if not os.path.exists(os.path.join(_CacheDir, filenameAlt)):
-					## Can we download it?
-					status = downloader(mjd, timeout=timeout, type='rapid')
-					if status:
+		if type == 'USTEC':
+			# Pull out a YMD string
+			dateStr = dt.strftime("%Y%m%d")
+			
+			# Figure out the filenames in order of preference.  We'd rather have
+			# final values than rapid values
+			filename = filenameTemplate % (dateStr)
+			
+			# Is the primary file in the disk cache?
+			if not os.path.exists(os.path.join(_CacheDir, filename)):
+				## Can we download it?
+				status = downloader(mjd, timeout=timeout)
+				
+			else:
+				## Good we have the primary file
+				pass
+				
+			# Parse it
+			_Cache[cacheName] = _parseUSTECMap(os.path.join(_CacheDir, filename))
+			
+		else:
+			
+			# Pull out the year and the day-of-year
+			year = dt.year
+			dayOfYear = int(dt.strftime('%j'), 10)
+			
+			# Figure out the filenames in order of preference.  We'd rather have
+			# final values than rapid values
+			filename = filenameTemplate % (dayOfYear, year%100)
+			filenameAlt = filenameAltTemplate % (dayOfYear, year%100)
+			
+			# Is the primary file in the disk cache?
+			if not os.path.exists(os.path.join(_CacheDir, filename)):
+				## Can we download it?
+				status = downloader(mjd, timeout=timeout, type='final')
+				if not status:
+					## Nope, now check for the secondary file on disk
+					if not os.path.exists(os.path.join(_CacheDir, filenameAlt)):
+						## Can we download it?
+						status = downloader(mjd, timeout=timeout, type='rapid')
+						if status:
+							### Good, we have the secondary file
+							filename = filenameAlt
+					else:
 						### Good, we have the secondary file
 						filename = filenameAlt
-				else:
-					### Good, we have the secondary file
-					filename = filenameAlt
-		else:
-			## Good we have the primary file
-			pass
+			else:
+				## Good we have the primary file
+				pass
+				
+			# Parse it
+			_Cache[cacheName] = _parseTECMap(os.path.join(_CacheDir, filename))
 			
-		# Parse it
-		_Cache[cacheName] = _parseTECMap(os.path.join(_CacheDir, filename))
-		
 		tecMap = _Cache[cacheName]
 		
 	# Done
@@ -698,10 +1100,15 @@ def getTECValue(mjd, lat=None, lng=None, includeRMS=False, timeout=120, type='IG
 	# Load in the right map
 	tecMap = _loadTECMap(mjd, timeout=timeout, type=type)
 	
-	# Figure out the closest model point(s) to the requested MJD taking into
-	# account that a new model is generated every two hours
-	best = numpy.where( numpy.abs((tecMap['dates']-mjd)) < 2/24.0 )[0]
-	
+	if type == 'USTEC':
+		# Figure out the closest model point(s) to the requested MJD taking into
+		# account that a new model is generated every fifteen minutes
+		best = numpy.where( numpy.abs((tecMap['dates']-mjd)) < 15/60./24.0 )[0]
+	else:
+		# Figure out the closest model point(s) to the requested MJD taking into
+		# account that a new model is generated every two hours
+		best = numpy.where( numpy.abs((tecMap['dates']-mjd)) < 2/24.0 )[0]
+		
 	# Interpolate in time
 	## TEC
 	slope = tecMap['tec'][best[-1],:,:] - tecMap['tec'][best[0],:,:]
