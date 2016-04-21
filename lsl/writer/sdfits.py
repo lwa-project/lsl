@@ -263,7 +263,7 @@ class SD(object):
 		nrows = self.hdulist[extension].data.shape[0]
 		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
 		for key in list(self.hdulist[extension].header.keys()):
-			tempHDU.header.update(key, self.hdulist[extension].header[key])
+			tempHDU.header[key] = self.hdulist[extension].header[key]
 	
 		return tempHDU
 
@@ -283,12 +283,12 @@ class SD(object):
 
 		primary = pyfits.PrimaryHDU()
 		
-		primary.header.update('NAXIS', 0, 'indicates SD file')
-		primary.header.update('EXTEND', True, 'indicates SD file')
+		primary.header['NAXIS'] = (0, 'indicates SD file')
+		primary.header['EXTEND'] = (True, 'indicates SD file')
 		ts = str(astro.get_date_from_sys())
-		primary.header.update('DATE', ts.split()[0], 'IDI file creation date')
-		primary.header.update('ORIGIN', 'LSL SDFITS writer')
-		primary.header.update('TELESCOP', self.site.name, 'Telescope name')
+		primary.header['DATE'] = (ts.split()[0], 'IDI file creation date')
+		primary.header['ORIGIN'] = 'LSL SDFITS writer'
+		primary.header['TELESCOP'] = (self.site.name, 'Telescope name')
 		
 		self.FITS.append(primary)
 		self.FITS.flush()
@@ -505,47 +505,47 @@ class SD(object):
 		sd = pyfits.new_table(colDefs)
 		
 		## Single disk keywords - order seems to matter
-		sd.header.update('EXTNAME', 'SINGLE DISH', 'SDFITS table name', after='TFIELDS')
-		sd.header.update('NMATRIX', 1, after='EXTNAME')
-		sd.header.update('OBSERVER', self.observer, 'Observer name(s)', before='TTYPE1')
-		sd.header.update('PROJID', self.project, 'Project name', before='TTYPE1')
-		sd.header.update('TELESCOP', self.site.name, 'Telescope name', before='TTYPE1')
+		sd.header.set('EXTNAME', 'SINGLE DISH', 'SDFITS table name', after='TFIELDS')
+		sd.header.set('NMATRIX', 1, after='EXTNAME')
+		sd.header.insert('TTYPE1', ('OBSERVER', self.observer, 'Observer name(s)'))
+		sd.header.insert('TTYPE1', ('PROJID', self.project, 'Project name'))
+		sd.header.insert('TTYPE1', ('TELESCOP', self.site.name, 'Telescope name'))
 		x,y,z = self.site.getGeocentricLocation()
-		sd.header.update('OBSGEO-X', x, '[m] Antenna ECEF X-coordinate', before='TTYPE1')
-		sd.header.update('OBSGEO-Y', y, '[m] Antenna ECEF Y-coordinate', before='TTYPE1')
-		sd.header.update('OBSGEO-Z', z, '[m] Antenna ECEF Z-coordinate', before='TTYPE1')
+		sd.header.insert('TTYPE1', ('OBSGEO-X', x, '[m] Antenna ECEF X-coordinate'))
+		sd.header.insert('TTYPE1', ('OBSGEO-Y', y, '[m] Antenna ECEF Y-coordinate'))
+		sd.header.insert('TTYPE1', ('OBSGEO-Z', z, '[m] Antenna ECEF Z-coordinate'))
 		
-		sd.header.update('SPECSYS', 'LSRK', 'Doppler reference frame (transformed)')
-		sd.header.update('SSYSOBS', 'TOPOCENT', 'Doppler reference frame of observation')
-		sd.header.update('EQUINOX', 2000.0, 'Equinox of equatorial coordinates')
-		sd.header.update('RADESYS', 'FK5', 'Equatorial coordinate system frame')
+		sd.header['SPECSYS'] = ('LSRK', 'Doppler reference frame (transformed)')
+		sd.header['SSYSOBS'] = ('TOPOCENT', 'Doppler reference frame of observation')
+		sd.header['EQUINOX'] = (2000.0, 'Equinox of equatorial coordinates')
+		sd.header['RADESYS'] = ('FK5', 'Equatorial coordinate system frame')
 		
 		## Data and flag table dimensionality
-		sd.header.update('TDIM%i' % dataIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % dataIndex)
-		#sd.header.update('TDIM%i' % flagIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % flagIndex)
+		sd.header.set('TDIM%i' % dataIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % dataIndex)
+		#sd.header.set('TDIM%i' % flagIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % flagIndex)
 		
 		## Data and flag table axis descriptions
 		### Frequency
-		sd.header.update('CTYPE1', 'FREQ', 'axis 1 is FREQ (frequency)', before='TTYPE1')
-		sd.header.update('CDELT1', self.freq[0].chWidth, before='TTYPE1')
-		sd.header.update('CRPIX1', self.refPix, before='TTYPE1')
-		sd.header.update('CRVAL1', self.refVal, before='TTYPE1')
+		sd.header.insert('TTYPE1', ('CTYPE1', 'FREQ', 'axis 1 is FREQ (frequency)'))
+		sd.header.insert('TTYPE1', ('CDELT1', self.freq[0].chWidth))
+		sd.header.insert('TTYPE1', ('CRPIX1', self.refPix))
+		sd.header.insert('TTYPE1', ('CRVAL1', self.refVal))
 		### Stokes
-		sd.header.update('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)', before='TTYPE1')
+		sd.header.insert('TTYPE1', ('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)'))
 		if self.stokes[0] < 0:
-			sd.header.update('CDELT2', -1.0, before='TTYPE1')
+			sd.header.insert('TTYPE1', ('CDELT2', -1.0))
 		else:
-			sd.header.update('CDELT2', 1.0, before='TTYPE1')
-		sd.header.update('CRPIX2', 1.0, before='TTYPE1')
-		sd.header.update('CRVAL2', float(self.stokes[0]), before='TTYPE1')
+			sd.header.insert('TTYPE1', ('CDELT2', 1.0))
+		sd.header.insert('TTYPE1', ('CRPIX2', 1.0))
+		sd.header.insert('TTYPE1', ('CRVAL2', float(self.stokes[0])))
 		### RA
-		sd.header.update('CTYPE3', 'RA', 'axis 3 is RA axis (pointing)', before='TTYPE1')
-		sd.header.update('CRPIX3', 1.0, before='TTYPE1')
-		sd.header.update('CDELT3', -1.0, before='TTYPE1')
+		sd.header.insert('TTYPE1', ('CTYPE3', 'RA', 'axis 3 is RA axis (pointing)'))
+		sd.header.insert('TTYPE1', ('CRPIX3', 1.0))
+		sd.header.insert('TTYPE1', ('CDELT3', -1.0))
 		### Dec
-		sd.header.update('CTYPE4', 'DEC', 'axis 4 is Dec. axis (pointing)', before='TTYPE1')
-		sd.header.update('CRPIX4', 1.0, before='TTYPE1')
-		sd.header.update('CDELT4', 1.0, before='TTYPE1')
+		sd.header.insert('TTYPE1', ('CTYPE4', 'DEC', 'axis 4 is Dec. axis (pointing)'))
+		sd.header.insert('TTYPE1', ('CRPIX4', 1.0))
+		sd.header.insert('TTYPE1', ('CDELT4', 1.0))
 		
 		self.FITS.append(sd)
 		self.FITS.flush()

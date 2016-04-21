@@ -16,6 +16,7 @@
   * Added optiosn for other model sources to getIonosphericRM.py
   * Fixed a bug in correlateTBW.py/correlateTBN.py that causes the script to usually write out an Extended IDI file
   * Fixed a bug in splitSession.py that caused the script to crash
+  * Updated the various FITS-based writers to remove the old PyFITS API that is no longer supported
 
 1.1.0
   * Updated the lsl.imaging.deconv module to include a source-based CLEAN method and a forward-modeling/least squares method

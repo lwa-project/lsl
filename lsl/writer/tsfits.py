@@ -105,10 +105,10 @@ class TSFITS(object):
 
 			self.standCount = 0
 			primary = pyfits.PrimaryHDU()
-			primary.header.update('OBJECT', 'zenith')
-			primary.header.update('TELESCOP', self.site)
-			primary.header.update('OBSMODE', self.mode)
-			primary.header.update('NSTAND', self.standCount)
+			primary.header['OBJECT'] = 'zenith'
+			primary.header['TELESCOP'] = self.site
+			primary.header['OBSMODE'] = self.mode
+			primary.header['NSTAND'] = self.standCount
 
 			hdulist = pyfits.HDUList([primary])
 			hdulist.writeto(filename)
@@ -147,7 +147,7 @@ class TSFITS(object):
 
 		self.site = site.name
 
-		self.hdulist[0].header.update('TELESCOP', self.site)
+		self.hdulist[0].header['TELESCOP'] = self.site
 
 		self.flush()
 
@@ -235,13 +235,13 @@ class TSFITS(object):
 			firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
 
 			tsfits = pyfits.new_table(colDefs)
-			tsfits.header.update('EXTNAME', 'TIME SERIES', after='tfields')
-			tsfits.header.update('EXTVER', self.standCount, after='EXTNAME')
-			tsfits.header.update('STAND', stand, after='EXTVER')
-			tsfits.header.update('DATE-OBS', firstSample.isoformat())
+			tsfits.header.set('EXTNAME', 'TIME SERIES', after='TFIELDS')
+			tsfits.header.set('EXTVER', self.standCount, after='EXTNAME')
+			tsfits.header.set('STAND', stand, after='EXTVER')
+			tsfits.header['DATE-OBS'] = firstSample.isoformat()
 
 			self.hdulist.append(tsfits)
-			self.hdulist[0].header.update('NSTAND', self.standCount)
+			self.hdulist[0].header['NSTAND'] = self.standCount
 			self.flush()
 			
 			self.hdulist[-1].data.field('pol')[0] = numpy.array([0], dtype=numpy.int16)
@@ -332,13 +332,13 @@ class TSFITS(object):
 				firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
 
 				tsfits = pyfits.new_table(colDefs)
-				tsfits.header.update('EXTNAME', 'TIME SERIES', after='tfields')
-				tsfits.header.update('EXTVER', self.standCount, after='EXTNAME')
-				tsfits.header.update('STAND', stand, after='EXTVER')
-				tsfits.header.update('DATE-OBS', firstSample.isoformat('T'))
+				tsfits.header.set('EXTNAME', 'TIME SERIES', after='TFIELDS')
+				tsfits.header.set('EXTVER', self.standCount, after='EXTNAME')
+				tsfits.header.set('STAND', stand, after='EXTVER')
+				tsfits.header['DATE-OBS'] = firstSample.isoformat('T')
 
 				self.hdulist.append(tsfits)
-				self.hdulist[0].header.update('NSTAND', self.standCount)
+				self.hdulist[0].header['NSTAND'] = self.standCount
 				self.flush()
 				
 				self.hdulist[-1].data.field('pol')[0] = numpy.array([0], dtype=numpy.int16)
@@ -430,13 +430,13 @@ class TSFITS(object):
 				firstSample = datetime.utcfromtimestamp(self.firstSamples[stand])
 
 				tsfits = pyfits.new_table(colDefs)
-				tsfits.header.update('EXTNAME', 'TIME SERIES', after='tfields')
-				tsfits.header.update('EXTVER', self.standCount, after='EXTNAME')
-				tsfits.header.update('STAND', stand, after='EXTVER')
-				tsfits.header.update('DATE-OBS', firstSample.isoformat('T'))
+				tsfits.header.set('EXTNAME', 'TIME SERIES', after='TFIELDS')
+				tsfits.header.set('EXTVER', self.standCount, after='EXTNAME')
+				tsfits.header.set('STAND', stand, after='EXTVER')
+				tsfits.header['DATE-OBS'] = firstSample.isoformat('T')
 
 				self.hdulist.append(tsfits)
-				self.hdulist[0].header.update('NSTAND', self.standCount)
+				self.hdulist[0].header['NSTAND'] = self.standCount
 				self.flush()
 				
 				self.hdulist[-1].data.field('pol')[0] = numpy.array([0], dtype=numpy.int16)
@@ -494,18 +494,18 @@ class TSFITS(object):
 			try:
 				self.hdulist[0].header['TBWBITS']
 			except:
-				self.hdulist[0].header.update('TBWBITS', frame.getDataBits())
+				self.hdulist[0].header['TBWBITS'] = frame.getDataBits()
 				self.flush()
 		else:
 			try:
 				self.hdulist[0].header['FILTER']
 			except:
 				if frame.getFilterCode() is not None:
-					self.hdulist[0].header.update('FILTER', frame.getFilterCode())
+					self.hdulist[0].header['FILTER'] = frame.getFilterCode()
 				if getattr(frame.header, 'gain', None) is not None:
-					self.hdulist[0].header.update('GAIN', frame.header.gain)
+					self.hdulist[0].header['GAIN'] = frame.header.gain
 				if getattr(frame.header, 'tuningWord', None) is not None:
-					self.hdulist[0].header.update('FREQ', frame.getCentralFreq())
+					self.hdulist[0].header['FREQ'] = frame.getCentralFreq()
 				self.flush()
 
 		if self.UseQueue:

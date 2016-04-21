@@ -342,16 +342,16 @@ class UV(object):
 		Added keywords common to all table headers.
 		"""
 		
-		hdr.update('EXTNAME', name, 'UVFITS table name')
-		hdr.update('EXTVER', 1, 'table instance number') 
-		hdr.update('TABREV', revision, 'table format revision number')
+		hdr['EXTNAME'] = (name, 'UVFITS table name')
+		hdr['EXTVER'] = (1, 'table instance number') 
+		hdr['TABREV'] = (revision, 'table format revision number')
 		
 		date = self.refTime.split('-')
 		name = "ZA%s%s%s" % (date[0][2:], date[1], date[2])
-		hdr.update('OBSCODE', name, 'zenith all-sky image')
+		hdr['OBSCODE'] = (name, 'zenith all-sky image')
 		
-		hdr.update('ARRNAM', self.siteName)      
-		hdr.update('RDATE', self.refTime, 'file data reference date')
+		hdr['ARRNAM'] = self.siteName
+		hdr['RDATE'] = (self.refTime, 'file data reference date')
 		
 	def _makeAppendTable(self, extension, AddRows=1):
 		"""
@@ -361,7 +361,7 @@ class UV(object):
 		nrows = self.hdulist[extension].data.shape[0]
 		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
 		for key in list(self.hdulist[extension].header.keys()):
-			tempHDU.header.update(key, self.hdulist[extension].header[key])
+			tempHDU.header[key] = self.hdulist[extension].header[key]
 			
 		return tempHDU
 		
@@ -498,55 +498,55 @@ class UV(object):
 									numpy.array(dateList)], bitpix=-32)
 		primary = pyfits.GroupsHDU(uv)
 		
-		primary.header.update('EXTEND', True, 'indicates UVFITS file')
-		primary.header.update('GROUPS', True, 'indicates UVFITS file')
-		primary.header.update('OBJECT', 'BINARYTB')
-		primary.header.update('TELESCOP', self.siteName)
-		primary.header.update('INSTRUME', self.siteName)
-		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
-		primary.header.update('ORIGIN', 'LSL')
-		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
-		primary.header.update('FXCORVER', '1', 'Correlator version')
-		primary.header.update('LWATYPE', 'UV-ZA', 'LWA FITS file type')
-		primary.header.update('LWAMAJV', UVVersion[0], 'LWA UVFITS file format major version')
-		primary.header.update('LWAMINV', UVVersion[1], 'LWA UVFITS file format minor version')
-		primary.header.update('DATE-OBS', self.refTime, 'UVFITS file data collection date')
+		primary.header['EXTEND'] = (True, 'indicates UVFITS file')
+		primary.header['GROUPS'] = (True, 'indicates UVFITS file')
+		primary.header['OBJECT'] = 'BINARYTB'
+		primary.header['TELESCOP'] = self.siteName
+		primary.header['INSTRUME'] = self.siteName
+		primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+		primary.header['ORIGIN'] = 'LSL'
+		primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
+		primary.header['FXCORVER'] = ('1', 'Correlator version')
+		primary.header['LWATYPE'] = ('UV-ZA', 'LWA FITS file type')
+		primary.header['LWAMAJV'] = (UVVersion[0], 'LWA UVFITS file format major version')
+		primary.header['LWAMINV'] = (UVVersion[1], 'LWA UVFITS file format minor version')
+		primary.header['DATE-OBS'] = (self.refTime, 'UVFITS file data collection date')
 		ts = str(astro.get_date_from_sys())
-		primary.header.update('DATE-MAP', ts.split()[0], 'UVFITS file creation date')
+		primary.header['DATE-MAP'] = (ts.split()[0], 'UVFITS file creation date')
 		
-		primary.header.update('CTYPE2', 'COMPLEX', 'axis 2 is COMPLEX axis')
-		primary.header.update('CDELT2', 1.0)
-		primary.header.update('CRPIX2', 1.0)
-		primary.header.update('CRVAL2', 1.0)
+		primary.header['CTYPE2'] = ('COMPLEX', 'axis 2 is COMPLEX axis')
+		primary.header['CDELT2'] = 1.0
+		primary.header['CRPIX2'] = 1.0
+		primary.header['CRVAL2'] = 1.0
 		
-		primary.header.update('CTYPE3', 'STOKES', 'axis 3 is STOKES axis (polarization)')
+		primary.header['CTYPE3'] = ('STOKES', 'axis 3 is STOKES axis (polarization)')
 		if self.stokes[0] < 0:
-			primary.header.update('CDELT3', -1.0)
+			primary.header['CDELT3'] = -1.0
 		else:
-			primary.header.update('CDELT3', 1.0)
-		primary.header.update('CRPIX3', 1.0)
-		primary.header.update('CRVAL3', float(self.stokes[0]))
+			primary.header['CDELT3'] = 1.0
+		primary.header['CRPIX3'] = 1.0
+		primary.header['CRVAL3'] = float(self.stokes[0])
 		
-		primary.header.update('CTYPE4', 'FREQ', 'axis 4 is FREQ axis (frequency)')
-		primary.header.update('CDELT4', self.freq[0].chWidth)
-		primary.header.update('CRPIX4', self.refPix)
-		primary.header.update('CRVAL4', self.refVal)
+		primary.header['CTYPE4'] = ('FREQ', 'axis 4 is FREQ axis (frequency)')
+		primary.header['CDELT4'] = self.freq[0].chWidth
+		primary.header['CRPIX4'] = self.refPix
+		primary.header['CRVAL4'] = self.refVal
 		
-		primary.header.update('CTYPE5', 'RA', 'axis 5 is RA axis (position of phase center)')
-		primary.header.update('CDELT5', 0.0)
-		primary.header.update('CRPIX5', 1.0)
-		primary.header.update('CRVAL5', 0.0)
+		primary.header['CTYPE5'] = ('RA', 'axis 5 is RA axis (position of phase center)')
+		primary.header['CDELT5'] = 0.0
+		primary.header['CRPIX5'] = 1.0
+		primary.header['CRVAL5'] = 0.0
 		
-		primary.header.update('CTYPE6', 'DEC', 'axis 6 is DEC axis (position of phase center)')
-		primary.header.update('CDELT6', 0.0)
-		primary.header.update('CRPIX6', 1.0)
-		primary.header.update('CRVAL6', 0.0)
+		primary.header['CTYPE6'] = ('DEC', 'axis 6 is DEC axis (position of phase center)')
+		primary.header['CDELT6'] = 0.0
+		primary.header['CRPIX6'] = 1.0
+		primary.header['CRVAL6'] = 0.0
 		
-		primary.header.update('TELESCOP', self.siteName)
-		primary.header.update('OBSERVER', 'ZASKY')
-		primary.header.update('SORT', 'TB', 'data is sorted in [time,baseline] order')
+		primary.header['TELESCOP'] = self.siteName
+		primary.header['OBSERVER'] = 'ZASKY'
+		primary.header['SORT'] = ('TB', 'data is sorted in [time,baseline] order')
 		
-		primary.header.update('VISSCALE', 1.0, 'UV data scale factor')
+		primary.header['VISSCALE'] = (1.0, 'UV data scale factor')
 		
 		self.FITS.append(primary)
 		self.FITS.flush()
@@ -605,17 +605,17 @@ class UV(object):
 		ag = pyfits.new_table(colDefs)
 		self._addCommonKeywords(ag.header, 'AIPS AN', 1)
 		
-		ag.header.update('EXTVER', 1, 'array ID')
-		ag.header.update('ARRNAM', self.siteName)
-		ag.header.update('FRAME', 'GEOCENTRIC', 'coordinate system')
-		ag.header.update('NUMORB', 0, 'number of orbital parameters')
-		ag.header.update('FREQ', self.refVal, 'reference frequency (Hz)')
-		ag.header.update('TIMSYS', 'UTC', 'time coordinate system')
+		ag.header['EXTVER'] = (1, 'array ID')
+		ag.header['ARRNAM'] = self.siteName
+		ag.header['FRAME'] = ('GEOCENTRIC', 'coordinate system')
+		ag.header['NUMORB'] = (0, 'number of orbital parameters')
+		ag.header['FREQ'] = (self.refVal, 'reference frequency (Hz)')
+		ag.header['TIMSYS'] = ('UTC', 'time coordinate system')
 
 		date = self.refTime2AstroDate()
 		utc0 = date.to_jd()
 		gst0 = astro.get_apparent_sidereal_time(utc0)
-		ag.header.update('GSTIA0', gst0 * 15, 'GAST (deg) at RDATE 0 hours')
+		ag.header['GSTIA0'] = (gst0 * 15, 'GAST (deg) at RDATE 0 hours')
 		
 		utc1 = utc0 + 1
 		gst1 = astro.get_apparent_sidereal_time(utc1)
@@ -623,7 +623,7 @@ class UV(object):
 			gst1 += 24.0
 		ds = gst1 - gst0
 		deg = ds * 15.0      
-		ag.header.update('DEGPDY', 360.0 + deg, 'rotation rate of the earth (deg/day)')
+		ag.header['DEGPDY'] = (360.0 + deg, 'rotation rate of the earth (deg/day)')
 		
 		refDate = self.refTime2AstroDate()
 		refMJD = refDate.to_jd() - astro.MJD_OFFSET
@@ -631,16 +631,16 @@ class UV(object):
 		if eop is None:
 			eop = geodesy.EOP(mjd=refMJD)
 			
-		ag.header.update('UT1UTC', eop.utDiff, 'difference UT1 - UTC for reference date')
-		ag.header.update('IATUTC', astro.leap_secs(utc0), 'TAI - UTC for reference date')
-		ag.header.update('POLARX', eop.x)
-		ag.header.update('POLARY', eop.y)
+		ag.header['UT1UTC'] = (eop.utDiff, 'difference UT1 - UTC for reference date')
+		ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
+		ag.header['POLARX'] = eop.x
+		ag.header['POLARY'] = eop.y
 		
-		ag.header.update('ARRAYX', self.array[0]['center'][0], 'array ECI X coordinate (m)')
-		ag.header.update('ARRAYY', self.array[0]['center'][1], 'array ECI Y coordinate (m)')
-		ag.header.update('ARRAYZ', self.array[0]['center'][2], 'array ECI Z coordinate (m)')
+		ag.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
+		ag.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')
+		ag.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECI Z coordinate (m)')
 		
-		ag.header.update('NOSTAMAP', int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
+		ag.header['NOSTAMAP'] = (int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
 		
 		if dummy:
 			self.an = ag

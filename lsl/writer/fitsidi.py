@@ -352,23 +352,23 @@ class IDI(object):
 		Added keywords common to all table headers.
 		"""
 		
-		hdr.update('EXTNAME', name, 'FITS-IDI table name')
-		hdr.update('EXTVER', 1, 'table instance number') 
-		hdr.update('TABREV', revision, 'table format revision number')
-		hdr.update('NO_STKD', self.nStokes, 'number of Stokes parameters')
-		hdr.update('STK_1', self.stokes[0], 'first Stokes parameter')
-		hdr.update('NO_BAND', 1, 'number of frequency bands')
-		hdr.update('NO_CHAN', self.nChan, 'number of frequency channels')
-		hdr.update('REF_FREQ', self.refVal, 'reference frequency (Hz)')
-		hdr.update('CHAN_BW', self.channelWidth, 'channel bandwidth (Hz)')
-		hdr.update('REF_PIXL', float(self.refPix), 'reference frequency bin')
+		hdr['EXTNAME'] = (name, 'FITS-IDI table name')
+		hdr['EXTVER'] = (1, 'table instance number') 
+		hdr['TABREV'] = (revision, 'table format revision number')
+		hdr['NO_STKD'] = (self.nStokes, 'number of Stokes parameters')
+		hdr['STK_1'] = (self.stokes[0], 'first Stokes parameter')
+		hdr['NO_BAND'] = (1, 'number of frequency bands')
+		hdr['NO_CHAN'] = (self.nChan, 'number of frequency channels')
+		hdr['REF_FREQ'] = (self.refVal, 'reference frequency (Hz)')
+		hdr['CHAN_BW'] = (self.channelWidth, 'channel bandwidth (Hz)')
+		hdr['REF_PIXL'] = (float(self.refPix), 'reference frequency bin')
 		
 		date = self.refTime.split('-')
 		name = "ZA%s%s%s" % (date[0][2:], date[1], date[2])
-		hdr.update('OBSCODE', name, 'zenith all-sky image')
+		hdr['OBSCODE'] = (name, 'zenith all-sky image')
 		
-		hdr.update('ARRNAM', self.siteName)      
-		hdr.update('RDATE', self.refTime, 'file data reference date')
+		hdr['ARRNAM'] = self.siteName      
+		hdr['RDATE'] = (self.refTime, 'file data reference date')
 		
 	def _makeAppendTable(self, extension, AddRows=1):
 		"""
@@ -378,7 +378,7 @@ class IDI(object):
 		nrows = self.hdulist[extension].data.shape[0]
 		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
 		for key in list(self.hdulist[extension].header.keys()):
-			tempHDU.header.update(key, self.hdulist[extension].header[key])
+			tempHDU.header[key] = self.hdulist[extension].header[key]
 			
 		return tempHDU
 		
@@ -398,24 +398,24 @@ class IDI(object):
 		
 		primary = pyfits.PrimaryHDU()
 		
-		primary.header.update('NAXIS', 0, 'indicates IDI file')
-		primary.header.update('EXTEND', True, 'indicates IDI file')
-		primary.header.update('GROUPS', True, 'indicates IDI file')
-		primary.header.update('GCOUNT', 0)
-		primary.header.update('PCOUNT', 0)
-		primary.header.update('OBJECT', 'BINARYTB')
-		primary.header.update('TELESCOP', self.siteName)
-		primary.header.update('INSTRUME', self.siteName)
-		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
-		primary.header.update('ORIGIN', 'LSL')
-		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
-		primary.header.update('FXCORVER', '1', 'Correlator version')
-		primary.header.update('LWATYPE', 'IDI-ZA', 'LWA FITS file type')
-		primary.header.update('LWAMAJV', IDIVersion[0], 'LWA FITS file format major version')
-		primary.header.update('LWAMINV', IDIVersion[1], 'LWA FITS file format minor version')
-		primary.header.update('DATE-OBS', self.refTime, 'IDI file data collection date')
+		primary.header['NAXIS'] = (0, 'indicates IDI file')
+		primary.header['EXTEND'] = (True, 'indicates IDI file')
+		primary.header['GROUPS'] = (True, 'indicates IDI file')
+		primary.header['GCOUNT'] = 0
+		primary.header['PCOUNT'] = 0
+		primary.header['OBJECT'] = 'BINARYTB'
+		primary.header['TELESCOP'] = self.siteName
+		primary.header['INSTRUME'] = self.siteName
+		primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+		primary.header['ORIGIN'] = 'LSL'
+		primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
+		primary.header['FXCORVER'] = ('1', 'Correlator version')
+		primary.header['LWATYPE'] = ('IDI-ZA', 'LWA FITS file type')
+		primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
+		primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
+		primary.header['DATE-OBS'] = (self.refTime, 'IDI file data collection date')
 		ts = str(astro.get_date_from_sys())
-		primary.header.update('DATE-MAP', ts.split()[0], 'IDI file creation date')
+		primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
 		
 		self.FITS.append(primary)
 		self.FITS.flush()
@@ -462,17 +462,17 @@ class IDI(object):
 		ag = pyfits.new_table(colDefs)
 		self._addCommonKeywords(ag.header, 'ARRAY_GEOMETRY', 1)
 		
-		ag.header.update('EXTVER', 1, 'array ID')
-		ag.header.update('ARRNAM', self.siteName)
-		ag.header.update('FRAME', 'GEOCENTRIC', 'coordinate system')
-		ag.header.update('NUMORB', 0, 'number of orbital parameters')
-		ag.header.update('FREQ', self.refVal, 'reference frequency (Hz)')
-		ag.header.update('TIMSYS', 'UTC', 'time coordinate system')
+		ag.header['EXTVER'] = (1, 'array ID')
+		ag.header['ARRNAM'] = self.siteName
+		ag.header['FRAME'] = ('GEOCENTRIC', 'coordinate system')
+		ag.header['NUMORB'] = (0, 'number of orbital parameters')
+		ag.header['FREQ'] = (self.refVal, 'reference frequency (Hz)')
+		ag.header['TIMSYS'] = ('UTC', 'time coordinate system')
 		
 		date = self.refTime2AstroDate()
 		utc0 = date.to_jd()
 		gst0 = astro.get_apparent_sidereal_time(utc0)
-		ag.header.update('GSTIA0', gst0 * 15, 'GAST (deg) at RDATE 0 hours')
+		ag.header['GSTIA0'] = (gst0 * 15, 'GAST (deg) at RDATE 0 hours')
 		
 		utc1 = utc0 + 1
 		gst1 = astro.get_apparent_sidereal_time(utc1)
@@ -480,7 +480,7 @@ class IDI(object):
 			gst1 += 24.0
 		ds = gst1 - gst0
 		deg = ds * 15.0      
-		ag.header.update('DEGPDY', 360.0 + deg, 'rotation rate of the earth (deg/day)')
+		ag.header['DEGPDY'] = (360.0 + deg, 'rotation rate of the earth (deg/day)')
 		
 		refDate = self.refTime2AstroDate()
 		refMJD = refDate.to_jd() - astro.MJD_OFFSET
@@ -488,16 +488,16 @@ class IDI(object):
 		if eop is None:
 			eop = geodesy.EOP(mjd=refMJD)
 			
-		ag.header.update('UT1UTC', eop.utDiff, 'difference UT1 - UTC for reference date')
-		ag.header.update('IATUTC', astro.leap_secs(utc0), 'TAI - UTC for reference date')
-		ag.header.update('POLARX', eop.x)
-		ag.header.update('POLARY', eop.y)
+		ag.header['UT1UTC'] = (eop.utDiff, 'difference UT1 - UTC for reference date')
+		ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
+		ag.header['POLARX'] = eop.x
+		ag.header['POLARY'] = eop.y
 		
-		ag.header.update('ARRAYX', self.array[0]['center'][0], 'array ECI X coordinate (m)')
-		ag.header.update('ARRAYY', self.array[0]['center'][1], 'array ECI Y coordinate (m)')
-		ag.header.update('ARRAYZ', self.array[0]['center'][2], 'array ECI Z coordinate (m)')
+		ag.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
+		ag.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')
+		ag.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECI Z coordinate (m)')
 		
-		ag.header.update('NOSTAMAP', int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
+		ag.header['NOSTAMAP'] = (int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
 		
 		ag.name = 'ARRAY_GEOMETRY'
 		self.FITS.append(ag)
@@ -594,8 +594,8 @@ class IDI(object):
 		an = pyfits.new_table(colDefs)
 		self._addCommonKeywords(an.header, 'ANTENNA', 1)
 		
-		an.header.update('NOPCAL', 2, 'number of polarization parameters')
-		an.header.update('POLTYPE', 'X-Y LIN', 'polarization parameterization')
+		an.header['NOPCAL'] = (2, 'number of polarization parameters')
+		an.header['POLTYPE'] = ('X-Y LIN', 'polarization parameterization')
 		
 		an.name = 'ANTENNA'
 		self.FITS.append(an)
@@ -656,10 +656,10 @@ class IDI(object):
 		bp = pyfits.new_table(colDefs)
 		self._addCommonKeywords(bp.header, 'BANDPASS', 1)
 		
-		bp.header.update('NO_ANT', self.nAnt)
-		bp.header.update('NO_POL', 2)
-		bp.header.update('NO_BACH', self.nChan)
-		bp.header.update('STRT_CHN', self.refPix)
+		bp.header['NO_ANT'] = self.nAnt
+		bp.header['NO_POL'] = 2
+		bp.header['NO_BACH'] = self.nChan
+		bp.header['STRT_CHN'] = self.refPix
 		
 		bp.name = 'BANDPASS'
 		self.FITS.append(bp)
@@ -1033,54 +1033,54 @@ class IDI(object):
 		uv = pyfits.new_table(colDefs)
 		self._addCommonKeywords(uv.header, 'UV_DATA', 1)
 		
-		uv.header.update('NMATRIX', 1, 'number of UV data matricies')
-		uv.header.update('MAXIS', 6, 'number of UV data matrix axes')
-		uv.header.update('TMATX13', True, 'axis 13 contains UV matrix')
+		uv.header['NMATRIX'] = (1, 'number of UV data matricies')
+		uv.header['MAXIS'] = (6, 'number of UV data matrix axes')
+		uv.header['TMATX13'] = (True, 'axis 13 contains UV matrix')
 		
-		uv.header.update('MAXIS1', 2, 'number of pixels in COMPLEX axis')
-		uv.header.update('CTYPE1', 'COMPLEX', 'axis 1 is COMPLEX axis')
-		uv.header.update('CDELT1', 1.0)
-		uv.header.update('CRPIX1', 1.0)
-		uv.header.update('CRVAL1', 1.0)
+		uv.header['MAXIS1'] = (2, 'number of pixels in COMPLEX axis')
+		uv.header['CTYPE1'] = ('COMPLEX', 'axis 1 is COMPLEX axis')
+		uv.header['CDELT1'] = 1.0
+		uv.header['CRPIX1'] = 1.0
+		uv.header['CRVAL1'] = 1.0
 		
-		uv.header.update('MAXIS2', self.nStokes, 'number of pixels in STOKES axis')
-		uv.header.update('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)')
+		uv.header['MAXIS2'] = (self.nStokes, 'number of pixels in STOKES axis')
+		uv.header['CTYPE2'] = ('STOKES', 'axis 2 is STOKES axis (polarization)')
 		if self.stokes[0] < 0:
-			uv.header.update('CDELT2', -1.0)
+			uv.header['CDELT2'] = -1.0
 		else:
-			uv.header.update('CDELT2', 1.0)
-		uv.header.update('CRPIX2', 1.0)
-		uv.header.update('CRVAL2', float(self.stokes[0]))
+			uv.header['CDELT2'] = 1.0
+		uv.header['CRPIX2'] = 1.0
+		uv.header['CRVAL2'] = float(self.stokes[0])
 		
-		uv.header.update('MAXIS3', self.nChan, 'number of pixels in FREQ axis')
-		uv.header.update('CTYPE3', 'FREQ', 'axis 3 is FREQ axis (frequency)')
-		uv.header.update('CDELT3', self.freq[0].chWidth)
-		uv.header.update('CRPIX3', self.refPix)
-		uv.header.update('CRVAL3', self.refVal)
+		uv.header['MAXIS3'] = (self.nChan, 'number of pixels in FREQ axis')
+		uv.header['CTYPE3'] = ('FREQ', 'axis 3 is FREQ axis (frequency)')
+		uv.header['CDELT3'] = self.freq[0].chWidth
+		uv.header['CRPIX3'] = self.refPix
+		uv.header['CRVAL3'] = self.refVal
 		
-		uv.header.update('MAXIS4', 1, 'number of pixels in BAND (IF) axis')
-		uv.header.update('CTYPE4', 'BAND', 'axis 4 is BAND axis')
-		uv.header.update('CDELT4', 1.0)
-		uv.header.update('CRPIX4', 1.0)
-		uv.header.update('CRVAL4', 1.0)
+		uv.header['MAXIS4'] = (1, 'number of pixels in BAND (IF) axis')
+		uv.header['CTYPE4'] = ('BAND', 'axis 4 is BAND axis')
+		uv.header['CDELT4'] = 1.0
+		uv.header['CRPIX4'] = 1.0
+		uv.header['CRVAL4'] = 1.0
 		
-		uv.header.update('MAXIS5', 1, 'number of pixels in RA axis')
-		uv.header.update('CTYPE5', 'RA', 'axis 5 is RA axis (position of phase center)')
-		uv.header.update('CDELT5', 0.0)
-		uv.header.update('CRPIX5', 1.0)
-		uv.header.update('CRVAL5', 0.0)
+		uv.header['MAXIS5'] = (1, 'number of pixels in RA axis')
+		uv.header['CTYPE5'] = ('RA', 'axis 5 is RA axis (position of phase center)')
+		uv.header['CDELT5'] = 0.0
+		uv.header['CRPIX5'] = 1.0
+		uv.header['CRVAL5'] = 0.0
 		
-		uv.header.update('MAXIS6', 1, 'number of pixels in DEC axis')
-		uv.header.update('CTYPE6', 'DEC', 'axis 6 is DEC axis (position of phase center)')
-		uv.header.update('CDELT6', 0.0)
-		uv.header.update('CRPIX6', 1.0)
-		uv.header.update('CRVAL6', 0.0)
+		uv.header['MAXIS6'] = (1, 'number of pixels in DEC axis')
+		uv.header['CTYPE6'] = ('DEC', 'axis 6 is DEC axis (position of phase center)')
+		uv.header['CDELT6'] = 0.0
+		uv.header['CRPIX6'] = 1.0
+		uv.header['CRVAL6'] = 0.0
 		
-		uv.header.update('TELESCOP', self.siteName)
-		uv.header.update('OBSERVER', 'ZASKY')
-		uv.header.update('SORT', 'TB', 'data is sorted in [time,baseline] order')
+		uv.header['TELESCOP'] = self.siteName
+		uv.header['OBSERVER'] = 'ZASKY'
+		uv.header['SORT'] = ('TB', 'data is sorted in [time,baseline] order')
 		
-		uv.header.update('VISSCALE', 1.0, 'UV data scale factor')
+		uv.header['VISSCALE'] = (1.0, 'UV data scale factor')
 		
 		uv.name = 'UV_DATA'
 		self.FITS.append(uv)
@@ -1255,24 +1255,24 @@ class AIPS(IDI):
 		
 		primary = pyfits.PrimaryHDU()
 		
-		primary.header.update('NAXIS', 0, 'indicates IDI file')
-		primary.header.update('EXTEND', True, 'indicates IDI file')
-		primary.header.update('GROUPS', True, 'indicates IDI file')
-		primary.header.update('GCOUNT', 0)
-		primary.header.update('PCOUNT', 0)
-		primary.header.update('OBJECT', 'BINARYTB')
-		primary.header.update('TELESCOP', self.siteName)
-		primary.header.update('INSTRUME', self.siteName)
-		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
-		primary.header.update('ORIGIN', 'LSL')
-		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
-		primary.header.update('FXCORVER', '1', 'Correlator version')
-		primary.header.update('LWATYPE', 'IDI-AIPS-ZA', 'LWA FITS file type')
-		primary.header.update('LWAMAJV', IDIVersion[0], 'LWA FITS file format major version')
-		primary.header.update('LWAMINV', IDIVersion[1], 'LWA FITS file format minor version')
-		primary.header.update('DATE-OBS', self.refTime, 'IDI file data collection date')
+		primary.header['NAXIS'] = (0, 'indicates IDI file')
+		primary.header['EXTEND'] = (True, 'indicates IDI file')
+		primary.header['GROUPS'] = (True, 'indicates IDI file')
+		primary.header['GCOUNT'] = 0
+		primary.header['PCOUNT'] = 0
+		primary.header['OBJECT'] = 'BINARYTB'
+		primary.header['TELESCOP'] = self.siteName
+		primary.header['INSTRUME'] = self.siteName
+		primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+		primary.header['ORIGIN'] = 'LSL'
+		primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
+		primary.header['FXCORVER'] = ('1', 'Correlator version')
+		primary.header['LWATYPE'] = ('IDI-AIPS-ZA', 'LWA FITS file type')
+		primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
+		primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
+		primary.header['DATE-OBS'] = (self.refTime, 'IDI file data collection date')
 		ts = str(astro.get_date_from_sys())
-		primary.header.update('DATE-MAP', ts.split()[0], 'IDI file creation date')
+		primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
 		
 		self.FITS.append(primary)
 		self.FITS.flush()
@@ -1369,24 +1369,24 @@ class ExtendedIDI(IDI):
 		
 		primary = pyfits.PrimaryHDU()
 		
-		primary.header.update('NAXIS', 0, 'indicates IDI file')
-		primary.header.update('EXTEND', True, 'indicates IDI file')
-		primary.header.update('GROUPS', True, 'indicates IDI file')
-		primary.header.update('GCOUNT', 0)
-		primary.header.update('PCOUNT', 0)
-		primary.header.update('OBJECT', 'BINARYTB')
-		primary.header.update('TELESCOP', self.siteName)
-		primary.header.update('INSTRUME', self.siteName)
-		primary.header.update('OBSERVER', 'ZASKY', 'zenith all-sky image')
-		primary.header.update('ORIGIN', 'LSL')
-		primary.header.update('CORRELAT', 'LWASWC', 'Correlator used')
-		primary.header.update('FXCORVER', '1', 'Correlator version')
-		primary.header.update('LWATYPE', 'IDI-EXTENDED-ZA', 'LWA FITS file type')
-		primary.header.update('LWAMAJV', IDIVersion[0], 'LWA FITS file format major version')
-		primary.header.update('LWAMINV', IDIVersion[1], 'LWA FITS file format minor version')
-		primary.header.update('DATE-OBS', self.refTime, 'IDI file data collection date')
+		primary.header['NAXIS'] = (0, 'indicates IDI file')
+		primary.header['EXTEND'] = (True, 'indicates IDI file')
+		primary.header['GROUPS'] = (True, 'indicates IDI file')
+		primary.header['GCOUNT'] = 0
+		primary.header['PCOUNT'] = 0
+		primary.header['OBJECT'] = 'BINARYTB'
+		primary.header['TELESCOP'] = self.siteName
+		primary.header['INSTRUME'] = self.siteName
+		primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+		primary.header['ORIGIN'] = 'LSL'
+		primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
+		primary.header['FXCORVER'] = ('1', 'Correlator version')
+		primary.header['LWATYPE'] = ('IDI-EXTENDED-ZA', 'LWA FITS file type')
+		primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
+		primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
+		primary.header['DATE-OBS'] = (self.refTime, 'IDI file data collection date')
 		ts = str(astro.get_date_from_sys())
-		primary.header.update('DATE-MAP', ts.split()[0], 'IDI file creation date')
+		primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
 		
 		self.FITS.append(primary)
 		self.FITS.flush()
@@ -1604,54 +1604,54 @@ class ExtendedIDI(IDI):
 		uv = pyfits.new_table(colDefs)
 		self._addCommonKeywords(uv.header, 'UV_DATA', 1)
 		
-		uv.header.update('NMATRIX', 1, 'number of UV data matricies')
-		uv.header.update('MAXIS', 6, 'number of UV data matrix axes')
-		uv.header.update('TMATX13', True, 'axis 13 contains UV matrix')
+		uv.header['NMATRIX'] = (1, 'number of UV data matricies')
+		uv.header['MAXIS'] = (6, 'number of UV data matrix axes')
+		uv.header['TMATX13'] = (True, 'axis 13 contains UV matrix')
 		
-		uv.header.update('MAXIS1', 2, 'number of pixels in COMPLEX axis')
-		uv.header.update('CTYPE1', 'COMPLEX', 'axis 1 is COMPLEX axis')
-		uv.header.update('CDELT1', 1.0)
-		uv.header.update('CRPIX1', 1.0)
-		uv.header.update('CRVAL1', 1.0)
+		uv.header['MAXIS1'] = (2, 'number of pixels in COMPLEX axis')
+		uv.header['CTYPE1'] = ('COMPLEX', 'axis 1 is COMPLEX axis')
+		uv.header['CDELT1'] = 1.0
+		uv.header['CRPIX1'] = 1.0
+		uv.header['CRVAL1'] = 1.0
 		
-		uv.header.update('MAXIS2', self.nStokes, 'number of pixels in STOKES axis')
-		uv.header.update('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)')
+		uv.header['MAXIS2'] = (self.nStokes, 'number of pixels in STOKES axis')
+		uv.header['CTYPE2'] = ('STOKES', 'axis 2 is STOKES axis (polarization)')
 		if self.stokes[0] < 0:
-			uv.header.update('CDELT2', -1.0)
+			uv.header['CDELT2'] = -1.0
 		else:
-			uv.header.update('CDELT2', 1.0)
-		uv.header.update('CRPIX2', 1.0)
-		uv.header.update('CRVAL2', float(self.stokes[0]))
+			uv.header['CDELT2'] = 1.0
+		uv.header['CRPIX2'] = 1.0
+		uv.header['CRVAL2'] = float(self.stokes[0])
 		
-		uv.header.update('MAXIS3', self.nChan, 'number of pixels in FREQ axis')
-		uv.header.update('CTYPE3', 'FREQ', 'axis 3 is FREQ axis (frequency)')
-		uv.header.update('CDELT3', self.freq[0].chWidth)
-		uv.header.update('CRPIX3', self.refPix)
-		uv.header.update('CRVAL3', self.refVal)
+		uv.header['MAXIS3'] = (self.nChan, 'number of pixels in FREQ axis')
+		uv.header['CTYPE3'] = ('FREQ', 'axis 3 is FREQ axis (frequency)')
+		uv.header['CDELT3'] = self.freq[0].chWidth
+		uv.header['CRPIX3'] = self.refPix
+		uv.header['CRVAL3'] = self.refVal
 		
-		uv.header.update('MAXIS4', 1, 'number of pixels in BAND (IF) axis')
-		uv.header.update('CTYPE4', 'BAND', 'axis 4 is BAND axis')
-		uv.header.update('CDELT4', 1.0)
-		uv.header.update('CRPIX4', 1.0)
-		uv.header.update('CRVAL4', 1.0)
+		uv.header['MAXIS4'] = (1, 'number of pixels in BAND (IF) axis')
+		uv.header['CTYPE4'] = ('BAND', 'axis 4 is BAND axis')
+		uv.header['CDELT4'] = 1.0
+		uv.header['CRPIX4'] = 1.0
+		uv.header['CRVAL4'] = 1.0
 		
-		uv.header.update('MAXIS5', 1, 'number of pixels in RA axis')
-		uv.header.update('CTYPE5', 'RA', 'axis 5 is RA axis (position of phase center)')
-		uv.header.update('CDELT5', 0.0)
-		uv.header.update('CRPIX5', 1.0)
-		uv.header.update('CRVAL5', 0.0)
+		uv.header['MAXIS5'] = (1, 'number of pixels in RA axis')
+		uv.header['CTYPE5'] = ('RA', 'axis 5 is RA axis (position of phase center)')
+		uv.header['CDELT5'] = 0.0
+		uv.header['CRPIX5'] = 1.0
+		uv.header['CRVAL5'] = 0.0
 		
-		uv.header.update('MAXIS6', 1, 'number of pixels in DEC axis')
-		uv.header.update('CTYPE6', 'DEC', 'axis 6 is DEC axis (position of phase center)')
-		uv.header.update('CDELT6', 0.0)
-		uv.header.update('CRPIX6', 1.0)
-		uv.header.update('CRVAL6', 0.0)
+		uv.header['MAXIS6'] = (1, 'number of pixels in DEC axis')
+		uv.header['CTYPE6'] = ('DEC', 'axis 6 is DEC axis (position of phase center)')
+		uv.header['CDELT6'] = 0.0
+		uv.header['CRPIX6'] = 1.0
+		uv.header['CRVAL6'] = 0.0
 		
-		uv.header.update('TELESCOP', self.siteName)
-		uv.header.update('OBSERVER', 'ZASKY')
-		uv.header.update('SORT', 'TB', 'data is sorted in [time,baseline] order')
+		uv.header['TELESCOP'] = self.siteName
+		uv.header['OBSERVER'] = 'ZASKY'
+		uv.header['SORT'] = ('TB', 'data is sorted in [time,baseline] order')
 		
-		uv.header.update('VISSCALE', 1.0, 'UV data scale factor')
+		uv.header['VISSCALE'] = (1.0, 'UV data scale factor')
 		
 		uv.name = 'UV_DATA'
 		self.FITS.append(uv)
