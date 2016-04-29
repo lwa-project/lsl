@@ -13,7 +13,7 @@
   * Updated the updateLSLSSMIF.py script to use the new LWA1 SSMIF location on the archive
   * Added new ionosphere model sources to the lsl.misc.ionosphere module
   * Changed the disk caching to lsl.misc.ionosphere to store only gzipped files
-  * Added optiosn for other model sources to getIonosphericRM.py
+  * Added options for other model sources to getIonosphericRM.py
   * Fixed a bug in correlateTBW.py/correlateTBN.py that causes the script to usually write out an Extended IDI file
   * Fixed a bug in splitSession.py that caused the script to crash
   * Updated the various FITS-based writers to remove the old PyFITS API that is no longer supported
