@@ -10,7 +10,7 @@ import numpy
 import ephem
 import getopt
 
-from lsl.common import stations
+from lsl.common import stations, metabundle
 from lsl.reader.ldp import LWA1DataFile
 from lsl.correlator import fx as fxc
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
