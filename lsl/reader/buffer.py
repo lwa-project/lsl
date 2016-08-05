@@ -12,6 +12,9 @@ Buffer for dealing with out-of-order/missing frames.
 .. versionchanged:: 1.0.0
 	Added back in the DRX FrameBuffers since they might be useful.
 	Dropped TBW support from within the FrameBuffer class.
+	
+.. versionchanged:: 1.0.2
+	Added support for the LWA-SV ADP DRX8 mode
 """
 
 import copy
@@ -22,9 +25,9 @@ except ImportError:
 	from lsl.misc.OrderedDict import OrderedDict
 
 
-__version__ = '0.8'
+__version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', '__version__', '__revision__', '__all__']
+__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'DRX8FrameBuffer', '__version__', '__revision__', '__all__']
 
 
 def _cmpStands(x, y):
@@ -88,13 +91,16 @@ class FrameBuffer(object):
 		      * list of beams
 		      * list of tunings
 		      * list of pols.
+		  * DRX8
+		      * list of beams
+		      * list of pols.
 		By doing this, we should be able to keep up with when the buffer 
 		is full and to help figure out which stands/beam/tunings/pols. are 
 		missing.
 		"""
 		
 		# Input validation
-		if mode.upper() not in ('TBN', 'DRX'):
+		if mode.upper() not in ('TBN', 'DRX', 'DRX8'):
 			raise RuntimeError("Invalid observing mode '%s'" % mode)
 			
 		if mode.upper() == 'TBN':
@@ -102,10 +108,15 @@ class FrameBuffer(object):
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
 					
-		else:
+		elif mode.upper() == 'DRX':
 			for tune in tunes:
 				if tune not in (1, 2):
 					raise RuntimeError("Invalid tuning '%i'" % tune)
+			for pol in pols:
+				if pol not in (0, 1):
+					raise RuntimeError("Invalid polarization '%i'" % pol)
+					
+		else:
 			for pol in pols:
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
@@ -506,6 +517,101 @@ class DRXFrameBuffer(FrameBuffer):
 		# Get out the frame parameters and fix-up the header
 		beam, tune, pol = frameParameters
 		fillFrame.header.drxID = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
+		
+		# Zero the data for the fill packet
+		fillFrame.data.iq *= 0
+		
+		# Invalidate the frame
+		fillFrame.valid = False
+		
+		return fillFrame
+
+
+class DRX8FrameBuffer(FrameBuffer):
+	"""
+	A sub-type of FrameBuffer specifically for dealing with DRX8 frames.
+	See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+	buffering is implemented.
+	
+	Keywords:
+	beams
+	  list of beam to expect packets for
+	  
+	tunes
+	  list of tunings to expect packets for
+	  
+	pols
+	  list of polarizations to expect packets for
+	  
+	nSegments
+	  number of ring segments to use for the buffer (default is 10)
+	  
+	ReorderFrames
+	  whether or not to reorder frames returned by get() or flush() by 
+	  stand/polarization (default is False)
+	  
+	The number of segements in the ring can be converted to a buffer time in 
+	seconds:
+	
+	+----------+--------------------------------------------------+
+	|          |                DRX8 Filter Code                  |
+	| Segments +------+------+------+------+------+-------+-------+
+	|          |  1   |  2   |  3   |  4   |  5   |  6    |  7    |
+	+----------+------+------+------+------+------+-------+-------+
+	|    10    | 0.16 | 0.08 | 0.04 | 0.02 | 0.01 | 0.004 | 0.002 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    20    | 0.33 | 0.16 | 0.08 | 0.04 | 0.02 | 0.008 | 0.004 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    30    | 0.49 | 0.25 | 0.12 | 0.06 | 0.03 | 0.013 | 0.006 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    40    | 0.66 | 0.33 | 0.16 | 0.08 | 0.03 | 0.017 | 0.008 |
+	+----------+------+------+------+------+------+-------+-------+
+	|    50    | 0.82 | 0.41 | 0.20 | 0.10 | 0.04 | 0.021 | 0.010 |
+	+----------+------+------+------+------+------+-------+-------+
+	|   100    | 1.64 | 0.82 | 0.41 | 0.20 | 0.08 | 0.042 | 0.021 |
+	
+	"""
+	
+	def __init__(self, beams=[], tunes=[1], pols=[0, 1], nSegments=10, ReorderFrames=False):
+		super(DRX8FrameBuffer, self).__init__(mode='DRX8', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
+		
+	def calcFrames(self):
+		"""
+		Calculate the maximum number of frames that we expect from 
+		the setup of the observations and a list of tuples that describes
+		all of the possible stand/pol combination.
+		"""
+		
+		nFrames = 0
+		frameList = []
+		
+		nFrames = len(self.beams)*len(self.tunes)*len(self.pols)
+		for beam in self.beams:
+			for pol in self.pols:
+				frameList.append((beam,pol))
+					
+		return (nFrames, frameList)
+		
+	def figureOfMerit(self, frame):
+		"""
+		Figure of merit for sorting frames.  For DRX it is:
+		    <frame timetag in ticks>
+		"""
+		
+		return frame.data.timeTag
+		
+	def createFill(self, key, frameParameters):
+		"""
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+		"""
+
+		# Get a template based on the first frame for the current buffer
+		fillFrame = copy.deepcopy(self.buffer[key][0])
+		
+		# Get out the frame parameters and fix-up the header
+		beam, pol = frameParameters
+		fillFrame.header.drx8ID = (beam & 63) | (1 << 6) | ((pol & 1) << 7)
 		
 		# Zero the data for the fill packet
 		fillFrame.data.iq *= 0
