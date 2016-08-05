@@ -135,18 +135,21 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
 	.. versionchanged:: 1.0.0
 		Added a keyword (site) to specify the station used for the 
 		observation.
+		
+	.. versionchanged:: 1.1.2
+		Updated to work with lists in a transparent manner.
 	"""
 
-	 # Try this so that freq can be either a scalar or a list 
+	 # Try this so that freq can be either a scalar, a list, or an array
 	try: 
-		junk = len(freq) 
-	except TypeError: 
-		freq = numpy.array([freq])
+		freq.size
+	except AttributeError:
+		freq = numpy.array(freq, ndmin=1)
 		
 	N = len(antennas)
 	baselines = getBaselines(antennas, IncludeAuto=IncludeAuto, Indicies=True)
 	Nbase = len(baselines)
-	Nfreq = freq.shape[0]
+	Nfreq = freq.size
 	uvw = numpy.zeros((Nbase,3,Nfreq))
 
 	# Phase center coordinates
@@ -163,8 +166,7 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
 					   [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
 					   [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
 					   
-	count = 0
-	for i,j in baselines:
+	for k,(i,j) in enumerate(baselines):
 		# Go from a east, north, up coordinate system to a celestial equation, 
 		# east, north celestial pole system
 		xyzPrime = antennas[i].stand - antennas[j].stand
@@ -172,10 +174,10 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
 		
 		# Go from CE, east, NCP to u, v, w
 		temp = trans2*xyz
-		for k in range(Nfreq):
-			uvw[count,:,k] = numpy.squeeze(temp) * freq[k] / numpy.array(c)
-		count = count + 1
+		uvw[k,:,:] = temp[:,0] * freq.ravel() / c
 		
+	uvw.shape = (Nbase,3)+freq.shape
+	
 	return uvw
 
 

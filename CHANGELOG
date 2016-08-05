@@ -8,6 +8,13 @@
 1.1.2
   * Fixed a bug in the lsl.reader.ldp.TBWFile class that caused the wrong start time to be returned in some cases
   * Fixed a missing import statement in tbnSpectra.py that caused the script to fail when a metadata tarball as passed in on the command line
+  * Updated the lsl.writer.fitsidi module to be more efficient
+  * Updated the lsl.writer.uvfits module to be more efficient
+  * Updated the lsl.imaging.utils.CorrelatedMS function to work with MeasurementSets stored inside a tarball
+  * Small change to lsl.correlator.uvUtils.computeUVW to make it faster for large frequency arrays
+  * Added 'memmap' and 'clobber' keywords to the various lsl.writer modules to expose a consistent interface
+  * Small fix in imageIDI.py to make it work with CASA MeasurementSets
+  * Transitioned to the native C complex type for the various C extensions
 
 1.1.1
   * Fixed a bug in the lsl.statistics.robust.checkfit function

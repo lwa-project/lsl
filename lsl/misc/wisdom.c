@@ -1,27 +1,16 @@
 #include "Python.h"
 #include <math.h>
 #include <stdio.h>
-#ifdef _MKL
-	#include "mkl_cblas.h"
-	#include "fftw3.h"
-#else
-	#include <cblas.h>
-	#include <fftw3.h>
-#endif
-#include <stdlib.h>
 #include <complex.h>
+#include <cblas.h>
+#include <fftw3.h>
+#include <stdlib.h>
 
 #ifdef _OPENMP
 	#include <omp.h>
-	#ifdef _MKL
-		#include "fftw3_mkl.h"
-	#endif
 #endif
 
 #include "numpy/arrayobject.h"
-
-#define PI 3.1415926535898
-#define imaginary _Complex_I
 
 #define MAXTRANSFORM 1048576
 
@@ -138,6 +127,6 @@ PyMODINIT_FUNC init_wisdom(void) {
 	import_array();
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 }

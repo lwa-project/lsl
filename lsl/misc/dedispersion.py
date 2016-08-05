@@ -68,8 +68,10 @@ def delay(freq, dm):
 	
 	# Validate in input frequencies
 	## Right Type?
-	if type(freq) != numpy.ndarray:
-		freq = numpy.array(freq)
+	try:
+		freq.size
+	except AttributeError:
+		freq = numpy.array(freq, ndmin=1)
 	## Right size?
 	singleFreq = False
 	if freq.size == 1:

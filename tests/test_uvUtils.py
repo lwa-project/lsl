@@ -10,7 +10,7 @@ from lsl.correlator import uvUtils
 from lsl.common import stations
 
 
-__version__  = "0.4"
+__version__  = "0.5"
 __revision__ = "$Rev$"
 __author__    = "Jayce Dowell"
 
@@ -83,6 +83,57 @@ class uvUtils_tests(unittest.TestCase):
 		
 		ind = uvUtils.antenna2baseline(0, 3, standList, IncludeAuto=False, Indicies=True)
 		self.assertEqual(ind, 2)
+		
+	def test_computeUVW(self):
+		"""Test the the computeUVW function runs."""
+		
+		station = stations.lwa1
+		antennas = station.getAntennas()
+		
+		# Frequency is a scalar
+		freq = 45e6
+		out = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+		self.assertEqual(len(out.shape), 3)
+		self.assertEqual(out.shape[-1], 1)
+		
+		# Frequency is a list
+		freq = [45e6, 60e6]
+		out = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+		self.assertEqual(len(out.shape), 3)
+		self.assertEqual(out.shape[-1], 2)
+
+		# Frequency is an array
+		## 1-D
+		freq = numpy.linspace(45e6, 60e6, 1024)
+		out0 = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+		
+		## 2-D
+		freq.shape = (512, 2)
+		out1 = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+		
+		## 3-D
+		freq.shape = (128, 4, 2)
+		out2 = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+		
+		shape0 = (out0.shape[0], 3, 1024)
+		shape1 = (out0.shape[0], 3, 512, 2)
+		shape2 = (out0.shape[0], 3, 128, 4, 2)
+		
+		# Make sure we have the right dimensions
+		for i in xrange(len(shape0)):
+			self.assertEqual(out0.shape[i], shape0[i])
+		for i in xrange(len(shape1)):
+			self.assertEqual(out1.shape[i], shape1[i])
+		for i in xrange(len(shape2)):
+			self.assertEqual(out2.shape[i], shape2[i])
+			
+		# Make sure the values are the same
+		out1.shape = shape0
+		out2.shape = shape0
+		diff01 = ((out0 - out1)**2).sum()
+		diff02 = ((out0 - out2)**2).sum()
+		self.assertAlmostEqual(diff01, 0.0, 6)
+		self.assertAlmostEqual(diff02, 0.0, 6)
 		
 	def test_computeUVTrack(self):
 		"""Test that the computeUVTrack function runs."""

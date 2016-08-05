@@ -14,6 +14,7 @@ import gc
 import re
 import sys
 import math
+import ephem
 import numpy
 import pyfits
 from datetime import datetime
@@ -28,7 +29,7 @@ from lsl.misc import geodesy
 
 from lsl.writer.fitsidi import StokesCodes, NumericStokes
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['UV', 'StokesCodes', 'NumericStokes', '__version__', '__revision__', '__all__']
 
@@ -105,15 +106,75 @@ class UV(object):
 		"""
 		Represents one UV visibility data set for a given observation time.
 		"""
-		
-		def __init__(self, obsTime, intTime, dataDict, pol=StokesCodes['XX']):
+    
+		def __init__(self, obsTime, intTime, baselines, visibilities, pol=StokesCodes['XX'], source='z'):
 			self.obsTime = obsTime
 			self.intTime = intTime
-			self.dataDict = dataDict
+			self.baselines = baselines
+			self.visibilities = visibilities
 			self.pol = pol
+			self.source = source
 			
+		def __cmp__(self, y):
+			"""
+			Function to sort the self.data list in order of time and then 
+			polarization code.
+			"""
+			
+			sID = self.obsTime*10000000 + abs(self.pol)
+			yID =    y.obsTime*10000000 + abs(   y.pol)
+			
+			if sID > yID:
+				return 1
+			elif sID < yID:
+				return -1
+			else:
+				return 0
+				
 		def time(self):
 			return self.obsTime
+			
+		def getUVW(self, HA, dec, obs):
+			Nbase = len(self.baselines)
+			uvw = numpy.zeros((Nbase,3), dtype=numpy.float32)
+			
+			# Phase center coordinates
+			# Convert numbers to radians and, for HA, hours to degrees
+			HA2 = HA * 15.0 * numpy.pi/180
+			dec2 = dec * numpy.pi/180
+			lat2 = obs.lat
+			
+			# Coordinate transformation matrices
+			trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+							   [1,  0,               0],
+							   [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+			trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
+							   [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+							   [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+					   
+			for i,(a1,a2) in enumerate(self.baselines):
+				# Go from a east, north, up coordinate system to a celestial equation, 
+				# east, north celestial pole system
+				xyzPrime = a1.stand - a2.stand
+				xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+				
+				# Go from CE, east, NCP to u, v, w
+				temp = trans2*xyz
+				uvw[i,:] = numpy.squeeze(temp) / constants.c
+				
+			return uvw
+				
+		def argsort(self, mapper=None, shift=16):
+			packed = []
+			for a1,a2 in self.baselines:
+				if mapper is None:
+					s1, s2 = a1.stand.id, a2.stand.id
+				else:
+					s1, s2 = mapper[a1.stand.id], mapper[a2.stand.id]
+				packed.append( mergeBaseline(s1, s2) )
+			packed = numpy.array(packed, dtype=numpy.int32)
+			
+			return numpy.argsort(packed)
 			
 	def parseRefTime(self, refTime):
 		"""
@@ -124,12 +185,12 @@ class UV(object):
 		# Valid time string (modulo the 'T')
 		timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
 		
-		if type(refTime).__name__ in ['int', 'long', 'float']:
+		if type(refTime) in (int, long, float):
 			refDateTime = datetime.utcfromtimestamp(refTime)
 			refTime = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-		elif type(refTime).__name__ in ['datetime']:
+		elif type(refTime) == datetime:
 			refTime = refTime.strftime("%Y-%m-%dT%H:%M:%S")
-		elif type(refTime).__name__ in ['str']:
+		elif type(refTime) == str:
 			# Make sure that the string times are of the correct format
 			if re.match(timeRE, refTime) is None:
 				raise RuntimeError("Malformed date/time provided: %s" % refTime)
@@ -148,18 +209,23 @@ class UV(object):
 		dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
 		return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
 		
-	def __init__(self, filename, refTime=0.0, verbose=False):
+	def __init__(self, filename, refTime=0.0, verbose=False, memmap=None, clobber=False):
 		"""
 		Initialize a new UVFITS object using a filename and a reference time 
 		given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
 		string in the format of 'YYYY-MM-DDTHH:MM:SS'.
+		
+		.. versionchanged:: 1.1.2
+			Added the 'memmap' and 'clobber' keywords to control if the file
+			is memory mapped and whether or not to overwrite an existing file, 
+			respectively.
 		"""
 		
 		# File-specific information
 		self.filename = filename
 		self.verbose = verbose
 		
-		# Observator-specific information
+		# Observatory-specific information
 		self.siteName = 'Unknown'
 		
 		# Observation-specific information
@@ -178,7 +244,12 @@ class UV(object):
 		self.data = []
 		
 		# Open the file and get going
-		self.FITS = pyfits.open(filename, mode='append')
+		if os.path.exists(filename):
+			if clobber:
+				os.unlink(filename)
+			else:
+				raise IOError("File '%s' already exists" % filename)
+		self.FITS = pyfits.open(filename, mode='append', memmap=memmap)
 		
 	def setStokes(self, polList):
 		"""
@@ -186,7 +257,7 @@ class UV(object):
 		"""
 		
 		for pol in polList:
-			if type(pol).__name__ == 'str':
+			if type(pol) == str:
 				numericPol = StokesCodes[pol.upper()]
 			else:
 				numericPol = pol
@@ -275,7 +346,7 @@ class UV(object):
 		self.nAnt = len(ants)
 		self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )
 		
-	def addDataSet(self, obsTime, intTime, baselines, visibilities, pol='XX'):
+	def addDataSet(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
 		"""
 		Create a UVData object to store a collection of visibilities.
 		
@@ -285,17 +356,12 @@ class UV(object):
 			as part of the baselines.
 		"""
 		
-		if type(pol).__name__ == 'str':
+		if type(pol) == str:
 			numericPol = StokesCodes[pol.upper()]
 		else:
 			numericPol = pol
 			
-		dataDict = {}
-		for bl, (ant1,ant2) in enumerate(baselines):
-			baseline = mergeBaseline(ant1.stand.id, ant2.stand.id)
-			dataDict[baseline] = visibilities[bl,:].squeeze()
-			
-		self.data.append( self._UVData(obsTime, intTime, dataDict, pol=numericPol) )
+		self.data.append( self._UVData(obsTime, intTime, baselines, visibilities, pol=numericPol, source=source) )
 		
 	def write(self):
 		"""
@@ -385,114 +451,107 @@ class UV(object):
 		(mapper, inverseMapper) = self.readArrayMapper(dummy=True)
 		ids = ag.keys()
 		
-		# Retrieve the original list of Antenna objects and convert them to
-		# a dictionary index by the stand ID number
-		inputAnts = {}
-		for ant in self.array[0]['inputAnts']:
-			inputAnts[ant.stand.id] = ant
-			
+		obs = ephem.Observer()
+		obs.lat = arrPos.lat * numpy.pi/180
+		obs.lon = arrPos.lng * numpy.pi/180
+		obs.elev = arrPos.elv * numpy.pi/180
+		obs.pressure = 0
+		
+		first = True
 		mList = []
 		uList = []
 		vList = []
 		wList = []
 		dateList = []
 		blineList = []
-		rawList = []
 		for dataSet in self.data:
+			# Sort the data by packed baseline
+			try:
+				order
+			except NameError:
+				order = dataSet.argsort(mapper=mapper)
+				
+			# Deal with defininig the values of the new data set
 			if dataSet.pol == self.stokes[0]:
+				## Figure out the new date/time for the observation
 				utc = astro.taimjd_to_utcjd(dataSet.obsTime)
 				date = astro.get_date(utc)
 				date.hours = 0
 				date.minutes = 0
 				date.seconds = 0
 				utc0 = date.to_jd()
-				equ = hrz.to_equ(arrPos, utc)
 				
-				# format 'source' name based on local sidereal time
-				raHms = astro.deg_to_hms(equ.ra)
-				
-				# Compute the uvw coordinates of all baselines
-				if inverseMapper is not None:
-					standIDs = []
-					for stand in self.an.data.field('NOSTA'):
-						standIDs.append(inverseMapper[stand])
-					standIDs = numpy.array(standIDs)
+				## Update the observer so we can figure out where the source is
+				obs.date = utc - astro.DJD_OFFSET
+				if dataSet.source == 'z':
+					### Zenith pointings
+					equ = astro.equ_posn( obs.sidereal_time()*180/numpy.pi, obs.lat*180/numpy.pi )
+					
+					### format 'source' name based on local sidereal time
+					raHms = astro.deg_to_hms(equ.ra)
+					(tsecs, secs) = math.modf(raHms.seconds)
+					name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
 				else:
-					standIDs = self.an.data.field('NOSTA')
-				antennaStands = []
-				for standID in standIDs:
-					antennaStands.append( inputAnts[standID] )
+					### Real-live sources (ephem.Body instances)
+					name = dataSet.source.name
 					
-				uvwBaselines = numpy.array([mergeBaseline(a1.stand.id, a2.stand.id) for a1,a2 in uvUtils.getBaselines(antennaStands)])
-				uvwCoords = uvUtils.computeUVW(antennaStands, HA=0.0, dec=equ.dec, freq=self.refVal)
-				uvwCoords *= 1.0 / self.refVal
+				## Compute the uvw coordinates of all baselines
+				if dataSet.source == 'z':
+					RA = obs.sidereal_time()
+					HA = 0.0
+					dec = equ.dec
+				else:
+					RA = dataSet.source.ra * 180/numpy.pi
+					HA = obs.sidereal_time() - dataSet.source.ra
+					dec = dataSet.source.dec * 180/numpy.pi
+					
+				if first is True:
+					sourceRA, sourceDec = RA, dec
+					first = False
+					
+				uvwCoords = dataSet.getUVW(HA, dec, obs)
 				
-				tempMList = {}
-				for stokes in self.stokes:
-					tempMList[stokes] = {}
-					
-			# Loop over the data store in the dataDict and extract each baseline
-			baselines = list(dataSet.dataDict.keys())
-			baselines.sort()
-			for baseline in baselines: 
-				# validate baseline antenna ID's
-				stand1, stand2 = splitBaseline(baseline)
-				if mapper is not None:
-					stand1 = mapper[stand1]
-					stand2 = mapper[stand2]
-				# Reconstruct the baseline in UVFITS/MIRIAD format
-				baselineMapped = mergeBaseline(stand1, stand2)
-				
-				if (stand1 not in ids) or (stand2 not in ids):
-					raise ValueError("baseline 0x%04x (%i to %i) contains unknown antenna IDs" % (baselineMapped, stand1, stand2))
-					
-				# validate data matrix shape
-				visData = dataSet.dataDict[baseline]
-				if (len(visData) != self.nChan):
-					raise ValueError("data for baseline 0x%04x is the wrong size %s (!= %s)" % (baselineMapped, len(visData), self.nChan))
-					
-				# Calculate the UVW coordinates for antenna pair.  Catch auto-
-				# correlations and set their UVW's to zeros.
+				## Populate the metadata
+				### Add in the new baselines
 				try:
-					which = (numpy.where( uvwBaselines == baseline ))[0][0]
-					uvw = numpy.squeeze(uvwCoords[which,:,0])
-				except IndexError:
-					uvw = numpy.zeros((3,))
+					blineList.extend( baselineMapped )
+				except NameError:
+					baselineMapped = []
+					for o in order:
+						antenna1, antenna2 = dataSet.baselines[o]
+						if mapper is None:
+							stand1, stand2 = antenna1.stand.id, antenna2.stand.id
+						else:
+							stand1, stand2 = mapper[antenna1.stand.id], mapper[antenna2.stand.id]
+						baselineMapped.append( mergeBaseline(stand1, stand2) ) 
+					blineList.extend( baselineMapped )
 					
-				# Load the data into a matrix that splits the real and imaginary parts out
-				matrix = numpy.zeros((2,self.nChan,), dtype=numpy.float32)
-				matrix[0,:] = visData.real
-				matrix[1,:] = visData.imag
-				tempMList[dataSet.pol][baseline] = matrix
+				### Add in the new u, v, and w coordinates
+				uList.extend( uvwCoords[order,0] )
+				vList.extend( uvwCoords[order,1] )
+				wList.extend( uvwCoords[order,2] )
 				
-				if dataSet.pol == self.stokes[0]:
-					blineList.append(baselineMapped)
-					rawList.append(baseline)
-					uList.append(uvw[0])
-					vList.append(uvw[1])
-					wList.append(uvw[2])
-					dateList.append(utc)
+				### Add in the new date/time
+				dateList.extend( [utc for bl in dataSet.baselines] )
+				
+				### Zero out the visibility data
+				try:
+					matrix *= 0.0
+				except NameError:
+					matrix = numpy.zeros((len(order), 1, 1, self.nChan, self.nStokes, 2), dtype=numpy.float32)
 					
+			# Save the visibility data in the right order
+			matrix[:,0,0,:,self.stokes.index(dataSet.pol),0] = dataSet.visibilities[order,:].real
+			matrix[:,0,0,:,self.stokes.index(dataSet.pol),1] = dataSet.visibilities[order,:].imag
+			
+			# Deal with saving the data once all of the polarizations have been added to 'matrix'
 			if dataSet.pol == self.stokes[-1]:
-				for bl in rawList:
-					matrix = numpy.zeros((1,1,self.nChan,self.nStokes,2), dtype=numpy.float32)
-					for p in xrange(self.nStokes):
-						try:
-							matrix[0,0,:,p,0] = tempMList[self.stokes[p]][bl][0,:]
-							matrix[0,0,:,p,1] = tempMList[self.stokes[p]][bl][1,:]
-						except KeyError:
-							stand1, stand2 = splitBaseline(bl)
-							newBL = mergeBaseline(stand2, stand1)
-							print 'WARNING: Keyerror', bl, bl in tempMList[self.stokes[p]], stand1, stand2, newBL, newBL in tempMList[self.stokes[p]]
-							
-					mList.append(matrix)
-					
-				rawList = []
+				mList.append( matrix*1.0 )
+				
 		nBaseline = len(blineList)
 		
 		# Create the UV Data table and update its header
-		test = numpy.array(mList, dtype=numpy.float32)
-		uv = pyfits.GroupData(numpy.array(mList, dtype=numpy.float32), parnames=['UU', 'VV', 'WW', 'BASELINE', 'DATE'], 
+		uv = pyfits.GroupData(numpy.concatenate(mList), parnames=['UU', 'VV', 'WW', 'BASELINE', 'DATE'], 
 							pardata=[numpy.array(uList, dtype=numpy.float32), numpy.array(vList, dtype=numpy.float32), 
 									numpy.array(wList, dtype=numpy.float32), numpy.array(blineList), 
 									numpy.array(dateList)], bitpix=-32)
@@ -535,12 +594,12 @@ class UV(object):
 		primary.header['CTYPE5'] = ('RA', 'axis 5 is RA axis (position of phase center)')
 		primary.header['CDELT5'] = 0.0
 		primary.header['CRPIX5'] = 1.0
-		primary.header['CRVAL5'] = 0.0
+		primary.header['CRVAL5'] = sourceRA
 		
 		primary.header['CTYPE6'] = ('DEC', 'axis 6 is DEC axis (position of phase center)')
 		primary.header['CDELT6'] = 0.0
 		primary.header['CRPIX6'] = 1.0
-		primary.header['CRVAL6'] = 0.0
+		primary.header['CRVAL6'] = sourceDec
 		
 		primary.header['TELESCOP'] = self.siteName
 		primary.header['OBSERVER'] = 'ZASKY'

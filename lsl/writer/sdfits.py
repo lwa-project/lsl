@@ -87,12 +87,12 @@ class SD(object):
 		# Valid time string (modulo the 'T')
 		timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
 
-		if type(refTime).__name__ in ['int', 'long', 'float']:
+		if type(refTime) in (int, long, float):
 			refDateTime = datetime.utcfromtimestamp(refTime)
 			refTime = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-		elif type(refTime).__name__ in ['datetime']:
+		elif type(refTime) == datetime:
 			refTime = refTime.strftime("%Y-%m-%dT%H:%M:%S")
-		elif type(refTime).__name__ in ['str']:
+		elif type(refTime) == str:
 			# Make sure that the string times are of the correct format
 			if re.match(timeRE, refTime) is None:
 				raise RuntimeError("Malformed date/time provided: %s" % refTime)
@@ -111,11 +111,16 @@ class SD(object):
 		dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
 		return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
 
-	def __init__(self, filename, refTime=0.0, verbose=False):
+	def __init__(self, filename, refTime=0.0, verbose=False, memmap=None, clobber=False):
 		"""
 		Initialize a new SDFITS object using a filename and a reference time 
 		given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
 		string in the format of 'YYYY-MM-DDTHH:MM:SS'.
+		
+		.. versionchanged:: 1.1.2
+			Added the 'memmap' and 'clobber' keywords to control if the file
+			is memory mapped and whether or not to overwrite an existing file, 
+			respectively.
 		"""
 
 		# File-specific information
@@ -144,7 +149,12 @@ class SD(object):
 		
 
 		# Open the file and get going
-		self.FITS = pyfits.open(filename, mode='append')
+		if os.path.exists(filename):
+			if clobber:
+				os.unlink(filename)
+			else:
+				raise IOError("File '%s' already exists" % filename)
+		self.FITS = pyfits.open(filename, mode='append', memmap=memmap)
 
 	def setSite(self, site):
 		"""
@@ -160,7 +170,7 @@ class SD(object):
 		"""
 
 		for pol in polList:
-			if type(pol).__name__ == 'str':
+			if type(pol) == str:
 				numericPol = StokesCodes[pol.upper()]
 			else:
 				numericPol = pol
@@ -205,7 +215,7 @@ class SD(object):
 		Create a SpectrometerData object to store a collection of spectra.
 		"""
 		
-		if type(pol).__name__ == 'str':
+		if type(pol) == str:
 			numericPol = StokesCodes[pol.upper()]
 		else:
 			numericPol = pol

@@ -264,6 +264,10 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		
 		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / vLight
+	if not numpy.isfinite(delays1.max()):
+		delays1[numpy.where( ~numpy.isfinite(delays1) )] = delays1[numpy.where( numpy.isfinite(delays1) )].max()
+	if not numpy.isfinite(delays2.max()):
+		delays2[numpy.where( ~numpy.isfinite(delays2) )] = delays2[numpy.where( numpy.isfinite(delays2) )].max()
 	if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
 		minDelay = delays1[:,dlyRef].min()
 	else:
@@ -286,7 +290,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		else:
 			FEngine = _core.FEngineR3
 		signalsF1, validF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
-	
+		
 	if pol2 == pol1:
 		signalsF2 = signalsF1
 		validF2 = validF1
@@ -295,7 +299,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 			signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel)
 		else:
 			signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
-
+			
 	# X
 	output = _core.XEngine2(signalsF1, signalsF2, validF1, validF2)
 	if not IncludeAuto:
@@ -306,11 +310,6 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
 		nonAuto = numpy.where( fom != 0 )[0]
 		output = output[nonAuto,:]
-
-	# Divide the cross-multiplied data by the number of channels used
-	output /= LFFT
-	if signals.dtype.kind != 'c':
-		output /= 2.0
 		
 	# Apply cable gain corrections (if needed)
 	if GainCorrect:
@@ -410,6 +409,10 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		
 		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / vLight
 		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / vLight
+	if not numpy.isfinite(delays1.max()):
+		delays1[numpy.where( ~numpy.isfinite(delays1) )] = delays1[numpy.where( numpy.isfinite(delays1) )].max()
+	if not numpy.isfinite(delays2.max()):
+		delays2[numpy.where( ~numpy.isfinite(delays2) )] = delays2[numpy.where( numpy.isfinite(delays2) )].max()
 	if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
 		minDelay = delays1[:,dlyRef].min()
 	else:
@@ -437,7 +440,7 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel)
 	else:
 		signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
-
+		
 	# X
 	output = _stokes.XEngine2(signalsF1, signalsF2, validF1, validF2)
 	if not IncludeAuto:
@@ -448,11 +451,6 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
 		nonAuto = numpy.where( fom != 0 )[0]
 		output = output[:,nonAuto,:]
-
-	# Divide the cross-multiplied data by the number of channels used
-	output /= LFFT
-	if signals.dtype.kind != 'c':
-		output /= 2.0
 		
 	# Apply cable gain corrections (if needed)
 	if GainCorrect:

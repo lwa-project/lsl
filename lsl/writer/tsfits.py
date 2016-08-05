@@ -77,11 +77,15 @@ class TSFITS(object):
 	Class that holds TSFITS data until it is ready to be written to disk.
 	"""
 
-	def __init__(self, filename, mode, Overwrite=False, UseQueue=True, verbose=False):
+	def __init__(self, filename, mode, UseQueue=True, verbose=False, memmap=None, clobber=False):
 		"""
 		Initialize a TSFITS object using a filename and an observation mode 
 		(TBW or TBN).  Optionally, TSFITS can be told to overwrite the file if it 
 		already exists using the 'Overwrite' keyword.
+		
+		.. versionchanged:: 1.1.2
+			Added the 'memmap' to control if the file is memory mapped.
+			Changed 'Overwrite' to 'clobber' for consistency with other writers.
 		"""
 
 		assert(mode in ['TBW', 'TBN'])
@@ -96,24 +100,22 @@ class TSFITS(object):
 		self.firstSamples = {}
 		self.verbose = verbose
 
-		if os.path.exists(filename) and not Overwrite:
-			self.hdulist = pyfits.open(self.filename, mode="update", memmap=0)
-			self.standCount = self.hdulist[0].header['nstand']
-		else:
-			if os.path.exists(filename):
-				os.path.delete(filename)
-
-			self.standCount = 0
-			primary = pyfits.PrimaryHDU()
-			primary.header['OBJECT'] = 'zenith'
-			primary.header['TELESCOP'] = self.site
-			primary.header['OBSMODE'] = self.mode
-			primary.header['NSTAND'] = self.standCount
-
-			hdulist = pyfits.HDUList([primary])
-			hdulist.writeto(filename)
-
-			self.hdulist = pyfits.open(self.filename, mode="update", memmap=0)
+		if os.path.exists(filename):
+			if clobber:
+				os.unlink(filename)
+			else:
+				raise IOError("File '%s' already exists" % filename)
+		self.standCount = 0
+		primary = pyfits.PrimaryHDU()
+		primary.header['OBJECT'] = 'zenith'
+		primary.header['TELESCOP'] = self.site
+		primary.header['OBSMODE'] = self.mode
+		primary.header['NSTAND'] = self.standCount
+		
+		hdulist = pyfits.HDUList([primary])
+		hdulist.writeto(filename)
+		
+		self.hdulist = pyfits.open(self.filename, mode="update", memmap=memmap)
 
 	def info(self):
 		"""
@@ -540,8 +542,8 @@ class TBW(TSFITS):
 	Sub-class of TSFITS for dealing with TBW data in particular.
 	"""
 
-	def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
-		super(TBW, self).__init__(filename, 'TBW', Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
+	def __init__(self, filename, UseQueue=True, verbose=False, memmap=None, clobber=False):
+		super(TBW, self).__init__(filename, 'TBW', UseQueue=UseQueue, verbose=verbose, memmap=memmap, clobber=clobber)
 		
 
 class TBN(TSFITS):
@@ -549,5 +551,5 @@ class TBN(TSFITS):
 	Sub-class of TSFITS for dealing with TBN data in particular.
 	"""
 
-	def __init__(self, filename, Overwrite=False, UseQueue=True, verbose=False):
-		super(TBN, self).__init__(filename, 'TBN', Overwrite=Overwrite, UseQueue=UseQueue, verbose=verbose)
+	def __init__(self, filename, UseQueue=True, verbose=False, memmap=None, clobber=False):
+		super(TBN, self).__init__(filename, 'TBN', UseQueue=UseQueue, verbose=verbose, memmap=memmap, clobber=clobber)

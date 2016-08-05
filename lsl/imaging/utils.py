@@ -19,6 +19,9 @@ Also included is a utility to sort data dictionaries by baselines.
 	plotGriddedImage() and make it easier to work with phase centers 
 	that are not at zenith.  Added in the ImgWPlus class to add support
 	for imaging weighting and tapering.
+	
+.. versionchanged:: 1.1.2
+	Added support for CASA MeasurementSets that are stored as a tarball
 """
 
 import os
@@ -27,8 +30,12 @@ import sys
 import aipy
 import ephem
 import numpy
+import atexit
 import pyfits
+import shutil
 import string
+import tarfile
+import tempfile
 try:
 	import cStringIO as StringIO
 except ImportError:
@@ -38,6 +45,7 @@ from datetime import datetime
 from operator import itemgetter
 
 from lsl import astro
+from lsl.statistics import robust
 from lsl.common import stations
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NumericStokes
@@ -239,29 +247,38 @@ def CorrelatedData(filename):
 	
 	valid = False
 	
-	# FITS IDI
-	try:
-		return CorrelatedDataIDI(filename)
-	except IOError as e:
-		raise e
-	except:
-		pass
+	# Basic filesystem validation
+	if not os.path.exists(filename):
+		raise IOError("File does not exists")
+	if not os.access(filename, os.R_OK):
+		raise IOError("File cannot be read")
 		
-	# UVFITS
-	try:
-		return CorrelatedDataUV(filename)
-	except IOError as e:
-		raise e
-	except:
-		pass
+	if os.path.isdir(filename):
+		# Only a MS can be a directory
+		try:
+			return CorrelatedDataMS(filename)
+		except Exception as e:
+			pass
+			
+	else:
+		# Standard files
+		## FITS IDI
+		try:
+			return CorrelatedDataIDI(filename)
+		except Exception as e:
+			pass
 		
-	# Measurment Set
-	try:
-		return CorrelatedDataMS(filename)
-	except IOError as e:
-		raise e
-	except:
-		pass
+		## UVFITS
+		try:
+			return CorrelatedDataUV(filename)
+		except Exception as e:
+			pass
+		
+		## Measurment Set as a compressed entity
+		try:
+			return CorrelatedDataMS(filename)
+		except Exception as e:
+			pass
 		
 	if not valid:
 		raise RuntimeError("File '%s' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet" % filename)
@@ -476,6 +493,9 @@ class CorrelatedDataIDI(object):
 		hdulist = pyfits.open(self.filename)
 		uvData = hdulist['UV_DATA']
 		
+		import time
+		t0 = time.time()
+		
 		# We need this a lot...
 		nPol = len(self.pols)
 		
@@ -488,70 +508,104 @@ class CorrelatedDataIDI(object):
 		else:
 			sourceID = range(set,set+1)
 			
-		# Loop over data rows
-		found = False
-		setCounter = 0
-		for row in uvData.data:
-			if setCounter == 0:
-				blCheck = row['baseline']
-			if row['BASELINE'] == blCheck:
-				setCounter += 1
-				
-			# If we've passed the correct set
-			if setCounter > max(sourceID):
+		# Figure out what rows we need based on how the baseline iterate
+		blList = uvData.data['BASELINE']
+		## Baseline based boundaries
+		setBoundaries = numpy.where( blList == blList[0] )[0]
+		try:
+			setStart = setBoundaries[ sourceID[ 0]-1 ]
+		except IndexError:
+			raise RuntimeError("Cannot find baseline set %i in FITS IDI file", set)
+		try:
+			setStop  = setBoundaries[ sourceID[-1]   ]
+		except IndexError:
+			setStop = len(blList)
+		## Row Selection
+		selection = numpy.s_[setStart:setStop]
+		
+		# Figure out if we have seperate WEIGHT data or not
+		seperateWeights = False
+		for col in uvData.data.columns:
+			if col.name == 'WEIGHT':
+				seperateWeights = True
 				break
 				
-			# If we are on the right set...
-			if setCounter in sourceID:
-				found = True
-				
-				# Load it.
-				bl = row['BASELINE']
-				if not self.extended:
-					i = self.standMap[(bl >> 8) & 255]
-					j = self.standMap[bl & 255]
-				else:
-					i = self.standMap[(bl >> 16) & 65535]
-					j = self.standMap[bl & 65535]
-				if i == j and not includeAuto:
-					## Skip auto-correlations
-					continue
-				ri = numpy.where(self.stands == i)[0][0]
-				rj = numpy.where(self.stands == j)[0][0]
-				
-				try:
-					uvw = numpy.array([row['UU'], row['VV'], row['WW']])
-				except KeyError:
-					## Catch for DiFX FITS-IDI files that call them **---SIN
-					uvw = numpy.array([row['UU---SIN'], row['VV---SIN'], row['WW---SIN']])
+		# Pull out the raw data from the table
+		bl = blList[selection]
+		jd = uvData.data['DATE'][selection] + uvData.data['TIME'][selection]
+		try:
+			u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
+		except KeyError:
+			u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
+		vis = uvData.data['FLUX'][selection]
+		if seperateWeights:
+			wgt = uvData.data['WEIGHT'][selection]
+		else:
+			wgt = None
+			
+		# Re-work the data into something more useful
+		## Axis sizes
+		nFreq = len(self.freq)
+		nStk = len(self.pols)
+		nCmp = 2 if seperateWeights else 3
+		## Frequency for converting the u, v, and w coordinates
+		freq = self.freq*1.0
+		freq.shape += (1,)
+		## Convert u, v, and w from seconds to wavelengths and then into one massive array
+		u = (u*freq).T
+		v = (v*freq).T
+		w = (w*freq).T
+		uvw = numpy.array([u,v,w], dtype=numpy.float32)
+		## Reshape the visibilities and weights
+		vis.shape = (vis.size/nFreq/nStk/nCmp, nFreq, nStk, nCmp)
+		if seperateWeights:
+			if wgt.shape != nFreq*nStk:
+				## Catch for some old stuff
+				wgt = numpy.concatenate([wgt for pol in self.pols])
+			wgt.shape = (wgt.size/nFreq/nStk, nFreq, nStk)
+		else:
+			wgt = vis[:,:,:,2]
+			vis = vis[:,:,:,:2]
+		## Back to complex
+		vis = vis[:,:,:,0] + 1j*vis[:,:,:,1]
+		## Scale
+		try:
+			scl = uvData.header['VIS_SCAL']
+			vis /= scl
+		except KeyError:
+			pass
+			
+		## Setup a dummy mask
+		msk = numpy.zeros(nFreq, dtype=numpy.int16)
+		
+		# Re-pack into the data dictionary
+		for b in xrange(bl.size):
+			if not self.extended:
+				i = self.standMap[(bl[b] >> 8) & 255]
+				j = self.standMap[bl[b] & 255]
+			else:
+				i = self.standMap[(bl[b] >> 16) & 65535]
+				j = self.standMap[bl[b] & 65535]
+			if i == j and not includeAuto:
+				## Skip auto-correlations
+				continue
+			ri = numpy.where(self.stands == i)[0][0]
+			rj = numpy.where(self.stands == j)[0][0]
+			
+			for p,l in enumerate(self.pols):
+				name = NumericStokes[l]
+				if len(name) == 2:
+					name = name.lower()
 					
-				jd = row['DATE'] + row['TIME']
-				uvw = numpy.array([numpy.dot(uvw[0], self.freq), numpy.dot(uvw[1], self.freq), numpy.dot(uvw[2], self.freq)])
-				flux = row['FLUX']
+				dataDict['bls'][name].append( (ri,rj) )
+				dataDict['uvw'][name].append( uvw[:,b,:] )
+				dataDict['vis'][name].append( vis[b,:,p] )
+				dataDict['wgt'][name].append( wgt[b,:,p] )
+				dataDict['msk'][name].append( msk )
+				dataDict['jd' ][name].append( jd[b] )
 				
-				for c,p in enumerate(self.pols):
-					name = NumericStokes[p]
-					if len(name) == 2:
-						name = name.lower()
-					
-					vis = numpy.zeros(len(flux)/2/nPol, dtype=numpy.complex64)
-					vis.real = flux[2*c+0::(2*nPol)]
-					vis.imag = flux[2*c+1::(2*nPol)]
-					wgt = numpy.ones(vis.size)
-				
-					dataDict['uvw'][name].append( uvw ) 
-					dataDict['vis'][name].append( vis )
-					dataDict['wgt'][name].append( wgt )
-					dataDict['msk'][name].append( numpy.zeros(len(vis), dtype=numpy.int16) )
-					dataDict['bls'][name].append( (ri,rj) )
-					dataDict['jd' ][name].append( jd )
-					
 		# Close
 		hdulist.close()
-		
-		# Make sure we found something
-		if not found:
-			raise RuntimeError("Cannot find baseline set %i in FITS IDI file", set)
 		
 		# Sort
 		if sort:
@@ -561,6 +615,8 @@ class CorrelatedDataIDI(object):
 		if uvMin != 0 or uvMax != numpy.inf:
 			dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
 			
+		print time.time()-t0
+		
 		# Return
 		return dataDict
 
@@ -764,84 +820,87 @@ class CorrelatedDataUV(object):
 		else:
 			sourceID = range(set,set+1)
 			
-		# Loop over data rows
-		found = False
-		setCounter = 0
-		for row in uvData.data:
-			if setCounter == 0:
-				blCheck = row['baseline']
-			if row['BASELINE'] == blCheck:
-				setCounter += 1
-				
-			# If we've passed the correct set
-			if setCounter > max(sourceID):
-				break
-				
-			# If we are on the right set...
-			if setCounter in sourceID:
-				found = True
-				# Load it.
-				bl = int(row['BASELINE'])
-				if bl >= 65536:
-					a1 = int((bl - 65536) / 2048)
-					a2 = int((bl - 65536) % 2048)
-				else:
-					a1 = int(bl / 256)
-					a2 = int(bl % 256)
-				i = self.standMap[a1]
-				j = self.standMap[a2]
+		# Figure out what rows we need based on how the baseline iterate
+		blList = uvData.data['BASELINE']
+		## Baseline based boundaries
+		setBoundaries = numpy.where( blList == blList[0] )[0]
+		try:
+			setStart = setBoundaries[ sourceID[ 0]-1 ]
+		except IndexError:
+			raise RuntimeError("Cannot find baseline set %i in FITS IDI file", set)
+		try:
+			setStop  = setBoundaries[ sourceID[-1]   ]
+		except IndexError:
+			setStop = len(blList)
+		## Row Selection
+		selection = numpy.s_[setStart:setStop]
+
+		# Pull out the raw data from the table
+		bl = blList[selection]
+		jd = uvData.data['DATE'][selection]
+		try:
+			u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
+		except KeyError:
+			u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
+		vis = uvData.data['DATA'][selection]
+		wgt = None
+		
+		# Re-work the data into something more useful
+		## Axis sizes
+		nFreq = len(self.freq)
+		nStk = len(self.pols)
+		nCmp = vis.shape[-1]
+		## Frequency for converting the u, v, and w coordinates
+		freq = self.freq*1.0
+		freq.shape += (1,)
+		## Convert u, v, and w from seconds to wavelengths and then into one massive array
+		u = (u*freq).T
+		v = (v*freq).T
+		w = (w*freq).T
+		uvw = numpy.array([u,v,w], dtype=numpy.float32)
+		## Reshape the visibilities and weights
+		if len(vis.shape) == 7:
+			vis = vis[:,0,0,0,:,:,:]
+		else:
+			vis = vis[:,0,0,:,:,:]
+		if vis.shape[-1] == 3:
+			wgt = vis[:,:,:,2]
+			vis = vis[:,:,:,:2]
+		else:
+			wgt = numpy.ones((vis.shape[0], vis.shape[1], vis.shape[2]), dtype=numpy.float32)
+		## Back to complex
+		vis = vis[:,:,:,0] + 1j*vis[:,:,:,1]
+		## Setup a dummy mask
+		msk = numpy.zeros(nFreq, dtype=numpy.int16)
+
+		# Re-pack into the data dictionary
+		for b in xrange(bl.size):
+			if bl[b] >= 65536:
+				i = self.standMap[int((bl[b] - 65536) / 2048)]
+				j = self.standMap[int((bl[b] - 65536) % 2048)]
+			else:
+				i = self.standMap[int(bl[b] / 256)]
+				j = self.standMap[int(bl[b] % 256)]
+			if i == j and not includeAuto:
+				## Skip auto-correlations
+				continue
+			ri = numpy.where(self.stands == i)[0][0]
+			rj = numpy.where(self.stands == j)[0][0]
 			
-				if i == j and not includeAuto:
-					## Skip auto-correlations
-					continue
-				ri = numpy.where(self.stands == i)[0][0]
-				rj = numpy.where(self.stands == j)[0][0]
+			for p,l in enumerate(self.pols):
+				name = NumericStokes[l]
+				if len(name) == 2:
+					name = name.lower()
+					
+				dataDict['bls'][name].append( (ri,rj) )
+				dataDict['uvw'][name].append( uvw[:,b,:] )
+				dataDict['vis'][name].append( vis[b,:,p] )
+				dataDict['wgt'][name].append( wgt[b,:,p] )
+				dataDict['msk'][name].append( msk )
+				dataDict['jd' ][name].append( jd[b] )
 				
-				try:
-					uvw = numpy.array([row['UU'], row['VV'], row['WW']])
-				except KeyError:
-					### Catch for AIPS UVFITS data which calls them **---SIN
-					uvw = numpy.array([row['UU---SIN'], row['VV---SIN'], row['WW---SIN']])
-					
-				jd = row['DATE']
-				uvw = numpy.array([numpy.dot(uvw[0], self.freq), numpy.dot(uvw[1], self.freq), numpy.dot(uvw[2], self.freq)])
-				if len(row['DATA'].shape) == 6:
-					## Fix for AIPS UVFITS data which includes an 'IF' column
-					flux = row['DATA'][0,0,0,:,:,:]
-				else:
-					flux = row['DATA'][0,0,:,:,:]
-				if flux.shape[-1] == 3:
-					## Catch for AIPS UVFITS which has a third entry in COMPLEX which includes the weight
-					wgt = flux[:,:,2]
-					flux = flux[:,:,:2]
-				else:
-					wgt = None
-					
-				for c,p in enumerate(self.pols):
-					name = NumericStokes[p]
-					if len(name) == 2:
-						name = name.lower()
-					
-					vis = numpy.zeros(flux.shape[0], dtype=numpy.complex64)
-					vis.real = flux[:,c,0]
-					vis.imag = flux[:,c,1]
-					if wgt is None:
-						wgt = numpy.ones(vis.size)
-					msk = numpy.zeros(vis.size, dtype=numpy.int16)
-					
-					dataDict['uvw'][name].append( uvw ) 
-					dataDict['vis'][name].append( vis )
-					dataDict['wgt'][name].append( wgt )
-					dataDict['msk'][name].append( msk )
-					dataDict['bls'][name].append( (ri,rj) )
-					dataDict['jd' ][name].append( jd )
-					
 		# Close
 		hdulist.close()
-		
-		# Make sure we found something
-		if not found:
-			raise RuntimeError("Cannot find baseline set %i in UVFITS file", set)
 		
 		# Sort
 		if sort:
@@ -916,6 +975,25 @@ try:
 			in the metadata.
 			"""
 			
+			if tarfile.is_tarfile(filename):
+				# LASI generate compressed tarballs that contain the MS.  Deal with 
+				# those in a transparent manner by automatically unpacking them
+				tempdir = tempfile.mkdtemp(prefix='CorrelatedMS-')
+				tf = tarfile.open(filename, mode='r:*')
+				tf.extractall(tempdir)
+				tf.close()
+				
+				# Find the first directory that could be a MS
+				filename = None
+				for path in os.listdir(tempdir):
+					path = os.path.join(tempdir, path)
+					if os.path.isdir(path):
+						filename = path
+						break
+						
+				# Clean up the temporary directory when the script exists
+				atexit.register(lambda: shutil.rmtree(tempdir))
+				
 			self.filename = filename
 			
 			# Open the various tables that we need
@@ -1059,7 +1137,7 @@ try:
 			
 			# Define the dictionary to return
 			dataDict = self._createEmptyDataDict()
-
+			
 			# Load in something we can iterate over
 			uvw  = data.col('UVW')
 			ant1 = data.col('ANTENNA1')
@@ -1080,9 +1158,13 @@ try:
 				if a1 == a2 and not includeAuto:
 					## Skip auto-correlations
 					continue
-				r1 = numpy.where(self.stands == a1)
-				r2 = numpy.where(self.stands == a2)
-				
+				try:
+					r1 = numpy.where((a1+1) == numpy.array(self.stands))[0][0]
+					r2 = numpy.where((a2+1) == numpy.array(self.stands))[0][0]
+				except IndexError:
+					r1 = a1
+					r2 = a2
+					
 				jd = t / 3600.0 / 24.0 + astro.MJD_OFFSET
 				u = numpy.array(u)
 				v = numpy.array(v)
@@ -1144,6 +1226,47 @@ class ImgWPlus(aipy.img.ImgW):
 	the field of view and the pixels near the phase center.
 	"""
 	
+	def put(self, (u,v,w), data, wgts=None, invker2=None):
+		"""Same as Img.put, only now the w component is projected to the w=0
+		plane before applying the data to the UV matrix."""
+		if len(u) == 0: return
+		if wgts is None:
+			wgts = []
+			for i in range(len(self.bm)):
+				if i == 0: wgts.append(numpy.ones_like(data))
+				else: wgts.append(numpy.zeros_like(data))
+		if len(self.bm) == 1 and len(wgts) != 1: wgts = [wgts]
+		assert(len(wgts) == len(self.bm))
+		# Sort uvw in order of w
+		order = numpy.argsort(w)
+		u = u.take(order)
+		v = v.take(order)
+		w = w.take(order)
+		data = data.take(order)
+		wgts = [wgt.take(order) for wgt in wgts]
+		sqrt_w = numpy.sqrt(numpy.abs(w)) * numpy.sign(w)
+		i = 0
+		while True:
+			# Grab a chunk of uvw's that grid w to same point.
+			j = sqrt_w.searchsorted(sqrt_w[i]+self.wres)
+			print '%d/%d datums' % (j, len(w))
+			avg_w = numpy.average(w[i:j])
+			# Put all uv's down on plane for this gridded w point
+			wgtsij = [wgt[i:j] for wgt in wgts]
+			uv,bm = aipy.img.Img.put(self, (u[i:j],v[i:j],w[i:j]),
+				data[i:j], wgtsij, apply=False)
+			# Convolve with the W projection kernel
+			invker = numpy.fromfunction(lambda u,v: self.conv_invker(u,v,avg_w),
+				uv.shape)
+			if not invker2 is None: invker *= invker2
+			self.uv += numpy.fft.ifft2(numpy.fft.fft2(uv) * invker)
+			#self.uv += uv
+			for b in range(len(self.bm)):
+				self.bm[b] += numpy.fft.ifft2(numpy.fft.fft2(bm[b]) * invker)
+				#self.bm[b] += numpy.array(bm)[0,:,:]
+			if j >= len(w): break
+			i = j
+			
 	def getFieldOfView(self):
 		"""
 		Return the approximate size of the field of view in radians.  The 
