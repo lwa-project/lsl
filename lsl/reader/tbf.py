@@ -33,7 +33,7 @@ from errors import *
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getChannelCount',
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getChannelCount', 'getFirstChannel', 
 		 '__version__', '__revision__', '__all__']
 
 FrameSize = 6168
@@ -119,12 +119,12 @@ class Frame(object):
 		
 		return self.header.isTBF()
 		
-	def getChannelFreqqs(self):
+	def getChannelFreqs(self):
 		"""
 		Convenience wrapper for the Frame.FrameHeader.getChannelFreq function.
 		"""
 		
-		return self.header.getFrequencies()
+		return self.header.getChannelFreqs()
 		
 	def getTime(self):
 		"""
@@ -357,3 +357,38 @@ def getChannelCount(filehandle):
 	
 	# Return the number of channels
 	return nChannels
+
+
+def getFirstChannel(filehandle, frequency=False):
+	"""
+	Find and return the lowest frequency channel in a TBF file.  If the 
+	`frequency` keyword is True the returned value is in Hz.
+	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+	
+	# Find out how many frames there are per observation
+	nFrames = getFramesPerObs(filehandle)
+	
+	# Find the lowest frequency channel
+	freqMin = 99e9
+	for i in xrange(nFrames):
+		try:
+			cFrame = readFrame(filehandle)
+		except:
+			break
+			
+		if frequency:
+			freq = cFrame.getChannelFreqs()[0]
+		else:
+			freq = cFrame.header.firstChan
+		if freq < freqMin:
+			freqMin = freq
+			
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Return the lowest frequency channel
+	return freqMin
+	
