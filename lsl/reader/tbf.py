@@ -33,8 +33,8 @@ from errors import *
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getChannelCount', 'getFirstChannel', 
-		 '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getChannelCount', 
+		 'getFirstChannel', '__version__', '__revision__', '__all__']
 
 FrameSize = 6168
 
@@ -121,7 +121,7 @@ class Frame(object):
 		
 	def getChannelFreqs(self):
 		"""
-		Convenience wrapper for the Frame.FrameHeader.getChannelFreq function.
+		Convenience wrapper for the Frame.FrameHeader.getChannelFreqs function.
 		"""
 		
 		return self.header.getChannelFreqs()
@@ -391,4 +391,3 @@ def getFirstChannel(filehandle, frequency=False):
 	
 	# Return the lowest frequency channel
 	return freqMin
-	
