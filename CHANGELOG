@@ -15,6 +15,11 @@
   * Added 'memmap' and 'clobber' keywords to the various lsl.writer modules to expose a consistent interface
   * Small fix in imageIDI.py to make it work with CASA MeasurementSets
   * Transitioned to the native C complex type for the various C extensions
+  * Added 'memmap' and 'clobber' keywords to the various lsl.writer modules to expose a consistent interface
+  * Small fix in imageIDI.py to make it work with CASA MeasurementSets
+  * Transitioned to the native C complex type for the various C extensions
+  * Added better support VDIF files in the lsl.reader.vdif module
+  * Added a ring buffer for VDIF files to the lsl.reader.buffer module
 
 1.1.1
   * Fixed a bug in the lsl.statistics.robust.checkfit function

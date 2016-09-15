@@ -25,9 +25,9 @@ except ImportError:
 	from lsl.misc.OrderedDict import OrderedDict
 
 
-__version__ = '0.9'
+__version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'DRX8FrameBuffer', '__version__', '__revision__', '__all__']
+__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'DRX8FrameBuffer', 'VDIFFrameBuffer', '__version__', '__revision__', '__all__']
 
 
 def _cmpStands(x, y):
@@ -81,7 +81,7 @@ class FrameBuffer(object):
 		'flush()' function.
 	"""
 	
-	def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], nSegments=6, ReorderFrames=False):
+	def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], threads=[], nSegments=6, ReorderFrames=False):
 		"""
 		Initialize the buffer with a list of:
 		  * TBN
@@ -94,6 +94,8 @@ class FrameBuffer(object):
 		  * DRX8
 		      * list of beams
 		      * list of pols.
+		  * VDIF
+		      * list of thread IDs
 		By doing this, we should be able to keep up with when the buffer 
 		is full and to help figure out which stands/beam/tunings/pols. are 
 		missing.
@@ -116,10 +118,15 @@ class FrameBuffer(object):
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
 					
-		else:
+		elif mode.upper() == 'DRX8':
 			for pol in pols:
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
+					
+		else:
+			for thread in threads:
+				if thread not in range(1024):
+					raise RuntimeError("Invalid thread ID '%i'" % thread)
 					
 		# The buffer itself
 		self.nSegments = nSegments
@@ -138,6 +145,7 @@ class FrameBuffer(object):
 		self.beams = beams
 		self.tunes = tunes
 		self.pols = pols
+		self.threads = threads
 		
 		# If we should reorder the returned frames by stand/pol or not
 		self.reorder = ReorderFrames
@@ -216,6 +224,13 @@ class FrameBuffer(object):
 				self.buffer[fom].append(frame)
 				
 		return True
+		
+	def put(self, *args, **kwds):
+		"""
+		Synonymous with 'append'.
+		"""
+		
+		self.append(*args, **kwds)
 		
 	def get(self, keyToReturn=None):
 		"""
@@ -301,8 +316,11 @@ class FrameBuffer(object):
 		# Find out what frames we have
 		frameList = []
 		for frame in self.buffer[key]:
-			frameList.append(frame.parseID())
-			
+			if self.mode == 'VDIF':
+				frameList.append(frame.parseID()[1])
+			else:
+				frameList.append(frame.parseID())
+				
 		# Compare the existing list with the possible list stored in the 
 		# FrameBuffer object to build a list of missing frames.
 		missingList = []
@@ -615,6 +633,73 @@ class DRX8FrameBuffer(FrameBuffer):
 		
 		# Zero the data for the fill packet
 		fillFrame.data.iq *= 0
+		
+		# Invalidate the frame
+		fillFrame.valid = False
+		
+		return fillFrame
+
+
+class VDIFFrameBuffer(FrameBuffer):
+	"""
+	A sub-type of FrameBuffer specifically for dealing with VDIF frames.
+	See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+	buffering is implemented.
+	
+	Keywords:
+	threads
+	  list of thread IDs to expect data for
+	  
+	nSegments
+	  number of ring segments to use for the buffer (default is 10)
+	  
+	ReorderFrames
+	  whether or not to reorder frames returned by get() or flush() by 
+	  stand/polarization (default is False)
+	"""
+	
+	def __init__(self, threads=[0,1], nSegments=10, ReorderFrames=False):
+		super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nSegments=nSegments, ReorderFrames=ReorderFrames)
+		
+	def calcFrames(self):
+		"""
+		Calculate the maximum number of frames that we expect from 
+		the setup of the observations and a list of tuples that describes
+		all of the possible stand/pol combination.
+		"""
+		
+		nFrames = 0
+		frameList = []
+		
+		nFrames = len(self.threads)
+		for thread in self.threads:
+			frameList.append(thread)
+			
+		return (nFrames, frameList)
+		
+	def figureOfMerit(self, frame):
+		"""
+		Figure of merit for sorting frames.  For VIDF this is:
+		  secondsFromEpoch * 100000 + frameInSecond
+		"""
+		
+		return frame.header.secondsFromEpoch*100000 + frame.header.frameInSecond
+		
+	def createFill(self, key, frameParameters):
+		"""
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+		"""
+
+		# Get a template based on the first frame for the current buffer
+		fillFrame = copy.deepcopy(self.buffer[key][0])
+		
+		# Get out the frame parameters and fix-up the header
+		thread = frameParameters
+		fillFrame.header.threadID = thread
+		
+		# Zero the data for the fill packet
+		fillFrame.data.data *= 0
 		
 		# Invalidate the frame
 		fillFrame.valid = False

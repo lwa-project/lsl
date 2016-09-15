@@ -42,9 +42,11 @@ from lsl import astro
 from lsl.common.mcs import datetime2mjdmpm
 
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getFrameSize', 'getThreadCount', '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readGUPPIHeader', 'readFrame', 
+		 'getFrameSize', 'getThreadCount', 'getFramesPerSecond', 'getSampleRate', 
+		 '__version__', '__revision__', '__all__']
 
 
 
@@ -488,6 +490,38 @@ class Frame(object):
 	#		return 0
 
 
+def readGUPPIHeader(filehandle):
+	"""
+	Read in a GUPPI header at the start of a VDIF file from the VLA.  The 
+	contents of the header are returned as a dictionary.
+	"""
+	
+	# Read in the GUPPI header
+	header = {}
+	while True:
+		line = filehandle.read(80)
+		if line[:3] == 'END':
+			break
+		elif line[:8] == 'CONTINUE':
+			junk, value2 = line.split(None, 1)
+			value = "%s%s" % (value[:-1], value2[:-1])
+		else:
+			name, value = line.split('=', 1)
+			name = name.strip()
+		try:
+			value = int(value, 10)
+		except:
+			try:
+				value = float(value)
+			except:
+				value = value.strip().replace("'", '')
+		header[name.strip()] = value
+	header['OBSBW'] *= 1e6
+	header['OBSFREQ'] *= 1e6
+	
+	return header
+
+
 def readFrame(filehandle, sampleRate=0.0, centralFreq=0.0, Verbose=False):
 	"""
 	Function to read in a single VDIF frame (header+data) and store the 
@@ -504,7 +538,6 @@ def readFrame(filehandle, sampleRate=0.0, centralFreq=0.0, Verbose=False):
 		raise eofError
 		
 	return newFrame
-
 
 
 def getFrameSize(filehandle, nFrames=None):
@@ -533,22 +566,137 @@ def getThreadCount(filehandle):
 	# Save the current position in the file so we can return to that point
 	fhStart = filehandle.tell()
 	
+	# Get the frame size
+	FrameSize = getFrameSize(filehandle)
+	
 	# Build up the list-of-lists that store ID codes and loop through 1024
 	# frames.  In each case, parse pull the thread ID and append the thread 
 	# ID to the relevant thread array if it is not already there.
 	threads = []
-	for i in range(1024):
+	i = 0
+	while i < 1024:
 		try:
 			cFrame = readFrame(filehandle)
-		except eofError:
+		except syncError:
+			filehandle.seek(FrameSize, 1)
 			continue
+		except eofError:
+			break
 			
 		cID = cFrame.header.threadID
 		if cID not in threads:
 			threads.append(cID)
-			
+		i += 1
+		
 	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
 	
 	# Return the number of threads found
-	return len(threads)	
+	return len(threads)
+
+
+def getFramesPerSecond(filehandle):
+	"""
+	Find out the number of frames per second in a file by watching how the 
+	headers change.  Returns the number of frames in a second.
+	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+	
+	# Get the frame size
+	FrameSize = getFrameSize(filehandle)
+	
+	# Get the number of threads
+	nThreads = getThreadCount(filehandle)
+	
+	# Get the current second counts for all threads
+	ref = {}
+	i = 0
+	while i < nThreads:
+		try:
+			cFrame = readFrame(filehandle)
+		except syncError:
+			filehandle.seek(FrameSize, 1)
+			continue
+		except eofError:
+			break
+			
+		cID = cFrame.header.threadID
+		cSC = cFrame.header.secondsFromEpoch
+		ref[cID] = cSC
+		i += 1
+		
+	# Read frames until we see a change in the second counter
+	cur = {}
+	fnd = []
+	while True:
+		## Get a frame
+		try:
+			cFrame = readFrame(filehandle)
+		except syncError:
+			filehandle.seek(FrameSize, 1)
+			continue
+		except eofError:
+			break
+			
+		## Pull out the relevant metadata
+		cID = cFrame.header.threadID
+		cSC = cFrame.header.secondsFromEpoch
+		cFC = cFrame.header.frameInSecond
+		
+		## Figure out what to do with it
+		if cSC == ref[cID]:
+			### Same second as the reference, save the frame number
+			cur[cID] = cFC
+		else:
+			### Different second than the reference, we've found something
+			ref[cID] = cSC
+			if cID not in fnd:
+				fnd.append( cID )
+				
+		if len(fnd) == nThreads:
+			break
+			
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Pull out the mode
+	mode = {}
+	for key,value in cur.iteritems():
+		try:
+			mode[value] += 1
+		except KeyError:
+			mode[value] = 1
+	best, bestValue = 0, 0
+	for key,value in mode.iteritems():
+		if value > bestValue:
+			best = key
+			bestValue = value
+			
+	# Correct for a zero-based counter and return
+	best += 1
+	return best
+
+
+def getSampleRate(filehandle):
+	"""
+	Find and return the sample rate in Hz by looking at how many frames 
+	there are per second and how many samples there are in a frame.
+	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+	
+	# Get the number of frames per second
+	nFramesSecond = getFramesPerSecond(filehandle)
+	
+	# Read in a frame
+	cFrame = readFrame(filehandle)
+	
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Get the sample rate
+	sampleRate = cFrame.data.data.shape[-1] * nFramesSecond
+	return float(sampleRate)
