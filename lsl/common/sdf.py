@@ -1316,7 +1316,7 @@ class _DRXBase(Observation):
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
 			failures += 1
-		if self.freq2 < 219130984 or self.freq2 > 1928352663:
+		if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1
@@ -1846,7 +1846,7 @@ class BeamStep(object):
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
 			failures += 1
-		if self.freq2 < 219130984 or self.freq2 > 1928352663:
+		if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1
