@@ -939,7 +939,7 @@ class IDI(object):
 					HA = 0.0
 					dec = equ.dec
 				else:
-					HA = obs.sidereal_time() - dataSet.source.ra
+					HA = (obs.sidereal_time() - dataSet.source.ra) * 12/numpy.pi
 					dec = dataSet.source.dec * 180/numpy.pi
 				uvwCoords = dataSet.getUVW(HA, dec, obs)
 				

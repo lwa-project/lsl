@@ -139,11 +139,12 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
 	.. versionchanged:: 1.1.2
 		Updated to work with lists in a transparent manner.
 	"""
-
-	 # Try this so that freq can be either a scalar, a list, or an array
+	
+	# Try this so that freq can be either a scalar, a list, or an array
 	try: 
 		freq.size
-	except AttributeError:
+		assert(freq.shape != ())
+	except (AttributeError, AssertionError):
 		freq = numpy.array(freq, ndmin=1)
 		
 	N = len(antennas)
