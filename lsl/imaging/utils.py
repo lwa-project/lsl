@@ -493,9 +493,6 @@ class CorrelatedDataIDI(object):
 		hdulist = pyfits.open(self.filename)
 		uvData = hdulist['UV_DATA']
 		
-		import time
-		t0 = time.time()
-		
 		# We need this a lot...
 		nPol = len(self.pols)
 		
@@ -537,9 +534,9 @@ class CorrelatedDataIDI(object):
 			u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
 		except KeyError:
 			u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
-		vis = uvData.data['FLUX'][selection]
+		vis = numpy.ascontiguousarray(uvData.data['FLUX'][selection])
 		if seperateWeights:
-			wgt = uvData.data['WEIGHT'][selection]
+			wgt = numpy.ascontiguousarray(uvData.data['WEIGHT'][selection])
 		else:
 			wgt = None
 			
@@ -548,6 +545,9 @@ class CorrelatedDataIDI(object):
 		nFreq = len(self.freq)
 		nStk = len(self.pols)
 		nCmp = 2 if seperateWeights else 3
+		if vis.size/nFreq/nStk/nCmp != len(bl):
+			### Catch for FITS-IDI files generate by interfits
+			nCmp = 2 if nCmp == 3 else 3
 		## Frequency for converting the u, v, and w coordinates
 		freq = self.freq*1.0
 		freq.shape += (1,)
@@ -564,8 +564,12 @@ class CorrelatedDataIDI(object):
 				wgt = numpy.concatenate([wgt for pol in self.pols])
 			wgt.shape = (wgt.size/nFreq/nStk, nFreq, nStk)
 		else:
-			wgt = vis[:,:,:,2]
-			vis = vis[:,:,:,:2]
+			try:
+				wgt = vis[:,:,:,2]
+				vis = vis[:,:,:,:2]
+			except IndexError:
+				### Catch for FITS-IDI files generate by interfits
+				wgt = numpy.ones([vis.shape[i] for i in xrange(3)], dtype=numpy.float32)
 		## Back to complex
 		vis = vis[:,:,:,0] + 1j*vis[:,:,:,1]
 		## Scale
@@ -615,8 +619,6 @@ class CorrelatedDataIDI(object):
 		if uvMin != 0 or uvMax != numpy.inf:
 			dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
 			
-		print time.time()-t0
-		
 		# Return
 		return dataDict
 

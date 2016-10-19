@@ -47,6 +47,7 @@ Options:
 -e, --exclude          Comma seperated list of dipoles to exclude
                        (Default = None)
 -t, --topo             Display an az/el grid instead of a RA/Dec grid
+-u, --utc              Display the time as UTC, instead of LST
 -n, --no-labels        Disable source and grid labels
 -g, --no-grid          Disable the grid
 -f, --fits             Save the images to the specified FITS image file
@@ -73,12 +74,13 @@ def parseConfig(args):
 	config['label'] = True
 	config['grid'] = True
 	config['coord'] = 'RADec'
+	config['time'] = 'LST'
 	config['fits'] = None
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "h1:2:s:m:i:e:tngf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "include=", "exclude=", "topo", "no-labels", "no-grid", "fits="])
+		opts, arg = getopt.getopt(args, "h1:2:s:m:i:e:tungf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "include=", "exclude=", "topo", "utc", "no-labels", "no-grid", "fits="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -102,6 +104,8 @@ def parseConfig(args):
 			config['exclude'] = [int(v) for v in value.split(',')]
 		elif opt in ('-t', '--topo'):
 			config['coord'] = 'AzEl'
+		elif opt in ('-u', '--utc'):
+			config['time'] = 'UTC'
 		elif opt in ('-n', '--no-labels'):
 			config['label'] = False
 		elif opt in ('-g', '--no-grid'):
@@ -150,6 +154,28 @@ def main(args):
 		print "Set #%i of %i" % (set, nSets)
 		dataDict = idi.getDataSet(set, uvMin=config['uvMin'])
 		
+		# Build a list of unique JDs for the data
+		pols = dataDict['bls'].keys()
+		jdList = []
+		for jd in dataDict['jd'][pols[0]]:
+			if jd not in jdList:
+				jdList.append(jd)
+				
+		# Find the LST
+		lo.date = jdList[0] - astro.DJD_OFFSET
+		utc = str(lo.date)
+		lst = str(lo.sidereal_time())
+		
+		# Pull out the right channels
+		toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]
+		if len(toWork) == 0:
+			raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (config['freq1']/1e6, config['freq2']/1e6))
+			
+		# Integration report
+		print "    Date Observed: %s" % utc
+		print "    LST: %s" % lst
+		print "    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6)
+		
 		# Prune out what needs to go
 		if config['include'] is not None or config['exclude'] is not None:
 			print "    Processing include/exclude lists"
@@ -190,22 +216,6 @@ def main(args):
 			for pol in dataDict['bls'].keys():
 				print "        %s now has %i baselines" % (pol, len(dataDict['bls'][pol]))
 				
-		# Build a list of unique JDs for the data
-		pols = dataDict['bls'].keys()
-		jdList = []
-		for jd in dataDict['jd'][pols[0]]:
-			if jd not in jdList:
-				jdList.append(jd)
-				
-		# Find the LST
-		lo.date = jdList[0] - astro.DJD_OFFSET
-		lst = str(lo.sidereal_time())
-		
-		# Pull out the right channels
-		toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]
-		if len(toWork) == 0:
-			raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (config['freq1']/1e6, config['freq2']/1e6))
-
 		# Build up the images for each polarization
 		print "    Gridding"
 		img1 = None
@@ -255,19 +265,25 @@ def main(args):
 			# Skip missing images
 			if img is None:
 				ax.text(0.5, 0.5, 'Not found in file', color='black', size=12, horizontalalignment='center')
-
+				
 				ax.xaxis.set_major_formatter( NullFormatter() )
 				ax.yaxis.set_major_formatter( NullFormatter() )
-
-				ax.set_title("%s @ %s LST" % (pol, lst))
+				
+				if config['time'] == 'LST':
+					ax.set_title("%s @ %s LST" % (pol, lst))
+				else:
+					ax.set_title("%s @ %s UTC" % (pol, utc))
 				continue
 				
 			# Display the image and label with the polarization/LST
 			cb = ax.imshow(img.image(center=(80,80)), extent=(1,-1,-1,1), origin='lower', 
 					vmin=img.image().min(), vmax=img.image().max())
 			fig.colorbar(cb, ax=ax)
-			ax.set_title("%s @ %s LST" % (pol, lst))
-			
+			if config['time'] == 'LST':
+				ax.set_title("%s @ %s LST" % (pol, lst))
+			else:
+				ax.set_title("%s @ %s UTC" % (pol, utc))
+				
 			junk = img.image(center=(80,80))
 			print "%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean())
 			

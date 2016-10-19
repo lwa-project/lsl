@@ -22,6 +22,7 @@
   * Added a ring buffer for VDIF files to the lsl.reader.buffer module
   * Added support for single tuning beam SDFs
   * Fixed a couple of bugs that caused FITS IDI files to have invalid uvw coordinates
+  * Added an option to imageIDI.py to show the time in UTC instead of LST
 
 1.1.1
   * Fixed a bug in the lsl.statistics.robust.checkfit function
