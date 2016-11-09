@@ -23,6 +23,7 @@
   * Added support for single tuning beam SDFs
   * Fixed a couple of bugs that caused FITS IDI files to have invalid uvw coordinates
   * Added an option to imageIDI.py to show the time in UTC instead of LST
+  * Updated the LWA1 SSMIF to the 7 July 2016 version
 
 1.1.1
   * Fixed a bug in the lsl.statistics.robust.checkfit function

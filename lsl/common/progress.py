@@ -40,7 +40,7 @@ class ProgressBar(object):
 		self.max = max
 		self.span = span
 		self.sym = sym
-		self.rotations = ['-', '\\', '|', '/', '-', '\\', '|', '/', self.sym]
+		self.rotations = ['-', '\\', '|', '/', self.sym]
 		self.printP = printP
 		
 	def inc(self, amount=1):
