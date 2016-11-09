@@ -366,16 +366,16 @@ def phaseAndSum(antennas, data, sampleRate=dp_common.fS, CentralFreq=49.0e6, azi
 	
 	# Figure out the polarizations
 	pols = numpy.array([ant.pol for ant in antennas])
-	pol0 = numpy.where( pols == 0 )[0]
-	pol1 = numpy.where( pols == 1 )[0]
+	stat = numpy.array([ant.getStatus() for ant in antennas])
+	pol0 = numpy.where( (pols == 0) & (stat == 33) )[0]
+	pol1 = numpy.where( (pols == 1) & (stat == 33) )[0]
 	
 	# Loop over stands to compute the formed beam
 	output = numpy.zeros((2, data.shape[1]), dtype=numpy.complex64)
-	for b,s,p in zip(bln, range(len(antennas)), pols):
-		if antennas[s].getStatus() != 33:
-			continue
-			
-		output[p,:] += data[s,:]*b
+	if len(pol0):
+		output[0,:] = numpy.dot(bln[pol0], data[pol0,:]) / len(pol0)
+	if len(pol1):
+		output[1,:] = numpy.dot(bln[pol1], data[pol1,:]) / len(pol1)
 		
 	# Check for empty polarization data.  Always return a 3-D array for the data
 	if len(pol0) == 0:
