@@ -362,7 +362,7 @@ class Antenna(object):
 	Object to store the information about an antenna.  Stores antenna:
 	  * ID number (id)
 	  * ARX instance the antenna is attached to (arx)
-	  * DP1/ROAQCH board number (board)
+	  * DP1/ROACH board number (board)
 	  * DP1/ROACH  digitizer number (digitizer)
 	  * DP/ADP rack input connector (input)
 	  * Stand instance the antenna is part of (stand)
