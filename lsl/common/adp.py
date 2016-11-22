@@ -21,6 +21,7 @@ fS = 196.0e6	# Hz
 fC = 25e3		# Hz
 T = 1.0		# seconds
 T2 = 0.010	# seconds
+N_MAX = 8192	# bytes
 
 
 def freq2word(freq):

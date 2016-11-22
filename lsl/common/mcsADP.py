@@ -54,7 +54,7 @@ import re
 import struct
 from ctypes import *
 
-from lsl.common import adp as dpCommon
+from lsl.common import adp as adpCommon
 
 
 __version__ = '0.1'
@@ -67,7 +67,10 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
 			'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'IS_32BIT_PYTHON', 
 			'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
 			'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
-			'parseCStruct', '__version__', '__revision__', '__all__']
+			'delaytoMCSD', 'MCSDtodelay', 'gaintoMCSG', 'MCSGtogain',
+			'mjdmpm2datetime', 'datetime2mjdmpm', 'status2string', 'summary2string', 'sid2string', 'cid2string', 
+			'mode2string', 'parseCStruct', 'single2multi', 'applyPointingCorrection', 'MIB', 'MIBEntry', 
+			'__version__', '__revision__', '__all__']
 
 
 ME_SSMIF_FORMAT_VERSION = 8	# SSMIF format version code
@@ -533,7 +536,7 @@ def delaytoMCSD(delay):
 	.. versionadded:: 0.6.3
 	"""
 	
-	return _twoByteSwap( dpCommon.delaytoDPD(delay) )
+	return _twoByteSwap( adpCommon.delaytoDPD(delay) )
 
 
 def MCSDtodelay(delay):
@@ -544,7 +547,7 @@ def MCSDtodelay(delay):
 	.. versionadded:: 0.6.3
 	"""
 	
-	return dpCommon.DPDtodelay( _twoByteSwap(delay) )
+	return adpCommon.DPDtodelay( _twoByteSwap(delay) )
 
 
 def gaintoMCSG(gain):
@@ -556,7 +559,7 @@ def gaintoMCSG(gain):
 	.. versionadded::0.6.3
 	"""
 	
-	return _twoByteSwap( dpCommon.gaintoDPG(gain) )
+	return _twoByteSwap( adpCommon.gaintoDPG(gain) )
 
 
 def MCSGtogain(gain):
@@ -567,7 +570,7 @@ def MCSGtogain(gain):
 	.. versionadded:: 0.6.3
 	"""
 	
-	return dpCommon.DPGtogain( _twoByteSwap(gain) )
+	return adpCommon.DPGtogain( _twoByteSwap(gain) )
 
 
 def mjdmpm2datetime(mjd, mpm):

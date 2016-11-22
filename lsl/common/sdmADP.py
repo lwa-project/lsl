@@ -8,7 +8,7 @@ files (as defined in MCS0031, v5).
 import os
 import copy
 
-from lsl.common.mcs import *
+from lsl.common.mcsADP import *
 from datetime import datetime
 
 __version__ = '0.3'

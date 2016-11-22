@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+	import dbm
+else:
+	import anydbm as dbm
+
 """
 Module that contains common values found in the MCS Joint Release 5 header file
 src/exec/me.h and other functions useful for working with the MCS metadata.  
@@ -57,7 +67,10 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
 			'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'IS_32BIT_PYTHON', 
 			'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
 			'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
-			'parseCStruct', '__version__', '__revision__', '__all__']
+			'delaytoMCSD', 'MCSDtodelay', 'gaintoMCSG', 'MCSGtogain',
+			'mjdmpm2datetime', 'datetime2mjdmpm', 'status2string', 'summary2string', 'sid2string', 'cid2string', 
+			'mode2string', 'parseCStruct', 'single2multi', 'applyPointingCorrection', 'MIB', 'MIBEntry', 
+			'__version__', '__revision__', '__all__']
 
 
 ME_SSMIF_FORMAT_VERSION = 7	# SSMIF format version code

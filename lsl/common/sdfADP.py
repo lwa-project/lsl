@@ -9,8 +9,8 @@ if sys.version_info > (3,):
 
 """
 Module that contains all of the relevant class to build up a representation 
-of a session definition file as defined in MCS0030v5.  The hierarchy of classes
-is:
+of a session definition file as defined in MCS0030v5 and updated LWA-SV.  The 
+hierarchy of classes is:
   * Project - class that holds all of the information about the project (including
     the observer) and one or more sessions.  Technically, a SD file has only one
     session but this approach allows for the generation of multiple SD files from
@@ -21,7 +21,6 @@ is:
   * Observations - class that hold information about a particular observation.  It
     includes a variety of attributes that are used to convert human-readable inputs
     to SDF data values.  The observation class is further subclasses into:
-    - TBW - class for TBW observations
     - TBN - class for TBN observations
     - DRX - class for general DRX observation, with sub-classes:
       * Solar - class for solar tracking
@@ -33,7 +32,7 @@ is:
 All of the classes, except for Stepped and BeamStep, are complete and functional.  In 
 addition, most class contain 'validate' attribute functions that can be used to 
 determine if the project/session/observation are valid or not given the constraints of
-the DP system.
+the ADP system.
 
 In addition to providing the means for creating session definition files from scratch, 
 this module also includes a simple parser for SD files.
@@ -59,19 +58,18 @@ from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
 
-from lsl.common.mcs import LWA_MAX_NSTD
-from lsl.common.dp import freq2word, word2freq
-from lsl.common.stations import lwa1
+from lsl.common.mcsADP import LWA_MAX_NSTD
+from lsl.common.adp import freq2word, word2freq
+from lsl.common.stations import lwasv
 from lsl.reader.tbn import filterCodes as TBNFilters
 from lsl.reader.drx import filterCodes as DRXFilters
-from lsl.reader.tbw import FrameSize as TBWSize
 from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
 __version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
 _UTC = pytz.utc
@@ -80,10 +78,6 @@ _CST = pytz.timezone('US/Central')
 _MST = pytz.timezone('US/Mountain')
 _PST = pytz.timezone('US/Pacific')
 _DRSUCapacityTB = 10
-# Factors for computing the time it takes to read out a TBW from the number 
-# of samples
-_TBW_TIME_SCALE = 196000
-_TBW_TIME_GAIN = 5000
 
 
 def _getEquinoxEquation(jd):
@@ -114,7 +108,7 @@ def _getEquinoxEquation(jd):
 	return deltaPsi * math.cos(epsilon*math.pi/180.0)
 
 
-def parseTime(s, site=lwa1):
+def parseTime(s, site=lwasv):
 	"""
 	Given a timezone-aware datetime instance or a string in the format of 
 	(UTC) YYYY MM DD HH:MM:SS.SSS, return the corresponding UTC datetime object.
@@ -617,12 +611,8 @@ class Project(object):
 					
 					if ats != -1:
 						output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, atsID, ats)
-			## TBW settings
-			if obs.mode == 'TBW':
-				output = "%sOBS_TBW_BITS     %i\n" % (output, obs.bits)
-				output = "%sOBS_TBW_SAMPLES  %i\n" % (output, obs.samples)
 			## TBN gain
-			elif obs.mode == 'TBN':
+			if obs.mode == 'TBN':
 				if obs.gain != -1:
 					output = "%sOBS_TBN_GAIN     %i\n" % (output, obs.gain)
 			## DRX gain
@@ -771,7 +761,7 @@ class Session(object):
 				
 		# Validate beam number
 		if len(self.observations) > 0:
-			if self.observations[0].mode not in ('TBW', 'TBN'):
+			if self.observations[0].mode not in ('TBN',):
 				if self.drxBeam == -1:
 					if verbose:
 						print("[%i] Error: Beam not assigned for this session" % os.getpid())
@@ -843,7 +833,7 @@ class Session(object):
 class Observation(object):
 	"""
 	Class to hold the specifics of an observations.  It currently
-	handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped
+	handles TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped
 	
 	.. versionchanged:: 1.0.0
 		Added support for RA/dec values as ephem.hours/ephem.degrees instances
@@ -987,7 +977,7 @@ class Observation(object):
 		
 		return None
 	
-	def computeVisibility(self, station=lwa1):
+	def computeVisibility(self, station=lwasv):
 		"""Place holder for functions that return the fractional visibility of the 
 		target during the observation period."""
 		
@@ -1008,98 +998,6 @@ class Observation(object):
 			return 1
 		else:
 			return 0
-
-
-class TBW(Observation):
-	"""Sub-class of Observation specifically for TBW observations.  It features a
-	reduced number of parameters needed to setup the observation and provides extra
-	information about the number of data bits and the number of samples.
-	
-	.. note::
-		TBW read-out times in ms are calculated using (samples/196000+1)*5000 per
-		MCS
-	
-	Required Arguments:
-	  * observation name
-	  * observation target
-	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
-	  * integer number of samples
-	  
-	Optional Keywords:
-	  * bits - number of data bits (4 or 12)
-	  * comments - comments about the observation
-	"""
-	
-	def __init__(self, name, target, start, samples, bits=12, comments=None):
-		self.samples = int(samples)
-		self.bits = int(bits)
-		
-		duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
-		durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
-		Observation.__init__(self, name, target, start, durStr, 'TBW', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
-		
-	def update(self):
-		"""Update the computed parameters from the string values."""
-		
-		# Update the duration based on the number of bits and samples used
-		duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
-		sc = int(duration/1000.0)
-		ms = int(round((duration/1000.0 - sc)*1000))
-		us = ms*1000
-		self.duration = str(timedelta(seconds=sc, microseconds=us))
-		
-		self.mjd = self.getMJD()
-		self.mpm = self.getMPM()
-		self.dur = self.getDuration()
-		self.freq1 = self.getFrequency1()
-		self.freq2 = self.getFrequency2()
-		self.beam = self.getBeamType()
-		self.dataVolume = self.estimateBytes()
-
-	def estimateBytes(self):
-		"""Estimate the data volume for the specified type and duration of 
-		observations.  For TBW:
-		
-			bytes = samples / samplesPerFrame * 1224 bytes * 260 stands
-		"""
-		
-		SamplesPerFrame = 400
-		if self.bits == 4:
-			SamplesPerFrame = 1200
-		nFrames = self.samples / SamplesPerFrame
-		nBytes = nFrames * TBWSize * LWA_MAX_NSTD
-		return nBytes
-		
-	def validate(self, verbose=False):
-		"""Evaluate the observation and return True if it is valid, False
-		otherwise."""
-		
-		failures = 0
-		# Basic - Sample size and data bits agreement
-		if self.bits not in [4, 12]:
-			if verbose:
-				print("[%i] Error: Invalid number of data bits '%i'" % (os.getpid(), self.bits))
-			failures += 1
-		if self.bits == 12 and self.samples > 12000000:
-			if verbose:
-				print("[%i] Error: Invalid number of samples for 12-bit data (%i > 12000000)" % (os.getpid(), self.samples))
-			failures += 1
-		if self.bits == 4 and self.samples > 36000000:
-			if verbose:
-				print("[%i] Error: Invalid number of samples for 4-bit data (%i > 36000000)" % (os.getpid(), self.samples))
-			failures += 1
-			
-		# Advanced - Data Volume
-		if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-			if verbose:
-				print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
-			failures += 1
-			
-		# Any failures indicates a bad observation
-		if failures == 0:
-			return True
-		else:
-			return False
 
 
 class TBN(Observation):
@@ -1219,7 +1117,7 @@ class _DRXBase(Observation):
 		self.frequency2 = float(frequency2)
 		self.update()
 		
-	def setBeamDipoleMode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwa1):
+	def setBeamDipoleMode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwasv):
 		"""Convert the current observation to a 'beam-dipole mode' 
 		observation with the specified stand.  Setting the stand to zero
 		will disable the 'beam-dipole mode' for this observation'.
@@ -1231,7 +1129,7 @@ class _DRXBase(Observation):
 		                default: 1.0; range: 0.0 to 1.0
 		 * pol - Polarization to record  default: "X"
 		 * station - lsl.common.stations instance to use for mapping
-		             default: lsl.common.stations.lwa1
+		             default: lsl.common.stations.lwasv
 		"""
 		
 		# Validate
@@ -1272,7 +1170,7 @@ class _DRXBase(Observation):
 		
 	def getFixedBody(self):
 		"""Return an ephem.Body object corresponding to where the observation is 
-		pointed.  None if the observation mode is either TBN or TBW."""
+		pointed.  None if the observation mode is TBN."""
 		
 		pnt = ephem.FixedBody()
 		pnt._ra = self.ra / 12.0 * math.pi
@@ -1280,7 +1178,7 @@ class _DRXBase(Observation):
 		pnt._epoch = '2000'
 		return pnt
 		
-	def computeVisibility(self, station=lwa1):
+	def computeVisibility(self, station=lwasv):
 		"""Return the fractional visibility of the target during the observation 
 		period."""
 		
@@ -1411,7 +1309,7 @@ class Solar(_DRXBase):
 		
 	def getFixedBody(self):
 		"""Return an ephem.Body object corresponding to where the observation is 
-		pointed.  None if the observation mode is either TBN or TBW."""
+		pointed.  None if the observation mode is TBN."""
 		
 		return ephem.Sun()
 
@@ -1441,7 +1339,7 @@ class Jovian(_DRXBase):
 
 	def getFixedBody(self):
 		"""Return an ephem.Body object corresponding to where the observation is 
-		pointed.  None if the observation mode is either TBN or TBW."""
+		pointed.  None if the observation mode is TBN."""
 		
 		return ephem.Jupiter()
 
@@ -1525,7 +1423,7 @@ class Stepped(Observation):
 		self.steps.append(newStep)
 		self.update()
 		
-	def setBeamDipoleMode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwa1):
+	def setBeamDipoleMode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwasv):
 		"""Convert the current observation to a 'beam-dipole mode' 
 		observation with the specified stand.  Setting the stand to zero
 		will disable the 'beam-dipole mode' for this observation'.
@@ -1537,7 +1435,7 @@ class Stepped(Observation):
 		                default: 1.0; range: 0.0 to 1.0
 		 * pol - Polarization to record  default: "X"
 		 * station - lsl.common.stations instance to use for mapping
-		             default: lsl.common.stations.lwa1
+		             default: lsl.common.stations.lwasv
 		"""
 		
 		# Validate
@@ -1577,7 +1475,7 @@ class Stepped(Observation):
 		nBytes = nFrames * DRXSize * 4
 		return nBytes
 		
-	def computeVisibility(self, station=lwa1):
+	def computeVisibility(self, station=lwasv):
 		"""Return the fractional visibility of the target during the observation 
 		period."""
 		
@@ -1800,7 +1698,7 @@ class BeamStep(object):
 			
 	def getFixedBody(self):
 		"""Return an ephem.Body object corresponding to where the observation is 
-		pointed.  None if the observation mode is either TBN or TBW."""
+		pointed.  None if the observation mode is TBN."""
 		
 		if self.RADec:
 			pnt = ephem.FixedBody()
@@ -1893,8 +1791,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	utcString = start.strftime("UTC %Y %m %d %H:%M:%S.%f")
 	utcString = utcString[:-3]
 	
-	# Build up a string representing the observation duration.  For TBW observations 
-	# this needs to be wrapped in a try...expect statement to catch errors.
+	# Build up a string representing the observation duration.
 	try:
 		dur = obsTemp['duration']
 		dur = float(dur) / 1000.0
@@ -1911,14 +1808,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	if verbose:
 		print("[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
 		
-	if mode == 'TBW':
-		obsOut = TBW(obsTemp['name'], obsTemp['target'], utcString, 12000000, comments=obsTemp['comments'])
-		obsOut.bits = 1*obsTemp['tbwBits']
-		if obsTemp['tbwSamples'] > 0:
-			obsOut.samples = 1*obsTemp['tbwSamples']
-		else:
-			obsOut.samples = 12000000 if obsOut.bits == 12 else 36000000
-	elif mode == 'TBN':
+	if mode == 'TBN':
 		obsOut = TBN(obsTemp['name'], obsTemp['target'], utcString, durString, f1, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
 	elif mode == 'TRK_RADEC':
 		obsOut = DRX(obsTemp['name'], obsTemp['target'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
@@ -2347,12 +2237,6 @@ def parseSDF(filename, verbose=False):
 					obsTemp['aspATS'][n] = int(value)
 			else:
 				obsTemp['aspATS'][ids[0]-1] = int(value)
-			continue
-		if keyword == 'OBS_TBW_BITS':
-			obsTemp['tbwBits'] = int(value)
-			continue
-		if keyword == 'OBS_TBW_SAMPLES':
-			obsTemp['tbwSamples'] = int(value)
 			continue
 		if keyword == 'OBS_TBN_GAIN':
 			obsTemp['gain'] = int(value)

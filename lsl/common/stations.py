@@ -19,8 +19,7 @@ import ephem
 import struct
 
 from lsl.common.paths import data as dataPath
-from lsl.common.mcs import *
-from lsl.common.mcs import dpCompatibility, adpCompatibility
+from lsl.common import mcs, mcsADP
 from lsl.common.constants import *
 from lsl.misc.mathutil import to_dB, from_dB
 
@@ -1334,10 +1333,10 @@ def __parseBinarySSMIF(filename):
 	
 	if version in (8,):
 		## ADP
-		mode = adpCompatibility
+		mode = mcsADP
 	else:
 		## DP
-		mode = dpCompatibility
+		mode = mcs
 	bssmif = mode.parseCStruct(mode.SSMIF_STRUCT, charMode='int', endianness='little')
 	bsettings = mode.parseCStruct(mode.STATION_SETTINGS_STRUCT, endianness='little')
 	

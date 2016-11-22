@@ -23,9 +23,9 @@ import tarfile
 import tempfile
 from datetime import datetime, timedelta
 
-from lsl.common import dp as dpCommon
+from lsl.common import adp as adpCommon
 from lsl.common import stations, sdm, sdf
-from lsl.common.mcs import *
+from lsl.common.mcsADP import *
 from lsl.transform import Time
 
 __version__ = '1.0'
@@ -66,13 +66,11 @@ def readSESFile(filename):
 		bses.SESSION_SPC = ''
 	fh.close()
 	
-	record = {'ASP': bses.SESSION_MRP_ASP, 'DP_': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
-			'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2, 
-			'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4, 'DR5': bses.SESSION_MRP_DR5}
+	record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
+			'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2}
 	
-	update = {'ASP': bses.SESSION_MUP_ASP, 'DP_': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
-			'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2, 
-			'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4, 'DR5': bses.SESSION_MUP_DR5}
+	update = {'ASP': bses.SESSION_MUP_ASP, 'ADP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
+			'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2}
 	
 	return {'version': bses.FORMAT_VERSION, 'projectID': bses.PROJECT_ID.lstrip().rstrip(), 
 		   'sessionID': bses.SESSION_ID,  'CRA': bses.SESSION_CRA,  'drxBeam': bses.SESSION_DRX_BEAM,
@@ -178,8 +176,8 @@ def readOBSFile(filename):
 		     'fee': single2multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
 		     'flt': list(bfooter.OBS_ASP_FLT), 'at1': list(bfooter.OBS_ASP_AT1), 
 		     'at2': list(bfooter.OBS_ASP_AT2), 'ats': list(bfooter.OBS_ASP_ATS)}
-	output['tbwBits'] = bfooter.OBS_TBW_BITS
-	output['tbwSamples'] = bfooter.OBS_TBW_SAMPLES
+	output['tbfSamples'] = bfooter.OBS_TBF_SAMPLES
+	output['tbfGain'] = bfooter.OBS_TBF_GAIN
 	output['tbnGain'] = bfooter.OBS_TBN_GAIN
 	output['drxGain'] = bfooter.OBS_DRX_GAIN
 	
