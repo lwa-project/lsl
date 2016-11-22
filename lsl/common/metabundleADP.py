@@ -24,7 +24,7 @@ import tempfile
 from datetime import datetime, timedelta
 
 from lsl.common import adp as adpCommon
-from lsl.common import stations, sdm, sdf
+from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
 from lsl.transform import Time
 
@@ -255,7 +255,7 @@ def getSDM(tarname):
 	
 	try:
 		# Parse the SDM file and build the SDM instance
-		dynamic = sdm.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+		dynamic = sdmADP.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
 	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e
@@ -495,7 +495,7 @@ def getSessionDefinition(tarname):
 	a SDF-representation of the session.
 	
 	.. note::
-		This function returns a full :class:`lsl.common.sdf.Project` instance 
+		This function returns a full :class:`lsl.common.sdfADP.Project` instance 
 		with the session in question stored under `project.sessions[0]` and the 
 		observations under `project.sessions[0].observations`.
 	"""
@@ -514,7 +514,7 @@ def getSessionDefinition(tarname):
 	
 	try:
 		# Parse it
-		project = sdf.parseSDF(os.path.join(tempDir, ti.name))
+		project = sdfADP.parseSDF(os.path.join(tempDir, ti.name))
 	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e

@@ -38,7 +38,7 @@ class SubSystemStatus(object):
 		"""
 		
 		## They are the same size so this really doesn't matter
-		sssStruct = dpCompatibility.parseCStruct(dpCompatibility.SUBSYSTEM_STATUS_STRUCT, endianness='little')
+		sssStruct = parseCStruct(SUBSYSTEM_STATUS_STRUCT, endianness='little')
 		
 		fh.readinto(sssStruct)
 		
@@ -74,27 +74,16 @@ class SubSubSystemStatus(object):
 		else:
 			self.arb = arb
 			
-		if self.mcsRef is dpCompatibility:
-			if dp1 is None:
-				self.dp1 = [0 for n in xrange(ME_MAX_NDP1)]
-			else:
-				self.dp1 = dp1
-		
-			if dp2 is None:
-				self.dp2 = [0 for n in xrange(ME_MAX_NDP2)]
-			else:
-				self.dp2 = dp2
+		if dp1 is None:
+			self.dp1 = [0 for n in xrange(ME_MAX_NROACH)]
 		else:
-			if dp1 is None:
-				self.dp1 = [0 for n in xrange(ME_MAX_NROACH)]
-			else:
-				self.dp1 = dp1
+			self.dp1 = dp1
 		
-			if dp2 is None:
-				self.dp2 = [0 for n in xrange(ME_MAX_NSERVER)]
-			else:
-				self.dp2 = dp2
-				
+		if dp2 is None:
+			self.dp2 = [0 for n in xrange(ME_MAX_NSERVER)]
+		else:
+			self.dp2 = dp2
+			
 		if dr is None:
 			self.dr = [0 for n in xrange(ME_MAX_NDR)]
 		else:
@@ -117,12 +106,8 @@ class SubSubSystemStatus(object):
 		self.rpd = list(ssssStruct.eRPDStat)
 		self.sep = list(ssssStruct.eSEPStat)
 		self.arb = single2multi(ssssStruct.eARBStat, *ssssStruct.dims['eARBStat'])
-		if self.mcsRef is dpCompatibility:
-			self.dp1 = single2multi(ssssStruct.eDP1Stat, *ssssStruct.dims['eDP1Stat'])
-			self.dp2 = list(ssssStruct.eDP2Stat)
-		else:
-			self.dp1 = single2multi(ssssStruct.eRoachStat, *ssssStruct.dims['eRoachStat'])
-			self.dp2 = list(ssssStruct.eServerStat)
+		self.dp1 = single2multi(ssssStruct.eRoachStat, *ssssStruct.dims['eRoachStat'])
+		self.dp2 = list(ssssStruct.eServerStat)
 		self.dr  = list(ssssStruct.eDRStat)
 
 
@@ -188,26 +173,17 @@ class StationSettings(object):
 		self.report['ASP'] = ssStruct.mrp_asp
 		self.report['DP_'] = ssStruct.mrp_dp
 		self.report['DR1'] = ssStruct.mrp_dr1
+		self.report['DR2'] = ssStruct.mrp_dr2
 		self.report['SHL'] = ssStruct.mrp_shl
 		self.report['MCS'] = ssStruct.mrp_mcs
 		
 		self.update['ASP'] = ssStruct.mup_asp
 		self.update['DP_'] = ssStruct.mup_dp
 		self.update['DR1'] = ssStruct.mup_dr1
+		self.update['DR2'] = ssStruct.mup_dr2
 		self.update['SHL'] = ssStruct.mup_shl
 		self.update['MCS'] = ssStruct.mup_mcs
 		
-		if self.mcsRef is dpCompatibility:
-			self.report['DR2'] = ssStruct.mrp_dr2
-			self.report['DR3'] = ssStruct.mrp_dr3
-			self.report['DR4'] = ssStruct.mrp_dr4
-			self.report['DR5'] = ssStruct.mrp_dr5
-			
-			self.update['DR2'] = ssStruct.mup_dr2
-			self.update['DR3'] = ssStruct.mup_dr3
-			self.update['DR4'] = ssStruct.mup_dr4
-			self.update['DR5'] = ssStruct.mup_dr5
-			
 		self.fee = single2multi(ssStruct.fee, *ssStruct.dims['fee'])
 		
 		self.aspFlt = list(ssStruct.asp_flt)
@@ -217,8 +193,7 @@ class StationSettings(object):
 		
 		self.tbnGain = ssStruct.tbn_gain
 		self.drxgain = ssStruct.drx_gain
-		if self.mcsRef is adpCompatibility:
-			self.tbfGain = ssStruct.tbf_gain
+		self.tbfGain = ssStruct.tbf_gain
 
 
 class SDM(object):
@@ -245,7 +220,7 @@ class SDM(object):
 		else:
 			self.dp = dp
 		if dr is None:
-			self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(mcsRef.ME_MAX_NDR)]
+			self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(ME_MAX_NDR)]
 		else:
 			self.dr = dr
 		
@@ -255,11 +230,11 @@ class SDM(object):
 			self.status = status
 		
 		if antStatus is None:
-			self.antStatus = [[0,0] for n in xrange(mcsRef.ME_MAX_NSTD)]
+			self.antStatus = [[0,0] for n in xrange(ME_MAX_NSTD)]
 		else:
 			self.antStatus = antStatus
 		if dpoStatus is None:
-			self.dpoStatus = [0 for n in xrange(mcsRef.ME_MAX_NDR)]
+			self.dpoStatus = [0 for n in xrange(ME_MAX_NDR)]
 		else:
 			self.dpoStatus = dpoStatus
 			
@@ -301,14 +276,14 @@ def parseSDM(filename):
 	dynamic.shl._binaryRead(fh)
 	dynamic.asp._binaryRead(fh)
 	dynamic.dp._binaryRead(fh)
-	for n in xrange(mcsRef.ME_MAX_NDR):
-			dynamic.dr[n]._binaryRead(fh)
-	
+	for n in xrange(ME_MAX_NDR):
+		dynamic.dr[n]._binaryRead(fh)
+		
 	# Sub-sub-system status section
 	dynamic.status._binaryRead(fh)
 	
 	# Antenna status and data path status
-	adpsStruct = mcsRef.parseCStruct("""
+	adpsStruct = parseCStruct("""
 	int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
 	int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
 	""", endianness='little')
