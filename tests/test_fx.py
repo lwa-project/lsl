@@ -147,6 +147,25 @@ class SpecMaster_tests(unittest.TestCase):
 				spectra2[i,:] += numpy.fft.fftshift( numpy.abs( numpy.fft.fft(fakeData[i,j*LFFT:(j+1)*LFFT]) )**2 )
 		spectra2 /= (LFFT * nFFT)
 		self.assertTrue(numpy.abs(spectra-spectra2).max() < 1e-6*spectra2.max())
+		
+	def test_spectra_odd_complex(self):
+		"""Test the SpecMaster function on odd-sized complex transforms."""
+		
+		fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+		fakeData = fakeData + 0j
+		fakeData = fakeData.astype(numpy.csingle)
+		freq, spectra = fx.SpecMaster(fakeData, LFFT=9, SampleRate=1e5, CentralFreq=38e6)
+		
+		for i in xrange(spectra.shape[0]):
+			self.assertTrue(numpy.abs(spectra[i,0]-spectra[i,-1]) < 1e-6*spectra[i,:].max())
+			
+		def wndw2(L):
+			return numpy.kaiser(L, 1)
+			
+		freq, spectra = fx.SpecMaster(fakeData, LFFT=9, SampleRate=1e5, CentralFreq=38e6, window=wndw2)
+		
+		for i in xrange(spectra.shape[0]):
+			self.assertTrue(numpy.abs(spectra[i,0]-spectra[i,-1]) < 1e-6*spectra[i,:].max())
 
 
 class StokesMaster_tests(unittest.TestCase):
@@ -327,6 +346,28 @@ class StokesMaster_tests(unittest.TestCase):
 				spectra2[3,i,:] += 2*(xF*yF.conj()).imag
 		spectra2 /= (LFFT * nFFT)
 		self.assertTrue(numpy.abs(spectra-spectra2).max() < 1e-6*spectra2.max())
+		
+	def test_spectra_odd_complex(self):
+		"""Test the SpecMaster function on odd-sized complex transforms."""
+		
+		station = stations.parseSSMIF(_SSMIF)
+		antennas = station.getAntennas()
+		
+		fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+		fakeData = fakeData + 0j
+		fakeData = fakeData.astype(numpy.csingle)
+		freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], LFFT=9, SampleRate=1e5, CentralFreq=38e6)
+		
+		for i in xrange(spectra.shape[0]):
+			self.assertTrue(numpy.abs(spectra[0,i,0]-spectra[0,i,-1]) < 1e-6*spectra[0,i,:].max())
+			
+		def wndw2(L):
+			return numpy.kaiser(L, 1)
+			
+		freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], LFFT=9, SampleRate=1e5, CentralFreq=38e6, window=wndw2)
+		
+		for i in xrange(spectra.shape[0]):
+			self.assertTrue(numpy.abs(spectra[0,i,0]-spectra[0,i,-1]) < 1e-6*spectra[0,i,:].max())
 
 
 class FXMaster_tests(unittest.TestCase):
@@ -567,6 +608,36 @@ class FXMaster_tests(unittest.TestCase):
 		for (ant1,ant2) in blList:
 			self.assertEqual(ant1.pol, 1)
 			self.assertEqual(ant2.pol, 0)
+			
+	def test_correlator_odd_complex(self):
+		"""Test the FXMaster function on odd-sized complex transforms."""
+		
+		fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+		fakeData = fakeData + 0j
+		fakeData = fakeData.astype(numpy.csingle)
+		
+		station = stations.parseSSMIF(_SSMIF)
+		antennas = station.getAntennas()
+		for ant in antennas:
+			ant.stand.x = 0.0
+			ant.stand.y = 0.0
+			ant.stand.z = 0.0
+			ant.cable.length = 0.0
+			
+		blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], LFFT=9, SampleRate=1e5, CentralFreq=38e6, 
+									ReturnBaselines=True, Pol='XX')
+		
+		for i in xrange(cps.shape[0]):
+			self.assertTrue(numpy.abs(cps[i,0]-cps[i,-1].conj()) < 1e-6*numpy.abs(cps[i,:]).max())
+			
+		def wndw2(L):
+			return numpy.kaiser(L, 1)
+			
+		blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], LFFT=9, SampleRate=1e5, CentralFreq=38e6, 
+									ReturnBaselines=True, Pol='XX', window=wndw2)
+		
+		for i in xrange(cps.shape[0]):
+			self.assertTrue(numpy.abs(cps[i,0]-cps[i,-1].conj()) < 1e-6*numpy.abs(cps[i,:]).max())
 
 
 class FXStokes_tests(unittest.TestCase):
@@ -770,6 +841,36 @@ class FXStokes_tests(unittest.TestCase):
 		
 		blList, freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], SampleRate=1e5, CentralFreq=38e6, 
 									ReturnBaselines=True)
+		
+	def test_correlator_odd_complex(self):
+		"""Test the FXStokes function on odd-sized complex transforms."""
+		
+		fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+		fakeData = fakeData + 0j
+		fakeData = fakeData.astype(numpy.csingle)
+		
+		station = stations.parseSSMIF(_SSMIF)
+		antennas = station.getAntennas()
+		for ant in antennas:
+			ant.stand.x = 0.0
+			ant.stand.y = 0.0
+			ant.stand.z = 0.0
+			ant.cable.length = 0.0
+				
+		blList, freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], LFFT=9, SampleRate=1e5, CentralFreq=38e6, 
+									ReturnBaselines=True)
+		
+		for i in xrange(cps.shape[0]):
+			self.assertTrue(numpy.abs(cps[0,i,0]-cps[0,i,-1].conj()) < 1e-6*cps[0,i,:].max())
+			
+		def wndw2(L):
+			return numpy.kaiser(L, 1)
+			
+		blList, freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], LFFT=9, SampleRate=1e5, CentralFreq=38e6, 
+									ReturnBaselines=True, window=wndw2)
+		
+		for i in xrange(cps.shape[0]):
+			self.assertTrue(numpy.abs(cps[0,i,0]-cps[0,i,-1].conj()) < 1e-6*cps[0,i,:].max())
 
 
 class fx_test_suite(unittest.TestSuite):

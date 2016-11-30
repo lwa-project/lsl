@@ -547,12 +547,12 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 			fftwf_free(inX);
 			fftwf_free(inY);
 			
-			temp2 = (double *) malloc(sizeof(double)*nChan/2);
+			temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
 			for(j=0; j<4; j++) {
 				// Shift FFTs
-				memcpy(temp2, (b + j*nChan*nStand + nChan*i), sizeof(double)*nChan/2);
+				memcpy(temp2, (b + j*nChan*nStand + nChan*i), sizeof(double)*(nChan/2+nChan%2));
 				memmove((b + j*nChan*nStand + nChan*i), (b + j*nChan*nStand + nChan*i)+nChan/2, sizeof(double)*nChan/2);
-				memcpy((b + j*nChan*nStand + nChan*i)+nChan/2, temp2, sizeof(double)*nChan/2);
+				memcpy((b + j*nChan*nStand + nChan*i)+nChan/2, temp2, sizeof(double)*(nChan/2+nChan%2));
 				
 				// Scale FFTs
 				cblas_dscal(nChan, 1.0/(nActFFT*nChan), (b + j*nChan*nStand + nChan*i), 1);
@@ -734,12 +734,12 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 			fftwf_free(inX);
 			fftwf_free(inY);
 			
-			temp2 = (double *) malloc(sizeof(double)*nChan/2);
+			temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
 			for(j=0; j<4; j++) {
 				// Shift FFTs
-				memcpy(temp2, (b + j*nChan*nStand + nChan*i), sizeof(double)*nChan/2);
+				memcpy(temp2, (b + j*nChan*nStand + nChan*i), sizeof(double)*(nChan/2+nChan%2));
 				memmove((b + j*nChan*nStand + nChan*i), (b + j*nChan*nStand + nChan*i)+nChan/2, sizeof(double)*nChan/2);
-				memcpy((b + j*nChan*nStand + nChan*i)+nChan/2, temp2, sizeof(double)*nChan/2);
+				memcpy((b + j*nChan*nStand + nChan*i)+nChan/2, temp2, sizeof(double)*(nChan/2+nChan%2));
 				
 				// Scale FFTs
 				cblas_dscal(nChan, 1.0/(nActFFT*nChan), (b + j*nChan*nStand + nChan*i), 1);

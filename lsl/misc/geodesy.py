@@ -147,7 +147,7 @@ class EOP(object):
 			return 0
 
 
-def __downloadFile(filename, baseURL='http://maia.usno.navy.mil/ser7/', timeout=120):
+def __downloadFile(filename, baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=120):
 	try:
 		eopFH = urllib2.urlopen('%s%s' % (baseURL, filename), timeout=timeout)
 		lines = eopFH.readlines()
@@ -178,13 +178,13 @@ def __loadHistoric1973(timeout=120):
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.all')):
 		status = __downloadFile('finals2000A.all', timeout=timeout)
 		if not status:
-			__downloadFile('finals2000A.all', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+			__downloadFile('finals2000A.all', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
 	else:
 		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.all')).st_mtime
 		if age > (3600*24*180):
 			status = __downloadFile('finals2000A.all', timeout=timeout)
 			if not status:
-				__downloadFile('finals2000A.all', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+				__downloadFile('finals2000A.all', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
 				
 	fh = open(os.path.join(_CacheDir, 'finals2000A.all'), 'r')
 	lines = fh.readlines()
@@ -215,13 +215,13 @@ def __loadHistoric1992(timeout=120):
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.data')):
 		status = __downloadFile('finals2000A.data', timeout=timeout)
 		if not status:
-			__downloadFile('finals2000A.data', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+			__downloadFile('finals2000A.data', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
 	else:
 		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.data')).st_mtime
 		if age > (3600*24*7):
 			status = __downloadFile('finals2000A.data', timeout=timeout)
 			if not status:
-				__downloadFile('finals2000A.data', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+				__downloadFile('finals2000A.data', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
 				
 	fh = open(os.path.join(_CacheDir, 'finals2000A.data'), 'r')
 	lines = fh.readlines()
@@ -251,13 +251,13 @@ def __loadCurrent90(timeout=120):
 	if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.daily')):
 		status = __downloadFile('finals2000A.daily', timeout=timeout)
 		if not status:
-			__downloadFile('finals2000A.daily', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+			__downloadFile('finals2000A.daily', baseURL='ftp://ftp.iers.org/products/eop/rapid/daily/', timeout=timeout)
 	else:
 		age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.daily')).st_mtime
 		if age > (3600*24):
 			status = __downloadFile('finals2000A.daily', timeout=timeout)
 			if not status:
-				__downloadFile('finals2000A.daily', baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=timeout)
+				__downloadFile('finals2000A.daily', baseURL='ftp://ftp.iers.org/products/eop/rapid/daily/', timeout=timeout)
 				
 	fh = open(os.path.join(_CacheDir, 'finals2000A.daily'), 'r')
 	lines = fh.readlines()

@@ -649,7 +649,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 			fftwf_execute_dft(p, in, in);
 			
 			for(k=0; k<nChan/2; k++) {
-				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2];
+				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2+nChan%2];
 				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
 				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(nChan);
 			}
@@ -868,7 +868,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 			fftwf_execute_dft(p, in, in);
 			
 			for(k=0; k<nChan/2; k++) {
-				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2];
+				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2+nChan%2];
 				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
 				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(nChan);
 			}

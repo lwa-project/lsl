@@ -17,7 +17,7 @@ from lsl.common.paths import data as dataPath
 
 __version__   = '0.2'
 __revision__ = '$Rev$'
-__author__    = 'D. L .Wood'
+__author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'
 
 
