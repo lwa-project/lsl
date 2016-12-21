@@ -5,6 +5,9 @@
   * Added support for ADP 8+8-bit DRX data, also know as DRX8
   * Added support for complex antenna response to lsl.sim.nec_util.NECPattern
 
+1.1.4
+  * Fixed a missing import statement and a couple of bugs in splitTBN.py
+
 1.1.3.2
   * Applied a fix for the course FIFO phase jumps in the core.c FEngineC2/3 functions.
 

@@ -3,6 +3,7 @@
 
 import os
 import sys
+import math
 import time
 import getopt
 from datetime import datetime
@@ -164,7 +165,7 @@ def main(args):
 		fileSplitFunction(fh, fhOut, nCaptures, nFramesX+nFramesY)
 		fhOut.close()
 		t1 = time.time()
-		print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.getsize(captFilename), t1-t0, os.getsize(captFilename)/1024.0**2/(t1-t0))
+		print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0))
 	fh.close()
 	
 	
