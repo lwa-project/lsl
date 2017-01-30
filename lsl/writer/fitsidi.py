@@ -8,6 +8,9 @@ functions defined in this module are based heavily off the lwda_fits library.
 	Some software that deal with FITS IDI files, e.g. AIPS, does not support
 	FITS IDI files with more than 99 antennas.  See the :class:`lsl.writer.fitsidi.aips`
 	class for a FITS IDI writer that respects this limit.
+	
+.. versionchanged:: 1.1.4
+	Fixed a conjugation problem in the visibilities saved to a FITS-IDI file
 """
 
 import os
@@ -34,7 +37,7 @@ except ImportError:
 	from lsl.misc.OrderedDict import OrderedDict
 
 
-__version__ = '0.8'
+__version__ = '0.9'
 __revision__ = '$Rev$'
 __all__ = ['IDI', 'AIPS', 'ExtendedIDI', 'StokesCodes', 'NumericStokes', '__version__', '__revision__', '__all__']
 
@@ -979,7 +982,9 @@ class IDI(object):
 					matrix = numpy.zeros((len(order), self.nStokes*self.nChan,), dtype=numpy.complex64)
 					
 			# Save the visibility data in the right order
-			matrix[:,self.stokes.index(dataSet.pol)::self.nStokes] = dataSet.visibilities[order,:]
+			# NOTE:  This is this conjugate since there seems to be a convention mis-match
+			#        between LSL and AIPS/the FITS-IDI convention.
+			matrix[:,self.stokes.index(dataSet.pol)::self.nStokes] = dataSet.visibilities[order,:].conj()
 			
 			# Deal with saving the data once all of the polarizations have been added to 'matrix'
 			if dataSet.pol == self.stokes[-1]:

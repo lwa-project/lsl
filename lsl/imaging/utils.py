@@ -22,6 +22,9 @@ Also included is a utility to sort data dictionaries by baselines.
 	
 .. versionchanged:: 1.1.2
 	Added support for CASA MeasurementSets that are stored as a tarball
+	
+.. versionchanged:: 1.1.4
+	Fixed a conjugation problem in the visibilities read from a FITS-IDI file
 """
 
 import os
@@ -66,7 +69,7 @@ except ImportError:
 	fft2Function = numpy.fft.fft2
 	ifft2Function = numpy.fft.ifft2
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
 __all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 
 		 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'ImgWPlus', 'buildGriddedImage', 
@@ -572,6 +575,9 @@ class CorrelatedDataIDI(object):
 				wgt = numpy.ones([vis.shape[i] for i in xrange(3)], dtype=numpy.float32)
 		## Back to complex
 		vis = vis[:,:,:,0] + 1j*vis[:,:,:,1]
+		## NOTE: This is this conjugate since there seems to be a convention mis-match
+		##       between LSL and AIPS/the FITS-IDI convention.
+		vis = vis.conj()
 		## Scale
 		try:
 			scl = uvData.header['VIS_SCAL']
