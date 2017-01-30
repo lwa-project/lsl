@@ -42,7 +42,7 @@ __revision__ = '$Rev$'
 __all__ = ['IDI', 'AIPS', 'ExtendedIDI', 'StokesCodes', 'NumericStokes', '__version__', '__revision__', '__all__']
 
 
-IDIVersion = (2, 0)
+IDIVersion = (3, 0)
 
 StokesCodes = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
 			'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 

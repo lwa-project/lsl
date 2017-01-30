@@ -351,11 +351,17 @@ class CorrelatedDataIDI(object):
 				raise RuntimeError("Cannot find table '%s' in '%s'" % (tbl, self.filename))
 		
 		self.extended = False
+		self.conjugate = True
 		try:
 			if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
 				self.extended = True
 		except KeyError:
 			## Catch for LEDA64-NM data
+			pass
+		try:
+			if int(hdulist[0].header['LWAMAJV'], 10) < 3:
+				self.conjugate = False
+		except KeyError:
 			pass
 		ag = hdulist['ARRAY_GEOMETRY']
 		uvData = hdulist['UV_DATA']
@@ -575,9 +581,10 @@ class CorrelatedDataIDI(object):
 				wgt = numpy.ones([vis.shape[i] for i in xrange(3)], dtype=numpy.float32)
 		## Back to complex
 		vis = vis[:,:,:,0] + 1j*vis[:,:,:,1]
-		## NOTE: This is this conjugate since there seems to be a convention mis-match
-		##       between LSL and AIPS/the FITS-IDI convention.
-		vis = vis.conj()
+		if self.conjugate:
+			## NOTE: This is this conjugate since there seems to be a convention mis-match
+			##       between LSL and AIPS/the FITS-IDI convention.
+			vis = vis.conj()
 		## Scale
 		try:
 			scl = uvData.header['VIS_SCAL']
