@@ -10,6 +10,14 @@ if sys.version_info > (3,):
 else:
 	import anydbm as dbm
 
+import re
+import aipy
+import math
+import numpy
+import struct
+from datetime import datetime
+from ctypes import *
+
 """
 Module that contains common values found in the MCS Joint Release 5 header file
 src/exec/me.h and other functions useful for working with the MCS metadata.  
@@ -934,14 +942,14 @@ def applyPointingCorrection(az, el, theta, phi, psi, lat=34.070, degrees=True):
 	
 	# Convert the az,alt coordinates to the unit vector
 	if degrees:
-		xyz = coord.azalt2top((az*numpy.pi/180.0, el*numpy.pi/180.0))
+		xyz = aipy.coord.azalt2top((az*numpy.pi/180.0, el*numpy.pi/180.0))
 	else:
-		xyz = coord.azalt2top((az, el))
+		xyz = aipy.coord.azalt2top((az, el))
 		
 	# Rotate
 	xyzP = numpy.dot(rot, xyz)
 	
-	azP, elP = coord.top2azalt(xyzP)
+	azP, elP = aipy.coord.top2azalt(xyzP)
 	if degrees:
 		azP *= 180/numpy.pi
 		elP *= 180/numpy.pi
@@ -1193,7 +1201,10 @@ class MIBEntry(object):
 		# Validate
 		if record.eType == MIB_REC_TYPE_BRANCH:
 			raise ValueError("Cannot interpret MIB branch entries")
-		if record.index[0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+		try:
+			if record.index[0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+				raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
+		except IndexError:
 			raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
 			
 		# Basic information

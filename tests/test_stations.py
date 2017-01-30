@@ -102,17 +102,29 @@ class stations_tests(unittest.TestCase):
 		for i in xrange(len(ants)):
 			pair = (ants[i].stand.id, ants[i].pol)
 			self.assertEqual(pair, antExpected[i])
-	
+			
 	def test_ssmif_text(self):
 		"""Test the text SSMIF parser."""
 		
 		ssmifFile = os.path.join(dataPath, 'lwa1-ssmif.txt')
 		out = stations.parseSSMIF(ssmifFile)
-	
+		
+	def test_ssmif_test_adp(self):
+		"""Test the text SSMIF parser for ADP-based stations."""
+		
+		ssmifFile = os.path.join(dataPath, 'lwasv-ssmif.txt')
+		out = stations.parseSSMIF(ssmifFile)
+		
 	def test_ssmif_binary(self):
 		"""Test the binary SSMIF parser."""
 		
 		ssmifFile = os.path.join(dataPath, 'tests', 'ssmif.dat')
+		out = stations.parseSSMIF(ssmifFile)
+		
+	def test_ssmif_binary_adp(self):
+		"""Test the binary SSMIF parser for ADP-based stations."""
+		
+		ssmifFile = os.path.join(dataPath, 'tests', 'ssmif-adp.dat')
 		out = stations.parseSSMIF(ssmifFile)
 
 

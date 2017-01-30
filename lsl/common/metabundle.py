@@ -23,9 +23,9 @@ import tarfile
 import tempfile
 from datetime import datetime, timedelta
 
-from lsl.common import dp as dpCommon
 from lsl.common import stations, sdm, sdf
 from lsl.common.mcs import *
+from lsl.common.dp import word2freq
 from lsl.transform import Time
 
 __version__ = '1.0'
@@ -49,6 +49,11 @@ def readSESFile(filename):
 	
 	fh.readinto(bses)
 	
+	# LWA-SV check
+	if bses.FORMAT_VERSION in (6,):
+		fh.close()
+		raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
+		
 	if bses.SESSION_NOBS > 150:
 		## Pre SESSION_SPC
 		fh.seek(0)
@@ -98,6 +103,11 @@ def readOBSFile(filename):
 	
 	fh.readinto(bheader)
 	
+	# LWA-SV check
+	if bheader.FORMAT_VERSION in (6,):
+		fh.close()
+		raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
+		
 	if bheader.OBS_ID > 150:
 		## Pre SESSION_SPC and OBS_BDM
 		fh.seek(0)
