@@ -359,7 +359,7 @@ class CorrelatedDataIDI(object):
 			## Catch for LEDA64-NM data
 			pass
 		try:
-			if int(hdulist[0].header['LWAMAJV'], 10) < 3:
+			if hdulist[0].header['LWAMAJV'] < 3:
 				self.conjugate = False
 		except KeyError:
 			pass
