@@ -10,7 +10,7 @@ import numpy
 import ephem
 import getopt
 
-from lsl.common import stations, metabundle
+from lsl.common import stations, metabundle, metabundleADP
 from lsl.reader.ldp import LWA1DataFile
 from lsl.correlator import fx as fxc
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
@@ -155,7 +155,10 @@ def main(args):
 		try:
 			station = stations.parseSSMIF(config['metadata'])
 		except ValueError:
-			station = metabundle.getStation(config['metadata'], ApplySDM=True)
+			try:
+				station = metabundle.getStation(config['metadata'], ApplySDM=True)
+			except:
+				station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
 	else:
 		station = stations.lwa1
 	antennas = station.getAntennas()

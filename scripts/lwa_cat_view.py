@@ -11,7 +11,7 @@ import Tkinter
 from lsl import astro
 from lsl import transform
 from lsl import catalog
-from lsl.common.stations import lwa1
+from lsl.common import stations
 
 
 __revision__  = "$Revision: 96 $"
@@ -28,7 +28,14 @@ class CatalogViewer(object):
         self.period = opts.period * 1000
         self.catalog = None
         self.cursor = self.root.cget("cursor")
-        self.site = transform.GeographicalPosition((lwa1.long*180/math.pi, lwa1.lat*180/math.pi), name='LWA1')
+        opts['site'] = opts['site'].lower().replace('-', '')
+        if opts['site'] == 'lwa1':
+            station = stations.lwa1
+        elif opts['site'] == 'lwasv':
+            station = stations.lwasv
+        else:
+            raise RuntimeError("Unknown site name: %s" % opts['site'])
+        self.site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)
         
         self.root.title('LWA Catalog Viewer')
 

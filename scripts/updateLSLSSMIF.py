@@ -17,15 +17,19 @@ versionRE = re.compile(r'(?P<year>\d{4}) (?P<month>[a-zA-Z]{3,4}) (?P<day>\d{1,2
 
 
 def usage(exitCode=None):
-	print """updateSSMIF.py - Update the internal LWA1 SSMIF used by LSL.
+	print """updateSSMIF.py - Update the internal LWA1/LWA-SV SSMIFs used by LSL.
 
 Usage: updateSSMIF.py [OPTIONS]
 
 Options:
 -h, --help          Display this help information
+-s, --lwasv         Update LWA-SV instead of LWA1
 -u, --update        Update the default LWA1 SSMIF
 -r, --revert        Revert the default LWA1 SSMIF to an older version
 -f, --file          Update the default LWA1 SSMIF using the specified file
+
+NOTE:  The -s/--lwasv option changes the behavior of all other options, e.g., 
+       -u/--update updates the LWA-SV SSMIF.
 """
 	
 	if exitCode is not None:
@@ -36,6 +40,7 @@ Options:
 
 def parseOptions(args):
 	config = {}
+	config['site'] = 'lwa1'
 	config['show'] = True
 	config['update'] = False
 	config['revert'] = False
@@ -43,7 +48,7 @@ def parseOptions(args):
 	
 	# Read in and process the command line flags
 	try:
-		opts, args = getopt.getopt(args, "hurf:", ["help", "update", "revert", "file="])
+		opts, args = getopt.getopt(args, "hsurf:", ["help", "lwasv", "update", "revert", "file="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -53,6 +58,8 @@ def parseOptions(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
+		elif opt in ('-s', '--lwasv'):
+			config['site'] = 'lwasv'
 		elif opt in ('-u', '--update'):
 			config['update'] = True
 			
@@ -149,15 +156,22 @@ def main(args):
 	config = parseOptions(args)
 	
 	# Current LSL SSMIF
-	_ssmif1 = os.path.join(dataPath, 'lwa1-ssmif.txt')
-	
+	if config['site'] == 'lwa1':
+		_ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+		_url = "http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/"
+	elif config['site'] == 'lwasv':
+		_ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+		_url = "http://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
+	else:
+		raise RuntimeError("Unknown site name: %s" % config['site'])
+		
 	urlToDownload = None
 	if config['revert']:
 		# Revert and Upgrade URL
 		
 		try:
 			## Retrieve the list
-			ah = urllib.urlopen("http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/")
+			ah = urllib.urlopen(_url)
 			index = ah.read()
 			ah.close()
 			
@@ -178,14 +192,14 @@ def main(args):
 			print " "
 			
 			## Build the URL
-			urlToDownload = "http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/%s" % versions[i][0]
+			urlToDownload = "%s/%s" % (_url, versions[i][0])
 		except Exception, e:
 			print "Error:  Cannot process reversion, %s" % str(e)
 			
 	elif config['update']:
 		# Update to the latest version
 		
-		urlToDownload = "http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/SSMIF_CURRENT.txt"
+		urlToDownload = "%s/SSMIF_CURRENT.txt" % _url
 		
 	elif config['filename'] is not None:
 		# Use the specified file
@@ -204,7 +218,7 @@ def main(args):
 			
 		## Save
 		try:
-			fh = open(_ssmif1, 'wb')
+			fh = open(_ssmif, 'wb')
 			fh.write(newSSMIF)
 			fh.close()
 		except Exception, e:
@@ -213,15 +227,15 @@ def main(args):
 	# Summarize the SSMIF
 	if config['show']:
 		## Filesystem information
-		size = os.path.getsize(_ssmif1)
-		mtime = datetime.utcfromtimestamp(os.stat(_ssmif1)[8])
+		size = os.path.getsize(_ssmif)
+		mtime = datetime.utcfromtimestamp(os.stat(_ssmif)[8])
 		age = datetime.utcnow() - mtime
 		
 		## MD5 checksum
-		md5 = getMD5(_ssmif1)
+		md5 = getMD5(_ssmif)
 		
 		## SSMIF version (date)
-		fh = open(_ssmif1, 'r')
+		fh = open(_ssmif, 'r')
 		lines = [fh.readline() for i in xrange(10)]
 		fh.close()
 		
@@ -235,7 +249,7 @@ def main(args):
 					version = datetime.strptime("%s %s %s" % (mtch.group('year'), mtch.group('month'), mtch.group('day')), "%Y %B %d")
 				break
 				
-		print "LSL LWA1 SSMIF%s:" % (' (updated)' if config['update'] else '',)
+		print "LSL %s SSMIF%s:" % (config['site'].upper(), ' (updated)' if config['update'] else '',)
 		print "  Size: %i bytes" % size
 		print "  SSMIF Version: %s" % version.strftime("%Y %b %d")
 		print "  File Last Modified: %s (%i day%s ago)" % (mtime.strftime("%Y-%m-%d %H:%M:%S UTC"), age.days, 's' if age.days != 1 else '')

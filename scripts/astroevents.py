@@ -10,32 +10,46 @@ Moved out of the lsl.astro module into this script and updated for LWA-1
 
 import time
 import math
+import optparse
 
 from lsl.common import stations
 from lsl.astro import *
 
 
 if __name__ == '__main__':
-	# input NRL longitude and latitude
+	usage = "astroevents.py [options]"
+
+	# check command line
+	parser = optparse.OptionParser(usage = usage)
+	parser.add_option("-s", "--site", action = "store", type = "string",
+					dest = "site", default = 'LWA-1', help = "site name (default LWA-1)")
+	(opts, args) = parser.parse_args()
 	
-	station = stations.lwa1
-	
+	# setup transform objects
+	opts['site'] = opts['site'].lower().replace('-', '')
+	if opts['site'] == 'lwa1':
+		station = stations.lwa1
+	elif opts['site'] == 'lwasv':
+		station = stations.lwasv
+	else:
+		raise RuntimeError("Unknown site name: %s" % opts['site'])
+		
 	nam = station.name
 	lng = deg_to_dms(station.long*180/3.14)
 	lat = deg_to_dms(station.lat*180/3.14)
-	lwa1_lnlat = lnlat_posn(lng, lat)
+	lwa_lnlat = lnlat_posn(lng, lat)
 	
 	print('---------------------------------------------------------------')
 	print('%s location' % nam)
 	print('---------------------------------------------------------------')
-	print('Longitude:         %s (%0.3f)' % (lng, lwa1_lnlat.lng))
-	print('Latitude:          %s (%0.3f)' % (lat, lwa1_lnlat.lat)) 
+	print('Longitude:         %s (%0.3f)' % (lng, lwa_lnlat.lng))
+	print('Latitude:          %s (%0.3f)' % (lat, lwa_lnlat.lat)) 
 		
 	# calculate offset from GM
 	
-	lwa1_gm_hms = deg_to_hms(-lwa1_lnlat.lng)
-	lwa1_gm_off = lwa1_gm_hms.to_sec()
-	print('GM Offset:         %s (%0.3f)' % (lwa1_gm_hms, lwa1_gm_off))
+	lwa_gm_hms = deg_to_hms(-lwa_lnlat.lng)
+	lwa_gm_off = lwa_gm_hms.to_sec()
+	print('GM Offset:         %s (%0.3f)' % (lwa_gm_hms, lwa_gm_off))
 	
 	# get current UTC time from system clock
 	
@@ -47,7 +61,7 @@ if __name__ == '__main__':
 	# caculate sidereal times
 	
 	gm_sid = get_apparent_sidereal_time(utc)
-	lwa1_sid = get_local_sidereal_time(lwa1_lnlat.lng, utc)
+	lwa_sid = get_local_sidereal_time(lwa_lnlat.lng, utc)
 		
 	print('---------------------------------------------------------------')
 	print('Current time')
@@ -55,7 +69,7 @@ if __name__ == '__main__':
 	print('UTC time:             %s (%0.3f)' % (utcd, utc))
 	print('%s local time:     %s' % (nam, str(lcld)))
 	print('GM sidereal time:     %0.3f' % gm_sid)
-	print('%s sidereal time:  %0.3f' % (nam, lwa1_sid))
+	print('%s sidereal time:  %0.3f' % (nam, lwa_sid))
 	print('UNIX time:            %d' % unixt)   
 	
 	# calculate nutation
@@ -72,7 +86,7 @@ if __name__ == '__main__':
 	
 	# calculate Solar phenomena
 	
-	sun_rst = get_solar_rst(utc, lwa1_lnlat)
+	sun_rst = get_solar_rst(utc, lwa_lnlat)
 	(sun_utc_rise, sun_utc_set, sun_utc_trans) = sun_rst.format()
 	sun_lcl_rise = sun_utc_rise.to_zone()
 	sun_lcl_trans = sun_utc_trans.to_zone()
@@ -80,7 +94,7 @@ if __name__ == '__main__':
 	
 	sun_equ = get_solar_equ_coords(utc) 
 	(sun_ra, sun_dec) = sun_equ.format()
-	sun_hrz = sun_equ.to_hrz(lwa1_lnlat, utc)
+	sun_hrz = sun_equ.to_hrz(lwa_lnlat, utc)
 	sun_ecl = sun_equ.to_ecl(utc)
 	(sun_lng, sun_lat) = sun_ecl.format()
 	
@@ -101,7 +115,7 @@ if __name__ == '__main__':
 	
 	# calculate Lunar phenomena
 	
-	moon_rst = get_lunar_rst(utc, lwa1_lnlat)
+	moon_rst = get_lunar_rst(utc, lwa_lnlat)
 	(moon_utc_rise, moon_utc_set, moon_utc_trans) = moon_rst.format()
 	moon_lcl_rise = moon_utc_rise.to_zone()
 	moon_lcl_trans = moon_utc_trans.to_zone()
@@ -109,7 +123,7 @@ if __name__ == '__main__':
 	
 	moon_equ = get_lunar_equ_coords(utc) 
 	(moon_ra, moon_dec) = moon_equ.format()
-	moon_hrz = moon_equ.to_hrz(lwa1_lnlat, utc)
+	moon_hrz = moon_equ.to_hrz(lwa_lnlat, utc)
 	moon_ecl = moon_equ.to_ecl(utc)
 	(moon_lng, moon_lat) = moon_ecl.format()
 	
@@ -133,7 +147,7 @@ if __name__ == '__main__':
 	
 	# calculate Venus phenomena
 	
-	venus_rst = get_venus_rst(utc, lwa1_lnlat)
+	venus_rst = get_venus_rst(utc, lwa_lnlat)
 	(venus_utc_rise, venus_utc_set, venus_utc_trans) = venus_rst.format()
 	venus_lcl_rise = venus_utc_rise.to_zone()
 	venus_lcl_trans = venus_utc_trans.to_zone()
@@ -141,7 +155,7 @@ if __name__ == '__main__':
 	
 	venus_equ = get_venus_equ_coords(utc) 
 	(venus_ra, venus_dec) = venus_equ.format()
-	venus_hrz = venus_equ.to_hrz(lwa1_lnlat, utc)
+	venus_hrz = venus_equ.to_hrz(lwa_lnlat, utc)
 	venus_ecl = venus_equ.to_ecl(utc)
 	(venus_lng, venus_lat) = venus_ecl.format()
 	
@@ -171,7 +185,7 @@ if __name__ == '__main__':
 	
 	# calculate Mars phenomena
 	
-	mars_rst = get_mars_rst(utc, lwa1_lnlat)
+	mars_rst = get_mars_rst(utc, lwa_lnlat)
 	(mars_utc_rise, mars_utc_set, mars_utc_trans) = mars_rst.format()
 	mars_lcl_rise = mars_utc_rise.to_zone()
 	mars_lcl_trans = mars_utc_trans.to_zone()
@@ -179,7 +193,7 @@ if __name__ == '__main__':
 	
 	mars_equ = get_mars_equ_coords(utc) 
 	(mars_ra, mars_dec) = mars_equ.format()
-	mars_hrz = mars_equ.to_hrz(lwa1_lnlat, utc)
+	mars_hrz = mars_equ.to_hrz(lwa_lnlat, utc)
 	mars_ecl = mars_equ.to_ecl(utc)
 	(mars_lng, mars_lat) = mars_ecl.format()
 	
@@ -203,7 +217,7 @@ if __name__ == '__main__':
 	
 	# calculate Jupiter phenomena
 	
-	jupiter_rst = get_jupiter_rst(utc, lwa1_lnlat)
+	jupiter_rst = get_jupiter_rst(utc, lwa_lnlat)
 	(jupiter_utc_rise, jupiter_utc_set, jupiter_utc_trans) = jupiter_rst.format()
 	jupiter_lcl_rise = jupiter_utc_rise.to_zone()
 	jupiter_lcl_trans = jupiter_utc_trans.to_zone()
@@ -211,7 +225,7 @@ if __name__ == '__main__':
 	
 	jupiter_equ = get_jupiter_equ_coords(utc) 
 	(jupiter_ra, jupiter_dec) = jupiter_equ.format()
-	jupiter_hrz = jupiter_equ.to_hrz(lwa1_lnlat, utc)
+	jupiter_hrz = jupiter_equ.to_hrz(lwa_lnlat, utc)
 	jupiter_ecl = jupiter_equ.to_ecl(utc)
 	(jupiter_lng, jupiter_lat) = jupiter_ecl.format()
 	
@@ -235,7 +249,7 @@ if __name__ == '__main__':
 	
 	# calculate Saturn phenomena
 	
-	saturn_rst = get_saturn_rst(utc, lwa1_lnlat)
+	saturn_rst = get_saturn_rst(utc, lwa_lnlat)
 	(saturn_utc_rise, saturn_utc_set, saturn_utc_trans) = saturn_rst.format()
 	saturn_lcl_rise = saturn_utc_rise.to_zone()
 	saturn_lcl_trans = saturn_utc_trans.to_zone()
@@ -243,7 +257,7 @@ if __name__ == '__main__':
 	
 	saturn_equ = get_saturn_equ_coords(utc) 
 	(saturn_ra, saturn_dec) = saturn_equ.format()
-	saturn_hrz = saturn_equ.to_hrz(lwa1_lnlat, utc)
+	saturn_hrz = saturn_equ.to_hrz(lwa_lnlat, utc)
 	saturn_ecl = saturn_equ.to_ecl(utc)
 	(saturn_lng, saturn_lat) = saturn_ecl.format()
 	
@@ -268,14 +282,14 @@ if __name__ == '__main__':
 	
 	sgra_j2000_equ = equ_posn(hms(17, 42, 48.1), dms(True, 28, 55, 8))
 	sgra_equ = get_apparent_posn(sgra_j2000_equ, utc)
-	sgra_rst = get_object_rst(utc, lwa1_lnlat, sgra_equ)
+	sgra_rst = get_object_rst(utc, lwa_lnlat, sgra_equ)
 	(sgra_utc_rise, sgra_utc_set, sgra_utc_trans) = sgra_rst.format()
 	sgra_lcl_rise = sgra_utc_rise.to_zone()
 	sgra_lcl_trans = sgra_utc_trans.to_zone()
 	sgra_lcl_set = sgra_utc_set.to_zone()
 	
 	(sgra_ra, sgra_dec) = sgra_equ.format()
-	sgra_hrz = sgra_equ.to_hrz(lwa1_lnlat, utc)
+	sgra_hrz = sgra_equ.to_hrz(lwa_lnlat, utc)
 	sgra_gal = sgra_equ.to_gal(utc)
 	(sgra_l, sgra_b) = sgra_gal.format()
 	
@@ -302,7 +316,7 @@ if __name__ == '__main__':
 	casa_equ = get_apparent_posn(casa_j2000_equ, utc)
 	
 	(casa_ra, casa_dec) = casa_equ.format()
-	casa_hrz = casa_equ.to_hrz(lwa1_lnlat, utc)
+	casa_hrz = casa_equ.to_hrz(lwa_lnlat, utc)
 	casa_gal = casa_equ.to_gal(utc)
 	(casa_l, casa_b) = casa_gal.format()
 	
@@ -328,14 +342,14 @@ if __name__ == '__main__':
 	
 	cyga_j2000_equ = equ_posn(hms(19, 59, 27.8), dms(False, 40, 44, 2))
 	cyga_equ = get_apparent_posn(cyga_j2000_equ, utc)
-	cyga_rst = get_object_rst(utc, lwa1_lnlat, cyga_equ)
+	cyga_rst = get_object_rst(utc, lwa_lnlat, cyga_equ)
 	(cyga_utc_rise, cyga_utc_set, cyga_utc_trans) = cyga_rst.format()
 	cyga_lcl_rise = cyga_utc_rise.to_zone()
 	cyga_lcl_trans = cyga_utc_trans.to_zone()
 	cyga_lcl_set = cyga_utc_set.to_zone()
 	
 	(cyga_ra, cyga_dec) = cyga_equ.format()
-	cyga_hrz = cyga_equ.to_hrz(lwa1_lnlat, utc)
+	cyga_hrz = cyga_equ.to_hrz(lwa_lnlat, utc)
 	cyga_gal = cyga_equ.to_gal(utc)
 	(cyga_l, cyga_b) = cyga_gal.format()
 	
@@ -361,14 +375,14 @@ if __name__ == '__main__':
 	
 	taua_j2000_equ = equ_posn(hms(5, 34, 32.0), dms(False, 22, 00, 52.1))
 	taua_equ = get_apparent_posn(taua_j2000_equ, utc)
-	taua_rst = get_object_rst(utc, lwa1_lnlat, taua_equ)
+	taua_rst = get_object_rst(utc, lwa_lnlat, taua_equ)
 	(taua_utc_rise, taua_utc_set, taua_utc_trans) = taua_rst.format()
 	taua_lcl_rise = taua_utc_rise.to_zone()
 	taua_lcl_trans = taua_utc_trans.to_zone()
 	taua_lcl_set = taua_utc_set.to_zone()
 	
 	(taua_ra, taua_dec) = taua_equ.format()
-	taua_hrz = taua_equ.to_hrz(lwa1_lnlat, utc)
+	taua_hrz = taua_equ.to_hrz(lwa_lnlat, utc)
 	taua_gal = taua_equ.to_gal(utc)
 	(taua_l, taua_b) = taua_gal.format()
 	
@@ -393,14 +407,14 @@ if __name__ == '__main__':
 	
 	b1919_j2000_equ = equ_posn(hms(19, 21, 44.80), dms(False, 21, 53, 1.8))
 	b1919_equ = get_apparent_posn(b1919_j2000_equ, utc)
-	b1919_rst = get_object_rst(utc, lwa1_lnlat, b1919_equ)
+	b1919_rst = get_object_rst(utc, lwa_lnlat, b1919_equ)
 	(b1919_utc_rise, b1919_utc_set, b1919_utc_trans) = b1919_rst.format()
 	b1919_lcl_rise = b1919_utc_rise.to_zone()
 	b1919_lcl_trans = b1919_utc_trans.to_zone()
 	b1919_lcl_set = b1919_utc_set.to_zone()
 	
 	(b1919_ra, b1919_dec) = b1919_equ.format()
-	b1919_hrz = b1919_equ.to_hrz(lwa1_lnlat, utc)
+	b1919_hrz = b1919_equ.to_hrz(lwa_lnlat, utc)
 	b1919_gal = b1919_equ.to_gal(utc)
 	(b1919_l, b1919_b) = b1919_gal.format()
 	

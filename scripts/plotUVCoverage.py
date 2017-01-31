@@ -12,7 +12,7 @@ import math
 import numpy
 import getopt
 
-from lsl.common import stations
+from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import uvUtils
 from lsl.common.constants import c as vLight
 
@@ -27,6 +27,7 @@ Usage: plotUVCoverage.py [OPTIONS]
 
 Options:
 -h, --help             Display this help information
+-s, --lwasv            Use LWA-SV instead of LWA1
 -f, --frequency        Frequency in MHz to compute the uv coverage (default 
                        50 MHz)
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
@@ -43,6 +44,7 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
+	config['site'] = 'lwa1'
 	config['metadata'] = ''
 	config['freq'] = 50e6
 	config['output'] = None
@@ -50,7 +52,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hf:m:o:", ["help", "frequency=", "metadata=", "output="])
+		opts, arg = getopt.getopt(args, "hsf:m:o:", ["help", "lwasv", "frequency=", "metadata=", "output="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -60,6 +62,8 @@ def parseOptions(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
+		elif opt in ('-s', '--lwasv'):
+			config['site'] = 'lwasv'
 		elif opt in ('-f', '--frequency'):
 			config['freq'] = float(value)*1e6
 		elif opt in ('-m', '--metadata'):
@@ -84,9 +88,16 @@ def main(args):
 		try:
 			station = stations.parseSSMIF(config['metadata'])
 		except ValueError:
-			station = metabundle.getStation(config['metadata'], ApplySDM=True)
-	else:
+			try:
+				station = metabundle.getStation(config['metadata'], ApplySDM=True)
+			except:
+				station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+	elif config['site'] == 'lwa1':
 		station = stations.lwa1
+	elif config['site'] == 'lwasv':
+		station = stations.lwasv
+	else:
+		raise RuntimeError("Unknown site name: %s" % config['site'])
 		
 	antennas = []
 	for ant in station.getAntennas()[0::2]:

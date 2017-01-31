@@ -10,10 +10,10 @@ import getopt
 
 from datetime import datetime, date, time, timedelta
 
-from lsl.common.stations import lwa1
+from lsl.common import stations
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
-from lsl.common import sdf, metabundle
+from lsl.common import sdf, sdfADP, metabundle, metabundleADP
 
 
 __version__ = "0.2"
@@ -46,16 +46,31 @@ def getObsStartStop(obs):
 
 
 def main(args):
-	# Get the observer
-	observer = lwa1.getObserver()
+	# Get the site and observer
+	site = stations.lwa1
+	observer = site.getObserver()
 	
 	# Filenames in an easier format
 	inputTGZ  = args[0]
 	
-	# Parse the input file and get the dates of the observations
-	project = metabundle.getSessionDefinition(inputTGZ)
-	obsImpl = metabundle.getObservationSpec(inputTGZ)
-	
+	# Parse the input file and get the dates of the observations.  Be default 
+	# this is for LWA1 but we switch over to LWA-SV if an error occurs.
+	try:
+		# LWA1
+		project = metabundle.getSessionDefinition(inputTGZ)
+		obsImpl = metabundle.getObservationSpec(inputTGZ)
+	except:
+		# LWA-SV
+		## Module changes
+		sdf = sdfADP
+		metabundle = metabundleADP
+		## Site changes
+		site = stations.lwasv
+		observer = site.getObserver()
+		## Try again
+		project = metabundle.getSessionDefinition(inputTGZ)
+		obsImpl = metabundle.getObservationSpec(inputTGZ)
+		
 	nObs = len(project.sessions[0].observations)
 	tStart = [None,]*nObs
 	for i in xrange(nObs):
@@ -73,7 +88,7 @@ def main(args):
 	print " Project ID: %s" % project.id
 	print " Session ID: %i" % project.sessions[0].id
 	print " Observations appear to start at %s" % (min(tStart)).strftime(formatString)
-	print " -> LST at %s for this date/time is %s" % (lwa1.name, lst)
+	print " -> LST at %s for this date/time is %s" % (site.name, lst)
 	
 	lastDur = project.sessions[0].observations[nObs-1].dur
 	lastDur = timedelta(seconds=int(lastDur/1000), microseconds=(lastDur*1000) % 1000000)

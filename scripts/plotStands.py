@@ -9,7 +9,7 @@ import sys
 import numpy
 import getopt
 
-from lsl.common import stations
+from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import uvUtils
 
 import matplotlib.pyplot as plt
@@ -24,6 +24,7 @@ Usage: plotStands.py [OPTIONS] [stand1 [stand2 [...]]]
 
 Options:
 -h, --help             Display this help information
+-s, --lwasv            Use LWA-SV instead of LWA1
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
                        mappings
 -l, --label            Label the stands with their ID numbers
@@ -42,6 +43,7 @@ def parseOptions(args):
 	config = {}
 	
 # Command line flags - default values
+	config['site'] = 'lwa1'
 	config['metadata'] = ''
 	config['label'] = False
 	config['verbose'] = False
@@ -50,7 +52,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hvlm:o:", ["help", "verbose", "label", "metadata=", "output="])
+		opts, arg = getopt.getopt(args, "hvslm:o:", ["help", "verbose", "lwasv", "label", "metadata=", "output="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -62,6 +64,8 @@ def parseOptions(args):
 			usage(exitCode=0)
 		elif opt in ('-v', '--verbose'):
 			config['verbose'] = True
+		elif opt in ('-s', '--lwasv'):
+			config['site'] = 'lwasv'
 		elif opt in ('-l', '--label'):
 			config['label'] = True
 		elif opt in ('-m', '--metadata'):
@@ -88,9 +92,16 @@ def main(args):
 		try:
 			station = stations.parseSSMIF(config['metadata'])
 		except ValueError:
-			station = metabundle.getStation(config['metadata'], ApplySDM=True)
-	else:
+			try:
+				station = metabundle.getStation(config['metadata'], ApplySDM=True)
+			except:
+				station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+	elif config['site'] == 'lwa1':
 		station = stations.lwa1
+	elif config['site'] == 'lwasv':
+		station = stations.lwasv
+	else:
+		raise RuntimeError("Unknown site name: %s" % config['site'])
 	stands = station.getStands()
 	stands.sort()
 

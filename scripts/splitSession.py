@@ -8,7 +8,7 @@ import getopt
 from datetime import datetime, timedelta
 
 from lsl.common.mcs import mjdmpm2datetime, mode2string
-from lsl.common import metabundle
+from lsl.common import metabundle, metabundleADP
 from lsl.reader import tbw,tbn,drx,errors
 
 
@@ -96,9 +96,19 @@ def main(args):
 	data = config['args'][1]
 
 	# Get all observations and their start times
-	sdf = metabundle.getSessionDefinition(meta)
-	ses = metabundle.getSessionSpec(meta)
-	obs = metabundle.getObservationSpec(meta)
+	try:
+		## LWA-1
+		sdf = metabundle.getSessionDefinition(meta)
+		ses = metabundle.getSessionSpec(meta)
+		obs = metabundle.getObservationSpec(meta)
+	except:
+		## LWA-SV
+		### Module change
+		metabundle = metabundleADP
+		### Try again
+		sdf = metabundle.getSessionDefinition(meta)
+		ses = metabundle.getSessionSpec(meta)
+		obs = metabundle.getObservationSpec(meta)
 	obs.sort(obsComp)
 	tStart = []
 	oDetails = []

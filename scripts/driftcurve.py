@@ -27,6 +27,7 @@ Usage: driftcurve.py [OPTIONS]
 
 Options:
 -h, --help             Display this help information
+-s, --lwasv            Calculate for LWA-SV instead of LWA1
 -f, --freq             Frequency of the observations in MHz
                        (default = 74 MHz)
 -p, --polarization     Polarization of the observations (NS or EW; 
@@ -47,6 +48,7 @@ Options:
 def parseOptions(args):
 	config = {}
 	# Command line flags - default values
+	config['site'] = 'lwa1'
 	config['freq'] = 74.0e6
 	config['pol'] = 'EW'
 	config['GSM'] = True
@@ -57,7 +59,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hvf:p:lt:x", ["help", "verbose", "freq=", "polarization=", "lf-map", "time-step=", "do-plot",])
+		opts, arg = getopt.getopt(args, "hvsf:p:lt:x", ["help", "verbose", "lwasv", "freq=", "polarization=", "lf-map", "time-step=", "do-plot",])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -69,6 +71,8 @@ def parseOptions(args):
 			usage(exitCode=0)
 		elif opt in ('-v', '--verbose'):
 			config['verbose'] = True
+		elif opt in ('-s', '--lwasv'):
+			config['site'] = 'lwasv'
 		elif opt in ('-f', '--freq'):
 			config['freq'] = float(value)*1e6
 		elif opt in ('-p', '--polarization'):
@@ -98,9 +102,14 @@ def main(args):
 	# Parse command line
 	config = parseOptions(args)
 	
-	# Get the site information for LWA-1
-	sta = stations.lwa1
-	
+	# Get the site information
+	if config['site'] == 'lwa1':
+		sta = stations.lwa1
+	elif config['site'] == 'lwasv':
+		sta = stations.lwasv
+	else:
+		raise RuntimeError("Unknown site: %s" % config['site'])
+		
 	# Read in the skymap (GSM or LF map @ 74 MHz)
 	if config['GSM']:
 		smap = skymap.SkyMapGSM(freqMHz=config['freq']/1e6)

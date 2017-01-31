@@ -26,17 +26,23 @@ def restorescreen():
 
 
 if __name__ == '__main__':
-	usage = "astrostatus [options]"
+	usage = "astrostatus.py [options]"
 
 	# check command line
 	parser = optparse.OptionParser(usage = usage)
 	parser.add_option("-s", "--site", action = "store", type = "string",
 					dest = "site", default = 'LWA-1', help = "site name (default LWA-1)")
 	(opts, args) = parser.parse_args()
-			
+	
 	# setup transform objects
-	lwa1 = stations.lwa1
-	site = transform.GeographicalPosition((lwa1.long*180.0/math.pi, lwa1.lat*180.0/math.pi), name=lwa1.name)
+	opts['site'] = opts['site'].lower().replace('-', '')
+	if opts['site'] == 'lwa1':
+		station = stations.lwa1
+	elif opts['site'] == 'lwasv':
+		station = stations.lwasv
+	else:
+		raise RuntimeError("Unknown site name: %s" % opts['site'])
+	site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)
 	
 	sun_pos = transform.PlanetaryPosition('Sun')
 	sun_dir = transform.PointingDirection(sun_pos, site)

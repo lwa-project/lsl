@@ -9,7 +9,7 @@ import getopt
 from datetime import datetime
 
 from lsl import astro
-from lsl.common.stations import lwa1
+from lsl.common import stations
 from lsl.common.mcs import datetime2mjdmpm
 from lsl.misc import ionosphere
 
@@ -27,6 +27,7 @@ Stop:   YYYY/MM/DD HH:MM:SS stop time in UTC
 
 Options:
 -h, --help             Display this help information
+-s, --lwasv            Calculate for LWA-SV instead of LWA1
 -n, --n-samples        Number of samples to take between the start and stop
                        times (default = 11)
 -i, --igs              Use the IGS data products (default)
@@ -44,13 +45,14 @@ Options:
 def parseConfig(args):
 	config = {}
 	# Command line flags - default values
+	config['site'] = 'lwa1'
 	config['nSamples'] = 11
 	config['type'] = 'IGS'
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hn:ijcu", ["help", "n-samples", "igs", "jpl", "code", "ustec"])
+		opts, arg = getopt.getopt(args, "hsn:ijcu", ["help", "lwasv", "n-samples", "igs", "jpl", "code", "ustec"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -60,6 +62,8 @@ def parseConfig(args):
 	for opt, value in opts:
 		if opt in ('-h', '--help'):
 			usage(exitCode=0)
+		elif opt in ('-s', '--lwasv'):
+			config['site'] = 'lwasv'
 		elif opt in ('-n', '--n-samples'):
 			config['nSamples'] = int(value)
 		elif opt in ('-i', '--igs'):
@@ -107,7 +111,13 @@ def main(args):
 	mjdStop = mjd + mpm/1000.0/86400.0
 	
 	# Setup everthing for computing the position of the source
-	obs = lwa1.getObserver()
+	if config['site'] == 'lwa1':
+		site = stations.lwa1
+	elif config['site'] == 'lwasv':
+		site = stations.lwasv
+	else:
+		raise RuntimeError("Unknown site: %s" % config['site'])
+	obs = site.getObserver()
 	bdy = ephem.FixedBody()
 	bdy._ra = RA
 	bdy._dec = dec
@@ -125,7 +135,7 @@ def main(args):
 		if el > 0:
 			# Get the latitude, longitude, and height of the ionospheric pierce 
 			# point in this direction
-			ippLat, ippLon, ippElv = ionosphere.getIonosphericPiercePoint(lwa1, az, el)
+			ippLat, ippLon, ippElv = ionosphere.getIonosphericPiercePoint(site, az, el)
 			
 			# Load in the TEC value and the RMS from the IGS final data product
 			tec, rms = ionosphere.getTECValue(mjd, lat=ippLat, lng=ippLon, includeRMS=True, type=config['type'])
@@ -136,9 +146,9 @@ def main(args):
 			
 			# Rotate the ECEF field into topocentric coordinates so that we can 
 			# get the magnetic field along the line of sight
-			rot = numpy.array([[ numpy.sin(lwa1.lat)*numpy.cos(lwa1.long), numpy.sin(lwa1.lat)*numpy.sin(lwa1.long), -numpy.cos(lwa1.lat)], 
-						[-numpy.sin(lwa1.long),                     numpy.cos(lwa1.long),                      0                  ],
-						[ numpy.cos(lwa1.lat)*numpy.cos(lwa1.long), numpy.cos(lwa1.lat)*numpy.sin(lwa1.long),  numpy.sin(lwa1.lat)]])
+			rot = numpy.array([[ numpy.sin(site.lat)*numpy.cos(site.long), numpy.sin(site.lat)*numpy.sin(site.long), -numpy.cos(site.lat)], 
+						[-numpy.sin(site.long),                     numpy.cos(site.long),                      0                  ],
+						[ numpy.cos(site.lat)*numpy.cos(site.long), numpy.cos(site.lat)*numpy.sin(site.long),  numpy.sin(site.lat)]])
 			## ECEF -> SEZ
 			sez = numpy.dot(rot, numpy.array([Bx, By, Bz]))
 			## SEZ -> NEZ
