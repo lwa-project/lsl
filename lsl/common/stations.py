@@ -1494,8 +1494,11 @@ def parseSSMIF(filename):
 	
 	# Unpack the dictionary into the current variable scope
 	for k in ssmifDataDict.keys():
-		exec("%s = ssmifDataDict['%s']" % (k, k))
-	
+		try:
+			exec("%s = ssmifDataDict['%s']" % (k, k))
+		except NameError:
+			pass
+			
 	# Build up a list of Stand instances and load them with data
 	i = 1
 	stands = []
