@@ -755,7 +755,12 @@ class IDI(object):
 				
 				obs.date = utc - astro.DJD_OFFSET
 				
-				if dataSet.source.name != lastSourceName:
+				try:
+					currSourceName = dataSet.source.name
+				except AttributeError:
+					currSourceName = dataSet.source
+				
+				if currSourceName != lastSourceName:
 					sourceID += 1
 					
 					if dataSet.source == 'z':
@@ -771,8 +776,6 @@ class IDI(object):
 						
 					else:
 						## Real-live sources (ephem.Body instances)
-						lastSourceName = dataSet.source.name
-						
 						name = dataSet.source.name
 						equ = astro.equ_posn(dataSet.source.ra*180/numpy.pi, dataSet.source.dec*180/numpy.pi)
 						equPo = astro.equ_posn(dataSet.source.a_ra*180/numpy.pi, dataSet.source.a_dec*180/numpy.pi)
@@ -787,6 +790,9 @@ class IDI(object):
 					
 					# name
 					nameList.append(name)
+					
+					# Update
+					lastSourceName = name
 					
 		nSource = len(nameList)
 		
