@@ -7,8 +7,9 @@
 
 1.1.4
   * Fixed a missing import statement and a couple of bugs in splitTBN.py
-  * Fixed a conjugation problem in the lsl.writer.idi module that caused the image to be transposed in AIPS
+  * Fixed a conjugation problem in the lsl.writer.fitsidi module that caused the image to be transposed in AIPS
   * Fixed a conjugation problem in the lsl.utils.imaging module that caused images created from FITS-IDI files to be transposed
+  * Fixed a source enumeration problem in the lsl.writer.fitsidi module that caused excessive source IDs
 
 1.1.3.2
   * Applied a fix for the course FIFO phase jumps in the core.c FEngineC2/3 functions.

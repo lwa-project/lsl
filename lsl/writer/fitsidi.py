@@ -743,7 +743,7 @@ class IDI(object):
 		raPoList = []
 		decPoList = []
 		sourceID = 0
-		lastSource = None
+		lastSourceName = None
 		for dataSet in self.data:
 			if dataSet.pol == self.stokes[0]:
 				utc = astro.taimjd_to_utcjd(dataSet.obsTime)
@@ -755,7 +755,7 @@ class IDI(object):
 				
 				obs.date = utc - astro.DJD_OFFSET
 				
-				if dataSet.source != lastSource:
+				if dataSet.source.name != lastSourceName:
 					sourceID += 1
 					
 					if dataSet.source == 'z':
@@ -771,7 +771,7 @@ class IDI(object):
 						
 					else:
 						## Real-live sources (ephem.Body instances)
-						lastSource = dataSet.source
+						lastSourceName = dataSet.source.name
 						
 						name = dataSet.source.name
 						equ = astro.equ_posn(dataSet.source.ra*180/numpy.pi, dataSet.source.dec*180/numpy.pi)
