@@ -66,8 +66,9 @@ try:
 	ifft2Function = lambda x: pyfftw.interfaces.numpy_fft.ifft2(x)
 
 except ImportError:
-	fft2Function = numpy.fft.fft2
-	ifft2Function = numpy.fft.ifft2
+	from scipy import fftpack
+	fft2Function = fftpack.fft2
+	ifft2Function = fftpack.ifft2
 
 __version__ = '0.8'
 __revision__ = '$Rev$'
@@ -1241,6 +1242,23 @@ class ImgWPlus(aipy.img.ImgW):
 	the field of view and the pixels near the phase center.
 	"""
 	
+	def __init__(self, size=100, res=1, wres=.5, mf_order=0):
+		"""size = number of wavelengths which the UV matrix spans (this 
+		determines the image resolution).
+		res = resolution of the UV matrix (determines image field of view).
+		wres: the gridding resolution of sqrt(w) when projecting to w=0."""
+		self.res = float(res)
+		self.size = float(size)
+		## Small change needed to work with Numpy 1.12+
+		dim = numpy.int64(numpy.round(self.size / self.res))
+		self.shape = (dim,dim)
+		self.uv = numpy.zeros(shape=self.shape, dtype=numpy.complex64)
+		self.bm = []
+		for i in range(mf_order+1):
+			self.bm.append(numpy.zeros(shape=self.shape, dtype=numpy.complex64))
+		self.wres = wres
+		self.wcache = {}
+	
 	def put(self, (u,v,w), data, wgts=None, invker2=None):
 		"""Same as Img.put, only now the w component is projected to the w=0
 		plane before applying the data to the UV matrix."""
@@ -1274,10 +1292,10 @@ class ImgWPlus(aipy.img.ImgW):
 			invker = numpy.fromfunction(lambda u,v: self.conv_invker(u,v,avg_w),
 				uv.shape)
 			if not invker2 is None: invker *= invker2
-			self.uv += numpy.fft.ifft2(numpy.fft.fft2(uv) * invker)
+			self.uv += ifft2Function(fft2Function(uv) * invker)
 			#self.uv += uv
 			for b in range(len(self.bm)):
-				self.bm[b] += numpy.fft.ifft2(numpy.fft.fft2(bm[b]) * invker)
+				self.bm[b] += ifft2Function(fft2Function(bm[b]) * invker)
 				#self.bm[b] += numpy.array(bm)[0,:,:]
 			if j >= len(w): break
 			i = j

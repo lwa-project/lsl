@@ -529,7 +529,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 		q = numpy.argsort(u)
 		u = u[q]
 		v = v[q]
-		nPerSeg = numpy.zeros(nSeg) + n/nSeg
+		nPerSeg = numpy.zeros(nSeg, dtype=numpy.int64) + n/nSeg
 		nLeft = n - nPerSeg[0]*nSeg
 		nPerSeg[nSeg/2] = nPerSeg[nSeg/2] + nLeft
 		r = numpy.zeros(nSeg)
