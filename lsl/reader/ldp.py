@@ -24,6 +24,7 @@ from scipy.stats import norm
 from collections import deque
 
 from lsl.common.dp import fS
+from lsl.common.adp import fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer
 
@@ -1345,7 +1346,7 @@ class TBFFile(LDPFileBase):
 		# Basic file information
 		filesize = os.fstat(self.fh.fileno()).st_size
 		nFramesFile = filesize / tbf.FrameSize
-		srate = 204.8e6 / 8192
+		srate = fC
 		bits = 4
 		nFramesPerObs = tbf.getFramesPerObs(self.fh)
 		nChan = tbf.getChannelCount(self.fh)
@@ -1370,7 +1371,7 @@ class TBFFile(LDPFileBase):
 		freq = numpy.zeros(nChan)
 		for i,c in enumerate(self.mapper):
 			freq[i*12:i*12+12] = c + numpy.arange(12)
-		freq *= srate
+		freq *= fC
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbf.FrameSize,
 						'firstFrameCount': firstFrameCount, 'sampleRate': srate, 'dataBits': bits, 

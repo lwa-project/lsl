@@ -30,7 +30,7 @@ from lsl.transform import Time
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 'getASPConfiguration', 'getASPConfigurationSummary', '__version__', '__revision__', '__all__']
+__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 'getASPConfiguration', 'getASPConfigurationSummary', 'isValid', '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
@@ -690,3 +690,51 @@ def getASPConfigurationSummary(tarname, which='beginning'):
 				
 	# Done
 	return mode
+
+
+def isValid(tarname, verbose=False):
+	"""
+	Given a filename, see if it is valid metadata tarball or not.
+	
+	.. versionadded:: 1.2.0
+	"""
+	
+	passes = 0
+	failures = 0
+	try:
+		getSessionSpec(tarname)
+		passes += 1
+		if verbose:
+			print("Session specification - OK")
+	except IOError as e:
+		raise e
+	except:
+		failures += 1
+		if verbose:
+			print("Session specification - FAILED")
+		
+	try:
+		getObservationSpec(tarname)
+		passes += 1
+		if verbose:
+			print("Observation specification(s) - OK")
+	except:
+		failures += 1
+		if verbose:
+			print("Observation specification(s) - FAILED")
+			
+	try:
+		getCommandScript(tarname)
+		passes += 1
+		if verbose:
+			print("Command script - OK")
+	except:
+		failures += 1
+		if verbose:
+			print("Command script - FAILED")
+			
+	if verbose:
+		print("---")
+		print("%i passed / %i failed" % (passes, failures))
+		
+	return False if failures else True

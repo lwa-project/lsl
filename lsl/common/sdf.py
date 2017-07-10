@@ -69,9 +69,9 @@ from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
-__version__ = '0.9'
+__version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', 'isValid', '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
 _UTC = pytz.utc
@@ -1926,7 +1926,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 		obsOut = Solar(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
 	elif mode == 'TRK_JOV':
 		obsOut = Jovian(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
-	else:
+	elif mode == 'STEPPED':
 		if verbose:
 			print("[%i] -> found %i steps" % (os.getpid(), len(beamTemps)))
 			
@@ -1942,7 +1942,9 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 			f1 = word2freq(beamTemp['freq1'])
 			f2 = word2freq(beamTemp['freq2'])
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
-			
+	else:
+		raise RuntimeError("Invalid mode encountered: %s" % mode)
+		
 	# Set the beam-dipole mode information (if applicable)
 	if obsTemp['beamDipole'] is not None:
 		obsOut.beamDipole = obsTemp['beamDipole']
@@ -2361,6 +2363,10 @@ def parseSDF(filename, verbose=False):
 			obsTemp['gain'] = int(value)
 			continue
 			
+		# Keywords that might indicate this is for ADP-based stations
+		if keyword in ('OBS_TBF_SAMPLES',):
+			raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+			
 	# Create the final observation
 	if obsTemp['id'] != 0:
 		project.sessions[0].observations.append( __parseCreateObsObject(obsTemp, beamTemps=beamTemps, verbose=verbose) )
@@ -2404,3 +2410,42 @@ def getObservationStartStop(obs):
 	
 	# Return
 	return tStart, tStop
+
+
+def isValid(filename, verbose=False):
+	"""
+	Given a filename, see if it is valid SDF file or not.
+	
+	.. versionadded:: 1.2.0
+	"""
+	
+	passes = 0
+	failures = 0
+	try:
+		proj = parseSDF(filename)
+		passes += 1
+		if verbose:
+			print("Parser - OK")
+			
+		valid = proj.validate()
+		if valid:
+			passes += 1
+			if verbose:
+				print("Validator - OK")
+		else:
+			failures += 1
+			if verbose:
+				print("Validator - FAILED")
+				
+	except IOError as e:
+		raise e
+	except:
+		failures += 1
+		if verbose:
+			print("Parser - FAILED")
+			
+	if verbose:
+		print("---")
+		print("%i passed / %i failed" % (passes, failures))
+		
+	return False if failures else True

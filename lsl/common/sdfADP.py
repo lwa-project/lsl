@@ -59,17 +59,18 @@ from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
 
 from lsl.common.mcsADP import LWA_MAX_NSTD
-from lsl.common.adp import freq2word, word2freq
+from lsl.common.adp import freq2word, word2freq, fC
 from lsl.common.stations import lwasv
 from lsl.reader.tbn import filterCodes as TBNFilters
 from lsl.reader.drx import filterCodes as DRXFilters
+from lsl.reader.tbf import FrameSize as TBFSize
 from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
-__version__ = '0.9'
+__version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', 'isValid', '__version__', '__revision__', '__all__']
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
 _UTC = pytz.utc
@@ -78,6 +79,10 @@ _CST = pytz.timezone('US/Central')
 _MST = pytz.timezone('US/Mountain')
 _PST = pytz.timezone('US/Pacific')
 _DRSUCapacityTB = 10
+# Factors for computing the time it takes to read out a TBF from the number 
+# of samples
+_TBF_TIME_SCALE = 196000
+_TBF_TIME_GAIN = 150
 
 
 def _getEquinoxEquation(jd):
@@ -489,7 +494,14 @@ class Project(object):
 			output = "%sOBS_MODE         %s\n" % (output, obs.mode)
 			if obs.beamDipole is not None:
 				output = "%sOBS_BDM          %i %6.4f %6.4f %s\n" % ((output,) + tuple(obs.beamDipole))
-			if obs.mode == 'TBN':
+			if obs.mode == 'TBF':
+				output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
+				output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
+				output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
+				output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
+				output = "%sOBS_BW           %i\n" % (output, obs.filter)
+				output = "%sOBS_BW+          %s\n" % (output, self._renderBandwidth(obs.filter, obs.filterCodes))
+			elif obs.mode == 'TBN':
 				output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
 				output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
 				output = "%sOBS_BW           %i\n" % (output, obs.filter)
@@ -611,6 +623,9 @@ class Project(object):
 					
 					if ats != -1:
 						output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, atsID, ats)
+			## TBF settings
+			if obs.mode == 'TBF':
+				output = "%sOBS_TBF_SAMPLES  %i\n" % (output, obs.samples)
 			## TBN gain
 			if obs.mode == 'TBN':
 				if obs.gain != -1:
@@ -731,7 +746,7 @@ class Session(object):
 			if verbose:
 				print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
 			failures += 1
-		if self.drxBeam not in (-1, 1, 2, 3, 4):
+		if self.drxBeam not in (-1, 1):
 			if verbose:
 				print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
 			failures += 1
@@ -999,6 +1014,109 @@ class Observation(object):
 		else:
 			return 0
 
+
+class TBF(Observation):
+	"""Sub-class of Observation specifically for TBF observations.  It features a
+	reduced number of parameters needed to setup the observation and provides extra
+	information about the number of number of samples.
+	
+	.. note::
+		TBF read-out times in ms are calculated using (samples / 196000 + 1) * 150 per
+		MCS
+	
+	Required Arguments:
+	  * observation name
+	  * observation target
+	  * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
+	  * observation frequency (Hz) - 1
+	  * observation frequency (Hz) - 2
+	  * integer filter code
+	  * integer number of samples
+	  
+	Optional Keywords:
+	  * comments - comments about the observation
+	"""
+	
+	def __init__(self, name, target, start, frequency1, frequency2, filter, samples, comments=None):
+		self.filterCodes = DRXFilters
+		self.samples = int(samples)
+		
+		duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN
+		durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
+		Observation.__init__(self, name, target, start, durStr, 'TBF', 0.0, 0.0, frequency1, frequency2, filter, comments=comments)
+		
+	def setFrequency1(self, frequency1):
+		"""Set the frequency in Hz corresponding to tuning 1."""
+		
+		self.frequency1 = float(frequency1)
+		self.update()
+		
+	def setFrequency2(self, frequency2):
+		"""Set the frequency in Hz correpsonding to tuning 2."""
+		
+		self.frequency2 = float(frequency2)
+		self.update()
+		
+	def update(self):
+		"""Update the computed parameters from the string values."""
+		
+		# Update the duration based on the number of bits and samples used
+		duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN
+		sc = int(duration/1000.0)
+		ms = int(round((duration/1000.0 - sc)*1000))
+		us = ms*1000
+		self.duration = str(timedelta(seconds=sc, microseconds=us))
+		
+		self.mjd = self.getMJD()
+		self.mpm = self.getMPM()
+		self.dur = self.getDuration()
+		self.freq1 = self.getFrequency1()
+		self.freq2 = self.getFrequency2()
+		self.beam = self.getBeamType()
+		self.dataVolume = self.estimateBytes()
+
+	def estimateBytes(self):
+		"""Estimate the data volume for the specified type and duration of 
+		observations.  For TBF:
+		
+			bytes = samples / samplesPerFrame * 1224 bytes
+		"""
+		
+		nFramesTime = self.samples / (196e6 / fC)
+		nFramesChan = math.ceil(DRXFilters[self.filter] / fC / 12)
+		nBytes = nFramesTime * nFramesChan * TBFSize
+		return nBytes
+		
+	def validate(self, verbose=False):
+		"""Evaluate the observation and return True if it is valid, False
+		otherwise."""
+		
+		failures = 0
+		# Basic - Sample size, frequency, and filter
+		if self.freq1 < 219130984 or self.freq1 > 1928352663:
+			if verbose:
+				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
+			failures += 1
+		if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+			if verbose:
+				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
+			failures += 1
+		if self.filter not in [1,2,3,4,5,6,7]:
+			if verbose:
+				print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
+			failures += 1
+			
+		# Advanced - Data Volume
+		if self.dataVolume >= (_DRSUCapacityTB*1024**4):
+			if verbose:
+				print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
+			failures += 1
+			
+		# Any failures indicates a bad observation
+		if failures == 0:
+			return True
+		else:
+			return False
 
 class TBN(Observation):
 	"""Sub-class of Observation specifically for TBN observations.   It features a
@@ -1808,7 +1926,9 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	if verbose:
 		print("[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
 		
-	if mode == 'TBN':
+	if mode == 'TBF':
+		obsOut = TBF(obsTemp['name'], obsTemp['target'], utcString, f1, f2, obsTemp['filter'], obsTemp['tbfSamples'], comments=obsTemp['comments'])
+	elif mode == 'TBN':
 		obsOut = TBN(obsTemp['name'], obsTemp['target'], utcString, durString, f1, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
 	elif mode == 'TRK_RADEC':
 		obsOut = DRX(obsTemp['name'], obsTemp['target'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
@@ -1816,7 +1936,7 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 		obsOut = Solar(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
 	elif mode == 'TRK_JOV':
 		obsOut = Jovian(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
-	else:
+	elif mode == 'STEPPED':
 		if verbose:
 			print("[%i] -> found %i steps" % (os.getpid(), len(beamTemps)))
 			
@@ -1832,7 +1952,9 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 			f1 = word2freq(beamTemp['freq1'])
 			f2 = word2freq(beamTemp['freq2'])
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
-			
+	else:
+		raise RuntimeError("Invalid mode encountered: %s" % mode)
+		
 	# Set the beam-dipole mode information (if applicable)
 	if obsTemp['beamDipole'] is not None:
 		obsOut.beamDipole = obsTemp['beamDipole']
@@ -1880,7 +2002,7 @@ def parseSDF(filename, verbose=False):
 	# Loop over the file
 	obsTemp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
 			 'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
-			 'stpRADec': True, 'tbwBits': 12, 'tbwSamples': 0, 'gain': -1, 
+			 'stpRADec': True, 'tbwBits': 12, 'tbfSamples': 0, 'gain': -1, 
 			 'obsFEE': [[-1,-1] for n in xrange(260)], 
 			 'aspFlt': [-1 for n in xrange(260)], 'aspAT1': [-1 for n in xrange(260)], 
 			 'aspAT2': [-1 for n in xrange(260)], 'aspATS': [-1 for n in xrange(260)]}
@@ -2238,12 +2360,19 @@ def parseSDF(filename, verbose=False):
 			else:
 				obsTemp['aspATS'][ids[0]-1] = int(value)
 			continue
+		if keyword == 'OBS_TBF_SAMPLES':
+			obsTemp['tbfSamples'] = int(value)
+			continue
 		if keyword == 'OBS_TBN_GAIN':
 			obsTemp['gain'] = int(value)
 			continue
 		if keyword == 'OBS_DRX_GAIN':
 			obsTemp['gain'] = int(value)
 			continue
+			
+		# Keywords that might indicate this is for DP-based stations
+		if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES',):
+			raise RuntimeError("Invalid keyword encountered: %s" % keyword)
 			
 	# Create the final observation
 	if obsTemp['id'] != 0:
@@ -2288,3 +2417,42 @@ def getObservationStartStop(obs):
 	
 	# Return
 	return tStart, tStop
+
+
+def isValid(filename, verbose=False):
+	"""
+	Given a filename, see if it is valid SDF file or not.
+	
+	.. versionadded:: 1.2.0
+	"""
+	
+	passes = 0
+	failures = 0
+	try:
+		proj = parseSDF(filename)
+		passes += 1
+		if verbose:
+			print("Parser - OK")
+			
+		valid = proj.validate()
+		if valid:
+			passes += 1
+			if verbose:
+				print("Validator - OK")
+		else:
+			failures += 1
+			if verbose:
+				print("Validator - FAILED")
+				
+	except IOError as e:
+		raise e
+	except:
+		failures += 1
+		if verbose:
+			print("Parser - FAILED")
+			
+	if verbose:
+		print("---")
+		print("%i passed / %i failed" % (passes, failures))
+		
+	return False if failures else True
