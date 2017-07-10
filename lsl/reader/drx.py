@@ -519,7 +519,7 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 
 def getBeamCount(filehandle):
 	"""
-	Find out how many beams are present by examining the first 16 DRX
+	Find out how many beams are present by examining the first 32 DRX
 	records.  Return the number of beams found.
 	"""
 
@@ -531,7 +531,7 @@ def getBeamCount(filehandle):
 	# and append the DRX ID to the relevant beam array if it is not already 
 	# there.
 	beams = []
-	for i in range(16):
+	for i in range(32):
 		cFrame = readFrame(filehandle)
 			
 		cID = cFrame.header.drxID
@@ -549,7 +549,7 @@ def getBeamCount(filehandle):
 def getFramesPerObs(filehandle):
 	"""
 	Find out how many frames are present per beam by examining the first 
-	16 DRX records.  Return the number of frames per observations as a four-
+	32 DRX records.  Return the number of frames per observations as a four-
 	element tuple, one for each beam.
 	"""
 	
@@ -561,7 +561,7 @@ def getFramesPerObs(filehandle):
 	# and append the DRX ID to the relevant beam array if it is not already 
 	# there.
 	idCodes = [[], [], [], []]
-	for i in range(16):
+	for i in range(32):
 		cFrame = readFrame(filehandle)
 		
 		cID = cFrame.header.drxID
