@@ -8,7 +8,6 @@
  * vdif
  * tbf
  * cor
- * drx8
 
 A ring buffer for re-ordering TBN data is included in the 'buffer'
 module.

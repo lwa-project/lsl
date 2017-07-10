@@ -41,7 +41,6 @@ short int tbw4LUT[256][2];
 float tbnLUT[256];
 float drxLUT[256][2];
 float tbfLUT[256][2];
-float drx8LUT[256];
 
 static void initLWALUTs(void) {
 	// Look-up table inialization function from the VDIFIO library
@@ -58,13 +57,10 @@ static void initLWALUTs(void) {
 		}
 	}
 	
-	// TBN & DRX8
+	// TBN
 	for(i=0; i<256; i++) {
 		tbnLUT[i] = i;
 		tbnLUT[i] -= ((i&128)<<1);
-		
-		drx8LUT[i] = i;
-		drx8LUT[i] -= ((i&128)<<1);
 	}
 	
 	// DRX & TBF
@@ -93,7 +89,6 @@ static PyMethodDef GoFastMethods[] = {
 	{"readVDIF",   (PyCFunction) readVDIF,   METH_VARARGS|METH_KEYWORDS, readVDIF_doc  }, 
 	{"readTBF",    (PyCFunction) readTBF,    METH_VARARGS,               readTBF_doc   }, 
 	{"readCOR",    (PyCFunction) readCOR,    METH_VARARGS,               readCOR_doc   }, 
-	{"readDRX8",   (PyCFunction) readDRX8,   METH_VARARGS,               readDRX8_doc  }, 
 	{NULL,         NULL,                     0,                          NULL          }
 };
 

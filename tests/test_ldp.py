@@ -133,9 +133,8 @@ class ldp_tests(unittest.TestCase):
 		# Read a frame
 		frame = f.readFrame()
 		
-		# Get the remaining frame count - the extra -3 here is for the timetag
-		# alignemnt that happens when the drx-test.dat file is made ready.
-		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-3-1)
+		# Get the remaining frame count
+		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
 		
 		# Reset
 		f.reset()
@@ -166,9 +165,8 @@ class ldp_tests(unittest.TestCase):
 		# Read a frame
 		frame = f.readFrame()
 		
-		# Get the remaining frame count - the extra -3 here is for the timetag
-		# alignemnt that happens when the drx-test.dat file is made ready.
-		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-3-1)
+		# Get the remaining frame count
+		self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
 		
 		# Reset
 		f.reset()
