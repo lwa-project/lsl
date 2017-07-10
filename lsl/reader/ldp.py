@@ -105,7 +105,7 @@ class LDPFileBase(object):
 			try:
 				return self.description[key]
 			except KeyError:
-				raise ValueError("Unknown key '%d'" % key)
+				raise ValueError("Unknown key '%s'" % key)
 				
 	def getRemainingFrameCount(self):
 		"""
@@ -224,8 +224,11 @@ class TBWFile(LDPFileBase):
 		start = junkFrame.getTime()
 		startRaw = junkFrame.data.timeTag
 		
-		# Trick to figure out how many antennas are in a file
+		# Trick to figure out how many antennas are in a file and the "real" 
+		# start time.  For details of why this needs to be done, see the read()
+		# function below.
 		idsFound = []
+		timesFound = []
 		filePosRef = self.fh.tell()
 		while True:
 			try:
@@ -236,10 +239,21 @@ class TBWFile(LDPFileBase):
 					stand = frame.parseID()
 					if stand not in idsFound:
 						idsFound.append(stand)
+					if frame.header.frameCount < 1000:
+						timesFound.append( (frame.header.frameCount-1, frame.data.timeTag) )
 				self.fh.seek(tbw.FrameSize*(30000-26), 1)
 			except:
 				break
 		self.fh.seek(filePosRef)
+		
+		# What is that start time again?
+		startTimeTag = None
+		for fc,tt in timesFound:
+			tt = tt - fc*(1200 if bits == 4 else 400)
+			if startTimeTag is None or tt < startTimeTag:
+				startTimeTag = tt
+		start = startTimeTag / fS
+		startRaw = startTimeTag
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbw.FrameSize,
 						'sampleRate': srate, 'dataBits': bits, 'nAntenna': 2*len(idsFound), 
@@ -288,6 +302,24 @@ class TBWFile(LDPFileBase):
 		# Find out how many frames to work with at a time
 		nFrames = int(30000)
 		
+		# Initialize the time variables
+		# Explination:
+		#   This is needed to work out what the "real" start time is of the 
+		#   capture due to buffering in the data recorder.  What can happen 
+		#   is that the last ~4 MB of a previous capture could be stuck in 
+		#   the data recoder's buffer and that the buffer won't get dumped 
+		#   until the next capture is launch.  Thus, you can end up in a 
+		#   situation where the first few valid TBW frames in a file are from 
+		#   the previous capture.
+		#   
+		#   To get around this we use the frame count-correction time tag of 
+		#   the lowest frame number found.  This skips over the trailing edge of 
+		#   the previous capture (which should have a high frame count) while
+		#   allowing the code to deal with files that may be missing the first
+		#   frame from the first board to send a frame.
+		setTime = None
+		setTimeRef = 1000
+		
 		# Initialize the output data array
 		data = numpy.zeros((self.description['nAntenna'], nFrames*dataSize), dtype=numpy.int16)
 		
@@ -307,12 +339,12 @@ class TBWFile(LDPFileBase):
 			stand = cFrame.header.parseID()
 			aStandX = 2*(stand-1) + 0
 			aStandY = 2*(stand-1) + 1
-				
-			if i == 0:
-				if timeInSamples:
-					setTime = cFrame.data.timeTag
-				else:
-					setTime = cFrame.getTime()
+			
+			if cFrame.header.frameCount < setTimeRef:
+				newSetTime = cFrame.data.timeTag - (cFrame.header.frameCount-1)*dataSize
+				if setTime is None or cFrame.data.timeTag < setTime:
+					setTime = newSetTime
+					setTimeRef = cFrame.header.frameCount
 					
 			try:
 				cnt = cFrame.header.frameCount - 1
@@ -323,6 +355,10 @@ class TBWFile(LDPFileBase):
 			except ValueError:
 				pass
 				
+		# Deal with the time if we don't want it in samples
+		if not timeInSamples:
+			setTime = setTime / fS
+			
 		# Calculate the duration
 		duration = data.shape[1]/self.getInfo('sampleRate')
 		
