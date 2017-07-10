@@ -1328,6 +1328,17 @@ class TBFFile(LDPFileBase):
 		Describe the TBF file.
 		"""
 		
+		# Skip over any DRX frames the start of the file
+		i = 0
+		junkFrame = tbf.readFrame(fh)
+		while True:
+			try:
+				tbf.readFrame(fh)
+				break
+			except errors.syncError:
+				i += 1
+				fh.seek(-tbf.FrameSize+drx.FrameSize, 1)
+				
 		junkFrame = self.readFrame()
 		self.fh.seek(-tbf.FrameSize, 1)
 		
@@ -1336,19 +1347,22 @@ class TBFFile(LDPFileBase):
 		nFramesFile = filesize / tbf.FrameSize
 		srate = 204.8e6 / 8192
 		bits = 4
-		start = junkFrame.getTime()
-		startRaw = junkFrame.data.timeTag
 		nFramesPerObs = tbf.getFramesPerObs(self.fh)
 		nChan = tbf.getChannelCount(self.fh)
 		
-		# Pre-load the mapper
+		# Pre-load the channel mapper and find the first frame
 		self.mapper = []
 		marker = self.fh.tell()
-		print marker
-		for i in xrange(2*nFramesPerObs):
+		firstFrameCount = 2**64-1
+		while len(mapper) < nChan/12:
 			cFrame = tbf.readFrame(self.fh)
 			if cFrame.header.firstChan not in self.mapper:
 				self.mapper.append( cFrame.header.firstChan )
+			if cFrame.header.frameCount < firstFrameCount:
+				firstFrameCount = cFrame.header.frameCount
+				start = junkFrame.getTime()
+				startRaw = junkFrame.data.timeTag
+			i += 1
 		self.fh.seek(marker)
 		self.mapper.sort()
 		
@@ -1359,8 +1373,9 @@ class TBFFile(LDPFileBase):
 		freq *= srate
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbf.FrameSize,
-						'sampleRate': srate, 'dataBits': bits, 'nAntenna': 512, 'nChan': nChan, 
-						'freq1': freq, 'tStart': start, 'tStartSamples': startRaw}
+						'firstFrameCount': firstFrameCount, 'sampleRate': srate, 'dataBits': bits, 
+						'nAntenna': 512, 'nChan': nChan, 'freq1': freq, 'tStart': start, 
+						'tStartSamples': startRaw}
 						
 	def readFrame(self):
 		"""
@@ -1398,7 +1413,7 @@ class TBFFile(LDPFileBase):
 		frameCount = int(round(1.0 * duration * self.description['sampleRate'] * framesPerObs))
 		frameCount = frameCount if frameCount else 1
 		duration = frameCount / framesPerObs / self.description['sampleRate']
-		print frameCount, duration
+		firstFrameCount = self.description['firstFrameCount']
 		
 		# Initialize the output data array
 		data = numpy.zeros((self.description['nAntenna'], self.description['nChan'], frameCount/framesPerObs), dtype=numpy.complex64)
@@ -1417,23 +1432,22 @@ class TBFFile(LDPFileBase):
 			if not cFrame.header.isTBF():
 				continue
 				
-			if i == 1:
+			if cFrame.header.frameCount == firstFrameCount:
 				if timeInSamples:
 					setTime = cFrame.data.timeTag
 				else:
 					setTime = cFrame.getTime()
 					
 			firstChan = cFrame.header.firstChan
-			try:
-				cnt = cFrame.header.frameCount - frameCountRef
-			except NameError:
-				frameCountRef = cFrame.header.frameCount
-				cnt = 0
-				
+			cnt = cFrame.header.frameCount - firstFrameCount
+			
+			subData = cFrame.data.fDomain
+			subData.shape = (12,512)
+			subData = subData.T
+			
 			aStand = self.mapper.index(firstChan)
 			try:
-				data[0::2,aStand*12:(aStand+1)*12,cnt] = cFrame.data.fDomain[:,:,0].T
-				data[1::2,aStand*12:(aStand+1)*12,cnt] = cFrame.data.fDomain[:,:,1].T
+				data[:,aStand*12:(aStand+1)*12,cnt] = subData
 			except IndexError:
 				pass
 				

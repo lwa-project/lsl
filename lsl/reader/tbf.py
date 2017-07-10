@@ -33,8 +33,8 @@ from errors import *
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getChannelCount', 
-		 'getFirstChannel', '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getFirstFameCount',
+		 'getChannelCount', 'getFirstChannel', '__version__', '__revision__', '__all__']
 
 FrameSize = 6168
 
@@ -317,7 +317,7 @@ def readFrame(filehandle, Verbose=False):
 def getFramesPerObs(filehandle):
 	"""
 	Find out how many frames are present per time stamp by examining the 
-	first 250 TBF records.  Return the number of frames per observation.
+	first 1000 TBF records.  Return the number of frames per observation.
 	"""
 	
 	# Save the current position in the file so we can return to that point
@@ -326,7 +326,7 @@ def getFramesPerObs(filehandle):
 	# Build up the list-of-lists that store the index of the first frequency
 	# channel in each frame.
 	channels = []
-	for i in range(250):
+	for i in range(1000):
 		try:
 			cFrame = readFrame(filehandle)
 		except:
@@ -343,10 +343,42 @@ def getFramesPerObs(filehandle):
 	return len(channels)
 
 
+def getFirstFameCount(filehandle):
+	"""
+	Find and return the lowest frame count encountered in a TBF file.
+	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
+	
+	# Find out how many frames there are per observation
+	nFrames = getFramesPerObs(filehandle)
+	
+	firstFrameCount = 2**64-1
+	freqs = []
+	while len(freqs) < nFrames:
+		cFrame = readFrame(filehandle)
+		if frequency:
+			freq = cFrame.getChannelFreqs()[0]
+		else:
+			freq = cFrame.header.firstChan
+			
+		if freq not in freqs:
+			freqs.append(freq)
+		if cFrame.header.frameCount < firstFrameCount:
+			firstFrameCount = cFrame.header.frameCount
+			
+	# Return to the place in the file where we started
+	filehandle.seek(fhStart)
+	
+	# Return the lowest frame number found
+	return firstFrameCount
+
+
 def getChannelCount(filehandle):
 	"""
 	Find out the total number of channels that are present by examining 
-	the first 250 TBF records.  Return the number of channels found.
+	the first 1000 TBF records.  Return the number of channels found.
 	"""
 	
 	# Find out how many frames there are per observation
@@ -372,22 +404,19 @@ def getFirstChannel(filehandle, frequency=False):
 	nFrames = getFramesPerObs(filehandle)
 	
 	# Find the lowest frequency channel
-	freqMin = 99e9
-	for i in xrange(nFrames):
-		try:
-			cFrame = readFrame(filehandle)
-		except:
-			break
-			
+	freqs = []
+	while len(freqs) < nFrames:
+		cFrame = readFrame(filehandle)
 		if frequency:
 			freq = cFrame.getChannelFreqs()[0]
 		else:
 			freq = cFrame.header.firstChan
-		if freq < freqMin:
-			freqMin = freq
+			
+		if freq not in freqs:
+			freqs.append(freq)
 			
 	# Return to the place in the file where we started
 	filehandle.seek(fhStart)
 	
 	# Return the lowest frequency channel
-	return freqMin
+	return min(freqs)
