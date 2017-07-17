@@ -61,5 +61,5 @@ void sf_error(char *func_name, sf_error_t code, char *fmt, ...)
                       func_name, sf_error_messages[(int)code]);
     }
 
-    printf(msg);
+    printf("%s", msg);
 }
