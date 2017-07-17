@@ -22,7 +22,7 @@ typedef enum {
 extern const char *sf_error_messages[];
 void sf_error(char *func_name, sf_error_t code, char *fmt, ...);
 int sf_error_set_print(int flag);
-int sf_error_get_print();
+int sf_error_get_print(void);
 
 #ifdef __cplusplus
 }

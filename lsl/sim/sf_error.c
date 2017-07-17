@@ -27,7 +27,7 @@ int sf_error_set_print(int flag)
     return old_flag;
 }
 
-int sf_error_get_print()
+int sf_error_get_print(void)
 {
     return print_error_messages;
 }
