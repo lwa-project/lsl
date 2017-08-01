@@ -778,8 +778,12 @@ class DRXFile(LDPFileBase):
 			## and check the location in the file again/
 			if cOffset is 0:
 				break
-			self.fh.seek(cOffset*drx.FrameSize, 1)
-			
+			try:
+				self.fh.seek(cOffset*drx.FrameSize, 1)
+			except IOError:
+				print "WARNING: Could not find the correct offset, giving up"
+				break
+				
 		# Update the file metadata
 		self._describeFile()
 		
