@@ -439,7 +439,8 @@ def readFrame(filehandle, Gain=None, Verbose=False):
 	try:
 		newFrame = readDRX(filehandle, Frame())
 	except gsyncError:
-		raise syncError
+		mark = filehandle.tell() - FrameSize
+		raise syncError(location=mark)
 	except geofError:
 		raise eofError
 	

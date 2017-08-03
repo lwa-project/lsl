@@ -371,7 +371,8 @@ def readFrame(filehandle, Verbose=False):
 	try:
 		newFrame = readCOR(filehandle, Frame())
 	except gsyncError:
-		raise syncError
+		mark = filehandle.tell() - FrameSize
+		raise syncError(location=mark)
 	except geofError:
 		raise eofError
 		

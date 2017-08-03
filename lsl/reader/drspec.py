@@ -536,7 +536,8 @@ def readFrame(filehandle, Gain=None, Verbose=False):
 	try:
 		newFrame = readDRSpec(filehandle, Frame())
 	except gsyncError:
-		raise syncError
+		mark = filehandle.tell()
+		raise syncError(location=mark)
 	except geofError:
 		raise eofError
 		

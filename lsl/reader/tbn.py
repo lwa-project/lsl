@@ -473,7 +473,8 @@ def readFrame(filehandle, SampleRate=None, Verbose=False):
 	try:
 		newFrame = readTBN(filehandle, Frame())
 	except gsyncError:
-		raise syncError
+		mark = filehandle.tell() - FrameSize
+		raise syncError(location=mark)
 	except geofError:
 		raise eofError
 	

@@ -3,15 +3,18 @@
 """
 Module that contains the error classes for the DRX, TBN, and TBW readers.  
 These errors are currently meant to deal with file I/O problems.
+
+.. versionchanged::1.1.4
+	Removed numpyError and re-enumerated
 """
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['baseReaderError', 'eofError', 'numpyError', 'syncError', 'notTBNError', 'notTBWError', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
+__all__ = ['baseReaderError', 'eofError', 'syncError', 'notTBNError', 'notTBWError', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
 
 
 MinErrorNo = 1
-MaxErrorNo = 5
+MaxErrorNo = 4
 
 
 class baseReaderError(IOError):
@@ -43,20 +46,6 @@ class eofError(baseReaderError):
 		self.args = (self.errno, self.strerror)
 
 
-class numpyError(baseReaderError):
-	"""
-	Extension to the base class for dealing with errors that occur when 
-	numpy.fromfile tried to read more data can exists.  This is a specialized form
-	of EOF error.  The error code is 2.
-	"""
-
-	def __init__(self):
-		self.errno = 2
-		self.strerror = 'End of file encountered during numpy.fromfile call'
-		self.filename = None
-		self.args = (self.errno, self.strerror)
-
-
 class syncError(baseReaderError):
 	"""
 	Extension to the base class for dealing with Mark 5C header sync word 
@@ -64,18 +53,21 @@ class syncError(baseReaderError):
 	is 3.
 	"""
 
-	def __init__(self, sync1=None, sync2=None, sync3=None, sync4=None):
-		self.errno = 3
+	def __init__(self, location=None, sync1=None, sync2=None, sync3=None, sync4=None):
+		self.errno = 2
 		self.strerror = 'Mark 5C sync word differs from expected'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
+		self.location = location
 		self.syncWord = (sync1, sync2, sync3, sync4)
 
 	def __str__(self):
-		if self.syncWord[0] is None:
-			return self.strerror
-		else:
-			return "%s:  %2X %2X %2X %2X" % (self.strerror, self.syncWord[0], self.syncWord[1], self.syncWord[2], self.syncWord[3])
+		output = self.strerror
+		if self.location is not None:
+			output = '%s at byte %i' % (output, self.location)
+		if self.syncWord[0] is not None:
+			output = '%s: %02X %02X %02X %02X' % (output, self.syncWord[0], self.syncWord[1], self.syncWord[2], self.syncWord[3])
+		return output
 
 
 class notTBNError(baseReaderError):
@@ -85,7 +77,7 @@ class notTBNError(baseReaderError):
 	"""
 
 	def __init__(self):
-		self.errno = 4
+		self.errno = 3
 		self.strerror = 'Data appears to be TBW, not TBN as expected'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -98,7 +90,7 @@ class notTBWError(baseReaderError):
 	"""
 
 	def __init__(self):
-		self.errno = 5
+		self.errno = 4
 		self.strerror = 'Data appears to be TBN, not TBW as expected'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
@@ -118,12 +110,10 @@ def listErrorCodes(errno=None):
 		if errno == 1:
 			print "1: End of file encountered during filehandle read"
 		elif errno == 2:
-			print "2: End of file encountered during numpy.fromfile call"
+			print "2: Mark 5C sync word differs from expected"
 		elif errno == 3:
-			print "3: Mark 5C sync word differs from expected"
+			print "3: Data appears to be TBW, not TBN as expected"
 		elif errno == 4:
-			print "4: Data appears to be TBW, not TBN as expected"
-		elif errno == 5:
-			print "5: Data appears to be TBN, not TBW as expected"
+			print "4: Data appears to be TBN, not TBW as expected"
 		else:
 			print "Unknown error code '%i'" % errno

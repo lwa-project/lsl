@@ -16,6 +16,7 @@
   * Fixed a bug in lsl.reader.buffer that could lead to some invalid frames being added to the buffer
   * Dropped support for ADP DRX8 in the lsl.reader.buffer module
   * Dropped support for FreeBSD
+  * Added support for printing to location of sync. errors in the lsl.reader modules
 
 1.1.3.2
   * Applied a fix for the course FIFO phase jumps in the core.c FEngineC2/3 functions.

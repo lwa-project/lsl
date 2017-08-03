@@ -533,7 +533,8 @@ def readFrame(filehandle, sampleRate=0.0, centralFreq=0.0, Verbose=False):
 	try:
 		newFrame = readVDIF(filehandle, Frame(), centralFreq=centralFreq, sampleRate=sampleRate)
 	except gsyncError:
-		raise syncError
+		mark = filehandle.tell()
+		raise syncError(location=mark)
 	except geofError:
 		raise eofError
 		
