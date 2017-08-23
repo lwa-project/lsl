@@ -27,6 +27,7 @@ from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
 from lsl.common.adp import word2freq
 from lsl.transform import Time
+from lsl.misc.lru_cache import lru_cache
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
@@ -34,6 +35,17 @@ __all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', '
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
+
+
+@lru_cache(maxsize=1)
+def _openTarball(tarname):
+	return tarfile.open(tarname, mode='r:*')
+
+
+@lru_cache(maxsize=1)
+def _getMembers(tarname):
+	tf = _openTarball(tarname)
+	return tf.getmembers()
 
 
 def readSESFile(filename):
@@ -256,7 +268,7 @@ def getSDM(tarname):
 	
 	# Extract the SDM file.  If the dynamic/sdm.dat file cannot be found, None
 	# is returned via the try...except block.
-	tf = tarfile.open(tarname, mode='r:*')
+	tf = _openTarball(tarname)
 	try:
 		ti = tf.getmember('dynamic/sdm.dat')
 	except KeyError:
@@ -290,7 +302,7 @@ def getStation(tarname, ApplySDM=True):
 	
 	# Extract the SSMIF and SDM files.  If the ssmif.dat file cannot be found, None
 	# is returned via the try...except block
-	tf = tarfile.open(tarname, mode='r:*')
+	tf = _openTarball(tarname)
 	try:
 		ti = tf.getmember('ssmif.dat')
 	except KeyError:
@@ -338,11 +350,11 @@ def getSessionMetaData(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Extract the session meta-data file (_metadata.txt)
-	tf = tarfile.open(tarname, mode='r:*')
+	tf = _openTarball(tarname)
 	try:
 		ti = tf.getmember('%s_metadata.txt' % basename)
 	except KeyError:
-		for ti in tf.getmembers():
+		for ti in _getMembers(tarname):
 			if ti.name[-13:] == '_metadata.txt':
 				break
 	tf.extractall(path=tempDir, members=[ti,])
@@ -423,11 +435,11 @@ def getSessionSpec(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Extract the session specification file (.ses)
-	tf = tarfile.open(tarname, mode='r:*')
+	tf = _openTarball(tarname)
 	try:
 		ti = tf.getmember('%s.ses' % basename)
 	except KeyError:
-		for ti in tf.getmembers():
+		for ti in _getMembers(tarname):
 			if ti.name[-4:] == '.ses':
 				break
 	tf.extractall(path=tempDir, members=[ti,])
@@ -459,9 +471,9 @@ def getObservationSpec(tarname, selectObs=None):
 	basename, ext = os.path.splitext(basename)
 	
 	# Find all of the .obs files and extract them
-	tf = tarfile.open(tarname, mode='r:*')
+	tf = _openTarball(tarname)
 	tis = []
-	for ti in tf.getmembers():
+	for ti in _getMembers(tarname):
 		if ti.name[-4:] == '.obs':
 			tis.append(ti)
 	tf.extractall(path=tempDir, members=tis)
@@ -516,8 +528,8 @@ def getSessionDefinition(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Find the right .txt file (not the metadata one) and extract it
-	tf = tarfile.open(tarname, mode='r:*')
-	for ti in tf.getmembers():
+	tf = _openTarball(tarname)
+	for ti in _getMembers(tarname):
 		if ti.name[-4:] == '.txt' and ti.name.find('metadata') == -1:
 			break
 	tf.extractall(path=tempDir, members=[ti,])
@@ -547,8 +559,8 @@ def getCommandScript(tarname):
 	basename, ext = os.path.splitext(basename)
 	
 	# Find the .cs file and extract it
-	tf = tarfile.open(tarname, mode='r:*')
-	for ti in tf.getmembers():
+	tf = _openTarball(tarname)
+	for ti in _getMembers(tarname):
 		if ti.name[-3:] == '.cs':
 			break
 	tf.extractall(path=tempDir, members=[ti,])
@@ -578,7 +590,7 @@ def getASPConfiguration(tarname, which='beginning'):
 	"""
 	
 	which = which.lower()
-	if which not in ('beginning', 'end'):
+	if which not in ('beginning', 'begin', 'end'):
 		raise ValueError("Unknown configuration time '%s'" % which)
 		
 	# Stub ASP configuration
@@ -592,10 +604,10 @@ def getASPConfiguration(tarname, which='beginning'):
 	basename, ext = os.path.splitext(basename)
 	
 	# Find the .dir/.pag file and extract it
-	tf = tarfile.open(tarname, mode='r:*')
+	tf = _openTarball(tarname)
 	mibs = []
-	for ti in tf.getmembers():
-		if ti.name.find('_ASP_') != -1:
+	for ti in _getMembers(tarname):
+		if ti.name.find('_ASP_%s' % which[:5]) != -1:
 			if ti.name[-4:] == '.pag' or ti.name[-4:] == '.dir':
 				mibs.append(ti)
 				
@@ -608,7 +620,7 @@ def getASPConfiguration(tarname, which='beginning'):
 			for mib in mibs:
 				if mib.name[-4:] == '.dir':
 					continue
-				if which == 'beginning' and mib.name.find('_ASP_begin') == -1:
+				if which[:5] == 'begin' and mib.name.find('_ASP_begin') == -1:
 					continue
 				if which == 'end' and mib.name.find('_ASP_end') == -1:
 					continue
