@@ -9,7 +9,7 @@ if sys.version_info > (3,):
 
 """
 Module that contains all of the relevant class to build up a representation 
-of a session definition file as defined in MCS0030v5 and updated LWA-SV.  The 
+of a session definition file as defined in MCS0030v5 and updated for LWA-SV.  The 
 hierarchy of classes is:
   * Project - class that holds all of the information about the project (including
     the observer) and one or more sessions.  Technically, a SD file has only one
@@ -21,6 +21,7 @@ hierarchy of classes is:
   * Observations - class that hold information about a particular observation.  It
     includes a variety of attributes that are used to convert human-readable inputs
     to SDF data values.  The observation class is further subclasses into:
+    - TBF - class for TBF observations
     - TBN - class for TBN observations
     - DRX - class for general DRX observation, with sub-classes:
       * Solar - class for solar tracking

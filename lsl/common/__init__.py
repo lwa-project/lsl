@@ -3,12 +3,13 @@
 """
 lsl.common - Common information for the LSL package.  Including:
  * paths    - paths to the module and its data directories, 
+ * stations - information about LWA stations, 
  * dp       - information about the DP system, 
- * adp      - information about the ADP system,
  * mcs      - information about DP-compatible stations at large, 
- * mcsADP   - information about ADP-compatible stations at large, 
- * stations - information about LWA stations, and 
- * sdf      - read in and interpret SDF files.
- """
+ * sdf      - read in and interpret SDF files, 
+ * adp      - information about the ADP system,
+ * mcsADP   - information about ADP-compatible stations at large, and
+ * sdfADP   - read in and interpret ADP-compatible SDF files.
+"""
 
 
