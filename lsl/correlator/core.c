@@ -1139,8 +1139,7 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
 				*(v + 1*nBL*nChan + bl*nChan + c) = tempVis / nActVisCross;
 				
 				// YX
-				cblas_cdotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-				*(v + 2*nBL*nChan + bl*nChan + c) = tempVis / nActVisCross;
+				*(v + 2*nBL*nChan + bl*nChan + c) = conjf(*(v + 1*nBL*nChan + bl*nChan + c));
 				
 				// YY
 				cblas_cdotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
@@ -1230,7 +1229,7 @@ PyMODINIT_FUNC init_core(void) {
 	import_array();
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.5"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.6"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 	// LSL FFTW Wisdom
