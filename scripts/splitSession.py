@@ -103,12 +103,10 @@ def main(args):
 		obs = metabundle.getObservationSpec(meta)
 	except:
 		## LWA-SV
-		### Module change
-		metabundle = metabundleADP
 		### Try again
-		sdf = metabundle.getSessionDefinition(meta)
-		ses = metabundle.getSessionSpec(meta)
-		obs = metabundle.getObservationSpec(meta)
+		sdf = metabundleADP.getSessionDefinition(meta)
+		ses = metabundleADP.getSessionSpec(meta)
+		obs = metabundleADP.getObservationSpec(meta)
 	obs.sort(obsComp)
 	tStart = []
 	oDetails = []
