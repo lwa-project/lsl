@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main python functions in this module are:
@@ -248,7 +255,6 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		else:
 			azPC = phaseCenter[0]*numpy.pi/180.0
 			elPC = phaseCenter[1]*numpy.pi/180.0
-			
 	source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
 					  numpy.cos(elPC)*numpy.cos(azPC), 
 					  numpy.sin(elPC)])

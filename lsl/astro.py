@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+	xrange = range
+	long = int
+
 """
 Astronomical utility functions and classes based on libnova library.
 """
