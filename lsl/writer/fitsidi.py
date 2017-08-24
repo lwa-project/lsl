@@ -11,6 +11,7 @@ functions defined in this module are based heavily off the lwda_fits library.
 	
 .. versionchanged:: 1.1.4
 	Fixed a conjugation problem in the visibilities saved to a FITS-IDI file
+	Added support for writing user-specified weights to a FITS-IDI file
 """
 
 import os
@@ -116,11 +117,12 @@ class IDI(object):
 		Represents one UV visibility data set for a given observation time.
 		"""
     
-		def __init__(self, obsTime, intTime, baselines, visibilities, pol=StokesCodes['XX'], source='z'):
+		def __init__(self, obsTime, intTime, baselines, visibilities, weights=None, pol=StokesCodes['XX'], source='z'):
 			self.obsTime = obsTime
 			self.intTime = intTime
 			self.baselines = baselines
 			self.visibilities = visibilities
+			self.weights = weights
 			self.pol = pol
 			self.source = source
 			
@@ -354,7 +356,7 @@ class IDI(object):
 		self.nAnt = len(ants)
 		self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )
 		
-	def addDataSet(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
+	def addDataSet(self, obsTime, intTime, baselines, visibilities, weights=None, pol='XX', source='z'):
 		"""
 		Create a UVData object to store a collection of visibilities.
 		
@@ -367,6 +369,10 @@ class IDI(object):
 			Added a new 'source' keyword to set the phase center for the data.
 			This can either by 'z' for zenith or a ephem.Body instances for a
 			point on the sky.
+			
+		.. versionchanged:: 1.3.0
+			Added a new 'weights' keyword to set the visibility weights for the
+			data.
 		"""
 		
 		if type(pol) == str:
@@ -374,7 +380,7 @@ class IDI(object):
 		else:
 			numericPol = pol
 			
-		self.data.append( self._UVData(obsTime, intTime, baselines, visibilities, pol=numericPol, source=source) )
+		self.data.append( self._UVData(obsTime, intTime, baselines, visibilities, weights=weights, pol=numericPol, source=source) )
 		
 	def write(self):
 		"""
@@ -900,6 +906,7 @@ class IDI(object):
 		obs.pressure = 0
 		
 		mList = []
+		fList = []
 		uList = []
 		vList = []
 		wList = []
@@ -984,18 +991,22 @@ class IDI(object):
 				### Zero out the visibility data
 				try:
 					matrix *= 0.0
+					weights *= 0.0
 				except NameError:
 					matrix = numpy.zeros((len(order), self.nStokes*self.nChan,), dtype=numpy.complex64)
+					weights = numpy.ones((len(order), self.nStokes*self.nChan,), dtype=numpy.float32)
 					
 			# Save the visibility data in the right order
 			# NOTE:  This is this conjugate since there seems to be a convention mis-match
 			#        between LSL and AIPS/the FITS-IDI convention.
 			matrix[:,self.stokes.index(dataSet.pol)::self.nStokes] = dataSet.visibilities[order,:].conj()
-			
+			if dataSet.weights is not None:
+				weights[:,self.stokes.index(dataSet.pol)::self.nStokes] = dataSet.weights[order,:]
+				
 			# Deal with saving the data once all of the polarizations have been added to 'matrix'
 			if dataSet.pol == self.stokes[-1]:
 				mList.append( matrix.view(numpy.float32)*1.0 )
-				
+				fList.append( weights*1.0 )
 		nBaseline = len(blineList)
 		nSource = len(nameList)
 		
@@ -1037,7 +1048,7 @@ class IDI(object):
 						array=numpy.zeros((nBaseline,), dtype=numpy.int32))
 		# Weights
 		c13 = pyfits.Column(name='WEIGHT', format='%iE' % (self.nStokes*self.nChan), 
-						array=numpy.ones((nBaseline, self.nStokes*self.nChan), dtype=numpy.float32))
+						array=numpy.concatenate(fList))
 						
 		colDefs = pyfits.ColDefs([c6, c7, c8, c3, c4, c2, c11, c9, c10, c5, 
 						c13, c12, c1])
