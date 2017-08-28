@@ -164,13 +164,13 @@ def readOBSFile(filename):
 	steps = []
 	for n in xrange(bheader.OBS_STP_N):
 		fh.readinto(bstep)
-		if obsStep.OBS_STP_B == 3:
+		if bstep.OBS_STP_B == 3:
 			fh.readinto(bbeam)
-			obsStep.delay = copy.deepcopy(bbeam.OBS_BEAM_DELAY)
-			obsStep.gain  = copy.deepcopy(single2multi(bbeam.OBS_BEAM_GAIN, *bbeam.dims['OBS_BEAM_GAIN']))
+			bstep.delay = copy.deepcopy(bbeam.OBS_BEAM_DELAY)
+			bstep.gain  = copy.deepcopy(single2multi(bbeam.OBS_BEAM_GAIN, *bbeam.dims['OBS_BEAM_GAIN']))
 		else:
-			obsStep.delay = []
-			obsStep.gain  = []
+			bstep.delay = []
+			bstep.gain  = []
 		
 		steps.append(copy.deepcopy(bstep))
 		
