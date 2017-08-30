@@ -1856,7 +1856,7 @@ def get_equ_from_ecl(object_, jD):
 	"""
 	
 	_posn = equ_posn()
-	ecl = ephem.Ecliptic(deg_to_rad(object_.lng), deg_to_rad(object_.lat), epoch=jD-DJD_OFFSET)
+	ecl = ephem.Ecliptic(deg_to_rad(object_.lng), deg_to_rad(object_.lat), epoch=ephem.B1950)
 	equ = ephem.Equatorial(ecl)
 	ra = rad_to_deg(equ.ra)
 	dec = rad_to_deg(equ.dec)
@@ -1877,7 +1877,7 @@ def get_ecl_from_equ(object_, jD):
 	"""
 	
 	_posn = ecl_posn()
-	equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=jD-DJD_OFFSET)
+	equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=ephem.B1950)
 	ecl = ephem.Ecliptic(equ)
 	l = rad_to_deg(ecl.lon)
 	b = rad_to_deg(ecl.lat)

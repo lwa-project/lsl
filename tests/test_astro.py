@@ -1181,17 +1181,17 @@ class astro_tests(unittest.TestCase):
 		lat_aa = (  0.0000, -1.0000,   3.0000,  -5.0000,   7.0000)
 		
 		ra_aa = (\
-			astro.hms(20, 17, 26.67).to_deg(),
-			astro.hms( 1, 39,  2.11).to_deg(),
-			astro.hms( 8, 51,  9.97).to_deg(),
-			astro.hms(12, 53, 44.99).to_deg(),
-			astro.hms(22, 31, 32.23).to_deg())
+			astro.hms(20, 17, 26.98).to_deg(),
+			astro.hms( 1, 39,  1.88).to_deg(),
+			astro.hms( 8, 51, 10.38).to_deg(),
+			astro.hms(12, 53, 44.69).to_deg(),
+			astro.hms(22, 31, 32.27).to_deg())
 		dec_aa = (\
-			astro.dms(True,  19, 41, 31.6).to_deg(),
-			astro.dms(False,  9, 13,  7.6).to_deg(),
-			astro.dms(False, 20, 45, 53.0).to_deg(),
-			astro.dms(True,  11, 10, 35.9).to_deg(),
-			astro.dms(True,   1, 44, 14.5).to_deg()) 
+			astro.dms(True,  19, 41, 50.94).to_deg(),
+			astro.dms(False,  9, 13, 17.35).to_deg(),
+			astro.dms(False, 20, 46, 10.16).to_deg(),
+			astro.dms(True,  11, 10, 41.32).to_deg(),
+			astro.dms(True,   1, 44, 23.34).to_deg())  
 			
 		ilng = iter(lng_aa)
 		ilat = iter(lat_aa)
@@ -1220,17 +1220,17 @@ class astro_tests(unittest.TestCase):
 		lat_aa = (  0.0000, -1.0000,   3.0000,  -5.0000,   7.0000)
 		
 		ra_aa = (\
-			astro.hms(20, 17, 26.67).to_deg(),
-			astro.hms( 1, 39,  2.11).to_deg(),
-			astro.hms( 8, 51,  9.97).to_deg(),
-			astro.hms(12, 53, 44.99).to_deg(),
-			astro.hms(22, 31, 32.23).to_deg())
+			astro.hms(20, 17, 26.98).to_deg(),
+			astro.hms( 1, 39,  1.88).to_deg(),
+			astro.hms( 8, 51, 10.38).to_deg(),
+			astro.hms(12, 53, 44.69).to_deg(),
+			astro.hms(22, 31, 32.27).to_deg())
 		dec_aa = (\
-			astro.dms(True,  19, 41, 31.6).to_deg(),
-			astro.dms(False,  9, 13,  7.6).to_deg(),
-			astro.dms(False, 20, 45, 53.0).to_deg(),
-			astro.dms(True,  11, 10, 35.9).to_deg(),
-			astro.dms(True,   1, 44, 14.5).to_deg()) 
+			astro.dms(True,  19, 41, 50.94).to_deg(),
+			astro.dms(False,  9, 13, 17.35).to_deg(),
+			astro.dms(False, 20, 46, 10.16).to_deg(),
+			astro.dms(True,  11, 10, 41.32).to_deg(),
+			astro.dms(True,   1, 44, 23.34).to_deg()) 
 			
 		ilng = iter(lng_aa)
 		ilat = iter(lat_aa)
