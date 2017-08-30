@@ -15,10 +15,12 @@ __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
-tbfFile = os.path.join(dataPath, 'tests', 'tbf-test.dat')
+tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
 drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
+
+tbfFile = os.path.join(dataPath, 'tests', 'tbf-test.dat')
 
 
 class ldp_adp_tests(unittest.TestCase):
@@ -73,11 +75,10 @@ class ldp_adp_tests(unittest.TestCase):
 		
 	### File Type Discovery ###
 	
-	def test_ldp_discover_tbf(self):
-		"""Test the LDP LWASVDataFile function of TBF."""
-		# TBF
-		f = ldp.LWASVDataFile(tbfFile)
-		self.assertEqual(type(f), ldp.TBFFile)
+	def test_ldp_discover_tbw(self):
+		"""Test the LDP LWA1DataFile function of TBW."""
+		# TBW
+		self.assertRaises(ldp.LWASVDataFile(tbwFile), RuntimeError)
 		
 	def test_ldp_discover_tbn(self):
 		"""Test the LDP LWASVDataFile function of TBN."""
@@ -96,6 +97,12 @@ class ldp_adp_tests(unittest.TestCase):
 		# DR Spectrometer
 		f = ldp.LWASVDataFile(drspecFile)
 		self.assertEqual(type(f), ldp.DRSpecFile)
+		
+	def test_ldp_discover_tbf(self):
+		"""Test the LDP LWASVDataFile function of TBF."""
+		# TBF
+		f = ldp.LWASVDataFile(tbfFile)
+		self.assertEqual(type(f), ldp.TBFFile)
 
 
 class ldp_adp_test_suite(unittest.TestSuite):

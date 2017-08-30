@@ -47,7 +47,7 @@ class eofError(baseReaderError):
 		self.strerror = 'End of file encountered during filehandle read'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
-		super(eofError, self).__init__(self.strerr, errno=self.errno)
+		super(eofError, self).__init__(self.strerror, errno=self.errno)
 
 
 class syncError(baseReaderError):
@@ -64,7 +64,7 @@ class syncError(baseReaderError):
 		self.args = (self.errno, self.strerror)
 		self.location = location
 		self.syncWord = (sync1, sync2, sync3, sync4)
-		super(syncError, self).__init__(self.strerr, errno=self.errno)
+		super(syncError, self).__init__(self.strerror, errno=self.errno)
 
 	def __str__(self):
 		output = self.strerror
@@ -86,7 +86,7 @@ class notTBNError(baseReaderError):
 		self.strerror = 'Data appears to be TBW, not TBN as expected'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
-		super(notTBNError, self).__init__(self.strerr, errno=self.errno)
+		super(notTBNError, self).__init__(self.strerror, errno=self.errno)
 
 
 class notTBWError(baseReaderError):
@@ -100,7 +100,7 @@ class notTBWError(baseReaderError):
 		self.strerror = 'Data appears to be TBN, not TBW as expected'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
-		super(notTBWError, self).__init__(self.strerr, errno=self.errno)
+		super(notTBWError, self).__init__(self.strerror, errno=self.errno)
 
 
 def listErrorCodes(errno=None):

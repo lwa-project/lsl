@@ -20,6 +20,8 @@ tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
 drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
 
+tbfFile = os.path.join(dataPath, 'tests', 'tbf-test.dat')
+
 
 class ldp_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.reader
@@ -276,6 +278,11 @@ class ldp_tests(unittest.TestCase):
 		# DR Spectrometer
 		f = ldp.LWA1DataFile(drspecFile)
 		self.assertEqual(type(f), ldp.DRSpecFile)
+		
+	def test_ldp_discover_tbf(self):
+		"""Test the LDP LWA1DataFile function of TBF."""
+		# TBF
+		self.assertRaises(ldp.LWA1DataFile(tbfFile), RuntimeError)
 
 
 class ldp_test_suite(unittest.TestSuite):

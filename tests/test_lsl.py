@@ -19,6 +19,7 @@ import test_reader
 import test_reader_adp
 import test_buffer
 import test_ldp
+import test_ldp_adp
 import test_uvUtils
 import test_fx
 import test_filterbank
@@ -69,6 +70,7 @@ class lsl_tests(unittest.TestSuite):
 		self.addTest(test_reader_adp.reader_adp_test_suite())
 		self.addTest(test_buffer.buffer_test_suite())
 		self.addTest(test_ldp.ldp_test_suite())
+		self.addTest(test_ldp_adp.ldp_adp_test_suite())
 		self.addTest(test_uvUtils.uvUtils_test_suite())
 		self.addTest(test_fx.fx_test_suite())
 		self.addTest(test_filterbank.filterbank_test_suite())
