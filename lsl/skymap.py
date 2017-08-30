@@ -33,7 +33,8 @@ class SkyMapError(Exception):
 	Base class for SkyMap exceptions.
 	"""
 	
-	pass
+	def __init__(self, *args, **kwds):
+		super(SkyMapError, self).__init__(*args, **kwds)
 
 
 class SkyMapLoadError(SkyMapError):
@@ -41,7 +42,8 @@ class SkyMapLoadError(SkyMapError):
 	Exception raised when a SkyMap fails to load.
 	"""
 	
-	pass
+	def __init__(self, *args, **kwds):
+		super(SkyMapLoadError, self).__init__(*args, **kwds)
 
 
 class SkyMapPowerError(SkyMapError):
@@ -50,7 +52,8 @@ class SkyMapPowerError(SkyMapError):
 	compute (such as summing or multiplying over an empty data set).
 	"""
 	
-	pass
+	def __init__(self, *args, **kwds):
+		super(SkyMapPowerError, self).__init__(*args, **kwds)
 
 
 class SkyMap(object):

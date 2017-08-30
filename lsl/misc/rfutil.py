@@ -14,7 +14,9 @@ from lsl.common.constants import c as speedOfLight, kB
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['dBd2dBi', 'dBd2dBi', 'dBi2gain', 'dBd2gain', 'gain2dBi', 'gain2dBd', 'calculateSEFD', 'calculateEffectiveArea', 'Jy2dBm', 'dBm2Jy', '__version__', '__revision__', '__all__']
+__all__ = ['dBd2dBi', 'dBd2dBi', 'dBi2gain', 'dBd2gain', 'gain2dBi', 'gain2dBd', 'calculateSEFD', 
+		 'calculateEffectiveArea', 'Jy2dBm', 'dBm2Jy', 
+		 '__version__', '__revision__', '__all__']
 
 
 def dBd2dBi(dBd):
@@ -66,7 +68,7 @@ def gain2dBi(gain, frequency):
 	"""
 	
 	# Calculate the area ratio
-	areaRatio = 8.0*math.pi*kB*frequency**2 / c**2 * gain
+	areaRatio = 8.0*math.pi*kB*frequency**2 / speedOfLight**2 * gain
 	
 	# Convert to dBi
 	return 10.0*math.log10(areaRatio)
@@ -134,7 +136,7 @@ def Jy2dBm(flux, bandwidth, gain):
 	area = calculateEffectiveArea(gain)
 	
 	# Power in mW
-	P = 10**-26 * bandwidth * area * 1000.0
+	P =  flux * 10**-26 * bandwidth * area * 1000.0
 	
 	# To dBm
 	return 10.0*math.log10(P)

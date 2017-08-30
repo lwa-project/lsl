@@ -13,9 +13,8 @@ import math
 import numpy
 
 from lsl.common.paths import data as dataPath
-from lsl.common.constants import c
+from lsl.common.constants import c as speedOfLight
 from lsl.common import dp as dp_common
-from lsl.correlator import uvUtils
 
 
 __version__ = '0.6'
@@ -27,11 +26,15 @@ class BeamformingError(Exception):
 	Base class for all exceptions in this file.
 	"""
 	
-	def __init__(self, strerror, errno='-1'):
-		self.errno = errno
+	def __init__(self, strerror, *args, **kwds):
+		try:
+			self.errno = kwds['errno']
+		except KeyError:
+			self.errno = '-1'
 		self.strerror = strerror
 		self.filename = None
-		self.args = (errno, strerror)
+		self.args = (self.errno, strerror)
+		super(BeamformingError, self).__init__(*args, **kwds)
 		
 	def __str__(self):
 		return "%s" % self.strerror
@@ -110,7 +113,7 @@ def calcDelay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
 	arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
 	delays = numpy.zeros((len(antennas),))
 	for i in list(range(len(antennas))):
-		delays[i] = numpy.dot(source, arrayXYZ[i,:]) / c
+		delays[i] = numpy.dot(source, arrayXYZ[i,:]) / speedOfLight
 		
 	# Get the cable delays for each stand and add that in as well
 	for i in list(range(len(antennas))):
@@ -207,7 +210,7 @@ def __intBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamShape
 	# Loop over stands to build the simulated singnals
 	signals = numpy.zeros((len(antennas), len(t)))
 	for i in list(range(len(antennas))):
-		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
+		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / speedOfLight
 		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
 		
 	# Beamform with delay-and-sum and store the RMS result
@@ -306,11 +309,11 @@ def intBeamShape(antennas, sampleRate=dp_common.fS, freq=49e6, azimuth=0.0, elev
 			# 10%.  At 100%, `Done' is displayed.
 			if progress:
 				fracDone = (az*90+el) / 32400.0 * 100
-				if fracDone % 10 == 0 and round(fracDone,2) != 100:
+				if fracDone % 10 == 0 and round(fracDone, 2) != 100:
 					sys.stdout.write("%i%%" % fracDone)
-				elif round(fracDone,2) == 100:
+				elif round(fracDone, 2) == 100:
 					sys.stdout.write("Done\n")
-				elif round(fracDone,3) % 2 == 0:
+				elif round(fracDone, 3) % 2 == 0:
 					sys.stdout.write(".")
 				else:
 					pass
@@ -411,7 +414,7 @@ def __phaseBeepAndSweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beamSha
 	# Loop over stands to build the simulated signals
 	signals = numpy.zeros((len(antennas), len(t)))
 	for i in list(range(len(antennas))):
-		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / c
+		currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / speedOfLight
 		signals[i,:] = currResponse * numpy.cos(2*numpy.pi*freq*(t - currDelay))
 		
 	# Beamform with delay-and-sum and store the RMS result
@@ -504,11 +507,11 @@ def phaseBeamShape(antennas, sampleRate=dp_common.fS, CentralFreq=49.0e6, azimut
 			# 10%.  At 100%, `Done' is displayed.
 			if progress:
 				fracDone = (az*90+el) / 32400.0 * 100
-				if fracDone % 10 == 0 and round(fracDone,2) != 100:
+				if fracDone % 10 == 0 and round(fracDone, 2) != 100:
 					sys.stdout.write("%i%%" % fracDone)
-				elif round(fracDone,2) == 100:
+				elif round(fracDone, 2) == 100:
 					sys.stdout.write("Done\n")
-				elif round(fracDone,3) % 2 == 0:
+				elif round(fracDone, 3) % 2 == 0:
 					sys.stdout.write(".")
 				else:
 					pass
@@ -557,8 +560,8 @@ def circularize(x, y, iauConvention=True):
 		lrSign = -1.0
 		
 	# Compute the circular terms
-	l = (x + lrSign*j*y) / numpy.sqrt(2)
-	r = (x - lrSignj*y) / numpy.sqrt(2)
+	l = (x + lrSign*1.0j*y) / numpy.sqrt(2)
+	r = (x - lrSign*1.0j*y) / numpy.sqrt(2)
 	
 	# Done
 	return l, r

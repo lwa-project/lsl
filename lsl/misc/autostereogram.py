@@ -52,23 +52,23 @@ def getASG(data, patternWidth=100, patternPad=1, maxDepth=30):
 		orig[:,start:stop,:] = pattern[:,:(stop-start),:]
 	
 	# Compute the depth map and convert it to an integer
-	map = data - data.min()
-	map = numpy.round( float(maxDepth) * map/map.max() )
-	map = map.astype(numpy.int16)
+	dmap = data - data.min()
+	dmap = numpy.round( float(maxDepth) * dmap/dmap.max() )
+	dmap = dmap.astype(numpy.int16)
 
 	# Shift it base image to make the autostereogram
 	final = 1*orig
-	for i in xrange(map.shape[0]):
+	for i in xrange(dmap.shape[0]):
 		l = i + (patternWidth*patternPad)
 		
-		for j in xrange(map.shape[1]):
+		for j in xrange(dmap.shape[1]):
 			m = j + (patternWidth*patternPad)
-			d = patternWidth + map[i,j]
+			d = patternWidth + dmap[i,j]
 			
 			final[l,m,:] = 1*final[l,m-d,:]
 			
 	# Return a three-element tuple of the map, base image, and autostereogram
-	return map, orig, final
+	return dmap, orig, final
 
 
 def getDepthMap(final):

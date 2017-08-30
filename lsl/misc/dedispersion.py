@@ -12,7 +12,6 @@ import os
 import numpy
 
 try:
-	import os
 	import pickle
 	import pyfftw
 	
@@ -44,7 +43,8 @@ except ImportError:
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', '__version__', '__revision__', '__all__']
+__all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', 
+		 '__version__', '__revision__', '__all__']
 
 
 # Dispersion constant in MHz^2 s / pc cm^-3
@@ -172,7 +172,6 @@ def __chirpFunction(freq, dm, taper=False):
 	freqMHz = freq / 1e6
 	fMHz0 = freqMHz.mean()
 	fMHz1 = freqMHz - fMHz0
-	BW = fMHz1.max() - fMHz1.min()
 	
 	chirp = numpy.exp(-2j*numpy.pi*_D*1e6 / (fMHz0**2*(fMHz0 + fMHz1)) * dm*fMHz1**2)
 	if taper:
@@ -269,9 +268,6 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
 			dataIn = numpy.zeros(N, dtype=timeseries.dtype)
 			
 			if nextData is not None:
-				ns = nextData.size
-				df = dataIn.size - (timeseries.size-start)
-				
 				try:
 					timeIn[timeseries.size-start:] = nextTime[:(dataIn.size-(timeseries.size-start))]
 					dataIn[timeseries.size-start:] = nextData[:(dataIn.size-(timeseries.size-start))]

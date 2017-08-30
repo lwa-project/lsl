@@ -6,7 +6,6 @@ Module for building and saving LSL-specific FFTW and PyFFTW wisdom.
 """
 
 import os
-import time
 import numpy
 import pickle
 from datetime import datetime
@@ -37,9 +36,7 @@ def _makeFFTW():
 	bi = BusyIndicator(message="Building FFTW wisdom")
 	bi.start()
 	
-	t0 = time.time()
 	_wisdom.buildWisdom(_wisdomFilenameFFTW)
-	t1 = time.time()
 	
 	bi.stop()
 	
@@ -58,8 +55,6 @@ def _makePyFFTW():
 		
 		bi = BusyIndicator(message="Building PyFFTW wisdom")
 		bi.start()
-		
-		t0 = time.time()
 		
 		# Enable the PyFFTW cache
 		if not pyfftw.interfaces.cache.is_enabled():
@@ -87,10 +82,8 @@ def _makePyFFTW():
 			fftlen *= 10
 			
 		fh = open(_wisdomFilenamePyFFTW, 'wb')
-		wisdom = pickle.dump(pyfftw.export_wisdom(), fh)
+		pickle.dump(pyfftw.export_wisdom(), fh)
 		fh.close()
-		
-		t1 = time.time()
 		
 		bi.stop()
 		

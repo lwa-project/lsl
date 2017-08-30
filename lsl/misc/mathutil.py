@@ -12,7 +12,10 @@ from scipy.special import sph_harm
 
 __version__   = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 'creal', 'cimag', 'to_dB', 'from_dB', 'ndft',  'savitzky_golay', 'gaussian1d', 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', '__version__', '__revision__', '__all__']
+__all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 
+		 'creal', 'cimag', 'to_dB', 'from_dB', 'ndft',  'savitzky_golay', 'gaussian1d', 
+		 'gaussian2d', 'gaussparams', 'sphfit', 'sphval', 
+		 '__version__', '__revision__', '__all__']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
 
@@ -92,7 +95,7 @@ def downsample(vector, factor, rescale=True):
 	return numpy.add.reduce(newvector, 1)
 
 
-def smooth(x,window_len=10,window='hanning'):
+def smooth(x, window_len=10, window='hanning'):
 	"""
 	Smooth the data using a window with requested size.  Stolen from SciPy 
 	Cookbook at http://www.scipy.org/Cookbook/SignalSmooth
@@ -122,30 +125,27 @@ def smooth(x,window_len=10,window='hanning'):
 	
 	TODO: the window parameter could be the window itself if an array instead of a string
 	"""
-
+	
 	if x.ndim != 1:
 		raise ValueError("smooth only accepts 1 dimension arrays.")
-
+		
 	if x.size < window_len:
 		raise ValueError("Input vector needs to be bigger than window size.")
-
-
-	if window_len<3:
+		
+	if window_len < 3:
 		return x
-
-
+		
 	if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
 		raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
-
-
-	s=numpy.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
+		
+	s = numpy.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
 	#print(len(s))
 	if window == 'flat': #moving average
-		w=numpy.ones(window_len,'d')
+		w = numpy.ones(window_len, dtype=s.dtype)
 	else:
-		w=eval('numpy.'+window+'(window_len)')
-
-	y=numpy.convolve(w/w.sum(),s,mode='same')
+		w = eval('numpy.'+window+'(window_len)')
+		
+	y = numpy.convolve(w/w.sum(), s, mode='same')
 	return y[window_len-1:-window_len+1]
 
 

@@ -5,7 +5,6 @@ for ionospheric corrections.
 """
 
 import os
-import sys
 import glob
 import gzip
 import numpy
@@ -19,7 +18,7 @@ from datetime import datetime
 
 from scipy.special import lpmv
 from scipy.misc import factorial
-from scipy.optimize import fmin, leastsq
+from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
 
 from lsl.common.stations import geo2ecef
@@ -421,7 +420,7 @@ def _downloadTECMapIGS(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 	# Attempt to download the data
 	try:
 		tecFH = urllib2.urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
-		data= tecFH.read()
+		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
 		__logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
@@ -479,7 +478,7 @@ def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 	# Attempt to download the data
 	try:
 		tecFH = urllib2.urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
-		data= tecFH.read()
+		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
 		__logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
@@ -528,7 +527,7 @@ def _downloadTECMapCODE(mjd, baseURL='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeo
 	# Attempt to download the data
 	try:
 		tecFH = urllib2.urlopen('%s/%04i/%s' % (baseURL, year, filename), timeout=timeout)
-		data= tecFH.read()
+		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
 		__logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
@@ -578,7 +577,7 @@ def _downloadTECMapUSTEC(mjd, baseURL='http://www.ngdc.noaa.gov/stp/iono/ustec/p
 	# Attempt to download the data
 	try:
 		tecFH = urllib2.urlopen('%s/%04i/%02i/%s' % (baseURL, year, month, filename), timeout=timeout)
-		data= tecFH.read()
+		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
 		__logger.error('Error downloading file for %s: %s', dateStr, str(e))
@@ -638,9 +637,9 @@ def _parseTECMap(filename):
 		## Have we just ended a map?
 		if line.find('END OF TEC MAP') != -1 or line.find('END OF RMS MAP') != -1:
 			if line.find('TEC') != -1:
-				tecMaps.append( map )
+				tecMaps.append( cmap )
 			else:
-				rmsMaps.append( map )
+				rmsMaps.append( cmap )
 			
 			inMap = False
 			continue
@@ -666,7 +665,7 @@ def _parseTECMap(filename):
 					dates.append( mjd )
 					
 				### Initialize the map and the coorindates
-				map = []
+				cmap = []
 				lats = []
 				lngs = []
 				
@@ -680,7 +679,7 @@ def _parseTECMap(filename):
 				dlng = float(line[20:26])
 				height = float(line[26:32])
 				
-				map.append( [] )
+				cmap.append( [] )
 				lats.append( lat )
 				lngs = list(numpy.arange(lng1, lng2+dlng, dlng))
 				
@@ -693,7 +692,7 @@ def _parseTECMap(filename):
 				fields = numpy.array([float(v)/10.0 for v in line.split(None)])
 				fields[numpy.where( fields == 999.9 )] = numpy.nan
 				
-				map[-1].extend( fields )
+				cmap[-1].extend( fields )
 				continue
 	fh.close()
 	
@@ -744,7 +743,7 @@ def _parseUSTECMapIndividual(filename):
 	# Go!
 	inBlock = False
 	lats = []
-	data= []
+	data = []
 	for line in fh:
 		if line[0] in ('#', ':'):
 			## Comments
@@ -857,7 +856,7 @@ def _parseUSTECMapHeight(filename):
 	# Go!
 	inBlock = False
 	heights = []
-	data= []
+	data = []
 	for line in fh:
 		if line[0] in ('#', ':'):
 			## Comments

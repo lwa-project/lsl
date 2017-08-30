@@ -14,17 +14,14 @@ of dates.
 """
 
 import os
-import gzip
 import time
 import ephem
 import numpy
 import socket
 import urllib2
 import logging
-import tempfile
 
 import lsl.astro as astro
-import lsl.common.paths as paths
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
@@ -71,7 +68,9 @@ class EOP(object):
 		self.dy = dy
 		self.utDiff = utDiff
 		self.type = type
-
+		
+		self.date = None
+		
 		self.__setDate()
 
 	def fromMAIA(self, line):
@@ -291,7 +290,7 @@ def getEOP(mjd=None, timeout=120):
 	"""
 	
 	try:
-		junk = len(mjd)
+		len(mjd)
 	except TypeError:
 		if mjd is None:
 			try:
@@ -304,11 +303,11 @@ def getEOP(mjd=None, timeout=120):
 
 	oldEOPs = []
 	midEOPs = []
-	newEOPs = __loadCurrent90()
+	newEOPs = __loadCurrent90(timeout=timeout)
 	if mjd.min() < 48622:
-		oldEOPs = __loadHistoric1973()
+		oldEOPs = __loadHistoric1973(timeout=timeout)
 	if mjd.min() < newEOPs[0].mjd:
-		midEOPs = __loadHistoric1992()
+		midEOPs = __loadHistoric1992(timeout=timeout)
 		
 	outEOPs = []
 	for day in mjd:
