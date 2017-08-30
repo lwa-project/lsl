@@ -5,6 +5,7 @@
   * Added support for ADP TBF data
   * Added support for ADP COR data
   * Added support for complex antenna response to lsl.sim.nec_util.NECPattern
+  * Dropped support for block reads in lsl.reader.drx and lsl.reader.tbn
 
 1.1.4
   * Fixed a missing import statement and a couple of bugs in splitTBN.py

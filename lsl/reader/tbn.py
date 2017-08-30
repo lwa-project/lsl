@@ -38,6 +38,10 @@ getSampleRate
 getFramesPerObs
   read in the first several frames to see how many stands are found in the data.
 
+..versionchanged:: 1.2.0
+	Dropped support for ObservingBlock since the lsl.reader.buffer modules does
+	a better job.
+
 .. versionchanged:: 0.4.0
 	Switched over from pure Python readers to the new C-base Go Fast! readers.
 
@@ -54,9 +58,9 @@ from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
 from errors import baseReaderError, syncError, eofError
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 
 		 'getSampleRate', 'getFramesPerObs', 'FrameSize', 'filterCodes', 
 		 '__version__', '__revision__', '__all__']
 
@@ -408,63 +412,6 @@ class Frame(object):
 			return 0
 
 
-class ObservingBlock(object):
-	def __init__(self, x=None, y=None):
-		if x is None:
-			self.x = []
-		else:
-			self.x = x
-			
-		if y is None:
-			self.y = []
-		else:
-			self.y = y
-
-	def getTime(self):
-		"""
-		Convenience wrapper for the Frame.FrameData.getTime function.
-		"""
-		
-		return self.x[0].data.getTime()
-
-	def getFilterCode(self):
-		"""
-		Convenience wrapper for the Frame.FrameData.getFilterCode function.
-		"""
-
-		return self.x[0].data.getFilterCode()
-
-	def setSampleRate(self, sampleRate):
-		"""
-		Convenience wrapper for the Frame.FrameData.setSampleRate function.
-		"""
-
-		for i in len(self.x):
-			self.x[i].data.setSampleRate(sampleRate)
-		for i in len(self.y):
-			self.y[i].data.setSampleRate(sampleRate)
-
-	def setCentralFreq(self, centralFreq):
-		"""
-		Convenience wrapper for the Frame.FrameData.setCentralFreq function.
-		"""
-
-		for i in len(self.x):
-			self.x[i].data.setCentralFreq(centralFreq)
-		for i in len(self.y):
-			self.y[i].data.setCentralFreq(centralFreq)
-
-	def setGain(self, gain):
-		"""
-		Convenience wrapper for the Frame.FrameData.setGain function.
-		"""
-
-		for i in len(self.x):
-			self.x[i].data.setGain(gain)
-		for i in len(self.y):
-			self.y[i].data.setGain(gain)
-
-
 def readFrame(filehandle, SampleRate=None, Verbose=False):
 	"""
 	Function to read in a single TBN frame (header+data) and store the 
@@ -482,34 +429,9 @@ def readFrame(filehandle, SampleRate=None, Verbose=False):
 	
 	if SampleRate is not None:
 		newFrame.setSampleRate(SampleRate)
-
+		
 	return newFrame
 
-
-def readBlock(filehandle, nFrames=520, SampleRate=None, Verbose=False):
-	"""
-	Function to read in a single TBN block (frames set by the nFrames 
-	keyword) and store the contents as a ObservingBlock object.  This function 
-	wraps readFrame.
-	
-	..warning::
-		Since the various TBN frames are interleaved on the network before 
-		recording, the frames returned by a single call to readBlock may
-		not all have the same frame count/time tag.  It is recommended that
-		the :class:`lsl.reader.buffer.TBNFrameBuffer` be used in order to 
-		deal with the out-of-order frames.
-	"""
-
-	frames = []
-	for i in range(0, nFrames):
-		try:
-			frame = readFrame(filehandle, SampleRate=SampleRate, Verbose=Verbose)
-		except baseReaderError:
-			frame = None
-		frames.append( frame )
-
-	return ObservingBlock(x=frames[0::2], y=frames[1::2])
-	
 
 def getSampleRate(filehandle, nFrames=None, FilterCode=False):
 	"""

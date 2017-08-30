@@ -298,27 +298,6 @@ class reader_tests(unittest.TestCase):
 		self.assertEqual(pol,  0)
 		fh.close()
 		
-	def test_drx_read_block(self):
-		"""Test reading in a block of DRX frames."""
-		
-		fh = open(drxFile, 'rb')
-		cFrame = drx.readFrame(fh)
-		b,t,p = cFrame.parseID()
-		while 2*(t-1)+p != 0:
-			cFrame = drx.readFrame(fh)
-			b,t,p = cFrame.parseID()
-			
-		# Read a block
-		cFrames = drx.readBlock(fh)
-		
-		# Make sure everthing is in the right place
-		self.assertEqual(cFrames.x1.parseID(), (4,1,0))
-		self.assertEqual(cFrames.x2.parseID(), (4,2,0))
-		self.assertEqual(cFrames.y1.parseID(), (4,1,1))
-		self.assertEqual(cFrames.y2.parseID(), (4,2,1))
-		
-		fh.close()
-		
 	def test_drx_errors(self):
 		"""Test reading in all frames from a truncated DRX file."""
 		

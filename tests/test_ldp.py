@@ -282,7 +282,7 @@ class ldp_tests(unittest.TestCase):
 	def test_ldp_discover_tbf(self):
 		"""Test the LDP LWA1DataFile function of TBF."""
 		# TBF
-		self.assertRaises(ldp.LWA1DataFile(tbfFile), RuntimeError)
+		self.assertRaises(RuntimeError, ldp.LWA1DataFile, tbfFile)
 
 
 class ldp_test_suite(unittest.TestSuite):

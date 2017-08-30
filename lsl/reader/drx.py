@@ -35,6 +35,10 @@ getFramesPerObs
   read in the first several frames to see how many frames (tunings/polarizations)
   are associated with each beam.
 
+..versionchanged:: 1.2.0
+	Dropped support for ObservingBlock since the lsl.reader.buffer modules does
+	a better job.
+  
 .. versionchanged:: 0.4.0
 	Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
@@ -48,9 +52,9 @@ from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
 from errors import baseReaderError, syncError, eofError
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'ObservingBlock', 'readFrame', 'readBlock', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 
 		 'getSampleRate', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', 
 		 '__version__', '__revision__', '__all__']
 
@@ -366,70 +370,6 @@ class Frame(object):
 			return 0
 
 
-class ObservingBlock(object):
-	"""
-	Class that stores all frames associates with a particular beam at a
-	particular time.
-	"""
-
-	def __init__(self, x1=None, y1=None, x2=None, y2=None):
-		if x1 is None:
-			self.x1 = Frame()
-		else:
-			self.x1 = x1
-			
-		if y1 is None:
-			self.y1 = Frame()
-		else:
-			self.y1 = y1
-			
-		if x2 is None:
-			self.x2 = Frame()
-		else:
-			self.x2 = x2
-			
-		if y2 is None:
-			self.y2 = Frame()
-		else:
-			self.y2 = y2
-			
-	def getTime(self):
-		"""
-		Convenience wrapper for the Frame.FrameData.getTime function.
-		"""
-		
-		return self.x1.getTime()
-
-	def getFilterCode(self):
-		"""
-		Convenience wrapper for the Frame.FrameData.getFilterCode function.
-		"""
-
-		return self.x1.getFilterCode()
-
-	def getCentralFreq(self):
-		"""
-		Convenience wrapper for the Frame.FrameData.getCentralFreq function.
-		
-		.. note::
-			This returned a two-element tuple giving the frequncies for 
-			both tunings.
-		"""
-
-		return self.x1.getCentralFreq(), self.x2.getCentralFreq()
-
-	def setGain(self, gain):
-		"""
-		Convenience wrapper for the Frame.FrameData.setGain function.
-		"""
-
-		self.x1.setGain(gain)
-		self.y1.setGain(gain)
-			
-		self.x2.setGain(gain)
-		self.y2.setGain(gain)
-
-
 def readFrame(filehandle, Gain=None, Verbose=False):
 	"""
 	Function to read in a single DRX frame (header+data) and store the 
@@ -448,51 +388,8 @@ def readFrame(filehandle, Gain=None, Verbose=False):
 	
 	if Gain is not None:
 		newFrame.setGain(Gain)
-
+		
 	return newFrame
-
-
-def readBlock(filehandle):
-	"""
-	Function to read in a single DRX block (four frames) and store the 
-	contents as a ObservingBlock object.  This function wraps 
-	readFrame.
-	"""
-	
-	# Create dummy values
-	x1 = None
-	y1 = None
-	x2 = None
-	y2 = None
-	
-	# Read in four frames
-	try:
-		f1 = readFrame(filehandle)
-		f2 = readFrame(filehandle)
-		f3 = readFrame(filehandle)
-		f4 = readFrame(filehandle)
-	except baseReaderError, err:
-		raise err
-
-	# Load them into x1, y1, x2, y2 based on their tuning and polariztaion
-	# values
-	for f in [f1, f2, f3, f4]:
-		beam, tune, pol = f.parseID()
-		if tune == 1:
-			if pol == 0:
-				x1 = f
-			else:
-				y1 = f
-		else:
-			if pol == 0:
-				x2 = f
-			else:
-				y2 = f
-
-	# Create the block structure and return
-	block = ObservingBlock(x1=x1, y1=y1, x2=x2, y2=y2)
-	
-	return block
 
 
 def getSampleRate(filehandle, nFrames=None, FilterCode=False):

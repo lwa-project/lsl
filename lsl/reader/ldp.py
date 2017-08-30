@@ -1309,7 +1309,7 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 	
 	# Raise an error if nothing is found
 	if not foundMode:
-		raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
+		raise RuntimeError("File '%s' does not appear to be a valid LWA1 data file" % filename)
 		
 	# Otherwise, build and return the correct LDPFileBase sub-class
 	if mode == drx:
@@ -1501,7 +1501,7 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 			fh = open(filename, 'rb')
 			
 	# Read a bit of data to try to find the right type
-	for mode in (drx, cor, tbf, drspec):
+	for mode in (drx, tbn, tbf, cor, drspec):
 		## Set if we find a valid frame marker
 		foundMatch = False
 		## Set if we can read more than one valid successfully
@@ -1522,7 +1522,7 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		for i in xrange(mfs):
 			try:
 				junkFrame = mode.readFrame(fh)
-				foundMatch = True
+				#foundMatch = True
 				break
 			except errors.syncError:
 				fh.seek(-mfs+1, 1)
@@ -1552,11 +1552,13 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 	
 	# Raise an error if nothing is found
 	if not foundMode:
-		raise RuntimeError("File '%s' does not appear to be a valid LWA1 data file" % filename)
+		raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
 		
 	# Otherwise, build and return the correct LDPFileBase sub-class
 	if mode == drx:
 		ldpInstance = DRXFile(filename, ignoreTimeTagErrors=ignoreTimeTagErrors)
+	elif mode == tbn:
+		ldpInstance = TBNFile(filename, ignoreTimeTagErrors=ignoreTimeTagErrors)
 	elif mode == tbf:
 		ldpInstance = TBFFile(filename, ignoreTimeTagErrors=ignoreTimeTagErrors)
 	else:
