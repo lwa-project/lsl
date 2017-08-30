@@ -1,0 +1,79 @@
+
+PI_ID             99
+PI_NAME           Dowell, Jayce
+
+PROJECT_ID        COMJD
+PROJECT_TITLE     Commissioning
+PROJECT_REMPI     None provided
+PROJECT_REMPO     None
+
+SESSION_ID        49
+SESSION_TITLE     TBF calibration sweep
+SESSION_REMPI     None provided
+SESSION_REMPO     Requested data return method is DRSU
+SESSION_DRX_BEAM  1
+
+OBS_ID            1
+OBS_TITLE         tpms-generated TBF observation
+OBS_START_MJD     57865
+OBS_START_MPM     46800000
+OBS_START         2017-04-22 13:00:00
+OBS_DUR           300000
+OBS_MODE          TBF
+OBS_FREQ1         876523938
+OBS_FREQ1+        40.000 MHz
+OBS_BW            6
+OBS_BW+           9.8 MHz
+OBS_TBF_SAMPLES   19600000
+
+OBS_ID            2
+OBS_TITLE         tpms-generated TBF observation
+OBS_START_MJD     57865
+OBS_START_MPM     47100000
+OBS_START         2017-04-22 13:05:00
+OBS_DUR           300000
+OBS_MODE          TBF
+OBS_FREQ1         1095654922
+OBS_FREQ1+        50.000 MHz
+OBS_BW            6
+OBS_BW+           9.8 MHz
+OBS_TBF_SAMPLES   19600000
+
+OBS_ID            3
+OBS_TITLE         tpms-generated TBF observation
+OBS_START_MJD     57865
+OBS_START_MPM     47400000
+OBS_START         2017-04-22 13:10:00
+OBS_DUR           300000
+OBS_MODE          TBF
+OBS_FREQ1         1314785907
+OBS_FREQ1+        60.000 MHz
+OBS_BW            6
+OBS_BW+           9.8 MHz
+OBS_TBF_SAMPLES   19600000
+
+OBS_ID            4
+OBS_TITLE         tpms-generated TBF observation
+OBS_START_MJD     57865
+OBS_START_MPM     47700000
+OBS_START         2017-04-22 13:15:00
+OBS_DUR           300000
+OBS_MODE          TBF
+OBS_FREQ1         1533916891
+OBS_FREQ1+        70.000 MHz
+OBS_BW            6
+OBS_BW+           9.8 MHz
+OBS_TBF_SAMPLES   19600000
+
+OBS_ID            5
+OBS_TITLE         tpms-generated TBF observation
+OBS_START_MJD     57865
+OBS_START_MPM     48000000
+OBS_START         2017-04-22 13:20:00
+OBS_DUR           300000
+OBS_MODE          TBF
+OBS_FREQ1         1753047876
+OBS_FREQ1+        80.000 MHz
+OBS_BW            6
+OBS_BW+           9.8 MHz
+OBS_TBF_SAMPLES   19600000
