@@ -7,8 +7,8 @@ Classes and methods to model sky brightness and visibility.
 ### This module handles the skymaps from the 74 MHz skymap.
 ### David Munton, ARL:UT Jan 2007
 
-from numpy import *
-import os,sys
+import os
+from numpy import pi, float32, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
 
 import pyfits
 
@@ -23,7 +23,8 @@ __maintainer__ = 'Jayce Dowell'
 ### This code is the base class for the sky map. It takes as input a skymap file name and frequency to
 ### which the skymap corresponds.  It has the following methods:
 ###     _init_ - takes the array coordinate filename as an input argument.
-###     NormalizePower - Converts the skymap powers (in Kelvin radiated into 4 pi ster) into a power seen at the antenna.
+###     NormalizePower - Converts the skymap powers (in Kelvin radiated into 4 pi ster) into a power 
+###                      seen at the antenna.
 ###     ComputeTotalPowerFromSky - Sums the power for all sources in the sky
 ###     ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.8 MHz to the desired frequency.
 
@@ -61,7 +62,7 @@ class SkyMap(object):
 	  2. NormalizePower - Converts the skymap powers (in Kelvin radiated into 4 pi ster)
 	  into a power seen at the antenna.
 	  3. ComputeTotalPowerFromSky - Sums the power for all sources in the sky
-	  4. ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.8 MHz to the
+	  4. ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.9 MHz to the
 	  desired frequency.
 	"""
 	
@@ -75,8 +76,12 @@ class SkyMap(object):
 		"""
 		
 		if skyMapFileName is None:
+			if freqMHz != 73.9:
+				raise SkyMapError("LFmap only available at 73.9 MHz")
+				
 			from lsl.common.paths import data as dataPath
 			skyMapFileName = os.path.join(dataPath, 'skymap', 'LFmap_73.9.fits')
+			
 			
 		fits = pyfits.open(skyMapFileName)
 		
@@ -189,13 +194,13 @@ class ProjectedSkyMap(object):
 		UTC julian day).
 		"""
 		
-		self.skyMapObject=skyMapObject
+		self.skyMapObject = skyMapObject
 		
-		assert -90<=lat<=90, ValueError('lat = %g not in [-90,90]' % lat)
-		assert -360<=lon<=360, ValueError('lon = %g not in [-360,360]' % lon)
-		self.lat=lat
-		self.lon=lon
-		self.time=utc_jd
+		assert  -90 <= lat <=  90, ValueError('lat = %g not in [-90,90]' % lat)
+		assert -360 <= lon <= 360, ValueError('lon = %g not in [-360,360]' % lon)
+		self.lat  = lat
+		self.lon  = lon
+		self.time = utc_jd
 		
 		# Compute the ra and dec locations to a altitude and azimuth. This requires a lat/lon and a time (UTC).
 		# Alt and Az are compressed to show only the visible source.
@@ -254,7 +259,7 @@ class ProjectedSkyMap(object):
 		l = cos(altRad)*sin(azRad)
 		m = cos(altRad)*cos(azRad)
 		n = sin(altRad)
-		return (l,m,n)
+		return (l, m, n)
 		
 	def ComputeTotalPowerFromVisibleSky(self):
 		"""

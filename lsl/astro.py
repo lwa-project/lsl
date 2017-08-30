@@ -96,7 +96,7 @@ class dms(object):
 		dms object repr string method
 		"""
 			
-		return "%s.%s(%s,%s,%s,%s)" % (type(self).__module__,type(self).__name__, repr(self.neg), repr(self.degrees), repr(self.minutes), repr(self.seconds))
+		return "%s.%s(%s,%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.neg), repr(self.degrees), repr(self.minutes), repr(self.seconds))
 		
 	def __reduce__(self):
 		"""
@@ -182,7 +182,7 @@ class hms(object):
 		hms object repr string method
 		"""
 		
-		return "%s.%s(%s,%s,%s)" % (type(self).__module__,type(self).__name__, repr(self.hours), repr(self.minutes), repr(self.seconds))           
+		return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.hours), repr(self.minutes), repr(self.seconds))           
 		
 	def __str__(self):	
 		"""
@@ -491,7 +491,7 @@ class zonedate(object):
 		zonedate object repr string method
 		"""
 		
-		return "%s.%s(%s,%s,%s,%s,%s,%s,%s)" % (type(self).__module__,type(self).__name__, repr(self.years), repr(self.months), repr(self.days), repr(self.hours), repr(self.minutes), repr(self.seconds), repr(self.gmtoff))
+		return "%s.%s(%s,%s,%s,%s,%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.years), repr(self.months), repr(self.days), repr(self.hours), repr(self.minutes), repr(self.seconds), repr(self.gmtoff))
 		
 	def __reduce__(self):
 		"""
@@ -576,7 +576,7 @@ class rst_time(object):
 		rst_time object repr string method
 		"""
 		
-		return "%s.%s(%s,%s,%s)" % (type(self).__module__,type(self).__name__, repr(self.rise), repr(self.set), repr(self.transit))
+		return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.rise), repr(self.set), repr(self.transit))
 		
 	def __reduce__(self):
 		"""
@@ -1856,7 +1856,7 @@ def get_equ_from_ecl(object_, jD):
 	"""
 	
 	_posn = equ_posn()
-	ecl = ephem.Ecliptic(deg_to_rad(object_.lng), deg_to_rad(object_.lat))
+	ecl = ephem.Ecliptic(deg_to_rad(object_.lng), deg_to_rad(object_.lat), epoch=jD-DJD_OFFSET)
 	equ = ephem.Equatorial(ecl)
 	ra = rad_to_deg(equ.ra)
 	dec = rad_to_deg(equ.dec)
@@ -1877,7 +1877,7 @@ def get_ecl_from_equ(object_, jD):
 	"""
 	
 	_posn = ecl_posn()
-	equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec))
+	equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=jD-DJD_OFFSET)
 	ecl = ephem.Ecliptic(equ)
 	l = rad_to_deg(ecl.lon)
 	b = rad_to_deg(ecl.lat)
@@ -2325,10 +2325,10 @@ def get_equ_aber(mean_position, jD):
 	
 	_posn = equ_posn()
 	# speed of light in 10-8 au per day
-	c = 17314463350.0;
+	c = 17314463350.0
 	
 	# calc T
-	T = (jD - 2451545.0) / 36525.0;
+	T = (jD - 2451545.0) / 36525.0
 	
 	# calc planetary perturbutions
 	L2 = 3.1761467 + 1021.3285546 * T
@@ -2511,9 +2511,9 @@ def get_equ_aber(mean_position, jD):
 	mean_ra = deg_to_rad(mean_position.ra)
 	mean_dec = deg_to_rad(mean_position.dec)
 	
-	delta_ra = (Y * math.cos(mean_ra) - X * math.sin(mean_ra)) / (c * math.cos(mean_dec));
-	delta_dec = (X * math.cos(mean_ra) + Y * math.sin(mean_ra)) * math.sin(mean_dec) - Z * math.cos(mean_dec);
-	delta_dec /= -c;
+	delta_ra = (Y * math.cos(mean_ra) - X * math.sin(mean_ra)) / (c * math.cos(mean_dec))
+	delta_dec = (X * math.cos(mean_ra) + Y * math.sin(mean_ra)) * math.sin(mean_dec) - Z * math.cos(mean_dec)
+	delta_dec /= -c
 	
 	_posn.ra = rad_to_deg(mean_ra + delta_ra)
 	_posn.dec = rad_to_deg(mean_dec + delta_dec)
@@ -3476,14 +3476,14 @@ class geo_posn(lnlat_posn):
 		geo_posn object pickle reduce method.
 		"""
 		
-		return (geo_posn,(self.lng,self.lat,self.elv))
+		return (geo_posn, (self.lng, self.lat, self.elv))
 		
 	def __repr__(self):
 		"""
 		geo_posn object repr string method.
 		"""
 		
-		return "%s.%s(%s,%s,%s)" % (type(self).__module__,type(self).__name__,repr(self.lng),repr(self.lat),repr(self.elv))
+		return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat), repr(self.elv))
 		
 	def __getitem__(self, key):
 		"""
@@ -3774,22 +3774,22 @@ def _precession(tjd1, pos, tjd2):
 	#
 	#  Precession rotation matrix follows.
 	#
-	xx =  cz0 * ct * cz - sz0 * sz;
-	yx = -sz0 * ct * cz - cz0 * sz;
-	zx = -st * cz;
-	xy = cz0 * ct * sz + sz0 * cz;
-	yy = -sz0 * ct * sz + cz0 * cz;
-	zy = -st * sz;
-	xz = cz0 * st;
-	yz = -sz0 * st;
-	zz = ct;
+	xx =  cz0 * ct * cz - sz0 * sz
+	yx = -sz0 * ct * cz - cz0 * sz
+	zx = -st * cz
+	xy = cz0 * ct * sz + sz0 * cz
+	yy = -sz0 * ct * sz + cz0 * cz
+	zy = -st * sz
+	xz = cz0 * st
+	yz = -sz0 * st
+	zz = ct
 	
 	#
 	#  Perform rotation.
 	#
-	xr = xx * pos[0] + yx * pos[1] + zx * pos[2];
-	yr = xy * pos[0] + yy * pos[1] + zy * pos[2];
-	zr = xz * pos[0] + yz * pos[1] + zz * pos[2];
+	xr = xx * pos[0] + yx * pos[1] + zx * pos[2]
+	yr = xy * pos[0] + yy * pos[1] + zy * pos[2]
+	zr = xz * pos[0] + yz * pos[1] + zz * pos[2]
 	
 	return (xr, yr, zr)
 

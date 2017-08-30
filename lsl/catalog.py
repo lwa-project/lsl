@@ -260,7 +260,8 @@ class PSR_Catalog(Catalog):
 					(raHours, raMinutes) = sp
 					raSeconds = 0.0
 				else:
-					if debug: print('Bad format for RAJ line : '+line)
+					if debug:
+						print('Bad format for RAJ line : '+line)
 					bad = True
 				raHours = int(raHours)
 				raMinutes = int(raMinutes)
@@ -268,7 +269,8 @@ class PSR_Catalog(Catalog):
 				try:
 					ra = astro.hms(raHours, raMinutes, raSeconds)
 				except:
-					if debug: print('PSRCAT: Bad RA for ',psrj," : ",rastr)
+					if debug:
+						print('PSRCAT: Bad RA for ', psrj, " : ", rastr)
 					bad = True
 			if line.startswith('DECJ'):
 				decstr = line.split()[1]
@@ -279,7 +281,8 @@ class PSR_Catalog(Catalog):
 					(decDegrees, decMinutes) = sp
 					decSeconds = 0.0
 				else:
-					if debug: print('PSRCAT: Bad format for DECJ line : '+line)
+					if debug:
+						print('PSRCAT: Bad format for DECJ line : '+line)
 					bad = True
 					continue
 				if decDegrees.startswith('-'):
@@ -293,7 +296,8 @@ class PSR_Catalog(Catalog):
 				try:
 					dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
 				except:
-					if debug: print('PSRCAT: Bad DEC for ',psrj," : ",decstr)
+					if debug:
+						print('PSRCAT: Bad DEC for ', psrj, " : ", decstr)
 					bad = True
 					
 			if line.startswith('@-'):
@@ -318,14 +322,16 @@ class PSR_Catalog(Catalog):
 					sourcePos = astro.equ_posn(ra, dec) 
 					entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
 					self.source_map[name] = entry
-					if debug: print('Added ',name)
+					if debug:
+						print('Added ', name)
 					
 					if alias is not None:
 						alias = alias.rstrip()
 						self.alias_map[alias] = entry
 						entry.alias_list.append(alias)
-						if debug: print('Alias : ',alias.rstrip())
-						
+						if debug:
+							print('Alias : ', alias.rstrip())
+							
 				# Clear out vars for next source
 				psrb = None
 				psrj = None
