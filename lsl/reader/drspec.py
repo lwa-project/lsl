@@ -43,12 +43,13 @@ from lsl.reader.drx import filterCodes as drxFilterCodes
 from _gofast import readDRSpec
 from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
-from errors import *
+from errors import syncError, eofError
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getDataProducts', 'containsLinearData', 'containsStokesData', 
-		 'getSampleRate', 'getFrameSize', 'getFFTsPerIntegration', 'getTransformSize', 'getIntegrationTime', 'filterCodes', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getDataProducts', 'containsLinearData',
+		 'containsStokesData', 'getSampleRate', 'getFrameSize', 'getFFTsPerIntegration', 
+		 'getTransformSize', 'getIntegrationTime', 'filterCodes', 
 		 '__version__', '__revision__', '__all__']
 
 # List of filter codes and their corresponding sample rates in Hz.  
@@ -211,7 +212,15 @@ class FrameData(object):
 			return dp_common.fS * self.tuningWords[0] / 2**32
 		elif which == 2:
 			return dp_common.fS * self.tuningWords[1] / 2**32
+		else:
 			raise ValueError("Unknown tuning/polarization combination: '%i'" % which)
+			
+	def setGain(self, gain):
+		"""
+		Function to set the gain of the DRX data.
+		"""
+
+		self.gain = gain
 
 
 class Frame(object):

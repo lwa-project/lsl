@@ -45,7 +45,7 @@ from  lsl.common import dp as dp_common
 from _gofast import readTBW
 from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
-from errors import *
+from errors import syncError, eofError
 
 __version__ = '0.6'
 __revision__ = '$Rev$'

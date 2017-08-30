@@ -25,12 +25,14 @@ from collections import deque
 
 from lsl.common.dp import fS
 from lsl.common.adp import fC
-from lsl.reader import tbw, tbn, drx, drspec, tbf, errors
+from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 'LWASVDataFile', 'LWADataFile', '__version__', '__revision__', '__all__']
+__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
+		 'LWASVDataFile', 'LWADataFile', 
+		 '__version__', '__revision__', '__all__']
 
 
 class LDPFileBase(object):
@@ -138,18 +140,38 @@ class LDPFileBase(object):
 		self._describeFile()
 		
 	def close(self):
+		"""
+		Close the file.
+		"""
+		
 		self.fh.close()
 		
 	def offset(self, *args, **kwds):
+		"""
+		Offset into the data.
+		"""
+		
 		raise NotImplementedError
 		
 	def readFrame(self):
+		"""
+		Read a single frame from the data.
+		"""
+		
 		raise NotImplementedError
 		
 	def read(self, *args, **kwds):
+		"""
+		Read a certain amount of time from the data.
+		"""
+		
 		raise NotImplementedError
 		
 	def estimateLevels(self, *args, **kwds):
+		"""
+		Estimate the standard deviation of the data.
+		"""
+		
 		raise NotImplementedError
 
 
@@ -605,7 +627,7 @@ class TBNFile(LDPFileBase):
 			count[i] = 0
 		data = numpy.zeros((self.description['nAntenna'], nFrames*512))
 		for i in xrange(nFrames):
-			for j in xrange(nAntenna):
+			for j in xrange(self.description['nAntenna']):
 				# Read in the next frame and anticipate any problems that could occur
 				try:
 					cFrame = tbn.readFrame(self.fh, Verbose=False)
@@ -619,7 +641,7 @@ class TBNFile(LDPFileBase):
 				
 				data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.data.iq )
 				count[aStand] +=  1
-		self.fh.seek(-tbn.FrameSize*nAntenna*nFrames, 1)
+		self.fh.seek(-tbn.FrameSize*self.description['nAntenna']*nFrames, 1)
 		
 		# Statistics
 		rv = norm()
@@ -628,8 +650,8 @@ class TBNFile(LDPFileBase):
 		if index == data.shape[1]:
 			index = data.shape[1] - 1
 		
-		levels = [0 for i in xrange(nAntenna)]
-		for i in xrange(nAntenna):
+		levels = [0 for i in xrange(self.description['nAntenna'])]
+		for i in xrange(self.description['nAntenna']):
 			data2 = sorted(data[i,:])
 			levels[i] = data2[index]
 		
@@ -965,7 +987,7 @@ class DRXFile(LDPFileBase):
 				
 				data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.data.iq )
 				count[aStand] +=  1
-		self.fh.seek(-drx.FrameSize*beampols*nFrames, 1)
+		self.fh.seek(-drx.FrameSize*self.description['beampols']*nFrames, 1)
 		
 		# Statistics
 		rv = norm()
@@ -1181,7 +1203,7 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		filename = fh.name
 		if fh.mode.find('b') == -1:
 			fh.close()
-			fh = open(self.filename, 'rb')
+			fh = open(filename, 'rb')
 			
 	# Read a bit of data to try to find the right type
 	for mode in (drx, tbn, tbw, drspec):
@@ -1335,14 +1357,14 @@ class TBFFile(LDPFileBase):
 		
 		# Skip over any DRX frames the start of the file
 		i = 0
-		junkFrame = tbf.readFrame(fh)
+		junkFrame = tbf.readFrame(self.fh)
 		while True:
 			try:
-				tbf.readFrame(fh)
+				tbf.readFrame(self.fh)
 				break
 			except errors.syncError:
 				i += 1
-				fh.seek(-tbf.FrameSize+drx.FrameSize, 1)
+				self.fh.seek(-tbf.FrameSize+drx.FrameSize, 1)
 				
 		junkFrame = self.readFrame()
 		self.fh.seek(-tbf.FrameSize, 1)
@@ -1359,7 +1381,7 @@ class TBFFile(LDPFileBase):
 		self.mapper = []
 		marker = self.fh.tell()
 		firstFrameCount = 2**64-1
-		while len(mapper) < nChan/12:
+		while len(self.mapper) < nChan/12:
 			cFrame = tbf.readFrame(self.fh)
 			if cFrame.header.firstChan not in self.mapper:
 				self.mapper.append( cFrame.header.firstChan )
@@ -1476,7 +1498,7 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		filename = fh.name
 		if fh.mode.find('b') == -1:
 			fh.close()
-			fh = open(self.filename, 'rb')
+			fh = open(filename, 'rb')
 			
 	# Read a bit of data to try to find the right type
 	for mode in (drx, cor, tbf, drspec):

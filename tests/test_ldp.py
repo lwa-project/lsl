@@ -255,7 +255,6 @@ class ldp_tests(unittest.TestCase):
 	
 	def test_ldp_discover_tbw(self):
 		"""Test the LDP LWA1DataFile function of TBW."""
-		
 		# TBW
 		f = ldp.LWA1DataFile(tbwFile)
 		self.assertEqual(type(f), ldp.TBWFile)

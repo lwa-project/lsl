@@ -29,12 +29,13 @@ from  lsl.common import adp as adp_common
 from _gofast import readTBF
 from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
-from errors import *
+from errors import syncError, eofError
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getFirstFameCount',
-		 'getChannelCount', 'getFirstChannel', '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 
+		 'getFirstFrameCount', 'getChannelCount', 'getFirstChannel', 
+		 '__version__', '__revision__', '__all__']
 
 FrameSize = 6168
 
@@ -344,7 +345,7 @@ def getFramesPerObs(filehandle):
 	return len(channels)
 
 
-def getFirstFameCount(filehandle):
+def getFirstFrameCount(filehandle):
 	"""
 	Find and return the lowest frame count encountered in a TBF file.
 	"""
@@ -359,10 +360,7 @@ def getFirstFameCount(filehandle):
 	freqs = []
 	while len(freqs) < nFrames:
 		cFrame = readFrame(filehandle)
-		if frequency:
-			freq = cFrame.getChannelFreqs()[0]
-		else:
-			freq = cFrame.header.firstChan
+		freq = cFrame.header.firstChan
 			
 		if freq not in freqs:
 			freqs.append(freq)

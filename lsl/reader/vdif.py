@@ -29,14 +29,12 @@ getThreadCount
 """
 
 import copy
-import numpy
-import struct
 from datetime import datetime
 
 from _gofast import readVDIF
 from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
-from errors import *
+from errors import syncError, eofError
 
 from lsl import astro
 from lsl.common.mcs import datetime2mjdmpm
@@ -131,7 +129,7 @@ class FrameHeader(object):
 				## What is the frame rate?
 				frameRate = sampleRate / nSamples
 			
-				frameMJD += 1.0*self.frame/frameRate/86400.0
+				frameMJD += 1.0*self.frameInSecond/frameRate/86400.0
 			
 			except KeyError:
 				pass
@@ -172,7 +170,7 @@ class FrameHeader(object):
 		fields = {}
 		
 		# Is there anything to look at?
-		if self.extendedData1 is None or self.extendedData2 or self.extendedData3 is None or self.extendedData4 is None:
+		if self.extendedData1 is None or self.extendedData2 is None or self.extendedData3 is None or self.extendedData4 is None:
 			return fields
 			
 		# Extract the version
@@ -209,7 +207,7 @@ class FrameHeader(object):
 			mj = int((self.extendedData4 >> 12) & 0xF)
 			mn = int((self.extendedData4 >>  8) & 0xF)
 			pr = int(self.extendedData4 & 0xFF)
-			fields['version'] = '%i.%i-%02f' % (mj,mn,pr)
+			fields['version'] = '%i.%i-%02f' % (mj, mn, pr)
 			
 		elif edv == 0xAB:
 			## Haystack (which is really an embedded Mark 5B header)
@@ -230,10 +228,11 @@ class FrameHeader(object):
 			f1 = int((self.extendedData4 >> 24) & 0xF)
 			f2 = int((self.extendedData4 >> 20) & 0xF)
 			f3 = int((self.extendedData4 >> 16) & 0xF)
+			f4 = int((self.extendedData4 >>  8) & 0xF)
 			crcf = int(self.extendedData4 & 0xFFFF)
 			crcf = (crcf & 0xF) << 8 | ((crcf >> 8) & 0xF)
-			crcf = _crcc((self.extendedData3 << 16) | ((self.extendedData >> 16) & 0xFF), 48)
-			fields['vlbaTimeCode'] = j0*1e7+j1*1e6+j2*1e5 + s0*1e4+s1*1e3+s2*1e2+s3*1e1+s4*1e0 + f0/1e1+f1/1e2+f2/1e3+f4/1e4
+			crcc = _crcc((self.extendedData3 << 16) | ((self.extendedData3 >> 16) & 0xFF), 48)
+			fields['vlbaTimeCode'] = j0*1e7+j1*1e6+j2*1e5 + s0*1e4+s1*1e3+s2*1e2+s3*1e1+s4*1e0 + f0/1e1+f1/1e2+f2/1e3+f3/1e4+f4/1e5
 			fields['vlbaTimeCodeValue'] = True if crcc == crcf else False
 			
 		else:

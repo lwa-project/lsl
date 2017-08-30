@@ -29,12 +29,13 @@ from  lsl.common import adp as adp_common
 from _gofast import readCOR
 from _gofast import syncError as gsyncError
 from _gofast import eofError as geofError
-from errors import *
+from errors import syncError, eofError
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 'getChannelCount',
-		 'getBaselineCount', '__version__', '__revision__', '__all__']
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 
+		 'getChannelCount', 'getBaselineCount', 
+		 '__version__', '__revision__', '__all__']
 
 FrameSize = 4640
 
@@ -416,6 +417,9 @@ def getChannelCount(filehandle):
 	Find out the total number of channels that are present by examining 
 	the first several thousand COR records.  Return the number of channels found.
 	"""
+	
+	# Save the current position in the file so we can return to that point
+	fhStart = filehandle.tell()
 	
 	# Build up the list-of-lists that store the index of the first frequency
 	# channel in each frame.
