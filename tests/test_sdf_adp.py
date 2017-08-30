@@ -16,12 +16,12 @@ except ImprotError:
 	import StringIO
 
 from lsl.common.paths import dataBuild as dataPath
-from lsl.common import sdf
-from lsl.common.stations import lwa1
+from lsl.common import sdfADP
+from lsl.common.stations import lwasv
 
 
 __revision__ = "$Rev$"
-__version__  = "0.4"
+__version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
@@ -35,7 +35,7 @@ spcFile = os.path.join(dataPath, 'tests', 'spc-sdf.txt')
 tbfFile = os.path.join(dataPath, 'tests', 'tbf-sdf.txt')
 
 
-class sdf_tests(unittest.TestCase):
+class sdf_adp_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.common.sdf
 	module."""
 	
@@ -49,7 +49,7 @@ class sdf_tests(unittest.TestCase):
 	### General ###
 	
 	def test_time(self):
-		"""Test the sdf.parseTime() function."""
+		"""Test the sdfADP.parseTime() function."""
 		
 		_UTC = pytz.utc
 		_EST = pytz.timezone('US/Eastern')
@@ -61,32 +61,32 @@ class sdf_tests(unittest.TestCase):
 		s4 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
 		s5 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567123))
 		
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s2))
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s3))
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s4))
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s5))
-		self.assertEqual(sdf.parseTime(s2), sdf.parseTime(s3))
-		self.assertEqual(sdf.parseTime(s2), sdf.parseTime(s4))
-		self.assertEqual(sdf.parseTime(s2), sdf.parseTime(s5))
-		self.assertEqual(sdf.parseTime(s3), sdf.parseTime(s4))
-		self.assertEqual(sdf.parseTime(s3), sdf.parseTime(s5))
-		self.assertEqual(sdf.parseTime(s4), sdf.parseTime(s5))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s4))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s5))
+		self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s3))
+		self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s4))
+		self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s5))
+		self.assertEqual(sdfADP.parseTime(s3), sdfADP.parseTime(s4))
+		self.assertEqual(sdfADP.parseTime(s3), sdfADP.parseTime(s5))
+		self.assertEqual(sdfADP.parseTime(s4), sdfADP.parseTime(s5))
 		
 		# Month name and month number agreement
 		for n,m in enumerate(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']):
 			s1 = "UTC 2011-%s-14 12:13:14.000" % m
 			s2 = "UTC 2011-%02i-14 12:13:14.000" % (n+1)
 			s3 = _UTC.localize(datetime(2011, n+1, 14, 12, 13, 14, 0))
-			self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s2))
-			self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s3))
+			self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
+			self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
 			
 		# Time zone agreement - UTC
 		s1 = "2011-01-01 12:13:14.567"
 		s2 = "2011 01 01 12:13:14.567"
 		s3 = _UTC.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s2))
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s3))
-		self.assertEqual(sdf.parseTime(s2), sdf.parseTime(s3))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
+		self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s3))
 		
 		# Time zone agreement - local
 		for o,z in enumerate(['EST', 'CST', 'MST', 'PST']):
@@ -94,19 +94,19 @@ class sdf_tests(unittest.TestCase):
 			o = -5 - o
 			s1 = "%s 2011 01 01 %02i:13:14.567" % ('UTC', h)
 			s2 = "%s 2011 01 01 %02i:13:14.567" % (z, h+o)
-			self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s2))
+			self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
 			
 		# Something strange
 		s1 = "CET 2013-01-08 19:42:00.000"
 		s2 = "2013-01-08 18:42:00.000+00:00"
 		s3 = "2013-01-08 11:42:00-0700"
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s2))
-		self.assertEqual(sdf.parseTime(s1), sdf.parseTime(s3))
-		self.assertEqual(sdf.parseTime(s2), sdf.parseTime(s3))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
+		self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
+		self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s3))
 		
 		# Details
 		s1 = "2011 01 02 03:04:05.678"
-		out = sdf.parseTime(s1)
+		out = sdfADP.parseTime(s1)
 		## Date
 		self.assertEqual(out.year, 2011)
 		self.assertEqual(out.month, 1)
@@ -119,69 +119,22 @@ class sdf_tests(unittest.TestCase):
 		
 		# LST at LWA1
 		s1 = "LST 2013-01-08 19:42:00.000"
-		s2 = "UTC 2013-01-08 19:38:26.640"
-		self.assertEqual(sdf.parseTime(s1, site=lwa1), sdf.parseTime(s2))
+		s2 = "UTC 2013-01-08 19:35:28.994"
+		self.assertEqual(sdfADP.parseTime(s1, site=lwasv), sdfADP.parseTime(s2))
 		
 	### TBW ###
 	
 	def test_tbw_parse(self):
 		"""Test reading in a TBW SDF file."""
 		
-		project = sdf.parseSDF(tbwFile)
-		
-		# Basic file structure
-		self.assertEqual(len(project.sessions), 1)
-		self.assertEqual(len(project.sessions[0].observations), 2)
-		
-		# Observational setup - 1
-		self.assertEqual(project.sessions[0].observations[0].mode,  'TBW')
-		self.assertEqual(project.sessions[0].observations[0].mjd,   55616)
-		self.assertEqual(project.sessions[0].observations[0].mpm,       0)
-		
-		# Observational setup - 2
-		self.assertEqual(project.sessions[0].observations[1].mode,  'TBW')
-		self.assertEqual(project.sessions[0].observations[1].mjd,   55616)
-		self.assertEqual(project.sessions[0].observations[1].mpm,  700000)
-		
-	def test_tbw_update(self):
-		"""Test updating TRK_SOL values."""
-		
-		project = sdf.parseSDF(tbwFile)
-		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:10:15")
-		
-		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
-		self.assertEqual(project.sessions[0].observations[1].mpm,  615000)
-		
-	def test_tbw_write(self):
-		"""Test writing a TBW SDF file."""
-		
-		project = sdf.parseSDF(tbwFile)
-		out = project.render()
-		
-	def test_tbw_errors(self):
-		"""Test various TBW SDF errors."""
-		
-		project = sdf.parseSDF(tbwFile)
-		
-		# Bad number of TBW bits
-		project.sessions[0].observations[0].bits = 6
-		self.assertFalse(project.validate())
-		
-		# Bad number of TBW samples
-		project.sessions[0].observations[0].bits = 4
-		project.sessions[0].observations[0].samples = 72000000
-		self.assertFalse(project.validate())
-		
-		project.sessions[0].observations[0].bits = 12
-		project.sessions[0].observations[0].samples = 72000000
-		self.assertFalse(project.validate())
+		self.assertRaises(RuntimeError, sdfADP.parseSDF, tbwFile)
 		
 	### TBN ###
 	
 	def test_tbn_parse(self):
 		"""Test reading in a TBN SDF file."""
 		
-		project = sdf.parseSDF(tbnFile)
+		project = sdfADP.parseSDF(tbnFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -206,7 +159,7 @@ class sdf_tests(unittest.TestCase):
 	def test_tbn_update(self):
 		"""Test updating TBN values."""
 		
-		project = sdf.parseSDF(tbnFile)
+		project = sdfADP.parseSDF(tbnFile)
 		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
 		project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
 		project.sessions[0].observations[1].setFrequency1(75e6)
@@ -219,13 +172,13 @@ class sdf_tests(unittest.TestCase):
 	def test_tbn_write(self):
 		"""Test writing a TBN SDF file."""
 		
-		project = sdf.parseSDF(tbnFile)
+		project = sdfADP.parseSDF(tbnFile)
 		out = project.render()
 		
 	def test_tbn_errors(self):
 		"""Test various TBN SDF errors."""
 		
-		project = sdf.parseSDF(tbnFile)
+		project = sdfADP.parseSDF(tbnFile)
 		
 		# Bad filter
 		project.sessions[0].observations[0].filter = 10
@@ -248,7 +201,7 @@ class sdf_tests(unittest.TestCase):
 	def test_drx_parse(self):
 		"""Test reading in a TRK_RADEC SDF file."""
 		
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -279,7 +232,7 @@ class sdf_tests(unittest.TestCase):
 	def test_drx_update(self):
 		"""Test updating TRK_RADEC values."""
 		
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
 		project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
 		project.sessions[0].observations[1].setFrequency1(75e6)
@@ -298,13 +251,13 @@ class sdf_tests(unittest.TestCase):
 	def test_drx_write(self):
 		"""Test writing a TRK_RADEC SDF file."""
 		
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		out = project.render()
 		
 	def test_drx_errors(self):
 		"""Test various TRK_RADEC SDF errors."""
 		
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		
 		# Bad beam
 		project.sessions[0].drxBeam = 6
@@ -346,7 +299,7 @@ class sdf_tests(unittest.TestCase):
 	def test_sol_parse(self):
 		"""Test reading in a TRK_SOL SDF file."""
 		
-		project = sdf.parseSDF(solFile)
+		project = sdfADP.parseSDF(solFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -373,7 +326,7 @@ class sdf_tests(unittest.TestCase):
 	def test_sol_update(self):
 		"""Test updating TRK_SOL values."""
 		
-		project = sdf.parseSDF(solFile)
+		project = sdfADP.parseSDF(solFile)
 		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
 		project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
 		project.sessions[0].observations[1].setFrequency1(75e6)
@@ -388,13 +341,13 @@ class sdf_tests(unittest.TestCase):
 	def test_sol_write(self):
 		"""Test writing a TRK_SOL SDF file."""
 		
-		project = sdf.parseSDF(solFile)
+		project = sdfADP.parseSDF(solFile)
 		out = project.render()
 		
 	def test_sol_errors(self):
 		"""Test various TRK_SOL SDF errors."""
 		
-		project = sdf.parseSDF(solFile)
+		project = sdfADP.parseSDF(solFile)
 		
 		# Bad beam
 		project.sessions[0].drxBeam = 6
@@ -430,7 +383,7 @@ class sdf_tests(unittest.TestCase):
 	def test_jov_parse(self):
 		"""Test reading in a TRK_JOV SDF file."""
 		
-		project = sdf.parseSDF(jovFile)
+		project = sdfADP.parseSDF(jovFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -457,7 +410,7 @@ class sdf_tests(unittest.TestCase):
 	def test_jov_update(self):
 		"""Test updating TRK_JOV values."""
 		
-		project = sdf.parseSDF(jovFile)
+		project = sdfADP.parseSDF(jovFile)
 		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
 		project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
 		project.sessions[0].observations[1].setFrequency1(75e6)
@@ -472,13 +425,13 @@ class sdf_tests(unittest.TestCase):
 	def test_jov_write(self):
 		"""Test writing a TRK_JOV SDF file."""
 		
-		project = sdf.parseSDF(jovFile)
+		project = sdfADP.parseSDF(jovFile)
 		out = project.render()
 		
 	def test_jov_errors(self):
 		"""Test various TRK_JOV SDF errors."""
 		
-		project = sdf.parseSDF(jovFile)
+		project = sdfADP.parseSDF(jovFile)
 		
 		# Bad beam
 		project.sessions[0].drxBeam = 6
@@ -514,7 +467,7 @@ class sdf_tests(unittest.TestCase):
 	def test_stp_parse(self):
 		"""Test reading in a STEPPED SDF file."""
 		
-		project = sdf.parseSDF(stpFile)
+		project = sdfADP.parseSDF(stpFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -573,7 +526,7 @@ class sdf_tests(unittest.TestCase):
 	def test_stp_update(self):
 		"""Test updating a STEPPED SDF file."""
 		
-		project = sdf.parseSDF(stpFile)
+		project = sdfADP.parseSDF(stpFile)
 		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
 		for step in project.sessions[0].observations[1].steps:
 			step.setDuration(timedelta(seconds=15))
@@ -593,7 +546,7 @@ class sdf_tests(unittest.TestCase):
 			self.assertEqual(step.c1, 10.5)
 			self.assertEqual(step.c2, 89.5)
 			
-		project = sdf.parseSDF(stpFile)
+		project = sdfADP.parseSDF(stpFile)
 		project.sessions[0].observations[1].RADec = False
 		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
 		for step in project.sessions[0].observations[1].steps:
@@ -619,13 +572,13 @@ class sdf_tests(unittest.TestCase):
 	def test_stp_write(self):
 		"""Test writing a STEPPED SDF file."""
 		
-		project = sdf.parseSDF(stpFile)
+		project = sdfADP.parseSDF(stpFile)
 		out = project.render()
 		
 	def test_stp_errors(self):
 		"""Test various STEPPED SDF errors."""
 		
-		project = sdf.parseSDF(stpFile)
+		project = sdfADP.parseSDF(stpFile)
 		
 		# Bad beam
 		project.sessions[0].drxBeam = 6
@@ -661,7 +614,7 @@ class sdf_tests(unittest.TestCase):
 	def test_spc_parse(self):
 		"""Test reading in a STEPPED Delay and Gain SDF file."""
 		
-		project = sdf.parseSDF(spcFile)
+		project = sdfADP.parseSDF(spcFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
@@ -684,11 +637,11 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(project.sessions[0].observations[0].steps[0].dur, 60000)
 		
 		# Delays - 1
-		for i in xrange(260):
+		for i in xrange(512):
 			self.assertEqual(project.sessions[0].observations[0].steps[0].delays[i], 0)
 			
 		# Gains - 1
-		for i in xrange(260):
+		for i in xrange(256):
 			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][0], 1)
 			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
 			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)
@@ -697,12 +650,12 @@ class sdf_tests(unittest.TestCase):
 	def test_spc_write(self):
 		"""Test writing a STEPPED Delay and Gain SDF file."""
 		
-		project = sdf.parseSDF(spcFile)
+		project = sdfADP.parseSDF(spcFile)
 		out = project.render()
 		
 	def test_spectrometer(self):
 		"""Test parsing DR spectrometer configurations."""
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		
 		# Good spectrometer settings
 		for channels in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
@@ -745,9 +698,66 @@ class sdf_tests(unittest.TestCase):
 	### TBF ###
 	
 	def test_tbf_parse(self):
-		"""Test reading in a TBW SDF file."""
+		"""Test reading in a TBF SDF file."""
 		
-		self.assertRaises(RuntimeError, sdf.parseSDF, tbfFile)
+		project = sdfADP.parseSDF(tbfFile)
+		
+		# Basic file structure
+		self.assertEqual(len(project.sessions), 1)
+		self.assertEqual(len(project.sessions[0].observations), 5)
+		
+		# Observational setup - 1
+		self.assertEqual(project.sessions[0].observations[0].mode,      'TBF')
+		self.assertEqual(project.sessions[0].observations[0].mjd,       57865)
+		self.assertEqual(project.sessions[0].observations[0].mpm,    46800000)
+		self.assertEqual(project.sessions[0].observations[0].freq1, 876523938)
+		self.assertEqual(project.sessions[0].observations[0].filter,        6)
+		
+		# Observational setup - 2
+		self.assertEqual(project.sessions[0].observations[1].mode,       'TBF')
+		self.assertEqual(project.sessions[0].observations[1].mjd,        57865)
+		self.assertEqual(project.sessions[0].observations[1].mpm,     47100000)
+		self.assertEqual(project.sessions[0].observations[1].freq1, 1095654922)
+		self.assertEqual(project.sessions[0].observations[1].filter,         6)
+		
+	def test_tbf_update(self):
+		"""Test updating TRK_SOL values."""
+		
+		project = sdfADP.parseSDF(tbfFile)
+		project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:10:15")
+		
+		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[1].mpm,  615000)
+		
+	def test_tbf_write(self):
+		"""Test writing a TBF SDF file."""
+		
+		project = sdfADP.parseSDF(tbfFile)
+		out = project.render()
+		
+	def test_tbf_errors(self):
+		"""Test various TBF SDF errors."""
+		
+		project = sdfADP.parseSDF(tbfFile)
+		
+		# Bad number of TBF samples
+		project.sessions[0].observations[0].samples = 6*196000000
+		self.assertFalse(project.validate())
+		
+		# Bad filter
+		project.sessions[0].observations[0].filter = 10
+		self.assertFalse(project.validate())
+		
+		# Bad frequency
+		project.sessions[0].observations[0].filter = 7
+		project.sessions[0].observations[0].frequency1 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
+		
+		project.sessions[0].observations[0].frequency1 = 38.0e6
+		project.sessions[0].observations[0].frequency2 = 90.0e6
+		project.sessions[0].observations[0].update()
+		self.assertFalse(project.validate())
 		
 	### Misc. ###
 	
@@ -755,7 +765,7 @@ class sdf_tests(unittest.TestCase):
 		"""Test project auto-update on render."""
 		
 		# Part 1 - frequency and duration
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		project.sessions[0].observations[1].frequency1 = 75e6
 		project.sessions[0].observations[1].duration = '00:01:31.000'
 
@@ -763,12 +773,12 @@ class sdf_tests(unittest.TestCase):
 		fh.write(project.render())
 		fh.close()
 		
-		project = sdf.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+		project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
 		self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
 		self.assertEqual(project.sessions[0].observations[1].dur, 91000)
 		
 		# Part 2 - frequency and duration (timedelta)
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		project.sessions[0].observations[1].frequency1 = 75e6
 		project.sessions[0].observations[1].duration = timedelta(minutes=1, seconds=31, microseconds=1000)
 
@@ -776,12 +786,12 @@ class sdf_tests(unittest.TestCase):
 		fh.write(project.render())
 		fh.close()
 		
-		project = sdf.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+		project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
 		self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
 		self.assertEqual(project.sessions[0].observations[1].dur, 91001)
 		
 		# Part 3 - frequency and start time
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		project.sessions[0].observations[1].frequency2 = 75e6
 		project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
 
@@ -789,13 +799,13 @@ class sdf_tests(unittest.TestCase):
 		fh.write(project.render())
 		fh.close()
 		
-		project = sdf.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+		project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
 		self.assertEqual(project.sessions[0].observations[1].freq2, 1643482384)
 		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
 		self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
 		
 		# Part 4 - frequency and start time (timedelta)
-		project = sdf.parseSDF(drxFile)
+		project = sdfADP.parseSDF(drxFile)
 		_MST = pytz.timezone('US/Mountain')
 		project.sessions[0].observations[1].frequency2 = 75e6
 		project.sessions[0].observations[1].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
@@ -804,7 +814,7 @@ class sdf_tests(unittest.TestCase):
 		fh.write(project.render())
 		fh.close()
 		
-		project = sdf.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+		project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
 		self.assertEqual(project.sessions[0].observations[1].freq2, 1643482384)
 		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
 		self.assertEqual(project.sessions[0].observations[1].mpm,  30001)
@@ -819,7 +829,7 @@ class sdf_tests(unittest.TestCase):
 		self.testPath = None
 
 
-class sdf_test_suite(unittest.TestSuite):
+class sdf_adp_test_suite(unittest.TestSuite):
 	"""A unittest.TestSuite class which contains all of the lsl.common.sdf units 
 	tests."""
 	
@@ -827,7 +837,7 @@ class sdf_test_suite(unittest.TestSuite):
 		unittest.TestSuite.__init__(self)
 		
 		loader = unittest.TestLoader()
-		self.addTests(loader.loadTestsFromTestCase(sdf_tests)) 
+		self.addTests(loader.loadTestsFromTestCase(sdf_adp_tests)) 
 
 
 if __name__ == '__main__':

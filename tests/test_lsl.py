@@ -37,8 +37,11 @@ import test_imaging
 import test_progress
 import test_busy
 import test_mcs
+import test_mcs_adp
 import test_sdf
+import test_sdf_adp
 import test_meta
+import test_meta_adp
 
 
 __revision__  = "$Rev$"
@@ -55,41 +58,44 @@ class lsl_tests(unittest.TestSuite):
 
 		unittest.TestSuite.__init__(self)
 		
-		self.addTest(test_paths.paths_test_suite())
-		self.addTest(test_astro.astro_test_suite())
-		self.addTest(test_skymap.skymap_test_suite())
-		self.addTest(test_transform.transform_test_suite())
-		self.addTest(test_mathutil.mathutil_test_suite())
-		self.addTest(test_nec_util.nec_util_test_suite())
-		self.addTest(test_catalog.catalog_test_suite())
-		self.addTest(test_dp.dp_test_suite())
-		self.addTest(test_stations.stations_test_suite())
-		self.addTest(test_robust.robust_test_suite())
-		self.addTest(test_stattests.stattests_test_suite())
-		self.addTest(test_reader.reader_test_suite())
-		self.addTest(test_reader_adp.reader_adp_test_suite())
-		self.addTest(test_buffer.buffer_test_suite())
+		#self.addTest(test_paths.paths_test_suite())
+		#self.addTest(test_astro.astro_test_suite())
+		#self.addTest(test_skymap.skymap_test_suite())
+		#self.addTest(test_transform.transform_test_suite())
+		#self.addTest(test_mathutil.mathutil_test_suite())
+		#self.addTest(test_nec_util.nec_util_test_suite())
+		#self.addTest(test_catalog.catalog_test_suite())
+		#self.addTest(test_dp.dp_test_suite())
+		#self.addTest(test_stations.stations_test_suite())
+		#self.addTest(test_robust.robust_test_suite())
+		#self.addTest(test_stattests.stattests_test_suite())
+		#self.addTest(test_reader.reader_test_suite())
+		#self.addTest(test_reader_adp.reader_adp_test_suite())
+		#self.addTest(test_buffer.buffer_test_suite())
 		self.addTest(test_ldp.ldp_test_suite())
 		self.addTest(test_ldp_adp.ldp_adp_test_suite())
-		self.addTest(test_uvUtils.uvUtils_test_suite())
-		self.addTest(test_fx.fx_test_suite())
-		self.addTest(test_filterbank.filterbank_test_suite())
-		self.addTest(test_fakedata.fakedata_test_suite())
-		self.addTest(test_simdp.simdp_test_suite())
-		self.addTest(test_simvis.simvis_test_suite())
-		self.addTest(test_geodesy.geodesy_test_suite())
-		self.addTest(test_fitsidi.fitsidi_test_suite())
-		self.addTest(test_uvfits.uvfits_test_suite())
-		self.addTest(test_tsfits.tsfits_test_suite())
-		self.addTest(test_sdfits.sdfits_test_suite())
-		self.addTest(test_vdif.vdif_test_suite())
-		self.addTest(test_beamformer.beamformer_test_suite())
-		self.addTest(test_imaging.imaging_test_suite())
-		self.addTest(test_progress.progress_test_suite())
-		self.addTest(test_busy.busy_test_suite())
-		self.addTest(test_mcs.mcs_test_suite())
+		#self.addTest(test_uvUtils.uvUtils_test_suite())
+		#self.addTest(test_fx.fx_test_suite())
+		#self.addTest(test_filterbank.filterbank_test_suite())
+		#self.addTest(test_fakedata.fakedata_test_suite())
+		#self.addTest(test_simdp.simdp_test_suite())
+		#self.addTest(test_simvis.simvis_test_suite())
+		#self.addTest(test_geodesy.geodesy_test_suite())
+		#self.addTest(test_fitsidi.fitsidi_test_suite())
+		#self.addTest(test_uvfits.uvfits_test_suite())
+		#self.addTest(test_tsfits.tsfits_test_suite())
+		#self.addTest(test_sdfits.sdfits_test_suite())
+		#self.addTest(test_vdif.vdif_test_suite())
+		#self.addTest(test_beamformer.beamformer_test_suite())
+		#self.addTest(test_imaging.imaging_test_suite())
+		#self.addTest(test_progress.progress_test_suite())
+		#self.addTest(test_busy.busy_test_suite())
+		#self.addTest(test_mcs.mcs_test_suite())
+		self.addTest(test_mcs_adp.mcs_adp_test_suite())
 		self.addTest(test_sdf.sdf_test_suite())
-		self.addTest(test_meta.metabundle_test_suite())
+		self.addTest(test_sdf_adp.sdf_adp_test_suite())
+		#self.addTest(test_meta.metabundle_test_suite())
+		self.addTest(test_meta_adp.metabundle_adp_test_suite())
 
 
 def main(opts=None, args=None):

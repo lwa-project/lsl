@@ -1229,6 +1229,8 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 				junkFrame = mode.readFrame(fh)
 				foundMatch = True
 				break
+			except errors.eofError:
+				break
 			except errors.syncError:
 				fh.seek(-mfs+1, 1)
 				
@@ -1242,6 +1244,8 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 				for i in xrange(2):
 					junkFrame = mode.readFrame(fh)
 				foundMode = True
+			except errors.eofError:
+				break
 			except errors.syncError:
 				### Reset for the next mode...
 				fh.seek(0)
@@ -1280,6 +1284,8 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 				try:
 					junkFrame = mode.readFrame(fh)
 					foundMatch = True
+					break
+				except errors.eofError:
 					break
 				except errors.syncError:
 					fh.seek(-mfs+1, 1)
@@ -1348,6 +1354,19 @@ class TBFFile(LDPFileBase):
 			except errors.syncError:
 				self.fh.seek(-tbf.FrameSize+1, 1)
 				
+		# Skip over any DRX frames the start of the file
+		i = 0
+		while True:
+			try:
+				junkFrame = tbf.readFrame(self.fh)
+				break
+			except errors.syncError:
+				i += 1
+				self.fh.seek(-tbf.FrameSize+drx.FrameSize, 1)
+		if i == 0:
+			self.fh.seek(-tbf.FrameSize, 1)
+		self.fh.seek(-tbf.FrameSize, 1)
+		
 		return True
 		
 	def _describeFile(self):
@@ -1355,18 +1374,8 @@ class TBFFile(LDPFileBase):
 		Describe the TBF file.
 		"""
 		
-		# Skip over any DRX frames the start of the file
-		i = 0
+		# Read in frame
 		junkFrame = tbf.readFrame(self.fh)
-		while True:
-			try:
-				tbf.readFrame(self.fh)
-				break
-			except errors.syncError:
-				i += 1
-				self.fh.seek(-tbf.FrameSize+drx.FrameSize, 1)
-				
-		junkFrame = self.readFrame()
 		self.fh.seek(-tbf.FrameSize, 1)
 		
 		# Basic file information
@@ -1389,7 +1398,6 @@ class TBFFile(LDPFileBase):
 				firstFrameCount = cFrame.header.frameCount
 				start = junkFrame.getTime()
 				startRaw = junkFrame.data.timeTag
-			i += 1
 		self.fh.seek(marker)
 		self.mapper.sort()
 		
@@ -1522,7 +1530,9 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		for i in xrange(mfs):
 			try:
 				junkFrame = mode.readFrame(fh)
-				#foundMatch = True
+				foundMatch = True
+				break
+			except errors.eofError:
 				break
 			except errors.syncError:
 				fh.seek(-mfs+1, 1)
@@ -1537,6 +1547,8 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 				for i in xrange(2):
 					junkFrame = mode.readFrame(fh)
 				foundMode = True
+			except errors.eofError:
+				break
 			except errors.syncError:
 				### Reset for the next mode...
 				fh.seek(0)
@@ -1548,6 +1560,60 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		if foundMode:
 			break
 			
+	# There is an ambiguity that can arise for TBF data such that it *looks* 
+	# like DRX.  If the identified mode is DRX, skip halfway into the file and 
+	# veryfiy that it is still DRX.
+	if mode == drx:
+		## Sort out the frame size
+		mfs = mode.FrameSize
+		
+		## Seek half-way in
+		nFrames = os.path.getsize(filename)/mfs
+		fh.seek(nFrames/2*mfs)
+		
+		## Read a bit of data to try to find the right type
+		for mode in (drx, tbf):
+			### Set if we find a valid frame marker
+			foundMatch = False
+			### Set if we can read more than one valid successfully
+			foundMode = False
+			
+			### Sort out the frame size.
+			mfs = mode.FrameSize
+			
+			### Loop over the frame size to try and find what looks like valid data.  If
+			### is is found, set 'foundMatch' to True.
+			for i in xrange(mfs):
+				try:
+					junkFrame = mode.readFrame(fh)
+					foundMatch = True
+					break
+				except errors.eofError:
+					break
+				except errors.syncError:
+					fh.seek(-mfs+1, 1)
+					
+			### Did we strike upon a valid frame?
+			if foundMatch:
+				#### Is so, we now need to try and read more frames to make sure we have 
+				#### the correct type of file
+				fh.seek(-mfs, 1)
+				
+				try:
+					for i in xrange(4):
+						junkFrame = mode.readFrame(fh)
+					foundMode = True
+				except errors.syncError:
+					#### Reset for the next mode...
+					fh.seek(nFrames/2*mfs)
+			else:
+				#### Reset for the next mode...
+				fh.seek(nFrames/2*mfs)
+				
+			### Did we read more than one valid frame?
+			if foundMode:
+				break
+				
 	fh.close()
 	
 	# Raise an error if nothing is found

@@ -1093,6 +1093,10 @@ class TBF(Observation):
 		
 		failures = 0
 		# Basic - Sample size, frequency, and filter
+		if self.samples > 5*196000000:
+			if verbose:
+				print("[%i] Error: Invalid number of samples (%i > %s)" % (os.getpid(), self.samples, 5*196e6))
+			failures += 1
 		if self.freq1 < 219130984 or self.freq1 > 1928352663:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
@@ -1840,7 +1844,7 @@ class BeamStep(object):
 		failures = 0
 		# Basic - Delay and gain settings are correctly configured
 		if self.delays is not None:
-			if len(self.delays) != 520:
+			if len(self.delays) != 512:
 				failures += 1
 				if verbose:
 					print("[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid())
@@ -1849,7 +1853,7 @@ class BeamStep(object):
 				if verbose:
 					print("[%i] Error: Delays specified but gains were not" % os.getpid())
 		if self.gains is not None:
-			if len(self.gains) != 260:
+			if len(self.gains) != 256:
 				failures += 1
 				if verbose:
 					print("[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid())
@@ -1959,6 +1963,12 @@ def __parseCreateObsObject(obsTemp, beamTemps=None, verbose=False):
 			
 			f1 = word2freq(beamTemp['freq1'])
 			f2 = word2freq(beamTemp['freq2'])
+			
+			if beamTemp['delays'] is not None:
+				beamTemp['delays'] = beamTemp['delays'][:512]
+			if beamTemp['gains'] is not None:
+				beamTemp['gains']  = beamTemp['gains'][:256]
+				
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
 	else:
 		raise RuntimeError("Invalid mode encountered: %s" % mode)
