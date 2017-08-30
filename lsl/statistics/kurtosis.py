@@ -18,7 +18,8 @@ from scipy.stats import betaprime
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['mean', 'std', 'var', 'skew', 'getLimits', 'spectralFFT', 'spectralPower', '__version__', '__revision__', '__all__']
+__all__ = ['mean', 'std', 'var', 'skew', 'getLimits', 'spectralFFT', 'spectralPower', 
+		 '__version__', '__revision__', '__all__']
 
 
 def mean(M, N=1):

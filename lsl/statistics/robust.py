@@ -172,7 +172,7 @@ def mode(inputData, axis=None, dtype=None):
 					return data[1]
 			else:
 				wMin = data[-1] - data[0]
-				N = data.size/2 + data.size%2 
+				N = data.size / 2 + data.size % 2 
 				for i in xrange(0, N):
 					w = data[i+N-1] - data[i] 
 					if w < wMin:
@@ -520,6 +520,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 	if (nSeg/2)*2 == nSeg:
 		nSeg = nSeg + 1
 	minPts = nSeg*3
+	yp = y
 	if n < 1000:
 		lsqFit = 1
 		cc = numpy.polyfit(u, v, order)
@@ -537,7 +538,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 		r[0] = numpy.median(u[0:nPerSeg[0]])
 		s[0] = numpy.median(v[0:nPerSeg[0]])
 		i2 = nPerSeg[0]-1
-		for i in range(1,nSeg):
+		for i in range(1, nSeg):
 			i1 = i2
 			i2 = i1 + nPerSeg[i]
 			r[i] = numpy.median(u[i1:i2])
@@ -554,7 +555,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 			yFit = numpy.polyval(cc, u)
 			sigma, fracDev, nGood, biweights, scaledResids = checkfit(yp, yFit, __epsilon, __delta)
 			if nGood == 0:
-				return __processPoly(x0, y0, order, cc)
+				return 0
 			nGood = n - nGood
 		if nGood < minPts:
 			return 0
