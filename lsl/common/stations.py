@@ -20,7 +20,7 @@ import struct
 
 from lsl.common.paths import data as dataPath
 from lsl.common import mcs, mcsADP
-from lsl.common.constants import *
+from lsl.common.constants import c as speedOfLight
 from lsl.misc.mathutil import to_dB, from_dB
 
 __version__ = '2.1'
@@ -597,7 +597,7 @@ class FEE(object):
 		freq = data[:,0]*1e6
 		gai = data[:,3]
 		if not dB:
-			gai = from_dB(gain)
+			gai = from_dB(gai)
 			
 		# Return
 		return (freq, gai)
@@ -638,7 +638,7 @@ class Cable(object):
 	def __reduce__(self):
 		return (Cable, (self.id, self.length, self.vf, self.dd, self.a0, self.a1, self.aFreq, self.stretch))
 		
-	def __cmp__(self):
+	def __cmp__(self, y):
 		if self.id > y.id:
 			return 1
 		elif self.id < y.id:
@@ -666,7 +666,7 @@ class Cable(object):
 		collection of frequencies in Hz."""
 		
 		# Bulk delay for the cable
-		bulkDelay = self.length*self.stretch / (self.vf * c)
+		bulkDelay = self.length*self.stretch / (self.vf * speedOfLight)
 		
 		# Dispersion delay
 		dispDelay = self.dd * (self.length*self.stretch / 100.0) / numpy.sqrt(frequency / numpy.array(self.aFreq))
@@ -1670,10 +1670,10 @@ class PrototypeStation(LWAStation):
 		for ant in self.antennas:
 			stdpolPair = (ant.stand.id,ant.pol)
 			if stdpolPair in stdpolList:
-					protoAnts.append(ant)
-					protoAnts[-1].digitizer = stdpolList.index(stdpolPair) + 1
-					protoAnts[-1].board = 1
-		
+				protoAnts.append(ant)
+				protoAnts[-1].digitizer = stdpolList.index(stdpolPair) + 1
+				protoAnts[-1].board = 1
+				
 		# Sort the list of prototype antennas and return
 		protoAnts.sort(cmp=sortFcn)
 		return protoAnts

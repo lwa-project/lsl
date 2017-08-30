@@ -5,15 +5,16 @@ Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM)
 files (as defined in MCS0031, v5).
 """
 
-import os
-import copy
-
-from lsl.common.mcs import *
+from lsl.common.mcs import summary2string, parseCStruct, single2multi, \
+						STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, \
+						ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_NRPD, ME_MAX_NSEP, ME_MAX_NARB, \
+						ME_MAX_NDP1, ME_MAX_NDP2, ME_MAX_NDR
 from datetime import datetime
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parseSDM', '__version__', '__revision__', '__all__']
+__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parseSDM', 
+		 '__version__', '__revision__', '__all__']
 
 
 class SubSystemStatus(object):
@@ -31,7 +32,7 @@ class SubSystemStatus(object):
 	def __str__(self):
 		return "%s at %s: %s [%i = %s]" % (self.name, datetime.utcfromtimestamp(self.time), self.info, self.summary, summary2string(self.summary))
 		
-	def _binaryRead(self, fh):
+	def binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		subsystem_status_struct C structure and update the Python instance accordingly.
@@ -89,7 +90,7 @@ class SubSubSystemStatus(object):
 		else:
 			self.dr = dr
 			
-	def _binaryRead(self, fh):
+	def binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		subsubsystem_status_struct C structure and update the Python instance accordingly.
@@ -156,7 +157,7 @@ class StationSettings(object):
 		self.tbnGain = tbnGain
 		self.drxGain = drxGain
 		
-	def _binaryRead(self, fh):
+	def binaryRead(self, fh):
 		"""
 		Given an open file handle, interpret it in the context of a 
 		station_settings_struct C structure and update the Python instance accordingly.
@@ -198,7 +199,7 @@ class StationSettings(object):
 		self.aspATS = list(ssStruct.asp_ats)
 		
 		self.tbnGain = ssStruct.tbn_gain
-		self.drxgain = ssStruct.drx_gain
+		self.drxGain = ssStruct.drx_gain
 
 
 class SDM(object):
@@ -256,7 +257,7 @@ class SDM(object):
 		
 		updatedAntennas = []
 		for ant in antennas:
-			updatedAntennas.apppend(ant)
+			updatedAntennas.append(ant)
 			
 			index = self.antStatus.index(ant.id)
 			updatedAntennas[-1].status = self.antStatus[index]
@@ -277,15 +278,15 @@ def parseSDM(filename):
 	dynamic = SDM()
 	
 	# Sub-system status sections
-	dynamic.station._binaryRead(fh)
-	dynamic.shl._binaryRead(fh)
-	dynamic.asp._binaryRead(fh)
-	dynamic.dp._binaryRead(fh)
+	dynamic.station.binaryRead(fh)
+	dynamic.shl.binaryRead(fh)
+	dynamic.asp.binaryRead(fh)
+	dynamic.dp.binaryRead(fh)
 	for n in xrange(ME_MAX_NDR):
-		dynamic.dr[n]._binaryRead(fh)
+		dynamic.dr[n].binaryRead(fh)
 		
 	# Sub-sub-system status section
-	dynamic.status._binaryRead(fh)
+	dynamic.status.binaryRead(fh)
 	
 	# Antenna status and data path status
 	adpsStruct = parseCStruct("""
@@ -299,7 +300,7 @@ def parseSDM(filename):
 	dynamic.dpoStatus = single2multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
 	
 	# Station settings section
-	dynamic.settings._binaryRead(fh)
+	dynamic.settings.binaryRead(fh)
 	
 	fh.close()
 	

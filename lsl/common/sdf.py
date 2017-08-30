@@ -53,7 +53,7 @@ import copy
 import math
 import pytz
 import ephem
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime, timedelta
 
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
@@ -235,7 +235,6 @@ def parseTime(s, site=lwa1):
 				
 				# Get the position of the observer on the Earth and the Julian 
 				# Date of midnight UT for the day we want to map LST to
-				obs = site.getObserver()
 				dt = astroDate(year, month, day, 0, 0, 0)
 				jd = dt.to_jd()
 				
@@ -658,7 +657,7 @@ class Session(object):
 		self.logScheduler = False
 		self.logExecutive = False
 		
-		self.includeStationStatic= False
+		self.includeStationStatic = False
 		self.includeDesign = False
 		
 	def append(self, newObservation):
@@ -1171,7 +1170,7 @@ class TBN(Observation):
 			if verbose:
 				print("[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid())
 			failures += 1
-		if self.filter not in [1,2,3,4,5,6,7]:
+		if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
 			if verbose:
 				print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
 			failures += 1
@@ -1320,13 +1319,13 @@ class _DRXBase(Observation):
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1
-		if self.filter not in [1,2,3,4,5,6,7]:
+		if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
 			if verbose:
 				print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
 			failures += 1
 			
 		# Advanced - Target Visibility
-		if self.ra < 0 or self.ra >=24:
+		if self.ra < 0 or self.ra >= 24:
 			if verbose:
 				print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra))
 			failures += 1
@@ -1616,7 +1615,7 @@ class Stepped(Observation):
 		
 		failures = 0
 		# Basic - filter setup
-		if self.filter not in [1,2,3,4,5,6,7]:
+		if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
 			if verbose:
 				print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
 			failures += 1
@@ -1700,6 +1699,11 @@ class BeamStep(object):
 		self.MaxSNR = bool(MaxSNR)
 		self.delays = SpecDelays
 		self.gains = SpecGains
+		
+		self.dur = None
+		self.freq1 = None
+		self.freq2 = None
+		self.beam = None
 		
 		self.update()
 		
@@ -1852,7 +1856,7 @@ class BeamStep(object):
 			failures += 1
 		# Advanced - Target Visibility via RA/Dec & Az/El ranging
 		if self.RADec:
-			if self.c1 < 0 or self.c1 >=24:
+			if self.c1 < 0 or self.c1 >= 24:
 				if verbose:
 					print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.c1))
 				failures += 1
@@ -1876,7 +1880,7 @@ class BeamStep(object):
 			return False
 
 
-def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
+def __parseCreateObsObject(obsTemp, beamTemps=None, verbose=False):
 	"""Given a obsTemp dictionary of observation parameters and, optionally, a list of
 	beamTemp step parameters, return a complete Observation object corresponding to 
 	those values."""
@@ -1884,6 +1888,9 @@ def __parseCreateObsObject(obsTemp, beamTemps=[], verbose=False):
 	# If the observation ID is 0, do nothing.
 	if obsTemp['id'] == 0:
 		return None
+		
+	if beamTemps is None:
+		beamTemps = []
 		
 	# Create a time string for the start time in UTC.  This is a little tricky 
 	# because of the rounding to the nearest millisecond which has to be done

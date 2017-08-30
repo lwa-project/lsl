@@ -66,7 +66,7 @@ def DPDtodelay(combined):
 	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
 	
 	# Split
-	fine = combined & 15;
+	fine = combined & 15
 	course = (combined >> 4) & 4095
 	
 	# Convert to time

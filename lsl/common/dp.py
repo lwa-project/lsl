@@ -30,7 +30,8 @@ import _fir
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'delaytoDPD', 'DPDtodelay', 'gaintoDPG', 'DPGtogain', 'tbnFilter', 'drxFilter', 'SoftwareDP', '__version__', '__revision__', '__all__']
+__all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'delaytoDPD', 'DPDtodelay', 'gaintoDPG', 
+		 'DPGtogain', 'tbnFilter', 'drxFilter', 'SoftwareDP', '__version__', '__revision__', '__all__']
 
 fS = 196.0e6	# Hz
 T = 1.0		# seconds
@@ -327,7 +328,7 @@ def DPDtodelay(combined):
 	combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
 	
 	# Split
-	fine = combined & 15;
+	fine = combined & 15
 	course = (combined >> 4) & 4095
 	
 	# Convert to time
@@ -560,7 +561,7 @@ class SoftwareDP(object):
 		
 		# Make sure we have a list of lists
 		try:
-			nCoeff = len(coeffs[0])
+			len(coeffs[0])
 		except TypeError:
 			raise ValueError("Expected a list of lists for the coefficients.")
 		
@@ -618,7 +619,6 @@ class SoftwareDP(object):
 				taskList = []
 
 				usePool = True
-				progress = False
 			except ImportError:
 				usePool = False
 				

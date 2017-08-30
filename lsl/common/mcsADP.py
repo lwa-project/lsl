@@ -10,14 +10,6 @@ if sys.version_info > (3,):
 else:
 	import anydbm as dbm
 
-import re
-import aipy
-import math
-import numpy
-import struct
-from datetime import datetime
-from ctypes import *
-
 """
 Module that contains common values found in the MCS Joint Release 5 header file
 src/exec/me.h and other functions useful for working with the MCS metadata.  
@@ -59,8 +51,12 @@ The other functions:
 """
 
 import re
+import aipy
+import math
+import numpy
+import ctypes
 import struct
-from ctypes import *
+from datetime import datetime
 
 from lsl.common import adp as adpCommon
 
@@ -363,9 +359,9 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 	if charMode not in ('str', 'int'):
 		raise RuntimeError("Unknown character mode: '%s'" % charMode)
 	if charMode == 'str':
-		baseCharType = c_char
+		baseCharType = ctypes.c_char
 	else:
-		baseCharType = c_byte
+		baseCharType = ctypes.c_byte
 	
 	# Hold the basic fields and dimensions
 	fields = []
@@ -408,37 +404,37 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 		
 		## Basic data types
 		if dec in ('signed int', 'int'):
-			typ = c_int
+			typ = ctypes.c_int
 		elif dec == 'unsigned int':
-			typ = c_uint
+			typ = ctypes.c_uint
 		elif dec in ('signed short int', 'signed short', 'short int', 'short'):
-			typ = c_short
+			typ = ctypes.c_short
 		elif dec in ('unsigned short int', 'unsigned short'):
-			typ = c_ushort
+			typ = ctypes.c_ushort
 		elif dec in ('signed long int', 'signed long', 'long int', 'long'):
 			if IS_32BIT_PYTHON:
-				typ = c_longlong
+				typ = ctypes.c_longlong
 			else:
-				typ = c_long
+				typ = ctypes.c_long
 		elif dec in ('unsigned long int', 'unsigned long'):
 			if IS_32BIT_PYTHON:
-				typ = c_uint64
+				typ = ctypes.c_uint64
 			else:
-				typ = c_ulong
+				typ = ctypes.c_ulong
 		elif dec in ('signed long long', 'long long'):
-			typ = c_longlong
+			typ = ctypes.c_longlong
 		elif dec == 'unsigned long long':
-			typ = c_uint64
+			typ = ctypes.c_uint64
 		elif dec == 'float':
-			typ = c_float
+			typ = ctypes.c_float
 		elif dec == 'double':
-			typ = c_double
+			typ = ctypes.c_double
 		elif dec == 'char':
 			typ = baseCharType
 		elif dec == 'signed char':
-			typ = c_byte
+			typ = ctypes.c_byte
 		elif dec == 'unsigned char':
-			typ = c_ubyte
+			typ = ctypes.c_ubyte
 		else:
 			raise RuntimeError("Unparseable line: '%s' -> type: %s, name: %s, dims: %s, %s, %s %s" % (line, dec, name, d1, d2, d3, d4))
 		
@@ -469,13 +465,13 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 		raise RuntimeError("Unknown endianness: '%s'" % endianness)
 	
 	if endianness == 'little':
-		endianness = LittleEndianStructure
+		endianness = ctypes.LittleEndianStructure
 	elif endianness == 'big':
-		endianness = BigEndianStructure
+		endianness = ctypes.BigEndianStructure
 	elif endianness == 'network':
-		endianness = BigEndianStructure
+		endianness = ctypes.BigEndianStructure
 	else:
-		endiannes = Structure
+		endianness = ctypes.Structure
 	
 	# ctypes creation - actual
 	class MyStruct(endianness):
@@ -514,7 +510,7 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 			Return the size, in bytes, of the structure.
 			"""
 			
-			return sizeof(self)
+			return ctypes.sizeof(self)
 			
 		def returnDict(self):
 			"""
@@ -919,7 +915,6 @@ def _getRotationMatrix(theta, phi, psi, degrees=True):
 		
 	# Axis
 	u = numpy.array([numpy.cos(phi)*numpy.sin(theta), numpy.sin(phi)*numpy.sin(theta), numpy.cos(theta)])
-	ux, uy, uz = u
 	
 	# Rotation matrix
 	rot  = numpy.eye(3)*numpy.cos(psi) 
@@ -1195,8 +1190,8 @@ class MIBEntry(object):
 			""" % (MIB_INDEX_FIELD_LENGTH, MIB_VAL_FIELD_LENGTH), endianness='little')
 			
 		# Squeeze the binary string into the structure using ctypes magic
-		temp = create_string_buffer(value)
-		memmove(addressof(record), addressof(temp), sizeof(record))
+		temp = ctypes.create_string_buffer(value)
+		ctypes.memmove(ctypes.addressof(record), ctypes.addressof(temp), ctypes.sizeof(record))
 		
 		# Validate
 		if record.eType == MIB_REC_TYPE_BRANCH:

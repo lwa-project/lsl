@@ -18,7 +18,6 @@ import re
 import copy
 import glob
 import shutil
-import struct
 import tarfile
 import tempfile
 from datetime import datetime, timedelta
@@ -31,7 +30,10 @@ from lsl.misc.lru_cache import lru_cache
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 'getASPConfiguration', 'getASPConfigurationSummary', 'isValid', '__version__', '__revision__', '__all__']
+__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 
+		 'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 
+		 'getASPConfiguration', 'getASPConfigurationSummary', 'isValid', 
+		 '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
