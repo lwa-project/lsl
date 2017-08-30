@@ -22,10 +22,13 @@ class stations_tests(unittest.TestCase):
 	module."""
 
 	def test_station(self):
-		"""Test retrieving a stations from the stations module."""
+		"""Test retrieving stations from the stations module."""
 
 		lwa1 = stations.lwa1
 		self.assertTrue(isinstance(lwa1, stations.LWAStation))
+		
+		lwasv = stations.lwasv
+		self.assertTrue(isinstance(lwasv, stations.LWAStation))
 		
 	def test_observer(self):
 		"""Test the ephem.Observer portion of an LWAStation."""
@@ -65,6 +68,25 @@ class stations_tests(unittest.TestCase):
 		# Check independence
 		lwa1Prime.antennas[100].stand.id = 888
 		self.assertTrue(lwa1.antennas[100].stand.id != lwa1Prime.antennas[100].stand.id)
+		
+		lwasv = stations.lwasv
+		
+		# Pickle and re-load
+		out  = pickle.dumps(lwasv)
+		lwasvPrime = pickle.loads(out)
+		
+		# Test similarity
+		self.assertAlmostEqual(lwasv.lat, lwasvPrime.lat)
+		self.assertAlmostEqual(lwasv.long, lwasvPrime.long)
+		self.assertAlmostEqual(lwasv.elev, lwasvPrime.elev)
+		for i in xrange(512):
+			self.assertEqual(lwasv.antennas[i].id, lwasvPrime.antennas[i].id)
+			self.assertEqual(lwasv.antennas[i].stand.id, lwasvPrime.antennas[i].stand.id)
+			self.assertEqual(lwasv.antennas[i].digitizer, lwasvPrime.antennas[i].digitizer)
+			
+		# Check independence
+		lwasvPrime.antennas[100].stand.id = 888
+		self.assertTrue(lwasv.antennas[100].stand.id != lwasvPrime.antennas[100].stand.id)
 		
 	def test_ecef_conversion(self):
 		"""Test the stations.geo2ecef() function."""
