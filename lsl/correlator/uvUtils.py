@@ -19,21 +19,22 @@ coverage and time delays.  The functions in the module:
 
 import numpy
 
-from lsl.common.paths import data as dataPath
-from lsl.common.constants import *
 from lsl.common.stations import lwa1
+from lsl.common.constants import deg2rad, c as speedOfLight
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 'uvUtilsError', '__version__', '__revision__', '__all__']
+__all__ = ['getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 
+		 'uvUtilsError', '__version__', '__revision__', '__all__']
 
 
 class uvUtilsError(Exception):
 	"""Base exception class for this module"""
-
-	def __init__(self, strerror):
-		self.strerror = strerror
 	
+	def __init__(self, strerror, *args, **kwds):
+		self.strerror = strerror
+		super(uvUtilsError, self).__init__(*args, **kwds)
+		
 	def __str__(self):
 		return "%s" % self.strerror
 
@@ -115,7 +116,7 @@ def antenna2baseline(ant1, ant2, antennas, antennas2=None, BaselineList=None, In
 		else:
 			i = i + 1
 	else:
-			return -1
+		return -1
 
 
 def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto=False):
@@ -147,7 +148,6 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
 	except (AttributeError, AssertionError):
 		freq = numpy.array(freq, ndmin=1)
 		
-	N = len(antennas)
 	baselines = getBaselines(antennas, IncludeAuto=IncludeAuto, Indicies=True)
 	Nbase = len(baselines)
 	Nfreq = freq.size
@@ -171,11 +171,11 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
 		# Go from a east, north, up coordinate system to a celestial equation, 
 		# east, north celestial pole system
 		xyzPrime = antennas[i].stand - antennas[j].stand
-		xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+		xyz = trans1*numpy.matrix([[xyzPrime[0]], [xyzPrime[1]], [xyzPrime[2]]])
 		
 		# Go from CE, east, NCP to u, v, w
 		temp = trans2*xyz
-		uvw[k,:,:] = temp[:,0] * freq.ravel() / c
+		uvw[k,:,:] = temp[:,0] * freq.ravel() / speedOfLight
 		
 	uvw.shape = (Nbase,3)+freq.shape
 	
@@ -227,10 +227,10 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6, site=lwa1):
 		vRange1 = numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*numpy.sin(dec2) + xyz[2]*numpy.cos(dec2)
 		vRange2 = -numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*numpy.sin(dec2) + xyz[2]*numpy.cos(dec2)
 		
-		uvTrack[count,0,0:256] = uRange * freq / numpy.array(c)
-		uvTrack[count,1,0:256] = vRange1 * freq / numpy.array(c)
-		uvTrack[count,0,256:512] = uRange[::-1] * freq / numpy.array(c)
-		uvTrack[count,1,256:512] = vRange2[::-1] * freq / numpy.array(c)
+		uvTrack[count,0,0:256] = uRange * freq / numpy.array(speedOfLight)
+		uvTrack[count,1,0:256] = vRange1 * freq / numpy.array(speedOfLight)
+		uvTrack[count,0,256:512] = uRange[::-1] * freq / numpy.array(speedOfLight)
+		uvTrack[count,1,256:512] = vRange2[::-1] * freq / numpy.array(speedOfLight)
 		count = count + 1
 		
 	return uvTrack

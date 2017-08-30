@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
-from __future__ import print_function
-import sys
-if sys.version_info > (3,):
-	xrange = range
-	long = int
-
 """
 Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main python functions in this module are:
@@ -34,14 +27,11 @@ of the data, including various window functions and time averaging.
 	All of the functions here now return all 'LFFT' channels.
 """
 
-import os
-import sys
 import ephem
 import numpy
 
-from lsl.common.constants import c as vLight
+from lsl.common.constants import c as speedOfLight
 from lsl.common import dp as dp_common
-from lsl.common.constants import *
 from lsl.correlator import uvUtils
 
 import _spec
@@ -50,7 +40,8 @@ import _core
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes', '__version__', '__revision__', '__all__']
+__all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes', 
+		 '__version__', '__revision__', '__all__']
 
 
 def pol2pol(pol):
@@ -152,9 +143,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=noWindow, verbose=False, Sam
 		doFFTShift = False
 		
 	# Match the X and Y stand data
-	antennas1 = [a for a in antennas if a.pol == 0]
 	signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == 0]
-	antennas2 = [a for a in antennas if a.pol == 1]
 	signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == 1]
 	if len(signalsIndex1) != len(signalsIndex2):
 		raise RuntimeError("Supplied data does not contain an equal number of X and Y signals.")
@@ -219,11 +208,10 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == pol1]
 	antennas2 = [a for a in antennas if a.pol == pol2]
 	signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
-
+	
 	nStands = len(antennas1)
 	baselines = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=True)
-	nBL = len(baselines)
-
+	
 	# Figure out if we are working with complex (I/Q) data or only real.  This
 	# will determine how the FFTs are done since the real data mirrors the pos-
 	# itive and negative Fourier frequencies.
@@ -255,6 +243,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		else:
 			azPC = phaseCenter[0]*numpy.pi/180.0
 			elPC = phaseCenter[1]*numpy.pi/180.0
+			
 	source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
 					  numpy.cos(elPC)*numpy.cos(azPC), 
 					  numpy.sin(elPC)])
@@ -268,8 +257,8 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		xyz1 = numpy.array([antennas1[i].stand.x, antennas1[i].stand.y, antennas1[i].stand.z])
 		xyz2 = numpy.array([antennas2[i].stand.x, antennas2[i].stand.y, antennas2[i].stand.z])
 		
-		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / vLight
-		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / vLight
+		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / speedOfLight
+		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / speedOfLight
 	if not numpy.isfinite(delays1.max()):
 		delays1[numpy.where( ~numpy.isfinite(delays1) )] = delays1[numpy.where( numpy.isfinite(delays1) )].max()
 	if not numpy.isfinite(delays2.max()):
@@ -370,11 +359,10 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 	signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == pol1]
 	antennas2 = [a for a in antennas if a.pol == pol2]
 	signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
-
+	
 	nStands = len(antennas1)
 	baselines = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=True)
-	nBL = len(baselines)
-
+	
 	# Figure out if we are working with complex (I/Q) data or only real.  This
 	# will determine how the FFTs are done since the real data mirrors the pos-
 	# itive and negative Fourier frequencies.
@@ -419,8 +407,8 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		xyz1 = numpy.array([antennas1[i].stand.x, antennas1[i].stand.y, antennas1[i].stand.z])
 		xyz2 = numpy.array([antennas2[i].stand.x, antennas2[i].stand.y, antennas2[i].stand.z])
 		
-		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / vLight
-		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / vLight
+		delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / speedOfLight
+		delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / speedOfLight
 	if not numpy.isfinite(delays1.max()):
 		delays1[numpy.where( ~numpy.isfinite(delays1) )] = delays1[numpy.where( numpy.isfinite(delays1) )].max()
 	if not numpy.isfinite(delays2.max()):

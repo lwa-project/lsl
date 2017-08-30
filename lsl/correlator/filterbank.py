@@ -65,7 +65,7 @@ def fft(signal, N, P=1, window=noWindow):
 	details on using window functions.
 	"""
 	
-	filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N,P)
+	filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N, P)
 	
 	if usePyFFTW and filteredSignal.dtype in (numpy.complex64, numpy.complex128):
 		dd = filteredSignal.dtype
@@ -76,7 +76,7 @@ def fft(signal, N, P=1, window=noWindow):
 		
 		fbInput = numpy.empty(N, dtype=dd)
 		fbTemp = numpy.empty(N, dtype=dd)
-		for i in range(0,P):
+		for i in range(0, P):
 			fbInput[:] = filteredSignal[i*N:(i+1)*N]
 			forwardPlan(fbInput, fbTemp)
 			try:
@@ -86,7 +86,7 @@ def fft(signal, N, P=1, window=noWindow):
 				
 	else:
 		fbOutput = numpy.fft.fft(filteredSignal[0:N])
-		for i in range(1,P):
+		for i in range(1, P):
 			fbOutput += numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
 			
 	return fbOutput
