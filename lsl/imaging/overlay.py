@@ -174,7 +174,7 @@ def graticleRADec(ax, aa, phaseCenter='z', label=True, color='white'):
 			
 	# Lines of constant RA			
 	decs = numpy.linspace(-80, 80, 400)
-	ras = range(0,360,30)
+	ras = range(0, 360, 30)
 	
 	x = numpy.zeros(decs.size) + numpy.nan
 	y = numpy.zeros(decs.size) + numpy.nan

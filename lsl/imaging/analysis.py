@@ -8,8 +8,6 @@ Module for analyzing images.  Currently, this module supports:
 .. versionadded:: 1.1.0
 """
 
-import os
-import sys
 import math
 import numpy
 from scipy.signal import convolve, medfilt
@@ -90,7 +88,8 @@ def estimateBackground(image, window=32):
 	# Build up the interpolation function
 	backgroundX, backgroundY = backgroundX.ravel(), backgroundY.ravel()
 	backgroundBasis = backgroundBasis.ravel()
-	backgroundInterp = bisplrep(backgroundX, backgroundY, backgroundBasis, xb=0, xe=image.shape[0], yb=0, ye=image.shape[1], kx=3, ky=3)
+	backgroundInterp = bisplrep(backgroundX, backgroundY, backgroundBasis, 
+							xb=0, xe=image.shape[0], yb=0, ye=image.shape[1], kx=3, ky=3)
 		
 	# Evaluate
 	x, y = numpy.arange(image.shape[0]), numpy.arange(image.shape[1])
@@ -129,22 +128,22 @@ def findPointSources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.
 	
 	For additional information about the original IDL routines, see:
 	  http://idlastro.gsfc.nasa.gov/contents.html#C2
-  	"""
-  	
-  	# Maximum size of convolution box in pixels 
+	"""
+	
+	# Maximum size of convolution box in pixels 
 	maxbox = 13
 	
 	# Make sure that the FWHM is not too small and compute the corresponding 
 	# value for sigma
 	if fwhm < 1.0:
- 		fwhm = 1.0
- 	sigma = fwhm / (2*math.sqrt(2*math.log(2)))
- 	
- 	# Setup the source detection boxes
- 	## The detection radius is the larger of 1.5 sigma or 2 pixels
- 	radius = max([1.5*sigma, 2.0])			# Radius is the
- 	## The detection box size is the smaller of the radius or half the
- 	## maximum size of the convolution box
+		fwhm = 1.0
+	sigma = fwhm / (2*math.sqrt(2*math.log(2)))
+	
+	# Setup the source detection boxes
+	## The detection radius is the larger of 1.5 sigma or 2 pixels
+	radius = max([1.5*sigma, 2.0])			# Radius is the
+	## The detection box size is the smaller of the radius or half the
+	## maximum size of the convolution box
 	nHalf = min([int(radius),  (maxbox-1)/2])   	
 	## The size of the convolution box
 	nBox = 2*nHalf + 1
@@ -161,7 +160,7 @@ def findPointSources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.
 	## Coordinate setup
 	row = numpy.arange(nBox, dtype=numpy.float64) - nHalf
 	rx, ry = numpy.meshgrid(row, row)
-    ## Build the mask
+	## Build the mask
 	mask = (rx**2 + ry**2) <= radius**2
 	valid = numpy.where( mask )
 	pixels = int(mask.sum())

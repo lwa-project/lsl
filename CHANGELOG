@@ -2,10 +2,17 @@
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
+  * Added support for MCS working with ADP-based stations
+  * Added support for SDFs for ADP-based stations
+  * Addes support for metadata handling for ADP-based stations
   * Added support for ADP TBF data
   * Added support for ADP COR data
   * Added support for complex antenna response to lsl.sim.nec_util.NECPattern
   * Dropped support for block reads in lsl.reader.drx and lsl.reader.tbn
+  * Added a new interface attribute to lsl.common.stations.LWAStationBase instances
+  * Added support for auto-copy to the LWAUCF in the lsl.common.sdf and lsl.common.sdfADP modules
+  * Added a function to lsl.common.stations, getFullStations(), to return a list of full stations
+  * General code clean-up using pylint
 
 1.1.4
   * Fixed a missing import statement and a couple of bugs in splitTBN.py

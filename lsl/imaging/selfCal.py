@@ -15,11 +15,8 @@ supported self-calibration methods are:
 ..versionadded:: 0.5.5
 """
 
-import sys
-import math
 import numpy
 
-from lsl.imaging import utils
 from lsl.statistics import robust
 
 __version__ = '0.2'
@@ -79,9 +76,9 @@ def _buildAmplitudeA(aa, dataDict, simDict, chan, pol, refAnt=0):
 	
 	A = numpy.zeros((nBLs, nStands))
 	for i,(l,m) in enumerate(dataDict['bls'][pol]):
-			A[i,l] = 1.0
-			A[i,m] = 1.0
-			
+		A[i,l] = 1.0
+		A[i,m] = 1.0
+		
 	A = numpy.matrix(A)
 	return A
 

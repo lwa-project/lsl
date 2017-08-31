@@ -5,18 +5,15 @@ Deconvolution support for images made with :func:`lsl.imaging.utils.buildGridded
 """
 
 import numpy
-from aipy.img import ImgW
 from aipy.coord import eq2radec, top2azalt
 from aipy.fit import RadioFixedBody
-from scipy.signal import fftconvolve as convolve, convolve2d
+from scipy.signal import fftconvolve as convolve
 
 from lsl.sim.vis import buildSimData
 from lsl.imaging import utils
-from lsl.common import stations
-from lsl.correlator import uvUtils
 from lsl.astro import deg_to_dms, deg_to_hms
 from lsl.statistics.robust import std as rStd
-from lsl.misc.mathutil import gaussparams, gaussian2d
+from lsl.misc.mathutil import gaussian2d
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
@@ -733,6 +730,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
 	rChan = [chan[0], chan[-1]]
 	diff = img - mdl
 	diffScaled = 0.0*diff/gain
+	oldModel = mdl
 	oldRMS = diff.std()*1e6
 	oldDiff = diff*0.0
 	rHist = []

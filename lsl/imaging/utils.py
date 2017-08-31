@@ -36,7 +36,6 @@ import numpy
 import atexit
 import pyfits
 import shutil
-import string
 import tarfile
 import tempfile
 try:
@@ -931,7 +930,7 @@ class CorrelatedDataUV(object):
 
 
 try:
-	from pyrap.tables import *
+	from pyrap.tables import table
 	
 	# Stokes codes for CASA Measurement Sets
 	NumericStokesMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
@@ -1056,7 +1055,7 @@ try:
 			antennas = []
 			for i in xrange(lat.size):
 				enz = self.station.getENZOffset((lat[i], lng[i], elv[i]))
-				sid = int(ants.col('NAME')[i].translate(None, string.letters))
+				sid = int(ants.col('NAME')[i].translate(None, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'))
 				
 				stand = stations.Stand(sid, *enz)
 				antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
@@ -1266,9 +1265,12 @@ class ImgWPlus(aipy.img.ImgW):
 		if wgts is None:
 			wgts = []
 			for i in range(len(self.bm)):
-				if i == 0: wgts.append(numpy.ones_like(data))
-				else: wgts.append(numpy.zeros_like(data))
-		if len(self.bm) == 1 and len(wgts) != 1: wgts = [wgts]
+				if i == 0:
+					wgts.append(numpy.ones_like(data))
+				else:
+					wgts.append(numpy.zeros_like(data))
+		if len(self.bm) == 1 and len(wgts) != 1:
+			wgts = [wgts]
 		assert(len(wgts) == len(self.bm))
 		# Sort uvw in order of w
 		order = numpy.argsort(w)
@@ -1291,13 +1293,15 @@ class ImgWPlus(aipy.img.ImgW):
 			# Convolve with the W projection kernel
 			invker = numpy.fromfunction(lambda u,v: self.conv_invker(u,v,avg_w),
 				uv.shape)
-			if not invker2 is None: invker *= invker2
+			if not invker2 is None:
+				invker *= invker2
 			self.uv += ifft2Function(fft2Function(uv) * invker)
 			#self.uv += uv
 			for b in range(len(self.bm)):
 				self.bm[b] += ifft2Function(fft2Function(bm[b]) * invker)
 				#self.bm[b] += numpy.array(bm)[0,:,:]
-			if j >= len(w): break
+			if j >= len(w):
+				break
 			i = j
 			
 	def getFieldOfView(self):
@@ -1580,14 +1584,14 @@ def _radec_of(aa, az, alt):
 	pos = astro.equ_posn(RA, dec)
 	
 	# Correct for aberration
-	pos2 = astro.get_equ_aber(pos, site.date+astro.DJD_OFFSET)
+	pos2 = astro.get_equ_aber(pos, aa.date+astro.DJD_OFFSET)
 	dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
 	pos.ra = (pos.ra - dRA) % 360.0
 	pos.ra %= 360.0
 	pos.dec = pos.dec - dDec
 	
 	# Correct for nutation
-	pos2 = astro.get_equ_nut(pos, site.date+astro.DJD_OFFSET)
+	pos2 = astro.get_equ_nut(pos, aa.date+astro.DJD_OFFSET)
 	dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
 	pos.ra = (pos.ra - dRA) % 360.0
 	pos.ra %= 360.0
