@@ -16,7 +16,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import tbw
-from errors import *
+from errors import invalidStand, invalidDataSize, invalidDataType
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
@@ -122,9 +122,7 @@ class SimFrame(tbw.Frame):
 		self.dataBits = dataBits
 		self.obsTime = obsTime
 		self.xy = xy
-		
-		self.header = tbw.FrameHeader()
-		self.data = tbw.FrameData()
+		super(SimFrame, self).__init__()
 		
 	def __update(self):
 		"""

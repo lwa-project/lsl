@@ -1823,7 +1823,7 @@ class BeamStep(object):
 		failures = 0
 		# Basic - Delay and gain settings are correctly configured
 		if self.delays is not None:
-			if len(self.delays) != 520:
+			if len(self.delays) != 2*LWA_MAX_NSTD:
 				failures += 1
 				if verbose:
 					print("[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid())
@@ -1832,7 +1832,7 @@ class BeamStep(object):
 				if verbose:
 					print("[%i] Error: Delays specified but gains were not" % os.getpid())
 		if self.gains is not None:
-			if len(self.gains) != 260:
+			if len(self.gains) != LWA_MAX_NSTD:
 				failures += 1
 				if verbose:
 					print("[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid())
@@ -1948,6 +1948,14 @@ def __parseCreateObsObject(obsTemp, beamTemps=None, verbose=False):
 			
 			f1 = word2freq(beamTemp['freq1'])
 			f2 = word2freq(beamTemp['freq2'])
+			
+			if beamTemps['delays'] is not None:
+				if len(beamTemps['delays']) != 2*LWA_MAX_NSTD:
+					raise RuntimeError("Invalid number of delays for custom beamforming")
+			if beamTemps['gains'] is not None:
+				if len(beamTemps['gains']) != LWA_MAX_NSTD:
+					raise RuntimeError("Invalid number of gains for custom beamforming")
+					
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
 	else:
 		raise RuntimeError("Invalid mode encountered: %s" % mode)

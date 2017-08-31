@@ -9,7 +9,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import drx
-from errors import *
+from errors import invalidBeam, invalidTune, invalidPol, invalidDataSize, invalidDataType
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
@@ -119,12 +119,11 @@ class SimFrame(drx.Frame):
 		self.filterCode = filterCode
 		self.timeOffset = timeOffset
 		self.frameCount = frameCount
+		self.secondsCount = 0
 		self.obsTime = obsTime
 		self.flags = flags
 		self.iq = iq
-		
-		self.header = drx.FrameHeader()
-		self.data = drx.FrameData()
+		super(SimFrame, self).__init__()
 		
 	def __update(self):
 		"""
@@ -246,7 +245,7 @@ class SimFrame(drx.Frame):
 		rawFrame.tofile(fh)
 
 	def __str__(self):
-		if self.stand is None:
+		if self.beam is None:
 			return "Empty DRX SimFrame object"
 		else:
 			return "DRX SimFrame for beam %i, tunning %i, pol. %i @ time %i" % (self.beam, self.tune, self.pol, self.obsTime)

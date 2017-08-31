@@ -13,11 +13,11 @@ data writers.  These errors are currently meant to deal with things that can
 invalidate a frame or set of frames.
 """
 
-import numpy
-
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['baseSimError', 'invalidStand', 'invalidPol', 'invalidBeam', 'invalidTune', 'invalidDataSize', 'invalidDataType', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', '__version__', '__revision__', '__all__']
+__all__ = ['baseSimError', 'invalidStand', 'invalidPol', 'invalidBeam', 'invalidTune', 'invalidDataSize',
+		 'invalidDataType', 'listErrorCodes', 'MinErrorNo', 'MaxErrorNo', 
+		 '__version__', '__revision__', '__all__']
 
 
 MinErrorNo = 1
@@ -34,6 +34,7 @@ class baseSimError(IOError):
 		self.strerror = strerror
 		self.filename = None
 		self.args = (errno, strerror)
+		super(baseSimError, self).__init__()
 
 	def __str__(self):
 		return "%s" % self.strerror
@@ -50,6 +51,7 @@ class invalidStand(baseSimError):
 		self.strerror = 'Stand number is out of range (==0 or >258)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
+		super(invalidStand, self).__init__(self.strerror, errno=self.errno)
 
 
 class invalidPol(baseSimError):
@@ -63,6 +65,7 @@ class invalidPol(baseSimError):
 		self.strerror = 'Polarization is out of range (!=0 and !=1)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
+		super(invalidPol, self).__init__(self.strerror, errno=self.errno)
 
 
 class invalidBeam(baseSimError):
@@ -76,6 +79,7 @@ class invalidBeam(baseSimError):
 		self.strerror = 'Beam is out of range (==0 or >4)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
+		super(invalidBeam, self).__init__(self.strerror, errno=self.errno)
 
 
 class invalidTune(baseSimError):
@@ -89,6 +93,7 @@ class invalidTune(baseSimError):
 		self.strerror = 'Tunning is out of range (!=1 and !=2)'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
+		super(invalidTune, self).__init__(self.strerror, errno=self.errno)
 
 
 class invalidDataSize(baseSimError):
@@ -102,6 +107,7 @@ class invalidDataSize(baseSimError):
 		self.strerror = 'Data array size is not consistent with frame type'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
+		super(invalidDataSize, self).__init__(self.strerror, errno=self.errno)
 
 
 class invalidDataType(baseSimError):
@@ -115,6 +121,7 @@ class invalidDataType(baseSimError):
 		self.strerror = 'Data array has the wrong general kind'
 		self.filename = None
 		self.args = (self.errno, self.strerror)
+		super(invalidDataType, self).__init__(self.strerror, errno=self.errno)
 
 
 def listErrorCodes(errno=None):

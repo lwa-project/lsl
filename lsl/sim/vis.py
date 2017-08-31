@@ -78,15 +78,14 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
 """
 
 import os
-import sys
 import aipy
 import copy
 import math
+import ephem
 import numpy
 from scipy.interpolate import interp1d
 
 from lsl import astro
-from lsl.common import dp as dp_common
 from lsl.common.paths import data as dataPath
 from lsl.correlator import uvUtils
 from lsl.common.stations import lwa1
@@ -174,10 +173,12 @@ class RadioEarthSatellite(object):
 		assert(crdsys in ('eq','top'))
 		assert(ncrd in (2,3))
 		if crdsys == 'eq':
-			if ncrd == 2: return (self.ra, self.dec)
+			if ncrd == 2:
+				return (self.ra, self.dec)
 			return aipy.coord.radec2eq((self.ra, self.dec))
 		else:
-			if ncrd == 2: return (self.az, self.alt)
+			if ncrd == 2:
+				return (self.az, self.alt)
 			return aipy.coord.azalt2top((self.az, self.alt))
 			
 	def update_jys(self, afreqs):
@@ -243,11 +244,12 @@ class BeamAlm(aipy.amp.BeamAlm):
 		"""
 		
 		aipy.phs.Beam.__init__(self, freqs)
-		self.alm = [aipy.healpix.Alm(lmax,mmax) for i in range(deg+1)]
-		self.hmap = [aipy.healpix.HealpixMap(nside,scheme='RING',interp=True)
+		self.alm = [aipy.healpix.Alm(lmax, mmax) for i in range(deg+1)]
+		self.hmap = [aipy.healpix.HealpixMap(nside, scheme='RING', interp=True)
 			for a in self.alm]
 		for c in coeffs:
-			if c < len(self.alm): self.alm[-1-c].set_data(coeffs[c])
+			if c < len(self.alm):
+				self.alm[-1-c].set_data(coeffs[c])
 		self._update_hmap()
 		
 	def __responsePrimitive(self, top):
@@ -260,7 +262,7 @@ class BeamAlm(aipy.amp.BeamAlm):
 		"""
 		
 		top = [aipy.healpix.mk_arr(c, dtype=numpy.double) for c in top]
-		px,wgts = self.hmap[0].crd2px(*top, **{'interpolate':1})
+		px,wgts = self.hmap[0].crd2px(*top, interpolate=1)
 		poly = numpy.array([numpy.sum(h.map[px] * wgts, axis=-1) for h in self.hmap])
 		rv = numpy.polyval(poly, numpy.reshape(self.afreqs, (self.afreqs.size, 1)))
 		return rv
@@ -408,13 +410,16 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
 		Returns 'x' pol (rotate pi/2 for 'y').
 		"""
 		
-		az,alt = coord.top2azalt(top)
+		az,alt = aipy.coord.top2azalt(top)
 		zang = numpy.pi/2 - alt
 		if zang.size == 1:
 			zang = numpy.array([zang]); zang.shape = (1,)
-			az = numpy.array([az]); az.shape = (1,)
+			az = numpy.array([az])
+			az.shape = (1,)
 		a = 2 * numpy.arange(self.poly.shape[0], dtype=numpy.float)
-		a.shape = (1,) + a.shape; az.shape += (1,); zang.shape += (1,)
+		a.shape = (1,) + a.shape
+		az.shape += (1,)
+		zang.shape += (1,)
 		a = numpy.cos(numpy.dot(az, a))
 		a[:,0] = 0.5
 		s = numpy.dot(a, self.sigma)
@@ -777,7 +782,7 @@ class AntennaArray(aipy.amp.AntennaArray):
 				except AttributeError:
 					pass
 		if srcshape is not None:
-			  phs *= self.resolve_src(u, v, srcshape=srcshape)
+			phs *= self.resolve_src(u, v, srcshape=srcshape)
 		return phs.squeeze()
 		
 	def sim(self, i, j, pol='xx'):
@@ -865,7 +870,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 		try:
 			xw, yw = ForceGaussian
 			xw, yw = float(xw), float(yw)
-		except TypeError, ValueError:
+		except (TypeError, ValueError) as e:
 			xw = float(ForceGaussian)
 			yw = 1.0*xw
 			
@@ -1015,10 +1020,10 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 		srcTop = src.get_crds(crdsys='top', ncrd=3)
 		srcAzAlt = aipy.coord.top2azalt(srcTop)
 		if srcAzAlt[1] < 0:
-				if verbose:
-					print("  %s: below horizon" % name)
-				continue
-				
+			if verbose:
+				print("  %s: below horizon" % name)
+			continue
+			
 		## Topocentric coordinates for the gain pattern calculations
 		srcTop.shape = (1,3)
 		srcs_tp.append( srcTop )
@@ -1155,7 +1160,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
 	..versionchanged:: 0.4.0
 		Added the 'pols' keyword to only compute certain polarization components
 	"""
-
+	
 	# Update the JD if necessary
 	if jd is not None:
 		try:
@@ -1163,8 +1168,8 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
 		except TypeError:
 			jd = [jd]
 	else:
-			jd = [aa.get_jultime()]
-
+		jd = [aa.get_jultime()]
+		
 	# Build up output dictionary
 	freq = aa.get_afreqs()*1e9
 	if len(freq.shape) == 2:
@@ -1253,28 +1258,28 @@ def shiftData(dataDict, aa):
 	"""
 	
 	# Build the data dictionary to hold the shifted data
-	sftUVData = {'freq': (dataDict['freq']).copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
+	shftData = {'freq': dataDict['freq'].copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
 	if dataDict['isMasked']:
-		sftUVData['isMasked'] = True
+		shftData['isMasked'] = True
 	else:
-		sftUVData['isMasked'] = False
+		shftData['isMasked'] = False
 		
 	# Apply the coordinate shift all polarization pairs found in the original data
 	for pol in dataDict['vis'].keys():
-		sftUVData['bls'][pol] = copy.copy(dataDict['bls'][pol])
-		sftUVData['uvw'][pol] = []
-		sftUVData['vis'][pol] = copy.copy(dataDict['vis'][pol])
-		sftUVData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
-		sftUVData['msk'][pol] = copy.copy(dataDict['msk'][pol])
-		sftUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
+		shftData['bls'][pol] = copy.copy(dataDict['bls'][pol])
+		shftData['uvw'][pol] = []
+		shftData['vis'][pol] = copy.copy(dataDict['vis'][pol])
+		shftData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
+		shftData['msk'][pol] = copy.copy(dataDict['msk'][pol])
+		shftData['jd'][pol] = copy.copy(dataDict['jd'][pol])
 
 		for (i,j),m in zip(dataDict['bls'][pol], dataDict['msk'][pol]):
 			crds = aa.gen_uvw(j, i, src='z')[:,0,:]
 			if dataDict['isMasked']:
 				crds = crds.compress(numpy.logical_not(numpy.logical_not(m), axis=2))
-			sftUVData['uvw'][pol].append( crds )
+			shftData['uvw'][pol].append( crds )
 			
-	return sftUVData
+	return shftData
 
 
 def addBaselineNoise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
@@ -1316,20 +1321,20 @@ def addBaselineNoise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
 		SEFD = numpy.ones(nAnts)*SEFD
 		
 	# Build the data dictionary to hold the data with noise added
-	naUVData = {'freq': (dataDict['freq']).copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
+	bnData = {'freq': dataDict['freq'].copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
 	if dataDict['isMasked']:
-		naUVData['isMasked'] = True
+		bnData['isMasked'] = True
 	else:
-		naUVData['isMasked'] = False
+		bnData['isMasked'] = False
 		
 	# Copy the original data over and add in the noise
 	for pol in dataDict['vis'].keys():
-		naUVData['bls'][pol] = copy.copy(dataDict['bls'][pol])
-		naUVData['uvw'][pol] = copy.copy(dataDict['uvw'][pol])
-		naUVData['vis'][pol] = []
-		naUVData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
-		naUVData['msk'][pol] = copy.copy(dataDict['msk'][pol])
-		naUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
+		bnData['bls'][pol] = copy.copy(dataDict['bls'][pol])
+		bnData['uvw'][pol] = copy.copy(dataDict['uvw'][pol])
+		bnData['vis'][pol] = []
+		bnData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
+		bnData['msk'][pol] = copy.copy(dataDict['msk'][pol])
+		bnData['jd'][pol] = copy.copy(dataDict['jd'][pol])
 		
 		## Apply this to the visibilities
 		for bl in xrange(len(dataDict['vis'][pol])):
@@ -1339,6 +1344,6 @@ def addBaselineNoise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
 			visNoise = visNoiseSigma * (numpy.random.randn(*vShape) + 1j*numpy.random.randn(*vShape))
 			
 			### Apply
-			naUVData['vis'][pol].append( dataDict['vis'][pol][bl] + visNoise )
+			bnData['vis'][pol].append( dataDict['vis'][pol][bl] + visNoise )
 			
-	return naUVData
+	return bnData

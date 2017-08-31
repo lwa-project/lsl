@@ -22,7 +22,6 @@ from lsl.sim import tbw
 from lsl.sim import tbn
 from lsl.sim import drx
 from lsl.sim import vis
-from lsl.correlator import uvUtils
 from lsl.reader.tbn import filterCodes as TBNFilters
 from lsl.reader.drx import filterCodes as DRXFilters
 
@@ -49,7 +48,8 @@ def __basicTBW(fh, stands, nFrames, **kwargs):
 		samplesPerFrame = 1200
 
 	if verbose:
-		print("Simulating %i captures of %i-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands)))
+		print("Simulating %i captures of %i-bit TBW data for %i stands:" % \
+			(int(numpy.ceil(nFrames / 30000.0)), bits, len(stands)))
 
 	nCaptures = int(numpy.ceil(nFrames / 30000.0))
 	for capture in xrange(nCaptures):
@@ -99,7 +99,8 @@ def __basicTBN(fh, stands, nFrames, **kwargs):
 	lowerSpike = -sampleRate / 4.0
 	
 	if verbose:
-		print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands)))
+		print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
+			(nFrames, sampleRate/1e3, len(stands)))
 	
 	for i in xrange(nFrames):
 		if i % 1000 == 0 and verbose:
@@ -141,7 +142,8 @@ def __basicDRX(fh, stands, nFrames, **kwargs):
 	lowerSpike2 = -sampleRate / 3.0
 
 	if verbose:
-		print("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % (nFrames, sampleRate/1e6, len(stands), nTuning))
+		print("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % \
+			(nFrames, sampleRate/1e6, len(stands), nTuning))
 
 	beams = stands
 	for i in range(nFrames):
@@ -230,13 +232,13 @@ def basicSignal(fh, stands, nFrames, mode='DRX', filter=6, nTuning=2, bits=12, t
 		raise RuntimeError("Unknown observations mode: %s" % mode)
 
 
-def __getAntennaArray(station, stands, time, freqs):
+def __getAntennaArray(station, stands, utime, freqs):
 	"""
 	Given a LWA station object, a list of stands, an observation time, and
 	a list of frequencies in Hz, build an aipy AntennaArray object.
 	"""
 
-	return vis.buildSimArray(station, stands, freqs/1e9, jd=astro.unix_to_utcjd(time))
+	return vis.buildSimArray(station, stands, freqs/1e9, jd=astro.unix_to_utcjd(utime))
 
 
 def __getSourceParameters(aa, timestamp, srcs):
@@ -250,7 +252,7 @@ def __getSourceParameters(aa, timestamp, srcs):
 
 	# Compute the source parameters
 	srcs_tp = []
-	srcs_mp = []
+	srcs_mt = []
 	srcs_jy = []
 	srcs_fq = []
 	for name,src in srcs.iteritems():
@@ -259,7 +261,7 @@ def __getSourceParameters(aa, timestamp, srcs):
 
 		## Get parameters
 		top = src.get_crds(crdsys='top', ncrd=3)	# topo. coords.
-		map = src.map							# equitorial -> topo. rotation matrix
+		mat = src.map							# equitorial -> topo. rotation matrix
 		jys = src.get_jys()						# F_nu
 		frq = aa.get_afreqs()					# nu
 
@@ -276,12 +278,12 @@ def __getSourceParameters(aa, timestamp, srcs):
 
 		## Save values into the source arrays
 		srcs_tp.append( top )
-		srcs_mp.append( map )
+		srcs_mt.append( mat )
 		srcs_jy.append( jys )
 		srcs_fq.append( frq )
 
 	# Return the values as a dictionary
-	return {'topo': srcs_tp, 'trans': srcs_mp, 'flux': srcs_jy, 'freq': srcs_fq}
+	return {'topo': srcs_tp, 'trans': srcs_mt, 'flux': srcs_jy, 'freq': srcs_fq}
 
 
 def __buildSignals(aa, stands, srcParams, times, pol='x', phaseCenter='z'):
@@ -297,7 +299,7 @@ def __buildSignals(aa, stands, srcParams, times, pol='x', phaseCenter='z'):
 	Ntime = len(times)
 	
 	# Get the topocentric coorindates for the zenith
-	zen = aipycoord.azalt2top(numpy.array([[numpy.pi/4],[numpy.pi/2]]))
+	zen = aipycoord.azalt2top(numpy.array([[numpy.pi/4], [numpy.pi/2]]))
 	zen = numpy.squeeze(zen)
 	
 	# Update the phase center if necessary
@@ -366,7 +368,8 @@ def __pointSourceTBW(fh, stands, src, nFrames, **kwargs):
 		samplesPerFrame = 1200
 
 	if verbose:
-		print("Simulating %i captures of %-bit TBW data for %i stands:" % (int(numpy.ceil(nFrames / 30000.0)), bits, len(stands)))
+		print("Simulating %i captures of %i-bit TBW data for %i stands:" % \
+			(int(numpy.ceil(nFrames / 30000.0)), bits, len(stands)))
 
 	nCaptures = int(numpy.ceil(nFrames / 30000.0))
 	for capture in range(nCaptures):
@@ -428,7 +431,8 @@ def __pointSourceTBN(fh, stands, src, nFrames, **kwargs):
 	aa = __getAntennaArray(lwa_common.lwa1, stands, tStart, freqs)
 	
 	if verbose:
-		print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % (nFrames, sampleRate/1e3, len(stands)))
+		print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
+			(nFrames, sampleRate/1e3, len(stands)))
 	
 	for i in range(nFrames):
 		if i % 1000 == 0 and verbose:

@@ -18,7 +18,7 @@ dipoles.  See the `README.NEC` file included in the LSL data directory for
 more information about what is included.
 """
 
-from numpy import *
+from numpy import pi, abs, exp, log10, float_, complex_, zeros, array
 from lsl.misc.mathutil import regrid
 import os
 import re
@@ -27,8 +27,9 @@ import logging
 
 __version__   = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['CloseTo', 'open_and_get_nec_freq', 'change_nec_freq', 'calcIME', 'NECImpedance', 'NECPattern', 'whichNEC4', 
-	   '__version__', '__revision__', '__all__']
+__all__ = ['CloseTo', 'open_and_get_nec_freq', 'change_nec_freq', 'calcIME', 'NECImpedance', 
+		 'NECPattern', 'whichNEC4', 
+		 '__version__', '__revision__', '__all__']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
 
@@ -42,7 +43,7 @@ def CloseTo( x, y, epsilon=0.005 ):
 	absolute, tolerance of each other.  Tolerance epsilon is a keyword 
 	parameter with a default of 0.005.
 	"""
-
+	
 	return ( 2.0*abs(x-y)/(x+y) < epsilon )
 
 
@@ -51,12 +52,12 @@ def open_and_get_nec_freq(fname):
 	Open a NEC output file and return a tuple containing the open file 
 	object and the first frequency found in the file (MHz).
 	"""
-
+	
 	f = open(fname)
-
+	
 	# Start at beginning of file
 	f.seek(0)
-
+	
 	# skip all lines until a line containing "STRUCTURE SPECIFICATION": this
 	# effectively skips all comments (from CM cards) and text resulting from
 	# reading Numerical Green's Function parts. Of course, if a user writes
@@ -81,7 +82,7 @@ def open_and_get_nec_freq(fname):
 			break
 	else:
 		raise RuntimeError("Frequency value not found")
-	
+		
 	_NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
 	return (f, freq)
 
@@ -98,7 +99,7 @@ def change_nec_freq(necname, freq):
 	for i in range(len(lines)):
 		if lines[i][:2] == 'FR':
 			_NEC_UTIL_LOG.debug("Found line : %s", lines[i])
-			vals = re.split(',| +',lines[i])
+			vals = re.split(',| +', lines[i])
 			_NEC_UTIL_LOG.debug("Vals = %s", vals)
 			vals[5] = "%.2f" % freq
 			lines[i] = " ".join(vals)
@@ -145,11 +146,11 @@ class NECImpedance:
 		RP 0,91,1,1000,0.,0.,1.0,1.0
 
 	"""
-
+	
 	def __init__(self, necname):
 		outname = os.path.splitext(necname)[0] + '.out'
 		f = open(outname)
-
+		
 		# Start at beginning of file
 		f.seek(0)
 		
@@ -158,10 +159,11 @@ class NECImpedance:
 		# reading Numerical Green's Function parts. Of course, if a user writes
 		# "STRUCTURE SPECIFICATION" in his comment lines, this still fails...
 		for line in f:
-			if line.find('STRUCTURE SPECIFICATION') >= 0: break
+			if line.find('STRUCTURE SPECIFICATION') >= 0:
+				break
 		else:
 			raise RuntimeError("STRUCTURE SPECIFICATION not found!")
-
+			
 		freqs = []
 		impedances = []
 		while (True):
@@ -180,7 +182,7 @@ class NECImpedance:
 			else:
 				_NEC_UTIL_LOG.debug("No more freqs...")
 				break
-			_NEC_UTIL_LOG.debug("Found frequency %f MHz",freq)
+			_NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
 			for line in f:
 				if line.find('ANTENNA INPUT PARAMETERS') >= 0:
 					break
@@ -196,14 +198,14 @@ class NECImpedance:
 			for line in f:
 				_NEC_UTIL_LOG.debug(line.strip())
 				break
-
+				
 			# Here we need to add a space before - signs that
 			# are not preceded by an E, so it will parse
-			line = re.sub(r'(\d)-',r'\1 -',line)
+			line = re.sub(r'(\d)-', r'\1 -', line)
 			re_z = float(line.split()[6])
 			im_z = float(line.split()[7])
 			freqs.append(freq)
-			impedances.append(complex(re_z,im_z))
+			impedances.append(complex(re_z, im_z))
 			
 		self.freqs = array(freqs)
 		self.z = array(impedances)
@@ -226,7 +228,7 @@ class NECPattern:
 		Added a new "antenna_pat_complex attribute to store the 
 		complex antenna pattern
 	"""
-        
+	
 	def __init__(self, necname, freq, rerun = True):
 		# Modify NEC file to set FR card to use "freq"
 		
@@ -236,23 +238,23 @@ class NECPattern:
 		# 0 to 359, where 0 is North and alt (altitude) runs from 0 to 89 , 
 		# where 0 is the horizon The default pattern is all zeros (isotropic 
 		# response)
-		self.antenna_pat_dB=zeros(shape=(360,90),dtype=float_)
-		self.antenna_pat_complex=zeros(shape=(360,90),dtype=complex_)
-
+		self.antenna_pat_dB = zeros(shape=(360,90),dtype=float_)
+		self.antenna_pat_complex = zeros(shape=(360,90),dtype=complex_)
+		
 		outname = os.path.splitext(necname)[0] + '.out'
 		try:
 			f, filefreq = open_and_get_nec_freq(outname)
 		except:
 			print("NEC .out file not found!  Running NEC")
 			f = None
-		
-		if f is None or not CloseTo(filefreq,freq):
+			
+		if f is None or not CloseTo(filefreq, freq):
 			if rerun:
 				_NEC_UTIL_LOG.warning("NEC output file is at a different frequency \
 					than the requested frequency: re-running")
 				if f is not None:
 					f.close()
-				change_nec_freq(necname,freq)
+				change_nec_freq(necname, freq)
 
 				# Make sure we have NEC install
 				if whichNEC4() is None:
@@ -263,11 +265,11 @@ class NECPattern:
 				# takes 2 command line arguments instead of asking questions
 				# interactively. See Paul Ray for info.
 				cmdstr = "nec4d %s %s" % (necname, outname)
-				ret=os.system(cmdstr)
+				ret = os.system(cmdstr)
 				if ret != 0:
 					raise RuntimeError("Bad return value from nec2++ call : %d" % ret)       
 				f, filefreq = open_and_get_nec_freq(outname)
-				if not CloseTo(filefreq,freq):
+				if not CloseTo(filefreq, freq):
 					raise ValueError("NEC failed to generate a file with the correct frequency.")
 					
 			else:
@@ -291,21 +293,20 @@ class NECPattern:
 			self.__readRADIATION(f)
 		else:
 			self.__readEXCITATION(f)
-		
-
+			
 	def __readRADIATION(self, f):
 		"""
 		Private function to read in a RADIATION PATTERN section of a NEC
 		output file.
 		"""
-
+		
 		# Some versions of NEC2 output extraneous data after "RADIATION PATTERNS" before the actual data
 		# and column labels (e.g. RANGE = and EXP (-JKR) values ).  Discard until
 		# the true bottom of the column labels (look for DB) */
 		for line in f:
 			if line.find('DB') >= 0:
 				break
-
+				
 		n = 0
 		for line in f:
 			cols = line.split()
@@ -318,13 +319,13 @@ class NECPattern:
 			if theta < 0 or theta > 89 or phi > 359:
 				#print("Skipping ",phi,theta)
 				continue
-			powgain= float(cols[4])
-			phsgain= float(cols[6])
+			powgain = float(cols[4])
+			phsgain = float(cols[6])
 			#print phi, theta, powgain
 			self.antenna_pat_dB[phi,theta] = powgain
 			self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*exp(1j*phsgain*180/pi)
 			n += 1
-			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f @ %f deg", theta,phi,powgain,phsgain)
+			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f @ %f deg", theta, phi, powgain, phsgain)
 
 
 	def __readEXCITATION(self, f):
@@ -332,7 +333,7 @@ class NECPattern:
 		Private function to read in data stored in a collection of EXCITATION 
 		sections in a NEC output file.
 		"""
-
+		
 		n = 0
 		# We have already read the first line of the first entry, so start there
 		# The information we need is stored across the 15 lines following the 
@@ -347,7 +348,7 @@ class NECPattern:
 			if lineCount % 16 == 0:
 				fieldsAngle = parts[1].split()
 				fieldsCurrent = parts[11].split()
-
+				
 				# Direction of the incident radiation
 				theta = 90 - int(float(fieldsAngle[3]))
 				phi = int(float(fieldsAngle[6]))
@@ -362,7 +363,7 @@ class NECPattern:
 					self.antenna_pat_dB[phi,theta] = powcurr
 					self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*exp(1j*phscurr*pi/180)
 					n += 1
-					_NEC_UTIL_LOG.debug("theta %d phi %d current %f @ %f deg", theta,phi,powcurr,phscurr)
+					_NEC_UTIL_LOG.debug("theta %d phi %d current %f @ %f deg", theta, phi, powcurr, phscurr)
 
 
 def whichNEC4():
@@ -371,10 +372,10 @@ def whichNEC4():
 	current path.  None otherwise.  This is useful for making sure that NEC
 	is installed before trying to run something.
 	"""
-
+	
 	def is_exe(fpath):
 		return os.path.exists(fpath) and os.access(fpath, os.X_OK)
-
+		
 	fpath, fname = os.path.split('nec4d')
 	if fpath:
 		if is_exe('nec4d'):
@@ -384,5 +385,5 @@ def whichNEC4():
 			exe_file = os.path.join(path, 'nec4d')
 			if is_exe(exe_file):
 				return exe_file
-
+				
 	return None

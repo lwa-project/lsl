@@ -16,7 +16,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import tbn
-from errors import *
+from errors import invalidStand, invalidPol, invalidDataSize, invalidDataType
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
@@ -116,9 +116,7 @@ class SimFrame(tbn.Frame):
 		self.frameCount = frameCount
 		self.obsTime = obsTime
 		self.iq = iq
-		
-		self.header = tbn.FrameHeader()
-		self.data = tbn.FrameData()
+		super(SimFrame, self).__init__()
 		
 	def __update(self):
 		"""
