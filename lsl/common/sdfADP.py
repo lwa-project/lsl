@@ -1964,11 +1964,11 @@ def __parseCreateObsObject(obsTemp, beamTemps=None, verbose=False):
 			f1 = word2freq(beamTemp['freq1'])
 			f2 = word2freq(beamTemp['freq2'])
 			
-			if beamTemps['delays'] is not None:
-				if len(beamTemps['delays']) != 2*LWA_MAX_NSTD:
+			if beamTemp['delays'] is not None:
+				if len(beamTemp['delays']) != 2*LWA_MAX_NSTD:
 					raise RuntimeError("Invalid number of delays for custom beamforming")
-			if beamTemps['gains'] is not None:
-				if len(beamTemps['gains']) != LWA_MAX_NSTD:
+			if beamTemp['gains'] is not None:
+				if len(beamTemp['gains']) != LWA_MAX_NSTD:
 					raise RuntimeError("Invalid number of gains for custom beamforming")
 					
 			obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
