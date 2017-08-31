@@ -9,7 +9,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import drx
-from errors import invalidBeam, invalidTune, invalidPol, invalidDataSize, invalidDataType
+from lsl.sim.errors import invalidBeam, invalidTune, invalidPol, invalidDataSize, invalidDataType
 
 __version__ = '0.1'
 __revision__ = '$Rev$'

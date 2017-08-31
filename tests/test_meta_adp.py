@@ -13,6 +13,9 @@ __revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
+mdbFile = os.path.join(dataPath, 'tests', 'metadata.tgz')
+mdbFileOld0 = os.path.join(dataPath, 'tests', 'metadata-old-0.tgz')
+mdbFileOld1 = os.path.join(dataPath, 'tests', 'metadata-old-1.tgz')
 mdbFileADP = os.path.join(dataPath, 'tests', 'metadata-adp.tgz')
 
 
@@ -121,6 +124,18 @@ class metabundle_tests_adp(unittest.TestCase):
 		
 		# Unknown code
 		self.assertRaises(ValueError, metabundleADP.getASPConfigurationSummary, mdbFileADP, 'middle')
+		
+	def test_is_valid(self):
+		"""Test whether or not isValid works."""
+		
+		self.assertTrue(metabundleADP.isValid(mdbFileADP))
+		
+	def test_is_not_valid(self):
+		"""Test whether or not isValid works on LWA1 files."""
+		
+		self.assertFalse(metabundleADP.isValid(mdbFile))
+		self.assertFalse(metabundleADP.isValid(mdbFileOld0))
+		self.assertFalse(metabundleADP.isValid(mdbFileOld1))
 
 
 class metabundle_adp_test_suite(unittest.TestSuite):

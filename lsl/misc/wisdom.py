@@ -12,8 +12,7 @@ from datetime import datetime
 
 from lsl.common.paths import data as dataPath
 from lsl.common.busy import BusyIndicator
-
-import _wisdom
+from lsl.misc import _wisdom
 
 
 __version__ = "0.1"

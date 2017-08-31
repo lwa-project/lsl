@@ -16,6 +16,7 @@ __author__    = "Jayce Dowell"
 mdbFile = os.path.join(dataPath, 'tests', 'metadata.tgz')
 mdbFileOld0 = os.path.join(dataPath, 'tests', 'metadata-old-0.tgz')
 mdbFileOld1 = os.path.join(dataPath, 'tests', 'metadata-old-1.tgz')
+mdbFileADP = os.path.join(dataPath, 'tests', 'metadata-adp.tgz')
 
 class metabundle_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.common.metabundle
@@ -122,6 +123,16 @@ class metabundle_tests(unittest.TestCase):
 		
 		# Unknown code
 		self.assertRaises(ValueError, metabundle.getASPConfigurationSummary, mdbFile, 'middle')
+		
+	def test_is_valid(self):
+		"""Test whether or not isValid works."""
+		
+		self.assertTrue(metabundle.isValid(mdbFile))
+		
+	def test_is_not_valid(self):
+		"""Test whether or not isValid works on LWA-SV files."""
+		
+		self.assertFalse(metabundle.isValid(mdbFileADP))
 
 
 class metabundle_tests_old_0(unittest.TestCase):
@@ -197,6 +208,11 @@ class metabundle_tests_old_0(unittest.TestCase):
 		"""Test the station dynamic MIB utilties."""
 		
 		sm = metabundle.getSDM(mdbFileOld0)
+		
+	def test_is_valid(self):
+		"""Test whether or not isValid works."""
+		
+		self.assertTrue(metabundle.isValid(mdbFileOld0))
 
 
 class metabundle_tests_old_1(unittest.TestCase):
@@ -304,6 +320,11 @@ class metabundle_tests_old_1(unittest.TestCase):
 		
 		# Unknown code
 		self.assertRaises(ValueError, metabundle.getASPConfigurationSummary, mdbFileOld1, 'middle')
+		
+	def test_is_valid(self):
+		"""Test whether or not isValid works."""
+		
+		self.assertTrue(metabundle.isValid(mdbFileOld1))
 
 
 class metabundle_test_suite(unittest.TestSuite):

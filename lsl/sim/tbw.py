@@ -16,7 +16,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import tbw
-from errors import invalidStand, invalidDataSize, invalidDataType
+from lsl.sim.errors import invalidStand, invalidDataSize, invalidDataType
 
 __version__ = '0.2'
 __revision__ = '$Rev$'

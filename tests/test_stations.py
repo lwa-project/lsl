@@ -9,7 +9,7 @@ import unittest
 from datetime import datetime
 
 from lsl.common.paths import dataBuild as dataPath
-from lsl.common import stations
+from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
 
 
 __revision__ = "$Rev$"
@@ -64,7 +64,9 @@ class stations_tests(unittest.TestCase):
 			self.assertEqual(lwa1.antennas[i].id, lwa1Prime.antennas[i].id)
 			self.assertEqual(lwa1.antennas[i].stand.id, lwa1Prime.antennas[i].stand.id)
 			self.assertEqual(lwa1.antennas[i].digitizer, lwa1Prime.antennas[i].digitizer)
-			
+		self.assertEqual(lwa1.interface.mcs, lwa1Prime.interface.mcs)
+		self.assertEqual(lwa1.interface.sdf, lwa1Prime.interface.sdf)
+		
 		# Check independence
 		lwa1Prime.antennas[100].stand.id = 888
 		self.assertTrue(lwa1.antennas[100].stand.id != lwa1Prime.antennas[100].stand.id)
@@ -83,7 +85,9 @@ class stations_tests(unittest.TestCase):
 			self.assertEqual(lwasv.antennas[i].id, lwasvPrime.antennas[i].id)
 			self.assertEqual(lwasv.antennas[i].stand.id, lwasvPrime.antennas[i].stand.id)
 			self.assertEqual(lwasv.antennas[i].digitizer, lwasvPrime.antennas[i].digitizer)
-			
+		self.assertEqual(lwasv.interface.mcs, lwasvPrime.interface.mcs)
+		self.assertEqual(lwasv.interface.sdf, lwasvPrime.interface.sdf)
+		
 		# Check independence
 		lwasvPrime.antennas[100].stand.id = 888
 		self.assertTrue(lwasv.antennas[100].stand.id != lwasvPrime.antennas[100].stand.id)
@@ -98,6 +102,54 @@ class stations_tests(unittest.TestCase):
 		self.assertAlmostEqual(x, 6378137.0)
 		self.assertAlmostEqual(y, 0.0)
 		self.assertAlmostEqual(z, 0.0)
+		
+	def test_interfaces(self):
+		"""Test retrieving LSL interface information."""
+		
+		lwa1 = stations.lwa1
+		self.assertEqual(lwa1.interface.backend, 'lsl.common.dp')
+		self.assertEqual(lwa1.interface.mcs, 'lsl.common.mcs')
+		self.assertEqual(lwa1.interface.sdf, 'lsl.common.sdf')
+		self.assertEqual(lwa1.interface.metabundle, 'lsl.common.metabundle')
+		self.assertEqual(lwa1.interface.sdm, 'lsl.common.sdm')
+		
+		lwasv = stations.lwasv
+		self.assertEqual(lwasv.interface.backend, 'lsl.common.adp')
+		self.assertEqual(lwasv.interface.mcs, 'lsl.common.mcsADP')
+		self.assertEqual(lwasv.interface.sdf, 'lsl.common.sdfADP')
+		self.assertEqual(lwasv.interface.metabundle, 'lsl.common.metabundleADP')
+		self.assertEqual(lwasv.interface.sdm, 'lsl.common.sdmADP')
+		
+		lwana = stations.lwana
+		self.assertEqual(lwana.interface.backend, None)
+		self.assertEqual(lwana.interface.mcs, None)
+		self.assertEqual(lwana.interface.sdf, None)
+		self.assertEqual(lwana.interface.metabundle, None)
+		self.assertEqual(lwana.interface.sdm, None)
+		
+		proto = stations.prototypeSystem
+		self.assertEqual(proto.interface.backend, None)
+		self.assertEqual(proto.interface.mcs, None)
+		self.assertEqual(proto.interface.sdf, None)
+		self.assertEqual(proto.interface.metabundle, None)
+		self.assertEqual(proto.interface.sdm, None)
+		
+	def test_interface_modules(self):
+		"""Test retrieving LSL interface modules."""
+		
+		lwa1 = stations.lwa1
+		self.assertEqual(lwa1.interface.getModule('backend'), dp)
+		self.assertEqual(lwa1.interface.getModule('mcs'), mcs)
+		self.assertEqual(lwa1.interface.getModule('sdf'), sdf)
+		self.assertEqual(lwa1.interface.getModule('metabundle'), metabundle)
+		self.assertEqual(lwa1.interface.getModule('sdm'), sdm)
+		
+		lwasv = stations.lwasv
+		self.assertFalse(lwasv.interface.getModule('backend') == dp)
+		self.assertFalse(lwasv.interface.getModule('mcs') == mcs)
+		self.assertFalse(lwasv.interface.getModule('sdf') == sdf)
+		self.assertFalse(lwasv.interface.getModule('metabundle') == metabundle)
+		self.assertFalse(lwasv.interface.getModule('sdm') == sdm)
 		
 	def test_prototype(self):
 		"""Test retrieving a PrototypeStation from the stations module."""

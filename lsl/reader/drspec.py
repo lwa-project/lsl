@@ -40,10 +40,10 @@ import numpy
 
 from lsl.common import dp as dp_common
 from lsl.reader.drx import filterCodes as drxFilterCodes
-from _gofast import readDRSpec
-from _gofast import syncError as gsyncError
-from _gofast import eofError as geofError
-from errors import syncError, eofError
+from lsl.reader._gofast import readDRSpec
+from lsl.reader._gofast import syncError as gsyncError
+from lsl.reader._gofast import eofError as geofError
+from lsl.reader.errors import syncError, eofError
 
 __version__ = '0.3'
 __revision__ = '$Rev$'

@@ -84,6 +84,8 @@ _DRSUCapacityTB = 10
 # of samples
 _TBW_TIME_SCALE = 196000
 _TBW_TIME_GAIN = 5000
+# UCF Username RE
+_usernameRE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z]+)(\/(?P<subdir>[a-zA-Z0-9\/\+-_]+))?')
 
 
 def _getEquinoxEquation(jd):
@@ -114,13 +116,16 @@ def _getEquinoxEquation(jd):
 	return deltaPsi * math.cos(epsilon*math.pi/180.0)
 
 
-def parseTime(s, site=lwa1):
+def parseTime(s, station=lwa1):
 	"""
 	Given a timezone-aware datetime instance or a string in the format of 
 	(UTC) YYYY MM DD HH:MM:SS.SSS, return the corresponding UTC datetime object.
 	This function goes a little beyond what datetime.strptime does in the 
 	since that it handle both integer and float seconds as well as does the 
 	appropriate rounding to get millisecond precision.
+	
+	.. versionchanged:: 1.2.0
+		Renamed the 'site' keyword to 'station'
 	
 	.. versionchanged:: 1.0.0
 		Renamed to parseTime()
@@ -244,7 +249,7 @@ def parseTime(s, site=lwa1):
 				# Get the Greenwich apparent ST for LST using the longitude of 
 				# the site.  The site longitude is stored as radians, so convert
 				# to hours first.
-				GAST = LST - site.long*12/math.pi
+				GAST = LST - station.long*12/math.pi
 				
 				# Get the Greenwich mean ST by removing the equation of the 
 				# equinoxes (or some approximation thereof)
@@ -346,7 +351,7 @@ class Project(object):
 			self.projectOffice = ProjectOffice()
 		else:
 			self.projectOffice = projectOffice
-		
+			
 	def update(self):
 		"""Update the various sessions that are part of this project."""
 		
@@ -364,6 +369,10 @@ class Project(object):
 			if verbose:
 				print("[%i] Validating session %i" % (os.getpid(), sessionCount))
 			if not session.validate(verbose=verbose):
+				failures += 1
+				
+			if session.station != self.sessions[0].station:
+				print("[%i] Session station mis-match" % os.getpid())
 				failures += 1
 				
 			sessionCount += 1
@@ -436,6 +445,18 @@ class Project(object):
 		# actual number of observations
 		while (len(ses.observations) - len(poo)) > 0:
 			poo.append(None)
+			
+		# Combine the session comments together in an intelligent fashion
+		## Observer comments
+		if ses.comments:
+			if ses.ucfuser is not None:
+				clean = _usernameRE.sub('', ses.comments)
+				ses.comments = 'ucfuser:%s' % ses.ucfuser
+				if len(clean) > 0:
+					ses.comments += ';;%s' % clean
+		## Project office comments, including the data return method
+		if pos != 'None' and pos is not None:
+			pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
 			
 		## PI Information
 		output = ""
@@ -636,7 +657,7 @@ class Project(object):
 class Session(object):
 	"""Class to hold all of the observations in a session."""
 	
-	def __init__(self, name, id, observations=None, dataReturnMethod='DRSU', comments=None):
+	def __init__(self, name, id, observations=None, dataReturnMethod='DRSU', comments=None, station=lwa1):
 		self.name = name
 		self.id = int(id)
 		if observations is None:
@@ -644,6 +665,7 @@ class Session(object):
 		else:
 			self.observations = observations
 		self.dataReturnMethod = dataReturnMethod
+		self.ucfuser = None
 		self.comments = comments
 		
 		self.cra = 0
@@ -659,6 +681,22 @@ class Session(object):
 		
 		self.includeStationStatic = False
 		self.includeDesign = False
+		
+		self.station = station
+		
+	def setStation(self, station):
+		"""
+		Update the station used by the project for source computations.
+		
+		.. versionadded:: 1.2.0
+		"""
+		
+		if station.interface.sdf != 'lsl.common.sdf':
+			raise RuntimeError("Incompatible station: expected %s, got %s" % \
+							(station.interface.sdf, 'lsl.common.sdf'))
+			
+		self.station = station
+		self.update()
 		
 	def append(self, newObservation):
 		"""Add a new Observation to the list of observations."""
@@ -723,6 +761,20 @@ class Session(object):
 		
 		self.updateMIB[component] = int(interval)
 		
+	def setDataReturnMethod(self, method):
+		"""Set the data return method for the session.  Valid values are: UCF, DRSU, and 
+		'USB Harddrives'."""
+		
+		if method not in ('UCF', 'DRSU', 'USB Harddrives'):
+			raise ValueError("Unknown data return method: %s" % method)
+			
+		self.dataReturnMethod = method
+		
+	def setUCFUsername(self, username):
+		"""Set the username to use for UCF data copies."""
+		
+		self.ucfuser = username
+		
 	def update(self):
 		"""Update the various observations in the session."""
 		
@@ -781,7 +833,7 @@ class Session(object):
 			if verbose:
 				print("[%i] Validating observation %i" % (os.getpid(), observationCount))
 			
-			if not obs.validate(verbose=verbose):
+			if not obs.validate(station=self.station, verbose=verbose):
 				failures += 1
 			totalData += obs.dataVolume
 			
@@ -877,11 +929,11 @@ class Observation(object):
 		self.beam = None
 		self.dataVolume = None
 		
-		self.obsFEE = [[-1,-1] for n in xrange(260)]
-		self.aspFlt = [-1 for n in xrange(260)]
-		self.aspAT1 = [-1 for n in xrange(260)]
-		self.aspAT2 = [-1 for n in xrange(260)]
-		self.aspATS = [-1 for n in xrange(260)]
+		self.obsFEE = [[-1,-1] for n in xrange(LWA_MAX_NSTD)]
+		self.aspFlt = [-1 for n in xrange(LWA_MAX_NSTD)]
+		self.aspAT1 = [-1 for n in xrange(LWA_MAX_NSTD)]
+		self.aspAT2 = [-1 for n in xrange(LWA_MAX_NSTD)]
+		self.aspATS = [-1 for n in xrange(LWA_MAX_NSTD)]
 
 		self.gain = int(gain)
 		
@@ -921,7 +973,7 @@ class Observation(object):
 		"""Return the modified Julian Date corresponding to the date/time of the
 		self.start string."""
 		
-		utc = parseTime(self.start)
+		utc = parseTime(self.start)		## TODO:  We need to get the station informaiton here somehow
 		utc = Time(utc, format=Time.FORMAT_PY_DATE)
 		return int(utc.utc_mjd)
 
@@ -929,7 +981,7 @@ class Observation(object):
 		"""Return the number of milliseconds between the date/time specified in the
 		self.start string and the previous UT midnight."""
 		
-		utc = parseTime(self.start)
+		utc = parseTime(self.start)		## TODO:  We need to get the station informaiton here somehow
 		utcMidnight = datetime(utc.year, utc.month, utc.day, 0, 0, 0, tzinfo=_UTC)
 		diff = utc - utcMidnight
 		return int(round((diff.seconds + diff.microseconds/1000000.0)*1000.0))
@@ -992,7 +1044,7 @@ class Observation(object):
 		
 		return 1.0
 	
-	def validate(self, verbose=False):
+	def validate(self, station=lwa1, verbose=False):
 		"""Place holder for functions that evaluate the observation and return True 
 		if it is valid, False otherwise."""
 		
@@ -1069,7 +1121,7 @@ class TBW(Observation):
 		nBytes = nFrames * TBWSize * LWA_MAX_NSTD
 		return nBytes
 		
-	def validate(self, verbose=False):
+	def validate(self, station=lwa1, verbose=False):
 		"""Evaluate the observation and return True if it is valid, False
 		otherwise."""
 		
@@ -1152,7 +1204,7 @@ class TBN(Observation):
 		nBytes = nFrames * TBNSize * LWA_MAX_NSTD * 2
 		return nBytes
 		
-	def validate(self, verbose=False):
+	def validate(self, station=lwa1, verbose=False):
 		"""Evaluate the observation and return True if it is valid, False
 		otherwise.
 		
@@ -1234,8 +1286,8 @@ class _DRXBase(Observation):
 		"""
 		
 		# Validate
-		if stand < 0 or stand > 260:
-			raise ValueError("Stand number %i is out of range: 0 <= stand <= 260" % stand)
+		if stand < 0 or stand > LWA_MAX_NSTD:
+			raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
 		if beamGain < 0.0 or beamGain > 1.0:
 			raise ValueError("Beam BAM gain is out of range: 0.0 <= beamGain <= 1.0" % beamGain)
 		if dipoleGain < 0.0 or dipoleGain > 1.0:
@@ -1301,7 +1353,7 @@ class _DRXBase(Observation):
 		
 		return float(vis)/float(cnt)
 		
-	def validate(self, verbose=False):
+	def validate(self, station=lwa1, verbose=False):
 		"""Evaluate the observation and return True if it is valid, False
 		otherwise."""
 		
@@ -1333,9 +1385,9 @@ class _DRXBase(Observation):
 			if verbose:
 				print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
 			failures += 1
-		if self.computeVisibility() < 1.0:
+		if self.computeVisibility(station=station) < 1.0:
 			if verbose:
-				print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility()*100.0))
+				print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility(station=station)*100.0))
 			failures += 1
 			
 		# Advanced - Data Volume
@@ -1540,8 +1592,8 @@ class Stepped(Observation):
 		"""
 		
 		# Validate
-		if stand < 0 or stand > 260:
-			raise ValueError("Stand number %i is out of range: 0 <= stand <= 260" % stand)
+		if stand < 0 or stand > LWA_MAX_NSTD:
+			raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
 		if beamGain < 0.0 or beamGain > 1.0:
 			raise ValueError("Beam BAM gain is out of range: 0.0 <= beamGain <= 1.0" % beamGain)
 		if dipoleGain < 0.0 or dipoleGain > 1.0:
@@ -1609,7 +1661,7 @@ class Stepped(Observation):
 			
 		return float(vis)/float(cnt)
 		
-	def validate(self, verbose=False):
+	def validate(self, station=lwa1, verbose=False):
 		"""Evaluate the observation and return True if it is valid, False
 		otherwise."""
 		
@@ -1625,7 +1677,7 @@ class Stepped(Observation):
 		for step in self.steps:
 			if verbose:
 				print("[%i] Validating step %i" % (os.getpid(), stepCount))
-			if not step.validate(verbose=verbose):
+			if not step.validate(station=station, verbose=verbose):
 				failures += 1
 			if step.RADec != self.RADec:
 				if verbose:
@@ -1635,9 +1687,9 @@ class Stepped(Observation):
 			stepCount += 1
 			
 		# Advanced - Target Visibility
-		if self.computeVisibility() < 1.0:
+		if self.computeVisibility(station=station) < 1.0:
 			if verbose:
-				print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility()*100.0))
+				print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.computeVisibility(station=station)*100.0))
 			failures += 1
 			
 		# Advanced - Data Volume
@@ -1817,7 +1869,7 @@ class BeamStep(object):
 			
 		return pnt
 			
-	def validate(self, verbose=False):
+	def validate(self, station=lwa1, verbose=False):
 		"""Evaluate the step and return True if it is valid, False otherwise."""
 		
 		failures = 0
@@ -2008,9 +2060,9 @@ def parseSDF(filename, verbose=False):
 	obsTemp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
 			 'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
 			 'stpRADec': True, 'tbwBits': 12, 'tbwSamples': 0, 'gain': -1, 
-			 'obsFEE': [[-1,-1] for n in xrange(260)], 
-			 'aspFlt': [-1 for n in xrange(260)], 'aspAT1': [-1 for n in xrange(260)], 
-			 'aspAT2': [-1 for n in xrange(260)], 'aspATS': [-1 for n in xrange(260)]}
+			 'obsFEE': [[-1,-1] for n in xrange(LWA_MAX_NSTD)], 
+			 'aspFlt': [-1 for n in xrange(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in xrange(LWA_MAX_NSTD)], 
+			 'aspAT2': [-1 for n in xrange(LWA_MAX_NSTD)], 'aspATS': [-1 for n in xrange(LWA_MAX_NSTD)]}
 	beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
 	beamTemps = []
 	
@@ -2073,13 +2125,26 @@ def parseSDF(filename, verbose=False):
 			project.sessions[0].name = value
 			continue
 		if keyword == 'SESSION_REMPI':
+			mtch = _usernameRE.search(value)
+			if mtch is not None:
+				project.sessions[0].ucfuser = mtch.group('username')
+				if mtch.group('subdir') is not None:
+					project.sessions[0].ucfuser = os.path.join(project.sessions[0].ucfuser, mtch.group('subdir'))
 			project.sessions[0].comments = value
 			continue
 		if keyword == 'SESSION_REMPO':
 			project.projectOffice.sessions.append(None)
-			if value[:31] == 'Requested data return method is':
+			parts = value.split(';;', 1)
+			first = parts[0]
+			try:
+				second = parts[1]
+			except IndexError:
+				second = ''
+				
+			if first[:31] == 'Requested data return method is':
 				# Catch for project office comments that are data return related
-				project.sessions[0].dataReturnMethod = value[32:]
+				project.sessions[0].dataReturnMethod = first[32:]
+				project.projectOffice.sessions[0] = second
 			else:
 				# Catch for standard (not data related) project office comments
 				project.projectOffice.sessions[0] = value
@@ -2303,12 +2368,18 @@ def parseSDF(filename, verbose=False):
 			if len(beamTemps) == 0:
 				beamTemps.append( copy.deepcopy(beamTemp) )
 				beamTemps[-1]['id'] = ids[0]
-				beamTemps[-1]['delays'][ids[1]-1] = int(value)
+				try:
+					beamTemps[-1]['delays'][ids[1]-1] = int(value)
+				except IndexError:
+					raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
 			else:
 				if beamTemps[-1]['id'] != ids[0]:
 					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
 					beamTemps[-1]['id'] = ids[0]
-				beamTemps[-1]['delays'][ids[1]-1] = int(value)
+				try:
+					beamTemps[-1]['delays'][ids[1]-1] = int(value)
+				except IndexError:
+					raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
 			continue
 			
 		if keyword == 'OBS_BEAM_GAIN':
@@ -2318,7 +2389,7 @@ def parseSDF(filename, verbose=False):
 				try:
 					beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
 				except IndexError:
-					pass
+					raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_GAIN")
 			else:
 				if beamTemps[-1]['id'] != ids[0]:
 					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
@@ -2326,7 +2397,7 @@ def parseSDF(filename, verbose=False):
 				try:
 					beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
 				except IndexError:
-					pass
+					raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_GAIN")
 			continue
 			
 		# Session wide settings at the end of the observations

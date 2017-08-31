@@ -25,11 +25,11 @@ handle as an input and returns a fully-filled Frame object.
 import copy
 import numpy
 
-from  lsl.common import adp as adp_common
-from _gofast import readCOR
-from _gofast import syncError as gsyncError
-from _gofast import eofError as geofError
-from errors import syncError, eofError
+from lsl.common import adp as adp_common
+from lsl.reader._gofast import readCOR
+from lsl.reader._gofast import syncError as gsyncError
+from lsl.reader._gofast import eofError as geofError
+from lsl.reader.errors import syncError, eofError
 
 __version__ = '0.1'
 __revision__ = '$Rev$'

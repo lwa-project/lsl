@@ -25,7 +25,7 @@ import numpy
 from scipy.signal import freqz, lfilter
 from scipy.interpolate import interp1d
 
-import _fir
+from lsl.common import _fir
 
 
 __version__ = '0.6'

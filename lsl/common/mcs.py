@@ -696,7 +696,7 @@ def sid2string(sid):
 	elif sid == 18:
 		return "DR #5"
 	else:
-		return "ADP"
+		raise ValueError("Invalid sid code %i" % sid)
 
 
 def cid2string(cid):
@@ -787,10 +787,8 @@ def cid2string(cid):
 		return "OBE"
 	elif cid == 39:
 		return "SPC"
-	elif cid == 40:
-		return "TBF"
 	else:
-		return "COR"
+		raise ValueError("Invalid cid code %i" % cid)
 
 
 def mode2string(mode):
@@ -816,7 +814,7 @@ def mode2string(mode):
 	elif mode == 7:
 		return "DIAG1"
 	else:
-		return "TBF"
+		raise ValueError("Invalid observing mode %i" % mode)
 
 
 def single2multi(inputList, dim1, dim2=None, dim3=None, dim4=None):

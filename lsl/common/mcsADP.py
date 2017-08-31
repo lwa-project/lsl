@@ -685,8 +685,6 @@ def sid2string(sid):
 		return "SHL"
 	elif sid == 12:
 		return "ASP"
-	elif sid == 13:
-		return "DP"
 	elif sid == 14:
 		return "DR #1"
 	elif sid == 15:
@@ -697,8 +695,10 @@ def sid2string(sid):
 		return "DR #4"
 	elif sid == 18:
 		return "DR #5"
-	else:
+	elif sid == 19:
 		return "ADP"
+	else:
+		raise ValueError("Invalid sid code %i" % sid)
 
 
 def cid2string(cid):
@@ -739,8 +739,6 @@ def cid2string(cid):
 		return "RXP"
 	elif cid == 14:
 		return "FEP"
-	elif cid == 15:
-		return "TBW"
 	elif cid == 16:
 		return "TBN"
 	elif cid == 17:
@@ -791,8 +789,10 @@ def cid2string(cid):
 		return "SPC"
 	elif cid == 40:
 		return "TBF"
-	else:
+	elif cid == 41:
 		return "COR"
+	else:
+		raise ValueError("Invalid cid code %i" % cid)
 
 
 def mode2string(mode):
@@ -811,14 +811,14 @@ def mode2string(mode):
 		return "TRK_JOV"
 	elif mode == 4:
 		return "STEPPED"
-	elif mode == 5:
-		return "TBW"
 	elif mode == 6:
 		return "TBN"
 	elif mode == 7:
 		return "DIAG1"
-	else:
+	elif mode == 8:
 		return "TBF"
+	else:
+		raise ValueError("Invalid observing mode %i" % mode)
 
 
 def single2multi(inputList, dim1, dim2=None, dim3=None, dim4=None):

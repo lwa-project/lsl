@@ -5,6 +5,7 @@ Unit test for the lsl.common.sdf module.
 """
 
 import os
+import re
 import pytz
 import ephem
 import tempfile
@@ -17,7 +18,7 @@ except ImprotError:
 
 from lsl.common.paths import dataBuild as dataPath
 from lsl.common import sdf
-from lsl.common.stations import lwa1
+from lsl.common.stations import lwa1, lwasv
 
 
 __revision__ = "$Rev$"
@@ -120,7 +121,7 @@ class sdf_tests(unittest.TestCase):
 		# LST at LWA1
 		s1 = "LST 2013-01-08 19:42:00.000"
 		s2 = "UTC 2013-01-08 19:38:26.640"
-		self.assertEqual(sdf.parseTime(s1, site=lwa1), sdf.parseTime(s2))
+		self.assertEqual(sdf.parseTime(s1, station=lwa1), sdf.parseTime(s2))
 		
 	### TBW ###
 	
@@ -808,6 +809,52 @@ class sdf_tests(unittest.TestCase):
 		self.assertEqual(project.sessions[0].observations[1].freq2, 1643482384)
 		self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
 		self.assertEqual(project.sessions[0].observations[1].mpm,  30001)
+		
+	def test_set_station(self):
+		"""Test the set stations functionlity."""
+		
+		project = sdf.parseSDF(drxFile)
+		project.sessions[0].setStation(lwa1)
+		self.assertTrue(project.validate())
+		
+		self.assertRaises(RuntimeError, project.sessions[0].setStation, lwasv)
+		
+	def test_is_valid(self):
+		"""Test whether or not isValid works."""
+		
+		self.assertTrue(sdf.isValid(tbwFile))
+		self.assertTrue(sdf.isValid(tbnFile))
+		self.assertTrue(sdf.isValid(drxFile))
+		self.assertTrue(sdf.isValid(solFile))
+		self.assertTrue(sdf.isValid(jovFile))
+		self.assertTrue(sdf.isValid(stpFile))
+		self.assertTrue(sdf.isValid(spcFile))
+		
+	def test_is_not_valid(self):
+		"""Test whether or not isValid works on LWA-SV files."""
+		
+		self.assertFalse(sdf.isValid(tbfFile))
+		
+	def test_username(self):
+		"""Test setting auto-copy parameters."""
+		
+		project = sdf.parseSDF(drxFile)
+		project.sessions[0].setDataReturnMethod('UCF')
+		project.sessions[0].setUCFUsername('jdowell')
+		out = project.render()
+		
+		self.assertTrue(out.find('Requested data return method is UCF') > 0)
+		self.assertTrue(out.find('ucfuser:jdowell') > 0)
+		
+		fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
+		fh.write(out)
+		fh.close()
+		
+		project = sdf.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+		out = project.render()
+		
+		self.assertTrue(out.find('Requested data return method is UCF') > 0)
+		self.assertTrue(out.find('ucfuser:jdowell') > 0)
 		
 	def tearDown(self):
 		"""Remove the test path directory and its contents"""

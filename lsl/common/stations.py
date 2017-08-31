@@ -18,16 +18,18 @@ import numpy
 import ephem
 import struct
 
+from lsl.astro import DJD_OFFSET
 from lsl.common.paths import data as dataPath
 from lsl.common import mcs, mcsADP
 from lsl.common.constants import c as speedOfLight
 from lsl.misc.mathutil import to_dB, from_dB
 
-__version__ = '2.1'
+__version__ = '2.2'
 __revision__ = '$Rev$'
-__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'parseSSMIF', 
-	   'lwa1', 'lwavl', 'lwana', 'lwasv',  'PrototypeStation', 'prototypeSystem', 
-	   '__version__', '__revision__', '__all__']
+__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
+		 'parseSSMIF', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'getFullStations', 
+		 'PrototypeStation', 'prototypeSystem', 
+		 '__version__', '__revision__', '__all__']
 
 
 _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
@@ -91,10 +93,13 @@ class LWAStationBase(object):
 	  * ID code (id)
 	  * List of Antenna instances (antennas)
 	  
+	.. versionchanged:: 1.2.0
+		Added a new 'interface' keyword to reference a LSLInterface instance.
+	
 	.. versionadded:: 1.0.0
 	"""
 	
-	def __init__(self, name, id='', antennas=None):
+	def __init__(self, name, id='', antennas=None, interface=None):
 		self.name = name
 		self.id = id
 		
@@ -103,11 +108,16 @@ class LWAStationBase(object):
 		else:
 			self.antennas = antennas
 			
+		if interface is None:
+			self.interface = LSLInterface()
+		else:
+			self.interface = interface
+			
 	def __str__(self):
 		return "%s (%s) with %i antennas" % (self.name, self.id, len(self.antennas))
 		
 	def __reduce__(self):
-		return (LWAStationBase, (self.name, self.id, self.antennas))
+		return (LWAStationBase, (self.name, self.id, self.antennas, self.interface))
 		
 	def _sortAntennas(self, attr='digitizer'):
 		"""
@@ -162,6 +172,10 @@ class LWAStation(ephem.Observer, LWAStationBase):
 	  * getPols:  Return a list of polarizations
 	  * getCables: Return a list of cables
 	  
+	.. versionchanged:: 1.2.0
+		Added a new 'interface' attribute which provides referenves to various modules
+		to help interface with the station.
+	
 	.. versionchanged:: 1.0.0
 		Converted LWAStation to be an instance of LWAStationBase and ephem.Observer
 		to make it easier to work with ephem.Body objects.
@@ -172,8 +186,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		consistent with its purpose.
 	"""
 	
-	def __init__(self, name, lat, long, elev, id='', antennas=None):
-		LWAStationBase.__init__(self, name, id=id, antennas=antennas)
+	def __init__(self, name, lat, long, elev, id='', antennas=None, interface=None):
+		LWAStationBase.__init__(self, name, id=id, antennas=antennas, interface=interface)
 		ephem.Observer.__init__(self)
 		
 		self.lat = lat * numpy.pi/180.0
@@ -185,7 +199,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
 		
 	def __reduce__(self):
-		return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, self.antennas))
+		return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, self.antennas, self.interface))
 		
 	def compute(self, body):
 		"""
@@ -211,7 +225,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 			if JD:
 				# If the date is Julian, convert to Dublin Julian Date 
 				# which is used by ephem
-				date -= 2415020.0
+				date -= DJD_OFFSET
 			oo.date = date
 			
 		return oo
@@ -808,6 +822,41 @@ class ARX(object):
 			return (freq, data[:,2])
 		else:
 			raise ValueError("Unknown ARX filter '%s'" % filter)
+
+
+class LSLInterface(object):
+	"""
+	Object to store information about how to work with the station in LSL.
+	This includes names for the:
+	  * Backend module to use (backend)
+	  * MCS module to use (mcs)
+	  * SDF module to use (sdf)
+	  * Metadata module to use (metabundle)
+	  * SDM module to use (sdm)
+	
+	.. versionadded:: 1.2.0
+	"""
+	
+	def __init__(self, backend=None, mcs=None, sdf=None, metabundle=None, sdm=None):
+		self.backend = backend
+		self.mcs = mcs
+		self.sdf = sdf
+		self.metabundle = metabundle
+		self.sdm = sdm
+		
+	def __str__(self):
+		return "LSL Interfaces:\n Backend: %s\n MCS: %s\n SDF: %s\n Metadata: %s\n SDM: %s" % \
+				(self.backend, self.mcs, self.sdf, self.metabundle, self.sdm)
+		
+	def __reduce__(self):
+		return (LSLInterface, (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm))
+		
+	def getModule(self, which):
+		value = getattr(self, which)
+		if value is None:
+			raise RuntimeError("Unknown module for interface type '%s'" % which)
+		exec('import %s as tempModule' % value, None, locals())
+		return tempModule
 
 
 def __parseTextSSMIF(filename):
@@ -1583,10 +1632,26 @@ def parseSSMIF(filename):
 			
 	# Build a Station
 	try:
-		station = LWAStation(_id2name[idn], lat, lon, elv, id=idn, antennas=antennas)
+		## LSL interface support
+		if idn in ('VL',):
+			interface = LSLInterface(backend='lsl.common.dp', 
+								mcs='lsl.common.mcs', 
+								sdf='lsl.common.sdf', 
+								metabundle='lsl.common.metabundle', 
+								sdm='lsl.common.sdm')
+		elif idn in ('SV',):
+			interface = LSLInterface(backend='lsl.common.adp', 
+								mcs='lsl.common.mcsADP', 
+								sdf='lsl.common.sdfADP', 
+								metabundle='lsl.common.metabundleADP', 
+								sdm='lsl.common.sdmADP')
+		else:
+			interface = None
+			
+		station = LWAStation(_id2name[idn], lat, lon, elv, id=idn, antennas=antennas, interface=interface)
 	except KeyError:
 		station = LWAStation('New LWA Station', lat, lon, elv, id=idn, antennas=antennas)
-	
+		
 	# And return it
 	return station
 
@@ -1607,6 +1672,16 @@ _ssmifsv = os.path.join(dataPath, 'lwasv-ssmif.txt')
 lwasv = parseSSMIF(_ssmifsv)
 
 
+def getFullStations():
+	"""
+	Function to return a list of full stations.
+	
+	.. versionadded:: 1.2.0
+	"""
+	
+	return [lwa1, lwasv]
+
+
 class PrototypeStation(LWAStation):
 	"""
 	LWAStation class to provide backward compatiability to the 20-stand prototype 
@@ -1616,7 +1691,7 @@ class PrototypeStation(LWAStation):
 	def __init__(self, base):
 		pLat = base.lat * 180 / numpy.pi
 		pLng = base.long * 180 / numpy.pi
-	
+		
 		super(PrototypeStation, self).__init__('%s prototype' % base.name, pLat, pLng, base.elev, id='PS', antennas=copy.deepcopy(base.antennas))
 	
 	def __standsList(self, date):

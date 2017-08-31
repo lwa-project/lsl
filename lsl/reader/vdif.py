@@ -31,13 +31,12 @@ getThreadCount
 import copy
 from datetime import datetime
 
-from _gofast import readVDIF
-from _gofast import syncError as gsyncError
-from _gofast import eofError as geofError
-from errors import syncError, eofError
-
 from lsl import astro
 from lsl.common.mcs import datetime2mjdmpm
+from lsl.reader._gofast import readVDIF
+from lsl.reader._gofast import syncError as gsyncError
+from lsl.reader._gofast import eofError as geofError
+from lsl.reader.errors import syncError, eofError
 
 
 __version__ = '0.4'

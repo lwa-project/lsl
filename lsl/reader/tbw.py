@@ -41,11 +41,11 @@ getFramesPerObs
 import copy
 import numpy
 
-from  lsl.common import dp as dp_common
-from _gofast import readTBW
-from _gofast import syncError as gsyncError
-from _gofast import eofError as geofError
-from errors import syncError, eofError
+from lsl.common import dp as dp_common
+from lsl.reader._gofast import readTBW
+from lsl.reader._gofast import syncError as gsyncError
+from lsl.reader._gofast import eofError as geofError
+from lsl.reader.errors import syncError, eofError
 
 __version__ = '0.6'
 __revision__ = '$Rev$'

@@ -47,10 +47,10 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from _gofast import readDRX
-from _gofast import syncError as gsyncError
-from _gofast import eofError as geofError
-from errors import baseReaderError, syncError, eofError
+from lsl.reader._gofast import readDRX
+from lsl.reader._gofast import syncError as gsyncError
+from lsl.reader._gofast import eofError as geofError
+from lsl.reader.errors import baseReaderError, syncError, eofError
 
 __version__ = '0.8'
 __revision__ = '$Rev$'

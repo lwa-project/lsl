@@ -32,11 +32,7 @@ import numpy
 
 from lsl.common.constants import c as speedOfLight
 from lsl.common import dp as dp_common
-from lsl.correlator import uvUtils
-
-import _spec
-import _stokes
-import _core
+from lsl.correlator import uvUtils, _spec, _stokes, _core
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
