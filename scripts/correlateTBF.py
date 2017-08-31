@@ -18,7 +18,6 @@ from datetime import datetime, timedelta, tzinfo
 from lsl import astro
 from lsl.reader import tbf, errors
 from lsl.common import stations, metabundle, metabundleADP
-from lsl.statistics import robust
 from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2

@@ -7,7 +7,7 @@ import sys
 import getopt
 import urllib
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from lsl.common.paths import data as dataPath
 

@@ -8,8 +8,6 @@ at current system clock time
 Moved out of the lsl.astro module into this script and updated for LWA-1
 """
 
-import time
-import math
 import optparse
 
 from lsl.common import stations

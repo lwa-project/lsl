@@ -8,7 +8,6 @@ import pytz
 import numpy
 import getopt
 import pyfits
-from calendar import timegm
 from datetime import datetime
 
 from lsl import astro
@@ -21,7 +20,6 @@ from lsl.imaging import utils, overlay
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NumericStokes
 
-from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 

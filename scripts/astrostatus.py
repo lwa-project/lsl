@@ -3,11 +3,9 @@
 
 """Application to calculate real-time ephemeris for a LWA site."""
 
-import curses
 import math
 import time
-import traceback
-import sys, os
+import curses
 import optparse
 
 from lsl import astro

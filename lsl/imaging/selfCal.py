@@ -20,7 +20,7 @@ import numpy
 from lsl.statistics import robust
 
 __version__ = '0.2'
-__revision__ = '$Rev: 497 $'
+__revision__ = '$Rev$'
 __all__ = ['phaseOnly', 'delayOnly', 'delayAndPhase', '__version__', '__revision__', '__all__']
 
 

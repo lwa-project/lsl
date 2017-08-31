@@ -12,13 +12,11 @@ import time
 import ephem
 import numpy
 import getopt
-import random
 from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
 from lsl.reader.ldp import LWA1DataFile
 from lsl.common import stations, metabundle
-from lsl.statistics import robust
 from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi

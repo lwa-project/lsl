@@ -14,7 +14,6 @@ import getopt
 
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import uvUtils
-from lsl.common.constants import c as vLight
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter,  MaxNLocator
