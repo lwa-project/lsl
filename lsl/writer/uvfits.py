@@ -12,7 +12,6 @@ functions defined in this module are based heavily off the lwda_fits library.
 import os
 import gc
 import re
-import sys
 import math
 import ephem
 import numpy
@@ -20,14 +19,9 @@ import pyfits
 from datetime import datetime
 
 from lsl import astro
-from lsl.common import constants
-from lsl.common import dp as dp_common
-from lsl.common.stations import geo2ecef
-from lsl.correlator import uvUtils
-from lsl.misc import mathutil
 from lsl.misc import geodesy
-
-from lsl.writer.fitsidi import StokesCodes, NumericStokes
+from lsl.common import constants
+from lsl.writer.fitsidi import StokesCodes
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
@@ -418,27 +412,6 @@ class UV(object):
 		
 		hdr['ARRNAM'] = self.siteName
 		hdr['RDATE'] = (self.refTime, 'file data reference date')
-		
-	def _makeAppendTable(self, extension, AddRows=1):
-		"""
-		Private function to make a temporary table for appending data.
-		"""
-		
-		nrows = self.hdulist[extension].data.shape[0]
-		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
-		for key in list(self.hdulist[extension].header.keys()):
-			tempHDU.header[key] = self.hdulist[extension].header[key]
-			
-		return tempHDU
-		
-	def _applyAppendTable(self, extension, tempHDU):
-		"""
-		Private function to replace the given extension with the temporary
-		table.
-		"""
-		
-		self.hdulist[extension] = tempHDU
-		self.flush()
 		
 	def _writePrimary(self):
 		"""

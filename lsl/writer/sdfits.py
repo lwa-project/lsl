@@ -16,17 +16,12 @@ Analysis Package (ASAP).
 import os
 import gc
 import re
-import sys
-import math
 import numpy
 import pyfits
 from datetime import datetime
 
 from lsl import astro
-from lsl.common import constants
-from lsl.common import dp as dp_common
 from lsl.common.stations import lwa1
-from lsl.misc import mathutil
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
@@ -264,27 +259,6 @@ class SD(object):
 
 		self.FITS.flush()
 		self.FITS.close()
-
-	def __makeAppendTable(self, extension, AddRows=1):
-		"""
-		Private function to make a temporary table for appending data.
-		"""
-
-		nrows = self.hdulist[extension].data.shape[0]
-		tempHDU = pyfits.new_table(self.hdulist[extension].columns, nrows=nrows+AddRows)
-		for key in list(self.hdulist[extension].header.keys()):
-			tempHDU.header[key] = self.hdulist[extension].header[key]
-	
-		return tempHDU
-
-	def __applyAppendTable(self, extension, tempHDU):
-		"""
-		Private function to replace the given extension with the temporary
-		table.
-		"""
-
-		self.hdulist[extension] = tempHDU
-		self.flush()
 
 	def __writePrimary(self):
 		"""

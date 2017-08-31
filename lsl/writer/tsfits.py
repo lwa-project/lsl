@@ -43,14 +43,12 @@ Data:
 """
 
 import os
-import sys
 import time
 import numpy
 import pyfits
 from datetime import datetime, timedelta, tzinfo
 
 from lsl.common import dp as dp_common
-from lsl.reader.tbn import filterCodes as tbnCodes
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
@@ -58,18 +56,18 @@ __all__ = ['UTC', 'TSFITS', 'TBW', 'TBN', '__version__', '__revision__', '__all_
 
 
 class UTC(tzinfo):
-    """
-    tzinfo object for UTC time.
-    """
+	"""
+	tzinfo object for UTC time.
+	"""
 
-    def utcoffset(self, dt):
-        return timedelta(0)
+	def utcoffset(self, dt):
+		return timedelta(0)
 
-    def tzname(self, dt):
-        return "UTC"
+	def tzname(self, dt):
+		return "UTC"
 
-    def dst(self, dt):
-        return timedelta(0)
+	def dst(self, dt):
+		return timedelta(0)
 
 
 class TSFITS(object):

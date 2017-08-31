@@ -11,12 +11,9 @@ handle.
 	:mod:`lsl.sim.tbw`
 """
 
-import math
 import numpy
 import ephem
-import struct
 
-from lsl.common import stations as lwa_common
 from lsl.common import dp as dp_common
 import lsl.astro as astro
 
@@ -44,7 +41,11 @@ class Frame(object):
 			self.dataReal = False
 		else:
 			self.dataReal = True
-
+			
+		self.seconds = 0
+		self.frame = 0
+		self.epoch = 0
+		
 		# Convert the time from UNIX to epoch and make the data ready to 
 		# be written to the disk.
 		self.__dataAdjust()
@@ -139,7 +140,7 @@ class Frame(object):
 		raw[28:31] = 0
 		
 		# Data values
-		for f in range(32,len(raw),4):
+		for f in range(32, len(raw), 4):
 			i = (f - 32) / 4
 			word = 0
 			for p in range(samplesPerWord):
