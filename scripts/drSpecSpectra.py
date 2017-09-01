@@ -4,14 +4,12 @@
 """Given a DR spectrometer file, plot the time averaged spectra for each 
 polarization product."""
 
-import os
 import sys
 import math
 import numpy
 import ephem
 import getopt
 
-import lsl.correlator.fx as fxc
 from lsl.reader.ldp import LWA1DataFile
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 

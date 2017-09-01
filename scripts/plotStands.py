@@ -4,13 +4,11 @@
 """Example script to read in the positions of stands at LWA-1 and make a plot
 of the site."""
 
-import os
 import sys
 import numpy
 import getopt
 
 from lsl.common import stations, metabundle, metabundleADP
-from lsl.correlator import uvUtils
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter

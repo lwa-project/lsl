@@ -17,7 +17,6 @@ from datetime import datetime, timedelta, tzinfo
 from lsl import astro
 from lsl.reader.ldp import LWA1DataFile
 from lsl.common import stations, metabundle
-from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi
 from lsl.common.progress import ProgressBar
@@ -150,7 +149,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
 		print "-> %s" % pol
 		try:
 			tempVis *= 0
-		except:
+		except NameError:
 			pass
 			
 		# Set up the progress bar so we can keep up with how the sub-integrations 

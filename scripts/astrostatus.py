@@ -18,9 +18,9 @@ __author__    = "P.S.Ray"
 
 
 def restorescreen():
-    curses.nocbreak()
-    curses.echo()
-    curses.endwin()
+	curses.nocbreak()
+	curses.echo()
+	curses.endwin()
 
 
 if __name__ == '__main__':

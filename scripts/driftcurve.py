@@ -204,7 +204,7 @@ def main(args):
 		pylab.figure(2)
 		pylab.title("Driftcurve: %s pol. @ %0.2f MHz - LWA-1" % \
 			(config['pol'], config['freq']/1e6))
-		pylab.plot(lstList, powListAnt, "ro",label="Antenna Pattern")
+		pylab.plot(lstList, powListAnt, "ro", label="Antenna Pattern")
 		pylab.xlabel("LST [hours]")
 		pylab.ylabel("Temp. [K]")
 		pylab.grid(2)
@@ -215,7 +215,7 @@ def main(args):
 	print "Writing driftcurve to file '%s'" % outputFile
 	mf = file(outputFile, "w")
 	for lst,pow in zip(lstList, powListAnt):
-		mf.write("%f  %f\n" % (lst,pow))
+		mf.write("%f  %f\n" % (lst, pow))
 	mf.close()
 
 

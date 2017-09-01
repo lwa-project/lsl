@@ -9,7 +9,6 @@ import numpy
 import pyfits
 
 from lsl.common import stations
-from lsl.correlator import uvUtils
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter

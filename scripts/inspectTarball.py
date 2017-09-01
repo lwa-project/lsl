@@ -1,19 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 import pytz
-import math
-import ephem
 import getopt
 
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 
 from lsl.common import stations
-from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
-from lsl.common import sdf, sdfADP, metabundle, metabundleADP
+from lsl.common import metabundle, metabundleADP
 
 
 __version__ = "0.2"
@@ -59,17 +55,20 @@ def main(args):
 		# LWA1
 		project = metabundle.getSessionDefinition(inputTGZ)
 		obsImpl = metabundle.getObservationSpec(inputTGZ)
+		fileInfo = metabundle.getSessionMetaData(inputTGZ)
+		aspConfigB = metabundle.getASPConfigurationSummary(inputTGZ, which='Beginning')
+		aspConfigE = metabundle.getASPConfigurationSummary(inputTGZ, which='End')
 	except:
 		# LWA-SV
-		## Module changes
-		sdf = sdfADP
-		metabundle = metabundleADP
 		## Site changes
 		site = stations.lwasv
 		observer = site.getObserver()
 		## Try again
-		project = metabundle.getSessionDefinition(inputTGZ)
-		obsImpl = metabundle.getObservationSpec(inputTGZ)
+		project = metabundleADP.getSessionDefinition(inputTGZ)
+		obsImpl = metabundleADP.getObservationSpec(inputTGZ)
+		fileInfo = metabundleADP.getSessionMetaData(inputTGZ)
+		aspConfigB = metabundleADP.getASPConfigurationSummary(inputTGZ, which='Beginning')
+		aspConfigE = metabundleADP.getASPConfigurationSummary(inputTGZ, which='End')
 		
 	nObs = len(project.sessions[0].observations)
 	tStart = [None,]*nObs
@@ -127,19 +126,18 @@ def main(args):
 			print " Transient Buffer Mode: both TBW and TBN"
 	print " "
 	print "File Information:"
-	fileInfo = metabundle.getSessionMetaData(inputTGZ)
 	for obsID in fileInfo.keys():
 		print " Obs. #%i: %s" % (obsID, fileInfo[obsID]['tag'])
 	
 	print " "
 	print "ASP Configuration:"
-	for which in ('Beginning', 'End'):
-		aspConfig = metabundle.getASPConfigurationSummary(inputTGZ, which=which)
+	print '  Beginning'
+	for k in aspConfigB.keys():
+		print '    %s: %i' % (k, aspConfigB[k])
+	print '  End'
+	for k in aspConfigE.keys():
+		print '    %s: %i' % (k, aspConfigE[k])
 		
-		print '  %s' % which
-		for k in aspConfig.keys():
-			print '    %s: %i' % (k, aspConfig[k])
-			
 	print " "
 	print " Number of observations: %i" % nObs
 	print " Observation Detail:"

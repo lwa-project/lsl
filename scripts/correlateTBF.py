@@ -7,7 +7,6 @@ The results are saved in the FITS IDI format.
 """
 
 import os
-import re
 import sys
 import time
 import ephem
@@ -17,7 +16,7 @@ from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
 from lsl.reader import tbf, errors
-from lsl.common import stations, metabundle, metabundleADP
+from lsl.common import stations, metabundleADP
 from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2

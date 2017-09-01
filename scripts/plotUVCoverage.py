@@ -6,7 +6,6 @@ Plot the uv-plane coverage of LWA1 for a zenith snapshot and the expected
 beam.
 """
 
-import os
 import sys
 import math
 import numpy

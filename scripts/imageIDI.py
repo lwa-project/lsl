@@ -8,16 +8,10 @@ import pytz
 import numpy
 import getopt
 import pyfits
-from datetime import datetime
 
 from lsl import astro
-from lsl.common import stations
-from lsl.statistics.robust import *
-from lsl.correlator import uvUtils
-from lsl.writer.fitsidi import NumericStokes
-
-from lsl.imaging import utils, overlay
 from lsl.sim import vis as simVis
+from lsl.imaging import utils, overlay
 from lsl.writer.fitsidi import NumericStokes
 
 import matplotlib.pyplot as plt

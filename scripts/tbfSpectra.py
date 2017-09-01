@@ -10,8 +10,8 @@ import ephem
 import numpy
 import getopt
 
-from lsl.common import stations
 from lsl.reader import tbf, errors
+from lsl.common import stations, metabundleADP
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 from matplotlib import pyplot as plt

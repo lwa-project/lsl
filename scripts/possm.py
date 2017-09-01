@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 import numpy
 import getopt
-from datetime import datetime
 
 from lsl import astro
 from lsl.imaging import utils

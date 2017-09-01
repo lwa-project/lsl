@@ -116,13 +116,13 @@ def parseIndex(index):
 	for row in rows:
 		values = [col.text for col in row]
 		if len(values) != 5:
-			 continue
+			continue
 			
 		filename = values[1].lstrip().rstrip()
 		if filename[:5] != 'SSMIF':
-			 continue
+			continue
 		if filename.find('CURRENT') != -1:
-			 continue
+			continue
 			
 		date = filename.split('_', 1)[1]
 		date = date.split('.', 1)[0]

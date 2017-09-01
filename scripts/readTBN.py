@@ -3,7 +3,6 @@
 
 """Example script for reading in TBN data and writing it to a TS-FITS file."""
 
-import os
 import sys
 import time
 import ephem

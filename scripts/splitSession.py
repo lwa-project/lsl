@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from lsl.common.mcs import mjdmpm2datetime, mode2string
 from lsl.common import metabundle, metabundleADP
-from lsl.reader import tbw,tbn,drx,errors
+from lsl.reader import tbw, tbn, drx, errors
 
 
 def obsComp(x, y):
