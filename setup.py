@@ -184,7 +184,7 @@ cflags, libs = get_fftw()
 atlasFlags, atlasLibs = get_atlas()
 openmpFlags, openmpLibs = get_openmp()
 
-coreExtraFlags = []
+coreExtraFlags = ['-DNPY_NO_DEPRECATED_API',]
 coreExtraFlags.extend(openmpFlags)
 coreExtraFlags.extend(cflags)
 coreExtraFlags.extend(atlasFlags)
@@ -192,9 +192,6 @@ coreExtraLibs = []
 coreExtraLibs.extend(openmpLibs)
 coreExtraLibs.extend(libs)
 coreExtraLibs.extend(atlasLibs)
-
-drsuExtraFlags = ['-D_GNU_SOURCE', '-O3', '-fmessage-length=0', '-MMD', '-MP']
-drsuExtraLibs = ['-lrt', '-lgdbm']
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system

@@ -68,9 +68,6 @@
 #ifndef CEPHES_MCONF_H
 #define CEPHES_MCONF_H
 
-#include <Python.h>
-#include <numpy/npy_math.h>
-
 #include "protos.h"
 
 /* Constant definitions for math error conditions

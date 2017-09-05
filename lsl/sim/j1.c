@@ -86,6 +86,9 @@
  * #define SQ2OPI .79788456080286535588
  */
 
+#include <Python.h>
+#include <numpy/npy_math.h>
+
 #include "mconf.h"
 
 #ifdef UNK
