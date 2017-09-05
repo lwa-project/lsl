@@ -184,7 +184,7 @@ cflags, libs = get_fftw()
 atlasFlags, atlasLibs = get_atlas()
 openmpFlags, openmpLibs = get_openmp()
 
-coreExtraFlags = ['-DNPY_NO_DEPRECATED_API',]
+coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
 coreExtraFlags.extend(openmpFlags)
 coreExtraFlags.extend(cflags)
 coreExtraFlags.extend(atlasFlags)
