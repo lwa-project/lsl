@@ -91,6 +91,10 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 
 	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signals to 2-D int16");
+		goto fail;
+	}
 	
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(data, 0);
@@ -223,9 +227,13 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(windowFunc);
 		windowFunc = window;
 	}
-
+	
 	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signals to 2-D int16");
+		goto fail;
+	}
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", 2*nChan);
@@ -363,10 +371,14 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	}
-
+	
 	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
-
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signals to 2-D complex64");
+		goto fail;
+	}
+	
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(data, 0);
 	nSamps = (long) PyArray_DIM(data, 1);
@@ -506,9 +518,13 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(windowFunc);
 		windowFunc = window;
 	}
-
+	
 	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signals to 2-D complex64");
+		goto fail;
+	}
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", nChan);

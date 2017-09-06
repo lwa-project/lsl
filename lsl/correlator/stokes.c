@@ -81,7 +81,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
-
+	
 	long i, j, k, nStand, nSamps, nFFT;
 	
 	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", NULL};
@@ -89,10 +89,18 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	}
-
+	
 	// Bring the data into C and make it usable
 	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_INT16, 2, 2);
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_INT16, 2, 2);
+	if( dataX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX to 2-D int16");
+		goto fail;
+	}
+	if( dataY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsY to 2-D int16");
+		goto fail;
+	}
 	
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(dataX, 0);
@@ -100,11 +108,11 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Make sure the dimensions of X and Y agree
 	if( PyArray_DIM(dataY, 0) != nStand ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different stand counts");
 		goto fail;
 	}
 	if( PyArray_DIM(dataY, 1) != nSamps ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different sample counts");
 		goto fail;
 	}
 	
@@ -264,10 +272,18 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(windowFunc);
 		windowFunc = window;
 	}
-
+	
 	// Bring the data into C and make it usable
 	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_INT16, 2, 2);
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_INT16, 2, 2);
+	if( dataX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX to 2-D int16");
+		goto fail;
+	}
+	if( dataY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsY to 2-D int16");
+		goto fail;
+	}
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", 2*nChan);
@@ -281,11 +297,11 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Make sure the dimensions of X and Y agree
 	if( PyArray_DIM(dataY, 0) != nStand ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different stand counts");
 		goto fail;
 	}
 	if( PyArray_DIM(dataY, 1) != nSamps ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different sample counts");
 		goto fail;
 	}
 
@@ -437,30 +453,38 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
-
+	
 	long i, j, k, nStand, nSamps, nFFT;
-
+	
 	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iii", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	}
-
+	
 	// Bring the data into C and make it usable
 	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_COMPLEX64, 2, 2);
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 2, 2);
-
+	if( dataX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX to 2-D complex64");
+		goto fail;
+	}
+	if( dataY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsY to 2-D complex64");
+		goto fail;
+	}
+	
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(dataX, 0);
 	nSamps = (long) PyArray_DIM(dataX, 1);
 	
 	// Make sure the dimensions of X and Y agree
 	if( PyArray_DIM(dataY, 0) != nStand ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different stand counts");
 		goto fail;
 	}
 	if( PyArray_DIM(dataY, 1) != nSamps ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different sample counts");
 		goto fail;
 	}
 	
@@ -610,9 +634,9 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
-
+	
 	long i, j, k, nStand, nSamps, nFFT;
-
+	
 	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", "window", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iiiO:set_callback", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
@@ -626,28 +650,36 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_XDECREF(windowFunc);
 		windowFunc = window;
 	}
-
+	
 	// Bring the data into C and make it usable
 	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_COMPLEX64, 2, 2);
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 2, 2);
+	if( dataX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX to 2-D complex64");
+		goto fail;
+	}
+	if( dataY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsY to 2-D complex64");
+		goto fail;
+	}
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", nChan);
 	window = PyObject_CallObject(windowFunc, window);
 	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
 	Py_DECREF(window);
-
+	
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(dataX, 0);
 	nSamps = (long) PyArray_DIM(dataX, 1);
-
+	
 	// Make sure the dimensions of X and Y agree
 	if( PyArray_DIM(dataY, 0) != nStand ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different stand counts");
 		goto fail;
 	}
 	if( PyArray_DIM(dataY, 1) != nSamps ) {
-		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
+		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different sample counts");
 		goto fail;
 	}
 	
@@ -807,18 +839,34 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	PyObject *signalsX, *signalsY, *sigValidX, *sigValidY, *output;
 	PyArrayObject *dataX=NULL, *dataY=NULL, *validX=NULL, *validY=NULL, *vis=NULL;
 	long nStand, nChan, nFFT, nBL;	
-
+	
 	if(!PyArg_ParseTuple(args, "OOOO", &signalsX, &signalsY, &sigValidX, &sigValidY)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	}
-
+	
 	// Bring the data into C and make it usable
 	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_COMPLEX64, 3, 3);
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 3, 3);
 	validX = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidX, NPY_UINT8, 2, 2);
 	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_UINT8, 2, 2);
-
+	if( dataX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signalsX array to 3-D complex64");
+		goto fail;
+	}
+	if( dataY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signalsY array to 3-D complex64");
+		goto fail;
+	}
+	if( validX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValidX array to 2-D uint8");
+		goto fail;
+	}
+	if( validY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValidY array to 2-D uint8");
+		goto fail;
+	}
+	
 	// Get channel count and number of FFTs stored
 	nStand = (long) PyArray_DIM(dataX, 0);
 	nChan = (long) PyArray_DIM(dataX, 1);

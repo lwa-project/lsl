@@ -95,26 +95,26 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Check data dimensions
 	if(PyArray_DIM(ha, 0) != PyArray_DIM(dec, 0)) {
-		PyErr_Format(PyExc_TypeError, "Source hour angle and declination arrays do not contain the same number of elements");
+		PyErr_Format(PyExc_RuntimeError, "Source hour angle and declination arrays do not contain the same number of elements");
 		goto fail;
 	}
 	
 	if(PyArray_DIM(flux, 0) != PyArray_DIM(ha, 0)) {
-		PyErr_Format(PyExc_TypeError, "Source flux dimensions do not agree with number of sources");
+		PyErr_Format(PyExc_RuntimeError, "Source flux dimensions do not agree with number of sources");
 		goto fail;
 	}
 	
 	if(PyArray_DIM(shape, 0) != 3) {
-		PyErr_Format(PyExc_TypeError, "Source shape dimensions do not agree with number of required parameters");
+		PyErr_Format(PyExc_RuntimeError, "Source shape dimensions do not agree with number of required parameters");
 		goto fail;
 	}
 	if(PyArray_DIM(shape, 1) != PyArray_DIM(ha, 0)) {
-		PyErr_Format(PyExc_TypeError, "Source shape dimensions do not agree with number of sources");
+		PyErr_Format(PyExc_RuntimeError, "Source shape dimensions do not agree with number of sources");
 		goto fail;
 	}
 	
 	if(PyArray_DIM(flux, 1) != PyArray_DIM(freq, 0)) {
-		PyErr_Format(PyExc_TypeError, "Source flux dimensions do not agree with number of channels");
+		PyErr_Format(PyExc_RuntimeError, "Source flux dimensions do not agree with number of channels");
 		goto fail;
 	}
 	

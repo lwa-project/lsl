@@ -118,10 +118,22 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16")
+		goto fail;
+	}
+	if( freq == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		goto fail;
+	}
+	if( delay == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		goto fail;
+	}
 	
 	// Check data dimensions
 	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
-		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
 		goto fail;
 	}
 	
@@ -131,7 +143,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
-		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
+		PyErr_Format(PyExc_RuntimeError, "freqs and delays have different channel counts");
 		goto fail;
 	}
 	
@@ -316,6 +328,18 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16")
+		goto fail;
+	}
+	if( freq == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		goto fail;
+	}
+	if( delay == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		goto fail;
+	}
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", 2*nChan);
@@ -325,7 +349,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Check data dimensions
 	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
-		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
 		goto fail;
 	}
 	
@@ -335,7 +359,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
-		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
+		PyErr_Format(PyExc_RuntimeError, "freqs and delays have different channel counts");
 		goto fail;
 	}
 	
@@ -518,10 +542,22 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D complex64")
+		goto fail;
+	}
+	if( freq == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		goto fail;
+	}
+	if( delay == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		goto fail;
+	}
 	
 	// Check data dimensions
 	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
-		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
 		goto fail;
 	}
 	
@@ -531,7 +567,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
-		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
+		PyErr_Format(PyExc_RuntimeError, "freqs and delays have different channel counts");
 		goto fail;
 	}
 
@@ -722,6 +758,18 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D complex64")
+		goto fail;
+	}
+	if( freq == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		goto fail;
+	}
+	if( delay == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		goto fail;
+	}
 	
 	// Calculate the windowing function
 	window = Py_BuildValue("(i)", nChan);
@@ -731,7 +779,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Check data dimensions
 	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
-		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
 		goto fail;
 	}
 	
@@ -741,7 +789,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
-		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
+		PyErr_Format(PyExc_RuntimeError, "freqs and delays have different channel counts");
 		goto fail;
 	}
 
@@ -930,6 +978,22 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signals2, NPY_COMPLEX64, 3, 3);
 	valid1 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid1, NPY_UINT8, 2, 2);
 	valid2 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid2, NPY_UINT8, 2, 2);
+	if( data1 == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals1 array to 3-D complex64");
+		goto fail;
+	}
+	if( data2 == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals2 array to 3-D complex64");
+		goto fail;
+	}
+	if( valid1 == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValid1 array to 2-D uint8");
+		goto fail;
+	}
+	if( valid2 == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValid2 array to 2-D uint8");
+		goto fail;
+	}
 
 	// Get channel count and number of FFTs stored
 	nStand = (long) PyArray_DIM(data1, 0);
@@ -1053,6 +1117,22 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 3, 3);
 	validX = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidX, NPY_UINT8, 2, 2);
 	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_UINT8, 2, 2);
+	if( dataX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signalsX array to 3-D complex64");
+		goto fail;
+	}
+	if( dataY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signalsY array to 3-D complex64");
+		goto fail;
+	}
+	if( validX == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValidX array to 2-D uint8");
+		goto fail;
+	}
+	if( validY == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValidY array to 2-D uint8");
+		goto fail;
+	}
 
 	// Get channel count and number of FFTs stored
 	nStand = (long) PyArray_DIM(dataX, 0);

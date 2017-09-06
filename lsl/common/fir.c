@@ -89,6 +89,14 @@ static PyObject *integerFIR(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Bring the data into C and make it usable
 	data  = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 1, 1);
 	coeff = (PyArrayObject *) PyArray_ContiguousFromObject(filter, NPY_INT16, 1, 1);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 1-D int16");
+		goto fail;
+	}
+	if( coeff == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input filter array to 1-D int16");
+		goto fail;
+	}
 	
 	// Get sample and tap counts
 	nSamps = (long) PyArray_DIM(data, 0);
@@ -162,6 +170,14 @@ static PyObject *integerFIRDelayed(PyObject *self, PyObject *args, PyObject *kwd
 	// Bring the data into C and make it usable
 	data  = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 1, 1);
 	coeff = (PyArrayObject *) PyArray_ContiguousFromObject(filter, NPY_INT16, 1, 1);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 1-D int16");
+		goto fail;
+	}
+	if( coeff == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input filter array to 1-D int16");
+		goto fail;
+	}
 	
 	// Get sample and tap counts
 	nSamps = (long) PyArray_DIM(data, 0);
@@ -236,26 +252,46 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
 	course = (PyArrayObject *) PyArray_ContiguousFromObject(courses, NPY_INT16, 1, 1);
 	fine   = (PyArrayObject *) PyArray_ContiguousFromObject(fines,   NPY_INT16, 1, 1);
 	gain   = (PyArrayObject *) PyArray_ContiguousFromObject(gains,   NPY_INT16, 2, 2);
+	if( data == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16");
+		goto fail;
+	}
+	if( filter == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input filters array to 3-D int16");
+		goto fail;
+	}
+	if( course == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input courses array to 1-D int16");
+		goto fail;
+	}
+	if( fine == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input fines array to 1-D int16");
+		goto fail;
+	}
+	if( gain == NULL ) {
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input gains array to 2-D int16");
+		goto fail;
+	}
 	
 	// Check data dimensions
 	if( PyArray_DIM(data, 0) != PyArray_DIM(filter, 0) ) {
-		PyErr_Format(PyExc_TypeError, "signals and FIR filters have different input counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and FIR filters have different input counts");
 		goto fail;
 	}
 	if( PyArray_DIM(data, 0) != PyArray_DIM(course, 0) ) {
-		PyErr_Format(PyExc_TypeError, "signals and course delays have different input counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and course delays have different input counts");
 		goto fail;
 	}
 	if( PyArray_DIM(data, 0) != PyArray_DIM(fine, 0) ) {
-		PyErr_Format(PyExc_TypeError, "signals and find delays have different input counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and find delays have different input counts");
 		goto fail;
 	}
 	if( PyArray_DIM(data, 0)/2 != PyArray_DIM(gain, 0) ) {
-		PyErr_Format(PyExc_TypeError, "signals and gains have different input counts");
+		PyErr_Format(PyExc_RuntimeError, "signals and gains have different input counts");
 		goto fail;
 	}
 	if( PyArray_DIM(gain, 1) != 4 ) {
-		PyErr_Format(PyExc_TypeError, "seconds dimension of gains must be four");
+		PyErr_Format(PyExc_RuntimeError, "seconds dimension of gains must be four");
 		goto fail;
 	}
 	
