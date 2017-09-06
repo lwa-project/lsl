@@ -77,13 +77,13 @@ void applyFIRDelayed(short int *data, long nSamps, short int *coeff, long nTaps,
 
 static PyObject *integerFIR(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *filter, *output;
-	PyArrayObject *data, *coeff, *dataF;
+	PyArrayObject *data=NULL, *coeff=NULL, *dataF=NULL;
 	
 	long nSamps, nTaps;
 	
 	if(!PyArg_ParseTuple(args, "OO", &signals, &filter)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -91,38 +91,44 @@ static PyObject *integerFIR(PyObject *self, PyObject *args, PyObject *kwds) {
 	coeff = (PyArrayObject *) PyArray_ContiguousFromObject(filter, NPY_INT16, 1, 1);
 	
 	// Get sample and tap counts
-	nSamps = (long) data->dimensions[0];
-	nTaps  = (long) coeff->dimensions[0];
+	nSamps = (long) PyArray_DIM(data, 0);
+	nTaps  = (long) PyArray_DIM(coeff, 0);
 	
 	// Create the output data holders
 	npy_intp dims[1];
 	dims[0] = (npy_intp) nSamps;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_INT32);
+	dataF = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_INT32, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(coeff);
-		Py_XDECREF(dataF);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataF, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Go
 	short int *a, *b;
 	float *c;
-	a = (short int *) data->data;
-	b = (short int *) coeff->data;
-	c = (float *) dataF->data;
+	a = (short int *) PyArray_DATA(data);
+	b = (short int *) PyArray_DATA(coeff);
+	c = (float *) PyArray_DATA(dataF);
 	applyFIR(a, nSamps, b, nTaps, c);
 	
+	Py_END_ALLOW_THREADS
+	
+	output = Py_BuildValue("O", PyArray_Return(dataF));
 	
 	Py_XDECREF(data);
 	Py_XDECREF(coeff);
-	
-	output = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);
 	
 	return output;
+	
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(coeff);
+	Py_XDECREF(dataF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(integerFIR_doc, \
@@ -144,13 +150,13 @@ Outputs:\n\
 
 static PyObject *integerFIRDelayed(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *filter, *output;
-	PyArrayObject *data, *coeff, *dataF;
+	PyArrayObject *data=NULL, *coeff=NULL, *dataF=NULL;
 	
 	long nSamps, nTaps, sampleDelay;
 	
 	if(!PyArg_ParseTuple(args, "OOl", &signals, &filter, &sampleDelay)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -158,38 +164,44 @@ static PyObject *integerFIRDelayed(PyObject *self, PyObject *args, PyObject *kwd
 	coeff = (PyArrayObject *) PyArray_ContiguousFromObject(filter, NPY_INT16, 1, 1);
 	
 	// Get sample and tap counts
-	nSamps = (long) data->dimensions[0];
-	nTaps  = (long) coeff->dimensions[0];
+	nSamps = (long) PyArray_DIM(data, 0);
+	nTaps  = (long) PyArray_DIM(coeff, 0);
 	
 	// Create the output data holders
 	npy_intp dims[1];
 	dims[0] = (npy_intp) nSamps;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataF = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(coeff);
-		Py_XDECREF(dataF);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataF, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Go
 	short int *a, *b;
 	float *c;
-	a = (short int *) data->data;
-	b = (short int *) coeff->data;
-	c = (float *) dataF->data;
+	a = (short int *) PyArray_DATA(data);
+	b = (short int *) PyArray_DATA(coeff);
+	c = (float *) PyArray_DATA(dataF);
 	applyFIRDelayed(a, nSamps, b, nTaps, sampleDelay, c);
 	
+	Py_END_ALLOW_THREADS
+	
+	output = Py_BuildValue("O", PyArray_Return(dataF));
 	
 	Py_XDECREF(data);
 	Py_XDECREF(coeff);
-	
-	output = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);
 	
 	return output;
+	
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(coeff);
+	Py_XDECREF(dataF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(integerFIRDelayed_doc, \
@@ -209,7 +221,7 @@ Outputs:\n\
 
 static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *filters, *courses, *fines, *gains, *output;
-	PyArrayObject *data, *filter, *course, *fine, *gain, *dataFX, *dataFY;
+	PyArrayObject *data=NULL, *filter=NULL, *course=NULL, *fine=NULL, *gain=NULL, *dataFX=NULL, *dataFY=NULL;
 	
 	long i, j, k, nStand, nSamps, nFilts, nTaps;
 	
@@ -226,61 +238,36 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
 	gain   = (PyArrayObject *) PyArray_ContiguousFromObject(gains,   NPY_INT16, 2, 2);
 	
 	// Check data dimensions
-	if( data->dimensions[0] != filter->dimensions[0] ) {
+	if( PyArray_DIM(data, 0) != PyArray_DIM(filter, 0) ) {
 		PyErr_Format(PyExc_TypeError, "signals and FIR filters have different input counts");
-		Py_XDECREF(data);
-		Py_XDECREF(filter);
-		Py_XDECREF(course);
-		Py_XDECREF(fine);
-		Py_XDECREF(gain);
-		return NULL;
+		goto fail;
 	}
-	if( data->dimensions[0] != course->dimensions[0] ) {
+	if( PyArray_DIM(data, 0) != PyArray_DIM(course, 0) ) {
 		PyErr_Format(PyExc_TypeError, "signals and course delays have different input counts");
-		Py_XDECREF(data);
-		Py_XDECREF(filter);
-		Py_XDECREF(course);
-		Py_XDECREF(fine);
-		Py_XDECREF(gain);
-		return NULL;
+		goto fail;
 	}
-	if( data->dimensions[0] != fine->dimensions[0] ) {
+	if( PyArray_DIM(data, 0) != PyArray_DIM(fine, 0) ) {
 		PyErr_Format(PyExc_TypeError, "signals and find delays have different input counts");
-		Py_XDECREF(data);
-		Py_XDECREF(filter);
-		Py_XDECREF(course);
-		Py_XDECREF(fine);
-		Py_XDECREF(gain);
-		return NULL;
+		goto fail;
 	}
-	if( data->dimensions[0]/2 != gain->dimensions[0] ) {
+	if( PyArray_DIM(data, 0)/2 != PyArray_DIM(gain, 0) ) {
 		PyErr_Format(PyExc_TypeError, "signals and gains have different input counts");
-		Py_XDECREF(data);
-		Py_XDECREF(filter);
-		Py_XDECREF(course);
-		Py_XDECREF(fine);
-		Py_XDECREF(gain);
-		return NULL;
+		goto fail;
 	}
-	if( gain->dimensions[1] != 4 ) {
+	if( PyArray_DIM(gain, 1) != 4 ) {
 		PyErr_Format(PyExc_TypeError, "seconds dimension of gains must be four");
-		Py_XDECREF(data);
-		Py_XDECREF(filter);
-		Py_XDECREF(course);
-		Py_XDECREF(fine);
-		Py_XDECREF(gain);
-		return NULL;
+		goto fail;
 	}
 	
 	// Get sample and tap counts
-	nStand = (long) data->dimensions[0];
-	nSamps = (long) data->dimensions[1];
-	nFilts = (long) filter->dimensions[1];
-	nTaps  = (long) filter->dimensions[2];
+	nStand = (long) PyArray_DIM(data, 0);
+	nSamps = (long) PyArray_DIM(data, 1);
+	nFilts = (long) PyArray_DIM(filter, 1);
+	nTaps  = (long) PyArray_DIM(filter, 2);
 	
 	long maxCourse = 0;
 	short int *c;
-	c = (short int *) course->data;
+	c = (short int *) PyArray_DATA(course);
 	for(i=0; i<nStand/2; i++) {
 		k = 2*i;
 		if( *(c + k) > maxCourse ) {
@@ -296,43 +283,30 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
 	// Create the output data holders
 	npy_intp dims[1];
 	dims[0] = (npy_intp) (nSamps - maxCourse);
-	dataFX = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataFX = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataFX == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array for X polarization");
-		Py_XDECREF(data);
-		Py_XDECREF(filter);
-		Py_XDECREF(course);
-		Py_XDECREF(fine);
-		Py_XDECREF(gain);
-		Py_XDECREF(dataFX);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataFX, 0);
 	
-	dataFY = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataFY = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataFY == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array for Y polarization");
-		Py_XDECREF(data);
-		Py_XDECREF(filter);
-		Py_XDECREF(course);
-		Py_XDECREF(fine);
-		Py_XDECREF(gain);
-		Py_XDECREF(dataFX);
-		Py_XDECREF(dataFY);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataFY, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Go
 	short int *d, *f, *w, *g;
 	float *x, *y;
-	d = (short int *) data->data;
-	f = (short int *) filter->data;
-	c = (short int *) course->data;
-	w = (short int *) fine->data;
-	g = (short int *) gain->data;
-	x = (float *) dataFX->data;
-	y = (float *) dataFY->data;
+	d = (short int *) PyArray_DATA(data);
+	f = (short int *) PyArray_DATA(filter);
+	c = (short int *) PyArray_DATA(course);
+	w = (short int *) PyArray_DATA(fine);
+	g = (short int *) PyArray_DATA(gain);
+	x = (float *) PyArray_DATA(dataFX);
+	y = (float *) PyArray_DATA(dataFY);
 	
 	float *t1, *t2, *tX, *tY;
 	
@@ -402,17 +376,30 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
 		}
 	}
 	
+	Py_END_ALLOW_THREADS
+	
+	output = Py_BuildValue("(OO)", PyArray_Return(dataFX), PyArray_Return(dataFY));
+	
 	Py_XDECREF(data);
 	Py_XDECREF(filter);
 	Py_XDECREF(course);
 	Py_XDECREF(fine);
 	Py_XDECREF(gain);
-	
-	output = Py_BuildValue("(OO)", PyArray_Return(dataFX), PyArray_Return(dataFY));
 	Py_XDECREF(dataFX);
 	Py_XDECREF(dataFY);
 	
 	return output;
+	
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(filter);
+	Py_XDECREF(course);
+	Py_XDECREF(fine);
+	Py_XDECREF(gain);
+	Py_XDECREF(dataFX);
+	Py_XDECREF(dataFY);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(integerBeamformer_doc, \
