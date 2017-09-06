@@ -12,9 +12,6 @@
 
 #include "numpy/arrayobject.h"
 
-#define PI 3.1415926535898
-#define imaginary _Complex_I
-
 
 /*
  Load in FFTW wisdom.  Based on the read_wisdom function in PRESTO.
@@ -50,7 +47,7 @@ double sinc(double x) {
 	if(x == 0.0) {
 		return 1.0;
 	} else {
-		return sin(x*PI)/(x*PI);
+		return sin(x*NPY_PI)/(x*NPY_PI);
 	}
 }
 
@@ -79,7 +76,7 @@ float cabs2f(float complex z) {
 
 static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signalsX, *signalsY, *signalsF;
-	PyArrayObject *dataX, *dataY, *dataF;
+	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
@@ -89,7 +86,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iii", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -97,21 +94,17 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_INT16, 2, 2);
 	
 	// Get the properties of the data
-	nStand = (long) dataX->dimensions[0];
-	nSamps = (long) dataX->dimensions[1];
+	nStand = (long) PyArray_DIM(dataX, 0);
+	nSamps = (long) PyArray_DIM(dataX, 1);
 	
 	// Make sure the dimensions of X and Y agree
-	if( dataY->dimensions[0] != nStand ) {
+	if( PyArray_DIM(dataY, 0) != nStand ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
-	if( dataY->dimensions[1] != nSamps ) {
+	if( PyArray_DIM(dataY, 1) != nSamps ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
 	
 	// Find out how large the output array needs to be and initialize it
@@ -120,14 +113,13 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
 	dims[2] = (npy_intp) nChan;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_DOUBLE, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataF, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
 	float complex *inPX, *inPY, *inX, *inY;                          
@@ -142,9 +134,9 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	long secStart;
 	short int *aX, *aY;
 	double *b;
-	aX = (short int *) dataX->data;
-	aY = (short int *) dataY->data;
-	b = (double *) dataF->data;
+	aX = (short int *) PyArray_DATA(dataX);
+	aY = (short int *) PyArray_DATA(dataY);
+	b = (double *) PyArray_DATA(dataF);
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -212,13 +204,22 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inPX);
 	fftwf_free(inPY);
 	
+	Py_END_ALLOW_THREADS
+	
+	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
+	
 	Py_XDECREF(dataX);
 	Py_XDECREF(dataY);
-
-	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);
-
+	
 	return signalsF;
+	
+fail:
+	Py_XDECREF(dataX);
+	Py_XDECREF(dataY);
+	Py_XDECREF(dataF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FPSDR2_doc, \
@@ -242,7 +243,7 @@ Outputs:\n\
 
 static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signalsX, *signalsY, *signalsF, *window;
-	PyArrayObject *dataX, *dataY, *dataF, *windowData;
+	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
@@ -252,10 +253,11 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", "window", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iiiO:set_callback", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	} else {
 		if(!PyCallable_Check(window)) {
 			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+			goto fail;
 		}
 		Py_XINCREF(window);
 		Py_XDECREF(windowFunc);
@@ -273,21 +275,17 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_DECREF(window);
 	
 	// Get the properties of the data
-	nStand = (long) dataX->dimensions[0];
-	nSamps = (long) dataX->dimensions[1];
+	nStand = (long) PyArray_DIM(dataX, 0);
+	nSamps = (long) PyArray_DIM(dataX, 1);
 	
 	// Make sure the dimensions of X and Y agree
-	if( dataY->dimensions[0] != nStand ) {
+	if( PyArray_DIM(dataY, 0) != nStand ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
-	if( dataY->dimensions[1] != nSamps ) {
+	if( PyArray_DIM(dataY, 1) != nSamps ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
 
 	// Find out how large the output array needs to be and initialize it
@@ -296,15 +294,13 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
 	dims[2] = (npy_intp) nChan;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_DOUBLE, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataF, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
 	float complex *inPX, *inPY, *inX, *inY;                          
@@ -319,10 +315,10 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	long secStart;
 	short int *aX, *aY;
 	double *b, *c;
-	aX = (short int *) dataX->data;
-	aY = (short int *) dataY->data;
-	b = (double *) dataF->data;
-	c = (double *) windowData->data;
+	aX = (short int *) PyArray_DATA(dataX);
+	aY = (short int *) PyArray_DATA(dataY);
+	b = (double *) PyArray_DATA(dataF);
+	c = (double *) PyArray_DATA(windowData);
 	
 	
 	// Time-domain blanking control
@@ -394,14 +390,24 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inPX);
 	fftwf_free(inPY);
 	
+	Py_END_ALLOW_THREADS
+	
+	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
+	
 	Py_XDECREF(dataX);
 	Py_XDECREF(dataY);
 	Py_XDECREF(windowData);
-
-	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);
-
+	
 	return signalsF;
+	
+fail:
+	Py_XDECREF(dataX);
+	Py_XDECREF(dataY);
+	Py_XDECREF(windowData);
+	Py_XDECREF(dataF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FPSDR3_doc, \
@@ -426,7 +432,7 @@ Outputs:\n\
 
 static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signalsX, *signalsY, *signalsF;
-	PyArrayObject *dataX, *dataY, *dataF;
+	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
@@ -436,7 +442,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iii", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -444,21 +450,17 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 2, 2);
 
 	// Get the properties of the data
-	nStand = (long) dataX->dimensions[0];
-	nSamps = (long) dataX->dimensions[1];
+	nStand = (long) PyArray_DIM(dataX, 0);
+	nSamps = (long) PyArray_DIM(dataX, 1);
 	
 	// Make sure the dimensions of X and Y agree
-	if( dataY->dimensions[0] != nStand ) {
+	if( PyArray_DIM(dataY, 0) != nStand ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
-	if( dataY->dimensions[1] != nSamps ) {
+	if( PyArray_DIM(dataY, 1) != nSamps ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
 	
 	// Find out how large the output array needs to be and initialize it
@@ -467,15 +469,14 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
 	dims[2] = (npy_intp) nChan;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_DOUBLE, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataF, 0);
-
+	
+	Py_BEGIN_ALLOW_THREADS
+	
 	// Create the FFTW plan
 	float complex *inPX, *inPY, *inX, *inY;
 	inPX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
@@ -488,9 +489,9 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	long secStart;
 	float complex *aX, *aY;
 	double *b, *temp2;
-	aX = (float complex *) dataX->data;
-	aY = (float complex *) dataY->data;
-	b = (double *) dataF->data;
+	aX = (float complex *) PyArray_DATA(dataX);
+	aY = (float complex *) PyArray_DATA(dataY);
+	b = (double *) PyArray_DATA(dataF);
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -565,13 +566,22 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inPX);
 	fftwf_free(inPY);
 	
-	Py_XDECREF(dataX);
-	Py_XDECREF(dataY);
+	Py_END_ALLOW_THREADS
 	
 	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
+	
+	Py_XDECREF(dataX);
+	Py_XDECREF(dataY);
 	Py_XDECREF(dataF);
-
+	
 	return signalsF;
+	
+fail:
+	Py_XDECREF(dataX);
+	Py_XDECREF(dataY);
+	Py_XDECREF(dataF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FPSDC2_doc, \
@@ -595,7 +605,7 @@ Outputs:\n\
 
 static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signalsX, *signalsY, *signalsF, *window;
-	PyArrayObject *dataX, *dataY, *dataF, *windowData;
+	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
@@ -605,10 +615,11 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", "window", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iiiO:set_callback", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	} else {
 		if(!PyCallable_Check(window)) {
 			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+			goto fail;
 		}
 		Py_XINCREF(window);
 		Py_XDECREF(windowFunc);
@@ -626,21 +637,17 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_DECREF(window);
 
 	// Get the properties of the data
-	nStand = (long) dataX->dimensions[0];
-	nSamps = (long) dataX->dimensions[1];
+	nStand = (long) PyArray_DIM(dataX, 0);
+	nSamps = (long) PyArray_DIM(dataX, 1);
 
 	// Make sure the dimensions of X and Y agree
-	if( dataY->dimensions[0] != nStand ) {
+	if( PyArray_DIM(dataY, 0) != nStand ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different stand counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
-	if( dataY->dimensions[1] != nSamps ) {
+	if( PyArray_DIM(dataY, 1) != nSamps ) {
 		PyErr_Format(PyExc_TypeError, "X and Y signals have different sample counts");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		return NULL;
+		goto fail;
 	}
 	
 	// Find out how large the output array needs to be and initialize it
@@ -649,16 +656,14 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nStand;
 	dims[2] = (npy_intp) nChan;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_DOUBLE, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(dataF, 0);
-
+	
+	Py_BEGIN_ALLOW_THREADS
+	
 	// Create the FFTW plan
 	float complex *inPX, *inPY, *inX, *inY;
 	inPX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
@@ -671,10 +676,10 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	long secStart;
 	float complex *aX, *aY;
 	double *b, *c, *temp2;
-	aX = (float complex *) dataX->data;
-	aY = (float complex *) dataY->data;
-	b = (double *) dataF->data;
-	c = (double *) windowData->data;
+	aX = (float complex *) PyArray_DATA(dataX);
+	aY = (float complex *) PyArray_DATA(dataY);
+	b = (double *) PyArray_DATA(dataF);
+	c = (double *) PyArray_DATA(windowData);
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -752,14 +757,24 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inPX);
 	fftwf_free(inPY);
 	
+	Py_END_ALLOW_THREADS
+	
+	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
+	
 	Py_XDECREF(dataX);
 	Py_XDECREF(dataY);
 	Py_XDECREF(windowData);
-
-	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
 	Py_XDECREF(dataF);
-
+	
 	return signalsF;
+	
+fail:
+	Py_XDECREF(dataX);
+	Py_XDECREF(dataY);
+	Py_XDECREF(windowData);
+	Py_XDECREF(dataF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FPSDC3_doc, \
@@ -789,12 +804,12 @@ Outputs:\n\
 
 static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	PyObject *signalsX, *signalsY, *sigValidX, *sigValidY, *output;
-	PyArrayObject *dataX, *dataY, *validX, *validY, *vis;
+	PyArrayObject *dataX=NULL, *dataY=NULL, *validX=NULL, *validY=NULL, *vis=NULL;
 	long nStand, nChan, nFFT, nBL;	
 
 	if(!PyArg_ParseTuple(args, "OOOO", &signalsX, &signalsY, &sigValidX, &sigValidY)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -804,9 +819,9 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_UINT8, 2, 2);
 
 	// Get channel count and number of FFTs stored
-	nStand = (long) dataX->dimensions[0];
-	nChan = (long) dataX->dimensions[1];
-	nFFT = (long) dataX->dimensions[2];
+	nStand = (long) PyArray_DIM(dataX, 0);
+	nChan = (long) PyArray_DIM(dataX, 1);
+	nFFT = (long) PyArray_DIM(dataX, 2);
 	nBL = (nStand+1)*nStand/2;
 	
 	// Create the output visibility array and fill with zeros
@@ -814,16 +829,13 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nBL;
 	dims[2] = (npy_intp) nChan;
-	vis = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	vis = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(vis == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		Py_XDECREF(validX);
-		Py_XDECREF(validY);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(vis, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Mapper for baseline number to stand 1, stand 2
 	long s1, s2, mapper[nBL][2];
@@ -839,15 +851,15 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	long bl, c, f;
 	float complex tempVis1, tempVis2;
 	float complex *a, *b, *v;
-	a = (float complex *) dataX->data;
-	b = (float complex *) dataY->data;
-	v = (float complex *) vis->data;
+	a = (float complex *) PyArray_DATA(dataX);
+	b = (float complex *) PyArray_DATA(dataY);
+	v = (float complex *) PyArray_DATA(vis);
 	
 	// Time-domain blanking control
 	long nActVis;
 	unsigned char *u1, *u2;
-	u1 = (unsigned char *) validX->data;
-	u2 = (unsigned char *) validY->data;
+	u1 = (unsigned char *) PyArray_DATA(validX);
+	u2 = (unsigned char *) PyArray_DATA(validY);
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(c, f, nActVis, tempVis1, tempVis2)
@@ -881,15 +893,27 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 			}
 		}
 	}
+	
+	Py_END_ALLOW_THREADS
+	
+	output = Py_BuildValue("O", PyArray_Return(vis));
+	
 	Py_XDECREF(dataX);
 	Py_XDECREF(dataY);
 	Py_XDECREF(validX);
 	Py_XDECREF(validY);
-
-	output = Py_BuildValue("O", PyArray_Return(vis));
 	Py_XDECREF(vis);
-
+	
 	return output;
+	
+fail:
+	Py_XDECREF(dataX);
+	Py_XDECREF(dataY);
+	Py_XDECREF(validX);
+	Py_XDECREF(validY);
+	Py_XDECREF(vis);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(XEngine2_doc, \

@@ -107,7 +107,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 		// 12-bit Data -> 400 samples in the data section
 		dims[0] = (npy_intp) 2;
 		dims[1] = (npy_intp) 400;
-		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_INT16);
+		data = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT16, 0);
 		if(data == NULL) {
 			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 			Py_XDECREF(data);
@@ -117,7 +117,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 		// Fill the data array
 		short int tempR;
 		short int *a;
-		a = (short int *) data->data;
+		a = (short int *) PyArray_DATA(data);
 		for(i=0; i<400; i++) {
 			tempR = (cFrame.data.bytes[3*i]<<4) | ((cFrame.data.bytes[3*i+1]>>4)&15);
 			tempR -= ((tempR&2048)<<1);
@@ -131,7 +131,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 		// 4-bit Data -> 1200 samples in the data section
 		dims[0] = (npy_intp) 2;
 		dims[1] = (npy_intp) 1200;
-		data = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_INT16);
+		data = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT16, 0);
 		if(data == NULL) {
 			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 			Py_XDECREF(data);
@@ -141,7 +141,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 		// Fill the data array
 		const short int *fp;
 		short int *a;
-		a = (short int *) data->data;
+		a = (short int *) PyArray_DATA(data);
 		for(i=0; i<1200; i++) {
 			fp = tbw4LUT[ cFrame.data.bytes[i] ];
 			*(a + i) = (short int) fp[0];
@@ -178,12 +178,12 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
+	output = Py_BuildValue("O", frame);
 	
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
 	
-	output = Py_BuildValue("O", frame);
 	return output;
 }
 

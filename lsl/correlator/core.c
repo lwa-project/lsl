@@ -12,7 +12,7 @@
 
 #include "numpy/arrayobject.h"
 
-#define TPI (2*3.1415926535898*_Complex_I)
+#define TPI (2*NPY_PI*_Complex_I)
 
 
 /*
@@ -51,12 +51,12 @@ long computeDelayComponents(PyArrayObject *delays, double SampleRate, long *fifo
 	double minDelay;
 	
 	// Get the properties of the delays
-	nStand = (long) delays->dimensions[0];
-	nChan = (long) delays->dimensions[1];
+	nStand = (long) PyArray_DIM(delays, 0);
+	nChan = (long) PyArray_DIM(delays, 1);
 	
 	// Set up a way to access the data
 	double *a;
-	a = (double *) delays->data;
+	a = (double *) PyArray_DATA(delays);
 	
 	// Find the minimum delay
 	/*
@@ -99,7 +99,7 @@ long computeDelayComponents(PyArrayObject *delays, double SampleRate, long *fifo
 
 static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freqs, *delays, *signalsF;
-	PyArrayObject *data, *freq, *delay, *dataF, *validF;
+	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
@@ -110,7 +110,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"signals", "freqs", "delays", "LFFT", "Overlap", "SampleRate", "ClipLevel", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidi", kwlist, &signals, &freqs, &delays, &nChan, &Overlap, &SampleRate, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -119,33 +119,24 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	
 	// Check data dimensions
-	if(data->dimensions[0] != delay->dimensions[0]) {
+	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
 		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	
-	if(nChan != freq->dimensions[0]) {
+	if(nChan != PyArray_DIM(freq, 0)) {
 		PyErr_Format(PyExc_RuntimeError, "freqs has a different channel count than nChan");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	
-	if(freq->dimensions[0] != delay->dimensions[1]) {
+	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
 		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	
 	// Get the properties of the data
-	nStand = (long) data->dimensions[0];
-	nSamps = (long) data->dimensions[1];
+	nStand = (long) PyArray_DIM(data, 0);
+	nSamps = (long) PyArray_DIM(data, 1);
 	
 	// Compute the integer sample offset and the fractional sample delay for each stand
 	long *fifo, fifoMax;
@@ -154,10 +145,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	frac = (double *) malloc(nStand*nChan*sizeof(double));
 	if( fifo == NULL || frac == NULL ) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	fifoMax = computeDelayComponents(delay, SampleRate, fifo, frac);
 
@@ -167,30 +155,27 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
+		free(fifo)
 		free(frac);
-		return NULL;
+		goto fail;
 	}
 	
 	// Create an array to store whether or not the FFT window is valid (1) or not (0)
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
+	validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(dataF);
+		free(fifo)
 		free(frac);
-		return NULL;
+		goto fail;
 	}
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
 	float complex *inP, *in;                          
@@ -204,10 +189,10 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	float complex *b;
 	double *c;
 	unsigned char *d;
-	a = (short int *) data->data;
-	b = (float complex *) dataF->data;
-	c = (double *) freq->data;
-	d = (unsigned char *) validF->data;
+	a = (short int *) PyArray_DATA(data);
+	b = (float complex *) PyArray_DATA(dataF);
+	c = (double *) PyArray_DATA(freq);
+	d = (unsigned char *) PyArray_DATA(validF);
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -253,16 +238,27 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inP);
 	free(frac);
 	free(fifo);
-
+	
+	Py_END_ALLOW_THREADS
+	
+	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
+	
 	Py_XDECREF(data);
 	Py_XDECREF(freq);
 	Py_XDECREF(delay);
-
-	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
 	Py_XDECREF(dataF);
 	Py_XDECREF(validF);
-
+	
 	return signalsF;
+	
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(freq);
+	Py_XDECREF(delay);
+	Py_XDECREF(dataF);
+	Py_XDECREF(validF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FEngineR2_doc, \
@@ -293,7 +289,7 @@ Outputs:\n\
 
 static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freqs, *delays, *window, *signalsF;
-	PyArrayObject *data, *freq, *delay, *dataF, *validF, *windowData;
+	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
@@ -304,10 +300,11 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"signals", "freqs", "delays", "LFFT", "Overlap", "SampleRate", "ClipLevel", "window", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidiO:set_callback", kwlist, &signals, &freqs, &delays, &nChan, &Overlap, &SampleRate, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	} else {
 		if(!PyCallable_Check(window)) {
 			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+			goto fail;
 		}
 		Py_XINCREF(window);
 		Py_XDECREF(windowFunc);
@@ -326,36 +323,24 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_DECREF(window);
 	
 	// Check data dimensions
-	if(data->dimensions[0] != delay->dimensions[0]) {
+	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
 		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
 	
-	if(nChan != freq->dimensions[0]) {
+	if(nChan != PyArray_DIM(freq, 0)) {
 		PyErr_Format(PyExc_RuntimeError, "freqs has a different channel count than nChan");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
 	
-	if(freq->dimensions[0] != delay->dimensions[1]) {
+	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
 		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
 	
 	// Get the properties of the data
-	nStand = (long) data->dimensions[0];
-	nSamps = (long) data->dimensions[1];
+	nStand = (long) PyArray_DIM(data, 0);
+	nSamps = (long) PyArray_DIM(data, 1);
 	
 	// Compute the integer sample offset and the fractional sample delay for each stand
 	long *fifo, fifoMax;
@@ -364,10 +349,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	frac = (double *) malloc(nStand*nChan*sizeof(double));
 	if( fifo == NULL || frac == NULL ) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	fifoMax = computeDelayComponents(delay, SampleRate, fifo, frac);
 	
@@ -377,32 +359,27 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
+		free(fifo);
 		free(frac);
-		return NULL;
+		goto fail;
 	}
 	
 	// Create an array to store whether or not the FFT window is valid (1) or not (0)
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
+	validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(dataF);
-		Py_XDECREF(windowData);
+		free(fifo);
 		free(frac);
-		return NULL;
+		goto fail;
 	}
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
 	float complex *inP, *in;                          
@@ -416,11 +393,11 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	float complex *b;
 	double *c, *e;
 	unsigned char *d;
-	a = (short int *) data->data;
-	b = (float complex *) dataF->data;
-	c = (double *) freq->data;
-	d = (unsigned char *) validF->data;
-	e = (double *) windowData->data;
+	a = (short int *) PyArray_DATA(data);
+	b = (float complex *) PyArray_DATA(dataF);
+	c = (double *) PyArray_DATA(freq);
+	d = (unsigned char *) PyArray_DATA(validF);
+	e = (double *) PyArray_DATA(windowData);
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -468,17 +445,29 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inP);
 	free(frac);
 	free(fifo);
-
+	
+	Py_END_ALLOW_THREADS
+	
+	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
+	
 	Py_XDECREF(data);
 	Py_XDECREF(freq);
 	Py_XDECREF(delay);
 	Py_XDECREF(windowData);
-
-	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
 	Py_XDECREF(dataF);
 	Py_XDECREF(validF);
 	
 	return signalsF;
+	
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(freq);
+	Py_XDECREF(delay);
+	Py_XDECREF(windowData);
+	Py_XDECREF(dataF);
+	Py_XDECREF(validF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FEngineR3_doc, \
@@ -510,53 +499,44 @@ Outputs:\n\
 
 static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freqs, *delays, *signalsF;
-	PyArrayObject *data, *freq, *delay, *dataF, *validF;
+	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
 	double SampleRate = 1.0e5;
-
+	
 	long ij, i, j, k, nStand, nSamps, nFFT;
-
+	
 	static char *kwlist[] = {"signals", "freqs", "delays", "LFFT", "Overlap", "SampleRate", "ClipLevel", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidi", kwlist, &signals, &freqs, &delays, &nChan, &Overlap, &SampleRate, &Clip)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
-
+	
 	// Bring the data into C and make it usable
 	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	
 	// Check data dimensions
-	if(data->dimensions[0] != delay->dimensions[0]) {
+	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
 		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	
-	if(nChan != freq->dimensions[0]) {
+	if(nChan != PyArray_DIM(freq, 0)) {
 		PyErr_Format(PyExc_RuntimeError, "freqs has a different channel count than nChan");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	
-	if(freq->dimensions[0] != delay->dimensions[1]) {
+	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
 		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 
 	// Get the properties of the data
-	nStand = (long) data->dimensions[0];
-	nSamps = (long) data->dimensions[1];
+	nStand = (long) PyArray_DIM(data, 0);
+	nSamps = (long) PyArray_DIM(data, 1);
 	
 	// Compute the integer sample offset and the fractional sample delay for each stand
 	long *fifo, fifoMax;
@@ -565,10 +545,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	frac = (double *) malloc(nStand*nChan*sizeof(double));
 	if( fifo == NULL || frac == NULL ) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	fifoMax = computeDelayComponents(delay, SampleRate, fifo, frac);
 
@@ -578,31 +555,28 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
+		free(fifo);
 		free(frac);
-		return NULL;
+		goto fail;
 	}
 	
 	// Create an array to store whether or not the FFT window is valid (1) or not (0)
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
+	validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(dataF);
+		free(fifo);
 		free(frac);
-		return NULL;
+		goto fail;
 	}
-
+	
+	Py_BEGIN_ALLOW_THREADS
+	
 	// Create the FFTW plan
 	float complex *inP, *in;
 	inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
@@ -614,10 +588,10 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	float complex *a, *b;
 	double *c;
 	unsigned char *d;
-	a = (float complex *) data->data;
-	b = (float complex *) dataF->data;
-	c = (double *) freq->data;
-	d = (unsigned char *) validF->data;
+	a = (float complex *) PyArray_DATA(data);
+	b = (float complex *) PyArray_DATA(dataF);
+	c = (double *) PyArray_DATA(freq);
+	d = (unsigned char *) PyArray_DATA(validF);
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -670,16 +644,27 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inP);
 	free(frac);
 	free(fifo);
-
+	
+	Py_END_ALLOW_THREADS
+	
+	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
+	
 	Py_XDECREF(data);
 	Py_XDECREF(freq);
 	Py_XDECREF(delay);
-
-	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
 	Py_XDECREF(dataF);
 	Py_XDECREF(validF);
 	
 	return signalsF;
+
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(freq);
+	Py_XDECREF(delay);
+	Py_XDECREF(dataF);
+	Py_XDECREF(validF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FEngineC2_doc, \
@@ -710,7 +695,7 @@ Outputs:\n\
 
 static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freqs, *delays, *window, *signalsF;
-	PyArrayObject *data, *freq, *delay, *dataF, *validF, *windowData;
+	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
 	int Clip = 0;
@@ -721,10 +706,11 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"signals", "freqs", "delays", "LFFT", "Overlap", "SampleRate", "ClipLevel", "window", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidiO:set_callback", kwlist, &signals, &freqs, &delays, &nChan, &Overlap, &SampleRate, &Clip, &window)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	} else {
 		if(!PyCallable_Check(window)) {
 			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+			goto fail;
 		}
 		Py_XINCREF(window);
 		Py_XDECREF(windowFunc);
@@ -743,36 +729,24 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_DECREF(window);
 	
 	// Check data dimensions
-	if(data->dimensions[0] != delay->dimensions[0]) {
+	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
 		PyErr_Format(PyExc_TypeError, "signals and delays have different stand counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
 	
-	if(nChan != freq->dimensions[0]) {
+	if(nChan != PyArray_DIM(freq, 0)) {
 		PyErr_Format(PyExc_RuntimeError, "freqs has a different channel count than nChan");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
 	
-	if(freq->dimensions[0] != delay->dimensions[1]) {
+	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
 		PyErr_Format(PyExc_TypeError, "freqs and delays have different channel counts");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
-		return NULL;
+		goto fail;
 	}
 
 	// Get the properties of the data
-	nStand = (long) data->dimensions[0];
-	nSamps = (long) data->dimensions[1];
+	nStand = (long) PyArray_DIM(data, 0);
+	nSamps = (long) PyArray_DIM(data, 1);
 	
 	// Compute the integer sample offset and the fractional sample delay for each stand
 	long *fifo, fifoMax;
@@ -781,10 +755,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	frac = (double *) malloc(nStand*nChan*sizeof(double));
 	if( fifo == NULL || frac == NULL ) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		return NULL;
+		goto fail;
 	}
 	fifoMax = computeDelayComponents(delay, SampleRate, fifo, frac);
 
@@ -794,33 +765,28 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims[0] = (npy_intp) nStand;
 	dims[1] = (npy_intp) nChan;
 	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
+		free(fifo);
 		free(frac);
-		return NULL;
+		goto fail;
 	}
 	
 	// Create an array to store whether or not the FFT window is valid (1) or not (0)
 	npy_intp dimsV[2];
 	dimsV[0] = (npy_intp) nStand;
 	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_SimpleNew(2, dimsV, NPY_UINT8);
+	validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-		Py_XDECREF(data);
-		Py_XDECREF(freq);
-		Py_XDECREF(delay);
-		Py_XDECREF(windowData);
-		Py_XDECREF(dataF);
+		free(fifo);
 		free(frac);
-		return NULL;
+		goto fail;
 	}
-
+	
+	Py_BEGIN_ALLOW_THREADS
+	
 	// Create the FFTW plan
 	float complex *inP, *in;
 	inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
@@ -832,11 +798,11 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	float complex *a, *b;
 	double *c, *e;
 	unsigned char *d;
-	a = (float complex *) data->data;
-	b = (float complex *) dataF->data;
-	c = (double *) freq->data;
-	d = (unsigned char *) validF->data;
-	e = (double *) windowData->data;
+	a = (float complex *) PyArray_DATA(data);
+	b = (float complex *) PyArray_DATA(dataF);
+	c = (double *) PyArray_DATA(freq);
+	d = (unsigned char *) PyArray_DATA(validF);
+	e = (double *) PyArray_DATA(windowData);
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -891,17 +857,29 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	fftwf_free(inP);
 	free(frac);
 	free(fifo);
-
+	
+	Py_END_ALLOW_THREADS
+	
+	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
+	
 	Py_XDECREF(data);
 	Py_XDECREF(freq);
 	Py_XDECREF(delay);
 	Py_XDECREF(windowData);
-
-	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
 	Py_XDECREF(dataF);
 	Py_XDECREF(validF);
 	
 	return signalsF;
+	
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(freq);
+	Py_XDECREF(delay);
+	Py_XDECREF(windowData);
+	Py_XDECREF(dataF);
+	Py_XDECREF(validF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FEngineC3_doc, \
@@ -938,12 +916,12 @@ Outputs:\n\
 
 static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	PyObject *signals1, *signals2, *sigValid1, *sigValid2, *output;
-	PyArrayObject *data1, *data2, *valid1, *valid2, *vis;
+	PyArrayObject *data1=NULL, *data2=NULL, *valid1=NULL, *valid2=NULL, *vis=NULL;
 	long nStand, nChan, nFFT, nBL;	
 
 	if(!PyArg_ParseTuple(args, "OOOO", &signals1, &signals2, &sigValid1, &sigValid2)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -953,25 +931,22 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	valid2 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid2, NPY_UINT8, 2, 2);
 
 	// Get channel count and number of FFTs stored
-	nStand = (long) data1->dimensions[0];
-	nChan = (long) data1->dimensions[1];
-	nFFT = (long) data1->dimensions[2];
+	nStand = (long) PyArray_DIM(data1, 0);
+	nChan = (long) PyArray_DIM(data1, 1);
+	nFFT = (long) PyArray_DIM(data1, 2);
 	nBL = (nStand+1)*nStand/2;
 	
 	// Create the output visibility array and fill with zeros
 	npy_intp dims[2];
 	dims[0] = (npy_intp) nBL;
 	dims[1] = (npy_intp) nChan;
-	vis = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_COMPLEX64);
+	vis = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_COMPLEX64, 0);
 	if(vis == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data1);
-		Py_XDECREF(data2);
-		Py_XDECREF(valid1);
-		Py_XDECREF(valid2);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(vis, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Mapper for baseline number to stand 1, stand 2
 	long s1, s2, mapper[nBL][2];
@@ -987,15 +962,15 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	long bl, c, f;
 	float complex tempVis;
 	float complex *a, *b, *v;
-	a = (float complex *) data1->data;
-	b = (float complex *) data2->data;
-	v = (float complex *) vis->data;
+	a = (float complex *) PyArray_DATA(data1);
+	b = (float complex *) PyArray_DATA(data2);
+	v = (float complex *) PyArray_DATA(vis);
 	
 	// Time-domain blanking control
 	long nActVis;
 	unsigned char *u1, *u2;
-	u1 = (unsigned char *) valid1->data;
-	u2 = (unsigned char *) valid2->data;
+	u1 = (unsigned char *) PyArray_DATA(valid1);
+	u2 = (unsigned char *) PyArray_DATA(valid2);
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(c, f, nActVis, tempVis)
@@ -1016,15 +991,27 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 			}
 		}
 	}
+	
+	Py_END_ALLOW_THREADS
+	
+	output = Py_BuildValue("O", PyArray_Return(vis));
+	
 	Py_XDECREF(data1);
 	Py_XDECREF(data2);
 	Py_XDECREF(valid1);
 	Py_XDECREF(valid2);
-
-	output = Py_BuildValue("O", PyArray_Return(vis));
 	Py_XDECREF(vis);
-
+	
 	return output;
+	
+fail:
+	Py_XDECREF(data1);
+	Py_XDECREF(data2);
+	Py_XDECREF(valid1);
+	Py_XDECREF(valid2);
+	Py_XDECREF(vis);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(XEngine2_doc, \
@@ -1052,12 +1039,12 @@ Ouputs:\n\
 
 static PyObject *XEngine3(PyObject *self, PyObject *args) {
 	PyObject *signalsX, *signalsY, *sigValidX, *sigValidY, *output;
-	PyArrayObject *dataX, *dataY, *validX, *validY, *vis;
+	PyArrayObject *dataX=NULL, *dataY=NULL, *validX=NULL, *validY=NULL, *vis=NULL;
 	long nStand, nChan, nFFT, nBL;	
 
 	if(!PyArg_ParseTuple(args, "OOOO", &signalsX, &signalsY, &sigValidX, &sigValidY)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Bring the data into C and make it usable
@@ -1067,9 +1054,9 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
 	validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_UINT8, 2, 2);
 
 	// Get channel count and number of FFTs stored
-	nStand = (long) dataX->dimensions[0];
-	nChan = (long) dataX->dimensions[1];
-	nFFT = (long) dataX->dimensions[2];
+	nStand = (long) PyArray_DIM(dataX, 0);
+	nChan = (long) PyArray_DIM(dataX, 1);
+	nFFT = (long) PyArray_DIM(dataX, 2);
 	nBL = (nStand+1)*nStand/2;
 	
 	// Create the output visibility array and fill with zeros
@@ -1077,16 +1064,13 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
 	dims[0] = (npy_intp) 4;
 	dims[1] = (npy_intp) nBL;
 	dims[2] = (npy_intp) nChan;
-	vis = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	vis = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(vis == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(dataX);
-		Py_XDECREF(dataY);
-		Py_XDECREF(validX);
-		Py_XDECREF(validY);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(vis, 0);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Mapper for baseline number to stand 1, stand 2
 	long s1, s2, mapper[nBL][2];
@@ -1102,15 +1086,15 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
 	long bl, c, f;
 	float complex tempVis;
 	float complex *a, *b, *v;
-	a = (float complex *) dataX->data;
-	b = (float complex *) dataY->data;
-	v = (float complex *) vis->data;
+	a = (float complex *) PyArray_DATA(dataX);
+	b = (float complex *) PyArray_DATA(dataY);
+	v = (float complex *) PyArray_DATA(vis);
 	
 	// Time-domain blanking control
 	long nActVisPureX, nActVisPureY, nActVisCross;
 	unsigned char *u1, *u2;
-	u1 = (unsigned char *) validX->data;
-	u2 = (unsigned char *) validY->data;
+	u1 = (unsigned char *) PyArray_DATA(validX);
+	u2 = (unsigned char *) PyArray_DATA(validY);
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(c, f, nActVisPureX, nActVisPureY, nActVisCross, tempVis)
@@ -1147,15 +1131,27 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
 			}
 		}
 	}
+	
+	Py_END_ALLOW_THREADS
+	
+	output = Py_BuildValue("O", PyArray_Return(vis));
+	
 	Py_XDECREF(dataX);
 	Py_XDECREF(dataY);
 	Py_XDECREF(validX);
 	Py_XDECREF(validY);
-
-	output = Py_BuildValue("O", PyArray_Return(vis));
 	Py_XDECREF(vis);
 
 	return output;
+	
+fail:
+	Py_XDECREF(dataX);
+	Py_XDECREF(dataY);
+	Py_XDECREF(validX);
+	Py_XDECREF(validY);
+	Py_XDECREF(vis);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(XEngine3_doc, \

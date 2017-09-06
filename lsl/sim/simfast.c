@@ -12,13 +12,10 @@
 
 #include "protos.h"
 
-#define PI 3.1415926535898
-#define imaginary _Complex_I
-
 
 static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *antarray, *bls, *output, *temp, *temp2, *temp3;
-	PyArrayObject *freq, *ha, *dec, *flux, *shape, *uvwF, *visF, *tempA;
+	PyArrayObject *freq=NULL, *ha=NULL, *dec=NULL, *flux=NULL, *shape=NULL, *uvwF=NULL, *visF=NULL, *tempA=NULL;
 	long int i, j, k;
 	long int resolve, nAnt, nSrc, nFreq, nBL, chanMin, chanMax;
 	double lat, pcAz, pcEl, pcHA, pcDec;
@@ -31,7 +28,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"aa", "bls", "chanMin", "chanMax", "pcAz", "pcEl", "resolve_src", NULL};
 	if( !PyArg_ParseTupleAndKeywords(args, kwds, "OOlldd|i", kwlist, &antarray, &bls, &chanMin, &chanMax, &pcAz, &pcEl, &resolve) ) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 	
 	// Bring the data into C and make it usable
@@ -59,100 +56,65 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	temp2 = PyDict_GetItemString(temp, "s_ha");
 	if( temp2 == NULL ) {
 		PyErr_Format(PyExc_TypeError, "Cannot find HA array 's_ha' in the simulation cache");
-		Py_XDECREF(freq);
-		return NULL;
+		goto fail;
 	}
 	ha   = (PyArrayObject *) PyArray_ContiguousFromObject(temp2, NPY_DOUBLE, 1, 1);
 	/** Declination **/
 	temp2 = PyDict_GetItemString(temp, "s_dec");
 	if( temp2 == NULL ) {
 		PyErr_Format(PyExc_TypeError, "Cannot find dec. array 's_dec' in the simulation cache");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		return NULL;
+		goto fail;
 	}
 	dec  = (PyArrayObject *) PyArray_ContiguousFromObject(temp2, NPY_DOUBLE, 1, 1);
 	/** Flux density as a function of frequency **/
 	temp2 = PyDict_GetItemString(temp, "jys");
 	if( temp2 == NULL ) {
 		PyErr_Format(PyExc_TypeError, "Cannot find flux density array 'jys' in the simulation cache");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		return NULL;
+		goto fail;
 	}
 	flux = (PyArrayObject *) PyArray_ContiguousFromObject(temp2, NPY_COMPLEX128, 2, 2);
 	/** Source shape **/
 	temp2 = PyDict_GetItemString(temp, "s_shp");
 	if( temp2 == NULL ) {
 		PyErr_Format(PyExc_TypeError, "Cannot find source shape array 's_shp' in the simulation cache");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		return NULL;
+		goto fail;
 	}
 	shape = (PyArrayObject *) PyArray_ContiguousFromObject(temp2, NPY_DOUBLE, 2, 2);
 	Py_DECREF(temp);
 	
 	/* Pointing center */
-	pcAz *= PI / 180.0;
-	pcEl *= PI / 180.0;
-	if( pcEl == PI/2 ) {
+	pcAz *= NPY_PI / 180.0;
+	pcEl *= NPY_PI / 180.0;
+	if( pcEl == NPY_PI/2 ) {
 		pcEl -= 1e-8;
 	}
 	/** Conversion to hour angle and declination **/
-	pcHA = atan2(sin(pcAz-PI), (cos(pcAz-PI)*sin(lat) + tan(pcEl)*cos(lat)));
-	pcDec = asin(sin(lat)*sin(pcEl) - cos(lat)*cos(pcEl)*cos(pcAz-PI));
+	pcHA = atan2(sin(pcAz-NPY_PI), (cos(pcAz-NPY_PI)*sin(lat) + tan(pcEl)*cos(lat)));
+	pcDec = asin(sin(lat)*sin(pcEl) - cos(lat)*cos(pcEl)*cos(pcAz-NPY_PI));
 	
 	// Check data dimensions
-	if(ha->dimensions[0] != dec->dimensions[0]) {
+	if(PyArray_DIM(ha, 0) != PyArray_DIM(dec, 0)) {
 		PyErr_Format(PyExc_TypeError, "Source hour angle and declination arrays do not contain the same number of elements");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		Py_XDECREF(shape);
-		return NULL;
+		goto fail;
 	}
 	
-	if(flux->dimensions[0] != ha->dimensions[0]) {
+	if(PyArray_DIM(flux, 0) != PyArray_DIM(ha, 0)) {
 		PyErr_Format(PyExc_TypeError, "Source flux dimensions do not agree with number of sources");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		Py_XDECREF(shape);
-		return NULL;
+		goto fail;
 	}
 	
-	if(shape->dimensions[0] != 3) {
+	if(PyArray_DIM(shape, 0) != 3) {
 		PyErr_Format(PyExc_TypeError, "Source shape dimensions do not agree with number of required parameters");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		Py_XDECREF(shape);
-		return NULL;
+		goto fail;
 	}
-	if(shape->dimensions[1] != ha->dimensions[0]) {
+	if(PyArray_DIM(shape, 1) != PyArray_DIM(ha, 0)) {
 		PyErr_Format(PyExc_TypeError, "Source shape dimensions do not agree with number of sources");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		Py_XDECREF(shape);
-		return NULL;
+		goto fail;
 	}
 	
-	if(flux->dimensions[1] != freq->dimensions[0]) {
+	if(PyArray_DIM(flux, 1) != PyArray_DIM(freq, 0)) {
 		PyErr_Format(PyExc_TypeError, "Source flux dimensions do not agree with number of channels");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		Py_XDECREF(shape);
-		return NULL;
+		goto fail;
 	}
 	
 	// Dimensions
@@ -160,8 +122,8 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	nAnt = (long int) PyInt_AsLong(temp);
 	temp2 = PyObject_CallMethod(bls, "__len__", NULL);
 	nBL = (long int) PyInt_AsLong(temp2);
-	nFreq = (long int) freq->dimensions[0];
-	nSrc = (long int) ha->dimensions[0];
+	nFreq = (long int) PyArray_DIM(freq, 0);
+	nSrc = (long int) PyArray_DIM(ha, 0);
 	Py_DECREF(temp);
 	Py_DECREF(temp2);
 	if( chanMax < chanMin ) {
@@ -179,33 +141,20 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	dims1[0] = (npy_intp) nBL;
 	dims1[1] = (npy_intp) 3;
 	dims1[2] = (npy_intp) nFreq;
-	uvwF = (PyArrayObject*) PyArray_SimpleNew(3, dims1, NPY_DOUBLE);
+	uvwF = (PyArrayObject*) PyArray_ZEROS(3, dims1, NPY_DOUBLE, 0);
 	if(uvwF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create uvw output array");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		Py_XDECREF(shape);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(uvwF, 0);
 	
 	npy_intp dims2[2];
 	dims2[0] = (npy_intp) nBL;
 	dims2[1] = (npy_intp) nFreq;
-	visF = (PyArrayObject*) PyArray_SimpleNew(2, dims2, NPY_COMPLEX64);
+	visF = (PyArrayObject*) PyArray_ZEROS(2, dims2, NPY_COMPLEX64, 0);
 	if(visF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create visibility output array");
-		Py_XDECREF(freq);
-		Py_XDECREF(ha);
-		Py_XDECREF(dec);
-		Py_XDECREF(flux);
-		Py_XDECREF(shape);
-		Py_XDECREF(uvwF);
-		return NULL;
+		goto fail;
 	}
-	PyArray_FILLWBYTE(visF, 0);
 	
 	// Load in the antenna equatorial positions
 	double *pos, *t;
@@ -218,7 +167,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_DECREF(temp2);
 		
 		tempA = (PyArrayObject *) PyArray_ContiguousFromObject(temp3, NPY_DOUBLE, 1, 1);
-		t = (double *) tempA->data;
+		t = (double *) PyArray_DATA(tempA);
 		
 		for(j=0; j<3; j++) {
 			*(pos + 3*i + j) = *(t + j);
@@ -247,6 +196,8 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 		Py_DECREF(temp2);
 	}
 	
+	Py_BEGIN_ALLOW_THREADS
+	
 	// Equatorial to topocentric baseline conversion basis for the phase center
 	double pcsinHA, pccosHA, pcsinDec, pccosDec;
 	pcsinHA = sin(pcHA);
@@ -262,13 +213,13 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *a, *b, *c, *e, *g;
 	double complex *d;
 	float complex *f;
-	a = (double *) freq->data;
-	b = (double *) ha->data;
-	c = (double *) dec->data;
-	d = (double complex *) flux->data;
-	e = (double *) uvwF->data;
-	f = (float complex *) visF->data;
-	g = (double *) shape->data;
+	a = (double *) PyArray_DATA(freq);
+	b = (double *) PyArray_DATA(ha);
+	c = (double *) PyArray_DATA(dec);
+	d = (double complex *) PyArray_DATA(flux);
+	e = (double *) PyArray_DATA(uvwF);
+	f = (float complex *) PyArray_DATA(visF);
+	g = (double *) PyArray_DATA(shape);
 	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempA0, tempA1, tempTheta, tempX, tempVis, x, y, z, u, v, w, i, j, k)
@@ -316,7 +267,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 					if( resolve && tempA0 != 0.0 && tempA1 != 0.0 ) {
 						tempX  = tempA0*(u*cos(tempTheta) - v*sin(tempTheta)) * tempA0*(u*cos(tempTheta) - v*sin(tempTheta));
 						tempX += tempA1*(u*sin(tempTheta) + v*cos(tempTheta)) * tempA1*(u*sin(tempTheta) + v*cos(tempTheta));
-						tempX = 2.0*PI * sqrt(tempX);
+						tempX = 2.0*NPY_PI * sqrt(tempX);
 						
 						if( tempX != 0.0 ) {
 							tempX = 2.0 * j1(tempX)/tempX;
@@ -328,7 +279,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 					}
 					
 					// Compute the contribution of this source to the baseline visibility (with the conjugation)
-					*(tempVis + k) += tempX * *(d + nFreq*j + k) * cexp(2*PI*imaginary*w);
+					*(tempVis + k) += tempX * *(d + nFreq*j + k) * cexp(2*NPY_PI*_Complex_I*w);
 				}
 			}
 			
@@ -349,7 +300,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 				*(e + i*3*nFreq + 2*nFreq + k) = w;
 				
 				// Phase to zenith
-				*(f + i*nFreq + k) = *(tempVis + k) * cexp(-2*PI*imaginary*w);
+				*(f + i*nFreq + k) = *(tempVis + k) * cexp(-2*NPY_PI*_Complex_I*w);
 			}
 			
 			free(tempVis);
@@ -359,17 +310,31 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Cleanup
 	free(pos);
 	free(bll);
+	
+	Py_END_ALLOW_THREADS
+	
+	output = Py_BuildValue("(OO)", PyArray_Return(uvwF), PyArray_Return(visF));
+	
 	Py_XDECREF(freq);
 	Py_XDECREF(ha);
 	Py_XDECREF(dec);
 	Py_XDECREF(flux);
 	Py_XDECREF(shape);
-	
-	output = Py_BuildValue("(OO)", PyArray_Return(uvwF), PyArray_Return(visF));
 	Py_XDECREF(uvwF);
 	Py_XDECREF(visF);
 	
 	return output;
+	
+fail:
+	Py_XDECREF(freq);
+	Py_XDECREF(ha);
+	Py_XDECREF(dec);
+	Py_XDECREF(flux);
+	Py_XDECREF(shape);
+	Py_XDECREF(uvwF);
+	Py_XDECREF(visF);
+	
+	return NULL;
 }
 
 PyDoc_STRVAR(FastVis_doc, \

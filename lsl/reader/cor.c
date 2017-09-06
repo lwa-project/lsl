@@ -60,12 +60,12 @@ typedef struct {
 
 PyObject *readCOR(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
-	PyArrayObject *data, *wgt;
+	PyArrayObject *data=NULL, *wgt=NULL;
 	int i;
 	
 	if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		return NULL;
+		goto fail;
 	}
 
 	// Read in a single 4640 byte frame
@@ -76,19 +76,19 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	if(ferror(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		return NULL;
+		goto fail;
 	}
 	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		return NULL;
+		goto fail;
 	}
 	PyFile_DecUseCount((PyFileObject *) ph);
 	
 	// Validate
 	if( !validSync5C(cFrame.header.syncWord) ) {
 		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
-		return NULL;
+		goto fail;
 	}
 	
 	// Swap the bits around
@@ -107,11 +107,10 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	dims[0] = 144;
 	dims[1] = 2;
 	dims[2] = 2;
-	data = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	data = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		return NULL;
+		goto fail;
 	}
 	
 	// Create the output weight array
@@ -119,12 +118,10 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	dims[0] = 144;
 	dims[1] = 2;
 	dims[2] = 2;
-	wgt = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_FLOAT32);
+	wgt = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_FLOAT32, 0);
 	if(wgt == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output weight array");
-		Py_XDECREF(data);
-		Py_XDECREF(wgt);
-		return NULL;
+		goto fail;
 	}
 	
 	// Fill the data and weight arrays
@@ -132,8 +129,8 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	unsigned long int fp;
 	float complex *a;
 	float *b;
-	a = (float complex *) data->data;
-	b = (float *) wgt->data;
+	a = (float complex *) PyArray_DATA(data);
+	b = (float *) PyArray_DATA(wgt);
 	for(i=0; i<576; i++) {
 		fp = ((unsigned long long) cFrame.data.bytes[8*i+0])<<56 | \
 			((unsigned long long) cFrame.data.bytes[8*i+1])<<48 | \
@@ -150,7 +147,7 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 		tempI -= ((tempI & 0x200000) << 1);
 		tempW  = fp & 0x3FFFFF;
 		tempW -= ((tempW & 0x200000) << 1);
-		*(a + i) = (float) tempR + imaginary * (float) tempI;
+		*(a + i) = (float) tempR + _Complex_I * (float) tempI;
 		*(b + i) = (float) tempW / (float) 0x1FFFFF;
 	}
 	
@@ -203,14 +200,20 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
+	output = Py_BuildValue("O", frame);
 	
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
 	Py_XDECREF(wgt);
 	
-	output = Py_BuildValue("O", frame);
 	return output;
+	
+fail:
+	Py_XDECREF(data);
+	Py_XDECREF(wgt);
+	
+	return NULL;
 }
 
 char readCOR_doc[] = PyDoc_STR(\

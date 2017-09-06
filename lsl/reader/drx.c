@@ -111,7 +111,7 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	// Create the output data array
 	npy_intp dims[1];
 	dims[0] = (npy_intp) 4096;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_COMPLEX64);
+	data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_COMPLEX64, 0);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -121,10 +121,10 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	// Fill the data array
 	const float *fp;
 	float complex *a;
-	a = (float complex *) data->data;
+	a = (float complex *) PyArray_DATA(data);
 	for(i=0; i<4096; i++) {
 		fp = drxLUT[ cFrame.data.bytes[i] ];
-		*(a + i) = fp[0] + imaginary * fp[1];
+		*(a + i) = fp[0] + _Complex_I * fp[1];
 	}
 	
 	// Save the data to the frame object
@@ -171,12 +171,12 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
+	output = Py_BuildValue("O", frame);
 	
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
 	
-	output = Py_BuildValue("O", frame);
 	return output;
 }
 

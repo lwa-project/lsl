@@ -205,8 +205,8 @@ static void parseStokesFull(DRSpecHeader header, float *data, float *I0, float *
 PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
 	PyObject *tuningWords, *fills, *errors, *saturations;
-	PyArrayObject *dataA0, *dataB0, *dataC0, *dataD0;
-	PyArrayObject *dataA1, *dataB1, *dataC1, *dataD1;
+	PyArrayObject *dataA0=NULL, *dataB0=NULL, *dataC0=NULL, *dataD0=NULL;
+	PyArrayObject *dataA1=NULL, *dataB1=NULL, *dataC1=NULL, *dataD1=NULL;
 	
 	int i, nSets;
 	
@@ -223,12 +223,12 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	if(ferror(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		return NULL;
+		goto fail;
 	}
 	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		return NULL;
+		goto fail;
 	}
 	
 	// Check the header's magic numbers
@@ -236,7 +236,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		fseek(fh, -sizeof(DRSpecHeader), SEEK_CUR);
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(syncError, "Sync word differs from expected");
-		return NULL;
+		goto fail;
 	}
 	
 	// Get the data format
@@ -264,88 +264,52 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	npy_intp dims[1];
 	dims[0] = (npy_intp) header.nFreqs;
 	
-	dataA0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataA0 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataA0 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XX0/I0");
-		Py_XDECREF(dataA0);
-		return NULL;
+		goto fail;
 	}
 	
-	dataB0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataB0 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataB0 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XY0/Q0");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		return NULL;
+		goto fail;
 	}
 	
-	dataC0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataC0 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataC0 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YX0/U0");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		return NULL;
+		goto fail;
 	}
 	
-	dataD0 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataD0 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataD0 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YY0/V0");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		return NULL;
+		goto fail;
 	}
 	
-	dataA1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataA1 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataA1 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XX1/I1");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		return NULL;
+		goto fail;
 	}
 	
-	dataB1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataB1 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataB1 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - XY1/Q1");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		Py_XDECREF(dataB1);
-		return NULL;
+		goto fail;
 	}
 	
-	dataC1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataC1 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataC1 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YX1/U1");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		Py_XDECREF(dataB1);
-		Py_XDECREF(dataC1);
-		return NULL;
+		goto fail;
 	}
 	
-	dataD1 = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	dataD1 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(dataD1 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array - YY1/V1");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		Py_XDECREF(dataB1);
-		Py_XDECREF(dataC1);
-		Py_XDECREF(dataD1);
-		return NULL;
+		goto fail;
 	}
 	
 	// Get ready to read in the data
@@ -357,25 +321,25 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	if(ferror(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		return NULL;
+		goto fail;
 	}
 	if(feof(fh)) {
 		PyFile_DecUseCount((PyFileObject *) ph);
 		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		return NULL;
+		goto fail;
 	}
 	PyFile_DecUseCount((PyFileObject *) ph);
 	
 	// Fill the data arrays
 	float *a0, *b0, *c0, *d0, *a1, *b1, *c1, *d1;
-	a0 = (float *) dataA0->data;
-	b0 = (float *) dataB0->data;
-	c0 = (float *) dataC0->data;
-	d0 = (float *) dataD0->data;
-	a1 = (float *) dataA1->data;
-	b1 = (float *) dataB1->data;
-	c1 = (float *) dataC1->data;
-	d1 = (float *) dataD1->data;
+	a0 = (float *) PyArray_DATA(dataA0);
+	b0 = (float *) PyArray_DATA(dataB0);
+	c0 = (float *) PyArray_DATA(dataC0);
+	d0 = (float *) PyArray_DATA(dataD0);
+	a1 = (float *) PyArray_DATA(dataA1);
+	b1 = (float *) PyArray_DATA(dataB1);
+	c1 = (float *) PyArray_DATA(dataC1);
+	d1 = (float *) PyArray_DATA(dataD1);
 	if( header.stokes_format < 0x10 ) {
 		// Linear
 		if( header.stokes_format == 0x01 ) {
@@ -427,16 +391,8 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	tuningWords = PyList_New(2);
 	if(tuningWords == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - tuningWords");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		Py_XDECREF(dataB1);
-		Py_XDECREF(dataC1);
-		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
-		return NULL;
+		goto fail;
 	}
 	for(i=0; i<2; i++) {
 		temp = Py_BuildValue("I", header.freqCode[i]);
@@ -446,17 +402,9 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	fills = PyList_New(4);
 	if(fills == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - fills");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		Py_XDECREF(dataB1);
-		Py_XDECREF(dataC1);
-		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
 		Py_XDECREF(fills);
-		return NULL;
+		goto fail;
 	}
 	for(i=0; i<4; i++) {
 		temp = Py_BuildValue("I", header.fills[i]);
@@ -466,18 +414,10 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	errors = PyList_New(4);
 	if(errors == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - flags");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		Py_XDECREF(dataB1);
-		Py_XDECREF(dataC1);
-		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
 		Py_XDECREF(fills);
 		Py_XDECREF(errors);
-		return NULL;
+		goto fail;
 	}
 	for(i=0; i<4; i++) {
 		temp = Py_BuildValue("B", header.errors[i]);
@@ -487,19 +427,11 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	saturations = PyList_New(4);
 	if(saturations == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output list - saturations");
-		Py_XDECREF(dataA0);
-		Py_XDECREF(dataB0);
-		Py_XDECREF(dataC0);
-		Py_XDECREF(dataD0);
-		Py_XDECREF(dataA1);
-		Py_XDECREF(dataB1);
-		Py_XDECREF(dataC1);
-		Py_XDECREF(dataD1);
 		Py_XDECREF(tuningWords);
 		Py_XDECREF(fills);
 		Py_XDECREF(errors);
 		Py_XDECREF(saturations);
-		return NULL;
+		goto fail;
 	}
 	for(i=0; i<4; i++) {
 		temp = Py_BuildValue("I", header.satCount[i]);
@@ -584,6 +516,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
+	output = Py_BuildValue("O", frame);
 	
 	Py_XDECREF(fHeader);
 	Py_XDECREF(tuningWords);
@@ -600,8 +533,19 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	Py_XDECREF(dataC1);
 	Py_XDECREF(dataD1);
 	
-	output = Py_BuildValue("O", frame);
 	return output;
+	
+fail:
+	Py_XDECREF(dataA0);
+	Py_XDECREF(dataB0);
+	Py_XDECREF(dataC0);
+	Py_XDECREF(dataD0);
+	Py_XDECREF(dataA1);
+	Py_XDECREF(dataB1);
+	Py_XDECREF(dataC1);
+	Py_XDECREF(dataD1);
+	
+	return NULL;
 }
 
 char readDRSpec_doc[] = PyDoc_STR(\

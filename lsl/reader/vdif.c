@@ -129,15 +129,14 @@ static PyArrayObject * parseVDIF8(unsigned char *rawData, unsigned int dataLengt
 	// Create the data holders and output data array
 	npy_intp dims[1];
 	dims[0] = (npy_intp) nSamples;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(data == NULL) {
 		return data;
 	}
 	
 	// Fill the data
 	float *a;
-	
-	a = (float *) data->data;
+	a = (float *) PyArray_DATA(data);
 	
 	unsigned int i;
 	for(i=0; i<dataLength; i++) {
@@ -157,15 +156,14 @@ static PyArrayObject * parseVDIF4(unsigned char *rawData, unsigned int dataLengt
 	// Create the data holders and output data array
 	npy_intp dims[1];
 	dims[0] = (npy_intp) nSamples;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(data == NULL) {
 		return data;
 	}
 	
 	// Fill the data
 	float *a;
-	
-	a = (float *) data->data;
+	a = (float *) PyArray_DATA(data);
 	
 	unsigned int i;
 	float *fp;
@@ -188,15 +186,14 @@ static PyArrayObject * parseVDIF2(unsigned char *rawData, unsigned int dataLengt
 	// Create the data holders and output data array
 	npy_intp dims[1];
 	dims[0] = (npy_intp) nSamples;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(data == NULL) {
 		return data;
 	}
 	
 	// Fill the data
 	float *a;
-	
-	a = (float *) data->data;
+	a = (float *) PyArray_DATA(data);
 	
 	unsigned int i;
 	float *fp;
@@ -222,15 +219,14 @@ static PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLengt
 	// Create the data holders and output data array
 	npy_intp dims[1];
 	dims[0] = (npy_intp) nSamples;
-	data = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+	data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
 	if(data == NULL) {
 		return data;
 	}
 	
 	// Fill the data
 	float *a;
-	
-	a = (float *) data->data;
+	a = (float *) PyArray_DATA(data);
 	
 	unsigned int i;
 	float *fp;
@@ -386,7 +382,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 		// Create a new complex64 array to hold the data
 		npy_intp dims[1];
 		dims[0] = (npy_intp) nSamples/2;
-		tempArrayComplex = (PyArrayObject*) PyArray_SimpleNew(1, dims, NPY_COMPLEX64);
+		tempArrayComplex = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_COMPLEX64, 0);
 		if(tempArrayComplex == NULL) {
 			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 			Py_XDECREF(tempArrayComplex);
@@ -397,10 +393,10 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 		float *a;
 		float complex *b;
 		
-		a = (float *) data->data;
-		b = (float complex *) tempArrayComplex->data;
+		a = (float *) PyArray_DATA(data);
+		b = (float complex *) PyArray_DATA(tempArrayComplex);
 		for(i=0; i<nSamples; i+=2) {
-			*(b+i/2) = *(a+i+0) + imaginary * *(a+i+1);
+			*(b+i/2) = *(a+i+0) + _Complex_I * *(a+i+1);
 		}
 		
 		Py_XDECREF(data);
@@ -513,12 +509,12 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
+	output = Py_BuildValue("O", frame);
 	
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
-
-	output = Py_BuildValue("O", frame);
+	
 	return output;
 }
 

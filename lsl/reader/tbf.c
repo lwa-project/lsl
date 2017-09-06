@@ -100,7 +100,7 @@ PyObject *readTBF(PyObject *self, PyObject *args) {
 	dims[0] = (npy_intp) 12;
 	dims[1] = (npy_intp) 256;
 	dims[2] = (npy_intp) 2;
-	data = (PyArrayObject*) PyArray_SimpleNew(3, dims, NPY_COMPLEX64);
+	data = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 		Py_XDECREF(data);
@@ -110,10 +110,10 @@ PyObject *readTBF(PyObject *self, PyObject *args) {
 	// Fill the data array
 	const float *fp;
 	float complex *a;
-	a = (float complex *) data->data;
+	a = (float complex *) PyArray_DATA(data);
 	for(i=0; i<6144; i++) {
 		fp = tbfLUT[ cFrame.data.bytes[i] ];
-		*(a + i) = fp[0] + imaginary * fp[1];
+		*(a + i) = fp[0] + _Complex_I * fp[1];
 	}
 	
 	// Save the data to the frame object
@@ -148,12 +148,12 @@ PyObject *readTBF(PyObject *self, PyObject *args) {
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
 	PyObject_SetAttrString(frame, "data", fData);
+	output = Py_BuildValue("O", frame);
 	
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
 	
-	output = Py_BuildValue("O", frame);
 	return output;
 }
 
