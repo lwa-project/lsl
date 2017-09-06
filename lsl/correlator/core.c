@@ -159,7 +159,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(dataF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		free(fifo)
+		free(fifo);
 		free(frac);
 		goto fail;
 	}
@@ -171,7 +171,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
 	if(validF == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-		free(fifo)
+		free(fifo);
 		free(frac);
 		goto fail;
 	}
