@@ -119,15 +119,15 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	if( data == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16");
 		goto fail;
 	}
 	if( freq == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double");
 		goto fail;
 	}
 	if( delay == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double");
 		goto fail;
 	}
 	
@@ -329,15 +329,15 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	if( data == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16");
 		goto fail;
 	}
 	if( freq == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double");
 		goto fail;
 	}
 	if( delay == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double");
 		goto fail;
 	}
 	
@@ -543,15 +543,15 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	if( data == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D complex64")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D complex64");
 		goto fail;
 	}
 	if( freq == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double");
 		goto fail;
 	}
 	if( delay == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double");
 		goto fail;
 	}
 	
@@ -759,15 +759,15 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
 	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
 	if( data == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D complex64")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D complex64");
 		goto fail;
 	}
 	if( freq == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double");
 		goto fail;
 	}
 	if( delay == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double")
+		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double");
 		goto fail;
 	}
 	
