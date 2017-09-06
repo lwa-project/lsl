@@ -11,6 +11,7 @@
 #endif
 
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 
 #define TPI (2*NPY_PI*_Complex_I)
 

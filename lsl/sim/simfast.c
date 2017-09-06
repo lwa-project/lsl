@@ -9,6 +9,7 @@
 #endif
 
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 
 #include "protos.h"
 
