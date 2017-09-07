@@ -227,7 +227,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(static)
+			#pragma omp for schedule(dynamic)
 		#endif
 		for(i=0; i<nBL; i++) {
 			// Antenna indicies for the baseline
