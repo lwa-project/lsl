@@ -8,6 +8,11 @@
 
 #ifdef _OPENMP
 	#include <omp.h>
+	
+	// OpenMP scheduling method
+	#ifndef OMP_SCHEDULER
+	#define OMP_SCHEDULER guided
+	#endif
 #endif
 
 #include "numpy/arrayobject.h"
@@ -215,7 +220,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(ij=0; ij<nStand*nFFT; ij++) {
 			i = ij / nFFT;
@@ -432,7 +437,7 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(ij=0; ij<nStand*nFFT; ij++) {
 			i = ij / nFFT;
@@ -638,7 +643,7 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(ij=0; ij<nStand*nFFT; ij++) {
 			i = ij / nFFT;
@@ -861,7 +866,7 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(ij=0; ij<nStand*nFFT; ij++) {
 			i = ij / nFFT;
@@ -1042,7 +1047,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(bl=0; bl<nBL; bl++) {
 			nActVis = 0;
@@ -1182,7 +1187,7 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(bl=0; bl<nBL; bl++) {
 			nActVisPureX = 0;

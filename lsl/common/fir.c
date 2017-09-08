@@ -8,6 +8,11 @@
 
 #ifdef _OPENMP
 	#include <omp.h>
+	
+	// OpenMP scheduling method
+	#ifndef OMP_SCHEDULER
+	#define OMP_SCHEDULER dynamic
+	#endif
 #endif
 
 #include "numpy/arrayobject.h"
@@ -351,7 +356,7 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand/2; i++) {
 			/* 

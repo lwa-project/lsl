@@ -1149,11 +1149,11 @@ class TBF(Observation):
 			if verbose:
 				print("[%i] Error: Invalid number of samples (%i > %s)" % (os.getpid(), self.samples, 5*196e6))
 			failures += 1
-		if self.freq1 < 219130984 or self.freq1 > 1928352663:
+		if self.freq1 < 123809006 or self.freq1 > 2037918156:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
 			failures += 1
-		if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+		if (self.freq2 < 123809006 or self.freq2 > 2037918156) and self.freq2 != 0:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1
@@ -1239,7 +1239,7 @@ class TBN(Observation):
 			if verbose:
 				print("[%i] Error: Specified a duration of length zero" % os.getpid())
 			failures += 1
-		if self.freq1 < 109565492 or self.freq1 > 2037918156:
+		if self.freq1 < 65739295 or self.freq1 > 2037918156:
 			if verbose:
 				print("[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid())
 			failures += 1
@@ -1384,11 +1384,11 @@ class _DRXBase(Observation):
 			if verbose:
 				print("[%i] Error: Specified a duration of length zero" % os.getpid())
 			failures += 1
-		if self.freq1 < 219130984 or self.freq1 > 1928352663:
+		if self.freq1 < 123809006 or self.freq1 > 2037918156:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
 			failures += 1
-		if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+		if (self.freq2 < 123809006 or self.freq2 > 2037918156) and self.freq2 != 0:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1
@@ -1919,11 +1919,11 @@ class BeamStep(object):
 				print("[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur))
 			failures += 1
 	     # Basic - Frequency and filter code values
-		if self.freq1 < 219130984 or self.freq1 > 1928352663:
+		if self.freq1 < 123809006 or self.freq1 > 2037918156:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
 			failures += 1
-		if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+		if (self.freq2 < 123809006 or self.freq2 > 2037918156) and self.freq2 != 0:
 			if verbose:
 				print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
 			failures += 1

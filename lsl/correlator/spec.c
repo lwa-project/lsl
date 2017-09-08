@@ -8,6 +8,11 @@
 
 #ifdef _OPENMP
 	#include <omp.h>
+	
+	// OpenMP scheduling method
+	#ifndef OMP_SCHEDULER
+	#define OMP_SCHEDULER dynamic
+	#endif
 #endif
 
 #include "numpy/arrayobject.h"
@@ -135,7 +140,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
@@ -281,7 +286,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
@@ -418,7 +423,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
@@ -572,7 +577,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		#ifdef _OPENMP
-			#pragma omp for schedule(dynamic)
+			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
