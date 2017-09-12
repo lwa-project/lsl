@@ -2,14 +2,6 @@
 #define __READERS_H
 
 /*
-  Constants
-*/
-
-#define PI 3.1415926535898
-#define imaginary _Complex_I
-
-
-/*
   Minimum function for two values
 */
 

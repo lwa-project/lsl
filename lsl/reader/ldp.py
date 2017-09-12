@@ -20,6 +20,7 @@ correct data format object to use.
 
 import os
 import numpy
+import warnings
 from scipy.stats import norm
 from collections import deque
 
@@ -557,9 +558,11 @@ class TBNFile(LDPFileBase):
 				
 			# If something comes out, add it to the data array
 			cTimetag = cFrames[0].data.timeTag
-			if not self.ignoreTimeTagErrors:
-				if cTimetag != self._timetag+timetagSkip:
-					actStep = cTimetag - self._timetag
+			if cTimetag != self._timetag+timetagSkip:
+				actStep = cTimetag - self._timetag
+				if self.ignoreTimeTagErrors:
+					warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
+				else:
 					raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
 			self._timetag = cFrames[0].data.timeTag
 			
@@ -582,9 +585,11 @@ class TBNFile(LDPFileBase):
 		if eofFound or nFrameSets != frameCount:
 			for cFrames in self.buffer.flush():
 				cTimetag = cFrames[0].data.timeTag
-				if not self.ignoreTimeTagErrors:
-					if cTimetag != self._timetag+timetagSkip:
-						actStep = cTimetag - self._timetag
+				if cTimetag != self._timetag+timetagSkip:
+					actStep = cTimetag - self._timetag
+					if self.ignoreTimeTagErrors:
+						warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
+					else:
 						raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
 				self._timetag = cFrames[0].data.timeTag
 				
@@ -898,11 +903,13 @@ class DRXFile(LDPFileBase):
 				b,t,p = cFrame.parseID()
 				aStand = 2*(t-1) + p
 				cTimetag = cFrame.data.timeTag
-				if not self.ignoreTimeTagErrors:
-					if self._timetag[aStand] == 0:
-						self._timetag[aStand] = cTimetag - timetagSkip
-					if cTimetag != self._timetag[aStand]+timetagSkip:
-						actStep = cTimetag - self._timetag[aStand]
+				if self._timetag[aStand] == 0:
+					self._timetag[aStand] = cTimetag - timetagSkip
+				if cTimetag != self._timetag[aStand]+timetagSkip:
+					actStep = cTimetag - self._timetag[aStand]
+					if self.ignoreTimeTagErrors:
+						warnings.warn("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep), RuntimeWarning)
+					else:
 						raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep))
 						
 				if setTime is None:
@@ -924,11 +931,13 @@ class DRXFile(LDPFileBase):
 					b,t,p = cFrame.parseID()
 					aStand = 2*(t-1) + p
 					cTimetag = cFrame.data.timeTag
-					if not self.ignoreTimeTagErrors:
-						if self._timetag[aStand] == 0:
-							self._timetag[aStand] = cTimetag - timetagSkip
-						if cTimetag != self._timetag[aStand]+timetagSkip:
-							actStep = cTimetag - self._timetag[aStand]
+					if self._timetag[aStand] == 0:
+						self._timetag[aStand] = cTimetag - timetagSkip
+					if cTimetag != self._timetag[aStand]+timetagSkip:
+						actStep = cTimetag - self._timetag[aStand]
+						if self.ignoreTimeTagErrors:
+							warnings.warn("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep), RuntimeWarning)
+						else:
 							raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep))
 							
 					if setTime is None:
@@ -1164,9 +1173,11 @@ class DRSpecFile(LDPFileBase):
 				continue
 				
 			cTimetag = cFrame.getTime()
-			if not self.ignoreTimeTagErrors:
-				if cTimetag > self._timetag + 1.001*timetagSkip:
-					actStep = cTimetag - self._timetag
+			if cTimetag > self._timetag + 1.001*timetagSkip:
+				actStep = cTimetag - self._timetag
+				if self.ignoreTimeTagErrors:
+					warnings.warn("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep), RuntimeWarning)
+				else:
 					raise RuntimeError("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep))
 					
 			if setTime is None:

@@ -64,36 +64,39 @@ typedef struct {
 
 PyObject *readTBW(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
-	PyArrayObject *data;
+	PyArrayObject *data4, *data12;
 	int i;
+	TBWFrame cFrame;
 	
 	if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
-
-	// Read in a single 1224 byte frame
+	
+	// Create the output data arrays
+	// 4-bit
+	npy_intp dims[2];
+	dims[0] = (npy_intp) 2;
+	dims[1] = (npy_intp) 1200;
+	data4 = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT16, 0);
+	if( data4
+	// 12-bit
+	dims[0] = (npy_intp) 2;
+	dims[1] = (npy_intp) 400;
+	data12 = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT16, 0);
+	if( data4 == NULL || data12 == NULL ) {
+		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
+		goto fail;
+	}
+	
+	// Setup the file handle for access
 	FILE *fh = PyFile_AsFile(ph);
 	PyFile_IncUseCount((PyFileObject *) ph);
-	TBWFrame cFrame;
+	
+	Py_BEGIN_ALLOW_THREADS
+	
+	// Read in a single 1224 byte frame
 	i = fread(&cFrame, sizeof(cFrame), 1, fh);
-	if(ferror(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		return NULL;
-	}
-	if(feof(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		return NULL;
-	}
-	PyFile_DecUseCount((PyFileObject *) ph);
-
-	// Validate
-	if( !validSync5C(cFrame.header.syncWord) ) {
-		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
-		return NULL;
-	}
 	
 	// Swap the bits around
 	cFrame.header.frameCountWord = __bswap_32(cFrame.header.frameCountWord);
@@ -101,23 +104,11 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	cFrame.header.tbwID = __bswap_16(cFrame.header.tbwID);
 	cFrame.data.timeTag = __bswap_64(cFrame.data.timeTag);
 	
-	// Create the output data array
-	npy_intp dims[2];
+	// Fill the data array
 	if(cFrame.header.bits == 0) {
-		// 12-bit Data -> 400 samples in the data section
-		dims[0] = (npy_intp) 2;
-		dims[1] = (npy_intp) 400;
-		data = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT16, 0);
-		if(data == NULL) {
-			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-			Py_XDECREF(data);
-			return NULL;
-		}
-	
-		// Fill the data array
 		short int tempR;
 		short int *a;
-		a = (short int *) PyArray_DATA(data);
+		a = (short int *) PyArray_DATA(data12);
 		for(i=0; i<400; i++) {
 			tempR = (cFrame.data.bytes[3*i]<<4) | ((cFrame.data.bytes[3*i+1]>>4)&15);
 			tempR -= ((tempR&2048)<<1);
@@ -128,26 +119,34 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 			*(a + 400 + i) = (short int) tempR;
 		}
 	} else {
-		// 4-bit Data -> 1200 samples in the data section
-		dims[0] = (npy_intp) 2;
-		dims[1] = (npy_intp) 1200;
-		data = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT16, 0);
-		if(data == NULL) {
-			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-			Py_XDECREF(data);
-			return NULL;
-		}
-	
-		// Fill the data array
 		const short int *fp;
 		short int *a;
-		a = (short int *) PyArray_DATA(data);
+		a = (short int *) PyArray_DATA(data4);
 		for(i=0; i<1200; i++) {
 			fp = tbw4LUT[ cFrame.data.bytes[i] ];
 			*(a + i) = (short int) fp[0];
 			*(a + 1200 + i) = (short int) fp[1];
 		}
-		
+	}
+	
+	Py_END_ALLOW_THREADS
+	
+	// Tear down the file handle access
+	PyFile_DecUseCount((PyFileObject *) ph);
+	
+	// Validate
+	if(ferror(fh)) {
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		goto fail;
+	}
+	if(feof(fh)) {
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		goto fail;
+	}
+	if( !validSync5C(cFrame.header.syncWord) ) {
+		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
+		goto fail;
+		return NULL;
 	}
 	
 	// Save the data to the frame object
@@ -173,7 +172,11 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	PyObject_SetAttrString(fData, "timeTag", temp);
 	Py_XDECREF(temp);
 	
-	PyObject_SetAttrString(fData, "xy", PyArray_Return(data));
+	if(cFrame.header.bits == 0) {
+		PyObject_SetAttrString(fData, "xy", PyArray_Return(data12));
+	} else {
+		PyObject_SetAttrString(fData, "xy", PyArray_Return(data4));
+	}
 	
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
@@ -182,9 +185,16 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
-	Py_XDECREF(data);
+	Py_XDECREF(data4);
+	PY_XDECREF(data12);
 	
 	return output;
+	
+fail:
+	Py_XDECREF(data4);
+	Py_XDECREF(data12);
+	
+	return NULL;
 }
 
 char readTBW_doc[] = PyDoc_STR(\

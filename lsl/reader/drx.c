@@ -70,43 +70,12 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
 	PyArrayObject *data;
 	int i;
+	DRXFrame cFrame;
 	
 	if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
-	
-	// Read in a single 4128 byte frame
-	FILE *fh = PyFile_AsFile(ph);
-	PyFile_IncUseCount((PyFileObject *) ph);
-	DRXFrame cFrame;
-	i = fread(&cFrame, sizeof(cFrame), 1, fh);
-	if(ferror(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		return NULL;
-	}
-	if(feof(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		return NULL;
-	}
-	PyFile_DecUseCount((PyFileObject *) ph);
-	
-	// Validate
-	if( !validSync5C(cFrame.header.syncWord) ) {
-		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
-		return NULL;
-	}
-	
-	// Swap the bits around
-	cFrame.header.frameCountWord = __bswap_32(cFrame.header.frameCountWord);
-	cFrame.header.secondsCount = __bswap_32(cFrame.header.secondsCount);
-	cFrame.header.decimation = __bswap_16(cFrame.header.decimation);
-	cFrame.header.timeOffset = __bswap_16(cFrame.header.timeOffset);
-	cFrame.data.timeTag = __bswap_64(cFrame.data.timeTag);
-	cFrame.data.tuningWord = __bswap_32(cFrame.data.tuningWord);
-	cFrame.data.flags = __bswap_32(cFrame.data.flags);
 	
 	// Create the output data array
 	npy_intp dims[1];
@@ -118,6 +87,24 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 	
+	// Setup the file handle for access
+	FILE *fh = PyFile_AsFile(ph);
+	PyFile_IncUseCount((PyFileObject *) ph);
+	
+	Py_BEGIN_ALLOW_THREADS
+	
+	// Read in a single 4128 byte frame
+	i = fread(&cFrame, sizeof(cFrame), 1, fh);
+	
+	// Swap the bits around
+	cFrame.header.frameCountWord = __bswap_32(cFrame.header.frameCountWord);
+	cFrame.header.secondsCount = __bswap_32(cFrame.header.secondsCount);
+	cFrame.header.decimation = __bswap_16(cFrame.header.decimation);
+	cFrame.header.timeOffset = __bswap_16(cFrame.header.timeOffset);
+	cFrame.data.timeTag = __bswap_64(cFrame.data.timeTag);
+	cFrame.data.tuningWord = __bswap_32(cFrame.data.tuningWord);
+	cFrame.data.flags = __bswap_32(cFrame.data.flags);
+	
 	// Fill the data array
 	const float *fp;
 	float complex *a;
@@ -125,6 +112,28 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	for(i=0; i<4096; i++) {
 		fp = drxLUT[ cFrame.data.bytes[i] ];
 		*(a + i) = fp[0] + _Complex_I * fp[1];
+	}
+	
+	Py_END_ALLOW_THREADS
+	
+	// Tear down the file handle access
+	PyFile_DecUseCount((PyFileObject *) ph);
+	
+	// Validate
+	if(ferror(fh)) {
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		Py_XDECREF(data);
+		return NULL;
+	}
+	if(feof(fh)) {
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		Py_XDECREF(data);
+		return NULL;
+	}
+	if( !validSync5C(cFrame.header.syncWord) ) {
+		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
+		Py_XDECREF(data);
+		return NULL;
 	}
 	
 	// Save the data to the frame object

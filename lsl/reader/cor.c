@@ -62,44 +62,12 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
 	PyArrayObject *data=NULL, *wgt=NULL;
 	int i;
+	CORFrame cFrame;
 	
 	if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	}
-
-	// Read in a single 4640 byte frame
-	FILE *fh = PyFile_AsFile(ph);
-	PyFile_IncUseCount((PyFileObject *) ph);
-	CORFrame cFrame;
-	i = fread(&cFrame, sizeof(cFrame), 1, fh);
-	if(ferror(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		goto fail;
-	}
-	if(feof(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		goto fail;
-	}
-	PyFile_DecUseCount((PyFileObject *) ph);
-	
-	// Validate
-	if( !validSync5C(cFrame.header.syncWord) ) {
-		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
-		goto fail;
-	}
-	
-	// Swap the bits around
-	cFrame.header.frameCountWord = __bswap_32(cFrame.header.frameCountWord);
-	cFrame.header.secondsCount = __bswap_32(cFrame.header.secondsCount);
-	cFrame.header.firstChan = __bswap_16(cFrame.header.firstChan);
-	cFrame.header.gain = __bswap_16(cFrame.header.gain);
-	cFrame.data.timeTag = __bswap_64(cFrame.data.timeTag);
-	cFrame.data.nAvg = __bswap_32(cFrame.data.nAvg);
-	cFrame.data.stand0 = __bswap_16(cFrame.data.stand0);
-	cFrame.data.stand1 = __bswap_16(cFrame.data.stand1);
 	
 	// Create the output data array
 	npy_intp dims[3];
@@ -123,6 +91,25 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output weight array");
 		goto fail;
 	}
+	
+	// Setup the file handle for access
+	FILE *fh = PyFile_AsFile(ph);
+	PyFile_IncUseCount((PyFileObject *) ph);
+	
+	Py_BEGIN_ALLOW_THREADS
+	
+	// Read in a single 4640 byte frame
+	i = fread(&cFrame, sizeof(cFrame), 1, fh);
+	
+	// Swap the bits around
+	cFrame.header.frameCountWord = __bswap_32(cFrame.header.frameCountWord);
+	cFrame.header.secondsCount = __bswap_32(cFrame.header.secondsCount);
+	cFrame.header.firstChan = __bswap_16(cFrame.header.firstChan);
+	cFrame.header.gain = __bswap_16(cFrame.header.gain);
+	cFrame.data.timeTag = __bswap_64(cFrame.data.timeTag);
+	cFrame.data.nAvg = __bswap_32(cFrame.data.nAvg);
+	cFrame.data.stand0 = __bswap_16(cFrame.data.stand0);
+	cFrame.data.stand1 = __bswap_16(cFrame.data.stand1);
 	
 	// Fill the data and weight arrays
 	int tempR, tempI, tempW;
@@ -149,6 +136,26 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 		tempW -= ((tempW & 0x200000) << 1);
 		*(a + i) = (float) tempR + _Complex_I * (float) tempI;
 		*(b + i) = (float) tempW / (float) 0x1FFFFF;
+	}
+	
+	Py_END_ALLOW_THREADS
+	
+	// Tear down the file handle access
+	PyFile_DecUseCount((PyFileObject *) ph);
+	
+	// Validate
+	if(ferror(fh)) {
+		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		goto fail;
+	}
+	if(feof(fh)) {
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		Py_XDECREF(data);
+		goto fail;
+	}
+	if( !validSync5C(cFrame.header.syncWord) ) {
+		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
+		goto fail;
 	}
 	
 	// Save the data to the frame object
