@@ -79,7 +79,6 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	dims[0] = (npy_intp) 2;
 	dims[1] = (npy_intp) 1200;
 	data4 = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT16, 0);
-	if( data4
 	// 12-bit
 	dims[0] = (npy_intp) 2;
 	dims[1] = (npy_intp) 400;
@@ -186,7 +185,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data4);
-	PY_XDECREF(data12);
+	Py_XDECREF(data12);
 	
 	return output;
 	
