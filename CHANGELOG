@@ -13,6 +13,15 @@
   * Added support for auto-copy to the LWAUCF in the lsl.common.sdf and lsl.common.sdfADP modules
   * Added a function to lsl.common.stations, getFullStations(), to return a list of full stations
   * General code clean-up using pylint
+  * Fixed various bugs found in pylint in seldom-used routines
+  * Moved the C extensions over to version 1.7 of the Numpy C API
+  * Added a new OMP_SCHEDULER macro the the various C extensions to help control how OpenMP schedules things
+  * Added more robust error handling inside the C extensions to help make segfaults more rare
+  * Released the GIL inside the various computing C extensions and some of the LWA file format readers
+  * Added a backport of the Python3 LRU cache module to help with internal caching
+  * Added a new LSLInterfaces attribute to lsl.common.station.LWAStation instances to help keep track of which station uses which modules
+  * Updated various scripts that ship with LSL to support data from LWA-SV
+  * Updated the lsl.reader.ldp module to issue warnings on timetag errors when 'ignoreTimeTagErrors' is set to True
 
 1.1.4
   * Fixed a missing import statement and a couple of bugs in splitTBN.py

@@ -832,6 +832,7 @@ class DRXFile(LDPFileBase):
 			self.buffer.flush()
 			
 		# Zero out the time tag checker
+		self._timetagSkip = None
 		self._timetag = None
 		
 		return drx.readFrame(self.fh)
@@ -857,7 +858,8 @@ class DRXFile(LDPFileBase):
 			raise errors.eofError()
 			
 		# Covert the sample rate to an expected timetag skip
-		timetagSkip = int(4096 / self.description['sampleRate'] * fS)
+		if getattr(self, "_timetagSkip", None) is None:
+			self._timetagSkip = int(4096 / self.description['sampleRate'] * fS)
 		
 		# Setup the counter variables:  frame count and time tag count
 		if getattr(self, "_timetag", None) is None:
@@ -904,13 +906,13 @@ class DRXFile(LDPFileBase):
 				aStand = 2*(t-1) + p
 				cTimetag = cFrame.data.timeTag
 				if self._timetag[aStand] == 0:
-					self._timetag[aStand] = cTimetag - timetagSkip
-				if cTimetag != self._timetag[aStand]+timetagSkip:
+					self._timetag[aStand] = cTimetag - self._timetagSkip
+				if cTimetag != self._timetag[aStand]+self._timetagSkip:
 					actStep = cTimetag - self._timetag[aStand]
 					if self.ignoreTimeTagErrors:
-						warnings.warn("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep), RuntimeWarning)
+						warnings.warn("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep), RuntimeWarning)
 					else:
-						raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep))
+						raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep))
 						
 				if setTime is None:
 					if timeInSamples:
@@ -932,13 +934,13 @@ class DRXFile(LDPFileBase):
 					aStand = 2*(t-1) + p
 					cTimetag = cFrame.data.timeTag
 					if self._timetag[aStand] == 0:
-						self._timetag[aStand] = cTimetag - timetagSkip
+						self._timetag[aStand] = cTimetag - self._timetagSkip
 					if cTimetag != self._timetag[aStand]+timetagSkip:
 						actStep = cTimetag - self._timetag[aStand]
 						if self.ignoreTimeTagErrors:
-							warnings.warn("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep), RuntimeWarning)
+							warnings.warn("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep), RuntimeWarning)
 						else:
-							raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (timetagSkip, t, p, actStep))
+							raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep))
 							
 					if setTime is None:
 						if timeInSamples:
