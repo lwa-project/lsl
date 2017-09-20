@@ -935,7 +935,7 @@ class DRXFile(LDPFileBase):
 					cTimetag = cFrame.data.timeTag
 					if self._timetag[aStand] == 0:
 						self._timetag[aStand] = cTimetag - self._timetagSkip
-					if cTimetag != self._timetag[aStand]+timetagSkip:
+					if cTimetag != self._timetag[aStand]+self._timetagSkip:
 						actStep = cTimetag - self._timetag[aStand]
 						if self.ignoreTimeTagErrors:
 							warnings.warn("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep), RuntimeWarning)
