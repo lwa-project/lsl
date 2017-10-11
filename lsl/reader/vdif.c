@@ -120,7 +120,7 @@ void initVDIFLUTs(void) {
   Data-type specific VDIF Helper Functions
 */
 
-static PyArrayObject * parseVDIF8(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord, unsigned int bitsPerSample) {
+static PyArrayObject * parseVDIF8(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
 	PyArrayObject *data;
 	
 	unsigned int nSamples;	
@@ -147,7 +147,7 @@ static PyArrayObject * parseVDIF8(unsigned char *rawData, unsigned int dataLengt
 	return data;
 }
 
-static PyArrayObject * parseVDIF4(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord, unsigned int bitsPerSample) {
+static PyArrayObject * parseVDIF4(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
 	PyArrayObject *data;
 	
 	unsigned int nSamples;	
@@ -177,7 +177,7 @@ static PyArrayObject * parseVDIF4(unsigned char *rawData, unsigned int dataLengt
 	return data;
 }
 
-static PyArrayObject * parseVDIF2(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord, unsigned int bitsPerSample) {
+static PyArrayObject * parseVDIF2(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
 	PyArrayObject *data;
 	
 	unsigned int nSamples;	
@@ -210,7 +210,7 @@ static PyArrayObject * parseVDIF2(unsigned char *rawData, unsigned int dataLengt
 }
 
 
-static PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord, unsigned int bitsPerSample) {
+static PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
 	PyArrayObject *data;
 	
 	unsigned int nSamples;	
@@ -348,16 +348,16 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Parse it out
 	if( bitsPerSample == 8 ) {
-		data = parseVDIF8(rawData, dataLength, samplesPerWord, 8);
+		data = parseVDIF8(rawData, dataLength, samplesPerWord);
 	} else {
 		if( bitsPerSample == 4 ) {
-			data = parseVDIF4(rawData, dataLength, samplesPerWord, 4);
+			data = parseVDIF4(rawData, dataLength, samplesPerWord);
 		} else {
 			if( bitsPerSample == 2 ) {
-				data = parseVDIF2(rawData, dataLength, samplesPerWord, 2);
+				data = parseVDIF2(rawData, dataLength, samplesPerWord);
 			} else {
 				if( bitsPerSample == 1 ) {
-					data = parseVDIF1(rawData, dataLength, samplesPerWord, 1);
+					data = parseVDIF1(rawData, dataLength, samplesPerWord);
 				} else {
 					PyErr_Format(PyExc_RuntimeError, "Cannot parse data with %d bits per sample", bitsPerSample);
 					free(rawData);

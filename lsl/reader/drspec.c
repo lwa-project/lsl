@@ -92,12 +92,12 @@ static void parseLinearHalf(DRSpecHeader header, float *data, float *XX0, float 
 	// Sort out the data
 	for(i=0; i<header.nFreqs; i++) {
 		// XX*
-		*(XX0 + i) = *(data + 0*header.nFreqs + i + 0) / normXX0;
-		*(XX1 + i) = *(data + 2*header.nFreqs + i + 0) / normXX1;
+		*(XX0 + i) = *(data + 0*header.nFreqs + 2*i + 0) / normXX0;
+		*(XX1 + i) = *(data + 2*header.nFreqs + 2*i + 0) / normXX1;
 		
 		// YY*
-		*(YY0 + i) = *(data + 0*header.nFreqs + i + 1) / normYY0;
-		*(YY1 + i) = *(data + 2*header.nFreqs + i + 1) / normYY1;
+		*(YY0 + i) = *(data + 0*header.nFreqs + 2*i + 1) / normYY0;
+		*(YY1 + i) = *(data + 2*header.nFreqs + 2*i + 1) / normYY1;
 	}
 }
 
@@ -117,20 +117,20 @@ static void parseLinearFull(DRSpecHeader header, float *data, float *XX0, float 
 	// Sort out the data
 	for(i=0; i<header.nFreqs; i++) {
 		// XX*
-		*(XX0 + i) = *(data + 0*header.nFreqs + i + 0) / normXX0;
-		*(XX1 + i) = *(data + 4*header.nFreqs + i + 0) / normXX1;
+		*(XX0 + i) = *(data + 0*header.nFreqs + 4*i + 0) / normXX0;
+		*(XX1 + i) = *(data + 4*header.nFreqs + 4*i + 0) / normXX1;
 		
 		// XY*
-		*(XY0 + i) = *(data + 0*header.nFreqs + i + 1) / normCH0;
-		*(XY1 + i) = *(data + 4*header.nFreqs + i + 1) / normCH1;
+		*(XY0 + i) = *(data + 0*header.nFreqs + 4*i + 1) / normCH0;
+		*(XY1 + i) = *(data + 4*header.nFreqs + 4*i + 1) / normCH1;
 		
 		// YX*
-		*(YX0 + i) = *(data + 0*header.nFreqs + i + 2) / normCH0;
-		*(YX1 + i) = *(data + 4*header.nFreqs + i + 2) / normCH1;
+		*(YX0 + i) = *(data + 0*header.nFreqs + 4*i + 2) / normCH0;
+		*(YX1 + i) = *(data + 4*header.nFreqs + 4*i + 2) / normCH1;
 		
 		// YY*
-		*(YY0 + i) = *(data + 0*header.nFreqs + i + 3) / normYY0;
-		*(YY1 + i) = *(data + 4*header.nFreqs + i + 3) / normYY1;
+		*(YY0 + i) = *(data + 0*header.nFreqs + 4*i + 3) / normYY0;
+		*(YY1 + i) = *(data + 4*header.nFreqs + 4*i + 3) / normYY1;
 	}
 }
 
@@ -163,12 +163,12 @@ static void parseStokesHalf(DRSpecHeader header, float *data, float *I0, float *
 	// Sort out the data
 	for(i=0; i<header.nFreqs; i++) {
 		// I
-		*(I0 + i) = *(data + 0*header.nFreqs + i + 0) / norm0;
-		*(I1 + i) = *(data + 2*header.nFreqs + i + 0) / norm1;
+		*(I0 + i) = *(data + 0*header.nFreqs + 2*i + 0) / norm0;
+		*(I1 + i) = *(data + 2*header.nFreqs + 2*i + 0) / norm1;
 		
 		// V
-		*(V0 + i) = *(data + 0*header.nFreqs + i + 1) / norm0;
-		*(V1 + i) = *(data + 2*header.nFreqs + i + 1) / norm1;
+		*(V0 + i) = *(data + 0*header.nFreqs + 2*i + 1) / norm0;
+		*(V1 + i) = *(data + 2*header.nFreqs + 2*i + 1) / norm1;
 	}
 }
 
@@ -184,20 +184,20 @@ static void parseStokesFull(DRSpecHeader header, float *data, float *I0, float *
 	// Sort out the data
 	for(i=0; i<header.nFreqs; i++) {
 		// I
-		*(I0 + i) = *(data + 0*header.nFreqs + i + 0) / norm0;
-		*(I1 + i) = *(data + 4*header.nFreqs + i + 3) / norm1;
+		*(I0 + i) = *(data + 0*header.nFreqs + 4*i + 0) / norm0;
+		*(I1 + i) = *(data + 4*header.nFreqs + 4*i + 3) / norm1;
 		
 		// Q
-		*(Q0 + i) = *(data + 0*header.nFreqs + i + 1) / norm0;
-		*(Q1 + i) = *(data + 4*header.nFreqs + i + 1) / norm1;
+		*(Q0 + i) = *(data + 0*header.nFreqs + 4*i + 1) / norm0;
+		*(Q1 + i) = *(data + 4*header.nFreqs + 4*i + 1) / norm1;
 		
 		// U
-		*(U0 + i) = *(data + 0*header.nFreqs + i + 2) / norm0;
-		*(U1 + i) = *(data + 4*header.nFreqs + i + 2) / norm1;
+		*(U0 + i) = *(data + 0*header.nFreqs + 4*i + 2) / norm0;
+		*(U1 + i) = *(data + 4*header.nFreqs + 4*i + 2) / norm1;
 		
 		// V
-		*(V0 + i) = *(data + 0*header.nFreqs + i + 3) / norm0;
-		*(V1 + i) = *(data + 4*header.nFreqs + i + 3) / norm1;
+		*(V0 + i) = *(data + 0*header.nFreqs + 4*i + 3) / norm0;
+		*(V1 + i) = *(data + 4*header.nFreqs + 4*i + 3) / norm1;
 	}
 }
 
