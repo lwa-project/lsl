@@ -44,8 +44,8 @@ class stations_tests(unittest.TestCase):
 		self.assertAlmostEqual(jov.dec, ephem.degrees('23:11:49.1'), 6)
 		
 		#Az/Alt
-		self.assertAlmostEqual(jov.az,  ephem.degrees('274:40:25.3'), 6)
-		self.assertAlmostEqual(jov.alt, ephem.degrees( '37:24:09.8'), 6)
+		self.assertAlmostEqual(jov.az,  ephem.degrees('274:40:27.7'), 6)
+		self.assertAlmostEqual(jov.alt, ephem.degrees( '37:24:10.5'), 6)
 		
 	def test_pickle(self):
 		"""Test pickling of LWAStation instances."""

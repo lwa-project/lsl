@@ -120,7 +120,7 @@ class sdf_tests(unittest.TestCase):
 		
 		# LST at LWA1
 		s1 = "LST 2013-01-08 19:42:00.000"
-		s2 = "UTC 2013-01-08 19:38:26.640"
+		s2 = "UTC 2013-01-08 19:38:26.723"
 		self.assertEqual(sdf.parseTime(s1, station=lwa1), sdf.parseTime(s2))
 		
 	### TBW ###
