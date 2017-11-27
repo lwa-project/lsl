@@ -22,6 +22,9 @@ MST = pytz.timezone('US/Mountain')
 UTC = pytz.UTC
 
 
+NPIX_SIDE = 350
+
+
 def usage(exitCode=None):
 	print """imageIDI.py - Create images from a FITS-IDI file
 
@@ -214,7 +217,7 @@ def main(args):
 		lbl1 = 'XX'
 		for p in ('xx', 'rr', 'I'):
 			try:
-				img1 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				img1 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
 				lbl1 = p.upper()
 			except:
 				pass
@@ -223,7 +226,7 @@ def main(args):
 		lbl2 = 'YY'
 		for p in ('yy', 'll', 'Q'):
 			try:
-				img2 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				img2 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
 				lbl2 = p.upper()
 			except:
 				pass
@@ -232,7 +235,7 @@ def main(args):
 		lbl3 = 'XY'
 		for p in ('xy', 'rl', 'U'):
 			try:
-				img3 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				img3 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
 				lbl3 = p.upper()
 			except:
 				pass
@@ -241,7 +244,7 @@ def main(args):
 		lbl4 = 'YY'
 		for p in ('yx', 'lr', 'V'):
 			try:
-				img4 = utils.buildGriddedImage(dataDict, MapSize=80, MapRes=0.5, pol=p, chan=toWork)
+				img4 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
 				lbl4 = p.upper()
 			except:
 				pass
@@ -268,7 +271,7 @@ def main(args):
 				continue
 				
 			# Display the image and label with the polarization/LST
-			cb = ax.imshow(img.image(center=(80,80)), extent=(1,-1,-1,1), origin='lower', 
+			cb = ax.imshow(img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2)), extent=(1,-1,-1,1), origin='lower', 
 					vmin=img.image().min(), vmax=img.image().max())
 			fig.colorbar(cb, ax=ax)
 			if config['time'] == 'LST':
@@ -276,7 +279,7 @@ def main(args):
 			else:
 				ax.set_title("%s @ %s UTC" % (pol, utc))
 				
-			junk = img.image(center=(80,80))
+			junk = img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2))
 			print "%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean())
 			
 			# Turn off tick marks
@@ -318,24 +321,25 @@ def main(args):
 		if config['fits'] is not None:
 			## Loop over the images to build up the FITS file
 			hdulist = [pyfits.PrimaryHDU(),]
-			for img,pol in zip((imgXX,imgYY,imgXY,imgXY), ('XX','YY','XY','YX')):
+			for img,pol in zip((img1,img2,img3,img4), (lbl1,lbl2,lbl3,lbl4)):
 				if img is None:
 					continue
 					
 				### Create the HDU
 				try:
-					hdu = pyfits.ImageHDU(data=img.image(center=(80,80)), name=pol)
+					hdu = pyfits.ImageHDU(data=img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2)), name=pol)
 				except AttributeError:
 					hdu = pyfits.ImageHDU(data=img, name=pol)
 					
 				### Add in the coordinate information
+				hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
 				hdu.header['CTYPE1'] = 'RA---SIN'
-				hdu.header['CRPIX1'] = 80
-				hdu.header['CDELT1'] = -360.0/160.0/numpy.pi
+				hdu.header['CRPIX1'] = NPIX_SIDE/2+1
+				hdu.header['CDELT1'] = -360.0/NPIX_SIDE/numpy.pi
 				hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi
 				hdu.header['CTYPE2'] = 'DEC--SIN'
-				hdu.header['CRPIX2'] = 80
-				hdu.header['CDELT2'] = 360.0/160.0/numpy.pi
+				hdu.header['CRPIX2'] = NPIX_SIDE/2+1
+				hdu.header['CDELT2'] = 360.0/NPIX_SIDE/numpy.pi
 				hdu.header['CRVAL2'] = lo.lat*180/numpy.pi
 				hdu.header['LONPOLE'] = 180.0
 				hdu.header['LATPOLE'] = 90.0
