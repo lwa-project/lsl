@@ -32,7 +32,7 @@ Options:
                        (default = 74 MHz)
 -p, --polarization     Polarization of the observations (NS or EW; 
                        default = EW)
--l, --lf-map           Use LF map instead of GSM
+-l, --lfms             Use LFSM instead of GSM
 -t, --time-step        Time step of simulations in minutes (default = 
                        10)
 -x, --do-plot          Plot the driftcurve data
@@ -59,7 +59,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hvsf:p:lt:x", ["help", "verbose", "lwasv", "freq=", "polarization=", "lf-map", "time-step=", "do-plot",])
+		opts, arg = getopt.getopt(args, "hvsf:p:lt:x", ["help", "verbose", "lwasv", "freq=", "polarization=", "lfsm", "time-step=", "do-plot",])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -77,7 +77,7 @@ def parseOptions(args):
 			config['freq'] = float(value)*1e6
 		elif opt in ('-p', '--polarization'):
 			config['pol'] = value.upper()
-		elif opt in ('-l', '--lf-map'):
+		elif opt in ('-l', '--lfsm'):
 			config['GSM'] = False
 		elif opt in ('-t', '--time-step'):
 			config['tStep'] = float(value)
@@ -116,9 +116,9 @@ def main(args):
 		if config['verbose']:
 			print "Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (config['freq']/1e6, len(smap.ra), smap._power.min(), smap._power.max())
 	else:
-		smap = skymap.SkyMap(freqMHz=config['freq']/1e6)
+		smap = skymap.SkyMapLFSM(freqMHz=config['freq']/1e6)
 		if config['verbose']:
-			print "Read in LF map at %.2f MHz of %d x %d pixels; min=%f, max=%f" % (config['freq']/1e6, smap.numPixelsX, smap.numPixelsY, smap._power.min(), smap._power.max())
+			print "Read in LFSM map at %.2f MHz of %d x %d pixels; min=%f, max=%f" % (config['freq']/1e6, smap.numPixelsX, smap.numPixelsY, smap._power.min(), smap._power.max())
 	
 	# Get the emperical model of the beam and compute it for the correct frequencies
 	beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
