@@ -2,19 +2,26 @@
 
 """
 Classes and methods to model sky brightness and visibility.
+
+.. versionchanged:: 1.2.0
+	Removed the orignal SkyMap class that uses LFmap at 73.9 MHz
+	Updated SkyMapGSM to use the 5 degree resolution GSM
+	Added a new SkyMapLFSM that uses the 5.1 degree resolution LFSM
 """
 
 ### This module handles the skymaps from the 74 MHz skymap.
 ### David Munton, ARL:UT Jan 2007
 
 import os
-from numpy import pi, float32, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
+from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
 
 import pyfits
+from scipy.interpolate import interp1d
 
 from lsl import astro
+from lsl.common.paths import data as dataPath
 
-__version__   = '0.2'
+__version__   = '0.3'
 __revision__ = '$Rev$'
 __author__    = 'J. York'
 __maintainer__ = 'Jayce Dowell'
@@ -56,89 +63,22 @@ class SkyMapPowerError(SkyMapError):
 		super(SkyMapPowerError, self).__init__(*args, **kwds)
 
 
-class SkyMap(object):
+class SkyMapGSM(object):
 	"""
-	The class for handling the model sky brightness maps.  This code is the base 
-	class for the sky map. It takes as input a skymap file name and frequency to
-	which the skymap corresponds.  It has the following methods:
-	  1. _init_ - takes the array coordinate filename as an input argument.
-	  2. NormalizePower - Converts the skymap powers (in Kelvin radiated into 4 pi ster)
-	  into a power seen at the antenna.
-	  3. ComputeTotalPowerFromSky - Sums the power for all sources in the sky
-	  4. ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.9 MHz to the
-	  desired frequency.
+	Extension of the SkyMap class to use the Global Sky Model with 5 
+	degree resolution.
+	
+	For more information on the Global Sky Model, see: http://space.mit.edu/~angelica/gsm/index.html
+	
+	.. versionchanged:: 1.2.0
+		Reworked the GSM model to use the actual 5 degree resolution GSM 
+		that has been downsampled to 64 sides rather than the fit.
 	"""
 	
 	# Class data 
 	degToRad = (pi/180.)             # Usual conversion factor
-	    
-	def __init__(self, skyMapFileName=None, freqMHz=73.9):
-		"""
-		Initialize the SkyMap object with an optional full file path to 
-		the skymap file.
-		"""
-		
-		if skyMapFileName is None:
-			if freqMHz != 73.9:
-				raise SkyMapError("LFmap only available at 73.9 MHz")
-				
-			from lsl.common.paths import data as dataPath
-			skyMapFileName = os.path.join(dataPath, 'skymap', 'LFmap_73.9.fits')
-			
-			
-		fits = pyfits.open(skyMapFileName)
-		
-		hdr = fits[0].header
-		
-		self.numPixelsX = hdr['NAXIS1']
-		self.numPixelsY = hdr['NAXIS2']
-		
-		self.freq = float(hdr['FINALFRQ'].split()[0])
-	  
-		ra = (arange(1, self.numPixelsX + 1, dtype = float32) - hdr['CRPIX1']) * hdr['CDELT1']
-		self.ra = ra.reshape(1, len(ra)).repeat(self.numPixelsY, 0).ravel()
-		
-		dec = (arange(1, self.numPixelsY + 1, dtype = float32) - hdr['CRPIX2']) * hdr['CDELT2']
-		self.dec = dec.repeat(self.numPixelsX, -1)
-		
-		self._power = empty((self.numPixelsX * self.numPixelsY,), float32) 
-		data = fits[0].data
-		
-		for i in range(self.numPixelsY):
-			ii = i * self.numPixelsX
-			for j in range(self.numPixelsX):
-				self._power[ii + j] = data[i, j]
-		
-		fits.close()
-		
-	def NormalizePower(self):
-		"""
-		Compute the skymap power (total power radiated into 4 pi steradians) into 
-		a power at antenna, based on pixel count.
-		"""
-		
-		# The cosine term is the projection of the receiving area onto the direction 
-		# of the source
-		return self._power*cos(self.dec * self.degToRad) 
-		
-	def ComputeTotalPowerFromSky(self):
-		"""
-		Compute and return the the total power from the sky.
-		"""
-		
-		if len(self._power) == 0:
-			raise SkyMapPowerError("self._power contains 0 elements")
-		return self.NormalizePower().sum()
-
-
-class SkyMapGSM(SkyMap):
-	"""
-	Extension of the SkyMap class to use a Global Sky Model-based set of maps
-	of T0 @ f0, alpha, and beta, where:
-	  .. math:: T(f) = T_0 \\times \\left(\\frac{f}{f_0}\\right)^{\\alpha + \\beta*\\log{f/f_0}}
 	
-	For more information on the Global Sky Model, see: http://space.mit.edu/~angelica/gsm/index.html
-	"""
+	_input = os.path.join(dataPath, 'skymap', 'gsm-5deg.npz')
 	
 	def __init__(self, skyMapFileName=None, freqMHz=73.9):
 		"""
@@ -147,22 +87,37 @@ class SkyMapGSM(SkyMap):
 		"""
 		
 		if skyMapFileName is None:
-			from lsl.common.paths import data as dataPath
-			skyMapFileName = os.path.join(dataPath, 'skymap', 'gsm.npz')
+			skyMapFileName = self._input
 			
 		# Since we are using a pre-computed GSM which is a NPZ file, read it
 		# in with numpy.load.
 		dataDict = load(skyMapFileName)
 		
-		# RA and dec. are stored in the 'eCoords' keyword as radians
-		self.ra = dataDict['eCoords'][:,0].ravel() / self.degToRad
-		self.dec = dataDict['eCoords'][:,1].ravel() / self.degToRad
+		# RA and dec. are stored in the dictionary as radians
+		self.ra = dataDict['ra'].ravel() / self.degToRad
+		self.dec = dataDict['dec'].ravel() / self.degToRad
 		
-		# Compute the temperature for the current frequency using the stroed 
-		# values of T0, alpha (the spectral index), and beta (the spectral
-		# curvature)
-		fRatio = freqMHz / dataDict['f0']
-		self._power = dataDict['T0']*fRatio**(dataDict['alpha']+dataDict['beta']*log10(fRatio))
+		# Compute the temperature for the current frequency
+		## Load in the data
+		freqs = dataDict['freqs']
+		sigmas = dataDict['sigmas']
+		comps = dataDict['comps']
+		maps = dataDict['maps']
+		## Build the scale and spectral component interpolation functions so that we can
+		## move from the surveys to an arbitrary frequency.  This is done using cubic 
+		## interpolation across log(freq)
+		scaleFunc = interp1d(log(freqs), log(sigmas), kind='cubic')
+		compFuncs = []
+		for i in xrange(comps.shape[1]):
+			compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
+		## Actually create the realization by running the interplation and adding up the
+		## compnent maps
+		output = maps[:,0]*0.0
+		for i,compFunc in enumerate(compFuncs):
+			output += compFunc(log(freqMHz))*maps[:,i]
+		output *= exp(scaleFunc(log(freqMHz)))
+		## Save
+		self._power = output
 		
 		# Close out the dictionary
 		try:
@@ -177,6 +132,28 @@ class SkyMapGSM(SkyMap):
 		"""
 		
 		return self._power
+		
+	def ComputeTotalPowerFromSky(self):
+		"""
+		Compute and return the the total power from the sky.
+		"""
+		
+		if len(self._power) == 0:
+			raise SkyMapPowerError("self._power contains 0 elements")
+		return self.NormalizePower().sum()
+
+
+class SkyMapLFSM(SkyMapGSM):
+	"""
+	Extension of the SkyMap class to use the Low Frequency Sky Model with 5.1
+	degree resolution.
+	
+	For more information on the Low Frequency Sky Model, see: https://lda10g.alliance.unm.edu/LWA1LowFrequencySkySurvey/
+	
+	.. versionadded:: 1.2.0
+	"""
+	
+	_input = os.path.join(dataPath, 'skymap', 'lfsm-5.1deg.npz')
 
 
 class ProjectedSkyMap(object):
