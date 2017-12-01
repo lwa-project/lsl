@@ -9,6 +9,8 @@ import sys
 import numpy
 import getopt
 
+from scipy.interpolate import interp1d
+
 from lsl.common.paths import data as dataPath
 
 import matplotlib.pyplot as plt
@@ -24,6 +26,8 @@ Options:
 -h, --help             Display this help information
 -f, --freq             Frequency of the observations in MHz
                        (default = 74 MHz)
+-e, --empirical        Enable empirical corrections to the dipole model
+                       (valid from 35 to 80 MHz, default = no)
 -v, --verbose          Run plotAntenna in vebose mode
 """
 
@@ -37,12 +41,13 @@ def parseOptions(args):
 	config = {}
 	# Command line flags - default values
 	config['freq'] = 74.0e6
+	config['corr'] = False
 	config['verbose'] = False
 	config['args'] = []
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hvf:", ["help", "verbose", "freq="])
+		opts, arg = getopt.getopt(args, "hvf:e", ["help", "verbose", "freq=", "empirical"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -56,6 +61,8 @@ def parseOptions(args):
 			config['verbose'] = True
 		elif opt in ('-f', '--freq'):
 			config['freq'] = float(value)*1e6
+		elif opt in ('-e', '--empirical'):
+			config['corr'] = True
 		else:
 			assert False
 	
@@ -97,15 +104,42 @@ def main(args):
 		if config['verbose']:
 			print "Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH)
 			print "Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE)
-		
-		def BeamPattern(az, alt):
+			
+		if config['corr']:
+			corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
+			cFreqs = corrDict['freqs']
+			cAlts  = corrDict['alts']
+			if corrDict['degrees'].item():
+				cAlts *= numpy.pi / 180.0
+			cCorrs = corrDict['corrs']
+			corrDict.close()
+			
+			if config['freq']/1e6 < cFreqs.min() or config['freq']/1e6 > cFreqs.max():
+				print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction"
+				corrFnc = None
+			else:
+				fCors = cAlts*0.0
+				for j in xrange(fCors.size):
+					ffnc = interp1d(cFreqs, cCorrs[:,j], bounds_error=False)
+					fCors[j] = ffnc(config['freq']/1e6)
+				corrFnc = interp1d(cAlts, fCors, bounds_error=False)
+				
+		else:
+			corrFnc = None
+			
+		def BeamPattern(az, alt, corr=corrFnc):
 			zaR = numpy.pi/2 - alt*numpy.pi / 180.0 
 			azR = az*numpy.pi / 180.0
-
+			
+			c = 1.0
+			if corrFnc is not None:
+				c = corrFnc(alt*numpy.pi / 180.0)
+				c = numpy.where(numpy.isfinite(c), c, 1.0)
+				
 			pE = (1-(2*zaR/numpy.pi)**alphaE)*numpy.cos(zaR)**betaE + gammaE*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaE
 			pH = (1-(2*zaR/numpy.pi)**alphaH)*numpy.cos(zaR)**betaH + gammaH*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaH
 
-			return numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
+			return c*numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
 	
 		# Calculate the beam
 		pattern = BeamPattern(az, alt)

@@ -29,10 +29,12 @@ Options:
 -s, --lwasv            Calculate for LWA-SV instead of LWA1
 -n, --n-samples        Number of samples to take between the start and stop
                        times (default = 11)
+-f, --file             Read MJDs to compute for from a file
 -i, --igs              Use the IGS data products (default)
 -j, --jpl              Use the JPL data prodcuts
 -c, --code             Use the CODE data products
 -u, --ustec            Use the USTEC data products
+-q, --uqr              Use the high time resolution UQRG data products
 """
 
 	if exitCode is not None:
@@ -46,12 +48,13 @@ def parseConfig(args):
 	# Command line flags - default values
 	config['site'] = 'lwa1'
 	config['nSamples'] = 11
+	config['mjdFile'] = None
 	config['type'] = 'IGS'
 	config['args'] = []
 	
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hsn:ijcu", ["help", "lwasv", "n-samples", "igs", "jpl", "code", "ustec"])
+		opts, arg = getopt.getopt(args, "hsn:f:ijcuq", ["help", "lwasv", "n-samples", "file=", "igs", "jpl", "code", "ustec", "uqr"])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -65,6 +68,8 @@ def parseConfig(args):
 			config['site'] = 'lwasv'
 		elif opt in ('-n', '--n-samples'):
 			config['nSamples'] = int(value)
+		elif opt in ('-f', '--file'):
+			config['mjdFile'] = value
 		elif opt in ('-i', '--igs'):
 			config['type'] = 'IGS'
 		elif opt in ('-j', '--jpl'):
@@ -73,6 +78,8 @@ def parseConfig(args):
 			config['type'] = 'CODE'
 		elif opt in ('-u', '--ustec'):
 			config['type'] = 'USTEC'
+		elif opt in ('-q', '--uqr'):
+			config['type'] = 'UQR'
 		else:
 			assert False
 	
@@ -80,8 +87,12 @@ def parseConfig(args):
 	config['args'] = arg
 	
 	# Validate
-	if len(config['args']) != 6:
-		raise RuntimeError("Invalid number of arguments")
+	if config['mjdFile'] is None:
+		if len(config['args']) != 6:
+			raise RuntimeError("Invalid number of arguments")
+	else:
+		if len(config['args']) != 2:
+			raise RuntimeError("Invalid number of arguments")
 	if config['nSamples'] < 1:
 		raise RuntimeError("Invalid number of samples to generate")
 		
@@ -96,18 +107,27 @@ def main(args):
 	# Inputs
 	RA = ephem.hours( config['args'][0] )
 	dec = ephem.degrees( config['args'][1] )
-	tStart = "%s %s" % (config['args'][2], config['args'][3])
-	tStop = "%s %s" % (config['args'][4], config['args'][5])
-	
-	# YYYY/MM/DD HH:MM:SS -> datetime instance
-	tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S")
-	tStop = datetime.strptime(tStop, "%Y/%m/%d %H:%M:%S")
-	
-	# datetime instance to MJD
-	mjd,mpm = datetime2mjdmpm(tStart)
-	mjdStart = mjd + mpm/1000.0/86400.0
-	mjd,mpm = datetime2mjdmpm(tStop)
-	mjdStop = mjd + mpm/1000.0/86400.0
+	if config['mjdFile'] is not None:
+		mjdList = numpy.loadtxt(config['mjdFile'])
+		mjdList = mjdList.ravel()
+		
+		mjdList = numpy.sort(mjdList)
+		
+	else:
+		tStart = "%s %s" % (config['args'][2], config['args'][3])
+		tStop = "%s %s" % (config['args'][4], config['args'][5])
+		
+		# YYYY/MM/DD HH:MM:SS -> datetime instance
+		tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S")
+		tStop = datetime.strptime(tStop, "%Y/%m/%d %H:%M:%S")
+		
+		# datetime instance to MJD
+		mjd,mpm = datetime2mjdmpm(tStart)
+		mjdStart = mjd + mpm/1000.0/86400.0
+		mjd,mpm = datetime2mjdmpm(tStop)
+		mjdStop = mjd + mpm/1000.0/86400.0
+		
+		mjdList = numpy.linspace(mjdStart, mjdStop, config['nSamples'])
 	
 	# Setup everthing for computing the position of the source
 	if config['site'] == 'lwa1':
@@ -124,7 +144,7 @@ def main(args):
 	# Go!
 	print "%-13s  %-6s  %-6s  %-21s  %-15s" % ("MJD", "Az.", "El.", "DM [pc/cm^3]", "RM [1/m^2]")
 	print "-"*(13+2+6+2+6+2+21+2+15)
-	for mjd in numpy.linspace(mjdStart, mjdStop, config['nSamples']):
+	for mjd in mjdList:
 		# Set the date and compute the location of the target
 		obs.date = mjd + astro.MJD_OFFSET - astro.DJD_OFFSET
 		bdy.compute(obs)

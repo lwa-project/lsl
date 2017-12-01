@@ -10,6 +10,8 @@ import numpy
 import pylab
 import getopt
 
+from scipy.interpolate import interp1d
+
 from lsl import skymap, astro
 from lsl.common import stations
 from lsl.common.paths import data as dataPath
@@ -32,6 +34,8 @@ Options:
                        (default = 74 MHz)
 -p, --polarization     Polarization of the observations (NS or EW; 
                        default = EW)
+-e, --empirical        Enable empirical corrections to the dipole model
+                       (valid from 35 to 80 MHz, default = no)
 -l, --lfms             Use LFSM instead of GSM
 -t, --time-step        Time step of simulations in minutes (default = 
                        10)
@@ -51,6 +55,7 @@ def parseOptions(args):
 	config['site'] = 'lwa1'
 	config['freq'] = 74.0e6
 	config['pol'] = 'EW'
+	config['corr'] = False
 	config['GSM'] = True
 	config['tStep'] = 10.0
 	config['enableDisplay'] = False
@@ -59,7 +64,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hvsf:p:lt:x", ["help", "verbose", "lwasv", "freq=", "polarization=", "lfsm", "time-step=", "do-plot",])
+		opts, arg = getopt.getopt(args, "hvsf:p:elt:x", ["help", "verbose", "lwasv", "freq=", "polarization=", "empirical", "lfsm", "time-step=", "do-plot",])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -77,6 +82,8 @@ def parseOptions(args):
 			config['freq'] = float(value)*1e6
 		elif opt in ('-p', '--polarization'):
 			config['pol'] = value.upper()
+		elif opt in ('-e', '--empirical'):
+			config['corr'] = True
 		elif opt in ('-l', '--lfsm'):
 			config['GSM'] = False
 		elif opt in ('-t', '--time-step'):
@@ -141,15 +148,42 @@ def main(args):
 	if config['verbose']:
 		print "Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH)
 		print "Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE)
-	
-	def BeamPattern(az, alt):
+		
+	if config['corr']:
+		corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
+		cFreqs = corrDict['freqs']
+		cAlts  = corrDict['alts']
+		if corrDict['degrees'].item():
+			cAlts *= numpy.pi / 180.0
+		cCorrs = corrDict['corrs']
+		corrDict.close()
+		
+		if config['freq']/1e6 < cFreqs.min() or config['freq']/1e6 > cFreqs.max():
+			print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction"
+			corrFnc = None
+		else:
+			fCors = cAlts*0.0
+			for i in xrange(fCors.size):
+				ffnc = interp1d(cFreqs, cCorrs[:,i], bounds_error=False)
+				fCors[i] = ffnc(config['freq']/1e6)
+			corrFnc = interp1d(cAlts, fCors, bounds_error=False)
+			
+	else:
+		corrFnc = None
+		
+	def BeamPattern(az, alt, corr=corrFnc):
 		zaR = numpy.pi/2 - alt*numpy.pi / 180.0 
 		azR = az*numpy.pi / 180.0
-
+		
+		c = 1.0
+		if corrFnc is not None:
+			c = corrFnc(alt*numpy.pi / 180.0)
+			c = numpy.where(numpy.isfinite(c), c, 1.0)
+			
 		pE = (1-(2*zaR/numpy.pi)**alphaE)*numpy.cos(zaR)**betaE + gammaE*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaE
 		pH = (1-(2*zaR/numpy.pi)**alphaH)*numpy.cos(zaR)**betaH + gammaH*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaH
 
-		return numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
+		return c*numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
 
 	if config['enableDisplay']:
 		az = numpy.zeros((90,360))

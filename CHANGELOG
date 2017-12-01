@@ -23,6 +23,7 @@
   * Updated various scripts that ship with LSL to support data from LWA-SV
   * Updated the lsl.reader.ldp module to issue warnings on timetag errors when 'ignoreTimeTagErrors' is set to True
   * Updated the lsl.skymap module to include the Low Frequnecy Sky Model (LFSM)
+  * Added an option for applying an empirical correction to the dipole power pattern to driftcurve.py and plotAntenna.py
 
 1.1.4
   * Fixed a missing import statement and a couple of bugs in splitTBN.py
