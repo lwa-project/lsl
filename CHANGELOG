@@ -22,6 +22,7 @@
   * Added a new LSLInterfaces attribute to lsl.common.station.LWAStation instances to help keep track of which station uses which modules
   * Updated various scripts that ship with LSL to support data from LWA-SV
   * Updated the lsl.reader.ldp module to issue warnings on timetag errors when 'ignoreTimeTagErrors' is set to True
+  * Updated the lsl.skymap module to include the Low Frequnecy Sky Model (LFSM)
 
 1.1.4
   * Fixed a missing import statement and a couple of bugs in splitTBN.py

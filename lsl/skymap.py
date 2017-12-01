@@ -5,7 +5,7 @@ Classes and methods to model sky brightness and visibility.
 
 .. versionchanged:: 1.2.0
 	Removed the orignal SkyMap class that uses LFmap at 73.9 MHz
-	Updated SkyMapGSM to use the 5 degree resolution GSM
+	Updated SkyMapGSM to use the actual GSM rather than a fit to the GSM
 	Added a new SkyMapLFSM that uses the 5.1 degree resolution LFSM
 """
 
@@ -65,20 +65,23 @@ class SkyMapPowerError(SkyMapError):
 
 class SkyMapGSM(object):
 	"""
-	Extension of the SkyMap class to use the Global Sky Model with 5 
-	degree resolution.
+	Extension of the SkyMap class to use the Global Sky Model.
 	
 	For more information on the Global Sky Model, see: http://space.mit.edu/~angelica/gsm/index.html
 	
+	.. note:: This class uses a slightly different interpolation method than
+	          the original GSM and introduces a few percent difference at 
+	          74 MHz.
+	
 	.. versionchanged:: 1.2.0
-		Reworked the GSM model to use the actual 5 degree resolution GSM 
-		that has been downsampled to 64 sides rather than the fit.
+		Reworked the GSM model to use the actual GSM that has been 
+		downsampled to 64 sides rather than the fit.
 	"""
 	
 	# Class data 
 	degToRad = (pi/180.)             # Usual conversion factor
 	
-	_input = os.path.join(dataPath, 'skymap', 'gsm-5deg.npz')
+	_input = os.path.join(dataPath, 'skymap', 'gsm-408locked.npz')
 	
 	def __init__(self, skyMapFileName=None, freqMHz=73.9):
 		"""
