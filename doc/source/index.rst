@@ -37,6 +37,7 @@ General Utilities
    robust
    paths
    busy
+   color
    progress
 
 LWA-Specific Utilites

@@ -1,5 +1,8 @@
 1.3.0
 
+1.2.1
+  * Added a new lsl.common.color module to help bring color to ANSI terminals
+
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
   * Added support for MCS working with ADP-based stations
