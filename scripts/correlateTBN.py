@@ -43,7 +43,7 @@ Options:
 -h, --help             Display this help information
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
                        mappings
--l, --fft-length       Set FFT length (default = 256)
+-l, --fft-length       Set FFT length (default = 16)
 -t, --avg-time         Window to average visibilities in time (seconds; 
                        default = 5 s)
 -s, --samples          Number of average visibilities to generate
@@ -70,7 +70,7 @@ def parseConfig(args):
 	# Command line flags - default values
 	config['metadata'] = ''
 	config['avgTime'] = 5.0
-	config['LFFT'] = 256
+	config['LFFT'] = 16
 	config['samples'] = 10
 	config['offset'] = 0
 	config['verbose'] = True

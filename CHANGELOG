@@ -2,6 +2,9 @@
 
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals
+  * Small fix to lsl.imaging.utils.plotGriddedImage() to get the image scale correct for non-all-sky images
+  * Finished moving imageIDI.py over to using the lsl.imaging modules
+  * Changed the default FFT length in correlateTBN.py to 16 channels
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP

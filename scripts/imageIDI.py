@@ -271,8 +271,7 @@ def main(args):
 				continue
 				
 			# Display the image and label with the polarization/LST
-			cb = ax.imshow(img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2)), extent=(1,-1,-1,1), origin='lower', 
-					vmin=img.image().min(), vmax=img.image().max())
+			cb = utils.plotGriddedImage(ax, img)
 			fig.colorbar(cb, ax=ax)
 			if config['time'] == 'LST':
 				ax.set_title("%s @ %s LST" % (pol, lst))
@@ -287,27 +286,10 @@ def main(args):
 			ax.yaxis.set_major_formatter( NullFormatter() )
 			
 			# Compute the positions of major sources and label the images
-			compSrc = {}
-			for name,src in simVis.srcs.iteritems():
-				src.compute(aa)
-				top = src.get_crds(crdsys='top', ncrd=3)
-				az, alt = aipy.coord.top2azalt(top)
-				compSrc[name] = [az, alt]
-				if alt <= 0:
-					continue
-				ax.plot(top[0], top[1], marker='x', markerfacecolor='None', markeredgecolor='w', 
-						linewidth=10.0, markersize=10)
-				if config['label']:
-					ax.text(top[0], top[1], name, color='white', size=12)
-					
+			overlay.sources(ax, aa, simVis.srcs)
+			
 			# Add in the horizon
-			x = numpy.zeros(361)
-			y = numpy.zeros(361)
-			for i in xrange(361):
-				xyz = aipy.coord.azalt2top([i*numpy.pi/180.0, 0])
-				x[i] = xyz[0]
-				y[i] = xyz[1]
-			ax.plot(x, y, color='white')
+			overlay.horizon(ax, aa)
 			
 			# Add lines of constant RA and dec.
 			if config['grid']:
