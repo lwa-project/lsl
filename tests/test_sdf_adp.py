@@ -614,7 +614,7 @@ class sdf_adp_tests(unittest.TestCase):
 	def test_spc_parse(self):
 		"""Test reading in a STEPPED Delay and Gain SDF file."""
 		
-		project = sdf.parseSDF(spcFile)
+		project = sdfADP.parseSDF(spcFile)
 		
 		# Basic file structure
 		self.assertEqual(len(project.sessions), 1)
