@@ -2404,7 +2404,7 @@ def parseSDF(filename, verbose=False):
 				try:
 					beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
 				except IndexError:
-					raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_GAIN")
+					pass
 			else:
 				if beamTemps[-1]['id'] != ids[0]:
 					beamTemps.append( copy.deepcopy(beamTemps[-1]) )
@@ -2412,7 +2412,7 @@ def parseSDF(filename, verbose=False):
 				try:
 					beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
 				except IndexError:
-					raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_GAIN")
+					pass
 			continue
 			
 		# Session wide settings at the end of the observations
