@@ -1,4 +1,5 @@
 1.3.0
+  * Added a new extension to speed up w-projection gridding
 
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals

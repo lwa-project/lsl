@@ -53,6 +53,8 @@ from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NumericStokes
 from lsl.common.constants import c as vLight
 
+from lsl.imaging._gridder import WProjection
+
 try:
 	import pyfftw
 	
@@ -69,7 +71,7 @@ except ImportError:
 	fft2Function = fftpack.fft2
 	ifft2Function = fftpack.ifft2
 
-__version__ = '0.8'
+__version__ = '0.9'
 __revision__ = '$Rev$'
 __all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 
 		 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'ImgWPlus', 'buildGriddedImage', 
@@ -1530,7 +1532,14 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
 		sys.stdout = StringIO.StringIO()
 		
 	uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
-	im.put(uvw, vis, wgts=wgt)
+	u,v,w = uvw
+	order = numpy.argsort(w)
+	u,v,w = u.take(order), v.take(order), w.take(order)
+	vis,wgt = vis.take(order), numpy.array([wg.take(order) for wg in wgt]).squeeze()
+	if wgt.dtype != numpy.complex64:
+		wgt = wgt.astype(numpy.complex64)
+		
+	im.uv, im.bm[0] = WProjection(u, v, w, vis, wgt, MapSize, numpy.float64(MapRes), numpy.float64(MapWRes))
 	
 	if not verbose:
 		sys.stdout.close()
