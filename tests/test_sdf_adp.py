@@ -614,8 +614,38 @@ class sdf_adp_tests(unittest.TestCase):
 	def test_spc_parse(self):
 		"""Test reading in a STEPPED Delay and Gain SDF file."""
 		
-		## This fails with LWA-SV because it has the wrong number of delays and gains
-		self.assertRaises(RuntimeError, sdfADP.parseSDF, spcFile)
+		project = sdf.parseSDF(spcFile)
+		
+		# Basic file structure
+		self.assertEqual(len(project.sessions), 1)
+		self.assertEqual(len(project.sessions[0].observations), 1)
+		
+		# Observational setup - 1
+		self.assertEqual(project.sessions[0].observations[0].mode, 'STEPPED')
+		self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
+		self.assertEqual(project.sessions[0].observations[0].mpm, 440000)
+		self.assertEqual(project.sessions[0].observations[0].dur,  60000)
+		self.assertEqual(project.sessions[0].observations[0].filter,   7)
+		
+		# Steps - 1
+		self.assertEqual(len(project.sessions[0].observations[0].steps), 1)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].RADec, project.sessions[0].observations[0].RADec)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c1, 90.0, 6)
+		self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c2, 45.0, 6)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].freq1,  832697741)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].freq2, 1621569285)
+		self.assertEqual(project.sessions[0].observations[0].steps[0].dur, 60000)
+		
+		# Delays - 1
+		for i in xrange(256):
+			self.assertEqual(project.sessions[0].observations[0].steps[0].delays[i], 0)
+			
+		# Gains - 1
+		for i in xrange(256):
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][0], 1)
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)
+			self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][1], 1)
 		
 	### TBF ###
 	
@@ -758,13 +788,13 @@ class sdf_adp_tests(unittest.TestCase):
 		self.assertTrue(sdfADP.isValid(solFile))
 		self.assertTrue(sdfADP.isValid(jovFile))
 		self.assertTrue(sdfADP.isValid(stpFile))
+		self.assertTrue(sdfADP.isValid(spcFile))
 		self.assertTrue(sdfADP.isValid(tbfFile))
 		
 	def test_is_not_valid(self):
 		"""Test whether or not isValid works on LWA1 files."""
 		
 		self.assertFalse(sdfADP.isValid(tbwFile))
-		self.assertFalse(sdfADP.isValid(spcFile))
 		
 	def test_username(self):
 		"""Test setting auto-copy parameters."""
