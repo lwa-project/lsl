@@ -798,7 +798,7 @@ class Session(object):
 			if verbose:
 				print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
 			failures += 1
-		if self.drxBeam not in (-1, 1):
+		if self.drxBeam not in (-1, 1, 2):
 			if verbose:
 				print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
 			failures += 1
@@ -832,6 +832,11 @@ class Session(object):
 				if self.drxBeam == -1:
 					if verbose:
 						print("[%i] Error: Beam not assigned for this session" % os.getpid())
+					failures += 1
+			if self.observations[0].mode ==  'TBF':
+				if self.drxBeam != 1:
+					if verbose:
+						print("[%i] Error: TBF can only run on beam 1" % os.getpid())
 					failures += 1
 					
 		observationCount = 1
