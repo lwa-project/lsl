@@ -92,7 +92,7 @@ def mean(inputData, Cut=3.0, axis=None, dtype=None):
 	Robust estimator of the mean of a data set.  Based on the 
 	resistant_mean function from the AstroIDL User's Library.
 	
-	.. versionchanged:: 1.21.
+	.. versionchanged:: 1.2.1
 		Added a ValueError if the distriubtion is too strange
 	
 	.. versionchanged:: 1.0.3
@@ -206,7 +206,7 @@ def std(inputData, Zero=False, axis=None, dtype=None):
 	
 	Based on the robust_sigma function from the AstroIDL User's Library.
 	
-	.. versionchanged:: 1.21.
+	.. versionchanged:: 1.2.1
 		Added a ValueError if the distriubtion is too strange
 	
 	.. versionchanged:: 1.0.3
