@@ -24,7 +24,7 @@ For additional information about the original IDL routines, see:
 import math
 import numpy
 
-__version__ = '0.4'
+__version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['biweightMean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit', '__version__', '__revision__', '__all__']
 
@@ -92,6 +92,9 @@ def mean(inputData, Cut=3.0, axis=None, dtype=None):
 	Robust estimator of the mean of a data set.  Based on the 
 	resistant_mean function from the AstroIDL User's Library.
 	
+	.. versionchanged:: 1.21.
+		Added a ValueError if the distriubtion is too strange
+	
 	.. versionchanged:: 1.0.3
 		Added the 'axis' and 'dtype' keywords to make this function more
 		compatible with numpy.mean()
@@ -131,6 +134,8 @@ def mean(inputData, Cut=3.0, axis=None, dtype=None):
 		dataMean = data[good].mean()
 		if len(good) > 3:
 			dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
+		else:
+			raise ValueError("Distribution is too strange to compute mean")
 			
 		if Cut > 1.0:
 			sigmaCut = Cut
@@ -201,6 +206,9 @@ def std(inputData, Zero=False, axis=None, dtype=None):
 	
 	Based on the robust_sigma function from the AstroIDL User's Library.
 	
+	.. versionchanged:: 1.21.
+		Added a ValueError if the distriubtion is too strange
+	
 	.. versionchanged:: 1.0.3
 		Added the 'axis' and 'dtype' keywords to make this function more
 		compatible with numpy.std()
@@ -232,9 +240,7 @@ def std(inputData, Zero=False, axis=None, dtype=None):
 		good = numpy.where( u2 <= 1.0 )
 		good = good[0]
 		if len(good) < 3:
-			print "WARNING:  Distribution is too strange to compute standard deviation"
-			sigma = -1.0
-			return sigma
+			raise ValueError("Distribution is too strange to compute standard deviation")
 			
 		numerator = ((data[good]-data0)**2.0 * (1.0-u2[good])**2.0).sum()
 		nElements = (data.ravel()).shape[0]

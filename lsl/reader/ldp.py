@@ -808,7 +808,7 @@ class DRXFile(LDPFileBase):
 			try:
 				self.fh.seek(cOffset*drx.FrameSize, 1)
 			except IOError:
-				print "WARNING: Could not find the correct offset, giving up"
+				warnings.warn("Could not find the correct offset, giving up", RuntimeWarning)
 				break
 				
 		# Update the file metadata

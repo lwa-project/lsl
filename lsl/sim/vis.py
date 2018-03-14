@@ -83,6 +83,7 @@ import copy
 import math
 import ephem
 import numpy
+import warnings
 from scipy.interpolate import interp1d
 
 from lsl import astro
@@ -915,7 +916,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
 			beam = Beam(freqs)
 			
 	if PosError != 0:
-		print("WARNING:  Creating array with positional errors between %.3f and %.3f m" % (-PosError, PosError))
+		warnings.warn("Creating array with positional errors between %.3f and %.3f m" % (-PosError, PosError), RuntimeWarning)
 
 	# Build an array of AIPY Antenna objects
 	ants = []
