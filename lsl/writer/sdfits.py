@@ -18,6 +18,7 @@ import gc
 import re
 import numpy
 import pyfits
+import warnings
 from datetime import datetime
 
 from lsl import astro
@@ -327,8 +328,8 @@ class SD(object):
 						try:
 							matrix[p,:] = tempMList[self.stokes[p]][b]
 						except KeyError:
-							print 'WARNING: Keyerror', b, tempMList[self.stokes[p]].keys()
-						
+							warnings.warn('Key mis-match %s %s' % (str(b), str(tempMList[self.stokes[p]].keys())), RuntimeWarning)
+							
 					mList.append(matrix.ravel())
 				scanCount += 1
 				rawList = []
