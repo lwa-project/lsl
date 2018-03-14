@@ -9,19 +9,47 @@ are:
   * T_2 - Sub-slot duration
 
 Also included are two functions to convert between frequencies and ADP tuning 
-words.
+words and functions for calculating the magnitude response of the TBN and DRX 
+filters.
+
+.. versionchanged:: 1.2.1
+	Added in functions to calculate the magnitude response of the TBN and DRX
+	filters
 """
 
-__version__ = '0.1'
+import numpy
+from scipy.signal import freqz, lfilter
+from scipy.interpolate import interp1d
+
+
+__version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'delaytoDPD', 'DPDtodelay', 
-		 'gaintoDPG', 'DPGtogain', '__version__', '__revision__', '__all__']
+		 'gaintoDPG', 'DPGtogain', 'tbnFilter', 'drxFilter', '__version__', '__revision__', '__all__']
 
 fS = 196.0e6	# Hz
 fC = 25e3		# Hz
 T = 1.0		# seconds
 T2 = 0.010	# seconds
 N_MAX = 8192	# bytes
+
+# FIR Filters
+## TBN
+_tbnFIR = [-3.22350e-05, -0.00021433,  0.0017756, -0.0044913,  0.0040327, 
+            0.00735870,  -0.03218100,  0.0553980, -0.0398360, -0.0748920, 
+            0.58308000,   0.58308000, -0.0748920, -0.0398360,  0.0553980,
+           -0.03218100,   0.00735870,  0.0040327, -0.0044913,  0.0017756,
+           -0.00021433,  -3.2235e-05]
+## DRX
+_drxFIR = [ 0.0111580, -0.0074330,  0.0085684, -0.0085984,  0.0070656, -0.0035905, 
+           -0.0020837,  0.0099858, -0.0199800,  0.0316360, -0.0443470,  0.0573270, 
+           -0.0696630,  0.0804420, -0.0888320,  0.0941650,  0.9040000,  0.0941650, 
+           -0.0888320,  0.0804420, -0.0696630,  0.0573270, -0.0443470,  0.0316360, 
+           -0.0199800,  0.0099858, -0.0020837, -0.0035905,  0.0070656, -0.0085984,  
+            0.0085684, -0.0074330,  0.0111580]
+
+
+_nPts = 1000 # Number of points to use in calculating the bandpasses
 
 
 def freq2word(freq):
@@ -100,3 +128,48 @@ def DPGtogain(combined):
 	gain = combined / 32767.0
 	
 	return gain
+
+
+def tbnFilter(sampleRate=1e5, nPts=_nPts):
+	"""
+	Return a function that will generate the shape of a TBN filter for a given sample
+	rate.
+	"""
+	
+	# Part 0 - FIR filter
+	h, wFIR = freqz(_tbnFIR, 1, nPts)
+	w = numpy.abs(wFIR)
+	
+	# Convert to a "real" frequency and magnitude response
+	h *= sampleRate / 2.0 / numpy.pi
+	w = numpy.abs(w)**2
+	
+	# Mirror
+	h = numpy.concatenate([-h[::-1], h[1:]])
+	w = numpy.concatenate([ w[::-1], w[1:]])
+	
+	# Return the interpolating function
+	return interp1d(h, w/w.max(), kind='cubic', bounds_error=False)
+
+
+def drxFilter(sampleRate=9.8e6, nPts=_nPts):
+	"""
+	Return a function that will generate the shape of a DRX filter for a given sample
+	rate.
+	
+	Based on memo DRX0001.
+	"""
+	# Part 0 - FIR filter
+	h, wFIR = freqz(_drxFIR, 1, nPts)
+	w = numpy.abs(wFIR)
+	
+	# Convert to a "real" frequency and magnitude response
+	h *= sampleRate / 2.0 / numpy.pi
+	w = numpy.abs(w)**2
+	
+	# Mirror
+	h = numpy.concatenate([-h[::-1], h[1:]])
+	w = numpy.concatenate([w[::-1], w[1:]])
+	
+	# Return the interpolating function
+	return interp1d(h, w/w.max(), kind='cubic', bounds_error=False)

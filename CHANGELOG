@@ -10,6 +10,7 @@
   * Updated lsl.common.sdfADP to allow two beams at LWA-SV
   * Cleaned up a few messages in lsl.sim.vis and lsl.reader.ldp so that they use the warnings module
   * Made problems in lsl.statistics.robust raise ValueErrors if a problem is encountered
+  * Added functions to lsl.common.adp to calculate the magnitude response of the TBN and DRX filters
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
