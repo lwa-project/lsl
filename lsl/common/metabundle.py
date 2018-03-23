@@ -369,7 +369,7 @@ def getSessionMetaData(tarname):
 		fh = open(filename, 'r')
 		
 		# Define a regular expresion to match the latest format
-		lineRE = re.compile(r"\s*(?P<id>\d{1,}?)\s+\[(?P<tag>[\d_]+?)\]\s+\['(?P<barcode>\w+?)'\]\s+(?P<outcome>\d)\s+\[(?P<msg>.*?)\]")
+		lineRE = re.compile(r"\s*(?P<id>\d{1,}?)\s+\[(?P<tag>[\d_]+?)\]\s+\['?(?P<barcode>.+?)'?\]\s+(?P<outcome>\d)\s+\[(?P<msg>.*?)\]")
 		
 		result = {}
 		for line in fh:
@@ -383,6 +383,11 @@ def getSessionMetaData(tarname):
 				obsID = mtch.group('id')
 				opTag = mtch.group('tag')
 				drsuBarcode = mtch.group('barcode')
+				if drsuBarcode[:3] == 'Err':
+					try:
+						drsuBarcode = result[int(obsID)-1]['barcode']
+					except KeyError:
+						drsuBarcode = 'UNK'
 				obsOutcome = mtch.group('outcome')
 				msg = mtch.group('msg')
 				
