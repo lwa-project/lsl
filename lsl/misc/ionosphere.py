@@ -26,7 +26,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common.mcs import mjdmpm2datetime, datetime2mjdmpm
 
 
-__version__ = "0.4"
+__version__ = "0.5"
 __revision__ = "$Rev$"
 __all__ = ['getMagneticField', 'computeMagneticDeclination', 'computeMagneticInclination', 
 		 'getTECValue', 'getIonosphericPiercePoint', 
@@ -471,6 +471,64 @@ def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 	elif type == 'rapid':
 		## Rapid
 		filename = 'jprg%03i0.%02ii.Z' % (dayOfYear, year%100)
+	else:
+		## ???
+		raise ValueError("Unknown TEC file type '%s'" % type)
+		
+	# Attempt to download the data
+	try:
+		tecFH = urllib2.urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+		data = tecFH.read()
+		tecFH.close()
+	except IOError as e:
+		__logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
+		data = ''
+	except socket.timeout:
+		data = ''
+		
+	# Did we get anything?
+	if len(data) == 0:
+		## Fail
+		return False
+	else:
+		## Success!  Save it to a file and then decompress it with 'gunzip' 
+		## since I can't figure out how to decompress this in Python.
+		fh = open(os.path.join(_CacheDir, filename), 'wb')
+		fh.write(data)
+		fh.close()
+		
+		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
+		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
+		
+		return True
+
+
+def _downloadTECMapUQR(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+	"""
+	Given an MJD value, download the corresponding JPL final data product 
+	for that day.
+	
+	.. note::
+		By default the "final" product is downloaded.  However, the "rapid" 
+		data product may be downloaded if the 'type' keyword is set to 
+		"rapid".
+	"""
+	
+	# Convert the MJD to a datetime instance so that we can pull out the year
+	# and the day-of-year
+	mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
+	dt = mjdmpm2datetime(int(mjd), mpm)
+	
+	year = dt.year
+	dayOfYear = int(dt.strftime('%j'), 10)
+	
+	# Figure out which file we need to download
+	if type == 'final':
+		## Final
+		filename = 'uqrg%03i0.%02ii.Z' % (dayOfYear, year%100)
+	elif type == 'rapid':
+		## Rapid
+		filename = 'uqrg%03i0.%02ii.Z' % (dayOfYear, year%100)
 	else:
 		## ???
 		raise ValueError("Unknown TEC file type '%s'" % type)
@@ -991,6 +1049,17 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
 		## Filename templates
 		filenameTemplate = 'jplg%03i0.%02ii.gz'
 		filenameAltTemplate = 'jprg%03i0.%02ii.gz'
+		
+	elif type == 'UQR':
+		## Cache entry name
+		cacheName = 'TEC-UQR-%i' % mjd
+		
+		## Download helper
+		downloader = _downloadTECMapUQR
+		
+		## Filename templates
+		filenameTemplate = 'uqrg%03i0.%02ii.gz'
+		filenameAltTemplate = 'uqrg%03i0.%02ii.gz'
 		
 	elif type == 'CODE':
 		## Cache entry name
