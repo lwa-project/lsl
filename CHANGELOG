@@ -14,6 +14,7 @@
   * Small fix to lsl.common.metabundle(ADP).getSessionMetaData() to make it more robust
   * Updated the lsl.skymap.SkyMapLFSM module to the 2018 April 23 version of the model
   * Added support for the UQR global ionospheric model to the lsl.misc.ionosphere module
+  * Updated the lsl.reader.cor module to support what ADP at LWA-SV is currently capable of generating
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
