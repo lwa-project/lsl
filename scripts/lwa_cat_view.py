@@ -32,6 +32,9 @@ class CatalogViewer(object):
 			station = stations.lwa1
 		elif opts['site'] == 'lwasv':
 			station = stations.lwasv
+		elif opts['site'] == 'ovrolwa':
+			station = stations.lwa1
+			station.lat, station.lon, station.elev = ('37.2397808', '-118.2816819', 1183.4839)
 		else:
 			raise RuntimeError("Unknown site name: %s" % opts['site'])
 		self.site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)

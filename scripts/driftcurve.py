@@ -30,6 +30,7 @@ Usage: driftcurve.py [OPTIONS]
 Options:
 -h, --help             Display this help information
 -s, --lwasv            Calculate for LWA-SV instead of LWA1
+-o, --ovro-lwa         Calculate for OVRO-LWA instead of LWA1
 -f, --freq             Frequency of the observations in MHz
                        (default = 74 MHz)
 -p, --polarization     Polarization of the observations (NS or EW; 
@@ -64,7 +65,7 @@ def parseOptions(args):
 
 	# Read in and process the command line flags
 	try:
-		opts, arg = getopt.getopt(args, "hvsf:p:elt:x", ["help", "verbose", "lwasv", "freq=", "polarization=", "empirical", "lfsm", "time-step=", "do-plot",])
+		opts, arg = getopt.getopt(args, "hvsof:p:elt:x", ["help", "verbose", "lwasv", "ovro-lwa", "freq=", "polarization=", "empirical", "lfsm", "time-step=", "do-plot",])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -78,6 +79,8 @@ def parseOptions(args):
 			config['verbose'] = True
 		elif opt in ('-s', '--lwasv'):
 			config['site'] = 'lwasv'
+		elif opt in ('-o', '--ovro-lwa'):
+			config['site'] = 'ovro'
 		elif opt in ('-f', '--freq'):
 			config['freq'] = float(value)*1e6
 		elif opt in ('-p', '--polarization'):
@@ -114,6 +117,9 @@ def main(args):
 		sta = stations.lwa1
 	elif config['site'] == 'lwasv':
 		sta = stations.lwasv
+	elif config['site'] == 'ovro':
+		sta = stations.lwa1
+		sta.lat, sta.lon, sta.elev = ('37.2397808', '-118.2816819', 1183.4839)
 	else:
 		raise RuntimeError("Unknown site: %s" % config['site'])
 		
