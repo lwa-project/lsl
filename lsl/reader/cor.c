@@ -103,7 +103,7 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	// Fill the data array
 	float complex *a;
 	a = (float complex *) PyArray_DATA(data);
-	fread(a, sizeof(float complex), 288, fh);
+	i = fread(a, sizeof(float complex), 288, fh);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -178,7 +178,6 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	Py_XDECREF(fHeader);
 	Py_XDECREF(fData);
 	Py_XDECREF(data);
-	Py_XDECREF(wgt);
 	
 	return output;
 	
