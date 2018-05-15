@@ -47,7 +47,7 @@ typedef struct {
 	signed int nAvg;
 	signed short int stand0;
 	signed short int stand1;
-	unsigned char bytes[4608];
+	unsigned char bytes[2304];
 } CORPayload;
 
 
@@ -60,7 +60,7 @@ typedef struct {
 
 PyObject *readCOR(PyObject *self, PyObject *args) {
 	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
-	PyArrayObject *data=NULL, *wgt=NULL;
+	PyArrayObject *data=NULL;
 	int i;
 	CORFrame cFrame;
 	
@@ -71,24 +71,13 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	
 	// Create the output data array
 	npy_intp dims[3];
-	// 21+21+22-bit Data -> 576 samples in the data section as 144 channels, 2 pols @ stand 0, 2 pols @  stand 1
-	dims[0] = 144;
+	// 32+32-bit Data -> 288 samples in the data section as 72 channels, 2 pols @ stand 0, 2 pols @  stand 1
+	dims[0] = 72;
 	dims[1] = 2;
 	dims[2] = 2;
 	data = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		goto fail;
-	}
-	
-	// Create the output weight array
-	// 21+21+22-bit Data -> 576 samples in the data section as 144 channels, 2 pols @ stand 0, 2 pols @  stand 1
-	dims[0] = 144;
-	dims[1] = 2;
-	dims[2] = 2;
-	wgt = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_FLOAT32, 0);
-	if(wgt == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output weight array");
 		goto fail;
 	}
 	
@@ -98,7 +87,7 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	
 	Py_BEGIN_ALLOW_THREADS
 	
-	// Read in a single 4640 byte frame
+	// Read in a single 2336 byte frame
 	i = fread(&cFrame, sizeof(cFrame), 1, fh);
 	
 	// Swap the bits around
@@ -111,32 +100,10 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	cFrame.data.stand0 = __bswap_16(cFrame.data.stand0);
 	cFrame.data.stand1 = __bswap_16(cFrame.data.stand1);
 	
-	// Fill the data and weight arrays
-	int tempR, tempI, tempW;
-	unsigned long int fp;
+	// Fill the data array
 	float complex *a;
-	float *b;
 	a = (float complex *) PyArray_DATA(data);
-	b = (float *) PyArray_DATA(wgt);
-	for(i=0; i<576; i++) {
-		fp = ((unsigned long long) cFrame.data.bytes[8*i+0])<<56 | \
-			((unsigned long long) cFrame.data.bytes[8*i+1])<<48 | \
-			((unsigned long long) cFrame.data.bytes[8*i+2])<<40 | \
-			((unsigned long long) cFrame.data.bytes[8*i+3])<<32 | \
-			((unsigned long long) cFrame.data.bytes[8*i+4])<<24 | \
-			((unsigned long long) cFrame.data.bytes[8*i+5])<<16 | \
-			((unsigned long long) cFrame.data.bytes[8*i+6])<<8 | \
-			cFrame.data.bytes[8*i+7];
-			
-		tempR  = (fp >> 43) & 0x1FFFFF;
-		tempR -= ((tempR & 0x200000) << 1);
-		tempI  = (fp >> 22) & 0x1FFFFF;
-		tempI -= ((tempI & 0x200000) << 1);
-		tempW  = fp & 0x3FFFFF;
-		tempW -= ((tempW & 0x200000) << 1);
-		*(a + i) = (float) tempR + _Complex_I * (float) tempI;
-		*(b + i) = (float) tempW / (float) 0x1FFFFF;
-	}
+	fread(a, sizeof(float complex), 288, fh);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -202,7 +169,6 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	Py_XDECREF(temp);
 	
 	PyObject_SetAttrString(fData, "vis", PyArray_Return(data));
-	PyObject_SetAttrString(fData, "wgt", PyArray_Return(wgt));
 	
 	// 3. Frame
 	PyObject_SetAttrString(frame, "header", fHeader);
@@ -218,7 +184,6 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	
 fail:
 	Py_XDECREF(data);
-	Py_XDECREF(wgt);
 	
 	return NULL;
 }
@@ -226,6 +191,10 @@ fail:
 char readCOR_doc[] = PyDoc_STR(\
 "Function to read in a single COR frame (header+data) and store the contents\n\
 as a Frame object.\n\
+\n\
+.. versionchanged:: 1.2.1\n\
+\tUpdated readCOR for the switch over to 72 channels, complex64 data, and no\n\
+\tdata weights\n\
 \n\
 .. versionadded:: 1.2.0\n\
 ");

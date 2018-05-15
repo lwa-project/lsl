@@ -19,6 +19,10 @@ The functions defined in this module fall into two class:
 For reading in data, use the readFrame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.
 
+.. versionchanged:: 1.2.1
+	Updated for the switch over to 72 channels, complex64 data, and no
+	data weights
+
 .. versionadded:: 1.2.0
 """
 
@@ -31,13 +35,13 @@ from lsl.reader._gofast import syncError as gsyncError
 from lsl.reader._gofast import eofError as geofError
 from lsl.reader.errors import syncError, eofError
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 
 		 'getChannelCount', 'getBaselineCount', 
 		 '__version__', '__revision__', '__all__']
 
-FrameSize = 4640
+FrameSize = 2336
 
 
 class FrameHeader(object):
@@ -87,13 +91,12 @@ class FrameData(object):
 	frame.
 	"""
 	
-	def __init__(self, timeTag=None, nAvg=None, stand0=None, stand1=None, vis=None, wgt=None):
+	def __init__(self, timeTag=None, nAvg=None, stand0=None, stand1=None, vis=None):
 		self.timeTag = timeTag
 		self.nAvg = nAvg
 		self.stand0 = stand0
 		self.stand1 = stand1
 		self.vis = vis
-		self.wgt = wgt
 		
 	def parseID(self):
 		"""
