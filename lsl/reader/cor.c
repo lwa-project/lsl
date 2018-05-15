@@ -47,7 +47,7 @@ typedef struct {
 	signed int nAvg;
 	signed short int stand0;
 	signed short int stand1;
-	unsigned char bytes[2304];
+	float complex vis[288];
 } CORPayload;
 
 
@@ -103,7 +103,10 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	// Fill the data array
 	float complex *a;
 	a = (float complex *) PyArray_DATA(data);
-	i = fread(a, sizeof(float complex), 288, fh);
+	/*for(i=0; i<288; i++) {
+		*(a + i) = cFrame.data.vis[i];
+	}*/
+	memcpy(a, &cFrame.data.vis, sizeof(float complex)*288);
 	
 	Py_END_ALLOW_THREADS
 	
