@@ -52,10 +52,10 @@ class geodesy_tests(unittest.TestCase):
 		
 		# Check
 		## http://toshi.nofs.navy.mil/ser7/finals2000A.all
-		## 93 1 2 48989.00 I  0.208331 0.000166  0.356585 0.000241  I 0.0594794 0.0000108  2.6575 0.0094  I     0.187    0.233     0.020    0.180   .208700   .355900   .0593100    -0.020    -0.087
-		self.assertAlmostEqual(eop.x, 0.208331, ACCURACY)
-		self.assertAlmostEqual(eop.y, 0.356585, ACCURACY)
-		self.assertAlmostEqual(eop.utDiff,  0.0594794, ACCURACY)
+		## 93 1 2 48989.00 I  0.208333 0.000166  0.356577 0.000241  I 0.0594754 0.0000108  2.6575 0.0094  I     0.187    0.233     0.020    0.180   .208700   .355900   .0593100    -0.020    -0.087 
+		self.assertAlmostEqual(eop.x, 0.208333, ACCURACY)
+		self.assertAlmostEqual(eop.y, 0.356577, ACCURACY)
+		self.assertAlmostEqual(eop.utDiff,  0.0594754, ACCURACY)
 		
 		# Read in three values and check the output
 		mjdList = [41684.0, 41685.0, 41686.0]
