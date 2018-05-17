@@ -22,7 +22,7 @@ __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
 def usage(exitCode=None):
-	print """driftcurve.py - Generate a drift curve for a dipole at LWA-1 
+	print """driftcurve.py - Generate a drift curve for a dipole at LWA1 
 observing at a given frequency in MHz.
 
 Usage: driftcurve.py [OPTIONS]
@@ -242,8 +242,8 @@ def main(args):
 	# plot results
 	if config['enableDisplay']:
 		pylab.figure(2)
-		pylab.title("Driftcurve: %s pol. @ %0.2f MHz - LWA-1" % \
-			(config['pol'], config['freq']/1e6))
+		pylab.title("Driftcurve: %s pol. @ %0.2f MHz - %s" % \
+			(config['pol'], config['freq']/1e6), config['site'].upper())
 		pylab.plot(lstList, powListAnt, "ro", label="Antenna Pattern")
 		pylab.xlabel("LST [hours]")
 		pylab.ylabel("Temp. [K]")
@@ -251,7 +251,7 @@ def main(args):
 		pylab.draw()
 		pylab.show()
 	
-	outputFile = "driftcurve_%s_%s_%.2f.txt" % ('lwa1', config['pol'], config['freq']/1e6)
+	outputFile = "driftcurve_%s_%s_%.2f.txt" % (config['site'], config['pol'], config['freq']/1e6)
 	print "Writing driftcurve to file '%s'" % outputFile
 	mf = file(outputFile, "w")
 	for lst,pow in zip(lstList, powListAnt):
