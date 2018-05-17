@@ -243,7 +243,7 @@ def main(args):
 	if config['enableDisplay']:
 		pylab.figure(2)
 		pylab.title("Driftcurve: %s pol. @ %0.2f MHz - %s" % \
-			(config['pol'], config['freq']/1e6), config['site'].upper())
+			(config['pol'], config['freq']/1e6, config['site'].upper()))
 		pylab.plot(lstList, powListAnt, "ro", label="Antenna Pattern")
 		pylab.xlabel("LST [hours]")
 		pylab.ylabel("Temp. [K]")
