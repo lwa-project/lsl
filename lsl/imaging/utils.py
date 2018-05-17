@@ -767,7 +767,11 @@ class CorrelatedDataUV(object):
 		self.pols  = numpy.arange(1, uvData.header['NAXIS3']+1) - uvData.header['CRPIX3']
 		self.pols *= uvData.header['CDELT3'] 
 		self.pols += uvData.header['CRVAL3']
-		self.freq  = numpy.arange(1, uvData.header['NAXIS4']+1, dtype=numpy.float64) - uvData.header['CRPIX4']
+		nChan = uvData.header['NAXIS4']
+		if uvData.header['CTYPE5'] == 'IF':
+			## Merge the frequency and IF columns
+			nChan *= uvData.header['NAXIS5']
+		self.freq  = numpy.arange(1, nChan+1, dtype=numpy.float64) - uvData.header['CRPIX4']
 		self.freq *= uvData.header['CDELT4']
 		self.freq += uvData.header['CRVAL4']
 		
@@ -877,7 +881,9 @@ class CorrelatedDataUV(object):
 		uvw = numpy.array([u,v,w], dtype=numpy.float32)
 		## Reshape the visibilities and weights
 		if len(vis.shape) == 7:
-			vis = vis[:,0,0,0,:,:,:]
+			### Merge the frequency and IF columns
+			vis = vis[:,0,0,:,:,:,:]
+			vis.shape = (vis.shape[0], vis.shape[1]*vis.shape[2], vis.shape[3], vis.shape[4])
 		else:
 			vis = vis[:,0,0,:,:,:]
 		if vis.shape[-1] == 3:
