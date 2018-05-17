@@ -37,7 +37,7 @@ Options:
                        default = EW)
 -e, --empirical        Enable empirical corrections to the dipole model
                        (valid from 35 to 80 MHz, default = no)
--l, --lfms             Use LFSM instead of GSM
+-l, --lfsm             Use LFSM instead of GSM
 -t, --time-step        Time step of simulations in minutes (default = 
                        10)
 -x, --do-plot          Plot the driftcurve data
