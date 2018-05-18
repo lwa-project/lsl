@@ -16,6 +16,7 @@
   * Added support for the UQR global ionospheric model to the lsl.misc.ionosphere module
   * Updated the lsl.reader.cor module to support what ADP at LWA-SV is currently capable of generating
   * Added OVRO-LWA as a valid station for a few of the LSL scripts that do not depend on detailed configuration information
+  * Fixed a bug in lsl.common.metabundle*.getSessionMetaData() when parsing metadata from failed observations
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP

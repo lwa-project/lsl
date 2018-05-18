@@ -418,7 +418,7 @@ def getSessionMetaData(tarname):
 							msg = 'UNK'
 							
 			obsID = int(obsID)
-			obsOutcome = int(obsOutcome)
+			obsOutcome = int(obsOutcome) if obsOutcome != 'Failed' else 1
 			result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
 			
 		fh.close()
