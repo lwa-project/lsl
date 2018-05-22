@@ -157,12 +157,12 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 				for(k=0; k<2*nChan; k++) {
 					in[k] = (float) *(a + secStart + k);
 					
-					if( Clip && absf(in[k]) >= Clip ) {
+					if( Clip && fabsf(in[k]) >= Clip ) {
 						cleanFactor = 0.0;
 					}
 				}
 				
-				fftwf_execute_dft(p, in, out);
+				fftwf_execute_dft_r2c(p, in, out);
 				
 				for(k=0; k<nChan; k++) {
 					*(b + nChan*i + k) += cleanFactor*cabs2f(out[k]);
@@ -180,7 +180,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	fftwf_destroy_plan(p);
 	fftwf_free(inP);
-	fftfw_free(outP);
+	fftwf_free(outP);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -309,14 +309,14 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 				for(k=0; k<2*nChan; k++) {
 					in[k] = (float) *(a + secStart + k);
 					
-					if( Clip && absf(in[k]) >= Clip ) {
+					if( Clip && fabsf(in[k]) >= Clip ) {
 						cleanFactor = 0.0;
 					}
 					
 					in[k] *= *(c + k);
 				}
 				
-				fftwf_execute_dft(p, in, out);
+				fftwf_execute_dft_r2c(p, in, out);
 				
 				for(k=0; k<nChan; k++) {
 					*(b + nChan*i + k) += cleanFactor*cabs2f(out[k]);

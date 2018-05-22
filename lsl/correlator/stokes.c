@@ -137,7 +137,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Create the FFTW plan                          
 	float *inPX, *inPY, *inX, *inY;                          
-	float complex *outPX, *outPY, *outX, *outY
+	float complex *outPX, *outPY, *outX, *outY;
 	inPX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
 	inPY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
 	outPX = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
@@ -182,13 +182,13 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					inX[k] = (float) *(aX + secStart + k);
 					inY[k] = (float) *(aY + secStart + k);
 					
-					if( Clip && ( absf(inX[k]) >= Clip || absf(inY[k]) >= Clip ) ) {
+					if( Clip && ( fabsf(inX[k]) >= Clip || fabsf(inY[k]) >= Clip ) ) {
 						cleanFactor = 0.0;
 					}
 				}
 				
-				fftwf_execute_dft(pX, inX, outX);
-				fftwf_execute_dft(pY, inY, outY);
+				fftwf_execute_dft_r2c(pX, inX, outX);
+				fftwf_execute_dft_r2c(pY, inY, outY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
@@ -337,7 +337,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Create the FFTW plan                          
 	float *inPX, *inPY, *inX, *inY;                          
-	float complex *outPX, *outPY, *outX, *outY
+	float complex *outPX, *outPY, *outX, *outY;
 	inPX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
 	inPY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
 	outPX = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
@@ -384,7 +384,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					inX[k] = (float) *(aX + secStart + k);
 					inY[k] = (float) *(aY + secStart + k);
 					
-					if( Clip && ( absf(inX[k]) >= Clip || absf(inY[k]) >= Clip ) ) {
+					if( Clip && ( fabsf(inX[k]) >= Clip || fabsf(inY[k]) >= Clip ) ) {
 						cleanFactor = 0.0;
 					}
 					
@@ -392,8 +392,8 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					inY[k] *= *(c + k);
 				}
 				
-				fftwf_execute_dft(pX, inX, outX);
-				fftwf_execute_dft(pY, inY, outY);
+				fftwf_execute_dft_r2c(pX, inX, outX);
+				fftwf_execute_dft_r2c(pY, inY, outY);
 				
 				for(k=0; k<nChan; k++) {
 					// I

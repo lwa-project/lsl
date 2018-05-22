@@ -256,12 +256,12 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 			for(k=0; k<2*nChan; k++) {
 				in[k] = (float) *(a + secStart + k);
 				
-				if( Clip && absf(in[k]) >= Clip ) {
+				if( Clip && fabsf(in[k]) >= Clip ) {
 					cleanFactor = 0.0;
 				}
 			}
 			
-			fftwf_execute_dft(p, in, out);
+			fftwf_execute_dft_r2c(p, in, out);
 			
 			for(k=0; k<nChan; k++) {
 				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*out[k];
@@ -498,14 +498,14 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 			for(k=0; k<2*nChan; k++) {
 				in[k] = (float) *(a + secStart + k);
 				
-				if( Clip && absf(in[k]) >= Clip ) {
+				if( Clip && fabsf(in[k]) >= Clip ) {
 					cleanFactor = 0.0;
 				}
 				
 				in[k] *= *(e + k);
 			}
 			
-			fftwf_execute_dft(p, in, out);
+			fftwf_execute_dft_r2c(p, in, out);
 			
 			for(k=0; k<nChan; k++) {
 				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*out[k];
