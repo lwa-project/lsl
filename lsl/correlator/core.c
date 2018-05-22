@@ -278,7 +278,7 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	fftwf_destroy_plan(p);
 	fftwf_free(inP);
-	fftwf_free(outP)
+	fftwf_free(outP);
 	free(frac);
 	free(fifo);
 	
