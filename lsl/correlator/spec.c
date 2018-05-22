@@ -122,9 +122,9 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	float *inP, *in;                          
 	float complex *outP, *out;
 	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	outP = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+	outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
 	fftwf_plan p;
-	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_R2HC|FFTW_MEASURE);
+	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
 	
 	// Data indexing and access
 	long secStart;
@@ -142,7 +142,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		in = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-		out = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		out = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
 		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
@@ -273,9 +273,9 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	float *inP, *in;                          
 	float complex *outP, *out;
 	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	outP = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+	outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
 	fftwf_plan p;
-	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_R2HC|FFTW_MEASURE);
+	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
 	
 	// Data indexing and access
 	long secStart;
@@ -294,7 +294,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	#endif
 	{
 		in = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-		out = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		out = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
 		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
