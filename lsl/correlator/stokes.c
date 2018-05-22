@@ -136,13 +136,16 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
-	float complex *inPX, *inPY, *inX, *inY;                          
-	inPX = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
-	inPY = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
+	float *inPX, *inPY, *inX, *inY;                          
+	float complex *outPX, *outPY, *outX, *outY
+	inPX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	inPY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	outPX = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+	outPY = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
 	fftwf_plan pX;
 	fftwf_plan pY;
-	pX = fftwf_plan_dft_1d(2*nChan, inPX, inPX, FFTW_FORWARD, FFTW_ESTIMATE);
-	pY = fftwf_plan_dft_1d(2*nChan, inPY, inPY, FFTW_FORWARD, FFTW_ESTIMATE);
+	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPY, FFTW_R2HC|FFTW_MEASURE);
+	pY = fftwf_plan_dft_r2c_1d(2*nChan, inPY, outPY, FFTW_R2HC|FFTW_MEASURE);
 	
 	// Data indexing and access
 	long secStart;
@@ -157,66 +160,74 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	long nActFFT;
 	
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(inX, inY, i, j, k, secStart, cleanFactor, nActFFT)
+		#pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, secStart, cleanFactor, nActFFT)
 	#endif
 	{
+		inX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+		inY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+		outX = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		outY = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
-			inX = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
-			inY = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
 				secStart = nSamps * i + 2*nChan*j/Overlap;
 				
 				for(k=0; k<2*nChan; k++) {
-					inX[k] = (float complex) *(aX + secStart + k);
-					inY[k] = (float complex) *(aY + secStart + k);
+					inX[k] = (float) *(aX + secStart + k);
+					inY[k] = (float) *(aY + secStart + k);
 					
-					if( Clip && ( cabsf(inX[k]) >= Clip || cabsf(inY[k]) >= Clip ) ) {
+					if( Clip && ( absf(inX[k]) >= Clip || absf(inY[k]) >= Clip ) ) {
 						cleanFactor = 0.0;
 					}
 				}
 				
-				fftwf_execute_dft(pX, inX, inX);
-				fftwf_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(pX, inX, outX);
+				fftwf_execute_dft(pY, inY, outY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inX[k]);
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inY[k]);
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outX[k]);
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outY[k]);
 					
 					// Q
-					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inX[k]);
-					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2f(inY[k]);
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outX[k]);
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2f(outY[k]);
 					
 					// U
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(inX[k])*crealf(inY[k]);
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(inX[k])*cimagf(inY[k]);
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(outX[k])*crealf(outY[k]);
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(outX[k])*cimagf(outY[k]);
 					
 					// V
-					*(b + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(inX[k])*crealf(inY[k]);
-					*(b + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(inX[k])*cimagf(inY[k]);
+					*(b + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(outX[k])*crealf(outY[k]);
+					*(b + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(outX[k])*cimagf(outY[k]);
 				}
 				
 				nActFFT += (long) cleanFactor;
 			}
-			fftwf_free(inX);
-			fftwf_free(inY);
 			
 			// Scale FFTs
 			for(j=0; j<4; j++) {
 				cblas_dscal(nChan, 1.0/(2*nChan*nActFFT), (b + j*nChan*nStand + nChan*i), 1);
 			}
 		}
+		
+		fftwf_free(inX);
+		fftwf_free(inY);
+		fftwf_free(outX);
+		fftwf_free(outY);
 	}
 	fftwf_destroy_plan(pX);
 	fftwf_destroy_plan(pY);
 	fftwf_free(inPX);
 	fftwf_free(inPY);
+	fftwf_free(outPX);
+	fftwf_free(outPY);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -325,13 +336,16 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
-	float complex *inPX, *inPY, *inX, *inY;                          
-	inPX = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
-	inPY = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
+	float *inPX, *inPY, *inX, *inY;                          
+	float complex *outPX, *outPY, *outX, *outY
+	inPX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	inPY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	outPX = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+	outPY = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
 	fftwf_plan pX;
 	fftwf_plan pY;
-	pX = fftwf_plan_dft_1d(2*nChan, inPX, inPX, FFTW_FORWARD, FFTW_ESTIMATE);
-	pY = fftwf_plan_dft_1d(2*nChan, inPY, inPY, FFTW_FORWARD, FFTW_ESTIMATE);
+	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPY, FFTW_R2HC|FFTW_MEASURE);
+	pY = fftwf_plan_dft_r2c_1d(2*nChan, inPY, outPY, FFTW_R2HC|FFTW_MEASURE);
 	
 	// Data indexing and access
 	long secStart;
@@ -348,26 +362,29 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	long nActFFT;
 	
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(inX, inY, i, j, k, secStart, cleanFactor, nActFFT)
+		#pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, secStart, cleanFactor, nActFFT)
 	#endif
 	{
+		inX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+		inY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+		outX = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		outY = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
-			inX = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
-			inY = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
 				secStart = nSamps * i + 2*nChan*j/Overlap;
 				
 				for(k=0; k<2*nChan; k++) {
-					inX[k] = (float complex) *(aX + secStart + k);
-					inY[k] = (float complex) *(aY + secStart + k);
+					inX[k] = (float) *(aX + secStart + k);
+					inY[k] = (float) *(aY + secStart + k);
 					
-					if( Clip && ( cabsf(inX[k]) >= Clip || cabsf(inY[k]) >= Clip ) ) {
+					if( Clip && ( absf(inX[k]) >= Clip || absf(inY[k]) >= Clip ) ) {
 						cleanFactor = 0.0;
 					}
 					
@@ -375,42 +392,47 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					inY[k] *= *(c + k);
 				}
 				
-				fftwf_execute_dft(pX, inX, inX);
-				fftwf_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(pX, inX, outX);
+				fftwf_execute_dft(pY, inY, outY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inX[k]);
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inY[k]);
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outX[k]);
+					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outY[k]);
 					
 					// Q
-					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inX[k]);
-					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2f(inY[k]);
+					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outX[k]);
+					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2f(outY[k]);
 					
 					// U
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(inX[k])*crealf(inY[k]);
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(inX[k])*cimagf(inY[k]);
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(outX[k])*crealf(outY[k]);
+					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(outX[k])*cimagf(outY[k]);
 					
 					// V
-					*(b + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(inX[k])*crealf(inY[k]);
-					*(b + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(inX[k])*cimagf(inY[k]);
+					*(b + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(outX[k])*crealf(outY[k]);
+					*(b + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(outX[k])*cimagf(outY[k]);
 				}
 				
 				nActFFT += (long) cleanFactor;
 			}
-			fftwf_free(inX);
-			fftwf_free(inY);
 			
 			// Scale FFTs
 			for(j=0; j<4; j++) {
 				cblas_dscal(nChan, 1.0/(2*nChan*nActFFT), (b + j*nChan*nStand + nChan*i), 1);
 			}
 		}
+		
+		fftwf_free(inX);
+		fftwf_free(inY);
+		fftwf_free(outX);
+		fftwf_free(outY);
 	}
 	fftwf_destroy_plan(pX);
 	fftwf_destroy_plan(pY);
 	fftwf_free(inPX);
 	fftwf_free(inPY);
+	fftwf_free(outPX);
+	fftwf_free(outPY);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -531,13 +553,15 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		#pragma omp parallel default(shared) private(inX, inY, i, j, k, secStart, cleanFactor, nActFFT, temp2)
 	#endif
 	{
+		inX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+		inY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+		temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
-			inX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-			inY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
@@ -575,10 +599,7 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				nActFFT += (long) cleanFactor;
 			}
-			fftwf_free(inX);
-			fftwf_free(inY);
 			
-			temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
 			for(j=0; j<4; j++) {
 				// Shift FFTs
 				memcpy(temp2, (b + j*nChan*nStand + nChan*i), sizeof(double)*(nChan/2+nChan%2));
@@ -588,8 +609,11 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 				// Scale FFTs
 				cblas_dscal(nChan, 1.0/(nActFFT*nChan), (b + j*nChan*nStand + nChan*i), 1);
 			}
-			free(temp2);
 		}
+		
+		fftwf_free(inX);
+		fftwf_free(inY);
+		free(temp2);
 	}
 	fftwf_destroy_plan(pX);
 	fftwf_destroy_plan(pY);
@@ -727,13 +751,15 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		#pragma omp parallel default(shared) private(inX, inY, i, j, k, secStart, cleanFactor, nActFFT, temp2)
 	#endif
 	{
+		inX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+		inY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+		temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(i=0; i<nStand; i++) {
 			nActFFT = 0;
-			inX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-			inY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
 			
 			for(j=0; j<nFFT; j++) {
 				cleanFactor = 1.0;
@@ -774,10 +800,7 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				
 				nActFFT += (long) cleanFactor;
 			}
-			fftwf_free(inX);
-			fftwf_free(inY);
 			
-			temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
 			for(j=0; j<4; j++) {
 				// Shift FFTs
 				memcpy(temp2, (b + j*nChan*nStand + nChan*i), sizeof(double)*(nChan/2+nChan%2));
@@ -787,8 +810,11 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 				// Scale FFTs
 				cblas_dscal(nChan, 1.0/(nActFFT*nChan), (b + j*nChan*nStand + nChan*i), 1);
 			}
-			free(temp2);
 		}
+		
+		fftwf_free(inX);
+		fftwf_free(inY);
+		free(temp2);
 	}
 	fftwf_destroy_plan(pX);
 	fftwf_destroy_plan(pY);
@@ -1038,7 +1064,7 @@ PyMODINIT_FUNC init_stokes(void) {
 	import_array();
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 	// LSL FFTW Wisdom

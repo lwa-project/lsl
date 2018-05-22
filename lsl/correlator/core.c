@@ -11,7 +11,7 @@
 	
 	// OpenMP scheduling method
 	#ifndef OMP_SCHEDULER
-	#define OMP_SCHEDULER guided
+	#define OMP_SCHEDULER dynamic
 	#endif
 #endif
 
@@ -196,10 +196,12 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
-	float complex *inP, *in;                          
-	inP = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
+	float *inP, *in;                          
+	float complex *outP, *out;
+	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	outP = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
 	fftwf_plan p;
-	p = fftwf_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
+	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_R2HC|FFTW_MEASURE);
 	
 	// Data indexing and access
 	long secStart;
@@ -215,10 +217,32 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Time-domain blanking control
 	double cleanFactor;
 	
+	// Pre-compute the phase rotation and scaling factor
+	float complex *rot;
+	rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor)
+		#pragma omp parallel default(shared) private(i, j)
 	#endif
 	{
+		#ifdef _OPENMP
+			#pragma omp for schedule(OMP_SCHEDULER)
+		#endif
+		for(ij=0; ij<nStand*nChan; ij++) {
+			i = ij / nChan;
+			j = ij % nChan;
+			*(rot + nChan*i + j)  = cexp(TPI * *(c + j) * *(frac + nChan*i + j));
+			*(rot + nChan*i + j) *= cexp(TPI * *(c + 0) / SampleRate * *(fifo + i));
+			*(rot + nChan*i + j) /= sqrt(2*nChan);
+		}
+	}
+	
+	#ifdef _OPENMP
+		#pragma omp parallel default(shared) private(in, out, i, j, k, secStart, cleanFactor)
+	#endif
+	{
+		in = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+		out = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
@@ -226,34 +250,35 @@ static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
 			i = ij / nFFT;
 			j = ij % nFFT;
 			
-			in = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
-			
 			cleanFactor = 1.0;
 			secStart = *(fifo + i) + nSamps*i + 2*nChan*j/Overlap;
 			
 			for(k=0; k<2*nChan; k++) {
-				in[k] = (float complex) *(a + secStart + k);
+				in[k] = (float) *(a + secStart + k);
 				
-				if( Clip && cabsf(in[k]) >= Clip ) {
+				if( Clip && absf(in[k]) >= Clip ) {
 					cleanFactor = 0.0;
 				}
 			}
 			
-			fftwf_execute_dft(p, in, in);
+			fftwf_execute_dft(p, in, out);
 			
 			for(k=0; k<nChan; k++) {
-				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
-				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(2*nChan);
+				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*out[k];
+				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
 			}
 			
 			*(d + nFFT*i + j) = (unsigned char) cleanFactor;
-			
-			fftwf_free(in);
 		}
+		
+		fftwf_free(in);
+		fftwf_free(out);
 	}
+	free(rot);
+	
 	fftwf_destroy_plan(p);
 	fftwf_free(inP);
+	fftwf_free(outP)
 	free(frac);
 	free(fifo);
 	
@@ -412,10 +437,12 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
-	float complex *inP, *in;                          
-	inP = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
+	float *inP, *in;                          
+	float complex *outP, *out;
+	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	outP = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
 	fftwf_plan p;
-	p = fftwf_plan_dft_1d(2*nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
+	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_R2HC|FFTW_MEASURE);
 	
 	// Data indexing and access
 	long secStart;
@@ -432,10 +459,32 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Time-domain blanking control
 	double cleanFactor;
 	
+	// Pre-compute the phase rotation and scaling factor
+	float complex *rot;
+	rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
 	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor)
+		#pragma omp parallel default(shared) private(i, j)
 	#endif
 	{
+		#ifdef _OPENMP
+			#pragma omp for schedule(OMP_SCHEDULER)
+		#endif
+		for(ij=0; ij<nStand*nChan; ij++) {
+			i = ij / nChan;
+			j = ij % nChan;
+			*(rot + nChan*i + j)  = cexp(TPI * *(c + j) * *(frac + nChan*i + j));
+			*(rot + nChan*i + j) *= cexp(TPI * *(c + 0) / SampleRate * *(fifo + i));
+			*(rot + nChan*i + j) /= sqrt(2*nChan);
+		}
+	}
+	
+	#ifdef _OPENMP
+		#pragma omp parallel default(shared) private(in, out, i, j, k, secStart, cleanFactor)
+	#endif
+	{
+		in = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+		out = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
@@ -443,36 +492,37 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 			i = ij / nFFT;
 			j = ij % nFFT;
 			
-			in = (float complex *) fftwf_malloc(sizeof(float complex) * 2*nChan);
-			
 			cleanFactor = 1.0;
 			secStart = *(fifo + i) + nSamps*i + 2*nChan*j/Overlap;
 			
 			for(k=0; k<2*nChan; k++) {
-				in[k] = (float complex) *(a + secStart + k);
+				in[k] = (float) *(a + secStart + k);
 				
-				if( Clip && cabsf(in[k]) >= Clip ) {
+				if( Clip && absf(in[k]) >= Clip ) {
 					cleanFactor = 0.0;
 				}
 				
 				in[k] *= *(e + k);
 			}
 			
-			fftwf_execute_dft(p, in, in);
+			fftwf_execute_dft(p, in, out);
 			
 			for(k=0; k<nChan; k++) {
-				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
-				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(2*nChan);
+				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*out[k];
+				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
 			}
 			
 			*(d + nFFT*i + j) = (unsigned char) cleanFactor;
-			
-			fftwf_free(in);
 		}
+		
+		fftwf_free(in);
+		fftwf_free(out);
 	}
+	free(rot);
+	
 	fftwf_destroy_plan(p);
 	fftwf_free(inP);
+	fftwf_free(outP);
 	free(frac);
 	free(fifo);
 	
@@ -638,18 +688,37 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Time-domain blanking control
 	double cleanFactor;
 	
+	// Pre-compute the phase rotation and scaling factor
+	float complex *rot;
+	rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
+	#ifdef _OPENMP
+		#pragma omp parallel default(shared) private(i, j)
+	#endif
+	{
+		#ifdef _OPENMP
+			#pragma omp for schedule(OMP_SCHEDULER)
+		#endif
+		for(ij=0; ij<nStand*nChan; ij++) {
+			i = ij / nChan;
+			j = ij % nChan;
+			*(rot + nChan*i + j)  = cexp(TPI * *(c + j) * *(frac + nChan*i + j));
+			*(rot + nChan*i + j) *= cexp(TPI * *(c + nChan/2) / SampleRate * *(fifo + i));
+			*(rot + nChan*i + j) /= sqrt(nChan);
+		}
+	}
+	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor)
 	#endif
 	{
+		in = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(ij=0; ij<nStand*nFFT; ij++) {
 			i = ij / nFFT;
 			j = ij % nFFT;
-			
-			in = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
 			
 			cleanFactor = 1.0;
 			secStart = *(fifo + i) + nSamps*i + nChan*j/Overlap;
@@ -666,22 +735,20 @@ static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 			for(k=0; k<nChan/2; k++) {
 				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2+nChan%2];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + nChan/2) / SampleRate * *(fifo + i));
-				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(nChan);
+				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
 			}
 			for(k=nChan/2; k<nChan; k++) {
 				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k-nChan/2];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + nChan/2) / SampleRate * *(fifo + i));
-				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(nChan);
+				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
 			}
 			
 			*(d + nFFT*i + j) = (unsigned char) cleanFactor;
-			
-			fftwf_free(in);
 		}
+		
+		fftwf_free(in);
 	}
+	free(rot);
+	
 	fftwf_destroy_plan(p);
 	fftwf_free(inP);
 	free(frac);
@@ -861,18 +928,37 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Time-domain blanking control
 	double cleanFactor;
 	
+	// Pre-compute the phase rotation and scaling factor
+	float complex *rot;
+	rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
+	#ifdef _OPENMP
+		#pragma omp parallel default(shared) private(i, j)
+	#endif
+	{
+		#ifdef _OPENMP
+			#pragma omp for schedule(OMP_SCHEDULER)
+		#endif
+		for(ij=0; ij<nStand*nChan; ij++) {
+			i = ij / nChan;
+			j = ij % nChan;
+			*(rot + nChan*i + j)  = cexp(TPI * *(c + j) * *(frac + nChan*i + j));
+			*(rot + nChan*i + j) *= cexp(TPI * *(c + nChan/2) / SampleRate * *(fifo + i));
+			*(rot + nChan*i + j) /= sqrt(nChan);
+		}
+	}
+	
 	#ifdef _OPENMP
 		#pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor)
 	#endif
 	{
+		in = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+		
 		#ifdef _OPENMP
 			#pragma omp for schedule(OMP_SCHEDULER)
 		#endif
 		for(ij=0; ij<nStand*nFFT; ij++) {
 			i = ij / nFFT;
 			j = ij % nFFT;
-			
-			in = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
 			
 			cleanFactor = 1.0;
 			secStart = *(fifo + i) + nSamps*i + nChan*j/Overlap;
@@ -891,22 +977,20 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 			
 			for(k=0; k<nChan/2; k++) {
 				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2+nChan%2];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + nChan/2) / SampleRate * *(fifo + i));
-				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(nChan);
+				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
 			}
 			for(k=nChan/2; k<nChan; k++) {
 				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k-nChan/2];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + k) * *(frac + nChan*i + k));
-				*(b + nChan*nFFT*i + nFFT*k + j) *= cexp(TPI * *(c + nChan/2) / SampleRate * *(fifo + i));
-				*(b + nChan*nFFT*i + nFFT*k + j) /= sqrt(nChan);
+				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
 			}
 			
 			*(d + nFFT*i + j) = (unsigned char) cleanFactor;
-			
-			fftwf_free(in);
 		}
+		
+		fftwf_free(in);
 	}
+	free(rot);
+	
 	fftwf_destroy_plan(p);
 	fftwf_free(inP);
 	free(frac);
@@ -1311,7 +1395,7 @@ PyMODINIT_FUNC init_core(void) {
 	import_array();
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.6"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.7"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
 	// LSL FFTW Wisdom
