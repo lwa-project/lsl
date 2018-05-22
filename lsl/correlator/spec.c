@@ -217,7 +217,7 @@ Outputs:\n\
 
 
 static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signals, *signalsF, *window;
+	PyObject *signals, *signalsF, *window=Py_None;
 	PyArrayObject *data=NULL, *dataF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
@@ -230,8 +230,8 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	} else {
-		if(!PyCallable_Check(window)) {
-			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		if(!PyCallable_Check(window) && window != Py_None) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function or None");
 			goto fail;
 		}
 		Py_XINCREF(window);
@@ -246,16 +246,18 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		goto fail;
 	}
 	
-	// Calculate the windowing function
-	window = Py_BuildValue("(i)", 2*nChan);
-	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
-	Py_DECREF(window);
-	
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(data, 0);
 	nSamps = (long) PyArray_DIM(data, 1);
-
+	
+	// Calculate the windowing function
+	if( windowFunc != Py_None ) {
+		window = Py_BuildValue("(i)", 2*nChan);
+		window = PyObject_CallObject(windowFunc, window);
+		windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
+		Py_DECREF(window);
+	}
+	
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / ((2*nChan)/Overlap) - (2*nChan)/((2*nChan)/Overlap) + 1;
 	npy_intp dims[2];
@@ -283,7 +285,9 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *b, *c;
 	a = (short int *) PyArray_DATA(data);
 	b = (double *) PyArray_DATA(dataF);
-	c = (double *) PyArray_DATA(windowData);
+	if( windowData != NULL ) {
+		c = (double *) PyArray_DATA(windowData);
+	}
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -313,7 +317,9 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 						cleanFactor = 0.0;
 					}
 					
-					in[k] *= *(c + k);
+					if( windowData != NULL ) {
+						in[k] *= *(c + k);
+					}
 				}
 				
 				fftwf_execute_dft_r2c(p, in, out);
@@ -515,7 +521,7 @@ Outputs:\n\
 
 
 static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signals, *signalsF, *window;
+	PyObject *signals, *signalsF, *window=Py_None;
 	PyArrayObject *data=NULL, *dataF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
@@ -528,8 +534,8 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	} else {
-		if(!PyCallable_Check(window)) {
-			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		if(!PyCallable_Check(window) && window != Py_None) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function or None");
 			goto fail;
 		}
 		Py_XINCREF(window);
@@ -544,16 +550,18 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		goto fail;
 	}
 	
-	// Calculate the windowing function
-	window = Py_BuildValue("(i)", nChan);
-	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
-	Py_DECREF(window);
-
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(data, 0);
 	nSamps = (long) PyArray_DIM(data, 1);
-
+	
+	// Calculate the windowing function
+	if( windowFunc != Py_None ) {
+		window = Py_BuildValue("(i)", nChan);
+		window = PyObject_CallObject(windowFunc, window);
+		windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
+		Py_DECREF(window);
+	}
+	
 	// Find out how large the output array needs to be and initialize it
 	nFFT = nSamps / (nChan/Overlap) - nChan/(nChan/Overlap) + 1;
 	npy_intp dims[2];
@@ -579,7 +587,9 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	double *b, *c, *temp2;
 	a = (float complex *) PyArray_DATA(data);
 	b = (double *) PyArray_DATA(dataF);
-	c = (double *) PyArray_DATA(windowData);
+	if( windowData != NULL ) {
+		c = (double *) PyArray_DATA(windowData);
+	}
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -609,7 +619,9 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 						cleanFactor = 0.0;
 					}
 					
-					in[k] *= *(c + k);
+					if( windowData != NULL ) {
+						in[k] *= *(c + k);
+					}
 				}
 				
 				fftwf_execute_dft(p, in, in);

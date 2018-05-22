@@ -331,7 +331,7 @@ Outputs:\n\
 
 
 static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signals, *freqs, *delays, *window, *signalsF;
+	PyObject *signals, *freqs, *delays, *window=Py_None, *signalsF;
 	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
@@ -345,8 +345,8 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	} else {
-		if(!PyCallable_Check(window)) {
-			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		if(!PyCallable_Check(window) && window != Py_None) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function or None");
 			goto fail;
 		}
 		Py_XINCREF(window);
@@ -371,12 +371,6 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		goto fail;
 	}
 	
-	// Calculate the windowing function
-	window = Py_BuildValue("(i)", 2*nChan);
-	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
-	Py_DECREF(window);
-	
 	// Check data dimensions
 	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
 		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
@@ -396,6 +390,14 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(data, 0);
 	nSamps = (long) PyArray_DIM(data, 1);
+	
+	// Calculate the windowing function
+	if( windowFunc != Py_None ) {
+		window = Py_BuildValue("(i)", 2*nChan);
+		window = PyObject_CallObject(windowFunc, window);
+		windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
+		Py_DECREF(window);
+	}
 	
 	// Compute the integer sample offset and the fractional sample delay for each stand
 	long *fifo, fifoMax;
@@ -454,7 +456,9 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	b = (float complex *) PyArray_DATA(dataF);
 	c = (double *) PyArray_DATA(freq);
 	d = (unsigned char *) PyArray_DATA(validF);
-	e = (double *) PyArray_DATA(windowData);
+	if( windowData != NULL ) {
+		e = (double *) PyArray_DATA(windowData);
+	}
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -502,7 +506,9 @@ static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					cleanFactor = 0.0;
 				}
 				
-				in[k] *= *(e + k);
+				if( windowData != NULL ) {
+					in[k] *= *(e + k);
+				}
 			}
 			
 			fftwf_execute_dft_r2c(p, in, out);
@@ -803,7 +809,7 @@ Outputs:\n\
 
 
 static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signals, *freqs, *delays, *window, *signalsF;
+	PyObject *signals, *freqs, *delays, *window=Py_None, *signalsF;
 	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL, *windowData=NULL;
 	int nChan = 64;
 	int Overlap = 1;
@@ -817,8 +823,8 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		goto fail;
 	} else {
-		if(!PyCallable_Check(window)) {
-			PyErr_Format(PyExc_TypeError, "window must be a callable function");
+		if(!PyCallable_Check(window) && window != Py_None) {
+			PyErr_Format(PyExc_TypeError, "window must be a callable function or None");
 			goto fail;
 		}
 		Py_XINCREF(window);
@@ -843,12 +849,6 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		goto fail;
 	}
 	
-	// Calculate the windowing function
-	window = Py_BuildValue("(i)", nChan);
-	window = PyObject_CallObject(windowFunc, window);
-	windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
-	Py_DECREF(window);
-	
 	// Check data dimensions
 	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
 		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
@@ -868,6 +868,14 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Get the properties of the data
 	nStand = (long) PyArray_DIM(data, 0);
 	nSamps = (long) PyArray_DIM(data, 1);
+	
+	// Calculate the windowing function
+	if( windowFunc != Py_None ) {
+		window = Py_BuildValue("(i)", nChan);
+		window = PyObject_CallObject(windowFunc, window);
+		windowData = (PyArrayObject *) PyArray_ContiguousFromObject(window, NPY_DOUBLE, 1, 1);
+		Py_DECREF(window);
+	}
 	
 	// Compute the integer sample offset and the fractional sample delay for each stand
 	long *fifo, fifoMax;
@@ -923,7 +931,9 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	b = (float complex *) PyArray_DATA(dataF);
 	c = (double *) PyArray_DATA(freq);
 	d = (unsigned char *) PyArray_DATA(validF);
-	e = (double *) PyArray_DATA(windowData);
+	if( windowData != NULL ) {
+		e = (double *) PyArray_DATA(windowData);
+	}
 	
 	// Time-domain blanking control
 	double cleanFactor;
@@ -970,7 +980,9 @@ static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					cleanFactor = 0.0;
 				}
 				
-				in[k] *= *(e + k);
+				if( windowData != NULL ) {
+					in[k] *= *(e + k);
+				}
 			}
 			
 			fftwf_execute_dft(p, in, in);
