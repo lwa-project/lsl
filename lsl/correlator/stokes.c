@@ -144,7 +144,7 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	outPY = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
 	fftwf_plan pX;
 	fftwf_plan pY;
-	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPY, FFTW_R2HC|FFTW_MEASURE);
+	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPX, FFTW_R2HC|FFTW_MEASURE);
 	pY = fftwf_plan_dft_r2c_1d(2*nChan, inPY, outPY, FFTW_R2HC|FFTW_MEASURE);
 	
 	// Data indexing and access
@@ -344,7 +344,7 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	outPY = (float complex *) fftwf_malloc(sizeof(float complex) * nChan);
 	fftwf_plan pX;
 	fftwf_plan pY;
-	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPY, FFTW_R2HC|FFTW_MEASURE);
+	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPX, FFTW_R2HC|FFTW_MEASURE);
 	pY = fftwf_plan_dft_r2c_1d(2*nChan, inPY, outPY, FFTW_R2HC|FFTW_MEASURE);
 	
 	// Data indexing and access
