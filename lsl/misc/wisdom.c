@@ -25,8 +25,8 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 	int fftlen;
 	FILE *fh;
 	fftwf_plan plan;
-	float complex *inout
-	float *inR
+	float complex *inout;
+	float *inR;
 	char *filename;
 	
 	if(!PyArg_ParseTuple(args, "s", &filename)) {
@@ -44,7 +44,7 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 	fftlen = 2;
 	while(fftlen <= MAXTRANSFORM) {
 		// Setup
-		inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen)
+		inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen);
 		inout = (float complex *) fftwf_malloc(sizeof(float complex) * (fftlen+1));
 		
 		// Forward
@@ -63,7 +63,7 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 	fftlen = 10;
 	while(fftlen <= MAXTRANSFORM) {
 		// Setup
-		inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen)
+		inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen);
 		inout = (float complex *) fftwf_malloc(sizeof(float complex) * (fftlen+1));
 		
 		// Forward
