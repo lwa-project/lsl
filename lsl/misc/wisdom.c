@@ -12,7 +12,7 @@
 
 #include "numpy/arrayobject.h"
 
-#define MAXTRANSFORM 1048576
+#define MAXTRANSFORM 262144
 
 
 /*
@@ -22,10 +22,11 @@
 
 static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 	PyObject *output;
-	int fftlen = 2;
+	int fftlen;
 	FILE *fh;
 	fftwf_plan plan;
-	fftwf_complex *inout;
+	float complex *inout
+	float *inR
 	char *filename;
 	
 	if(!PyArg_ParseTuple(args, "s", &filename)) {
@@ -39,27 +40,49 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 		printf("Warning: system wisdom file not found, continuing\n");
 	}
 	
-	// Powers of 2
-	inout = fftwf_malloc(sizeof(fftwf_complex) * MAXTRANSFORM + 2);
+	// Real to complex - powers of 2
+	fftlen = 2;
 	while(fftlen <= MAXTRANSFORM) {
+		// Setup
+		inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen)
+		inout = (float complex *) fftwf_malloc(sizeof(float complex) * (fftlen+1));
+		
 		// Forward
-		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
+		plan = fftwf_plan_dft_r2c_1d(2*fftlen, inR, inout, FFTW_PATIENT);
 		fftwf_destroy_plan(plan);
 		
-		// Backward
-		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
-		fftwf_destroy_plan(plan);
+		// Teardown
+		fftwf_free(inR);
+		fftwf_free(inout);
 		
 		// Next
 		fftlen *= 2;
 	}
-	fftwf_free(inout);
 	
-	// Powers of 10
+	// Real to complex - powers of 10
 	fftlen = 10;
 	while(fftlen <= MAXTRANSFORM) {
 		// Setup
-		inout = fftwf_malloc(sizeof(fftwf_complex) * fftlen + 2);
+		inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen)
+		inout = (float complex *) fftwf_malloc(sizeof(float complex) * (fftlen+1));
+		
+		// Forward
+		plan = fftwf_plan_dft_r2c_1d(2*fftlen, inR, inout, FFTW_PATIENT);
+		fftwf_destroy_plan(plan);
+		
+		// Teardown
+		fftwf_free(inR);
+		fftwf_free(inout);
+		
+		// Next
+		fftlen *= 10;
+	}
+	
+	// Complex in-place - powers of 2
+	fftlen = 2;
+	while(fftlen <= MAXTRANSFORM) {
+		// Setup
+		inout = (float complex *) fftwf_malloc(sizeof(float complex) * fftlen);
 		
 		// Forward
 		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
@@ -69,9 +92,32 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
 		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
 		fftwf_destroy_plan(plan);
 		
+		// Teardown
+		fftwf_free(inout);
+		
+		// Next
+		fftlen *= 2;
+	}
+	
+	// Complex in-place - powers of 10
+	fftlen = 10;
+	while(fftlen <= MAXTRANSFORM) {
+		// Setup
+		inout = (float complex *) fftwf_malloc(sizeof(float complex) * fftlen);
+		
+		// Forward
+		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
+		fftwf_destroy_plan(plan);
+		
+		// Backward
+		plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
+		fftwf_destroy_plan(plan);
+		
+		// Teardown
+		fftwf_free(inout);
+		
 		// Next
 		fftlen *= 10;
-		fftwf_free(inout);
 	}
 	
 	// Save the wisdom
@@ -127,6 +173,6 @@ PyMODINIT_FUNC init_wisdom(void) {
 	import_array();
 	
 	// Version and revision information
-	PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
+	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 }

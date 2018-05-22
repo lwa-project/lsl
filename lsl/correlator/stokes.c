@@ -136,16 +136,12 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
-	float *inPX, *inPY, *inX, *inY;                          
-	float complex *outPX, *outPY, *outX, *outY;
-	inPX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	inPY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	outPX = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-	outPY = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-	fftwf_plan pX;
-	fftwf_plan pY;
-	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPX, FFTW_ESTIMATE);
-	pY = fftwf_plan_dft_r2c_1d(2*nChan, inPY, outPY, FFTW_ESTIMATE);
+	float *inP, *inX, *inY;                          
+	float complex *outP, *outX, *outY;
+	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
+	fftwf_plan p;
+	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
 	
 	// Data indexing and access
 	long secStart;
@@ -187,8 +183,8 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 					}
 				}
 				
-				fftwf_execute_dft_r2c(pX, inX, outX);
-				fftwf_execute_dft_r2c(pY, inY, outY);
+				fftwf_execute_dft_r2c(p, inX, outX);
+				fftwf_execute_dft_r2c(p, inY, outY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
@@ -222,12 +218,9 @@ static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
 		fftwf_free(outX);
 		fftwf_free(outY);
 	}
-	fftwf_destroy_plan(pX);
-	fftwf_destroy_plan(pY);
-	fftwf_free(inPX);
-	fftwf_free(inPY);
-	fftwf_free(outPX);
-	fftwf_free(outPY);
+	fftwf_destroy_plan(p);
+	fftwf_free(inP);
+	fftwf_free(outP);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -336,16 +329,12 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan                          
-	float *inPX, *inPY, *inX, *inY;                          
-	float complex *outPX, *outPY, *outX, *outY;
-	inPX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	inPY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	outPX = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-	outPY = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-	fftwf_plan pX;
-	fftwf_plan pY;
-	pX = fftwf_plan_dft_r2c_1d(2*nChan, inPX, outPX, FFTW_ESTIMATE);
-	pY = fftwf_plan_dft_r2c_1d(2*nChan, inPY, outPY, FFTW_ESTIMATE);
+	float *inP, *inX, *inY;                          
+	float complex *outP, *outX, *outY;
+	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
+	outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
+	fftwf_plan p;
+	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
 	
 	// Data indexing and access
 	long secStart;
@@ -392,8 +381,8 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 					inY[k] *= *(c + k);
 				}
 				
-				fftwf_execute_dft_r2c(pX, inX, outX);
-				fftwf_execute_dft_r2c(pY, inY, outY);
+				fftwf_execute_dft_r2c(p, inX, outX);
+				fftwf_execute_dft_r2c(p, inY, outY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
@@ -427,12 +416,9 @@ static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
 		fftwf_free(outX);
 		fftwf_free(outY);
 	}
-	fftwf_destroy_plan(pX);
-	fftwf_destroy_plan(pY);
-	fftwf_free(inPX);
-	fftwf_free(inPY);
-	fftwf_free(outPX);
-	fftwf_free(outPY);
+	fftwf_destroy_plan(p);
+	fftwf_free(inP);
+	fftwf_free(outP);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -530,12 +516,10 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan
-	float complex *inPX, *inPY, *inX, *inY;
-	inPX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-	inPY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-	fftwf_plan pX, pY;
-	pX = fftwf_plan_dft_1d(nChan, inPX, inPX, FFTW_FORWARD, FFTW_ESTIMATE);
-	pY = fftwf_plan_dft_1d(nChan, inPY, inPY, FFTW_FORWARD, FFTW_ESTIMATE);
+	float complex *inP, *inX, *inY;
+	inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+	fftwf_plan p;
+	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
 	
 	// Data indexing and access
 	long secStart;
@@ -576,8 +560,8 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 					}
 				}
 				
-				fftwf_execute_dft(pX, inX, inX);
-				fftwf_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(p, inX, inX);
+				fftwf_execute_dft(p, inY, inY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
@@ -615,10 +599,8 @@ static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
 		fftwf_free(inY);
 		free(temp2);
 	}
-	fftwf_destroy_plan(pX);
-	fftwf_destroy_plan(pY);
-	fftwf_free(inPX);
-	fftwf_free(inPY);
+	fftwf_destroy_plan(p);
+	fftwf_free(inP);
 	
 	Py_END_ALLOW_THREADS
 	
@@ -727,12 +709,10 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_BEGIN_ALLOW_THREADS
 	
 	// Create the FFTW plan
-	float complex *inPX, *inPY, *inX, *inY;
-	inPX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-	inPY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-	fftwf_plan pX, pY;
-	pX = fftwf_plan_dft_1d(nChan, inPX, inPX, FFTW_FORWARD, FFTW_ESTIMATE);
-	pY = fftwf_plan_dft_1d(nChan, inPY, inPY, FFTW_FORWARD, FFTW_ESTIMATE);
+	float complex *inP, *inX, *inY;
+	inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+	fftwf_plan p;
+	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
 	
 	// Data indexing and access
 	long secStart;
@@ -777,8 +757,8 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 					inY[k] *= *(c + k);
 				}
 				
-				fftwf_execute_dft(pX, inX, inX);
-				fftwf_execute_dft(pY, inY, inY);
+				fftwf_execute_dft(p, inX, inX);
+				fftwf_execute_dft(p, inY, inY);
 				
 				for(k=0; k<nChan; k++) {
 					// I
@@ -816,10 +796,8 @@ static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
 		fftwf_free(inY);
 		free(temp2);
 	}
-	fftwf_destroy_plan(pX);
-	fftwf_destroy_plan(pY);
-	fftwf_free(inPX);
-	fftwf_free(inPY);
+	fftwf_destroy_plan(p);
+	fftwf_free(inP);
 	
 	Py_END_ALLOW_THREADS
 	

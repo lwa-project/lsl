@@ -15,7 +15,7 @@ from lsl.common.busy import BusyIndicator
 from lsl.misc import _wisdom
 
 
-__version__ = "0.1"
+__version__ = "0.2"
 __revision__ = "$Rev$"
 __all__ = ["make", "show", "__version__", "__revision__", "__all__"]
 
@@ -47,7 +47,7 @@ def _makePyFFTW():
 	Build a new set of LSL-specific PyFFTW wisdom.
 	"""
 	
-	MAXTRANSFORM = 131072
+	MAXTRANSFORM = 262144
 	
 	try:
 		import pyfftw
