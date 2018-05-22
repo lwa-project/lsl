@@ -570,7 +570,7 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * SampleRate: sample rate of the data (default=196e6)\n\
- * window: Callable Python function for generating the window\n\
+ * window: Callable Python function for generating the window or None for no window\n\
  * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
    greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
    to zero disables time-domain blanking\n\
@@ -1046,7 +1046,7 @@ Input keywords are:\n\
  * LFFT: number of FFT channels to make (default=64)\n\
  * Overlap: number of overlapped FFTs to use (default=1)\n\
  * SampleRate: sample rate of the data (default=100e3)\n\
- * window: Callable Python function for generating the window\n\
+ * window: Callable Python function for generating the window or None for no window\n\
  * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
    greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
    to zero disables time-domain blanking\n\

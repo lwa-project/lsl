@@ -114,7 +114,7 @@ class beamformer_tests(unittest.TestCase):
 			if len(ants) == 15:
 				break
 				
-		# Multithreaded test for accuracy
+		# Test for accuracy
 		out = beamformer.phaseBeamShape(ants, azimuth=135.0, elevation=60.0)
 		
 		i = out.argmax()
@@ -122,9 +122,6 @@ class beamformer_tests(unittest.TestCase):
 		elDiff = numpy.abs(60.0 - i % 90)
 		self.assertTrue(azDiff <= 1)
 		self.assertTrue(elDiff <= 1)
-		
-		# Single threaded test for coverage
-		out = beamformer.phaseBeamShape(ants[:1], azimuth=135.0, elevation=60.0, DisablePool=True)
 
 
 class  beamformer_test_suite(unittest.TestSuite):
