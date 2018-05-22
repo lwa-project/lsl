@@ -41,10 +41,10 @@ class geodesy_tests(unittest.TestCase):
 		
 		# Check
 		## http://toshi.nofs.navy.mil/ser7/finals2000A.all
-		## 73 1 2 41684.00 I  0.120727 0.009786  0.136963 0.015902  I 0.8084318 0.0002710  0.0000 0.1916  P    -0.766    0.199    -0.720    0.300   .143000   .137000   .8075000   -18.637    -3.667 
-		self.assertAlmostEqual(eop.x, 0.120727, ACCURACY)
-		self.assertAlmostEqual(eop.y, 0.136963, ACCURACY)
-		self.assertAlmostEqual(eop.utDiff,  0.8084318, ACCURACY)
+		## 73 1 2 41684.00 I  0.120733 0.009786  0.136966 0.015902  I 0.8084178 0.0002710  0.0000 0.1916  P    -0.766    0.199    -0.720    0.300   .143000   .137000   .8075000   -18.637    -3.667 
+		self.assertAlmostEqual(eop.x, 0.120733, ACCURACY)
+		self.assertAlmostEqual(eop.y, 0.136966, ACCURACY)
+		self.assertAlmostEqual(eop.utDiff,  0.8084178, ACCURACY)
 		
 		# Read in the data for January 2, 1993
 		eops = geodesy.getEOP(48989.0)
