@@ -241,7 +241,7 @@ def main(args):
 				pass
 				
 		img4 = None
-		lbl4 = 'YY'
+		lbl4 = 'YX'
 		for p in ('yx', 'lr', 'V'):
 			try:
 				img4 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
