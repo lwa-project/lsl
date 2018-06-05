@@ -106,9 +106,9 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
 		window = None
 		
 	if signals.dtype.kind == 'c':
-		output = _spec.FPSDC3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
+		output = _spec.FPSDC(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 	else:
-		output = _spec.FPSDR3(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
+		output = _spec.FPSDR(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 		
 	return (freq, output)
 
@@ -155,9 +155,9 @@ def StokesMaster(signals, antennas, LFFT=64, window=noWindow, verbose=False, Sam
 		window = None
 		
 	if signals.dtype.kind == 'c':
-		output = _stokes.FPSDC3(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
+		output = _stokes.FPSDC(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 	else:
-		output = _stokes.FPSDR3(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
+		output = _stokes.FPSDR(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
 		
 	return (freq, output)
 
@@ -261,9 +261,9 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		
 	# F - defaults to running parallel in C via OpenMP
 	if signals.dtype.kind == 'c':
-		FEngine = _core.FEngineC3
+		FEngine = _core.FEngineC
 	else:
-		FEngine = _core.FEngineR3
+		FEngine = _core.FEngineR
 	if signals.shape[0] != len(signalsIndex1):
 		signalsF1, validF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
 	else:
@@ -399,9 +399,9 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
 		
 	# F - defaults to running parallel in C via OpenMP
 	if signals.dtype.kind == 'c':
-		FEngine = _core.FEngineC3
+		FEngine = _core.FEngineC
 	else:
-		FEngine = _core.FEngineR3
+		FEngine = _core.FEngineR
 	signalsF1, validF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
 	
 	signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)

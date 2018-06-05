@@ -73,193 +73,11 @@ float cabs2f(float complex z) {
 
 /*
   FFT Functions
-    1. FPSDR2 - FFT a real-valued collection of signals
-    2. FPSDR3 - window the data and FFT a real-valued collection of signals
-    3. FPSDC2 - FFT a complex-valued collection of signals
-    4. FPSDC3 - window the data and FFT a complex-valued collection of signals
+    1. FPSDR - FFT a real-valued collection of signals
+    2. FPSDC - FFT a complex-valued collection of signals
 */
 
-
-static PyObject *FPSDR2(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signalsX, *signalsY, *signalsF;
-	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL;
-	int nChan = 64;
-	int Overlap = 1;
-	int Clip = 0;
-	
-	long i, j, k, nStand, nSamps, nFFT;
-	
-	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iii", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip)) {
-		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		goto fail;
-	}
-	
-	// Bring the data into C and make it usable
-	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_INT16, 2, 2);
-	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_INT16, 2, 2);
-	if( dataX == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX to 2-D int16");
-		goto fail;
-	}
-	if( dataY == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsY to 2-D int16");
-		goto fail;
-	}
-	
-	// Get the properties of the data
-	nStand = (long) PyArray_DIM(dataX, 0);
-	nSamps = (long) PyArray_DIM(dataX, 1);
-	
-	// Make sure the dimensions of X and Y agree
-	if( PyArray_DIM(dataY, 0) != nStand ) {
-		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different stand counts");
-		goto fail;
-	}
-	if( PyArray_DIM(dataY, 1) != nSamps ) {
-		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different sample counts");
-		goto fail;
-	}
-	
-	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / ((2*nChan)/Overlap) - (2*nChan)/((2*nChan)/Overlap) + 1;
-	npy_intp dims[3];
-	dims[0] = (npy_intp) 4;
-	dims[1] = (npy_intp) nStand;
-	dims[2] = (npy_intp) nChan;
-	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_DOUBLE, 0);
-	if(dataF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		goto fail;
-	}
-	
-	Py_BEGIN_ALLOW_THREADS
-	
-	// Create the FFTW plan                          
-	float *inP, *inX, *inY;                          
-	float complex *outP, *outX, *outY;
-	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-	fftwf_plan p;
-	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
-	
-	// Data indexing and access
-	long secStart;
-	short int *aX, *aY;
-	double *b;
-	aX = (short int *) PyArray_DATA(dataX);
-	aY = (short int *) PyArray_DATA(dataY);
-	b = (double *) PyArray_DATA(dataF);
-	
-	// Time-domain blanking control
-	double cleanFactor;
-	long nActFFT;
-	
-	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, secStart, cleanFactor, nActFFT)
-	#endif
-	{
-		inX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-		inY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-		outX = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-		outY = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-		
-		#ifdef _OPENMP
-			#pragma omp for schedule(OMP_SCHEDULER)
-		#endif
-		for(i=0; i<nStand; i++) {
-			nActFFT = 0;
-			
-			for(j=0; j<nFFT; j++) {
-				cleanFactor = 1.0;
-				secStart = nSamps * i + 2*nChan*j/Overlap;
-				
-				for(k=0; k<2*nChan; k++) {
-					inX[k] = (float) *(aX + secStart + k);
-					inY[k] = (float) *(aY + secStart + k);
-					
-					if( Clip && ( fabsf(inX[k]) >= Clip || fabsf(inY[k]) >= Clip ) ) {
-						cleanFactor = 0.0;
-					}
-				}
-				
-				fftwf_execute_dft_r2c(p, inX, outX);
-				fftwf_execute_dft_r2c(p, inY, outY);
-				
-				for(k=0; k<nChan; k++) {
-					// I
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outX[k]);
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outY[k]);
-					
-					// Q
-					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(outX[k]);
-					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2f(outY[k]);
-					
-					// U
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(outX[k])*crealf(outY[k]);
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(outX[k])*cimagf(outY[k]);
-					
-					// V
-					*(b + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(outX[k])*crealf(outY[k]);
-					*(b + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(outX[k])*cimagf(outY[k]);
-				}
-				
-				nActFFT += (long) cleanFactor;
-			}
-			
-			// Scale FFTs
-			for(j=0; j<4; j++) {
-				cblas_dscal(nChan, 1.0/(2*nChan*nActFFT), (b + j*nChan*nStand + nChan*i), 1);
-			}
-		}
-		
-		fftwf_free(inX);
-		fftwf_free(inY);
-		fftwf_free(outX);
-		fftwf_free(outY);
-	}
-	fftwf_destroy_plan(p);
-	fftwf_free(inP);
-	fftwf_free(outP);
-	
-	Py_END_ALLOW_THREADS
-	
-	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
-	
-	Py_XDECREF(dataX);
-	Py_XDECREF(dataY);
-	Py_XDECREF(dataF);
-	
-	return signalsF;
-	
-fail:
-	Py_XDECREF(dataX);
-	Py_XDECREF(dataY);
-	Py_XDECREF(dataF);
-	
-	return NULL;
-}
-
-PyDoc_STRVAR(FPSDR2_doc, \
-"Perform a series of Fourier transforms on real-valued data to get the PSD\n\
-for the four Stokes parameters: I, Q, U, and V.\n\
-\n\
-Input arguments are:\n\
- * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
-\n\
-Input keywords are:\n\
- * LFFT: number of FFT channels to make (default=64)\n\
- * Overlap: number of overlapped FFTs to use (default=1)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
-   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
-   to zero disables time-domain blanking\n\
-\n\
-Outputs:\n\
- * psd: 3-D numpy.double (Stokes parameter (I,Q,U,V) by stands by channels) of PSD data\n\
-");
-
-
-static PyObject *FPSDR3(PyObject *self, PyObject *args, PyObject *kwds) {
+static PyObject *FPSDR(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signalsX, *signalsY, *signalsF, *window=Py_None;
 	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL, *windowData=NULL;
 	int nChan = 64;
@@ -445,7 +263,7 @@ fail:
 	return NULL;
 }
 
-PyDoc_STRVAR(FPSDR3_doc, \
+PyDoc_STRVAR(FPSDR_doc, \
 "Perform a series of Fourier transforms with windows on real-valued data to\n\
 get the PSD for the four Stokes parameters: I, Q, U, and V.\n\
 \n\
@@ -465,186 +283,7 @@ Outputs:\n\
 ");
 
 
-static PyObject *FPSDC2(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signalsX, *signalsY, *signalsF;
-	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL;
-	int nChan = 64;
-	int Overlap = 1;
-	int Clip = 0;
-	
-	long i, j, k, nStand, nSamps, nFFT;
-	
-	static char *kwlist[] = {"signalsX", "signalsY", "LFFT", "Overlap", "ClipLevel", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iii", kwlist, &signalsX, &signalsY, &nChan, &Overlap, &Clip)) {
-		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		goto fail;
-	}
-	
-	// Bring the data into C and make it usable
-	dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, NPY_COMPLEX64, 2, 2);
-	dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, NPY_COMPLEX64, 2, 2);
-	if( dataX == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX to 2-D complex64");
-		goto fail;
-	}
-	if( dataY == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsY to 2-D complex64");
-		goto fail;
-	}
-	
-	// Get the properties of the data
-	nStand = (long) PyArray_DIM(dataX, 0);
-	nSamps = (long) PyArray_DIM(dataX, 1);
-	
-	// Make sure the dimensions of X and Y agree
-	if( PyArray_DIM(dataY, 0) != nStand ) {
-		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different stand counts");
-		goto fail;
-	}
-	if( PyArray_DIM(dataY, 1) != nSamps ) {
-		PyErr_Format(PyExc_RuntimeError, "X and Y signals have different sample counts");
-		goto fail;
-	}
-	
-	// Find out how large the output array needs to be and initialize it
-	nFFT = nSamps / (nChan/Overlap) - nChan/(nChan/Overlap) + 1;
-	npy_intp dims[3];
-	dims[0] = (npy_intp) 4;
-	dims[1] = (npy_intp) nStand;
-	dims[2] = (npy_intp) nChan;
-	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_DOUBLE, 0);
-	if(dataF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		goto fail;
-	}
-	
-	Py_BEGIN_ALLOW_THREADS
-	
-	// Create the FFTW plan
-	float complex *inP, *inX, *inY;
-	inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-	fftwf_plan p;
-	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
-	
-	// Data indexing and access
-	long secStart;
-	float complex *aX, *aY;
-	double *b, *temp2;
-	aX = (float complex *) PyArray_DATA(dataX);
-	aY = (float complex *) PyArray_DATA(dataY);
-	b = (double *) PyArray_DATA(dataF);
-	
-	// Time-domain blanking control
-	double cleanFactor;
-	long nActFFT;
-	
-	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(inX, inY, i, j, k, secStart, cleanFactor, nActFFT, temp2)
-	#endif
-	{
-		inX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-		inY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-		temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
-		
-		#ifdef _OPENMP
-			#pragma omp for schedule(OMP_SCHEDULER)
-		#endif
-		for(i=0; i<nStand; i++) {
-			nActFFT = 0;
-			
-			for(j=0; j<nFFT; j++) {
-				cleanFactor = 1.0;
-				secStart = nSamps * i + nChan*j/Overlap;
-				
-				for(k=0; k<nChan; k++) {
-					inX[k] = *(aX + secStart + k);
-					inY[k] = *(aY + secStart + k);
-					
-					if( Clip && ( cabsf(inX[k]) >= Clip || cabsf(inY[k]) >= Clip ) ) {
-						cleanFactor = 0.0;
-					}
-				}
-				
-				fftwf_execute_dft(p, inX, inX);
-				fftwf_execute_dft(p, inY, inY);
-				
-				for(k=0; k<nChan; k++) {
-					// I
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inX[k]);
-					*(b + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inY[k]);
-					
-					// Q
-					*(b + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2f(inX[k]);
-					*(b + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2f(inY[k]);
-					
-					// U
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(inX[k])*crealf(inY[k]);
-					*(b + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(inX[k])*cimagf(inY[k]);
-					
-					// V
-					*(b + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(inX[k])*crealf(inY[k]);
-					*(b + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(inX[k])*cimagf(inY[k]);
-				}
-				
-				nActFFT += (long) cleanFactor;
-			}
-			
-			for(j=0; j<4; j++) {
-				// Shift FFTs
-				memcpy(temp2, (b + j*nChan*nStand + nChan*i), sizeof(double)*(nChan/2+nChan%2));
-				memmove((b + j*nChan*nStand + nChan*i), (b + j*nChan*nStand + nChan*i)+nChan/2+nChan%2, sizeof(double)*nChan/2);
-				memcpy((b + j*nChan*nStand + nChan*i)+nChan/2, temp2, sizeof(double)*(nChan/2+nChan%2));
-				
-				// Scale FFTs
-				cblas_dscal(nChan, 1.0/(nActFFT*nChan), (b + j*nChan*nStand + nChan*i), 1);
-			}
-		}
-		
-		fftwf_free(inX);
-		fftwf_free(inY);
-		free(temp2);
-	}
-	fftwf_destroy_plan(p);
-	fftwf_free(inP);
-	
-	Py_END_ALLOW_THREADS
-	
-	signalsF = Py_BuildValue("O", PyArray_Return(dataF));
-	
-	Py_XDECREF(dataX);
-	Py_XDECREF(dataY);
-	Py_XDECREF(dataF);
-	
-	return signalsF;
-	
-fail:
-	Py_XDECREF(dataX);
-	Py_XDECREF(dataY);
-	Py_XDECREF(dataF);
-	
-	return NULL;
-}
-
-PyDoc_STRVAR(FPSDC2_doc, \
-"Perform a series of Fourier transforms on complex-valued data to get the\n\
-PSD for the four Stokes parameters: I, Q, U, and V.\n\
-\n\
-Input arguments are:\n\
- * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
-\n\
-Input keywords are:\n\
- * LFFT: number of FFT channels to make (default=64)\n\
- * Overlap: number of overlapped FFTs to use (default=1)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
-   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
-   to zero disables time-domain blanking\n\
-\n\
-Outputs:\n\
- * psd: 3-D numpy.double (Stokes parameter (I,Q,U,V) by stands by channels) of PSD data\n\
-");
-
-
-static PyObject *FPSDC3(PyObject *self, PyObject *args, PyObject *kwds) {
+static PyObject *FPSDC(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signalsX, *signalsY, *signalsF, *window=Py_None;
 	PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL, *windowData=NULL;
 	int nChan = 64;
@@ -830,7 +469,7 @@ fail:
 	return NULL;
 }
 
-PyDoc_STRVAR(FPSDC3_doc, \
+PyDoc_STRVAR(FPSDC_doc, \
 "Perform a series of Fourier transforms with windows on complex-valued data\n\
 to get the PSD for the four Stokes parameters: I, Q, U, and V.\n\
 \n\
@@ -1010,12 +649,10 @@ Ouputs:\n\
 */
 
 static PyMethodDef StokesMethods[] = {
-	{"FPSDR2",   (PyCFunction) FPSDR2,    METH_VARARGS|METH_KEYWORDS, FPSDR2_doc   }, 
-	{"FPSDR3",   (PyCFunction) FPSDR3,    METH_VARARGS|METH_KEYWORDS, FPSDR3_doc   }, 
-	{"FPSDC2",   (PyCFunction) FPSDC2,    METH_VARARGS|METH_KEYWORDS, FPSDC2_doc   }, 
-	{"FPSDC3",   (PyCFunction) FPSDC3,    METH_VARARGS|METH_KEYWORDS, FPSDC3_doc   }, 
-	{"XEngine2", (PyCFunction) XEngine2,  METH_VARARGS,               XEngine2_doc }, 
-	{NULL,       NULL,      0,                          NULL         }
+	{"FPSDR",    (PyCFunction) FPSDR,    METH_VARARGS|METH_KEYWORDS, FPSDR_doc   }, 
+	{"FPSDC",    (PyCFunction) FPSDC,    METH_VARARGS|METH_KEYWORDS, FPSDC_doc   }, 
+	{"XEngine2", (PyCFunction) XEngine2, METH_VARARGS,               XEngine2_doc}, 
+	{NULL,       NULL,                   0,                          NULL        }
 };
 
 PyDoc_STRVAR(stokes_doc, \
@@ -1023,16 +660,12 @@ PyDoc_STRVAR(stokes_doc, \
 parameters.\n\
 \n\
 The functions defined in this module are:\n\
-  * FPSDR2 -  FFT and integrate function for computing a series of overlapped\n\
+  * FPSDR -  FFT and integrate function for computing a series of overlapped\n\
     Fourier transforms for a real-valued (TBW) signal from a collection of\n\
     stands all at once.\n\
-  * FPSDR3 - Similar to FPSDR2, but allows for a window function to be applied\n\
-    to the data.\n\
-  * FPSDC2 - FFT and integrate function for computing a series of overlapped\n\
+  * FPSDC - FFT and integrate function for computing a series of overlapped\n\
     Fourier transforms for a complex-valued (TBN and DRX) signal from a \n\
     collection of stands/beams all at once.\n\
-  * FPSDC3 - Similar to FPSDC2, but allows for a window function to be applied\n\
-    to the data.\n\
 \n\
 Also included is an X-Engine for use with the lsl.correlator._core module to\n\
 perform cross-correlations for the stokes parameters.\n\

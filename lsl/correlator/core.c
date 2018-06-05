@@ -96,241 +96,11 @@ long computeDelayComponents(PyArrayObject *delays, double SampleRate, long *fifo
 
 /*
   FFT Functions ("F-engines")
-    1. FEngineR2 - FFT a real-valued collection of signals
-    2. FEngineR3 - window the data and FFT a real-valued collection of signals
-    3. FEngineC2 - FFT a complex-valued collection of signals
-    4. FEngineC3 - window the data and FFT a complex-valued collection of signals
+    1. FEngineR - FFT a real-valued collection of signals
+    2. FEngineC - FFT a complex-valued collection of signals
 */
 
-
-static PyObject *FEngineR2(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signals, *freqs, *delays, *signalsF;
-	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL;
-	int nChan = 64;
-	int Overlap = 1;
-	int Clip = 0;
-	double SampleRate = 196.0e6;
-
-	long ij, i, j, k, nStand, nSamps, nFFT;
-	
-	static char *kwlist[] = {"signals", "freqs", "delays", "LFFT", "Overlap", "SampleRate", "ClipLevel", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidi", kwlist, &signals, &freqs, &delays, &nChan, &Overlap, &SampleRate, &Clip)) {
-		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		goto fail;
-	}
-
-	// Bring the data into C and make it usable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_INT16, 2, 2);
-	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
-	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
-	if( data == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D int16");
-		goto fail;
-	}
-	if( freq == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double");
-		goto fail;
-	}
-	if( delay == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double");
-		goto fail;
-	}
-	
-	// Check data dimensions
-	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
-		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
-		goto fail;
-	}
-	
-	if(nChan != PyArray_DIM(freq, 0)) {
-		PyErr_Format(PyExc_RuntimeError, "freqs has a different channel count than nChan");
-		goto fail;
-	}
-	
-	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
-		PyErr_Format(PyExc_RuntimeError, "freqs and delays have different channel counts");
-		goto fail;
-	}
-	
-	// Get the properties of the data
-	nStand = (long) PyArray_DIM(data, 0);
-	nSamps = (long) PyArray_DIM(data, 1);
-	
-	// Compute the integer sample offset and the fractional sample delay for each stand
-	long *fifo, fifoMax;
-	double *frac;
-	fifo = (long *) malloc(nStand*sizeof(long));
-	frac = (double *) malloc(nStand*nChan*sizeof(double));
-	if( fifo == NULL || frac == NULL ) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
-		goto fail;
-	}
-	fifoMax = computeDelayComponents(delay, SampleRate, fifo, frac);
-
-	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - fifoMax) / ((2*nChan)/Overlap) - (2*nChan)/((2*nChan)/Overlap) + 1;
-	npy_intp dims[3];
-	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) nChan;
-	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
-	if(dataF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		free(fifo);
-		free(frac);
-		goto fail;
-	}
-	
-	// Create an array to store whether or not the FFT window is valid (1) or not (0)
-	npy_intp dimsV[2];
-	dimsV[0] = (npy_intp) nStand;
-	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
-	if(validF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-		free(fifo);
-		free(frac);
-		goto fail;
-	}
-	
-	Py_BEGIN_ALLOW_THREADS
-	
-	// Create the FFTW plan                          
-	float *inP, *in;                          
-	float complex *outP, *out;
-	inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-	outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-	fftwf_plan p;
-	p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
-	
-	// Data indexing and access
-	long secStart;
-	short int *a;
-	float complex *b;
-	double *c;
-	unsigned char *d;
-	a = (short int *) PyArray_DATA(data);
-	b = (float complex *) PyArray_DATA(dataF);
-	c = (double *) PyArray_DATA(freq);
-	d = (unsigned char *) PyArray_DATA(validF);
-	
-	// Time-domain blanking control
-	double cleanFactor;
-	
-	// Pre-compute the phase rotation and scaling factor
-	float complex *rot;
-	rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
-	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(i, j)
-	#endif
-	{
-		#ifdef _OPENMP
-			#pragma omp for schedule(OMP_SCHEDULER)
-		#endif
-		for(ij=0; ij<nStand*nChan; ij++) {
-			i = ij / nChan;
-			j = ij % nChan;
-			*(rot + nChan*i + j)  = cexp(TPI * *(c + j) * *(frac + nChan*i + j));
-			*(rot + nChan*i + j) *= cexp(TPI * *(c + 0) / SampleRate * *(fifo + i));
-			*(rot + nChan*i + j) /= sqrt(2*nChan);
-		}
-	}
-	
-	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(in, out, i, j, k, secStart, cleanFactor)
-	#endif
-	{
-		in = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-		out = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-		
-		#ifdef _OPENMP
-			#pragma omp for schedule(OMP_SCHEDULER)
-		#endif
-		for(ij=0; ij<nStand*nFFT; ij++) {
-			i = ij / nFFT;
-			j = ij % nFFT;
-			
-			cleanFactor = 1.0;
-			secStart = *(fifo + i) + nSamps*i + 2*nChan*j/Overlap;
-			
-			for(k=0; k<2*nChan; k++) {
-				in[k] = (float) *(a + secStart + k);
-				
-				if( Clip && fabsf(in[k]) >= Clip ) {
-					cleanFactor = 0.0;
-				}
-			}
-			
-			fftwf_execute_dft_r2c(p, in, out);
-			
-			for(k=0; k<nChan; k++) {
-				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*out[k];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
-			}
-			
-			*(d + nFFT*i + j) = (unsigned char) cleanFactor;
-		}
-		
-		fftwf_free(in);
-		fftwf_free(out);
-	}
-	free(rot);
-	
-	fftwf_destroy_plan(p);
-	fftwf_free(inP);
-	fftwf_free(outP);
-	free(frac);
-	free(fifo);
-	
-	Py_END_ALLOW_THREADS
-	
-	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
-	
-	Py_XDECREF(data);
-	Py_XDECREF(freq);
-	Py_XDECREF(delay);
-	Py_XDECREF(dataF);
-	Py_XDECREF(validF);
-	
-	return signalsF;
-	
-fail:
-	Py_XDECREF(data);
-	Py_XDECREF(freq);
-	Py_XDECREF(delay);
-	Py_XDECREF(dataF);
-	Py_XDECREF(validF);
-	
-	return NULL;
-}
-
-PyDoc_STRVAR(FEngineR2_doc, \
-"Perform a series of overlapped Fourier transforms on real-valued data using\n\
-OpenMP.\n\
-\n\
-Input arguments are:\n\
- * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
- * frequency: 1-D numpy.double array of frequency values in Hz for the\n\
-   FFT channels\n\
- * delays: 1-D numpy.double array of delays to apply to each stand\n\
-\n\
-Input keywords are:\n\
- * LFFT: number of FFT channels to make (default=64)\n\
- * Overlap: number of overlapped FFTs to use (default=1)\n\
- * SampleRate: sample rate of the data (default=196e6)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
-   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
-   to zero disables time-domain blanking\n\
-\n\
-Outputs:\n\
- * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
-   data\n\
- * valid: 2-D numpy.uint8 (stands by FFT_set) of whether or not the FFT\n\
-   set is valid (1) or not (0)\n\
-");
-
-
-static PyObject *FEngineR3(PyObject *self, PyObject *args, PyObject *kwds) {
+static PyObject *FEngineR(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freqs, *delays, *window=Py_None, *signalsF;
 	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL, *windowData=NULL;
 	int nChan = 64;
@@ -556,7 +326,7 @@ fail:
 	return NULL;
 }
 
-PyDoc_STRVAR(FEngineR3_doc, \
+PyDoc_STRVAR(FEngineR_doc, \
 "Perform a series of overlapped Fourier transforms on real-valued data using\n\
 OpenMP and windows.\n\
 \n\
@@ -583,232 +353,7 @@ Outputs:\n\
 ");
 
 
-static PyObject *FEngineC2(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *signals, *freqs, *delays, *signalsF;
-	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL;
-	int nChan = 64;
-	int Overlap = 1;
-	int Clip = 0;
-	double SampleRate = 1.0e5;
-	
-	long ij, i, j, k, nStand, nSamps, nFFT;
-	
-	static char *kwlist[] = {"signals", "freqs", "delays", "LFFT", "Overlap", "SampleRate", "ClipLevel", NULL};
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iidi", kwlist, &signals, &freqs, &delays, &nChan, &Overlap, &SampleRate, &Clip)) {
-		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
-		goto fail;
-	}
-	
-	// Bring the data into C and make it usable
-	data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, NPY_COMPLEX64, 2, 2);
-	freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
-	delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
-	if( data == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array to 2-D complex64");
-		goto fail;
-	}
-	if( freq == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input freq array to 1-D double");
-		goto fail;
-	}
-	if( delay == NULL ) {
-		PyErr_Format(PyExc_RuntimeError, "Cannot cast input delay array to 2-D double");
-		goto fail;
-	}
-	
-	// Check data dimensions
-	if(PyArray_DIM(data, 0) != PyArray_DIM(delay, 0)) {
-		PyErr_Format(PyExc_RuntimeError, "signals and delays have different stand counts");
-		goto fail;
-	}
-	
-	if(nChan != PyArray_DIM(freq, 0)) {
-		PyErr_Format(PyExc_RuntimeError, "freqs has a different channel count than nChan");
-		goto fail;
-	}
-	
-	if(PyArray_DIM(freq, 0) != PyArray_DIM(delay, 1)) {
-		PyErr_Format(PyExc_RuntimeError, "freqs and delays have different channel counts");
-		goto fail;
-	}
-
-	// Get the properties of the data
-	nStand = (long) PyArray_DIM(data, 0);
-	nSamps = (long) PyArray_DIM(data, 1);
-	
-	// Compute the integer sample offset and the fractional sample delay for each stand
-	long *fifo, fifoMax;
-	double *frac;
-	fifo = (long *) malloc(nStand*sizeof(long));
-	frac = (double *) malloc(nStand*nChan*sizeof(double));
-	if( fifo == NULL || frac == NULL ) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
-		goto fail;
-	}
-	fifoMax = computeDelayComponents(delay, SampleRate, fifo, frac);
-
-	// Find out how large the output array needs to be and initialize it
-	nFFT = (nSamps - fifoMax) / (nChan/Overlap) - nChan/(nChan/Overlap) + 1;
-	npy_intp dims[3];
-	dims[0] = (npy_intp) nStand;
-	dims[1] = (npy_intp) nChan;
-	dims[2] = (npy_intp) nFFT;
-	dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
-	if(dataF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		free(fifo);
-		free(frac);
-		goto fail;
-	}
-	
-	// Create an array to store whether or not the FFT window is valid (1) or not (0)
-	npy_intp dimsV[2];
-	dimsV[0] = (npy_intp) nStand;
-	dimsV[1] = (npy_intp) nFFT;
-	validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
-	if(validF == NULL) {
-		PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-		free(fifo);
-		free(frac);
-		goto fail;
-	}
-	
-	Py_BEGIN_ALLOW_THREADS
-	
-	// Create the FFTW plan
-	float complex *inP, *in;
-	inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-	fftwf_plan p;
-	p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
-	
-	// Data indexing and access
-	long secStart;
-	float complex *a, *b;
-	double *c;
-	unsigned char *d;
-	a = (float complex *) PyArray_DATA(data);
-	b = (float complex *) PyArray_DATA(dataF);
-	c = (double *) PyArray_DATA(freq);
-	d = (unsigned char *) PyArray_DATA(validF);
-	
-	// Time-domain blanking control
-	double cleanFactor;
-	
-	// Pre-compute the phase rotation and scaling factor
-	float complex *rot;
-	rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
-	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(i, j)
-	#endif
-	{
-		#ifdef _OPENMP
-			#pragma omp for schedule(OMP_SCHEDULER)
-		#endif
-		for(ij=0; ij<nStand*nChan; ij++) {
-			i = ij / nChan;
-			j = ij % nChan;
-			*(rot + nChan*i + j)  = cexp(TPI * *(c + j) * *(frac + nChan*i + j));
-			*(rot + nChan*i + j) *= cexp(TPI * *(c + nChan/2) / SampleRate * *(fifo + i));
-			*(rot + nChan*i + j) /= sqrt(nChan);
-		}
-	}
-	
-	#ifdef _OPENMP
-		#pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor)
-	#endif
-	{
-		in = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-		
-		#ifdef _OPENMP
-			#pragma omp for schedule(OMP_SCHEDULER)
-		#endif
-		for(ij=0; ij<nStand*nFFT; ij++) {
-			i = ij / nFFT;
-			j = ij % nFFT;
-			
-			cleanFactor = 1.0;
-			secStart = *(fifo + i) + nSamps*i + nChan*j/Overlap;
-			
-			for(k=0; k<nChan; k++) {
-				in[k] = *(a + secStart + k);
-				
-				if( Clip && cabsf(in[k]) >= Clip ) {
-					cleanFactor = 0.0;
-				}
-			}
-			
-			fftwf_execute_dft(p, in, in);
-			
-			for(k=0; k<nChan/2; k++) {
-				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2+nChan%2];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
-			}
-			for(k=nChan/2; k<nChan; k++) {
-				*(b + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k-nChan/2];
-				*(b + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
-			}
-			
-			*(d + nFFT*i + j) = (unsigned char) cleanFactor;
-		}
-		
-		fftwf_free(in);
-	}
-	free(rot);
-	
-	fftwf_destroy_plan(p);
-	fftwf_free(inP);
-	free(frac);
-	free(fifo);
-	
-	Py_END_ALLOW_THREADS
-	
-	signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
-	
-	Py_XDECREF(data);
-	Py_XDECREF(freq);
-	Py_XDECREF(delay);
-	Py_XDECREF(dataF);
-	Py_XDECREF(validF);
-	
-	return signalsF;
-
-fail:
-	Py_XDECREF(data);
-	Py_XDECREF(freq);
-	Py_XDECREF(delay);
-	Py_XDECREF(dataF);
-	Py_XDECREF(validF);
-	
-	return NULL;
-}
-
-PyDoc_STRVAR(FEngineC2_doc, \
-"Perform a series of overlapped Fourier transforms on complex-valued data\n\
-using OpenMP.\n\
-\n\
-Input arguments are:\n\
- * signals: 2-D numpy.complex64 (stands by samples) array of data to FFT\n\
- * frequency: 1-D numpy.double array of frequency values in Hz for the\n\
-   FFT channels\n\
- * delays: 1-D numpy.double array of delays to apply to each stand\n\
-\n\
-Input keywords are:\n\
- * LFFT: number of FFT channels to make (default=64)\n\
- * Overlap: number of overlapped FFTs to use (default=1)\n\
- * SampleRate: sample rate of the data (default=100e3)\n\
- * ClipLevel: count value of 'bad' data.  FFT windows with instantaneous powers\n\
-   greater than or equal to this value greater are zeroed.  Setting the ClipLevel\n\
-   to zero disables time-domain blanking\n\
-\n\
-Outputs:\n\
- * fsignals: 3-D numpy.complex64 (stands by channels by FFT_set) of FFTd\n\
-   data\n\
- * valid: 2-D numpy.uint8 (stands by FFT_set) of whether or not the FFT\n\
-   set is valid (1) or not (0)\n\
-");
-
-
-static PyObject *FEngineC3(PyObject *self, PyObject *args, PyObject *kwds) {
+static PyObject *FEngineC(PyObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *signals, *freqs, *delays, *window=Py_None, *signalsF;
 	PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL, *windowData=NULL;
 	int nChan = 64;
@@ -1032,7 +577,7 @@ fail:
 	return NULL;
 }
 
-PyDoc_STRVAR(FEngineC3_doc, \
+PyDoc_STRVAR(FEngineC_doc, \
 "Perform a series of overlapped Fourier transforms on complex-valued data\n\
 using OpenMP and allow for windowing of the data.\n\
 \n\
@@ -1363,13 +908,11 @@ Ouputs:\n\
 */
 
 static PyMethodDef CorrelatorMethods[] = {
-	{"FEngineR2", (PyCFunction) FEngineR2, METH_VARARGS|METH_KEYWORDS, FEngineR2_doc}, 
-	{"FEngineR3", (PyCFunction) FEngineR3, METH_VARARGS|METH_KEYWORDS, FEngineR3_doc}, 
-	{"FEngineC2", (PyCFunction) FEngineC2, METH_VARARGS|METH_KEYWORDS, FEngineC2_doc}, 
-	{"FEngineC3", (PyCFunction) FEngineC3, METH_VARARGS|METH_KEYWORDS, FEngineC3_doc}, 
-	{"XEngine2",  (PyCFunction) XEngine2,  METH_VARARGS,               XEngine2_doc }, 
-	{"XEngine3",  (PyCFunction) XEngine3,  METH_VARARGS,               XEngine3_doc }, 
-	{NULL,        NULL,      0,                          NULL         }
+	{"FEngineR", (PyCFunction) FEngineR, METH_VARARGS|METH_KEYWORDS, FEngineR_doc}, 
+	{"FEngineC", (PyCFunction) FEngineC, METH_VARARGS|METH_KEYWORDS, FEngineC_doc}, 
+	{"XEngine2", (PyCFunction) XEngine2, METH_VARARGS,               XEngine2_doc}, 
+	{"XEngine3", (PyCFunction) XEngine3, METH_VARARGS,               XEngine3_doc}, 
+	{NULL,        NULL,                  0,                          NULL        }
 };
 
 PyDoc_STRVAR(correlator_doc, \
@@ -1378,16 +921,12 @@ are meant to provide an alternative to the lsl.correlator.fx.correlate function 
 provide a much-needed speed boost to cross-correlation.\n\
 \n\
 The function defined in this module are:\n\
-  * FEngineR2 -F-engine for computing a series of overlapped Fourier transforms with\n\
+  * FEngineR -F-engine for computing a series of overlapped Fourier transforms with\n\
     delay corrections for a real-valued (TBW) signal from a collection of stands all at\n\
     once.\n\
-  * FEngineR3 - Similar to FEngineR2, but allows for a window function to be applied\n\
-    to the data.\n\
-  * FEngineC2 - F-engine for computing a series of overlapped Fourier transforms with\n\
+  * FEngineC - F-engine for computing a series of overlapped Fourier transforms with\n\
     delay corrections for a complex-valued (TBN) signal from a collection of stands all at\n\
     once.\n\
-  * FEngineC3 - Similar to FEngineC2, but allows for a window function to be applied\n\
-    to the data.\n\
   * XEngine2 - Similar to XEngine, but works with a collection of stands all at\n\
     once.\n\
 \n\
