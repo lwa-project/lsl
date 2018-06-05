@@ -1272,8 +1272,9 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 			
 	# There is an ambiguity that can arise for TBW data such that it *looks* 
 	# like TBN.  If the identified mode is TBN, skip halfway into the file and 
-	# veryfiy that it is still TBN.
-	if mode == tbn:
+	# verify that it is still TBN.  We also need to catch the LWA-SV DRX vs.
+	# TBF ambiguity since we could have been given an LWA-SV file by accident
+	if mode in (drx, tbn):
 		## Sort out the frame size
 		mfs = mode.FrameSize
 		
@@ -1282,7 +1283,7 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		fh.seek(nFrames/2*mfs)
 		
 		## Read a bit of data to try to find the right type
-		for mode in (tbn, tbw):
+		for mode in (tbn, tbw, drx):
 			### Set if we find a valid frame marker
 			foundMatch = False
 			### Set if we can read more than one valid successfully
@@ -1575,8 +1576,9 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 			
 	# There is an ambiguity that can arise for TBF data such that it *looks* 
 	# like DRX.  If the identified mode is DRX, skip halfway into the file and 
-	# veryfiy that it is still DRX.
-	if mode == drx:
+	# verify that it is still DRX.   We also need to catch the LWA1 TBN vs.
+	# TBW ambiguity since we could have been given an LWA1 file by accident.
+	if mode in (drx, tbn):
 		## Sort out the frame size
 		mfs = mode.FrameSize
 		
@@ -1585,7 +1587,7 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		fh.seek(nFrames/2*mfs)
 		
 		## Read a bit of data to try to find the right type
-		for mode in (drx, tbf):
+		for mode in (drx, tbf, tbn):
 			### Set if we find a valid frame marker
 			foundMatch = False
 			### Set if we can read more than one valid successfully
