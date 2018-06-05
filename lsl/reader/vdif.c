@@ -252,36 +252,37 @@ static PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLengt
 */
 
 PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
-	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
-	PyArrayObject *data;
+	PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
+	PyArrayObject *data=NULL;
 	unsigned int i;
 	float cFreq, sRate;
 	cFreq = 0.0;
 	sRate = 0.0;
+	VDIFBasicHeader bHeader;
+	VDIFExtendedHeader eHeader;
 	
 	static char *kwlist[] = {"fh", "frame", "centralFreq", "sampleRate", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|ff", kwlist, &ph, &frame, &cFreq, &sRate)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
-
+	
 	// Read in the 16 byte common (regular + legacy) header
-	FILE *fh = PyFile_AsFile(ph);
-	PyFile_IncUseCount((PyFileObject *) ph);
-	VDIFBasicHeader bHeader;
-	i = fread(&bHeader, sizeof(bHeader), 1, fh);	
-	if(ferror(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		return NULL;
-	}
-	if(feof(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
+	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(bHeader)), NULL);
+	if( buffer == NULL ) {
+		if( PyObject_HasAttrString(ph, "read") ) {
+			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		} else {
+			PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
+		}
+		goto fail;
+	} else if( PyString_GET_SIZE(buffer) != sizeof(bHeader) ) {
 		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		return NULL;
+		goto fail;
 	}
-	PyFile_DecUseCount((PyFileObject *) ph);
-
+	memcpy(&bHeader, PyString_AS_STRING(buffer), sizeof(bHeader));
+	Py_XDECREF(buffer);
+	
 	// Fix up various bits in the basic header
 	unsigned int nChan;
 	unsigned char bitsPerSample;
@@ -290,28 +291,28 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Does this frame look like it is valid?
 	if( bHeader.frameLength < sizeof(bHeader)/8 ) {
-		fseek(fh, -sizeof(bHeader), SEEK_CUR);
-		PyFile_DecUseCount((PyFileObject *) ph);
+		buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("seek"), PyInt_FromLong(-sizeof(bHeader)), PyInt_FromLong(1), NULL);
 		PyErr_Format(syncError, "Frame size is zero, zero-filled frame?");
-		return NULL;
+		goto fail;
 	}
 	
-	VDIFExtendedHeader eHeader;
+	
 	if( bHeader.isLegacy == 0 ) {
 		// Deal with the extra information in standard (non-legacy) headers
-		PyFile_IncUseCount((PyFileObject *) ph);
-		i = fread(&eHeader, sizeof(eHeader), 1, fh);	
-		if(ferror(fh)) {
-			PyFile_DecUseCount((PyFileObject *) ph);
-			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-			return NULL;
-		}
-		if(feof(fh)) {
-			PyFile_DecUseCount((PyFileObject *) ph);
+		buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(eHeader)), NULL);
+		if( buffer == NULL ) {
+			if( PyObject_HasAttrString(ph, "read") ) {
+				PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+			} else {
+				PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
+			}
+			goto fail;
+		} else if( PyString_GET_SIZE(buffer) != sizeof(eHeader) ) {
 			PyErr_Format(eofError, "End of file encountered during filehandle read");
-			return NULL;
+			goto fail;
 		}
-		PyFile_DecUseCount((PyFileObject *) ph);
+		memcpy(&eHeader, PyString_AS_STRING(buffer), sizeof(eHeader));
+		Py_XDECREF(buffer);
 		
 	} else {
 		// Legacy headers are missing this information
@@ -331,20 +332,22 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Read in a chunk of the data
 	unsigned char *rawData;
 	rawData = (unsigned char *) malloc(dataLength);
-	
-	PyFile_IncUseCount((PyFileObject *) ph);
-	i = fread(rawData, 1, dataLength, fh);
-	if(ferror(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		return NULL;
-	}
-	if(feof(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
+	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(dataLength), NULL);
+	if( buffer == NULL ) {
+		if( PyObject_HasAttrString(ph, "read") ) {
+			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		} else {
+			PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
+		}
+		free(rawData);
+		goto fail;
+	} else if( PyString_GET_SIZE(buffer) != dataLength ) {
 		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		return NULL;
+		free(rawData);
+		goto fail;
 	}
-	PyFile_DecUseCount((PyFileObject *) ph);
+	memcpy(rawData, PyString_AS_STRING(buffer), sizeof(dataLength));
+	Py_XDECREF(buffer);
 	
 	// Parse it out
 	if( bitsPerSample == 8 ) {
@@ -361,7 +364,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 				} else {
 					PyErr_Format(PyExc_RuntimeError, "Cannot parse data with %d bits per sample", bitsPerSample);
 					free(rawData);
-					return NULL;
+					goto fail;
 				}
 			}
 		}
@@ -371,8 +374,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	free(rawData);
 	if(data == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-		Py_XDECREF(data);
-		return NULL;
+		goto fail;
 	}
 	
 	// Deal with complex data as necessary
@@ -386,8 +388,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 		if(tempArrayComplex == NULL) {
 			PyErr_Format(PyExc_MemoryError, "Cannot create output array");
 			Py_XDECREF(tempArrayComplex);
-			Py_XDECREF(data);
-			return NULL;
+			goto fail;
 		}
 		
 		float *a;
@@ -516,6 +517,12 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_XDECREF(data);
 	
 	return output;
+	
+fail:
+	Py_XDECREF(buffer);
+	Py_XDECREF(data);
+	
+	return NULL;
 }
 
 char readVDIF_doc[] = PyDoc_STR(\

@@ -203,38 +203,37 @@ static void parseStokesFull(DRSpecHeader header, float *data, float *I0, float *
 
 
 PyObject *readDRSpec(PyObject *self, PyObject *args) {
-	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
+	PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
 	PyObject *tuningWords, *fills, *errors, *saturations;
 	PyArrayObject *dataA0=NULL, *dataB0=NULL, *dataC0=NULL, *dataD0=NULL;
 	PyArrayObject *dataA1=NULL, *dataB1=NULL, *dataC1=NULL, *dataD1=NULL;
-	
 	int i, nSets;
+	DRSpecHeader header;
 	
 	if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
 	}
 	
-	// Read in a single header
-	FILE *fh = PyFile_AsFile(ph);
-	PyFile_IncUseCount((PyFileObject *) ph);
-	DRSpecHeader header;
-	i = fread(&header, sizeof(DRSpecHeader), 1, fh);
-	if(ferror(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+	// Read in a single header from the file
+	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(DRSpecHeader)), NULL);
+	if( buffer == NULL ) {
+		if( PyObject_HasAttrString(ph, "read") ) {
+			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		} else {
+			PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
+		}
 		goto fail;
-	}
-	if(feof(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
+	} else if( PyString_GET_SIZE(buffer) != sizeof(DRSpecHeader) ) {
 		PyErr_Format(eofError, "End of file encountered during filehandle read");
 		goto fail;
 	}
+	memcpy(&header, PyString_AS_STRING(buffer), sizeof(header));
+	Py_XDECREF(buffer);
 	
 	// Check the header's magic numbers
 	if( header.MAGIC1 != 0xC0DEC0DE || header.MAGIC2 != 0xED0CED0C) {
-		fseek(fh, -sizeof(DRSpecHeader), SEEK_CUR);
-		PyFile_DecUseCount((PyFileObject *) ph);
+		buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("seek"), PyInt_FromLong(-sizeof(DRSpecHeader)), PyInt_FromLong(1), NULL);
 		PyErr_Format(syncError, "Sync word differs from expected");
 		goto fail;
 	}
@@ -317,18 +316,22 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	data = (float *) malloc(sizeof(float)*nSets*header.nFreqs);
 	
 	// Read in the data section
-	i = fread(data, sizeof(float), nSets*header.nFreqs, fh);
-	if(ferror(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(float)*nSets*header.nFreqs), NULL);
+	if( buffer == NULL ) {
+		if( PyObject_HasAttrString(ph, "read") ) {
+			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		} else {
+			PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
+		}
 		goto fail;
-	}
-	if(feof(fh)) {
-		PyFile_DecUseCount((PyFileObject *) ph);
+	} else if( PyString_GET_SIZE(buffer) != sizeof(float)*nSets*header.nFreqs ) {
 		PyErr_Format(eofError, "End of file encountered during filehandle read");
 		goto fail;
 	}
-	PyFile_DecUseCount((PyFileObject *) ph);
+	memcpy(data, PyString_AS_STRING(buffer), sizeof(float)*nSets*header.nFreqs);
+	Py_XDECREF(buffer);
+	
+	Py_BEGIN_ALLOW_THREADS
 	
 	// Fill the data arrays
 	float *a0, *b0, *c0, *d0, *a1, *b1, *c1, *d1;
@@ -386,6 +389,8 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	
 	// Clean up the data
 	free(data);
+	
+	Py_END_ALLOW_THREADS
 	
 	// Fill in the multi-value fields (tuningWords, fills, errors)
 	tuningWords = PyList_New(2);
@@ -536,6 +541,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	return output;
 	
 fail:
+	Py_XDECREF(buffer);
 	Py_XDECREF(dataA0);
 	Py_XDECREF(dataB0);
 	Py_XDECREF(dataC0);

@@ -63,7 +63,7 @@ typedef struct {
 
 
 PyObject *readTBW(PyObject *self, PyObject *args) {
-	PyObject *ph, *output, *frame, *fHeader, *fData, *temp;
+	PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
 	PyArrayObject *data4, *data12;
 	int i;
 	TBWFrame cFrame;
@@ -88,14 +88,23 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 		goto fail;
 	}
 	
-	// Setup the file handle for access
-	FILE *fh = PyFile_AsFile(ph);
-	PyFile_IncUseCount((PyFileObject *) ph);
+	// Read from the file
+	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(cFrame)), NULL);
+	if( buffer == NULL ) {
+		if( PyObject_HasAttrString(ph, "read") ) {
+			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
+		} else {
+			PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
+		}
+		goto fail;
+	} else if( PyString_GET_SIZE(buffer) != sizeof(cFrame) ) {
+		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		goto fail;
+	}
+	memcpy(&cFrame, PyString_AS_STRING(buffer), sizeof(cFrame));
+	Py_XDECREF(buffer);
 	
 	Py_BEGIN_ALLOW_THREADS
-	
-	// Read in a single 1224 byte frame
-	i = fread(&cFrame, sizeof(cFrame), 1, fh);
 	
 	// Swap the bits around
 	cFrame.header.frameCountWord = __bswap_32(cFrame.header.frameCountWord);
@@ -130,22 +139,10 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	
 	Py_END_ALLOW_THREADS
 	
-	// Tear down the file handle access
-	PyFile_DecUseCount((PyFileObject *) ph);
-	
 	// Validate
-	if(ferror(fh)) {
-		PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-		goto fail;
-	}
-	if(feof(fh)) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
-		goto fail;
-	}
 	if( !validSync5C(cFrame.header.syncWord) ) {
 		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
 		goto fail;
-		return NULL;
 	}
 	
 	// Save the data to the frame object
