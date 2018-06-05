@@ -20,6 +20,7 @@
   * Fixed a bug in lsl.common.metabundle*.getSessionMetaData() when parsing metadata from failed observations
   * Various performance enhancements to the C extentions in lsl.correlator
   * Updated the various lsl.reader extensions to use the read() method of the filehandle to make them more flexible
+  * Improved support for TBF in the lsl.reader.ldp module
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
