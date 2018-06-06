@@ -18,6 +18,9 @@ Buffer for dealing with out-of-order/missing frames.
 	
 .. versionchanged:: 1.1.4
 	Dropped support for the LWA-SV ADP DRX8 mode
+	
+.. versionchanged:: 1.2.1
+	Added support for the LWA-SV TBF mode
 """
 
 import copy
@@ -28,9 +31,9 @@ except ImportError:
 	from lsl.misc.OrderedDict import OrderedDict
 
 
-__version__ = '1.1'
+__version__ = '1.2'
 __revision__ = '$Rev$'
-__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'VDIFFrameBuffer', '__version__', '__revision__', '__all__']
+__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer', '__version__', '__revision__', '__all__']
 
 
 def _cmpStands(x, y):
@@ -84,7 +87,7 @@ class FrameBuffer(object):
 		'flush()' function.
 	"""
 	
-	def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], threads=[], nSegments=6, ReorderFrames=False):
+	def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nSegments=6, ReorderFrames=False):
 		"""
 		Initialize the buffer with a list of:
 		  * TBN
@@ -94,6 +97,8 @@ class FrameBuffer(object):
 		      * list of beams
 		      * list of tunings
 		      * list of pols.
+		  * TBF
+		      * list of start channels
 		  * VDIF
 		      * list of thread IDs
 		By doing this, we should be able to keep up with when the buffer 
@@ -102,7 +107,7 @@ class FrameBuffer(object):
 		"""
 		
 		# Input validation
-		if mode.upper() not in ('TBN', 'DRX', 'VDIF'):
+		if mode.upper() not in ('TBN', 'DRX', 'TBF', 'VDIF'):
 			raise RuntimeError("Invalid observing mode '%s'" % mode)
 			
 		if mode.upper() == 'TBN':
@@ -118,6 +123,10 @@ class FrameBuffer(object):
 				if pol not in (0, 1):
 					raise RuntimeError("Invalid polarization '%i'" % pol)
 					
+		elif mode.upper() == 'TBF':
+			for chan in chans:
+				if chan not in range(4096):
+					raise RuntimeError("Invalid start channel '%i'" % chan)
 		else:
 			for thread in threads:
 				if thread not in range(1024):
@@ -140,6 +149,7 @@ class FrameBuffer(object):
 		self.beams = beams
 		self.tunes = tunes
 		self.pols = pols
+		self.chans = chans
 		self.threads = threads
 		
 		# If we should reorder the returned frames by stand/pol or not
@@ -243,7 +253,10 @@ class FrameBuffer(object):
 			if len(keys) < self.nSegments:
 				return None
 				
-			keyToReturn = keys[0]
+			if self.mode == 'TBF':
+				keyToReturn = min(keys)
+			else:
+				keyToReturn = keys[0]
 		returnCount = len(self.buffer[keyToReturn])
 		
 		if returnCount == self.nFrames:
@@ -313,6 +326,8 @@ class FrameBuffer(object):
 		for frame in self.buffer[key]:
 			if self.mode == 'VDIF':
 				frameList.append(frame.parseID()[1])
+			elif self.mode == 'TBF':
+				frameList.append(frame.header.firstChan)
 			else:
 				frameList.append(frame.parseID())
 				
@@ -533,6 +548,91 @@ class DRXFrameBuffer(FrameBuffer):
 		
 		# Zero the data for the fill packet
 		fillFrame.data.iq *= 0
+		
+		# Invalidate the frame
+		fillFrame.valid = False
+		
+		return fillFrame
+
+
+class TBFFrameBuffer(FrameBuffer):
+	"""
+	A sub-type of FrameBuffer specifically for dealing with VDIF frames.
+	See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+	buffering is implemented.
+	
+	Keywords:
+	chans
+	  list of start channel numbers to expect data for
+	  
+	nSegments
+	  number of ring segments to use for the buffer (default is 25)
+	  
+	ReorderFrames
+	  whether or not to reorder frames returned by get() or flush() by 
+	  start channel (default is False)
+	
+	The number of segements in the ring can be converted to a buffer time in 
+	seconds:
+	
+	+----------+--------+
+	| Segments |  Time  |
+	+----------+--------+
+	|    10    | 0.0004 |
+	+----------+--------+
+	|    25    | 0.001  |
+	+----------+--------+
+	|    50    | 0.002  |
+	+----------+--------+
+	|   100    | 0.004  |
+	+----------+--------+
+	|   200    | 0.008  |
+	+----------+--------+
+	
+	"""
+	
+	def __init__(self, chans, nSegments=25, ReorderFrames=False):
+		super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames)
+		
+	def calcFrames(self):
+		"""
+		Calculate the maximum number of frames that we expect from 
+		the setup of the observations and a list of tuples that describes
+		all of the possible stand/pol combination.
+		"""
+		
+		nFrames = 0
+		frameList = []
+		
+		nFrames = len(self.chans)
+		for chans in self.chans:
+			frameList.append(chans)
+			
+		return (nFrames, frameList)
+		
+	def figureOfMerit(self, frame):
+		"""
+		Figure of merit for sorting frames.  For TBF this is:
+		  frame.data.timeTag
+		"""
+		
+		return frame.data.timeTag
+		
+	def createFill(self, key, frameParameters):
+		"""
+		Create a 'fill' frame of zeros using an existing good
+		packet as a template.
+		"""
+
+		# Get a template based on the first frame for the current buffer
+		fillFrame = copy.deepcopy(self.buffer[key][0])
+		
+		# Get out the frame parameters and fix-up the header
+		chan = frameParameters
+		fillFrame.header.firstChan = chan
+		
+		# Zero the data for the fill packet
+		fillFrame.data.fDomain *= 0
 		
 		# Invalidate the frame
 		fillFrame.valid = False
