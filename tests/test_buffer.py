@@ -8,22 +8,28 @@ import os
 import unittest
 
 from lsl.common.paths import dataBuild as dataPath
-from lsl.reader import tbn, drx
+from lsl.reader import tbn, drx, tbf
 from lsl.reader import errors
 from lsl.reader import buffer
 
 
 __revision__ = "$Rev$"
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
+tbfFile = os.path.join(dataPath, 'tests', 'tbf-test.dat')
+
 
 class buffer_tests(unittest.TestCase):
 	"""A unittest.TestCase collection of unit tests for the lsl.reader.buffer
 	module."""
+	
+	#
+	# TBN
+	#
 	
 	def test_tbn_default(self):
 		"""Test the TBN ring buffer with the default values."""
@@ -226,6 +232,10 @@ class buffer_tests(unittest.TestCase):
 				cID = cS*2 + cP
 				self.assertTrue(cID > pID)
 				
+	#
+	# DRX
+	#
+	
 	def test_drx_basic(self):
 		"""Test the DRX ring buffer."""
 		
@@ -412,6 +422,201 @@ class buffer_tests(unittest.TestCase):
 				pID = 4*pB + 2*(pT-1) + pP
 				cID = 4*cB + 2*(cT-1) + cP
 				self.assertTrue(cID > pID)
+				
+	#
+	# TBF
+	#
+	
+	def test_tbf_default(self):
+		"""Test the TBF ring buffer with the default values."""
+		
+		fh = open(tbfFile, 'rb')
+		nFpO = tbf.getFramesPerObs(fh)
+		
+		# Create the FrameBuffer instance
+		frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396])
+		
+		# Go
+		while True:
+			try:
+				cFrame = tbf.readFrame(fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+				
+			frameBuffer.append(cFrame)
+			cFrames = frameBuffer.get()
+			
+			if cFrames is None:
+				continue
+			
+		fh.close()
+		
+		# Make sure we have the right number of frames in the buffer
+		nFrames = 0
+		for key in frameBuffer.buffer.keys():
+			nFrames = nFrames + len(frameBuffer.buffer[key])
+		self.assertEqual(nFrames, 5)
+		
+		# Make sure nothing has happened that shouldn't have
+		self.assertEqual(frameBuffer.full,    0)
+		self.assertEqual(frameBuffer.partial, 0)
+		self.assertEqual(frameBuffer.missing, 0)
+		self.assertEqual(frameBuffer.dropped, 0)
+		
+		# Make sure we have the right keys
+		for key in frameBuffer.buffer.keys():
+			self.assertTrue(key in (283685766952000000,))
+			
+		# Make sure the buffer keys have the right sizes
+		self.assertEqual(len(frameBuffer.buffer[283685766952000000]), 5)
+		
+	def test_tbf_small(self):
+		"""Test a small version of the TBF ring buffer."""
+		
+		fh = open(tbfFile, 'rb')
+		nFpO = tbf.getFramesPerObs(fh)
+		
+		# Create the FrameBuffer instance
+		frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], nSegments=1)
+		
+		# Go
+		while True:
+			try:
+				cFrame = tbf.readFrame(fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+				
+			frameBuffer.append(cFrame)
+			cFrames = frameBuffer.get()
+			
+			if cFrames is None:
+				continue
+				
+			# Make sure the dump has one of the expected time tags
+			self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+			
+			# Make sure it has the right number of frames
+			self.assertEqual(len(cFrames), nFpO)
+			
+		fh.close()
+		
+	def test_tbf_buffer_reorder(self):
+		"""Test the reorder function of the TBF ring buffer."""
+		
+		fh = open(tbfFile, 'rb')
+		nFpO = tbf.getFramesPerObs(fh)
+		
+		# Create the FrameBuffer instance
+		frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], ReorderFrames=True)
+		
+		# Go
+		while True:
+			try:
+				cFrame = tbf.readFrame(fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+				
+			frameBuffer.append(cFrame)
+			cFrames = frameBuffer.get()
+			
+			if cFrames is None:
+				continue
+				
+			# Make sure the dump has one of the expected time tags
+			self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+			
+			# Make sure it has the right number of frames
+			self.assertEqual(len(cFrames), nFpO)
+			
+			# Check the order
+			for i in xrange(1, len(cFrames)):
+				pC = cFrames[i-1].header.firstChan
+				cC = cFrames[i].header.firstChan
+				
+				self.assertTrue(cC > pC)
+				
+		fh.close()
+		
+	def test_tbf_buffer_flush(self):
+		"""Test the TBF ring buffer's flush() function."""
+		
+		fh = open(tbfFile, 'rb')
+		nFpO = tbf.getFramesPerObs(fh)
+		
+		# Create the FrameBuffer instance
+		frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396])
+		
+		# Go
+		while True:
+			try:
+				cFrame = tbf.readFrame(fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+				
+			frameBuffer.append(cFrame)
+			cFrames = frameBuffer.get()
+			
+			if cFrames is None:
+				continue
+				
+		fh.close()
+		
+		# Flush the buffer
+		for cFrames in frameBuffer.flush():
+			# Make sure the dump has one of the expected time tags
+			self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+			
+			# Make sure it has the right number of frames
+			self.assertEqual(len(cFrames), nFpO)
+			
+	def test_tbf_buffer_reorder_flush(self):
+		"""Test the TBF ring buffer's flush() function with reordering."""
+		
+		fh = open(tbfFile, 'rb')
+		nFpO = tbf.getFramesPerObs(fh)
+		
+		# Create the FrameBuffer instance
+		frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], ReorderFrames=True)
+		
+		# Go
+		while True:
+			try:
+				cFrame = tbf.readFrame(fh)
+			except errors.eofError:
+				break
+			except errors.syncError:
+				continue
+				
+			frameBuffer.append(cFrame)
+			cFrames = frameBuffer.get()
+			
+			if cFrames is None:
+				continue
+				
+		fh.close()
+		
+		# Flush the buffer
+		for cFrames in frameBuffer.flush():
+			# Make sure the dump has one of the expected time tags
+			self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+			
+			# Make sure it has the right number of frames
+			self.assertEqual(len(cFrames), nFpO)
+			
+			# Check the order
+			for i in xrange(1, len(cFrames)):
+				pC = cFrames[i-1].header.firstChan
+				cC = cFrames[i].header.firstChan
+				
+				self.assertTrue(cC > pC)
 
 
 class buffer_test_suite(unittest.TestSuite):

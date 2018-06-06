@@ -36,17 +36,21 @@ __revision__ = '$Rev$'
 __all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer', '__version__', '__revision__', '__all__']
 
 
-def _cmpStands(x, y):
+def _cmpFrames(x, y):
 	"""
-	Function to compare two frames and sort by stand/beam number.  This 
-	should work for TBN and DRX.
+	Function to compare two frames and sort by stand/beam number (TBN, DRX)
+	or by channel number (TBF).
 	"""
 	
 	# Parse if frame IDs to extract the stand/beam, tunning, and polarization
 	# information (where appropriate)
-	idsX = x.parseID()
-	idsY = y.parseID()
-
+	try:
+		idsX = x.parseID()
+		idsY = y.parseID()
+	except AttributeError:
+		idsX = x.header.firstChan
+		idsY = y.header.firstChan
+		
 	# Do a try...except block to catch TBW vs. TBN/DRX
 	try:
 		len1 = len(idsX)
@@ -292,7 +296,7 @@ class FrameBuffer(object):
 		# Sort and return
 		if self.reorder:
 			output = list(output)
-			output.sort(cmp=_cmpStands)
+			output.sort(cmp=_cmpFrames)
 		return output
 		
 	def flush(self):
@@ -557,7 +561,7 @@ class DRXFrameBuffer(FrameBuffer):
 
 class TBFFrameBuffer(FrameBuffer):
 	"""
-	A sub-type of FrameBuffer specifically for dealing with VDIF frames.
+	A sub-type of FrameBuffer specifically for dealing with TBF frames.
 	See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
 	buffering is implemented.
 	
