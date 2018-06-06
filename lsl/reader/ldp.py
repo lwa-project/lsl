@@ -11,8 +11,9 @@ Data format objects included are:
   * DRSpecFile
   * TBFFile
   
-Also included is the LWA1DataFile function that take a filename and tries to determine the 
-correct data format object to use.
+Also included are the LWA1DataFile, LWASVDataFile, and LWADataFile functions 
+that take a filename and try to determine the correct data format object to
+use.
 
 .. versionchanged:: 1.2.0
 	Added support for LWA-SV ADP data
@@ -1274,13 +1275,13 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 	# like TBN.  If the identified mode is TBN, skip halfway into the file and 
 	# verify that it is still TBN.  We also need to catch the LWA-SV DRX vs.
 	# TBF ambiguity since we could have been given an LWA-SV file by accident
-	if mode in (drx, tbn):
+	if mode in (tbn, drx):
 		## Sort out the frame size
-		mfs = mode.FrameSize
+		omfs = mode.FrameSize
 		
 		## Seek half-way in
-		nFrames = os.path.getsize(filename)/mfs
-		fh.seek(nFrames/2*mfs)
+		nFrames = os.path.getsize(filename)/omfs
+		fh.seek(nFrames/2*omfs)
 		
 		## Read a bit of data to try to find the right type
 		for mode in (tbn, tbw, drx):
@@ -1316,10 +1317,10 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 					foundMode = True
 				except errors.syncError:
 					#### Reset for the next mode...
-					fh.seek(nFrames/2*mfs)
+					fh.seek(nFrames/2*omfs)
 			else:
 				#### Reset for the next mode...
-				fh.seek(nFrames/2*mfs)
+				fh.seek(nFrames/2*omfs)
 				
 			### Did we read more than one valid frame?
 			if foundMode:
@@ -1580,14 +1581,14 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 	# TBW ambiguity since we could have been given an LWA1 file by accident.
 	if mode in (drx, tbn):
 		## Sort out the frame size
-		mfs = mode.FrameSize
+		omfs = mode.FrameSize
 		
 		## Seek half-way in
-		nFrames = os.path.getsize(filename)/mfs
-		fh.seek(nFrames/2*mfs)
+		nFrames = os.path.getsize(filename)/omfs
+		fh.seek(nFrames/2*omfs)
 		
 		## Read a bit of data to try to find the right type
-		for mode in (drx, tbf, tbn):
+		for mode in (tbn, drx, tbf):
 			### Set if we find a valid frame marker
 			foundMatch = False
 			### Set if we can read more than one valid successfully
@@ -1620,10 +1621,10 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 					foundMode = True
 				except errors.syncError:
 					#### Reset for the next mode...
-					fh.seek(nFrames/2*mfs)
+					fh.seek(nFrames/2*omfs)
 			else:
 				#### Reset for the next mode...
-				fh.seek(nFrames/2*mfs)
+				fh.seek(nFrames/2*omfs)
 				
 			### Did we read more than one valid frame?
 			if foundMode:
