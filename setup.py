@@ -91,26 +91,22 @@ return 0;
 """)
 	fh.close()
 	
+	ccmd = []
+	ccmd.extend( cc )
+	ccmd.extend( ['-fopenmp', 'test.c', '-o test', '-lgomp'] )
 	try:
-		cmd = []
-		cmd.extend( cc )
-		cmd.extend( ['-fopenmp', 'test.c', '-o test', '-lgomp'] )
-		output = subprocess.check_output(cmd)
-		status = 0
-	except subprocess.CalledProcessError:
-		output = ''
-		status = 1
-		
-	os.chdir(curdir)
-	shutil.rmtree(tmpdir)
-	
-	if status == 0:
+		output = subprocess.check_call(ccmd)
 		outCFLAGS = ['-fopenmp',]
 		outLIBS = ['-lgomp',]
-	else:
+		
+	except subprocess.CalledProcessError:
 		print("WARNING:  OpenMP does not appear to be supported by %s, disabling" % cc[0])
 		outCFLAGS = []
 		outLIBS = []
+		
+	finally:
+		os.chdir(curdir)
+		shutil.rmtree(tmpdir)
 		
 	return outCFLAGS, outLIBS
 
@@ -121,21 +117,20 @@ def get_fftw():
 	cannot be found via pkg-config, some 'sane' values are returned."""
 	
 	try:
-		output = subprocess.check_output(['pkg-config', 'fftw3f', '--exists'])
-		status = 0
-	except subprocess.CalledProcessError:
-		output = ''
-		status = 1
+		subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
 		
-	if status == 0:
-		configCommand = 'pkg-config fftw3f'
-		outVersion = subprocess.check_output(['pkg-config', 'fftw3f', '--modversion']).rstrip().split()
-		outCFLAGS = subprocess.check_output(['pkg-config', 'fftw3f', '--cflags']).rstrip().split()
+		p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
+		outVersion = p.communicte()[0].rstrip().split()
+		
+		p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
+		outCFLAGS = p.communicte()[0].rstrip().split()
 		try:
 			outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
 		except TypeError:
 			pass
-		outLIBS = subprocess.check_output(['pkg-config', 'fftw3f', '--libs']).rstrip().split()
+		
+		p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
+		outLIBS = p.communicte()[0].rstrip().split()
 		try:
 			outLIBS = [str(v, 'utf-8') for v in outLIBS]
 		except TypeError:
@@ -144,7 +139,7 @@ def get_fftw():
 		if len(outVersion) > 0:
 			print("Found FFTW3, version %s" % outVersion[0])
 			
-	else:
+	except subprocess.CalledProcessError:
 		print("WARNING:  FFTW3 cannot be found, using defaults")
 		outCFLAGS = []
 		outLIBS = ['-lfftw3f', '-lm']
