@@ -18,6 +18,13 @@
 #include "numpy/arrayobject.h"
 
 
+#if PY_MAJOR_VERSION >= 3
+	#define PyCapsule_Type PyCObject_Type
+	#define PyString_FromString PyUnicode_FromString
+	#define PyString_AsString PyUnicode_AsString
+#endif
+
+
 /*
  applyFIR - Given a pointer to a 16-bit integer data stream, the number of data samples to 
             process, a pointer a set of 16-bit FIR coefficients, the number of taps, and a
@@ -490,15 +497,37 @@ provided in this module are:\n\
   Module Setup - Initialization
 */
 
-PyMODINIT_FUNC init_fir(void) {
+#if PY_MAJOR_VERSION >= 3
+	#define MOD_ERROR_VAL NULL
+	#define MOD_SUCCESS_VAL(val) val
+	#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   static struct PyModuleDef moduledef = { \
+	      PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+	   ob = PyModule_Create(&moduledef);
+#else
+	#define MOD_ERROR_VAL
+	#define MOD_SUCCESS_VAL(val)
+	#define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   ob = Py_InitModule3(name, methods, doc);
+#endif
+
+MOD_INIT(_fir) {
 	PyObject *m;
 
 	// Module definitions and functions
-	m = Py_InitModule3("_fir", FIRMethods, FIRMethods_doc);
+	MOD_DEF(m, "_fir", FIRMethods, FIRMethods_doc);
+	if( m == NULL ) {
+		return MOD_ERROR_VAL;
+	}
 	import_array();
 	
 	// Version and revision information
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
+	#if PY_MAJOR_VERSION >= 3
+		return m;
+	#endif
 }

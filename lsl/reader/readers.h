@@ -2,6 +2,19 @@
 #define __READERS_H
 
 /*
+ Python3 compatibility
+*/
+#if PY_MAJOR_VERSION >= 3
+	#define PyCapsule_Type PyCObject_Type
+	#define PyString_FromString PyUnicode_FromString
+	#define PyString_GET_SIZE PyBytes_GET_SIZE
+	#define PyString_AS_STRING PyBytes_AS_STRING
+	#define PyInt_AsLong PyLong_AsLong 
+	#define PyInt_FromLong PyLong_FromLong 
+#endif
+
+
+/*
   Minimum function for two values
 */
 

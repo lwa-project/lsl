@@ -19,6 +19,13 @@
 #include "numpy/npy_math.h"
 
 
+#if PY_MAJOR_VERSION >= 3
+	#define PyCapsule_Type PyCObject_Type
+	#define PyString_FromString PyUnicode_FromString
+	#define PyString_AsString PyBytes_AsString
+#endif
+
+
 /*
  Load in FFTW wisdom.  Based on the read_wisdom function in PRESTO.
 */
@@ -677,12 +684,31 @@ See the inidividual functions for more details.");
   Module Setup - Initialization
 */
 
-PyMODINIT_FUNC init_stokes(void) {
+#if PY_MAJOR_VERSION >= 3
+	#define MOD_ERROR_VAL NULL
+	#define MOD_SUCCESS_VAL(val) val
+	#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   static struct PyModuleDef moduledef = { \
+	      PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+	   ob = PyModule_Create(&moduledef);
+#else
+	#define MOD_ERROR_VAL
+	#define MOD_SUCCESS_VAL(val)
+	#define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   ob = Py_InitModule3(name, methods, doc);
+#endif
+
+MOD_INIT(_stokes) {
 	char filename[256];
 	PyObject *m, *pModule, *pDataPath;
 
 	// Module definitions and functions
-	m = Py_InitModule3("_stokes", StokesMethods, stokes_doc);
+	MOD_DEF(m, "_stokes", StokesMethods, stokes_doc);
+	if( m == NULL ) {
+		return MOD_ERROR_VAL;
+	}
 	import_array();
 	
 	// Version and revision information
@@ -698,4 +724,8 @@ PyMODINIT_FUNC init_stokes(void) {
 	} else {
 		PyErr_Warn(PyExc_RuntimeWarning, "Cannot load the LSL FFTWF wisdom");
 	}
+	
+	#if PY_MAJOR_VERSION >= 3
+		return m;
+	#endif
 }

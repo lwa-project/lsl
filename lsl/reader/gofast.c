@@ -99,7 +99,23 @@ PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VD
   Module Setup - Initialization
 */
 
-PyMODINIT_FUNC init_gofast(void) {
+#if PY_MAJOR_VERSION >= 3
+	#define MOD_ERROR_VAL NULL
+	#define MOD_SUCCESS_VAL(val) val
+	#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   static struct PyModuleDef moduledef = { \
+	      PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+	   ob = PyModule_Create(&moduledef);
+#else
+	#define MOD_ERROR_VAL
+	#define MOD_SUCCESS_VAL(val)
+	#define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   ob = Py_InitModule3(name, methods, doc);
+#endif
+
+MOD_INIT(_gofast) {
 	PyObject *m, *dict1, *dict2;
 	
 	// Initialize the look-up tables
@@ -107,7 +123,10 @@ PyMODINIT_FUNC init_gofast(void) {
 	initVDIFLUTs();
 	
 	// Module definitions and functions
-	m = Py_InitModule3("_gofast", GoFastMethods, GoFast_doc);
+	MOD_DEF(m, "_gofast", GoFastMethods, GoFast_doc);
+	if( m == NULL ) {
+		return MOD_ERROR_VAL;
+	}
 	import_array();
 
 	// Exceptions
@@ -118,6 +137,7 @@ PyMODINIT_FUNC init_gofast(void) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
 		Py_XDECREF(dict1);
 		Py_XDECREF(m);
+		return MOD_ERROR_VAL;
 	}
 	PyDict_SetItemString(dict1, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
@@ -133,6 +153,7 @@ PyMODINIT_FUNC init_gofast(void) {
 		Py_XDECREF(syncError);
 		Py_XDECREF(dict2);
 		Py_XDECREF(m);
+		return MOD_ERROR_VAL;
 	}
 	PyDict_SetItemString(dict2, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters the end-of-file while reading."));
@@ -144,4 +165,7 @@ PyMODINIT_FUNC init_gofast(void) {
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
+	#if PY_MAJOR_VERSION >= 3
+		return m;
+	#endif
 }
