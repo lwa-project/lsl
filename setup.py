@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 
-import ez_setup
-ez_setup.use_setuptools()
+# Python3 compatibility
+from __future__ import print_function
 
 import os
 import imp
@@ -9,13 +9,13 @@ import sys
 import glob
 import tempfile
 import unittest
-import commands
 import platform
 import warnings
+import subprocess
 try:
-	import cStringIO as StringIO
+	from StringIO import StringIO
 except ImportError:
-	import StringIO
+	from io import StringIO
 
 from setuptools import setup, Extension, Distribution, find_packages
 try:
@@ -83,15 +83,24 @@ def get_openmp():
 	fh = open('test.c', 'w')
 	fh.write(r"""#include <omp.h>
 #include <stdio.h>
-int main() {
+int main(void) {
 #pragma omp parallel
 printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_threads());
+return 0;
 }
 """)
 	fh.close()
 	
-	status, output = commands.getstatusoutput('%s -fopenmp test.c -o test -lgomp' % ' '.join(cc))
-	
+	try:
+		cmd = []
+		cmd.extend( cc )
+		cmd.extend( ['-fopenmp', 'test.c', '-o test', '-lgomp'] )
+		output = subprocess.check_output(cmd)
+		status = 0
+	except subprocess.CalledProcessError:
+		output = ''
+		status = 1
+		
 	os.chdir(curdir)
 	shutil.rmtree(tmpdir)
 	
@@ -99,7 +108,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 		outCFLAGS = ['-fopenmp',]
 		outLIBS = ['-lgomp',]
 	else:
-		print "WARNING:  OpenMP does not appear to be supported by %s, disabling" % cc[0]
+		print("WARNING:  OpenMP does not appear to be supported by %s, disabling" % cc[0])
 		outCFLAGS = []
 		outLIBS = []
 		
@@ -110,19 +119,33 @@ def get_fftw():
 	"""Use pkg-config (if installed) to figure out the C flags and linker flags
 	needed to compile a C program with FFTW3 (floating point version).  If FFTW3 
 	cannot be found via pkg-config, some 'sane' values are returned."""
-
-	status, output = commands.getstatusoutput('pkg-config fftw3f --exists')
+	
+	try:
+		output = subprocess.check_output(['pkg-config', 'fftw3f', '--exists'])
+		status = 0
+	except subprocess.CalledProcessError:
+		output = ''
+		status = 1
+		
 	if status == 0:
 		configCommand = 'pkg-config fftw3f'
-		outVersion = os.popen('%s --modversion' % configCommand, 'r').readline().rstrip().split()
-		outCFLAGS = os.popen('%s --cflags' % configCommand, 'r').readline().rstrip().split()
-		outLIBS = os.popen('%s --libs' % configCommand, 'r').readline().rstrip().split()
-		
+		outVersion = subprocess.check_output(['pkg-config', 'fftw3f', '--modversion']).rstrip().split()
+		outCFLAGS = subprocess.check_output(['pkg-config', 'fftw3f', '--cflags']).rstrip().split()
+		try:
+			outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
+		except TypeError:
+			pass
+		outLIBS = subprocess.check_output(['pkg-config', 'fftw3f', '--libs']).rstrip().split()
+		try:
+			outLIBS = [str(v, 'utf-8') for v in outLIBS]
+		except TypeError:
+			pass
+			
 		if len(outVersion) > 0:
-			print "Found FFTW3, version %s" % outVersion[0]
+			print("Found FFTW3, version %s" % outVersion[0])
 			
 	else:
-		print "WARNING:  FFTW3 cannot be found, using defaults"
+		print("WARNING:  FFTW3 cannot be found, using defaults")
 		outCFLAGS = []
 		outLIBS = ['-lfftw3f', '-lm']
 		
@@ -137,14 +160,14 @@ def get_atlas():
 	
 	with warnings.catch_warnings():
 		warnings.filterwarnings("ignore",category=DeprecationWarning)
-		sys.stdout = StringIO.StringIO()
+		sys.stdout = StringIO()
 		atlas_info = get_info('atlas_blas', notfound_action=2)
 		sys.stdout = sys.__stdout__
 		
 	atlas_version = ([v[3:-3] for k,v in atlas_info.get('define_macros',[])
 					if k == 'ATLAS_INFO']+[None])[0]
 	if atlas_version:
-		print "Found ATLAS, version %s" % atlas_version
+		print("Found ATLAS, version %s" % atlas_version)
 		
 	outCFLAGS = ['-I%s' % idir for idir in atlas_info['include_dirs']]
 	outLIBS = ['-L%s' % ldir for ldir in atlas_info['library_dirs']]
@@ -167,8 +190,6 @@ full_version = '%s'
 short_version = '%s'
 
 """ % (lslVersion, lslVersion, shortVersion)
-
-
 	
 	fh = open('lsl/version.py', 'w')
 	fh.write(contents)
