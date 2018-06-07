@@ -515,7 +515,9 @@ provided in this module are:\n\
 
 MOD_INIT(_fir) {
 	PyObject *m;
-
+	
+	Py_Initialize();
+	
 	// Module definitions and functions
 	MOD_DEF(m, "_fir", FIRMethods, FIRMethods_doc);
 	if( m == NULL ) {
@@ -527,7 +529,5 @@ MOD_INIT(_fir) {
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
-	#if PY_MAJOR_VERSION >= 3
-		return m;
-	#endif
+	return MOD_SUCCESS_VAL(m);
 }

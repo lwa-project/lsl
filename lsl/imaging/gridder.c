@@ -17,6 +17,25 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
+
+#if PY_MAJOR_VERSION >= 3
+	#define PyCapsule_Type PyCObject_Type
+	#define PyString_FromString PyUnicode_FromString
+char* PyString_AsString(PyObject *ob) {
+	PyObject *enc;
+	char *cstr;
+	enc = PyUnicode_AsEncodedString(ob, "utf-8", "Error");
+	if( enc == NULL ) {
+		PyErr_Format(PyExc_ValueError, "Cannot encode string");
+		return NULL;
+	}
+	cstr = PyBytes_AsString(enc);
+	Py_XDECREF(enc);
+	return cstr;
+}
+#endif
+
+
 // Maximum number of w-planes to project
 #define MAX_W_PLANES 1024
 
@@ -35,11 +54,9 @@ void read_wisdom(char *filename, PyObject *m) {
 	wisdomfile = fopen(filename, "r");
 	if( wisdomfile != NULL ) {
 		status = fftwf_import_wisdom_from_file(wisdomfile);
-		PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));
 		fclose(wisdomfile);
-	} else {
-		PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));
 	}
+	PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));
 }
 
 
@@ -408,12 +425,33 @@ See the inidividual functions for more details.");
   Module Setup - Initialization
 */
 
-PyMODINIT_FUNC init_gridder(void) {
-	char filename[256];
-	PyObject *m, *pModule, *pDataPath;
+#if PY_MAJOR_VERSION >= 3
+	#define MOD_ERROR_VAL NULL
+	#define MOD_SUCCESS_VAL(val) val
+	#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   static struct PyModuleDef moduledef = { \
+	      PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+	   ob = PyModule_Create(&moduledef);
+#else
+	#define MOD_ERROR_VAL
+	#define MOD_SUCCESS_VAL(val)
+	#define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
+	#define MOD_DEF(ob, name, methods, doc) \
+	   ob = Py_InitModule3(name, methods, doc);
+#endif
 
+MOD_INIT(_gridder) {
+	char filename[256];
+	PyObject *m, *pModule, *pDataPath=NULL;
+	
+	Py_Initialize();
+	
 	// Module definitions and functions
-	m = Py_InitModule3("_gridder", GridderMethods, gridder_doc);
+	MOD_DEF(m, "_gridder", GridderMethods, gridder_doc);
+	if( m == NULL ) {
+		return MOD_ERROR_VAL;
+	}
 	import_array();
 	
 	// Version and revision information
@@ -424,9 +462,15 @@ PyMODINIT_FUNC init_gridder(void) {
 	pModule = PyImport_ImportModule("lsl.common.paths");
 	if( pModule != NULL ) {
 		pDataPath = PyObject_GetAttrString(pModule, "data");
-		sprintf(filename, "%s/fftw_wisdom.txt", PyString_AsString(pDataPath));
-		read_wisdom(filename, m);
+		if( pDataPath != NULL ) {
+			sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
+			read_wisdom(filename, m);
+		}
 	} else {
 		PyErr_Warn(PyExc_RuntimeWarning, "Cannot load the LSL FFTWF wisdom");
 	}
+	Py_XDECREF(pDataPath);
+	Py_XDECREF(pModule);
+	
+	return MOD_SUCCESS_VAL(m);
 }

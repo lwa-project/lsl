@@ -118,6 +118,8 @@ PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VD
 MOD_INIT(_gofast) {
 	PyObject *m, *dict1, *dict2;
 	
+	Py_Initialize();
+	
 	// Initialize the look-up tables
 	initLWALUTs();
 	initVDIFLUTs();
@@ -128,7 +130,7 @@ MOD_INIT(_gofast) {
 		return MOD_ERROR_VAL;
 	}
 	import_array();
-
+	
 	// Exceptions
 	
 	//   1.  syncError -> similar to lsl.reader.errors.syncError
@@ -165,7 +167,5 @@ MOD_INIT(_gofast) {
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
-	#if PY_MAJOR_VERSION >= 3
-		return m;
-	#endif
+	return MOD_SUCCESS_VAL(m);
 }

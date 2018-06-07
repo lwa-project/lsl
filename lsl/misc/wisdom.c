@@ -191,7 +191,9 @@ See the individual functions for more details.");
 
 MOD_INIT(_wisdom) {
 	PyObject *m;
-
+	
+	Py_Initialize();
+	
 	// Module definitions and functions
 	MOD_DEF(m, "_wisdom", WisdomMethods, wisdom_doc);
 	if( m == NULL ) {
@@ -203,7 +205,5 @@ MOD_INIT(_wisdom) {
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
 	
-	#if PY_MAJOR_VERSION >= 3
-		return m;
-	#endif
+	return MOD_SUCCESS_VAL(m);
 }

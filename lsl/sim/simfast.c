@@ -424,7 +424,9 @@ See the inidividual functions for more details.\n\
 
 MOD_INIT(_simfast) {
 	PyObject *m;
-
+	
+	Py_Initialize();
+	
 	// Module definitions and functions
 	MOD_DEF(m, "_simfast", SimMethods, sim_doc);
 	if( m == NULL ) {
@@ -436,8 +438,6 @@ MOD_INIT(_simfast) {
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev: 1639 $"));
 	
-	#if PY_MAJOR_VERSION >= 3
-		return m;
-	#endif
+	return MOD_SUCCESS_VAL(m);
 }
 
