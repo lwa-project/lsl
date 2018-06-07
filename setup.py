@@ -120,17 +120,17 @@ def get_fftw():
 		subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
 		
 		p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-		outVersion = p.communicte()[0].rstrip().split()
+		outVersion = p.communicate()[0].rstrip().split()
 		
 		p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-		outCFLAGS = p.communicte()[0].rstrip().split()
+		outCFLAGS = p.communicate()[0].rstrip().split()
 		try:
 			outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
 		except TypeError:
 			pass
 		
 		p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-		outLIBS = p.communicte()[0].rstrip().split()
+		outLIBS = p.communicate()[0].rstrip().split()
 		try:
 			outLIBS = [str(v, 'utf-8') for v in outLIBS]
 		except TypeError:
