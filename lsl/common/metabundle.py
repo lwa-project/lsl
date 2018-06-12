@@ -57,34 +57,30 @@ def readSESFile(filename):
 	"""
 	
 	# Read the SES
-	fh = open(filename, 'rb')
-	
-	bses = parseCStruct(SSF_STRUCT, endianness='little')
-	
-	fh.readinto(bses)
-	
-	# LWA-SV check
-	if bses.FORMAT_VERSION in (6,):
-		fh.close()
-		raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
-		
-	if bses.SESSION_NOBS > 150:
-		## Pre SESSION_SPC
-		fh.seek(0)
-		
-		newStruct = []
-		for line in SSF_STRUCT.split('\n'):
-			if line.find('SESSION_SPC') != -1:
-				continue
-			newStruct.append(line)
-		newStruct = '\n'.join(newStruct)
-		
-		bses = parseCStruct(newStruct, endianness='little')
-		
+	with open(filename, 'rb') as fh:
+		bses = parseCStruct(SSF_STRUCT, endianness='little')
 		fh.readinto(bses)
-		bses.SESSION_SPC = ''
-	fh.close()
-	
+		
+		# LWA-SV check
+		if bses.FORMAT_VERSION in (6,):
+			raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
+			
+		if bses.SESSION_NOBS > 150:
+			## Pre SESSION_SPC
+			fh.seek(0)
+			
+			newStruct = []
+			for line in SSF_STRUCT.split('\n'):
+				if line.find('SESSION_SPC') != -1:
+					continue
+				newStruct.append(line)
+			newStruct = '\n'.join(newStruct)
+			
+			bses = parseCStruct(newStruct, endianness='little')
+			fh.readinto(bses)
+			
+			bses.SESSION_SPC = ''
+			
 	record = {'ASP': bses.SESSION_MRP_ASP, 'DP_': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
 			'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2, 
 			'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4, 'DR5': bses.SESSION_MRP_DR5}
@@ -108,90 +104,83 @@ def readOBSFile(filename):
 	"""
 	
 	# Read the OBS
-	fh = open(filename, 'rb')
-	
-	bheader = parseCStruct(OSF_STRUCT, endianness='little')
-	bstep   = parseCStruct(OSFS_STRUCT, endianness='little')
-	bbeam   = parseCStruct(BEAM_STRUCT, endianness='little')
-	bfooter = parseCStruct(OSF2_STRUCT, endianness='little')
-	
-	fh.readinto(bheader)
-	
-	# LWA-SV check
-	if bheader.FORMAT_VERSION in (6,):
-		fh.close()
-		raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
-		
-	if bheader.OBS_ID > 150:
-		## Pre SESSION_SPC and OBS_BDM
-		fh.seek(0)
-		
-		newStruct = []
-		for line in OSF_STRUCT.split('\n'):
-			if line.find('OBS_BDM') != -1:
-				continue
-			if line.find('SESSION_SPC') != -1:
-				continue
-			newStruct.append(line)
-		newStruct = '\n'.join(newStruct)
-		
-		bheader = parseCStruct(newStruct, endianness='little')
-		
+	with open(filename, 'rb') as fh:
+		bheader = parseCStruct(OSF_STRUCT, endianness='little')
+		bstep   = parseCStruct(OSFS_STRUCT, endianness='little')
+		bbeam   = parseCStruct(BEAM_STRUCT, endianness='little')
+		bfooter = parseCStruct(OSF2_STRUCT, endianness='little')
 		fh.readinto(bheader)
-		bheader.SESSION_SPC = ''
-		bheader.OBS_BDM = ''
 		
-	elif bheader.OBS_B > 2:
-		## Pre OBS_BDM
-		fh.seek(0)
-		
-		newStruct = []
-		for line in OSF_STRUCT.split('\n'):
-			if line.find('OBS_BDM') != -1:
-				continue
-			newStruct.append(line)
-		newStruct = '\n'.join(newStruct)
-		
-		bheader = parseCStruct(newStruct, endianness='little')
-		
-		fh.readinto(bheader)
-		bheader.OBS_BDM = ''
-		
-	if IS_32BIT_PYTHON:
-		skip = parseCStruct("""
-		int junk;
-		""", endianness='little')
-		fh.readinto(skip)
+		# LWA-SV check
+		if bheader.FORMAT_VERSION in (6,):
+			fh.close()
+			raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
+			
+		if bheader.OBS_ID > 150:
+			## Pre SESSION_SPC and OBS_BDM
+			fh.seek(0)
+			
+			newStruct = []
+			for line in OSF_STRUCT.split('\n'):
+				if line.find('OBS_BDM') != -1:
+					continue
+				if line.find('SESSION_SPC') != -1:
+					continue
+				newStruct.append(line)
+			newStruct = '\n'.join(newStruct)
+			
+			bheader = parseCStruct(newStruct, endianness='little')
+			fh.readinto(bheader)
+			bheader.SESSION_SPC = ''
+			bheader.OBS_BDM = ''
+			
+		elif bheader.OBS_B > 2:
+			## Pre OBS_BDM
+			fh.seek(0)
+			
+			newStruct = []
+			for line in OSF_STRUCT.split('\n'):
+				if line.find('OBS_BDM') != -1:
+					continue
+				newStruct.append(line)
+			newStruct = '\n'.join(newStruct)
+			
+			bheader = parseCStruct(newStruct, endianness='little')
+			fh.readinto(bheader)
+			bheader.OBS_BDM = ''
+			
+		if IS_32BIT_PYTHON:
+			skip = parseCStruct("""
+			int junk;
+			""", endianness='little')
+			fh.readinto(skip)
 
-	steps = []
-	for n in xrange(bheader.OBS_STP_N):
-		fh.readinto(bstep)
-		if bstep.OBS_STP_B == 3:
-			fh.readinto(bbeam)
-			bstep.delay = copy.deepcopy(bbeam.OBS_BEAM_DELAY)
-			bstep.gain  = copy.deepcopy(single2multi(bbeam.OBS_BEAM_GAIN, *bbeam.dims['OBS_BEAM_GAIN']))
-		else:
-			bstep.delay = []
-			bstep.gain  = []
+		steps = []
+		for n in xrange(bheader.OBS_STP_N):
+			fh.readinto(bstep)
+			if bstep.OBS_STP_B == 3:
+				fh.readinto(bbeam)
+				bstep.delay = copy.deepcopy(bbeam.OBS_BEAM_DELAY)
+				bstep.gain  = copy.deepcopy(single2multi(bbeam.OBS_BEAM_GAIN, *bbeam.dims['OBS_BEAM_GAIN']))
+			else:
+				bstep.delay = []
+				bstep.gain  = []
+			
+			steps.append(copy.deepcopy(bstep))
+			
+			alignment = parseCStruct("""
+			unsigned int block;
+			""", endianness='little')
+			fh.readinto(alignment)
+			
+			if alignment.block != (2**32 - 2):
+				raise IOError("Byte alignment lost at byte %i" % fh.tell())
+				
+		fh.readinto(bfooter)
 		
-		steps.append(copy.deepcopy(bstep))
-		
-		alignment = parseCStruct("""
-		unsigned int block;
-		""", endianness='little')
-		
-		fh.readinto(alignment)
-		
-		if alignment.block != (2**32 - 2):
+		if bfooter.alignment != (2**32 - 1):
 			raise IOError("Byte alignment lost at byte %i" % fh.tell())
 			
-	fh.readinto(bfooter)
-	
-	if bfooter.alignment != (2**32 - 1):
-		raise IOError("Byte alignment lost at byte %i" % fh.tell())
-		
-	fh.close()
-	
 	output = {'version': bheader.FORMAT_VERSION, 'projectID': bheader.PROJECT_ID.lstrip().rstrip(), 
 		     'sessionID': bheader.SESSION_ID, 'drxBeam': bheader.SESSION_DRX_BEAM, 
 		     'spcSetup': bheader.SESSION_SPC, 'obsID': bheader.OBS_ID,
@@ -217,45 +206,42 @@ def readCSFile(filename):
 	"""
 	
 	# Read the CS file
-	fh = open(filename, 'rb')
-	
-	commands = []
-	while True:
-		action = parseCStruct("""
-		long int tv[2];
-		int bASAP;
-		int sid;
-		int cid;
-		int len;
-		""", endianness='little')
-		
-		try:
-			fh.readinto(action)
+	with open(filename, 'rb') as fh:
+		commands = []
+		while True:
+			action = parseCStruct("""
+			long int tv[2];
+			int bASAP;
+			int sid;
+			int cid;
+			int len;
+			""", endianness='little')
 			
-			if action.tv[0] == 0:
-				break
-			
-			if action.len > 0:
-				data = parseCStruct("""
-				char data[%i];
-				""" % action.len, endianness='little')
+			try:
+				fh.readinto(action)
 				
-				fh.readinto(data)
-				data = data.data
-			else:
-				data = None
-			
-			actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
-						'ignoreTime': True if action.bASAP else False, 
-						'subsystemID': sid2string(action.sid), 'commandID': cid2string(action.cid), 
-						'commandLength': action.len, 'data': data}
-						
-			commands.append( actionPrime )
-		except IOError:
-			break
-			
-	fh.close()
-	
+				if action.tv[0] == 0:
+					break
+					
+				if action.len > 0:
+					data = parseCStruct("""
+					char data[%i];
+					""" % action.len, endianness='little')
+					
+					fh.readinto(data)
+					data = data.data
+				else:
+					data = None
+					
+				actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
+							'ignoreTime': True if action.bASAP else False, 
+							'subsystemID': sid2string(action.sid), 'commandID': cid2string(action.cid), 
+							'commandLength': action.len, 'data': data}
+							
+				commands.append( actionPrime )
+			except IOError:
+				break
+				
 	return commands
 
 
@@ -366,62 +352,60 @@ def getSessionMetaData(tarname):
 	try:
 		# Read in the SMF
 		filename = os.path.join(tempDir, ti.name)
-		fh = open(filename, 'r')
-		
-		# Define a regular expresion to match the latest format
-		lineRE = re.compile(r"\s*(?P<id>\d{1,}?)\s+\[(?P<tag>[\d_]+?)\]\s+\['?(?P<barcode>.+?)'?\]\s+(?P<outcome>\d)\s+\[(?P<msg>.*?)\]")
-		
-		result = {}
-		for line in fh:
-			line = line.replace('\n', '')
-			if len(line) == 0:
-				continue
-				
-			mtch = lineRE.search(line)
-			if mtch is not None:
-				## If it matches the new format
-				obsID = mtch.group('id')
-				opTag = mtch.group('tag')
-				drsuBarcode = mtch.group('barcode')
-				if drsuBarcode[:3] == 'Err':
+		with open(filename, 'r') as fh:
+			# Define a regular expresion to match the latest format
+			lineRE = re.compile(r"\s*(?P<id>\d{1,}?)\s+\[(?P<tag>[\d_]+?)\]\s+\['?(?P<barcode>.+?)'?\]\s+(?P<outcome>\d)\s+\[(?P<msg>.*?)\]")
+			
+			result = {}
+			for line in fh:
+				line = line.replace('\n', '')
+				if len(line) == 0:
+					continue
+					
+				mtch = lineRE.search(line)
+				if mtch is not None:
+					## If it matches the new format
+					obsID = mtch.group('id')
+					opTag = mtch.group('tag')
+					drsuBarcode = mtch.group('barcode')
+					if drsuBarcode[:3] == 'Err':
+						try:
+							drsuBarcode = result[int(obsID)-1]['barcode']
+						except KeyError:
+							drsuBarcode = 'UNK'
+					obsOutcome = mtch.group('outcome')
+					msg = mtch.group('msg')
+					
+				else:
+					## Otherwise, I don't really know how the messages will look so we use this try...except
+					## block should take care of the various situations.
 					try:
-						drsuBarcode = result[int(obsID)-1]['barcode']
-					except KeyError:
-						drsuBarcode = 'UNK'
-				obsOutcome = mtch.group('outcome')
-				msg = mtch.group('msg')
-				
-			else:
-				## Otherwise, I don't really know how the messages will look so we use this try...except
-				## block should take care of the various situations.
-				try:
-					obsID, opTag, drsuBarcode, obsOutcome, msg = line.split(None, 4)
-					opTag = opTag.replace('[', '')
-					opTag = opTag.replace(']', '')
-					drsuBarcode = drsuBarcode.replace('[', '')
-					drsuBarcode = drsuBarcode.replace(']', '')
-					drsuBarcode = drsuBarcode.replace("'", '')
-				except ValueError:
-					try:
-						obsID, opTag, drsuBarcode, obsOutcome = line.split(None, 3)
-						msg = 'UNK'
+						obsID, opTag, drsuBarcode, obsOutcome, msg = line.split(None, 4)
+						opTag = opTag.replace('[', '')
+						opTag = opTag.replace(']', '')
+						drsuBarcode = drsuBarcode.replace('[', '')
+						drsuBarcode = drsuBarcode.replace(']', '')
+						drsuBarcode = drsuBarcode.replace("'", '')
 					except ValueError:
 						try:
-							obsID, opTag, obsOutcome = line.split(None, 2)
-							drsuBarcode = 'UNK'
-							obsOutcome = '-1'
+							obsID, opTag, drsuBarcode, obsOutcome = line.split(None, 3)
 							msg = 'UNK'
 						except ValueError:
-							obsID, obsOutcome = line.split(None, 1)
-							drsuBarcode = 'UNK'
-							opTag = 'UNK'
-							msg = 'UNK'
-							
-			obsID = int(obsID)
-			obsOutcome = int(obsOutcome) if obsOutcome != 'Failed' else 1
-			result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
-			
-		fh.close()
+							try:
+								obsID, opTag, obsOutcome = line.split(None, 2)
+								drsuBarcode = 'UNK'
+								obsOutcome = '-1'
+								msg = 'UNK'
+							except ValueError:
+								obsID, obsOutcome = line.split(None, 1)
+								drsuBarcode = 'UNK'
+								opTag = 'UNK'
+								msg = 'UNK'
+								
+				obsID = int(obsID)
+				obsOutcome = int(obsOutcome) if obsOutcome != 'Failed' else 1
+				result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
+				
 	except Exception as e:
 		shutil.rmtree(tempDir, ignore_errors=True)
 		raise e

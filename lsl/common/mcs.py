@@ -368,12 +368,16 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
 	# Split into lines and go!
 	cStruct = cStruct.split('\n')
 	for line in cStruct:
-		## Skip structure declaration and lines too short to hold a declaration
+		## Skip structure declaration, blank lines, comments, and lines too short to hold a 
+		## declaration
+		line = line.strip().rstrip()
 		if '{' in line or '}' in line:
+			continue
+		if line[:2] == '//':
 			continue
 		if len(line) < 5:
 			continue
-		
+			
 		## RegEx the line to find the type, name, and dimensions (if needed) for
 		## the next structure variable
 		mtch = _cDecRE.search(line)
