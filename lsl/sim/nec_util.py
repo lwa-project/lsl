@@ -53,26 +53,26 @@ def open_and_get_nec_freq(fname):
 	object and the first frequency found in the file (MHz).
 	"""
 	
-	f = open(fname)
+	fh = open(fname, 'r')
 	
 	# Start at beginning of file
-	f.seek(0)
+	fh.seek(0)
 	
 	# skip all lines until a line containing "STRUCTURE SPECIFICATION": this
 	# effectively skips all comments (from CM cards) and text resulting from
 	# reading Numerical Green's Function parts. Of course, if a user writes
 	# "STRUCTURE SPECIFICATION" in his comment lines, this still fails...
-	for line in f:
+	for line in fh:
 		if line.find('STRUCTURE SPECIFICATION') >= 0:
 			break
 	else:
 		raise RuntimeError("STRUCTURE SPECIFICATION not found!")
 		
 	#  Now look for FREQUENCY and get the value
-	for line in f:
+	for line in fh:
 		if line.find('FREQUENCY') >= 0:
 			break
-	for line in f:
+	for line in fh:
 		#print(line)
 		if line.find('FREQUENCY=') >= 0:
 			freq = float(line[line.find('=')+1:].split()[0])
@@ -84,7 +84,7 @@ def open_and_get_nec_freq(fname):
 		raise RuntimeError("Frequency value not found")
 		
 	_NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
-	return (f, freq)
+	return (fh, freq)
 
 
 def change_nec_freq(necname, freq):
@@ -92,25 +92,24 @@ def change_nec_freq(necname, freq):
 	Modify the FR card in a NEC input file to run at freq.
 	"""
 
-	f = open(necname,'r+')
-	buf = f.read()
-	lines = buf.splitlines(True)
-	# Substitute the freq in the right field of the FR card
-	for i in range(len(lines)):
-		if lines[i][:2] == 'FR':
-			_NEC_UTIL_LOG.debug("Found line : %s", lines[i])
-			vals = re.split(',| +', lines[i])
-			_NEC_UTIL_LOG.debug("Vals = %s", vals)
-			vals[5] = "%.2f" % freq
-			lines[i] = " ".join(vals)
-			# Make sure this line ends in newline
-			if lines[i][-1] != '\n':
-				lines[i] += '\n'
-	# Rewrite the file
-	f.seek(0)
-	f.writelines(lines)
-	f.truncate()
-	f.close()
+	with open(necname, 'r+') as fh:
+		buf = fh.read()
+		lines = buf.splitlines(True)
+		# Substitute the freq in the right field of the FR card
+		for i in range(len(lines)):
+			if lines[i][:2] == 'FR':
+				_NEC_UTIL_LOG.debug("Found line : %s", lines[i])
+				vals = re.split(',| +', lines[i])
+				_NEC_UTIL_LOG.debug("Vals = %s", vals)
+				vals[5] = "%.2f" % freq
+				lines[i] = " ".join(vals)
+				# Make sure this line ends in newline
+				if lines[i][-1] != '\n':
+					lines[i] += '\n'
+		# Rewrite the file
+		fh.seek(0)
+		fh.writelines(lines)
+		fh.truncate()
 
 
 def calcIME(necname, myfreqs = None, zpre = 100):
@@ -149,66 +148,65 @@ class NECImpedance:
 	
 	def __init__(self, necname):
 		outname = os.path.splitext(necname)[0] + '.out'
-		f = open(outname)
-		
-		# Start at beginning of file
-		f.seek(0)
-		
-		# skip all lines until a line containing "STRUCTURE SPECIFICATION": this
-		# effectively skips all comments (from CM cards) and text resulting from
-		# reading Numerical Green's Function parts. Of course, if a user writes
-		# "STRUCTURE SPECIFICATION" in his comment lines, this still fails...
-		for line in f:
-			if line.find('STRUCTURE SPECIFICATION') >= 0:
-				break
-		else:
-			raise RuntimeError("STRUCTURE SPECIFICATION not found!")
+		with open(outname, 'r') as fh:
+			# Start at beginning of file
+			fh.seek(0)
 			
-		freqs = []
-		impedances = []
-		while (True):
-			#  Now look for FREQUENCY and get the value
-			for line in f:
-				if line.find('FREQUENCY') >= 0:
-					break
-			for line in f:
-				_NEC_UTIL_LOG.debug(line.strip())
-				if line.find('FREQUENCY=') >= 0:
-					freq = float(line[line.find('=')+1:].split()[0])
-					break
-				if line.find('FREQUENCY :') >=0:
-					freq = float(line[line.find(':')+1:].split()[0])
+			# skip all lines until a line containing "STRUCTURE SPECIFICATION": this
+			# effectively skips all comments (from CM cards) and text resulting from
+			# reading Numerical Green's Function parts. Of course, if a user writes
+			# "STRUCTURE SPECIFICATION" in his comment lines, this still fails...
+			for line in fh:
+				if line.find('STRUCTURE SPECIFICATION') >= 0:
 					break
 			else:
-				_NEC_UTIL_LOG.debug("No more freqs...")
-				break
-			_NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
-			for line in f:
-				if line.find('ANTENNA INPUT PARAMETERS') >= 0:
-					break
-			gotimp = False
-			for line in f:
-				if line.find('IMPEDANCE') >= 0:
-					gotimp = True
-					break
-			if not gotimp:
-				raise RuntimeError("IMPEDANCE not found")
-			for line in f:
-				break
-			for line in f:
-				_NEC_UTIL_LOG.debug(line.strip())
-				break
+				raise RuntimeError("STRUCTURE SPECIFICATION not found!")
 				
-			# Here we need to add a space before - signs that
-			# are not preceded by an E, so it will parse
-			line = re.sub(r'(\d)-', r'\1 -', line)
-			re_z = float(line.split()[6])
-			im_z = float(line.split()[7])
-			freqs.append(freq)
-			impedances.append(complex(re_z, im_z))
-			
-		self.freqs = array(freqs)
-		self.z = array(impedances)
+			freqs = []
+			impedances = []
+			while (True):
+				#  Now look for FREQUENCY and get the value
+				for line in fh:
+					if line.find('FREQUENCY') >= 0:
+						break
+				for line in fh:
+					_NEC_UTIL_LOG.debug(line.strip())
+					if line.find('FREQUENCY=') >= 0:
+						freq = float(line[line.find('=')+1:].split()[0])
+						break
+					if line.find('FREQUENCY :') >=0:
+						freq = float(line[line.find(':')+1:].split()[0])
+						break
+				else:
+					_NEC_UTIL_LOG.debug("No more freqs...")
+					break
+				_NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
+				for line in fh:
+					if line.find('ANTENNA INPUT PARAMETERS') >= 0:
+						break
+				gotimp = False
+				for line in fh:
+					if line.find('IMPEDANCE') >= 0:
+						gotimp = True
+						break
+				if not gotimp:
+					raise RuntimeError("IMPEDANCE not found")
+				for line in fh:
+					break
+				for line in fh:
+					_NEC_UTIL_LOG.debug(line.strip())
+					break
+					
+				# Here we need to add a space before - signs that
+				# are not preceded by an E, so it will parse
+				line = re.sub(r'(\d)-', r'\1 -', line)
+				re_z = float(line.split()[6])
+				im_z = float(line.split()[7])
+				freqs.append(freq)
+				impedances.append(complex(re_z, im_z))
+				
+			self.freqs = array(freqs)
+			self.z = array(impedances)
 
 
 class NECPattern:
@@ -243,23 +241,23 @@ class NECPattern:
 		
 		outname = os.path.splitext(necname)[0] + '.out'
 		try:
-			f, filefreq = open_and_get_nec_freq(outname)
+			fh, filefreq = open_and_get_nec_freq(outname)
 		except:
 			print("NEC .out file not found!  Running NEC")
-			f = None
+			fh = None
 			
-		if f is None or not CloseTo(filefreq, freq):
+		if fh is None or not CloseTo(filefreq, freq):
 			if rerun:
 				_NEC_UTIL_LOG.warning("NEC output file is at a different frequency \
 					than the requested frequency: re-running")
-				if f is not None:
-					f.close()
+				if fh is not None:
+					fh.close()
 				change_nec_freq(necname, freq)
-
+				
 				# Make sure we have NEC install
 				if whichNEC4() is None:
 					raise RuntimeError("NEC executable 'nec4d' not found in PATH")
-
+					
 				# Important NOTE:
 				# This requires a modified version of NEC-4 that
 				# takes 2 command line arguments instead of asking questions
@@ -268,17 +266,18 @@ class NECPattern:
 				ret = os.system(cmdstr)
 				if ret != 0:
 					raise RuntimeError("Bad return value from nec2++ call : %d" % ret)       
-				f, filefreq = open_and_get_nec_freq(outname)
+				fh, filefreq = open_and_get_nec_freq(outname)
 				if not CloseTo(filefreq, freq):
+					fh.close()
 					raise ValueError("NEC failed to generate a file with the correct frequency.")
 					
 			else:
 				raise ValueError("NEC output file is at a different frequency (%f) than the requested frequency (%f)." % \
 					(filefreq, freq))
-		
+					
 		#  Now look for RADIATION PATTERN or EXCITATION and read it
 		radpat = None
-		for line in f:
+		for line in fh:
 			if line.find('RADIATION PATTERN') >= 0:
 				radpat = True
 				break
@@ -287,14 +286,15 @@ class NECPattern:
 				break
 		else:
 			raise RuntimeError("RADIATION PATTERN nor EXCITATION not found!")
-
-		
-		if radpat:
-			self.__readRADIATION(f)
-		else:
-			self.__readEXCITATION(f)
 			
-	def __readRADIATION(self, f):
+		if radpat:
+			self.__readRADIATION(fh)
+		else:
+			self.__readEXCITATION(fh)
+			
+		fh.close()
+		
+	def __readRADIATION(self, fh):
 		"""
 		Private function to read in a RADIATION PATTERN section of a NEC
 		output file.
@@ -303,12 +303,12 @@ class NECPattern:
 		# Some versions of NEC2 output extraneous data after "RADIATION PATTERNS" before the actual data
 		# and column labels (e.g. RANGE = and EXP (-JKR) values ).  Discard until
 		# the true bottom of the column labels (look for DB) */
-		for line in f:
+		for line in fh:
 			if line.find('DB') >= 0:
 				break
 				
 		n = 0
-		for line in f:
+		for line in fh:
 			cols = line.split()
 			if len(cols) < 4:
 				break
@@ -328,7 +328,7 @@ class NECPattern:
 			_NEC_UTIL_LOG.debug("theta %d phi %d gain %f @ %f deg", theta, phi, powgain, phsgain)
 
 
-	def __readEXCITATION(self, f):
+	def __readEXCITATION(self, fh):
 		"""
 		Private function to read in data stored in a collection of EXCITATION 
 		sections in a NEC output file.
@@ -340,7 +340,7 @@ class NECPattern:
 		# EXCITATION heading.  Read those lines into parts and then deal with the
 		# results.  The keys lines are #2 (theta and phi) and #12 (induced currents)
 		lineCount = 0
-		for line in f:
+		for line in fh:
 			if lineCount % 16 == 0:
 				parts = []
 			parts.append( line )

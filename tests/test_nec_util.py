@@ -38,7 +38,8 @@ class nec_util_tests(unittest.TestCase):
 	def test_open_and_get_nec_freq(self):
 		"""Test nec_util.open_and_get_nec_freq() function."""
 		
-		(f, freq) = nec_util.open_and_get_nec_freq(self.nec_name)   
+		(fh, freq) = nec_util.open_and_get_nec_freq(self.nec_name)   
+		fh.close()
 		
 	def test_calcIME(self):
 		"""Test nec_util.calcIME() function."""
