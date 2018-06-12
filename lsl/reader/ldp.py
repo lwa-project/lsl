@@ -243,7 +243,7 @@ class TBWFile(LDPFileBase):
 		
 		# Basic file information
 		filesize = os.fstat(self.fh.fileno()).st_size
-		nFramesFile = filesize / tbw.FrameSize
+		nFramesFile = (filesize - self.fh.tell()) / tbw.FrameSize
 		srate = 196e6
 		bits = junkFrame.getDataBits()
 		start = junkFrame.getTime()
@@ -430,7 +430,7 @@ class TBNFile(LDPFileBase):
 		"""
 		
 		filesize = os.fstat(self.fh.fileno()).st_size
-		nFramesFile = filesize / tbn.FrameSize
+		nFramesFile = (filesize - self.fh.tell()) / tbn.FrameSize
 		framesPerObsX, framesPerObsY = tbn.getFramesPerObs(self.fh)
 		srate =  tbn.getSampleRate(self.fh, nFrames=((framesPerObsX+framesPerObsY)*3))
 		bits = 8
@@ -718,7 +718,7 @@ class DRXFile(LDPFileBase):
 		"""
 		
 		filesize = os.fstat(self.fh.fileno()).st_size
-		nFramesFile = filesize / drx.FrameSize
+		nFramesFile = (filesize - self.fh.tell()) / drx.FrameSize
 		beams = drx.getBeamCount(self.fh)
 		tunepols = drx.getFramesPerObs(self.fh)
 		tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
@@ -1395,7 +1395,7 @@ class TBFFile(LDPFileBase):
 		
 		# Basic file information
 		filesize = os.fstat(self.fh.fileno()).st_size
-		nFramesFile = filesize / tbf.FrameSize
+		nFramesFile = (filesize - self.fh.tell()) / tbf.FrameSize
 		srate = fC
 		bits = 4
 		nFramesPerObs = tbf.getFramesPerObs(self.fh)
