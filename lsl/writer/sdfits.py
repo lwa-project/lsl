@@ -485,20 +485,20 @@ class SD(object):
 			except NameError:
 				pass
 		colDefs = pyfits.ColDefs(cs)
-
+		
 		# Create the SINGLE DISH table and update its header
 		sd = pyfits.new_table(colDefs)
 		
 		## Single disk keywords - order seems to matter
-		sd.header.set('EXTNAME', 'SINGLE DISH', 'SDFITS table name', after='TFIELDS')
-		sd.header.set('NMATRIX', 1, after='EXTNAME')
-		sd.header.insert('TTYPE1', ('OBSERVER', self.observer, 'Observer name(s)'))
-		sd.header.insert('TTYPE1', ('PROJID', self.project, 'Project name'))
-		sd.header.insert('TTYPE1', ('TELESCOP', self.site.name, 'Telescope name'))
+		sd.header['EXTNAME'] = ('SINGLE DISH', 'SDFITS table name')
+		sd.header['NMATRIX'] = 1
+		sd.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+		sd.header['PROJID']   = (self.project, 'Project name')
+		sd.header['TELESCOP'] = (self.site.name, 'Telescope name')
 		x,y,z = self.site.getGeocentricLocation()
-		sd.header.insert('TTYPE1', ('OBSGEO-X', x, '[m] Antenna ECEF X-coordinate'))
-		sd.header.insert('TTYPE1', ('OBSGEO-Y', y, '[m] Antenna ECEF Y-coordinate'))
-		sd.header.insert('TTYPE1', ('OBSGEO-Z', z, '[m] Antenna ECEF Z-coordinate'))
+		sd.header['OBSGEO-X'] = (x, '[m] Antenna ECEF X-coordinate')
+		sd.header['OBSGEO-Y'] = (y, '[m] Antenna ECEF Y-coordinate')
+		sd.header['OBSGEO-Z'] = (z, '[m] Antenna ECEF Z-coordinate')
 		
 		sd.header['SPECSYS'] = ('LSRK', 'Doppler reference frame (transformed)')
 		sd.header['SSYSOBS'] = ('TOPOCENT', 'Doppler reference frame of observation')
@@ -506,31 +506,31 @@ class SD(object):
 		sd.header['RADESYS'] = ('FK5', 'Equatorial coordinate system frame')
 		
 		## Data and flag table dimensionality
-		sd.header.set('TDIM%i' % dataIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % dataIndex)
+		sd.header['TDIM%i' % dataIndex] = ('(%i,%i,1,1)' % (self.nChan, self.nStokes))
 		#sd.header.set('TDIM%i' % flagIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % flagIndex)
 		
 		## Data and flag table axis descriptions
 		### Frequency
-		sd.header.insert('TTYPE1', ('CTYPE1', 'FREQ', 'axis 1 is FREQ (frequency)'))
-		sd.header.insert('TTYPE1', ('CDELT1', self.freq[0].chWidth))
-		sd.header.insert('TTYPE1', ('CRPIX1', self.refPix))
-		sd.header.insert('TTYPE1', ('CRVAL1', self.refVal))
+		sd.header['CTYPE1'] = ('FREQ', 'axis 1 is FREQ (frequency)')
+		sd.header['CDELT1'] = self.freq[0].chWidth
+		sd.header['CRPIX1'] = self.refPix
+		sd.header['CRVAL1'] = self.refVal
 		### Stokes
-		sd.header.insert('TTYPE1', ('CTYPE2', 'STOKES', 'axis 2 is STOKES axis (polarization)'))
+		sd.header['CTYPE2'] = ('STOKES', 'axis 2 is STOKES axis (polarization)')
 		if self.stokes[0] < 0:
-			sd.header.insert('TTYPE1', ('CDELT2', -1.0))
+			sd.header['CDELT2'] = -1.0
 		else:
-			sd.header.insert('TTYPE1', ('CDELT2', 1.0))
-		sd.header.insert('TTYPE1', ('CRPIX2', 1.0))
-		sd.header.insert('TTYPE1', ('CRVAL2', float(self.stokes[0])))
+			sd.header['CDELT2'] = 1.0
+		sd.header['CRPIX2'] = 1.0
+		sd.header['CRVAL2'] = float(self.stokes[0])
 		### RA
-		sd.header.insert('TTYPE1', ('CTYPE3', 'RA', 'axis 3 is RA axis (pointing)'))
-		sd.header.insert('TTYPE1', ('CRPIX3', 1.0))
-		sd.header.insert('TTYPE1', ('CDELT3', -1.0))
+		sd.header['CTYPE3'] = ('RA', 'axis 3 is RA axis (pointing)')
+		sd.header['CRPIX3'] = 1.0
+		sd.header['CDELT3'] = -1.0
 		### Dec
-		sd.header.insert('TTYPE1', ('CTYPE4', 'DEC', 'axis 4 is Dec. axis (pointing)'))
-		sd.header.insert('TTYPE1', ('CRPIX4', 1.0))
-		sd.header.insert('TTYPE1', ('CDELT4', 1.0))
+		sd.header['CTYPE4'] = ('DEC', 'axis 4 is Dec. axis (pointing)')
+		sd.header['CRPIX4'] = 1.0
+		sd.header['CDELT4'] = 1.0
 		
 		self.FITS.append(sd)
 		self.FITS.flush()
