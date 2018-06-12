@@ -268,36 +268,33 @@ def parseSDM(filename):
 	"""
 	
 	# Open the file
-	fh = open(filename, 'rb')
-	
-	# Create a new SDM instance
-	dynamic = SDM()
-	
-	# Sub-system status sections
-	dynamic.station.binaryRead(fh)
-	dynamic.shl.binaryRead(fh)
-	dynamic.asp.binaryRead(fh)
-	dynamic.dp.binaryRead(fh)
-	for n in xrange(ME_MAX_NDR):
-		dynamic.dr[n].binaryRead(fh)
+	with open(filename, 'rb') as fh:
+		# Create a new SDM instance
+		dynamic = SDM()
 		
-	# Sub-sub-system status section
-	dynamic.status.binaryRead(fh)
-	
-	# Antenna status and data path status
-	adpsStruct = parseCStruct("""
-	int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
-	int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
-	""", endianness='little')
-	
-	fh.readinto(adpsStruct)
-	
-	dynamic.antStatus = single2multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
-	dynamic.dpoStatus = single2multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
-	
-	# Station settings section
-	dynamic.settings.binaryRead(fh)
-	
-	fh.close()
-	
+		# Sub-system status sections
+		dynamic.station.binaryRead(fh)
+		dynamic.shl.binaryRead(fh)
+		dynamic.asp.binaryRead(fh)
+		dynamic.dp.binaryRead(fh)
+		for n in xrange(ME_MAX_NDR):
+			dynamic.dr[n].binaryRead(fh)
+			
+		# Sub-sub-system status section
+		dynamic.status.binaryRead(fh)
+		
+		# Antenna status and data path status
+		adpsStruct = parseCStruct("""
+		int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
+		int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
+		""", endianness='little')
+		
+		fh.readinto(adpsStruct)
+		
+		dynamic.antStatus = single2multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
+		dynamic.dpoStatus = single2multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
+		
+		# Station settings section
+		dynamic.settings.binaryRead(fh)
+		
 	return dynamic

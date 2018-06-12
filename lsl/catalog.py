@@ -174,46 +174,43 @@ class LWA_Catalog(Catalog):
 		
 		# open data file 
 		fileName = os.path.join(self.get_directory(), 'lwa_catalog.dat')
-		catFile = open(fileName, 'r')
-		
-		# read source info
-		lineNum = 0
-		for line in catFile:
-			lineNum += 1
-			if line.startswith('#') or line.isspace():
-				continue
-				
-			try:
-				name = line[0:8]
-				raHours = int(line[9:11], 10)
-				raMinutes = int(line[12:14], 10)
-				raSeconds = float(line[15:20])
-				decSign = line[21]
-				decDegrees = int(line[22:24], 10)
-				decMinutes = int(line[25:27], 10)
-				decSeconds = float(line[28:32])
-			except ValueError as err:
-				raise RuntimeError("file %s, line %d incorectly formated: \'%s\' : %s]" % (fileName, lineNum, line, err))
-				
-			name = name.rstrip()           
-			
-			ra = astro.hms(raHours, raMinutes, raSeconds)
-			if decSign == '-':
-				sign = True
-			else:
-				sign = False
-			dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
-			
-			entry = CatalogEntry(name, transform.CelestialPosition((ra, dec), name=name))
-			self.source_map[name] = entry
-			
-			aliasList = line[34:].split()
-			if len(aliasList) > 0:
-				for alias in aliasList:
-					entry.alias_list.append(alias)
-					self.alias_map[alias] = entry
+		with open(fileName, 'r') as catFile:
+			# read source info
+			lineNum = 0
+			for line in catFile:
+				lineNum += 1
+				if line.startswith('#') or line.isspace():
+					continue
 					
-		catFile.close()
+				try:
+					name = line[0:8]
+					raHours = int(line[9:11], 10)
+					raMinutes = int(line[12:14], 10)
+					raSeconds = float(line[15:20])
+					decSign = line[21]
+					decDegrees = int(line[22:24], 10)
+					decMinutes = int(line[25:27], 10)
+					decSeconds = float(line[28:32])
+				except ValueError as err:
+					raise RuntimeError("file %s, line %d incorectly formated: \'%s\' : %s]" % (fileName, lineNum, line, err))
+					
+				name = name.rstrip()           
+				
+				ra = astro.hms(raHours, raMinutes, raSeconds)
+				if decSign == '-':
+					sign = True
+				else:
+					sign = False
+				dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
+				
+				entry = CatalogEntry(name, transform.CelestialPosition((ra, dec), name=name))
+				self.source_map[name] = entry
+				
+				aliasList = line[34:].split()
+				if len(aliasList) > 0:
+					for alias in aliasList:
+						entry.alias_list.append(alias)
+						self.alias_map[alias] = entry
 
 
 class PSR_Catalog(Catalog):
@@ -238,108 +235,105 @@ class PSR_Catalog(Catalog):
 		debug = False
 		# open data file 
 		fileName = os.path.join(self.get_directory(), 'psrcat.db')
-		catFile = open(fileName, 'r')
-		
-		# read source info
-		psrb = None
-		psrj = None
-		ra = None
-		dec = None
-		bad = False
-		for line in catFile:
-			if line.startswith('PSRB'):
-				psrb = line.split()[1]
-			if line.startswith('PSRJ'):
-				psrj = line.split()[1]
-			if line.startswith('RAJ'):
-				rastr = line.split()[1]
-				sp = rastr.split(':')
-				if len(sp) == 3:
-					(raHours, raMinutes, raSeconds) = sp
-				elif len(sp) == 2:
-					(raHours, raMinutes) = sp
-					raSeconds = 0.0
-				else:
-					if debug:
-						print('Bad format for RAJ line : '+line)
-					bad = True
-				raHours = int(raHours)
-				raMinutes = int(raMinutes)
-				raSeconds = float(raSeconds)
-				try:
-					ra = astro.hms(raHours, raMinutes, raSeconds)
-				except:
-					if debug:
-						print('PSRCAT: Bad RA for ', psrj, " : ", rastr)
-					bad = True
-			if line.startswith('DECJ'):
-				decstr = line.split()[1]
-				sp = decstr.split(':')
-				if len(sp) == 3:
-					(decDegrees, decMinutes, decSeconds) = sp
-				elif len(sp) == 2:
-					(decDegrees, decMinutes) = sp
-					decSeconds = 0.0
-				else:
-					if debug:
-						print('PSRCAT: Bad format for DECJ line : '+line)
-					bad = True
-					continue
-				if decDegrees.startswith('-'):
-					decDegrees = decDegrees[1:]
-					sign = True
-				else:
-					sign = False
-				decDegrees = int(decDegrees)
-				decMinutes = int(decMinutes)
-				decSeconds = float(decSeconds)
-				try:
-					dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
-				except:
-					if debug:
-						print('PSRCAT: Bad DEC for ', psrj, " : ", decstr)
-					bad = True
-					
-			if line.startswith('@-'):
-				# New source, save current source info
-				if psrb is not None:
-					name = psrb
-					alias = psrj
-				else:
-					name = psrj
-					alias = None
-					
-				if ra is None or dec is None:
-					# These pulsars don't have RAJ, DECJ
-					# I think they may all have ecliptic positions
-					# which should be converted to ra,dec but I'm
-					# going to ignore them for now. -- paulr
-					#print "PSRCAT: No position for pulsar ",name
-					bad = True
-					
-				# Add source to list if good.
-				if not bad:                    
-					sourcePos = astro.equ_posn(ra, dec) 
-					entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
-					self.source_map[name] = entry
-					if debug:
-						print('Added ', name)
-					
-					if alias is not None:
-						alias = alias.rstrip()
-						self.alias_map[alias] = entry
-						entry.alias_list.append(alias)
+		with open(fileName, 'r') as catFile:
+			# read source info
+			psrb = None
+			psrj = None
+			ra = None
+			dec = None
+			bad = False
+			for line in catFile:
+				if line.startswith('PSRB'):
+					psrb = line.split()[1]
+				if line.startswith('PSRJ'):
+					psrj = line.split()[1]
+				if line.startswith('RAJ'):
+					rastr = line.split()[1]
+					sp = rastr.split(':')
+					if len(sp) == 3:
+						(raHours, raMinutes, raSeconds) = sp
+					elif len(sp) == 2:
+						(raHours, raMinutes) = sp
+						raSeconds = 0.0
+					else:
 						if debug:
-							print('Alias : ', alias.rstrip())
-							
-				# Clear out vars for next source
-				psrb = None
-				psrj = None
-				ra = None
-				dec = None
-				bad = False
-				
-		catFile.close()
+							print('Bad format for RAJ line : '+line)
+						bad = True
+					raHours = int(raHours)
+					raMinutes = int(raMinutes)
+					raSeconds = float(raSeconds)
+					try:
+						ra = astro.hms(raHours, raMinutes, raSeconds)
+					except:
+						if debug:
+							print('PSRCAT: Bad RA for ', psrj, " : ", rastr)
+						bad = True
+				if line.startswith('DECJ'):
+					decstr = line.split()[1]
+					sp = decstr.split(':')
+					if len(sp) == 3:
+						(decDegrees, decMinutes, decSeconds) = sp
+					elif len(sp) == 2:
+						(decDegrees, decMinutes) = sp
+						decSeconds = 0.0
+					else:
+						if debug:
+							print('PSRCAT: Bad format for DECJ line : '+line)
+						bad = True
+						continue
+					if decDegrees.startswith('-'):
+						decDegrees = decDegrees[1:]
+						sign = True
+					else:
+						sign = False
+					decDegrees = int(decDegrees)
+					decMinutes = int(decMinutes)
+					decSeconds = float(decSeconds)
+					try:
+						dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
+					except:
+						if debug:
+							print('PSRCAT: Bad DEC for ', psrj, " : ", decstr)
+						bad = True
+						
+				if line.startswith('@-'):
+					# New source, save current source info
+					if psrb is not None:
+						name = psrb
+						alias = psrj
+					else:
+						name = psrj
+						alias = None
+						
+					if ra is None or dec is None:
+						# These pulsars don't have RAJ, DECJ
+						# I think they may all have ecliptic positions
+						# which should be converted to ra,dec but I'm
+						# going to ignore them for now. -- paulr
+						#print "PSRCAT: No position for pulsar ",name
+						bad = True
+						
+					# Add source to list if good.
+					if not bad:                    
+						sourcePos = astro.equ_posn(ra, dec) 
+						entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
+						self.source_map[name] = entry
+						if debug:
+							print('Added ', name)
+						
+						if alias is not None:
+							alias = alias.rstrip()
+							self.alias_map[alias] = entry
+							entry.alias_list.append(alias)
+							if debug:
+								print('Alias : ', alias.rstrip())
+								
+					# Clear out vars for next source
+					psrb = None
+					psrj = None
+					ra = None
+					dec = None
+					bad = False
 
 
 class PKS_Catalog(Catalog):
@@ -361,51 +355,48 @@ class PKS_Catalog(Catalog):
 		
 		# open data file 
 		fileName = os.path.join(self.get_directory(), 'pkscat.txt')
-		catFile = open(fileName, 'r')
-		
-		# read source info
-		lineNum = 1
-		line = catFile.readline()
-		while line:
-			if line == '\n':
+		with open(fileName, 'r') as catFile:
+			# read source info
+			lineNum = 1
+			line = catFile.readline()
+			while line:
+				if line == '\n':
+					line = catFile.readline()
+					lineNum += 1
+					continue
+					
+				try:
+					name = line[0:8]
+					alias = line[12:19]
+					raHours = int(line[22:24])
+					raMinutes = int(line[25:27])
+					raSeconds = float(line[28:32])
+					decSign = line[33]
+					decDegrees = int(line[34:36])
+					decMinutes = int(line[37:39])
+					decSeconds = int(line[40:42])
+				except ValueError:
+					raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+					
+				ra = astro.hms(raHours, raMinutes, raSeconds)
+				if decSign == '-':
+					sign = True
+				else:
+					sign = False
+				dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
+				sourcePos = astro.equ_posn(ra, dec)
+				
+				# precess coordinates from B1950
+				entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, epoch='B1950', name=name))
+				self.source_map[name] = entry
+				
+				if len(alias.strip()):
+					alias = alias.rstrip()
+					self.alias_map[alias] = entry
+					entry.alias_list.append(alias)
+					
 				line = catFile.readline()
 				lineNum += 1
-				continue
-				
-			try:
-				name = line[0:8]
-				alias = line[12:19]
-				raHours = int(line[22:24])
-				raMinutes = int(line[25:27])
-				raSeconds = float(line[28:32])
-				decSign = line[33]
-				decDegrees = int(line[34:36])
-				decMinutes = int(line[37:39])
-				decSeconds = int(line[40:42])
-			except ValueError:
-				raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
-				
-			ra = astro.hms(raHours, raMinutes, raSeconds)
-			if decSign == '-':
-				sign = True
-			else:
-				sign = False
-			dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
-			sourcePos = astro.equ_posn(ra, dec)
-			
-			# precess coordinates from B1950
-			entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, epoch='B1950', name=name))
-			self.source_map[name] = entry
-			
-			if len(alias.strip()):
-				alias = alias.rstrip()
-				self.alias_map[alias] = entry
-				entry.alias_list.append(alias)
-				
-			line = catFile.readline()
-			lineNum += 1
-			
-		catFile.close()
 
 
 class PKS90_Catalog(Catalog):
@@ -427,55 +418,52 @@ class PKS90_Catalog(Catalog):
 		
 		# open data file 
 		fileName = os.path.join(self.get_directory(), 'PKS90.txt')
-		catFile = open(fileName, 'r')
-		
-		# read source info
-		lineNum = 1
-		line = catFile.readline()
-		while line:
-			if line == '\n':
+		with open(fileName, 'r') as catFile:
+			# read source info
+			lineNum = 1
+			line = catFile.readline()
+			while line:
+				if line == '\n':
+					line = catFile.readline()
+					lineNum += 1
+					continue
+					
+				try:
+					name = line[0:10]
+					alias0 = line[139:148]
+					alias1 = line[168:175]
+					raHours = int(line[10:12])
+					raMinutes = int(line[13:15])
+					raSeconds = float(line[16:20])
+					decSign = line[23]
+					decDegrees = int(line[24:26])
+					decMinutes = int(line[27:29])
+					decSeconds = float(line[30:34])
+				except ValueError:
+					raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+					
+				ra = astro.hms(raHours, raMinutes, raSeconds)
+				if decSign == '-':
+					sign = True
+				else:
+					sign = False
+				dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
+				sourcePos = astro.equ_posn(ra, dec)
+				
+				entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
+				self.source_map[name] = entry
+				
+				if len(alias0.strip()): 
+					alias = alias0.rstrip()
+					entry.alias_list.append(alias)
+					self.alias_map[alias] = entry
+				if len(alias1.strip()):
+					alias = alias1.rstrip()
+					entry.alias_list.append(alias)
+					self.alias_map[alias] = entry
+					
 				line = catFile.readline()
 				lineNum += 1
-				continue
-				
-			try:
-				name = line[0:10]
-				alias0 = line[139:148]
-				alias1 = line[168:175]
-				raHours = int(line[10:12])
-				raMinutes = int(line[13:15])
-				raSeconds = float(line[16:20])
-				decSign = line[23]
-				decDegrees = int(line[24:26])
-				decMinutes = int(line[27:29])
-				decSeconds = float(line[30:34])
-			except ValueError:
-				raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
-				
-			ra = astro.hms(raHours, raMinutes, raSeconds)
-			if decSign == '-':
-				sign = True
-			else:
-				sign = False
-			dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
-			sourcePos = astro.equ_posn(ra, dec)
-			
-			entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
-			self.source_map[name] = entry
-			
-			if len(alias0.strip()): 
-				alias = alias0.rstrip()
-				entry.alias_list.append(alias)
-				self.alias_map[alias] = entry
-			if len(alias1.strip()):
-				alias = alias1.rstrip()
-				entry.alias_list.append(alias)
-				self.alias_map[alias] = entry
-				
-			line = catFile.readline()
-			lineNum += 1
-			
-		catFile.close()
 
 
 class C3C_Catalog(Catalog):
@@ -497,42 +485,39 @@ class C3C_Catalog(Catalog):
 		
 		# open data file 
 		fileName = os.path.join(self.get_directory(), '3c.dat')
-		catFile = open(fileName, 'r')
-		
-		# read source info
-		lineNum = 1
-		line = catFile.readline()
-		while line:
-			try:
-				name = line[0:3]
-				raHours = int(line[12:14])
-				raMinutes = int(line[15:17])
-				raSeconds = float(line[18:22])
-				decSign = line[27]
-				decDegrees = int(line[28:30])
-				decMinutes = float(line[31:35])
-			except ValueError:
-				raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
-				
-			name = ('3C' + name.strip())         
-			
-			ra = astro.hms(raHours, raMinutes, raSeconds)
-			(decSeconds, decMinutes) = math.modf(decMinutes)
-			if decSign == '-':
-				sign = True
-			else:
-				sign = False
-			dec = astro.dms(sign, decDegrees, int(decMinutes), (60 * decSeconds))
-			sourcePos = astro.equ_posn(ra, dec)
-			
-			# precess coordinates from B1950
-			entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, epoch='B1950', name=name))
-			self.source_map[name] = entry        
-			
+		with open(fileName, 'r') as catFile:
+			# read source info
+			lineNum = 1
 			line = catFile.readline()
-			lineNum += 1      
-			
-		catFile.close()
+			while line:
+				try:
+					name = line[0:3]
+					raHours = int(line[12:14])
+					raMinutes = int(line[15:17])
+					raSeconds = float(line[18:22])
+					decSign = line[27]
+					decDegrees = int(line[28:30])
+					decMinutes = float(line[31:35])
+				except ValueError:
+					raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+					
+				name = ('3C' + name.strip())         
+				
+				ra = astro.hms(raHours, raMinutes, raSeconds)
+				(decSeconds, decMinutes) = math.modf(decMinutes)
+				if decSign == '-':
+					sign = True
+				else:
+					sign = False
+				dec = astro.dms(sign, decDegrees, int(decMinutes), (60 * decSeconds))
+				sourcePos = astro.equ_posn(ra, dec)
+				
+				# precess coordinates from B1950
+				entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, epoch='B1950', name=name))
+				self.source_map[name] = entry        
+				
+				line = catFile.readline()
+				lineNum += 1      
 
 
 class C4C_Catalog(Catalog):
@@ -554,52 +539,49 @@ class C4C_Catalog(Catalog):
 		
 		# open data file 
 		fileName = os.path.join(self.get_directory(), '4c.dat')
-		catFile = open(fileName, 'r')
-		
-		# read source info
-		lineNum = 1
-		line = catFile.readline()
-		while line:
-			try:
-				name = line[0:8]
-				raHours = int(line[10:12])
-				raMinutes = int(line[13:15])
-				raSeconds = float(line[16:20])
-				decSign = line[22]
-				decDegrees = int(line[23:25])
-				decMinutes = float(line[26:30])
-				alias = line[64:-1]
-			except ValueError:
-				raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
-				
-			name = name.strip()        
-			name = ('4C' + name)
-			
-			alias = alias.strip()
-			alias = alias.rstrip('*')         
-			
-			ra = astro.hms(raHours, raMinutes, raSeconds)
-			(decSeconds, decMinutes) = math.modf(decMinutes)
-			if decSign == '-':
-				sign = True
-			else:
-				sign = False
-			dec = astro.dms(sign, decDegrees, int(decMinutes), (60 * decSeconds))
-			sourcePos = astro.equ_posn(ra, dec)
-			
-			# precess coordinates from B1950
-			entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, epoch='B1950', name=name))
-			self.source_map[name] = entry
-			
-			if len(alias.strip()):
-				alias = alias.rstrip()
-				entry.alias_list.append(alias)
-				self.alias_map[alias] = entry       
-				
+		with open(fileName, 'r') as catFile:
+			# read source info
+			lineNum = 1
 			line = catFile.readline()
-			lineNum += 1      
-			
-		catFile.close()
+			while line:
+				try:
+					name = line[0:8]
+					raHours = int(line[10:12])
+					raMinutes = int(line[13:15])
+					raSeconds = float(line[16:20])
+					decSign = line[22]
+					decDegrees = int(line[23:25])
+					decMinutes = float(line[26:30])
+					alias = line[64:-1]
+				except ValueError:
+					raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+					
+				name = name.strip()        
+				name = ('4C' + name)
+				
+				alias = alias.strip()
+				alias = alias.rstrip('*')         
+				
+				ra = astro.hms(raHours, raMinutes, raSeconds)
+				(decSeconds, decMinutes) = math.modf(decMinutes)
+				if decSign == '-':
+					sign = True
+				else:
+					sign = False
+				dec = astro.dms(sign, decDegrees, int(decMinutes), (60 * decSeconds))
+				sourcePos = astro.equ_posn(ra, dec)
+				
+				# precess coordinates from B1950
+				entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, epoch='B1950', name=name))
+				self.source_map[name] = entry
+				
+				if len(alias.strip()):
+					alias = alias.rstrip()
+					entry.alias_list.append(alias)
+					self.alias_map[alias] = entry       
+					
+				line = catFile.readline()
+				lineNum += 1      
 
 
 class F2FGL_Catalog(Catalog):

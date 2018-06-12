@@ -12,8 +12,8 @@ import socket
 import shutil
 import logging
 import tarfile
-import urllib2
 import tempfile
+from urllib2 import urlopen
 from datetime import datetime
 
 from scipy.special import lpmv
@@ -69,45 +69,43 @@ def _loadIGRFModel(filename):
 	"""
 	
 	# Open the file
-	fh = open(filename, 'r')
-	
-	# Go!
-	dataCos = {}
-	dataSin = {}
-	for line in fh:
-		## Is this line a comment?
-		line = line.replace('\n', '')
-		if line.find('#') != -1:
-			continue
-			
-		## Is it a header?
-		if line.find('IGRF') != -1:
-			continue
-		if line.find('g/h') != -1:
+	with open(filename, 'r') as fh:
+		# Go!
+		dataCos = {}
+		dataSin = {}
+		for line in fh:
+			## Is this line a comment?
+			line = line.replace('\n', '')
+			if line.find('#') != -1:
+				continue
+				
+			## Is it a header?
+			if line.find('IGRF') != -1:
+				continue
+			if line.find('g/h') != -1:
+				fields = line.split(None)
+				years = [float(value) for value in fields[3:-1]]
+				continue
+				
+			## Must be data...  parse it
 			fields = line.split(None)
-			years = [float(value) for value in fields[3:-1]]
-			continue
+			t, n, m = fields[0], int(fields[1]), int(fields[2])
+			c = numpy.array([float(v) for v in fields[3:]])
 			
-		## Must be data...  parse it
-		fields = line.split(None)
-		t, n, m = fields[0], int(fields[1]), int(fields[2])
-		c = numpy.array([float(v) for v in fields[3:]])
-		
-		## Sort out cosine (g) vs. sine (h)
-		if t == 'g':
-			try:
-				dataCos[n][m] = c
-			except KeyError:
-				dataCos[n] = [numpy.zeros(len(years)+1) for i in xrange(n+1)]
-				dataCos[n][m] = c
-		else:
-			try:
-				dataSin[n][m] = c
-			except KeyError:
-				dataSin[n] = [numpy.zeros(len(years)+1) for i in xrange(n+1)]
-				dataSin[n][m] = c
-	fh.close()
-	
+			## Sort out cosine (g) vs. sine (h)
+			if t == 'g':
+				try:
+					dataCos[n][m] = c
+				except KeyError:
+					dataCos[n] = [numpy.zeros(len(years)+1) for i in xrange(n+1)]
+					dataCos[n][m] = c
+			else:
+				try:
+					dataSin[n][m] = c
+				except KeyError:
+					dataSin[n] = [numpy.zeros(len(years)+1) for i in xrange(n+1)]
+					dataSin[n][m] = c
+					
 	# Build the output
 	output = {'years': years, 'g': dataCos, 'h': dataSin}
 	
@@ -419,7 +417,7 @@ def _downloadTECMapIGS(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 		
 	# Attempt to download the data
 	try:
-		tecFH = urllib2.urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+		tecFH = urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
 		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
@@ -477,7 +475,7 @@ def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 		
 	# Attempt to download the data
 	try:
-		tecFH = urllib2.urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+		tecFH = urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
 		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
@@ -535,7 +533,7 @@ def _downloadTECMapUQR(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 		
 	# Attempt to download the data
 	try:
-		tecFH = urllib2.urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+		tecFH = urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
 		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
@@ -584,7 +582,7 @@ def _downloadTECMapCODE(mjd, baseURL='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeo
 	
 	# Attempt to download the data
 	try:
-		tecFH = urllib2.urlopen('%s/%04i/%s' % (baseURL, year, filename), timeout=timeout)
+		tecFH = urlopen('%s/%04i/%s' % (baseURL, year, filename), timeout=timeout)
 		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
@@ -634,7 +632,7 @@ def _downloadTECMapUSTEC(mjd, baseURL='http://www.ngdc.noaa.gov/stp/iono/ustec/p
 	
 	# Attempt to download the data
 	try:
-		tecFH = urllib2.urlopen('%s/%04i/%02i/%s' % (baseURL, year, month, filename), timeout=timeout)
+		tecFH = urlopen('%s/%04i/%02i/%s' % (baseURL, year, month, filename), timeout=timeout)
 		data = tecFH.read()
 		tecFH.close()
 	except IOError as e:
@@ -683,77 +681,75 @@ def _parseTECMap(filename):
 	inBlock = False
 	
 	# Go
-	fh = gzip.open(filename, 'r')
-	
-	for line in fh:
-		## Are we beginning a map?
-		line = line.replace('\n', '')
-		if line.find('START OF TEC MAP') != -1 or line.find('START OF RMS MAP') != -1:
-			inMap = True
-			continue
-			
-		## Have we just ended a map?
-		if line.find('END OF TEC MAP') != -1 or line.find('END OF RMS MAP') != -1:
-			if line.find('TEC') != -1:
-				tecMaps.append( cmap )
-			else:
-				rmsMaps.append( cmap )
-			
-			inMap = False
-			continue
-			
-		## Are we in a map?
-		if inMap:
-			## Is this part of the preamble? 
-			if line.find('EPOCH OF CURRENT MAP') != -1:
-				### Parse the date/time string
-				year, month, day, hour, minute, second = line.split(None, 6)[:6]
-				year = int(year)
-				month = int(month)
-				day = int(day)
-				hour = int(hour)
-				minute = int(minute)
-				second = int(second)
+	with gzip.open(filename, 'r') as fh:
+		for line in fh:
+			## Are we beginning a map?
+			line = line.replace('\n', '')
+			if line.find('START OF TEC MAP') != -1 or line.find('START OF RMS MAP') != -1:
+				inMap = True
+				continue
 				
-				### Figure out the MJD
-				dt = datetime(year, month, day, hour, minute, second, 0)
-				mjd, mpm = datetime2mjdmpm(dt)
-				mjd = mjd + mpm/1000.0/3600.0/24.0
-				if mjd not in dates:
-					dates.append( mjd )
+			## Have we just ended a map?
+			if line.find('END OF TEC MAP') != -1 or line.find('END OF RMS MAP') != -1:
+				if line.find('TEC') != -1:
+					tecMaps.append( cmap )
+				else:
+					rmsMaps.append( cmap )
+				
+				inMap = False
+				continue
+				
+			## Are we in a map?
+			if inMap:
+				## Is this part of the preamble? 
+				if line.find('EPOCH OF CURRENT MAP') != -1:
+					### Parse the date/time string
+					year, month, day, hour, minute, second = line.split(None, 6)[:6]
+					year = int(year)
+					month = int(month)
+					day = int(day)
+					hour = int(hour)
+					minute = int(minute)
+					second = int(second)
 					
-				### Initialize the map and the coorindates
-				cmap = []
-				lats = []
-				lngs = []
-				
-				continue
-				
-			## Is this a different part of the preamble? 
-			elif line.find('LAT/LON1/LON2/DLON/H') != -1:
-				lat = float(line[3:8])
-				lng1 = float(line[8:14])
-				lng2 = float(line[14:20])
-				dlng = float(line[20:26])
-				height = float(line[26:32])
-				
-				cmap.append( [] )
-				lats.append( lat )
-				lngs = list(numpy.arange(lng1, lng2+dlng, dlng))
-				
-				inBlock = True
-				continue
-				
-			## Process the data block keeping in mind that missing values are stored 
-			## as 9999
-			if inBlock:
-				fields = numpy.array([float(v)/10.0 for v in line.split(None)])
-				fields[numpy.where( fields == 999.9 )] = numpy.nan
-				
-				cmap[-1].extend( fields )
-				continue
-	fh.close()
-	
+					### Figure out the MJD
+					dt = datetime(year, month, day, hour, minute, second, 0)
+					mjd, mpm = datetime2mjdmpm(dt)
+					mjd = mjd + mpm/1000.0/3600.0/24.0
+					if mjd not in dates:
+						dates.append( mjd )
+						
+					### Initialize the map and the coorindates
+					cmap = []
+					lats = []
+					lngs = []
+					
+					continue
+					
+				## Is this a different part of the preamble? 
+				elif line.find('LAT/LON1/LON2/DLON/H') != -1:
+					lat = float(line[3:8])
+					lng1 = float(line[8:14])
+					lng2 = float(line[14:20])
+					dlng = float(line[20:26])
+					height = float(line[26:32])
+					
+					cmap.append( [] )
+					lats.append( lat )
+					lngs = list(numpy.arange(lng1, lng2+dlng, dlng))
+					
+					inBlock = True
+					continue
+					
+				## Process the data block keeping in mind that missing values are stored 
+				## as 9999
+				if inBlock:
+					fields = numpy.array([float(v)/10.0 for v in line.split(None)])
+					fields[numpy.where( fields == 999.9 )] = numpy.nan
+					
+					cmap[-1].extend( fields )
+					continue
+					
 	# Combine everything together
 	dates = numpy.array(dates, dtype=numpy.float64)
 	tec = numpy.array(tecMaps, dtype=numpy.float32)
@@ -796,55 +792,11 @@ def _parseUSTECMapIndividual(filename):
 	dt = datetime.strptime(dt, "%Y%m%d%H%M")
 	
 	# Open the TEC file for reading
-	fh = open(filename, 'r')
-	
-	# Go!
-	inBlock = False
-	lats = []
-	data = []
-	for line in fh:
-		if line[0] in ('#', ':'):
-			## Comments
-			continue
-		elif len(line) < 3:
-			## Blank lines
-			continue
-			
-		## Start the parsing
-		if not inBlock:
-			### The first row consists of a list of longitudes
-			fields = line.split()
-			lngs = [float(f)/10.0 for f in fields[1:]]
-			inBlock = True
-			continue
-		else:
-			### Slant TEC values are stored at the end of the file
-			if line[:3] == '999':
-				inBlock = False
-				break
-				
-			### Before the satellite we have the TEC values, one for each latitude
-			fields = line.split()
-			lats.append( float(fields[0])/10 )
-			data.append( [float(f)/10 for f in fields[1:]] )
-	fh.close()
-	
-	# Bring it into NumPy
-	lats = numpy.array(lats)
-	lngs = numpy.array(lngs)
-	lngs,lats = numpy.meshgrid(lngs,lats)
-	data = numpy.array(data)
-	
-	# Check for an associated RMS file
-	rmsname = filename.replace('_TEC', '_ERR')
-	if os.path.exists(rmsname):
-		## Oh good, we have one
-		fh = open(rmsname, 'r')
-		
-		## Go! (again)
+	with open(filename, 'r') as fh:
+		# Go!
 		inBlock = False
-		rlats = []
-		rdata = []
+		lats = []
+		data = []
 		for line in fh:
 			if line[0] in ('#', ':'):
 				## Comments
@@ -857,7 +809,7 @@ def _parseUSTECMapIndividual(filename):
 			if not inBlock:
 				### The first row consists of a list of longitudes
 				fields = line.split()
-				rlngs = [float(f)/10.0 for f in fields[1:]]
+				lngs = [float(f)/10.0 for f in fields[1:]]
 				inBlock = True
 				continue
 			else:
@@ -866,12 +818,52 @@ def _parseUSTECMapIndividual(filename):
 					inBlock = False
 					break
 					
-				### Before the satellite we have the TEC RMS values, one for each latitude
+				### Before the satellite we have the TEC values, one for each latitude
 				fields = line.split()
-				rlats.append( float(fields[0])/10 )
-				rdata.append( [float(f)/10 for f in fields[1:]] )
-		fh.close()
-		
+				lats.append( float(fields[0])/10 )
+				data.append( [float(f)/10 for f in fields[1:]] )
+				
+	# Bring it into NumPy
+	lats = numpy.array(lats)
+	lngs = numpy.array(lngs)
+	lngs,lats = numpy.meshgrid(lngs,lats)
+	data = numpy.array(data)
+	
+	# Check for an associated RMS file
+	rmsname = filename.replace('_TEC', '_ERR')
+	if os.path.exists(rmsname):
+		## Oh good, we have one
+		with open(rmsname, 'r') as fh:
+			## Go! (again)
+			inBlock = False
+			rlats = []
+			rdata = []
+			for line in fh:
+				if line[0] in ('#', ':'):
+					## Comments
+					continue
+				elif len(line) < 3:
+					## Blank lines
+					continue
+					
+				## Start the parsing
+				if not inBlock:
+					### The first row consists of a list of longitudes
+					fields = line.split()
+					rlngs = [float(f)/10.0 for f in fields[1:]]
+					inBlock = True
+					continue
+				else:
+					### Slant TEC values are stored at the end of the file
+					if line[:3] == '999':
+						inBlock = False
+						break
+						
+					### Before the satellite we have the TEC RMS values, one for each latitude
+					fields = line.split()
+					rlats.append( float(fields[0])/10 )
+					rdata.append( [float(f)/10 for f in fields[1:]] )
+					
 		# Bring it into NumPy
 		rlats = numpy.array(rlats)
 		rlngs = numpy.array(rlngs)
@@ -909,35 +901,31 @@ def _parseUSTECMapHeight(filename):
 	"""
 	
 	# Open the EOF file for reading
-	fh = open(filename, 'r')
-	
-	# Go!
-	inBlock = False
-	heights = []
-	data = []
-	for line in fh:
-		if line[0] in ('#', ':'):
-			## Comments
-			continue
-		elif len(line) < 3:
-			## Blank lines
-			continue
-			
-		## Start the parsing
-		if not inBlock:
-			fields = line.split()
-			height = float(fields[2])
-			step = float(fields[3])
-			inBlock = True
-		else:
-			fields = line.split()
-			heights.append( height - 6371)
-			height += step
-			data.append( float(fields[0]) )
-			
-	# Done
-	fh.close()
-	
+	with open(filename, 'r') as fh:
+		# Go!
+		inBlock = False
+		heights = []
+		data = []
+		for line in fh:
+			if line[0] in ('#', ':'):
+				## Comments
+				continue
+			elif len(line) < 3:
+				## Blank lines
+				continue
+				
+			## Start the parsing
+			if not inBlock:
+				fields = line.split()
+				height = float(fields[2])
+				step = float(fields[3])
+				inBlock = True
+			else:
+				fields = line.split()
+				heights.append( height - 6371)
+				height += step
+				data.append( float(fields[0]) )
+				
 	# Bring it into Numpy and get an average height
 	heights = numpy.array(heights)
 	data = numpy.array(data)

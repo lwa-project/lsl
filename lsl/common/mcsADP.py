@@ -1014,26 +1014,24 @@ class MIB(object):
 		"""
 		
 		# Open the file
-		fh = open(filename)
-		
-		# Go!
-		self.mapper = {}
-		self.invMapper = {}
-		for line in fh:
-			## Parse out the line
-			line = line.replace('\n', '')
-			eType, index, name, default, dbmType, icdType = line.split(None, 5)
-			
-			## Skip over branches
-			if eType == 'B':
-				continue
+		with open(filename, 'r') as fh:
+			# Go!
+			self.mapper = {}
+			self.invMapper = {}
+			for line in fh:
+				## Parse out the line
+				line = line.replace('\n', '')
+				eType, index, name, default, dbmType, icdType = line.split(None, 5)
 				
-			## Remember the mapping
-			self.mapper[index] = name
-			self.invMapper[name] = index
-			
+				## Skip over branches
+				if eType == 'B':
+					continue
+					
+				## Remember the mapping
+				self.mapper[index] = name
+				self.invMapper[name] = index
+				
 		# Done
-		fh.close()
 		return True
 		
 	def fromFile(self, filename, initFilename=None):
