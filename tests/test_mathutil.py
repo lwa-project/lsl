@@ -92,8 +92,8 @@ class mathutil_tests(unittest.TestCase):
 		
 		pol = mathutil.cpolar(x)
 		for p in pol:
-			self.assertAlmostEqual(p[0], im.next())
-			self.assertAlmostEqual(p[1], ip.next())
+			self.assertAlmostEqual(p[0], next(im))
+			self.assertAlmostEqual(p[1], next(ip))
 			
 	def test_creal(self):
 		"""Test mathtutil.creal() function."""
@@ -138,7 +138,7 @@ class mathutil_tests(unittest.TestCase):
 		
 		rect = mathutil.crect(x)
 		for r in rect:
-			co = ic.next()
+			co = next(ic)
 			self.assertAlmostEqual(r.real, co.real)
 			self.assertAlmostEqual(r.imag, co.imag)
 			
@@ -147,30 +147,30 @@ class mathutil_tests(unittest.TestCase):
 		
 		yout = (0.0, 2.0, 4.0, 6.0, 8.0)
 		
-		x = numpy.arange(0, 10, dtype = numpy.float_)
-		y = numpy.arange(0, 10, dtype = numpy.float_)
-		xnew = numpy.arange(0, 10, 2, dtype = numpy.float_)
+		x = numpy.arange(0, 10, dtype = numpy.float32)
+		y = numpy.arange(0, 10, dtype = numpy.float32)
+		xnew = numpy.arange(0, 10, 2, dtype = numpy.float32)
 		
 		ynew = mathutil.regrid(x, y, xnew, method = 'spline')
 		iy = iter(yout)
 		for yn in ynew:
-			self.assertAlmostEqual(yn, iy.next())
+			self.assertAlmostEqual(yn, next(iy))
 			
 		ynew = mathutil.regrid(x, y, xnew, method = 'linear')
 		iy = iter(yout)
 		for yn in ynew:
-			self.assertAlmostEqual(yn, iy.next())
+			self.assertAlmostEqual(yn, next(iy))
 		
-		xnew = numpy.arange(-2, 10, 2, dtype = numpy.float_)    
+		xnew = numpy.arange(-2, 10, 2, dtype = numpy.float32)    
 		self.assertRaises(ValueError, mathutil.regrid, x, y, xnew)
 		
-		xnew = numpy.arange(0, 12, 2, dtype = numpy.float_)    
+		xnew = numpy.arange(0, 12, 2, dtype = numpy.float32)    
 		self.assertRaises(ValueError, mathutil.regrid, x, y, xnew)
 		
 	def test_smooth(self):
 		"""Test mathutil.smooth() function."""
 		
-		x = numpy.arange(0, 100, dtype = numpy.float_)
+		x = numpy.arange(0, 100, dtype = numpy.float32)
 		mathutil.smooth(x)
 		mathutil.smooth(x, window='flat')
 		
@@ -183,7 +183,7 @@ class mathutil_tests(unittest.TestCase):
 	def test_from_dB(self):
 		"""Test mathutil.from_dB function."""
 		
-		x = numpy.arange(1, 100, dtype = numpy.float_)
+		x = numpy.arange(1, 100, dtype = numpy.float32)
 		mathutil.from_dB(x)
 		
 	def test_savitzky_golay(self):

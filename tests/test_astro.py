@@ -370,9 +370,9 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			d = astro.get_date(j)
-			self.assertEqual(d.years, iyear.next())
-			self.assertEqual(d.months, imonth.next())
-			self.assertEqual(d.days, iday.next())
+			self.assertEqual(d.years, next(iyear))
+			self.assertEqual(d.months, next(imonth))
+			self.assertEqual(d.days, next(iday))
 			self.assertEqual(d.hours, 0)
 			self.assertEqual(d.minutes, 0)
 			self.assertAlmostEqual(d.seconds, 0.0)
@@ -397,7 +397,7 @@ class astro_tests(unittest.TestCase):
 		iat = iter(at_aa)
 		for t in jd_aa:
 			tai = astro.utc_to_tai(t)
-			self.assertAlmostEqual(tai - t, iat.next(), ACCURACY) 
+			self.assertAlmostEqual(tai - t, next(iat), ACCURACY) 
 			
 	def test_tai_to_utc(self):
 		"""Test astro.tai_to_utc() function."""
@@ -419,7 +419,7 @@ class astro_tests(unittest.TestCase):
 		iat = iter(at_aa)
 		for t in jd_aa:
 			utc = astro.tai_to_utc(t)
-			self.assertAlmostEqual(utc - t, iat.next(), ACCURACY)            
+			self.assertAlmostEqual(utc - t, next(iat), ACCURACY)            
 			
 	def test_get_geo_from_rect(self):
 		"""Test astro.get_geo_from_rect() function."""
@@ -459,7 +459,7 @@ class astro_tests(unittest.TestCase):
 		ijd = iter(jd_aa)
 		for t in self.times:
 			j = t.to_jd()
-			self.assertAlmostEqual(j, ijd.next())
+			self.assertAlmostEqual(j, next(ijd))
 			
 	def test_get_mean_sidereal_time(self):
 		"""Test astro.get_mean_sidereal_time() function."""
@@ -477,7 +477,7 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			st = astro.get_mean_sidereal_time(j)
-			self.assertAlmostEqual(st, igmst.next(), ACCURACY)
+			self.assertAlmostEqual(st, next(igmst), ACCURACY)
 			
 	def test_get_apparent_sidereal_time(self):
 		"""Test astro.get_apparent_sidereal_time() function."""
@@ -495,7 +495,7 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			st = astro.get_apparent_sidereal_time(j)
-			self.assertAlmostEqual(st, igast.next(), ACCURACY)
+			self.assertAlmostEqual(st, next(igast), ACCURACY)
 			
 	def test_get_local_sidereal_time(self):
 		"""Test astro.get_local_sidereal_time() function."""
@@ -515,7 +515,7 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			st = astro.get_local_sidereal_time(self.geo.lng, j)
-			self.assertAlmostEqual(st, igast.next(), ACCURACY)
+			self.assertAlmostEqual(st, next(igast), ACCURACY)
 			
 	def test_equ_posn_init(self):
 		"""Test astro.equ_posn constructor."""
@@ -822,7 +822,7 @@ class astro_tests(unittest.TestCase):
 		
 		ira = iter(ra_aa)
 		for t in self.times:
-			ra = ira.next()
+			ra = next(ira)
 			
 			j = t.to_jd()
 			equ = astro.equ_posn(ra, 30.0)
@@ -851,7 +851,7 @@ class astro_tests(unittest.TestCase):
 		
 		ira = iter(ra_aa)
 		for t in self.times:
-			ra = ira.next()
+			ra = next(ira)
 			
 			j = t.to_jd()
 			equ = astro.get_equ_from_hrz(hrz, obs, j)
@@ -874,7 +874,7 @@ class astro_tests(unittest.TestCase):
 		iequ = iter(equ_in)
 		for t in self.times:
 			j = t.to_jd() 
-			equ0 = iequ.next()
+			equ0 = next(iequ)
 			equ = astro.get_equ_prec(equ0, j)
 			chk = astro.get_precession(astro.J2000_UTC_JD, equ0, j)
 			self.assertAlmostEqual(equ.ra, chk.ra, ACCURACY_RA)
@@ -896,7 +896,7 @@ class astro_tests(unittest.TestCase):
 		iequ = iter(equ_in)
 		for t in self.times:
 			j = t.to_jd() 
-			equ0 = iequ.next()
+			equ0 = next(iequ)
 			equ = astro.get_equ_prec2(equ0, j, astro.J2000_UTC_JD)
 			chk = astro.get_precession(j, equ0, astro.J2000_UTC_JD)
 			self.assertAlmostEqual(equ.ra, chk.ra, ACCURACY_RA)
@@ -949,9 +949,9 @@ class astro_tests(unittest.TestCase):
 		iobl = iter(obl_aa)
 		iecl = iter(ecl_aa)
 		for t in self.times:
-			lng = ilng.next()
-			obl = iobl.next()
-			ecl = iecl.next()
+			lng = next(ilng)
+			obl = next(iobl)
+			ecl = next(iecl)
 			
 			j = t.to_jd()
 			nut = astro.get_nutation(j)
@@ -1015,7 +1015,7 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			trns = astro.get_object_rst(j, self.geo, body)
-			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), itr.next(), ACCURACY)
+			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), next(itr), ACCURACY)
 			
 		body = astro.equ_posn(0, 89.0)
 		for t in self.times:
@@ -1046,7 +1046,7 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			trns = astro.get_solar_rst(j, self.geo)
-			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), itr.next(), ACCURACY)
+			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), next(itr), ACCURACY)
 			
 	def test_get_solar_equ_coords(self):
 		"""Test astro.get_solar_equ_coords() function."""
@@ -1073,8 +1073,8 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			equ = astro.get_solar_equ_coords(j)
-			self.assertAlmostEqual(equ.ra, ira.next(), ACCURACY_RA)
-			self.assertAlmostEqual(equ.dec, idec.next(), ACCURACY_DEC)
+			self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
 			
 	def test_get_jupiter_rst(self):
 		"""Test astro.get_jupiter_rst() function."""
@@ -1093,7 +1093,7 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			trns = astro.get_jupiter_rst(j, self.geo)
-			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), itr.next(), ACCURACY)
+			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), next(itr), ACCURACY)
 			
 	def test_get_jupiter_equ_coord(self):
 		"""Test astro.get_jupiter_equ_coords() function."""
@@ -1120,8 +1120,8 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			equ = astro.get_jupiter_equ_coords(j)
-			self.assertAlmostEqual(equ.ra, ira.next(), ACCURACY_RA)
-			self.assertAlmostEqual(equ.dec, idec.next(), ACCURACY_DEC)                                                     
+			self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)                                                     
 			
 	def test_get_lunar_rst(self):
 		"""Test astro.get_lunar_rst() function."""
@@ -1140,7 +1140,7 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			trns = astro.get_lunar_rst(j, self.geo)
-			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), itr.next(), ACCURACY)
+			self.assertAlmostEqual(astro.utc_to_tt(trns.transit), next(itr), ACCURACY)
 			
 	def test_get_lunar_equ_coords(self):
 		"""Test astro.get_lunar_equ_coords() function."""
@@ -1167,8 +1167,8 @@ class astro_tests(unittest.TestCase):
 		for t in self.times:
 			j = t.to_jd()
 			equ = astro.get_lunar_equ_coords(j)
-			self.assertAlmostEqual(equ.ra, ira.next(), ACCURACY_RA)
-			self.assertAlmostEqual(equ.dec, idec.next(), ACCURACY_DEC) 
+			self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC) 
 			
 	def test_get_ecl_from_equ(self):
 		"""Test astro.get_ecl_from_equ() function."""
@@ -1198,10 +1198,10 @@ class astro_tests(unittest.TestCase):
 		ira = iter(ra_aa)
 		idec = iter(dec_aa)
 		for t in self.times:
-			lng = ilng.next()
-			lat = ilat.next()
-			ra = ira.next()
-			dec = idec.next()
+			lng = next(ilng)
+			lat = next(ilat)
+			ra = next(ira)
+			dec = next(idec)
 			
 			j = t.to_jd()
 			equ = astro.equ_posn(ra, dec)
@@ -1237,10 +1237,10 @@ class astro_tests(unittest.TestCase):
 		ira = iter(ra_aa)
 		idec = iter(dec_aa)
 		for t in self.times:
-			lng = ilng.next()
-			lat = ilat.next()
-			ra = ira.next()
-			dec = idec.next()
+			lng = next(ilng)
+			lat = next(ilat)
+			ra = next(ira)
+			dec = next(idec)
 			
 			j = t.to_jd()
 			
@@ -1275,10 +1275,10 @@ class astro_tests(unittest.TestCase):
 		il = iter(l_4c)
 		ib = iter(b_4c)
 		for i in range(len(ra_4c)):
-			ra = ira.next()
-			dec = idec.next()
-			l = il.next()
-			b = ib.next()
+			ra = next(ira)
+			dec = next(idec)
+			l = next(il)
+			b = next(ib)
 			
 			equ = astro.equ_posn(ra, dec)
 			gal = astro.get_gal_from_equ(equ)
@@ -1311,10 +1311,10 @@ class astro_tests(unittest.TestCase):
 		il = iter(l_4c)
 		ib = iter(b_4c)
 		for i in range(len(ra_4c)):
-			ra = ira.next()
-			dec = idec.next()
-			l = il.next()
-			b = ib.next()
+			ra = next(ira)
+			dec = next(idec)
+			l = next(il)
+			b = next(ib)
 			
 			gal = astro.gal_posn(l, b)
 			equ = astro.get_equ_from_gal(gal)
@@ -1347,10 +1347,10 @@ class astro_tests(unittest.TestCase):
 		il = iter(l_4c)
 		ib = iter(b_4c)
 		for i in range(len(ra_4c)):
-			ra = ira.next()
-			dec = idec.next()
-			l = il.next()
-			b = ib.next()
+			ra = next(ira)
+			dec = next(idec)
+			l = next(il)
+			b = next(ib)
 			
 			equ = astro.equ_posn(ra, dec)
 			gal = astro.get_gal_from_equ2000(equ)
@@ -1383,10 +1383,10 @@ class astro_tests(unittest.TestCase):
 		il = iter(l_4c)
 		ib = iter(b_4c)
 		for i in range(len(ra_4c)):
-			ra = ira.next()
-			dec = idec.next()
-			l = il.next()
-			b = ib.next()
+			ra = next(ira)
+			dec = next(idec)
+			l = next(il)
+			b = next(ib)
 			
 			gal = astro.gal_posn(l, b)
 			equ = astro.get_equ2000_from_gal(gal)
@@ -1410,10 +1410,10 @@ class astro_tests(unittest.TestCase):
 		idec_out = iter(dec_out)
 		j = self.times[0].to_jd()
 		for ra in ra_in:
-			equ = astro.equ_posn(ra, idec_in.next())
+			equ = astro.equ_posn(ra, next(idec_in))
 			equ = astro.get_apparent_posn(equ, j)
-			self.assertAlmostEqual(equ.ra, ira_out.next(), ACCURACY_RA)
-			self.assertAlmostEqual(equ.dec, idec_out.next(), ACCURACY_DEC)
+			self.assertAlmostEqual(equ.ra, next(ira_out), ACCURACY_RA)
+			self.assertAlmostEqual(equ.dec, next(idec_out), ACCURACY_DEC)
 			
 	def test_B1950_to_J2000(self):
 		"""Test astro.B1950_to_J2000() function."""

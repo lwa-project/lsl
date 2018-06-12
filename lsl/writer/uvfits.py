@@ -742,7 +742,7 @@ class UV(object):
 		antennaID = antenna.field('NOSTA')
 		antennaPos = iter(antenna.field('STABXYZ'))
 		for id in antennaID:
-			antennaGeo[id] = antennaPos.next()
+			antennaGeo[id] = next(antennaPos)
 			
 		# Return
 		return (arrayGeo, antennaGeo)

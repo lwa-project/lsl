@@ -209,7 +209,7 @@ def crect(cmplx):
 	"""
 	
 	if isinstance(cmplx, numpy.ndarray):
-		ret = numpy.empty((len(cmplx),), numpy.complex_)
+		ret = numpy.empty((len(cmplx),), cmplx.dtype)
 		ret.real = creal(cmplx)
 		ret.imag = cimag(cmplx)
 		return ret         

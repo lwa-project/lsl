@@ -18,7 +18,7 @@ dipoles.  See the `README.NEC` file included in the LSL data directory for
 more information about what is included.
 """
 
-from numpy import pi, abs, exp, log10, float_, complex_, zeros, array
+from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
 from lsl.misc.mathutil import regrid
 import os
 import re
@@ -238,8 +238,8 @@ class NECPattern:
 		# 0 to 359, where 0 is North and alt (altitude) runs from 0 to 89 , 
 		# where 0 is the horizon The default pattern is all zeros (isotropic 
 		# response)
-		self.antenna_pat_dB = zeros(shape=(360,90),dtype=float_)
-		self.antenna_pat_complex = zeros(shape=(360,90),dtype=complex_)
+		self.antenna_pat_dB = zeros(shape=(360,90),dtype=float32)
+		self.antenna_pat_complex = zeros(shape=(360,90),dtype=complex64)
 		
 		outname = os.path.splitext(necname)[0] + '.out'
 		try:
