@@ -18,8 +18,8 @@ import time
 import ephem
 import numpy
 import socket
-import urllib2
 import logging
+from urllib2 import urlopen
 
 import lsl.astro as astro
 
@@ -148,22 +148,21 @@ class EOP(object):
 
 def __downloadFile(filename, baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=120):
 	try:
-		eopFH = urllib2.urlopen('%s%s' % (baseURL, filename), timeout=timeout)
-		lines = eopFH.readlines()
+		eopFH = urlopen('%s%s' % (baseURL, filename), timeout=timeout)
+		contents = eopFH.read()
 		eopFH.close()
 	except IOError as e:
 		__logger.error('Error downloading file \'%s\': %s', filename, str(e))
-		lines = []
+		contents = ''
 	except socket.timeout:
 		__logger.error('Timeout after %i seconds downloading file \'%s\'', timeout, filename)
-		lines = []
+		contents = ''
 		
-	if len(lines) == 0:
+	if len(contents) == 0:
 		return False
 	else:
-		fh = open(os.path.join(_CacheDir, filename), 'w')
-		for line in lines:
-			fh.write(line)
+		fh = open(os.path.join(_CacheDir, filename), 'wb')
+		fh.write(contents)
 		fh.close()
 		return True
 
@@ -185,23 +184,20 @@ def __loadHistoric1973(timeout=120):
 			if not status:
 				__downloadFile('finals2000A.all', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
 				
-	fh = open(os.path.join(_CacheDir, 'finals2000A.all'), 'r')
-	lines = fh.readlines()
-	fh.close()
-	
 	eops = []
-	for line in lines:
-		newEOP = EOP()
-		try:
-			newEOP.fromMAIA(line) 
-			# Only include "final" values, not predictions
-			if newEOP.type == 'final':
-				eops.append(newEOP)
-		except:
-			pass
+	with open(os.path.join(_CacheDir, 'finals2000A.all'), 'r') as fh:
+		for line in fh:
+			newEOP = EOP()
+			try:
+				newEOP.fromMAIA(line) 
+				# Only include "final" values, not predictions
+				if newEOP.type == 'final':
+					eops.append(newEOP)
+			except:
+				pass
 	if len(eops) == 0:
 		eops.append(None)
-	
+		
 	return eops
 
 
@@ -222,23 +218,20 @@ def __loadHistoric1992(timeout=120):
 			if not status:
 				__downloadFile('finals2000A.data', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
 				
-	fh = open(os.path.join(_CacheDir, 'finals2000A.data'), 'r')
-	lines = fh.readlines()
-	fh.close()
-	
 	eops = []
-	for line in lines:
-		newEOP = EOP()
-		try:
-			newEOP.fromMAIA(line) 
-			# Only include "final" values, not predictions
-			if newEOP.type == 'final':
-				eops.append(newEOP)
-		except:
-			pass
+	with open(os.path.join(_CacheDir, 'finals2000A.data'), 'r') as fh:
+		for line in fh:
+			newEOP = EOP()
+			try:
+				newEOP.fromMAIA(line) 
+				# Only include "final" values, not predictions
+				if newEOP.type == 'final':
+					eops.append(newEOP)
+			except:
+				pass
 	if len(eops) == 0:
 		eops.append(None)
-	
+		
 	return eops
 
 
@@ -258,21 +251,18 @@ def __loadCurrent90(timeout=120):
 			if not status:
 				__downloadFile('finals2000A.daily', baseURL='ftp://ftp.iers.org/products/eop/rapid/daily/', timeout=timeout)
 				
-	fh = open(os.path.join(_CacheDir, 'finals2000A.daily'), 'r')
-	lines = fh.readlines()
-	fh.close()
-	
 	eops = []
-	for line in lines:
-		newEOP = EOP()
-		try:
-			newEOP.fromMAIA(line) 
-			eops.append(newEOP)
-		except:
-			pass
+	with open(os.path.join(_CacheDir, 'finals2000A.daily'), 'r') as fh:
+		for line in fh:
+			newEOP = EOP()
+			try:
+				newEOP.fromMAIA(line) 
+				eops.append(newEOP)
+			except:
+				pass
 	if len(eops) == 0:
 		eops.append(None)
-	
+		
 	return eops
 
 
