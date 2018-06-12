@@ -75,7 +75,7 @@ def cmp_to_total(cls):
 	
 	for name,func in zip(names, funcs):
 		# Is it defined?
-		if getattr(cls, name, None) is not getattr(object, name, None):
+		if name not in dir(cls):
 			func.__name__ = name
 			setattr(cls, name, func)
 			

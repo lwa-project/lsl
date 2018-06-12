@@ -62,7 +62,7 @@ class EOP(object):
 	.. versionchanged:: 1.0.0
 		Added extra attributes to store dX (dx) and dY (dy) in arc seconds.
 	"""
-
+	
 	def __init__(self, mjd=0.0, x=0.0, y=0.0, dx=0.0, dy=0.0, utDiff=0.0, type='final'):
 		self.mjd = mjd
 		self.x = x
@@ -75,13 +75,13 @@ class EOP(object):
 		self.date = None
 		
 		self.__setDate()
-
+		
 	def fromMAIA(self, line):
 		"""
 		Given a line from a MAIA standard rapid EOP data (IAU2000) file, fill
 		in the object's values with the needed information.
 		"""
-
+		
 		self.mjd = float(line[7:15])
 		self.x = float(line[18:27])
 		self.y = float(line[37:46])
@@ -92,50 +92,46 @@ class EOP(object):
 			self.type = 'final'
 		else:
 			self.type = 'prediction'
-
+			
 		self.__setDate()
-
+		
 	def __setDate(self):
 		"""
 		Use the ephem.Data object to get an easy-to-use date into the structure.
 		"""
-
-		# Catch statement for working is version of LSL older than 0.3
-		try:
-			self.date = ephem.Date(self.mjd + astro.MJD_OFFSET - astro.DJD_OFFSET)
-		except AttributeError:
-			self.date = ephem.Date(self.mjd + astro.MJD_OFFSET - 2415020.0)
-
+		
+		self.date = ephem.Date(self.mjd + astro.MJD_OFFSET - astro.DJD_OFFSET)
+		
 	def __str__(self):
 		"""
 		Create a string representation of the EOP object that shows the MJD, x, 
 		y, and UT1-UTC values.
 		"""
-
+		
 		return "%.1f (%s): x=%.6f y=%.6f UT1-UTC=%.6f (%s)" % (self.mjd, str(self.date), self.x, self.y, self.utDiff, self.type)
-
+		
 	def __eq__(self, y):
 		"""
 		Determine if MJDs of two EOP objects are equal, or if the MJD of a EOP 
 		object equal data of a numeric MJD.
 		"""
-
+		
 		tX = self.mjd
 		try:
 			tY = y.mjd
 		except:
 			tY = float(y)
-
+			
 		if tX == tY:
 			return True
 		else:
 			return False
-
+			
 	def __cmp__(self, y):
 		"""
 		Method for soring EOP objects based on their MJDs.
 		"""
-
+		
 		tX = float(self.date)
 		try:
 			tY = float(y.date)
