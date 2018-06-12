@@ -103,6 +103,11 @@ class ldp_adp_tests(unittest.TestCase):
 		# TBF
 		f = ldp.LWASVDataFile(tbfFile)
 		self.assertEqual(type(f), ldp.TBFFile)
+		
+	def tearDown(self):
+		"""Cleanup"""
+		for handler in list(ldp._open_ldp_files.handlers):
+			handler.close()
 
 
 class ldp_adp_test_suite(unittest.TestSuite):

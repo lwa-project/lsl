@@ -23,7 +23,7 @@ import os
 import numpy
 import warnings
 from scipy.stats import norm
-from collections import deque
+from collections import deque, defaultdict
 
 from lsl.common.dp import fS
 from lsl.common.adp import fC
@@ -35,6 +35,53 @@ __revision__ = '$Rev$'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
 		 'LWASVDataFile', 'LWADataFile', 
 		 '__version__', '__revision__', '__all__']
+
+
+class _LDPFileRegistry(object):
+	"""
+	Class to keep track of which files are open so that we can close them out
+	when we exit.
+	
+	This concept/framework/class is borrowed from PyTables:
+		https://github.com/PyTables/PyTables/blob/master/tables/file.py
+	"""
+	
+	def __init__(self):
+		self._name_mapping = defaultdict(set)
+		self._handlers = set()
+		
+	@property
+	def filenames(self):
+		return list(self._name_mapping.keys())
+		
+	@property
+	def handlers(self):
+		return self._handlers
+		
+	def __len__(self):
+		return len(self._handlers)
+		
+	def __contains__(self, filename):
+		return filename in self.filenames
+		
+	def add(self, handler):
+		self._name_mapping[handler.filename].add(handler)
+		self._handlers.add(handler)
+		
+	def remove(self, handler):
+		filename = handler.filename
+		self._name_mapping[filename].remove(handler)
+		if not self._name_mapping[filename]:
+			del self._name_mapping[filename]
+		self._handlers.remove(handler)
+		
+	def close_all(self):
+		handlers = list(self.handlers)  # make a copy
+		for handler in handlers:
+			handler.close()
+
+
+_open_ldp_files = _LDPFileRegistry()
 
 
 class LDPFileBase(object):
@@ -58,7 +105,8 @@ class LDPFileBase(object):
 				fh.close()
 				fh = open(self.filename, 'rb')
 			self.fh = fh
-			
+		_open_ldp_files.add(self)
+		
 		# Set whether or not reading errors are fatal
 		self.ignoreTimeTagErrors = ignoreTimeTagErrors
 		
@@ -68,6 +116,12 @@ class LDPFileBase(object):
 		# Describe the contents of the file
 		self.description = {}
 		self._describeFile()
+		
+	def __enter__(self):
+		return self
+		
+	def __exit__(self, type, value, tb):
+		self.close()
 		
 	def __getattr__(self, name):
 		## Try to access the attribute as a real attribute
@@ -82,6 +136,9 @@ class LDPFileBase(object):
 		except ValueError:
 			raise AttributeError("'%s' object has no attribute '%s'" % (type(self).__name__, name))
 			
+	def __str__(self):
+		return "%s @ %s" % (self.__name__, self.filename)
+		
 	def _readyFile(self):
 		"""
 		Method for finding the start of valid data.  This will be over-
@@ -147,6 +204,7 @@ class LDPFileBase(object):
 		"""
 		
 		self.fh.close()
+		_open_ldp_files.remove(self)
 		
 	def offset(self, *args, **kwds):
 		"""
@@ -1787,3 +1845,7 @@ def LWADataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
 		raise RuntimeError("File '%s' does not appear to be a valid LWA1 or LWA-SV data file" % filename)
 		
 	return ldpInstance
+
+
+import atexit
+atexit.register(_open_ldp_files.close_all)

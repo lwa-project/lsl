@@ -283,6 +283,11 @@ class ldp_tests(unittest.TestCase):
 		"""Test the LDP LWA1DataFile function of TBF."""
 		# TBF
 		self.assertRaises(RuntimeError, ldp.LWA1DataFile, tbfFile)
+		
+	def tearDown(self):
+		"""Cleanup"""
+		for handler in list(ldp._open_ldp_files.handlers):
+			handler.close()
 
 
 class ldp_test_suite(unittest.TestSuite):
