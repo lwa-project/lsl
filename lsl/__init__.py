@@ -21,6 +21,7 @@ See the individual package descriptions for more information.
 """
 
 import os
+import subprocess
 from lsl import version
 from lsl.common import paths
 
@@ -33,8 +34,8 @@ def test():
 	"""
 	Internal test fixture
 	"""
-
+	
 	eggPath = os.path.split(paths.module)[0]
 	testPath = os.path.join(eggPath, 'tests', 'test_lsl.py')
-	os.system("python %s -v" % testPath)
+	subprocess.check_call(['python', testPath, '-v'])
 

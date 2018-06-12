@@ -23,6 +23,7 @@ from lsl.misc.mathutil import regrid
 import os
 import re
 import logging
+import subprocess
 
 
 __version__   = '0.2'
@@ -262,10 +263,10 @@ class NECPattern:
 				# This requires a modified version of NEC-4 that
 				# takes 2 command line arguments instead of asking questions
 				# interactively. See Paul Ray for info.
-				cmdstr = "nec4d %s %s" % (necname, outname)
-				ret = os.system(cmdstr)
-				if ret != 0:
-					raise RuntimeError("Bad return value from nec2++ call : %d" % ret)       
+				try:
+					subprocess.check_call(['nec4d', necname, outname])
+				except subprocess.CalledProcessError as e:
+					raise RuntimeError("Bad return value from nec2++ call : %e" % str(e))       
 				fh, filefreq = open_and_get_nec_freq(outname)
 				if not CloseTo(filefreq, freq):
 					fh.close()

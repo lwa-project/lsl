@@ -13,6 +13,7 @@ import shutil
 import logging
 import tarfile
 import tempfile
+import subprocess
 from urllib2 import urlopen
 from datetime import datetime
 
@@ -437,8 +438,8 @@ def _downloadTECMapIGS(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 		fh.write(data)
 		fh.close()
 		
-		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
-		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
+		subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
+		subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
 		
 		return True
 
@@ -495,8 +496,8 @@ def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 		fh.write(data)
 		fh.close()
 		
-		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
-		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
+		subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
+		subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
 		
 		return True
 
@@ -553,8 +554,8 @@ def _downloadTECMapUQR(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
 		fh.write(data)
 		fh.close()
 		
-		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
-		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
+		subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
+		subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
 		
 		return True
 
@@ -602,8 +603,8 @@ def _downloadTECMapCODE(mjd, baseURL='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeo
 		fh.write(data)
 		fh.close()
 		
-		os.system('gunzip -f %s' % os.path.join(_CacheDir, filename))
-		os.system('gzip %s' % os.path.join(_CacheDir, os.path.splitext(filename)[0]))
+		subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
+		subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
 		
 		return True
 

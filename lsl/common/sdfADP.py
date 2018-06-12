@@ -69,7 +69,7 @@ from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
 
-__version__ = '1.0'
+__version__ = '1.1'
 __revision__ = '$Rev$'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parseSDF',  'getObservationStartStop', 'isValid', '__version__', '__revision__', '__all__']
 
@@ -335,8 +335,13 @@ class ProjectOffice(object):
 
 
 class Project(object):
-	"""Class to hold all the information about a specific session for a 
-	project/proposal."""
+	"""
+	Class to hold all the information about a specific session for a 
+	project/proposal.
+	
+	.. versionchanged:: 1.2.1
+		Added a new writeto() method to directly write the SDF to a file.
+	"""
 	
 	def __init__(self, observer, name, id, sessions=None, comments=None, projectOffice=None):
 		self.observer = observer
@@ -658,6 +663,15 @@ class Project(object):
 			output = "%s\n" % output
 			
 		return output
+		
+	def writeto(self, filename, session=0, verbose=False):
+		"""Create a session definition file that corresponds to the specified 
+		session and write it to the provided filename."""
+		
+		output = self.render(session=session, verbose=verbose)
+		fh = open(filename, 'w')
+		fh.write(output)
+		fh.close()
 
 
 class Session(object):

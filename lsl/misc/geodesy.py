@@ -149,20 +149,20 @@ class EOP(object):
 def __downloadFile(filename, baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=120):
 	try:
 		eopFH = urlopen('%s%s' % (baseURL, filename), timeout=timeout)
-		contents = eopFH.read()
+		data = eopFH.read()
 		eopFH.close()
 	except IOError as e:
 		__logger.error('Error downloading file \'%s\': %s', filename, str(e))
-		contents = ''
+		data = ''
 	except socket.timeout:
 		__logger.error('Timeout after %i seconds downloading file \'%s\'', timeout, filename)
-		contents = ''
+		data = ''
 		
-	if len(contents) == 0:
+	if len(data) == 0:
 		return False
 	else:
 		fh = open(os.path.join(_CacheDir, filename), 'wb')
-		fh.write(contents)
+		fh.write(data)
 		fh.close()
 		return True
 
