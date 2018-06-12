@@ -28,9 +28,9 @@ from collections import deque
 from lsl.common.dp import fS
 from lsl.common.adp import fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
-from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer
+from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
 		 'LWASVDataFile', 'LWADataFile', 
@@ -1401,7 +1401,7 @@ class TBFFile(LDPFileBase):
 		nFramesPerObs = tbf.getFramesPerObs(self.fh)
 		nChan = tbf.getChannelCount(self.fh)
 		
-		# Pre-load the channel mapper and find the first frame
+		# Pre-load the channel mapper
 		self.mapper = []
 		marker = self.fh.tell()
 		firstFrameCount = 2**64-1
@@ -1423,24 +1423,56 @@ class TBFFile(LDPFileBase):
 		freq *= fC
 		
 		self.description = {'size': filesize, 'nFrames': nFramesFile, 'FrameSize': tbf.FrameSize,
-						'firstFrameCount': firstFrameCount, 'sampleRate': srate, 'dataBits': bits, 
+						'sampleRate': srate, 'dataBits': bits, 
 						'nAntenna': 512, 'nChan': nChan, 'freq1': freq, 'tStart': start, 
 						'tStartSamples': startRaw}
 						
-	def readFrame(self):
+		# Initialize the buffer as part of the description process
+		self.buffer = TBFFrameBuffer(chans=self.mapper)
+		
+	def offset(self, offset):
 		"""
-		Read and return a single `lsl.reader.tbw.Frame` instance.
+		Offset a specified number of seconds in an open TBF file.  This function 
+		returns the exact offset time.
+		
+		.. note::
+			The offset provided by this function is relatively crude due to the
+			structure of TBF files.
 		"""
 		
-		frame = tbf.readFrame(self.fh)
-		while not frame.header.isTBF():
-			frame = tbf.readFrame(self.fh)
+		framesPerObs = self.description['nChan'] / 12
+		frameOffset = int(offset * self.description['sampleRate'] * framesPerObs)
+		frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
+		self.fh.seek(frameOffset*tbf.FrameSize)
+		
+		# Update the file metadata
+		self._describeFile()
+		
+		# Reset the buffer
+		self.buffer.flush()
+		
+		# Reset the timetag checker
+		self._timetag = None
+		
+		return 1.0 * frameOffset / framesPerObs / self.description['sampleRate']
+		
+	def readFrame(self):
+		"""
+		Read and return a single `lsl.reader.tbf.Frame` instance.
+		"""
+		
+		# Reset the buffer
+		if getattr(self, "buffer", None) is not None:
+			self.buffer.flush()
 			
-		return frame
+		# Reset the timetag checker
+		self._timetag = None
+		
+		return tbf.readFrame(self.fh)
 		
 	def read(self, duration=None, timeInSamples=False):
 		"""
-		Read and return the entire TBW capture.  This function returns 
+		Read and return the entire TBF capture.  This function returns 
 		a three-element tuple with elements of:
 		  0) the actual duration of data read in, 
 		  1) the time tag for the first sample, and
@@ -1452,57 +1484,132 @@ class TBFFile(LDPFileBase):
 		
 		The sorting order of the output data array is by 
 		digitizer number - 1.
-		"""
+		""" 
 		
 		# Make sure there is file left to read
 		if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
 			raise errors.eofError()
 			
-		# Find out how many frames to work with at a time
-		framesPerObs = self.description['nChan']/12
-		frameCount = int(round(1.0 * duration * self.description['sampleRate'] * framesPerObs))
+		# Covert the sample rate to an expected timetag skip
+		timetagSkip = int(1.0 / self.description['sampleRate'] * fS)
+		
+		# Setup the counter variables:  frame count and time tag count
+		if getattr(self, "_timetag", None) is None:
+			self._timetag = 0
+			
+		# Find out how many frames to read in
+		if duration is None:
+			duration = self.description['nFrames'] / framesPerObs / self.description['sampleRate']
+		framesPerObs = self.description['nChan'] / 12
+		frameCount = int(round(1.0 * duration * self.description['sampleRate']))
 		frameCount = frameCount if frameCount else 1
-		duration = frameCount / framesPerObs / self.description['sampleRate']
-		firstFrameCount = self.description['firstFrameCount']
+		duration = frameCount / self.description['sampleRate']
 		
-		# Initialize the output data array
-		data = numpy.zeros((self.description['nAntenna'], self.description['nChan'], frameCount/framesPerObs), dtype=numpy.complex64)
-		
-		# Read in the next frame and anticipate any problems that could occur
-		i = 0
-		while i < frameCount:
-			try:
-				cFrame = tbf.readFrame(self.fh)
-				i += 1
-			except errors.eofError:
+		nFrameSets = 0
+		eofFound = False
+		setTime = None
+		count = [0 for i in xrange(framesPerObs)]
+		data = numpy.zeros((self.description['nAntenna'], self.description['nChan'], frameCount), dtype=numpy.complex64)
+		while True:
+			if eofFound or nFrameSets == frameCount:
 				break
-			except errors.syncError:
-				continue
 				
-			if not cFrame.header.isTBF():
-				continue
-				
-			if cFrame.header.frameCount == firstFrameCount:
-				if timeInSamples:
-					setTime = cFrame.data.timeTag
-				else:
-					setTime = cFrame.getTime()
+			cFrames = deque()
+			for i in xrange(framesPerObs):
+				try:
+					cFrame = tbf.readFrame(self.fh, Verbose=False)
+					if not cFrame.isTBF():
+						continue
+					cFrames.append( cFrame )
+				except errors.eofError:
+					eofFound = True
+					self.buffer.append(cFrames)
+					break
+				except errors.syncError:
+					continue
 					
-			firstChan = cFrame.header.firstChan
-			cnt = cFrame.header.frameCount - firstFrameCount
+			self.buffer.append(cFrames)
+			cFrames = self.buffer.get()
 			
-			subData = cFrame.data.fDomain
-			subData.shape = (12,512)
-			subData = subData.T
-			
-			aStand = self.mapper.index(firstChan)
-			try:
-				data[:,aStand*12:(aStand+1)*12,cnt] = subData
-			except IndexError:
-				pass
+			# Continue adding frames if nothing comes out.
+			if cFrames is None:
+				continue
 				
-		# Calculate the duration
-		duration = data.shape[2] / self.getInfo('sampleRate')
+			# If something comes out, add it to the data array
+			cTimetag = cFrames[0].data.timeTag
+			if self._timetag == 0:
+				self._timetag = cTimetag - timetagSkip
+			if cTimetag != self._timetag+timetagSkip:
+				actStep = cTimetag - self._timetag
+				if self.ignoreTimeTagErrors:
+					warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
+				else:
+					raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+			self._timetag = cFrames[0].data.timeTag
+			
+			for cFrame in cFrames:
+				firstChan = cFrame.header.firstChan
+				
+				if setTime is None:
+					if timeInSamples:
+						setTime = cFrame.data.timeTag
+					else:
+						setTime = cFrame.getTime()
+						
+				subData = cFrame.data.fDomain
+				subData.shape = (12,512)
+				subData = subData.T
+				
+				aStand = self.mapper.index(firstChan)
+				data[:,aStand*12:(aStand+1)*12,count[aStand]] = subData
+				count[aStand] += 1
+			nFrameSets += 1
+			
+		# If we've hit the end of the file and haven't read in enough frames, 
+		# flush the buffer
+		if eofFound or nFrameSets != frameCount:
+			for cFrames in self.buffer.flush():
+				cTimetag = cFrames[0].data.timeTag
+				if self._timetag == 0:
+					self._timetag = cTimetag - timetagSkip
+				if cTimetag != self._timetag+timetagSkip:
+					actStep = cTimetag - self._timetag
+					if self.ignoreTimeTagErrors:
+						warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
+					else:
+						raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+				self._timetag = cFrames[0].data.timeTag
+				
+				for cFrame in cFrames:
+					firstChan = cFrame.header.firstChan
+					
+					if setTime is None:
+						if timeInSamples:
+							setTime = cFrame.data.timeTag
+						else:
+							setTime = cFrame.getTime()
+						
+					subData = cFrame.data.fDomain
+					subData.shape = (12,512)
+					subData = subData.T
+					
+					aStand = self.mapper.index(firstChan)
+					data[:,aStand*12:(aStand+1)*12,count[aStand]] = subData
+					count[aStand] += 1
+				nFrameSets += 1
+				
+				if nFrameSets == frameCount:
+					break
+					
+		# Sanity check at the end to see if we actually read anything.  
+		# This is needed because of how TBF and DRX interact where TBF
+		# files can be padded at the end with DRX data
+		if nFrameSets == 0 and duration > 0:
+			raise errors.eofError()
+			
+		# Adjust the duration to account for all of the things that could 
+		# have gone wrong while reading the data
+		duration = nFrameSets  / self.description['sampleRate']
 		
 		return duration, setTime, data
 
