@@ -26,6 +26,7 @@ from datetime import datetime
 from lsl import astro
 from lsl.misc import geodesy
 from lsl.common import constants
+from lsl.misc.total_sorting import cmp_to_total
 
 try:
 	from collections import OrderedDict
@@ -108,6 +109,7 @@ class IDI(object):
 			self.sideBand = 1
 			self.baseBand = 0
 			
+	@cmp_to_total
 	class _UVData(object):
 		"""
 		Represents one UV visibility data set for a given observation time.

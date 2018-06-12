@@ -23,6 +23,7 @@ from lsl.common.paths import data as dataPath
 from lsl.common import mcs, mcsADP
 from lsl.common.constants import c as speedOfLight
 from lsl.misc.mathutil import to_dB, from_dB
+from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '2.2'
 __revision__ = '$Rev$'
@@ -370,6 +371,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
 		return [ant.cable for ant in self.antennas]
 
 
+@cmp_to_total
 class Antenna(object):
 	"""
 	Object to store the information about an antenna.  Stores antenna:
@@ -474,6 +476,7 @@ class Antenna(object):
 		return 10*self.status + self.fee.status
 
 
+@cmp_to_total
 class Stand(object):
 	"""
 	Object to store the information (location and ID) about a stand.  
@@ -557,6 +560,7 @@ class Stand(object):
 		return out
 
 
+@cmp_to_total
 class FEE(object):
 	"""
 	Object to store the information about a FEE.  Stores FEE:
@@ -617,6 +621,7 @@ class FEE(object):
 		return (freq, gai)
 
 
+@cmp_to_total
 class Cable(object):
 	"""
 	Object to store information about a cable.  Stores cable:
@@ -1542,12 +1547,52 @@ def parseSSMIF(filename):
 		raise ValueError("Unknown file extension '%s', cannot tell if it is text or binary" % ext)
 	
 	# Unpack the dictionary into the current variable scope
-	for k in ssmifDataDict.keys():
-		try:
-			exec("%s = ssmifDataDict['%s']" % (k, k))
-		except NameError:
-			pass
-			
+	## Site
+	idn = ssmifDataDict['idn']
+	lat = ssmifDataDict['lat']
+	lon = ssmifDataDict['lon']
+	elv = ssmifDataDict['elv']
+	## Stands
+	stdPos = ssmifDataDict['stdPos']
+	## FEEs
+	feeID   = ssmifDataDict['feeID']
+	feeGai1 = ssmifDataDict['feeGai1']
+	feeGai2 = ssmifDataDict['feeGai2']
+	feeStat = ssmifDataDict['feeStat']
+	feeAnt1 = ssmifDataDict['feeAnt1']
+	feeAnt2 = ssmifDataDict['feeAnt2']
+	## Cables
+	rpdID   = ssmifDataDict['rpdID']
+	rpdLeng = ssmifDataDict['rpdLeng']
+	rpdVF   = ssmifDataDict['rpdVF']
+	rpdDD   = ssmifDataDict['rpdDD']
+	rpdA0   = ssmifDataDict['rpdA0']
+	rpdA1   = ssmifDataDict['rpdA1']
+	rpdStr  = ssmifDataDict['rpdStr']
+	rpdFre  = ssmifDataDict['rpdFre']
+	rpdAnt  = ssmifDataDict['rpdAnt']
+	## Antennas
+	stdAnt   = ssmifDataDict['stdAnt']
+	stdOrie  = ssmifDataDict['stdOrie']
+	stdTheta = ssmifDataDict['stdTheta']
+	stdPhi   = ssmifDataDict['stdPhi']
+	stdStat  = ssmifDataDict['stdStat']
+	## ARX
+	nChanARX = ssmifDataDict['nChanARX']
+	arxID    = ssmifDataDict['arxID']
+	arxAnt   = ssmifDataDict['arxAnt']
+	arxIn    = ssmifDataDict['arxIn']
+	arxOut   = ssmifDataDict['arxOut']
+	### DP/ADP
+	try:
+		isDP = True
+		dp1Ant = ssmifDataDict['dp1Ant']
+		dp1InR = ssmifDataDict['dp1InR']
+	except KeyError:
+		isDP = False
+		roachAnt = ssmifDataDict['roachAnt']
+		roachInR = ssmifDataDict['roachInR']
+		
 	# Build up a list of Stand instances and load them with data
 	i = 1
 	stands = []
@@ -1606,7 +1651,7 @@ def parseSSMIF(filename):
 			channel = j + 1
 			antennas[ant-1].arx = ARX(boardID, channel=channel, aspChannel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
 			
-	try:
+	if isDP:
 		# Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
 		# with DP2 boards at 1 and 15.
 		i = 1
@@ -1618,7 +1663,7 @@ def parseSSMIF(filename):
 				antennas[ant-1].input = con
 				j += 1
 			i += 1
-	except NameError:
+	else:
 		# Associate ROACH board and digitizer numbers with Antennas.
 		i = 1
 		j = 1

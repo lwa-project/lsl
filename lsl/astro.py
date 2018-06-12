@@ -17,12 +17,15 @@ import ephem
 import numpy
 from calendar import timegm
 
+from lsl.misc.total_sorting import cmp_to_total
+
 __version__   = '0.5'
 __revision__ = '$Rev$'
 __author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'
 
 
+@cmp_to_total
 class dms(object):
 	"""
 	Represents angles in degrees, minutes, seconds.
@@ -136,6 +139,7 @@ class dms(object):
 		return deg_to_hms(self.to_deg())
 
 
+@cmp_to_total
 class hms(object):
 	"""
 	Represents times/angles in hours, minutes, seconds.
@@ -239,6 +243,7 @@ class hms(object):
 		return hms_to_sec(self)
 
 
+@cmp_to_total
 class date(object):
 	"""
 	Represents UT time in calendar units.
@@ -418,6 +423,7 @@ class date(object):
 		self.seconds = second
 
 
+@cmp_to_total
 class zonedate(object):
 	"""
 	Represents local time in calendar units.

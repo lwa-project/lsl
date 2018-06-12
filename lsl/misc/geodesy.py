@@ -22,6 +22,8 @@ import logging
 from urllib2 import urlopen
 
 import lsl.astro as astro
+from lsl.misc.total_sorting import cmp_to_total
+
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
@@ -39,6 +41,7 @@ if not os.path.exists(_CacheDir):
 	os.mkdir(_CacheDir)
 
 
+@cmp_to_total
 class EOP(object):
 	"""
 	Object for storing the geodetic parameters relevant for DiFX input 

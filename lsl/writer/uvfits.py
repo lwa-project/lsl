@@ -22,6 +22,7 @@ from lsl import astro
 from lsl.misc import geodesy
 from lsl.common import constants
 from lsl.writer.fitsidi import StokesCodes
+from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
@@ -96,6 +97,7 @@ class UV(object):
 			self.sideBand = 1
 			self.baseBand = 0
 			
+	@cmp_to_total
 	class _UVData(object):
 		"""
 		Represents one UV visibility data set for a given observation time.

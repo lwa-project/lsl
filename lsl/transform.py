@@ -12,6 +12,7 @@ import math
 import abc
 
 from lsl import astro
+from lsl.misc.total_sorting import cmp_to_total
    
 __version__ = '0.2'
 __revision__ = '$Rev$'
@@ -19,6 +20,7 @@ __author__ = "Unknown"
 __maintainer__ = "Jayce Dowell"
 
 
+@cmp_to_total
 class Time(object):
 	"""
 	Holds an absolute time value and can manipulate the value in 

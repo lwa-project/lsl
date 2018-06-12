@@ -68,6 +68,8 @@ from lsl.reader.tbf import FrameSize as TBFSize
 from lsl.reader.tbn import FrameSize as TBNSize
 from lsl.reader.drx import FrameSize as DRXSize
 
+from lsl.misc.total_sorting import cmp_to_total
+
 
 __version__ = '1.1'
 __revision__ = '$Rev$'
@@ -674,6 +676,7 @@ class Project(object):
 		fh.close()
 
 
+@cmp_to_total
 class Session(object):
 	"""Class to hold all of the observations in a session."""
 	
@@ -916,6 +919,7 @@ class Session(object):
 			return 0
 
 
+@cmp_to_total
 class Observation(object):
 	"""
 	Class to hold the specifics of an observations.  It currently
