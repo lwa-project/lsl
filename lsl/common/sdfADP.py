@@ -666,10 +666,13 @@ class Project(object):
 			
 		return output
 		
-	def writeto(self, filename, session=0, verbose=False):
+	def writeto(self, filename, session=0, verbose=False, clobber=False):
 		"""Create a session definition file that corresponds to the specified 
 		session and write it to the provided filename."""
 		
+		if os.path.exists(filename) and not clobber:
+			raise RuntimeError("'%s' already exists" % filename)
+			
 		output = self.render(session=session, verbose=verbose)
 		fh = open(filename, 'w')
 		fh.write(output)
