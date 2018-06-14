@@ -54,7 +54,7 @@ def __filterCoeff(N, P):
 	"""
 
 	t = numpy.arange(N*P)
-	return numpy.sinc((t - N*P/2 + 0.5)/N)/N
+	return numpy.sinc((t - N*P/2.0 + 0.5)/N)
 
 
 def fft(signal, N, P=1, window=noWindow):
@@ -69,26 +69,27 @@ def fft(signal, N, P=1, window=noWindow):
 	
 	if usePyFFTW and filteredSignal.dtype in (numpy.complex64, numpy.complex128):
 		dd = filteredSignal.dtype
-		di = numpy.empty(N, dtype=dd)
-		do = numpy.empty(N, dtype=dd)
+		di = pyfftw.empty_aligned(N, dtype=dd)
+		do = pyfftw.empty_aligned(N, dtype=dd)
 		
-		forwardPlan = pyfftw.FFTW(di, do, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
+		forwardPlan = pyfftw.FFTW(di, do, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE',))
 		
-		fbInput = numpy.empty(N, dtype=dd)
-		fbTemp = numpy.empty(N, dtype=dd)
 		for i in range(0, P):
-			fbInput[:] = filteredSignal[i*N:(i+1)*N]
-			forwardPlan(fbInput, fbTemp)
+			di[:] = filteredSignal[i*N:(i+1)*N]
+			forwardPlan(di, do)
 			try:
-				fbOutput += fbTemp[:]
+				fbOutput += do
 			except NameError:
-				fbOutput = fbTemp[:]
+				fbOutput = do*1.0
 				
 	else:
-		fbOutput = numpy.fft.fft(filteredSignal[0:N])
-		for i in range(1, P):
-			fbOutput += numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
-			
+		for i in range(0, P):
+			fbTemp = numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
+			try:
+				fbOutput += fbTemp
+			except NameError:
+				fbOutput = fbTemp*1.0
+				
 	return fbOutput
 
 def fft2(signal, N, window=noWindow):
