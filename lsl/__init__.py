@@ -21,6 +21,7 @@ See the individual package descriptions for more information.
 """
 
 import os
+import sys
 import subprocess
 from lsl import version
 from lsl.common import paths
@@ -37,5 +38,5 @@ def test():
 	
 	eggPath = os.path.split(paths.module)[0]
 	testPath = os.path.join(eggPath, 'tests', 'test_lsl.py')
-	subprocess.check_call(['python', testPath, '-v'])
+	subprocess.check_call([sys.executable, testPath, '-v'])
 
