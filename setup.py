@@ -46,8 +46,6 @@ def get_description(filename):
 
 	inDescription = False
 	for line in lines:
-		line = line.replace('\n', '')
-		line = line.replace('\t', '')
 		if line.find('DESCRIPTION') == 0:
 			inDescription = True
 			continue
@@ -55,7 +53,9 @@ def get_description(filename):
 			inDescription = False
 			break
 		if inDescription:
-			desc = ' '.join([desc, line])
+			if line[:3] == '---':
+				continue
+			desc = ''.join([desc, line])
 
 	return desc
 
@@ -230,17 +230,21 @@ setup(
 	author = "Jayce Dowell", 
 	author_email = "jdowell@unm.edu", 
 	url = "https://fornax.phys.unm.edu/lwa/trac/", 
-	long_description = get_description('README'), 
+	long_description = get_description('README.md'), 
 	license = 'GPL',
 	classifiers = ['Development Status :: 5 - Production/Stable',
+			'Intended Audience :: Developers',
 			'Intended Audience :: Science/Research',
 			'License :: OSI Approved :: GNU General Public License (GPL)',
 			'Topic :: Scientific/Engineering :: Astronomy',
 			'Programming Language :: Python :: 2',
-                        'Programming Language :: Python :: 2.6',
-                        'Programming Language :: Python :: 2.7'],
+			'Programming Language :: Python :: 2.6',
+			'Programming Language :: Python :: 2.7',
+			'Operating System :: MacOS :: MacOS X',
+			'Operating System :: POSIX :: Linux'],
 	packages = find_packages(), 
 	scripts = glob.glob('scripts/*.py'), 
+	python_requires='>=2.6, <3', 
 	setup_requires = ['numpy>=1.2'], 
 	install_requires = ['pyfits>=3.1', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.5', 'aipy>=0.9.1', 'pytz>=2011k'], 
 	dependency_links = ['http://www.stsci.edu/resources/software_hardware/pyfits/Download'], 
