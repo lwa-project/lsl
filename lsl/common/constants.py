@@ -5,16 +5,16 @@ Module that stores various useful constants in one convenient location.
 The constants defined in this file are:
 
 c
-  the speed of light in m/s
+    the speed of light in m/s
 
 kB
-  Boltzmann's constant in Jy m^2 / K
-  
+    Boltzmann's constant in Jy m^2 / K
+
 deg2rad
-  the conversion factor for degrees to radians
+    the conversion factor for degrees to radians
 
 tpi
-  :math:`2 \\pi \\sqrt{-1}`
+    :math:`2 \\pi \\sqrt{-1}`
 """
 
 import math

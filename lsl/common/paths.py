@@ -7,10 +7,10 @@ variables are defined by this module:
   * data
 
 module
-  specifies the absolute path to the module
+    specifies the absolute path to the module
 
 data
-  the absolute path to the data directory where data files are stored
+    the absolute path to the data directory where data files are stored
 """
 
 import os
@@ -35,9 +35,9 @@ data = os.path.join(module, 'data')
 # points to data.
 currentDir = os.path.abspath(os.getcwd())
 if os.path.exists(os.path.join(currentDir, 'setup.py')) and os.path.exists(os.path.join(currentDir, 'lsl')):
-	modInfoBuild = imp.find_module('lsl', [currentDir])
-	moduleBuild =  os.path.abspath(modInfoBuild[1])
-	dataBuild = os.path.join(moduleBuild, 'data')
+    modInfoBuild = imp.find_module('lsl', [currentDir])
+    moduleBuild =  os.path.abspath(modInfoBuild[1])
+    dataBuild = os.path.join(moduleBuild, 'data')
 else:
-	moduleBuild = module
-	dataBuild = data
+    moduleBuild = module
+    dataBuild = data
