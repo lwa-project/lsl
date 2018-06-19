@@ -22,9 +22,9 @@ class _HashedSeq(list):
         return self.hashvalue
 
 def _make_key(args, kwds, typed,
-             kwd_mark = (object(),),
-             fasttypes = set([int, str, frozenset, type(None)]),
-             sorted=sorted, tuple=tuple, type=type, len=len):
+              kwd_mark = (object(),),
+              fasttypes = set([int, str, frozenset, type(None)]),
+              sorted=sorted, tuple=tuple, type=type, len=len):
     'Make a cache key from optionally typed positional and keyword arguments'
     key = args
     if kwds:
