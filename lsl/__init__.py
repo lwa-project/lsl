@@ -32,11 +32,11 @@ __author__ = "Jayce Dowell"
 
 
 def test():
-	"""
-	Internal test fixture
-	"""
-	
-	eggPath = os.path.split(paths.module)[0]
-	testPath = os.path.join(eggPath, 'tests', 'test_lsl.py')
-	subprocess.check_call([sys.executable, testPath, '-v'])
+    """
+    Internal test fixture
+    """
+    
+    eggPath = os.path.split(paths.module)[0]
+    testPath = os.path.join(eggPath, 'tests', 'test_lsl.py')
+    subprocess.check_call([sys.executable, testPath, '-v'])
 
