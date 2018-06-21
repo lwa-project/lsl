@@ -166,6 +166,9 @@ MOD_INIT(_gofast) {
 	// Version and revision information
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
 	PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    
+    // Correlator channel count
+    PyModule_AddObject(m, "NCHAN_COR", PyInt_FromLong(COR_NCHAN));
 	
 	return MOD_SUCCESS_VAL(m);
 }

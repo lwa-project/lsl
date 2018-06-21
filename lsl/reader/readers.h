@@ -51,6 +51,11 @@ extern int validSync5C(unsigned int);
 // vdif.c
 extern void initVDIFLUTs(void);
 
+/*
+ ADP COR mode channel information
+*/
+
+#define COR_NCHAN 72
 
 /*
   Reader Functions and Documentation

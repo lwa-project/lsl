@@ -21,6 +21,7 @@
 
 #include "readers.h"
 
+
 /*
   COR Reader
 */
@@ -47,7 +48,7 @@ typedef struct {
 	signed int nAvg;
 	signed short int stand0;
 	signed short int stand1;
-	float complex vis[288];
+	float complex vis[COR_NCHAN*4];
 } CORPayload;
 
 
@@ -70,8 +71,8 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	
 	// Create the output data array
 	npy_intp dims[3];
-	// 32+32-bit Data -> 288 samples in the data section as 72 channels, 2 pols @ stand 0, 2 pols @  stand 1
-	dims[0] = 72;
+	// 32+32-bit Data -> as COR_NCHAN channels, 2 pols @ stand 0, 2 pols @  stand 1
+	dims[0] = COR_NCHAN;
 	dims[1] = 2;
 	dims[2] = 2;
 	data = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
@@ -117,7 +118,7 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
 	/*for(i=0; i<288; i++) {
 		*(a + i) = cFrame.data.vis[i];
 	}*/
-	memcpy(a, &cFrame.data.vis, sizeof(float complex)*288);
+	memcpy(a, &cFrame.data.vis, sizeof(float complex)*COR_NCHAN*4);
 	
 	Py_END_ALLOW_THREADS
 	

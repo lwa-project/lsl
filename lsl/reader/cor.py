@@ -30,6 +30,7 @@ import copy
 import numpy
 
 from lsl.common import adp as adp_common
+from lsl.reader._gofast import NCHAN_COR
 from lsl.reader._gofast import readCOR
 from lsl.reader._gofast import syncError as gsyncError
 from lsl.reader._gofast import eofError as geofError
@@ -41,7 +42,7 @@ __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFr
            'getChannelCount', 'getBaselineCount', 
            '__version__', '__revision__', '__all__']
 
-FrameSize = 2336
+FrameSize = 32 + NCHAN_COR*4*8
 
 
 class FrameHeader(object):
@@ -75,7 +76,7 @@ class FrameHeader(object):
         each channel in the data.
         """
         
-        return (numpy.arange(144, dtype=numpy.float32)+self.firstChan) * adp_common.fC
+        return (numpy.arange(NCHAN_COR, dtype=numpy.float32)+self.firstChan) * adp_common.fC
         
     def getGain(self):
         """
@@ -396,7 +397,7 @@ def getFramesPerObs(filehandle):
     # Build up the list-of-lists that store the index of the first frequency
     # channel in each frame.
     channelBaselinePairs = []
-    for i in range(32896*2):
+    for i in range(32896*16):
         try:
             cFrame = readFrame(filehandle)
         except:
@@ -427,7 +428,7 @@ def getChannelCount(filehandle):
     # Build up the list-of-lists that store the index of the first frequency
     # channel in each frame.
     channels = []
-    for i in range(32896*2):
+    for i in range(32896*16):
         try:
             cFrame = readFrame(filehandle)
         except:
@@ -441,7 +442,7 @@ def getChannelCount(filehandle):
     filehandle.seek(fhStart)
     
     # Return the number of channels
-    return len(channels)
+    return len(channels)*NCHAN_COR
 
 
 def getBaselineCount(filehandle):
@@ -457,7 +458,7 @@ def getBaselineCount(filehandle):
     # Build up the list-of-lists that store the index of the first frequency
     # channel in each frame.
     baselines = []
-    for i in range(32896*2):
+    for i in range(32896*16):
         try:
             cFrame = readFrame(filehandle)
         except:
