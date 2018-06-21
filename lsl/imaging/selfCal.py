@@ -3,12 +3,12 @@
 """
 Simple self-calibration module for correlated TBW and TBN data.  The 
 supported self-calibration methods are:
-* phase-only
-* amplitude and phase
-* delay-only
-* amplitude and delay
-* delay/phase offset
-* amplitude and delay/phase offset
+  * phase-only
+  * amplitude and phase
+  * delay-only
+  * amplitude and delay
+  * delay/phase offset
+  * amplitude and delay/phase offset
 
 ..versionchanged:: 0.6.3
     Reworked the module to make it more versatile
@@ -325,20 +325,20 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
     channel(s).
     
     The supported self-cal. schemes are:
-    * phase-only
-    * amplitude and phase
-    * delay-only
-    * amplitude and delay
-    * delay/phase offset
-    * amplitude and delay/phase offset
+      * phase-only
+      * amplitude and phase
+      * delay-only
+      * amplitude and delay
+      * delay/phase offset
+      * amplitude and delay/phase offset
     
     The function exits when either the maximum number of iterations is 
     reached (nIter) or the maximum absolute value of the relevant quantity
     drops below the quantity's cutoff value.  The cutoff keywords and 
     their default values are:
-    * amplitudeCutoff - 1.001, 
-    * phaseCutoff - 0.01 radians, 
-    * delayCutoff - 0.2 ns (0.01 radians over 10 MHz),
+      * amplitudeCutoff - 1.001, 
+      * phaseCutoff - 0.01 radians, 
+      * delayCutoff - 0.2 ns (0.01 radians over 10 MHz),
     """
 
     # Make sure we have the right polarization
