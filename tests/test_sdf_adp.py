@@ -252,6 +252,9 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TRK_RADEC SDF file."""
         
         project = sdfADP.parseSDF(drxFile)
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.setFilter(6)
         out = project.render()
         
     def test_drx_errors(self):
@@ -268,11 +271,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 10
+        project.sessions[0].observations[0].filter = 7
         self.assertFalse(project.validate())
         
         # Bad frequency
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 6
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
@@ -342,6 +345,9 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TRK_SOL SDF file."""
         
         project = sdfADP.parseSDF(solFile)
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.setFilter(6)
         out = project.render()
         
     def test_sol_errors(self):
@@ -358,11 +364,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 10
+        project.sessions[0].observations[0].filter = 7
         self.assertFalse(project.validate())
         
         # Bad frequency
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 6
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
@@ -426,6 +432,9 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TRK_JOV SDF file."""
         
         project = sdfADP.parseSDF(jovFile)
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.setFilter(6)
         out = project.render()
         
     def test_jov_errors(self):
@@ -442,11 +451,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 10
+        project.sessions[0].observations[0].filter = 7
         self.assertFalse(project.validate())
         
         # Bad frequency
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 6
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
@@ -573,6 +582,9 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a STEPPED SDF file."""
         
         project = sdfADP.parseSDF(stpFile)
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.setFilter(6)
         out = project.render()
         
     def test_stp_errors(self):
@@ -589,11 +601,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 10
+        project.sessions[0].observations[0].filter = 7
         self.assertFalse(project.validate())
         
         # Bad frequency
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 6
         project.sessions[0].observations[0].steps[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
@@ -697,11 +709,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 10
+        project.sessions[0].observations[0].filter = 7
         self.assertFalse(project.validate())
         
         # Bad frequency
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 6
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
@@ -776,6 +788,9 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parseSDF(drxFile)
         project.sessions[0].setStation(lwasv)
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.setFilter(6)
         self.assertTrue(project.validate())
         
         self.assertRaises(RuntimeError, project.sessions[0].setStation, lwa1)
@@ -784,11 +799,11 @@ class sdf_adp_tests(unittest.TestCase):
         """Test whether or not isValid works."""
         
         self.assertTrue(sdfADP.isValid(tbnFile))
-        self.assertTrue(sdfADP.isValid(drxFile))
-        self.assertTrue(sdfADP.isValid(solFile))
-        self.assertTrue(sdfADP.isValid(jovFile))
-        self.assertTrue(sdfADP.isValid(stpFile))
-        self.assertTrue(sdfADP.isValid(spcFile))
+        self.assertFalse(sdfADP.isValid(drxFile))
+        self.assertFalse(sdfADP.isValid(solFile))
+        self.assertFalse(sdfADP.isValid(jovFile))
+        self.assertFalse(sdfADP.isValid(stpFile))
+        self.assertFalse(sdfADP.isValid(spcFile))
         self.assertTrue(sdfADP.isValid(tbfFile))
         
     def test_is_not_valid(self):
@@ -802,6 +817,9 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(drxFile)
         project.sessions[0].setDataReturnMethod('UCF')
         project.sessions[0].setUCFUsername('jdowell')
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.setFilter(6)
         out = project.render()
         
         self.assertTrue(out.find('Requested data return method is UCF') > 0)
