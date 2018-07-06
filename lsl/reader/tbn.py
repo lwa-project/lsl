@@ -67,9 +67,7 @@ __all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame',
 FrameSize = 1048
 
 # List of filter codes and their corresponding sample rates in Hz
-# NOTE: filter codes 8, 9, 10, and 11 are only valid on ADP TBN
-filterCodes = {1:   1000, 2:   3125, 3:    6250, 4:    12500, 5: 25000, 6: 50000, 7: 100000, 
-            8: 200000, 9: 400000, 10: 800000, 11: 1600000}
+filterCodes = {1:   1000, 2:   3125, 3:    6250, 4:    12500, 5: 25000, 6: 50000, 7: 100000}
 
 
 class FrameHeader(object):
