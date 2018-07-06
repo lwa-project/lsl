@@ -732,8 +732,11 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(drxFile)
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].duration = '00:01:31.000'
-
-        fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
+        
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.filter = 6
+        fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')
         fh.write(project.render())
         fh.close()
         
@@ -745,8 +748,11 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(drxFile)
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].duration = timedelta(minutes=1, seconds=31, microseconds=1000)
-
-        fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
+        
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.filter = 6
+        fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')
         fh.write(project.render())
         fh.close()
         
@@ -758,7 +764,10 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(drxFile)
         project.sessions[0].observations[1].frequency2 = 75e6
         project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
-
+        
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
         fh.write(project.render())
         fh.close()
@@ -773,7 +782,10 @@ class sdf_adp_tests(unittest.TestCase):
         _MST = pytz.timezone('US/Mountain')
         project.sessions[0].observations[1].frequency2 = 75e6
         project.sessions[0].observations[1].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
-
+        
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.sessions[0].observations:
+            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
         fh.write(project.render())
         fh.close()
