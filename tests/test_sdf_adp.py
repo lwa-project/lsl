@@ -254,7 +254,7 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(drxFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
-            obs.setFilter(6)
+            obs.filter = 6
         out = project.render()
         
     def test_drx_errors(self):
@@ -347,7 +347,7 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(solFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
-            obs.setFilter(6)
+            obs.filter = 6
         out = project.render()
         
     def test_sol_errors(self):
@@ -434,7 +434,7 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(jovFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
-            obs.setFilter(6)
+            obs.filter = 6
         out = project.render()
         
     def test_jov_errors(self):
@@ -584,7 +584,7 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parseSDF(stpFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
-            obs.setFilter(6)
+            obs.filter = 6
         out = project.render()
         
     def test_stp_errors(self):
@@ -790,7 +790,7 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].setStation(lwasv)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
-            obs.setFilter(6)
+            obs.filter = 6
         self.assertTrue(project.validate())
         
         self.assertRaises(RuntimeError, project.sessions[0].setStation, lwa1)
@@ -819,7 +819,7 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].setUCFUsername('jdowell')
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
-            obs.setFilter(6)
+            obs.filter = 6
         out = project.render()
         
         self.assertTrue(out.find('Requested data return method is UCF') > 0)
