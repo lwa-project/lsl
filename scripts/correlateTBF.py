@@ -15,7 +15,7 @@ import getopt
 from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
-from lsl.reader import tbf, errors
+from lsl.reader.ldp import LWASVDataFile
 from lsl.common import stations, metabundleADP
 from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
@@ -44,15 +44,20 @@ Usage: correlateTBF.py [OPTIONS] file
 Options:
 -h, --help             Display this help information
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                    mappings
--q, --quiet            Run correlateTBN in silent mode
+                       mappings
+-t, --avg-time         Window to average visibilities in time (seconds; 
+                       default = 1 s)
+-s, --samples          Number of average visibilities to generate
+                       (default = 1)
+-o, --offset           Seconds to skip from the beginning of the file
+-q, --quiet            Run correlateTBF in silent mode
 -a, --all              Correlated all dipoles regardless of their status 
-                    (default = no)
+                       (default = no)
 -x, --xx               Compute only the XX polarization product (default)
 -y, --yy               Compute only the YY polarization product
 -2, --two-products     Compute both the XX and YY polarization products
 -4, --four-products    Compute all for polariation products:  XX, YY, XY, 
-                    and YX.
+                       and YX.
 """
     
     if exitCode is not None:
@@ -65,6 +70,9 @@ def parseConfig(args):
     config = {}
     # Command line flags - default values
     config['metadata'] = ''
+    config['avgTime'] = 1.0
+    config['samples'] = 1
+    config['offset'] = 0
     config['verbose'] = True
     config['all'] = False
     config['products'] = ['xx',]
@@ -72,7 +80,7 @@ def parseConfig(args):
     
     # Read in and process the command line flags
     try:
-        opts, arg = getopt.getopt(args, "hm:qa24xy", ["help", "metadata=", "quiet", "all", "two-products", "four-products", "xx", "yy"])
+        opts, arg = getopt.getopt(args, "hm:qt:s:o:a24xy", ["help", "metadata=", "quiet", "avg-time=", "samples=", "offset=", "all", "two-products", "four-products", "xx", "yy"])
     except getopt.GetoptError, err:
         # Print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -86,6 +94,12 @@ def parseConfig(args):
             config['metadata'] = value
         elif opt in ('-q', '--quiet'):
             config['verbose'] = False
+        elif opt in ('-t', '--avg-time'):
+            config['avgTime'] = float(value)
+        elif opt in ('-s', '--samples'):
+            config['samples'] = int(value)
+        elif opt in ('-o', '--offset'):
+            config['offset'] = int(value)
         elif opt in ('-a', '--all'):
             config['all'] = True
         elif opt in ('-2', '--two-products'):
@@ -102,11 +116,15 @@ def parseConfig(args):
     # Add in arguments
     config['args'] = arg
     
+    # Validate
+    if config['avgTime'] < 0.1 and config['samples'] > 1:
+        raise RuntimeError("Integration time is too short: %.3f s" % config['avgTime'])
+        
     # Return configuration
     return config
 
 
-def processChunk(fh, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize=100):
+def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize=100):
     """
     Given a lsl.reader.ldp.TBNFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -115,33 +133,9 @@ def processChunk(fh, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize=
     # Get antennas
     antennas = site.getAntennas()
     
-    # Figure out how many frames there are per observation and the number of
-    # channels that are in the file
-    nFrames = os.path.getsize(fh.name) / tbf.FrameSize
-    nFramesPerObs = tbf.getFramesPerObs(fh)
-    nChannels = tbf.getChannelCount(fh)
-    nSamples = 7840
-    
-    # Figure out how many chunks we need to work with
-    nChunks = nFrames / nFramesPerObs
-    
-    # Pre-load the channel mapper
-    cMapper = []
-    for i in xrange(2*nFramesPerObs):
-        cFrame = tbf.readFrame(fh)
-        if cFrame.header.firstChan not in cMapper:
-            cMapper.append( cFrame.header.firstChan )
-    fh.seek(-2*nFramesPerObs*tbf.FrameSize, 1)
-    cMapper.sort()
-    
-    # Calculate the frequencies
-    freq = numpy.zeros(nChannels)
-    for i,c in enumerate(cMapper):
-        freq[i*12:i*12+12] = c + numpy.arange(12)
-    freq *= 25e3
-    
     # Get the metadata
-    sampleRate = 25e3
+    sampleRate = idf.getInfo('sampleRate')
+    freq = idf.getInfo('freq1')
     
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  
     # These are:
@@ -161,42 +155,12 @@ def processChunk(fh, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize=
     setTime = 0.0
     wallTime = time.time()
     for s in xrange(ChunkSize):
-        data = numpy.zeros((256*2,nChannels,nChunks), dtype=numpy.complex64)
-        for i in xrange(nChunks):
-            # Inner loop that actually reads the frames into the data array
-            for j in xrange(nFramesPerObs):
-                # Read in the next frame and anticipate any problems that could occur
-                try:
-                    cFrame = tbf.readFrame(fh)
-                except errors.eofError:
-                    break
-                except errors.syncError:
-                    print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FrameSize-1)
-                    continue
-                if not cFrame.header.isTBF():
-                    continue
-                    
-                firstChan = cFrame.header.firstChan
-                
-                # Figure out where to map the channel sequence to
-                try:
-                    aStand = cMapper.index(firstChan)
-                except ValueError:
-                    cMapper.append(firstChan)
-                    aStand = cMapper.index(firstChan)
-                
-                # Actually load the data.
-                if i == 0 and j == 0:
-                    t = cFrame.getTime()
-                    refCount = cFrame.header.frameCount
-                count = cFrame.header.frameCount - refCount
-                subData = cFrame.data.fDomain
-                subData.shape = (12,512)
-                subData = subData.T
-                
-                data[:,aStand*12:aStand*12+12,count] = subData
-        readT = ChunkSize*40e-6
-        
+        try:
+            readT, t, data = idf.read(intTime)
+        except Exception, e:
+            print "Error: %s" % str(e)
+            continue
+            
         ## Prune out what we don't want
         data = data[toKeep,:,:]
         
@@ -299,43 +263,13 @@ def main(args):
         station = stations.lwasv
     antennas = station.getAntennas()
     
-    fh = open(config['args'][0], 'rb')
-    nFrames = os.path.getsize(config['args'][0]) / tbf.FrameSize
-    antpols = len(antennas)
+    idf = LWASVDataFile(filename)
     
-    
-    # Read in the first frame and get the date/time of the first sample 
-    # of the frame.  This is needed to get the list of stands.
-    junkFrame = tbf.readFrame(fh)
-    fh.seek(0)
-    beginJD = astro.unix_to_utcjd(junkFrame.getTime())
-    beginDate = ephem.Date(astro.unix_to_utcjd(junkFrame.getTime()) - astro.DJD_OFFSET)
-    
-    # Figure out how many frames there are per observation and the number of
-    # channels that are in the file
-    nFramesPerObs = tbf.getFramesPerObs(fh)
-    nChannels = tbf.getChannelCount(fh)
-    nSamples = 7840
-    
-    # Figure out how many chunks we need to work with
-    nChunks = nFrames / nFramesPerObs
-    
-    # Pre-load the channel mapper
-    mapper = []
-    for i in xrange(2*nFramesPerObs):
-        cFrame = tbf.readFrame(fh)
-        if cFrame.header.firstChan not in mapper:
-            mapper.append( cFrame.header.firstChan )
-    fh.seek(-2*nFramesPerObs*tbf.FrameSize, 1)
-    mapper.sort()
-    
-    # Calculate the frequencies
-    freq = numpy.zeros(nChannels)
-    for i,c in enumerate(mapper):
-        freq[i*12:i*12+12] = c + numpy.arange(12)
-    freq *= 25e3
-    
-    nInts = nFrames / nFramesPerObs
+    jd = astro.unix_to_utcjd(idf.getInfo('tStart'))
+    date = str(ephem.Date(jd - astro.DJD_OFFSET))
+    nFpO = idf.getInfo('nChan') / 12
+    sampleRate = idf.getInfo('sampleRate')
+    nInts = idf.getInfo('nFrames') / nFpO
     
     # Get valid stands for both polarizations
     goodX = []
@@ -367,25 +301,35 @@ def main(args):
         print "%3i, %i" % (antennas[i].stand.id, antennas[i].pol)
         
     # Number of frames to read in at once and average
-    nFrames = nFrames
-    nSets = 1
+    nFrames = min([int(config['avgTime']*sampleRate), nInts])
+    config['offset'] = idf.offset(config['offset'])
+    nSets = idf.getInfo('nFrames') / nFpO / nFrames
+    nSets = nSets - int(config['offset']*sampleRate) / nFrames
     
-    centralFreq = freq.mean()
+    centralFreq = idf.getInfo('freq1')
+    centralFreq = centralFreq[len(centralFreq)/2]
     
-    print "Samples per observations: %i per pol." % (nFramesPerObs/2)
+    print "Data type:  %s" % type(idf)
+    print "Samples per observations: %i" % nFpO
+    print "Sampling rate: %i Hz" % sampleRate
     print "Tuning frequency: %.3f Hz" % centralFreq
-    print "Captures in file: %i (%.1f s)" % (nInts, nInts*40e-6)
+    print "Captures in file: %i (%.3f s)" % (nInts, nInts / sampleRate)
     print "=="
     print "Station: %s" % station.name
-    print "Date observed: %s" % beginDate
-    print "Julian day: %.5f" % beginJD
-    print "Integration Time: %.3f s" % (40e-6*nFrames/nFramesPerObs)
+    print "Date observed: %s" % date
+    print "Julian day: %.5f" % jd
+    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*sampleRate)
+    print "Integration Time: %.3f s" % (nFrames/sampleRate)
     print "Number of integrations in file: %i" % nSets
     
-    # Loop over junks of 300 integrations to make sure that we don't overflow 
+    # Make sure we don't try to do too many sets
+    if config['samples'] > nSets:
+        config['samples'] = nSets
+        
+    # Loop over junks of 100 integrations to make sure that we don't overflow 
     # the FITS IDI memory buffer
     s = 0
-    leftToDo = 1
+    leftToDo = config['samples']
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     while leftToDo > 0:
@@ -396,12 +340,13 @@ def main(args):
         else:
             chunk = leftToDo
             
-        processChunk(fh, station, good, fitsFilename, pols=config['products'], ChunkSize=chunk)
+        processChunk(idf, station, good, fitsFilename, intTime=config['avgTime'], 
+                     pols=config['products'], ChunkSize=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk
         
-    fh.close()
+    idf.close()
 
 
 if __name__ == "__main__":
