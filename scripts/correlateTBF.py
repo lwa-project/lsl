@@ -21,6 +21,7 @@ from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi
+from lsl.common.constants import c as speedOfLight
 
 
 class UTC(tzinfo):
@@ -172,13 +173,17 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
         
         ## Apply the cable delays as phase rotations
         for i in xrange(dataX.shape[0]):
-            phaseRot = numpy.exp(2j*numpy.pi*freq*antennasX[i].cable.delay(freq))
+            gain = numpy.sqrt( antennasX[i].cable.gain(freq) )
+            phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasX[i].cable.delay(freq) \
+                                                   -antennasX[i].stand.z/speedOfLight))
             for j in xrange(dataX.shape[2]):
-                dataX[i,:,j] *= phaseRot
+                dataX[i,:,j] *= phaseRot / gain
         for i in xrange(dataY.shape[0]):
-            phaseRot = numpy.exp(2j*numpy.pi*freq*antennasY[i].cable.delay(freq))
+            gain = numpy.sqrt( antennasY[i].cable.gain(freq) )
+            phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasY[i].cable.delay(freq)\
+                                                   -antennasY[i].stand.z/speedOfLight))
             for j in xrange(dataY.shape[2]):
-                dataY[i,:,j] *= phaseRot
+                dataY[i,:,j] *= phaseRot / gain
                 
         setTime = t
         if s == 0:
@@ -209,13 +214,6 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
                 
             ## Run the cross multiply and accumulate
             vis = XEngine2(d1, d2, v1, v2)
-            
-            ## Apply the cable gains
-            for bl in xrange(vis.shape[0]):
-                cableGain1 = a1[baselines[bl][0]].cable.gain(freq)
-                cableGain2 = a2[baselines[bl][1]].cable.gain(freq)
-                
-                vis[bl,:] /= numpy.sqrt(cableGain1*cableGain2)
             
             # Select the right range of channels to save
             toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
