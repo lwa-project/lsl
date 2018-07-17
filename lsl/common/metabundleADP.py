@@ -31,9 +31,9 @@ from lsl.misc.lru_cache import lru_cache
 __version__ = '1.0'
 __revision__ = '$Rev$'
 __all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 
-        'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 
-        'getASPConfiguration', 'getASPConfigurationSummary', 'isValid', 
-        '__version__', '__revision__', '__all__']
+           'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 
+           'getASPConfiguration', 'getASPConfigurationSummary', 'isValid', 
+           '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
@@ -48,6 +48,26 @@ def _openTarball(tarname):
 def _getMembers(tarname):
     tf = _openTarball(tarname)
     return tf.getmembers()
+
+
+class managed_mkdtemp(object):
+    """
+    Wrapper class around tempfile.mkdtemp to enable 'with' statements with 
+    automatic cleanup.
+    """
+    
+    def __init__(self, suffix='', prefix='tmp', dir=None):
+        self._dir = tempfile.mkdtemp(suffix, prefix, dir)
+        
+    def __enter__(self):
+        return self._dir
+        
+    def __exit__(self, type, value, tb):
+        shutil.rmtree(self._dir, ignore_errors=True)
+        
+    @property
+    def name(self):
+        return self._dir
 
 
 def readSESFile(filename):
@@ -82,17 +102,17 @@ def readSESFile(filename):
             bses.SESSION_SPC = ''
             
     record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
-            'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2}
+              'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2}
     
     update = {'ASP': bses.SESSION_MUP_ASP, 'ADP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
-            'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2}
+              'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2}
     
     return {'version': bses.FORMAT_VERSION, 'projectID': bses.PROJECT_ID.lstrip().rstrip(), 
-        'sessionID': bses.SESSION_ID,  'CRA': bses.SESSION_CRA,  'drxBeam': bses.SESSION_DRX_BEAM,
-        'spcSetup': bses.SESSION_SPC, 'MJD': bses.SESSION_START_MJD, 'MPM': bses.SESSION_START_MPM, 
-        'Dur': bses.SESSION_DUR, 'nObs': bses.SESSION_NOBS, 'record': record, 'update': update, 
-        'logSch': bses.SESSION_LOG_SCH, 'logExe': bses.SESSION_LOG_EXE, 'incSMIF': bses.SESSION_INC_SMIB,
-        'incDesi': bses.SESSION_INC_DES}
+            'sessionID': bses.SESSION_ID,  'CRA': bses.SESSION_CRA,  'drxBeam': bses.SESSION_DRX_BEAM,
+            'spcSetup': bses.SESSION_SPC, 'MJD': bses.SESSION_START_MJD, 'MPM': bses.SESSION_START_MPM, 
+            'Dur': bses.SESSION_DUR, 'nObs': bses.SESSION_NOBS, 'record': record, 'update': update, 
+            'logSch': bses.SESSION_LOG_SCH, 'logExe': bses.SESSION_LOG_EXE, 'incSMIF': bses.SESSION_INC_SMIB,
+            'incDesi': bses.SESSION_INC_DES}
 
 
 def readOBSFile(filename):
@@ -180,15 +200,15 @@ def readOBSFile(filename):
             raise IOError("Byte alignment lost at byte %i" % fh.tell())
             
     output = {'version': bheader.FORMAT_VERSION, 'projectID': bheader.PROJECT_ID.lstrip().rstrip(), 
-            'sessionID': bheader.SESSION_ID, 'drxBeam': bheader.SESSION_DRX_BEAM, 
-            'spcSetup': bheader.SESSION_SPC, 'obsID': bheader.OBS_ID,
-            'MJD': bheader.OBS_START_MJD, 'MPM': bheader.OBS_START_MPM, 'Dur': bheader.OBS_DUR, 
-            'Mode': bheader.OBS_MODE, 'beamDipole': bheader.OBS_BDM, 
-            'RA': bheader.OBS_RA, 'Dec': bheader.OBS_DEC, 'Beam': bheader.OBS_B, 
-            'Freq1': word2freq(bheader.OBS_FREQ1), 'Freq2': word2freq(bheader.OBS_FREQ2), 'BW': bheader.OBS_BW, 'nSteps': bheader.OBS_STP_N, 'StepRADec': bheader.OBS_STP_RADEC,  'steps': steps, 
-            'fee': single2multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
-            'flt': list(bfooter.OBS_ASP_FLT), 'at1': list(bfooter.OBS_ASP_AT1), 
-            'at2': list(bfooter.OBS_ASP_AT2), 'ats': list(bfooter.OBS_ASP_ATS)}
+              'sessionID': bheader.SESSION_ID, 'drxBeam': bheader.SESSION_DRX_BEAM, 
+              'spcSetup': bheader.SESSION_SPC, 'obsID': bheader.OBS_ID,
+              'MJD': bheader.OBS_START_MJD, 'MPM': bheader.OBS_START_MPM, 'Dur': bheader.OBS_DUR, 
+              'Mode': bheader.OBS_MODE, 'beamDipole': bheader.OBS_BDM, 
+              'RA': bheader.OBS_RA, 'Dec': bheader.OBS_DEC, 'Beam': bheader.OBS_B, 
+              'Freq1': word2freq(bheader.OBS_FREQ1), 'Freq2': word2freq(bheader.OBS_FREQ2), 'BW': bheader.OBS_BW, 'nSteps': bheader.OBS_STP_N, 'StepRADec': bheader.OBS_STP_RADEC,  'steps': steps, 
+              'fee': single2multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
+              'flt': list(bfooter.OBS_ASP_FLT), 'at1': list(bfooter.OBS_ASP_AT1), 
+              'at2': list(bfooter.OBS_ASP_AT2), 'ats': list(bfooter.OBS_ASP_ATS)}
     output['tbfSamples'] = bfooter.OBS_TBF_SAMPLES
     output['tbfGain'] = bfooter.OBS_TBF_GAIN
     output['tbnGain'] = bfooter.OBS_TBN_GAIN
@@ -232,9 +252,9 @@ def readCSFile(filename):
                     data = None
                 
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
-                            'ignoreTime': True if action.bASAP else False, 
-                            'subsystemID': sid2string(action.sid), 'commandID': cid2string(action.cid), 
-                            'commandLength': action.len, 'data': data}
+                               'ignoreTime': True if action.bASAP else False, 
+                               'subsystemID': sid2string(action.sid), 'commandID': cid2string(action.cid), 
+                               'commandLength': action.len, 'data': data}
                             
                 commands.append( actionPrime )
             except IOError:
@@ -252,27 +272,19 @@ def getSDM(tarname):
     If a sdm.dat file cannot be found in the tarball, None is returned.
     """
     
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    
-    # Extract the SDM file.  If the dynamic/sdm.dat file cannot be found, None
-    # is returned via the try...except block.
-    tf = _openTarball(tarname)
-    try:
-        ti = tf.getmember('dynamic/sdm.dat')
-    except KeyError:
-        return None
-    tf.extractall(path=tempDir, members=[ti,])
-    
-    try:
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        # Extract the SDM file.  If the dynamic/sdm.dat file cannot be found, None
+        # is returned via the try...except block.
+        tf = _openTarball(tarname)
+        try:
+            ti = tf.getmember('dynamic/sdm.dat')
+        except KeyError:
+            return None
+        tf.extractall(path=tempDir, members=[ti,])
+        
         # Parse the SDM file and build the SDM instance
         dynamic = sdmADP.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
-    except Exception as e:
-        shutil.rmtree(tempDir, ignore_errors=True)
-        raise e
         
-    # Cleanup
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
     return dynamic
 
 
@@ -286,18 +298,16 @@ def getStation(tarname, ApplySDM=True):
     If a ssmif.dat file cannot be found in the tarball, None is returned.  
     """
     
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    
-    # Extract the SSMIF and SDM files.  If the ssmif.dat file cannot be found, None
-    # is returned via the try...except block
-    tf = _openTarball(tarname)
-    try:
-        ti = tf.getmember('ssmif.dat')
-    except KeyError:
-        return None
-    tf.extractall(path=tempDir, members=[ti,])
-    
-    try:
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        # Extract the SSMIF and SDM files.  If the ssmif.dat file cannot be found, None
+        # is returned via the try...except block
+        tf = _openTarball(tarname)
+        try:
+            ti = tf.getmember('ssmif.dat')
+        except KeyError:
+            return None
+        tf.extractall(path=tempDir, members=[ti,])
+        
         # Read in the SSMIF
         station = stations.parseSSMIF(os.path.join(tempDir, 'ssmif.dat'))
         
@@ -311,13 +321,7 @@ def getStation(tarname, ApplySDM=True):
         if dynamic is not None:
             newAnts = dynamic.updateAntennas(station.getAntennas())
             station.antennas = newAnts
-    except Exception as e:
-        shutil.rmtree(tempDir, ignore_errors=True)
-        raise e
-        
-    # Cleanup
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
+            
     # Return
     return station
 
@@ -333,21 +337,20 @@ def getSessionMetaData(tarname):
         Update to the new _metadata.txt format
     """
     
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    path, basename = os.path.split(tarname)
-    basename, ext = os.path.splitext(basename)
-    
-    # Extract the session meta-data file (_metadata.txt)
-    tf = _openTarball(tarname)
-    try:
-        ti = tf.getmember('%s_metadata.txt' % basename)
-    except KeyError:
-        for ti in _getMembers(tarname):
-            if ti.name[-13:] == '_metadata.txt':
-                break
-    tf.extractall(path=tempDir, members=[ti,])
-    
-    try:
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        path, basename = os.path.split(tarname)
+        basename, ext = os.path.splitext(basename)
+        
+        # Extract the session meta-data file (_metadata.txt)
+        tf = _openTarball(tarname)
+        try:
+            ti = tf.getmember('%s_metadata.txt' % basename)
+        except KeyError:
+            for ti in _getMembers(tarname):
+                if ti.name[-13:] == '_metadata.txt':
+                    break
+        tf.extractall(path=tempDir, members=[ti,])
+        
         # Read in the SMF
         filename = os.path.join(tempDir, ti.name)
         with open(filename, 'r') as fh:
@@ -402,15 +405,9 @@ def getSessionMetaData(tarname):
                                 
                 obsID = int(obsID)
                 obsOutcome = int(obsOutcome) if obsOutcome != 'Failed' else 1
-                result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 'outcome': obsOutcome, 'msg': msg}
+                result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 
+                                'outcome': obsOutcome, 'msg': msg}
                 
-    except Exception as e:
-        shutil.rmtree(tempDir, ignore_errors=True)
-        raise e
-        
-    # Cleanup
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
     # Return
     return result
 
@@ -421,30 +418,23 @@ def getSessionSpec(tarname):
     Section 5) and return a dictionary of parameters.
     """
     
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    path, basename = os.path.split(tarname)
-    basename, ext = os.path.splitext(basename)
-    
-    # Extract the session specification file (.ses)
-    tf = _openTarball(tarname)
-    try:
-        ti = tf.getmember('%s.ses' % basename)
-    except KeyError:
-        for ti in _getMembers(tarname):
-            if ti.name[-4:] == '.ses':
-                break
-    tf.extractall(path=tempDir, members=[ti,])
-    
-    try:
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        path, basename = os.path.split(tarname)
+        basename, ext = os.path.splitext(basename)
+        
+        # Extract the session specification file (.ses)
+        tf = _openTarball(tarname)
+        try:
+            ti = tf.getmember('%s.ses' % basename)
+        except KeyError:
+            for ti in _getMembers(tarname):
+                if ti.name[-4:] == '.ses':
+                    break
+        tf.extractall(path=tempDir, members=[ti,])
+        
         # Read in the SES
         ses = readSESFile(os.path.join(tempDir, ti.name))
-    except Exception as e:
-        shutil.rmtree(tempDir, ignore_errors=True)
-        raise e
         
-    # Cleanup
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
     # Return
     return ses
 
@@ -457,19 +447,18 @@ def getObservationSpec(tarname, selectObs=None):
     numbers, only observations matching the numbers in `selectObs` are returned.
     """
     
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    path, basename = os.path.split(tarname)
-    basename, ext = os.path.splitext(basename)
-    
-    # Find all of the .obs files and extract them
-    tf = _openTarball(tarname)
-    tis = []
-    for ti in _getMembers(tarname):
-        if ti.name[-4:] == '.obs':
-            tis.append(ti)
-    tf.extractall(path=tempDir, members=tis)
-    
-    try:
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        path, basename = os.path.split(tarname)
+        basename, ext = os.path.splitext(basename)
+        
+        # Find all of the .obs files and extract them
+        tf = _openTarball(tarname)
+        tis = []
+        for ti in _getMembers(tarname):
+            if ti.name[-4:] == '.obs':
+                tis.append(ti)
+        tf.extractall(path=tempDir, members=tis)
+        
         # Read in the OBS files
         obsList = []
         for of in sorted(glob.glob(os.path.join(tempDir, '*.obs'))):
@@ -490,13 +479,7 @@ def getObservationSpec(tarname, selectObs=None):
                 outObs = outObs[0]
         else:
             outObs = obsList
-    except Exception as e:
-        shutil.rmtree(tempDir, ignore_errors=True)
-        raise e
-        
-    # Cleanup
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
+            
     # Return
     return outObs
 
@@ -514,27 +497,20 @@ def getSessionDefinition(tarname):
     """
     
     # Find the SDF file contained in the tarball
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    path, basename = os.path.split(tarname)
-    basename, ext = os.path.splitext(basename)
-    
-    # Find the right .txt file (not the metadata one) and extract it
-    tf = _openTarball(tarname)
-    for ti in _getMembers(tarname):
-        if ti.name[-4:] == '.txt' and ti.name.find('metadata') == -1:
-            break
-    tf.extractall(path=tempDir, members=[ti,])
-    
-    try:
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        path, basename = os.path.split(tarname)
+        basename, ext = os.path.splitext(basename)
+        
+        # Find the right .txt file (not the metadata one) and extract it
+        tf = _openTarball(tarname)
+        for ti in _getMembers(tarname):
+            if ti.name[-4:] == '.txt' and ti.name.find('metadata') == -1:
+                break
+        tf.extractall(path=tempDir, members=[ti,])
+        
         # Parse it
         project = sdfADP.parseSDF(os.path.join(tempDir, ti.name))
-    except Exception as e:
-        shutil.rmtree(tempDir, ignore_errors=True)
-        raise e
         
-    # Clean up
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
     # Return the filled-in SDF instance
     return project
 
@@ -545,27 +521,20 @@ def getCommandScript(tarname):
     commands are returned as a list of dictionaries (one dictionary per command).
     """
     
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    path, basename = os.path.split(tarname)
-    basename, ext = os.path.splitext(basename)
-    
-    # Find the .cs file and extract it
-    tf = _openTarball(tarname)
-    for ti in _getMembers(tarname):
-        if ti.name[-3:] == '.cs':
-            break
-    tf.extractall(path=tempDir, members=[ti,])
-    
-    try:
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        path, basename = os.path.split(tarname)
+        basename, ext = os.path.splitext(basename)
+        
+        # Find the .cs file and extract it
+        tf = _openTarball(tarname)
+        for ti in _getMembers(tarname):
+            if ti.name[-3:] == '.cs':
+                break
+        tf.extractall(path=tempDir, members=[ti,])
+        
         # Read in the CS
         cs = readCSFile(os.path.join(tempDir, ti.name))
-    except Exception as e:
-        shutil.rmtree(tempDir, ignore_errors=True)
-        raise e
         
-    # Cleanup
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
     # Return
     return cs
 
@@ -585,32 +554,29 @@ def getASPConfiguration(tarname, which='beginning'):
         raise ValueError("Unknown configuration time '%s'" % which)
         
     # Stub ASP configuration
-    aspConfig = {'filter': [-1 for i in xrange(264)],
-            'at1': [-1 for i in xrange(264)],
-            'at2': [-1 for i in xrange(264)],
-            'atsplit': [-1 for i in xrange(264)]}
+    aspConfig = {'filter':  [-1 for i in xrange(264)],
+                 'at1':     [-1 for i in xrange(264)],
+                 'at2':     [-1 for i in xrange(264)],
+                 'atsplit': [-1 for i in xrange(264)]}
     
-    tempDir = tempfile.mkdtemp(prefix='metadata-bundle-')
-    path, basename = os.path.split(tarname)
-    basename, ext = os.path.splitext(basename)
-    
-    # Find the .dir/.pag file and extract it
-    tf = _openTarball(tarname)
-    mibs = []
-    for ti in _getMembers(tarname):
-        if ti.name.find('_ASP_%s' % which[:5]) != -1:
-            if ti.name[-4:] == '.pag' or ti.name[-4:] == '.dir':
-                mibs.append(ti)
-                
-    if len(mibs) > 0:
-        tf.extractall(path=tempDir, members=mibs)
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        path, basename = os.path.split(tarname)
+        basename, ext = os.path.splitext(basename)
         
-        try:
+        # Find the .pag file and extract it
+        tf = _openTarball(tarname)
+        mibs = []
+        for ti in _getMembers(tarname):
+            if ti.name.find('_ASP_%s' % which[:5]) != -1:
+                if ti.name[-4:] in ('.pag',):
+                    mibs.append(ti)
+                    
+        if len(mibs) > 0:
+            tf.extractall(path=tempDir, members=mibs)
+            
             # Read in the right MIB
             aspMIB = {}
             for mib in mibs:
-                if mib.name[-4:] == '.dir':
-                    continue
                 if which[:5] == 'begin' and mib.name.find('_ASP_begin') == -1:
                     continue
                 if which == 'end' and mib.name.find('_ASP_end') == -1:
@@ -644,13 +610,7 @@ def getASPConfiguration(tarname, which='beginning'):
                         
                 else:
                     pass
-        except Exception as e:
-            shutil.rmtree(tempDir, ignore_errors=True)
-            raise e
-            
-    # Cleanup
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
+                    
     return aspConfig
 
 
