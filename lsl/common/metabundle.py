@@ -499,7 +499,7 @@ def getSessionDefinition(tarname):
     """
     
     # Find the SDF file contained in the tarball
-    with managed_mkdtemp(prefix='metadata-bundle-'):
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         path, basename = os.path.split(tarname)
         basename, ext = os.path.splitext(basename)
         
