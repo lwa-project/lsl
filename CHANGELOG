@@ -23,6 +23,7 @@
   * Improved support for TBF in the lsl.reader.ldp module
   * Added a writeto() method to lsl.common.sdf/sdfADP.Project to make it easier to write an SDF to a file
   * Fixed a bug in the PyFFTW usage in lsl.correlator.filterbank and fixed the output scaling
+  * Added a new lsl.version.get_fingerprint() function to help keep track of local changes made to the LSL installation
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
