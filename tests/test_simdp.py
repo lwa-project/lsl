@@ -10,7 +10,6 @@ import tempfile
 import aipy
 
 from lsl.sim import dp
-from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
 from lsl.common import dp as dp_common
@@ -35,30 +34,6 @@ class simdp_tests(unittest.TestCase):
         self.testPath = tempfile.mkdtemp(prefix='test-simdp-', suffix='.tmp')
         self.src = aipy.src.get_catalog(['cyg',])
         
-    def test_basic_tbw(self):
-        """Test building a basic TBW signal"""
-
-        testFile = os.path.join(self.testPath, 'tbw.dat')
-
-        fh = open(testFile, 'wb')
-        dp.basicSignal(fh, numpy.array([1,2,3,4]), 3000, mode='TBW', bits=12, tStart=1000)
-        fh.close()
-
-        # Check file size
-        fileSize = os.path.getsize(testFile)
-        nSamples = fileSize / tbw.FrameSize
-        self.assertEqual(nSamples, 3000*4)
-
-        # Check the time of the first frame
-        fh = open(testFile, 'rb')
-        frame = tbw.readFrame(fh)
-        fh.close()
-        self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
-        self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
-
-        # Check that the frames have the correct value of data bits
-        self.assertEqual(frame.getDataBits(), 12)
-
     def test_basic_tbn(self):
         """Test building a basic TBN signal"""
 
@@ -78,34 +53,7 @@ class simdp_tests(unittest.TestCase):
         frame = tbn.readFrame(fh)
         fh.close()
         self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
-
-    def test_point_tbw(self):
-        """Test building a point source TBW signal"""
-
-        testFile = os.path.join(self.testPath, 'tbw.dat')
         
-        station = lwa_common.lwa1
-        antennas = station.getAntennas()
-
-        fh = open(testFile, 'wb')
-        dp.pointSource(fh, antennas[:8:2], self.src, 3, mode='TBW', bits=12, tStart=1000)
-        fh.close()
-
-        # Check file size
-        fileSize = os.path.getsize(testFile)
-        nSamples = fileSize / tbw.FrameSize
-        self.assertEqual(nSamples, 3*4)
-
-        # Check the time of the first frame
-        fh = open(testFile, 'rb')
-        frame = tbw.readFrame(fh)
-        fh.close()
-        self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
-        self.assertEqual(frame.header.secondsCount, int(frame.getTime()))
-
-        # Check that the frames have the correct value of data bits
-        self.assertEqual(frame.getDataBits(), 12)
-
     def test_point_tbn(self):
         """Test building a point source TBN signal"""
 
