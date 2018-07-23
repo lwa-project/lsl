@@ -9,8 +9,6 @@ import tempfile
 import numpy
 
 from lsl.common.paths import dataBuild as dataPath
-from lsl.reader import tbw as tbwReader
-from lsl.sim import tbw as tbwWriter
 from lsl.reader import tbn as tbnReader
 from lsl.sim import tbn as tbnWriter
 from lsl.reader import drx as drxReader
@@ -23,134 +21,8 @@ __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
 tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
 drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
-
-
-class fake_TBW_tests(unittest.TestCase):
-    """A unittest.TestCase collection of unit tests for the lsl.sim.tbw
-    module."""
-    
-    testPath = None
-    
-    def setUp(self):
-        """Turn off all numpy warnings and create the temporary file directory."""
-        
-        numpy.seterr(all='ignore')
-        self.testPath = tempfile.mkdtemp(prefix='test-fakedata-', suffix='.tmp')
-        
-    def test_sim_frame(self):
-        """Test the tbw.SimFrame class."""
-        
-        # Read in a TBW frame from the test file
-        fh = open(tbwFile, 'rb')
-        origFrame = tbwReader.readFrame(fh)
-        fh.close()
-        
-        fakeFrame = tbwWriter.SimFrame()
-        fakeFrame.loadFrame(origFrame)
-        # Test the validity of the SimFrame
-        self.assertTrue(fakeFrame.isValid())
-        
-    def test_write_frame(self):
-        """Test that the TBW data writer works."""
-        
-        testFile = os.path.join(self.testPath, 'tbw-test-W.dat')
-        
-        nFrames = os.path.getsize(tbwFile) / tbwReader.FrameSize
-        
-        # Read in a TBW frame from the test file
-        fh = open(tbwFile, 'rb')
-        origFrames = []
-        for i in xrange(nFrames):
-            origFrames.append( tbwReader.readFrame(fh) )
-        fh.close()
-        
-        # Write the data to a TBN test frame
-        fh = open(testFile, 'wb')
-        for origFrame in origFrames:
-            rawFrame = tbwWriter.frame2frame(origFrame)
-            rawFrame.tofile(fh)
-        fh.close()
-        
-        # Read in the 
-        fh = open(testFile, 'rb')
-        fakeFrames = []
-        for i in xrange(nFrames):
-            fakeFrames.append( tbwReader.readFrame(fh) )
-        fh.close()
-        
-        for fakeFrame,origFrame in zip(fakeFrames, origFrames):
-            # Test values returned by info functions
-            self.assertEqual(fakeFrame.parseID(), origFrame.parseID())
-            self.assertEqual(fakeFrame.getDataBits(), origFrame.getDataBits())
-            
-            # Test raw header values
-            self.assertTrue(fakeFrame.header.isTBW())
-            self.assertEqual(fakeFrame.header.frameCount, origFrame.header.frameCount)
-            self.assertEqual(fakeFrame.header.secondsCount, origFrame.header.secondsCount)
-            
-            # Test raw data values
-            self.assertEqual(fakeFrame.data.timeTag, origFrame.data.timeTag)
-            for i in range(400):
-                self.assertEqual(fakeFrame.data.xy[0,i], origFrame.data.xy[0,i])
-                self.assertEqual(fakeFrame.data.xy[1,i], origFrame.data.xy[1,i])
-                
-    def test_frame_data_errors(self):
-        """Test the data error scenarios when validating a TBW SimFrame ."""
-        
-        # Read in a TBW frame from the test file
-        fh = open(tbwFile, 'rb')
-        origFrame = tbwReader.readFrame(fh)
-        fh.close()
-        
-        # Try to validate frame with the wrong data type
-        fakeFrame = tbwWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
-        fakeFrame.xy = fakeFrame.data.xy.astype(numpy.complex64)
-        self.assertRaises(errors.invalidDataType, fakeFrame.isValid, raiseErrors=True)
-        
-        # Try to validate frame with the wrong data size
-        fakeFrame = tbwWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
-        fakeFrame.xy = None
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
-        fakeFrame = tbwWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
-        fakeFrame.xy = fakeFrame.data.xy[0,:]
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
-        fakeFrame = tbwWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
-        fakeFrame.xy = fakeFrame.data.xy[:,0:50]
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
-        fakeFrame = tbwWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
-        fakeFrame.dataBits = 4
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
-        
-    def test_frame_header_errors(self):
-        """Test the header error scenarios when validating a TBW SimFrame."""
-        
-        # Read in a TBW frame from the test file
-        fh = open(tbwFile, 'rb')
-        origFrame = tbwReader.readFrame(fh)
-        fh.close()
-        
-        # Try to validate frame with the wrong stand number
-        fakeFrame = tbwWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
-        fakeFrame.stand = 300
-        self.assertRaises(errors.invalidStand, fakeFrame.isValid, raiseErrors=True)
-        
-    def tearDown(self):
-        """Remove the test path directory and its contents"""
-        
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
 
 
 class fake_TBN_tests(unittest.TestCase):
@@ -404,7 +276,6 @@ class fakedata_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(fake_TBW_tests))
         self.addTests(loader.loadTestsFromTestCase(fake_TBN_tests))
         self.addTests(loader.loadTestsFromTestCase(fake_DRX_tests))
 
