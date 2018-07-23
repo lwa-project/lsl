@@ -13,6 +13,7 @@ Module for creating object oriented representations of the LWA stations.
 
 import os
 import re
+import imp
 import copy
 import numpy
 import ephem
@@ -860,7 +861,8 @@ class LSLInterface(object):
         value = getattr(self, which)
         if value is None:
             raise RuntimeError("Unknown module for interface type '%s'" % which)
-        exec('import %s as tempModule' % value, None, locals())
+        modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
+        tempModule = imp.load_module(value, *modInfo)
         return tempModule
 
 
