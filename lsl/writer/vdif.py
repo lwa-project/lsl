@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    long = int
+    
 """
 Module to write VDIF frames.  The implementation of this module is similar
 to that of lsl.sim.tbw in that the primary element defined in this module is
