@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Module that contains the error classes for the DRX, TBN, and TBW readers.  
 These errors are currently meant to deal with file I/O problems.
@@ -115,12 +118,12 @@ def listErrorCodes(errno=None):
             listErrorCodes(errno=i)
     else:
         if errno == 1:
-            print "1: End of file encountered during filehandle read"
+            print("1: End of file encountered during filehandle read")
         elif errno == 2:
-            print "2: Mark 5C sync word differs from expected"
+            print("2: Mark 5C sync word differs from expected")
         elif errno == 3:
-            print "3: Data appears to be TBW, not TBN as expected"
+            print("3: Data appears to be TBW, not TBN as expected")
         elif errno == 4:
-            print "4: Data appears to be TBN, not TBW as expected"
+            print("4: Data appears to be TBN, not TBW as expected")
         else:
-            print "Unknown error code '%i'" % errno
+            print("Unknown error code '%i'" % errno)

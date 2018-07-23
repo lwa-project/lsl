@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Module for removing multi-path scattering effects in pulsar profiles.  This 
 is based on the CLEAN-like deconvolution method presented in Bhat, N., 
@@ -223,10 +226,10 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, iterMax=10000, b
     
     # Report on the findings
     if verbose:
-        print "Multi-path Scattering Results:"
-        print "  Iterations Used: %i of %i" % (i, iterMax)
-        print "  Best-fit Scattering time: %.3f ms" % (tScat*1000.0,)
-        print "  Figure-of-merit:  %.5f" % merit
+        print("Multi-path Scattering Results:")
+        print("  Iterations Used: %i of %i" % (i, iterMax))
+        print("  Best-fit Scattering time: %.3f ms" % (tScat*1000.0,))
+        print("  Figure-of-merit:  %.5f" % merit)
         
     # Restore the profile using a Gaussian with a sigma value of 5 time steps
     sigmaRestore = 5*(t[1]-t[0])

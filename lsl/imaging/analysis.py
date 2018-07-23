@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Module for analyzing images.  Currently, this module supports:
   * estimating the position-dependent background level in the image
@@ -253,21 +256,21 @@ def findPointSources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.
             
         ## Print out information, if requested
         if verbose:
-            print "Source #%i" % (i+1,)
-            print "  Center:  %.3f, %.3f" % (xcen, ycen)
-            print "  Peak: %.3f" % cPeak
-            print "  Sharpness: %.3f%s" % (cSharpness, " (rejected)" if not validSharpness else "")
-            print "  Roundness: %.3f%s" % (cRoundness, " (rejected)" if not validRoundness else "")
+            print("Source #%i" % (i+1,))
+            print("  Center:  %.3f, %.3f" % (xcen, ycen))
+            print("  Peak: %.3f" % cPeak)
+            print("  Sharpness: %.3f%s" % (cSharpness, " (rejected)" if not validSharpness else ""))
+            print("  Roundness: %.3f%s" % (cRoundness, " (rejected)" if not validRoundness else ""))
             
     # Print out a summary, if requested
     if verbose:
-        print " "
-        print "Summary"
-        print "  Detections: %i" % nGood
-        print "  Valid Detections: %i" % nStar
-        print "  Number Rejected:"
-        print "    Sharpness: %i" % bad['sharp']
-        print "    Roundness: %i" % bad['round']
+        print(" ")
+        print("Summary")
+        print("  Detections: %i" % nGood)
+        print("  Valid Detections: %i" % nStar)
+        print("  Number Rejected:")
+        print("    Sharpness: %i" % bad['sharp'])
+        print("    Roundness: %i" % bad['round'])
         
     # Trim the output arrays for the actual number of stars found
     x = x[:nStar]

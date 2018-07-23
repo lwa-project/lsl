@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Modules to take TBW/TBN time series data and write it to a FITS file composed 
 of binary tables.  The format of TSFITS files is:
@@ -207,7 +210,7 @@ class TSFITS(object):
 
         if extension is None:
             if self.verbose:
-                print "Stand '%i' not found, creating new binary table extension" % stand
+                print("Stand '%i' not found, creating new binary table extension" % stand)
             self.standCount = self.standCount + 1
 
             if self.mode == 'TBW':
@@ -304,7 +307,7 @@ class TSFITS(object):
                 frame = self.queue[stand][0]
                 
                 if self.verbose:
-                    print "Stand '%i' not found, creating new binary table extension" % stand
+                    print("Stand '%i' not found, creating new binary table extension" % stand)
                 self.standCount = self.standCount + 1
 
                 if self.mode == 'TBW':
@@ -402,7 +405,7 @@ class TSFITS(object):
                 frame = self.queue[stand][0]
                 
                 if self.verbose:
-                    print "Stand '%i' not found, creating new binary table extension" % stand
+                    print("Stand '%i' not found, creating new binary table extension" % stand)
                 self.standCount = self.standCount + 1
 
                 if self.mode == 'TBW':

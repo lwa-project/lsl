@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Simple self-calibration module for correlated TBW and TBN data.  The 
 supported self-calibration methods are:
@@ -371,7 +374,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
     if not found:
         raise RuntimeError("Stand #%i not found in the array provided" % refAnt)
     if verbose:
-        print "Using antenna #%i as a reference (Stand #%i)" % (refAnt, aa.ants[refAnt].stand)
+        print("Using antenna #%i as a reference (Stand #%i)" % (refAnt, aa.ants[refAnt].stand))
         
     # Frequency in GHz so that the delays can be in ns
     fq = dataDict['freq'][chan] / 1e9
@@ -385,7 +388,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
         #
         if amplitude:
             if verbose:
-                print '  %iA' % (i+1,)
+                print('  %iA' % (i+1,))
                 
             A = _buildAmplitudeA(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
             C = _buildAmplitudeC(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
@@ -403,7 +406,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
             valid = numpy.where( numpy.abs(bestGains) < 1e6 )[0]
             metric = (numpy.abs(bestGains[valid])).max()
             if verbose:
-                print '    ', metric
+                print('    ', metric)
             if metric < amplitudeCutoff:
                 amplitude = False
                 
@@ -414,7 +417,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
         #
         if phaseOnly:
             if verbose:
-                print '  %iP' % (i+1,)
+                print('  %iP' % (i+1,))
                 
             A = _buildPhaseOnlyA(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
             C = _buildPhaseOnlyC(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
@@ -435,7 +438,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
             valid = valid = numpy.where( numpy.abs(bestPhaseOffsets) < 1e6 )[0]
             metric = (numpy.abs(bestPhaseOffsets[valid])).max()
             if verbose:
-                print '    ', metric
+                print('    ', metric)
             if metric < phaseCutoff:
                 phaseOnly = False
                 
@@ -443,7 +446,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
             
         elif delayOnly:
             if verbose:
-                print '  %iD' % (i+1,)
+                print('  %iD' % (i+1,))
                 
             A = _buildDelayOnlyA(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
             C = _buildDelayOnlyC(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
@@ -464,7 +467,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
             valid = numpy.where( numpy.abs(bestDelays) < 1e6 )[0]
             metric = (numpy.abs(bestDelays[valid])).max()
             if verbose:
-                print '    ', metric
+                print('    ', metric)
             if metric < delayCutoff:
                 delayOnly = False
                 
@@ -472,7 +475,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
             
         elif delayAndPhase:
             if verbose:
-                print '  %iD+P' % (i+1,)
+                print('  %iD+P' % (i+1,))
                 
             A = _buildDelayAndPhaseA(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
             C = _buildDelayAndPhaseC(aa, dataDict, simDict, chan, pol, refAnt=refAnt)
@@ -499,7 +502,7 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
             metric1 = (numpy.abs(bestDelays[valid])).max()
             metric2 = (numpy.abs(bestPhaseOffsets[valid])).max()
             if verbose:
-                print '    ', metric1, metric2
+                print('    ', metric1, metric2)
             if metric1 < delayCutoff and metric2 < phaseCutoff:
                 delayAndPhase = False
                 
@@ -513,15 +516,15 @@ def _selfCal(aa, dataDict, simDict, chan, pol, refAnt=0, nIter=30, amplitude=Fal
     tempPhaseOffsets[numpy.where( tempPhaseOffsets >  numpy.pi )] -= 2*numpy.pi
     
     if verbose:
-        print 'Best Gains: ', tempGains
+        print('Best Gains: ', tempGains)
     bestGains = tempGains
     
     if verbose:
-        print 'Best Delays: ', tempDelays
+        print('Best Delays: ', tempDelays)
     bestDelays = tempDelays
     
     if verbose:
-        print 'Best Phase Offsets: ', tempPhaseOffsets
+        print('Best Phase Offsets: ', tempPhaseOffsets)
     bestPhaseOffsets = tempPhaseOffsets
     
     return dataDict, bestGains, bestDelays, bestPhaseOffsets

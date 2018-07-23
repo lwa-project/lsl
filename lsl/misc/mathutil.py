@@ -530,8 +530,7 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
                 
     else:
         lmax = int(numpy.sqrt(nTerms)-1)
-        print lmax
-
+        
         t = 0
         out = numpy.zeros(az.shape, dtype=numpy.complex64)
         for l in range(lmax+1):

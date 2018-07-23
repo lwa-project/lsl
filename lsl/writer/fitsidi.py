@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Module for writing correlator output to a FITS IDI file.  The classes and 
 functions defined in this module are based heavily off the lwda_fits library.
@@ -347,9 +350,9 @@ class IDI(object):
                 
         # If the mapper has been enabled, tell the user about it
         if enableMapper and self.verbose:
-            print "FITS IDI: stand ID mapping enabled"
+            print("FITS IDI: stand ID mapping enabled")
             for key, value in mapper.iteritems():
-                print "FITS IDI:  stand #%i -> mapped #%i" % (key, value)
+                print("FITS IDI:  stand #%i -> mapped #%i" % (key, value))
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

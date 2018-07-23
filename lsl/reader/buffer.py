@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Buffer for dealing with out-of-order/missing frames.
 
@@ -366,7 +369,7 @@ class FrameBuffer(object):
         outString = '\n'.join([outString, "Missing frames:  %i" % self.missing])
         outString = '\n'.join([outString, "Dropped frames:  %i" % self.dropped])
         
-        print outString
+        print(outString)
 
 
 class TBNFrameBuffer(FrameBuffer):

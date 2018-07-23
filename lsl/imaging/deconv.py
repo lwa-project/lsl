@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Deconvolution support for images made with :func:`lsl.imaging.utils.buildGriddedImage`.
 """
@@ -225,9 +228,9 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
             currAz  = deg_to_dms(peakAz * 180/numpy.pi)
             currEl  = deg_to_dms(peakEl * 180/numpy.pi)
             
-            print "Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peakX, peakY)
-            print "               -> RA: %s, Dec: %s" % (currRA, currDec)
-            print "               -> az: %s, el: %s" % (currAz, currEl)
+            print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peakX, peakY))
+            print("               -> RA: %s, Dec: %s" % (currRA, currDec))
+            print("               -> az: %s, el: %s" % (currAz, currEl))
             
         # Check for the exit criteria
         if peakV < 0:
@@ -242,18 +245,18 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
             
         except KeyError:
             if verbose:
-                print "               -> Computing beam(s)"
+                print("               -> Computing beam(s)")
                 
             beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
             beamDict = buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
             beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
             beam = beam.image(center=(MapSize,MapSize))
             beam /= beam.max()
-            print "                  ", beam.mean(), beam.min(), beam.max(), beam.sum()
+            print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
             
             prevBeam[beamIndex] = beam
             if verbose:
-                print "               -> Beam cache contains %i entries" % len(prevBeam.keys())
+                print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
                 
         # Calculate how much signal needs to be removed...
         toRemove = gain*peakV*beam
@@ -300,7 +303,7 @@ def clean(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWR
             break
             
     # Summary
-    print "Exited after %i iterations with status '%s'" % (i+1, exitStatus)
+    print("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
     
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
@@ -424,7 +427,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
         
         # Make sure the source is up
         src.compute(aa)
-        print 'Source: %s @ %s degrees elevation' % (name, src.alt)
+        print('Source: %s @ %s degrees elevation' % (name, src.alt))
         if src.alt <= 10*numpy.pi/180.0:
             continue
             
@@ -499,9 +502,9 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
                 currAz  = deg_to_dms(peakAz * 180/numpy.pi)
                 currEl  = deg_to_dms(peakEl * 180/numpy.pi)
                 
-                print "%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peakX, peakY)
-                print "               -> RA: %s, Dec: %s" % (currRA, currDec)
-                print "               -> az: %s, el: %s" % (currAz, currEl)
+                print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peakX, peakY))
+                print("               -> RA: %s, Dec: %s" % (currRA, currDec))
+                print("               -> az: %s, el: %s" % (currAz, currEl))
                 
             # Check for the exit criteria
             if peakV < 0:
@@ -516,18 +519,18 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
                 
             except KeyError:
                 if verbose:
-                    print "               -> Computing beam(s)"
+                    print("               -> Computing beam(s)")
                     
                 beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
                 beamDict = buildSimData(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
                 beam = utils.buildGriddedImage(beamDict, MapSize=MapSize, MapRes=MapRes, MapWRes=MapWRes, chan=chan, pol=pol, verbose=verbose)
                 beam = beam.image(center=(MapSize,MapSize))
                 beam /= beam.max()
-                print "                  ", beam.mean(), beam.min(), beam.max(), beam.sum()
+                print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
                 
                 prevBeam[beamIndex] = beam
                 if verbose:
-                    print "               -> Beam cache contains %i entries" % len(prevBeam.keys())
+                    print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
                     
             # Calculate how much signal needs to be removed...
             toRemove = gain*peakV*beam
@@ -582,7 +585,7 @@ def cleanSources(aa, dataDict, aipyImg, srcs, imageInput=None, MapSize=80, MapRe
                 break
                 
         # Summary
-        print "Exited after %i iterations with status '%s'" % (i+1, exitStatus)
+        print("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
         
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
@@ -771,10 +774,10 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
         
         ## Status report
         if verbose:
-            print "Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS)
-            print "               -> maximum residual: %.4e (%.3f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max())
-            print "               -> minimum residual: %.4e (%.3f%% of peak)" % (diff.min(), 100.0*diff.min()/img.max())
-            print "               -> delta RMS: %.4e (%.3f%%)" % (RMS-oldRMS, 100.0*(RMS-oldRMS)/RMS)
+            print("Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS))
+            print("               -> maximum residual: %.4e (%.3f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max()))
+            print("               -> minimum residual: %.4e (%.3f%% of peak)" % (diff.min(), 100.0*diff.min()/img.max()))
+            print("               -> delta RMS: %.4e (%.3f%%)" % (RMS-oldRMS, 100.0*(RMS-oldRMS)/RMS))
             
         ## Make the cleaned residuals map ready for updating the model
         diff = diff2
@@ -821,7 +824,7 @@ def lsq(aa, dataDict, aipyImg, imageInput=None, MapSize=80, MapRes=0.50, MapWRes
             pylab.draw()
             
     # Summary
-    print "Exited after %i iterations with status '%s'" % (k+1, exitStatus)
+    print("Exited after %i iterations with status '%s'" % (k+1, exitStatus))
     
     # Restore
     conv = convolve(mdl2, beamClean, mode='same')

@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+
+# Python3 compatiability
+from __future__ import print_function
+
 """
 Module for building and saving LSL-specific FFTW and PyFFTW wisdom.
 
@@ -87,7 +91,7 @@ def _makePyFFTW():
         bi.stop()
         
     except ImportError:
-        print "PyFFTW is not installed, skipping"
+        print("PyFFTW is not installed, skipping")
         return False
         
     return True
@@ -115,17 +119,17 @@ def _showFFTW():
     """
     
     if not os.path.exists(_wisdomFilenameFFTW):
-        print "No LSL-specific FFTW wisdom file found, consider running make()"
+        print("No LSL-specific FFTW wisdom file found, consider running make()")
         return False
         
     fh = open(_wisdomFilenameFFTW, 'r')
     lines = fh.readlines()
     fh.close()
     
-    print "LSL FFTW Wisdom:"
-    print " Lines: %i" % len(lines)
-    print " Size: %i bytes" % os.path.getsize(_wisdomFilenameFFTW)
-    print " Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_wisdomFilenameFFTW)[8])
+    print("LSL FFTW Wisdom:")
+    print(" Lines: %i" % len(lines))
+    print(" Size: %i bytes" % os.path.getsize(_wisdomFilenameFFTW))
+    print(" Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_wisdomFilenameFFTW)[8]))
     
     return True
 
@@ -136,7 +140,7 @@ def _showPyFFTW():
     """
     
     if not os.path.exists(_wisdomFilenamePyFFTW):
-        print "No LSL-specific PyFFTW wisdom file found, consider running make()"
+        print("No LSL-specific PyFFTW wisdom file found, consider running make()")
         return False
         
     try:
@@ -150,13 +154,13 @@ def _showPyFFTW():
         s = s.split('\n')
         ld = ld.split('\n')
         
-        print "LSL PyFFTW Wisdom:"
-        print " Lines: %i (single) %i (double) %i (long double)" % (len(s), len(d), len(ld))
-        print " Size: %i bytes" % os.path.getsize(_wisdomFilenamePyFFTW)
-        print " Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_wisdomFilenamePyFFTW)[8])
+        print("LSL PyFFTW Wisdom:")
+        print(" Lines: %i (single) %i (double) %i (long double)" % (len(s), len(d), len(ld)))
+        print(" Size: %i bytes" % os.path.getsize(_wisdomFilenamePyFFTW))
+        print(" Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_wisdomFilenamePyFFTW)[8]))
         
     except ImportError:
-        print "PyFFTW is not installed, skipping"
+        print("PyFFTW is not installed, skipping")
         return False
     
     return True
