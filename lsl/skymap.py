@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    long = int
+
 """
 Classes and methods to model sky brightness and visibility.
 

@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+
+#Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 A collection of utilities for retrieving parameters that may be relevant 
 for ionospheric corrections.

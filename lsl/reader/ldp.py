@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 LWA Development Primitives - A set of utilities that should make developing 
 new analysis software easier.  These functions wrap the nitty gritty of the 

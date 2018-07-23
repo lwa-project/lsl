@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Python module to read in VDIF data.  This module defines the following 
 classes for storing the VIDF data found in a file:

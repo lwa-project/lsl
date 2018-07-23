@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module to support imaging correlated data.  This module provides utilities to 
 read FITS IDI files into data dictionaries (as described in 

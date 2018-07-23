@@ -2,7 +2,10 @@
 
 # Python3 compatiability
 from __future__ import print_function
-
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Simple self-calibration module for correlated TBW and TBN data.  The 
 supported self-calibration methods are:

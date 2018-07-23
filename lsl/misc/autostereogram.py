@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module for taking a 2-D numpy array and turning it into an autostereogram
 (http://en.wikipedia.org/wiki/Autostereogram).  This module also takes auto-

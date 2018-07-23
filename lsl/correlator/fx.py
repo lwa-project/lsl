@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main python functions in this module are:

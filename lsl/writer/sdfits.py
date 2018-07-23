@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module for writing spectrometer output to a SDFITS file.  The SDFITS created by this 
 modulefiles closely follow the Parkes variant of the SDFITS convention 

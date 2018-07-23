@@ -2,7 +2,10 @@
 
 # Python3 compatiability
 from __future__ import print_function
-
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module for writing correlator output to a UVFITS file.  The classes and 
 functions defined in this module are based heavily off the lwda_fits library.
