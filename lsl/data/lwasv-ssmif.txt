@@ -1,6 +1,14 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2018 Jul 26 by. J. Dowell
+#  Updated the list of bad stands after the 7/20 and 7/26 site trips
+#  Bad count: 7; Suspect count: 10
+# 2018 Mar 3 by J. Dowell
+#  Updated the information on the new DR2
+# 2018 Feb 13 by J. Dowell
+#  Added support for a second beam and third data recorder
+#  Marked DR2 as bad since it is not installed
 # 2017 Oct 27 by J. Dowell
 #  Re-calibrated using the latest antenna positions
 # 2017 Oct 19 by J. Dowell
@@ -854,18 +862,23 @@ STD_LZ[256]   +10.244
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-ANT_STAT[124]     1	# 62Y
-ANT_STAT[177]     1	# 89X
-ANT_STAT[178]     1	# 89Y
-ANT_STAT[179]     1	# 90X
-ANT_STAT[180]     1	# 90Y
-ANT_STAT[265]     1     # 133X
-ANT_STAT[272]     1     # 136Y
-ANT_STAT[318]     1     # 159Y
-ANT_STAT[426]     1     # 213Y
-ANT_STAT[434]     1     # 217Y
-ANT_STAT[439]     1     # 220X
-ANT_STAT[457]     1     # 229X
+ANT_STAT[30]      2     # 15Y - high on 7/26
+ANT_STAT[36]      2     # 18Y
+ANT_STAT[81]      1     # 41X - high; ARX or ADP implicated
+ANT_STAT[159]     1     # 80X - high; ARX or ADP implicated
+ANT_STAT[219]     2     # 110X
+ANT_STAT[240]     2     # 120Y
+ANT_STAT[265]     1     # 133X - low; ARX or ADP implicated
+ANT_STAT[272]     1     # 136Y - low; ARX or ADP implicated
+ANT_STAT[283]     2     # 142X
+ANT_STAT[325]     2     # 163X
+ANT_STAT[389]     2     # 195X
+ANT_STAT[390]     2     # 195Y
+ANT_STAT[405]     2     # 203X
+ANT_STAT[407]     2     # 204X
+ANT_STAT[426]     1     # 213Y - low; ARX or ADP implicated
+ANT_STAT[434]     1     # 217Y - high; ARX or ADP implicated
+ANT_STAT[457]     1     # 229X - low; ARX or ADP implicated
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -7003,32 +7016,36 @@ SERVER_DESI[7]  2
 # --- DR ---------------
 # ----------------------
 # Maximum number of DR subsystems:
-N_DR 2
+N_DR 3
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DRs not identified
 # *** DR_STAT[dr#] goes here:
 DR_STAT[1]  3
 DR_STAT[2]  3
+DR_STAT[3]  3
 
 # DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
 # *** DR_ID[dr#] goes here:
 DR_ID[1]  DR1
 DR_ID[2]  DR2
+DR_ID[3]  DR3
 
 # DR_SHLF[] will be set to 0 (not known/not applicable) for any DRs not identified
 # *** DR_SHLF[dr#] goes here:
 
 # DR_PC[] will be set to "UNK" (not known/not applicable) for any DRs not identified
 # *** DR_PC[dr#] goes here:
-DR_PC[1]  T1500
-DR_PC[2]  StudioXPS
+DR_PC[1]  SM1US
+DR_PC[2]  SM1US
+DR_PC[3]  SM1US
 
 # 1 is the beam output, 2 is TBN
 # DR_DP[] will be set to 0 (no connection) for any DPs not identified
 # *** DR_DP[] goes here:
 DR_DP[1] 1
 DR_DP[2] 2
+DR_DP[3] 3
 
 # ----------------------
 # --- Power ------------
