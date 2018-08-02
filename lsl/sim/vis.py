@@ -1012,8 +1012,9 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     srcs_sh = []
     if verbose:
         print("Sources Used for Simulation:")
-    for name,src in srcs.iteritems():
+    for name in srcs:
         ## Update the source's coordinates
+        src = srcs[name]
         src.compute(aa)
         
         ## Remove sources below the horizon

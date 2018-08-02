@@ -194,8 +194,9 @@ def __getSourceParameters(aa, timestamp, srcs):
     srcs_mt = []
     srcs_jy = []
     srcs_fq = []
-    for name,src in srcs.iteritems():
+    for name in srcs:
         ## Update the source's coordinates
+        src = srcs[name]
         src.compute(aa)
 
         ## Get parameters
