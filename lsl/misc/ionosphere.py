@@ -20,7 +20,10 @@ import logging
 import tarfile
 import tempfile
 import subprocess
-from urllib2 import urlopen
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
 from datetime import datetime
 
 from scipy.special import lpmv

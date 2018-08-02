@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import division
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module for calculating dispersion delay due to an ionized ISM and performing
 incoherent/coherent dedispersion.
@@ -225,7 +231,7 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
             _coherentCache[pair] = (N, chirp)
             
     # Figure out the output array size
-    nSets = len(timeseries) / N
+    nSets = len(timeseries) // N
     outT = numpy.zeros(timeseries.size, dtype=t.dtype)
     outD = numpy.zeros(timeseries.size, dtype=timeseries.dtype)
     
@@ -295,10 +301,10 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
             dataOut = numpy.fft.ifft( dataOut )
             
         # Get the output data ranges
-        outStart  = i*N/2
-        outStop   = outStart + N/2
-        dataStart = N/4
-        dataStop  = dataStart + N/2
+        outStart  = i*N//2
+        outStop   = outStart + N//2
+        dataStart = N//4
+        dataStop  = dataStart + N//2
         
         # Make sure we don't fall off the end of the array
         if outStop >= outD.size:

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
+from __future__ import division
 import sys
 if sys.version_info > (3,):
     xrange = range
@@ -89,13 +90,13 @@ def downsample(vector, factor, rescale=True):
 
     if (len(vector) % factor):
         _MATHUTIL_LOG.warning("Length of 'vector' is not divisible by 'factor'=%d, clipping!", factor)
-        newlen = (len(vector)/factor)*factor
+        newlen = (len(vector)//factor)*factor
         _MATHUTIL_LOG.debug("Oldlen %d, newlen %d", len(vector), newlen)
         vector = vector[:newlen]
     if rescale:
-        newvector = numpy.reshape(vector, (len(vector)/factor, factor))/float(factor)
+        newvector = numpy.reshape(vector, (len(vector)//factor, factor))/float(factor)
     else:
-        newvector = numpy.reshape(vector, (len(vector)/factor, factor))
+        newvector = numpy.reshape(vector, (len(vector)//factor, factor))
         
     return numpy.add.reduce(newvector, 1)
 
@@ -256,7 +257,7 @@ def ndft(t, x):
     # Create the output NDFT array and fill it
     out = numpy.zeros(x.shape, dtype=dtype)
     for m in xrange(out.size):
-        mPrime = out.size/2 - m
+        mPrime = out.size//2 - m
         s = 0.0j
         for n in xrange(out.size):
             s += x[n]*numpy.exp(-2j*numpy.pi*t[n]*mPrime / (t.max() - t.min()))
@@ -265,7 +266,7 @@ def ndft(t, x):
     # Create the output frequency array and fill it
     f = numpy.zeros_like(t)
     for m in xrange(out.size):
-        mPrime = out.size/2 - m
+        mPrime = out.size//2 - m
         f[m] = mPrime / (t.max() - t.min())
         
     # Done
@@ -320,7 +321,7 @@ def savitzky_golay(y, window_size, order, deriv=0):
     try:
         window_size = numpy.abs(numpy.int(window_size))
         order = numpy.abs(numpy.int(order))
-    except ValueError, msg:
+    except ValueError as msg:
         raise ValueError("window_size and order have to be of type int")
     if window_size % 2 != 1 or window_size < 1:
         raise TypeError("window_size size must be a positive odd number")

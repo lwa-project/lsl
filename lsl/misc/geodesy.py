@@ -19,8 +19,11 @@ import ephem
 import numpy
 import socket
 import logging
-from urllib2 import urlopen
-
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
+    
 import lsl.astro as astro
 from lsl.misc.total_sorting import cmp_to_total
 

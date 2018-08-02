@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module to allow for post-acquisition delay-and-sum beamforming with integer 
 sample delays for TBW time series data (intDelayAndSum) and phase-and-sum 
