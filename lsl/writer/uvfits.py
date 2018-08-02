@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
-from __future__ import print_function
+from __future__ import print_function, division
 import sys
 if sys.version_info > (3,):
     xrange = range
+    from functools import cmp_to_key
     
 """
 Module for writing correlator output to a UVFITS file.  The classes and 
@@ -57,10 +58,10 @@ def splitBaseline(baseline):
     """
     
     if baseline >= 65536:
-        ant1 = int((baseline - 65536) / 2048)
+        ant1 = int((baseline - 65536) // 2048)
         ant2 = int((baseline - 65536) % 2048)
     else:
-        ant1 = int(baseline / 256)
+        ant1 = int(baseline // 256)
         ant2 = int(baseline % 256)
         
     return ant1,ant2
@@ -388,8 +389,11 @@ class UV(object):
                 return 0
                 
         # Sort the data set
-        self.data.sort(cmp=__sortData)
-        
+        try:
+            self.data.sort(cmp=__sortData)
+        except TypeError:
+            self.data.sort(key=cmp_to_key(__sortData))
+            
         self._writePrimary()
         self._writeGeometry()
         

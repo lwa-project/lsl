@@ -4,6 +4,7 @@
 import sys
 if sys.version_info > (3,):
     xrange = range
+    from functools import cmp_to_key
     
 """
 Module for writing spectrometer output to a SDFITS file.  The SDFITS created by this 
@@ -249,8 +250,11 @@ class SD(object):
                 return 0
                 
         # Sort the data set
-        self.data.sort(cmp=__sortData)
-        
+        try:
+            self.data.sort(cmp=__sortData)
+        except TypeError:
+            self.data.sort(key=cmp_to_key(__sortData))
+            
         self.__writePrimary()
         self.__writeData()
         

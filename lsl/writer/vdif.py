@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
+from __future__ import division
 import sys
 if sys.version_info > (3,):
     long = int
@@ -105,8 +106,8 @@ class Frame(object):
         
         # Find out how many samples can be packed into a work and build
         # the corresponding numpy array.
-        samplesPerWord = int(32 / self.bits)
-        raw = numpy.zeros(32 + 4*len(self.data)/samplesPerWord, dtype=numpy.uint8)
+        samplesPerWord = int(32 // self.bits)
+        raw = numpy.zeros(32 + 4*len(self.data)//samplesPerWord, dtype=numpy.uint8)
 
         # Valid data, standard (not legacy) 32-bit header, and seconds since 
         # the 01/01/2000 epoch.
@@ -124,9 +125,9 @@ class Frame(object):
         # VDIF version number, number of channels (just 1), and data frame 
         # length in units to 8-bytes (8 raw array elements)
         raw[11] = (1 << 6) | (0 & 31)
-        raw[10] = ((len(raw) / 8) >> 16) & 255
-        raw[9] = ((len(raw) / 8) >> 8) & 255
-        raw[8] = (len(raw) / 8) & 255
+        raw[10] = ((len(raw) // 8) >> 16) & 255
+        raw[9] = ((len(raw) // 8) >> 8) & 255
+        raw[8] = (len(raw) // 8) & 255
 
         # Data type, bits per sample, thread ID, and station ID
         # NB:  The thread ID is fixed at `0'
@@ -146,7 +147,7 @@ class Frame(object):
         
         # Data values
         for f in range(32, len(raw), 4):
-            i = (f - 32) / 4
+            i = (f - 32) // 4
             word = 0
             for p in range(samplesPerWord):
                 word |= (self.data[i*samplesPerWord + p] << self.bits*p)
