@@ -1274,9 +1274,10 @@ class ImgWPlus(aipy.img.ImgW):
         self.wres = float(wres)
         self.wcache = {}
     
-    def put(self, (u,v,w), data, wgts=None, invker2=None):
+    def put(self, uvw, data, wgts=None, invker2=None):
         """Same as Img.put, only now the w component is projected to the w=0
         plane before applying the data to the UV matrix."""
+        u, v, w = uvw
         if len(u) == 0: return
         if wgts is None:
             wgts = []
@@ -1300,7 +1301,7 @@ class ImgWPlus(aipy.img.ImgW):
         while True:
             # Grab a chunk of uvw's that grid w to same point.
             j = sqrt_w.searchsorted(sqrt_w[i]+self.wres)
-            print '%d/%d datums' % (j, len(w))
+            print('%d/%d datums' % (j, len(w)))
             avg_w = numpy.average(w[i:j])
             # Put all uv's down on plane for this gridded w point
             wgtsij = [wgt[i:j] for wgt in wgts]
