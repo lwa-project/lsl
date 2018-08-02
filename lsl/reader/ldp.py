@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
+from __future__ import division
 import sys
 if sys.version_info > (3,):
     xrange = range
@@ -180,7 +181,7 @@ class LDPFileBase(object):
         Return the number of frames left in the file.
         """
         
-        return (self.description['size'] - self.fh.tell()) / self.description['FrameSize']
+        return (self.description['size'] - self.fh.tell()) // self.description['FrameSize']
         
     def reset(self):
         """
@@ -307,7 +308,7 @@ class TBWFile(LDPFileBase):
         
         # Basic file information
         filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) / tbw.FrameSize
+        nFramesFile = (filesize - self.fh.tell()) // tbw.FrameSize
         srate = 196e6
         bits = junkFrame.getDataBits()
         start = junkFrame.getTime()
@@ -414,7 +415,7 @@ class TBWFile(LDPFileBase):
         
         # Read in the next frame and anticipate any problems that could occur
         i = 0
-        while i < ((self.description['nAntenna']/2)*nFrames):
+        while i < ((self.description['nAntenna']//2)*nFrames):
             try:
                 cFrame = tbw.readFrame(self.fh)
             except errors.eofError:
@@ -494,7 +495,7 @@ class TBNFile(LDPFileBase):
         """
         
         filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) / tbn.FrameSize
+        nFramesFile = (filesize - self.fh.tell()) // tbn.FrameSize
         framesPerObsX, framesPerObsY = tbn.getFramesPerObs(self.fh)
         srate =  tbn.getSampleRate(self.fh, nFrames=((framesPerObsX+framesPerObsY)*3))
         bits = 8
@@ -518,7 +519,7 @@ class TBNFile(LDPFileBase):
             pols.append(1)
         nAntenna = framesPerObsX + framesPerObsY
         
-        self.buffer = TBNFrameBuffer(stands=range(1,nAntenna/len(pols)+1), pols=pols)
+        self.buffer = TBNFrameBuffer(stands=range(1,nAntenna//len(pols)+1), pols=pols)
         
     def offset(self, offset):
         """
@@ -604,7 +605,7 @@ class TBNFile(LDPFileBase):
                 break
             
             cFrames = deque()
-            for i in xrange(self.description['nAntenna']/2):
+            for i in xrange(self.description['nAntenna']//2):
                 try:
                     cFrames.append( tbn.readFrame(self.fh, Verbose=False) )
                 except errors.eofError:
@@ -782,7 +783,7 @@ class DRXFile(LDPFileBase):
         """
         
         filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) / drx.FrameSize
+        nFramesFile = (filesize - self.fh.tell()) // drx.FrameSize
         beams = drx.getBeamCount(self.fh)
         tunepols = drx.getFramesPerObs(self.fh)
         tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
@@ -1105,7 +1106,7 @@ class DRSpecFile(LDPFileBase):
         
         filesize = os.fstat(self.fh.fileno()).st_size
         FrameSize = drspec.getFrameSize(self.fh)
-        nFramesFile = filesize / FrameSize
+        nFramesFile = filesize // FrameSize
         LFFT = drspec.getTransformSize(self.fh)
         junkFrame = drspec.readFrame(self.fh)
         self.fh.seek(-FrameSize, 1)
@@ -1344,8 +1345,8 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
         omfs = mode.FrameSize
         
         ## Seek half-way in
-        nFrames = os.path.getsize(filename)/omfs
-        fh.seek(nFrames/2*omfs)
+        nFrames = os.path.getsize(filename)//omfs
+        fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
         for mode in (tbn, tbw, drx):
@@ -1381,10 +1382,10 @@ def LWA1DataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
                     foundMode = True
                 except errors.syncError:
                     #### Reset for the next mode...
-                    fh.seek(nFrames/2*omfs)
+                    fh.seek(nFrames//2*omfs)
             else:
                 #### Reset for the next mode...
-                fh.seek(nFrames/2*omfs)
+                fh.seek(nFrames//2*omfs)
                 
             ### Did we read more than one valid frame?
             if foundMode:
@@ -1459,7 +1460,7 @@ class TBFFile(LDPFileBase):
         
         # Basic file information
         filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) / tbf.FrameSize
+        nFramesFile = (filesize - self.fh.tell()) // tbf.FrameSize
         srate = fC
         bits = 4
         nFramesPerObs = tbf.getFramesPerObs(self.fh)
@@ -1504,7 +1505,7 @@ class TBFFile(LDPFileBase):
             structure of TBF files.
         """
         
-        framesPerObs = self.description['nChan'] / 12
+        framesPerObs = self.description['nChan'] // 12
         frameOffset = int(offset * self.description['sampleRate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
         self.fh.seek(frameOffset*tbf.FrameSize)
@@ -1564,7 +1565,7 @@ class TBFFile(LDPFileBase):
         # Find out how many frames to read in
         if duration is None:
             duration = self.description['nFrames'] / framesPerObs / self.description['sampleRate']
-        framesPerObs = self.description['nChan'] / 12
+        framesPerObs = self.description['nChan'] // 12
         frameCount = int(round(1.0 * duration * self.description['sampleRate']))
         frameCount = frameCount if frameCount else 1
         duration = frameCount / self.description['sampleRate']
@@ -1755,8 +1756,8 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
         omfs = mode.FrameSize
         
         ## Seek half-way in
-        nFrames = os.path.getsize(filename)/omfs
-        fh.seek(nFrames/2*omfs)
+        nFrames = os.path.getsize(filename)//omfs
+        fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
         for mode in (tbn, drx, tbf):
@@ -1792,10 +1793,10 @@ def LWASVDataFile(filename=None, fh=None, ignoreTimeTagErrors=False):
                     foundMode = True
                 except errors.syncError:
                     #### Reset for the next mode...
-                    fh.seek(nFrames/2*omfs)
+                    fh.seek(nFrames//2*omfs)
             else:
                 #### Reset for the next mode...
-                fh.seek(nFrames/2*omfs)
+                fh.seek(nFrames//2*omfs)
                 
             ### Did we read more than one valid frame?
             if foundMode:

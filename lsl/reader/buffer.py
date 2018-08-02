@@ -2,6 +2,9 @@
 
 # Python3 compatiability
 from __future__ import print_function
+import sys
+if sys.version_info > (3,):
+    from functools import cmp_to_key
 
 """
 Buffer for dealing with out-of-order/missing frames.
@@ -253,7 +256,7 @@ class FrameBuffer(object):
         """
         
         # Get the current status of the buffer
-        keys = self.buffer.keys()
+        keys = list(self.buffer.keys())
         
         if keyToReturn is None:
             # If the ring is full, dump the oldest
@@ -299,7 +302,10 @@ class FrameBuffer(object):
         # Sort and return
         if self.reorder:
             output = list(output)
-            output.sort(cmp=_cmpFrames)
+            try:
+                output.sort(cmp=_cmpFrames)
+            except TypeError:
+                output.sort(key=cmp_to_key(_cmpFrames))
         return output
         
     def flush(self):
@@ -314,10 +320,8 @@ class FrameBuffer(object):
             are mostly invalid.
         """
         
-        remainingKeys = self.buffer.keys()
-        
         output = []
-        for key in remainingKeys:
+        for key in self.buffer:
             output2 = self.get(keyToReturn=key)
             output.append( output2 )
             
@@ -359,7 +363,7 @@ class FrameBuffer(object):
         """
         
         nf = 0
-        for key in self.buffer.keys():
+        for key in self.buffer:
             nf = nf + len(self.buffer[key])
             
         outString = ''

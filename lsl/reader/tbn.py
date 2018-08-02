@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatibility
+from __future__ import division
+
 """
 Python module for reading data in from TBN files.This module defines the 
 following classes for storing the TBN data found in a file:
@@ -107,10 +110,10 @@ class FrameHeader(object):
         """
 
         if self.tbnID&1023 % 2 == 0:
-            stand = (self.tbnID&1023) / 2
+            stand = (self.tbnID&1023) // 2
             pol = 1
         else:
-            stand = (self.tbnID&1023) / 2 + 1
+            stand = (self.tbnID&1023) // 2 + 1
             pol = 0
             
         return (stand, pol)
@@ -145,7 +148,8 @@ class FrameHeader(object):
             return None
         else:
             sampleCodes = {}
-            for key,value in filterCodes.iteritems():
+            for key in filterCodes:
+                value = filterCodes[key]
                 sampleCodes[value] = key
 
             return sampleCodes[self.sampleRate]
@@ -474,7 +478,7 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
     keyCount = 0
     frame1 = None
     frame2 = None
-    frameKeys = frames.keys()
+    frameKeys = list(frames.keys())
     while frame1 is None and frame2 is None:
         validKey = frameKeys[keyCount]
         
@@ -502,7 +506,8 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
         return rate
     else:
         sampleCodes = {}
-        for key,value in filterCodes.iteritems():
+        for key in filterCodes:
+            value = filterCodes[key]
             sampleCodes[value] = key
 
         return sampleCodes[rate]

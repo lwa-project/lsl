@@ -105,7 +105,8 @@ class FrameHeader(object):
         """
         
         sampleCodes = {}
-        for key,value in filterCodes.iteritems():
+        for key in filterCodes:
+            value = filterCodes[key]
             sampleCodes[value] = key
 
         return sampleCodes[self.getSampleRate()]
