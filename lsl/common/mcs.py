@@ -1119,11 +1119,24 @@ class MIBEntry(object):
         """
         
         if dataType == 'NUL':
-            return str(value)
+            try:
+                value = str(value, 'utf-8')
+            except TypeError:
+                value = str(value)
+            return value
         elif dataType[0] == 'a':
-            return str(value)
+            try:
+                value = str(value, 'utf-8')
+            except TypeError:
+                value = str(value)
+            return value
         elif dataType[0] == 'r':
-            return str(value)
+            try:
+                value = str(value, 'utf-8')
+            except TypeError:
+                value = str(value)
+            return value
+
         elif dataType[:3] == 'i1u':
             try:
                 return struct.unpack('<1B', value)[0]
@@ -1191,21 +1204,31 @@ class MIBEntry(object):
         temp = ctypes.create_string_buffer(value)
         ctypes.memmove(ctypes.addressof(record), ctypes.addressof(temp), ctypes.sizeof(record))
         
+        # Bytes to Unicode for Python3
+        try:
+            index   = str(record.index, 'utf-8')
+            dbmType = str(record.type_dbm, 'utf-8')
+            icdType = str(record.type_icd, 'utf-8')
+        except Exception as e:
+            index   = str(record.index)
+            dbmType = str(record.type_dbm)
+            icdType = str(record.type_icd)
+            
         # Validate
         if record.eType == MIB_REC_TYPE_BRANCH:
             raise ValueError("Cannot interpret MIB branch entries")
         try:
-            if record.index[0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+            if index[0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
                 raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
         except IndexError:
             raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
             
         # Basic information
         self.eType = int(record.eType)
-        self.index = str(record.index)
-        self.value = self._parseValue(record.val, record.type_dbm)
-        self.dbmType = str(record.type_dbm)
-        self.icdType = str(record.type_icd)
+        self.index = index
+        self.value = self._parseValue(record.val, dbmType)
+        self.dbmType = dbmType
+        self.icdType = icdType
         self._tv = (int(record.tv[0]), int(record.tv[1]))
         
         # Time

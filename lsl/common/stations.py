@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatibility
-from __future__ import print_function
+from __future__ import print_function, division
 import sys
 if sys.version_info > (3,):
     xrange = range
     long = int
+    from functools import cmp_to_key
 
 """
 Module for creating object oriented representations of the LWA stations.
@@ -128,7 +129,7 @@ class LWAStationBase(object):
         """
         
         # Build the sorting function
-        def sortFcn(x, y):
+        def sortFnc(x, y):
             if getattr(x, attr) > getattr(y, attr):
                 return 1
             elif getattr(x, attr) < getattr(y, attr):
@@ -136,7 +137,10 @@ class LWAStationBase(object):
             else:
                 return 0
                 
-        self.antennas.sort(cmp=sortFcn)
+        try:
+            self.antennas.sort(cmp=sortFnc)
+        except TypeError:
+            self.anntennas.sort(key=cmp_to_key(sortFnc))
 
 
 class LWAStation(ephem.Observer, LWAStationBase):
@@ -923,7 +927,7 @@ def __parseTextSSMIF(filename):
             nStand = int(value)
             
             stdPos = [[0.0, 0.0, 0.0] for n in xrange(nStand)]
-            stdAnt = [n/2+1 for n in xrange(2*nStand)]
+            stdAnt = [n//2+1 for n in xrange(2*nStand)]
             stdOrie = [n % 2 for n in xrange(2*nStand)]
             stdStat = [3 for n in xrange(2*nStand)]
             stdTheta = [0.0 for n in xrange(2*nStand)]
@@ -1660,7 +1664,7 @@ def parseSSMIF(filename):
         j = 1
         for brd,inp in zip(dp1Ant,dp1InR):
             for ant,con in zip(brd,inp):
-                antennas[ant-1].board = i + 1 + (i/14)
+                antennas[ant-1].board = i + 1 + (i//14)
                 antennas[ant-1].digitizer = j
                 antennas[ant-1].input = con
                 j += 1
@@ -1775,7 +1779,7 @@ class PrototypeStation(LWAStation):
         """
         
         # Build the sorting function
-        def sortFcn(x, y):
+        def sortFnc(x, y):
             if x.digitizer > y.digitizer:
                 return 1
             elif x.digitizer < y.digitizer:
@@ -1797,7 +1801,10 @@ class PrototypeStation(LWAStation):
                 protoAnts[-1].board = 1
                 
         # Sort the list of prototype antennas and return
-        protoAnts.sort(cmp=sortFcn)
+        try:
+            protoAnts.sort(cmp=sortFnc)
+        except TypeError:
+            protoAnts.sort(key=cmp_to_key(sortFnc))
         return protoAnts
     
     def getAntennas(self, date):
