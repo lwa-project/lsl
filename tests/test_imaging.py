@@ -46,7 +46,6 @@ class imaging_tests(unittest.TestCase):
         # Stand and baseline counts
         self.assertEqual(len(idi.stands), 5)
         self.assertEqual(idi.totalBaselineCount, 5*(5+1)/2)
-        print idi.integrationCount
         
         # Basic functions (just to see that they run)
         junk = idi.getAntennaArray()

@@ -49,7 +49,7 @@ class SpecMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[1]
-        nFFT = fakeData.shape[1]//2/L/FFT
+        nFFT = fakeData.shape[1]//2//LFFT
         wndw = numpy.blackman(2*LFFT)
         for i in xrange(self.nAnt):
             for j in xrange(nFFT):
