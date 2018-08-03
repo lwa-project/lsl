@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import division
+
 """Unit test for the lsl.sim.dp module."""
 
 import os
@@ -45,7 +48,7 @@ class simdp_tests(unittest.TestCase):
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
-        nSamples = fileSize / tbn.FrameSize
+        nSamples = fileSize // tbn.FrameSize
         self.assertEqual(nSamples, 2000*4*2)
 
         # Check the time of the first frame
@@ -68,7 +71,7 @@ class simdp_tests(unittest.TestCase):
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
-        nSamples = fileSize / tbn.FrameSize
+        nSamples = fileSize // tbn.FrameSize
         self.assertEqual(nSamples, 4*4*2)
 
         # Check the time of the first frame
@@ -88,7 +91,7 @@ class simdp_tests(unittest.TestCase):
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
-        nSamples = fileSize / drx.FrameSize
+        nSamples = fileSize // drx.FrameSize
         self.assertEqual(nSamples, 10*4*2*2)
 
         # Check the file size

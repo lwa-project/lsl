@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import division
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """Unit test for lsl.reader modules"""
 
 import os
@@ -122,24 +128,24 @@ class reader_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 2*frames[0].data.xy[i%2, i/2], 2)
+            self.assertAlmostEqual(frameT.data.xy[i%2, i//2], 2*frames[0].data.xy[i%2, i//2], 2)
         frameT *= 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameT.data.xy[i%2, i/2], 4*frames[0].data.xy[i%2, i/2], 2)
+            self.assertAlmostEqual(frameT.data.xy[i%2, i//2], 4*frames[0].data.xy[i%2, i//2], 2)
         frameT = frames[0] * frames[1]
         for i in range(800):
-            self.assertAlmostEqual(frameT.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]*frames[1].data.xy[i%2, i/2], 2)
+            self.assertAlmostEqual(frameT.data.xy[i%2, i//2], frames[0].data.xy[i%2, i//2]*frames[1].data.xy[i%2, i//2], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 2+frames[0].data.xy[i%2, i/2], 2)
+            self.assertAlmostEqual(frameA.data.xy[i%2, i//2], 2+frames[0].data.xy[i%2, i//2], 2)
         frameA += 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameA.data.xy[i%2, i/2], 4+frames[0].data.xy[i%2, i/2], 2)
+            self.assertAlmostEqual(frameA.data.xy[i%2, i//2], 4+frames[0].data.xy[i%2, i//2], 2)
         frameA = frames[0] + frames[1]
         for i in range(800):
-            self.assertAlmostEqual(frameA.data.xy[i%2, i/2], frames[0].data.xy[i%2, i/2]+frames[1].data.xy[i%2, i/2], 2)
+            self.assertAlmostEqual(frameA.data.xy[i%2, i//2], frames[0].data.xy[i%2, i//2]+frames[1].data.xy[i%2, i//2], 2)
             
     ### TBN ###
     
@@ -570,7 +576,7 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(frame1.header.refEpoch, 30)
         self.assertEqual(frame1.header.secondsFromEpoch, 9106862)
         self.assertEqual(frame1.header.frameInSecond, 59866)
-        self.assertEqual(frame1.header.frameLength, 8224/8)
+        self.assertEqual(frame1.header.frameLength, 8224//8)
         self.assertEqual(frame1.header.nChan, 4)
         self.assertEqual(frame1.header.bitsPerSample, 2)
         self.assertEqual(frame1.header.isComplex, 0)
@@ -578,7 +584,7 @@ class reader_tests(unittest.TestCase):
         # Validate (some) data
         for k,d in enumerate((1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0)):
             i = k % frame1.header.nChan
-            j = k / frame1.header.nChan
+            j = k // frame1.header.nChan
             self.assertAlmostEqual(frame1.data.data[i,j], d, 5)
             
         # Second frame
@@ -593,7 +599,7 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(frame2.header.refEpoch, 30)
         self.assertEqual(frame2.header.secondsFromEpoch, 9106862)
         self.assertEqual(frame2.header.frameInSecond, 59867)
-        self.assertEqual(frame2.header.frameLength, 8224/8)
+        self.assertEqual(frame2.header.frameLength, 8224//8)
         self.assertEqual(frame2.header.nChan, 4)
         self.assertEqual(frame2.header.bitsPerSample, 2)
         self.assertEqual(frame2.header.isComplex, 0)
@@ -601,7 +607,7 @@ class reader_tests(unittest.TestCase):
         # Validate (some) data
         for k,d in enumerate((-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0)):
             i = k % frame2.header.nChan
-            j = k / frame2.header.nChan
+            j = k // frame2.header.nChan
             self.assertAlmostEqual(frame2.data.data[i,j], d, 5)
             
         fh.close()

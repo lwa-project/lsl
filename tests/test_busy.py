@@ -6,10 +6,10 @@ import sys
 import time
 import unittest
 try:
-    import cStringIO as StringIO
+    from StringIO import StringIO
 except ImportError:
-    import StringIO
-
+    from io import StringIO
+    
 from lsl.common import busy
 
 __revision__ = "$Rev$"
@@ -25,7 +25,7 @@ class busy_tests(unittest.TestCase):
         
         bi = busy.BusyIndicator()
         
-        sys.stdout = StringIO.StringIO()
+        sys.stdout = StringIO()
         
         bi.start()
         time.sleep(1)

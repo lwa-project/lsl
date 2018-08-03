@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatibility
+from __future__ import division
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """Unit test for the lsl.correlator.fx module."""
 
 import os
@@ -43,7 +49,7 @@ class SpecMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[1]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2/L/FFT
         wndw = numpy.blackman(2*LFFT)
         for i in xrange(self.nAnt):
             for j in xrange(nFFT):
@@ -61,7 +67,7 @@ class SpecMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[1]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         wndw = numpy.hamming(LFFT)
         for i in xrange(self.nAnt):
             for j in xrange(nFFT):
@@ -85,7 +91,7 @@ class SpecMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[1]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         wndw = wndw(2*LFFT)
         for i in xrange(self.nAnt):
             for j in xrange(nFFT):
@@ -106,7 +112,7 @@ class SpecMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[1]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         wndw = wndw2(LFFT)
         for i in xrange(self.nAnt):
             for j in xrange(nFFT):
@@ -124,7 +130,7 @@ class SpecMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[1]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         for i in xrange(self.nAnt):
             for j in xrange(nFFT):
                 spectra2[i,:] += (numpy.abs( numpy.fft.fft(fakeData[i,j*2*LFFT:(j+1)*2*LFFT]) )**2)[:LFFT]
@@ -141,7 +147,7 @@ class SpecMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[1]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         for i in xrange(self.nAnt):
             for j in xrange(nFFT):
                 spectra2[i,:] += numpy.fft.fftshift( numpy.abs( numpy.fft.fft(fakeData[i,j*LFFT:(j+1)*LFFT]) )**2 )
@@ -196,9 +202,9 @@ class StokesMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[2]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         wndw = numpy.blackman(2*LFFT)
-        for i in xrange(self.nAnt/2):
+        for i in xrange(self.nAnt//2):
             for j in xrange(nFFT):
                 xF = numpy.fft.fft(fakeData[2*i+0,j*2*LFFT:(j+1)*2*LFFT]*wndw)[:LFFT]
                 yF = numpy.fft.fft(fakeData[2*i+1,j*2*LFFT:(j+1)*2*LFFT]*wndw)[:LFFT]
@@ -220,9 +226,9 @@ class StokesMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[2]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         wndw = numpy.hamming(LFFT)
-        for i in xrange(self.nAnt/2):
+        for i in xrange(self.nAnt//2):
             for j in xrange(nFFT):
                 xF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+0,j*LFFT:(j+1)*LFFT]*wndw) )
                 yF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+1,j*LFFT:(j+1)*LFFT]*wndw) )
@@ -254,9 +260,9 @@ class StokesMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[2]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         wndw = wndw(2*LFFT)
-        for i in xrange(self.nAnt/2):
+        for i in xrange(self.nAnt//2):
             for j in xrange(nFFT):
                 xF = numpy.fft.fft(fakeData[2*i+0,j*2*LFFT:(j+1)*2*LFFT]*wndw)[:LFFT]
                 yF = numpy.fft.fft(fakeData[2*i+1,j*2*LFFT:(j+1)*2*LFFT]*wndw)[:LFFT]
@@ -281,9 +287,9 @@ class StokesMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[2]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         wndw = wndw2(LFFT)
-        for i in xrange(self.nAnt/2):
+        for i in xrange(self.nAnt//2):
             for j in xrange(nFFT):
                 xF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+0,j*LFFT:(j+1)*LFFT]*wndw) )
                 yF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+1,j*LFFT:(j+1)*LFFT]*wndw) )
@@ -308,8 +314,8 @@ class StokesMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[2]
-        nFFT = fakeData.shape[1]/2/LFFT
-        for i in xrange(self.nAnt/2):
+        nFFT = fakeData.shape[1]//2//LFFT
+        for i in xrange(self.nAnt//2):
             for j in xrange(nFFT):
                 xF = numpy.fft.fft(fakeData[2*i+0,j*2*LFFT:(j+1)*2*LFFT])[:LFFT]
                 yF = numpy.fft.fft(fakeData[2*i+1,j*2*LFFT:(j+1)*2*LFFT])[:LFFT]
@@ -334,8 +340,8 @@ class StokesMaster_tests(unittest.TestCase):
         # Numpy comparison
         spectra2 = numpy.zeros_like(spectra)
         LFFT = spectra2.shape[2]
-        nFFT = fakeData.shape[1]/LFFT
-        for i in xrange(self.nAnt/2):
+        nFFT = fakeData.shape[1]//LFFT
+        for i in xrange(self.nAnt//2):
             for j in xrange(nFFT):
                 xF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+0,j*LFFT:(j+1)*LFFT]) )
                 yF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+1,j*LFFT:(j+1)*LFFT]) )
@@ -404,7 +410,7 @@ class FXMaster_tests(unittest.TestCase):
         
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[1]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         blc = 0
         for i in xrange(0, self.nAnt):
             if antennas[i].pol != 0:
@@ -444,7 +450,7 @@ class FXMaster_tests(unittest.TestCase):
         
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[1]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         blc = 0
         for i in xrange(0, self.nAnt):
             if antennas[i].pol != 0:
@@ -486,7 +492,7 @@ class FXMaster_tests(unittest.TestCase):
                             
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[1]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         wndw = numpy.blackman(2*LFFT)
         blc = 0
         for i in xrange(0, self.nAnt):
@@ -529,7 +535,7 @@ class FXMaster_tests(unittest.TestCase):
                             
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[1]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         wndw = numpy.blackman(LFFT)
         blc = 0
         for i in xrange(0, self.nAnt):
@@ -674,10 +680,10 @@ class FXStokes_tests(unittest.TestCase):
         
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[2]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         blc = 0
-        for i in xrange(0, self.nAnt/2):
-            for j in xrange(i+1, self.nAnt/2):
+        for i in xrange(0, self.nAnt//2):
+            for j in xrange(i+1, self.nAnt//2):
                 for k in xrange(nFFT):
                     f1X = numpy.fft.fft(fakeData[2*i+0,k*2*LFFT:(k+1)*2*LFFT])[:LFFT]
                     f1Y = numpy.fft.fft(fakeData[2*i+1,k*2*LFFT:(k+1)*2*LFFT])[:LFFT]
@@ -714,10 +720,10 @@ class FXStokes_tests(unittest.TestCase):
         
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[2]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         blc = 0
-        for i in xrange(0, self.nAnt/2):
-            for j in xrange(i+1, self.nAnt/2):
+        for i in xrange(0, self.nAnt//2):
+            for j in xrange(i+1, self.nAnt//2):
                 for k in xrange(nFFT):
                     f1X = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+0,k*LFFT:(k+1)*LFFT]) )
                     f1Y = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+1,k*LFFT:(k+1)*LFFT]) )
@@ -756,11 +762,11 @@ class FXStokes_tests(unittest.TestCase):
                             
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[2]
-        nFFT = fakeData.shape[1]/2/LFFT
+        nFFT = fakeData.shape[1]//2//LFFT
         wndw = numpy.blackman(2*LFFT)
         blc = 0
-        for i in xrange(0, self.nAnt/2):
-            for j in xrange(i+1, self.nAnt/2):
+        for i in xrange(0, self.nAnt//2):
+            for j in xrange(i+1, self.nAnt//2):
                 for k in xrange(nFFT):
                     f1X = numpy.fft.fft(fakeData[2*i+0,k*2*LFFT:(k+1)*2*LFFT]*wndw)[:LFFT]
                     f1Y = numpy.fft.fft(fakeData[2*i+1,k*2*LFFT:(k+1)*2*LFFT]*wndw)[:LFFT]
@@ -799,11 +805,11 @@ class FXStokes_tests(unittest.TestCase):
                             
         cps2 = numpy.zeros_like(cps)
         LFFT = cps.shape[2]
-        nFFT = fakeData.shape[1]/LFFT
+        nFFT = fakeData.shape[1]//LFFT
         wndw = numpy.blackman(LFFT)
         blc = 0
-        for i in xrange(0, self.nAnt/2):
-            for j in xrange(i+1, self.nAnt/2):
+        for i in xrange(0, self.nAnt//2):
+            for j in xrange(i+1, self.nAnt//2):
                 for k in xrange(nFFT):
                     f1X = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+0,k*LFFT:(k+1)*LFFT]*wndw) )
                     f1Y = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+1,k*LFFT:(k+1)*LFFT]*wndw) )

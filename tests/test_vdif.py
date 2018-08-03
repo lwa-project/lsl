@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import division
+
 """Unit test for the lsl.writer.tsfits modules."""
 
 import os
@@ -98,7 +101,7 @@ class vdif_tests(unittest.TestCase):
             j = 0
             for i in range(32,vFrame.shape[0],4):
                 word = vFrame[i] | (vFrame[i+1]<<8) | (vFrame[i+2]<<16) | (vFrame[i+3]<<24)
-                for k in range(32/dataBits):
+                for k in range(32//dataBits):
                     data[j] = ((word>>(dataBits*k)) & (2**dataBits-1)) - 2**(dataBits-1)
                     j = j + 1
             
@@ -140,7 +143,7 @@ class vdif_tests(unittest.TestCase):
             j = 0
             for i in range(32,vFrame.shape[0],4):
                 word = vFrame[i] | (vFrame[i+1]<<8) | (vFrame[i+2]<<16) | (vFrame[i+3]<<24)
-                for k in range(32/dataBits):
+                for k in range(32//dataBits):
                     if k % 2 == 0:
                         data.real[j] = ((word>>(dataBits*k)) & (2**dataBits-1)) - 2**(dataBits-1)
                     else:

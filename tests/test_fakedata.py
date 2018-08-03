@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
-"""Unit test for the lsl.sim.s60/tbw/tbn/drx modules."""
+# Python3 compatiability
+from __future__ import division
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
+"""Unit test for the lsl.sim.tbn/drx modules."""
 
 import os
 import copy
@@ -55,7 +61,7 @@ class fake_TBN_tests(unittest.TestCase):
         
         testFile = os.path.join(self.testPath, 'tbn-test-W.dat')
         
-        nFrames = os.path.getsize(tbnFile) / tbnReader.FrameSize
+        nFrames = os.path.getsize(tbnFile) // tbnReader.FrameSize
         
         # Read in a TBN frame from the test file
         fh = open(tbnFile, 'rb')
@@ -172,7 +178,7 @@ class fake_DRX_tests(unittest.TestCase):
         
         testFile = os.path.join(self.testPath, 'drx-test-W.dat')
         
-        nFrames = os.path.getsize(drxFile) / drxReader.FrameSize
+        nFrames = os.path.getsize(drxFile) // drxReader.FrameSize
         
         # Read in a TBN frame from the test file
         fh = open(drxFile, 'rb')

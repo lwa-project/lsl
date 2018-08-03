@@ -5,7 +5,10 @@
 import unittest
 import logging
 import os
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from lsl.sim import nec_util
 from lsl.common.paths import dataBuild as dataPath
@@ -25,7 +28,7 @@ class nec_util_tests(unittest.TestCase):
         """Setup unit tests."""
         
         # disable logger since we intentionally generate errors 
-        logging.basicConfig(stream = StringIO.StringIO())
+        logging.basicConfig(stream = StringIO())
         
         # get a reference to the input test file
         self.nec_name = os.path.join(dataPath, 'tests', 'bigblade_imp.out')

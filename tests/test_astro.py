@@ -119,7 +119,7 @@ class astro_tests(unittest.TestCase):
         """Test astro.dms constructor."""
         
         d = astro.dms(True, 1, 30, 29.3245)
-        self.assert_(d.neg)
+        self.assertTrue(d.neg)
         self.assertEqual(d.degrees, 1)
         self.assertEqual(d.minutes, 30)
         self.assertAlmostEqual(d.seconds, 29.3245)
@@ -134,7 +134,7 @@ class astro_tests(unittest.TestCase):
         d = astro.dms(True, 1, 30, 29.3245)
         s = pickle.dumps(d)
         d = pickle.loads(s)
-        self.assert_(d.neg)
+        self.assertTrue(d.neg)
         self.assertEqual(d.degrees, 1)
         self.assertEqual(d.minutes, 30)
         self.assertAlmostEqual(d.seconds, 29.3245)

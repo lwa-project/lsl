@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """Unit test for lsl.misc.mathutil module."""
 
 import unittest
 import logging
 import math
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 
 import numpy
 from scipy.special import sph_harm
@@ -27,7 +36,7 @@ class mathutil_tests(unittest.TestCase):
         """Setup for unit tests."""
         
         # disable logger since we intentionally generate errors 
-        logging.basicConfig(stream = StringIO.StringIO())
+        logging.basicConfig(stream = StringIO())
     
     def test_downsample(self):
         """Test mathutil.downsample() function."""

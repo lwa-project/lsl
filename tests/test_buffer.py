@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import division
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Unit test for the lsl.reader.buffer module.
 """
@@ -39,7 +45,7 @@ class buffer_tests(unittest.TestCase):
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1])
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1])
         
         # Go
         while True:
@@ -86,7 +92,7 @@ class buffer_tests(unittest.TestCase):
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1], nSegments=1)
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], nSegments=1)
         
         # Go
         while True:
@@ -119,7 +125,7 @@ class buffer_tests(unittest.TestCase):
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1], nSegments=1, ReorderFrames=True)
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], nSegments=1, ReorderFrames=True)
         
         # Go
         while True:
@@ -161,7 +167,7 @@ class buffer_tests(unittest.TestCase):
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1])
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1])
         
         # Go
         while True:
@@ -196,7 +202,7 @@ class buffer_tests(unittest.TestCase):
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO/2+1), pols=[0, 1], ReorderFrames=True)
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], ReorderFrames=True)
         
         # Go
         while True:

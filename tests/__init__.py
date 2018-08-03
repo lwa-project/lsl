@@ -9,5 +9,5 @@ __version__   = "0.2"
 __author__    = "D. L. Wood"
 __maintainer__ = "Jayce Dowell"
 
-import test_lsl
+from . import test_lsl
 
