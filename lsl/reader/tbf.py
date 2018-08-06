@@ -33,11 +33,12 @@ from lsl.reader.errors import syncError, eofError
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 
-           'getFirstFrameCount', 'getChannelCount', 'getFirstChannel', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'FrameChannelCount',
+           'getFramesPerObs', 'getFirstFrameCount', 'getChannelCount', 'getFirstChannel', 
            '__version__', '__revision__', '__all__']
 
 FrameSize = 6168
+FrameChannelCount = 12
 
 
 class FrameHeader(object):

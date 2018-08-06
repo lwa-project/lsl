@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
-from __future__ import print_function
+from __future__ import print_function, division
 import sys
 if sys.version_info > (3,):
     from functools import cmp_to_key
@@ -26,7 +26,7 @@ Buffer for dealing with out-of-order/missing frames.
     Dropped support for the LWA-SV ADP DRX8 mode
     
 .. versionchanged:: 1.2.1
-    Added support for the LWA-SV TBF mode
+    Added support for the LWA-SV TBF and COR modes
 """
 
 import copy
@@ -64,8 +64,8 @@ def _cmpFrames(x, y):
             sX = 2*(idsX[0]-1) + idsX[1]
             sY = 2*(idsY[0]-1) + idsY[1]
         else:
-            sX = 4*(idsX[0]-1) + 2*(idsX[1]-1) + idsX[2]
-            sY = 4*(idsY[0]-1) + 2*(idsY[1]-1) + idsY[2]
+            sX = 16777216*(idsX[0]-1) + 4096*(idsX[1]-1) + idsX[2]
+            sY = 16777216*(idsY[0]-1) + 4096*(idsY[1]-1) + idsY[2]
     except TypeError:
         sX = idsX
         sY = idsY
@@ -95,9 +95,13 @@ class FrameBuffer(object):
         still be 'nSegments'-1 segements in the buffer that are either
         full or partially full.  This can be retrieved using the buffer's 
         'flush()' function.
+        
+    .. versionchanged:: 1.2.1
+        Added a 'FillInMissingFrames' keyword to control whether or not
+        missing frames are filled in with zero frames
     """
     
-    def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nSegments=6, ReorderFrames=False):
+    def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nSegments=6, ReorderFrames=False, FillInMissingFrames=True):
         """
         Initialize the buffer with a list of:
           * TBN
@@ -109,6 +113,9 @@ class FrameBuffer(object):
             * list of pols.
           * TBF
             * list of start channels
+          * COR
+            * list of stands
+            * list of start channels
           * VDIF
             * list of thread IDs
         By doing this, we should be able to keep up with when the buffer 
@@ -117,7 +124,7 @@ class FrameBuffer(object):
         """
         
         # Input validation
-        if mode.upper() not in ('TBN', 'DRX', 'TBF', 'VDIF'):
+        if mode.upper() not in ('TBN', 'DRX', 'TBF', 'COR', 'VDIF'):
             raise RuntimeError("Invalid observing mode '%s'" % mode)
             
         if mode.upper() == 'TBN':
@@ -137,6 +144,12 @@ class FrameBuffer(object):
             for chan in chans:
                 if chan not in range(4096):
                     raise RuntimeError("Invalid start channel '%i'" % chan)
+                    
+        elif mode.upper() == 'COR':
+            for chan in chans:
+                if chan not in range(4096):
+                    raise RuntimeError("Invalid start channel '%i'" % chan)
+            
         else:
             for thread in threads:
                 if thread not in range(1024):
@@ -165,6 +178,9 @@ class FrameBuffer(object):
         # If we should reorder the returned frames by stand/pol or not
         self.reorder = ReorderFrames
         
+        # If we should create dummy frames for everything that is missing
+        self.fillin = FillInMissingFrames
+        
         # Figure out how many frames fill the buffer and the list of all
         # possible frames in the data set
         self.nFrames, self.possibleFrames = self.calcFrames()
@@ -178,7 +194,7 @@ class FrameBuffer(object):
         This will be overridden by sub-classes of FrameBuffer.
         """
         
-        pass
+        raise NotImplementedError
         
     def figureOfMerit(self, frame):
         """
@@ -187,7 +203,7 @@ class FrameBuffer(object):
         This will be overridden by sub-classes of FrameBuffer.
         """
         
-        pass
+        raise NotImplementedError
         
     def createFill(self, key, frameParameters):
         """
@@ -197,7 +213,7 @@ class FrameBuffer(object):
         This will be overridden by sub-classes of FrameBuffer.
         """
         
-        pass
+        raise NotImplementedError
         
     def append(self, frames):
         """
@@ -280,8 +296,11 @@ class FrameBuffer(object):
             self.missing = self.missing + (self.nFrames - returnCount)
             
             output = self.buffer[keyToReturn]
-            for frame in self._missingList(keyToReturn):
-                output.append( self.createFill(keyToReturn, frame) )
+            
+            ## Fill in the missing frames
+            if self.fillin:
+                for frame in self._missingList(keyToReturn):
+                    output.append( self.createFill(keyToReturn, frame) )
         else:
             ## There are too many frames
             self.full = self.full + 1
@@ -338,7 +357,17 @@ class FrameBuffer(object):
             if self.mode == 'VDIF':
                 frameList.append(frame.parseID()[1])
             elif self.mode == 'TBF':
-                frameList.append(frame.header.firstChan)
+                try:
+                    frameList.append(frame.header.firstChan)
+                except AttributeError:
+                    ## Catch for tbfMux.py
+                    frameList.append(frame.firstChan)
+            elif self.mode == 'COR':
+                try:
+                    frameList.append(frame.parseID()+(frame.header.firstChan,))
+                except AttributeError:
+                    ## Catch for corMux.py
+                    frameList.append(frame.parseID()+(frame.firstChan,))
             else:
                 frameList.append(frame.parseID())
                 
@@ -419,8 +448,8 @@ class TBNFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, stands=[], pols=[0, 1], nSegments=20, ReorderFrames=False):
-        super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, stands=[], pols=[0, 1], nSegments=20, ReorderFrames=False, FillInMissingFrames=True):
+        super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
         
     def calcFrames(self):
         """
@@ -515,8 +544,8 @@ class DRXFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nSegments=10, ReorderFrames=False):
-        super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nSegments=10, ReorderFrames=False, FillInMissingFrames=True):
+        super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
         
     def calcFrames(self):
         """
@@ -602,8 +631,8 @@ class TBFFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, chans, nSegments=25, ReorderFrames=False):
-        super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, chans, nSegments=25, ReorderFrames=False, FillInMissingFrames=True):
+        super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
         
     def calcFrames(self):
         """
@@ -651,6 +680,93 @@ class TBFFrameBuffer(FrameBuffer):
         return fillFrame
 
 
+class CORFrameBuffer(FrameBuffer):
+    """
+    A sub-type of FrameBuffer specifically for dealing with COR frames.
+    See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+    buffering is implemented.
+    
+    Keywords:
+      chans
+        list of start channel numbers to expect data for
+    
+      nSegments
+        number of ring segments to use for the buffer (default is 5)
+    
+      ReorderFrames
+        whether or not to reorder frames returned by get() or flush() by 
+        start channel (default is False)
+    
+    The number of segements in the ring can be converted to a buffer time in 
+    seconds:
+    
+    +----------+--------+
+    | Segments |  Time  |
+    +----------+--------+
+    |     1    |   10   |
+    +----------+--------+
+    |     2    |   20   |
+    +----------+--------+
+    |     5    |   50   |
+    +----------+--------+
+    
+    """
+    
+    def __init__(self, chans, nSegments=5, ReorderFrames=False, FillInMissingFrames=True):
+        super(CORFrameBuffer, self).__init__(mode='COR', stands=list(range(1,256+1)), chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
+        
+    def calcFrames(self):
+        """
+        Calculate the maximum number of frames that we expect from 
+        the setup of the observations and a list of tuples that describes
+        all of the possible stand/pol combination.
+        """
+        
+        nFrames = 0
+        frameList = []
+        
+        nFrames = len(self.stands)*(len(self.stands)+1)//2 * len(self.chans)
+        for stand0 in self.stands:
+            for stand1 in self.stands:
+                if stand1 < stand0:
+                    continue
+                for chan in self.chans:
+                    frameList.append((stand0,stand1,chan))
+                    
+        return (nFrames, frameList)
+        
+    def figureOfMerit(self, frame):
+        """
+        Figure of merit for sorting frames.  For TBF this is:
+        frame.data.timeTag
+        """
+        
+        return frame.data.timeTag
+        
+    def createFill(self, key, frameParameters):
+        """
+        Create a 'fill' frame of zeros using an existing good
+        packet as a template.
+        """
+
+        # Get a template based on the first frame for the current buffer
+        fillFrame = copy.deepcopy(self.buffer[key][0])
+        
+        # Get out the frame parameters and fix-up the header
+        stand0, stand1, chan = frameParameters
+        fillFrame.header.firstChan = chan
+        fillFrame.data.stand0 = stand0
+        fillFrame.data.stand1 = stand1
+        
+        # Zero the data for the fill packet
+        fillFrame.data.vis *= 0
+        
+        # Invalidate the frame
+        fillFrame.valid = False
+        
+        return fillFrame
+
+
 class VDIFFrameBuffer(FrameBuffer):
     """
     A sub-type of FrameBuffer specifically for dealing with VDIF frames.
@@ -669,8 +785,8 @@ class VDIFFrameBuffer(FrameBuffer):
         stand/polarization (default is False)
     """
     
-    def __init__(self, threads=[0,1], nSegments=10, ReorderFrames=False):
-        super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, threads=[0,1], nSegments=10, ReorderFrames=False, FillInMissingFrames=True):
+        super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
         
     def calcFrames(self):
         """

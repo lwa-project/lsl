@@ -38,11 +38,12 @@ from lsl.reader.errors import syncError, eofError
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'getFramesPerObs', 
-           'getChannelCount', 'getBaselineCount', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'FrameChannelCount', 
+           'getFramesPerObs', 'getChannelCount', 'getBaselineCount', 
            '__version__', '__revision__', '__all__']
 
 FrameSize = 32 + NCHAN_COR*4*8
+FrameChannelCount = NCHAN_COR
 
 
 class FrameHeader(object):
@@ -387,39 +388,24 @@ def readFrame(filehandle, Verbose=False):
 def getFramesPerObs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
-    first several thousand COR records.  Return the number of frames per 
-    observation.
+    first several COR records.  Return the number of frames per observation.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
+    # Get the number of channels in the file
+    nChan = getChannelCount(filehandle)
+    nFrames = nChan / NCHAN_COR
     
-    # Build up the list-of-lists that store the index of the first frequency
-    # channel in each frame.
-    channelBaselinePairs = []
-    for i in range(32896*16):
-        try:
-            cFrame = readFrame(filehandle)
-        except:
-            break
-            
-        chan = cFrame.header.firstChan
-        baseline = cFrame.parseID()
-        pair = (chan, baseline[0], baseline[1])
-        if pair not in channelBaselinePairs:
-            channelBaselinePairs.append( pair )
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
+    # Multiply by the number of baselines
+    nFrames *= getBaselineCount(filehandle)
     
     # Return the number of channel/baseline pairs
-    return len(channelBaselinePairs)
+    return nFrames
 
 
 def getChannelCount(filehandle):
     """
     Find out the total number of channels that are present by examining 
-    the first several thousand COR records.  Return the number of channels found.
+    the first several COR records.  Return the number of channels found.
     """
     
     # Save the current position in the file so we can return to that point
@@ -428,7 +414,7 @@ def getChannelCount(filehandle):
     # Build up the list-of-lists that store the index of the first frequency
     # channel in each frame.
     channels = []
-    for i in range(32896*16):
+    for i in range(64):
         try:
             cFrame = readFrame(filehandle)
         except:
@@ -448,28 +434,10 @@ def getChannelCount(filehandle):
 def getBaselineCount(filehandle):
     """
     Find out the total number of baselines that are present by examining the 
-    first several thousand COR records.  Return the number of baselines found.
-    observation.
+    first several COR records.  Return the number of baselines found.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
+    # This is fixed based on how ADP works
+    nBaseline = 256*(256+1) / 2
     
-    # Build up the list-of-lists that store the index of the first frequency
-    # channel in each frame.
-    baselines = []
-    for i in range(32896*16):
-        try:
-            cFrame = readFrame(filehandle)
-        except:
-            break
-            
-        baseline = cFrame.parseID()
-        if baseline not in baselines:
-            baselines.append( baseline )
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
-    # Return the number of baselines
-    return len(baselines)
+    return nBaseline
