@@ -194,7 +194,7 @@ class reader_adp_tests(unittest.TestCase):
         """Test determing the number of frames per observation in a COR file."""
         
         fh = open(corFile, 'rb')
-        self.assertEqual(65, cor.getFramesPerObs(fh))
+        self.assertEqual(32896, cor.getFramesPerObs(fh))
         fh.close()
         
     def test_cor_channels(self):
@@ -208,7 +208,7 @@ class reader_adp_tests(unittest.TestCase):
         """Test determing the number of baselines in a COR observation."""
         
         fh = open(corFile, 'rb')
-        self.assertEqual(65, cor.getBaselineCount(fh))
+        self.assertEqual(32896, cor.getBaselineCount(fh))
         fh.close()
         
     def test_cor_comps(self):
