@@ -95,13 +95,9 @@ class FrameBuffer(object):
         still be 'nSegments'-1 segements in the buffer that are either
         full or partially full.  This can be retrieved using the buffer's 
         'flush()' function.
-        
-    .. versionchanged:: 1.2.1
-        Added a 'FillInMissingFrames' keyword to control whether or not
-        missing frames are filled in with zero frames
     """
     
-    def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nSegments=6, ReorderFrames=False, FillInMissingFrames=True):
+    def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nSegments=6, ReorderFrames=False):
         """
         Initialize the buffer with a list of:
           * TBN
@@ -178,12 +174,10 @@ class FrameBuffer(object):
         # If we should reorder the returned frames by stand/pol or not
         self.reorder = ReorderFrames
         
-        # If we should create dummy frames for everything that is missing
-        self.fillin = FillInMissingFrames
-        
         # Figure out how many frames fill the buffer and the list of all
         # possible frames in the data set
         self.nFrames, self.possibleFrames = self.calcFrames()
+        self.possibleFrames = set(self.possibleFrames)
         
     def calcFrames(self):
         """
@@ -298,9 +292,7 @@ class FrameBuffer(object):
             output = self.buffer[keyToReturn]
             
             ## Fill in the missing frames
-            if self.fillin:
-                for frame in self._missingList(keyToReturn):
-                    output.append( self.createFill(keyToReturn, frame) )
+            output.extend( map(lambda x: self.createFill(keyToReturn, x), self._missingList(keyToReturn)) )
         else:
             ## There are too many frames
             self.full = self.full + 1
@@ -352,32 +344,23 @@ class FrameBuffer(object):
         """
         
         # Find out what frames we have
-        frameList = []
-        for frame in self.buffer[key]:
+        if hasattr(self, 'frameID'):
+            fnc = lambda x: self.frameID(x)
+        else:
             if self.mode == 'VDIF':
-                frameList.append(frame.parseID()[1])
+                fnc = lambda x: x.parseID()[1]
             elif self.mode == 'TBF':
-                try:
-                    frameList.append(frame.header.firstChan)
-                except AttributeError:
-                    ## Catch for tbfMux.py
-                    frameList.append(frame.firstChan)
+                fnc = lambda x: x.header.firstChan
             elif self.mode == 'COR':
-                try:
-                    frameList.append(frame.parseID()+(frame.header.firstChan,))
-                except AttributeError:
-                    ## Catch for corMux.py
-                    frameList.append(frame.parseID()+(frame.firstChan,))
+                fnc = lambda x: x.parseID()+(x.header.firstChan,)
             else:
-                frameList.append(frame.parseID())
-                
+                fnc = lambda x: x.parseID()
+        frameList = set(map(fnc, self.buffer[key]))
+        
         # Compare the existing list with the possible list stored in the 
         # FrameBuffer object to build a list of missing frames.
-        missingList = []
-        for frame in self.possibleFrames:
-            if frame not in frameList:
-                missingList.append(frame)
-                
+        missingList = self.possibleFrames.difference(frameList)
+        
         return missingList
         
     def status(self):
@@ -448,8 +431,8 @@ class TBNFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, stands=[], pols=[0, 1], nSegments=20, ReorderFrames=False, FillInMissingFrames=True):
-        super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
+    def __init__(self, stands=[], pols=[0, 1], nSegments=20, ReorderFrames=False):
+        super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
         
     def calcFrames(self):
         """
@@ -544,8 +527,8 @@ class DRXFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nSegments=10, ReorderFrames=False, FillInMissingFrames=True):
-        super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
+    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nSegments=10, ReorderFrames=False):
+        super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
         
     def calcFrames(self):
         """
@@ -631,8 +614,8 @@ class TBFFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, chans, nSegments=25, ReorderFrames=False, FillInMissingFrames=True):
-        super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
+    def __init__(self, chans, nSegments=25, ReorderFrames=False):
+        super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames)
         
     def calcFrames(self):
         """
@@ -712,8 +695,8 @@ class CORFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, chans, nSegments=5, ReorderFrames=False, FillInMissingFrames=True):
-        super(CORFrameBuffer, self).__init__(mode='COR', stands=list(range(1,256+1)), chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
+    def __init__(self, chans, nSegments=5, ReorderFrames=False):
+        super(CORFrameBuffer, self).__init__(mode='COR', stands=list(range(1,256+1)), chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames)
         
     def calcFrames(self):
         """
@@ -785,8 +768,8 @@ class VDIFFrameBuffer(FrameBuffer):
         stand/polarization (default is False)
     """
     
-    def __init__(self, threads=[0,1], nSegments=10, ReorderFrames=False, FillInMissingFrames=True):
-        super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nSegments=nSegments, ReorderFrames=ReorderFrames, FillInMissingFrames=FillInMissingFrames)
+    def __init__(self, threads=[0,1], nSegments=10, ReorderFrames=False):
+        super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nSegments=nSegments, ReorderFrames=ReorderFrames)
         
     def calcFrames(self):
         """
