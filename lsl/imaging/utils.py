@@ -945,11 +945,12 @@ class CorrelatedDataUV(object):
 
 
 try:
-    from pyrap.tables import table
+    from casacore.tables import table
     
     # Stokes codes for CASA Measurement Sets
-    NumericStokesMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
-                    9:'XX', 10:'XY', 11:'YX', 12:'YY'}
+    NumericStokesMS = { 1:'I',   2:'Q',   3:'U',   4:'V', 
+                        5:'RR',  6:'RL',  7:'LR',  8:'LL',
+                        9:'XX', 10:'XY', 11:'YX', 12:'YY'}
     
     class CorrelatedDataMS(object):
         """
@@ -1006,7 +1007,7 @@ try:
             in the metadata.
             """
             
-            if tarfile.is_tarfile(filename):
+            if not os.path.isdir(filename) and tarfile.is_tarfile(filename):
                 # LASI generate compressed tarballs that contain the MS.  Deal with 
                 # those in a transparent manner by automatically unpacking them
                 tempdir = tempfile.mkdtemp(prefix='CorrelatedMS-')
@@ -1236,7 +1237,7 @@ try:
             
 except ImportError:
     import warnings
-    warnings.warn('Cannot import pyrap.tables, MS support disabled', ImportWarning)
+    warnings.warn('Cannot import casacore.tables, MS support disabled', ImportWarning)
     
     class CorrelatedMS(object):
         """
@@ -1246,7 +1247,7 @@ except ImportError:
         """
         
         def __init__(self, filename):
-            raise RuntimeError("Cannot import pyrap.tables, MS support disabled")
+            raise RuntimeError("Cannot import casacore.tables, MS support disabled")
 
 
 class ImgWPlus(aipy.img.ImgW):
