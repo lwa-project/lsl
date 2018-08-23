@@ -396,20 +396,28 @@ class MS(object):
         """
         
         col1 = tableutil.makearrcoldesc('OFFSET', 0.0, 1, 
+                                        comment='Axes offset of mount to FEED REFERENCE point', 
                                         keywords={'QuantumUnits':['m','m','m'], 
                                                   'MEASINFO':{'type':'position', 'Ref':'ITRF'}
                                         })
         col2 = tableutil.makearrcoldesc('POSITION', 0.0, 1,
+                                        comment='Antenna X,Y,Z phase reference position', 
                                         keywords={'QuantumUnits':['m','m','m'], 
                                                   'MEASINFO':{'type':'position', 'Ref':'ITRF'}
                                                   })
-        col3 = tableutil.makescacoldesc('TYPE', "ground-based")
+        col3 = tableutil.makescacoldesc('TYPE', "ground-based", 
+                                        comment='Antenna type (e.g. SPACE-BASED)')
         col4 = tableutil.makescacoldesc('DISH_DIAMETER', 2.0, 
+                                        comment='Physical diameter of dish', 
                                         keywords={'QuantumUnits':['m',]})
-        col5 = tableutil.makescacoldesc('FLAG_ROW', False)
-        col6 = tableutil.makescacoldesc('MOUNT', "alt-az")
-        col7 = tableutil.makescacoldesc('NAME', "none")
-        col8 = tableutil.makescacoldesc('STATION', self.siteName)
+        col5 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                        comment='Flag for this row')
+        col6 = tableutil.makescacoldesc('MOUNT', "alt-az", 
+                                        comment='Mount type e.g. alt-az, equatorial, etc.')
+        col7 = tableutil.makescacoldesc('NAME', "none", 
+                                        comment='Antenna name, e.g. VLA22, CA03')
+        col8 = tableutil.makescacoldesc('STATION', self.siteName, 
+                                        comment='Station (antenna pad) name')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8])
         tb = table("%s/ANTENNA" % self.basename, desc, nrow=self.nAnt, ack=False)
@@ -454,10 +462,14 @@ class MS(object):
                 prds[0,i] = 1
                 prds[1,i] = 1
                 
-        col1 = tableutil.makearrcoldesc('CORR_TYPE', 0, 1)
-        col2 = tableutil.makearrcoldesc('CORR_PRODUCT', 0, 2)
-        col3 = tableutil.makescacoldesc('FLAG_ROW', False)
-        col4 = tableutil.makescacoldesc('NUM_CORR', self.nStokes)
+        col1 = tableutil.makearrcoldesc('CORR_TYPE', 0, 1, 
+                                        comment='The polarization type for each correlation product, as a Stokes enum.')
+        col2 = tableutil.makearrcoldesc('CORR_PRODUCT', 0, 2, 
+                                        comment='Indices describing receptors of feed going into correlation')
+        col3 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                        comment='flag')
+        col4 = tableutil.makescacoldesc('NUM_CORR', self.nStokes, 
+                                        comment='Number of correlation products')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4])
         tb = table("%s/POLARIZATION" % self.basename, desc, nrow=1, ack=False)
@@ -472,25 +484,38 @@ class MS(object):
         # Feed
         
         col1  = tableutil.makearrcoldesc('POSITION', 0.0, 1, 
+                                         comment='Position of feed relative to feed reference position', 
                                          keywords={'QuantumUnits':['m','m','m'], 
                                                    'MEASINFO':{'type':'position', 'Ref':'ITRF'}
                                                    })
         col2  = tableutil.makearrcoldesc('BEAM_OFFSET', 0.0, 2, 
+                                         comment='Beam position offset (on sky but in antennareference frame)', 
                                          keywords={'QuantumUnits':['rad','rad'], 
                                                    'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                    })
-        col3  = tableutil.makearrcoldesc('POLARIZATION_TYPE', 'X', 1)
-        col4  = tableutil.makearrcoldesc('POL_RESPONSE', 1j, 2, valuetype='complex')
+        col3  = tableutil.makearrcoldesc('POLARIZATION_TYPE', 'X', 1, 
+                                         comment='Type of polarization to which a given RECEPTOR responds')
+        col4  = tableutil.makearrcoldesc('POL_RESPONSE', 1j, 2,
+                                         valuetype='complex',
+                                         comment='D-matrix i.e. leakage between two receptors')
         col5  = tableutil.makearrcoldesc('RECEPTOR_ANGLE', 0.0, 1,  
+                                         comment='The reference angle for polarization', 
                                          keywords={'QuantumUnits':['rad',]})
-        col6  = tableutil.makescacoldesc('ANTENNA_ID', 0)
-        col7  = tableutil.makescacoldesc('BEAM_ID', -1)
-        col8  = tableutil.makescacoldesc('FEED_ID', 0)
+        col6  = tableutil.makescacoldesc('ANTENNA_ID', 0, 
+                                         comment='ID of antenna in this array')
+        col7  = tableutil.makescacoldesc('BEAM_ID', -1, 
+                                         comment='Id for BEAM model')
+        col8  = tableutil.makescacoldesc('FEED_ID', 0, 
+                                         comment='Feed id')
         col9  = tableutil.makescacoldesc('INTERVAL', 0.0, 
+                                         comment='Interval for which this set of parameters is accurate', 
                                          keywords={'QuantumUnits':['s',]})
-        col10 = tableutil.makescacoldesc('NUM_RECEPTORS', 2)
-        col11 = tableutil.makescacoldesc('SPECTRAL_WINDOW_ID', -1)
+        col10 = tableutil.makescacoldesc('NUM_RECEPTORS', 2, 
+                                         comment='Number of receptors on this feed (probably 1 or 2)')
+        col11 = tableutil.makescacoldesc('SPECTRAL_WINDOW_ID', -1, 
+                                         comment='ID for this spectral window setup')
         col12 = tableutil.makescacoldesc('TIME', 0.0, 
+                                         comment='Midpoint of time for which this set of parameters is accurate', 
                                          keywords={'QuantumUnits':['s',], 
                                                    'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                    })
@@ -531,20 +556,6 @@ class MS(object):
         tb.putcol('NUM_RECEPTORS', [2,]*self.nAnt, 0, self.nAnt)
         tb.putcol('SPECTRAL_WINDOW_ID', [-1,]*self.nAnt, 0, self.nAnt)
         tb.putcol('TIME', [0.0,]*self.nAnt, 0, self.nAnt)
-            
-        #for i,ant in enumerate(self.array[0]['ants']):
-            ##tb.putcell('POSITION', i, numpy.zeros(3))
-            ##tb.putcell('BEAM_OFFSET', i, numpy.zeros((2,2)))
-            #tb.putcell('POLARIZATION_TYPE', i, ptype)
-            #tb.putcell('POL_RESPONSE', i, presp)
-            #tb.putcell('RECEPTOR_ANGLE', i, numpy.zeros(2))
-            #tb.putcell('ANTENNA_ID', i, i)
-            #tb.putcell('BEAM_ID', i, -1)
-            #tb.putcell('FEED_ID', i, 0)
-            #tb.putcell('INTERVAL', i, 0.0)
-            #tb.putcell('NUM_RECEPTORS', i, 2)
-            #tb.putcell('SPECTRAL_WINDOW_ID', i, -1)
-            #tb.putcell('TIME', i, 0.0)
         
         tb.done()
         
@@ -556,20 +567,29 @@ class MS(object):
         # Observation
         
         col1 = tableutil.makearrcoldesc('TIME_RANGE', 0.0, 1, 
+                                        comment='Start and end of observation', 
                                         keywords={'QuantumUnits':['s',], 
                                                   'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                   })
-        col2 = tableutil.makearrcoldesc('LOG', 'none', 1)
-        col3 = tableutil.makearrcoldesc('SCHEDULE', 'none', 1)
-        col4 = tableutil.makescacoldesc('FLAG_ROW', False)
-        col5 = tableutil.makescacoldesc('OBSERVER', 'ZASKY')
-        col6 = tableutil.makescacoldesc('PROJECT', 'ZASKY')
+        col2 = tableutil.makearrcoldesc('LOG', 'none', 1, 
+                                        comment='Observing log')
+        col3 = tableutil.makearrcoldesc('SCHEDULE', 'none', 1, 
+                                        comment='Observing schedule')
+        col4 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                        comment='Row flag')
+        col5 = tableutil.makescacoldesc('OBSERVER', 'ZASKY', 
+                                        comment='Name of observer(s)')
+        col6 = tableutil.makescacoldesc('PROJECT', 'ZASKY', 
+                                        comment='Project identification string')
         col7 = tableutil.makescacoldesc('RELEASE_DATE', 0.0, 
+                                        comment='Release date when data becomes public', 
                                         keywords={'QuantumUnits':['s',], 
                                                   'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                   })
-        col8 = tableutil.makescacoldesc('SCHEDULE_TYPE', 'none')
-        col9 = tableutil.makescacoldesc('TELESCOPE_NAME', self.siteName)
+        col8 = tableutil.makescacoldesc('SCHEDULE_TYPE', 'none', 
+                                        comment='Observing schedule type')
+        col9 = tableutil.makescacoldesc('TELESCOPE_NAME', self.siteName, 
+                                        comment='Telescope Name (e.g. WSRT, VLBA)')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
         tb = table("%s/OBSERVATION" % self.basename, desc, nrow=1, ack=False)
@@ -655,35 +675,36 @@ class MS(object):
         self._sourceTable = nameList
         
         col1  = tableutil.makearrcoldesc('DIRECTION', 0.0, 1, 
+                                         comment='Direction (e.g. RA, DEC).', 
                                          keywords={'QuantumUnits':['rad','rad'], 
                                                    'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                    })
         col2  = tableutil.makearrcoldesc('PROPER_MOTION', 0.0, 1, 
+                                         comment='Proper motion', 
                                          keywords={'QuantumUnits':['rad/s',]})
-        col3  = tableutil.makescacoldesc('CALIBRATION_GROUP', 0)
-        col4  = tableutil.makescacoldesc('CODE', "none")
+        col3  = tableutil.makescacoldesc('CALIBRATION_GROUP', 0, 
+                                         comment='Number of grouping for calibration purpose.')
+        col4  = tableutil.makescacoldesc('CODE', "none", 
+                                         comment='Special characteristics of source, e.g. Bandpass calibrator')
         col5  = tableutil.makescacoldesc('INTERVAL', 0.0, 
+                                         comment='Interval of time for which this set of parameters is accurate', 
                                          keywords={'QuantumUnits':['s',]})
-        col6  = tableutil.makescacoldesc('NAME', "none")
-        col7  = tableutil.makescacoldesc('NUM_LINES', 0)
-        col8  = tableutil.makescacoldesc('SOURCE_ID', 0)
-        col9  = tableutil.makescacoldesc('SPECTRAL_WINDOW_ID', -1)
+        col6  = tableutil.makescacoldesc('NAME', "none", 
+                                         comment='Name of source as given during observations')
+        col7  = tableutil.makescacoldesc('NUM_LINES', 0, 
+                                         comment='Number of spectral lines')
+        col8  = tableutil.makescacoldesc('SOURCE_ID', 0, 
+                                         comment='Source id')
+        col9  = tableutil.makescacoldesc('SPECTRAL_WINDOW_ID', -1, 
+                                         comment='ID for this spectral window setup')
         col10 = tableutil.makescacoldesc('TIME', 0.0,
+                                         comment='Midpoint of time for which this set of parameters is accurate.', 
                                          keywords={'QuantumUnits':['s',], 
                                                    'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                    })
-        #col11 = tableutil.makearrcoldesc('TRANSITION', 'none', 1)
-        #col12 = tableutil.makearrcoldesc('REST_FREQUENCY', 0.0, 1, 
-                                         #keywords={'QuantumUnits':['Hz',], 
-                                                   #'MEASINFO':{'type':'frequency', 'Ref':'LSRK'}
-                                                   #})
-        #col13 = tableutil.makearrcoldesc('SYSVEL', 0.0, 1, 
-                                         #keywords={'QuantumUnits':['m/s',], 
-                                                   #'MEASINFO':{'type':'radialvelocity', 'Ref':'LSRK'}
-                                                   #})
-                                        
+        
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
-                                      col10])#, col11, col12, col13])
+                                      col10])
         tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
         
         for i in xrange(nSource):
@@ -706,23 +727,32 @@ class MS(object):
         # Field
         
         col1 = tableutil.makearrcoldesc('DELAY_DIR', 0.0, 2, 
+                                        comment='Direction of delay center (e.g. RA, DEC)as polynomial in time.', 
                                         keywords={'QuantumUnits':['rad','rad'], 
                                                   'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                   })
         col2 = tableutil.makearrcoldesc('PHASE_DIR', 0.0, 2, 
+                                        comment='Direction of phase center (e.g. RA, DEC).', 
                                         keywords={'QuantumUnits':['rad','rad'], 
                                                   'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                   })
         col3 = tableutil.makearrcoldesc('REFERENCE_DIR', 0.0, 2, 
+                                        comment='Direction of REFERENCE center (e.g. RA, DEC).as polynomial in time.', 
                                         keywords={'QuantumUnits':['rad','rad'], 
                                                   'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                   })
-        col4 = tableutil.makescacoldesc('CODE', "none")
-        col5 = tableutil.makescacoldesc('FLAG_ROW', False)
-        col6 = tableutil.makescacoldesc('NAME', "none")
-        col7 = tableutil.makescacoldesc('NUM_POLY', 0)
-        col8 = tableutil.makescacoldesc('SOURCE_ID', 0)
+        col4 = tableutil.makescacoldesc('CODE', "none", 
+                                        comment='Special characteristics of field, e.g. Bandpass calibrator')
+        col5 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                        comment='Row Flag')
+        col6 = tableutil.makescacoldesc('NAME', "none", 
+                                        comment='Name of this field')
+        col7 = tableutil.makescacoldesc('NUM_POLY', 0, 
+                                        comment='Polynomial order of _DIR columns')
+        col8 = tableutil.makescacoldesc('SOURCE_ID', 0, 
+                                        comment='Source id')
         col9 = tableutil.makescacoldesc('TIME', (tStart+tStop)/2, 
+                                        comment='Time origin for direction and rate', 
                                         keywords={'QuantumUnits':['s',],
                                                   'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                   })
@@ -750,8 +780,10 @@ class MS(object):
         
         # Spectral Window
         
-        col1  = tableutil.makescacoldesc('MEAS_FREQ_REF', 0)
+        col1  = tableutil.makescacoldesc('MEAS_FREQ_REF', 0, 
+                                         comment='Frequency Measure reference')
         col2  = tableutil.makearrcoldesc('CHAN_FREQ', 0.0, 1, 
+                                         comment='Center frequencies for each channel in the data matrix', 
                                          keywords={'QuantumUnits':['Hz',], 
                                                    'MEASINFO':{'type':'frequency', 
                                                                'VarRefCol':'MEAS_FREQ_REF', 
@@ -759,6 +791,7 @@ class MS(object):
                                                                'TabRefCodes':[0,1,2,3,4,5,6,7,8,64]}
                                                    })
         col3  = tableutil.makescacoldesc('REF_FREQUENCY', self.refVal, 
+                                         comment='The reference frequency', 
                                          keywords={'QuantumUnits':['Hz',], 
                                                    'MEASINFO':{'type':'frequency', 
                                                                'VarRefCol':'MEAS_FREQ_REF', 
@@ -766,19 +799,30 @@ class MS(object):
                                                                'TabRefCodes':[0,1,2,3,4,5,6,7,8,64]}
                                                    })
         col4  = tableutil.makearrcoldesc('CHAN_WIDTH', 0.0, 1, 
+                                         comment='Channel width for each channel', 
                                          keywords={'QuantumUnits':['Hz',]})
         col5  = tableutil.makearrcoldesc('EFFECTIVE_BW', 0.0, 1, 
+                                         comment='Effective noise bandwidth of each channel', 
                                          keywords={'QuantumUnits':['Hz',]})
         col6  = tableutil.makearrcoldesc('RESOLUTION', 0.0, 1, 
+                                         comment='The effective noise bandwidth for each channel', 
                                          keywords={'QuantumUnits':['Hz',]})
-        col7  = tableutil.makescacoldesc('FLAG_ROW', False)
-        col8  = tableutil.makescacoldesc('FREQ_GROUP', 1)
-        col9  = tableutil.makescacoldesc('FREQ_GROUP_NAME', "group1")
-        col10 = tableutil.makescacoldesc('IF_CONV_CHAIN', 0)
-        col11 = tableutil.makescacoldesc('NAME', "%i channels" % self.nChan)
-        col12 = tableutil.makescacoldesc('NET_SIDEBAND', 0)
-        col13 = tableutil.makescacoldesc('NUM_CHAN', 0)
+        col7  = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                         comment='flag')
+        col8  = tableutil.makescacoldesc('FREQ_GROUP', 1, 
+                                         comment='Frequency group')
+        col9  = tableutil.makescacoldesc('FREQ_GROUP_NAME', "group1", 
+                                         comment='Frequency group name')
+        col10 = tableutil.makescacoldesc('IF_CONV_CHAIN', 0, 
+                                         comment='The IF conversion chain number')
+        col11 = tableutil.makescacoldesc('NAME', "%i channels" % self.nChan, 
+                                         comment='Spectral window name')
+        col12 = tableutil.makescacoldesc('NET_SIDEBAND', 0, 
+                                         comment='Net sideband')
+        col13 = tableutil.makescacoldesc('NUM_CHAN', 0, 
+                                         comment='Number of spectral channels')
         col14 = tableutil.makescacoldesc('TOTAL_BANDWIDTH', 0.0, 
+                                         comment='The total bandwidth for this window', 
                                          keywords={'QuantumUnits':['Hz',]})
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
@@ -821,39 +865,64 @@ class MS(object):
         mapper = self.array[0]['mapper']
         
         col1  = tableutil.makearrcoldesc('UVW', 0.0, 1, 
+                                         comment='Vector with uvw coordinates (in meters)', 
                                          keywords={'QuantumUnits':['m','m','m'], 
                                                    'MEASINFO':{'type':'uvw', 'Ref':'ITRF'}
                                                    })
-        col2  = tableutil.makearrcoldesc('FLAG', False, 2)
+        col2  = tableutil.makearrcoldesc('FLAG', False, 2, 
+                                         comment='The data flags, array of bools with same shape as data')
         col3  = tableutil.makearrcoldesc('FLAG_CATEGORY', False, 3,  
+                                         comment='The flag category, NUM_CAT flags for each datum', 
                                          keywords={'CATEGORY':['',]})
-        col4  = tableutil.makearrcoldesc('WEIGHT', 1.0, 1, valuetype='float')
-        col5  = tableutil.makearrcoldesc('SIGMA', 9999., 1, valuetype='float')
-        col6  = tableutil.makescacoldesc('ANTENNA1', 0)
-        col7  = tableutil.makescacoldesc('ANTENNA2', 0)
-        col8  = tableutil.makescacoldesc('ARRAY_ID', 0)
-        col9  = tableutil.makescacoldesc('DATA_DESC_ID', 0)
+        col4  = tableutil.makearrcoldesc('WEIGHT', 1.0, 1, 
+                                         valuetype='float', 
+                                         comment='Weight for each polarization spectrum')
+        col5  = tableutil.makearrcoldesc('SIGMA', 9999., 1, 
+                                         valuetype='float', 
+                                         comment='Estimated rms noise for channel with unity bandpass response')
+        col6  = tableutil.makescacoldesc('ANTENNA1', 0, 
+                                         comment='ID of first antenna in interferometer')
+        col7  = tableutil.makescacoldesc('ANTENNA2', 0, 
+                                         comment='ID of second antenna in interferometer')
+        col8  = tableutil.makescacoldesc('ARRAY_ID', 0, 
+                                         comment='ID of array or subarray')
+        col9  = tableutil.makescacoldesc('DATA_DESC_ID', 0, 
+                                         comment='The data description table index')
         col10 = tableutil.makescacoldesc('EXPOSURE', 0.0, 
+                                         comment='he effective integration time', 
                                          keywords={'QuantumUnits':['s',]})
-        col11 = tableutil.makescacoldesc('FEED1', 0)
-        col12 = tableutil.makescacoldesc('FEED2', 0)
-        col13 = tableutil.makescacoldesc('FIELD_ID', 0)
-        col14 = tableutil.makescacoldesc('FLAG_ROW', False)
+        col11 = tableutil.makescacoldesc('FEED1', 0, 
+                                         comment='The feed index for ANTENNA1')
+        col12 = tableutil.makescacoldesc('FEED2', 0, 
+                                         comment='The feed index for ANTENNA2')
+        col13 = tableutil.makescacoldesc('FIELD_ID', 0, 
+                                         comment='Unique id for this pointing')
+        col14 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                         comment='Row flag - flag all data in this row if True')
         col15 = tableutil.makescacoldesc('INTERVAL', 0.0, 
+                                         comment='The sampling interval', 
                                          keywords={'QuantumUnits':['s',]})
-        col16 = tableutil.makescacoldesc('OBSERVATION_ID', 0)
-        col17 = tableutil.makescacoldesc('PROCESSOR_ID', -1)
-        col18 = tableutil.makescacoldesc('SCAN_NUMBER', 1)
-        col19 = tableutil.makescacoldesc('STATE_ID', -1)
+        col16 = tableutil.makescacoldesc('OBSERVATION_ID', 0, 
+                                         comment='ID for this observation, index in OBSERVATION table')
+        col17 = tableutil.makescacoldesc('PROCESSOR_ID', -1, 
+                                         comment='Id for backend processor, index in PROCESSOR table')
+        col18 = tableutil.makescacoldesc('SCAN_NUMBER', 1, 
+                                         comment='Sequential scan number from on-line system')
+        col19 = tableutil.makescacoldesc('STATE_ID', -1, 
+                                         comment='ID for this observing state')
         col20 = tableutil.makescacoldesc('TIME', 0.0, 
+                                         comment='Modified Julian Day', 
                                          keywords={'QuantumUnits':['s',],
                                                    'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                    })
         col21 = tableutil.makescacoldesc('TIME_CENTROID', 0.0, 
+                                         comment='Modified Julian Day', 
                                          keywords={'QuantumUnits':['s',],
                                                    'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                    })
-        col22 = tableutil.makearrcoldesc("DATA", 0j, 2, valuetype='complex')
+        col22 = tableutil.makearrcoldesc("DATA", 0j, 2, 
+                                         valuetype='complex',
+                                         comment='The data column')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
                                         col10, col11, col12, col13, col14, col15, col16, 
@@ -985,9 +1054,12 @@ class MS(object):
         
         # Data description
         
-        col1 = tableutil.makescacoldesc('FLAG_ROW', False)
-        col2 = tableutil.makescacoldesc('POLARIZATION_ID', 0)
-        col3 = tableutil.makescacoldesc('SPECTRAL_WINDOW_ID', 0)
+        col1 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                        comment='Flag this row')
+        col2 = tableutil.makescacoldesc('POLARIZATION_ID', 0, 
+                                        comment='Pointer to polarization table')
+        col3 = tableutil.makescacoldesc('SPECTRAL_WINDOW_ID', 0, 
+                                        comment='Pointer to spectralwindow table')
         
         desc = tableutil.maketabdesc([col1, col2, col3])
         tb = table("%s/DATA_DESCRIPTION" % self.basename, desc, nrow=1, ack=False)
@@ -1007,17 +1079,25 @@ class MS(object):
         # Flag command
         
         col1 = tableutil.makescacoldesc('TIME', 0.0, 
-                                         keywords={'QuantumUnits':['s',], 
-                                                   'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
-                                                   })
+                                        comment='Midpoint of interval for which this flag is valid', 
+                                        keywords={'QuantumUnits':['s',], 
+                                                  'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
+                                                  })
         col2 = tableutil.makescacoldesc('INTERVAL', 0.0, 
-                                         keywords={'QuantumUnits':['s',]})
-        col3 = tableutil.makescacoldesc('TYPE', 'flag')
-        col4 = tableutil.makescacoldesc('REASON', 'reason')
-        col5 = tableutil.makescacoldesc('LEVEL', 0)
-        col6 = tableutil.makescacoldesc('SEVERITY', 0)
-        col7 = tableutil.makescacoldesc('APPLIED', False)
-        col8 = tableutil.makescacoldesc('COMMAND', 'command')
+                                        comment='Time interval for which this flag is valid', 
+                                        keywords={'QuantumUnits':['s',]})
+        col3 = tableutil.makescacoldesc('TYPE', 'flag', 
+                                        comment='Type of flag (FLAG or UNFLAG)')
+        col4 = tableutil.makescacoldesc('REASON', 'reason', 
+                                        comment='Flag reason')
+        col5 = tableutil.makescacoldesc('LEVEL', 0, 
+                                        comment='Flag level - revision level')
+        col6 = tableutil.makescacoldesc('SEVERITY', 0, 
+                                        comment='Severity code (0-10)')
+        col7 = tableutil.makescacoldesc('APPLIED', False, 
+                                        comment='True if flag has been applied to main table')
+        col8 = tableutil.makescacoldesc('COMMAND', 'command', 
+                                        comment='Flagging command')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8])
         tb = table("%s/FLAG_CMD" % self.basename, desc, nrow=0, ack=False)
@@ -1027,17 +1107,26 @@ class MS(object):
         # History
         
         col1 = tableutil.makescacoldesc('TIME', 0.0, 
-                                         keywords={'QuantumUnits':['s',], 
-                                                   'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
-                                                   })
-        col2 = tableutil.makescacoldesc('OBSERVATION_ID', 0)
-        col3 = tableutil.makescacoldesc('MESSAGE', 'message')
-        col4 = tableutil.makescacoldesc('PRIORITY', 'NORMAL')
-        col5 = tableutil.makescacoldesc('ORIGIN', 'origin')
-        col6 = tableutil.makescacoldesc('OBJECT_ID', 0)
-        col7 = tableutil.makescacoldesc('APPLICATION', 'application')
-        col8 = tableutil.makearrcoldesc('CLI_COMMAND', 'command', 1)
-        col9 = tableutil.makearrcoldesc('APP_PARAMS', 'params', 1)
+                                        comment='Timestamp of message', 
+                                        keywords={'QuantumUnits':['s',], 
+                                                  'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
+                                                  })
+        col2 = tableutil.makescacoldesc('OBSERVATION_ID', 0, 
+                                        comment='Observation id (index in OBSERVATION table)')
+        col3 = tableutil.makescacoldesc('MESSAGE', 'message', 
+                                        comment='Log message')
+        col4 = tableutil.makescacoldesc('PRIORITY', 'NORMAL', 
+                                        comment='Message priority')
+        col5 = tableutil.makescacoldesc('ORIGIN', 'origin', 
+                                        comment='(Source code) origin from which message originated')
+        col6 = tableutil.makescacoldesc('OBJECT_ID', 0, 
+                                        comment='Originating ObjectID')
+        col7 = tableutil.makescacoldesc('APPLICATION', 'application', 
+                                        comment='Application name')
+        col8 = tableutil.makearrcoldesc('CLI_COMMAND', 'command', 1, 
+                                        comment='CLI command sequence')
+        col9 = tableutil.makearrcoldesc('APP_PARAMS', 'params', 1, 
+                                        comment='Application parameters')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
         tb = table("%s/HISTORY" % self.basename, desc, nrow=0, ack=False)
@@ -1046,28 +1135,37 @@ class MS(object):
         
         # POINTING
         
-        col1 = tableutil.makescacoldesc('ANTENNA_ID', 0)
+        col1 = tableutil.makescacoldesc('ANTENNA_ID', 0, 
+                                        comment='Antenna Id')
         col2 = tableutil.makescacoldesc('TIME', 0.0, 
-                                         keywords={'QuantumUnits':['s',], 
-                                                   'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
-                                                   })
+                                        comment='Time interval midpoint', 
+                                        keywords={'QuantumUnits':['s',], 
+                                                  'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
+                                                  })
         col3 = tableutil.makescacoldesc('INTERVAL', 0.0, 
-                                         keywords={'QuantumUnits':['s',]})
-        col4 = tableutil.makescacoldesc('NAME', 'name')
-        col5 = tableutil.makescacoldesc('NUM_POLY', 0)
+                                        comment='Time interval', 
+                                        keywords={'QuantumUnits':['s',]})
+        col4 = tableutil.makescacoldesc('NAME', 'name', 
+                                        comment='Pointing position name')
+        col5 = tableutil.makescacoldesc('NUM_POLY', 0, 
+                                        comment='Series order')
         col6 = tableutil.makescacoldesc('TIME_ORIGIN', 0.0, 
-                                         keywords={'QuantumUnits':['s',], 
-                                                   'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
-                                                   })
+                                        comment='Time origin for direction', 
+                                        keywords={'QuantumUnits':['s',], 
+                                                  'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
+                                                  })
         col7 = tableutil.makearrcoldesc('DIRECTION', 0.0, 2, 
-                                         keywords={'QuantumUnits':['rad','rad'], 
-                                                   'MEASINFO':{'type':'direction', 'Ref':'J2000'}
-                                                   })
+                                        comment='Antenna pointing direction as polynomial in time', 
+                                        keywords={'QuantumUnits':['rad','rad'], 
+                                                  'MEASINFO':{'type':'direction', 'Ref':'J2000'}
+                                                  })
         col8 = tableutil.makearrcoldesc('TARGET', 0.0, 2, 
-                                         keywords={'QuantumUnits':['rad','rad'], 
-                                                   'MEASINFO':{'type':'direction', 'Ref':'J2000'}
-                                                   })
-        col9 = tableutil.makescacoldesc('TRACKING', True)
+                                        comment='target direction as polynomial in time',
+                                        keywords={'QuantumUnits':['rad','rad'], 
+                                                  'MEASINFO':{'type':'direction', 'Ref':'J2000'}
+                                                  })
+        col9 = tableutil.makescacoldesc('TRACKING', True, 
+                                        comment='Tracking flag - True if on position')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
         tb = table("%s/POINTING" % self.basename, desc, nrow=0, ack=False)
@@ -1076,11 +1174,16 @@ class MS(object):
         
         # Processor
         
-        col1 = tableutil.makescacoldesc('TYPE', 'type')
-        col2 = tableutil.makescacoldesc('SUB_TYPE', 'subtype')
-        col3 = tableutil.makescacoldesc('TYPE_ID', 0)
-        col4 = tableutil.makescacoldesc('MODE_ID', 0)
-        col5 = tableutil.makescacoldesc('FLAG_ROW', False)
+        col1 = tableutil.makescacoldesc('TYPE', 'type', 
+                                        comment='Processor type')
+        col2 = tableutil.makescacoldesc('SUB_TYPE', 'subtype', 
+                                        comment='Processor sub type')
+        col3 = tableutil.makescacoldesc('TYPE_ID', 0, 
+                                        comment='Processor type id')
+        col4 = tableutil.makescacoldesc('MODE_ID', 0, 
+                                        comment='Processor mode id')
+        col5 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                        comment='flag')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5])
         tb = table("%s/PROCESSOR" % self.basename, desc, nrow=0, ack=False)
@@ -1089,34 +1192,25 @@ class MS(object):
         
         # State
         
-        col1 = tableutil.makescacoldesc('SIG', True)
-        col2 = tableutil.makescacoldesc('REF', True)
+        col1 = tableutil.makescacoldesc('SIG', True, 
+                                        comment='True for a source observation')
+        col2 = tableutil.makescacoldesc('REF', False, 
+                                        comment='True for a reference observation')
         col3 = tableutil.makescacoldesc('CAL', 0.0, 
+                                        comment='Noise calibration temperature', 
                                         keywords={'QuantumUnits':['K',]})
         col4 = tableutil.makescacoldesc('LOAD', 0.0, 
+                                        comment='Load temperature', 
                                         keywords={'QuantumUnits':['K',]})
-        col5 = tableutil.makescacoldesc('SUB_SCAN', 0)
-        col6 = tableutil.makescacoldesc('OBS_MODE', 'mode')
-        col7 = tableutil.makescacoldesc('FLAG_ROW', False)
+        col5 = tableutil.makescacoldesc('SUB_SCAN', 0, 
+                                        comment='Sub scan number, relative to scan number')
+        col6 = tableutil.makescacoldesc('OBS_MODE', 'mode', 
+                                        comment='Observing mode, e.g., OFF_SPECTRUM')
+        col7 = tableutil.makescacoldesc('FLAG_ROW', False, 
+                                        comment='Row flag')
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7])
         tb = table("%s/STATE" % self.basename, desc, nrow=0, ack=False)
         
         tb.close()
         
-        ## Syscal
-        
-        #col1 = tableutil.makescacoldesc('ANTENNA_ID', 0)
-        #col2 = tableutil.makescacoldesc('FEED_ID', 0)
-        #col3 = tableutil.makescacoldesc('SPECTRAL_WINDOW_ID', 0)
-        #col4 = tableutil.makescacoldesc('TIME', 0.0, 
-                                         #keywords={'QuantumUnits':['s',], 
-                                                   #'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
-                                                   #})
-        #col5 = tableutil.makescacoldesc('INTERVAL', 0.0, 
-                                         #keywords={'QuantumUnits':['s',]})
-        
-        #desc = tableutil.maketabdesc([col1, col2, col3, col4, col5])
-        #tb = table("%s/SYSCAL" % self.basename, desc, nrow=0, ack=False)
-        
-        #tb.close()
