@@ -195,11 +195,11 @@ class LDPFileBase(object):
         self._readyFile()
         
         # Reset any buffers
-        if getattr(self, "buffer", None) is not None:
-            self.buffer.flush()
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
             
         # Reset the timetag checker
-        if getattr(self, "_timetag", None) is not None:
+        if hasattr(self, "_timetag"):
             self._timetag = None
             
         # Describe the contents of the file
@@ -383,8 +383,12 @@ class TBWFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-            
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Get the data frame size
         dataSize = 400
         if self.description['dataBits'] == 4:
@@ -540,8 +544,9 @@ class TBNFile(LDPFileBase):
         self._describeFile()
         
         # Reset the buffer
-        self.buffer.flush()
-        
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
+            
         # Reset the timetag checker
         self._timetag = None
         
@@ -553,8 +558,8 @@ class TBNFile(LDPFileBase):
         """
         
         # Reset the buffer
-        if getattr(self, "buffer", None) is not None:
-            self.buffer.flush()
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
             
         # Reset the timetag checker
         self._timetag = None
@@ -579,8 +584,12 @@ class TBNFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-            
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Covert the sample rate to an expected timetag skip
         timetagSkip = int(512 / self.description['sampleRate'] * fS)
         
@@ -649,7 +658,7 @@ class TBNFile(LDPFileBase):
             
         # If we've hit the end of the file and haven't read in enough frames, 
         # flush the buffer
-        if eofFound or nFrameSets != frameCount:
+        if eofFound and nFrameSets != frameCount:
             for cFrames in self.buffer.flush():
                 cTimetag = cFrames[0].data.timeTag
                 if cTimetag != self._timetag+timetagSkip:
@@ -691,8 +700,12 @@ class TBNFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-            
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Go!
         count = {}
         for i in xrange(self.description['nAntenna']):
@@ -882,8 +895,9 @@ class DRXFile(LDPFileBase):
         self._describeFile()
         
         # Reset the buffer
-        self.buffer.flush()
-        
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
+            
         # Zero out the time tag checker
         self._timetag = None
         
@@ -895,8 +909,8 @@ class DRXFile(LDPFileBase):
         """
         
         # Reset the buffer
-        if getattr(self, "buffer", None) is not None:
-            self.buffer.flush()
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
             
         # Zero out the time tag checker
         self._timetagSkip = None
@@ -922,8 +936,12 @@ class DRXFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-            
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Covert the sample rate to an expected timetag skip
         if getattr(self, "_timetagSkip", None) is None:
             self._timetagSkip = int(4096 / self.description['sampleRate'] * fS)
@@ -994,7 +1012,7 @@ class DRXFile(LDPFileBase):
             
         # If we've hit the end of the file and haven't read in enough frames, 
         # flush the buffer
-        if eofFound or nFrameSets != frameCount:
+        if eofFound and nFrameSets != frameCount:
             for cFrames in self.buffer.flush():
                 for cFrame in cFrames:
                     b,t,p = cFrame.parseID()
@@ -1045,8 +1063,12 @@ class DRXFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-        
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Sample the data
         count = {0:0, 1:0, 2:0, 3:0}
         data = numpy.zeros((4, nFrames*4096))
@@ -1208,8 +1230,12 @@ class DRSpecFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-            
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Covert the sample rate to an expected timetag skip
         timetagSkip = self.description['tInt']
         
@@ -1516,7 +1542,8 @@ class TBFFile(LDPFileBase):
         self._describeFile()
         
         # Reset the buffer
-        self.buffer.flush()
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
         
         # Reset the timetag checker
         self._timetag = None
@@ -1529,8 +1556,8 @@ class TBFFile(LDPFileBase):
         """
         
         # Reset the buffer
-        if getattr(self, "buffer", None) is not None:
-            self.buffer.flush()
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
             
         # Reset the timetag checker
         self._timetag = None
@@ -1555,8 +1582,12 @@ class TBFFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-            
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Covert the sample rate to an expected timetag skip
         timetagSkip = int(1.0 / self.description['sampleRate'] * fS)
         
@@ -1634,7 +1665,7 @@ class TBFFile(LDPFileBase):
             
         # If we've hit the end of the file and haven't read in enough frames, 
         # flush the buffer
-        if eofFound or nFrameSets != frameCount:
+        if eofFound and nFrameSets != frameCount:
             for cFrames in self.buffer.flush():
                 cTimetag = cFrames[0].data.timeTag
                 if self._timetag == 0:
@@ -1739,10 +1770,14 @@ class CORFile(LDPFileBase):
         nBaseline = cor.getBaselineCount(self.fh)
         
         # Pre-load the baseline mapper
-        self.bmapper = []
+        # NOTE: This is done with a dictionary rather than a list since 
+        #       the look-ups are much faster
+        self.bmapperd = {}
+        k = 0
         for i in xrange(1, 256+1):
             for j in xrange(i, 256+1):
-                self.bmapper.append( (i,j) )
+                self.bmapperd[(i,j)] = k
+                k += 1
                 
         # Pre-load the channel mapper
         self.cmapper = []
@@ -1759,6 +1794,11 @@ class CORFile(LDPFileBase):
         self.fh.seek(marker)
         self.cmapper.sort()
         
+        # Create a channel mapper dictionary
+        self.cmapperd = {}
+        for i,c in enumerate(self.cmapper):
+            self.cmapperd[c] = i
+            
         # Calculate the frequencies
         freq = numpy.zeros(nChan)
         for i,c in enumerate(self.cmapper):
@@ -1771,7 +1811,7 @@ class CORFile(LDPFileBase):
                         'tStartSamples': startRaw, 'nBaseline': nBaseline, 'tInt':cFrame.getIntegrationTime()}
                         
         # Initialize the buffer as part of the description process
-        self.buffer = CORFrameBuffer(chans=self.cmapper, ReorderFrames=False, FillInMissingFrames=False)
+        self.buffer = CORFrameBuffer(chans=self.cmapper, ReorderFrames=False)
         
     def offset(self, offset):
         """
@@ -1792,7 +1832,8 @@ class CORFile(LDPFileBase):
         self._describeFile()
         
         # Reset the buffer
-        self.buffer.flush()
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
         
         # Reset the timetag checker
         self._timetag = None
@@ -1805,8 +1846,8 @@ class CORFile(LDPFileBase):
         """
         
         # Reset the buffer
-        if getattr(self, "buffer", None) is not None:
-            self.buffer.flush()
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
             
         # Reset the timetag checker
         self._timetag = None
@@ -1831,8 +1872,12 @@ class CORFile(LDPFileBase):
         
         # Make sure there is file left to read
         if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
-            raise errors.eofError()
-            
+            try:
+                if self.buffer.isEmpty():
+                    raise errors.eofError()
+            except AttributeError:
+                raise errors.eofError()
+                
         # Covert the sample rate to an expected timetag skip
         timetagSkip = int(self.description['tInt'] * fS)
         
@@ -1872,6 +1917,7 @@ class CORFile(LDPFileBase):
                     continue
                     
             self.buffer.append(cFrames)
+
             cFrames = self.buffer.get()
             
             # Continue adding frames if nothing comes out.
@@ -1899,8 +1945,8 @@ class CORFile(LDPFileBase):
                     else:
                         setTime = cFrame.getTime()
                         
-                aBase = self.bmapper.index(cFrame.parseID())
-                aChan = self.cmapper.index(firstChan)
+                aBase = self.bmapperd[cFrame.parseID()]
+                aChan = self.cmapperd[firstChan]
                 aStand = aBase*len(self.cmapper) + aChan
                 data[aBase,aChan*cor.FrameChannelCount:(aChan+1)*cor.FrameChannelCount,:,:,count[aStand]] = cFrame.data.vis
                 count[aStand] += 1
@@ -1908,7 +1954,7 @@ class CORFile(LDPFileBase):
             
         # If we've hit the end of the file and haven't read in enough frames, 
         # flush the buffer
-        if eofFound or nFrameSets != frameCount:
+        if eofFound and nFrameSets != frameCount:
             for cFrames in self.buffer.flush():
                 cTimetag = cFrames[0].data.timeTag
                 if self._timetag == 0:
@@ -1930,8 +1976,8 @@ class CORFile(LDPFileBase):
                         else:
                             setTime = cFrame.getTime()
                             
-                    aBase = self.bmapper.index(cFrame.parseID())
-                    aChan = self.cmapper.index(firstChan)
+                    aBase = self.bmapperd[cFrame.parseID()]
+                    aChan = self.cmapperd[firstChan]
                     aStand = aBase*len(self.cmapper) + aChan
                     data[aBase,aChan*cor.FrameChannelCount:(aChan+1)*cor.FrameChannelCount,:,:,count[aStand]] = cFrame.data.vis
                     count[aStand] += 1
