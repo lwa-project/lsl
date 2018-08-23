@@ -278,7 +278,7 @@ class FrameBuffer(object):
             else:
                 keyToReturn = keys[0]
         returnCount = len(self.buffer[keyToReturn])
-        
+       
         if returnCount == self.nFrames:
             ## Everything is good (Is it really???)
             self.full = self.full + 1
@@ -321,22 +321,43 @@ class FrameBuffer(object):
         
     def flush(self):
         """
-        Return a list of lists containing all remaining frames in the 
-        buffer from buffers that are considered 'full'.  Afterwards, 
-        delete all buffers.  This is useful for emptying the buffer after
-        reading in all of the data.
+        Generator to return all of the remaining frames in the buffer 
+        from buffers that are considered 'full'.  Afterwards, delete all 
+        buffers.  This is useful for emptying the buffer after reading 
+        in all of the data.
         
         .. note::
             It is possible for this function to return list of packets that
             are mostly invalid.
+            
+        .. versionchanged::1.2.1
+            Converted to a generator to make sure that we can get all of 
+            the LWA-SV COR frames out of the buffer
         """
         
-        output = []
         for key in self.buffer:
-            output2 = self.get(keyToReturn=key)
-            output.append( output2 )
+            yield self.get(keyToReturn=key)
             
-        return output
+    def reset(self):
+        """
+        Emtpy the contents of the buffer and reset it to a clean state.
+        
+        .. versionadded::1.2.1
+        """
+        
+        self.buffer.clear()
+        self.done.clear()
+        self.done.append(0)
+        
+    def isEmpty(self):
+        """
+        Determine if there is anything in the buffer or not.  Returns False 
+        if there is, True if there is not.
+        
+        .. versionadded::1.2.1
+        """
+        
+        return False if len(self.buffer) else True
         
     def _missingList(self, key):
         """
