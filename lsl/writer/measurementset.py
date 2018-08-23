@@ -366,8 +366,10 @@ class MS(object):
         self._writeSpectralWindow()
         self._writeMisc()
         
-        # Fixup the keywords
+        # Fixup the info and keywords for the main table
         tb = table("%s" % self.basename, readonly=False, ack=False)
+        tb.putinfo({'type':'Measurement Set', 
+                    'readme':'This is a MeasurementSet Table holding measurements from a Telescope'})
         tb.putkeyword('MS_VERSION', numpy.float32(2.0))
         for filename in sorted(glob.glob('%s/*' % self.basename)):
             if os.path.isdir(filename):
@@ -412,17 +414,25 @@ class MS(object):
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8])
         tb = table("%s/ANTENNA" % self.basename, desc, nrow=self.nAnt, ack=False)
         
+        tb.putcol('OFFSET', numpy.zeros((self.nAnt,3)), 0, self.nAnt)
+        tb.putcol('TYPE', ['GROUND-BASED,']*self.nAnt, 0, self.nAnt)
+        tb.putcol('DISH_DIAMETER', [2.0,]*self.nAnt, 0, self.nAnt)
+        tb.putcol('FLAG_ROW', [False,]*self.nAnt, 0, self.nAnt)
+        tb.putcol('MOUNT', ['ALT-AZ',]*self.nAnt, 0, self.nAnt)
+        tb.putcol('NAME', [ant.getName() for ant in self.array[0]['ants']], 0, self.nAnt)
+        tb.putcol('STATION', [self.siteName,]*self.nAnt, 0, self.nAnt)
+        
         for i,ant in enumerate(self.array[0]['ants']):
-            tb.putcell('OFFSET', i, [0.0, 0.0, 0.0])
+            #tb.putcell('OFFSET', i, [0.0, 0.0, 0.0])
             tb.putcell('POSITION', i, [ant.x + self.array[0]['center'][0],
                                        ant.y + self.array[0]['center'][1], 
                                        ant.z + self.array[0]['center'][2]])
-            tb.putcell('TYPE', i, 'GROUND-BASED')
-            tb.putcell('DISH_DIAMETER', i, 2.0)
-            tb.putcell('FLAG_ROW', i, False)
-            tb.putcell('MOUNT', i, 'ALT-AZ')
-            tb.putcell('NAME', i, ant.getName())
-            tb.putcell('STATION', i, self.siteName)
+            #tb.putcell('TYPE', i, 'GROUND-BASED')
+            #tb.putcell('DISH_DIAMETER', i, 2.0)
+            #tb.putcell('FLAG_ROW', i, False)
+            #tb.putcell('MOUNT', i, 'ALT-AZ')
+            #tb.putcell('NAME', i, ant.getName())
+            #tb.putcell('STATION', i, self.siteName)
             
         tb.done()
         
@@ -489,40 +499,52 @@ class MS(object):
                                         col9, col10, col11, col12])
         tb = table("%s/FEED" % self.basename, desc, nrow=self.nAnt, ack=False)
         
-        ptype = [None, None]
-        presp = numpy.zeros((2,2), dtype=numpy.complex64)
+        presp = numpy.zeros((self.nAnt,2,2), dtype=numpy.complex64)
         if self.stokes[0] > 8:
-            ptype = ['X', 'Y']
-            presp[0,0] = 1.0
-            presp[0,1] = 0.0
-            presp[1,0] = 0.0
-            presp[1,1] = 1.0
+            ptype = numpy.tile(['X', 'Y'], (self.nAnt,1))
+            presp[:,0,0] = 1.0
+            presp[:,0,1] = 0.0
+            presp[:,1,0] = 0.0
+            presp[:,1,1] = 1.0
         elif self.stokes[0] > 4:
-            ptype = ['R', 'L']
-            presp[0,0] = 1.0 - 1.0j
-            presp[0,1] = 0.0
-            presp[1,0] = 0.0
-            presp[1,1] = 1.0 + 1.0j
+            ptype = numpy.tile(['R', 'L'], (self.nAnt,1))
+            presp[:,0,0] = 1.0
+            presp[:,0,1] = -1.0j
+            presp[:,1,0] = 1.0j
+            presp[:,1,1] = 1.0
         else:
-            ptype = ['X', 'Y']
-            presp[0,0] = 1.0
-            presp[0,1] = 0.0
-            presp[1,0] = 0.0
-            presp[1,1] = 1.0
+            ptype = numpy.tile(['X', 'Y'], (self.nAnt,1))
+            presp[:,0,0] = 1.0
+            presp[:,0,1] = 0.0
+            presp[:,1,0] = 0.0
+            presp[:,1,1] = 1.0
             
-        for i,ant in enumerate(self.array[0]['ants']):
-            tb.putcell('POSITION', i, numpy.zeros(3))
-            tb.putcell('BEAM_OFFSET', i, numpy.zeros((2,2)))
-            tb.putcell('POLARIZATION_TYPE', i, ptype)
-            tb.putcell('POL_RESPONSE', i, presp)
-            tb.putcell('RECEPTOR_ANGLE', i, numpy.zeros(2))
-            tb.putcell('ANTENNA_ID', i, i)
-            tb.putcell('BEAM_ID', i, -1)
-            tb.putcell('FEED_ID', i, 0)
-            tb.putcell('INTERVAL', i, 0.0)
-            tb.putcell('NUM_RECEPTORS', i, 2)
-            tb.putcell('SPECTRAL_WINDOW_ID', i, -1)
-            tb.putcell('TIME', i, 0.0)
+        tb.putcol('POSITION', numpy.zeros((self.nAnt,3)), 0, self.nAnt)
+        tb.putcol('BEAM_OFFSET', numpy.zeros((self.nAnt,2,2)), 0, self.nAnt)
+        tb.putcol('POLARIZATION_TYPE', ptype, 0, self.nAnt)
+        tb.putcol('POL_RESPONSE', presp, 0, self.nAnt)
+        tb.putcol('RECEPTOR_ANGLE', numpy.zeros((self.nAnt,2)), 0, self.nAnt)
+        tb.putcol('ANTENNA_ID', list(range(self.nAnt)), 0, self.nAnt)
+        tb.putcol('BEAM_ID', [-1,]*self.nAnt, 0, self.nAnt)
+        tb.putcol('FEED_ID', [0,]*self.nAnt, 0, self.nAnt)
+        tb.putcol('INTERVAL', [0.0,]*self.nAnt, 0, self.nAnt)
+        tb.putcol('NUM_RECEPTORS', [2,]*self.nAnt, 0, self.nAnt)
+        tb.putcol('SPECTRAL_WINDOW_ID', [-1,]*self.nAnt, 0, self.nAnt)
+        tb.putcol('TIME', [0.0,]*self.nAnt, 0, self.nAnt)
+            
+        #for i,ant in enumerate(self.array[0]['ants']):
+            ##tb.putcell('POSITION', i, numpy.zeros(3))
+            ##tb.putcell('BEAM_OFFSET', i, numpy.zeros((2,2)))
+            #tb.putcell('POLARIZATION_TYPE', i, ptype)
+            #tb.putcell('POL_RESPONSE', i, presp)
+            #tb.putcell('RECEPTOR_ANGLE', i, numpy.zeros(2))
+            #tb.putcell('ANTENNA_ID', i, i)
+            #tb.putcell('BEAM_ID', i, -1)
+            #tb.putcell('FEED_ID', i, 0)
+            #tb.putcell('INTERVAL', i, 0.0)
+            #tb.putcell('NUM_RECEPTORS', i, 2)
+            #tb.putcell('SPECTRAL_WINDOW_ID', i, -1)
+            #tb.putcell('TIME', i, 0.0)
         
         tb.done()
         
@@ -908,8 +930,9 @@ class MS(object):
                 uvwList = uvwCoords[order,:]
                 
                 ### Add in the new date/time and integration time
-                timeList = [utc - astro.MJD_OFFSET for bl in dataSet.baselines]
+                #timeList = [utc - astro.MJD_OFFSET for bl in dataSet.baselines]
                 intTimeList = [dataSet.intTime for bl in dataSet.baselines]
+                timeList = [(utc - astro.MJD_OFFSET)*86400 + dataSet.intTime/2.0 for bl in dataSet.baselines]
                 
                 ### Add in the new new source ID and name
                 sourceList = [sourceID for bl in dataSet.baselines]
@@ -925,35 +948,39 @@ class MS(object):
             
             # Deal with saving the data once all of the polarizations have been added to 'matrix'
             if dataSet.pol == self.stokes[-1]:
-                mList = matrix
+                nBL = uvwList.shape[0]
+                tb.addrows(nBL)
+
+                fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=numpy.bool)
+                fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=numpy.bool)
+                wg = numpy.ones((nBL,self.nStokes))
+                sg = numpy.ones((nBL,self.nStokes))*9999
                 
-                tb.addrows(uvwList.shape[0])
-                for j in xrange(uvwList.shape[0]):
-                    tb.putcell('UVW', i, uvwList[j,:])
-                    tb.putcell('FLAG', i, numpy.zeros((self.nStokes,self.nChan), dtype=numpy.bool).T)
-                    tb.putcell('FLAG_CATEGORY', i, numpy.zeros((self.nStokes,self.nChan,1), dtype=numpy.bool).T)
-                    tb.putcell('WEIGHT', i, numpy.ones(self.nStokes))
-                    tb.putcell('SIGMA', i, numpy.ones(self.nStokes)*9999)
-                    tb.putcell('ANTENNA1', i, ant1List[j])
-                    tb.putcell('ANTENNA2', i, ant2List[j])
-                    tb.putcell('ARRAY_ID', i, 0)
-                    tb.putcell('DATA_DESC_ID', i, 0)
-                    tb.putcell('EXPOSURE', i, intTimeList[j])
-                    tb.putcell('FEED1', i, 0)
-                    tb.putcell('FEED2', i, 0)
-                    tb.putcell('FIELD_ID', i, sourceList[j])
-                    tb.putcell('FLAG_ROW', i, False)
-                    tb.putcell('INTERVAL', i, intTimeList[j])
-                    tb.putcell('OBSERVATION_ID', i, 0)
-                    tb.putcell('PROCESSOR_ID', i, -1)
-                    tb.putcell('SCAN_NUMBER', i, s)
-                    tb.putcell('STATE_ID', i, -1)
-                    tb.putcell('TIME', i, (timeList[j] + intTimeList[j]/2)*86400)
-                    tb.putcell('TIME_CENTROID', i, (timeList[j] + intTimeList[j]/2)*86400)
-                    tb.putcell('DATA', i, mList[j,:,:].T)
-                    i += 1
+                tb.putcol('UVW', uvwList, i, nBL)
+                tb.putcol('FLAG', fg.transpose(0,2,1), i, nBL)
+                tb.putcol('FLAG_CATEGORY', fc.transpose(0,3,2,1), i, nBL)
+                tb.putcol('WEIGHT', wg, i, nBL)
+                tb.putcol('SIGMA', sg, i, nBL)
+                tb.putcol('ANTENNA1', ant1List, i, nBL)
+                tb.putcol('ANTENNA2', ant2List, i, nBL)
+                tb.putcol('ARRAY_ID', [0,]*nBL, i, nBL)
+                tb.putcol('DATA_DESC_ID', [0,]*nBL, i, nBL)
+                tb.putcol('EXPOSURE', intTimeList, i, nBL)
+                tb.putcol('FEED1', [0,]*nBL, i, nBL)
+                tb.putcol('FEED2', [0,]*nBL, i, nBL)
+                tb.putcol('FIELD_ID', sourceList, i, nBL)
+                tb.putcol('FLAG_ROW', [False,]*nBL, i, nBL)
+                tb.putcol('INTERVAL', intTimeList, i, nBL)
+                tb.putcol('OBSERVATION_ID', [0,]*nBL, i, nBL)
+                tb.putcol('PROCESSOR_ID', [-1,]*nBL, i, nBL)
+                tb.putcol('SCAN_NUMBER', [s,]*nBL, i, nBL)
+                tb.putcol('STATE_ID', [-1,]*nBL, i, nBL)
+                tb.putcol('TIME', timeList, i, nBL)
+                tb.putcol('TIME_CENTROID', timeList, i, nBL)
+                tb.putcol('DATA', matrix.transpose(0,2,1), i, nBL)
+                i += nBL
                 s += 1
-            
+                
         tb.close()
         
         # Data description
