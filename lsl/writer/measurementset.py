@@ -702,9 +702,23 @@ class MS(object):
                                          keywords={'QuantumUnits':['s',], 
                                                    'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                    })
+        col11 = tableutil.makearrcoldesc('TRANSITION', 'none', 1, 
+                                         comment='Line Transition name')
+        col12 = tableutil.makearrcoldesc('REST_FREQUENCY', 1.0, 1, 
+                                         comment='Line rest frequency', 
+                                         keywords={'QuantumUnits':['Hz',], 
+                                                   'MEASINFO':{'type':'frequency', 
+                                                               'Ref':'LSRK'}
+                                                   })
+        col13 = tableutil.makearrcoldesc('SYSVEL', 1.0, 1, 
+                                         comments='Systemic velocity at reference', 
+                                         keywords={'QuantumUnits':['m/s',], 
+                                                   'MEASINFO':{'type':'radialvelocity', 
+                                                               'Ref':'LSRK'}
+                                                   })
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
-                                      col10])
+                                      col10, col11, col12, col13])
         tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
         
         for i in xrange(nSource):
