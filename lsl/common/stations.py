@@ -44,8 +44,8 @@ def geo2ecef(lat, lon, elev):
     centered, earth-fixed coordinates.
     """
     
-    WGS84_a = 6378137.000000
-    WGS84_b = 6356752.314245
+    WGS84_a = 6378137.00000000
+    WGS84_b = 6356752.31424518
     N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
     
     x = (N+elev)*numpy.cos(lat)*numpy.cos(lon)
@@ -61,8 +61,8 @@ def ecef2geo(x, y, z):
     (rad), elevation (m) using Bowring's method.
     """
     
-    WGS84_a = 6378137.000000
-    WGS84_b = 6356752.314245
+    WGS84_a = 6378137.00000000
+    WGS84_b = 6356752.31424518
     e2 = (WGS84_a**2 - WGS84_b**2) / WGS84_a**2
     ep2 = (WGS84_a**2 - WGS84_b**2) / WGS84_b**2
     
