@@ -25,6 +25,7 @@
   * Fixed a bug in the PyFFTW usage in lsl.correlator.filterbank and fixed the output scaling
   * Added a new lsl.version.get_fingerprint() function to help keep track of local changes made to the LSL installation
   * Added support for writing correlated data to a CASA measurement set
+  * Added ARX filter response measurements for Sevilleta
 
 1.2.0
   * Added a new lsl.common.adp module to help describe ADP
