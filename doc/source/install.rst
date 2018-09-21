@@ -2,19 +2,19 @@ Requirements
 ============
  * python >= 2.6 and python < 3.0
  * atlas >= 3.6
- * blas >= 1.2
  * fftw3 >= 3.2
  * gdbm >= 1.8
- * setuptools >= 0.6.10
  * numpy >= 1.2
  * scipy >= 0.7
  * pyfits >= 3.1
  * ephem >= 3.7.5
- * aipy >= 0.9.1
+ * aipy >= 1.0
  * pytz >= 2011k
- * matplotlib >= 0.98.3 [1]_
+ * matplotlib >= 1.1 [1]_
+ * casacore [2]_
 
 .. [1] Required for some of the included scripts
+.. [2] Required for measurement set support
 
 Building
 ========
