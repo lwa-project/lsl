@@ -661,10 +661,16 @@ class AntennaArray(aipy.amp.AntennaArray):
           * split
           * full
           * reduced
+          * split@3MHz
+          * full@3MHz
           * none
         
         None is a special case where both the IMM and ARX response are 
         removed, i.e., the bandpass is unity for all frequencies.
+        
+        .. versionchanged:: 1.2.1
+            Added support for the 'split@3MHz' and 'full@3MHz' filters at
+            LWA-SV.
         
         .. versionadded:: 1.0.1
         """
@@ -688,9 +694,9 @@ class AntennaArray(aipy.amp.AntennaArray):
             immIntp = interp1d(immf, immr, kind='cubic', bounds_error=False)
             
             # Mean ARX filter response
-            arxf, arxr = ants[0].arx.response(dB=False)
+            arxf, arxr = ants[0].arx.response(filter, dB=False)
             for i in xrange(1, len(ants)):
-                arxfi, arxri = ants[i].arx.response(dB=False)
+                arxfi, arxri = ants[i].arx.response(filter, dB=False)
                 arxr += arxri
             arxr /= arxr.max()
             arxIntp = interp1d(arxf, arxr, kind='cubic', bounds_error=False)

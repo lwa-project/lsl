@@ -787,17 +787,28 @@ class ARX(object):
     def __reduce__(self):
         return (ARX, (self.id, self.channel, self.aspChannel, self.input, self.output))
         
-    def response(self, filter='full', dB=True):
+    def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
         the ARX response for the current board/channel from the "ARX0026" 
-        memo on the "LWA Engineering Documents" wiki.
+        memo on the "LWA Engineering Documents" wiki.  For ARX boards at 
+        LWA-SV, data from the production tests are used.
         
         Filter options are:
-        * 1 or 'full'
-        * 2 or 'reduced'
-        * 3 or 'split'
+          * 0 or 'split'
+          * 1 or 'full'
+          * 2 or 'reduced'
+          * 4 or 'split@3MHz'
+          * 5 of 'full@3MHz'
         
+        .. note:: If 'split@3MHz' or 'full@3MHz' are requested for LWA1, the
+                  values for 'split' and 'full' are returned instead.
+        
+        .. versionchanged:: 1.2.1
+            Switched the filter numbers over to match what ASP uses 
+            at LWA1 and LWA-SV.  Also, changed the default filter to
+            'split' to match the default value for observations.
+           
         .. versionchanged:: 1.0.0
             Add an option to specify whether the magnitude should be 
             returned in dB or not.
@@ -812,7 +823,7 @@ class ARX(object):
             dataDict = numpy.load(filename)
         except IOError:
             raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
-
+            
         freq = dataDict['freq']
         data = dataDict['data']
         try:
@@ -824,12 +835,24 @@ class ARX(object):
             data = from_dB(data)
             
         # Return or raise an error
-        if filter == 1 or filter == 'full':
+        if filter == 0 or filter == 'split':
             return (freq, data[:,0])
-        elif filter == 2 or filter == 'reduced':
+        elif filter == 1 or filter == 'full':
             return (freq, data[:,1])
-        elif filter == 3 or filter == 'split':
+        elif filter == 2 or filter == 'reduced':
             return (freq, data[:,2])
+        elif filter == 4 or filter == 'split@3MHz':
+            try:
+                return (freq, data[:,3])
+            except IndexError:
+                ## Catch LWA1 boards
+                return (freq, data[:,0])
+        elif filter == 5 or filter == 'full@3MHz':
+            try:
+                return (freq, data[:,4])
+            except IndexError:
+                ## Catch LWA1 boards
+                return (freq, data[:,1])
         else:
             raise ValueError("Unknown ARX filter '%s'" % filter)
 
