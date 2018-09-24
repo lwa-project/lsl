@@ -2,6 +2,9 @@
   * Added a new extension to speed up w-projection gridding
   * Merged the non-windowed and windowed functions in the lsl.correlator extensions to de-duplicate some of the codebase
 
+1.2.2
+  * Fixed a bug in setup.py that causes it to crash when 'pkg-config' is not installed
+
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals
   * Small fix to lsl.imaging.utils.plotGriddedImage() to get the image scale correct for non-all-sky images

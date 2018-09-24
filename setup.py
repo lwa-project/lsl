@@ -139,7 +139,7 @@ def get_fftw():
         if len(outVersion) > 0:
             print("Found FFTW3, version %s" % outVersion[0])
             
-    except subprocess.CalledProcessError:
+    except (OSError, subprocess.CalledProcessError):
         print("WARNING:  FFTW3 cannot be found, using defaults")
         outCFLAGS = []
         outLIBS = ['-lfftw3f', '-lm']
