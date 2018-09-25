@@ -268,7 +268,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	// Read in the 16 byte common (regular + legacy) header
-	buffer = PyObject_CallMethod(ph, "read", "i", sizeof(bHeader);
+	buffer = PyObject_CallMethod(ph, "read", "i", sizeof(bHeader));
 	if( buffer == NULL ) {
 		if( PyObject_HasAttrString(ph, "read") ) {
 			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
