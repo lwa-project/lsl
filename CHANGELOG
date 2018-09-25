@@ -4,6 +4,7 @@
 
 1.2.2
   * Fixed a bug in setup.py that causes it to crash when 'pkg-config' is not installed
+  * Fixed a memory leak in the new, more flexible lsl.reader modules
 
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals

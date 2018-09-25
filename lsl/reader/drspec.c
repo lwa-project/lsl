@@ -216,7 +216,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	}
 	
 	// Read in a single header from the file
-	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(DRSpecHeader)), NULL);
+	buffer = PyObject_CallMethod(ph, "read", "i", sizeof(DRSpecHeader));
 	if( buffer == NULL ) {
 		if( PyObject_HasAttrString(ph, "read") ) {
 			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
@@ -233,7 +233,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	
 	// Check the header's magic numbers
 	if( header.MAGIC1 != 0xC0DEC0DE || header.MAGIC2 != 0xED0CED0C) {
-		buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("seek"), PyInt_FromLong(-sizeof(DRSpecHeader)), PyInt_FromLong(1), NULL);
+		buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(DRSpecHeader), 1);
 		PyErr_Format(syncError, "Sync word differs from expected");
 		goto fail;
 	}
@@ -316,7 +316,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	data = (float *) malloc(sizeof(float)*nSets*header.nFreqs);
 	
 	// Read in the data section
-	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(float)*nSets*header.nFreqs), NULL);
+	buffer = PyObject_CallMethod(ph, "read", "i", sizeof(float)*nSets*header.nFreqs);
 	if( buffer == NULL ) {
 		if( PyObject_HasAttrString(ph, "read") ) {
 			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");

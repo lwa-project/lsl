@@ -89,7 +89,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
 	}
 	
 	// Read from the file
-	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(cFrame)), NULL);
+	buffer = PyObject_CallMethod(ph, "read", "i", sizeof(cFrame));
 	if( buffer == NULL ) {
 		if( PyObject_HasAttrString(ph, "read") ) {
 			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");

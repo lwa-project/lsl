@@ -268,7 +268,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	}
 	
 	// Read in the 16 byte common (regular + legacy) header
-	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(bHeader)), NULL);
+	buffer = PyObject_CallMethod(ph, "read", "i", sizeof(bHeader);
 	if( buffer == NULL ) {
 		if( PyObject_HasAttrString(ph, "read") ) {
 			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
@@ -291,7 +291,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	// Does this frame look like it is valid?
 	if( bHeader.frameLength < sizeof(bHeader)/8 ) {
-		buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("seek"), PyInt_FromLong(-sizeof(bHeader)), PyInt_FromLong(1), NULL);
+		buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(bHeader), 1);
 		PyErr_Format(syncError, "Frame size is zero, zero-filled frame?");
 		goto fail;
 	}
@@ -299,7 +299,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	
 	if( bHeader.isLegacy == 0 ) {
 		// Deal with the extra information in standard (non-legacy) headers
-		buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(sizeof(eHeader)), NULL);
+		buffer = PyObject_CallMethod(ph, "read", "i", sizeof(eHeader));
 		if( buffer == NULL ) {
 			if( PyObject_HasAttrString(ph, "read") ) {
 				PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
@@ -332,7 +332,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Read in a chunk of the data
 	unsigned char *rawData;
 	rawData = (unsigned char *) malloc(dataLength);
-	buffer = PyObject_CallMethodObjArgs(ph, PyString_FromString("read"), PyInt_FromLong(dataLength), NULL);
+	buffer = PyObject_CallMethod(ph, "read", "i", dataLength);
 	if( buffer == NULL ) {
 		if( PyObject_HasAttrString(ph, "read") ) {
 			PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
