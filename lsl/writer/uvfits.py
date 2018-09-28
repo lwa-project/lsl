@@ -204,7 +204,8 @@ class UV(object):
             
         return ref_time
         
-    def ref_time2AstroDate(self):
+    @property
+    def astro_ref_time(self):
         """
         Convert a reference time string to an :class:`lsl.astro.date` object.
         """
@@ -656,7 +657,7 @@ class UV(object):
         ag.header['FREQ'] = (self.refVal, 'reference frequency (Hz)')
         ag.header['TIMSYS'] = ('UTC', 'time coordinate system')
 
-        date = self.ref_time2AstroDate()
+        date = self.astro_ref_time
         utc0 = date.to_jd()
         gst0 = astro.get_apparent_sidereal_time(utc0)
         ag.header['GSTIA0'] = (gst0 * 15, 'GAST (deg) at RDATE 0 hours')
@@ -669,7 +670,7 @@ class UV(object):
         deg = ds * 15.0      
         ag.header['DEGPDY'] = (360.0 + deg, 'rotation rate of the earth (deg/day)')
         
-        refDate = self.ref_time2AstroDate()
+        refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
         eop = geodesy.getEOP(refMJD)
         if eop is None:

@@ -104,8 +104,9 @@ class SD(object):
             raise RuntimeError("Unknown time format provided.")
 
         return ref_time
-
-    def ref_time2AstroDate(self):
+        
+    @property
+    def astro_ref_time(self):
         """
         Convert a reference time string to an :class:`lsl.astro.date` object.
         """
