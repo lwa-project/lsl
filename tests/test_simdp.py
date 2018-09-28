@@ -43,7 +43,7 @@ class simdp_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'tbn.dat')
 
         fh = open(testFile, 'wb')
-        dp.basicSignal(fh, numpy.array([1,2,3,4]), 2000, mode='TBN', filter=7, tStart=1000)
+        dp.basicSignal(fh, numpy.array([1,2,3,4]), 2000, mode='TBN', filter=7, start_time=1000)
         fh.close()
 
         # Check the file size
@@ -66,7 +66,7 @@ class simdp_tests(unittest.TestCase):
         antennas = station.getAntennas()
 
         fh = open(testFile, 'wb')
-        dp.pointSource(fh, antennas[:8:2], self.src, 4, mode='TBN', filter=7, tStart=1000)
+        dp.pointSource(fh, antennas[:8:2], self.src, 4, mode='TBN', filter=7, start_time=1000)
         fh.close()
 
         # Check the file size
@@ -86,7 +86,7 @@ class simdp_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'drx.dat')
 
         fh = open(testFile, 'wb')
-        dp.basicSignal(fh, numpy.array([1,2,3,4]), 10, mode='DRX', filter=6, nTuning=2, tStart=1000)
+        dp.basicSignal(fh, numpy.array([1,2,3,4]), 10, mode='DRX', filter=6, ntuning=2, start_time=1000)
         fh.close()
 
         # Check the file size

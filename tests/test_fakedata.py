@@ -52,9 +52,9 @@ class fake_TBN_tests(unittest.TestCase):
         fh.close()
         
         fakeFrame = tbnWriter.SimFrame()
-        fakeFrame.loadFrame(origFrame)
+        fakeFrame.load_frame(origFrame)
         # Test the validity of the SimFrame
-        self.assertTrue(fakeFrame.isValid())
+        self.assertTrue(fakeFrame.is_valid())
         
     def test_write_frame(self):
         """Test that the TBN data writer works."""
@@ -110,19 +110,19 @@ class fake_TBN_tests(unittest.TestCase):
         
         # Try to validate frame with the wrong data type
         fakeFrame = tbnWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.iq = fakeFrame.data.iq.real
-        self.assertRaises(errors.invalidDataType, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidDataType, fakeFrame.is_valid, raiseErrors=True)
         
         # Try to validate frame with the wrong data size
         fakeFrame = tbnWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.iq = None
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidDataSize, fakeFrame.is_valid, raiseErrors=True)
         fakeFrame = tbnWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.iq = fakeFrame.data.iq[0:50]
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidDataSize, fakeFrame.is_valid, raiseErrors=True)
         
     def test_frame_header_errors(self):
         """Test the header error scenarios when validating a TBN SimFrame."""
@@ -134,9 +134,9 @@ class fake_TBN_tests(unittest.TestCase):
         
         # Try to validate frame with the wrong stand number
         fakeFrame = tbnWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.stand = 300
-        self.assertRaises(errors.invalidStand, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidStand, fakeFrame.is_valid, raiseErrors=True)
         
     def tearDown(self):
         """Remove the test path directory and its contents"""
@@ -169,9 +169,9 @@ class fake_DRX_tests(unittest.TestCase):
         fh.close()
         
         fakeFrame = drxWriter.SimFrame()
-        fakeFrame.loadFrame(origFrame)
+        fakeFrame.load_frame(origFrame)
         # Test the validity of the SimFrame
-        self.assertTrue(fakeFrame.isValid())
+        self.assertTrue(fakeFrame.is_valid())
         
     def test_write_frame(self):
         """Test that the DRX data writer works."""
@@ -230,19 +230,19 @@ class fake_DRX_tests(unittest.TestCase):
         
         # Try to validate frame with the wrong data type
         fakeFrame = drxWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.iq = fakeFrame.data.iq.real
-        self.assertRaises(errors.invalidDataType, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidDataType, fakeFrame.is_valid, raiseErrors=True)
         
         # Try to validate frame with the wrong data size
         fakeFrame = drxWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.iq = None
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidDataSize, fakeFrame.is_valid, raiseErrors=True)
         fakeFrame = drxWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.iq = fakeFrame.data.iq[0:50]
-        self.assertRaises(errors.invalidDataSize, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidDataSize, fakeFrame.is_valid, raiseErrors=True)
         
     def test_frame_header_errors(self):
         """Test the header error scenarios when validating a DRX SimFrame."""
@@ -254,15 +254,15 @@ class fake_DRX_tests(unittest.TestCase):
         
         # Try to validate frame with the wrong beam number
         fakeFrame = drxWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.beam = 5
-        self.assertRaises(errors.invalidBeam, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidBeam, fakeFrame.is_valid, raiseErrors=True)
         
         # Try to validate frame with the wrong tuning number
         fakeFrame = drxWriter.SimFrame()
-        fakeFrame.loadFrame(copy.deepcopy(origFrame))
+        fakeFrame.load_frame(copy.deepcopy(origFrame))
         fakeFrame.tune = 3
-        self.assertRaises(errors.invalidTune, fakeFrame.isValid, raiseErrors=True)
+        self.assertRaises(errors.invalidTune, fakeFrame.is_valid, raiseErrors=True)
         
     def tearDown(self):
         """Remove the test path directory and its contents"""

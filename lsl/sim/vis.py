@@ -14,7 +14,7 @@ functions of this module are:
 buildSimArray
   given a station object, a list of stands, and a list of frequencies, build 
   a AIPY AntennaArray-like object.  This module can also generate AntennaArray 
-  objects with positional errors by setting the 'PosError' keyword to a 
+  objects with positional errors by setting the 'pos_error' keyword to a 
   positive value.
 
 buildSimData
@@ -72,7 +72,7 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
     
 .. versionchanged:: 1.0.3
     Moved the calculateSEFD function into lsl.misc.rfutils
-    Changed the meaning of the ForceGaussian parameter of the buildSimArray()
+    Changed the meaning of the force_gaussian parameter of the buildSimArray()
     function to be the Gaussian full width at half maximum in degrees
 """
 
@@ -832,7 +832,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         return Vij_f
 
 
-def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=False, ForceGaussian=False, verbose=False):
+def buildSimArray(station, antennas, freq, jd=None, pos_error=0.0, force_flat=False, force_gaussian=False, verbose=False):
     """
     Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
     object defined from the lwa_common module, a numpy array of stand 
@@ -848,7 +848,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
     are used if the file 'beam_shape.npz' is found in the current directory.
     
     .. versionchanged:: 1.0.3
-        Changed the meaning of the ForceGaussian parameters so that the
+        Changed the meaning of the force_gaussian parameters so that the
         Gaussian full width at half maximum in degrees is passed in.
         
     .. versionchanged:: 1.0.1
@@ -857,7 +857,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
         and antenna gain patterns are the same for all antennas.  This 
         should be a reasonable assumption for large-N arrays.
         
-        Added an option to use a 2-D Gaussian beam pattern via the ForceGaussian
+        Added an option to use a 2-D Gaussian beam pattern via the force_gaussian
         keyword.
         
     .. versionchanged:: 0.4.0
@@ -872,12 +872,12 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
         
     # If the beam Alm coefficient file is present, build a more realistic beam 
     # response.  Otherwise, assume a flat beam
-    if ForceGaussian:
+    if force_gaussian:
         try:
-            xw, yw = ForceGaussian
+            xw, yw = force_gaussian
             xw, yw = float(xw), float(yw)
         except (TypeError, ValueError) as e:
-            xw = float(ForceGaussian)
+            xw = float(force_gaussian)
             yw = 1.0*xw
             
         # FWHM to sigma
@@ -892,7 +892,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
             print("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/numpy.pi, yw*180/numpy.pi))
         beam = Beam2DGaussian(freqs, xw, yw)
         
-    elif ForceFlat:
+    elif force_flat:
         if verbose:
             print("Using flat beam model")
         beam = Beam(freqs)
@@ -920,14 +920,14 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
                 print("Using flat beam model")
             beam = Beam(freqs)
             
-    if PosError != 0:
-        warnings.warn("Creating array with positional errors between %.3f and %.3f m" % (-PosError, PosError), RuntimeWarning)
+    if pos_error != 0:
+        warnings.warn("Creating array with positional errors between %.3f and %.3f m" % (-pos_error, pos_error), RuntimeWarning)
 
     # Build an array of AIPY Antenna objects
     ants = []
     for antenna in antennas:
         top = numpy.array([antenna.stand.x, antenna.stand.y, antenna.stand.z])
-        top += (2*PosError*numpy.random.rand(3)-PosError)	# apply a random positional error if needed
+        top += (2*pos_error*numpy.random.rand(3)-pos_error)	# apply a random positional error if needed
         top.shape = (3,)
         eq = numpy.dot( aipy.coord.top2eq_m(0.0, station.lat), top )
         eq *= 100	# m -> cm
@@ -960,7 +960,7 @@ def buildSimArray(station, antennas, freq, jd=None, PosError=0.0, ForceFlat=Fals
     return simAA
 
 
-def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None, verbose=False, count=None, max=None, flatResponse=False, resolve_src=False):
+def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None, verbose=False, count=None, max=None, flat_response=False, resolve_src=False):
     """
     Helper function for buildSimData so that buildSimData can be called with 
     a list of Julian Dates and reconstruct the data appropriately.
@@ -970,7 +970,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
           This should be much faster but under the caveats that the bandpass
           and antenna gain patterns are the same for all antennas.  This 
           should be a reasonable assumption for large-N arrays.
-        * Added a 'flatResponse' keyword to make it easy to toggle on and off
+        * Added a 'flat_response' keyword to make it easy to toggle on and off
           the spectral and spatial response of the array for the simulation
         * Added a 'resolve_src' keyword to turn on source resolution effects
     """
@@ -1004,7 +1004,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
         Bj = aa[1].bm_response(xyz, pol=pol[1]).transpose()
         Bij = numpy.sqrt( Bi*Bj.conj() )
         return Bij.squeeze()
-    if flatResponse:
+    if flat_response:
         Gij_sf *= 0.0
         Gij_sf += 1.0
         
@@ -1074,7 +1074,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     # Build the simulated data.  If no baseline list is provided, build all 
     # baselines available
     if baselines is None:
-        baselines = uvUtils.getBaselines(numpy.zeros(len(aa.ants)), Indicies=True)
+        baselines = uvUtils.getBaselines(numpy.zeros(len(aa.ants)), indicies=True)
         
     # Define output data structure
     freq = aa.get_afreqs()*1e9
@@ -1087,17 +1087,17 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
         UVData['isMasked'] = True
         
     # Go!
-    if phaseCenter is not 'z':
-        phaseCenter.compute(aa)
-        pcAz = phaseCenter.az*180/numpy.pi
-        pcEl = phaseCenter.alt*180/numpy.pi
+    if phase_center is not 'z':
+        phase_center.compute(aa)
+        pcAz = phase_center.az*180/numpy.pi
+        pcEl = phase_center.alt*180/numpy.pi
     else:
         pcAz = 0.0
         pcEl = 90.0
         
     for p,pol in enumerate(pols):
         ## Apply the antenna gain pattern for each source
-        if not flatResponse:
+        if not flat_response:
             if p == 0:
                 for i in xrange(aa._cache['jys'].shape[0]):
                     aa._cache['jys'][i,:] *= Bij_sf(aa._cache['s_top'][i,:], pol)
@@ -1107,7 +1107,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
                     aa._cache['jys'][i,:] *=  Bij_sf(aa._cache['s_top'][i,:], pol)
                     
         ## Simulate
-        if not flatResponse:
+        if not flat_response:
             uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl, resolve_src=resolve_src)
         else:
             currentVars = locals().keys()
@@ -1143,7 +1143,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
                 UVData['jd'][pol].append( jd )
                 
     # Cleanup
-    if not flatResponse:
+    if not flat_response:
         for i in xrange(aa._cache['jys'].shape[0]):
             aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[-1])	# Remove the old pol
             aa._cache['jys'][i,:] /= Gij_sf								# Remove the bandpass
@@ -1152,7 +1152,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     return UVData
 
 
-def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phaseCenter='z', baselines=None, mask=None,  flatResponse=False, resolve_src=False, verbose=False):
+def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None,  flat_response=False, resolve_src=False, verbose=False):
     """
     Given an AIPY AntennaArray object and a dictionary of sources from 
     aipy.src.get_catalog, returned a data dictionary of simulated data taken at 
@@ -1160,7 +1160,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
     data set or only a specific sub-set of baselines.
     
     .. versionchanged:: 1.0.1
-        * Added a 'flatResponse' keyword to make it easy to toggle on and off
+        * Added a 'flat_response' keyword to make it easy to toggle on and off
           the spectral and spatial response of the array for the simulation
         * Added a 'resolve_src' keyword to turn on source resolution effects
         
@@ -1199,7 +1199,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
     # Loop over Julian days to fill in the simulated data set
     jdCounter = 1
     for juldate in jd:
-        oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, chan=chan, phaseCenter=phaseCenter, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flatResponse=flatResponse, resolve_src=resolve_src)
+        oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, chan=chan, phase_center=phase_center, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flat_response=flat_response, resolve_src=resolve_src)
         jdCounter = jdCounter + 1
 
         for pol in oBlk['bls']:
@@ -1214,7 +1214,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
     return UVData
 
 
-def scaleData(dataDict, amps, delays, phaseOffsets=None):
+def scaleData(dataDict, amps, delays, phase_offsets=None):
     """
     Apply a set of antenna-based real gain values and phase delays in ns to a 
     data dictionary.  Returned the new scaled and delayed dictionary.
@@ -1233,12 +1233,12 @@ def scaleData(dataDict, amps, delays, phaseOffsets=None):
         sclUVData['isMasked'] = False
     fq = dataDict['freq'] / 1e9
     
-    if phaseOffsets is None:
-        phaseOffsets = numpy.zeros_like(delays)
+    if phase_offsets is None:
+        phase_offsets = numpy.zeros_like(delays)
         
     cGains = []
     for i in xrange(len(amps)):
-        cGains.append( amps[i]*numpy.exp(2j*numpy.pi*fq*delays[i] + 1j*phaseOffsets[i]) )
+        cGains.append( amps[i]*numpy.exp(2j*numpy.pi*fq*delays[i] + 1j*phase_offsets[i]) )
         
     # Apply the scales and delays for all polarization pairs found in the original data
     for pol in dataDict['vis'].keys():
