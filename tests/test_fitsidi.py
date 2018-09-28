@@ -7,7 +7,7 @@ import time
 import unittest
 import tempfile
 import numpy
-import pyfits
+from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
 from lsl.correlator import uvUtils
@@ -48,7 +48,7 @@ class fitsidi_tests(unittest.TestCase):
         antennas = site.getAntennas()[0:40:2]
         
         # Set baselines and data
-        blList = uvUtils.getBaselines(antennas, IncludeAuto=True, Indicies=False)
+        blList = uvUtils.getBaselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
 
@@ -72,7 +72,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         # Check that all of the extensions are there
         extNames = [hdu.name for hdu in hdulist]
         for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
@@ -98,7 +98,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         ag = hdulist['ARRAY_GEOMETRY'].data
         # Correct number of stands
         self.assertEqual(len(data['antennas']), len(ag.field('NOSTA')))
@@ -128,7 +128,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         fq = hdulist['FREQUENCY'].data
         # Correct number of FREQIDs
         self.assertEqual(len(fq.field('FREQID')), 1)
@@ -162,7 +162,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         an = hdulist['ANTENNA'].data
         # Correct number of stands
         self.assertEqual(len(data['antennas']), len(an.field('ANTENNA_NO')))
@@ -191,7 +191,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         bp = hdulist['BANDPASS'].data
         # Correct number of entries
         self.assertEqual(len(data['antennas']), len(bp.field('ANTENNA_NO')))
@@ -224,7 +224,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         so = hdulist['SOURCE'].data
         # Correct number of entries
         self.assertEqual(len(so.field('SOURCE_ID')), 1)
@@ -252,7 +252,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         uv = hdulist['UV_DATA'].data
 
         # Load the mapper
@@ -318,7 +318,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         extNames = [hdu.name for hdu in hdulist]
         maxStand = -1
         for ant in data['antennas']:
@@ -379,7 +379,7 @@ class aipsidi_tests(unittest.TestCase):
         antennas = site.getAntennas()[0:40:2]
         
         # Set baselines and data
-        blList = uvUtils.getBaselines(antennas, IncludeAuto=True, Indicies=False)
+        blList = uvUtils.getBaselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
 
@@ -403,7 +403,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         # Check that all of the extensions are there
         extNames = [hdu.name for hdu in hdulist]
         for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
@@ -429,7 +429,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         ag = hdulist['ARRAY_GEOMETRY'].data
         # Correct number of stands
         self.assertEqual(len(data['antennas']), len(ag.field('NOSTA')))
@@ -459,7 +459,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         fq = hdulist['FREQUENCY'].data
         # Correct number of FREQIDs
         self.assertEqual(len(fq.field('FREQID')), 1)
@@ -493,7 +493,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         an = hdulist['ANTENNA'].data
         # Correct number of stands
         self.assertEqual(len(data['antennas']), len(an.field('ANTENNA_NO')))
@@ -522,7 +522,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         bp = hdulist['BANDPASS'].data
         # Correct number of entries
         self.assertEqual(len(data['antennas']), len(bp.field('ANTENNA_NO')))
@@ -555,7 +555,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         so = hdulist['SOURCE'].data
         # Correct number of entries
         self.assertEqual(len(so.field('SOURCE_ID')), 1)
@@ -583,7 +583,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         uv = hdulist['UV_DATA'].data
 
         # Load the mapper
@@ -649,7 +649,7 @@ class aipsidi_tests(unittest.TestCase):
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         extNames = [hdu.name for hdu in hdulist]
         maxStand = -1
         for ant in data['antennas']:

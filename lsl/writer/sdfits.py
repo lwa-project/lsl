@@ -23,8 +23,8 @@ import os
 import gc
 import re
 import numpy
-import pyfits
 import warnings
+from astropy.io import fits as astrofits
 from datetime import datetime
 
 from lsl import astro
@@ -156,7 +156,7 @@ class SD(object):
                 os.unlink(filename)
             else:
                 raise IOError("File '%s' already exists" % filename)
-        self.FITS = pyfits.open(filename, mode='append', memmap=memmap)
+        self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
 
     def setSite(self, site):
         """
@@ -275,7 +275,7 @@ class SD(object):
         Write the primary HDU to file.
         """
 
-        primary = pyfits.PrimaryHDU()
+        primary = astrofits.PrimaryHDU()
         
         primary.header['NAXIS'] = (0, 'indicates SD file')
         primary.header['EXTEND'] = (True, 'indicates SD file')
@@ -344,136 +344,136 @@ class SD(object):
                 rawList = []
         
         # Scan number
-        c1  = pyfits.Column(name='SCAN', format='1I', 
+        c1  = astrofits.Column(name='SCAN', format='1I', 
                         array=numpy.array(scanList))
         ## Cycle
-        #c2 = pyfits.Column(name='CYCLE', format='1J', 
+        #c2 = astrofits.Column(name='CYCLE', format='1J', 
                         #array=numpy.array([1 for s in scanList]))
         # DATE-OBS
-        c3  = pyfits.Column(name='DATE-OBS', format='10A', 
+        c3  = astrofits.Column(name='DATE-OBS', format='10A', 
                         array = numpy.array(dateList))
         # Time elapsed since 0h
-        c4  = pyfits.Column(name='TIME', format='1D', unit = 's', 
+        c4  = astrofits.Column(name='TIME', format='1D', unit = 's', 
                         array = numpy.array(timeList))
         # Integration time (seconds)
-        c5  = pyfits.Column(name='EXPOSURE', format='1E', unit='s', 
+        c5  = astrofits.Column(name='EXPOSURE', format='1E', unit='s', 
                         array=numpy.array(intTimeList, dtype=numpy.float32))
         # Object name
-        c6  = pyfits.Column(name='OBJECT', format='16A', 
+        c6  = astrofits.Column(name='OBJECT', format='16A', 
                         array=numpy.array(['LWA_OBS' for s in scanList]))
         # Object position (deg and deg)
-        c7  = pyfits.Column(name='OBJ-RA', format='1D', unit='deg', 
+        c7  = astrofits.Column(name='OBJ-RA', format='1D', unit='deg', 
                         array=numpy.array([0.0 for s in scanList]))
-        c8  = pyfits.Column(name='OBJ-DEC', format='1D', unit='deg', 
+        c8  = astrofits.Column(name='OBJ-DEC', format='1D', unit='deg', 
                         array=numpy.array([0.0 for s in scanList]))
         # Rest frequency (Hz)
-        c9  = pyfits.Column(name='RESTFRQ', format='1D', unit='Hz', 
+        c9  = astrofits.Column(name='RESTFRQ', format='1D', unit='Hz', 
                         array=numpy.array([0.0 for s in scanList]))
         # Observation mode
-        c10 = pyfits.Column(name='OBSMODE', format='16A', 
+        c10 = astrofits.Column(name='OBSMODE', format='16A', 
                         array=numpy.array([self.mode for s in scanList]))
         # Beam (tuning)
-        c11 = pyfits.Column(name='BEAM', format='1I', 
+        c11 = astrofits.Column(name='BEAM', format='1I', 
                         array=numpy.array(beamList))
         # IF
-        c12 = pyfits.Column(name='IF', format='1I', 
+        c12 = astrofits.Column(name='IF', format='1I', 
                         array=numpy.array([self.freq[0].id for s in scanList]))
         # Frequency resolution (Hz)
-        c13 = pyfits.Column(name='FREQRES', format='1D', unit='Hz', 
+        c13 = astrofits.Column(name='FREQRES', format='1D', unit='Hz', 
                         array=numpy.array([self.freq[0].chWidth for s in scanList]))
         # Bandwidth of the system (Hz)
-        c14 = pyfits.Column(name='BANDWID', format='1D', unit='Hz', 
+        c14 = astrofits.Column(name='BANDWID', format='1D', unit='Hz', 
                         array=numpy.array([self.freq[0].totalBW for s in scanList]))
         # Frequency axis - 1
-        c15 = pyfits.Column(name='CRPIX1', format='1E',
+        c15 = astrofits.Column(name='CRPIX1', format='1E',
                         array=numpy.array([self.refPix for s in scanList]))
-        c16 = pyfits.Column(name='CRVAL1', format='1D', unit='Hz', 
+        c16 = astrofits.Column(name='CRVAL1', format='1D', unit='Hz', 
                         array=numpy.array([self.refVal for s in scanList]))
-        c17 = pyfits.Column(name='CDELT1', format='1D', unit='Hz', 
+        c17 = astrofits.Column(name='CDELT1', format='1D', unit='Hz', 
                         array=numpy.array([self.freq[0].chWidth for s in scanList]))
-        c18 = pyfits.Column(name='CRVAL3', format='1D', unit='deg', 
+        c18 = astrofits.Column(name='CRVAL3', format='1D', unit='deg', 
                         array=numpy.array([0.0 for s in scanList]))
         # Dec. axis - 4
-        c19 = pyfits.Column(name='CRVAL4', format='1D', unit='deg', 
+        c19 = astrofits.Column(name='CRVAL4', format='1D', unit='deg', 
                         array=numpy.array([0.0 for s in scanList]))
         ## Scan rate
-        #c20 = pyfits.Column(name='SCANRATE', format='2E', unit='deg/s', 
+        #c20 = astrofits.Column(name='SCANRATE', format='2E', unit='deg/s', 
                         #array=numpy.array([[0,0] for s in scanList]))
                         
         #
         # Calibration information (currently not implemented)
         #
         ## System temperature  *** UNKNOWN ***
-        #c21 =  pyfits.Column(name='TSYS', format='2E', unit='K', 
+        #c21 =  astrofits.Column(name='TSYS', format='2E', unit='K', 
                         #array=numpy.array([[self.tSys,self.tSys] for s in scanList]))
         ## CALFCTR *** UNKNOWN ***
-        #c22 =  pyfits.Column(name='CALFCTR', format='2E', unit='K', 
+        #c22 =  astrofits.Column(name='CALFCTR', format='2E', unit='K', 
                         #array=numpy.array([[1,1] for s in scanList]))
         
         # Data
-        c23 = pyfits.Column(name='DATA', format='%iE' % (self.nStokes*self.nChan), unit='UNCALIB', 
+        c23 = astrofits.Column(name='DATA', format='%iE' % (self.nStokes*self.nChan), unit='UNCALIB', 
                         array=numpy.array(mList))
                         
         #
         # Data masking table (currently not implemented)
         #
         # Flag table
-        #c24 = pyfits.Column(name='FLAGGED', format='%iB' % (self.nStokes*self.nChan), 
+        #c24 = astrofits.Column(name='FLAGGED', format='%iB' % (self.nStokes*self.nChan), 
                         #array=numpy.array([[0,]*self.nStokes*self.nChan for s in scanList]))
         
         #
         # Calibration information (currently not implemented)
         #
         ## TCAL *** UNKNOWN ***
-        #c25 = pyfits.Column(name='TCAL', format='2E', unit='Jy', 
+        #c25 = astrofits.Column(name='TCAL', format='2E', unit='Jy', 
                         #array=numpy.array([[1,1] for s in scanList]))
         ## TCALTIME *** UNKNOWN ***
-        #c26 = pyfits.Column(name='TCALTIME', format='16A', 
+        #c26 = astrofits.Column(name='TCALTIME', format='16A', 
                         #array=numpy.array(['UNKNOWN' for s in scanList]))
         
         #
         # Pointing information (currently not implemented)
         #
         ## Azimuth *** UNKNOWN ***
-        #c27 = pyfits.Column(name='AZIMUTH', format='1E', unit='deg', 
+        #c27 = astrofits.Column(name='AZIMUTH', format='1E', unit='deg', 
                         #array=numpy.array([0 for s in scanList]))
         ## Elevation *** UNKNOWN ***
-        #c28 = pyfits.Column(name='ELEVATIO', format='1E', unit='deg', 
+        #c28 = astrofits.Column(name='ELEVATIO', format='1E', unit='deg', 
                         #array=numpy.array([0 for s in scanList]))
         ## Parallactic angle *** UNKNOWN ***
-        #c29 = pyfits.Column(name='PARANGLE', format='1E', unit='deg', 
+        #c29 = astrofits.Column(name='PARANGLE', format='1E', unit='deg', 
                         #array=numpy.array([0 for s in scanList]))
         
         #
         # Focusing information (currently not implemented and probably never will be)
         #
         ## FOCUSAXI *** NOT NEEDED ***
-        #c30 = pyfits.Column(name='FOCUSAXI', format='1E', unit='m', 
+        #c30 = astrofits.Column(name='FOCUSAXI', format='1E', unit='m', 
                         #array=numpy.array([0 for s in scanList]))
         ## FOCUSTAN *** NOT NEEDED ***
-        #c31 = pyfits.Column(name='FOCUSTAN', format='1E', unit='m', 
+        #c31 = astrofits.Column(name='FOCUSTAN', format='1E', unit='m', 
                         #array=numpy.array([0 for s in scanList]))
         ## FOCUSROT *** NOT NEEDED ***
-        #c32 = pyfits.Column(name='FOCUSROT', format='1E', unit='deg', 
+        #c32 = astrofits.Column(name='FOCUSROT', format='1E', unit='deg', 
                         #array=numpy.array([0 for s in scanList]))
         
         #
         # Weather information (currently not implemented)
         #
         ## Ambient temperature *** UNKNOWN ***
-        #c33 = pyfits.Column(name='TAMBIENT', format='1E', unit='C', 
+        #c33 = astrofits.Column(name='TAMBIENT', format='1E', unit='C', 
                         #array=numpy.array([0 for s in scanList]))
         ## Air pressure *** UNKNOWN ***
-        #c34 = pyfits.Column(name='PRESSURE', format='1E', unit='Pa', 
+        #c34 = astrofits.Column(name='PRESSURE', format='1E', unit='Pa', 
                         #array=numpy.array([0 for s in scanList]))
         ## Humidity *** UNKNOWN ***
-        #c35 = pyfits.Column(name='HUMIDITY', format='1E', unit='%', 
+        #c35 = astrofits.Column(name='HUMIDITY', format='1E', unit='%', 
                         #array=numpy.array([0 for s in scanList]))
         ## Wind speed *** UNKNOWN ***
-        #c36 = pyfits.Column(name='WINDSPEE', format='1E', unit='m/s', 
+        #c36 = astrofits.Column(name='WINDSPEE', format='1E', unit='m/s', 
                         #array=numpy.array([0 for s in scanList]))
         ## Wind direction *** UNKNOWN ***
-        #c37 = pyfits.Column(name='WINDDIRE', format='1E', unit='deg', 
+        #c37 = astrofits.Column(name='WINDDIRE', format='1E', unit='deg', 
                         #array=numpy.array([0 for s in scanList]))
         
         # Gather together all of the needed columns and figure out which ones
@@ -493,10 +493,10 @@ class SD(object):
                 n += 1
             except NameError:
                 pass
-        colDefs = pyfits.ColDefs(cs)
+        colDefs = astrofits.ColDefs(cs)
         
         # Create the SINGLE DISH table and update its header
-        sd = pyfits.new_table(colDefs)
+        sd = astrofits.new_table(colDefs)
         
         ## Single disk keywords - order seems to matter
         sd.header['EXTNAME'] = ('SINGLE DISH', 'SDFITS table name')

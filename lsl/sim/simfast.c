@@ -33,8 +33,8 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     pcAz = 0.0;
     pcEl = 90.0;
     resolve = 0;
-    char const* kwlist[] = {"aa", "bls", "chan_min", "chan_max", "pc_az", "pc_el", "resolve_src", NULL};
-    if( !PyArg_ParseTupleAndKeywords(args, kwds, "OOlldd|i", const_cast<char **>(kwlist), &antarray, &bls, &chanMin, &chanMax, &pcAz, &pcEl, &resolve) ) {
+    static char* kwlist[] = {"aa", "bls", "chan_min", "chan_max", "pc_az", "pc_el", "resolve_src", NULL};
+    if( !PyArg_ParseTupleAndKeywords(args, kwds, "OOlldd|i", kwlist, &antarray, &bls, &chanMin, &chanMax, &pcAz, &pcEl, &resolve) ) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         goto fail;
     }
@@ -46,7 +46,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     Py_DECREF(temp);
     
     /* Frequencies (GHz) */
-    temp = PyObject_CallMethod(antarray, const_cast<char *>("get_afreqs"), NULL);
+    temp = PyObject_CallMethod(antarray, "get_afreqs", NULL);
     freq = (PyArrayObject *) PyArray_ContiguousFromObject(temp, NPY_DOUBLE, 1, 2);
     if( PyArray_NDIM(freq) == 2 ) {
         // Flatten 2-D arrays since the first dimension is one
@@ -126,9 +126,9 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
     // Dimensions
-    temp = PyObject_CallMethod(antarray, const_cast<char *>("__len__"), NULL);
+    temp = PyObject_CallMethod(antarray, "__len__", NULL);
     nAnt = (long int) PyInt_AsLong(temp);
-    temp2 = PyObject_CallMethod(bls, const_cast<char *>("__len__"), NULL);
+    temp2 = PyObject_CallMethod(bls, "__len__", NULL);
     nBL = (long int) PyInt_AsLong(temp2);
     nFreq = (long int) PyArray_DIM(freq, 0);
     nSrc = (long int) PyArray_DIM(ha, 0);

@@ -7,7 +7,7 @@ import time
 import unittest
 import tempfile
 import numpy
-import pyfits
+from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
 from lsl.correlator import uvUtils
@@ -48,7 +48,7 @@ class uvfits_tests(unittest.TestCase):
         antennas = site.getAntennas()[0:40:2]
         
         # Set baselines and data
-        blList = uvUtils.getBaselines(antennas, IncludeAuto=True, Indicies=False)
+        blList = uvUtils.getBaselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
         
@@ -72,7 +72,7 @@ class uvfits_tests(unittest.TestCase):
         fits.write()
         
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         # Check that all of the extensions are there
         extNames = [hdu.name for hdu in hdulist]
         for ext in ['AIPS AN']:
@@ -98,7 +98,7 @@ class uvfits_tests(unittest.TestCase):
         fits.write()
         
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         ag = hdulist['AIPS AN'].data
         # Correct number of stands
         self.assertEqual(len(data['antennas']), len(ag.field('NOSTA')))
@@ -128,7 +128,7 @@ class uvfits_tests(unittest.TestCase):
         fits.write()
         
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         an = hdulist['AIPS AN'].data
         # Correct number of stands
         self.assertEqual(len(data['antennas']), len(an.field('NOSTA')))
@@ -153,7 +153,7 @@ class uvfits_tests(unittest.TestCase):
         fits.write()
         
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         uv = hdulist[0]
         
         # Load the mapper

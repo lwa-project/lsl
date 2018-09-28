@@ -22,7 +22,7 @@ import re
 import math
 import ephem
 import numpy
-import pyfits
+from astropy.io import fits as astrofits
 from datetime import datetime
 
 from lsl import astro
@@ -252,7 +252,7 @@ class UV(object):
                 os.unlink(filename)
             else:
                 raise IOError("File '%s' already exists" % filename)
-        self.FITS = pyfits.open(filename, mode='append', memmap=memmap)
+        self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
         
     def setStokes(self, polList):
         """
@@ -536,11 +536,11 @@ class UV(object):
         nBaseline = len(blineList)
         
         # Create the UV Data table and update its header
-        uv = pyfits.GroupData(numpy.concatenate(mList), parnames=['UU', 'VV', 'WW', 'BASELINE', 'DATE'], 
+        uv = astrofits.GroupData(numpy.concatenate(mList), parnames=['UU', 'VV', 'WW', 'BASELINE', 'DATE'], 
                             pardata=[numpy.array(uList, dtype=numpy.float32), numpy.array(vList, dtype=numpy.float32), 
                                     numpy.array(wList, dtype=numpy.float32), numpy.array(blineList), 
                                     numpy.array(dateList)], bitpix=-32)
-        primary = pyfits.GroupsHDU(uv)
+        primary = astrofits.GroupsHDU(uv)
         
         primary.header['EXTEND'] = (True, 'indicates UVFITS file')
         primary.header['GROUPS'] = (True, 'indicates UVFITS file')
@@ -609,44 +609,44 @@ class UV(object):
             i = i + 1
             
         # Antenna name
-        c1 = pyfits.Column(name='ANNAME', format='A8', 
+        c1 = astrofits.Column(name='ANNAME', format='A8', 
                         array=numpy.array([ant.getName() for ant in self.array[0]['ants']]))
         # Station coordinates in meters
-        c2 = pyfits.Column(name='STABXYZ', unit='METERS', format='3D', 
+        c2 = astrofits.Column(name='STABXYZ', unit='METERS', format='3D', 
                         array=xyz)
         # Station number
-        c3 = pyfits.Column(name='NOSTA', format='1J', 
+        c3 = astrofits.Column(name='NOSTA', format='1J', 
                         array=numpy.array([self.array[0]['mapper'][ant.id] for ant in self.array[0]['ants']]))
         # Mount type (0 == alt-azimuth)
-        c4 = pyfits.Column(name='MNTSTA', format='1J', 
+        c4 = astrofits.Column(name='MNTSTA', format='1J', 
                         array=numpy.zeros((self.nAnt,), dtype=numpy.int32))
         # Axis offset in meters
-        c5 = pyfits.Column(name='STAXOF', unit='METERS', format='3E', 
+        c5 = astrofits.Column(name='STAXOF', unit='METERS', format='3E', 
                         array=numpy.zeros((self.nAnt,3), dtype=numpy.float32))
         # Feed A polarization label
-        c6 = pyfits.Column(name='POLTYA', format='A1', 
+        c6 = astrofits.Column(name='POLTYA', format='A1', 
                         array=numpy.array([ant.polA['Type'] for ant in self.array[0]['ants']]))
         # Feed A orientation in degrees
-        c7 = pyfits.Column(name='POLAA', format='1E', 
+        c7 = astrofits.Column(name='POLAA', format='1E', 
                         array=numpy.array([ant.polA['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed A polarization parameters
-        c8 = pyfits.Column(name='POLCALA', format='2E', 
+        c8 = astrofits.Column(name='POLCALA', format='2E', 
                         array=numpy.array([ant.polA['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed B polarization label
-        c9 = pyfits.Column(name='POLTYB', format='A1', 
+        c9 = astrofits.Column(name='POLTYB', format='A1', 
                         array=numpy.array([ant.polB['Type'] for ant in self.array[0]['ants']]))
         # Feed B orientation in degrees
-        c10 = pyfits.Column(name='POLAB', format='1E', 
+        c10 = astrofits.Column(name='POLAB', format='1E', 
                         array=numpy.array([ant.polB['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed B polarization parameters
-        c11 = pyfits.Column(name='POLCALB', format='2E', 
+        c11 = astrofits.Column(name='POLCALB', format='2E', 
                         array=numpy.array([ant.polB['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
                         
         # Define the collection of columns
-        colDefs = pyfits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11])
+        colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11])
         
         # Create the table and fill in the header
-        ag = pyfits.new_table(colDefs)
+        ag = astrofits.new_table(colDefs)
         self._addCommonKeywords(ag.header, 'AIPS AN', 1)
         
         ag.header['EXTVER'] = (1, 'array ID')
@@ -706,17 +706,17 @@ class UV(object):
         the names, but this makes the extraction more programmatic.
         """
         
-        c1 = pyfits.Column(name='ANNAME', format='A8', 
+        c1 = astrofits.Column(name='ANNAME', format='A8', 
                         array=numpy.array([ant.getName() for ant in self.array[0]['ants']]))
-        c2 = pyfits.Column(name='NOSTA', format='1J', 
+        c2 = astrofits.Column(name='NOSTA', format='1J', 
                         array=numpy.array([self.array[0]['mapper'][ant.id] for ant in self.array[0]['ants']]))
-        c3 = pyfits.Column(name='NOACT', format='1J', 
+        c3 = astrofits.Column(name='NOACT', format='1J', 
                         array=numpy.array([ant.id for ant in self.array[0]['ants']]))
                         
-        colDefs = pyfits.ColDefs([c1, c2, c3])
+        colDefs = astrofits.ColDefs([c1, c2, c3])
         
         # Create the ID mapping table and update its header
-        nsm = pyfits.new_table(colDefs)
+        nsm = astrofits.new_table(colDefs)
         self._addCommonKeywords(nsm.header, 'NOSTA_MAPPER', 1)
         
         if dummy:
