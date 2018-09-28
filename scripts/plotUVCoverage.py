@@ -106,7 +106,7 @@ def main(args):
     HA = 0.0
     dec = station.lat*180.0/math.pi
     
-    uvw = uvUtils.computeUVW(antennas, HA=HA, dec=dec, freq=config['freq'])
+    uvw = uvUtils.compute_uvw(antennas, HA=HA, dec=dec, freq=config['freq'])
     uvw = numpy.squeeze(uvw[:,:,0])
     
     # Coursely grid the uv data to come up with a rough beam

@@ -35,9 +35,9 @@ class uvUtils_tests(unittest.TestCase):
 
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
+        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
         self.assertEqual(len(bl), 6)
-        bl = uvUtils.getBaselines(standList, include_auto=True, indicies=False)
+        bl = uvUtils.get_baselines(standList, include_auto=True, indicies=False)
         self.assertEqual(len(bl), 10)
 
     def test_baseline_ind(self):
@@ -46,17 +46,17 @@ class uvUtils_tests(unittest.TestCase):
 
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
+        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
         bl = numpy.array(bl)
         self.assertTrue(bl.min() == 100)
-        bl = uvUtils.getBaselines(standList, include_auto=True, indicies=False)
+        bl = uvUtils.get_baselines(standList, include_auto=True, indicies=False)
         bl = numpy.array(bl)
         self.assertTrue(bl.min() == 100)
 
-        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=True)
+        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=True)
         bl = numpy.array(bl)
         self.assertTrue(bl.max() < 100)
-        bl = uvUtils.getBaselines(standList, include_auto=True, indicies=True)
+        bl = uvUtils.get_baselines(standList, include_auto=True, indicies=True)
         bl = numpy.array(bl)
         self.assertTrue(bl.max() < 100)
         
@@ -65,12 +65,12 @@ class uvUtils_tests(unittest.TestCase):
         
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
-        ind = uvUtils.baseline2antenna(0, standList)
+        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
+        ind = uvUtils.baseline_to_antennas(0, standList)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 101)
         
-        ind = uvUtils.baseline2antenna(1, standList, baseline_list=bl)
+        ind = uvUtils.baseline_to_antennas(1, standList, baseline_list=bl)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 102)
         
@@ -78,47 +78,47 @@ class uvUtils_tests(unittest.TestCase):
         """Test antennas to baseline lookup function."""
         
         standList = numpy.array([100, 101, 102, 103])
-        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
+        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
         
-        ind = uvUtils.antenna2baseline(100, 101, standList, include_auto=False, indicies=False)
+        ind = uvUtils.antennas_to_baseline(100, 101, standList, include_auto=False, indicies=False)
         self.assertEqual(ind, 0)
         
-        ind = uvUtils.antenna2baseline(100, 102, standList, baseline_list=bl)
+        ind = uvUtils.antennas_to_baseline(100, 102, standList, baseline_list=bl)
         self.assertEqual(ind, 1)
         
-        ind = uvUtils.antenna2baseline(0, 3, standList, include_auto=False, indicies=True)
+        ind = uvUtils.antennas_to_baseline(0, 3, standList, include_auto=False, indicies=True)
         self.assertEqual(ind, 2)
         
-    def test_computeUVW(self):
-        """Test the the computeUVW function runs."""
+    def test_compute_uvw(self):
+        """Test the the compute_uvw function runs."""
         
         station = stations.lwa1
         antennas = station.getAntennas()
         
         # Frequency is a scalar
         freq = 45e6
-        out = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+        out = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
         self.assertEqual(len(out.shape), 3)
         self.assertEqual(out.shape[-1], 1)
         
         # Frequency is a list
         freq = [45e6, 60e6]
-        out = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+        out = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
         self.assertEqual(len(out.shape), 3)
         self.assertEqual(out.shape[-1], 2)
 
         # Frequency is an array
         ## 1-D
         freq = numpy.linspace(45e6, 60e6, 1024)
-        out0 = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+        out0 = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
         
         ## 2-D
         freq.shape = (512, 2)
-        out1 = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+        out1 = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
         
         ## 3-D
         freq.shape = (128, 4, 2)
-        out2 = uvUtils.computeUVW(antennas[0:60:2], freq=freq)
+        out2 = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
         
         shape0 = (out0.shape[0], 3, 1024)
         shape1 = (out0.shape[0], 3, 512, 2)
@@ -140,13 +140,13 @@ class uvUtils_tests(unittest.TestCase):
         self.assertAlmostEqual(diff01, 0.0, 6)
         self.assertAlmostEqual(diff02, 0.0, 6)
         
-    def test_computeUVTrack(self):
-        """Test that the computeUVTrack function runs."""
+    def test_compute_uv_track(self):
+        """Test that the compute_uv_track function runs."""
         
         station = stations.lwa1
         antennas = station.getAntennas()
         
-        out = uvUtils.computeUVTrack(antennas[0:60:2])
+        out = uvUtils.compute_uv_track(antennas[0:60:2])
         
         # Make sure we have the right dimensions
         self.assertEqual(out.shape, (435,2,512))

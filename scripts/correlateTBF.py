@@ -207,7 +207,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
                 a2, d2, v2 = antennasY, dataY, validY
                 
             ## Get the baselines
-            baselines = uvUtils.getBaselines(a1, antennas2=a2, IncludeAuto=True, Indicies=True)
+            baselines = uvUtils.get_baselines(a1, antennas2=a2, include_auto=True, indicies=True)
             blList = []
             for bl in xrange(len(baselines)):
                 blList.append( (a1[baselines[bl][0]], a2[baselines[bl][1]]) )

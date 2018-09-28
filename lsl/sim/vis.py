@@ -1074,7 +1074,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     # Build the simulated data.  If no baseline list is provided, build all 
     # baselines available
     if baselines is None:
-        baselines = uvUtils.getBaselines(numpy.zeros(len(aa.ants)), indicies=True)
+        baselines = uvUtils.get_baselines(numpy.zeros(len(aa.ants)), indicies=True)
         
     # Define output data structure
     freq = aa.get_afreqs()*1e9

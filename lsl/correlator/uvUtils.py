@@ -14,7 +14,7 @@ coverage and time delays.  The functions in the module:
     module.
     
 .. versionchanged:: 1.0.0
-    Generalized the computeUVW() and computeUVTrack() functions.
+    Generalized the compute_uvw() and compute_uv_track() functions.
 """
 
 import numpy
@@ -24,25 +24,14 @@ from lsl.common.constants import deg2rad, c as speedOfLight
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['getBaselines', 'baseline2antenna', 'antenna2baseline', 'computeUVW', 'computeUVTrack', 
-           'uvUtilsError', '__version__', '__revision__', '__all__']
+__all__ = ['get_baselines', 'baseline_to_antennas', 'antennas_to_baseline', 'compute_uvw', 'compute_uv_track', 
+           '__version__', '__revision__', '__all__']
 
 
-class uvUtilsError(Exception):
-    """Base exception class for this module"""
-    
-    def __init__(self, strerror, *args, **kwds):
-        self.strerror = strerror
-        super(uvUtilsError, self).__init__(*args, **kwds)
-        
-    def __str__(self):
-        return "%s" % self.strerror
-
-
-def getBaselines(antennas, antennas2=None, include_auto=False, indicies=False):
+def get_baselines(antennas, antennas2=None, include_auto=False, indicies=False):
     """
     Generate a list of two-element tuples that describe which antennae
-    compose each of the output uvw triplets from computeUVW/computeUVTrack.
+    compose each of the output uvw triplets from compute_uvw/compute_uv_track.
     If the indicies keyword is set to True, the two-element tuples 
     contain the indicies of the stands array used, rather than the actual
     stand numbers.
@@ -70,7 +59,7 @@ def getBaselines(antennas, antennas2=None, include_auto=False, indicies=False):
     return out
     
 
-def baseline2antenna(baseline, antennas, antennas2=None, baseline_list=None, include_auto=False, indicies=False):
+def baseline_to_antennas(baseline, antennas, antennas2=None, baseline_list=None, include_auto=False, indicies=False):
     """
     Given a baseline number, a list of stands, and options of how the base-
     line listed was generated, convert the baseline number to antenna numbers.
@@ -84,14 +73,14 @@ def baseline2antenna(baseline, antennas, antennas2=None, baseline_list=None, inc
 
     # Build up the list of baselines using the options provided
     if baseline_list is None:
-        baseline_list = getBaselines(antennas, antennas2=antennas2, include_auto=include_auto, indicies=indicies)
+        baseline_list = get_baselines(antennas, antennas2=antennas2, include_auto=include_auto, indicies=indicies)
     
     # Select the correct one and return based on the value of indicies
     i,j = baseline_list[baseline]
     return i,j
 
 
-def antenna2baseline(ant1, ant2, antennas, antennas2=None, baseline_list=None, include_auto=False, indicies=False):
+def antennas_to_baseline(ant1, ant2, antennas, antennas2=None, baseline_list=None, include_auto=False, indicies=False):
     """
     Given two antenna numbers, a list of stands, and options to how the base-
     line listed was generated, convert the antenna pair to  a baseline number. 
@@ -105,7 +94,7 @@ def antenna2baseline(ant1, ant2, antennas, antennas2=None, baseline_list=None, i
 
     # Build up the list of baselines using the options provided
     if baseline_list is None:
-        baseline_list = getBaselines(antennas, antennas2=antennas2, include_auto=include_auto, indicies=indicies)
+        baseline_list = get_baselines(antennas, antennas2=antennas2, include_auto=include_auto, indicies=indicies)
     
     # Loop over the baselines until we find one that matches.  If we don't find 
     # one, return -1
@@ -119,7 +108,7 @@ def antenna2baseline(ant1, ant2, antennas, antennas2=None, baseline_list=None, i
         return -1
 
 
-def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_auto=False):
+def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_auto=False):
     """
     Compute the uvw converate of a baselines formed by a collection of 
     stands.  The coverage is computed at a given HA (in hours) and 
@@ -148,7 +137,7 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_aut
     except (AttributeError, AssertionError):
         freq = numpy.array(freq, ndmin=1)
         
-    baselines = getBaselines(antennas, include_auto=include_auto, indicies=True)
+    baselines = get_baselines(antennas, include_auto=include_auto, indicies=True)
     Nbase = len(baselines)
     Nfreq = freq.size
     uvw = numpy.zeros((Nbase,3,Nfreq))
@@ -182,13 +171,13 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_aut
     return uvw
 
 
-def computeUVTrack(antennas, dec=34.070, freq=49.0e6, site=lwa1):
+def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     """
-    Whereas computeUVW provides the uvw coverage at a particular time, 
-    computeUVTrack provides the complete uv plane track for a long 
+    Whereas compute_uvw provides the uvw coverage at a particular time, 
+    compute_uv_track provides the complete uv plane track for a long 
     integration.  The output is a three dimensional numpy array with 
     dimensions baselines, uv, and 512 points along the track ellipses.  
-    Unlike computeUVW, however, only a single frequency (in Hz) can be 
+    Unlike compute_uvw, however, only a single frequency (in Hz) can be 
     specified.
     
     .. versionchanged:: 0.4.0
@@ -216,7 +205,7 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6, site=lwa1):
                     [0,  numpy.cos(lat2), numpy.sin(lat2)]])
                     
     count = 0
-    for i,j in getBaselines(antennas, indicies=True):
+    for i,j in get_baselines(antennas, indicies=True):
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
         xyzPrime = antennas[i].stand - antennas[j].stand

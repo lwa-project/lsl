@@ -48,7 +48,7 @@ class fitsidi_tests(unittest.TestCase):
         antennas = site.getAntennas()[0:40:2]
         
         # Set baselines and data
-        blList = uvUtils.getBaselines(antennas, include_auto=True, indicies=False)
+        blList = uvUtils.get_baselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
 
@@ -379,7 +379,7 @@ class aipsidi_tests(unittest.TestCase):
         antennas = site.getAntennas()[0:40:2]
         
         # Set baselines and data
-        blList = uvUtils.getBaselines(antennas, include_auto=True, indicies=False)
+        blList = uvUtils.get_baselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
 
