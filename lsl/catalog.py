@@ -26,10 +26,10 @@ class CatalogEntry(object):
     Represents one source entry in a catalogue.
     
     Contains members:
-    * name        - The source name.
-    * position    - The source equatorial J2000 position as object
-        of type transform.CelestialPosition.
-    * alias_list  - A list of strings providing alternate names for
+     * name        - The source name.
+     * position    - The source equatorial J2000 position as object
+                     of type transform.CelestialPosition.
+     * alias_list  - A list of strings providing alternate names for
         the source.
     """
     
@@ -601,11 +601,11 @@ class F2FGL_Catalog(Catalog):
         Read a source catalogue data file.
         """
         
-        import pyfits
+        from astropy.io import fits as astrofits
         
         # open data file
         fileName = os.path.join(self.get_directory(), 'gll_psc_v08.fit')
-        catFile = pyfits.open(fileName)
+        catFile = astrofits.open(fileName)
         
         # read source info
         sourceTable = catFile['LAT_POINT_SOURCE_CATALOG'].data

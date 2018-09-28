@@ -21,7 +21,6 @@ Classes and methods to model sky brightness and visibility.
 import os
 from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
 
-import pyfits
 from scipy.interpolate import interp1d
 
 from lsl import astro

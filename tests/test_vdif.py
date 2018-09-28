@@ -10,7 +10,6 @@ import time
 import unittest
 import tempfile
 import numpy
-import pyfits
 
 from lsl.common.paths import dataBuild as dataPath
 from lsl.reader import tbw

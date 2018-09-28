@@ -7,7 +7,7 @@ import aipy
 import pytz
 import numpy
 import getopt
-import pyfits
+from astropy.io import fits as astrofits
 
 from lsl import astro
 from lsl.sim import vis as simVis
@@ -302,16 +302,16 @@ def main(args):
         
         if config['fits'] is not None:
             ## Loop over the images to build up the FITS file
-            hdulist = [pyfits.PrimaryHDU(),]
+            hdulist = [astrofits.PrimaryHDU(),]
             for img,pol in zip((img1,img2,img3,img4), (lbl1,lbl2,lbl3,lbl4)):
                 if img is None:
                     continue
                     
                 ### Create the HDU
                 try:
-                    hdu = pyfits.ImageHDU(data=img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2)), name=pol)
+                    hdu = astrofits.ImageHDU(data=img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2)), name=pol)
                 except AttributeError:
-                    hdu = pyfits.ImageHDU(data=img, name=pol)
+                    hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
                 hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
@@ -330,7 +330,7 @@ def main(args):
                 hdulist.append(hdu)
                 
             ## Save the FITS file to disk
-            hdulist = pyfits.HDUList(hdulist)
+            hdulist = astrofits.HDUList(hdulist)
             clobber = False
             if os.path.exists(config['fits']):
                 yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % config['fits'])

@@ -6,7 +6,7 @@ lsl.writer.fitsidi if it exists."""
 
 import sys
 import numpy
-import pyfits
+from astropy.io import fits as astrofits
 
 from lsl.common import stations
 
@@ -23,7 +23,7 @@ def main(args):
         stands.append(ant.stand.id)
 
     # Open the FITS file for reading
-    hdu = pyfits.open(args[0])
+    hdu = astrofits.open(args[0])
 
     # This try...except block catches files that don't use the stand mapper 
     # feature in lsl.writer.fitsidi.  If a NOSTA_MAPPER table doesn't exist,

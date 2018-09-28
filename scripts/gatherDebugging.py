@@ -40,7 +40,7 @@ def main(args):
     #
     
     ## Required
-    for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy', 'pytz'):
+    for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
         try:
             exec "import %s" % mod
         except ImportError, e:

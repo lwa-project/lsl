@@ -39,7 +39,7 @@ import aipy
 import ephem
 import numpy
 import atexit
-import pyfits
+from astropy.io import fits as astrofits
 import shutil
 import tarfile
 import tempfile
@@ -352,7 +352,7 @@ class CorrelatedDataIDI(object):
         self.filename = filename
         
         # Open the file, check if it looks like FITS IDI, and pull out the UV_DATA table
-        hdulist = pyfits.open(self.filename)
+        hdulist = astrofits.open(self.filename)
         tbls = [i.header['EXTNAME'] for i in hdulist[1:]]
         for tbl in ('ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'SOURCE', 'UV_DATA'):
             if tbl not in tbls:
@@ -507,7 +507,7 @@ class CorrelatedDataIDI(object):
         """
         
         # Open the file
-        hdulist = pyfits.open(self.filename)
+        hdulist = astrofits.open(self.filename)
         uvData = hdulist['UV_DATA']
         
         # We need this a lot...
@@ -702,7 +702,7 @@ class CorrelatedDataUV(object):
         self.filename = filename
         
         # Open the various tables that we need
-        hdulist = pyfits.open(filename)
+        hdulist = astrofits.open(filename)
         
         uvData = hdulist[0]
         ag = hdulist['AIPS AN']
@@ -833,7 +833,7 @@ class CorrelatedDataUV(object):
         """
         
         # Open the file
-        hdulist = pyfits.open(self.filename)
+        hdulist = astrofits.open(self.filename)
         uvData = hdulist[0]
         
         # We need this a lot...
