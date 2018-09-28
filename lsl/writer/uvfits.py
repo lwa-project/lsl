@@ -39,7 +39,7 @@ __all__ = ['UV', 'StokesCodes', 'NumericStokes', '__version__', '__revision__', 
 UVVersion = (1, 0)
 
 
-def mergeBaseline(ant1, ant2):
+def merge_baseline(ant1, ant2):
     """
     Merge two stand ID numbers into a single baseline.
     """
@@ -52,7 +52,7 @@ def mergeBaseline(ant1, ant2):
     return baseline
 
 
-def splitBaseline(baseline):
+def split_baseline(baseline):
     """
     Given a baseline, split it into it consistent stand ID numbers.
     """
@@ -137,7 +137,7 @@ class UV(object):
         def time(self):
             return self.obsTime
             
-        def getUVW(self, HA, dec, obs):
+        def get_uvw(self, HA, dec, obs):
             Nbase = len(self.baselines)
             uvw = numpy.zeros((Nbase,3), dtype=numpy.float32)
             
@@ -174,12 +174,12 @@ class UV(object):
                     s1, s2 = a1.stand.id, a2.stand.id
                 else:
                     s1, s2 = mapper[a1.stand.id], mapper[a2.stand.id]
-                packed.append( mergeBaseline(s1, s2) )
+                packed.append( merge_baseline(s1, s2) )
             packed = numpy.array(packed, dtype=numpy.int32)
             
             return numpy.argsort(packed)
             
-    def parseRefTime(self, refTime):
+    def parse_time(self, ref_time):
         """
         Given a time as either a integer, float, string, or datetime object, 
         convert it to a string in the formation 'YYYY-MM-DDTHH:MM:SS'.
@@ -188,31 +188,31 @@ class UV(object):
         # Valid time string (modulo the 'T')
         timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
         
-        if type(refTime) in (int, long, float):
-            refDateTime = datetime.utcfromtimestamp(refTime)
-            refTime = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == datetime:
-            refTime = refTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == str:
+        if type(ref_time) in (int, long, float):
+            refDateTime = datetime.utcfromtimestamp(ref_time)
+            ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == datetime:
+            ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == str:
             # Make sure that the string times are of the correct format
-            if re.match(timeRE, refTime) is None:
-                raise RuntimeError("Malformed date/time provided: %s" % refTime)
+            if re.match(timeRE, ref_time) is None:
+                raise RuntimeError("Malformed date/time provided: %s" % ref_time)
             else:
-                refTime = refTime.replace(' ', 'T', 1)
+                ref_time = ref_time.replace(' ', 'T', 1)
         else:
             raise RuntimeError("Unknown time format provided.")
             
-        return refTime
+        return ref_time
         
-    def refTime2AstroDate(self):
+    def ref_time2AstroDate(self):
         """
         Convert a reference time string to an :class:`lsl.astro.date` object.
         """
         
-        dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
+        dateStr = self.ref_time.replace('T', '-').replace(':', '-').split('-')
         return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
         
-    def __init__(self, filename, refTime=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
         """
         Initialize a new UVFITS object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
@@ -232,7 +232,7 @@ class UV(object):
         self.siteName = 'Unknown'
         
         # Observation-specific information
-        self.refTime = self.parseRefTime(refTime)
+        self.ref_time = self.parse_time(ref_time)
         self.nAnt = 0
         self.nChan = 0
         self.nStokes = 0
@@ -254,7 +254,7 @@ class UV(object):
                 raise IOError("File '%s' already exists" % filename)
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
         
-    def setStokes(self, polList):
+    def set_stokes(self, polList):
         """
         Given a list of Stokes parameters, update the object's parameters.
         """
@@ -275,7 +275,7 @@ class UV(object):
             
         self.nStokes = len(self.stokes)
         
-    def setFrequency(self, freq):
+    def set_frequency(self, freq):
         """
         Given a numpy array of frequencies, set the relevant common observation
         parameters and add an entry to the self.freq list.
@@ -290,7 +290,7 @@ class UV(object):
         freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
         self.freq.append(freqSetup)
         
-    def setGeometry(self, site, antennas, bits=8):
+    def set_geometry(self, site, antennas, bits=8):
         """
         Given a station and an array of stands, set the relevant common observation
         parameters and add entries to the self.array list.
@@ -349,7 +349,7 @@ class UV(object):
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )
         
-    def addDataSet(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
+    def add_data_set(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
         """
         Create a UVData object to store a collection of visibilities.
         
@@ -394,8 +394,8 @@ class UV(object):
         except TypeError:
             self.data.sort(key=cmp_to_key(__sortData))
             
-        self._writePrimary()
-        self._writeGeometry()
+        self._write_primary_hdu()
+        self._write_aipsan_hdu()
         
         # Clear out the data section
         del(self.data[:])
@@ -409,7 +409,7 @@ class UV(object):
         self.FITS.flush()
         self.FITS.close()
         
-    def _addCommonKeywords(self, hdr, name, revision):
+    def _add_common_keywords(self, hdr, name, revision):
         """
         Added keywords common to all table headers.
         """
@@ -418,22 +418,22 @@ class UV(object):
         hdr['EXTVER'] = (1, 'table instance number') 
         hdr['TABREV'] = (revision, 'table format revision number')
         
-        date = self.refTime.split('-')
+        date = self.ref_time.split('-')
         name = "ZA%s%s%s" % (date[0][2:], date[1], date[2])
         hdr['OBSCODE'] = (name, 'zenith all-sky image')
         
         hdr['ARRNAM'] = self.siteName
-        hdr['RDATE'] = (self.refTime, 'file data reference date')
+        hdr['RDATE'] = (self.ref_time, 'file data reference date')
         
-    def _writePrimary(self):
+    def _write_primary_hdu(self):
         """
         Write the primary HDU to file.
         """
         
-        self._writeGeometry(dummy=True)
+        self._write_aipsan_hdu(dummy=True)
         hrz = astro.hrz_posn(0, 90)
-        (arrPos, ag) = self.readArrayGeometry(dummy=True)
-        (mapper, inverseMapper) = self.readArrayMapper(dummy=True)
+        (arrPos, ag) = self.read_array_geometry(dummy=True)
+        (mapper, inverseMapper) = self.read_array_mapper(dummy=True)
         ids = ag.keys()
         
         obs = ephem.Observer()
@@ -494,7 +494,7 @@ class UV(object):
                     sourceRA, sourceDec = RA, dec
                     first = False
                     
-                uvwCoords = dataSet.getUVW(HA, dec, obs)
+                uvwCoords = dataSet.get_uvw(HA, dec, obs)
                 
                 ## Populate the metadata
                 ### Add in the new baselines
@@ -508,7 +508,7 @@ class UV(object):
                             stand1, stand2 = antenna1.stand.id, antenna2.stand.id
                         else:
                             stand1, stand2 = mapper[antenna1.stand.id], mapper[antenna2.stand.id]
-                        baselineMapped.append( mergeBaseline(stand1, stand2) ) 
+                        baselineMapped.append( merge_baseline(stand1, stand2) ) 
                     blineList.extend( baselineMapped )
                     
                 ### Add in the new u, v, and w coordinates
@@ -554,7 +554,7 @@ class UV(object):
         primary.header['LWATYPE'] = ('UV-ZA', 'LWA FITS file type')
         primary.header['LWAMAJV'] = (UVVersion[0], 'LWA UVFITS file format major version')
         primary.header['LWAMINV'] = (UVVersion[1], 'LWA UVFITS file format minor version')
-        primary.header['DATE-OBS'] = (self.refTime, 'UVFITS file data collection date')
+        primary.header['DATE-OBS'] = (self.ref_time, 'UVFITS file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'UVFITS file creation date')
         
@@ -595,7 +595,7 @@ class UV(object):
         self.FITS.append(primary)
         self.FITS.flush()
         
-    def _writeGeometry(self, dummy=False):
+    def _write_aipsan_hdu(self, dummy=False):
         """
         Define the 'AIPS AN' table .
         """
@@ -646,8 +646,8 @@ class UV(object):
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11])
         
         # Create the table and fill in the header
-        ag = astrofits.new_table(colDefs)
-        self._addCommonKeywords(ag.header, 'AIPS AN', 1)
+        ag = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(ag.header, 'AIPS AN', 1)
         
         ag.header['EXTVER'] = (1, 'array ID')
         ag.header['ARRNAM'] = self.siteName
@@ -656,7 +656,7 @@ class UV(object):
         ag.header['FREQ'] = (self.refVal, 'reference frequency (Hz)')
         ag.header['TIMSYS'] = ('UTC', 'time coordinate system')
 
-        date = self.refTime2AstroDate()
+        date = self.ref_time2AstroDate()
         utc0 = date.to_jd()
         gst0 = astro.get_apparent_sidereal_time(utc0)
         ag.header['GSTIA0'] = (gst0 * 15, 'GAST (deg) at RDATE 0 hours')
@@ -669,7 +669,7 @@ class UV(object):
         deg = ds * 15.0      
         ag.header['DEGPDY'] = (360.0 + deg, 'rotation rate of the earth (deg/day)')
         
-        refDate = self.refTime2AstroDate()
+        refDate = self.ref_time2AstroDate()
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
         eop = geodesy.getEOP(refMJD)
         if eop is None:
@@ -689,7 +689,7 @@ class UV(object):
         if dummy:
             self.an = ag
             if self.array[0]['enableMapper']:
-                self._writeMapper(dummy=True)
+                self._write_mapper_hdu(dummy=True)
                 
         else:
             ag.name = 'AIPS AN'
@@ -697,9 +697,9 @@ class UV(object):
             self.FITS.flush()
             
             if self.array[0]['enableMapper']:
-                self._writeMapper()
+                self._write_mapper_hdu()
                 
-    def _writeMapper(self, dummy=False):
+    def _write_mapper_hdu(self, dummy=False):
         """
         Write a fits table that contains information about mapping stations 
         numbers to actual antenna numbers.  This information can be backed out of
@@ -716,8 +716,8 @@ class UV(object):
         colDefs = astrofits.ColDefs([c1, c2, c3])
         
         # Create the ID mapping table and update its header
-        nsm = astrofits.new_table(colDefs)
-        self._addCommonKeywords(nsm.header, 'NOSTA_MAPPER', 1)
+        nsm = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(nsm.header, 'NOSTA_MAPPER', 1)
         
         if dummy:
             self.am = nsm
@@ -726,7 +726,7 @@ class UV(object):
             self.FITS.append(nsm)
             self.FITS.flush()
             
-    def readArrayGeometry(self, dummy=False):
+    def read_array_geometry(self, dummy=False):
         """
         Return a tuple with the array geodetic position and the local 
         positions for all antennas defined in the AIPS AN table.
@@ -759,7 +759,7 @@ class UV(object):
         # Return
         return (arrayGeo, antennaGeo)
         
-    def readArrayMapper(self, dummy=False):
+    def read_array_mapper(self, dummy=False):
         """
         Return a tuple with the array NOSTA mapper and inverse mapper (both
         dictionaries.  If the stand IDs have not been mapped, return None for

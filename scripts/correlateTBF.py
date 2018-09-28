@@ -225,16 +225,16 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
                 pol1, pol2 = fxc.pol2pol(pol)
                 
                 if len(stands) > 255:
-                    fits = fitsidi.ExtendedIDI(filename, refTime=refTime)
+                    fits = fitsidi.ExtendedIDI(filename, ref_time=refTime)
                 else:
-                    fits = fitsidi.IDI(filename, refTime=refTime)
-                fits.setStokes(pols)
-                fits.setFrequency(freq[toUse])
-                fits.setGeometry(site, [a for a in mapper if a.pol == pol1])
+                    fits = fitsidi.IDI(filename, ref_time=refTime)
+                fits.set_stokes(pols)
+                fits.set_frequency(freq[toUse])
+                fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
             obsTime = astro.unix_to_taimjd(setTime)
-            fits.addDataSet(obsTime, readT, blList, vis[:,toUse], pol=pol)
+            fits.add_data_set(obsTime, readT, blList, vis[:,toUse], pol=pol)
         print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
         
     # Cleanup after everything is done

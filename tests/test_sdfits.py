@@ -7,7 +7,7 @@ import time
 import unittest
 import numpy
 import tempfile
-import pyfits
+from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
 from lsl.writer import sdfits
@@ -61,14 +61,14 @@ class sdfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = sdfits.SD(testFile, refTime=testTime)
-        fits.setStokes(['xx'])
-        fits.setFrequency(data['freq'])
-        fits.addDataSet(testTime, 6.0, data['antennas'], data['spec'])
+        fits = sdfits.SD(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         # Check that all of the extensions are there
         extNames = [hdu.name for hdu in hdulist]
         for ext in ['SINGLE DISH',]:
@@ -86,14 +86,14 @@ class sdfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = sdfits.SD(testFile, refTime=testTime)
-        fits.setStokes(['xx'])
-        fits.setFrequency(data['freq'])
-        fits.addDataSet(testTime, 6.0, data['antennas'], data['spec'])
+        fits = sdfits.SD(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])
         fits.write()
 
         # Open the file and examine
-        hdulist = pyfits.open(testFile)
+        hdulist = astrofits.open(testFile)
         sd = hdulist['SINGLE DISH'].data
 
         # Correct number of elements

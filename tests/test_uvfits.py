@@ -64,11 +64,11 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, refTime=testTime)
-        fits.setStokes(['xx'])
-        fits.setFrequency(data['freq'])
-        fits.setGeometry(data['site'], data['antennas'])
-        fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
+        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -90,11 +90,11 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, refTime=testTime)
-        fits.setStokes(['xx'])
-        fits.setFrequency(data['freq'])
-        fits.setGeometry(data['site'], data['antennas'])
-        fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
+        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -120,11 +120,11 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, refTime=testTime)
-        fits.setStokes(['xx'])
-        fits.setFrequency(data['freq'])
-        fits.setGeometry(data['site'], data['antennas'])
-        fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
+        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -145,11 +145,11 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, refTime=testTime)
-        fits.setStokes(['xx'])
-        fits.setFrequency(data['freq'])
-        fits.setGeometry(data['site'], data['antennas'])
-        fits.addDataSet(testTime, 6.0, data['bl'], data['vis'])
+        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine

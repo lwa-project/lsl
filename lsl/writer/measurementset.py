@@ -49,7 +49,7 @@ NumericStokes = { 1:'I',   2:'Q',   3:'U',   4:'V',
                   5:'RR',  6:'RL',  7:'LR',  8:'LL',
                   9:'XX', 10:'XY', 11:'YX', 12:'YY'}
 
-def mergeBaseline(ant1, ant2, shift=16):
+def merge_baseline(ant1, ant2, shift=16):
     """
     Merge two stand ID numbers into a single baseline using the specified bit 
     shift size.
@@ -57,7 +57,7 @@ def mergeBaseline(ant1, ant2, shift=16):
     
     return (ant1 << shift) | ant2
 
-def splitBaseline(baseline, shift=16):
+def split_baseline(baseline, shift=16):
     """
     Given a baseline, split it into it consistent stand ID numbers.
     """
@@ -135,7 +135,7 @@ class MS(object):
         def time(self):
             return self.obsTime
             
-        def getUVW(self, HA, dec, obs):
+        def get_uvw(self, HA, dec, obs):
             Nbase = len(self.baselines)
             uvw = numpy.zeros((Nbase,3), dtype=numpy.float32)
             
@@ -172,12 +172,12 @@ class MS(object):
                     s1, s2 = a1.stand.id, a2.stand.id
                 else:
                     s1, s2 = mapper.index(a1.stand.id), mapper.index(a2.stand.id)
-                packed.append( mergeBaseline(s1, s2, shift=shift) )
+                packed.append( merge_baseline(s1, s2, shift=shift) )
             packed = numpy.array(packed, dtype=numpy.int32)
             
             return numpy.argsort(packed)
             
-    def parseRefTime(self, refTime):
+    def parse_time(self, ref_time):
         """
         Given a time as either a integer, float, string, or datetime object, 
         convert it to a string in the formation 'YYYY-MM-DDTHH:MM:SS'.
@@ -186,31 +186,31 @@ class MS(object):
         # Valid time string (modulo the 'T')
         timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
         
-        if type(refTime) in (int, long, float):
-            refDateTime = datetime.utcfromtimestamp(refTime)
-            refTime = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == datetime:
-            refTime = refTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == str:
+        if type(ref_time) in (int, long, float):
+            refDateTime = datetime.utcfromtimestamp(ref_time)
+            ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == datetime:
+            ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == str:
             # Make sure that the string times are of the correct format
-            if re.match(timeRE, refTime) is None:
-                raise RuntimeError("Malformed date/time provided: %s" % refTime)
+            if re.match(timeRE, ref_time) is None:
+                raise RuntimeError("Malformed date/time provided: %s" % ref_time)
             else:
-                refTime = refTime.replace(' ', 'T', 1)
+                ref_time = ref_time.replace(' ', 'T', 1)
         else:
             raise RuntimeError("Unknown time format provided.")
             
-        return refTime
+        return ref_time
         
-    def refTime2AstroDate(self):
+    def ref_time2AstroDate(self):
         """
         Convert a reference time string to an :class:`lsl.astro.date` object.
         """
         
-        dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
+        dateStr = self.ref_time.replace('T', '-').replace(':', '-').split('-')
         return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
         
-    def __init__(self, filename, refTime=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
         """
         Initialize a new FITS IDI object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
@@ -230,7 +230,7 @@ class MS(object):
         self.siteName = 'Unknown'
         
         # Observation-specific information
-        self.refTime = self.parseRefTime(refTime)
+        self.ref_time = self.parse_time(ref_time)
         self.nAnt = 0
         self.nChan = 0
         self.nStokes = 0
@@ -252,7 +252,7 @@ class MS(object):
                 raise IOError("File '%s' already exists" % filename)
         self.basename = filename
         
-    def setStokes(self, polList):
+    def set_stokes(self, polList):
         """
         Given a list of Stokes parameters, update the object's parameters.
         """
@@ -273,7 +273,7 @@ class MS(object):
             
         self.nStokes = len(self.stokes)
         
-    def setFrequency(self, freq):
+    def set_frequency(self, freq):
         """
         Given a numpy array of frequencies, set the relevant common observation
         parameters and add an entry to the self.freq list.
@@ -288,7 +288,7 @@ class MS(object):
         freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
         self.freq.append(freqSetup)
         
-    def setGeometry(self, site, antennas, bits=8):
+    def set_geometry(self, site, antennas, bits=8):
         """
         Given a station and an array of stands, set the relevant common observation
         parameters and add entries to the self.array list.
@@ -327,7 +327,7 @@ class MS(object):
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'inputAnts': antennas} )
         
-    def addDataSet(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
+    def add_data_set(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
         """
         Create a UVData object to store a collection of visibilities.
         
@@ -359,12 +359,12 @@ class MS(object):
         self.data.sort()
         
         # Write the tables
-        self._writeMain()
-        self._writeAntenna()
-        self._writePolarization()
-        self._writeObservation()
-        self._writeSpectralWindow()
-        self._writeMisc()
+        self._write_main_table()
+        self._write_antenna_table()
+        self._write_polarization_table()
+        self._write_observation_table()
+        self._write_spectralwindow_table()
+        self._write_misc_required_tables()
         
         # Fixup the info and keywords for the main table
         tb = table("%s" % self.basename, readonly=False, ack=False)
@@ -390,7 +390,7 @@ class MS(object):
         
         pass
         
-    def _writeAntenna(self):
+    def _write_antenna_table(self):
         """
         Write the antenna table.
         """
@@ -444,7 +444,7 @@ class MS(object):
             
         tb.done()
         
-    def _writePolarization(self):
+    def _write_polarization_table(self):
         """
         Write the polarization table.
         """
@@ -559,7 +559,7 @@ class MS(object):
         
         tb.done()
         
-    def _writeObservation(self):
+    def _write_observation_table(self):
         """
         Write the observation table.
         """
@@ -787,7 +787,7 @@ class MS(object):
             
         tb.close()
         
-    def _writeSpectralWindow(self):
+    def _write_spectralwindow_table(self):
         """
         Write the spectral window table.
         """
@@ -860,7 +860,7 @@ class MS(object):
         
         tb.done
         
-    def _writeMain(self):
+    def _write_main_table(self):
         """
         Write the main table.
         """
@@ -991,7 +991,7 @@ class MS(object):
                 else:
                     HA = (obs.sidereal_time() - dataSet.source.ra) * 12/numpy.pi
                     dec = dataSet.source.dec * 180/numpy.pi
-                uvwCoords = dataSet.getUVW(HA, dec, obs)
+                uvwCoords = dataSet.get_uvw(HA, dec, obs)
                 
                 ## Populate the metadata
                 ### Add in the baselines
@@ -1084,7 +1084,7 @@ class MS(object):
         
         tb.close()
         
-    def _writeMisc(self):
+    def _write_misc_required_tables(self):
         """
         Write the other tables that are part of the measurement set but 
         don't contain anything by default.

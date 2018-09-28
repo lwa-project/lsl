@@ -80,7 +80,7 @@ class SD(object):
         def time(self):
             return self.obsTime
     
-    def parseRefTime(self, refTime):
+    def parse_time(self, ref_time):
         """
         Given a time as either a integer, float, string, or datetime object, 
         convert it to a string in the formation 'YYYY-MM-DDTHH:MM:SS'.
@@ -89,31 +89,31 @@ class SD(object):
         # Valid time string (modulo the 'T')
         timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
 
-        if type(refTime) in (int, long, float):
-            refDateTime = datetime.utcfromtimestamp(refTime)
-            refTime = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == datetime:
-            refTime = refTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == str:
+        if type(ref_time) in (int, long, float):
+            refDateTime = datetime.utcfromtimestamp(ref_time)
+            ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == datetime:
+            ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == str:
             # Make sure that the string times are of the correct format
-            if re.match(timeRE, refTime) is None:
-                raise RuntimeError("Malformed date/time provided: %s" % refTime)
+            if re.match(timeRE, ref_time) is None:
+                raise RuntimeError("Malformed date/time provided: %s" % ref_time)
             else:
-                refTime = refTime.replace(' ', 'T', 1)
+                ref_time = ref_time.replace(' ', 'T', 1)
         else:
             raise RuntimeError("Unknown time format provided.")
 
-        return refTime
+        return ref_time
 
-    def refTime2AstroDate(self):
+    def ref_time2AstroDate(self):
         """
         Convert a reference time string to an :class:`lsl.astro.date` object.
         """
 
-        dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
+        dateStr = self.ref_time.replace('T', '-').replace(':', '-').split('-')
         return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
 
-    def __init__(self, filename, refTime=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
         """
         Initialize a new SDFITS object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
@@ -131,7 +131,7 @@ class SD(object):
 
         # Observation-specific information
         self.site = lwa1
-        self.refTime = self.parseRefTime(refTime)
+        self.ref_time = self.parse_time(ref_time)
         self.nChan = 0
         self.nStokes = 0
         self.refVal = 0
@@ -158,7 +158,7 @@ class SD(object):
                 raise IOError("File '%s' already exists" % filename)
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
 
-    def setSite(self, site):
+    def set_site(self, site):
         """
         Set the TELESCOP keyword in the primary HDU using an :class:`lsl.common.stations.LWAStation`
         object.
@@ -166,7 +166,7 @@ class SD(object):
 
         self.site = site
         
-    def setStokes(self, polList):
+    def set_stokes(self, polList):
         """
         Given a list of Stokes parameters, update the object's parameters.
         """
@@ -187,7 +187,7 @@ class SD(object):
 
         self.nStokes = len(self.stokes)
 
-    def setFrequency(self, freq):
+    def set_frequency(self, freq):
         """
         Given a numpy array of frequencies, set the relevant common observation
         parameters and add an entry to the self.freq list.
@@ -202,7 +202,7 @@ class SD(object):
         freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
         self.freq.append(freqSetup)
         
-    def setObserver(self, observer, project='UNKNOWN', mode='UNKNOWN'):
+    def set_observer(self, observer, project='UNKNOWN', mode='UNKNOWN'):
         """
         Set the observer name, project, and observation mode (if given) to the 
         self.observer, self.project, and self.mode attributes, respectively.
@@ -212,7 +212,7 @@ class SD(object):
         self.project = project
         self.mode = mode
 
-    def addDataSet(self, obsTime, intTime, beam, data, pol='XX'):
+    def add_data_set(self, obsTime, intTime, beam, data, pol='XX'):
         """
         Create a SpectrometerData object to store a collection of spectra.
         """
@@ -255,8 +255,8 @@ class SD(object):
         except TypeError:
             self.data.sort(key=cmp_to_key(__sortData))
             
-        self.__writePrimary()
-        self.__writeData()
+        self._write_primary_hdu()
+        self._write_singledish_hdu()
         
         # Clear out the data section
         del(self.data[:])
@@ -270,7 +270,7 @@ class SD(object):
         self.FITS.flush()
         self.FITS.close()
 
-    def __writePrimary(self):
+    def _write_primary_hdu(self):
         """
         Write the primary HDU to file.
         """
@@ -287,7 +287,7 @@ class SD(object):
         self.FITS.append(primary)
         self.FITS.flush()
         
-    def __writeData(self):
+    def _write_singledish_hdu(self):
         """
         Define the SINGLE DISH table.
         """
@@ -496,7 +496,7 @@ class SD(object):
         colDefs = astrofits.ColDefs(cs)
         
         # Create the SINGLE DISH table and update its header
-        sd = astrofits.new_table(colDefs)
+        sd = astrofits.BinTableHDU.from_columns(colDefs)
         
         ## Single disk keywords - order seems to matter
         sd.header['EXTNAME'] = ('SINGLE DISH', 'SDFITS table name')

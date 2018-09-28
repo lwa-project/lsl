@@ -57,7 +57,7 @@ NumericStokes = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V',
             -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
 
-def mergeBaseline(ant1, ant2, shift=16):
+def merge_baseline(ant1, ant2, shift=16):
     """
     Merge two stand ID numbers into a single baseline using the specified bit 
     shift size.
@@ -65,7 +65,7 @@ def mergeBaseline(ant1, ant2, shift=16):
     
     return (ant1 << shift) | ant2
 
-def splitBaseline(baseline, shift=16):
+def split_baseline(baseline, shift=16):
     """
     Given a baseline, split it into it consistent stand ID numbers.
     """
@@ -149,7 +149,7 @@ class IDI(object):
         def time(self):
             return self.obsTime
             
-        def getUVW(self, HA, dec, obs):
+        def get_uvw(self, HA, dec, obs):
             Nbase = len(self.baselines)
             uvw = numpy.zeros((Nbase,3), dtype=numpy.float32)
             
@@ -186,12 +186,12 @@ class IDI(object):
                     s1, s2 = a1.stand.id, a2.stand.id
                 else:
                     s1, s2 = mapper[a1.stand.id], mapper[a2.stand.id]
-                packed.append( mergeBaseline(s1, s2, shift=shift) )
+                packed.append( merge_baseline(s1, s2, shift=shift) )
             packed = numpy.array(packed, dtype=numpy.int32)
             
             return numpy.argsort(packed)
             
-    def parseRefTime(self, refTime):
+    def parse_time(self, ref_time):
         """
         Given a time as either a integer, float, string, or datetime object, 
         convert it to a string in the formation 'YYYY-MM-DDTHH:MM:SS'.
@@ -200,31 +200,31 @@ class IDI(object):
         # Valid time string (modulo the 'T')
         timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
         
-        if type(refTime) in (int, long, float):
-            refDateTime = datetime.utcfromtimestamp(refTime)
-            refTime = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == datetime:
-            refTime = refTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(refTime) == str:
+        if type(ref_time) in (int, long, float):
+            refDateTime = datetime.utcfromtimestamp(ref_time)
+            ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == datetime:
+            ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
+        elif type(ref_time) == str:
             # Make sure that the string times are of the correct format
-            if re.match(timeRE, refTime) is None:
-                raise RuntimeError("Malformed date/time provided: %s" % refTime)
+            if re.match(timeRE, ref_time) is None:
+                raise RuntimeError("Malformed date/time provided: %s" % ref_time)
             else:
-                refTime = refTime.replace(' ', 'T', 1)
+                ref_time = ref_time.replace(' ', 'T', 1)
         else:
             raise RuntimeError("Unknown time format provided.")
             
-        return refTime
+        return ref_time
         
-    def refTime2AstroDate(self):
+    def ref_time2AstroDate(self):
         """
         Convert a reference time string to an :class:`lsl.astro.date` object.
         """
         
-        dateStr = self.refTime.replace('T', '-').replace(':', '-').split('-')
+        dateStr = self.ref_time.replace('T', '-').replace(':', '-').split('-')
         return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
         
-    def __init__(self, filename, refTime=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
         """
         Initialize a new FITS IDI object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
@@ -244,7 +244,7 @@ class IDI(object):
         self.siteName = 'Unknown'
         
         # Observation-specific information
-        self.refTime = self.parseRefTime(refTime)
+        self.ref_time = self.parse_time(ref_time)
         self.nAnt = 0
         self.nChan = 0
         self.nStokes = 0
@@ -266,7 +266,7 @@ class IDI(object):
                 raise IOError("File '%s' already exists" % filename)
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
         
-    def setStokes(self, polList):
+    def set_stokes(self, polList):
         """
         Given a list of Stokes parameters, update the object's parameters.
         """
@@ -287,7 +287,7 @@ class IDI(object):
             
         self.nStokes = len(self.stokes)
         
-    def setFrequency(self, freq):
+    def set_frequency(self, freq):
         """
         Given a numpy array of frequencies, set the relevant common observation
         parameters and add an entry to the self.freq list.
@@ -302,7 +302,7 @@ class IDI(object):
         freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
         self.freq.append(freqSetup)
         
-    def setGeometry(self, site, antennas, bits=8):
+    def set_geometry(self, site, antennas, bits=8):
         """
         Given a station and an array of stands, set the relevant common observation
         parameters and add entries to the self.array list.
@@ -360,7 +360,7 @@ class IDI(object):
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )
         
-    def addDataSet(self, obsTime, intTime, baselines, visibilities, weights=None, pol='XX', source='z'):
+    def add_data_set(self, obsTime, intTime, baselines, visibilities, weights=None, pol='XX', source='z'):
         """
         Create a UVData object to store a collection of visibilities.
         
@@ -395,13 +395,13 @@ class IDI(object):
         # Sort the data set
         self.data.sort()
         
-        self._writePrimary()
-        self._writeGeometry()
-        self._writeFrequency()
-        self._writeAntenna()
-        self._writeBandpass()
-        self._writeSource()
-        self._writeData()
+        self._write_primary_hdu()
+        self._write_geometry_hdu()
+        self._write_frequency_hdu()
+        self._write_antenna_hdu()
+        self._write_bandpass_hdu()
+        self._write_source_hdu()
+        self._write_uvdata_hdu()
         
         # Clear out the data section
         del(self.data[:])
@@ -415,7 +415,7 @@ class IDI(object):
         self.FITS.flush()
         self.FITS.close()
         
-    def _addCommonKeywords(self, hdr, name, revision):
+    def _add_common_keywords(self, hdr, name, revision):
         """
         Added keywords common to all table headers.
         """
@@ -431,14 +431,14 @@ class IDI(object):
         hdr['CHAN_BW'] = (self.channelWidth, 'channel bandwidth (Hz)')
         hdr['REF_PIXL'] = (float(self.refPix), 'reference frequency bin')
         
-        date = self.refTime.split('-')
+        date = self.ref_time.split('-')
         name = "ZA%s%s%s" % (date[0][2:], date[1], date[2])
         hdr['OBSCODE'] = (name, 'zenith all-sky image')
         
         hdr['ARRNAM'] = self.siteName      
-        hdr['RDATE'] = (self.refTime, 'file data reference date')
+        hdr['RDATE'] = (self.ref_time, 'file data reference date')
         
-    def _writePrimary(self):
+    def _write_primary_hdu(self):
         """
         Write the primary HDU to file.
         """
@@ -460,14 +460,14 @@ class IDI(object):
         primary.header['LWATYPE'] = ('IDI-ZA', 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
-        primary.header['DATE-OBS'] = (self.refTime, 'IDI file data collection date')
+        primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
         self.FITS.append(primary)
         self.FITS.flush()
         
-    def _writeGeometry(self):
+    def _write_geometry_hdu(self):
         """
         Define the Array_Geometry table (group 1, table 1).
         """
@@ -506,8 +506,8 @@ class IDI(object):
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7])
         
         # Create the table and fill in the header
-        ag = astrofits.new_table(colDefs)
-        self._addCommonKeywords(ag.header, 'ARRAY_GEOMETRY', 1)
+        ag = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(ag.header, 'ARRAY_GEOMETRY', 1)
         
         ag.header['EXTVER'] = (1, 'array ID')
         ag.header['ARRNAM'] = self.siteName
@@ -516,7 +516,7 @@ class IDI(object):
         ag.header['FREQ'] = (self.refVal, 'reference frequency (Hz)')
         ag.header['TIMSYS'] = ('UTC', 'time coordinate system')
         
-        date = self.refTime2AstroDate()
+        date = self.ref_time2AstroDate()
         utc0 = date.to_jd()
         gst0 = astro.get_apparent_sidereal_time(utc0)
         ag.header['GSTIA0'] = (gst0 * 15, 'GAST (deg) at RDATE 0 hours')
@@ -529,7 +529,7 @@ class IDI(object):
         deg = ds * 15.0      
         ag.header['DEGPDY'] = (360.0 + deg, 'rotation rate of the earth (deg/day)')
         
-        refDate = self.refTime2AstroDate()
+        refDate = self.ref_time2AstroDate()
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
         eop = geodesy.getEOP(refMJD)
         if eop is None:
@@ -551,9 +551,9 @@ class IDI(object):
         self.FITS.flush()
         
         if self.array[0]['enableMapper']:
-            self._writeMapper()
+            self._write_mapper_hdu()
             
-    def _writeFrequency(self):
+    def _write_frequency_hdu(self):
         """
         Define the Frequency table (group 1, table 3).
         """
@@ -581,15 +581,15 @@ class IDI(object):
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6])
         
         # Create the table and header
-        fq = astrofits.new_table(colDefs)
-        self._addCommonKeywords(fq.header, 'FREQUENCY', 1)
+        fq = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(fq.header, 'FREQUENCY', 1)
         
         # Add the table to the file
         fq.name = 'FREQUENCY'
         self.FITS.append(fq)
         self.FITS.flush()
         
-    def _writeAntenna(self):
+    def _write_antenna_hdu(self):
         """
         Define the Antenna table (group 2, table 1).
         """
@@ -638,8 +638,8 @@ class IDI(object):
                             c11, c12, c13])
                             
         # Create the Antenna table and update it's header
-        an = astrofits.new_table(colDefs)
-        self._addCommonKeywords(an.header, 'ANTENNA', 1)
+        an = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(an.header, 'ANTENNA', 1)
         
         an.header['NOPCAL'] = (2, 'number of polarization parameters')
         an.header['POLTYPE'] = ('X-Y LIN', 'polarization parameterization')
@@ -648,7 +648,7 @@ class IDI(object):
         self.FITS.append(an)
         self.FITS.flush()
         
-    def _writeBandpass(self):
+    def _write_bandpass_hdu(self):
         """
         Define the Bandpass table (group 2, table 3).
         """
@@ -700,8 +700,8 @@ class IDI(object):
                             c11, c12, c13, c14])
                             
         # Create the Bandpass table and update its header
-        bp = astrofits.new_table(colDefs)
-        self._addCommonKeywords(bp.header, 'BANDPASS', 1)
+        bp = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(bp.header, 'BANDPASS', 1)
         
         bp.header['NO_ANT'] = self.nAnt
         bp.header['NO_POL'] = 2
@@ -712,12 +712,12 @@ class IDI(object):
         self.FITS.append(bp)
         self.FITS.flush()
         
-    def _writeSource(self):
+    def _write_source_hdu(self):
         """
         Define the Source table (group 1, table 2).
         """
         
-        (arrPos, ag) = self.readArrayGeometry()
+        (arrPos, ag) = self.read_array_geometry()
         ids = ag.keys()
         
         obs = ephem.Observer()
@@ -866,20 +866,20 @@ class IDI(object):
                             c21, c22, c23, c24])
                             
         # Create the Source table and update its header
-        sr = astrofits.new_table(colDefs)
-        self._addCommonKeywords(sr.header, 'SOURCE', 1)
+        sr = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(sr.header, 'SOURCE', 1)
         
         sr.name = 'SOURCE'
         self.FITS.append(sr)
         self.FITS.flush()
         
-    def _writeData(self):
+    def _write_uvdata_hdu(self):
         """
         Define the UV_Data table (group 3, table 1).
         """
         
-        (arrPos, ag) = self.readArrayGeometry()
-        (mapper, inverseMapper) = self.readArrayMapper()
+        (arrPos, ag) = self.read_array_geometry()
+        (mapper, inverseMapper) = self.read_array_mapper()
         ids = ag.keys()
         
         obs = ephem.Observer()
@@ -940,7 +940,7 @@ class IDI(object):
                 else:
                     HA = (obs.sidereal_time() - dataSet.source.ra) * 12/numpy.pi
                     dec = dataSet.source.dec * 180/numpy.pi
-                uvwCoords = dataSet.getUVW(HA, dec, obs)
+                uvwCoords = dataSet.get_uvw(HA, dec, obs)
                 
                 ## Populate the metadata
                 ### Add in the new baselines
@@ -954,7 +954,7 @@ class IDI(object):
                             stand1, stand2 = antenna1.stand.id, antenna2.stand.id
                         else:
                             stand1, stand2 = mapper[antenna1.stand.id], mapper[antenna2.stand.id]
-                        baselineMapped.append( mergeBaseline(stand1, stand2, shift=self._PACKING_BIT_SHIFT) ) 
+                        baselineMapped.append( merge_baseline(stand1, stand2, shift=self._PACKING_BIT_SHIFT) ) 
                     blineList.extend( baselineMapped )
                     
                 ### Add in the new u, v, and w coordinates
@@ -1037,8 +1037,8 @@ class IDI(object):
                         c13, c12, c1])
                         
         # Create the UV Data table and update its header
-        uv = astrofits.new_table(colDefs)
-        self._addCommonKeywords(uv.header, 'UV_DATA', 1)
+        uv = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(uv.header, 'UV_DATA', 1)
         
         uv.header['NMATRIX'] = (1, 'number of UV data matricies')
         uv.header['MAXIS'] = (6, 'number of UV data matrix axes')
@@ -1093,7 +1093,7 @@ class IDI(object):
         self.FITS.append(uv)
         self.FITS.flush()
         
-    def _writeMapper(self):
+    def _write_mapper_hdu(self):
         """
         Write a fits table that contains information about mapping stations 
         numbers to actual antenna numbers.  This information can be backed out of
@@ -1110,14 +1110,14 @@ class IDI(object):
         colDefs = astrofits.ColDefs([c1, c2, c3])
         
         # Create the ID mapping table and update its header
-        nsm = astrofits.new_table(colDefs)
-        self._addCommonKeywords(nsm.header, 'NOSTA_MAPPER', 1)
+        nsm = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(nsm.header, 'NOSTA_MAPPER', 1)
         
         nsm.name = 'NOSTA_MAPPER'
         self.FITS.append(nsm)
         self.FITS.flush()
         
-    def readArrayGeometry(self):
+    def read_array_geometry(self):
         """
         Return a tuple with the array geodetic position and the local 
         positions for all antennas defined in the ARRAY_GEOMETRY table.
@@ -1143,7 +1143,7 @@ class IDI(object):
         # Return
         return (arrayGeo, antennaGeo)
         
-    def readArrayMapper(self):
+    def read_array_mapper(self):
         """
         Return a tuple with the array NOSTA mapper and inverse mapper (both
         dictionaries.  If the stand IDs have not been mapped, return None for
@@ -1172,7 +1172,7 @@ class AIPS(IDI):
     """
     Sub-class of the FITS IDI writer for making files that *should* work 
     with AIPS nicely.  AIPS imposes a limit on antenna number of two digits
-    (1-99).  This sub-class overwrite the setGeometry() function with one that
+    (1-99).  This sub-class overwrite the set_geometry() function with one that
     enforces the two digit limit and maps accordingly.  It also sets the FITS
     `LWATYPE` keyword in the primary HDU to a value of `IDI-AIPS-ZA` to 
     distinguish files written by this writer from the standard IDI writer.
@@ -1198,7 +1198,7 @@ class AIPS(IDI):
         def getName(self):
             return "L%03i" % self.id
             
-    def _writePrimary(self):
+    def _write_primary_hdu(self):
         """
         Write the primary HDU to file.
         """
@@ -1220,7 +1220,7 @@ class AIPS(IDI):
         primary.header['LWATYPE'] = ('IDI-AIPS-ZA', 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
-        primary.header['DATE-OBS'] = (self.refTime, 'IDI file data collection date')
+        primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
@@ -1259,7 +1259,7 @@ class ExtendedIDI(IDI):
         def getName(self):
             return "LWA%05i" % self.id
             
-    def _writePrimary(self):
+    def _write_primary_hdu(self):
         """
         Write the primary HDU to file.
         """
@@ -1281,7 +1281,7 @@ class ExtendedIDI(IDI):
         primary.header['LWATYPE'] = ('IDI-EXTENDED-ZA', 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
-        primary.header['DATE-OBS'] = (self.refTime, 'IDI file data collection date')
+        primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         

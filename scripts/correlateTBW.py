@@ -182,16 +182,16 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
             pol1, pol2 = fxc.pol2pol(pol)
             
             if len(stands) > 255:
-                fits = fitsidi.ExtendedIDI(filename, refTime=refTime)
+                fits = fitsidi.ExtendedIDI(filename, ref_time=refTime)
             else:
-                fits = fitsidi.IDI(filename, refTime=refTime)
-            fits.setStokes(pols)
-            fits.setFrequency(freq[toUse])
-            fits.setGeometry(site, [a for a in mapper if a.pol == pol1])
+                fits = fitsidi.IDI(filename, ref_time=refTime)
+            fits.set_stokes(pols)
+            fits.set_frequency(freq[toUse])
+            fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
             
         # Add the visibilities
         obsTime = astro.unix_to_taimjd(setTime)
-        fits.addDataSet(obsTime, readT, blList, vis[:,toUse], pol=pol)
+        fits.add_data_set(obsTime, readT, blList, vis[:,toUse], pol=pol)
         sys.stdout.write(pb.show()+'\r')
         sys.stdout.write('\n')
         sys.stdout.flush()
