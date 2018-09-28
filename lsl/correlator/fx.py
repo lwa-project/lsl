@@ -41,7 +41,7 @@ from lsl.correlator import uvUtils, _spec, _stokes, _core
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['pol2pol', 'noWindow', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes', 
+__all__ = ['pol2pol', 'NullWindow', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes', 
            '__version__', '__revision__', '__all__']
 
 
@@ -64,7 +64,7 @@ def pol2pol(pol):
     return out
 
 
-def noWindow(L):
+def NullWindow(L):
     """
     Default "empty" windowing function for use with the various routines.  This
     function returned a numpy array of '1's of the specified length.
@@ -73,7 +73,7 @@ def noWindow(L):
     return numpy.ones(L)
 
 
-def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0, ClipLevel=0):
+def SpecMaster(signals, LFFT=64, window=NullWindow, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     A more advanced version of calcSpectra that uses the _spec C extension 
     to handle all of the P.S.D. calculations in parallel.  Returns a two-
@@ -90,7 +90,7 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
     if signals.dtype.kind == 'c':
         lFactor = 1
         doFFTShift = True
-        CentralFreq = float(CentralFreq)
+        central_freq = float(central_freq)
     else:
         lFactor = 2
         doFFTShift = False
@@ -98,27 +98,24 @@ def SpecMaster(signals, LFFT=64, window=noWindow, verbose=False, SampleRate=None
     # Calculate the frequencies of the FFTs.  We do this for twice the FFT length
     # because the real-valued signal only occupies the positive part of the 
     # frequency space.
-    if SampleRate is None:
-        SampleRate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+    if sample_rate is None:
+        sample_rate = dp_common.fS
+    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     # Deal with TBW and TBN data in the correct way
     if doFFTShift:
-        freq += CentralFreq
+        freq += central_freq
         freq = numpy.fft.fftshift(freq)
     freq = freq[:LFFT]
     
-    if window is noWindow:
+    if window is NullWindow:
         window = None
         
-    if signals.dtype.kind == 'c':
-        output = _spec.FPSDC(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
-    else:
-        output = _spec.FPSDR(signals, LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
+    output = _spec.FPSD(signals, LFFT=LFFT, overlap=1, clip_level=clip_level, window=window)
         
     return (freq, output)
 
 
-def StokesMaster(signals, antennas, LFFT=64, window=noWindow, verbose=False, SampleRate=None, CentralFreq=0.0, ClipLevel=0):
+def StokesMaster(signals, antennas, LFFT=64, window=NullWindow, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     Similar to SpecMaster, but accepts an array of signals and a list of 
     antennas in order to compute the PSDs for the four Stokes parameters: 
@@ -133,7 +130,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=noWindow, verbose=False, Sam
     if signals.dtype.kind == 'c':
         lFactor = 1
         doFFTShift = True
-        CentralFreq = float(CentralFreq)
+        central_freq = float(central_freq)
     else:
         lFactor = 2
         doFFTShift = False
@@ -147,27 +144,24 @@ def StokesMaster(signals, antennas, LFFT=64, window=noWindow, verbose=False, Sam
     # Calculate the frequencies of the FFTs.  We do this for twice the FFT length
     # because the real-valued signal only occupies the positive part of the 
     # frequency space.
-    if SampleRate is None:
-        SampleRate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+    if sample_rate is None:
+        sample_rate = dp_common.fS
+    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     # Deal with TBW and TBN data in the correct way
     if doFFTShift:
-        freq += CentralFreq
+        freq += central_freq
         freq = numpy.fft.fftshift(freq)
     freq = freq[:LFFT]
     
-    if window is noWindow:
+    if window is NullWindow:
         window = None
         
-    if signals.dtype.kind == 'c':
-        output = _stokes.FPSDC(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
-    else:
-        output = _stokes.FPSDR(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, Overlap=1, ClipLevel=ClipLevel, window=window)
-        
+    output = _stokes.FPSD(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, overlap=1, clip_level=clip_level, window=window)
+    
     return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0, Pol='XX', GainCorrect=False, ReturnBaselines=False, ClipLevel=0, phaseCenter='z'):
+def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=NullWindow, sample_rate=None, central_freq=0.0, Pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
     A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -185,7 +179,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
         correlations are phased to
         
     .. versionchanged:: 1.1.0
-        Made the 'phaseCenter' keyword more flexible.  It can now be either:
+        Made the 'phase_center' keyword more flexible.  It can now be either:
         * 'z' to denote the zenith,
         * a ephem.Body instances which has been computed for the observer, or
         * a two-element tuple of azimuth, elevation in degrees.
@@ -201,7 +195,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=True)
+    baselines = uvUtils.getBaselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -209,31 +203,31 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
     if signals.dtype.kind == 'c':
         lFactor = 1
         doFFTShift = True
-        CentralFreq = float(CentralFreq)
+        central_freq = float(central_freq)
     else:
         lFactor = 2
         doFFTShift = False
         
-    if SampleRate is None:
-        SampleRate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+    if sample_rate is None:
+        sample_rate = dp_common.fS
+    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
-        freq += CentralFreq
+        freq += central_freq
         freq = numpy.fft.fftshift(freq)
     freq = freq[:LFFT]
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phaseCenter == 'z':
+    if phase_center == 'z':
         azPC = 0.0
         elPC = numpy.pi/2.0
     else:
-        if isinstance(phaseCenter, ephem.Body):
-            azPC = phaseCenter.az * 1.0
-            elPC = phaseCenter.alt * 1.0
+        if isinstance(phase_center, ephem.Body):
+            azPC = phase_center.az * 1.0
+            elPC = phase_center.alt * 1.0
         else:
-            azPC = phaseCenter[0]*numpy.pi/180.0
-            elPC = phaseCenter[1]*numpy.pi/180.0
+            azPC = phase_center[0]*numpy.pi/180.0
+            elPC = phase_center[1]*numpy.pi/180.0
             
     source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
                     numpy.cos(elPC)*numpy.cos(azPC), 
@@ -261,38 +255,34 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
     delays1 -= minDelay
     delays2 -= minDelay
     
-    if window is noWindow:
+    if window is NullWindow:
         window = None
         
     # F - defaults to running parallel in C via OpenMP
-    if signals.dtype.kind == 'c':
-        FEngine = _core.FEngineC
-    else:
-        FEngine = _core.FEngineR
     if signals.shape[0] != len(signalsIndex1):
-        signalsF1, validF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
+        signalsF1, validF1 = _core.FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
     else:
-        signalsF1, validF1 = FEngine(signals, freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
+        signalsF1, validF1 = _core.FEngine(signals, freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
         
     if pol2 == pol1:
         signalsF2 = signalsF1
         validF2 = validF1
     else:
-        signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
+        signalsF2, validF2 = _core.FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
         
     # X
     output = _core.XEngine2(signalsF1, signalsF2, validF1, validF2)
-    if not IncludeAuto:
+    if not include_auto:
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=True, Indicies=True)
+        baselinesFull = uvUtils.getBaselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
         fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
         nonAuto = numpy.where( fom != 0 )[0]
         output = output[nonAuto,:]
         
     # Apply cable gain corrections (if needed)
-    if GainCorrect:
+    if gain_correct:
         for bl in xrange(output.shape[0]):
             cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
             cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
@@ -300,7 +290,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
             output[bl,:] /= numpy.sqrt(cableGain1*cableGain2)
             
     # Create antenna baseline list (if needed)
-    if ReturnBaselines:
+    if return_baselines:
         antennaBaselines = []
         for bl in xrange(output.shape[0]):
             antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
@@ -311,7 +301,7 @@ def FXMaster(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
     return returnValues
 
 
-def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=False, window=noWindow, SampleRate=None, CentralFreq=0.0,  GainCorrect=False, ReturnBaselines=False, ClipLevel=0, phaseCenter='z'):
+def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=NullWindow, sample_rate=None, central_freq=0.0,  gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
     A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -324,7 +314,7 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
         correlations are phased to
         
     .. versionchanged:: 1.1.0
-        Made the 'phaseCenter' keyword more flexible.  It can now be either:
+        Made the 'phase_center' keyword more flexible.  It can now be either:
         * 'z' to denote the zenith,
         * a ephem.Body instances which has been computed for the observer, or
         * a two-element tuple of azimuth, elevation in degrees.
@@ -340,7 +330,7 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=True)
+    baselines = uvUtils.getBaselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -348,31 +338,31 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
     if signals.dtype.kind == 'c':
         lFactor = 1
         doFFTShift = True
-        CentralFreq = float(CentralFreq)
+        central_freq = float(central_freq)
     else:
         lFactor = 2
         doFFTShift = False
 
-    if SampleRate is None:
-        SampleRate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/SampleRate)
+    if sample_rate is None:
+        sample_rate = dp_common.fS
+    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
-        freq += CentralFreq
+        freq += central_freq
         freq = numpy.fft.fftshift(freq)
     freq = freq[:LFFT]
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phaseCenter == 'z':
+    if phase_center == 'z':
         azPC = 0.0
         elPC = numpy.pi/2.0
     else:
-        if isinstance(phaseCenter, ephem.Body):
-            azPC = phaseCenter.az * 1.0
-            elPC = phaseCenter.alt * 1.0
+        if isinstance(phase_center, ephem.Body):
+            azPC = phase_center.az * 1.0
+            elPC = phase_center.alt * 1.0
         else:
-            azPC = phaseCenter[0]*numpy.pi/180.0
-            elPC = phaseCenter[1]*numpy.pi/180.0
+            azPC = phase_center[0]*numpy.pi/180.0
+            elPC = phase_center[1]*numpy.pi/180.0
     source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
                     numpy.cos(elPC)*numpy.cos(azPC), 
                     numpy.sin(elPC)])
@@ -399,31 +389,27 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
     delays1 -= minDelay
     delays2 -= minDelay
     
-    if window is noWindow:
+    if window is NullWindow:
         window = None
         
     # F - defaults to running parallel in C via OpenMP
-    if signals.dtype.kind == 'c':
-        FEngine = _core.FEngineC
-    else:
-        FEngine = _core.FEngineR
-    signalsF1, validF1 = FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
+    signalsF1, validF1 = _core.FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
     
-    signalsF2, validF2 = FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, Overlap=Overlap, SampleRate=SampleRate, ClipLevel=ClipLevel, window=window)
+    signalsF2, validF2 = _core.FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
     
     # X
     output = _stokes.XEngine2(signalsF1, signalsF2, validF1, validF2)
-    if not IncludeAuto:
+    if not include_auto:
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvUtils.getBaselines(antennas1, antennas2=antennas2, IncludeAuto=True, Indicies=True)
+        baselinesFull = uvUtils.getBaselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
         fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
         nonAuto = numpy.where( fom != 0 )[0]
         output = output[:,nonAuto,:]
         
     # Apply cable gain corrections (if needed)
-    if GainCorrect:
+    if gain_correct:
         for bl in xrange(output.shape[0]):
             cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
             cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
@@ -431,7 +417,7 @@ def FXStokes(signals, antennas, LFFT=64, Overlap=1, IncludeAuto=False, verbose=F
             output[:,bl,:] /= numpy.sqrt(cableGain1*cableGain2)
             
     # Create antenna baseline list (if needed)
-    if ReturnBaselines:
+    if return_baselines:
         antennaBaselines = []
         for bl in xrange(output.shape[1]):
             antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )

@@ -35,28 +35,28 @@ class uvUtils_tests(unittest.TestCase):
 
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.getBaselines(standList, IncludeAuto=False, Indicies=False)
+        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
         self.assertEqual(len(bl), 6)
-        bl = uvUtils.getBaselines(standList, IncludeAuto=True, Indicies=False)
+        bl = uvUtils.getBaselines(standList, include_auto=True, indicies=False)
         self.assertEqual(len(bl), 10)
 
     def test_baseline_ind(self):
-        """Test that the baselines generated with Indicies do return indicies and vice
+        """Test that the baselines generated with indicies do return indicies and vice
         versa."""
 
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.getBaselines(standList, IncludeAuto=False, Indicies=False)
+        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
         bl = numpy.array(bl)
         self.assertTrue(bl.min() == 100)
-        bl = uvUtils.getBaselines(standList, IncludeAuto=True, Indicies=False)
+        bl = uvUtils.getBaselines(standList, include_auto=True, indicies=False)
         bl = numpy.array(bl)
         self.assertTrue(bl.min() == 100)
 
-        bl = uvUtils.getBaselines(standList, IncludeAuto=False, Indicies=True)
+        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=True)
         bl = numpy.array(bl)
         self.assertTrue(bl.max() < 100)
-        bl = uvUtils.getBaselines(standList, IncludeAuto=True, Indicies=True)
+        bl = uvUtils.getBaselines(standList, include_auto=True, indicies=True)
         bl = numpy.array(bl)
         self.assertTrue(bl.max() < 100)
         
@@ -65,12 +65,12 @@ class uvUtils_tests(unittest.TestCase):
         
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.getBaselines(standList, IncludeAuto=False, Indicies=False)
+        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
         ind = uvUtils.baseline2antenna(0, standList)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 101)
         
-        ind = uvUtils.baseline2antenna(1, standList, BaselineList=bl)
+        ind = uvUtils.baseline2antenna(1, standList, baseline_list=bl)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 102)
         
@@ -78,15 +78,15 @@ class uvUtils_tests(unittest.TestCase):
         """Test antennas to baseline lookup function."""
         
         standList = numpy.array([100, 101, 102, 103])
-        bl = uvUtils.getBaselines(standList, IncludeAuto=False, Indicies=False)
+        bl = uvUtils.getBaselines(standList, include_auto=False, indicies=False)
         
-        ind = uvUtils.antenna2baseline(100, 101, standList, IncludeAuto=False, Indicies=False)
+        ind = uvUtils.antenna2baseline(100, 101, standList, include_auto=False, indicies=False)
         self.assertEqual(ind, 0)
         
-        ind = uvUtils.antenna2baseline(100, 102, standList, BaselineList=bl)
+        ind = uvUtils.antenna2baseline(100, 102, standList, baseline_list=bl)
         self.assertEqual(ind, 1)
         
-        ind = uvUtils.antenna2baseline(0, 3, standList, IncludeAuto=False, Indicies=True)
+        ind = uvUtils.antenna2baseline(0, 3, standList, include_auto=False, indicies=True)
         self.assertEqual(ind, 2)
         
     def test_computeUVW(self):

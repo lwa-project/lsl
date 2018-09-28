@@ -1,4 +1,5 @@
 1.3.0
+  * Major API changes to put LSL under a uniform coding style
   * Added a new extension to speed up w-projection gridding
   * Merged the non-windowed and windowed functions in the lsl.correlator extensions to de-duplicate some of the codebase
 

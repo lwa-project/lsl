@@ -39,16 +39,16 @@ class uvUtilsError(Exception):
         return "%s" % self.strerror
 
 
-def getBaselines(antennas, antennas2=None, IncludeAuto=False, Indicies=False):
+def getBaselines(antennas, antennas2=None, include_auto=False, indicies=False):
     """
     Generate a list of two-element tuples that describe which antennae
     compose each of the output uvw triplets from computeUVW/computeUVTrack.
-    If the Indicies keyword is set to True, the two-element tuples 
+    If the indicies keyword is set to True, the two-element tuples 
     contain the indicies of the stands array used, rather than the actual
     stand numbers.
     """
 
-    if IncludeAuto:
+    if include_auto:
         offset = 0
     else:
         offset = 1
@@ -62,7 +62,7 @@ def getBaselines(antennas, antennas2=None, IncludeAuto=False, Indicies=False):
     
     for i in range(0, N-offset):
         for j in range(i+offset, N):
-            if Indicies:
+            if indicies:
                 out.append( (i, j) )
             else:
                 out.append( (antennas[i], antennas2[j]) )
@@ -70,7 +70,7 @@ def getBaselines(antennas, antennas2=None, IncludeAuto=False, Indicies=False):
     return out
     
 
-def baseline2antenna(baseline, antennas, antennas2=None, BaselineList=None, IncludeAuto=False, Indicies=False):
+def baseline2antenna(baseline, antennas, antennas2=None, baseline_list=None, include_auto=False, indicies=False):
     """
     Given a baseline number, a list of stands, and options of how the base-
     line listed was generated, convert the baseline number to antenna numbers.
@@ -83,15 +83,15 @@ def baseline2antenna(baseline, antennas, antennas2=None, BaselineList=None, Incl
         antennas2 = antennas
 
     # Build up the list of baselines using the options provided
-    if BaselineList is None:
-        BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indicies)
+    if baseline_list is None:
+        baseline_list = getBaselines(antennas, antennas2=antennas2, include_auto=include_auto, indicies=indicies)
     
-    # Select the correct one and return based on the value of Indicies
-    i,j = BaselineList[baseline]
+    # Select the correct one and return based on the value of indicies
+    i,j = baseline_list[baseline]
     return i,j
 
 
-def antenna2baseline(ant1, ant2, antennas, antennas2=None, BaselineList=None, IncludeAuto=False, Indicies=False):
+def antenna2baseline(ant1, ant2, antennas, antennas2=None, baseline_list=None, include_auto=False, indicies=False):
     """
     Given two antenna numbers, a list of stands, and options to how the base-
     line listed was generated, convert the antenna pair to  a baseline number. 
@@ -104,13 +104,13 @@ def antenna2baseline(ant1, ant2, antennas, antennas2=None, BaselineList=None, In
         antennas2 = antennas
 
     # Build up the list of baselines using the options provided
-    if BaselineList is None:
-        BaselineList = getBaselines(antennas, antennas2=antennas2, IncludeAuto=IncludeAuto, Indicies=Indicies)
+    if baseline_list is None:
+        baseline_list = getBaselines(antennas, antennas2=antennas2, include_auto=include_auto, indicies=indicies)
     
     # Loop over the baselines until we find one that matches.  If we don't find 
     # one, return -1
     i = 0
-    for baseline in BaselineList:
+    for baseline in baseline_list:
         if ant1 in baseline and ant2 in baseline:
             return i
         else:
@@ -119,7 +119,7 @@ def antenna2baseline(ant1, ant2, antennas, antennas2=None, BaselineList=None, In
         return -1
 
 
-def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto=False):
+def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_auto=False):
     """
     Compute the uvw converate of a baselines formed by a collection of 
     stands.  The coverage is computed at a given HA (in hours) and 
@@ -148,7 +148,7 @@ def computeUVW(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, IncludeAuto
     except (AttributeError, AssertionError):
         freq = numpy.array(freq, ndmin=1)
         
-    baselines = getBaselines(antennas, IncludeAuto=IncludeAuto, Indicies=True)
+    baselines = getBaselines(antennas, include_auto=include_auto, indicies=True)
     Nbase = len(baselines)
     Nfreq = freq.size
     uvw = numpy.zeros((Nbase,3,Nfreq))
@@ -216,7 +216,7 @@ def computeUVTrack(antennas, dec=34.070, freq=49.0e6, site=lwa1):
                     [0,  numpy.cos(lat2), numpy.sin(lat2)]])
                     
     count = 0
-    for i,j in getBaselines(antennas, Indicies=True):
+    for i,j in getBaselines(antennas, indicies=True):
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
         xyzPrime = antennas[i].stand - antennas[j].stand

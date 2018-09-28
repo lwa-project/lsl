@@ -10,7 +10,7 @@ on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
 """
 
 import numpy
-from fx import noWindow
+from fx import NullWindow
 
 try:
     import os
@@ -57,7 +57,7 @@ def __filterCoeff(N, P):
     return numpy.sinc((t - N*P/2.0 + 0.5)/N)
 
 
-def fft(signal, N, P=1, window=noWindow):
+def fft(signal, N, P=1, window=NullWindow):
     """
     FFT-based poly-phase filter bank for creating N channels with P
     taps.  Optionally, a window function can be specified using the 
@@ -92,35 +92,35 @@ def fft(signal, N, P=1, window=noWindow):
                 
     return fbOutput
 
-def fft2(signal, N, window=noWindow):
+def fft2(signal, N, window=NullWindow):
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses two taps.
     """
 
     return fft(signal, N, P=2, window=window)
 
-def fft4(signal, N, window=noWindow):
+def fft4(signal, N, window=NullWindow):
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses four taps.
     """
 
     return fft(signal, N, P=4, window=window)
 
-def fft8(signal, N, window=noWindow):
+def fft8(signal, N, window=NullWindow):
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses eight taps.
     """
 
     return fft(signal, N, P=8, window=window)
 
-def fft16(signal, N, window=noWindow):
+def fft16(signal, N, window=NullWindow):
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses 16 taps.
     """
 
     return fft(signal, N, P=16, window=window)
 
-def fft32(signal, N, window=noWindow):
+def fft32(signal, N, window=NullWindow):
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses 32 taps.
     """
