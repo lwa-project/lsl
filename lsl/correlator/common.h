@@ -2,6 +2,8 @@
 #define CORRELATOR_COMMON_H_INCLUDE_GUARD_
 
 #include "Python.h"
+#include <cmath>
+#include <complex>
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
@@ -21,13 +23,6 @@ inline void read_wisdom(char *filename, PyObject *m) {
     }
     PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));
 }
-
-
-/*
-  Macro for 2*pi
-*/
-
-#define TPI (2*NPY_PI*_Complex_I)
 
 
 /*
@@ -58,14 +53,48 @@ inline double sinc(double x) {
 
 
 /*
+  Complex types
+*/
+
+typedef std::complex<float> Complex32;
+typedef std::complex<double> Complex64;
+
+
+/*
+  Macro for 2*pi
+*/
+
+#define TPI (2*NPY_PI*Complex64(0,1))
+
+
+/*
+  fftwf_complex math helpers
+*/
+
+
+inline float real(fftwf_complex z) {
+    return z[0];
+}
+inline float imag(fftwf_complex z) {
+    return z[1];
+}
+inline float abs(fftwf_complex z) {
+    return std::sqrt(z[0]*z[0] + z[1]*z[1]);
+}
+inline float abs2(fftwf_complex z) {
+    return z[0]*z[0] + z[1]*z[1];
+}
+
+
+/*
   Complex magnitude squared functions
 */
 
-inline float cabs2(float complex z) {
-    return crealf(z)*crealf(z) + cimagf(z)*cimagf(z);
+inline float abs2(Complex32 z) {
+    return z.real()*z.real() + z.imag()*z.imag();
 }
-inline double cabs2(double complex z) {
-    return creal(z)*creal(z) + cimag(z)*cimag(z);
+inline double abs2(Complex64 z) {
+    return z.real()*z.real() + z.imag()*z.imag();
 }
 
 #endif // CORRELATOR_COMMON_H_INCLUDE_GUARD_

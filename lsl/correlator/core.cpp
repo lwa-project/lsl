@@ -1,9 +1,7 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <complex.h>
+#include <cmath>
+#include <complex>
 #include <fftw3.h>
-#include <stdlib.h>
 
 #ifdef _OPENMP
     #include <omp.h>
@@ -33,8 +31,8 @@ static PyObject *windowFunc = NULL;
 Function to compute the interger and fractional delays for a set of inputs
 */
 
-long compute_delay_components(int nStand, 
-                              int nChan, 
+long compute_delay_components(long nStand, 
+                              long nChan, 
                               double SampleRate, 
                               double const* delay,
                               long* fifo, 
@@ -75,6 +73,40 @@ long compute_delay_components(int nStand,
 
 
 /*
+  Function to build the phase rotator
+*/
+
+template<typename OutType>
+void compute_phase_rotator(long nStand, 
+                           long nChan, 
+                           double SampleRate, 
+                           long ChanRef,
+                           float norm,
+                           double const* freq,
+                           const long* fifo, 
+                           const double* frac,
+                           OutType* rot) {
+    long ij, i, j;
+    
+    #ifdef _OPENMP
+        #pragma omp parallel default(shared) private(i, j)
+    #endif
+    {
+        #ifdef _OPENMP
+            #pragma omp for schedule(OMP_SCHEDULER)
+        #endif
+        for(ij=0; ij<nStand*nChan; ij++) {
+            i = ij / nChan;
+            j = ij % nChan;
+            *(rot + nChan*i + j)  = exp(TPI * *(freq + j) * *(frac + nChan*i + j));
+            *(rot + nChan*i + j) *= exp(TPI * *(freq + ChanRef) / SampleRate * (double) *(fifo + i));
+            *(rot + nChan*i + j) /= sqrt(norm);
+        }
+    }
+}
+
+
+/*
 FFT Functions ("F-engines")
     1. FEngine - FFT a real or complex-valued collection of signals
 */
@@ -101,9 +133,9 @@ void compute_fengine_real(long nStand,
     
     // Create the FFTW plan                          
     float *inP, *in;                          
-    float complex *outP, *out;
+    fftwf_complex *outP, *out;
     inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-    outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
+    outP = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
     fftwf_plan p;
     p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
     
@@ -114,30 +146,16 @@ void compute_fengine_real(long nStand,
     double cleanFactor;
     
     // Pre-compute the phase rotation and scaling factor
-    float complex *rot;
-    rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
-    #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(i, j)
-    #endif
-    {
-        #ifdef _OPENMP
-            #pragma omp for schedule(OMP_SCHEDULER)
-        #endif
-        for(ij=0; ij<nStand*nChan; ij++) {
-            i = ij / nChan;
-            j = ij % nChan;
-            *(rot + nChan*i + j)  = cexp(TPI * *(freq + j) * *(frac + nChan*i + j));
-            *(rot + nChan*i + j) *= cexp(TPI * *(freq + 0) / SampleRate * *(fifo + i));
-            *(rot + nChan*i + j) /= sqrt(2*nChan);
-        }
-    }
+    OutType* rot;
+    rot = (OutType*) malloc(sizeof(OutType) * nStand*nChan);
+    compute_phase_rotator(nStand, nChan, SampleRate, 0, 2*nChan, freq, fifo, frac, rot);
     
     #ifdef _OPENMP
         #pragma omp parallel default(shared) private(in, out, i, j, k, secStart, cleanFactor)
     #endif
     {
         in = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-        out = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
+        out = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -152,7 +170,7 @@ void compute_fengine_real(long nStand,
             for(k=0; k<2*nChan; k++) {
                 in[k] = (float) *(data + secStart + k);
                 
-                if( Clip && fabsf(in[k]) >= Clip ) {
+                if( Clip && abs(in[k]) >= Clip ) {
                     cleanFactor = 0.0;
                 }
                 
@@ -164,7 +182,8 @@ void compute_fengine_real(long nStand,
             fftwf_execute_dft_r2c(p, in, out);
             
             for(k=0; k<nChan; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*out[k];
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor \
+                                                          * OutType(out[k][0], out[k][1]);
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             
@@ -206,8 +225,8 @@ void compute_fengine_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    float complex *inP, *in;
-    inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+    fftwf_complex *inP, *in;
+    inP = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
     fftwf_plan p;
     p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
     
@@ -218,29 +237,15 @@ void compute_fengine_complex(long nStand,
     double cleanFactor;
     
     // Pre-compute the phase rotation and scaling factor
-    float complex *rot;
-    rot = (float complex *) malloc(sizeof(float complex) * nStand*nChan);
-    #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(i, j)
-    #endif
-    {
-        #ifdef _OPENMP
-            #pragma omp for schedule(OMP_SCHEDULER)
-        #endif
-        for(ij=0; ij<nStand*nChan; ij++) {
-            i = ij / nChan;
-            j = ij % nChan;
-            *(rot + nChan*i + j)  = cexp(TPI * *(freq + j) * *(frac + nChan*i + j));
-            *(rot + nChan*i + j) *= cexp(TPI * *(freq + nChan/2) / SampleRate * *(fifo + i));
-            *(rot + nChan*i + j) /= sqrt(nChan);
-        }
-    }
+    OutType* rot;
+    rot = (OutType*) malloc(sizeof(OutType) * nStand*nChan);
+    compute_phase_rotator(nStand, nChan, SampleRate, nChan/2, nChan, freq, fifo, frac, rot);
     
     #ifdef _OPENMP
         #pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor)
     #endif
     {
-        in = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+        in = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -253,25 +258,29 @@ void compute_fengine_complex(long nStand,
             secStart = *(fifo + i) + nSamps*i + nChan*j/Overlap;
             
             for(k=0; k<nChan; k++) {
-                in[k] = *(data + secStart + k);
+                in[k][0] = (float) *(data + 2*secStart + 2*k + 0);
+                in[k][1] = (float) *(data + 2*secStart + 2*k + 1);
                 
-                if( Clip && cabsf(in[k]) >= Clip ) {
+                if( Clip && abs(in[k]) >= Clip ) {
                     cleanFactor = 0.0;
                 }
                 
                 if( window != NULL ) {
-                    in[k] *= *(window + k);
+                    in[k][0] *= *(window + k);
+                    in[k][1] *= *(window + k);
                 }
             }
             
             fftwf_execute_dft(p, in, in);
             
             for(k=0; k<nChan/2; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k+nChan/2+nChan%2];
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor \
+                                                          * OutType(in[k+nChan/2+nChan%2][0], in[k+nChan/2+nChan%2][1]);
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             for(k=nChan/2; k<nChan; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = cleanFactor*in[k-nChan/2];
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor \
+                                                          * OutType(in[k-nChan/2][0], in[k-nChan/2][1]);
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             
@@ -406,7 +415,7 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
                                        (double*) PyArray_DATA(freq), \
                                        (long*) fifo, (double*) frac, \
                                        (double*) PyArray_SAFE_DATA(windowData), \
-                                       (float complex*) PyArray_DATA(dataF), \
+                                       (Complex32*) PyArray_DATA(dataF), \
                                        (unsigned char*) PyArray_DATA(validF))
 #define LAUNCH_FENGINE_COMPLEX(IterType) \
         compute_fengine_complex<IterType>(nStand, nSamps, nFFT, nChan, Overlap, Clip, SampleRate, \
@@ -414,18 +423,18 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
                                           (double*) PyArray_DATA(freq), \
                                           (long*) fifo, (double*) frac, \
                                           (double*) PyArray_SAFE_DATA(windowData), \
-                                          (float complex*) PyArray_DATA(dataF), \
+                                          (Complex32*) PyArray_DATA(dataF), \
                                           (unsigned char*) PyArray_DATA(validF))
     
     switch( PyArray_TYPE(data) ){
-        case( NPY_INT8       ): LAUNCH_FENGINE_REAL(int8_t);            break;
-        case( NPY_INT16      ): LAUNCH_FENGINE_REAL(int16_t);           break;
-        case( NPY_INT32      ): LAUNCH_FENGINE_REAL(int);               break;
-        case( NPY_INT64      ): LAUNCH_FENGINE_REAL(long);              break;
-        case( NPY_FLOAT32    ): LAUNCH_FENGINE_REAL(float);             break;
-        case( NPY_FLOAT64    ): LAUNCH_FENGINE_REAL(double);            break;
-        case( NPY_COMPLEX64  ): LAUNCH_FENGINE_COMPLEX(float complex);  break;
-        case( NPY_COMPLEX128 ): LAUNCH_FENGINE_COMPLEX(double complex); break;
+        case( NPY_INT8       ): LAUNCH_FENGINE_REAL(int8_t);    break;
+        case( NPY_INT16      ): LAUNCH_FENGINE_REAL(int16_t);   break;
+        case( NPY_INT32      ): LAUNCH_FENGINE_REAL(int);       break;
+        case( NPY_INT64      ): LAUNCH_FENGINE_REAL(long);      break;
+        case( NPY_FLOAT32    ): LAUNCH_FENGINE_REAL(float);     break;
+        case( NPY_FLOAT64    ): LAUNCH_FENGINE_REAL(double);    break;
+        case( NPY_COMPLEX64  ): LAUNCH_FENGINE_COMPLEX(float);  break;
+        case( NPY_COMPLEX128 ): LAUNCH_FENGINE_COMPLEX(double); break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         
@@ -560,11 +569,11 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
     
     // Cross-multiplication and accumulation
     long bl, c, f;
-    float complex tempVis;
-    float complex *a, *b, *v;
-    a = (float complex *) PyArray_DATA(data1);
-    b = (float complex *) PyArray_DATA(data2);
-    v = (float complex *) PyArray_DATA(vis);
+    Complex32 tempVis;
+    Complex32 *a, *b, *v;
+    a = (Complex32 *) PyArray_DATA(data1);
+    b = (Complex32 *) PyArray_DATA(data2);
+    v = (Complex32 *) PyArray_DATA(vis);
     
     // Time-domain blanking control
     long nActVis;
@@ -587,7 +596,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
             
             for(c=0; c<nChan; c++) {
                 blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + bl*nChan + c) = tempVis / nActVis;
+                *(v + bl*nChan + c) = tempVis / (float) nActVis;
             }
         }
     }
@@ -708,11 +717,11 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
     
     // Cross-multiplication and accumulation
     long bl, c, f;
-    float complex tempVis;
-    float complex *a, *b, *v;
-    a = (float complex *) PyArray_DATA(dataX);
-    b = (float complex *) PyArray_DATA(dataY);
-    v = (float complex *) PyArray_DATA(vis);
+    Complex32 tempVis;
+    Complex32 *a, *b, *v;
+    a = (Complex32 *) PyArray_DATA(dataX);
+    b = (Complex32 *) PyArray_DATA(dataY);
+    v = (Complex32 *) PyArray_DATA(vis);
     
     // Time-domain blanking control
     long nActVisPureX, nActVisPureY, nActVisCross;
@@ -740,18 +749,18 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
             for(c=0; c<nChan; c++) {
                 // XX
                 blas_dotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + 0*nBL*nChan + bl*nChan + c) = tempVis / nActVisPureX;
+                *(v + 0*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureX;
                 
                 // XY
                 blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + 1*nBL*nChan + bl*nChan + c) = tempVis / nActVisCross;
+                *(v + 1*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross;
                 
                 // YX
-                *(v + 2*nBL*nChan + bl*nChan + c) = conjf(*(v + 1*nBL*nChan + bl*nChan + c));
+                *(v + 2*nBL*nChan + bl*nChan + c) = conj(*(v + 1*nBL*nChan + bl*nChan + c));
                 
                 // YY
                 blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + 3*nBL*nChan + bl*nChan + c) = tempVis / nActVisPureY;
+                *(v + 3*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureY;
             }
         }
     }

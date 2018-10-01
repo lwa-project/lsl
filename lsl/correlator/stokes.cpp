@@ -1,9 +1,7 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <complex.h>
+#include <cmath>
+#include <complex>
 #include <fftw3.h>
-#include <stdlib.h>
 
 #ifdef _OPENMP
     #include <omp.h>
@@ -52,9 +50,9 @@ void compute_psd_real(long nStand,
     
     // Create the FFTW plan                          
     float *inP, *inX, *inY;                          
-    float complex *outP, *outX, *outY;
+    fftwf_complex *outP, *outX, *outY;
     inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-    outP = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
+    outP = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
     fftwf_plan p;
     p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
     
@@ -71,8 +69,8 @@ void compute_psd_real(long nStand,
     {
         inX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
         inY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-        outX = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
-        outY = (float complex *) fftwf_malloc(sizeof(float complex) * (nChan+1));
+        outX = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
+        outY = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -88,7 +86,7 @@ void compute_psd_real(long nStand,
                     inX[k] = (float) *(dataX + secStart + k);
                     inY[k] = (float) *(dataY + secStart + k);
                     
-                    if( Clip && ( fabsf(inX[k]) >= Clip || fabsf(inY[k]) >= Clip ) ) {
+                    if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
                         cleanFactor = 0.0;
                     }
                     
@@ -103,20 +101,20 @@ void compute_psd_real(long nStand,
                 
                 for(k=0; k<nChan; k++) {
                     // I
-                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2(outX[k]);
-                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2(outY[k]);
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(outX[k]);
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(outY[k]);
                     
                     // Q
-                    *(psd + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2(outX[k]);
-                    *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2(outY[k]);
+                    *(psd + 1*nChan*nStand + nChan*i + k) += cleanFactor*abs2(outX[k]);
+                    *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*abs2(outY[k]);
                     
                     // U
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(outX[k])*crealf(outY[k]);
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(outX[k])*cimagf(outY[k]);
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*real(outX[k])*real(outY[k]);
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*imag(outX[k])*imag(outY[k]);
                     
                     // V
-                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(outX[k])*crealf(outY[k]);
-                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(outX[k])*cimagf(outY[k]);
+                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*imag(outX[k])*real(outY[k]);
+                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*real(outX[k])*imag(outY[k]);
                 }
                 
                 nActFFT += (long) cleanFactor;
@@ -158,8 +156,8 @@ void compute_psd_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    float complex *inP, *inX, *inY;
-    inP = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+    fftwf_complex *inP, *inX, *inY;
+    inP = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
     fftwf_plan p;
     p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
     
@@ -175,8 +173,8 @@ void compute_psd_complex(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, i, j, k, secStart, cleanFactor, nActFFT, temp2)
     #endif
     {
-        inX = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
-        inY = (float complex*) fftwf_malloc(sizeof(float complex) * nChan);
+        inX = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+        inY = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
         temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
         
         #ifdef _OPENMP
@@ -190,16 +188,20 @@ void compute_psd_complex(long nStand,
                 secStart = nSamps * i + nChan*j/Overlap;
                 
                 for(k=0; k<nChan; k++) {
-                    inX[k] = *(dataX + secStart + k);
-                    inY[k] = *(dataY + secStart + k);
+                    inX[k][0] = (float) *(dataX + 2*secStart + 2*k + 0);
+                    inX[k][1] = (float) *(dataX + 2*secStart + 2*k + 1);
+                    inY[k][0] = (float) *(dataY + 2*secStart + 2*k + 0);
+                    inY[k][1] = (float) *(dataY + 2*secStart + 2*k + 1);
                     
-                    if( Clip && ( cabsf(inX[k]) >= Clip || cabsf(inY[k]) >= Clip ) ) {
+                    if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
                         cleanFactor = 0.0;
                     }
                     
                     if( window != NULL ) {
-                        inX[k] *= *(window + k);
-                        inY[k] *= *(window + k);
+                        inX[k][0] *= *(window + k);
+                        inX[k][1] *= *(window + k);
+                        inY[k][0] *= *(window + k);
+                        inY[k][1] *= *(window + k);
                     }
                 }
                 
@@ -208,20 +210,20 @@ void compute_psd_complex(long nStand,
                 
                 for(k=0; k<nChan; k++) {
                     // I
-                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2(inX[k]);
-                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*cabs2(inY[k]);
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(inX[k]);
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(inY[k]);
                     
                     // Q
-                    *(psd + 1*nChan*nStand + nChan*i + k) += cleanFactor*cabs2(inX[k]);
-                    *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*cabs2(inY[k]);
+                    *(psd + 1*nChan*nStand + nChan*i + k) += cleanFactor*abs2(inX[k]);
+                    *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*abs2(inY[k]);
                     
                     // U
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*crealf(inX[k])*crealf(inY[k]);
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*cimagf(inX[k])*cimagf(inY[k]);
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*real(inX[k])*real(inY[k]);
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*imag(inX[k])*imag(inY[k]);
                     
                     // V
-                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*cimagf(inX[k])*crealf(inY[k]);
-                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*crealf(inX[k])*cimagf(inY[k]);
+                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*imag(inX[k])*real(inY[k]);
+                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*real(inX[k])*imag(inY[k]);
                 }
                 
                 nActFFT += (long) cleanFactor;
@@ -338,14 +340,14 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
                                       (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(dataX) ){
-        case( NPY_INT8       ): LAUNCH_PSD_REAL(int8_t);            break;
-        case( NPY_INT16      ): LAUNCH_PSD_REAL(int16_t);           break;
-        case( NPY_INT32      ): LAUNCH_PSD_REAL(int);               break;
-        case( NPY_INT64      ): LAUNCH_PSD_REAL(long);              break;
-        case( NPY_FLOAT32    ): LAUNCH_PSD_REAL(float);             break;
-        case( NPY_FLOAT64    ): LAUNCH_PSD_REAL(double);            break;
-        case( NPY_COMPLEX64  ): LAUNCH_PSD_COMPLEX(float complex);  break;
-        case( NPY_COMPLEX128 ): LAUNCH_PSD_COMPLEX(double complex); break;
+        case( NPY_INT8       ): LAUNCH_PSD_REAL(int8_t);    break;
+        case( NPY_INT16      ): LAUNCH_PSD_REAL(int16_t);   break;
+        case( NPY_INT32      ): LAUNCH_PSD_REAL(int);       break;
+        case( NPY_INT64      ): LAUNCH_PSD_REAL(long);      break;
+        case( NPY_FLOAT32    ): LAUNCH_PSD_REAL(float);     break;
+        case( NPY_FLOAT64    ): LAUNCH_PSD_REAL(double);    break;
+        case( NPY_COMPLEX64  ): LAUNCH_PSD_COMPLEX(float);  break;
+        case( NPY_COMPLEX128 ): LAUNCH_PSD_COMPLEX(double); break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         
@@ -469,11 +471,11 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
     
     // Cross-multiplication and accumulation
     long bl, c, f;
-    float complex tempVis1, tempVis2;
-    float complex *a, *b, *v;
-    a = (float complex *) PyArray_DATA(dataX);
-    b = (float complex *) PyArray_DATA(dataY);
-    v = (float complex *) PyArray_DATA(vis);
+    Complex32 tempVis1, tempVis2;
+    Complex32 *a, *b, *v;
+    a = (Complex32 *) PyArray_DATA(dataX);
+    b = (Complex32 *) PyArray_DATA(dataY);
+    v = (Complex32 *) PyArray_DATA(vis);
     
     // Time-domain blanking control
     long nActVis;
@@ -498,18 +500,18 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
                 // I
                 blas_dotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
                 blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis2);
-                *(v + 0*nBL*nChan + bl*nChan + c) = (tempVis1 + tempVis2) / nActVis;
+                *(v + 0*nBL*nChan + bl*nChan + c) = (tempVis1 + tempVis2) / (float) nActVis;
                 
                 // Q
-                *(v + 1*nBL*nChan + bl*nChan + c) = (tempVis1 - tempVis2) / nActVis;
+                *(v + 1*nBL*nChan + bl*nChan + c) = (tempVis1 - tempVis2) / (float) nActVis;
                 
                 // U
                 blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis1);
                 blas_dotc_sub(nFFT, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, &tempVis2);
-                *(v + 2*nBL*nChan + bl*nChan + c) = (tempVis1 + tempVis2) / nActVis;
+                *(v + 2*nBL*nChan + bl*nChan + c) = (tempVis1 + tempVis2) / (float) nActVis;
                 
                 // V
-                *(v + 3*nBL*nChan + bl*nChan + c) = (tempVis1 - tempVis2) / nActVis / _Complex_I;
+                *(v + 3*nBL*nChan + bl*nChan + c) = (tempVis1 - tempVis2) / (float) nActVis / Complex32(0,1);
             }
         }
     }

@@ -1,10 +1,12 @@
 #ifndef CORRELATOR_BLAS_H_INCLUDE_GUARD_
 #define CORRELATOR_BLAS_H_INCLUDE_GUARD_
 
-#include <complex.h>
+#include <complex>
 extern "C" {
     #include <cblas.h>
 }
+
+#include "common.h"
 
 /*
   Easy BLAS for C++
@@ -26,15 +28,15 @@ inline void blas_scal(const int N,
 
 // cbals_[cz]dotc_sub wrappers
 inline void blas_dotc_sub(const int N, 
-                          const float complex* X, const int incX, 
-                          const float complex* Y, const int incY,
-                          float complex* dotc) {
+                          const Complex32* X, const int incX, 
+                          const Complex32* Y, const int incY,
+                          Complex32* dotc) {
     cblas_cdotc_sub(N, X, incX, Y, incY, dotc);
 }
 inline void blas_dotc_sub(const int N, 
-                          const double complex* X, const int incX, 
-                          const double complex* Y, const int incY,
-                          double complex* dotc) {
+                          const Complex64* X, const int incX, 
+                          const Complex64* Y, const int incY,
+                          Complex64* dotc) {
     cblas_zdotc_sub(N, X, incX, Y, incY, dotc);
 }
 
