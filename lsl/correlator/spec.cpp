@@ -84,7 +84,7 @@ void compute_psd_real(long nStand,
                 for(k=0; k<2*nChan; k++) {
                     in[k] = (float) *(data + secStart + k);
                     
-                    if( Clip && abs(in[k]) >= Clip ) {
+                    if( Clip && fabs(in[k]) >= Clip ) {
                         cleanFactor = 0.0;
                     }
                     

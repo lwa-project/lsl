@@ -89,7 +89,7 @@ void compute_psd_real(long nStand,
                     inX[k] = (float) *(dataX + secStart + k);
                     inY[k] = (float) *(dataY + secStart + k);
                     
-                    if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
+                    if( Clip && ( fabs(inX[k]) >= Clip || fabs(inY[k]) >= Clip ) ) {
                         cleanFactor = 0.0;
                     }
                     
