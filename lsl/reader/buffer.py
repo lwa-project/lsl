@@ -30,11 +30,7 @@ Buffer for dealing with out-of-order/missing frames.
 """
 
 import copy
-from collections import deque
-try:
-    from collections import OrderedDict
-except ImportError:
-    from lsl.misc.OrderedDict import OrderedDict
+from collections import deque, OrderedDict
 
 
 __version__ = '1.2'

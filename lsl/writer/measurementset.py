@@ -20,16 +20,12 @@ import ephem
 import numpy
 import shutil
 from datetime import datetime
+from collections import OrderedDict
 
 from lsl import astro
 from lsl.misc import geodesy
 from lsl.common import constants
 from lsl.misc.total_sorting import cmp_to_total
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from lsl.misc.OrderedDict import OrderedDict
 
 from casacore.tables import table, tableutil
 

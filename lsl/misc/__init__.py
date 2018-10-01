@@ -8,7 +8,6 @@ lsl.misc - Miscellanous modules including:
  * ionosphere     - access to ionospheric and geomagnetic models, 
  * dedispersion   - dedispersion module,
  * scattering     - multi-path scattering module, 
- * OrderedDict    - backport of the OrderedDict class from Python 2.7, 
  * rfutil         - convert RF engineering lingo into radio astrnomy lingo, and
  * wisdom         - build LSL-specific FFTW and PyFFTW wisdom.
 """
