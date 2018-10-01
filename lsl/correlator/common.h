@@ -68,25 +68,6 @@ typedef std::complex<double> Complex64;
 
 
 /*
-  fftwf_complex math helpers
-*/
-
-
-inline float real(fftwf_complex z) {
-    return z[0];
-}
-inline float imag(fftwf_complex z) {
-    return z[1];
-}
-inline float abs(fftwf_complex z) {
-    return std::sqrt(z[0]*z[0] + z[1]*z[1]);
-}
-inline float abs2(fftwf_complex z) {
-    return z[0]*z[0] + z[1]*z[1];
-}
-
-
-/*
   Complex magnitude squared functions
 */
 

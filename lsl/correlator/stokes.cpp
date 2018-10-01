@@ -50,11 +50,14 @@ void compute_psd_real(long nStand,
     
     // Create the FFTW plan                          
     float *inP, *inX, *inY;                          
-    fftwf_complex *outP, *outX, *outY;
-    inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-    outP = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
+    Complex32 *outP, *outX, *outY;
+    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan);
+    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1));
     fftwf_plan p;
-    p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
+    p = fftwf_plan_dft_r2c_1d(2*nChan, \
+                              inP, \
+                              reinterpret_cast<fftwf_complex*>(outP), \
+                              FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -67,10 +70,10 @@ void compute_psd_real(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, secStart, cleanFactor, nActFFT)
     #endif
     {
-        inX = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-        inY = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-        outX = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
-        outY = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
+        inX = (float*) fftwf_malloc(sizeof(float) * 2*nChan);
+        inY = (float*) fftwf_malloc(sizeof(float) * 2*nChan);
+        outX = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1));
+        outY = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -96,8 +99,12 @@ void compute_psd_real(long nStand,
                     }
                 }
                 
-                fftwf_execute_dft_r2c(p, inX, outX);
-                fftwf_execute_dft_r2c(p, inY, outY);
+                fftwf_execute_dft_r2c(p, \
+                                      inX, \
+                                      reinterpret_cast<fftwf_complex*>(outX));
+                fftwf_execute_dft_r2c(p, \
+                                      inY, \
+                                      reinterpret_cast<fftwf_complex*>(outY));
                 
                 for(k=0; k<nChan; k++) {
                     // I
@@ -109,12 +116,12 @@ void compute_psd_real(long nStand,
                     *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*abs2(outY[k]);
                     
                     // U
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*real(outX[k])*real(outY[k]);
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*imag(outX[k])*imag(outY[k]);
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*outX[k].real()*outY[k].real();
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*outX[k].imag()*outY[k].imag();
                     
                     // V
-                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*imag(outX[k])*real(outY[k]);
-                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*real(outX[k])*imag(outY[k]);
+                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*outX[k].imag()*outY[k].real();
+                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*outX[k].real()*outY[k].imag();
                 }
                 
                 nActFFT += (long) cleanFactor;
@@ -156,10 +163,13 @@ void compute_psd_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    fftwf_complex *inP, *inX, *inY;
-    inP = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+    Complex32 *inP, *inX, *inY;
+    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan);
     fftwf_plan p;
-    p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
+    p = fftwf_plan_dft_1d(nChan, \
+                          reinterpret_cast<fftwf_complex*>(inP), \
+                          reinterpret_cast<fftwf_complex*>(inP), \
+                          FFTW_FORWARD, FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -173,9 +183,9 @@ void compute_psd_complex(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, i, j, k, secStart, cleanFactor, nActFFT, temp2)
     #endif
     {
-        inX = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
-        inY = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
-        temp2 = (double *) malloc(sizeof(double)*(nChan/2+nChan%2));
+        inX = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan);
+        inY = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan);
+        temp2 = (double*) malloc(sizeof(double) * (nChan/2+nChan%2));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -188,25 +198,27 @@ void compute_psd_complex(long nStand,
                 secStart = nSamps * i + nChan*j/Overlap;
                 
                 for(k=0; k<nChan; k++) {
-                    inX[k][0] = (float) *(dataX + 2*secStart + 2*k + 0);
-                    inX[k][1] = (float) *(dataX + 2*secStart + 2*k + 1);
-                    inY[k][0] = (float) *(dataY + 2*secStart + 2*k + 0);
-                    inY[k][1] = (float) *(dataY + 2*secStart + 2*k + 1);
+                    inX[k] = Complex32(*(dataX + 2*secStart + 2*k + 0), \
+                                       *(dataX + 2*secStart + 2*k + 1));
+                    inY[k] = Complex32(*(dataY + 2*secStart + 2*k + 0), \
+                                       *(dataY + 2*secStart + 2*k + 1));
                     
                     if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
                         cleanFactor = 0.0;
                     }
                     
                     if( window != NULL ) {
-                        inX[k][0] *= *(window + k);
-                        inX[k][1] *= *(window + k);
-                        inY[k][0] *= *(window + k);
-                        inY[k][1] *= *(window + k);
+                        inX[k] *= *(window + k);
+                        inY[k] *= *(window + k);
                     }
                 }
                 
-                fftwf_execute_dft(p, inX, inX);
-                fftwf_execute_dft(p, inY, inY);
+                fftwf_execute_dft(p, \
+                                  reinterpret_cast<fftwf_complex*>(inX), \
+                                  reinterpret_cast<fftwf_complex*>(inX));
+                fftwf_execute_dft(p,  \
+                                  reinterpret_cast<fftwf_complex*>(inY), \
+                                  reinterpret_cast<fftwf_complex*>(inY));
                 
                 for(k=0; k<nChan; k++) {
                     // I
@@ -218,12 +230,12 @@ void compute_psd_complex(long nStand,
                     *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*abs2(inY[k]);
                     
                     // U
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*real(inX[k])*real(inY[k]);
-                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*imag(inX[k])*imag(inY[k]);
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k].real()*inY[k].real();
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k].imag()*inY[k].imag();
                     
                     // V
-                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*imag(inX[k])*real(inY[k]);
-                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*real(inX[k])*imag(inY[k]);
+                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*inX[k].imag()*inY[k].real();
+                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*inX[k].real()*inY[k].imag();
                 }
                 
                 nActFFT += (long) cleanFactor;

@@ -133,11 +133,14 @@ void compute_fengine_real(long nStand,
     
     // Create the FFTW plan                          
     float *inP, *in;                          
-    fftwf_complex *outP, *out;
-    inP = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-    outP = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
+    Complex32 *outP, *out;
+    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan);
+    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1));
     fftwf_plan p;
-    p = fftwf_plan_dft_r2c_1d(2*nChan, inP, outP, FFTW_ESTIMATE);
+    p = fftwf_plan_dft_r2c_1d(2*nChan, \
+                              inP, \
+                              reinterpret_cast<fftwf_complex*>(outP), \
+                              FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -154,8 +157,8 @@ void compute_fengine_real(long nStand,
         #pragma omp parallel default(shared) private(in, out, i, j, k, secStart, cleanFactor)
     #endif
     {
-        in = (float *) fftwf_malloc(sizeof(float) * 2*nChan);
-        out = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * (nChan+1));
+        in = (float*) fftwf_malloc(sizeof(float) * 2*nChan);
+        out = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -179,11 +182,12 @@ void compute_fengine_real(long nStand,
                 }
             }
             
-            fftwf_execute_dft_r2c(p, in, out);
+            fftwf_execute_dft_r2c(p, \
+                                  in, \
+                                  reinterpret_cast<fftwf_complex*>(out));
             
             for(k=0; k<nChan; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor \
-                                                          * OutType(out[k][0], out[k][1]);
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor * out[k];
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             
@@ -225,10 +229,13 @@ void compute_fengine_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    fftwf_complex *inP, *in;
-    inP = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+    Complex32 *inP, *in;
+    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan);
     fftwf_plan p;
-    p = fftwf_plan_dft_1d(nChan, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
+    p = fftwf_plan_dft_1d(nChan, \
+                          reinterpret_cast<fftwf_complex*>(inP), \
+                          reinterpret_cast<fftwf_complex*>(inP), \
+                          FFTW_FORWARD, FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -245,7 +252,7 @@ void compute_fengine_complex(long nStand,
         #pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor)
     #endif
     {
-        in = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * nChan);
+        in = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -258,29 +265,28 @@ void compute_fengine_complex(long nStand,
             secStart = *(fifo + i) + nSamps*i + nChan*j/Overlap;
             
             for(k=0; k<nChan; k++) {
-                in[k][0] = (float) *(data + 2*secStart + 2*k + 0);
-                in[k][1] = (float) *(data + 2*secStart + 2*k + 1);
+                in[k] = Complex32(*(data + 2*secStart + 2*k + 0), \
+                                  *(data + 2*secStart + 2*k + 1));
                 
                 if( Clip && abs(in[k]) >= Clip ) {
                     cleanFactor = 0.0;
                 }
                 
                 if( window != NULL ) {
-                    in[k][0] *= *(window + k);
-                    in[k][1] *= *(window + k);
+                    in[k] *= *(window + k);
                 }
             }
             
-            fftwf_execute_dft(p, in, in);
+            fftwf_execute_dft(p, \
+                              reinterpret_cast<fftwf_complex*>(in), \
+                              reinterpret_cast<fftwf_complex*>(in));
             
             for(k=0; k<nChan/2; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor \
-                                                          * OutType(in[k+nChan/2+nChan%2][0], in[k+nChan/2+nChan%2][1]);
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor * in[k+nChan/2+nChan%2];
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             for(k=nChan/2; k<nChan; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor \
-                                                          * OutType(in[k-nChan/2][0], in[k-nChan/2][1]);
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor * in[k-nChan/2];
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             

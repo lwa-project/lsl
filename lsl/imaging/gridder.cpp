@@ -1,9 +1,7 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <complex.h>
+#include <cmath>
+#include <complex>
 #include <fftw3.h>
-#include <stdlib.h>
 
 #ifdef _OPENMP
     #include <omp.h>
@@ -18,6 +16,7 @@
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
+#include "../correlator/common.h"
 
 
 // Maximum number of w-planes to project
@@ -25,23 +24,6 @@
 
 // Gridding convolution size on a side
 #define GRID_KERNEL_SIZE 7
-
-
-/*
- Load in FFTW wisdom.  Based on the read_wisdom function in PRESTO.
-*/
-
-void read_wisdom(char *filename, PyObject *m) {
-    int status = 0;
-    FILE *wisdomfile;
-    
-    wisdomfile = fopen(filename, "r");
-    if( wisdomfile != NULL ) {
-        status = fftwf_import_wisdom_from_file(wisdomfile);
-        fclose(wisdomfile);
-    }
-    PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));
-}
 
 
 double signed_sqrt(double data) {
@@ -69,11 +51,11 @@ double gridding_kernel_point(long i,
 void w_projection_kernel(long nPixSide, 
                          double uvRes, 
                          double w, 
-                         float complex* kernel) {
+                         Complex32* kernel) {
     long i,j,l,m;
     double cL, cM;
     
-    memset(kernel, 0, sizeof(float complex)*nPixSide*nPixSide);
+    memset(kernel, 0, sizeof(Complex32)*nPixSide*nPixSide);
     
     for(i=0; i<nPixSide; i++) {
         m = i;
@@ -90,7 +72,7 @@ void w_projection_kernel(long nPixSide,
             cL = ((double) l) / nPixSide / uvRes;
             
             if( cL*cL + cM*cM < 1.0 ) {
-                *(kernel + nPixSide*i + j) = cexp(-2*NPY_PI*_Complex_I*w*(sqrt(1 - cL*cL - cM*cM)-1));
+                *(kernel + nPixSide*i + j) = exp(-TPI*w*(sqrt(1 - cL*cL - cM*cM)-1));
             }
         }
     }
@@ -140,10 +122,10 @@ void compute_gridding(long nVis,
                       double const* u,
                       double const* v,
                       double const* w,
-                      float complex const* vis,
-                      float complex const* wgt,
-                      float complex* uv,
-                      float complex* bm) {
+                      Complex32 const* vis,
+                      Complex32 const* wgt,
+                      Complex32* uv,
+                      Complex32* bm) {
     // Setup
     long i, j, l, m;
     
@@ -159,15 +141,21 @@ void compute_gridding(long nVis,
     long secStart, secStop;
     double avgW, ci, cj, temp, temp2;
     long pi, pj;
-    float complex *suv, *sbm, *kern;
-    static float complex norm = (float complex) 1.0 / (nPixSide * nPixSide * nPixSide * nPixSide);
+    Complex32 *suv, *sbm, *kern;
+    static float norm = (float) 1.0 / (nPixSide * nPixSide * nPixSide * nPixSide);
     
     // FFT setup
-    float complex *inP;
-    inP = (float complex *) fftwf_malloc(nPixSide*nPixSide*sizeof(float complex));
+    Complex32* inP;
+    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
     fftwf_plan pF, pR;
-    pF = fftwf_plan_dft_2d(nPixSide, nPixSide, inP, inP, FFTW_FORWARD, FFTW_ESTIMATE);
-    pR = fftwf_plan_dft_2d(nPixSide, nPixSide, inP, inP, FFTW_BACKWARD, FFTW_ESTIMATE);
+    pF = fftwf_plan_dft_2d(nPixSide, nPixSide, \
+                           reinterpret_cast<fftwf_complex*>(inP), \
+                           reinterpret_cast<fftwf_complex*>(inP), \
+                           FFTW_FORWARD, FFTW_ESTIMATE);
+    pR = fftwf_plan_dft_2d(nPixSide, nPixSide, \
+                           reinterpret_cast<fftwf_complex*>(inP), \
+                           reinterpret_cast<fftwf_complex*>(inP), \
+                           FFTW_BACKWARD, FFTW_ESTIMATE);
     
     // Go!
     #ifdef _OPENMP
@@ -175,23 +163,21 @@ void compute_gridding(long nVis,
     #endif
     {
         // Initialize the sub-grids and the w projection kernel
-        //// FFTW
-        suv = (float complex *) fftwf_malloc(nPixSide*nPixSide*sizeof(float complex));
-        sbm = (float complex *) fftwf_malloc(nPixSide*nPixSide*sizeof(float complex));
-        //// Standard
-        kern = (float complex *) fftwf_malloc(nPixSide*nPixSide*sizeof(float complex));
+        suv  = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
+        sbm  = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
+        kern = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
         #endif
         for(j=0; j<nPlanes; j++) {
             // Zero out the sub-grids
-            memset(suv, 0, nPixSide*nPixSide*sizeof(float complex));
-            memset(sbm, 0, nPixSide*nPixSide*sizeof(float complex));
+            memset(suv, 0, sizeof(Complex32)*nPixSide*nPixSide);
+            memset(sbm, 0, sizeof(Complex32)*nPixSide*nPixSide);
             
             // Extract the plane index boundaries
             secStart = *(planeStart + j);
-            secStop = *(planeStop + j);
+            secStop  = *(planeStop  + j);
             
             // Grid and determine the average value for w for this plane
             avgW = 0.0;
@@ -229,8 +215,8 @@ void compute_gridding(long nVis,
                             pj += nPixSide;
                         }
                         
-                        *(suv + nPixSide*pi + pj) += *(vis + i) * temp2;
-                        *(sbm + nPixSide*pi + pj) += *(wgt + i) * temp2;
+                        *(suv + nPixSide*pi + pj) += *(vis + i) * (float) temp2;
+                        *(sbm + nPixSide*pi + pj) += *(wgt + i) * (float) temp2;
                     }
                 }
             }
@@ -240,22 +226,30 @@ void compute_gridding(long nVis,
             w_projection_kernel(nPixSide, uvRes, avgW, kern);
             
             // Project
-            fftwf_execute_dft(pF, suv, suv);
-            fftwf_execute_dft(pF, sbm, sbm);
+            fftwf_execute_dft(pF, \
+                              reinterpret_cast<fftwf_complex*>(suv), \
+                              reinterpret_cast<fftwf_complex*>(suv));
+            fftwf_execute_dft(pF, \
+                              reinterpret_cast<fftwf_complex*>(sbm), \
+                              reinterpret_cast<fftwf_complex*>(sbm));
             for(i=0; i<nPixSide*nPixSide; i++) {
                 *(suv + i) *= *(kern + i) * norm;
                 *(sbm + i) *= *(kern + i) * norm;
             }
-            fftwf_execute_dft(pR, suv, suv);
-            fftwf_execute_dft(pR, sbm, sbm);
+            fftwf_execute_dft(pR, \
+                              reinterpret_cast<fftwf_complex*>(suv), \
+                              reinterpret_cast<fftwf_complex*>(suv));
+            fftwf_execute_dft(pR, \
+                              reinterpret_cast<fftwf_complex*>(sbm), \
+                              reinterpret_cast<fftwf_complex*>(sbm));
             
             #ifdef _OPENMP
             #pragma omp critical
             #endif
             {
                 for(i=0; i<nPixSide*nPixSide; i++) {
-                    *(uv + i) += (float complex) *(suv + i);
-                    *(bm + i) += (float complex) *(sbm + i);
+                    *(uv + i) += *(suv+i);
+                    *(bm + i) += *(suv+i);
                 }
             }
         }
@@ -346,14 +340,14 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Get pointers to the data we need
     double *u, *v, *w;
-    float complex *vis, *wgt, *uv, *bm;
+    Complex32 *vis, *wgt, *uv, *bm;
     u = (double *) PyArray_DATA(uu);
     v = (double *) PyArray_DATA(vv);
     w = (double *) PyArray_DATA(ww);
-    vis = (float complex *) PyArray_DATA(vd);
-    wgt = (float complex *) PyArray_DATA(wd);
-    uv = (float complex *) PyArray_DATA(uvPlane);
-    bm = (float complex *) PyArray_DATA(bmPlane);
+    vis = (Complex32 *) PyArray_DATA(vd);
+    wgt = (Complex32 *) PyArray_DATA(wd);
+    uv = (Complex32 *) PyArray_DATA(uvPlane);
+    bm = (Complex32 *) PyArray_DATA(bmPlane);
     
     // Grid
     compute_gridding(nVis, nPixSide, uvRes, wRes, u, v, w, vis, wgt, uv, bm);
