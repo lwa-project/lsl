@@ -91,6 +91,7 @@ class FrameHeader(object):
         self.gain = gain
         self.sample_rate = None
         
+    @property
     def is_tbn(self):
         """
         Function to check if the data is really TBN and not TBW by examining
@@ -102,8 +103,9 @@ class FrameHeader(object):
             return True
         else:
             return False
-
-    def parse_id(self):
+            
+    @property
+    def id(self):
         """
         Function to parse the TBN ID field and return a tuple of the stand 
         number and polarization.
@@ -117,29 +119,17 @@ class FrameHeader(object):
             pol = 0
             
         return (stand, pol)
-
-    def get_central_freq(self):
+    
+    @property
+    def central_freq(self):
         """
         Convert the tuning word to a frequency in Hz.
         """
 
         return dp_common.fS * self.tuning_word / 2**32
-
-    def get_gain(self):
-        """
-        Get the current TBN gain for this frame.
-        """
-
-        return self.gain
-
-    def setsample_rate(self, sample_rate):
-        """
-        Function to set the sample rate of the TBN data in Hz.
-        """
-
-        self.sample_rate = sample_rate
-
-    def get_filter_code(self):
+        
+    @property
+    def filter_code(self):
         """
         Function to convert the sample rate in Hz to a filter code.
         """
@@ -201,19 +191,21 @@ class Frame(object):
             
         self.valid = True
         
+    @property
     def is_tbn(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.is_tbn function.
+        Convenience wrapper for the Frame.FrameHeader.is_tbn property.
         """
         
-        return self.header.is_tbn()
+        return self.header.is_tbn
         
-    def parse_id(self):
+    @property
+    def id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parse_id function.
+        Convenience wrapper for the Frame.FrameHeader.id property.
         """
         
-        return self.header.parse_id()
+        return self.header.id
         
     def get_time(self):
         """
@@ -221,35 +213,55 @@ class Frame(object):
         """
         
         return self.data.get_time()
-
-    def get_filter_code(self):
+        
+    @property
+    def sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameData.get_filter_code function.
-        """
-
-        return self.header.get_filter_code()
-
-    def setsample_rate(self, sample_rate):
-        """
-        Convenience wrapper for the Frame.FrameData.setsample_rate function.
+        Convenience wrapper for the Frame.FrameData.sample_rate property.
         """
 
-        self.header.setsample_rate(sample_rate)
-
-    def get_central_freq(self):
+        return self.header.sample_rate
+        
+    @sample_rate.setter
+    def sample_rate(self, value):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_central_freq function.
-        """
-
-        return self.header.get_central_freq()
-
-    def get_gain(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.get_gain function.
+        Convenience wrapper for setting the Frame.FrameData.sample_rate property.
         """
 
-        return self.header.get_gain()
-            
+        self.header.sample_rate = value
+        
+    @property
+    def filter_code(self):
+        """
+        Convenience wrapper for the Frame.FrameData.filter_code property.
+        """
+
+        return self.header.filter_code
+    
+    @property
+    def central_freq(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.central_freq property.
+        """
+
+        return self.header.central_freq
+        
+    @property
+    def gain(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.gain property.
+        """
+
+        return self.header.gain
+        
+    @gain.setter
+    def gain(self, value):
+        """
+        Convenience wrapper to set the Frame.FrameHader.gain property.
+        """
+        
+        self.header.gain = value
+        
     def __add__(self, y):
         """
         Add the data sections of two frames together or add a number 
@@ -463,7 +475,7 @@ def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
         except SyncError:
             continue
         
-        stand, pol = cFrame.parse_id()
+        stand, pol = cFrame.id
         key = 2*stand + pol
         try:
             frames[key].append(cFrame)
@@ -546,7 +558,7 @@ def get_frames_per_obs(filehandle):
         except SyncError:
             continue
         
-        cID, cPol = cFrame.header.parse_id()
+        cID, cPol = cFrame.header.id
         if cID not in idCodes[cPol]:
             idCodes[cPol].append(cID)
         

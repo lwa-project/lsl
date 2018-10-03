@@ -79,7 +79,8 @@ class FrameHeader(object):
         self.decimation = decimation
         self.time_offset = time_offset
     
-    def parse_id(self):
+    @property
+    def id(self):
         """
         Parse the DRX ID into a tuple containing the beam (1 through
         4), tunning (1 and 2), and polarization (0 and 1).
@@ -91,7 +92,8 @@ class FrameHeader(object):
 
         return (beam, tune, pol)
     
-    def get_sample_rate(self):
+    @property
+    def sample_rate(self):
         """
         Return the sample rate of the data in samples/second.
         """
@@ -99,7 +101,8 @@ class FrameHeader(object):
         sample_rate = dp_common.fS / self.decimation
         return sample_rate
         
-    def get_filter_code(self):
+    @property
+    def filter_code(self):
         """
         Function to convert the sample rate in Hz to a filter code.
         """
@@ -109,7 +112,7 @@ class FrameHeader(object):
             value = FILTER_CODES[key]
             sampleCodes[value] = key
 
-        return sampleCodes[self.get_sample_rate()]
+        return sampleCodes[self.sample_rate]
 
 
 class FrameData(object):
@@ -119,26 +122,19 @@ class FrameData(object):
     """
 
     def __init__(self, timetag=None, tuning_word=None, flags=None, iq=None):
-        self.central_freq = None
         self.gain = None
         self.timetag = timetag
         self.tuning_word = tuning_word
         self.flags = flags
         self.iq = iq
         
-    def get_central_freq(self):
+    @property
+    def central_freq(self):
         """
         Function to set the central frequency of the DRX data in Hz.
         """
 
         return dp_common.fS * self.tuning_word / 2**32
-
-    def set_gain(self, gain):
-        """
-        Function to set the gain of the DRX data.
-        """
-
-        self.gain = gain
 
 
 class Frame(object):
@@ -159,29 +155,33 @@ class Frame(object):
             self.data = data
             
         self.valid = True
+        self.gain = None
 
-    def parse_id(self):
+    @property
+    def id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parse_id 
-        function.
+        Convenience wrapper for the Frame.FrameHeader.id 
+        property.
         """
         
-        return self.header.parse_id()
+        return self.header.id
 
-    def get_sample_rate(self):
+    @property
+    def sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_sample_rate 
-        function.
+        Convenience wrapper for the Frame.FrameHeader.sample_rate 
+        property.
         """
         
-        return self.header.get_sample_rate()
+        return self.header.sample_rate
         
-    def get_filter_code(self):
+    @property
+    def filter_code(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_filter_code function.
+        Convenience wrapper for the Frame.FrameHeader.filter_code property.
         """
 
-        return self.header.get_filter_code()
+        return self.header.filter_code
 
     def get_time(self):
         """
@@ -193,20 +193,14 @@ class Frame(object):
         
         return seconds
     
-    def get_central_freq(self):
+    @property
+    def central_freq(self):
         """
-        Convenience wrapper for the Frame.FrameData.get_central_freq function.
-        """
-
-        return self.data.get_central_freq()
-
-    def set_gain(self, gain):
-        """
-        Convenience wrapper for the Frame.FrameData.set_gain function.
+        Convenience wrapper for the Frame.FrameData.central_freq property.
         """
 
-        self.data.set_gain(gain)
-
+        return self.data.central_freq
+        
     def __add__(self, y):
         """
         Add the data sections of two frames together or add a number 
@@ -388,7 +382,7 @@ def read_frame(filehandle, Gain=None, Verbose=False):
         raise EOFError
     
     if Gain is not None:
-        newFrame.set_gain(Gain)
+        newFrame.gain = Gain
         
     return newFrame
 
@@ -413,9 +407,9 @@ def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     filehandle.seek(fhStart)
 
     if not FilterCode:
-        return newFrame.get_sample_rate()
+        return newFrame.sample_rate
     else:
-        return newFrame.get_filter_code()
+        return newFrame.filter_code
 
 
 def get_beam_count(filehandle):

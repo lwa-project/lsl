@@ -11,7 +11,7 @@
 #include "readers.h"
 
 /*
-VIDF Reader
+  VIDF Reader
 */
 
 #pragma pack(push)
@@ -56,7 +56,7 @@ PyObject *vdif_size_dat = NULL;
 
 
 /* 
-Look-up Tables
+  Look-up Tables
 */
 
 #define OPTIMAL_2BIT_HIGH	3.3359
@@ -112,7 +112,7 @@ void initVDIFLUTs(void) {
 }
 
 /* 
-Data-type specific VDIF Helper Functions
+  Data-type specific VDIF Helper Functions
 */
 
 static PyArrayObject * parseVDIF8(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
@@ -243,7 +243,7 @@ static PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLengt
 
 
 /*
-VIDF Reader
+  VIDF Reader
 */
 
 PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {

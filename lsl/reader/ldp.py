@@ -184,6 +184,14 @@ class LDPFileBase(object):
         
         return (self.description['size'] - self.fh.tell()) // self.description['frame_size']
         
+    @property
+    def nframes_remaining(self):
+        """
+        Alternate method of accessing the number of frames remaining.
+        """
+        
+        return self.get_remaining_frame_count()
+        
     def reset(self):
         """
         Reset the file to the beginning.
@@ -268,7 +276,7 @@ class TBWFile(LDPFileBase):
                 self.fh.seek(-tbw.FRAME_SIZE+1, 1)
                 
         # Jump over any TBN data in the file
-        while not junkFrame.header.is_tbw():
+        while not junkFrame.header.is_tbw:
             try:
                 junkFrame = tbw.read_frame(self.fh)
             except errors.SyncError:
@@ -311,7 +319,7 @@ class TBWFile(LDPFileBase):
         filesize = os.fstat(self.fh.fileno()).st_size
         nFramesFile = (filesize - self.fh.tell()) // tbw.FRAME_SIZE
         srate = 196e6
-        bits = junkFrame.get_data_bits()
+        bits = junkFrame.data_bits
         start = junkFrame.get_time()
         startRaw = junkFrame.data.timetag
         
@@ -325,9 +333,9 @@ class TBWFile(LDPFileBase):
             try:
                 for i in xrange(26):
                     frame = tbw.read_frame(self.fh)
-                    while not frame.header.is_tbw():
+                    while not frame.header.is_tbw:
                         frame = tbw.read_frame(self.fh)
-                    stand = frame.parse_id()
+                    stand = frame.id
                     if stand not in idsFound:
                         idsFound.append(stand)
                     if frame.header.frame_count < 1000:
@@ -347,8 +355,8 @@ class TBWFile(LDPFileBase):
         startRaw = startTimeTag
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbw.FRAME_SIZE,
-                        'sample_rate': srate, 'data_bits': bits, 'nantenna': 2*len(idsFound), 
-                        'start_time': start, 'start_time_samples': startRaw}
+                            'sample_rate': srate, 'data_bits': bits, 'nantenna': 2*len(idsFound), 
+                            'start_time': start, 'start_time_samples': startRaw}
                         
     def read_frame(self):
         """
@@ -356,7 +364,7 @@ class TBWFile(LDPFileBase):
         """
         
         frame = tbw.read_frame(self.fh)
-        while not frame.header.is_tbw():
+        while not frame.header.is_tbw:
             frame = tbw.read_frame(self.fh)
             
         return frame
@@ -428,10 +436,10 @@ class TBWFile(LDPFileBase):
             except errors.SyncError:
                 continue
                 
-            if not cFrame.header.is_tbw():
+            if not cFrame.header.is_tbw:
                 continue
                 
-            stand = cFrame.header.parse_id()
+            stand = cFrame.header.id
             aStandX = 2*(stand-1) + 0
             aStandY = 2*(stand-1) + 1
             
@@ -455,7 +463,7 @@ class TBWFile(LDPFileBase):
             setTime = setTime / fS
             
         # Calculate the duration
-        duration = data.shape[1]/self.get_info('sample_rate')
+        duration = data.shape[1]/self.description['sample_rate']
         
         return duration, setTime, data
 
@@ -488,7 +496,7 @@ class TBNFile(LDPFileBase):
                 self.fh.seek(-tbn.FRAME_SIZE+1, 1)
                 
         # Jump over any TBN data in the file
-        while not junkFrame.header.is_tbn():
+        while not junkFrame.header.is_tbn:
             junkFrame = tbn.read_frame(self.fh)
         self.fh.seek(-tbn.FRAME_SIZE, 1)
         
@@ -507,14 +515,14 @@ class TBNFile(LDPFileBase):
         
         junkFrame = self.read_frame()
         self.fh.seek(-tbn.FRAME_SIZE, 1)
-        tuning1 = junkFrame.get_central_freq()
+        tuning1 = junkFrame.central_freq
         start = junkFrame.get_time()
         startRaw = junkFrame.data.timetag
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbn.FRAME_SIZE,
-                        'nantenna': framesPerObsX+framesPerObsY, 
-                        'sample_rate': srate, 'data_bits': bits, 
-                        'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1}
+                            'nantenna': framesPerObsX+framesPerObsY, 
+                            'sample_rate': srate, 'data_bits': bits, 
+                            'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1}
                         
         # Initialize the buffer as part of the description process
         pols = []
@@ -643,7 +651,7 @@ class TBNFile(LDPFileBase):
             self._timetag = cFrames[0].data.timetag
             
             for cFrame in cFrames:
-                stand,pol = cFrame.header.parse_id()
+                stand,pol = cFrame.header.id
                 aStand = 2*(stand-1)+pol
                 
                 if setTime is None:
@@ -670,7 +678,7 @@ class TBNFile(LDPFileBase):
                 self._timetag = cFrames[0].data.timetag
                 
                 for cFrame in cFrames:
-                    stand,pol = cFrame.header.parse_id()
+                    stand,pol = cFrame.header.id
                     aStand = 2*(stand-1)+pol
                     
                     if setTime is None:
@@ -721,7 +729,7 @@ class TBNFile(LDPFileBase):
                 except errors.SyncError:
                     continue
                     
-                s,p = cFrame.parse_id()
+                s,p = cFrame.id
                 aStand = 2*(s-1) + p
                 
                 data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.data.iq )
@@ -768,7 +776,7 @@ class DRXFile(LDPFileBase):
                 junkFrame = drx.read_frame(self.fh)
                 try:
                     # ... that has a valid decimation
-                    srate = junkFrame.get_sample_rate()
+                    srate = junkFrame.sample_rate
                     break
                 except ZeroDivisionError:
                     pass
@@ -782,7 +790,7 @@ class DRXFile(LDPFileBase):
         timetags = []
         for i in xrange(32):
             junkFrame = drx.read_frame(self.fh)
-            b,t,p = junkFrame.parse_id()
+            b,t,p = junkFrame.id
             id = (t,p)
             if id not in ids:
                 ids.append(id)
@@ -811,8 +819,8 @@ class DRXFile(LDPFileBase):
         tuning2 = 0.0
         for i in xrange(4):
             junkFrame = self.read_frame()
-            b,t,p = junkFrame.parse_id()
-            srate = junkFrame.get_sample_rate()
+            b,t,p = junkFrame.id
+            srate = junkFrame.sample_rate
             if b not in beams:
                 beams.append(b)
             if t not in tunes:
@@ -821,9 +829,9 @@ class DRXFile(LDPFileBase):
                 pols.append(p)
                 
             if t == 1:
-                tuning1 = junkFrame.get_central_freq()
+                tuning1 = junkFrame.central_freq
             else:
-                tuning2 = junkFrame.get_central_freq()
+                tuning2 = junkFrame.central_freq
                 
             if i == 0:
                 start = junkFrame.get_time()
@@ -831,9 +839,9 @@ class DRXFile(LDPFileBase):
         self.fh.seek(-drx.FRAME_SIZE*4, 1)
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': drx.FRAME_SIZE,
-                        'beampols': beampols, 'beam': b, 
-                        'sample_rate': srate, 'data_bits': bits, 
-                        'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2}
+                            'beampols': beampols, 'beam': b, 
+                            'sample_rate': srate, 'data_bits': bits, 
+                            'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2}
                         
         # Initialize the buffer as part of the description process
         self.buffer = DRXFrameBuffer(beams=beams, tunes=tunes, pols=pols)
@@ -849,7 +857,7 @@ class DRXFile(LDPFileBase):
         
         # Get the initial time, sample rate, and beampols
         t0 = junkFrame.get_time()
-        sample_rate = junkFrame.get_sample_rate()
+        sample_rate = junkFrame.sample_rate
         beampols = drx.get_frames_per_obs(self.fh)
         beampols = reduce(int.__add__, beampols)
         
@@ -868,7 +876,7 @@ class DRXFile(LDPFileBase):
             ## Figure out where in the file we are and what the current tuning/sample 
             ## rate is
             t1 = junkFrame.get_time()
-            sample_rate = junkFrame.get_sample_rate()
+            sample_rate = junkFrame.sample_rate
             beampols = drx.get_frames_per_obs(self.fh)
             beampols = reduce(int.__add__, beampols)
             
@@ -987,7 +995,7 @@ class DRXFile(LDPFileBase):
                 
             # If something comes out, add it to the data array
             for cFrame in cFrames:
-                b,t,p = cFrame.parse_id()
+                b,t,p = cFrame.id
                 aStand = 2*(t-1) + p
                 cTimetag = cFrame.data.timetag
                 if self._timetag[aStand] == 0:
@@ -1015,7 +1023,7 @@ class DRXFile(LDPFileBase):
         if eofFound and nFrameSets != frame_count:
             for cFrames in self.buffer.flush():
                 for cFrame in cFrames:
-                    b,t,p = cFrame.parse_id()
+                    b,t,p = cFrame.id
                     aStand = 2*(t-1) + p
                     cTimetag = cFrame.data.timetag
                     if self._timetag[aStand] == 0:
@@ -1082,7 +1090,7 @@ class DRXFile(LDPFileBase):
                 except errors.SyncError:
                     continue
                     
-                b,t,p = cFrame.parse_id()
+                b,t,p = cFrame.id
                 aStand = 2*(t-1) + p
                 
                 data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.data.iq )
@@ -1135,22 +1143,22 @@ class DRSpecFile(LDPFileBase):
         self.fh.seek(-FRAME_SIZE, 1)
         
         bits = 32
-        beam = junkFrame.parse_id()
+        beam = junkFrame.id
         beampols = 4
-        srate = junkFrame.get_sample_rate()
+        srate = junkFrame.sample_rate
         nInt = junkFrame.header.nints
         tInt = nInt*LFFT/srate
         start = junkFrame.get_time()
         startRaw = junkFrame.data.timetag - junkFrame.header.time_offset
         tuning1, tuning2 = junkFrame.get_central_freq()
-        prod = junkFrame.get_data_products()
+        prod = junkFrame.data_products
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': FRAME_SIZE, 
-                        'beampols': beampols, 'beam': beam, 
-                        'sample_rate': srate, 'data_bits': bits, 
-                        'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2, 
-                        'nInt': nInt, 'tInt': tInt, 'LFFT': LFFT, 
-                        'nProducts': len(prod), 'dataProducts': prod}
+                            'beampols': beampols, 'beam': beam, 
+                            'sample_rate': srate, 'data_bits': bits, 
+                            'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2, 
+                            'nInt': nInt, 'tint': tInt, 'LFFT': LFFT, 
+                            'nproducts': len(prod), 'data_products': prod}
                         
     def offset(self, offset):
         """
@@ -1166,7 +1174,7 @@ class DRSpecFile(LDPFileBase):
         t0 = junkFrame.get_time()
         
         # Offset in frames for beampols beam/tuning/pol. sets
-        ioffset = int(round(offset / self.description['tInt']))
+        ioffset = int(round(offset / self.description['tint']))
         self.fh.seek(ioffset*self.description['frame_size'], 1)
         
         # Iterate on the offsets until we reach the right point in the file.  This
@@ -1179,7 +1187,7 @@ class DRSpecFile(LDPFileBase):
             ## Figure out where in the file we are and what the current tuning/sample 
             ## rate is
             t1 = junkFrame.get_time()
-            sample_rate = junkFrame.get_sample_rate()
+            sample_rate = junkFrame.sample_rate
             LFFT = junkFrame.get_transform_size()
             tInt = junkFrame.header.nints*LFFT/sample_rate
             
@@ -1237,7 +1245,7 @@ class DRSpecFile(LDPFileBase):
                 raise errors.EOFError()
                 
         # Covert the sample rate to an expected timetag skip
-        timetagSkip = self.description['tInt']
+        timetagSkip = self.description['tint']
         
         # Setup the counter variables:  frame count and time tag count
         count = 0
@@ -1248,12 +1256,12 @@ class DRSpecFile(LDPFileBase):
             self.fh.seek(-self.description['frame_size'], 1)
         
         # Find out how many frames to read in
-        frame_count = int(round(1.0 * duration / self.description['tInt']))
+        frame_count = int(round(1.0 * duration / self.description['tint']))
         frame_count = frame_count if frame_count else 1
-        duration = frame_count * self.description['tInt']
+        duration = frame_count * self.description['tint']
         
         # Setup the output arrays
-        data = numpy.zeros((2*self.description['nProducts'],frame_count,self.description['LFFT']), dtype=numpy.float32)
+        data = numpy.zeros((2*self.description['nproducts'],frame_count,self.description['LFFT']), dtype=numpy.float32)
         
         # Go!
         nFrameSets = 0
@@ -1281,16 +1289,16 @@ class DRSpecFile(LDPFileBase):
                 else:
                     setTime = cFrame.get_time()
                     
-            for j,p in enumerate(self.description['dataProducts']):
+            for j,p in enumerate(self.description['data_products']):
                 data[j+0,                             count, :] = getattr(cFrame.data, '%s0' % p, None)
-                data[j+self.description['nProducts'], count, :] = getattr(cFrame.data, '%s1' % p, None)
+                data[j+self.description['nproducts'], count, :] = getattr(cFrame.data, '%s1' % p, None)
             count +=  1
             self._timetag = cTimetag
             nFrameSets += 1
             
         # Adjust the duration to account for all of the things that could 
         # have gone wrong while reading the data
-        duration = nFrameSets * self.description['tInt']
+        duration = nFrameSets * self.description['tint']
         
         return duration, setTime, data
 
@@ -1492,13 +1500,13 @@ class TBFFile(LDPFileBase):
         srate = fC
         bits = 4
         nFramesPerObs = tbf.get_frames_per_obs(self.fh)
-        nChan = tbf.get_channel_count(self.fh)
+        nchan = tbf.get_channel_count(self.fh)
         
         # Pre-load the channel mapper
         self.mapper = []
         marker = self.fh.tell()
         firstFrameCount = 2**64-1
-        while len(self.mapper) < nChan/tbf.FRAME_CHANNEL_COUNT:
+        while len(self.mapper) < nchan/tbf.FRAME_CHANNEL_COUNT:
             cFrame = tbf.read_frame(self.fh)
             if cFrame.header.first_chan not in self.mapper:
                 self.mapper.append( cFrame.header.first_chan )
@@ -1510,15 +1518,15 @@ class TBFFile(LDPFileBase):
         self.mapper.sort()
         
         # Calculate the frequencies
-        freq = numpy.zeros(nChan)
+        freq = numpy.zeros(nchan)
         for i,c in enumerate(self.mapper):
             freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + numpy.arange(tbf.FRAME_CHANNEL_COUNT)
         freq *= fC
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbf.FRAME_SIZE,
-                        'sample_rate': srate, 'data_bits': bits, 
-                        'nantenna': 512, 'nChan': nChan, 'freq1': freq, 'start_time': start, 
-                        'start_time_samples': startRaw}
+                            'sample_rate': srate, 'data_bits': bits, 
+                            'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
+                            'start_time_samples': startRaw}
                         
         # Initialize the buffer as part of the description process
         self.buffer = TBFFrameBuffer(chans=self.mapper)
@@ -1533,7 +1541,7 @@ class TBFFile(LDPFileBase):
             structure of TBF files.
         """
         
-        framesPerObs = self.description['nChan'] // tbf.FRAME_CHANNEL_COUNT
+        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frameOffset = int(offset * self.description['sample_rate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
         self.fh.seek(frameOffset*tbf.FRAME_SIZE)
@@ -1598,7 +1606,7 @@ class TBFFile(LDPFileBase):
         # Find out how many frames to read in
         if duration is None:
             duration = self.description['nframes'] / framesPerObs / self.description['sample_rate']
-        framesPerObs = self.description['nChan'] // tbf.FRAME_CHANNEL_COUNT
+        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frame_count = int(round(1.0 * duration * self.description['sample_rate']))
         frame_count = frame_count if frame_count else 1
         duration = frame_count / self.description['sample_rate']
@@ -1607,7 +1615,7 @@ class TBFFile(LDPFileBase):
         eofFound = False
         setTime = None
         count = [0 for i in xrange(framesPerObs)]
-        data = numpy.zeros((self.description['nantenna'], self.description['nChan'], frame_count), dtype=numpy.complex64)
+        data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=numpy.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -1616,7 +1624,7 @@ class TBFFile(LDPFileBase):
             for i in xrange(framesPerObs):
                 try:
                     cFrame = tbf.read_frame(self.fh, Verbose=False)
-                    if not cFrame.isTBF():
+                    if not cFrame.is_tbf:
                         continue
                     cFrames.append( cFrame )
                 except errors.EOFError:
@@ -1766,7 +1774,7 @@ class CORFile(LDPFileBase):
         srate = fC
         bits = 32
         nFramesPerObs = cor.get_frames_per_obs(self.fh)
-        nChan = cor.get_channel_count(self.fh)
+        nchan = cor.get_channel_count(self.fh)
         nBaseline = cor.get_baseline_count(self.fh)
         
         # Pre-load the baseline mapper
@@ -1783,7 +1791,7 @@ class CORFile(LDPFileBase):
         self.cmapper = []
         marker = self.fh.tell()
         firstFrameCount = 2**64-1
-        while len(self.cmapper) < nChan/cor.FRAME_CHANNEL_COUNT:
+        while len(self.cmapper) < nchan/cor.FRAME_CHANNEL_COUNT:
             cFrame = cor.read_frame(self.fh)
             if cFrame.header.first_chan not in self.cmapper:
                 self.cmapper.append( cFrame.header.first_chan )
@@ -1800,15 +1808,15 @@ class CORFile(LDPFileBase):
             self.cmapperd[c] = i
             
         # Calculate the frequencies
-        freq = numpy.zeros(nChan)
+        freq = numpy.zeros(nchan)
         for i,c in enumerate(self.cmapper):
             freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + numpy.arange(cor.FRAME_CHANNEL_COUNT)
         freq *= fC
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': cor.FRAME_SIZE,
-                        'sample_rate': srate, 'data_bits': bits, 
-                        'nantenna': 512, 'nChan': nChan, 'freq1': freq, 'start_time': start, 
-                        'start_time_samples': startRaw, 'nBaseline': nBaseline, 'tInt':cFrame.get_integration_time()}
+                            'sample_rate': srate, 'data_bits': bits, 
+                            'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
+                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'tint':cFrame.get_integration_time()}
                         
         # Initialize the buffer as part of the description process
         self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False)
@@ -1823,8 +1831,8 @@ class CORFile(LDPFileBase):
             structure of COR files.
         """
         
-        framesPerObs = self.description['nChan'] // cor.FRAME_CHANNEL_COUNT * self.description['nBaseline']
-        frameOffset = int(offset / self.description['tInt'] * framesPerObs)
+        framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
+        frameOffset = int(offset / self.description['tint'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
         self.fh.seek(frameOffset*cor.FRAME_SIZE)
         
@@ -1838,7 +1846,7 @@ class CORFile(LDPFileBase):
         # Reset the timetag checker
         self._timetag = None
         
-        return 1.0 * frameOffset / framesPerObs * self.description['tInt']
+        return 1.0 * frameOffset / framesPerObs * self.description['tint']
         
     def read_frame(self):
         """
@@ -1879,7 +1887,7 @@ class CORFile(LDPFileBase):
                 raise errors.EOFError()
                 
         # Covert the sample rate to an expected timetag skip
-        timetagSkip = int(self.description['tInt'] * fS)
+        timetagSkip = int(self.description['tint'] * fS)
         
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
@@ -1887,17 +1895,17 @@ class CORFile(LDPFileBase):
             
         # Find out how many frames to read in
         if duration is None:
-            duration = self.description['nframes'] / framesPerObs * self.description['tInt']
-        framesPerObs = self.description['nChan'] // cor.FRAME_CHANNEL_COUNT * self.description['nBaseline']
-        frame_count = int(round(1.0 * duration / self.description['tInt']))
+            duration = self.description['nframes'] / framesPerObs * self.description['tint']
+        framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
+        frame_count = int(round(1.0 * duration / self.description['tint']))
         frame_count = frame_count if frame_count else 1
-        duration = frame_count * self.description['tInt']
+        duration = frame_count * self.description['tint']
         
         nFrameSets = 0
         eofFound = False
         setTime = None
         count = [0 for i in xrange(framesPerObs)]
-        data = numpy.zeros((self.description['nBaseline'], self.description['nChan'], 2, 2, frame_count), dtype=numpy.complex64)
+        data = numpy.zeros((self.description['nbaseline'], self.description['nchan'], 2, 2, frame_count), dtype=numpy.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -1945,7 +1953,7 @@ class CORFile(LDPFileBase):
                     else:
                         setTime = cFrame.get_time()
                         
-                aBase = self.bmapperd[cFrame.parse_id()]
+                aBase = self.bmapperd[cFrame.id]
                 aChan = self.cmapperd[first_chan]
                 aStand = aBase*len(self.cmapper) + aChan
                 data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.data.vis
@@ -1976,7 +1984,7 @@ class CORFile(LDPFileBase):
                         else:
                             setTime = cFrame.get_time()
                             
-                    aBase = self.bmapperd[cFrame.parse_id()]
+                    aBase = self.bmapperd[cFrame.id]
                     aChan = self.cmapperd[first_chan]
                     aStand = aBase*len(self.cmapper) + aChan
                     data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.data.vis
@@ -1994,7 +2002,7 @@ class CORFile(LDPFileBase):
             
         # Adjust the duration to account for all of the things that could 
         # have gone wrong while reading the data
-        duration = nFrameSets  * self.description['tInt']
+        duration = nFrameSets  * self.description['tint']
         
         return duration, setTime, data
 

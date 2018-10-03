@@ -108,14 +108,14 @@ class SimFrame(tbn.Frame):
             Added support for ECR 11 TBN headers
         """
         
+        super(SimFrame, self).__init__()
         self.stand = stand
         self.pol = pol
         self.freq = central_freq
-        self.gain = gain
         self.frame_count = frame_count
+        self.gain = gain
         self.obs_time = obs_time
         self.iq = iq
-        super(SimFrame, self).__init__()
         
     def _update(self):
         """
@@ -141,10 +141,10 @@ class SimFrame(tbn.Frame):
         
         # Back-fill the class' fields to make sure the object is consistent
         ## Header
-        self.stand = self.header.parse_id()[0]
-        self.pol = self.header.parse_id()[1]
-        self.freq = self.header.get_central_freq()
-        self.gain = self.header.get_gain()
+        self.stand = self.header.id[0]
+        self.pol = self.header.id[1]
+        self.freq = self.header.central_freq
+        self.gain = self.header.gain
         self.frame_count = self.header.frame_count
         ## Data
         self.obs_time = self.data.timetag
@@ -160,7 +160,7 @@ class SimFrame(tbn.Frame):
         # Make sure we have the latest values
         self._update()
 
-        stand, pol = self.parse_id()
+        stand, pol = self.id
         # Is the stand number reasonable?
         if stand == 0 or stand > 258:
             if raise_errors:

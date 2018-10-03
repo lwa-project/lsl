@@ -48,24 +48,26 @@ class FrameHeader(object):
     well as the original binary header data.
     """
     
-    def __init__(self, id=None, frame_count=None, second_count=None, first_chan=None):
-        self.id = id
+    def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None):
+        self.adp_id = adp_id
         self.frame_count = frame_count
         self.second_count = second_count
         self.first_chan = first_chan
         
+    @property
     def is_tbf(self):
         """
         Function to check if the data is really TBF.  Returns True if the 
         data is TBF, false otherwise.
         """
         
-        if self.id == 0x01:
+        if self.adp_id == 0x01:
             return True
         else:
             return False
             
-    def get_channel_freqs(self):
+    @property
+    def channel_freqs(self):
         """
         Return a numpy.float32 array for the center frequencies, in Hz, of
         each channel in the data.
@@ -114,19 +116,21 @@ class Frame(object):
             
         self.valid = True
         
+    @property
     def is_tbf(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.is_tbf function.
+        Convenience wrapper for the Frame.FrameHeader.is_tbf property.
         """
         
-        return self.header.is_tbf()
+        return self.header.is_tbf
         
-    def get_channel_freqs(self):
+    @property
+    def channel_freqs(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_channel_freqs function.
+        Convenience wrapper for the Frame.FrameHeader.channel_freqs property.
         """
         
-        return self.header.get_channel_freqs()
+        return self.header.channel_freqs
         
     def get_time(self):
         """
@@ -408,7 +412,7 @@ def get_first_channel(filehandle, frequency=False):
     while len(freqs) < nFrames:
         cFrame = read_frame(filehandle)
         if frequency:
-            freq = cFrame.get_channel_freqs()[0]
+            freq = cFrame.channel_freqs[0]
         else:
             freq = cFrame.header.first_chan
             

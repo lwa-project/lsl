@@ -86,11 +86,11 @@ class fake_TBN_tests(unittest.TestCase):
         
         for fakeFrame,origFrame in zip(fakeFrames, origFrames):
             # Test values returned by info functions
-            self.assertEqual(fakeFrame.parse_id()[0], origFrame.parse_id()[0])
-            self.assertEqual(fakeFrame.parse_id()[1], origFrame.parse_id()[1])
+            self.assertEqual(fakeFrame.id[0], origFrame.id[0])
+            self.assertEqual(fakeFrame.id[1], origFrame.id[1])
             
             # Test raw header values
-            self.assertTrue(fakeFrame.header.is_tbn())
+            self.assertTrue(fakeFrame.header.is_tbn)
             self.assertEqual(fakeFrame.header.frame_count, origFrame.header.frame_count)
             self.assertEqual(fakeFrame.header.tuning_word, origFrame.header.tuning_word)
             
@@ -203,10 +203,10 @@ class fake_DRX_tests(unittest.TestCase):
         
         for fakeFrame,origFrame in zip(fakeFrames, origFrames):
             # Test values returned by info functions
-            self.assertEqual(fakeFrame.parse_id()[0], origFrame.parse_id()[0])
-            self.assertEqual(fakeFrame.parse_id()[1], origFrame.parse_id()[1])
-            self.assertEqual(fakeFrame.parse_id()[2], origFrame.parse_id()[2])
-            self.assertAlmostEqual(fakeFrame.get_sample_rate(), origFrame.get_sample_rate(), 4)
+            self.assertEqual(fakeFrame.id[0], origFrame.id[0])
+            self.assertEqual(fakeFrame.id[1], origFrame.id[1])
+            self.assertEqual(fakeFrame.id[2], origFrame.id[2])
+            self.assertAlmostEqual(fakeFrame.sample_rate, origFrame.sample_rate, 4)
             
             # Test raw header values
             self.assertEqual(fakeFrame.header.second_count, origFrame.header.second_count)

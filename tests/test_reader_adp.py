@@ -38,11 +38,11 @@ class reader_adp_tests(unittest.TestCase):
         fh = open(tbfFile, 'rb')
         # First frame is really TBF and stores the first channel
         frame1 = tbf.read_frame(fh)
-        self.assertTrue(frame1.header.is_tbf())
+        self.assertTrue(frame1.header.is_tbf)
         self.assertEqual(frame1.header.first_chan, 2348)
         # Second frame
         frame2 = tbf.read_frame(fh)
-        self.assertTrue(frame2.header.is_tbf())
+        self.assertTrue(frame2.header.is_tbf)
         self.assertEqual(frame2.header.first_chan, 2360)
         fh.close()
         
@@ -157,18 +157,18 @@ class reader_adp_tests(unittest.TestCase):
         fh = open(corFile, 'rb')
         # First frame is really COR and check the basic metadata
         frame1 = cor.read_frame(fh)
-        self.assertTrue(frame1.header.isCOR())
+        self.assertTrue(frame1.header.is_cor)
         self.assertEqual(frame1.header.first_chan, 1584)
-        self.assertEqual(frame1.parse_id(), (1,1))
-        self.assertEqual(frame1.get_integration_time(), 5)
-        self.assertEqual(frame1.get_gain(), 1)
+        self.assertEqual(frame1.id, (1,1))
+        self.assertEqual(frame1.integration_time, 5)
+        self.assertEqual(frame1.gain, 1)
         # Second frame
         frame2 = cor.read_frame(fh)
-        self.assertTrue(frame2.header.isCOR())
+        self.assertTrue(frame2.header.is_cor)
         self.assertEqual(frame2.header.first_chan, 1584)
-        self.assertEqual(frame2.parse_id(), (1,2))
-        self.assertEqual(frame2.get_integration_time(), 5)
-        self.assertEqual(frame2.get_gain(), 1)
+        self.assertEqual(frame2.id, (1,2))
+        self.assertEqual(frame2.integration_time, 5)
+        self.assertEqual(frame2.gain, 1)
         fh.close()
         
     def test_cor_errors(self):

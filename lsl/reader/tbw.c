@@ -11,7 +11,7 @@
 #include "readers.h"
 
 /*
-TBW Reader (12-bit and 4-bit samples)
+  TBW Reader (12-bit and 4-bit samples)
 */
 
 #pragma pack(push)

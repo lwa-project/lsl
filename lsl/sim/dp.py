@@ -80,6 +80,7 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     verbose = kwargs['verbose']
     noise_strength = kwargs['noise_strength']
     sample_rate = DRXFilters[filter]
+    decimation = int(round(dp_common.fS / sample_rate))
     
     maxValue = 7
     samplesPerFrame = 4096
@@ -102,14 +103,14 @@ def _basic_drx(fh, stands, nframes, **kwargs):
             for tune in range(1, ntuning+1):
                 if tune == 1:
                     # Tuning 1:
-                    cFrame = drx.SimFrame(beam=beam, tune=1, pol=0, frame_count=i+1, filter_code=filter, time_offset=0, obs_time=t, flags=0)
+                    cFrame = drx.SimFrame(beam=beam, tune=1, pol=0, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
                     cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
                     cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
                     cFrame.iq *= maxValue*noise_strength
                     cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike1*tFrame)
                     cFrame.write_raw_frame(fh)
             
-                    cFrame = drx.SimFrame(beam=beam, tune=1, pol=1, frame_count=i+1, filter_code=filter, time_offset=0, obs_time=t, flags=0)
+                    cFrame = drx.SimFrame(beam=beam, tune=1, pol=1, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
                     cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
                     cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
                     cFrame.iq *= maxValue*noise_strength
@@ -117,14 +118,14 @@ def _basic_drx(fh, stands, nframes, **kwargs):
                     cFrame.write_raw_frame(fh)
                 else:
                     # Tuning 2:
-                    cFrame = drx.SimFrame(beam=beam, tune=2, pol=0, frame_count=i+1, filter_code=filter, time_offset=0, obs_time=t, flags=0)
+                    cFrame = drx.SimFrame(beam=beam, tune=2, pol=0, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
                     cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
                     cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
                     cFrame.iq *= maxValue*noise_strength
                     cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike2*tFrame)
                     cFrame.write_raw_frame(fh)
             
-                    cFrame = drx.SimFrame(beam=beam, tune=2, pol=1, frame_count=i+1, filter_code=filter, time_offset=0, obs_time=t, flags=0)
+                    cFrame = drx.SimFrame(beam=beam, tune=2, pol=1, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
                     cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
                     cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
                     cFrame.iq *= maxValue*noise_strength

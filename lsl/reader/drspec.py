@@ -75,14 +75,16 @@ class FrameHeader(object):
         else:
             self.nints = nints
         
-    def parse_id(self):
+    @property
+    def id(self):
         """
         Return the beam the frame corresponds to.
         """
         
         return self.beam
         
-    def get_data_products(self):
+    @property
+    def data_products(self):
         """
         Return a list of data products contained in the file.
         
@@ -113,6 +115,7 @@ class FrameHeader(object):
         
         return products
         
+    @property
     def is_linear(self):
         """
         Return whether or not the frame contains linear polarization 
@@ -126,6 +129,7 @@ class FrameHeader(object):
         else:
             return False
             
+    @property
     def is_stokes(self):
         """
         Return whether or not the frame contains Stokes polarization
@@ -139,7 +143,8 @@ class FrameHeader(object):
         else:
             return True
         
-    def get_sample_rate(self):
+    @property
+    def sample_rate(self):
         """
         Return the sample rate of the data in samples/second.
         """
@@ -147,7 +152,8 @@ class FrameHeader(object):
         sample_rate = dp_common.fS / self.decimation
         return sample_rate
         
-    def get_filter_code(self):
+    @property
+    def filter_code(self):
         """
         Function to convert the sample rate in Hz to a filter code.
         """
@@ -157,9 +163,10 @@ class FrameHeader(object):
             value = FILTER_CODES[key]
             sampleCodes[value] = key
             
-        return sampleCodes[self.get_sample_rate()]
+        return sampleCodes[self.sample_rate]
         
-    def get_ffts_per_integration(self):
+    @property
+    def ffts_per_integration(self):
         """
         Return the number of FFT windows per integration.
         
@@ -201,7 +208,7 @@ class FrameData(object):
             self.saturations = [0, 0, 0, 0]
         else:
             self.saturations = saturations
-            
+        
     def get_central_freq(self, which=None):
         """
         Function to set the central frequency of the DRX data in Hz.
@@ -215,13 +222,6 @@ class FrameData(object):
             return dp_common.fS * self.tuning_words[1] / 2**32
         else:
             raise ValueError("Unknown tuning/polarization combination: '%i'" % which)
-            
-    def set_gain(self, gain):
-        """
-        Function to set the gain of the DRX data.
-        """
-
-        self.gain = gain
 
 
 class Frame(object):
@@ -249,63 +249,71 @@ class Frame(object):
             self.data = data
             
         self.valid = True
+        self.gain = None
         
-    def parse_id(self):
+    @property
+    def id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parse_id 
-        function.
-        """
-        
-        return self.header.parse_id()
-        
-    def get_data_products(self):
-        """
-        Convenience wrapper for the Frame.FrameHeder.get_data_products
-        function.
+        Convenience wrapper for the Frame.FrameHeader.id 
+        property.
         """
         
-        return self.header.get_data_products()
+        return self.header.id
         
+    @property
+    def data_products(self):
+        """
+        Convenience wrapper for the Frame.FrameHeder.data_products
+        property.
+        """
+        
+        return self.header.data_products
+        
+    @property
     def is_linear(self):
         """
         Convenience wrapper for the Frame.FrameHeder.is_linear
-        function.
+        property.
         """
         
-        return self.header.is_linear()
+        return self.header.is_linear
         
+    @property
     def is_stokes(self):
         """
         Convenience wrapper for the Frame.FrameHeder.is_stokes
-        function.
+        property.
         """
         
-        return self.header.is_stokes()
+        return self.header.is_stokes
         
-    def get_sample_rate(self):
+    @property
+    def sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_sample_rate 
-        function.
-        """
-        
-        return self.header.get_sample_rate()
-        
-    def get_filter_code(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.get_filter_code function.
+        Convenience wrapper for the Frame.FrameHeader.sample_rate 
+        property.
         """
         
-        return self.header.get_filter_code()
+        return self.header.sample_rate
         
-    def get_ffts_per_integration(self):
+    @property
+    def filter_code(self):
         """
-        Conveinence wrapper for the Frame.FrameHeader.get_ffts_per_integration 
-        function.
+        Convenience wrapper for the Frame.FrameHeader.filter_code property.
+        """
+        
+        return self.header.filter_code
+        
+    @property
+    def ffts_per_integration(self):
+        """
+        Conveinence wrapper for the Frame.FrameHeader.ffts_per_integration 
+        property.
         
         .. versionadded:: 1.0.1
         """
         
-        return self.header.get_ffts_per_integration()
+        return self.header.ffts_per_integration
         
     def get_time(self):
         """
@@ -317,6 +325,7 @@ class Frame(object):
         
         return seconds
         
+    
     def get_central_freq(self, which=None):
         """
         Convenience wrapper for the Frame.FrameData.get_central_freq function.
@@ -324,35 +333,30 @@ class Frame(object):
         
         return self.data.get_central_freq(which=which)
         
-    def get_transform_size(self):
+    @property
+    def transform_size(self):
         """
         Find out what the transform size is.
         
         .. versionadded:: 1.0.1
         """
         
-        p = self.get_data_products()[0]
+        p = self.data_products[0]
         return getattr(self.data, "%s0" % p, None).size
         
-    def get_integration_time(self):
+    @property
+    def integration_time(self):
         """
         Return the integration time for data in seconds.
         
         .. versionadded:: 1.0.1
         """
         
-        LFFT = self.get_transform_size()
-        srate = self.get_sample_rate()
-        nints = self.get_ffts_per_integration()
+        LFFT = self.transform_size
+        srate = self.sample_rate
+        nints = self.ffts_per_integration
         
         return nints*LFFT/srate
-        
-    def set_gain(self, gain):
-        """
-        Convenience wrapper for the Frame.FrameData.set_gain function.
-        """
-        
-        self.data.set_gain(gain)
         
     def __add__(self, y):
         """
@@ -370,9 +374,7 @@ class Frame(object):
         a number to every element in the data section.
         """
         
-        attrs = self.header.get_data_products()
-        
-        for attrBase in attrs:
+        for attrBase in self.header.data_products:
             for tuning in (0, 1):
                 attr = "%s%i" % (attrBase, tuning)
                 try:
@@ -401,9 +403,7 @@ class Frame(object):
         multiply a number to every element in the data section.
         """
         
-        attrs = self.header.get_data_products()
-        
-        for attrBase in attrs:
+        for attrBase in self.header.data_products:
             for tuning in (0, 1):
                 attr = "%s%i" % (attrBase, tuning)
                 try:
@@ -552,7 +552,7 @@ def read_frame(filehandle, Gain=None, Verbose=False):
         raise EOFError
         
     if Gain is not None:
-        newFrame.set_gain(Gain)
+        newFrame.gain = Gain
         
     return newFrame
 
@@ -572,7 +572,7 @@ def get_data_products(filehandle):
     filehandle.seek(fhStart)
     
     # Return the data products
-    return newFrame.header.get_data_products()
+    return newFrame.header.data_products
 
 
 def is_linear(filehandle):
@@ -590,7 +590,7 @@ def is_linear(filehandle):
     filehandle.seek(fhStart)
     
     # Return the verdict
-    return newFrame.header.is_linear()
+    return newFrame.header.is_linear
 
 
 def is_stokes(filehandle):
@@ -608,7 +608,7 @@ def is_stokes(filehandle):
     filehandle.seek(fhStart)
     
     # Return the verdict
-    return newFrame.header.is_stokes()
+    return newFrame.header.is_stokes
 
 
 def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
@@ -628,9 +628,9 @@ def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     filehandle.seek(fhStart)
     
     if not FilterCode:
-        return newFrame.get_sample_rate()
+        return newFrame.sample_rate
     else:
-        return newFrame.get_filter_code()
+        return newFrame.filter_code
 
 
 def get_frame_size(filehandle):
@@ -661,7 +661,7 @@ def get_ffts_per_integration(filehandle):
     frame = read_frame(filehandle)
     filehandle.seek(cPos)
     
-    return frame.get_ffts_per_integration()
+    return frame.ffts_per_integration
 
 
 def get_transform_size(filehandle):
@@ -674,7 +674,7 @@ def get_transform_size(filehandle):
     frame = read_frame(filehandle)
     filehandle.seek(cPos)
     
-    return frame.get_transform_size()
+    return frame.transform_size
 
 
 def get_integration_time(filehandle):
@@ -686,4 +686,4 @@ def get_integration_time(filehandle):
     frame = read_frame(filehandle)
     filehandle.seek(cPos)
     
-    return frame.get_integration_time()
+    return frame.integration_time

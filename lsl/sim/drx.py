@@ -91,7 +91,7 @@ class SimFrame(drx.Frame):
     this method can be written to a file via the methods write_raw_frame() function.
     """
 
-    def __init__(self, beam=None, tune=None, pol=None, filter_code=None, time_offset=None, frame_count=None, obs_time=None, flags=None, iq=None):
+    def __init__(self, beam=None, tune=None, pol=None, decimation=None, time_offset=None, frame_count=None, obs_time=None, flags=None, iq=None):
         """
         Given a list of parameters, build a drx.SimFrame object.  The parameters
         needed are:
@@ -112,17 +112,17 @@ class SimFrame(drx.Frame):
             obs_time now in samples at fS, not seconds
         """
         
+        super(SimFrame, self).__init__()
         self.beam = beam
         self.tune = tune
         self.pol = pol
-        self.filter_code = filter_code
+        self.decimation = decimation
         self.time_offset = time_offset
         self.frame_count = frame_count
         self.second_count = 0
         self.obs_time = obs_time
         self.flags = flags
         self.iq = iq
-        super(SimFrame, self).__init__()
         
     def _update(self):
         """
@@ -132,7 +132,7 @@ class SimFrame(drx.Frame):
         
         self.header.frame_count = 0*self.frame_count
         self.header.second_count = 0*long(self.obs_time / fS)
-        self.header.decimation = int(fS / drx.FILTER_CODES[self.filter_code])
+        self.header.decimation = self.decimation
         self.header.time_offset = self.time_offset
         self.header.drx_id = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
         
@@ -155,12 +155,12 @@ class SimFrame(drx.Frame):
         
         # Back-fill the class' fields to make sure the object is consistent
         ## Header
-        self.beam = self.header.parse_id()[0]
-        self.tune = self.header.parse_id()[1]
-        self.pol = self.header.parse_id()[2]
+        self.beam = self.header.id[0]
+        self.tune = self.header.id[1]
+        self.pol = self.header.id[2]
         self.frame_count = self.header.frame_count
         self.second_count = self.header.second_count
-        self.filter_code = inverseCodes[int(fS / self.header.decimation)]
+        self.decimation = self.header.decimation
         self.time_offset = self.header.time_offset
         ## Data
         self.obs_time = self.data.timetag
@@ -181,7 +181,7 @@ class SimFrame(drx.Frame):
         if self.header.time_offset >= fS:
             return False
 
-        beam, tune, pol = self.parse_id()
+        beam, tune, pol = self.id
         # Is the beam number reasonable?
         if beam not in [1, 2, 3, 4]:
             if raise_errors:

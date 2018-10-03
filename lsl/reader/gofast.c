@@ -11,7 +11,7 @@
 
 
 /*
-Exceptions for the Go Fast! Readers
+  Exceptions for the Go Fast! Readers
 */
 
 PyObject *SyncError;
@@ -19,8 +19,8 @@ PyObject *EOFError;
 
 
 /*
-Validate a collection of Mark 5C sync words.  Return 1 is all are
-valid.
+  Validate a collection of Mark 5C sync words.  Return 1 is all are
+  valid.
 */
 
 int validSync5C(unsigned int syncWord) {
@@ -35,7 +35,7 @@ int validSync5C(unsigned int syncWord) {
 
 
 /* 
-Look-up Tables
+  Look-up Tables
 */
 short int tbw4LUT[256][2];
 float tbnLUT[256];
@@ -78,7 +78,7 @@ static void initLWALUTs(void) {
 
 
 /*
-Module Setup - Function Definitions and Documentation
+  Module Setup - Function Definitions and Documentation
 */
 
 static PyMethodDef GoFastMethods[] = {
@@ -96,24 +96,8 @@ PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VD
 
 
 /*
-Module Setup - Initialization
+  Module Setup - Initialization
 */
-
-#if PY_MAJOR_VERSION >= 3
-    #define MOD_ERROR_VAL NULL
-    #define MOD_SUCCESS_VAL(val) val
-    #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
-    #define MOD_DEF(ob, name, methods, doc) \
-    static struct PyModuleDef moduledef = { \
-        PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
-    ob = PyModule_Create(&moduledef);
-#else
-    #define MOD_ERROR_VAL
-    #define MOD_SUCCESS_VAL(val)
-    #define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
-    #define MOD_DEF(ob, name, methods, doc) \
-    ob = Py_InitModule3(name, methods, doc);
-#endif
 
 MOD_INIT(_gofast) {
     PyObject *m, *dict1, *dict2;

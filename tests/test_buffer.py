@@ -150,8 +150,8 @@ class buffer_tests(unittest.TestCase):
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pS, pP = cFrames[i-1].parse_id()
-                cS, cP = cFrames[i].parse_id()
+                pS, pP = cFrames[i-1].id
+                cS, cP = cFrames[i].id
                 
                 pID = pS*2 + pP
                 cID = cS*2 + cP
@@ -231,8 +231,8 @@ class buffer_tests(unittest.TestCase):
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pS, pP = cFrames[i-1].parse_id()
-                cS, cP = cFrames[i].parse_id()
+                pS, pP = cFrames[i-1].id
+                cS, cP = cFrames[i].id
                 
                 pID = pS*2 + pP
                 cID = cS*2 + cP
@@ -247,7 +247,7 @@ class buffer_tests(unittest.TestCase):
         
         fh = open(drxFile, 'rb')
         junkFrame = drx.read_frame(fh)
-        b,t,p = junkFrame.parse_id()
+        b,t,p = junkFrame.id
         fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
@@ -301,7 +301,7 @@ class buffer_tests(unittest.TestCase):
         
         fh = open(drxFile, 'rb')
         junkFrame = drx.read_frame(fh)
-        b,t,p = junkFrame.parse_id()
+        b,t,p = junkFrame.id
         fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
@@ -327,8 +327,8 @@ class buffer_tests(unittest.TestCase):
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pB, pT, pP = cFrames[i-1].parse_id()
-                cB, cT, cP = cFrames[i].parse_id()
+                pB, pT, pP = cFrames[i-1].id
+                cB, cT, cP = cFrames[i].id
                 
                 pID = 4*pB + 2*(pT-1) + pP
                 cID = 4*cB + 2*(cT-1) + cP
@@ -341,7 +341,7 @@ class buffer_tests(unittest.TestCase):
         
         fh = open(drxFile, 'rb')
         junkFrame = drx.read_frame(fh)
-        b,t,p = junkFrame.parse_id()
+        b,t,p = junkFrame.id
         fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
@@ -377,7 +377,7 @@ class buffer_tests(unittest.TestCase):
         
         fh = open(drxFile, 'rb')
         junkFrame = drx.read_frame(fh)
-        b,t,p = junkFrame.parse_id()
+        b,t,p = junkFrame.id
         fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
@@ -403,8 +403,8 @@ class buffer_tests(unittest.TestCase):
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pB, pT, pP = cFrames[i-1].parse_id()
-                cB, cT, cP = cFrames[i].parse_id()
+                pB, pT, pP = cFrames[i-1].id
+                cB, cT, cP = cFrames[i].id
                 
                 pID = 4*pB + 2*(pT-1) + pP
                 cID = 4*cB + 2*(cT-1) + cP
@@ -422,8 +422,8 @@ class buffer_tests(unittest.TestCase):
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pB, pT, pP = cFrames[i-1].parse_id()
-                cB, cT, cP = cFrames[i].parse_id()
+                pB, pT, pP = cFrames[i-1].id
+                cB, cT, cP = cFrames[i].id
                 
                 pID = 4*pB + 2*(pT-1) + pP
                 cID = 4*cB + 2*(cT-1) + cP

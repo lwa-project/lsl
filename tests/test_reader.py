@@ -44,12 +44,12 @@ class reader_tests(unittest.TestCase):
         fh = open(tbwFile, 'rb')
         # First frame is really TBW and stores the correct stand ID
         frame1 = tbw.read_frame(fh)
-        self.assertTrue(frame1.header.is_tbw())
-        self.assertEqual(frame1.parse_id(), 2)
+        self.assertTrue(frame1.header.is_tbw)
+        self.assertEqual(frame1.id, 2)
         # Second frame
         frame2 = tbw.read_frame(fh)
-        self.assertTrue(frame2.header.is_tbw())
-        self.assertEqual(frame2.parse_id(), 1)
+        self.assertTrue(frame2.header.is_tbw)
+        self.assertEqual(frame2.id, 1)
         fh.close()
         
     def test_tbw_bits(self):
@@ -59,7 +59,7 @@ class reader_tests(unittest.TestCase):
         # File contains 12-bit data, two ways
         self.assertEqual(tbw.get_data_bits(fh), 12)
         frame1 = tbw.read_frame(fh)
-        self.assertEqual(frame1.get_data_bits(), 12)
+        self.assertEqual(frame1.data_bits, 12)
         fh.close()
         
     def test_tbw_errors(self):
@@ -155,12 +155,12 @@ class reader_tests(unittest.TestCase):
         fh = open(tbnFile, 'rb')
         # First frame is really TBN and stores the correct IDs
         frame1 = tbn.read_frame(fh)
-        stand, pol = frame1.parse_id()
+        stand, pol = frame1.id
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 0)
         # Second frame
         frame2 = tbn.read_frame(fh)
-        stand, pol = frame2.parse_id()
+        stand, pol = frame2.id
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 1)
         fh.close()
@@ -276,12 +276,12 @@ class reader_tests(unittest.TestCase):
         
         fh = open(tbnFile, 'rb')
         frame1 = tbw.read_frame(fh)
-        self.assertFalse(frame1.header.is_tbw())
+        self.assertFalse(frame1.header.is_tbw)
         fh.close()
         
         fh = open(tbwFile, 'rb')
         frame1 = tbn.read_frame(fh)
-        self.assertFalse(frame1.header.is_tbn())
+        self.assertFalse(frame1.header.is_tbn)
         fh.close()
         
     ### DRX ###
@@ -292,13 +292,13 @@ class reader_tests(unittest.TestCase):
         fh = open(drxFile, 'rb')
         # First frame is really DRX and stores the IDs
         frame1 = drx.read_frame(fh)
-        beam, tune, pol = frame1.parse_id()
+        beam, tune, pol = frame1.id
         self.assertEqual(beam, 4)
         self.assertEqual(tune, 1)
         self.assertEqual(pol,  1)
         # Second frame
         frame2 = drx.read_frame(fh)
-        beam, tune, pol = frame2.parse_id()
+        beam, tune, pol = frame2.id
         self.assertEqual(beam, 4)
         self.assertEqual(tune, 2)
         self.assertEqual(pol,  0)
@@ -350,10 +350,10 @@ class reader_tests(unittest.TestCase):
         fh.seek(0)
         
         # Sample rate
-        self.assertEqual(cFrame.get_sample_rate(), drx.get_sample_rate(fh))
+        self.assertEqual(cFrame.sample_rate, drx.get_sample_rate(fh))
         
         # Filter code
-        self.assertEqual(cFrame.get_filter_code(), drx.get_sample_rate(fh, FilterCode=True))
+        self.assertEqual(cFrame.filter_code, drx.get_sample_rate(fh, FilterCode=True))
         fh.close()
         
     def test_drx_comps(self):
@@ -430,12 +430,12 @@ class reader_tests(unittest.TestCase):
         fh = open(drspecFile, 'rb')
         # First frame is really DR spectrometer and stores the IDs
         frame1 = drspec.read_frame(fh)
-        beam = frame1.parse_id()
+        beam = frame1.id
         self.assertEqual(beam, 1)
         
         # Second frame
         frame2 = drspec.read_frame(fh)
-        beam = frame2.parse_id()
+        beam = frame2.id
         self.assertEqual(beam, 1)
         fh.close()
         
@@ -466,27 +466,27 @@ class reader_tests(unittest.TestCase):
         fh.seek(0)
         
         # Beam
-        self.assertEqual(cFrame.parse_id(), 1)
+        self.assertEqual(cFrame.id, 1)
         
         # Sample rate
-        self.assertAlmostEqual(cFrame.get_sample_rate(), 19.6e6, 1)
-        self.assertAlmostEqual(cFrame.get_sample_rate(), drspec.get_sample_rate(fh), 1)
+        self.assertAlmostEqual(cFrame.sample_rate, 19.6e6, 1)
+        self.assertAlmostEqual(cFrame.sample_rate, drspec.get_sample_rate(fh), 1)
         
         # Filter code
-        self.assertEqual(cFrame.get_filter_code(), 7)
-        self.assertEqual(cFrame.get_filter_code(), drspec.get_sample_rate(fh, FilterCode=True))
+        self.assertEqual(cFrame.filter_code, 7)
+        self.assertEqual(cFrame.filter_code, drspec.get_sample_rate(fh, FilterCode=True))
         
         # FFT windows per integration
-        self.assertEqual(cFrame.get_ffts_per_integration(), 6144)
-        self.assertEqual(cFrame.get_ffts_per_integration(), drspec.get_ffts_per_integration(fh))
+        self.assertEqual(cFrame.ffts_per_integration, 6144)
+        self.assertEqual(cFrame.ffts_per_integration, drspec.get_ffts_per_integration(fh))
         
         # Transform size
-        self.assertEqual(cFrame.get_transform_size(), 1024)
-        self.assertEqual(cFrame.get_transform_size(), drspec.get_transform_size(fh))
+        self.assertEqual(cFrame.transform_size, 1024)
+        self.assertEqual(cFrame.transform_size, drspec.get_transform_size(fh))
         
         # Integration time
-        self.assertAlmostEqual(cFrame.get_integration_time(), 0.32099265, 8)
-        self.assertAlmostEqual(cFrame.get_integration_time(), drspec.get_integration_time(fh), 8)
+        self.assertAlmostEqual(cFrame.integration_time, 0.32099265, 8)
+        self.assertAlmostEqual(cFrame.integration_time, drspec.get_integration_time(fh), 8)
         
         fh.close()
         
@@ -568,7 +568,7 @@ class reader_tests(unittest.TestCase):
         frame1 = vdif.read_frame(fh)
         
         # Validate header
-        station, thread = frame1.parse_id()
+        station, thread = frame1.id
         self.assertEqual(station, 19284)
         self.assertEqual(thread, 0)
         self.assertEqual(frame1.header.is_legacy, 0)
@@ -591,7 +591,7 @@ class reader_tests(unittest.TestCase):
         frame2 = vdif.read_frame(fh)
         
         # Validate header
-        station, thread = frame2.parse_id()
+        station, thread = frame2.id
         self.assertEqual(station, 19284)
         self.assertEqual(thread, 0)
         self.assertEqual(frame2.header.is_legacy, 0)

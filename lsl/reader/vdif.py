@@ -155,7 +155,8 @@ class FrameHeader(object):
         
         return seconds
         
-    def parse_id(self):
+    @property
+    def id(self):
         """
         Return a two-element tuple of the station ID and thread ID.
         
@@ -164,7 +165,8 @@ class FrameHeader(object):
         """
         return (self.station_id, self.thread_id)
         
-    def parse_extended_user_data(self):
+    @property
+    def extended_user_data(self):
         """
         Parse the extended user data if it was included with the reader.  
         The data is returned as a dictionary.
@@ -243,20 +245,6 @@ class FrameHeader(object):
             raise RuntimeError("Unknown extended user data version: %i" % edv)
             
         return fields
-        
-    def get_sample_rate(self):
-        """
-        Return the sample rate of the data in samples/second.
-        """
-        
-        return self.sample_rate*1.0
-        
-    def get_central_freq(self):
-        """
-        Function to get the central frequency of the VDIF data in Hz.
-        """
-        
-        return self.central_freq*1.0
 
 
 class FrameData(object):
@@ -292,21 +280,23 @@ class Frame(object):
             
         self.valid = True
 
-    def parse_id(self):
+    @property
+    def id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parse_id 
-        function.
-        """
-        
-        return self.header.parse_id()
-        
-    def parse_extended_user_data(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.parse_extended_user_data
-        function.
+        Convenience wrapper for the Frame.FrameHeader.id 
+        property.
         """
         
-        return self.header.parse_extended_user_data()
+        return self.header.id
+        
+    @property
+    def extended_user_data(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.extended_user_data
+        property.
+        """
+        
+        return self.header.extended_user_data
         
     def get_time(self):
         """
@@ -315,19 +305,21 @@ class Frame(object):
         
         return self.header.get_time()
         
-    def get_sample_rate(self):
+    @property
+    def sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_sample_rate function.
-        """
-        
-        return self.header.get_sample_rate()
-        
-    def get_central_freq(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.get_central_freq function.
+        Convenience wrapper for the Frame.FrameHeader.sample_rate property.
         """
         
-        return self.header.get_central_freq()
+        return self.header.sample_rate
+        
+    @property
+    def central_freq(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.central_freq property.
+        """
+        
+        return self.header.central_freq
         
     def __add__(self, y):
         """

@@ -11,7 +11,7 @@
 #include "readers.h"
 
 /*
-DR Spectrometer Reader
+  DR Spectrometer Reader
 */
 
 #pragma pack(push)

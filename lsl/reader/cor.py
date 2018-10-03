@@ -32,8 +32,8 @@ import numpy
 from lsl.common import adp as adp_common
 from lsl.reader._gofast import NCHAN_COR
 from lsl.reader._gofast import readCOR
-from lsl.reader._gofast import SyncError as GSyncError
-from lsl.reader._gofast import EOFError as GEOFError
+from lsl.reader._gofast import SyncError as gSyncError
+from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
 
 __version__ = '0.2'
@@ -60,6 +60,7 @@ class FrameHeader(object):
         self.first_chan = first_chan
         self.gain = gain
         
+    @property
     def is_cor(self):
         """
         Function to check if the data is really COR.  Returns True if the 
@@ -71,20 +72,14 @@ class FrameHeader(object):
         else:
             return False
             
-    def get_channel_freqs(self):
+    @property
+    def channel_freqs(self):
         """
         Return a numpy.float32 array for the center frequencies, in Hz, of
         each channel in the data.
         """
         
         return (numpy.arange(NCHAN_COR, dtype=numpy.float32)+self.first_chan) * adp_common.fC
-        
-    def get_gain(self):
-        """
-        Get the current TBN gain for this frame.
-        """
-        
-        return self.gain
 
 
 class FrameData(object):
@@ -100,7 +95,8 @@ class FrameData(object):
         self.stand1 = stand1
         self.vis = vis
         
-    def parse_id(self):
+    @property
+    def id(self):
         """
         Return a tuple of the two stands that contribute the this frame.
         """
@@ -117,7 +113,8 @@ class FrameData(object):
         
         return seconds
         
-    def get_integration_time(self):
+    @property
+    def integration_time(self):
         """
         Return the integration time of the visibility in seconds.
         """
@@ -144,26 +141,29 @@ class Frame(object):
             
         self.valid = True
         
+    @property
     def is_cor(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.is_cor function.
+        Convenience wrapper for the Frame.FrameHeader.is_cor property.
         """
         
-        return self.header.is_cor()
+        return self.header.is_cor
         
-    def get_channel_freqs(self):
+    @property
+    def channel_freqs(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_channel_freqs function.
+        Convenience wrapper for the Frame.FrameHeader.channel_freqs property.
         """
         
-        return self.header.get_channel_freqs()
+        return self.header.channel_freqs
         
-    def get_gain(self):
+    @property
+    def gain(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_gain function.
+        Convenience wrapper for the Frame.FrameHeader.gain property.
         """
 
-        return self.header.get_gain()
+        return self.header.gain
         
     def get_time(self):
         """
@@ -172,20 +172,22 @@ class Frame(object):
         
         return self.data.get_time()
         
-    def parse_id(self):
+    @property
+    def id(self):
         """
-        Convenience wrapper for the Frame.FrameData.parse_id function.
-        """
-        
-        return self.data.parse_id()
-        
-    def get_integration_time(self):
-        """
-        Convenience wrapper for the Frame.FrameData.get_integration_time
-        function.
+        Convenience wrapper for the Frame.FrameData.id property.
         """
         
-        return self.data.get_integration_time()
+        return self.data.id
+        
+    @property
+    def integration_time(self):
+        """
+        Convenience wrapper for the Frame.FrameData.integration_time
+        property.
+        """
+        
+        return self.data.integration_time
         
     def __add__(self, y):
         """
@@ -376,10 +378,10 @@ def read_frame(filehandle, Verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = readCOR(filehandle, Frame())
-    except GSyncError:
+    except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
-    except GEOFError:
+    except gEOFError:
         raise EOFError
         
     return newFrame

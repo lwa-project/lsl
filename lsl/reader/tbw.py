@@ -67,7 +67,8 @@ class FrameHeader(object):
         self.frame_count = frame_count
         self.second_count = second_count
         self.tbw_id = tbw_id
-
+        
+    @property
     def is_tbw(self):
         """
         Function to check if the data is really TBW and not TBN by examining
@@ -79,8 +80,9 @@ class FrameHeader(object):
             return True
         else:
             return False
-
-    def parse_id(self):
+    
+    @property
+    def id(self):
         """
         Function to parse the TBW ID field and return the stand number.
         """
@@ -91,8 +93,9 @@ class FrameHeader(object):
         stand = self.tbw_id&1023
 
         return stand
-
-    def get_data_bits(self):
+    
+    @property
+    def data_bits(self):
         """
         Function to parse the TBW ID field and return the size of number of 
         bits that comprise the data.  12 is returned for 12-bit data, and 4 
@@ -148,28 +151,31 @@ class Frame(object):
             
         self.valid = True
         
+    @property
     def is_tbw(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.is_tbw function.
+        Convenience wrapper for the Frame.FrameHeader.is_tbw property.
         """
         
-        return self.header.is_tbw()
+        return self.header.is_tbw
         
-    def parse_id(self):
+    @property
+    def id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parse_id 
-        function.
+        Convenience wrapper for the Frame.FrameHeader.id 
+        property.
         """
         
-        return self.header.parse_id()
+        return self.header.id
 
-    def get_data_bits(self):
+    @property
+    def data_bits(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_data_bits 
-        function.
+        Convenience wrapper for the Frame.FrameHeader.data_bits 
+        property.
         """
         
-        return self.header.get_data_bits()
+        return self.header.data_bits
 
     def get_time(self):
         """
@@ -374,7 +380,7 @@ def get_data_bits(filehandle):
     cFrame = read_frame(filehandle)
 
     # Get the number of bits used to represent the data
-    dataBits = cFrame.get_data_bits()
+    dataBits = cFrame.data_bits
 
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
@@ -408,10 +414,10 @@ def get_frames_per_obs(filehandle):
         except SyncError:
             continue
 
-        cID = cFrame1.parse_id()
+        cID = cFrame1.id
         if cID not in idCodes:
             idCodes.append(cID)
-        cID = cFrame2.parse_id()
+        cID = cFrame2.id
         if cID not in idCodes:
             idCodes.append(cID)
 

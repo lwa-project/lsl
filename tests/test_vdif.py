@@ -66,7 +66,7 @@ class vdif_tests(unittest.TestCase):
         if not vanilla:
             # Set some values for the other meta-data
             for frame in frames:
-                frame.setsample_rate(100000)
+                frame.sample_rate = 100000
 
         fh.close()
         return frames
@@ -83,7 +83,7 @@ class vdif_tests(unittest.TestCase):
         # Write the data
         fh = open(testFile, 'wb')
         for frame in frames:
-            vFrame = vdif.Frame(frame.parse_id(), frame.get_time(), bits=12, data=frame.data.xy[0,:])
+            vFrame = vdif.Frame(frame.id, frame.get_time(), bits=12, data=frame.data.xy[0,:])
             vFrame.write_raw_frame(fh)
         fh.close()
 
@@ -121,7 +121,7 @@ class vdif_tests(unittest.TestCase):
         # Write the data
         fh = open(testFile, 'wb')
         for frame in frames:
-            stand, pol = frame.parse_id()
+            stand, pol = frame.id
             if pol == 1:
                 continue
             vFrame = vdif.Frame(stand, frame.get_time(), bits=8, data=frame.data.iq)

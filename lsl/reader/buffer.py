@@ -47,8 +47,8 @@ def _cmp_frames(x, y):
     # Parse if frame IDs to extract the stand/beam, tunning, and polarization
     # information (where appropriate)
     try:
-        idsX = x.parse_id()
-        idsY = y.parse_id()
+        idsX = x.id
+        idsY = y.id
     except AttributeError:
         idsX = x.header.first_chan
         idsY = y.header.first_chan
@@ -296,7 +296,7 @@ class FrameBuffer(object):
             output = []
             frameIDs = []
             for frame in self.buffer[keyToReturn]:
-                newID = frame.parse_id()
+                newID = frame.id
                 if newID not in frameIDs:
                     output.append(frame)
                     frameIDs.append(newID)
@@ -365,13 +365,13 @@ class FrameBuffer(object):
             fnc = lambda x: self.frameID(x)
         else:
             if self.mode == 'VDIF':
-                fnc = lambda x: x.parse_id()[1]
+                fnc = lambda x: x.id[1]
             elif self.mode == 'TBF':
                 fnc = lambda x: x.header.first_chan
             elif self.mode == 'COR':
-                fnc = lambda x: x.parse_id()+(x.header.first_chan,)
+                fnc = lambda x: x.id+(x.header.first_chan,)
             else:
-                fnc = lambda x: x.parse_id()
+                fnc = lambda x: x.id
         frameList = set(map(fnc, self.buffer[key]))
         
         # Compare the existing list with the possible list stored in the 
