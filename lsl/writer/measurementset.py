@@ -42,8 +42,8 @@ STOKES_CODES = {'I':  1, 'Q':  2, 'U':  3, 'V':  4,
                
 
 NUMERIC_STOKES = { 1:'I',   2:'Q',   3:'U',   4:'V', 
-                  5:'RR',  6:'RL',  7:'LR',  8:'LL',
-                  9:'XX', 10:'XY', 11:'YX', 12:'YY'}
+                   5:'RR',  6:'RL',  7:'LR',  8:'LL',
+                   9:'XX', 10:'XY', 11:'YX', 12:'YY'}
 
 
 def merge_baseline(ant1, ant2, shift=16):
@@ -120,8 +120,8 @@ class MS(object):
             polarization code.
             """
             
-            sID = self.obsTime*10000000 + abs(self.pol)
-            yID =    y.obsTime*10000000 + abs(   y.pol)
+            sID = (self.obsTime, abs(self.pol))
+            yID = (y.obsTime,    abs(y.pol)   )
             
             if sID > yID:
                 return 1

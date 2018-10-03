@@ -134,8 +134,8 @@ class IDI(object):
             polarization code.
             """
             
-            sID = (self.obsTime, self.pol)
-            yID = (y.obsTime,    y.pol   )
+            sID = (self.obsTime, abs(self.pol))
+            yID = (y.obsTime,    abs(y.pol)   )
             
             if sID > yID:
                 return 1

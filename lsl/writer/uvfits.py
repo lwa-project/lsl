@@ -124,8 +124,8 @@ class UV(object):
             polarization code.
             """
             
-            sID = self.obsTime*10000000 + abs(self.pol)
-            yID =    y.obsTime*10000000 + abs(   y.pol)
+            sID = (self.obsTime, abs(self.pol))
+            yID = (y.obsTime,    abs(y.pol)   )
             
             if sID > yID:
                 return 1

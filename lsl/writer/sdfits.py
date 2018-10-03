@@ -38,12 +38,12 @@ __all__ = ['SD', 'STOKES_CODES', 'NUMERIC_STOKES', '__version__', '__revision__'
 SD_VERSION = (1, 6)
 
 STOKES_CODES = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
-            'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 
-            'XX': -5, 'YY': -6, 'XY': -7, 'YX': -8}
+                'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 
+                'XX': -5, 'YY': -6, 'XY': -7, 'YX': -8}
 
 NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
-            -1: 'RR', -2: 'LL', -3: 'RL', -4: 'RL', 
-            -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
+                  -1: 'RR', -2: 'LL', -3: 'RL', -4: 'RL', 
+                  -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
 
 class SD(object):
