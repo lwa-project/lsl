@@ -1,6 +1,19 @@
 #ifndef __READERS_H
 #define __READERS_H
 
+#include "Python.h"
+
+#if defined(__linux__)
+/* Linux */
+#include <byteswap.h>
+#elif defined(__APPLE__) && defined(__MACH__)
+/* OSX */
+#include <libkern/OSByteOrder.h>
+#define __bswap_16 OSSwapInt16
+#define __bswap_32 OSSwapInt32
+#define __bswap_64 OSSwapInt64
+#endif
+
 /*
  Python3 compatibility
 */

@@ -53,20 +53,20 @@ class FrameHeader(object):
     well as the original binary header data.
     """
     
-    def __init__(self, id=None, frame_count=None, second_count=None, first_chan=None, gain=None):
-        self.id = id
+    def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None, gain=None):
+        self.adp_id = adp_id
         self.frame_count = frame_count
         self.second_count = second_count
         self.first_chan = first_chan
         self.gain = gain
         
-    def isCOR(self):
+    def is_cor(self):
         """
         Function to check if the data is really COR.  Returns True if the 
         data is COR, false otherwise.
         """
         
-        if self.id == 0x02:
+        if self.adp_id == 0x02:
             return True
         else:
             return False
@@ -144,12 +144,12 @@ class Frame(object):
             
         self.valid = True
         
-    def isCOR(self):
+    def is_cor(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.isCOR function.
+        Convenience wrapper for the Frame.FrameHeader.is_cor function.
         """
         
-        return self.header.isCOR()
+        return self.header.is_cor()
         
     def get_channel_freqs(self):
         """
