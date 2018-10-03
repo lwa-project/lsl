@@ -50,7 +50,7 @@ def parseOptions(args):
     config['metadata'] = ''
     config['LFFT'] = 4096
     config['maxFrames'] = 30000*260
-    config['window'] = fxc.noWindow
+    config['window'] = fxc.null_window
     config['applyGain'] = False
     config['stack'] = False
     config['output'] = None
@@ -104,12 +104,12 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
-            station = metabundle.getStation(config['metadata'], ApplySDM=True)
+            station = metabundle.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
-    antennas = station.getAntennas()
+    antennas = station.get_antennas()
     
     # Length of the FFT
     LFFT = config['LFFT']
@@ -125,9 +125,9 @@ def main(args):
     
     idf = LWA1DataFile(config['args'][0])
     
-    nFrames = idf.getInfo('nFrames')
-    srate = idf.getInfo('sampleRate')
-    dataBits = idf.getInfo('dataBits')
+    nFrames = idf.get_info('nFrames')
+    srate = idf.get_info('sample_rate')
+    dataBits = idf.get_info('dataBits')
     # The number of ant/pols in the file is hard coded because I cannot figure out 
     # a way to get this number in a systematic fashion
     antpols = len(antennas)
@@ -139,7 +139,7 @@ def main(args):
         
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    beginDate = ephem.Date(unix_to_utcjd(idf.getInfo('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
     
     # File summary
     print "Filename: %s" % config['args'][0]
@@ -231,7 +231,7 @@ def main(args):
                         diff = subspectra - currSpectra
                         ax.plot(freq/1e6, diff)
                         
-                ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer, antennas[i].getStatus()))
+                ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer, antennas[i].get_status()))
                 ax.set_xlabel('Frequency [MHz]')
                 ax.set_ylabel('P.S.D. [dB/RBW]')
                 ax.set_xlim([10,90])

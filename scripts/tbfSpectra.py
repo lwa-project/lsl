@@ -118,27 +118,27 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
-            station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+            station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwasv
-    antennas = station.getAntennas()
+    antennas = station.get_antennas()
     
     fh = open(config['args'][0], 'rb')
-    nFrames = os.path.getsize(config['args'][0]) / tbf.FrameSize
+    nFrames = os.path.getsize(config['args'][0]) / tbf.FRAME_SIZE
     antpols = len(antennas)
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    junkFrame = tbf.readFrame(fh)
+    junkFrame = tbf.read_frame(fh)
     fh.seek(0)
-    beginDate = ephem.Date(unix_to_utcjd(junkFrame.getTime()) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(junkFrame.get_time()) - DJD_OFFSET)
     
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
-    nFramesPerObs = tbf.getFramesPerObs(fh)
-    nChannels = tbf.getChannelCount(fh)
+    nFramesPerObs = tbf.get_frames_per_obs(fh)
+    nchannels = tbf.get_channel_count(fh)
     nSamples = 7840
     
     # Figure out how many chunks we need to work with
@@ -147,14 +147,14 @@ def main(args):
     # Pre-load the channel mapper
     mapper = []
     for i in xrange(2*nFramesPerObs):
-        cFrame = tbf.readFrame(fh)
-        if cFrame.header.firstChan not in mapper:
-            mapper.append( cFrame.header.firstChan )
-    fh.seek(-2*nFramesPerObs*tbf.FrameSize, 1)
+        cFrame = tbf.read_frame(fh)
+        if cFrame.header.first_chan not in mapper:
+            mapper.append( cFrame.header.first_chan )
+    fh.seek(-2*nFramesPerObs*tbf.FRAME_SIZE, 1)
     mapper.sort()
     
     # Calculate the frequencies
-    freq = numpy.zeros(nChannels)
+    freq = numpy.zeros(nchannels)
     for i,c in enumerate(mapper):
         freq[i*12:i*12+12] = c + numpy.arange(12)
     freq *= 25e3
@@ -163,35 +163,35 @@ def main(args):
     print "Filename: %s" % config['args'][0]
     print "Date of First Frame: %s" % str(beginDate)
     print "Frames per Observation: %i" % nFramesPerObs
-    print "Channel Count: %i" % nChannels
+    print "Channel Count: %i" % nchannels
     print "Frames: %i" % nFrames
     print "==="
     print "Chunks: %i" % nChunks
     
-    spec = numpy.zeros((nChannels,256,2))
+    spec = numpy.zeros((nchannels,256,2))
     norm = numpy.zeros_like(spec)
     for i in xrange(nChunks):
         # Inner loop that actually reads the frames into the data array
         for j in xrange(nFramesPerObs):
             # Read in the next frame and anticipate any problems that could occur
             try:
-                cFrame = tbf.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbf.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
-                print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FrameSize-1)
+            except errors.SyncError:
+                print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FRAME_SIZE-1)
                 continue
-            if not cFrame.header.isTBF():
+            if not cFrame.header.is_tbf():
                 continue
                 
-            firstChan = cFrame.header.firstChan
+            first_chan = cFrame.header.first_chan
             
             # Figure out where to map the channel sequence to
             try:
-                aStand = mapper.index(firstChan)
+                aStand = mapper.index(first_chan)
             except ValueError:
-                mapper.append(firstChan)
-                aStand = mapper.index(firstChan)
+                mapper.append(first_chan)
+                aStand = mapper.index(first_chan)
             
             # Actually load the data.
             spec[aStand*12:aStand*12+12,:,:] += numpy.abs(cFrame.data.fDomain)**2
@@ -251,7 +251,7 @@ def main(args):
             ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)
             ax.plot(freq, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
             
-            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].getStatus()))
+            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].get_status()))
             ax.set_xlabel('Frequency [%s]' % units)
             ax.set_ylabel('P.S.D. [dB/RBW]')
             ax.set_ylim([-10, 30])

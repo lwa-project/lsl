@@ -14,21 +14,21 @@ import matplotlib.pyplot as plt
 
 def main(args):
     # Determine the number of samples in the specified file
-    nSamples = os.path.getsize(args[0]) / tbw.FrameSize
+    nSamples = os.path.getsize(args[0]) / tbw.FRAME_SIZE
     print "Samples in file: ", nSamples
-    fh = open(args[0], "rb", buffering=tbw.FrameSize)
+    fh = open(args[0], "rb", buffering=tbw.FRAME_SIZE)
 
     # Make sure that the data is TBW and determine the data length
-    test = tbw.readFrame(fh)
-    print "TBW Data:  %s" % test.header.isTBW()
-    if not test.header.isTBW():
+    test = tbw.read_frame(fh)
+    print "TBW Data:  %s" % test.header.is_tbw()
+    if not test.header.is_tbw():
         raise errors.notTBWError()
-    print "Data Length: %i bits" % test.getDataBits()
-    if test.header.getDataBits() == 12:
+    print "Data Length: %i bits" % test.get_data_bits()
+    if test.header.get_data_bits() == 12:
         nData = 400
     else:
         nData = 1200
-    fh.seek(-tbw.FrameSize, 1)
+    fh.seek(-tbw.FRAME_SIZE, 1)
     
     # Due to the size of the FITS files being generated, the number of frames that 
     # can be read in is limited to 300,000, or 30,000 frames for 10 stands.  Getting
@@ -48,17 +48,17 @@ def main(args):
     for i in range(nSamples):
         # Read in the next frame and anticipate any problems that could occur
         try:
-            cFrame = tbw.readFrame(fh, Verbose=False)
-        except errors.eofError:
+            cFrame = tbw.read_frame(fh, Verbose=False)
+        except errors.EOFError:
             break
-        except errors.syncError:
-            #print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFrameSize-1)
+        except errors.SyncError:
+            #print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/TBWFRAME_SIZE-1)
             syncCount = syncCount + 1
             continue
             
-        stand = cFrame.header.parseID()
-        if cFrame.header.frameCount % 10000 == 0:
-            print "%2i  %14i  %6.3f  %5i  %5i" % (stand, cFrame.data.timeTag, cFrame.getTime(), cFrame.header.frameCount, cFrame.header.secondsCount)
+        stand = cFrame.header.parse_id()
+        if cFrame.header.frame_count % 10000 == 0:
+            print "%2i  %14i  %6.3f  %5i  %5i" % (stand, cFrame.data.timetag, cFrame.get_time(), cFrame.header.frame_count, cFrame.header.second_count)
         if stand not in count.keys():
             count[stand] = 0
             

@@ -14,14 +14,14 @@ from lsl.astro import unix_to_utcjd, DJD_OFFSET
 
 def main(args):
     idf = LWA1DataFile(args[0])
-    print idf.getInfo()
-    nFramesFile = idf.getInfo('nFrames')
+    print idf.get_info()
+    nFramesFile = idf.get_info('nFrames')
     
-    srate = idf.getInfo('sampleRate')
-    antpols = idf.getInfo('nAntenna')
+    srate = idf.get_info('sample_rate')
+    antpols = idf.get_info('nAntenna')
     
     # Date
-    beginDate = ephem.Date(unix_to_utcjd(idf.getInfo('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
     
     # File summary
     print "Filename: %s" % args[0]
@@ -42,8 +42,8 @@ def main(args):
     masterCount = 0
     for i in xrange(nSamples):
         for j in xrange(antpols):
-            frame = idf.readFrame()
-            stand, pol = frame.parseID()
+            frame = idf.read_frame()
+            stand, pol = frame.parse_id()
             try:
                 count[stand] += 1
             except KeyError:

@@ -13,7 +13,7 @@ import pickle
 import unittest
 from datetime import datetime
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
 
 
@@ -98,12 +98,12 @@ class stations_tests(unittest.TestCase):
         self.assertTrue(lwasv.antennas[100].stand.id != lwasvPrime.antennas[100].stand.id)
         
     def test_ecef_conversion(self):
-        """Test the stations.geo2ecef() function."""
+        """Test the stations.geo_to_ecef() function."""
 
         lat = 0.0
         lng = 0.0
         elev = 0.0
-        x, y, z = stations.geo2ecef(lat, lng, elev)
+        x, y, z = stations.geo_to_ecef(lat, lng, elev)
         self.assertAlmostEqual(x, 6378137.0)
         self.assertAlmostEqual(y, 0.0)
         self.assertAlmostEqual(z, 0.0)
@@ -143,18 +143,18 @@ class stations_tests(unittest.TestCase):
         """Test retrieving LSL interface modules."""
         
         lwa1 = stations.lwa1
-        self.assertEqual(lwa1.interface.getModule('backend'), dp)
-        self.assertEqual(lwa1.interface.getModule('mcs'), mcs)
-        self.assertEqual(lwa1.interface.getModule('sdf'), sdf)
-        self.assertEqual(lwa1.interface.getModule('metabundle'), metabundle)
-        self.assertEqual(lwa1.interface.getModule('sdm'), sdm)
+        self.assertEqual(lwa1.interface.get_module('backend'), dp)
+        self.assertEqual(lwa1.interface.get_module('mcs'), mcs)
+        self.assertEqual(lwa1.interface.get_module('sdf'), sdf)
+        self.assertEqual(lwa1.interface.get_module('metabundle'), metabundle)
+        self.assertEqual(lwa1.interface.get_module('sdm'), sdm)
         
         lwasv = stations.lwasv
-        self.assertFalse(lwasv.interface.getModule('backend') == dp)
-        self.assertFalse(lwasv.interface.getModule('mcs') == mcs)
-        self.assertFalse(lwasv.interface.getModule('sdf') == sdf)
-        self.assertFalse(lwasv.interface.getModule('metabundle') == metabundle)
-        self.assertFalse(lwasv.interface.getModule('sdm') == sdm)
+        self.assertFalse(lwasv.interface.get_module('backend') == dp)
+        self.assertFalse(lwasv.interface.get_module('mcs') == mcs)
+        self.assertFalse(lwasv.interface.get_module('sdf') == sdf)
+        self.assertFalse(lwasv.interface.get_module('metabundle') == metabundle)
+        self.assertFalse(lwasv.interface.get_module('sdm') == sdm)
         
     def test_prototype(self):
         """Test retrieving a PrototypeStation from the stations module."""
@@ -168,11 +168,11 @@ class stations_tests(unittest.TestCase):
         proto = stations.prototypeSystem
         
         # Check that we get the right number of antennas for the system
-        ants = proto.getAntennas(datetime(2011, 4, 4, 0, 0, 0))
+        ants = proto.get_antennas(datetime(2011, 4, 4, 0, 0, 0))
         self.assertEqual(len(ants), 20)
         
         # Again
-        ants = proto.getAntennas(datetime(2011, 1, 1, 0, 0, 0))
+        ants = proto.get_antennas(datetime(2011, 1, 1, 0, 0, 0))
         self.assertEqual(len(ants), 20)
         
         # And check that we actually get out what we need in the right order
@@ -186,25 +186,25 @@ class stations_tests(unittest.TestCase):
         """Test the text SSMIF parser."""
         
         ssmifFile = os.path.join(dataPath, 'lwa1-ssmif.txt')
-        out = stations.parseSSMIF(ssmifFile)
+        out = stations.parse_ssmif(ssmifFile)
         
     def test_ssmif_test_adp(self):
         """Test the text SSMIF parser for ADP-based stations."""
         
         ssmifFile = os.path.join(dataPath, 'lwasv-ssmif.txt')
-        out = stations.parseSSMIF(ssmifFile)
+        out = stations.parse_ssmif(ssmifFile)
         
     def test_ssmif_binary(self):
         """Test the binary SSMIF parser."""
         
         ssmifFile = os.path.join(dataPath, 'tests', 'ssmif.dat')
-        out = stations.parseSSMIF(ssmifFile)
+        out = stations.parse_ssmif(ssmifFile)
         
     def test_ssmif_binary_adp(self):
         """Test the binary SSMIF parser for ADP-based stations."""
         
         ssmifFile = os.path.join(dataPath, 'tests', 'ssmif-adp.dat')
-        out = stations.parseSSMIF(ssmifFile)
+        out = stations.parse_ssmif(ssmifFile)
 
 
 class stations_test_suite(unittest.TestSuite):

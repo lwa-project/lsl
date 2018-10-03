@@ -98,7 +98,7 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 		Py_XDECREF(data);
 		return NULL;
 	} else if( PyString_GET_SIZE(buffer) != sizeof(cFrame) ) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(EOFError, "End of file encountered during filehandle read");
 		Py_XDECREF(data);
 		Py_XDECREF(buffer);
 		return NULL;
@@ -130,7 +130,7 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	
 	// Validate
 	if( !validSync5C(cFrame.header.syncWord) ) {
-		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
+		PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
 		Py_XDECREF(data);
 		return NULL;
 	}
@@ -140,15 +140,15 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	fHeader = PyObject_GetAttrString(frame, "header");
 	
 	temp = PyLong_FromUnsignedLong(cFrame.header.frameCount);
-	PyObject_SetAttrString(fHeader, "frameCount", temp);
+	PyObject_SetAttrString(fHeader, "frame_count", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("B", cFrame.header.id);
-	PyObject_SetAttrString(fHeader, "drxID", temp);
+	PyObject_SetAttrString(fHeader, "drx_id", temp);
 	Py_XDECREF(temp);
 	
 	temp = PyLong_FromUnsignedLong(cFrame.header.secondsCount);
-	PyObject_SetAttrString(fHeader, "secondsCount", temp);
+	PyObject_SetAttrString(fHeader, "second_count", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", cFrame.header.decimation);
@@ -156,18 +156,18 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", cFrame.header.timeOffset);
-	PyObject_SetAttrString(fHeader, "timeOffset", temp);
+	PyObject_SetAttrString(fHeader, "time_offset", temp);
 	Py_XDECREF(temp);
 	
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
 	
 	temp = PyLong_FromUnsignedLongLong(cFrame.data.timeTag);
-	PyObject_SetAttrString(fData, "timeTag", temp);
+	PyObject_SetAttrString(fData, "timetag", temp);
 	Py_XDECREF(temp);
 	
 	temp = PyLong_FromUnsignedLong(cFrame.data.tuningWord);
-	PyObject_SetAttrString(fData, "tuningWord", temp);
+	PyObject_SetAttrString(fData, "tuning_word", temp);
 	Py_XDECREF(temp);
 	
 	temp = PyLong_FromUnsignedLong(cFrame.data.flags);
@@ -202,12 +202,12 @@ In order to use this reader in place of lsl.reader.drx.readFrame change:\n\
 to:\n\
 \n\
 \t>>> import lsl.reader.drx as drx\n\
-\t>>> from lsl.reader._gofast import ReadDRX, syncError, eofError\n\
+\t>>> from lsl.reader._gofast import ReadDRX, SyncError, EOFError\n\
 \t>>> fh = open('some-drx-file.dat', 'rb')\n\
 \t>>> frame = readDRX(fh, tbn.Frame())\n\
 \n\
 In addition, the exceptions checked for in the try...except blocks wrapping the\n\
-frame reader need to be changed to 'IOError' since syncError and eofError are\n\
+frame reader need to be changed to 'IOError' since SyncError and EOFError are\n\
 are sub-classes of IOError.\n\
 \n\
 .. versionchanged:: 0.4.0\n\

@@ -16,14 +16,14 @@ The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
-For reading in data, use the readFrame function.  It takes a python file-
+For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object
 For describing the format of data in the file, three function are provided:
-  * getSampleRate - get the sample rate in the file
-  * getFrameSize - get the total (header + data) frame size
-  * getFFTsPerIntegration - get the number of FFT windows per integration
-  * getTransformSize - get the FFT length
-  * getIntegrationTime - get the integration time
+  * get_sample_rate - get the sample rate in the file
+  * getFRAME_SIZE - get the total (header + data) frame size
+  * get_ffts_per_integration - get the number of FFT windows per integration
+  * get_transform_size - get the FFT length
+  * get_integration_time - get the integration time
 
 .. note::
     This reader works with the most current version of the DR spectrometer data
@@ -39,23 +39,23 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from lsl.reader.drx import filterCodes as drxFilterCodes
+from lsl.reader.drx import FILTER_CODES as drx_FILTER_CODES
 from lsl.reader._gofast import readDRSpec
-from lsl.reader._gofast import syncError as gsyncError
-from lsl.reader._gofast import eofError as geofError
-from lsl.reader.errors import syncError, eofError
+from lsl.reader._gofast import SyncError as gSyncError
+from lsl.reader._gofast import EOFError as gEOFError
+from lsl.reader.errors import SyncError, EOFError
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'getDataProducts', 'containsLinearData',
-           'containsStokesData', 'getSampleRate', 'getFrameSize', 'getFFTsPerIntegration', 
-           'getTransformSize', 'getIntegrationTime', 'filterCodes', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'get_data_products', 'is_linear',
+           'is_stokes', 'get_sample_rate', 'get_frame_size', 'get_ffts_per_integration', 
+           'get_transform_size', 'get_integration_time', 'FILTER_CODES', 
            '__version__', '__revision__', '__all__']
 
 # List of filter codes and their corresponding sample rates in Hz.  
 # .. note::
 #		These are just the DRX filter codes
-filterCodes = drxFilterCodes
+FILTER_CODES = drx_FILTER_CODES
 
 
 class FrameHeader(object):
@@ -64,25 +64,25 @@ class FrameHeader(object):
     frame.
     """
     
-    def __init__(self, beam=0, format=0, decimation=None, timeOffset=None, nInts=None):
+    def __init__(self, beam=0, format=0, decimation=None, time_offset=None, nints=None):
         self.beam = beam
         self.format = format
         self.decimation = decimation
-        self.timeOffset = timeOffset
+        self.time_offset = time_offset
         
-        if nInts is None:
-            self.nInts = 0
+        if nints is None:
+            self.nints = 0
         else:
-            self.nInts = nInts
+            self.nints = nints
         
-    def parseID(self):
+    def parse_id(self):
         """
         Return the beam the frame corresponds to.
         """
         
         return self.beam
         
-    def getDataProducts(self):
+    def get_data_products(self):
         """
         Return a list of data products contained in the file.
         
@@ -113,7 +113,7 @@ class FrameHeader(object):
         
         return products
         
-    def containsLinearData(self):
+    def is_linear(self):
         """
         Return whether or not the frame contains linear polarization 
         products or not.
@@ -126,7 +126,7 @@ class FrameHeader(object):
         else:
             return False
             
-    def containsStokesData(self):
+    def is_stokes(self):
         """
         Return whether or not the frame contains Stokes polarization
         parameters or not.
@@ -139,34 +139,34 @@ class FrameHeader(object):
         else:
             return True
         
-    def getSampleRate(self):
+    def get_sample_rate(self):
         """
         Return the sample rate of the data in samples/second.
         """
         
-        sampleRate = dp_common.fS / self.decimation
-        return sampleRate
+        sample_rate = dp_common.fS / self.decimation
+        return sample_rate
         
-    def getFilterCode(self):
+    def get_filter_code(self):
         """
         Function to convert the sample rate in Hz to a filter code.
         """
         
         sampleCodes = {}
-        for key in filterCodes:
-            value = filterCodes[key]
+        for key in FILTER_CODES:
+            value = FILTER_CODES[key]
             sampleCodes[value] = key
             
-        return sampleCodes[self.getSampleRate()]
+        return sampleCodes[self.get_sample_rate()]
         
-    def getFFTsPerIntegration(self):
+    def get_ffts_per_integration(self):
         """
         Return the number of FFT windows per integration.
         
         .. versionadded:: 1.0.1
         """
         
-        return self.nInts
+        return self.nints
 
 
 class FrameData(object):
@@ -183,12 +183,12 @@ class FrameData(object):
         data.
     """
     
-    def __init__(self, timeTag=None, tuningWords=None, fills=None, errors=None, saturations=None):
-        self.timeTag = timeTag
-        if tuningWords is None:
-            self.tuningWords = [0, 0]
+    def __init__(self, timetag=None, tuning_words=None, fills=None, errors=None, saturations=None):
+        self.timetag = timetag
+        if tuning_words is None:
+            self.tuning_words = [0, 0]
         else:
-            self.tuningWords = tuningWords
+            self.tuning_words = tuning_words
         if fills is None:
             self.fills = [0, 0, 0, 0]
         else:
@@ -202,21 +202,21 @@ class FrameData(object):
         else:
             self.saturations = saturations
             
-    def getCentralFreq(self, which=None):
+    def get_central_freq(self, which=None):
         """
         Function to set the central frequency of the DRX data in Hz.
         """
         
         if which is None:
-            return [dp_common.fS * i / 2**32 for i in self.tuningWords]
+            return [dp_common.fS * i / 2**32 for i in self.tuning_words]
         elif which == 1:
-            return dp_common.fS * self.tuningWords[0] / 2**32
+            return dp_common.fS * self.tuning_words[0] / 2**32
         elif which == 2:
-            return dp_common.fS * self.tuningWords[1] / 2**32
+            return dp_common.fS * self.tuning_words[1] / 2**32
         else:
             raise ValueError("Unknown tuning/polarization combination: '%i'" % which)
             
-    def setGain(self, gain):
+    def set_gain(self, gain):
         """
         Function to set the gain of the DRX data.
         """
@@ -250,109 +250,109 @@ class Frame(object):
             
         self.valid = True
         
-    def parseID(self):
+    def parse_id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parseID 
+        Convenience wrapper for the Frame.FrameHeader.parse_id 
         function.
         """
         
-        return self.header.parseID()
+        return self.header.parse_id()
         
-    def getDataProducts(self):
+    def get_data_products(self):
         """
-        Convenience wrapper for the Frame.FrameHeder.getDataProducts
+        Convenience wrapper for the Frame.FrameHeder.get_data_products
         function.
         """
         
-        return self.header.getDataProducts()
+        return self.header.get_data_products()
         
-    def containsLinearData(self):
+    def is_linear(self):
         """
-        Convenience wrapper for the Frame.FrameHeder.containsLinearData
+        Convenience wrapper for the Frame.FrameHeder.is_linear
         function.
         """
         
-        return self.header.containsLinearData()
+        return self.header.is_linear()
         
-    def containsStokesData(self):
+    def is_stokes(self):
         """
-        Convenience wrapper for the Frame.FrameHeder.containsStokesData
+        Convenience wrapper for the Frame.FrameHeder.is_stokes
         function.
         """
         
-        return self.header.containsStokesData()
+        return self.header.is_stokes()
         
-    def getSampleRate(self):
+    def get_sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getSampleRate 
+        Convenience wrapper for the Frame.FrameHeader.get_sample_rate 
         function.
         """
         
-        return self.header.getSampleRate()
+        return self.header.get_sample_rate()
         
-    def getFilterCode(self):
+    def get_filter_code(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getFilterCode function.
+        Convenience wrapper for the Frame.FrameHeader.get_filter_code function.
         """
         
-        return self.header.getFilterCode()
+        return self.header.get_filter_code()
         
-    def getFFTsPerIntegration(self):
+    def get_ffts_per_integration(self):
         """
-        Conveinence wrapper for the Frame.FrameHeader.getFFTsPerIntegration 
+        Conveinence wrapper for the Frame.FrameHeader.get_ffts_per_integration 
         function.
         
         .. versionadded:: 1.0.1
         """
         
-        return self.header.getFFTsPerIntegration()
+        return self.header.get_ffts_per_integration()
         
-    def getTime(self):
+    def get_time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
         (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
         """
         
-        seconds = (self.data.timeTag - self.header.timeOffset) / dp_common.fS
+        seconds = (self.data.timetag - self.header.time_offset) / dp_common.fS
         
         return seconds
         
-    def getCentralFreq(self, which=None):
+    def get_central_freq(self, which=None):
         """
-        Convenience wrapper for the Frame.FrameData.getCentralFreq function.
+        Convenience wrapper for the Frame.FrameData.get_central_freq function.
         """
         
-        return self.data.getCentralFreq(which=which)
+        return self.data.get_central_freq(which=which)
         
-    def getTransformSize(self):
+    def get_transform_size(self):
         """
         Find out what the transform size is.
         
         .. versionadded:: 1.0.1
         """
         
-        p = self.getDataProducts()[0]
+        p = self.get_data_products()[0]
         return getattr(self.data, "%s0" % p, None).size
         
-    def getIntegrationTime(self):
+    def get_integration_time(self):
         """
         Return the integration time for data in seconds.
         
         .. versionadded:: 1.0.1
         """
         
-        LFFT = self.getTransformSize()
-        srate = self.getSampleRate()
-        nInts = self.getFFTsPerIntegration()
+        LFFT = self.get_transform_size()
+        srate = self.get_sample_rate()
+        nints = self.get_ffts_per_integration()
         
-        return nInts*LFFT/srate
+        return nints*LFFT/srate
         
-    def setGain(self, gain):
+    def set_gain(self, gain):
         """
-        Convenience wrapper for the Frame.FrameData.setGain function.
+        Convenience wrapper for the Frame.FrameData.set_gain function.
         """
         
-        self.data.setGain(gain)
+        self.data.set_gain(gain)
         
     def __add__(self, y):
         """
@@ -370,7 +370,7 @@ class Frame(object):
         a number to every element in the data section.
         """
         
-        attrs = self.header.getDataProducts()
+        attrs = self.header.get_data_products()
         
         for attrBase in attrs:
             for tuning in (0, 1):
@@ -378,7 +378,7 @@ class Frame(object):
                 try:
                     temp = getattr(self.data, attr, None) + getattr(y.data, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.getDataProducts())))
+                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
                 except AttributeError:
                     temp = getattr(self.data, attr, None) + numpy.float32(y)
                 setattr(self.data, attr, temp)
@@ -401,7 +401,7 @@ class Frame(object):
         multiply a number to every element in the data section.
         """
         
-        attrs = self.header.getDataProducts()
+        attrs = self.header.get_data_products()
         
         for attrBase in attrs:
             for tuning in (0, 1):
@@ -409,7 +409,7 @@ class Frame(object):
                 try:
                     temp = getattr(self.data, attr, None) * getattr(y.data, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.getDataProducts())))
+                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
                 except AttributeError:
                     temp = getattr(self.data, attr, None) * numpy.float32(y)
                 setattr(self.data, attr, temp)
@@ -422,9 +422,9 @@ class Frame(object):
         tag is equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -439,9 +439,9 @@ class Frame(object):
         tag is not equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -456,9 +456,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -474,9 +474,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -491,9 +491,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -509,9 +509,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -526,8 +526,8 @@ class Frame(object):
         sorting things.
         """
         
-        tX = self.data.timeTag
-        tY = y.data.timeTag
+        tX = self.data.timetag
+        tY = y.data.timetag
         if tY > tX:
             return -1
         elif tX > tY:
@@ -536,7 +536,7 @@ class Frame(object):
             return 0
 
 
-def readFrame(filehandle, Gain=None, Verbose=False):
+def read_frame(filehandle, Gain=None, Verbose=False):
     """
     Function to read in a single DR spectrometer/DRX frame (header+data) and 
     store the contents as a Frame object.
@@ -545,19 +545,19 @@ def readFrame(filehandle, Gain=None, Verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = readDRSpec(filehandle, Frame())
-    except gsyncError:
+    except gSyncError:
         mark = filehandle.tell()
-        raise syncError(location=mark)
-    except geofError:
-        raise eofError
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
         
     if Gain is not None:
-        newFrame.setGain(Gain)
+        newFrame.set_gain(Gain)
         
     return newFrame
 
 
-def getDataProducts(filehandle):
+def get_data_products(filehandle):
     """
     Find out the data products contained in the file by looking at a frame.
     """
@@ -566,16 +566,16 @@ def getDataProducts(filehandle):
     fhStart = filehandle.tell()
     
     # Read in one frame
-    newFrame = readFrame(filehandle)
+    newFrame = read_frame(filehandle)
     
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
     
     # Return the data products
-    return newFrame.header.getDataProducts()
+    return newFrame.header.get_data_products()
 
 
-def containsLinearData(filehandle):
+def is_linear(filehandle):
     """
     Find out if the file contains linear polarization products or not.
     """
@@ -584,16 +584,16 @@ def containsLinearData(filehandle):
     fhStart = filehandle.tell()
     
     # Read in one frame
-    newFrame = readFrame(filehandle)
+    newFrame = read_frame(filehandle)
     
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
     
     # Return the verdict
-    return newFrame.header.containsLinearData()
+    return newFrame.header.is_linear()
 
 
-def containsStokesData(filehandle):
+def is_stokes(filehandle):
     """
     Find out if the file contains Stokes parameters or not.
     """
@@ -602,16 +602,16 @@ def containsStokesData(filehandle):
     fhStart = filehandle.tell()
     
     # Read in one frame
-    newFrame = readFrame(filehandle)
+    newFrame = read_frame(filehandle)
     
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
     
     # Return the verdict
-    return newFrame.header.containsStokesData()
+    return newFrame.header.is_stokes()
 
 
-def getSampleRate(filehandle, nFrames=None, FilterCode=False):
+def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     """
     Find out what the sampling rate/filter code is from a single observations.  
     By default, the rate in Hz is returned.  However, the corresponding filter 
@@ -622,34 +622,34 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
     fhStart = filehandle.tell()
     
     # Read in one frame
-    newFrame = readFrame(filehandle)
+    newFrame = read_frame(filehandle)
     
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
     
     if not FilterCode:
-        return newFrame.getSampleRate()
+        return newFrame.get_sample_rate()
     else:
-        return newFrame.getFilterCode()
+        return newFrame.get_filter_code()
 
 
-def getFrameSize(filehandle):
+def get_frame_size(filehandle):
     """
     Find out what the frame size in a file is at the current file location.
     Returns the frame size in bytes.
     """
     
     cPos = filehandle.tell()
-    frame = readFrame(filehandle)
+    frame = read_frame(filehandle)
     nPos = filehandle.tell()
     
-    FrameSize = nPos - cPos
+    FRAME_SIZE = nPos - cPos
     filehandle.seek(cPos)
     
-    return FrameSize
+    return FRAME_SIZE
 
 
-def getFFTsPerIntegration(filehandle):
+def get_ffts_per_integration(filehandle):
     """
     Find out what the number of FFT windows per integration is at the 
     current file location.
@@ -658,32 +658,32 @@ def getFFTsPerIntegration(filehandle):
     """
     
     cPos = filehandle.tell()
-    frame = readFrame(filehandle)
+    frame = read_frame(filehandle)
     filehandle.seek(cPos)
     
-    return frame.getFFTsPerIntegration()
+    return frame.get_ffts_per_integration()
 
 
-def getTransformSize(filehandle):
+def get_transform_size(filehandle):
     """
     Find out what the transform size in a file is at the current file 
     location.  
     """
     
     cPos = filehandle.tell()
-    frame = readFrame(filehandle)
+    frame = read_frame(filehandle)
     filehandle.seek(cPos)
     
-    return frame.getTransformSize()
+    return frame.get_transform_size()
 
 
-def getIntegrationTime(filehandle):
+def get_integration_time(filehandle):
     """
     Find out what the integration time is at the current file location.
     """
     
     cPos = filehandle.tell()
-    frame = readFrame(filehandle)
+    frame = read_frame(filehandle)
     filehandle.seek(cPos)
     
-    return frame.getIntegrationTime()
+    return frame.get_integration_time()

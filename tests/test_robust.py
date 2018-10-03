@@ -30,25 +30,25 @@ class robust_tests(unittest.TestCase):
         
         # Make sure that it can do simple averages
         a = numpy.random.rand(512)
-        self.assertAlmostEqual(a.mean(), robust.biweightMean(a), 1)
+        self.assertAlmostEqual(a.mean(), robust.biweight_mean(a), 1)
 
         b = numpy.random.randn(512)
-        self.assertAlmostEqual(b.mean(), robust.biweightMean(b), 1)
+        self.assertAlmostEqual(b.mean(), robust.biweight_mean(b), 1)
 
         # Make sure it can reject obvious points
         b = 1.0*a
         b[10] = 1e6
-        self.assertTrue(robust.biweightMean(b) < b.mean())
+        self.assertTrue(robust.biweight_mean(b) < b.mean())
 
     def test_mean(self):
         """Test the outlier-resistant mean function."""
 
         # Make sure that it can do simple averages
         a = numpy.random.rand(512)
-        self.assertAlmostEqual(a.mean(), robust.mean(a, Cut=100), 6)
+        self.assertAlmostEqual(a.mean(), robust.mean(a, cut=100), 6)
 
         b = numpy.random.randn(512)
-        self.assertAlmostEqual(b.mean(), robust.mean(b, Cut=100), 6)
+        self.assertAlmostEqual(b.mean(), robust.mean(b, cut=100), 6)
 
         # Make sure it can reject obvious points
         b = 1.0*a
@@ -73,7 +73,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[0], 1.34, 2)
         self.assertAlmostEqual(cc[1], 0.56, 2)
 
-        cc = robust.linefit(x, y, Bisector=True)
+        cc = robust.linefit(x, y, bisector=True)
         self.assertAlmostEqual(cc[0], 1.34, 2)
         self.assertAlmostEqual(cc[1], 0.56, 2)
 
@@ -84,7 +84,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[0], 2.86,  2)
         self.assertAlmostEqual(cc[1], -0.56, 2)
 
-        cc = robust.linefit(x, y, Bisector=True)
+        cc = robust.linefit(x, y, bisector=True)
         self.assertAlmostEqual(cc[0], 2.86,  2)
         self.assertAlmostEqual(cc[1], -0.56, 2)
 

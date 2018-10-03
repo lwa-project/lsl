@@ -24,7 +24,7 @@ from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty,
 from scipy.interpolate import interp1d
 
 from lsl import astro
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 
 __version__   = '0.3'
 __revision__ = '$Rev$'
@@ -35,37 +35,10 @@ __maintainer__ = 'Jayce Dowell'
 ### This code is the base class for the sky map. It takes as input a skymap file name and frequency to
 ### which the skymap corresponds.  It has the following methods:
 ###     _init_ - takes the array coordinate filename as an input argument.
-###     NormalizePower - Converts the skymap powers (in Kelvin radiated into 4 pi ster) into a power 
+###     normalize_power - Converts the skymap powers (in Kelvin radiated into 4 pi ster) into a power 
 ###                      seen at the antenna.
-###     ComputeTotalPowerFromSky - Sums the power for all sources in the sky
+###     compute_total_power - Sums the power for all sources in the sky
 ###     ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.8 MHz to the desired frequency.
-
-class SkyMapError(Exception):
-    """
-    Base class for SkyMap exceptions.
-    """
-    
-    def __init__(self, *args, **kwds):
-        super(SkyMapError, self).__init__(*args, **kwds)
-
-
-class SkyMapLoadError(SkyMapError):
-    """
-    Exception raised when a SkyMap fails to load.
-    """
-    
-    def __init__(self, *args, **kwds):
-        super(SkyMapLoadError, self).__init__(*args, **kwds)
-
-
-class SkyMapPowerError(SkyMapError):
-    """
-    Exception raised when an operation on a normalized SkyMap fails to 
-    compute (such as summing or multiplying over an empty data set).
-    """
-    
-    def __init__(self, *args, **kwds):
-        super(SkyMapPowerError, self).__init__(*args, **kwds)
 
 
 class SkyMapGSM(object):
@@ -88,18 +61,18 @@ class SkyMapGSM(object):
     
     _input = os.path.join(dataPath, 'skymap', 'gsm-408locked.npz')
     
-    def __init__(self, skyMapFileName=None, freqMHz=73.9):
+    def __init__(self, filename=None, freq_MHz=73.9):
         """
         Initialize the SkyMapGSM object with an optional full file path to 
         the skymap file.
         """
         
-        if skyMapFileName is None:
-            skyMapFileName = self._input
+        if filename is None:
+            filename = self._input
             
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(skyMapFileName)
+        dataDict = load(filename)
         
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
@@ -122,8 +95,8 @@ class SkyMapGSM(object):
         ## compnent maps
         output = maps[:,0]*0.0
         for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(freqMHz))*maps[:,i]
-        output *= exp(scaleFunc(log(freqMHz)))
+            output += compFunc(log(freq_MHz))*maps[:,i]
+        output *= exp(scaleFunc(log(freq_MHz)))
         ## Save
         self._power = output
         
@@ -133,7 +106,7 @@ class SkyMapGSM(object):
         except AttributeError:
             pass
             
-    def NormalizePower(self):
+    def normalize_power(self):
         """
         Compute the skymap power (total power radiated into 4 pi steradians) into 
         a power at antenna, based on pixel count.
@@ -141,14 +114,14 @@ class SkyMapGSM(object):
         
         return self._power
         
-    def ComputeTotalPowerFromSky(self):
+    def compute_total_power(self):
         """
         Compute and return the the total power from the sky.
         """
         
         if len(self._power) == 0:
-            raise SkyMapPowerError("self._power contains 0 elements")
-        return self.NormalizePower().sum()
+            raise RuntimeError("%s contains no data" % type(self).__name__)
+        return self.normalize_power().sum()
 
 
 class SkyMapLFSM(SkyMapGSM):
@@ -163,18 +136,18 @@ class SkyMapLFSM(SkyMapGSM):
     
     _input = os.path.join(dataPath, 'skymap', 'lfsm-5.1deg.npz')
     
-    def __init__(self, skyMapFileName=None, freqMHz=73.9):
+    def __init__(self, filename=None, freq_MHz=73.9):
         """
         Initialize the SkyMapLFSM object with an optional full file path to 
         the skymap file.
         """
         
-        if skyMapFileName is None:
-            skyMapFileName = self._input
+        if filename is None:
+            filename = self._input
             
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(skyMapFileName)
+        dataDict = load(filename)
         
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
@@ -198,8 +171,8 @@ class SkyMapLFSM(SkyMapGSM):
         ## compnent maps
         output = maps[:,0]*0.0
         for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(freqMHz))*maps[:,i]
-        output *= exp(scaleFunc(log(freqMHz)))
+            output += compFunc(log(freq_MHz))*maps[:,i]
+        output *= exp(scaleFunc(log(freq_MHz)))
         ## Save
         self._power = output
         
@@ -217,8 +190,8 @@ class ProjectedSkyMap(object):
     takes as input a skymap file name and frequency to which the skymap corresponds.
     It inherits from class SkyMap. It has the following methods:
     1. _init_ - takes the array coordinate filename as an input argument.
-    2. ComputeDirectionCosines - Computes the direction cosines 
-    3. ComputeTotalPowerFromVisibleSky - Sums the power for all visible sources in 
+    2. get_direction_cosines - Computes the direction cosines 
+    3. compute_visibile_power - Sums the power for all visible sources in 
     the sky.
     """
     
@@ -277,13 +250,13 @@ class ProjectedSkyMap(object):
         
         # The cosine term is the projection of the receiving area onto the direction 
         # of the source
-        normalizedPower = self.skyMapObject.NormalizePower() * fractionSolidAngle  
+        normalizedPower = self.skyMapObject.normalize_power() * fractionSolidAngle  
         self.visibleNormalizedPower = compress(visibleMask, normalizedPower)
         #self.visibleNormalizedPower = self.visiblePower*cos(self.visibleAlt * self.skyMapObject.degToRad)
         self.visibleRa = compress(visibleMask, self.skyMapObject.ra)
         self.visibleDec = compress(visibleMask, self.skyMapObject.dec)
         
-    def ComputeDirectionCosines(self):
+    def get_direction_cosines(self):
         """
         Compute the direction cosines and return the tuple of arrays (l,m,n).
         """
@@ -295,12 +268,12 @@ class ProjectedSkyMap(object):
         n = sin(altRad)
         return (l, m, n)
         
-    def ComputeTotalPowerFromVisibleSky(self):
+    def compute_visible_power(self):
         """
         Compute and return the the total power from visible portion of the sky.
         """
         
         if len(self.visibleNormalizedPower) == 0:
-            raise SkyMapPowerError("visibleNormalizedPower contains 0 elements")
+            raise RuntimeError("%s contains no data" % type(self).__name__)
         totalVisiblePower = sum(self.visibleNormalizedPower)
         return totalVisiblePower

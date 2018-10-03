@@ -9,7 +9,7 @@ from datetime import datetime
 
 from lsl import astro
 from lsl.common import stations
-from lsl.common.mcs import datetime2mjdmpm
+from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.misc import ionosphere
 
 
@@ -125,9 +125,9 @@ def main(args):
         tStop = datetime.strptime(tStop, "%Y/%m/%d %H:%M:%S")
         
         # datetime instance to MJD
-        mjd,mpm = datetime2mjdmpm(tStart)
+        mjd,mpm = datetime_to_mjdmpm(tStart)
         mjdStart = mjd + mpm/1000.0/86400.0
-        mjd,mpm = datetime2mjdmpm(tStop)
+        mjd,mpm = datetime_to_mjdmpm(tStop)
         mjdStop = mjd + mpm/1000.0/86400.0
         
         mjdList = numpy.linspace(mjdStart, mjdStop, config['nSamples'])
@@ -142,7 +142,7 @@ def main(args):
         site.lat, site.lon, site.elev = ('37.2397808', '-118.2816819', 1183.4839)
     else:
         raise RuntimeError("Unknown site: %s" % config['site'])
-    obs = site.getObserver()
+    obs = site.get_observer()
     bdy = ephem.FixedBody()
     bdy._ra = RA
     bdy._dec = dec
@@ -160,14 +160,14 @@ def main(args):
         if el > 0:
             # Get the latitude, longitude, and height of the ionospheric pierce 
             # point in this direction
-            ippLat, ippLon, ippElv = ionosphere.getIonosphericPiercePoint(site, az, el)
+            ippLat, ippLon, ippElv = ionosphere.get_ionospheric_pierce_point(site, az, el)
             
             # Load in the TEC value and the RMS from the IGS final data product
-            tec, rms = ionosphere.getTECValue(mjd, lat=ippLat, lng=ippLon, includeRMS=True, type=config['type'])
+            tec, rms = ionosphere.get_tec_value(mjd, lat=ippLat, lng=ippLon, includeRMS=True, type=config['type'])
             tec, rms = tec[0][0], rms[0][0]
             
             # Use the IGRF to compute the ECEF components of the Earth's magnetic field
-            Bx, By, Bz = ionosphere.getMagneticField(ippLat, ippLon, ippElv, mjd=mjd, ecef=True)
+            Bx, By, Bz = ionosphere.get_magnetic_field(ippLat, ippLon, ippElv, mjd=mjd, ecef=True)
             
             # Rotate the ECEF field into topocentric coordinates so that we can 
             # get the magnetic field along the line of sight

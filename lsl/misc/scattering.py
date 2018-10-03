@@ -24,20 +24,20 @@ __revision__ = "$Rev$"
 __all__ = ['thin', 'thick', 'uniform', 'unscatter', '__version__', '__revision__', '__all__']
 
 
-def thin(t, tauScatter):
+def thin(t, tau):
     """
     Pulsar broadening function for multi-path scattering through a
     thin screen.
     """
 
-    g  = 1.0/tauScatter * numpy.exp(-t/tauScatter)
+    g  = 1.0/tau * numpy.exp(-t/tau)
     g  = numpy.where(t >= 0, g, 0)
     g /= g.sum()
 
     return g
 
 
-def thick(t, tauScatter):
+def thick(t, tau):
     """
     Pulse broadening function for multi-path scattering through a
     thick screen.
@@ -48,15 +48,15 @@ def thick(t, tauScatter):
 
     tPrime = t + 1e-15
     
-    g  = numpy.sqrt(numpy.pi*tauScatter/4/tPrime**3)
-    g *= numpy.exp(-numpy.pi**2*tauScatter/16/tPrime)
+    g  = numpy.sqrt(numpy.pi*tau/4/tPrime**3)
+    g *= numpy.exp(-numpy.pi**2*tau/16/tPrime)
     g  = numpy.where(t > 0, g, 0)
     g /= g.sum()
 
     return g
 
 
-def uniform(t, tauScatter):
+def uniform(t, tau):
     """
     Pulsr broadening function for multi-path scattering through a 
     uniform screen.
@@ -67,8 +67,8 @@ def uniform(t, tauScatter):
 
     tPrime = t + 1e-15
     
-    g  = numpy.sqrt(numpy.pi**5*tauScatter**3/8/tPrime**5)
-    g *= numpy.exp(-numpy.pi**2*tauScatter/4/tPrime)
+    g  = numpy.sqrt(numpy.pi**5*tau**3/8/tPrime**5)
+    g *= numpy.exp(-numpy.pi**2*tau/4/tPrime)
     g  = numpy.where(t > 0, g, 0)
     g /= g.sum()
 
@@ -111,7 +111,7 @@ def _skewness(t, raw, resids, cc):
     return t3 / t2**(3./2.)
 
 
-def _figureOfMerit(t, raw, resids, cc):
+def _figure_of_merit(t, raw, resids, cc):
     """
     Figure of merit for deconvolution that combines the positivity of the 
     residuals, the skewness of the clean components, the RMS of the 
@@ -142,28 +142,28 @@ def _figureOfMerit(t, raw, resids, cc):
     return (f + g)/2.0 + r - n
 
 
-def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, iterMax=10000, broadeningFunction=thin, verbose=True):
+def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, screen=thin, verbose=True):
     """
     Multi-path scattering deconvolution method based on the method 
     presented in Bhat, N., Cordes, J., & Chatterjee, S.  2003, ApJ, 
     584, 782.
     
     Inputs:
-    1) t: List of times in seconds the pulse profile corresponds to
-    2) raw: the raw (scattered) pulse profile over time
-    3) tScatMin: minimum scattering time to search
-    4) tScatMax: maximum scattering time to search
-    5) tScatStep: time step for tScat search
+     1) t: List of times in seconds the pulse profile corresponds to
+     2) raw: the raw (scattered) pulse profile over time
+     3) tScatMin: minimum scattering time to search
+     4) tScatMax: maximum scattering time to search
+     5) tScatStep: time step for tScat search
         
     Options:
-    * gain: CLEAN loop gain (default is 0.05)
-    * iterMax: maximum number of iterations to use (default is 10000)
-    * broadeningFunction: pulse broadening function (default is thin)
+     * gain: CLEAN loop gain (default is 0.05)
+     * max_iter: maximum number of iterations to use (default is 10000)
+     * screen: pulse broadening function (default is thin)
         
     Outputs (as a tuple):
-    1) tScat: best-fit scattering time in seconds
-    2) merit: figure of merit for the deconvolution/scattering time fit
-    3) cleand: CLEANed pulsar profile as a function of time
+     1) tScat: best-fit scattering time in seconds
+     2) merit: figure of merit for the deconvolution/scattering time fit
+     3) cleand: CLEANed pulsar profile as a function of time
     """
     
     iList = {}
@@ -184,7 +184,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, iterMax=10000, b
 
         ## Iterate...
         i = 0
-        while i < iterMax:
+        while i < max_iter:
             ### Find the peak and make sure it is really a peak
             peak = numpy.where( working == working.max() )[0][0]
             if working.max() < 3./2.*sigma:
@@ -193,7 +193,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, iterMax=10000, b
             ### Generate the clean component
             tPeak = t[peak]
             tRel = t - tPeak
-            toRemove  = broadeningFunction(tRel, tScat)
+            toRemove  = screen(tRel, tScat)
             toRemove /= toRemove.sum()
             toRemove *= gain*working.max()
 
@@ -204,7 +204,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, iterMax=10000, b
             
         ## Evaluate and save
         iList[tScat] = i
-        meritList[tScat] = _figureOfMerit(t, raw, working, cc)
+        meritList[tScat] = _figure_of_merit(t, raw, working, cc)
         ccList[tScat] = cc
         residList[tScat] = working
         
@@ -227,7 +227,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, iterMax=10000, b
     # Report on the findings
     if verbose:
         print("Multi-path Scattering Results:")
-        print("  Iterations Used: %i of %i" % (i, iterMax))
+        print("  Iterations Used: %i of %i" % (i, max_iter))
         print("  Best-fit Scattering time: %.3f ms" % (tScat*1000.0,))
         print("  Figure-of-merit:  %.5f" % merit)
         

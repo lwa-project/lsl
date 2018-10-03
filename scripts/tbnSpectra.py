@@ -58,7 +58,7 @@ def parseOptions(args):
     config['average'] = 10.0
     config['LFFT'] = 4096
     config['maxFrames'] = 2*260*750
-    config['window'] = fxc.noWindow
+    config['window'] = fxc.null_window
     config['applyGain'] = False
     config['output'] = None
     config['displayChunks'] = True
@@ -153,23 +153,23 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
             try:
-                station = metabundle.getStation(config['metadata'], ApplySDM=True)
+                station = metabundle.getStation(config['metadata'], apply_sdm=True)
             except:
-                station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+                station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
-    antennas = station.getAntennas()
+    antennas = station.get_antennas()
     
     # Length of the FFT
     LFFT = config['LFFT']
     
     idf = LWA1DataFile(config['args'][0])
     
-    nFramesFile = idf.getInfo('nFrames')
-    srate = idf.getInfo('sampleRate')
+    nFramesFile = idf.get_info('nFrames')
+    srate = idf.get_info('sample_rate')
     antpols = len(antennas)
     
     # Offset in frames for beampols beam/tuning/pol. sets
@@ -191,15 +191,15 @@ def main(args):
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    beginDate = ephem.Date(unix_to_utcjd(idf.getInfo('tStart')) - DJD_OFFSET)
-    centralFreq = idf.getInfo('freq1')
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    central_freq = idf.get_info('freq1')
     
     # File summary
     print "Filename: %s" % config['args'][0]
     print "Date of First Frame: %s" % str(beginDate)
     print "Ant/Pols: %i" % antpols
     print "Sample Rate: %i Hz" % srate
-    print "Tuning Frequency: %.3f Hz" % centralFreq
+    print "Tuning Frequency: %.3f Hz" % central_freq
     print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate)
     print "---"
     print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*srate*antpols/512)
@@ -227,7 +227,7 @@ def main(args):
             
         # Calculate the spectra for this block of data and then weight the results by 
         # the total number of frames read.  This is needed to keep the averages correct.
-        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate)
+        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], sample_rate=srate)
         for stand in xrange(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
@@ -244,7 +244,7 @@ def main(args):
     spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Put the frequencies in the best units possible
-    freq += centralFreq
+    freq += central_freq
     freq, units = bestFreqUnits(freq)
     
     # Deal with the `keep` options
@@ -299,7 +299,7 @@ def main(args):
                     diff = subspectra - currSpectra
                     ax.plot(freq, diff)
                     
-            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].getStatus()))
+            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].get_status()))
             ax.set_xlabel('Frequency [%s]' % units)
             ax.set_ylabel('P.S.D. [dB/RBW]')
             ax.set_ylim([-10, 30])

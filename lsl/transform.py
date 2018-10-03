@@ -4,7 +4,6 @@
 Time and position transform objects.
 """
 
-
 import collections
 import copy
 import datetime
@@ -12,6 +11,7 @@ import math
 import abc
 
 from lsl import astro
+from lsl.common.dp import fS
 from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
@@ -36,6 +36,8 @@ class Time(object):
     utc_timet (S)     - UTC UNIX timet seconds
     utc_py_date (S)   - UTC python datetime.datetime object
     utc_ln_date (S)   - UTC libnova astro.date object
+    utc_dp (S)        - UTC DP samples at 196 MHz
+    utc_mcs           - UTC MCS MJD/MPM pair
     utc_str           - UTC ISO8601 calendar string format
     
     tai_jd (S)        - TAI standard Julian day
@@ -50,10 +52,12 @@ class Time(object):
     FORMAT_STR        = 'STR'
     FORMAT_JD         = 'JD'
     FORMAT_MJD        = 'MJD'
+    FORMAT_DP         = 'DP'
+    FORMAT_MCS        = 'MCS'
     FORMAT_TIMET      = 'TIMET'
     
     known_formats = (FORMAT_LN_DATE, FORMAT_PY_DATE, FORMAT_STR, FORMAT_JD, 
-    FORMAT_MJD, FORMAT_TIMET)
+    FORMAT_MJD, FORMAT_DP, FORMAT_MCS, FORMAT_TIMET)
     
     # time system types
     TIMESYS_UTC       = 'UTC'
@@ -77,9 +81,11 @@ class Time(object):
             Time.FORMAT_LN_DATE - libnova astro.date class calendar format
             Time.FORMAT_PY_DATE - python datetime.datetime class calendar format
             Time.FORMAT_STR     - ISO 8601 (YYYY-MM-DD hh:mm:ss.s) calendar format 
-                            string 
+                                  string 
             Time.FORMAT_JD      - standard julian day as float
             Time.FORMAT_MJD     - modified julian day as float
+            Time FORMAT_DP      - samples of the DP 196 MHz clock as integer
+            Time FORMAT_MCS     - MCS MJD, MPM pair as integers
             Time.FORMAT_TIMET   - UNIX timet seconds as integer
         
         'timesys' defines the time system
@@ -114,6 +120,12 @@ class Time(object):
             
         elif format == self.FORMAT_MJD:
             self.utc_mjd = value
+            
+        elif format == self.FORMAT_DP:
+            self.utc_timet = value / fS
+            
+        elif format == self.FORMAT_MCS:
+            self.utc_mjd = value[0] + value[1]/86400/1000
             
         elif format == self.FORMAT_TIMET:
             self.utc_timet = value
@@ -180,6 +192,43 @@ class Time(object):
             raise TypeError("value must be type int or float")
             
         self._time = astro.mjd_to_jd(float(value))
+        
+    @property
+    def utc_dp(self):
+        return int(astro.utcjd_to_unix(self.utc_jd) * fS)
+        
+    @utc_dp.setter
+    def utc_dp(self, value):
+        if not isinstance(value, (int, float)):
+            raise TypeError("value must be type int or float")
+            
+        self._time = astro.unix_to_utcjd(float(value) / fS)
+        
+    @property
+    def utc_mcs(self):
+        mjd = int(self.utc_mjd)
+        mpm = int(round((self.utc_mjd - mjd) * 86400 * 1000))
+        return (mjd, mpm)
+        
+    @utc_mcs.setter
+    def utc_mcs(self, value, mpm=None):
+        if mpm is None:
+            if not isinstance(value, (tuple, list)):
+                raise TypeError("value must be a tuple or list if 'mpm' is not supplied")
+            if len(value) != 2:
+                raise ValueError("value must be a two-element tuple or list")
+            if not isinstance(value[0], (int, float)):
+                raise TypeError("value[0] must be type int or float")
+            if not isinstance(value[1], (int, float)):
+                raise TypeError("value[1] must be type int or float")
+            mjd, mpm = value
+        else:
+            if not isinstance(value, (int, float)):
+                raise TypeError("value must be type int or float")
+            if not isinstance(mpm, (int, float)):
+                raise TypeError("mpm must be type int or float")
+            mjd = value
+        self._time = astro.mjd_to_jd(float(mjd) + float(mpm)/86400/1000)
         
     @property
     def utc_ln_date(self):

@@ -24,15 +24,15 @@ from datetime import datetime, timedelta
 
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
-from lsl.common.adp import word2freq
+from lsl.common.adp import word_to_freq
 from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['readSESFile', 'readOBSFile', 'readCSFile', 'getSDM', 'getStation', 'getSessionMetaData', 
-           'getSessionSpec', 'getObservationSpec', 'getSessionDefinition', 'getCommandScript', 
-           'getASPConfiguration', 'getASPConfigurationSummary', 'isValid', 
+__all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_station', 'get_session_metadata', 
+           'get_session_spec', 'get_observation_spec', 'get_sdf', 'get_command_script', 
+           'get_asp_configuration', 'get_asp_configuration_summary', 'is_valid', 
            '__version__', '__revision__', '__all__']
 
 # Regular expression for figuring out filenames
@@ -70,7 +70,7 @@ class managed_mkdtemp(object):
         return self._dir
 
 
-def readSESFile(filename):
+def read_ses_file(filename):
     """
     Read in a session specification file (MCS0030, Section 5) and return the data
     as a dictionary.
@@ -78,7 +78,7 @@ def readSESFile(filename):
     
     # Read the SES
     with open(filename, 'rb') as fh:
-        bses = parseCStruct(SSF_STRUCT, endianness='little')
+        bses = parse_c_struct(SSF_STRUCT, endianness='little')
         fh.readinto(bses)
         
         ## LWA-1 check
@@ -97,7 +97,7 @@ def readSESFile(filename):
                 newStruct.append(line)
             newStruct = '\n'.join(newStruct)
             
-            bses = parseCStruct(newStruct, endianness='little')
+            bses = parse_c_struct(newStruct, endianness='little')
             fh.readinto(bses)
             bses.SESSION_SPC = ''
             
@@ -115,7 +115,7 @@ def readSESFile(filename):
             'incDesi': bses.SESSION_INC_DES}
 
 
-def readOBSFile(filename):
+def read_obs_file(filename):
     """
     Read in a observation specification file (MCS0030, Section 6) and return the
     data as a dictionary.
@@ -123,10 +123,10 @@ def readOBSFile(filename):
     
     # Read the OBS
     with open(filename, 'rb') as fh:
-        bheader = parseCStruct(OSF_STRUCT, endianness='little')
-        bstep   = parseCStruct(OSFS_STRUCT, endianness='little')
-        bbeam   = parseCStruct(BEAM_STRUCT, endianness='little')
-        bfooter = parseCStruct(OSF2_STRUCT, endianness='little')
+        bheader = parse_c_struct(OSF_STRUCT, endianness='little')
+        bstep   = parse_c_struct(OSFS_STRUCT, endianness='little')
+        bbeam   = parse_c_struct(BEAM_STRUCT, endianness='little')
+        bfooter = parse_c_struct(OSF2_STRUCT, endianness='little')
         fh.readinto(bheader)
         
         ## LWA-1 check
@@ -147,7 +147,7 @@ def readOBSFile(filename):
                 newStruct.append(line)
             newStruct = '\n'.join(newStruct)
             
-            bheader = parseCStruct(newStruct, endianness='little')
+            bheader = parse_c_struct(newStruct, endianness='little')
             fh.readinto(bheader)
             bheader.SESSION_SPC = ''
             bheader.OBS_BDM = ''
@@ -163,12 +163,12 @@ def readOBSFile(filename):
                 newStruct.append(line)
             newStruct = '\n'.join(newStruct)
             
-            bheader = parseCStruct(newStruct, endianness='little')
+            bheader = parse_c_struct(newStruct, endianness='little')
             fh.readinto(bheader)
             bheader.OBS_BDM = ''
             
         if IS_32BIT_PYTHON:
-            skip = parseCStruct("""
+            skip = parse_c_struct("""
             int junk;
             """, endianness='little')
             fh.readinto(skip)
@@ -179,14 +179,14 @@ def readOBSFile(filename):
             if bstep.OBS_STP_B == 3:
                 fh.readinto(bbeam)
                 bstep.delay = copy.deepcopy(bbeam.OBS_BEAM_DELAY)
-                bstep.gain  = copy.deepcopy(single2multi(bbeam.OBS_BEAM_GAIN, *bbeam.dims['OBS_BEAM_GAIN']))
+                bstep.gain  = copy.deepcopy(flat_to_multi(bbeam.OBS_BEAM_GAIN, *bbeam.dims['OBS_BEAM_GAIN']))
             else:
                 bstep.delay = []
                 bstep.gain  = []
             
             steps.append(copy.deepcopy(bstep))
             
-            alignment = parseCStruct("""
+            alignment = parse_c_struct("""
             unsigned int block;
             """, endianness='little')
             fh.readinto(alignment)
@@ -205,8 +205,8 @@ def readOBSFile(filename):
               'MJD': bheader.OBS_START_MJD, 'MPM': bheader.OBS_START_MPM, 'Dur': bheader.OBS_DUR, 
               'Mode': bheader.OBS_MODE, 'beamDipole': bheader.OBS_BDM, 
               'RA': bheader.OBS_RA, 'Dec': bheader.OBS_DEC, 'Beam': bheader.OBS_B, 
-              'Freq1': word2freq(bheader.OBS_FREQ1), 'Freq2': word2freq(bheader.OBS_FREQ2), 'BW': bheader.OBS_BW, 'nSteps': bheader.OBS_STP_N, 'StepRADec': bheader.OBS_STP_RADEC,  'steps': steps, 
-              'fee': single2multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
+              'Freq1': word_to_freq(bheader.OBS_FREQ1), 'Freq2': word_to_freq(bheader.OBS_FREQ2), 'BW': bheader.OBS_BW, 'nSteps': bheader.OBS_STP_N, 'StepRADec': bheader.OBS_STP_RADEC,  'steps': steps, 
+              'fee': flat_to_multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
               'flt': list(bfooter.OBS_ASP_FLT), 'at1': list(bfooter.OBS_ASP_AT1), 
               'at2': list(bfooter.OBS_ASP_AT2), 'ats': list(bfooter.OBS_ASP_ATS)}
     output['tbfSamples'] = bfooter.OBS_TBF_SAMPLES
@@ -217,7 +217,7 @@ def readOBSFile(filename):
     return output
 
 
-def readCSFile(filename):
+def read_cs_file(filename):
     """
     Read in a command script file (MCS0030, currently undocumented) and return the
     data as a list of dictionaries.
@@ -227,7 +227,7 @@ def readCSFile(filename):
     with open(filename, 'rb') as fh:
         commands = []
         while True:
-            action = parseCStruct("""
+            action = parse_c_struct("""
             long int tv[2];
             int bASAP;
             int sid;
@@ -242,7 +242,7 @@ def readCSFile(filename):
                     break
                     
                 if action.len > 0:
-                    data = parseCStruct("""
+                    data = parse_c_struct("""
                     char data[%i];
                     """ % action.len, endianness='little')
                     
@@ -253,7 +253,7 @@ def readCSFile(filename):
                 
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
                                'ignoreTime': True if action.bASAP else False, 
-                               'subsystemID': sid2string(action.sid), 'commandID': cid2string(action.cid), 
+                               'subsystemID': sid_to_string(action.sid), 'commandID': cid_to_string(action.cid), 
                                'commandLength': action.len, 'data': data}
                             
                 commands.append( actionPrime )
@@ -263,7 +263,7 @@ def readCSFile(filename):
     return commands
 
 
-def getSDM(tarname):
+def get_sdm(tarname):
     """
     Given an MCS meta-data tarball, extract the information stored in the 
     dynamic/sdm.dat file and return a :class:`lsl.common.sdm.SDM` instance
@@ -283,12 +283,12 @@ def getSDM(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse the SDM file and build the SDM instance
-        dynamic = sdmADP.parseSDM(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+        dynamic = sdmADP.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
         
     return dynamic
 
 
-def getStation(tarname, ApplySDM=True):
+def get_station(tarname, apply_sdm=True):
     """
     Given an MCS meta-data tarball, extract the information stored in the ssmif.dat 
     file and return a :class:`lsl.common.stations.LWAStation` object.  Optionally, 
@@ -309,24 +309,24 @@ def getStation(tarname, ApplySDM=True):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Read in the SSMIF
-        station = stations.parseSSMIF(os.path.join(tempDir, 'ssmif.dat'))
+        station = stations.parse_ssmif(os.path.join(tempDir, 'ssmif.dat'))
         
         # Get the SDM (if we need to)
-        if ApplySDM:
-            dynamic = getSDM(tarname)
+        if apply_sdm:
+            dynamic = get_sdm(tarname)
         else:
             dynamic = None
         
         # Update the SSMIF entries
         if dynamic is not None:
-            newAnts = dynamic.updateAntennas(station.getAntennas())
+            newAnts = dynamic.update_antennas(station.get_antennas())
             station.antennas = newAnts
             
     # Return
     return station
 
 
-def getSessionMetaData(tarname):
+def get_session_metadata(tarname):
     """
     Given an MCS meta-data tarball, extract the session meta-data file (MCS0030, 
     Section 7) and return a dictionary of observations that contain dictionaries 
@@ -412,7 +412,7 @@ def getSessionMetaData(tarname):
     return result
 
 
-def getSessionSpec(tarname):
+def get_session_spec(tarname):
     """
     Given an MCS meta-data tarball, extract the session specification file (MCS0030, 
     Section 5) and return a dictionary of parameters.
@@ -433,18 +433,18 @@ def getSessionSpec(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Read in the SES
-        ses = readSESFile(os.path.join(tempDir, ti.name))
+        ses = read_ses_file(os.path.join(tempDir, ti.name))
         
     # Return
     return ses
 
 
-def getObservationSpec(tarname, selectObs=None):
+def get_observation_spec(tarname, obs_id=None):
     """
     Given an MCS meta-data tarball, extract one or more observation specification 
     file (MCS0030, Section 6) and return a list of dictionaries corresponding to
-    each OBS file.  If the `selectObs` keyword is set to a list of observation
-    numbers, only observations matching the numbers in `selectObs` are returned.
+    each OBS file.  If the `obs_id` keyword is set to a list of observation
+    numbers, only observations matching the numbers in `obs_id` are returned.
     """
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
@@ -462,17 +462,17 @@ def getObservationSpec(tarname, selectObs=None):
         # Read in the OBS files
         obsList = []
         for of in sorted(glob.glob(os.path.join(tempDir, '*.obs'))):
-            obsList.append( readOBSFile(of) )
+            obsList.append( read_obs_file(of) )
             
         # Cull the list based on the observation ID selection
-        if selectObs is not None:
+        if obs_id is not None:
             outObs = []
             for o in obsList:
                 try:
-                    if o['obsID'] in selectObs:
+                    if o['obsID'] in obs_id:
                         outObs.append(o)
                 except TypeError:
-                    if o['obsID'] == selectObs:
+                    if o['obsID'] == obs_id:
                         outObs.append(o)
                         
             if len(outObs) == 1:
@@ -484,7 +484,7 @@ def getObservationSpec(tarname, selectObs=None):
     return outObs
 
 
-def getSessionDefinition(tarname):
+def get_sdf(tarname):
     """
     Given an MCS meta-data tarball, extract the session specification file, the 
     session meta-data file, and all observation specification files to build up
@@ -509,13 +509,13 @@ def getSessionDefinition(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse it
-        project = sdfADP.parseSDF(os.path.join(tempDir, ti.name))
+        project = sdfADP.parse_sdf(os.path.join(tempDir, ti.name))
         
     # Return the filled-in SDF instance
     return project
 
 
-def getCommandScript(tarname):
+def get_command_script(tarname):
     """
     Given an MCS meta-data tarball, extract the command script and parse it.  The
     commands are returned as a list of dictionaries (one dictionary per command).
@@ -533,13 +533,13 @@ def getCommandScript(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Read in the CS
-        cs = readCSFile(os.path.join(tempDir, ti.name))
+        cs = read_cs_file(os.path.join(tempDir, ti.name))
         
     # Return
     return cs
 
 
-def getASPConfiguration(tarname, which='beginning'):
+def get_asp_configuration(tarname, which='beginning'):
     """
     Given an MCS meta-data tarball, extract the ASP MIB contained in it and return 
     a dictionary of values for the filter, AT1, AT2, and ATSplit.  The 'which'
@@ -583,7 +583,7 @@ def getASPConfiguration(tarname, which='beginning'):
                     continue
                     
                 aspMIB = MIB()
-                aspMIB.fromFile(os.path.join(tempDir, mib.name))
+                aspMIB.from_file(os.path.join(tempDir, mib.name))
                 break
                 
             # Extract the configuration
@@ -614,9 +614,9 @@ def getASPConfiguration(tarname, which='beginning'):
     return aspConfig
 
 
-def getASPConfigurationSummary(tarname, which='beginning'):
+def get_asp_configuration_summary(tarname, which='beginning'):
     """
-    Similar to getASPConfiguration, but returns only a single value for each
+    Similar to get_asp_configuration, but returns only a single value for each
     of the four ASP paramters:  filter, AT, AT2, and ATSplit.  The values
     are based off the mode of the parameter.
     
@@ -624,7 +624,7 @@ def getASPConfigurationSummary(tarname, which='beginning'):
     """
     
     # Get the full configuration
-    aspConfig = getASPConfiguration(tarname, which=which)
+    aspConfig = get_asp_configuration(tarname, which=which)
     
     # Count
     count = {}
@@ -653,7 +653,7 @@ def getASPConfigurationSummary(tarname, which='beginning'):
     return mode
 
 
-def isValid(tarname, verbose=False):
+def is_valid(tarname, verbose=False):
     """
     Given a filename, see if it is valid metadata tarball or not.
     
@@ -663,7 +663,7 @@ def isValid(tarname, verbose=False):
     passes = 0
     failures = 0
     try:
-        getSessionSpec(tarname)
+        get_session_spec(tarname)
         passes += 1
         if verbose:
             print("Session specification - OK")
@@ -675,7 +675,7 @@ def isValid(tarname, verbose=False):
             print("Session specification - FAILED")
         
     try:
-        getObservationSpec(tarname)
+        get_observation_spec(tarname)
         passes += 1
         if verbose:
             print("Observation specification(s) - OK")
@@ -685,7 +685,7 @@ def isValid(tarname, verbose=False):
             print("Observation specification(s) - FAILED")
             
     try:
-        getCommandScript(tarname)
+        get_command_script(tarname)
         passes += 1
         if verbose:
             print("Command script - OK")

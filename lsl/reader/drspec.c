@@ -225,7 +225,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		}
 		goto fail;
 	} else if( PyString_GET_SIZE(buffer) != sizeof(DRSpecHeader) ) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(EOFError, "End of file encountered during filehandle read");
 		goto fail;
 	}
 	memcpy(&header, PyString_AS_STRING(buffer), sizeof(header));
@@ -234,7 +234,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	// Check the header's magic numbers
 	if( header.MAGIC1 != 0xC0DEC0DE || header.MAGIC2 != 0xED0CED0C) {
 		buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(DRSpecHeader), 1);
-		PyErr_Format(syncError, "Sync word differs from expected");
+		PyErr_Format(SyncError, "Sync word differs from expected");
 		goto fail;
 	}
 	
@@ -325,7 +325,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 		}
 		goto fail;
 	} else if( PyString_GET_SIZE(buffer) != sizeof(float)*nSets*header.nFreqs ) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(EOFError, "End of file encountered during filehandle read");
 		goto fail;
 	}
 	memcpy(data, PyString_AS_STRING(buffer), sizeof(float)*nSets*header.nFreqs);
@@ -460,21 +460,21 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", header.timeOffset);
-	PyObject_SetAttrString(fHeader, "timeOffset", temp);
+	PyObject_SetAttrString(fHeader, "time_offset", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", header.nInts);
-	PyObject_SetAttrString(fHeader, "nInts", temp);
+	PyObject_SetAttrString(fHeader, "nints", temp);
 	Py_XDECREF(temp);
 	
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
 	
 	temp = PyLong_FromUnsignedLongLong(header.timeTag0);
-	PyObject_SetAttrString(fData, "timeTag", temp);
+	PyObject_SetAttrString(fData, "timetag", temp);
 	Py_XDECREF(temp);
 	
-	PyObject_SetAttrString(fData, "tuningWords", tuningWords);
+	PyObject_SetAttrString(fData, "tuning_words", tuningWords);
 	
 	PyObject_SetAttrString(fData, "fills", fills);
 	

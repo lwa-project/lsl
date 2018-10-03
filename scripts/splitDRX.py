@@ -76,7 +76,7 @@ def fileSplitFunction(fhIn, fhOut, nCaptures, nBeampols):
     
     for c in xrange(int(nCaptures)):
         for i in xrange(nBeampols):
-            cFrame = fhIn.read(drx.FrameSize)
+            cFrame = fhIn.read(drx.FRAME_SIZE)
             fhOut.write(cFrame)
             
         pb.inc(amount=1)
@@ -97,31 +97,31 @@ def main(args):
 
     # Open the file and get some basic info about the data contained
     fh = open(filename, 'rb')
-    nFramesFile = sizeB / drx.FrameSize
+    nFramesFile = sizeB / drx.FRAME_SIZE
 
     while True:
         try:
-            junkFrame = drx.readFrame(fh)
+            junkFrame = drx.read_frame(fh)
             try:
-                srate = junkFrame.getSampleRate()
-                t0 = junkFrame.getTime()
+                srate = junkFrame.get_sample_rate()
+                t0 = junkFrame.get_time()
                 break
             except ZeroDivisionError:
                 pass
-        except errors.syncError:
-            fh.seek(-drx.FrameSize+1, 1)
+        except errors.SyncError:
+            fh.seek(-drx.FRAME_SIZE+1, 1)
             
-    fh.seek(-drx.FrameSize, 1)
+    fh.seek(-drx.FRAME_SIZE, 1)
     
-    beams = drx.getBeamCount(fh)
-    tunepols = drx.getFramesPerObs(fh)
+    beams = drx.get_beam_count(fh)
+    tunepols = drx.get_frames_per_obs(fh)
     tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
     beampols = tunepol
 
     # Offset in frames for beampols beam/tuning/pol. sets
     offset = int(round(config['offset'] * srate / 4096 * beampols))
     offset = int(1.0 * offset / beampols) * beampols
-    fh.seek(offset*drx.FrameSize, 1)
+    fh.seek(offset*drx.FRAME_SIZE, 1)
     
     # Iterate on the offsets until we reach the right point in the file.  This
     # is needed to deal with files that start with only one tuning and/or a 
@@ -129,13 +129,13 @@ def main(args):
     while True:
         ## Figure out where in the file we are and what the current tuning/sample 
         ## rate is
-        junkFrame = drx.readFrame(fh)
-        srate = junkFrame.getSampleRate()
-        t1 = junkFrame.getTime()
-        tunepols = drx.getFramesPerObs(fh)
+        junkFrame = drx.read_frame(fh)
+        srate = junkFrame.get_sample_rate()
+        t1 = junkFrame.get_time()
+        tunepols = drx.get_frames_per_obs(fh)
         tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
         beampols = tunepol
-        fh.seek(-drx.FrameSize, 1)
+        fh.seek(-drx.FRAME_SIZE, 1)
         
         ## See how far off the current frame is from the target
         tDiff = t1 - (t0 + config['offset'])
@@ -150,7 +150,7 @@ def main(args):
         ## and check the location in the file again/
         if cOffset is 0:
             break
-        fh.seek(cOffset*drx.FrameSize, 1)
+        fh.seek(cOffset*drx.FRAME_SIZE, 1)
     
     # Update the offset actually used
     config['offset'] = t1 - t0
@@ -177,15 +177,15 @@ def main(args):
     # Make sure that the first frame in the file is the first frame of a capture 
     # (tuning 1, pol 0).  If not, read in as many frames as necessary to get to 
     # the beginning of a complete capture.
-    beam, tune, pol = junkFrame.parseID()
+    beam, tune, pol = junkFrame.parse_id()
 
     skip = 0
     while (2*(tune-1)+pol) != 0:
-        frame = drx.readFrame(fh)
-        beam, tune, pol = frame.parseID()
+        frame = drx.read_frame(fh)
+        beam, tune, pol = frame.parse_id()
         skip += 1
 
-    nFramesRemaining = (sizeB - fh.tell()) / drx.FrameSize
+    nFramesRemaining = (sizeB - fh.tell()) / drx.FRAME_SIZE
     nRecursions = int(nFramesRemaining / (nCaptures*beampols))
     if not config['recursive']:
         nRecursions = 1
@@ -196,10 +196,10 @@ def main(args):
     for r in xrange(nRecursions):
         if config['date']:
             filePos = fh.tell()
-            junkFrame = drx.readFrame(fh)
+            junkFrame = drx.read_frame(fh)
             fh.seek(filePos)
 
-            dt = datetime.utcfromtimestamp(junkFrame.getTime())
+            dt = datetime.utcfromtimestamp(junkFrame.get_time())
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
             captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'], scale)

@@ -17,17 +17,17 @@ The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
-For reading in data, use the readFrame function.  It takes a python file-
-handle as an input and returns a fully-filled Frame object.  readFrame 
+For reading in data, use the read_frame function.  It takes a python file-
+handle as an input and returns a fully-filled Frame object.  read_frame 
 is designed to work with both 4-bit and 12-bit observations.
 
 For describing the format of data in the file, two function are provided:
 
-getDataBits
+get_data_bits
   read in the first frame of an open file handle and return whether or not 
   the data is 12 or 4-bit
 
-getFramesPerObs
+get_frames_per_obs
   read in the first several frames to see how many stands are found in the 
   data.
 .. note::
@@ -43,17 +43,17 @@ import numpy
 
 from lsl.common import dp as dp_common
 from lsl.reader._gofast import readTBW
-from lsl.reader._gofast import syncError as gsyncError
-from lsl.reader._gofast import eofError as geofError
-from lsl.reader.errors import syncError, eofError
+from lsl.reader._gofast import SyncError as gSyncError
+from lsl.reader._gofast import EOFError as gEOFError
+from lsl.reader.errors import SyncError, EOFError
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 
-           'FrameSize', 'getDataBits', 'getFramesPerObs', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 
+           'FRAME_SIZE', 'get_data_bits', 'get_frames_per_obs', 
            '__version__', '__revision__', '__all__']
 
-FrameSize = 1224
+FRAME_SIZE = 1224
 
 
 class FrameHeader(object):
@@ -63,24 +63,24 @@ class FrameHeader(object):
     well as the original binary header data.
     """
 
-    def __init__(self, frameCount=None, secondsCount=None, tbwID=None):
-        self.frameCount = frameCount
-        self.secondsCount = secondsCount
-        self.tbwID = tbwID
+    def __init__(self, frame_count=None, second_count=None, tbw_id=None):
+        self.frame_count = frame_count
+        self.second_count = second_count
+        self.tbw_id = tbw_id
 
-    def isTBW(self):
+    def is_tbw(self):
         """
         Function to check if the data is really TBW and not TBN by examining
         the TBW ID field.  Returns True if the data is TBW, false otherwise.
         """
 
-        mode = (self.tbwID>>15)&1
+        mode = (self.tbw_id>>15)&1
         if mode == 1:
             return True
         else:
             return False
 
-    def parseID(self):
+    def parse_id(self):
         """
         Function to parse the TBW ID field and return the stand number.
         """
@@ -88,18 +88,18 @@ class FrameHeader(object):
         # Why &1023?  Well, from DP ICD revision H, it seems that the stand count 
         # only goes up 260.  So, channel numbers should range up to 520, which can
         # be represented as 10 bits or 1023.
-        stand = self.tbwID&1023
+        stand = self.tbw_id&1023
 
         return stand
 
-    def getDataBits(self):
+    def get_data_bits(self):
         """
         Function to parse the TBW ID field and return the size of number of 
         bits that comprise the data.  12 is returned for 12-bit data, and 4 
         for 4-bit data.
         """
 
-        bits = (self.tbwID>>14)&1
+        bits = (self.tbw_id>>14)&1
         if bits == 0:
             dataBits = 12
         else:
@@ -114,17 +114,17 @@ class FrameData(object):
     frame.  Both fields listed in the DP ICD version H are stored.
     """
 
-    def __init__(self, timeTag=None, samples=400, xy=None):
-        self.timeTag = timeTag
+    def __init__(self, timetag=None, samples=400, xy=None):
+        self.timetag = timetag
         self.xy = xy
 
-    def getTime(self):
+    def get_time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
         (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
         """
 
-        seconds = self.timeTag / dp_common.fS
+        seconds = self.timetag / dp_common.fS
         
         return seconds
 
@@ -148,35 +148,35 @@ class Frame(object):
             
         self.valid = True
         
-    def isTBW(self):
+    def is_tbw(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.isTBW function.
+        Convenience wrapper for the Frame.FrameHeader.is_tbw function.
         """
         
-        return self.header.isTBW()
+        return self.header.is_tbw()
         
-    def parseID(self):
+    def parse_id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parseID 
+        Convenience wrapper for the Frame.FrameHeader.parse_id 
         function.
         """
         
-        return self.header.parseID()
+        return self.header.parse_id()
 
-    def getDataBits(self):
+    def get_data_bits(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getDataBits 
+        Convenience wrapper for the Frame.FrameHeader.get_data_bits 
         function.
         """
         
-        return self.header.getDataBits()
+        return self.header.get_data_bits()
 
-    def getTime(self):
+    def get_time(self):
         """
-        Convenience wrapper for the Frame.FrameData.getTime function.
+        Convenience wrapper for the Frame.FrameData.get_time function.
         """
         
-        return self.data.getTime()
+        return self.data.get_time()
             
     def __add__(self, y):
         """
@@ -228,9 +228,9 @@ class Frame(object):
         tag is equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -245,9 +245,9 @@ class Frame(object):
         tag is not equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -262,9 +262,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -280,9 +280,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -297,9 +297,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -315,9 +315,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -332,8 +332,8 @@ class Frame(object):
         sorting things.
         """
         
-        tX = self.data.timeTag
-        tY = y.data.timeTag
+        tX = self.data.timetag
+        tY = y.data.timetag
         if tY > tX:
             return -1
         elif tX > tY:
@@ -342,7 +342,7 @@ class Frame(object):
             return 0
 
 
-def readFrame(filehandle, Verbose=False):
+def read_frame(filehandle, Verbose=False):
     """
     Function to read in a single TBW frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 
@@ -352,16 +352,16 @@ def readFrame(filehandle, Verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = readTBW(filehandle, Frame())
-    except gsyncError:
-        mark = filehandle.tell() - FrameSize
-        raise syncError(location=mark)
-    except geofError:
-        raise eofError
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
 
     return newFrame
 
 
-def getDataBits(filehandle):
+def get_data_bits(filehandle):
     """
     Find out the number of data bits used in the file be reading in the 
     first frame.
@@ -371,10 +371,10 @@ def getDataBits(filehandle):
     fhStart = filehandle.tell()
 
     # Read a frame
-    cFrame = readFrame(filehandle)
+    cFrame = read_frame(filehandle)
 
     # Get the number of bits used to represent the data
-    dataBits = cFrame.getDataBits()
+    dataBits = cFrame.get_data_bits()
 
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
@@ -382,7 +382,7 @@ def getDataBits(filehandle):
     return dataBits
 
 
-def getFramesPerObs(filehandle):
+def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per observation by examining 
     the first frames for what would be 260 stands.  This is done by reading
@@ -401,22 +401,22 @@ def getFramesPerObs(filehandle):
     for i in range(260):
         currentPosition = filehandle.tell()
         try:
-            cFrame1 = readFrame(filehandle)
-            cFrame2 = readFrame(filehandle)
-        except eofError:
+            cFrame1 = read_frame(filehandle)
+            cFrame2 = read_frame(filehandle)
+        except EOFError:
             break
-        except syncError:
+        except SyncError:
             continue
 
-        cID = cFrame1.parseID()
+        cID = cFrame1.parse_id()
         if cID not in idCodes:
             idCodes.append(cID)
-        cID = cFrame2.parseID()
+        cID = cFrame2.parse_id()
         if cID not in idCodes:
             idCodes.append(cID)
 
         # Junk 30,000 frames since that is how many frames there are per stand
-        filehandle.seek(currentPosition+30000*FrameSize)
+        filehandle.seek(currentPosition+30000*FRAME_SIZE)
 
     # Return to the place in the file where we started
     filehandle.seek(fhStart)

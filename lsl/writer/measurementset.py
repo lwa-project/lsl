@@ -32,18 +32,19 @@ from casacore.tables import table, tableutil
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['MS', 'StokesCodes', 'NumericStokes', 
+__all__ = ['MS', 'STOKES_CODES', 'NUMERIC_STOKES', 
            '__version__', '__revision__', '__all__']
 
 
-StokesCodes = {'I':  1, 'Q':  2, 'U':  3, 'V':  4, 
+STOKES_CODES = {'I':  1, 'Q':  2, 'U':  3, 'V':  4, 
                'RR': 5, 'RL': 6, 'LR': 7, 'LL': 8,
                'XX': 9, 'XY':10, 'YX':11, 'YY':12}
                
 
-NumericStokes = { 1:'I',   2:'Q',   3:'U',   4:'V', 
+NUMERIC_STOKES = { 1:'I',   2:'Q',   3:'U',   4:'V', 
                   5:'RR',  6:'RL',  7:'LR',  8:'LL',
                   9:'XX', 10:'XY', 11:'YX', 12:'YY'}
+
 
 def merge_baseline(ant1, ant2, shift=16):
     """
@@ -52,6 +53,7 @@ def merge_baseline(ant1, ant2, shift=16):
     """
     
     return (ant1 << shift) | ant2
+
 
 def split_baseline(baseline, shift=16):
     """
@@ -104,7 +106,7 @@ class MS(object):
         Represents one UV visibility data set for a given observation time.
         """
     
-        def __init__(self, obsTime, intTime, baselines, visibilities, pol=StokesCodes['XX'], source='z'):
+        def __init__(self, obsTime, intTime, baselines, visibilities, pol=STOKES_CODES['XX'], source='z'):
             self.obsTime = obsTime
             self.intTime = intTime
             self.baselines = baselines
@@ -256,7 +258,7 @@ class MS(object):
         
         for pol in polList:
             if type(pol) == str:
-                numericPol = StokesCodes[pol.upper()]
+                numericPol = STOKES_CODES[pol.upper()]
             else:
                 numericPol = pol
                 
@@ -304,7 +306,7 @@ class MS(object):
             stands.append(ant.stand.id)
         stands = numpy.array(stands)
         
-        arrayX, arrayY, arrayZ = site.getGeocentricLocation()
+        arrayX, arrayY, arrayZ = site.get_geocentric_location()
         
         xyz = numpy.zeros((len(stands),3))
         for i,ant in enumerate(antennas):
@@ -340,7 +342,7 @@ class MS(object):
         """
         
         if type(pol) == str:
-            numericPol = StokesCodes[pol.upper()]
+            numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol
             

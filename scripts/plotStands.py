@@ -88,12 +88,12 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
             try:
-                station = metabundle.getStation(config['metadata'], ApplySDM=True)
+                station = metabundle.getStation(config['metadata'], apply_sdm=True)
             except:
-                station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+                station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     elif config['site'] == 'lwa1':
         station = stations.lwa1
     elif config['site'] == 'lwasv':

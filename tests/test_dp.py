@@ -33,13 +33,13 @@ class dp_bandpass_tests(unittest.TestCase):
     def test_tbn_bandpass(self):
         """Test that the TBN bandpass generator actually runs."""
         
-        fnc = dp.tbnFilter(sampleRate=1e5, nPts=256)
+        fnc = dp.tbn_filter(sample_rate=1e5, npts=256)
         junk = fnc(1e3)
 
     def test_drx_bandpass(self):
         """Test that the DRX bandpass generator actually runs."""
         
-        fnc = dp.drxFilter(sampleRate=19.6e6, nPts=256)
+        fnc = dp.drx_filter(sample_rate=19.6e6, npts=256)
         junk = fnc(1e3)
 
 
@@ -58,28 +58,28 @@ class dp_software_tests(unittest.TestCase):
         
         sdp = dp.SoftwareDP()
         
-        sdp.setMode("DRX")
-        sdp.setMode("TBN")
-        self.assertRaises(ValueError, sdp.setMode, "TBW")
+        sdp.set_mode("DRX")
+        sdp.set_mode("TBN")
+        self.assertRaises(ValueError, sdp.set_mode, "TBW")
         
     def test_filters(self):
         """Test that various SoftwareDP filters work."""
         
         sdp = dp.SoftwareDP()
         
-        sdp.setMode("DRX")
+        sdp.set_mode("DRX")
         for i in xrange(7,0,-1):
             if i >= 3:
-                sdp.setFilter(i)
+                sdp.set_filter(i)
             else:
-                self.assertRaises(ValueError, sdp.setFilter, i)
+                self.assertRaises(ValueError, sdp.set_filter, i)
                 
-        sdp.setMode("TBN")
+        sdp.set_mode("TBN")
         for i in xrange(7,0,-1):
             if i >= 5:
-                sdp.setFilter(i)
+                sdp.set_filter(i)
             else:
-                self.assertRaises(ValueError, sdp.setFilter, i)
+                self.assertRaises(ValueError, sdp.set_filter, i)
                 
     def test_frequency(self):
         """Test that SoftwareDP the tuning works."""
@@ -88,36 +88,36 @@ class dp_software_tests(unittest.TestCase):
         
         for f in xrange(5, 95, 5):
             if f < 10 or f > 88:
-                self.assertRaises(ValueError, sdp.setCentralFreq, f*1e6)
+                self.assertRaises(ValueError, sdp.set_tuning_freq, f*1e6)
             else:
-                sdp.setCentralFreq(f*1e6)
+                sdp.set_tuning_freq(f*1e6)
                 
     def test_input(self):
         """Test the SoftwareDP filtering on some data."""
         
         sdp = dp.SoftwareDP()
         
-        nPts = 10000
-        time = numpy.arange(nPts)
-        data = numpy.random.rand(nPts)
+        npts = 10000
+        time = numpy.arange(npts)
+        data = numpy.random.rand(npts)
         
-        sdp.setMode("DRX")
-        sdp.setFilter(7)
-        sdp.setCentralFreq(40e6)
+        sdp.set_mode("DRX")
+        sdp.set_filter(7)
+        sdp.set_tuning_freq(40e6)
         
-        output = sdp.applyFilter(time, data)
-        self.assertEqual(output.size, nPts/10)
+        output = sdp.apply_filter(time, data)
+        self.assertEqual(output.size, npts/10)
         
     def test_beam(self):
         """Test the SoftwareDP beamformer on some data."""
         
         sdp = dp.SoftwareDP()
         
-        antennas = stations.lwa1.getAntennas()
+        antennas = stations.lwa1.get_antennas()
         
-        nPts = 10000
-        time = numpy.arange(nPts)
-        data = numpy.random.rand(len(antennas), nPts)*2048 - 1024
+        npts = 10000
+        time = numpy.arange(npts)
+        data = numpy.random.rand(len(antennas), npts)*2048 - 1024
         data = data.astype(numpy.int16)
         
         course = numpy.zeros(data.shape[0])
@@ -127,11 +127,11 @@ class dp_software_tests(unittest.TestCase):
         gains[0,0] = 1
         gains[1,1] = 1
         
-        sdp.setMode("DRX")
-        sdp.setFilter(7)
-        sdp.setCentralFreq(40e6)
+        sdp.set_mode("DRX")
+        sdp.set_filter(7)
+        sdp.set_tuning_freq(40e6)
         
-        beamX, beamY = sdp.formBeam(antennas, time, data, course, fine, gains)
+        beamX, beamY = sdp.form_beam(antennas, time, data, course, fine, gains)
         beamX = numpy.round(beamX).astype(numpy.int16)
         beamY = numpy.round(beamY).astype(numpy.int16)
         

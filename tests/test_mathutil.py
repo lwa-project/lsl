@@ -274,7 +274,7 @@ class mathutil_tests(unittest.TestCase):
         for i in xrange(45):
             alt[:,i] = 2*i
         
-        out = mathutil.sphval(terms, az, alt, degrees=True, realOnly=True)
+        out = mathutil.sphval(terms, az, alt, degrees=True, real_only=True)
         
         # Make sure we have the right output shape
         self.assertEqual(out.shape, az.shape)

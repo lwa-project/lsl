@@ -71,9 +71,9 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
             'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'IS_32BIT_PYTHON', 
             'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
             'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
-            'delaytoMCSD', 'MCSDtodelay', 'gaintoMCSG', 'MCSGtogain',
-            'mjdmpm2datetime', 'datetime2mjdmpm', 'status2string', 'summary2string', 'sid2string', 'cid2string', 
-            'mode2string', 'parseCStruct', 'single2multi', 'applyPointingCorrection', 'MIB', 'MIBEntry', 
+            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
+            'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
+            'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry', 
             '__version__', '__revision__', '__all__']
 
 
@@ -343,7 +343,7 @@ OSF2_STRUCT = """
 _cDecRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
 
 
-def parseCStruct(cStruct, charMode='str', endianness='native'):
+def parse_c_struct(cStruct, char_mode='str', endianness='native'):
     """
     Function to take a C structure declaration and build a ctypes.Structure out 
     of it with the appropriate alignment, character interpretation*, and endianness
@@ -351,14 +351,14 @@ def parseCStruct(cStruct, charMode='str', endianness='native'):
     
     *:  ctypes converts character arrays to Python strings until the first null is
     incountered.  This behavior causes problems for multi-dimension arrays of null
-    filled strings.  By setting charMode to 'int', all char types are retuned as 
+    filled strings.  By setting char_mode to 'int', all char types are retuned as 
     bytes which can be converted to strings via chr().
     """
     
     # Figure out how to deal with character arrays
-    if charMode not in ('str', 'int'):
-        raise RuntimeError("Unknown character mode: '%s'" % charMode)
-    if charMode == 'str':
+    if char_mode not in ('str', 'int'):
+        raise RuntimeError("Unknown character mode: '%s'" % char_mode)
+    if char_mode == 'str':
         baseCharType = ctypes.c_char
     else:
         baseCharType = ctypes.c_byte
@@ -535,7 +535,7 @@ def _twoByteSwap(value):
     return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF)
 
 
-def delaytoMCSD(delay):
+def delay_to_mcsd(delay):
     """
     Given a delay in ns, convert it to a course and fine portion and into 
     the form expected by MCS in a custom beamforming SDF (little endian 
@@ -544,10 +544,10 @@ def delaytoMCSD(delay):
     .. versionadded:: 0.6.3
     """
     
-    return _twoByteSwap( adpCommon.delaytoDPD(delay) )
+    return _twoByteSwap( adpCommon.delay_to_dpd(delay) )
 
 
-def MCSDtodelay(delay):
+def mcsd_to_delay(delay):
     """
     Given delay value from an OBS_BEAM_DELAY field in a custom beamforming 
     SDF, return the delay in ns.
@@ -555,10 +555,10 @@ def MCSDtodelay(delay):
     .. versionadded:: 0.6.3
     """
     
-    return adpCommon.DPDtodelay( _twoByteSwap(delay) )
+    return adpCommon.dpd_to_delay( _twoByteSwap(delay) )
 
 
-def gaintoMCSG(gain):
+def gain_to_mcsg(gain):
     """
     Given a gain (between 0 and 1), convert it to a gain in the form 
     expected by MCS in a custom beamforming SDF (little endian 16.1 
@@ -567,10 +567,10 @@ def gaintoMCSG(gain):
     .. versionadded::0.6.3
     """
     
-    return _twoByteSwap( adpCommon.gaintoDPG(gain) )
+    return _twoByteSwap( adpCommon.gain_to_dpg(gain) )
 
 
-def MCSGtogain(gain):
+def mcsg_to_gain(gain):
     """
     Given a gain value from an OBS_BEAM_GAIN field in a custom beamforming
     SDF, return the decimal equivalent.
@@ -578,10 +578,10 @@ def MCSGtogain(gain):
     .. versionadded:: 0.6.3
     """
     
-    return adpCommon.DPGtogain( _twoByteSwap(gain) )
+    return adpCommon.dpg_to_gain( _twoByteSwap(gain) )
 
 
-def mjdmpm2datetime(mjd, mpm):
+def mjdmpm_to_datetime(mjd, mpm):
     """
     Convert a MJD, MPM pair to a UTC-aware datetime instance.
     
@@ -592,7 +592,7 @@ def mjdmpm2datetime(mjd, mpm):
     return datetime.utcfromtimestamp(unix)
 
 
-def datetime2mjdmpm(dt):
+def datetime_to_mjdmpm(dt):
     """
     Convert a UTC datetime instance to a MJD, MPM pair (returned as a 
     two-element tuple).
@@ -628,7 +628,7 @@ def datetime2mjdmpm(dt):
     return (mjd, mpm)
 
 
-def status2string(code):
+def status_to_string(code):
     """
     Convert a numerical MCS status code to a string.
     """
@@ -649,7 +649,7 @@ def status2string(code):
         return "Unknown status code '%i'" % code
 
 
-def summary2string(code):
+def summary_to_string(code):
     """
     Convert a numerical MCS overall status code to an explination.
     """
@@ -673,7 +673,7 @@ def summary2string(code):
         return "Status is unknown"
 
 
-def sid2string(sid):
+def sid_to_string(sid):
     """
     Convert a MCS subsystem ID code into a string.
     """
@@ -705,7 +705,7 @@ def sid2string(sid):
         raise ValueError("Invalid sid code %i" % sid)
 
 
-def cid2string(cid):
+def cid_to_string(cid):
     """
     Convert a MCS command code into a string.
     """
@@ -799,7 +799,7 @@ def cid2string(cid):
         raise ValueError("Invalid cid code %i" % cid)
 
 
-def mode2string(mode):
+def mode_to_string(mode):
     """
     Convert a MCS numeric observing mode into a string.
     """
@@ -825,21 +825,21 @@ def mode2string(mode):
         raise ValueError("Invalid observing mode %i" % mode)
 
 
-def single2multi(inputList, dim1, dim2=None, dim3=None, dim4=None):
+def flat_to_multi(inputList, dim1, dim2=None, dim3=None, dim4=None):
     if dim4 is not None:
-        return _single2four(inputList, dim1, dim2, dim3, dim4)
+        return _flat_to_four(inputList, dim1, dim2, dim3, dim4)
         
     elif dim3 is not None:
-        return _single2three(inputList, dim1, dim2, dim3)
+        return _flat_to_three(inputList, dim1, dim2, dim3)
 
     elif dim2 is not None:
-        return _single2two(inputList, dim1, dim2)
+        return _flat_to_two(inputList, dim1, dim2)
         
     else:
         return list(inputList)
 
 
-def _single2two(inputList, dim1, dim2):
+def _flat_to_two(inputList, dim1, dim2):
     """
     Convert a flatten list into a two-dimensional list.  This is useful
     for converting flat lists of ctypes into their two-dimensional forms.
@@ -860,7 +860,7 @@ def _single2two(inputList, dim1, dim2):
     return outputList
 
 
-def _single2three(inputList, dim1, dim2, dim3):
+def _flat_to_three(inputList, dim1, dim2, dim3):
     """
     Convert a flatten list into a three-dimensional list.  This is useful
     for converting flat lists of ctypes into their three-dimensional forms.
@@ -882,7 +882,7 @@ def _single2three(inputList, dim1, dim2, dim3):
     return outputList
 
 
-def _single2four(inputList, dim1, dim2, dim3, dim4):
+def _flat_to_four(inputList, dim1, dim2, dim3, dim4):
     """
     Convert a flatten list into a four-dimensional list.  This is useful
     for converting flat lists of ctypes into their four-dimensional forms.
@@ -905,7 +905,7 @@ def _single2four(inputList, dim1, dim2, dim3, dim4):
     return outputList
 
 
-def _getRotationMatrix(theta, phi, psi, degrees=True):
+def _get_rotation_matrix(theta, phi, psi, degrees=True):
     """
     Generate the rotation matrix for a rotation about a specified axis.
     
@@ -928,7 +928,7 @@ def _getRotationMatrix(theta, phi, psi, degrees=True):
     return rot
 
 
-def applyPointingCorrection(az, el, theta, phi, psi, lat=34.070, degrees=True):
+def apply_pointing_correction(az, el, theta, phi, psi, lat=34.070, degrees=True):
     """
     Given a azimuth and elevation pair, and an axis to rotate about, 
     perform the rotation.
@@ -937,7 +937,7 @@ def applyPointingCorrection(az, el, theta, phi, psi, lat=34.070, degrees=True):
     """
     
     # Get the rotation matrix
-    rot = _getRotationMatrix(theta, phi, psi, degrees=degrees)
+    rot = _get_rotation_matrix(theta, phi, psi, degrees=degrees)
     
     # Convert the az,alt coordinates to the unit vector
     if degrees:
@@ -1006,7 +1006,7 @@ class MIB(object):
             # Index
             return self.entries.keys()
             
-    def parseInitFile(self, filename):
+    def parse_init_file(self, filename):
         """
         Given a MCS MIB initialization file, i.e., ASP_MIB_init.dat, create a 
         dictionary that maps indicies to human-readable names that can be used
@@ -1034,7 +1034,7 @@ class MIB(object):
         # Done
         return True
         
-    def fromFile(self, filename, initFilename=None):
+    def from_file(self, filename, init_filename=None):
         """
         Given the name of a GDBM database file, initialize the MIB.  
         Optionally, use the name of the MCS MIB initialization file to
@@ -1042,8 +1042,8 @@ class MIB(object):
         """
         
         # Parse the init. file (if we have one)
-        if initFilename is not None:
-            self.parseInitFile(initFilename)
+        if init_filename is not None:
+            self.parse_init_file(init_filename)
             
         # Make sure we have the .pag file
         if filename[-4:] == '.dir':
@@ -1059,7 +1059,7 @@ class MIB(object):
             
             try:
                 record = MIBEntry()
-                record.fromEntry(value)
+                record.from_entry(value)
                 self.entries[record.index] = record
                 
             except ValueError:
@@ -1103,7 +1103,7 @@ class MIBEntry(object):
         
         return "Index: %s; Value: %s; Updated at %s" % (self.index, self.value, self.updateTime)
         
-    def _parseValue(self, value, dataType):
+    def _parse_value(self, value, dataType):
         """
         Convert an encoded value to something Pythonic (if possible).
         
@@ -1179,7 +1179,7 @@ class MIBEntry(object):
         else:
             raise ValueError("Unknown data type '%s'" % dataType)
             
-    def fromEntry(self, value):
+    def from_entry(self, value):
         """
         Given an MIB entry straight out of a GDBM database, populate the 
         MIBEntry instance.
@@ -1195,7 +1195,7 @@ class MIBEntry(object):
         """
         
         # Initialize a new structure to parse the binary string
-        record = parseCStruct("""
+        record = parse_c_struct("""
             int eType;
             char index[%i];
             char val[%i];
@@ -1230,7 +1230,7 @@ class MIBEntry(object):
         # Basic information
         self.eType = int(record.eType)
         self.index = index
-        self.value = self._parseValue(record.val, dbmType)
+        self.value = self._parse_value(record.val, dbmType)
         self.dbmType = dbmType
         self.icdType = icdType
         self._tv = (int(record.tv[0]), int(record.tv[1]))

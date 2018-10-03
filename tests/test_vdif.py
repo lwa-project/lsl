@@ -11,7 +11,7 @@ import unittest
 import tempfile
 import numpy
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import errors
@@ -46,7 +46,7 @@ class vdif_tests(unittest.TestCase):
         # Frames 1 through 8
         frames = []
         for i in range(1,9):
-            frames.append(tbw.readFrame(fh))
+            frames.append(tbw.read_frame(fh))
 
         fh.close()
         return frames
@@ -61,12 +61,12 @@ class vdif_tests(unittest.TestCase):
         # Frames 1 through 8
         frames = []
         for i in range(1,9):
-            frames.append(tbn.readFrame(fh))
+            frames.append(tbn.read_frame(fh))
 
         if not vanilla:
             # Set some values for the other meta-data
             for frame in frames:
-                frame.setSampleRate(100000)
+                frame.setsample_rate(100000)
 
         fh.close()
         return frames
@@ -83,8 +83,8 @@ class vdif_tests(unittest.TestCase):
         # Write the data
         fh = open(testFile, 'wb')
         for frame in frames:
-            vFrame = vdif.Frame(frame.parseID(), frame.getTime(), bits=12, data=frame.data.xy[0,:])
-            vFrame.writeRawFrame(fh)
+            vFrame = vdif.Frame(frame.parse_id(), frame.get_time(), bits=12, data=frame.data.xy[0,:])
+            vFrame.write_raw_frame(fh)
         fh.close()
 
         # Read it back in
@@ -121,11 +121,11 @@ class vdif_tests(unittest.TestCase):
         # Write the data
         fh = open(testFile, 'wb')
         for frame in frames:
-            stand, pol = frame.parseID()
+            stand, pol = frame.parse_id()
             if pol == 1:
                 continue
-            vFrame = vdif.Frame(stand, frame.getTime(), bits=8, data=frame.data.iq)
-            vFrame.writeRawFrame(fh)
+            vFrame = vdif.Frame(stand, frame.get_time(), bits=8, data=frame.data.iq)
+            vFrame.write_raw_frame(fh)
         fh.close()
 
         # Read it back in

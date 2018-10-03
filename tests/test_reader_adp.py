@@ -11,7 +11,7 @@ if sys.version_info > (3,):
 import os
 import unittest
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.reader import tbf
 from lsl.reader import cor
 from lsl.reader import errors
@@ -37,13 +37,13 @@ class reader_adp_tests(unittest.TestCase):
         
         fh = open(tbfFile, 'rb')
         # First frame is really TBF and stores the first channel
-        frame1 = tbf.readFrame(fh)
-        self.assertTrue(frame1.header.isTBF())
-        self.assertEqual(frame1.header.firstChan, 2348)
+        frame1 = tbf.read_frame(fh)
+        self.assertTrue(frame1.header.is_tbf())
+        self.assertEqual(frame1.header.first_chan, 2348)
         # Second frame
-        frame2 = tbf.readFrame(fh)
-        self.assertTrue(frame2.header.isTBF())
-        self.assertEqual(frame2.header.firstChan, 2360)
+        frame2 = tbf.read_frame(fh)
+        self.assertTrue(frame2.header.is_tbf())
+        self.assertEqual(frame2.header.first_chan, 2360)
         fh.close()
         
     def test_tbf_errors(self):
@@ -52,17 +52,17 @@ class reader_adp_tests(unittest.TestCase):
         fh = open(tbfFile, 'rb')
         # Frames 1 through 5
         for i in range(1,6):
-            frame = tbf.readFrame(fh)
+            frame = tbf.read_frame(fh)
             
-        # Last frame should be an error (errors.eofError)
-        self.assertRaises(errors.eofError, tbf.readFrame, fh)
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, tbf.read_frame, fh)
         fh.close()
         
         # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.syncError).
+        # sync error (errors.SyncError).
         fh = open(tbfFile, 'rb')
         fh.seek(1)
-        self.assertRaises(errors.syncError, tbf.readFrame, fh)
+        self.assertRaises(errors.SyncError, tbf.read_frame, fh)
         fh.close()
         
     def test_tbf_comps(self):
@@ -72,7 +72,7 @@ class reader_adp_tests(unittest.TestCase):
         # Frames 1 through 4
         frames = []
         for i in range(1,5):
-            frames.append(tbf.readFrame(fh))
+            frames.append(tbf.read_frame(fh))
         fh.close()
         
         self.assertTrue(0 < frames[0])
@@ -90,7 +90,7 @@ class reader_adp_tests(unittest.TestCase):
         # Frames 1 through 3
         frames = []
         for i in range(1,4):
-            frames.append(tbf.readFrame(fh))
+            frames.append(tbf.read_frame(fh))
         fh.close()
         
         frames.sort()
@@ -106,7 +106,7 @@ class reader_adp_tests(unittest.TestCase):
         # Frames 1 through 3
         frames = []
         for i in range(1,4):
-            frames.append(tbf.readFrame(fh))
+            frames.append(tbf.read_frame(fh))
         fh.close()
         
         # Multiplication
@@ -156,19 +156,19 @@ class reader_adp_tests(unittest.TestCase):
         
         fh = open(corFile, 'rb')
         # First frame is really COR and check the basic metadata
-        frame1 = cor.readFrame(fh)
+        frame1 = cor.read_frame(fh)
         self.assertTrue(frame1.header.isCOR())
-        self.assertEqual(frame1.header.firstChan, 1584)
-        self.assertEqual(frame1.parseID(), (1,1))
-        self.assertEqual(frame1.getIntegrationTime(), 5)
-        self.assertEqual(frame1.getGain(), 1)
+        self.assertEqual(frame1.header.first_chan, 1584)
+        self.assertEqual(frame1.parse_id(), (1,1))
+        self.assertEqual(frame1.get_integration_time(), 5)
+        self.assertEqual(frame1.get_gain(), 1)
         # Second frame
-        frame2 = cor.readFrame(fh)
+        frame2 = cor.read_frame(fh)
         self.assertTrue(frame2.header.isCOR())
-        self.assertEqual(frame2.header.firstChan, 1584)
-        self.assertEqual(frame2.parseID(), (1,2))
-        self.assertEqual(frame2.getIntegrationTime(), 5)
-        self.assertEqual(frame2.getGain(), 1)
+        self.assertEqual(frame2.header.first_chan, 1584)
+        self.assertEqual(frame2.parse_id(), (1,2))
+        self.assertEqual(frame2.get_integration_time(), 5)
+        self.assertEqual(frame2.get_gain(), 1)
         fh.close()
         
     def test_cor_errors(self):
@@ -177,38 +177,38 @@ class reader_adp_tests(unittest.TestCase):
         fh = open(corFile, 'rb')
         # Frames 1 through 65
         for i in range(1,66):
-            frame = cor.readFrame(fh)
+            frame = cor.read_frame(fh)
             
-        # Last frame should be an error (errors.eofError)
-        self.assertRaises(errors.eofError, cor.readFrame, fh)
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, cor.read_frame, fh)
         fh.close()
         
         # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.syncError).
+        # sync error (errors.SyncError).
         fh = open(corFile, 'rb')
         fh.seek(1)
-        self.assertRaises(errors.syncError, cor.readFrame, fh)
+        self.assertRaises(errors.SyncError, cor.read_frame, fh)
         fh.close()
         
     def test_cor_frames(self):
         """Test determing the number of frames per observation in a COR file."""
         
         fh = open(corFile, 'rb')
-        self.assertEqual(32896, cor.getFramesPerObs(fh))
+        self.assertEqual(32896, cor.get_frames_per_obs(fh))
         fh.close()
         
     def test_cor_channels(self):
         """Test determing the number of channels in a COR observation."""
         
         fh = open(corFile, 'rb')
-        self.assertEqual(72, cor.getChannelCount(fh))
+        self.assertEqual(72, cor.get_channel_count(fh))
         fh.close()
         
     def test_cor_baselines(self):
         """Test determing the number of baselines in a COR observation."""
         
         fh = open(corFile, 'rb')
-        self.assertEqual(32896, cor.getBaselineCount(fh))
+        self.assertEqual(32896, cor.get_baseline_count(fh))
         fh.close()
         
     def test_cor_comps(self):
@@ -218,7 +218,7 @@ class reader_adp_tests(unittest.TestCase):
         # Frames 1 through 29
         frames = []
         for i in range(1,30):
-            frames.append(cor.readFrame(fh))
+            frames.append(cor.read_frame(fh))
         fh.close()
         
         self.assertTrue(0 < frames[0])
@@ -236,7 +236,7 @@ class reader_adp_tests(unittest.TestCase):
         # Frames 1 through 29
         frames = []
         for i in range(1,30):
-            frames.append(cor.readFrame(fh))
+            frames.append(cor.read_frame(fh))
         fh.close()
         
         frames.sort()
@@ -252,7 +252,7 @@ class reader_adp_tests(unittest.TestCase):
         # Frames 1 through 29
         frames = []
         for i in range(1,30):
-            frames.append(cor.readFrame(fh))
+            frames.append(cor.read_frame(fh))
         fh.close()
         
         # Multiplication

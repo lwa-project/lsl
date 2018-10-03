@@ -28,6 +28,8 @@ class transform_tests(unittest.TestCase):
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
         self.assertEqual(t0.utc_str, '2013-01-08 01:23:45.000')
+        self.assertEqual(t0.utc_mcs, (56300, 5025000))
+        self.assertAlmostEqual(t0.utc_dp/196e6, 1357608225.0, 3)
         
     def test_planetaryposition_init(self):
         """Test the transform.PlanetaryPosition constructor."""
@@ -40,7 +42,7 @@ class transform_tests(unittest.TestCase):
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
         
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         obs.date = t0.utc_str
         sat = ephem.Saturn()
         sat.compute(obs)
@@ -55,7 +57,7 @@ class transform_tests(unittest.TestCase):
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
         
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         obs.date = t0.utc_str
         jove = ephem.Jupiter()
         jove.compute(obs)
@@ -70,7 +72,7 @@ class transform_tests(unittest.TestCase):
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
         
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         obs.date = t0.utc_str
         mars = ephem.Mars()
         mars.compute(obs)
@@ -85,7 +87,7 @@ class transform_tests(unittest.TestCase):
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
         
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         obs.date = t0.utc_str
         venu = ephem.Venus()
         venu.compute(obs)
@@ -100,7 +102,7 @@ class transform_tests(unittest.TestCase):
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
         
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         obs.date = t0.utc_str
         sol = ephem.Sun()
         sol.compute(obs)
@@ -127,9 +129,9 @@ class transform_tests(unittest.TestCase):
         elv = lwa1.elev
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
-        self.assertAlmostEqual(g0.ecef[0], lwa1.getGeocentricLocation()[0], 6)
-        self.assertAlmostEqual(g0.ecef[1], lwa1.getGeocentricLocation()[1], 6)
-        self.assertAlmostEqual(g0.ecef[2], lwa1.getGeocentricLocation()[2], 6)
+        self.assertAlmostEqual(g0.ecef[0], lwa1.get_geocentric_location()[0], 6)
+        self.assertAlmostEqual(g0.ecef[1], lwa1.get_geocentric_location()[1], 6)
+        self.assertAlmostEqual(g0.ecef[2], lwa1.get_geocentric_location()[2], 6)
         
     def test_geographicalposition_lst(self):
         """Test the tranform.GeographicalPosition sidereal time."""
@@ -139,7 +141,7 @@ class transform_tests(unittest.TestCase):
         lon = lwa1.long * 180.0/math.pi
         lat = lwa1.lat  * 180.0/math.pi
         elv = lwa1.elev
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
         
@@ -170,7 +172,7 @@ class transform_tests(unittest.TestCase):
         lon = lwa1.long * 180.0/math.pi
         lat = lwa1.lat  * 180.0/math.pi
         elv = lwa1.elev
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         obs.date = t0.utc_str
         jove = ephem.Jupiter()
         jove.compute(obs)
@@ -190,7 +192,7 @@ class transform_tests(unittest.TestCase):
         lon = lwa1.long * 180.0/math.pi
         lat = lwa1.lat  * 180.0/math.pi
         elv = lwa1.elev
-        obs = lwa1.getObserver()
+        obs = lwa1.get_observer()
         obs.date = t0.utc_str
         jove = ephem.Jupiter()
         jove.compute(obs)

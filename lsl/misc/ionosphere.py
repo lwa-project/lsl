@@ -38,8 +38,8 @@ from lsl.common.mcs import mjdmpm2datetime, datetime2mjdmpm
 
 __version__ = "0.5"
 __revision__ = "$Rev$"
-__all__ = ['getMagneticField', 'computeMagneticDeclination', 'computeMagneticInclination', 
-        'getTECValue', 'getIonosphericPiercePoint', 
+__all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
+        'get_tec_value', 'get_ionospheric_pierce_point', 
         '__version__', '__revision__', '__all__']
 
 
@@ -62,15 +62,15 @@ _Cache = {}
 _rEarth = 6371.2e3
 
 
-def _loadIGRFModel(filename):
+def _load_igrf(filename):
     """
     Given a filename pointing to a list of IGRF coefficients, load in the 
     data and return a dictionary containing the raw coefficients.
     
     The dictionary keys are:
-    * years - list of years for each of the models
-    * g - dictionary of cosine term coefficients
-    * h - dictionary of sine term coefficients
+     * years - list of years for each of the models
+     * g - dictionary of cosine term coefficients
+     * h - dictionary of sine term coefficients
     
     The g and h dictionaries are keyed off the degree of the Legendre 
     function and each stores a list of n orders.  Each order is composed
@@ -233,7 +233,7 @@ def _dPnm(n, m, mu):
     return o
 
 
-def getMagneticField(lat, lng, elev, mjd=None, ecef=False):
+def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     """
     Given a geodetic location described by a latitude in degrees (North 
     positive), a longitude in degrees (West negative), an elevation 
@@ -288,7 +288,7 @@ def getMagneticField(lat, lng, elev, mjd=None, ecef=False):
         coeffs = _Cache['IGRF']
     except KeyError:
         filename = os.path.join(dataPath, 'igrf12coeffs.txt')
-        _Cache['IGRF'] = _loadIGRFModel(filename)
+        _Cache['IGRF'] = _load_igrf(filename)
         
         coeffs = _Cache['IGRF']
         
@@ -352,9 +352,9 @@ def getMagneticField(lat, lng, elev, mjd=None, ecef=False):
     return outputField
 
 
-def computeMagneticDeclination(Bn, Be, Bz):
+def compute_magnetic_declination(Bn, Be, Bz):
     """
-    Given the topocentric output of getMagneticField(), compute and return 
+    Given the topocentric output of get_magnetic_field(), compute and return 
     the magnetic declination (deviation between magnetic north and true 
     north) in degrees.
     
@@ -377,9 +377,9 @@ def computeMagneticDeclination(Bn, Be, Bz):
     return decl*180.0/numpy.pi
 
 
-def computeMagneticInclination(Bn, Be, Bz):
+def compute_magnetic_inclination(Bn, Be, Bz):
     """
-    Given the topocentric output of getMagneticField(), compute and return 
+    Given the topocentric output of get_magnetic_field(), compute and return 
     the magnetic inclination or magnetic dip (angle between the magnetic 
     field and the horizontal) in degrees.
     """
@@ -388,14 +388,14 @@ def computeMagneticInclination(Bn, Be, Bz):
     Bh = numpy.sqrt(Bn**2+Be**2)
     
     # Compute the inclination.  This has an extra negative sign because of the
-    # convention used in getMagneticField().
+    # convention used in get_magnetic_field().
     incl = numpy.arctan2(-Bz, Bh)
     
     # Convert to degrees and done
     return incl*180.0/numpy.pi
 
 
-def _downloadTECMapIGS(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding IGS final data product 
     for that day.
@@ -427,7 +427,7 @@ def _downloadTECMapIGS(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
         
     # Attempt to download the data
     try:
-        tecFH = urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+        tecFH = urlopen('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), timeout=timeout)
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
@@ -453,7 +453,7 @@ def _downloadTECMapIGS(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
         return True
 
 
-def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -485,7 +485,7 @@ def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
         
     # Attempt to download the data
     try:
-        tecFH = urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+        tecFH = urlopen('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), timeout=timeout)
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
@@ -511,7 +511,7 @@ def _downloadTECMapJPL(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
         return True
 
 
-def _downloadTECMapUQR(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -543,7 +543,7 @@ def _downloadTECMapUQR(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
         
     # Attempt to download the data
     try:
-        tecFH = urlopen('%s/%04i/%03i/%s' % (baseURL, year, dayOfYear, filename), timeout=timeout)
+        tecFH = urlopen('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), timeout=timeout)
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
@@ -569,14 +569,14 @@ def _downloadTECMapUQR(mjd, baseURL='ftp://cddis.gsfc.nasa.gov/gps/products/ione
         return True
 
 
-def _downloadTECMapCODE(mjd, baseURL='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeout=120, type='final'):
+def _download_code(mjd, base_url='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding CODE final data product 
     for that day.
     
     .. note::
         The 'type' keyword is ignored in the call.  It is included for 
-        compatiability with _downloadTECMapIGS().
+        compatiability with _download_igs().
     """
     
     # Convert the MJD to a datetime instance so that we can pull out the year
@@ -592,7 +592,7 @@ def _downloadTECMapCODE(mjd, baseURL='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeo
     
     # Attempt to download the data
     try:
-        tecFH = urlopen('%s/%04i/%s' % (baseURL, year, filename), timeout=timeout)
+        tecFH = urlopen('%s/%04i/%s' % (base_url, year, filename), timeout=timeout)
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
@@ -618,7 +618,7 @@ def _downloadTECMapCODE(mjd, baseURL='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeo
         return True
 
 
-def _downloadTECMapUSTEC(mjd, baseURL='http://www.ngdc.noaa.gov/stp/iono/ustec/products/', timeout=120):
+def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/products/', timeout=120):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -642,7 +642,7 @@ def _downloadTECMapUSTEC(mjd, baseURL='http://www.ngdc.noaa.gov/stp/iono/ustec/p
     
     # Attempt to download the data
     try:
-        tecFH = urlopen('%s/%04i/%02i/%s' % (baseURL, year, month, filename), timeout=timeout)
+        tecFH = urlopen('%s/%04i/%02i/%s' % (base_url, year, month, filename), timeout=timeout)
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
@@ -665,20 +665,20 @@ def _downloadTECMapUSTEC(mjd, baseURL='http://www.ngdc.noaa.gov/stp/iono/ustec/p
         return True
 
 
-def _parseTECMap(filename):
+def _parse_tec_map(filename):
     """
     Given the name of a file containing a TEC map from the IGC, parse it 
     and return a dictionary containing the files data.
     
     The dictionary keys are:
-    * dates - array of MJD values for each time step in the map
-    * lats - 2-D array of latitude values for the maps in degrees
-    * lngs - 2-D array of longitude values for the maps in degrees
-    * height - height for the ionospheric pierce point in km
-    * tec - 3-D array of TEC values in TECU.  The dimensions are time by
-        latitude by longitude.
-    * rms - 3-D array of TEC RMS values in TECU.  The dimensions are time
-        by latitude by longitude.
+     * dates - array of MJD values for each time step in the map
+     * lats - 2-D array of latitude values for the maps in degrees
+     * lngs - 2-D array of longitude values for the maps in degrees
+     * height - height for the ionospheric pierce point in km
+     * tec - 3-D array of TEC values in TECU.  The dimensions are time by
+             latitude by longitude.
+     * rms - 3-D array of TEC RMS values in TECU.  The dimensions are time
+             by latitude by longitude.
     """
     
     # Variables to hold the map sequences
@@ -781,16 +781,16 @@ def _parseTECMap(filename):
     return output
 
 
-def _parseUSTECMapIndividual(filename):
+def _parse_ustec_individual(filename):
     """
     Parse an individual TEC map from the USTEC project.  This returns a five-
     element tuple of:
-    * datetime for the start of the map
-    * 2-D array of latitude values for the maps in degrees
-    * 2-D array of longitude values for the maps in degrees
-    * 2-D array of TEC values in TECU.  The dimensions are latitude by 
+     * datetime for the start of the map
+     * 2-D array of latitude values for the maps in degrees
+     * 2-D array of longitude values for the maps in degrees
+     * 2-D array of TEC values in TECU.  The dimensions are latitude by 
         longitude
-    * 2-D array of TEC RMS values in TECU.  The dimensions are latitude 
+     * 2-D array of TEC RMS values in TECU.  The dimensions are latitude 
         by longitude.
     
     Format Reference:
@@ -901,7 +901,7 @@ def _parseUSTECMapIndividual(filename):
     return dt, lats, lngs, data, rms
 
 
-def _parseUSTECMapHeight(filename):
+def _parse_ustec_height(filename):
     """
     Parse emperical orthonormal functions to come up with an effective 
     height for the ionosphere.
@@ -945,19 +945,19 @@ def _parseUSTECMapHeight(filename):
     return height
 
 
-def _parseUSTECMap(filename):
+def _parse_ustec_map(filename):
     """
     Given the name of a file containing a TEC map from the USTEC project, 
     parse it and return a dictionary containing the files data.
     
     The dictionary keys are:
-    * dates - array of MJD values for each time step in the map
-    * lats - 2-D array of latitude values for the maps in degrees
-    * lngs - 2-D array of longitude values for the maps in degrees
-    * height - height for the ionospheric pierce point in km
-    * tec - 3-D array of TEC values in TECU.  The dimensions are time by
+     * dates - array of MJD values for each time step in the map
+     * lats - 2-D array of latitude values for the maps in degrees
+     * lngs - 2-D array of longitude values for the maps in degrees
+     * height - height for the ionospheric pierce point in km
+     * tec - 3-D array of TEC values in TECU.  The dimensions are time by
         latitude by longitude.
-    * rms - 3-D array of TEC RMS values in TECU.  The dimensions are time
+     * rms - 3-D array of TEC RMS values in TECU.  The dimensions are time
         by latitude by longitude.
     """
     
@@ -981,7 +981,7 @@ def _parseUSTECMap(filename):
     tecfilenames.sort()
     for tecfilename in tecfilenames:
         #try:
-        dt, lats, lngs, tec, rms = _parseUSTECMapIndividual(tecfilename)
+        dt, lats, lngs, tec, rms = _parse_ustec_individual(tecfilename)
         
         ### Figure out the MJD
         mjd, mpm = datetime2mjdmpm(dt)
@@ -999,7 +999,7 @@ def _parseUSTECMap(filename):
     # Get the mean ionospheric height
     eoffilename = glob.glob(os.path.join(tempDir, '*_EOF.txt'))[0]
     #try:
-    height = _parseUSTECMapHeight(eoffilename)
+    height = _parse_ustec_height(eoffilename)
     #except:
     #	height = 450
         
@@ -1019,7 +1019,7 @@ def _parseUSTECMap(filename):
     return output
 
 
-def _loadTECMap(mjd, timeout=120, type='IGS'):
+def _load_map(mjd, timeout=120, type='IGS'):
     """
     Given an MJD value, load the corresponding TEC map.  If the map is not
     avaliable on disk, download it.
@@ -1031,7 +1031,7 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
         cacheName = 'TEC-IGS-%i' % mjd
         
         ## Download helper
-        downloader = _downloadTECMapIGS
+        downloader = _download_igs
         
         ## Filename templates
         filenameTemplate = 'igsg%03i0.%02ii.gz'
@@ -1042,7 +1042,7 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
         cacheName = 'TEC-JPL-%i' % mjd
         
         ## Download helper
-        downloader = _downloadTECMapJPL
+        downloader = _download_jpl
         
         ## Filename templates
         filenameTemplate = 'jplg%03i0.%02ii.gz'
@@ -1053,7 +1053,7 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
         cacheName = 'TEC-UQR-%i' % mjd
         
         ## Download helper
-        downloader = _downloadTECMapUQR
+        downloader = _download_uqr
         
         ## Filename templates
         filenameTemplate = 'uqrg%03i0.%02ii.gz'
@@ -1064,7 +1064,7 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
         cacheName = 'TEC-CODE-%i' % mjd
         
         ## Download helper
-        downloader = _downloadTECMapCODE
+        downloader = _download_code
         
         ## Filename templates
         filenameTemplate = 'CKMG%03i0.%02iI.gz'
@@ -1075,7 +1075,7 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
         cacheName = 'TEC-USTEC-%i' % mjd
         
         ## Download helper
-        downloader = _downloadTECMapUSTEC
+        downloader = _download_ustec
         
         ## Filename templates
         filenameTemplate = '%s_ustec.tar.gz'
@@ -1113,7 +1113,7 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
                 pass
                 
             # Parse it
-            _Cache[cacheName] = _parseUSTECMap(os.path.join(_CacheDir, filename))
+            _Cache[cacheName] = _parse_ustec_map(os.path.join(_CacheDir, filename))
             
         else:
             
@@ -1146,7 +1146,7 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
                 pass
                 
             # Parse it
-            _Cache[cacheName] = _parseTECMap(os.path.join(_CacheDir, filename))
+            _Cache[cacheName] = _parse_tec_map(os.path.join(_CacheDir, filename))
             
         tecMap = _Cache[cacheName]
         
@@ -1154,17 +1154,17 @@ def _loadTECMap(mjd, timeout=120, type='IGS'):
     return tecMap
 
 
-def getTECValue(mjd, lat=None, lng=None, includeRMS=False, timeout=120, type='IGS'):
+def get_tec_value(mjd, lat=None, lng=None, include_rms=False, timeout=120, type='IGS'):
     """
     Given an MJD value and, optionally, a latitude and longitude in degrees, 
     compute the TEC value in TECU above that location using data from the 
     IGS or CODE (depending on the value of the 'type' keyword).  If the 
-    'includeRMS' keyword is set to True, also return the RMS in the TEC 
+    'include_rms' keyword is set to True, also return the RMS in the TEC 
     value.
     """
     
     # Load in the right map
-    tecMap = _loadTECMap(mjd, timeout=timeout, type=type)
+    tecMap = _load_map(mjd, timeout=timeout, type=type)
     
     if type == 'USTEC':
         # Figure out the closest model point(s) to the requested MJD taking into
@@ -1185,7 +1185,7 @@ def getTECValue(mjd, lat=None, lng=None, includeRMS=False, timeout=120, type='IG
     tec = slope*(mjd - tecMap['dates'][best[0]]) + tecMap['tec'][best[0],:,:]
     
     ## RMS
-    if includeRMS:
+    if include_rms:
         slope = tecMap['rms'][best[-1],:,:] - tecMap['rms'][best[0],:,:]
         if best[-1] == best[0]:
             slope = 0.0
@@ -1200,18 +1200,18 @@ def getTECValue(mjd, lat=None, lng=None, includeRMS=False, timeout=120, type='IG
         tec = interpFunction(lat, lng)
         
         ## RMS
-        if includeRMS:
+        if include_rms:
             interpFunction = RectBivariateSpline(tecMap['lats'][::-1,0], tecMap['lngs'][0,:], rms[::-1,:], kx=1, ky=1)
             rms = interpFunction(lat, lng)
             
     # Done
-    if includeRMS:
+    if include_rms:
         return tec, rms
     else:
         return tec
 
 
-def getIonosphericPiercePoint(site, az, el, height=450e3, verbose=False):
+def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
     """
     Given a site and a pointing direction (azimuth and elevation in degrees),
     compute the location of the ionospheric pierce  point.  Since the height

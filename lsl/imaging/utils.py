@@ -17,11 +17,11 @@ Also included is a utility to sort data dictionaries by baselines.
     Added support for UVFITS files and CASA measurement sets
 
 .. versionchanged:: 1.0.1
-    Added the plotGriddedImage() function
+    Added the plot_gridded_image() function
     
 .. versionchanged:: 1.1.0
-    Added the getImageRADec() and getImageAzEl() functions to complement
-    plotGriddedImage() and make it easier to work with phase centers 
+    Added the get_image_radec() and get_image_azalt() functions to complement
+    plot_gridded_image() and make it easier to work with phase centers 
     that are not at zenith.  Added in the ImgWPlus class to add support
     for imaging weighting and tapering.
     
@@ -55,7 +55,7 @@ from lsl import astro
 from lsl.statistics import robust
 from lsl.common import stations
 from lsl.sim import vis as simVis
-from lsl.writer.fitsidi import NumericStokes
+from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.common.constants import c as vLight
 
 from lsl.imaging._gridder import WProjection
@@ -78,9 +78,9 @@ except ImportError:
 
 __version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData', 'CorrelatedData', 
-           'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'ImgWPlus', 'buildGriddedImage', 
-           'plotGriddedImage', 'getImageRADec', 'getImageAzEl', '__version__', '__revision__', '__all__']
+__all__ = ['baseline_order', 'sort_data', 'pruneBaselineRange', 'rephase_data', 'CorrelatedData', 
+           'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 'ImgWPlus', 'build_gridded_image', 
+           'plot_gridded_image', 'get_image_radec', 'get_image_azalt', '__version__', '__revision__', '__all__']
 
 
 # Regular expression for trying to get the stand number out of an antenna
@@ -88,11 +88,11 @@ __all__ = ['baselineOrder', 'sortDataDict', 'pruneBaselineRange', 'rephaseData',
 _annameRE = re.compile('^.*?(?P<id>\d{1,3})$')
 
 
-def baselineOrder(bls):
+def baseline_order(bls):
     """
     Like numpy.argsort(), but for a list of two-element tuples of baseline 
     pairs.  The resulting lists can then be used to sort a data dictionary
-    a la sortDataDict().
+    a la sort_data().
     """
     
     def __cmpBaseline(bl):
@@ -101,10 +101,10 @@ def baselineOrder(bls):
     return [i for (v, i) in sorted((v, i) for (i, v) in enumerate([__cmpBaseline(bl) for bl in bls]))]
 
 
-def sortDataDict(dataDict, order=None):
+def sort_data(dataDict, order=None):
     """
     Sort a data dictionary by the specified order.  If no order is supplied, 
-    the data dictionary is sorted by baseline using baselineOrder().
+    the data dictionary is sorted by baseline using baseline_order().
     """
     
     if order is None:
@@ -112,7 +112,7 @@ def sortDataDict(dataDict, order=None):
             try:
                 if len(dataDict['bls'][pol]) == 0:
                     continue
-                order = baselineOrder(dataDict['bls'][pol])
+                order = baseline_order(dataDict['bls'][pol])
                 break
             except KeyError:
                 pass
@@ -128,20 +128,20 @@ def sortDataDict(dataDict, order=None):
     return dataDict
 
 
-def pruneBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
+def pruneBaselineRange(dataDict, min_uv=0, max_uv=numpy.inf):
     """
-    Prune baselines from a data dictionary that are less than uvMin or
-    greater than or equal to uvMax.
+    Prune baselines from a data dictionary that are less than min_uv or
+    greater than or equal to max_uv.
 
     .. note::
-        uvMin and uvMax should be specified in lambda
+        min_uv and max_uv should be specified in lambda
     """
 
     # Force min to be less than max
-    if uvMin > uvMax:
-        temp = uvMin
-        uvMin = uvMax
-        uvMax = temp
+    if min_uv > max_uv:
+        temp = min_uv
+        min_uv = max_uv
+        max_uv = temp
         
     # Create the new output data dictionary
     newDict = {}
@@ -162,7 +162,7 @@ def pruneBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
             uvw = bl[:,freq.size/2]
             sizes.append( numpy.sqrt((uvw**2).sum()) )
         sizes = numpy.array(sizes)
-        good[pol] = list(numpy.where( (sizes >= uvMin) & (sizes < uvMax) )[0])
+        good[pol] = list(numpy.where( (sizes >= min_uv) & (sizes < max_uv) )[0])
         
     # Prune
     for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
@@ -179,7 +179,7 @@ def pruneBaselineRange(dataDict, uvMin=0, uvMax=numpy.inf):
     return newDict
 
 
-def rephaseData(aa, dataDict, currentPhaseCenter='z', newPhaseCenter='z'):
+def rephase_data(aa, dataDict, current_phase_center='z', new_phase_center='z'):
     """
     Given an AntennaArray instance and a data dictionary, re-phase the data 
     to change the pointing center.
@@ -217,18 +217,18 @@ def rephaseData(aa, dataDict, currentPhaseCenter='z', newPhaseCenter='z'):
                 aa.set_jultime(jd)
                 
                 # Recompute
-                if currentPhaseCenter is not 'z':
-                    currentPhaseCenter.compute(aa)
-                if newPhaseCenter is not 'z':
-                    newPhaseCenter.compute(aa)
+                if current_phase_center is not 'z':
+                    current_phase_center.compute(aa)
+                if new_phase_center is not 'z':
+                    new_phase_center.compute(aa)
                     
                 lastJD = jd
                 
             ### Compute the uvw coordinates and the new phasing
             try:
-                crd = aa.gen_uvw(j, i, src=newPhaseCenter)[:,0,:]
-                d = aa.unphs2src(d, currentPhaseCenter, j, i)
-                d = aa.phs2src(d, newPhaseCenter, j, i)
+                crd = aa.gen_uvw(j, i, src=new_phase_center)[:,0,:]
+                d = aa.unphs2src(d, current_phase_center, j, i)
+                d = aa.phs2src(d, new_phase_center, j, i)
             except aipy.phs.PointingError:
                 raise RuntimeError("Rephasing center is below the horizon")
                 
@@ -301,12 +301,12 @@ class CorrelatedDataIDI(object):
     from the file and return them as common LSL objects.
     
     This class has three main attributes to interact with:
-      * getAntennaArray - Return a :class:`lsl.sim.vim.AntennaArray` instance
+      * get_antennaarray - Return a :class:`lsl.sim.vim.AntennaArray` instance
                           that represents the array where the data was obtained.
                           This is useful for simulation proposes and computing 
                           source positions.
-      * getObserver - Return a ephem.Observer instance representing the array
-      * getDataSet - Return a data dictionary of all baselines for a given set
+      * get_observer - Return a ephem.Observer instance representing the array
+      * get_data_set - Return a data dictionary of all baselines for a given set
                      of observations
         
     The class also includes a variety of useful metadata attributes:
@@ -319,11 +319,11 @@ class CorrelatedDataIDI(object):
     
     .. note::
         The CorrelatedData.antennas attribute should be used over 
-        CorrelatedData.station.getAntennas() since the mapping in the FITS IDI
+        CorrelatedData.station.get_antennas() since the mapping in the FITS IDI
         file may not be the same as the digitizer order.
     """
     
-    def _createEmptyDataDict(self):
+    def _create_empty_data(self):
         """
         Create an empty data dictionary that is appropriate for the current file.
         """
@@ -335,7 +335,7 @@ class CorrelatedDataIDI(object):
             dataDict[key] = {}
             
         for p in self.pols:
-            name = NumericStokes[p]
+            name = NUMERIC_STOKES[p]
             if len(name) == 2:
                 name = name.lower()
             for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
@@ -402,7 +402,7 @@ class CorrelatedDataIDI(object):
             
         ## Extract the site position
         geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
-        site = stations.ecef2geo(*geo)
+        site = stations.ecef_to_geo(*geo)
         
         ## Try to back out the "real" stand names
         noact2 = []
@@ -442,7 +442,7 @@ class CorrelatedDataIDI(object):
         self.antennaMap = {}
         self.antennas = []
         for stand in self.stands:
-            for ant in self.station.getAntennas():
+            for ant in self.station.get_antennas():
                 if ant.stand.id == stand and ant.pol == 0:
                     self.antennas.append(ant)
                     self.antennaMap[ant.stand.id] = ant
@@ -466,7 +466,7 @@ class CorrelatedDataIDI(object):
         # Close
         hdulist.close()
     
-    def getAntennaArray(self):
+    def get_antennaarray(self):
         """
         Return an AIPY AntennaArray instance for the array that made the 
         observations contained here.
@@ -476,9 +476,9 @@ class CorrelatedDataIDI(object):
         refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
         
         # Return
-        return simVis.buildSimArray(self.station, self.antennas, self.freq/1e9, jd=refJD)
+        return simVis.build_sim_array(self.station, self.antennas, self.freq/1e9, jd=refJD)
         
-    def getObserver(self):
+    def get_observer(self):
         """
         Return a ephem.Observer instances for the array described in the file.
         """
@@ -486,20 +486,20 @@ class CorrelatedDataIDI(object):
         # Get the date of observations
         refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
         
-        obs = self.station.getObserver()
+        obs = self.station.get_observer()
         obs.date = refJD - astro.DJD_OFFSET
         return obs
         
-    def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
+    def get_data_set(self, set, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
         Return a baseline sorted data dictionary for the specified data set.  
         By default this excludes the autocorrelations.  To include 
-        autocorrelations set the value of 'includeAuto' to True.  Setting the
+        autocorrelations set the value of 'include_auto' to True.  Setting the
         'sort' keyword to False will disable the baseline sorting.  Optionally,
-        baselines with lengths between uvMin and uvMax can only be returned.
+        baselines with lengths between min_uv and max_uv can only be returned.
 
         .. note::
-            uvMin and uvMax should be specified in lambda
+            min_uv and max_uv should be specified in lambda
             
         .. versionchanged:: 1.1.0
             'set' can now be either an integer or a list to pull back multiple 
@@ -514,7 +514,7 @@ class CorrelatedDataIDI(object):
         nPol = len(self.pols)
         
         # Define the dictionary to return
-        dataDict = self._createEmptyDataDict()
+        dataDict = self._create_empty_data()
 
         # Set the source ID to look for (this is LWA specific)
         if type(set) == list:
@@ -527,7 +527,7 @@ class CorrelatedDataIDI(object):
         ## Baseline based boundaries
         setBoundaries = numpy.where( blList == blList[0] )[0]
         try:
-            setStart = setBoundaries[ sourceID[ 0]-1 ]
+            set_start = setBoundaries[ sourceID[ 0]-1 ]
         except IndexError:
             raise RuntimeError("Cannot find baseline set %i in FITS IDI file", set)
         try:
@@ -535,7 +535,7 @@ class CorrelatedDataIDI(object):
         except IndexError:
             setStop = len(blList)
         ## Row Selection
-        selection = numpy.s_[setStart:setStop]
+        selection = numpy.s_[set_start:setStop]
         
         # Figure out if we have seperate WEIGHT data or not
         seperateWeights = False
@@ -611,14 +611,14 @@ class CorrelatedDataIDI(object):
             else:
                 i = self.standMap[(bl[b] >> 16) & 65535]
                 j = self.standMap[bl[b] & 65535]
-            if i == j and not includeAuto:
+            if i == j and not include_auto:
                 ## Skip auto-correlations
                 continue
             ri = numpy.where(self.stands == i)[0][0]
             rj = numpy.where(self.stands == j)[0][0]
             
             for p,l in enumerate(self.pols):
-                name = NumericStokes[l]
+                name = NUMERIC_STOKES[l]
                 if len(name) == 2:
                     name = name.lower()
                     
@@ -634,11 +634,11 @@ class CorrelatedDataIDI(object):
         
         # Sort
         if sort:
-            sortDataDict(dataDict)
+            sort_data(dataDict)
             
         # Prune
-        if uvMin != 0 or uvMax != numpy.inf:
-            dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
+        if min_uv != 0 or max_uv != numpy.inf:
+            dataDict = pruneBaselineRange(dataDict, min_uv=min_uv, max_uv=max_uv)
             
         # Return
         return dataDict
@@ -651,12 +651,12 @@ class CorrelatedDataUV(object):
     from the file and return them as common LSL objects.
     
     This class has three main attributes to interact with:
-      * getAntennaArray - Return a :class:`lsl.sim.vim.AntennaArray` instance
+      * get_antennaarray - Return a :class:`lsl.sim.vim.AntennaArray` instance
                           that represents the array where the data was obtained.
                           This is useful for simulation proposes and computing 
                           source positions.
-      * getObserver - Return a ephem.Observer instance representing the array
-      * getDataSet - Return a data dictionary of all baselines for a given set
+      * get_observer - Return a ephem.Observer instance representing the array
+      * get_data_set - Return a data dictionary of all baselines for a given set
                      of observations
         
     The class also includes a variety of useful metadata attributes:
@@ -669,11 +669,11 @@ class CorrelatedDataUV(object):
     
     .. note::
         The CorrelatedDataUV.antennas attribute should be used over 
-        CorrelatedDataUV.station.getAntennas() since the mapping in the UVFITS
+        CorrelatedDataUV.station.get_antennas() since the mapping in the UVFITS
         file may not be the same as the digitizer order.
     """
     
-    def _createEmptyDataDict(self):
+    def _create_empty_data(self):
         """
         Create an empty data dictionary that is appropriate for the current file.
         """
@@ -685,7 +685,7 @@ class CorrelatedDataUV(object):
             dataDict[key] = {}
             
         for p in self.pols:
-            name = NumericStokes[p]
+            name = NUMERIC_STOKES[p]
             if len(name) == 2:
                 name = name.lower()
             for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
@@ -724,7 +724,7 @@ class CorrelatedDataUV(object):
             
         ## Extract the site position
         geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
-        site = stations.ecef2geo(*geo)
+        site = stations.ecef_to_geo(*geo)
         
         ## Try to back out the "real" stand names
         noact2 = []
@@ -764,7 +764,7 @@ class CorrelatedDataUV(object):
         self.antennaMap = {}
         self.antennas = []
         for stand in self.stands:
-            for ant in self.station.getAntennas():
+            for ant in self.station.get_antennas():
                 if ant.stand.id == stand and ant.pol == 0:
                     self.antennas.append(ant)
                     self.antennaMap[ant.stand.id] = ant
@@ -792,7 +792,7 @@ class CorrelatedDataUV(object):
         # Close
         hdulist.close()
     
-    def getAntennaArray(self):
+    def get_antennaarray(self):
         """
         Return an AIPY AntennaArray instance for the array that made the 
         observations contained here.
@@ -802,9 +802,9 @@ class CorrelatedDataUV(object):
         refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
         
         # Return
-        return simVis.buildSimArray(self.station, self.antennas, self.freq/1e9, jd=refJD)
+        return simVis.build_sim_array(self.station, self.antennas, self.freq/1e9, jd=refJD)
         
-    def getObserver(self):
+    def get_observer(self):
         """
         Return a ephem.Observer instances for the array described in the file.
         """
@@ -812,20 +812,20 @@ class CorrelatedDataUV(object):
         # Get the date of observations
         refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
         
-        obs = self.station.getObserver()
+        obs = self.station.get_observer()
         obs.date = refJD - astro.DJD_OFFSET
         return obs
         
-    def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
+    def get_data_set(self, set, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
         Return a baseline sorted data dictionary for the specified data set.  
         By default this excludes the autocorrelations.  To include 
-        autocorrelations set the value of 'includeAuto' to True.  Setting the
+        autocorrelations set the value of 'include_auto' to True.  Setting the
         'sort' keyword to False will disable the baseline sorting.  Optionally,
-        baselines with lengths between uvMin and uvMax can only be returned.
+        baselines with lengths between min_uv and max_uv can only be returned.
 
         .. note::
-            uvMin and uvMax should be specified in lambda
+            min_uv and max_uv should be specified in lambda
             
         .. versionchanged:: 1.1.0
             'set' can now be either an integer or a list to pull back multiple 
@@ -840,7 +840,7 @@ class CorrelatedDataUV(object):
         nPol = len(self.pols)
         
         # Define the dictionary to return
-        dataDict = self._createEmptyDataDict()
+        dataDict = self._create_empty_data()
 
         # Set the source ID to look for (this is LWA specific)
         if type(set) == list:
@@ -853,7 +853,7 @@ class CorrelatedDataUV(object):
         ## Baseline based boundaries
         setBoundaries = numpy.where( blList == blList[0] )[0]
         try:
-            setStart = setBoundaries[ sourceID[ 0]-1 ]
+            set_start = setBoundaries[ sourceID[ 0]-1 ]
         except IndexError:
             raise RuntimeError("Cannot find baseline set %i in FITS IDI file", set)
         try:
@@ -861,7 +861,7 @@ class CorrelatedDataUV(object):
         except IndexError:
             setStop = len(blList)
         ## Row Selection
-        selection = numpy.s_[setStart:setStop]
+        selection = numpy.s_[set_start:setStop]
 
         # Pull out the raw data from the table
         bl = blList[selection]
@@ -911,14 +911,14 @@ class CorrelatedDataUV(object):
             else:
                 i = self.standMap[int(bl[b] / 256)]
                 j = self.standMap[int(bl[b] % 256)]
-            if i == j and not includeAuto:
+            if i == j and not include_auto:
                 ## Skip auto-correlations
                 continue
             ri = numpy.where(self.stands == i)[0][0]
             rj = numpy.where(self.stands == j)[0][0]
             
             for p,l in enumerate(self.pols):
-                name = NumericStokes[l]
+                name = NUMERIC_STOKES[l]
                 if len(name) == 2:
                     name = name.lower()
                     
@@ -934,11 +934,11 @@ class CorrelatedDataUV(object):
         
         # Sort
         if sort:
-            sortDataDict(dataDict)
+            sort_data(dataDict)
             
         # Prune
-        if uvMin != 0 or uvMax != numpy.inf:
-            dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
+        if min_uv != 0 or max_uv != numpy.inf:
+            dataDict = pruneBaselineRange(dataDict, min_uv=min_uv, max_uv=max_uv)
             
         # Return
         return dataDict
@@ -948,7 +948,7 @@ try:
     from casacore.tables import table
     
     # Stokes codes for CASA Measurement Sets
-    NumericStokesMS = { 1:'I',   2:'Q',   3:'U',   4:'V', 
+    NUMERIC_STOKESMS = { 1:'I',   2:'Q',   3:'U',   4:'V', 
                         5:'RR',  6:'RL',  7:'LR',  8:'LL',
                         9:'XX', 10:'XY', 11:'YX', 12:'YY'}
     
@@ -959,12 +959,12 @@ try:
         from the file and return them as common LSL objects.
         
         This class has three main attributes to interact with:
-          * getAntennaArray - Return a :class:`lsl.sim.vim.AntennaArray` instance
+          * get_antennaarray - Return a :class:`lsl.sim.vim.AntennaArray` instance
                               that represents the array where the data was obtained.
                               This is useful for simulation proposes and computing 
                               source positions.
-          * getObserver - Return a ephem.Observer instance representing the array
-          * getDataSet - Return a data dictionary of all baselines for a given set
+          * get_observer - Return a ephem.Observer instance representing the array
+          * get_data_set - Return a data dictionary of all baselines for a given set
                          of observations
         
         The class also includes a variety of useful metadata attributes:
@@ -977,11 +977,11 @@ try:
         
         .. note::
             The CorrelatedDataMS.antennas attribute should be used over 
-            CorrelatedDataMS.station.getAntennas() since the mapping in the MS
+            CorrelatedDataMS.station.get_antennas() since the mapping in the MS
             may not be the same as the digitizer order.
         """
         
-        def _createEmptyDataDict(self):
+        def _create_empty_data(self):
             """
             Create an empty data dictionary that is appropriate for the current file.
             """
@@ -993,7 +993,7 @@ try:
                 dataDict[key] = {}
                 
             for p in self.pols:
-                name = NumericStokesMS[p]
+                name = NUMERIC_STOKESMS[p]
                 if len(name) == 2:
                     name = name.lower()
                 for key in ('uvw', 'vis', 'wgt', 'msk', 'bls', 'jd'):
@@ -1055,7 +1055,7 @@ try:
             lng = numpy.array([], dtype=numpy.float64)
             elv = numpy.array([], dtype=numpy.float64)
             for row in ants.col('POSITION'):
-                la,ln,el = stations.ecef2geo(*row)
+                la,ln,el = stations.ecef_to_geo(*row)
                 lat = numpy.append(lat, la*180/numpy.pi)
                 lng = numpy.append(lng, ln*180/numpy.pi)
                 elv = numpy.append(elv, el)
@@ -1089,7 +1089,7 @@ try:
             self.antennaMap = {}
             self.antennas = []
             for stand in self.stands:
-                for ant in self.station.getAntennas():
+                for ant in self.station.get_antennas():
                     if ant.stand.id == stand and ant.pol == 0:
                         self.antennas.append(ant)
                         self.antennaMap[ant.stand.id] = ant
@@ -1121,7 +1121,7 @@ try:
             obs.close()
             spw.close()
         
-        def getAntennaArray(self):
+        def get_antennaarray(self):
             """
             Return an AIPY AntennaArray instance for the array that made the 
             observations contained here.
@@ -1131,9 +1131,9 @@ try:
             refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
             
             # Return
-            return simVis.buildSimArray(self.station, self.antennas, self.freq/1e9, jd=refJD)
+            return simVis.build_sim_array(self.station, self.antennas, self.freq/1e9, jd=refJD)
             
-        def getObserver(self):
+        def get_observer(self):
             """
             Return a ephem.Observer instances for the array described in the file.
             """
@@ -1141,20 +1141,20 @@ try:
             # Get the date of observations
             refJD = astro.unix_to_utcjd(timegm(self.dateObs.timetuple()))
             
-            obs = self.station.getObserver()
+            obs = self.station.get_observer()
             obs.date = refJD - astro.DJD_OFFSET
             return obs
             
-        def getDataSet(self, set, includeAuto=False, sort=True, uvMin=0, uvMax=numpy.inf):
+        def get_data_set(self, set, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
             """
             Return a baseline sorted data dictionary for the specified data set.  
             By default this excludes the autocorrelations.  To include 
-            autocorrelations set the value of 'includeAuto' to True.  Setting the
+            autocorrelations set the value of 'include_auto' to True.  Setting the
             'sort' keyword to False will disable the baseline sorting.  Optionally,
-            baselines with lengths between uvMin and uvMax can only be returned.
+            baselines with lengths between min_uv and max_uv can only be returned.
 
             .. note::
-                uvMin and uvMax should be specified in lambda
+                min_uv and max_uv should be specified in lambda
                 
             .. versionchanged:: 1.1.0
                 'set' can now be either an integer or a list to pull back multiple 
@@ -1168,7 +1168,7 @@ try:
             nPol = len(self.pols)
             
             # Define the dictionary to return
-            dataDict = self._createEmptyDataDict()
+            dataDict = self._create_empty_data()
             
             # Load in something we can iterate over
             uvw  = data.col('UVW')
@@ -1187,7 +1187,7 @@ try:
                     continue
                 found = True
 
-                if a1 == a2 and not includeAuto:
+                if a1 == a2 and not include_auto:
                     ## Skip auto-correlations
                     continue
                 try:
@@ -1208,7 +1208,7 @@ try:
                     u2[:,c] = u * (self.freq[c] / vLight)
                     
                 for c,p in enumerate(self.pols):
-                    name = NumericStokesMS[p]
+                    name = NUMERIC_STOKESMS[p]
                     if len(name) == 2:
                         name = name.lower()
                         
@@ -1226,11 +1226,11 @@ try:
             
             # Sort
             if sort:
-                sortDataDict(dataDict)
+                sort_data(dataDict)
                 
             # Prune
-            if uvMin != 0 or uvMax != numpy.inf:
-                dataDict = pruneBaselineRange(dataDict, uvMin=uvMin, uvMax=uvMax)
+            if min_uv != 0 or max_uv != numpy.inf:
+                dataDict = pruneBaselineRange(dataDict, min_uv=min_uv, max_uv=max_uv)
                 
             # Return
             return dataDict
@@ -1322,7 +1322,7 @@ class ImgWPlus(aipy.img.ImgW):
                 break
             i = j
             
-    def getFieldOfView(self):
+    def get_field_of_view(self):
         """
         Return the approximate size of the field of view in radians.  The 
         field of view calculate is based off the maximum and minimum values
@@ -1349,7 +1349,7 @@ class ImgWPlus(aipy.img.ImgW):
         
         return d.max()
         
-    def getPixelSize(self):
+    def get_pixel_size(self):
         """
         Return the approximate size of pixels at the phase center in radians.
         The pixel size is averaged over the four pixels that neighboor the 
@@ -1379,7 +1379,7 @@ class ImgWPlus(aipy.img.ImgW):
         
         return sizes.mean()
         
-    def _gen_img(self, data, center=(0,0), weighting='natural', localFraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+    def _gen_img(self, data, center=(0,0), weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
         """
         Return the inverse FFT of the provided data, with the 0,0 point 
         moved to 'center'.  In the images return north is up and east is 
@@ -1389,7 +1389,7 @@ class ImgWPlus(aipy.img.ImgW):
         There are:
           * weighting - The weighting scheme ('natural', 'uniform', or 
                         'briggs') used on the data;
-          * localFraction - The fraction of the uv grid that is consider 
+          * local_fraction - The fraction of the uv grid that is consider 
                             "local" for the 'uniform' and 'briggs' methods;
           * robust - The value for the weighting robustness under the 
                      'briggs' method; and
@@ -1400,9 +1400,9 @@ class ImgWPlus(aipy.img.ImgW):
         if weighting not in ('natural', 'uniform', 'briggs'):
             raise ValueError("Unknown weighting scheme '%s'" % weighting)
             
-        # Make sure that we have a valid localFraction value
-        if localFraction <= 0 or localFraction > 1:
-            raise ValueError("Invalid localFraction value")
+        # Make sure that we have a valid local_fraction value
+        if local_fraction <= 0 or local_fraction > 1:
+            raise ValueError("Invalid local_fraction value")
             
         # Apply the weighting
         if weighting == 'natural':
@@ -1415,7 +1415,7 @@ class ImgWPlus(aipy.img.ImgW):
             size = dens.shape[0]
             
             from scipy.ndimage import uniform_filter
-            dens = uniform_filter(dens, size=size*localFraction)
+            dens = uniform_filter(dens, size=size*local_fraction)
             dens /= dens.max()
             dens[numpy.where( dens < 1e-8 )] = 0
             
@@ -1428,7 +1428,7 @@ class ImgWPlus(aipy.img.ImgW):
             size = dens.shape[0]
             
             from scipy.ndimage import uniform_filter
-            dens = uniform_filter(dens, size=size*localFraction)
+            dens = uniform_filter(dens, size=size*local_fraction)
             dens /= dens.max()
             dens[numpy.where( dens < 1e-8 )] = 0
             
@@ -1463,7 +1463,7 @@ class ImgWPlus(aipy.img.ImgW):
             
         return aipy.img.recenter(ifft2Function(data).real.astype(numpy.float32), center)
         
-    def image(self, center=(0,0), weighting='natural', localFraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+    def image(self, center=(0,0), weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
         """Return the inverse FFT of the UV matrix, with the 0,0 point moved
         to 'center'.  In the images return north is up and east is 
         to the left.
@@ -1472,16 +1472,16 @@ class ImgWPlus(aipy.img.ImgW):
         There are:
           * weighting - The weighting scheme ('natural', 'uniform', or 
                         'briggs') used on the data;
-          * localFraction - The fraction of the uv grid that is consider 
+          * local_fraction - The fraction of the uv grid that is consider 
                             "local" for the 'uniform' and 'briggs' methods;
           * robust - The value for the weighting robustness under the 
                      'briggs' method; and
           * taper - The size of u and v Gaussian tapers at the 30% level.
         """
         
-        return self._gen_img(self.uv, center=center, weighting=weighting, localFraction=localFraction, robust=robust, taper=taper)
+        return self._gen_img(self.uv, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper)
         
-    def bm_image(self, center=(0,0), term=None, weighting='natural', localFraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+    def bm_image(self, center=(0,0), term=None, weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
         """Return the inverse FFT of the sample weightings (for all mf_order
         terms, or the specified term if supplied), with the 0,0 point
         moved to 'center'.  In the images return north is up and east is 
@@ -1491,7 +1491,7 @@ class ImgWPlus(aipy.img.ImgW):
         There are:
           * weighting - The weighting scheme ('natural', 'uniform', or 
                        'briggs') used on the data;
-          * localFraction - The fraction of the uv grid that is consider 
+          * local_fraction - The fraction of the uv grid that is consider 
                             "local" for the 'uniform' and 'briggs' methods;
           * robust - The value for the weighting robustness under the 
                      'briggs' method; and
@@ -1499,19 +1499,19 @@ class ImgWPlus(aipy.img.ImgW):
         """
         
         if not term is None:
-            return self._gen_img(self.bm[term], center=center, weighting=weighting, localFraction=localFraction, robust=robust, taper=taper)
+            return self._gen_img(self.bm[term], center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper)
         else:
-            return [self._gen_img(b, center=center, weighting=weighting, localFraction=localFraction, robust=robust, taper=taper) for b in self.bm]
+            return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
 
 
-def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx', chan=None, verbose=True):
+def build_gridded_image(dataDict, size=80, res=0.50, wres=0.10, pol='xx', chan=None, verbose=True):
     """
     Given a data dictionary, build an aipy.img.ImgW object of gridded uv data 
     which can be used for imaging.  The ImgW object itself is returned by this 
     function to make it more versatile.
     """
     
-    im = ImgWPlus(size=MapSize, res=MapRes, wres=MapWRes)
+    im = ImgWPlus(size=size, res=res, wres=wres)
     
     # Make sure we have the right polarization
     if pol not in dataDict['bls'].keys() and pol.lower() not in dataDict['bls'].keys():
@@ -1555,7 +1555,7 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
     if wgt.dtype != numpy.complex64:
         wgt = wgt.astype(numpy.complex64)
         
-    im.uv, im.bm[0] = WProjection(u, v, w, vis, wgt, MapSize, numpy.float64(MapRes), numpy.float64(MapWRes))
+    im.uv, im.bm[0] = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
     
     if not verbose:
         sys.stdout.close()
@@ -1564,10 +1564,10 @@ def buildGriddedImage(dataDict, MapSize=80, MapRes=0.50, MapWRes=0.10, pol='xx',
     return im
 
 
-def plotGriddedImage(ax, gimg, shifted=True, origin='lower', interpolation='nearest', **kwargs):
+def plot_gridded_image(ax, gimg, shifted=True, origin='lower', interpolation='nearest', **kwargs):
     """
     Given a blank matplotlib axes instance and a gridded image generated by 
-    the buildGriddedImage() function, plot the image on the axes and setup
+    the build_gridded_image() function, plot the image on the axes and setup
     the basic coordinate system.  This function returns the matplotlib object
     added to the plot
     
@@ -1603,22 +1603,22 @@ def plotGriddedImage(ax, gimg, shifted=True, origin='lower', interpolation='near
     return ax.imshow(img, extent=extent, origin=origin, interpolation=interpolation, **kwargs)
 
 
-def getImageRADec(gimg, aa, phaseCenter='z', shifted=True):
+def get_image_radec(gimg, aa, phase_center='z', shifted=True):
     """
-    Given a gridded image generated by the buildGriddedImage() function
+    Given a gridded image generated by the build_gridded_image() function
     and an AntennaArray instance, return a two-element tuple containing
     the RA and dec. values (in radians) for each pixel in the image.  
     
-    The 'phaseCenter' keyword controls what the phase center of the image 
+    The 'phase_center' keyword controls what the phase center of the image 
     is and defaults to zenith.
     
     .. versionadded: 1.1.0
     """
     
     # Get the phase center
-    if phaseCenter is not 'z':
-        phaseCenter.compute(aa)
-        pcRA, pcDec = phaseCenter.ra, phaseCenter.dec
+    if phase_center is not 'z':
+        phase_center.compute(aa)
+        pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
         pcRA, pcDec = aa.sidereal_time(), aa.lat
     rotInv = aipy.coord.top2eq_m(0, pcDec)
@@ -1633,7 +1633,7 @@ def getImageRADec(gimg, aa, phaseCenter='z', shifted=True):
     # Over to RA/Dec
     ra, dec = aipy.coord.eq2radec(eq)
     
-    # Correct for the phaseCenter
+    # Correct for the phase_center
     ra += pcRA
     ra %= 2*numpy.pi
     
@@ -1651,29 +1651,29 @@ def getImageRADec(gimg, aa, phaseCenter='z', shifted=True):
     return ra, dec
 
 
-def getImageAzEl(gimg, aa, phaseCenter='z', shifted=True):
+def get_image_azalt(gimg, aa, phase_center='z', shifted=True):
     """
-    Given a gridded image generated by the buildGriddedImage() function
+    Given a gridded image generated by the build_gridded_image() function
     and an AntennaArray instance, return a two-element tuple containing
     the azimuth and elevation (altitude), both in radians, for each pixel
     in the image.
     
-    The 'phaseCenter' keyword controls what the phase center of the image 
+    The 'phase_center' keyword controls what the phase center of the image 
     is and defaults to zenith.
     
     .. versionadded: 1.1.0
     """
     
     # Get the phase center
-    if phaseCenter is not 'z':
-        phaseCenter.compute(aa)
-        pcRA, pcDec = phaseCenter.ra, phaseCenter.dec
+    if phase_center is not 'z':
+        phase_center.compute(aa)
+        pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
         pcRA, pcDec = aa.sidereal_time(), aa.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
     
     # Get the RA and dec. coordinates for each pixel
-    ra, dec = getImageRADec(gimg, aa, phaseCenter=phaseCenter, shifted=shifted)
+    ra, dec = get_image_radec(gimg, aa, phase_center=phase_center, shifted=shifted)
     
     # Convert to azimuth and elevation using PyEphem
     bdy = aipy.amp.RadioFixedBody(0, 0)

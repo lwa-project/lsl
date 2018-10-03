@@ -132,11 +132,11 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
     """
     
     # Get antennas
-    antennas = site.getAntennas()
+    antennas = site.get_antennas()
     
     # Get the metadata
-    sampleRate = idf.getInfo('sampleRate')
-    freq = idf.getInfo('freq1')
+    sample_rate = idf.get_info('sample_rate')
+    freq = idf.get_info('freq1')
     
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  
     # These are:
@@ -222,7 +222,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
             # If we are in the first polarazation product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
-                pol1, pol2 = fxc.pol2pol(pol)
+                pol1, pol2 = fxc.pol_to_pols(pol)
                 
                 if len(stands) > 255:
                     fits = fitsidi.ExtendedIDI(filename, ref_time=refTime)
@@ -254,27 +254,27 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
-            station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+            station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwasv
-    antennas = station.getAntennas()
+    antennas = station.get_antennas()
     
     idf = LWASVDataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.getInfo('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
-    nFpO = idf.getInfo('nChan') / 12
-    sampleRate = idf.getInfo('sampleRate')
-    nInts = idf.getInfo('nFrames') / nFpO
+    nFpO = idf.get_info('nchan') / 12
+    sample_rate = idf.get_info('sample_rate')
+    nInts = idf.get_info('nFrames') / nFpO
     
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
     for i in xrange(len(antennas)):
         ant = antennas[i]
-        if ant.getStatus() != 33 and not config['all']:
+        if ant.get_status() != 33 and not config['all']:
             pass
         else:
             if ant.pol == 0:
@@ -299,25 +299,25 @@ def main(args):
         print "%3i, %i" % (antennas[i].stand.id, antennas[i].pol)
         
     # Number of frames to read in at once and average
-    nFrames = min([int(config['avgTime']*sampleRate), nInts])
+    nFrames = min([int(config['avgTime']*sample_rate), nInts])
     config['offset'] = idf.offset(config['offset'])
-    nSets = idf.getInfo('nFrames') / nFpO / nFrames
-    nSets = nSets - int(config['offset']*sampleRate) / nFrames
+    nSets = idf.get_info('nFrames') / nFpO / nFrames
+    nSets = nSets - int(config['offset']*sample_rate) / nFrames
     
-    centralFreq = idf.getInfo('freq1')
-    centralFreq = centralFreq[len(centralFreq)/2]
+    central_freq = idf.get_info('freq1')
+    central_freq = central_freq[len(central_freq)/2]
     
     print "Data type:  %s" % type(idf)
     print "Samples per observations: %i" % nFpO
-    print "Sampling rate: %i Hz" % sampleRate
-    print "Tuning frequency: %.3f Hz" % centralFreq
-    print "Captures in file: %i (%.3f s)" % (nInts, nInts / sampleRate)
+    print "Sampling rate: %i Hz" % sample_rate
+    print "Tuning frequency: %.3f Hz" % central_freq
+    print "Captures in file: %i (%.3f s)" % (nInts, nInts / sample_rate)
     print "=="
     print "Station: %s" % station.name
     print "Date observed: %s" % date
     print "Julian day: %.5f" % jd
-    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*sampleRate)
-    print "Integration Time: %.3f s" % (nFrames/sampleRate)
+    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*sample_rate)
+    print "Integration Time: %.3f s" % (nFrames/sample_rate)
     print "Number of integrations in file: %i" % nSets
     
     # Make sure we don't try to do too many sets

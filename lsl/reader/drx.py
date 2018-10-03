@@ -20,18 +20,18 @@ The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
-For reading in data, use the readFrame function.  It takes a python file-
+For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.  The readBlock
 function reads in a (user-defined) number of DRX frames and returns a 
 ObservingBlock object.
 
 For describing the format of data in the file, two function are provided:
 
-getBeamCount
+get_beam_count
   read in the first few frames of an open file handle and return how many 
   beams are present in the file.
 
-getFramesPerObs
+get_frames_per_obs
   read in the first several frames to see how many frames (tunings/polarizations)
   are associated with each beam.
 
@@ -48,21 +48,21 @@ import numpy
 
 from lsl.common import dp as dp_common
 from lsl.reader._gofast import readDRX
-from lsl.reader._gofast import syncError as gsyncError
-from lsl.reader._gofast import eofError as geofError
-from lsl.reader.errors import baseReaderError, syncError, eofError
+from lsl.reader._gofast import SyncError as gSyncError
+from lsl.reader._gofast import EOFError as gEOFError
+from lsl.reader.errors import SyncError, EOFError
 
 __version__ = '0.8'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 
-           'getSampleRate', 'getBeamCount', 'getFramesPerObs', 'FrameSize', 'filterCodes', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 
+           'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES', 
            '__version__', '__revision__', '__all__']
 
-FrameSize = 4128
+FRAME_SIZE = 4128
 
 # List of filter codes and their corresponding sample rates in Hz
 # NOTE: filter code 7 is only valid on DP DRX
-filterCodes = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4900000, 6: 9800000, 7: 19600000}
+FILTER_CODES = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4900000, 6: 9800000, 7: 19600000}
 
 
 class FrameHeader(object):
@@ -72,44 +72,44 @@ class FrameHeader(object):
     well as the original binary header data.
     """
     
-    def __init__(self, frameCount=None, drxID=None, secondsCount=None, decimation=None, timeOffset=None):
-        self.frameCount = frameCount
-        self.drxID = drxID
-        self.secondsCount = secondsCount
+    def __init__(self, frame_count=None, drx_id=None, second_count=None, decimation=None, time_offset=None):
+        self.frame_count = frame_count
+        self.drx_id = drx_id
+        self.second_count = second_count
         self.decimation = decimation
-        self.timeOffset = timeOffset
+        self.time_offset = time_offset
     
-    def parseID(self):
+    def parse_id(self):
         """
         Parse the DRX ID into a tuple containing the beam (1 through
         4), tunning (1 and 2), and polarization (0 and 1).
         """
         
-        beam = self.drxID&7
-        tune = (self.drxID>>3)&7
-        pol  = (self.drxID>>7)&1
+        beam = self.drx_id&7
+        tune = (self.drx_id>>3)&7
+        pol  = (self.drx_id>>7)&1
 
         return (beam, tune, pol)
     
-    def getSampleRate(self):
+    def get_sample_rate(self):
         """
         Return the sample rate of the data in samples/second.
         """
         
-        sampleRate = dp_common.fS / self.decimation
-        return sampleRate
+        sample_rate = dp_common.fS / self.decimation
+        return sample_rate
         
-    def getFilterCode(self):
+    def get_filter_code(self):
         """
         Function to convert the sample rate in Hz to a filter code.
         """
         
         sampleCodes = {}
-        for key in filterCodes:
-            value = filterCodes[key]
+        for key in FILTER_CODES:
+            value = FILTER_CODES[key]
             sampleCodes[value] = key
 
-        return sampleCodes[self.getSampleRate()]
+        return sampleCodes[self.get_sample_rate()]
 
 
 class FrameData(object):
@@ -118,22 +118,22 @@ class FrameData(object):
     frame.  All three fields listed in the DP ICD version H are stored.
     """
 
-    def __init__(self, timeTag=None, tuningWord=None, flags=None, iq=None):
-        self.centralFreq = None
+    def __init__(self, timetag=None, tuning_word=None, flags=None, iq=None):
+        self.central_freq = None
         self.gain = None
-        self.timeTag = timeTag
-        self.tuningWord = tuningWord
+        self.timetag = timetag
+        self.tuning_word = tuning_word
         self.flags = flags
         self.iq = iq
         
-    def getCentralFreq(self):
+    def get_central_freq(self):
         """
         Function to set the central frequency of the DRX data in Hz.
         """
 
-        return dp_common.fS * self.tuningWord / 2**32
+        return dp_common.fS * self.tuning_word / 2**32
 
-    def setGain(self, gain):
+    def set_gain(self, gain):
         """
         Function to set the gain of the DRX data.
         """
@@ -160,52 +160,52 @@ class Frame(object):
             
         self.valid = True
 
-    def parseID(self):
+    def parse_id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parseID 
+        Convenience wrapper for the Frame.FrameHeader.parse_id 
         function.
         """
         
-        return self.header.parseID()
+        return self.header.parse_id()
 
-    def getSampleRate(self):
+    def get_sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getSampleRate 
+        Convenience wrapper for the Frame.FrameHeader.get_sample_rate 
         function.
         """
         
-        return self.header.getSampleRate()
+        return self.header.get_sample_rate()
         
-    def getFilterCode(self):
+    def get_filter_code(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getFilterCode function.
+        Convenience wrapper for the Frame.FrameHeader.get_filter_code function.
         """
 
-        return self.header.getFilterCode()
+        return self.header.get_filter_code()
 
-    def getTime(self):
+    def get_time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
         (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
         """
 
-        seconds = (self.data.timeTag - self.header.timeOffset) / dp_common.fS
+        seconds = (self.data.timetag - self.header.time_offset) / dp_common.fS
         
         return seconds
     
-    def getCentralFreq(self):
+    def get_central_freq(self):
         """
-        Convenience wrapper for the Frame.FrameData.getCentralFreq function.
-        """
-
-        return self.data.getCentralFreq()
-
-    def setGain(self, gain):
-        """
-        Convenience wrapper for the Frame.FrameData.setGain function.
+        Convenience wrapper for the Frame.FrameData.get_central_freq function.
         """
 
-        self.data.setGain(gain)
+        return self.data.get_central_freq()
+
+    def set_gain(self, gain):
+        """
+        Convenience wrapper for the Frame.FrameData.set_gain function.
+        """
+
+        self.data.set_gain(gain)
 
     def __add__(self, y):
         """
@@ -257,9 +257,9 @@ class Frame(object):
         tag is equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -274,9 +274,9 @@ class Frame(object):
         tag is not equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -291,9 +291,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -309,9 +309,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -326,9 +326,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -344,9 +344,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -361,8 +361,8 @@ class Frame(object):
         sorting things.
         """
         
-        tX = self.data.timeTag
-        tY = y.data.timeTag
+        tX = self.data.timetag
+        tY = y.data.timetag
         if tY > tX:
             return -1
         elif tX > tY:
@@ -371,7 +371,7 @@ class Frame(object):
             return 0
 
 
-def readFrame(filehandle, Gain=None, Verbose=False):
+def read_frame(filehandle, Gain=None, Verbose=False):
     """
     Function to read in a single DRX frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 
@@ -381,19 +381,19 @@ def readFrame(filehandle, Gain=None, Verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = readDRX(filehandle, Frame())
-    except gsyncError:
-        mark = filehandle.tell() - FrameSize
-        raise syncError(location=mark)
-    except geofError:
-        raise eofError
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
     
     if Gain is not None:
-        newFrame.setGain(Gain)
+        newFrame.set_gain(Gain)
         
     return newFrame
 
 
-def getSampleRate(filehandle, nFrames=None, FilterCode=False):
+def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     """
     Find out what the sampling rate/filter code is from a single observations.  
     By default, the rate in Hz is returned.  However, the corresponding filter 
@@ -407,18 +407,18 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
     fhStart = filehandle.tell()
 
     # Read in one frame
-    newFrame = readFrame(filehandle)
+    newFrame = read_frame(filehandle)
     
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
 
     if not FilterCode:
-        return newFrame.getSampleRate()
+        return newFrame.get_sample_rate()
     else:
-        return newFrame.getFilterCode()
+        return newFrame.get_filter_code()
 
 
-def getBeamCount(filehandle):
+def get_beam_count(filehandle):
     """
     Find out how many beams are present by examining the first 32 DRX
     records.  Return the number of beams found.
@@ -433,9 +433,9 @@ def getBeamCount(filehandle):
     # there.
     beams = []
     for i in range(32):
-        cFrame = readFrame(filehandle)
+        cFrame = read_frame(filehandle)
             
-        cID = cFrame.header.drxID
+        cID = cFrame.header.drx_id
         beam = cID&7
         if beam not in beams:
             beams.append(beam)
@@ -447,7 +447,7 @@ def getBeamCount(filehandle):
     return len(beams)
 
 
-def getFramesPerObs(filehandle):
+def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per beam by examining the first 
     32 DRX records.  Return the number of frames per observations as a four-
@@ -463,9 +463,9 @@ def getFramesPerObs(filehandle):
     # there.
     idCodes = [[], [], [], []]
     for i in range(32):
-        cFrame = readFrame(filehandle)
+        cFrame = read_frame(filehandle)
         
-        cID = cFrame.header.drxID
+        cID = cFrame.header.drx_id
         beam = cID&7
         if cID not in idCodes[beam-1]:
             idCodes[beam-1].append(cID)

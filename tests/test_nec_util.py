@@ -11,7 +11,7 @@ except ImportError:
     from io import StringIO
 
 from lsl.sim import nec_util
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 
 
 __revision__  = "$Rev$"
@@ -44,10 +44,10 @@ class nec_util_tests(unittest.TestCase):
         (fh, freq) = nec_util.open_and_get_nec_freq(self.nec_name)   
         fh.close()
         
-    def test_calcIME(self):
-        """Test nec_util.calcIME() function."""
+    def test_calculate_ime(self):
+        """Test nec_util.calculate_ime() function."""
         
-        (freqs, ime) = nec_util.calcIME(self.nec_name)
+        (freqs, ime) = nec_util.calculate_ime(self.nec_name)
     
     def test_NECPattern_init(self):
         """Test nec_util.NECPattern constructor method."""

@@ -49,7 +49,7 @@ def parseConfig(args):
     config['freq1'] = 10e6
     config['freq2'] = 88e6
     config['dataset'] = 0
-    config['uvMin'] = 0.0
+    config['min_uv'] = 0.0
     config['include'] = None
     config['exclude'] = None
     config['labelFreq'] = False
@@ -75,7 +75,7 @@ def parseConfig(args):
         elif opt in ('-s', '--dataset'):
             config['dataset'] = int(value)
         elif opt in ('-m', '--uv-min'):
-            config['uvMin'] = float(value)
+            config['min_uv'] = float(value)
         elif opt in ('-i', '--include'):
             config['include'] = [int(v) for v in value.split(',')]
         elif opt in ('-e', '--exclude'):
@@ -102,19 +102,19 @@ def main(args):
     filename = config['args'][0]
     
     idi = utils.CorrelatedData(filename)
-    aa = idi.getAntennaArray()
-    lo = idi.getObserver()
+    aa = idi.get_antennaarray()
+    lo = idi.get_observer()
     lo.date = idi.dateObs.strftime("%Y/%m/%d %H:%M:%S")
     jd = lo.date + astro.DJD_OFFSET
     lst = str(lo.sidereal_time())
 
     nStand = len(idi.stands)
-    nChan = len(idi.freq)
+    nchan = len(idi.freq)
     freq = idi.freq
     
     print "Raw Stand Count: %i" % nStand
     print "Final Baseline Count: %i" % (nStand*(nStand-1)/2,)
-    print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nChan, (freq[1] - freq[0])/1e3)
+    print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3)
     print "Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0])
     print "JD: %.3f" % jd
 
@@ -125,7 +125,7 @@ def main(args):
             continue
             
         print "Set #%i of %i" % (set, nSets)
-        dataDict = idi.getDataSet(set, uvMin=config['uvMin'])
+        dataDict = idi.get_data_set(set, min_uv=config['min_uv'])
         
         # Prune out what needs to go
         if config['include'] is not None or config['exclude'] is not None:

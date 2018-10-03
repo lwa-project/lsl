@@ -28,15 +28,15 @@ from datetime import datetime
 from lsl import astro
 from lsl.misc import geodesy
 from lsl.common import constants
-from lsl.writer.fitsidi import StokesCodes
+from lsl.writer.fitsidi import STOKES_CODES
 from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['UV', 'StokesCodes', 'NumericStokes', '__version__', '__revision__', '__all__']
+__all__ = ['UV', '__version__', '__revision__', '__all__']
 
 
-UVVersion = (1, 0)
+UV_VERSION = (1, 0)
 
 
 def merge_baseline(ant1, ant2):
@@ -110,7 +110,7 @@ class UV(object):
         Represents one UV visibility data set for a given observation time.
         """
     
-        def __init__(self, obsTime, intTime, baselines, visibilities, pol=StokesCodes['XX'], source='z'):
+        def __init__(self, obsTime, intTime, baselines, visibilities, pol=STOKES_CODES['XX'], source='z'):
             self.obsTime = obsTime
             self.intTime = intTime
             self.baselines = baselines
@@ -262,7 +262,7 @@ class UV(object):
         
         for pol in polList:
             if type(pol) == str:
-                numericPol = StokesCodes[pol.upper()]
+                numericPol = STOKES_CODES[pol.upper()]
             else:
                 numericPol = pol
                 
@@ -314,7 +314,7 @@ class UV(object):
             stands.append(ant.stand.id)
         stands = numpy.array(stands)
         
-        arrayX, arrayY, arrayZ = site.getGeocentricLocation()
+        arrayX, arrayY, arrayZ = site.get_geocentric_location()
         
         xyz = numpy.zeros((len(stands),3))
         i = 0
@@ -332,7 +332,7 @@ class UV(object):
             enableMapper = False
             
         ants = []
-        topo2eci = site.getECITransform()
+        topo2eci = site.get_eci_transform()
         for i in xrange(len(stands)):
             eci = numpy.dot(topo2eci, xyz[i,:])
             ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
@@ -361,7 +361,7 @@ class UV(object):
         """
         
         if type(pol) == str:
-            numericPol = StokesCodes[pol.upper()]
+            numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol
             
@@ -553,8 +553,8 @@ class UV(object):
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
         primary.header['LWATYPE'] = ('UV-ZA', 'LWA FITS file type')
-        primary.header['LWAMAJV'] = (UVVersion[0], 'LWA UVFITS file format major version')
-        primary.header['LWAMINV'] = (UVVersion[1], 'LWA UVFITS file format minor version')
+        primary.header['LWAMAJV'] = (UV_VERSION[0], 'LWA UVFITS file format major version')
+        primary.header['LWAMINV'] = (UV_VERSION[1], 'LWA UVFITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'UVFITS file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'UVFITS file creation date')
@@ -672,7 +672,7 @@ class UV(object):
         
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
-        eop = geodesy.getEOP(refMJD)
+        eop = geodesy.get_eop(refMJD)
         if eop is None:
             eop = geodesy.EOP(mjd=refMJD)
             

@@ -13,27 +13,27 @@ __all__ = ['colorfy', '__version__', '__revision__', '__all__']
 
 
 # Dictionary of ANSI color codes
-_colors = {'black':       u'\u001b[30m', 
-        'red':         u'\u001b[31m', 
-        'green':       u'\u001b[32m', 
-        'yellow':      u'\u001b[33m', 
-        'blue':        u'\u001b[34m', 
-        'magenta':     u'\u001b[35m', 
-        'cyan':        u'\u001b[36m', 
-        'white':       u'\u001b[37m', 
-        'bkg-black':   u'\u001b[40m', 
-        'bkg-red':     u'\u001b[41m', 
-        'bkg-green':   u'\u001b[42m', 
-        'bkg-yellow':  u'\u001b[43m', 
-        'bkg-blue':    u'\u001b[44m', 
-        'bkg-magenta': u'\u001b[45m', 
-        'bkg-cyan':    u'\u001b[46m', 
-        'bkg-white':   u'\u001b[47m', 
-        'reset':       u'\u001b[0m', 
-        'bold':        u'\u001b[1m', 
-        'underline':   u'\u001b[4m', 
-        'blink':       u'\u001b[5m',
-        'reverse':     u'\u001b[7m'}
+_COLORS = {'black':       u'\u001b[30m', 
+           'red':         u'\u001b[31m', 
+           'green':       u'\u001b[32m', 
+           'yellow':      u'\u001b[33m', 
+           'blue':        u'\u001b[34m', 
+           'magenta':     u'\u001b[35m', 
+           'cyan':        u'\u001b[36m', 
+           'white':       u'\u001b[37m', 
+           'bkg-black':   u'\u001b[40m', 
+           'bkg-red':     u'\u001b[41m', 
+           'bkg-green':   u'\u001b[42m', 
+           'bkg-yellow':  u'\u001b[43m', 
+           'bkg-blue':    u'\u001b[44m', 
+           'bkg-magenta': u'\u001b[45m', 
+           'bkg-cyan':    u'\u001b[46m', 
+           'bkg-white':   u'\u001b[47m', 
+           'reset':       u'\u001b[0m', 
+           'bold':        u'\u001b[1m', 
+           'underline':   u'\u001b[4m', 
+           'blink':       u'\u001b[5m',
+           'reverse':     u'\u001b[7m'}
 
 
 def _label(text):
@@ -83,20 +83,20 @@ def colorfy(text):
     underlined.
     
     Valid colors are:
-    * black
-    * red
-    * green
-    * yellow
-    * blue
-    * magenta
-    * cyan
-    * white
+     * black
+     * red
+     * green
+     * yellow
+     * blue
+     * magenta
+     * cyan
+     * white
     
     Valid type styles are:
-    * bold
-    * underline
-    * blink
-    * reverse
+     * bold
+     * underline
+     * blink
+     * reverse
     
     .. note::
         Background colors can be set by appending 'bkg-' to the color name.
@@ -123,7 +123,7 @@ def colorfy(text):
             tag, txt = mtch.group('tag'), mtch.group('text')
             tag = tag.lower()
             try:
-                tag = _colors[tag]
+                tag = _COLORS[tag]
             except KeyError:
                 tag = ''
                 
@@ -132,8 +132,8 @@ def colorfy(text):
             
             ### Substitute, taking into account any higher levels that have already been encoded
             repl = tag+txt
-            repl = repl.replace(_colors['reset'], _colors['reset']+tag)
-            repl = repl+_colors['reset']
+            repl = repl.replace(_COLORS['reset'], _COLORS['reset']+tag)
+            repl = repl+_COLORS['reset']
             text = tagRE.sub(repl, text, count=1)
             
             ### Get the next match

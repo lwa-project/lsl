@@ -9,8 +9,8 @@ of dates.
     primary server at 'toshi.nofs.navy.mil' cannot be reached
 
 .. versionchanged:: 1.0.0
-    Added caching of MAIA results to speed up subsequent calls to getEOP().
-    Removed getEOPRange() since getEOP() can do the same thing.
+    Added caching of MAIA results to speed up subsequent calls to get_eop().
+    Removed get_eopRange() since get_eop() can do the same thing.
 """
 
 import os
@@ -30,7 +30,7 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['EOP', 'getEOP', '__version__', '__revision__', '__all__']
+__all__ = ['EOP', 'get_eop', '__version__', '__revision__', '__all__']
 
 # Logger for capturing problems with downloading EOP data
 __logger = logging.getLogger('__main__')
@@ -77,9 +77,9 @@ class EOP(object):
         
         self.date = None
         
-        self.__setDate()
+        self._set_date()
         
-    def fromMAIA(self, line):
+    def from_maia(self, line):
         """
         Given a line from a MAIA standard rapid EOP data (IAU2000) file, fill
         in the object's values with the needed information.
@@ -96,9 +96,9 @@ class EOP(object):
         else:
             self.type = 'prediction'
             
-        self.__setDate()
+        self._set_date()
         
-    def __setDate(self):
+    def _set_date(self):
         """
         Use the ephem.Data object to get an easy-to-use date into the structure.
         """
@@ -148,7 +148,7 @@ class EOP(object):
             return 0
 
 
-def __downloadFile(filename, baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=120):
+def _download(filename, baseURL='http://toshi.nofs.navy.mil/ser7/', timeout=120):
     try:
         eopFH = urlopen('%s%s' % (baseURL, filename), timeout=timeout)
         data = eopFH.read()
@@ -169,29 +169,29 @@ def __downloadFile(filename, baseURL='http://toshi.nofs.navy.mil/ser7/', timeout
         return True
 
 
-def __loadHistoric1973(timeout=120):
+def _load_1973(timeout=120):
     """
     Load in historical values from the web.  The downloaded file includes 
     values from January 2, 1973 until today (usually).
     """
     
     if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.all')):
-        status = __downloadFile('finals2000A.all', timeout=timeout)
+        status = _download('finals2000A.all', timeout=timeout)
         if not status:
-            __downloadFile('finals2000A.all', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
+            _download('finals2000A.all', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
     else:
         age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.all')).st_mtime
         if age > (3600*24*180):
-            status = __downloadFile('finals2000A.all', timeout=timeout)
+            status = _download('finals2000A.all', timeout=timeout)
             if not status:
-                __downloadFile('finals2000A.all', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
+                _download('finals2000A.all', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
                 
     eops = []
     with open(os.path.join(_CacheDir, 'finals2000A.all'), 'r') as fh:
         for line in fh:
             newEOP = EOP()
             try:
-                newEOP.fromMAIA(line) 
+                newEOP.from_maia(line) 
                 # Only include "final" values, not predictions
                 if newEOP.type == 'final':
                     eops.append(newEOP)
@@ -203,29 +203,29 @@ def __loadHistoric1973(timeout=120):
     return eops
 
 
-def __loadHistoric1992(timeout=120):
+def _load_1992(timeout=120):
     """
     Load in historical values from the web.  The downloaded file includes 
     values from January 1, 1992 until today (usually).
     """
     
     if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.data')):
-        status = __downloadFile('finals2000A.data', timeout=timeout)
+        status = _download('finals2000A.data', timeout=timeout)
         if not status:
-            __downloadFile('finals2000A.data', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
+            _download('finals2000A.data', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
     else:
         age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.data')).st_mtime
         if age > (3600*24*7):
-            status = __downloadFile('finals2000A.data', timeout=timeout)
+            status = _download('finals2000A.data', timeout=timeout)
             if not status:
-                __downloadFile('finals2000A.data', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
+                _download('finals2000A.data', baseURL='ftp://ftp.iers.org/products/eop/rapid/standard/', timeout=timeout)
                 
     eops = []
     with open(os.path.join(_CacheDir, 'finals2000A.data'), 'r') as fh:
         for line in fh:
             newEOP = EOP()
             try:
-                newEOP.fromMAIA(line) 
+                newEOP.from_maia(line) 
                 # Only include "final" values, not predictions
                 if newEOP.type == 'final':
                     eops.append(newEOP)
@@ -237,28 +237,28 @@ def __loadHistoric1992(timeout=120):
     return eops
 
 
-def __loadCurrent90(timeout=120):
+def _load_current90(timeout=120):
     """
     Load data for the current 90-day period from the web.
     """
 
     if not os.path.exists(os.path.join(_CacheDir, 'finals2000A.daily')):
-        status = __downloadFile('finals2000A.daily', timeout=timeout)
+        status = _download('finals2000A.daily', timeout=timeout)
         if not status:
-            __downloadFile('finals2000A.daily', baseURL='ftp://ftp.iers.org/products/eop/rapid/daily/', timeout=timeout)
+            _download('finals2000A.daily', baseURL='ftp://ftp.iers.org/products/eop/rapid/daily/', timeout=timeout)
     else:
         age = time.time() - os.stat(os.path.join(_CacheDir, 'finals2000A.daily')).st_mtime
         if age > (3600*24):
-            status = __downloadFile('finals2000A.daily', timeout=timeout)
+            status = _download('finals2000A.daily', timeout=timeout)
             if not status:
-                __downloadFile('finals2000A.daily', baseURL='ftp://ftp.iers.org/products/eop/rapid/daily/', timeout=timeout)
+                _download('finals2000A.daily', baseURL='ftp://ftp.iers.org/products/eop/rapid/daily/', timeout=timeout)
                 
     eops = []
     with open(os.path.join(_CacheDir, 'finals2000A.daily'), 'r') as fh:
         for line in fh:
             newEOP = EOP()
             try:
-                newEOP.fromMAIA(line) 
+                newEOP.from_maia(line) 
                 eops.append(newEOP)
             except:
                 pass
@@ -268,7 +268,7 @@ def __loadCurrent90(timeout=120):
     return eops
 
 
-def getEOP(mjd=None, timeout=120):
+def get_eop(mjd=None, timeout=120):
     """
     Return a list of earth orientation parameter objects for the specified 
     MJDs.  A MJD of 'None' returns the values for today's date.
@@ -295,11 +295,11 @@ def getEOP(mjd=None, timeout=120):
 
     oldEOPs = []
     midEOPs = []
-    newEOPs = __loadCurrent90(timeout=timeout)
+    newEOPs = _load_current90(timeout=timeout)
     if mjd.min() < 48622:
-        oldEOPs = __loadHistoric1973(timeout=timeout)
+        oldEOPs = _load_1973(timeout=timeout)
     if mjd.min() < newEOPs[0].mjd:
-        midEOPs = __loadHistoric1992(timeout=timeout)
+        midEOPs = _load_1992(timeout=timeout)
         
     outEOPs = []
     for day in mjd:

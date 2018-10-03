@@ -26,8 +26,8 @@
 */
 
 // gofast.c
-extern PyObject *syncError;
-extern PyObject *eofError;
+extern PyObject *SyncError;
+extern PyObject *EOFError;
 
 
 /*

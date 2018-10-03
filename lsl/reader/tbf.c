@@ -90,7 +90,7 @@ PyObject *readTBF(PyObject *self, PyObject *args) {
 		Py_XDECREF(data);
 		return NULL;
 	} else if( PyString_GET_SIZE(buffer) != sizeof(cFrame) ) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(EOFError, "End of file encountered during filehandle read");
 		Py_XDECREF(data);
 		Py_XDECREF(buffer);
 		return NULL;
@@ -119,7 +119,7 @@ PyObject *readTBF(PyObject *self, PyObject *args) {
 	
 	// Validate
 	if( !validSync5C(cFrame.header.syncWord) ) {
-		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
+		PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
 		Py_XDECREF(data);
 		return NULL;
 	}
@@ -133,22 +133,22 @@ PyObject *readTBF(PyObject *self, PyObject *args) {
 	Py_XDECREF(temp);
 	
 	temp = PyLong_FromUnsignedLong(cFrame.header.frameCount);
-	PyObject_SetAttrString(fHeader, "frameCount", temp);
+	PyObject_SetAttrString(fHeader, "frame_count", temp);
 	Py_XDECREF(temp);
 	
 	temp = PyLong_FromUnsignedLong(cFrame.header.secondsCount);
-	PyObject_SetAttrString(fHeader, "secondsCount", temp);
+	PyObject_SetAttrString(fHeader, "second_count", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("h", cFrame.header.firstChan);
-	PyObject_SetAttrString(fHeader, "firstChan", temp);
+	PyObject_SetAttrString(fHeader, "first_chan", temp);
 	Py_XDECREF(temp);
 	
 	// 2. Data
 	fData = PyObject_GetAttrString(frame, "data");
 	
 	temp = PyLong_FromLongLong(cFrame.data.timeTag);
-	PyObject_SetAttrString(fData, "timeTag", temp);
+	PyObject_SetAttrString(fData, "timetag", temp);
 	Py_XDECREF(temp);
 	
 	PyObject_SetAttrString(fData, "fDomain", PyArray_Return(data));

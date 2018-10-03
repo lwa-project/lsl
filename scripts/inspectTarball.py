@@ -44,7 +44,7 @@ def getObsStartStop(obs):
 def main(args):
     # Get the site and observer
     site = stations.lwa1
-    observer = site.getObserver()
+    observer = site.get_observer()
     
     # Filenames in an easier format
     inputTGZ  = args[0]
@@ -53,22 +53,22 @@ def main(args):
     # this is for LWA1 but we switch over to LWA-SV if an error occurs.
     try:
         # LWA1
-        project = metabundle.getSessionDefinition(inputTGZ)
-        obsImpl = metabundle.getObservationSpec(inputTGZ)
-        fileInfo = metabundle.getSessionMetaData(inputTGZ)
-        aspConfigB = metabundle.getASPConfigurationSummary(inputTGZ, which='Beginning')
-        aspConfigE = metabundle.getASPConfigurationSummary(inputTGZ, which='End')
+        project = metabundle.get_sdf(inputTGZ)
+        obsImpl = metabundle.get_observation_spec(inputTGZ)
+        fileInfo = metabundle.get_session_metadata(inputTGZ)
+        aspConfigB = metabundle.get_asp_configuration_summary(inputTGZ, which='Beginning')
+        aspConfigE = metabundle.get_asp_configuration_summary(inputTGZ, which='End')
     except:
         # LWA-SV
         ## Site changes
         site = stations.lwasv
-        observer = site.getObserver()
+        observer = site.get_observer()
         ## Try again
-        project = metabundleADP.getSessionDefinition(inputTGZ)
-        obsImpl = metabundleADP.getObservationSpec(inputTGZ)
-        fileInfo = metabundleADP.getSessionMetaData(inputTGZ)
-        aspConfigB = metabundleADP.getASPConfigurationSummary(inputTGZ, which='Beginning')
-        aspConfigE = metabundleADP.getASPConfigurationSummary(inputTGZ, which='End')
+        project = metabundleADP.get_sdf(inputTGZ)
+        obsImpl = metabundleADP.get_observation_spec(inputTGZ)
+        fileInfo = metabundleADP.get_session_metadata(inputTGZ)
+        aspConfigB = metabundleADP.get_asp_configuration_summary(inputTGZ, which='Beginning')
+        aspConfigE = metabundleADP.get_asp_configuration_summary(inputTGZ, which='End')
         
     nObs = len(project.sessions[0].observations)
     tStart = [None,]*nObs

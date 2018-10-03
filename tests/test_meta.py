@@ -6,7 +6,7 @@ import os
 import unittest
 
 from lsl.common import metabundle
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 
 
 __revision__ = "$Rev$"
@@ -25,8 +25,8 @@ class metabundle_tests(unittest.TestCase):
     def test_ss(self):
         """Test the session specification utilties."""
         
-        ses = metabundle.getSessionSpec(mdbFile)
-        obs = metabundle.getObservationSpec(mdbFile)
+        ses = metabundle.get_session_spec(mdbFile)
+        obs = metabundle.get_observation_spec(mdbFile)
         
         # Check session start time
         self.assertEqual(ses['MJD'], 56742)
@@ -41,8 +41,8 @@ class metabundle_tests(unittest.TestCase):
     def test_os(self):
         """Test the observation specification utilities."""
         
-        obs1 = metabundle.getObservationSpec(mdbFile)
-        obs2 = metabundle.getObservationSpec(mdbFile, selectObs=1)
+        obs1 = metabundle.get_observation_spec(mdbFile)
+        obs2 = metabundle.get_observation_spec(mdbFile, obs_id=1)
         
         # Check if the right observation is returned
         self.assertEqual(obs1[0], obs2)
@@ -57,7 +57,7 @@ class metabundle_tests(unittest.TestCase):
     def test_cs(self):
         """Test the command script utilities."""
         
-        cmnds = metabundle.getCommandScript(mdbFile)
+        cmnds = metabundle.get_command_script(mdbFile)
         
         # Check number of command
         self.assertEqual(len(cmnds), 150)
@@ -77,7 +77,7 @@ class metabundle_tests(unittest.TestCase):
     def test_sm(self):
         """Test the session metadata utilties."""
         
-        sm = metabundle.getSessionMetaData(mdbFile)
+        sm = metabundle.get_session_metadata(mdbFile)
         
         # Make sure all of the observations are done
         self.assertEqual(len(sm.keys()), 1)
@@ -85,17 +85,17 @@ class metabundle_tests(unittest.TestCase):
     def test_sdf(self):
         """Test building a SDF from a tarball."""
         
-        sdf = metabundle.getSessionDefinition(mdbFile)
+        sdf = metabundle.get_sdf(mdbFile)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
         
-        sm = metabundle.getSDM(mdbFile)
+        sm = metabundle.get_sdm(mdbFile)
         
     def test_metadata(self):
         """Test the observation metadata utility."""
         
-        fileInfo = metabundle.getSessionMetaData(mdbFile)
+        fileInfo = metabundle.get_session_metadata(mdbFile)
         self.assertEqual(len(fileInfo.keys()), 1)
         
         # File tag
@@ -108,31 +108,31 @@ class metabundle_tests(unittest.TestCase):
         """Test retrieving the ASP configuration."""
         
         # Beginning config.
-        aspConfig = metabundle.getASPConfigurationSummary(mdbFile, which='beginning')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFile, which='beginning')
         self.assertEqual(aspConfig['filter'],  1)
         self.assertEqual(aspConfig['at1'],    13)
         self.assertEqual(aspConfig['at2'],    13)
         self.assertEqual(aspConfig['atsplit'],15)
         
         # End config.
-        aspConfig = metabundle.getASPConfigurationSummary(mdbFile, which='End')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFile, which='End')
         self.assertEqual(aspConfig['filter'],  1)
         self.assertEqual(aspConfig['at1'],    13)
         self.assertEqual(aspConfig['at2'],    13)
         self.assertEqual(aspConfig['atsplit'],15)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.getASPConfigurationSummary, mdbFile, 'middle')
+        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
         
     def test_is_valid(self):
-        """Test whether or not isValid works."""
+        """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.isValid(mdbFile))
+        self.assertTrue(metabundle.is_valid(mdbFile))
         
     def test_is_not_valid(self):
-        """Test whether or not isValid works on LWA-SV files."""
+        """Test whether or not is_valid works on LWA-SV files."""
         
-        self.assertFalse(metabundle.isValid(mdbFileADP))
+        self.assertFalse(metabundle.is_valid(mdbFileADP))
 
 
 class metabundle_tests_old_0(unittest.TestCase):
@@ -142,8 +142,8 @@ class metabundle_tests_old_0(unittest.TestCase):
     def test_ss(self):
         """Test the session specification utilties."""
         
-        ses = metabundle.getSessionSpec(mdbFileOld0)
-        obs = metabundle.getObservationSpec(mdbFileOld0)
+        ses = metabundle.get_session_spec(mdbFileOld0)
+        obs = metabundle.get_observation_spec(mdbFileOld0)
         
         # Check session start time
         self.assertEqual(ses['MJD'], 56013)
@@ -158,8 +158,8 @@ class metabundle_tests_old_0(unittest.TestCase):
     def test_os(self):
         """Test the observation specification utilities."""
         
-        obs1 = metabundle.getObservationSpec(mdbFileOld0)
-        obs2 = metabundle.getObservationSpec(mdbFileOld0, selectObs=1)
+        obs1 = metabundle.get_observation_spec(mdbFileOld0)
+        obs2 = metabundle.get_observation_spec(mdbFileOld0, obs_id=1)
         
         # Check if the right observation is returned
         self.assertEqual(obs1[0], obs2)
@@ -174,7 +174,7 @@ class metabundle_tests_old_0(unittest.TestCase):
     def test_cs(self):
         """Test the command script utilities."""
         
-        cmnds = metabundle.getCommandScript(mdbFileOld0)
+        cmnds = metabundle.get_command_script(mdbFileOld0)
         
         # Check number of command
         self.assertEqual(len(cmnds), 491)
@@ -194,7 +194,7 @@ class metabundle_tests_old_0(unittest.TestCase):
     def test_sm(self):
         """Test the session metadata utilties."""
         
-        sm = metabundle.getSessionMetaData(mdbFileOld0)
+        sm = metabundle.get_session_metadata(mdbFileOld0)
         
         # Make sure all of the observations are done
         self.assertEqual(len(sm.keys()), 1)
@@ -202,17 +202,17 @@ class metabundle_tests_old_0(unittest.TestCase):
     def test_sdf(self):
         """Test building a SDF from a tarball."""
         
-        sdf = metabundle.getSessionDefinition(mdbFileOld0)
+        sdf = metabundle.get_sdf(mdbFileOld0)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
         
-        sm = metabundle.getSDM(mdbFileOld0)
+        sm = metabundle.get_sdm(mdbFileOld0)
         
     def test_is_valid(self):
-        """Test whether or not isValid works."""
+        """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.isValid(mdbFileOld0))
+        self.assertTrue(metabundle.is_valid(mdbFileOld0))
 
 
 class metabundle_tests_old_1(unittest.TestCase):
@@ -222,8 +222,8 @@ class metabundle_tests_old_1(unittest.TestCase):
     def test_ss(self):
         """Test the session specification utilties."""
         
-        ses = metabundle.getSessionSpec(mdbFileOld1)
-        obs = metabundle.getObservationSpec(mdbFileOld1)
+        ses = metabundle.get_session_spec(mdbFileOld1)
+        obs = metabundle.get_observation_spec(mdbFileOld1)
         
         # Check session start time
         self.assertEqual(ses['MJD'], 56492)
@@ -238,8 +238,8 @@ class metabundle_tests_old_1(unittest.TestCase):
     def test_os(self):
         """Test the observation specification utilities."""
         
-        obs1 = metabundle.getObservationSpec(mdbFileOld1)
-        obs2 = metabundle.getObservationSpec(mdbFileOld1, selectObs=1)
+        obs1 = metabundle.get_observation_spec(mdbFileOld1)
+        obs2 = metabundle.get_observation_spec(mdbFileOld1, obs_id=1)
         
         # Check if the right observation is returned
         self.assertEqual(obs1[0], obs2)
@@ -254,7 +254,7 @@ class metabundle_tests_old_1(unittest.TestCase):
     def test_cs(self):
         """Test the command script utilities."""
         
-        cmnds = metabundle.getCommandScript(mdbFileOld1)
+        cmnds = metabundle.get_command_script(mdbFileOld1)
         
         # Check number of command
         self.assertEqual(len(cmnds), 8)
@@ -274,7 +274,7 @@ class metabundle_tests_old_1(unittest.TestCase):
     def test_sm(self):
         """Test the session metadata utilties."""
         
-        sm = metabundle.getSessionMetaData(mdbFileOld1)
+        sm = metabundle.get_session_metadata(mdbFileOld1)
         
         # Make sure all of the observations are done
         self.assertEqual(len(sm.keys()), 1)
@@ -282,17 +282,17 @@ class metabundle_tests_old_1(unittest.TestCase):
     def test_sdf(self):
         """Test building a SDF from a tarball."""
         
-        sdf = metabundle.getSessionDefinition(mdbFileOld1)
+        sdf = metabundle.get_sdf(mdbFileOld1)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
         
-        sm = metabundle.getSDM(mdbFileOld1)
+        sm = metabundle.get_sdm(mdbFileOld1)
         
     def test_metadata(self):
         """Test the observation metadata utility."""
         
-        fileInfo = metabundle.getSessionMetaData(mdbFileOld1)
+        fileInfo = metabundle.get_session_metadata(mdbFileOld1)
         self.assertEqual(len(fileInfo.keys()), 1)
         
         # File tag
@@ -305,26 +305,26 @@ class metabundle_tests_old_1(unittest.TestCase):
         """Test retrieving the ASP configuration."""
         
         # Beginning config.
-        aspConfig = metabundle.getASPConfigurationSummary(mdbFileOld1, which='beginning')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFileOld1, which='beginning')
         self.assertEqual(aspConfig['filter'],  3)
         self.assertEqual(aspConfig['at1'],     0)
         self.assertEqual(aspConfig['at2'],     0)
         self.assertEqual(aspConfig['atsplit'], 0)
         
         # End config.
-        aspConfig = metabundle.getASPConfigurationSummary(mdbFileOld1, which='End')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFileOld1, which='End')
         self.assertEqual(aspConfig['filter'],  1)
         self.assertEqual(aspConfig['at1'],    13)
         self.assertEqual(aspConfig['at2'],    13)
         self.assertEqual(aspConfig['atsplit'], 0)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.getASPConfigurationSummary, mdbFileOld1, 'middle')
+        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileOld1, 'middle')
         
     def test_is_valid(self):
-        """Test whether or not isValid works."""
+        """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.isValid(mdbFileOld1))
+        self.assertTrue(metabundle.is_valid(mdbFileOld1))
 
 
 class metabundle_test_suite(unittest.TestSuite):

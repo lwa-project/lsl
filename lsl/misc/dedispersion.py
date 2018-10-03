@@ -21,7 +21,7 @@ try:
     import pickle
     import pyfftw
     
-    from lsl.common.paths import data as dataPath
+    from lsl.common.paths import DATA as dataPath
     
     # Enable the PyFFTW cache
     if not pyfftw.interfaces.cache.is_enabled():
@@ -49,7 +49,7 @@ except ImportError:
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['delay', 'incoherent', 'getCoherentSampleSize', 'coherent', 
+__all__ = ['delay', 'incoherent', 'get_coherent_sample_size', 'coherent', 
         '__version__', '__revision__', '__all__']
 
 
@@ -132,7 +132,7 @@ def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=numpy.nan)
     return ddWaterfall
 
 
-def getCoherentSampleSize(centralFreq, sampleRate, dm):
+def get_coherent_sample_size(central_freq, sample_rate, dm):
     """
     Estimate the number of samples needed to successfully apply coherent 
     dedispersion to a data stream.
@@ -141,8 +141,8 @@ def getCoherentSampleSize(centralFreq, sampleRate, dm):
     # Roughly estimate the number of points we need to look at to do the dedispersion 
     # correctly.  Based on the the relative dispersion delay between the high and low
     # ends of an observational band.
-    F0 = centralFreq
-    BW = sampleRate
+    F0 = central_freq
+    BW = sample_rate
 
     delayBand = dm*_D *((1e6/(F0-BW/2.0))**2 - (1e6/(F0+BW/2.0))**2)	# Dispersion delay across the band
     samples = delayBand*BW									# Conversion to samples
@@ -152,7 +152,7 @@ def getCoherentSampleSize(centralFreq, sampleRate, dm):
     return int(samples)
 
 
-def __taperFunction(freq):
+def _taper(freq):
     """
     Taper function based Equation (1) of "Pulsar Coherent De-dispersion 
     Experiment at Urumqi Observatory" CJA&A, 2006, S2, 53.
@@ -168,7 +168,7 @@ def __taperFunction(freq):
     return taper
 
 
-def __chirpFunction(freq, dm, taper=False):
+def _chirp(freq, dm, taper=False):
     """
     Chip function for coherent dedispersion for a given set of frequencies (in Hz).  
     Based on Equation (6) of "Pulsar Observations II -- Coherent Dedispersion, 
@@ -181,12 +181,12 @@ def __chirpFunction(freq, dm, taper=False):
     
     chirp = numpy.exp(-2j*numpy.pi*_D*1e6 / (fMHz0**2*(fMHz0 + fMHz1)) * dm*fMHz1**2)
     if taper:
-        chirp *= __taperFunction(freq)
+        chirp *= _taper(freq)
     
     return chirp
 
 
-def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTime=None, previousData=None, nextTime=None, nextData=None, enableCaching=True):
+def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous_time=None, previous_data=None, next_time=None, next_data=None, enable_caching=True):
     """
     Simple coherent dedispersion of complex-valued time-series data at a given central
     frequency and sample rate.  A tapering function can also be applied to the chirp of 
@@ -212,22 +212,22 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
     
     # Caching for N and the chirp function
     try:
-        pair = (centralFreq*1.0, sampleRate*1.0, dm*1.0, taper, timeseries.dtype)
+        pair = (central_freq*1.0, sample_rate*1.0, dm*1.0, taper, timeseries.dtype)
         
         # Get an idea of how many samples we need to do the dedispersion correctly
         # Compute the chirp function 
         N, chirp = _coherentCache[pair]
     except KeyError:
         # Get an idea of how many samples we need to do the dedispersion correctly
-        N = getCoherentSampleSize(centralFreq, sampleRate, dm)
+        N = get_coherent_sample_size(central_freq, sample_rate, dm)
         
         # Compute the chirp function 
-        freq = numpy.fft.fftfreq(N, d=1.0/sampleRate) + centralFreq 
-        chirp = __chirpFunction(freq, dm, taper=taper) 
+        freq = numpy.fft.fftfreq(N, d=1.0/sample_rate) + central_freq 
+        chirp = _chirp(freq, dm, taper=taper) 
         chirp = chirp.astype(timeseries.dtype)
         
         # Update the cache
-        if enableCaching:
+        if enable_caching:
             _coherentCache[pair] = (N, chirp)
             
     # Figure out the output array size
@@ -259,10 +259,10 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
             timeIn = numpy.zeros(N, dtype=t.dtype)
             dataIn = numpy.zeros(N, dtype=timeseries.dtype)
             
-            if previousData is not None:
+            if previous_data is not None:
                 try:
-                    timeIn[:-start] = previousTime[start:]
-                    dataIn[:-start] = previousData[start:]
+                    timeIn[:-start] = previous_time[start:]
+                    dataIn[:-start] = previous_data[start:]
                 except ValueError:
                     raise RuntimeError("Too few data samples for proper start buffering")
                     
@@ -273,10 +273,10 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
             timeIn = numpy.zeros(N, dtype=t.dtype)
             dataIn = numpy.zeros(N, dtype=timeseries.dtype)
             
-            if nextData is not None:
+            if next_data is not None:
                 try:
-                    timeIn[timeseries.size-start:] = nextTime[:(dataIn.size-(timeseries.size-start))]
-                    dataIn[timeseries.size-start:] = nextData[:(dataIn.size-(timeseries.size-start))]
+                    timeIn[timeseries.size-start:] = next_time[:(dataIn.size-(timeseries.size-start))]
+                    dataIn[timeseries.size-start:] = next_data[:(dataIn.size-(timeseries.size-start))]
                 except ValueError:
                     raise RuntimeError("Too few data samples for proper end buffering")
                     
@@ -312,9 +312,9 @@ def coherent(t, timeseries, centralFreq, sampleRate, dm, taper=False, previousTi
             outStop  -= diff
             dataStop -= diff
             
-        if i == 0 and previousData is None:
+        if i == 0 and previous_data is None:
             continue
-        if i == (2*nSets) and nextData is None:
+        if i == (2*nSets) and next_data is None:
             continue
             
         outT[outStart:outStop] = timeOut[dataStart:dataStop]

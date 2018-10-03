@@ -413,7 +413,7 @@ def gaussparams(data, x=None, y=None):
         return height, center, width
 
 
-def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
+def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
     """
     Decompose a spherical or semi-spherical data set into spherical harmonics.  
 
@@ -423,19 +423,19 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
       * alt: 2-D numpy array of altitude coordinates in radian or degrees if the 
              `degrees` keyword is set
       * data: 2-D numpy array of the data to be fit.  If the data array is purely
-             real, then the `realOnly` keyword can be set which speeds up the 
+             real, then the `real_only` keyword can be set which speeds up the 
              decomposition
       * lmax: integer setting the maximum order harmonic to fit
 
     Keywords:
       * degrees: boolean of whether or not the input azimuth and altitude coordinates
          are in degrees or not
-      * realOnly: boolean of whether or not the input data is purely real or not.  If
+      * real_only: boolean of whether or not the input data is purely real or not.  If
         the data are real, only coefficients for modes >=0 are computed.
 
     Returned is a 1-D complex numpy array with the spherical harmonic coefficients 
     packed packed in order of increasing harmonic order and increasing mode, i.e.,
-    (0,0), (1,-1), (1,0), (1,1), (2,-2), etc.  If the `realOnly` keyword has been 
+    (0,0), (1,-1), (1,0), (1,1), (2,-2), etc.  If the `real_only` keyword has been 
     set, the negative coefficients for the negative modes are excluded from the 
     output array.
     
@@ -456,7 +456,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
     rAlt += numpy.pi/2
     sinAlt = numpy.sin(rAlt)
     
-    if realOnly:
+    if real_only:
         nTerms = (lmax*(lmax+3)+2)/2
         terms = numpy.zeros(nTerms, dtype=numpy.complex64)
         
@@ -481,7 +481,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, realOnly=False):
     return terms
 
 
-def sphval(terms, az, alt, degrees=False, realOnly=False):
+def sphval(terms, az, alt, degrees=False, real_only=False):
     """
     Evaluate a set of spherical harmonic coefficents at a specified set of
     azimuth and altitude coordinates.
@@ -496,7 +496,7 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
     Keywords:
       * degrees: boolean of whether or not the input azimuth and altitude coordinates
                  are in degrees or not
-      * realOnly: boolean of whether or not the input data is purely real or not.  If
+      * real_only: boolean of whether or not the input data is purely real or not.  If
                   the data are real, only coefficients for modes >=0 are computed.
 
     Returns a 2-D numpy array of the harmoics evalated and summed at the given 
@@ -519,7 +519,7 @@ def sphval(terms, az, alt, degrees=False, realOnly=False):
     rAlt += numpy.pi/2
     
     nTerms = terms.size
-    if realOnly:
+    if real_only:
         lmax = int((numpy.sqrt(1+8*nTerms)-3)/2)
 
         t = 0

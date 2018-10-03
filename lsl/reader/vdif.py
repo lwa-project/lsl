@@ -21,14 +21,14 @@ The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
-For reading in data, use the readFrame function.  It takes a python file-
+For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.  The readBlock
 function reads in a (user-defined) number of VDIF frames and returns a 
 ObservingBlock object.
 
 For describing the format of data in the file, two function are provided:
 
-getThreadCount
+get_thread_count
   read in the first few frames of an open file handle and return how many 
   threads are present in the file.
 """
@@ -37,17 +37,17 @@ import copy
 from datetime import datetime
 
 from lsl import astro
-from lsl.common.mcs import datetime2mjdmpm
+from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.reader._gofast import readVDIF
-from lsl.reader._gofast import syncError as gsyncError
-from lsl.reader._gofast import eofError as geofError
-from lsl.reader.errors import syncError, eofError
+from lsl.reader._gofast import SyncError as gSyncError
+from lsl.reader._gofast import EOFError as gEOFError
+from lsl.reader.errors import SyncError, EOFError
 
 
 __version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readGUPPIHeader', 'readFrame', 
-           'getFrameSize', 'getThreadCount', 'getFramesPerSecond', 'getSampleRate', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_guppi_header', 'read_frame', 
+           'get_frame_size', 'get_thread_count', 'get_frames_per_second', 'get_sample_rate', 
            '__version__', '__revision__', '__all__']
 
 
@@ -78,62 +78,62 @@ class FrameHeader(object):
     frame.  Most fields in the VDIF version 1.1.1 header are stored.
     """
     
-    def __init__(self, isInvalid=0, isLegacy=0, secondsFromEpoch=0, refEpoch=0, frameInSecond=0, version=1, nChan=0, frameLength=0, isComplex='C', bitsPerSample=0, threadID=0, stationID=0, extendedData1=None, extendedData2=None, extendedData3=None, extendedData4=None, sampleRate=0.0, centralFreq=0.0):
-        self.isInvalid = isInvalid
-        self.isLegacy = isLegacy
-        self.secondsFromEpoch = secondsFromEpoch
+    def __init__(self, is_invalid=0, is_legacy=0, seconds_from_epoch=0, ref_epoch=0, frame_in_second=0, version=1, nchan=0, frame_length=0, is_complex='C', bits_per_sample=0, thread_id=0, station_id=0, extended_data_1=None, extended_data_2=None, extended_data_3=None, extended_data_4=None, sample_rate=0.0, central_freq=0.0):
+        self.is_invalid = is_invalid
+        self.is_legacy = is_legacy
+        self.seconds_from_epoch = seconds_from_epoch
         
-        self.refEpoch = refEpoch
-        self.frameInSecond = frameInSecond
+        self.ref_epoch = ref_epoch
+        self.frame_in_second = frame_in_second
         
         self.version = version
-        self.nChan = nChan
-        self.frameLength = frameLength
+        self.nchan = nchan
+        self.frame_length = frame_length
         
-        self.isComplex = isComplex
-        self.bitsPerSample = bitsPerSample
-        self.threadID = threadID
-        self.stationID = stationID
+        self.is_complex = is_complex
+        self.bits_per_sample = bits_per_sample
+        self.thread_id = thread_id
+        self.station_id = station_id
         
-        self.extendedData1 = extendedData1
-        self.extendedData2 = extendedData2
-        self.extendedData3 = extendedData3
-        self.extendedData4 = extendedData4
+        self.extended_data_1 = extended_data_1
+        self.extended_data_2 = extended_data_2
+        self.extended_data_3 = extended_data_3
+        self.extended_data_4 = extended_data_4
         
-        self.sampleRate = sampleRate
-        self.centralFreq = centralFreq
+        self.sample_rate = sample_rate
+        self.central_freq = central_freq
         
-    def getTime(self):
+    def get_time(self):
         """
         Function to convert the time tag to seconds since the UNIX epoch.
         """
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
         # and convert it to a MJD
-        epochDT = datetime(2000+self.refEpoch/2, (self.refEpoch % 2)*6+1, 1, 0, 0, 0, 0)
-        epochMJD, epochMPM = datetime2mjdmpm(epochDT)
+        epochDT = datetime(2000+self.ref_epoch/2, (self.ref_epoch % 2)*6+1, 1, 0, 0, 0, 0)
+        epochMJD, epochMPM = datetime_to_mjdmpm(epochDT)
         epochMJD = epochMJD + epochMPM/1000.0/86400.0
         
-        # Get the frame MJD by adding the secondsFromEpoch value to the epoch
-        frameMJD = epochMJD + self.secondsFromEpoch / 86400.0
+        # Get the frame MJD by adding the seconds_from_epoch value to the epoch
+        frameMJD = epochMJD + self.seconds_from_epoch / 86400.0
         
-        if self.sampleRate == 0.0:
+        if self.sample_rate == 0.0:
             # Try to get the sub-second time by parsing the extended user data
             try:
                 ## Is there a sample rate to grab?
-                eud = self.parseExtendedUserData()
-                sampleRate = eud['sampleRate']
-                sampleRate *= 1e6 if eud['sampleRateUnits'] == 'MHz' else 1.0
+                eud = self.parse_extended_user_data()
+                sample_rate = eud['sample_rate']
+                sample_rate *= 1e6 if eud['sample_rateUnits'] == 'MHz' else 1.0
             
                 ## How many samples are in each frame?
-                dataSize = self.frameLength*8 - 32 + 16*self.isLegacy		# 8-byte chunks -> bytes - full header + legacy offset
-                samplesPerWord = 32 / self.bitsPerSample					# dimensionless
+                dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		# 8-byte chunks -> bytes - full header + legacy offset
+                samplesPerWord = 32 / self.bits_per_sample					# dimensionless
                 nSamples = dataSize / 4 * samplesPerWord					# bytes -> words -> samples
             
                 ## What is the frame rate?
-                frameRate = sampleRate / nSamples
+                frameRate = sample_rate / nSamples
             
-                frameMJD += 1.0*self.frameInSecond/frameRate/86400.0
+                frameMJD += 1.0*self.frame_in_second/frameRate/86400.0
             
             except KeyError:
                 pass
@@ -141,30 +141,30 @@ class FrameHeader(object):
         else:
             # Use what we already have been told
             ## How many samples are in each frame?
-            dataSize = self.frameLength*8 - 32 + 16*self.isLegacy		# 8-byte chunks -> bytes - full header + legacy offset
-            samplesPerWord = 32 / self.bitsPerSample				# dimensionless
+            dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		# 8-byte chunks -> bytes - full header + legacy offset
+            samplesPerWord = 32 / self.bits_per_sample				# dimensionless
             nSamples = dataSize / 4 * samplesPerWord				# bytes -> words -> samples
         
             ## What is the frame rate?
-            frameRate = self.sampleRate / nSamples
+            frameRate = self.sample_rate / nSamples
             
-            frameMJD += 1.0*self.frameInSecond/frameRate/86400.0
+            frameMJD += 1.0*self.frame_in_second/frameRate/86400.0
 
         # Convert from MJD to UNIX time
         seconds = astro.utcjd_to_unix(frameMJD + astro.MJD_OFFSET)
         
         return seconds
         
-    def parseID(self):
+    def parse_id(self):
         """
         Return a two-element tuple of the station ID and thread ID.
         
         .. note::
             The station ID is always returned as numeric.
         """
-        return (self.stationID, self.threadID)
+        return (self.station_id, self.thread_id)
         
-    def parseExtendedUserData(self):
+    def parse_extended_user_data(self):
         """
         Parse the extended user data if it was included with the reader.  
         The data is returned as a dictionary.
@@ -174,11 +174,11 @@ class FrameHeader(object):
         fields = {}
         
         # Is there anything to look at?
-        if self.extendedData1 is None or self.extendedData2 is None or self.extendedData3 is None or self.extendedData4 is None:
+        if self.extended_data_1 is None or self.extended_data_2 is None or self.extended_data_3 is None or self.extended_data_4 is None:
             return fields
             
         # Extract the version
-        edv = int((self.extendedData1 >> 24) & 0xFF)
+        edv = int((self.extended_data_1 >> 24) & 0xFF)
         
         # Parse accordingly
         if edv == 0x00:
@@ -187,76 +187,76 @@ class FrameHeader(object):
             
         elif edv == 0x01:
             ## NICT
-            fields['sampleRate'] = int(self.extendedData1 & (2**23-1))
-            fields['sampleRateUnits'] = 'MHz' if int((self.extendedData1>>23) & 1) else 'kHz'
-            fields['syncPattern'] = self.extendedData2
-            fields['stationName'] = (self.extendedData4 << 32) | self.extendedData3
+            fields['sample_rate'] = int(self.extended_data_1 & (2**23-1))
+            fields['sample_rate_units'] = 'MHz' if int((self.extended_data_1>>23) & 1) else 'kHz'
+            fields['sync_pattern'] = self.extended_data_2
+            fields['station_name'] = (self.extended_data_4 << 32) | self.extended_data_3
             
         elif edv == 0x02:
             ## ALMA
-            fields['syncWord'] = int(self.extendedData1 & 0xFFFF)
-            fields['picStatusWord'] = self.extendedData2
-            fields['packetSerialNumber'] = (self.extendedData4 << 32) | self.extendedData3
+            fields['sync_word'] = int(self.extended_data_1 & 0xFFFF)
+            fields['pic_status_word'] = self.extended_data_2
+            fields['packet_serial_number'] = (self.extended_data_4 << 32) | self.extended_data_3
             
         elif edv == 0x03:
             ## NRAO
-            fields['sampleRate'] = int(self.extendedData1 & (2**23-1))
-            fields['sampleRateUnits'] = 'MHz' if int((self.extendedData1 >> 23) & 1) else 'kHz'
-            fields['syncPattern'] = self.extendedData2
-            fields['tuningWord'] = self.extendedData3
-            fields['dbeUnit'] = int((self.extendedData4 >> 24) & 0xF)
-            fields['ifInputNumber'] = int((self.extendedData4 >> 20) & 0xF)
-            fields['subBand'] = int((self.extendedData4 >> 17) & 0x7)
-            fields['electronicSideBand'] = 'USB' if (self.extendedData4 >> 16) & 1 else 'LSB'
-            mj = int((self.extendedData4 >> 12) & 0xF)
-            mn = int((self.extendedData4 >>  8) & 0xF)
-            pr = int(self.extendedData4 & 0xFF)
+            fields['sample_rate'] = int(self.extended_data_1 & (2**23-1))
+            fields['sample_rate_units'] = 'MHz' if int((self.extended_data_1 >> 23) & 1) else 'kHz'
+            fields['sync_pattern'] = self.extended_data_2
+            fields['tuning_word'] = self.extended_data_3
+            fields['dbe_unit'] = int((self.extended_data_4 >> 24) & 0xF)
+            fields['if_input_number'] = int((self.extended_data_4 >> 20) & 0xF)
+            fields['subband'] = int((self.extended_data_4 >> 17) & 0x7)
+            fields['electronic_sideband'] = 'USB' if (self.extended_data_4 >> 16) & 1 else 'LSB'
+            mj = int((self.extended_data_4 >> 12) & 0xF)
+            mn = int((self.extended_data_4 >>  8) & 0xF)
+            pr = int(self.extended_data_4 & 0xFF)
             fields['version'] = '%i.%i-%02f' % (mj, mn, pr)
             
         elif edv == 0xAB:
             ## Haystack (which is really an embedded Mark 5B header)
-            fields['syncWord'] = self.extendedData1
-            fields['yearsFrom2000'] = int((self.extendedData2 >> 28) & 0xF)
-            fields['userSpecifiedData'] = int((self.extendedData2 >> 16) & 0xFFF)
-            fields['dataFromInternalTVG'] = (self.extendedData2 >> 15) & 1
-            fields['frameInSecond'] = int(self.extendedData2 & (2**14-1))
-            j0 = int((self.extendedData3 >> 28) & 0xF)
-            j1 = int((self.extendedData3 >> 24) & 0xF)
-            j2 = int((self.extendedData3 >> 20) & 0xF)
-            s0 = int((self.extendedData3 >> 16) & 0xF)
-            s1 = int((self.extendedData3 >> 12) & 0xF)
-            s2 = int((self.extendedData3 >>  8) & 0xF)
-            s3 = int((self.extendedData3 >>  4) & 0xF)
-            s4 = int((self.extendedData3 >>  0) & 0xF)
-            f0 = int((self.extendedData4 >> 28) & 0xF)
-            f1 = int((self.extendedData4 >> 24) & 0xF)
-            f2 = int((self.extendedData4 >> 20) & 0xF)
-            f3 = int((self.extendedData4 >> 16) & 0xF)
-            f4 = int((self.extendedData4 >>  8) & 0xF)
-            crcf = int(self.extendedData4 & 0xFFFF)
+            fields['sync_word'] = self.extended_data_1
+            fields['years_from_2000'] = int((self.extended_data_2 >> 28) & 0xF)
+            fields['user_specified_data'] = int((self.extended_data_2 >> 16) & 0xFFF)
+            fields['data_from_internal_tvg'] = (self.extended_data_2 >> 15) & 1
+            fields['frame_in_second'] = int(self.extended_data_2 & (2**14-1))
+            j0 = int((self.extended_data_3 >> 28) & 0xF)
+            j1 = int((self.extended_data_3 >> 24) & 0xF)
+            j2 = int((self.extended_data_3 >> 20) & 0xF)
+            s0 = int((self.extended_data_3 >> 16) & 0xF)
+            s1 = int((self.extended_data_3 >> 12) & 0xF)
+            s2 = int((self.extended_data_3 >>  8) & 0xF)
+            s3 = int((self.extended_data_3 >>  4) & 0xF)
+            s4 = int((self.extended_data_3 >>  0) & 0xF)
+            f0 = int((self.extended_data_4 >> 28) & 0xF)
+            f1 = int((self.extended_data_4 >> 24) & 0xF)
+            f2 = int((self.extended_data_4 >> 20) & 0xF)
+            f3 = int((self.extended_data_4 >> 16) & 0xF)
+            f4 = int((self.extended_data_4 >>  8) & 0xF)
+            crcf = int(self.extended_data_4 & 0xFFFF)
             crcf = (crcf & 0xF) << 8 | ((crcf >> 8) & 0xF)
-            crcc = _crcc((self.extendedData3 << 16) | ((self.extendedData3 >> 16) & 0xFF), 48)
-            fields['vlbaTimeCode'] = j0*1e7+j1*1e6+j2*1e5 + s0*1e4+s1*1e3+s2*1e2+s3*1e1+s4*1e0 + f0/1e1+f1/1e2+f2/1e3+f3/1e4+f4/1e5
-            fields['vlbaTimeCodeValue'] = True if crcc == crcf else False
+            crcc = _crcc((self.extended_data_3 << 16) | ((self.extended_data_3 >> 16) & 0xFF), 48)
+            fields['vlba_timecode'] = j0*1e7+j1*1e6+j2*1e5 + s0*1e4+s1*1e3+s2*1e2+s3*1e1+s4*1e0 + f0/1e1+f1/1e2+f2/1e3+f3/1e4+f4/1e5
+            fields['vlba_timecode_value'] = True if crcc == crcf else False
             
         else:
             raise RuntimeError("Unknown extended user data version: %i" % edv)
             
         return fields
         
-    def getSampleRate(self):
+    def get_sample_rate(self):
         """
         Return the sample rate of the data in samples/second.
         """
         
-        return self.sampleRate*1.0
+        return self.sample_rate*1.0
         
-    def getCentralFreq(self):
+    def get_central_freq(self):
         """
         Function to get the central frequency of the VDIF data in Hz.
         """
         
-        return self.centralFreq*1.0
+        return self.central_freq*1.0
 
 
 class FrameData(object):
@@ -292,42 +292,42 @@ class Frame(object):
             
         self.valid = True
 
-    def parseID(self):
+    def parse_id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parseID 
+        Convenience wrapper for the Frame.FrameHeader.parse_id 
         function.
         """
         
-        return self.header.parseID()
+        return self.header.parse_id()
         
-    def parseExtendedUserData(self):
+    def parse_extended_user_data(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.parseExtendedUserData
+        Convenience wrapper for the Frame.FrameHeader.parse_extended_user_data
         function.
         """
         
-        return self.header.parseExtendedUserData()
+        return self.header.parse_extended_user_data()
         
-    def getTime(self):
+    def get_time(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getTime function.
-        """
-        
-        return self.header.getTime()
-        
-    def getSampleRate(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.getSampleRate function.
+        Convenience wrapper for the Frame.FrameHeader.get_time function.
         """
         
-        return self.header.getSampleRate()
+        return self.header.get_time()
         
-    def getCentralFreq(self):
+    def get_sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getCentralFreq function.
+        Convenience wrapper for the Frame.FrameHeader.get_sample_rate function.
         """
         
-        return self.header.getCentralFreq()
+        return self.header.get_sample_rate()
+        
+    def get_central_freq(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.get_central_freq function.
+        """
+        
+        return self.header.get_central_freq()
         
     def __add__(self, y):
         """
@@ -379,9 +379,9 @@ class Frame(object):
     #	tag is equal to a particular value.
     #	"""
     #	
-    #	tX = self.data.timeTag
+    #	tX = self.data.timetag
     #	try:
-    #		tY = y.data.timeTag
+    #		tY = y.data.timetag
     #	except AttributeError:
     #		tY = y
     #	
@@ -396,9 +396,9 @@ class Frame(object):
     #	tag is not equal to a particular value.
     #	"""
     #	
-    #	tX = self.data.timeTag
+    #	tX = self.data.timetag
     #	try:
-    #		tY = y.data.timeTag
+    #		tY = y.data.timetag
     #	except AttributeError:
     #		tY = y
     #	
@@ -413,9 +413,9 @@ class Frame(object):
     #	second frame or if the time tag is greater than a particular value.
     #	"""
     #	
-    #	tX = self.data.timeTag
+    #	tX = self.data.timetag
     #	try:
-    #		tY = y.data.timeTag
+    #		tY = y.data.timetag
     #	except AttributeError:
     #		tY = y
     #	
@@ -431,9 +431,9 @@ class Frame(object):
     #	value.
     #	"""
     #	
-    #	tX = self.data.timeTag
+    #	tX = self.data.timetag
     #	try:
-    #		tY = y.data.timeTag
+    #		tY = y.data.timetag
     #	except AttributeError:
     #		tY = y
     #	
@@ -448,9 +448,9 @@ class Frame(object):
     #	second frame or if the time tag is greater than a particular value.
     #	"""
     #	
-    #	tX = self.data.timeTag
+    #	tX = self.data.timetag
     #	try:
-    #		tY = y.data.timeTag
+    #		tY = y.data.timetag
     #	except AttributeError:
     #		tY = y
     #	
@@ -466,9 +466,9 @@ class Frame(object):
     #	value.
     #	"""
     #	
-    #	tX = self.data.timeTag
+    #	tX = self.data.timetag
     #	try:
-    #		tY = y.data.timeTag
+    #		tY = y.data.timetag
     #	except AttributeError:
     #		tY = y
     #	
@@ -483,8 +483,8 @@ class Frame(object):
     #	sorting things.
     #	"""
     #	
-    #	tX = self.data.timeTag
-    #	tY = y.data.timeTag
+    #	tX = self.data.timetag
+    #	tY = y.data.timetag
     #	if tY > tX:
     #		return -1
     #	elif tX > tY:
@@ -493,7 +493,7 @@ class Frame(object):
     #		return 0
 
 
-def readGUPPIHeader(filehandle):
+def read_guppi_header(filehandle):
     """
     Read in a GUPPI header at the start of a VDIF file from the VLA.  The 
     contents of the header are returned as a dictionary.
@@ -525,7 +525,7 @@ def readGUPPIHeader(filehandle):
     return header
 
 
-def readFrame(filehandle, sampleRate=0.0, centralFreq=0.0, Verbose=False):
+def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, Verbose=False):
     """
     Function to read in a single VDIF frame (header+data) and store the 
     contents as a Frame object.  This function wraps the _readerHeader and 
@@ -534,17 +534,17 @@ def readFrame(filehandle, sampleRate=0.0, centralFreq=0.0, Verbose=False):
     
     # New _vdif method
     try:
-        newFrame = readVDIF(filehandle, Frame(), centralFreq=centralFreq, sampleRate=sampleRate)
-    except gsyncError:
+        newFrame = readVDIF(filehandle, Frame(), central_freq=central_freq, sample_rate=sample_rate)
+    except gSyncError:
         mark = filehandle.tell()
-        raise syncError(location=mark)
-    except geofError:
-        raise eofError
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
         
     return newFrame
 
 
-def getFrameSize(filehandle, nFrames=None):
+def get_frame_size(filehandle, nFrames=None):
     """
     Find out what the frame size is in bytes from a single observation.
     """
@@ -553,15 +553,15 @@ def getFrameSize(filehandle, nFrames=None):
     fhStart = filehandle.tell()
 
     # Read in one frame
-    newFrame = readFrame(filehandle)
+    newFrame = read_frame(filehandle)
     
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
     
-    return newFrame.header.frameLength*8
+    return newFrame.header.frame_length*8
 
 
-def getThreadCount(filehandle):
+def get_thread_count(filehandle):
     """
     Find out how many thrads are present by examining the first 1024
     records.  Return the number of threads found.
@@ -571,7 +571,7 @@ def getThreadCount(filehandle):
     fhStart = filehandle.tell()
     
     # Get the frame size
-    FrameSize = getFrameSize(filehandle)
+    frame_size = get_frame_size(filehandle)
     
     # Build up the list-of-lists that store ID codes and loop through 1024
     # frames.  In each case, parse pull the thread ID and append the thread 
@@ -580,14 +580,14 @@ def getThreadCount(filehandle):
     i = 0
     while i < 1024:
         try:
-            cFrame = readFrame(filehandle)
-        except syncError:
-            filehandle.seek(FrameSize, 1)
+            cFrame = read_frame(filehandle)
+        except SyncError:
+            filehandle.seek(frame_size, 1)
             continue
-        except eofError:
+        except EOFError:
             break
             
-        cID = cFrame.header.threadID
+        cID = cFrame.header.thread_id
         if cID not in threads:
             threads.append(cID)
         i += 1
@@ -599,7 +599,7 @@ def getThreadCount(filehandle):
     return len(threads)
 
 
-def getFramesPerSecond(filehandle):
+def get_frames_per_second(filehandle):
     """
     Find out the number of frames per second in a file by watching how the 
     headers change.  Returns the number of frames in a second.
@@ -609,25 +609,25 @@ def getFramesPerSecond(filehandle):
     fhStart = filehandle.tell()
     
     # Get the frame size
-    FrameSize = getFrameSize(filehandle)
+    frame_size = get_frame_size(filehandle)
     
     # Get the number of threads
-    nThreads = getThreadCount(filehandle)
+    nThreads = get_thread_count(filehandle)
     
     # Get the current second counts for all threads
     ref = {}
     i = 0
     while i < nThreads:
         try:
-            cFrame = readFrame(filehandle)
-        except syncError:
-            filehandle.seek(FrameSize, 1)
+            cFrame = read_frame(filehandle)
+        except SyncError:
+            filehandle.seek(frame_size, 1)
             continue
-        except eofError:
+        except EOFError:
             break
             
-        cID = cFrame.header.threadID
-        cSC = cFrame.header.secondsFromEpoch
+        cID = cFrame.header.thread_id
+        cSC = cFrame.header.seconds_from_epoch
         ref[cID] = cSC
         i += 1
         
@@ -637,17 +637,17 @@ def getFramesPerSecond(filehandle):
     while True:
         ## Get a frame
         try:
-            cFrame = readFrame(filehandle)
-        except syncError:
-            filehandle.seek(FrameSize, 1)
+            cFrame = read_frame(filehandle)
+        except SyncError:
+            filehandle.seek(frame_size, 1)
             continue
-        except eofError:
+        except EOFError:
             break
             
         ## Pull out the relevant metadata
-        cID = cFrame.header.threadID
-        cSC = cFrame.header.secondsFromEpoch
-        cFC = cFrame.header.frameInSecond
+        cID = cFrame.header.thread_id
+        cSC = cFrame.header.seconds_from_epoch
+        cFC = cFrame.header.frame_in_second
         
         ## Figure out what to do with it
         if cSC == ref[cID]:
@@ -683,7 +683,7 @@ def getFramesPerSecond(filehandle):
     return best
 
 
-def getSampleRate(filehandle):
+def get_sample_rate(filehandle):
     """
     Find and return the sample rate in Hz by looking at how many frames 
     there are per second and how many samples there are in a frame.
@@ -693,14 +693,14 @@ def getSampleRate(filehandle):
     fhStart = filehandle.tell()
     
     # Get the number of frames per second
-    nFramesSecond = getFramesPerSecond(filehandle)
+    nFramesSecond = get_frames_per_second(filehandle)
     
     # Read in a frame
-    cFrame = readFrame(filehandle)
+    cFrame = read_frame(filehandle)
     
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
     
     # Get the sample rate
-    sampleRate = cFrame.data.data.shape[-1] * nFramesSecond
-    return float(sampleRate)
+    sample_rate = cFrame.data.data.shape[-1] * nFramesSecond
+    return float(sample_rate)

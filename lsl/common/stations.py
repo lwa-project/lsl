@@ -21,7 +21,7 @@ import ephem
 import struct
 
 from lsl.astro import DJD_OFFSET
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 from lsl.common import mcs, mcsADP
 from lsl.common.constants import c as speedOfLight
 from lsl.misc.mathutil import to_dB, from_dB
@@ -29,8 +29,8 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '2.2'
 __revision__ = '$Rev$'
-__all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
-        'parseSSMIF', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'getFullStations', 
+__all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
+        'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations', 
         'PrototypeStation', 'prototypeSystem', 
         '__version__', '__revision__', '__all__']
 
@@ -38,7 +38,7 @@ __all__ = ['geo2ecef', 'ecef2geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cab
 _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
 
 
-def geo2ecef(lat, lon, elev):
+def geo_to_ecef(lat, lon, elev):
     """
     Convert latitude (rad), longitude (rad), elevation (m) to earth-
     centered, earth-fixed coordinates.
@@ -55,7 +55,7 @@ def geo2ecef(lat, lon, elev):
     return (x, y, z)
 
 
-def ecef2geo(x, y, z):
+def ecef_to_geo(x, y, z):
     """
     Convert earth-centered, earth-fixed coordinates to (rad), longitude 
     (rad), elevation (m) using Bowring's method.
@@ -110,7 +110,8 @@ class LWAStationBase(object):
             self.antennas = []
         else:
             self.antennas = antennas
-            
+        self._sort_antennas()
+        
         if interface is None:
             self.interface = LSLInterface()
         else:
@@ -122,7 +123,10 @@ class LWAStationBase(object):
     def __reduce__(self):
         return (LWAStationBase, (self.name, self.id, self.antennas, self.interface))
         
-    def _sortAntennas(self, attr='digitizer'):
+    def __getitem__(self, *args):
+        return self.antennas.__getitem__(*args)
+        
+    def _sort_antennas(self, attr='digitizer'):
         """
         Sort the antennas list by the specified attribute.  The default
         attribute is the digitizer number.
@@ -148,35 +152,35 @@ class LWAStation(ephem.Observer, LWAStationBase):
     Object to hold information about the a LWA station.  This object can
     create a ephem.Observer representation of itself and identify which stands
     were in use at a given time.  Stores station:
-    * Name (name)
-    * ID code (id)
-    * Latitiude in radians [but initialized as degrees] (N is positive, lat)
-    * Longitude in radians [but initialized as degrees] (W is negative, long)
-    * Elevation in meters (elev)
-    * List of Antenna instances (antennas)
+     * Name (name)
+     * ID code (id)
+     * Latitiude in radians [but initialized as degrees] (N is positive, lat)
+     * Longitude in radians [but initialized as degrees] (W is negative, long)
+     * Elevation in meters (elev)
+     * List of Antenna instances (antennas)
     
     LWAStation provides several functional attributes for dealing with the 
     station's location on Earth.  These include:
-    * getObserver: Return an ephem.Observer instance representing the station
-    * getAIPYLocation: Return a tuple for setting the location of an AIPY
-        AntennaArray instance
-    * getGeocentricLocation: Return a tuple of the EC-EF coordinates of the 
-        station
-    * getECITransform: Return a 3x3 transformation matrix to convert antenna
-        positions to ECI coordinates
-    * getECIInverseTransform: Return a 3x3 transformation matrix to convert antenna
-        positions from ECI coordinates
-    * getENZOffset: Return the east, north, and vertical offsets to a point on
-        the surface of the Earth
-    * getPointingAndDistance: Return the pointing direction and distance to 
-        another location on the surface of the Earth
+     * get_observer: Return an ephem.Observer instance representing the station
+     * getAIPYLocation: Return a tuple for setting the location of an AIPY
+                        AntennaArray instance
+     * get_geocentric_location: Return a tuple of the EC-EF coordinates of the 
+                                station
+     * get_eci_transform: Return a 3x3 transformation matrix to convert antenna
+                          positions to ECI coordinates
+     * get_eci_inverse_transform: Return a 3x3 transformation matrix to convert antenna
+                                 positions from ECI coordinates
+     * get_enz_offset: Return the east, north, and vertical offsets to a point on
+                       the surface of the Earth
+     * get_pointing_and_distance: Return the pointing direction and distance to 
+                                  another location on the surface of the Earth
         
     LWAStation also provides several functional attributes for dealing with
     the station's antennas.  These include:
-    * getAntennas:  Return a list of antennas
-    * getStands: Return a list of stands
-    * getPols:  Return a list of polarizations
-    * getCables: Return a list of cables
+     * get_antennas:  Return a list of antennas
+     * get_stands: Return a list of stands
+     * get_pols:  Return a list of polarizations
+     * get_cables: Return a list of cables
     
     .. versionchanged:: 1.2.0
         Added a new 'interface' attribute which provides referenves to various modules
@@ -188,7 +192,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         Added additional functions for dealing with other locations.
         
-        Changed getECEFTransform() to getECITransform() to make the function name
+        Changed getECEFTransform() to get_eci_transform() to make the function name
         consistent with its purpose.
     """
     
@@ -217,7 +221,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         body.compute(self)
         
-    def getObserver(self, date=None, JD=False):
+    def get_observer(self, date=None, JD=False):
         """
         Return a ephem.Observer object for this site.
         """
@@ -244,14 +248,14 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         return (self.lat, self.long, self.elev)
         
-    def getGeocentricLocation(self):
+    def get_geocentric_location(self):
         """
         Return a tuple with earth-centered, earth-fixed coordinates for the station.
         """
         
-        return geo2ecef(self.lat, self.long, self.elev)
+        return geo_to_ecef(self.lat, self.long, self.elev)
         
-    def getECITransform(self):
+    def get_eci_transform(self):
         """
         Return a 3x3 transformation matrix that converts a baseline in 
         [east, north, elevation] to earth-centered inertial coordinates
@@ -263,7 +267,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
                         [1.0, 0.0,                  0.0], 
                         [0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
                         
-    def getECIInverseTransform(self):
+    def get_eci_inverse_transform(self):
         """
         Return a 3x3 transformation matrix that converts a baseline in 
         earth-centered inertial coordinates [x, y, z] to [east, north, 
@@ -274,7 +278,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
                         [-numpy.sin(self.lat), 0.0, numpy.cos(self.lat)],
                         [ numpy.cos(self.lat), 0.0, numpy.sin(self.lat)]])
                         
-    def getENZOffset(self, locTo):
+    def get_enz_offset(self, locTo):
         """
         Given another location on the surface of the Earth, either as a 
         LWAStation instance or a three-element tuple of latitude (deg.), 
@@ -282,11 +286,11 @@ class LWAStation(ephem.Observer, LWAStationBase):
         in meter along the east, north, and vertical directions.
         """
         
-        ecefFrom = self.getGeocentricLocation()
+        ecefFrom = self.get_geocentric_location()
         try:
-            ecefTo = locTo.getGeocentricLocation()
+            ecefTo = locTo.get_geocentric_location()
         except AttributeError:
-            ecefTo = geo2ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
+            ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
             
         ecefFrom = numpy.array(ecefFrom)
         ecefTo = numpy.array(ecefTo)
@@ -303,7 +307,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         return enz
         
-    def getPointingAndDistance(self, locTo):
+    def get_pointing_and_distance(self, locTo):
         """
         Given another location on the surface of the Earth, either as a 
         LWAStation instance or a three-element tuple of latitude (deg.), 
@@ -311,14 +315,14 @@ class LWAStation(ephem.Observer, LWAStationBase):
         elevation in radians and distance in meters to the location.
         
         .. versionchanged:: 1.0.1
-            Renamed from getPointingAndDirection to getPointingAndDistance
+            Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = self.getGeocentricLocation()
+        ecefFrom = self.get_geocentric_location()
         try:
-            ecefTo = locTo.getGeocentricLocation()
+            ecefTo = locTo.get_geocentric_location()
         except AttributeError:
-            ecefTo = geo2ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
+            ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
             
         ecefFrom = numpy.array(ecefFrom)
         ecefTo = numpy.array(ecefTo)
@@ -335,44 +339,40 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         return az, el, d
         
-    def getAntennas(self):
+    def get_antennas(self):
         """
         Return the list of Antenna instances for the station, sorted by 
         digitizer number.
         """
         
-        # Sort and return
-        self._sortAntennas()
+        # Return
         return self.antennas
         
-    def getStands(self):
+    def get_stands(self):
         """
         Return a list of Stand instances for each antenna, sorted by 
         digitizer number.
         """
         
-        # Sort and return
-        self._sortAntennas()
+        # Return
         return [ant.stand for ant in self.antennas]
     
-    def getPols(self):
+    def get_pols(self):
         """
         Return a list of polarization (0 == N-S; 1 == E-W) for each antenna, 
         sorted by digitizer number.
         """
         
-        # Sort and return
-        self._sortAntennas()
+        # Return
         return [ant.pol for ant in self.antennas]
         
-    def getCables(self):
+    def get_cables(self):
         """
         Return a list of Cable instances for each antenna, sorted by
         digitizer number.
         """
         
-        # Sort and return
-        self._sortAntennas()
+        # Return
         return [ant.cable for ant in self.antennas]
 
 
@@ -380,25 +380,25 @@ class LWAStation(ephem.Observer, LWAStationBase):
 class Antenna(object):
     """
     Object to store the information about an antenna.  Stores antenna:
-    * ID number (id)
-    * ARX instance the antenna is attached to (arx)
-    * DP1/ROACH board number (board)
-    * DP1/ROACH  digitizer number (digitizer)
-    * DP/ADP rack input connector (input)
-    * Stand instance the antenna is part of (stand)
-    * Polarization (0 == N-S; pol)
-    * Antenna vertical mis-alignment in degrees (theta)
-    * Antenna rotation mis-alignment in degrees (phi)
-    * Fee instance the antenna is attached to (fee)
-    * Port of the FEE used for the antenna (feePort)
-    * Cable instance used to connect the antenna (cable)
-    * Status of the antenna (status)
+     * ID number (id)
+     * ARX instance the antenna is attached to (arx)
+     * DP1/ROACH board number (board)
+     * DP1/ROACH  digitizer number (digitizer)
+     * DP/ADP rack input connector (input)
+     * Stand instance the antenna is part of (stand)
+     * Polarization (0 == N-S; pol)
+     * Antenna vertical mis-alignment in degrees (theta)
+     * Antenna rotation mis-alignment in degrees (phi)
+     * Fee instance the antenna is attached to (fee)
+     * Port of the FEE used for the antenna (feePort)
+     * Cable instance used to connect the antenna (cable)
+     * Status of the antenna (status)
     
     Status codes are:
-    * 0 == Not installed
-    * 1 == Bad
-    * 2 == Suspect, possibly bad
-    * 3 == OK
+     * 0 == Not installed
+     * 1 == Bad
+     * 2 == Suspect, possibly bad
+     * 3 == OK
     
     .. versionchanged:: 1.0.0
         Added an attribute to hold the DP rack input connector label.
@@ -471,7 +471,7 @@ class Antenna(object):
         # Return
         return (freq, ime)
         
-    def getStatus(self):
+    def get_status(self):
         """
         Return the combined antenna + FEE status as a two digit number 
         with the first digit representing the antenna status and the 
@@ -486,13 +486,13 @@ class Stand(object):
     """
     Object to store the information (location and ID) about a stand.  
     Stores stand:
-    * ID number (id)
-    * Position relative to the center stake in meters (x,y,z)
+     * ID number (id)
+     * Position relative to the center stake in meters (x,y,z)
     
     The x, y, and z positions can also be accessed through subscripts:
-    Stand[0] = x
-    Stand[1] = y
-    Stand[2] = z
+     Stand[0] = x
+     Stand[1] = y
+     Stand[2] = z
     
     .. versionchanged:: 1.0.0
         Added the option to get the positions via subscripts.
@@ -569,17 +569,17 @@ class Stand(object):
 class FEE(object):
     """
     Object to store the information about a FEE.  Stores FEE:
-    * ID name (id)
-    * ID number (idNumber)
-    * Gain of port 1 (gain1)
-    * Gain of part 2 (gain2)
-    * Status (status)
+     * ID name (id)
+     * ID number (idNumber)
+     * Gain of port 1 (gain1)
+     * Gain of part 2 (gain2)
+     * Status (status)
     
     Status codes are:
-    * 0 == Not installed
-    * 1 == Bad
-    * 2 == Suspect, possibly bad
-    * 3 == OK
+     * 0 == Not installed
+     * 1 == Bad
+     * 2 == Suspect, possibly bad
+     * 3 == OK
     """
     
     def __init__(self, id, idNumber, gain1=0, gain2=0, status=0):
@@ -630,15 +630,15 @@ class FEE(object):
 class Cable(object):
     """
     Object to store information about a cable.  Stores cable:
-    * ID name (id)
-    * Length in meters (length)
-    * Velocity factor (fractional, vf)
-    * Dispersive delay (seconds, dd)
-    * Gain term that goes as the square root of frequency (a0)
-    * Gain term that goes as frequency (a1)
-    * Gain term reference frequency (Hz, aFreq)
-    * Cable length stretch factor (stretch)
-    * Clock offset (seconds, clockOffset)
+     * ID name (id)
+     * Length in meters (length)
+     * Velocity factor (fractional, vf)
+     * Dispersive delay (seconds, dd)
+     * Gain term that goes as the square root of frequency (a0)
+     * Gain term that goes as frequency (a1)
+     * Gain term reference frequency (Hz, aFreq)
+     * Cable length stretch factor (stretch)
+     * Clock offset (seconds, clockOffset)
     
     The object also as a functional attribute named 'delay' that computes the
     cable delay for a particular frequency or collection of frequencies in 
@@ -670,14 +670,14 @@ class Cable(object):
         else:
             return 0
             
-    def setClockOffset(self, offset):
+    def set_clock_offset(self, offset):
         """
         Add a clock offset (in seconds) to the cable model.
         """
         
         self.clockOffset = float(offset)
         
-    def clearClockOffset(self):
+    def clear_clock_offset(self):
         """
         Clear the clock offset of the cable model.
         """
@@ -759,11 +759,11 @@ class Cable(object):
 class ARX(object):
     """
     Object to store information about a ARX board/channel combination.  Stores ARX:
-    * ID name (id)
-    * Channel number (channel; 1-16)
-    * ASP channel number (aspChannel; 1-520)
-    * ASP rack input connector label (input)
-    * ASP rack output connector label (output)
+     * ID name (id)
+     * Channel number (channel; 1-16)
+     * ASP channel number (aspChannel; 1-520)
+     * ASP rack input connector label (input)
+     * ASP rack output connector label (output)
     
     The object also as a functional attribute named 'delay' that computes the
     cable delay for a particular frequency or collection of frequencies in 
@@ -795,11 +795,11 @@ class ARX(object):
         LWA-SV, data from the production tests are used.
         
         Filter options are:
-          * 0 or 'split'
-          * 1 or 'full'
-          * 2 or 'reduced'
-          * 4 or 'split@3MHz'
-          * 5 of 'full@3MHz'
+         * 0 or 'split'
+         * 1 or 'full'
+         * 2 or 'reduced'
+         * 4 or 'split@3MHz'
+         * 5 of 'full@3MHz'
         
         .. note:: If 'split@3MHz' or 'full@3MHz' are requested for LWA1, the
                   values for 'split' and 'full' are returned instead.
@@ -861,11 +861,11 @@ class LSLInterface(object):
     """
     Object to store information about how to work with the station in LSL.
     This includes names for the:
-    * Backend module to use (backend)
-    * MCS module to use (mcs)
-    * SDF module to use (sdf)
-    * Metadata module to use (metabundle)
-    * SDM module to use (sdm)
+     * Backend module to use (backend)
+     * MCS module to use (mcs)
+     * SDF module to use (sdf)
+     * Metadata module to use (metabundle)
+     * SDM module to use (sdm)
     
     .. versionadded:: 1.2.0
     """
@@ -884,7 +884,7 @@ class LSLInterface(object):
     def __reduce__(self):
         return (LSLInterface, (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm))
         
-    def getModule(self, which):
+    def get_module(self, which):
         value = getattr(self, which)
         if value is None:
             raise RuntimeError("Unknown module for interface type '%s'" % which)
@@ -893,7 +893,7 @@ class LSLInterface(object):
         return tempModule
 
 
-def __parseTextSSMIF(filename):
+def _parse_ssmif_text(filename):
     """
     Given a human-readable (text) SSMIF file and return a collection of
     variables via locals() containing the files data.
@@ -1401,7 +1401,7 @@ def __parseTextSSMIF(filename):
     return locals()
 
 
-def __parseBinarySSMIF(filename):
+def _parse_ssmif_binary(filename):
     """
     Given a binary packed SSMIF file and return a collection of
     variables via locals() containing the files data.
@@ -1420,8 +1420,8 @@ def __parseBinarySSMIF(filename):
     else:
         ## DP
         mode = mcs
-    bssmif = mode.parseCStruct(mode.SSMIF_STRUCT, charMode='int', endianness='little')
-    bsettings = mode.parseCStruct(mode.STATION_SETTINGS_STRUCT, endianness='little')
+    bssmif = mode.parse_c_struct(mode.SSMIF_STRUCT, char_mode='int', endianness='little')
+    bsettings = mode.parse_c_struct(mode.STATION_SETTINGS_STRUCT, endianness='little')
     
     fh.readinto(bssmif)
     
@@ -1448,7 +1448,7 @@ def __parseBinarySSMIF(filename):
     #
     # FEE, Cable, & SEP Data
     #
-    feeID   = mcs.single2multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
+    feeID   = mcs.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
     feeID   = [''.join([k for k in i if k != '\x00']) for i in feeID]
     feeStat = list(bssmif.iFEEStat)
     feeDesi = list(bssmif.eFEEDesi)
@@ -1457,7 +1457,7 @@ def __parseBinarySSMIF(filename):
     feeAnt1 = list(bssmif.iFEEAnt1)
     feeAnt2 = list(bssmif.iFEEAnt2)
     
-    rpdID   = mcs.single2multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
+    rpdID   = mcs.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
     rpdID   = [''.join([k for k in i if k != '\x00']) for i in rpdID]
     rpdStat = list(bssmif.iRPDStat)
     rpdDesi = list(bssmif.eRPDDesi)
@@ -1470,7 +1470,7 @@ def __parseBinarySSMIF(filename):
     rpdStr  = list(bssmif.fRPDStr)
     rpdAnt  = list(bssmif.iRPDAnt)
     
-    sepCbl  = mcs.single2multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
+    sepCbl  = mcs.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
     sepCbl  = [''.join([k for k in i if k != '\x00']) for i in sepCbl]
     sepLeng = list(bssmif.fSEPLeng)
     sepDesi = list(bssmif.eSEPDesi)
@@ -1481,38 +1481,38 @@ def __parseBinarySSMIF(filename):
     # ARX (ARB) Data
     #
     nChanARX = bssmif.nARBCH
-    arxID    = mcs.single2multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
+    arxID    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
     arxID    = [''.join([k for k in i if k != '\x00']) for i in arxID]
     arxSlot  = list(bssmif.iARBSlot)
     arxDesi  = list(bssmif.eARBDesi)
     arxRack  = list(bssmif.iARBRack)
     arxPort  = list(bssmif.iARBPort)
-    arxStat  = mcs.single2multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
-    arxAnt   = mcs.single2multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
-    arxIn    = mcs.single2multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
+    arxStat  = mcs.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
+    arxAnt   = mcs.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
+    arxIn    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
     arxIn    = [[''.join(i) for i in j] for j in arxIn]
-    arxOut   = mcs.single2multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
+    arxOut   = mcs.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
     arxOUt   = [[''.join(i) for i in j] for j in arxOut]
     
     try:
         #
         # DP 1 & 2 Data
         #
-        dp1ID   = mcs.single2multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
+        dp1ID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
         dp1ID   = [''.join([k for k in i if k != '\x00']) for i in dp1ID]
-        dp1Slot = mcs.single2multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
+        dp1Slot = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
         dp1Slot = [''.join([k for k in i if k != '\x00']) for i in dp1Slot]
         dp1Desi = list(bssmif.eDP1Desi)
         dp1Stat = list(bssmif.eDP1Stat)
-        dp1InR  = mcs.single2multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
+        dp1InR  = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
         dp1InR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InR]
-        dp1InC  = mcs.single2multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
+        dp1InC  = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
         dp1InC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InC]
-        dp1Ant  = mcs.single2multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
+        dp1Ant  = mcs.flat_to_multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
         
-        dp2ID   = mcs.single2multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
+        dp2ID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
         dp2ID   = [''.join([k for k in i if k != '\x00']) for i in dp2ID]
-        dp2Slot = mcs.single2multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
+        dp2Slot = mcs.flat_to_multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
         dp2Slot = [''.join([k for k in i if k != '\x00']) for i in dp2Slot]
         dp2Stat = list(bssmif.eDP2Stat)
         dp2Desi = list(bssmif.eDP2Desi)
@@ -1520,21 +1520,21 @@ def __parseBinarySSMIF(filename):
         #
         # ROACH & Server Data
         #
-        roachID   = mcs.single2multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
+        roachID   = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
         roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-        roachSlot = mcs.single2multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
+        roachSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
         roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
         roachDesi = list(bssmif.eRoachDesi)
         roachStat = list(bssmif.eRoachStat)
-        roachInR  = mcs.single2multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
+        roachInR  = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
         roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-        roachInC  = mcs.single2multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
+        roachInC  = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
         roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-        roachAnt  = mcs.single2multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
+        roachAnt  = mcs.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
         
-        serverID   = mcs.single2multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+        serverID   = mcs.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
         serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-        serverSlot = mcs.single2multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+        serverSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
         serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
         serverStat = list(bssmif.eServerStat)
         serverDesi = list(bssmif.eServerDesi)
@@ -1543,10 +1543,10 @@ def __parseBinarySSMIF(filename):
     # DR Data
     #
     drStat = list(bssmif.eDRStat)
-    drID   = mcs.single2multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
+    drID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
     drID   = [''.join([k for k in i if k != '\x00']) for i in drID]
     drShlf = [0 for i in xrange(bssmif.nDR)]
-    drPC   = mcs.single2multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
+    drPC   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
     drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
     drDP   = list(bssmif.iDRDP)
     
@@ -1557,7 +1557,7 @@ def __parseBinarySSMIF(filename):
     return locals()
 
 
-def parseSSMIF(filename):
+def parse_ssmif(filename):
     """
     Given a SSMIF file, return a fully-filled LWAStation instance.  This function
     supports both human-readable files (filenames with '.txt' extensions) or 
@@ -1569,9 +1569,9 @@ def parseSSMIF(filename):
     
     # Read in the ssmif to a dictionary of variables
     if ext == '.dat':
-        ssmifDataDict = __parseBinarySSMIF(filename)
+        ssmifDataDict = _parse_ssmif_binary(filename)
     elif ext == '.txt':
-        ssmifDataDict = __parseTextSSMIF(filename)
+        ssmifDataDict = _parse_ssmif_text(filename)
     else:
         raise ValueError("Unknown file extension '%s', cannot tell if it is text or binary" % ext)
     
@@ -1732,21 +1732,21 @@ def parseSSMIF(filename):
 
 # LWAVL
 _ssmifvl = os.path.join(dataPath, 'lwa1-ssmif.txt')
-lwavl = parseSSMIF(_ssmifvl)
+lwavl = parse_ssmif(_ssmifvl)
 
 # LWAVL is also known as LWA1
 lwa1 = lwavl
 
 # LWANA
 _ssmifna = os.path.join(dataPath, 'lwana-ssmif.txt')
-lwana = parseSSMIF(_ssmifna)
+lwana = parse_ssmif(_ssmifna)
 
 # LWASV
 _ssmifsv = os.path.join(dataPath, 'lwasv-ssmif.txt')
-lwasv = parseSSMIF(_ssmifsv)
+lwasv = parse_ssmif(_ssmifsv)
 
 
-def getFullStations():
+def get_full_stations():
     """
     Function to return a list of full stations.
     
@@ -1768,7 +1768,7 @@ class PrototypeStation(LWAStation):
         
         super(PrototypeStation, self).__init__('%s prototype' % base.name, pLat, pLng, base.elev, id='PS', antennas=copy.deepcopy(base.antennas))
     
-    def __standsList(self, date):
+    def _stand_list(self, date):
         """
         For a given datetime object, return a list of two-element tuples (stand ID 
         and polarization) for what antennas are connected to what digitizers.
@@ -1795,7 +1795,7 @@ class PrototypeStation(LWAStation):
             return [(183,0), (183,1), (200,0), (200,1), (35,0), (35,1), (108,0), (108,1), (99,0), (99,1), 
                     (97,0), (97,1), (8,0), (8,1), (168,0), (168,1), (129,0), (129,1), (155,0), (155,1)]
         
-    def __filterAntennas(self, date):
+    def _filter_antennas(self, date):
         """
         For a given datetime object, return a list of Antenna instances with the 
         correct digitizer mappings.
@@ -1811,7 +1811,7 @@ class PrototypeStation(LWAStation):
                 return 0
         
         # Get the list of stand,polarization tuples that we are looking for
-        stdpolList = self.__standsList(date)
+        stdpolList = self._stand_list(date)
         
         # Build up the list of actual antennas connected to the prototype system 
         # and fix the digitizer numbers
@@ -1830,43 +1830,43 @@ class PrototypeStation(LWAStation):
             protoAnts.sort(key=cmp_to_key(sortFnc))
         return protoAnts
     
-    def getAntennas(self, date):
+    def get_antennas(self, date):
         """Return the list of Antenna instances for the station, sorted by 
         digitizer number, for a given DateTime instance.
         """
         
         # Sort and return
-        protoAnts = self.__filterAntennas(date)
+        protoAnts = self._filter_antennas(date)
         return protoAnts
         
-    def getStands(self, date):
+    def get_stands(self, date):
         """
         Return a list of Stand instances for each antenna, sorted by 
         digitizer number, for a given DateTime instance.
         """
         
         # Sort and return
-        protoAnts = self.__filterAntennas(date)
+        protoAnts = self._filter_antennas(date)
         return [ant.stand for ant in protoAnts]
     
-    def getPols(self, date):
+    def get_pols(self, date):
         """
         Return a list of polarization (0 == N-S; 1 == E-W) for each antenna, 
         sorted by digitizer number, for a given DateTime instance.
         """
         
         # Sort and return
-        protoAnts = self.__filterAntennas(date)
+        protoAnts = self._filter_antennas(date)
         return [ant.pol for ant in protoAnts]
         
-    def getCables(self, date):
+    def get_cables(self, date):
         """
         Return a list of Cable instances for each antenna, sorted by
         digitizer number, for a given DateTime instance.
         """
         
         # Sort and return
-        protoAnts = self.__filterAntennas(date)
+        protoAnts = self._filter_antennas(date)
         return [ant.cable for ant in protoAnts]
 
 

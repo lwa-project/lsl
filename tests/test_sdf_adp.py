@@ -20,7 +20,7 @@ try:
 except ImprotError:
     import StringIO
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.common import sdfADP
 from lsl.common.stations import lwa1, lwasv
 
@@ -54,7 +54,7 @@ class sdf_adp_tests(unittest.TestCase):
     ### General ###
     
     def test_time(self):
-        """Test the sdfADP.parseTime() function."""
+        """Test the sdfADP.parse_time() function."""
         
         _UTC = pytz.utc
         _EST = pytz.timezone('US/Eastern')
@@ -66,32 +66,32 @@ class sdf_adp_tests(unittest.TestCase):
         s4 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
         s5 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567123))
         
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s4))
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s5))
-        self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s3))
-        self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s4))
-        self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s5))
-        self.assertEqual(sdfADP.parseTime(s3), sdfADP.parseTime(s4))
-        self.assertEqual(sdfADP.parseTime(s3), sdfADP.parseTime(s5))
-        self.assertEqual(sdfADP.parseTime(s4), sdfADP.parseTime(s5))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s2))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s3))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s4))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s5))
+        self.assertEqual(sdfADP.parse_time(s2), sdfADP.parse_time(s3))
+        self.assertEqual(sdfADP.parse_time(s2), sdfADP.parse_time(s4))
+        self.assertEqual(sdfADP.parse_time(s2), sdfADP.parse_time(s5))
+        self.assertEqual(sdfADP.parse_time(s3), sdfADP.parse_time(s4))
+        self.assertEqual(sdfADP.parse_time(s3), sdfADP.parse_time(s5))
+        self.assertEqual(sdfADP.parse_time(s4), sdfADP.parse_time(s5))
         
         # Month name and month number agreement
         for n,m in enumerate(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']):
             s1 = "UTC 2011-%s-14 12:13:14.000" % m
             s2 = "UTC 2011-%02i-14 12:13:14.000" % (n+1)
             s3 = _UTC.localize(datetime(2011, n+1, 14, 12, 13, 14, 0))
-            self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
-            self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
+            self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s2))
+            self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s3))
             
         # Time zone agreement - UTC
         s1 = "2011-01-01 12:13:14.567"
         s2 = "2011 01 01 12:13:14.567"
         s3 = _UTC.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
-        self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s3))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s2))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s3))
+        self.assertEqual(sdfADP.parse_time(s2), sdfADP.parse_time(s3))
         
         # Time zone agreement - local
         for o,z in enumerate(['EST', 'CST', 'MST', 'PST']):
@@ -99,19 +99,19 @@ class sdf_adp_tests(unittest.TestCase):
             o = -5 - o
             s1 = "%s 2011 01 01 %02i:13:14.567" % ('UTC', h)
             s2 = "%s 2011 01 01 %02i:13:14.567" % (z, h+o)
-            self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
+            self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s2))
             
         # Something strange
         s1 = "CET 2013-01-08 19:42:00.000"
         s2 = "2013-01-08 18:42:00.000+00:00"
         s3 = "2013-01-08 11:42:00-0700"
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s2))
-        self.assertEqual(sdfADP.parseTime(s1), sdfADP.parseTime(s3))
-        self.assertEqual(sdfADP.parseTime(s2), sdfADP.parseTime(s3))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s2))
+        self.assertEqual(sdfADP.parse_time(s1), sdfADP.parse_time(s3))
+        self.assertEqual(sdfADP.parse_time(s2), sdfADP.parse_time(s3))
         
         # Details
         s1 = "2011 01 02 03:04:05.678"
-        out = sdfADP.parseTime(s1)
+        out = sdfADP.parse_time(s1)
         ## Date
         self.assertEqual(out.year, 2011)
         self.assertEqual(out.month, 1)
@@ -125,21 +125,21 @@ class sdf_adp_tests(unittest.TestCase):
         # LST at LWA1
         s1 = "LST 2013-01-08 19:42:00.000"
         s2 = "UTC 2013-01-08 19:35:28.994"
-        self.assertEqual(sdfADP.parseTime(s1, station=lwasv), sdfADP.parseTime(s2))
+        self.assertEqual(sdfADP.parse_time(s1, station=lwasv), sdfADP.parse_time(s2))
         
     ### TBW ###
     
     def test_tbw_parse(self):
         """Test reading in a TBW SDF file."""
         
-        self.assertRaises(RuntimeError, sdfADP.parseSDF, tbwFile)
+        self.assertRaises(RuntimeError, sdfADP.parse_sdf, tbwFile)
         
     ### TBN ###
     
     def test_tbn_parse(self):
         """Test reading in a TBN SDF file."""
         
-        project = sdfADP.parseSDF(tbnFile)
+        project = sdfADP.parse_sdf(tbnFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
@@ -164,10 +164,10 @@ class sdf_adp_tests(unittest.TestCase):
     def test_tbn_update(self):
         """Test updating TBN values."""
         
-        project = sdfADP.parseSDF(tbnFile)
-        project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
-        project.sessions[0].observations[1].setFrequency1(75e6)
+        project = sdfADP.parse_sdf(tbnFile)
+        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
+        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
+        project.sessions[0].observations[1].set_frequency1(75e6)
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
@@ -177,13 +177,13 @@ class sdf_adp_tests(unittest.TestCase):
     def test_tbn_write(self):
         """Test writing a TBN SDF file."""
         
-        project = sdfADP.parseSDF(tbnFile)
+        project = sdfADP.parse_sdf(tbnFile)
         out = project.render()
         
     def test_tbn_errors(self):
         """Test various TBN SDF errors."""
         
-        project = sdfADP.parseSDF(tbnFile)
+        project = sdfADP.parse_sdf(tbnFile)
         
         # Bad filter
         project.sessions[0].observations[0].filter = 10
@@ -206,7 +206,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_drx_parse(self):
         """Test reading in a TRK_RADEC SDF file."""
         
-        project = sdfADP.parseSDF(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
@@ -237,13 +237,13 @@ class sdf_adp_tests(unittest.TestCase):
     def test_drx_update(self):
         """Test updating TRK_RADEC values."""
         
-        project = sdfADP.parseSDF(drxFile)
-        project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
-        project.sessions[0].observations[1].setFrequency1(75e6)
-        project.sessions[0].observations[1].setFrequency2(76e6)
-        project.sessions[0].observations[1].setRA(ephem.hours('5:30:00'))
-        project.sessions[0].observations[1].setDec(ephem.degrees('+22:30:00'))
+        project = sdfADP.parse_sdf(drxFile)
+        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
+        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
+        project.sessions[0].observations[1].set_frequency1(75e6)
+        project.sessions[0].observations[1].set_frequency2(76e6)
+        project.sessions[0].observations[1].set_ra(ephem.hours('5:30:00'))
+        project.sessions[0].observations[1].set_dec(ephem.degrees('+22:30:00'))
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
@@ -256,7 +256,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_drx_write(self):
         """Test writing a TRK_RADEC SDF file."""
         
-        project = sdfADP.parseSDF(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
             obs.filter = 6
@@ -265,7 +265,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_drx_errors(self):
         """Test various TRK_RADEC SDF errors."""
         
-        project = sdfADP.parseSDF(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         
         # Bad beam
         project.sessions[0].drxBeam = 6
@@ -307,7 +307,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_sol_parse(self):
         """Test reading in a TRK_SOL SDF file."""
         
-        project = sdfADP.parseSDF(solFile)
+        project = sdfADP.parse_sdf(solFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
@@ -334,11 +334,11 @@ class sdf_adp_tests(unittest.TestCase):
     def test_sol_update(self):
         """Test updating TRK_SOL values."""
         
-        project = sdfADP.parseSDF(solFile)
-        project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
-        project.sessions[0].observations[1].setFrequency1(75e6)
-        project.sessions[0].observations[1].setFrequency2(76e6)
+        project = sdfADP.parse_sdf(solFile)
+        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
+        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
+        project.sessions[0].observations[1].set_frequency1(75e6)
+        project.sessions[0].observations[1].set_frequency2(76e6)
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
@@ -349,7 +349,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_sol_write(self):
         """Test writing a TRK_SOL SDF file."""
         
-        project = sdfADP.parseSDF(solFile)
+        project = sdfADP.parse_sdf(solFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
             obs.filter = 6
@@ -358,7 +358,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_sol_errors(self):
         """Test various TRK_SOL SDF errors."""
         
-        project = sdfADP.parseSDF(solFile)
+        project = sdfADP.parse_sdf(solFile)
         
         # Bad beam
         project.sessions[0].drxBeam = 6
@@ -394,7 +394,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_jov_parse(self):
         """Test reading in a TRK_JOV SDF file."""
         
-        project = sdfADP.parseSDF(jovFile)
+        project = sdfADP.parse_sdf(jovFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
@@ -421,11 +421,11 @@ class sdf_adp_tests(unittest.TestCase):
     def test_jov_update(self):
         """Test updating TRK_JOV values."""
         
-        project = sdfADP.parseSDF(jovFile)
-        project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].setDuration(timedelta(seconds=15))
-        project.sessions[0].observations[1].setFrequency1(75e6)
-        project.sessions[0].observations[1].setFrequency2(76e6)
+        project = sdfADP.parse_sdf(jovFile)
+        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
+        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
+        project.sessions[0].observations[1].set_frequency1(75e6)
+        project.sessions[0].observations[1].set_frequency2(76e6)
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
@@ -436,7 +436,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_jov_write(self):
         """Test writing a TRK_JOV SDF file."""
         
-        project = sdfADP.parseSDF(jovFile)
+        project = sdfADP.parse_sdf(jovFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
             obs.filter = 6
@@ -445,7 +445,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_jov_errors(self):
         """Test various TRK_JOV SDF errors."""
         
-        project = sdfADP.parseSDF(jovFile)
+        project = sdfADP.parse_sdf(jovFile)
         
         # Bad beam
         project.sessions[0].drxBeam = 6
@@ -481,7 +481,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_stp_parse(self):
         """Test reading in a STEPPED SDF file."""
         
-        project = sdfADP.parseSDF(stpFile)
+        project = sdfADP.parse_sdf(stpFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
@@ -540,14 +540,14 @@ class sdf_adp_tests(unittest.TestCase):
     def test_stp_update(self):
         """Test updating a STEPPED SDF file."""
         
-        project = sdfADP.parseSDF(stpFile)
-        project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
+        project = sdfADP.parse_sdf(stpFile)
+        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
         for step in project.sessions[0].observations[1].steps:
-            step.setDuration(timedelta(seconds=15))
-            step.setFrequency1(75e6)
-            step.setFrequency2(76e6)
-            step.setC1(ephem.hours('10:30:00'))
-            step.setC2(ephem.degrees('89:30:00'))
+            step.set_duration(timedelta(seconds=15))
+            step.set_frequency1(75e6)
+            step.set_frequency2(76e6)
+            step.set_c1(ephem.hours('10:30:00'))
+            step.set_c2(ephem.degrees('89:30:00'))
         project.sessions[0].observations[1].update()
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
@@ -560,16 +560,16 @@ class sdf_adp_tests(unittest.TestCase):
             self.assertEqual(step.c1, 10.5)
             self.assertEqual(step.c2, 89.5)
             
-        project = sdfADP.parseSDF(stpFile)
+        project = sdfADP.parse_sdf(stpFile)
         project.sessions[0].observations[1].RADec = False
-        project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:00:15")
+        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
         for step in project.sessions[0].observations[1].steps:
             step.RADec = False
-            step.setDuration(timedelta(seconds=15))
-            step.setFrequency1(75e6)
-            step.setFrequency2(76e6)
-            step.setC1(ephem.hours('10:30:00'))
-            step.setC2(ephem.degrees('89:30:00'))
+            step.set_duration(timedelta(seconds=15))
+            step.set_frequency1(75e6)
+            step.set_frequency2(76e6)
+            step.set_c1(ephem.hours('10:30:00'))
+            step.set_c2(ephem.degrees('89:30:00'))
         project.sessions[0].observations[1].update()
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
@@ -586,7 +586,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_stp_write(self):
         """Test writing a STEPPED SDF file."""
         
-        project = sdfADP.parseSDF(stpFile)
+        project = sdfADP.parse_sdf(stpFile)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
             obs.filter = 6
@@ -595,7 +595,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_stp_errors(self):
         """Test various STEPPED SDF errors."""
         
-        project = sdfADP.parseSDF(stpFile)
+        project = sdfADP.parse_sdf(stpFile)
         
         # Bad beam
         project.sessions[0].drxBeam = 6
@@ -631,7 +631,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_spc_parse(self):
         """Test reading in a STEPPED Delay and Gain SDF file."""
         
-        project = sdfADP.parseSDF(spcFile)
+        project = sdfADP.parse_sdf(spcFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
@@ -669,7 +669,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_tbf_parse(self):
         """Test reading in a TBF SDF file."""
         
-        project = sdfADP.parseSDF(tbfFile)
+        project = sdfADP.parse_sdf(tbfFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
@@ -692,8 +692,8 @@ class sdf_adp_tests(unittest.TestCase):
     def test_tbf_update(self):
         """Test updating TRK_SOL values."""
         
-        project = sdfADP.parseSDF(tbfFile)
-        project.sessions[0].observations[1].setStart("MST 2011 Feb 23 17:10:15")
+        project = sdfADP.parse_sdf(tbfFile)
+        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:10:15")
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  615000)
@@ -701,13 +701,13 @@ class sdf_adp_tests(unittest.TestCase):
     def test_tbf_write(self):
         """Test writing a TBF SDF file."""
         
-        project = sdfADP.parseSDF(tbfFile)
+        project = sdfADP.parse_sdf(tbfFile)
         out = project.render()
         
     def test_tbf_errors(self):
         """Test various TBF SDF errors."""
         
-        project = sdfADP.parseSDF(tbfFile)
+        project = sdfADP.parse_sdf(tbfFile)
         
         # Bad number of TBF samples
         project.sessions[0].observations[0].samples = 6*196000000
@@ -734,7 +734,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test project auto-update on render."""
         
         # Part 1 - frequency and duration
-        project = sdfADP.parseSDF(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].duration = '00:01:31.000'
         
@@ -745,12 +745,12 @@ class sdf_adp_tests(unittest.TestCase):
         fh.write(project.render())
         fh.close()
         
-        project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+        project = sdfADP.parse_sdf(os.path.join(self.testPath, 'sdf.txt'))
         self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
         self.assertEqual(project.sessions[0].observations[1].dur, 91000)
         
         # Part 2 - frequency and duration (timedelta)
-        project = sdfADP.parseSDF(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].duration = timedelta(minutes=1, seconds=31, microseconds=1000)
         
@@ -761,12 +761,12 @@ class sdf_adp_tests(unittest.TestCase):
         fh.write(project.render())
         fh.close()
         
-        project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+        project = sdfADP.parse_sdf(os.path.join(self.testPath, 'sdf.txt'))
         self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
         self.assertEqual(project.sessions[0].observations[1].dur, 91001)
         
         # Part 3 - frequency and start time
-        project = sdfADP.parseSDF(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].observations[1].frequency2 = 75e6
         project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
         
@@ -777,13 +777,13 @@ class sdf_adp_tests(unittest.TestCase):
         fh.write(project.render())
         fh.close()
         
-        project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+        project = sdfADP.parse_sdf(os.path.join(self.testPath, 'sdf.txt'))
         self.assertEqual(project.sessions[0].observations[1].freq2, 1643482384)
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
         
         # Part 4 - frequency and start time (timedelta)
-        project = sdfADP.parseSDF(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         _MST = pytz.timezone('US/Mountain')
         project.sessions[0].observations[1].frequency2 = 75e6
         project.sessions[0].observations[1].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
@@ -795,7 +795,7 @@ class sdf_adp_tests(unittest.TestCase):
         fh.write(project.render())
         fh.close()
         
-        project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+        project = sdfADP.parse_sdf(os.path.join(self.testPath, 'sdf.txt'))
         self.assertEqual(project.sessions[0].observations[1].freq2, 1643482384)
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  30001)
@@ -803,37 +803,37 @@ class sdf_adp_tests(unittest.TestCase):
     def test_set_station(self):
         """Test the set stations functionlity."""
         
-        project = sdfADP.parseSDF(drxFile)
-        project.sessions[0].setStation(lwasv)
+        project = sdfADP.parse_sdf(drxFile)
+        project.sessions[0].set_station(lwasv)
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
             obs.filter = 6
         self.assertTrue(project.validate())
         
-        self.assertRaises(RuntimeError, project.sessions[0].setStation, lwa1)
+        self.assertRaises(RuntimeError, project.sessions[0].set_station, lwa1)
         
     def test_is_valid(self):
-        """Test whether or not isValid works."""
+        """Test whether or not is_valid works."""
         
-        self.assertTrue(sdfADP.isValid(tbnFile))
-        self.assertFalse(sdfADP.isValid(drxFile))
-        self.assertFalse(sdfADP.isValid(solFile))
-        self.assertFalse(sdfADP.isValid(jovFile))
-        self.assertFalse(sdfADP.isValid(stpFile))
-        self.assertFalse(sdfADP.isValid(spcFile))
-        self.assertTrue(sdfADP.isValid(tbfFile))
+        self.assertTrue(sdfADP.is_valid(tbnFile))
+        self.assertFalse(sdfADP.is_valid(drxFile))
+        self.assertFalse(sdfADP.is_valid(solFile))
+        self.assertFalse(sdfADP.is_valid(jovFile))
+        self.assertFalse(sdfADP.is_valid(stpFile))
+        self.assertFalse(sdfADP.is_valid(spcFile))
+        self.assertTrue(sdfADP.is_valid(tbfFile))
         
     def test_is_not_valid(self):
-        """Test whether or not isValid works on LWA1 files."""
+        """Test whether or not is_valid works on LWA1 files."""
         
-        self.assertFalse(sdfADP.isValid(tbwFile))
+        self.assertFalse(sdfADP.is_valid(tbwFile))
         
     def test_username(self):
         """Test setting auto-copy parameters."""
         
-        project = sdfADP.parseSDF(drxFile)
-        project.sessions[0].setDataReturnMethod('UCF')
-        project.sessions[0].setUCFUsername('jdowell')
+        project = sdfADP.parse_sdf(drxFile)
+        project.sessions[0].set_data_return_method('UCF')
+        project.sessions[0].set_ucf_username('jdowell')
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.sessions[0].observations:
             obs.filter = 6
@@ -846,7 +846,7 @@ class sdf_adp_tests(unittest.TestCase):
         fh.write(out)
         fh.close()
         
-        project = sdfADP.parseSDF(os.path.join(self.testPath, 'sdf.txt'))
+        project = sdfADP.parse_sdf(os.path.join(self.testPath, 'sdf.txt'))
         out = project.render()
         
         self.assertTrue(out.find('Requested data return method is UCF') > 0)

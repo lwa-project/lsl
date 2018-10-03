@@ -19,11 +19,11 @@ class stattests_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.statistics.tests
     module."""
 
-    def test_waldwolfowitz(self):
+    def test_wald_wolfowitz(self):
         """Test the Wald-Wolfowitz (runs) test"""
 
         data = numpy.random.randn(1024)
-        pValue = stattests.waldwolfowitz(data)
+        pValue = stattests.wald_wolfowitz(data)
 
 
 class stattests_test_suite(unittest.TestSuite):

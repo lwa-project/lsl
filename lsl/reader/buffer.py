@@ -38,7 +38,7 @@ __revision__ = '$Rev$'
 __all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer', '__version__', '__revision__', '__all__']
 
 
-def _cmpFrames(x, y):
+def _cmp_frames(x, y):
     """
     Function to compare two frames and sort by stand/beam number (TBN, DRX)
     or by channel number (TBF).
@@ -47,11 +47,11 @@ def _cmpFrames(x, y):
     # Parse if frame IDs to extract the stand/beam, tunning, and polarization
     # information (where appropriate)
     try:
-        idsX = x.parseID()
-        idsY = y.parseID()
+        idsX = x.parse_id()
+        idsY = y.parse_id()
     except AttributeError:
-        idsX = x.header.firstChan
-        idsY = y.header.firstChan
+        idsX = x.header.first_chan
+        idsY = y.header.first_chan
         
     # Do a try...except block to catch TBW vs. TBN/DRX
     try:
@@ -79,7 +79,7 @@ class FrameBuffer(object):
     """
     Frame buffer for re-ordering TBN and DRX frames in time order.  
     This class is filled with frames and a returns a frame list when 
-    the 'nSegments' starts filling.  In that case, the oldest segment 
+    the 'nsegments' starts filling.  In that case, the oldest segment 
     is returned.
 
     The buffer also keeps track of what has already been read out so 
@@ -88,12 +88,12 @@ class FrameBuffer(object):
     
     .. note::
         Due to the nature of the buffer, it is possible that there will
-        still be 'nSegments'-1 segements in the buffer that are either
+        still be 'nsegments'-1 segements in the buffer that are either
         full or partially full.  This can be retrieved using the buffer's 
         'flush()' function.
     """
     
-    def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nSegments=6, ReorderFrames=False):
+    def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nsegments=6, reorder=False):
         """
         Initialize the buffer with a list of:
           * TBN
@@ -148,9 +148,9 @@ class FrameBuffer(object):
                     raise RuntimeError("Invalid thread ID '%i'" % thread)
                     
         # The buffer itself
-        self.nSegments = nSegments
+        self.nsegments = nsegments
         self.buffer = OrderedDict()
-        self.done = deque([0,], maxlen=self.nSegments)
+        self.done = deque([0,], maxlen=self.nsegments)
         
         # Buffer statistics
         self.full = 0		# Number of times a full buffer was emptied
@@ -168,14 +168,14 @@ class FrameBuffer(object):
         self.threads = threads
         
         # If we should reorder the returned frames by stand/pol or not
-        self.reorder = ReorderFrames
+        self.reorder = reorder
         
         # Figure out how many frames fill the buffer and the list of all
         # possible frames in the data set
-        self.nFrames, self.possibleFrames = self.calcFrames()
+        self.nFrames, self.possibleFrames = self.get_max_frames()
         self.possibleFrames = set(self.possibleFrames)
         
-    def calcFrames(self):
+    def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
         the setup of the observations and a list of tuples that describes
@@ -186,7 +186,7 @@ class FrameBuffer(object):
         
         raise NotImplementedError
         
-    def figureOfMerit(self, frame):
+    def get_figure_of_merit(self, frame):
         """
         Figure of merit for storing/sorting frames in the ring buffer.
         
@@ -195,7 +195,7 @@ class FrameBuffer(object):
         
         raise NotImplementedError
         
-    def createFill(self, key, frameParameters):
+    def create_fill(self, key, frameParameters):
         """
         Create a 'fill' frame of zeros using an existing good
         packet as a template.
@@ -231,7 +231,7 @@ class FrameBuffer(object):
                 
             # Make sure that it is not in the `done' list.  If it is,
             # disgaurd the frame and make a note of it.
-            fom = self.figureOfMerit(frame)
+            fom = self.get_figure_of_merit(frame)
             if fom <= self.done[-1]:
                 self.dropped += 1
                 continue
@@ -266,7 +266,7 @@ class FrameBuffer(object):
         
         if keyToReturn is None:
             # If the ring is full, dump the oldest
-            if len(keys) < self.nSegments:
+            if len(keys) < self.nsegments:
                 return None
                 
             if self.mode == 'TBF':
@@ -288,7 +288,7 @@ class FrameBuffer(object):
             output = self.buffer[keyToReturn]
             
             ## Fill in the missing frames
-            output.extend( map(lambda x: self.createFill(keyToReturn, x), self._missingList(keyToReturn)) )
+            output.extend( map(lambda x: self.create_fill(keyToReturn, x), self._get_missing_list(keyToReturn)) )
         else:
             ## There are too many frames
             self.full = self.full + 1
@@ -296,7 +296,7 @@ class FrameBuffer(object):
             output = []
             frameIDs = []
             for frame in self.buffer[keyToReturn]:
-                newID = frame.parseID()
+                newID = frame.parse_id()
                 if newID not in frameIDs:
                     output.append(frame)
                     frameIDs.append(newID)
@@ -310,9 +310,9 @@ class FrameBuffer(object):
         if self.reorder:
             output = list(output)
             try:
-                output.sort(cmp=_cmpFrames)
+                output.sort(cmp=_cmp_frames)
             except TypeError:
-                output.sort(key=cmp_to_key(_cmpFrames))
+                output.sort(key=cmp_to_key(_cmp_frames))
         return output
         
     def flush(self):
@@ -345,7 +345,7 @@ class FrameBuffer(object):
         self.done.clear()
         self.done.append(0)
         
-    def isEmpty(self):
+    def is_empty(self):
         """
         Determine if there is anything in the buffer or not.  Returns False 
         if there is, True if there is not.
@@ -355,7 +355,7 @@ class FrameBuffer(object):
         
         return False if len(self.buffer) else True
         
-    def _missingList(self, key):
+    def _get_missing_list(self, key):
         """
         Create a list of tuples of missing frame information.
         """
@@ -365,13 +365,13 @@ class FrameBuffer(object):
             fnc = lambda x: self.frameID(x)
         else:
             if self.mode == 'VDIF':
-                fnc = lambda x: x.parseID()[1]
+                fnc = lambda x: x.parse_id()[1]
             elif self.mode == 'TBF':
-                fnc = lambda x: x.header.firstChan
+                fnc = lambda x: x.header.first_chan
             elif self.mode == 'COR':
-                fnc = lambda x: x.parseID()+(x.header.firstChan,)
+                fnc = lambda x: x.parse_id()+(x.header.first_chan,)
             else:
-                fnc = lambda x: x.parseID()
+                fnc = lambda x: x.parse_id()
         frameList = set(map(fnc, self.buffer[key]))
         
         # Compare the existing list with the possible list stored in the 
@@ -418,10 +418,10 @@ class TBNFrameBuffer(FrameBuffer):
       pols
         list of polarizations to expect packets for
     
-      nSegments
+      nsegments
         number of ring segments to use for the buffer (default is 20)
     
-      ReorderFrames
+      reorder
         whether or not to reorder frames returned by get() or flush() by 
         stand/polarization (default is False)
     
@@ -448,10 +448,10 @@ class TBNFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, stands=[], pols=[0, 1], nSegments=20, ReorderFrames=False):
-        super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, stands=[], pols=[0, 1], nsegments=20, reorder=False):
+        super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nsegments=nsegments, reorder=reorder)
         
-    def calcFrames(self):
+    def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
         the setup of the observations and a list of tuples that describes
@@ -468,15 +468,15 @@ class TBNFrameBuffer(FrameBuffer):
                 
         return (nFrames, frameList)
         
-    def figureOfMerit(self, frame):
+    def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For TBN it is:
             <frame timetag in ticks>
         """
         
-        return frame.data.timeTag
+        return frame.data.timetag
         
-    def createFill(self, key, frameParameters):
+    def create_fill(self, key, frameParameters):
         """
         Create a 'fill' frame of zeros using an existing good
         packet as a template.
@@ -487,7 +487,7 @@ class TBNFrameBuffer(FrameBuffer):
         
         # Get out the frame parameters and fix-up the header
         stand, pol = frameParameters
-        fillFrame.header.tbnID = 2*(stand-1) + pol + 1
+        fillFrame.header.tbn_id = 2*(stand-1) + pol + 1
         
         # Zero the data for the fill packet
         fillFrame.data.iq *= 0
@@ -514,10 +514,10 @@ class DRXFrameBuffer(FrameBuffer):
       pols
         list of polarizations to expect packets for
     
-      nSegments
+      nsegments
         number of ring segments to use for the buffer (default is 10)
     
-      ReorderFrames
+      reorder
         whether or not to reorder frames returned by get() or flush() by 
         stand/polarization (default is False)
     
@@ -544,10 +544,10 @@ class DRXFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nSegments=10, ReorderFrames=False):
-        super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nsegments=10, reorder=False):
+        super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
         
-    def calcFrames(self):
+    def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
         the setup of the observations and a list of tuples that describes
@@ -565,15 +565,15 @@ class DRXFrameBuffer(FrameBuffer):
                     
         return (nFrames, frameList)
         
-    def figureOfMerit(self, frame):
+    def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For DRX it is:
             <frame timetag in ticks>
         """
         
-        return frame.data.timeTag
+        return frame.data.timetag
         
-    def createFill(self, key, frameParameters):
+    def create_fill(self, key, frameParameters):
         """
         Create a 'fill' frame of zeros using an existing good
         packet as a template.
@@ -584,7 +584,7 @@ class DRXFrameBuffer(FrameBuffer):
         
         # Get out the frame parameters and fix-up the header
         beam, tune, pol = frameParameters
-        fillFrame.header.drxID = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
+        fillFrame.header.drx_id = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
         
         # Zero the data for the fill packet
         fillFrame.data.iq *= 0
@@ -605,10 +605,10 @@ class TBFFrameBuffer(FrameBuffer):
       chans
         list of start channel numbers to expect data for
     
-      nSegments
+      nsegments
         number of ring segments to use for the buffer (default is 25)
     
-      ReorderFrames
+      reorder
         whether or not to reorder frames returned by get() or flush() by 
         start channel (default is False)
     
@@ -631,10 +631,10 @@ class TBFFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, chans, nSegments=25, ReorderFrames=False):
-        super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, chans, nsegments=25, reorder=False):
+        super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nsegments=nsegments, reorder=reorder)
         
-    def calcFrames(self):
+    def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
         the setup of the observations and a list of tuples that describes
@@ -650,15 +650,15 @@ class TBFFrameBuffer(FrameBuffer):
             
         return (nFrames, frameList)
         
-    def figureOfMerit(self, frame):
+    def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For TBF this is:
-        frame.data.timeTag
+        frame.data.timetag
         """
         
-        return frame.data.timeTag
+        return frame.data.timetag
         
-    def createFill(self, key, frameParameters):
+    def create_fill(self, key, frameParameters):
         """
         Create a 'fill' frame of zeros using an existing good
         packet as a template.
@@ -669,7 +669,7 @@ class TBFFrameBuffer(FrameBuffer):
         
         # Get out the frame parameters and fix-up the header
         chan = frameParameters
-        fillFrame.header.firstChan = chan
+        fillFrame.header.first_chan = chan
         
         # Zero the data for the fill packet
         fillFrame.data.fDomain *= 0
@@ -690,10 +690,10 @@ class CORFrameBuffer(FrameBuffer):
       chans
         list of start channel numbers to expect data for
     
-      nSegments
+      nsegments
         number of ring segments to use for the buffer (default is 5)
     
-      ReorderFrames
+      reorder
         whether or not to reorder frames returned by get() or flush() by 
         start channel (default is False)
     
@@ -712,10 +712,10 @@ class CORFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, chans, nSegments=5, ReorderFrames=False):
-        super(CORFrameBuffer, self).__init__(mode='COR', stands=list(range(1,256+1)), chans=chans, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, chans, nsegments=5, reorder=False):
+        super(CORFrameBuffer, self).__init__(mode='COR', stands=list(range(1,256+1)), chans=chans, nsegments=nsegments, reorder=reorder)
         
-    def calcFrames(self):
+    def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
         the setup of the observations and a list of tuples that describes
@@ -735,15 +735,15 @@ class CORFrameBuffer(FrameBuffer):
                     
         return (nFrames, frameList)
         
-    def figureOfMerit(self, frame):
+    def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For TBF this is:
-        frame.data.timeTag
+        frame.data.timetag
         """
         
-        return frame.data.timeTag
+        return frame.data.timetag
         
-    def createFill(self, key, frameParameters):
+    def create_fill(self, key, frameParameters):
         """
         Create a 'fill' frame of zeros using an existing good
         packet as a template.
@@ -754,7 +754,7 @@ class CORFrameBuffer(FrameBuffer):
         
         # Get out the frame parameters and fix-up the header
         stand0, stand1, chan = frameParameters
-        fillFrame.header.firstChan = chan
+        fillFrame.header.first_chan = chan
         fillFrame.data.stand0 = stand0
         fillFrame.data.stand1 = stand1
         
@@ -777,18 +777,18 @@ class VDIFFrameBuffer(FrameBuffer):
       threads
         list of thread IDs to expect data for
     
-      nSegments
+      nsegments
         number of ring segments to use for the buffer (default is 10)
     
-      ReorderFrames
+      reorder
         whether or not to reorder frames returned by get() or flush() by 
         stand/polarization (default is False)
     """
     
-    def __init__(self, threads=[0,1], nSegments=10, ReorderFrames=False):
-        super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nSegments=nSegments, ReorderFrames=ReorderFrames)
+    def __init__(self, threads=[0,1], nsegments=10, reorder=False):
+        super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nsegments=nsegments, reorder=reorder)
         
-    def calcFrames(self):
+    def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
         the setup of the observations and a list of tuples that describes
@@ -804,15 +804,15 @@ class VDIFFrameBuffer(FrameBuffer):
             
         return (nFrames, frameList)
         
-    def figureOfMerit(self, frame):
+    def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For VIDF this is:
-        secondsFromEpoch * 100000 + frameInSecond
+        seconds_from_epoch * 100000 + frame_in_second
         """
         
-        return frame.header.secondsFromEpoch*100000 + frame.header.frameInSecond
+        return frame.header.seconds_from_epoch*100000 + frame.header.frame_in_second
         
-    def createFill(self, key, frameParameters):
+    def create_fill(self, key, frameParameters):
         """
         Create a 'fill' frame of zeros using an existing good
         packet as a template.
@@ -823,7 +823,7 @@ class VDIFFrameBuffer(FrameBuffer):
         
         # Get out the frame parameters and fix-up the header
         thread = frameParameters
-        fillFrame.header.threadID = thread
+        fillFrame.header.thread_id = thread
         
         # Zero the data for the fill packet
         fillFrame.data.data *= 0

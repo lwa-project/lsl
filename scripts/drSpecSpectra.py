@@ -116,13 +116,13 @@ def main(args):
     idf = LWA1DataFile(config['args'][0])
     
     # Basic file informaiton
-    nFramesFile = idf.getInfo('nFrames')
-    srate = idf.getInfo('sampleRate')
-    beam = idf.getInfo('beam')
-    beampols = idf.getInfo('beampols')
-    tInt = idf.getInfo('tInt')
-    LFFT = idf.getInfo('LFFT')
-    products = idf.getInfo('dataProducts')
+    nFramesFile = idf.get_info('nFrames')
+    srate = idf.get_info('sample_rate')
+    beam = idf.get_info('beam')
+    beampols = idf.get_info('beampols')
+    tInt = idf.get_info('tInt')
+    LFFT = idf.get_info('LFFT')
+    products = idf.get_info('dataProducts')
     
     # Offset in frames for beampols beam/tuning/pol. sets
     config['offset'] = idf.offset(config['offset'])
@@ -137,9 +137,9 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.getInfo('tStart')) - DJD_OFFSET)
-    centralFreq1 = idf.getInfo('freq1')
-    centralFreq2 = idf.getInfo('freq2')
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    central_freq1 = idf.get_info('freq1')
+    central_freq2 = idf.get_info('freq2')
     freq = numpy.fft.fftfreq(LFFT, d=1.0/srate)
     freq = numpy.fft.fftshift(freq)
     
@@ -149,7 +149,7 @@ def main(args):
     print "Beam: %i" % beam
     print "Tune/Pols: %i" % beampols
     print "Sample Rate: %i Hz" % srate
-    print "Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (centralFreq1, centralFreq2)
+    print "Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (central_freq1, central_freq2)
     print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile*tInt)
     print "---"
     print "Transform Length: %i channels" % LFFT
@@ -193,8 +193,8 @@ def main(args):
     spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Frequencies
-    freq1 = freq + centralFreq1
-    freq2 = freq + centralFreq2
+    freq1 = freq + central_freq1
+    freq2 = freq + central_freq2
     
     # The plots:  This is setup for the current configuration of 20 beampols
     fig = plt.figure()

@@ -7,7 +7,7 @@ import time
 import getopt
 from datetime import datetime, timedelta
 
-from lsl.common.mcs import mjdmpm2datetime, mode2string
+from lsl.common.mcs import mjdmpm_to_datetime, mode_to_string
 from lsl.common import metabundle, metabundleADP
 from lsl.reader import tbw, tbn, drx, errors
 
@@ -17,8 +17,8 @@ def obsComp(x, y):
     Function to help sort observations in time.
     """
     
-    tX = mjdmpm2datetime(x['MJD'], x['MPM'])
-    tY = mjdmpm2datetime(y['MJD'], y['MPM'])
+    tX = mjdmpm_to_datetime(x['MJD'], x['MPM'])
+    tY = mjdmpm_to_datetime(y['MJD'], y['MPM'])
     if tX < tY:
         return -1
     elif tX > tY:
@@ -98,38 +98,38 @@ def main(args):
     # Get all observations and their start times
     try:
         ## LWA-1
-        sdf = metabundle.getSessionDefinition(meta)
-        ses = metabundle.getSessionSpec(meta)
-        obs = metabundle.getObservationSpec(meta)
+        sdf = metabundle.get_sdf(meta)
+        ses = metabundle.get_session_spec(meta)
+        obs = metabundle.get_observation_spec(meta)
     except:
         ## LWA-SV
         ### Try again
-        sdf = metabundleADP.getSessionDefinition(meta)
-        ses = metabundleADP.getSessionSpec(meta)
-        obs = metabundleADP.getObservationSpec(meta)
+        sdf = metabundleADP.get_sdf(meta)
+        ses = metabundleADP.get_session_spec(meta)
+        obs = metabundleADP.get_observation_spec(meta)
     obs.sort(obsComp)
     tStart = []
     oDetails = []
     for i,o in enumerate(obs):
-        tStart.append( mjdmpm2datetime(o['MJD'], o['MPM']) )
+        tStart.append( mjdmpm_to_datetime(o['MJD'], o['MPM']) )
         oDetails.append( {'m': o['Mode'], 'd': o['Dur'] / 1000.0, 'f': o['BW'], 
                 'p': o['projectID'], 's': o['sessionID'], 'o': o['obsID'], 't': sdf.sessions[0].observations[o['obsID']-1].target} )
 
         print "Observation #%i" % (o['obsID'])
         print " Start: %i, %i -> %s" % (o['MJD'], o['MPM'], tStart[-1])
-        print " Mode: %s" % mode2string(o['Mode'])
+        print " Mode: %s" % mode_to_string(o['Mode'])
         print " BW: %i" % o['BW']
         print " Target: %s" % sdf.sessions[0].observations[o['obsID']-1].target
     print " "
 
     # Figure out where in the file the various bits are.
     fh = open(data, 'rb')
-    lf = drx.readFrame(fh)
-    beam, j, k = lf.parseID()
+    lf = drx.read_frame(fh)
+    beam, j, k = lf.parse_id()
     if beam != obs[0]['drxBeam']:
         print 'ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drxBeam'], beam)
         sys.exit()
-    firstFrame = datetime.utcfromtimestamp(lf.getTime())
+    firstFrame = datetime.utcfromtimestamp(lf.get_time())
     if abs(firstFrame - min(tStart)) > timedelta(seconds=30):
         print 'ERROR: Time mis-match, metadata is for %s, file is for %s' % (min(tStart), firstFrame)
         sys.exit()
@@ -140,7 +140,7 @@ def main(args):
 
         ## Get observation properties
         oStart = tStart[i]
-        oMode = mode2string(oDetails[i]['m'])
+        oMode = mode_to_string(oDetails[i]['m'])
         oDur  = oDetails[i]['d']
         oBW   = oDetails[i]['f']
         print "Seeking %s observation of %.3f seconds at %s" % (oMode, oDur, oStart)
@@ -153,12 +153,12 @@ def main(args):
             fCount = 400
         elif oMode == 'TBN':
             reader = tbn
-            bwKey = tbn.filterCodes
+            bwKey = tbn.FILTER_CODES
             bwMult = 520.0 / 512
             fCount = 512
         else:
             reader = drx
-            bwKey = drx.filterCodes
+            bwKey = drx.FILTER_CODES
             bwMult = 4.0 / 4096
             fCount = 4096
 
@@ -168,64 +168,64 @@ def main(args):
             pBW   = oDetails[i-1]['f']
 
             nFramesSkip = int(pDur*bwKey[pBW]*bwMult)
-            fh.seek(nFramesSkip*reader.FrameSize, 1)
+            fh.seek(nFramesSkip*reader.FRAME_SIZE, 1)
             if fh.tell() >= os.path.getsize(data):
-                fh.seek(-10*reader.FrameSize, 2)
+                fh.seek(-10*reader.FRAME_SIZE, 2)
                 
         ## Figure out where we are and make sure we line up on a frame
         ## NOTE: This should never be needed
         fail = True
         while fail:
             try:
-                frame = reader.readFrame(fh)
+                frame = reader.read_frame(fh)
                 fail = False
-            except errors.syncError:
+            except errors.SyncError:
                 fh.seek(1, 1)
-            except errors.eofError:
+            except errors.EOFError:
                 break
-        fh.seek(-reader.FrameSize, 1)	
+        fh.seek(-reader.FRAME_SIZE, 1)	
 
         ## Go in search of the start of the observation
-        if datetime.utcfromtimestamp(frame.getTime()) < oStart:
+        if datetime.utcfromtimestamp(frame.get_time()) < oStart:
             ### We aren't at the beginning yet, seek fowards
-            print "-> At byte %i, time is %s < %s" % (fh.tell(), datetime.utcfromtimestamp(frame.getTime()), oStart)
+            print "-> At byte %i, time is %s < %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
 
-            while datetime.utcfromtimestamp(frame.getTime()) < oStart:
+            while datetime.utcfromtimestamp(frame.get_time()) < oStart:
                 try:
-                    frame = reader.readFrame(fh)
-                except errors.syncError:		
+                    frame = reader.read_frame(fh)
+                except errors.SyncError:		
                     fh.seek(1, 1)
-                except errors.eofError:
+                except errors.EOFError:
                     break
-                #print datetime.utcfromtimestamp(frame.getTime()), oStart
+                #print datetime.utcfromtimestamp(frame.get_time()), oStart
 
-        elif datetime.utcfromtimestamp(frame.getTime()) > oStart:
+        elif datetime.utcfromtimestamp(frame.get_time()) > oStart:
             ### We've gone too far, seek backwards
-            print "-> At byte %i, time is %s > %s" % (fh.tell(), datetime.utcfromtimestamp(frame.getTime()), oStart)
+            print "-> At byte %i, time is %s > %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
 
-            while datetime.utcfromtimestamp(frame.getTime()) > oStart:
+            while datetime.utcfromtimestamp(frame.get_time()) > oStart:
                 if fh.tell() == 0:
                     break
-                fh.seek(-2*reader.FrameSize, 1)
+                fh.seek(-2*reader.FRAME_SIZE, 1)
                 try:
-                    frame = reader.readFrame(fh)
-                except errors.syncError:		
+                    frame = reader.read_frame(fh)
+                except errors.SyncError:		
                     fh.seek(-1, 1)
-                except errors.eofError:
+                except errors.EOFError:
                     break
-                #print datetime.utcfromtimestamp(frame.getTime()), oStart
+                #print datetime.utcfromtimestamp(frame.get_time()), oStart
                 
         else:
             ### We're there already
-            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.getTime()), oStart)
+            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
             
         ## Jump back exactly one frame so that the filehandle is in a position 
         ## to read the first frame that is part of the observation
         try:
-            frame = reader.readFrame(fh)
-            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.getTime()), oStart)
-            fh.seek(-reader.FrameSize, 1)
-        except errors.eofError:
+            frame = reader.read_frame(fh)
+            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
+            fh.seek(-reader.FRAME_SIZE, 1)
+        except errors.EOFError:
             pass
             
         ## Update the bytes ranges
@@ -270,7 +270,7 @@ def main(args):
             else:
                 outname = '%s_%i_%i.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
                 
-            oMode = mode2string(oDetails[i]['m'])
+            oMode = mode_to_string(oDetails[i]['m'])
 
             ## Get the correct reader to use
             if oMode == 'TBW':
@@ -283,9 +283,9 @@ def main(args):
 
             ## Get the number of frames
             if oDetails[i]['e'] > 0:
-                nFramesRead = (oDetails[i]['e'] - oDetails[i]['b']) / reader.FrameSize
+                nFramesRead = (oDetails[i]['e'] - oDetails[i]['b']) / reader.FRAME_SIZE
             else:
-                nFramesRead = (os.path.getsize(data) - oDetails[i]['b']) / reader.FrameSize
+                nFramesRead = (os.path.getsize(data) - oDetails[i]['b']) / reader.FRAME_SIZE
 
             ## Split
             if os.path.exists(outname):
@@ -306,7 +306,7 @@ def main(args):
             oh = open(outname, 'wb')
             for sl in [2**i for i in range(17)[::-1]]:
                 while nFramesRead >= sl:
-                    temp = fh.read(sl*reader.FrameSize)
+                    temp = fh.read(sl*reader.FRAME_SIZE)
                     oh.write(temp)
                     nFramesRead -= sl
             oh.close()

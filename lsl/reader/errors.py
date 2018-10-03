@@ -13,7 +13,7 @@ These errors are currently meant to deal with file I/O problems.
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['baseReaderError', 'eofError', 'syncError', 'notTBNError', 'notTBWError', 'listErrorCodes', 
+__all__ = ['BaseReaderError', 'EOFError', 'SyncError', 'notTBNError', 'notTBWError', 'list_error_codes', 
            'MinErrorNo', 'MaxErrorNo', 
            '__version__', '__revision__', '__all__']
 
@@ -22,7 +22,7 @@ MinErrorNo = 1
 MaxErrorNo = 4
 
 
-class baseReaderError(IOError):
+class BaseReaderError(IOError):
     """
     Base class for file I/O problem during numpy.fromfile calls and out-of-
     sync Mark5C headers.
@@ -33,13 +33,13 @@ class baseReaderError(IOError):
         self.strerror = strerror
         self.filename = None
         self.args = (errno, strerror)
-        super(baseReaderError, self).__init__()
+        super(BaseReaderError, self).__init__()
 
     def __str__(self):
         return "%s" % self.strerror
 
 
-class eofError(baseReaderError):
+class EOFError(BaseReaderError):
     """
     Extension to the base class for dealing with EOF errors.  The error code
     is 1.
@@ -50,10 +50,10 @@ class eofError(baseReaderError):
         self.strerror = 'End of file encountered during filehandle read'
         self.filename = None
         self.args = (self.errno, self.strerror)
-        super(eofError, self).__init__(self.strerror, errno=self.errno)
+        super(EOFError, self).__init__(self.strerror, errno=self.errno)
 
 
-class syncError(baseReaderError):
+class SyncError(BaseReaderError):
     """
     Extension to the base class for dealing with Mark 5C header sync word 
     problems.  If the sync word doesn't match what is expected.  The error code 
@@ -67,7 +67,7 @@ class syncError(baseReaderError):
         self.args = (self.errno, self.strerror)
         self.location = location
         self.syncWord = (sync1, sync2, sync3, sync4)
-        super(syncError, self).__init__(self.strerror, errno=self.errno)
+        super(SyncError, self).__init__(self.strerror, errno=self.errno)
 
     def __str__(self):
         output = self.strerror
@@ -78,7 +78,7 @@ class syncError(baseReaderError):
         return output
 
 
-class notTBNError(baseReaderError):
+class notTBNError(BaseReaderError):
     """
     Extenstion to the base class for dealing with trying to read in TBW data 
     with a TBN reader.  The error code is 4.
@@ -92,7 +92,7 @@ class notTBNError(baseReaderError):
         super(notTBNError, self).__init__(self.strerror, errno=self.errno)
 
 
-class notTBWError(baseReaderError):
+class notTBWError(BaseReaderError):
     """
     Extenstion to the base class for dealing with trying to read in TBN data 
     with a TBW reader.  The error code is 5.
@@ -106,7 +106,7 @@ class notTBWError(baseReaderError):
         super(notTBWError, self).__init__(self.strerror, errno=self.errno)
 
 
-def listErrorCodes(errno=None):
+def list_error_codes(errno=None):
     """
     Function to provide a list of errors defined in this file.  It 
     alternatively takes an error code using the 'errno' keyword and returns its
@@ -115,7 +115,7 @@ def listErrorCodes(errno=None):
 
     if errno is None:
         for i in range(MinErrorNo, (MaxErrorNo+1)):
-            listErrorCodes(errno=i)
+            list_error_codes(errno=i)
     else:
         if errno == 1:
             print("1: End of file encountered during filehandle read")

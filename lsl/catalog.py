@@ -13,7 +13,7 @@ import logging
 
 from lsl import astro
 from lsl import transform
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA
 
 __version__   = '0.2'
 __revision__ = '$Rev$'
@@ -100,7 +100,7 @@ class Catalog(collections.Mapping):
         Returns the path to the catalog data file directory.
         """
             
-        return os.path.join(dataPath, 'catalog')
+        return os.path.join(DATA, 'catalog')
         
     def __repr__(self):   
         """

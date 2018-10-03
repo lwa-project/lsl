@@ -94,7 +94,7 @@ PyObject *readTBN(PyObject *self, PyObject *args) {
 		Py_XDECREF(data);
 		return NULL;
 	} else if( PyString_GET_SIZE(buffer) != sizeof(cFrame) ) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(EOFError, "End of file encountered during filehandle read");
 		Py_XDECREF(data);
 		Py_XDECREF(buffer);
 		return NULL;
@@ -122,7 +122,7 @@ PyObject *readTBN(PyObject *self, PyObject *args) {
 	
 	// Validate
 	if( !validSync5C(cFrame.header.syncWord) ) {
-		PyErr_Format(syncError, "Mark 5C sync word differs from expected");
+		PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
 		Py_XDECREF(data);
 		return NULL;
 	}
@@ -132,15 +132,15 @@ PyObject *readTBN(PyObject *self, PyObject *args) {
 	fHeader = PyObject_GetAttrString(frame, "header");
 	
 	temp = PyLong_FromUnsignedLong(cFrame.header.frameCount);
-	PyObject_SetAttrString(fHeader, "frameCount", temp);
+	PyObject_SetAttrString(fHeader, "frame_count", temp);
 	Py_XDECREF(temp);
 	
 	temp = PyLong_FromUnsignedLong(cFrame.header.tuningWord);
-	PyObject_SetAttrString(fHeader, "tuningWord", temp);
+	PyObject_SetAttrString(fHeader, "tuning_word", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", cFrame.header.tbnID);
-	PyObject_SetAttrString(fHeader, "tbnID", temp);
+	PyObject_SetAttrString(fHeader, "tbn_id", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", cFrame.header.gain);
@@ -151,7 +151,7 @@ PyObject *readTBN(PyObject *self, PyObject *args) {
 	fData = PyObject_GetAttrString(frame, "data");
 	
 	temp = PyLong_FromUnsignedLongLong(cFrame.data.timeTag);
-	PyObject_SetAttrString(fData, "timeTag", temp);
+	PyObject_SetAttrString(fData, "timetag", temp);
 	Py_XDECREF(temp);
 	
 	PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
@@ -182,12 +182,12 @@ In order to use this reader in place of lsl.reader.tbn.readFrame change:\n\
 to:\n\
 \n\
 \t>>> import lsl.reader.tbn as tbn\n\
-\t>>> from lsl.reader._gofast import ReadTBN, syncError, eofError\n\
+\t>>> from lsl.reader._gofast import ReadTBN, SyncError, EOFError\n\
 \t>>> fh = open('some-tbn-file.dat', 'rb')\n\
 \t>> frame = readTBN(fh, tbn.Frame())\n\
 \n\
 In addition, the exceptions checked for in the try...except blocks wrapping the\n\
-frame reader need to be changed to 'IOError' since syncError and eofError are\n\
+frame reader need to be changed to 'IOError' since SyncError and EOFError are\n\
 are sub-classes of IOError.\n\
 \n\
 .. versionchanged:: 0.4.0\n\

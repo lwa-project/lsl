@@ -24,8 +24,9 @@ from scipy.interpolate import interp1d
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'freq2word', 'word2freq', 'delaytoDPD', 'DPDtodelay', 
-        'gaintoDPG', 'DPGtogain', 'tbnFilter', 'drxFilter', '__version__', '__revision__', '__all__']
+__all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'freq_to_word', 'word_to_freq', 
+           'delay_to_dpd', 'dpd_to_delay', 'gain_to_dpg', 'dpg_to_gain', 
+           'tbn_filter', 'drx_filter', '__version__', '__revision__', '__all__']
 
 fS = 196.0e6	# Hz
 fC = 25e3		# Hz
@@ -35,24 +36,24 @@ N_MAX = 8192	# bytes
 
 # FIR Filters
 ## TBN
-_tbnFIR = [-3.22350e-05, -0.00021433,  0.0017756, -0.0044913,  0.0040327, 
-            0.00735870,  -0.03218100,  0.0553980, -0.0398360, -0.0748920, 
-            0.58308000,   0.58308000, -0.0748920, -0.0398360,  0.0553980,
-        -0.03218100,   0.00735870,  0.0040327, -0.0044913,  0.0017756,
-        -0.00021433,  -3.2235e-05]
+_TBN_FIR = [-3.22350e-05, -0.00021433,  0.0017756, -0.0044913,  0.0040327, 
+             0.00735870,  -0.03218100,  0.0553980, -0.0398360, -0.0748920, 
+             0.58308000,   0.58308000, -0.0748920, -0.0398360,  0.0553980,
+            -0.03218100,   0.00735870,  0.0040327, -0.0044913,  0.0017756,
+            -0.00021433,  -3.2235e-05]
 ## DRX
-_drxFIR = [ 0.0111580, -0.0074330,  0.0085684, -0.0085984,  0.0070656, -0.0035905, 
-        -0.0020837,  0.0099858, -0.0199800,  0.0316360, -0.0443470,  0.0573270, 
-        -0.0696630,  0.0804420, -0.0888320,  0.0941650,  0.9040000,  0.0941650, 
-        -0.0888320,  0.0804420, -0.0696630,  0.0573270, -0.0443470,  0.0316360, 
-        -0.0199800,  0.0099858, -0.0020837, -0.0035905,  0.0070656, -0.0085984,  
-            0.0085684, -0.0074330,  0.0111580]
+_DRX_FIR = [ 0.0111580, -0.0074330,  0.0085684, -0.0085984,  0.0070656, -0.0035905, 
+            -0.0020837,  0.0099858, -0.0199800,  0.0316360, -0.0443470,  0.0573270, 
+            -0.0696630,  0.0804420, -0.0888320,  0.0941650,  0.9040000,  0.0941650, 
+            -0.0888320,  0.0804420, -0.0696630,  0.0573270, -0.0443470,  0.0316360, 
+            -0.0199800,  0.0099858, -0.0020837, -0.0035905,  0.0070656, -0.0085984,  
+             0.0085684, -0.0074330,  0.0111580]
 
 
-_nPts = 1000 # Number of points to use in calculating the bandpasses
+_N_PTS = 1000 # Number of points to use in calculating the bandpasses
 
 
-def freq2word(freq):
+def freq_to_word(freq):
     """
     Given a frequency in Hz, convert it to the closest DP tuning word.
     """
@@ -60,7 +61,7 @@ def freq2word(freq):
     return int(round(freq*2**32 / fS))
 
 
-def word2freq(word):
+def word_to_freq(word):
     """
     Given a DP tuning word, convert it to a frequncy in Hz.
     """
@@ -68,7 +69,7 @@ def word2freq(word):
     return word*fS / 2**32
 
 
-def delaytoDPD(delay):
+def delay_to_dpd(delay):
     """Given a delay in ns, convert it to a course and fine portion and into the 
     final format expected by ADP (big endian 16.12 unsigned integer)."""
     
@@ -87,7 +88,7 @@ def delaytoDPD(delay):
     return combined
 
 
-def DPDtodelay(combined):
+def dpd_to_delay(combined):
     """Given a delay value in the final format expect by ADP, return the delay in ns."""
     
     # Convert to little-endian
@@ -104,7 +105,7 @@ def DPDtodelay(combined):
     return delay
 
 
-def gaintoDPG(gain):
+def gain_to_dpg(gain):
     """Given a gain (between 0 and 1), convert it to a gain in the final form 
     expected by ADP (big endian 16.1 signed integer)."""
     
@@ -117,7 +118,7 @@ def gaintoDPG(gain):
     return combined
 
 
-def DPGtogain(combined):
+def dpg_to_gain(combined):
     """Given a gain value in the final format expected by ADP, return the gain
     as a decimal value (0 to 1)."""
     
@@ -130,18 +131,18 @@ def DPGtogain(combined):
     return gain
 
 
-def tbnFilter(sampleRate=1e5, nPts=_nPts):
+def tbn_filter(sample_rate=1e5, npts=_N_PTS):
     """
     Return a function that will generate the shape of a TBN filter for a given sample
     rate.
     """
     
     # Part 0 - FIR filter
-    h, wFIR = freqz(_tbnFIR, 1, nPts)
+    h, wFIR = freqz(_TBN_FIR, 1, npts)
     w = numpy.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= sampleRate / 2.0 / numpy.pi
+    h *= sample_rate / 2.0 / numpy.pi
     w = numpy.abs(w)**2
     
     # Mirror
@@ -152,7 +153,7 @@ def tbnFilter(sampleRate=1e5, nPts=_nPts):
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False)
 
 
-def drxFilter(sampleRate=9.8e6, nPts=_nPts):
+def drx_filter(sample_rate=9.8e6, npts=_N_PTS):
     """
     Return a function that will generate the shape of a DRX filter for a given sample
     rate.
@@ -160,11 +161,11 @@ def drxFilter(sampleRate=9.8e6, nPts=_nPts):
     Based on memo DRX0001.
     """
     # Part 0 - FIR filter
-    h, wFIR = freqz(_drxFIR, 1, nPts)
+    h, wFIR = freqz(_DRX_FIR, 1, npts)
     w = numpy.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= sampleRate / 2.0 / numpy.pi
+    h *= sample_rate / 2.0 / numpy.pi
     w = numpy.abs(w)**2
     
     # Mirror

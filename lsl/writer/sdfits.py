@@ -32,16 +32,16 @@ from lsl.common.stations import lwa1
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['SD', '__version__', '__revision__', '__all__']
+__all__ = ['SD', 'STOKES_CODES', 'NUMERIC_STOKES', '__version__', '__revision__', '__all__']
 
 
-SDVersion = (1, 6)
+SD_VERSION = (1, 6)
 
-StokesCodes = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
+STOKES_CODES = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
             'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 
             'XX': -5, 'YY': -6, 'XY': -7, 'YX': -8}
 
-NumericStokes = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
+NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
             -1: 'RR', -2: 'LL', -3: 'RL', -4: 'RL', 
             -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
@@ -71,7 +71,7 @@ class SD(object):
         Representns one spectrum for a given observation time.
         """
         
-        def __init__(self, obsTime, intTime, dataDict, pol=StokesCodes['XX']):
+        def __init__(self, obsTime, intTime, dataDict, pol=STOKES_CODES['XX']):
             self.obsTime = obsTime
             self.intTime = intTime
             self.dataDict = dataDict
@@ -174,7 +174,7 @@ class SD(object):
 
         for pol in polList:
             if type(pol) == str:
-                numericPol = StokesCodes[pol.upper()]
+                numericPol = STOKES_CODES[pol.upper()]
             else:
                 numericPol = pol
                 
@@ -219,7 +219,7 @@ class SD(object):
         """
         
         if type(pol) == str:
-            numericPol = StokesCodes[pol.upper()]
+            numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol
         
@@ -505,7 +505,7 @@ class SD(object):
         sd.header['OBSERVER'] = (self.observer, 'Observer name(s)')
         sd.header['PROJID']   = (self.project, 'Project name')
         sd.header['TELESCOP'] = (self.site.name, 'Telescope name')
-        x,y,z = self.site.getGeocentricLocation()
+        x,y,z = self.site.get_geocentric_location()
         sd.header['OBSGEO-X'] = (x, '[m] Antenna ECEF X-coordinate')
         sd.header['OBSGEO-Y'] = (y, '[m] Antenna ECEF Y-coordinate')
         sd.header['OBSGEO-Z'] = (z, '[m] Antenna ECEF Z-coordinate')

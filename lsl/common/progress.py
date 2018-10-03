@@ -18,22 +18,22 @@ class ProgressBar(object):
     run tasks.
     
     Example Usage:
-        >>> import sys
-        >>> from progess import ProgressBar
-        >>> pb = ProgressBar()
-        >>> pb.inc()
-        >>> sys.stdout.write(pb.show())
-        >>> sys.stdout.flush()
+     >>> import sys
+     >>> from progess import ProgressBar
+     >>> pb = ProgressBar()
+     >>> pb.inc()
+     >>> sys.stdout.write(pb.show())
+     >>> sys.stdout.flush()
     """
     
     def __init__(self, max=100, span=70, sym='=', printP=True):
         """
         Initialize the ProgressBar class with various parameters:
-        * max: maximum count for the progress bar (default: 100)
-        * span: width in characters to make the bar (default: 70)
-        * sym: character to use in the progress bar (default: '=')
-        * printP: whether or not to print the percentage in addition to
-            the bar or not (default: True)
+         * max: maximum count for the progress bar (default: 100)
+         * span: width in characters to make the bar (default: 70)
+         * sym: character to use in the progress bar (default: '=')
+         * printP: whether or not to print the percentage in addition to
+                   the bar or not (default: True)
         """
         
         self.amount = 0
@@ -151,12 +151,12 @@ class ProgressBarPlus(ProgressBar):
     estimator.
     
     Example Usage:
-        >>> import sys
-        >>> from progess import ProgressBar
-        >>> pb = ProgressBar()
-        >>> pb.inc()
-        >>> sys.stdout.write(pb.show())
-        >>> sys.stdout.flush()
+     >>> import sys
+     >>> from progess import ProgressBar
+     >>> pb = ProgressBar()
+     >>> pb.inc()
+     >>> sys.stdout.write(pb.show())
+     >>> sys.stdout.flush()
         
     .. note::
         The timing feature is only active when the inc()/dec() functions are called.

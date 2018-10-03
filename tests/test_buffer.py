@@ -13,7 +13,7 @@ Unit test for the lsl.reader.buffer module.
 import os
 import unittest
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.reader import tbn, drx, tbf
 from lsl.reader import errors
 from lsl.reader import buffer
@@ -41,7 +41,7 @@ class buffer_tests(unittest.TestCase):
         """Test the TBN ring buffer with the default values."""
         
         fh = open(tbnFile, 'rb')
-        nFpO = tbn.getFramesPerObs(fh)
+        nFpO = tbn.get_frames_per_obs(fh)
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
@@ -50,10 +50,10 @@ class buffer_tests(unittest.TestCase):
         # Go
         while True:
             try:
-                cFrame = tbn.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbn.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -88,19 +88,19 @@ class buffer_tests(unittest.TestCase):
         """Test a small version of the TBN ring buffer."""
         
         fh = open(tbnFile, 'rb')
-        nFpO = tbn.getFramesPerObs(fh)
+        nFpO = tbn.get_frames_per_obs(fh)
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], nSegments=1)
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], nsegments=1)
         
         # Go
         while True:
             try:
-                cFrame = tbn.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbn.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -110,7 +110,7 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -121,19 +121,19 @@ class buffer_tests(unittest.TestCase):
         """Test the reorder function of the TBN ring buffer."""
         
         fh = open(tbnFile, 'rb')
-        nFpO = tbn.getFramesPerObs(fh)
+        nFpO = tbn.get_frames_per_obs(fh)
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], nSegments=1, ReorderFrames=True)
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], nsegments=1, reorder=True)
         
         # Go
         while True:
             try:
-                cFrame = tbn.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbn.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -143,15 +143,15 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pS, pP = cFrames[i-1].parseID()
-                cS, cP = cFrames[i].parseID()
+                pS, pP = cFrames[i-1].parse_id()
+                cS, cP = cFrames[i].parse_id()
                 
                 pID = pS*2 + pP
                 cID = cS*2 + cP
@@ -163,7 +163,7 @@ class buffer_tests(unittest.TestCase):
         """Test the TBN ring buffer's flush() function."""
         
         fh = open(tbnFile, 'rb')
-        nFpO = tbn.getFramesPerObs(fh)
+        nFpO = tbn.get_frames_per_obs(fh)
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
@@ -172,10 +172,10 @@ class buffer_tests(unittest.TestCase):
         # Go
         while True:
             try:
-                cFrame = tbn.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbn.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -189,7 +189,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -198,19 +198,19 @@ class buffer_tests(unittest.TestCase):
         """Test the TBN ring buffer's flush() function with reordering."""
         
         fh = open(tbnFile, 'rb')
-        nFpO = tbn.getFramesPerObs(fh)
+        nFpO = tbn.get_frames_per_obs(fh)
         nFpO = nFpO[0] + nFpO[1]
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], ReorderFrames=True)
+        frameBuffer = buffer.TBNFrameBuffer(stands=range(1,nFpO//2+1), pols=[0, 1], reorder=True)
         
         # Go
         while True:
             try:
-                cFrame = tbn.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbn.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -224,15 +224,15 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pS, pP = cFrames[i-1].parseID()
-                cS, cP = cFrames[i].parseID()
+                pS, pP = cFrames[i-1].parse_id()
+                cS, cP = cFrames[i].parse_id()
                 
                 pID = pS*2 + pP
                 cID = cS*2 + cP
@@ -246,21 +246,21 @@ class buffer_tests(unittest.TestCase):
         """Test the DRX ring buffer."""
         
         fh = open(drxFile, 'rb')
-        junkFrame = drx.readFrame(fh)
-        b,t,p = junkFrame.parseID()
-        fh.seek(-drx.FrameSize, 1)
+        junkFrame = drx.read_frame(fh)
+        b,t,p = junkFrame.parse_id()
+        fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nSegments=2)
+        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nsegments=2)
         
         # Go
         dumped = []
         while True:
             try:
-                cFrame = drx.readFrame(fh)
-            except errors.eofError:
+                cFrame = drx.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
 
             frameBuffer.append(cFrame)
@@ -269,7 +269,7 @@ class buffer_tests(unittest.TestCase):
             if cFrames is None:
                 continue
                 
-            dumped.append( cFrames[0].data.timeTag )
+            dumped.append( cFrames[0].data.timetag )
             
         fh.close()
         
@@ -300,20 +300,20 @@ class buffer_tests(unittest.TestCase):
         """Test the reorder function of the TBN ring buffer."""
         
         fh = open(drxFile, 'rb')
-        junkFrame = drx.readFrame(fh)
-        b,t,p = junkFrame.parseID()
-        fh.seek(-drx.FrameSize, 1)
+        junkFrame = drx.read_frame(fh)
+        b,t,p = junkFrame.parse_id()
+        fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nSegments=2, ReorderFrames=True)
+        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nsegments=2, reorder=True)
         
         # Go
         while True:
             try:
-                cFrame = drx.readFrame(fh)
-            except errors.eofError:
+                cFrame = drx.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
 
             frameBuffer.append(cFrame)
@@ -327,8 +327,8 @@ class buffer_tests(unittest.TestCase):
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pB, pT, pP = cFrames[i-1].parseID()
-                cB, cT, cP = cFrames[i].parseID()
+                pB, pT, pP = cFrames[i-1].parse_id()
+                cB, cT, cP = cFrames[i].parse_id()
                 
                 pID = 4*pB + 2*(pT-1) + pP
                 cID = 4*cB + 2*(cT-1) + cP
@@ -340,20 +340,20 @@ class buffer_tests(unittest.TestCase):
         """Test the DRX ring buffer's flush() function."""
         
         fh = open(drxFile, 'rb')
-        junkFrame = drx.readFrame(fh)
-        b,t,p = junkFrame.parseID()
-        fh.seek(-drx.FrameSize, 1)
+        junkFrame = drx.read_frame(fh)
+        b,t,p = junkFrame.parse_id()
+        fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nSegments=2)
+        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nsegments=2)
         
         # Go
         while True:
             try:
-                cFrame = drx.readFrame(fh)
-            except errors.eofError:
+                cFrame = drx.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
 
             frameBuffer.append(cFrame)
@@ -367,7 +367,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (257355782095346056,))
+            self.assertTrue(cFrames[0].data.timetag in (257355782095346056,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), 4)
@@ -376,20 +376,20 @@ class buffer_tests(unittest.TestCase):
         """Test the DRX ring buffer's flush() function with reordering."""
         
         fh = open(drxFile, 'rb')
-        junkFrame = drx.readFrame(fh)
-        b,t,p = junkFrame.parseID()
-        fh.seek(-drx.FrameSize, 1)
+        junkFrame = drx.read_frame(fh)
+        b,t,p = junkFrame.parse_id()
+        fh.seek(-drx.FRAME_SIZE, 1)
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nSegments=2, ReorderFrames=True)
+        frameBuffer = buffer.DRXFrameBuffer(beams=[b,], tunes=[1, 2], pols=[0, 1], nsegments=2, reorder=True)
         
         # Go
         while True:
             try:
-                cFrame = drx.readFrame(fh)
-            except errors.eofError:
+                cFrame = drx.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
 
             frameBuffer.append(cFrame)
@@ -403,8 +403,8 @@ class buffer_tests(unittest.TestCase):
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pB, pT, pP = cFrames[i-1].parseID()
-                cB, cT, cP = cFrames[i].parseID()
+                pB, pT, pP = cFrames[i-1].parse_id()
+                cB, cT, cP = cFrames[i].parse_id()
                 
                 pID = 4*pB + 2*(pT-1) + pP
                 cID = 4*cB + 2*(cT-1) + cP
@@ -415,15 +415,15 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (257355782095346056,))
+            self.assertTrue(cFrames[0].data.timetag in (257355782095346056,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), 4)
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pB, pT, pP = cFrames[i-1].parseID()
-                cB, cT, cP = cFrames[i].parseID()
+                pB, pT, pP = cFrames[i-1].parse_id()
+                cB, cT, cP = cFrames[i].parse_id()
                 
                 pID = 4*pB + 2*(pT-1) + pP
                 cID = 4*cB + 2*(cT-1) + cP
@@ -437,7 +437,7 @@ class buffer_tests(unittest.TestCase):
         """Test the TBF ring buffer with the default values."""
         
         fh = open(tbfFile, 'rb')
-        nFpO = tbf.getFramesPerObs(fh)
+        nFpO = tbf.get_frames_per_obs(fh)
         
         # Create the FrameBuffer instance
         frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396])
@@ -445,10 +445,10 @@ class buffer_tests(unittest.TestCase):
         # Go
         while True:
             try:
-                cFrame = tbf.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbf.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -482,18 +482,18 @@ class buffer_tests(unittest.TestCase):
         """Test a small version of the TBF ring buffer."""
         
         fh = open(tbfFile, 'rb')
-        nFpO = tbf.getFramesPerObs(fh)
+        nFpO = tbf.get_frames_per_obs(fh)
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], nSegments=1)
+        frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], nsegments=1)
         
         # Go
         while True:
             try:
-                cFrame = tbf.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbf.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -503,7 +503,7 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -514,18 +514,18 @@ class buffer_tests(unittest.TestCase):
         """Test the reorder function of the TBF ring buffer."""
         
         fh = open(tbfFile, 'rb')
-        nFpO = tbf.getFramesPerObs(fh)
+        nFpO = tbf.get_frames_per_obs(fh)
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], ReorderFrames=True)
+        frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], reorder=True)
         
         # Go
         while True:
             try:
-                cFrame = tbf.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbf.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -535,15 +535,15 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pC = cFrames[i-1].header.firstChan
-                cC = cFrames[i].header.firstChan
+                pC = cFrames[i-1].header.first_chan
+                cC = cFrames[i].header.first_chan
                 
                 self.assertTrue(cC > pC)
                 
@@ -553,7 +553,7 @@ class buffer_tests(unittest.TestCase):
         """Test the TBF ring buffer's flush() function."""
         
         fh = open(tbfFile, 'rb')
-        nFpO = tbf.getFramesPerObs(fh)
+        nFpO = tbf.get_frames_per_obs(fh)
         
         # Create the FrameBuffer instance
         frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396])
@@ -561,10 +561,10 @@ class buffer_tests(unittest.TestCase):
         # Go
         while True:
             try:
-                cFrame = tbf.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbf.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -578,7 +578,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -587,18 +587,18 @@ class buffer_tests(unittest.TestCase):
         """Test the TBF ring buffer's flush() function with reordering."""
         
         fh = open(tbfFile, 'rb')
-        nFpO = tbf.getFramesPerObs(fh)
+        nFpO = tbf.get_frames_per_obs(fh)
         
         # Create the FrameBuffer instance
-        frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], ReorderFrames=True)
+        frameBuffer = buffer.TBFFrameBuffer(chans=[2348, 2360, 2372, 2384, 2396], reorder=True)
         
         # Go
         while True:
             try:
-                cFrame = tbf.readFrame(fh)
-            except errors.eofError:
+                cFrame = tbf.read_frame(fh)
+            except errors.EOFError:
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 continue
                 
             frameBuffer.append(cFrame)
@@ -612,15 +612,15 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timeTag in (283685766952000000,))
+            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
             for i in xrange(1, len(cFrames)):
-                pC = cFrames[i-1].header.firstChan
-                cC = cFrames[i].header.firstChan
+                pC = cFrames[i-1].header.first_chan
+                cC = cFrames[i].header.first_chan
                 
                 self.assertTrue(cC > pC)
 

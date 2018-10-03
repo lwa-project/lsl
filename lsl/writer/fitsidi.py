@@ -38,19 +38,21 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['IDI', 'AIPS', 'ExtendedIDI', 'StokesCodes', 'NumericStokes', 
+__all__ = ['IDI', 'AIPS', 'ExtendedIDI', 'STOKES_CODES', 'NUMERIC_STOKES', 
     '__version__', '__revision__', '__all__']
 
 
-IDIVersion = (3, 0)
+IDI_VERSION = (3, 0)
 
-StokesCodes = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
-            'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 
-            'XX': -5, 'YY': -6, 'XY': -7, 'YX': -8}
 
-NumericStokes = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
-            -1: 'RR', -2: 'LL', -3: 'RL', -4: 'LR', 
-            -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
+STOKES_CODES = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4, 
+                'RR': -1, 'LL': -2, 'RL': -3, 'LR': -4, 
+                'XX': -5, 'YY': -6, 'XY': -7, 'YX': -8}
+
+
+NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
+                  -1: 'RR', -2: 'LL', -3: 'RL', -4: 'LR', 
+                  -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
 
 def merge_baseline(ant1, ant2, shift=16):
@@ -117,7 +119,7 @@ class IDI(object):
         Represents one UV visibility data set for a given observation time.
         """
     
-        def __init__(self, obsTime, intTime, baselines, visibilities, weights=None, pol=StokesCodes['XX'], source='z'):
+        def __init__(self, obsTime, intTime, baselines, visibilities, weights=None, pol=STOKES_CODES['XX'], source='z'):
             self.obsTime = obsTime
             self.intTime = intTime
             self.baselines = baselines
@@ -132,8 +134,8 @@ class IDI(object):
             polarization code.
             """
             
-            sID = self.obsTime*10000000 + abs(self.pol)
-            yID =    y.obsTime*10000000 + abs(   y.pol)
+            sID = (self.obsTime, self.pol)
+            yID = (y.obsTime,    y.pol   )
             
             if sID > yID:
                 return 1
@@ -270,7 +272,7 @@ class IDI(object):
         
         for pol in polList:
             if type(pol) == str:
-                numericPol = StokesCodes[pol.upper()]
+                numericPol = STOKES_CODES[pol.upper()]
             else:
                 numericPol = pol
                 
@@ -322,7 +324,7 @@ class IDI(object):
             stands.append(ant.stand.id)
         stands = numpy.array(stands)
         
-        arrayX, arrayY, arrayZ = site.getGeocentricLocation()
+        arrayX, arrayY, arrayZ = site.get_geocentric_location()
         
         xyz = numpy.zeros((len(stands),3))
         for i,ant in enumerate(antennas):
@@ -339,7 +341,7 @@ class IDI(object):
             enableMapper = False
             
         ants = []
-        topo2eci = site.getECITransform()
+        topo2eci = site.get_eci_transform()
         for i in xrange(len(stands)):
             eci = numpy.dot(topo2eci, xyz[i,:])
             ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
@@ -377,7 +379,7 @@ class IDI(object):
         """
         
         if type(pol) == str:
-            numericPol = StokesCodes[pol.upper()]
+            numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol
             
@@ -455,8 +457,8 @@ class IDI(object):
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
         primary.header['LWATYPE'] = ('IDI-ZA', 'LWA FITS file type')
-        primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
-        primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
+        primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
+        primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
@@ -528,7 +530,7 @@ class IDI(object):
         
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
-        eop = geodesy.getEOP(refMJD)
+        eop = geodesy.get_eop(refMJD)
         if eop is None:
             eop = geodesy.EOP(mjd=refMJD)
             
@@ -1215,8 +1217,8 @@ class AIPS(IDI):
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
         primary.header['LWATYPE'] = ('IDI-AIPS-ZA', 'LWA FITS file type')
-        primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
-        primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
+        primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
+        primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
@@ -1276,8 +1278,8 @@ class ExtendedIDI(IDI):
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
         primary.header['LWATYPE'] = ('IDI-EXTENDED-ZA', 'LWA FITS file type')
-        primary.header['LWAMAJV'] = (IDIVersion[0], 'LWA FITS file format major version')
-        primary.header['LWAMINV'] = (IDIVersion[1], 'LWA FITS file format minor version')
+        primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
+        primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')

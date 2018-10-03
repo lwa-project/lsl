@@ -17,7 +17,7 @@ from scipy.stats import betaprime
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['mean', 'std', 'var', 'skew', 'getLimits', 'spectralFFT', 'spectralPower', 
+__all__ = ['mean', 'std', 'var', 'skew', 'get_limits', 'spectral_fft', 'spectral_power', 
         '__version__', '__revision__', '__all__']
 
 
@@ -101,7 +101,7 @@ def _delta(M, N):
     return (b - a - 1) / (b - 1)
 
 
-def getLimits(sigma, M, N=1):
+def get_limits(sigma, M, N=1):
     """
     Return the limits on the spectral kurtosis value to exclude the specified confidence
     interval in sigma using a Pearson Type VI distribution (betaprime in scipy.stats world).
@@ -143,7 +143,7 @@ def getLimits(sigma, M, N=1):
     return lower, upper
 
 
-def spectralFFT(x):
+def spectral_fft(x):
     """
     Compute the spectral kurtosis for a set of unaveraged FFT measurements.
     For a distribution consistent with Gaussian noise, this value should 
@@ -153,10 +153,10 @@ def spectralFFT(x):
     # Convert to power
     xPrime = numpy.abs(x)**2
     
-    return spectralPower(xPrime, N=1)
+    return spectral_power(xPrime, N=1)
 
 
-def spectralPower(x, N=1):
+def spectral_power(x, N=1):
     """
     Compute the spectral kurtosis for a set of power measurements averaged over 
     N FFT windows.  For a distribution consistent with Gaussian noise, this value 

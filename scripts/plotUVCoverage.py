@@ -84,12 +84,12 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
             try:
-                station = metabundle.getStation(config['metadata'], ApplySDM=True)
+                station = metabundle.getStation(config['metadata'], apply_sdm=True)
             except:
-                station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+                station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     elif config['site'] == 'lwa1':
         station = stations.lwa1
     elif config['site'] == 'lwasv':
@@ -98,8 +98,8 @@ def main(args):
         raise RuntimeError("Unknown site name: %s" % config['site'])
         
     antennas = []
-    for ant in station.getAntennas()[0::2]:
-        if ant.getStatus() == 33:
+    for ant in station.get_antennas()[0::2]:
+        if ant.get_status() == 33:
             antennas.append(ant)
     print "Displaying uv coverage for %i good stands" % len(antennas)
     

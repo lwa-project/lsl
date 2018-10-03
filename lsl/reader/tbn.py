@@ -27,18 +27,18 @@ The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
-For reading in data, use the readFrame function.  It takes a python file-
+For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.  The readBlock
 function reads in a (user-defined) number of TBN frames and returns a 
 ObservingBlock object.
 
 For describing the format of data in the file, two function are provided:
 
-getSampleRate
+get_sample_rate
   read in the few frame of an open file handle and return the sampling rate 
   of the data
 
-getFramesPerObs
+get_frames_per_obs
   read in the first several frames to see how many stands are found in the data.
 
 ..versionchanged:: 1.2.0
@@ -57,20 +57,20 @@ import numpy
 
 from lsl.common import dp as dp_common
 from lsl.reader._gofast import readTBN
-from lsl.reader._gofast import syncError as gsyncError
-from lsl.reader._gofast import eofError as geofError
-from lsl.reader.errors import baseReaderError, syncError, eofError
+from lsl.reader._gofast import SyncError as gSyncError
+from lsl.reader._gofast import EOFError as gEOFError
+from lsl.reader.errors import SyncError, EOFError
 
 __version__ = '0.8'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 
-           'getSampleRate', 'getFramesPerObs', 'FrameSize', 'filterCodes', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 
+           'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES', 
            '__version__', '__revision__', '__all__']
 
-FrameSize = 1048
+FRAME_SIZE = 1048
 
 # List of filter codes and their corresponding sample rates in Hz
-filterCodes = {1:   1000, 2:   3125, 3:    6250, 4:    12500, 5: 25000, 6: 50000, 7: 100000}
+FILTER_CODES = {1:   1000, 2:   3125, 3:    6250, 4:    12500, 5: 25000, 6: 50000, 7: 100000}
 
 
 class FrameHeader(object):
@@ -84,75 +84,75 @@ class FrameHeader(object):
         and gain that are part of the ECR 11 changes.
     """
 
-    def __init__(self, frameCount=None, tuningWord=None, tbnID=None, gain=None):
-        self.frameCount = frameCount
-        self.tuningWord = tuningWord
-        self.tbnID = tbnID
+    def __init__(self, frame_count=None, tuning_word=None, tbn_id=None, gain=None):
+        self.frame_count = frame_count
+        self.tuning_word = tuning_word
+        self.tbn_id = tbn_id
         self.gain = gain
-        self.sampleRate = None
+        self.sample_rate = None
         
-    def isTBN(self):
+    def is_tbn(self):
         """
         Function to check if the data is really TBN and not TBW by examining
         the TBN ID field.  Returns True if the data is TBN, false otherwise.
         """
 
-        mode = (self.tbnID>>15)&1
+        mode = (self.tbn_id>>15)&1
         if mode == 0:
             return True
         else:
             return False
 
-    def parseID(self):
+    def parse_id(self):
         """
         Function to parse the TBN ID field and return a tuple of the stand 
         number and polarization.
         """
 
-        if self.tbnID&1023 % 2 == 0:
-            stand = (self.tbnID&1023) // 2
+        if self.tbn_id&1023 % 2 == 0:
+            stand = (self.tbn_id&1023) // 2
             pol = 1
         else:
-            stand = (self.tbnID&1023) // 2 + 1
+            stand = (self.tbn_id&1023) // 2 + 1
             pol = 0
             
         return (stand, pol)
 
-    def getCentralFreq(self):
+    def get_central_freq(self):
         """
         Convert the tuning word to a frequency in Hz.
         """
 
-        return dp_common.fS * self.tuningWord / 2**32
+        return dp_common.fS * self.tuning_word / 2**32
 
-    def getGain(self):
+    def get_gain(self):
         """
         Get the current TBN gain for this frame.
         """
 
         return self.gain
 
-    def setSampleRate(self, sampleRate):
+    def setsample_rate(self, sample_rate):
         """
         Function to set the sample rate of the TBN data in Hz.
         """
 
-        self.sampleRate = sampleRate
+        self.sample_rate = sample_rate
 
-    def getFilterCode(self):
+    def get_filter_code(self):
         """
         Function to convert the sample rate in Hz to a filter code.
         """
         
-        if self.sampleRate is None:
+        if self.sample_rate is None:
             return None
         else:
             sampleCodes = {}
-            for key in filterCodes:
-                value = filterCodes[key]
+            for key in FILTER_CODES:
+                value = FILTER_CODES[key]
                 sampleCodes[value] = key
 
-            return sampleCodes[self.sampleRate]
+            return sampleCodes[self.sample_rate]
 
 
 class FrameData(object):
@@ -165,17 +165,17 @@ class FrameData(object):
         and gain that aren't needed with ECR 11.
     """
 
-    def __init__(self, timeTag=None, iq=None):
-        self.timeTag = timeTag
+    def __init__(self, timetag=None, iq=None):
+        self.timetag = timetag
         self.iq = iq
 
-    def getTime(self):
+    def get_time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
         (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
         """
         
-        return self.timeTag / dp_common.fS
+        return self.timetag / dp_common.fS
 
 
 class Frame(object):
@@ -201,54 +201,54 @@ class Frame(object):
             
         self.valid = True
         
-    def isTBN(self):
+    def is_tbn(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.isTBN function.
-        """
-        
-        return self.header.isTBN()
-        
-    def parseID(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.parseID function.
+        Convenience wrapper for the Frame.FrameHeader.is_tbn function.
         """
         
-        return self.header.parseID()
+        return self.header.is_tbn()
         
-    def getTime(self):
+    def parse_id(self):
         """
-        Convenience wrapper for the Frame.FrameData.getTime function.
+        Convenience wrapper for the Frame.FrameHeader.parse_id function.
         """
         
-        return self.data.getTime()
-
-    def getFilterCode(self):
+        return self.header.parse_id()
+        
+    def get_time(self):
         """
-        Convenience wrapper for the Frame.FrameData.getFilterCode function.
+        Convenience wrapper for the Frame.FrameData.get_time function.
         """
+        
+        return self.data.get_time()
 
-        return self.header.getFilterCode()
-
-    def setSampleRate(self, sampleRate):
+    def get_filter_code(self):
         """
-        Convenience wrapper for the Frame.FrameData.setSampleRate function.
-        """
-
-        self.header.setSampleRate(sampleRate)
-
-    def getCentralFreq(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.getCentralFreq function.
+        Convenience wrapper for the Frame.FrameData.get_filter_code function.
         """
 
-        return self.header.getCentralFreq()
+        return self.header.get_filter_code()
 
-    def getGain(self):
+    def setsample_rate(self, sample_rate):
         """
-        Convenience wrapper for the Frame.FrameHeader.getGain function.
+        Convenience wrapper for the Frame.FrameData.setsample_rate function.
         """
 
-        return self.header.getGain()
+        self.header.setsample_rate(sample_rate)
+
+    def get_central_freq(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.get_central_freq function.
+        """
+
+        return self.header.get_central_freq()
+
+    def get_gain(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.get_gain function.
+        """
+
+        return self.header.get_gain()
             
     def __add__(self, y):
         """
@@ -300,9 +300,9 @@ class Frame(object):
         tag is equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -317,9 +317,9 @@ class Frame(object):
         tag is not equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -334,9 +334,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -352,9 +352,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -369,9 +369,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -387,9 +387,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -404,8 +404,8 @@ class Frame(object):
         sorting things.
         """
         
-        tX = self.data.timeTag
-        tY = y.data.timeTag
+        tX = self.data.timetag
+        tY = y.data.timetag
         if tY > tX:
             return -1
         elif tX > tY:
@@ -414,7 +414,7 @@ class Frame(object):
             return 0
 
 
-def readFrame(filehandle, SampleRate=None, Verbose=False):
+def read_frame(filehandle, sample_rate=None, Verbose=False):
     """
     Function to read in a single TBN frame (header+data) and store the 
     contents as a Frame object.
@@ -423,19 +423,19 @@ def readFrame(filehandle, SampleRate=None, Verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = readTBN(filehandle, Frame())
-    except gsyncError:
-        mark = filehandle.tell() - FrameSize
-        raise syncError(location=mark)
-    except geofError:
-        raise eofError
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
     
-    if SampleRate is not None:
-        newFrame.setSampleRate(SampleRate)
+    if sample_rate is not None:
+        newFrame.setsample_rate(sample_rate)
         
     return newFrame
 
 
-def getSampleRate(filehandle, nFrames=None, FilterCode=False):
+def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     """
     Find out what the sampling rate/filter code is from consecutive sets of 
     observations.  By default, the rate in Hz is returned.  However, the 
@@ -457,13 +457,13 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
     frames = {}
     for i in range(nFrames):
         try:
-            cFrame = readFrame(filehandle)
-        except eofError:
+            cFrame = read_frame(filehandle)
+        except EOFError:
             break
-        except syncError:
+        except SyncError:
             continue
         
-        stand, pol = cFrame.parseID()
+        stand, pol = cFrame.parse_id()
         key = 2*stand + pol
         try:
             frames[key].append(cFrame)
@@ -498,22 +498,22 @@ def getSampleRate(filehandle, nFrames=None, FilterCode=False):
     # time tags and calculate the sampling rate.  Since the time tags are based off f_S
     # @ 196 MSPS, and each frame contains 512 samples, the sampling rate is:
     #  f_S / <difference in time tags per 512 samples>
-    time1 = frame1.data.timeTag
-    time2 = frame2.data.timeTag
+    time1 = frame1.data.timetag
+    time2 = frame2.data.timetag
     rate = dp_common.fS / (abs( time2 - time1 ) / 512)
 
     if not FilterCode:
         return rate
     else:
         sampleCodes = {}
-        for key in filterCodes:
-            value = filterCodes[key]
+        for key in FILTER_CODES:
+            value = FILTER_CODES[key]
             sampleCodes[value] = key
 
         return sampleCodes[rate]
 
 
-def getFramesPerObs(filehandle):
+def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per observation by examining 
     the first 2,080 TBN frames.  Return the number of frames per observations 
@@ -540,13 +540,13 @@ def getFramesPerObs(filehandle):
     maxY = 0
     for i in range(4*520):
         try:
-            cFrame = readFrame(filehandle)
-        except eofError:
+            cFrame = read_frame(filehandle)
+        except EOFError:
             break
-        except syncError:
+        except SyncError:
             continue
         
-        cID, cPol = cFrame.header.parseID()
+        cID, cPol = cFrame.header.parse_id()
         if cID not in idCodes[cPol]:
             idCodes[cPol].append(cID)
         

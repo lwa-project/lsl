@@ -3059,10 +3059,10 @@ _LEAP_SEC_LIST = []
 # <package_dir>/data/astro/tai-utc.dat
 def _parse_tai_file():
     import os
-    from lsl.common.paths import data as dataPath
+    from lsl.common.paths import DATA
     
     # get path to almanac data file
-    datName = os.path.join(dataPath, 'astro', 'tai-utc.dat') 
+    datName = os.path.join(DATA, 'astro', 'tai-utc.dat') 
     if not os.path.exists(datName):
         raise RuntimeError("file %s not found" % datName)        
         

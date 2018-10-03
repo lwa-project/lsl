@@ -22,7 +22,7 @@ class mcs_adp_tests(unittest.TestCase):
         """Test the datetime to MJD, MPM conversion"""
         
         dt = datetime.strptime("2012-06-15 06:34:09", "%Y-%m-%d %H:%M:%S")
-        mjd, mpm = mcsADP.datetime2mjdmpm(dt)
+        mjd, mpm = mcsADP.datetime_to_mjdmpm(dt)
         
         self.assertEqual(mjd, 56093)
         self.assertEqual(mpm, 23649000)
@@ -31,7 +31,7 @@ class mcs_adp_tests(unittest.TestCase):
         """Test the MJD, MPM to datetime conversion"""
         
         mjd, mpm = 56093, 23649000
-        dt = mcsADP.mjdmpm2datetime(mjd, mpm)
+        dt = mcsADP.mjdmpm_to_datetime(mjd, mpm)
         
         self.assertEqual(dt.strftime("%Y-%m-%d %H:%M:%S"), "2012-06-15 06:34:09")
         
@@ -45,7 +45,7 @@ class mcs_adp_tests(unittest.TestCase):
         theta = 0.0
         phi = 0.0
         psi = 0.0
-        azP, elP = mcsADP.applyPointingCorrection(az, el, theta, phi, psi, degrees=True)
+        azP, elP = mcsADP.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, az, 1)
         self.assertAlmostEqual(elP, el, 1)
         
@@ -53,7 +53,7 @@ class mcs_adp_tests(unittest.TestCase):
         theta = 0.0
         phi = 0.0
         psi = 1.0
-        azP, elP = mcsADP.applyPointingCorrection(az, el, theta, phi, psi, degrees=True)
+        azP, elP = mcsADP.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, az-1.0, 1)
         self.assertAlmostEqual(elP, el, 1)
         
@@ -61,7 +61,7 @@ class mcs_adp_tests(unittest.TestCase):
         theta = 23.0
         phi = 10.0
         psi = 1.5
-        azP, elP = mcsADP.applyPointingCorrection(az, el, theta, phi, psi, degrees=True)
+        azP, elP = mcsADP.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, 62.40, 1)
         self.assertAlmostEqual(elP, 34.37, 1)
 

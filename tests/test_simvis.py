@@ -28,19 +28,19 @@ class simvis_tests(unittest.TestCase):
         """Test building a antenna array object with uniform sky response."""
         
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         
-        aa = vis.buildSimArray(lwa1, antennas, freqs, force_flat=True)
+        aa = vis.build_sim_array(lwa1, antennas, freqs, force_flat=True)
         
     def test_build_aa(self):
         """Test building a antenna array object with realistic sky response."""
         
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         # Check the number of stands
         self.assertEqual(len(aa.ants), len(antennas))
         
@@ -53,12 +53,12 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Do a check of keys
         keyList = out.keys()
@@ -88,12 +88,12 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.array([30e6,])
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Do a check of keys
         keyList = out.keys()
@@ -122,12 +122,12 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs, resolve_src=True)
+        out = vis.build_sim_data(aa, vis.SRCS, resolve_src=True)
         
         # Do a check of keys
         keyList = out.keys()
@@ -157,12 +157,12 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.array([30e6,])
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs, resolve_src=True)
+        out = vis.build_sim_data(aa, vis.SRCS, resolve_src=True)
         
         # Do a check of keys
         keyList = out.keys()
@@ -191,17 +191,17 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Scale
-        amp = vis.scaleData(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
+        amp = vis.scale_data(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
         # Delay
-        phs = vis.scaleData(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
+        phs = vis.scale_data(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
         
         #
         # Single-channel test
@@ -209,17 +209,17 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.array([30e6,])
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Scale
-        amp = vis.scaleData(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
+        amp = vis.scale_data(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
         # Delay
-        phs = vis.scaleData(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
+        phs = vis.scale_data(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
         
     def test_shift_data(self):
         """Test that we can shift the uvw coordinates of a data dictionary 
@@ -227,15 +227,15 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Shift
-        sft = vis.shiftData(out, aa)
+        sft = vis.shift_data(out, aa)
         
         #
         # Single-channel test
@@ -243,15 +243,15 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.array([30e6,])
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Shift
-        sft = vis.shiftData(out, aa)
+        sft = vis.shift_data(out, aa)
         
     def test_add_noise(self):
         """Test that we can add baseline noise to a data dictionary without
@@ -259,15 +259,15 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Add in the noise
-        na = vis.addBaselineNoise(out, 15e3, 0.061)
+        na = vis.add_baseline_noise(out, 15e3, 0.061)
         
         #
         # Single-channel test
@@ -275,15 +275,15 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.getAntennas()[0:20]
+        antennas = lwa1.get_antennas()[0:20]
         freqs = numpy.array([30e6,])
-        aa = vis.buildSimArray(lwa1, antennas, freqs)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.buildSimData(aa, vis.srcs)
+        out = vis.build_sim_data(aa, vis.SRCS)
         
         # Add in the noise
-        na = vis.addBaselineNoise(out, 15e3, 0.061, bandwidth=1e6)
+        na = vis.add_baseline_noise(out, 15e3, 0.061, bandwidth=1e6)
 
 
 class  simvis_test_suite(unittest.TestSuite):

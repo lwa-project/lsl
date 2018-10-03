@@ -16,7 +16,7 @@ The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
-For reading in data, use the readFrame function.  It takes a python file-
+For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.
 
 .. versionadded:: 1.2.0
@@ -27,18 +27,18 @@ import numpy
 
 from lsl.common import adp as adp_common
 from lsl.reader._gofast import readTBF
-from lsl.reader._gofast import syncError as gsyncError
-from lsl.reader._gofast import eofError as geofError
-from lsl.reader.errors import syncError, eofError
+from lsl.reader._gofast import SyncError as gSyncError
+from lsl.reader._gofast import EOFError as gEOFError
+from lsl.reader.errors import SyncError, EOFError
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'FrameChannelCount',
-           'getFramesPerObs', 'getFirstFrameCount', 'getChannelCount', 'getFirstChannel', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT',
+           'get_frames_per_obs', 'getFirstFrameCount', 'get_channel_count', 'get_first_channel', 
            '__version__', '__revision__', '__all__']
 
-FrameSize = 6168
-FrameChannelCount = 12
+FRAME_SIZE = 6168
+FRAME_CHANNEL_COUNT = 12
 
 
 class FrameHeader(object):
@@ -48,13 +48,13 @@ class FrameHeader(object):
     well as the original binary header data.
     """
     
-    def __init__(self, id=None, frameCount=None, secondsCount=None, firstChan=None):
+    def __init__(self, id=None, frame_count=None, second_count=None, first_chan=None):
         self.id = id
-        self.frameCount = frameCount
-        self.secondsCount = secondsCount
-        self.firstChan = firstChan
+        self.frame_count = frame_count
+        self.second_count = second_count
+        self.first_chan = first_chan
         
-    def isTBF(self):
+    def is_tbf(self):
         """
         Function to check if the data is really TBF.  Returns True if the 
         data is TBF, false otherwise.
@@ -65,13 +65,13 @@ class FrameHeader(object):
         else:
             return False
             
-    def getChannelFreqs(self):
+    def get_channel_freqs(self):
         """
         Return a numpy.float32 array for the center frequencies, in Hz, of
         each channel in the data.
         """
         
-        return (numpy.arange(12, dtype=numpy.float32)+self.firstChan) * adp_common.fC
+        return (numpy.arange(12, dtype=numpy.float32)+self.first_chan) * adp_common.fC
 
 
 class FrameData(object):
@@ -80,17 +80,17 @@ class FrameData(object):
     frame.  Both fields listed in the DP ICD version H are stored.
     """
     
-    def __init__(self, timeTag=None, fDomain=None):
-        self.timeTag = timeTag
+    def __init__(self, timetag=None, fDomain=None):
+        self.timetag = timetag
         self.fDomain = fDomain
         
-    def getTime(self):
+    def get_time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
         (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
         """
         
-        seconds = self.timeTag / adp_common.fS
+        seconds = self.timetag / adp_common.fS
         
         return seconds
 
@@ -114,26 +114,26 @@ class Frame(object):
             
         self.valid = True
         
-    def isTBF(self):
+    def is_tbf(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.isTBF function.
-        """
-        
-        return self.header.isTBF()
-        
-    def getChannelFreqs(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.getChannelFreqs function.
+        Convenience wrapper for the Frame.FrameHeader.is_tbf function.
         """
         
-        return self.header.getChannelFreqs()
+        return self.header.is_tbf()
         
-    def getTime(self):
+    def get_channel_freqs(self):
         """
-        Convenience wrapper for the Frame.FrameData.getTime function.
+        Convenience wrapper for the Frame.FrameHeader.get_channel_freqs function.
         """
         
-        return self.data.getTime()
+        return self.header.get_channel_freqs()
+        
+    def get_time(self):
+        """
+        Convenience wrapper for the Frame.FrameData.get_time function.
+        """
+        
+        return self.data.get_time()
         
     def __add__(self, y):
         """
@@ -185,9 +185,9 @@ class Frame(object):
         tag is equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -202,9 +202,9 @@ class Frame(object):
         tag is not equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -219,9 +219,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -237,9 +237,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -254,9 +254,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -272,9 +272,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -289,8 +289,8 @@ class Frame(object):
         sorting things.
         """
         
-        tX = self.data.timeTag
-        tY = y.data.timeTag
+        tX = self.data.timetag
+        tY = y.data.timetag
         if tY > tX:
             return -1
         elif tX > tY:
@@ -299,7 +299,7 @@ class Frame(object):
             return 0
 
 
-def readFrame(filehandle, Verbose=False):
+def read_frame(filehandle, Verbose=False):
     """
     Function to read in a single TBF frame (header+data) and store the 
     contents as a Frame object.
@@ -308,16 +308,16 @@ def readFrame(filehandle, Verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = readTBF(filehandle, Frame())
-    except gsyncError:
-        mark = filehandle.tell() - FrameSize
-        raise syncError(location=mark)
-    except geofError:
-        raise eofError
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
         
     return newFrame
 
 
-def getFramesPerObs(filehandle):
+def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
     first 1000 TBF records.  Return the number of frames per observation.
@@ -331,11 +331,11 @@ def getFramesPerObs(filehandle):
     channels = []
     for i in range(1000):
         try:
-            cFrame = readFrame(filehandle)
+            cFrame = read_frame(filehandle)
         except:
             break
             
-        chan = cFrame.header.firstChan
+        chan = cFrame.header.first_chan
         if chan not in channels:
             channels.append( chan )
             
@@ -355,18 +355,18 @@ def getFirstFrameCount(filehandle):
     fhStart = filehandle.tell()
     
     # Find out how many frames there are per observation
-    nFrames = getFramesPerObs(filehandle)
+    nFrames = get_frames_per_obs(filehandle)
     
     firstFrameCount = 2**64-1
     freqs = []
     while len(freqs) < nFrames:
-        cFrame = readFrame(filehandle)
-        freq = cFrame.header.firstChan
+        cFrame = read_frame(filehandle)
+        freq = cFrame.header.first_chan
             
         if freq not in freqs:
             freqs.append(freq)
-        if cFrame.header.frameCount < firstFrameCount:
-            firstFrameCount = cFrame.header.frameCount
+        if cFrame.header.frame_count < firstFrameCount:
+            firstFrameCount = cFrame.header.frame_count
             
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
@@ -375,14 +375,14 @@ def getFirstFrameCount(filehandle):
     return firstFrameCount
 
 
-def getChannelCount(filehandle):
+def get_channel_count(filehandle):
     """
     Find out the total number of channels that are present by examining 
     the first 1000 TBF records.  Return the number of channels found.
     """
     
     # Find out how many frames there are per observation
-    nFrames = getFramesPerObs(filehandle)
+    nFrames = get_frames_per_obs(filehandle)
     
     # Convert to channels
     nChannels = nFrames * 12
@@ -391,7 +391,7 @@ def getChannelCount(filehandle):
     return nChannels
 
 
-def getFirstChannel(filehandle, frequency=False):
+def get_first_channel(filehandle, frequency=False):
     """
     Find and return the lowest frequency channel in a TBF file.  If the 
     `frequency` keyword is True the returned value is in Hz.
@@ -401,16 +401,16 @@ def getFirstChannel(filehandle, frequency=False):
     fhStart = filehandle.tell()
     
     # Find out how many frames there are per observation
-    nFrames = getFramesPerObs(filehandle)
+    nFrames = get_frames_per_obs(filehandle)
     
     # Find the lowest frequency channel
     freqs = []
     while len(freqs) < nFrames:
-        cFrame = readFrame(filehandle)
+        cFrame = read_frame(filehandle)
         if frequency:
-            freq = cFrame.getChannelFreqs()[0]
+            freq = cFrame.get_channel_freqs()[0]
         else:
-            freq = cFrame.header.firstChan
+            freq = cFrame.header.first_chan
             
         if freq not in freqs:
             freqs.append(freq)

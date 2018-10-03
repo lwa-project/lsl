@@ -20,7 +20,7 @@ coverage and time delays.  The functions in the module:
 import numpy
 
 from lsl.common.stations import lwa1
-from lsl.common.constants import deg2rad, c as speedOfLight
+from lsl.common.constants import deg_to_rad, c as speedOfLight
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
@@ -144,8 +144,8 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
 
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    HA2 = HA * 15.0 * deg2rad
-    dec2 = dec * deg2rad
+    HA2 = HA * 15.0 * deg_to_rad
+    dec2 = dec * deg_to_rad
     lat2 = site.lat
     
     # Coordinate transformation matrices
@@ -196,7 +196,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    dec2 = dec * deg2rad
+    dec2 = dec * deg_to_rad
     lat2 = site.lat
     
     # Coordinate transformation matrices

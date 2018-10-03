@@ -9,7 +9,7 @@ if sys.version_info > (3,):
 Small collection of robust statistical estimators based on functions from
 Henry Freudenriech (Hughes STX) statistics library (called ROBLIB) that have
 been incorporated into the AstroIDL User's Library.  Function included are:
-* biweightMean - biweighted mean estimator
+* biweight_mean - biweighted mean estimator
 * mean - robust estimator of the mean of a data set
 * mode - robust estimate of the mode of a data set using the half-sample
     method
@@ -31,14 +31,14 @@ import numpy
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['biweightMean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit', '__version__', '__revision__', '__all__']
+__all__ = ['biweight_mean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit', '__version__', '__revision__', '__all__']
 
-__iterMax = 25
+__max_iter = 25
 __delta = 5.0e-7
 __epsilon = 1.0e-20
 
 
-def biweightMean(inputData, axis=None, dtype=None):
+def biweight_mean(inputData, axis=None, dtype=None):
     """
     Calculate the mean of a data set using bisquare weighting.  
     
@@ -51,7 +51,7 @@ def biweightMean(inputData, axis=None, dtype=None):
     """
     
     if axis is not None:
-        fnc = lambda x: biweightMean(x, dtype=dtype)
+        fnc = lambda x: biweight_mean(x, dtype=dtype)
         y0 = numpy.apply_along_axis(fnc, axis, inputData)
     else:
         y = inputData.ravel()
@@ -74,7 +74,7 @@ def biweightMean(inputData, axis=None, dtype=None):
             diff = 0
         while diff > closeEnough:
             nIter = nIter + 1
-            if nIter > __iterMax:
+            if nIter > __max_iter:
                 break
             uu = ((y-y0)/(6.0*sigma))**2.0
             uu = numpy.where(uu > 1.0, 1.0, uu)
@@ -83,7 +83,7 @@ def biweightMean(inputData, axis=None, dtype=None):
             y0 = (weights*y).sum()
             deviation = y - y0
             prevSigma = sigma
-            sigma = std(deviation, Zero=True)
+            sigma = std(deviation, zero=True)
             if sigma > __epsilon:
                 diff = numpy.abs(prevSigma - sigma) / prevSigma
             else:
@@ -92,7 +92,7 @@ def biweightMean(inputData, axis=None, dtype=None):
     return y0
 
 
-def mean(inputData, Cut=3.0, axis=None, dtype=None):
+def mean(inputData, cut=3.0, axis=None, dtype=None):
     """
     Robust estimator of the mean of a data set.  Based on the 
     resistant_mean function from the AstroIDL User's Library.
@@ -120,20 +120,20 @@ def mean(inputData, Cut=3.0, axis=None, dtype=None):
         if maxAbsDev < __epsilon:
             maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
             
-        cutOff = Cut*maxAbsDev
+        cutOff = cut*maxAbsDev
         good = numpy.where( numpy.abs(data-data0) <= cutOff )
         good = good[0]
         dataMean = data[good].mean()
         dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
 
-        if Cut > 1.0:
-            sigmaCut = Cut
+        if cut > 1.0:
+            sigmacut = cut
         else:
-            sigmaCut = 1.0
-        if sigmaCut <= 4.5:
-            dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
+            sigmacut = 1.0
+        if sigmacut <= 4.5:
+            dataSigma = dataSigma / (-0.15405 + 0.90723*sigmacut - 0.23584*sigmacut**2.0 + 0.020142*sigmacut**3.0)
             
-        cutOff = Cut*dataSigma
+        cutOff = cut*dataSigma
         good = numpy.where(  numpy.abs(data-data0) <= cutOff )
         good = good[0]
         dataMean = data[good].mean()
@@ -142,12 +142,12 @@ def mean(inputData, Cut=3.0, axis=None, dtype=None):
         else:
             raise ValueError("Distribution is too strange to compute mean")
             
-        if Cut > 1.0:
-            sigmaCut = Cut
+        if cut > 1.0:
+            sigmacut = cut
         else:
-            sigmaCut = 1.0
-        if sigmaCut <= 4.5:
-            dataSigma = dataSigma / (-0.15405 + 0.90723*sigmaCut - 0.23584*sigmaCut**2.0 + 0.020142*sigmaCut**3.0)
+            sigmacut = 1.0
+        if sigmacut <= 4.5:
+            dataSigma = dataSigma / (-0.15405 + 0.90723*sigmacut - 0.23584*sigmacut**2.0 + 0.020142*sigmacut**3.0)
             
         dataSigma = dataSigma / math.sqrt(len(good)-1)
         
@@ -205,7 +205,7 @@ def mode(inputData, axis=None, dtype=None):
     return dataMode
 
 
-def std(inputData, Zero=False, axis=None, dtype=None):
+def std(inputData, zero=False, axis=None, dtype=None):
     """
     Robust estimator of the standard deviation of a data set.  
     
@@ -229,7 +229,7 @@ def std(inputData, Zero=False, axis=None, dtype=None):
         if dtype is not None:
             data = data.astype(dtype)
             
-        if Zero:
+        if zero:
             data0 = 0.0
         else:
             data0 = numpy.median(data)
@@ -259,7 +259,7 @@ def std(inputData, Zero=False, axis=None, dtype=None):
     return sigma
 
 
-def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
+def checkfit(inputData, inputFit, epsilon, delta, bisquare_limit=6.0):
     """
     Determine the quality of a fit and biweights.  Returns a tuple
     with elements:
@@ -281,7 +281,7 @@ def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
         fit = fit.compressed()
 
     deviation = data - fit
-    sigma = std(deviation, Zero=True)
+    sigma = std(deviation, zero=True)
     if sigma < epsilon:
         return (sigma, 0.0, 0, 0.0, 0.0)
     
@@ -293,7 +293,7 @@ def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
     if fracDev < delta:
         return (sigma, fracDev, 0, 0.0, 0.0)
         
-    biweights = numpy.abs(deviation)/(BisquareLimit*sigma)
+    biweights = numpy.abs(deviation)/(bisquare_limit*sigma)
     toUse = (numpy.where(biweights > 1))[0]
     if len(toUse) > 0:
         biweights[toUse] = 1.0
@@ -305,7 +305,7 @@ def checkfit(inputData, inputFit, epsilon, delta, BisquareLimit=6.0):
     return (sigma, fracDev, nGood, biweights, scaledResids)
 
 
-def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, CloseFactor=0.03):
+def linefit(inputX, inputY, max_iter=25, bisector=False, bisquare_limit=6.0, close_factor=0.03):
     """
     Outlier resistance two-variable linear regression function.
     
@@ -365,7 +365,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
         ySlope = (sxy - sx*sy) / d
         yYInt = (sxx*sy - sx*sxy) / d
         
-        if Bisector:
+        if bisector:
             syy = (y*y).sum()
             d = syy - sy*sy
             if numpy.abs(d) < __epsilon:
@@ -414,14 +414,14 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
         return cc[::-1]
         
     sigma1 = (100.0*sigma)
-    closeEnough = CloseFactor * numpy.sqrt(0.5/(n-1))
+    closeEnough = close_factor * numpy.sqrt(0.5/(n-1))
     if closeEnough < __delta:
         closeEnough = __delta
     diff = 1.0e20
     nIter = 0
     while diff > closeEnough:
         nIter = nIter + 1
-        if nIter > iterMax:
+        if nIter > max_iter:
             break
         sigma2 = sigma1
         sigma1 = sigma
@@ -437,7 +437,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
         slope = ySlope
         yInt = yYInt
         
-        if Bisector:
+        if bisector:
             syy = (biweights*y*y).sum()
             d = syy - sy*sy
             if numpy.abs(d) < __epsilon:
@@ -493,7 +493,7 @@ def linefit(inputX, inputY, iterMax=25, Bisector=False, BisquareLimit=6.0, Close
     return cc[::-1]
 
 
-def polyfit(inputX, inputY, order, iterMax=25):
+def polyfit(inputX, inputY, order, max_iter=25):
     """
     Outlier resistance two-variable polynomial function fitter.
     
@@ -579,7 +579,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
     nIter = 0
     while diff > closeEnough:
         nIter = nIter + 1
-        if nIter > iterMax:
+        if nIter > max_iter:
             break
         sigma2 = sigma1
         sigma1 = sigma

@@ -5,7 +5,7 @@
 import os
 import unittest
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.reader import ldp
 from lsl.reader import errors
 
@@ -35,15 +35,15 @@ class ldp_tests(unittest.TestCase):
         f = ldp.TBWFile(tbwFile)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 196e6)
-        self.assertEqual(f.getInfo("dataBits"), 12)
-        self.assertEqual(f.getInfo("nFrames"), 8)
+        self.assertEqual(f.get_info("sample_rate"), 196e6)
+        self.assertEqual(f.get_info("data_bits"), 12)
+        self.assertEqual(f.get_info("nframes"), 8)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -54,18 +54,18 @@ class ldp_tests(unittest.TestCase):
     def test_ldp_tbw_nocheck(self):
         """Test the LDP interface for a TBW file."""
         
-        f = ldp.TBWFile(tbwFile, ignoreTimeTagErrors=True)
+        f = ldp.TBWFile(tbwFile, ignore_timetag_errors=True)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 196e6)
-        self.assertEqual(f.getInfo("dataBits"), 12)
-        self.assertEqual(f.getInfo("nFrames"), 8)
+        self.assertEqual(f.get_info("sample_rate"), 196e6)
+        self.assertEqual(f.get_info("data_bits"), 12)
+        self.assertEqual(f.get_info("nframes"), 8)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -81,15 +81,15 @@ class ldp_tests(unittest.TestCase):
         f = ldp.TBNFile(tbnFile)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 100e3)
-        self.assertEqual(f.getInfo("dataBits"), 8)
-        self.assertEqual(f.getInfo("nFrames"), 29)
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info("nframes"), 29)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -100,18 +100,18 @@ class ldp_tests(unittest.TestCase):
     def test_ldp_tbn_nocheck(self):
         """Test the LDP interface for a TBN file."""
         
-        f = ldp.TBNFile(tbnFile, ignoreTimeTagErrors=True)
+        f = ldp.TBNFile(tbnFile, ignore_timetag_errors=True)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 100e3)
-        self.assertEqual(f.getInfo("dataBits"), 8)
-        self.assertEqual(f.getInfo("nFrames"), 29)
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info("nframes"), 29)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -127,16 +127,16 @@ class ldp_tests(unittest.TestCase):
         f = ldp.DRXFile(drxFile)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 19.6e6)
-        self.assertEqual(f.getInfo("dataBits"), 4)
-        self.assertEqual(f.getInfo("nFrames"), 32)
-        self.assertEqual(f.getInfo("beampols"), 4)
+        self.assertEqual(f.get_info("sample_rate"), 19.6e6)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info("nframes"), 32)
+        self.assertEqual(f.get_info("beampols"), 4)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -156,19 +156,19 @@ class ldp_tests(unittest.TestCase):
     def test_ldp_drx_nocheck(self):
         """Test the LDP interface for a DRX file."""
         
-        f = ldp.DRXFile(drxFile, ignoreTimeTagErrors=True)
+        f = ldp.DRXFile(drxFile, ignore_timetag_errors=True)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 19.6e6)
-        self.assertEqual(f.getInfo("dataBits"), 4)
-        self.assertEqual(f.getInfo("nFrames"), 32)
-        self.assertEqual(f.getInfo("beampols"), 4)
+        self.assertEqual(f.get_info("sample_rate"), 19.6e6)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info("nframes"), 32)
+        self.assertEqual(f.get_info("beampols"), 4)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -193,17 +193,17 @@ class ldp_tests(unittest.TestCase):
         f = ldp.DRSpecFile(drspecFile)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 19.6e6)
-        self.assertEqual(f.getInfo("dataBits"), 32)
-        self.assertEqual(f.getInfo("nFrames"), 7)
-        self.assertEqual(f.getInfo("beampols"), 4)
-        self.assertEqual(f.getInfo("nProducts"), 2)
+        self.assertEqual(f.get_info("sample_rate"), 19.6e6)
+        self.assertEqual(f.get_info("data_bits"), 32)
+        self.assertEqual(f.get_info("nframes"), 7)
+        self.assertEqual(f.get_info("beampols"), 4)
+        self.assertEqual(f.get_info("nProducts"), 2)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -223,20 +223,20 @@ class ldp_tests(unittest.TestCase):
     def test_ldp_drspec_nocheck(self):
         """Test the LDP interface for a DR Spectrometer file."""
         
-        f = ldp.DRSpecFile(drspecFile, ignoreTimeTagErrors=True)
+        f = ldp.DRSpecFile(drspecFile, ignore_timetag_errors=True)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 19.6e6)
-        self.assertEqual(f.getInfo("dataBits"), 32)
-        self.assertEqual(f.getInfo("nFrames"), 7)
-        self.assertEqual(f.getInfo("beampols"), 4)
-        self.assertEqual(f.getInfo("nProducts"), 2)
+        self.assertEqual(f.get_info("sample_rate"), 19.6e6)
+        self.assertEqual(f.get_info("data_bits"), 32)
+        self.assertEqual(f.get_info("nframes"), 7)
+        self.assertEqual(f.get_info("beampols"), 4)
+        self.assertEqual(f.get_info("nProducts"), 2)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()

@@ -43,19 +43,19 @@ class simdp_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'tbn.dat')
 
         fh = open(testFile, 'wb')
-        dp.basicSignal(fh, numpy.array([1,2,3,4]), 2000, mode='TBN', filter=7, start_time=1000)
+        dp.basic_signal(fh, numpy.array([1,2,3,4]), 2000, mode='TBN', filter=7, start_time=1000)
         fh.close()
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
-        nSamples = fileSize // tbn.FrameSize
+        nSamples = fileSize // tbn.FRAME_SIZE
         self.assertEqual(nSamples, 2000*4*2)
 
         # Check the time of the first frame
         fh = open(testFile, 'rb')
-        frame = tbn.readFrame(fh)
+        frame = tbn.read_frame(fh)
         fh.close()
-        self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
+        self.assertEqual(frame.data.timetag, 1000*dp_common.fS)
         
     def test_point_tbn(self):
         """Test building a point source TBN signal"""
@@ -63,22 +63,22 @@ class simdp_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'tbn.dat')
         
         station = lwa_common.lwa1
-        antennas = station.getAntennas()
+        antennas = station.get_antennas()
 
         fh = open(testFile, 'wb')
-        dp.pointSource(fh, antennas[:8:2], self.src, 4, mode='TBN', filter=7, start_time=1000)
+        dp.point_source(fh, antennas[:8:2], self.src, 4, mode='TBN', filter=7, start_time=1000)
         fh.close()
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
-        nSamples = fileSize // tbn.FrameSize
+        nSamples = fileSize // tbn.FRAME_SIZE
         self.assertEqual(nSamples, 4*4*2)
 
         # Check the time of the first frame
         fh = open(testFile, 'rb')
-        frame = tbn.readFrame(fh)
+        frame = tbn.read_frame(fh)
         fh.close()
-        self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
+        self.assertEqual(frame.data.timetag, 1000*dp_common.fS)
 
     def test_basic_drx(self):
         """Test building a basic DRX signal"""
@@ -86,21 +86,21 @@ class simdp_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'drx.dat')
 
         fh = open(testFile, 'wb')
-        dp.basicSignal(fh, numpy.array([1,2,3,4]), 10, mode='DRX', filter=6, ntuning=2, start_time=1000)
+        dp.basic_signal(fh, numpy.array([1,2,3,4]), 10, mode='DRX', filter=6, ntuning=2, start_time=1000)
         fh.close()
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
-        nSamples = fileSize // drx.FrameSize
+        nSamples = fileSize // drx.FRAME_SIZE
         self.assertEqual(nSamples, 10*4*2*2)
 
         # Check the file size
         fh = open(testFile, 'rb')
-        frame = drx.readFrame(fh)
+        frame = drx.read_frame(fh)
         fh.close()
-        self.assertEqual(frame.data.timeTag, 1000*dp_common.fS)
-        self.assertEqual(frame.header.frameCount, 0)
-        self.assertEqual(frame.header.secondsCount, 0)
+        self.assertEqual(frame.data.timetag, 1000*dp_common.fS)
+        self.assertEqual(frame.header.frame_count, 0)
+        self.assertEqual(frame.header.second_count, 0)
 
     def tearDown(self):
         """Remove the test path directory and its contents"""

@@ -25,7 +25,7 @@ from lsl import astro
 
 __version__ = "0.3"
 __revision__ = "$Rev$"
-__all__ = ["sources", "horizon", "graticleRADec", "graticleAzEl", 
+__all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt", 
            "__version__", "__revision__", "__all__"]
 
 
@@ -70,16 +70,16 @@ def _radec_of(aa, az, alt):
     return RA, dec 
 
 
-def sources(ax, aa, srcs, phaseCenter='z', label=True, marker='x', color='white'):
+def sources(ax, aa, srcs, phase_center='z', label=True, marker='x', color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the
     locations of the srcs given in the 'srcs' dictionary.
     """
     
     # Get the phase center
-    if phaseCenter is not 'z':
-        phaseCenter.compute(aa)
-        pcRA, pcDec = phaseCenter.ra, phaseCenter.dec
+    if phase_center is not 'z':
+        phase_center.compute(aa)
+        pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
         pcRA, pcDec = aa.sidereal_time(), aa.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
@@ -97,7 +97,7 @@ def sources(ax, aa, srcs, phaseCenter='z', label=True, marker='x', color='white'
                 ax.text(top[0], top[1], name, color=color, size=12)
 
 
-def horizon(ax, aa, phaseCenter='z', color='white'):
+def horizon(ax, aa, phase_center='z', color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the horizon.
     
@@ -107,9 +107,9 @@ def horizon(ax, aa, phaseCenter='z', color='white'):
     """
         
     # Get the phase center
-    if phaseCenter is not 'z':
-        phaseCenter.compute(aa)
-        pcRA, pcDec = phaseCenter.ra, phaseCenter.dec
+    if phase_center is not 'z':
+        phase_center.compute(aa)
+        pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
         pcRA, pcDec = aa.sidereal_time(), aa.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
@@ -128,7 +128,7 @@ def horizon(ax, aa, phaseCenter='z', color='white'):
     ax.plot(x, y, color=color)
 
 
-def graticleRADec(ax, aa, phaseCenter='z', label=True, color='white'):
+def graticule_radec(ax, aa, phase_center='z', label=True, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant declinate and RA.  Declinations are spaced at 20 degree intervals
@@ -136,9 +136,9 @@ def graticleRADec(ax, aa, phaseCenter='z', label=True, color='white'):
     """
     
     # Get the phase center
-    if phaseCenter is not 'z':
-        phaseCenter.compute(aa)
-        pcRA, pcDec = phaseCenter.ra, phaseCenter.dec
+    if phase_center is not 'z':
+        phase_center.compute(aa)
+        pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
         pcRA, pcDec = aa.sidereal_time(), aa.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
@@ -202,7 +202,7 @@ def graticleRADec(ax, aa, phaseCenter='z', label=True, color='white'):
             ax.text(top[0], top[1], '%i$^h$' % (ra/15,), color=color)
 
 
-def graticleAzEl(ax, aa, phaseCenter='z', label=True, color='white'):
+def graticule_azalt(ax, aa, phase_center='z', label=True, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant azimuth and elevation.  Elevations are spaced at 20 degree intervals
@@ -210,9 +210,9 @@ def graticleAzEl(ax, aa, phaseCenter='z', label=True, color='white'):
     """
     
     # Get the phase center
-    if phaseCenter is not 'z':
-        phaseCenter.compute(aa)
-        pcRA, pcDec = phaseCenter.ra, phaseCenter.dec
+    if phase_center is not 'z':
+        phase_center.compute(aa)
+        pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
         pcRA, pcDec = aa.sidereal_time(), aa.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
@@ -237,7 +237,7 @@ def graticleAzEl(ax, aa, phaseCenter='z', label=True, color='white'):
                 
         ax.plot(x, y, color=color)
         
-        if el > 0 or phaseCenter is not 'z':
+        if el > 0 or phase_center is not 'z':
             valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
             pos = valid.size / 2 - valid.size / 5
             if valid.size > 10:

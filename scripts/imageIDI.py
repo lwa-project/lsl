@@ -12,7 +12,7 @@ from astropy.io import fits as astrofits
 from lsl import astro
 from lsl.sim import vis as simVis
 from lsl.imaging import utils, overlay
-from lsl.writer.fitsidi import NumericStokes
+from lsl.writer.fitsidi import NUMERIC_STOKES
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -63,7 +63,7 @@ def parseConfig(args):
     config['freq1'] = 10e6
     config['freq2'] = 88e6
     config['dataset'] = 0
-    config['uvMin'] = 0.0
+    config['min_uv'] = 0.0
     config['include'] = None
     config['exclude'] = None
     config['label'] = True
@@ -92,7 +92,7 @@ def parseConfig(args):
         elif opt in ('-s', '--dataset'):
             config['dataset'] = int(value)
         elif opt in ('-m', '--uv-min'):
-            config['uvMin'] = float(value)
+            config['min_uv'] = float(value)
         elif opt in ('-i', '--include'):
             config['include'] = [int(v) for v in value.split(',')]
         elif opt in ('-e', '--exclude'):
@@ -122,23 +122,23 @@ def main(args):
     filename = config['args'][0]
     
     idi = utils.CorrelatedData(filename)
-    aa = idi.getAntennaArray()
-    lo = idi.getObserver()
+    aa = idi.get_antennaarray()
+    lo = idi.get_observer()
     
     nStand = len(idi.stands)
-    nChan = len(idi.freq)
+    nchan = len(idi.freq)
     freq = idi.freq
     
     print "Raw Stand Count: %i" % nStand
     print "Final Baseline Count: %i" % (nStand*(nStand-1)/2,)
-    print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nChan, (freq[1] - freq[0])/1e3)
+    print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3)
     try:
-        print "Polarization Products: %s" % ' '.join([NumericStokes[p] for p in idi.pols])
+        print "Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols])
     except KeyError:
         # Catch for CASA MS that use a different numbering scheme
-        NumericStokesMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
+        NUMERIC_STOKESMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
                         9:'XX', 10:'XY', 11:'YX', 12:'YY'}
-        print "Polarization Products: %s" % ' '.join([NumericStokesMS[p] for p in idi.pols])
+        print "Polarization Products: %s" % ' '.join([NUMERIC_STOKESMS[p] for p in idi.pols])
         
     print "Reading in FITS IDI data"
     nSets = idi.integrationCount
@@ -147,7 +147,7 @@ def main(args):
             continue
             
         print "Set #%i of %i" % (set, nSets)
-        dataDict = idi.getDataSet(set, uvMin=config['uvMin'])
+        dataDict = idi.get_data_set(set, min_uv=config['min_uv'])
         
         # Build a list of unique JDs for the data
         pols = dataDict['bls'].keys()
@@ -217,7 +217,7 @@ def main(args):
         lbl1 = 'XX'
         for p in ('xx', 'rr', 'I'):
             try:
-                img1 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
+                img1 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl1 = p.upper()
             except:
                 pass
@@ -226,7 +226,7 @@ def main(args):
         lbl2 = 'YY'
         for p in ('yy', 'll', 'Q'):
             try:
-                img2 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
+                img2 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl2 = p.upper()
             except:
                 pass
@@ -235,7 +235,7 @@ def main(args):
         lbl3 = 'XY'
         for p in ('xy', 'rl', 'U'):
             try:
-                img3 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
+                img3 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl3 = p.upper()
             except:
                 pass
@@ -244,7 +244,7 @@ def main(args):
         lbl4 = 'YX'
         for p in ('yx', 'lr', 'V'):
             try:
-                img4 = utils.buildGriddedImage(dataDict, MapSize=NPIX_SIDE/2, MapRes=0.5, pol=p, chan=toWork)
+                img4 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl4 = p.upper()
             except:
                 pass
@@ -271,7 +271,7 @@ def main(args):
                 continue
                 
             # Display the image and label with the polarization/LST
-            cb = utils.plotGriddedImage(ax, img)
+            cb = utils.plot_gridded_image(ax, img)
             fig.colorbar(cb, ax=ax)
             if config['time'] == 'LST':
                 ax.set_title("%s @ %s LST" % (pol, lst))
@@ -294,9 +294,9 @@ def main(args):
             # Add lines of constant RA and dec.
             if config['grid']:
                 if config['coord'] == 'RADec':
-                    overlay.graticleRADec(ax, aa)
+                    overlay.graticule_radec(ax, aa)
                 else:
-                    overlay.graticleAzEl(ax, aa)
+                    overlay.graticule_azalt(ax, aa)
                     
         plt.show()
         

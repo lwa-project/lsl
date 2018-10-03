@@ -125,11 +125,11 @@ def main(args):
         
     # Read in the skymap (GSM or LF map @ 74 MHz)
     if config['GSM']:
-        smap = skymap.SkyMapGSM(freqMHz=config['freq']/1e6)
+        smap = skymap.SkyMapGSM(freq_MHz=config['freq']/1e6)
         if config['verbose']:
             print "Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (config['freq']/1e6, len(smap.ra), smap._power.min(), smap._power.max())
     else:
-        smap = skymap.SkyMapLFSM(freqMHz=config['freq']/1e6)
+        smap = skymap.SkyMapLFSM(freq_MHz=config['freq']/1e6)
         if config['verbose']:
             print "Read in LFSM map at %.2f MHz of %d x %d pixels; min=%f, max=%f" % (config['freq']/1e6, smap.numPixelsX, smap.numPixelsY, smap._power.min(), smap._power.max())
     

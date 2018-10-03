@@ -261,7 +261,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	VDIFBasicHeader bHeader;
 	VDIFExtendedHeader eHeader;
 	
-	static char *kwlist[] = {"fh", "frame", "centralFreq", "sampleRate", NULL};
+	static char *kwlist[] = {"fh", "frame", "central_freq", "sample_rate", NULL};
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|ff", kwlist, &ph, &frame, &cFreq, &sRate)) {
 		PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
 		return NULL;
@@ -277,7 +277,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 		}
 		goto fail;
 	} else if( PyString_GET_SIZE(buffer) != sizeof(bHeader) ) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(EOFError, "End of file encountered during filehandle read");
 		goto fail;
 	}
 	memcpy(&bHeader, PyString_AS_STRING(buffer), sizeof(bHeader));
@@ -292,7 +292,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	// Does this frame look like it is valid?
 	if( bHeader.frameLength < sizeof(bHeader)/8 ) {
 		buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(bHeader), 1);
-		PyErr_Format(syncError, "Frame size is zero, zero-filled frame?");
+		PyErr_Format(SyncError, "Frame size is zero, zero-filled frame?");
 		goto fail;
 	}
 	
@@ -308,7 +308,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 			}
 			goto fail;
 		} else if( PyString_GET_SIZE(buffer) != sizeof(eHeader) ) {
-			PyErr_Format(eofError, "End of file encountered during filehandle read");
+			PyErr_Format(EOFError, "End of file encountered during filehandle read");
 			goto fail;
 		}
 		memcpy(&eHeader, PyString_AS_STRING(buffer), sizeof(eHeader));
@@ -342,7 +342,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 		free(rawData);
 		goto fail;
 	} else if( PyString_GET_SIZE(buffer) != dataLength ) {
-		PyErr_Format(eofError, "End of file encountered during filehandle read");
+		PyErr_Format(EOFError, "End of file encountered during filehandle read");
 		free(rawData);
 		goto fail;
 	}
@@ -431,23 +431,23 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	fHeader = PyObject_GetAttrString(frame, "header");
 
 	temp = Py_BuildValue("B", bHeader.isInvalid);
-	PyObject_SetAttrString(fHeader, "isInvalid", temp);
+	PyObject_SetAttrString(fHeader, "is_invalid", temp);
 	Py_XDECREF(temp);
 
 	temp = Py_BuildValue("B", bHeader.isLegacy);
-	PyObject_SetAttrString(fHeader, "isLegacy", temp);
+	PyObject_SetAttrString(fHeader, "is_legacy", temp);
 	Py_XDECREF(temp);
 
 	temp = Py_BuildValue("I", bHeader.secondsFromEpoch);
-	PyObject_SetAttrString(fHeader, "secondsFromEpoch", temp);
+	PyObject_SetAttrString(fHeader, "seconds_from_epoch", temp);
 	Py_XDECREF(temp);
 
 	temp = Py_BuildValue("H", bHeader.refEpoch);
-	PyObject_SetAttrString(fHeader, "refEpoch", temp);
+	PyObject_SetAttrString(fHeader, "ref_epoch", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", bHeader.frameInSecond);
-	PyObject_SetAttrString(fHeader, "frameInSecond", temp);
+	PyObject_SetAttrString(fHeader, "frame_in_second", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("B", bHeader.version);
@@ -455,39 +455,39 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", nChan);
-	PyObject_SetAttrString(fHeader, "nChan", temp);
+	PyObject_SetAttrString(fHeader, "nchan", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", bHeader.frameLength);
-	PyObject_SetAttrString(fHeader, "frameLength", temp);
+	PyObject_SetAttrString(fHeader, "frame_length", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("B", bHeader.isComplex);
-	PyObject_SetAttrString(fHeader, "isComplex", temp);
+	PyObject_SetAttrString(fHeader, "is_complex", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("B", bitsPerSample);
-	PyObject_SetAttrString(fHeader, "bitsPerSample", temp);
+	PyObject_SetAttrString(fHeader, "bits_per_sample", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", bHeader.threadID);
-	PyObject_SetAttrString(fHeader, "threadID", temp);
+	PyObject_SetAttrString(fHeader, "thread_id", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("H", bHeader.stationID);
-	PyObject_SetAttrString(fHeader, "stationID", temp);
+	PyObject_SetAttrString(fHeader, "station_id", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", eHeader.extendedData1);
-	PyObject_SetAttrString(fHeader, "extendedData1", temp);
+	PyObject_SetAttrString(fHeader, "extended_data_1", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", eHeader.extendedData2);
-	PyObject_SetAttrString(fHeader, "extendedData2", temp);
+	PyObject_SetAttrString(fHeader, "extended_data_2", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", eHeader.extendedData3);
-	PyObject_SetAttrString(fHeader, "extendedData3", temp);
+	PyObject_SetAttrString(fHeader, "extended_data_3", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("I", eHeader.extendedData4);
@@ -495,11 +495,11 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("f", cFreq);
-	PyObject_SetAttrString(fHeader, "centralFreq", temp);
+	PyObject_SetAttrString(fHeader, "central_freq", temp);
 	Py_XDECREF(temp);
 	
 	temp = Py_BuildValue("f", sRate);
-	PyObject_SetAttrString(fHeader, "sampleRate", temp);
+	PyObject_SetAttrString(fHeader, "sample_rate", temp);
 	Py_XDECREF(temp);
 	
 	// 2. Data
@@ -539,11 +539,11 @@ In order to use this reader in place of lsl.reader.vdif.readFrame change:\n\
 to:\n\
 \n\
 \t>>> import lsl.reader.vdif as vdif\n\
-\t>>> from lsl.reader._vdif import readVDIF, syncError, eofError\n\
+\t>>> from lsl.reader._vdif import readVDIF, SyncError, EOFError\n\
 \t>>> fh = open('some-vdif-file.dat', 'rb')\n\
 \t>> frame = readVDIF(fh, vdif.Frame())\n\
 \n\
 In addition, the exceptions checked for in the try...except blocks wrapping the\n\
-frame reader need to be changed to 'IOError' since syncError and eofError are\n\
+frame reader need to be changed to 'IOError' since SyncError and EOFError are\n\
 are sub-classes of IOError.\n\
 ");

@@ -11,7 +11,7 @@ if sys.version_info > (3,):
 import os
 import unittest
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
@@ -43,13 +43,13 @@ class reader_tests(unittest.TestCase):
         
         fh = open(tbwFile, 'rb')
         # First frame is really TBW and stores the correct stand ID
-        frame1 = tbw.readFrame(fh)
-        self.assertTrue(frame1.header.isTBW())
-        self.assertEqual(frame1.parseID(), 2)
+        frame1 = tbw.read_frame(fh)
+        self.assertTrue(frame1.header.is_tbw())
+        self.assertEqual(frame1.parse_id(), 2)
         # Second frame
-        frame2 = tbw.readFrame(fh)
-        self.assertTrue(frame2.header.isTBW())
-        self.assertEqual(frame2.parseID(), 1)
+        frame2 = tbw.read_frame(fh)
+        self.assertTrue(frame2.header.is_tbw())
+        self.assertEqual(frame2.parse_id(), 1)
         fh.close()
         
     def test_tbw_bits(self):
@@ -57,9 +57,9 @@ class reader_tests(unittest.TestCase):
         
         fh = open(tbwFile, 'rb')
         # File contains 12-bit data, two ways
-        self.assertEqual(tbw.getDataBits(fh), 12)
-        frame1 = tbw.readFrame(fh)
-        self.assertEqual(frame1.getDataBits(), 12)
+        self.assertEqual(tbw.get_data_bits(fh), 12)
+        frame1 = tbw.read_frame(fh)
+        self.assertEqual(frame1.get_data_bits(), 12)
         fh.close()
         
     def test_tbw_errors(self):
@@ -68,17 +68,17 @@ class reader_tests(unittest.TestCase):
         fh = open(tbwFile, 'rb')
         # Frames 1 through 8
         for i in range(1,9):
-            frame = tbw.readFrame(fh)
+            frame = tbw.read_frame(fh)
             
-        # Last frame should be an error (errors.eofError)
-        self.assertRaises(errors.eofError, tbw.readFrame, fh)
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, tbw.read_frame, fh)
         fh.close()
         
         # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.syncError).
+        # sync error (errors.SyncError).
         fh = open(tbwFile, 'rb')
         fh.seek(1)
-        self.assertRaises(errors.syncError, tbw.readFrame, fh)
+        self.assertRaises(errors.SyncError, tbw.read_frame, fh)
         fh.close()
         
     def test_tbw_comps(self):
@@ -88,7 +88,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 3
         frames = []
         for i in range(1,4):
-            frames.append(tbw.readFrame(fh))
+            frames.append(tbw.read_frame(fh))
         fh.close()
         
         self.assertTrue(0 < frames[0])
@@ -106,7 +106,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 3
         frames = []
         for i in range(1,4):
-            frames.append(tbw.readFrame(fh))
+            frames.append(tbw.read_frame(fh))
         fh.close()
         
         frames.sort()
@@ -122,7 +122,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 3
         frames = []
         for i in range(1,4):
-            frames.append(tbw.readFrame(fh))
+            frames.append(tbw.read_frame(fh))
         fh.close()
         
         # Multiplication
@@ -154,13 +154,13 @@ class reader_tests(unittest.TestCase):
         
         fh = open(tbnFile, 'rb')
         # First frame is really TBN and stores the correct IDs
-        frame1 = tbn.readFrame(fh)
-        stand, pol = frame1.parseID()
+        frame1 = tbn.read_frame(fh)
+        stand, pol = frame1.parse_id()
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 0)
         # Second frame
-        frame2 = tbn.readFrame(fh)
-        stand, pol = frame2.parseID()
+        frame2 = tbn.read_frame(fh)
+        stand, pol = frame2.parse_id()
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 1)
         fh.close()
@@ -171,24 +171,24 @@ class reader_tests(unittest.TestCase):
         fh = open(tbnFile, 'rb')
         # Frames 1 through 29
         for i in range(1,30):
-            frame = tbn.readFrame(fh)
+            frame = tbn.read_frame(fh)
             
-        # Last frame should be an error (errors.eofError)
-        self.assertRaises(errors.eofError, tbn.readFrame, fh)
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, tbn.read_frame, fh)
         fh.close()
         
         # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.syncError).
+        # sync error (errors.SyncError).
         fh = open(tbnFile, 'rb')
         fh.seek(1)
-        self.assertRaises(errors.syncError, tbn.readFrame, fh)
+        self.assertRaises(errors.SyncError, tbn.read_frame, fh)
         fh.close()
         
     def test_tbn_block(self):
         """Test finding out how many stands are in a file."""
         
         fh = open(tbnFile, 'rb')
-        nx, ny = tbn.getFramesPerObs(fh)
+        nx, ny = tbn.get_frames_per_obs(fh)
         self.assertEqual(nx, 10)
         self.assertEqual(ny, 10)
         fh.close()
@@ -197,9 +197,9 @@ class reader_tests(unittest.TestCase):
         """Test finding out the sample rate of a TBN file."""
         
         fh = open(tbnFile, 'rb')
-        rate = tbn.getSampleRate(fh)
+        rate = tbn.get_sample_rate(fh)
         self.assertEqual(rate, 100000)
-        code = tbn.getSampleRate(fh, FilterCode=True)
+        code = tbn.get_sample_rate(fh, FilterCode=True)
         self.assertEqual(code, 7)
         fh.close()
         
@@ -210,7 +210,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 29
         frames = []
         for i in range(1,30):
-            frames.append(tbn.readFrame(fh))
+            frames.append(tbn.read_frame(fh))
         fh.close()
         
         self.assertTrue(0 < frames[0])
@@ -228,7 +228,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 29
         frames = []
         for i in range(1,30):
-            frames.append(tbn.readFrame(fh))
+            frames.append(tbn.read_frame(fh))
         fh.close()
         
         frames.sort()
@@ -244,7 +244,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 29
         frames = []
         for i in range(1,30):
-            frames.append(tbn.readFrame(fh))
+            frames.append(tbn.read_frame(fh))
         fh.close()
         
         # Multiplication
@@ -275,13 +275,13 @@ class reader_tests(unittest.TestCase):
         """Test that tbw will not read tbn files and vice versa."""
         
         fh = open(tbnFile, 'rb')
-        frame1 = tbw.readFrame(fh)
-        self.assertFalse(frame1.header.isTBW())
+        frame1 = tbw.read_frame(fh)
+        self.assertFalse(frame1.header.is_tbw())
         fh.close()
         
         fh = open(tbwFile, 'rb')
-        frame1 = tbn.readFrame(fh)
-        self.assertFalse(frame1.header.isTBN())
+        frame1 = tbn.read_frame(fh)
+        self.assertFalse(frame1.header.is_tbn())
         fh.close()
         
     ### DRX ###
@@ -291,14 +291,14 @@ class reader_tests(unittest.TestCase):
         
         fh = open(drxFile, 'rb')
         # First frame is really DRX and stores the IDs
-        frame1 = drx.readFrame(fh)
-        beam, tune, pol = frame1.parseID()
+        frame1 = drx.read_frame(fh)
+        beam, tune, pol = frame1.parse_id()
         self.assertEqual(beam, 4)
         self.assertEqual(tune, 1)
         self.assertEqual(pol,  1)
         # Second frame
-        frame2 = drx.readFrame(fh)
-        beam, tune, pol = frame2.parseID()
+        frame2 = drx.read_frame(fh)
+        beam, tune, pol = frame2.parse_id()
         self.assertEqual(beam, 4)
         self.assertEqual(tune, 2)
         self.assertEqual(pol,  0)
@@ -310,24 +310,24 @@ class reader_tests(unittest.TestCase):
         fh = open(drxFile, 'rb')
         # Frames 1 through 32
         for i in range(1,33):
-            frame = drx.readFrame(fh)
+            frame = drx.read_frame(fh)
             
-        # Last frame should be an error (errors.eofError)
-        self.assertRaises(errors.eofError, drx.readFrame, fh)
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, drx.read_frame, fh)
         fh.close()
         
         # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.syncError).
+        # sync error (errors.SyncError).
         fh = open(drxFile, 'rb')
         fh.seek(1)
-        self.assertRaises(errors.syncError, drx.readFrame, fh)
+        self.assertRaises(errors.SyncError, drx.read_frame, fh)
         fh.close()
         
     def test_drx_beam(self):
         """Test finding out how many beams are present in a DRX file."""
         
         fh = open(drxFile, 'rb')
-        nBeam = drx.getBeamCount(fh)
+        nBeam = drx.get_beam_count(fh)
         self.assertEqual(nBeam, 1)
         fh.close()
         
@@ -335,7 +335,7 @@ class reader_tests(unittest.TestCase):
         """Test finding out how many tunings/pols. per beam are in a DRX file."""
         
         fh = open(drxFile, 'rb')
-        b1, b2, b3, b4 = drx.getFramesPerObs(fh)
+        b1, b2, b3, b4 = drx.get_frames_per_obs(fh)
         self.assertEqual(b1, 0)
         self.assertEqual(b2, 0)
         self.assertEqual(b3, 0)
@@ -346,14 +346,14 @@ class reader_tests(unittest.TestCase):
         """Test finding out the DRX sample rate."""
         
         fh = open(drxFile, 'rb')
-        cFrame = drx.readFrame(fh)
+        cFrame = drx.read_frame(fh)
         fh.seek(0)
         
         # Sample rate
-        self.assertEqual(cFrame.getSampleRate(), drx.getSampleRate(fh))
+        self.assertEqual(cFrame.get_sample_rate(), drx.get_sample_rate(fh))
         
         # Filter code
-        self.assertEqual(cFrame.getFilterCode(), drx.getSampleRate(fh, FilterCode=True))
+        self.assertEqual(cFrame.get_filter_code(), drx.get_sample_rate(fh, FilterCode=True))
         fh.close()
         
     def test_drx_comps(self):
@@ -363,7 +363,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 10
         frames = []
         for i in range(1,11):
-            frames.append(drx.readFrame(fh))
+            frames.append(drx.read_frame(fh))
         fh.close()
         
         self.assertTrue(0 < frames[0])
@@ -381,7 +381,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 10
         frames = []
         for i in range(1,11):
-            frames.append(drx.readFrame(fh))
+            frames.append(drx.read_frame(fh))
         fh.close()
         
         frames.sort()
@@ -397,7 +397,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 10
         frames = []
         for i in range(1,11):
-            frames.append(drx.readFrame(fh))
+            frames.append(drx.read_frame(fh))
         fh.close()
         
         # Multiplication
@@ -429,13 +429,13 @@ class reader_tests(unittest.TestCase):
         
         fh = open(drspecFile, 'rb')
         # First frame is really DR spectrometer and stores the IDs
-        frame1 = drspec.readFrame(fh)
-        beam = frame1.parseID()
+        frame1 = drspec.read_frame(fh)
+        beam = frame1.parse_id()
         self.assertEqual(beam, 1)
         
         # Second frame
-        frame2 = drspec.readFrame(fh)
-        beam = frame2.parseID()
+        frame2 = drspec.read_frame(fh)
+        beam = frame2.parse_id()
         self.assertEqual(beam, 1)
         fh.close()
         
@@ -445,48 +445,48 @@ class reader_tests(unittest.TestCase):
         fh = open(drspecFile, 'rb')
         # Frames 1 through 8
         for i in range(1,8):
-            frame = drspec.readFrame(fh)
+            frame = drspec.read_frame(fh)
             
-        # Last frame should be an error (errors.eofError)
-        self.assertRaises(errors.eofError, drspec.readFrame, fh)
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, drspec.read_frame, fh)
         fh.close()
         
         # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.syncError).
+        # sync error (errors.SyncError).
         fh = open(drspecFile, 'rb')
         fh.seek(1)
-        self.assertRaises(errors.syncError, drspec.readFrame, fh)
+        self.assertRaises(errors.SyncError, drspec.read_frame, fh)
         fh.close()
         
     def test_drspec_metadata(self):
         """Test finding out the DR spectrometer metadata."""
         
         fh = open(drspecFile, 'rb')
-        cFrame = drspec.readFrame(fh)
+        cFrame = drspec.read_frame(fh)
         fh.seek(0)
         
         # Beam
-        self.assertEqual(cFrame.parseID(), 1)
+        self.assertEqual(cFrame.parse_id(), 1)
         
         # Sample rate
-        self.assertAlmostEqual(cFrame.getSampleRate(), 19.6e6, 1)
-        self.assertAlmostEqual(cFrame.getSampleRate(), drspec.getSampleRate(fh), 1)
+        self.assertAlmostEqual(cFrame.get_sample_rate(), 19.6e6, 1)
+        self.assertAlmostEqual(cFrame.get_sample_rate(), drspec.get_sample_rate(fh), 1)
         
         # Filter code
-        self.assertEqual(cFrame.getFilterCode(), 7)
-        self.assertEqual(cFrame.getFilterCode(), drspec.getSampleRate(fh, FilterCode=True))
+        self.assertEqual(cFrame.get_filter_code(), 7)
+        self.assertEqual(cFrame.get_filter_code(), drspec.get_sample_rate(fh, FilterCode=True))
         
         # FFT windows per integration
-        self.assertEqual(cFrame.getFFTsPerIntegration(), 6144)
-        self.assertEqual(cFrame.getFFTsPerIntegration(), drspec.getFFTsPerIntegration(fh))
+        self.assertEqual(cFrame.get_ffts_per_integration(), 6144)
+        self.assertEqual(cFrame.get_ffts_per_integration(), drspec.get_ffts_per_integration(fh))
         
         # Transform size
-        self.assertEqual(cFrame.getTransformSize(), 1024)
-        self.assertEqual(cFrame.getTransformSize(), drspec.getTransformSize(fh))
+        self.assertEqual(cFrame.get_transform_size(), 1024)
+        self.assertEqual(cFrame.get_transform_size(), drspec.get_transform_size(fh))
         
         # Integration time
-        self.assertAlmostEqual(cFrame.getIntegrationTime(), 0.32099265, 8)
-        self.assertAlmostEqual(cFrame.getIntegrationTime(), drspec.getIntegrationTime(fh), 8)
+        self.assertAlmostEqual(cFrame.get_integration_time(), 0.32099265, 8)
+        self.assertAlmostEqual(cFrame.get_integration_time(), drspec.get_integration_time(fh), 8)
         
         fh.close()
         
@@ -497,7 +497,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 7
         frames = []
         for i in range(1,8):
-            frames.append(drspec.readFrame(fh))
+            frames.append(drspec.read_frame(fh))
         fh.close()
 
         self.assertTrue(0 < frames[0])
@@ -515,7 +515,7 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 7
         frames = []
         for i in range(1,8):
-            frames.append(drspec.readFrame(fh))
+            frames.append(drspec.read_frame(fh))
         
         frames.sort()
         frames = frames[::-1]
@@ -531,31 +531,31 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 7
         frames = []
         for i in range(1,8):
-            frames.append(drspec.readFrame(fh))
+            frames.append(drspec.read_frame(fh))
         fh.close()
         
-        nPts = frames[0].data.XX0.size
+        npts = frames[0].data.XX0.size
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in xrange(nPts):
+        for i in xrange(npts):
             self.assertAlmostEqual(frameT.data.XX0[i], 2*frames[0].data.XX0[i], 2)
         frameT *= 2.0
-        for i in xrange(nPts):
+        for i in xrange(npts):
             self.assertAlmostEqual(frameT.data.XX1[i], 4*frames[0].data.XX1[i], 2)
         frameT = frames[0] * frames[1]
-        for i in xrange(nPts):
+        for i in xrange(npts):
             self.assertAlmostEqual(frameT.data.YY0[i], frames[0].data.YY0[i]*frames[1].data.YY0[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
-        for i in xrange(nPts):
+        for i in xrange(npts):
             self.assertAlmostEqual(frameA.data.XX0[i], 2+frames[0].data.XX0[i], 2)
         frameA += 2.0
-        for i in xrange(nPts):
+        for i in xrange(npts):
             self.assertAlmostEqual(frameA.data.XX1[i], 4+frames[0].data.XX1[i], 2)
         frameA = frames[0] + frames[1]
-        for i in xrange(nPts):
+        for i in xrange(npts):
             self.assertAlmostEqual(frameA.data.YY0[i], frames[0].data.YY0[i]+frames[1].data.YY0[i], 2)
             
     ### VDIF ###
@@ -565,49 +565,49 @@ class reader_tests(unittest.TestCase):
         
         fh = open(vdifFile, 'rb')
         # First frame
-        frame1 = vdif.readFrame(fh)
+        frame1 = vdif.read_frame(fh)
         
         # Validate header
-        station, thread = frame1.parseID()
+        station, thread = frame1.parse_id()
         self.assertEqual(station, 19284)
         self.assertEqual(thread, 0)
-        self.assertEqual(frame1.header.isLegacy, 0)
-        self.assertEqual(frame1.header.isInvalid, 0)
-        self.assertEqual(frame1.header.refEpoch, 30)
-        self.assertEqual(frame1.header.secondsFromEpoch, 9106862)
-        self.assertEqual(frame1.header.frameInSecond, 59866)
-        self.assertEqual(frame1.header.frameLength, 8224//8)
-        self.assertEqual(frame1.header.nChan, 4)
-        self.assertEqual(frame1.header.bitsPerSample, 2)
-        self.assertEqual(frame1.header.isComplex, 0)
+        self.assertEqual(frame1.header.is_legacy, 0)
+        self.assertEqual(frame1.header.is_invalid, 0)
+        self.assertEqual(frame1.header.ref_epoch, 30)
+        self.assertEqual(frame1.header.seconds_from_epoch, 9106862)
+        self.assertEqual(frame1.header.frame_in_second, 59866)
+        self.assertEqual(frame1.header.frame_length, 8224//8)
+        self.assertEqual(frame1.header.nchan, 4)
+        self.assertEqual(frame1.header.bits_per_sample, 2)
+        self.assertEqual(frame1.header.is_complex, 0)
         
         # Validate (some) data
         for k,d in enumerate((1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0)):
-            i = k % frame1.header.nChan
-            j = k // frame1.header.nChan
+            i = k % frame1.header.nchan
+            j = k // frame1.header.nchan
             self.assertAlmostEqual(frame1.data.data[i,j], d, 5)
             
         # Second frame
-        frame2 = vdif.readFrame(fh)
+        frame2 = vdif.read_frame(fh)
         
         # Validate header
-        station, thread = frame2.parseID()
+        station, thread = frame2.parse_id()
         self.assertEqual(station, 19284)
         self.assertEqual(thread, 0)
-        self.assertEqual(frame2.header.isLegacy, 0)
-        self.assertEqual(frame2.header.isInvalid, 0)
-        self.assertEqual(frame2.header.refEpoch, 30)
-        self.assertEqual(frame2.header.secondsFromEpoch, 9106862)
-        self.assertEqual(frame2.header.frameInSecond, 59867)
-        self.assertEqual(frame2.header.frameLength, 8224//8)
-        self.assertEqual(frame2.header.nChan, 4)
-        self.assertEqual(frame2.header.bitsPerSample, 2)
-        self.assertEqual(frame2.header.isComplex, 0)
+        self.assertEqual(frame2.header.is_legacy, 0)
+        self.assertEqual(frame2.header.is_invalid, 0)
+        self.assertEqual(frame2.header.ref_epoch, 30)
+        self.assertEqual(frame2.header.seconds_from_epoch, 9106862)
+        self.assertEqual(frame2.header.frame_in_second, 59867)
+        self.assertEqual(frame2.header.frame_length, 8224//8)
+        self.assertEqual(frame2.header.nchan, 4)
+        self.assertEqual(frame2.header.bits_per_sample, 2)
+        self.assertEqual(frame2.header.is_complex, 0)
         
         # Validate (some) data
         for k,d in enumerate((-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0)):
-            i = k % frame2.header.nChan
-            j = k // frame2.header.nChan
+            i = k % frame2.header.nchan
+            j = k // frame2.header.nchan
             self.assertAlmostEqual(frame2.data.data[i,j], d, 5)
             
         fh.close()
@@ -618,17 +618,17 @@ class reader_tests(unittest.TestCase):
         fh = open(vdifFile, 'rb')
         # Frames 1 through 10
         for i in range(1,11):
-            frame = vdif.readFrame(fh)
+            frame = vdif.read_frame(fh)
             
-        # Last frame should be an error (errors.eofError)
-        self.assertRaises(errors.eofError, vdif.readFrame, fh)
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, vdif.read_frame, fh)
         fh.close()
         
     def test_vdif_threads(self):
         """Test finding out how many threads file."""
         
         fh = open(vdifFile, 'rb')
-        nt = vdif.getThreadCount(fh)
+        nt = vdif.get_thread_count(fh)
         self.assertEqual(nt, 1)
         fh.close()
         
@@ -639,36 +639,36 @@ class reader_tests(unittest.TestCase):
         # Frames 1 through 10
         frames = []
         for i in range(1,11):
-            frames.append(vdif.readFrame(fh))
+            frames.append(vdif.read_frame(fh))
         fh.close()
         
-        nChan, nSamples = frames[0].data.data.shape
+        nchan, nSamples = frames[0].data.data.shape
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(nChan):
+        for i in range(nchan):
             for j in range(nSamples):
                 self.assertAlmostEqual(frameT.data.data[i,j], 2*frames[0].data.data[i,j], 2)
         frameT *= 2.0
-        for i in range(nChan):
+        for i in range(nchan):
             for j in range(nSamples):
                 self.assertAlmostEqual(frameT.data.data[i,j], 4*frames[0].data.data[i,j], 2)
         frameT = frames[0] * frames[1]
-        for i in range(nChan):
+        for i in range(nchan):
             for j in range(nSamples):
                 self.assertAlmostEqual(frameT.data.data[i,j], frames[0].data.data[i,j]*frames[1].data.data[i,j], 2)
             
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(nChan):
+        for i in range(nchan):
             for j in range(nSamples):
                 self.assertAlmostEqual(frameA.data.data[i,j], 2+frames[0].data.data[i,j], 2)
         frameA += 2.0
-        for i in range(nChan):
+        for i in range(nchan):
             for j in range(nSamples):
                 self.assertAlmostEqual(frameA.data.data[i,j], 4+frames[0].data.data[i,j], 2)
         frameA = frames[0] + frames[1]
-        for i in range(nChan):
+        for i in range(nchan):
             for j in range(nSamples):
                 self.assertAlmostEqual(frameA.data.data[i,j], frames[0].data.data[i,j]+frames[1].data.data[i,j], 2)
 

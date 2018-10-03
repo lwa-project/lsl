@@ -18,10 +18,10 @@ from scipy.interpolate import bisplrep, bisplev
 
 __version__ = "0.1"
 __revision__ = "$Rev$"
-__all__ = ['estimateBackground', 'findPointSources', '__version__', '__revision__', '__all__']
+__all__ = ['estimate_background', 'find_point_sources', '__version__', '__revision__', '__all__']
 
 
-def estimateBackground(image, window=32):
+def estimate_background(image, window=32):
     """
     Given a 2-D image, estimate and return the background a la SExtractor.
     
@@ -102,7 +102,7 @@ def estimateBackground(image, window=32):
     return background
 
 
-def findPointSources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.0,1.0], backgroundSize=16, verbose=True):
+def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.0,1.0], background_size=16, verbose=True):
     """
     Given a 2-D image, find all of the point sources in it that meet the
     selection criteria provided via the keywords.  These are:
@@ -113,10 +113,10 @@ def findPointSources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.
       * round: two-element array that defines the lower and upper bounds
                on the source roundness
         
-    Background estimation and removal is handled by the estimateBackground()
+    Background estimation and removal is handled by the estimate_background()
     function in this module that implements a SExtractor-like method.  This
-    can be disabled by setting the 'backgroundSize' keyword to 0.  For 
-    details see :func:`lsl.imaging.analysis.estimateBackground`.
+    can be disabled by setting the 'background_size' keyword to 0.  For 
+    details see :func:`lsl.imaging.analysis.estimate_background`.
         
     The output of this function is a five-element tuple of 1-D NumPy arrays
     that store information for each source.  The elements are:
@@ -152,8 +152,8 @@ def findPointSources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.
     nBox = 2*nHalf + 1
     
     # Remove the diffuse background.
-    if backgroundSize > 0:
-        background = estimateBackground(image, backgroundSize)
+    if background_size > 0:
+        background = estimate_background(image, background_size)
         cleanImage = image - background
     else:
         cleanImage = image

@@ -5,7 +5,7 @@
 import os
 import unittest
 
-from lsl.common.paths import dataBuild as dataPath
+from lsl.common.paths import DATA_BUILD as dataPath
 from lsl.reader import ldp
 from lsl.reader import errors
 
@@ -35,15 +35,15 @@ class ldp_adp_tests(unittest.TestCase):
         f = ldp.TBFFile(tbfFile)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 25e3)
-        self.assertEqual(f.getInfo("dataBits"), 4)
-        self.assertEqual(f.getInfo("nFrames"), 5)
+        self.assertEqual(f.get_info("sample_rate"), 25e3)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info("nframes"), 5)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()
@@ -54,18 +54,18 @@ class ldp_adp_tests(unittest.TestCase):
     def test_ldp_tbf_nocheck(self):
         """Test the LDP interface for a TBF file."""
         
-        f = ldp.TBFFile(tbfFile, ignoreTimeTagErrors=True)
+        f = ldp.TBFFile(tbfFile, ignore_timetag_errors=True)
         
         # File info
-        self.assertEqual(f.getInfo("sampleRate"), 25e3)
-        self.assertEqual(f.getInfo("dataBits"), 4)
-        self.assertEqual(f.getInfo("nFrames"), 5)
+        self.assertEqual(f.get_info("sample_rate"), 25e3)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info("nframes"), 5)
         
         # Read a frame
-        frame = f.readFrame()
+        frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.getRemainingFrameCount(), f.getInfo("nFrames")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
         
         # Reset
         f.reset()

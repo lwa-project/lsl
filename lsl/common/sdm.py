@@ -5,7 +5,7 @@ Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM)
 files (as defined in MCS0031, v5).
 """
 
-from lsl.common.mcs import summary2string, parseCStruct, single2multi, \
+from lsl.common.mcs import summary_to_string, parse_c_struct, flat_to_multi, \
                         STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, \
                         ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_NRPD, ME_MAX_NSEP, ME_MAX_NARB, \
                         ME_MAX_NDP1, ME_MAX_NDP2, ME_MAX_NDR
@@ -13,7 +13,7 @@ from datetime import datetime
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parseSDM', 
+__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parse_sdm', 
         '__version__', '__revision__', '__all__']
 
 
@@ -30,16 +30,16 @@ class SubSystemStatus(object):
         self.time = float(time)
         
     def __str__(self):
-        return "%s at %s: %s [%i = %s]" % (self.name, datetime.utcfromtimestamp(self.time), self.info, self.summary, summary2string(self.summary))
+        return "%s at %s: %s [%i = %s]" % (self.name, datetime.utcfromtimestamp(self.time), self.info, self.summary, summary_to_string(self.summary))
         
-    def binaryRead(self, fh):
+    def binary_read(self, fh):
         """
         Given an open file handle, interpret it in the context of a 
         subsystem_status_struct C structure and update the Python instance accordingly.
         """
         
         ## They are the same size so this really doesn't matter
-        sssStruct = parseCStruct(SUBSYSTEM_STATUS_STRUCT, endianness='little')
+        sssStruct = parse_c_struct(SUBSYSTEM_STATUS_STRUCT, endianness='little')
         
         fh.readinto(sssStruct)
         
@@ -90,14 +90,14 @@ class SubSubSystemStatus(object):
         else:
             self.dr = dr
             
-    def binaryRead(self, fh):
+    def binary_read(self, fh):
         """
         Given an open file handle, interpret it in the context of a 
         subsubsystem_status_struct C structure and update the Python instance accordingly.
         """
         
         # Figure out what to do
-        ssssStruct = parseCStruct(SUBSUBSYSTEM_STATUS_STRUCT, endianness='little')
+        ssssStruct = parse_c_struct(SUBSUBSYSTEM_STATUS_STRUCT, endianness='little')
         
         # Read
         fh.readinto(ssssStruct)
@@ -106,8 +106,8 @@ class SubSubSystemStatus(object):
         self.fee = list(ssssStruct.eFEEStat)
         self.rpd = list(ssssStruct.eRPDStat)
         self.sep = list(ssssStruct.eSEPStat)
-        self.arb = single2multi(ssssStruct.eARBStat, *ssssStruct.dims['eARBStat'])
-        self.dp1 = single2multi(ssssStruct.eDP1Stat, *ssssStruct.dims['eDP1Stat'])
+        self.arb = flat_to_multi(ssssStruct.eARBStat, *ssssStruct.dims['eARBStat'])
+        self.dp1 = flat_to_multi(ssssStruct.eDP1Stat, *ssssStruct.dims['eDP1Stat'])
         self.dp2 = list(ssssStruct.eDP2Stat)
         self.dr  = list(ssssStruct.eDRStat)
 
@@ -157,14 +157,14 @@ class StationSettings(object):
         self.tbnGain = tbnGain
         self.drxGain = drxGain
         
-    def binaryRead(self, fh):
+    def binary_read(self, fh):
         """
         Given an open file handle, interpret it in the context of a 
         station_settings_struct C structure and update the Python instance accordingly.
         """
         
         # Figure out what to do
-        ssStruct = parseCStruct(STATION_SETTINGS_STRUCT, endianness='little')
+        ssStruct = parse_c_struct(STATION_SETTINGS_STRUCT, endianness='little')
         
         # Read
         fh.readinto(ssStruct)
@@ -191,7 +191,7 @@ class StationSettings(object):
         self.update['SHL'] = ssStruct.mup_shl
         self.update['MCS'] = ssStruct.mup_mcs
         
-        self.fee = single2multi(ssStruct.fee, *ssStruct.dims['fee'])
+        self.fee = flat_to_multi(ssStruct.fee, *ssStruct.dims['fee'])
         
         self.aspFlt = list(ssStruct.asp_flt)
         self.aspAT1 = list(ssStruct.asp_at1)
@@ -249,7 +249,7 @@ class SDM(object):
         else:
             self.settings = settings
             
-    def updateAntennas(self, antennas):
+    def update_antennas(self, antennas):
         """
         Given a list of :class:`lsl.common.stations.Antenna` instances, return a new list 
         of Antenna instances with updated antenna status codes.
@@ -265,7 +265,7 @@ class SDM(object):
         return updatedAntennas
 
 
-def parseSDM(filename):
+def parse_sdm(filename):
     """
     Given a filename, read the file's contents into the SDM instance and return
     that instance.
@@ -277,28 +277,28 @@ def parseSDM(filename):
         dynamic = SDM()
         
         # Sub-system status sections
-        dynamic.station.binaryRead(fh)
-        dynamic.shl.binaryRead(fh)
-        dynamic.asp.binaryRead(fh)
-        dynamic.dp.binaryRead(fh)
+        dynamic.station.binary_read(fh)
+        dynamic.shl.binary_read(fh)
+        dynamic.asp.binary_read(fh)
+        dynamic.dp.binary_read(fh)
         for n in xrange(ME_MAX_NDR):
-            dynamic.dr[n].binaryRead(fh)
+            dynamic.dr[n].binary_read(fh)
             
         # Sub-sub-system status section
-        dynamic.status.binaryRead(fh)
+        dynamic.status.binary_read(fh)
         
         # Antenna status and data path status
-        adpsStruct = parseCStruct("""
+        adpsStruct = parse_c_struct("""
         int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
         int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
         """, endianness='little')
         
         fh.readinto(adpsStruct)
         
-        dynamic.antStatus = single2multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
-        dynamic.dpoStatus = single2multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
+        dynamic.antStatus = flat_to_multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
+        dynamic.dpoStatus = flat_to_multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
         
         # Station settings section
-        dynamic.settings.binaryRead(fh)
+        dynamic.settings.binary_read(fh)
         
     return dynamic

@@ -129,11 +129,11 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pol
     """
     
     # Get antennas
-    antennas = site.getAntennas()
+    antennas = site.get_antennas()
     
     # Get the metadata
-    sampleRate = idf.getInfo('sampleRate')
-    centralFreq = idf.getInfo('freq1')
+    sample_rate = idf.get_info('sample_rate')
+    central_freq = idf.get_info('freq1')
     
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  
     # These are:
@@ -174,7 +174,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pol
         # Loop over polarization products
         for pol in pols:
             print "->  %s" % pol
-            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False, SampleRate=sampleRate, CentralFreq=centralFreq, Pol=pol, ReturnBaselines=True, GainCorrect=True)
+            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, Overlap=Overlap, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, Pol=pol, return_baselines=True, gain_correct=True)
             
             # Select the right range of channels to save
             toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
@@ -183,7 +183,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pol
             # If we are in the first polarazation product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
-                pol1, pol2 = fxc.pol2pol(pol)
+                pol1, pol2 = fxc.pol_to_pols(pol)
                 
                 if len(stands) > 255:
                     fits = fitsidi.ExtendedIDI(filename, ref_time=refTime)
@@ -218,30 +218,30 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
             try:
-                station = metabundle.getStation(config['metadata'], ApplySDM=True)
+                station = metabundle.getStation(config['metadata'], apply_sdm=True)
             except:
-                station = metabundleADP.getStation(config['metadata'], ApplySDM=True)
+                station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
-    antennas = station.getAntennas()
+    antennas = station.get_antennas()
     
     idf = LWA1DataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.getInfo('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     nFpO = len(antennas)
-    sampleRate = idf.getInfo('sampleRate')
-    nInts = idf.getInfo('nFrames') / nFpO
+    sample_rate = idf.get_info('sample_rate')
+    nInts = idf.get_info('nFrames') / nFpO
     
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
     for i in xrange(len(antennas)):
         ant = antennas[i]
-        if ant.getStatus() != 33 and not config['all']:
+        if ant.get_status() != 33 and not config['all']:
             pass
         else:
             if ant.pol == 0:
@@ -266,24 +266,24 @@ def main(args):
         print "%3i, %i" % (antennas[i].stand.id, antennas[i].pol)
         
     # Number of frames to read in at once and average
-    nFrames = int(config['avgTime']*sampleRate/512)
+    nFrames = int(config['avgTime']*sample_rate/512)
     config['offset'] = idf.offset(config['offset'])
-    nSets = idf.getInfo('nFrames') / nFpO / nFrames
-    nSets = nSets - int(config['offset']*sampleRate/512) / nFrames
+    nSets = idf.get_info('nFrames') / nFpO / nFrames
+    nSets = nSets - int(config['offset']*sample_rate/512) / nFrames
     
-    centralFreq = idf.getInfo('freq1')
+    central_freq = idf.get_info('freq1')
     
     print "Data type:  %s" % type(idf)
     print "Samples per observations: %i per pol." % (nFpO/2)
-    print "Sampling rate: %i Hz" % sampleRate
-    print "Tuning frequency: %.3f Hz" % centralFreq
-    print "Captures in file: %i (%.1f s)" % (nInts, nInts*512 / sampleRate)
+    print "Sampling rate: %i Hz" % sample_rate
+    print "Tuning frequency: %.3f Hz" % central_freq
+    print "Captures in file: %i (%.1f s)" % (nInts, nInts*512 / sample_rate)
     print "=="
     print "Station: %s" % station.name
     print "Date observed: %s" % date
     print "Julian day: %.5f" % jd
-    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*sampleRate/512)
-    print "Integration Time: %.3f s" % (512*nFrames/sampleRate)
+    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*sample_rate/512)
+    print "Integration Time: %.3f s" % (512*nFrames/sample_rate)
     print "Number of integrations in file: %i" % nSets
     
     # Make sure we don't try to do too many sets

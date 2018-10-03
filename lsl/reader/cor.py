@@ -16,7 +16,7 @@ The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
-For reading in data, use the readFrame function.  It takes a python file-
+For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.
 
 .. versionchanged:: 1.2.1
@@ -32,18 +32,18 @@ import numpy
 from lsl.common import adp as adp_common
 from lsl.reader._gofast import NCHAN_COR
 from lsl.reader._gofast import readCOR
-from lsl.reader._gofast import syncError as gsyncError
-from lsl.reader._gofast import eofError as geofError
-from lsl.reader.errors import syncError, eofError
+from lsl.reader._gofast import SyncError as GSyncError
+from lsl.reader._gofast import EOFError as GEOFError
+from lsl.reader.errors import SyncError, EOFError
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'readFrame', 'FrameSize', 'FrameChannelCount', 
-           'getFramesPerObs', 'getChannelCount', 'getBaselineCount', 
+__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 
+           'get_frames_per_obs', 'get_channel_count', 'get_baseline_count', 
            '__version__', '__revision__', '__all__']
 
-FrameSize = 32 + NCHAN_COR*4*8
-FrameChannelCount = NCHAN_COR
+FRAME_SIZE = 32 + NCHAN_COR*4*8
+FRAME_CHANNEL_COUNT = NCHAN_COR
 
 
 class FrameHeader(object):
@@ -53,11 +53,11 @@ class FrameHeader(object):
     well as the original binary header data.
     """
     
-    def __init__(self, id=None, frameCount=None, secondsCount=None, firstChan=None, gain=None):
+    def __init__(self, id=None, frame_count=None, second_count=None, first_chan=None, gain=None):
         self.id = id
-        self.frameCount = frameCount
-        self.secondsCount = secondsCount
-        self.firstChan = firstChan
+        self.frame_count = frame_count
+        self.second_count = second_count
+        self.first_chan = first_chan
         self.gain = gain
         
     def isCOR(self):
@@ -71,15 +71,15 @@ class FrameHeader(object):
         else:
             return False
             
-    def getChannelFreqs(self):
+    def get_channel_freqs(self):
         """
         Return a numpy.float32 array for the center frequencies, in Hz, of
         each channel in the data.
         """
         
-        return (numpy.arange(NCHAN_COR, dtype=numpy.float32)+self.firstChan) * adp_common.fC
+        return (numpy.arange(NCHAN_COR, dtype=numpy.float32)+self.first_chan) * adp_common.fC
         
-    def getGain(self):
+    def get_gain(self):
         """
         Get the current TBN gain for this frame.
         """
@@ -93,36 +93,36 @@ class FrameData(object):
     frame.
     """
     
-    def __init__(self, timeTag=None, nAvg=None, stand0=None, stand1=None, vis=None):
-        self.timeTag = timeTag
-        self.nAvg = nAvg
+    def __init__(self, timetag=None, navg=None, stand0=None, stand1=None, vis=None):
+        self.timetag = timetag
+        self.navg = navg
         self.stand0 = stand0
         self.stand1 = stand1
         self.vis = vis
         
-    def parseID(self):
+    def parse_id(self):
         """
         Return a tuple of the two stands that contribute the this frame.
         """
         
         return (self.stand0, self.stand1)
         
-    def getTime(self):
+    def get_time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
         (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
         """
         
-        seconds = self.timeTag / adp_common.fS
+        seconds = self.timetag / adp_common.fS
         
         return seconds
         
-    def getIntegrationTime(self):
+    def get_integration_time(self):
         """
         Return the integration time of the visibility in seconds.
         """
         
-        return self.nAvg * adp_common.T2
+        return self.navg * adp_common.T2
 
 
 class Frame(object):
@@ -151,41 +151,41 @@ class Frame(object):
         
         return self.header.isCOR()
         
-    def getChannelFreqs(self):
+    def get_channel_freqs(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getChannelFreqs function.
+        Convenience wrapper for the Frame.FrameHeader.get_channel_freqs function.
         """
         
-        return self.header.getChannelFreqs()
+        return self.header.get_channel_freqs()
         
-    def getGain(self):
+    def get_gain(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.getGain function.
+        Convenience wrapper for the Frame.FrameHeader.get_gain function.
         """
 
-        return self.header.getGain()
+        return self.header.get_gain()
         
-    def getTime(self):
+    def get_time(self):
         """
-        Convenience wrapper for the Frame.FrameData.getTime function.
-        """
-        
-        return self.data.getTime()
-        
-    def parseID(self):
-        """
-        Convenience wrapper for the Frame.FrameData.parseID function.
+        Convenience wrapper for the Frame.FrameData.get_time function.
         """
         
-        return self.data.parseID()
+        return self.data.get_time()
         
-    def getIntegrationTime(self):
+    def parse_id(self):
         """
-        Convenience wrapper for the Frame.FrameData.getIntegrationTime
+        Convenience wrapper for the Frame.FrameData.parse_id function.
+        """
+        
+        return self.data.parse_id()
+        
+    def get_integration_time(self):
+        """
+        Convenience wrapper for the Frame.FrameData.get_integration_time
         function.
         """
         
-        return self.data.getIntegrationTime()
+        return self.data.get_integration_time()
         
     def __add__(self, y):
         """
@@ -253,9 +253,9 @@ class Frame(object):
         tag is equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -270,9 +270,9 @@ class Frame(object):
         tag is not equal to a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -287,9 +287,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -305,9 +305,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -322,9 +322,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -340,9 +340,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timeTag
+        tX = self.data.timetag
         try:
-            tY = y.data.timeTag
+            tY = y.data.timetag
         except AttributeError:
             tY = y
         
@@ -357,8 +357,8 @@ class Frame(object):
         sorting things.
         """
         
-        tX = self.data.timeTag
-        tY = y.data.timeTag
+        tX = self.data.timetag
+        tY = y.data.timetag
         if tY > tX:
             return -1
         elif tX > tY:
@@ -367,7 +367,7 @@ class Frame(object):
             return 0
 
 
-def readFrame(filehandle, Verbose=False):
+def read_frame(filehandle, Verbose=False):
     """
     Function to read in a single COR frame (header+data) and store the 
     contents as a Frame object.
@@ -376,33 +376,33 @@ def readFrame(filehandle, Verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = readCOR(filehandle, Frame())
-    except gsyncError:
-        mark = filehandle.tell() - FrameSize
-        raise syncError(location=mark)
-    except geofError:
-        raise eofError
+    except GSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except GEOFError:
+        raise EOFError
         
     return newFrame
 
 
-def getFramesPerObs(filehandle):
+def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
     first several COR records.  Return the number of frames per observation.
     """
     
     # Get the number of channels in the file
-    nChan = getChannelCount(filehandle)
+    nChan = get_channel_count(filehandle)
     nFrames = nChan / NCHAN_COR
     
     # Multiply by the number of baselines
-    nFrames *= getBaselineCount(filehandle)
+    nFrames *= get_baseline_count(filehandle)
     
     # Return the number of channel/baseline pairs
     return nFrames
 
 
-def getChannelCount(filehandle):
+def get_channel_count(filehandle):
     """
     Find out the total number of channels that are present by examining 
     the first several COR records.  Return the number of channels found.
@@ -416,11 +416,11 @@ def getChannelCount(filehandle):
     channels = []
     for i in range(64):
         try:
-            cFrame = readFrame(filehandle)
+            cFrame = read_frame(filehandle)
         except:
             break
             
-        chan = cFrame.header.firstChan
+        chan = cFrame.header.first_chan
         if chan not in channels:
             channels.append( chan )
             
@@ -431,7 +431,7 @@ def getChannelCount(filehandle):
     return len(channels)*NCHAN_COR
 
 
-def getBaselineCount(filehandle):
+def get_baseline_count(filehandle):
     """
     Find out the total number of baselines that are present by examining the 
     first several COR records.  Return the number of baselines found.

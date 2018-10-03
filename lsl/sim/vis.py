@@ -11,22 +11,22 @@ if sys.version_info > (3,):
 Module for generating simulated arrays and visibility data.  The chief 
 functions of this module are:
 
-buildSimArray
+build_sim_array
   given a station object, a list of stands, and a list of frequencies, build 
   a AIPY AntennaArray-like object.  This module can also generate AntennaArray 
   objects with positional errors by setting the 'pos_error' keyword to a 
   positive value.
 
-buildSimData
+build_sim_data
   given a SimArray and a list of aipy.src sources, build up a collection of 
   visibilities for a given set of Julian dates
 
-scaleData
-  given a dictionary of simulated visibilities from buildSimData, apply 
+scale_data
+  given a dictionary of simulated visibilities from build_sim_data, apply 
   antenna-based gains and delays to the visibilities
 
-shiftData
-  given a dictionary of simulated visibilities from buildSimData, shift the uvw 
+shift_data
+  given a dictionary of simulated visibilities from build_sim_data, shift the uvw 
   coordinates of the visibilities.
   .. note::
     This only changes the uvw values and does not phase-shift the data.
@@ -67,12 +67,12 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
     Switched over to a new C-based simulation package
     
 .. versionchanged:: 1.0.2
-    Added in a function, addBaselineNoise, to help bring noise into the 
+    Added in a function, add_baseline_noise, to help bring noise into the 
     simulations
     
 .. versionchanged:: 1.0.3
     Moved the calculateSEFD function into lsl.misc.rfutils
-    Changed the meaning of the force_gaussian parameter of the buildSimArray()
+    Changed the meaning of the force_gaussian parameter of the build_sim_array()
     function to be the Gaussian full width at half maximum in degrees
 """
 
@@ -86,7 +86,7 @@ import warnings
 from scipy.interpolate import interp1d
 
 from lsl import astro
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 from lsl.correlator import uvUtils
 from lsl.common.stations import lwa1
 from lsl.common.constants import c as speedOfLight
@@ -96,12 +96,12 @@ from _simfast import FastVis
 __version__ = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['srcs', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
-        'buildSimArray', 'buildSimData', 'scaleData', 'shiftData', 'addBaselineNoise', 
+        'build_sim_array', 'build_sim_data', 'scale_data', 'shift_data', 'add_baseline_noise', 
         '__version__', '__revision__', '__all__']
 
 
 # A dictionary of bright sources in the sky to use for simulations
-srcs = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
+SRCS = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
 
 
 class RadioEarthSatellite(object):
@@ -252,7 +252,7 @@ class BeamAlm(aipy.amp.BeamAlm):
                 self.alm[-1-c].set_data(coeffs[c])
         self._update_hmap()
         
-    def __responsePrimitive(self, top):
+    def _repsonse_primitive(self, top):
         """
         Copy of the original aipy.amp.BeamAlm.response function.
         
@@ -283,18 +283,18 @@ class BeamAlm(aipy.amp.BeamAlm):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self.__responsePrimitive((x,y,z))
+            temp = self._repsonse_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
                 for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -328,7 +328,7 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         aipy.phs.Beam.__init__(self, freqs)
         self.xwidth, self.ywidth = xwidth, ywidth
         
-    def __responsePrimitive(self, top):
+    def _repsonse_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
         
@@ -359,18 +359,18 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self.__responsePrimitive((x,y,z))
+            temp = self._repsonse_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
                 for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -401,7 +401,7 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
         self.poly = poly_azfreq
         self._update_sigma()
         
-    def __responsePrimitive(self, top):
+    def _repsonse_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
         
@@ -441,18 +441,18 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self.__responsePrimitive((x,y,z))
+            temp = self._repsonse_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
                 for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -470,7 +470,7 @@ class Beam(aipy.amp.Beam):
     beam response at all points.
     """
     
-    def __responsePrimitive(self, top):
+    def _repsonse_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam.response function.
         
@@ -496,18 +496,18 @@ class Beam(aipy.amp.Beam):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self.__responsePrimitive((x,y,z))
+            temp = self._repsonse_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self.__responsePrimitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in xrange(temp.shape[1]):
                 for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self.__responsePrimitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -832,7 +832,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         return Vij_f
 
 
-def buildSimArray(station, antennas, freq, jd=None, pos_error=0.0, force_flat=False, force_gaussian=False, verbose=False):
+def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=False, force_gaussian=False, verbose=False):
     """
     Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
     object defined from the lwa_common module, a numpy array of stand 
@@ -960,9 +960,9 @@ def buildSimArray(station, antennas, freq, jd=None, pos_error=0.0, force_flat=Fa
     return simAA
 
 
-def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None, verbose=False, count=None, max=None, flat_response=False, resolve_src=False):
+def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None, verbose=False, count=None, max=None, flat_response=False, resolve_src=False):
     """
-    Helper function for buildSimData so that buildSimData can be called with 
+    Helper function for build_sim_data so that build_sim_data can be called with 
     a list of Julian Dates and reconstruct the data appropriately.
     
     .. versionchanged:: 1.0.1
@@ -1152,7 +1152,7 @@ def __buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     return UVData
 
 
-def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None,  flat_response=False, resolve_src=False, verbose=False):
+def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None,  flat_response=False, resolve_src=False, verbose=False):
     """
     Given an AIPY AntennaArray object and a dictionary of sources from 
     aipy.src.get_catalog, returned a data dictionary of simulated data taken at 
@@ -1199,7 +1199,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
     # Loop over Julian days to fill in the simulated data set
     jdCounter = 1
     for juldate in jd:
-        oBlk = __buildSimData(aa, srcs, pols=pols, jd=juldate, chan=chan, phase_center=phase_center, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flat_response=flat_response, resolve_src=resolve_src)
+        oBlk = __build_sim_data(aa, srcs, pols=pols, jd=juldate, chan=chan, phase_center=phase_center, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flat_response=flat_response, resolve_src=resolve_src)
         jdCounter = jdCounter + 1
 
         for pol in oBlk['bls']:
@@ -1214,7 +1214,7 @@ def buildSimData(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, ph
     return UVData
 
 
-def scaleData(dataDict, amps, delays, phase_offsets=None):
+def scale_data(dataDict, amps, delays, phase_offsets=None):
     """
     Apply a set of antenna-based real gain values and phase delays in ns to a 
     data dictionary.  Returned the new scaled and delayed dictionary.
@@ -1257,7 +1257,7 @@ def scaleData(dataDict, amps, delays, phase_offsets=None):
     return sclUVData
     
 
-def shiftData(dataDict, aa):
+def shift_data(dataDict, aa):
     """
     Shift the uvw coordinates in one data dictionary to a new set of uvw 
     coordinates that correspond to a new AntennaArray object.  This is useful
@@ -1289,7 +1289,7 @@ def shiftData(dataDict, aa):
     return shftData
 
 
-def addBaselineNoise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
+def add_baseline_noise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
     """
     Given a data dictionary of visibilities, an SEFD or array SEFDs in Jy, 
     and an integration time in seconds, add noise to the visibilities 

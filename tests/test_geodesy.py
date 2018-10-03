@@ -24,7 +24,7 @@ class geodesy_tests(unittest.TestCase):
         ## http://toshi.nofs.navy.mil/ser7/finals2000A.all
         line = '92 1 1 48622.00 I  0.182985 0.000672  0.168782 0.000345  I-0.1251614 0.0000207  1.8335 0.0201  I    -0.086    0.202     0.130    0.165   .182400   .167900  -.1253000     0.129    -0.653\n'
         newEOP = geodesy.EOP()
-        newEOP.fromMAIA(line)
+        newEOP.from_maia(line)
         
         self.assertAlmostEqual(newEOP.x, 0.182985, ACCURACY)
         self.assertAlmostEqual(newEOP.y, 0.168782, ACCURACY)
@@ -32,12 +32,12 @@ class geodesy_tests(unittest.TestCase):
         self.assertEqual(newEOP.type, 'final')
         
     def test_read_mjd(self):
-        """Test reading a specific MJD via getEOP."""
+        """Test reading a specific MJD via get_eop."""
         
         ACCURACY = 6
         
         # Read in the data for January 2, 1973
-        eop = geodesy.getEOP(41684.0)
+        eop = geodesy.get_eop(41684.0)
         
         # Check
         ## http://toshi.nofs.navy.mil/ser7/finals2000A.all
@@ -47,7 +47,7 @@ class geodesy_tests(unittest.TestCase):
         self.assertAlmostEqual(eop.utDiff,  0.8084178, ACCURACY)
         
         # Read in the data for January 2, 1993
-        eops = geodesy.getEOP(48989.0)
+        eops = geodesy.get_eop(48989.0)
         eop = eops
         
         # Check
@@ -59,7 +59,7 @@ class geodesy_tests(unittest.TestCase):
         
         # Read in three values and check the output
         mjdList = [41684.0, 41685.0, 41686.0]
-        eops = geodesy.getEOP(mjdList)
+        eops = geodesy.get_eop(mjdList)
         self.assertEqual(len(eops), 3)
         for i in range(3):
             self.assertTrue(mjdList[i] in eops)

@@ -21,15 +21,15 @@ from lsl.common import stations as lwa_common
 from lsl.sim import tbn
 from lsl.sim import drx
 from lsl.sim import vis
-from lsl.reader.tbn import filterCodes as TBNFilters
-from lsl.reader.drx import filterCodes as DRXFilters
+from lsl.reader.tbn import FILTER_CODES as TBNFilters
+from lsl.reader.drx import FILTER_CODES as DRXFilters
 
 __version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['basicSignal', 'pointSource', '__version__', '__revision__', '__all__']
+__all__ = ['basic_signal', 'point_source', '__version__', '__revision__', '__all__']
 
 
-def __basicTBN(fh, stands, nframes, **kwargs):
+def _basic_tbn(fh, stands, nframes, **kwargs):
     """
     Private function for generating a basic TBN signal.
     """
@@ -38,22 +38,22 @@ def __basicTBN(fh, stands, nframes, **kwargs):
     filter = kwargs['filter']
     verbose = kwargs['verbose']
     noise_strength = kwargs['noise_strength']
-    sampleRate = TBNFilters[filter]
+    sample_rate = TBNFilters[filter]
     
     maxValue = 127
     samplesPerFrame = 512
-    upperSpike = sampleRate / 4.0
-    lowerSpike = -sampleRate / 4.0
+    upperSpike = sample_rate / 4.0
+    lowerSpike = -sample_rate / 4.0
     
     if verbose:
         print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
-            (nframes, sampleRate/1e3, len(stands)))
+            (nframes, sample_rate/1e3, len(stands)))
     
     for i in xrange(nframes):
         if i % 1000 == 0 and verbose:
             print(" frame %i" % (i+1))
-        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
-        tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
+        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sample_rate)
+        tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         for stand in stands:
             cFrame = tbn.SimFrame(stand=stand, pol=0, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
             cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
@@ -69,7 +69,7 @@ def __basicTBN(fh, stands, nframes, **kwargs):
             cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
             cFrame.write_raw_frame(fh)
 
-def __basicDRX(fh, stands, nframes, **kwargs):
+def _basic_drx(fh, stands, nframes, **kwargs):
     """
     Private function for generating a basic TBN signal.
     """
@@ -79,25 +79,25 @@ def __basicDRX(fh, stands, nframes, **kwargs):
     ntuning = kwargs['ntuning']
     verbose = kwargs['verbose']
     noise_strength = kwargs['noise_strength']
-    sampleRate = DRXFilters[filter]
+    sample_rate = DRXFilters[filter]
     
     maxValue = 7
     samplesPerFrame = 4096
-    upperSpike1 = sampleRate / 4.0
-    lowerSpike1 = -sampleRate / 4.0
-    upperSpike2 = sampleRate / 3.0
-    lowerSpike2 = -sampleRate / 3.0
+    upperSpike1 = sample_rate / 4.0
+    lowerSpike1 = -sample_rate / 4.0
+    upperSpike2 = sample_rate / 3.0
+    lowerSpike2 = -sample_rate / 3.0
 
     if verbose:
         print("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % \
-            (nframes, sampleRate/1e6, len(stands), ntuning))
+            (nframes, sample_rate/1e6, len(stands), ntuning))
 
     beams = stands
     for i in range(nframes):
         if i % 1000 == 0 and verbose:
             print(" frame %i" % i)
-        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
-        tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
+        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sample_rate)
+        tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         for beam in beams:
             for tune in range(1, ntuning+1):
                 if tune == 1:
@@ -132,20 +132,20 @@ def __basicDRX(fh, stands, nframes, **kwargs):
                     cFrame.write_raw_frame(fh)
 
 
-def basicSignal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, start_time=0, noise_strength=0.1, verbose=False):
+def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, start_time=0, noise_strength=0.1, verbose=False):
     """
     Generate a collection of frames with a basic test signal for TBN and 
     DRX.  The signals for the three modes are:
     
     TBN
-    * noise + (sampleRate/4) kHz signal for x-pol. and noise + 
-        (-sampleRate/4) for y-pol.
+     * noise + (sample_rate/4) kHz signal for x-pol. and noise + 
+        (-sample_rate/4) for y-pol.
 
     DRX
-    * noise + (sampleRate/4) kHz signal for x-pol. and noise + 
-        (-sampleRate/4) for y-pol. -> tuning 1
-    * noise + (-sampleRate/3) kHz signal for x-pol. and noise + 
-        (sampleRate/3) for y-pol. -> tuning 2
+     * noise + (sample_rate/4) kHz signal for x-pol. and noise + 
+        (-sample_rate/4) for y-pol. -> tuning 1
+     * noise + (-sample_rate/3) kHz signal for x-pol. and noise + 
+        (sample_rate/3) for y-pol. -> tuning 2
         
     All modes need to have stands (beams in the case of DRX) and number of
     frames to generate.  The TBN and DRX frames need the 'filter'
@@ -164,23 +164,23 @@ def basicSignal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, s
         start_time = time.time()
 
     if mode == 'TBN':
-        __basicTBN(fh, stands, nframes, filter=filter, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
+        _basic_tbn(fh, stands, nframes, filter=filter, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     elif mode == 'DRX':
-        __basicDRX(fh, stands, nframes, filter=filter, ntuning=ntuning, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
+        _basic_drx(fh, stands, nframes, filter=filter, ntuning=ntuning, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     else:
         raise RuntimeError("Unknown observations mode: %s" % mode)
 
 
-def __getAntennaArray(station, stands, utime, freqs):
+def _get_antennaarray(station, stands, utime, freqs):
     """
     Given a LWA station object, a list of stands, an observation time, and
     a list of frequencies in Hz, build an aipy AntennaArray object.
     """
 
-    return vis.buildSimArray(station, stands, freqs/1e9, jd=astro.unix_to_utcjd(utime))
+    return vis.build_sim_array(station, stands, freqs/1e9, jd=astro.unix_to_utcjd(utime))
 
 
-def __getSourceParameters(aa, timestamp, srcs):
+def _get_source_parameters(aa, timestamp, srcs):
     """
     Given an aipy AntennaArray object, an observation time, and aipy.src 
     object, return all of the parameters needed for a simulation.
@@ -226,7 +226,7 @@ def __getSourceParameters(aa, timestamp, srcs):
     return {'topo': srcs_tp, 'trans': srcs_mt, 'flux': srcs_jy, 'freq': srcs_fq}
 
 
-def __buildSignals(aa, stands, src_params, times, pol='x', phase_center='z'):
+def _build_signals(aa, stands, src_params, times, pol='x', phase_center='z'):
     """
     Given an aipy AntennaArray, a list of stand numbers, a dictionary of source 
     parameters, and an array of times in ns, return a numpy array of the simulated 
@@ -284,7 +284,7 @@ def __buildSignals(aa, stands, src_params, times, pol='x', phase_center='z'):
     return tdSignals
 
 
-def __pointSourceTBN(fh, stands, src, nframes, **kwargs):
+def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     """
     Private function to build TBN point sources.
     """
@@ -296,29 +296,29 @@ def __pointSourceTBN(fh, stands, src, nframes, **kwargs):
     verbose = kwargs['verbose']
     noise_strength = kwargs['noise_strength']
     
-    sampleRate = TBNFilters[filter]
+    sample_rate = TBNFilters[filter]
     maxValue = 127
     samplesPerFrame = 512
-    freqs = (numpy.fft.fftfreq(samplesPerFrame, d=1.0/sampleRate)) + central_freq
+    freqs = (numpy.fft.fftfreq(samplesPerFrame, d=1.0/sample_rate)) + central_freq
     freqs = numpy.fft.fftshift(freqs)
-    aa = __getAntennaArray(lwa_common.lwa1, stands, start_time, freqs)
+    aa = _get_antennaarray(lwa_common.lwa1, stands, start_time, freqs)
     
     if verbose:
         print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
-            (nframes, sampleRate/1e3, len(stands)))
+            (nframes, sample_rate/1e3, len(stands)))
     
     for i in range(nframes):
         if i % 1000 == 0 and verbose:
             print(" frame %i" % (i+1))
-        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sampleRate)
-        tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sampleRate
+        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sample_rate)
+        tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         
         # Get the source parameters
-        src_params = __getSourceParameters(aa, tFrame[0], src)
+        src_params = _get_source_parameters(aa, tFrame[0], src)
         
         # Generate the time series response of each signal at each frequency
-        tdSignalsX = __buildSignals(aa, stands, src_params, tFrame*1e9, pol='x', phase_center=phase_center)
-        tdSignalsY = __buildSignals(aa, stands, src_params, tFrame*1e9, pol='y', phase_center=phase_center)
+        tdSignalsX = _build_signals(aa, stands, src_params, tFrame*1e9, pol='x', phase_center=phase_center)
+        tdSignalsY = _build_signals(aa, stands, src_params, tFrame*1e9, pol='y', phase_center=phase_center)
         
         j = 0
         for stand in stands:
@@ -341,7 +341,7 @@ def __pointSourceTBN(fh, stands, src, nframes, **kwargs):
             j += 1
 
 
-def pointSource(fh, stands, src, nframes, mode='TBN', central_freq=49.0e6, filter=7, bits=12, start_time=0, phase_center='z', noise_strength=0.1, verbose=False):
+def point_source(fh, stands, src, nframes, mode='TBN', central_freq=49.0e6, filter=7, bits=12, start_time=0, phase_center='z', noise_strength=0.1, verbose=False):
     """
     Generate a collection of frames with a point source signal for TBN.  
     The point source is specified as a aipy.src object.
@@ -362,6 +362,6 @@ def pointSource(fh, stands, src, nframes, mode='TBN', central_freq=49.0e6, filte
         start_time = time.time()
 
     if mode == 'TBN':
-        __pointSourceTBN(fh, stands, src, nframes, central_freq=central_freq, filter=filter, start_time=start_time, phase_center=phase_center, noise_strength=noise_strength, verbose=verbose)
+        _point_source_tbn(fh, stands, src, nframes, central_freq=central_freq, filter=filter, start_time=start_time, phase_center=phase_center, noise_strength=noise_strength, verbose=verbose)
     else:
         raise RuntimeError("Unknown observations mode: %s" % mode)

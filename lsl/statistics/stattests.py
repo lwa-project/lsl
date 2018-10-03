@@ -10,10 +10,10 @@ from scipy.special import ndtr
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['waldwolfowitz', '__version__', '__revision__', '__all__']
+__all__ = ['wald_wolfowitz', '__version__', '__revision__', '__all__']
 
 
-def __toBinary(inputData):
+def _to_binary(inputData):
     """
     Convert a floating point data sequence (like the difference
     between the data and a model to a 1-bit data sequence.  Values
@@ -25,18 +25,18 @@ def __toBinary(inputData):
     return binary.astype(numpy.int8)
 
 
-def __countRuns(inputData):
+def _count_runs(inputData):
     """
     Count the number of runs in a data set and returns a three-element
     tuple of the number of:
-    * total runs
-    * positive values (inputData > 0)
-    * negative values ( inputData <= 0)
+     * total runs
+     * positive values (inputData > 0)
+     * negative values ( inputData <= 0)
     Where a run is defined as sequential groups of two or more instances of
     the same value in the data.
     """
     
-    data = __toBinary(inputData)
+    data = _to_binary(inputData)
     
     tot = 1
     pos = 0
@@ -55,7 +55,7 @@ def __countRuns(inputData):
     return (tot, pos, neg)
 
 
-def waldwolfowitz(inputData):
+def wald_wolfowitz(inputData):
     """
     Wald-Wolfowitz test of randomness.  Given a numpy array of values
     compute the probability that the values are mutially independent.
@@ -64,7 +64,7 @@ def waldwolfowitz(inputData):
         http://en.wikipedia.org/wiki/Wald%E2%80%93Wolfowitz_runs_test
     """
     
-    N, Np, Nn = __countRuns(inputData)
+    N, Np, Nn = _count_runs(inputData)
     mean = 2.0*Np*Nn/(Np+Nn) + 1.0
     vari = ((2.0*Np*Nn)*(2.0*Np*Nn-Np-Nn)) / ((Np+Nn)**2 * (Np+Nn-1))
     sigm = numpy.sqrt(vari)

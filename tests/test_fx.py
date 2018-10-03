@@ -14,7 +14,7 @@ import warnings
 import unittest
 import numpy
 
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 from lsl.common import stations
 from lsl.correlator import fx
 
@@ -198,8 +198,8 @@ class StokesMaster_tests(unittest.TestCase):
     def test_window(self):
         """Test that window functions can be passed to StokesMaster."""
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         #
         # Real
@@ -254,8 +254,8 @@ class StokesMaster_tests(unittest.TestCase):
     def test_window_custom(self):
         """Test that custom window functions can be passed to StokesMaster."""
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         #
         # Real
@@ -317,8 +317,8 @@ class StokesMaster_tests(unittest.TestCase):
     def test_spectra_real(self):
         """Test the StokesMaster function on real-valued data."""
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         for dtype in (numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.float32, numpy.float64):
             fakeData = 10.0*numpy.random.rand(self.nAnt,1024) + 3.0
@@ -344,8 +344,8 @@ class StokesMaster_tests(unittest.TestCase):
     def test_spectra_complex(self):
         """Test the StokesMaster function on complex-valued data."""
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         for dtype in (numpy.complex64, numpy.complex128):
             fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
@@ -371,8 +371,8 @@ class StokesMaster_tests(unittest.TestCase):
     def test_spectra_odd_complex(self):
         """Test the SpecMaster function on odd-sized complex transforms."""
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         for dtype in (numpy.complex64, numpy.complex128):
             fakeData = numpy.random.rand(self.nAnt,10) + 3.0
@@ -412,8 +412,8 @@ class FXMaster_tests(unittest.TestCase):
             fakeData = 10.0*numpy.random.rand(self.nAnt,1024) + 3.0
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt])
             
@@ -453,8 +453,8 @@ class FXMaster_tests(unittest.TestCase):
             fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6)
             
@@ -494,8 +494,8 @@ class FXMaster_tests(unittest.TestCase):
             fakeData = 10.0*numpy.random.rand(self.nAnt,1024) + 3.0
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], 
                                 window=numpy.blackman)
@@ -538,8 +538,8 @@ class FXMaster_tests(unittest.TestCase):
             fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
                                 window=numpy.blackman)
@@ -581,8 +581,8 @@ class FXMaster_tests(unittest.TestCase):
         fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
         fakeData = fakeData.astype(numpy.csingle)
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
                             gain_correct=True)
@@ -593,8 +593,8 @@ class FXMaster_tests(unittest.TestCase):
         fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
         fakeData = fakeData.astype(numpy.csingle)
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
                                     return_baselines=True)
@@ -605,8 +605,8 @@ class FXMaster_tests(unittest.TestCase):
         fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
         fakeData = fakeData.astype(numpy.csingle)
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         ## XX
         blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
@@ -644,8 +644,8 @@ class FXMaster_tests(unittest.TestCase):
             fakeData = fakeData + 0j
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             for ant in antennas:
                 ant.stand.x = 0.0
                 ant.stand.y = 0.0
@@ -688,8 +688,8 @@ class FXStokes_tests(unittest.TestCase):
             fakeData = 10.0*numpy.random.rand(self.nAnt,1024) + 3.0
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt])
             
@@ -729,8 +729,8 @@ class FXStokes_tests(unittest.TestCase):
             fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6)
             
@@ -770,8 +770,8 @@ class FXStokes_tests(unittest.TestCase):
             fakeData = 10.0*numpy.random.rand(self.nAnt,1024) + 3.0
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], 
                                 window=numpy.blackman)
@@ -814,8 +814,8 @@ class FXStokes_tests(unittest.TestCase):
             fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             
             freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
                                 window=numpy.blackman)
@@ -857,8 +857,8 @@ class FXStokes_tests(unittest.TestCase):
         fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
         fakeData = fakeData.astype(numpy.csingle)
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
                             gain_correct=True)
@@ -869,8 +869,8 @@ class FXStokes_tests(unittest.TestCase):
         fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
         fakeData = fakeData.astype(numpy.csingle)
         
-        station = stations.parseSSMIF(_SSMIF)
-        antennas = station.getAntennas()
+        station = stations.parse_ssmif(_SSMIF)
+        antennas = station.get_antennas()
         
         blList, freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
                                     return_baselines=True)
@@ -883,8 +883,8 @@ class FXStokes_tests(unittest.TestCase):
             fakeData = fakeData + 0j
             fakeData = fakeData.astype(dtype)
             
-            station = stations.parseSSMIF(_SSMIF)
-            antennas = station.getAntennas()
+            station = stations.parse_ssmif(_SSMIF)
+            antennas = station.get_antennas()
             for ant in antennas:
                 ant.stand.x = 0.0
                 ant.stand.y = 0.0

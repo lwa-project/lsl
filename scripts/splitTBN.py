@@ -75,7 +75,7 @@ def fileSplitFunction(fhIn, fhOut, nCaptures, nAntpols):
     
     for c in xrange(int(nCaptures)):
         for i in xrange(nAntpols):
-            cFrame = fhIn.read(tbn.FrameSize)
+            cFrame = fhIn.read(tbn.FRAME_SIZE)
             fhOut.write(cFrame)
             
         pb.inc(amount=1)
@@ -96,24 +96,24 @@ def main(args):
     
     # Open the file and get some basic info about the data contained
     fh = open(filename, 'rb')
-    sampleRate = tbn.getSampleRate(fh)
-    nFramesX, nFramesY = tbn.getFramesPerObs(fh)
+    sample_rate = tbn.get_sample_rate(fh)
+    nFramesX, nFramesY = tbn.get_frames_per_obs(fh)
     
-    nCaptures = sizeB / tbn.FrameSize / (nFramesX + nFramesY)
+    nCaptures = sizeB / tbn.FRAME_SIZE / (nFramesX + nFramesY)
     
     print "Filename:    %s" % filename
     print "Size:        %.1f MB" % (float(sizeB)/1024/1024)
-    print "Captures:    %i (%.2f seconds)" % (nCaptures, nCaptures*512/sampleRate)
+    print "Captures:    %i (%.2f seconds)" % (nCaptures, nCaptures*512/sample_rate)
     print "Stands:      %i (%i x pol., %i y pol.)" % ((nFramesX+nFramesY), nFramesX, nFramesY)
-    print "Sample Rate: %.2f kHz" % (sampleRate/1000.0)
+    print "Sample Rate: %.2f kHz" % (sample_rate/1000.0)
     print "==="
 
     if config['count'] > 0:
-        nCaptures = config['count'] * sampleRate / 512
+        nCaptures = config['count'] * sample_rate / 512
     else:
-        nCaptures -= config['offset'] * sampleRate / 512
-        config['count'] = nCaptures * 512 / sampleRate
-    nSkip = int(config['offset'] * sampleRate / 512)
+        nCaptures -= config['offset'] * sample_rate / 512
+        config['count'] = nCaptures * 512 / sample_rate
+    nSkip = int(config['offset'] * sample_rate / 512)
 
     print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], nSkip)
     print "Seconds to Split: %.2f (%i captures)" % (config['count'], nCaptures)
@@ -121,25 +121,25 @@ def main(args):
     # Make sure that the first frame in the file is the first frame if a capture 
     # (stand 1, pol 0).  If not, read in as many frames as necessary to get to 
     # the beginning of a complete capture.
-    frame = tbn.readFrame(fh)
-    stand, pol = frame.parseID()
+    frame = tbn.read_frame(fh)
+    stand, pol = frame.parse_id()
 
     skip = 0
     while (2*(stand-1)+pol) != 0:
-        frame = tbn.readFrame(fh)
-        stand, pol = frame.parseID()
+        frame = tbn.read_frame(fh)
+        stand, pol = frame.parse_id()
         skip += 1
-    fh.seek(fh.tell() - tbn.FrameSize)
+    fh.seek(fh.tell() - tbn.FRAME_SIZE)
 
     if skip != 0:
         print "Skipped %i frames at the beginning of the file" % skip
     
     for c in list(range(nSkip)):
         if c < nSkip:
-            fh.seek(fh.tell() + tbn.FrameSize*(nFramesX+nFramesY))
+            fh.seek(fh.tell() + tbn.FRAME_SIZE*(nFramesX+nFramesY))
             continue
             
-    nFramesRemaining = (sizeB - fh.tell()) / tbn.FrameSize
+    nFramesRemaining = (sizeB - fh.tell()) / tbn.FRAME_SIZE
     nRecursions = int(nFramesRemaining / (nCaptures*(nFramesX+nFramesY)))
     if not config['recursive']:
         nRecursions = 1
@@ -150,10 +150,10 @@ def main(args):
     for r in xrange(nRecursions):
         if config['date']:
             filePos = fh.tell()
-            junkFrame = tbn.readFrame(fh)
+            junkFrame = tbn.read_frame(fh)
             fh.seek(filePos)
             
-            dt = datetime.utcfromtimestamp(junkFrame.getTime())
+            dt = datetime.utcfromtimestamp(junkFrame.get_time())
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
             captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'])

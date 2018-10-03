@@ -51,7 +51,7 @@ def parseOptions(args):
     config['average'] = 10.0
     config['LFFT'] = 4096
     config['maxFrames'] = 19144
-    config['window'] = fxc.noWindow
+    config['window'] = fxc.null_window
     config['output'] = None
     config['displayChunks'] = True
     config['verbose'] = True
@@ -132,9 +132,9 @@ def main(args):
     
     idf = LWA1DataFile(config['args'][0])
     
-    nFramesFile = idf.getInfo('nFrames')
-    srate = idf.getInfo('sampleRate')
-    beampols = idf.getInfo('beampols')
+    nFramesFile = idf.get_info('nFrames')
+    srate = idf.get_info('sample_rate')
+    beampols = idf.get_info('beampols')
     
     # Offset in frames for beampols beam/tuning/pol. sets
     config['offset'] = idf.offset(config['offset'])
@@ -154,10 +154,10 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.getInfo('tStart')) - DJD_OFFSET)
-    centralFreq1 = idf.getInfo('freq1')
-    centralFreq2 = idf.getInfo('freq2')
-    beam = idf.getInfo('beam')
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    central_freq1 = idf.get_info('freq1')
+    central_freq2 = idf.get_info('freq2')
+    beam = idf.get_info('beam')
     
     # File summary
     print "Filename: %s" % config['args'][0]
@@ -165,7 +165,7 @@ def main(args):
     print "Beam: %i" % beam
     print "Tune/Pols: %i" % beampols
     print "Sample Rate: %i Hz" % srate
-    print "Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (centralFreq1, centralFreq2)
+    print "Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (central_freq1, central_freq2)
     print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate)
     print "---"
     print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*srate*beampols/4096)
@@ -193,7 +193,7 @@ def main(args):
             
         # Calculate the spectra for this block of data and then weight the results by 
         # the total number of frames read.  This is needed to keep the averages correct.
-        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], SampleRate=srate, ClipLevel=0)
+        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], sample_rate=srate, clip_level=0)
         for stand in xrange(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
@@ -206,8 +206,8 @@ def main(args):
     spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Frequencies
-    freq1 = freq + centralFreq1
-    freq2 = freq + centralFreq2
+    freq1 = freq + central_freq1
+    freq2 = freq + central_freq2
     
     # The plots:  This is setup for the current configuration of 20 beampols
     fig = plt.figure()

@@ -17,7 +17,7 @@ from matplotlib.ticker import NullFormatter
 def main(args):
     # Set the station
     station = stations.lwa1
-    antennas = station.getAntennas()[0::2]
+    antennas = station.get_antennas()[0::2]
     stands = []
     for ant in antennas:
         stands.append(ant.stand.id)

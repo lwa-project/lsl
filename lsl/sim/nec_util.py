@@ -28,8 +28,8 @@ import subprocess
 
 __version__   = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['CloseTo', 'open_and_get_nec_freq', 'change_nec_freq', 'calcIME', 'NECImpedance', 
-        'NECPattern', 'whichNEC4', 
+__all__ = ['close_to', 'open_and_get_nec_freq', 'change_nec_freq', 'calculate_ime', 'NECImpedance', 
+        'NECPattern', 'which_nec4', 
         '__version__', '__revision__', '__all__']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
@@ -38,7 +38,7 @@ _NEC_UTIL_LOG = logging.getLogger('nec_util')
 _NEC_UTIL_LOG.setLevel(logging.INFO)
 
 
-def CloseTo( x, y, epsilon=0.005 ):
+def close_to( x, y, epsilon=0.005 ):
     """
     Return True if two numbers are within a specified fractional, not 
     absolute, tolerance of each other.  Tolerance epsilon is a keyword 
@@ -113,7 +113,7 @@ def change_nec_freq(necname, freq):
         fh.truncate()
 
 
-def calcIME(necname, myfreqs = None, zpre = 100):
+def calculate_ime(necname, myfreqs = None, zpre = 100):
     """
     Compute the impedance mismatch efficiency (IME), for a given NEC run 
     and write out the results in a file.  Assumes a default preamplifier input 
@@ -247,7 +247,7 @@ class NECPattern:
             print("NEC .out file not found!  Running NEC")
             fh = None
             
-        if fh is None or not CloseTo(filefreq, freq):
+        if fh is None or not close_to(filefreq, freq):
             if rerun:
                 _NEC_UTIL_LOG.warning("NEC output file is at a different frequency \
                     than the requested frequency: re-running")
@@ -256,7 +256,7 @@ class NECPattern:
                 change_nec_freq(necname, freq)
                 
                 # Make sure we have NEC install
-                if whichNEC4() is None:
+                if which_nec4() is None:
                     raise RuntimeError("NEC executable 'nec4d' not found in PATH")
                     
                 # Important NOTE:
@@ -268,7 +268,7 @@ class NECPattern:
                 except subprocess.CalledProcessError as e:
                     raise RuntimeError("Bad return value from nec2++ call : %e" % str(e))       
                 fh, filefreq = open_and_get_nec_freq(outname)
-                if not CloseTo(filefreq, freq):
+                if not close_to(filefreq, freq):
                     fh.close()
                     raise ValueError("NEC failed to generate a file with the correct frequency.")
                     
@@ -289,13 +289,13 @@ class NECPattern:
             raise RuntimeError("RADIATION PATTERN nor EXCITATION not found!")
             
         if radpat:
-            self.__readRADIATION(fh)
+            self._read_radiation(fh)
         else:
-            self.__readEXCITATION(fh)
+            self._read_excitation(fh)
             
         fh.close()
         
-    def __readRADIATION(self, fh):
+    def _read_radiation(self, fh):
         """
         Private function to read in a RADIATION PATTERN section of a NEC
         output file.
@@ -329,7 +329,7 @@ class NECPattern:
             _NEC_UTIL_LOG.debug("theta %d phi %d gain %f @ %f deg", theta, phi, powgain, phsgain)
 
 
-    def __readEXCITATION(self, fh):
+    def _read_excitation(self, fh):
         """
         Private function to read in data stored in a collection of EXCITATION 
         sections in a NEC output file.
@@ -367,7 +367,7 @@ class NECPattern:
                     _NEC_UTIL_LOG.debug("theta %d phi %d current %f @ %f deg", theta, phi, powcurr, phscurr)
 
 
-def whichNEC4():
+def which_nec4():
     """
     Return the path to the nec4d executable if it can be found in the 
     current path.  None otherwise.  This is useful for making sure that NEC

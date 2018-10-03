@@ -27,8 +27,8 @@ __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['Frame', '__version__', '__revision__', '__all__']
 
-vdifEpoch = ephem.Date('2000/01/01 00:00:00.00')
-unixEpoch = ephem.Date('1970/01/01 00:00:00.00')
+VDIF_EPOCH = ephem.Date('2000/01/01 00:00:00.00')
+UNIX_EPOCH = ephem.Date('1970/01/01 00:00:00.00')
 
 
 class Frame(object):
@@ -37,12 +37,12 @@ class Frame(object):
     frame (version 1, June 26, 2009).
     """
     
-    def __init__(self, stand=0, time=0, bits=16, data=None, sampleRate=dp_common.fS):
+    def __init__(self, stand=0, time=0, bits=16, data=None, sample_rate=dp_common.fS):
         self.stand = stand
         self.time = time
         self.bits = bits
         self.data = numpy.squeeze(data)
-        self.sampleRate = sampleRate
+        self.sample_rate = sample_rate
         if data.dtype.kind == 'c':
             self.dataReal = False
         else:
@@ -54,10 +54,10 @@ class Frame(object):
         
         # Convert the time from UNIX to epoch and make the data ready to 
         # be written to the disk.
-        self.__dataAdjust()
-        self.__setEpoch()
+        self._data_adjust()
+        self._set_epoch()
         
-    def __dataAdjust(self):
+    def _data_adjust(self):
         """
         Adjust the data to the number of bits required for the frame 
         and convert to unsigned 32-bit integers.  Also, interlace complex
@@ -76,7 +76,7 @@ class Frame(object):
         
         self.data = biased
         
-    def __setEpoch(self):
+    def _set_epoch(self):
         """
         Convert a UNIX timestap in seconds since 1970 to seconds since
         January 1st, 2000 using ephem.Data objects.  Also, calculate the 
@@ -84,21 +84,21 @@ class Frame(object):
         """
         
         # UNIX time to seconds since DJD  = 0
-        curEpoch = float(unixEpoch)*astro.SECS_IN_DAY + self.time
+        curEpoch = float(UNIX_EPOCH)*astro.SECS_IN_DAY + self.time
         self.epoch = 0
         # Seconds since the VDIF epoch
-        epochSeconds = curEpoch - float(vdifEpoch)*astro.SECS_IN_DAY
+        epochSeconds = curEpoch - float(VDIF_EPOCH)*astro.SECS_IN_DAY
         # Integer seconds
         self.seconds = long(epochSeconds)
         
         # Compute the frames since the beginning of the second
-        frame = (epochSeconds - self.seconds) * (self.sampleRate/len(self.data))
+        frame = (epochSeconds - self.seconds) * (self.sample_rate/len(self.data))
         if self.dataReal:
             self.frame = long(frame)
         else:
             self.frame = long(frame * 2)
 
-    def createRawFrame(self):
+    def create_raw_frame(self):
         """
         Using the data and information stored in the object, create a
         numpy array on unsigned 1-byte integers that represents the frame.
@@ -158,11 +158,11 @@ class Frame(object):
                 
         return raw
 
-    def writeRawFrame(self, fh):
+    def write_raw_frame(self, fh):
         """
         Create a numpy representation of the VDIF frame and then write 
         it to the specified file handle.
         """
         
-        rawFrame = self.createRawFrame()
+        rawFrame = self.create_raw_frame()
         rawFrame.tofile(fh)

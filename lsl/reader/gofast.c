@@ -14,8 +14,8 @@
   Exceptions for the Go Fast! Readers
 */
 
-PyObject *syncError;
-PyObject *eofError;
+PyObject *SyncError;
+PyObject *EOFError;
 
 
 /*
@@ -133,7 +133,7 @@ MOD_INIT(_gofast) {
 	
 	// Exceptions
 	
-	//   1.  syncError -> similar to lsl.reader.errors.syncError
+	//   1.  SyncError -> similar to lsl.reader.errors.SyncError
 	dict1 = (PyObject *) PyDict_New();
 	if(dict1 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
@@ -143,25 +143,25 @@ MOD_INIT(_gofast) {
 	}
 	PyDict_SetItemString(dict1, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
-	syncError = PyErr_NewException("_gofast.syncError", PyExc_IOError, dict1);
-	Py_INCREF(syncError);
-	PyModule_AddObject(m, "syncError", syncError);
+	SyncError = PyErr_NewException("_gofast.SyncError", PyExc_IOError, dict1);
+	Py_INCREF(SyncError);
+	PyModule_AddObject(m, "SyncError", SyncError);
 	
-	//    2. eofError -> similar to lsl.reader.errors.eofError
+	//    2. EOFError -> similar to lsl.reader.errors.EOFError
 	dict2 = (PyObject *) PyDict_New();
 	if(dict2 == NULL) {
 		PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
 		Py_XDECREF(dict1);
-		Py_XDECREF(syncError);
+		Py_XDECREF(SyncError);
 		Py_XDECREF(dict2);
 		Py_XDECREF(m);
 		return MOD_ERROR_VAL;
 	}
 	PyDict_SetItemString(dict2, "__doc__", \
 		PyString_FromString("Exception raised when a reader encounters the end-of-file while reading."));
-	eofError = PyErr_NewException("_gofast.eofError", PyExc_IOError, dict2);
-	Py_INCREF(eofError);
-	PyModule_AddObject(m, "eofError", eofError);
+	EOFError = PyErr_NewException("_gofast.EOFError", PyExc_IOError, dict2);
+	Py_INCREF(EOFError);
+	PyModule_AddObject(m, "EOFError", EOFError);
 	
 	// Version and revision information
 	PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));

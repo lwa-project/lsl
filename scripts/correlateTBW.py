@@ -114,10 +114,10 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
     """
     
     # Get antennas
-    antennas = site.getAntennas()
+    antennas = site.get_antennas()
     
     # Get the metadata
-    sampleRate = idf.getInfo('sampleRate')
+    sample_rate = idf.get_info('sample_rate')
     
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  
     # These are:
@@ -160,7 +160,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
         
         # Loop over sub-integrations (set by nSec)
         for k in xrange(nSec):
-            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, Overlap=Overlap, IncludeAuto=True, verbose=False, SampleRate=sampleRate, CentralFreq=0.0, Pol=pol, ReturnBaselines=True, GainCorrect=True)
+            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, Overlap=Overlap, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
             
             toUse = numpy.where( (freq>=5.0e6) & (freq<=93.0e6) )
             toUse = toUse[0]
@@ -179,7 +179,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
         
         # Set up the FITS IDI file is we need to
         if pol == pols[0]:
-            pol1, pol2 = fxc.pol2pol(pol)
+            pol1, pol2 = fxc.pol_to_pols(pol)
             
             if len(stands) > 255:
                 fits = fitsidi.ExtendedIDI(filename, ref_time=refTime)
@@ -216,26 +216,26 @@ def main(args):
     # Setup the LWA station information
     if config['metadata'] != '':
         try:
-            station = stations.parseSSMIF(config['metadata'])
+            station = stations.parse_ssmif(config['metadata'])
         except ValueError:
-            station = metabundle.getStation(config['metadata'], ApplySDM=True)
+            station = metabundle.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
-    antennas = station.getAntennas()
+    antennas = station.get_antennas()
     
     idf = LWA1DataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.getInfo('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
-    sampleRate = idf.getInfo('sampleRate')
-    nInts = idf.getInfo('nFrames') / (30000 * len(antennas) / 2)
+    sample_rate = idf.get_info('sample_rate')
+    nInts = idf.get_info('nFrames') / (30000 * len(antennas) / 2)
     
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
     for i in xrange(len(antennas)):
         ant = antennas[i]
-        if ant.getStatus() != 33 and not config['all']:
+        if ant.get_status() != 33 and not config['all']:
             pass
         else:
             if ant.pol == 0:
@@ -260,15 +260,15 @@ def main(args):
         
     # Number of frames to read in at once and average
     nFrames = 30000
-    nSets = idf.getInfo('nFrames') / (30000*len(antennas)/2)
+    nSets = idf.get_info('nFrames') / (30000*len(antennas)/2)
     
     print "Data type:  %s" % type(idf)
-    print "Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sampleRate)
+    print "Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sample_rate)
     print "=="
     print "Station: %s" % station.name
     print "Date observed: %s" % date
     print "Julian day: %.5f" % jd
-    print "Integration Time: %.3f s" % (400*nFrames/sampleRate)
+    print "Integration Time: %.3f s" % (400*nFrames/sample_rate)
     print "Number of integrations in file: %i" % nSets
     print "=="
     

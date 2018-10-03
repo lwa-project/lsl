@@ -9,20 +9,19 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import drx
-from lsl.sim.errors import invalidBeam, invalidTune, invalidPol, invalidDataSize, invalidDataType
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['SimFrame', 'frame2frame', '__version__', '__revision__', '__all__']
+__all__ = ['SimFrame', 'frame_to_frame', '__version__', '__revision__', '__all__']
 
 
-def frame2frame(drx_frame):
+def frame_to_frame(drx_frame):
     """
     Convert a :class:`lsl.reader.drx.Frame` object to a raw DP DRX frame.
     """
 
     # The raw frame
-    rawFrame = numpy.zeros(drx.FrameSize, dtype=numpy.uint8)
+    rawFrame = numpy.zeros(drx.FRAME_SIZE, dtype=numpy.uint8)
 
     # Part 1: The header
     ## Sync. words (0xDEC0DE5C)
@@ -31,33 +30,33 @@ def frame2frame(drx_frame):
     rawFrame[2] = 0xDE  # 222
     rawFrame[3] = 0x5C  #  92
     ## DRX ID
-    rawFrame[4] = drx_frame.header.drxID
+    rawFrame[4] = drx_frame.header.drx_id
     ## Frame count
-    rawFrame[5] = (drx_frame.header.frameCount>>16) & 255
-    rawFrame[6] = (drx_frame.header.frameCount>>8) & 255
-    rawFrame[7] = drx_frame.header.frameCount & 255
+    rawFrame[5] = (drx_frame.header.frame_count>>16) & 255
+    rawFrame[6] = (drx_frame.header.frame_count>>8) & 255
+    rawFrame[7] = drx_frame.header.frame_count & 255
     ## Seconds count
-    rawFrame[8] = (drx_frame.header.secondsCount>>24) & 255
-    rawFrame[9] = (drx_frame.header.secondsCount>>16) & 255
-    rawFrame[10] = (drx_frame.header.secondsCount>>8) & 255
-    rawFrame[11] = drx_frame.header.secondsCount & 255
+    rawFrame[8] = (drx_frame.header.second_count>>24) & 255
+    rawFrame[9] = (drx_frame.header.second_count>>16) & 255
+    rawFrame[10] = (drx_frame.header.second_count>>8) & 255
+    rawFrame[11] = drx_frame.header.second_count & 255
     ## Decimation
     rawFrame[12] = (drx_frame.header.decimation>>8) & 255
     rawFrame[13] = drx_frame.header.decimation & 255
     ## Time offset
-    rawFrame[14] = (drx_frame.header.timeOffset>>8) & 255
-    rawFrame[15] = drx_frame.header.timeOffset & 255
+    rawFrame[14] = (drx_frame.header.time_offset>>8) & 255
+    rawFrame[15] = drx_frame.header.time_offset & 255
 
     # Part 2: The data
     ## Time tag
-    rawFrame[16] = (drx_frame.data.timeTag>>56) & 255
-    rawFrame[17] = (drx_frame.data.timeTag>>48) & 255
-    rawFrame[18] = (drx_frame.data.timeTag>>40) & 255
-    rawFrame[19] = (drx_frame.data.timeTag>>32) & 255
-    rawFrame[20] = (drx_frame.data.timeTag>>24) & 255
-    rawFrame[21] = (drx_frame.data.timeTag>>16) & 255
-    rawFrame[22] = (drx_frame.data.timeTag>>8) & 255
-    rawFrame[23] = drx_frame.data.timeTag & 255
+    rawFrame[16] = (drx_frame.data.timetag>>56) & 255
+    rawFrame[17] = (drx_frame.data.timetag>>48) & 255
+    rawFrame[18] = (drx_frame.data.timetag>>40) & 255
+    rawFrame[19] = (drx_frame.data.timetag>>32) & 255
+    rawFrame[20] = (drx_frame.data.timetag>>24) & 255
+    rawFrame[21] = (drx_frame.data.timetag>>16) & 255
+    rawFrame[22] = (drx_frame.data.timetag>>8) & 255
+    rawFrame[23] = drx_frame.data.timetag & 255
     ## Flags
     rawFrame[24] = (drx_frame.data.flags>>56) & 255
     rawFrame[25] = (drx_frame.data.flags>>48) & 255
@@ -119,25 +118,25 @@ class SimFrame(drx.Frame):
         self.filter_code = filter_code
         self.time_offset = time_offset
         self.frame_count = frame_count
-        self.secondsCount = 0
+        self.second_count = 0
         self.obs_time = obs_time
         self.flags = flags
         self.iq = iq
         super(SimFrame, self).__init__()
         
-    def __update(self):
+    def _update(self):
         """
         Private function to use the object's parameter values to build up 
         a drx.Frame-like object.
         """
         
-        self.header.frameCount = 0*self.frame_count
-        self.header.secondsCount = 0*long(self.obs_time / fS)
-        self.header.decimation = int(fS / drx.filterCodes[self.filter_code])
-        self.header.timeOffset = self.time_offset
-        self.header.drxID = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
+        self.header.frame_count = 0*self.frame_count
+        self.header.second_count = 0*long(self.obs_time / fS)
+        self.header.decimation = int(fS / drx.FILTER_CODES[self.filter_code])
+        self.header.time_offset = self.time_offset
+        self.header.drx_id = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
         
-        self.data.timeTag = self.obs_time
+        self.data.timetag = self.obs_time
         self.data.flags = self.flags
         self.data.iq = self.iq
         
@@ -150,73 +149,73 @@ class SimFrame(drx.Frame):
         self.data = drx_frame.data
 
         inverseCodes = {}
-        for code in drx.filterCodes:
-            rate = drx.filterCodes[code]
+        for code in drx.FILTER_CODES:
+            rate = drx.FILTER_CODES[code]
             inverseCodes[int(rate)] = code
         
         # Back-fill the class' fields to make sure the object is consistent
         ## Header
-        self.beam = self.header.parseID()[0]
-        self.tune = self.header.parseID()[1]
-        self.pol = self.header.parseID()[2]
-        self.frame_count = self.header.frameCount
-        self.secondsCount = self.header.secondsCount
+        self.beam = self.header.parse_id()[0]
+        self.tune = self.header.parse_id()[1]
+        self.pol = self.header.parse_id()[2]
+        self.frame_count = self.header.frame_count
+        self.second_count = self.header.second_count
         self.filter_code = inverseCodes[int(fS / self.header.decimation)]
-        self.time_offset = self.header.timeOffset
+        self.time_offset = self.header.time_offset
         ## Data
-        self.obs_time = self.data.timeTag
+        self.obs_time = self.data.timetag
         self.flags = self.data.flags
         self.iq = self.data.iq
     
-    def is_valid(self, raiseErrors=False):
+    def is_valid(self, raise_errors=False):
         """
         Check if simulated DRX frame is valid or not.  Valid frames return 
-        True and invalid frames False.  If the 'raiseErrors' keyword is set, 
+        True and invalid frames False.  If the 'raise_errors' keyword is set, 
         is_valid raises an error when a problem is encountered.
         """
 
         # Make sure we have the latest values
-        self.__update()
+        self._update()
 
         # Is the time offset reasonable?
-        if self.header.timeOffset >= fS:
+        if self.header.time_offset >= fS:
             return False
 
-        beam, tune, pol = self.parseID()
+        beam, tune, pol = self.parse_id()
         # Is the beam number reasonable?
         if beam not in [1, 2, 3, 4]:
-            if raiseErrors:
-                raise invalidBeam()
+            if raise_errors:
+                raise ValueError("Invalid beam: '%s'" % beam)
             return False
 
         # Is the tunning number reasonable?
         if tune not in [1, 2]:
-            if raiseErrors:
-                raise invalidTune()
+            if raise_errors:
+                raise ValueError("Invalid tuning: '%s'" % tune)
             return False
 
         # Is the polarization reasonable?
         if pol not in [0, 1]:
-            if raiseErrors:
-                raise invalidPol()
+            if raise_errors:
+                raise ValueError("Invalid polarization: '%s'" % tune)
             return False
 
         # Is there data loaded into frame.data.iq?
         if self.data.iq is None:
-            if raiseErrors:
-                raise invalidDataSize()
+            if raise_errors:
+                raise ValueError("Invalid data payload: '%s'" % self.data.iq)
             return False
 
         # Does the data length make sense?
         if self.data.iq.shape[0] != 4096:
-            if raiseErrors:
-                raise invalidDataSize()
+            if raise_errors:
+                raise ValueError("Invalid data length: %i", self.data.iq.shape[0])
             return False
 
         # Does the data type make sense?
         if self.data.iq.dtype.kind != 'c':
-            if raiseErrors:
-                raise invalidDataType()
+            if raise_errors:
+                raise ValueError("Invalid data type: '%s'" % self.data.iq.dtype.kind)
             return False
 
         # If we made it this far, it's valid
@@ -230,10 +229,10 @@ class SimFrame(drx.Frame):
         """
 
         # Make sure we have the latest values
-        self.__update()
+        self._update()
 
-        self.is_valid(raiseErrors=True)
-        return frame2frame(self)
+        self.is_valid(raise_errors=True)
+        return frame_to_frame(self)
 
     def write_raw_frame(self, fh):
         """

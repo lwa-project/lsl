@@ -20,7 +20,7 @@ class paths_tests(unittest.TestCase):
     def test_module_path(self):
         """Test the paths.module variable."""
         
-        modPath = paths.moduleBuild
+        modPath = paths.MODULE_BUILD
 
         astroFile = os.path.join(modPath, 'astro.py')
         self.assertTrue(os.path.exists(astroFile))
@@ -31,7 +31,7 @@ class paths_tests(unittest.TestCase):
     def test_data_path(self):
         """Test the paths.data variable."""
         
-        dataPath = paths.dataBuild
+        dataPath = paths.DATA_BUILD
 
         ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
         self.assertTrue(os.path.exists(ssmif))
