@@ -21,7 +21,7 @@ try:
 except ImprotError:
     import StringIO
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.common import sdf
 from lsl.common.stations import lwa1, lwasv
 
@@ -31,14 +31,14 @@ __version__  = "0.4"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(dataPath, 'tests', 'tbw-sdf.txt')
-tbnFile = os.path.join(dataPath, 'tests', 'tbn-sdf.txt')
-drxFile = os.path.join(dataPath, 'tests', 'drx-sdf.txt')
-solFile = os.path.join(dataPath, 'tests', 'sol-sdf.txt')
-jovFile = os.path.join(dataPath, 'tests', 'jov-sdf.txt')
-stpFile = os.path.join(dataPath, 'tests', 'stp-sdf.txt')
-spcFile = os.path.join(dataPath, 'tests', 'spc-sdf.txt')
-tbfFile = os.path.join(dataPath, 'tests', 'tbf-sdf.txt')
+tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-sdf.txt')
+tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-sdf.txt')
+drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
+solFile = os.path.join(DATA_BUILD, 'tests', 'sol-sdf.txt')
+jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-sdf.txt')
+stpFile = os.path.join(DATA_BUILD, 'tests', 'stp-sdf.txt')
+spcFile = os.path.join(DATA_BUILD, 'tests', 'spc-sdf.txt')
+tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
 
 
 class sdf_tests(unittest.TestCase):

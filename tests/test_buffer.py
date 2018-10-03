@@ -13,7 +13,7 @@ Unit test for the lsl.reader.buffer module.
 import os
 import unittest
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbn, drx, tbf
 from lsl.reader import errors
 from lsl.reader import buffer
@@ -24,9 +24,9 @@ __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
-tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
-tbfFile = os.path.join(dataPath, 'tests', 'tbf-test.dat')
+tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
+drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
+tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
 
 
 class buffer_tests(unittest.TestCase):

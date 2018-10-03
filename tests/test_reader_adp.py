@@ -11,7 +11,7 @@ if sys.version_info > (3,):
 import os
 import unittest
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbf
 from lsl.reader import cor
 from lsl.reader import errors
@@ -22,8 +22,8 @@ __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
-tbfFile = os.path.join(dataPath, 'tests', 'tbf-test.dat')
-corFile = os.path.join(dataPath, 'tests', 'cor-test.dat')
+tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
+corFile = os.path.join(DATA_BUILD, 'tests', 'cor-test.dat')
 
 
 class reader_adp_tests(unittest.TestCase):

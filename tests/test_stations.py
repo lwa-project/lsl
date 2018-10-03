@@ -13,7 +13,7 @@ import pickle
 import unittest
 from datetime import datetime
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
 
 
@@ -185,25 +185,25 @@ class stations_tests(unittest.TestCase):
     def test_ssmif_text(self):
         """Test the text SSMIF parser."""
         
-        ssmifFile = os.path.join(dataPath, 'lwa1-ssmif.txt')
+        ssmifFile = os.path.join(DATA_BUILD, 'lwa1-ssmif.txt')
         out = stations.parse_ssmif(ssmifFile)
         
     def test_ssmif_test_adp(self):
         """Test the text SSMIF parser for ADP-based stations."""
         
-        ssmifFile = os.path.join(dataPath, 'lwasv-ssmif.txt')
+        ssmifFile = os.path.join(DATA_BUILD, 'lwasv-ssmif.txt')
         out = stations.parse_ssmif(ssmifFile)
         
     def test_ssmif_binary(self):
         """Test the binary SSMIF parser."""
         
-        ssmifFile = os.path.join(dataPath, 'tests', 'ssmif.dat')
+        ssmifFile = os.path.join(DATA_BUILD, 'tests', 'ssmif.dat')
         out = stations.parse_ssmif(ssmifFile)
         
     def test_ssmif_binary_adp(self):
         """Test the binary SSMIF parser for ADP-based stations."""
         
-        ssmifFile = os.path.join(dataPath, 'tests', 'ssmif-adp.dat')
+        ssmifFile = os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat')
         out = stations.parse_ssmif(ssmifFile)
 
 

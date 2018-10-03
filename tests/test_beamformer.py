@@ -46,12 +46,12 @@ class beamformer_tests(unittest.TestCase):
         antennas = station.get_antennas()
         
         # Azimuth  checks
-        self.assertRaises(beamformer.ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, -5, 30)
-        self.assertRaises(beamformer.ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 365, 30)
+        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, -5, 30)
+        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 365, 30)
         
         # Elevation checks
-        self.assertRaises(beamformer.ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, -5)
-        self.assertRaises(beamformer.ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, 95)
+        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, -5)
+        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, 95)
         
     def test_int_delay_and_sum(self):
         """Check that the beamformer.int_delay_and_sum function actually runs"""

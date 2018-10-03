@@ -11,7 +11,7 @@ import unittest
 import tempfile
 import numpy
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import errors
@@ -22,8 +22,8 @@ __revision__ = "$Rev$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
-tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
-tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
+tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-test.dat')
+tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
 
 
 class vdif_tests(unittest.TestCase):

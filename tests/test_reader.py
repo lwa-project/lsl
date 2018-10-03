@@ -11,7 +11,7 @@ if sys.version_info > (3,):
 import os
 import unittest
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
@@ -25,11 +25,11 @@ __version__  = "0.6"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
-tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
-vdifFile = os.path.join(dataPath, 'tests', 'vdif-test.dat')
-drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
+tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-test.dat')
+tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
+drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
+vdifFile = os.path.join(DATA_BUILD, 'tests', 'vdif-test.dat')
+drspecFile = os.path.join(DATA_BUILD, 'tests', 'drspec-test.dat')
 
 
 class reader_tests(unittest.TestCase):

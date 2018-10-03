@@ -11,7 +11,7 @@ import os
 import copy
 import unittest
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import selfCal
 from lsl.writer.fitsidi import NUMERIC_STOKES
@@ -24,10 +24,10 @@ __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
-uvFile = os.path.join(dataPath, 'tests', 'uv-test.fits')
-idiFile = os.path.join(dataPath, 'tests', 'idi-test.fits')
-idiAltFile = os.path.join(dataPath, 'tests', 'idi-test-alt.fits')
-idiSSMIFFile = os.path.join(dataPath, 'tests', 'idi-test-alt.txt')
+uvFile = os.path.join(DATA_BUILD, 'tests', 'uv-test.fits')
+idiFile = os.path.join(DATA_BUILD, 'tests', 'idi-test.fits')
+idiAltFile = os.path.join(DATA_BUILD, 'tests', 'idi-test-alt.fits')
+idiSSMIFFile = os.path.join(DATA_BUILD, 'tests', 'idi-test-alt.txt')
 
 
 class imaging_tests(unittest.TestCase):

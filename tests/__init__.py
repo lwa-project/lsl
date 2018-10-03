@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import absolute_import
+
 """
 Modules defining package tests.
 """

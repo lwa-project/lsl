@@ -14,11 +14,11 @@ import warnings
 import unittest
 import numpy
 
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.common import stations
 from lsl.correlator import fx
 
-_SSMIF = os.path.join(dataPath, 'lwa1-ssmif.txt')
+_SSMIF = os.path.join(DATA_BUILD, 'lwa1-ssmif.txt')
 
 __version__  = "0.5"
 __revision__ = "$Rev$"

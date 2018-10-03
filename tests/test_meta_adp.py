@@ -6,17 +6,17 @@ import os
 import unittest
 
 from lsl.common import metabundleADP
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 
 
 __revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
-mdbFile = os.path.join(dataPath, 'tests', 'metadata.tgz')
-mdbFileOld0 = os.path.join(dataPath, 'tests', 'metadata-old-0.tgz')
-mdbFileOld1 = os.path.join(dataPath, 'tests', 'metadata-old-1.tgz')
-mdbFileADP = os.path.join(dataPath, 'tests', 'metadata-adp.tgz')
+mdbFile = os.path.join(DATA_BUILD, 'tests', 'metadata.tgz')
+mdbFileOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-0.tgz')
+mdbFileOld1 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-1.tgz')
+mdbFileADP = os.path.join(DATA_BUILD, 'tests', 'metadata-adp.tgz')
 
 
 class metabundle_tests_adp(unittest.TestCase):

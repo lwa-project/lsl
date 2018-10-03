@@ -14,7 +14,7 @@ import unittest
 import tempfile
 import numpy
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbn as tbnReader
 from lsl.sim import tbn as tbnWriter
 from lsl.reader import drx as drxReader
@@ -27,8 +27,8 @@ __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
-tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
+tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
+drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
 
 
 class fake_TBN_tests(unittest.TestCase):

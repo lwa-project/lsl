@@ -5,7 +5,7 @@
 import os
 import unittest
 
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 from lsl.reader import ldp
 from lsl.reader import errors
 
@@ -15,12 +15,12 @@ __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(dataPath, 'tests', 'tbw-test.dat')
-tbnFile = os.path.join(dataPath, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(dataPath, 'tests', 'drx-test.dat')
-drspecFile = os.path.join(dataPath, 'tests', 'drspec-test.dat')
+tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-test.dat')
+tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
+drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
+drspecFile = os.path.join(DATA_BUILD, 'tests', 'drspec-test.dat')
 
-tbfFile = os.path.join(dataPath, 'tests', 'tbf-test.dat')
+tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
 
 
 class ldp_tests(unittest.TestCase):

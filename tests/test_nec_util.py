@@ -11,7 +11,7 @@ except ImportError:
     from io import StringIO
 
 from lsl.sim import nec_util
-from lsl.common.paths import DATA_BUILD as dataPath
+from lsl.common.paths import DATA_BUILD
 
 
 __revision__  = "$Rev$"
@@ -31,7 +31,7 @@ class nec_util_tests(unittest.TestCase):
         logging.basicConfig(stream = StringIO())
         
         # get a reference to the input test file
-        self.nec_name = os.path.join(dataPath, 'tests', 'bigblade_imp.out')
+        self.nec_name = os.path.join(DATA_BUILD, 'tests', 'bigblade_imp.out')
     
     def test_NECImpedance_init(self):
         """Test nec_util.NECImpedance constructor method."""
