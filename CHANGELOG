@@ -7,6 +7,7 @@
   * Fixed a bug in setup.py that causes it to crash when 'pkg-config' is not installed
   * Fixed a memory leak in the new, more flexible lsl.reader modules
   * Fixed a problem with the data ordering in the lsl.writer modules when a high time resolution (<~2 ms) is used
+  * Fixed a bug in the DR spectrometer reader which incorrectly mapped tuning 2, Stokes I for IQUV-mode observations
 
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals

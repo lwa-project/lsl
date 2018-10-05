@@ -179,7 +179,7 @@ static void parseStokesFull(DRSpecHeader header, float *data, float *I0, float *
     for(i=0; i<header.nFreqs; i++) {
         // I
         *(I0 + i) = *(data + 0*header.nFreqs + 4*i + 0) / norm0;
-        *(I1 + i) = *(data + 4*header.nFreqs + 4*i + 3) / norm1;
+        *(I1 + i) = *(data + 4*header.nFreqs + 4*i + 0) / norm1;
         
         // Q
         *(Q0 + i) = *(data + 0*header.nFreqs + 4*i + 1) / norm0;
