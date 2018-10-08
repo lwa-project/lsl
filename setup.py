@@ -281,5 +281,5 @@ setup(
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,
     zip_safe = False,  
-    test_suite = "tests.test_lsl.lsl_tests"
+    test_suite = "tests"
 ) 

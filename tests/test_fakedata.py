@@ -19,7 +19,6 @@ from lsl.reader import tbn as tbnReader
 from lsl.sim import tbn as tbnWriter
 from lsl.reader import drx as drxReader
 from lsl.sim import drx as drxWriter
-from lsl.sim import errors
 
 
 __revision__ = "$Rev$"
