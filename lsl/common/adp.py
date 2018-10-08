@@ -150,7 +150,7 @@ def tbn_filter(sample_rate=1e5, npts=_N_PTS):
     w = numpy.concatenate([ w[::-1], w[1:]])
     
     # Return the interpolating function
-    return interp1d(h, w/w.max(), kind='cubic', bounds_error=False)
+    return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
 
 
 def drx_filter(sample_rate=9.8e6, npts=_N_PTS):
@@ -173,4 +173,4 @@ def drx_filter(sample_rate=9.8e6, npts=_N_PTS):
     w = numpy.concatenate([w[::-1], w[1:]])
     
     # Return the interpolating function
-    return interp1d(h, w/w.max(), kind='cubic', bounds_error=False)
+    return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
