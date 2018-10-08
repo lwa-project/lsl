@@ -710,7 +710,7 @@ class MS(object):
                                                                'Ref':'LSRK'}
                                                    })
         col13 = tableutil.makearrcoldesc('SYSVEL', 1.0, 1, 
-                                         comments='Systemic velocity at reference', 
+                                         comment='Systemic velocity at reference', 
                                          keywords={'QuantumUnits':['m/s',], 
                                                    'MEASINFO':{'type':'radialvelocity', 
                                                                'Ref':'LSRK'}
