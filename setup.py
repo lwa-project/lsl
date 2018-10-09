@@ -18,6 +18,7 @@ except ImportError:
     from io import StringIO
 
 from setuptools import setup, Extension, Distribution, find_packages
+from setuptools.command.build_ext import build_ext
 try:
     import numpy
 except ImportError:
@@ -227,18 +228,54 @@ short_version = '%s'
 # Get the FFTW flags/libs and manipulate the flags and libraries for 
 # correlator._core appropriately.  This will, hopefully, fix the build
 # problems on Mac
-cflags, libs = get_fftw()
-atlasFlags, atlasLibs = get_atlas()
-openmpFlags, openmpLibs = get_openmp()
+class lsl_build_ext(build_ext):
+    user_options = build_ext.user_options \
+                   + [('with-atlas=', None, 'Installation path for ATLAS'),] \
+                   + [('with-fftw=', None, 'Installation path for FFTW'),]
+    
+    def initialize_options(self, *args, **kwargs):
+        self.with_atlas = None
+        self.with_fftw = None
+        build_ext.initialize_options(self, *args, **kwargs)
+        
+    def run(self, *args, **kwargs):
+        ## Grab the OpenMP flags
+        openmpFlags, openmpLibs = get_openmp()
+        
+        ## Grab the ATLAS flags
+        if self.with_atlas is None:
+            atlasFlags, atlasLibs = get_atlas()
+        else:
+            atlasFlags = ['-I%s/include' % self.with_atlas,]
+            atlasLibs = ['-L%s/lib' % self.with_atlas, '-lf77blas', '-lcblas', '-latlas']
+            
+        ## Grab the FFTW flags
+        if self.with_fftw is None:
+            fftwFlags, fftwLibs = get_fftw()
+        else:
+            fftwFlags = ['-I%s/include' % self.with_fftw,]
+            fftwLibs = ['-L%s/lib' % self.with_fftw, '-lfftw3f']
+            
+        ## Update the extensions with the additional compilier/linker flags
+        for ext in self.extensions:
+            for cflags in (openmpFlags, atlasFlags, fftwFlags):
+                try:
+                    ext.extra_compile_args.extend( cflags )
+                except TypeError:
+                    ext.extra_compile_args = cflags
+            for ldflags in (openmpLibs, atlasLibs, fftwLibs):
+                try:
+                    ext.extra_link_args.extend( ldflags )
+                except TypeError:
+                    ext.extra_link_args = ldflags
+                    
+        ## Build the extensions
+        build_ext.run(self, *args, **kwargs)
+
 
 coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
-coreExtraFlags.extend(openmpFlags)
-coreExtraFlags.extend(cflags)
-coreExtraFlags.extend(atlasFlags)
 coreExtraLibs = []
-coreExtraLibs.extend(openmpLibs)
-coreExtraLibs.extend(libs)
-coreExtraLibs.extend(atlasLibs)
+
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
@@ -255,6 +292,7 @@ ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/rea
 write_version_info()
 
 setup(
+    cmdclass = {'build_ext': lsl_build_ext}, 
     name = "lsl", 
     version = get_version(), 
     description = "LWA Software Library", 
