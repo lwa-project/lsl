@@ -356,7 +356,7 @@ setup(
     scripts = glob.glob('scripts/*.py'), 
     python_requires='>=2.7, <3', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = ['astropy<2.0', 'numpy>=1.2', 'scipy>=0.7', 'pyephem>=3.7.5', 'aipy>=1.0', 'pytz>=2011k'], 
+    install_requires = ['astropy<2.0', 'numpy>=1.7', 'scipy>=0.13', 'pyephem>=3.7.5', 'aipy>=1.0', 'pytz>=2011k'], 
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,
