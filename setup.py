@@ -18,7 +18,17 @@ except ImportError:
     from io import StringIO
 
 from setuptools import setup, Extension, Distribution, find_packages
-from setuptools.command.build_ext import build_ext
+from distutils import log
+from distutils.command.build import build
+try:
+    # Attempt to use Cython for building extensions, if available
+    from Cython.Distutils.build_ext import build_ext
+    # Additionally, assert that the compiler module will load
+    # also. Ref #1229.
+    __import__('Cython.Compiler.Main')
+except ImportError:
+    from distutils.command.build_ext import build_ext
+
 try:
     import numpy
 except ImportError:
@@ -228,49 +238,81 @@ short_version = '%s'
 # Get the FFTW flags/libs and manipulate the flags and libraries for 
 # correlator._core appropriately.  This will, hopefully, fix the build
 # problems on Mac
+class lsl_build(build):
+    user_options = build.user_options \
+                   + [('with-atlas=', None, 'Installation path for ATLAS'),] \
+                   + [('with-fftw=', None, 'Installation path for FFTW'),]
+    
+    def initialize_options(self, *args, **kwargs):
+        build.initialize_options(self, *args, **kwargs)
+        self.with_atlas = None
+        self.with_fftw = None
+        
+    def finalize_options(self, *args, **kwargs):
+        build.finalize_options(self, *args, **kwargs)
+        
+        if self.distribution.has_ext_modules():
+            ## Grab the 'build_ext' command
+            beco = self.distribution.get_command_obj('build_ext')
+            
+            ## Grab the ATLAS flags
+            if self.with_atlas is not None:
+                beco.with_atlas = self.with_atlas
+                
+            ## Grab the FFTW flags
+            if self.with_fftw is not None:
+                beco.with_fftw = self.with_fftw
+
+
 class lsl_build_ext(build_ext):
     user_options = build_ext.user_options \
                    + [('with-atlas=', None, 'Installation path for ATLAS'),] \
                    + [('with-fftw=', None, 'Installation path for FFTW'),]
     
     def initialize_options(self, *args, **kwargs):
+        build_ext.initialize_options(self, *args, **kwargs)
         self.with_atlas = None
         self.with_fftw = None
-        build_ext.initialize_options(self, *args, **kwargs)
         
-    def run(self, *args, **kwargs):
+    def finalize_options(self, *args, **kwargs):
+        build_ext.finalize_options(self, *args, **kwargs)
+        self.verbose = True
+        
         ## Grab the OpenMP flags
         openmpFlags, openmpLibs = get_openmp()
         
         ## Grab the ATLAS flags
-        if self.with_atlas is None:
-            atlasFlags, atlasLibs = get_atlas()
-        else:
+        if self.with_atlas is not None:
             atlasFlags = ['-I%s/include' % self.with_atlas,]
             atlasLibs = ['-L%s/lib' % self.with_atlas, '-lf77blas', '-lcblas', '-latlas']
+        else:
+            atlasFlags, atlasLibs = get_atlas()
             
         ## Grab the FFTW flags
-        if self.with_fftw is None:
-            fftwFlags, fftwLibs = get_fftw()
-        else:
+        if self.with_fftw is not None:
             fftwFlags = ['-I%s/include' % self.with_fftw,]
             fftwLibs = ['-L%s/lib' % self.with_fftw, '-lfftw3f']
+        else:
+            fftwFlags, fftwLibs = get_fftw()
             
         ## Update the extensions with the additional compilier/linker flags
         for ext in self.extensions:
+            ### Compiler flags
             for cflags in (openmpFlags, atlasFlags, fftwFlags):
                 try:
                     ext.extra_compile_args.extend( cflags )
                 except TypeError:
                     ext.extra_compile_args = cflags
+            ### Linker flags
             for ldflags in (openmpLibs, atlasLibs, fftwLibs):
                 try:
                     ext.extra_link_args.extend( ldflags )
                 except TypeError:
                     ext.extra_link_args = ldflags
                     
-        ## Build the extensions
-        build_ext.run(self, *args, **kwargs)
+        ## HACK: Update the log verbosity - for some reason this gets set to 
+        ##       WARN when I replace build_ext
+        log.set_threshold(min([log.INFO, log._global_log.threshold]))
 
 
 coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
@@ -292,7 +334,7 @@ ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/rea
 write_version_info()
 
 setup(
-    cmdclass = {'build_ext': lsl_build_ext}, 
+    cmdclass = {'build': lsl_build, 'build_ext': lsl_build_ext}, 
     name = "lsl", 
     version = get_version(), 
     description = "LWA Software Library", 
