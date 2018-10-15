@@ -39,7 +39,7 @@ class PolarizationDataSet(object):
         
     def copy(self):
         """
-        Return a deep copy of the object.
+        Return a copy of the object.
         """
         
         pol_copy = PolarizationDataSet(self.polarization, 
@@ -131,7 +131,7 @@ class VisibilityDataSet(object):
         self.uvw = uvw
         if antennaarray is not None and not isinstance(antennaarray, aipy.amp.AntennaArray):
             raise TypeError("Expected antennaarray to be either None or AntennaArray")
-        self.antennaarray = copy.deepcopy(antennaarray)
+        self.antennaarray = copy.copy(antennaarray)
         if self.antennaarray is not None:
             self.antennaarray.set_jultime(self.jd)
         self.phase_center = phase_center
@@ -165,12 +165,12 @@ class VisibilityDataSet(object):
     def mjd(self):
         return self.jd - astro.MJD_OFFSET
         
-    def copy(self, include_pols=False):
+    def copy(self, include_pols=True):
         set_copy = VisibilityDataSet(self.jd*1.0, 
                                      self.freq.copy(), 
-                                     copy.deepcopy(self.baselines), 
+                                     copy.copy(self.baselines), 
                                      self.uvw.copy(), 
-                                     antennaarray=copy.deepcopy(self.antennaarray), 
+                                     antennaarray=copy.copy(self.antennaarray), 
                                      phase_center=self.phase_center)
         if include_pols:
             for pol in self:

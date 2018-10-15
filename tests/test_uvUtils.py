@@ -93,7 +93,7 @@ class uvUtils_tests(unittest.TestCase):
         """Test the the compute_uvw function runs."""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         
         # Frequency is a scalar
         freq = 45e6
@@ -144,7 +144,7 @@ class uvUtils_tests(unittest.TestCase):
         """Test that the compute_uv_track function runs."""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         
         out = uvUtils.compute_uv_track(antennas[0:60:2])
         

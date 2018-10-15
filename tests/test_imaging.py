@@ -72,11 +72,8 @@ class imaging_tests(unittest.TestCase):
         
         # Basic functions (just to see that they run)
         junk = idi.get_antennaarray()
-        print('A^^', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = idi.get_observer()
-        print('A&&', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = idi.get_data_set(1)
-        print('A**', junk.jd)
         
         # Error checking
         self.assertRaises(IndexError, idi.get_data_set, 2)
@@ -133,11 +130,8 @@ class imaging_tests(unittest.TestCase):
         
         # Basic functions (just to see that they run)
         junk = uv.get_antennaarray()
-        print('^^', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = uv.get_observer()
-        print('&&', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = uv.get_data_set(1)
-        print('**', junk.jd)
         
         # Error checking
         self.assertRaises(IndexError, uv.get_data_set, 2)
@@ -152,7 +146,7 @@ class imaging_tests(unittest.TestCase):
         ds = idi.get_data_set(1, sort=False)
         
         # Sort
-        dss = copy.deepcopy(ds)
+        dss = ds.copy()
         dss.sort()
         for pol in ds.pols:
             p0 = getattr(ds,  pol)
@@ -169,7 +163,7 @@ class imaging_tests(unittest.TestCase):
         ds = idi.get_data_set(1, sort=False)
         
         # Sort
-        dss = copy.deepcopy(ds)
+        dss = ds.copy()
         dss.sort()
         for pol in ds.pols:
             p0 = getattr(ds,  pol)
@@ -186,7 +180,7 @@ class imaging_tests(unittest.TestCase):
         ds = uv.get_data_set(1, sort=False)
         
         # Sort
-        dss = copy.deepcopy(ds)
+        dss = ds.copy()
         dss.sort()
         for pol in ds.pols:
             p0 = getattr(ds,  pol)
@@ -271,13 +265,9 @@ class imaging_tests(unittest.TestCase):
             
         # Auto-prune
         dsp2 = uv.get_data_set(1, min_uv=10)
-        print(dsp2)
         for pol in ds.pols:
             p0 = getattr(ds,   pol)
             p2 = getattr(dsp2, pol)
-            print(p2)
-            print('KK', pol, p0.nbaseline, p1.nbaseline, p2.nbaseline)
-            print('LL', dsp2 is ds, p2.data.shape)
             self.assertTrue(p2.nbaseline < p0.nbaseline)
             
         # Auto-prune that should result in no baselines

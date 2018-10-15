@@ -132,13 +132,6 @@ class stations_tests(unittest.TestCase):
         self.assertEqual(lwana.interface.metabundle, None)
         self.assertEqual(lwana.interface.sdm, None)
         
-        proto = stations.prototypeSystem
-        self.assertEqual(proto.interface.backend, None)
-        self.assertEqual(proto.interface.mcs, None)
-        self.assertEqual(proto.interface.sdf, None)
-        self.assertEqual(proto.interface.metabundle, None)
-        self.assertEqual(proto.interface.sdm, None)
-        
     def test_interface_modules(self):
         """Test retrieving LSL interface modules."""
         
