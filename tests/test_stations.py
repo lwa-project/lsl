@@ -156,32 +156,6 @@ class stations_tests(unittest.TestCase):
         self.assertFalse(lwasv.interface.get_module('metabundle') == metabundle)
         self.assertFalse(lwasv.interface.get_module('sdm') == sdm)
         
-    def test_prototype(self):
-        """Test retrieving a PrototypeStation from the stations module."""
-        
-        proto = stations.prototypeSystem
-        self.assertTrue(isinstance(proto, stations.PrototypeStation))
-        
-    def test_prototype_ants(self):
-        """Test retrieving antennas from a prototype system."""
-        
-        proto = stations.prototypeSystem
-        
-        # Check that we get the right number of antennas for the system
-        ants = proto.get_antennas(datetime(2011, 4, 4, 0, 0, 0))
-        self.assertEqual(len(ants), 20)
-        
-        # Again
-        ants = proto.get_antennas(datetime(2011, 1, 1, 0, 0, 0))
-        self.assertEqual(len(ants), 20)
-        
-        # And check that we actually get out what we need in the right order
-        antExpected = [(206,0), (183,0), (153,0), (174,0), (38,0), (34,0), (67,0), (181,0), (80,0), (14,0), 
-                    (254,0), (118,0), (246,0), (9,0), (69,0), (168,0), (258,0), (4,0), (158,0), (205,0)]
-        for i in xrange(len(ants)):
-            pair = (ants[i].stand.id, ants[i].pol)
-            self.assertEqual(pair, antExpected[i])
-            
     def test_ssmif_text(self):
         """Test the text SSMIF parser."""
         

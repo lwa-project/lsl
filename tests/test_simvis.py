@@ -28,7 +28,7 @@ class simvis_tests(unittest.TestCase):
         """Test building a antenna array object with uniform sky response."""
         
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_flat=True)
@@ -37,7 +37,7 @@ class simvis_tests(unittest.TestCase):
         """Test building a antenna array object with realistic sky response."""
         
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs)
@@ -53,7 +53,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -77,7 +77,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -100,7 +100,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -125,7 +125,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -148,7 +148,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -166,7 +166,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -184,7 +184,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -200,7 +200,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -216,7 +216,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
@@ -232,7 +232,7 @@ class simvis_tests(unittest.TestCase):
         
         # Setup
         lwa1 = lwa_common.lwa1
-        antennas = lwa1.get_antennas()[0:20]
+        antennas = lwa1.antennas[0:20]
         freqs = numpy.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         

@@ -633,19 +633,14 @@ class AntennaArray(aipy.amp.AntennaArray):
         impedance mis-match and the mean ARX response.
     """
     
-    def copy(self):
-        """
-        Return a copy of the object.
-        """
+    def __str__(self):
+        return "AntennaArray at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.ants))
         
-        dup = copy.deepcopy(self)
-        dup.lat = self.lat*1.0
-        dup.lon = self.lon*1.0
-        dup.elev = self.elev*1.0
-        dup.horizon = self.horizon*1.0
-        dup.temp = self.temp*1.0
-        dup.pressure = self.pressure*1.0
-        return dup
+    def __repr__(self):
+        return str(self)
+        
+    def __reduce__(self):
+        return (AntennaArray, ((self.lat, self.lon, self.elev), self.ants))
         
     def get_stands(self):
         """
@@ -881,7 +876,12 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     """
     
     # If the frequencies are in Hz, we need to convert to GHz
-    freqs = freq.copy()
+    try:
+        freqs = freq.copy()
+    except AttributeError:
+        freqs = numpy.array(freq)
+        if freqs.shape == ():
+            freqs.shape = (1,)
     if freqs.min() > 1e6:
         freqs /= 1.0e9
         
@@ -951,7 +951,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         
         delayCoeff = numpy.zeros(2)
         
-        amp = 0*antenna.cable.gain(freq*1e9) + 1
+        amp = 0*antenna.cable.gain(freqs*1e9) + 1
         
         ants.append( Antenna(eq[0], eq[1], eq[2], beam, phsoff=delayCoeff, amp=amp, stand=antenna.stand.id) )
 

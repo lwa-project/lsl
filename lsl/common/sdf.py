@@ -1322,7 +1322,7 @@ class _DRXBase(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
-            for ant in station.get_antennas():
+            for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
@@ -1356,15 +1356,14 @@ class _DRXBase(Observation):
         """Return the fractional visibility of the target during the observation 
         period."""
         
-        lwa = station.get_observer()
         pnt = self.get_fixed_body()
         
         vis = 0
         cnt = 0
         dt = 0.0
         while dt <= self.dur/1000.0:
-            lwa.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
-            pnt.compute(lwa)
+            station.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
+            pnt.compute(station)
             
             cnt += 1
             if pnt.alt > 0:
@@ -1628,7 +1627,7 @@ class Stepped(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
-            for ant in station.get_antennas():
+            for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
@@ -1653,7 +1652,6 @@ class Stepped(Observation):
         """Return the fractional visibility of the target during the observation 
         period."""
         
-        lwa = station.get_observer()
         pnt = self.get_fixed_body()
         
         vis = 0
@@ -1665,8 +1663,8 @@ class Stepped(Observation):
                 
                 dt = 0.0
                 while dt <= self.dur/1000.0:
-                    lwa.date = self.mjd + (relStart/1000.0 + self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
-                    pnt.compute(lwa)
+                    station.date = self.mjd + (relStart/1000.0 + self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
+                    pnt.compute(stationf)
                     
                     cnt += 1
                     if pnt.alt > 0:

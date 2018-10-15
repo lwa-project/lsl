@@ -7,6 +7,7 @@ import time
 import unittest
 import tempfile
 import numpy
+import shutil
 from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
@@ -45,7 +46,7 @@ class fitsidi_tests(unittest.TestCase):
         freq = numpy.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa_common.lwa1
-        antennas = site.get_antennas()[0:40:2]
+        antennas = site.antennas[0:40:2]
         
         # Set baselines and data
         blList = uvUtils.get_baselines(antennas, include_auto=True, indicies=False)
@@ -376,7 +377,7 @@ class aipsidi_tests(unittest.TestCase):
         freq = numpy.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa_common.lwa1
-        antennas = site.get_antennas()[0:40:2]
+        antennas = site.antennas[0:40:2]
         
         # Set baselines and data
         blList = uvUtils.get_baselines(antennas, include_auto=True, indicies=False)
@@ -674,11 +675,7 @@ class aipsidi_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class fitsidi_test_suite(unittest.TestSuite):

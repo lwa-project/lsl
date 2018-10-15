@@ -113,7 +113,7 @@ class dp_software_tests(unittest.TestCase):
         
         sdp = dp.SoftwareDP()
         
-        antennas = stations.lwa1.get_antennas()
+        antennas = stations.lwa1.antennas
         
         npts = 10000
         time = numpy.arange(npts)

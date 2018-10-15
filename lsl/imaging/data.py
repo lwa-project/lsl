@@ -131,7 +131,7 @@ class VisibilityDataSet(object):
         self.uvw = uvw
         if antennaarray is not None and not isinstance(antennaarray, aipy.amp.AntennaArray):
             raise TypeError("Expected antennaarray to be either None or AntennaArray")
-        self.antennaarray = antennaarray.copy()
+        self.antennaarray = copy.deepcopy(antennaarray)
         if self.antennaarray is not None:
             self.antennaarray.set_jultime(self.jd)
         self.phase_center = phase_center
@@ -170,7 +170,7 @@ class VisibilityDataSet(object):
                                      self.freq.copy(), 
                                      copy.deepcopy(self.baselines), 
                                      self.uvw.copy(), 
-                                     antennaarray=self.antennaarray.copy(), 
+                                     antennaarray=copy.deepcopy(self.antennaarray), 
                                      phase_center=self.phase_center)
         if include_pols:
             for pol in self:

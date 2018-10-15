@@ -31,7 +31,6 @@ __version__ = '2.2'
 __revision__ = '$Rev$'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
         'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations', 
-        'PrototypeStation', 'prototypeSystem', 
         '__version__', '__revision__', '__all__']
 
 
@@ -107,9 +106,10 @@ class LWAStationBase(object):
         self.id = id
         
         if antennas is None:
-            self.antennas = []
+            self._antennas = []
         else:
-            self.antennas = antennas
+            self._antennas = antennas
+        self._sort_order = ''
         self._sort_antennas()
         
         if interface is None:
@@ -120,11 +120,35 @@ class LWAStationBase(object):
     def __str__(self):
         return "%s (%s) with %i antennas" % (self.name, self.id, len(self.antennas))
         
+    def __repr__(self):
+        return str(self)
+        
     def __reduce__(self):
         return (LWAStationBase, (self.name, self.id, self.antennas, self.interface))
         
+    def __iter__(self):
+        return self.antennas.__iter__()
+        
     def __getitem__(self, *args):
         return self.antennas.__getitem__(*args)
+        
+    def __setitem__(self, *args):
+        self.antennas.__setitem__(*args)
+        
+    @property
+    def antennas(self):
+        return self._antennas
+        
+    @antennas.setter
+    def antennas(self, antennas):
+        if not isinstance(antennas, list):
+            raise TypeError("Expected a list")
+        self._antennas = antennas
+        
+        # Fix the sorting
+        orig_sort_order = self._sort_order
+        self._sort_order = ''
+        self._sort_antennas(attr=orig_sort_order)
         
     def _sort_antennas(self, attr='digitizer'):
         """
@@ -132,19 +156,9 @@ class LWAStationBase(object):
         attribute is the digitizer number.
         """
         
-        # Build the sorting function
-        def sortFnc(x, y):
-            if getattr(x, attr) > getattr(y, attr):
-                return 1
-            elif getattr(x, attr) < getattr(y, attr):
-                return -1
-            else:
-                return 0
-                
-        try:
-            self.antennas.sort(cmp=sortFnc)
-        except TypeError:
-            self.anntennas.sort(key=cmp_to_key(sortFnc))
+        if self._sort_order != attr:
+            self._antennas.sort(key=lambda x: getattr(x, attr))
+            self._sort_order = attr
 
 
 class LWAStation(ephem.Observer, LWAStationBase):
@@ -175,12 +189,12 @@ class LWAStation(ephem.Observer, LWAStationBase):
      * get_pointing_and_distance: Return the pointing direction and distance to 
                                   another location on the surface of the Earth
         
-    LWAStation also provides several functional attributes for dealing with
+    LWAStation also provides several properties for dealing with
     the station's antennas.  These include:
-     * get_antennas:  Return a list of antennas
-     * get_stands: Return a list of stands
-     * get_pols:  Return a list of polarizations
-     * get_cables: Return a list of cables
+     * antennas:  A list of antennas
+     * stands: A list of stands
+     * pols:  A list of polarizations
+     * cables: A list of cables
     
     .. versionchanged:: 1.2.0
         Added a new 'interface' attribute which provides referenves to various modules
@@ -204,9 +218,13 @@ class LWAStation(ephem.Observer, LWAStationBase):
         self.long = long * numpy.pi/180.0
         self.elev = elev
         self.pressure = 0.0
+        self.horizon = 0.0
         
     def __str__(self):
         return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
+        
+    def __repr__(self):
+        return str(self)
         
     def __reduce__(self):
         return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, self.antennas, self.interface))
@@ -339,16 +357,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         return az, el, d
         
-    def get_antennas(self):
-        """
-        Return the list of Antenna instances for the station, sorted by 
-        digitizer number.
-        """
-        
-        # Return
-        return self.antennas
-        
-    def get_stands(self):
+    @property
+    def stands(self):
         """
         Return a list of Stand instances for each antenna, sorted by 
         digitizer number.
@@ -356,8 +366,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         # Return
         return [ant.stand for ant in self.antennas]
-    
-    def get_pols(self):
+        
+    @property
+    def pols(self):
         """
         Return a list of polarization (0 == N-S; 1 == E-W) for each antenna, 
         sorted by digitizer number.
@@ -366,7 +377,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         # Return
         return [ant.pol for ant in self.antennas]
         
-    def get_cables(self):
+    @property
+    def cables(self):
         """
         Return a list of Cable instances for each antenna, sorted by
         digitizer number.
@@ -1754,120 +1766,3 @@ def get_full_stations():
     """
     
     return [lwa1, lwasv]
-
-
-class PrototypeStation(LWAStation):
-    """
-    LWAStation class to provide backward compatiability to the 20-stand prototype 
-    system.
-    """
-    
-    def __init__(self, base):
-        pLat = base.lat * 180 / numpy.pi
-        pLng = base.long * 180 / numpy.pi
-        
-        super(PrototypeStation, self).__init__('%s prototype' % base.name, pLat, pLng, base.elev, id='PS', antennas=copy.deepcopy(base.antennas))
-    
-    def _stand_list(self, date):
-        """
-        For a given datetime object, return a list of two-element tuples (stand ID 
-        and polarization) for what antennas are connected to what digitizers.
-        """
-        
-        from datetime import datetime
-        
-        if date < datetime(2010, 11, 23):
-            return [(258,0), (4,0), (158,0), (205,0), (246,0), (9,0), (69,0), (168,0), (80,0), (14,0), 
-                    (254,0), (118,0), (38,0), (34,0), (67,0), (181,0), (206,0), (183,0), (153,0), (174,0)]
-        elif date < datetime(2011, 1, 12):
-            return [(206,0), (183,0), (153,0), (174,0), (38,0), (34,0), (67,0), (181,0), (80,0), (14,0), 
-                    (254,0), (118,0), (246,0), (9,0), (69,0), (168,0), (258,0), (4,0), (158,0), (205,0)]
-        elif date < datetime(2011, 2, 11):
-            return [(206,0), (183,0), (153,0), (174,0), (38,0), (34,0), (67,0), (187,0), (80,0), (14,0), 
-                    (254,0), (118,0), (246,0), (9,0), (69,0), (168,0), (258,0), (4,0), (158,0), (205,0)]
-        elif date < datetime(2011, 2, 22):
-            return [(157,0), (157,1), (155,0), (155,1), (185,0), (185,1), (159,0), (159,1), (63,0), (63,1), 
-                    (67,0), (67,1), (65,0), (65,1), (127,0), (127,1), (123,0), (123,1), (125,0), (125,1)]
-        elif date < datetime(2011, 3, 12):
-            return [(183,0), (183,1), (200,0), (200,1), (212,0), (212,1), (14,0), (14,1), (210,0), (210,1), 
-                    (80,0), (80,1), (228,0), (228,1), (15,0), (15,1)]
-        else:
-            return [(183,0), (183,1), (200,0), (200,1), (35,0), (35,1), (108,0), (108,1), (99,0), (99,1), 
-                    (97,0), (97,1), (8,0), (8,1), (168,0), (168,1), (129,0), (129,1), (155,0), (155,1)]
-        
-    def _filter_antennas(self, date):
-        """
-        For a given datetime object, return a list of Antenna instances with the 
-        correct digitizer mappings.
-        """
-        
-        # Build the sorting function
-        def sortFnc(x, y):
-            if x.digitizer > y.digitizer:
-                return 1
-            elif x.digitizer < y.digitizer:
-                return -1
-            else:
-                return 0
-        
-        # Get the list of stand,polarization tuples that we are looking for
-        stdpolList = self._stand_list(date)
-        
-        # Build up the list of actual antennas connected to the prototype system 
-        # and fix the digitizer numbers
-        protoAnts = []
-        for ant in self.antennas:
-            stdpolPair = (ant.stand.id,ant.pol)
-            if stdpolPair in stdpolList:
-                protoAnts.append(ant)
-                protoAnts[-1].digitizer = stdpolList.index(stdpolPair) + 1
-                protoAnts[-1].board = 1
-                
-        # Sort the list of prototype antennas and return
-        try:
-            protoAnts.sort(cmp=sortFnc)
-        except TypeError:
-            protoAnts.sort(key=cmp_to_key(sortFnc))
-        return protoAnts
-    
-    def get_antennas(self, date):
-        """Return the list of Antenna instances for the station, sorted by 
-        digitizer number, for a given DateTime instance.
-        """
-        
-        # Sort and return
-        protoAnts = self._filter_antennas(date)
-        return protoAnts
-        
-    def get_stands(self, date):
-        """
-        Return a list of Stand instances for each antenna, sorted by 
-        digitizer number, for a given DateTime instance.
-        """
-        
-        # Sort and return
-        protoAnts = self._filter_antennas(date)
-        return [ant.stand for ant in protoAnts]
-    
-    def get_pols(self, date):
-        """
-        Return a list of polarization (0 == N-S; 1 == E-W) for each antenna, 
-        sorted by digitizer number, for a given DateTime instance.
-        """
-        
-        # Sort and return
-        protoAnts = self._filter_antennas(date)
-        return [ant.pol for ant in protoAnts]
-        
-    def get_cables(self, date):
-        """
-        Return a list of Cable instances for each antenna, sorted by
-        digitizer number, for a given DateTime instance.
-        """
-        
-        # Sort and return
-        protoAnts = self._filter_antennas(date)
-        return [ant.cable for ant in protoAnts]
-
-
-prototypeSystem = PrototypeStation(lwa1)

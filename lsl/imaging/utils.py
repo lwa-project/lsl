@@ -169,7 +169,7 @@ class CorrelatedDataIDI(object):
     
     .. note::
         The CorrelatedData.antennas attribute should be used over 
-        CorrelatedData.station.get_antennas() since the mapping in the FITS IDI
+        CorrelatedData.station.antennas since the mapping in the FITS IDI
         file may not be the same as the digitizer order.
     """
     
@@ -262,6 +262,8 @@ class CorrelatedDataIDI(object):
             
         ## Build up the station
         self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+        self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                            - astro.DJD_OFFSET
         
         self.stand_map = {}
         self.stands = []
@@ -272,7 +274,7 @@ class CorrelatedDataIDI(object):
         self.antenna_map = {}
         self.antennas = []
         for stand in self.stands:
-            for ant in self.station.get_antennas():
+            for ant in self.station.antennas:
                 if ant.stand.id == stand and ant.pol == 0:
                     self.antennas.append(ant)
                     self.antenna_map[ant.stand.id] = ant
@@ -314,12 +316,7 @@ class CorrelatedDataIDI(object):
         Return a ephem.Observer instances for the array described in the file.
         """
         
-        # Get the date of observations
-        refJD = astro.unix_to_utcjd(timegm(self.date_obs.timetuple()))
-        
-        obs = self.station.get_observer()
-        obs.date = refJD - astro.DJD_OFFSET
-        return obs
+        return self.station
         
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
@@ -509,7 +506,7 @@ class CorrelatedDataUV(object):
     
     .. note::
         The CorrelatedDataUV.antennas attribute should be used over 
-        CorrelatedDataUV.station.get_antennas() since the mapping in the UVFITS
+        CorrelatedDataUV.station.antennas since the mapping in the UVFITS
         file may not be the same as the digitizer order.
     """
     
@@ -574,6 +571,8 @@ class CorrelatedDataUV(object):
             
         ## Build up the station
         self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+        self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                            - astro.DJD_OFFSET
         
         self.stand_map = {}
         self.stands = []
@@ -584,7 +583,7 @@ class CorrelatedDataUV(object):
         self.antenna_map = {}
         self.antennas = []
         for stand in self.stands:
-            for ant in self.station.get_antennas():
+            for ant in self.station.antennas:
                 if ant.stand.id == stand and ant.pol == 0:
                     self.antennas.append(ant)
                     self.antenna_map[ant.stand.id] = ant
@@ -630,12 +629,7 @@ class CorrelatedDataUV(object):
         Return a ephem.Observer instances for the array described in the file.
         """
         
-        # Get the date of observations
-        refJD = astro.unix_to_utcjd(timegm(self.date_obs.timetuple()))
-        
-        obs = self.station.get_observer()
-        obs.date = refJD - astro.DJD_OFFSET
-        return obs
+        return self.station
         
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
@@ -806,7 +800,7 @@ try:
         
         .. note::
             The CorrelatedDataMS.antennas attribute should be used over 
-            CorrelatedDataMS.station.get_antennas() since the mapping in the MS
+            CorrelatedDataMS.station.antennas since the mapping in the MS
             may not be the same as the digitizer order.
         """
         
@@ -884,6 +878,8 @@ try:
             
             ## Build a preliminayr represenation of the station
             self.station = stations.LWAStation(ants.col('STATION')[0], sLat, sLng, sElv)
+            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                                - astro.DJD_OFFSET
             
             ## Fill in the antennas instances
             antennas = []
@@ -906,7 +902,7 @@ try:
             self.antenna_map = {}
             self.antennas = []
             for stand in self.stands:
-                for ant in self.station.get_antennas():
+                for ant in self.station.antennas:
                     if ant.stand.id == stand and ant.pol == 0:
                         self.antennas.append(ant)
                         self.antenna_map[ant.stand.id] = ant
@@ -964,12 +960,7 @@ try:
             Return a ephem.Observer instances for the array described in the file.
             """
             
-            # Get the date of observations
-            refJD = astro.unix_to_utcjd(timegm(self.date_obs.timetuple()))
-            
-            obs = self.station.get_observer()
-            obs.date = refJD - astro.DJD_OFFSET
-            return obs
+            return self.station
             
         def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
             """

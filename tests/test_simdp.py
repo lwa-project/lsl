@@ -63,7 +63,7 @@ class simdp_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'tbn.dat')
         
         station = lwa_common.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
 
         fh = open(testFile, 'wb')
         dp.point_source(fh, antennas[:8:2], self.src, 4, mode='TBN', filter=7, start_time=1000)

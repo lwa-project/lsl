@@ -319,7 +319,7 @@ def get_station(tarname, apply_sdm=True):
         
         # Update the SSMIF entries
         if dynamic is not None:
-            newAnts = dynamic.update_antennas(station.get_antennas())
+            newAnts = dynamic.update_antennas(station.antennas)
             station.antennas = newAnts
             
     # Return

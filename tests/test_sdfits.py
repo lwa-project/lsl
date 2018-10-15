@@ -43,7 +43,7 @@ class sdfits_tests(unittest.TestCase):
         freq = numpy.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa_common.lwa1
-        antennas = site.get_antennas()[0:40:2]
+        antennas = site.antennas[0:40:2]
         
         # Set data
         specData = numpy.random.rand(len(antennas), len(freq))

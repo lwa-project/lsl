@@ -28,7 +28,7 @@ class beamformer_tests(unittest.TestCase):
         """Check that the beamformer.calc_delay function actually runs"""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         
         out = beamformer.calc_delay(antennas[:3])
         self.assertEqual(len(out), 3)
@@ -43,7 +43,7 @@ class beamformer_tests(unittest.TestCase):
         """Test that beamformer.calc_delay respects the pointing limits"""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         
         # Azimuth  checks
         self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, -5, 30)
@@ -57,7 +57,7 @@ class beamformer_tests(unittest.TestCase):
         """Check that the beamformer.int_delay_and_sum function actually runs"""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         data = numpy.random.rand(3, 1000)
         
         beam = beamformer.int_delay_and_sum(antennas[:3], data, azimuth=45.0, elevation=30.0)
@@ -66,7 +66,7 @@ class beamformer_tests(unittest.TestCase):
         """Check that the beamformer.int_beam_shape function actually runs"""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         
         # Get a list of valid antennas
         ants = []
@@ -96,7 +96,7 @@ class beamformer_tests(unittest.TestCase):
         """Check that the beamformer.phase_and_sum function actually runs"""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         data = numpy.random.rand(3, 1000)
         
         beam = beamformer.phase_and_sum(antennas[:3], data, azimuth=45.0, elevation=30.0)
@@ -105,7 +105,7 @@ class beamformer_tests(unittest.TestCase):
         """Check that the beamformer.phase_beam_shape function actually runs"""
         
         station = stations.lwa1
-        antennas = station.get_antennas()
+        antennas = station.antennas
         
         # Get a list of valid antennas
         ants = []
