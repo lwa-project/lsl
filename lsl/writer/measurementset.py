@@ -36,7 +36,7 @@ __all__ = ['MS', 'STOKES_CODES', 'NUMERIC_STOKES',
            '__version__', '__revision__', '__all__']
 
 
-STOKES_CODES = {'I':  1, 'Q':  2, 'U':  3, 'V':  4, 
+STOKES_CODES = {'I': 1,  'Q': 2,  'U': 3,  'V': 4, 
                'RR': 5, 'RL': 6, 'LR': 7, 'LL': 8,
                'XX': 9, 'XY':10, 'YX':11, 'YY':12}
                
@@ -317,7 +317,7 @@ class MS(object):
         # Create the stand mapper
         mapper = []
         ants = []
-        topo2eci = site.getECITransform()
+        topo2eci = site.get_eci_transform()
         for i in xrange(len(stands)):
             eci = numpy.dot(topo2eci, xyz[i,:])
             ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )

@@ -162,8 +162,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
     LWAStation provides several functional attributes for dealing with the 
     station's location on Earth.  These include:
      * get_observer: Return an ephem.Observer instance representing the station
-     * getAIPYLocation: Return a tuple for setting the location of an AIPY
-                        AntennaArray instance
+     * get_aipy_location: Return a tuple for setting the location of an AIPY
+                          AntennaArray instance
      * get_geocentric_location: Return a tuple of the EC-EF coordinates of the 
                                 station
      * get_eci_transform: Return a 3x3 transformation matrix to convert antenna
@@ -240,7 +240,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             
         return oo
         
-    def getAIPYLocation(self):
+    def get_aipy_location(self):
         """
         Return a tuple that can be used by AIPY for specifying a array
         location.
