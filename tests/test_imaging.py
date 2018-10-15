@@ -11,11 +11,12 @@ import os
 import copy
 import unittest
 
+from lsl import astro
 from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import selfCal
 from lsl.writer.fitsidi import NUMERIC_STOKES
-from lsl.sim.vis import SRCS as simSrcs
+from lsl.sim.vis import SOURCES as simSrcs
 from lsl.common.stations import parse_ssmif
 
 
@@ -41,11 +42,11 @@ class imaging_tests(unittest.TestCase):
         idi = utils.CorrelatedDataIDI(idiFile)
         
         # Dates
-        self.assertEqual(idi.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
+        self.assertEqual(idi.date_obs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
         
         # Stand and baseline counts
         self.assertEqual(len(idi.stands), 5)
-        self.assertEqual(idi.totalBaselineCount, 5*(5+1)/2)
+        self.assertEqual(idi.total_baseline_count, 5*(5+1)/2)
         
         # Basic functions (just to see that they run)
         junk = idi.get_antennaarray()
@@ -53,7 +54,7 @@ class imaging_tests(unittest.TestCase):
         junk = idi.get_data_set(1)
         
         # Error checking
-        self.assertRaises(RuntimeError, idi.get_data_set, 2)
+        self.assertRaises(IndexError, idi.get_data_set, 2)
         
     def test_CorrelatedDataIDI_Alt(self):
         """Test the utils.CorrelatedDataIDI class on a file with an unusual telescope."""
@@ -62,20 +63,23 @@ class imaging_tests(unittest.TestCase):
         idi = utils.CorrelatedDataIDI(idiAltFile)
         
         # Dates
-        self.assertEqual(idi.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
+        self.assertEqual(idi.date_obs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
         
         # Stand and baseline counts
         self.assertEqual(len(idi.stands), 5)
-        self.assertEqual(idi.totalBaselineCount, 5*(5+1)/2)
-        self.assertEqual(idi.integrationCount, 1)
+        self.assertEqual(idi.total_baseline_count, 5*(5+1)/2)
+        self.assertEqual(idi.integration_count, 1)
         
         # Basic functions (just to see that they run)
         junk = idi.get_antennaarray()
+        print('A^^', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = idi.get_observer()
+        print('A&&', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = idi.get_data_set(1)
+        print('A**', junk.jd)
         
         # Error checking
-        self.assertRaises(RuntimeError, idi.get_data_set, 2)
+        self.assertRaises(IndexError, idi.get_data_set, 2)
         
     def test_CorrelatedDataIDI_AltArrayGeometry(self):
         """Test the utils.CorrelatedDataIDI class on determing array geometry."""
@@ -85,12 +89,12 @@ class imaging_tests(unittest.TestCase):
         idi2 = utils.CorrelatedData(idiAltFile)
         
         # Dates
-        self.assertEqual(idi1.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), idi2.dateObs.strftime("%Y-%m-%dT%H:%M:%S"))
+        self.assertEqual(idi1.date_obs.strftime("%Y-%m-%dT%H:%M:%S"), idi2.date_obs.strftime("%Y-%m-%dT%H:%M:%S"))
         
         # Stand and baseline counts
         self.assertEqual(len(idi1.stands), len(idi2.stands))
-        self.assertEqual(idi1.totalBaselineCount, idi2.totalBaselineCount)
-        self.assertEqual(idi1.integrationCount, idi2.integrationCount)
+        self.assertEqual(idi1.total_baseline_count, idi2.total_baseline_count)
+        self.assertEqual(idi1.integration_count, idi2.integration_count)
         
         # Check stands
         for s1,s2 in zip(idi1.stands, idi2.stands):
@@ -120,20 +124,23 @@ class imaging_tests(unittest.TestCase):
         uv = utils.CorrelatedDataUV(uvFile)
         
         # Dates
-        self.assertEqual(uv.dateObs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
+        self.assertEqual(uv.date_obs.strftime("%Y-%m-%dT%H:%M:%S"), "2013-03-04T20:36:26")
         
         # Stand and baseline counts
         self.assertEqual(len(uv.stands), 5)
-        self.assertEqual(uv.totalBaselineCount, 5*(5+1)/2)
-        self.assertEqual(uv.integrationCount, 1)
+        self.assertEqual(uv.total_baseline_count, 5*(5+1)/2)
+        self.assertEqual(uv.integration_count, 1)
         
         # Basic functions (just to see that they run)
         junk = uv.get_antennaarray()
+        print('^^', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = uv.get_observer()
+        print('&&', junk.date, junk.date+astro.DJD_OFFSET, junk.sidereal_time())
         junk = uv.get_data_set(1)
+        print('**', junk.jd)
         
         # Error checking
-        self.assertRaises(RuntimeError, uv.get_data_set, 2)
+        self.assertRaises(IndexError, uv.get_data_set, 2)
         
     def test_sort(self):
         """Test the utils.sort_data function."""
@@ -146,11 +153,12 @@ class imaging_tests(unittest.TestCase):
         
         # Sort
         dss = copy.deepcopy(ds)
-        utils.sort_data(dss)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dss[prop][pol]), len(ds[prop][pol]))
-                
+        dss.sort()
+        for pol in ds.pols:
+            p0 = getattr(ds,  pol)
+            p1 = getattr(dss, pol)
+            self.assertEqual(p0.nbaseline, p1.nbaseline)
+            
     def test_sort_alt(self):
         """Test the utils.sort_data function - alternate FITS IDI file."""
         
@@ -162,11 +170,12 @@ class imaging_tests(unittest.TestCase):
         
         # Sort
         dss = copy.deepcopy(ds)
-        utils.sort_data(dss)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dss[prop][pol]), len(ds[prop][pol]))
-                
+        dss.sort()
+        for pol in ds.pols:
+            p0 = getattr(ds,  pol)
+            p1 = getattr(dss, pol)
+            self.assertEqual(p0.nbaseline, p1.nbaseline)
+            
     def test_sort_uvfits(self):
         """Test the utils.sort_data function - UVFITS file."""
         
@@ -178,11 +187,12 @@ class imaging_tests(unittest.TestCase):
         
         # Sort
         dss = copy.deepcopy(ds)
-        utils.sort_data(dss)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dss[prop][pol]), len(ds[prop][pol]))
-                
+        dss.sort()
+        for pol in ds.pols:
+            p0 = getattr(ds,  pol)
+            p1 = getattr(dss, pol)
+            self.assertEqual(p0.nbaseline, p1.nbaseline)
+            
     def test_prune(self):
         """Test the utils.pruneBaselineRange function."""
         
@@ -193,23 +203,26 @@ class imaging_tests(unittest.TestCase):
         ds = idi.get_data_set(1)
         
         # Prune
-        dsp1 = utils.pruneBaselineRange(ds, min_uv=10)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertTrue(len(dsp1[prop][pol]) < len(ds[prop][pol]))
-                
+        dsp1 = ds.get_uv_range(min_uv=10)
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p1 = getattr(dsp1, pol)
+            self.assertTrue(p1.nbaseline < p0.nbaseline)
+            
         # Auto-prune
         dsp2 = idi.get_data_set(1, min_uv=10)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dsp1[prop][pol]), len(dsp2[prop][pol]))
-
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p2 = getattr(dsp2, pol)
+            self.assertTrue(p2.nbaseline < p0.nbaseline)
+            
         # Auto-prune that should result in no baselines
         dsp3 = idi.get_data_set(1, min_uv=100)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dsp3[prop][pol]), 0)
-                
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p3 = getattr(dsp3, pol)
+            self.assertEqual(p3.nbaseline, 0)
+            
     def test_prune_alt(self):
         """Test the utils.pruneBaselineRange function - alternate FITS IDI file."""
         
@@ -220,23 +233,26 @@ class imaging_tests(unittest.TestCase):
         ds = idi.get_data_set(1)
         
         # Prune
-        dsp1 = utils.pruneBaselineRange(ds, min_uv=10)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertTrue(len(dsp1[prop][pol]) < len(ds[prop][pol]))
-                
+        dsp1 = ds.get_uv_range(min_uv=10)
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p1 = getattr(dsp1, pol)
+            self.assertTrue(p1.nbaseline < p0.nbaseline)
+            
         # Auto-prune
         dsp2 = idi.get_data_set(1, min_uv=10)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dsp1[prop][pol]), len(dsp2[prop][pol]))
-
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p2 = getattr(dsp2, pol)
+            self.assertTrue(p2.nbaseline < p0.nbaseline)
+            
         # Auto-prune that should result in no baselines
         dsp3 = idi.get_data_set(1, min_uv=100)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dsp3[prop][pol]), 0)
-                
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p3 = getattr(dsp3, pol)
+            self.assertEqual(p3.nbaseline, 0)
+            
     def test_prune_uvfits(self):
         """Test the utils.pruneBaselineRange function - UVFITS file."""
         
@@ -247,23 +263,30 @@ class imaging_tests(unittest.TestCase):
         ds = uv.get_data_set(1)
         
         # Prune
-        dsp1 = utils.pruneBaselineRange(ds, min_uv=10)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertTrue(len(dsp1[prop][pol]) < len(ds[prop][pol]))
-                
+        dsp1 = ds.get_uv_range(min_uv=10)
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p1 = getattr(dsp1, pol)
+            self.assertTrue(p1.nbaseline < p0.nbaseline)
+            
         # Auto-prune
         dsp2 = uv.get_data_set(1, min_uv=10)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dsp1[prop][pol]), len(dsp2[prop][pol]))
-
+        print(dsp2)
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p2 = getattr(dsp2, pol)
+            print(p2)
+            print('KK', pol, p0.nbaseline, p1.nbaseline, p2.nbaseline)
+            print('LL', dsp2 is ds, p2.data.shape)
+            self.assertTrue(p2.nbaseline < p0.nbaseline)
+            
         # Auto-prune that should result in no baselines
         dsp3 = uv.get_data_set(1, min_uv=100)
-        for prop in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            for pol in ds['bls'].keys():
-                self.assertEqual(len(dsp3[prop][pol]), 0)
-                
+        for pol in ds.pols:
+            p0 = getattr(ds,   pol)
+            p3 = getattr(dsp3, pol)
+            self.assertEqual(p3.nbaseline, 0)
+            
     def test_rephase(self):
         """Test the utils.rephase_data function."""
         
@@ -275,24 +298,27 @@ class imaging_tests(unittest.TestCase):
         
         # Get some data to sort
         ds = idi.get_data_set(1)
+        orig_bls = ds.baselines
+        orig_dat = ds.XX.data.copy()
+        orig_pc  = ds.phase_center
         
         # Rephase #1
-        rs1 = utils.rephase_data(aa, ds, current_phase_center='z', new_phase_center=simSrcs['Sun'])
-        for i in xrange(len(ds['bls']['xx'])):
-            self.assertEqual(ds['bls']['xx'][i][0], rs1['bls']['xx'][i][0])
-            self.assertEqual(ds['bls']['xx'][i][1], rs1['bls']['xx'][i][1])
+        ds.rephase(new_phase_center=simSrcs['Sun'])
+        for i in xrange(ds.nbaseline):
+            self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
+            self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
         # Rephase #2
-        rs2 = utils.rephase_data(aa, rs1, current_phase_center=simSrcs['Sun'], new_phase_center='z')
-        for i in xrange(len(ds['bls']['xx'])):
-            self.assertEqual(ds['bls']['xx'][i][0], rs2['bls']['xx'][i][0])
-            self.assertEqual(ds['bls']['xx'][i][1], rs2['bls']['xx'][i][1])
+        ds.rephase(new_phase_center=orig_pc)
+        for i in xrange(ds.nbaseline):
+            self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
+            self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
-            for j in xrange(len(ds['vis']['xx'][i])):
-                self.assertAlmostEqual(ds['vis']['xx'][i][j], rs2['vis']['xx'][i][j], 2)
+            for j in xrange(ds.nchan):
+                self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
-        self.assertRaises(RuntimeError, utils.rephase_data, aa, ds, current_phase_center='z', new_phase_center=simSrcs['vir'])
+        self.assertRaises(RuntimeError, ds.rephase, simSrcs['vir'])
         
     def test_rephase_alt(self):
         """Test the utils.rephase_data function - alternate FITS IDI file."""
@@ -305,24 +331,27 @@ class imaging_tests(unittest.TestCase):
         
         # Get some data to sort
         ds = idi.get_data_set(1)
+        orig_bls = ds.baselines
+        orig_dat = ds.XX.data.copy()
+        orig_pc  = ds.phase_center
         
         # Rephase #1
-        rs1 = utils.rephase_data(aa, ds, current_phase_center='z', new_phase_center=simSrcs['Sun'])
-        for i in xrange(len(ds['bls']['xx'])):
-            self.assertEqual(ds['bls']['xx'][i][0], rs1['bls']['xx'][i][0])
-            self.assertEqual(ds['bls']['xx'][i][1], rs1['bls']['xx'][i][1])
+        ds.rephase(new_phase_center=simSrcs['Sun'])
+        for i in xrange(ds.nbaseline):
+            self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
+            self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
         # Rephase #2
-        rs2 = utils.rephase_data(aa, rs1, current_phase_center=simSrcs['Sun'], new_phase_center='z')
-        for i in xrange(len(ds['bls']['xx'])):
-            self.assertEqual(ds['bls']['xx'][i][0], rs2['bls']['xx'][i][0])
-            self.assertEqual(ds['bls']['xx'][i][1], rs2['bls']['xx'][i][1])
+        ds.rephase(new_phase_center=orig_pc)
+        for i in xrange(ds.nbaseline):
+            self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
+            self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
-            for j in xrange(len(ds['vis']['xx'][i])):
-                self.assertAlmostEqual(ds['vis']['xx'][i][j], rs2['vis']['xx'][i][j], 2)
+            for j in xrange(ds.nchan):
+                self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
-        self.assertRaises(RuntimeError, utils.rephase_data, aa, ds, current_phase_center='z', new_phase_center=simSrcs['vir'])
+        self.assertRaises(RuntimeError, ds.rephase, simSrcs['vir'])
         
     def test_rephase_uvfits(self):
         """Test the utils.rephase_data function - UVFITS file."""
@@ -335,24 +364,27 @@ class imaging_tests(unittest.TestCase):
         
         # Get some data to sort
         ds = uv.get_data_set(1)
+        orig_bls = ds.baselines
+        orig_dat = ds.XX.data.copy()
+        orig_pc  = ds.phase_center
         
         # Rephase #1
-        rs1 = utils.rephase_data(aa, ds, current_phase_center='z', new_phase_center=simSrcs['Sun'])
-        for i in xrange(len(ds['bls']['xx'])):
-            self.assertEqual(ds['bls']['xx'][i][0], rs1['bls']['xx'][i][0])
-            self.assertEqual(ds['bls']['xx'][i][1], rs1['bls']['xx'][i][1])
+        ds.rephase(new_phase_center=simSrcs['Sun'])
+        for i in xrange(ds.nbaseline):
+            self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
+            self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
         # Rephase #2
-        rs2 = utils.rephase_data(aa, rs1, current_phase_center=simSrcs['Sun'], new_phase_center='z')
-        for i in xrange(len(ds['bls']['xx'])):
-            self.assertEqual(ds['bls']['xx'][i][0], rs2['bls']['xx'][i][0])
-            self.assertEqual(ds['bls']['xx'][i][1], rs2['bls']['xx'][i][1])
+        ds.rephase(new_phase_center=orig_pc)
+        for i in xrange(ds.nbaseline):
+            self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
+            self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
-            for j in xrange(len(ds['vis']['xx'][i])):
-                self.assertAlmostEqual(ds['vis']['xx'][i][j], rs2['vis']['xx'][i][j], 2)
+            for j in xrange(ds.nchan):
+                self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
-        self.assertRaises(RuntimeError, utils.rephase_data, aa, ds, current_phase_center='z', new_phase_center=simSrcs['vir'])
+        self.assertRaises(RuntimeError, ds.rephase, simSrcs['vir'])
         
     def test_gridding(self):
         """Test building a image from a visibility data set."""
@@ -365,7 +397,7 @@ class imaging_tests(unittest.TestCase):
         junk = utils.build_gridded_image(ds, verbose=False)
 
         # Error checking
-        self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='xy')
+        self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='XY')
         
     def test_gridding_alt(self):
         """Test building a image from a visibility data set - alternate FITS IDI file."""
@@ -378,7 +410,7 @@ class imaging_tests(unittest.TestCase):
         junk = utils.build_gridded_image(ds, verbose=False)
 
         # Error checking
-        self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='xy')
+        self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='XY')
         
     def test_gridding_uvfits(self):
         """Test building a image from a visibility data set - UVFITS file."""
@@ -392,7 +424,7 @@ class imaging_tests(unittest.TestCase):
         junk = utils.build_gridded_image(ds, verbose=False)
         
         # Error checking
-        self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='xy')
+        self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='XY')
         
     def test_selfcal(self):
         """Test running a simple self calibration."""
@@ -403,11 +435,11 @@ class imaging_tests(unittest.TestCase):
         # Go for it!
         aa = idi.get_antennaarray()
         ds = idi.get_data_set(1)
-        junk = selfCal.phase_only(aa, ds, ds, 173, 'xx', max_iter=1, verbose=False)
+        junk = selfCal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'yx', ref_ant=0  )
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'yx', ref_ant=564)
+        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
+        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
         
     def test_selfcal_alt(self):
         """Test running a simple self calibration - alternate FITS IDI file."""
@@ -418,11 +450,11 @@ class imaging_tests(unittest.TestCase):
         # Go for it!
         aa = idi.get_antennaarray()
         ds = idi.get_data_set(1)
-        junk = selfCal.phase_only(aa, ds, ds, 173, 'xx', max_iter=1, verbose=False)
+        junk = selfCal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'yx', ref_ant=0  )
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'yx', ref_ant=564)
+        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
+        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
         
     def test_selfcal_uvfits(self):
         """Test running a simple self calibration - UVFITS file."""
@@ -433,11 +465,11 @@ class imaging_tests(unittest.TestCase):
         # Go for it!
         aa = uv.get_antennaarray()
         ds = uv.get_data_set(1)
-        junk = selfCal.phase_only(aa, ds, ds, 173, 'xx', max_iter=1, verbose=False)
+        junk = selfCal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'yx', ref_ant=0  )
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'yx', ref_ant=564)
+        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
+        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
 
 
 class imaging_test_suite(unittest.TestSuite):

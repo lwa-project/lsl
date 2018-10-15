@@ -7,6 +7,7 @@ import time
 import unittest
 import tempfile
 import numpy
+import shutil
 from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
@@ -34,11 +35,11 @@ class uvfits_tests(unittest.TestCase):
     def __initData(self):
         """Private function to generate a random set of data for writing a UVFITS
         file.  The data is returned as a dictionary with keys:
-        * freq - frequency array in Hz
-        * site - lwa.common.stations object
-        * stands - array of stand numbers
-        * bl - list of baseline pairs in real stand numbers
-        * vis - array of visibility data in baseline x freq format
+         * freq - frequency array in Hz
+         * site - lwa.common.stations object
+         * stands - array of stand numbers
+         * bl - list of baseline pairs in real stand numbers
+         * vis - array of visibility data in baseline x freq format
         """
 
         # Frequency range
@@ -75,7 +76,7 @@ class uvfits_tests(unittest.TestCase):
         hdulist = astrofits.open(testFile)
         # Check that all of the extensions are there
         extNames = [hdu.name for hdu in hdulist]
-        for ext in ['AIPS AN']:
+        for ext in ['AIPS AN', 'AIPS FQ', 'AIPS SU']:
             self.assertTrue(ext in extNames)
             
         hdulist.close()
@@ -132,6 +133,58 @@ class uvfits_tests(unittest.TestCase):
         an = hdulist['AIPS AN'].data
         # Correct number of stands
         self.assertEqual(len(data['antennas']), len(an.field('NOSTA')))
+        
+        hdulist.close()
+        
+    def test_frequency(self):
+        """Test the 'AIPS FQ' table."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'uv-test-FQ.fits')
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Start the file
+        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.write()
+        
+        # Open the file and examine
+        hdulist = astrofits.open(testFile)
+        fq = hdulist['AIPS FQ'].data
+        # Correct number of IFs
+        self.assertEqual(len(fq.field('FRQSEL')), 1)
+        # Correct channel width
+        self.assertEqual(fq.field('CH WIDTH')[0], data['freq'][1]-data['freq'][0])
+        # Correct bandwidth
+        self.assertEqual(fq.field('TOTAL BANDWIDTH')[0], numpy.abs(data['freq'][-1]-data['freq'][0]).astype(numpy.float32), 4)
+        
+        hdulist.close()
+        
+    def test_source(self):
+        """Test the 'AIPS SU' table."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'uv-test-SU.fits')
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Start the file
+        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.write()
+        
+        # Open the file and examine
+        hdulist = astrofits.open(testFile)
+        su = hdulist['AIPS SU'].data
         
         hdulist.close()
         
@@ -216,11 +269,7 @@ class uvfits_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
         
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class uvfits_test_suite(unittest.TestSuite):

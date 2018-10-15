@@ -90,18 +90,19 @@ from lsl.common.paths import DATA as dataPath
 from lsl.correlator import uvUtils
 from lsl.common.stations import lwa1
 from lsl.common.constants import c as speedOfLight
+from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 
-from _simfast import FastVis
+from lsl.sim._simfast import FastVis
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['srcs', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
-        'build_sim_array', 'build_sim_data', 'scale_data', 'shift_data', 'add_baseline_noise', 
-        '__version__', '__revision__', '__all__']
+__all__ = ['SOURCES', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
+           'build_sim_array', 'build_sim_data', 'scale_data', 'shift_data', 'add_baseline_noise', 
+           '__version__', '__revision__', '__all__']
 
 
 # A dictionary of bright sources in the sky to use for simulations
-SRCS = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
+SOURCES = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
 
 
 class RadioEarthSatellite(object):
@@ -631,7 +632,21 @@ class AntennaArray(aipy.amp.AntennaArray):
         This updates the bandpasses used by AIPY to include the antenna
         impedance mis-match and the mean ARX response.
     """
-
+    
+    def copy(self):
+        """
+        Return a copy of the object.
+        """
+        
+        dup = copy.deepcopy(self)
+        dup.lat = self.lat*1.0
+        dup.lon = self.lon*1.0
+        dup.elev = self.elev*1.0
+        dup.horizon = self.horizon*1.0
+        dup.temp = self.temp*1.0
+        dup.pressure = self.pressure*1.0
+        return dup
+        
     def get_stands(self):
         """
         Return a numpy array listing the stands found in the AntennaArray 
@@ -942,7 +957,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
 
     # Combine the array of antennas with the array's location to generate an
     # AIPY AntennaArray object
-    simAA = AntennaArray(ants=ants, location=station.getAIPYLocation())
+    simAA = AntennaArray(station.get_aipy_location(), ants)
     
     # Set the Julian Data for the AntennaArray object if it is provided.  The try...except
     # clause is used to deal with people who may want to pass an array of JDs in rather than
@@ -1080,12 +1095,8 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     freq = aa.get_afreqs()*1e9
     if len(freq.shape) == 2:
         freq = freq[0,:]
-    UVData = {'freq': freq, 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
-    if mask is None:
-        UVData['isMasked'] = False
-    else:
-        UVData['isMasked'] = True
-        
+    UVData = VisibilityDataSet(jd, freq, baselines, [], antennaarray=aa, phase_center=phase_center)
+    
     # Go!
     if phase_center is not 'z':
         phase_center.compute(aa)
@@ -1114,34 +1125,12 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
             if 'uvw1' not in currentVars or 'vis1' not in currentVars:
                 uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl, resolve_src=resolve_src)
                 
-        ## Unpack the data and repack it into a data dictionary
-        UVData['bls'][pol] = []
-        UVData['uvw'][pol] = []
-        UVData['vis'][pol] = []
-        UVData['wgt'][pol] = []
-        UVData['msk'][pol] = []
-        UVData['jd'][pol] = []
+        ## Unpack the data and add it to the data set
+        if p == 0:
+            UVData.uvw = uvw1
+        pds = PolarizationDataSet(pol, data=vis1)
+        UVData.append( pds )
         
-        if mask is None:
-            for i in xrange(uvw1.shape[0]):
-                UVData['bls'][pol].append( baselines[i] )
-                UVData['uvw'][pol].append( uvw1[i,:,:] )
-                UVData['vis'][pol].append( vis1[i,:] )
-                UVData['wgt'][pol].append( numpy.ones_like(vis1[i,:])*len(UVData['vis'][pol][-1]) )
-                UVData['msk'][pol].append( numpy.zeros_like(UVData['vis'][pol][-1]) )
-                UVData['jd'][pol].append( jd )
-                
-        else:
-            for i in xrange(uvw1.shape[0]):
-                msk = mask[i]
-                
-                UVData['bls'][pol].append( baselines[i] )
-                UVData['uvw'][pol].append( uvw1[i,:,:].compress(numpy.logical_not(msk), axis=2) )
-                UVData['vis'][pol].append( vis1[i,:].compress(numpy.logical_not(msk)) )
-                UVData['wgt'][pol].append( numpy.ones_like(UVData['vis'][pol][-1])*len(UVData['vis'][pol][-1]) )
-                UVData['msk'][pol].append( msk )
-                UVData['jd'][pol].append( jd )
-                
     # Cleanup
     if not flat_response:
         for i in xrange(aa._cache['jys'].shape[0]):
@@ -1181,40 +1170,23 @@ def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     freq = aa.get_afreqs()*1e9
     if len(freq.shape) == 2:
         freq = freq[0,:]
-    UVData = {'freq': freq, 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
-    if mask is None:
-        UVData['isMasked'] = False
-    else:
-        UVData['isMasked'] = True
+    UVData = VisibilityData()
     
-    # Loop over polarizations to populate the simulated data set
-    for pol in pols:
-        UVData['bls'][pol] = []
-        UVData['uvw'][pol] = []
-        UVData['vis'][pol] = []
-        UVData['wgt'][pol] = []
-        UVData['msk'][pol] = []
-        UVData['jd'][pol] = []
-
     # Loop over Julian days to fill in the simulated data set
     jdCounter = 1
     for juldate in jd:
         oBlk = __build_sim_data(aa, srcs, pols=pols, jd=juldate, chan=chan, phase_center=phase_center, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flat_response=flat_response, resolve_src=resolve_src)
         jdCounter = jdCounter + 1
-
-        for pol in oBlk['bls']:
-            for b,u,v,w,m,j in zip(oBlk['bls'][pol], oBlk['uvw'][pol], oBlk['vis'][pol], oBlk['wgt'][pol], oBlk['msk'][pol], oBlk['jd'][pol]):
-                UVData['bls'][pol].append( b )
-                UVData['uvw'][pol].append( u )
-                UVData['vis'][pol].append( v )
-                UVData['wgt'][pol].append( w )
-                UVData['msk'][pol].append( m )
-                UVData['jd'][pol].append( j )
-                
+        UVData.append( oBlk )
+        
+    # Trim
+    if len(UVData) == 1:
+        UVData = UVData.pop()
+        
     return UVData
 
 
-def scale_data(dataDict, amps, delays, phase_offsets=None):
+def scale_data(dataSet, amps, delays, phase_offsets=None):
     """
     Apply a set of antenna-based real gain values and phase delays in ns to a 
     data dictionary.  Returned the new scaled and delayed dictionary.
@@ -1226,70 +1198,43 @@ def scale_data(dataDict, amps, delays, phase_offsets=None):
     """
     
     # Build the data dictionary to hold the scaled and delayed data
-    sclUVData = {'freq': (dataDict['freq']).copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
-    if dataDict['isMasked']:
-        sclUVData['isMasked'] = True
-    else:
-        sclUVData['isMasked'] = False
-    fq = dataDict['freq'] / 1e9
+    sclData = dataSet.copy(include_pols=True)
+    fq = dataSet.freq / 1e9
     
-    if phase_offsets is None:
-        phase_offsets = numpy.zeros_like(delays)
-        
     cGains = []
     for i in xrange(len(amps)):
-        cGains.append( amps[i]*numpy.exp(2j*numpy.pi*fq*delays[i] + 1j*phase_offsets[i]) )
-        
-    # Apply the scales and delays for all polarization pairs found in the original data
-    for pol in dataDict['vis'].keys():
-        sclUVData['bls'][pol] = []
-        sclUVData['uvw'][pol] = []
-        sclUVData['vis'][pol] = []
-        sclUVData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
-        sclUVData['msk'][pol] = copy.copy(dataDict['msk'][pol])
-        sclUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
+        gain = 2j*numpy.pi*fq*delays[i]
+        if phase_offsets is not None:
+            gain += 1j*phase_offsets[i]
+        cGains.append( amps[i]*numpy.exp(gain) )
 
-        for (i,j),uvw,vis in zip(dataDict['bls'][pol], dataDict['uvw'][pol], dataDict['vis'][pol]):
-            sclUVData['bls'][pol].append( (i,j) )
-            sclUVData['uvw'][pol].append( uvw )
-            sclUVData['vis'][pol].append( vis*cGains[j].conj()*cGains[i] )
+    # Apply the scales and delays for all polarization pairs found in the original data
+    for pds in sclData:
+        for b,(i,j) in enumerate(sclData.baselines):
+            pds.data[b,:] *= cGains[j].conj()*cGains[i]
             
-    return sclUVData
+    return sclData
     
 
-def shift_data(dataDict, aa):
+def shift_data(dataSet, aa):
     """
     Shift the uvw coordinates in one data dictionary to a new set of uvw 
     coordinates that correspond to a new AntennaArray object.  This is useful
     for looking at how positional errors in the array affect the data.
     """
     
-    # Build the data dictionary to hold the shifted data
-    shftData = {'freq': dataDict['freq'].copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
-    if dataDict['isMasked']:
-        shftData['isMasked'] = True
-    else:
-        shftData['isMasked'] = False
+    # Build the data dictionary to hold the scaled and delayed data
+    shftData = dataSet.copy(include_pols=True)
+    
+    # Apply the coordinate shift
+    for b,(i,j) in enumerate(shftData.baselines):
+        crds = aa.gen_uvw(j, i, src=shftData.phase_center)[:,0,:]
+        shftData.uvw[b,:] = crds
         
-    # Apply the coordinate shift all polarization pairs found in the original data
-    for pol in dataDict['vis'].keys():
-        shftData['bls'][pol] = copy.copy(dataDict['bls'][pol])
-        shftData['uvw'][pol] = []
-        shftData['vis'][pol] = copy.copy(dataDict['vis'][pol])
-        shftData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
-        shftData['msk'][pol] = copy.copy(dataDict['msk'][pol])
-        shftData['jd'][pol] = copy.copy(dataDict['jd'][pol])
-
-        for (i,j),m in zip(dataDict['bls'][pol], dataDict['msk'][pol]):
-            crds = aa.gen_uvw(j, i, src='z')[:,0,:]
-            if dataDict['isMasked']:
-                crds = crds.compress(numpy.logical_not(numpy.logical_not(m), axis=2))
-            shftData['uvw'][pol].append( crds )
-            
     return shftData
 
 
-def add_baseline_noise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
+def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     """
     Given a data dictionary of visibilities, an SEFD or array SEFDs in Jy, 
     and an integration time in seconds, add noise to the visibilities 
@@ -1304,7 +1249,7 @@ def add_baseline_noise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
     # Figure out the bandwidth from the frequency list in the 
     if bandwidth is None:
         try:
-            bandwidth = dataDict['freq'][1] - dataDict['freq'][0]
+            bandwidth = dataSet.freq[1] - dataSet.freq[0]
         except IndexError:
             raise RuntimeError("Too few frequencies to determine the bandwidth, use the 'bandwidth' keyword")
             
@@ -1313,12 +1258,11 @@ def add_baseline_noise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
     
     # Make sure that we have an SEFD for each antenna
     ants = []
-    for pol in dataDict['bls'].keys():
-        for i,j in dataDict['bls'][pol]:
-            if i not in ants:
-                ants.append( i )
-            if j not in ants:
-                ants.append( j )
+    for i,j in dataSet.baselines:
+        if i not in ants:
+            ants.append( i )
+        if j not in ants:
+            ants.append( j )
     nAnts = len(ants)
     try:
         if len(SEFD) != nAnts:
@@ -1328,29 +1272,15 @@ def add_baseline_noise(dataDict, SEFD, tInt, bandwidth=None, efficiency=1.0):
         SEFD = numpy.ones(nAnts)*SEFD
         
     # Build the data dictionary to hold the data with noise added
-    bnData = {'freq': dataDict['freq'].copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
-    if dataDict['isMasked']:
-        bnData['isMasked'] = True
-    else:
-        bnData['isMasked'] = False
+    bnData = dataSet.copy(include_pols=True)
+    
+    # Apply the scales and delays for all polarization pairs found in the original data
+    for pds in bnData:
+        ## Calculate the expected noise
+        visNoise = visNoiseSigma * (numpy.random.randn(*pds.data.shape) \
+                   + 1j*numpy.random.randn(*pds.data.shape))
+            
+        ## Apply
+        pds.data += visNoise
         
-    # Copy the original data over and add in the noise
-    for pol in dataDict['vis'].keys():
-        bnData['bls'][pol] = copy.copy(dataDict['bls'][pol])
-        bnData['uvw'][pol] = copy.copy(dataDict['uvw'][pol])
-        bnData['vis'][pol] = []
-        bnData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
-        bnData['msk'][pol] = copy.copy(dataDict['msk'][pol])
-        bnData['jd'][pol] = copy.copy(dataDict['jd'][pol])
-        
-        ## Apply this to the visibilities
-        for bl in xrange(len(dataDict['vis'][pol])):
-            vShape = dataDict['vis'][pol][bl].shape
-            
-            ### Calculate the expected noise
-            visNoise = visNoiseSigma * (numpy.random.randn(*vShape) + 1j*numpy.random.randn(*vShape))
-            
-            ### Apply
-            bnData['vis'][pol].append( dataDict['vis'][pol][bl] + visNoise )
-            
     return bnData

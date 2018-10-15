@@ -395,8 +395,11 @@ class UV(object):
         except TypeError:
             self.data.sort(key=cmp_to_key(__sortData))
             
+        self._write_aipssu_hdu(dummy=True)
         self._write_primary_hdu()
         self._write_aipsan_hdu()
+        self._write_aipsfq_hdu()
+        self._write_aipssu_hdu()
         
         # Clear out the data section
         del(self.data[:])
@@ -418,6 +421,7 @@ class UV(object):
         hdr['EXTNAME'] = (name, 'UVFITS table name')
         hdr['EXTVER'] = (1, 'table instance number') 
         hdr['TABREV'] = (revision, 'table format revision number')
+        hdr['NO_IF'] = (len(self.freq), 'number of frequency bands')
         
         date = self.ref_time.split('-')
         name = "ZA%s%s%s" % (date[0][2:], date[1], date[2])
@@ -448,8 +452,12 @@ class UV(object):
         uList = []
         vList = []
         wList = []
+        timeList = []
         dateList = []
+        intTimeList = []
         blineList = []
+        nameList = []
+        sourceList = []
         for dataSet in self.data:
             # Sort the data by packed baseline
             try:
@@ -466,7 +474,11 @@ class UV(object):
                 date.minutes = 0
                 date.seconds = 0
                 utc0 = date.to_jd()
-                
+                try:
+                    utcR
+                except NameError:
+                    utcR = utc0*1.0
+                    
                 ## Update the observer so we can figure out where the source is
                 obs.date = utc - astro.DJD_OFFSET
                 if dataSet.source == 'z':
@@ -481,6 +493,9 @@ class UV(object):
                     ### Real-live sources (ephem.Body instances)
                     name = dataSet.source.name
                     
+                ## Update the source ID
+                sourceID = self._sourceTable.index(name) + 1
+                
                 ## Compute the uvw coordinates of all baselines
                 if dataSet.source == 'z':
                     RA = obs.sidereal_time()
@@ -518,7 +533,13 @@ class UV(object):
                 wList.extend( uvwCoords[order,2] )
                 
                 ### Add in the new date/time
-                dateList.extend( [utc for bl in dataSet.baselines] )
+                dateList.extend( [utc0-utcR for bl in dataSet.baselines] )
+                timeList.extend( [utc-utc0 for bl in dataSet.baselines] )
+                intTimeList.extend( [dataSet.intTime for bl in dataSet.baselines] )
+                
+                ### Add in the new new source ID and name
+                sourceList.extend( [sourceID for bl in dataSet.baselines] )
+                nameList.extend( [name for bl in dataSet.baselines] )
                 
                 ### Zero out the visibility data
                 try:
@@ -537,10 +558,14 @@ class UV(object):
         nBaseline = len(blineList)
         
         # Create the UV Data table and update its header
-        uv = astrofits.GroupData(numpy.concatenate(mList), parnames=['UU', 'VV', 'WW', 'BASELINE', 'DATE'], 
-                            pardata=[numpy.array(uList, dtype=numpy.float32), numpy.array(vList, dtype=numpy.float32), 
-                                    numpy.array(wList, dtype=numpy.float32), numpy.array(blineList), 
-                                    numpy.array(dateList)], bitpix=-32)
+        uv = astrofits.GroupData(numpy.concatenate(mList), parnames=['UU', 'VV', 'WW', 'DATE', 'DATE', 'BASELINE', 'SOURCE', 'INTTIM'], 
+                                 pardata=[numpy.array(uList, dtype=numpy.float32), numpy.array(vList, dtype=numpy.float32), 
+                                          numpy.array(wList, dtype=numpy.float32), numpy.array(dateList), numpy.array(timeList), 
+                                          numpy.array(blineList), numpy.array(sourceList), 
+                                          numpy.array(intTimeList)], 
+                                 parbscales=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 
+                                 parbzeros=[0.0, 0.0, 0.0, utcR, 0.0, 0.0, 0.0, 0.0], 
+                                 bitpix=-32)
         primary = astrofits.GroupsHDU(uv)
         
         primary.header['EXTEND'] = (True, 'indicates UVFITS file')
@@ -624,43 +649,49 @@ class UV(object):
         # Axis offset in meters
         c5 = astrofits.Column(name='STAXOF', unit='METERS', format='3E', 
                         array=numpy.zeros((self.nAnt,3), dtype=numpy.float32))
+        # Diameter
+        c6 = astrofits.Column(name='DIAMETER', unit='METERS', format='1E', 
+                       array=numpy.ones(self.nAnt, dtype=numpy.float32)*2.0)
+        # Beam FWHM
+        c7 = astrofits.Column(name='BEAMFWHM', unit='DEGR/M', format='1E', 
+                       array=numpy.ones(self.nAnt, dtype=numpy.float32)*360.0)
         # Feed A polarization label
-        c6 = astrofits.Column(name='POLTYA', format='A1', 
+        c8 = astrofits.Column(name='POLTYA', format='A1', 
                         array=numpy.array([ant.polA['Type'] for ant in self.array[0]['ants']]))
         # Feed A orientation in degrees
-        c7 = astrofits.Column(name='POLAA', format='1E', 
+        c9 = astrofits.Column(name='POLAA', format='1E', unit='DEGREES', 
                         array=numpy.array([ant.polA['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed A polarization parameters
-        c8 = astrofits.Column(name='POLCALA', format='2E', 
+        c10 = astrofits.Column(name='POLCALA', format='2E', 
                         array=numpy.array([ant.polA['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed B polarization label
-        c9 = astrofits.Column(name='POLTYB', format='A1', 
+        c11 = astrofits.Column(name='POLTYB', format='A1', 
                         array=numpy.array([ant.polB['Type'] for ant in self.array[0]['ants']]))
         # Feed B orientation in degrees
-        c10 = astrofits.Column(name='POLAB', format='1E', 
+        c12 = astrofits.Column(name='POLAB', format='1E', unit='DEGREES', 
                         array=numpy.array([ant.polB['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed B polarization parameters
-        c11 = astrofits.Column(name='POLCALB', format='2E', 
+        c13 = astrofits.Column(name='POLCALB', format='2E', 
                         array=numpy.array([ant.polB['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
                         
         # Define the collection of columns
-        colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11])
+        colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13])
         
         # Create the table and fill in the header
-        ag = astrofits.BinTableHDU.from_columns(colDefs)
-        self._add_common_keywords(ag.header, 'AIPS AN', 1)
+        an = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(an.header, 'AIPS AN', 1)
         
-        ag.header['EXTVER'] = (1, 'array ID')
-        ag.header['ARRNAM'] = self.siteName
-        ag.header['FRAME'] = ('GEOCENTRIC', 'coordinate system')
-        ag.header['NUMORB'] = (0, 'number of orbital parameters')
-        ag.header['FREQ'] = (self.refVal, 'reference frequency (Hz)')
-        ag.header['TIMSYS'] = ('UTC', 'time coordinate system')
+        an.header['EXTVER'] = (1, 'array ID')
+        an.header['ARRNAM'] = self.siteName
+        an.header['FRAME'] = ('GEOCENTRIC', 'coordinate system')
+        an.header['NUMORB'] = (0, 'number of orbital parameters')
+        an.header['FREQ'] = (self.refVal, 'reference frequency (Hz)')
+        an.header['TIMSYS'] = ('UTC', 'time coordinate system')
 
         date = self.astro_ref_time
         utc0 = date.to_jd()
         gst0 = astro.get_apparent_sidereal_time(utc0)
-        ag.header['GSTIA0'] = (gst0 * 15, 'GAST (deg) at RDATE 0 hours')
+        an.header['GSTIA0'] = (gst0 * 15, 'GAST (deg) at RDATE 0 hours')
         
         utc1 = utc0 + 1
         gst1 = astro.get_apparent_sidereal_time(utc1)
@@ -668,7 +699,7 @@ class UV(object):
             gst1 += 24.0
         ds = gst1 - gst0
         deg = ds * 15.0      
-        ag.header['DEGPDY'] = (360.0 + deg, 'rotation rate of the earth (deg/day)')
+        an.header['DEGPDY'] = (360.0 + deg, 'rotation rate of the earth (deg/day)')
         
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
@@ -676,30 +707,211 @@ class UV(object):
         if eop is None:
             eop = geodesy.EOP(mjd=refMJD)
             
-        ag.header['UT1UTC'] = (eop.utDiff, 'difference UT1 - UTC for reference date')
-        ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
-        ag.header['POLARX'] = eop.x
-        ag.header['POLARY'] = eop.y
+        an.header['UT1UTC'] = (eop.utDiff, 'difference UT1 - UTC for reference date')
+        an.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
+        an.header['POLARX'] = eop.x
+        an.header['POLARY'] = eop.y
         
-        ag.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
-        ag.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')
-        ag.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECI Z coordinate (m)')
+        an.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
+        an.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')
+        an.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECI Z coordinate (m)')
         
-        ag.header['NOSTAMAP'] = (int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
+        an.header['NOSTAMAP'] = (int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
         
         if dummy:
-            self.an = ag
+            self.an = an
             if self.array[0]['enableMapper']:
                 self._write_mapper_hdu(dummy=True)
                 
         else:
-            ag.name = 'AIPS AN'
-            self.FITS.append(ag)
+            an.name = 'AIPS AN'
+            self.FITS.append(an)
             self.FITS.flush()
             
             if self.array[0]['enableMapper']:
                 self._write_mapper_hdu()
                 
+    def _write_aipsfq_hdu(self):
+        """
+        Define the 'AIPS FQ' table .
+        """
+        
+        # Frequency setup number
+        c1 = astrofits.Column(name='FRQSEL', format='1J', 
+                        array=numpy.array([self.freq[0].id], dtype=numpy.int32))
+        # Frequency offsets in Hz
+        c2 = astrofits.Column(name='IF FREQ', format='1D', unit='HZ', 
+                        array=numpy.array([self.freq[0].bandFreq], dtype=numpy.float64))
+        # Channel width in Hz
+        c3 = astrofits.Column(name='CH WIDTH', format='1E', unit='HZ', 
+                        array=numpy.array([self.freq[0].chWidth], dtype=numpy.float32))
+        # Total bandwidths of bands
+        c4 = astrofits.Column(name='TOTAL BANDWIDTH', format='1E', unit='HZ', 
+                        array=numpy.array([self.freq[0].totalBW], dtype=numpy.float32))
+        # Sideband flag
+        c5 = astrofits.Column(name='SIDEBAND', format='1J', 
+                        array=numpy.array([self.freq[0].sideBand], dtype=numpy.int32))
+        
+        # Define the collection of columns
+        colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5])
+        
+        # Create the table and fill in the header
+        fq = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(fq.header, 'AIPS FQ', 1)
+        
+        self.FITS.append(fq)
+        self.FITS.flush()
+        
+    def _write_aipssu_hdu(self, dummy=False):
+        """
+        Define the 'AIPS SU' table .
+        """
+        
+        self._write_aipsan_hdu(dummy=True)
+        (arrPos, ag) = self.read_array_geometry(dummy=True)
+        ids = ag.keys()
+        
+        obs = ephem.Observer()
+        obs.lat = arrPos.lat * numpy.pi/180
+        obs.lon = arrPos.lng * numpy.pi/180
+        obs.elev = arrPos.elv * numpy.pi/180
+        obs.pressure = 0
+        
+        nameList = []
+        raList = []
+        decList = []
+        raPoList = []
+        decPoList = []
+        sourceID = 0
+        lastSourceName = None
+        for dataSet in self.data:
+            if dataSet.pol == self.stokes[0]:
+                utc = astro.taimjd_to_utcjd(dataSet.obsTime)
+                date = astro.get_date(utc)
+                date.hours = 0
+                date.minutes = 0
+                date.seconds = 0
+                utc0 = date.to_jd()
+                
+                obs.date = utc - astro.DJD_OFFSET
+                
+                try:
+                    currSourceName = dataSet.source.name
+                except AttributeError:
+                    currSourceName = dataSet.source
+                
+                if currSourceName != lastSourceName:
+                    sourceID += 1
+                    
+                    if dataSet.source == 'z':
+                        ## Zenith pointings
+                        equ = astro.equ_posn( obs.sidereal_time()*180/numpy.pi, obs.lat*180/numpy.pi )
+                        
+                        # format 'source' name based on local sidereal time
+                        raHms = astro.deg_to_hms(equ.ra)
+                        (tsecs, secs) = math.modf(raHms.seconds)
+                        
+                        name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
+                        equPo = astro.get_equ_prec2(equ, utc, astro.J2000_UTC_JD)
+                        
+                    else:
+                        ## Real-live sources (ephem.Body instances)
+                        name = dataSet.source.name
+                        equ = astro.equ_posn(dataSet.source.ra*180/numpy.pi, dataSet.source.dec*180/numpy.pi)
+                        equPo = astro.equ_posn(dataSet.source.a_ra*180/numpy.pi, dataSet.source.a_dec*180/numpy.pi)
+                        
+                    # current apparent zenith equatorial coordinates
+                    raList.append(equ.ra)
+                    decList.append(equ.dec)
+                    
+                    # J2000 zenith equatorial coordinates
+                    raPoList.append(equPo.ra)
+                    decPoList.append(equPo.dec)
+                    
+                    # name
+                    nameList.append(name)
+                    
+                    # Update
+                    lastSourceName = name
+                    
+        nSource = len(nameList)
+        
+        # Save these for later since we might need them
+        self._sourceTable = nameList
+        
+        # Source ID number
+        c1 = astrofits.Column(name='ID. NO.', format='1J', 
+                        array=numpy.arange(1, nSource+1, dtype=numpy.int32))
+        # Source name
+        c2 = astrofits.Column(name='SOURCE', format='A16', 
+                        array=numpy.array(nameList))
+        # Source qualifier
+        c3 = astrofits.Column(name='QUAL', format='1J', 
+                        array=numpy.zeros((nSource,), dtype=numpy.int32))
+        # Calibrator code
+        c4 = astrofits.Column(name='CALCODE', format='A4', 
+                        array=numpy.array(('   ',)).repeat(nSource))
+        # Stokes I flux density in Jy
+        c5 = astrofits.Column(name='IFLUX', format='1E', unit='JY', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        # Stokes I flux density in Jy
+        c6 = astrofits.Column(name='QFLUX', format='1E', unit='JY', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        # Stokes I flux density in Jy
+        c7 = astrofits.Column(name='UFLUX', format='1E', unit='JY', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        # Stokes I flux density in Jy
+        c8 = astrofits.Column(name='VFLUX', format='1E', unit='JY', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        # Frequency offset in Hz
+        c9 = astrofits.Column(name='FREQOFF', format='1D', unit='HZ',
+                       array=numpy.zeros((nSource,), dtype=numpy.float64))
+        # Bandwidth
+        c10 = astrofits.Column(name='BANDWIDTH', format='1D', unit='HZ',
+                        array=numpy.zeros((nSource,), dtype=numpy.float64))
+        # Right ascension at mean equinox in degrees
+        c11 = astrofits.Column(name='RAEPO', format='1D', unit='DEGREES', 
+                        array=numpy.array(raPoList))
+        # Declination at mean equinox in degrees
+        c12 = astrofits.Column(name='DECEPO', format='1D', unit='DEGREES', 
+                        array=numpy.array(decPoList))
+        # Epoch
+        c13 = astrofits.Column(name='EPOCH', format='1D', unit='YEARS', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float64) + 2000.0)
+        # Apparent right ascension in degrees
+        c14 = astrofits.Column(name='RAAPP', format='1D', unit='DEGREES', 
+                        array=numpy.array(raList))
+        # Apparent declination in degrees
+        c15 = astrofits.Column(name='DECAPP', format='1D', unit='DEGREES', 
+                        array=numpy.array(decList))
+        # LSR frame systemic velocity in m/s
+        c16 = astrofits.Column(name='LSRVEL', format='1D', unit='M/SEC', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float64))
+        # Line rest frequency in Hz
+        c17 = astrofits.Column(name='RESTFREQ', format='1D', unit='HZ', 
+                        array=(numpy.zeros((nSource,), dtype=numpy.float64) + self.refVal))
+        # Proper motion in RA in degrees/day
+        c18 = astrofits.Column(name='PMRA', format='1D', unit='DEG/DAY', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float64))
+        # Proper motion in Dec in degrees/day
+        c19 = astrofits.Column(name='PMDEC', format='1D', unit='DEG/DAY', 
+                        array=numpy.zeros((nSource,), dtype=numpy.float64))
+                        
+        # Define the collection of columns
+        colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
+                            c11, c12, c13, c14, c15, c16, c17, c18, c19])
+        
+        # Create the table and fill in the header
+        su = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(su.header, 'AIPS SU', 1)
+        su.header['FREQID'] = 1
+        su.header['VELDEF'] = ''
+        su.header['VECTYP'] = ''
+        
+        if not dummy:
+            self.FITS.append(su)
+            self.FITS.flush()
+            
     def _write_mapper_hdu(self, dummy=False):
         """
         Write a fits table that contains information about mapping stations 

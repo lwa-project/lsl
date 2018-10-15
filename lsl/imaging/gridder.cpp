@@ -48,10 +48,11 @@ double gridding_kernel_point(long i,
 }
 
 
+template<typename OutType>
 void w_projection_kernel(long nPixSide, 
                          double uvRes, 
                          double w, 
-                         Complex32* kernel) {
+                         OutType* kernel) {
     long i,j,l,m;
     double cL, cM;
     
@@ -115,6 +116,7 @@ int compute_planes(int nVis,
 }
 
 
+template<typename InType, typename OutType>
 void compute_gridding(long nVis,
                       long nPixSide,
                       double uvRes,
@@ -122,10 +124,10 @@ void compute_gridding(long nVis,
                       double const* u,
                       double const* v,
                       double const* w,
-                      Complex32 const* vis,
-                      Complex32 const* wgt,
-                      Complex32* uv,
-                      Complex32* bm) {
+                      InType const* vis,
+                      InType const* wgt,
+                      OutType* uv,
+                      OutType* bm) {
     // Setup
     long i, j, l, m;
     

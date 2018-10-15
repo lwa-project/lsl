@@ -9,12 +9,12 @@ if sys.version_info > (3,):
 """
 Simple self-calibration module for correlated TBW and TBN data.  The 
 supported self-calibration methods are:
-  * phase-only
-  * amplitude and phase
-  * delay-only
-  * amplitude and delay
-  * delay/phase offset
-  * amplitude and delay/phase offset
+ * phase-only
+ * amplitude and phase
+ * delay-only
+ * amplitude and delay
+ * delay/phase offset
+ * amplitude and delay/phase offset
 
 ..versionchanged:: 0.6.3
     Reworked the module to make it more versatile
@@ -25,13 +25,14 @@ supported self-calibration methods are:
 import numpy
 
 from lsl.statistics import robust
+from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['phase_only', 'delay_only', 'delay_and_phase', '__version__', '__revision__', '__all__']
 
 
-def _scale_data(dataDict, amps, delays, phaseOffsets):
+def _scale_data(dataSet, amps, delays, phase_offsets):
     """
     Apply a set of antenna-based real gain value, phase delays in ns, phase 
     offsets in radians to a data dictionary.  Returned the new scaled and 
@@ -41,48 +42,35 @@ def _scale_data(dataDict, amps, delays, phaseOffsets):
     import copy
 
     # Build the data dictionary to hold the scaled and delayed data
-    sclUVData = {'freq': (dataDict['freq']).copy(), 'uvw': {}, 'vis': {}, 'wgt': {}, 'msk': {}, 'bls': {}, 'jd': {}}
-    if dataDict['isMasked']:
-        sclUVData['isMasked'] = True
-    else:
-        sclUVData['isMasked'] = False
-    fq = dataDict['freq'] / 1e9
+    sclData = dataSet.copy(include_pols=True)
+    fq = dataSet.freq / 1e9
     
     cGains = []
     for i in xrange(len(amps)):
-        cGains.append( amps[i]*numpy.exp(2j*numpy.pi*fq*delays[i] + 1j*phaseOffsets[i]) )
+        cGains.append( amps[i]*numpy.exp(2j*numpy.pi*fq*delays[i] + 1j*phase_offsets[i]) )
 
     # Apply the scales and delays for all polarization pairs found in the original data
-    for pol in dataDict['vis'].keys():
-        sclUVData['bls'][pol] = []
-        sclUVData['uvw'][pol] = []
-        sclUVData['vis'][pol] = []
-        sclUVData['wgt'][pol] = copy.copy(dataDict['wgt'][pol])
-        sclUVData['msk'][pol] = copy.copy(dataDict['msk'][pol])
-        sclUVData['jd'][pol] = copy.copy(dataDict['jd'][pol])
-
-        for (i,j),uvw,vis in zip(dataDict['bls'][pol], dataDict['uvw'][pol], dataDict['vis'][pol]):
-            sclUVData['bls'][pol].append( (i,j) )
-            sclUVData['uvw'][pol].append( uvw )
-            sclUVData['vis'][pol].append( vis*cGains[j].conj()*cGains[i] )
-
-    return sclUVData
+    for pds in sclData:
+        for b,(i,j) in enumerate(sclData.baselines):
+            pds.data[b,:] *= cGains[j].conj()*cGains[i]
+            
+    return sclData
 
 
-def _build_amplitude_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix A for amplitude correction.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     A = numpy.zeros((nBLs, nStands))
-    for i,(l,m) in enumerate(dataDict['bls'][pol]):
+    for i,(l,m) in enumerate(dataSet.baselines):
         A[i,l] = 1.0
         A[i,m] = 1.0
         
@@ -90,25 +78,25 @@ def _build_amplitude_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return A
 
 
-def _build_amplitude_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix C for the amplitude correction.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     obsVis = []
-    for vis in dataDict['vis'][pol]:
+    for vis in getattr(dataSet, pol).data:
         obsVis.append( numpy.array(vis[chan]) )
     obsVis = numpy.array(obsVis)
     
     simVis = []
-    for vis in simDict['vis'][pol]:
+    for vis in getattr(simSet, pol).data:
         simVis.append( numpy.array(vis[chan]) )
     simVis = numpy.array(simVis)
     
@@ -121,22 +109,22 @@ def _build_amplitude_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return Cp
 
 
-def _build_phaseonly_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix A for phase correction with a frequency independent
     phase.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     A = numpy.zeros((nBLs*fq.size, nStands-1))
     for i in xrange(fq.size):
-        for j,(l,m) in enumerate(dataDict['bls'][pol]):
+        for j,(l,m) in enumerate(dataSet.baselines):
             if l < ref_ant:
                 A[j+i*nBLs,l]   =  1.0
             elif l > ref_ant:
@@ -155,26 +143,26 @@ def _build_phaseonly_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return A
 
 
-def _build_phaseonly_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_phaseonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix C for phase correction with a frequency independent
     phase.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     obsVis = []
-    for vis in dataDict['vis'][pol]:
+    for vis in getattr(dataSet, pol).data:
         obsVis.append( numpy.array(vis[chan]) )
     obsVis = numpy.array(obsVis)
     
     simVis = []
-    for vis in simDict['vis'][pol]:
+    for vis in getattr(simSet, pol).data:
         simVis.append( numpy.array(vis[chan]) )
     simVis = numpy.array(simVis)
     
@@ -188,21 +176,21 @@ def _build_phaseonly_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return Cp
 
 
-def _build_delayonly_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix A for phase correction with a delay.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     A = numpy.zeros((nBLs*fq.size, nStands-1))
     for i in xrange(fq.size):
-        for j,(l,m) in enumerate(dataDict['bls'][pol]):
+        for j,(l,m) in enumerate(dataSet.baselines):
             if l < ref_ant:
                 A[j+i*nBLs,l]   =  2*numpy.pi*fq[i]
             elif l > ref_ant:
@@ -221,25 +209,25 @@ def _build_delayonly_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return A
 
 
-def _build_delayonly_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_delayonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix C for phase correction with a delay.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     obsVis = []
-    for vis in dataDict['vis'][pol]:
+    for vis in getattr(dataSet, pol).data:
         obsVis.append( numpy.array(vis[chan]) )
     obsVis = numpy.array(obsVis)
     
     simVis = []
-    for vis in simDict['vis'][pol]:
+    for vis in getattr(simSet, pol).data:
         simVis.append( numpy.array(vis[chan]) )
     simVis = numpy.array(simVis)
     
@@ -253,21 +241,21 @@ def _build_delayonly_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return Cp
 
 
-def _build_delayandphase_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_delayandphase_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix A for phase correction with a delay and a phase offset.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     A = numpy.zeros((nBLs*fq.size, 2*(nStands-1)))
     for i in xrange(fq.size):
-        for j,(l,m) in enumerate(dataDict['bls'][pol]):
+        for j,(l,m) in enumerate(dataSet.baselines):
             if l < ref_ant:
                 A[j+i*nBLs,l]   =  2*numpy.pi*fq[i]
                 A[j+i*nBLs,l+(nStands-1)] = 1.0
@@ -291,25 +279,25 @@ def _build_delayandphase_a(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return A
 
 
-def _build_delayandphase_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
+def _build_delayandphase_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix C for phase correction with a delay and a phase offset.
     """
     
     # Get the baseline and stand counts
-    nBLs = len(dataDict['bls'][pol])
+    nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     obsVis = []
-    for vis in dataDict['vis'][pol]:
+    for vis in getattr(dataSet, pol).data:
         obsVis.append( numpy.array(vis[chan]) )
     obsVis = numpy.array(obsVis)
     
     simVis = []
-    for vis in simDict['vis'][pol]:
+    for vis in getattr(simSet, pol).data:
         simVis.append( numpy.array(vis[chan]) )
     simVis = numpy.array(simVis)
     
@@ -323,7 +311,7 @@ def _build_delayandphase_c(aa, dataDict, simDict, chan, pol, ref_ant=0):
     return Cp
 
 
-def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitude=False, phase_only=False, delay_only=False, delay_and_phase=False, amplitude_cutoff=1.001, phase_cutoff=0.01, delay_cutoff=0.2, verbose=True):
+def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, phase_only=False, delay_only=False, delay_and_phase=False, amplitude_cutoff=1.001, phase_cutoff=0.01, delay_cutoff=0.2, verbose=True):
     """
     Function used to perform a variety of self-calibration strategies on 
     data stored in a readUVData dictionary and a model sky stored in a 
@@ -331,27 +319,27 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
     channel(s).
     
     The supported self-cal. schemes are:
-      * phase-only
-      * amplitude and phase
-      * delay-only
-      * amplitude and delay
-      * delay/phase offset
-      * amplitude and delay/phase offset
+     * phase-only
+     * amplitude and phase
+     * delay-only
+     * amplitude and delay
+     * delay/phase offset
+     * amplitude and delay/phase offset
     
     The function exits when either the maximum number of iterations is 
     reached (max_iter) or the maximum absolute value of the relevant quantity
     drops below the quantity's cutoff value.  The cutoff keywords and 
     their default values are:
-      * amplitude_cutoff - 1.001, 
-      * phase_cutoff - 0.01 radians, 
-      * delay_cutoff - 0.2 ns (0.01 radians over 10 MHz),
+     * amplitude_cutoff - 1.001, 
+     * phase_cutoff - 0.01 radians, 
+     * delay_cutoff - 0.2 ns (0.01 radians over 10 MHz),
     """
 
     # Make sure we have the right polarization
-    if pol not in dataDict['bls'].keys() and pol.lower() not in dataDict['bls'].keys():
-        raise RuntimeError("Data dictionary does not have data for polarization '%s'" % pol)
-    if pol not in simDict['bls'].keys() and pol.lower() not in simDict['bls'].keys():
-        raise RuntimeError("Simulation dictionary does not have data for polarization '%s'" % pol)
+    if pol not in dataSet.pols:
+        raise RuntimeError("Data set does not have data for polarization '%s'" % pol)
+    if pol not in simSet.pols:
+        raise RuntimeError("Simulation set does not have data for polarization '%s'" % pol)
 
     # Make sure that `chan' is an array by trying to find its length
     try:
@@ -380,7 +368,7 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
         print("Using antenna #%i as a reference (Stand #%i)" % (ref_ant, aa.ants[ref_ant].stand))
         
     # Frequency in GHz so that the delays can be in ns
-    fq = dataDict['freq'][chan] / 1e9
+    fq = dataSet.freq[chan] / 1e9
     
     tempGains = numpy.ones(N)
     tempDelays = numpy.zeros(N)
@@ -393,8 +381,8 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
             if verbose:
                 print('  %iA' % (i+1,))
                 
-            A = _build_amplitude_a(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
-            C = _build_amplitude_c(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
+            A = _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = numpy.where( numpy.isfinite(C) == 1 )[0]
             A = A[good,:]
@@ -413,7 +401,7 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
             if metric < amplitude_cutoff:
                 amplitude = False
                 
-            dataDict = _scale_data(dataDict, bestGains, numpy.zeros_like(bestGains), numpy.zeros_like(bestGains))
+            dataSet = _scale_data(dataSet, bestGains, numpy.zeros_like(bestGains), numpy.zeros_like(bestGains))
         
         #
         # Delay and/or phase
@@ -422,8 +410,8 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
             if verbose:
                 print('  %iP' % (i+1,))
                 
-            A = _build_phaseonly_a(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
-            C = _build_phaseonly_c(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
+            A = _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_phaseonly_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = numpy.where( numpy.isfinite(C) == 1 )[0]
             A = A[good,:]
@@ -445,14 +433,14 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
             if metric < phase_cutoff:
                 phase_only = False
                 
-            dataDict = _scale_data(dataDict, numpy.ones_like(bestPhaseOffsets), numpy.zeros_like(bestPhaseOffsets), bestPhaseOffsets)
+            dataSet = _scale_data(dataSet, numpy.ones_like(bestPhaseOffsets), numpy.zeros_like(bestPhaseOffsets), bestPhaseOffsets)
             
         elif delay_only:
             if verbose:
                 print('  %iD' % (i+1,))
                 
-            A = _build_delayonly_a(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
-            C = _build_delayonly_c(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
+            A = _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_delayonly_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = numpy.where( numpy.isfinite(C) == 1 )[0]
             A = A[good,:]
@@ -474,14 +462,14 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
             if metric < delay_cutoff:
                 delay_only = False
                 
-            dataDict = _scale_data(dataDict, numpy.ones_like(bestDelays), bestDelays, numpy.zeros_like(bestDelays))
+            dataSet = _scale_data(dataSet, numpy.ones_like(bestDelays), bestDelays, numpy.zeros_like(bestDelays))
             
         elif delay_and_phase:
             if verbose:
                 print('  %iD+P' % (i+1,))
                 
-            A = _build_delayandphase_a(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
-            C = _build_delayandphase_c(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant)
+            A = _build_delayandphase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_delayandphase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = numpy.where( numpy.isfinite(C) == 1 )[0]
             A = A[good,:]
@@ -509,7 +497,7 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
             if metric1 < delay_cutoff and metric2 < phase_cutoff:
                 delay_and_phase = False
                 
-            dataDict = _scale_data(dataDict, numpy.ones_like(bestDelays), bestDelays, bestPhaseOffsets)
+            dataSet = _scale_data(dataSet, numpy.ones_like(bestDelays), bestDelays, bestPhaseOffsets)
             
         else:
             pass
@@ -530,10 +518,10 @@ def _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitud
         print('Best Phase Offsets: ', tempPhaseOffsets)
     bestPhaseOffsets = tempPhaseOffsets
     
-    return dataDict, bestGains, bestDelays, bestPhaseOffsets
+    return dataSet, bestGains, bestDelays, bestPhaseOffsets
 
 
-def phase_only(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, verbose=True):
+def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, verbose=True):
     """
     Function to apply a phase-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -546,7 +534,7 @@ def phase_only(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitu
         rather than the standard two-element tuple.
     """
     
-    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
                                             amplitude=amplitude, phase_only=True, 
                                             amplitude_cutoff=amplitude_cutoff, phase_cutoff=phase_cutoff, 
                                             verbose=verbose)
@@ -557,7 +545,7 @@ def phase_only(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitu
         return caldDict, phaseOffsets
 
 
-def delay_only(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, verbose=True):
+def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, verbose=True):
     """
     Function to apply a delay-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -570,7 +558,7 @@ def delay_only(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitu
         than the standard two-element tuple.
     """
     
-    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
                                             amplitude=amplitude, delay_only=True, 
                                             amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff,
                                             verbose=verbose)
@@ -581,7 +569,7 @@ def delay_only(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitu
         return caldDict, delays
 
 
-def delay_and_phase(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, verbose=True):
+def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, verbose=True):
     """
     Function to apply a delay and phase offset (and, optionally, a amplitude)
     self-calibration to data stored in a readUVData dictionary and a model 
@@ -594,7 +582,7 @@ def delay_and_phase(aa, dataDict, simDict, chan, pol, ref_ant=0, max_iter=30, am
         is returned rather than the standard three-element tuple.
     """
     
-    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataDict, simDict, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
                                             amplitude=amplitude, delay_and_phase=True, 
                                             amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff, phase_cutoff=phase_cutoff, 
                                             verbose=verbose)

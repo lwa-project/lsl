@@ -29,13 +29,13 @@ __all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt",
            "__version__", "__revision__", "__all__"]
 
 
-def _radec_of(aa, az, alt):
+def _radec_of(antennaarray, az, alt):
     # az/el -> HA/dec
-    HA = numpy.arctan2(numpy.sin(az-numpy.pi), (numpy.cos(az-numpy.pi)*numpy.sin(aa.lat) + numpy.tan(alt)*numpy.cos(aa.lat)))
-    dec = numpy.arcsin(numpy.sin(aa.lat)*numpy.sin(alt) - numpy.cos(aa.lat)*numpy.cos(alt)*numpy.cos(az-numpy.pi))
+    HA = numpy.arctan2(numpy.sin(az-numpy.pi), (numpy.cos(az-numpy.pi)*numpy.sin(antennaarray.lat) + numpy.tan(alt)*numpy.cos(antennaarray.lat)))
+    dec = numpy.arcsin(numpy.sin(antennaarray.lat)*numpy.sin(alt) - numpy.cos(antennaarray.lat)*numpy.cos(alt)*numpy.cos(az-numpy.pi))
     
     # HA -> RA
-    RA = aa.sidereal_time() - HA
+    RA = antennaarray.sidereal_time() - HA
     
     # radians -> degrees
     RA = RA * 180.0/numpy.pi
@@ -46,21 +46,21 @@ def _radec_of(aa, az, alt):
     pos = astro.equ_posn(RA, dec)
     
     # Correct for aberration
-    pos2 = astro.get_equ_aber(pos, aa.date+astro.DJD_OFFSET)
+    pos2 = astro.get_equ_aber(pos, antennaarray.date+astro.DJD_OFFSET)
     dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
     pos.ra = (pos.ra - dRA) % 360.0
     pos.ra %= 360.0
     pos.dec = pos.dec - dDec
     
     # Correct for nutation
-    pos2 = astro.get_equ_nut(pos, aa.date+astro.DJD_OFFSET)
+    pos2 = astro.get_equ_nut(pos, antennaarray.date+astro.DJD_OFFSET)
     dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
     pos.ra = (pos.ra - dRA) % 360.0
     pos.ra %= 360.0
     pos.dec = pos.dec - dDec
     
     # Precess back to J2000
-    pos = astro.get_precession(aa.date+astro.DJD_OFFSET, pos, ephem.J2000+astro.DJD_OFFSET)
+    pos = astro.get_precession(antennaarray.date+astro.DJD_OFFSET, pos, ephem.J2000+astro.DJD_OFFSET)
     RA, dec = pos.ra, pos.dec
     
     # degrees -> radians
@@ -70,7 +70,7 @@ def _radec_of(aa, az, alt):
     return RA, dec 
 
 
-def sources(ax, aa, srcs, phase_center='z', label=True, marker='x', color='white'):
+def sources(ax, antennaarray, srcs, phase_center='z', label=True, marker='x', color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the
     locations of the srcs given in the 'srcs' dictionary.
@@ -78,15 +78,15 @@ def sources(ax, aa, srcs, phase_center='z', label=True, marker='x', color='white
     
     # Get the phase center
     if phase_center is not 'z':
-        phase_center.compute(aa)
+        phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
-        pcRA, pcDec = aa.sidereal_time(), aa.lat
+        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
         
     # Compute the positions of major sources and label the images
     for name,src in srcs.iteritems():
-        src.compute(aa)
+        src.compute(antennaarray)
         eq = aipy.coord.radec2eq((src.ra-pcRA, src.dec))
         top = numpy.dot(rot, eq)
         junk,alt = aipy.coord.top2azalt(top)
@@ -97,7 +97,7 @@ def sources(ax, aa, srcs, phase_center='z', label=True, marker='x', color='white
                 ax.text(top[0], top[1], name, color=color, size=12)
 
 
-def horizon(ax, aa, phase_center='z', color='white'):
+def horizon(ax, antennaarray, phase_center='z', color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the horizon.
     
@@ -108,17 +108,17 @@ def horizon(ax, aa, phase_center='z', color='white'):
         
     # Get the phase center
     if phase_center is not 'z':
-        phase_center.compute(aa)
+        phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
-        pcRA, pcDec = aa.sidereal_time(), aa.lat
+        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
     
     # Add in the horizon
     x = numpy.zeros(361) + numpy.nan
     y = numpy.zeros(361) + numpy.nan
     for i in xrange(361):
-        ra, dec = _radec_of(aa, i*numpy.pi/180.0, 0.0)
+        ra, dec = _radec_of(antennaarray, i*numpy.pi/180.0, 0.0)
         eq = aipy.coord.radec2eq((ra-pcRA,dec))
         top = numpy.dot(rot, eq)
         junk,alt = aipy.coord.top2azalt(top)
@@ -128,7 +128,7 @@ def horizon(ax, aa, phase_center='z', color='white'):
     ax.plot(x, y, color=color)
 
 
-def graticule_radec(ax, aa, phase_center='z', label=True, color='white'):
+def graticule_radec(ax, antennaarray, phase_center='z', label=True, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant declinate and RA.  Declinations are spaced at 20 degree intervals
@@ -137,10 +137,10 @@ def graticule_radec(ax, aa, phase_center='z', label=True, color='white'):
     
     # Get the phase center
     if phase_center is not 'z':
-        phase_center.compute(aa)
+        phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
-        pcRA, pcDec = aa.sidereal_time(), aa.lat
+        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
     
     # Lines of constant declination first
@@ -202,7 +202,7 @@ def graticule_radec(ax, aa, phase_center='z', label=True, color='white'):
             ax.text(top[0], top[1], '%i$^h$' % (ra/15,), color=color)
 
 
-def graticule_azalt(ax, aa, phase_center='z', label=True, color='white'):
+def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant azimuth and elevation.  Elevations are spaced at 20 degree intervals
@@ -211,10 +211,10 @@ def graticule_azalt(ax, aa, phase_center='z', label=True, color='white'):
     
     # Get the phase center
     if phase_center is not 'z':
-        phase_center.compute(aa)
+        phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
-        pcRA, pcDec = aa.sidereal_time(), aa.lat
+        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
     rot = aipy.coord.eq2top_m(0, pcDec)
     
     # Lines of constant elevation
@@ -227,7 +227,7 @@ def graticule_azalt(ax, aa, phase_center='z', label=True, color='white'):
         y *= numpy.nan
         
         for i in xrange(361):
-            ra, dec = _radec_of(aa, i*numpy.pi/180.0, el*numpy.pi/180.0)
+            ra, dec = _radec_of(antennaarray, i*numpy.pi/180.0, el*numpy.pi/180.0)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
             top = numpy.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
@@ -253,7 +253,7 @@ def graticule_azalt(ax, aa, phase_center='z', label=True, color='white'):
         y *= numpy.nan
         
         for i in xrange(81):
-            ra, dec = _radec_of(aa, az*numpy.pi/180.0, i*numpy.pi/180.0)
+            ra, dec = _radec_of(antennaarray, az*numpy.pi/180.0, i*numpy.pi/180.0)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
             top = numpy.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
