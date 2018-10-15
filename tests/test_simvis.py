@@ -58,30 +58,19 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
-        # Do a check of keys
-        keyList = out.keys()
-        for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            self.assertTrue(key in keyList)
-            
         # Do a check of frequencies
-        for fa, fq in zip(out['freq'], freqs):
+        for fa, fq in zip(out.freq, freqs):
             self.assertAlmostEqual(fa, fq, 6)
             
-        # Do a check to make sure that the entries with secondary keys have them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(key2 in secondaryKeyList)
-                
-        # Do a check to make sure that the entries with secondary keys also 
-        # have lists in them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(type(out[key][key2]).__name__ == 'list')
-                
+        # Do a check to make sure that the polarizations
+        self.assertEqual(out.npol, 4)
+        self.assertTrue('XX' in out.pols)
+        self.assertTrue('XY' in out.pols)
+        self.assertTrue('YX' in out.pols)
+        self.assertTrue('YY' in out.pols)
+        
         #
         # Single-channel test
         #
@@ -93,30 +82,19 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
-        # Do a check of keys
-        keyList = out.keys()
-        for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            self.assertTrue(key in keyList)
-            
         # Do a check of frequencies
-        for fa, fq in zip(out['freq'], freqs):
+        for fa, fq in zip(out.freq, freqs):
             self.assertAlmostEqual(fa, fq, 6)
             
-        # Do a check to make sure that the entries with secondary keys have them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(key2 in secondaryKeyList)
-                
-        # Do a check to make sure that the entries with secondary keys also 
-        # have lists in them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(type(out[key][key2]).__name__ == 'list')
-                
+        # Do a check to make sure that the polarizations
+        self.assertEqual(out.npol, 4)
+        self.assertTrue('XX' in out.pols)
+        self.assertTrue('XY' in out.pols)
+        self.assertTrue('YX' in out.pols)
+        self.assertTrue('YY' in out.pols)
+        
     def test_build_data_res(self):
         """Test building simulated visibility data with resolved sources"""
         
@@ -127,30 +105,20 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS, resolve_src=True)
+        out = vis.build_sim_data(aa, vis.SOURCES, resolve_src=True)
         
         # Do a check of keys
-        keyList = out.keys()
-        for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            self.assertTrue(key in keyList)
-            
         # Do a check of frequencies
-        for fa, fq in zip(out['freq'], freqs):
+        for fa, fq in zip(out.freq, freqs):
             self.assertAlmostEqual(fa, fq, 6)
             
-        # Do a check to make sure that the entries with secondary keys have them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(key2 in secondaryKeyList)
-                
-        # Do a check to make sure that the entries with secondary keys also 
-        # have lists in them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(type(out[key][key2]).__name__ == 'list')
-                
+        # Do a check to make sure that the polarizations
+        self.assertEqual(out.npol, 4)
+        self.assertTrue('XX' in out.pols)
+        self.assertTrue('XY' in out.pols)
+        self.assertTrue('YX' in out.pols)
+        self.assertTrue('YY' in out.pols)
+        
         #
         # Single-channel test
         #
@@ -162,30 +130,19 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS, resolve_src=True)
+        out = vis.build_sim_data(aa, vis.SOURCES, resolve_src=True)
         
-        # Do a check of keys
-        keyList = out.keys()
-        for key in ['freq', 'isMasked', 'bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            self.assertTrue(key in keyList)
-            
         # Do a check of frequencies
-        for fa, fq in zip(out['freq'], freqs):
+        for fa, fq in zip(out.freq, freqs):
             self.assertAlmostEqual(fa, fq, 6)
             
-        # Do a check to make sure that the entries with secondary keys have them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(key2 in secondaryKeyList)
-                
-        # Do a check to make sure that the entries with secondary keys also 
-        # have lists in them
-        for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-            secondaryKeyList = out[key].keys()
-            for key2 in ['xx', 'yy', 'xy', 'yx']:
-                self.assertTrue(type(out[key][key2]).__name__ == 'list')
-                
+        # Do a check to make sure that the polarizations
+        self.assertEqual(out.npol, 4)
+        self.assertTrue('XX' in out.pols)
+        self.assertTrue('XY' in out.pols)
+        self.assertTrue('YX' in out.pols)
+        self.assertTrue('YY' in out.pols)
+        
     def test_scale_data(self):
         """Test that we can scale a data dictionary without error"""
         
@@ -196,7 +153,7 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Scale
         amp = vis.scale_data(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
@@ -214,7 +171,7 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Scale
         amp = vis.scale_data(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
@@ -232,7 +189,7 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Shift
         sft = vis.shift_data(out, aa)
@@ -248,7 +205,7 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Shift
         sft = vis.shift_data(out, aa)
@@ -264,7 +221,7 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Add in the noise
         na = vis.add_baseline_noise(out, 15e3, 0.061)
@@ -280,7 +237,7 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SRCS)
+        out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Add in the noise
         na = vis.add_baseline_noise(out, 15e3, 0.061, bandwidth=1e6)
