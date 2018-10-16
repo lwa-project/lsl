@@ -35,11 +35,11 @@ class fitsidi_tests(unittest.TestCase):
     def __initData(self):
         """Private function to generate a random set of data for writing a FITS
         IDI file.  The data is returned as a dictionary with keys:
-        * freq - frequency array in Hz
-        * site - lwa.common.stations object
-        * stands - array of stand numbers
-        * bl - list of baseline pairs in real stand numbers
-        * vis - array of visibility data in baseline x freq format
+         * freq - frequency array in Hz
+         * site - lwa.common.stations object
+         * stands - array of stand numbers
+         * bl - list of baseline pairs in real stand numbers
+         * vis - array of visibility data in baseline x freq format
         """
 
         # Frequency range
@@ -80,7 +80,57 @@ class fitsidi_tests(unittest.TestCase):
             self.assertTrue(ext in extNames)
 
         hdulist.close()
+        
+    def test_multi_if(self):
+        """Test writing more than one IF to a FITS IDI file."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'idi-test-MultiIF.fits')
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Start the file
+        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_frequency(data['freq']+10e6)
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], 
+                          numpy.concatenate([data['vis'], data['vis']], axis=1))
+        fits.write()
 
+        # Open the file and examine
+        hdulist = astrofits.open(testFile)
+        # Check that all of the extensions are there
+        extNames = [hdu.name for hdu in hdulist]
+        for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
+            self.assertTrue(ext in extNames)
+
+        hdulist.close()
+        
+    def test_writer_errors(self):
+        """Test that common FITS IDI error conditions are caught."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'idi-test-MultiIF.fits')
+        
+        # Get some data
+        data = self.__initData()
+        
+        for i in range(4):
+            # Start the file
+            fits = fitsidi.IDI(testFile, ref_time=testTime, clobber=True)
+            if i != 0:
+                fits.set_stokes(['xx'])
+            if i != 1:
+                fits.set_frequency(data['freq'])
+            if i != 2:
+                fits.set_geometry(data['site'], data['antennas'])
+            if i != 3:
+                fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+            self.assertRaises(fits.write, RuntimeError)
+            
     def test_array_geometry(self):
         """Test the ARRAY_GEOMETRY table."""
 

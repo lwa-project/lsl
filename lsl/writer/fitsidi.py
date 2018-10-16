@@ -292,13 +292,18 @@ class IDI(object):
         parameters and add an entry to the self.freq list.
         """
         
-        self.nChan = len(freq)
-        self.refVal = freq[0]
-        self.refPix = 1
-        self.channelWidth = numpy.abs(freq[1] - freq[0])
+        if self.nChan == 0:
+            self.nChan = len(freq)
+            self.refVal = freq[0]
+            self.refPix = 1
+            self.channelWidth = numpy.abs(freq[1] - freq[0])
+            offset = 0.0
+        else:
+            assert(len(freq) == self.nChan)
+            offset = freq[0] - self.refVal
         totalWidth = numpy.abs(freq[-1] - freq[0])
         
-        freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
+        freqSetup = self._Frequency(offset, self.channelWidth, totalWidth)
         self.freq.append(freqSetup)
         
     def set_geometry(self, site, antennas, bits=8):
@@ -391,6 +396,16 @@ class IDI(object):
         correct order.
         """
         
+        # Validate
+        if self.nStokes == 0:
+            raise RuntimeError("No polarization setups defined")
+        if len(self.freq) == 0:
+            raise RuntimeError("No frequency setups defined")
+        if self.nAnt == 0:
+            raise RuntimeError("No array geometry defined")
+        if len(self.data) == 0:
+            raise RuntimeError("No visibility data defined")
+            
         # Sort the data set
         self.data.sort()
         
@@ -424,7 +439,7 @@ class IDI(object):
         hdr['TABREV'] = (revision, 'table format revision number')
         hdr['NO_STKD'] = (self.nStokes, 'number of Stokes parameters')
         hdr['STK_1'] = (self.stokes[0], 'first Stokes parameter')
-        hdr['NO_BAND'] = (1, 'number of frequency bands')
+        hdr['NO_BAND'] = (len(self.freq), 'number of frequency bands')
         hdr['NO_CHAN'] = (self.nChan, 'number of frequency channels')
         hdr['REF_FREQ'] = (self.refVal, 'reference frequency (Hz)')
         hdr['CHAN_BW'] = (self.channelWidth, 'channel bandwidth (Hz)')
@@ -557,24 +572,26 @@ class IDI(object):
         Define the Frequency table (group 1, table 3).
         """
         
+        nBand = len(self.freq)
+        
         # Frequency setup number
         c1 = astrofits.Column(name='FREQID', format='1J', 
-                        array=numpy.array([self.freq[0].id], dtype=numpy.int32))
+                        array=numpy.array([self.freq[0].id,], dtype=numpy.int32))
         # Frequency offsets in Hz
-        c2 = astrofits.Column(name='BANDFREQ', format='1D', unit='HZ', 
-                        array=numpy.array([self.freq[0].bandFreq], dtype=numpy.float64))
+        c2 = astrofits.Column(name='BANDFREQ', format='%iD' % nBand, unit='HZ', 
+                        array=numpy.array([f.bandFreq for f in self.freq], dtype=numpy.float64).reshape(1,nBand))
         # Channel width in Hz
-        c3 = astrofits.Column(name='CH_WIDTH', format='1E', unit='HZ', 
-                        array=numpy.array([self.freq[0].chWidth], dtype=numpy.float32))
+        c3 = astrofits.Column(name='CH_WIDTH', format='%iE' % nBand, unit='HZ', 
+                        array=numpy.array([f.chWidth for f in self.freq], dtype=numpy.float32).reshape(1,nBand))
         # Total bandwidths of bands
-        c4 = astrofits.Column(name='TOTAL_BANDWIDTH', format='1E', unit='HZ', 
-                        array=numpy.array([self.freq[0].totalBW], dtype=numpy.float32))
+        c4 = astrofits.Column(name='TOTAL_BANDWIDTH', format='%iE' % nBand, unit='HZ', 
+                        array=numpy.array([f.totalBW for f in self.freq], dtype=numpy.float32).reshape(1,nBand))
         # Sideband flag
-        c5 = astrofits.Column(name='SIDEBAND', format='1J', 
-                        array=numpy.array([self.freq[0].sideBand], dtype=numpy.int32))
+        c5 = astrofits.Column(name='SIDEBAND', format='%iJ' % nBand, 
+                        array=numpy.array([f.sideBand for f in self.freq], dtype=numpy.int32).reshape(1,nBand))
         # Baseband channel
-        c6 = astrofits.Column(name='BB_CHAN', format='1J', 
-                        array=numpy.array([self.freq[0].baseBand], dtype=numpy.int32))
+        c6 = astrofits.Column(name='BB_CHAN', format='%iJ' % nBand, 
+                        array=numpy.array([f.baseBand for f in self.freq], dtype=numpy.int32).reshape(1,nBand))
                         
         # Define the collection of columns
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6])
@@ -592,6 +609,8 @@ class IDI(object):
         """
         Define the Antenna table (group 2, table 1).
         """
+        
+        nBand = len(self.freq)
         
         # Central time of period covered by record in days
         c1 = astrofits.Column(name='TIME', unit='DAYS', format='1D', 
@@ -618,20 +637,20 @@ class IDI(object):
         c8 = astrofits.Column(name='POLTYA', format='A1', 
                         array=numpy.array([ant.polA['Type'] for ant in self.array[0]['ants']]))
         # Feed A orientation in degrees
-        c9 = astrofits.Column(name='POLAA', format='1E', 
-                        array=numpy.array([ant.polA['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
+        c9 = astrofits.Column(name='POLAA', format='%iE' % nBand,  unit='DEGREES', 
+                        array=numpy.array([[ant.polA['Angle'],]*nBand for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed A polarization parameters
-        c10 = astrofits.Column(name='POLCALA', format='2E', 
-                        array=numpy.array([ant.polA['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
+        c10 = astrofits.Column(name='POLCALA', format='%iE' % (2*nBand), 
+                        array=numpy.concatenate([[ant.polA['Cal'],]*nBand for ant in self.array[0]['ants']]).astype(numpy.float32))
         # Feed B polarization label
         c11 = astrofits.Column(name='POLTYB', format='A1', 
                         array=numpy.array([ant.polB['Type'] for ant in self.array[0]['ants']]))
         # Feed B orientation in degrees
-        c12 = astrofits.Column(name='POLAB', format='1E', 
-                        array=numpy.array([ant.polB['Angle'] for ant in self.array[0]['ants']], dtype=numpy.float32))
+        c12 = astrofits.Column(name='POLAB', format='%iE' % nBand,  unit='DEGREES', 
+                        array=numpy.array([[ant.polB['Angle'],]*nBand for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed B polarization parameters
-        c13 = astrofits.Column(name='POLCALB', format='2E', 
-                        array=numpy.array([ant.polB['Cal'] for ant in self.array[0]['ants']], dtype=numpy.float32))
+        c13 = astrofits.Column(name='POLCALB', format='%iE' % (2*nBand), 
+                        array=numpy.concatenate([[ant.polB['Cal'],]*nBand for ant in self.array[0]['ants']]).astype(numpy.float32))
                         
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
                             c11, c12, c13])
@@ -651,6 +670,8 @@ class IDI(object):
         """
         Define the Bandpass table (group 2, table 3).
         """
+        
+        nBand = len(self.freq)
         
         # Central time of period covered by record in days
         c1 = astrofits.Column(name='TIME', unit='DAYS', format='1D', 
@@ -674,26 +695,26 @@ class IDI(object):
         c7 = astrofits.Column(name='BANDWIDTH', unit='HZ', format='1E',
                         array=(numpy.zeros((self.nAnt,), dtype=numpy.float32)+self.freq[0].totalBW))
         # Band frequency in Hz
-        c8 = astrofits.Column(name='BAND_FREQ', unit='HZ', format='1D',
-                        array=(numpy.zeros((self.nAnt,), dtype=numpy.float64)+self.freq[0].bandFreq))
+        c8 = astrofits.Column(name='BAND_FREQ', unit='HZ', format='%iD' % nBand,
+                        array=(numpy.zeros((self.nAnt,nBand,), dtype=numpy.float64)+[f.bandFreq for f in self.freq]))
         # Reference antenna number (pol. 1)
         c9 = astrofits.Column(name='REFANT_1', format='1J',
                         array=numpy.ones((self.nAnt,), dtype=numpy.int32))
         # Real part of the bandpass (pol. 1)
-        c10 = astrofits.Column(name='BREAL_1', format='%dE' % self.nChan,
-                        array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
+        c10 = astrofits.Column(name='BREAL_1', format='%iE' % (self.nChan*nBand),
+                        array=numpy.ones((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
         # Imaginary part of the bandpass (pol. 1)
-        c11 = astrofits.Column(name='BIMAG_1', format='%dE' % self.nChan,
-                        array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
+        c11 = astrofits.Column(name='BIMAG_1', format='%iE' % (self.nChan*nBand),
+                        array=numpy.zeros((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
         # Reference antenna number (pol. 2)
         c12 = astrofits.Column(name='REFANT_2', format='1J',
                         array=numpy.ones((self.nAnt,), dtype=numpy.int32))
         # Real part of the bandpass (pol. 2)
-        c13 = astrofits.Column(name='BREAL_2', format='%dE' % self.nChan,
-                        array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
+        c13 = astrofits.Column(name='BREAL_2', format='%iE' % (self.nChan*nBand),
+                        array=numpy.ones((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
         # Imaginary part of the bandpass (pol. 2)
-        c14 = astrofits.Column(name='BIMAG_2', format='%dE' % self.nChan,
-                        array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
+        c14 = astrofits.Column(name='BIMAG_2', format='%iE' % (self.nChan*nBand),
+                        array=numpy.zeros((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
                         
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
                             c11, c12, c13, c14])
@@ -715,6 +736,8 @@ class IDI(object):
         """
         Define the Source table (group 1, table 2).
         """
+        
+        nBand = len(self.freq)
         
         (arrPos, ag) = self.read_array_geometry()
         ids = ag.keys()
@@ -803,43 +826,43 @@ class IDI(object):
         c5 = astrofits.Column(name='FREQID', format='1J', 
                         array=(numpy.zeros((nSource,), dtype=numpy.int32)+self.freq[0].id))
         # Stokes I flux density in Jy
-        c6 = astrofits.Column(name='IFLUX', format='1E', 
-                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        c6 = astrofits.Column(name='IFLUX', format='%iE' % nBand, unit='JY', 
+                        array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Stokes I flux density in Jy
-        c7 = astrofits.Column(name='QFLUX', format='1E', 
-                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        c7 = astrofits.Column(name='QFLUX', format='%iE' % nBand, unit='JY', 
+                        array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Stokes I flux density in Jy
-        c8 = astrofits.Column(name='UFLUX', format='1E', 
-                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        c8 = astrofits.Column(name='UFLUX', format='%iE' % nBand, unit='JY', 
+                        array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Stokes I flux density in Jy
-        c9 = astrofits.Column(name='VFLUX', format='1E', 
-                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        c9 = astrofits.Column(name='VFLUX', format='%iE' % nBand, unit='JY', 
+                        array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Spectral index
-        c10 = astrofits.Column(name='ALPHA', format='1E', 
-                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        c10 = astrofits.Column(name='ALPHA', format='%iE' % nBand, 
+                        array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Frequency offset in Hz
-        c11 = astrofits.Column(name='FREQOFF', format='1E', 
-                        array=numpy.zeros((nSource,), dtype=numpy.float32))
+        c11 = astrofits.Column(name='FREQOFF', format='%iE' % nBand, unit='HZ', 
+                        array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Mean equinox and epoch
         c12 = astrofits.Column(name='EQUINOX', format='A8',
                         array=numpy.array(('J2000',)).repeat(nSource))
-        c13 = astrofits.Column(name='EPOCH', format='1D', 
+        c13 = astrofits.Column(name='EPOCH', format='1D', unit='YEARS', 
                         array=numpy.zeros((nSource,), dtype=numpy.float64) + 2000.0)
         # Apparent right ascension in degrees
-        c14 = astrofits.Column(name='RAAPP', format='1D', 
+        c14 = astrofits.Column(name='RAAPP', format='1D', unit='DEGREES', 
                         array=numpy.array(raList))
         # Apparent declination in degrees
-        c15 = astrofits.Column(name='DECAPP', format='1D', 
+        c15 = astrofits.Column(name='DECAPP', format='1D', unit='DEGREES', 
                         array=numpy.array(decList))
         # Right ascension at mean equinox in degrees
-        c16 = astrofits.Column(name='RAEPO', format='1D', 
+        c16 = astrofits.Column(name='RAEPO', format='1D', unit='DEGREES', 
                         array=numpy.array(raPoList))
         # Declination at mean equinox in degrees
-        c17 = astrofits.Column(name='DECEPO', format='1D', 
+        c17 = astrofits.Column(name='DECEPO', format='1D', unit='DEGREES', 
                         array=numpy.array(decPoList))
         # Systemic velocity in m/s
-        c18 = astrofits.Column(name='SYSVEL', format='1D', 
-                        array=numpy.zeros((nSource,), dtype=numpy.float64))
+        c18 = astrofits.Column(name='SYSVEL', format='%iD' % nBand, unit='M/SEC', 
+                        array=numpy.zeros((nSource,nBand), dtype=numpy.float64))
         # Velocity type
         c19 = astrofits.Column(name='VELTYP', format='A8', 
                         array=numpy.array(('GEOCENTR',)).repeat(nSource))
@@ -847,16 +870,16 @@ class IDI(object):
         c20 = astrofits.Column(name='VELDEF', format='A8', 
                         array=numpy.array(('OPTICAL',)).repeat(nSource))
         # Line rest frequency in Hz
-        c21 = astrofits.Column(name='RESTFREQ', format='1D', 
-                        array=(numpy.zeros((nSource,), dtype=numpy.float64) + self.refVal))
+        c21 = astrofits.Column(name='RESTFREQ', format='%iD' % nBand, unit='HZ', 
+                        array=(numpy.zeros((nSource,nBand), dtype=numpy.float64) + [f.bandFreq+self.refVal for f in self.freq]))
         # Proper motion in RA in degrees/day
-        c22 = astrofits.Column(name='PMRA', format='1D', 
+        c22 = astrofits.Column(name='PMRA', format='1D', unit='DEG/DAY', 
                         array=numpy.zeros((nSource,), dtype=numpy.float64))
         # Proper motion in Dec in degrees/day
-        c23 = astrofits.Column(name='PMDEC', format='1D', 
+        c23 = astrofits.Column(name='PMDEC', format='1D', unit='DEG/DAY', 
                         array=numpy.zeros((nSource,), dtype=numpy.float64))
         # Parallax of source in arc sec.
-        c24 = astrofits.Column(name='PARALLAX', format='1E', 
+        c24 = astrofits.Column(name='PARALLAX', format='1E', unit='ARCSEC', 
                         array=numpy.zeros((nSource,), dtype=numpy.float32))
                         
         # Define the collection of columns
@@ -876,6 +899,8 @@ class IDI(object):
         """
         Define the UV_Data table (group 3, table 1).
         """
+        
+        nBand = len(self.freq)
         
         (arrPos, ag) = self.read_array_geometry()
         (mapper, inverseMapper) = self.read_array_mapper()
@@ -914,7 +939,11 @@ class IDI(object):
                 date.minutes = 0
                 date.seconds = 0
                 utc0 = date.to_jd()
-                
+                try:
+                    utcR
+                except NameError:
+                    utcR = utc0*1.0
+                    
                 ## Update the observer so we can figure out where the source is
                 obs.date = utc - astro.DJD_OFFSET
                 if dataSet.source == 'z':
@@ -975,8 +1004,8 @@ class IDI(object):
                     matrix *= 0.0
                     weights *= 0.0
                 except NameError:
-                    matrix = numpy.zeros((len(order), self.nStokes*self.nChan,), dtype=numpy.complex64)
-                    weights = numpy.ones((len(order), self.nStokes*self.nChan,), dtype=numpy.float32)
+                    matrix = numpy.zeros((len(order), self.nStokes*self.nChan*nBand), dtype=numpy.complex64)
+                    weights = numpy.ones((len(order), self.nStokes*self.nChan*nBand), dtype=numpy.float32)
                     
             # Save the visibility data in the right order
             # NOTE:  This is this conjugate since there seems to be a convention mis-match
@@ -993,7 +1022,7 @@ class IDI(object):
         nSource = len(nameList)
         
         # Visibility Data
-        c1 = astrofits.Column(name='FLUX', format='%iE' % (2*self.nStokes*self.nChan), unit='UNCALIB', 
+        c1 = astrofits.Column(name='FLUX', format='%iE' % (2*self.nStokes*self.nChan*nBand), unit='UNCALIB', 
                         array=numpy.concatenate(mList))
         # Baseline number (first*256+second)
         c2 = astrofits.Column(name='BASELINE', format='1J', 
@@ -1029,7 +1058,7 @@ class IDI(object):
         c12 = astrofits.Column(name='GATEID', format='1J', 
                         array=numpy.zeros((nBaseline,), dtype=numpy.int32))
         # Weights
-        c13 = astrofits.Column(name='WEIGHT', format='%iE' % (self.nStokes*self.nChan), 
+        c13 = astrofits.Column(name='WEIGHT', format='%iE' % (self.nStokes*self.nChan*nBand), 
                         array=numpy.concatenate(fList))
                         
         colDefs = astrofits.ColDefs([c6, c7, c8, c3, c4, c2, c11, c9, c10, c5, 
@@ -1064,7 +1093,7 @@ class IDI(object):
         uv.header['CRPIX3'] = self.refPix
         uv.header['CRVAL3'] = self.refVal
         
-        uv.header['MAXIS4'] = (1, 'number of pixels in BAND (IF) axis')
+        uv.header['MAXIS4'] = (nBand, 'number of pixels in BAND (IF) axis')
         uv.header['CTYPE4'] = ('BAND', 'axis 4 is BAND axis')
         uv.header['CDELT4'] = 1.0
         uv.header['CRPIX4'] = 1.0

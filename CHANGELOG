@@ -9,6 +9,7 @@
   * Fixed a problem with the data ordering in the lsl.writer modules when a high time resolution (<~2 ms) is used
   * Fixed a bug in the DR spectrometer reader which incorrectly mapped tuning 2, Stokes I for IQUV-mode observations
   * Fixed a bug in the new measurement set writer
+  * Added multiple IF support to the FITS IDI writer
 
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals
