@@ -129,7 +129,7 @@ class fitsidi_tests(unittest.TestCase):
                 fits.set_geometry(data['site'], data['antennas'])
             if i != 3:
                 fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
-            self.assertRaises(fits.write, RuntimeError)
+            self.assertRaises(RuntimeError, fits.write)
             
     def test_array_geometry(self):
         """Test the ARRAY_GEOMETRY table."""
