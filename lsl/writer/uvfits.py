@@ -373,33 +373,25 @@ class UV(object):
         correct order.
         """
         
-        def __sortData(x, y):
-            """
-            Function to sort the self.data list in order of time and then 
-            polarization code.
-            """
+        # Validate
+        if self.nStokes == 0:
+            raise RuntimeError("No polarization setups defined")
+        if len(self.freq) == 0:
+            raise RuntimeError("No frequency setups defined")
+        if self.nAnt == 0:
+            raise RuntimeError("No array geometry defined")
+        if len(self.data) == 0:
+            raise RuntimeError("No visibility data defined")
             
-            xID = x.obsTime*10000000 + abs(x.pol)
-            yID = y.obsTime*10000000 + abs(y.pol)
-            
-            if xID > yID:
-                return 1
-            elif xID < yID:
-                return -1
-            else:
-                return 0
-                
         # Sort the data set
-        try:
-            self.data.sort(cmp=__sortData)
-        except TypeError:
-            self.data.sort(key=cmp_to_key(__sortData))
-            
+        self.data.sort()
+        
         self._write_aipssu_hdu(dummy=True)
         self._write_primary_hdu()
         self._write_aipsan_hdu()
         self._write_aipsfq_hdu()
         self._write_aipssu_hdu()
+        self._write_aipsbp_hdu()
         
         # Clear out the data section
         del(self.data[:])
@@ -762,9 +754,80 @@ class UV(object):
         self.FITS.append(fq)
         self.FITS.flush()
         
+    def _write_aipsbp_hdu(self):
+        """
+        Define the 'AIPS BP' table.
+        """
+        
+        # Central time of period covered by record in days
+        c1 = astrofits.Column(name='TIME', unit='DAYS', format='1D', 
+                        array=numpy.zeros((self.nAnt,), dtype=numpy.float64))
+        # Duration of period covered by record in days
+        c2 = astrofits.Column(name='INTERVAL', unit='DAYS', format='1E',
+                        array=(2*numpy.ones((self.nAnt,), dtype=numpy.float32)))
+        # Source ID
+        c3 = astrofits.Column(name='SOURCE ID', format='1J', 
+                        array=numpy.zeros((self.nAnt,), dtype=numpy.int32))
+        # Sub-array number
+        c4 = astrofits.Column(name='SUBARRAY', format='1J', 
+                        array=numpy.ones((self.nAnt,), dtype=numpy.int32))
+        # Frequency setup number
+        c5 = astrofits.Column(name='FREQ ID', format='1J',
+                        array=(numpy.zeros((self.nAnt,), dtype=numpy.int32) + self.freq[0].id))
+        # Antenna number
+        c6 = astrofits.Column(name='ANTENNA', format='1J', 
+                        array=self.FITS['AIPS AN'].data.field('NOSTA'))
+        # Bandwidth in Hz
+        c7 = astrofits.Column(name='BANDWIDTH', unit='HZ', format='1E',
+                        array=(numpy.zeros((self.nAnt,), dtype=numpy.float32)+self.freq[0].totalBW))
+        # Band frequency in Hz
+        c8 = astrofits.Column(name='CHN_SHIFT', format='1D',
+                        array=(numpy.zeros((self.nAnt,), dtype=numpy.float64)+self.freq[0].bandFreq))
+        # Reference antenna number (pol. 1)
+        c9 = astrofits.Column(name='REFANT 1', format='1J',
+                        array=numpy.ones((self.nAnt,), dtype=numpy.int32))
+        # Solution weight (pol. 1)
+        c10 = astrofits.Column(name='WEIGHT 1', format='%dE' % self.nChan,
+                        array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
+        # Real part of the bandpass (pol. 1)
+        c11 = astrofits.Column(name='REAL 1', format='%dE' % self.nChan,
+                        array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
+        # Imaginary part of the bandpass (pol. 1)
+        c12 = astrofits.Column(name='IMAG 1', format='%dE' % self.nChan,
+                        array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
+        # Reference antenna number (pol. 2)
+        c13 = astrofits.Column(name='REFANT 2', format='1J',
+                        array=numpy.ones((self.nAnt,), dtype=numpy.int32))
+        # Solution weight (pol. 2)
+        c14 = astrofits.Column(name='WEIGHT 2', format='%dE' % self.nChan,
+                        array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
+        # Real part of the bandpass (pol. 2)
+        c15 = astrofits.Column(name='REAL 2', format='%dE' % self.nChan,
+                        array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
+        # Imaginary part of the bandpass (pol. 2)
+        c16 = astrofits.Column(name='IMAG 2', format='%dE' % self.nChan,
+                        array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
+                        
+        colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
+                            c11, c12, c13, c14, c15, c16])
+                            
+        # Create the Bandpass table and update its header
+        bp = astrofits.BinTableHDU.from_columns(colDefs)
+        self._add_common_keywords(bp.header, 'AIPS BP', 1)
+        
+        bp.header['NO_ANT'] = self.nAnt
+        bp.header['NO_POL'] = 2
+        bp.header['NO_CHAN'] = self.nChan
+        bp.header['STRT_CHN'] = self.refPix
+        bp.header['NO_SHFTS'] = 1
+        bp.header['BP_TYPE'] = ' '
+        
+        self.FITS.append(bp)
+        self.FITS.flush()
+        
     def _write_aipssu_hdu(self, dummy=False):
         """
-        Define the 'AIPS SU' table .
+        Define the 'AIPS SU' table.
         """
         
         self._write_aipsan_hdu(dummy=True)

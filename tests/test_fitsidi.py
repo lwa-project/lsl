@@ -81,39 +81,11 @@ class fitsidi_tests(unittest.TestCase):
 
         hdulist.close()
         
-    def test_multi_if(self):
-        """Test writing more than one IF to a FITS IDI file."""
-        
-        testTime = time.time()
-        testFile = os.path.join(self.testPath, 'idi-test-MultiIF.fits')
-        
-        # Get some data
-        data = self.__initData()
-        
-        # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
-        fits.set_stokes(['xx'])
-        fits.set_frequency(data['freq'])
-        fits.set_frequency(data['freq']+10e6)
-        fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], data['vis']], axis=1))
-        fits.write()
-
-        # Open the file and examine
-        hdulist = astrofits.open(testFile)
-        # Check that all of the extensions are there
-        extNames = [hdu.name for hdu in hdulist]
-        for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
-            self.assertTrue(ext in extNames)
-
-        hdulist.close()
-        
     def test_writer_errors(self):
         """Test that common FITS IDI error conditions are caught."""
         
         testTime = time.time()
-        testFile = os.path.join(self.testPath, 'idi-test-MultiIF.fits')
+        testFile = os.path.join(self.testPath, 'idi-test-ERR.fits')
         
         # Get some data
         data = self.__initData()
@@ -350,7 +322,7 @@ class fitsidi_tests(unittest.TestCase):
             i = i + 1
         
         hdulist.close()
-
+        
     def test_mapper(self):
         """Test the NOSTA_MAPPER table."""
 
@@ -390,7 +362,85 @@ class fitsidi_tests(unittest.TestCase):
                 self.assertEqual(mact, int(anam[3:]))
 
         hdulist.close()
+        
+    def test_multi_if(self):
+        """Test writing more than one IF to a FITS IDI file."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'idi-test-MultiIF.fits')
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Start the file
+        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_frequency(data['freq']+10e6)
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], 
+                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+        fits.write()
 
+        # Open the file and examine
+        hdulist = astrofits.open(testFile)
+        # Check that all of the extensions are there
+        extNames = [hdu.name for hdu in hdulist]
+        for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
+            self.assertTrue(ext in extNames)
+            
+        # Load the mapper
+        try:
+            mp = hdulist['NOSTA_MAPPER'].data
+            nosta = mp.field('NOSTA')
+            noact = mp.field('NOACT')
+        except KeyError:
+            ag = hdulist['ARRAY_GEOMETRY'].data
+            nosta = ag.field('NOSTA')
+            noact = ag.field('NOSTA')
+        mapper = {}
+        for s,a in zip(nosta, noact):
+            mapper[s] = a
+            
+        # Correct number of visibilities
+        uv = hdulist['UV_DATA'].data
+        self.assertEqual(len(uv.field('FLUX')), data['vis'].shape[0])
+        
+        # Correct number of frequencies
+        for vis in uv.field('FLUX'):
+            self.assertEqual(len(vis), 2*2*len(data['freq']))
+
+        # Correct values
+        for bl, vis in zip(uv.field('BASELINE'), uv.field('FLUX')):
+            # Convert mapped stands to real stands
+            stand1 = mapper[(bl >> 8) & 255]
+            stand2 = mapper[bl & 255]
+
+            # Find out which visibility set in the random data corresponds to the 
+            # current visibility
+            i = 0
+            for ant1,ant2 in data['bl']:
+                if ant1.stand.id == stand1 and ant2.stand.id == stand2:
+                    break
+                else:
+                    i = i + 1
+            
+            # Extract the data and run the comparison - IF 1
+            visData = numpy.zeros(2*len(data['freq']), dtype=numpy.complex64)
+            visData.real = vis[0::2]
+            visData.imag = vis[1::2]
+            for vd, sd in zip(visData[:len(data['freq'])], data['vis'][i,:]):
+                self.assertAlmostEqual(vd, sd, 8)
+                
+            # Extract the data and run the comparison - IF 2
+            visData = numpy.zeros(2*len(data['freq']), dtype=numpy.complex64)
+            visData.real = vis[0::2]
+            visData.imag = vis[1::2]
+            for vd, sd in zip(visData[len(data['freq']):], 10*data['vis'][i,:]):
+                self.assertAlmostEqual(vd, sd, 8)
+                
+        hdulist.close()
+        
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
@@ -721,7 +771,7 @@ class aipsidi_tests(unittest.TestCase):
                 self.assertEqual(mact, int(anam[1:]))
 
         hdulist.close()
-
+        
     def tearDown(self):
         """Remove the test path directory and its contents"""
 

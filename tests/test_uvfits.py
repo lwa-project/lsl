@@ -188,6 +188,29 @@ class uvfits_tests(unittest.TestCase):
         
         hdulist.close()
         
+    def test_bandpass(self):
+        """Test the 'AIPS BP' table."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'uv-test-BP.fits')
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Start the file
+        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.write()
+        
+        # Open the file and examine
+        hdulist = astrofits.open(testFile)
+        su = hdulist['AIPS BP'].data
+        
+        hdulist.close()
+        
     def test_uvdata(self):
         """Test the primary data table."""
         

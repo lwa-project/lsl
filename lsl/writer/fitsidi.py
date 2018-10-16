@@ -18,6 +18,9 @@ functions defined in this module are based heavily off the lwda_fits library.
 .. versionchanged:: 1.1.4
     Fixed a conjugation problem in the visibilities saved to a FITS-IDI file
     Added support for writing user-specified weights to a FITS-IDI file
+
+.. versionchanged:: 1.2.2
+    Added support for writing multiple IFs to the same FITS-IDI file
 """
 
 import os
