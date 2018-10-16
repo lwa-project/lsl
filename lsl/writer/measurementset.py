@@ -278,13 +278,18 @@ class MS(object):
         parameters and add an entry to the self.freq list.
         """
         
-        self.nChan = len(freq)
-        self.refVal = freq[0]
-        self.refPix = 1
-        self.channelWidth = numpy.abs(freq[1] - freq[0])
+        if self.nChan == 0:
+            self.nChan = len(freq)
+            self.refVal = freq[0]
+            self.refPix = 1
+            self.channelWidth = numpy.abs(freq[1] - freq[0])
+            offset = 0.0
+        else:
+            assert(len(freq) == self.nChan)
+            offset = freq[0] - self.refVal
         totalWidth = numpy.abs(freq[-1] - freq[0])
         
-        freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
+        freqSetup = self._Frequency(offset, self.channelWidth, totalWidth)
         self.freq.append(freqSetup)
         
     def set_geometry(self, site, antennas, bits=8):
@@ -354,6 +359,16 @@ class MS(object):
         correct order.
         """
         
+        # Validate
+        if self.nStokes == 0:
+            raise RuntimeError("No polarization setups defined")
+        if len(self.freq) == 0:
+            raise RuntimeError("No frequency setups defined")
+        if self.nAnt == 0:
+            raise RuntimeError("No array geometry defined")
+        if len(self.data) == 0:
+            raise RuntimeError("No visibility data defined")
+            
         # Sort the data set
         self.data.sort()
         
@@ -441,7 +456,7 @@ class MS(object):
             #tb.putcell('NAME', i, ant.getName())
             #tb.putcell('STATION', i, self.siteName)
             
-        tb.done()
+        tb.close()
         
     def _write_polarization_table(self):
         """
@@ -478,7 +493,7 @@ class MS(object):
         tb.putcell('FLAG_ROW', 0, False)
         tb.putcell('NUM_CORR', 0, self.nStokes)
         
-        tb.done()
+        tb.close()
         
         # Feed
         
@@ -556,7 +571,7 @@ class MS(object):
         tb.putcol('SPECTRAL_WINDOW_ID', [-1,]*self.nAnt, 0, self.nAnt)
         tb.putcol('TIME', [0.0,]*self.nAnt, 0, self.nAnt)
         
-        tb.done()
+        tb.close()
         
     def _write_observation_table(self):
         """
@@ -606,7 +621,7 @@ class MS(object):
         tb.putcell('SCHEDULE_TYPE', 0, 'None')
         tb.putcell('TELESCOPE_NAME', 0, self.siteName)
         
-        tb.done()
+        tb.close()
         
         # Source
         
@@ -793,6 +808,8 @@ class MS(object):
         
         # Spectral Window
         
+        nBand = len(self.freq)
+        
         col1  = tableutil.makescacoldesc('MEAS_FREQ_REF', 0, 
                                          comment='Frequency Measure reference')
         col2  = tableutil.makearrcoldesc('CHAN_FREQ', 0.0, 1, 
@@ -840,24 +857,25 @@ class MS(object):
         
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
                                         col10, col11, col12, col13, col14])
-        tb = table("%s/SPECTRAL_WINDOW" % self.basename, desc, nrow=1, ack=False)
+        tb = table("%s/SPECTRAL_WINDOW" % self.basename, desc, nrow=nBand, ack=False)
         
-        tb.putcell('MEAS_FREQ_REF', 0, 0)
-        tb.putcell('CHAN_FREQ', 0, self.refVal + numpy.arange(self.nChan)*self.channelWidth)
-        tb.putcell('REF_FREQUENCY', 0, self.refVal)
-        tb.putcell('CHAN_WIDTH', 0, [self.channelWidth for i in xrange(self.nChan)])
-        tb.putcell('EFFECTIVE_BW', 0, [self.channelWidth for i in xrange(self.nChan)])
-        tb.putcell('RESOLUTION', 0, [self.channelWidth for i in xrange(self.nChan)])
-        tb.putcell('FLAG_ROW', 0, False)
-        tb.putcell('FREQ_GROUP', 0, 1)
-        tb.putcell('FREQ_GROUP_NAME', 0, 'group1')
-        tb.putcell('IF_CONV_CHAIN', 0, 0)
-        tb.putcell('NAME', 0, "%i channels" % self.nChan)
-        tb.putcell('NET_SIDEBAND', 0, 0)
-        tb.putcell('NUM_CHAN', 0, self.nChan)
-        tb.putcell('TOTAL_BANDWIDTH', 0, self.channelWidth*self.nChan)
-        
-        tb.done
+        for i,freq in enumerate(self.freq):
+            tb.putcell('MEAS_FREQ_REF', i, 0)
+            tb.putcell('CHAN_FREQ', i, self.refVal + freq.bandFreq + numpy.arange(self.nChan)*self.channelWidth)
+            tb.putcell('REF_FREQUENCY', i, self.refVal)
+            tb.putcell('CHAN_WIDTH', i, [freq.chWidth for j in xrange(self.nChan)])
+            tb.putcell('EFFECTIVE_BW', i, [freq.chWidth for j in xrange(self.nChan)])
+            tb.putcell('RESOLUTION', i, [freq.chWidth for j in xrange(self.nChan)])
+            tb.putcell('FLAG_ROW', i, False)
+            tb.putcell('FREQ_GROUP', i, i+1)
+            tb.putcell('FREQ_GROUP_NAME', i, 'group%i' % (i+1))
+            tb.putcell('IF_CONV_CHAIN', i, i)
+            tb.putcell('NAME', i, "IF %i, %i channels" % (i+1, self.nChan))
+            tb.putcell('NET_SIDEBAND', i, 0)
+            tb.putcell('NUM_CHAN', i, self.nChan)
+            tb.putcell('TOTAL_BANDWIDTH', i, freq.totalBW)
+            
+        tb.close()
         
     def _write_main_table(self):
         """
@@ -865,6 +883,8 @@ class MS(object):
         """
         
         # Main
+        
+        nBand = len(self.freq)
         
         arrayGeo = astro.rect_posn(*self.array[0]['center'])
         arrayGeo = astro.get_geo_from_rect(arrayGeo)
@@ -1021,9 +1041,10 @@ class MS(object):
                  
                 ### Zero out the visibility data
                 try:
+                    matrix.shape = (len(order), self.nStokes, nBand*self.nChan)
                     matrix *= 0.0
                 except NameError:
-                    matrix = numpy.zeros((len(order), self.nStokes, self.nChan), dtype=numpy.complex64)
+                    matrix = numpy.zeros((len(order), self.nStokes, self.nChan*nBand), dtype=numpy.complex64)
                     
             # Save the visibility data in the right order
             matrix[:,self.stokes.index(dataSet.pol),:] = dataSet.visibilities[order,:]
@@ -1031,36 +1052,39 @@ class MS(object):
             # Deal with saving the data once all of the polarizations have been added to 'matrix'
             if dataSet.pol == self.stokes[-1]:
                 nBL = uvwList.shape[0]
-                tb.addrows(nBL)
-
-                fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=numpy.bool)
-                fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=numpy.bool)
-                wg = numpy.ones((nBL,self.nStokes))
-                sg = numpy.ones((nBL,self.nStokes))*9999
+                tb.addrows(nBand*nBL)
                 
-                tb.putcol('UVW', uvwList, i, nBL)
-                tb.putcol('FLAG', fg.transpose(0,2,1), i, nBL)
-                tb.putcol('FLAG_CATEGORY', fc.transpose(0,3,2,1), i, nBL)
-                tb.putcol('WEIGHT', wg, i, nBL)
-                tb.putcol('SIGMA', sg, i, nBL)
-                tb.putcol('ANTENNA1', ant1List, i, nBL)
-                tb.putcol('ANTENNA2', ant2List, i, nBL)
-                tb.putcol('ARRAY_ID', [0,]*nBL, i, nBL)
-                tb.putcol('DATA_DESC_ID', [0,]*nBL, i, nBL)
-                tb.putcol('EXPOSURE', intTimeList, i, nBL)
-                tb.putcol('FEED1', [0,]*nBL, i, nBL)
-                tb.putcol('FEED2', [0,]*nBL, i, nBL)
-                tb.putcol('FIELD_ID', sourceList, i, nBL)
-                tb.putcol('FLAG_ROW', [False,]*nBL, i, nBL)
-                tb.putcol('INTERVAL', intTimeList, i, nBL)
-                tb.putcol('OBSERVATION_ID', [0,]*nBL, i, nBL)
-                tb.putcol('PROCESSOR_ID', [-1,]*nBL, i, nBL)
-                tb.putcol('SCAN_NUMBER', [s,]*nBL, i, nBL)
-                tb.putcol('STATE_ID', [-1,]*nBL, i, nBL)
-                tb.putcol('TIME', timeList, i, nBL)
-                tb.putcol('TIME_CENTROID', timeList, i, nBL)
-                tb.putcol('DATA', matrix.transpose(0,2,1), i, nBL)
-                i += nBL
+                matrix.shape = (len(order), self.nStokes, nBand, self.nChan)
+                
+                for j in xrange(nBand):
+                    fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=numpy.bool)
+                    fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=numpy.bool)
+                    wg = numpy.ones((nBL,self.nStokes))
+                    sg = numpy.ones((nBL,self.nStokes))*9999
+                    
+                    tb.putcol('UVW', uvwList, i, nBL)
+                    tb.putcol('FLAG', fg.transpose(0,2,1), i, nBL)
+                    tb.putcol('FLAG_CATEGORY', fc.transpose(0,3,2,1), i, nBL)
+                    tb.putcol('WEIGHT', wg, i, nBL)
+                    tb.putcol('SIGMA', sg, i, nBL)
+                    tb.putcol('ANTENNA1', ant1List, i, nBL)
+                    tb.putcol('ANTENNA2', ant2List, i, nBL)
+                    tb.putcol('ARRAY_ID', [0,]*nBL, i, nBL)
+                    tb.putcol('DATA_DESC_ID', [j,]*nBL, i, nBL)
+                    tb.putcol('EXPOSURE', intTimeList, i, nBL)
+                    tb.putcol('FEED1', [0,]*nBL, i, nBL)
+                    tb.putcol('FEED2', [0,]*nBL, i, nBL)
+                    tb.putcol('FIELD_ID', sourceList, i, nBL)
+                    tb.putcol('FLAG_ROW', [False,]*nBL, i, nBL)
+                    tb.putcol('INTERVAL', intTimeList, i, nBL)
+                    tb.putcol('OBSERVATION_ID', [0,]*nBL, i, nBL)
+                    tb.putcol('PROCESSOR_ID', [-1,]*nBL, i, nBL)
+                    tb.putcol('SCAN_NUMBER', [s,]*nBL, i, nBL)
+                    tb.putcol('STATE_ID', [-1,]*nBL, i, nBL)
+                    tb.putcol('TIME', timeList, i, nBL)
+                    tb.putcol('TIME_CENTROID', timeList, i, nBL)
+                    tb.putcol('DATA', matrix[...,j,:].transpose(0,2,1), i, nBL)
+                    i += nBL
                 s += 1
                 
         tb.close()
@@ -1075,12 +1099,13 @@ class MS(object):
                                         comment='Pointer to spectralwindow table')
         
         desc = tableutil.maketabdesc([col1, col2, col3])
-        tb = table("%s/DATA_DESCRIPTION" % self.basename, desc, nrow=1, ack=False)
+        tb = table("%s/DATA_DESCRIPTION" % self.basename, desc, nrow=nBand, ack=False)
         
-        tb.putcell('FLAG_ROW', 0, False)
-        tb.putcell('POLARIZATION_ID', 0, 0)
-        tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
-        
+        for i in xrange(nBand):
+            tb.putcell('FLAG_ROW', i, False)
+            tb.putcell('POLARIZATION_ID', i, 0)
+            tb.putcell('SPECTRAL_WINDOW_ID', i, i)
+            
         tb.close()
         
     def _write_misc_required_tables(self):

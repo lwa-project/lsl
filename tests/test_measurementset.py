@@ -86,6 +86,28 @@ class measurementset_tests(unittest.TestCase):
                     'SPECTRAL_WINDOW', 'STATE'):
             self.assertTrue(os.path.exists(os.path.join(testFile, tbl)))
             
+    def test_writer_errors(self):
+        """Test that common measurement set error conditions are caught."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'ms-test-ERR.ms')
+        
+        # Get some data
+        data = self.__initData()
+        
+        for i in range(4):
+            # Start the file
+            ms = measurementset.MS(testFile, ref_time=testTime, clobber=True)
+            if i != 0:
+                ms.set_stokes(['xx'])
+            if i != 1:
+                ms.set_frequency(data['freq'])
+            if i != 2:
+                ms.set_geometry(data['site'], data['antennas'])
+            if i != 3:
+                ms.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+            self.assertRaises(RuntimeError, ms.write)
+            
     def test_main_table(self):
         """Test the primary data table."""
         
@@ -146,6 +168,80 @@ class measurementset_tests(unittest.TestCase):
             
         ms.close()
         ms2.close()
+        
+    def test_multi_if(self):
+        """writing more than one spectral window to a MeasurementSet."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'ms-test-MultiIF.ms')
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Start the file
+        fits = measurementset.MS(testFile, ref_time=testTime)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_frequency(data['freq']+10e6)
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(testTime, 6.0, data['bl'], 
+                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+        fits.write()
+        
+        # Open the table and examine
+        ms = casacore.tables.table(testFile, ack=False)
+        uvw  = ms.getcol('UVW')
+        ant1 = ms.getcol('ANTENNA1')
+        ant2 = ms.getcol('ANTENNA2')
+        ddsc = ms.getcol('DATA_DESC_ID')
+        vis  = ms.getcol('DATA')
+        
+        ms2 = casacore.tables.table(os.path.join(testFile, 'ANTENNA'), ack=False)
+        mapper = ms2.getcol('NAME')
+        mapper = [int(m[3:], 10) for m in mapper]
+        
+        ms3 = casacore.tables.table(os.path.join(testFile, 'DATA_DESCRIPTION'), ack=False)
+        spw = [i for i in ms3.getcol('SPECTRAL_WINDOW_ID')]
+        
+        # Correct number of visibilities
+        self.assertEqual(uvw.shape[0], 2*data['vis'].shape[0])
+        self.assertEqual(vis.shape[0], 2*data['vis'].shape[0])
+        
+        # Correct number of uvw coordinates
+        self.assertEqual(uvw.shape[1], 3)
+        
+        # Correct number of frequencies
+        self.assertEqual(vis.shape[1], data['freq'].size)
+            
+        # Correct values
+        for row in xrange(uvw.shape[0]):
+            stand1 = ant1[row]
+            stand2 = ant2[row]
+            descid = ddsc[row]
+            visData = vis[row,:,0]
+           
+            # Find out which visibility set in the random data corresponds to the 
+            # current visibility
+            i = 0
+            for a1,a2 in data['bl']:
+                if a1.stand.id == mapper[stand1] and a2.stand.id == mapper[stand2]:
+                    break
+                else:
+                    i = i + 1
+                    
+            # Find out which spectral window this corresponds to
+            if spw[descid] == 0:
+                compData = data['vis']
+            else:
+                compData = 10*data['vis']
+                
+            # Run the comparison
+            for vd, sd in zip(visData, compData[i,:]):
+                self.assertAlmostEqual(vd, sd, 8)
+                
+        ms.close()
+        ms2.close()
+        ms3.close()
         
     def tearDown(self):
         """Remove the test path directory and its contents"""
