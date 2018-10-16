@@ -63,18 +63,15 @@ def frame_to_frame(tbn_frame):
     rawFrame[22] = (tbn_frame.data.timetag>>8) & 255
     rawFrame[23] = tbn_frame.data.timetag & 255
     ## Data
-    i = tbn_frame.data.iq.real
-    q = tbn_frame.data.iq.imag
-    ### Round, clip, and convert to unsigned integers
-    i = i.round()
-    i = i.clip(-128, 127)
-    i = i.astype(numpy.uint8)
-    q = q.round()
-    q = q.clip(-128, 127)
-    q = q.astype(numpy.uint8)
+    iq = tbn_frame.data.iq
+    ### Round and convert to unsigned integers
+    iq = numpy.round(iq)
+    if iq.dtype == numpy.complex128:
+        iq = iq.astype(numpy.complex64)
+    iq = iq.view(numpy.float32)
+    iq = iq.astype(numpy.int8)
     
-    rawFrame[24::2] = i
-    rawFrame[25::2] = q
+    rawFrame[24:] = iq
     
     return rawFrame
 
