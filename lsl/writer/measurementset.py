@@ -21,6 +21,7 @@ import numpy
 import shutil
 from datetime import datetime
 from collections import OrderedDict
+from functools import wraps
 
 from lsl import astro
 from lsl.misc import geodesy
@@ -391,6 +392,7 @@ class MS(object):
                 stb = table("%s/%s" % (self.basename, tname), ack=False)
                 tb.putkeyword(tname, stb)
                 stb.close()
+        tb.flush()
         tb.close()
             
         # Clear out the data section
@@ -456,6 +458,7 @@ class MS(object):
             #tb.putcell('NAME', i, ant.getName())
             #tb.putcell('STATION', i, self.siteName)
             
+        tb.flush()
         tb.close()
         
     def _write_polarization_table(self):
@@ -493,6 +496,7 @@ class MS(object):
         tb.putcell('FLAG_ROW', 0, False)
         tb.putcell('NUM_CORR', 0, self.nStokes)
         
+        tb.flush()
         tb.close()
         
         # Feed
@@ -571,6 +575,7 @@ class MS(object):
         tb.putcol('SPECTRAL_WINDOW_ID', [-1,]*self.nAnt, 0, self.nAnt)
         tb.putcol('TIME', [0.0,]*self.nAnt, 0, self.nAnt)
         
+        tb.flush()
         tb.close()
         
     def _write_observation_table(self):
@@ -621,6 +626,7 @@ class MS(object):
         tb.putcell('SCHEDULE_TYPE', 0, 'None')
         tb.putcell('TELESCOPE_NAME', 0, self.siteName)
         
+        tb.flush()
         tb.close()
         
         # Source
@@ -750,6 +756,7 @@ class MS(object):
             #tb.putcell('REST_FREQUENCY', i, [])
             #tb.putcell('SYSVEL', i, [])
             
+        tb.flush()
         tb.close()
         
         # Field
@@ -799,6 +806,7 @@ class MS(object):
             tb.putcell('SOURCE_ID', i, i)
             tb.putcell('TIME', i, (tStart+tStop)/2*86400)
             
+        tb.flush()
         tb.close()
         
     def _write_spectralwindow_table(self):
@@ -875,6 +883,7 @@ class MS(object):
             tb.putcell('NUM_CHAN', i, self.nChan)
             tb.putcell('TOTAL_BANDWIDTH', i, freq.totalBW)
             
+        tb.flush()
         tb.close()
         
     def _write_main_table(self):
@@ -1087,6 +1096,7 @@ class MS(object):
                     i += nBL
                 s += 1
                 
+        tb.flush()
         tb.close()
         
         # Data description
@@ -1106,6 +1116,7 @@ class MS(object):
             tb.putcell('POLARIZATION_ID', i, 0)
             tb.putcell('SPECTRAL_WINDOW_ID', i, i)
             
+        tb.flush()
         tb.close()
         
     def _write_misc_required_tables(self):
@@ -1140,6 +1151,7 @@ class MS(object):
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8])
         tb = table("%s/FLAG_CMD" % self.basename, desc, nrow=0, ack=False)
         
+        tb.flush()
         tb.close()
         
         # History
@@ -1169,6 +1181,7 @@ class MS(object):
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
         tb = table("%s/HISTORY" % self.basename, desc, nrow=0, ack=False)
         
+        tb.flush()
         tb.close()
         
         # POINTING
@@ -1208,6 +1221,7 @@ class MS(object):
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
         tb = table("%s/POINTING" % self.basename, desc, nrow=0, ack=False)
         
+        tb.flush()
         tb.close()
         
         # Processor
@@ -1226,6 +1240,7 @@ class MS(object):
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5])
         tb = table("%s/PROCESSOR" % self.basename, desc, nrow=0, ack=False)
         
+        tb.flush()
         tb.close()
         
         # State
@@ -1250,5 +1265,6 @@ class MS(object):
         desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7])
         tb = table("%s/STATE" % self.basename, desc, nrow=0, ack=False)
         
+        tb.flush()
         tb.close()
         
