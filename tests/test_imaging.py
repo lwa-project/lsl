@@ -24,6 +24,14 @@ from lsl.sim.vis import SOURCES as simSrcs
 from lsl.common.stations import lwa1, parse_ssmif
 from lsl.correlator import uvUtils
 
+run_ms_tests = False
+try:
+    import casacore
+    from lsl.writer.measurementset import MS
+    run_ms_tests = True
+except ImportError:
+    pass
+
 
 __revision__ = "$Rev$"
 __version__  = "0.1"
@@ -69,9 +77,16 @@ class imaging_tests(unittest.TestCase):
         # Error checking
         self.assertRaises(IndexError, idi.get_data_set, 2)
         
-    def test_CorrelatedDataIDI_MultiIF(self):
-        """Test the utils.CorrelatedDataIDI class on a file with multiple IFs."""
-        
+    def __initData(self):
+        """Private function to generate a random set of data for writing a UVFITS
+        file.  The data is returned as a dictionary with keys:
+         * freq - frequency array in Hz
+         * site - lwa.common.stations object
+         * stands - array of stand numbers
+         * bl - list of baseline pairs in real stand numbers
+         * vis - array of visibility data in baseline x freq format
+        """
+
         # Frequency range
         freq = numpy.arange(0,512)*20e6/512 + 40e6
         # Site and stands
@@ -82,8 +97,14 @@ class imaging_tests(unittest.TestCase):
         blList = uvUtils.get_baselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
-
-        data = {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
+        
+        return {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
+        
+    def test_CorrelatedDataIDI_MultiIF(self):
+        """Test the utils.CorrelatedDataIDI class on a file with multiple IFs."""
+        
+        # Get some data
+        data = self.__initData()
         
         # Filename and time
         testTime, testFile = time.time(), os.path.join('idi-test-MultiIF.fits')
@@ -188,6 +209,65 @@ class imaging_tests(unittest.TestCase):
         # Error checking
         self.assertRaises(IndexError, uv.get_data_set, 2)
         
+    @unittest.skipUnless(run_ms_tests, "requires the 'casacore' module")
+    def test_CorrelatedDataMS(self):
+        """Test the utils.CorrelatedDataMS class."""
+        
+        testTime = time.time()
+        testFile = os.path.join(self.testPath, 'ms-test-W.ms')
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Start the table
+        tbl = MS(testFile, ref_time=testTime)
+        tbl.set_stokes(['xx'])
+        tbl.set_frequency(data['freq'])
+        tbl.set_geometry(data['site'], data['antennas'])
+        tbl.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], data['vis'])
+        tbl.write()
+        
+        # Open the measurement set
+        ms = utils.CorrelatedData(testFile)
+        
+        # Basic functions (just to see that they run)
+        junk = ms.get_antennaarray()
+        junk = ms.get_observer()
+        junk = ms.get_data_set(1)
+        
+        # Error checking
+        self.assertRaises(IndexError, ms.get_data_set, 2)
+        
+    @unittest.skipUnless(run_ms_tests, "requires the 'casacore' module")
+    def test_CorrelatedDataMS_MultiIF(self):
+        """Test the utils.CorrelatedDataMS class on a file with multiple IFs."""
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Filename and time
+        testTime, testFile = time.time(), os.path.join('ms-test-MultiIF.ms')
+        
+        # Start the file
+        fits = IDI(testFile, ref_time=testTime, clobber=True)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_frequency(data['freq']+30e6)
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
+                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+        fits.write()
+        
+        # Open the measurement set
+        ms = utils.CorrelatedData(testFile)
+        self.assertEqual(ms.freq.size, 2*data['freq'].size)
+        ds = ms.get_data_set(1, include_auto=True)
+        
+        for i in xrange(len(data['bl'])):
+            for j in xrange(data['freq'].size):
+                self.assertAlmostEqual(ds.XX.data[i,j], data['vis'][i,j], 6)
+                self.assertAlmostEqual(ds.XX.data[i,j+data['freq'].size], 10*data['vis'][i,j], 6)
+                
     def test_sort(self):
         """Test the utils.sort_data function."""
         
