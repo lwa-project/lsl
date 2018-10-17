@@ -144,7 +144,47 @@ def CorrelatedData(filename, verbose=False):
         raise RuntimeError("File '%s' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet" % filename)
 
 
-class CorrelatedDataIDI(object):
+class CorrelatedDataBase(object):
+    """
+    Base class for acessing visibility data stored in a file.
+    """
+    
+    def __init__(self, filename):
+        self.filename = filename
+        
+    def __str__(self):
+        return "%s @ %s" % (self.__name__, self.filename)
+        
+    def __enter__(self):
+        return self
+        
+    def __exit__(self, type, value, tb):
+        self.close()
+        
+    def get_antennaarray(self):
+        """
+        Return an AIPY AntennaArray instance for the array that made the 
+        observations contained here.
+        """
+        
+        # Get the date of observations
+        refJD = astro.unix_to_utcjd(timegm(self.date_obs.timetuple()))
+        
+        # Return
+        return simVis.build_sim_array(self.station, self.antennas, self.freq/1e9, jd=refJD)
+        
+    def get_observer(self):
+        """
+        Return a ephem.Observer instances for the array described in the file.
+        """
+        
+        return self.station
+        
+    def get_data_set(self, *args, **kwds):
+        raise NotImplementedError
+
+
+class CorrelatedDataIDI(CorrelatedDataBase):
     """
     Class to make accessing information about a FITS IDI easy.  This wraps 
     all of the "messy" machinery needed to extract both the metadata and data 
@@ -179,7 +219,7 @@ class CorrelatedDataIDI(object):
         fill in the metadata.
         """
         
-        self.filename = filename
+        super(CorrelatedDataIDI, self).__init__(filename)
         
         # Open the file, check if it looks like FITS IDI, and pull out the UV_DATA table
         hdulist = astrofits.open(self.filename)
@@ -202,6 +242,7 @@ class CorrelatedDataIDI(object):
         except KeyError:
             pass
         ag = hdulist['ARRAY_GEOMETRY']
+        fq = hdulist['FREQUENCY']
         uvData = hdulist['UV_DATA']
         
         # Antennas
@@ -284,10 +325,16 @@ class CorrelatedDataIDI(object):
         self.pols  = numpy.arange(1, uvData.header['MAXIS2']+1) - uvData.header['CRPIX2']
         self.pols *= uvData.header['CDELT2'] 
         self.pols += uvData.header['CRVAL2']
-        self.freq  = numpy.arange(1, uvData.header['NO_CHAN']+1, dtype=numpy.float64) - uvData.header['REF_PIXL']
-        self.freq *= uvData.header['CHAN_BW']
-        self.freq += uvData.header['REF_FREQ']
-        
+        self.freq  = numpy.array([], dtype=numpy.float64)
+        for i in xrange(uvData.header['NO_BAND']):
+            width = fq.data['CH_WIDTH'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['CH_WIDTH'][0]
+            offset = fq.data['BANDFREQ'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['BANDFREQ'][0]
+            
+            freqIF = numpy.arange(1, uvData.header['NO_CHAN']+1, dtype=numpy.float64) - uvData.header['REF_PIXL']
+            freqIF *= width
+            freqIF += uvData.header['REF_FREQ'] + offset
+            self.freq = numpy.concatenate([self.freq, freqIF])
+            
         # Total baseline count
         self.total_baseline_count = len(uvData.data['BASELINE'])
         
@@ -298,25 +345,6 @@ class CorrelatedDataIDI(object):
         
         # Close
         hdulist.close()
-    
-    def get_antennaarray(self):
-        """
-        Return an AIPY AntennaArray instance for the array that made the 
-        observations contained here.
-        """
-        
-        # Get the date of observations
-        refJD = astro.unix_to_utcjd(timegm(self.date_obs.timetuple()))
-        
-        # Return
-        return simVis.build_sim_array(self.station, self.antennas, self.freq/1e9, jd=refJD)
-        
-    def get_observer(self):
-        """
-        Return a ephem.Observer instances for the array described in the file.
-        """
-        
-        return self.station
         
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
@@ -481,7 +509,7 @@ class CorrelatedDataIDI(object):
         return dataSets
 
 
-class CorrelatedDataUV(object):
+class CorrelatedDataUV(CorrelatedDataBase):
     """
     Class to make accessing information about a UVFITS file easy.  This wraps 
     all of the "messy" machinery needed to extract both the metadata and data 
@@ -516,7 +544,7 @@ class CorrelatedDataUV(object):
         fill in the metadata.
         """
         
-        self.filename = filename
+        super(CorrelatedDataUV, self).__init__(filename)
         
         # Open the various tables that we need
         hdulist = astrofits.open(filename)
@@ -611,25 +639,6 @@ class CorrelatedDataUV(object):
         
         # Close
         hdulist.close()
-    
-    def get_antennaarray(self):
-        """
-        Return an AIPY AntennaArray instance for the array that made the 
-        observations contained here.
-        """
-        
-        # Get the date of observations
-        refJD = astro.unix_to_utcjd(timegm(self.date_obs.timetuple()))
-        
-        # Return
-        return simVis.build_sim_array(self.station, self.antennas, self.freq/1e9, jd=refJD)
-        
-    def get_observer(self):
-        """
-        Return a ephem.Observer instances for the array described in the file.
-        """
-        
-        return self.station
         
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
@@ -775,7 +784,7 @@ try:
                         5:'RR',  6:'RL',  7:'LR',  8:'LL',
                         9:'XX', 10:'XY', 11:'YX', 12:'YY'}
     
-    class CorrelatedDataMS(object):
+    class CorrelatedDataMS(CorrelatedDataBase):
         """
         Class to make accessing information about a MS easy.  This wraps 
         all of the "messy" machinery needed to extract both the metadata and data 
@@ -810,27 +819,27 @@ try:
             in the metadata.
             """
             
-            if not os.path.isdir(filename) and tarfile.is_tarfile(filename):
+            super(CorrelatedDataMS, self).__init__(filename)
+            
+            if not os.path.isdir(self.filename) and tarfile.is_tarfile(self.filename):
                 # LASI generate compressed tarballs that contain the MS.  Deal with 
                 # those in a transparent manner by automatically unpacking them
                 tempdir = tempfile.mkdtemp(prefix='CorrelatedMS-')
-                tf = tarfile.open(filename, mode='r:*')
+                tf = tarfile.open(self.filename, mode='r:*')
                 tf.extractall(tempdir)
                 tf.close()
                 
                 # Find the first directory that could be a MS
-                filename = None
+                self.filename = None
                 for path in os.listdir(tempdir):
                     path = os.path.join(tempdir, path)
                     if os.path.isdir(path):
-                        filename = path
+                        self.filename = path
                         break
                         
                 # Clean up the temporary directory when the script exists
                 atexit.register(lambda: shutil.rmtree(tempdir))
                 
-            self.filename = filename
-            
             # Open the various tables that we need
             data = table(self.filename, ack=False)
             try:
@@ -857,6 +866,10 @@ try:
                 spw = table(os.path.join(self.filename, 'SPECTRAL_WINDOW'), ack=False)
             except:
                 raise RuntimeError("Cannot find table 'SPECTRAL_WINDOW' in '%s'" % self.filename)
+            try:
+                dsc = table(os.path.join(self.filename, 'DATA_DESCRIPTION'), ack=False)
+            except:
+                raise RuntimeError("Cannot find table 'DATA_DESCRIPTION' in '%s'" % self.filename)
                 
             # Station/telescope information
             self.telescope = obs.col('TELESCOPE_NAME')[0]
@@ -878,8 +891,6 @@ try:
             
             ## Build a preliminayr represenation of the station
             self.station = stations.LWAStation(ants.col('STATION')[0], sLat, sLng, sElv)
-            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
-                                - astro.DJD_OFFSET
             
             ## Fill in the antennas instances
             antennas = []
@@ -910,15 +921,19 @@ try:
                         
             # Polarization and frequency
             self.pols = pols.col('CORR_TYPE')[0]
-            self.freq  = numpy.array( spw.col('CHAN_FREQ')[0] )
-            
+            self.freq = numpy.array([], dtype=numpy.float64)
+            for freqIF in spw.col('CHAN_FREQ'):
+                self.freq  = numpy.concatenate([self.freq, freqIF])
+                
             # Total baseline count
             self.total_baseline_count = data.nrows()
             
             # Data set times
             self._times = numpy.unique(data.getcol('TIME'))
-            jd = self._times[0] / 3600.0 / 24.0 + astro.MJD_OFFSET
+            jd = self._times[0] / 86400.0 + astro.MJD_OFFSET
             self.date_obs = datetime.utcfromtimestamp(astro.utcjd_to_unix(jd))
+            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                                - astro.DJD_OFFSET
             
             # Data set sources
             self._sources = []
@@ -929,6 +944,11 @@ try:
             self._fields = []
             for s in fld.col('SOURCE_ID'):
                 self._fields.append( s )
+                
+            # Data set spectral windows
+            self._windows = []
+            for d in dsc.col('SPECTRAL_WINDOW_ID'):
+                self._windows.append( d )
                 
             # Integration count
             jd = numpy.array(self._times) / 3600.0 / 24.0 + astro.MJD_OFFSET
@@ -942,25 +962,7 @@ try:
             src.close()
             fld.close()
             spw.close()
-        
-        def get_antennaarray(self):
-            """
-            Return an AIPY AntennaArray instance for the array that made the 
-            observations contained here.
-            """
-            
-            # Get the date of observations
-            refJD = astro.unix_to_utcjd(timegm(self.date_obs.timetuple()))
-            
-            # Return
-            return simVis.build_sim_array(self.station, self.antennas, self.freq/1e9, jd=refJD)
-            
-        def get_observer(self):
-            """
-            Return a ephem.Observer instances for the array described in the file.
-            """
-            
-            return self.station
+            dsc.close()
             
         def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
             """
@@ -993,11 +995,17 @@ try:
                 # Pull out the data
                 targetData = data.query('TIME == %f' % targetTime)
                 uvw  = targetData.getcol('UVW')
-                wgt  = targetData.getcol('WEIGHT')
+                try:
+                    wgt  = None
+                    wgtS = targetData.getcol('WEIGHT SPECTRUM')
+                except RuntimeError:
+                    wgt  = targetData.getcol('WEIGHT')
+                    wgtS = None
                 ant1 = targetData.getcol('ANTENNA1')
                 ant2 = targetData.getcol('ANTENNA2')
                 vis  = targetData.getcol('DATA')
                 fld  = targetData.getcol('FIELD_ID')
+                dsc  = targetData.getcol('DATA_DESC_ID')
                 
                 # Figure out the source we are working on and create a phase center
                 # if there is only a single source
@@ -1012,13 +1020,17 @@ try:
                 uscl.shape = (1,1)+uscl.shape
                 uvw = uvw*uscl
                 
-                # Expand the weights
-                wgt2 = numpy.ones(vis.shape, dtype=wgt.dtype)
-                for i in xrange(wgt2.shape[1]):
-                    wgt2[:,i,:] = wgt
-                wgt = wgt2
-                
+                # Expand the weights, if needed
+                if wgtS is None:
+                    wgtS = numpy.ones(vis.shape, dtype=wgt.dtype)
+                    for i in xrange(wgtS.shape[1]):
+                        wgtS[:,i,:] = wgt
+                    wgt = wgtS
+                    
                 # Setup the output data
+                # NOTE: This assumes that the data are stored in an array that 
+                #       is window, basline per the lsl.writer.measurementset 
+                #       module
                 baselines = []
                 select = []
                 for b,a1,a2 in zip(xrange(len(ant1)),ant1,ant2):
@@ -1033,15 +1045,38 @@ try:
                         r2 = a2
                     baselines.append( (r1,r2) )
                     select.append( b )
+                if len(self._windows) > 1:
+                    baselines = baselines[:len(baselines)/2]
+                    selectU = select[:len(baselines)]
+                else:
+                    selectU = select
                     
                 # Build the output data set
                 dataSet = VisibilityDataSet(targetJD, self.freq*1.0, baselines=baselines, 
-                                            uvw=uvw[select,:,:], 
+                                            uvw=uvw[selectU,:,:], 
                                             antennaarray=self.get_antennaarray(), 
                                             phase_center=phase_center)
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKESMS[l]
-                    polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=numpy.ones_like(vis[select,:,p]))#, weight=wgt[select,:,p])
+                    subvis = vis[select,:,p]
+                    subwgt = wgt[select,:,p]
+                    
+                    # Deal with multiple spectral windows
+                    # NOTE: This assumes that the data are stored in an array that 
+                    #       is window, basline per the lsl.writer.measurementset 
+                    #       module
+                    if len(self._windows) > 1:
+                        nBand = len(self._windows)
+                        subvis.shape = (nBand,subvis.shape[0]/nBand,subvis.shape[1])
+                        subwgt.shape = subvis.shape
+                        
+                        subvis = subvis.transpose(1,0,2)
+                        subwgt = subwgt.transpose(1,0,2)
+                        
+                        subvis = subvis.reshape(subvis.shape[0],subvis.shape[1]*subvis.shape[2])
+                        subwgt = subwgt.reshape(*subvis.shape)
+                        
+                    polDataSet = PolarizationDataSet(name, data=subvis, weight=subwgt)
                     dataSet.append(polDataSet)
                 dataSets.append( dataSet )
             # Close

@@ -9,15 +9,20 @@ if sys.version_info > (3,):
 
 import os
 import copy
+import time
+import numpy
+import shutil
+import tempfile
 import unittest
 
 from lsl import astro
 from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import selfCal
-from lsl.writer.fitsidi import NUMERIC_STOKES
+from lsl.writer.fitsidi import IDI, NUMERIC_STOKES
 from lsl.sim.vis import SOURCES as simSrcs
-from lsl.common.stations import parse_ssmif
+from lsl.common.stations import lwa1, parse_ssmif
+from lsl.correlator import uvUtils
 
 
 __revision__ = "$Rev$"
@@ -35,6 +40,14 @@ class imaging_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.imaging
     modules."""
     
+    testPath = None
+
+    def setUp(self):
+        """Turn off all numpy warnings and create the temporary file directory."""
+
+        numpy.seterr(all='ignore')
+        self.testPath = tempfile.mkdtemp(prefix='test-imaging-', suffix='.tmp')
+
     def test_CorrelatedDataIDI(self):
         """Test the utils.CorrelatedDataIDI class."""
         
@@ -56,6 +69,45 @@ class imaging_tests(unittest.TestCase):
         # Error checking
         self.assertRaises(IndexError, idi.get_data_set, 2)
         
+    def test_CorrelatedDataIDI_MultiIF(self):
+        """Test the utils.CorrelatedDataIDI class on a file with multiple IFs."""
+        
+        # Frequency range
+        freq = numpy.arange(0,512)*20e6/512 + 40e6
+        # Site and stands
+        site = lwa1
+        antennas = site.antennas[0:40:2]
+        
+        # Set baselines and data
+        blList = uvUtils.get_baselines(antennas, include_auto=True, indicies=False)
+        visData = numpy.random.rand(len(blList), len(freq))
+        visData = visData.astype(numpy.complex64)
+
+        data = {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
+        
+        # Filename and time
+        testTime, testFile = time.time(), os.path.join('idi-test-MultiIF.fits')
+        
+        # Start the file
+        fits = IDI(testFile, ref_time=testTime, clobber=True)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_frequency(data['freq']+30e6)
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
+                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+        fits.write()
+        
+        # Open the FITS IDI file
+        idi = utils.CorrelatedData(testFile)
+        self.assertEqual(idi.freq.size, 2*data['freq'].size)
+        ds = idi.get_data_set(1, include_auto=True)
+        
+        for i in xrange(len(data['bl'])):
+            for j in xrange(data['freq'].size):
+                self.assertAlmostEqual(ds.XX.data[i,j], data['vis'][i,j], 6)
+                self.assertAlmostEqual(ds.XX.data[i,j+data['freq'].size], 10*data['vis'][i,j], 6)
+                
     def test_CorrelatedDataIDI_Alt(self):
         """Test the utils.CorrelatedDataIDI class on a file with an unusual telescope."""
         
@@ -460,6 +512,11 @@ class imaging_tests(unittest.TestCase):
         # Error checking
         self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
         self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
+        
+    def tearDown(self):
+        """Remove the test path directory and its contents"""
+
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class imaging_test_suite(unittest.TestSuite):
