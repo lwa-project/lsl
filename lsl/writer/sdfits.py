@@ -29,6 +29,7 @@ from datetime import datetime
 
 from lsl import astro
 from lsl.common.stations import lwa1
+from lsl.writer.fitsidi import WriterBase
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
@@ -46,29 +47,16 @@ NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V',
                   -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
 
-class SD(object):
+class SD(WriterBase):
     """
     Class for storing spectrometer data and writing the data, along with array
     frequency setup, etc., to a SDFITS file that can be read into CASA via the
     sd.scantable() function.
     """
     
-    class _Frequency:
-        """
-        Holds information about the frequency setup used in the file.
-        """
-
-        def __init__(self, offset, channelWidth, bandwidth):
-            self.id = 1
-            self.bandFreq = offset
-            self.chWidth = channelWidth
-            self.totalBW = bandwidth
-            self.sideBand = 1
-            self.baseBand = 0
-    
     class _SpectrometerData(object):
         """
-        Representns one spectrum for a given observation time.
+        Represents one spectrum for a given observation time.
         """
         
         def __init__(self, obsTime, intTime, dataDict, pol=STOKES_CODES['XX']):
@@ -79,41 +67,7 @@ class SD(object):
         
         def time(self):
             return self.obsTime
-    
-    def parse_time(self, ref_time):
-        """
-        Given a time as either a integer, float, string, or datetime object, 
-        convert it to a string in the formation 'YYYY-MM-DDTHH:MM:SS'.
-        """
-
-        # Valid time string (modulo the 'T')
-        timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
-
-        if type(ref_time) in (int, long, float):
-            refDateTime = datetime.utcfromtimestamp(ref_time)
-            ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(ref_time) == datetime:
-            ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(ref_time) == str:
-            # Make sure that the string times are of the correct format
-            if re.match(timeRE, ref_time) is None:
-                raise RuntimeError("Malformed date/time provided: %s" % ref_time)
-            else:
-                ref_time = ref_time.replace(' ', 'T', 1)
-        else:
-            raise RuntimeError("Unknown time format provided.")
-
-        return ref_time
-        
-    @property
-    def astro_ref_time(self):
-        """
-        Convert a reference time string to an :class:`lsl.astro.date` object.
-        """
-
-        dateStr = self.ref_time.replace('T', '-').replace(':', '-').split('-')
-        return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
-
+            
     def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
         """
         Initialize a new SDFITS object using a filename and a reference time 
@@ -127,23 +81,11 @@ class SD(object):
         """
 
         # File-specific information
-        self.filename = filename
-        self.verbose = verbose
-
+        super(SD, self).__init__(filename, ref_time=ref_time, verbose=verbose)
+        
         # Observation-specific information
         self.site = lwa1
-        self.ref_time = self.parse_time(ref_time)
-        self.nChan = 0
-        self.nStokes = 0
-        self.refVal = 0
-        self.refPix = 0
-        self.channelWidth = 0
-
-        # Parameters that store the meta-data and data
-        self.freq = []
-        self.stokes = []
-        self.data = []
-
+        
         # Misc.
         self.tSys = 250
         self.observer = 'UKNOWN'
@@ -166,42 +108,6 @@ class SD(object):
         """
 
         self.site = site
-        
-    def set_stokes(self, polList):
-        """
-        Given a list of Stokes parameters, update the object's parameters.
-        """
-
-        for pol in polList:
-            if type(pol) == str:
-                numericPol = STOKES_CODES[pol.upper()]
-            else:
-                numericPol = pol
-                
-            if numericPol not in self.stokes:
-                self.stokes.append(numericPol)
-                
-        # Sort into order of 'XX', 'YY', 'XY', and 'YX' or 'I', 'Q', 'U', and 'V'
-        self.stokes.sort()
-        if self.stokes[0] < 0:
-            self.stokes.reverse()
-
-        self.nStokes = len(self.stokes)
-
-    def set_frequency(self, freq):
-        """
-        Given a numpy array of frequencies, set the relevant common observation
-        parameters and add an entry to the self.freq list.
-        """
-
-        self.nChan = len(freq)
-        self.refVal = freq[0]
-        self.refPix = 1
-        self.channelWidth = numpy.abs(freq[1] - freq[0])
-        totalWidth = numpy.abs(freq[-1] - freq[0])
-
-        freqSetup = self._Frequency(0.0, self.channelWidth, totalWidth)
-        self.freq.append(freqSetup)
         
     def set_observer(self, observer, project='UNKNOWN', mode='UNKNOWN'):
         """
