@@ -31,28 +31,7 @@ shift_data
   .. note::
     This only changes the uvw values and does not phase-shift the data.
 
-The format of the data dictionaries mentioned above is:
-
-primary keys
-  The primary keys store the major aspects of the visiblity data, e.g., 
-  frequency coverage, baseline pairs, uvw coordinates, etc.  Valid keys are:
-    * *freq* - list of frequencies used in Hz
-    * *isMasked* - whether or not the visibility data have been masked 
-    (numpy.compress'd)
-    * *bls* - list of baselines in (stand 1, stand2) format
-    * *uvw* - list of uvw coordinates as 3-element numpy arrays
-    * *vis* - list of visibility numpy arrays
-    * *wgt* - list of weight arrays with the same length as the visilitity arrays
-    * *msk* - list of mask arrays used for the data.  1 = masked, 0 = valid
-    * *jd*  - list of Julian dates associated with each list element
-
-secondary keys
-  The bls, uvw, vis, wgt, msk, and jd primary keys also have secondary keys that 
-  indicate which polarizations are being stored.  Valid keys are:
-    * *xx*
-    * *yy*
-    * *xy*
-    * *yx*
+The format of the is descrined in the :mod:`lsl.imaging.data` module.
 
 In addition to simulation functions, this module includes buildGriddedImage
 which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
@@ -1144,9 +1123,10 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
 def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None,  flat_response=False, resolve_src=False, verbose=False):
     """
     Given an AIPY AntennaArray object and a dictionary of sources from 
-    aipy.src.get_catalog, returned a data dictionary of simulated data taken at 
-    zenith.  Optinally, the data can be masked using some referenced (observed) 
-    data set or only a specific sub-set of baselines.
+    aipy.src.get_catalog, returned a :class:`lsl.imaging.data.VisibilityDataSet` 
+    object of simulated data taken at zenith.  Optinally, the data can be 
+    masked using some referenced (observed) data set or only a specific sub-set 
+    of baselines.
     
     .. versionchanged:: 1.0.1
         * Added a 'flat_response' keyword to make it easy to toggle on and off
@@ -1189,15 +1169,17 @@ def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
 def scale_data(dataSet, amps, delays, phase_offsets=None):
     """
     Apply a set of antenna-based real gain values and phase delays in ns to a 
-    data dictionary.  Returned the new scaled and delayed dictionary.
+    :class:`lsl.imaging.data.VisibilityDataSet` object.  Returned the new
+    scaled and delayed VisibilityDataSet.
     
     ..versionchanged:: 0.6.3
         Added a keyword so that phase offsets (in radians) can also be specified
+    
     ..versionchanged:: 0.4.0
         The delays are now expected to be in nanoseconds rather than radians.
     """
     
-    # Build the data dictionary to hold the scaled and delayed data
+    # Build the VisibilityDataSet to hold the scaled and delayed data
     sclData = dataSet.copy(include_pols=True)
     fq = dataSet.freq / 1e9
     
@@ -1218,12 +1200,17 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
 
 def shift_data(dataSet, aa):
     """
-    Shift the uvw coordinates in one data dictionary to a new set of uvw 
-    coordinates that correspond to a new AntennaArray object.  This is useful
-    for looking at how positional errors in the array affect the data.
+    Shift the uvw coordinates in one :class:`lsl.imaging.data.VisibilityDataSet` 
+    object to a new set of uvw coordinates that correspond to a new 
+    AntennaArray object.  This is useful for looking at how positional errors 
+    in the array affect the data.
     """
     
-    # Build the data dictionary to hold the scaled and delayed data
+    # Make sure we have the right kind of object
+    if not isinstance(dataSet, VisibilityDataSet):
+        raise TypeError("Expected data to be stored in an VisibilityDataSet object")
+        
+    # Build the VisibilityDataSet to hold the scaled and delayed data
     shftData = dataSet.copy(include_pols=True)
     
     # Apply the coordinate shift
@@ -1236,9 +1223,9 @@ def shift_data(dataSet, aa):
 
 def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     """
-    Given a data dictionary of visibilities, an SEFD or array SEFDs in Jy, 
-    and an integration time in seconds, add noise to the visibilities 
-    assuming that the "weak source" limit.
+    Given a :class:`lsl.imaging.data.VisibilityDataSet` object of visibilities, 
+    an SEFD or array SEFDs in Jy, and an integration time in seconds, add noise 
+    to the visibilities assuming that the "weak source" limit.
     
     This function implements Equation 9-15 from Chapter 9 of "Synthesis 
     Imaging in Radio Astronomy II".
@@ -1246,6 +1233,10 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     .. versionadded:: 1.0.2
     """
     
+    # Make sure we have the right kind of object
+    if not isinstance(dataSet, VisibilityDataSet):
+        raise TypeError("Expected data to be stored in an VisibilityDataSet object")
+        
     # Figure out the bandwidth from the frequency list in the 
     if bandwidth is None:
         try:
@@ -1266,12 +1257,12 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     nAnts = len(ants)
     try:
         if len(SEFD) != nAnts:
-            raise RuntimeError("Mis-match between the number of SEFDs supplied and the number of antennas in the data dictionary")
+            raise RuntimeError("Mis-match between the number of SEFDs supplied and the number of antennas in the data")
             
     except TypeError:
         SEFD = numpy.ones(nAnts)*SEFD
         
-    # Build the data dictionary to hold the data with noise added
+    # Build the VisibilityDataSet to hold the data with noise added
     bnData = dataSet.copy(include_pols=True)
     
     # Apply the scales and delays for all polarization pairs found in the original data

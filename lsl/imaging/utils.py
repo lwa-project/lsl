@@ -8,9 +8,9 @@ if sys.version_info > (3,):
     
 """
 Module to support imaging correlated data.  This module provides utilities to 
-read FITS IDI files into data dictionaries (as described in 
-:mod:`lsl.sim.vis`) and build AIPY ImgW instances from the data dictionaries.
-Also included is a utility to sort data dictionaries by baselines.
+read FITS IDI files into :class:`lsl.imaging.data.VisibilityDataSet` or 
+:class:`lsl.imaging.data.VisibilityData` object (as described in 
+:mod:`lsl.imaging.data`) and build AIPY ImgW instances from the data.
 
 .. versionadded:: 0.5.0
 
@@ -196,8 +196,9 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                           This is useful for simulation proposes and computing 
                           source positions.
      * get_observer - Return a ephem.Observer instance representing the array
-     * get_data_set - Return a data dictionary of all baselines for a given set
-                      of observations
+     * get_data_set - Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
+                      :class:`lsl.imaging.data.VisibilityData` object for all 
+                      baselines for a given set of observations
         
     The class also includes a variety of useful metadata attributes:
      * pols - Numpy array of polarization product codes
@@ -348,7 +349,9 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
-        Return a baseline sorted data dictionary for the specified data set.  
+        Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
+        :class:`lsl.imaging.data.VisibilityData` object for all 
+        baselines for a given set of observations for the specified data set.  
         By default this excludes the autocorrelations.  To include 
         autocorrelations set the value of 'include_auto' to True.  Setting the
         'sort' keyword to False will disable the baseline sorting.  Optionally,
@@ -521,8 +524,9 @@ class CorrelatedDataUV(CorrelatedDataBase):
                           This is useful for simulation proposes and computing 
                           source positions.
      * get_observer - Return a ephem.Observer instance representing the array
-     * get_data_set - Return a data dictionary of all baselines for a given set
-                      of observations
+     * get_data_set - Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
+                      :class:`lsl.imaging.data.VisibilityData` object of all 
+                      baselines for a given set of observations
         
     The class also includes a variety of useful metadata attributes:
      * pols - Numpy array of polarization product codes
@@ -642,7 +646,8 @@ class CorrelatedDataUV(CorrelatedDataBase):
         
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
-        Return a baseline sorted data dictionary for the specified data set.  
+        Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
+        :class:`lsl.imaging.data.VisibilityData` object for the specified data set.  
         By default this excludes the autocorrelations.  To include 
         autocorrelations set the value of 'include_auto' to True.  Setting the
         'sort' keyword to False will disable the baseline sorting.  Optionally,
@@ -796,8 +801,9 @@ try:
                               This is useful for simulation proposes and computing 
                               source positions.
          * get_observer - Return a ephem.Observer instance representing the array
-         * get_data_set - Return a data dictionary of all baselines for a given set
-                          of observations
+         * get_data_set - Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
+                      :class:`lsl.imaging.data.VisibilityData` object of all 
+                      baselines for a given set of observations
         
         The class also includes a variety of useful metadata attributes:
          * pols - Numpy array of polarization product codes
@@ -966,7 +972,8 @@ try:
             
         def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
             """
-            Return a baseline sorted data dictionary for the specified data set.  
+            Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
+            :class:`lsl.imaging.data.VisibilityData` object for the specified data set.  
             By default this excludes the autocorrelations.  To include 
             autocorrelations set the value of 'include_auto' to True.  Setting the
             'sort' keyword to False will disable the baseline sorting.  Optionally,
@@ -1371,13 +1378,17 @@ class ImgWPlus(aipy.img.ImgW):
 
 def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=None, verbose=True):
     """
-    Given a data dictionary, build an aipy.img.ImgW object of gridded uv data 
-    which can be used for imaging.  The ImgW object itself is returned by this 
-    function to make it more versatile.
+    Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
+    object of gridded uv data which can be used for imaging.  The ImgW object 
+    itself is returned by this function to make it more versatile.
     """
     
     im = ImgWPlus(size=size, res=res, wres=wres)
     
+    # Make sure we have the right kind of object
+    if not isinstance(data_set, VisibilityDataSet):
+        raise TypeError("Expected data to be stored in an VisibilityDataSet object")
+        
     # Make sure we have the right polarization
     if pol not in data_set.pols:
         raise RuntimeError("Data dictionary does not have data for polarization '%s'" % pol)

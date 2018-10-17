@@ -35,6 +35,10 @@ class PolarizationDataSet(object):
             
     @property
     def nbaseline(self):
+        """
+        The number of baselines contained in the data.
+        """
+        
         return len(self.data)
         
     def copy(self):
@@ -151,21 +155,43 @@ class VisibilityDataSet(object):
            
     @property
     def nbaseline(self):
+        """
+        The number of baselines in the data.
+        """
+        
         return len(self.baselines)
         
     @property
     def nchan(self):
+        """
+        The number of frequency channels in the data.
+        """
+        
         return len(self.freq)
         
     @property
     def npol(self):
+        """
+        The number of polarizations stored.
+        """
+        
         return len(self.pols)
         
     @property
     def mjd(self):
+        """
+        The MJD that the data correspond to.
+        """
+        
         return self.jd - astro.MJD_OFFSET
         
     def copy(self, include_pols=True):
+        """
+        Return a copy of the object.  Be default this includes copies of all 
+        of the associated PolarizationDataSet objects.  Setting 'include_pols'
+        to False will not copy this objects.
+        """
+        
         set_copy = VisibilityDataSet(self.jd*1.0, 
                                      self.freq.copy(), 
                                      copy.copy(self.baselines), 
@@ -179,6 +205,11 @@ class VisibilityDataSet(object):
         return set_copy               
         
     def append(self, value):
+        """
+        Append a new PolarizationDataSet object.  If the polarization already
+        exists it is replaced.
+        """
+        
         if not isinstance(value, PolarizationDataSet):
             raise TypeError("Must be a VisibilityDataSet instance")
         if self.nbaseline != value.nbaseline:
@@ -197,6 +228,11 @@ class VisibilityDataSet(object):
         return [i for (v, i) in sorted((v, i) for (i, v) in enumerate([__cmpBaseline(bl) for bl in self.baselines]))]
         
     def sort(self, order=None):
+        """
+        Sort the stored data using the order provided in the 'order' keyword.
+        If not ordering is provided, the data are sorted by baseline pair.
+        """
+        
         if order is None:
             order = self._baseline_order
             
@@ -206,6 +242,10 @@ class VisibilityDataSet(object):
             pds.sort(order)
             
     def rephase(self, new_phase_center):
+        """
+        Shift the phase center of the data to a new phase center.
+        """
+        
         if self.phase_center is None:
             raise AttributeError("No phase center defined for this data set")
         if self.antennaarray is None:
@@ -245,6 +285,11 @@ class VisibilityDataSet(object):
         self.phase_center = new_phase_center
         
     def get_uv_range(self, min_uv=0.0, max_uv=numpy.inf):
+        """
+        Return a copy of the data containing only baselines with the (u,v)
+        distances allowed by the 'min_uv' and 'max_uv' cuts.
+        """
+        
         # Force min to be less than max
         if min_uv > max_uv:
             temp = min_uv
@@ -294,25 +339,50 @@ class VisibilityData(object):
         self._data[index] = value
         
     def append(self, value):
+        """
+        Append a new integration stored as a VisibilityDataSet to the object.
+        """
+        
         if not isinstance(value, VisibilityDataSet):
             raise TypeError("Expected type to be VisibilityDataSet")
+        if value.jd in [d.jd for d in self._data]:
+            raise ValueError("Data for JD %f have already been added" % value.jd)
         self._data.append(value)
         
     def extend(self, values):
+        """
+        Append a collection of new integration stored as VisibilityDataSet to 
+        the objects.
+        """
+        
         for value in values:
             if not isinstance(value, VisibilityDataSet):
                 raise TypeError("Expected type to be VisibilityDataSet")
+            if value.jd in [d.jd for d in self._data]:
+                raise ValueError("Data for JD %f have already been added" % value.jd)
             self._data.append(value)
             
     def pop(self, index=-1):
+        """
+        Pop and return the VisibilityDataSet specified by the provided index.
+        """
+        
         return self._data.pop(index)
         
     def sort(self):
+        """
+        Sort the VisibilityDataSet objects contained by the JD of the 
+        integrations.
+        """
+        
         self._data.sort(key=lambda x: x.jd)
         for data_set in self._data:
             data_set.sort()
             
     def rephase(self, new_phase_center, ignore_errors=False):
+        """
+        Shift the phase center for all of the integrations stored.
+        """
         for data_set in self._data:
             try:
                 data_set.rephase(new_phase_center)
@@ -321,6 +391,11 @@ class VisibilityData(object):
                     raise e
                     
     def get_uv_range(self, min_uv=0.0, max_uv=numpy.inf):
+        """
+        Return a copy of the data containing only baselines with the (u,v)
+        distances allowed by the 'min_uv' and 'max_uv' cuts.
+        """
+        
         new_data = VisibilityData()
         for data_set in self:
             new_data.append( data_set.get_uv_range(min_uv=min_uv, max_uv=max_uv) )
