@@ -180,8 +180,37 @@ class CorrelatedDataBase(object):
         
         return self.station
         
-    def get_data_set(self, *args, **kwds):
+    def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
+        """
+        Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
+        :class:`lsl.imaging.data.VisibilityData` object for all 
+        baselines for a given set of observations for the specified data set.  
+        By default this excludes the autocorrelations.  To include 
+        autocorrelations set the value of 'include_auto' to True.  Setting the
+        'sort' keyword to False will disable the baseline sorting.  Optionally,
+        baselines with lengths between min_uv and max_uv can only be returned.
+
+        .. note::
+            min_uv and max_uv should be specified in lambda
+        
+        .. versionchanged:: 1.1.0
+            'set' can now be either an integer or a list to pull back multiple 
+            integrations.
+        """
         raise NotImplementedError
+        
+    def data_set_sequence(self, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
+        """
+        Return an iterator that yields :class:`lsl.imaging.data.VisibilityDataSet` 
+        objects for each integration contained in the file one at a time.
+        
+        .. note::
+            min_uv and max_uv should be specified in lambda
+        """
+        
+        for i in xrange(self.integration_count):
+            yield self.get_data_set(i+1, include_auto=include_auto, sort=sort, 
+                                    min_uv=min_uv, max_uv=max_uv)
 
 
 class CorrelatedDataIDI(CorrelatedDataBase):

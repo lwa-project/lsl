@@ -221,7 +221,7 @@ class LDPFileBase(object):
         self.fh.close()
         _open_ldp_files.remove(self)
         
-    def offset(self, *args, **kwds):
+    def offset(self, offset):
         """
         Offset into the data.
         """
@@ -235,14 +235,27 @@ class LDPFileBase(object):
         
         raise NotImplementedError
         
-    def read(self, *args, **kwds):
+    def read(self, duration, time_in_samples=False):
         """
         Read a certain amount of time from the data.
         """
         
         raise NotImplementedError
         
-    def estimate_levels(self, *args, **kwds):
+    def read_sequence(self, duration, time_in_samples=False):
+        """
+        Return a generator that an iterator that yields the results of the 
+        read() method until the end of the file is reached.
+        """
+        
+        while True:
+            try:
+                output = self.read(duration, time_in_samples=time_in_samples)
+                yield output
+            except errors.EOFError:
+                raise GeneratorExit
+                
+    def estimate_levels(self, nframes=10, sigma=5.0):
         """
         Estimate the standard deviation of the data.
         """
@@ -699,7 +712,7 @@ class TBNFile(LDPFileBase):
         
         return duration, setTime, data
         
-    def estimate_levels(self, nFrames=100, Sigma=5.0):
+    def estimate_levels(self, nframes=100, sigma=5.0):
         """
         Estimate the n-sigma level for the absolute value of the voltages.  
         Returns a list with indicies that are the digitizer numbers minus one.
@@ -717,8 +730,8 @@ class TBNFile(LDPFileBase):
         count = {}
         for i in xrange(self.description['nantenna']):
             count[i] = 0
-        data = numpy.zeros((self.description['nantenna'], nFrames*512))
-        for i in xrange(nFrames):
+        data = numpy.zeros((self.description['nantenna'], nframes*512))
+        for i in xrange(nframes):
             for j in xrange(self.description['nantenna']):
                 # Read in the next frame and anticipate any problems that could occur
                 try:
@@ -733,11 +746,11 @@ class TBNFile(LDPFileBase):
                 
                 data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.data.iq )
                 count[aStand] +=  1
-        self.fh.seek(-tbn.FRAME_SIZE*self.description['nantenna']*nFrames, 1)
+        self.fh.seek(-tbn.FRAME_SIZE*self.description['nantenna']*nframes, 1)
         
         # Statistics
         rv = norm()
-        frac = rv.cdf(Sigma) - rv.cdf(-Sigma)
+        frac = rv.cdf(sigma) - rv.cdf(-sigma)
         index = int(round(data.shape[1]*frac))
         if index == data.shape[1]:
             index = data.shape[1] - 1
@@ -1054,7 +1067,7 @@ class DRXFile(LDPFileBase):
             
         return duration, setTime, data
         
-    def estimate_levels(self, nFrames=100, Sigma=5.0):
+    def estimate_levels(self, nframes=100, sigma=5.0):
         """
         Estimate the n-sigma level for the absolute value of the voltages.  
         Returns a list with indicies corresponding to:
@@ -1078,8 +1091,8 @@ class DRXFile(LDPFileBase):
                 
         # Sample the data
         count = {0:0, 1:0, 2:0, 3:0}
-        data = numpy.zeros((4, nFrames*4096))
-        for i in xrange(nFrames):
+        data = numpy.zeros((4, nframes*4096))
+        for i in xrange(nframes):
             for j in xrange(self.description['beampols']):
                 # Read in the next frame and anticipate any problems that could occur
                 try:
@@ -1094,11 +1107,11 @@ class DRXFile(LDPFileBase):
                 
                 data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.data.iq )
                 count[aStand] +=  1
-        self.fh.seek(-drx.FRAME_SIZE*self.description['beampols']*nFrames, 1)
+        self.fh.seek(-drx.FRAME_SIZE*self.description['beampols']*nframes, 1)
         
         # Statistics
         rv = norm()
-        frac = rv.cdf(Sigma) - rv.cdf(-Sigma)
+        frac = rv.cdf(sigma) - rv.cdf(-sigma)
         index = int(round(data.shape[1]*frac))
         if index == data.shape[1]:
             index = data.shape[1] - 1
