@@ -77,6 +77,29 @@ class imaging_tests(unittest.TestCase):
         # Error checking
         self.assertRaises(IndexError, idi.get_data_set, 2)
         
+        # 'with' statement support
+        with utils.CorrelatedDataIDI(idiFile) as idi:
+            ## Basic functions (just to see that they run)
+            junk = idi.get_antennaarray()
+            junk = idi.get_observer()
+            junk = idi.get_data_set(1)
+            
+        # generator support
+        idi = utils.CorrelatedDataIDI(idiFile)
+        i = 0
+        for ds in idi.data_set_sequence(include_auto=False):
+            self.assertEqual(ds.XX.data.shape[0], 5*(5-1)/2)
+            i += 1
+        self.assertEqual(i, 1)
+        
+        # both at the same time
+        with utils.CorrelatedDataIDI(idiFile) as idi:
+            i = 0
+            for ds in idi.data_set_sequence(include_auto=False):
+                self.assertEqual(ds.XX.data.shape[0], 5*(5-1)/2)
+                i += 1
+            self.assertEqual(i, 1)
+            
     def __initData(self):
         """Private function to generate a random set of data for writing a UVFITS
         file.  The data is returned as a dictionary with keys:

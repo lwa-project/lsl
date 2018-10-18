@@ -201,7 +201,7 @@ class CorrelatedDataBase(object):
         
     def data_set_sequence(self, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
-        Return an iterator that yields :class:`lsl.imaging.data.VisibilityDataSet` 
+        Return a generator that yields :class:`lsl.imaging.data.VisibilityDataSet` 
         objects for each integration contained in the file one at a time.
         
         .. note::
@@ -211,6 +211,13 @@ class CorrelatedDataBase(object):
         for i in xrange(self.integration_count):
             yield self.get_data_set(i+1, include_auto=include_auto, sort=sort, 
                                     min_uv=min_uv, max_uv=max_uv)
+            
+    def close(self):
+        """
+        Close out the object.
+        """
+        
+        pass
 
 
 class CorrelatedDataIDI(CorrelatedDataBase):
@@ -1030,7 +1037,6 @@ try:
                 
                 # Pull out the data
                 targetData = data.query('TIME == %.16f' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
-                print('nrows:', targetData.nrows())
                 uvw  = targetData.getcol('UVW')
                 try:
                     wgt  = None

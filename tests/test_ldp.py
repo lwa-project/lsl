@@ -127,6 +127,45 @@ class ldp_tests(unittest.TestCase):
         # Close it out
         f.close()
         
+        # 'with' statement support
+        with ldp.TBNFile(tbnFile) as f:
+            ## File info
+            self.assertEqual(f.get_info("sample_rate"), 100e3)
+            self.assertEqual(f.get_info("data_bits"), 8)
+            self.assertEqual(f.get_info("nframes"), 29)
+            
+            self.assertEqual(f.sample_rate, 100e3)
+            self.assertEqual(f.data_bits, 8)
+            self.assertEqual(f.nframes, 29)
+            
+            ## Read a frame
+            frame = f.read_frame()
+            
+            ## Get the remaining frame count
+            self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
+            self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+            
+        # generator support
+        f = ldp.TBNFile(tbnFile)
+        i = 0
+        for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+            self.assertEqual(tInt, tInt2)
+            self.assertEqual(tStart, tStart2)
+            self.assertEqual(data.shape, data2.shape)
+            i += 1
+        self.assertEqual(i, 1)
+        f.close()
+        
+        # both at the same time
+        with ldp.TBNFile(tbnFile) as f:
+            i = 0
+            for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+                self.assertEqual(tInt, tInt2)
+                self.assertEqual(tStart, tStart2)
+                self.assertEqual(data.shape, data2.shape)
+                i += 1
+            self.assertEqual(i, 1)
+            
     def test_ldp_tbn_nocheck(self):
         """Test the LDP interface for a TBN file."""
         
@@ -203,6 +242,47 @@ class ldp_tests(unittest.TestCase):
         # Close it out
         f.close()
         
+        # 'with' statement support
+        with ldp.DRXFile(drxFile) as f:
+            ## File info
+            self.assertEqual(f.get_info("sample_rate"), 19.6e6)
+            self.assertEqual(f.get_info("data_bits"), 4)
+            self.assertEqual(f.get_info("nframes"), 32)
+            self.assertEqual(f.get_info("beampols"), 4)
+            
+            self.assertEqual(f.sample_rate, 19.6e6)
+            self.assertEqual(f.data_bits, 4)
+            self.assertEqual(f.nframes, 32)
+            self.assertEqual(f.beampols, 4)
+            
+            ## Read a frame
+            frame = f.read_frame()
+            
+            ## Get the remaining frame count
+            self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
+            self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+            
+        # generator support
+        f = ldp.DRXFile(drxFile)
+        i = 0
+        for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+            self.assertEqual(tInt, tInt2)
+            self.assertEqual(tStart, tStart2)
+            self.assertEqual(data.shape, data2.shape)
+            i += 1
+        self.assertEqual(i, 1)
+        f.close()
+        
+        # both at the same time
+        with ldp.DRXFile(drxFile) as f:
+            i = 0
+            for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+                self.assertEqual(tInt, tInt2)
+                self.assertEqual(tStart, tStart2)
+                self.assertEqual(data.shape, data2.shape)
+                i += 1
+            self.assertEqual(i, 1)
+            
     def test_ldp_drx_nocheck(self):
         """Test the LDP interface for a DRX file."""
         
@@ -283,6 +363,49 @@ class ldp_tests(unittest.TestCase):
         # Close it out
         f.close()
         
+        # 'with' statement support
+        with ldp.DRSpecFile(drspecFile) as f:
+            ## File info
+            self.assertEqual(f.get_info("sample_rate"), 19.6e6)
+            self.assertEqual(f.get_info("data_bits"), 32)
+            self.assertEqual(f.get_info("nframes"), 7)
+            self.assertEqual(f.get_info("beampols"), 4)
+            self.assertEqual(f.get_info("nproducts"), 2)
+            
+            self.assertEqual(f.sample_rate, 19.6e6)
+            self.assertEqual(f.data_bits, 32)
+            self.assertEqual(f.nframes, 7)
+            self.assertEqual(f.beampols, 4)
+            self.assertEqual(f.nproducts, 2)
+            
+            ## Read a frame
+            frame = f.read_frame()
+            
+            ## Get the remaining frame count
+            self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
+            self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+            
+        # generator support
+        f = ldp.DRSpecFile(drspecFile)
+        i = 0
+        for (tInt2, tStart2, data2) in f.read_sequence(5.0):
+            self.assertEqual(tInt, tInt2)
+            self.assertEqual(tStart, tStart2)
+            self.assertEqual(data.shape, data2.shape)
+            i += 1
+        self.assertEqual(i, 1)
+        f.close()
+        
+        # both at the same time
+        with ldp.DRSpecFile(drspecFile) as f:
+            i = 0
+            for (tInt2, tStart2, data2) in f.read_sequence(5.0):
+                self.assertEqual(tInt, tInt2)
+                self.assertEqual(tStart, tStart2)
+                self.assertEqual(data.shape, data2.shape)
+                i += 1
+            self.assertEqual(i, 1)
+            
     def test_ldp_drspec_nocheck(self):
         """Test the LDP interface for a DR Spectrometer file."""
         

@@ -244,8 +244,8 @@ class LDPFileBase(object):
         
     def read_sequence(self, duration, time_in_samples=False):
         """
-        Return a generator that an iterator that yields the results of the 
-        read() method until the end of the file is reached.
+        Return a generator that yields the results of the read() method until 
+        the end of the file is reached.
         """
         
         while True:
@@ -253,7 +253,7 @@ class LDPFileBase(object):
                 output = self.read(duration, time_in_samples=time_in_samples)
                 yield output
             except errors.EOFError:
-                raise GeneratorExit
+                break
                 
     def estimate_levels(self, nframes=10, sigma=5.0):
         """
