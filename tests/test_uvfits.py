@@ -65,7 +65,7 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits = uvfits.Uv(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -91,7 +91,7 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits = uvfits.Uv(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -121,7 +121,7 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits = uvfits.Uv(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -146,7 +146,7 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits = uvfits.Uv(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -175,7 +175,7 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits = uvfits.Uv(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -198,7 +198,7 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits = uvfits.Uv(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -221,7 +221,7 @@ class uvfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = uvfits.UV(testFile, ref_time=testTime)
+        fits = uvfits.Uv(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])

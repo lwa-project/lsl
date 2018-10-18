@@ -13,10 +13,10 @@ from lsl.writer import measurementset
 from lsl.common import stations as lwa_common
 from lsl.correlator import uvUtils
 
-run_tests = False
+run_ms_tests = False
 try:
     import casacore
-    run_tests = True
+    run_ms_tests = True
 except ImportError:
     pass
 
@@ -26,9 +26,9 @@ __revision__ = "$Rev$"
 __author__   = "Jayce Dowell"
 
 
-@unittest.skipUnless(run_tests, "requires the 'casacore' module")
+@unittest.skipUnless(run_ms_tests, "requires the 'casacore' module")
 class measurementset_tests(unittest.TestCase):
-    """A unittest.TestCase collection of unit tests for the lsl.writer.measurementset.MS
+    """A unittest.TestCase collection of unit tests for the lsl.writer.measurementset.Ms
     class."""
     
     testPath = None
@@ -72,7 +72,7 @@ class measurementset_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the table
-        tbl = measurementset.MS(testFile, ref_time=testTime)
+        tbl = measurementset.Ms(testFile, ref_time=testTime)
         tbl.set_stokes(['xx'])
         tbl.set_frequency(data['freq'])
         tbl.set_geometry(data['site'], data['antennas'])
@@ -97,7 +97,7 @@ class measurementset_tests(unittest.TestCase):
         
         for i in range(4):
             # Start the file
-            ms = measurementset.MS(testFile, ref_time=testTime, clobber=True)
+            ms = measurementset.Ms(testFile, ref_time=testTime, clobber=True)
             if i != 0:
                 ms.set_stokes(['xx'])
             if i != 1:
@@ -118,7 +118,7 @@ class measurementset_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = measurementset.MS(testFile, ref_time=testTime)
+        fits = measurementset.Ms(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -179,7 +179,7 @@ class measurementset_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = measurementset.MS(testFile, ref_time=testTime)
+        fits = measurementset.Ms(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+10e6)

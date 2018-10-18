@@ -61,7 +61,7 @@ class sdfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = sdfits.SD(testFile, ref_time=testTime)
+        fits = sdfits.Sd(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])
@@ -86,7 +86,7 @@ class sdfits_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = sdfits.SD(testFile, ref_time=testTime)
+        fits = sdfits.Sd(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])

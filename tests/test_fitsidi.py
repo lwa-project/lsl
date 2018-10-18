@@ -65,7 +65,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -92,7 +92,7 @@ class fitsidi_tests(unittest.TestCase):
         
         for i in range(4):
             # Start the file
-            fits = fitsidi.IDI(testFile, ref_time=testTime, clobber=True)
+            fits = fitsidi.Idi(testFile, ref_time=testTime, clobber=True)
             if i != 0:
                 fits.set_stokes(['xx'])
             if i != 1:
@@ -113,7 +113,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -143,7 +143,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -177,7 +177,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -206,7 +206,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -239,7 +239,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -267,7 +267,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -333,7 +333,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -373,7 +373,7 @@ class fitsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.IDI(testFile, ref_time=testTime)
+        fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+10e6)
@@ -496,7 +496,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -522,7 +522,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -552,7 +552,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -586,7 +586,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -615,7 +615,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -648,7 +648,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -676,7 +676,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -742,7 +742,7 @@ class aipsidi_tests(unittest.TestCase):
         data = self.__initData()
         
         # Start the file
-        fits = fitsidi.AIPS(testFile, ref_time=testTime)
+        fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
