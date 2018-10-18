@@ -33,7 +33,7 @@ from lsl.writer.fitsidi import WriterBase
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['SD', 'STOKES_CODES', 'NUMERIC_STOKES', '__version__', '__revision__', '__all__']
+__all__ = ['Sd', 'STOKES_CODES', 'NUMERIC_STOKES', '__version__', '__revision__', '__all__']
 
 
 SD_VERSION = (1, 6)
@@ -47,7 +47,7 @@ NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V',
                   -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
 
-class SD(WriterBase):
+class Sd(WriterBase):
     """
     Class for storing spectrometer data and writing the data, along with array
     frequency setup, etc., to a SDFITS file that can be read into CASA via the
@@ -81,7 +81,7 @@ class SD(WriterBase):
         """
 
         # File-specific information
-        super(SD, self).__init__(filename, ref_time=ref_time, verbose=verbose)
+        super(Sd, self).__init__(filename, ref_time=ref_time, verbose=verbose)
         
         # Observation-specific information
         self.site = lwa1

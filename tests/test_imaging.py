@@ -19,7 +19,7 @@ from lsl import astro
 from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import selfCal
-from lsl.writer.fitsidi import IDI, NUMERIC_STOKES
+from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
 from lsl.sim.vis import SOURCES as simSrcs
 from lsl.common.stations import lwa1, parse_ssmif
 from lsl.correlator import uvUtils
@@ -27,7 +27,7 @@ from lsl.correlator import uvUtils
 run_ms_tests = False
 try:
     import casacore
-    from lsl.writer.measurementset import MS
+    from lsl.writer.measurementset import Ms
     run_ms_tests = True
 except ImportError:
     pass
@@ -110,7 +110,7 @@ class imaging_tests(unittest.TestCase):
         testTime, testFile = time.time(), os.path.join('idi-test-MultiIF.fits')
         
         # Start the file
-        fits = IDI(testFile, ref_time=testTime, clobber=True)
+        fits = Idi(testFile, ref_time=testTime, clobber=True)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+30e6)
@@ -213,14 +213,13 @@ class imaging_tests(unittest.TestCase):
     def test_CorrelatedDataMS(self):
         """Test the utils.CorrelatedDataMS class."""
         
-        testTime = time.time()
-        testFile = os.path.join(self.testPath, 'ms-test-W.ms')
+        testTime, testFile = time.time(), os.path.join(self.testPath, 'ms-test-W.ms')
         
         # Get some data
         data = self.__initData()
         
         # Start the table
-        tbl = MS(testFile, ref_time=testTime)
+        tbl = Ms(testFile, ref_time=testTime)
         tbl.set_stokes(['xx'])
         tbl.set_frequency(data['freq'])
         tbl.set_geometry(data['site'], data['antennas'])
@@ -228,7 +227,7 @@ class imaging_tests(unittest.TestCase):
         tbl.write()
         
         # Open the measurement set
-        ms = utils.CorrelatedData(testFile)
+        ms = utils.CorrelatedDataMS(testFile)
         
         # Basic functions (just to see that they run)
         junk = ms.get_antennaarray()
@@ -239,6 +238,33 @@ class imaging_tests(unittest.TestCase):
         self.assertRaises(IndexError, ms.get_data_set, 2)
         
     @unittest.skipUnless(run_ms_tests, "requires the 'casacore' module")
+    def test_CorrelatedDataMS_SingleIF(self):
+        """Test the utils.CorrelatedDataMS class on a file with a single IF."""
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Filename and time
+        testTime, testFile = time.time(), os.path.join(self.testPath, 'ms-test-SingleIF.ms')
+        
+        # Start the file
+        fits = Ms(testFile, ref_time=testTime, clobber=True)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], data['vis'])
+        fits.write()
+        
+        # Open the measurement set
+        ms = utils.CorrelatedDataMS(testFile)
+        self.assertEqual(ms.freq.size, data['freq'].size)
+        ds = ms.get_data_set(1, include_auto=True)
+        
+        for i in xrange(len(data['bl'])):
+            for j in xrange(data['freq'].size):
+                self.assertAlmostEqual(ds.XX.data[i,j], data['vis'][i,j], 6)
+                
+    @unittest.skipUnless(run_ms_tests, "requires the 'casacore' module")
     def test_CorrelatedDataMS_MultiIF(self):
         """Test the utils.CorrelatedDataMS class on a file with multiple IFs."""
         
@@ -246,10 +272,10 @@ class imaging_tests(unittest.TestCase):
         data = self.__initData()
         
         # Filename and time
-        testTime, testFile = time.time(), os.path.join('ms-test-MultiIF.ms')
+        testTime, testFile = time.time(), os.path.join(self.testPath, 'ms-test-MultiIF.ms')
         
         # Start the file
-        fits = IDI(testFile, ref_time=testTime, clobber=True)
+        fits = Ms(testFile, ref_time=testTime, clobber=True)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+30e6)
@@ -259,7 +285,7 @@ class imaging_tests(unittest.TestCase):
         fits.write()
         
         # Open the measurement set
-        ms = utils.CorrelatedData(testFile)
+        ms = utils.CorrelatedDataMS(testFile)
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         

@@ -41,7 +41,7 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['IDI', 'AIPS', 'ExtendedIDI', 'STOKES_CODES', 'NUMERIC_STOKES', 
+__all__ = ['Idi', 'Aips', 'ExtendedIdi', 'STOKES_CODES', 'NUMERIC_STOKES', 
     '__version__', '__revision__', '__all__']
 
 
@@ -160,11 +160,11 @@ class WriterBase(object):
             
             # Coordinate transformation matrices
             trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                            [1,  0,               0],
-                            [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+                                   [1,  0,               0],
+                                   [0,  numpy.cos(lat2), numpy.sin(lat2)]])
             trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                            [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                            [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                                   [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+                                   [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
                     
             for i,(a1,a2) in enumerate(self.baselines):
                 # Go from a east, north, up coordinate system to a celestial equation, 
@@ -344,7 +344,7 @@ class WriterBase(object):
         raise NotImplementedError
 
 
-class IDI(WriterBase):
+class Idi(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array
     geometry, frequency setup, etc., to a FITS IDI file that can be read into 
@@ -364,7 +364,7 @@ class IDI(WriterBase):
         """
         
         # File-specific information
-        super(IDI, self).__init__(filename, ref_time=ref_time, verbose=verbose)
+        super(Idi, self).__init__(filename, ref_time=ref_time, verbose=verbose)
         
         # Open the file and get going
         if os.path.exists(filename):
@@ -1238,7 +1238,7 @@ class IDI(WriterBase):
         return (mapper, inverseMapper)
 
 
-class AIPS(IDI):
+class Aips(Idi):
     """
     Sub-class of the FITS IDI writer for making files that *should* work 
     with AIPS nicely.  AIPS imposes a limit on antenna number of two digits
@@ -1298,7 +1298,7 @@ class AIPS(IDI):
         self.FITS.flush()
 
 
-class ExtendedIDI(IDI):
+class ExtendedIdi(Idi):
     """
     Sub-class of the FITS IDI writer for making files that support up to
     65,535 antennas.  This is done by changing the packing of baselines 

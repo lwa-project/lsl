@@ -65,7 +65,7 @@ def split_baseline(baseline, shift=16):
     return (baseline >> shift) & part, baseline & part
 
 
-class MS(WriterBase):
+class Ms(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array
     geometry, frequency setup, etc., to a CASA measurement set.
@@ -74,7 +74,7 @@ class MS(WriterBase):
     _STOKES_CODES = STOKES_CODES
     
     @cmp_to_total
-    class _MSUVData(WriterBase._UVData):
+    class _MS_UVData(WriterBase._UVData):
         """
         Represents one MS UV visibility data set for a given observation time.
         """
@@ -91,11 +91,11 @@ class MS(WriterBase):
             
             # Coordinate transformation matrices
             trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                            [1,  0,               0],
-                            [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+                                   [1,  0,               0],
+                                   [0,  numpy.cos(lat2), numpy.sin(lat2)]])
             trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                            [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                            [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                                   [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+                                   [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
                     
             for i,(a1,a2) in enumerate(self.baselines):
                 # Go from a east, north, up coordinate system to a celestial equation, 
@@ -134,7 +134,7 @@ class MS(WriterBase):
         """
         
         # File-specific information
-        super(MS, self). __init__(filename, ref_time=ref_time, verbose=verbose)
+        super(Ms, self). __init__(filename, ref_time=ref_time, verbose=verbose)
         
         # Open the file and get going
         if os.path.exists(filename):
@@ -203,7 +203,7 @@ class MS(WriterBase):
         else:
             numericPol = pol
             
-        self.data.append( self._MSUVData(obsTime, intTime, baselines, visibilities, pol=numericPol, source=source) )
+        self.data.append( self._MS_UVData(obsTime, intTime, baselines, visibilities, pol=numericPol, source=source) )
         
     def write(self):
         """

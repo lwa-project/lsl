@@ -33,7 +33,7 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['UV', '__version__', '__revision__', '__all__']
+__all__ = ['Uv', '__version__', '__revision__', '__all__']
 
 
 UV_VERSION = (1, 0)
@@ -67,7 +67,7 @@ def split_baseline(baseline, shift=None):
     return ant1,ant2
 
 
-class UV(WriterBase):
+class Uv(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array
     geometry, frequency setup, etc., to a UVFITS file that can be read into 
@@ -87,7 +87,7 @@ class UV(WriterBase):
         """
         
         # File-specific information
-        super(UV, self).__init__(filename, ref_time=ref_time, verbose=verbose)
+        super(Uv, self).__init__(filename, ref_time=ref_time, verbose=verbose)
         
         # Open the file and get going
         if os.path.exists(filename):

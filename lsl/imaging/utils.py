@@ -1000,7 +1000,8 @@ try:
                 targetJD = targetTime / 3600.0 / 24.0 + astro.MJD_OFFSET
                 
                 # Pull out the data
-                targetData = data.query('TIME == %f' % targetTime)
+                targetData = data.query('TIME == %.16f' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
+                print('nrows:', targetData.nrows())
                 uvw  = targetData.getcol('UVW')
                 try:
                     wgt  = None
@@ -1040,24 +1041,17 @@ try:
                 #       module
                 baselines = []
                 select = []
-                for b,a1,a2 in zip(xrange(len(ant1)),ant1,ant2):
+                for b,(a1,a2) in enumerate(zip(ant1,ant2)):
                     if a1 == a2 and not include_auto:
                         ## Skip auto-correlations
                         continue
-                    try:
-                        r1 = numpy.where((a1+1) == numpy.array(self.stands))[0][0]
-                        r2 = numpy.where((a2+1) == numpy.array(self.stands))[0][0]
-                    except IndexError:
-                        r1 = a1
-                        r2 = a2
-                    baselines.append( (r1,r2) )
+                    baselines.append( (a1,a2) )
                     select.append( b )
                 if len(self._windows) > 1:
                     baselines = baselines[:len(baselines)/2]
                     selectU = select[:len(baselines)]
                 else:
                     selectU = select
-                    
                 # Build the output data set
                 dataSet = VisibilityDataSet(targetJD, self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[selectU,:,:], 
