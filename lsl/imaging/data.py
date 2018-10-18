@@ -10,7 +10,7 @@ from lsl import astro
 
 __version__ = "0.1"
 __revision__ = "$Rev$"
-__all__ = ['PolarizationDataSet', 'VisibilityDataSet', 'VisibilityData', '__version__', '__revision__', '__all__']
+__all__ = ['PolarizationDataSet', 'VisibilityDataSet', 'VisibilityData']
 
 
 class PolarizationDataSet(object):

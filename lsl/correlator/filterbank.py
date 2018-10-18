@@ -45,7 +45,7 @@ except ImportError:
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['fft', 'fft2', 'fft4', 'fft8', 'fft16', 'fft32', '__version__', '__revision__', '__all__']
+__all__ = ['fft', 'fft2', 'fft4', 'fft8', 'fft16', 'fft32']
 
 def __filterCoeff(N, P):
     """

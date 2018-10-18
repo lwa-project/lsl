@@ -26,7 +26,7 @@ from lsl.reader.drx import FILTER_CODES as DRXFilters
 
 __version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['basic_signal', 'point_source', '__version__', '__revision__', '__all__']
+__all__ = ['basic_signal', 'point_source']
 
 
 def _basic_tbn(fh, stands, nframes, **kwargs):

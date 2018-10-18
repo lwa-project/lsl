@@ -12,7 +12,7 @@ from lsl.reader import drx
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['SimFrame', 'frame_to_frame', '__version__', '__revision__', '__all__']
+__all__ = ['SimFrame', 'frame_to_frame']
 
 
 def frame_to_frame(drx_frame):

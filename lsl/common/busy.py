@@ -10,7 +10,7 @@ import threading
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['BusyIndicator', '__version__', '__revision__', '__all__']
+__all__ = ['BusyIndicator',]
 
 
 class BusyIndicator(object):

@@ -16,6 +16,8 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
+__all__ = ['Time', 'SkyPosition', 'CelestialPosition', 'PlanetaryPosition', 
+           'GeographicalPosition', 'PointingDirection']
 __author__ = "Unknown"
 __maintainer__ = "Jayce Dowell"
 

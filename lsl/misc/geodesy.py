@@ -30,7 +30,7 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['EOP', 'get_eop', '__version__', '__revision__', '__all__']
+__all__ = ['EOP', 'get_eop']
 
 # Logger for capturing problems with downloading EOP data
 __logger = logging.getLogger('__main__')

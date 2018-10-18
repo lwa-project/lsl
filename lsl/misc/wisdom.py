@@ -21,7 +21,7 @@ from lsl.misc import _wisdom
 
 __version__ = "0.2"
 __revision__ = "$Rev$"
-__all__ = ["make", "show", "__version__", "__revision__", "__all__"]
+__all__ = ["make", "show"]
 
 
 # Path to the LSL-specific FFTW wisdom file

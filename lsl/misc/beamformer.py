@@ -24,7 +24,7 @@ from lsl.common import dp as dp_common
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['calc_delay', 'int_delay_and_sum', 'int_beam_shape', 'phase_and_sum', 'phase_beam_shape', 'circularize', '__version__', '__revision__', '__all__']
+__all__ = ['calc_delay', 'int_delay_and_sum', 'int_beam_shape', 'phase_and_sum', 'phase_beam_shape', 'circularize']
 
 
 def _load_stand_response(freq=49.0e6):

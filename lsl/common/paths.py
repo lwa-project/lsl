@@ -18,7 +18,7 @@ import imp
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['MODULE', 'DATA', 'MODULE_BUILD', 'DATA_BUILD', '__version__', '__revision__', '__all__']
+__all__ = ['MODULE', 'DATA', 'MODULE_BUILD', 'DATA_BUILD']
 
 modInfo = imp.find_module('lsl')
 MODULE = os.path.abspath(modInfo[1])

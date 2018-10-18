@@ -21,7 +21,7 @@ import math
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['c', 'kB', 'deg_to_rad', 'tpi', '__version__', '__revision__', '__all__']
+__all__ = ['c', 'kB', 'deg_to_rad', 'tpi']
 
 c = 2.9979245800e8			# speed of light in m/s
 kB = 1380.6488				# Boltzmann's constant in Jy m^2 / K

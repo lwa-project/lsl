@@ -19,7 +19,7 @@ from lsl.reader import tbn
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['SimFrame', 'frame_to_frame', '__version__', '__revision__', '__all__']
+__all__ = ['SimFrame', 'frame_to_frame']
 
 
 def frame_to_frame(tbn_frame):

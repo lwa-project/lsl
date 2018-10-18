@@ -41,8 +41,7 @@ from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CO
 __version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
-           'LWASVDataFile', 'LWADataFile', 
-           '__version__', '__revision__', '__all__']
+           'LWASVDataFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):

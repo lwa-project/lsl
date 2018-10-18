@@ -83,7 +83,7 @@ __version__ = '0.9'
 __revision__ = '$Rev$'
 __all__ = ['CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 
            'ImgWPlus', 'build_gridded_image', 'plot_gridded_image', 'get_image_radec', 
-           'get_image_azalt', '__version__', '__revision__', '__all__']
+           'get_image_azalt']
 
 
 # Regular expression for trying to get the stand number out of an antenna

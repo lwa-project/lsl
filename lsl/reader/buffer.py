@@ -35,7 +35,7 @@ from collections import deque, OrderedDict
 
 __version__ = '1.2'
 __revision__ = '$Rev$'
-__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer', '__version__', '__revision__', '__all__']
+__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer']
 
 
 def _cmp_frames(x, y):

@@ -32,8 +32,7 @@ __version__ = '1.0'
 __revision__ = '$Rev$'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_station', 'get_session_metadata', 
            'get_session_spec', 'get_observation_spec', 'get_sdf', 'get_command_script', 
-           'get_asp_configuration', 'get_asp_configuration_summary', 'is_valid', 
-           '__version__', '__revision__', '__all__']
+           'get_asp_configuration', 'get_asp_configuration_summary', 'is_valid']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')

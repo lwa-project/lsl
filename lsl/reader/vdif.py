@@ -47,8 +47,7 @@ from lsl.reader.errors import SyncError, EOFError
 __version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_guppi_header', 'read_frame', 
-           'get_frame_size', 'get_thread_count', 'get_frames_per_second', 'get_sample_rate', 
-           '__version__', '__revision__', '__all__']
+           'get_frame_size', 'get_thread_count', 'get_frames_per_second', 'get_sample_rate']
 
 
 

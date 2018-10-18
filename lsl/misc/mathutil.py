@@ -20,8 +20,7 @@ __version__   = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 
            'creal', 'cimag', 'to_dB', 'from_dB', 'ndft',  'savitzky_golay', 'gaussian1d', 
-           'gaussian2d', 'gaussparams', 'sphfit', 'sphval', 
-           '__version__', '__revision__', '__all__']
+           'gaussian2d', 'gaussparams', 'sphfit', 'sphval']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
 

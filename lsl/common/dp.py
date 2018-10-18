@@ -32,8 +32,7 @@ __version__ = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq_to_word', 'word_to_freq', 
            'delay_to_dpd', 'dpd_to_delay', 'gain_to_dpg', 'dpg_to_gain', 
-           'tbn_filter', 'drx_filter', 'SoftwareDP', '__version__', 
-           '__revision__', '__all__']
+           'tbn_filter', 'drx_filter', 'SoftwareDP']
 
 fS = 196.0e6	# Hz
 T = 1.0		# seconds

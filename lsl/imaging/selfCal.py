@@ -29,7 +29,7 @@ from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['phase_only', 'delay_only', 'delay_and_phase', '__version__', '__revision__', '__all__']
+__all__ = ['phase_only', 'delay_only', 'delay_and_phase']
 
 
 def _scale_data(dataSet, amps, delays, phase_offsets):

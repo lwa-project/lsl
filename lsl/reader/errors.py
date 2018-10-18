@@ -14,8 +14,7 @@ These errors are currently meant to deal with file I/O problems.
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['BaseReaderError', 'EOFError', 'SyncError', 'notTBNError', 'notTBWError', 'list_error_codes', 
-           'MinErrorNo', 'MaxErrorNo', 
-           '__version__', '__revision__', '__all__']
+           'MinErrorNo', 'MaxErrorNo']
 
 
 MinErrorNo = 1

@@ -26,7 +26,7 @@ __version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'freq_to_word', 'word_to_freq', 
            'delay_to_dpd', 'dpd_to_delay', 'gain_to_dpg', 'dpg_to_gain', 
-           'tbn_filter', 'drx_filter', '__version__', '__revision__', '__all__']
+           'tbn_filter', 'drx_filter']
 
 fS = 196.0e6	# Hz
 fC = 25e3		# Hz

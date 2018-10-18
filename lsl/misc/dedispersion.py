@@ -49,8 +49,7 @@ except ImportError:
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['delay', 'incoherent', 'get_coherent_sample_size', 'coherent', 
-        '__version__', '__revision__', '__all__']
+__all__ = ['delay', 'incoherent', 'get_coherent_sample_size', 'coherent']
 
 
 # Dispersion constant in MHz^2 s / pc cm^-3

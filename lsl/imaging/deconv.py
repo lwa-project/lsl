@@ -23,7 +23,7 @@ from lsl.misc.mathutil import gaussian2d
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['clean', 'clean_sources', 'lsq', '__version__', '__revision__', '__all__']
+__all__ = ['clean', 'clean_sources', 'lsq']
 
 
 def _interpolate(data, peakX, peakY):

@@ -12,7 +12,7 @@ This module is based on the total_ordering decorator from functools at:
 
 __version__   = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['cmp_to_total', '__version__', '__revision__', '__all__']
+__all__ = ['cmp_to_total',]
 
 
 def _cmp_to_lt(self, other):

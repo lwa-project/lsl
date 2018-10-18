@@ -9,7 +9,7 @@ import re
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['colorfy', '__version__', '__revision__', '__all__']
+__all__ = ['colorfy',]
 
 
 # Dictionary of ANSI color codes

@@ -49,8 +49,7 @@ __version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'get_data_products', 'is_linear',
            'is_stokes', 'get_sample_rate', 'get_frame_size', 'get_ffts_per_integration', 
-           'get_transform_size', 'get_integration_time', 'FILTER_CODES', 
-           '__version__', '__revision__', '__all__']
+           'get_transform_size', 'get_integration_time', 'FILTER_CODES']
 
 # List of filter codes and their corresponding sample rates in Hz.  
 # .. note::

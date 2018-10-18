@@ -41,8 +41,7 @@ from lsl.correlator import uvUtils, _spec, _stokes, _core
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
-__all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes', 
-           '__version__', '__revision__', '__all__']
+__all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes']
 
 
 def pol_to_pols(pol):

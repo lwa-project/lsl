@@ -9,7 +9,7 @@ import time
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['ProgressBar', 'ProgressBarPlus', '__version__', '__revision__', '__all__']
+__all__ = ['ProgressBar', 'ProgressBarPlus']
 
 
 class ProgressBar(object):

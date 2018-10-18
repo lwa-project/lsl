@@ -17,6 +17,9 @@ from lsl.common.paths import DATA
 
 __version__   = '0.2'
 __revision__ = '$Rev$'
+__all__ = ['CatalogEntry', 'Catalog', 'LWA_Catalog', 'PSR_Catalog', 'PKS_Catalog', 
+           'PKS90_Catalog', 'C3C_Catalog', 'C4C_Catalog', 'F2FGL_Catalog', 
+           'CatalogFactory']
 __author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'
 

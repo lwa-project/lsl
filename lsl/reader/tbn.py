@@ -64,8 +64,7 @@ from lsl.reader.errors import SyncError, EOFError
 __version__ = '0.8'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 
-           'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES', 
-           '__version__', '__revision__', '__all__']
+           'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 FRAME_SIZE = 1048
 

@@ -30,8 +30,7 @@ from lsl.misc.total_sorting import cmp_to_total
 __version__ = '2.2'
 __revision__ = '$Rev$'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
-        'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations', 
-        '__version__', '__revision__', '__all__']
+        'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations']
 
 
 _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}

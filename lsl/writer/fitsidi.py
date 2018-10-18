@@ -41,8 +41,7 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.9'
 __revision__ = '$Rev$'
-__all__ = ['Idi', 'Aips', 'ExtendedIdi', 'STOKES_CODES', 'NUMERIC_STOKES', 
-    '__version__', '__revision__', '__all__']
+__all__ = ['Idi', 'Aips', 'ExtendedIdi', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
 IDI_VERSION = (3, 0)

@@ -21,7 +21,7 @@ from lsl.statistics import robust
 
 __version__ = "0.1"
 __revision__ = "$Rev$"
-__all__ = ['thin', 'thick', 'uniform', 'unscatter', '__version__', '__revision__', '__all__']
+__all__ = ['thin', 'thick', 'uniform', 'unscatter']
 
 
 def thin(t, tau):

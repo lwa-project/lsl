@@ -18,7 +18,7 @@ from scipy.interpolate import bisplrep, bisplev
 
 __version__ = "0.1"
 __revision__ = "$Rev$"
-__all__ = ['estimate_background', 'find_point_sources', '__version__', '__revision__', '__all__']
+__all__ = ['estimate_background', 'find_point_sources']
 
 
 def estimate_background(image, window=32):

@@ -39,8 +39,7 @@ from lsl.reader.errors import SyncError, EOFError
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 
-           'get_frames_per_obs', 'get_channel_count', 'get_baseline_count', 
-           '__version__', '__revision__', '__all__']
+           'get_frames_per_obs', 'get_channel_count', 'get_baseline_count']
 
 FRAME_SIZE = 32 + NCHAN_COR*4*8
 FRAME_CHANNEL_COUNT = NCHAN_COR

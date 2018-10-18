@@ -39,8 +39,7 @@ from lsl.common.mcs import mjdmpm2datetime, datetime2mjdmpm
 __version__ = "0.5"
 __revision__ = "$Rev$"
 __all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
-        'get_tec_value', 'get_ionospheric_pierce_point', 
-        '__version__', '__revision__', '__all__']
+        'get_tec_value', 'get_ionospheric_pierce_point']
 
 
 # Logger for capturing problems with downloading EOP data

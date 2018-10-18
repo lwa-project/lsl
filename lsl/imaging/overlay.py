@@ -25,8 +25,7 @@ from lsl import astro
 
 __version__ = "0.3"
 __revision__ = "$Rev$"
-__all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt", 
-           "__version__", "__revision__", "__all__"]
+__all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt"]
 
 
 def _radec_of(antennaarray, az, alt):

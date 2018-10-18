@@ -33,7 +33,7 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['Uv', '__version__', '__revision__', '__all__']
+__all__ = ['Uv',]
 
 
 UV_VERSION = (1, 0)

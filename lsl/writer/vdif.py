@@ -25,7 +25,7 @@ import lsl.astro as astro
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['Frame', '__version__', '__revision__', '__all__']
+__all__ = ['Frame',]
 
 VDIF_EPOCH = ephem.Date('2000/01/01 00:00:00.00')
 UNIX_EPOCH = ephem.Date('1970/01/01 00:00:00.00')

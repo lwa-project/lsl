@@ -24,8 +24,7 @@ from lsl.common.constants import deg_to_rad, c as speedOfLight
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['get_baselines', 'baseline_to_antennas', 'antennas_to_baseline', 'compute_uvw', 'compute_uv_track', 
-           '__version__', '__revision__', '__all__']
+__all__ = ['get_baselines', 'baseline_to_antennas', 'antennas_to_baseline', 'compute_uvw', 'compute_uv_track']
 
 
 def get_baselines(antennas, antennas2=None, include_auto=False, indicies=False):

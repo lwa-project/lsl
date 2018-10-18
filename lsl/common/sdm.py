@@ -13,8 +13,7 @@ from datetime import datetime
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parse_sdm', 
-        '__version__', '__revision__', '__all__']
+__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parse_sdm']
 
 
 class SubSystemStatus(object):

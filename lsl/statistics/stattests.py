@@ -10,7 +10,7 @@ from scipy.special import ndtr
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['wald_wolfowitz', '__version__', '__revision__', '__all__']
+__all__ = ['wald_wolfowitz',]
 
 
 def _to_binary(inputData):

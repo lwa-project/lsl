@@ -31,7 +31,7 @@ import numpy
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['biweight_mean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit', '__version__', '__revision__', '__all__']
+__all__ = ['biweight_mean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit']
 
 __max_iter = 25
 __delta = 5.0e-7

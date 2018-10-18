@@ -28,6 +28,7 @@ from lsl.common.paths import DATA as dataPath
 
 __version__   = '0.3'
 __revision__ = '$Rev$'
+__all__ = ['SkyMapGSM', 'SkyMapLFSM', 'ProjectedSkyMap']
 __author__    = 'J. York'
 __maintainer__ = 'Jayce Dowell'
 

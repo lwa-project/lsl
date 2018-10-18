@@ -33,7 +33,7 @@ from lsl.writer.fitsidi import WriterBase
 
 __version__ = '0.5'
 __revision__ = '$Rev$'
-__all__ = ['Sd', 'STOKES_CODES', 'NUMERIC_STOKES', '__version__', '__revision__', '__all__']
+__all__ = ['Sd', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
 SD_VERSION = (1, 6)
@@ -53,6 +53,8 @@ class Sd(WriterBase):
     frequency setup, etc., to a SDFITS file that can be read into CASA via the
     sd.scantable() function.
     """
+   
+    _STOKES_CODES = STOKES_CODES
     
     class _SpectrometerData(object):
         """

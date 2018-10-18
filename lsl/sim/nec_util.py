@@ -29,8 +29,7 @@ import subprocess
 __version__   = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['close_to', 'open_and_get_nec_freq', 'change_nec_freq', 'calculate_ime', 'NECImpedance', 
-        'NECPattern', 'which_nec4', 
-        '__version__', '__revision__', '__all__']
+        'NECPattern', 'which_nec4']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
 

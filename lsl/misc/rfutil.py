@@ -16,8 +16,7 @@ from lsl.common.constants import c as speedOfLight, kB
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['dBd_to_dBi', 'dBd_to_dBi', 'dBi_to_gain', 'dBd_to_gain', 'gain_to_dBi', 'gain_to_dBd', 'calculate_sefd', 
-        'calculate_effective_area', 'Jy_to_dBm', 'dBm_to_Jy', 
-        '__version__', '__revision__', '__all__']
+        'calculate_effective_area', 'Jy_to_dBm', 'dBm_to_Jy']
 
 
 def dBd_to_dBi(dBd):

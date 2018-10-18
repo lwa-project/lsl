@@ -33,8 +33,7 @@ from casacore.tables import table, tableutil
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['MS', 'STOKES_CODES', 'NUMERIC_STOKES', 
-           '__version__', '__revision__', '__all__']
+__all__ = ['Ms', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
 STOKES_CODES = {'I': 1,  'Q': 2,  'U': 3,  'V': 4, 
