@@ -26,8 +26,6 @@ from astropy.io import fits as astrofits
 from datetime import datetime
 
 from lsl import astro
-from lsl.misc import geodesy
-from lsl.common import constants
 from lsl.writer.fitsidi import WriterBase, STOKES_CODES
 from lsl.misc.total_sorting import cmp_to_total
 
@@ -486,14 +484,14 @@ class Uv(WriterBase):
         
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
-        eop = geodesy.get_eop(refMJD)
-        if eop is None:
-            eop = geodesy.EOP(mjd=refMJD)
+        eop = iers.IERS_Auto.open()
+        ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
+        pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
             
-        an.header['UT1UTC'] = (eop.utDiff, 'difference UT1 - UTC for reference date')
+        an.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         an.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
-        an.header['POLARX'] = eop.x
-        an.header['POLARY'] = eop.y
+        an.header['POLARX'] = pm_xy[0].to('arcsec').value
+        an.header['POLARY'] = pm_xy[1].to('arcsec').value
         
         an.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
         an.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')

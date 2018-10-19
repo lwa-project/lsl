@@ -34,14 +34,17 @@ of the data, including various window functions and time averaging.
 
 import ephem
 import numpy
+from astropy.constants import c as speedOfLight
 
-from lsl.common.constants import c as speedOfLight
 from lsl.common import dp as dp_common
 from lsl.correlator import uvUtils, _spec, _stokes, _core
 
 __version__ = '1.0'
 __revision__ = '$Rev$'
 __all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes']
+
+
+speedOfLight = speedOfLight.to('m/s').value
 
 
 def pol_to_pols(pol):

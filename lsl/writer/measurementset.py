@@ -23,8 +23,6 @@ from datetime import datetime
 from collections import OrderedDict
 
 from lsl import astro
-from lsl.misc import geodesy
-from lsl.common import constants
 from lsl.writer.fitsidi import WriterBase
 from lsl.misc.total_sorting import cmp_to_total
 

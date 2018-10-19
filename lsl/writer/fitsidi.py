@@ -29,13 +29,13 @@ import re
 import math
 import ephem
 import numpy
+from astropy.constants import c as speedOfLight
+from astropy.utils import iers
 from astropy.io import fits as astrofits
 from datetime import datetime
 from collections import OrderedDict
 
 from lsl import astro
-from lsl.misc import geodesy
-from lsl.common import constants
 from lsl.misc.total_sorting import cmp_to_total
 
 
@@ -55,6 +55,9 @@ STOKES_CODES = { 'I':  1,  'Q': 2,   'U':  3,  'V':  4,
 NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V', 
                   -1: 'RR', -2: 'LL', -3: 'RL', -4: 'LR', 
                   -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
+
+
+speedOfLight = speedOfLight.to('m/s').value
 
 
 def merge_baseline(ant1, ant2, shift=16):
@@ -173,7 +176,7 @@ class WriterBase(object):
                 
                 # Go from CE, east, NCP to u, v, w
                 temp = trans2*xyz
-                uvw[i,:] = numpy.squeeze(temp) / constants.c
+                uvw[i,:] = numpy.squeeze(temp) / speedOfLight
                 
             return uvw
                 
@@ -586,14 +589,14 @@ class Idi(WriterBase):
         
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
-        eop = geodesy.get_eop(refMJD)
-        if eop is None:
-            eop = geodesy.EOP(mjd=refMJD)
-            
-        ag.header['UT1UTC'] = (eop.utDiff, 'difference UT1 - UTC for reference date')
+	eop = iers.IERS_Auto.open()
+        ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
+        pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
+         
+        ag.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
-        ag.header['POLARX'] = eop.x
-        ag.header['POLARY'] = eop.y
+        ag.header['POLARX'] = pm_xy[0].to('arcsec').value
+        ag.header['POLARY'] = pm_xy[1].to('arcsec').value
         
         ag.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
         ag.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')

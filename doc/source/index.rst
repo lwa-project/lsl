@@ -27,7 +27,6 @@ General Utilities
 .. toctree::
    :maxdepth: 2
 
-   consts
    astro
    kurtosis
    dedispersion

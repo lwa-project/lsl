@@ -1,12 +1,6 @@
 Data Writers
 ============
 
-Time-Series FITS
-----------------
-.. automodule:: lsl.writer.tsfits
-   :members:
-   :inherited-members:
-
 Single-Dish FITS
 ----------------
 `SDFITS Standard <http://fits.gsfc.nasa.gov/registry/sdfits.html>`_
@@ -25,6 +19,11 @@ FITS IDI
 UVFITS
 ------
 .. automodule:: lsl.writer.uvfits
+   :members:
+
+Measurement Set
+---------------
+.. automodule:: lsl.writer.measurementset
    :members:
 
 VDIF

@@ -63,12 +63,12 @@ import ephem
 import numpy
 import warnings
 from scipy.interpolate import interp1d
+from astropy.constants import c as speedOfLight
 
 from lsl import astro
 from lsl.common.paths import DATA as dataPath
 from lsl.correlator import uvUtils
 from lsl.common.stations import lwa1
-from lsl.common.constants import c as speedOfLight
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 
 from lsl.sim._simfast import FastVis
@@ -77,6 +77,9 @@ __version__ = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['SOURCES', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
            'build_sim_array', 'build_sim_data', 'scale_data', 'shift_data', 'add_baseline_noise']
+
+
+speedOfLight = speedOfLight.to('m/s').value
 
 
 # A dictionary of bright sources in the sky to use for simulations

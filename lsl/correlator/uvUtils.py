@@ -18,13 +18,16 @@ coverage and time delays.  The functions in the module:
 """
 
 import numpy
+from astropy.constants import c as speedOfLight
 
 from lsl.common.stations import lwa1
-from lsl.common.constants import deg_to_rad, c as speedOfLight
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['get_baselines', 'baseline_to_antennas', 'antennas_to_baseline', 'compute_uvw', 'compute_uv_track']
+
+
+speedOfLight = speedOfLight.to('m/s').value
 
 
 def get_baselines(antennas, antennas2=None, include_auto=False, indicies=False):
@@ -143,8 +146,8 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
 
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    HA2 = HA * 15.0 * deg_to_rad
-    dec2 = dec * deg_to_rad
+    HA2 = HA * 15.0 * numpy.pi/180
+    dec2 = dec * numpy.pi/180
     lat2 = site.lat
     
     # Coordinate transformation matrices
@@ -195,7 +198,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    dec2 = dec * deg_to_rad
+    dec2 = dec * numpy.pi/180
     lat2 = site.lat
     
     # Coordinate transformation matrices

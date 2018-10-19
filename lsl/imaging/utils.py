@@ -51,6 +51,7 @@ except ImportError:
 from calendar import timegm
 from datetime import datetime
 from operator import itemgetter
+from astropy.constants import c as vLight
 
 from lsl import astro
 from lsl.statistics import robust
@@ -58,7 +59,6 @@ from lsl.common import stations
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
-from lsl.common.constants import c as vLight
 
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -84,6 +84,10 @@ __revision__ = '$Rev$'
 __all__ = ['CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 
            'ImgWPlus', 'build_gridded_image', 'plot_gridded_image', 'get_image_radec', 
            'get_image_azalt']
+
+
+
+vLight = vLight.to('m/s').value
 
 
 # Regular expression for trying to get the stand number out of an antenna

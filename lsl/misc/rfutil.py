@@ -10,13 +10,16 @@ K/Jy and then using those to get a system equivalent flux density.
 """
 
 import math
-
-from lsl.common.constants import c as speedOfLight, kB
+from astropy.constants import c as speedOfLight, k_B as kB
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['dBd_to_dBi', 'dBd_to_dBi', 'dBi_to_gain', 'dBd_to_gain', 'gain_to_dBi', 'gain_to_dBd', 'calculate_sefd', 
         'calculate_effective_area', 'Jy_to_dBm', 'dBm_to_Jy']
+
+
+speedOfLight = speedOfLight.to('m/s').value
+kB = kB.to('Jy m^2 / s').value
 
 
 def dBd_to_dBi(dBd):

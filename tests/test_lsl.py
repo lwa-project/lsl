@@ -29,7 +29,6 @@ from . import test_filterbank
 from . import test_fakedata
 from . import test_simdp
 from . import test_simvis
-from . import test_geodesy
 from . import test_fitsidi
 from . import test_uvfits
 from . import test_sdfits
@@ -83,7 +82,6 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_fakedata.fakedata_test_suite())
         self.addTest(test_simdp.simdp_test_suite())
         self.addTest(test_simvis.simvis_test_suite())
-        self.addTest(test_geodesy.geodesy_test_suite())
         self.addTest(test_fitsidi.fitsidi_test_suite())
         self.addTest(test_uvfits.uvfits_test_suite())
         self.addTest(test_sdfits.sdfits_test_suite())

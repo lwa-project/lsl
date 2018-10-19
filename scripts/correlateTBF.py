@@ -13,6 +13,8 @@ import ephem
 import numpy
 import getopt
 from datetime import datetime, timedelta, tzinfo
+from astropy.constants import c as speedOfLight
+speedOfLight = speedOfLight.to('m/s').value
 
 from lsl import astro
 from lsl.reader.ldp import LWASVDataFile
@@ -21,7 +23,6 @@ from lsl.correlator import uvUtils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi
-from lsl.common.constants import c as speedOfLight
 
 
 class UTC(tzinfo):

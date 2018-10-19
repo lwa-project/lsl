@@ -19,11 +19,11 @@ import copy
 import numpy
 import ephem
 import struct
+from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as dataPath
 from lsl.common import mcs, mcsADP
-from lsl.common.constants import c as speedOfLight
 from lsl.misc.mathutil import to_dB, from_dB
 from lsl.misc.total_sorting import cmp_to_total
 
@@ -34,6 +34,9 @@ __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE'
 
 
 _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
+
+
+speedOfLight = speedOfLight.to('m/s').value
 
 
 def geo_to_ecef(lat, lon, elev):
