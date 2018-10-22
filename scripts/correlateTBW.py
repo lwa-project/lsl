@@ -235,7 +235,7 @@ def main(args):
     goodY = []
     for i in xrange(len(antennas)):
         ant = antennas[i]
-        if ant.get_status() != 33 and not config['all']:
+        if ant.status != 33 and not config['all']:
             pass
         else:
             if ant.pol == 0:

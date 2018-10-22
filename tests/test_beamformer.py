@@ -73,7 +73,7 @@ class beamformer_tests(unittest.TestCase):
         for ant in antennas:
             if ant.pol == 1:
                 continue
-            if ant.get_status() != 33:
+            if ant.status != 33:
                 continue
                 
             ants.append(ant)
@@ -112,7 +112,7 @@ class beamformer_tests(unittest.TestCase):
         for ant in antennas:
             if ant.pol == 1:
                 continue
-            if ant.get_status() != 33:
+            if ant.status != 33:
                 continue
                 
             ants.append(ant)

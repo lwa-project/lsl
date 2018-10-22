@@ -99,7 +99,7 @@ def main(args):
         
     antennas = []
     for ant in station.get_antennas()[0::2]:
-        if ant.get_status() == 33:
+        if ant.status == 33:
             antennas.append(ant)
     print "Displaying uv coverage for %i good stands" % len(antennas)
     

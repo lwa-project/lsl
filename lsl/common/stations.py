@@ -485,7 +485,8 @@ class Antenna(object):
         # Return
         return (freq, ime)
         
-    def get_status(self):
+    @property
+    def status(self):
         """
         Return the combined antenna + FEE status as a two digit number 
         with the first digit representing the antenna status and the 

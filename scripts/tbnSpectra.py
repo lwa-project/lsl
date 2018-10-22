@@ -299,7 +299,7 @@ def main(args):
                     diff = subspectra - currSpectra
                     ax.plot(freq, diff)
                     
-            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].get_status()))
+            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].status))
             ax.set_xlabel('Frequency [%s]' % units)
             ax.set_ylabel('P.S.D. [dB/RBW]')
             ax.set_ylim([-10, 30])
