@@ -890,7 +890,9 @@ STD_LZ[260]    -5.692
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-# This is the list of baddies after visual inspection by GBT
+# This is the list of baddies after visual inspection by GBT and JDD
+ANT_STAT[11]   2   # JDD ID - 2018/10/22
+ANT_STAT[12]   2   # JDD ID - 2018/10/22
 ANT_STAT[15]   2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[16]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[27]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
@@ -902,6 +904,8 @@ ANT_STAT[82]   1   # GBT ID - 2018/10/22
 ANT_STAT[83]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[84]   2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[99]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[127]  2   # JDD ID -2018/10/22
+ANT_STAT[128]  2   # JDD ID -2018/10/22
 ANT_STAT[135]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[144]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[154]  1   # GBT ID - 2018/10/22
@@ -955,6 +959,7 @@ ANT_STAT[440]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[445]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[446]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[447]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[452]  2   # JDD ID -2018/10/22
 ANT_STAT[473]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[474]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[483]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
