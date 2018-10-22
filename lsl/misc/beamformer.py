@@ -127,7 +127,7 @@ def int_delay_and_sum(antennas, data, sample_rate=dp_common.fS, freq=49e6, azimu
         samples for all pointings.
         
     .. note:
-        "Bad" antennas (those with antenna.status != 33) are automatically
+        "Bad" antennas (those with antenna.combined_status != 33) are automatically
         excluded from the beam.
         
     .. note:
@@ -159,7 +159,7 @@ def int_delay_and_sum(antennas, data, sample_rate=dp_common.fS, freq=49e6, azimu
     # Delay and sum by looping over stands inside of looping over times
     output = numpy.zeros((2, (data.shape[1]-delays.max())), dtype=data.dtype)
     for s,p in zip(range(len(antennas)), pols):
-        if antennas[s].status != 33:
+        if antennas[s].combined_status != 33:
             continue
             
         start = delays[s]
@@ -345,7 +345,7 @@ def phase_and_sum(antennas, data, sample_rate=dp_common.fS, central_freq=49.0e6,
         This task is intended to be used with TBN data streams.
         
     .. note:
-        "Bad" antennas (those with antenna.status != 33) are automatically
+        "Bad" antennas (those with antenna.combined_status != 33) are automatically
         excluded from the beam.
     """
     
@@ -360,7 +360,7 @@ def phase_and_sum(antennas, data, sample_rate=dp_common.fS, central_freq=49.0e6,
     
     # Figure out the polarizations
     pols = numpy.array([ant.pol for ant in antennas])
-    stat = numpy.array([ant.status for ant in antennas])
+    stat = numpy.array([ant.combined_status for ant in antennas])
     pol0 = numpy.where( (pols == 0) & (stat == 33) )[0]
     pol1 = numpy.where( (pols == 1) & (stat == 33) )[0]
     
