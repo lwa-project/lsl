@@ -1,6 +1,8 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2018 Oct 22 by J. Dowell
+#  -- Updated for an ARX board swap and after another round of FEE replacements
 # 2016 Jul 07 by J. Dowell
 #  -- Applied a new calibration based of a TBW sequence from 2016 Jun 18
 # 2016 Jun 8 by J. Dowell
@@ -888,19 +890,25 @@ STD_LZ[260]    -5.692
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
+# This is the list of baddies after visual inspection by GBT
 ANT_STAT[15]   2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[16]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[27]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[43]   1   # GBT ID - 2018/10/22
+ANT_STAT[65]   1   # GBT ID - 2018/10/22
 ANT_STAT[74]   2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[76]   2   #  52% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[82]   2   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[82]   1   # GBT ID - 2018/10/22
 ANT_STAT[83]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[84]   2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[99]   1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[135]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[144]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[154]  1   # GBT ID - 2018/10/22
 ANT_STAT[164]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[166]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[169]  1   # GBT ID - 2018/10/22
+ANT_STAT[175]  1   # GBT ID - 2018/10/22
 ANT_STAT[177]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[178]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[181]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
@@ -911,27 +919,36 @@ ANT_STAT[206]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[209]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[215]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[216]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[229]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[229]  1   # GBT ID - 2018/10/22
 ANT_STAT[239]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[240]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[246]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[251]  1   # GBT ID - 2018/10/22
+ANT_STAT[258]  1   # GBT ID - 2018/10/22
 ANT_STAT[265]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[295]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[300]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[309]  1   # GBT ID - 2018/10/22
+ANT_STAT[310]  1   # GBT ID - 2018/10/22
 ANT_STAT[314]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[315]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[334]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[336]  1   # GBT ID - 2018/10/22
 ANT_STAT[351]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[355]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[361]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[366]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[366]  1   # GBT ID - 2018/10/22
+ANT_STAT[374]  1   # GBT ID - 2018/10/22
 ANT_STAT[375]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[383]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[396]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[397]  1   # GBT ID - 2018/10/22
 ANT_STAT[400]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[407]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[408]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[416]  1   # GBT ID - 2018/10/22
 ANT_STAT[429]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
+ANT_STAT[430]  1   # GBT ID - 2018/10/22
 ANT_STAT[437]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[439]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[440]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
@@ -3855,7 +3872,7 @@ N_ARBCH 16
 
 # ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
 # *** ARB_ID[arb#] goes here:
-ARB_ID[1] 0106
+ARB_ID[1] 0127
 ARB_ID[2] 0139
 ARB_ID[3] 0127
 ARB_ID[4] 0123
