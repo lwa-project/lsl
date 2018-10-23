@@ -104,7 +104,7 @@ def main(args):
             junkFrame = drx.read_frame(fh)
             try:
                 srate = junkFrame.get_sample_rate()
-                t0 = junkFrame.get_time()
+                ti0, tf0 = junkFrame.time
                 break
             except ZeroDivisionError:
                 pass
@@ -131,14 +131,14 @@ def main(args):
         ## rate is
         junkFrame = drx.read_frame(fh)
         srate = junkFrame.get_sample_rate()
-        t1 = junkFrame.get_time()
+        ti1, tf1 = junkFrame.time
         tunepols = drx.get_frames_per_obs(fh)
         tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
         beampols = tunepol
         fh.seek(-drx.FRAME_SIZE, 1)
         
         ## See how far off the current frame is from the target
-        tDiff = t1 - (t0 + config['offset'])
+        tDiff = ti1 - (ti0 + config['offset']) + tf1 - tf0
         
         ## Half that to come up with a new seek parameter
         tCorr = -tDiff / 2.0
@@ -199,7 +199,7 @@ def main(args):
             junkFrame = drx.read_frame(fh)
             fh.seek(filePos)
 
-            dt = datetime.utcfromtimestamp(junkFrame.get_time())
+            dt = datetime.utcfromtimestamp(sum(junkFrame.time))
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
             captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'], scale)

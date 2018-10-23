@@ -129,7 +129,7 @@ def main(args):
     if beam != obs[0]['drxBeam']:
         print 'ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drxBeam'], beam)
         sys.exit()
-    firstFrame = datetime.utcfromtimestamp(lf.get_time())
+    firstFrame = datetime.utcfromtimestamp(sum(lf.time))
     if abs(firstFrame - min(tStart)) > timedelta(seconds=30):
         print 'ERROR: Time mis-match, metadata is for %s, file is for %s' % (min(tStart), firstFrame)
         sys.exit()
@@ -186,24 +186,24 @@ def main(args):
         fh.seek(-reader.FRAME_SIZE, 1)	
 
         ## Go in search of the start of the observation
-        if datetime.utcfromtimestamp(frame.get_time()) < oStart:
+        if datetime.utcfromtimestamp(sum(frame.time)) < oStart:
             ### We aren't at the beginning yet, seek fowards
-            print "-> At byte %i, time is %s < %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
+            print "-> At byte %i, time is %s < %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
 
-            while datetime.utcfromtimestamp(frame.get_time()) < oStart:
+            while datetime.utcfromtimestamp(sum(frame.time)) < oStart:
                 try:
                     frame = reader.read_frame(fh)
                 except errors.SyncError:		
                     fh.seek(1, 1)
                 except errors.EOFError:
                     break
-                #print datetime.utcfromtimestamp(frame.get_time()), oStart
+                #print datetime.utcfromtimestamp(sum(frame.time)), oStart
 
-        elif datetime.utcfromtimestamp(frame.get_time()) > oStart:
+        elif datetime.utcfromtimestamp(sum(frame.time)) > oStart:
             ### We've gone too far, seek backwards
-            print "-> At byte %i, time is %s > %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
+            print "-> At byte %i, time is %s > %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
 
-            while datetime.utcfromtimestamp(frame.get_time()) > oStart:
+            while datetime.utcfromtimestamp(sum(frame.time)) > oStart:
                 if fh.tell() == 0:
                     break
                 fh.seek(-2*reader.FRAME_SIZE, 1)
@@ -213,17 +213,17 @@ def main(args):
                     fh.seek(-1, 1)
                 except errors.EOFError:
                     break
-                #print datetime.utcfromtimestamp(frame.get_time()), oStart
+                #print datetime.utcfromtimestamp(sum(frame.time)), oStart
                 
         else:
             ### We're there already
-            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
+            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
             
         ## Jump back exactly one frame so that the filehandle is in a position 
         ## to read the first frame that is part of the observation
         try:
             frame = reader.read_frame(fh)
-            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(frame.get_time()), oStart)
+            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
             fh.seek(-reader.FRAME_SIZE, 1)
         except errors.EOFError:
             pass
