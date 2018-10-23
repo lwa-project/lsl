@@ -120,7 +120,7 @@ class FrameHeader(object):
             # Try to get the sub-second time by parsing the extended user data
             try:
                 ## Is there a sample rate to grab?
-                eud = self.parse_extended_user_data()
+                eud = self.extended_user_data
                 sample_rate = eud['sample_rate']
                 sample_rate *= 1e6 if eud['sample_rateUnits'] == 'MHz' else 1.0
             
