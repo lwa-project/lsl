@@ -77,7 +77,7 @@ class beamformer_tests(unittest.TestCase):
                 continue
                 
             ants.append(ant)
-            if len(ants) == 15:
+            if len(ants) == 16:
                 break
                 
         # Multithreaded test for accuracy
@@ -116,7 +116,7 @@ class beamformer_tests(unittest.TestCase):
                 continue
                 
             ants.append(ant)
-            if len(ants) == 15:
+            if len(ants) == 16:
                 break
                 
         # Test for accuracy
