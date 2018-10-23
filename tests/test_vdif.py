@@ -12,9 +12,7 @@ import tempfile
 import numpy
 
 from lsl.common.paths import DATA_BUILD
-from lsl.reader import tbw
-from lsl.reader import tbn
-from lsl.reader import errors
+from lsl.reader import tbw, tbn, vdif as vrdr, errors
 from lsl.writer import vdif
 
 
@@ -83,32 +81,20 @@ class vdif_tests(unittest.TestCase):
         # Write the data
         fh = open(testFile, 'wb')
         for frame in frames:
-            vFrame = vdif.Frame(frame.id, frame.get_time(), bits=12, data=frame.data.xy[0,:])
+            vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.data.xy[0,:].astype(numpy.int8))
             vFrame.write_raw_frame(fh)
         fh.close()
 
         # Read it back in
         fh = open(testFile, 'rb')
-        junk = numpy.fromfile(fh, dtype=numpy.uint8, count=16)
-        frameSize = (junk[10]<<16) | (junk[9]<<8) | (junk[8])
-        dataBits = (junk[15]>>2) & 15
-        dataSize = (frameSize - 4) * 8
-        fh.seek(0)
         for tFrame in frames:
-            vFrame = numpy.fromfile(fh, dtype=numpy.uint8, count=frameSize*8)
-            data = numpy.zeros(400, dtype=numpy.int16)
-            j = 0
-            for i in range(32,vFrame.shape[0],4):
-                word = vFrame[i] | (vFrame[i+1]<<8) | (vFrame[i+2]<<16) | (vFrame[i+3]<<24)
-                for k in range(32//dataBits):
-                    data[j] = ((word>>(dataBits*k)) & (2**dataBits-1)) - 2**(dataBits-1)
-                    j = j + 1
-            
-            for v,t in zip(data, tFrame.data.xy[0,:]):
-                self.assertEqual(v, t)
-
+            vFrame = vrdr.read_frame(fh)
+            self.assertEqual(sum(vFrame.time), sum(tFrame.time))
+            for v,t in zip((vFrame.data.data*256-1)/2, tFrame.data.xy[0,:].astype(numpy.int8)):
+                self.assertAlmostEqual(v, t, 6)
+                
         fh.close()
-
+        
     def test_vdif_complex(self):
         """Test writing complex data to VIDF format."""
 
@@ -124,34 +110,17 @@ class vdif_tests(unittest.TestCase):
             stand, pol = frame.id
             if pol == 1:
                 continue
-            vFrame = vdif.Frame(stand, frame.get_time(), bits=8, data=frame.data.iq)
+            vFrame = vdif.Frame(stand, frame.time, bits=8, data=frame.data.iq, sample_rate=100e3)
             vFrame.write_raw_frame(fh)
         fh.close()
 
         # Read it back in
         fh = open(testFile, 'rb')
-        junk = numpy.fromfile(fh, dtype=numpy.uint8, count=16)
-        frameSize = (junk[10]<<16) | (junk[9]<<8) | (junk[8])
-        dataBits = (junk[15]>>2) & 15
-        dataSize = (frameSize - 4) * 8
-        fh.seek(0)
-        
         for tFrame in frames[::2]:
-            vFrame = numpy.fromfile(fh, dtype=numpy.uint8, count=frameSize*8)
-            data = numpy.zeros(512, dtype=numpy.singlecomplex)
-            j = 0
-            for i in range(32,vFrame.shape[0],4):
-                word = vFrame[i] | (vFrame[i+1]<<8) | (vFrame[i+2]<<16) | (vFrame[i+3]<<24)
-                for k in range(32//dataBits):
-                    if k % 2 == 0:
-                        data.real[j] = ((word>>(dataBits*k)) & (2**dataBits-1)) - 2**(dataBits-1)
-                    else:
-                        data.imag[j] = ((word>>(dataBits*k)) & (2**dataBits-1)) - 2**(dataBits-1)
-                        j = j + 1
-
-            for v,t in zip(data, tFrame.data.iq):
+            vFrame = vrdr.read_frame(fh)
+            for v,t in zip((vFrame.data.data*256-1-1j)/2, tFrame.data.iq):
                 self.assertAlmostEqual(v, t, 6)
-        
+                
         fh.close()
 
     def tearDown(self):

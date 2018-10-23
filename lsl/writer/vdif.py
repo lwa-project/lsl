@@ -37,7 +37,7 @@ class Frame(object):
     frame (version 1, June 26, 2009).
     """
     
-    def __init__(self, stand=0, time=0, bits=16, data=None, sample_rate=dp_common.fS):
+    def __init__(self, stand=0, time=0, bits=8, data=None, sample_rate=dp_common.fS):
         self.stand = stand
         self.time = time
         self.bits = bits
@@ -52,6 +52,10 @@ class Frame(object):
         self.frame = 0
         self.epoch = 0
         
+        # Validate
+        if self.bits not in (1, 2, 4, 8):
+            raise ValueError("Unsupported output bitdepth: %i" % self.bits)
+            
         # Convert the time from UNIX to epoch and make the data ready to 
         # be written to the disk.
         self._data_adjust()
@@ -83,8 +87,14 @@ class Frame(object):
         frame number since the beginning of the second.
         """
         
+        try:
+            seconds_i, seconds_f = self.time
+        except TypeError:
+            seconds_i = int(self.time)
+            seconds_f = self.time - seconds_i
+                
         # UNIX time to seconds since DJD  = 0
-        curEpoch = float(UNIX_EPOCH)*astro.SECS_IN_DAY + self.time
+        curEpoch = float(UNIX_EPOCH)*astro.SECS_IN_DAY + seconds_i
         self.epoch = 0
         # Seconds since the VDIF epoch
         epochSeconds = curEpoch - float(VDIF_EPOCH)*astro.SECS_IN_DAY
@@ -92,11 +102,8 @@ class Frame(object):
         self.seconds = long(epochSeconds)
         
         # Compute the frames since the beginning of the second
-        frame = (epochSeconds - self.seconds) * (self.sample_rate/len(self.data))
-        if self.dataReal:
-            self.frame = long(frame)
-        else:
-            self.frame = long(frame * 2)
+        frame = (epochSeconds - self.seconds + seconds_f) * (self.sample_rate/len(self.data))
+        self.frame = long(round(frame))
 
     def create_raw_frame(self):
         """
@@ -116,7 +123,7 @@ class Frame(object):
         raw[1] = (self.seconds >> 8) & 255
         raw[0] = self.seconds & 255
 
-        # Refernce epoch (0 == 01/01/2000) and frame count
+        # Reference epoch (0 == 01/01/2000) and frame count
         raw[7] = self.epoch & 63
         raw[6] = (self.frame >> 16) & 255
         raw[5] = (self.frame >> 8) & 255
@@ -132,30 +139,35 @@ class Frame(object):
         # Data type, bits per sample, thread ID, and station ID
         # NB:  The thread ID is fixed at `0'
         if self.dataReal:
-            raw[15] = (0 << 7) | ((self.bits & 31) << 2) | ((0 >> 8) & 3)
+            raw[15] = (0 << 7) | ((self.bits-1 & 31) << 2) | ((0 >> 8) & 3)
         else:
-            raw[15] = (1 << 7) | ((self.bits & 31) << 2) | ((0 >> 8) & 3)
+            raw[15] = (1 << 7) | ((self.bits-1 & 31) << 2) | ((0 >> 8) & 3)
         raw[14] = 0 & 255
         raw[13] = (self.stand >> 8) & 255
         raw[12] = self.stand & 255
         
         # User-defined words 4 through 7 (array entries 16 to 31)
-        raw[16:19] = 0
-        raw[20:23] = 0
-        raw[24:27] = 0
-        raw[28:31] = 0
+        ## NICT format so that we can put in the sample rate
+        sample_rate_kHz = int(self.sample_rate / 1000.0)
+        raw[19] = 0x01
+        raw[18] = (0 << 7) | ((sample_rate_kHz >> 16) & 0xFF)
+        raw[17] = (sample_rate_kHz >> 8) & 0xFF
+        raw[16] = sample_rate_kHz & 0xFF
+        raw[20:24] = 0
+        raw[24:28] = 0
+        raw[28:32] = 0
         
         # Data values
         for f in range(32, len(raw), 4):
             i = (f - 32) // 4
             word = 0
             for p in range(samplesPerWord):
-                word |= (self.data[i*samplesPerWord + p] << self.bits*p)
+                word |= (self.data[i*samplesPerWord + p] << (self.bits*p))
             raw[f+3] = (word >> 24) & 255
             raw[f+2] = (word >> 16) & 255
             raw[f+1] = (word >> 8) & 255
             raw[f+0] = word & 255
-                
+            
         return raw
 
     def write_raw_frame(self, fh):
