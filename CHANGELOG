@@ -19,6 +19,7 @@
   * Added multiple IF support to the FITS IDI writer and reader
   * Added multiple IF/spectral window support to the CASA measurement set writer
   * Worked on making the lsl.writer.fitsidi and lsl.writer.measurementset modules more robust
+  * Fixed a bug in the VDIF reader
 
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals

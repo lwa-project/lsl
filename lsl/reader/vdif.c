@@ -354,7 +354,7 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
         free(rawData);
         goto fail;
     }
-    memcpy(rawData, PyString_AS_STRING(buffer), sizeof(dataLength));
+    memcpy(rawData, PyString_AS_STRING(buffer), sizeof(unsigned char)*dataLength);
     Py_XDECREF(buffer);
     
     // Parse it out
