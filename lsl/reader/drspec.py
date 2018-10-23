@@ -207,20 +207,14 @@ class FrameData(object):
             self.saturations = [0, 0, 0, 0]
         else:
             self.saturations = saturations
-        
-    def get_central_freq(self, which=None):
+            
+    @property
+    def central_freq(self):
         """
         Function to set the central frequency of the DRX data in Hz.
         """
         
-        if which is None:
-            return [dp_common.fS * i / 2**32 for i in self.tuning_words]
-        elif which == 1:
-            return dp_common.fS * self.tuning_words[0] / 2**32
-        elif which == 2:
-            return dp_common.fS * self.tuning_words[1] / 2**32
-        else:
-            raise ValueError("Unknown tuning/polarization combination: '%i'" % which)
+        return [dp_common.fS * i / 2**32 for i in self.tuning_words]
 
 
 class Frame(object):
@@ -314,23 +308,28 @@ class Frame(object):
         
         return self.header.ffts_per_integration
         
-    def get_time(self):
+    @property
+    def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
+        element tuple.
         """
         
-        seconds = (self.data.timetag - self.header.time_offset) / dp_common.fS
+        adj_timetag = self.data.timetag - self.header.time_offset
         
-        return seconds
+        seconds_i = adj_timetag / int(dp_common.fS)
+        seconds_f = (adj_timetag % int(dp_common.fS)) / dp_common.fS
         
-    
-    def get_central_freq(self, which=None):
+        return seconds_i, seconds_f
+        
+    @property
+    def central_freq(self):
         """
-        Convenience wrapper for the Frame.FrameData.get_central_freq function.
+        Convenience wrapper for the Frame.FrameData.central_freq property.
         """
         
-        return self.data.get_central_freq(which=which)
+        return self.data.central_freq
         
     @property
     def transform_size(self):

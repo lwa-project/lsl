@@ -332,7 +332,7 @@ class TBWFile(LDPFileBase):
         nFramesFile = (filesize - self.fh.tell()) // tbw.FRAME_SIZE
         srate = 196e6
         bits = junkFrame.data_bits
-        start = junkFrame.get_time()
+        start = junkFrame.time
         startRaw = junkFrame.data.timetag
         
         # Trick to figure out how many antennas are in a file and the "real" 
@@ -528,7 +528,7 @@ class TBNFile(LDPFileBase):
         junkFrame = self.read_frame()
         self.fh.seek(-tbn.FRAME_SIZE, 1)
         tuning1 = junkFrame.central_freq
-        start = junkFrame.get_time()
+        start = junkFrame.time
         startRaw = junkFrame.data.timetag
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbn.FRAME_SIZE,
@@ -670,7 +670,7 @@ class TBNFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.data.timetag
                     else:
-                        setTime = cFrame.get_time()
+                        setTime = sum(cFrame.time)
                         
                 data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
                 count[aStand] += 1
@@ -697,7 +697,7 @@ class TBNFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.data.timetag
                         else:
-                            setTime = cFrame.get_time()
+                            setTime = sum(cFrame.time)
                         
                     data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
                     count[aStand] += 1
@@ -846,7 +846,7 @@ class DRXFile(LDPFileBase):
                 tuning2 = junkFrame.central_freq
                 
             if i == 0:
-                start = junkFrame.get_time()
+                start = junkFrame.time
                 startRaw = junkFrame.data.timetag - junkFrame.header.time_offset
         self.fh.seek(-drx.FRAME_SIZE*4, 1)
         
@@ -868,7 +868,7 @@ class DRXFile(LDPFileBase):
         self.fh.seek(-drx.FRAME_SIZE, 1)
         
         # Get the initial time, sample rate, and beampols
-        t0 = junkFrame.get_time()
+        ti0, tf0 = junkFrame.time
         sample_rate = junkFrame.sample_rate
         beampols = drx.get_frames_per_obs(self.fh)
         beampols = reduce(int.__add__, beampols)
@@ -887,13 +887,13 @@ class DRXFile(LDPFileBase):
             
             ## Figure out where in the file we are and what the current tuning/sample 
             ## rate is
-            t1 = junkFrame.get_time()
+            ti1, tf1 = junkFrame.time
             sample_rate = junkFrame.sample_rate
             beampols = drx.get_frames_per_obs(self.fh)
             beampols = reduce(int.__add__, beampols)
             
             ## See how far off the current frame is from the target
-            tDiff = t1 - (t0 + offset)
+            tDiff = ti1 - (ti0 + offset) + tf1 - tf0
             
             ## Half that to come up with a new seek parameter
             tCorr   = -tDiff / 2.0
@@ -1023,7 +1023,7 @@ class DRXFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.data.timetag - cFrame.header.time_offset
                     else:
-                        setTime = cFrame.get_time()
+                        setTime = sum(cFrame.time)
                         
                 data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
                 count[aStand] +=  1
@@ -1051,7 +1051,7 @@ class DRXFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.data.timetag - cFrame.header.time_offset
                         else:
-                            setTime = cFrame.get_time()
+                            setTime = sum(cFrame.time)
                             
                     data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
                     count[aStand] +=  1
@@ -1160,9 +1160,9 @@ class DRSpecFile(LDPFileBase):
         srate = junkFrame.sample_rate
         nInt = junkFrame.header.nints
         tInt = nInt*LFFT/srate
-        start = junkFrame.get_time()
+        start = junkFrame.time
         startRaw = junkFrame.data.timetag - junkFrame.header.time_offset
-        tuning1, tuning2 = junkFrame.get_central_freq()
+        tuning1, tuning2 = junkFrame.central_freq
         prod = junkFrame.data_products
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': FRAME_SIZE, 
@@ -1183,7 +1183,7 @@ class DRSpecFile(LDPFileBase):
         self.fh.seek(-self.description['frame_size'], 1)
         
         # Get the initial time, sample rate, and integration time
-        t0 = junkFrame.get_time()
+        ti0, tf0 = junkFrame.time
         
         # Offset in frames for beampols beam/tuning/pol. sets
         ioffset = int(round(offset / self.description['tint']))
@@ -1198,13 +1198,13 @@ class DRSpecFile(LDPFileBase):
             
             ## Figure out where in the file we are and what the current tuning/sample 
             ## rate is
-            t1 = junkFrame.get_time()
+            ti1, tf1 = junkFrame.time
             sample_rate = junkFrame.sample_rate
             LFFT = junkFrame.get_transform_size()
             tInt = junkFrame.header.nints*LFFT/sample_rate
             
             ## See how far off the current frame is from the target
-            tDiff = t1 - (t0 + offset)
+            tDiff = ti1 - (ti0 + offset) + tf1 - tf0
             
             ## Half that to come up with a new seek parameter
             tCorr   = -tDiff / 2.0
@@ -1264,7 +1264,7 @@ class DRSpecFile(LDPFileBase):
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
             junkFrame = drspec.read_frame(self.fh)
-            self._timetag = junkFrame.get_time() - timetagSkip
+            self._timetag = junkFrame.time[0] + (junkFrame.time[1] - timetagSkip)
             self.fh.seek(-self.description['frame_size'], 1)
         
         # Find out how many frames to read in
@@ -1287,7 +1287,7 @@ class DRSpecFile(LDPFileBase):
             except errors.SyncError:
                 continue
                 
-            cTimetag = cFrame.get_time()
+            cTimetag = sum(cFrame.time)
             if cTimetag > self._timetag + 1.001*timetagSkip:
                 actStep = cTimetag - self._timetag
                 if self.ignore_timetag_errors:
@@ -1299,7 +1299,7 @@ class DRSpecFile(LDPFileBase):
                 if time_in_samples:
                     setTime = cFrame.data.timetag - cFrame.header.time_offset
                 else:
-                    setTime = cFrame.get_time()
+                    setTime = sum(cFrame.time)
                     
             for j,p in enumerate(self.description['data_products']):
                 data[j+0,                             count, :] = getattr(cFrame.data, '%s0' % p, None)
@@ -1524,7 +1524,7 @@ class TBFFile(LDPFileBase):
                 self.mapper.append( cFrame.header.first_chan )
             if cFrame.header.frame_count < firstFrameCount:
                 firstFrameCount = cFrame.header.frame_count
-                start = junkFrame.get_time()
+                start = junkFrame.time
                 startRaw = junkFrame.data.timetag
         self.fh.seek(marker)
         self.mapper.sort()
@@ -1672,7 +1672,7 @@ class TBFFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.data.timetag
                     else:
-                        setTime = cFrame.get_time()
+                        setTime = sum(cFrame.time)
                         
                 subData = cFrame.data.fDomain
                 subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
@@ -1705,7 +1705,7 @@ class TBFFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.data.timetag
                         else:
-                            setTime = cFrame.get_time()
+                            setTime = sum(cFrame.time)
                         
                     subData = cFrame.data.fDomain
                     subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
@@ -1809,7 +1809,7 @@ class CORFile(LDPFileBase):
                 self.cmapper.append( cFrame.header.first_chan )
             if cFrame.header.frame_count < firstFrameCount:
                 firstFrameCount = cFrame.header.frame_count
-                start = junkFrame.get_time()
+                start = junkFrame.time
                 startRaw = junkFrame.data.timetag
         self.fh.seek(marker)
         self.cmapper.sort()
@@ -1963,7 +1963,7 @@ class CORFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.data.timetag
                     else:
-                        setTime = cFrame.get_time()
+                        setTime = sum(cFrame.time)
                         
                 aBase = self.bmapperd[cFrame.id]
                 aChan = self.cmapperd[first_chan]
@@ -1994,7 +1994,7 @@ class CORFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.data.timetag
                         else:
-                            setTime = cFrame.get_time()
+                            setTime = sum(cFrame.time)
                             
                     aBase = self.bmapperd[cFrame.id]
                     aChan = self.cmapperd[first_chan]

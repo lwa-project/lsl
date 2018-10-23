@@ -119,16 +119,19 @@ class FrameData(object):
     def __init__(self, timetag=None, samples=400, xy=None):
         self.timetag = timetag
         self.xy = xy
-
-    def get_time(self):
+        
+    @property
+    def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
+        element tuple.
         """
-
-        seconds = self.timetag / dp_common.fS
         
-        return seconds
+        seconds_i = self.timetag / int(dp_common.fS)
+        seconds_f = (self.timetag % int(dp_common.fS)) / dp_common.fS
+        
+        return seconds_i, seconds_f
 
 
 class Frame(object):
@@ -175,13 +178,14 @@ class Frame(object):
         """
         
         return self.header.data_bits
-
-    def get_time(self):
+        
+    @property
+    def time(self):
         """
-        Convenience wrapper for the Frame.FrameData.get_time function.
+        Convenience wrapper for the Frame.FrameData.time property.
         """
         
-        return self.data.get_time()
+        return self.data.time
             
     def __add__(self, y):
         """

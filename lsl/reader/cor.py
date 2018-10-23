@@ -102,15 +102,18 @@ class FrameData(object):
         
         return (self.stand0, self.stand1)
         
-    def get_time(self):
+    @property
+    def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
+        element tuple.
         """
         
-        seconds = self.timetag / adp_common.fS
+        seconds_i = self.timetag / int(adp_common.fS)
+        seconds_f = (self.timetag % int(adp_common.fS)) / adp_common.fS
         
-        return seconds
+        return seconds_i, seconds_f
         
     @property
     def integration_time(self):
@@ -164,12 +167,13 @@ class Frame(object):
 
         return self.header.gain
         
-    def get_time(self):
+    @property
+    def time(self):
         """
-        Convenience wrapper for the Frame.FrameData.get_time function.
+        Convenience wrapper for the Frame.FrameData.time property.
         """
         
-        return self.data.get_time()
+        return self.data.time
         
     @property
     def id(self):

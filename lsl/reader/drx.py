@@ -181,16 +181,21 @@ class Frame(object):
         """
 
         return self.header.filter_code
-
-    def get_time(self):
+        
+    @property
+    def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
+        element tuple.
         """
-
-        seconds = (self.data.timetag - self.header.time_offset) / dp_common.fS
         
-        return seconds
+        adj_timetag = self.data.timetag - self.header.time_offset
+        
+        seconds_i = adj_timetag / int(dp_common.fS)
+        seconds_f = (adj_timetag % int(dp_common.fS)) / dp_common.fS
+        
+        return seconds_i, seconds_f
     
     @property
     def central_freq(self):

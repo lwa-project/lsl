@@ -102,9 +102,11 @@ class FrameHeader(object):
         self.sample_rate = sample_rate
         self.central_freq = central_freq
         
-    def get_time(self):
+    @property
+    def time(self):
         """
-        Function to convert the time tag to seconds since the UNIX epoch.
+        Function to convert the time tag to seconds since the UNIX epoch as a two-
+        element tuple.
         """
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
@@ -114,7 +116,8 @@ class FrameHeader(object):
         epochMJD = epochMJD + epochMPM/1000.0/86400.0
         
         # Get the frame MJD by adding the seconds_from_epoch value to the epoch
-        frameMJD = epochMJD + self.seconds_from_epoch / 86400.0
+        frameMJD_i = epochMJD + self.seconds_from_epoch / 86400
+        frameMJD_f = (self.seconds_from_epoch % 86400) / 86400.0
         
         if self.sample_rate == 0.0:
             # Try to get the sub-second time by parsing the extended user data
@@ -122,7 +125,7 @@ class FrameHeader(object):
                 ## Is there a sample rate to grab?
                 eud = self.extended_user_data
                 sample_rate = eud['sample_rate']
-                sample_rate *= 1e6 if eud['sample_rateUnits'] == 'MHz' else 1.0
+                sample_rate *= 1e6 if eud['sample_rate_units'] == 'MHz' else 1e3
             
                 ## How many samples are in each frame?
                 dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		# 8-byte chunks -> bytes - full header + legacy offset
@@ -131,8 +134,8 @@ class FrameHeader(object):
             
                 ## What is the frame rate?
                 frameRate = sample_rate / nSamples
-            
-                frameMJD += 1.0*self.frame_in_second/frameRate/86400.0
+                
+                frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
             
             except KeyError:
                 pass
@@ -147,12 +150,16 @@ class FrameHeader(object):
             ## What is the frame rate?
             frameRate = self.sample_rate / nSamples
             
-            frameMJD += 1.0*self.frame_in_second/frameRate/86400.0
+            frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
 
         # Convert from MJD to UNIX time
-        seconds = astro.utcjd_to_unix(frameMJD + astro.MJD_OFFSET)
+        if frameMJD_f > 1:
+            frameMJD_i += 1
+            frameMJD_f -= 1
+        seconds_i = int(astro.utcjd_to_unix(frameMJD_i + astro.MJD_OFFSET))
+        seconds_f = frameMJD_f * 86400.0
         
-        return seconds
+        return seconds_i, seconds_f
         
     @property
     def id(self):
@@ -297,12 +304,13 @@ class Frame(object):
         
         return self.header.extended_user_data
         
-    def get_time(self):
+    @property
+    def time(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.get_time function.
+        Convenience wrapper for the Frame.FrameHeader.time property.
         """
         
-        return self.header.get_time()
+        return self.header.time
         
     @property
     def sample_rate(self):
