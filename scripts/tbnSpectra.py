@@ -161,7 +161,7 @@ def main(args):
                 station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
-    antennas = station.get_antennas()
+    antennas = station.antennas
     
     # Length of the FFT
     LFFT = config['LFFT']

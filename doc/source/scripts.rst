@@ -176,27 +176,6 @@ splitDRX.py
 
             -d, --date             	Label the split files with a date rather than a squence number
 
-readTBW.py
-  :Description: Example script for reading in TBW data and writing it to a TSFITS file.
-
-  :Usage: readTBW.py file
-
-  :Options: None
-
-readTBN.py
-  :Description: Example script for reading in TBN data and writing it to a TSFITS file.
-
-  :Usage: readTBN.py file
-
-  :Options: None
-
-readDRX.py
-  :Description: Example script for reading in DRX data and writing it to a SD-FITS file.
-
-  :Usage: readDRX.py file
-
-  :Options: None
-
 splitSession.py
   :Description: Given a MCS metadata tarball and a session DRX recording, split the session
                 recording into the individual observations.

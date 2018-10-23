@@ -38,7 +38,7 @@ Options:
 -h, --help             Display this help information
 -l, --list             List source names
 -s, --source           Split by source name instead of observation 
-                    ID
+                       ID
 -f, --force            Force overwritting of existing split files
 """
 
@@ -125,7 +125,7 @@ def main(args):
     # Figure out where in the file the various bits are.
     fh = open(data, 'rb')
     lf = drx.read_frame(fh)
-    beam, j, k = lf.parse_id()
+    beam, j, k = lf.id
     if beam != obs[0]['drxBeam']:
         print 'ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drxBeam'], beam)
         sys.exit()

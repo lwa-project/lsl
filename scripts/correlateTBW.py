@@ -43,11 +43,11 @@ Usage: correlateTBW.py [OPTIONS] file
 Options:
 -h, --help             Display this help information
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                    mappings
+                       mappings
 -l, --fft-length       Set FFT length (default = 2048)
 -q, --quiet            Run correlateTBW in silent mode
 -a, --all              Correlated all dipoles regardless of their status 
-                    (default = no)
+                       (default = no)
 -x, --xx               Compute only the XX polarization product (default)
 -y, --yy               Compute only the YY polarization product
 -2, --two-products     Compute both the XX and YY polarization products
@@ -114,7 +114,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
     """
     
     # Get antennas
-    antennas = site.get_antennas()
+    antennas = site.antennas
     
     # Get the metadata
     sample_rate = idf.get_info('sample_rate')
@@ -182,9 +182,9 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
             pol1, pol2 = fxc.pol_to_pols(pol)
             
             if len(stands) > 255:
-                fits = fitsidi.ExtendedIDI(filename, ref_time=refTime)
+                fits = fitsidi.ExtendedIdi(filename, ref_time=refTime)
             else:
-                fits = fitsidi.IDI(filename, ref_time=refTime)
+                fits = fitsidi.Idi(filename, ref_time=refTime)
             fits.set_stokes(pols)
             fits.set_frequency(freq[toUse])
             fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
@@ -221,7 +221,7 @@ def main(args):
             station = metabundle.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
-    antennas = station.get_antennas()
+    antennas = station.antennas
     
     idf = LWA1DataFile(filename)
     

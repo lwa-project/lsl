@@ -27,9 +27,9 @@ Options:
 -h, --help             Display this help information
 -s, --lwasv            Use LWA-SV instead of LWA1
 -f, --frequency        Frequency in MHz to compute the uv coverage (default 
-                    50 MHz)
+                       50 MHz)
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                    mappings
+                       mappings
 -o, --output           Filename to save the plot to (default = do not save)
 """
 
@@ -98,7 +98,7 @@ def main(args):
         raise RuntimeError("Unknown site name: %s" % config['site'])
         
     antennas = []
-    for ant in station.get_antennas()[0::2]:
+    for ant in station.antennas[0::2]:
         if ant.combined_status == 33:
             antennas.append(ant)
     print "Displaying uv coverage for %i good stands" % len(antennas)

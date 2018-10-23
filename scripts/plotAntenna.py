@@ -25,9 +25,9 @@ Usage: plotAntenna.py [OPTIONS]
 Options:
 -h, --help             Display this help information
 -f, --freq             Frequency of the observations in MHz
-                    (default = 74 MHz)
+                       (default = 74 MHz)
 -e, --empirical        Enable empirical corrections to the dipole model
-                    (valid from 35 to 80 MHz, default = no)
+                       (valid from 35 to 80 MHz, default = no)
 -v, --verbose          Run plotAntenna in vebose mode
 """
 

@@ -133,7 +133,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
     """
     
     # Get antennas
-    antennas = site.get_antennas()
+    antennas = site.antennas
     
     # Get the metadata
     sample_rate = idf.get_info('sample_rate')
@@ -226,9 +226,9 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
                 pol1, pol2 = fxc.pol_to_pols(pol)
                 
                 if len(stands) > 255:
-                    fits = fitsidi.ExtendedIDI(filename, ref_time=refTime)
+                    fits = fitsidi.ExtendedIdi(filename, ref_time=refTime)
                 else:
-                    fits = fitsidi.IDI(filename, ref_time=refTime)
+                    fits = fitsidi.Idi(filename, ref_time=refTime)
                 fits.set_stokes(pols)
                 fits.set_frequency(freq[toUse])
                 fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
@@ -260,7 +260,7 @@ def main(args):
             station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwasv
-    antennas = station.get_antennas()
+    antennas = station.antennas
     
     idf = LWASVDataFile(filename)
     

@@ -123,7 +123,7 @@ def main(args):
             station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwasv
-    antennas = station.get_antennas()
+    antennas = station.antennas
     
     fh = open(config['args'][0], 'rb')
     nFrames = os.path.getsize(config['args'][0]) / tbf.FRAME_SIZE
@@ -181,7 +181,7 @@ def main(args):
             except errors.SyncError:
                 print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FRAME_SIZE-1)
                 continue
-            if not cFrame.header.is_tbf():
+            if not cFrame.header.is_tbf:
                 continue
                 
             first_chan = cFrame.header.first_chan

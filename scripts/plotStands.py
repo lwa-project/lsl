@@ -24,9 +24,9 @@ Options:
 -h, --help             Display this help information
 -s, --lwasv            Use LWA-SV instead of LWA1
 -m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                    mappings
+                       mappings
 -l, --label            Label the stands with their ID numbers
-                    (default = No)
+                       (default = No)
 -v, --verbose          Run plotStands in vebose mode
 -o, --output           Filename to save the plot to (default = do not save)
 """

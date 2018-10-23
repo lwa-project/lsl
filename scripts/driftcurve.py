@@ -32,14 +32,14 @@ Options:
 -s, --lwasv            Calculate for LWA-SV instead of LWA1
 -o, --ovro-lwa         Calculate for OVRO-LWA instead of LWA1
 -f, --freq             Frequency of the observations in MHz
-                    (default = 74 MHz)
+                       (default = 74 MHz)
 -p, --polarization     Polarization of the observations (NS or EW; 
-                    default = EW)
+                       default = EW)
 -e, --empirical        Enable empirical corrections to the dipole model
-                    (valid from 35 to 80 MHz, default = no)
+                       (valid from 35 to 80 MHz, default = no)
 -l, --lfsm             Use LFSM instead of GSM
 -t, --time-step        Time step of simulations in minutes (default = 
-                    10)
+                       10)
 -x, --do-plot          Plot the driftcurve data
 -v, --verbose          Run driftcurve in vebose mode
 """

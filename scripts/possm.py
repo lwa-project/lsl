@@ -23,15 +23,15 @@ Options:
 -2, --freq-stop        Last frequency to image in MHz (Default = 88 MHz)
 -s, --dataset          Data set to image (Default = All)
 -m, --uv-min           Minimun baseline uvw length to include 
-                    (Default = 0 lambda at midpoint frequency)
+                       (Default = 0 lambda at midpoint frequency)
 -i, --include          Comma seperated list of dipoles to include 
-                    (Default = All)
+                       (Default = All)
 -e, --exclude          Comma seperated list of dipoles to exclude
-                    (Default = None)
+                       (Default = None)
 -f, --frequency        Label the channels in frequency rather than channel
-                    number (Default = no, use channel number)
+                       number (Default = no, use channel number)
 -l, --log              Use a log scale for the visbility amplitudes
-                    (Default = no, use linear)
+                       (Default = no, use linear)
 
 NOTE:  If both -i/--include and -e/--exclude are specified the include list
     has priority.

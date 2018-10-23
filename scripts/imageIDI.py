@@ -36,11 +36,11 @@ Options:
 -2, --freq-stop        Last frequency to image in MHz (Default = 88 MHz)
 -s, --dataset          Data set to image (Default = All)
 -m, --uv-min           Minimun baseline uvw length to include 
-                    (Default = 0 lambda at midpoint frequency)
+                       (Default = 0 lambda at midpoint frequency)
 -i, --include          Comma seperated list of dipoles to include 
-                    (Default = All)
+                       (Default = All)
 -e, --exclude          Comma seperated list of dipoles to exclude
-                    (Default = None)
+                       (Default = None)
 -t, --topo             Display an az/el grid instead of a RA/Dec grid
 -u, --utc              Display the time as UTC, instead of LST
 -n, --no-labels        Disable source and grid labels

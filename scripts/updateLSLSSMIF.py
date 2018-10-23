@@ -29,7 +29,7 @@ Options:
 -f, --file          Update the default LWA1 SSMIF using the specified file
 
 NOTE:  The -s/--lwasv option changes the behavior of all other options, e.g., 
-    -u/--update updates the LWA-SV SSMIF.
+       -u/--update updates the LWA-SV SSMIF.
 """
     
     if exitCode is not None:
@@ -158,10 +158,10 @@ def main(args):
     # Current LSL SSMIF
     if config['site'] == 'lwa1':
         _ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
-        _url = "http://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/"
+        _url = "https://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/"
     elif config['site'] == 'lwasv':
         _ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
-        _url = "http://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
+        _url = "https://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
     else:
         raise RuntimeError("Unknown site name: %s" % config['site'])
         

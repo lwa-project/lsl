@@ -122,7 +122,7 @@ def main(args):
     beampols = idf.get_info('beampols')
     tInt = idf.get_info('tInt')
     LFFT = idf.get_info('LFFT')
-    products = idf.get_info('dataProducts')
+    products = idf.get_info('data_products')
     
     # Offset in frames for beampols beam/tuning/pol. sets
     config['offset'] = idf.offset(config['offset'])

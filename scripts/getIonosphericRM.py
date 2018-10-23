@@ -29,7 +29,7 @@ Options:
 -s, --lwasv            Calculate for LWA-SV instead of LWA1
 -o, --ovro-lwa         Calculate for OVRO-LWA instead of LWA1
 -n, --n-samples        Number of samples to take between the start and stop
-                    times (default = 11)
+                       times (default = 11)
 -f, --file             Read MJDs to compute for from a file
 -i, --igs              Use the IGS data products (default)
 -j, --jpl              Use the JPL data prodcuts

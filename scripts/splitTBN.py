@@ -23,7 +23,7 @@ Options:
 -c, --count            Number of seconds to keep
 -o, --offset           Number of seconds to skip before splitting
 -d, --date             Label the split files with a date rather than a 
-                    sequence number
+                       sequence number
 -r, --recurvsive       Recursively split the file
 """
     
@@ -122,12 +122,12 @@ def main(args):
     # (stand 1, pol 0).  If not, read in as many frames as necessary to get to 
     # the beginning of a complete capture.
     frame = tbn.read_frame(fh)
-    stand, pol = frame.parse_id()
+    stand, pol = frame.id
 
     skip = 0
     while (2*(stand-1)+pol) != 0:
         frame = tbn.read_frame(fh)
-        stand, pol = frame.parse_id()
+        stand, pol = frame.id
         skip += 1
     fh.seek(fh.tell() - tbn.FRAME_SIZE)
 

@@ -23,7 +23,7 @@ Options:
 -c, --count            Number of seconds to keep
 -o, --offset           Number of seconds to skip before splitting
 -d, --date             Label the split files with a date rather than a 
-                    sequence number
+                       sequence number
 -r, --recurvsive       Recursively split the file
 """
     
@@ -103,7 +103,7 @@ def main(args):
         try:
             junkFrame = drx.read_frame(fh)
             try:
-                srate = junkFrame.get_sample_rate()
+                srate = junkFrame.sample_rate
                 ti0, tf0 = junkFrame.time
                 break
             except ZeroDivisionError:
@@ -130,7 +130,7 @@ def main(args):
         ## Figure out where in the file we are and what the current tuning/sample 
         ## rate is
         junkFrame = drx.read_frame(fh)
-        srate = junkFrame.get_sample_rate()
+        srate = junkFrame.sample_rate
         ti1, tf1 = junkFrame.time
         tunepols = drx.get_frames_per_obs(fh)
         tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
@@ -177,12 +177,12 @@ def main(args):
     # Make sure that the first frame in the file is the first frame of a capture 
     # (tuning 1, pol 0).  If not, read in as many frames as necessary to get to 
     # the beginning of a complete capture.
-    beam, tune, pol = junkFrame.parse_id()
+    beam, tune, pol = junkFrame.id
 
     skip = 0
     while (2*(tune-1)+pol) != 0:
         frame = drx.read_frame(fh)
-        beam, tune, pol = frame.parse_id()
+        beam, tune, pol = frame.id
         skip += 1
 
     nFramesRemaining = (sizeB - fh.tell()) / drx.FRAME_SIZE
