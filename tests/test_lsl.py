@@ -12,7 +12,7 @@ from . import test_astro
 from . import test_skymap
 from . import test_transform
 from . import test_mathutil
-from . import test_nec_util
+from . import test_necutil
 from . import test_catalog
 from . import test_dp
 from . import test_stations
@@ -65,7 +65,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_skymap.skymap_test_suite())
         self.addTest(test_transform.transform_test_suite())
         self.addTest(test_mathutil.mathutil_test_suite())
-        self.addTest(test_nec_util.nec_util_test_suite())
+        self.addTest(test_necutil.necutil_test_suite())
         self.addTest(test_catalog.catalog_test_suite())
         self.addTest(test_dp.dp_test_suite())
         self.addTest(test_stations.stations_test_suite())

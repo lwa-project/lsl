@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Unit test for lsl.sim.nec_util module."""
+"""Unit test for lsl.sim.necutil module."""
 
 import unittest
 import os
@@ -9,7 +9,7 @@ try:
 except ImportError:
     from io import StringIO
 
-from lsl.sim import nec_util
+from lsl.sim import necutil
 from lsl.common.paths import DATA_BUILD
 
 
@@ -19,8 +19,8 @@ __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
 
-class nec_util_tests(unittest.TestCase):
-    """A unittest.TestCase collection of unit tests for the lsl.nec_util
+class necutil_tests(unittest.TestCase):
+    """A unittest.TestCase collection of unit tests for the lsl.necutil
     module."""
     
     def setUp(self):
@@ -30,37 +30,37 @@ class nec_util_tests(unittest.TestCase):
         self.nec_name = os.path.join(DATA_BUILD, 'tests', 'bigblade_imp.out')
     
     def test_NECImpedance_init(self):
-        """Test nec_util.NECImpedance constructor method."""
+        """Test necutil.NECImpedance constructor method."""
         
-        imp = nec_util.NECImpedance(self.nec_name)
+        imp = necutil.NECImpedance(self.nec_name)
         
     def test_open_and_get_nec_freq(self):
-        """Test nec_util.open_and_get_nec_freq() function."""
+        """Test necutil.open_and_get_nec_freq() function."""
         
-        (fh, freq) = nec_util.open_and_get_nec_freq(self.nec_name)   
+        (fh, freq) = necutil.open_and_get_nec_freq(self.nec_name)   
         fh.close()
         
     def test_calculate_ime(self):
-        """Test nec_util.calculate_ime() function."""
+        """Test necutil.calculate_ime() function."""
         
-        (freqs, ime) = nec_util.calculate_ime(self.nec_name)
+        (freqs, ime) = necutil.calculate_ime(self.nec_name)
     
     def test_NECPattern_init(self):
-        """Test nec_util.NECPattern constructor method."""
+        """Test necutil.NECPattern constructor method."""
         
-        pat = nec_util.NECPattern(self.nec_name, 5.0)
-        self.assertRaises(ValueError, nec_util.NECPattern, self.nec_name, 0.0, False)
+        pat = necutil.NECPattern(self.nec_name, 5.0)
+        self.assertRaises(ValueError, necutil.NECPattern, self.nec_name, 0.0, False)
 
     
-class nec_util_test_suite(unittest.TestSuite):
-    """A unittest.TestSuite class which contains all of the lwa_user.nec_util
+class necutil_test_suite(unittest.TestSuite):
+    """A unittest.TestSuite class which contains all of the lwa_user.necutil
     module unit tests."""
     
     def __init__(self):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(nec_util_tests))        
+        self.addTests(loader.loadTestsFromTestCase(necutil_tests))        
         
         
 if __name__ == '__main__':
