@@ -80,7 +80,7 @@ def open_and_get_nec_freq(fname):
     else:
         raise RuntimeError("Frequency value not found")
         
-    print("Found frequency %f MHz", freq)
+    #print("Found frequency %f MHz" % freq)
     return (fh, freq)
 
 
@@ -240,7 +240,7 @@ class NECPattern:
         try:
             fh, filefreq = open_and_get_nec_freq(outname)
         except:
-            print("NEC .out file not found!  Running NEC")
+            warnings.warn("NEC .out file not found!  Running NEC", RuntimeWarning)
             fh = None
             
         if fh is None or not close_to(filefreq, freq):
