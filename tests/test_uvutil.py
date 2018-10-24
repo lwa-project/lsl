@@ -5,13 +5,13 @@ import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""Unit test for the lsl.correlator.uvUtils module."""
+"""Unit test for the lsl.correlator.uvutil module."""
 
 import warnings
 import unittest
 import numpy
 
-from lsl.correlator import uvUtils
+from lsl.correlator import uvutil
 from lsl.common import stations
 
 
@@ -20,8 +20,8 @@ __revision__ = "$Rev$"
 __author__    = "Jayce Dowell"
 
 
-class uvUtils_tests(unittest.TestCase):
-    """A unittest.TestCase collection of unit tests for the lsl.correlator.uvUtils
+class uvutil_tests(unittest.TestCase):
+    """A unittest.TestCase collection of unit tests for the lsl.correlator.uvutil
     module."""
     
     def setUp(self):
@@ -35,9 +35,9 @@ class uvUtils_tests(unittest.TestCase):
 
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutil.get_baselines(standList, include_auto=False, indicies=False)
         self.assertEqual(len(bl), 6)
-        bl = uvUtils.get_baselines(standList, include_auto=True, indicies=False)
+        bl = uvutil.get_baselines(standList, include_auto=True, indicies=False)
         self.assertEqual(len(bl), 10)
 
     def test_baseline_ind(self):
@@ -46,17 +46,17 @@ class uvUtils_tests(unittest.TestCase):
 
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutil.get_baselines(standList, include_auto=False, indicies=False)
         bl = numpy.array(bl)
         self.assertTrue(bl.min() == 100)
-        bl = uvUtils.get_baselines(standList, include_auto=True, indicies=False)
+        bl = uvutil.get_baselines(standList, include_auto=True, indicies=False)
         bl = numpy.array(bl)
         self.assertTrue(bl.min() == 100)
 
-        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=True)
+        bl = uvutil.get_baselines(standList, include_auto=False, indicies=True)
         bl = numpy.array(bl)
         self.assertTrue(bl.max() < 100)
-        bl = uvUtils.get_baselines(standList, include_auto=True, indicies=True)
+        bl = uvutil.get_baselines(standList, include_auto=True, indicies=True)
         bl = numpy.array(bl)
         self.assertTrue(bl.max() < 100)
         
@@ -65,12 +65,12 @@ class uvUtils_tests(unittest.TestCase):
         
         standList = numpy.array([100, 101, 102, 103])
 
-        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
-        ind = uvUtils.baseline_to_antennas(0, standList)
+        bl = uvutil.get_baselines(standList, include_auto=False, indicies=False)
+        ind = uvutil.baseline_to_antennas(0, standList)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 101)
         
-        ind = uvUtils.baseline_to_antennas(1, standList, baseline_list=bl)
+        ind = uvutil.baseline_to_antennas(1, standList, baseline_list=bl)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 102)
         
@@ -78,15 +78,15 @@ class uvUtils_tests(unittest.TestCase):
         """Test antennas to baseline lookup function."""
         
         standList = numpy.array([100, 101, 102, 103])
-        bl = uvUtils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutil.get_baselines(standList, include_auto=False, indicies=False)
         
-        ind = uvUtils.antennas_to_baseline(100, 101, standList, include_auto=False, indicies=False)
+        ind = uvutil.antennas_to_baseline(100, 101, standList, include_auto=False, indicies=False)
         self.assertEqual(ind, 0)
         
-        ind = uvUtils.antennas_to_baseline(100, 102, standList, baseline_list=bl)
+        ind = uvutil.antennas_to_baseline(100, 102, standList, baseline_list=bl)
         self.assertEqual(ind, 1)
         
-        ind = uvUtils.antennas_to_baseline(0, 3, standList, include_auto=False, indicies=True)
+        ind = uvutil.antennas_to_baseline(0, 3, standList, include_auto=False, indicies=True)
         self.assertEqual(ind, 2)
         
     def test_compute_uvw(self):
@@ -97,28 +97,28 @@ class uvUtils_tests(unittest.TestCase):
         
         # Frequency is a scalar
         freq = 45e6
-        out = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
+        out = uvutil.compute_uvw(antennas[0:60:2], freq=freq)
         self.assertEqual(len(out.shape), 3)
         self.assertEqual(out.shape[-1], 1)
         
         # Frequency is a list
         freq = [45e6, 60e6]
-        out = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
+        out = uvutil.compute_uvw(antennas[0:60:2], freq=freq)
         self.assertEqual(len(out.shape), 3)
         self.assertEqual(out.shape[-1], 2)
 
         # Frequency is an array
         ## 1-D
         freq = numpy.linspace(45e6, 60e6, 1024)
-        out0 = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
+        out0 = uvutil.compute_uvw(antennas[0:60:2], freq=freq)
         
         ## 2-D
         freq.shape = (512, 2)
-        out1 = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
+        out1 = uvutil.compute_uvw(antennas[0:60:2], freq=freq)
         
         ## 3-D
         freq.shape = (128, 4, 2)
-        out2 = uvUtils.compute_uvw(antennas[0:60:2], freq=freq)
+        out2 = uvutil.compute_uvw(antennas[0:60:2], freq=freq)
         
         shape0 = (out0.shape[0], 3, 1024)
         shape1 = (out0.shape[0], 3, 512, 2)
@@ -146,13 +146,13 @@ class uvUtils_tests(unittest.TestCase):
         station = stations.lwa1
         antennas = station.antennas
         
-        out = uvUtils.compute_uv_track(antennas[0:60:2])
+        out = uvutil.compute_uv_track(antennas[0:60:2])
         
         # Make sure we have the right dimensions
         self.assertEqual(out.shape, (435,2,512))
         
         
-class uvUtils_test_suite(unittest.TestSuite):
+class uvutil_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.reader units 
     tests."""
     
@@ -160,7 +160,7 @@ class uvUtils_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(uvUtils_tests)) 
+        self.addTests(loader.loadTestsFromTestCase(uvutil_tests)) 
 
 
 if __name__ == '__main__':

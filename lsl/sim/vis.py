@@ -67,7 +67,7 @@ from astropy.constants import c as speedOfLight
 
 from lsl import astro
 from lsl.common.paths import DATA as dataPath
-from lsl.correlator import uvUtils
+from lsl.correlator import uvutil
 from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 
@@ -1070,7 +1070,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     # Build the simulated data.  If no baseline list is provided, build all 
     # baselines available
     if baselines is None:
-        baselines = uvUtils.get_baselines(numpy.zeros(len(aa.ants)), indicies=True)
+        baselines = uvutil.get_baselines(numpy.zeros(len(aa.ants)), indicies=True)
         
     # Define output data structure
     freq = aa.get_afreqs()*1e9

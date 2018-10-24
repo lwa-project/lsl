@@ -23,7 +23,7 @@ from . import test_reader_adp
 from . import test_buffer
 from . import test_ldp
 from . import test_ldp_adp
-from . import test_uvUtils
+from . import test_uvutil
 from . import test_fx
 from . import test_filterbank
 from . import test_fakedata
@@ -76,7 +76,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_buffer.buffer_test_suite())
         self.addTest(test_ldp.ldp_test_suite())
         self.addTest(test_ldp_adp.ldp_adp_test_suite())
-        self.addTest(test_uvUtils.uvUtils_test_suite())
+        self.addTest(test_uvutil.uvutil_test_suite())
         self.addTest(test_fx.fx_test_suite())
         self.addTest(test_filterbank.filterbank_test_suite())
         self.addTest(test_fakedata.fakedata_test_suite())
