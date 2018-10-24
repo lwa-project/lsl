@@ -10,8 +10,8 @@ if sys.version_info > (3,):
 Useful math functions for LWA work.
 """
 
-import logging
 import math
+import warnings
 
 import numpy
 from scipy.special import sph_harm
@@ -23,8 +23,6 @@ __all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', '
            'gaussian2d', 'gaussparams', 'sphfit', 'sphval']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
-
-_MATHUTIL_LOG = logging.getLogger('mathutil')
 
 
 def regrid(x, y, newx, allow_extrapolation = False, method = 'spline'):
@@ -51,8 +49,8 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
     """
     
     if allow_extrapolation:
-        _MATHUTIL_LOG.warning("allow_extrapolation=True not honored for regrid_linear")
-    
+        warnings.warn("allow_extrapolation=True not honored for regrid_linear", RuntimeWarning)
+        
     if newx.min() < x.min():
         raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
     if newx.max() > x.max():
@@ -88,9 +86,9 @@ def downsample(vector, factor, rescale=True):
     """
 
     if (len(vector) % factor):
-        _MATHUTIL_LOG.warning("Length of 'vector' is not divisible by 'factor'=%d, clipping!", factor)
+        warnings.warn("Length of 'vector' is not divisible by 'factor'=%d, clipping!" % factor, RuntimeWarning)
         newlen = (len(vector)//factor)*factor
-        _MATHUTIL_LOG.debug("Oldlen %d, newlen %d", len(vector), newlen)
+        warnings.warn("Oldlen %d, newlen %d" % (len(vector), newlen), RuntimeWarning)
         vector = vector[:newlen]
     if rescale:
         newvector = numpy.reshape(vector, (len(vector)//factor, factor))/float(factor)

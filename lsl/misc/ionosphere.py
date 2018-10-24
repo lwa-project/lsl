@@ -16,15 +16,17 @@ import gzip
 import numpy
 import socket
 import shutil
-import logging
 import tarfile
 import tempfile
+import warnings
 import subprocess
 try:
     from urllib2 import urlopen
 except ImportError:
     from urllib.request import urlopen
 from datetime import datetime
+
+from astropy.constants import R_earth
 
 from scipy.special import lpmv
 from scipy.misc import factorial
@@ -39,26 +41,22 @@ from lsl.common.mcs import mjdmpm2datetime, datetime2mjdmpm
 __version__ = "0.5"
 __revision__ = "$Rev$"
 __all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
-        'get_tec_value', 'get_ionospheric_pierce_point']
-
-
-# Logger for capturing problems with downloading EOP data
-__logger = logging.getLogger('__main__')
+           'get_tec_value', 'get_ionospheric_pierce_point']
 
 
 # Create the cache directory
 if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
     os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-_CacheDir = os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache')
-if not os.path.exists(_CacheDir):
-    os.mkdir(_CacheDir)
+_CACHE_DIR = os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache')
+if not os.path.exists(_CACHE_DIR):
+    os.mkdir(_CACHE_DIR)
 
 
 # Create the on-line cache
-_Cache = {}
+_CACHE = {}
 
 # Radius of the Earth in meters for the IGRF
-_rEarth = 6371.2e3
+_RADIUS_EARTH = R_earth.to('m').value
 
 
 def _load_igrf(filename):
@@ -284,12 +282,12 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     
     # Load in the coefficients
     try:
-        coeffs = _Cache['IGRF']
+        coeffs = _CACHE['IGRF']
     except KeyError:
         filename = os.path.join(dataPath, 'igrf12coeffs.txt')
-        _Cache['IGRF'] = _load_igrf(filename)
+        _CACHE['IGRF'] = _load_igrf(filename)
         
-        coeffs = _Cache['IGRF']
+        coeffs = _CACHE['IGRF']
         
     # Compute the coefficients for the epoch
     coeffs = _computeIGRFCoefficents(year, coeffs)
@@ -298,14 +296,14 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     Br, Bth, Bph = 0.0, 0.0, 0.0
     for n in coeffs['g'].keys():
         for m in xrange(0, n+1):
-            Br  += (n+1.0)*(_rEarth/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
-            Br  += (n+1.0)*(_rEarth/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
+            Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
+            Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
             
-            Bth -= (_rEarth/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*numpy.cos(m*ln) * _dPnm(n, m, numpy.sin(lt))
-            Bth -= (_rEarth/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*numpy.sin(m*ln) * _dPnm(n, m, numpy.sin(lt))
+            Bth -= (_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*numpy.cos(m*ln) * _dPnm(n, m, numpy.sin(lt))
+            Bth -= (_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*numpy.sin(m*ln) * _dPnm(n, m, numpy.sin(lt))
             
-            Bph += (_rEarth/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['g'][n][m]*m*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
-            Bph -= (_rEarth/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['h'][n][m]*m*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
+            Bph += (_RADIUS_EARTH/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['g'][n][m]*m*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
+            Bph -= (_RADIUS_EARTH/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['h'][n][m]*m*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
     ## And deal with NaNs
     if Br != Br:
         Br = 0.0
@@ -430,7 +428,7 @@ def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
-        __logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
+        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
@@ -442,12 +440,12 @@ def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     else:
         ## Success!  Save it to a file and then decompress it with 'gunzip' 
         ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CacheDir, filename), 'wb')
+        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
         fh.write(data)
         fh.close()
         
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
+        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
         
         return True
 
@@ -488,7 +486,7 @@ def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
-        __logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
+        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
@@ -500,12 +498,12 @@ def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     else:
         ## Success!  Save it to a file and then decompress it with 'gunzip' 
         ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CacheDir, filename), 'wb')
+        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
         fh.write(data)
         fh.close()
         
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
+        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
         
         return True
 
@@ -546,7 +544,7 @@ def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
-        __logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
+        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
@@ -558,12 +556,12 @@ def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     else:
         ## Success!  Save it to a file and then decompress it with 'gunzip' 
         ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CacheDir, filename), 'wb')
+        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
         fh.write(data)
         fh.close()
         
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
+        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
         
         return True
 
@@ -595,7 +593,7 @@ def _download_code(mjd, base_url='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeout=1
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
-        __logger.error('Error downloading file for %i, %i: %s', dayOfYear, year, str(e))
+        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
@@ -607,12 +605,12 @@ def _download_code(mjd, base_url='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeout=1
     else:
         ## Success!  Save it to a file and then decompress it with 'gunzip' 
         ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CacheDir, filename), 'wb')
+        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
         fh.write(data)
         fh.close()
         
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CacheDir, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CacheDir, os.path.splitext(filename)[0])])
+        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
         
         return True
 
@@ -645,7 +643,7 @@ def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/produ
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
-        __logger.error('Error downloading file for %s: %s', dateStr, str(e))
+        warnings.warn('Error downloading file for %s: %s' % (dateStr, str(e)), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
@@ -657,7 +655,7 @@ def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/produ
     else:
         ## Success!  Save it to a file and then decompress it with 'gunzip' 
         ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CacheDir, filename), 'wb')
+        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
         fh.write(data)
         fh.close()
         
@@ -1085,7 +1083,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
         
     try:
         # Is it already in the on-line cache?
-        tecMap = _Cache[cacheName]
+        tecMap = _CACHE[cacheName]
     except KeyError:
         # Nope, we need to fetch it
         
@@ -1103,7 +1101,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
             filename = filenameTemplate % (dateStr)
             
             # Is the primary file in the disk cache?
-            if not os.path.exists(os.path.join(_CacheDir, filename)):
+            if not os.path.exists(os.path.join(_CACHE_DIR, filename)):
                 ## Can we download it?
                 status = downloader(mjd, timeout=timeout)
                 
@@ -1112,7 +1110,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
                 pass
                 
             # Parse it
-            _Cache[cacheName] = _parse_ustec_map(os.path.join(_CacheDir, filename))
+            _CACHE[cacheName] = _parse_ustec_map(os.path.join(_CACHE_DIR, filename))
             
         else:
             
@@ -1126,12 +1124,12 @@ def _load_map(mjd, timeout=120, type='IGS'):
             filenameAlt = filenameAltTemplate % (dayOfYear, year%100)
             
             # Is the primary file in the disk cache?
-            if not os.path.exists(os.path.join(_CacheDir, filename)):
+            if not os.path.exists(os.path.join(_CACHE_DIR, filename)):
                 ## Can we download it?
                 status = downloader(mjd, timeout=timeout, type='final')
                 if not status:
                     ## Nope, now check for the secondary file on disk
-                    if not os.path.exists(os.path.join(_CacheDir, filenameAlt)):
+                    if not os.path.exists(os.path.join(_CACHE_DIR, filenameAlt)):
                         ## Can we download it?
                         status = downloader(mjd, timeout=timeout, type='rapid')
                         if status:
@@ -1145,9 +1143,9 @@ def _load_map(mjd, timeout=120, type='IGS'):
                 pass
                 
             # Parse it
-            _Cache[cacheName] = _parse_tec_map(os.path.join(_CacheDir, filename))
+            _CACHE[cacheName] = _parse_tec_map(os.path.join(_CACHE_DIR, filename))
             
-        tecMap = _Cache[cacheName]
+        tecMap = _CACHE[cacheName]
         
     # Done
     return tecMap

@@ -9,7 +9,6 @@ import os
 import math
 import abc
 import collections
-import logging
 
 from lsl import astro
 from lsl import transform
@@ -70,9 +69,6 @@ class Catalog(collections.Mapping):
     
     __metaclass__ = abc.ABCMeta
     
-    # a logging instance for catalogs
-    log = logging.getLogger('catalog')
-    
     def __init__(self, name):
         """
         Create a source catalog.
@@ -84,8 +80,7 @@ class Catalog(collections.Mapping):
         self.alias_map = {}
         
         # parse_file() is an abstract method which must be defined in
-        # a concrete implementation for a particular catalog
-        self.log.debug("parsing data file for catalog %s", name)    
+        # a concrete implementation for a particular catalog  
         self.parse_file()
         
     @abc.abstractmethod

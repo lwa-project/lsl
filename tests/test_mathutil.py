@@ -8,7 +8,6 @@ if sys.version_info > (3,):
 """Unit test for lsl.misc.mathutil module."""
 
 import unittest
-import logging
 import math
 try:
     from StringIO import StringIO
@@ -31,12 +30,6 @@ __maintainer__ = "Jayce Dowell"
 class mathutil_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.misc.mathutil
     module."""
-    
-    def setUp(self):
-        """Setup for unit tests."""
-        
-        # disable logger since we intentionally generate errors 
-        logging.basicConfig(stream = StringIO())
     
     def test_downsample(self):
         """Test mathutil.downsample() function."""

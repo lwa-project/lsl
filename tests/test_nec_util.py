@@ -3,7 +3,6 @@
 """Unit test for lsl.sim.nec_util module."""
 
 import unittest
-import logging
 import os
 try:
     from StringIO import StringIO
@@ -26,9 +25,6 @@ class nec_util_tests(unittest.TestCase):
     
     def setUp(self):
         """Setup unit tests."""
-        
-        # disable logger since we intentionally generate errors 
-        logging.basicConfig(stream = StringIO())
         
         # get a reference to the input test file
         self.nec_name = os.path.join(DATA_BUILD, 'tests', 'bigblade_imp.out')

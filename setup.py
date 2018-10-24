@@ -37,7 +37,6 @@ try:
     import multiprocessing
 except ImportError:
     pass
-import logging
 
 
 def get_version():

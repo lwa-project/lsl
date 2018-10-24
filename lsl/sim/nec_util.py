@@ -22,19 +22,16 @@ from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
 from lsl.misc.mathutil import regrid
 import os
 import re
-import logging
+import warnings
 import subprocess
 
 
 __version__   = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['close_to', 'open_and_get_nec_freq', 'change_nec_freq', 'calculate_ime', 'NECImpedance', 
-        'NECPattern', 'which_nec4']
+__all__ = ['close_to', 'open_and_get_nec_freq', 'change_nec_freq', 'calculate_ime', 
+           'NECImpedance', 'NECPattern', 'which_nec4']
 __author__    = 'P. S. Ray'
 __maintainer__ = 'Jayce Dowell'
-
-_NEC_UTIL_LOG = logging.getLogger('nec_util')
-_NEC_UTIL_LOG.setLevel(logging.INFO)
 
 
 def close_to( x, y, epsilon=0.005 ):
@@ -83,7 +80,7 @@ def open_and_get_nec_freq(fname):
     else:
         raise RuntimeError("Frequency value not found")
         
-    _NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
+    print("Found frequency %f MHz", freq)
     return (fh, freq)
 
 
@@ -98,9 +95,9 @@ def change_nec_freq(necname, freq):
         # Substitute the freq in the right field of the FR card
         for i in range(len(lines)):
             if lines[i][:2] == 'FR':
-                _NEC_UTIL_LOG.debug("Found line : %s", lines[i])
+                #print("Found line : %s" % lines[i])
                 vals = re.split(',| +', lines[i])
-                _NEC_UTIL_LOG.debug("Vals = %s", vals)
+                #print("Vals = %s" % vals)
                 vals[5] = "%.2f" % freq
                 lines[i] = " ".join(vals)
                 # Make sure this line ends in newline
@@ -170,7 +167,7 @@ class NECImpedance:
                     if line.find('FREQUENCY') >= 0:
                         break
                 for line in fh:
-                    _NEC_UTIL_LOG.debug(line.strip())
+                    #print(line.strip())
                     if line.find('FREQUENCY=') >= 0:
                         freq = float(line[line.find('=')+1:].split()[0])
                         break
@@ -178,9 +175,9 @@ class NECImpedance:
                         freq = float(line[line.find(':')+1:].split()[0])
                         break
                 else:
-                    _NEC_UTIL_LOG.debug("No more freqs...")
+                    #print("No more freqs...")
                     break
-                _NEC_UTIL_LOG.debug("Found frequency %f MHz", freq)
+                #print("Found frequency %f MHz" % freq)
                 for line in fh:
                     if line.find('ANTENNA INPUT PARAMETERS') >= 0:
                         break
@@ -194,7 +191,7 @@ class NECImpedance:
                 for line in fh:
                     break
                 for line in fh:
-                    _NEC_UTIL_LOG.debug(line.strip())
+                    #print(line.strip())
                     break
                     
                 # Here we need to add a space before - signs that
@@ -248,8 +245,8 @@ class NECPattern:
             
         if fh is None or not close_to(filefreq, freq):
             if rerun:
-                _NEC_UTIL_LOG.warning("NEC output file is at a different frequency \
-                    than the requested frequency: re-running")
+                warnings.warn("NEC output file is at a different frequency \
+                    than the requested frequency: re-running", RuntimeWarning)
                 if fh is not None:
                     fh.close()
                 change_nec_freq(necname, freq)
@@ -325,7 +322,7 @@ class NECPattern:
             self.antenna_pat_dB[phi,theta] = powgain
             self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*exp(1j*phsgain*180/pi)
             n += 1
-            _NEC_UTIL_LOG.debug("theta %d phi %d gain %f @ %f deg", theta, phi, powgain, phsgain)
+            #print("theta %d phi %d gain %f @ %f deg" % (theta, phi, powgain, phsgain))
 
 
     def _read_excitation(self, fh):
@@ -363,7 +360,7 @@ class NECPattern:
                     self.antenna_pat_dB[phi,theta] = powcurr
                     self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*exp(1j*phscurr*pi/180)
                     n += 1
-                    _NEC_UTIL_LOG.debug("theta %d phi %d current %f @ %f deg", theta, phi, powcurr, phscurr)
+                    #print("theta %d phi %d current %f @ %f deg" % (theta, phi, powcurr, phscurr))
 
 
 def which_nec4():
