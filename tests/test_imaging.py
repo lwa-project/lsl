@@ -318,7 +318,7 @@ class imaging_tests(unittest.TestCase):
                 self.assertAlmostEqual(ds.XX.data[i,j+data['freq'].size], 10*data['vis'][i,j], 6)
                 
     def test_sort(self):
-        """Test the utils.sort_data function."""
+        """Test the utils.sort function."""
         
         # Open the FITS IDI file
         idi = utils.CorrelatedData(idiFile)
@@ -335,7 +335,7 @@ class imaging_tests(unittest.TestCase):
             self.assertEqual(p0.nbaseline, p1.nbaseline)
             
     def test_sort_alt(self):
-        """Test the utils.sort_data function - alternate FITS IDI file."""
+        """Test the utils.sort function - alternate FITS IDI file."""
         
         # Open the FITS IDI file
         idi = utils.CorrelatedData(idiAltFile)
@@ -352,7 +352,7 @@ class imaging_tests(unittest.TestCase):
             self.assertEqual(p0.nbaseline, p1.nbaseline)
             
     def test_sort_uvfits(self):
-        """Test the utils.sort_data function - UVFITS file."""
+        """Test the utils.sort function - UVFITS file."""
         
         # Open the FITS IDI file
         uv = utils.CorrelatedData(uvFile)
@@ -369,7 +369,7 @@ class imaging_tests(unittest.TestCase):
             self.assertEqual(p0.nbaseline, p1.nbaseline)
             
     def test_prune(self):
-        """Test the utils.pruneBaselineRange function."""
+        """Test the utils.get_uv_range function."""
         
         # Open the FITS IDI file
         idi = utils.CorrelatedData(idiFile)
@@ -398,8 +398,47 @@ class imaging_tests(unittest.TestCase):
             p3 = getattr(dsp3, pol)
             self.assertEqual(p3.nbaseline, 0)
             
+    def test_subset(self):
+        """Test the utils.get_antenna_subset function."""
+        
+        # Open the FITS IDI file
+        idi = utils.CorrelatedData(idiFile)
+        
+        # Get some data to sort
+        ds = idi.get_data_set(1)
+        
+        # Indicies
+        ## Include
+        dss1 = ds.get_antenna_subset(include=(0,1,2), indicies=True)
+        self.assertEqual(len(dss1.baselines), 3)
+        for a1,a2 in dss1.baselines:
+            self.assertTrue(a1 in (0,1,2))
+            self.assertTrue(a2 in (0,1,2))
+            
+        ## Exclude
+        dss2 = ds.get_antenna_subset(exclude=(4,), indicies=True)
+        self.assertEqual(len(dss2.baselines), 6)
+        for a1,a2 in dss2.baselines:
+            self.assertTrue(a1 != 4)
+            self.assertTrue(a2 != 4)
+            
+        # Stand numbers
+        ## Include
+        dss1 = ds.get_antenna_subset(include=(151,222,150), indicies=False)
+        self.assertEqual(len(dss1.baselines), 3)
+        for a1,a2 in dss1.baselines:
+            self.assertTrue(a1 in [idi.stands.index(s) for s in (151,222,150)])
+            self.assertTrue(a2 in [idi.stands.index(s) for s in (151,222,150)])
+            
+        ## Exclude
+        dss2 = ds.get_antenna_subset(exclude=(173,), indicies=False)
+        self.assertEqual(len(dss2.baselines), 6)
+        for a1,a2 in dss2.baselines:
+            self.assertTrue(a1 != idi.stands.index(173))
+            self.assertTrue(a2 != idi.stands.index(173))
+        
     def test_prune_alt(self):
-        """Test the utils.pruneBaselineRange function - alternate FITS IDI file."""
+        """Test the utils.get_uv_range function - alternate FITS IDI file."""
         
         # Open the FITS IDI file
         idi = utils.CorrelatedData(idiAltFile)
@@ -429,7 +468,7 @@ class imaging_tests(unittest.TestCase):
             self.assertEqual(p3.nbaseline, 0)
             
     def test_prune_uvfits(self):
-        """Test the utils.pruneBaselineRange function - UVFITS file."""
+        """Test the utils.get_uv_range function - UVFITS file."""
         
         # Open the FITS IDI file
         uv = utils.CorrelatedData(uvFile)

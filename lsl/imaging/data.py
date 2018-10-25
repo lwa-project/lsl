@@ -139,10 +139,16 @@ class VisibilityDataSet(object):
         if self.antennaarray is not None:
             self.antennaarray.set_jultime(self.jd)
         self.phase_center = phase_center
-        self.pols = [key for key in kwds]
+        
+        self.pols = []
+        self._extra_attrs = []
         for key in kwds:
-            setattr(self, key.upper(), kwds[key])
-            
+            if key.upper() in ('XX', 'XY', 'YX', 'YY', 'RR', 'RL', 'LR', 'LL', 'I', 'Q', 'U', 'V'):
+                self.append( kwds[key] )
+            else:
+                self._extra_attrs.append( key )
+                setattr(self, key, kwds[key])
+                
     def __contains__(self, value):
         return True if value in self.pols else False
         
@@ -198,6 +204,10 @@ class VisibilityDataSet(object):
                                      self.uvw.copy(), 
                                      antennaarray=copy.copy(self.antennaarray), 
                                      phase_center=self.phase_center)
+        for attr in self._extra_attrs:
+            set_copy._extra_attrs.append( attr )
+            setattr(set_copy, attr, copy.copy(getattr(self, attr)))
+            
         if include_pols:
             for pol in self:
                 pol_copy = pol.copy()  
@@ -311,6 +321,61 @@ class VisibilityDataSet(object):
             
         # Done
         return new_data
+        
+    def get_antenna_subset(self, include=None, exclude=None, indicies=True):
+        """
+        Return a copy of the data containing baselines that meet the specified
+        antenna selection criteria.  The selection is governed by the 'include', 
+        'exclude', and 'indicies' keywords.  If 'include' is not None, only 
+        baselines containing antennas in the list are selected.  If 'exclude' 
+        is not None, only baselines not containing antennas in the list are 
+        selected.  If both 'include' and 'exclude' are provided, the 'include' 
+        list has priority.  'indicies' sets whether or not the selection 
+        criteria are provided as indicies of the antennas stored in the 
+        antennaarray attribute or are stand numbers.
+        """
+        
+        # Validate
+        if include is not None:
+            if not isinstance(include, (list, tuple)):
+                raise TypeError("Expected 'include' to by a list or tuple")
+        if exclude is not None:
+            if not isinstance(exclude, (list, tuple)):
+                raise TypeError("Expected 'exclude' to by a list or tuple")
+        if not indicies:
+            if self.antennaarray is None:
+                raise AttributeError("No anntennaarray defined for this data set")
+                
+        # Convert to indicies, if needed
+        if not indicies:
+            stands = list(self.antennaarray.get_stands())
+            if include is not None:
+                include = [stands.index(i) for i in include]
+            if exclude is not None:
+                exclude = [stands.index(e) for e in exclude]
+                
+        # Find the baselines to keep based on what we were given
+        selection = []
+        for i,(a1,a2) in enumerate(self.baselines):
+            if include is not None:
+                if a1 in include and a2 in include:
+                    selection.append( i )
+                    continue
+            if exclude is not None:
+                if a1 not in exclude and a2 not in exclude:
+                    selection.append( i )
+                    continue
+                    
+        # Create the new data set
+        new_baselines = [self.baselines[b] for b in selection]
+        new_data = self.copy(include_pols=False)
+        new_data.baselines = new_baselines
+        
+        for pds in self:
+            new_data.append( pds.subset(selection) )
+            
+        # Done
+        return new_data
 
 
 class VisibilityData(object):
@@ -338,6 +403,38 @@ class VisibilityData(object):
             raise TypeError("Expected type to be VisibilityDataSet")
         self._data[index] = value
         
+    @property
+    def jds(self):
+        """
+        Return a list of JDs for all VisibilityDataSets contained.
+        """
+        
+        return [d.jd for d in self._data]
+        
+    @property
+    def baselines(self):
+        """
+        Return a list baselines contained in the first VisbilityDataSet object.
+        """
+        
+        try:
+            baselines = self._data[0].baselines
+        except IndexError:
+            baselines = []
+        return baselines
+        
+    @property
+    def pols(self):
+        """
+        Return a list polarizations contained in the first VisbilityDataSet object.
+        """
+        
+        try:
+            pols = self._data[0].pols
+        except IndexError:
+            pols = []
+        return pols
+        
     def append(self, value):
         """
         Append a new integration stored as a VisibilityDataSet to the object.
@@ -345,7 +442,7 @@ class VisibilityData(object):
         
         if not isinstance(value, VisibilityDataSet):
             raise TypeError("Expected type to be VisibilityDataSet")
-        if value.jd in [d.jd for d in self._data]:
+        if value.jd in self.jds:
             raise ValueError("Data for JD %f have already been added" % value.jd)
         self._data.append(value)
         
@@ -400,3 +497,22 @@ class VisibilityData(object):
         for data_set in self:
             new_data.append( data_set.get_uv_range(min_uv=min_uv, max_uv=max_uv) )
         return new_data
+        
+    def get_antenna_subset(self, include=None, exclude=None, indicies=True):
+        """
+        Return a copy of the data containing baselines that meet the specified
+        antenna selection criteria.  The selection is governed by the 'include', 
+        'exclude', and 'indicies' keywords.  If 'include' is not None, only 
+        baselines containing antennas in the list are selected.  If 'exclude' 
+        is not None, only baselines not containing antennas in the list are 
+        selected.  If both 'include' and 'exclude' are provided, the 'include' 
+        list has priority.  'indicies' sets whether or not the selection 
+        criteria are provided as indicies of the antennas stored in the 
+        antennaarray attribute or are stand numbers.
+        """
+        
+        new_data = VisibilityData()
+        for data_set in self:
+            new_data.append( data_set.get_antenna_subset(include=include, exclude=exclude, indicies=True) )
+        return new_data
+        

@@ -213,8 +213,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
     """
     
     def __init__(self, name, lat, long, elev, id='', antennas=None, interface=None):
-        LWAStationBase.__init__(self, name, id=id, antennas=antennas, interface=interface)
         ephem.Observer.__init__(self)
+        LWAStationBase.__init__(self, name, id=id, antennas=antennas, interface=interface)
         
         self.lat = lat * numpy.pi/180.0
         self.long = long * numpy.pi/180.0
