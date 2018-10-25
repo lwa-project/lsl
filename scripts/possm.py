@@ -104,9 +104,9 @@ def main(args):
     idi = utils.CorrelatedData(filename)
     aa = idi.get_antennaarray()
     lo = idi.get_observer()
-    lo.date = idi.dateObs.strftime("%Y/%m/%d %H:%M:%S")
+    lo.date = idi.date_obs.strftime("%Y/%m/%d %H:%M:%S")
     jd = lo.date + astro.DJD_OFFSET
-    lst = str(lo.sidereal_time())
+    lst = str(lo.sidereal_time())   # pylint:disable=no-member
 
     nStand = len(idi.stands)
     nchan = len(idi.freq)
@@ -119,7 +119,7 @@ def main(args):
     print "JD: %.3f" % jd
 
     print "Reading in FITS IDI data"
-    nSets = idi.integrationCount
+    nSets = idi.integration_count
     for set in range(1, nSets+1):
         if config['dataset'] != 0 and config['dataset'] != set:
             continue
@@ -130,42 +130,13 @@ def main(args):
         # Prune out what needs to go
         if config['include'] is not None or config['exclude'] is not None:
             print "    Processing include/exclude lists"
-            
-            ## Create an empty output data dictionary
-            newDict = {}
-            for key in dataDict.keys():
-                if key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-                    newDict[key] = {}
-                    for pol in dataDict[key].keys():
-                        newDict[key][pol] = []
-                else:
-                    newDict[key] = dataDict[key]
-                    
-            ## Fill it
-            for pol in dataDict['bls'].keys():
-                for b in xrange(len(dataDict['bls'][pol])):
-                    a0,a1 = dataDict['bls'][pol][b]
-                    
-                    if config['include'] is not None:
-                        if idi.stands[a0] in config['include'] and idi.stands[a1] in config['include']:
-                            for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-                                newDict[key][pol].append( dataDict[key][pol][b] )
-                        else:
-                            continue
-                            
-                    if config['exclude'] is not None:
-                        if idi.stands[a0] in config['exclude'] or idi.stands[a1] in config['exclude']:
-                            continue
-                        else:
-                            for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-                                newDict[key][pol].append( dataDict[key][pol][b] )
-                                
-            ## Make the substitution so that we are working with the right data now
-            dataDict = newDict
+            dataDict = dataDict.get_antenna_subset(include=config['include'], 
+                                                   exclude=config['exclude'], 
+                                                   indicies=False)
             
             ## Report
-            for pol in dataDict['bls'].keys():
-                print "        %s now has %i baselines" % (pol, len(dataDict['bls'][pol]))
+            for pol in dataDict.pols:   # pylint:disable=no-member
+                print "        %s now has %i baselines" % (pol, len(dataDict.baselines))
                 
         # Pull out the right channels
         toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]

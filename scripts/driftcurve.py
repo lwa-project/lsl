@@ -131,7 +131,7 @@ def main(args):
     else:
         smap = skymap.SkyMapLFSM(freq_MHz=config['freq']/1e6)
         if config['verbose']:
-            print "Read in LFSM map at %.2f MHz of %d x %d pixels; min=%f, max=%f" % (config['freq']/1e6, smap.numPixelsX, smap.numPixelsY, smap._power.min(), smap._power.max())
+            print "Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (config['freq']/1e6, len(smap.ra), smap._power.min(), smap._power.max())
     
     # Get the emperical model of the beam and compute it for the correct frequencies
     beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))

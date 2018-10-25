@@ -228,7 +228,7 @@ class SourceWindow(Tkinter.Toplevel):
         if self.catalog is None:
             mean_equ = astro.get_equ_prec2(cur_equ, currentTime.utc_jd, astro.J2000_UTC_JD)
         else:
-            mean_equ = self.position.j2000_equ
+            mean_equ = self.position.j2000_equ   # pylint:disable=no-member
             
         (mean_ra, mean_dec) = mean_equ.format()
         (cur_ra, cur_dec) = cur_equ.format()

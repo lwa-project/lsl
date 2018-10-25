@@ -91,16 +91,16 @@ def main(args):
             station = stations.parse_ssmif(config['metadata'])
         except ValueError:
             try:
-                station = metabundle.getStation(config['metadata'], apply_sdm=True)
+                station = metabundle.get_station(config['metadata'], apply_sdm=True)
             except:
-                station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
+                station = metabundleADP.get_station(config['metadata'], apply_sdm=True)
     elif config['site'] == 'lwa1':
         station = stations.lwa1
     elif config['site'] == 'lwasv':
         station = stations.lwasv
     else:
         raise RuntimeError("Unknown site name: %s" % config['site'])
-    stands = station.getStands()
+    stands = station.stands
     stands.sort()
 
     # Load in the stand position data

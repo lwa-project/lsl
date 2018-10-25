@@ -156,9 +156,9 @@ def main(args):
             station = stations.parse_ssmif(config['metadata'])
         except ValueError:
             try:
-                station = metabundle.getStation(config['metadata'], apply_sdm=True)
+                station = metabundle.get_station(config['metadata'], apply_sdm=True)
             except:
-                station = metabundleADP.getStation(config['metadata'], apply_sdm=True)
+                station = metabundleADP.get_station(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
     antennas = station.antennas

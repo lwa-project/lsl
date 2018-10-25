@@ -141,7 +141,7 @@ def main(args):
         print "Polarization Products: %s" % ' '.join([NUMERIC_STOKESMS[p] for p in idi.pols])
         
     print "Reading in FITS IDI data"
-    nSets = idi.integrationCount
+    nSets = idi.integration_count
     for set in range(1, nSets+1):
         if config['dataset'] != 0 and config['dataset'] != set:
             continue
@@ -159,7 +159,7 @@ def main(args):
         # Find the LST
         lo.date = jdList[0] - astro.DJD_OFFSET
         utc = str(lo.date)
-        lst = str(lo.sidereal_time())
+        lst = str(lo.sidereal_time())   # pylint:disable=no-member
         
         # Pull out the right channels
         toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]
@@ -174,42 +174,13 @@ def main(args):
         # Prune out what needs to go
         if config['include'] is not None or config['exclude'] is not None:
             print "    Processing include/exclude lists"
-            
-            ## Create an empty output data dictionary
-            newDict = {}
-            for key in dataDict.keys():
-                if key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-                    newDict[key] = {}
-                    for pol in dataDict[key].keys():
-                        newDict[key][pol] = []
-                else:
-                    newDict[key] = dataDict[key]
-                    
-            ## Fill it
-            for pol in dataDict['bls'].keys():
-                for b in xrange(len(dataDict['bls'][pol])):
-                    a0,a1 = dataDict['bls'][pol][b]
-                    
-                    if config['include'] is not None:
-                        if idi.stands[a0] in config['include'] and idi.stands[a1] in config['include']:
-                            for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-                                newDict[key][pol].append( dataDict[key][pol][b] )
-                        else:
-                            continue
-                            
-                    if config['exclude'] is not None:
-                        if idi.stands[a0] in config['exclude'] or idi.stands[a1] in config['exclude']:
-                            continue
-                        else:
-                            for key in ['bls', 'uvw', 'vis', 'wgt', 'msk', 'jd']:
-                                newDict[key][pol].append( dataDict[key][pol][b] )
-                                
-            ## Make the substitution so that we are working with the right data now
-            dataDict = newDict
+            dataDict = dataDict.get_antenna_subset(include=config['include'], 
+                                                   exclude=config['exclude'], 
+                                                   indicies=False)
             
             ## Report
-            for pol in dataDict['bls'].keys():
-                print "        %s now has %i baselines" % (pol, len(dataDict['bls'][pol]))
+            for pol in dataDict.pols:
+                print "        %s now has %i baselines" % (pol, len(dataDict.baselines))
                 
         # Build up the images for each polarization
         print "    Gridding"
@@ -286,7 +257,7 @@ def main(args):
             ax.yaxis.set_major_formatter( NullFormatter() )
             
             # Compute the positions of major sources and label the images
-            overlay.sources(ax, aa, simVis.srcs)
+            overlay.sources(ax, aa, simVis.SOURCES)
             
             # Add in the horizon
             overlay.horizon(ax, aa)
@@ -318,7 +289,7 @@ def main(args):
                 hdu.header['CTYPE1'] = 'RA---SIN'
                 hdu.header['CRPIX1'] = NPIX_SIDE/2+1
                 hdu.header['CDELT1'] = -360.0/NPIX_SIDE/numpy.pi
-                hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi
+                hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi   # pylint:disable=no-member
                 hdu.header['CTYPE2'] = 'DEC--SIN'
                 hdu.header['CRPIX2'] = NPIX_SIDE/2+1
                 hdu.header['CDELT2'] = 360.0/NPIX_SIDE/numpy.pi

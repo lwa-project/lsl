@@ -148,7 +148,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
     for pol in pols:
         print "-> %s" % pol
         try:
-            tempVis *= 0
+            tempVis *= 0    # pylint:disable=undefined-variable
         except NameError:
             pass
             
@@ -218,7 +218,7 @@ def main(args):
         try:
             station = stations.parse_ssmif(config['metadata'])
         except ValueError:
-            station = metabundle.getStation(config['metadata'], apply_sdm=True)
+            station = metabundle.get_station(config['metadata'], apply_sdm=True)
     else:
         station = stations.lwa1
     antennas = station.antennas
