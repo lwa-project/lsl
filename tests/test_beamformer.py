@@ -20,7 +20,6 @@ __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
-@unittest.skip("Skip")
 class beamformer_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.sim.dp
     module."""

@@ -1409,7 +1409,7 @@ class ImgWPlus(aipy.img.ImgW):
             return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
 
 
-def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=None, im=None, verbose=True):
+def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=None, verbose=True):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
@@ -1418,20 +1418,10 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     
     # Make sure we have the right kinds of objects
     ## im
-    if im is None:
-        im = ImgWPlus(size=size, res=res, wres=wres)
-    else:
-        if not isinstance(im, (ImgWPlus, aipy.img.ImgW)):
-            raise TypeError("Excpected im to be of type ImgWPlus or ImgW")
+    im = ImgWPlus(size=size, res=res, wres=wres)
     ## data_set
-    if not isinstance(data_set, (VisibilityData, VisibilityDataSet)):
+    if not isinstance(data_set, VisibilityDataSet):
         raise TypeError("Expected data to be stored in a VisibiltyData or VisibilityDataSet object")
-    if isinstance(data_set, VisibilityData):
-        sub_data_set = data_set.pop(0)
-        im = build_gridded_image(sub_data_set, size=size, res=res, wres=wres, 
-                                 pol=pol, chan=chan, im=im, verbose=verbose)
-        im = build_gridded_image(data_set, size=size, res=res, wres=wres, 
-                                 pol=pol, chan=chan, im=im, verbose=verbose)
         
     # Make sure we have the right polarization
     if pol not in data_set.pols:
@@ -1470,9 +1460,7 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     if wgt.dtype != numpy.complex64:
         wgt = wgt.astype(numpy.complex64)
         
-    uv, bm = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
-    im.uv += uv
-    im.bm[0] += bm
+    im.uv, im.bm[0] = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
     
     if not verbose:
         sys.stdout.close()
