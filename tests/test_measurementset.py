@@ -9,7 +9,6 @@ import tempfile
 import numpy
 import shutil
 
-from lsl.writer import measurementset
 from lsl.common import stations as lwa_common
 from lsl.correlator import uvutil
 
@@ -35,7 +34,8 @@ class measurementset_tests(unittest.TestCase):
     
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
-        
+       
+        from lsl.writer import measurementset 
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-measurementset-', suffix='.tmp')
         
