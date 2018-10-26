@@ -23,7 +23,7 @@ Basic Image Analysis
 
 Self-Calibration
 ----------------
-.. automodule:: lsl.imaging.selfCal
+.. automodule:: lsl.imaging.selfcal
    :members:
 
 Deconvolution

@@ -18,7 +18,7 @@ import unittest
 from lsl import astro
 from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
-from lsl.imaging import selfCal
+from lsl.imaging import selfcal
 from lsl.imaging.data import VisibilityData
 from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
 from lsl.sim.vis import SOURCES as simSrcs
@@ -654,11 +654,11 @@ class imaging_tests(unittest.TestCase):
         # Go for it!
         aa = idi.get_antennaarray()
         ds = idi.get_data_set(1)
-        junk = selfCal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
+        self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
+        self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
         
     def test_selfcal_alt(self):
         """Test running a simple self calibration - alternate FITS IDI file."""
@@ -669,11 +669,11 @@ class imaging_tests(unittest.TestCase):
         # Go for it!
         aa = idi.get_antennaarray()
         ds = idi.get_data_set(1)
-        junk = selfCal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
+        self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
+        self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
         
     def test_selfcal_uvfits(self):
         """Test running a simple self calibration - UVFITS file."""
@@ -684,11 +684,11 @@ class imaging_tests(unittest.TestCase):
         # Go for it!
         aa = uv.get_antennaarray()
         ds = uv.get_data_set(1)
-        junk = selfCal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
-        self.assertRaises(RuntimeError, selfCal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
+        self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
+        self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
         
     def tearDown(self):
         """Remove the test path directory and its contents"""
