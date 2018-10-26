@@ -7,6 +7,7 @@ import unittest
 import numpy
 
 from lsl.sim import vis
+from lsl.imaging.data import VisibilityData
 from lsl.common import stations as lwa_common
 
 
@@ -178,6 +179,26 @@ class simvis_tests(unittest.TestCase):
         # Delay
         phs = vis.scale_data(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
         
+        #
+        # VisibilityData test
+        #
+        
+        # Setup
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES)
+        out2 = VisibilityData(out)
+        
+        # Scale
+        amp2 = vis.scale_data(out2, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
+        # Delay
+        phs2 = vis.scale_data(out2, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
+        
+        
     def test_shift_data(self):
         """Test that we can shift the uvw coordinates of a data dictionary 
         without error"""
@@ -210,6 +231,24 @@ class simvis_tests(unittest.TestCase):
         # Shift
         sft = vis.shift_data(out, aa)
         
+        #
+        # VisibilityData test
+        #
+        
+        # Setup
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES)
+        out2 = VisibilityData()
+        out2.append( out )
+        
+        # Shift
+        sft2 = vis.shift_data(out2, aa)
+        
     def test_add_noise(self):
         """Test that we can add baseline noise to a data dictionary without
         error"""
@@ -241,6 +280,24 @@ class simvis_tests(unittest.TestCase):
         
         # Add in the noise
         na = vis.add_baseline_noise(out, 15e3, 0.061, bandwidth=1e6)
+        
+        #
+        # VisibilityData test
+        #
+        
+        # Setup
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES)
+        out2 = VisibilityData()
+        out2.append( out )
+        
+        # Add in the noise
+        na2 = vis.add_baseline_noise(out2, 15e3, 0.061)
 
 
 class  simvis_test_suite(unittest.TestSuite):

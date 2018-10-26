@@ -1161,10 +1161,13 @@ class ImgWPlus(aipy.img.ImgW):
     """
     
     def __init__(self, size=100, res=1, wres=.5, mf_order=0):
-        """size = number of wavelengths which the UV matrix spans (this 
+        """
+        size = number of wavelengths which the UV matrix spans (this 
         determines the image resolution).
         res = resolution of the UV matrix (determines image field of view).
-        wres: the gridding resolution of sqrt(w) when projecting to w=0."""
+        wres: the gridding resolution of sqrt(w) when projecting to w=0.
+        """
+        
         self.res = float(res)
         self.size = float(size)
         ## Small change needed to work with Numpy 1.12+
@@ -1176,10 +1179,39 @@ class ImgWPlus(aipy.img.ImgW):
             self.bm.append(numpy.zeros(shape=self.shape, dtype=numpy.complex64))
         self.wres = float(wres)
         self.wcache = {}
-    
+        
+    def __iadd__(self, uv, bm=None):
+        if isinstance(uv, ImgWPlus):
+            if self.shape != uv.shape:
+                raise ValueError("Shape mis-match: %s != %s" % (self.shape, uv.shape))
+            if len(self.bm) != len(uv.bm):
+                raise ValueError("Order mis-match: %i != %i" % (len(self.bm), len(uv.bm)))
+                
+            self.uv += uv.uv
+            for i in xrange(len(self.bm)):
+                self.bm[i] += uv.bm[i]
+                
+        elif isinstance(uv, numpy.ndarray):
+            if not isinstance(bm, (list, tuple)):
+                raise ValueError("Expected bm to be a list or tuple")
+            if self.uv.shape != uv.shape:
+                raise ValueError("Shape mis-match: %s != %s" % (self.uv.shape, uv.shape))
+            if len(self.bm) != len(bm):
+                raise ValueError("Order mis-match: %i != %i" % (len(self.bm), len(bm)))
+                
+            self.uv += uv
+            for i in xrange(len(self.bm)):
+                self.bm[i] += bm[i]
+                
+        else:
+            raise TypeError("Expected an ImgWPlus or numpy.ndarray instance")
+            
     def put(self, uvw, data, wgts=None, invker2=None, verbose=True):
-        """Same as Img.put, only now the w component is projected to the w=0
-        plane before applying the data to the UV matrix."""
+        """
+        Same as Img.put, only now the w component is projected to the w=0
+        plane before applying the data to the UV matrix.
+        """
+        
         u, v, w = uvw
         if len(u) == 0: return
         if wgts is None:
@@ -1409,16 +1441,34 @@ class ImgWPlus(aipy.img.ImgW):
             return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
 
 
-def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=None, verbose=True):
+def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=None, im=None, verbose=True):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
     itself is returned by this function to make it more versatile.
     """
     
+    # Catch VisibilityData objects before we go any further so we can iterate 
+    # over them
+    if isinstance(data_set, VisibilityData):
+        for ds in data_set:
+            im = build_gridded_image(ds, size=size, res=res, wres=wres, 
+                                     pol=pol, chan=chan, im=im, verbose=verbose)
+        return im
+        
     # Make sure we have the right kinds of objects
     ## im
-    im = ImgWPlus(size=size, res=res, wres=wres)
+    if im is None:
+        im = ImgWPlus(size=size, res=res, wres=wres)
+    elif not isinstance(im, ImgWPlus):
+        raise TypeError("Expected 'im' to be a ImgWPlus instance")
+    if im.size != size:
+        raise ValueError("Size of 'im' does not match 'size' keyword")
+    if im.res != res:
+        raise ValueError("Resolution of 'im' does not match 'res' keyword")
+    if im.wres != wres:
+        raise ValueError("w Resolution of 'im' does not match 'wres' keyword")
+        
     ## data_set
     if not isinstance(data_set, VisibilityDataSet):
         raise TypeError("Expected data to be stored in a VisibiltyData or VisibilityDataSet object")

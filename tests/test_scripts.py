@@ -33,7 +33,7 @@ class scripts_tests(unittest.TestCase):
     pass     
 
 
-def test_generator(script):
+def _test_generator(script):
     """
     Function to build a test method for each script that is provided.  
     Returns a function that is suitable as a method inside a unittest.TestCase
@@ -64,7 +64,7 @@ def test_generator(script):
 _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
 _SCRIPTS.sort()
 for script in _SCRIPTS:
-    test = test_generator(script)
+    test = _test_generator(script)
     name = 'test_%s' % os.path.splitext(os.path.basename(script))[0]
     doc = """Static analysis of the '%s' script.""" % os.path.basename(script)
     setattr(test, '__doc__', doc)

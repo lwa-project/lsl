@@ -158,7 +158,7 @@ class VisibilityDataSet(object):
             pol = self.pols[i]
             yield getattr(self, pol)
             i += 1
-           
+            
     @property
     def nbaseline(self):
         """
@@ -195,7 +195,7 @@ class VisibilityDataSet(object):
         """
         Return a copy of the object.  Be default this includes copies of all 
         of the associated PolarizationDataSet objects.  Setting 'include_pols'
-        to False will not copy this objects.
+        to False will not copy these objects.
         """
         
         set_copy = VisibilityDataSet(self.jd*1.0, 
@@ -385,7 +385,18 @@ class VisibilityData(object):
     
     def __init__(self, data=None):
         if data is not None:
-            self._data = data
+            if isinstance(data, (list, tuple)):
+                ## Do we have a list or tuple to iterate over?
+                for i,d in enumerate(data):
+                    if not isinstance(d, VisibilityDataSet):
+                        ### Is everybody in the list a VisibilityDataSet?
+                        raise TypeError("Excepted element %i to be a VisibilityDataSet object")
+                self._data = data
+            elif isinstance(data, VisibilityDataSet):
+                ## Do we have a single VisibilityDataSet?
+                self._data = [data,]
+            else:
+                raise TypeError("Expected a VisbilityDataSet object or a list/tuple of VisibilityDataSet objects")
         else:
             self._data = []
             
@@ -396,7 +407,7 @@ class VisibilityData(object):
         return len(self._data)
         
     def __getitem__(self, value):
-        return self._data[value]
+        return self._data.__getitem__(value)
         
     def __setitem__(self, index, value):
         if not isinstance(value, VisibilityDataSet):
@@ -412,6 +423,14 @@ class VisibilityData(object):
         return [d.jd for d in self._data]
         
     @property
+    def mjds(self):
+        """
+        Return a list of MJDs for all VisibilityDataSets contained.
+        """
+        
+        return [d.mjd for d in self._data]
+        
+    @property
     def baselines(self):
         """
         Return a list baselines contained in the first VisbilityDataSet object.
@@ -422,6 +441,18 @@ class VisibilityData(object):
         except IndexError:
             baselines = []
         return baselines
+        
+    @property
+    def freq(self):
+        """
+        Return a list polarizations contained in the first VisbilityDataSet object.
+        """
+        
+        try:
+            freq = self._data[0].freq
+        except IndexError:
+            freq = []
+        return freq
         
     @property
     def pols(self):
@@ -435,6 +466,55 @@ class VisibilityData(object):
             pols = []
         return pols
         
+    @property
+    def nbaseline(self):
+        """
+        The number of baselines contained in the first VisbilityDataSet object.
+        """
+        
+        try:
+            n = self._data[0].nbaseline
+        except IndexError:
+            n = 0
+        return n
+        
+    @property
+    def nchan(self):
+        """
+        The number of frequency channels contained in the first VisbilityDataSet object.
+        """
+        
+        try:
+            n = self._data[0].nchan
+        except IndexError:
+            n = 0
+        return n
+        
+    @property
+    def npol(self):
+        """
+        The number of polarizations contained in the first VisbilityDataSet object.
+        """
+        
+        try:
+            n = self._data[0].npol
+        except IndexError:
+            n = 0
+        return n
+        
+    def copy(self, include_pols=True):
+        """
+        Return a copy of the object.  Be default this includes copies of all 
+        of the associated PolarizationDataSet objects stored in the individual
+        VisibilityDataSet sets.  Setting 'include_pols' to False will not copy 
+        these objects.
+        """
+        
+        data_copy = VisibilityData()
+        for data_set in self:
+            data_copy.append( data_set.copy(include_pols=include_pols) )
+        return data_copy
+        
     def append(self, value):
         """
         Append a new integration stored as a VisibilityDataSet to the object.
@@ -444,6 +524,13 @@ class VisibilityData(object):
             raise TypeError("Expected type to be VisibilityDataSet")
         if value.jd in self.jds:
             raise ValueError("Data for JD %f have already been added" % value.jd)
+        if self.nbaseline > 0 and value.nbaseline != self.nbaseline:
+            raise ValueError("Data do not have the expected number of baselines")
+        if self.nchan > 0 and value.nchan != self.nchan:
+            raise ValueError("Data do not have the expected number of frequency channels")
+        if self.npol > 0 and value.npol != self.npol:
+            raise ValueError("Data do no have the expected number of polarizations")
+            
         self._data.append(value)
         
     def extend(self, values):
@@ -455,8 +542,6 @@ class VisibilityData(object):
         for value in values:
             if not isinstance(value, VisibilityDataSet):
                 raise TypeError("Expected type to be VisibilityDataSet")
-            if value.jd in [d.jd for d in self._data]:
-                raise ValueError("Data for JD %f have already been added" % value.jd)
             self._data.append(value)
             
     def pop(self, index=-1):

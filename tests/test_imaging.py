@@ -19,6 +19,7 @@ from lsl import astro
 from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import selfCal
+from lsl.imaging.data import VisibilityData
 from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
 from lsl.sim.vis import SOURCES as simSrcs
 from lsl.common.stations import lwa1, parse_ssmif
@@ -608,6 +609,14 @@ class imaging_tests(unittest.TestCase):
 
         # Error checking
         self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='XY')
+        
+        #
+        # VisibilityData test
+        #
+        
+        ds2 = VisibilityData()
+        ds2.append( ds )
+        junk = utils.build_gridded_image(ds, verbose=False)
         
     def test_gridding_alt(self):
         """Test building a image from a visibility data set - alternate FITS IDI file."""

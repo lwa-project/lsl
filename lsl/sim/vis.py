@@ -1181,6 +1181,10 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
         The delays are now expected to be in nanoseconds rather than radians.
     """
     
+    # Make sure we have the right kind of object
+    if not isinstance(dataSet, (VisibilityDataSet, VisibilityData)):
+        raise TypeError("Expected data to be stored in a VisibilityData or VisibilityDataSet object")
+        
     # Build the VisibilityDataSet to hold the scaled and delayed data
     sclData = dataSet.copy(include_pols=True)
     fq = dataSet.freq / 1e9
@@ -1194,9 +1198,14 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
 
     # Apply the scales and delays for all polarization pairs found in the original data
     for pds in sclData:
-        for b,(i,j) in enumerate(sclData.baselines):
-            pds.data[b,:] *= cGains[j].conj()*cGains[i]
-            
+        if isinstance(pds, VisibilityDataSet):
+            for ppds in pds:
+                for b,(i,j) in enumerate(sclData.baselines):
+                    ppds.data[b,:] *= cGains[j].conj()*cGains[i] 
+        else:
+            for b,(i,j) in enumerate(sclData.baselines):
+                pds.data[b,:] *= cGains[j].conj()*cGains[i]
+                
     return sclData
     
 
@@ -1209,17 +1218,23 @@ def shift_data(dataSet, aa):
     """
     
     # Make sure we have the right kind of object
-    if not isinstance(dataSet, VisibilityDataSet):
-        raise TypeError("Expected data to be stored in an VisibilityDataSet object")
+    if not isinstance(dataSet, (VisibilityData, VisibilityDataSet)):
+        raise TypeError("Expected data to be stored in a VisibilityData or VisibilityDataSet object")
         
     # Build the VisibilityDataSet to hold the scaled and delayed data
     shftData = dataSet.copy(include_pols=True)
     
     # Apply the coordinate shift
-    for b,(i,j) in enumerate(shftData.baselines):
-        crds = aa.gen_uvw(j, i, src=shftData.phase_center)[:,0,:]
-        shftData.uvw[b,:] = crds
-        
+    if isinstance(shftData, VisibilityData):
+        for data_set in shftData:
+            for b,(i,j) in enumerate(data_set.baselines):
+                crds = aa.gen_uvw(j, i, src=data_set.phase_center)[:,0,:]
+                data_set.uvw[b,:] = crds
+    else:
+        for b,(i,j) in enumerate(shftData.baselines):
+            crds = aa.gen_uvw(j, i, src=shftData.phase_center)[:,0,:]
+            shftData.uvw[b,:] = crds
+            
     return shftData
 
 
@@ -1236,8 +1251,8 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     """
     
     # Make sure we have the right kind of object
-    if not isinstance(dataSet, VisibilityDataSet):
-        raise TypeError("Expected data to be stored in an VisibilityDataSet object")
+    if not isinstance(dataSet, (VisibilityData, VisibilityDataSet)):
+        raise TypeError("Expected data to be stored in a VisibilityData or VisibilityDataSet object")
         
     # Figure out the bandwidth from the frequency list in the 
     if bandwidth is None:
@@ -1269,11 +1284,20 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     
     # Apply the scales and delays for all polarization pairs found in the original data
     for pds in bnData:
-        ## Calculate the expected noise
-        visNoise = visNoiseSigma * (numpy.random.randn(*pds.data.shape) \
-                   + 1j*numpy.random.randn(*pds.data.shape))
+        if isinstance(pds, VisibilityDataSet):
+            for ppds in pds:
+                ## Calculate the expected noise
+                visNoise = visNoiseSigma * (numpy.random.randn(*ppds.data.shape) \
+                           + 1j*numpy.random.randn(*ppds.data.shape))
+                
+                ## Apply
+                ppds.data += visNoise
+        else:
+            ## Calculate the expected noise
+            visNoise = visNoiseSigma * (numpy.random.randn(*pds.data.shape) \
+                       + 1j*numpy.random.randn(*pds.data.shape))
             
-        ## Apply
-        pds.data += visNoise
-        
+            ## Apply
+            pds.data += visNoise
+            
     return bnData
