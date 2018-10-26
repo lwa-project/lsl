@@ -20,6 +20,8 @@
   * Added multiple IF/spectral window support to the CASA measurement set writer
   * Worked on making the lsl.writer.fitsidi and lsl.writer.measurementset modules more robust
   * Fixed a bugs in the VDIF reader and writer
+  * Fixed a few bugs in the scripts that ship with LSL
+  * Added unittest2 as an extra dependency for Python 2.6
 
 1.2.1
   * Added a new lsl.common.color module to help bring color to ANSI terminals

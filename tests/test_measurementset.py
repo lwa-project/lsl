@@ -11,6 +11,7 @@ import shutil
 
 from lsl.common import stations as lwa_common
 from lsl.correlator import uvutil
+from lsl.writer import measurementset 
 
 run_ms_tests = False
 try:
@@ -35,7 +36,6 @@ class measurementset_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
        
-        from lsl.writer import measurementset 
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-measurementset-', suffix='.tmp')
         
