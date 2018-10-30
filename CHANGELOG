@@ -10,6 +10,7 @@
   * Added test suites for CASA measurement set support when the 'casacore' module is found
 
 1.2.3
+  * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools
   * Increased the default ring segment count for lsl.reader.buffer.DRXFrameBuffer to better deal with LWA-SV data
   * Increased the number of frames examined by lsl.reader.ldp.DRXFile to better deal with LWA-SV data
 
