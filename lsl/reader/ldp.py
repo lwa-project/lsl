@@ -829,7 +829,7 @@ class DRXFile(LDPFileBase):
         pols = []
         tuning1 = 0.0
         tuning2 = 0.0
-        for i in xrange(4):
+        for i in xrange(32):
             junkFrame = self.read_frame()
             b,t,p = junkFrame.id
             srate = junkFrame.sample_rate
@@ -848,7 +848,7 @@ class DRXFile(LDPFileBase):
             if i == 0:
                 start = junkFrame.time
                 startRaw = junkFrame.data.timetag - junkFrame.header.time_offset
-        self.fh.seek(-drx.FRAME_SIZE*4, 1)
+        self.fh.seek(-drx.FRAME_SIZE*32, 1)
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': drx.FRAME_SIZE,
                             'beampols': beampols, 'beam': b, 

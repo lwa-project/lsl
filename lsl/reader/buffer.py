@@ -515,7 +515,7 @@ class DRXFrameBuffer(FrameBuffer):
         list of polarizations to expect packets for
     
       nsegments
-        number of ring segments to use for the buffer (default is 10)
+        number of ring segments to use for the buffer (default is 20)
     
       reorder
         whether or not to reorder frames returned by get() or flush() by 
@@ -544,7 +544,7 @@ class DRXFrameBuffer(FrameBuffer):
     
     """
     
-    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nsegments=10, reorder=False):
+    def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nsegments=20, reorder=False):
         super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
