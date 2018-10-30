@@ -221,14 +221,9 @@ def main(args):
         lst = astro.get_local_sidereal_time(sta.long*180.0/math.pi, t)
         lstList.append(lst)
         
-        if config['GSM']:
-            cdec = numpy.ones_like(pmap.visibleDec)
-        else:
-            cdec = numpy.cos(pmap.visibleDec * smap.degToRad)
-                
         # Convolution of user antenna pattern with visible skymap
         gain = BeamPattern(pmap.visibleAz, pmap.visibleAlt)
-        powerAnt = (pmap.visiblePower * gain * cdec).sum() / (gain * cdec).sum()
+        powerAnt = (pmap.visiblePower * gain).sum() / gain.sum()
         powListAnt.append(powerAnt)
 
         if config['verbose']:
