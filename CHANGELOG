@@ -11,6 +11,8 @@
 
 1.2.4
   * Fixed a bug in driftcurve.py that put a cos(decliation) correction into the LFSM runs
+  * Updated the documentation to reflect that unittest2 is now required as of 1.2.2 for Python 2.6 support
+  * Added argparse as an extra dependency for Python 2.6
 
 1.2.3
   * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools
