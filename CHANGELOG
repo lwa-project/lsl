@@ -13,6 +13,10 @@
   * Fixed a bug in driftcurve.py that put a cos(decliation) correction into the LFSM runs
   * Updated the documentation to reflect that unittest2 is now required as of 1.2.2 for Python 2.6 support
   * Added argparse as an extra dependency for Python 2.6
+  * Moved the scripts that ship with LSL to argparse for command line parsing
+  * Added a new lsl.misc.parser module to help with the switch over to argparse
+  * Updated the minimum PyEphem version of 3.5.7.3
+  * Fixed a bug in lsl.misc.ionosphere that causes some UQR files to fail to parse
 
 1.2.3
   * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools

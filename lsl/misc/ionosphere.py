@@ -24,7 +24,7 @@ try:
     from urllib2 import urlopen
 except ImportError:
     from urllib.request import urlopen
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from astropy.constants import R_earth
 
@@ -720,7 +720,14 @@ def _parse_tec_map(filename):
                     second = int(second)
                     
                     ### Figure out the MJD
-                    dt = datetime(year, month, day, hour, minute, second, 0)
+                    try:
+                        dt = datetime(year, month, day, hour, minute, second, 0)
+                    except ValueError:
+                        if hour >= 24:
+                            dt = datetime(year, month, day, hour-24, minute, second, 0)
+                            dt += timedelta(days=1)
+                        else:
+                            continue
                     mjd, mpm = datetime2mjdmpm(dt)
                     mjd = mjd + mpm/1000.0/3600.0/24.0
                     if mjd not in dates:
