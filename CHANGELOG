@@ -17,6 +17,7 @@
   * Added a new lsl.misc.parser module to help with the switch over to argparse
   * Updated the minimum PyEphem version of 3.5.7.3
   * Fixed a bug in lsl.misc.ionosphere that causes some UQR files to fail to parse
+  * Updated the URL/filename structure used to download the CODE files in lsl.misc.ionosphere
 
 1.2.3
   * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools

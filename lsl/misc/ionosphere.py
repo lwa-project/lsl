@@ -566,7 +566,7 @@ def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         return True
 
 
-def _download_code(mjd, base_url='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeout=120, type='final'):
+def _download_code(mjd, base_url='ftp://ftp.aiub.unibe.ch/CODE/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding CODE final data product 
     for that day.
@@ -585,7 +585,7 @@ def _download_code(mjd, base_url='ftp://ftp.unibe.ch/aiub/CODE/IONO/', timeout=1
     dayOfYear = int(dt.strftime('%j'), 10)
     
     # Figure out which file we need to download
-    filename = 'CKMG%03i0.%02iI.Z' % (dayOfYear, year%100)
+    filename = 'CODG%03i0.%02iI.Z' % (dayOfYear, year%100)
     
     # Attempt to download the data
     try:
@@ -1071,8 +1071,8 @@ def _load_map(mjd, timeout=120, type='IGS'):
         downloader = _download_code
         
         ## Filename templates
-        filenameTemplate = 'CKMG%03i0.%02iI.gz'
-        filenameAltTemplate = 'CKMG%03i0.%02iI.gz'
+        filenameTemplate = 'CODG%03i0.%02iI.gz'
+        filenameAltTemplate = 'CODG%03i0.%02iI.gz'
         
     elif type == 'USTEC':
         ## Cache entry name
