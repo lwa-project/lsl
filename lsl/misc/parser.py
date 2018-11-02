@@ -85,10 +85,12 @@ def _get_units(string):
     """
     
     units = None
-    for i in xrange(len(string)-1, 0, -1):
+    for i in xrange(len(string), 0, -1):
         try:
             float(string[:i])
             units = string[i:]
+            if units == '':
+                units = None
             break
         except:
             pass
@@ -106,8 +108,8 @@ def _quantitiy_to_hz(value):
         value *= 1e6
     except ValueError:
         try:
-            value = units.Unit(value)
-            value = value.to(units.Hz, equivalencies=units.spectral())
+            value = units.quantity.Quantity(value)
+            value = value.to(units.Hz, equivalencies=units.spectral()).value
         except Exception as e:
             msg = "%r %s" % (value, str(e))
             raise ArgumentTypeError(msg)
@@ -124,8 +126,8 @@ def _quantitiy_to_m(value):
         value = float(value)
     except ValueError:
         try:
-            value = units.Unit(value)
-            value = value.to(units.meter, equivalencies=units.spectral())
+            value = units.quantity.Quantity(value)
+            value = value.to(units.meter, equivalencies=units.spectral()).value
         except Exception as e:
             msg = "%r %s" % (value, str(e))
             raise ArgumentTypeError(msg)
@@ -156,6 +158,7 @@ def _frequency_conversion_base(string):
             start, stop = fields
             units1 = _get_units(start)
             units2 = _get_units(stop)
+            print units1, units2
             if units1 is not None and units2 is None:
                 msg = "%r must have units specified for the second value" % string
                 raise ArgumentTypeError(msg)
