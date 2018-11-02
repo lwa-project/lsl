@@ -158,7 +158,6 @@ def _frequency_conversion_base(string):
             start, stop = fields
             units1 = _get_units(start)
             units2 = _get_units(stop)
-            print units1, units2
             if units1 is not None and units2 is None:
                 msg = "%r must have units specified for the second value" % string
                 raise ArgumentTypeError(msg)
