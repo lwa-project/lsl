@@ -10,6 +10,7 @@ K/Jy and then using those to get a system equivalent flux density.
 """
 
 import math
+from astropy import units
 from astropy.constants import c as speedOfLight, k_B as kB
 
 __version__ = '0.1'
@@ -18,8 +19,17 @@ __all__ = ['dBd_to_dBi', 'dBd_to_dBi', 'dBi_to_gain', 'dBd_to_gain', 'gain_to_dB
         'calculate_effective_area', 'Jy_to_dBm', 'dBm_to_Jy']
 
 
-speedOfLight = speedOfLight.to('m/s').value
-kB = kB.to('Jy m^2 / s').value
+def _make_quantity(value, default_units):
+    """
+    Helper function for taking values and giving them units.
+    """
+    
+    if value is not None:
+        if isinstance(value, str):
+            value = units.quantity.Quantity(value)
+        elif not isinstance(value, units.quantity.Quantity):
+            value = value*default_units
+    return value
 
 
 def dBd_to_dBi(dBd):
@@ -48,10 +58,16 @@ def dBi_to_gain(dBi, frequency):
     at a particular frequency in Hz into a gain in K/Jy.
     """
     
+    # Deal with units
+    frequency = _make_quantity(frequency, units.Hz)
+     
     # 10^(dBi/10) is the ratio of the effective area of the antenna relative 
     # to an isotropic antenna where the area of the isotropic antenna is 
     # given by:  wavelength^2 / 4 / pi
-    return speedOfLight**2 / (8.0*math.pi*kB*frequency**2) * 10**(dBi/10.0)
+    gain = speedOfLight**2 / (8.0*math.pi*kB*frequency**2) * 10**(dBi/10.0)
+    gain = gain.to('K/Jy').value
+    
+    return gain
 
 
 def dBd_to_gain(dBd, frequency):
@@ -70,6 +86,10 @@ def gain_to_dBi(gain, frequency):
     gain in dBi (gain relative to an isotropic antenna).
     """
     
+    # Deal with units
+    gain = _make_quantity(gain, units.K/units.Jy)
+    frequency = _make_quantity(frequency, units.Hz)
+        
     # Calculate the area ratio
     areaRatio = 8.0*math.pi*kB*frequency**2 / speedOfLight**2 * gain
     
@@ -100,6 +120,11 @@ def calculate_sefd(Tsys, gain=None, area=None, efficiency=None):
     both 'area' and 'efficiency'.
     """
     
+    # Deal with units
+    Tsys = _make_quantity(Tsys, units.K)
+    gain = _make_quantity(gain, units.K/units.Jy)
+    area = _make_quantity(area, units.meter**2)
+    
     # Have we been supplied a gain or do we need to calculate it?
     if gain is None:
         ## Do we have everything we need to calculate the gain?
@@ -111,6 +136,7 @@ def calculate_sefd(Tsys, gain=None, area=None, efficiency=None):
         
     # Calculate the SEFD
     SEFD = Tsys / gain
+    SEFD = SEFD.to('Jy').value
     
     return SEFD
 
@@ -121,8 +147,12 @@ def calculate_effective_area(gain):
     area in square meters.
     """
     
+    # Deal with units
+    gain = _make_quantity(gain, units.K/units.Jy)
+    
     # Calculate the area
     area = 2.0*kB*gain
+    area = area.to('m^2').value
     
     return area
 
@@ -135,11 +165,18 @@ def Jy_to_dBm(flux, bandwidth, gain):
      * antenna gain in K/Jy
     """
     
+    # Deak with units
+    flux = _make_quantity(flux, units.Jy)
+    bandwidth = _make_quantity(bandwidth, units.Hz)
+    gain = _make_quantity(gain, units.K/units.Jy)
+        
     # Antenna parameters
     area = calculate_effective_area(gain)
+    area = _make_quantity(area, units.meter**2)
     
     # Power in mW
-    P =  flux * 10**-26 * bandwidth * area * 1000.0
+    P = flux*bandwidth*area
+    P = P.to('mW').value
     
     # To dBm
     return 10.0*math.log10(P)
@@ -153,12 +190,20 @@ def dBm_to_Jy(dBm, bandwidth, gain):
      * antenna gain in K/Jy
     """
     
+    # Deak with units
+    bandwidth = _make_quantity(bandwidth, units.Hz)
+    gain = _make_quantity(gain, units.K/units.Jy)
+    
     # Antenna parameters
     area = calculate_effective_area(gain)
+    area = _make_quantity(area, units.meter**2)
     
     # Power in mW
-    P = 10**(dBm/10.0) / 1000.0
+    P = 10**(dBm/10.0)*(units.W/1000)
     
     # To Jy
-    return P / (10**-26 * bandwidth * area)
+    flux = P / (bandwidth*area)
+    flux = flux.to('Jy').value
+    
+    return flux
     

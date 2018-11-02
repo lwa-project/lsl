@@ -8,6 +8,7 @@
   * Merged the non-windowed and windowed functions in the lsl.correlator extensions to de-duplicate some of the codebase
   * Added support for reading CASA measurement sets with multiple spectral windows
   * Added test suites for CASA measurement set support when the 'casacore' module is found
+  * Added support for astorpy.units.quantity.Quantity instances to lsl.misc.rfutil
 
 1.2.4
   * Fixed a bug in driftcurve.py that put a cos(decliation) correction into the LFSM runs
