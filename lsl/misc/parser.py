@@ -79,6 +79,22 @@ def positive_float(string):
     return value
 
 
+def _get_units(string):
+    """
+    Function to search a string, starting at the end, to find units.
+    """
+    
+    units = None
+    for i in xrange(len(string)-1, 0, -1):
+        try:
+            float(string[:i])
+            units = string[i:]
+            break
+        except:
+            pass
+    return units
+
+
 def _quantitiy_to_hz(value):
     """
     Convert a string into a frequency.  If no unit is provided, MHz is 
@@ -138,19 +154,13 @@ def _frequency_conversion_base(string):
         fields = string.split('~', 1)
         try:
             start, stop = fields
-            try:
-                float(start)
-                float1 = True
-            except ValueError:
-                float1 = False
-            try:
-                float(stop)
-                float2 = True
-            except ValueError:
-                float2 = False
-            if not float1 and float2:
+            units1 = _get_units(start)
+            units2 = _get_units(stop)
+            if units1 is not None and units2 is None:
                 msg = "%r must have units specified for the second value" % string
                 raise ArgumentTypeError(msg)
+            elif units2 is not None and units1 is None:
+                start = start+units2
         except ValueError:
             start, stop = fields[0], None
         value = _quantitiy_to_hz(start)
@@ -224,19 +234,13 @@ def _wavelength_conversion_base(string):
         fields = string.split('~', 1)
         try:
             start, stop = fields
-            try:
-                float(start)
-                float1 = True
-            except ValueError:
-                float1 = False
-            try:
-                float(stop)
-                float2 = True
-            except ValueError:
-                float2 = False
-            if not float1 and float2:
+            units1 = _get_units(start)
+            units2 = _get_units(stop)
+            if units1 is not None and units2 is None:
                 msg = "%r must have units specified for the second value" % string
                 raise ArgumentTypeError(msg)
+            elif units2 is not None and units1 is None:
+                start = start+units2
         except ValueError:
             start, stop = fields[0], None
         value = _quantitiy_to_m(start)
