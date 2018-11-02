@@ -16,8 +16,6 @@ from lsl.misc import parser as aph
 
 def main(args):
     # Inputs
-    RA = ephem.hours( args.RA )
-    dec = ephem.degrees( args.Dec )
     if args.file is not None:
         mjdList = numpy.loadtxt(args.file)
         mjdList = mjdList.ravel()
@@ -50,8 +48,8 @@ def main(args):
         site = stations.lwa1
     obs = site.get_observer()
     bdy = ephem.FixedBody()
-    bdy._ra = RA
-    bdy._dec = dec
+    bdy._ra = args.RA
+    bdy._dec = args.Dec
     
     # Setup the ionospheric model source
     if args.igs:
@@ -128,9 +126,9 @@ if __name__ == "__main__":
         description='estimate the ionospheric contribution to the RM for an observation using the IGS final product and the IGRF', 
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
-    parser.add_argument('RA', type=str, 
+    parser.add_argument('RA', type=aph.hours, 
                         help='J2000 right ascension in HH:MM:SS[.SSS]')
-    parser.add_argument('Dec', type=str, 
+    parser.add_argument('Dec', type=aph.degrees, 
                         help='J2000 declination in sDD:MM:SS[.SSS]')
     parser.add_argument('StartDate', type=str, 
                         help='UTC start date in YYYY/MM/DD')
