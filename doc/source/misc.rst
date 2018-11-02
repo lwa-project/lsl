@@ -14,3 +14,10 @@ Ionospheric and Geomagnetic Field Models
 
 .. automodule:: lsl.misc.ionosphere
    :members:
+
+Conversion Helper Functions for argparse
+========================================
+.. versionadded:: 1.2.4
+
+.. automodule:: lsl.misc.parser
+   :members:

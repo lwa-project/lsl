@@ -44,6 +44,7 @@ from . import test_sdf
 from . import test_sdf_adp
 from . import test_meta
 from . import test_meta_adp
+from . import test_parser
 from . import test_scripts
 
 
@@ -98,6 +99,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_sdf_adp.sdf_adp_test_suite())
         self.addTest(test_meta.metabundle_test_suite())
         self.addTest(test_meta_adp.metabundle_adp_test_suite())
+        self.addTest(test_parser.parser_test_suite())
         self.addTest(test_scripts.scripts_test_suite())
 
 
