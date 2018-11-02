@@ -7,7 +7,7 @@ import unittest
 import ephem
 import numpy
 import argparse
-from astro.constants import c
+from astropy.constants import c
 
 from lsl.misc import parser
 
