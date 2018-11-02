@@ -4,7 +4,7 @@
 """Simple LWA1 astronomical source catalogue display application."""
 
 import math
-import optparse
+import argparse
 import Tkinter
 
 from lsl import astro
@@ -21,22 +21,22 @@ __maintainer__ = "Jayce Dowell"
 
 class CatalogViewer(object):
     
-    def __init__(self, root, opts):
+    def __init__(self, root, args):
         
         self.root = root
-        self.period = opts.period * 1000
+        self.period = args.period * 1000
         self.catalog = None
         self.cursor = self.root.cget("cursor")
-        opts['site'] = opts['site'].lower().replace('-', '')
-        if opts['site'] == 'lwa1':
+        site = args.site.lower().replace('-', '')
+        if site == 'lwa1':
             station = stations.lwa1
-        elif opts['site'] == 'lwasv':
+        elif site == 'lwasv':
             station = stations.lwasv
-        elif opts['site'] == 'ovrolwa':
+        elif site == 'ovrolwa':
             station = stations.lwa1
             station.lat, station.lon, station.elev = ('37.2397808', '-118.2816819', 1183.4839)
         else:
-            raise RuntimeError("Unknown site name: %s" % opts['site'])
+            raise RuntimeError("Unknown site name: %s" % site)
         self.site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)
         
         self.root.title('LWA Catalog Viewer')
@@ -228,7 +228,7 @@ class SourceWindow(Tkinter.Toplevel):
         if self.catalog is None:
             mean_equ = astro.get_equ_prec2(cur_equ, currentTime.utc_jd, astro.J2000_UTC_JD)
         else:
-            mean_equ = self.position.j2000_equ   # pylint:disable=no-member
+            mean_equ = self.position.j2000_equ
             
         (mean_ra, mean_dec) = mean_equ.format()
         (cur_ra, cur_dec) = cur_equ.format()
@@ -289,18 +289,18 @@ class SourceValue(Tkinter.Label):
 
 if __name__ == '__main__':
     # parse command line
-    usage = '%prog [options]'
-    
-    parser = optparse.OptionParser(usage = usage, description = __doc__)
-    parser.add_option("-s", "--site", action = "store", type = "str",
-        dest = "site", default = 'LWA1', help = "site name (default LWA1)")
-    parser.add_option('-p', '--period', action = 'store', dest = 'period',
-        type = 'int', default = 5, help = 'update period in seconds (default 5)')
-    (opts, args) = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('-s', '--site', type=str, default='LWA-1',
+                        help='site name')
+    parser.add_argument('-p', '--period', type=int, default=5, 
+                        help='update period in seconds')
+    args = parser.parse_args()
     
     # create the GUI
     tk = Tkinter.Tk()
-    CatalogViewer(tk, opts)
+    CatalogViewer(tk, args)
     
     # execute the GUI
     try:

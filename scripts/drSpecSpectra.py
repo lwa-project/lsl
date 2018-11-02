@@ -8,79 +8,13 @@ import sys
 import math
 import numpy
 import ephem
-import getopt
+import argparse
 
 from lsl.reader.ldp import LWA1DataFile
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
+from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
-
-
-def usage(exitCode=None):
-    print """drSpecSpectra.py - Read in DR spectrometer files and create a collection of 
-time-averaged spectra.
-
-Usage: drSpecSpectra.py [OPTIONS] file
-
-Options:
--h, --help                  Display this help information
--s, --skip                  Skip the specified number of seconds at the beginning
-                            of the file (default = 0)
--a, --average               Number of seconds of data to average for spectra 
-                            (default = 10)
--q, --quiet                 Run drSpecSpectra in silent mode
--d, --disable-chunks        Display plotting chunks in addition to the global 
-                            average
--o, --output                Output file name for spectra image
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    # Command line flags - default values
-    config['offset'] = 0.0
-    config['maxFrames'] = 10000
-    config['average'] = 10.0
-    config['output'] = None
-    config['displayChunks'] = True
-    config['verbose'] = True
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, args = getopt.getopt(args, "hqo:s:a:d", ["help", "quiet", "output=", "skip=", "average=", "disable-chunks"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-q', '--quiet'):
-            config['verbose'] = False
-        elif opt in ('-o', '--output'):
-            config['output'] = value
-        elif opt in ('-s', '--skip'):
-            config['offset'] = float(value)
-        elif opt in ('-a', '--average'):
-            config['average'] = float(value)
-        elif opt in ('-d', '--disable-chunks'):
-            config['displayChunks'] = False
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = args
-    
-    # Return configuration
-    return config
 
 
 def bestFreqUnits(freq):
@@ -110,10 +44,7 @@ def bestFreqUnits(freq):
 
 
 def main(args):
-    # Parse command line options
-    config = parseOptions(args)
-    
-    idf = LWA1DataFile(config['args'][0])
+    idf = LWA1DataFile(args.filename)
     
     # Basic file informaiton
     nFramesFile = idf.get_info('nFrames')
@@ -125,12 +56,12 @@ def main(args):
     products = idf.get_info('data_products')
     
     # Offset in frames for beampols beam/tuning/pol. sets
-    config['offset'] = idf.offset(config['offset'])
+    args.skip = idf.offset(args.skip)
     
     # Number of frames to integrate over
-    maxFrames = config['maxFrames']
-    nFrames = int(config['average'] / tInt)
-    config['average'] = nFrames * tInt
+    maxFrames = 10000
+    nFrames = int(args.average / tInt)
+    args.average = nFrames * tInt
     
     # Number of remaining chunks
     maxFramesTime = maxFrames*tInt
@@ -144,7 +75,7 @@ def main(args):
     freq = numpy.fft.fftshift(freq)
     
     # File summary
-    print "Filename: %s" % config['args'][0]
+    print "Filename: %s" % args.filename
     print "Date of First Frame: %s" % str(beginDate)
     print "Beam: %i" % beam
     print "Tune/Pols: %i" % beampols
@@ -155,14 +86,14 @@ def main(args):
     print "Transform Length: %i channels" % LFFT
     print "Integration Time: %.3f s" % tInt
     print "---"
-    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*srate*beampols/4096)
-    print "Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (config['average'], nFrames, nFrames)
+    print "Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*beampols/4096)
+    print "Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (args.average, nFrames, nFrames)
     print "Chunks: %i" % nChunks
     
     # Sanity check
-    if config['offset']/tInt > nFramesFile:
+    if args.skip/tInt > nFramesFile:
         raise RuntimeError("Requested offset is greater than file length")
-    if nFrames > (nFramesFile - config['offset']/tInt):
+    if nFrames > (nFramesFile - args.skip/tInt):
         raise RuntimeError("Requested integration time+offset is greater than file length")
         
     # Master loop over all of the file chunks
@@ -172,7 +103,7 @@ def main(args):
         print "Working on chunk #%i of %i" % (i+1, nChunks)
         
         try:
-            readT, t, data = idf.read(config['average']/nChunks)
+            readT, t, data = idf.read(args.average/nChunks)
         except Exception, e:
             print "Error: %s" % str(e)
             continue
@@ -218,7 +149,7 @@ def main(args):
         
         # If there is more than one chunk, plot the difference between the global 
         # average and each chunk
-        if nChunks > 1 and config['displayChunks']:
+        if nChunks > 1 and args.disable_chunks:
             for j in range(nChunks):
                 # Some files are padded by zeros at the end and, thus, carry no 
                 # weight in the average spectra.  Skip over those.
@@ -243,9 +174,26 @@ def main(args):
     plt.show()
     
     # Save spectra image if requested
-    if config['output'] is not None:
-        fig.savefig(config['output'])
+    if args.output is not None:
+        fig.savefig(args.output)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='read in DR spectrometer files and create a collection of time-averaged spectra', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('filename', type=str, 
+                            help='filename to process')
+    parser.add_argument('-s', '--skip', type=aph.positive_or_zero_float, default=0.0, 
+                        help='skip the specified number of seconds at the beginning of the file')
+    parser.add_argument('-a', '--average', type=aph.positive_float, default=10.0, 
+                        help='number of seconds of data to average for spectra')
+    parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
+                        help='run %(prog)s in silent mode')
+    parser.add_argument('-d', '--disable-chunks', action='store_true', 
+                        help='disable plotting chunks in addition to the global average')
+    parser.add_argument('-o', '--output', type=str, 
+                        help='output file name for spectra image')
+    args = parser.parse_args()
+    main(args)

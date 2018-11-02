@@ -5,70 +5,12 @@ import os
 import sys
 import math
 import time
-import getopt
+import argparse
 from datetime import datetime
 
 from lsl.reader import drx, errors
 from lsl.common.progress import ProgressBar
-
-
-def usage(exitCode=None):
-    print """splitDRX.py - split a DRX file containing multiple seconds into
-several files
-
-Usage: splitDRX.py [OPTIONS] file
-
-Options:
--h, --help             Display this help information
--c, --count            Number of seconds to keep
--o, --offset           Number of seconds to skip before splitting
--d, --date             Label the split files with a date rather than a 
-                       sequence number
--r, --recurvsive       Recursively split the file
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['offset'] = 0
-    config['count'] = 0
-    config['date'] = False
-    config['recursive'] = False
-    
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hc:o:dr", ["help", "count=", "offset=", "date", "recursive"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-c', '--count'):
-            config['count'] = float(value)
-        elif opt in ('-o', '--offset'):
-            config['offset'] = float(value)
-        elif opt in ('-d', '--date'):
-            config['date'] = True
-        elif opt in ('-r', '--recursive'):
-            config['recursive'] = True
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = arg
-    
-    # Return configuration
-    return config
+from lsl.misc import parser as aph
 
 
 def fileSplitFunction(fhIn, fhOut, nCaptures, nBeampols):
@@ -90,8 +32,7 @@ def fileSplitFunction(fhIn, fhOut, nCaptures, nBeampols):
 
 
 def main(args):
-    config = parseConfig(args)
-    filename = config['args'][0]
+    filename = args.filename
 
     sizeB = os.path.getsize(filename)
 
@@ -119,7 +60,7 @@ def main(args):
     beampols = tunepol
 
     # Offset in frames for beampols beam/tuning/pol. sets
-    offset = int(round(config['offset'] * srate / 4096 * beampols))
+    offset = int(round(args.offset * srate / 4096 * beampols))
     offset = int(1.0 * offset / beampols) * beampols
     fh.seek(offset*drx.FRAME_SIZE, 1)
     
@@ -153,7 +94,7 @@ def main(args):
         fh.seek(cOffset*drx.FRAME_SIZE, 1)
     
     # Update the offset actually used
-    config['offset'] = t1 - t0
+    args.offset = t1i - t0i + t1f - t0f
     
     nCaptures = nFramesFile/beampols
 
@@ -164,15 +105,15 @@ def main(args):
     print "Sample Rate: %.2f MHz" % (srate/1e6)
     print "==="
 
-    if config['count'] > 0:
-        nCaptures = config['count'] * srate / 4096
+    if args.count > 0:
+        nCaptures = args.count * srate / 4096
     else:
-        nCaptures -= config['offset'] * srate / 4096
+        nCaptures -= args.offset * srate / 4096
         
-        config['count'] = nCaptures * 4096 / srate
+        args.count = nCaptures * 4096 / srate
 
-    print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], offset/beampols)
-    print "Seconds to Split: %.2f (%i captures)" % (config['count'], nCaptures)
+    print "Seconds to Skip:  %.2f (%i captures)" % (args.offset, offset/beampols)
+    print "Seconds to Split: %.2f (%i captures)" % (args.count, nCaptures)
 
     # Make sure that the first frame in the file is the first frame of a capture 
     # (tuning 1, pol 0).  If not, read in as many frames as necessary to get to 
@@ -187,14 +128,14 @@ def main(args):
 
     nFramesRemaining = (sizeB - fh.tell()) / drx.FRAME_SIZE
     nRecursions = int(nFramesRemaining / (nCaptures*beampols))
-    if not config['recursive']:
+    if not args.recursive:
         nRecursions = 1
         
     scale = int(math.log10(nRecursions)) + 1
     ifString = "Working on #%%%ii of %i (%%s)" % (scale, nRecursions)
     
     for r in xrange(nRecursions):
-        if config['date']:
+        if args.date:
             filePos = fh.tell()
             junkFrame = drx.read_frame(fh)
             fh.seek(filePos)
@@ -202,10 +143,10 @@ def main(args):
             dt = datetime.utcfromtimestamp(sum(junkFrame.time))
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
-            captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'], scale)
+            captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count, scale)
             captFilename = captFilename % r
-            if not config['recursive']:
-                captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'])
+            if not args.recursive:
+                captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count)
             
         print ifString % (r+1, captFilename)
         
@@ -217,8 +158,23 @@ def main(args):
         print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0))
         
     fh.close()
-    
-    
+
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='split a DRX file into several files', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('filename', type=str, 
+                        help='filename to split')
+    parser.add_argument('-c', '--count', type=aph.positive_float, default=10.0, 
+                        help='number of seconds to keep')
+    parser.add_argument('-o', '--offset', type=aph.positive_or_zero_float, default=0.0, 
+                        help='number of seconds to skip before splitting')
+    parser.add_argument('-d', '--date', action='store_true', 
+                        help='label the split files with a date rather than a sequence number')
+    parser.add_argument('-r', '--recursive', action='store_true', 
+                        help='recursively split the file')
+    args = parser.parse_args()
+    main(args)
+    

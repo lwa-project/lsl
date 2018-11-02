@@ -8,134 +8,51 @@ import sys
 import math
 import numpy
 import pylab
-import getopt
+import argparse
 
 from scipy.interpolate import interp1d
 
 from lsl import skymap, astro
 from lsl.common import stations
 from lsl.common.paths import data as dataPath
+from lsl.misc import parser as aph
 
 __revision__ = "$Revision: 94 $"
 __version__  = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
-def usage(exitCode=None):
-    print """driftcurve.py - Generate a drift curve for a dipole at LWA1 
-observing at a given frequency in MHz.
-
-Usage: driftcurve.py [OPTIONS]
-
-Options:
--h, --help             Display this help information
--s, --lwasv            Calculate for LWA-SV instead of LWA1
--o, --ovro-lwa         Calculate for OVRO-LWA instead of LWA1
--f, --freq             Frequency of the observations in MHz
-                       (default = 74 MHz)
--p, --polarization     Polarization of the observations (NS or EW; 
-                       default = EW)
--e, --empirical        Enable empirical corrections to the dipole model
-                       (valid from 35 to 80 MHz, default = no)
--l, --lfsm             Use LFSM instead of GSM
--t, --time-step        Time step of simulations in minutes (default = 
-                       10)
--x, --do-plot          Plot the driftcurve data
--v, --verbose          Run driftcurve in vebose mode
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    # Command line flags - default values
-    config['site'] = 'lwa1'
-    config['freq'] = 74.0e6
-    config['pol'] = 'EW'
-    config['corr'] = False
-    config['GSM'] = True
-    config['tStep'] = 10.0
-    config['enableDisplay'] = False
-    config['verbose'] = False
-    config['args'] = []
-
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hvsof:p:elt:x", ["help", "verbose", "lwasv", "ovro-lwa", "freq=", "polarization=", "empirical", "lfsm", "time-step=", "do-plot",])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-v', '--verbose'):
-            config['verbose'] = True
-        elif opt in ('-s', '--lwasv'):
-            config['site'] = 'lwasv'
-        elif opt in ('-o', '--ovro-lwa'):
-            config['site'] = 'ovro'
-        elif opt in ('-f', '--freq'):
-            config['freq'] = float(value)*1e6
-        elif opt in ('-p', '--polarization'):
-            config['pol'] = value.upper()
-        elif opt in ('-e', '--empirical'):
-            config['corr'] = True
-        elif opt in ('-l', '--lfsm'):
-            config['GSM'] = False
-        elif opt in ('-t', '--time-step'):
-            config['tStep'] = float(value)
-        elif opt in ('-x', '--do-plot'):
-            config['enableDisplay'] = True
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = arg
-
-    # Check the validity of arguments
-    if config['pol'] not in ('NS', 'EW'):
-        print "Invalid polarization: '%s'" % config['pol']
-        usage(exitCode=2)
-
-    # Return configuration
-    return config
-
 
 def main(args):
-    # Parse command line
-    config = parseOptions(args)
-    
+    # Validate
+    if args.pol not in ('EW', 'NS'):
+        raise ValueError("Invalid polarization: %s" % args.pol)
+        
     # Get the site information
-    if config['site'] == 'lwa1':
-        sta = stations.lwa1
-    elif config['site'] == 'lwasv':
+    if args.lwasv:
+        nam = 'lwasv'
         sta = stations.lwasv
-    elif config['site'] == 'ovro':
+    elif args.ovro_lwa:
+        nam = 'ovro'
         sta = stations.lwa1
         sta.lat, sta.lon, sta.elev = ('37.2397808', '-118.2816819', 1183.4839)
     else:
-        raise RuntimeError("Unknown site: %s" % config['site'])
+        nam = 'lwa1'
+        sta = stations.lwa1
         
     # Read in the skymap (GSM or LF map @ 74 MHz)
-    if config['GSM']:
-        smap = skymap.SkyMapGSM(freq_MHz=config['freq']/1e6)
-        if config['verbose']:
-            print "Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (config['freq']/1e6, len(smap.ra), smap._power.min(), smap._power.max())
+    if not args.lfsm:
+        smap = skymap.SkyMapGSM(freq_MHz=args.frequency/1e6)
+        if args.verbose:
+            print "Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max())
     else:
-        smap = skymap.SkyMapLFSM(freq_MHz=config['freq']/1e6)
-        if config['verbose']:
-            print "Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (config['freq']/1e6, len(smap.ra), smap._power.min(), smap._power.max())
+        smap = skymap.SkyMapLFSM(freq_MHz=args.frequency/1e6)
+        if args.verbose:
+            print "Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max())
     
     # Get the emperical model of the beam and compute it for the correct frequencies
     beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
-    if config['pol'] == 'EW':
+    if args.pol == 'EW':
         beamCoeff = beamDict['fitX']
     else:
         beamCoeff = beamDict['fitY']
@@ -143,19 +60,19 @@ def main(args):
         beamDict.close()
     except AttributeError:
         pass
-    alphaE = numpy.polyval(beamCoeff[0,0,:], config['freq'])
-    betaE =  numpy.polyval(beamCoeff[0,1,:], config['freq'])
-    gammaE = numpy.polyval(beamCoeff[0,2,:], config['freq'])
-    deltaE = numpy.polyval(beamCoeff[0,3,:], config['freq'])
-    alphaH = numpy.polyval(beamCoeff[1,0,:], config['freq'])
-    betaH =  numpy.polyval(beamCoeff[1,1,:], config['freq'])
-    gammaH = numpy.polyval(beamCoeff[1,2,:], config['freq'])
-    deltaH = numpy.polyval(beamCoeff[1,3,:], config['freq'])
-    if config['verbose']:
+    alphaE = numpy.polyval(beamCoeff[0,0,:], args.frequency)
+    betaE =  numpy.polyval(beamCoeff[0,1,:], args.frequency)
+    gammaE = numpy.polyval(beamCoeff[0,2,:], args.frequency)
+    deltaE = numpy.polyval(beamCoeff[0,3,:], args.frequency)
+    alphaH = numpy.polyval(beamCoeff[1,0,:], args.frequency)
+    betaH =  numpy.polyval(beamCoeff[1,1,:], args.frequency)
+    gammaH = numpy.polyval(beamCoeff[1,2,:], args.frequency)
+    deltaH = numpy.polyval(beamCoeff[1,3,:], args.frequency)
+    if args.verbose:
         print "Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH)
         print "Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE)
         
-    if config['corr']:
+    if args.empirical:
         corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
         cFreqs = corrDict['freqs']
         cAlts  = corrDict['alts']
@@ -164,14 +81,14 @@ def main(args):
         cCorrs = corrDict['corrs']
         corrDict.close()
         
-        if config['freq']/1e6 < cFreqs.min() or config['freq']/1e6 > cFreqs.max():
-            print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction"
+        if args.frequency/1e6 < cFreqs.min() or args.frequency/1e6 > cFreqs.max():
+            print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,)
             corrFnc = None
         else:
             fCors = cAlts*0.0
             for i in xrange(fCors.size):
                 ffnc = interp1d(cFreqs, cCorrs[:,i], bounds_error=False)
-                fCors[i] = ffnc(config['freq']/1e6)
+                fCors[i] = ffnc(args.frequency/1e6)
             corrFnc = interp1d(cAlts, fCors, bounds_error=False)
             
     else:
@@ -191,7 +108,7 @@ def main(args):
 
         return c*numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
 
-    if config['enableDisplay']:
+    if args.do_plot:
         az = numpy.zeros((90,360))
         alt = numpy.zeros((90,360))
         for i in range(360):
@@ -199,7 +116,7 @@ def main(args):
         for i in range(90):
             alt[i,:] = i
         pylab.figure(1)
-        pylab.title("Beam Response: %s pol. @ %0.2f MHz" % (config['pol'], config['freq']/1e6))
+        pylab.title("Beam Response: %s pol. @ %0.2f MHz" % (args.pol, args.frequency/1e6))
         pylab.imshow(BeamPattern(az, alt), extent=(0,359, 0,89), origin='lower')
         pylab.xlabel("Azimuth [deg]")
         pylab.ylabel("Altitude [deg]")
@@ -210,7 +127,7 @@ def main(args):
     t0 = astro.get_julian_from_sys()
     lst = astro.get_local_sidereal_time(sta.long*180.0/math.pi, t0) / 24.0
     t0 -= lst*(23.933/24.0) # Compensate for shorter sidereal days
-    times = numpy.arange(0.0, 1.0, config['tStep']/1440.0) + t0
+    times = numpy.arange(0.0, 1.0, args.time_step/1440.0) + t0
     
     lstList = []
     powListAnt = [] 
@@ -226,7 +143,7 @@ def main(args):
         powerAnt = (pmap.visiblePower * gain).sum() / gain.sum()
         powListAnt.append(powerAnt)
 
-        if config['verbose']:
+        if args.verbose:
             lstH = int(lst)
             lstM = int((lst - lstH)*60.0)
             lstS = ((lst - lstH)*60.0 - lstM)*60.0
@@ -235,10 +152,10 @@ def main(args):
     sys.stdout.write("\n")
             
     # plot results
-    if config['enableDisplay']:
+    if args.do_plot:
         pylab.figure(2)
         pylab.title("Driftcurve: %s pol. @ %0.2f MHz - %s" % \
-            (config['pol'], config['freq']/1e6, config['site'].upper()))
+            (args.pol, args.frequency/1e6, nam.upper()))
         pylab.plot(lstList, powListAnt, "ro", label="Antenna Pattern")
         pylab.xlabel("LST [hours]")
         pylab.ylabel("Temp. [K]")
@@ -246,7 +163,7 @@ def main(args):
         pylab.draw()
         pylab.show()
     
-    outputFile = "driftcurve_%s_%s_%.2f.txt" % (config['site'], config['pol'], config['freq']/1e6)
+    outputFile = "driftcurve_%s_%s_%.2f.txt" % (nam, args.pol, args.frequency/1e6)
     print "Writing driftcurve to file '%s'" % outputFile
     mf = file(outputFile, "w")
     for lst,pow in zip(lstList, powListAnt):
@@ -255,4 +172,28 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='simulate a drift curve for a dipole at LWA1 observing at a given frequency in MHz', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('-f', '--frequency', type=aph.frequency, default='74.0', 
+                    help='frequency of the simulation in MHz')
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
+                        help='calculate for LWA-SV instead of LWA1')
+    sgroup.add_argument('-o', '--ovro-lwa', action='store_true', 
+                        help='calculate for OVRO-LWA instead of LWA1')
+    parser.add_argument('-p', '--pol', type=str, default='EW', 
+                        help='polarization of the simulations (NS or EW)')
+    parser.add_argument('-e', '--empirical', action='store_true', 
+                    help='enable empirical corrections to the dipole model (valid from 35 to 80 MHz)')
+    parser.add_argument('-l', '--lfsm', action='store_true', 
+                        help='use LFSM instead of GSM')
+    parser.add_argument('-t', '--time-step', type=float, default=10.0, 
+                        help='time step of the simulation in minutes')
+    parser.add_argument('-x', '--do-plot', action='store_true', 
+                        help='plot the driftcurve data')
+    parser.add_argument('-v', '--verbose', action='store_true', 
+                        help='run %(prog)s in verbose mode')
+    args = parser.parse_args()
+    main(args)

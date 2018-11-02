@@ -7,75 +7,17 @@ as a function of azimuth and elevation."""
 import os
 import sys
 import numpy
-import getopt
+import argparse
 
 from scipy.interpolate import interp1d
 
 from lsl.common.paths import data as dataPath
+from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 
 
-def usage(exitCode=None):
-    print """plotAntenna.py - Plot the relative dipole response for both
-polarizations of an isolated LWA-1 antenna at a particular frequency.
-
-Usage: plotAntenna.py [OPTIONS]
-
-Options:
--h, --help             Display this help information
--f, --freq             Frequency of the observations in MHz
-                       (default = 74 MHz)
--e, --empirical        Enable empirical corrections to the dipole model
-                       (valid from 35 to 80 MHz, default = no)
--v, --verbose          Run plotAntenna in vebose mode
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    # Command line flags - default values
-    config['freq'] = 74.0e6
-    config['corr'] = False
-    config['verbose'] = False
-    config['args'] = []
-
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hvf:e", ["help", "verbose", "freq=", "empirical"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-v', '--verbose'):
-            config['verbose'] = True
-        elif opt in ('-f', '--freq'):
-            config['freq'] = float(value)*1e6
-        elif opt in ('-e', '--empirical'):
-            config['corr'] = True
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = arg
-
-    # Return configuration
-    return config
-
-
 def main(args):
-    config = parseOptions(args)
-    
     # Build the grid of azimuth and elevations to plot
     az = numpy.zeros((90,360))
     alt = numpy.zeros((90,360))
@@ -93,19 +35,19 @@ def main(args):
     i = 0
     beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
     for beamCoeff in (beamDict['fitX'], beamDict['fitY']):
-        alphaE = numpy.polyval(beamCoeff[0,0,:], config['freq'])
-        betaE =  numpy.polyval(beamCoeff[0,1,:], config['freq'])
-        gammaE = numpy.polyval(beamCoeff[0,2,:], config['freq'])
-        deltaE = numpy.polyval(beamCoeff[0,3,:], config['freq'])
-        alphaH = numpy.polyval(beamCoeff[1,0,:], config['freq'])
-        betaH =  numpy.polyval(beamCoeff[1,1,:], config['freq'])
-        gammaH = numpy.polyval(beamCoeff[1,2,:], config['freq'])
-        deltaH = numpy.polyval(beamCoeff[1,3,:], config['freq'])
-        if config['verbose']:
+        alphaE = numpy.polyval(beamCoeff[0,0,:], args.frequency)
+        betaE =  numpy.polyval(beamCoeff[0,1,:], args.frequency)
+        gammaE = numpy.polyval(beamCoeff[0,2,:], args.frequency)
+        deltaE = numpy.polyval(beamCoeff[0,3,:], args.frequency)
+        alphaH = numpy.polyval(beamCoeff[1,0,:], args.frequency)
+        betaH =  numpy.polyval(beamCoeff[1,1,:], args.frequency)
+        gammaH = numpy.polyval(beamCoeff[1,2,:], args.frequency)
+        deltaH = numpy.polyval(beamCoeff[1,3,:], args.frequency)
+        if args.verbose:
             print "Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH)
             print "Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE)
             
-        if config['corr']:
+        if args.empirical:
             corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
             cFreqs = corrDict['freqs']
             cAlts  = corrDict['alts']
@@ -114,14 +56,14 @@ def main(args):
             cCorrs = corrDict['corrs']
             corrDict.close()
             
-            if config['freq']/1e6 < cFreqs.min() or config['freq']/1e6 > cFreqs.max():
-                print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction"
+            if args.frequency/1e6 < cFreqs.min() or args.frequency/1e6 > cFreqs.max():
+                print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,)
                 corrFnc = None
             else:
                 fCors = cAlts*0.0
                 for j in xrange(fCors.size):
                     ffnc = interp1d(cFreqs, cCorrs[:,j], bounds_error=False)
-                    fCors[j] = ffnc(config['freq']/1e6)
+                    fCors[j] = ffnc(args.frequency/1e6)
                 corrFnc = interp1d(cAlts, fCors, bounds_error=False)
                 
         else:
@@ -146,7 +88,7 @@ def main(args):
 
         if i == 0:
             p = ax1.imshow(pattern, origin='lower', vmin=0, vmax=1)
-            ax1.set_title('X pol. @ %.2f MHz' % (config['freq']/1e6))
+            ax1.set_title('X pol. @ %.2f MHz' % (args.frequency/1e6))
             ax1.set_xlabel('Azimuth [deg.]')
             ax1.set_ylabel('Elevation [deg.]')
             
@@ -155,7 +97,7 @@ def main(args):
             
         else:
             p = ax2.imshow(pattern, origin='lower', vmin=0, vmax=1)
-            ax2.set_title('Y pol. @ %.2f MHz' % (config['freq']/1e6))
+            ax2.set_title('Y pol. @ %.2f MHz' % (args.frequency/1e6))
             ax2.set_xlabel('Azimuth [deg.]')
             ax2.set_ylabel('Elevation [deg.]')
     
@@ -170,4 +112,16 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='plot the relative dipole response for both polarizations of an isolated LWA antenna at a particular frequency', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('-f', '--frequency', type=aph.frequency, default='50.0', 
+                        help='frequency in MHz to generate the dipole model for')
+    parser.add_argument('-e', '--empirical', action='store_true', 
+                        help='enable empirical corrections to the dipole model (valid from 35 to 80 MHz)')
+    parser.add_argument('-v', '--verbose', action='store_true', 
+                        help='run %(prog)s in verbose mode')
+    args = parser.parse_args()
+    main(args)
+    

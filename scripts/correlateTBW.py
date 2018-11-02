@@ -11,7 +11,7 @@ import sys
 import time
 import ephem
 import numpy
-import getopt
+import argparse
 from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
@@ -20,6 +20,7 @@ from lsl.common import stations, metabundle
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi
 from lsl.common.progress import ProgressBar
+from lsl.misc import parser as aph
 
 
 class UTC(tzinfo):
@@ -33,78 +34,6 @@ class UTC(tzinfo):
         
     def dst(self, dt):
         return timedelta(0)
-
-
-def usage(exitCode=None):
-    print """correlateTBW.py - cross-correlate data in a TBW file
-
-Usage: correlateTBW.py [OPTIONS] file
-
-Options:
--h, --help             Display this help information
--m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                       mappings
--l, --fft-length       Set FFT length (default = 2048)
--q, --quiet            Run correlateTBW in silent mode
--a, --all              Correlated all dipoles regardless of their status 
-                       (default = no)
--x, --xx               Compute only the XX polarization product (default)
--y, --yy               Compute only the YY polarization product
--2, --two-products     Compute both the XX and YY polarization products
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['metadata'] = ''
-    config['LFFT'] = 2048
-    config['samples'] = 1
-    config['offset'] = 0
-    config['verbose'] = True
-    config['all'] = False
-    config['products'] = ['xx',]
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hm:ql:axy2", ["help", "metadata=", "quiet", "fft-length=", "all", "xx", "yy", "two-products"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-m', '--metadata'):
-            config['metadata'] = value
-        elif opt in ('-q', '--quiet'):
-            config['verbose'] = False
-        elif opt in ('-l', '--fft-length'):
-            config['LFFT'] = int(value)
-        elif opt in ('-a', '--all'):
-            config['all'] = True
-        elif opt in ('-x', '--xx'):
-            config['products'] = ['xx',]
-        elif opt in ('-y', '--yy'):
-            config['products'] = ['yy',]
-        elif opt in ('-2', '--two-products'):
-            config['products'] = ['xx', 'yy']
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = arg
-    
-    # Return configuration
-    return config
 
 
 def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']):
@@ -132,11 +61,11 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
     wallTime = time.time()
     readT, t, data = idf.read()
     setTime = t
-    refTime = t
+    ref_time = t
     
     setDT = datetime.utcfromtimestamp(setTime)
     setDT.replace(tzinfo=UTC())
-    print "Working on set #1 (%.3f seconds after set #1 = %s)" % ((setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
+    print "Working on set #1 (%.3f seconds after set #1 = %s)" % ((setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
     
     # In order for the TBW stuff to actaully run, we need to run in with sub-
     # integrations.  8 sub-integrations (61.2 ms / 8 = 7.7 ms per section) 
@@ -182,9 +111,9 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
             pol1, pol2 = fxc.pol_to_pols(pol)
             
             if len(stands) > 255:
-                fits = fitsidi.ExtendedIdi(filename, ref_time=refTime)
+                fits = fitsidi.ExtendedIdi(filename, ref_time=ref_time)
             else:
-                fits = fitsidi.Idi(filename, ref_time=refTime)
+                fits = fitsidi.Idi(filename, ref_time=ref_time)
             fits.set_stokes(pols)
             fits.set_frequency(freq[toUse])
             fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
@@ -207,18 +136,17 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
 
 def main(args):
     # Parse command line options
-    config = parseConfig(args)
-    filename = config['args'][0]
+    filename = args.filename
 
     # Length of the FFT
-    LFFT = config['LFFT']
+    LFFT = args.fft_length
 
     # Setup the LWA station information
-    if config['metadata'] != '':
+    if args.metadata is not None:
         try:
-            station = stations.parse_ssmif(config['metadata'])
+            station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundle.get_station(config['metadata'], apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     else:
         station = stations.lwa1
     antennas = station.antennas
@@ -235,7 +163,7 @@ def main(args):
     goodY = []
     for i in xrange(len(antennas)):
         ant = antennas[i]
-        if ant.combined_status != 33 and not config['all']:
+        if ant.combined_status != 33 and not args.all:
             pass
         else:
             if ant.pol == 0:
@@ -272,19 +200,40 @@ def main(args):
     print "Number of integrations in file: %i" % nSets
     print "=="
     
-    if config['samples'] > nSets:
-        config['samples'] = nSets
-        
-    leftToDo = config['samples']
+    leftToDo = 1
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     
     fitsFilename = "%s.FITS_1" % basename
-    processChunk(idf, station, good, fitsFilename, LFFT=config['LFFT'], Overlap=1, pols=config['products'])
+    processChunk(idf, station, good, fitsFilename, LFFT=args.fft_length, Overlap=1, pols=args.products)
     
     idf.close()
 
 
 if __name__ == "__main__":
-    numpy.seterr(all='ignore')
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='cross-correlate data in a TBW file', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('filename', type=str, 
+                        help='filename to correlate')
+    parser.add_argument('-m', '--metadata', type=str, 
+                        help='name of SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
+                        help='set FFT length')
+    parser.add_argument('-q', '--quiet', dest='verbose', action='store_false', 
+                        help='run %(prog)s in silent mode')
+    parser.add_argument('-a', '--all', action='store_true', 
+                        help='correlated all dipoles regardless of their status')
+    pgroup = parser.add_mutually_exclusive_group(required=True)
+    pgroup.add_argument('-x', '--xx', dest='products', action='store_const', const=['xx',], 
+                        help='compute only the XX polarization product')
+    pgroup.add_argument('-y', '--yy', dest='products', action='store_const', const=['yy',], 
+                        help='compute only the YY polarization product')
+    pgroup.add_argument('-2', '--two-products', dest='products', action='store_const', const=['xx','yy'], 
+                        help='compute only the XX and YY polarization products')
+    pgroup.add_argument('-4', '--four-products', dest='products', action='store_const', const=['xx','yy','xy','yx'], 
+                        help='compute the XX, XY, YX, and YY polarization products')
+    args = parser.parse_args()
+    main(args)
+    

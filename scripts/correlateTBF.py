@@ -11,7 +11,7 @@ import sys
 import time
 import ephem
 import numpy
-import getopt
+import argparse
 from datetime import datetime, timedelta, tzinfo
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
@@ -23,6 +23,7 @@ from lsl.correlator import uvutil
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi
+from lsl.misc import parser as aph
 
 
 class UTC(tzinfo):
@@ -36,94 +37,6 @@ class UTC(tzinfo):
         
     def dst(self, dt):
         return timedelta(0)
-
-
-def usage(exitCode=None):
-    print """correlateTBF.py - cross-correlate data in a TBF file
-
-Usage: correlateTBF.py [OPTIONS] file
-
-Options:
--h, --help             Display this help information
--m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                       mappings
--t, --avg-time         Window to average visibilities in time (seconds; 
-                       default = 1 s)
--s, --samples          Number of average visibilities to generate
-                       (default = 1)
--o, --offset           Seconds to skip from the beginning of the file
--q, --quiet            Run correlateTBF in silent mode
--a, --all              Correlated all dipoles regardless of their status 
-                       (default = no)
--x, --xx               Compute only the XX polarization product (default)
--y, --yy               Compute only the YY polarization product
--2, --two-products     Compute both the XX and YY polarization products
--4, --four-products    Compute all for polariation products:  XX, YY, XY, 
-                       and YX.
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['metadata'] = ''
-    config['avgTime'] = 1.0
-    config['samples'] = 1
-    config['offset'] = 0
-    config['verbose'] = True
-    config['all'] = False
-    config['products'] = ['xx',]
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hm:qt:s:o:a24xy", ["help", "metadata=", "quiet", "avg-time=", "samples=", "offset=", "all", "two-products", "four-products", "xx", "yy"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-m', '--metadata'):
-            config['metadata'] = value
-        elif opt in ('-q', '--quiet'):
-            config['verbose'] = False
-        elif opt in ('-t', '--avg-time'):
-            config['avgTime'] = float(value)
-        elif opt in ('-s', '--samples'):
-            config['samples'] = int(value)
-        elif opt in ('-o', '--offset'):
-            config['offset'] = int(value)
-        elif opt in ('-a', '--all'):
-            config['all'] = True
-        elif opt in ('-2', '--two-products'):
-            config['products'] = ['xx', 'yy']
-        elif opt in ('-4', '--four-products'):
-            config['products'] = ['xx', 'yy', 'xy', 'yx']
-        elif opt in ('-x', '--xx'):
-            config['products'] = ['xx',]
-        elif opt in ('-y', '--yy'):
-            config['products'] = ['yy',]
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = arg
-    
-    # Validate
-    if config['avgTime'] < 0.1 and config['samples'] > 1:
-        raise RuntimeError("Integration time is too short: %.3f s" % config['avgTime'])
-        
-    # Return configuration
-    return config
 
 
 def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize=100):
@@ -151,9 +64,9 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
     
     # Main loop over the input file to read in the data and organize it.  Several control 
     # variables are defined for this:
-    #  refTime -> time (in seconds since the UNIX epoch) for the first data set
+    #  ref_time -> time (in seconds since the UNIX epoch) for the first data set
     #  setTime -> time (in seconds since the UNIX epoch) for the current data set
-    refTime = 0.0
+    ref_time = 0.0
     setTime = 0.0
     wallTime = time.time()
     for s in xrange(ChunkSize):
@@ -188,12 +101,12 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
                 
         setTime = t
         if s == 0:
-            refTime = setTime
+            ref_time = setTime
             
         # Setup the set time as a python datetime instance so that it can be easily printed
         setDT = datetime.utcfromtimestamp(setTime)
         setDT.replace(tzinfo=UTC())
-        print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-refTime), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
+        print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
         
         # Loop over polarization products
         for pol in pols:
@@ -226,9 +139,9 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
                 pol1, pol2 = fxc.pol_to_pols(pol)
                 
                 if len(stands) > 255:
-                    fits = fitsidi.ExtendedIdi(filename, ref_time=refTime)
+                    fits = fitsidi.ExtendedIdi(filename, ref_time=ref_time)
                 else:
-                    fits = fitsidi.Idi(filename, ref_time=refTime)
+                    fits = fitsidi.Idi(filename, ref_time=ref_time)
                 fits.set_stokes(pols)
                 fits.set_frequency(freq[toUse])
                 fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
@@ -249,15 +162,14 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
 
 def main(args):
     # Parse command line options
-    config = parseConfig(args)
-    filename = config['args'][0]
+    filename = args.filename
     
     # Setup the LWA station information
-    if config['metadata'] != '':
+    if args.metadata is not None:
         try:
-            station = stations.parse_ssmif(config['metadata'])
+            station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundleADP.get_station(config['metadata'], apply_sdm=True)
+            station = metabundleADP.get_station(args.metadata, apply_sdm=True)
     else:
         station = stations.lwasv
     antennas = station.antennas
@@ -275,7 +187,7 @@ def main(args):
     goodY = []
     for i in xrange(len(antennas)):
         ant = antennas[i]
-        if ant.combined_status != 33 and not config['all']:
+        if ant.combined_status != 33 and not args.all:
             pass
         else:
             if ant.pol == 0:
@@ -300,10 +212,10 @@ def main(args):
         print "%3i, %i" % (antennas[i].stand.id, antennas[i].pol)
         
     # Number of frames to read in at once and average
-    nFrames = min([int(config['avgTime']*sample_rate), nInts])
-    config['offset'] = idf.offset(config['offset'])
+    nFrames = min([int(args.avg_time*sample_rate), nInts])
+    args.offset = idf.offset(args.offset)
     nSets = idf.get_info('nFrames') / nFpO / nFrames
-    nSets = nSets - int(config['offset']*sample_rate) / nFrames
+    nSets = nSets - int(args.offset*sample_rate) / nFrames
     
     central_freq = idf.get_info('freq1')
     central_freq = central_freq[len(central_freq)/2]
@@ -317,18 +229,18 @@ def main(args):
     print "Station: %s" % station.name
     print "Date observed: %s" % date
     print "Julian day: %.5f" % jd
-    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*sample_rate)
+    print "Offset: %.3f s (%i frames)" % (args.offset, args.offset*sample_rate)
     print "Integration Time: %.3f s" % (nFrames/sample_rate)
     print "Number of integrations in file: %i" % nSets
     
     # Make sure we don't try to do too many sets
-    if config['samples'] > nSets:
-        config['samples'] = nSets
+    if args.samples > nSets:
+        args.samples = nSets
         
     # Loop over junks of 100 integrations to make sure that we don't overflow 
     # the FITS IDI memory buffer
     s = 0
-    leftToDo = config['samples']
+    leftToDo = args.samples
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     while leftToDo > 0:
@@ -339,8 +251,8 @@ def main(args):
         else:
             chunk = leftToDo
             
-        processChunk(idf, station, good, fitsFilename, intTime=config['avgTime'], 
-                     pols=config['products'], ChunkSize=chunk)
+        processChunk(idf, station, good, fitsFilename, intTime=args.avg_time, 
+                     pols=args.products, ChunkSize=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk
@@ -349,5 +261,33 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='cross-correlate data in a TBF file', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('filename', type=str, 
+                        help='filename to correlate')
+    parser.add_argument('-m', '--metadata', type=str, 
+                        help='name of SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-t', '--avg-time', type=aph.positive_float, default=1.0, 
+                        help='time window to average visibilities in seconds')
+    parser.add_argument('-s', '--samples', type=aph.positive_int, default=1, 
+                        help='number of average visibilities to generate')
+    parser.add_argument('-o', '--offset', type=aph.positive_or_zero_float, default=0.0, 
+                        help='offset into the file before starting correlation in seconds')
+    parser.add_argument('-q', '--quiet', dest='verbose', action='store_false', 
+                        help='run %(prog)s in silent mode')
+    parser.add_argument('-a', '--all', action='store_true', 
+                        help='correlated all dipoles regardless of their status')
+    pgroup = parser.add_mutually_exclusive_group(required=True)
+    pgroup.add_argument('-x', '--xx', dest='products', action='store_const', const=['xx',], 
+                        help='compute only the XX polarization product')
+    pgroup.add_argument('-y', '--yy', dest='products', action='store_const', const=['yy',], 
+                        help='compute only the YY polarization product')
+    pgroup.add_argument('-2', '--two-products', dest='products', action='store_const', const=['xx','yy'], 
+                        help='compute only the XX and YY polarization products')
+    pgroup.add_argument('-4', '--four-products', dest='products', action='store_const', const=['xx','yy','xy','yx'], 
+                        help='compute the XX, XY, YX, and YY polarization products')
+    args = parser.parse_args()
+    main(args)
     

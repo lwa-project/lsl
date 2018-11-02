@@ -7,94 +7,14 @@ import sys
 import math
 import numpy
 import ephem
-import getopt
+import argparse
 
 import lsl.correlator.fx as fxc
 from lsl.reader.ldp import LWA1DataFile
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
+from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
-
-
-def usage(exitCode=None):
-    print """drxSpectra.py - Read in DRX files and create a collection of 
-time-averaged spectra.
-
-Usage: drxSpectra.py [OPTIONS] file
-
-Options:
--h, --help                  Display this help information
--t, --bartlett              Apply a Bartlett window to the data
--b, --blackman              Apply a Blackman window to the data
--n, --hanning               Apply a Hanning window to the data
--s, --skip                  Skip the specified number of seconds at the beginning
-                            of the file (default = 0)
--a, --average               Number of seconds of data to average for spectra 
-                            (default = 10)
--q, --quiet                 Run drxSpectra in silent mode
--l, --fft-length            Set FFT length (default = 4096)
--d, --disable-chunks        Display plotting chunks in addition to the global 
-                            average
--o, --output                Output file name for spectra image
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    # Command line flags - default values
-    config['offset'] = 0.0
-    config['average'] = 10.0
-    config['LFFT'] = 4096
-    config['maxFrames'] = 19144
-    config['window'] = fxc.null_window
-    config['output'] = None
-    config['displayChunks'] = True
-    config['verbose'] = True
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, args = getopt.getopt(args, "hqtbnl:o:s:a:d", ["help", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "output=", "skip=", "average=", "disable-chunks"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-q', '--quiet'):
-            config['verbose'] = False
-        elif opt in ('-t', '--bartlett'):
-            config['window'] = numpy.bartlett
-        elif opt in ('-b', '--blackman'):
-            config['window'] = numpy.blackman
-        elif opt in ('-n', '--hanning'):
-            config['window'] = numpy.hanning
-        elif opt in ('-l', '--fft-length'):
-            config['LFFT'] = int(value)
-        elif opt in ('-o', '--output'):
-            config['output'] = value
-        elif opt in ('-s', '--skip'):
-            config['offset'] = float(value)
-        elif opt in ('-a', '--average'):
-            config['average'] = float(value)
-        elif opt in ('-d', '--disable-chunks'):
-            config['displayChunks'] = False
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = args
-    
-    # Return configuration
-    return config
 
 
 def bestFreqUnits(freq):
@@ -124,31 +44,28 @@ def bestFreqUnits(freq):
 
 
 def main(args):
-    # Parse command line options
-    config = parseOptions(args)
-    
     # Length of the FFT
-    LFFT = config['LFFT']
+    LFFT = args.fft_length
     
-    idf = LWA1DataFile(config['args'][0])
+    idf = LWA1DataFile(args.filename)
     
     nFramesFile = idf.get_info('nFrames')
     srate = idf.get_info('sample_rate')
     beampols = idf.get_info('beampols')
     
     # Offset in frames for beampols beam/tuning/pol. sets
-    config['offset'] = idf.offset(config['offset'])
+    args.skip = idf.offset(args.skip)
     
     # Make sure that the file chunk size contains is an integer multiple
     # of the FFT length so that no data gets dropped.  This needs to
     # take into account the number of beampols in the data, the FFT length,
     # and the number of samples per frame.
-    maxFrames = int(1.0*config['maxFrames']/beampols*4096/float(LFFT))*LFFT/4096*beampols
+    maxFrames = int(1.0*19144/beampols*4096/float(LFFT))*LFFT/4096*beampols
     
     # Number of frames to integrate over
-    nFrames = int(config['average'] * srate / 4096 * beampols)
+    nFrames = int(args.average * srate / 4096 * beampols)
     nFrames = int(1.0 * nFrames / beampols*4096/float(LFFT))*LFFT/4096*beampols
-    config['average'] = 1.0 * nFrames / beampols * 4096 / srate
+    args.average = 1.0 * nFrames / beampols * 4096 / srate
     
     # Number of remaining chunks
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
@@ -160,7 +77,7 @@ def main(args):
     beam = idf.get_info('beam')
     
     # File summary
-    print "Filename: %s" % config['args'][0]
+    print "Filename: %s" % args.filename
     print "Date of First Frame: %s" % str(beginDate)
     print "Beam: %i" % beam
     print "Tune/Pols: %i" % beampols
@@ -168,15 +85,25 @@ def main(args):
     print "Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (central_freq1, central_freq2)
     print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate)
     print "---"
-    print "Offset: %.3f s (%i frames)" % (config['offset'], config['offset']*srate*beampols/4096)
-    print "Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (config['average'], nFrames, nFrames / beampols)
+    print "Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*beampols/4096)
+    print "Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (args.average, nFrames, nFrames / beampols)
     print "Chunks: %i" % nChunks
     
     # Sanity check
-    if config['offset']*srate*beampols/4096 > nFramesFile:
+    if args.skip*srate*beampols/4096 > nFramesFile:
         raise RuntimeError("Requested offset is greater than file length")
-    if nFrames > (nFramesFile - config['offset']*srate*beampols/4096):
+    if nFrames > (nFramesFile - args.skip*srate*beampols/4096):
         raise RuntimeError("Requested integration time+offset is greater than file length")
+        
+    # Setup the window function to use
+    if args.bartlett:
+        window = numpy.bartlett
+    elif args.blackman:
+        window = numpy.blackman
+    elif args.hanning:
+        window = numpy.hanning
+    else:
+        window = fxc.null_window
         
     # Master loop over all of the file chunks
     standMapper = [4*(beam-1) + i for i in xrange(4)]
@@ -186,14 +113,14 @@ def main(args):
         print "Working on chunk #%i of %i" % (i+1, nChunks)
         
         try:
-            readT, t, data = idf.read(config['average']/nChunks)
+            readT, t, data = idf.read(args.average/nChunks)
         except Exception, e:
             print "Error: %s" % str(e)
             continue
             
         # Calculate the spectra for this block of data and then weight the results by 
         # the total number of frames read.  This is needed to keep the averages correct.
-        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'], sample_rate=srate, clip_level=0)
+        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, verbose=args.verbose, sample_rate=srate, clip_level=0)
         for stand in xrange(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
@@ -233,7 +160,7 @@ def main(args):
         
         # If there is more than one chunk, plot the difference between the global 
         # average and each chunk
-        if nChunks > 1 and config['displayChunks']:
+        if nChunks > 1 and not args.disable_chunks:
             for j in range(nChunks):
                 # Some files are padded by zeros at the end and, thus, carry no 
                 # weight in the average spectra.  Skip over those.
@@ -258,9 +185,35 @@ def main(args):
     plt.show()
     
     # Save spectra image if requested
-    if config['output'] is not None:
-        fig.savefig(config['output'])
+    if args.output is not None:
+        fig.savefig(args.output)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+            description='read in a DRX file and create a collection of time-averaged spectra', 
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            )
+    parser.add_argument('filename', type=str, 
+                        help='filename to process')
+    wgroup = parser.add_mutually_exclusive_group(required=False)
+    wgroup.add_argument('-t', '--bartlett', action='store_true', 
+                        help='apply a Bartlett window to the data')
+    wgroup.add_argument('-b', '--blackman', action='store_true', 
+                        help='apply a Blackman window to the data')
+    wgroup.add_argument('-n', '--hanning', action='store_true', 
+                        help='apply a Hanning window to the data')
+    parser.add_argument('-s', '--skip', type=aph.positive_or_zero_float, default=0.0, 
+                        help='skip the specified number of seconds at the beginning of the file')
+    parser.add_argument('-a', '--average', type=aph.positive_float, default=10.0, 
+                        help='number of seconds of data to average for spectra')
+    parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
+                        help='run %(prog)s in silent mode')
+    parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
+                        help='set FFT length')
+    parser.add_argument('-d', '--disable-chunks', action='store_true', 
+                        help='disable plotting chunks in addition to the global average')
+    parser.add_argument('-o', '--output', type=str, 
+                        help='output file name for spectra image')
+    args = parser.parse_args()
+    main(args)

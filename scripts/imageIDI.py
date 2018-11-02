@@ -6,13 +6,14 @@ import sys
 import aipy
 import pytz
 import numpy
-import getopt
+import argparse
 from astropy.io import fits as astrofits
 
 from lsl import astro
 from lsl.sim import vis as simVis
 from lsl.imaging import utils, overlay
 from lsl.writer.fitsidi import NUMERIC_STOKES
+from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -25,101 +26,8 @@ UTC = pytz.UTC
 NPIX_SIDE = 350
 
 
-def usage(exitCode=None):
-    print """imageIDI.py - Create images from a FITS-IDI file
-
-Usage: imageIDI.py [OPTIONS] file
-
-Options:
--h, --help             Display this help information
--1, --freq-start       First frequency to image in MHz (Default = 10 MHz)
--2, --freq-stop        Last frequency to image in MHz (Default = 88 MHz)
--s, --dataset          Data set to image (Default = All)
--m, --uv-min           Minimun baseline uvw length to include 
-                       (Default = 0 lambda at midpoint frequency)
--i, --include          Comma seperated list of dipoles to include 
-                       (Default = All)
--e, --exclude          Comma seperated list of dipoles to exclude
-                       (Default = None)
--t, --topo             Display an az/el grid instead of a RA/Dec grid
--u, --utc              Display the time as UTC, instead of LST
--n, --no-labels        Disable source and grid labels
--g, --no-grid          Disable the grid
--f, --fits             Save the images to the specified FITS image file
-
-NOTE:  If both -i/--include and -e/--exclude are specified the include list
-    has priority.
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['freq1'] = 10e6
-    config['freq2'] = 88e6
-    config['dataset'] = 0
-    config['min_uv'] = 0.0
-    config['include'] = None
-    config['exclude'] = None
-    config['label'] = True
-    config['grid'] = True
-    config['coord'] = 'RADec'
-    config['time'] = 'LST'
-    config['fits'] = None
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "h1:2:s:m:i:e:tungf:", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "include=", "exclude=", "topo", "utc", "no-labels", "no-grid", "fits="])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-1', '--freq-start'):
-            config['freq1'] = float(value)*1e6
-        elif opt in ('-2', '--freq-stop'):
-            config['freq2'] = float(value)*1e6
-        elif opt in ('-s', '--dataset'):
-            config['dataset'] = int(value)
-        elif opt in ('-m', '--uv-min'):
-            config['min_uv'] = float(value)
-        elif opt in ('-i', '--include'):
-            config['include'] = [int(v) for v in value.split(',')]
-        elif opt in ('-e', '--exclude'):
-            config['exclude'] = [int(v) for v in value.split(',')]
-        elif opt in ('-t', '--topo'):
-            config['coord'] = 'AzEl'
-        elif opt in ('-u', '--utc'):
-            config['time'] = 'UTC'
-        elif opt in ('-n', '--no-labels'):
-            config['label'] = False
-        elif opt in ('-g', '--no-grid'):
-            config['grid'] = False
-        elif opt in ('-f', '--fits'):
-            config['fits'] = str(value)
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = arg
-    
-    # Return configuration
-    return config
-
-
 def main(args):
-    config = parseConfig(args)
-    filename = config['args'][0]
+    filename = args.filename
     
     idi = utils.CorrelatedData(filename)
     aa = idi.get_antennaarray()
@@ -143,11 +51,11 @@ def main(args):
     print "Reading in FITS IDI data"
     nSets = idi.integration_count
     for set in range(1, nSets+1):
-        if config['dataset'] != 0 and config['dataset'] != set:
+        if args.dataset != -1 and args.dataset != set:
             continue
             
         print "Set #%i of %i" % (set, nSets)
-        dataDict = idi.get_data_set(set, min_uv=config['min_uv'])
+        dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Build a list of unique JDs for the data
         pols = dataDict['bls'].keys()
@@ -162,9 +70,9 @@ def main(args):
         lst = str(lo.sidereal_time())   # pylint:disable=no-member
         
         # Pull out the right channels
-        toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]
+        toWork = numpy.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
-            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (config['freq1']/1e6, config['freq2']/1e6))
+            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
             
         # Integration report
         print "    Date Observed: %s" % utc
@@ -172,7 +80,7 @@ def main(args):
         print "    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6)
         
         # Prune out what needs to go
-        if config['include'] is not None or config['exclude'] is not None:
+        if args.include != 'all' or args.exclude != 'none':
             print "    Processing include/exclude lists"
             dataDict = dataDict.get_antenna_subset(include=config['include'], 
                                                    exclude=config['exclude'], 
@@ -235,7 +143,7 @@ def main(args):
                 ax.xaxis.set_major_formatter( NullFormatter() )
                 ax.yaxis.set_major_formatter( NullFormatter() )
                 
-                if config['time'] == 'LST':
+                if not args.utc:
                     ax.set_title("%s @ %s LST" % (pol, lst))
                 else:
                     ax.set_title("%s @ %s UTC" % (pol, utc))
@@ -244,7 +152,7 @@ def main(args):
             # Display the image and label with the polarization/LST
             cb = utils.plot_gridded_image(ax, img)
             fig.colorbar(cb, ax=ax)
-            if config['time'] == 'LST':
+            if not args.utc:
                 ax.set_title("%s @ %s LST" % (pol, lst))
             else:
                 ax.set_title("%s @ %s UTC" % (pol, utc))
@@ -257,21 +165,21 @@ def main(args):
             ax.yaxis.set_major_formatter( NullFormatter() )
             
             # Compute the positions of major sources and label the images
-            overlay.sources(ax, aa, simVis.SOURCES)
+            overlay.sources(ax, aa, simVis.srcs, label=not args.no_labels)
             
             # Add in the horizon
             overlay.horizon(ax, aa)
             
             # Add lines of constant RA and dec.
-            if config['grid']:
-                if config['coord'] == 'RADec':
+            if not args.no_grid:
+                if not args.topo:
                     overlay.graticule_radec(ax, aa)
                 else:
                     overlay.graticule_azalt(ax, aa)
                     
         plt.show()
         
-        if config['fits'] is not None:
+        if args.fits is not None:
             ## Loop over the images to build up the FITS file
             hdulist = [astrofits.PrimaryHDU(),]
             for img,pol in zip((img1,img2,img3,img4), (lbl1,lbl2,lbl3,lbl4)):
@@ -289,7 +197,7 @@ def main(args):
                 hdu.header['CTYPE1'] = 'RA---SIN'
                 hdu.header['CRPIX1'] = NPIX_SIDE/2+1
                 hdu.header['CDELT1'] = -360.0/NPIX_SIDE/numpy.pi
-                hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi   # pylint:disable=no-member
+                hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi
                 hdu.header['CTYPE2'] = 'DEC--SIN'
                 hdu.header['CRPIX2'] = NPIX_SIDE/2+1
                 hdu.header['CDELT2'] = 360.0/NPIX_SIDE/numpy.pi
@@ -303,12 +211,12 @@ def main(args):
             ## Save the FITS file to disk
             hdulist = astrofits.HDUList(hdulist)
             clobber = False
-            if os.path.exists(config['fits']):
-                yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % config['fits'])
+            if os.path.exists(args.fits):
+                yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % args.fits)
                 if yn not in ('n', 'N'):
                     clobber = True
             try:
-                hdulist.writeto(config['fits'], clobber=clobber)
+                hdulist.writeto(args.fits, clobber=clobber)
             except IOError, e:
                 print "WARNING: FITS image file not saved"
                 
@@ -316,5 +224,34 @@ def main(args):
 
 
 if __name__ == "__main__":
-    numpy.seterr(all='ignore')
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='create images from a FITS-IDI file', 
+        epilog='NOTE:  If both -i/--include and -e/--exclude are specified the include list has priority.', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('filename', type=str, 
+                        help='filename to plot')
+    parser.add_argument('-1', '--freq-start', type=aph.frequency, default='10.0', 
+                        help='first frequency to analyze in MHz')
+    parser.add_argument('-2', '--freq-stop', type=aph.frequency, default='88.0', 
+                        help='last frequency to analyze in MHz')
+    parser.add_argument('-s', '--dataset', type=int, default=-1, 
+                        help='data set to image')
+    parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
+                        help='minimun baseline uvw length to include in lambda at the midpoint frequency')
+    parser.add_argument('-i', '--include', type=aph.csv_int_list, default='all', 
+                        help='comma seperated list of dipoles to include')
+    parser.add_argument('-e', '--exclude', type=aph.csv_int_list, default='none', 
+                        help='comma seperated list of dipoles to exclude')
+    parser.add_argument('-t', '--topo', action='store_true', 
+                        help='display an az/el grid instead of a RA/Dec grid')
+    parser.add_argument('-u', '--utc', action='store_true', 
+                        help='display the time as UTC, instead of LST')
+    parser.add_argument('-n', '--no-labels', action='store_true', 
+                        help='disable source and grid labels')
+    parser.add_argument('-g', '--no-grid', action='store_true', 
+                        help='disable the coordinate grid')
+    parser.add_argument('-f', '--fits', type=str, 
+                        help='save the images to the specified FITS image file')
+    args = parser.parse_args()
+    main(args)

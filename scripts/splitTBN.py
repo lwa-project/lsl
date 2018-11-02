@@ -5,69 +5,12 @@ import os
 import sys
 import math
 import time
-import getopt
+import argparse
 from datetime import datetime
 
 from lsl.reader import tbn
 from lsl.common.progress import ProgressBar
-
-
-def usage(exitCode=None):
-    print """splitTBN.py - split a TBN file containing multiple seconds into
-several files
-
-Usage: splitTBN.py [OPTIONS] file
-
-Options:
--h, --help             Display this help information
--c, --count            Number of seconds to keep
--o, --offset           Number of seconds to skip before splitting
--d, --date             Label the split files with a date rather than a 
-                       sequence number
--r, --recurvsive       Recursively split the file
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['offset'] = 0
-    config['count'] = 0
-    config['date'] = False
-    config['recursive'] = False
-    
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hc:o:dr", ["help", "count=", "offset=", "date", "recursive"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-c', '--count'):
-            config['count'] = float(value)
-        elif opt in ('-o', '--offset'):
-            config['offset'] = float(value)
-        elif opt in ('-d', '--date'):
-            config['date'] = True
-        elif opt in ('-r', '--recursive'):
-            config['recursive'] = True
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = arg
-    
-    # Return configuration
-    return config
+from lsl.misc import parser as aph
 
 
 def fileSplitFunction(fhIn, fhOut, nCaptures, nAntpols):
@@ -89,8 +32,7 @@ def fileSplitFunction(fhIn, fhOut, nCaptures, nAntpols):
 
 
 def main(args):
-    config = parseConfig(args)
-    filename = config['args'][0]
+    filename = args.filename
     
     sizeB = os.path.getsize(filename)
     
@@ -108,15 +50,15 @@ def main(args):
     print "Sample Rate: %.2f kHz" % (sample_rate/1000.0)
     print "==="
 
-    if config['count'] > 0:
-        nCaptures = config['count'] * sample_rate / 512
+    if args.count > 0:
+        nCaptures = args.count * sample_rate / 512
     else:
-        nCaptures -= config['offset'] * sample_rate / 512
-        config['count'] = nCaptures * 512 / sample_rate
-    nSkip = int(config['offset'] * sample_rate / 512)
+        nCaptures -= args.offset * sample_rate / 512
+        args.count = nCaptures * 512 / sample_rate
+    nSkip = int(args.offset * sample_rate / 512)
 
-    print "Seconds to Skip:  %.2f (%i captures)" % (config['offset'], nSkip)
-    print "Seconds to Split: %.2f (%i captures)" % (config['count'], nCaptures)
+    print "Seconds to Skip:  %.2f (%i captures)" % (args.offset, nSkip)
+    print "Seconds to Split: %.2f (%i captures)" % (args.count, nCaptures)
 
     # Make sure that the first frame in the file is the first frame if a capture 
     # (stand 1, pol 0).  If not, read in as many frames as necessary to get to 
@@ -141,22 +83,25 @@ def main(args):
             
     nFramesRemaining = (sizeB - fh.tell()) / tbn.FRAME_SIZE
     nRecursions = int(nFramesRemaining / (nCaptures*(nFramesX+nFramesY)))
-    if not config['recursive']:
+    if not args.recursive:
         nRecursions = 1
         
     scale = int(math.log10(nRecursions)) + 1
     ifString = "Working on #%%%ii of %i (%%s)" % (scale, nRecursions)
     
     for r in xrange(nRecursions):
-        if config['date']:
+        if args.date:
             filePos = fh.tell()
             junkFrame = tbn.read_frame(fh)
             fh.seek(filePos)
             
-            dt = datetime.utcfromtimestamp(junkFrame.get_time())
+            dt = datetime.utcfromtimestamp(sum(junkFrame.time))
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
-            captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], config['count'])
+            captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count, scale)
+            captFilename = captFilename % r
+            if not args.recursive:
+                captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count)
             
         print ifString % (r+1, captFilename)
         
@@ -167,8 +112,23 @@ def main(args):
         t1 = time.time()
         print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0))
     fh.close()
-    
-    
+
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='split a TBN file into several files', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('filename', type=str, 
+                        help='filename to split')
+    parser.add_argument('-c', '--count', type=aph.positive_float, default=10.0, 
+                        help='number of seconds to keep')
+    parser.add_argument('-o', '--offset', type=aph.positive_or_zero_float, default=0.0, 
+                        help='number of seconds to skip before splitting')
+    parser.add_argument('-d', '--date', action='store_true', 
+                        help='label the split files with a date rather than a sequence number')
+    parser.add_argument('-r', '--recursive', action='store_true', 
+                        help='recursively split the file')
+    args = parser.parse_args()
+    main(args)
+    

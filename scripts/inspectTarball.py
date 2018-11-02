@@ -4,6 +4,7 @@
 import sys
 import pytz
 import getopt
+import argparse
 
 from datetime import datetime, timedelta
 
@@ -47,7 +48,7 @@ def main(args):
     observer = site.get_observer()
     
     # Filenames in an easier format
-    inputTGZ  = args[0]
+    inputTGZ  = args.filename
     
     # Parse the input file and get the dates of the observations.  Be default 
     # this is for LWA1 but we switch over to LWA-SV if an error occurs.
@@ -182,5 +183,12 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='display information about an LWA metadata tarball', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument('filename', type=str, 
+                        help='metadata file to display')
+    args = parser.parse_args()
+    main(args)
     

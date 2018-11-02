@@ -3,103 +3,19 @@
 
 import sys
 import numpy
-import getopt
+import argparse
 
 from lsl import astro
 from lsl.imaging import utils
 from lsl.common.progress import ProgressBar
+from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 
 
-def usage(exitCode=None):
-    print """possm.py - Create AIPS POSSM style plots of FITS IDI files
-
-Usage: possm.py [OPTIONS] file
-
-Options:
--h, --help             Display this help information
--1, --freq-start       First frequency to image in MHz (Default = 10 MHz)
--2, --freq-stop        Last frequency to image in MHz (Default = 88 MHz)
--s, --dataset          Data set to image (Default = All)
--m, --uv-min           Minimun baseline uvw length to include 
-                       (Default = 0 lambda at midpoint frequency)
--i, --include          Comma seperated list of dipoles to include 
-                       (Default = All)
--e, --exclude          Comma seperated list of dipoles to exclude
-                       (Default = None)
--f, --frequency        Label the channels in frequency rather than channel
-                       number (Default = no, use channel number)
--l, --log              Use a log scale for the visbility amplitudes
-                       (Default = no, use linear)
-
-NOTE:  If both -i/--include and -e/--exclude are specified the include list
-    has priority.
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['freq1'] = 10e6
-    config['freq2'] = 88e6
-    config['dataset'] = 0
-    config['min_uv'] = 0.0
-    config['include'] = None
-    config['exclude'] = None
-    config['labelFreq'] = False
-    config['ampLog'] = False
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "h1:2:s:m:i:e:fl", ["help", "freq-start=", "freq-stop=", "dataset=", "uv-min=", "include=", "exclude=", "frequency", "log"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-1', '--freq-start'):
-            config['freq1'] = float(value)*1e6
-        elif opt in ('-2', '--freq-stop'):
-            config['freq2'] = float(value)*1e6
-        elif opt in ('-s', '--dataset'):
-            config['dataset'] = int(value)
-        elif opt in ('-m', '--uv-min'):
-            config['min_uv'] = float(value)
-        elif opt in ('-i', '--include'):
-            config['include'] = [int(v) for v in value.split(',')]
-        elif opt in ('-e', '--exclude'):
-            config['exclude'] = [int(v) for v in value.split(',')]
-        elif opt in ('-f', '--frequency'):
-            config['labelFreq'] = True
-        elif opt in ('-l', '--log'):
-            config['ampLog'] = True
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = arg
-    
-    # Return configuration
-    return config
-
-
 def main(args):
-    # Parse the command line
-    config = parseConfig(args)
-    
     # Grab the filename
-    filename = config['args'][0]
+    filename = args.filename
     
     idi = utils.CorrelatedData(filename)
     aa = idi.get_antennaarray()
@@ -121,28 +37,28 @@ def main(args):
     print "Reading in FITS IDI data"
     nSets = idi.integration_count
     for set in range(1, nSets+1):
-        if config['dataset'] != 0 and config['dataset'] != set:
+        if args.dataset != -1 and args.dataset != set:
             continue
             
         print "Set #%i of %i" % (set, nSets)
-        dataDict = idi.get_data_set(set, min_uv=config['min_uv'])
+        dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Prune out what needs to go
-        if config['include'] is not None or config['exclude'] is not None:
+        if args.include != 'all' or args.exclude != 'none':
             print "    Processing include/exclude lists"
             dataDict = dataDict.get_antenna_subset(include=config['include'], 
                                                    exclude=config['exclude'], 
                                                    indicies=False)
             
             ## Report
-            for pol in dataDict.pols:   # pylint:disable=no-member
+            for pol in dataDict.pols:
                 print "        %s now has %i baselines" % (pol, len(dataDict.baselines))
                 
         # Pull out the right channels
-        toWork = numpy.where( (freq >= config['freq1']) & (freq <= config['freq2']) )[0]
+        toWork = numpy.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
-            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (config['freq1']/1e6, config['freq2']/1e6))
-        if config['labelFreq']:
+            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
+        if args.frequency:
             xValues = freq[toWork]/1e6
             xLabel = 'Frequency [MHz]'
         else:
@@ -170,7 +86,7 @@ def main(args):
                     break
 
                 amp = numpy.abs(vis)
-                if config['ampLog']:
+                if args.log:
                     amp = numpy.log10(amp)
                 phs = numpy.angle(vis)*180/numpy.pi
 
@@ -190,7 +106,7 @@ def main(args):
                 ax.set_title('%i - %i' % (stnd1, stnd2))
                 if j % 5 == 0:
                     ax.set_xlabel(xLabel)
-                    ax.set_ylabel('%sAmp' % '' 'Log ' if config['ampLog'] else '')
+                    ax.set_ylabel('%sAmp' % '' 'Log ' if args.log else '')
                     
                 pb.inc(amount=1)
                 if pb.amount != 0 and pb.amount % 10 == 0:
@@ -205,5 +121,28 @@ def main(args):
     
 
 if __name__ == "__main__":
-    numpy.seterr(all='ignore')
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='create AIPS POSSM style plots of a FITS IDI file', 
+        epilog='NOTE:  If both -i/--include and -e/--exclude are specified the include list has priority.', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('filename', type=str, 
+                        help='filename to plot')
+    parser.add_argument('-1', '--freq-start', type=aph.frequency, default='10.0', 
+                        help='first frequency to analyze in MHz')
+    parser.add_argument('-2', '--freq-stop', type=aph.frequency, default='88.0', 
+                        help='last frequency to analyze in MHz')
+    parser.add_argument('-s', '--dataset', type=int, default=-1, 
+                        help='data set to image')
+    parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
+                        help='minimun baseline uvw length to include in lambda at the midpoint frequency')
+    parser.add_argument('-i', '--include', type=aph.csv_int_list, default='all', 
+                        help='comma seperated list of dipoles to include')
+    parser.add_argument('-e', '--exclude', type=aph.csv_int_list, default='none', 
+                        help='comma seperated list of dipoles to exclude')
+    parser.add_argument('-f', '--frequency', action='store_true', 
+                        help='label the channels in frequency rather than channel')
+    parser.add_argument('-l', '--log', action='store_true', 
+                        help='use a log scale for the visbility amplitudes')
+    args = parser.parse_args()
+    main(args)

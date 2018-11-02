@@ -4,7 +4,7 @@
 import os
 import sys
 import time
-import getopt
+import argparse
 from datetime import datetime, timedelta
 
 from lsl.common.mcs import mjdmpm_to_datetime, mode_to_string
@@ -27,73 +27,10 @@ def obsComp(x, y):
         return 0
 
 
-def usage(exitCode=None):
-    print """splitSession.py - Given a MCS metadata tarball and a session data file, 
-split the data file into individual observations.
-
-Usage:
-splitSession.py [OPTIONS] MetaData DataFile
-
-Options:
--h, --help             Display this help information
--l, --list             List source names
--s, --source           Split by source name instead of observation 
-                       ID
--f, --force            Force overwritting of existing split files
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['list'] = False
-    config['source'] = False
-    config['force'] = False
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, args = getopt.getopt(args, "hlsf", ["help", "list", "source", "force"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-l', '--list'):
-            config['list'] = True
-        elif opt in ('-s', '--source'):
-            config['source'] = True
-        elif opt in ('-f', '--force'):
-            config['force'] = True
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = args
-    
-    # Validate
-    if len(config['args']) != 2:
-        raise RuntimeError("Must specify both a metadata and data file")
-
-    # Return configuration
-    return config
-
-
 def main(args):
     # Get the file names
-    config = parseConfig(args)
-    
-    meta = config['args'][0]
-    data = config['args'][1]
+    meta = args.metadata
+    data = args.filename
 
     # Get all observations and their start times
     try:
@@ -256,7 +193,7 @@ def main(args):
     print " "
 
     # Split
-    if not config['list']:
+    if not args.list:
         for i in xrange(len(tStart)):
             if oDetails[i]['b'] < 0:
                 continue
@@ -265,7 +202,7 @@ def main(args):
             print "Working on Observation %i" % (i+1,)
             
             ## Create the output name
-            if config['source']:
+            if args.source:
                 outname = '%s_%i_%s.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['t'].replace(' ', '').replace('/','').replace('&','and'))
             else:
                 outname = '%s_%i_%i.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
@@ -289,7 +226,7 @@ def main(args):
 
             ## Split
             if os.path.exists(outname):
-                if not config['force']:
+                if not args.force:
                     yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n] " % outname)
                 else:
                     yn = 'y'
@@ -316,5 +253,21 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='given a MCS metadata tarball and a session data file, split the data file into individual observations', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('metadata', type=str, 
+                        help='metadata file for the observation')
+    parser.add_argument('filename', type=str, 
+                        help='data file for the observation')
+    parser.add_argument('-l', '--list', action='store_true', 
+                        help='list source names')
+    parser.add_argument('-s', '--source', action='store_true', 
+                        help='split by source name instead of observation ID')
+    parser.add_argument('-f', '--force', action='store_true', 
+                        help='force overwritting of existing split files')
+    args = parser.parse_args()
+
+    main(args)
     

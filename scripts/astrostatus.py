@@ -6,7 +6,7 @@
 import math
 import time
 import curses
-import optparse
+import argparse
 
 from lsl import astro
 from lsl import transform
@@ -24,25 +24,25 @@ def restorescreen():
 
 
 if __name__ == '__main__':
-    usage = "astrostatus.py [options]"
-
-    # check command line
-    parser = optparse.OptionParser(usage = usage)
-    parser.add_option("-s", "--site", action = "store", type = "string",
-                    dest = "site", default = 'LWA-1', help = "site name (default LWA-1)")
-    (opts, args) = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('-s', '--site', type=str, default='LWA-1',
+                        help='site name')
+    args = parser.parse_args()
     
     # setup transform objects
-    opts['site'] = opts['site'].lower().replace('-', '')
-    if opts['site'] == 'lwa1':
+    site = args.site.lower().replace('-', '')
+    if site == 'lwa1':
         station = stations.lwa1
-    elif opts['site'] == 'lwasv':
+    elif site == 'lwasv':
         station = stations.lwasv
-    elif opts['site'] == 'ovrolwa':
+    elif site == 'ovrolwa':
         station = stations.lwa1
+        station.name = 'OVRO-LWA'
         station.lat, station.lon, station.elev = ('37.2397808', '-118.2816819', 1183.4839)
     else:
-        raise RuntimeError("Unknown site name: %s" % opts['site'])
+        raise RuntimeError("Unknown site name: %s" % site)
     site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)
     
     sun_pos = transform.PlanetaryPosition('Sun')

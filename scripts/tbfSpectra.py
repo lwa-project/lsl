@@ -8,81 +8,14 @@ import sys
 import math
 import ephem
 import numpy
-import getopt
+import argparse
 
 from lsl.reader import tbf, errors
 from lsl.common import stations, metabundleADP
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
+from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
-
-
-def usage(exitCode=None):
-    print """tbfSpectra.py - Read in TBF files and create a collection of 
-time-averaged spectra.
-
-Usage: tbfSpectra.py [OPTIONS] file
-
-Options:
--h, --help                  Display this help information
--m, --metadata              Name of SSMIF or metadata tarball file to use for 
-                            mappings
--q, --quiet                 Run tbfSpectra in silent mode
--k, --keep                  Only display the following comma-seperated list of 
-                            stands (default = show all 260 dual pol)
--o, --output                Output file name for spectra image
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    # Command line flags - default values
-    config['metadata'] = ''
-    config['applyGain'] = False
-    config['output'] = None
-    config['verbose'] = True
-    config['keep'] = None
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, args = getopt.getopt(args, "hm:qo:k:", ["help", "metadata=", "quiet", "output=", "keep="])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-m', '--metadata'):
-            config['metadata'] = value
-        elif opt in ('-q', '--quiet'):
-            config['verbose'] = False
-        elif opt in ('-o', '--output'):
-            config['output'] = value
-        elif opt in ('-k', '--keep'):
-            config['keep'] = []
-            for entry in value.split(','):
-                if entry.find('-') != -1:
-                    start, stop = entry.split('-', 1)
-                    config['keep'].extend( range(int(start), int(stop)+1) )
-                else:
-                    config['keep'].append( int(entry) )
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = args
-    
-    # Return configuration
-    return config
 
 
 def bestFreqUnits(freq):
@@ -112,28 +45,25 @@ def bestFreqUnits(freq):
 
 
 def main(args):
-    # Parse command line options
-    config = parseOptions(args)
-    
     # Setup the LWA station information
-    if config['metadata'] != '':
+    if args.metadata is not None:
         try:
-            station = stations.parse_ssmif(config['metadata'])
+            station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundleADP.get_station(config['metadata'], apply_sdm=True)
+            station = metabundleADP.get_station(args.metadata, apply_sdm=True)
     else:
         station = stations.lwasv
     antennas = station.antennas
     
-    fh = open(config['args'][0], 'rb')
-    nFrames = os.path.getsize(config['args'][0]) / tbf.FRAME_SIZE
+    fh = open(args.filename, 'rb')
+    nFrames = os.path.getsize(args.filename) / tbf.FRAME_SIZE
     antpols = len(antennas)
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
     junkFrame = tbf.read_frame(fh)
     fh.seek(0)
-    beginDate = ephem.Date(unix_to_utcjd(junkFrame.get_time()) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(sum(junkFrame.time)) - DJD_OFFSET)
     
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
@@ -160,7 +90,7 @@ def main(args):
     freq *= 25e3
     
     # File summary
-    print "Filename: %s" % config['args'][0]
+    print "Filename: %s" % args.filename
     print "Date of First Frame: %s" % str(beginDate)
     print "Frames per Observation: %i" % nFramesPerObs
     print "Channel Count: %i" % nchannels
@@ -205,7 +135,7 @@ def main(args):
     spec = spec.T
     
     # Apply the cable loss corrections, if requested
-    if config['applyGain']:
+    if False:
         for s in range(spec.shape[0]):
             currGain = antennas[s].cable.gain(freq)
             spec[s,:] /= currGain
@@ -214,16 +144,16 @@ def main(args):
     freq, units = bestFreqUnits(freq)
     
     # Deal with the `keep` options
-    if config['keep'] is None:
+    if args.keep == 'all':
         antpolsDisp = int(numpy.ceil(antpols/20))
         js = [i for i in xrange(antpols)]
     else:
-        antpolsDisp = int(numpy.ceil(len(config['keep'])*2/20))
+        antpolsDisp = int(numpy.ceil(len(args.keep)*2/20))
         if antpolsDisp < 1:
             antpolsDisp = 1
             
         js = []
-        for k in config['keep']:
+        for k in args.keep:
             for i,ant in enumerate(antennas):
                 if ant.stand.id == k:
                     js.append(i)
@@ -257,8 +187,8 @@ def main(args):
             ax.set_ylim([-10, 30])
             
         # Save spectra image if requested
-        if config['output'] is not None:
-            base, ext = os.path.splitext(config['output'])
+        if args.output is not None:
+            base, ext = os.path.splitext(args.output)
             outFigure = "%s-%02i%s" % (base, i+1, ext)
             fig.savefig(outFigure)
             
@@ -269,5 +199,20 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+            description='read in a TBF file and create a collection of time-averaged spectra', 
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            )
+    parser.add_argument('filename', type=str, 
+                        help='filename to process')
+    parser.add_argument('-m', '--metadata', type=str, 
+                        help='name of the SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
+                        help='run %(prog)s in silent mode')
+    parser.add_argument('-k', '--keep', type=aph.csv_int_list, default='all', 
+                        help='only display the following comma-seperated list of stands')
+    parser.add_argument('-o', '--output', type=str, 
+                        help='output file name for spectra image')
+    args = parser.parse_args()
+    main(args)
     

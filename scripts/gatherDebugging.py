@@ -10,6 +10,7 @@ debugging and install issues.
 import os
 import re
 import sys
+import argparse
 import platform
 import warnings
 import subprocess
@@ -40,7 +41,7 @@ def main(args):
     #
     
     ## Required
-    for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
+    for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy', 'pytz'):
         try:
             exec "import %s" % mod
         except ImportError, e:
@@ -270,5 +271,10 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='gather information about the Python interpreter, modules, C libraries, numpy installation, and LSL installation', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    args = parser.parse_args()
+    main(args)
 

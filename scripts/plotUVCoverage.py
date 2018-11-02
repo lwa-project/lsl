@@ -9,93 +9,30 @@ beam.
 import sys
 import math
 import numpy
-import getopt
+import argparse
 
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import uvutil
+from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter,  MaxNLocator
 
 
-def usage(exitCode=None):
-    print """plotUVCoverage.py - Plot the UV-plane converage of LWA1.
-
-Usage: plotUVCoverage.py [OPTIONS]
-
-Options:
--h, --help             Display this help information
--s, --lwasv            Use LWA-SV instead of LWA1
--f, --frequency        Frequency in MHz to compute the uv coverage (default 
-                       50 MHz)
--m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                       mappings
--o, --output           Filename to save the plot to (default = do not save)
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    # Command line flags - default values
-    config['site'] = 'lwa1'
-    config['metadata'] = ''
-    config['freq'] = 50e6
-    config['output'] = None
-    config['args'] = []
-
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hsf:m:o:", ["help", "lwasv", "frequency=", "metadata=", "output="])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-s', '--lwasv'):
-            config['site'] = 'lwasv'
-        elif opt in ('-f', '--frequency'):
-            config['freq'] = float(value)*1e6
-        elif opt in ('-m', '--metadata'):
-            config['metadata'] = value
-        elif opt in ('-o', '--output'):
-            config['output'] = value
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = arg
-
-    # Return configuration
-    return config
-
-
 def main(args):
-    config = parseOptions(args)
-    
     # Setup the LWA station information
-    if config['metadata'] != '':
+    if args.metadata is not None:
         try:
-            station = stations.parse_ssmif(config['metadata'])
+            station = stations.parse_ssmif(args.metadata)
         except ValueError:
             try:
-                station = metabundle.get_station(config['metadata'], apply_sdm=True)
+                station = metabundle.get_station(args.metadata, apply_sdm=True)
             except:
-                station = metabundleADP.get_station(config['metadata'], apply_sdm=True)
-    elif config['site'] == 'lwa1':
-        station = stations.lwa1
-    elif config['site'] == 'lwasv':
+                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwasv:
         station = stations.lwasv
     else:
-        raise RuntimeError("Unknown site name: %s" % config['site'])
+        station = stations.lwa1
         
     antennas = []
     for ant in station.antennas[0::2]:
@@ -106,7 +43,7 @@ def main(args):
     HA = 0.0
     dec = station.lat*180.0/math.pi
     
-    uvw = uvutil.compute_uvw(antennas, HA=HA, dec=dec, freq=config['freq'])
+    uvw = uvutil.compute_uvw(antennas, HA=HA, dec=dec, freq=args.frequency)
     uvw = numpy.squeeze(uvw[:,:,0])
     
     # Coursely grid the uv data to come up with a rough beam
@@ -160,7 +97,11 @@ def main(args):
     rad = numpy.zeros(uvw.shape[0])
     for i in range(rad.shape[0]):
         rad[i] = math.sqrt( uvw[i,0]**2.0 + uvw[i,1]**2.0 + uvw[i,2]**2.0 )
-    ax4.hist(rad, 20)
+    try:
+        ax4.hist(rad, 20)
+    except TypeError:
+        ## I don't know why this happens
+        pass
     ax4.set_xlabel('uvw Radius [$\lambda$]')
     ax4.set_ylabel('Baselines')
     
@@ -185,9 +126,23 @@ def main(args):
     
     # Show n' save
     plt.show()
-    if config['output'] is not None:
-        fig.savefig(config['output'])
+    if args.output is not None:
+        fig.savefig(args.output)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='plot the UV-plane converage of an LWA station', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('-s', '--lwasv', action='store_true', 
+                        help='use LWA-SV instead of LWA1')
+    parser.add_argument('-f', '--frequency', type=aph.frequency, default='50.0', 
+                        help='frequency in MHz to compute the uv coverage')
+    parser.add_argument('-m', '--metadata', type=str, 
+                        help='name of the SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-o', '--output', type=str, 
+                        help='filename to save the plot to')
+    args = parser.parse_args()
+    main(args)
+    

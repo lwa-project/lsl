@@ -6,7 +6,7 @@ of the site."""
 
 import sys
 import numpy
-import getopt
+import argparse
 
 from lsl.common import stations, metabundle, metabundleADP
 
@@ -14,92 +14,23 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
 
-def usage(exitCode=None):
-    print """plotStands.py - Plot the x, y, and z locations of stands at 
-LWA1.  Also, mark and label particular stands, if requested.
-
-Usage: plotStands.py [OPTIONS] [stand1 [stand2 [...]]]
-
-Options:
--h, --help             Display this help information
--s, --lwasv            Use LWA-SV instead of LWA1
--m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                       mappings
--l, --label            Label the stands with their ID numbers
-                       (default = No)
--v, --verbose          Run plotStands in vebose mode
--o, --output           Filename to save the plot to (default = do not save)
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    
-# Command line flags - default values
-    config['site'] = 'lwa1'
-    config['metadata'] = ''
-    config['label'] = False
-    config['verbose'] = False
-    config['output'] = None
-    config['args'] = []
-
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hvslm:o:", ["help", "verbose", "lwasv", "label", "metadata=", "output="])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-v', '--verbose'):
-            config['verbose'] = True
-        elif opt in ('-s', '--lwasv'):
-            config['site'] = 'lwasv'
-        elif opt in ('-l', '--label'):
-            config['label'] = True
-        elif opt in ('-m', '--metadata'):
-            config['metadata'] = value
-        elif opt in ('-o', '--output'):
-            config['output'] = value
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = [int(i) for i in arg]
-
-    # Return configuration
-    return config
-
-
 def main(args):
     # Parse command line
-    config = parseOptions(args)
-    toMark = numpy.array(config['args'])-1
+    toMark = numpy.array(args.stand)-1
     
     # Setup the LWA station information
-    if config['metadata'] != '':
+    if args.metadata is not None:
         try:
-            station = stations.parse_ssmif(config['metadata'])
+            station = stations.parse_ssmif(args.metadata)
         except ValueError:
             try:
-                station = metabundle.get_station(config['metadata'], apply_sdm=True)
+                station = metabundle.get_station(args.metadata, apply_sdm=True)
             except:
-                station = metabundleADP.get_station(config['metadata'], apply_sdm=True)
-    elif config['site'] == 'lwa1':
-        station = stations.lwa1
-    elif config['site'] == 'lwasv':
+                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwasv:
         station = stations.lwasv
     else:
-        raise RuntimeError("Unknown site name: %s" % config['site'])
+        station = stations.lwa1
     stands = station.stands
     stands.sort()
 
@@ -144,7 +75,7 @@ def main(args):
             ax2.plot(data[toMark[i],0], data[toMark[i],2], marker='x', linestyle='x', color='black')
             ax3.plot(data[toMark[i],2], data[toMark[i],1], marker='x', linestyle='x', color='black')
             
-            if config['label']:
+            if args.label:
                 ax1.annotate('%i' % (toMark[i]+1), xy=(data[toMark[i],0], data[toMark[i],1]), xytext=(data[toMark[i],0]+1, data[toMark[i],1]+1))
                 
     # Add and elevation colorbar to the right-hand side of the figure
@@ -158,9 +89,27 @@ def main(args):
     
     # Show n' save
     plt.show()
-    if config['output'] is not None:
-        fig.savefig('stands.png')
+    if args.output is not None:
+        fig.savefig(args.output)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='plot the x, y, and z locations of stands at an LWA station', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('stand', type=int, nargs='*', 
+                        help='stand number to mark')
+    parser.add_argument('-s', '--lwasv', action='store_true', 
+                        help='use LWA-SV instead of LWA1')
+    parser.add_argument('-m', '--metadata', type=str, 
+                        help='name of the SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-l', '--label', action='store_true', 
+                        help='label the specified stands with their ID numbers')
+    parser.add_argument('-v', '--verbose', action='store_true', 
+                        help='run %(prog)s in verbose mode')
+    parser.add_argument('-o', '--output', type=str, 
+                        help='filename to save the plot to')
+    args = parser.parse_args()
+    main(args)
+    

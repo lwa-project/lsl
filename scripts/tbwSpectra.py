@@ -8,122 +8,41 @@ import sys
 import math
 import numpy
 import ephem
-import getopt
+import argparse
 
 from lsl.common import stations, metabundle
 from lsl.reader.ldp import LWA1DataFile
 from lsl.correlator import fx as fxc
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
+from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 
 
-def usage(exitCode=None):
-    print """tbwSpectra.py - Read in TBW files and create a collection of 
-time-averaged spectra.
-
-Usage: tbwSpectra.py [OPTIONS] file
-
-Options:
--h, --help                  Display this help information
--m, --metadata              Name of SSMIF or metadata tarball file to use for 
-                            mappings
--t, --bartlett              Apply a Bartlett window to the data
--b, --blackman              Apply a Blackman window to the data
--n, --hanning               Apply a Hanning window to the data
--q, --quiet                 Run tbwSpectra in silent mode
--l, --fft-length            Set FFT length (default = 4096)
--g, --gain-correct          Correct signals for the cable losses
--s, --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
--o, --output                Output file name for spectra image
-"""
-    
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    # Command line flags - default values
-    config['metadata'] = ''
-    config['LFFT'] = 4096
-    config['maxFrames'] = 30000*260
-    config['window'] = fxc.null_window
-    config['applyGain'] = False
-    config['stack'] = False
-    config['output'] = None
-    config['verbose'] = True
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, args = getopt.getopt(args, "hm:qtbnl:gso:", ["help", "metadata=", "quiet", "bartlett", "blackman", "hanning", "fft-length=", "gain-correct", "stack", "output="])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-        
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-m', '--metadata'):
-            config['metadata'] = value
-        elif opt in ('-q', '--quiet'):
-            config['verbose'] = False
-        elif opt in ('-t', '--bartlett'):
-            config['window'] = numpy.bartlett
-        elif opt in ('-b', '--blackman'):
-            config['window'] = numpy.blackman
-        elif opt in ('-n', '--hanning'):
-            config['window'] = numpy.hanning
-        elif opt in ('-l', '--fft-length'):
-            config['LFFT'] = int(value)
-        elif opt in ('-g', '--gain-correct'):
-            config['applyGain'] = True
-        elif opt in ('-s', '--stack'):
-            config['stack'] = True
-        elif opt in ('-o', '--output'):
-            config['output'] = value
-        else:
-            assert False
-            
-    # Add in arguments
-    config['args'] = args
-    
-    # Return configuration
-    return config
-
-
 def main(args):
-    # Parse command line options
-    config = parseOptions(args)
-    
     # Setup the LWA station information
-    if config['metadata'] != '':
+    if args.metadata is not None:
         try:
-            station = stations.parse_ssmif(config['metadata'])
+            station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundle.get_station(config['metadata'], apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     else:
         station = stations.lwa1
     antennas = station.antennas
     
     # Length of the FFT
-    LFFT = config['LFFT']
+    LFFT = args.fft_length
     
     # Make sure that the file chunk size contains is an integer multiple
     # of the FFT length so that no data gets dropped
-    maxFrames = int(config['maxFrames']/float(LFFT))*LFFT
+    maxFrames = int((30000*260)/float(LFFT))*LFFT
     # It seems like that would be a good idea, however...  TBW data comes one
     # capture at a time so doing something like this actually truncates data 
     # from the last set of stands for the first integration.  So, we really 
     # should stick with
-    maxFrames = config['maxFrames']
+    maxFrames = (30000*260)
     
-    idf = LWA1DataFile(config['args'][0])
+    idf = LWA1DataFile(args.filename)
     
     nFrames = idf.get_info('nFrames')
     srate = idf.get_info('sample_rate')
@@ -142,7 +61,7 @@ def main(args):
     beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
     
     # File summary
-    print "Filename: %s" % config['args'][0]
+    print "Filename: %s" % args.filename
     print "Date of First Frame: %s" % str(beginDate)
     print "Ant/Pols: %i" % antpols
     print "Sample Length: %i-bit" % dataBits
@@ -150,6 +69,16 @@ def main(args):
     print "Chunks: %i" % nChunks
     print "==="
     
+    # Setup the window function to use
+    if args.bartlett:
+        window = numpy.bartlett
+    elif args.blackman:
+        window = numpy.blackman
+    elif args.hanning:
+        window = numpy.hanning
+    else:
+        window = fxc.null_window
+        
     # Master loop over all of the file chunks
     nChunks = 1
     masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
@@ -161,7 +90,7 @@ def main(args):
     # the total number of frames read.  This is needed to keep the averages correct.
     # NB:  The weighting is the same for the x and y polarizations because of how 
     # the data are packed in TBW
-    freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=config['window'], verbose=config['verbose'])
+    freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, verbose=args.verbose)
     for stand in xrange(masterSpectra.shape[1]):
         masterSpectra[0,stand,:] = tempSpec[stand,:]
         masterWeight[0,stand,:] = int(readT*srate/LFFT)
@@ -170,7 +99,7 @@ def main(args):
     del(data)
     
     # Apply the cable loss corrections, if requested
-    if config['applyGain']:
+    if args.gain_correct:
         for s in xrange(masterSpectra.shape[1]):
             currGain = antennas[s].cable.gain(freq)
             for c in xrange(masterSpectra.shape[0]):
@@ -181,14 +110,14 @@ def main(args):
     spec = masterSpectra.mean(axis=0)
     
     # The plots:  This is setup for the current configuration of 20 antpols
-    if config['applyGain'] & config['stack']:
+    if args.gain_correct & args.stack:
         # Stacked spectra - only if cable loss corrections are to be applied
         colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'black', 
             'purple', 'salmon', 'olive', 'maroon', 'saddlebrown', 'yellowgreen', 
             'teal', 'steelblue', 'seagreen', 'slategray', 'mediumorchid', 'lime', 
             'dodgerblue', 'darkorange']
             
-        for f in xrange(numpy.ceil(antpols/20)):
+        for f in xrange(int(numpy.ceil(antpols/20.))):
             fig = plt.figure()
             ax1 = fig.add_subplot(1, 1, 1)
             for i in xrange(f*20, f*20+20):
@@ -238,8 +167,8 @@ def main(args):
                 ax.set_ylim([10,80])
                 
             # Save spectra image if requested
-            if config['output'] is not None:
-                base, ext = os.path.splitext(config['output'])
+            if args.output is not None:
+                base, ext = os.path.splitext(args.output)
                 outFigure = "%s-%02i%s" % (base, f+1, ext)
                 fig.savefig(outFigure)
                 
@@ -250,5 +179,31 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+            description='read in a TBW file and create a collection of time-averaged spectra', 
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            )
+    parser.add_argument('filename', type=str, 
+                        help='filename to process')
+    parser.add_argument('-m', '--metadata', type=str, 
+                        help='name of the SSMIF or metadata tarball file to use for mappings')
+    wgroup = parser.add_mutually_exclusive_group(required=False)
+    wgroup.add_argument('-t', '--bartlett', action='store_true', 
+                        help='apply a Bartlett window to the data')
+    wgroup.add_argument('-b', '--blackman', action='store_true', 
+                        help='apply a Blackman window to the data')
+    wgroup.add_argument('-n', '--hanning', action='store_true', 
+                        help='apply a Hanning window to the data')
+    parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
+                        help='run %(prog)s in silent mode')
+    parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
+                        help='set FFT length')
+    parser.add_argument('-g', '--gain-correct', action='store_true', 
+                        help='correct signals for the cable losses')
+    parser.add_argument('-s', '--stack', action='store_true', 
+                        help="stack spectra in groups of 6 (if '-g' is enabled only)")
+    parser.add_argument('-o', '--output', type=str, 
+                        help='output file name for spectra image')
+    args = parser.parse_args()
+    main(args)
 

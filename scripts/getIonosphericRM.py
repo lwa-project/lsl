@@ -4,121 +4,29 @@
 import sys
 import ephem
 import numpy
-import getopt
+import argparse
 from datetime import datetime
 
 from lsl import astro
 from lsl.common import stations
 from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.misc import ionosphere
-
-
-def usage(exitCode=None):
-    print """getIonosphericRM - Estimate the ionospheric contribution to the RM
-for an observation using the IGS final product and the IGRF.
-
-Usage: getIonosphericRM.py [OPTIONS] RA Dec Start Stop
-
-RA:     J2000 right ascension in HH:MM:SS[.SSS]
-Dec:    J2000 declination in sDD:MM:SS[.SSS]
-Start:  YYYY/MM/DD HH:MM:SS start time in UTC
-Stop:   YYYY/MM/DD HH:MM:SS stop time in UTC
-
-Options:
--h, --help             Display this help information
--s, --lwasv            Calculate for LWA-SV instead of LWA1
--o, --ovro-lwa         Calculate for OVRO-LWA instead of LWA1
--n, --n-samples        Number of samples to take between the start and stop
-                       times (default = 11)
--f, --file             Read MJDs to compute for from a file
--i, --igs              Use the IGS data products (default)
--j, --jpl              Use the JPL data prodcuts
--c, --code             Use the CODE data products
--u, --ustec            Use the USTEC data products
--q, --uqr              Use the high time resolution UQRG data products
-"""
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseConfig(args):
-    config = {}
-    # Command line flags - default values
-    config['site'] = 'lwa1'
-    config['nSamples'] = 11
-    config['mjdFile'] = None
-    config['type'] = 'IGS'
-    config['args'] = []
-    
-    # Read in and process the command line flags
-    try:
-        opts, arg = getopt.getopt(args, "hson:f:ijcuq", ["help", "lwasv", "ovro-lwa", "n-samples", "file=", "igs", "jpl", "code", "ustec", "uqr"])
-    except getopt.GetoptError, err:
-        # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-s', '--lwasv'):
-            config['site'] = 'lwasv'
-        elif opt in ('-o', '--ovro-lwa'):
-            config['site'] = 'ovro'
-        elif opt in ('-n', '--n-samples'):
-            config['nSamples'] = int(value)
-        elif opt in ('-f', '--file'):
-            config['mjdFile'] = value
-        elif opt in ('-i', '--igs'):
-            config['type'] = 'IGS'
-        elif opt in ('-j', '--jpl'):
-            config['type'] = 'JPL'
-        elif opt in ('-c', '--code'):
-            config['type'] = 'CODE'
-        elif opt in ('-u', '--ustec'):
-            config['type'] = 'USTEC'
-        elif opt in ('-q', '--uqr'):
-            config['type'] = 'UQR'
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = arg
-    
-    # Validate
-    if config['mjdFile'] is None:
-        if len(config['args']) != 6:
-            raise RuntimeError("Invalid number of arguments")
-    else:
-        if len(config['args']) != 2:
-            raise RuntimeError("Invalid number of arguments")
-    if config['nSamples'] < 1:
-        raise RuntimeError("Invalid number of samples to generate")
-        
-    # Return configuration
-    return config
+from lsl.misc import parser as aph
 
 
 def main(args):
-    # Parse the command line
-    config = parseConfig(args)
-    
     # Inputs
-    RA = ephem.hours( config['args'][0] )
-    dec = ephem.degrees( config['args'][1] )
-    if config['mjdFile'] is not None:
-        mjdList = numpy.loadtxt(config['mjdFile'])
+    RA = ephem.hours( args.RA )
+    dec = ephem.degrees( args.Dec )
+    if args.file is not None:
+        mjdList = numpy.loadtxt(args.file)
         mjdList = mjdList.ravel()
         
         mjdList = numpy.sort(mjdList)
         
     else:
-        tStart = "%s %s" % (config['args'][2], config['args'][3])
-        tStop = "%s %s" % (config['args'][4], config['args'][5])
+        tStart = "%s %s" % (args.StartDate, args.StartTime)
+        tStop = "%s %s" % (args.StopDate, args.StopTime)
         
         # YYYY/MM/DD HH:MM:SS -> datetime instance
         tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S")
@@ -130,22 +38,34 @@ def main(args):
         mjd,mpm = datetime_to_mjdmpm(tStop)
         mjdStop = mjd + mpm/1000.0/86400.0
         
-        mjdList = numpy.linspace(mjdStart, mjdStop, config['nSamples'])
+        mjdList = numpy.linspace(mjdStart, mjdStop, args.n_samples)
     
     # Setup everthing for computing the position of the source
-    if config['site'] == 'lwa1':
-        site = stations.lwa1
-    elif config['site'] == 'lwasv':
+    if args.lwasv:
         site = stations.lwasv
-    elif config['site'] == 'ovro':
+    elif args.ovro_lwa:
         site = stations.lwa1
         site.lat, site.lon, site.elev = ('37.2397808', '-118.2816819', 1183.4839)
     else:
-        raise RuntimeError("Unknown site: %s" % config['site'])
+        site = stations.lwa1
     obs = site.get_observer()
     bdy = ephem.FixedBody()
     bdy._ra = RA
     bdy._dec = dec
+    
+    # Setup the ionospheric model source
+    if args.igs:
+        mtype = 'IGS'
+    elif args.jpl:
+        mtype = 'JPL'
+    elif args.code:
+        mtype = 'CODE'
+    elif args.ustec:
+        mtype = 'USTEC'
+    elif args.uqr:
+        mtype = 'UQR'
+    else:
+        mtype = 'IGS'
     
     # Go!
     print "%-13s  %-6s  %-6s  %-21s  %-15s" % ("MJD", "Az.", "El.", "DM [pc/cm^3]", "RM [1/m^2]")
@@ -163,7 +83,7 @@ def main(args):
             ippLat, ippLon, ippElv = ionosphere.get_ionospheric_pierce_point(site, az, el)
             
             # Load in the TEC value and the RMS from the IGS final data product
-            tec, rms = ionosphere.get_tec_value(mjd, lat=ippLat, lng=ippLon, includeRMS=True, type=config['type'])
+            tec, rms = ionosphere.get_tec_value(mjd, lat=ippLat, lng=ippLon, include_rms=True, type=mtype)
             tec, rms = tec[0][0], rms[0][0]
             
             # Use the IGRF to compute the ECEF components of the Earth's magnetic field
@@ -172,8 +92,8 @@ def main(args):
             # Rotate the ECEF field into topocentric coordinates so that we can 
             # get the magnetic field along the line of sight
             rot = numpy.array([[ numpy.sin(site.lat)*numpy.cos(site.long), numpy.sin(site.lat)*numpy.sin(site.long), -numpy.cos(site.lat)], 
-                        [-numpy.sin(site.long),                     numpy.cos(site.long),                      0                  ],
-                        [ numpy.cos(site.lat)*numpy.cos(site.long), numpy.cos(site.lat)*numpy.sin(site.long),  numpy.sin(site.lat)]])
+                               [-numpy.sin(site.long),                     numpy.cos(site.long),                      0                  ],
+                               [ numpy.cos(site.lat)*numpy.cos(site.long), numpy.cos(site.lat)*numpy.sin(site.long),  numpy.sin(site.lat)]])
             ## ECEF -> SEZ
             sez = numpy.dot(rot, numpy.array([Bx, By, Bz]))
             ## SEZ -> NEZ
@@ -204,5 +124,42 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description='estimate the ionospheric contribution to the RM for an observation using the IGS final product and the IGRF', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('RA', type=str, 
+                        help='J2000 right ascension in HH:MM:SS[.SSS]')
+    parser.add_argument('Dec', type=str, 
+                        help='J2000 declination in sDD:MM:SS[.SSS]')
+    parser.add_argument('StartDate', type=str, 
+                        help='UTC start date in YYYY/MM/DD')
+    parser.add_argument('StartTime', type=str, 
+                        help='UTC start time in HH:MM:SS')
+    parser.add_argument('StopDate', type=str, 
+                        help='UTC stop date in YYYY/MM/DD')
+    parser.add_argument('StopTime', type=str, 
+                        help='UTC stop time in HH:MM:SS')
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
+                        help='calculate for LWA-SV instead of LWA1')
+    sgroup.add_argument('-o', '--ovro-lwa', action='store_true', 
+                        help='calculate for OVRO-LWA instead of LWA1')
+    parser.add_argument('-n', '--n-samples', type=aph.positive_int, default=11, 
+                        help='number of samples to take between the start and stop times')
+    parser.add_argument('-f', '--file', type=str, 
+                        help='read MJDs to compute for from a file')
+    mgroup = parser.add_mutually_exclusive_group(required=False)
+    mgroup.add_argument('-i', '--igs', action='store_true', 
+                        help='use the IGS data products')               
+    mgroup.add_argument('-j', '--jpl', action='store_true', 
+                        help='use the JPL data products')
+    mgroup.add_argument('-c', '--code', action='store_true', 
+                        help='use the CODE data products')
+    mgroup.add_argument('-u', '--ustec', action='store_true', 
+                        help='use the USTEC data products')
+    mgroup.add_argument('-q', '--uqr', action='store_true', 
+                        help='use the high time resolution UQRG data products')
+    args = parser.parse_args()
+    main(args)
     
