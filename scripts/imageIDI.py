@@ -82,8 +82,8 @@ def main(args):
         # Prune out what needs to go
         if args.include != 'all' or args.exclude != 'none':
             print "    Processing include/exclude lists"
-            dataDict = dataDict.get_antenna_subset(include=config['include'], 
-                                                   exclude=config['exclude'], 
+            dataDict = dataDict.get_antenna_subset(include=args.include, 
+                                                   exclude=args.exclude, 
                                                    indicies=False)
             
             ## Report

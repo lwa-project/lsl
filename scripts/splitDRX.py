@@ -79,7 +79,7 @@ def main(args):
         fh.seek(-drx.FRAME_SIZE, 1)
         
         ## See how far off the current frame is from the target
-        tDiff = ti1 - (ti0 + config['offset']) + tf1 - tf0
+        tDiff = ti1 - (ti0 + args.offset) + tf1 - tf0
         
         ## Half that to come up with a new seek parameter
         tCorr = -tDiff / 2.0
