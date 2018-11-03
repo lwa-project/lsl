@@ -197,7 +197,7 @@ def main(args):
                 hdu.header['CTYPE1'] = 'RA---SIN'
                 hdu.header['CRPIX1'] = NPIX_SIDE/2+1
                 hdu.header['CDELT1'] = -360.0/NPIX_SIDE/numpy.pi
-                hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi
+                hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi	# pylint:disable=no-member
                 hdu.header['CTYPE2'] = 'DEC--SIN'
                 hdu.header['CRPIX2'] = NPIX_SIDE/2+1
                 hdu.header['CDELT2'] = 360.0/NPIX_SIDE/numpy.pi
