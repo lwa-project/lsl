@@ -165,7 +165,7 @@ def main(args):
             ax.yaxis.set_major_formatter( NullFormatter() )
             
             # Compute the positions of major sources and label the images
-            overlay.sources(ax, aa, simVis.srcs, label=not args.no_labels)
+            overlay.sources(ax, aa, simVis.SOURCES, label=not args.no_labels)
             
             # Add in the horizon
             overlay.horizon(ax, aa)

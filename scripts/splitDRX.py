@@ -94,7 +94,7 @@ def main(args):
         fh.seek(cOffset*drx.FRAME_SIZE, 1)
     
     # Update the offset actually used
-    args.offset = t1i - t0i + t1f - t0f
+    args.offset = ti1 - ti0 + tf1 - tf0
     
     nCaptures = nFramesFile/beampols
 
