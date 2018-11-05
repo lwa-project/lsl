@@ -27,8 +27,8 @@ def main(args):
         tStop = "%s %s" % (args.StopDate, args.StopTime)
         
         # YYYY/MM/DD HH:MM:SS -> datetime instance
-        tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S")
-        tStop = datetime.strptime(tStop, "%Y/%m/%d %H:%M:%S")
+        tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S.%f")
+        tStop = datetime.strptime(tStop, "%Y/%m/%d %H:%M:%S.%f")
         
         # datetime instance to MJD
         mjd,mpm = datetime_to_mjdmpm(tStart)
@@ -130,13 +130,13 @@ if __name__ == "__main__":
                         help='J2000 right ascension in HH:MM:SS[.SSS]')
     parser.add_argument('Dec', type=aph.degrees, 
                         help='J2000 declination in sDD:MM:SS[.SSS]')
-    parser.add_argument('StartDate', type=str, 
+    parser.add_argument('StartDate', type=aph.date, 
                         help='UTC start date in YYYY/MM/DD')
-    parser.add_argument('StartTime', type=str, 
+    parser.add_argument('StartTime', type=aph.time, 
                         help='UTC start time in HH:MM:SS')
-    parser.add_argument('StopDate', type=str, 
+    parser.add_argument('StopDate', type=aph.date, 
                         help='UTC stop date in YYYY/MM/DD')
-    parser.add_argument('StopTime', type=str, 
+    parser.add_argument('StopTime', type=aph.time, 
                         help='UTC stop time in HH:MM:SS')
     sgroup = parser.add_mutually_exclusive_group(required=False)
     sgroup.add_argument('-s', '--lwasv', action='store_true', 
