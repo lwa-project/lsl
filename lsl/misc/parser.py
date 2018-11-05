@@ -13,14 +13,18 @@ of value formats, including:
 import re
 import ephem
 from argparse import ArgumentTypeError
+from datetime import datetime
 from astropy import units
+
+from lsl.common.mcs import datetime2mjdmpm, mjdmpm2datetime
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['positive_or_zero_int', 'positive_int', 'positive_or_zero_float', 
            'positive_float', 'frequency', 'frequency_range', 'wavelength', 
-           'wavelength_range', 'hours', 'csv_hours_list', 'degrees', 
-           'csv_degrees_list', 'csv_int_list', 'csv_baseline_list', 'csv_hostname_list']
+           'wavelength_range', 'date', 'mjd', 'time', 'hours', 
+           'csv_hours_list', 'degrees', 'csv_degrees_list', 'csv_int_list', 
+           'csv_baseline_list', 'csv_hostname_list']
 
 
 def positive_or_zero_int(string):
@@ -292,6 +296,64 @@ def wavelength_range(string):
         msg = "%r does not appear to be a wavelength range" % string
         raise ArgumentTypeError(msg)
     return value
+
+
+def date(string):
+    """
+    Convert a data as either a YYYY[-/]MM[-/]DD or MJD string into a 
+    YYYY/MM/DD string.
+    """
+    
+    try:
+        mjd = int(string, 10)
+        dt = mjdmpm2datetime(mjd, 0)
+    except ValueError:
+        cstring = string.replace('-', '/')
+        try:
+            dt = datetime.strptime("%s 00:00:00" % cstring, "%Y/%m/%d %H:%M:%S")
+        except ValueError:
+            msg = "%r cannot be interpretted as an MJD or date string" % string
+            raise ArgumentTypeError(msg)
+            
+    date = dt.strftime('%Y/%m/%d')
+    return date
+
+
+def mjd(string):
+    """
+    Convert a data as either a YYYY[-/]MM[-/]DD or MJD string into an integer
+    MJD.
+    """
+    
+    try:
+        mjd = int(string, 10)
+    except ValueError:
+        cstring = string.replace('-', '/')
+        try:
+            dt = datetime.strptime("%s 00:00:00" % cstring, "%Y/%m/%d %H:%M:%S")
+            mjd, mpm = datetime2mjdmpm(dt)
+        except ValueError:
+            msg = "%r cannot be interpretted as an MJD or date string" % string
+            raise ArgumentTypeError(msg)
+            
+    return mjd
+
+
+def time(string):
+    """
+    Covnert a time as HH:MM:SS[.SSS] into a HH:MM:SS.SSS string.
+    """
+    
+    try:
+        dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S.%f")
+    except ValueError:
+        try:
+            dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S")
+        except ValueError:
+            msg = "%r cannot be interpretted as a time string" % string
+            raise ArgumentTypeError(msg)
+    stime = "%i:%02i:%02i.%06i" % (dt.hour, dt.minute, dt.second, dt.microsecond)
+    return stime
 
 
 def hours(string):
