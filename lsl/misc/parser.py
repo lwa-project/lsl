@@ -16,7 +16,7 @@ from argparse import ArgumentTypeError
 from datetime import datetime
 from astropy import units
 
-from lsl.common.mcs import datetime2mjdmpm, mjdmpm2datetime
+from lsl.common.mcs import datetime_to_mjdmpm, mjdmpm_to_datetime
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
@@ -306,7 +306,7 @@ def date(string):
     
     try:
         mjd = int(string, 10)
-        dt = mjdmpm2datetime(mjd, 0)
+        dt = mjdmpm_to_datetime(mjd, 0)
     except ValueError:
         cstring = string.replace('-', '/')
         try:
@@ -331,7 +331,7 @@ def mjd(string):
         cstring = string.replace('-', '/')
         try:
             dt = datetime.strptime("%s 00:00:00" % cstring, "%Y/%m/%d %H:%M:%S")
-            mjd, mpm = datetime2mjdmpm(dt)
+            mjd, mpm = datetime_to_mjdmpm(dt)
         except ValueError:
             msg = "%r cannot be interpretted as an MJD or date string" % string
             raise ArgumentTypeError(msg)
