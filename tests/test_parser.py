@@ -118,11 +118,11 @@ class parser_tests(unittest.TestCase):
     def test_date(self):
         """Test the parser.date conversion function."""
         
-        self.assertEqual(parser.date('2001/1/1'), '2001/01/01')
+        self.assertEqual(parser.date('2001/1/1'),   '2001/01/01')
         self.assertEqual(parser.date('2010/02/23'), '2010/02/23')
         self.assertEqual(parser.date('2008/02/29'), '2008/02/29')
-        self.assertEqual(parser.date('2001/1/1'), '2001/01/01')
-        self.assertEqual(parser.date('58427'), '2018/11/05')
+        self.assertEqual(parser.date('2001/1/1'),   '2001/01/01')
+        self.assertEqual(parser.date('58427'),      '2018/11/05')
         
         self.assertRaises(argparse.ArgumentTypeError, parser.date, 'c')
         self.assertRaises(argparse.ArgumentTypeError, parser.date, '2018/1/32')
@@ -132,7 +132,7 @@ class parser_tests(unittest.TestCase):
     def test_mjd(self):
         """Test the parser.mjd conversion function."""
         
-        self.assertEqual(parser.mjd('56274'), 56274)
+        self.assertEqual(parser.mjd('56274'),     56274)
         self.assertEqual(parser.mjd('2018/11/5'), 58427)
         
         self.assertRaises(argparse.ArgumentTypeError, parser.mjd, 'c')
@@ -142,13 +142,29 @@ class parser_tests(unittest.TestCase):
     def test_time(self):
         """Test the parser.time conversion function."""
         
-        self.assertEqual(parser.time('1:23:45.6'), '1:23:45.600000')
-        self.assertEqual(parser.time('1:23:45'),   '1:23:45.000000')
+        self.assertEqual(parser.time('1:23:45.6'),  '1:23:45.600000')
+        self.assertEqual(parser.time('1:23:45'),    '1:23:45.000000')
         self.assertEqual(parser.time('23:59:59'),  '23:59:59.000000')
+        self.assertEqual(parser.time('3615100'),    '1:00:15.100000')
         
         self.assertRaises(argparse.ArgumentTypeError, parser.time, '24:58:23.5')
         self.assertRaises(argparse.ArgumentTypeError, parser.time, '-1:58:23.5')
+        self.assertRaises(argparse.ArgumentTypeError, parser.time, '-1')
+        self.assertRaises(argparse.ArgumentTypeError, parser.time, '86500000')
         
+    def test_mpm(self):
+        """Test the parser.mpm conversion function."""
+        
+        self.assertEqual(parser.mpm('1:23:45.6'),       5025600)
+        self.assertEqual(parser.mpm('1:23:45'),         5025000)
+        self.assertEqual(parser.mpm('23:59:59'),       86399000)
+        self.assertEqual(parser.mpm('1:00:15.100000'),  3615100)
+        
+        self.assertRaises(argparse.ArgumentTypeError, parser.mpm, '24:58:23.5')
+        self.assertRaises(argparse.ArgumentTypeError, parser.mpm, '-1:58:23.5')
+        self.assertRaises(argparse.ArgumentTypeError, parser.mpm, '-1')
+        self.assertRaises(argparse.ArgumentTypeError, parser.mpm, '86500000')
+    
     def test_hours(self):
         """Test the parser.hours conversion function."""
         

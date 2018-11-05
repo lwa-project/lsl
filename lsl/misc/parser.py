@@ -22,7 +22,7 @@ __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['positive_or_zero_int', 'positive_int', 'positive_or_zero_float', 
            'positive_float', 'frequency', 'frequency_range', 'wavelength', 
-           'wavelength_range', 'date', 'mjd', 'time', 'hours', 
+           'wavelength_range', 'date', 'mjd', 'time', 'mpm', 'hours', 
            'csv_hours_list', 'degrees', 'csv_degrees_list', 'csv_int_list', 
            'csv_baseline_list', 'csv_hostname_list']
 
@@ -341,19 +341,54 @@ def mjd(string):
 
 def time(string):
     """
-    Covnert a time as HH:MM:SS[.SSS] into a HH:MM:SS.SSS string.
+    Covnert a time as HH:MM:SS[.SSS] or MPM string into a HH:MM:SS.SSSSSS 
+    string.
     """
     
     try:
-        dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S.%f")
+        mpm = int(string, 10)
+        if mpm < 0 or mpm > (86400*1000 + 999):
+            msg = "%r is out of range for an MPM value"
+            raise ArgumentTypeError(msg)
+        s, f = mpm/1000, mpm%1000
+        h = s / 3600
+        m = (s / 60) % 60
+        s = s % 60
+        stime = "%i:%02i:%02i.%06i" % (h, m, s, f*1000)
     except ValueError:
         try:
-            dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S")
+            dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S.%f")
         except ValueError:
-            msg = "%r cannot be interpretted as a time string" % string
-            raise ArgumentTypeError(msg)
-    stime = "%i:%02i:%02i.%06i" % (dt.hour, dt.minute, dt.second, dt.microsecond)
+            try:
+                dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S")
+            except ValueError:
+                msg = "%r cannot be interpretted as a time string" % string
+                raise ArgumentTypeError(msg)
+        stime = "%i:%02i:%02i.%06i" % (dt.hour, dt.minute, dt.second, dt.microsecond)
     return stime
+
+
+def mpm(string):
+    """
+    Covnert a time as HH:MM:SS[.SSS] or MPM string into an MPM integer.
+    """
+    
+    try:
+        mpm = int(string, 10)
+        if mpm < 0 or mpm > (86400*1000 + 999):
+            msg = "%r is out of range for an MPM value"
+            raise ArgumentTypeError(msg)
+    except ValueError:
+        try:
+            dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S.%f")
+        except ValueError:
+            try:
+                dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S")
+            except ValueError:
+                msg = "%r cannot be interpretted as a time string" % string
+                raise ArgumentTypeError(msg)
+        mjd, mpm = datetime_to_mjdmpm(dt)
+    return mpm
 
 
 def hours(string):
