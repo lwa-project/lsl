@@ -567,7 +567,7 @@ def get_asp_configuration(tarname, which='beginning'):
         mibs = []
         for ti in _getMembers(tarname):
             if ti.name.find('_ASP_%s' % which[:5]) != -1:
-                if ti.name[-4:] in ('.pag',):
+                if ti.name[-4:] in ('.pag', '.gdb'):
                     mibs.append(ti)
                     
         if len(mibs) > 0:

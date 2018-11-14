@@ -14,40 +14,40 @@ else:
 Module that contains common values found in the MCS Joint Release 5 header file
 src/exec/me.h and other functions useful for working with the MCS metadata.  
 The header file values are:
-* ME_SSMIF_FORMAT_VERSION - SSMIF format version code
-* ME_MAX_NSTD - Maximum number of stands that can be described
-* ME_MAX_NFEE - Maximum number of FEEs that can be described
-* ME_MAX_FEEID_LENGTH - Number of characters in FEE ID name
-* ME_MAX_RACK - Maximum number of racks?
-* ME_MAX_PORT - Maximum number of ports?
-* ME_MAX_NRPD - Maxmimum number of RPD cables
-* ME_MAX_RPDID_LENGTH - Number of characters in the RPD ID name
-* ME_MAX_NSEP - Maximum number of SEP cable connections
-* ME_MAX_SEPID_LENGTH - Number of characters in the SEP ID name
-* ME_MAX_SEPCABL_LENGTH - Number of characters in the SEP cable ID name
-* ME_MAX_NARB - Maximum number of ARX boards
-* ME_MAX_NARBCH - Number of ARX channels per board
-* ME_MAX_ARBID_LENGTH - Number of characters in the ARX ID name
-* ME_MAX_NDP1 - Maximum number of DP1 boards
-* ME_MAX_NDP1CH - Number of channels per DP1 board
-* ME_MAX_DP1ID_LENGTH - Number of characters in the DP1 board ID name
-* ME_MAX_NDP2 - Maximum number of DP2 boards
-* ME_MAX_DP2ID_LENGTH - Number of characters in the DP2 board ID name
-* ME_MAX_NDR - Maximum number of data recorders
-* ME_MAX_DRID_LENGTH - Number of characters in the DR ID name
-* ME_MAX_NPWRPORT - Maximum number of power ports
-* ME_MAX_SSNAME_LENGTH - Number of characters in the power port ID names, for 
-    codes used for PWR_NAME
-* LWA_MAX_NSTD - Maximum number of stands for the LWA
-* MIB_REC_TYPE_BRANCH - eType for MIB branch entries
-* MIB_REC_TYPE_VALUE - etype for MIB value entries
-* MIB_INDEX_FIELD_LENGTH - Number of characters in a MIB index field
-* MIB_LABEL_FIELD_LENGTH - Number of characters in a MIB label field
-* MIB_VAL_FIELD_LENGTH - Number of characters in a MIB value field
-* SSMIF_STRUCT - String representing the C structure of the binary SSMIF
+ * ME_SSMIF_FORMAT_VERSION - SSMIF format version code
+ * ME_MAX_NSTD - Maximum number of stands that can be described
+ * ME_MAX_NFEE - Maximum number of FEEs that can be described
+ * ME_MAX_FEEID_LENGTH - Number of characters in FEE ID name
+ * ME_MAX_RACK - Maximum number of racks?
+ * ME_MAX_PORT - Maximum number of ports?
+ * ME_MAX_NRPD - Maxmimum number of RPD cables
+ * ME_MAX_RPDID_LENGTH - Number of characters in the RPD ID name
+ * ME_MAX_NSEP - Maximum number of SEP cable connections
+ * ME_MAX_SEPID_LENGTH - Number of characters in the SEP ID name
+ * ME_MAX_SEPCABL_LENGTH - Number of characters in the SEP cable ID name
+ * ME_MAX_NARB - Maximum number of ARX boards
+ * ME_MAX_NARBCH - Number of ARX channels per board
+ * ME_MAX_ARBID_LENGTH - Number of characters in the ARX ID name
+ * ME_MAX_NDP1 - Maximum number of DP1 boards
+ * ME_MAX_NDP1CH - Number of channels per DP1 board
+ * ME_MAX_DP1ID_LENGTH - Number of characters in the DP1 board ID name
+ * ME_MAX_NDP2 - Maximum number of DP2 boards
+ * ME_MAX_DP2ID_LENGTH - Number of characters in the DP2 board ID name
+ * ME_MAX_NDR - Maximum number of data recorders
+ * ME_MAX_DRID_LENGTH - Number of characters in the DR ID name
+ * ME_MAX_NPWRPORT - Maximum number of power ports
+ * ME_MAX_SSNAME_LENGTH - Number of characters in the power port ID names, for 
+                          codes used for PWR_NAME
+ * LWA_MAX_NSTD - Maximum number of stands for the LWA
+ * MIB_REC_TYPE_BRANCH - eType for MIB branch entries
+ * MIB_REC_TYPE_VALUE - etype for MIB value entries
+ * MIB_INDEX_FIELD_LENGTH - Number of characters in a MIB index field
+ * MIB_LABEL_FIELD_LENGTH - Number of characters in a MIB label field
+ * MIB_VAL_FIELD_LENGTH - Number of characters in a MIB value field
+ * SSMIF_STRUCT - String representing the C structure of the binary SSMIF
 
 The other functions:
-* Parse the binary packed metadata, 
+ * Parse the binary packed metadata, 
 """
 
 import re
@@ -346,7 +346,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
     of it with the appropriate alignment, character interpretation*, and endianness
     (little, big, network, or native).
     
-    *:  ctypes converts character arrays to Python strings until the first null is
+    .. note::  ctypes converts character arrays to Python strings until the first null is
     incountered.  This behavior causes problems for multi-dimension arrays of null
     filled strings.  By setting char_mode to 'int', all char types are retuned as 
     bytes which can be converted to strings via chr().
@@ -483,9 +483,9 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
         In addition to the standard attributes defined for a ctypes.Structure 
         instance there are a few additional attributes related to the parsed C
         structure.  They are:
-        * origC - String containing the original C structure
-        * dims  - Dictionary of the dimensionallity of the data, if needed, 
-                    keyed by variable name
+         * origC - String containing the original C structure
+         * dims  - Dictionary of the dimensionallity of the data, if needed, 
+                   keyed by variable name
         """
         
         origC = '\n'.join(cStruct)
@@ -1103,18 +1103,18 @@ class MIBEntry(object):
         Convert an encoded value to something Pythonic (if possible).
         
         Understood codes:
-        * NUL:   No data stored (e.g., branch head entry)
-        * a####: printable (i.e., ASCII minus escape codes), #### = number of characters
-                e.g., "a3" means 3 printable ASCII-encoded characters
-        * r####: raw data (not printable), #### = number of bytes
-                e.g., "r1024" means 1024 bytes of raw data
-        * i1u:   integer, 1 byte,  unsigned, little-endian (=uint8)
-        * i2u:   integer, 2 bytes, unsigned, litte-endian (=uint16)
-        * i4u:   integer, 4 bytes, unsigned, little-endian (=uint32)
-        * i4s:   integer, 4 bytes, signed, little-endian (=int32)
-        * i8u:   integer, 8 bytes, unsigned, litte-endian (=uint64)
-        * f4:    float, 4 bytes, little-endian (=float32)
-        * f4r:   float, 4 bytes, big-ending (=float32)
+         * NUL:   No data stored (e.g., branch head entry)
+         * a####: printable (i.e., ASCII minus escape codes), #### = number of characters
+                  e.g., "a3" means 3 printable ASCII-encoded characters
+         * r####: raw data (not printable), #### = number of bytes
+                  e.g., "r1024" means 1024 bytes of raw data
+         * i1u:   integer, 1 byte,  unsigned, little-endian (=uint8)
+         * i2u:   integer, 2 bytes, unsigned, litte-endian (=uint16)
+         * i4u:   integer, 4 bytes, unsigned, little-endian (=uint32)
+         * i4s:   integer, 4 bytes, signed, little-endian (=int32)
+         * i8u:   integer, 8 bytes, unsigned, litte-endian (=uint64)
+         * f4:    float, 4 bytes, little-endian (=float32)
+         * f4r:   float, 4 bytes, big-ending (=float32)
         """
         
         if dataType == 'NUL':

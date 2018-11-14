@@ -11,10 +11,10 @@ if sys.version_info > (3,):
 """
 Module that contains common values found in the DP ICD, revision I.  The values 
 are:
-* f_S - Sampling rate in samples per second
-* T - Slot duration in seconds
-* T_2 - Sub-slot duration
-* N_MAX_UDP - Maximum UDP packet size
+ * f_S - Sampling rate in samples per second
+ * T - Slot duration in seconds
+ * T_2 - Sub-slot duration
+ * N_MAX_UDP - Maximum UDP packet size
 
 Also included are two functions to convert between frequencies and DP tuning 
 words and functions for calculating the magnitude response of the TBN and DRX 
@@ -304,8 +304,10 @@ def word_to_freq(word):
 
 
 def delay_to_dpd(delay):
-    """Given a delay in ns, convert it to a course and fine portion and into the 
-    final format expected by DP (big endian 16.12 unsigned integer)."""
+    """
+    Given a delay in ns, convert it to a course and fine portion and into the 
+    final format expected by DP (big endian 16.12 unsigned integer).
+    """
     
     # Convert the delay to a combination of FIFO delays (~5.1 ns) and 
     # FIR delays (~0.3 ns)
@@ -323,7 +325,9 @@ def delay_to_dpd(delay):
 
 
 def dpd_to_delay(combined):
-    """Given a delay value in the final format expect by DP, return the delay in ns."""
+    """
+    Given a delay value in the final format expect by DP, return the delay in ns.
+    """
     
     # Convert to little-endian
     combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
@@ -340,8 +344,10 @@ def dpd_to_delay(combined):
 
 
 def gain_to_dpg(gain):
-    """Given a gain (between 0 and 1), convert it to a gain in the final form 
-    expected by DP (big endian 16.1 signed integer)."""
+    """
+    Given a gain (between 0 and 1), convert it to a gain in the final form 
+    expected by DP (big endian 16.1 signed integer).
+    """
     
     # Convert
     combined = int(32767*gain)
@@ -353,8 +359,10 @@ def gain_to_dpg(gain):
 
 
 def dpg_to_gain(combined):
-    """Given a gain value in the final format expected by DP, return the gain
-    as a decimal value (0 to 1)."""
+    """
+    Given a gain value in the final format expected by DP, return the gain
+    as a decimal value (0 to 1).
+    """
     
     # Convert to little-endian
     combined = ((combined & 0xFF) << 8) | ((combined >> 8) & 0xFF)
@@ -469,8 +477,8 @@ class SoftwareDP(object):
     
     .. note::
         Not all DP filters are supported by this class.  Supported filters are:
-        * TBN, filters 5, 6, and 7
-        * DRX, filters 3, 4, 5, 6, and 7
+         * TBN, filters 5, 6, and 7
+         * DRX, filters 3, 4, 5, 6, and 7
     
     .. versionchanged:: 0.5.2
         Added support for beamforming using the DP FIR coefficients and renamed 
