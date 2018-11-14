@@ -9,15 +9,15 @@ if sys.version_info > (3,):
 Small collection of robust statistical estimators based on functions from
 Henry Freudenriech (Hughes STX) statistics library (called ROBLIB) that have
 been incorporated into the AstroIDL User's Library.  Function included are:
-* biweight_mean - biweighted mean estimator
-* mean - robust estimator of the mean of a data set
-* mode - robust estimate of the mode of a data set using the half-sample
-    method
-* std - robust estimator of the standard deviation of a data set
-* checkfit - return the standard deviation and biweights for a fit in order 
-    to determine its quality
-* linefit - outlier resistant fit of a line to data
-* polyfit - outlier resistant fit of a polynomial to data
+ * biweight_mean - biweighted mean estimator
+ * mean - robust estimator of the mean of a data set
+ * mode - robust estimate of the mode of a data set using the half-sample
+          method
+ * std - robust estimator of the standard deviation of a data set
+ * checkfit - return the standard deviation and biweights for a fit in order 
+              to determine its quality
+ * linefit - outlier resistant fit of a line to data
+ * polyfit - outlier resistant fit of a polynomial to data
 
 For the fitting routines, the coefficients are returned in the same order as
 numpy.polyfit, i.e., with the coefficient of the highest power listed first.
@@ -263,11 +263,11 @@ def checkfit(inputData, inputFit, epsilon, delta, bisquare_limit=6.0):
     """
     Determine the quality of a fit and biweights.  Returns a tuple
     with elements:
-    0. Robust standard deviation analog
-    1. Fractional median absolute deviation of the residuals
-    2. Number of input points given non-zero weight in the calculation
-    3. Bisquare weights of the input points
-    4. Residual values scaled by sigma
+     0. Robust standard deviation analog
+     1. Fractional median absolute deviation of the residuals
+     2. Number of input points given non-zero weight in the calculation
+     3. Bisquare weights of the input points
+     4. Residual values scaled by sigma
     
     This function is based on the rob_checkfit routine from the AstroIDL 
     User's Library.
