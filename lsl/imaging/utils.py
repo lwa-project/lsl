@@ -1059,7 +1059,7 @@ try:
                 phase_center = None
                 fld = numpy.unique(fld)
                 if len(fld) == 1:
-                    phase_center = self._sources[self._fields[fld]]
+                    phase_center = self._sources[self._fields[fld[0]]]
                     
                 # Compute the full uvw coordinates
                 uvw.shape += (1,)
