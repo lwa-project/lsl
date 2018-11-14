@@ -20,6 +20,7 @@
   * Fixed a bug in lsl.misc.ionosphere that causes some UQR files to fail to parse
   * Updated the URL/filename structure used to download the CODE files in lsl.misc.ionosphere
   * Added support for MCS MIBs stored as .gdb files
+  * Added support for writing comments and history to FITS-IDI, SDFITS, and UVFITS files
 
 1.2.3
   * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools

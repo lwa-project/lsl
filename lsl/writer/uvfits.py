@@ -155,6 +155,30 @@ class Uv(WriterBase):
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )
         
+    def add_comment(self, comment):
+        """
+        Add a comment to data.
+        
+        .. versionadded:: 1.2.4
+        """
+        
+        try:
+            self._comments.append( comment )
+        except AttributeError:
+            self._comments = [comment,]
+            
+    def add_history(self, history):
+        """
+        Add a history entry to the data.
+        
+        .. versionadded:: 1.2.4
+        """
+        
+        try:
+            self._history.append( history )
+        except AttributeError:
+            self._history = [history,]
+            
     def write(self):
         """
         Fill in the FITS-IDI file will all of the tables in the 
@@ -400,6 +424,20 @@ class Uv(WriterBase):
         
         primary.header['VISSCALE'] = (1.0, 'UV data scale factor')
         
+        # Write the comments and history
+        try:
+            for comment in self._comments:
+                primary.header['COMMENT'] = comment
+            del self._comments
+        except AttributeError:
+            pass
+        try:
+            for hist in self._history:
+                primary.header['HISTORY'] = hist
+            del self._history
+        except AttributeError:
+            pass
+            
         self.FITS.append(primary)
         self.FITS.flush()
         

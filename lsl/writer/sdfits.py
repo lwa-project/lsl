@@ -120,7 +120,31 @@ class Sd(WriterBase):
         self.observer = observer
         self.project = project
         self.mode = mode
-
+        
+    def add_comment(self, comment):
+        """
+        Add a comment to data.
+        
+        .. versionadded:: 1.2.4
+        """
+        
+        try:
+            self._comments.append( comment )
+        except AttributeError:
+            self._comments = [comment,]
+            
+    def add_history(self, history):
+        """
+        Add a history entry to the data.
+        
+        .. versionadded:: 1.2.4
+        """
+        
+        try:
+            self._history.append( history )
+        except AttributeError:
+            self._history = [history,]
+            
     def add_data_set(self, obsTime, intTime, beam, data, pol='XX'):
         """
         Create a SpectrometerData object to store a collection of spectra.
@@ -193,6 +217,20 @@ class Sd(WriterBase):
         primary.header['ORIGIN'] = 'LSL SDFITS writer'
         primary.header['TELESCOP'] = (self.site.name, 'Telescope name')
         
+        # Write the comments and history
+        try:
+            for comment in self._comments:
+                primary.header['COMMENT'] = comment
+            del self._comments
+        except AttributeError:
+            pass
+        try:
+            for hist in self._history:
+                primary.header['HISTORY'] = hist
+            del self._history
+        except AttributeError:
+            pass
+            
         self.FITS.append(primary)
         self.FITS.flush()
         
