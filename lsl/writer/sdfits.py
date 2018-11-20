@@ -217,8 +217,6 @@ class Sd(WriterBase):
         primary.header['ORIGIN'] = 'LSL SDFITS writer'
         primary.header['TELESCOP'] = (self.site.name, 'Telescope name')
         
-        primary.header['COMMENT'] = " FITS (Flexible Image Transport System) format is defined in 'Astronomy and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"
-        
         # Write the comments and history
         try:
             for comment in self._comments:
@@ -226,6 +224,7 @@ class Sd(WriterBase):
             del self._comments
         except AttributeError:
             pass
+        primary.header['COMMENT'] = " FITS (Flexible Image Transport System) format is defined in 'Astronomy and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"
         try:
             for hist in self._history:
                 primary.header['HISTORY'] = hist
