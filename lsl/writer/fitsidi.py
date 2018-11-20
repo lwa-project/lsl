@@ -546,6 +546,8 @@ class Idi(WriterBase):
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        primary.header['COMMENT'] = " FITS (Flexible Image Transport System) format is defined in 'Astronomy and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"
+        
         # Write the comments and history
         try:
             for comment in self._comments:
@@ -1334,6 +1336,22 @@ class Aips(Idi):
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        primary.header['COMMENT'] = " FITS (Flexible Image Transport System) format is defined in 'Astronomy and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"
+        
+        # Write the comments and history
+        try:
+            for comment in self._comments:
+                primary.header['COMMENT'] = comment
+            del self._comments
+        except AttributeError:
+            pass
+        try:
+            for hist in self._history:
+                primary.header['HISTORY'] = hist
+            del self._history
+        except AttributeError:
+            pass
+            
         self.FITS.append(primary)
         self.FITS.flush()
 
@@ -1395,5 +1413,21 @@ class ExtendedIdi(Idi):
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        primary.header['COMMENT'] = " FITS (Flexible Image Transport System) format is defined in 'Astronomy and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"
+        
+        # Write the comments and history
+        try:
+            for comment in self._comments:
+                primary.header['COMMENT'] = comment
+            del self._comments
+        except AttributeError:
+            pass
+        try:
+            for hist in self._history:
+                primary.header['HISTORY'] = hist
+            del self._history
+        except AttributeError:
+            pass
+            
         self.FITS.append(primary)
         self.FITS.flush()
