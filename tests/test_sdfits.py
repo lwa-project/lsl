@@ -76,8 +76,8 @@ class sdfits_tests(unittest.TestCase):
         for ext in ['SINGLE DISH',]:
             self.assertTrue(ext in extNames)
         # Check the comments and history
-        self.assertEqual(str(hdulist[0].header['COMMENT']), 'This is a comment')
-        self.assertEqual(str(hdulist[0].header['HISTORY']), 'This is history')
+        self.assertTrue('This is a comment' in str(hdulist[0].header['COMMENT']).split('\n'))
+        self.assertTrue('This is history' in str(hdulist[0].header['HISTORY']).split('\n'))
         
         hdulist.close()
     

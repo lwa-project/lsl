@@ -81,8 +81,8 @@ class fitsidi_tests(unittest.TestCase):
         for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
             self.assertTrue(ext in extNames)
         # Check the comments and history
-        self.assertEqual(str(hdulist[0].header['COMMENT']), 'This is a comment')
-        self.assertEqual(str(hdulist[0].header['HISTORY']), 'This is history')
+        self.assertTrue('This is a comment' in str(hdulist[0].header['COMMENT']).split('\n'))
+        self.assertTrue('This is history' in str(hdulist[0].header['HISTORY']).split('\n'))
         
         hdulist.close()
         
@@ -505,6 +505,8 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
+        fits.add_comment('This is a comment')
+        fits.add_history('This is history')
         fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
         fits.write()
 
@@ -514,7 +516,10 @@ class aipsidi_tests(unittest.TestCase):
         extNames = [hdu.name for hdu in hdulist]
         for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
             self.assertTrue(ext in extNames)
-
+        # Check the comments and history
+        self.assertTrue('This is a comment' in str(hdulist[0].header['COMMENT']).split('\n'))
+        self.assertTrue('This is history' in str(hdulist[0].header['HISTORY']).split('\n'))
+        
         hdulist.close()
 
     def test_array_geometry(self):
