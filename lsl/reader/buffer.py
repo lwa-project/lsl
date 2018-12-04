@@ -175,6 +175,26 @@ class FrameBuffer(object):
         self.nFrames, self.possibleFrames = self.get_max_frames()
         self.possibleFrames = set(self.possibleFrames)
         
+    @property
+    def filled(self):
+        """
+        Indicates whether or not the ring buffer is full or not.
+        
+        .. versionadded:: 1.2.4
+        """
+        
+        return False if len(self.buffer) < self.nSegments else True
+        
+    @property
+    def overfilled(self):
+        """
+        Indicates whether or not the ring buffer has too many segements or not.
+        
+        .. versionadded:: 1.2.4
+        """
+        
+        return True if len(self.buffer) > self.nSegments else False
+        
     def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
@@ -223,12 +243,7 @@ class FrameBuffer(object):
             frames = deque([frames,])
             
         # Loop over frames
-        while True:
-            try:
-                frame = frames.popleft()
-            except IndexError:
-                break
-                
+        for frame in frames:
             # Make sure that it is not in the `done' list.  If it is,
             # disgaurd the frame and make a note of it.
             fom = self.get_figure_of_merit(frame)
@@ -253,6 +268,23 @@ class FrameBuffer(object):
         
         self.append(*args, **kwds)
         
+    def peek(self):
+        """
+        Peek into the buffer to see what the next key to be retruned by a 
+        call to get() will be.  Returns None if the buffer is not full.
+        
+        .. versionadded:: 1.2.4
+        """
+        
+        # If the ring is not full, return nothing
+        if not self.filled:
+            return None
+            
+        # Get the current status of the buffer
+        keys = list(self.buffer.keys())
+        keyToReturn = min(keys)
+        return keyToReturn
+        
     def get(self, keyToReturn=None):
         """
         Return a list of frames that consitute a 'full' buffer.  Afterwards, 
@@ -261,20 +293,11 @@ class FrameBuffer(object):
         dumped, None is returned.
         """
         
-        # Get the current status of the buffer
-        keys = list(self.buffer.keys())
-        
         if keyToReturn is None:
-            # If the ring is full, dump the oldest
-            if len(keys) < self.nsegments:
+            keyToReturn = self.peek()
+            if keyToReturn is None:
                 return None
                 
-            if self.mode == 'TBF':
-                keyToReturn = min(keys)
-            else:
-                keyToReturn = keys[0]
-        returnCount = len(self.buffer[keyToReturn])
-       
         if returnCount == self.nFrames:
             ## Everything is good (Is it really???)
             self.full = self.full + 1
