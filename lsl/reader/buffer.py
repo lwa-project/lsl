@@ -297,7 +297,8 @@ class FrameBuffer(object):
             keyToReturn = self.peek()
             if keyToReturn is None:
                 return None
-                
+        returnCount = len(self.buffer[keyToReturn])
+        
         if returnCount == self.nFrames:
             ## Everything is good (Is it really???)
             self.full = self.full + 1
