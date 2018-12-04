@@ -28,6 +28,7 @@ use.
 """
 
 import os
+import copy
 import numpy
 import warnings
 from scipy.stats import norm
@@ -987,24 +988,40 @@ class DRXFile(LDPFileBase):
             if eofFound or nFrameSets == frame_count:
                 break
                 
-            cFrames = deque()
-            for i in xrange(self.description['beampols']):
-                try:
-                    cFrames.append( drx.read_frame(self.fh, Verbose=False) )
-                except errors.EOFError:
-                    eofFound = True
-                    self.buffer.append(cFrames)
-                    break
-                except errors.SyncError:
-                    continue
-                    
-            self.buffer.append(cFrames)
+            if not self.buffer.overfilled:
+                cFrames = deque()
+                for i in xrange(self.description['beampols']):
+                    try:
+                        cFrames.append( drx.read_frame(self.fh, Verbose=False) )
+                    except errors.EOFError:
+                        eofFound = True
+                        self.buffer.append(cFrames)
+                        break
+                    except errors.SyncError:
+                        continue
+                self.buffer.append(cFrames)
+                
+            cTimetag = self.buffer.peek()
+            if cTimetag is None:
+                # Continue adding frames if nothing comes out.
+                continue
+            else:
+                # Otherwise, make sure we are on track
+                aStand = 0
+                if self._timetag[aStand] == 0:
+                    pass
+                elif cTimetag != self._timetag[aStand]+self._timetagSkip:
+                    missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
+                    if int(missing) == missing and missing < 50:
+                        ## This is kind of black magic down here
+                        for m in xrange(int(missing)):
+                            m = self._timetag[aStand] + self._timetagSkip*(m+1)
+                            baseframe = copy.deepcopy(cFrames[0])
+                            baseframe.data.timeTag = m
+                            baseframe.data.iq *= 0
+                            self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
-            # Continue adding frames if nothing comes out.
-            if cFrames is None:
-                continue
-                
             # If something comes out, add it to the data array
             for cFrame in cFrames:
                 b,t,p = cFrame.id
