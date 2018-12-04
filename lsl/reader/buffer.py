@@ -183,7 +183,7 @@ class FrameBuffer(object):
         .. versionadded:: 1.2.4
         """
         
-        return False if len(self.buffer) < self.nSegments else True
+        return False if len(self.buffer) < self.nsegments else True
         
     @property
     def overfilled(self):
@@ -193,7 +193,7 @@ class FrameBuffer(object):
         .. versionadded:: 1.2.4
         """
         
-        return True if len(self.buffer) > self.nSegments else False
+        return True if len(self.buffer) > self.nsegments else False
         
     def get_max_frames(self):
         """
