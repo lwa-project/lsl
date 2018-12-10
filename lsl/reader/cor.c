@@ -57,6 +57,8 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
     PyArrayObject *data=NULL;
     CORFrame cFrame;
     
+    int i;
+    
     if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         goto fail;
@@ -112,10 +114,19 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
     // Fill the data array
     float complex *a;
     a = (float complex *) PyArray_DATA(data);
-    /*for(i=0; i<288; i++) {
+    /*for(i=0; i<(COR_NCHAN*4); i++) {
         *(a + i) = cFrame.data.vis[i];
     }*/
     memcpy(a, &cFrame.data.vis, sizeof(float complex)*COR_NCHAN*4);
+    if( cFrame.data.stand0 == cFrame.data.stand1 ) {
+        // Deal with the edge of the triangular matrix that ADP outputs
+        // so that we do not get strange values in the output.  These are
+        // all auto-correlations and we can just use conjgation to get YX
+        // from XY.
+        for(i=0; i<COR_NCHAN; i++) {
+            a[4*i + 1*2 + 0] = conj(a[4*i + 0*2 + 1]);
+        }
+    }
     
     Py_END_ALLOW_THREADS
     
