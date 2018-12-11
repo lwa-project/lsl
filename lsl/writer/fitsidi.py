@@ -24,7 +24,6 @@ functions defined in this module are based heavily off the lwda_fits library.
 """
 
 import os
-import gc
 import re
 import math
 import ephem
@@ -484,10 +483,6 @@ class Idi(WriterBase):
         self._write_bandpass_hdu()
         self._write_source_hdu()
         self._write_uvdata_hdu()
-        
-        # Clear out the data section
-        del(self.data[:])
-        gc.collect()
         
     def close(self):
         """
@@ -1006,7 +1001,13 @@ class Idi(WriterBase):
         blineList = []
         nameList = []
         sourceList = []
-        for dataSet in self.data:
+        while True:
+            # Get the next data set to process
+            try:
+                dataSet = self.data.pop(0)
+            except IndexError:
+                break
+                
             # Sort the data by packed baseline
             try:
                 order
@@ -1101,6 +1102,10 @@ class Idi(WriterBase):
             if dataSet.pol == self.stokes[-1]:
                 mList.append( matrix.view(numpy.float32)*1.0 )
                 fList.append( weights*1.0 )
+                
+            # Cleanup
+            del dataSet
+            
         nBaseline = len(blineList)
         nSource = len(nameList)
         

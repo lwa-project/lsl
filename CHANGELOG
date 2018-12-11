@@ -23,6 +23,7 @@
   * Added support for writing comments and history to FITS-IDI, SDFITS, and UVFITS files
   * Changed the lsl.reader.ldp.DRXFile class to deal with small (<50 frame) gaps in DRX files
   * Changed the lsl.reader.cor module to ensure the YX is valid for the autocorrelations
+  * Worked on reduced the memory usage of the FITS-IDI writer
 
 1.2.3
   * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools
