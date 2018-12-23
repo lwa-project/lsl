@@ -86,7 +86,7 @@ _DRSUCapacityTB = 10
 # Factors for computing the time it takes to read out a TBW from the number 
 # of samples
 _TBW_TIME_SCALE = 196000
-_TBW_TIME_GAIN = 5000
+_TBW_TIME_GAIN = 2500
 # UCF Username RE
 _usernameRE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z]+)(\/(?P<subdir>[a-zA-Z0-9\/\+-_]+))?')
 
