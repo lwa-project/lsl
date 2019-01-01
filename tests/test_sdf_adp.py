@@ -131,7 +131,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test single session/observations SDFs."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, MaxSNR=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.set_drx_beam(1)
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
