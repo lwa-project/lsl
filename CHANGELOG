@@ -25,6 +25,7 @@
   * Changed the lsl.reader.cor module to ensure the YX is valid for the autocorrelations
   * Worked on reduced the memory usage of the FITS-IDI writer
   * Adjusted the TBW duration calculation to reflect that DP can output TBW twice as fast now
+  * Changed the lsl.common.sdf and lsl.common.sdfADF to allow "flat" Projects and Sessions
 
 1.2.3
   * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools

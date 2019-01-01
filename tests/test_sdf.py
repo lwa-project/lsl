@@ -128,6 +128,16 @@ class sdf_tests(unittest.TestCase):
         s2 = "UTC 2013-01-08 19:38:26.723"
         self.assertEqual(sdf.parse_time(s1, station=lwa1), sdf.parse_time(s2))
         
+    def test_flat_projects(self):
+        """Test single session/observations SDFs."""
+        
+        obs = sdf.Observer('Test Observer', 99)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, MaxSNR=False)
+        sess = sdf.Session('Test Session', 1, observations=targ)
+        sess.set_drx_beam(1)
+        proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=sess)
+        out = proj.render()
+        
     ### TBW ###
     
     def test_tbw_parse(self):

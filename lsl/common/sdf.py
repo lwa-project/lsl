@@ -354,6 +354,8 @@ class Project(object):
         if sessions is None:
             self.sessions = []
         else:
+            if isinstance(sessions, Session):
+                sessions = [sessions,]
             self.sessions = sessions
         if projectOffice is None:
             self.projectOffice = ProjectOffice()
@@ -684,6 +686,8 @@ class Session(object):
         if observations is None:
             self.observations = []
         else:
+            if isinstance(observations, Observation):
+                observations = [observations,]
             self.observations = observations
         self.dataReturnMethod = dataReturnMethod
         self.ucfuser = None
