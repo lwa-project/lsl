@@ -140,23 +140,23 @@ class sdf_adp_tests(unittest.TestCase):
     def test_ucf_username(self):
         """Test setting the UCF username for auto-copy support."""
         
-        obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
-        sess = sdf.Session('Test Session', 1, observations=targ)
+        obs = sdfADP.Observer('Test Observer', 99)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
+        sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.set_drx_beam(1)
         sess.set_data_return_method('UCF')
         sess.set_ucf_username('test')
-        proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=sess)
+        proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test') >= 0)
         
-        obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
-        sess = sdf.Session('Test Session', 1, observations=targ, comments='This is a comment')
+        obs = sdfADP.Observer('Test Observer', 99)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
+        sess = sdfADP.Session('Test Session', 1, observations=targ, comments='This is a comment')
         sess.set_drx_beam(1)
         sess.set_data_return_method('UCF')
         sess.set_ucf_username('test/dir1')
-        proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=sess)
+        proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test/dir1') >= 0)
         
