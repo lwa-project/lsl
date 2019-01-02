@@ -347,6 +347,8 @@ class Project(object):
     """
     
     def __init__(self, observer, name, id, sessions=None, comments=None, projectOffice=None):
+        if not isinstance(observer, Observer):
+            raise TypeError("Expected 'observer' to be an Observer")
         self.observer = observer
         self.name = name
         self.id = id
@@ -356,10 +358,18 @@ class Project(object):
         else:
             if isinstance(sessions, Session):
                 sessions = [sessions,]
+            elif isinstance(sessions, (list, tuple)):
+                for i,sess in enumerate(sessions):
+                    if not isinstance(sess, Session):
+                        raise TypeError("Expected index %i of 'sessions' to be a Session" % i)
+            else:
+                raise TypeError("Expected 'sessions' to be either a tuple or list of Sessions or a Session")
             self.sessions = sessions
         if projectOffice is None:
             self.projectOffice = ProjectOffice()
         else:
+            if not isinstance(projectOffice, ProjectOffice):
+                raise TypeError("Expected 'projectOffice' to be a ProjectOffice")
             self.projectOffice = projectOffice
             
     def update(self):
@@ -424,6 +434,8 @@ class Project(object):
     def append(self, newSession):
         """Add a new Session to the list of sessions."""
         
+        if not isinstance(newSession, Session):
+            raise TypeError('Expected a Session instance')
         self.sessions.append(newSession)
         
     def render(self, session=0, verbose=False):
@@ -695,6 +707,12 @@ class Session(object):
         else:
             if isinstance(observations, Observation):
                 observations = [observations,]
+            elif isinstance(observations, (tuple, list)):
+                for i,obs in enumerate(observations):
+                    if not isinstance(obs, Observation):
+                        raise TypeError("Expected index %i of 'obsevations' to be an Observation" % i)
+            else:
+                raise TypeError("Expected 'observations' to be either a tuple or list of Observations of an Observation")
             self.observations = observations
         self.dataReturnMethod = dataReturnMethod
         self.ucfuser = None
@@ -733,6 +751,8 @@ class Session(object):
     def append(self, newObservation):
         """Add a new Observation to the list of observations."""
         
+        if not isinstance(newObservation, Observation):
+            raise TypeError("Expected an Observation")
         self.observations.append(newObservation)
         
     def set_configuration_authority(self, value):
@@ -1571,6 +1591,14 @@ class Stepped(Observation):
         if steps is None:
             self.steps = []
         else:
+            if isinstance(steps, BeamStep):
+                steps = [steps,]
+            elif isinstance(steps, (tuple, list)):
+                for i,step in enumerate(steps):
+                    if not isinstance(step, BeamStep):
+                        raise TypeError("Expected index %i of 'steps' to be a BeamStep" % i)
+            else:
+                raise TypeError("Expected 'steps' to be either a tuple or list of BeamSteps or a BeamStep")
             self.steps = steps
         self.filter_codes = DRXFilters
         Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, MaxSNR=False, comments=comments)
@@ -1625,6 +1653,8 @@ class Stepped(Observation):
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
         
+        if not isinstance(newStep, BeamStep):
+            raise TypeError('Expected a BeamStep')
         self.steps.append(newStep)
         self.update()
         
