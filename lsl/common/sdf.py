@@ -458,12 +458,13 @@ class Project(object):
             
         # Combine the session comments together in an intelligent fashion
         ## Observer comments
-        if ses.comments:
-            if ses.ucfuser is not None:
+        if ses.ucfuser is not None:
+            clean = ''
+            if ses.comments:
                 clean = _usernameRE.sub('', ses.comments)
-                ses.comments = 'ucfuser:%s' % ses.ucfuser
-                if len(clean) > 0:
-                    ses.comments += ';;%s' % clean
+            ses.comments = 'ucfuser:%s' % ses.ucfuser
+            if len(clean) > 0:
+                ses.comments += ';;%s' % clean
         ## Project office comments, including the data return method
         if pos != 'None' and pos is not None:
             pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
