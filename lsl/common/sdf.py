@@ -789,8 +789,8 @@ class Session(object):
         specified.
         
         Special Values are:
-        * -1 = use the MCS default interval
-        * 0 = never record the MIB entries (the entries are still updated, however)
+         * -1 = use the MCS default interval
+         * 0 = never record the MIB entries (the entries are still updated, however)
         """
         
         self.recordMIB[component] = int(interval)
@@ -801,8 +801,8 @@ class Session(object):
         specified.
         
         Special Values are:
-        * -1 = use the MCS default interval
-        * 0 = request no updates to the MIB entries
+         * -1 = use the MCS default interval
+         * 0 = request no updates to the MIB entries
         """
         
         self.updateMIB[component] = int(interval)
@@ -1118,14 +1118,14 @@ class TBW(Observation):
         MCS
     
     Required Arguments:
-    * observation name
-    * observation target
-    * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
-    * integer number of samples
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string)
+     * integer number of samples
     
     Optional Keywords:
-    * bits - number of data bits (4 or 12)
-    * comments - comments about the observation
+     * bits - number of data bits (4 or 12)
+     * comments - comments about the observation
     """
     
     def __init__(self, name, target, start, samples, bits=12, comments=None):
@@ -1205,16 +1205,16 @@ class TBN(Observation):
     reduced number of parameters needed to setup the observation.
     
     Required Arguments:
-    * observation name
-    * observation target
-    * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
-        aware datetime instance)
-    * observation duration (HH:MM:SS.SSS string or timedelta instance)
-    * observation frequency (Hz)
-    * integer filter code
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation frequency (Hz)
+     * integer filter code
     
     Optional Keywords:
-    * comments - comments about the observation
+     * comments - comments about the observation
     """
     
     def __init__(self, name, target, start, duration, frequency, filter, gain=-1, comments=None):
@@ -1323,13 +1323,13 @@ class _DRXBase(Observation):
         will disable the 'beam-dipole mode' for this observation'.
         
         Keywords:
-        * beamGain - BAM gain to use for each dipole in the beam
-                    default: 0.04; range: 0.0 to 1.0
-        * dipoleGain - BAM gain to use for the single dipole
+         * beamGain - BAM gain to use for each dipole in the beam
+                     default: 0.04; range: 0.0 to 1.0
+         * dipoleGain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
-        * pol - Polarization to record  default: "X"
-        * station - lsl.common.stations instance to use for mapping
-                    default: lsl.common.stations.lwa1
+         * pol - Polarization to record  default: "X"
+         * station - lsl.common.stations instance to use for mapping
+                     default: lsl.common.stations.lwa1
         """
         
         # Validate
@@ -1452,21 +1452,21 @@ class _DRXBase(Observation):
 class DRX(_DRXBase):
     """
     Required Arguments:
-    * observation name
-    * observation target
-    * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
-        aware datetime instance)
-    * observation duration (HH:MM:SS.SSS string or timedelta instance)
-    * observation RA in hours, J2000.0 or ephem.hours instance
-    * observation Dec in degrees, J2000.0 or ephem.hours instance
-    * observation tuning frequency 1 (Hz)
-    * observation tuning frequency 1 (Hz)
-    * integer filter code
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation RA in hours, J2000.0 or ephem.hours instance
+     * observation Dec in degrees, J2000.0 or ephem.hours instance
+     * observation tuning frequency 1 (Hz)
+     * observation tuning frequency 1 (Hz)
+     * integer filter code
     
     Optional Keywords:
-    * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-        (default = False)
-    * comments - comments about the observation
+     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
+                (default = False)
+     * comments - comments about the observation
     """
     
     def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
@@ -1488,19 +1488,19 @@ class Solar(_DRXBase):
     reduced number of parameters needed to setup the observation.
     
     Required Arguments:
-    * observation name
-    * observation target
-    * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
-        aware datetime instance)
-    * observation duration (HH:MM:SS.SSS string or timedelta instance)
-    * observation tuning frequency 1 (Hz)
-    * observation tuning frequency 1 (Hz)
-    * integer filter code
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation tuning frequency 1 (Hz)
+     * observation tuning frequency 1 (Hz)
+     * integer filter code
     
     Optional Keywords:
-    * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-        (default = False)
-    * comments - comments about the observation
+     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
+                (default = False)
+     * comments - comments about the observation
     """
     
     def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
@@ -1518,19 +1518,19 @@ class Jovian(_DRXBase):
     reduced number of parameters needed to setup the observation.
     
     Required Arguments:
-    * observation name
-    * observation target
-    * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
-        aware datetime instance)
-    * observation duration (HH:MM:SS.SSS string or timedelta instance)
-    * observation tuning frequency 1 (Hz)
-    * observation tuning frequency 1 (Hz)
-    * integer filter code
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation tuning frequency 1 (Hz)
+     * observation tuning frequency 1 (Hz)
+     * integer filter code
     
     Optional Keywords:
-    * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-        (default = False)
-    * comments - comments about the observation
+     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
+                (default = False)
+     * comments - comments about the observation
     """
     
     def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
@@ -1549,15 +1549,15 @@ class Stepped(Observation):
     support for the individual steps.
     
     Required Arguments:
-    * observation name
-    * observation target
-    * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
-        aware datetime instance)
-    * integer filter code
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * integer filter code
     
     Optional Keywords:
-    * steps - array of BeamStep objects that specify the different steps
-    * comments - comments about the observation
+     * steps - array of BeamStep objects that specify the different steps
+     * comments - comments about the observation
     """
     
     def __init__(self, name, target, start, filter, steps=None, RADec=True, gain=-1, comments=None):
@@ -1638,13 +1638,13 @@ class Stepped(Observation):
         will disable the 'beam-dipole mode' for this observation'.
         
         Keywords:
-        * beamGain - BAM gain to use for each dipole in the beam
-                    default: 0.04; range: 0.0 to 1.0
-        * dipoleGain - BAM gain to use for the single dipole
+         * beamGain - BAM gain to use for each dipole in the beam
+                      default: 0.04; range: 0.0 to 1.0
+         * dipoleGain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
-        * pol - Polarization to record  default: "X"
-        * station - lsl.common.stations instance to use for mapping
-                    default: lsl.common.stations.lwa1
+         * pol - Polarization to record  default: "X"
+         * station - lsl.common.stations instance to use for mapping
+                     default: lsl.common.stations.lwa1
         """
         
         # Validate
@@ -1765,19 +1765,19 @@ class BeamStep(object):
     etc.)associated with a particular step.  
     
     Required Keywords:
-    * pointing coordinate 1 (RA [hours] or azimuth [degrees] or ephem.hours/ephem.degrees 
-        instance)
-    * pointing coordinate 2 (dec or elevation/altitude [degrees] or ephem.degrees instance)
-    * observation duration (HH:MM:SS.SSS string or timedelta instance)
-    * observation tuning frequency 1 (Hz)
-    * observation tuning frequency 1 (Hz)
+     * pointing coordinate 1 (RA [hours] or azimuth [degrees] or ephem.hours/ephem.degrees 
+       instance)
+     * pointing coordinate 2 (dec or elevation/altitude [degrees] or ephem.degrees instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation tuning frequency 1 (Hz)
+     * observation tuning frequency 1 (Hz)
     
     Optional Keywords:
-    * RADec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
-    * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-        (default = False)
-    * SpecDelays - 520 list of delays to apply for each antenna
-    * SpecGains - 260 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
+     * RADec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
+     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
+                (default = False)
+     * SpecDelays - 520 list of delays to apply for each antenna
+     * SpecGains - 260 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
     
     .. note::
     If `SpecDelays` is specified, `SpecGains` must also be specified.
