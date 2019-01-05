@@ -88,7 +88,7 @@ _DRSUCapacityTB = 10
 _TBW_TIME_SCALE = 196000
 _TBW_TIME_GAIN = 2500
 # UCF Username RE
-_usernameRE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z]+)(\/(?P<subdir>[a-zA-Z0-9\/\+-_]+))?')
+_usernameRE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z]+)(\/(?P<subdir>[a-zA-Z0-9\/\+\-_]+))?')
 
 
 def _get_equinox_equation(jd):
