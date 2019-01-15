@@ -544,9 +544,9 @@ class Run(object):
                     print("[%i] Error: Scan %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
                 failures += 1
             
-        if totalData >= (len(self.stations)*2*_DRSUCapacityTB*1024**4):
+        if totalData >= (len(self.stations)*_DRSUCapacityTB*1024**4):
             if verbose:
-                print("[%i] Error: Total data volume for run exceeds %i TB DRSU limit" % (os.getpid(), 2*_DRSUCapacityTB,))
+                print("[%i] Error: Total data volume for run exceeds per-station %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
             failures += 1
         
         if failures == 0:

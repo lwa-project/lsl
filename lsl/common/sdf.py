@@ -913,9 +913,9 @@ class Session(object):
                     print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
                 failures += 1
             
-        if totalData >= (2*_DRSUCapacityTB*1024**4):
+        if totalData >= (_DRSUCapacityTB*1024**4):
             if verbose:
-                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), 2*_DRSUCapacityTB,))
+                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
             failures += 1
         
         if failures == 0:
