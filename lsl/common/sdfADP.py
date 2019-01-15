@@ -479,7 +479,7 @@ class Project(object):
                 ses.comments += ';;%s' % clean
         ## Project office comments, including the data return method
         if pos != 'None' and pos is not None:
-            pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
+            pos = 'Requested data return method is %s;;%s' % (ses.data_return_method, pos)
             
         ## PI Information
         output = ""
@@ -498,7 +498,7 @@ class Project(object):
         output = "%sSESSION_ID       %s\n" % (output, ses.id)
         output = "%sSESSION_TITLE    %s\n" % (output, 'None provided' if ses.name is None else ses.name)
         output = "%sSESSION_REMPI    %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
-        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
+        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.data_return_method if pos == 'None' or pos is None else pos[:4090])
         if ses.cra != 0:
             output = "%sSESSION_CRA      %i\n" % (output, ses.cra)
         if ses.drxBeam != -1:
@@ -699,7 +699,7 @@ class Project(object):
 class Session(object):
     """Class to hold all of the observations in a session."""
     
-    def __init__(self, name, id, observations=None, dataReturnMethod='DRSU', comments=None, station=lwasv):
+    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwasv):
         self.name = name
         self.id = int(id)
         if observations is None:
@@ -714,7 +714,7 @@ class Session(object):
             else:
                 raise TypeError("Expected 'observations' to be either a tuple or list of Observations of an Observation")
             self.observations = observations
-        self.dataReturnMethod = dataReturnMethod
+        self.data_return_method = data_return_method
         self.ucfuser = None
         self.comments = comments
         
@@ -820,7 +820,7 @@ class Session(object):
         if method not in ('UCF', 'DRSU', 'USB Harddrives'):
             raise ValueError("Unknown data return method: %s" % method)
             
-        self.dataReturnMethod = method
+        self.data_return_method = method
         
     def set_ucf_username(self, username):
         """Set the username to use for UCF data copies."""
@@ -960,7 +960,7 @@ class Observation(object):
     
     id = 1
 
-    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
+    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
         self.name = name
         self.target = target
         self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
@@ -976,7 +976,7 @@ class Observation(object):
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
         self.filter = int(filter)
-        self.MaxSNR = bool(MaxSNR)
+        self.max_snr = bool(max_snr)
         self.comments = comments
         
         self.mjd = None
@@ -1079,7 +1079,7 @@ class Observation(object):
         """Return a valid value for beam type based on whether maximum S/N beam 
         forming has been requested."""
         
-        if self.MaxSNR:
+        if self.max_snr:
             return 'MAX_SNR'
         else:
             return 'SIMPLE'
@@ -1318,8 +1318,8 @@ class _DRXBase(Observation):
     
     filter_codes = DRXFilters
     
-    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
+    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
         
     def set_duration(self, duration):
         """Set the observation duration."""
@@ -1490,13 +1490,13 @@ class DRX(_DRXBase):
      * integer filter code
     
     Optional Keywords:
-     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-                (default = False)
+     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+                 (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
+    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
         
     def set_ra(self, ra):
         """Set the pointing RA."""
@@ -1524,13 +1524,13 @@ class Solar(_DRXBase):
      * integer filter code
     
     Optional Keywords:
-     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-                (default = False)
+     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+                 (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
         
     def get_fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
@@ -1554,13 +1554,13 @@ class Jovian(_DRXBase):
      * integer filter code
     
     Optional Keywords:
-     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-                (default = False)
+     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+                 (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, MaxSNR=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, MaxSNR=MaxSNR, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
 
     def get_fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
@@ -1601,7 +1601,7 @@ class Stepped(Observation):
                 raise TypeError("Expected 'steps' to be either a tuple or list of BeamSteps or a BeamStep")
             self.steps = steps
         self.filter_codes = DRXFilters
-        Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, MaxSNR=False, comments=comments)
+        Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
     def update(self):
         """Update the computed parameters from the string values."""
@@ -1800,21 +1800,21 @@ class BeamStep(object):
     
     Optional Keywords:
      * RADec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
-     * MaxSNR - specifies if maximum signal-to-noise beam forming is to be used
-                (default = False)
+     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+                 (default = False)
      * SpecDelays - 512 list of delays to apply for each antenna
      * SpecGains - 256 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
     
     .. note::
     If `SpecDelays` is specified, `SpecGains` must also be specified.
-    Specifying both `SpecDelays` and `SpecGains` overrides the `MaxSNR` keyword.
+    Specifying both `SpecDelays` and `SpecGains` overrides the `max_snr` keyword.
     
     .. versionchanged:: 1.0.0
         Added support for azimuth/altitude and RA/dec values as ephem.hours/ephem.degrees 
         instances
     """
     
-    def __init__(self, c1, c2, duration, frequency1, frequency2, RADec=True, MaxSNR=False, SpecDelays=None, SpecGains=None):
+    def __init__(self, c1, c2, duration, frequency1, frequency2, RADec=True, max_snr=False, SpecDelays=None, SpecGains=None):
         self.RADec = bool(RADec)
         if self.RADec:
             convFactor = 12.0/math.pi
@@ -1829,7 +1829,7 @@ class BeamStep(object):
         self.duration = str(duration)
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
-        self.MaxSNR = bool(MaxSNR)
+        self.max_snr = bool(max_snr)
         self.delays = SpecDelays
         self.gains = SpecGains
         
@@ -1930,7 +1930,7 @@ class BeamStep(object):
         if self.delays is not None and self.gains is not None:
             return 'SPEC_DELAYS_GAINS'
         else:
-            if self.MaxSNR:
+            if self.max_snr:
                 return 'MAX_SNR'
             else:
                 return 'SIMPLE'
@@ -2055,11 +2055,11 @@ def _parse_create_obs_object(obsTemp, beamTemps=None, verbose=False):
     elif mode == 'TBN':
         obsOut = TBN(obsTemp['name'], obsTemp['target'], utcString, durString, f1, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
     elif mode == 'TRK_RADEC':
-        obsOut = DRX(obsTemp['name'], obsTemp['target'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
+        obsOut = DRX(obsTemp['name'], obsTemp['target'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], max_snr=obsTemp['MaxSNR'], comments=obsTemp['comments'])
     elif mode == 'TRK_SOL':
-        obsOut = Solar(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
+        obsOut = Solar(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], max_snr=obsTemp['MaxSNR'], comments=obsTemp['comments'])
     elif mode == 'TRK_JOV':
-        obsOut = Jovian(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], MaxSNR=obsTemp['MaxSNR'], comments=obsTemp['comments'])
+        obsOut = Jovian(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], max_snr=obsTemp['MaxSNR'], comments=obsTemp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             print("[%i] -> found %i steps" % (os.getpid(), len(beamTemps)))
@@ -2218,7 +2218,7 @@ def parse_sdf(filename, verbose=False):
                 
             if first[:31] == 'Requested data return method is':
                 # Catch for project office comments that are data return related
-                project.sessions[0].dataReturnMethod = first[32:]
+                project.sessions[0].data_return_method = first[32:]
                 project.projectOffice.sessions[0] = second
             else:
                 # Catch for standard (not data related) project office comments
