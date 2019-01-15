@@ -38,6 +38,7 @@ jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-sdf.txt')
 stpFile = os.path.join(DATA_BUILD, 'tests', 'stp-sdf.txt')
 spcFile = os.path.join(DATA_BUILD, 'tests', 'spc-sdf.txt')
 tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
+idfFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
 
 
 class sdf_adp_tests(unittest.TestCase):
@@ -131,7 +132,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test single session/observations SDFs."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.set_drx_beam(1)
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
@@ -141,7 +142,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test setting the UCF username for auto-copy support."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.set_drx_beam(1)
         sess.set_data_return_method('UCF')
@@ -151,7 +152,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertTrue(out.find('ucfuser:test') >= 0)
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, MaxSNR=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ, comments='This is a comment')
         sess.set_drx_beam(1)
         sess.set_data_return_method('UCF')
@@ -857,9 +858,10 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertTrue(sdfADP.is_valid(tbfFile))
         
     def test_is_not_valid(self):
-        """Test whether or not is_valid works on LWA1 files."""
+        """Test whether or not is_valid works on LWA1 and IDF files."""
         
         self.assertFalse(sdfADP.is_valid(tbwFile))
+        self.assertFalse(sdf.is_valid(idfFile))
         
     def test_username(self):
         """Test setting auto-copy parameters."""
