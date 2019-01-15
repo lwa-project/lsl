@@ -2504,8 +2504,8 @@ def parse_sdf(filename, verbose=False):
             obsTemp['gain'] = int(value)
             continue
             
-        # Keywords that might indicate this is for ADP-based stations
-        if keyword in ('OBS_TBF_SAMPLES',):
+        # Keywords that might indicate this is for ADP-based stations/actually an IDF
+        if keyword in ('OBS_TBF_SAMPLES', 'RUN_ID'):
             raise RuntimeError("Invalid keyword encountered: %s" % keyword)
             
     # Create the final observation
