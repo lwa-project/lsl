@@ -861,7 +861,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test whether or not is_valid works on LWA1 and IDF files."""
         
         self.assertFalse(sdfADP.is_valid(tbwFile))
-        self.assertFalse(sdf.is_valid(idfFile))
+        self.assertFalse(sdfADP.is_valid(idfFile))
         
     def test_username(self):
         """Test setting auto-copy parameters."""
