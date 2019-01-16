@@ -234,7 +234,6 @@ class Project(object):
             clean = ''
             if ses.comments:
                 clean = sdf._usernameRE.sub('', ses.comments)
-                print('**', ses.comments, '=>', clean)
             ses.comments = 'ucfuser:%s' % ses.ucfuser
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
@@ -292,7 +291,7 @@ class Project(object):
             output = "%sSCAN_BW+         %s\n" % (output, self._renderBandwidth(obs.filter, obs.FILTER_CODES))
             ## ASP filter setting
             if obs.aspFlt != -1:
-                output = "%sSCAN_ASP_FLT    %i\n" % (output, 0, obs.aspFlt)
+                output = "%sSCAN_ASP_FLT     %i\n" % (output, obs.aspFlt)
             ## DRX gain
             if obs.gain != -1:
                 output = "%sSCAN_DRX_GAIN    %i\n" % (output, obs.gain)
@@ -727,6 +726,7 @@ class Scan(object):
         pointed.  None if the scan mode is TBN."""
         
         pnt = ephem.FixedBody()
+        pnt.name = self.target
         pnt._ra = self.ra / 12.0 * math.pi
         pnt._dec = self.dec / 180.0 * math.pi
         pnt._epoch = '2000'
@@ -1075,7 +1075,6 @@ def parse_idf(filename, verbose=False):
                 if mtch.group('subdir') is not None:
                     project.runs[0].ucfuser = os.path.join(project.runs[0].ucfuser, mtch.group('subdir'))
             project.runs[0].comments = sdf._usernameRE.sub('', value)
-            print('##', mtch.group('username'), mtch.group('subdir'))
             continue
         if keyword == 'RUN_REMPO':
             project.projectOffice.runs.append(None)

@@ -46,10 +46,11 @@ from . import test_meta
 from . import test_meta_adp
 from . import test_parser
 from . import test_scripts
+from . import test_idf
 
 
 __revision__  = "$Rev$"
-__version__   = "0.4"
+__version__   = "0.5"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
@@ -101,6 +102,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_meta_adp.metabundle_adp_test_suite())
         self.addTest(test_parser.parser_test_suite())
         self.addTest(test_scripts.scripts_test_suite())
+        self.addTest(test_idf.idf_test_suite())
 
 
 def main(opts=None, args=None):
