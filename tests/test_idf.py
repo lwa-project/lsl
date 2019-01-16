@@ -55,7 +55,6 @@ class idf_tests(unittest.TestCase):
         obs = idf.Observer('Test Observer', 99)
         targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6)
         sess = idf.Run('Test Session', 1, scans=targ)
-        sess.set_drx_beam(1)
         proj = idf.Project(obs, 'Test Project', 'COMTST', runs=sess)
         out = proj.render()
         
@@ -91,7 +90,7 @@ class idf_tests(unittest.TestCase):
         
         # Basic file structure
         self.assertEqual(len(project.runs), 1)
-        self.assertEqual(len(project.runs[0].scans), 2)
+        self.assertEqual(len(project.runs[0].scans), 1)
         
         # Correlator setup
         self.assertEqual(project.runs[0].corr_channels, 256)
@@ -113,20 +112,20 @@ class idf_tests(unittest.TestCase):
         """Test updating TRK_RADEC values."""
         
         project = idf.parse_idf(drxFile)
-        project.runs[0].scans[1].set_start("MST 2011 Feb 23 17:00:15")
-        project.runs[0].scans[1].set_duration(timedelta(seconds=15))
-        project.runs[0].scans[1].set_frequency1(75e6)
-        project.runs[0].scans[1].set_frequency2(76e6)
-        project.runs[0].scans[1].set_ra(ephem.hours('5:30:00'))
-        project.runs[0].scans[1].set_dec(ephem.degrees('+22:30:00'))
+        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
+        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
+        project.runs[0].scans[0].set_frequency1(75e6)
+        project.runs[0].scans[0].set_frequency2(76e6)
+        project.runs[0].scans[0].set_ra(ephem.hours('5:30:00'))
+        project.runs[0].scans[0].set_dec(ephem.degrees('+22:30:00'))
         
-        self.assertEqual(project.runs[0].scans[1].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[1].mpm,  15000)
-        self.assertEqual(project.runs[0].scans[1].dur,  15000)
-        self.assertEqual(project.runs[0].scans[1].freq1, 1643482384)
-        self.assertEqual(project.runs[0].scans[1].freq2, 1665395482)
-        self.assertAlmostEqual(project.runs[0].scans[1].ra, 5.5, 6)
-        self.assertAlmostEqual(project.runs[0].scans[1].dec, 22.5, 6)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
+        self.assertEqual(project.runs[0].scans[0].mpm,  15000)
+        self.assertEqual(project.runs[0].scans[0].dur,  15000)
+        self.assertEqual(project.runs[0].scans[0].freq1, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
+        self.assertAlmostEqual(project.runs[0].scans[0].ra, 5.5, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
         
     def test_drx_write(self):
         """Test writing a TRK_RADEC SDF file."""
@@ -194,7 +193,7 @@ class idf_tests(unittest.TestCase):
         
         # Basic file structure
         self.assertEqual(len(project.runs), 1)
-        self.assertEqual(len(project.runs[0].scans), 2)
+        self.assertEqual(len(project.runs[0].scans), 1)
         
         # Correlator setup
         self.assertEqual(project.runs[0].corr_channels, 512)
@@ -214,16 +213,16 @@ class idf_tests(unittest.TestCase):
         """Test updating TRK_SOL values."""
         
         project = idf.parse_idf(solFile)
-        project.runs[0].scans[1].set_start("MST 2011 Feb 23 17:00:15")
-        project.runs[0].scans[1].set_duration(timedelta(seconds=15))
-        project.runs[0].scans[1].set_frequency1(75e6)
-        project.runs[0].scans[1].set_frequency2(76e6)
+        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
+        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
+        project.runs[0].scans[0].set_frequency1(75e6)
+        project.runs[0].scans[0].set_frequency2(76e6)
         
-        self.assertEqual(project.runs[0].scans[1].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[1].mpm,  15000)
-        self.assertEqual(project.runs[0].scans[1].dur,  15000)
-        self.assertEqual(project.runs[0].scans[1].freq1, 1643482384)
-        self.assertEqual(project.runs[0].scans[1].freq2, 1665395482)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
+        self.assertEqual(project.runs[0].scans[0].mpm,  15000)
+        self.assertEqual(project.runs[0].scans[0].dur,  15000)
+        self.assertEqual(project.runs[0].scans[0].freq1, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
         
     def test_sol_write(self):
         """Test writing a TRK_SOL SDF file."""
@@ -285,7 +284,7 @@ class idf_tests(unittest.TestCase):
         
         # Basic file structure
         self.assertEqual(len(project.runs), 1)
-        self.assertEqual(len(project.runs[0].scans), 2)
+        self.assertEqual(len(project.runs[0].scans), 1)
         
         # Correlator setup
         self.assertEqual(project.runs[0].corr_channels, 512)
@@ -305,16 +304,16 @@ class idf_tests(unittest.TestCase):
         """Test updating TRK_JOV values."""
         
         project = idf.parse_idf(jovFile)
-        project.runs[0].scans[1].set_start("MST 2011 Feb 23 17:00:15")
-        project.runs[0].scans[1].set_duration(timedelta(seconds=15))
-        project.runs[0].scans[1].set_frequency1(75e6)
-        project.runs[0].scans[1].set_frequency2(76e6)
+        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
+        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
+        project.runs[0].scans[0].set_frequency1(75e6)
+        project.runs[0].scans[0].set_frequency2(76e6)
         
-        self.assertEqual(project.runs[0].scans[1].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[1].mpm,  15000)
-        self.assertEqual(project.runs[0].scans[1].dur,  15000)
-        self.assertEqual(project.runs[0].scans[1].freq1, 1643482384)
-        self.assertEqual(project.runs[0].scans[1].freq2, 1665395482)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
+        self.assertEqual(project.runs[0].scans[0].mpm,  15000)
+        self.assertEqual(project.runs[0].scans[0].dur,  15000)
+        self.assertEqual(project.runs[0].scans[0].freq1, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
         
     def test_jov_write(self):
         """Test writing a TRK_JOV SDF file."""
@@ -380,8 +379,8 @@ class idf_tests(unittest.TestCase):
         
         # Part 1 - frequency and duration
         project = idf.parse_idf(drxFile)
-        project.runs[0].scans[1].frequency1 = 75e6
-        project.runs[0].scans[1].duration = '00:01:31.000'
+        project.runs[0].scans[0].frequency1 = 75e6
+        project.runs[0].scans[0].duration = '00:01:31.000'
         
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.runs[0].scans:
@@ -391,13 +390,13 @@ class idf_tests(unittest.TestCase):
         fh.close()
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
-        self.assertEqual(project.runs[0].scans[1].freq1, 1643482384)
-        self.assertEqual(project.runs[0].scans[1].dur, 91000)
+        self.assertEqual(project.runs[0].scans[0].freq1, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].dur, 91000)
         
         # Part 2 - frequency and duration (timedelta)
         project = idf.parse_idf(drxFile)
-        project.runs[0].scans[1].frequency1 = 75e6
-        project.runs[0].scans[1].duration = timedelta(minutes=1, seconds=31, microseconds=1000)
+        project.runs[0].scans[0].frequency1 = 75e6
+        project.runs[0].scans[0].duration = timedelta(minutes=1, seconds=31, microseconds=1000)
         
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.runs[0].scans:
@@ -407,13 +406,13 @@ class idf_tests(unittest.TestCase):
         fh.close()
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
-        self.assertEqual(project.runs[0].scans[1].freq1, 1643482384)
-        self.assertEqual(project.runs[0].scans[1].dur, 91001)
+        self.assertEqual(project.runs[0].scans[0].freq1, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].dur, 91001)
         
         # Part 3 - frequency and start time
         project = idf.parse_idf(drxFile)
-        project.runs[0].scans[1].frequency2 = 75e6
-        project.runs[0].scans[1].start = "MST 2011 Feb 23 17:00:15"
+        project.runs[0].scans[0].frequency2 = 75e6
+        project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
         
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.runs[0].scans:
@@ -423,15 +422,15 @@ class idf_tests(unittest.TestCase):
         fh.close()
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
-        self.assertEqual(project.runs[0].scans[1].freq2, 1643482384)
-        self.assertEqual(project.runs[0].scans[1].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[1].mpm,  15000)
+        self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
+        self.assertEqual(project.runs[0].scans[0].mpm,  15000)
         
         # Part 4 - frequency and start time (timedelta)
         project = idf.parse_idf(drxFile)
         _MST = pytz.timezone('US/Mountain')
-        project.runs[0].scans[1].frequency2 = 75e6
-        project.runs[0].scans[1].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
+        project.runs[0].scans[0].frequency2 = 75e6
+        project.runs[0].scans[0].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
         
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.runs[0].scans:
@@ -441,33 +440,30 @@ class idf_tests(unittest.TestCase):
         fh.close()
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
-        self.assertEqual(project.runs[0].scans[1].freq2, 1643482384)
-        self.assertEqual(project.runs[0].scans[1].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[1].mpm,  30001)
+        self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
+        self.assertEqual(project.runs[0].scans[0].mpm,  30001)
         
-    def test_set_station(self):
+    def test_set_stations(self):
         """Test the set stations functionlity."""
         
         project = idf.parse_idf(drxFile)
-        project.runs[0].set_station(lwasv)
+        project.runs[0].set_stations([lwasv, lwa1])
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.runs[0].scans:
             obs.filter = 6
         self.assertTrue(project.validate())
         
-        self.assertRaises(RuntimeError, project.runs[0].set_station, lwa1)
-        
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertFalse(idf.is_valid(drxFile))
-        self.assertFalse(idf.is_valid(solFile))
-        self.assertFalse(idf.is_valid(jovFile))
+        self.assertTrue(idf.is_valid(drxFile))
+        self.assertTrue(idf.is_valid(solFile))
+        self.assertTrue(idf.is_valid(jovFile))
         
     def test_is_not_valid(self):
         """Test whether or not is_valid works on LWA1 and IDF files."""
         
-        self.assertFalse(idf.is_valid(tbwFile))
         self.assertFalse(idf.is_valid(sdfFile))
         
     def test_username(self):

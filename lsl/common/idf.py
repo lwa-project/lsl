@@ -424,11 +424,11 @@ class Run(object):
         
     def set_stations(self, stations):
         """
-        Update the station used by the project for source computations.
-        
-        .. versionadded:: 1.2.0
+        Update the stations used by the project for source computations.
         """
         
+        if not isinstance(stations, (tuple, list)):
+            raise TypeError('Expected a tuple of list of LWAStations')
         for i,station in stations:
             if notisinstance(station, LWAStation):
                 raise TypeError("Expected index %i to be an LWAStation" % i)
