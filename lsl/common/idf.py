@@ -429,7 +429,7 @@ class Run(object):
         
         if not isinstance(stations, (tuple, list)):
             raise TypeError('Expected a tuple of list of LWAStations')
-        for i,station in stations:
+        for i,station in enumerate(stations):
             if notisinstance(station, LWAStation):
                 raise TypeError("Expected index %i to be an LWAStation" % i)
         self.stations = stations
