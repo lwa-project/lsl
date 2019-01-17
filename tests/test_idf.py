@@ -293,7 +293,7 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].mode, 'TRK_JOV')
         self.assertEqual(project.runs[0].scans[0].mjd,  58490)
         self.assertEqual(project.runs[0].scans[0].mpm,  74580000)
-        self.assertEqual(project.runs[0].scans[0].dur,  7200000)
+        self.assertEqual(project.runs[0].scans[0].dur,  3600000)
         self.assertEqual(project.runs[0].scans[0].freq1, 766958446)
         self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
         self.assertEqual(project.runs[0].scans[0].filter,   6)
