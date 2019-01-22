@@ -1022,7 +1022,7 @@ def parse_idf(filename, verbose=False):
             continue
         if keyword == 'PI_NAME':
             project.observer.name = value
-            project.observer.splitName()
+            project.observer.split_name()
             continue
             
         # Project/Proposal Info
