@@ -50,7 +50,7 @@ class idf_tests(unittest.TestCase):
     ### General ###
     
     def test_flat_projects(self):
-        """Test single session/scans SDFs."""
+        """Test single session/scans IDFs."""
         
         obs = idf.Observer('Test Observer', 99)
         targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6)
@@ -82,7 +82,7 @@ class idf_tests(unittest.TestCase):
     ### DRX - TRK_RADEC ###
     
     def test_drx_parse(self):
-        """Test reading in a TRK_RADEC SDF file."""
+        """Test reading in a TRK_RADEC IDF file."""
         
         project = idf.parse_idf(drxFile)
         
@@ -92,7 +92,7 @@ class idf_tests(unittest.TestCase):
         
         # Correlator setup
         self.assertEqual(project.runs[0].corr_channels, 256)
-        self.assertAlmostEqual(project.runs[0].corr_inttime, 0.1, 6)
+        self.assertAlmostEqual(project.runs[0].corr_inttime, 1.0, 6)
         self.assertEqual(project.runs[0].corr_basis, 'linear')
         
         # Observational setup - 1
@@ -126,7 +126,7 @@ class idf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
         
     def test_drx_write(self):
-        """Test writing a TRK_RADEC SDF file."""
+        """Test writing a TRK_RADEC IDF file."""
         
         project = idf.parse_idf(drxFile)
         # Fix for LWA-SV only going up to filter code 6
@@ -135,7 +135,7 @@ class idf_tests(unittest.TestCase):
         out = project.render()
         
     def test_drx_errors(self):
-        """Test various TRK_RADEC SDF errors."""
+        """Test various TRK_RADEC IDF errors."""
         
         project = idf.parse_idf(drxFile)
         
@@ -185,7 +185,7 @@ class idf_tests(unittest.TestCase):
     ### DRX - TRK_SOL ###
     
     def test_sol_parse(self):
-        """Test reading in a TRK_SOL SDF file."""
+        """Test reading in a TRK_SOL IDF file."""
         
         project = idf.parse_idf(solFile)
         
@@ -223,7 +223,7 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
         
     def test_sol_write(self):
-        """Test writing a TRK_SOL SDF file."""
+        """Test writing a TRK_SOL IDF file."""
         
         project = idf.parse_idf(solFile)
         # Fix for LWA-SV only going up to filter code 6
@@ -232,7 +232,7 @@ class idf_tests(unittest.TestCase):
         out = project.render()
         
     def test_sol_errors(self):
-        """Test various TRK_SOL SDF errors."""
+        """Test various TRK_SOL IDF errors."""
         
         project = idf.parse_idf(solFile)
         
@@ -276,7 +276,7 @@ class idf_tests(unittest.TestCase):
     ### DRX - TRK_JOV ###
     
     def test_jov_parse(self):
-        """Test reading in a TRK_JOV SDF file."""
+        """Test reading in a TRK_JOV IDF file."""
         
         project = idf.parse_idf(jovFile)
         
@@ -314,7 +314,7 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
         
     def test_jov_write(self):
-        """Test writing a TRK_JOV SDF file."""
+        """Test writing a TRK_JOV IDF file."""
         
         project = idf.parse_idf(jovFile)
         # Fix for LWA-SV only going up to filter code 6
@@ -323,7 +323,7 @@ class idf_tests(unittest.TestCase):
         out = project.render()
         
     def test_jov_errors(self):
-        """Test various TRK_JOV SDF errors."""
+        """Test various TRK_JOV IDF errors."""
         
         project = idf.parse_idf(jovFile)
         
@@ -367,7 +367,7 @@ class idf_tests(unittest.TestCase):
     ### Misc. ###
     
     def test_generate_sdfs(self):
-        """Test generated SDFs from the IDF."""
+        """Test generated IDFs from the IDF."""
         
         project = idf.parse_idf(drxFile)
         sdfs = project.generate_sdfs()

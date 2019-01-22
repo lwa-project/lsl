@@ -351,7 +351,7 @@ class Project(object):
             ### Session
             session = sdf.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
                                   starting_session_id, observations=[], station=station)
-            session.setDRXBeam(1)
+            session.set_drx_beam(1)
             session.set_ucf_username('eLWA/%s_%s_%s_%04i' % (self.id, start.strftime('%y%m%d'), start.strftime('%H%M'), ses.id))
             session.set_data_return_method('UCF')
             
@@ -362,15 +362,15 @@ class Project(object):
                     new_obs = sdf.DRX(obs.intention, obs.target, _UTC.localize(obs_start), obs.duration, 
                                       obs.ra, obs.dec, 
                                       obs.frequency1, obs.frequency2, obs.filter, 
-                                      gain=obs.gain, MaxSNR=False, comments=obs.comments)
+                                      gain=obs.gain, max_snr=False, comments=obs.comments)
                 elif isinstance(obs, Solar):
                     new_obs = sdf.Solar(obs.intention, obs.target, _UTC.localize(obs_start), obs.duration, 
                                         obs.frequency1, obs.frequency2, obs.filter, 
-                                        gain=obs.gain, MaxSNR=False, comments=obs.comments)
+                                        gain=obs.gain, max_snr=False, comments=obs.comments)
                 elif isinstance(obs, Jovian):
                     new_obs = sdf.Jovian(obs.intention, obs.target, _UTC.localize(obs_start), obs.duration, 
                                          obs.frequency1, obs.frequency2, obs.filter, 
-                                         gain=obs.gain, MaxSNR=False, comments=obs.comments)
+                                         gain=obs.gain, max_snr=False, comments=obs.comments)
                 else:
                     raise RuntimeError("This should never happen")
                 session.append(new_obs)
