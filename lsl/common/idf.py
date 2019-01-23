@@ -661,6 +661,10 @@ class Scan(object):
         self.freq2 = self.get_frequency2()
         self.dataVolume = self.estimate_bytes()
         
+        # Update the associated alternate phase centers
+        for phase_center in self.alt_phase_centers:
+            phase_center.update()
+            
     def set_start(self, start):
         """Set the scan start time."""
         
@@ -988,6 +992,11 @@ class AlternatePhaseCenter(object):
         """Set the pointing Dec."""
         
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        
+    def update(self):
+        """Update the computed parameters from the string values."""
+        
+        pass
         
     def get_fixed_body(self):
         """Return an ephem.Body object corresponding to where the scan is 
