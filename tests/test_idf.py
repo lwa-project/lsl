@@ -305,6 +305,13 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
+        # Too many phase centers
+        project.runs[0].scans[0].alt_phase_centers[0].dec = 40.733916000
+        for i in xrange(4):
+            project.runs[0].scans[0].add_alt_phase_center('test', 'Target', 19.991210200, 40.733916000)
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
     ### DRX - TRK_SOL ###
     
     def test_sol_parse(self):

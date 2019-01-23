@@ -838,6 +838,10 @@ class Scan(object):
             failures += 1
             
         # Advanced - alternate phase centers
+        if len(self.alt_phase_centers) > 5:
+            if verbose:
+                print("[%i] Error: too many alternate phase centers defined" % os.getpid())
+            failures += 1
         for j,phase_center in enumerate(self.alt_phase_centers):
             if not phase_center.validate(station, verbose=verbose):
                 if verbose:
