@@ -212,12 +212,12 @@ class idf_tests(unittest.TestCase):
         
         # Phase center - 1
         self.assertEqual(len(project.runs[0].scans[0].alt_phase_centers), 2)
-        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0][2], 19.991310200, 6)
-        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0][3], 40.733916000, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0].ra, 19.991310200, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0].dec, 40.733916000, 6)
         
         # Phase center - 2
-        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1][2], 19.991210200, 6)
-        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1][3], 40.734016000, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1].ra, 19.991210200, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1].dec, 40.734016000, 6)
         
     def test_drx_alt_update(self):
         """Test updating TRK_RADEC values with other phase centers."""
