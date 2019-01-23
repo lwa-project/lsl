@@ -1,0 +1,43 @@
+PI_ID            99
+PI_NAME          Dowell, Jayce
+
+PROJECT_ID       COMJD
+PROJECT_TITLE    This is a test project
+
+RUN_ID           1
+RUN_STATIONS     all
+RUN_TITLE        This is a test run
+RUN_CHANNELS     256
+RUN_INTTIME      1.0
+RUN_BASIS        linear
+RUN_REMPI        Test 2;;ucfuser:jdowell/test;;This is a comment
+RUN_REMPO        Requested data return method is UCF
+
+SCAN_ID          1
+SCAN_TARGET      CygA
+SCAN_INTENTION   FluxCal
+SCAN_REMPI       Comment #1
+SCAN_REMPO       Estimated data volume for this observation is 264.91 GB
+SCAN_START_MJD   58490
+SCAN_START_MPM   74580000
+SCAN_START       UTC 2019 01 07 20:43:00.000
+SCAN_DUR         7200000
+SCAN_DUR+        02:00:00.000
+SCAN_MODE        TRK_RADEC
+SCAN_RA          19.991210200
+SCAN_DEC         +40.733916000
+SCAN_FREQ1       766958446
+SCAN_FREQ1+      35.000000000 MHz
+SCAN_FREQ2       1643482384
+SCAN_FREQ2+      75.000000000 MHz
+SCAN_BW          6
+SCAN_BW+         9.800 MHz
+SCAN_ALT_N            2
+SCAN_ALT_TARGET[1]    CygA+1
+SCAN_ALT_INTENTION[1] Target
+SCAN_ALT_RA[1]        19.991310200
+SCAN_ALT_DEC[1]       +40.733916000
+SCAN_ALT_TARGET[2]    CygA+2
+SCAN_ALT_INTENTION[2] Target
+SCAN_ALT_RA[2]        19.991210200
+SCAN_ALT_DEC[2]       +40.734016000

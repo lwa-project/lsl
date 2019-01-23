@@ -59,7 +59,7 @@ from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idF',  'getScanStartStop', 'is_valid', '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idF',  'get_scan_start_stop', 'is_valid', '__version__', '__revision__', '__all__']
 
 _UTC = pytz.utc
 _DRSUCapacityTB = 10
@@ -289,6 +289,15 @@ class Project(object):
             output = "%sSCAN_FREQ2+      %.9f MHz\n" % (output, obs.frequency2/1e6)
             output = "%sSCAN_BW          %i\n" % (output, obs.filter)
             output = "%sSCAN_BW+         %s\n" % (output, self._renderBandwidth(obs.filter, obs.FILTER_CODES))
+            ## Alternate phase centers
+            if len(obs.alt_phase_centers) > 0:
+                output = "%sSCAN_ALT_N             %i\n" % (output, len(obs.alt_phase_centers))
+                for i,phase_center in obs.alt_phase_centers:
+                    output = "%sSCAN_ALT_TARGET[%i]    %s\n" % (output, i+1, phase_center[0])  
+                    output = "%sSCAN_ALT_INTENTION[%i] %s\n" % (output, i+1, phase_center[1]) 
+                    output = "%sSCAN_ALT_RA[%i]        %.9f\n" % (output, i+1, phase_center[2])  
+                    output = "%sSCAN_ALT_DEC[%i]       %+.9f\n" % (output, i+1, phase_center[3])
+                    
             ## ASP filter setting
             if obs.aspFlt != -1:
                 output = "%sSCAN_ASP_FLT     %i\n" % (output, obs.aspFlt)
@@ -355,8 +364,13 @@ class Project(object):
             session.set_ucf_username('eLWA/%s_%s_%s_%04i' % (self.id, start.strftime('%y%m%d'), start.strftime('%H%M'), ses.id))
             session.set_data_return_method('UCF')
             
+            ## Project Office
+            new_projoff = sdf.ProjectOffice(project=copy.deepcopy(self.projectOffice.project), 
+                                            sessions=copy.deepcopy([self.projectOffice.runs[run],]), 
+                                            observations=copy.deepcopy([self.projectOffice.scans[run],]))
+            
             ## Observations
-            for obs in ses.scans:
+            for o,obs in enumerate(ses.scans):
                 obs_start = mjdmpm_to_datetime(obs.mjd, obs.mpm)
                 if isinstance(obs, DRX):
                     new_obs = sdf.DRX(obs.intention, obs.target, _UTC.localize(obs_start), obs.duration, 
@@ -375,11 +389,18 @@ class Project(object):
                     raise RuntimeError("This should never happen")
                 session.append(new_obs)
                 
-            ## Project Office
-            new_projoff = sdf.ProjectOffice(project=copy.deepcopy(self.projectOffice.project), 
-                                            sessions=copy.deepcopy(self.projectOffice.runs), 
-                                            observations=copy.deepcopy(self.projectOffice.scans))
-            
+                npc = len(obs.alt_phase_centers)
+                for p,phase_center in enumerate(reversed(obs.alt_phase_centers)):
+                    cid = npc - p
+                    alt_t, alt_i, alt_r, alt_d = phase_center
+                    try:
+                        new_projoff.observations[0][o]
+                    except IndexError:
+                        new_projoff.observations[0][o] = None
+                    if new_projoff.observations[0][o] is None:
+                        new_projoff.observations[0][o] = ''
+                    new_projoff.observations[0][o] = "alttarget%i:%s;;altintention%i:%s;;altra%i:%.9f;;altdec%i:%+.9f;;%s" % (cid, alt_t, cid, alt_i, cid, alt_r, cid, alt_d, new_projoff.observations[0][o])
+                    
             ## Project
             project = sdf.Project(new_observer, "%s - %s (%i of %i)" % (self.name, station.id, i+1, len(ses.stations)), 
                                   copy.deepcopy(self.id), sessions=[session,], comments=copy.deepcopy(self.comments), 
@@ -391,6 +412,8 @@ class Project(object):
             ## Save an increment the session ID
             sdfs.append(project)
             starting_session_id += 1
+            
+        # Done
         return sdfs
 
 
@@ -513,6 +536,11 @@ class Run(object):
                     failures += 1
                 totalData += obs.dataVolume
                 
+            if obs.filter != self.scans[0].filter:
+                if verbose:
+                    print("[%i] Error: Filter code changes at scan %i" % (os.getpid(), scanCount))
+                failures += 1
+                
             scanCount += 1
 
         # Make sure that the scans don't overlap
@@ -605,6 +633,8 @@ class Scan(object):
         self.aspFlt = -1
         
         self.gain = int(gain)
+        
+        self.alt_phase_centers = []
         
         self.update()
         
@@ -707,6 +737,14 @@ class Scan(object):
         self.frequency2 = float(frequency2)
         self.update()
         
+    def add_alt_phase_center(self, target, intention, ra, dec):
+        """Add an alternate phase center to the scan."""
+        
+        ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
+        dec = float(dec) * (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        
+        self.alt_phase_centers.append( (target, intention, ra, dec) )
+        
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
         scans.  For DRX:
@@ -794,6 +832,47 @@ class Scan(object):
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the scan for %s" % (os.getpid(), self.compute_visibility(station=station)*100.0, station.id))
             failures += 1
             
+        # Advanced - alternate phase centers
+        for j,phase_center in enumerate(self.alt_phase_centers):
+            _, alt_int, alt_ra, alt_dec = phase_center
+            
+            ## Intention
+            if alt_int.lower() not in ('fluxcal', 'phasecal', 'target'):
+                if verbose:
+                    print("[%s] Error: Invalid alternate phase center %i intention '%s'" % (os.getpid(), j+1, ant_int))
+                failures += 1
+                
+            ## Pointing
+            if alt_ra < 0 or alt_ra >= 24:
+                if verbose:
+                    print("[%i] Error: Invalid alternate phase center %i value for RA '%.6f'" % (os.getpid(), j+1, alt_ra))
+                failures += 1
+            if alt_dec < -90 or alt_dec > 90:
+                if verbose:
+                    print("[%i] Error: Invalid alternate phase center %i value for dec. '%+.6f'" % (os.getpid(), j+1, alt_dec))
+                failures += 1
+                
+            ## Closeness to pointing center
+            pnt = self.get_fixed_body()
+            
+            alt_pnt = ephem.FixedBody()
+            alt_pnt._ra = alt_ra / 12.0 * math.pi
+            alt_pnt._dec = alt_dec / 180.0 * math.pi
+            alt_pnt._epoch = '2000'
+            
+            lwa = station.get_observer()
+            lwa.date = self.mjd + (self.mpm/1000.0 + self.dur/1000.0/2.0)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
+            pnt.compute(lwa)
+            alt_pnt.compute(lwa)
+            
+            alt_sep = ephem.separation(pnt, alt_pnt) * 180/math.pi
+            
+            beam = 2.0*74e6/max([self.frequency1, self.frequency2])
+            if alt_sep > beam/2.0:
+                if verbose:
+                    print("[%i] Error: alternate phase center %i is %.1f degrees from pointing center" % (os.getpid(), j+1, alt_sep))
+                failures += 1
+                
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
             if verbose:
@@ -835,6 +914,8 @@ class DRX(Scan):
      * comments - comments about the scan
     """
     
+    alt_phase_centers = []
+    
     def __init__(self, target, intention, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, comments=None):
         Scan.__init__(self, target, intention, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, comments=comments)
         
@@ -847,8 +928,8 @@ class DRX(Scan):
         """Set the pointing Dec."""
         
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
-        
-        
+
+
 class Solar(Scan):
     """Sub-class of DRX specifically for Solar DRX scans.   It features a
     reduced number of parameters needed to setup the scan.
@@ -987,6 +1068,8 @@ def parse_idf(filename, verbose=False):
     obsTemp = {'id': 0, 'target': '', 'intention': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
                'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'gain': -1, 
                'aspFlt': -1}
+    altTemp = {'id': 0, 'target': '', 'intention': '', 'ra': 0.0, 'dec': 0.0}
+    altTemps = []
     
     for line in fh:
         # Trim off the newline character and skip blank lines
@@ -1097,12 +1180,14 @@ def parse_idf(filename, verbose=False):
         # Scan Info
         if keyword == 'SCAN_ID':
             if obsTemp['id'] != 0:
-                project.runs[0].scans.append( _parse_create_scan_object(obsTemp, verbose=verbose) )
+                project.runs[0].scans.append( _parse_create_scan_object(obsTemp, altTemps=altTemps, verbose=verbose) )
+                altTemp = {'id': 0, 'target': '', 'intention': '', 'ra': 0.0, 'dec': 0.0}
+                altTemps = []
             obsTemp['id'] = int(value)
             project.projectOffice.scans[0].append( None )
             
             if verbose:
-                print("[%i] Started obs %i" % (os.getpid(), int(value)))
+                print("[%i] Started scan %i" % (os.getpid(), int(value)))
                 
             continue
         if keyword == 'SCAN_TARGET':
@@ -1145,6 +1230,52 @@ def parse_idf(filename, verbose=False):
             obsTemp['filter'] = int(value)
             continue
             
+        # Alternate phase centers
+        if keyword == 'SCAN_ALT_TARGET':
+            if len(altTemps) == 0:
+                altTemps.append( copy.deepcopy(altTemp) )
+                altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['target'] = value
+            else:
+                if altTemps[-1]['id'] != ids[0]:
+                    altTemps.append( copy.deepcopy(altTemps[-1]) )
+                    altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['target'] = value
+            continue
+        if keyword == 'SCAN_ALT_INTENTION':
+            if len(altTemps) == 0:
+                altTemps.append( copy.deepcopy(altTemp) )
+                altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['intention'] = value
+            else:
+                if altTemps[-1]['id'] != ids[0]:
+                    altTemps.append( copy.deepcopy(altTemps[-1]) )
+                    altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['intention'] = value
+            continue
+        if keyword == 'SCAN_ALT_RA':
+            if len(altTemps) == 0:
+                altTemps.append( copy.deepcopy(altTemp) )
+                altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['ra'] = float(value)
+            else:
+                if altTemps[-1]['id'] != ids[0]:
+                    altTemps.append( copy.deepcopy(altTemps[-1]) )
+                    altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['ra'] = float(value)
+            continue
+        if keyword == 'SCAN_ALT_DEC':
+            if len(altTemps) == 0:
+                altTemps.append( copy.deepcopy(altTemp) )
+                altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['dec'] = float(value)
+            else:
+                if altTemps[-1]['id'] != ids[0]:
+                    altTemps.append( copy.deepcopy(altTemps[-1]) )
+                    altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['dec'] = float(value)
+            continue
+            
         # Run wide settings at the end of the scans
         if keyword == 'SCAN_ASP_FLT':
             obsTemp['aspFlt'] = int(value)
@@ -1159,7 +1290,7 @@ def parse_idf(filename, verbose=False):
             
     # Create the final scan
     if obsTemp['id'] != 0:
-        project.runs[0].scans.append( _parse_create_scan_object(obsTemp, verbose=verbose) )
+        project.runs[0].scans.append( _parse_create_scan_object(obsTemp, altTemps=altTemps, verbose=verbose) )
         
     # Close the file
     fh.close()
@@ -1168,7 +1299,7 @@ def parse_idf(filename, verbose=False):
     return project
 
 
-def getScanStartStop(obs):
+def get_scan_start_stop(obs):
     """
     Given a scan, get the start and stop times (returned as a two-
     element tuple of UTC datetime instances).

@@ -31,6 +31,7 @@ __author__    = "Jayce Dowell"
 
 
 drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
+altFile = os.path.join(DATA_BUILD, 'tests', 'alt-idf.txt')
 solFile = os.path.join(DATA_BUILD, 'tests', 'sol-idf.txt')
 jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-idf.txt')
 sdfFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
@@ -179,6 +180,128 @@ class idf_tests(unittest.TestCase):
         # Bad pointing
         project.runs[0].scans[0].duration = '00:00:01.000'
         project.runs[0].scans[0].dec = -72.0
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
+    ### DRX - TRK_RADEC + Alternate phase centers###
+    
+    def test_drx_alt_parse(self):
+        """Test reading in a TRK_RADEC IDF file with other phase centers."""
+        
+        project = idf.parse_idf(altFile)
+        
+        # Basic file structure
+        self.assertEqual(len(project.runs), 1)
+        self.assertEqual(len(project.runs[0].scans), 1)
+        
+        # Correlator setup
+        self.assertEqual(project.runs[0].corr_channels, 256)
+        self.assertAlmostEqual(project.runs[0].corr_inttime, 1.0, 6)
+        self.assertEqual(project.runs[0].corr_basis, 'linear')
+        
+        # Observational setup - 1
+        self.assertEqual(project.runs[0].scans[0].mode, 'TRK_RADEC')
+        self.assertEqual(project.runs[0].scans[0].mjd,  58490)
+        self.assertEqual(project.runs[0].scans[0].mpm,  74580000)
+        self.assertEqual(project.runs[0].scans[0].dur,  7200000)
+        self.assertEqual(project.runs[0].scans[0].freq1, 766958446)
+        self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].filter,   6)
+        self.assertAlmostEqual(project.runs[0].scans[0].ra, 19.991210200, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].dec, 40.733916000, 6)
+        
+        # Phase center - 1
+        self.assertEqual(len(project.runs[0].scans[0].alt_phase_centers), 2)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0][2], 19.991310200, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0][3], 40.733916000, 6)
+        
+        # Phase center - 2
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1][2], 19.991210200, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1][3], 40.734016000, 6)
+        
+    def test_drx_alt_update(self):
+        """Test updating TRK_RADEC values with other phase centers."""
+        
+        project = idf.parse_idf(altFile)
+        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
+        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
+        project.runs[0].scans[0].set_frequency1(75e6)
+        project.runs[0].scans[0].set_frequency2(76e6)
+        project.runs[0].scans[0].set_ra(ephem.hours('5:30:00'))
+        project.runs[0].scans[0].set_dec(ephem.degrees('+22:30:00'))
+        project.runs[0].scans[0].alt_phase_centers[0][2] = 5.56
+        project.runs[0].scans[0].alt_phase_centers[1][2] = 5.54
+        
+        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
+        self.assertEqual(project.runs[0].scans[0].mpm,  15000)
+        self.assertEqual(project.runs[0].scans[0].dur,  15000)
+        self.assertEqual(project.runs[0].scans[0].freq1, 1643482384)
+        self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
+        self.assertAlmostEqual(project.runs[0].scans[0].ra, 5.5, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_center[0][2], 5.56, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_center[1][2], 5.54, 6)
+        
+    def test_drx_alt_write(self):
+        """Test writing a TRK_RADEC IDF file with other phase centers."""
+        
+        project = idf.parse_idf(altFile)
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.runs[0].scans:
+            obs.filter = 6
+        out = project.render()
+        
+    def test_drx_alt_errors(self):
+        """Test various TRK_RADEC IDF errors with other phase centers."""
+        
+        project = idf.parse_idf(altFile)
+        
+        # Bad interferometer
+        project.runs[0].stations = [lwa1,]
+        self.assertFalse(project.validate())
+        
+        # Bad correlator channel count
+        project.runs[0].corr_channels = 129
+        self.assertFalse(project.validate())
+        
+        # Bad correlator integration time
+        project.runs[0].corr_inttime = 1e-6
+        self.assertFalse(project.validate())
+        
+        # Bad correlator output polarization basis
+        project.runs[0].corr_basis = 'cats'
+        self.assertFalse(project.validate())
+        
+        # Bad filter
+        project.runs[0].scans[0].filter = 7
+        self.assertFalse(project.validate())
+        
+        # Bad frequency
+        project.runs[0].scans[0].filter = 6
+        project.runs[0].scans[0].frequency1 = 90.0e6
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
+        project.runs[0].scans[0].frequency1 = 38.0e6
+        project.runs[0].scans[0].frequency2 = 90.0e6
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
+        # Bad duration
+        project.runs[0].scans[0].frequency2 = 38.0e6
+        project.runs[0].scans[0].duration = '96:00:00.000'
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
+        # Bad pointing
+        project.runs[0].scans[0].duration = '00:00:01.000'
+        project.runs[0].scans[0].dec = -72.0
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
+        # Bad alternate phase center
+        project.runs[0].scans[0].dec = 40.733916000
+        project.runs[0].scans[0].alt_phase_center[0][3] = 45.0
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
