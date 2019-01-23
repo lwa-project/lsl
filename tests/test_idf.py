@@ -229,8 +229,8 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].set_frequency2(76e6)
         project.runs[0].scans[0].set_ra(ephem.hours('5:30:00'))
         project.runs[0].scans[0].set_dec(ephem.degrees('+22:30:00'))
-        project.runs[0].scans[0].alt_phase_centers[0][2] = 5.56
-        project.runs[0].scans[0].alt_phase_centers[1][2] = 5.54
+        project.runs[0].scans[0].alt_phase_centers[0].set_ra(ephem.hours('5:35:00'))
+        project.runs[0].scans[0].alt_phase_centers[1].set_ra(ephem.hours('5:25:00'))
         
         self.assertEqual(project.runs[0].scans[0].mjd,  55616)
         self.assertEqual(project.runs[0].scans[0].mpm,  15000)
@@ -239,8 +239,8 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
         self.assertAlmostEqual(project.runs[0].scans[0].ra, 5.5, 6)
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
-        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_center[0][2], 5.56, 6)
-        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_center[1][2], 5.54, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0].ra, 5.583333, 6)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1].ra, 5.416667, 6)
         
     def test_drx_alt_write(self):
         """Test writing a TRK_RADEC IDF file with other phase centers."""
@@ -301,7 +301,7 @@ class idf_tests(unittest.TestCase):
         
         # Bad alternate phase center
         project.runs[0].scans[0].dec = 40.733916000
-        project.runs[0].scans[0].alt_phase_center[0][3] = 45.0
+        project.runs[0].scans[0].alt_phase_centers[0].dec = 45.0
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         

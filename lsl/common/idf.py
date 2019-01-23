@@ -292,11 +292,11 @@ class Project(object):
             ## Alternate phase centers
             if len(obs.alt_phase_centers) > 0:
                 output = "%sSCAN_ALT_N             %i\n" % (output, len(obs.alt_phase_centers))
-                for i,phase_center in obs.alt_phase_centers:
-                    output = "%sSCAN_ALT_TARGET[%i]    %s\n" % (output, i+1, phase_center[0])  
-                    output = "%sSCAN_ALT_INTENTION[%i] %s\n" % (output, i+1, phase_center[1]) 
-                    output = "%sSCAN_ALT_RA[%i]        %.9f\n" % (output, i+1, phase_center[2])  
-                    output = "%sSCAN_ALT_DEC[%i]       %+.9f\n" % (output, i+1, phase_center[3])
+                for i,phase_center in enumerate(obs.alt_phase_centers):
+                    output = "%sSCAN_ALT_TARGET[%i]    %s\n" % (output, i+1, phase_center.target)  
+                    output = "%sSCAN_ALT_INTENTION[%i] %s\n" % (output, i+1, phase_center.intention) 
+                    output = "%sSCAN_ALT_RA[%i]        %.9f\n" % (output, i+1, phase_center.ra)  
+                    output = "%sSCAN_ALT_DEC[%i]       %+.9f\n" % (output, i+1, phase_center.dec)
                     
             ## ASP filter setting
             if obs.aspFlt != -1:
@@ -392,7 +392,7 @@ class Project(object):
                 npc = len(obs.alt_phase_centers)
                 for p,phase_center in enumerate(reversed(obs.alt_phase_centers)):
                     cid = npc - p
-                    alt_t, alt_i, alt_r, alt_d = phase_center
+                    alt_t, alt_i, alt_r, alt_d = phase_center.target, phase_center.intention, phase_center.ra, phase_center.dec
                     try:
                         new_projoff.observations[0][o]
                     except IndexError:
@@ -737,13 +737,14 @@ class Scan(object):
         self.frequency2 = float(frequency2)
         self.update()
         
-    def add_alt_phase_center(self, target, intention, ra, dec):
+    def add_alt_phase_center(self, target_or_apc, intention=None, ra=None, dec=None):
         """Add an alternate phase center to the scan."""
         
-        ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
-        dec = float(dec) * (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
-        
-        self.alt_phase_centers.append( (target, intention, ra, dec) )
+        if isinstance(target_or_apc, AlternatePhaseCenter):
+            apc = target_or_apc
+        else:
+            apc = AlternatePhaseCenter(target_or_apc, intention, ra, dec)
+        self.alt_phase_centers.append(apc)
         
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
@@ -834,31 +835,14 @@ class Scan(object):
             
         # Advanced - alternate phase centers
         for j,phase_center in enumerate(self.alt_phase_centers):
-            _, alt_int, alt_ra, alt_dec = phase_center
-            
-            ## Intention
-            if alt_int.lower() not in ('fluxcal', 'phasecal', 'target'):
+            if not phase_center.validate(station, verbose=verbose):
                 if verbose:
-                    print("[%s] Error: Invalid alternate phase center %i intention '%s'" % (os.getpid(), j+1, ant_int))
-                failures += 1
-                
-            ## Pointing
-            if alt_ra < 0 or alt_ra >= 24:
-                if verbose:
-                    print("[%i] Error: Invalid alternate phase center %i value for RA '%.6f'" % (os.getpid(), j+1, alt_ra))
-                failures += 1
-            if alt_dec < -90 or alt_dec > 90:
-                if verbose:
-                    print("[%i] Error: Invalid alternate phase center %i value for dec. '%+.6f'" % (os.getpid(), j+1, alt_dec))
+                    print("[%i] Error: invalid alternate phase center %i" % (os.getpid(), j+1))
                 failures += 1
                 
             ## Closeness to pointing center
             pnt = self.get_fixed_body()
-            
-            alt_pnt = ephem.FixedBody()
-            alt_pnt._ra = alt_ra / 12.0 * math.pi
-            alt_pnt._dec = alt_dec / 180.0 * math.pi
-            alt_pnt._epoch = '2000'
+            alt_pnt = phase_center.get_fixed_body()
             
             lwa = station.get_observer()
             lwa.date = self.mjd + (self.mpm/1000.0 + self.dur/1000.0/2.0)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
@@ -986,7 +970,65 @@ class Jovian(Scan):
         return ephem.Jupiter()
 
 
-def _parse_create_scan_object(obsTemp, verbose=False):
+class AlternatePhaseCenter(object):
+    """Class to hold an alternate phase center for a scan."""
+    
+    def __init__(self, target, intention, ra, dec):
+        self.target = target
+        self.intention = intention
+        self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
+        self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        
+    def set_ra(self, ra):
+        """Set the pointing RA."""
+        
+        self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
+        
+    def set_dec(self, dec):
+        """Set the pointing Dec."""
+        
+        self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        
+    def get_fixed_body(self):
+        """Return an ephem.Body object corresponding to where the scan is 
+        pointed.  None if the scan mode is TBN."""
+        
+        pnt = ephem.FixedBody()
+        pnt.name = self.target
+        pnt._ra = self.ra / 12.0 * math.pi
+        pnt._dec = self.dec / 180.0 * math.pi
+        pnt._epoch = '2000'
+        return pnt
+    
+    def validate(self, station, verbose=False):
+        """Basic validation of the pointing, that's it."""
+        
+        failures = 0
+        
+        ## Intention
+        if self.intention.lower() not in ('fluxcal', 'phasecal', 'target'):
+            if verbose:
+                print("[%s] Error: Invalid alternate phase center intention '%s'" % (os.getpid(), self.intention))
+            failures += 1
+            
+        ## Pointing
+        if self.ra < 0 or self.ra >= 24:
+            if verbose:
+                print("[%i] Error: Invalid alternate phase center value for RA '%.6f'" % (os.getpid(), self.ra))
+            failures += 1
+        if self.dec < -90 or self.dec > 90:
+            if verbose:
+                print("[%i] Error: Invalid alternate phase center value for dec. '%+.6f'" % (os.getpid(), self.dec))
+            failures += 1
+            
+        # Any failures indicates a bad scan
+        if failures == 0:
+            return True
+        else:
+            return False
+
+
+def _parse_create_scan_object(obsTemp, altTemps=[], verbose=False):
     """Given a obsTemp dictionary of scan parameters, return a complete Scan object 
     corresponding to those values."""
     
@@ -1027,6 +1069,10 @@ def _parse_create_scan_object(obsTemp, verbose=False):
         obsOut = Jovian(obsTemp['target'], obsTemp['intention'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
     else:
         raise RuntimeError("Invalid mode encountered: %s" % mode)
+        
+    # Add in the alternate phase centers
+    for altTemp in altTemps:
+        obsOut.add_alt_phase_center(altTemp['target'], altTemp['intention'], altTemp['ra'], altTemp['dec'])
         
     # Set the ASP/FEE values
     obsOut.aspFlt = copy.deepcopy(obsTemp['aspFlt'])
