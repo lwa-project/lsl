@@ -157,7 +157,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        project.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -280,7 +280,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        project.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -403,7 +403,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        project.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -501,7 +501,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        project.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
