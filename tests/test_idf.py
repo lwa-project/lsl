@@ -157,7 +157,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        projects.run[0].scans[0].intent = 'cats'
+        project.run[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -280,7 +280,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        projects.run[0].scans[0].intent = 'cats'
+        project.run[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -319,8 +319,14 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
-        # Too many phase centers
+        # Bad alternate phase center intent
         project.runs[0].scans[0].alt_phase_centers[0].dec = 40.733916000
+        project.runs[0].scans[0].alt_phase_centers[0].intent = 'cats'
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
+        # Too many phase centers
+        project.runs[0].scans[0].alt_phase_centers[0].intent = 'PhaseCal'
         for i in xrange(4):
             project.runs[0].scans[0].add_alt_phase_center('test', 'Target', 19.991210200, 40.733916000)
         project.runs[0].scans[0].update()
@@ -397,7 +403,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        projects.run[0].scans[0].intent = 'cats'
+        project.run[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -495,7 +501,7 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad intent
-        projects.run[0].scans[0].intent = 'cats'
+        project.run[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
