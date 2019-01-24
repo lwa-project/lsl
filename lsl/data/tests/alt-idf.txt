@@ -15,7 +15,7 @@ RUN_REMPO        Requested data return method is UCF
 
 SCAN_ID          1
 SCAN_TARGET      CygA
-SCAN_INTENTION   FluxCal
+SCAN_INTENT      FluxCal
 SCAN_REMPI       Comment #1
 SCAN_REMPO       Estimated data volume for this observation is 264.91 GB
 SCAN_START_MJD   58490
@@ -34,10 +34,10 @@ SCAN_BW          6
 SCAN_BW+         9.800 MHz
 SCAN_ALT_N            2
 SCAN_ALT_TARGET[1]    CygA+1
-SCAN_ALT_INTENTION[1] Target
+SCAN_ALT_INTENT[1]    Target
 SCAN_ALT_RA[1]        19.991310200
 SCAN_ALT_DEC[1]       +40.733916000
 SCAN_ALT_TARGET[2]    CygA+2
-SCAN_ALT_INTENTION[2] Target
+SCAN_ALT_INTENT[2]    Target
 SCAN_ALT_RA[2]        19.991210200
 SCAN_ALT_DEC[2]       +40.734016000

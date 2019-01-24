@@ -15,7 +15,7 @@ RUN_REMPO        Requested data return method is UCF
 
 SCAN_ID          1
 SCAN_TARGET      Sun
-SCAN_INTENTION   Target
+SCAN_INTENT      Target
 SCAN_REMPI       Comment #1
 SCAN_REMPO       Estimated data volume for this observation is 264.91 GB
 SCAN_START_MJD   58490

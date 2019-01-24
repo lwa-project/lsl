@@ -271,7 +271,7 @@ class Project(object):
             
             output = "%sSCAN_ID          %i\n" % (output, obsID)
             output = "%sSCAN_TARGET      %s\n" % (output, obs.target)
-            output = "%sSCAN_INTENTION   %s\n" % (output, obs.intention)
+            output = "%sSCAN_INTENT      %s\n" % (output, obs.intent)
             output = "%sSCAN_REMPI       %s\n" % (output, obs.comments[:4090] if obs.comments else 'None provided')
             output = "%sSCAN_REMPO       %s\n" % (output, "Estimated data volume for this scan is %s" % self._renderFileSize(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sSCAN_START_MJD   %i\n" % (output, obs.mjd)
@@ -294,7 +294,7 @@ class Project(object):
                 output = "%sSCAN_ALT_N             %i\n" % (output, len(obs.alt_phase_centers))
                 for i,phase_center in enumerate(obs.alt_phase_centers):
                     output = "%sSCAN_ALT_TARGET[%i]    %s\n" % (output, i+1, phase_center.target)  
-                    output = "%sSCAN_ALT_INTENTION[%i] %s\n" % (output, i+1, phase_center.intention) 
+                    output = "%sSCAN_ALT_INTENT[%i]    %s\n" % (output, i+1, phase_center.intent) 
                     output = "%sSCAN_ALT_RA[%i]        %.9f\n" % (output, i+1, phase_center.ra)  
                     output = "%sSCAN_ALT_DEC[%i]       %+.9f\n" % (output, i+1, phase_center.dec)
                     
@@ -373,16 +373,16 @@ class Project(object):
             for o,obs in enumerate(ses.scans):
                 obs_start = mjdmpm_to_datetime(obs.mjd, obs.mpm)
                 if isinstance(obs, DRX):
-                    new_obs = sdf.DRX(obs.intention, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdf.DRX(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
                                       obs.ra, obs.dec, 
                                       obs.frequency1, obs.frequency2, obs.filter, 
                                       gain=obs.gain, max_snr=False, comments=obs.comments)
                 elif isinstance(obs, Solar):
-                    new_obs = sdf.Solar(obs.intention, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdf.Solar(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
                                         obs.frequency1, obs.frequency2, obs.filter, 
                                         gain=obs.gain, max_snr=False, comments=obs.comments)
                 elif isinstance(obs, Jovian):
-                    new_obs = sdf.Jovian(obs.intention, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdf.Jovian(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
                                          obs.frequency1, obs.frequency2, obs.filter, 
                                          gain=obs.gain, max_snr=False, comments=obs.comments)
                 else:
@@ -392,14 +392,14 @@ class Project(object):
                 npc = len(obs.alt_phase_centers)
                 for p,phase_center in enumerate(reversed(obs.alt_phase_centers)):
                     cid = npc - p
-                    alt_t, alt_i, alt_r, alt_d = phase_center.target, phase_center.intention, phase_center.ra, phase_center.dec
+                    alt_t, alt_i, alt_r, alt_d = phase_center.target, phase_center.intent, phase_center.ra, phase_center.dec
                     try:
                         new_projoff.observations[0][o]
                     except IndexError:
                         new_projoff.observations[0][o] = None
                     if new_projoff.observations[0][o] is None:
                         new_projoff.observations[0][o] = ''
-                    new_projoff.observations[0][o] = "alttarget%i:%s;;altintention%i:%s;;altra%i:%.9f;;altdec%i:%+.9f;;%s" % (cid, alt_t, cid, alt_i, cid, alt_r, cid, alt_d, new_projoff.observations[0][o])
+                    new_projoff.observations[0][o] = "alttarget%i:%s;;altintent%i:%s;;altra%i:%.9f;;altdec%i:%+.9f;;%s" % (cid, alt_t, cid, alt_i, cid, alt_r, cid, alt_d, new_projoff.observations[0][o])
                     
             ## Project
             project = sdf.Project(new_observer, "%s - %s (%i of %i)" % (self.name, station.id, i+1, len(ses.stations)), 
@@ -605,9 +605,9 @@ class Scan(object):
     id = 1
     FILTER_CODES = DRXFilters
 
-    def __init__(self, target, intention, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, comments=None):
+    def __init__(self, target, intent, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, comments=None):
         self.target = target
-        self.intention = intention
+        self.intent = intent
         self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
         self.start = start
@@ -741,13 +741,13 @@ class Scan(object):
         self.frequency2 = float(frequency2)
         self.update()
         
-    def add_alt_phase_center(self, target_or_apc, intention=None, ra=None, dec=None):
+    def add_alt_phase_center(self, target_or_apc, intent=None, ra=None, dec=None):
         """Add an alternate phase center to the scan."""
         
         if isinstance(target_or_apc, AlternatePhaseCenter):
             apc = target_or_apc
         else:
-            apc = AlternatePhaseCenter(target_or_apc, intention, ra, dec)
+            apc = AlternatePhaseCenter(target_or_apc, intent, ra, dec)
         self.alt_phase_centers.append(apc)
         
     def estimate_bytes(self):
@@ -801,10 +801,10 @@ class Scan(object):
         """Evaluate the scan and return True if it is valid, False otherwise."""
         
         failures = 0
-        # Basic - Intention, duration, frequency, and filter code values
-        if self.intention.lower() not in ('fluxcal', 'phasecal', 'target'):
+        # Basic - Intent, duration, frequency, and filter code values
+        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target'):
             if verbose:
-                print("[%s] Error: Invalid scan intention '%s'" % (os.getpid(), self.intention))
+                print("[%s] Error: Invalid scan intent '%s'" % (os.getpid(), self.intent))
             failures += 1
         if self.dur < 1:
             if verbose:
@@ -892,7 +892,7 @@ class DRX(Scan):
     """
     Required Arguments:
      * scan target
-     * scan intention
+     * scan intent
      * scan start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
        aware datetime instance)
      * scan duration (HH:MM:SS.SSS string or timedelta instance)
@@ -908,8 +908,8 @@ class DRX(Scan):
     
     alt_phase_centers = []
     
-    def __init__(self, target, intention, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, comments=None):
-        Scan.__init__(self, target, intention, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, comments=comments)
+    def __init__(self, target, intent, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, comments=None):
+        Scan.__init__(self, target, intent, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, comments=comments)
         
     def set_ra(self, ra):
         """Set the pointing RA."""
@@ -928,7 +928,7 @@ class Solar(Scan):
     
     Required Arguments:
      * scan target
-     * scan intention
+     * scan intent
      * scan start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
        aware datetime instance)
      * scan duration (HH:MM:SS.SSS string or timedelta instance)
@@ -940,8 +940,8 @@ class Solar(Scan):
      * comments - comments about the scan
     """
     
-    def __init__(self, target, intention, start, duration, frequency1, frequency2, filter, gain=-1, comments=None):
-        Scan.__init__(self, target, intention, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, comments=comments)
+    def __init__(self, target, intent, start, duration, frequency1, frequency2, filter, gain=-1, comments=None):
+        Scan.__init__(self, target, intent, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, comments=comments)
         
     def get_fixed_body(self):
         """Return an ephem.Body object corresponding to where the scan is 
@@ -956,7 +956,7 @@ class Jovian(Scan):
     
     Required Arguments:
      * scan target
-     * scan intention
+     * scan intent
      * scan start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
        aware datetime instance)
      * scan duration (HH:MM:SS.SSS string or timedelta instance)
@@ -968,8 +968,8 @@ class Jovian(Scan):
      * comments - comments about the scan
     """
     
-    def __init__(self, target, intention, start, duration, frequency1, frequency2, filter, gain=-1, comments=None):
-        Scan.__init__(self, target, intention, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, comments=comments)
+    def __init__(self, target, intent, start, duration, frequency1, frequency2, filter, gain=-1, comments=None):
+        Scan.__init__(self, target, intent, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, comments=comments)
 
     def get_fixed_body(self):
         """Return an ephem.Body object corresponding to where the scan is 
@@ -981,9 +981,9 @@ class Jovian(Scan):
 class AlternatePhaseCenter(object):
     """Class to hold an alternate phase center for a scan."""
     
-    def __init__(self, target, intention, ra, dec):
+    def __init__(self, target, intent, ra, dec):
         self.target = target
-        self.intention = intention
+        self.intent = intent
         self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
         
@@ -1018,10 +1018,10 @@ class AlternatePhaseCenter(object):
         
         failures = 0
         
-        ## Intention
-        if self.intention.lower() not in ('fluxcal', 'phasecal', 'target'):
+        ## Intent
+        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target'):
             if verbose:
-                print("[%s] Error: Invalid alternate phase center intention '%s'" % (os.getpid(), self.intention))
+                print("[%s] Error: Invalid alternate phase center intent '%s'" % (os.getpid(), self.intent))
             failures += 1
             
         ## Pointing
@@ -1075,17 +1075,17 @@ def _parse_create_scan_object(obsTemp, altTemps=[], verbose=False):
         print("[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
         
     if mode == 'TRK_RADEC':
-        obsOut = DRX(obsTemp['target'], obsTemp['intention'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = DRX(obsTemp['target'], obsTemp['intent'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
     elif mode == 'TRK_SOL':
-        obsOut = Solar(obsTemp['target'], obsTemp['intention'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = Solar(obsTemp['target'], obsTemp['intent'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
     elif mode == 'TRK_JOV':
-        obsOut = Jovian(obsTemp['target'], obsTemp['intention'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = Jovian(obsTemp['target'], obsTemp['intent'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
     else:
         raise RuntimeError("Invalid mode encountered: %s" % mode)
         
     # Add in the alternate phase centers
     for altTemp in altTemps:
-        obsOut.add_alt_phase_center(altTemp['target'], altTemp['intention'], altTemp['ra'], altTemp['dec'])
+        obsOut.add_alt_phase_center(altTemp['target'], altTemp['intent'], altTemp['ra'], altTemp['dec'])
         
     # Set the ASP/FEE values
     obsOut.aspFlt = copy.deepcopy(obsTemp['aspFlt'])
@@ -1124,10 +1124,10 @@ def parse_idf(filename, verbose=False):
     project.projectOffice.scans = [[],]
     
     # Loop over the file
-    obsTemp = {'id': 0, 'target': '', 'intention': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
+    obsTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
                'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'gain': -1, 
                'aspFlt': -1}
-    altTemp = {'id': 0, 'target': '', 'intention': '', 'ra': 0.0, 'dec': 0.0}
+    altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0}
     altTemps = []
     
     for line in fh:
@@ -1240,7 +1240,7 @@ def parse_idf(filename, verbose=False):
         if keyword == 'SCAN_ID':
             if obsTemp['id'] != 0:
                 project.runs[0].scans.append( _parse_create_scan_object(obsTemp, altTemps=altTemps, verbose=verbose) )
-                altTemp = {'id': 0, 'target': '', 'intention': '', 'ra': 0.0, 'dec': 0.0}
+                altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0}
                 altTemps = []
             obsTemp['id'] = int(value)
             project.projectOffice.scans[0].append( None )
@@ -1252,8 +1252,8 @@ def parse_idf(filename, verbose=False):
         if keyword == 'SCAN_TARGET':
             obsTemp['target'] = value
             continue
-        if keyword == 'SCAN_INTENTION':
-            obsTemp['intention'] = value
+        if keyword == 'SCAN_INTENT':
+            obsTemp['intent'] = value
             continue
         if keyword == 'SCAN_REMPI':
             obsTemp['comments'] = value
@@ -1301,16 +1301,16 @@ def parse_idf(filename, verbose=False):
                     altTemps[-1]['id'] = ids[0]
                 altTemps[-1]['target'] = value
             continue
-        if keyword == 'SCAN_ALT_INTENTION':
+        if keyword == 'SCAN_ALT_INTENT':
             if len(altTemps) == 0:
                 altTemps.append( copy.deepcopy(altTemp) )
                 altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['intention'] = value
+                altTemps[-1]['intent'] = value
             else:
                 if altTemps[-1]['id'] != ids[0]:
                     altTemps.append( copy.deepcopy(altTemps[-1]) )
                     altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['intention'] = value
+                altTemps[-1]['intent'] = value
             continue
         if keyword == 'SCAN_ALT_RA':
             if len(altTemps) == 0:
