@@ -156,8 +156,15 @@ class idf_tests(unittest.TestCase):
         project.runs[0].corr_basis = 'cats'
         self.assertFalse(project.validate())
         
+        # Bad intent
+        projects.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -272,8 +279,15 @@ class idf_tests(unittest.TestCase):
         project.runs[0].corr_basis = 'cats'
         self.assertFalse(project.validate())
         
+        # Bad intent
+        projects.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -382,8 +396,15 @@ class idf_tests(unittest.TestCase):
         project.runs[0].corr_basis = 'cats'
         self.assertFalse(project.validate())
         
+        # Bad intent
+        projects.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -473,8 +494,15 @@ class idf_tests(unittest.TestCase):
         project.runs[0].corr_basis = 'cats'
         self.assertFalse(project.validate())
         
+        # Bad intent
+        projects.run[0].scans[0].intent = 'cats'
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
         # Bad frequency
