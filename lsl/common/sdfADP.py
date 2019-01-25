@@ -1145,7 +1145,7 @@ class TBF(Observation):
         self.filter_codes = DRXFilters
         self.samples = int(samples)
         
-        duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN
+        duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN + 5000
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
         Observation.__init__(self, name, target, start, durStr, 'TBF', 0.0, 0.0, frequency1, frequency2, filter, comments=comments)
         
@@ -1165,7 +1165,7 @@ class TBF(Observation):
         """Update the computed parameters from the string values."""
         
         # Update the duration based on the number of bits and samples used
-        duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN
+        duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN + 5000
         sc = int(duration/1000.0)
         ms = int(round((duration/1000.0 - sc)*1000))
         us = ms*1000
