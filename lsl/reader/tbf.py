@@ -338,8 +338,12 @@ def get_frames_per_obs(filehandle):
     for i in range(1000):
         try:
             cFrame = read_frame(filehandle)
-        except:
+            if not cFrame.is_tbf():
+                continue
+        except EOFError:
             break
+        except SyncError:
+            continue
             
         chan = cFrame.header.first_chan
         if chan not in channels:

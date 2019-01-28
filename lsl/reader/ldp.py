@@ -559,7 +559,7 @@ class TBNFile(LDPFileBase):
         
         frameOffset = int(offset * self.description['sample_rate'] / 512 * self.description['nantenna'])
         frameOffset = int(1.0 * frameOffset / self.description['nantenna']) * self.description['nantenna']
-        self.fh.seek(frameOffset*tbn.FRAME_SIZE)
+        self.fh.seek(frameOffset*tbn.FRAME_SIZE, 1)
         
         # Update the file metadata
         self._describe_file()
@@ -1573,7 +1573,7 @@ class TBFFile(LDPFileBase):
         framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frameOffset = int(offset * self.description['sample_rate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
-        self.fh.seek(frameOffset*tbf.FRAME_SIZE)
+        self.fh.seek(frameOffset*tbf.FRAME_SIZE, 1)
         
         # Update the file metadata
         self._describe_file()
@@ -1863,7 +1863,7 @@ class CORFile(LDPFileBase):
         framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
         frameOffset = int(offset / self.description['tint'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
-        self.fh.seek(frameOffset*cor.FRAME_SIZE)
+        self.fh.seek(frameOffset*cor.FRAME_SIZE, 1)
         
         # Update the file metadata
         self._describe_file()
