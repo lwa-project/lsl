@@ -1072,7 +1072,7 @@ def _parse_create_scan_object(obsTemp, altTemps=[], verbose=False):
     # Get the mode and run through the various cases
     mode = obsTemp['mode']
     if verbose:
-        print("[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
+        print("[%i] Scan %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
         
     if mode == 'TRK_RADEC':
         obsOut = DRX(obsTemp['target'], obsTemp['intent'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])

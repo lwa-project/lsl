@@ -338,7 +338,7 @@ def get_frames_per_obs(filehandle):
     for i in range(1000):
         try:
             cFrame = read_frame(filehandle)
-            if not cFrame.is_tbf():
+            if not cFrame.is_tbf:
                 continue
         except EOFError:
             break
