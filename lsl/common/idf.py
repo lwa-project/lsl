@@ -530,19 +530,20 @@ class Run(object):
         for obs in self.scans:
             if verbose:
                 print("[%i] Validating scan %i" % (os.getpid(), scanCount))
-            
+                
             for station in self.stations:
                 if not obs.validate(station=station, verbose=verbose):
                     failures += 1
                 totalData += obs.dataVolume
                 
-            if obs.filter != self.scans[0].filter:
-                if verbose:
-                    print("[%i] Error: Filter code changes at scan %i" % (os.getpid(), scanCount))
-                failures += 1
-                
+            if scanCount > 1:
+                if obs.filter != self.scans[scanCount-2].filter:
+                    if verbose:
+                        print("[%i] Error: Filter code changes at scan %i" % (os.getpid(), scanCount))
+                    failures += 1
+                    
             scanCount += 1
-
+            
         # Make sure that the scans don't overlap
         sObs = self.scans
         
