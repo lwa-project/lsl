@@ -71,9 +71,9 @@ def main(args):
     # Explicitly mark those that need to be marked
     if toMark.size != 0:
         for i in xrange(toMark.size):
-            ax1.plot(data[toMark[i],0], data[toMark[i],1], marker='x', linestyle='x', color='black')
-            ax2.plot(data[toMark[i],0], data[toMark[i],2], marker='x', linestyle='x', color='black')
-            ax3.plot(data[toMark[i],2], data[toMark[i],1], marker='x', linestyle='x', color='black')
+            ax1.plot(data[toMark[i],0], data[toMark[i],1], marker='x', linestyle=' ', color='black')
+            ax2.plot(data[toMark[i],0], data[toMark[i],2], marker='x', linestyle=' ', color='black')
+            ax3.plot(data[toMark[i],2], data[toMark[i],1], marker='x', linestyle=' ', color='black')
             
             if args.label:
                 ax1.annotate('%i' % (toMark[i]+1), xy=(data[toMark[i],0], data[toMark[i],1]), xytext=(data[toMark[i],0]+1, data[toMark[i],1]+1))
