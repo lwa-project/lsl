@@ -7,7 +7,7 @@ Session Definition Files
 
 Session Structure
 +++++++++++++++++
-:mod:`lsl.common.sdf` provides a means to represent a set of observations as Python objects.  For each
+:mod:`lsl.common.sdf` (DP-based stations) and :mod:`lsl.common.sdfADP` (ADP-based stations) provide means to represent a set of observations as Python objects.  For each
 :class:`lsl.common.sdf.Project`, there is:
 
   1) An observer (:class:`lsl.common.sdf.Observer`)
