@@ -1,5 +1,5 @@
-Defining Observations and Observation Metadata
-==============================================
+Defining Single Station Observations and Observation Metadata
+=============================================================
 
 Session Definition Files
 ------------------------

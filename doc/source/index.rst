@@ -45,9 +45,11 @@ LWA-Specific Utilites
    :maxdepth: 2
 
    observations
+   swarm
 
    station
    sdf
+   idf
    readers
    writers
 
