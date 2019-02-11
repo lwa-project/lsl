@@ -48,9 +48,9 @@ INSTALLATION
 ------------
 Install LSL by running:
 
-	python setup.py install [--prefix=<prefix>|--user]
+	pip install . [--root=<prefix>|--user]
 
-If the '--prefix' option is not provided, then the installation tree root directory is the same as for the Python interpreter used to run `setup.py`.  For instance, if the Python interpreter is in '/usr/local/bin/python', then '<prefix>' will be set to '/usr/local'.  Otherwise, the explicit <prefix> value is taken from the command line option.  The package will install files in the following locations:
+If the '--root' option is not provided, then the installation tree root directory is the same as for the Python interpreter used to run `setup.py`.  For instance, if the Python interpreter is in '/usr/local/bin/python', then '<prefix>' will be set to '/usr/local'.  Otherwise, the explicit <prefix> value is taken from the command line option.  The package will install files in the following locations:
  * <prefix>/bin
  * <prefix>/lib/python2.6/site-packages
  * <prefix>/share/doc
