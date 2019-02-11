@@ -28,6 +28,7 @@
   * Changed the lsl.common.sdf and lsl.common.sdfADF to allow "flat" Projects and Sessions
   * Fixed a problem triggering auto-copy in SDFs when not session comments are provided
   * Fixed a problem in some of the lsl.writer modules that caused duplicate entries to end up in SOURCE tables
+  * Added support for interferometer definition files (IDFs)
 
 1.2.3
   * Fixed a problem with the conditional dependencies in setup.py for older versions of setuptools
