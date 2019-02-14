@@ -103,12 +103,20 @@ return 0;
     
     ccmd = []
     ccmd.extend( cc )
-    ccmd.extend( ['-fopenmp', 'test.c', '-o test', '-lgomp'] )
+    ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
+    if os.path.basename(cc[0]).find('gcc') != -1:
+        ccmd.append( '-lgomp' )
+    elif os.path.basename(cc[0]).find('clang') != -1:
+        ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
     try:
         output = subprocess.check_call(ccmd)
         outCFLAGS = ['-fopenmp',]
-        outLIBS = ['-lgomp',]
-        
+        outLIBS = []
+        if os.path.basename(cc[0]).find('gcc') != -1:
+            outLIBS.append( '-lgomp' )
+        elif os.path.basename(cc[0]).find('clang') != -1:
+            outLIBS.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
+            
     except subprocess.CalledProcessError:
         print("WARNING:  OpenMP does not appear to be supported by %s, disabling" % cc[0])
         outCFLAGS = []
