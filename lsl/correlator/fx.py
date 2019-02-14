@@ -17,7 +17,6 @@ TBN data.  The main python functions in this module are:
 The main python/C extension functions in this module are:
   * SpecMaster - similar to calcSpectra but uses the _spec module for all 
                  computations and does not support automatic sub-integration
-  * SpecMasterP - SpecMaster with a 64-tap uniform DFT filter bank
   * StokesMaster - similar to SpecMaster but computes all four Stokes parameters
   * FXMaster - calculate cross power spectra for a collection of signals
 
@@ -75,7 +74,7 @@ def null_window(L):
     return numpy.ones(L)
 
 
-def SpecMaster(signals, LFFT=64, window=null_window, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
+def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     A more advanced version of calcSpectra that uses the _spec C extension 
     to handle all of the P.S.D. calculations in parallel.  Returns a two-
@@ -84,6 +83,9 @@ def SpecMaster(signals, LFFT=64, window=null_window, verbose=False, sample_rate=
     .. note::
         SpecMaster currently average all data given and does not support the
         SampleAverage keyword that calcSpectra does.
+        
+    .. versionchanged:: 1.2.5
+        Added the 'pfb' keyword.
     """
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
@@ -111,19 +113,28 @@ def SpecMaster(signals, LFFT=64, window=null_window, verbose=False, sample_rate=
     
     if window is null_window:
         window = None
+    if window is not None and pfb:
+        raise RuntimeError("Cannot use a seperate window function with the PFB")
         
-    output = _spec.FPSD(signals, LFFT=LFFT, overlap=1, clip_level=clip_level, window=window)
-        
+    if pfb:
+        func = _spec.PFBPSD
+    else:
+        func = _spec.FPSD
+    output = func(signals, LFFT=LFFT, overlap=1, clip_level=clip_level, window=window)
+    
     return (freq, output)
 
 
-def StokesMaster(signals, antennas, LFFT=64, window=null_window, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
+def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     Similar to SpecMaster, but accepts an array of signals and a list of 
     antennas in order to compute the PSDs for the four Stokes parameters: 
     I, Q, U, and V.  Returns a two-element tuple of the frequencies (in Hz) 
     and PSDs in linear power/RBW.  The PSD are three dimensional with 
     dimensions Stokes parameter (0=I, 1=Q, 2=U, 3=V) by stand by channel).
+    
+    .. versionchanged:: 1.2.5
+        Added the 'pfb' keyword.
     """
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
@@ -157,13 +168,19 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, verbose=False, 
     
     if window is null_window:
         window = None
+    if window is not None and pfb:
+        raise RuntimeError("Cannot use a seperate window function with the PFB")
         
-    output = _stokes.FPSD(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, overlap=1, clip_level=clip_level, window=window)
+    if pfb:
+        func = _stokes.PFBPSD
+    else:
+        func = _stokes.FPSD
+    output = func(signals[signalsIndex1], signals[signalsIndex2], LFFT=LFFT, overlap=1, clip_level=clip_level, window=window)
     
     return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, sample_rate=None, central_freq=0.0, Pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
+def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, Pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
     A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -185,6 +202,9 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
          * 'z' to denote the zenith,
          * a ephem.Body instances which has been computed for the observer, or
          * a two-element tuple of azimuth, elevation in degrees.
+         
+    .. versionchanged:: 1.2.5
+        Added the 'pfb' keyword.
     """
     
     # Decode the polarization product into something that we can use to figure 
@@ -259,18 +279,24 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     if window is null_window:
         window = None
+    if window is not None and pfb:
+        raise RuntimeError("Cannot use a seperate window function with the PFB")
         
     # F - defaults to running parallel in C via OpenMP
-    if signals.shape[0] != len(signalsIndex1):
-        signalsF1, validF1 = _core.FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
+    if pfb:
+        func = _core.PFBEngine
     else:
-        signalsF1, validF1 = _core.FEngine(signals, freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
+        func = _core.FEngine
+    if signals.shape[0] != len(signalsIndex1):
+        signalsF1, validF1 = func(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
+    else:
+        signalsF1, validF1 = func(signals, freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
         
     if pol2 == pol1:
         signalsF2 = signalsF1
         validF2 = validF1
     else:
-        signalsF2, validF2 = _core.FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
+        signalsF2, validF2 = func(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
         
     # X
     output = _core.XEngine2(signalsF1, signalsF2, validF1, validF2)
@@ -303,7 +329,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     return returnValues
 
 
-def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, sample_rate=None, central_freq=0.0, gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
+def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
     A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -320,6 +346,9 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
          * 'z' to denote the zenith,
          * a ephem.Body instances which has been computed for the observer, or
          * a two-element tuple of azimuth, elevation in degrees.
+         
+    .. versionchanged:: 1.2.5
+        Added the 'pfb' keyword.
     """
     
     # Since we want to compute Stokes parameters, we need both pols
@@ -393,11 +422,17 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     if window is null_window:
         window = None
+    if window is not None and pfb:
+        raise RuntimeError("Cannot use a seperate window function with the PFB")
         
     # F - defaults to running parallel in C via OpenMP
-    signalsF1, validF1 = _core.FEngine(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
+    if pfb:
+        func = _core.PFBEngine
+    else:
+        func = _core.FEngine
+    signalsF1, validF1 = func(signals[signalsIndex1,:], freq, delays1, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
     
-    signalsF2, validF2 = _core.FEngine(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
+    signalsF2, validF2 = func(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
     
     # X
     output = _stokes.XEngine2(signalsF1, signalsF2, validF1, validF2)

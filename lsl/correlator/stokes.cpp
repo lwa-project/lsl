@@ -147,6 +147,140 @@ void compute_psd_real(long nStand,
 
 
 template<typename InType, typename OutType>
+void compute_pfb_real(long nStand,
+                      long nSamps,
+                      long nFFT,
+                      int nChan, 
+                      int Overlap, 
+                      int Clip, 
+                      InType const* dataX,
+                      InType const* dataY,
+                      double const* window,
+                      OutType* psd) {
+    // Setup
+    long i, j, k, l;
+    
+    Py_BEGIN_ALLOW_THREADS
+    
+    // Create the FFTW plan                          
+    float *inP, *inX, *inY;                          
+    Complex32 *outP, *outX, *outY;
+    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan*PFB_NTAP);
+    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*PFB_NTAP);
+    fftwf_plan p;
+    int n[] = {2*nChan,};
+    p = fftwf_plan_many_dft_r2c(1, n, PFB_NTAP, \
+                                inP, NULL, 1, 2*nChan, \
+                                reinterpret_cast<fftwf_complex*>(outP), NULL, 1, nChan+1, \
+                                FFTW_ESTIMATE);
+    
+    // Filter bank
+    float *pfb;
+    pfb = (float*) malloc(sizeof(float) * 2*nChan*PFB_NTAP);
+    for(i=0; i<2*nChan*PFB_NTAP; i++) {
+        *(pfb + i) = sinc((i - 2.0*nChan*PFB_NTAP/2.0 + 0.5)/(2.0*nChan));
+        *(pfb + i) *= hanning(2*NPY_PI*i/(2*nChan*PFB_NTAP-1));
+    }
+    
+    // Data indexing and access
+    long secStart;
+    
+    // Time-domain blanking control
+    double cleanFactor;
+    long nActFFT;
+    
+    #ifdef _OPENMP
+        #pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, l, secStart, cleanFactor, nActFFT)
+    #endif
+    {
+        inX = (float*) fftwf_malloc(sizeof(float) * 2*nChan*PFB_NTAP);
+        inY = (float*) fftwf_malloc(sizeof(float) * 2*nChan*PFB_NTAP);
+        outX = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*PFB_NTAP);
+        outY = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*PFB_NTAP);
+        
+        #ifdef _OPENMP
+            #pragma omp for schedule(OMP_SCHEDULER)
+        #endif
+        for(i=0; i<nStand; i++) {
+            nActFFT = 0;
+            
+            for(j=0; j<nFFT; j++) {
+                cleanFactor = 1.0;
+                secStart = nSamps * i + 2*nChan*j/Overlap;
+                
+                for(k=0; k<2*nChan*PFB_NTAP; k++) {
+                    if( secStart - 2*nChan*(PFB_NTAP-1) + k < nSamps*i ) {
+                        inX[k] = 0.0;
+                        inY[k] = 0.0;
+                    } else {
+                        inX[k] = (float) *(dataX + secStart - 2*nChan*(PFB_NTAP-1) + k);
+                        inY[k] = (float) *(dataY + secStart - 2*nChan*(PFB_NTAP-1) + k);
+                    }
+                    
+                    if( Clip && ( fabs(inX[k]) >= Clip || fabs(inY[k]) >= Clip ) ) {
+                        cleanFactor = 0.0;
+                    }
+                    
+                    inX[k] *= *(pfb + k);
+                    inY[k] *= *(pfb + k);
+                }
+                
+                fftwf_execute_dft_r2c(p, \
+                                      inX, \
+                                      reinterpret_cast<fftwf_complex*>(outX));
+                fftwf_execute_dft_r2c(p, \
+                                      inY, \
+                                      reinterpret_cast<fftwf_complex*>(outY));
+                
+                for(l=1; l<PFB_NTAP; l++) {
+                    for(k=0; k<nChan; k++) {
+                        outX[k] += outX[k+l*(nChan+1)];
+                        outY[k] += outY[k+l*(nChan+1)];
+                    }
+                }
+                
+                for(k=0; k<nChan; k++) {
+                    // I
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(outX[k]);
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(outY[k]);
+                    
+                    // Q
+                    *(psd + 1*nChan*nStand + nChan*i + k) += cleanFactor*abs2(outX[k]);
+                    *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*abs2(outY[k]);
+                    
+                    // U
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*outX[k].real()*outY[k].real();
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*outX[k].imag()*outY[k].imag();
+                    
+                    // V
+                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*outX[k].imag()*outY[k].real();
+                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*outX[k].real()*outY[k].imag();
+                }
+                
+                nActFFT += (long) cleanFactor;
+            }
+            
+            // Scale FFTs
+            for(j=0; j<4; j++) {
+                blas_scal(nChan, 1.0/(2*nChan*nActFFT), (psd + j*nChan*nStand + nChan*i), 1);
+            }
+        }
+        
+        fftwf_free(inX);
+        fftwf_free(inY);
+        fftwf_free(outX);
+        fftwf_free(outY);
+    }
+    free(pfb);
+    fftwf_destroy_plan(p);
+    fftwf_free(inP);
+    fftwf_free(outP);
+    
+    Py_END_ALLOW_THREADS
+}
+
+
+template<typename InType, typename OutType>
 void compute_psd_complex(long nStand,
                          long nSamps,
                          long nFFT,
@@ -261,6 +395,144 @@ void compute_psd_complex(long nStand,
     
     Py_END_ALLOW_THREADS
 }
+
+
+template<typename InType, typename OutType>
+void compute_pfb_complex(long nStand,
+                         long nSamps,
+                         long nFFT,
+                         int nChan, 
+                         int Overlap, 
+                         int Clip, 
+                         InType const* dataX,
+                         InType const* dataY,
+                         double const* window,
+                         OutType* psd) {
+    // Setup
+    long i, j, k, l;
+    
+    Py_BEGIN_ALLOW_THREADS
+    
+    // Create the FFTW plan
+    Complex32 *inP, *inX, *inY;
+    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*PFB_NTAP);
+    fftwf_plan p;
+    int n[] = {nChan,};
+    p = fftwf_plan_many_dft(1, n, PFB_NTAP, \
+                            reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
+                            reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
+                            FFTW_FORWARD, FFTW_ESTIMATE);
+    
+    // Filter bank
+    float *pfb;
+    pfb = (float*) malloc(sizeof(float) * nChan*PFB_NTAP);
+    for(i=0; i<nChan*PFB_NTAP; i++) {
+        *(pfb + i) = sinc((i - nChan*PFB_NTAP/2.0 + 0.5)/nChan);
+        *(pfb + i) *= hanning(2*NPY_PI*i/(nChan*PFB_NTAP-1));
+    }
+    
+    // Data indexing and access
+    long secStart;
+    double* temp2;
+    
+    // Time-domain blanking control
+    double cleanFactor;
+    long nActFFT;
+    
+    #ifdef _OPENMP
+        #pragma omp parallel default(shared) private(inX, inY, i, j, k, l, secStart, cleanFactor, nActFFT, temp2)
+    #endif
+    {
+        inX = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*PFB_NTAP);
+        inY = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*PFB_NTAP);
+        temp2 = (double*) malloc(sizeof(double) * (nChan/2+nChan%2));
+        
+        #ifdef _OPENMP
+            #pragma omp for schedule(OMP_SCHEDULER)
+        #endif
+        for(i=0; i<nStand; i++) {
+            nActFFT = 0;
+            
+            for(j=0; j<nFFT; j++) {
+                cleanFactor = 1.0;
+                secStart = nSamps * i + nChan*j/Overlap;
+                
+                for(k=0; k<nChan*PFB_NTAP; k++) {
+                    if( secStart - nChan*(PFB_NTAP-1) + k < nSamps*i ) {
+                        inX[k] = 0.0;
+                        inY[k] = 0.0;
+                    } else {
+                        inX[k] = Complex32(*(dataX + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 0), \
+                                           *(dataX + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 1));
+                        inY[k] = Complex32(*(dataY + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 0), \
+                                           *(dataY + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 1));
+                    }
+                    
+                    if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
+                        cleanFactor = 0.0;
+                    }
+                    
+                    inX[k] *= *(pfb + k);
+                    inY[k] *= *(pfb + k);
+                }
+                
+                fftwf_execute_dft(p, \
+                                  reinterpret_cast<fftwf_complex*>(inX), \
+                                  reinterpret_cast<fftwf_complex*>(inX));
+                fftwf_execute_dft(p,  \
+                                  reinterpret_cast<fftwf_complex*>(inY), \
+                                  reinterpret_cast<fftwf_complex*>(inY));
+                
+                for(l=1; l<PFB_NTAP; l++) {
+                    for(k=0; k<nChan; k++) {
+                        inX[k] += inX[k+l*nChan];
+                        inY[k] += inY[k+l*nChan];
+                    }
+                }
+                
+                for(k=0; k<nChan; k++) {
+                    // I
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(inX[k]);
+                    *(psd + 0*nChan*nStand + nChan*i + k) += cleanFactor*abs2(inY[k]);
+                    
+                    // Q
+                    *(psd + 1*nChan*nStand + nChan*i + k) += cleanFactor*abs2(inX[k]);
+                    *(psd + 1*nChan*nStand + nChan*i + k) -= cleanFactor*abs2(inY[k]);
+                    
+                    // U
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k].real()*inY[k].real();
+                    *(psd + 2*nChan*nStand + nChan*i + k) += 2*cleanFactor*inX[k].imag()*inY[k].imag();
+                    
+                    // V
+                    *(psd + 3*nChan*nStand + nChan*i + k) +=2*cleanFactor*inX[k].imag()*inY[k].real();
+                    *(psd + 3*nChan*nStand + nChan*i + k) -=2*cleanFactor*inX[k].real()*inY[k].imag();
+                }
+                
+                nActFFT += (long) cleanFactor;
+            }
+            
+            for(j=0; j<4; j++) {
+                // Shift FFTs
+                memcpy(temp2, (psd + j*nChan*nStand + nChan*i), sizeof(OutType)*(nChan/2+nChan%2));
+                memmove((psd + j*nChan*nStand + nChan*i), (psd + j*nChan*nStand + nChan*i)+nChan/2+nChan%2, sizeof(OutType)*nChan/2);
+                memcpy((psd + j*nChan*nStand + nChan*i)+nChan/2, temp2, sizeof(OutType)*(nChan/2+nChan%2));
+                
+                // Scale FFTs
+                blas_scal(nChan, 1.0/(nActFFT*nChan), (psd + j*nChan*nStand + nChan*i), 1);
+            }
+        }
+        
+        fftwf_free(inX);
+        fftwf_free(inY);
+        free(temp2);
+    }
+    free(pfb);
+    fftwf_destroy_plan(p);
+    fftwf_free(inP);
+    
+    Py_END_ALLOW_THREADS
+}
+
 
 static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *signalsX, *signalsY, *signalsF, *window=Py_None, *arglist, *windowValue;
@@ -388,6 +660,152 @@ fail:
 PyDoc_STRVAR(FPSD_doc, \
 "Perform a series of Fourier transforms with windows on data to get the\n\
 PSD for the four Stokes parameters: I, Q, U, and V.\n\
+\n\
+Input arguments are:\n\
+ * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
+\n\
+Input keywords are:\n\
+ * LFFT: number of FFT channels to make (default=64)\n\
+ * overlap: number of overlapped FFTs to use (default=1)\n\
+ * window: Callable Python function for generating the window or None for\n\
+           no window\n\
+ * clip_level: count value of 'bad' data.  FFT windows with instantaneous\n\
+               powers greater than or equal to this value greater are zeroed.  \n\
+               Setting the ClipLevel to zero disables time-domain blanking\n\
+\n\
+Outputs:\n\
+ * psd: 3-D numpy.double (Stokes parameter (I,Q,U,V) by stands by channels)\n\
+        of PSD data\n\
+");
+
+
+static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *signalsX, *signalsY, *signalsF, *window=Py_None, *arglist, *windowValue;
+    PyArrayObject *dataX=NULL, *dataY=NULL, *dataF=NULL, *windowData=NULL;
+    int isReal;
+    int nChan = 64;
+    int Overlap = 1;
+    int Clip = 0;
+    
+    long nStand, nSamps, nFFT;
+    
+    char const* kwlist[] = {"signalsX", "signalsY", "LFFT", "overlap", "clip_level", "window", NULL};
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iiiO:set_callback", const_cast<char **>(kwlist), &signalsX, &signalsY, &nChan, &Overlap, &Clip, &window)) {
+        PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
+        goto fail;
+    } else {
+        if(!PyCallable_Check(window) && window != Py_None) {
+            PyErr_Format(PyExc_TypeError, "window must be a callable function or None");
+            goto fail;
+        }
+        Py_XINCREF(window);
+        Py_XDECREF(windowFunc);
+        windowFunc = window;
+    }
+    
+    // Bring the data into C and make it usable
+    dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, 
+                                                        PyArray_TYPE((PyArrayObject *) signalsX), 
+                                                        2, 2);
+    dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, 
+                                                        PyArray_TYPE((PyArrayObject *) signalsX), 
+                                                        2, 2);
+    if( dataX == NULL ) {
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX as a 2-D array");
+        goto fail;
+    }
+    if( dataY == NULL ) {
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsY as a 2-D array");
+        goto fail;
+    }
+    
+    // Get the properties of the data
+    nStand = (long) PyArray_DIM(dataX, 0);
+    nSamps = (long) PyArray_DIM(dataX, 1);
+    isReal = 1 - PyArray_ISCOMPLEX(dataX);
+    
+    // Make sure the dimensions of X and Y agree
+    if( PyArray_DIM(dataY, 0) != nStand ) {
+        PyErr_Format(PyExc_RuntimeError, "X and Y signals have different stand counts");
+        goto fail;
+    }
+    if( PyArray_DIM(dataY, 1) != nSamps ) {
+        PyErr_Format(PyExc_RuntimeError, "X and Y signals have different sample counts");
+        goto fail;
+    }
+    
+    // Calculate the windowing function
+    if( windowFunc != Py_None ) {
+        arglist = Py_BuildValue("(i)", (1+isReal)*nChan);
+        windowValue = PyObject_CallObject(windowFunc, arglist);
+        windowData = (PyArrayObject *) PyArray_ContiguousFromObject(windowValue, NPY_DOUBLE, 1, 1);
+        Py_DECREF(arglist);
+        Py_DECREF(windowValue);
+    }
+    
+    // Find out how large the output array needs to be and initialize it
+    nFFT = nSamps / (((1+isReal)*nChan)/Overlap) - ((1+isReal)*nChan)/(((1+isReal)*nChan)/Overlap) + 1;
+    npy_intp dims[3];
+    dims[0] = (npy_intp) 4;
+    dims[1] = (npy_intp) nStand;
+    dims[2] = (npy_intp) nChan;
+    dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_DOUBLE, 0);
+    if(dataF == NULL) {
+        PyErr_Format(PyExc_MemoryError, "Cannot create output array");
+        goto fail;
+    }
+    
+#define LAUNCH_PFB_REAL(IterType) \
+        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, Overlap, Clip, \
+                                   (IterType*) PyArray_DATA(dataX), \
+                                   (IterType*) PyArray_DATA(dataY), \
+                                   (double*) PyArray_SAFE_DATA(windowData), \
+                                   (double*) PyArray_DATA(dataF))
+#define LAUNCH_PFB_COMPLEX(IterType) \
+        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, Overlap, Clip, \
+                                      (IterType*) PyArray_DATA(dataX), \
+                                      (IterType*) PyArray_DATA(dataY), \
+                                      (double*) PyArray_SAFE_DATA(windowData), \
+                                      (double*) PyArray_DATA(dataF))
+    
+    switch( PyArray_TYPE(dataX) ){
+        case( NPY_INT8       ): LAUNCH_PFB_REAL(int8_t);    break;
+        case( NPY_INT16      ): LAUNCH_PFB_REAL(int16_t);   break;
+        case( NPY_INT32      ): LAUNCH_PFB_REAL(int);       break;
+        case( NPY_INT64      ): LAUNCH_PFB_REAL(long);      break;
+        case( NPY_FLOAT32    ): LAUNCH_PFB_REAL(float);     break;
+        case( NPY_FLOAT64    ): LAUNCH_PFB_REAL(double);    break;
+        case( NPY_COMPLEX64  ): LAUNCH_PFB_COMPLEX(float);  break;
+        case( NPY_COMPLEX128 ): LAUNCH_PFB_COMPLEX(double); break;
+        default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
+    }
+        
+#undef LAUNCH_PFB_REAL
+#undef LAUNCH_PFB_COMPLEX
+    
+    
+    signalsF = Py_BuildValue("O", PyArray_Return(dataF));
+    
+    Py_XDECREF(dataX);
+    Py_XDECREF(dataY);
+    Py_XDECREF(windowData);
+    Py_XDECREF(dataF);
+    
+    return signalsF;
+    
+fail:
+    Py_XDECREF(dataX);
+    Py_XDECREF(dataY);
+    Py_XDECREF(windowData);
+    Py_XDECREF(dataF);
+    
+    return NULL;
+}
+
+PyDoc_STRVAR(PFBPSD_doc, \
+"Perform a series of polyphase filter band transforms (4-tap plus a\n\
+Hanning window) on data to get the PSD for the four Stokes parameters: \n\
+I, Q, U, and V.\n\
 \n\
 Input arguments are:\n\
  * signals: 2-D numpy.int16 (stands by samples) array of data to FFT\n\
@@ -576,6 +994,7 @@ Ouputs:\n\
 
 static PyMethodDef StokesMethods[] = {
     {"FPSD",     (PyCFunction) FPSD,     METH_VARARGS|METH_KEYWORDS, FPSD_doc    }, 
+    {"PFBPSD",   (PyCFunction) PFBPSD,   METH_VARARGS|METH_KEYWORDS, PFBPSD_doc  }, 
     {"XEngine2", (PyCFunction) XEngine2, METH_VARARGS,               XEngine2_doc}, 
     {NULL,       NULL,                   0,                          NULL        }
 };
@@ -613,7 +1032,7 @@ MOD_INIT(_stokes) {
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
+    PyModule_AddObject(m, "__version__", PyString_FromString("0.4"));
     PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
     
     // LSL FFTW Wisdom

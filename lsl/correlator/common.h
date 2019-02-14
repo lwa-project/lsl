@@ -36,13 +36,6 @@ inline void read_wisdom(char *filename, PyObject *m) {
   Sinc function for use by the polyphase filter bank
 */
 
-inline float sinc(float x) {
-    if(x == 0.0) {
-        return 1.0;
-    } else {
-        return sin(x*NPY_PI)/(x*NPY_PI);
-    }
-}
 inline double sinc(double x) {
     if(x == 0.0) {
         return 1.0;
@@ -50,6 +43,49 @@ inline double sinc(double x) {
         return sin(x*NPY_PI)/(x*NPY_PI);
     }
 }
+
+inline float sinc(float x) {
+    if(x == 0.0) {
+        return 1.0;
+    } else {
+        return sin(x*NPY_PI)/(x*NPY_PI);
+    }
+}
+
+
+/*
+  Hanning window for use by the polyphase filter bank
+*/
+
+inline double hanning(double x) {
+    return 0.5 - 0.5*cos(x);
+    
+}
+
+inline float hanning(float x) {
+    return 0.5 - 0.5*cos(x);
+}
+
+
+/*
+  Hamming window for use by the polyphase filter bank
+*/
+
+inline double hamming(double x) {
+    return 0.53836 - 0.46164*cos(x);
+    
+}
+
+inline float hamming(float x) {
+    return 0.53836 - 0.46164*cos(x);
+}
+
+
+/*
+  Number of PFB taps to use
+ */
+
+#define PFB_NTAP 4
 
 
 /*
