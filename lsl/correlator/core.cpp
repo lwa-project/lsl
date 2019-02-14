@@ -898,7 +898,7 @@ fail:
 }
 
 PyDoc_STRVAR(PFBEngine_doc, \
-"Perform a series of overlapped polyphase filter band transforms (4-tap plus a\n\
+"Perform a series of overlapped polyphase filter bank transforms (4-tap plus a\n\
 Hanning window) on real-valued data using\n\
 OpenMP and windows.\n\
 \n\
@@ -1262,8 +1262,10 @@ The function defined in this module are:\n\
  * FEngine - F-engine for computing a series of overlapped Fourier transforms with\n\
              delay corrections for a real-valued (TBW) or complex valued (TBN or DRX)\n\
              signals from a collection of stands all at once.\n\
+ * PFBEngine - Similar to FEngine, but using a 4-tap + Hanning windowed polyphase\n\
+               filter bank.\n\
  * XEngine2 - Similar to XEngine, but works with a collection of stands all at\n\
-    o         nce.\n\
+              once.\n\
 \n\
 See the inidividual functions for more details.");
 

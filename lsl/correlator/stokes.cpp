@@ -803,7 +803,7 @@ fail:
 }
 
 PyDoc_STRVAR(PFBPSD_doc, \
-"Perform a series of polyphase filter band transforms (4-tap plus a\n\
+"Perform a series of polyphase filter bank transforms (4-tap plus a\n\
 Hanning window) on data to get the PSD for the four Stokes parameters: \n\
 I, Q, U, and V.\n\
 \n\
@@ -1004,9 +1004,11 @@ PyDoc_STRVAR(stokes_doc, \
 parameters.\n\
 \n\
 The functions defined in this module are:\n\
-  * FPSDR -  FFT and integrate function for computing a series of overlapped\n\
-             Fourier transforms for a real-valued (TBW) or complex-valued (TBN\n\
-             and DRX) signals from a collection of stands all at once.\n\
+ * FPSDR -  FFT and integrate function for computing a series of overlapped\n\
+            Fourier transforms for a real-valued (TBW) or complex-valued (TBN\n\
+            and DRX) signals from a collection of stands all at once.\n\
+ * PFBPSD - Similar to FPSD, but using a 4-tap + Hanning windowed polyphase\n\
+            filter bank.\n\
 \n\
 Also included is an X-Engine for use with the lsl.correlator._core module to\n\
 perform cross-correlations for the stokes parameters.\n\

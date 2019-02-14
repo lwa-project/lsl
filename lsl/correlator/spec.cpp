@@ -647,7 +647,7 @@ fail:
 }
 
 PyDoc_STRVAR(PFBPSD_doc, \
-"Perform a series ofpolyphase filter band transforms (4-tap plus a\n\
+"Perform a series of polyphase filter bank transforms (4-tap plus a\n\
 Hanning window) on data to get the PSD.\n\
 \n\
 Input arguments are:\n\
@@ -681,9 +681,11 @@ PyDoc_STRVAR(spec_doc, \
 "Extension to take timeseries data and convert it to the frequency domain.\n\
 \n\
 The functions defined in this module are:\n\
-  * FPSD -  FFT and integrate function for computing a series of overlapped\n\
-            Fourier transforms for a real-valued (TBW) or complex-valued (TBN\n\
-            and DRX) signals from a collection of stands all at once.\n\
+ * FPSD -  FFT and integrate function for computing a series of overlapped\n\
+           Fourier transforms for a real-valued (TBW) or complex-valued (TBN\n\
+           and DRX) signals from a collection of stands all at once.\n\
+ * PFBPSD - Similar to FPSD, but using a 4-tap + Hanning windowed polyphase\n\
+            filter bank.\n\
 \n\
 See the inidividual functions for more details.\n\
 \n\
