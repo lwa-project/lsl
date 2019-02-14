@@ -36,7 +36,7 @@ class UTC(tzinfo):
         return timedelta(0)
 
 
-def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']):
+def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pfb=False, pols=['xx','yy']):
     """
     Given an lsl.reader.ldp.TBWFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -89,7 +89,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pols=['xx','yy']
         
         # Loop over sub-integrations (set by nSec)
         for k in xrange(nSec):
-            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, Overlap=Overlap, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
+            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, Overlap=Overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
             
             toUse = numpy.where( (freq>=5.0e6) & (freq<=93.0e6) )
             toUse = toUse[0]
@@ -205,7 +205,7 @@ def main(args):
     basename, ext = os.path.splitext(basename)
     
     fitsFilename = "%s.FITS_1" % basename
-    processChunk(idf, station, good, fitsFilename, LFFT=args.fft_length, Overlap=1, pols=args.products)
+    processChunk(idf, station, good, fitsFilename, LFFT=args.fft_length, Overlap=1, pfb=args.pfb, pols=args.products)
     
     idf.close()
 
@@ -221,6 +221,8 @@ if __name__ == "__main__":
                         help='name of SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
                         help='set FFT length')
+    parser.add_argument('-p', '--pfb', action='store true', 
+                        help='enabled the PFB on the F-engine')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false', 
                         help='run %(prog)s in silent mode')
     parser.add_argument('-a', '--all', action='store_true', 

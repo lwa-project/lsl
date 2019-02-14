@@ -35,7 +35,7 @@ class UTC(tzinfo):
         return timedelta(0)
 
 
-def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pols=['xx',], ChunkSize=100):
+def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pfb=False, pols=['xx',], ChunkSize=100):
     """
     Given a lsl.reader.ldp.TBNFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -87,7 +87,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pol
         # Loop over polarization products
         for pol in pols:
             print "->  %s" % pol
-            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, Overlap=Overlap, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, Pol=pol, return_baselines=True, gain_correct=True)
+            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, Overlap=Overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, Pol=pol, return_baselines=True, gain_correct=True)
             
             # Select the right range of channels to save
             toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
@@ -217,7 +217,7 @@ def main(args):
             chunk = leftToDo
             
         processChunk(idf, station, good, fitsFilename, intTime=args.avg_time, LFFT=args.fft_length, 
-                    Overlap=1, pols=args.products, ChunkSize=chunk)
+                    Overlap=1, pfb=args.pfb, pols=args.products, ChunkSize=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk
@@ -236,6 +236,8 @@ if __name__ == "__main__":
                         help='name of SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
                         help='set FFT length')
+    parser.add_argument('-p', '--pfb', action='store true', 
+                        help='enabled the PFB on the F-engine')
     parser.add_argument('-t', '--avg-time', type=aph.positive_float, default=5.0, 
                         help='time window to average visibilities in seconds')
     parser.add_argument('-s', '--samples', type=aph.positive_int, default=10, 

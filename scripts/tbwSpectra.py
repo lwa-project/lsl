@@ -70,7 +70,9 @@ def main(args):
     print "==="
     
     # Setup the window function to use
-    if args.bartlett:
+    if args.pfb:
+        window = fxc.null_window
+    elif args.bartlett:
         window = numpy.bartlett
     elif args.blackman:
         window = numpy.blackman
@@ -90,7 +92,7 @@ def main(args):
     # the total number of frames read.  This is needed to keep the averages correct.
     # NB:  The weighting is the same for the x and y polarizations because of how 
     # the data are packed in TBW
-    freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, verbose=args.verbose)
+    freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose)
     for stand in xrange(masterSpectra.shape[1]):
         masterSpectra[0,stand,:] = tempSpec[stand,:]
         masterWeight[0,stand,:] = int(readT*srate/LFFT)
@@ -198,6 +200,8 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
                         help='set FFT length')
+    parser.add_argument('-p', '--pfb', action='store true', 
+                        help='enabled the PFB on the F-engine')
     parser.add_argument('-g', '--gain-correct', action='store_true', 
                         help='correct signals for the cable losses')
     parser.add_argument('-s', '--stack', action='store_true', 

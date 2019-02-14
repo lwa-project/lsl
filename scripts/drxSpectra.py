@@ -96,7 +96,9 @@ def main(args):
         raise RuntimeError("Requested integration time+offset is greater than file length")
         
     # Setup the window function to use
-    if args.bartlett:
+    if args.pfb:
+        window = fxc.null_window
+    elif args.bartlett:
         window = numpy.bartlett
     elif args.blackman:
         window = numpy.blackman
@@ -120,7 +122,7 @@ def main(args):
             
         # Calculate the spectra for this block of data and then weight the results by 
         # the total number of frames read.  This is needed to keep the averages correct.
-        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, verbose=args.verbose, sample_rate=srate, clip_level=0)
+        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose, sample_rate=srate, clip_level=0)
         for stand in xrange(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
@@ -211,6 +213,8 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
                         help='set FFT length')
+    parser.add_argument('-p', '--pfb', action='store true', 
+                        help='enabled the PFB on the F-engine')
     parser.add_argument('-d', '--disable-chunks', action='store_true', 
                         help='disable plotting chunks in addition to the global average')
     parser.add_argument('-o', '--output', type=str, 
