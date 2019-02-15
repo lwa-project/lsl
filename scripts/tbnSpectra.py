@@ -249,7 +249,7 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
                         help='set FFT length')
-    parser.add_argument('-p', '--pfb', action='store true', 
+    parser.add_argument('-p', '--pfb', action='store_true', 
                         help='enabled the PFB on the F-engine')
     parser.add_argument('-d', '--disable-chunks', action='store_true', 
                         help='disable plotting chunks in addition to the global average')

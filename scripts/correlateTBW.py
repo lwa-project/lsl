@@ -221,7 +221,7 @@ if __name__ == "__main__":
                         help='name of SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
                         help='set FFT length')
-    parser.add_argument('-p', '--pfb', action='store true', 
+    parser.add_argument('-p', '--pfb', action='store_true', 
                         help='enabled the PFB on the F-engine')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false', 
                         help='run %(prog)s in silent mode')

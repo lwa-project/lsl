@@ -236,7 +236,7 @@ if __name__ == "__main__":
                         help='name of SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
                         help='set FFT length')
-    parser.add_argument('-p', '--pfb', action='store true', 
+    parser.add_argument('-p', '--pfb', action='store_true', 
                         help='enabled the PFB on the F-engine')
     parser.add_argument('-t', '--avg-time', type=aph.positive_float, default=5.0, 
                         help='time window to average visibilities in seconds')
