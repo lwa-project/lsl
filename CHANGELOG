@@ -10,6 +10,13 @@
   * Added test suites for CASA measurement set support when the 'casacore' module is found
   * Added support for astorpy.units.quantity.Quantity instances to lsl.misc.rfutil
 
+1.2.5
+  * Updated setup.py to make it more likely that clang will build OpenMP-enabled extensions
+  * Updated the install documentation to recommend pip
+  * Added a 4-tap + Hanning windowed polyphase filter bank to the various functions in lsl.correlator.fx
+  * Added an option to use the new PFB in correlateTBN and correlateTBW
+  * Added an option to use the new PFB in drxSpectra, tbnSpectra, and tbwSpectra
+
 1.2.4
   * Fixed a bug in driftcurve.py that put a cos(decliation) correction into the LFSM runs
   * Updated the documentation to reflect that unittest2 is now required as of 1.2.2 for Python 2.6 support
