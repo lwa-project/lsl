@@ -70,9 +70,7 @@ def main(args):
     print "==="
     
     # Setup the window function to use
-    if args.pfb:
-        window = fxc.null_window
-    elif args.bartlett:
+    if args.bartlett:
         window = numpy.bartlett
     elif args.blackman:
         window = numpy.blackman
@@ -196,12 +194,12 @@ if __name__ == "__main__":
                         help='apply a Blackman window to the data')
     wgroup.add_argument('-n', '--hanning', action='store_true', 
                         help='apply a Hanning window to the data')
+    wgroup.add_argument('-p', '--pfb', action='store_true', 
+                        help='enabled the PFB on the F-engine')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
                         help='run %(prog)s in silent mode')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
                         help='set FFT length')
-    parser.add_argument('-p', '--pfb', action='store_true', 
-                        help='enabled the PFB on the F-engine')
     parser.add_argument('-g', '--gain-correct', action='store_true', 
                         help='correct signals for the cable losses')
     parser.add_argument('-s', '--stack', action='store_true', 

@@ -96,9 +96,7 @@ def main(args):
         raise RuntimeError("Requested integration time+offset is greater than file length")
         
     # Setup the window function to use
-    if args.pfb:
-        window = fxc.null_window
-    elif args.bartlett:
+    if args.bartlett:
         window = numpy.bartlett
     elif args.blackman:
         window = numpy.blackman
@@ -205,6 +203,8 @@ if __name__ == "__main__":
                         help='apply a Blackman window to the data')
     wgroup.add_argument('-n', '--hanning', action='store_true', 
                         help='apply a Hanning window to the data')
+    wgroup.add_argument('-p', '--pfb', action='store_true', 
+                        help='enabled the PFB on the F-engine')
     parser.add_argument('-s', '--skip', type=aph.positive_or_zero_float, default=0.0, 
                         help='skip the specified number of seconds at the beginning of the file')
     parser.add_argument('-a', '--average', type=aph.positive_float, default=10.0, 
@@ -213,8 +213,6 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
                         help='set FFT length')
-    parser.add_argument('-p', '--pfb', action='store_true', 
-                        help='enabled the PFB on the F-engine')
     parser.add_argument('-d', '--disable-chunks', action='store_true', 
                         help='disable plotting chunks in addition to the global average')
     parser.add_argument('-o', '--output', type=str, 
