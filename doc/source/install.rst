@@ -11,6 +11,7 @@ Requirements
  * aipy >= 1.0
  * pytz >= 2011k
  * matplotlib >= 1.1 [1]_
+ * BeautifulSoup [1]_
  * casacore [2]_
 
 .. [1] Required for some of the included scripts

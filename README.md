@@ -26,6 +26,7 @@ REQUIREMENTS
  * aipy >= 1.0
  * pytz >= 2011k
  * matplotlib >= 1.1 (required for some of the scripts)
+ * BeautifulSoup (required for some of the scripts)
  * casacore (required for measurement set support)
 
 BUILDING
