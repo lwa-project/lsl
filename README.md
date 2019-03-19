@@ -6,12 +6,12 @@ LSL - The LWA Software Library
 DESCRIPTION
 -----------
 This package contains a collection of tools for reading, format shifting, and analyzing LWA data.  It also contains the majority of the lwa_user library developed by NRL.  The lwa_user modules includes (and their respective names in the LSL package are):
- * lwa_user.astro			(lsl.astro)
- * lwa_user.catalog		(lsl.catalog)
- * lwa_user.mathutil		(lsl.misc.mathutil)
- * lwa_user.nec_util		(lsl.sim.nec_util)
- * lwa_user.skymap			(lsl.skymap)
- * lwa_user.transform		(lsl.transform)
+ * lwa_user.astro           (lsl.astro)
+ * lwa_user.catalog         (lsl.catalog)
+ * lwa_user.mathutil        (lsl.misc.mathutil)
+ * lwa_user.nec_util        (lsl.sim.nec_util)
+ * lwa_user.skymap          (lsl.skymap)
+ * lwa_user.transform       (lsl.transform)
 
 REQUIREMENTS
 ------------
