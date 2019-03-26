@@ -381,7 +381,7 @@ class Project(object):
                 if isinstance(obs, DRX):
                     ### Apply the proper motion to generate the SDFs
                     delta_epoch = (obs.mjd + obs.mpm/1000.0/86400.0 - 51544.5) / 365.25
-                    ra = obs.ra + delta_epoch * obs.pm[0]/numpy.cos(obs.dec*numpy.pi/180)/1000.0/3600.0/15.0
+                    ra = obs.ra + delta_epoch * obs.pm[0]/math.cos(obs.dec*math.pi/180)/1000.0/3600.0/15.0
                     dec = obs.dec + delta_epoch * obs.pm[1]/1000.0/3600.0
                     comments = ''
                     if comments is not None:
@@ -413,7 +413,7 @@ class Project(object):
                     
                     ### Apply the proper motion to generate the SDFs
                     delta_epoch = (obs.mjd + obs.mpm/1000.0/86400.0 - 51544.5) / 365.25
-                    alt_r = alt_r + delta_epoch * alt_pr/numpy.cos(alt_d*numpy.pi/180)/1000.0/3600.0/15.0
+                    alt_r = alt_r + delta_epoch * alt_pr/math.cos(alt_d*math.pi/180)/1000.0/3600.0/15.0
                     alt_d = alt_d + delta_epoch * alt_pd/1000.0/3600.0
                     
                     try:
