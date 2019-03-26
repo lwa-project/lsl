@@ -155,8 +155,8 @@ class idf_tests(unittest.TestCase):
             for o in xrange(len(project.runs[0].scans)):
                 bdy = project.runs[0].scans[o].get_fixed_body()
                 bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
-                self.assertAlmostEqual(bdy.a_ra, sdf.sessions[0].observations[o].ra*math.pi/12.0, 5)
-                self.assertAlmostEqual(bdy.a_dec, sdf.sessions[0].observations[o].dec*math.pi/180.0, 5)
+                self.assertAlmostEqual(bdy.a_ra, sdf.sessions[0].observations[o].ra*pi/12.0, 5)
+                self.assertAlmostEqual(bdy.a_dec, sdf.sessions[0].observations[o].dec*pi/180.0, 5)
                 
     def test_drx_errors(self):
         """Test various TRK_RADEC IDF errors."""
