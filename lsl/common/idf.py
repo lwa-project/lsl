@@ -390,9 +390,9 @@ class Project(object):
                         comments = comments+";;Applied proper motion of %+.1f mas/yr in RA and %+.1f mas/yr in dec" % (obs.pm[0], obs.pm[1])
                         
                     new_obs = sdf.DRX(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
-                                      obs.ra, obs.dec, 
+                                      ra, dec, 
                                       obs.frequency1, obs.frequency2, obs.filter, 
-                                      gain=obs.gain, max_snr=False, comments=obs.comments)
+                                      gain=obs.gain, max_snr=False, comments=comments)
                 elif isinstance(obs, Solar):
                     new_obs = sdf.Solar(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
                                         obs.frequency1, obs.frequency2, obs.filter, 
