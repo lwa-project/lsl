@@ -283,6 +283,9 @@ class Project(object):
             if obs.mode == 'TRK_RADEC':
                 output = "%sSCAN_RA          %.9f\n" % (output, obs.ra)
                 output = "%sSCAN_DEC         %+.9f\n" % (output, obs.dec)
+                if obs.pm[0] != 0.0 or obs.pm[1] != 0.0:
+                    output = "%sSCAN_PM_RA       %+.1f\n" % (output, obs.pm[0])
+                    output = "%sSCAN_PM_DEC      %+.1f\n" % (output, obs.pm[1])
             output = "%sSCAN_FREQ1       %i\n" % (output, obs.freq1)
             output = "%sSCAN_FREQ1+      %.9f MHz\n" % (output, obs.frequency1/1e6)
             output = "%sSCAN_FREQ2       %i\n" % (output, obs.freq2)
@@ -297,7 +300,10 @@ class Project(object):
                     output = "%sSCAN_ALT_INTENT[%i]    %s\n" % (output, i+1, phase_center.intent) 
                     output = "%sSCAN_ALT_RA[%i]        %.9f\n" % (output, i+1, phase_center.ra)  
                     output = "%sSCAN_ALT_DEC[%i]       %+.9f\n" % (output, i+1, phase_center.dec)
-                    
+                    if phase_center.pm[0] != 0.0 or phase_center.pm[1] != 0.0:
+                        output = "%sSCAN_ALT_PM_RA[%i]       %+.1f\n" % (output, i+1, phase_center.pm[0])
+                        output = "%sSCAN_ALT_PM_DEC[%i]      %+.1f\n" % (output, i+1, phase_center.pm[1])
+                        
             ## ASP filter setting
             if obs.aspFlt != -1:
                 output = "%sSCAN_ASP_FLT     %i\n" % (output, obs.aspFlt)
@@ -373,6 +379,16 @@ class Project(object):
             for o,obs in enumerate(ses.scans):
                 obs_start = mjdmpm_to_datetime(obs.mjd, obs.mpm)
                 if isinstance(obs, DRX):
+                    ### Apply the proper motion to generate the SDFs
+                    delta_epoch = (obs.mjd + obs.mpm/1000.0/86400.0 - 51544.5) / 365.25
+                    ra = obs.ra + delta_epoch * obs.pm[0]/numpy.cos(obs.dec*numpy.pi/180)/1000.0/3600.0/15.0
+                    dec = obs.dec + delta_epoch * obs.pm[1]/1000.0/3600.0
+                    comments = ''
+                    if comments is not None:
+                        comments += obs.comments
+                    if obs.pm[0] != 0.0 or obs.pm[1] != 0.0:
+                        comments = comments+";;Applied proper motion of %+.1f mas/yr in RA and %+.1f mas/yr in dec" % (obs.pm[0], obs.pm[1])
+                        
                     new_obs = sdf.DRX(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
                                       obs.ra, obs.dec, 
                                       obs.frequency1, obs.frequency2, obs.filter, 
@@ -393,6 +409,13 @@ class Project(object):
                 for p,phase_center in enumerate(reversed(obs.alt_phase_centers)):
                     cid = npc - p
                     alt_t, alt_i, alt_r, alt_d = phase_center.target, phase_center.intent, phase_center.ra, phase_center.dec
+                    alt_pr, alt_pd = phase_center.pm
+                    
+                    ### Apply the proper motion to generate the SDFs
+                    delta_epoch = (obs.mjd + obs.mpm/1000.0/86400.0 - 51544.5) / 365.25
+                    alt_r = alt_r + delta_epoch * alt_pr/numpy.cos(alt_d*numpy.pi/180)/1000.0/3600.0/15.0
+                    alt_d = alt_d + delta_epoch * alt_pd/1000.0/3600.0
+                    
                     try:
                         new_projoff.observations[0][o]
                     except IndexError:
@@ -606,11 +629,14 @@ class Scan(object):
     id = 1
     FILTER_CODES = DRXFilters
 
-    def __init__(self, target, intent, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, comments=None):
+    def __init__(self, target, intent, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, pm=[0.0, 0.0], comments=None):
         self.target = target
         self.intent = intent
         self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        if pm is None:
+            pm = [0.0, 0.0]
+        self.pm = [pm[0], pm[1]]
         self.start = start
         if type(duration).__name__ == 'timedelta':
             # Make sure the number of microseconds agree with milliseconds
@@ -742,13 +768,13 @@ class Scan(object):
         self.frequency2 = float(frequency2)
         self.update()
         
-    def add_alt_phase_center(self, target_or_apc, intent=None, ra=None, dec=None):
+    def add_alt_phase_center(self, target_or_apc, intent=None, ra=None, dec=None, pm=None):
         """Add an alternate phase center to the scan."""
         
         if isinstance(target_or_apc, AlternatePhaseCenter):
             apc = target_or_apc
         else:
-            apc = AlternatePhaseCenter(target_or_apc, intent, ra, dec)
+            apc = AlternatePhaseCenter(target_or_apc, intent, ra, dec, pm=pm)
         self.alt_phase_centers.append(apc)
         
     def estimate_bytes(self):
@@ -773,7 +799,9 @@ class Scan(object):
         pnt.name = self.target
         pnt._ra = self.ra / 12.0 * math.pi
         pnt._dec = self.dec / 180.0 * math.pi
-        pnt._epoch = '2000'
+        pnt._pmra = self.pm[0]
+        pnt._pmdec = self.pm[1]
+        pnt._epoch = ephem.J2000
         return pnt
         
     def compute_visibility(self, station=lwa1):
@@ -909,8 +937,8 @@ class DRX(Scan):
     
     alt_phase_centers = []
     
-    def __init__(self, target, intent, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, comments=None):
-        Scan.__init__(self, target, intent, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, comments=comments)
+    def __init__(self, target, intent, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, pm=[0.0, 0.0], comments=None):
+        Scan.__init__(self, target, intent, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, pm=pm, comments=comments)
         
     def set_ra(self, ra):
         """Set the pointing RA."""
@@ -921,6 +949,12 @@ class DRX(Scan):
         """Set the pointing Dec."""
         
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        
+    def set_pm(self, ra_dec):
+        """Set the proper motion of the target in mas/yr."""
+        
+        self.pm[0] = ra_dec[0]
+        self.pm[1] = ra_dec[1]
 
 
 class Solar(Scan):
@@ -982,11 +1016,14 @@ class Jovian(Scan):
 class AlternatePhaseCenter(object):
     """Class to hold an alternate phase center for a scan."""
     
-    def __init__(self, target, intent, ra, dec):
+    def __init__(self, target, intent, ra, dec, pm=[0.0, 0.0]):
         self.target = target
         self.intent = intent
         self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        if pm is None:
+            pm = [0.0, 0.0]
+        self.pm = [pm[0], pm[1]]
         
     def set_ra(self, ra):
         """Set the pointing RA."""
@@ -997,6 +1034,12 @@ class AlternatePhaseCenter(object):
         """Set the pointing Dec."""
         
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        
+    def set_pm(self, ra_dec):
+        """Set the proper motion of the target in mas/yr."""
+        
+        self.pm[0] = ra_dec[0]
+        self.pm[1] = ra_dec[1]
         
     def update(self):
         """Update the computed parameters from the string values."""
@@ -1011,7 +1054,9 @@ class AlternatePhaseCenter(object):
         pnt.name = self.target
         pnt._ra = self.ra / 12.0 * math.pi
         pnt._dec = self.dec / 180.0 * math.pi
-        pnt._epoch = '2000'
+        pnt._pmra = self.pm[0]
+        pnt._pmdec = self.pm[1]
+        pnt._epoch = ephem.J2000
         return pnt
     
     def validate(self, station, verbose=False):
@@ -1076,7 +1121,7 @@ def _parse_create_scan_object(obsTemp, altTemps=[], verbose=False):
         print("[%i] Scan %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
         
     if mode == 'TRK_RADEC':
-        obsOut = DRX(obsTemp['target'], obsTemp['intent'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = DRX(obsTemp['target'], obsTemp['intent'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], pm=obsTemp['pm'], comments=obsTemp['comments'])
     elif mode == 'TRK_SOL':
         obsOut = Solar(obsTemp['target'], obsTemp['intent'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
     elif mode == 'TRK_JOV':
@@ -1086,7 +1131,7 @@ def _parse_create_scan_object(obsTemp, altTemps=[], verbose=False):
         
     # Add in the alternate phase centers
     for altTemp in altTemps:
-        obsOut.add_alt_phase_center(altTemp['target'], altTemp['intent'], altTemp['ra'], altTemp['dec'])
+        obsOut.add_alt_phase_center(altTemp['target'], altTemp['intent'], altTemp['ra'], altTemp['dec'], pm=altTemp['pm'])
         
     # Set the ASP/FEE values
     obsOut.aspFlt = copy.deepcopy(obsTemp['aspFlt'])
@@ -1125,10 +1170,10 @@ def parse_idf(filename, verbose=False):
     project.projectOffice.scans = [[],]
     
     # Loop over the file
-    obsTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
+    obsTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0], 'start': '', 'duration': '', 'mode': '', 
                'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'gain': -1, 
                'aspFlt': -1}
-    altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0}
+    altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
     altTemps = []
     
     for line in fh:
@@ -1241,7 +1286,7 @@ def parse_idf(filename, verbose=False):
         if keyword == 'SCAN_ID':
             if obsTemp['id'] != 0:
                 project.runs[0].scans.append( _parse_create_scan_object(obsTemp, altTemps=altTemps, verbose=verbose) )
-                altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0}
+                altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
                 altTemps = []
             obsTemp['id'] = int(value)
             project.projectOffice.scans[0].append( None )
@@ -1309,7 +1354,7 @@ def parse_idf(filename, verbose=False):
                 altTemps[-1]['intent'] = value
             else:
                 if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemps[-1]) )
+                    altTemps.append( copy.deepcopy(altTemp) )
                     altTemps[-1]['id'] = ids[0]
                 altTemps[-1]['intent'] = value
             continue
@@ -1320,7 +1365,7 @@ def parse_idf(filename, verbose=False):
                 altTemps[-1]['ra'] = float(value)
             else:
                 if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemps[-1]) )
+                    altTemps.append( copy.deepcopy(altTemp) )
                     altTemps[-1]['id'] = ids[0]
                 altTemps[-1]['ra'] = float(value)
             continue
@@ -1331,11 +1376,32 @@ def parse_idf(filename, verbose=False):
                 altTemps[-1]['dec'] = float(value)
             else:
                 if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemps[-1]) )
+                    altTemps.append( copy.deepcopy(altTemp) )
                     altTemps[-1]['id'] = ids[0]
                 altTemps[-1]['dec'] = float(value)
             continue
-            
+        if keyword == 'SCAN_ALT_PM_RA':
+            if len(altTemps) == 0:
+                altTemps.append( copy.deepcopy(altTemp) )
+                altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['pm'][0] = float(value)
+            else:
+                if altTemps[-1]['id'] != ids[0]:
+                    altTemps.append( copy.deepcopy(altTemp) )
+                    altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['pm'][0] = float(value)
+            continue
+        if keyword == 'SCAN_ALT_PM_DEC':
+            if len(altTemps) == 0:
+                altTemps.append( copy.deepcopy(altTemp) )
+                altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['pm'][1] = float(value)
+            else:
+                if altTemps[-1]['id'] != ids[0]:
+                    altTemps.append( copy.deepcopy(altTemp) )
+                    altTemps[-1]['id'] = ids[0]
+                altTemps[-1]['pm'][1] = float(value)
+            continue
         # Run wide settings at the end of the scans
         if keyword == 'SCAN_ASP_FLT':
             obsTemp['aspFlt'] = int(value)

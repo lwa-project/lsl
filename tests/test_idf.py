@@ -14,12 +14,14 @@ import pytz
 import ephem
 import tempfile
 import unittest
+from math import pi
 from datetime import datetime, timedelta
 try:
     import cStringIO as StringIO
 except ImprotError:
     import StringIO
 
+from lsl.astro import MJD_OFFSET, DJD_OFFSET
 from lsl.common.paths import DATA_BUILD
 from lsl.common import idf
 from lsl.common.stations import lwa1, lwasv
@@ -135,6 +137,27 @@ class idf_tests(unittest.TestCase):
             obs.filter = 6
         out = project.render()
         
+    def test_drx_proper_motion(self):
+        """Test proper motion handling in a TRK_RADEC IDF file."""
+        
+        project = idf.parse_idf(drxFile)
+        project.runs[0].scans[0].set_pm([3182.7, 592.1])
+        
+        self.assertAlmostEqual(project.runs[0].scans[0].pm[0], 3182.7, 1)
+        self.assertAlmostEqual(project.runs[0].scans[0].pm[1], 592.1, 1)
+        
+        ## TODO: Coordinate test?
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.runs[0].scans:
+            obs.filter = 6
+        sdfs = project.generate_sdfs()
+        for sdf in sdfs:
+            for o in xrange(len(project.runs[0].scans)):
+                bdy = project.runs[0].scans[o].get_fixed_body()
+                bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
+                self.assertAlmostEqual(bdy.a_ra, sdf.sessions[0].observations[o].ra*math.pi/12.0, 5)
+                self.assertAlmostEqual(bdy.a_dec, sdf.sessions[0].observations[o].dec*math.pi/180.0, 5)
+                
     def test_drx_errors(self):
         """Test various TRK_RADEC IDF errors."""
         
@@ -258,6 +281,22 @@ class idf_tests(unittest.TestCase):
             obs.filter = 6
         out = project.render()
         
+    def test_drx_alt_proper_motion(self):
+        """Test proper motion handling in a TRK_RADEC IDF file with other phase centers."""
+        
+        project = idf.parse_idf(altFile)
+        project.runs[0].scans[0].alt_phase_centers[0].set_pm([3182.7, 592.1])
+        
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0].pm[0], 3182.7, 1)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0].pm[1], 592.1, 1)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1].pm[0], 0.0, 1)
+        self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1].pm[1], 0.0, 1)
+        
+        ## TODO: Coordinate test?
+        # Fix for LWA-SV only going up to filter code 6
+        for obs in project.runs[0].scans:
+            obs.filter = 6
+            
     def test_drx_alt_errors(self):
         """Test various TRK_RADEC IDF errors with other phase centers."""
         

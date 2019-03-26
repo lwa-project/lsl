@@ -16,6 +16,7 @@
   * Added a 4-tap + Hanning windowed polyphase filter bank to the various functions in lsl.correlator.fx
   * Added an option to use the new PFB in correlateTBN and correlateTBW
   * Added an option to use the new PFB in drxSpectra, tbnSpectra, and tbwSpectra
+  * Added support for proper motions to the IDF format
 
 1.2.4
   * Fixed a bug in driftcurve.py that put a cos(decliation) correction into the LFSM runs

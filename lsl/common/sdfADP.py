@@ -1402,7 +1402,7 @@ class _DRXBase(Observation):
         pnt = ephem.FixedBody()
         pnt._ra = self.ra / 12.0 * math.pi
         pnt._dec = self.dec / 180.0 * math.pi
-        pnt._epoch = '2000'
+        pnt._epoch = ephem.J2000
         return pnt
         
     def compute_visibility(self, station=lwasv):
@@ -1944,7 +1944,7 @@ class BeamStep(object):
             pnt = ephem.FixedBody()
             pnt._ra = self.c1 / 12.0 * math.pi
             pnt._dec = self.c2 / 180.0 * math.pi
-            pnt._epoch = '2000'
+            pnt._epoch = ephem.J2000
             
         else:
             pnt = None
