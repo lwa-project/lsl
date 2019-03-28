@@ -3,6 +3,7 @@
   * Bumped the minimum Python version to 2.7
   * Bumped the mininum SciPy version to 0.13
   * Replaced PyFITS with astropy.io.fits
+  * Removed support for 32-bit systems in the lsl.common modules
   * Added a new lsl.imaging.data module and classes to help store visibility data
   * Added a new extension to speed up w-projection gridding
   * Merged the non-windowed and windowed functions in the lsl.correlator extensions to de-duplicate some of the codebase

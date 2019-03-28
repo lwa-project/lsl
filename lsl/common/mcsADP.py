@@ -61,14 +61,14 @@ from datetime import datetime
 from lsl.common import adp as adpCommon
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
             'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
             'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NROACH', 'ME_MAX_NROACHCH', 'ME_MAX_ROACHID_LENGTH', 
             'ME_MAX_NSERVER', 'ME_MAX_SERVERID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
             'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
-            'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'IS_32BIT_PYTHON', 
+            'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 
             'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
             'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
             'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
@@ -108,9 +108,6 @@ MIB_LABEL_FIELD_LENGTH = 32	# Number of characters in a MIB label field
 MIB_VAL_FIELD_LENGTH = 8192	# Number of characters in a MIB value field
 
 
-IS_32BIT_PYTHON = True if struct.calcsize("P") == 4 else False
-
-
 SSMIF_STRUCT = """
     int    iFormatVersion;           /* FORMAT_VERSION */
     char   sStationID[3];            /* STATION_ID */
@@ -127,7 +124,6 @@ SSMIF_STRUCT = """
     float  fAntTheta[2*ME_MAX_NSTD]; /* ANT_THETA[] */
     float  fAntPhi[2*ME_MAX_NSTD];   /* ANT_PHI[] */
     int    eAntDesi[2*ME_MAX_NSTD];  /* ANT_DESI[] */
-    %s
     int    nFEE;                     /* N_FEE */
     char   sFEEID[ME_MAX_NFEE][ME_MAX_FEEID_LENGTH+1]; /* FEE_ID[] */
     int    iFEEStat[ME_MAX_NFEE];    /* FEE_STAT[] */
@@ -197,7 +193,7 @@ SSMIF_STRUCT = """
     float  fPCAxisTh; /* PC_AXIS_TH */
     float  fPCAxisPh; /* PC_AXIS_PH */
     float  fPCRot;    /* PC_ROT */
-""" % ("short int junk;\n" if IS_32BIT_PYTHON else "")
+"""
 
 
 STATION_SETTINGS_STRUCT = """
@@ -232,10 +228,9 @@ STATION_SETTINGS_STRUCT = """
 
 SUBSYSTEM_STATUS_STRUCT = """
     int summary;
-    %s
     char info[256];
     long tv[2];
-""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",)
+"""
 
 
 SUBSUBSYSTEM_STATUS_STRUCT = """
@@ -256,7 +251,6 @@ SSF_STRUCT = """
     unsigned short int SESSION_CRA;
     signed short int SESSION_DRX_BEAM;
     char SESSION_SPC[32];
-    %s
     unsigned long int SESSION_START_MJD;
     unsigned long int SESSION_START_MPM;
     unsigned long int SESSION_DUR;
@@ -283,7 +277,7 @@ SSF_STRUCT = """
     signed char SESSION_LOG_EXE;
     signed char SESSION_INC_SMIB;
     signed char SESSION_INC_DES;
-""" % ("short int junk;\n" if IS_32BIT_PYTHON else "",)
+"""
 
 
 OSF_STRUCT = """
@@ -415,15 +409,9 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
         elif dec in ('unsigned short int', 'unsigned short'):
             typ = ctypes.c_ushort
         elif dec in ('signed long int', 'signed long', 'long int', 'long'):
-            if IS_32BIT_PYTHON:
-                typ = ctypes.c_longlong
-            else:
-                typ = ctypes.c_long
+            typ = ctypes.c_long
         elif dec in ('unsigned long int', 'unsigned long'):
-            if IS_32BIT_PYTHON:
-                typ = ctypes.c_uint64
-            else:
-                typ = ctypes.c_ulong
+            typ = ctypes.c_ulong
         elif dec in ('signed long long', 'long long'):
             typ = ctypes.c_longlong
         elif dec == 'unsigned long long':

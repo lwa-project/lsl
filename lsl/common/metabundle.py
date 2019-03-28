@@ -168,12 +168,6 @@ def read_obs_file(filename):
             fh.readinto(bheader)
             bheader.OBS_BDM = ''
             
-        if IS_32BIT_PYTHON:
-            skip = parse_c_struct("""
-            int junk;
-            """, endianness='little')
-            fh.readinto(skip)
-
         steps = []
         for n in xrange(bheader.OBS_STP_N):
             fh.readinto(bstep)
