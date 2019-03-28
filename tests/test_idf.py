@@ -10,6 +10,7 @@ Unit test for the lsl.common.idf module.
 """
 
 import os
+import re
 import pytz
 import ephem
 import tempfile
@@ -296,7 +297,21 @@ class idf_tests(unittest.TestCase):
         # Fix for LWA-SV only going up to filter code 6
         for obs in project.runs[0].scans:
             obs.filter = 6
-            
+        sdfs = project.generate_sdfs()
+        for sdf in sdfs:
+            for o in xrange(len(project.runs[0].scans)):
+                sdf_phase_centers = sdf.projectOffice.observations[0][o]
+                for i,phase_center in enumerate(project.runs[0].scans[o].alt_phase_centers):
+                    bdy = phase_center.get_fixed_body()
+                    bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
+                    
+                    ra = re.search("altra%i:(?P<ra>\d+(.\d*)?)" % (i+1,), sdf_phase_centers)
+                    ra = float(ra.group('ra'))
+                    dec = re.search("altdec%i:(?P<dec>[-+]?\d+(.\d*)?)" % (i+1,), sdf_phase_centers)
+                    dec = float(dec.group('dec'))
+                    self.assertAlmostEqual(bdy.a_ra, ra*pi/12.0, 5)
+                    self.assertAlmostEqual(bdy.a_dec, dec*pi/180.0, 5)
+                    
     def test_drx_alt_errors(self):
         """Test various TRK_RADEC IDF errors with other phase centers."""
         
