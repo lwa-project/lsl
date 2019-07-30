@@ -165,27 +165,39 @@ def get_fftw():
     return outCFLAGS, outLIBS
 
 
-def get_atlas():
-    """Use NumPy's system_info module to find the location of ATLAS (and 
-    cblas)."""
+def get_openblas():
+    """Use pkg-config (if installed) to figure out the C flags and linker flags
+    needed to compile a C program with OpenBLAS.  If OpenBLAS cannot be found 
+    via pkg-config, some 'sane' values are returned."""
     
-    from numpy.distutils.system_info import get_info
-    
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore",category=DeprecationWarning)
-        sys.stdout = StringIO()
-        atlas_info = get_info('atlas_blas', notfound_action=2)
-        sys.stdout = sys.__stdout__
+    try:
+        subprocess.check_call(['pkg-config', 'openblas', '--exists'])
         
-    atlas_version = ([v[3:-3] for k,v in atlas_info.get('define_macros',[])
-                    if k == 'ATLAS_INFO']+[None])[0]
-    if atlas_version:
-        print("Found ATLAS, version %s" % atlas_version)
+        p = subprocess.Popen(['pkg-config', 'openblas', '--modversion'], stdout=subprocess.PIPE)
+        outVersion = p.communicate()[0].rstrip().split()
         
-    outCFLAGS = ['-I%s' % idir for idir in atlas_info['include_dirs']]
-    outLIBS = ['-L%s' % ldir for ldir in atlas_info['library_dirs']]
-    outLIBS.extend(['-l%s' % lib for lib in atlas_info['libraries']])
-    
+        p = subprocess.Popen(['pkg-config', 'openblas', '--cflags'], stdout=subprocess.PIPE)
+        outCFLAGS = p.communicate()[0].rstrip().split()
+        try:
+            outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
+        except TypeError:
+            pass
+        
+        p = subprocess.Popen(['pkg-config', 'openblas', '--libs'], stdout=subprocess.PIPE)
+        outLIBS = p.communicate()[0].rstrip().split()
+        try:
+            outLIBS = [str(v, 'utf-8') for v in outLIBS]
+        except TypeError:
+            pass
+            
+        if len(outVersion) > 0:
+            print("Found OpenBLAS, version %s" % outVersion[0])
+            
+    except (OSError, subprocess.CalledProcessError):
+        print("WARNING:  OpenBLAS cannot be found, using defaults")
+        outCFLAGS = []
+        outLIBS = ['-L/usr/lib/openblas-base', '-lopenblas', '-lm']
+        
     return outCFLAGS, outLIBS
 
 
@@ -247,12 +259,12 @@ short_version = '%s'
 # problems on Mac
 class lsl_build(build):
     user_options = build.user_options \
-                   + [('with-atlas=', None, 'Installation path for ATLAS'),] \
+                   + [('with-openblas=', None, 'Installation path for OpenBLAS'),] \
                    + [('with-fftw=', None, 'Installation path for FFTW'),]
     
     def initialize_options(self, *args, **kwargs):
         build.initialize_options(self, *args, **kwargs)
-        self.with_atlas = None
+        self.with_openblas = None
         self.with_fftw = None
         
     def finalize_options(self, *args, **kwargs):
@@ -262,9 +274,9 @@ class lsl_build(build):
             ## Grab the 'build_ext' command
             beco = self.distribution.get_command_obj('build_ext')
             
-            ## Grab the ATLAS flags
-            if self.with_atlas is not None:
-                beco.with_atlas = self.with_atlas
+            ## Grab the OpenBLAS flags
+            if self.with_openblas is not None:
+                beco.with_openblas = self.with_openblas
                 
             ## Grab the FFTW flags
             if self.with_fftw is not None:
@@ -273,12 +285,12 @@ class lsl_build(build):
 
 class lsl_build_ext(build_ext):
     user_options = build_ext.user_options \
-                   + [('with-atlas=', None, 'Installation path for ATLAS'),] \
+                   + [('with-openblas=', None, 'Installation path for OpenBLAS'),] \
                    + [('with-fftw=', None, 'Installation path for FFTW'),]
     
     def initialize_options(self, *args, **kwargs):
         build_ext.initialize_options(self, *args, **kwargs)
-        self.with_atlas = None
+        self.with_openblas = None
         self.with_fftw = None
         
     def finalize_options(self, *args, **kwargs):
@@ -288,12 +300,12 @@ class lsl_build_ext(build_ext):
         ## Grab the OpenMP flags
         openmpFlags, openmpLibs = get_openmp()
         
-        ## Grab the ATLAS flags
-        if self.with_atlas is not None:
-            atlasFlags = ['-I%s/include' % self.with_atlas,]
-            atlasLibs = ['-L%s/lib' % self.with_atlas, '-lf77blas', '-lcblas', '-latlas']
+        ## Grab the OpenBLAS flags
+        if self.with_openblas is not None:
+            openblasFlags = ['-I%s/include' % self.with_openblas,]
+            openblasLibs = ['-L%s/lib' % self.with_openblas, '-lf77blas', '-lcblas', '-lopenblas']
         else:
-            atlasFlags, atlasLibs = get_atlas()
+            openblasFlags, openblasLibs = get_openblas()
             
         ## Grab the FFTW flags
         if self.with_fftw is not None:
@@ -305,13 +317,13 @@ class lsl_build_ext(build_ext):
         ## Update the extensions with the additional compilier/linker flags
         for ext in self.extensions:
             ### Compiler flags
-            for cflags in (openmpFlags, atlasFlags, fftwFlags):
+            for cflags in (openmpFlags, openblasFlags, fftwFlags):
                 try:
                     ext.extra_compile_args.extend( cflags )
                 except TypeError:
                     ext.extra_compile_args = cflags
             ### Linker flags
-            for ldflags in (openmpLibs, atlasLibs, fftwLibs):
+            for ldflags in (openmpLibs, openblasLibs, fftwLibs):
                 try:
                     ext.extra_link_args.extend( ldflags )
                 except TypeError:
