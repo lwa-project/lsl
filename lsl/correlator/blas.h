@@ -20,15 +20,18 @@ inline void blas_scal(const int N,
         X += incX;
     }
     
-    //cblas_sscal(N, alpha, X, incX);
+    /* Was:
+     *  cblas_sscal(N, alpha, X, incX);
+     *  cblas_dscal(N, alpha, X, incX);
+     */
 }
 
 // cbals_[cz]dotc_sub replacement
-template<typename IType>
+template<typename IType, typename OType>
 inline void blas_dotc_sub(const int N, 
                           const IType* X, const int incX, 
                           const IType* Y, const int incY,
-                          IType* dotc) {
+                          OType* dotc) {
     *dotc = 0.0;
     for(int i=0; i<N; i++) {
         *dotc += conj(*X) * *Y;
@@ -36,7 +39,10 @@ inline void blas_dotc_sub(const int N,
         Y += incY;
     }
     
-    //cblas_cdotc_sub(N, X, incX, Y, incY, dotc);
+    /* Was:
+     *  cblas_cdotc_sub(N, X, incX, Y, incY, dotc);
+     *  cblas_zdotc_sub(N, X, incX, Y, incY, dotc);
+     */
 }
 
 #endif // CORRELATOR_BLAS_H_INCLUDE_GUARD_
