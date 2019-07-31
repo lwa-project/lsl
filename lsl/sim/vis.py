@@ -926,8 +926,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         top += (2*pos_error*numpy.random.rand(3)-pos_error)	# apply a random positional error if needed
         top.shape = (3,)
         eq = numpy.dot( aipy.coord.top2eq_m(0.0, station.lat), top )
-        eq *= 100	# m -> cm
-        eq /= aipy.const.c	# cm -> s
+        eq /= speedOfLight	# m -> s
         eq *= 1e9	# s -> ns
         
         delayCoeff = numpy.zeros(2)
