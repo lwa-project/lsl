@@ -668,7 +668,7 @@ class Scan(object):
     def __str__(self):
         """Return a nice string to describe the scan."""
         
-        return "%s Obs. of '%s':\n Start %s\n Duration %s\n Filter: %i\n Frequency: %.3f; %.3f\n RA: %.3f\n Dec. %.3f\n" % (self.mode, self.name, self.start, self.duration, self.filter, self.frequency1, self.frequency2, self.ra, self.dec)
+        return "%s Scan of '%s':\n Intent %s\n Start %s\n Duration %s\n Filter: %i\n Frequency: %.3f; %.3f\n RA: %.6f hr @ %+.3f mas/yr\n Dec. %.6f d @ +%.3f mas/yr\n" % (self.mode, self.target, self.intent, self.start, self.duration, self.filter, self.frequency1, self.frequency2, self.ra, self.pm[0], self.dec, self.pm[1])
         
     def update(self):
         """Update the computed parameters from the string values."""

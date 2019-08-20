@@ -989,7 +989,7 @@ class Observation(object):
     def __str__(self):
         """Return a nice string to describe the observation."""
         
-        return "%s Obs. of '%s':\n Start %s\n Duration %s\n Filter: %i\n Frequency: %.3f; %.3f\n RA: %.3f\n Dec. %.3f\n" % (self.mode, self.name, self.start, self.duration, self.filter, self.frequency1, self.frequency2, self.ra, self.dec)
+        return "%s Obs. of '%s':\n Start %s\n Duration %s\n Filter: %i\n Frequency: %.3f; %.3f Hz\n RA: %.6f hr\n Dec. %.6f d\n" % (self.mode, self.name, self.start, self.duration, self.filter, self.frequency1, self.frequency2, self.ra, self.dec)
         
     def update(self):
         """Update the computed parameters from the string values."""
