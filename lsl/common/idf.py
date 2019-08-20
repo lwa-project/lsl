@@ -1130,6 +1130,8 @@ def _parse_create_scan_object(obsTemp, altTemps=[], verbose=False):
         raise RuntimeError("Invalid mode encountered: %s" % mode)
         
     # Add in the alternate phase centers
+    if obsTemp['nAlt'] != len(altTemps):
+        raise RuntimeError("Mis-match between SCAN_ALT_N and the number of alternate phase centers")
     for altTemp in altTemps:
         obsOut.add_alt_phase_center(altTemp['target'], altTemp['intent'], altTemp['ra'], altTemp['dec'], pm=altTemp['pm'])
         
@@ -1171,7 +1173,7 @@ def parse_idf(filename, verbose=False):
     
     # Loop over the file
     obsTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0], 'start': '', 'duration': '', 'mode': '', 
-               'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'gain': -1, 
+               'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'nAlt': 0, 'gain': -1, 
                'aspFlt': -1}
     altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
     altTemps = []
@@ -1325,6 +1327,12 @@ def parse_idf(filename, verbose=False):
         if keyword == 'SCAN_DEC':
             obsTemp['dec'] = float(value)
             continue
+        if keyword == 'SCAN_PM_RA':
+            obsTemp['pm'][0] = float(value)
+            continue
+        if keyword == 'SCAN_PM_DEC':
+            obsTemp['pm'][1] = float(value)
+            continue
         if keyword == 'SCAN_FREQ1':
             obsTemp['freq1'] = int(value)
             continue
@@ -1336,6 +1344,9 @@ def parse_idf(filename, verbose=False):
             continue
             
         # Alternate phase centers
+        if keyword == 'SCAN_ALT_N':
+            obsTemp['nAlt'] = int(value)
+            continue
         if keyword == 'SCAN_ALT_TARGET':
             if len(altTemps) == 0:
                 altTemps.append( copy.deepcopy(altTemp) )
