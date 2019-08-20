@@ -831,7 +831,7 @@ class Scan(object):
         
         failures = 0
         # Basic - Intent, duration, frequency, and filter code values
-        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target'):
+        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target', 'dummy'):
             if verbose:
                 print("[%s] Error: Invalid scan intent '%s'" % (os.getpid(), self.intent))
             failures += 1
