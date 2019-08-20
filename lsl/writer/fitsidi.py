@@ -827,6 +827,7 @@ class Idi(WriterBase):
         obs.pressure = 0
         
         nameList = []
+        codeList = []
         raList = []
         decList = []
         raPoList = []
@@ -879,6 +880,19 @@ class Idi(WriterBase):
                     # name
                     nameList.append(name)
                     
+                    # calcode
+                    code = '    '
+                    try:
+                        if dataSet.source.intent.lower() == 'fluxcal':
+                            ## calibrator for flux density scale and bandpass
+                            code = 'K   '
+                        elif dataSet.source.intent.lower() == 'phasecal':
+                            ## calibrator useful to determine Complex Gains
+                            code = 'D   '
+                    except AttributeError:
+                        pass
+                    codeList.append(code)
+                    
         nSource = len(nameList)
         
         # Save these for later since we might need them
@@ -895,7 +909,7 @@ class Idi(WriterBase):
                         array=numpy.zeros((nSource,), dtype=numpy.int32))
         # Calibrator code
         c4 = astrofits.Column(name='CALCODE', format='A4', 
-                        array=numpy.array(('   ',)).repeat(nSource))
+                        array=numpy.array(codeList))
         # Frequency group ID
         c5 = astrofits.Column(name='FREQID', format='1J', 
                         array=(numpy.zeros((nSource,), dtype=numpy.int32)+self.freq[0].id))
