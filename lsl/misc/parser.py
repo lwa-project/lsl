@@ -399,7 +399,7 @@ def hours(string):
     try:
         value = ephem.hours(string)
     except ValueError as e:
-        msg = str(e) % string
+        msg = "%s: %s" % (str(e), string)
         raise ArgumentTypeError(msg)
     return value
 
@@ -428,7 +428,7 @@ def degrees(string):
     try:
         value = ephem.degrees(string)
     except ValueError as e:
-        msg = str(e) % string
+        msg = "%s: %s" % (str(e), string)
         raise ArgumentTypeError(msg)
     return value
 
