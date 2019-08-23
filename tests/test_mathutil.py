@@ -22,7 +22,7 @@ from lsl.misc import mathutil
 
 
 __revision__  = "$Rev$"
-__version__   = "0.1"
+__version__   = "0.2"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
@@ -187,16 +187,6 @@ class mathutil_tests(unittest.TestCase):
         
         x = numpy.arange(1, 100, dtype = numpy.float32)
         mathutil.from_dB(x)
-        
-    def test_savitzky_golay(self):
-        """Test Savitzky-Golay smoothing."""
-        
-        # Actual smoothing
-        data = numpy.random.rand(4096)
-        out = mathutil.savitzky_golay(data, 15, 3)
-        
-        # Derivative
-        out = mathutil.savitzky_golay(data, 15, 3, deriv=1)
         
     def test_gaussian_gen(self):
         """Test 1-D and 2-D Gaussisan generating functions."""
