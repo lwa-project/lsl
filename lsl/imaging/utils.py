@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
-from __future__ import print_function
+from __future__ import print_function, division
 import sys
 if sys.version_info > (3,):
     xrange = range
@@ -45,9 +45,9 @@ import shutil
 import tarfile
 import tempfile
 try:
-    import cStringIO as StringIO
+    from StringIO import StringIO
 except ImportError:
-    import StringIO
+    from io import StringIO
 from calendar import timegm
 from datetime import datetime
 from operator import itemgetter
@@ -465,7 +465,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
             nFreq = len(self.freq)
             nStk = len(self.pols)
             nCmp = 2 if seperateWeights else 3
-            if vis.size/nFreq/nStk/nCmp != len(bl):
+            if vis.size//nFreq//nStk//nCmp != len(bl):
                 ### Catch for FITS-IDI files generate by interfits
                 nCmp = 2 if nCmp == 3 else 3
             ## Frequency for converting the u, v, and w coordinates
@@ -477,12 +477,12 @@ class CorrelatedDataIDI(CorrelatedDataBase):
             w = (w*freq).T
             uvw = numpy.array([u,v,w], dtype=numpy.float32)
             ## Reshape the visibilities and weights
-            vis.shape = (vis.size/nFreq/nStk/nCmp, nFreq, nStk, nCmp)
+            vis.shape = (vis.size//nFreq//nStk//nCmp, nFreq, nStk, nCmp)
             if seperateWeights:
                 if wgt.shape != nFreq*nStk:
                     ## Catch for some old stuff
                     wgt = numpy.concatenate([wgt for pol in self.pols])
-                wgt.shape = (wgt.size/nFreq/nStk, nFreq, nStk)
+                wgt.shape = (wgt.size//nFreq//nStk, nFreq, nStk)
             else:
                 try:
                     wgt = vis[:,:,:,2]
@@ -1500,7 +1500,7 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     wgt = numpy.concatenate(wgt)
     
     if not verbose:
-        sys.stdout = StringIO.StringIO()
+        sys.stdout = StringIO()
         
     uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
     u,v,w = uvw

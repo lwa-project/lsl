@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
+from __future__ import division
 import sys
 if sys.version_info > (3,):
     xrange = range
@@ -111,12 +112,12 @@ class FrameHeader(object):
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
         # and convert it to a MJD
-        epochDT = datetime(2000+self.ref_epoch/2, (self.ref_epoch % 2)*6+1, 1, 0, 0, 0, 0)
+        epochDT = datetime(2000+self.ref_epoch//2, (self.ref_epoch % 2)*6+1, 1, 0, 0, 0, 0)
         epochMJD, epochMPM = datetime_to_mjdmpm(epochDT)
         epochMJD = epochMJD + epochMPM/1000.0/86400.0
         
         # Get the frame MJD by adding the seconds_from_epoch value to the epoch
-        frameMJD_i = epochMJD + self.seconds_from_epoch / 86400
+        frameMJD_i = epochMJD + self.seconds_from_epoch // 86400
         frameMJD_f = (self.seconds_from_epoch % 86400) / 86400.0
         
         if self.sample_rate == 0.0:
@@ -129,11 +130,11 @@ class FrameHeader(object):
             
                 ## How many samples are in each frame?
                 dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		# 8-byte chunks -> bytes - full header + legacy offset
-                samplesPerWord = 32 / self.bits_per_sample					# dimensionless
-                nSamples = dataSize / 4 * samplesPerWord					# bytes -> words -> samples
+                samplesPerWord = 32 // self.bits_per_sample					# dimensionless
+                nSamples = dataSize // 4 * samplesPerWord					# bytes -> words -> samples
             
                 ## What is the frame rate?
-                frameRate = sample_rate / nSamples
+                frameRate = sample_rate // nSamples
                 
                 frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
             
@@ -144,11 +145,11 @@ class FrameHeader(object):
             # Use what we already have been told
             ## How many samples are in each frame?
             dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		# 8-byte chunks -> bytes - full header + legacy offset
-            samplesPerWord = 32 / self.bits_per_sample				# dimensionless
-            nSamples = dataSize / 4 * samplesPerWord				# bytes -> words -> samples
+            samplesPerWord = 32 // self.bits_per_sample				# dimensionless
+            nSamples = dataSize // 4 * samplesPerWord				# bytes -> words -> samples
         
             ## What is the frame rate?
-            frameRate = self.sample_rate / nSamples
+            frameRate = self.sample_rate // nSamples
             
             frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
 

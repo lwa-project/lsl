@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys
 if sys.version_info > (3,):
     xrange = range
+    long = int
     
 """
 Module for writing correlator output to a FITS IDI file.  The classes and 
@@ -623,7 +624,7 @@ class Idi(WriterBase):
         
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
-	eop = iers.IERS_Auto.open()
+        eop = iers.IERS_Auto.open()
         ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
         pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
          

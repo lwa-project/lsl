@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import absolute_import
+
 """
 This module implements a uniform DFT filter bank for use in calculating 
 spectra as an alternative to a simple FFT.  The implementation here is based 
@@ -10,7 +13,7 @@ on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
 """
 
 import numpy
-from fx import null_window
+from .fx import null_window
 
 try:
     import os

@@ -355,7 +355,7 @@ class FrameBuffer(object):
             the LWA-SV COR frames out of the buffer
         """
         
-        for key in self.buffer:
+        for key in list(self.buffer):
             yield self.get(keyToReturn=key)
             
     def reset(self):

@@ -16,10 +16,6 @@ import ephem
 import tempfile
 import unittest
 from datetime import datetime, timedelta
-try:
-    import cStringIO as StringIO
-except ImprotError:
-    import StringIO
 
 from lsl.common.paths import DATA_BUILD
 from lsl.common import sdf

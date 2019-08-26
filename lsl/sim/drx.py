@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    long = int
+    
 """
 Python module for creating creating, validating, and writing simulated 
 DRX frames to a file.

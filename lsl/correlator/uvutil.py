@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*
 
+# Python3 compatiability
+from __future__ import division
+
 """
 This module stores various functions that are needed for computing UV 
 coverage and time delays.  The functions in the module:
@@ -193,7 +196,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     """
     
     N = len(antennas)
-    Nbase = N*(N-1)/2
+    Nbase = N*(N-1)//2
     uvTrack = numpy.zeros((Nbase,2,512))
     
     # Phase center coordinates

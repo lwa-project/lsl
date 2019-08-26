@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+
+# Python3 compatiability
+from __future__ import division
+import sys
+if sys.version_info > (3,):
+    xrange = range
+
 """
 Classes to hold visibility data that are used internally with LSL.
 """
@@ -307,7 +315,7 @@ class VisibilityDataSet(object):
             max_uv = temp
             
         # Find out the baseline lengths and create a list of good ones
-        center_uvw = self.uvw[:,:2,self.nchan/2]
+        center_uvw = self.uvw[:,:2,self.nchan//2]
         center_uvw = numpy.sqrt( (center_uvw**2).sum(axis=1) ).ravel()
         selection = numpy.where( (center_uvw >= min_uv) & (center_uvw < max_uv) )[0]
         

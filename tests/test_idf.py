@@ -17,10 +17,6 @@ import tempfile
 import unittest
 from math import pi
 from datetime import datetime, timedelta
-try:
-    import cStringIO as StringIO
-except ImprotError:
-    import StringIO
 
 from lsl.astro import MJD_OFFSET, DJD_OFFSET
 from lsl.common.paths import DATA_BUILD

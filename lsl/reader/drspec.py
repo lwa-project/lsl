@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+from __future__ import division
+
 """
 Python module to read in DR spectrometer data.  This module defines the following 
 classes for storing the spectra found in a file:
@@ -318,7 +321,7 @@ class Frame(object):
         
         adj_timetag = self.data.timetag - self.header.time_offset
         
-        seconds_i = adj_timetag / int(dp_common.fS)
+        seconds_i = adj_timetag // int(dp_common.fS)
         seconds_f = (adj_timetag % int(dp_common.fS)) / dp_common.fS
         
         return seconds_i, seconds_f

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
+from __future__ import division
 import sys
 if sys.version_info > (3,):
     xrange = range
@@ -337,7 +338,7 @@ def linefit(inputX, inputY, max_iter=25, bisector=False, bisquare_limit=6.0, clo
         s = numpy.argsort(x)
         u = x[s]
         v = y[s]
-        nHalf = n/2 -1
+        nHalf = n//2 - 1
         x1 = numpy.median(u[0:nHalf])
         x2 = numpy.median(u[nHalf:])
         y1 = numpy.median(v[0:nHalf])
@@ -528,7 +529,7 @@ def polyfit(inputX, inputY, order, max_iter=25):
     v = y
     
     nSeg = order + 2
-    if (nSeg/2)*2 == nSeg:
+    if (nSeg//2)*2 == nSeg:
         nSeg = nSeg + 1
     minPts = nSeg*3
     yp = y
@@ -541,9 +542,9 @@ def polyfit(inputX, inputY, order, max_iter=25):
         q = numpy.argsort(u)
         u = u[q]
         v = v[q]
-        nPerSeg = numpy.zeros(nSeg, dtype=numpy.int64) + n/nSeg
+        nPerSeg = numpy.zeros(nSeg, dtype=numpy.int64) + n//nSeg
         nLeft = n - nPerSeg[0]*nSeg
-        nPerSeg[nSeg/2] = nPerSeg[nSeg/2] + nLeft
+        nPerSeg[nSeg//2] = nPerSeg[nSeg//2] + nLeft
         r = numpy.zeros(nSeg)
         s = numpy.zeros(nSeg)
         r[0] = numpy.median(u[0:nPerSeg[0]])

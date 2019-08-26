@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
+from __future__ import division
 import sys
 if sys.version_info > (3,):
     xrange = range
@@ -106,7 +107,7 @@ class dp_software_tests(unittest.TestCase):
         sdp.set_tuning_freq(40e6)
         
         output = sdp.apply_filter(time, data)
-        self.assertEqual(output.size, npts/10)
+        self.assertEqual(output.size, npts//10)
         
     def test_beam(self):
         """Test the SoftwareDP beamformer on some data."""
@@ -123,7 +124,7 @@ class dp_software_tests(unittest.TestCase):
         course = numpy.zeros(data.shape[0])
         course[0] = 2
         fine = numpy.zeros(data.shape[0])
-        gains = numpy.zeros((data.shape[0]/2, 4))
+        gains = numpy.zeros((data.shape[0]//2, 4))
         gains[0,0] = 1
         gains[1,1] = 1
         

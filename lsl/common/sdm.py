@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM) 
 files (as defined in MCS0031, v5).

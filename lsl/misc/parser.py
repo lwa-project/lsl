@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatiability
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module that provides argparse-compatible conversion functions for a variety 
 of value formats, including:

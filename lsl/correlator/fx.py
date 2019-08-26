@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Python3 compatiability
+from __future__ import division
 import sys
 if sys.version_info > (3,):
     xrange = range
@@ -257,7 +258,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals
-    dlyRef = len(freq)/2
+    dlyRef = len(freq)//2
     delays1 = numpy.zeros((nStands,LFFT))
     delays2 = numpy.zeros((nStands,LFFT))
     for i in list(range(nStands)):
@@ -400,7 +401,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals
-    dlyRef = len(freq)/2
+    dlyRef = len(freq)//2
     delays1 = numpy.zeros((nStands,LFFT))
     delays2 = numpy.zeros((nStands,LFFT))
     for i in list(range(nStands)):

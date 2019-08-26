@@ -38,6 +38,12 @@ try:
 except ImportError:
     pass
 
+PY2 = sys.version_info.major < 3
+if PY2:
+    ASTROPY_VERSION = 'astropy<2.0'
+else:
+    ASTROPY_VERSION = 'astropy>=3.0'
+
 
 def get_version():
     """Read the VERSION file and return the version number as a string."""
@@ -322,9 +328,9 @@ setup(
                    'Operating System :: POSIX :: Linux'],
     packages = find_packages(), 
     scripts = glob.glob('scripts/*.py'), 
-    python_requires='>=2.7, <3', 
+    python_requires='>=2.7', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = ['astropy<2.0', 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3.3.3', 'aipy>=3.0.1', 'pytz>=2011k'], 
+    install_requires = [ASTROPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3.3.3', 'aipy>=3.0.1', 'pytz>=2011k'], 
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,
