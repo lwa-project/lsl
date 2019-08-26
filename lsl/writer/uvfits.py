@@ -28,7 +28,6 @@ from datetime import datetime
 
 from lsl import astro
 from lsl.writer.fitsidi import WriterBase, STOKES_CODES
-from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
 __revision__ = '$Rev$'

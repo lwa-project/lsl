@@ -19,13 +19,13 @@ import copy
 import numpy
 import ephem
 import struct
+from functools import total_ordering
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as dataPath
 from lsl.common import mcs, mcsADP
 from lsl.misc.mathutil import to_dB, from_dB
-from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '2.2'
 __revision__ = '$Rev$'
@@ -231,6 +231,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
     def __reduce__(self):
         return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, self.antennas, self.interface))
         
+    def __hash__(self):
+        return hash(self.__reduce__()[1])
+        
     def compute(self, body):
         """
         Update the provided ephem.Body instance with the current location as 
@@ -390,7 +393,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return [ant.cable for ant in self.antennas]
 
 
-@cmp_to_total
+@total_ordering
 class Antenna(object):
     """
     Object to store the information about an antenna.  Stores antenna:
@@ -456,6 +459,9 @@ class Antenna(object):
     def __reduce__(self):
         return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.input, self.stand, self.pol, self.theta, self.phi, self.fee, self.feePort, self.cable, self.status))
         
+    def __hash__(self):
+        return hash(self.__reduce__()[1])
+        
     def __cmp__(self, y):
         if self.id > y.id:
             return 1
@@ -464,6 +470,12 @@ class Antenna(object):
         else:
             return 0
             
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
+        
     def response(self, dB=False):
         """
         Return a two-element tuple (freq in Hz, mis-match efficiency) for a model LWA1 
@@ -496,7 +508,7 @@ class Antenna(object):
         return 10*self.status + self.fee.status
 
 
-@cmp_to_total
+@total_ordering
 class Stand(object):
     """
     Object to store the information (location and ID) about a stand.  
@@ -527,11 +539,20 @@ class Stand(object):
         else:
             return 0
             
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
+        
     def __str__(self):
         return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
         
     def __reduce__(self):
         return (Stand, (self.id, self.x, self.y, self.z))
+        
+    def __hash__(self):
+        return hash(self.__reduce__()[1])
         
     def __getitem__(self, key):
         if key == 0:
@@ -580,7 +601,7 @@ class Stand(object):
         return out
 
 
-@cmp_to_total
+@total_ordering
 class FEE(object):
     """
     Object to store the information about a FEE.  Stores FEE:
@@ -610,6 +631,9 @@ class FEE(object):
     def __reduce__(self):
         return (FEE, (self.id, self.idNumber, self.gain1, self.gain2, self.status))
         
+    def __hash__(self):
+        return hash(self.__reduce__()[1])
+        
     def __cmp__(self, y):
         if self.id > y.id:
             return 1
@@ -618,6 +642,12 @@ class FEE(object):
         else:
             return 0
             
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
+        
     def response(self, dB=False):
         """
         Return a two-element tuple (freq in Hz, gain) for the frequency-
@@ -641,7 +671,7 @@ class FEE(object):
         return (freq, gai)
 
 
-@cmp_to_total
+@total_ordering
 class Cable(object):
     """
     Object to store information about a cable.  Stores cable:
@@ -677,6 +707,9 @@ class Cable(object):
     def __reduce__(self):
         return (Cable, (self.id, self.length, self.vf, self.dd, self.a0, self.a1, self.aFreq, self.stretch))
         
+    def __hash__(self):
+        return hash(self.__reduce__()[1])
+        
     def __cmp__(self, y):
         if self.id > y.id:
             return 1
@@ -685,6 +718,12 @@ class Cable(object):
         else:
             return 0
             
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
+        
     def set_clock_offset(self, offset):
         """
         Add a clock offset (in seconds) to the cable model.
@@ -801,6 +840,9 @@ class ARX(object):
         
     def __reduce__(self):
         return (ARX, (self.id, self.channel, self.aspChannel, self.input, self.output))
+        
+    def __hash__(self):
+        return hash(self.__reduce__()[1])
         
     def response(self, filter='split', dB=True):
         """

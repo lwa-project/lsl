@@ -29,6 +29,7 @@ import re
 import math
 import ephem
 import numpy
+from functools import total_ordering
 from astropy.constants import c as speedOfLight
 from astropy.utils import iers
 from astropy.io import fits as astrofits
@@ -36,7 +37,6 @@ from datetime import datetime
 from collections import OrderedDict
 
 from lsl import astro
-from lsl.misc.total_sorting import cmp_to_total
 
 
 __version__ = '0.9'
@@ -116,7 +116,7 @@ class WriterBase(object):
             self.sideBand = 1
             self.baseBand = 0
             
-    @cmp_to_total
+    @total_ordering
     class _UVData(object):
         """
         Represents one UV visibility data set for a given observation time.
@@ -147,6 +147,12 @@ class WriterBase(object):
             else:
                 return 0
                 
+        def __eq__(self, other):
+            return True if self.__cmp__(other) == 0 else False
+            
+        def __lt__(self, other):
+            return True if self.__cmp__(other) < 0 else False
+            
         def time(self):
             return self.obsTime
             

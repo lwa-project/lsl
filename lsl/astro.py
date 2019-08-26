@@ -16,8 +16,8 @@ import math
 import ephem
 import numpy
 from calendar import timegm
+from functools import total_ordering    
 
-from lsl.misc.total_sorting import cmp_to_total
 
 __version__   = '0.5'
 __revision__ = '$Rev$'
@@ -52,7 +52,7 @@ __author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'
 
 
-@cmp_to_total
+@total_ordering
 class dms(object):
     """
     Represents angles in degrees, minutes, seconds.
@@ -146,7 +146,18 @@ class dms(object):
         else:
             raise TypeError("comparison not supported for type %s" % type(other).__name__)
                 
-        return cmp(self.to_deg(), o)
+        if self.to_deg() < o:
+            return -1
+        elif self.to_deg() > o:
+            return 1
+        else:
+            return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
         
     def to_deg(self):
         """
@@ -165,7 +176,7 @@ class dms(object):
         return deg_to_hms(self.to_deg())
 
 
-@cmp_to_total
+@total_ordering
 class hms(object):
     """
     Represents times/angles in hours, minutes, seconds.
@@ -242,7 +253,18 @@ class hms(object):
         else:
             raise TypeError("comparison not supported for type %s" % type(other).__name__)
             
-        return cmp(self.to_deg(), o)
+        if self.to_deg() < o:
+            return -1
+        elif self.to_deg() > o:
+            return 1
+        else:
+            return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
         
     def to_deg(self):
         """
@@ -269,7 +291,7 @@ class hms(object):
         return hms_to_sec(self)
 
 
-@cmp_to_total
+@total_ordering
 class date(object):
     """
     Represents UT time in calendar units.
@@ -354,7 +376,18 @@ class date(object):
         if not isinstance(other, (date, zonedate)):
             raise TypeError("comparison not supported for type %s" % type(other).__name__)
             
-        return cmp(self.to_jd(), other.to_jd())   
+        if self.to_jd() < other.to_jd():
+            return -1
+        elif self.to_jd() > other.to_jd():
+            return 1
+        else:
+            return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
         
     def to_zone(self, gmtoff = None):
         """
@@ -449,7 +482,7 @@ class date(object):
         self.seconds = second
 
 
-@cmp_to_total
+@total_ordering
 class zonedate(object):
     """
     Represents local time in calendar units.
@@ -540,7 +573,18 @@ class zonedate(object):
         if not isinstance(other, (zonedate, date)):
             raise TypeError("comparison not supported for type %s" % type(other).__name__)
             
-        return cmp(self.to_jd(), other.to_jd())
+        if self.to_jd() < other.to_jd():
+            return -1
+        elif self.to_jd() > other.to_jd():
+            return 1
+        else:
+            return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
         
     def to_date(self):
         """

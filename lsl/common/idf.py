@@ -41,6 +41,7 @@ import copy
 import math
 import pytz
 import ephem
+from functools import total_ordering
 from datetime import datetime, timedelta
 
 from lsl.transform import Time
@@ -53,8 +54,6 @@ from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common import sdfADP as sdf
-
-from lsl.misc.total_sorting import cmp_to_total
 
 
 __version__ = '0.1'
@@ -440,7 +439,7 @@ class Project(object):
         return sdfs
 
 
-@cmp_to_total
+@total_ordering
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
@@ -617,9 +616,15 @@ class Run(object):
             return 1
         else:
             return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
 
 
-@cmp_to_total
+@total_ordering
 class Scan(object):
     """
     Class to hold the specifics of a scans.  It currently
@@ -915,6 +920,12 @@ class Scan(object):
             return 1
         else:
             return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
 
 
 class DRX(Scan):

@@ -54,6 +54,7 @@ import copy
 import math
 import pytz
 import ephem
+from functools import total_ordering
 from datetime import datetime, timedelta
 
 from lsl.transform import Time
@@ -68,8 +69,6 @@ from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_SIZE as TBFSize
 from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
-
-from lsl.misc.total_sorting import cmp_to_total
 
 
 __version__ = '1.1'
@@ -695,7 +694,7 @@ class Project(object):
         fh.close()
 
 
-@cmp_to_total
+@total_ordering
 class Session(object):
     """Class to hold all of the observations in a session."""
     
@@ -946,9 +945,15 @@ class Session(object):
             return 1
         else:
             return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
 
 
-@cmp_to_total
+@total_ordering
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
@@ -1117,6 +1122,12 @@ class Observation(object):
             return 1
         else:
             return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
 
 
 class TBF(Observation):

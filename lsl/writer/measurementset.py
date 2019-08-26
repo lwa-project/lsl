@@ -19,12 +19,12 @@ import math
 import ephem
 import numpy
 import shutil
+from functools import total_ordering
 from datetime import datetime
 from collections import OrderedDict
 
 from lsl import astro
 from lsl.writer.fitsidi import WriterBase
-from lsl.misc.total_sorting import cmp_to_total
 
 
 __version__ = '0.1'
@@ -71,7 +71,7 @@ try:
         
         _STOKES_CODES = STOKES_CODES
         
-        @cmp_to_total
+        @total_ordering
         class _MS_UVData(WriterBase._UVData):
             """
             Represents one MS UV visibility data set for a given observation time.

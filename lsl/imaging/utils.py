@@ -1087,7 +1087,7 @@ try:
                     baselines.append( (a1,a2) )
                     select.append( b )
                 if len(self._windows) > 1:
-                    baselines = baselines[:len(baselines)/2]
+                    baselines = baselines[:len(baselines)//2]
                     selectU = select[:len(baselines)]
                 else:
                     selectU = select
@@ -1543,8 +1543,8 @@ def plot_gridded_image(ax, gimg, shifted=True, origin='lower', interpolation='ne
     # Shift the image so that it is centered in the frame
     if shifted:
         imgSize = img.shape[0]	# should be square
-        img = numpy.roll(img, imgSize/2, axis=0)
-        img = numpy.roll(img, imgSize/2, axis=1)
+        img = numpy.roll(img, imgSize//2, axis=0)
+        img = numpy.roll(img, imgSize//2, axis=1)
         
     # Get the extent in L and M
     l, m = gimg.get_LM()
@@ -1595,12 +1595,12 @@ def get_image_radec(gimg, aa, phase_center='z', shifted=True):
     # Shift, if needed
     if shifted:
         raSize = ra.shape[0]	# should be square
-        ra = numpy.roll(ra, raSize/2, axis=0)
-        ra = numpy.roll(ra, raSize/2, axis=1)
+        ra = numpy.roll(ra, raSize//2, axis=0)
+        ra = numpy.roll(ra, raSize//2, axis=1)
         
         decSize = dec.shape[0]	# should be square
-        dec = numpy.roll(dec, decSize/2, axis=0)
-        dec = numpy.roll(dec, decSize/2, axis=1)
+        dec = numpy.roll(dec, decSize//2, axis=0)
+        dec = numpy.roll(dec, decSize//2, axis=1)
         
     # Done
     return ra, dec
