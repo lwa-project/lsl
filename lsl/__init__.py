@@ -20,23 +20,11 @@ Provided modules:
 See the individual package descriptions for more information.
 """
 
-import os
-import sys
-import subprocess
 from lsl import version
 from lsl.common import paths
 
-__version__ = '0.7'
+__version__ = '0.8'
 __revision__ = '$Rev$'
 __author__ = "Jayce Dowell"
 
-
-def test():
-    """
-    Internal test fixture
-    """
-    
-    eggPath = os.path.split(paths.module)[0]
-    testPath = os.path.join(eggPath, 'tests', 'test_lsl.py')
-    subprocess.check_call([sys.executable, testPath, '-v'])
 

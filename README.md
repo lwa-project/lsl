@@ -66,11 +66,6 @@ UNIT TESTS
 Unit tests for the package may be found in the 'lsl/tests' sub-directory in the package source distribution tree.  To run the complete suite of package unit tests:
 
     python test_lsl.py
-    
-The tests may also be run from an interactive Python session after LSL has been successfully installed via: 
-
-	import lsl
-	lsl.test()
 
 DOCUMENTATION
 -------------
