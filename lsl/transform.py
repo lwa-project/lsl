@@ -9,10 +9,10 @@ import copy
 import datetime
 import math
 import abc
+from functools import total_ordering
 
 from lsl import astro
 from lsl.common.dp import fS
-from lsl.misc.total_sorting import cmp_to_total
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
@@ -22,7 +22,7 @@ __author__ = "Unknown"
 __maintainer__ = "Jayce Dowell"
 
 
-@cmp_to_total
+@total_ordering
 class Time(object):
     """
     Holds an absolute time value and can manipulate the value in 
@@ -141,8 +141,19 @@ class Time(object):
         Determine ordering for two Time instances.
         """
         
-        return cmp(self._time, other._time)
-    
+        if self._time < other._time:
+            return -1
+        elif self._time > other._time:
+            return 1
+        else:
+            return 0
+            
+    def __eq__(self, other):
+        return True if self.__cmp__(other) == 0 else False
+        
+    def __lt__(self, other):
+        return True if self.__cmp__(other) < 0 else False
+        
     def __hash__(self):
         """
         Return a hash key for the Time instance.
