@@ -1,15 +1,14 @@
 Requirements
 ============
- * python >= 2.6 and python < 3.0
- * atlas >= 3.6
+ * python >= 2.7
  * fftw3 >= 3.2
  * gdbm >= 1.8
- * numpy >= 1.2
- * scipy >= 0.7
- * pyfits >= 3.1
- * ephem >= 3.7.5
- * aipy >= 1.0
- * pytz >= 2011k
+ * numpy >= 1.7
+ * scipy >= 0.19
+ * astropy < 2.0 (2.7) or >= 3.0 (3.0+)
+ * ephem >= 3.7.5.3
+ * aipy >= 3.0.1
+ * pytz >= 2012c
  * matplotlib >= 1.1 [1]_
  * BeautifulSoup [1]_
  * casacore [2]_

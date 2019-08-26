@@ -15,16 +15,16 @@ This package contains a collection of tools for reading, format shifting, and an
 
 REQUIREMENTS
 ------------
- * python >= 2.6 and python < 3.0
+ * python >= 2.7
  * atlas >= 3.6
  * fftw3 >= 3.2
  * gdbm >= 1.8
- * numpy >= 1.2
- * scipy >= 0.7
- * pyfits >= 3.1
- * pyephem >= 3.7.5
- * aipy >= 1.0
- * pytz >= 2011k
+ * numpy >= 1.7
+ * scipy >= 0.19
+ * astropy < 2.0 (2.7) or >= 3.0 (3.0+)
+ * pyephem >= 3.7.5.3
+ * aipy >= 3.0.1
+ * pytz >= 2012c
  * matplotlib >= 1.1 (required for some of the scripts)
  * BeautifulSoup (required for some of the scripts)
  * casacore (required for measurement set support)
