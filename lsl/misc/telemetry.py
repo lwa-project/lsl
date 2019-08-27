@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
-
+    
 """
 Basic telemetry client for LSL to help establish usage patterns
 
@@ -113,11 +114,14 @@ class _TelemetryClient(object):
         analysis.
         """
         
+        import time
+        
         # Special catch for lsl.tests
         test_suite = False
         if 'lsl.tests' in self._cache:
-            test_suite = True
-            
+            if not os.path.exists(self._lockout_file):
+                test_suite = True
+                
         success = False
         with self._lock:
             if (self.active or test_suite) and self._cache_count > 0:
