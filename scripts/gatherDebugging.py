@@ -7,6 +7,12 @@ C libraries, numpy installation, and LSL installation to help with
 debugging and install issues.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import re
 import sys
@@ -29,26 +35,26 @@ def main(args):
     #
     # Python interpreter
     #
-    print "Executable path: %s" % sys.executable
-    print "Platform: %s" % sys.platform
-    print "Version: %s" % sys.version
-    print "API: %s" % sys.api_version
-    print "Bits: %s\nLinkage: %s" % platform.architecture()
-    print " "
+    print("Executable path: %s" % sys.executable)
+    print("Platform: %s" % sys.platform)
+    print("Version: %s" % sys.version)
+    print("API: %s" % sys.api_version)
+    print("Bits: %s\nLinkage: %s" % platform.architecture())
+    print(" ")
     
     #
     # Python Module Check
     #
     
     ## Required
-    for mod in ('numpy', 'scipy', 'pyfits', 'ephem', 'aipy', 'pytz'):
+    for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
         try:
             exec "import %s" % mod
         except ImportError, e:
             if (str(e)).find('not found') != -1:
-                print  "%s: not found" % mod
+                print( "%s: not found" % mod)
             else:
-                print "%s: WARNING import error '%s'" % (mod, str(e))
+                print("%s: WARNING import error '%s'" % (mod, str(e)))
         else:
             try:
                 version = eval("%s.version.version" % mod)
@@ -62,7 +68,7 @@ def main(args):
                         version = mtch.group('version')
                     except:
                         version = "unknown"
-            print "%s:  version %s" % (mod, version)
+            print("%s:  version %s" % (mod, version))
             
     ## Optional
     for mod in ('matplotlib', 'h5py', 'psrfits_utils'):
@@ -70,9 +76,9 @@ def main(args):
             exec "import %s" % mod
         except ImportError, e:
             if (str(e)).find('not found') != -1:
-                print  "%s: not found" % mod
+                print( "%s: not found" % mod)
             #else:
-                #print "%s: WARNING import error '%s'" % (mod, str(e))
+                #print("%s: WARNING import error '%s'" % (mod, str(e)))
         else:
             try:
                 version = eval("%s.version.version" % mod)
@@ -86,10 +92,10 @@ def main(args):
                         version = mtch.group('version')
                     except:
                         version = "unknown"
-            print "%s:  version %s" % (mod.capitalize(), version)
+            print("%s:  version %s" % (mod.capitalize(), version))
             
     
-    print " "
+    print(" ")
     
     
     #
@@ -107,38 +113,19 @@ def main(args):
                 o, e = pkgQuery.communicate()
                 o = o.replace('\n', '')
                 
-                print "%s:  version %s" % (pkgName, o)
+                print("%s:  version %s" % (pkgName, o))
                 libsFound.append( pkgName )
                 
         except OSError:
             pass
             
-    ## Via 'numpy'
-    try:
-        from numpy.distutils.system_info import get_info
-        
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",category=DeprecationWarning)
-            sys.stdout = StringIO.StringIO()
-            atlas_info = get_info('atlas_blas', notfound_action=0)
-            sys.stdout = sys.__stdout__
-            
-        atlas_version = ([v[3:-3] for k,v in atlas_info.get('define_macros',[])
-                        if k == 'ATLAS_INFO']+[None])[0]
-        if atlas_version:
-            libsFound.append( 'atlas' )
-            libsFound.append( 'cblas' )
-            
-    except ImportError:
-        pass
-        
     ## Via 'ldconfig'
     try:
         p = subprocess.Popen(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = p.communicate()
         o = o.split('\n')
         
-        for lib in ('libatlas', 'libcblas', 'libfftw3f', 'libgdbm', 'librt'):
+        for lib in ('libfftw3f', 'libgdbm', 'librt'):
             libBaseName = lib.replace('lib', '')
             if libBaseName in libsFound:
                 continue
@@ -155,13 +142,13 @@ def main(args):
                 elif line.find(lib) != -1:
                     found = True
                     libFilename = line.split(None, 1)[0]
-                    print "%s: found %s" % (lib, os.path.join(currPath, libFilename))
+                    print("%s: found %s" % (lib, os.path.join(currPath, libFilename)))
             if not found:
-                print "%s: WARNING - not found" % lib
+                print("%s: WARNING - not found" % lib)
             
     except OSError:
         pass
-    print " "
+    print(" ")
     
     #
     # Compiler check
@@ -174,7 +161,7 @@ def main(args):
     sysconfig.customize_compiler(compiler)
     cc = compiler.compiler
     
-    print "Compiler: %s" % cc[0]
+    print("Compiler: %s" % cc[0])
     
     tmpdir = tempfile.mkdtemp()
     curdir = os.getcwd()
@@ -194,7 +181,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
     cmd.extend(['-fopenmp', 'test.c', '-o', 'test', '-lgomp'])
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     o, e = p.communicate()
-    print "Compiler OpenMP Support: %s" % ("Yes" if p.returncode == 0 else "No",)
+    print("Compiler OpenMP Support: %s" % ("Yes" if p.returncode == 0 else "No",))
     if p.returncode != 0:
         o = o.split('\n')[:-1]
         for i in xrange(len(o)):
@@ -205,12 +192,12 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
             e[i] = '  %s' % e[i]
         e = '\n'.join(e)
         
-        print "Compiler OpenMP Test Command:"
-        print "  %s" % ' '.join(cmd)
-        print "Compiler OpenMP Test Output:"
-        print o
-        print "Compiler OpenMP Test Errors:"
-        print e
+        print("Compiler OpenMP Test Command:")
+        print("  %s" % ' '.join(cmd))
+        print("Compiler OpenMP Test Output:")
+        print(o)
+        print("Compiler OpenMP Test Errors:")
+        print(e)
         
     os.chdir(curdir)
     shutil.rmtree(tmpdir)
@@ -221,9 +208,9 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
     for i in xrange(len(e)):
         e[i] = '  %s' % e[i]
     e = '\n'.join(e)
-    print "Compiler Version:"
-    print e
-    print " "
+    print("Compiler Version:")
+    print(e)
+    print(" ")
     
     #
     # Numpy
@@ -240,12 +227,12 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
         numpyLinkage = numpyLinkage.replace('\n', '')
 
         nfp, junk = os.path.split(numpy.__file__)
-        print "Numpy Path: %s" % nfp
-        print "Numpy Version: %s" % numpy.version.version
-        print "Numpy Linkage: %s" % numpyLinkage
+        print("Numpy Path: %s" % nfp)
+        print("Numpy Version: %s" % numpy.version.version)
+        print("Numpy Linkage: %s" % numpyLinkage)
     except ImportError, e:
-        print "Numpy Import Error: %s" % str(e)
-    print " "
+        print("Numpy Import Error: %s" % str(e))
+    print(" ")
     
     #
     # LSL
@@ -262,12 +249,12 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
         lslLinkage = lslLinkage.replace('\n', '')
 
         lfp, junk = os.path.split(lsl.__file__)
-        print "LSL Path: %s" % lfp
-        print "LSL Version: %s" % lsl.version.version
-        print "LSL Linkage: %s" % lslLinkage
+        print("LSL Path: %s" % lfp)
+        print("LSL Version: %s" % lsl.version.version)
+        print("LSL Linkage: %s" % lslLinkage)
     except ImportError, e:
-        print "LSL Import Error: %s" % str(e)
-    print " "
+        print("LSL Import Error: %s" % str(e))
+    print(" ")
 
 
 if __name__ == "__main__":

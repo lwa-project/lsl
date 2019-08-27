@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Utility for estimating the ionospheric contribution to the DM and RM for
+a given point on the sky at a given time.
+"""
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import sys
 import ephem
 import numpy
@@ -38,7 +49,7 @@ def main(args):
         
         mjdList = numpy.linspace(mjdStart, mjdStop, args.n_samples)
     
-    # Setup everthing for computing the position of the source
+    # Setup everything for computing the position of the source
     if args.lwasv:
         site = stations.lwasv
     elif args.ovro_lwa:
@@ -66,8 +77,8 @@ def main(args):
         mtype = 'IGS'
     
     # Go!
-    print "%-13s  %-6s  %-6s  %-21s  %-15s" % ("MJD", "Az.", "El.", "DM [pc/cm^3]", "RM [1/m^2]")
-    print "-"*(13+2+6+2+6+2+21+2+15)
+    print("%-13s  %-6s  %-6s  %-21s  %-15s" % ("MJD", "Az.", "El.", "DM [pc/cm^3]", "RM [1/m^2]"))
+    print("-"*(13+2+6+2+6+2+21+2+15))
     for mjd in mjdList:
         # Set the date and compute the location of the target
         obs.date = mjd + astro.MJD_OFFSET - astro.DJD_OFFSET
@@ -115,10 +126,10 @@ def main(args):
             rmsRM = 2.62e-13 * (rms*1e16) * (Bparallel*1e-9)
             
             # Report
-            print "%013.6f  %6.2f  %6.2f  %8.6f +/- %8.6f  %5.3f +/- %5.3f" % (mjd, az, el, DM, rmsDM, RM, rmsRM)
+            print("%013.6f  %6.2f  %6.2f  %8.6f +/- %8.6f  %5.3f +/- %5.3f" % (mjd, az, el, DM, rmsDM, RM, rmsRM))
         else:
             # Write out dummy values since the source isn't up
-            print "%013.6f  %6.2f  %6.2f  %8s +/- %8s  %5s +/- %5s" % (mjd, az, el, '---', '---', '---', '---')
+            print("%013.6f  %6.2f  %6.2f  %8s +/- %8s  %5s +/- %5s" % (mjd, az, el, '---', '---', '---', '---'))
 
 
 if __name__ == "__main__":

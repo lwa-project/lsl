@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Example script for splitting a TBN file into smaller pieces.
+"""
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import math
@@ -41,24 +51,24 @@ def main(args):
     sample_rate = tbn.get_sample_rate(fh)
     nFramesX, nFramesY = tbn.get_frames_per_obs(fh)
     
-    nCaptures = sizeB / tbn.FRAME_SIZE / (nFramesX + nFramesY)
+    nCaptures = sizeB // tbn.FRAME_SIZE // (nFramesX + nFramesY)
     
-    print "Filename:    %s" % filename
-    print "Size:        %.1f MB" % (float(sizeB)/1024/1024)
-    print "Captures:    %i (%.2f seconds)" % (nCaptures, nCaptures*512/sample_rate)
-    print "Stands:      %i (%i x pol., %i y pol.)" % ((nFramesX+nFramesY), nFramesX, nFramesY)
-    print "Sample Rate: %.2f kHz" % (sample_rate/1000.0)
-    print "==="
+    print("Filename:    %s" % filename)
+    print("Size:        %.1f MB" % (float(sizeB)/1024/1024))
+    print("Captures:    %i (%.2f seconds)" % (nCaptures, nCaptures*512/sample_rate))
+    print("Stands:      %i (%i x pol., %i y pol.)" % ((nFramesX+nFramesY), nFramesX, nFramesY))
+    print("Sample Rate: %.2f kHz" % (sample_rate/1000.0))
+    print("===")
 
     if args.count > 0:
-        nCaptures = args.count * sample_rate / 512
+        nCaptures = args.count * sample_rate // 512
     else:
-        nCaptures -= args.offset * sample_rate / 512
-        args.count = nCaptures * 512 / sample_rate
+        nCaptures -= args.offset * sample_rate // 512
+        args.count = nCaptures * 512 // sample_rate
     nSkip = int(args.offset * sample_rate / 512)
 
-    print "Seconds to Skip:  %.2f (%i captures)" % (args.offset, nSkip)
-    print "Seconds to Split: %.2f (%i captures)" % (args.count, nCaptures)
+    print("Seconds to Skip:  %.2f (%i captures)" % (args.offset, nSkip))
+    print("Seconds to Split: %.2f (%i captures)" % (args.count, nCaptures))
 
     # Make sure that the first frame in the file is the first frame if a capture 
     # (stand 1, pol 0).  If not, read in as many frames as necessary to get to 
@@ -74,15 +84,15 @@ def main(args):
     fh.seek(fh.tell() - tbn.FRAME_SIZE)
 
     if skip != 0:
-        print "Skipped %i frames at the beginning of the file" % skip
+        print("Skipped %i frames at the beginning of the file" % skip)
     
     for c in list(range(nSkip)):
         if c < nSkip:
             fh.seek(fh.tell() + tbn.FRAME_SIZE*(nFramesX+nFramesY))
             continue
             
-    nFramesRemaining = (sizeB - fh.tell()) / tbn.FRAME_SIZE
-    nRecursions = int(nFramesRemaining / (nCaptures*(nFramesX+nFramesY)))
+    nFramesRemaining = (sizeB - fh.tell()) // tbn.FRAME_SIZE
+    nRecursions = int(nFramesRemaining // (nCaptures*(nFramesX+nFramesY)))
     if not args.recursive:
         nRecursions = 1
         
@@ -103,14 +113,14 @@ def main(args):
             if not args.recursive:
                 captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count)
             
-        print ifString % (r+1, captFilename)
+        print(ifString % (r+1, captFilename))
         
         t0 = time.time()
         fhOut = open(captFilename, 'wb')
         fileSplitFunction(fh, fhOut, nCaptures, nFramesX+nFramesY)
         fhOut.close()
         t1 = time.time()
-        print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0))
+        print("  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0)))
     fh.close()
 
 

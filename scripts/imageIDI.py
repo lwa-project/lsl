@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Script for making and displaying images of correlated data files.
+"""
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import aipy
@@ -37,24 +47,24 @@ def main(args):
     nchan = len(idi.freq)
     freq = idi.freq
     
-    print "Raw Stand Count: %i" % nStand
-    print "Final Baseline Count: %i" % (nStand*(nStand-1)/2,)
-    print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3)
+    print("Raw Stand Count: %i" % nStand)
+    print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
+    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3))
     try:
-        print "Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols])
+        print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
     except KeyError:
         # Catch for CASA MS that use a different numbering scheme
         NUMERIC_STOKESMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
                         9:'XX', 10:'XY', 11:'YX', 12:'YY'}
-        print "Polarization Products: %s" % ' '.join([NUMERIC_STOKESMS[p] for p in idi.pols])
+        print("Polarization Products: %s" % ' '.join([NUMERIC_STOKESMS[p] for p in idi.pols]))
         
-    print "Reading in FITS IDI data"
+    print("Reading in FITS IDI data")
     nSets = idi.integration_count
     for set in range(1, nSets+1):
         if args.dataset != -1 and args.dataset != set:
             continue
             
-        print "Set #%i of %i" % (set, nSets)
+        print("Set #%i of %i" % (set, nSets))
         dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Build a list of unique JDs for the data
@@ -75,23 +85,23 @@ def main(args):
             raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
             
         # Integration report
-        print "    Date Observed: %s" % utc
-        print "    LST: %s" % lst
-        print "    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6)
+        print("    Date Observed: %s" % utc)
+        print("    LST: %s" % lst)
+        print("    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6))
         
         # Prune out what needs to go
         if args.include != 'all' or args.exclude != 'none':
-            print "    Processing include/exclude lists"
+            print("    Processing include/exclude lists")
             dataDict = dataDict.get_antenna_subset(include=args.include, 
                                                    exclude=args.exclude, 
                                                    indicies=False)
             
             ## Report
             for pol in dataDict.pols:
-                print "        %s now has %i baselines" % (pol, len(dataDict.baselines))
+                print("        %s now has %i baselines" % (pol, len(dataDict.baselines)))
                 
         # Build up the images for each polarization
-        print "    Gridding"
+        print("    Gridding")
         img1 = None
         lbl1 = 'XX'
         for p in ('xx', 'rr', 'I'):
@@ -129,7 +139,7 @@ def main(args):
                 pass
                 
         # Plots
-        print "    Plotting"
+        print("    Plotting")
         fig = plt.figure()
         ax1 = fig.add_subplot(2, 2, 1)
         ax2 = fig.add_subplot(2, 2, 2)
@@ -157,8 +167,8 @@ def main(args):
             else:
                 ax.set_title("%s @ %s UTC" % (pol, utc))
                 
-            junk = img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2))
-            print "%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean())
+            junk = img.image(center=(NPIX_SIDE//2,NPIX_SIDE//2))
+            print("%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean()))
             
             # Turn off tick marks
             ax.xaxis.set_major_formatter( NullFormatter() )
@@ -218,9 +228,9 @@ def main(args):
             try:
                 hdulist.writeto(args.fits, clobber=clobber)
             except IOError, e:
-                print "WARNING: FITS image file not saved"
+                print("WARNING: FITS image file not saved")
                 
-    print "...Done"
+    print("...Done")
 
 
 if __name__ == "__main__":

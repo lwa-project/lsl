@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Given a DRX file, plot the time averaged spectra for each beam output."""
+"""
+Given a DRX file, plot the time averaged spectra for each beam output.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import sys
 import math
 import numpy
@@ -77,17 +85,17 @@ def main(args):
     beam = idf.get_info('beam')
     
     # File summary
-    print "Filename: %s" % args.filename
-    print "Date of First Frame: %s" % str(beginDate)
-    print "Beam: %i" % beam
-    print "Tune/Pols: %i" % beampols
-    print "Sample Rate: %i Hz" % srate
-    print "Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (central_freq1, central_freq2)
-    print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate)
-    print "---"
-    print "Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*beampols/4096)
-    print "Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (args.average, nFrames, nFrames / beampols)
-    print "Chunks: %i" % nChunks
+    print("Filename: %s" % args.filename)
+    print("Date of First Frame: %s" % str(beginDate))
+    print("Beam: %i" % beam)
+    print("Tune/Pols: %i" % beampols)
+    print("Sample Rate: %i Hz" % srate)
+    print("Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (central_freq1, central_freq2))
+    print("Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate))
+    print("---")
+    print("Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*beampols/4096))
+    print("Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (args.average, nFrames, nFrames / beampols))
+    print("Chunks: %i" % nChunks)
     
     # Sanity check
     if args.skip*srate*beampols/4096 > nFramesFile:
@@ -110,12 +118,12 @@ def main(args):
     masterWeight = numpy.zeros((nChunks, 4, LFFT))
     masterSpectra = numpy.zeros((nChunks, 4, LFFT))
     for i in range(nChunks):
-        print "Working on chunk #%i of %i" % (i+1, nChunks)
+        print("Working on chunk #%i of %i" % (i+1, nChunks))
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
         except Exception, e:
-            print "Error: %s" % str(e)
+            print("Error: %s" % str(e))
             continue
             
         # Calculate the spectra for this block of data and then weight the results by 
@@ -139,7 +147,7 @@ def main(args):
     # The plots:  This is setup for the current configuration of 20 beampols
     fig = plt.figure()
     figsX = int(round(math.sqrt(4)))
-    figsY = 4 / figsX
+    figsY = 4 // figsX
     # Put the frequencies in the best units possible
     freq1, units1 = bestFreqUnits(freq1)
     freq2, units2 = bestFreqUnits(freq2)
@@ -147,7 +155,7 @@ def main(args):
     sortedMapper = sorted(standMapper)
     for k, aStand in enumerate(sortedMapper):
         i = standMapper.index(aStand)
-        if standMapper[i]%4/2+1 == 1:
+        if standMapper[i]%4//2+1 == 1:
             freq = freq1
             units = units1
         else:
@@ -172,15 +180,15 @@ def main(args):
                 diff = subspectra - currSpectra
                 ax.plot(freq, diff, label='%i' % j)
                 
-        ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2))
+        ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]//4+1, standMapper[i]%4//2+1, standMapper[i]%2))
         ax.set_xlabel('Frequency [%s]' % units)
         ax.set_ylabel('P.S.D. [dB/RBW]')
         ax.set_xlim([freq.min(), freq.max()])
         ax.legend(loc=0)
         
-        print "For beam %i, tune. %i, pol. %i maximum in PSD at %.3f %s" % (standMapper[i]/4+1, standMapper[i]%4/2+1, standMapper[i]%2, freq[numpy.where( spec[i,:] == spec[i,:].max() )][0], units)
+        print("For beam %i, tune. %i, pol. %i maximum in PSD at %.3f %s" % (standMapper[i]//4+1, standMapper[i]%4//2+1, standMapper[i]%2, freq[numpy.where( spec[i,:] == spec[i,:].max() )][0], units))
         
-    print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
+    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
     plt.subplots_adjust(hspace=0.35, wspace=0.30)
     plt.show()
     

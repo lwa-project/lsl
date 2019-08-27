@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Example script for splitting a DRX file into smaller pieces.
+"""
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import math
@@ -98,22 +108,22 @@ def main(args):
     
     nCaptures = nFramesFile/beampols
 
-    print "Filename:     %s" % filename
-    print "Size:         %.1f MB" % (float(sizeB)/1024/1024)
-    print "Captures:     %i (%.2f seconds)" % (nCaptures, nCaptures*4096/srate)
-    print "Tuning/Pols.: %i " % tunepol
-    print "Sample Rate: %.2f MHz" % (srate/1e6)
-    print "==="
+    print("Filename:     %s" % filename)
+    print("Size:         %.1f MB" % (float(sizeB)/1024/1024))
+    print("Captures:     %i (%.2f seconds)" % (nCaptures, nCaptures*4096/srate))
+    print("Tuning/Pols.: %i " % tunepol)
+    print("Sample Rate: %.2f MHz" % (srate/1e6))
+    print("===")
 
     if args.count > 0:
-        nCaptures = args.count * srate / 4096
+        nCaptures = args.count * srate // 4096
     else:
-        nCaptures -= args.offset * srate / 4096
+        nCaptures -= args.offset * srate // 4096
         
-        args.count = nCaptures * 4096 / srate
+        args.count = nCaptures * 4096 // srate
 
-    print "Seconds to Skip:  %.2f (%i captures)" % (args.offset, offset/beampols)
-    print "Seconds to Split: %.2f (%i captures)" % (args.count, nCaptures)
+    print("Seconds to Skip:  %.2f (%i captures)" % (args.offset, offset/beampols))
+    print("Seconds to Split: %.2f (%i captures)" % (args.count, nCaptures))
 
     # Make sure that the first frame in the file is the first frame of a capture 
     # (tuning 1, pol 0).  If not, read in as many frames as necessary to get to 
@@ -126,8 +136,8 @@ def main(args):
         beam, tune, pol = frame.id
         skip += 1
 
-    nFramesRemaining = (sizeB - fh.tell()) / drx.FRAME_SIZE
-    nRecursions = int(nFramesRemaining / (nCaptures*beampols))
+    nFramesRemaining = (sizeB - fh.tell()) // drx.FRAME_SIZE
+    nRecursions = int(nFramesRemaining // (nCaptures*beampols))
     if not args.recursive:
         nRecursions = 1
         
@@ -148,14 +158,14 @@ def main(args):
             if not args.recursive:
                 captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count)
             
-        print ifString % (r+1, captFilename)
+        print(ifString % (r+1, captFilename))
         
         t0 = time.time()
         fhOut = open(captFilename, 'wb')
         fileSplitFunction(fh, fhOut, nCaptures, beampols)
         fhOut.close()
         t1 = time.time()
-        print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0))
+        print("  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0)))
         
     fh.close()
 

@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Example script to read in the positions of stands at LWA-1 and make a plot
-of the site."""
+"""
+Example script to read in the positions of stands at LWA-1 and make a plot
+of the site.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import sys
 import numpy
 import argparse
@@ -35,7 +43,7 @@ def main(args):
     stands.sort()
 
     # Load in the stand position data
-    data = numpy.zeros((len(stands)/2,3))
+    data = numpy.zeros((len(stands)//2,3))
     
     i = 0
     for stand in stands[::2]:

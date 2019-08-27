@@ -6,6 +6,12 @@ Example script that reads in TBN data and runs a cross-correlation on it.
 The results are saved in the FITS IDI format.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import time
@@ -69,7 +75,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pfb
         try:
             readT, t, data = idf.read(intTime)
         except Exception, e:
-            print "Error: %s" % str(e)
+            print("Error: %s" % str(e))
             continue
             
         ## Prune out what we don't want
@@ -82,11 +88,11 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pfb
         # Setup the set time as a python datetime instance so that it can be easily printed
         setDT = datetime.utcfromtimestamp(setTime)
         setDT.replace(tzinfo=UTC())
-        print "Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
+        print("Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
         
         # Loop over polarization products
         for pol in pols:
-            print "->  %s" % pol
+            print("->  %s" % pol)
             blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, Overlap=Overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, Pol=pol, return_baselines=True, gain_correct=True)
             
             # Select the right range of channels to save
@@ -109,7 +115,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pfb
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
             obsTime = astro.unix_to_taimjd(setTime)
             fits.add_data_set(obsTime, readT, blList, vis[:,toUse], pol=pol)
-        print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1))
+        print("->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1)))
         
     # Cleanup after everything is done
     fits.write()
@@ -146,7 +152,7 @@ def main(args):
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     nFpO = len(antennas)
     sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nFrames') / nFpO
+    nInts = idf.get_info('nFrames') // nFpO
     
     # Get valid stands for both polarizations
     goodX = []
@@ -173,30 +179,30 @@ def main(args):
                 
     # Report on the valid stands found.  This is a little verbose,
     # but nice to see.
-    print "Found %i good stands to use" % (len(good)/2,)
+    print("Found %i good stands to use" % (len(good)//2,))
     for i in good:
-        print "%3i, %i" % (antennas[i].stand.id, antennas[i].pol)
+        print("%3i, %i" % (antennas[i].stand.id, antennas[i].pol))
         
     # Number of frames to read in at once and average
     nFrames = int(args.avg_time*sample_rate/512)
     args.offset = idf.offset(args.offset)
-    nSets = idf.get_info('nFrames') / nFpO / nFrames
-    nSets = nSets - int(args.offset*sample_rate/512) / nFrames
+    nSets = idf.get_info('nFrames') // nFpO // nFrames
+    nSets = nSets - int(args.offset*sample_rate/512) // nFrames
     
     central_freq = idf.get_info('freq1')
     
-    print "Data type:  %s" % type(idf)
-    print "Samples per observations: %i per pol." % (nFpO/2)
-    print "Sampling rate: %i Hz" % sample_rate
-    print "Tuning frequency: %.3f Hz" % central_freq
-    print "Captures in file: %i (%.1f s)" % (nInts, nInts*512 / sample_rate)
-    print "=="
-    print "Station: %s" % station.name
-    print "Date observed: %s" % date
-    print "Julian day: %.5f" % jd
-    print "Offset: %.3f s (%i frames)" % (args.offset, args.offset*sample_rate/512)
-    print "Integration Time: %.3f s" % (512*nFrames/sample_rate)
-    print "Number of integrations in file: %i" % nSets
+    print("Data type:  %s" % type(idf))
+    print("Samples per observations: %i per pol." % (nFpO/2))
+    print("Sampling rate: %i Hz" % sample_rate)
+    print("Tuning frequency: %.3f Hz" % central_freq)
+    print("Captures in file: %i (%.1f s)" % (nInts, nInts*512 / sample_rate))
+    print("==")
+    print("Station: %s" % station.name)
+    print("Date observed: %s" % date)
+    print("Julian day: %.5f" % jd)
+    print("Offset: %.3f s (%i frames)" % (args.offset, args.offset*sample_rate/512))
+    print("Integration Time: %.3f s" % (512*nFrames/sample_rate))
+    print("Number of integrations in file: %i" % nSets)
     
     # Make sure we don't try to do too many sets
     if args.samples > nSets:

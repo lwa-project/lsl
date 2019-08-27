@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Read and plot the NOSTA_MAPPER table in a FITS IDI file writen by 
-lsl.writer.fitsidi if it exists."""
+"""
+Read and plot the NOSTA_MAPPER table in a FITS IDI file writen by 
+lsl.writer.fitsidi if it exists.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import sys
 import numpy
 from astropy.io import fits as astrofits
@@ -43,9 +51,9 @@ def main(args):
         anname = ag.data.field('ANNAME')
 
     # Print the stand mapping out
-    print "Stand Mapping:"
+    print("Stand Mapping:")
     for sta,act,name in zip(nosta, noact, anname):
-        print "  %3i -> %s (stand %3i)" % (sta, name, act)
+        print("  %3i -> %s (stand %3i)" % (sta, name, act))
     
     # Load in the positions of all of the stands
     xyz = numpy.zeros((len(antennas), 3))

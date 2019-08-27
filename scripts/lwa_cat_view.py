@@ -1,8 +1,16 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Simple LWA1 astronomical source catalogue display application."""
+"""
+Simple LWA1 astronomical source catalogue display application.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import math
 import argparse
 import Tkinter

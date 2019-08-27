@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Given a TBN file, plot the time averaged spectra for each digitizer input."""
+"""
+Given a TBN file, plot the time averaged spectra for each digitizer input.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import math
@@ -91,16 +99,16 @@ def main(args):
     central_freq = idf.get_info('freq1')
     
     # File summary
-    print "Filename: %s" % args.filename
-    print "Date of First Frame: %s" % str(beginDate)
-    print "Ant/Pols: %i" % antpols
-    print "Sample Rate: %i Hz" % srate
-    print "Tuning Frequency: %.3f Hz" % central_freq
-    print "Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate)
-    print "---"
-    print "Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*antpols/512)
-    print "Integration: %.3f s (%i frames; %i frames per stand/pol)" % (args.average, nFrames, nFrames / antpols)
-    print "Chunks: %i" % nChunks
+    print("Filename: %s" % args.filename)
+    print("Date of First Frame: %s" % str(beginDate))
+    print("Ant/Pols: %i" % antpols)
+    print("Sample Rate: %i Hz" % srate)
+    print("Tuning Frequency: %.3f Hz" % central_freq)
+    print("Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate))
+    print("---")
+    print("Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*antpols/512))
+    print("Integration: %.3f s (%i frames; %i frames per stand/pol)" % (args.average, nFrames, nFrames / antpols))
+    print("Chunks: %i" % nChunks)
     
     # Sanity check
     if args.skip*srate*antpols/512 > nFramesFile:
@@ -123,12 +131,12 @@ def main(args):
     masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
     
     for i in xrange(nChunks):
-        print "Working on chunk #%i of %i" % (i+1, nChunks)
+        print("Working on chunk #%i of %i" % (i+1, nChunks))
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
         except Exception, e:
-            print "Error: %s" % str(e)
+            print("Error: %s" % str(e))
             continue
             
         # Calculate the spectra for this block of data and then weight the results by 
@@ -219,7 +227,7 @@ def main(args):
             
         plt.draw()
         
-    print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
+    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
     plt.show()
 
 

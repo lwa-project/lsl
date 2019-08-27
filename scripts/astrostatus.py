@@ -1,8 +1,16 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Application to calculate real-time ephemeris for a LWA site."""
+"""
+Application to calculate real-time ephemeris for a LWA site.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import math
 import time
 import curses

@@ -8,6 +8,13 @@ at current system clock time
 Moved out of the lsl.astro module into this script and updated for LWA-1
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+
+import math    
 import argparse
 
 from lsl import astro
@@ -36,8 +43,8 @@ if __name__ == '__main__':
         raise RuntimeError("Unknown site name: %s" % site)
         
     nam = station.name
-    lng = astro.deg_to_dms(station.long*180/3.14)
-    lat = astro.deg_to_dms(station.lat*180/3.14)
+    lng = astro.deg_to_dms(station.long*180/math.pi)
+    lat = astro.deg_to_dms(station.lat*180/math.pi)
     lwa_lnlat = astro.lnlat_posn(lng, lat)
     
     print('---------------------------------------------------------------')

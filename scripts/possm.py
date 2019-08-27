@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Utility script similar to the AIPS task 'possm' for plotting visibility data
+stored in a file.
+"""
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import sys
 import numpy
 import argparse
@@ -28,31 +39,31 @@ def main(args):
     nchan = len(idi.freq)
     freq = idi.freq
     
-    print "Raw Stand Count: %i" % nStand
-    print "Final Baseline Count: %i" % (nStand*(nStand-1)/2,)
-    print "Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3)
-    print "Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0])
-    print "JD: %.3f" % jd
+    print("Raw Stand Count: %i" % nStand)
+    print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
+    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3))
+    print("Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0]))
+    print("JD: %.3f" % jd)
 
-    print "Reading in FITS IDI data"
+    print("Reading in FITS IDI data")
     nSets = idi.integration_count
     for set in range(1, nSets+1):
         if args.dataset != -1 and args.dataset != set:
             continue
             
-        print "Set #%i of %i" % (set, nSets)
+        print("Set #%i of %i" % (set, nSets))
         dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Prune out what needs to go
         if args.include != 'all' or args.exclude != 'none':
-            print "    Processing include/exclude lists"
+            print("    Processing include/exclude lists")
             dataDict = dataDict.get_antenna_subset(include=args.include, 
                                                    exclude=args.exclude, 
                                                    indicies=False)
             
             ## Report
             for pol in dataDict.pols:
-                print "        %s now has %i baselines" % (pol, len(dataDict.baselines))
+                print("        %s now has %i baselines" % (pol, len(dataDict.baselines)))
                 
         # Pull out the right channels
         toWork = numpy.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
@@ -66,7 +77,7 @@ def main(args):
             xLabel = 'Channel'
             
         # Plot
-        print "    Plotting the first 50 baselines"
+        print("    Plotting the first 50 baselines")
         pols = dataDict['jd'].keys()
         nBL = len(dataDict['bls'][pols[0]])
         pb = ProgressBar(max=nBL)
@@ -90,7 +101,7 @@ def main(args):
                     amp = numpy.log10(amp)
                 phs = numpy.angle(vis)*180/numpy.pi
 
-                ax = fig.add_subplot(10, 5, 2*(j/5)*5+j%5+1)
+                ax = fig.add_subplot(10, 5, 2*(j//5)*5+j%5+1)
                 if ((phs+360)%360).std() < phs.std():
                     ax.plot(xValues, (phs[toWork]+360)%360, linestyle=' ', marker='x')
                     ax.set_ylim([0, 360])
@@ -101,7 +112,7 @@ def main(args):
                 if j % 5 == 0:
                     ax.set_ylabel('Phs')
                     
-                ax = fig.add_subplot(10, 5, 2*(j/5)*5+j%5+1+5)
+                ax = fig.add_subplot(10, 5, 2*(j//5)*5+j%5+1+5)
                 ax.plot(xValues, amp[toWork], linestyle=' ', marker='x', color='green')
                 ax.set_title('%i - %i' % (stnd1, stnd2))
                 if j % 5 == 0:

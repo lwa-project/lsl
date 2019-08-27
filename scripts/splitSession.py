@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Script for splitting a DRX file based on the information contained in a MCS
+metadata tarball.
+"""
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import time
@@ -52,23 +63,23 @@ def main(args):
         oDetails.append( {'m': o['Mode'], 'd': o['Dur'] / 1000.0, 'f': o['BW'], 
                 'p': o['projectID'], 's': o['sessionID'], 'o': o['obsID'], 't': sdf.sessions[0].observations[o['obsID']-1].target} )
 
-        print "Observation #%i" % (o['obsID'])
-        print " Start: %i, %i -> %s" % (o['MJD'], o['MPM'], tStart[-1])
-        print " Mode: %s" % mode_to_string(o['Mode'])
-        print " BW: %i" % o['BW']
-        print " Target: %s" % sdf.sessions[0].observations[o['obsID']-1].target
-    print " "
+        print("Observation #%i" % (o['obsID']))
+        print(" Start: %i, %i -> %s" % (o['MJD'], o['MPM'], tStart[-1]))
+        print(" Mode: %s" % mode_to_string(o['Mode']))
+        print(" BW: %i" % o['BW'])
+        print(" Target: %s" % sdf.sessions[0].observations[o['obsID']-1].target)
+    print(" ")
 
     # Figure out where in the file the various bits are.
     fh = open(data, 'rb')
     lf = drx.read_frame(fh)
     beam, j, k = lf.id
     if beam != obs[0]['drxBeam']:
-        print 'ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drxBeam'], beam)
+        print('ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drxBeam'], beam))
         sys.exit()
     firstFrame = datetime.utcfromtimestamp(sum(lf.time))
     if abs(firstFrame - min(tStart)) > timedelta(seconds=30):
-        print 'ERROR: Time mis-match, metadata is for %s, file is for %s' % (min(tStart), firstFrame)
+        print('ERROR: Time mis-match, metadata is for %s, file is for %s' % (min(tStart), firstFrame))
         sys.exit()
     fh.seek(0)
 
@@ -80,7 +91,7 @@ def main(args):
         oMode = mode_to_string(oDetails[i]['m'])
         oDur  = oDetails[i]['d']
         oBW   = oDetails[i]['f']
-        print "Seeking %s observation of %.3f seconds at %s" % (oMode, oDur, oStart)
+        print("Seeking %s observation of %.3f seconds at %s" % (oMode, oDur, oStart))
 
         ## Get the correct reader to use
         if oMode == 'TBW':
@@ -125,7 +136,7 @@ def main(args):
         ## Go in search of the start of the observation
         if datetime.utcfromtimestamp(sum(frame.time)) < oStart:
             ### We aren't at the beginning yet, seek fowards
-            print "-> At byte %i, time is %s < %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
+            print("-> At byte %i, time is %s < %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
 
             while datetime.utcfromtimestamp(sum(frame.time)) < oStart:
                 try:
@@ -134,11 +145,11 @@ def main(args):
                     fh.seek(1, 1)
                 except errors.EOFError:
                     break
-                #print datetime.utcfromtimestamp(sum(frame.time)), oStart
+                #print(datetime.utcfromtimestamp(sum(frame.time)), oStart)
 
         elif datetime.utcfromtimestamp(sum(frame.time)) > oStart:
             ### We've gone too far, seek backwards
-            print "-> At byte %i, time is %s > %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
+            print("-> At byte %i, time is %s > %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
 
             while datetime.utcfromtimestamp(sum(frame.time)) > oStart:
                 if fh.tell() == 0:
@@ -150,17 +161,17 @@ def main(args):
                     fh.seek(-1, 1)
                 except errors.EOFError:
                     break
-                #print datetime.utcfromtimestamp(sum(frame.time)), oStart
+                #print(datetime.utcfromtimestamp(sum(frame.time)), oStart)
                 
         else:
             ### We're there already
-            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
+            print("-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
             
         ## Jump back exactly one frame so that the filehandle is in a position 
         ## to read the first frame that is part of the observation
         try:
             frame = reader.read_frame(fh)
-            print "-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart)
+            print("-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
             fh.seek(-reader.FRAME_SIZE, 1)
         except errors.EOFError:
             pass
@@ -178,19 +189,19 @@ def main(args):
 
         ## Progress report
         if oDetails[i]['b'] >= 0:
-            print '-> Obs.', oDetails[i]['o'], 'starts at byte', oDetails[i]['b']
+            print('-> Obs.', oDetails[i]['o'], 'starts at byte', oDetails[i]['b'])
         else:
-            print '-> Obs.', oDetails[i]['o'], 'starts after the end of the file'
-    print " "
+            print('-> Obs.', oDetails[i]['o'], 'starts after the end of the file')
+    print(" ")
 
     # Report
     for i in xrange(len(tStart)):
         if oDetails[i]['b'] < 0:
-            print "%s, Session %i, Observation %i: not found" % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
+            print("%s, Session %i, Observation %i: not found" % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o']))
 
         else:
-            print "%s, Session %i, Observation %i: %i to %i (%i bytes)" % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'], oDetails[i]['b'], oDetails[i]['e'], (oDetails[i]['e'] - oDetails[i]['b']))
-    print " "
+            print("%s, Session %i, Observation %i: %i to %i (%i bytes)" % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'], oDetails[i]['b'], oDetails[i]['e'], (oDetails[i]['e'] - oDetails[i]['b'])))
+    print(" ")
 
     # Split
     if not args.list:
@@ -199,7 +210,7 @@ def main(args):
                 continue
                 
             ## Report
-            print "Working on Observation %i" % (i+1,)
+            print("Working on Observation %i" % (i+1,))
             
             ## Create the output name
             if args.source:
@@ -220,9 +231,9 @@ def main(args):
 
             ## Get the number of frames
             if oDetails[i]['e'] > 0:
-                nFramesRead = (oDetails[i]['e'] - oDetails[i]['b']) / reader.FRAME_SIZE
+                nFramesRead = (oDetails[i]['e'] - oDetails[i]['b']) // reader.FRAME_SIZE
             else:
-                nFramesRead = (os.path.getsize(data) - oDetails[i]['b']) / reader.FRAME_SIZE
+                nFramesRead = (os.path.getsize(data) - oDetails[i]['b']) // reader.FRAME_SIZE
 
             ## Split
             if os.path.exists(outname):
@@ -234,7 +245,7 @@ def main(args):
                 if yn not in ('n', 'N'):
                     os.unlink(outname)
                 else:
-                    print "WARNING: output file '%s' already exists, skipping" % outname
+                    print("WARNING: output file '%s' already exists, skipping" % outname)
                     continue
                     
             fh.seek(oDetails[i]['b'])
@@ -248,8 +259,8 @@ def main(args):
                     nFramesRead -= sl
             oh.close()
             t1 = time.time()
-            print "  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(outname), t1-t0, os.path.getsize(outname)/1024.0**2/(t1-t0))
-    print " "
+            print("  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(outname), t1-t0, os.path.getsize(outname)/1024.0**2/(t1-t0)))
+    print(" ")
 
 
 if __name__ == "__main__":

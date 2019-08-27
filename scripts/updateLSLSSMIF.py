@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Utility for updating/changing the LWA station SSMIF files in between LSL 
+releases.
+"""
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import re
 import sys
@@ -108,21 +119,21 @@ def main(args):
             
             ## Prompt the user for the version to revert to
             for i,(filename,date) in enumerate(versions):
-                print "%i: %s" % (i, filename)
+                print("%i: %s" % (i, filename))
             i = -1
             while i not in range(0, len(versions)):
                 i = raw_input("Enter SSMIF to revert to: ")
                 try:
                     i = int(i)
                 except ValueError:
-                    print "-> Invalid value"
+                    print("-> Invalid value")
                     i = -1
-            print " "
+            print(" ")
             
             ## Build the URL
             urlToDownload = "%s/%s" % (_url, versions[i][0])
         except Exception, e:
-            print "Error:  Cannot process reversion, %s" % str(e)
+            print("Error:  Cannot process reversion, %s" % str(e))
             
     elif args.update:
         # Update to the latest version
@@ -142,7 +153,7 @@ def main(args):
             newSSMIF = ah.read()
             ah.close()
         except Exception, e:
-            print "Error:  Cannot download SSMIF, %s" % str(e)
+            print("Error:  Cannot download SSMIF, %s" % str(e))
             
         ## Save
         try:
@@ -150,7 +161,7 @@ def main(args):
             fh.write(newSSMIF)
             fh.close()
         except Exception, e:
-            print "Error:  Cannot %s SSMIF, %s" % ('update' if args.update else 'revert', str(e))
+            print("Error:  Cannot %s SSMIF, %s" % ('update' if args.update else 'revert', str(e)))
             
     # Summarize the SSMIF
     ## Filesystem information
@@ -176,11 +187,11 @@ def main(args):
                 version = datetime.strptime("%s %s %s" % (mtch.group('year'), mtch.group('month'), mtch.group('day')), "%Y %B %d")
             break
             
-    print "LSL %s SSMIF%s:" % (_name.upper(), ' (updated)' if args.update else '',)
-    print "  Size: %i bytes" % size
-    print "  SSMIF Version: %s" % version.strftime("%Y %b %d")
-    print "  File Last Modified: %s (%i day%s ago)" % (mtime.strftime("%Y-%m-%d %H:%M:%S UTC"), age.days, 's' if age.days != 1 else '')
-    print "  MD5 Sum: %s" % md5
+    print("LSL %s SSMIF%s:" % (_name.upper(), ' (updated)' if args.update else '',))
+    print("  Size: %i bytes" % size)
+    print("  SSMIF Version: %s" % version.strftime("%Y %b %d"))
+    print("  File Last Modified: %s (%i day%s ago)" % (mtime.strftime("%Y-%m-%d %H:%M:%S UTC"), age.days, 's' if age.days != 1 else ''))
+    print("  MD5 Sum: %s" % md5)
 
 
 if __name__ == "__main__":

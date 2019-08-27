@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Given a TBW file, plot the time averaged spectra for each digitizer input."""
+"""
+Given a TBW file, plot the time averaged spectra for each digitizer input.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import math
@@ -61,13 +69,13 @@ def main(args):
     beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
     
     # File summary
-    print "Filename: %s" % args.filename
-    print "Date of First Frame: %s" % str(beginDate)
-    print "Ant/Pols: %i" % antpols
-    print "Sample Length: %i-bit" % dataBits
-    print "Frames: %i" % nFrames
-    print "Chunks: %i" % nChunks
-    print "==="
+    print("Filename: %s" % args.filename)
+    print("Date of First Frame: %s" % str(beginDate))
+    print("Ant/Pols: %i" % antpols)
+    print("Sample Length: %i-bit" % dataBits)
+    print("Frames: %i" % nFrames)
+    print("Chunks: %i" % nChunks)
+    print("===")
     
     # Setup the window function to use
     if args.bartlett:
@@ -174,7 +182,7 @@ def main(args):
                 
         plt.draw()
         
-    print "RBW: %.1f Hz" % (freq[1]-freq[0])
+    print("RBW: %.1f Hz" % (freq[1]-freq[0]))
     plt.show()
 
 

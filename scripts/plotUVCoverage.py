@@ -6,6 +6,12 @@ Plot the uv-plane coverage of LWA1 for a zenith snapshot and the expected
 beam.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import sys
 import math
 import numpy
@@ -38,7 +44,7 @@ def main(args):
     for ant in station.antennas[0::2]:
         if ant.combined_status == 33:
             antennas.append(ant)
-    print "Displaying uv coverage for %i good stands" % len(antennas)
+    print("Displaying uv coverage for %i good stands" % len(antennas))
     
     HA = 0.0
     dec = station.lat*180.0/math.pi

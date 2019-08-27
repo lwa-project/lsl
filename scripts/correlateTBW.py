@@ -6,6 +6,12 @@ Example script that reads in TBW data and runs a cross-correlation on it.
 The results are saved in the FITS IDI format.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import time
@@ -65,17 +71,17 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pfb=False, pols=
     
     setDT = datetime.utcfromtimestamp(setTime)
     setDT.replace(tzinfo=UTC())
-    print "Working on set #1 (%.3f seconds after set #1 = %s)" % ((setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f"))
+    print("Working on set #1 (%.3f seconds after set #1 = %s)" % ((setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
     
     # In order for the TBW stuff to actaully run, we need to run in with sub-
     # integrations.  8 sub-integrations (61.2 ms / 8 = 7.7 ms per section) 
     # seems to work ok with a "reasonable" number of channels.
     nSec = 8
-    secSize = data.shape[1]/nSec
+    secSize = data.shape[1]//nSec
     
     # Loop over polarizations (there should be only 1)
     for pol in pols:
-        print "-> %s" % pol
+        print("-> %s" % pol)
         try:
             tempVis *= 0    # pylint:disable=undefined-variable
         except NameError:
@@ -124,7 +130,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pfb=False, pols=
         sys.stdout.write(pb.show()+'\r')
         sys.stdout.write('\n')
         sys.stdout.flush()
-    print "->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime))
+    print("->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)))
     
     fits.write()
     fits.close()
@@ -156,7 +162,7 @@ def main(args):
     jd = astro.unix_to_utcjd(idf.get_info('tStart'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nFrames') / (30000 * len(antennas) / 2)
+    nInts = idf.get_info('nFrames') // (30000 * len(antennas) // 2)
     
     # Get valid stands for both polarizations
     goodX = []
@@ -182,23 +188,23 @@ def main(args):
                 
     # Report on the valid stands found.  This is a little verbose,
     # but nice to see.
-    print "Found %i good stands to use" % (len(good)/2,)
+    print("Found %i good stands to use" % (len(good)//2,))
     for i in good:
-        print "%3i, %i" % (antennas[i].stand.id, antennas[i].pol)
+        print("%3i, %i" % (antennas[i].stand.id, antennas[i].pol))
         
     # Number of frames to read in at once and average
     nFrames = 30000
-    nSets = idf.get_info('nFrames') / (30000*len(antennas)/2)
+    nSets = idf.get_info('nFrames') // (30000*len(antennas)//2)
     
-    print "Data type:  %s" % type(idf)
-    print "Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sample_rate)
-    print "=="
-    print "Station: %s" % station.name
-    print "Date observed: %s" % date
-    print "Julian day: %.5f" % jd
-    print "Integration Time: %.3f s" % (400*nFrames/sample_rate)
-    print "Number of integrations in file: %i" % nSets
-    print "=="
+    print("Data type:  %s" % type(idf))
+    print("Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sample_rate))
+    print("==")
+    print("Station: %s" % station.name)
+    print("Date observed: %s" % date)
+    print("Julian day: %.5f" % jd)
+    print("Integration Time: %.3f s" % (400*nFrames/sample_rate))
+    print("Number of integrations in file: %i" % nSets)
+    print("==")
     
     leftToDo = 1
     basename = os.path.split(filename)[1]

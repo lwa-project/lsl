@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Example script to plot the relative response of an isolated LWA antenna 
-as a function of azimuth and elevation."""
+"""
+Example script to plot the relative response of an isolated LWA antenna 
+as a function of azimuth and elevation.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import numpy
@@ -44,8 +52,8 @@ def main(args):
         gammaH = numpy.polyval(beamCoeff[1,2,:], args.frequency)
         deltaH = numpy.polyval(beamCoeff[1,3,:], args.frequency)
         if args.verbose:
-            print "Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH)
-            print "Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE)
+            print("Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH))
+            print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
             
         if args.empirical:
             corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
@@ -57,7 +65,7 @@ def main(args):
             corrDict.close()
             
             if args.frequency/1e6 < cFreqs.min() or args.frequency/1e6 > cFreqs.max():
-                print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,)
+                print("WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,))
                 corrFnc = None
             else:
                 fCors = cAlts*0.0

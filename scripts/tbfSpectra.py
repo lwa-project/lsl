@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Given a TBF file, plot the time averaged spectra for each digitizer input."""
+"""
+Given a TBF file, plot the time averaged spectra for each digitizer input.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import math
@@ -90,13 +98,13 @@ def main(args):
     freq *= 25e3
     
     # File summary
-    print "Filename: %s" % args.filename
-    print "Date of First Frame: %s" % str(beginDate)
-    print "Frames per Observation: %i" % nFramesPerObs
-    print "Channel Count: %i" % nchannels
-    print "Frames: %i" % nFrames
-    print "==="
-    print "Chunks: %i" % nChunks
+    print("Filename: %s" % args.filename)
+    print("Date of First Frame: %s" % str(beginDate))
+    print("Frames per Observation: %i" % nFramesPerObs)
+    print("Channel Count: %i" % nchannels)
+    print("Frames: %i" % nFrames)
+    print("===")
+    print("Chunks: %i" % nChunks)
     
     spec = numpy.zeros((nchannels,256,2))
     norm = numpy.zeros_like(spec)
@@ -109,7 +117,7 @@ def main(args):
             except errors.EOFError:
                 break
             except errors.SyncError:
-                print "WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FRAME_SIZE-1)
+                print("WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FRAME_SIZE-1))
                 continue
             if not cFrame.header.is_tbf:
                 continue
@@ -194,7 +202,7 @@ def main(args):
             
         plt.draw()
         
-    print "RBW: %.4f %s" % ((freq[1]-freq[0]), units)
+    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
     plt.show()
 
 

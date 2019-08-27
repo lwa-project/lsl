@@ -1,8 +1,16 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Predict driftcurve for a given site using a given antenna model."""
+"""
+Predict driftcurve for a given site using a given antenna model.
+"""
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import sys
 import math
@@ -44,11 +52,11 @@ def main(args):
     if not args.lfsm:
         smap = skymap.SkyMapGSM(freq_MHz=args.frequency/1e6)
         if args.verbose:
-            print "Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max())
+            print("Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
     else:
         smap = skymap.SkyMapLFSM(freq_MHz=args.frequency/1e6)
         if args.verbose:
-            print "Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max())
+            print("Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
     
     # Get the emperical model of the beam and compute it for the correct frequencies
     beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
@@ -69,8 +77,8 @@ def main(args):
     gammaH = numpy.polyval(beamCoeff[1,2,:], args.frequency)
     deltaH = numpy.polyval(beamCoeff[1,3,:], args.frequency)
     if args.verbose:
-        print "Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH)
-        print "Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE)
+        print("Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH))
+        print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
         
     if args.empirical:
         corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
@@ -82,7 +90,7 @@ def main(args):
         corrDict.close()
         
         if args.frequency/1e6 < cFreqs.min() or args.frequency/1e6 > cFreqs.max():
-            print "WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,)
+            print("WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,))
             corrFnc = None
         else:
             fCors = cAlts*0.0
@@ -164,7 +172,7 @@ def main(args):
         pylab.show()
     
     outputFile = "driftcurve_%s_%s_%.2f.txt" % (nam, args.pol, args.frequency/1e6)
-    print "Writing driftcurve to file '%s'" % outputFile
+    print("Writing driftcurve to file '%s'" % outputFile)
     mf = file(outputFile, "w")
     for lst,pow in zip(lstList, powListAnt):
         mf.write("%f  %f\n" % (lst, pow))
