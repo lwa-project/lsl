@@ -27,6 +27,9 @@ from collections import OrderedDict
 from lsl import astro
 from lsl.writer.fitsidi import WriterBase
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.1'
 __revision__ = '$Rev$'

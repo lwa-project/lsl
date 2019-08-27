@@ -23,6 +23,10 @@ from lsl.sim import vis
 from lsl.reader.tbn import FILTER_CODES as TBNFilters
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['basic_signal', 'point_source']

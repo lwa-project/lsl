@@ -16,6 +16,10 @@ import numpy
 from lsl.common.dp import fS
 from lsl.reader import tbn
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['SimFrame', 'frame_to_frame']

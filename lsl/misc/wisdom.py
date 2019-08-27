@@ -21,6 +21,9 @@ from lsl.common.paths import data as dataPath
 from lsl.common.busy import BusyIndicator
 from lsl.misc import _wisdom
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = "0.2"
 __revision__ = "$Rev$"

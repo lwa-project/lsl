@@ -16,6 +16,10 @@ import warnings
 import numpy
 from scipy.special import sph_harm
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__   = '0.6'
 __revision__ = '$Rev$'
 __all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 

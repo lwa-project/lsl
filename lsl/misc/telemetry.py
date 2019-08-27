@@ -30,6 +30,7 @@ from functools import update_wrapper
 
 from lsl.version import version as lsl_version
 
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',

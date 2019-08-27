@@ -32,6 +32,10 @@ from lsl import astro
 from lsl.common.stations import lwa1
 from lsl.writer.fitsidi import WriterBase
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['Sd', 'STOKES_CODES', 'NUMERIC_STOKES']

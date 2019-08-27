@@ -58,6 +58,10 @@ from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.8'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 

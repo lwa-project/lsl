@@ -25,6 +25,9 @@ from scipy.interpolate import interp1d
 
 from lsl.common import _fir
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.6'
 __revision__ = '$Rev$'

@@ -15,4 +15,8 @@ __version__   = "0.3"
 __author__    = "D. L. Wood"
 __maintainer__ = "Jayce Dowell"
 
+
+from lsl.misc import telemetry
+telemetry.ignore()
+
 from . import test_lsl

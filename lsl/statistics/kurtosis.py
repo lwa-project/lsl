@@ -21,6 +21,10 @@ import numpy
 from scipy.special import erf
 from scipy.stats import betaprime
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['mean', 'std', 'var', 'skew', 'get_limits', 'spectral_fft', 'spectral_power']

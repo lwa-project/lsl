@@ -13,6 +13,10 @@ if sys.version_info > (3,):
 import copy
 import time
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['ProgressBar', 'ProgressBarPlus']

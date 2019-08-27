@@ -26,6 +26,10 @@ from scipy.interpolate import interp1d
 from lsl import astro
 from lsl.common.paths import DATA as dataPath
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__   = '0.3'
 __revision__ = '$Rev$'
 __all__ = ['SkyMapGSM', 'SkyMapLFSM', 'ProjectedSkyMap']

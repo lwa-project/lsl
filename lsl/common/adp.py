@@ -27,6 +27,9 @@ import numpy
 from scipy.signal import freqz, lfilter
 from scipy.interpolate import interp1d
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.3'
 __revision__ = '$Rev$'

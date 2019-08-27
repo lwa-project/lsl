@@ -29,6 +29,10 @@ from datetime import datetime
 from lsl import astro
 from lsl.writer.fitsidi import WriterBase, STOKES_CODES
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['Uv',]

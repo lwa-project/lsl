@@ -33,6 +33,10 @@ if sys.version_info > (3,):
 import copy
 from collections import deque, OrderedDict
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '1.2'
 __revision__ = '$Rev$'
 __all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer']

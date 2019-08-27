@@ -45,6 +45,9 @@ try:
 except ImportError:
     usePyFFTW = False
     useWisdom = False
+    
+from lsl.misc import telemetry
+telemetry.track_module()
 
 
 __version__ = '0.5'

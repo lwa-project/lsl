@@ -16,7 +16,8 @@ if sys.version_info > (3,):
     xrange = range
     
 import numpy
-from .fx import null_window
+
+from lsl.correlator.fx import null_window
 
 try:
     import os
@@ -47,6 +48,10 @@ try:
 except ImportError:
     usePyFFTW = False
     useWisdom = False
+
+
+from lsl.misc import telemetry
+telemetry.track_module()
 
 
 __version__ = '0.2'

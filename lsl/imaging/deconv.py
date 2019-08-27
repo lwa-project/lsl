@@ -21,6 +21,10 @@ from lsl.astro import deg_to_dms, deg_to_hms
 from lsl.statistics.robust import std as rStd
 from lsl.misc.mathutil import gaussian2d
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['clean', 'clean_sources', 'lsq']

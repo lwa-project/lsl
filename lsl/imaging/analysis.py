@@ -19,6 +19,10 @@ import numpy
 from scipy.signal import convolve, medfilt
 from scipy.interpolate import bisplrep, bisplev
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = "0.1"
 __revision__ = "$Rev$"
 __all__ = ['estimate_background', 'find_point_sources']

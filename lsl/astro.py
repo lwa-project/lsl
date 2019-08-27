@@ -17,6 +17,9 @@ import numpy
 from calendar import timegm
 from functools import total_ordering    
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__   = '0.5'
 __revision__ = '$Rev$'

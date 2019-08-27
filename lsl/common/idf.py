@@ -54,10 +54,14 @@ from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common import sdfADP as sdf
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idF',  'get_scan_start_stop', 'is_valid', '__version__', '__revision__', '__all__']
+
 
 _UTC = pytz.utc
 _DRSUCapacityTB = 10

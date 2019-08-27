@@ -30,6 +30,10 @@ if sys.version_info > (3,):
 import math
 import numpy
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.5'
 __revision__ = '$Rev$'
 __all__ = ['biweight_mean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit']

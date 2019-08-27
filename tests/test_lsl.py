@@ -12,6 +12,9 @@ if sys.version_info > (3,):
     
 import unittest
 
+from lsl.misc import telemetry
+telemetry.ignore()
+
 from . import test_paths
 from . import test_astro
 from . import test_skymap

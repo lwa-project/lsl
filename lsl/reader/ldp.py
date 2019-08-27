@@ -39,6 +39,10 @@ from lsl.common.adp import fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 

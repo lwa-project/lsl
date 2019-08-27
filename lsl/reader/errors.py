@@ -14,6 +14,10 @@ import sys
 if sys.version_info > (3,):
     xrange = range
     
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['BaseReaderError', 'EOFError', 'SyncError', 'notTBNError', 'notTBWError', 'list_error_codes', 

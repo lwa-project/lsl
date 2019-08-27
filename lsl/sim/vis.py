@@ -69,8 +69,11 @@ from lsl.common.paths import DATA as dataPath
 from lsl.correlator import uvutil
 from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
-
 from lsl.sim._simfast import FastVis
+
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.6'
 __revision__ = '$Rev$'

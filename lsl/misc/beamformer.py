@@ -22,6 +22,9 @@ from astropy.constants import c as speedOfLight
 from lsl.common.paths import DATA as dataPath
 from lsl.common import dp as dp_common
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.6'
 __revision__ = '$Rev$'

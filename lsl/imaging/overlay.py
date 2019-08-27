@@ -29,6 +29,10 @@ import numpy
 
 from lsl import astro
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = "0.3"
 __revision__ = "$Rev$"
 __all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt"]

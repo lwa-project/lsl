@@ -26,6 +26,10 @@ from lsl.common.paths import DATA as dataPath
 from lsl.common import mcs, mcsADP
 from lsl.misc.mathutil import to_dB, from_dB
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '2.2'
 __revision__ = '$Rev$'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 

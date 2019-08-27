@@ -44,6 +44,9 @@ from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.4'
 __revision__ = '$Rev$'

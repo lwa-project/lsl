@@ -16,6 +16,10 @@ import numpy
 
 from lsl import astro
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = "0.1"
 __revision__ = "$Rev$"
 __all__ = ['PolarizationDataSet', 'VisibilityDataSet', 'VisibilityData']

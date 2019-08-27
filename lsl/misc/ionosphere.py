@@ -38,6 +38,9 @@ from lsl.common.stations import geo2ecef
 from lsl.common.paths import data as dataPath
 from lsl.common.mcs import mjdmpm2datetime, datetime2mjdmpm
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = "0.5"
 __revision__ = "$Rev$"

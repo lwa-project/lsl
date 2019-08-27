@@ -14,6 +14,10 @@ import sys
 import time
 import threading
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['BusyIndicator',]

@@ -16,6 +16,10 @@ from collections import namedtuple
 from functools import update_wrapper
 from threading import RLock
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 _CacheInfo = namedtuple("CacheInfo", ["hits", "misses", "maxsize", "currsize"])
 
 class _HashedSeq(list):

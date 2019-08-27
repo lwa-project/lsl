@@ -22,13 +22,19 @@ if sys.version_info > (3,):
 import os
 import imp
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['MODULE', 'DATA', 'MODULE_BUILD', 'DATA_BUILD']
 
+
 modInfo = imp.find_module('lsl')
 MODULE = os.path.abspath(modInfo[1])
 DATA = os.path.join(MODULE, 'data')
+
 
 # If we seem to be in the building directory, make the module and 
 # data build paths point to the right place.  This is done so that 

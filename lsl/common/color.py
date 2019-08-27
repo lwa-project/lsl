@@ -15,6 +15,10 @@ if sys.version_info > (3,):
     
 import re
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['colorfy',]

@@ -19,6 +19,10 @@ from lsl import astro
 from lsl import transform
 from lsl.common.paths import DATA
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__   = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['CatalogEntry', 'Catalog', 'LWA_Catalog', 'PSR_Catalog', 'PKS_Catalog', 

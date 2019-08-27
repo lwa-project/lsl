@@ -11,11 +11,16 @@ import sys
 if sys.version_info > (3,):
     xrange = range
     
+from datetime import datetime
+
 from lsl.common.mcsADP import summary_to_string, parse_c_struct, flat_to_multi, \
                         STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, \
                         ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_NRPD, ME_MAX_NSEP, ME_MAX_NARB, \
                         ME_MAX_NROACH, ME_MAX_NSERVER, ME_MAX_NDR
-from datetime import datetime
+
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.3'
 __revision__ = '$Rev$'

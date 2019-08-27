@@ -19,6 +19,10 @@ import math
 from astropy import units
 from astropy.constants import c as speedOfLight, k_B as kB
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['dBd_to_dBi', 'dBd_to_dBi', 'dBi_to_gain', 'dBd_to_gain', 'gain_to_dBi', 'gain_to_dBd', 'calculate_sefd', 

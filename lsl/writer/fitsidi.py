@@ -37,6 +37,9 @@ from collections import OrderedDict
 
 from lsl import astro
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 
 __version__ = '0.9'
 __revision__ = '$Rev$'

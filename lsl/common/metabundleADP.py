@@ -27,6 +27,10 @@ from lsl.common.adp import word_to_freq
 from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '1.0'
 __revision__ = '$Rev$'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_station', 'get_session_metadata', 

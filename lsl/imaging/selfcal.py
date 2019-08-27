@@ -27,6 +27,10 @@ import numpy
 from lsl.statistics import robust
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['phase_only', 'delay_only', 'delay_and_phase']

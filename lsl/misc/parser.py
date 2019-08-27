@@ -24,6 +24,10 @@ from astropy import units
 
 from lsl.common.mcs import datetime_to_mjdmpm, mjdmpm_to_datetime
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['positive_or_zero_int', 'positive_int', 'positive_or_zero_float', 

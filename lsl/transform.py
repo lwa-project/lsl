@@ -20,6 +20,10 @@ from functools import total_ordering
 from lsl import astro
 from lsl.common.dp import fS
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['Time', 'SkyPosition', 'CelestialPosition', 'PlanetaryPosition', 

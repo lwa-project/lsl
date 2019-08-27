@@ -19,7 +19,11 @@ if sys.version_info > (3,):
     xrange = range
     
 import numpy
+
 from lsl.statistics import robust
+
+from lsl.misc import telemetry
+telemetry.track_module()
 
 
 __version__ = "0.1"

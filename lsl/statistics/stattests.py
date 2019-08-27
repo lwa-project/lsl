@@ -14,6 +14,10 @@ if sys.version_info > (3,):
 import numpy
 from scipy.special import ndtr
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['wald_wolfowitz',]

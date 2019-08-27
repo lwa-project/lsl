@@ -23,6 +23,10 @@ import ephem
 from lsl.common import dp as dp_common
 import lsl.astro as astro
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
+
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['Frame',]
