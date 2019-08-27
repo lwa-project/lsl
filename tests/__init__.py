@@ -8,9 +8,12 @@ Modules defining package tests.
 """
 
 __revision__  = "$Rev$"
-__version__   = "0.2"
+__version__   = "0.3"
 __author__    = "D. L. Wood"
 __maintainer__ = "Jayce Dowell"
 
 from . import test_lsl
+
+from lsl.misc import telemetry
+telemetry.track_test_suite()
 

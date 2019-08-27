@@ -21,10 +21,7 @@ See the individual package descriptions for more information.
 """
 
 from lsl import version
-from lsl.common import paths
 
 __version__ = '0.8'
 __revision__ = '$Rev$'
 __author__ = "Jayce Dowell"
-
-
