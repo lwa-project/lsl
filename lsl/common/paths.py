@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Module to set up path information for the LWA Software Library.  Two 
 variables are defined by this module:
@@ -19,6 +13,12 @@ DATA
     the absolute path to the data directory where data files are stored
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import imp
 

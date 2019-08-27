@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Unit tests for the lsl.imaging modules.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""Unit test for lsl.imaging modules"""
-
 import os
 import copy
 import time

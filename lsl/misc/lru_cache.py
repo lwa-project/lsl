@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Full-featured O(1) LRU cache backported from Python3.3. The full Py3.3 API is supported (thread safety, maxsize, keyword args, type checking, __wrapped__, and cache_info). Includes Py3.3 optimizations for better memory utilization, fewer dependencies, and fewer dict lookups.
 
 From:  https://code.activestate.com/recipes/578078/
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 from collections import namedtuple
 from functools import update_wrapper
 from threading import RLock

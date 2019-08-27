@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 LWA Development Primitives - A set of utilities that should make developing 
 new analysis software easier.  These functions wrap the nitty gritty of the 
@@ -27,6 +21,12 @@ use.
     Added support for LWA-SV ADP data
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import copy
 import numpy

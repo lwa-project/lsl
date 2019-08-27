@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Module for analyzing images.  Currently, this module supports:
   * estimating the position-dependent background level in the image
@@ -14,6 +8,12 @@ Module for analyzing images.  Currently, this module supports:
 .. versionadded:: 1.1.0
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import math
 import numpy
 from scipy.signal import convolve, medfilt

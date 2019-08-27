@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Simple self-calibration module for correlated TBW and TBN data.  The 
 supported self-calibration methods are:
@@ -22,6 +16,12 @@ supported self-calibration methods are:
 ..versionadded:: 0.5.5
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import numpy
 
 from lsl.statistics import robust

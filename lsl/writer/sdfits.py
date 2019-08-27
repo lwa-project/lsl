@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    from functools import cmp_to_key
-    
 """
 Module for writing spectrometer output to a SDFITS file.  The SDFITS created by this 
 modulefiles closely follow the Parkes variant of the SDFITS convention 
@@ -20,6 +13,13 @@ Analysis Package (ASAP).
     the :mod:`lsl.writer.fitsidi` writer.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    from functools import cmp_to_key
+    
 import os
 import gc
 import re

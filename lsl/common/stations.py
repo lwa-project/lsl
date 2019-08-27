@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Module for creating object oriented representations of the LWA stations.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
@@ -7,10 +11,6 @@ if sys.version_info > (3,):
     xrange = range
     from functools import cmp_to_key
     
-"""
-Module for creating object oriented representations of the LWA stations.
-"""
-
 import os
 import re
 import imp

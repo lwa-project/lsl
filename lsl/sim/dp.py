@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Module to simulate observations made with the DP system.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
-
-"""
-Module to simulate observations made with the DP system.
-"""
-
+    
 import time
 import numpy
 from aipy import coord as aipycoord

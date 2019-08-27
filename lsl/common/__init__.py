@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*
-
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
     
 """
 lsl.common - Common information for the LSL package.  Including:
@@ -19,3 +13,10 @@ lsl.common - Common information for the LSL package.  Including:
  * sdfADP        - read in and interpret ADP-compatible SDF files, and
  * metabundleADP - read in and work with ADP-compatible MCS metadata.
 """
+
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    

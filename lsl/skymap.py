@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# -*- coding: utf-8 -*-
-
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Classes and methods to model sky brightness and visibility.
 
@@ -20,6 +12,12 @@ Classes and methods to model sky brightness and visibility.
 ### This module handles the skymaps from the 74 MHz skymap.
 ### David Munton, ARL:UT Jan 2007
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
 

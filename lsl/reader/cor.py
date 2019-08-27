@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Python module to reading in data from COR files.  This module defines the 
 following classes for storing the COR data found in a file:
@@ -32,6 +26,12 @@ handle as an input and returns a fully-filled Frame object.
 .. versionadded:: 1.2.0
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import copy
 import numpy
 
@@ -116,7 +116,7 @@ class FrameData(object):
         element tuple.
         """
         
-        seconds_i = self.timetag / int(adp_common.fS)
+        seconds_i = self.timetag // int(adp_common.fS)
         seconds_f = (self.timetag % int(adp_common.fS)) / adp_common.fS
         
         return seconds_i, seconds_f

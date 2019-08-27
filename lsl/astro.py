@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Astronomical utility functions and classes based on libnova library.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""
-Astronomical utility functions and classes based on libnova library.
-"""
-
 import time
 import math
 import ephem

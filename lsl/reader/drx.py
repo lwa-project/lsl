@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Python module to read in DRX data.  This module defines the following 
 classes for storing the DRX data found in a file:
@@ -49,6 +43,12 @@ get_frames_per_obs
     Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import copy
 import numpy
 
@@ -198,7 +198,7 @@ class Frame(object):
         
         adj_timetag = self.data.timetag - self.header.time_offset
         
-        seconds_i = adj_timetag / int(dp_common.fS)
+        seconds_i = adj_timetag // int(dp_common.fS)
         seconds_f = (adj_timetag % int(dp_common.fS)) / dp_common.fS
         
         return seconds_i, seconds_f

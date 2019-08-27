@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Module for generating simulated arrays and visibility data.  The chief 
 functions of this module are:
@@ -54,6 +48,12 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
     function to be the Gaussian full width at half maximum in degrees
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import aipy
 import copy

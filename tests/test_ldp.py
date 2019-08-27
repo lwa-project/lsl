@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Unit test for the lsl.reader.ldp module.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""Unit test for lsl.reader.ldp module"""
-
 import os
 import unittest
 

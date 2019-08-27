@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Module to write VDIF frames.  The implementation of this module is similar
 to that of lsl.sim.tbw in that the primary element defined in this module is
@@ -17,6 +11,12 @@ handle.
     :mod:`lsl.sim.tbw`
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import numpy
 import ephem
 

@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    import dbm
-else:
-    import anydbm as dbm
-
 """
 Module that contains common values found in the MCS Joint Release 5 header file
 src/exec/me.h and other functions useful for working with the MCS metadata.  
@@ -49,6 +40,15 @@ The other functions:
  * Parse the binary packed metadata, 
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    import dbm
+else:
+    import anydbm as dbm
+    
 import re
 import aipy
 import math

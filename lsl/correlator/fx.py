@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main python functions in this module are:
@@ -32,6 +26,12 @@ of the data, including various window functions and time averaging.
     All of the functions here now return all 'LFFT' channels.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import ephem
 import numpy
 from astropy.constants import c as speedOfLight

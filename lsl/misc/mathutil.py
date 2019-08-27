@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Useful math functions for LWA work.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""
-Useful math functions for LWA work.
-"""
-
 import math
 import warnings
 

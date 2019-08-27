@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Module to support imaging correlated data.  This module provides utilities to 
 read FITS IDI files into :class:`lsl.imaging.data.VisibilityDataSet` or 
@@ -33,6 +27,12 @@ read FITS IDI files into :class:`lsl.imaging.data.VisibilityDataSet` or
     Fixed a conjugation problem in the visibilities read from a FITS-IDI file
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import os
 import re
 import sys

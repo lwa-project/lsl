@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Unit tests for the various LSL scripts.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""Unit test for LSL scripts."""
-
 import unittest
 import glob
 import sys

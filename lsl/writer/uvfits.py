@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    from functools import cmp_to_key
-    
 """
 Module for writing correlator output to a UVFITS file.  The classes and 
 functions defined in this module are based heavily off the lwda_fits library.
@@ -16,6 +9,13 @@ functions defined in this module are based heavily off the lwda_fits library.
     follows the MIRIAD convention.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    from functools import cmp_to_key
+    
 import os
 import gc
 import re

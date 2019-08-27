@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Module that provides a variety of overlays for all-sky images.  These overlays
 include:
@@ -23,6 +17,12 @@ is used for plotting.
     Added support for overlaying on images with non-zenith phase centers
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import aipy
 import ephem
 import numpy

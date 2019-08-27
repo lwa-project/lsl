@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
+"""
+A collection of utilities for retrieving parameters that may be relevant 
+for ionospheric corrections.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""
-A collection of utilities for retrieving parameters that may be relevant 
-for ionospheric corrections.
-"""
-
 import os
 import glob
 import gzip

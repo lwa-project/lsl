@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Python module to read in VDIF data.  This module defines the following 
 classes for storing the VIDF data found in a file:
@@ -34,6 +28,12 @@ get_thread_count
   threads are present in the file.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import copy
 from datetime import datetime
 

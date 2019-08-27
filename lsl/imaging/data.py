@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Classes to hold visibility data that are used internally with LSL.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""
-Classes to hold visibility data that are used internally with LSL.
-"""
-
 import aipy
 import copy
 import numpy

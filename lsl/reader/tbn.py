@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Python module for reading data in from TBN files.This module defines the 
 following classes for storing the TBN data found in a file:
@@ -55,6 +49,12 @@ get_frames_per_obs
     Support for ECR 11 TBN header format change.
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import copy
 import numpy
 

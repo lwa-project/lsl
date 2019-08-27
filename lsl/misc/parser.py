@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    
 """
 Module that provides argparse-compatible conversion functions for a variety 
 of value formats, including:
@@ -16,6 +10,12 @@ of value formats, including:
 .. versionadded:: 1.2.4
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 import re
 import ephem
 from argparse import ArgumentTypeError

@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+Unit test for the lsl.common.stations module.
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""Unit test for lsl.common.stations module."""
-
 import os
 import ephem
 import pickle

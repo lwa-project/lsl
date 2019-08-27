@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
+"""
+Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM) 
+files (as defined in MCS0031, v5).
+"""
+
 # Python3 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
     
-"""
-Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM) 
-files (as defined in MCS0031, v5).
-"""
-
 from lsl.common.mcsADP import summary_to_string, parse_c_struct, flat_to_multi, \
                         STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, \
                         ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_NRPD, ME_MAX_NSEP, ME_MAX_NARB, \
