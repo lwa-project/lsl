@@ -28,6 +28,9 @@ from lsl.misc import parser as aph
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 MST = pytz.timezone('US/Mountain')
 UTC = pytz.UTC

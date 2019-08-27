@@ -24,6 +24,9 @@ try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
+    
+from lsl.misc import telemetry
+telemetry.track_script()
 
 
 def main(args):

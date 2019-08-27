@@ -16,6 +16,7 @@ import sys
 import argparse
 
 from lsl.misc import telemetry
+telemetry.track_script()
 
 
 def main(args):

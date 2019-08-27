@@ -23,6 +23,9 @@ from lsl.common import stations
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
 from lsl.common import metabundle, metabundleADP
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 __version__ = "0.2"
 __revision__ = "$Rev: 941 $"

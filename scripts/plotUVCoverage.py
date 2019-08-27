@@ -24,6 +24,9 @@ from lsl.misc import parser as aph
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter,  MaxNLocator
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def main(args):
     # Setup the LWA station information

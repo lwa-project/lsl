@@ -25,6 +25,10 @@ from lsl.common import stations
 from lsl.common.paths import data as dataPath
 from lsl.misc import parser as aph
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
+
 __revision__ = "$Revision: 94 $"
 __version__  = "0.1"
 __author__    = "D.L.Wood"

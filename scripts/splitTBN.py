@@ -22,6 +22,9 @@ from lsl.reader import tbn
 from lsl.common.progress import ProgressBar
 from lsl.misc import parser as aph
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def fileSplitFunction(fhIn, fhOut, nCaptures, nAntpols):
     pb = ProgressBar(max=nCaptures)

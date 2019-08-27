@@ -23,6 +23,9 @@ from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def main(args):
     # Grab the filename

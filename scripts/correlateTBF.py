@@ -31,6 +31,9 @@ from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi
 from lsl.misc import parser as aph
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 class UTC(tzinfo):
     """tzinfo object for UTC time."""

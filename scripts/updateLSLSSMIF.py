@@ -22,6 +22,9 @@ from datetime import datetime
 
 from lsl.common.paths import data as dataPath
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 # Regular expression for finding the SSMIF version from the file contents
 versionRE = re.compile(r'(?P<year>\d{4}) (?P<month>[a-zA-Z]{3,4}) (?P<day>\d{1,2}) by (?P<author>.*)')

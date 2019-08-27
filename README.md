@@ -67,6 +67,25 @@ Unit tests for the package may be found in the 'lsl/tests' sub-directory in the 
 
     python test_lsl.py
 
+TELEMETRY
+---------
+By default LSL installs with basic telemetry enabled in order to help inform the LWA how the software is used and to help inform future 
+development.  The data collected as part of this consist seven things:
+ * a timestamp for when the report is generated,
+ * a unique installation identifier,
+ * the LSL version being used, 
+ * the execution time of the Python process that imports LSL,
+ * which LSL modules are imported,
+ * which LSL functions are used and their average execution times, and
+ * which LSL scripts are used.
+These data are sent to the LWA using a HTTP POST request where they are aggregated.
+
+Users can opt out of telemetry collection using the provided lslTelemetry.py script via:
+
+    python lslTelemetry.py --disable
+
+This command will set a disk-based flag that disables the reporting process.  This script can also be used to re-enable telemetry and check the unique installation identifier being used.
+
 DOCUMENTATION
 -------------
 See doc/README for documentation information.

@@ -28,6 +28,9 @@ from lsl.writer import fitsidi
 from lsl.common.progress import ProgressBar
 from lsl.misc import parser as aph
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 class UTC(tzinfo):
     """tzinfo object for UTC time."""

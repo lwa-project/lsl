@@ -21,6 +21,9 @@ from lsl.common import stations, metabundle, metabundleADP
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def main(args):
     # Parse command line

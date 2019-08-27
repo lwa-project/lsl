@@ -22,6 +22,9 @@ from lsl.common.mcs import mjdmpm_to_datetime, mode_to_string
 from lsl.common import metabundle, metabundleADP
 from lsl.reader import tbw, tbn, drx, errors
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def obsComp(x, y):
     """

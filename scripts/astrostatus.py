@@ -20,6 +20,10 @@ from lsl import astro
 from lsl import transform
 from lsl.common import stations
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
+
 __revision__  = "$Revision: 94 $"
 __version__   = "dev"
 __author__    = "P.S.Ray"

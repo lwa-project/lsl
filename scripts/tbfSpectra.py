@@ -25,6 +25,9 @@ from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def bestFreqUnits(freq):
     """Given a numpy array of frequencies in Hz, return a new array with the

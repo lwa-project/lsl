@@ -24,6 +24,9 @@ from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.misc import ionosphere
 from lsl.misc import parser as aph
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def main(args):
     # Inputs

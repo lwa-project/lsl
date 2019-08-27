@@ -21,6 +21,9 @@ from lsl.common import stations
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def main(args):
     # Set the station

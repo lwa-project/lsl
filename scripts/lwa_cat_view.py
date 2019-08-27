@@ -20,6 +20,9 @@ from lsl import transform
 from lsl import catalog
 from lsl.common import stations
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 __revision__  = "$Revision: 96 $"
 __version__   = "0.1"

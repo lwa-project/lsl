@@ -31,10 +31,10 @@ from functools import update_wrapper
 from lsl.version import version as lsl_version
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __revision__ = '$Rev$'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
-           'track_module',
+           'track_script', 'track_module',
            'track_function', 'track_function_timed',
            'track_method', 'track_method_timed']
 
@@ -53,7 +53,7 @@ if not os.path.exists(_INSTALL_KEY):
         fh.write(str(uuid.uuid4()))
 
 with open(_INSTALL_KEY, 'r') as fh:
-    _INSTALL_KEY = fh.read()
+    _INSTALL_KEY = fh.read().rstrip()
 
 
 class _TelemetryClient(object):
@@ -236,6 +236,18 @@ def ignore():
     _telemetry_client.ignore()
 
 
+def track_script():
+    """
+    Record the use of a LSL script.
+    """
+    
+    global _telemetry_client
+    
+    caller = inspect.currentframe().f_back
+    name = os.path.basename(caller.f_globals['__file__'])
+    _telemetry_client.track('lsl.scripts.'+name)
+
+
 def track_module():
     """
     Record the import of an LSL module.
@@ -295,7 +307,6 @@ def track_function_timed(user_function):
     return update_wrapper(wrapper, user_function)
 
 
-# Record a method call
 def track_method(user_method):
     """
     Record the use of a method in LSL with execution time information.
@@ -321,7 +332,6 @@ def track_method(user_method):
     return update_wrapper(wrapper, user_method)
 
 
-# Record a method
 def track_method_timed(user_method):
     """
     Record the use of a method in LSL with execution time information.

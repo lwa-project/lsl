@@ -16,6 +16,9 @@ import argparse
 
 from lsl.misc import wisdom
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 def main(args):
     do_fftw = True if not args.pyfftw_only else False

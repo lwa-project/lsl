@@ -20,6 +20,9 @@ import argparse
 from lsl import astro
 from lsl.common import stations
 
+from lsl.misc import telemetry
+telemetry.track_script()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
