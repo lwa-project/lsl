@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Python module to read in DRX data.  This module defines the following 
 classes for storing the DRX data found in a file:

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
-from __future__ import print_function
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
-    long = int
 
 """
 Module to simulate observations made with the DP system.
@@ -52,7 +51,7 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
     for i in xrange(nframes):
         if i % 1000 == 0 and verbose:
             print(" frame %i" % (i+1))
-        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sample_rate)
+        t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         for stand in stands:
             cFrame = tbn.SimFrame(stand=stand, pol=0, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
@@ -97,7 +96,7 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     for i in range(nframes):
         if i % 1000 == 0 and verbose:
             print(" frame %i" % i)
-        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sample_rate)
+        t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         for beam in beams:
             for tune in range(1, ntuning+1):
@@ -311,7 +310,7 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     for i in range(nframes):
         if i % 1000 == 0 and verbose:
             print(" frame %i" % (i+1))
-        t = long(start_time*dp_common.fS) + long(i*dp_common.fS*samplesPerFrame/sample_rate)
+        t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         
         # Get the source parameters

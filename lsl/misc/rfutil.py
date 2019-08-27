@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 A collection of utilities to help convert RF engineering/communications terms
 into radio astronomy terms.  This module is geared toward taking antenna 

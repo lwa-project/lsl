@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
-from __future__ import absolute_import
-
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Modules defining package tests.
 """
@@ -13,7 +16,3 @@ __author__    = "D. L. Wood"
 __maintainer__ = "Jayce Dowell"
 
 from . import test_lsl
-
-from lsl.misc import telemetry
-telemetry.track_test_suite()
-

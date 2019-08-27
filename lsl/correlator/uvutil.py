@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*
 
-# Python3 compatiability
-from __future__ import division
-
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 This module stores various functions that are needed for computing UV 
 coverage and time delays.  The functions in the module:

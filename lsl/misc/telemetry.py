@@ -33,7 +33,7 @@ from lsl.version import version as lsl_version
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
-           'track_module', 'track_test_suite', 
+           'track_module',
            'track_function', 'track_function_timed',
            'track_method', 'track_method_timed']
 
@@ -82,7 +82,7 @@ class _TelemetryClient(object):
         if os.path.exists(self._lockout_file):
             self.active = False
             
-        # Register atexit
+        # Register the "send" method to be called by atexit... at exit
         atexit.register(self.send, True)
         
     def track(self, name, timing=0.0):
@@ -114,35 +114,27 @@ class _TelemetryClient(object):
         analysis.
         """
         
-        import time
-        
-        # Special catch for lsl.tests
-        test_suite = False
-        if 'lsl.tests' in self._cache:
-            if not os.path.exists(self._lockout_file):
-                test_suite = True
-                
         success = False
         with self._lock:
-            if (self.active or test_suite) and self._cache_count > 0:
-                tNow = time.time()
-                payload = ';'.join(["%s;%i;%i;%.6f" % (name,
-                                                       self._cache[name][0],
-                                                       self._cache[name][1],
-                                                       self._cache[name][2]) for name in self._cache])
-                payload = urlencode({'timestamp'   : int(tNow),
-                                     'key'         : self.key, 
-                                     'version'     : self.version,
-                                     'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
-                                     'payload'     : payload})
+            if self.active and self._cache_count > 0:
                 try:
+                    tNow = time.time()
+                    payload = ';'.join(["%s;%i;%i;%.6f" % (name,
+                                                           self._cache[name][0],
+                                                           self._cache[name][1],
+                                                           self._cache[name][2]) for name in self._cache])
+                    payload = urlencode({'timestamp'   : int(tNow),
+                                         'key'         : self.key, 
+                                         'version'     : self.version,
+                                         'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
+                                         'payload'     : payload})
                     uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload, 
                                  timeout=self.timeout)
                     status = uh.read()
                     if status == '':
                         self.clear()
                         success = True
-                except (IOError, socket.timeout) as e:
+                except Exception as e:
                     warnings.warn("Failed to send telemetry data: %s" % str(e))
             else:
                 self.clear()
@@ -252,17 +244,6 @@ def track_module():
     
     caller = inspect.currentframe().f_back
     _telemetry_client.track(caller.f_globals['__name__'])
-
-
-def track_test_suite():
-    """
-    Record the execution of the LSL test suite but ignore all subsequent 
-    recording requests until the process exits.
-    """
-    
-    global _telemetry_client
-    _telemetry_client.track('lsl.tests')
-    _telemetry_client.ignore()
 
 
 def track_function(user_function):

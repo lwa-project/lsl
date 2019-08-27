@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module for computing spectral kurtosis both for instantaneous PSDs and spectrometer 
 output.  This module also provides functions to estimate the spectral kurtosis

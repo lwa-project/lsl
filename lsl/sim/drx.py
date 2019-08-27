@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
-    long = int
+    xrange = range
     
 """
 Python module for creating creating, validating, and writing simulated 
@@ -136,7 +137,7 @@ class SimFrame(drx.Frame):
         """
         
         self.header.frame_count = 0*self.frame_count
-        self.header.second_count = 0*long(self.obs_time / fS)
+        self.header.second_count = 0*int(self.obs_time / fS)
         self.header.decimation = self.decimation
         self.header.time_offset = self.time_offset
         self.header.drx_id = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)

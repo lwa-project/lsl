@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*
 
-"""LWA Software Library
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
+"""
+LWA Software Library
+
 Provided packages:
   * lsl.common
   * lsl.reader

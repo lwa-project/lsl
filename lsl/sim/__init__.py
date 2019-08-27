@@ -10,4 +10,10 @@ In addition, there are two simulation modules to generate fake data sets::
   * vis - generate visibility data sets for use with the aipy module
 """
 
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+
 

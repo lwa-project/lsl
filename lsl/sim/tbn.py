@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
-from __future__ import print_function
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
-    long = int
-
+    
 """
 Python module for creating creating, validating, and writing simulated 
 TBN frames to a file.
@@ -121,7 +120,7 @@ class SimFrame(tbn.Frame):
         """
         
         self.header.frame_count = self.frame_count
-        self.header.tuning_word = long( round(self.freq/fS*2**32) )
+        self.header.tuning_word = int( round(self.freq/fS*2**32) )
         self.header.tbn_id = 2*(self.stand-1) + self.pol + 1
         self.header.gain = self.gain
         

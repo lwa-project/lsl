@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
-from __future__ import print_function
-
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
+import sys
+if sys.version_info > (3,):
+    xrange = range
+    
 """
 Module for removing multi-path scattering effects in pulsar profiles.  This 
 is based on the CLEAN-like deconvolution method presented in Bhat, N., 

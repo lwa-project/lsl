@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
-from __future__ import print_function
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
-    long = int
-
+    
 """
 Module that contains all of the relevant class to build up a representation 
 of a interferometer definition file.  The hierarchy of classes is:

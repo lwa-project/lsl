@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# Python3 compatiability
-from __future__ import division
+# Python3 compatibility
+from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
-    long = int
+    xrange = range
     
 """
 Module to write VDIF frames.  The implementation of this module is similar
@@ -99,11 +99,11 @@ class Frame(object):
         # Seconds since the VDIF epoch
         epochSeconds = curEpoch - float(VDIF_EPOCH)*astro.SECS_IN_DAY
         # Integer seconds
-        self.seconds = long(epochSeconds)
+        self.seconds = int(epochSeconds)
         
         # Compute the frames since the beginning of the second
         frame = (epochSeconds - self.seconds + seconds_f) * (self.sample_rate/len(self.data))
-        self.frame = long(round(frame))
+        self.frame = int(round(frame))
 
     def create_raw_frame(self):
         """
