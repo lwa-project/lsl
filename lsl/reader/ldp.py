@@ -559,6 +559,10 @@ class TBNFile(LDPFileBase):
         .. note::
             The offset provided by this function is relatively crude due to the
             structure of TBN files.
+            
+        .. versionchanged:: 1.2.4
+            Offsets are now relative to the current location in the file rather
+            than to the start of the file
         """
         
         frameOffset = int(offset * self.description['sample_rate'] / 512 * self.description['nantenna'])
@@ -1572,6 +1576,10 @@ class TBFFile(LDPFileBase):
         .. note::
             The offset provided by this function is relatively crude due to the
             structure of TBF files.
+            
+        .. versionchanged:: 1.2.4
+            Offsets are now relative to the current location in the file rather
+            than to the start of the file
         """
         
         framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
@@ -1862,6 +1870,10 @@ class CORFile(LDPFileBase):
         .. note::
             The offset provided by this function is relatively crude due to the
             structure of COR files.
+            
+        .. versionchanged:: 1.2.4
+            Offsets are now relative to the current location in the file rather
+            than to the start of the file
         """
         
         framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
