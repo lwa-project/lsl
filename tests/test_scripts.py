@@ -62,6 +62,7 @@ def _test_generator(script):
             mtch = _LINT_RE.match(line)
             if mtch is not None:
                 line_no, type, info = mtch.group('line'), mtch.group('type'), mtch.group('info')
+                self.assertEqual(type.find('syntax'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
                 self.assertEqual(type.find('undefined'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
                 # HACK to deal with some strangeness in lwa_cat_view.py
                 if script.find('lwa_cat_view.py') == -1 or (script.find('lwa_cat_view.py') != -1 and info.find('j2000_') == -1):
