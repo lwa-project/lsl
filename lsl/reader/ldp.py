@@ -565,6 +565,18 @@ class TBNFile(LDPFileBase):
             than to the start of the file
         """
         
+        # Find out where we really are taking into account the buffering
+        buffer_offset = 0
+        if self._timetag is not None:
+            curr = self.buffer.peek()
+            if curr is None:
+                frame = tbn.read_frame(self.fh)
+                self.fh.seek(-tbn.FRAME_SIZE, 1)
+                curr = frame.data.time_time
+            buffer_offset = curr - self._timetag
+            buffer_offset = buffer_offset / fS
+            
+        offset = offset - buffer_offset
         frameOffset = int(offset * self.description['sample_rate'] / 512 * self.description['nantenna'])
         frameOffset = int(1.0 * frameOffset / self.description['nantenna']) * self.description['nantenna']
         self.fh.seek(frameOffset*tbn.FRAME_SIZE, 1)
@@ -873,11 +885,17 @@ class DRXFile(LDPFileBase):
         returns the exact offset time.
         """
         
+        # Figure out how far we need to offset inside the file
         junkFrame = drx.read_frame(self.fh)
         self.fh.seek(-drx.FRAME_SIZE, 1)
         
         # Get the initial time, sample rate, and beampols
         ti0, tf0 = junkFrame.time
+        if self._timetag is not None:
+            curr = self.buffer.peek()
+            if curr is not None:
+                ti0 = (curr - junkFrame.header.timeOffset) // int(fS)
+                tf0 = ((curr - junkFrame.header.timeOffset) % int(fS)) / fS
         sample_rate = junkFrame.sample_rate
         beampols = drx.get_frames_per_obs(self.fh)
         beampols = reduce(int.__add__, beampols)
@@ -1164,6 +1182,15 @@ class DRSpecFile(LDPFileBase):
         """
         Ready the DRSpec file.
         """
+        
+        # Align on the start of a Mark5C packet...
+        while True:
+            try:
+                junkFrame = drspec.read_frame(self.fh)
+                break
+            except errors.syncError:
+                self.fh.seek(1, 1)
+        self.fh.seek(-drspec.get_frame_size(self.fh), 1)
         
         return True
         
@@ -1582,6 +1609,18 @@ class TBFFile(LDPFileBase):
             than to the start of the file
         """
         
+        # Find out where we really are taking into account the buffering
+        buffer_offset = 0
+        if self._timetag is not None:
+            curr = self.buffer.peek()
+            if curr is None:
+                frame = tbf.read_frame(self.fh)
+                self.fh.seek(-tbf.FRAME_SIZE, 1)
+                curr = frame.data.time_tag
+            buffer_offset = curr - self._timetag
+            buffer_offset = buffer_offset / fS
+            
+        offset = offset - buffer_offset
         framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frameOffset = int(offset * self.description['sample_rate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
@@ -1876,6 +1915,18 @@ class CORFile(LDPFileBase):
             than to the start of the file
         """
         
+        # Find out where we really are taking into account the buffering
+        buffer_offset = 0
+        if self._timetag is not None:
+            curr = self.buffer.peek()
+            if curr is None:
+                frame = cor.read_frame(self.fh)
+                self.fh.seek(-cor.FRAME_SIZE, 1)
+                curr = frame.data.time_tag
+            buffer_offset = curr - self._timetag
+            buffer_offset = buffer_offset / fS
+            
+        offset = offset - buffer_offset
         framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
         frameOffset = int(offset / self.description['tint'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs

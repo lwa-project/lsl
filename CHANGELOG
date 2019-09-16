@@ -10,6 +10,8 @@
   * Added support for reading CASA measurement sets with multiple spectral windows
   * Added test suites for CASA measurement set support when the 'casacore' module is found
   * Added support for astorpy.units.quantity.Quantity instances to lsl.misc.rfutil
+  * Updated the AIPY version requirement to >=3.0.1
+  * Updated the scipy version requirement to >=0.19
   * Removed lsl.misc.mathutil.savitzky_golay since it was added in scipy v0.14.0+
   * Added support for collecting usage data for LSL via lsl.misc.telemetry
   
@@ -21,8 +23,8 @@
   * Added an option to use the new PFB in drxSpectra, tbnSpectra, and tbwSpectra
   * Added support for proper motions to the IDF format
   * Added support for storing source intentions in the CALCODE field in FITS IDI files
-  * Updated the AIPY version requirement to >=3.0.1
-  * Updated the scipy version requirement to >=0.19
+  * Modified the offset method in lsl.reader.ldp to take into account the frame buffers
+  * Added support to the lsl.reader.ldp.DRSpecFile object for jumping over bad data at the start of a file
 
 1.2.4
   * Fixed a bug in driftcurve.py that put a cos(decliation) correction into the LFSM runs
