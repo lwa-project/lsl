@@ -867,7 +867,12 @@ class Session(object):
                 if verbose:
                     print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
                 failures += 1
-                
+            if len(self.observations) > 0:
+                if self.observations[0].mode in ('TBW', 'TBN'):
+                    if verbose:
+                        print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
+                    failures += 1
+                    
         # Validate beam number
         if len(self.observations) > 0:
             if self.observations[0].mode not in ('TBW', 'TBN'):
