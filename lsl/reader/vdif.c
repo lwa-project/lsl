@@ -410,7 +410,8 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
         
         Py_XDECREF(data);
         
-        data = tempArrayComplex;		
+        data = tempArrayComplex;
+        nSamples /= 2;
     }
     
     // Reshape to deal with multi-channel data... someday
