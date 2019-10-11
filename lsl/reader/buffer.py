@@ -835,10 +835,10 @@ class VDIFFrameBuffer(FrameBuffer):
     def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For VIDF this is:
-        seconds_from_epoch * 100000 + frame_in_second
+        seconds_from_epoch * 1000000 + frame_in_second
         """
         
-        return frame.header.seconds_from_epoch*100000 + frame.header.frame_in_second
+        return frame.header.seconds_from_epoch*1000000 + frame.header.frame_in_second
         
     def create_fill(self, key, frameParameters):
         """
