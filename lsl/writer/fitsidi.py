@@ -209,7 +209,7 @@ class WriterBase(object):
         # Valid time string (modulo the 'T')
         timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
         
-        if type(ref_time) in (int, long, float):
+        if type(ref_time) in (int, float):
             refDateTime = datetime.utcfromtimestamp(ref_time)
             ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
         elif type(ref_time) == datetime:
