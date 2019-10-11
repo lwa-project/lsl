@@ -24,7 +24,7 @@ try:
     from urllib import urlencode
 except ImportError:
     from urllib.request import urlopen
-    from urllib.parser import urlencode
+    from urllib.parse import urlencode
 from threading import RLock
 from functools import update_wrapper
 
