@@ -30,7 +30,10 @@ from datetime import datetime, timedelta
 from astropy.constants import R_earth
 
 from scipy.special import lpmv
-from scipy.misc import factorial
+try:
+    from scipy.misc import factorial
+except ImportError:
+    from scipy.special import factorial
 from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
 
