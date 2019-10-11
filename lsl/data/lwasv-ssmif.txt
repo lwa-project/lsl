@@ -1,7 +1,9 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
-# 2018 Jul 26 by. J. Dowell
+# 2019 Oct 11 by J. Dowell
+#  Updated the list of bad stands after monsoon season 2019
+# 2018 Jul 26 by J. Dowell
 #  Updated the list of bad stands after the 7/20 and 7/26 site trips
 #  Bad count: 7; Suspect count: 10
 # 2018 Mar 3 by J. Dowell
@@ -862,23 +864,26 @@ STD_LZ[256]   +10.244
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-ANT_STAT[30]      2     # 15Y - high on 7/26
-ANT_STAT[36]      2     # 18Y
-ANT_STAT[81]      1     # 41X - high; ARX or ADP implicated
-ANT_STAT[159]     1     # 80X - high; ARX or ADP implicated
+ANT_STAT[82]      1     # 41Y - dead on 10/10
+ANT_STAT[184]     1     # 92Y - dead on 10/10
+ANT_STAT[215]     1     # 108X - wonky at high frequencies on 10/10
 ANT_STAT[219]     2     # 110X
 ANT_STAT[240]     2     # 120Y
 ANT_STAT[265]     1     # 133X - low; ARX or ADP implicated
+ANT_STAT[268]     1     # 134Y - dead on 10/10
 ANT_STAT[272]     1     # 136Y - low; ARX or ADP implicated
 ANT_STAT[283]     2     # 142X
+ANT_STAT[300]     1     # 150Y - low on 10/10
 ANT_STAT[325]     2     # 163X
-ANT_STAT[389]     2     # 195X
 ANT_STAT[390]     2     # 195Y
 ANT_STAT[405]     2     # 203X
 ANT_STAT[407]     2     # 204X
+ANT_STAT[425]     2     # 213X - wonky at high frequencies on 10/10
 ANT_STAT[426]     1     # 213Y - low; ARX or ADP implicated
-ANT_STAT[434]     1     # 217Y - high; ARX or ADP implicated
+ANT_STAT[434]     1     # 217Y - high; ARX or ADP implicated - junky at high frequencies on 10/10
+ANT_STAT[436]     1     # 218Y - really low on 10/10
 ANT_STAT[457]     1     # 229X - low; ARX or ADP implicated
+ANT_STAT[458]     1     # 229Y - dead on 10/10
 
 # -------------------------------
 # --- Antenna mis-orientation ---
