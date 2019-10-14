@@ -568,7 +568,7 @@ class TBNFile(LDPFileBase):
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if self._timetag is not None:
-            curr = self.buffer.peek()
+            curr = self.buffer.peek(require_filled=False)
             if curr is None:
                 frame = tbn.read_frame(self.fh)
                 self.fh.seek(-tbn.FRAME_SIZE, 1)
@@ -892,7 +892,7 @@ class DRXFile(LDPFileBase):
         # Get the initial time, sample rate, and beampols
         ti0, tf0 = junkFrame.time
         if self._timetag is not None:
-            curr = self.buffer.peek()
+            curr = self.buffer.peek(require_filled=False)
             if curr is not None:
                 ti0 = (curr - junkFrame.header.timeOffset) // int(fS)
                 tf0 = ((curr - junkFrame.header.timeOffset) % int(fS)) / fS
@@ -1612,7 +1612,7 @@ class TBFFile(LDPFileBase):
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if self._timetag is not None:
-            curr = self.buffer.peek()
+            curr = self.buffer.peek(require_filled=False)
             if curr is None:
                 frame = tbf.read_frame(self.fh)
                 self.fh.seek(-tbf.FRAME_SIZE, 1)
@@ -1918,7 +1918,7 @@ class CORFile(LDPFileBase):
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if self._timetag is not None:
-            curr = self.buffer.peek()
+            curr = self.buffer.peek(require_filled=False)
             if curr is None:
                 frame = cor.read_frame(self.fh)
                 self.fh.seek(-cor.FRAME_SIZE, 1)

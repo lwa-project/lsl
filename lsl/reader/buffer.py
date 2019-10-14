@@ -187,7 +187,7 @@ class FrameBuffer(object):
         .. versionadded:: 1.2.4
         """
         
-        return False if len(self.buffer) < self.nsegments - 1 else True
+        return False if len(self.buffer) < self.nsegments else True
         
     @property
     def overfilled(self):
@@ -272,16 +272,17 @@ class FrameBuffer(object):
         
         self.append(*args, **kwds)
         
-    def peek(self):
+    def peek(self, require_filled=True):
         """
         Peek into the buffer to see what the next key to be retruned by a 
-        call to get() will be.  Returns None if the buffer is not full.
+        call to get() will be.  Returns None if the buffer is not full and
++        `required_filled` is True.
         
         .. versionadded:: 1.2.4
         """
         
         # If the ring is not full, return nothing
-        if not self.filled:
+        if required_filled and not self.filled:
             return None
             
         # Get the current status of the buffer
