@@ -132,10 +132,11 @@ class FrameHeader(object):
                 sample_rate *= 1e6 if eud['sample_rate_units'] == 'MHz' else 1e3
             
                 ## How many samples are in each frame?
-                dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		# 8-byte chunks -> bytes - full header + legacy offset
-                samplesPerWord = 32 // self.bits_per_sample					# dimensionless
-                nSamples = dataSize // 4 * samplesPerWord					# bytes -> words -> samples
-            
+                dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		     # 8-byte chunks -> bytes - full header + legacy offset
+                samplesPerWord = 32 // self.bits_per_sample					     # dimensionless
+                nSamples = dataSize // 4 * samplesPerWord					     # bytes -> words -> data samples
+                nSamples = nSamples / self.nchan / (2 if self.is_complex else 1) # data samples -> time samples
+                
                 ## What is the frame rate?
                 frameRate = sample_rate // nSamples
                 
@@ -147,15 +148,16 @@ class FrameHeader(object):
         else:
             # Use what we already have been told
             ## How many samples are in each frame?
-            dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		# 8-byte chunks -> bytes - full header + legacy offset
-            samplesPerWord = 32 // self.bits_per_sample				# dimensionless
-            nSamples = dataSize // 4 * samplesPerWord				# bytes -> words -> samples
+            dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		     # 8-byte chunks -> bytes - full header + legacy offset
+            samplesPerWord = 32 // self.bits_per_sample				         # dimensionless
+            nSamples = dataSize // 4 * samplesPerWord				         # bytes -> words -> samples
+            nSamples = nSamples / self.nchan / (2 if self.is_complex else 1) # data samples -> time samples
         
             ## What is the frame rate?
             frameRate = self.sample_rate // nSamples
             
             frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
-
+            
         # Convert from MJD to UNIX time
         if frameMJD_f > 1:
             frameMJD_i += 1
