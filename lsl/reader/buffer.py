@@ -286,7 +286,10 @@ class FrameBuffer(object):
             
         # Get the current status of the buffer
         keys = list(self.buffer.keys())
-        keyToReturn = min(keys)
+        try:
+            keyToReturn = min(keys)
+        except ValueError:
+            keyToReturn = None
         return keyToReturn
         
     def get(self, keyToReturn=None):
