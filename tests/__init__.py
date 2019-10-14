@@ -15,6 +15,9 @@ __version__   = "0.3"
 __author__    = "D. L. Wood"
 __maintainer__ = "Jayce Dowell"
 
+# Path adjustment
+import os
+sys.path.insert(1, os.path.dirname(__file__))
 
 from lsl.misc import telemetry
 telemetry.ignore()

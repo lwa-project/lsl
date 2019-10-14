@@ -15,46 +15,46 @@ import unittest
 from lsl.misc import telemetry
 telemetry.ignore()
 
-from . import test_paths
-from . import test_astro
-from . import test_skymap
-from . import test_transform
-from . import test_mathutil
-from . import test_necutil
-from . import test_catalog
-from . import test_dp
-from . import test_stations
-from . import test_robust
-from . import test_stattests
-from . import test_reader
-from . import test_reader_adp
-from . import test_buffer
-from . import test_ldp
-from . import test_ldp_adp
-from . import test_uvutil
-from . import test_fx
-from . import test_filterbank
-from . import test_fakedata
-from . import test_simdp
-from . import test_simvis
-from . import test_fitsidi
-from . import test_uvfits
-from . import test_sdfits
-from . import test_vdif
-from . import test_measurementset
-from . import test_beamformer
-from . import test_imaging
-from . import test_progress
-from . import test_busy
-from . import test_mcs
-from . import test_mcs_adp
-from . import test_sdf
-from . import test_sdf_adp
-from . import test_meta
-from . import test_meta_adp
-from . import test_parser
-from . import test_scripts
-from . import test_idf
+import test_paths
+import test_astro
+import test_skymap
+import test_transform
+import test_mathutil
+import test_necutil
+import test_catalog
+import test_dp
+import test_stations
+import test_robust
+import test_stattests
+import test_reader
+import test_reader_adp
+import test_buffer
+import test_ldp
+import test_ldp_adp
+import test_uvutil
+import test_fx
+import test_filterbank
+import test_fakedata
+import test_simdp
+import test_simvis
+import test_fitsidi
+import test_uvfits
+import test_sdfits
+import test_vdif
+import test_measurementset
+import test_beamformer
+import test_imaging
+import test_progress
+import test_busy
+import test_mcs
+import test_mcs_adp
+import test_sdf
+import test_sdf_adp
+import test_meta
+import test_meta_adp
+import test_parser
+import test_scripts
+import test_idf
 
 
 __revision__  = "$Rev$"
