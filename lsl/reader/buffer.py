@@ -276,13 +276,13 @@ class FrameBuffer(object):
         """
         Peek into the buffer to see what the next key to be retruned by a 
         call to get() will be.  Returns None if the buffer is not full and
-+        `required_filled` is True.
++        `require_filled` is True.
         
         .. versionadded:: 1.2.4
         """
         
         # If the ring is not full, return nothing
-        if required_filled and not self.filled:
+        if require_filled and not self.filled:
             return None
             
         # Get the current status of the buffer
