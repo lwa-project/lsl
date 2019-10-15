@@ -468,7 +468,7 @@ class Run(object):
         self.corr_inttime = corr_inttime
         self.corr_channels = corr_channels
         self.corr_basis = corr_basis
-        self.stations = stations
+        self.stations = list(set(stations))
         
     def set_stations(self, stations):
         """
