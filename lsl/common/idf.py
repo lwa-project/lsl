@@ -259,7 +259,7 @@ class Project(object):
         ## Run Information
         output = "%sRUN_ID           %s\n" % (output, ses.id)
         output = "%sRUN_TITLE        %s\n" % (output, 'None provided' if ses.name is None else ses.name)
-        output = "%sRUN_STATIONS     %s\n" % (output, ','.join([station.id for station in ses.stations]))
+        output = "%sRUN_STATIONS     %s\n" % (output, ','.join([station.id for station in list(set(ses.stations))]))
         output = "%sRUN_CHANNELS     %i\n" % (output, ses.corr_channels)
         output = "%sRUN_INTTIME      %.3f\n" % (output, ses.corr_inttime)
         output = "%sRUN_BASIS        %s\n" % (output, ses.corr_basis)
@@ -480,7 +480,7 @@ class Run(object):
         for i,station in enumerate(stations):
             if not isinstance(station, LWAStation):
                 raise TypeError("Expected index %i to be an LWAStation" % i)
-        self.stations = stations
+        self.stations = list(set(stations))
         self.update()
         
     def append(self, newScan):
@@ -1251,18 +1251,19 @@ def parse_idf(filename, verbose=False):
             project.runs[0].name = value
             continue
         if keyword == 'RUN_STATIONS':
-            project.runs[0].stations = []
+            use_stations = []
             possible = get_full_stations()
             for field in value.split(','):
                 field = field.strip().rstrip()
                 if field.lower() == 'all':
-                    run.stations = possible
+                    use_stations = copy.deepcopy(possible)
                     break
                 else:
                     for station in possible:
                         if station.id == field:
-                            run.stations.append(station)
+                            use_stations.append(station)
                             break
+            project.runs[0].stations  = list(set(use_stations))
         if keyword == 'RUN_CHANNELS':
             project.runs[0].corr_channels = int(value)
             continue
