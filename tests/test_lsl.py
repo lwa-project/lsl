@@ -97,7 +97,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_uvfits.uvfits_test_suite())
         self.addTest(test_sdfits.sdfits_test_suite())
         self.addTest(test_vdif.vdif_test_suite())
-        self.addTest(test_measurementset.measurement_test_suite())
+        self.addTest(test_measurementset.measurementset_test_suite())
         self.addTest(test_beamformer.beamformer_test_suite())
         self.addTest(test_imaging.imaging_test_suite())
         self.addTest(test_progress.progress_test_suite())
