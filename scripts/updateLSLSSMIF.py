@@ -100,7 +100,7 @@ def main(args):
     # Current LSL SSMIF
     if args.lwasv:
         _name = 'LWA-SV'
-        _ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+        _ssmif = os.path.join(dataPath, 'lwasv-ssmif.txt')
         _url = "https://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
     else:
         _name = 'LWA1'
