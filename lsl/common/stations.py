@@ -113,7 +113,7 @@ class LWAStationBase(object):
         if antennas is None:
             self._antennas = []
         else:
-            self._antennas = antennas
+            self._antennas = list(antennas)
         self._sort_order = ''
         self._sort_antennas()
         
@@ -232,9 +232,10 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return str(self)
         
     def __reduce__(self):
-        return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, self.antennas, self.interface))
+        return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, tuple(self.antennas), self.interface))
         
     def __hash__(self):
+        
         return hash(self.__reduce__()[1])
         
     def compute(self, body):
