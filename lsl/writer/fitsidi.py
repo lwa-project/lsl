@@ -374,7 +374,7 @@ class Idi(WriterBase):
         """
         
         # File-specific information
-        super(Idi, self).__init__(filename, ref_time=ref_time, verbose=verbose)
+        WriterBase.__init__(self, filename, ref_time=ref_time, verbose=verbose)
         
         # Open the file and get going
         if os.path.exists(filename):

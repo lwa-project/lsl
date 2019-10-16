@@ -264,7 +264,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         fill in the metadata.
         """
         
-        super(CorrelatedDataIDI, self).__init__(filename)
+        CorrelatedDataBase.__init__(self, filename)
         
         # Open the file, check if it looks like FITS IDI, and pull out the UV_DATA table
         hdulist = astrofits.open(self.filename)
@@ -592,7 +592,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
         fill in the metadata.
         """
         
-        super(CorrelatedDataUV, self).__init__(filename)
+        CorrelatedDataBase.__init__(self, filename)
         
         # Open the various tables that we need
         hdulist = astrofits.open(filename)
@@ -869,7 +869,7 @@ try:
             in the metadata.
             """
             
-            super(CorrelatedDataMS, self).__init__(filename)
+            CorrelatedDataBase.__init__(self, filename)
             
             if not os.path.isdir(self.filename) and tarfile.is_tarfile(self.filename):
                 # LASI generate compressed tarballs that contain the MS.  Deal with 

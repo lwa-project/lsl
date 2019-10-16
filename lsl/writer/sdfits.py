@@ -88,7 +88,7 @@ class Sd(WriterBase):
         """
 
         # File-specific information
-        super(Sd, self).__init__(filename, ref_time=ref_time, verbose=verbose)
+        WriterBase.__init__(self, filename, ref_time=ref_time, verbose=verbose)
         
         # Observation-specific information
         self.site = lwa1

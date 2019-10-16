@@ -108,7 +108,7 @@ class SimFrame(tbn.Frame):
             Added support for ECR 11 TBN headers
         """
         
-        super(SimFrame, self).__init__()
+        tbn.Frame.__init__(self)
         self.stand = stand
         self.pol = pol
         self.freq = central_freq

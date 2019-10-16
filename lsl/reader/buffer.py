@@ -481,7 +481,7 @@ class TBNFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, stands=[], pols=[0, 1], nsegments=20, reorder=False):
-        super(TBNFrameBuffer, self).__init__(mode='TBN', stands=stands, pols=pols, nsegments=nsegments, reorder=reorder)
+        FrameBuffer.__init__(self, mode='TBN', stands=stands, pols=pols, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -577,7 +577,7 @@ class DRXFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nsegments=20, reorder=False):
-        super(DRXFrameBuffer, self).__init__(mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
+        FrameBuffer.__init__(self, mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -664,7 +664,7 @@ class TBFFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, chans, nsegments=25, reorder=False):
-        super(TBFFrameBuffer, self).__init__(mode='TBF', chans=chans, nsegments=nsegments, reorder=reorder)
+        FrameBuffer.__init__(self, mode='TBF', chans=chans, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -745,7 +745,7 @@ class CORFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, chans, nsegments=5, reorder=False):
-        super(CORFrameBuffer, self).__init__(mode='COR', stands=list(range(1,256+1)), chans=chans, nsegments=nsegments, reorder=reorder)
+        FrameBuffer.__init__(self, mode='COR', stands=list(range(1,256+1)), chans=chans, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -818,7 +818,7 @@ class VDIFFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, threads=[0,1], nsegments=10, reorder=False):
-        super(VDIFFrameBuffer, self).__init__(mode='VDIF', threads=threads, nsegments=nsegments, reorder=reorder)
+        FrameBuffer.__init__(self, mode='VDIF', threads=threads, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """

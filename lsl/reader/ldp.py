@@ -138,7 +138,7 @@ class LDPFileBase(object):
     def __getattr__(self, name):
         ## Try to access the attribute as a real attribute
         try:
-            return super(LDPFileBase, self).__getattr__(name)
+            return LDPFileBase.__getattr__(self, name)
         except AttributeError:
             pass
             

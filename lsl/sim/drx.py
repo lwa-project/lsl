@@ -122,7 +122,7 @@ class SimFrame(drx.Frame):
             obs_time now in samples at fS, not seconds
         """
         
-        super(SimFrame, self).__init__()
+        drx.Frame.__init__(self)
         self.beam = beam
         self.tune = tune
         self.pol = pol
