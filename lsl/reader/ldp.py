@@ -31,6 +31,7 @@ import os
 import copy
 import numpy
 import warnings
+from textwrap import fill as tw_fill
 from scipy.stats import norm
 from collections import deque, defaultdict
 
@@ -150,6 +151,19 @@ class LDPFileBase(object):
             
     def __str__(self):
         return "%s @ %s" % (self.__name__, self.filename)
+        
+    def __repr__(self):
+        n = self.__class__.__name__
+        a = [('filename',repr(self.filename)),
+             ('ignore_timetag_errors',self.ignore_timetag_errors)]
+        a.extend([(attr,self.get_info(attr)) for attr in self.description])
+        output = "<%s" % n
+        first = True
+        for key,value in a:
+            output += "%s %s=%s" % (('' if first else ','), key, value)
+            first = False
+        output += ">"
+        return tw_fill(output, subsequent_indent='    ')
         
     def _ready_file(self):
         """

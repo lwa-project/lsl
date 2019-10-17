@@ -23,6 +23,7 @@ __all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase']
 
 
 def _build_repr(name, attrs=[]):
+    name = '.'.join(name.split('.')[-2:])
     output = "<%s" % name
     first = True
     for key,value in attrs:
