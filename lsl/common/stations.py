@@ -148,6 +148,9 @@ class LWAStationBase(object):
     def antennas(self, antennas):
         if not isinstance(antennas, list):
             raise TypeError("Expected a list")
+        for i,antenna in enumerate(antennas):
+            if not isinstance(antenna, Antenna):
+                raise TypeError("Expected index %i to be an Antenna" % i)
         self._antennas = antennas
         
         # Fix the sorting
