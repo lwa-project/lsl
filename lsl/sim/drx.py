@@ -77,8 +77,8 @@ def frame_to_frame(drx_frame):
     rawFrame[30] = (drx_frame.payload.flags>>8) & 255
     rawFrame[31] = drx_frame.payload.flags & 255
     ## Data
-    i = drx_frame.payload.iq.real
-    q = drx_frame.payload.iq.imag
+    i = drx_frame.payload.data.real
+    q = drx_frame.payload.data.imag
     ### Round, clip, and convert to unsigned integers
     i = i.round()
     i = i.clip(-8, 7)
@@ -175,7 +175,7 @@ class SimFrame(drx.Frame):
         ## Data
         self.obs_time = self.payload.timetag
         self.flags = self.payload.flags
-        self.iq = self.payload.iq
+        self.iq = self.payload.data
     
     def is_valid(self, raise_errors=False):
         """
@@ -210,22 +210,22 @@ class SimFrame(drx.Frame):
                 raise ValueError("Invalid polarization: '%s'" % tune)
             return False
 
-        # Is there data loaded into frame.payload.iq?
-        if self.payload.iq is None:
+        # Is there data loaded into frame.payload.data?
+        if self.payload.data is None:
             if raise_errors:
-                raise ValueError("Invalid data payload: '%s'" % self.payload.iq)
+                raise ValueError("Invalid data payload: '%s'" % self.payload.data)
             return False
 
         # Does the data length make sense?
-        if self.payload.iq.shape[0] != 4096:
+        if self.payload.data.shape[0] != 4096:
             if raise_errors:
-                raise ValueError("Invalid data length: %i", self.payload.iq.shape[0])
+                raise ValueError("Invalid data length: %i", self.payload.data.shape[0])
             return False
 
         # Does the data type make sense?
-        if self.payload.iq.dtype.kind != 'c':
+        if self.payload.data.dtype.kind != 'c':
             if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.payload.iq.dtype.kind)
+                raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
 
         # If we made it this far, it's valid

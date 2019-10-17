@@ -102,10 +102,6 @@ class FramePayload(FramePayloadBase):
         FramePayloadBase.__init__(self, fDomain)
         
     @property
-    def fDomain(self):
-        return self._data
-        
-    @property
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch

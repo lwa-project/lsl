@@ -144,10 +144,6 @@ class FramePayload(FramePayloadBase):
         FramePayloadBase.__init__(self, iq)
         
     @property
-    def iq(self):
-        return self._data
-        
-    @property
     def central_freq(self):
         """
         Function to set the central frequency of the DRX data in Hz.

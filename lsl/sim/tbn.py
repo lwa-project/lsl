@@ -66,7 +66,7 @@ def frame_to_frame(tbn_frame):
     rawFrame[22] = (tbn_frame.payload.timetag>>8) & 255
     rawFrame[23] = tbn_frame.payload.timetag & 255
     ## Data
-    iq = tbn_frame.payload.iq
+    iq = tbn_frame.payload.data
     ### Round and convert to unsigned integers
     iq = numpy.round(iq)
     if iq.dtype == numpy.complex128:
@@ -148,7 +148,7 @@ class SimFrame(tbn.Frame):
         self.frame_count = self.header.frame_count
         ## Data
         self.obs_time = self.payload.timetag
-        self.iq = self.payload.iq
+        self.iq = self.payload.data
     
     def is_valid(self, raise_errors=False):
         """
@@ -173,22 +173,22 @@ class SimFrame(tbn.Frame):
                 raise ValueError("Invalid polarization: '%s'" % tune)
             return False
 
-        # Is there data loaded into frame.payload.iq?
-        if self.payload.iq is None:
+        # Is there data loaded into frame.payload.data?
+        if self.payload.data is None:
             if raise_errors:
-                raise ValueError("Invalid data payload: '%s'" % self.payload.iq)
+                raise ValueError("Invalid data payload: '%s'" % self.payload.data)
             return False
 
         # Does the data length make sense?
-        if self.payload.iq.shape[0] != 512:
+        if self.payload.data.shape[0] != 512:
             if raise_errors:
-                raise ValueError("Invalid data length: %i", self.payload.iq.shape[0])
+                raise ValueError("Invalid data length: %i", self.payload.data.shape[0])
             return False
 
         # Does the data type make sense?
-        if self.payload.iq.dtype.kind != 'c':
+        if self.payload.data.dtype.kind != 'c':
             if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.payload.iq.dtype.kind)
+                raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
 
         # If we made it this far, it's valid

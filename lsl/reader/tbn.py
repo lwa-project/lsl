@@ -172,10 +172,6 @@ class FramePayload(FramePayloadBase):
         FramePayloadBase.__init__(self, iq)
         
     @property
-    def iq(self):
-        return self._data
-        
-    @property
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch

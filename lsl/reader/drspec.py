@@ -227,6 +227,16 @@ class FramePayload(FramePayloadBase):
         FramePayloadBase.__init__(self, None)
         
     @property
+    def data(self):
+        packed = []
+        for p in ('XX', 'XY', 'YX', 'YY', 'I', 'Q', 'U', 'V'):
+            for t in (0, 1):
+                sub = getattr(self, "%s%i" % (p, t), None)
+                if sub is not None:
+                    packed.append(sub)
+        return numpy.array(packed, dtype=packed[0].dtype)
+        
+    @property
     def central_freq(self):
         """
         Function to set the central frequency of the DRX data in Hz.

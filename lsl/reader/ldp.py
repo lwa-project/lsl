@@ -482,8 +482,8 @@ class TBWFile(LDPFileBase):
                     
             try:
                 cnt = cFrame.header.frame_count - 1
-                data[aStandX, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.xy[0,:]
-                data[aStandY, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.xy[1,:]
+                data[aStandX, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.data[0,:]
+                data[aStandY, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.data[1,:]
                 
                 i += 1
             except ValueError:
@@ -707,7 +707,7 @@ class TBNFile(LDPFileBase):
                     else:
                         setTime = sum(cFrame.time)
                         
-                data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.iq
+                data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -734,7 +734,7 @@ class TBNFile(LDPFileBase):
                         else:
                             setTime = sum(cFrame.time)
                         
-                    data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.iq
+                    data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
                     count[aStand] += 1
                 nFrameSets += 1
                 
@@ -779,7 +779,7 @@ class TBNFile(LDPFileBase):
                 s,p = cFrame.id
                 aStand = 2*(s-1) + p
                 
-                data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.iq )
+                data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.data )
                 count[aStand] +=  1
         self.fh.seek(-tbn.FRAME_SIZE*self.description['nantenna']*nframes, 1)
         
@@ -1058,7 +1058,7 @@ class DRXFile(LDPFileBase):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
                             baseframe = copy.deepcopy(cFrames[0])
                             baseframe.payload.timeTag = m
-                            baseframe.payload.iq *= 0
+                            baseframe.payload.data *= 0
                             self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
@@ -1082,7 +1082,7 @@ class DRXFile(LDPFileBase):
                     else:
                         setTime = sum(cFrame.time)
                         
-                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.iq
+                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
                 count[aStand] +=  1
                 self._timetag[aStand] = cTimetag
             nFrameSets += 1
@@ -1110,7 +1110,7 @@ class DRXFile(LDPFileBase):
                         else:
                             setTime = sum(cFrame.time)
                             
-                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.iq
+                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
                     count[aStand] +=  1
                     self._timetag[aStand] = cTimetag
                 nFrameSets += 1
@@ -1162,7 +1162,7 @@ class DRXFile(LDPFileBase):
                 b,t,p = cFrame.id
                 aStand = 2*(t-1) + p
                 
-                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.payload.iq )
+                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.payload.data )
                 count[aStand] +=  1
         self.fh.seek(-drx.FRAME_SIZE*self.description['beampols']*nframes, 1)
         
@@ -1756,7 +1756,7 @@ class TBFFile(LDPFileBase):
                     else:
                         setTime = sum(cFrame.time)
                         
-                subData = cFrame.payload.fDomain
+                subData = cFrame.payload.data
                 subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
                 subData = subData.T
                 
@@ -1789,7 +1789,7 @@ class TBFFile(LDPFileBase):
                         else:
                             setTime = sum(cFrame.time)
                         
-                    subData = cFrame.payload.fDomain
+                    subData = cFrame.payload.data
                     subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
                     subData = subData.T
                     
@@ -2066,7 +2066,7 @@ class CORFile(LDPFileBase):
                 aBase = self.bmapperd[cFrame.id]
                 aChan = self.cmapperd[first_chan]
                 aStand = aBase*len(self.cmapper) + aChan
-                data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.vis
+                data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.data
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -2097,7 +2097,7 @@ class CORFile(LDPFileBase):
                     aBase = self.bmapperd[cFrame.id]
                     aChan = self.cmapperd[first_chan]
                     aStand = aBase*len(self.cmapper) + aChan
-                    data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.vis
+                    data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.data
                     count[aStand] += 1
                 nFrameSets += 1
                 

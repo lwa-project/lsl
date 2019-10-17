@@ -111,10 +111,6 @@ class FramePayload(FramePayloadBase):
         FramePayloadBase.__init__(self, vis)
         
     @property
-    def vis(self):
-        return self._data
-        
-    @property
     def id(self):
         """
         Return a tuple of the two stands that contribute the this frame.

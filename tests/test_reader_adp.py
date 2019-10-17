@@ -117,19 +117,19 @@ class reader_adp_tests(unittest.TestCase):
             c = i // 2 // 256
             s = i // 2 % 256
             p = i % 2
-            self.assertAlmostEqual(frameT.payload.fDomain[c,s,p], 2*frames[0].payload.fDomain[c,s,p], 2)
+            self.assertAlmostEqual(frameT.payload.data[c,s,p], 2*frames[0].payload.data[c,s,p], 2)
         frameT *= 2.0
         for i in range(12*256*2):
             c = i // 2 // 256
             s = i // 2 % 256
             p = i % 2
-            self.assertAlmostEqual(frameT.payload.fDomain[c,s,p], 4*frames[0].payload.fDomain[c,s,p], 2)
+            self.assertAlmostEqual(frameT.payload.data[c,s,p], 4*frames[0].payload.data[c,s,p], 2)
         frameT = frames[0] * frames[1]
         for i in range(12*256*2):
             c = i // 2 // 256
             s = i // 2 % 256
             p = i % 2
-            self.assertAlmostEqual(frameT.payload.fDomain[c,s,p], frames[0].payload.fDomain[c,s,p]*frames[1].payload.fDomain[c,s,p], 2)
+            self.assertAlmostEqual(frameT.payload.data[c,s,p], frames[0].payload.data[c,s,p]*frames[1].payload.data[c,s,p], 2)
             
         # Addition
         frameA = frames[0] + 2.0
@@ -137,19 +137,19 @@ class reader_adp_tests(unittest.TestCase):
             c = i // 2 // 256
             s = i // 2 % 256
             p = i % 2
-            self.assertAlmostEqual(frameA.payload.fDomain[c,s,p], 2+frames[0].payload.fDomain[c,s,p], 2)
+            self.assertAlmostEqual(frameA.payload.data[c,s,p], 2+frames[0].payload.data[c,s,p], 2)
         frameA += 2.0
         for i in range(800):
             c = i // 2 // 256
             s = i // 2 % 256
             p = i % 2
-            self.assertAlmostEqual(frameA.payload.fDomain[c,s,p], 4+frames[0].payload.fDomain[c,s,p], 2)
+            self.assertAlmostEqual(frameA.payload.data[c,s,p], 4+frames[0].payload.data[c,s,p], 2)
         frameA = frames[0] + frames[1]
         for i in range(800):
             c = i // 2 // 256
             s = i // 2 % 256
             p = i % 2
-            self.assertAlmostEqual(frameA.payload.fDomain[c,s,p], frames[0].payload.fDomain[c,s,p]+frames[1].payload.fDomain[c,s,p], 2)
+            self.assertAlmostEqual(frameA.payload.data[c,s,p], frames[0].payload.data[c,s,p]+frames[1].payload.data[c,s,p], 2)
             
      ### COR ###
     
@@ -262,34 +262,34 @@ class reader_adp_tests(unittest.TestCase):
         for i in range(72):
             for j in xrange(2):
                 for k in xrange(2):
-                    self.assertAlmostEqual(frameT.payload.vis[i,j,k], 2*frames[0].payload.vis[i,j,k], 2)
+                    self.assertAlmostEqual(frameT.payload.data[i,j,k], 2*frames[0].payload.data[i,j,k], 2)
         frameT *= 2.0
         for i in range(72):
             for j in xrange(2):
                 for k in xrange(2):
-                    self.assertAlmostEqual(frameT.payload.vis[i,j,k], 4*frames[0].payload.vis[i,j,k], 2)
+                    self.assertAlmostEqual(frameT.payload.data[i,j,k], 4*frames[0].payload.data[i,j,k], 2)
         frameT = frames[0] * frames[1]
         for i in range(72):
             for j in xrange(2):
                 for k in xrange(2):
-                    self.assertAlmostEqual(frameT.payload.vis[i,j,k], frames[0].payload.vis[i,j,k]*frames[1].payload.vis[i,j,k], 2)
+                    self.assertAlmostEqual(frameT.payload.data[i,j,k], frames[0].payload.data[i,j,k]*frames[1].payload.data[i,j,k], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(72):
             for j in xrange(2):
                 for k in xrange(2):
-                    self.assertAlmostEqual(frameA.payload.vis[i,j,k], 2+frames[0].payload.vis[i,j,k], 2)
+                    self.assertAlmostEqual(frameA.payload.data[i,j,k], 2+frames[0].payload.data[i,j,k], 2)
         frameA += 2.0
         for i in range(72):
             for j in xrange(2):
                 for k in xrange(2):
-                    self.assertAlmostEqual(frameA.payload.vis[i,j,k], 4+frames[0].payload.vis[i,j,k], 2)
+                    self.assertAlmostEqual(frameA.payload.data[i,j,k], 4+frames[0].payload.data[i,j,k], 2)
         frameA = frames[0] + frames[1]
         for i in range(72):
             for j in xrange(2):
                 for k in xrange(2):
-                    self.assertAlmostEqual(frameA.payload.vis[i,j,k], frames[0].payload.vis[i,j,k]+frames[1].payload.vis[i,j,k], 2)
+                    self.assertAlmostEqual(frameA.payload.data[i,j,k], frames[0].payload.data[i,j,k]+frames[1].payload.data[i,j,k], 2)
             
         
 

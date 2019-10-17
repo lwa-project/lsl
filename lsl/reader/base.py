@@ -55,6 +55,10 @@ class FramePayloadBase(object):
             a.append(('dtype',str(self._data.dtype)))
             a.append(('shape',str(self._data.shape)))
         return tw_fill(_build_repr(n,a), subsequent_indent='    ')
+        
+    @property
+    def data(self):
+        return self._data
 
 
 class FrameBase(object):

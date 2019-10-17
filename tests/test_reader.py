@@ -130,24 +130,24 @@ class reader_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameT.payload.xy[i%2, i//2], 2*frames[0].payload.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameT.payload.data[i%2, i//2], 2*frames[0].payload.data[i%2, i//2], 2)
         frameT *= 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameT.payload.xy[i%2, i//2], 4*frames[0].payload.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameT.payload.data[i%2, i//2], 4*frames[0].payload.data[i%2, i//2], 2)
         frameT = frames[0] * frames[1]
         for i in range(800):
-            self.assertAlmostEqual(frameT.payload.xy[i%2, i//2], frames[0].payload.xy[i%2, i//2]*frames[1].payload.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameT.payload.data[i%2, i//2], frames[0].payload.data[i%2, i//2]*frames[1].payload.data[i%2, i//2], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameA.payload.xy[i%2, i//2], 2+frames[0].payload.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameA.payload.data[i%2, i//2], 2+frames[0].payload.data[i%2, i//2], 2)
         frameA += 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameA.payload.xy[i%2, i//2], 4+frames[0].payload.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameA.payload.data[i%2, i//2], 4+frames[0].payload.data[i%2, i//2], 2)
         frameA = frames[0] + frames[1]
         for i in range(800):
-            self.assertAlmostEqual(frameA.payload.xy[i%2, i//2], frames[0].payload.xy[i%2, i//2]+frames[1].payload.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameA.payload.data[i%2, i//2], frames[0].payload.data[i%2, i//2]+frames[1].payload.data[i%2, i//2], 2)
             
     ### TBN ###
     
@@ -252,24 +252,24 @@ class reader_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameT.payload.iq[i], 2*frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.data[i], 2*frames[0].payload.data[i], 2)
         frameT *= 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameT.payload.iq[i], 4*frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.data[i], 4*frames[0].payload.data[i], 2)
         frameT = frames[0] * frames[1]
         for i in range(512):
-            self.assertAlmostEqual(frameT.payload.iq[i], frames[0].payload.iq[i]*frames[1].payload.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.data[i], frames[0].payload.data[i]*frames[1].payload.data[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameA.payload.iq[i], 2+frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.data[i], 2+frames[0].payload.data[i], 2)
         frameA += 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameA.payload.iq[i], 4+frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.data[i], 4+frames[0].payload.data[i], 2)
         frameA = frames[0] + frames[1]
         for i in range(512):
-            self.assertAlmostEqual(frameA.payload.iq[i], frames[0].payload.iq[i]+frames[1].payload.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.data[i], frames[0].payload.data[i]+frames[1].payload.data[i], 2)
             
     ### TBW/TBN Mix-up ###
     
@@ -405,24 +405,24 @@ class reader_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameT.payload.iq[i], 2*frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.data[i], 2*frames[0].payload.data[i], 2)
         frameT *= 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameT.payload.iq[i], 4*frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.data[i], 4*frames[0].payload.data[i], 2)
         frameT = frames[0] * frames[1]
         for i in range(4096):
-            self.assertAlmostEqual(frameT.payload.iq[i], frames[0].payload.iq[i]*frames[1].payload.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.data[i], frames[0].payload.data[i]*frames[1].payload.data[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameA.payload.iq[i], 2+frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.data[i], 2+frames[0].payload.data[i], 2)
         frameA += 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameA.payload.iq[i], 4+frames[0].payload.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.data[i], 4+frames[0].payload.data[i], 2)
         frameA = frames[0] + frames[1]
         for i in range(4096):
-            self.assertAlmostEqual(frameA.payload.iq[i], frames[0].payload.iq[i]+frames[1].payload.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.data[i], frames[0].payload.data[i]+frames[1].payload.data[i], 2)
             
     ### DR Spectrometer ###
     
@@ -440,6 +440,13 @@ class reader_tests(unittest.TestCase):
         beam = frame2.id
         self.assertEqual(beam, 1)
         fh.close()
+        
+        # The special "data" attribute
+        data = frame2.payload.data
+        self.assertEqual(len(data.shape), 3)
+        self.assertEqual(data.shape[0], 2)
+        self.assertEqual(data.shape[1], 2)
+        self.assertEqual(data.shape[2], 1024)
         
     def test_drspec_errors(self):
         """Test reading in all frames from a truncated DR spectrometer file."""
