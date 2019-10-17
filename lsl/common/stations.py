@@ -18,6 +18,7 @@ import copy
 import numpy
 import ephem
 import struct
+from textwrap import fill as tw_fill
 from functools import total_ordering
 from astropy.constants import c as speedOfLight
 
@@ -93,6 +94,16 @@ def ecef_to_geo(x, y, z):
     return lat, lon, elev
 
 
+def _build_repr(name, attrs=[]):
+    output = "<%s" % name
+    first = True
+    for key,value in attrs:
+        output += "%s %s=%s" % (('' if first else ','), key, value)
+        first = False
+    output += ">"
+    return output
+
+
 class LWAStationBase(object):
     """
     Base object to hold information about the a LWA station.  Stores station:
@@ -120,13 +131,12 @@ class LWAStationBase(object):
         if interface is None:
             self.interface = LSLInterface()
         else:
+            if not isinstance(interface, LSLInterface):
+                raise TypeError("Expected 'interface' to be a LSLInterface")
             self.interface = interface
             
     def __str__(self):
         return "%s (%s) with %i antennas" % (self.name, self.id, len(self.antennas))
-        
-    def __repr__(self):
-        return str(self)
         
     def __reduce__(self):
         return (LWAStationBase, (self.name, self.id, tuple(self.antennas), self.interface))
@@ -232,13 +242,23 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
         
     def __repr__(self):
-        return str(self)
+        n = self.__class__.__name__
+        a = [(attr, getattr(self, attr, None)) for attr in ('id', 'name', 'lat', 'long', 'elev', 'pressure', 'horizon', 
+                                                            'antennas', 'interface')]
+        for i,(key,value) in enumerate(a):
+            if key in ('antennas',):
+                a[i] = (key, '[...]')
+            elif key in ('interface',):
+                value = repr(value).replace(',\n    ', ', ')
+                a[i] = (key, value)
+        a[0] = (a[0][0], repr(a[0][1]))
+        a[1] = (a[1][0], repr(a[1][1]))
+        return tw_fill(_build_repr(n, a), subsequent_indent='    ')
         
     def __reduce__(self):
         return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, tuple(self.antennas), self.interface))
         
     def __hash__(self):
-        
         return hash(self.__reduce__()[1])
         
     def compute(self, body):
@@ -294,8 +314,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         """
         
         return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
-                        [1.0, 0.0,                  0.0], 
-                        [0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
+                            [1.0, 0.0,                  0.0], 
+                            [0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
                         
     def get_eci_inverse_transform(self):
         """
@@ -305,8 +325,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         """
         
         return numpy.array([[ 0.0,                 1.0, 0.0                ],
-                        [-numpy.sin(self.lat), 0.0, numpy.cos(self.lat)],
-                        [ numpy.cos(self.lat), 0.0, numpy.sin(self.lat)]])
+                            [-numpy.sin(self.lat), 0.0, numpy.cos(self.lat)],
+                            [ numpy.cos(self.lat), 0.0, numpy.sin(self.lat)]])
                         
     def get_enz_offset(self, locTo):
         """
@@ -359,8 +379,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         rho = ecefTo - ecefFrom
         rot = numpy.array([[ numpy.sin(self.lat)*numpy.cos(self.long), numpy.sin(self.lat)*numpy.sin(self.long), -numpy.cos(self.lat)], 
-                        [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
-                        [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
+                           [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
+                           [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
         sez = numpy.dot(rot, rho)
         
         d = numpy.sqrt( (rho**2).sum() )
@@ -414,7 +434,7 @@ class Antenna(object):
      * Antenna vertical mis-alignment in degrees (theta)
      * Antenna rotation mis-alignment in degrees (phi)
      * Fee instance the antenna is attached to (fee)
-     * Port of the FEE used for the antenna (feePort)
+     * Port of the FEE used for the antenna (fee_port)
      * Cable instance used to connect the antenna (cable)
      * Status of the antenna (status)
     
@@ -428,11 +448,13 @@ class Antenna(object):
         Added an attribute to hold the DP rack input connector label.
     """
     
-    def __init__(self, id, arx=None, board=0, digitizer=0, input='', stand=None, pol=0, theta=0.0, phi=0.0, fee=None, feePort=1, cable=None, status=0):
+    def __init__(self, id, arx=None, board=0, digitizer=0, input='', stand=None, pol=0, theta=0.0, phi=0.0, fee=None, fee_port=1, cable=None, status=0):
         self.id = int(id)
         if arx is None:
             self.arx = ARX(0, 0, 0)
         else:
+            if not isinstance(arx, ARX):
+                raise TypeError("Expected 'arx' to be an ARX")
             self.arx = arx
         self.board = int(board)
         self.digitizer = int(digitizer)
@@ -441,6 +463,8 @@ class Antenna(object):
         if stand is None:
             self.stand = Stand(0, 0, 0, 0)
         else:
+            if not isinstance(stand, Stand):
+                raise TypeError("Expected 'stand' to be a Stand")
             self.stand = stand
             
         self.pol = int(pol)
@@ -450,12 +474,16 @@ class Antenna(object):
         if fee is None:
             self.fee = FEE('', 0)
         else:
+            if not isinstance(fee, FEE):
+                raise TypeError("Expected 'fee' to be a FEE")
             self.fee = fee
-        self.feePort = feePort
+        self.fee_port = fee_port
         
         if cable is None:
             self.cable = Cable('', 0)
         else:
+            if not isinstance(cable, Cable):
+                raise TypeError("Expected 'cable' to be a Cable")
             self.cable = cable
             
         self.status = int(status)
@@ -463,8 +491,18 @@ class Antenna(object):
     def __str__(self):
         return "Antenna %i: stand=%i, polarization=%i; digitizer %i; status is %i" % (self.id, self.stand.id, self.pol, self.digitizer, self.status)
         
+    def __repr__(self):
+        n = self.__class__.__name__
+        a = [(attr, getattr(self, attr, None)) for attr in ('id', 'arx', 'board', 'digitizer', 'input', 'stand', 'pol', 
+                                                            'theta', 'phi', 'fee', 'fee_port', 'cable', 'status')]
+        for i,(key,value) in enumerate(a):
+            if key in ('arx', 'input', 'stand', 'fee', 'cable'):
+                value = repr(value).replace(',\n    ', ', ')
+                a[i] = (key, value)
+        return tw_fill(_build_repr(n, a), subsequent_indent='    ')
+        
     def __reduce__(self):
-        return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.input, self.stand, self.pol, self.theta, self.phi, self.fee, self.feePort, self.cable, self.status))
+        return (Antenna, (self.id, self.arx, self.board, self.digitizer, self.input, self.stand, self.pol, self.theta, self.phi, self.fee, self.fee_port, self.cable, self.status))
         
     def __hash__(self):
         return hash(self.__reduce__()[1])
@@ -555,6 +593,11 @@ class Stand(object):
     def __str__(self):
         return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
         
+    def __repr__(self):
+        n = self.__class__.__name__
+        a = [(attr, getattr(self, attr, None)) for attr in ('x','y','z')]
+        return tw_fill(_build_repr(n, a), subsequent_indent='    ')
+        
     def __reduce__(self):
         return (Stand, (self.id, self.x, self.y, self.z))
         
@@ -613,7 +656,7 @@ class FEE(object):
     """
     Object to store the information about a FEE.  Stores FEE:
      * ID name (id)
-     * ID number (idNumber)
+     * ID number (id_number)
      * Gain of port 1 (gain1)
      * Gain of part 2 (gain2)
      * Status (status)
@@ -625,9 +668,9 @@ class FEE(object):
      * 3 == OK
     """
     
-    def __init__(self, id, idNumber, gain1=0, gain2=0, status=0):
+    def __init__(self, id, id_number, gain1=0, gain2=0, status=0):
         self.id = str(id)
-        self.idNumber = int(idNumber)
+        self.id_number = int(id_number)
         self.gain1 = float(gain1)
         self.gain2 = float(gain2)
         self.status = int(status)
@@ -635,8 +678,14 @@ class FEE(object):
     def __str__(self):
         return "FEE '%s': gain1=%.2f, gain2=%.2f; status is %i" % (self.id, self.gain1, self.gain2, self.status)
         
+    def __repr__(self):
+        n = self.__class__.__name__
+        a = [(attr, getattr(self, attr, None)) for attr in ('id', 'id_number', 'gain1', 'gain2', 'status')]
+        a[0] = (a[0][0], repr(a[0][1]))
+        return tw_fill(_build_repr(n, a), subsequent_indent='    ')
+        
     def __reduce__(self):
-        return (FEE, (self.id, self.idNumber, self.gain1, self.gain2, self.status))
+        return (FEE, (self.id, self.id_number, self.gain1, self.gain2, self.status))
         
     def __hash__(self):
         return hash(self.__reduce__()[1])
@@ -688,16 +737,16 @@ class Cable(object):
      * Dispersive delay (seconds, dd)
      * Gain term that goes as the square root of frequency (a0)
      * Gain term that goes as frequency (a1)
-     * Gain term reference frequency (Hz, aFreq)
+     * Gain term reference frequency (Hz, ref_freq)
      * Cable length stretch factor (stretch)
-     * Clock offset (seconds, clockOffset)
+     * Clock offset (seconds, clock_offset)
     
     The object also as a functional attribute named 'delay' that computes the
     cable delay for a particular frequency or collection of frequencies in 
     Hz.
     """
     
-    def __init__(self, id, length, vf=0, dd=0, a0=0.00428, a1=0.00000, aFreq=10e6, stretch=1.0):
+    def __init__(self, id, length, vf=0, dd=0, a0=0.00428, a1=0.00000, ref_freq=10e6, stretch=1.0):
         self.id = str(id)
         self.length = float(length)
         self.stretch = float(stretch)
@@ -705,14 +754,20 @@ class Cable(object):
         self.dd = float(dd)
         self.a0 = float(a0)
         self.a1 = float(a1)
-        self.aFreq = float(aFreq)
-        self.clockOffset = 0.0
+        self.ref_freq = float(ref_freq)
+        self.clock_offset = 0.0
         
     def __str__(self):
         return "Cable '%s' with length %.2f m (stretched to %.2f m)" % (self.id, self.length, self.length*self.stretch)
         
+    def __repr__(self):
+        n = self.__class__.__name__
+        a = [(attr, getattr(self, attr, None)) for attr in ('id', 'length', 'stretch', 'vf', 'dd', 'a0', 'a1', 'ref_freq', 'clock_offset')]
+        a[0] = (a[0][0], repr(a[0][1]))
+        return tw_fill(_build_repr(n, a), subsequent_indent='    ')
+        
     def __reduce__(self):
-        return (Cable, (self.id, self.length, self.vf, self.dd, self.a0, self.a1, self.aFreq, self.stretch))
+        return (Cable, (self.id, self.length, self.vf, self.dd, self.a0, self.a1, self.ref_freq, self.stretch))
         
     def __hash__(self):
         return hash(self.__reduce__()[1])
@@ -736,14 +791,14 @@ class Cable(object):
         Add a clock offset (in seconds) to the cable model.
         """
         
-        self.clockOffset = float(offset)
+        self.clock_offset = float(offset)
         
     def clear_clock_offset(self):
         """
         Clear the clock offset of the cable model.
         """
         
-        self.clockOffset = 0.0
+        self.clock_offset = 0.0
         
     def delay(self, frequency=49e6, ns=False):
         """Get the delay associated with the cable in second (or nanoseconds 
@@ -754,9 +809,9 @@ class Cable(object):
         bulkDelay = self.length*self.stretch / (self.vf * speedOfLight)
         
         # Dispersion delay
-        dispDelay = self.dd * (self.length*self.stretch / 100.0) / numpy.sqrt(frequency / numpy.array(self.aFreq))
+        dispDelay = self.dd * (self.length*self.stretch / 100.0) / numpy.sqrt(frequency / numpy.array(self.ref_freq))
         
-        totlDelay = bulkDelay + dispDelay + self.clockOffset
+        totlDelay = bulkDelay + dispDelay + self.clock_offset
         
         if ns:
             return totlDelay*1e9
@@ -773,8 +828,8 @@ class Cable(object):
             Added the `dB' keyword to allow dB to be returned.
         """
     
-        atten = 2 * self.a0 * self.length*self.stretch * numpy.sqrt(frequency / numpy.array(self.aFreq)) 
-        atten += self.a1 * self.length*self.stretch * (frequency / numpy.array(self.aFreq))
+        atten = 2 * self.a0 * self.length*self.stretch * numpy.sqrt(frequency / numpy.array(self.ref_freq)) 
+        atten += self.a1 * self.length*self.stretch * (frequency / numpy.array(self.ref_freq))
         atten = numpy.exp(atten)
         
         if dB:
@@ -822,7 +877,7 @@ class ARX(object):
     Object to store information about a ARX board/channel combination.  Stores ARX:
      * ID name (id)
      * Channel number (channel; 1-16)
-     * ASP channel number (aspChannel; 1-520)
+     * ASP channel number (asp_channel; 1-520)
      * ASP rack input connector label (input)
      * ASP rack output connector label (output)
     
@@ -835,18 +890,25 @@ class ARX(object):
         labels.
     """
     
-    def __init__(self, id, channel=0, aspChannel=0, input='', output=''):
+    def __init__(self, id, channel=0, asp_channel=0, input='', output=''):
         self.id = id
         self.channel = int(channel)
-        self.aspChannel = int(aspChannel)
+        self.asp_channel = int(asp_channel)
         self.input = input
         self.output = output
         
     def __str__(self):
-        return "ARX Board %s, channel %i (ASP Channel %i)" % (self.id, self.channel, self.aspChannel)
+        return "ARX Board %s, channel %i (ASP Channel %i)" % (self.id, self.channel, self.asp_channel)
+        
+    def __repr__(self):
+        n = self.__class__.__name__
+        a = [(attr, getattr(self, attr, None)) for attr in ('id', 'channel', 'asp_channel', 'input', 'output')]
+        a[-2] = (a[-2][0], repr(a[-2][1]))
+        a[-1] = (a[-1][0], repr(a[-1][1]))
+        return tw_fill(_build_repr(n, a), subsequent_indent='    ')
         
     def __reduce__(self):
-        return (ARX, (self.id, self.channel, self.aspChannel, self.input, self.output))
+        return (ARX, (self.id, self.channel, self.asp_channel, self.input, self.output))
         
     def __hash__(self):
         return hash(self.__reduce__()[1])
@@ -944,6 +1006,11 @@ class LSLInterface(object):
     def __str__(self):
         return "LSL Interfaces:\n Backend: %s\n MCS: %s\n SDF: %s\n Metadata: %s\n SDM: %s" % \
                 (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm)
+        
+    def __repr__(self):
+        n = self.__class__.__name__
+        a = [(attr, repr(getattr(self, attr, None))) for attr in ('backend', 'mcs', 'sdf', 'metabundle', 'sdm')]
+        return tw_fill(_build_repr(n, a), subsequent_indent='    ')
         
     def __reduce__(self):
         return (LSLInterface, (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm))
@@ -1703,8 +1770,8 @@ def parse_ssmif(filename):
     # Build up a list of Cable instances and load them with data
     i = 1
     cables = []
-    for id,length,vf,dd,a0,a1,stretch,aFreq in zip(rpdID, rpdLeng, rpdVF, rpdDD, rpdA0, rpdA1, rpdStr, rpdFre):
-        cables.append(Cable(id, length, vf=vf/100.0, dd=float(dd)*1e-9, a0=a0, a1=a1, aFreq=aFreq, stretch=stretch))
+    for id,length,vf,dd,a0,a1,stretch,ref_freq in zip(rpdID, rpdLeng, rpdVF, rpdDD, rpdA0, rpdA1, rpdStr, rpdFre):
+        cables.append(Cable(id, length, vf=vf/100.0, dd=float(dd)*1e-9, a0=a0, a1=a1, ref_freq=ref_freq, stretch=stretch))
         i += 1
     
     # Build up a list of Antenna instances and load them with antenna-level
@@ -1719,12 +1786,12 @@ def parse_ssmif(filename):
     i = 1
     for fee,ant in zip(fees, feeAnt1):
         antennas[ant-1].fee = fee
-        antennas[ant-1].feePort = 1
+        antennas[ant-1].fee_port = 1
         i += 1
     i = 1
     for fee,ant in zip(fees, feeAnt2):
         antennas[ant-1].fee = fee
-        antennas[ant-1].feePort = 2
+        antennas[ant-1].fee_port = 2
         i += 1
     
     # Associate Cables with Antennas
@@ -1742,7 +1809,7 @@ def parse_ssmif(filename):
             
             boardID = arxID[i]
             channel = j + 1
-            antennas[ant-1].arx = ARX(boardID, channel=channel, aspChannel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
+            antennas[ant-1].arx = ARX(boardID, channel=channel, asp_channel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
             
     if isDP:
         # Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
