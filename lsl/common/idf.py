@@ -66,6 +66,8 @@ __all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar'
 _UTC = pytz.utc
 _DRSUCapacityTB = 10
 
+_MAX_ALT_PHASE_CENTERS = 10
+
 
 class Observer(object):
     """Class to hold information about an observer."""
@@ -76,8 +78,13 @@ class Observer(object):
         self.last = last
         self.id = int(id)
         
+    def __str__(self):
+        return "%s (#%i)" % (self.name, self.id)
+        
     def __repr__(self):
-        return "<Observer name=%s, id=%i>" % (self.name, self.id)
+        return "<%s.%s name='%s', id=%i>" % (self.__class__.__module__,
+                                             self.__class__.__name__,
+                                             self.name, self.id)
         
     def join_name(self):
         if self.first != '':
@@ -141,6 +148,9 @@ class Project(object):
                 raise TypeError("Expected 'projectOffice' to be a ProjectOffice")
             self.projectOffice = projectOffice
             
+    def __str__(self):
+        return "%s: %s with %i run(s) for %s" % (self.id, self.name, len(self.runs), str(self.observer))
+        
     def update(self):
         """Update the various runs that are part of this project."""
         
@@ -472,6 +482,9 @@ class Run(object):
         self.corr_channels = corr_channels
         self.corr_basis = corr_basis
         self.stations = stations
+        
+    def __str__(self):
+        return "%i: %s with %i scans and correlator setup:\n  channels: %i\n  int. time: %f\n  basis: %s\n  stations: %s" % (self.id, self.name, len(self.scans), self.corr_channels, self.corr_inttime, self.corr_basis, " ".join([s.id for s in self.stations]))
         
     def set_stations(self, stations):
         """
@@ -889,7 +902,7 @@ class Scan(object):
             failures += 1
             
         # Advanced - alternate phase centers
-        if len(self.alt_phase_centers) > 5:
+        if len(self.alt_phase_centers) > _MAX_ALT_PHASE_CENTERS:
             if verbose:
                 print("[%i] Error: too many alternate phase centers defined" % os.getpid())
             failures += 1

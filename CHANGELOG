@@ -25,6 +25,7 @@
   * Added support for storing source intentions in the CALCODE field in FITS IDI files
   * Modified the offset method in lsl.reader.ldp to take into account the frame buffers
   * Added support to the lsl.reader.ldp.DRSpecFile object for jumping over bad data at the start of a file
+  * Improved support for complex and multi-channel VDIF data
 
 1.2.4
   * Fixed a bug in driftcurve.py that put a cos(decliation) correction into the LFSM runs
