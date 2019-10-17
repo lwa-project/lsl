@@ -129,7 +129,7 @@ class LWAStationBase(object):
         return str(self)
         
     def __reduce__(self):
-        return (LWAStationBase, (self.name, self.id, self.antennas, self.interface))
+        return (LWAStationBase, (self.name, self.id, tuple(self.antennas), self.interface))
         
     def __iter__(self):
         return self.antennas.__iter__()
