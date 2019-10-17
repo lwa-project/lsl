@@ -135,7 +135,7 @@ def main(args):
                 aStand = mapper.index(first_chan)
             
             # Actually load the data.
-            spec[aStand*12:aStand*12+12,:,:] += numpy.abs(cFrame.payload.fDomain)**2
+            spec[aStand*12:aStand*12+12,:,:] += numpy.abs(cFrame.payload.data)**2
             norm[aStand*12:aStand*12+12,:,:] += 1
             
     spec /= norm
