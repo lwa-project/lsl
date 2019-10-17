@@ -46,7 +46,7 @@ typedef struct {
 
 typedef struct {
     TBWHeader header;
-    TBWPayload data;
+    TBWPayload payload;
 } TBWFrame;
 #pragma pack(pop)
 
@@ -55,8 +55,8 @@ PyObject *tbw_method = NULL;
 PyObject *tbw_size   = NULL;
 
 
-PyObject *readTBW(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
+PyObject *read_tbw(PyObject *self, PyObject *args) {
+    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data4, *data12;
     int i;
     TBWFrame cFrame;
@@ -107,7 +107,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
     cFrame.header.frame_count_word = __bswap_32(cFrame.header.frame_count_word);
     cFrame.header.second_count = __bswap_32(cFrame.header.second_count);
     cFrame.header.tbw_id = __bswap_16(cFrame.header.tbw_id);
-    cFrame.data.timetag = __bswap_64(cFrame.data.timetag);
+    cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
     
     // Fill the data array
     if(cFrame.header.bits == 0) {
@@ -115,11 +115,11 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
         short int *a;
         a = (short int *) PyArray_DATA(data12);
         for(i=0; i<400; i++) {
-            tempR = (cFrame.data.bytes[3*i]<<4) | ((cFrame.data.bytes[3*i+1]>>4)&15);
+            tempR = (cFrame.payload.bytes[3*i]<<4) | ((cFrame.payload.bytes[3*i+1]>>4)&15);
             tempR -= ((tempR&2048)<<1);
             *(a + i) = (short int) tempR;
 
-            tempR = ((cFrame.data.bytes[3*i+1]&15)<<8) | cFrame.data.bytes[3*i+2];
+            tempR = ((cFrame.payload.bytes[3*i+1]&15)<<8) | cFrame.payload.bytes[3*i+2];
             tempR -= ((tempR&2048)<<1);
             *(a + 400 + i) = (short int) tempR;
         }
@@ -128,7 +128,7 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
         short int *a;
         a = (short int *) PyArray_DATA(data4);
         for(i=0; i<1200; i++) {
-            fp = tbw4LUT[ cFrame.data.bytes[i] ];
+            fp = tbw4LUT[ cFrame.payload.bytes[i] ];
             *(a + i) = (short int) fp[0];
             *(a + 1200 + i) = (short int) fp[1];
         }
@@ -145,7 +145,6 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
     // Save the data to the frame object
     // 1.  Header
     fHeader = PyObject_GetAttrString(frame, "header");
-    
     temp = PyLong_FromUnsignedLong(cFrame.header.frame_count);
     PyObject_SetAttrString(fHeader, "frame_count", temp);
     Py_XDECREF(temp);
@@ -159,25 +158,25 @@ PyObject *readTBW(PyObject *self, PyObject *args) {
     Py_XDECREF(temp);
     
     // 2. Data
-    fData = PyObject_GetAttrString(frame, "data");
+    fPayload = PyObject_GetAttrString(frame, "payload");
     
-    temp = PyLong_FromUnsignedLongLong(cFrame.data.timetag);
-    PyObject_SetAttrString(fData, "timetag", temp);
+    temp = PyLong_FromUnsignedLongLong(cFrame.payload.timetag);
+    PyObject_SetAttrString(fPayload, "timetag", temp);
     Py_XDECREF(temp);
     
     if(cFrame.header.bits == 0) {
-        PyObject_SetAttrString(fData, "xy", PyArray_Return(data12));
+        PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data12));
     } else {
-        PyObject_SetAttrString(fData, "xy", PyArray_Return(data4));
+        PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data4));
     }
     
     // 3. Frame
     PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "data", fData);
+    PyObject_SetAttrString(frame, "payload", fPayload);
     output = Py_BuildValue("O", frame);
     
     Py_XDECREF(fHeader);
-    Py_XDECREF(fData);
+    Py_XDECREF(fPayload);
     Py_XDECREF(data4);
     Py_XDECREF(data12);
     
@@ -190,7 +189,7 @@ fail:
     return NULL;
 }
 
-char readTBW_doc[] = PyDoc_STR(\
-"Function to read in a single TBW frame (header+data) and store the contents\n\
+char read_tbw_doc[] = PyDoc_STR(\
+"Function to read in a single TBW frame (header+payload) and store the contents\n\
 as a Frame object.\n\
 ");

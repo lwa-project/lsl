@@ -46,7 +46,7 @@ typedef struct {
 
 typedef struct {
     TBNHeader header;
-    TBNPayload data;
+    TBNPayload payload;
 } TBNFrame;
 #pragma pack(pop)
 
@@ -55,8 +55,8 @@ PyObject *tbn_method = NULL;
 PyObject *tbn_size   = NULL;
 
 
-PyObject *readTBN(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
+PyObject *read_tbn(PyObject *self, PyObject *args) {
+    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data;
     int i;
     TBNFrame cFrame;
@@ -106,13 +106,13 @@ PyObject *readTBN(PyObject *self, PyObject *args) {
     cFrame.header.tuning_word = __bswap_32(cFrame.header.tuning_word);
     cFrame.header.tbn_id = __bswap_16(cFrame.header.tbn_id);
     cFrame.header.gain= __bswap_16(cFrame.header.gain);
-    cFrame.data.timetag = __bswap_64(cFrame.data.timetag);
+    cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
     
     // Fill the data array
     float complex *a;
     a = (float complex *) PyArray_DATA(data);
     for(i=0; i<512; i++) {
-        *(a + i) = tbnLUT[ cFrame.data.bytes[2*i+0] ] + _Complex_I * tbnLUT[ cFrame.data.bytes[2*i+1] ];
+        *(a + i) = tbnLUT[ cFrame.payload.bytes[2*i+0] ] + _Complex_I * tbnLUT[ cFrame.payload.bytes[2*i+1] ];
     }
     
     Py_END_ALLOW_THREADS
@@ -145,27 +145,27 @@ PyObject *readTBN(PyObject *self, PyObject *args) {
     Py_XDECREF(temp);
     
     // 2. Data
-    fData = PyObject_GetAttrString(frame, "data");
+    fPayload = PyObject_GetAttrString(frame, "payload");
     
-    temp = PyLong_FromUnsignedLongLong(cFrame.data.timetag);
-    PyObject_SetAttrString(fData, "timetag", temp);
+    temp = PyLong_FromUnsignedLongLong(cFrame.payload.timetag);
+    PyObject_SetAttrString(fPayload, "timetag", temp);
     Py_XDECREF(temp);
     
-    PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
+    PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data));
     
     // 3. Frame
     PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "data", fData);
+    PyObject_SetAttrString(frame, "payload", fPayload);
     output = Py_BuildValue("O", frame);
     
     Py_XDECREF(fHeader);
-    Py_XDECREF(fData);
+    Py_XDECREF(fPayload);
     Py_XDECREF(data);
     
     return output;
 }
 
-char readTBN_doc[] = PyDoc_STR(\
-"Function to read in a single TBN frame (header+data) and store the contents\n\
+char read_tbn_doc[] = PyDoc_STR(\
+"Function to read in a single TBN frame (header+payload) and store the contents\n\
 as a Frame object.\n\
 ");

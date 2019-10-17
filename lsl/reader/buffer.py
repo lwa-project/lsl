@@ -11,7 +11,7 @@ Buffer for dealing with out-of-order/missing frames.
     
 .. versionchanged:: 1.0.0
     Added back in the DRX FrameBuffers since they might be useful.
-    Dropped TBW support from within the FrameBuffer class.
+    Dropped TBW support from within the FrameBufferBase class.
     
 .. versionchanged:: 1.0.2
     Added support for the LWA-SV ADP DRX8 mode
@@ -39,7 +39,7 @@ telemetry.track_module()
 
 __version__ = '1.2'
 __revision__ = '$Rev$'
-__all__ = ['FrameBuffer', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer']
+__all__ = ['FrameBufferBase', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer']
 
 
 def _cmp_frames(x, y):
@@ -79,7 +79,7 @@ def _cmp_frames(x, y):
         return 0
     
 
-class FrameBuffer(object):
+class FrameBufferBase(object):
     """
     Frame buffer for re-ordering TBN and DRX frames in time order.  
     This class is filled with frames and a returns a frame list when 
@@ -205,7 +205,7 @@ class FrameBuffer(object):
         the setup of the observations and a list of tuples that describes
         all of the possible stand/pol combination.
         
-        This will be overridden by sub-classes of FrameBuffer.
+        This will be overridden by sub-classes of FrameBufferBase.
         """
         
         raise NotImplementedError
@@ -214,7 +214,7 @@ class FrameBuffer(object):
         """
         Figure of merit for storing/sorting frames in the ring buffer.
         
-        This will be overridden by sub-classes of FrameBuffer.
+        This will be overridden by sub-classes of FrameBufferBase.
         """
         
         raise NotImplementedError
@@ -224,7 +224,7 @@ class FrameBuffer(object):
         Create a 'fill' frame of zeros using an existing good
         packet as a template.
         
-        This will be overridden by sub-classes of FrameBuffer.
+        This will be overridden by sub-classes of FrameBufferBase.
         """
         
         raise NotImplementedError
@@ -407,7 +407,7 @@ class FrameBuffer(object):
         frameList = set(map(fnc, self.buffer[key]))
         
         # Compare the existing list with the possible list stored in the 
-        # FrameBuffer object to build a list of missing frames.
+        # FrameBufferBase object to build a list of missing frames.
         missingList = self.possibleFrames.difference(frameList)
         
         return missingList
@@ -437,10 +437,10 @@ class FrameBuffer(object):
         print(outString)
 
 
-class TBNFrameBuffer(FrameBuffer):
+class TBNFrameBuffer(FrameBufferBase):
     """
-    A sub-type of FrameBuffer specifically for dealing with TBN frames.
-    See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+    A sub-type of FrameBufferBase specifically for dealing with TBN frames.
+    See :class:`lsl.reader.buffer.FrameBufferBase` for a description of how the 
     buffering is implemented.
     
     Keywords:
@@ -481,7 +481,7 @@ class TBNFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, stands=[], pols=[0, 1], nsegments=20, reorder=False):
-        FrameBuffer.__init__(self, mode='TBN', stands=stands, pols=pols, nsegments=nsegments, reorder=reorder)
+        FrameBufferBase.__init__(self, mode='TBN', stands=stands, pols=pols, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -506,7 +506,7 @@ class TBNFrameBuffer(FrameBuffer):
             <frame timetag in ticks>
         """
         
-        return frame.data.timetag
+        return frame.payload.timetag
         
     def create_fill(self, key, frameParameters):
         """
@@ -522,7 +522,7 @@ class TBNFrameBuffer(FrameBuffer):
         fillFrame.header.tbn_id = 2*(stand-1) + pol + 1
         
         # Zero the data for the fill packet
-        fillFrame.data.iq *= 0
+        fillFrame.payload._data *= 0
         
         # Invalidate the frame
         fillFrame.valid = False
@@ -530,10 +530,10 @@ class TBNFrameBuffer(FrameBuffer):
         return fillFrame
 
 
-class DRXFrameBuffer(FrameBuffer):
+class DRXFrameBuffer(FrameBufferBase):
     """
-    A sub-type of FrameBuffer specifically for dealing with DRX frames.
-    See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+    A sub-type of FrameBufferBase specifically for dealing with DRX frames.
+    See :class:`lsl.reader.buffer.FrameBufferBase` for a description of how the 
     buffering is implemented.
     
     Keywords:
@@ -577,7 +577,7 @@ class DRXFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nsegments=20, reorder=False):
-        FrameBuffer.__init__(self, mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
+        FrameBufferBase.__init__(self, mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -603,7 +603,7 @@ class DRXFrameBuffer(FrameBuffer):
             <frame timetag in ticks>
         """
         
-        return frame.data.timetag
+        return frame.payload.timetag
         
     def create_fill(self, key, frameParameters):
         """
@@ -619,7 +619,7 @@ class DRXFrameBuffer(FrameBuffer):
         fillFrame.header.drx_id = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
         
         # Zero the data for the fill packet
-        fillFrame.data.iq *= 0
+        fillFrame.payload._data *= 0
         
         # Invalidate the frame
         fillFrame.valid = False
@@ -627,10 +627,10 @@ class DRXFrameBuffer(FrameBuffer):
         return fillFrame
 
 
-class TBFFrameBuffer(FrameBuffer):
+class TBFFrameBuffer(FrameBufferBase):
     """
-    A sub-type of FrameBuffer specifically for dealing with TBF frames.
-    See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+    A sub-type of FrameBufferBase specifically for dealing with TBF frames.
+    See :class:`lsl.reader.buffer.FrameBufferBase` for a description of how the 
     buffering is implemented.
     
     Keywords:
@@ -664,7 +664,7 @@ class TBFFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, chans, nsegments=25, reorder=False):
-        FrameBuffer.__init__(self, mode='TBF', chans=chans, nsegments=nsegments, reorder=reorder)
+        FrameBufferBase.__init__(self, mode='TBF', chans=chans, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -685,10 +685,10 @@ class TBFFrameBuffer(FrameBuffer):
     def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For TBF this is:
-        frame.data.timetag
+        frame.payload.timetag
         """
         
-        return frame.data.timetag
+        return frame.payload.timetag
         
     def create_fill(self, key, frameParameters):
         """
@@ -704,7 +704,7 @@ class TBFFrameBuffer(FrameBuffer):
         fillFrame.header.first_chan = chan
         
         # Zero the data for the fill packet
-        fillFrame.data.fDomain *= 0
+        fillFrame.payload._data *= 0
         
         # Invalidate the frame
         fillFrame.valid = False
@@ -712,10 +712,10 @@ class TBFFrameBuffer(FrameBuffer):
         return fillFrame
 
 
-class CORFrameBuffer(FrameBuffer):
+class CORFrameBuffer(FrameBufferBase):
     """
-    A sub-type of FrameBuffer specifically for dealing with COR frames.
-    See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+    A sub-type of FrameBufferBase specifically for dealing with COR frames.
+    See :class:`lsl.reader.buffer.FrameBufferBase` for a description of how the 
     buffering is implemented.
     
     Keywords:
@@ -745,7 +745,7 @@ class CORFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, chans, nsegments=5, reorder=False):
-        FrameBuffer.__init__(self, mode='COR', stands=list(range(1,256+1)), chans=chans, nsegments=nsegments, reorder=reorder)
+        FrameBufferBase.__init__(self, mode='COR', stands=list(range(1,256+1)), chans=chans, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -770,10 +770,10 @@ class CORFrameBuffer(FrameBuffer):
     def get_figure_of_merit(self, frame):
         """
         Figure of merit for sorting frames.  For TBF this is:
-        frame.data.timetag
+        frame.payload.timetag
         """
         
-        return frame.data.timetag
+        return frame.payload.timetag
         
     def create_fill(self, key, frameParameters):
         """
@@ -787,11 +787,11 @@ class CORFrameBuffer(FrameBuffer):
         # Get out the frame parameters and fix-up the header
         stand0, stand1, chan = frameParameters
         fillFrame.header.first_chan = chan
-        fillFrame.data.stand0 = stand0
-        fillFrame.data.stand1 = stand1
+        fillFrame.payload.stand0 = stand0
+        fillFrame.payload.stand1 = stand1
         
         # Zero the data for the fill packet
-        fillFrame.data.vis *= 0
+        fillFrame.payload._data *= 0
         
         # Invalidate the frame
         fillFrame.valid = False
@@ -799,10 +799,10 @@ class CORFrameBuffer(FrameBuffer):
         return fillFrame
 
 
-class VDIFFrameBuffer(FrameBuffer):
+class VDIFFrameBuffer(FrameBufferBase):
     """
-    A sub-type of FrameBuffer specifically for dealing with VDIF frames.
-    See :class:`lsl.reader.buffer.FrameBuffer` for a description of how the 
+    A sub-type of FrameBufferBase specifically for dealing with VDIF frames.
+    See :class:`lsl.reader.buffer.FrameBufferBase` for a description of how the 
     buffering is implemented.
     
     Keywords:
@@ -818,7 +818,7 @@ class VDIFFrameBuffer(FrameBuffer):
     """
     
     def __init__(self, threads=[0,1], nsegments=10, reorder=False):
-        FrameBuffer.__init__(self, mode='VDIF', threads=threads, nsegments=nsegments, reorder=reorder)
+        FrameBufferBase.__init__(self, mode='VDIF', threads=threads, nsegments=nsegments, reorder=reorder)
         
     def get_max_frames(self):
         """
@@ -858,7 +858,7 @@ class VDIFFrameBuffer(FrameBuffer):
         fillFrame.header.thread_id = thread
         
         # Zero the data for the fill packet
-        fillFrame.data.data *= 0
+        fillFrame.payload._data *= 0
         
         # Invalidate the frame
         fillFrame.valid = False

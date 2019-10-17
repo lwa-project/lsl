@@ -115,7 +115,7 @@ void initVDIFLUTs(void) {
   Data-type specific VDIF Helper Functions
 */
 
-static PyArrayObject * parseVDIF8(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
+static PyArrayObject * parse_vdif_8(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
     PyArrayObject *data;
     
     unsigned int nSamples;	
@@ -142,7 +142,7 @@ static PyArrayObject * parseVDIF8(unsigned char *rawData, unsigned int dataLengt
     return data;
 }
 
-static PyArrayObject * parseVDIF4(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
+static PyArrayObject * parse_vdif_4(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
     PyArrayObject *data;
     
     unsigned int nSamples;	
@@ -172,7 +172,7 @@ static PyArrayObject * parseVDIF4(unsigned char *rawData, unsigned int dataLengt
     return data;
 }
 
-static PyArrayObject * parseVDIF2(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
+static PyArrayObject * parse_vdif_2(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
     PyArrayObject *data;
     
     unsigned int nSamples;	
@@ -205,7 +205,7 @@ static PyArrayObject * parseVDIF2(unsigned char *rawData, unsigned int dataLengt
 }
 
 
-static PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
+static PyArrayObject * parse_vdif_1(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
     PyArrayObject *data;
     
     unsigned int nSamples;	
@@ -246,8 +246,8 @@ static PyArrayObject * parseVDIF1(unsigned char *rawData, unsigned int dataLengt
   VIDF Reader
 */
 
-PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
+PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data=NULL;
     unsigned int i;
     float cFreq, sRate;
@@ -359,16 +359,16 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Parse it out
     if( bitsPerSample == 8 ) {
-        data = parseVDIF8(rawData, dataLength, samplesPerWord);
+        data = parse_vdif_8(rawData, dataLength, samplesPerWord);
     } else {
         if( bitsPerSample == 4 ) {
-            data = parseVDIF4(rawData, dataLength, samplesPerWord);
+            data = parse_vdif_4(rawData, dataLength, samplesPerWord);
         } else {
             if( bitsPerSample == 2 ) {
-                data = parseVDIF2(rawData, dataLength, samplesPerWord);
+                data = parse_vdif_2(rawData, dataLength, samplesPerWord);
             } else {
                 if( bitsPerSample == 1 ) {
-                    data = parseVDIF1(rawData, dataLength, samplesPerWord);
+                    data = parse_vdif_1(rawData, dataLength, samplesPerWord);
                 } else {
                     PyErr_Format(PyExc_RuntimeError, "Cannot parse data with %d bits per sample", bitsPerSample);
                     free(rawData);
@@ -512,17 +512,17 @@ PyObject *readVDIF(PyObject *self, PyObject *args, PyObject *kwds) {
     Py_XDECREF(temp);
     
     // 2. Data
-    fData = PyObject_GetAttrString(frame, "data");
+    fPayload = PyObject_GetAttrString(frame, "payload");
     
-    PyObject_SetAttrString(fData, "data", PyArray_Return(data));
+    PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data));
 
     // 3. Frame
     PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "data", fData);
+    PyObject_SetAttrString(frame, "payload", fPayload);
     output = Py_BuildValue("O", frame);
     
     Py_XDECREF(fHeader);
-    Py_XDECREF(fData);
+    Py_XDECREF(fPayload);
     Py_XDECREF(data);
     
     return output;
@@ -534,7 +534,7 @@ fail:
     return NULL;
 }
 
-char readVDIF_doc[] = PyDoc_STR(\
-"Function to read in a single VDIF frame (header+data) and store the contents\n\
+char read_vdif_doc[] = PyDoc_STR(\
+"Function to read in a single VDIF frame (header+payload) and store the contents\n\
 as a Frame object.\n\
 ");

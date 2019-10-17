@@ -8,7 +8,7 @@ Frame
   object that contains all data associated with a particular DRX frame.  
   The primary constituents of each frame are:
     * FrameHeader - the VDIF frame header object and
-    * FrameData   - the VDIF frame data object.
+    * FramePayload   - the VDIF frame data object.
 Combined, these two objects contain all of the information found in the 
 original VDIF frame.
 
@@ -39,7 +39,8 @@ from datetime import datetime
 
 from lsl import astro
 from lsl.common.mcs import datetime_to_mjdmpm
-from lsl.reader._gofast import readVDIF
+from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader._gofast import read_vdif
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -50,7 +51,7 @@ telemetry.track_module()
 
 __version__ = '0.4'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_guppi_header', 'read_frame', 
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_guppi_header', 'read_frame', 
            'get_frame_size', 'get_thread_count', 'get_frames_per_second', 'get_sample_rate']
 
 
@@ -75,11 +76,17 @@ def _crcc(data, length=48, mask=0o40003, cycle=16):
     return state
 
 
-class FrameHeader(object):
+class FrameHeader(FrameHeaderBase):
     """
     Class that stores the information found in the header of a VDIF 
     frame.  Most fields in the VDIF version 1.1.1 header are stored.
     """
+    
+    _header_attrs = ['is_invalid', 'is_legacy', 'second_from_epoch',
+                     'ref_epoch', 'frame_in_second',
+                     'version', 'nchan', 'frame_length',
+                     'is_complex', 'bits_per_sample', 'thread_id', 'station_id',
+                     'extended_data_1', 'extended_data_2', 'extended_data_3', 'extended_data_4']
     
     def __init__(self, is_invalid=0, is_legacy=0, seconds_from_epoch=0, ref_epoch=0, frame_in_second=0, version=1, nchan=0, frame_length=0, is_complex='C', bits_per_sample=0, thread_id=0, station_id=0, extended_data_1=None, extended_data_2=None, extended_data_3=None, extended_data_4=None, sample_rate=0.0, central_freq=0.0):
         self.is_invalid = is_invalid
@@ -105,6 +112,7 @@ class FrameHeader(object):
         
         self.sample_rate = sample_rate
         self.central_freq = central_freq
+        FrameHeaderBase.__init__(self)
         
     @property
     def time(self):
@@ -259,7 +267,7 @@ class FrameHeader(object):
         return fields
 
 
-class FrameData(object):
+class FramePayload(FramePayloadBase):
     """
     Class that stores the information found in the data section of a VDIF
     frame.
@@ -270,28 +278,22 @@ class FrameData(object):
     """
     
     def __init__(self, data=None):
-        self.data = data
+        FramePayloadBase.__init__(self, data)
+        
+    @property
+    def data(self):
+        return self._data
 
 
-class Frame(object):
+class Frame(FrameBase):
     """
     Class that stores the information contained within a single VDIF 
-    frame.  It's properties are FrameHeader and FrameData objects.
+    frame.  It's properties are FrameHeader and FramePayload objects.
     """
-
-    def __init__(self, header=None, data=None):
-        if header is None:
-            self.header = FrameHeader()
-        else:
-            self.header = header
-            
-        if data is None:
-            self.data = FrameData()
-        else:
-            self.data = data
-            
-        self.valid = True
-
+    
+    _header_class = FrameHeader
+    _payload_class = FramePayload
+    
     @property
     def id(self):
         """
@@ -333,169 +335,6 @@ class Frame(object):
         """
         
         return self.header.central_freq
-        
-    def __add__(self, y):
-        """
-        Add the data sections of two frames together or add a number 
-        to every element in the data section.
-        """
-    
-        newFrame = copy.deepcopy(self)
-        newFrame += y	
-        return newFrame
-            
-    def __iadd__(self, y):
-        """
-        In-place add the data sections of two frames together or add 
-        a number to every element in the data section.
-        """
-        
-        try:
-            self.data.data += y.data.data
-        except AttributeError:
-            self.data.data += y
-        return self
-        
-    def __mul__(self, y):
-        """
-        Multiple the data sections of two frames together or multiply 
-        a number to every element in the data section.
-        """
-        
-        newFrame = copy.deepcopy(self)
-        newFrame *= y
-        return newFrame
-        
-    def __imul__(self, y):
-        """
-        In-place multiple the data sections of two frames together or 
-        multiply a number to every element in the data section.
-        """
-        
-        try:
-            self.data.data *= y.data.data
-        except AttributeError:
-            self.data.data *= y
-        return self
-        
-    #def __eq__(self, y):
-    #	"""
-    #	Check if the time tags of two frames are equal or if the time
-    #	tag is equal to a particular value.
-    #	"""
-    #	
-    #	tX = self.data.timetag
-    #	try:
-    #		tY = y.data.timetag
-    #	except AttributeError:
-    #		tY = y
-    #	
-    #	if tX == tY:
-    #		return True
-    #	else:
-    #		return False
-    #		
-    #def __ne__(self, y):
-    #	"""
-    #	Check if the time tags of two frames are not equal or if the time
-    #	tag is not equal to a particular value.
-    #	"""
-    #	
-    #	tX = self.data.timetag
-    #	try:
-    #		tY = y.data.timetag
-    #	except AttributeError:
-    #		tY = y
-    #	
-    #	if tX != tY:
-    #		return True
-    #	else:
-    #		return False
-    #		
-    #def __gt__(self, y):
-    #	"""
-    #	Check if the time tag of the first frame is greater than that of a
-    #	second frame or if the time tag is greater than a particular value.
-    #	"""
-    #	
-    #	tX = self.data.timetag
-    #	try:
-    #		tY = y.data.timetag
-    #	except AttributeError:
-    #		tY = y
-    #	
-    #	if tX > tY:
-    #		return True
-    #	else:
-    #		return False
-    #		
-    #def __ge__(self, y):
-    #	"""
-    #	Check if the time tag of the first frame is greater than or equal to 
-    #	that of a second frame or if the time tag is greater than a particular 
-    #	value.
-    #	"""
-    #	
-    #	tX = self.data.timetag
-    #	try:
-    #		tY = y.data.timetag
-    #	except AttributeError:
-    #		tY = y
-    #	
-    #	if tX >= tY:
-    #		return True
-    #	else:
-    #		return False
-    #		
-    #def __lt__(self, y):
-    #	"""
-    #	Check if the time tag of the first frame is less than that of a
-    #	second frame or if the time tag is greater than a particular value.
-    #	"""
-    #	
-    #	tX = self.data.timetag
-    #	try:
-    #		tY = y.data.timetag
-    #	except AttributeError:
-    #		tY = y
-    #	
-    #	if tX < tY:
-    #		return True
-    #	else:
-    #		return False
-    #		
-    #def __le__(self, y):
-    #	"""
-    #	Check if the time tag of the first frame is less than or equal to 
-    #	that of a second frame or if the time tag is greater than a particular 
-    #	value.
-    #	"""
-    #	
-    #	tX = self.data.timetag
-    #	try:
-    #		tY = y.data.timetag
-    #	except AttributeError:
-    #		tY = y
-    #	
-    #	if tX <= tY:
-    #		return True
-    #	else:
-    #		return False
-    #		
-    #def __cmp__(self, y):
-    #	"""
-    #	Compare two frames based on the time tags.  This is helpful for 
-    #	sorting things.
-    #	"""
-    #	
-    #	tX = self.data.timetag
-    #	tY = y.data.timetag
-    #	if tY > tX:
-    #		return -1
-    #	elif tX > tY:
-    #		return 1
-    #	else:
-    #		return 0
 
 
 def read_guppi_header(filehandle):
@@ -530,7 +369,7 @@ def read_guppi_header(filehandle):
     return header
 
 
-def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, Verbose=False):
+def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
     """
     Function to read in a single VDIF frame (header+data) and store the 
     contents as a Frame object.  This function wraps the _readerHeader and 
@@ -539,7 +378,7 @@ def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, Verbose=False):
     
     # New _vdif method
     try:
-        newFrame = readVDIF(filehandle, Frame(), central_freq=central_freq, sample_rate=sample_rate)
+        newFrame = read_vdif(filehandle, Frame(), central_freq=central_freq, sample_rate=sample_rate)
     except gSyncError:
         mark = filehandle.tell()
         raise SyncError(location=mark)
@@ -549,7 +388,7 @@ def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, Verbose=False):
     return newFrame
 
 
-def get_frame_size(filehandle, nFrames=None):
+def get_frame_size(filehandle, nframes=None):
     """
     Find out what the frame size is in bytes from a single observation.
     """
@@ -707,5 +546,5 @@ def get_sample_rate(filehandle):
     filehandle.seek(fhStart)
     
     # Get the sample rate
-    sample_rate = cFrame.data.data.shape[-1] * nFramesSecond
+    sample_rate = cFrame.payload.data.shape[-1] * nFramesSecond
     return float(sample_rate)

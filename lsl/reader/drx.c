@@ -50,7 +50,7 @@ typedef struct {
 
 typedef struct {
     DRXHeader header;
-    DRXPayload data;
+    DRXPayload payload;
 } DRXFrame;
 #pragma pack(pop)
 
@@ -59,8 +59,8 @@ PyObject *drx_method = NULL;
 PyObject *drx_size   = NULL;
 
 
-PyObject *readDRX(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
+PyObject *read_drx(PyObject *self, PyObject *args) {
+    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data;
     int i;
     DRXFrame cFrame;
@@ -110,16 +110,16 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
     cFrame.header.second_count = __bswap_32(cFrame.header.second_count);
     cFrame.header.decimation = __bswap_16(cFrame.header.decimation);
     cFrame.header.time_offset = __bswap_16(cFrame.header.time_offset);
-    cFrame.data.timetag = __bswap_64(cFrame.data.timetag);
-    cFrame.data.tuning_word = __bswap_32(cFrame.data.tuning_word);
-    cFrame.data.flags = __bswap_32(cFrame.data.flags);
+    cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
+    cFrame.payload.tuning_word = __bswap_32(cFrame.payload.tuning_word);
+    cFrame.payload.flags = __bswap_32(cFrame.payload.flags);
     
     // Fill the data array
     const float *fp;
     float complex *a;
     a = (float complex *) PyArray_DATA(data);
     for(i=0; i<4096; i++) {
-        fp = drxLUT[ cFrame.data.bytes[i] ];
+        fp = drxLUT[ cFrame.payload.bytes[i] ];
         *(a + i) = fp[0] + _Complex_I * fp[1];
     }
     
@@ -157,35 +157,35 @@ PyObject *readDRX(PyObject *self, PyObject *args) {
     Py_XDECREF(temp);
     
     // 2. Data
-    fData = PyObject_GetAttrString(frame, "data");
+    fPayload = PyObject_GetAttrString(frame, "payload");
     
-    temp = PyLong_FromUnsignedLongLong(cFrame.data.timetag);
-    PyObject_SetAttrString(fData, "timetag", temp);
+    temp = PyLong_FromUnsignedLongLong(cFrame.payload.timetag);
+    PyObject_SetAttrString(fPayload, "timetag", temp);
     Py_XDECREF(temp);
     
-    temp = PyLong_FromUnsignedLong(cFrame.data.tuning_word);
-    PyObject_SetAttrString(fData, "tuning_word", temp);
+    temp = PyLong_FromUnsignedLong(cFrame.payload.tuning_word);
+    PyObject_SetAttrString(fPayload, "tuning_word", temp);
     Py_XDECREF(temp);
     
-    temp = PyLong_FromUnsignedLong(cFrame.data.flags);
-    PyObject_SetAttrString(fData, "flags", temp);
+    temp = PyLong_FromUnsignedLong(cFrame.payload.flags);
+    PyObject_SetAttrString(fPayload, "flags", temp);
     Py_XDECREF(temp);
     
-    PyObject_SetAttrString(fData, "iq", PyArray_Return(data));
+    PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data));
     
     // 3. Frame
     PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "data", fData);
+    PyObject_SetAttrString(frame, "payload", fPayload);
     output = Py_BuildValue("O", frame);
     
     Py_XDECREF(fHeader);
-    Py_XDECREF(fData);
+    Py_XDECREF(fPayload);
     Py_XDECREF(data);
     
     return output;
 }
 
-char readDRX_doc[] = PyDoc_STR(\
-"Function to read in a single DRX frame (header+data) and store the contents\n\
+char read_drx_doc[] = PyDoc_STR(\
+"Function to read in a single DRX frame (header+payload) and store the contents\n\
 as a Frame object.\n\
 ");

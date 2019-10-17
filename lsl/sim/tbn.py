@@ -57,16 +57,16 @@ def frame_to_frame(tbn_frame):
     
     # Part 2: The data
     ## Time tag
-    rawFrame[16] = (tbn_frame.data.timetag>>56) & 255
-    rawFrame[17] = (tbn_frame.data.timetag>>48) & 255
-    rawFrame[18] = (tbn_frame.data.timetag>>40) & 255
-    rawFrame[19] = (tbn_frame.data.timetag>>32) & 255
-    rawFrame[20] = (tbn_frame.data.timetag>>24) & 255
-    rawFrame[21] = (tbn_frame.data.timetag>>16) & 255
-    rawFrame[22] = (tbn_frame.data.timetag>>8) & 255
-    rawFrame[23] = tbn_frame.data.timetag & 255
+    rawFrame[16] = (tbn_frame.payload.timetag>>56) & 255
+    rawFrame[17] = (tbn_frame.payload.timetag>>48) & 255
+    rawFrame[18] = (tbn_frame.payload.timetag>>40) & 255
+    rawFrame[19] = (tbn_frame.payload.timetag>>32) & 255
+    rawFrame[20] = (tbn_frame.payload.timetag>>24) & 255
+    rawFrame[21] = (tbn_frame.payload.timetag>>16) & 255
+    rawFrame[22] = (tbn_frame.payload.timetag>>8) & 255
+    rawFrame[23] = tbn_frame.payload.timetag & 255
     ## Data
-    iq = tbn_frame.data.iq
+    iq = tbn_frame.payload.iq
     ### Round and convert to unsigned integers
     iq = numpy.round(iq)
     if iq.dtype == numpy.complex128:
@@ -128,8 +128,8 @@ class SimFrame(tbn.Frame):
         self.header.tbn_id = 2*(self.stand-1) + self.pol + 1
         self.header.gain = self.gain
         
-        self.data.timetag = self.obs_time
-        self.data.iq = self.iq
+        self.payload.timetag = self.obs_time
+        self.payload._data = self.iq
     
     def load_frame(self, tbn_frame):
         """
@@ -137,7 +137,7 @@ class SimFrame(tbn.Frame):
         """
         
         self.header = tbn_frame.header
-        self.data = tbn_frame.data
+        self.payload = tbn_frame.payload
         
         # Back-fill the class' fields to make sure the object is consistent
         ## Header
@@ -147,8 +147,8 @@ class SimFrame(tbn.Frame):
         self.gain = self.header.gain
         self.frame_count = self.header.frame_count
         ## Data
-        self.obs_time = self.data.timetag
-        self.iq = self.data.iq
+        self.obs_time = self.payload.timetag
+        self.iq = self.payload.iq
     
     def is_valid(self, raise_errors=False):
         """
@@ -173,22 +173,22 @@ class SimFrame(tbn.Frame):
                 raise ValueError("Invalid polarization: '%s'" % tune)
             return False
 
-        # Is there data loaded into frame.data.iq?
-        if self.data.iq is None:
+        # Is there data loaded into frame.payload.iq?
+        if self.payload.iq is None:
             if raise_errors:
-                raise ValueError("Invalid data payload: '%s'" % self.data.iq)
+                raise ValueError("Invalid data payload: '%s'" % self.payload.iq)
             return False
 
         # Does the data length make sense?
-        if self.data.iq.shape[0] != 512:
+        if self.payload.iq.shape[0] != 512:
             if raise_errors:
-                raise ValueError("Invalid data length: %i", self.data.iq.shape[0])
+                raise ValueError("Invalid data length: %i", self.payload.iq.shape[0])
             return False
 
         # Does the data type make sense?
-        if self.data.iq.dtype.kind != 'c':
+        if self.payload.iq.dtype.kind != 'c':
             if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.data.iq.dtype.kind)
+                raise ValueError("Invalid data type: '%s'" % self.payload.iq.dtype.kind)
             return False
 
         # If we made it this far, it's valid

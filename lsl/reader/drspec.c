@@ -45,7 +45,7 @@ PyObject *drspec_size_hdr = NULL;
 PyObject *drspec_size_dat = NULL;
 
 
-static void parseLinearSingle(DRSpecHeader header, float *data, float *S0, float *S1, int isX, int isY) {
+static void parse_linear_single(DRSpecHeader header, float *data, float *S0, float *S1, int isX, int isY) {
     int i;
     float norm0, norm1;
     
@@ -73,7 +73,7 @@ static void parseLinearSingle(DRSpecHeader header, float *data, float *S0, float
 }
 
 
-static void parseLinearHalf(DRSpecHeader header, float *data, float *XX0, float *XX1, float *YY0, float *YY1) {
+static void parse_linear_half(DRSpecHeader header, float *data, float *XX0, float *XX1, float *YY0, float *YY1) {
     int i;
     float normXX0, normXX1, normYY0, normYY1;
     
@@ -96,7 +96,7 @@ static void parseLinearHalf(DRSpecHeader header, float *data, float *XX0, float 
 }
 
 
-static void parseLinearFull(DRSpecHeader header, float *data, float *XX0, float *XX1, float *XY0, float *XY1, float *YX0, float *YX1, float *YY0, float *YY1) {
+static void parse_linear_full(DRSpecHeader header, float *data, float *XX0, float *XX1, float *XY0, float *XY1, float *YX0, float *YX1, float *YY0, float *YY1) {
     int i;
     float normXX0, normXX1, normCH0, normCH1, normYY0, normYY1;
     
@@ -129,7 +129,7 @@ static void parseLinearFull(DRSpecHeader header, float *data, float *XX0, float 
 }
 
 
-static void parseStokesSingle(DRSpecHeader header, float *data, float *S0, float *S1) {
+static void parse_stokes_single(DRSpecHeader header, float *data, float *S0, float *S1) {
     int i;
     float norm0, norm1;
     
@@ -146,7 +146,7 @@ static void parseStokesSingle(DRSpecHeader header, float *data, float *S0, float
 }
 
 
-static void parseStokesHalf(DRSpecHeader header, float *data, float *I0, float *I1, float *V0, float *V1) {
+static void parse_stokes_half(DRSpecHeader header, float *data, float *I0, float *I1, float *V0, float *V1) {
     int i;
     float norm0, norm1;
     
@@ -167,7 +167,7 @@ static void parseStokesHalf(DRSpecHeader header, float *data, float *I0, float *
 }
 
 
-static void parseStokesFull(DRSpecHeader header, float *data, float *I0, float *I1, float *Q0, float *Q1, float *U0, float *U1, float *V0, float *V1) {
+static void parse_stokes_full(DRSpecHeader header, float *data, float *I0, float *I1, float *Q0, float *Q1, float *U0, float *U1, float *V0, float *V1) {
     int i;
     float norm0, norm1;
     
@@ -196,8 +196,8 @@ static void parseStokesFull(DRSpecHeader header, float *data, float *I0, float *
 }
 
 
-PyObject *readDRSpec(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
+PyObject *read_drspec(PyObject *self, PyObject *args) {
+    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyObject *tuningWords, *fills, *errors, *saturations;
     PyArrayObject *dataA0=NULL, *dataB0=NULL, *dataC0=NULL, *dataD0=NULL;
     PyArrayObject *dataA1=NULL, *dataB1=NULL, *dataC1=NULL, *dataD1=NULL;
@@ -351,43 +351,43 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
         // Linear
         if( header.stokes_format == 0x01 ) {
             // XX* only
-            parseLinearSingle(header, data, a0, a1, 1, 0);
+            parse_linear_single(header, data, a0, a1, 1, 0);
         } else if( header.stokes_format == 0x02 ) {
             // XY* only
-            parseLinearSingle(header, data, b0, b1, 1, 1);
+            parse_linear_single(header, data, b0, b1, 1, 1);
         } else if( header.stokes_format == 0x04 ) {
             // YX* only
-            parseLinearSingle(header, data, c0, c1, 1, 1);
+            parse_linear_single(header, data, c0, c1, 1, 1);
         } else if( header.stokes_format == 0x08 ) {
             // YY* only
-            parseLinearSingle(header, data, d0, d1, 0, 1);
+            parse_linear_single(header, data, d0, d1, 0, 1);
         } else if( header.stokes_format == 0x09 ) {
             // XX* and YY*
-            parseLinearHalf(header, data, a0, a1, d0, d1);
+            parse_linear_half(header, data, a0, a1, d0, d1);
         } else {
             // XX*, XY*, YX*, and YY*
-            parseLinearFull(header, data, a0, a1, b0, b1, c0, c1, d0, d1);
+            parse_linear_full(header, data, a0, a1, b0, b1, c0, c1, d0, d1);
         }
     } else {
         // Stokes
         if( header.stokes_format == 0x10 ) {
             // I only
-            parseStokesSingle(header, data, a0, a1);
+            parse_stokes_single(header, data, a0, a1);
         } else if( header.stokes_format == 0x20 ) {
             // Q only
-            parseStokesSingle(header, data, b0, b1);
+            parse_stokes_single(header, data, b0, b1);
         } else if( header.stokes_format == 0x40 ) {
             // U only
-            parseStokesSingle(header, data, c0, c1);
+            parse_stokes_single(header, data, c0, c1);
         } else if( header.stokes_format == 0x80 ) {
             // V only
-            parseStokesSingle(header, data, d0, d1);
+            parse_stokes_single(header, data, d0, d1);
         } else if( header.stokes_format == 0x90 ) {
             // I and V
-            parseStokesHalf(header, data, a0, a1, d0, d1);
+            parse_stokes_half(header, data, a0, a1, d0, d1);
         } else {
             // I, Q, U, and V
-            parseStokesFull(header, data, a0, a1, b0, b1, c0, c1, d0, d1);
+            parse_stokes_full(header, data, a0, a1, b0, b1, c0, c1, d0, d1);
         }
     }
     
@@ -472,59 +472,59 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
     Py_XDECREF(temp);
     
     // 2. Data
-    fData = PyObject_GetAttrString(frame, "data");
+    fPayload = PyObject_GetAttrString(frame, "payload");
     
     temp = PyLong_FromUnsignedLongLong(header.timeTag0);
-    PyObject_SetAttrString(fData, "timetag", temp);
+    PyObject_SetAttrString(fPayload, "timetag", temp);
     Py_XDECREF(temp);
     
-    PyObject_SetAttrString(fData, "tuning_words", tuningWords);
+    PyObject_SetAttrString(fPayload, "tuning_words", tuningWords);
     
-    PyObject_SetAttrString(fData, "fills", fills);
+    PyObject_SetAttrString(fPayload, "fills", fills);
     
-    PyObject_SetAttrString(fData, "errors", errors);
+    PyObject_SetAttrString(fPayload, "errors", errors);
     
-    PyObject_SetAttrString(fData, "saturations", saturations);
+    PyObject_SetAttrString(fPayload, "saturations", saturations);
     
     // Linear
     if( header.stokes_format & 0x01 ) {
-        PyObject_SetAttrString(fData, "XX0", PyArray_Return(dataA0));
-        PyObject_SetAttrString(fData, "XX1", PyArray_Return(dataA1));
+        PyObject_SetAttrString(fPayload, "XX0", PyArray_Return(dataA0));
+        PyObject_SetAttrString(fPayload, "XX1", PyArray_Return(dataA1));
     }
     if( header.stokes_format & 0x02 ) {
-        PyObject_SetAttrString(fData, "XY0", PyArray_Return(dataB0));
-        PyObject_SetAttrString(fData, "XY1", PyArray_Return(dataB1));
+        PyObject_SetAttrString(fPayload, "XY0", PyArray_Return(dataB0));
+        PyObject_SetAttrString(fPayload, "XY1", PyArray_Return(dataB1));
     }
     if( header.stokes_format & 0x04 ) {
-        PyObject_SetAttrString(fData, "YX0", PyArray_Return(dataC0));
-        PyObject_SetAttrString(fData, "YX1", PyArray_Return(dataC1));
+        PyObject_SetAttrString(fPayload, "YX0", PyArray_Return(dataC0));
+        PyObject_SetAttrString(fPayload, "YX1", PyArray_Return(dataC1));
     }
     if( header.stokes_format & 0x08 ) {
-        PyObject_SetAttrString(fData, "YY0", PyArray_Return(dataD0));
-        PyObject_SetAttrString(fData, "YY1", PyArray_Return(dataD1));
+        PyObject_SetAttrString(fPayload, "YY0", PyArray_Return(dataD0));
+        PyObject_SetAttrString(fPayload, "YY1", PyArray_Return(dataD1));
     }
     
     // Stokes
     if( header.stokes_format & 0x10 ) {
-        PyObject_SetAttrString(fData, "I0", PyArray_Return(dataA0));
-        PyObject_SetAttrString(fData, "I1", PyArray_Return(dataA1));
+        PyObject_SetAttrString(fPayload, "I0", PyArray_Return(dataA0));
+        PyObject_SetAttrString(fPayload, "I1", PyArray_Return(dataA1));
     }
     if( header.stokes_format & 0x20 ) {
-        PyObject_SetAttrString(fData, "Q0", PyArray_Return(dataB0));
-        PyObject_SetAttrString(fData, "Q1", PyArray_Return(dataB1));
+        PyObject_SetAttrString(fPayload, "Q0", PyArray_Return(dataB0));
+        PyObject_SetAttrString(fPayload, "Q1", PyArray_Return(dataB1));
     }
     if( header.stokes_format & 0x40 ) {
-        PyObject_SetAttrString(fData, "U0", PyArray_Return(dataC0));
-        PyObject_SetAttrString(fData, "U1", PyArray_Return(dataC1));
+        PyObject_SetAttrString(fPayload, "U0", PyArray_Return(dataC0));
+        PyObject_SetAttrString(fPayload, "U1", PyArray_Return(dataC1));
     }
     if( header.stokes_format & 0x80 ) {
-        PyObject_SetAttrString(fData, "V0", PyArray_Return(dataD0));
-        PyObject_SetAttrString(fData, "V1", PyArray_Return(dataD1));
+        PyObject_SetAttrString(fPayload, "V0", PyArray_Return(dataD0));
+        PyObject_SetAttrString(fPayload, "V1", PyArray_Return(dataD1));
     }
     
     // 3. Frame
     PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "data", fData);
+    PyObject_SetAttrString(frame, "payload", fPayload);
     output = Py_BuildValue("O", frame);
     
     Py_XDECREF(fHeader);
@@ -532,7 +532,7 @@ PyObject *readDRSpec(PyObject *self, PyObject *args) {
     Py_XDECREF(fills);
     Py_XDECREF(errors);
     Py_XDECREF(saturations);
-    Py_XDECREF(fData);
+    Py_XDECREF(fPayload);
     Py_XDECREF(dataA0);
     Py_XDECREF(dataB0);
     Py_XDECREF(dataC0);
@@ -558,7 +558,7 @@ fail:
     return NULL;
 }
 
-char readDRSpec_doc[] = PyDoc_STR(\
+char read_drspec_doc[] = PyDoc_STR(\
 "Function to read in a DR spectrometer header structure and data and return\n\
 a drspec.Frame instance.\n\
 \n\

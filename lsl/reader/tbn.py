@@ -8,7 +8,7 @@ Frame
   object that contains all data associated with a particular TBN frame.  
   The primary constituents of each frame are:
     * FrameHeader - the TBN frame header object and
-    * FrameData   - the TBN frame data object.
+    * FramePayload   - the TBN frame data object.
 Combined, these two objects contain all of the information found in the 
 original TBN frame.
 
@@ -59,7 +59,8 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from lsl.reader._gofast import readTBN
+from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader._gofast import read_tbn
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -70,7 +71,7 @@ telemetry.track_module()
 
 __version__ = '0.8'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 FRAME_SIZE = 1048
@@ -79,7 +80,7 @@ FRAME_SIZE = 1048
 FILTER_CODES = {1:   1000, 2:   3125, 3:    6250, 4:    12500, 5: 25000, 6: 50000, 7: 100000}
 
 
-class FrameHeader(object):
+class FrameHeader(FrameHeaderBase):
     """
     Class that stores the information found in the header of a TBW 
     frame.  All three fields listed in the DP ICD version H are stored as 
@@ -90,12 +91,15 @@ class FrameHeader(object):
         and gain that are part of the ECR 11 changes.
     """
 
+    _header_attrs = ['frame_count', 'tuning_word', 'tbn_id', 'gain', 'sample_rate']
+    
     def __init__(self, frame_count=None, tuning_word=None, tbn_id=None, gain=None):
         self.frame_count = frame_count
         self.tuning_word = tuning_word
         self.tbn_id = tbn_id
         self.gain = gain
         self.sample_rate = None
+        FrameHeaderBase.__init__(self)
         
     @property
     def is_tbn(self):
@@ -151,7 +155,7 @@ class FrameHeader(object):
             return sampleCodes[self.sample_rate]
 
 
-class FrameData(object):
+class FramePayload(FramePayloadBase):
     """
     Class that stores the information found in the data section of a TBN
     frame.  Both fields listed in the DP ICD version H are stored.
@@ -160,10 +164,16 @@ class FrameData(object):
         Removed various attributes related to storing a central frequnecy 
         and gain that aren't needed with ECR 11.
     """
-
+    
+    _payload_attrs = ['timetag']
+    
     def __init__(self, timetag=None, iq=None):
         self.timetag = timetag
-        self.iq = iq
+        FramePayloadBase.__init__(self, iq)
+        
+    @property
+    def iq(self):
+        return self._data
         
     @property
     def time(self):
@@ -179,29 +189,20 @@ class FrameData(object):
         return seconds_i, seconds_f
 
 
-class Frame(object):
+class Frame(FrameBase):
     """
     Class that stores the information contained within a single TBN 
-    frame.  It's properties are FrameHeader and FrameData objects.
+    frame.  It's properties are FrameHeader and FramePayload objects.
     
     .. versionchanged:: 0.5.0
         Removed various attributes related to storing a central frequnecy 
         and gain that aren't needed with ECR 11.
     """
-
-    def __init__(self, header=None, data=None):
-        if header is None:
-            self.header = FrameHeader()
-        else:
-            self.header = header
-            
-        if data is None:
-            self.data = FrameData()
-        else:
-            self.data = data
-            
-        self.valid = True
-        
+    
+    _header_class = FrameHeader
+    _payload_class = FramePayload
+    gain = None
+    
     @property
     def is_tbn(self):
         """
@@ -221,15 +222,15 @@ class Frame(object):
     @property
     def time(self):
         """
-        Convenience wrapper for the Frame.FrameData.time property
+        Convenience wrapper for the Frame.FramePayload.time property
         """
         
-        return self.data.time
+        return self.payload.time
         
     @property
     def sample_rate(self):
         """
-        Convenience wrapper for the Frame.FrameData.sample_rate property.
+        Convenience wrapper for the Frame.FramePayload.sample_rate property.
         """
 
         return self.header.sample_rate
@@ -237,7 +238,7 @@ class Frame(object):
     @sample_rate.setter
     def sample_rate(self, value):
         """
-        Convenience wrapper for setting the Frame.FrameData.sample_rate property.
+        Convenience wrapper for setting the Frame.FramePayload.sample_rate property.
         """
 
         self.header.sample_rate = value
@@ -245,7 +246,7 @@ class Frame(object):
     @property
     def filter_code(self):
         """
-        Convenience wrapper for the Frame.FrameData.filter_code property.
+        Convenience wrapper for the Frame.FramePayload.filter_code property.
         """
 
         return self.header.filter_code
@@ -273,172 +274,9 @@ class Frame(object):
         """
         
         self.header.gain = value
-        
-    def __add__(self, y):
-        """
-        Add the data sections of two frames together or add a number 
-        to every element in the data section.
-        """
-        
-        newFrame = copy.deepcopy(self)
-        newFrame += y
-        return newFrame
-            
-    def __iadd__(self, y):
-        """
-        In-place add the data sections of two frames together or add 
-        a number to every element in the data section.
-        """
-        
-        try:
-            self.data.iq += y.data.iq
-        except AttributeError:
-            self.data.iq += numpy.complex64(y)
-        return self
-        
-    def __mul__(self, y):
-        """
-        Multiple the data sections of two frames together or multiply 
-        a number to every element in the data section.
-        """
-        
-        newFrame = copy.deepcopy(self)
-        newFrame *= y
-        return newFrame
-    
-    def __imul__(self, y):
-        """
-        In-place multiple the data sections of two frames together or 
-        multiply a number to every element in the data section.
-        """
-        
-        try:
-            self.data.iq *= y.data.iq
-        except AttributeError:
-            self.data.iq *= numpy.complex64(y)
-        return self
-
-    def __eq__(self, y):
-        """
-        Check if the time tags of two frames are equal or if the time
-        tag is equal to a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX == tY:
-            return True
-        else:
-            return False
-            
-    def __ne__(self, y):
-        """
-        Check if the time tags of two frames are not equal or if the time
-        tag is not equal to a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX != tY:
-            return True
-        else:
-            return False
-            
-    def __gt__(self, y):
-        """
-        Check if the time tag of the first frame is greater than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX > tY:
-            return True
-        else:
-            return False
-            
-    def __ge__(self, y):
-        """
-        Check if the time tag of the first frame is greater than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX >= tY:
-            return True
-        else:
-            return False
-            
-    def __lt__(self, y):
-        """
-        Check if the time tag of the first frame is less than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX < tY:
-            return True
-        else:
-            return False
-            
-    def __le__(self, y):
-        """
-        Check if the time tag of the first frame is less than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX <= tY:
-            return True
-        else:
-            return False
-            
-    def __cmp__(self, y):
-        """
-        Compare two frames based on the time tags.  This is helpful for 
-        sorting things.
-        """
-        
-        tX = self.data.timetag
-        tY = y.data.timetag
-        if tY > tX:
-            return -1
-        elif tX > tY:
-            return 1
-        else:
-            return 0
 
 
-def read_frame(filehandle, sample_rate=None, Verbose=False):
+def read_frame(filehandle, sample_rate=None, verbose=False):
     """
     Function to read in a single TBN frame (header+data) and store the 
     contents as a Frame object.
@@ -446,7 +284,7 @@ def read_frame(filehandle, sample_rate=None, Verbose=False):
 
     # New Go Fast! (TM) method
     try:
-        newFrame = readTBN(filehandle, Frame())
+        newFrame = read_tbn(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
@@ -459,7 +297,7 @@ def read_frame(filehandle, sample_rate=None, Verbose=False):
     return newFrame
 
 
-def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
+def get_sample_rate(filehandle, nframes=None, filter_code=False):
     """
     Find out what the sampling rate/filter code is from consecutive sets of 
     observations.  By default, the rate in Hz is returned.  However, the 
@@ -470,16 +308,16 @@ def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     # Save the current position in the file so we can return to that point
     fhStart = filehandle.tell()
 
-    if nFrames is None:
-        nFrames = 520
-    nFrames = 4*nFrames
+    if nframes is None:
+        nframes = 520
+    nframes = 4*nframes
 
     # Build up the list-of-lists that store ID codes and loop through 2,080
     # frames.  In each case, parse pull the TBN ID, extract the stand 
     # number, and append the stand number to the relevant polarization array 
     # if it is not already there.
     frames = {}
-    for i in range(nFrames):
+    for i in range(nframes):
         try:
             cFrame = read_frame(filehandle)
         except EOFError:
@@ -522,11 +360,11 @@ def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     # time tags and calculate the sampling rate.  Since the time tags are based off f_S
     # @ 196 MSPS, and each frame contains 512 samples, the sampling rate is:
     #  f_S / <difference in time tags per 512 samples>
-    time1 = frame1.data.timetag
-    time2 = frame2.data.timetag
+    time1 = frame1.payload.timetag
+    time2 = frame2.payload.timetag
     rate = dp_common.fS / (abs( time2 - time1 ) / 512)
 
-    if not FilterCode:
+    if not filter_code:
         return rate
     else:
         sampleCodes = {}

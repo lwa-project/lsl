@@ -130,24 +130,24 @@ class reader_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameT.data.xy[i%2, i//2], 2*frames[0].data.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameT.payload.xy[i%2, i//2], 2*frames[0].payload.xy[i%2, i//2], 2)
         frameT *= 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameT.data.xy[i%2, i//2], 4*frames[0].data.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameT.payload.xy[i%2, i//2], 4*frames[0].payload.xy[i%2, i//2], 2)
         frameT = frames[0] * frames[1]
         for i in range(800):
-            self.assertAlmostEqual(frameT.data.xy[i%2, i//2], frames[0].data.xy[i%2, i//2]*frames[1].data.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameT.payload.xy[i%2, i//2], frames[0].payload.xy[i%2, i//2]*frames[1].payload.xy[i%2, i//2], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameA.data.xy[i%2, i//2], 2+frames[0].data.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameA.payload.xy[i%2, i//2], 2+frames[0].payload.xy[i%2, i//2], 2)
         frameA += 2.0
         for i in range(800):
-            self.assertAlmostEqual(frameA.data.xy[i%2, i//2], 4+frames[0].data.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameA.payload.xy[i%2, i//2], 4+frames[0].payload.xy[i%2, i//2], 2)
         frameA = frames[0] + frames[1]
         for i in range(800):
-            self.assertAlmostEqual(frameA.data.xy[i%2, i//2], frames[0].data.xy[i%2, i//2]+frames[1].data.xy[i%2, i//2], 2)
+            self.assertAlmostEqual(frameA.payload.xy[i%2, i//2], frames[0].payload.xy[i%2, i//2]+frames[1].payload.xy[i%2, i//2], 2)
             
     ### TBN ###
     
@@ -201,7 +201,7 @@ class reader_tests(unittest.TestCase):
         fh = open(tbnFile, 'rb')
         rate = tbn.get_sample_rate(fh)
         self.assertEqual(rate, 100000)
-        code = tbn.get_sample_rate(fh, FilterCode=True)
+        code = tbn.get_sample_rate(fh, filter_code=True)
         self.assertEqual(code, 7)
         fh.close()
         
@@ -252,24 +252,24 @@ class reader_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.iq[i], 2*frames[0].payload.iq[i], 2)
         frameT *= 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.iq[i], 4*frames[0].payload.iq[i], 2)
         frameT = frames[0] * frames[1]
         for i in range(512):
-            self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.iq[i], frames[0].payload.iq[i]*frames[1].payload.iq[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.iq[i], 2+frames[0].payload.iq[i], 2)
         frameA += 2.0
         for i in range(512):
-            self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.iq[i], 4+frames[0].payload.iq[i], 2)
         frameA = frames[0] + frames[1]
         for i in range(512):
-            self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.iq[i], frames[0].payload.iq[i]+frames[1].payload.iq[i], 2)
             
     ### TBW/TBN Mix-up ###
     
@@ -355,7 +355,7 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(cFrame.sample_rate, drx.get_sample_rate(fh))
         
         # Filter code
-        self.assertEqual(cFrame.filter_code, drx.get_sample_rate(fh, FilterCode=True))
+        self.assertEqual(cFrame.filter_code, drx.get_sample_rate(fh, filter_code=True))
         fh.close()
         
     def test_drx_comps(self):
@@ -405,24 +405,24 @@ class reader_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameT.data.iq[i], 2*frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.iq[i], 2*frames[0].payload.iq[i], 2)
         frameT *= 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameT.data.iq[i], 4*frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.iq[i], 4*frames[0].payload.iq[i], 2)
         frameT = frames[0] * frames[1]
         for i in range(4096):
-            self.assertAlmostEqual(frameT.data.iq[i], frames[0].data.iq[i]*frames[1].data.iq[i], 2)
+            self.assertAlmostEqual(frameT.payload.iq[i], frames[0].payload.iq[i]*frames[1].payload.iq[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameA.data.iq[i], 2+frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.iq[i], 2+frames[0].payload.iq[i], 2)
         frameA += 2.0
         for i in range(4096):
-            self.assertAlmostEqual(frameA.data.iq[i], 4+frames[0].data.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.iq[i], 4+frames[0].payload.iq[i], 2)
         frameA = frames[0] + frames[1]
         for i in range(4096):
-            self.assertAlmostEqual(frameA.data.iq[i], frames[0].data.iq[i]+frames[1].data.iq[i], 2)
+            self.assertAlmostEqual(frameA.payload.iq[i], frames[0].payload.iq[i]+frames[1].payload.iq[i], 2)
             
     ### DR Spectrometer ###
     
@@ -476,7 +476,7 @@ class reader_tests(unittest.TestCase):
         
         # Filter code
         self.assertEqual(cFrame.filter_code, 7)
-        self.assertEqual(cFrame.filter_code, drspec.get_sample_rate(fh, FilterCode=True))
+        self.assertEqual(cFrame.filter_code, drspec.get_sample_rate(fh, filter_code=True))
         
         # FFT windows per integration
         self.assertEqual(cFrame.ffts_per_integration, 6144)
@@ -536,29 +536,29 @@ class reader_tests(unittest.TestCase):
             frames.append(drspec.read_frame(fh))
         fh.close()
         
-        npts = frames[0].data.XX0.size
+        npts = frames[0].payload.XX0.size
         
         # Multiplication
         frameT = frames[0] * 2.0
         for i in xrange(npts):
-            self.assertAlmostEqual(frameT.data.XX0[i], 2*frames[0].data.XX0[i], 2)
+            self.assertAlmostEqual(frameT.payload.XX0[i], 2*frames[0].payload.XX0[i], 2)
         frameT *= 2.0
         for i in xrange(npts):
-            self.assertAlmostEqual(frameT.data.XX1[i], 4*frames[0].data.XX1[i], 2)
+            self.assertAlmostEqual(frameT.payload.XX1[i], 4*frames[0].payload.XX1[i], 2)
         frameT = frames[0] * frames[1]
         for i in xrange(npts):
-            self.assertAlmostEqual(frameT.data.YY0[i], frames[0].data.YY0[i]*frames[1].data.YY0[i], 2)
+            self.assertAlmostEqual(frameT.payload.YY0[i], frames[0].payload.YY0[i]*frames[1].payload.YY0[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in xrange(npts):
-            self.assertAlmostEqual(frameA.data.XX0[i], 2+frames[0].data.XX0[i], 2)
+            self.assertAlmostEqual(frameA.payload.XX0[i], 2+frames[0].payload.XX0[i], 2)
         frameA += 2.0
         for i in xrange(npts):
-            self.assertAlmostEqual(frameA.data.XX1[i], 4+frames[0].data.XX1[i], 2)
+            self.assertAlmostEqual(frameA.payload.XX1[i], 4+frames[0].payload.XX1[i], 2)
         frameA = frames[0] + frames[1]
         for i in xrange(npts):
-            self.assertAlmostEqual(frameA.data.YY0[i], frames[0].data.YY0[i]+frames[1].data.YY0[i], 2)
+            self.assertAlmostEqual(frameA.payload.YY0[i], frames[0].payload.YY0[i]+frames[1].payload.YY0[i], 2)
             
     ### VDIF ###
     
@@ -587,7 +587,7 @@ class reader_tests(unittest.TestCase):
         for k,d in enumerate((1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,-1.0)):
             i = k % frame1.header.nchan
             j = k // frame1.header.nchan
-            self.assertAlmostEqual(frame1.data.data[i,j], d, 5)
+            self.assertAlmostEqual(frame1.payload.data[i,j], d, 5)
             
         # Second frame
         frame2 = vdif.read_frame(fh)
@@ -610,7 +610,7 @@ class reader_tests(unittest.TestCase):
         for k,d in enumerate((-1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ,1.0)):
             i = k % frame2.header.nchan
             j = k // frame2.header.nchan
-            self.assertAlmostEqual(frame2.data.data[i,j], d, 5)
+            self.assertAlmostEqual(frame2.payload.data[i,j], d, 5)
             
         fh.close()
         
@@ -634,6 +634,40 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(nt, 1)
         fh.close()
         
+    def test_vdif_comps(self):
+        """Test the VDIF frame comparison operators (>, <, etc.) for time tags."""
+
+        fh = open(vdifFile, 'rb')
+        # Frames 1 through 10
+        frames = []
+        for i in range(1,11):
+            frames.append(vdif.read_frame(fh, sample_rate=16e6))
+        fh.close()
+
+        self.assertTrue(0 < frames[0])
+        self.assertFalse(0 > frames[0])
+        self.assertTrue(frames[-1] >= frames[0])
+        self.assertFalse(frames[-1] <= frames[0])
+        self.assertTrue(frames[0] == frames[0])
+        self.assertFalse(frames[0] == frames[-1])
+        self.assertFalse(frames[0] != frames[0])
+        
+    def test_vdif_sort(self):
+        """Test sorting VDIF frames by time tags."""
+        
+        fh = open(vdifFile, 'rb')
+        # Frames 1 through 10
+        frames = []
+        for i in range(1,11):
+            frames.append(vdif.read_frame(fh, sample_rate=16e6))
+        
+        frames.sort()
+        frames = frames[::-1]
+        
+        for i in xrange(1,len(frames)):
+            self.assertTrue( frames[i-1] >= frames[i] )
+        fh.close()
+        
     def test_vdif_math(self):
         """Test mathematical operations on VDIF frame data via frames."""
         
@@ -644,35 +678,35 @@ class reader_tests(unittest.TestCase):
             frames.append(vdif.read_frame(fh))
         fh.close()
         
-        nchan, nSamples = frames[0].data.data.shape
+        nchan, nSamples = frames[0].payload.data.shape
         
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(nchan):
             for j in range(nSamples):
-                self.assertAlmostEqual(frameT.data.data[i,j], 2*frames[0].data.data[i,j], 2)
+                self.assertAlmostEqual(frameT.payload.data[i,j], 2*frames[0].payload.data[i,j], 2)
         frameT *= 2.0
         for i in range(nchan):
             for j in range(nSamples):
-                self.assertAlmostEqual(frameT.data.data[i,j], 4*frames[0].data.data[i,j], 2)
+                self.assertAlmostEqual(frameT.payload.data[i,j], 4*frames[0].payload.data[i,j], 2)
         frameT = frames[0] * frames[1]
         for i in range(nchan):
             for j in range(nSamples):
-                self.assertAlmostEqual(frameT.data.data[i,j], frames[0].data.data[i,j]*frames[1].data.data[i,j], 2)
+                self.assertAlmostEqual(frameT.payload.data[i,j], frames[0].payload.data[i,j]*frames[1].payload.data[i,j], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(nchan):
             for j in range(nSamples):
-                self.assertAlmostEqual(frameA.data.data[i,j], 2+frames[0].data.data[i,j], 2)
+                self.assertAlmostEqual(frameA.payload.data[i,j], 2+frames[0].payload.data[i,j], 2)
         frameA += 2.0
         for i in range(nchan):
             for j in range(nSamples):
-                self.assertAlmostEqual(frameA.data.data[i,j], 4+frames[0].data.data[i,j], 2)
+                self.assertAlmostEqual(frameA.payload.data[i,j], 4+frames[0].payload.data[i,j], 2)
         frameA = frames[0] + frames[1]
         for i in range(nchan):
             for j in range(nSamples):
-                self.assertAlmostEqual(frameA.data.data[i,j], frames[0].data.data[i,j]+frames[1].data.data[i,j], 2)
+                self.assertAlmostEqual(frameA.payload.data[i,j], frames[0].payload.data[i,j]+frames[1].payload.data[i,j], 2)
 
 
 class reader_test_suite(unittest.TestSuite):

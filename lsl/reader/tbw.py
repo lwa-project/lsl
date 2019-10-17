@@ -9,7 +9,7 @@ Frame
   object that contains all data associated with a particular TBW frame.  The 
   primary consituents of each frame are:
     * FrameHeader - the TBW frame header object and
-    * FrameData   - the TBW frame data object.  
+    * FramePayload   - the TBW frame data object.  
 Combined, these two objects contain all of the information found in the 
 original TBW frame.
 
@@ -48,7 +48,8 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from lsl.reader._gofast import readTBW
+from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader._gofast import read_tbw
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -59,23 +60,26 @@ telemetry.track_module()
 
 __version__ = '0.6'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'FRAME_SIZE', 'get_data_bits', 'get_frames_per_obs']
 
 FRAME_SIZE = 1224
 
 
-class FrameHeader(object):
+class FrameHeader(FrameHeaderBase):
     """
     Class that stores the information found in the header of a TBW 
     frame.  All three fields listed in the DP ICD version H are stored as 
     well as the original binary header data.
     """
-
+    
+    _header_attrs = ['frame_count', 'second_count', 'tbw_id']
+    
     def __init__(self, frame_count=None, second_count=None, tbw_id=None):
         self.frame_count = frame_count
         self.second_count = second_count
         self.tbw_id = tbw_id
+        FrameHeaderBase.__init__(self)
         
     @property
     def is_tbw(self):
@@ -120,15 +124,21 @@ class FrameHeader(object):
         return dataBits
 
 
-class FrameData(object):
+class FramePayload(FramePayloadBase):
     """
     Class that stores the information found in the data section of a TBW
     frame.  Both fields listed in the DP ICD version H are stored.
     """
-
-    def __init__(self, timetag=None, samples=400, xy=None):
+    
+    _payload_attrs = ['timetag']
+    
+    def __init__(self, timetag=None, xy=None):
         self.timetag = timetag
-        self.xy = xy
+        FramePayloadBase.__init__(self, xy)
+        
+    @property
+    def xy(self):
+        return self._data
         
     @property
     def time(self):
@@ -144,25 +154,15 @@ class FrameData(object):
         return seconds_i, seconds_f
 
 
-class Frame(object):
+class Frame(FrameBase):
     """
     Class that stores the information contained within a single TBW 
-    frame.  It's properties are FrameHeader and FrameData objects.
+    frame.  It's properties are FrameHeader and FramePayload objects.
     """
-
-    def __init__(self, header=None, data=None):
-        if header is None:
-            self.header = FrameHeader()
-        else:
-            self.header = header
-            
-        if data is None:
-            self.data = FrameData()
-        else:
-            self.data = data
-            
-        self.valid = True
-        
+    
+    _header_class = FrameHeader
+    _payload_class = FramePayload
+    
     @property
     def is_tbw(self):
         """
@@ -192,176 +192,13 @@ class Frame(object):
     @property
     def time(self):
         """
-        Convenience wrapper for the Frame.FrameData.time property.
+        Convenience wrapper for the Frame.FramePayload.time property.
         """
         
-        return self.data.time
-            
-    def __add__(self, y):
-        """
-        Add the data sections of two frames together or add a number 
-        to every element in the data section.
-        """
-        
-        newFrame = copy.deepcopy(self)
-        newFrame += y
-        return newFrame
-    
-    def __iadd__(self, y):
-        """
-        In-place add the data sections of two frames together or add 
-        a number to every element in the data section.
-        """
-        
-        try:
-            self.data.xy += y.data.xy
-        except AttributeError:
-            self.data.xy += numpy.int16(y)
-        return self
-        
-    def __mul__(self, y):
-        """
-        Multiple the data sections of two frames together or multiply 
-        a number to every element in the data section.
-        """
-
-        newFrame = copy.deepcopy(self)
-        newFrame *= y
-        return newFrame
-            
-    def __imul__(self, y):
-        """
-        In-place multiple the data sections of two frames together or 
-        multiply a number to every element in the data section.
-        """
-        
-        try:
-            self.data.xy *= y.data.xy
-        except AttributeError:
-            self.data.xy *= numpy.int16(y)
-        return self
-            
-    def __eq__(self, y):
-        """
-        Check if the time tags of two frames are equal or if the time
-        tag is equal to a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX == tY:
-            return True
-        else:
-            return False
-            
-    def __ne__(self, y):
-        """
-        Check if the time tags of two frames are not equal or if the time
-        tag is not equal to a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX != tY:
-            return True
-        else:
-            return False
-            
-    def __gt__(self, y):
-        """
-        Check if the time tag of the first frame is greater than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX > tY:
-            return True
-        else:
-            return False
-            
-    def __ge__(self, y):
-        """
-        Check if the time tag of the first frame is greater than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX >= tY:
-            return True
-        else:
-            return False
-            
-    def __lt__(self, y):
-        """
-        Check if the time tag of the first frame is less than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX < tY:
-            return True
-        else:
-            return False
-            
-    def __le__(self, y):
-        """
-        Check if the time tag of the first frame is less than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX <= tY:
-            return True
-        else:
-            return False
-            
-    def __cmp__(self, y):
-        """
-        Compare two frames based on the time tags.  This is helpful for 
-        sorting things.
-        """
-        
-        tX = self.data.timetag
-        tY = y.data.timetag
-        if tY > tX:
-            return -1
-        elif tX > tY:
-            return 1
-        else:
-            return 0
+        return self.payload.time
 
 
-def read_frame(filehandle, Verbose=False):
+def read_frame(filehandle, verbose=False):
     """
     Function to read in a single TBW frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 
@@ -370,7 +207,7 @@ def read_frame(filehandle, Verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = readTBW(filehandle, Frame())
+        newFrame = read_tbw(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

@@ -8,7 +8,7 @@ Frame
   object that contains all data associated with a particular COR frame.  The 
   primary consituents of each frame are:
     * FrameHeader - the COR frame header object and
-    * FrameData   - the COR frame data object.  
+    * FramePayload   - the COR frame data object.  
 Combined, these two objects contain all of the information found in the 
 original COR frame.
 
@@ -36,8 +36,9 @@ import copy
 import numpy
 
 from lsl.common import adp as adp_common
+from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
 from lsl.reader._gofast import NCHAN_COR
-from lsl.reader._gofast import readCOR
+from lsl.reader._gofast import read_cor
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -48,19 +49,21 @@ telemetry.track_module()
 
 __version__ = '0.2'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 
            'get_frames_per_obs', 'get_channel_count', 'get_baseline_count']
 
 FRAME_SIZE = 32 + NCHAN_COR*4*8
 FRAME_CHANNEL_COUNT = NCHAN_COR
 
 
-class FrameHeader(object):
+class FrameHeader(FrameHeaderBase):
     """
     Class that stores the information found in the header of a COR 
     frame.  All three fields listed in the DP ICD version H are stored as 
     well as the original binary header data.
     """
+    
+    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'first_chan', 'gain']
     
     def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None, gain=None):
         self.adp_id = adp_id
@@ -68,6 +71,7 @@ class FrameHeader(object):
         self.second_count = second_count
         self.first_chan = first_chan
         self.gain = gain
+        FrameHeaderBase.__init__(self)
         
     @property
     def is_cor(self):
@@ -91,18 +95,24 @@ class FrameHeader(object):
         return (numpy.arange(NCHAN_COR, dtype=numpy.float32)+self.first_chan) * adp_common.fC
 
 
-class FrameData(object):
+class FramePayload(FramePayloadBase):
     """
     Class that stores the information found in the data section of a COR
     frame.
     """
+    
+    _payload_attrs = ['timetag', 'navg', 'stand0', 'stand1']
     
     def __init__(self, timetag=None, navg=None, stand0=None, stand1=None, vis=None):
         self.timetag = timetag
         self.navg = navg
         self.stand0 = stand0
         self.stand1 = stand1
-        self.vis = vis
+        FramePayloadBase.__init__(self, vis)
+        
+    @property
+    def vis(self):
+        return self._data
         
     @property
     def id(self):
@@ -134,25 +144,15 @@ class FrameData(object):
         return self.navg * adp_common.T2
 
 
-class Frame(object):
+class Frame(FrameBase):
     """
     Class that stores the information contained within a single COR 
-    frame.  It's properties are FrameHeader and FrameData objects.
+    frame.  It's properties are FrameHeader and FramePayload objects.
     """
     
-    def __init__(self, header=None, data=None):
-        if header is None:
-            self.header = FrameHeader()
-        else:
-            self.header = header
-            
-        if data is None:
-            self.data = FrameData()
-        else:
-            self.data = data
-            
-        self.valid = True
-        
+    _header_class = FrameHeader
+    _payload_class = FramePayload
+    
     @property
     def is_cor(self):
         """
@@ -180,209 +180,30 @@ class Frame(object):
     @property
     def time(self):
         """
-        Convenience wrapper for the Frame.FrameData.time property.
+        Convenience wrapper for the Frame.FramePayload.time property.
         """
         
-        return self.data.time
+        return self.payload.time
         
     @property
     def id(self):
         """
-        Convenience wrapper for the Frame.FrameData.id property.
+        Convenience wrapper for the Frame.FramePayload.id property.
         """
         
-        return self.data.id
+        return self.payload.id
         
     @property
     def integration_time(self):
         """
-        Convenience wrapper for the Frame.FrameData.integration_time
+        Convenience wrapper for the Frame.FramePayload.integration_time
         property.
         """
         
-        return self.data.integration_time
-        
-    def __add__(self, y):
-        """
-        Add the data sections of two frames together or add a number 
-        to every element in the data section.
-        
-        .. note::
-            In the case where a frame is given the weights are
-            ignored.
-        """
-        
-        newFrame = copy.deepcopy(self)
-        newFrame += y
-        return newFrame
-        
-    def __iadd__(self, y):
-        """
-        In-place add the data sections of two frames together or add 
-        a number to every element in the data section.
-        
-        .. note::
-            In the case where a frame is given the weights are
-            ignored.
-        """
-        
-        try:
-            self.data.vis += y.data.vis
-        except AttributeError:
-            self.data.vis += numpy.complex64(y)
-        return self
-        
-    def __mul__(self, y):
-        """
-        Multiple the data sections of two frames together or multiply 
-        a number to every element in the data section.
-        
-        .. note::
-            In the case where a frame is given the weights are
-            ignored.
-        """
-        
-        newFrame = copy.deepcopy(self)
-        newFrame *= y
-        return newFrame
-            
-    def __imul__(self, y):
-        """
-        In-place multiple the data sections of two frames together or 
-        multiply a number to every element in the data section.
-        
-        .. note::
-            In the case where a frame is given the weights are
-            ignored.
-        """
-        
-        try:
-            self.data.vis *= y.data.vis
-        except AttributeError:
-            self.data.vis *= numpy.complex64(y)
-        return self
-            
-    def __eq__(self, y):
-        """
-        Check if the time tags of two frames are equal or if the time
-        tag is equal to a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX == tY:
-            return True
-        else:
-            return False
-            
-    def __ne__(self, y):
-        """
-        Check if the time tags of two frames are not equal or if the time
-        tag is not equal to a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX != tY:
-            return True
-        else:
-            return False
-            
-    def __gt__(self, y):
-        """
-        Check if the time tag of the first frame is greater than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX > tY:
-            return True
-        else:
-            return False
-            
-    def __ge__(self, y):
-        """
-        Check if the time tag of the first frame is greater than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX >= tY:
-            return True
-        else:
-            return False
-            
-    def __lt__(self, y):
-        """
-        Check if the time tag of the first frame is less than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX < tY:
-            return True
-        else:
-            return False
-            
-    def __le__(self, y):
-        """
-        Check if the time tag of the first frame is less than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.data.timetag
-        try:
-            tY = y.data.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX <= tY:
-            return True
-        else:
-            return False
-            
-    def __cmp__(self, y):
-        """
-        Compare two frames based on the time tags.  This is helpful for 
-        sorting things.
-        """
-        
-        tX = self.data.timetag
-        tY = y.data.timetag
-        if tY > tX:
-            return -1
-        elif tX > tY:
-            return 1
-        else:
-            return 0
+        return self.payload.integration_time
 
 
-def read_frame(filehandle, Verbose=False):
+def read_frame(filehandle, verbose=False):
     """
     Function to read in a single COR frame (header+data) and store the 
     contents as a Frame object.
@@ -390,7 +211,7 @@ def read_frame(filehandle, Verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = readCOR(filehandle, Frame())
+        newFrame = read_cor(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

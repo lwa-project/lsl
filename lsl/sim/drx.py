@@ -59,26 +59,26 @@ def frame_to_frame(drx_frame):
 
     # Part 2: The data
     ## Time tag
-    rawFrame[16] = (drx_frame.data.timetag>>56) & 255
-    rawFrame[17] = (drx_frame.data.timetag>>48) & 255
-    rawFrame[18] = (drx_frame.data.timetag>>40) & 255
-    rawFrame[19] = (drx_frame.data.timetag>>32) & 255
-    rawFrame[20] = (drx_frame.data.timetag>>24) & 255
-    rawFrame[21] = (drx_frame.data.timetag>>16) & 255
-    rawFrame[22] = (drx_frame.data.timetag>>8) & 255
-    rawFrame[23] = drx_frame.data.timetag & 255
+    rawFrame[16] = (drx_frame.payload.timetag>>56) & 255
+    rawFrame[17] = (drx_frame.payload.timetag>>48) & 255
+    rawFrame[18] = (drx_frame.payload.timetag>>40) & 255
+    rawFrame[19] = (drx_frame.payload.timetag>>32) & 255
+    rawFrame[20] = (drx_frame.payload.timetag>>24) & 255
+    rawFrame[21] = (drx_frame.payload.timetag>>16) & 255
+    rawFrame[22] = (drx_frame.payload.timetag>>8) & 255
+    rawFrame[23] = drx_frame.payload.timetag & 255
     ## Flags
-    rawFrame[24] = (drx_frame.data.flags>>56) & 255
-    rawFrame[25] = (drx_frame.data.flags>>48) & 255
-    rawFrame[26] = (drx_frame.data.flags>>40) & 255
-    rawFrame[27] = (drx_frame.data.flags>>32) & 255
-    rawFrame[28] = (drx_frame.data.flags>>24) & 255
-    rawFrame[29] = (drx_frame.data.flags>>16) & 255
-    rawFrame[30] = (drx_frame.data.flags>>8) & 255
-    rawFrame[31] = drx_frame.data.flags & 255
+    rawFrame[24] = (drx_frame.payload.flags>>56) & 255
+    rawFrame[25] = (drx_frame.payload.flags>>48) & 255
+    rawFrame[26] = (drx_frame.payload.flags>>40) & 255
+    rawFrame[27] = (drx_frame.payload.flags>>32) & 255
+    rawFrame[28] = (drx_frame.payload.flags>>24) & 255
+    rawFrame[29] = (drx_frame.payload.flags>>16) & 255
+    rawFrame[30] = (drx_frame.payload.flags>>8) & 255
+    rawFrame[31] = drx_frame.payload.flags & 255
     ## Data
-    i = drx_frame.data.iq.real
-    q = drx_frame.data.iq.imag
+    i = drx_frame.payload.iq.real
+    q = drx_frame.payload.iq.imag
     ### Round, clip, and convert to unsigned integers
     i = i.round()
     i = i.clip(-8, 7)
@@ -146,9 +146,9 @@ class SimFrame(drx.Frame):
         self.header.time_offset = self.time_offset
         self.header.drx_id = (self.beam & 7) | ((self.tune & 7) << 3) | ((self.pol & 1) << 7)
         
-        self.data.timetag = self.obs_time
-        self.data.flags = self.flags
-        self.data.iq = self.iq
+        self.payload.timetag = self.obs_time
+        self.payload.flags = self.flags
+        self.payload._data = self.iq
         
     def load_frame(self, drx_frame):
         """
@@ -156,7 +156,7 @@ class SimFrame(drx.Frame):
         """
         
         self.header = drx_frame.header
-        self.data = drx_frame.data
+        self.payload = drx_frame.payload
 
         inverseCodes = {}
         for code in drx.FILTER_CODES:
@@ -173,9 +173,9 @@ class SimFrame(drx.Frame):
         self.decimation = self.header.decimation
         self.time_offset = self.header.time_offset
         ## Data
-        self.obs_time = self.data.timetag
-        self.flags = self.data.flags
-        self.iq = self.data.iq
+        self.obs_time = self.payload.timetag
+        self.flags = self.payload.flags
+        self.iq = self.payload.iq
     
     def is_valid(self, raise_errors=False):
         """
@@ -210,22 +210,22 @@ class SimFrame(drx.Frame):
                 raise ValueError("Invalid polarization: '%s'" % tune)
             return False
 
-        # Is there data loaded into frame.data.iq?
-        if self.data.iq is None:
+        # Is there data loaded into frame.payload.iq?
+        if self.payload.iq is None:
             if raise_errors:
-                raise ValueError("Invalid data payload: '%s'" % self.data.iq)
+                raise ValueError("Invalid data payload: '%s'" % self.payload.iq)
             return False
 
         # Does the data length make sense?
-        if self.data.iq.shape[0] != 4096:
+        if self.payload.iq.shape[0] != 4096:
             if raise_errors:
-                raise ValueError("Invalid data length: %i", self.data.iq.shape[0])
+                raise ValueError("Invalid data length: %i", self.payload.iq.shape[0])
             return False
 
         # Does the data type make sense?
-        if self.data.iq.dtype.kind != 'c':
+        if self.payload.iq.dtype.kind != 'c':
             if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.data.iq.dtype.kind)
+                raise ValueError("Invalid data type: '%s'" % self.payload.iq.dtype.kind)
             return False
 
         # If we made it this far, it's valid

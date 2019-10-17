@@ -110,7 +110,7 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].payload.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -143,7 +143,7 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].payload.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -189,7 +189,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].payload.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -224,7 +224,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (119196674956800, 119196675960320))
+            self.assertTrue(cFrames[0].payload.timetag in (119196674956800, 119196675960320))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -269,7 +269,7 @@ class buffer_tests(unittest.TestCase):
             if cFrames is None:
                 continue
                 
-            dumped.append( cFrames[0].data.timetag )
+            dumped.append( cFrames[0].payload.timetag )
             
         fh.close()
         
@@ -367,7 +367,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (257355782095346056,))
+            self.assertTrue(cFrames[0].payload.timetag in (257355782095346056,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), 4)
@@ -415,7 +415,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (257355782095346056,))
+            self.assertTrue(cFrames[0].payload.timetag in (257355782095346056,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), 4)
@@ -503,7 +503,7 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
+            self.assertTrue(cFrames[0].payload.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -535,7 +535,7 @@ class buffer_tests(unittest.TestCase):
                 continue
                 
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
+            self.assertTrue(cFrames[0].payload.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -578,7 +578,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
+            self.assertTrue(cFrames[0].payload.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)
@@ -612,7 +612,7 @@ class buffer_tests(unittest.TestCase):
         # Flush the buffer
         for cFrames in frameBuffer.flush():
             # Make sure the dump has one of the expected time tags
-            self.assertTrue(cFrames[0].data.timetag in (283685766952000000,))
+            self.assertTrue(cFrames[0].payload.timetag in (283685766952000000,))
             
             # Make sure it has the right number of frames
             self.assertEqual(len(cFrames), nFpO)

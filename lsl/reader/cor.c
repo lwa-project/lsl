@@ -43,7 +43,7 @@ typedef struct {
 
 typedef struct {
     CORHeader header;
-    CORPayload data;
+    CORPayload payload;
 } CORFrame;
 #pragma pack(pop)
 
@@ -52,8 +52,8 @@ PyObject *cor_method = NULL;
 PyObject *cor_size   = NULL;
 
 
-PyObject *readCOR(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fData, *temp;
+PyObject *read_cor(PyObject *self, PyObject *args) {
+    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data=NULL;
     CORFrame cFrame;
     
@@ -106,19 +106,19 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
     cFrame.header.second_count = __bswap_32(cFrame.header.second_count);
     cFrame.header.first_chan = __bswap_16(cFrame.header.first_chan);
     cFrame.header.gain = __bswap_16(cFrame.header.gain);
-    cFrame.data.timetag = __bswap_64(cFrame.data.timetag);
-    cFrame.data.navg = __bswap_32(cFrame.data.navg);
-    cFrame.data.stand0 = __bswap_16(cFrame.data.stand0);
-    cFrame.data.stand1 = __bswap_16(cFrame.data.stand1);
+    cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
+    cFrame.payload.navg = __bswap_32(cFrame.payload.navg);
+    cFrame.payload.stand0 = __bswap_16(cFrame.payload.stand0);
+    cFrame.payload.stand1 = __bswap_16(cFrame.payload.stand1);
     
     // Fill the data array
     float complex *a;
     a = (float complex *) PyArray_DATA(data);
     /*for(i=0; i<(COR_NCHAN*4); i++) {
-        *(a + i) = cFrame.data.vis[i];
+        *(a + i) = cFrame.payload.vis[i];
     }*/
-    memcpy(a, &cFrame.data.vis, sizeof(float complex)*COR_NCHAN*4);
-    if( cFrame.data.stand0 == cFrame.data.stand1 ) {
+    memcpy(a, &cFrame.payload.vis, sizeof(float complex)*COR_NCHAN*4);
+    if( cFrame.payload.stand0 == cFrame.payload.stand1 ) {
         // Deal with the edge of the triangular matrix that ADP outputs
         // so that we do not get strange values in the output.  These are
         // all auto-correlations and we can just use conjgation to get YX
@@ -161,33 +161,33 @@ PyObject *readCOR(PyObject *self, PyObject *args) {
     Py_XDECREF(temp);
     
     // 2. Data
-    fData = PyObject_GetAttrString(frame, "data");
+    fPayload = PyObject_GetAttrString(frame, "payload");
     
-    temp = PyLong_FromLongLong(cFrame.data.timetag);
-    PyObject_SetAttrString(fData, "timetag", temp);
+    temp = PyLong_FromLongLong(cFrame.payload.timetag);
+    PyObject_SetAttrString(fPayload, "timetag", temp);
     Py_XDECREF(temp);
     
-    temp = Py_BuildValue("i", cFrame.data.navg);
-    PyObject_SetAttrString(fData, "navg", temp);
+    temp = Py_BuildValue("i", cFrame.payload.navg);
+    PyObject_SetAttrString(fPayload, "navg", temp);
     Py_XDECREF(temp);
     
-    temp = Py_BuildValue("h", cFrame.data.stand0);
-    PyObject_SetAttrString(fData, "stand0", temp);
+    temp = Py_BuildValue("h", cFrame.payload.stand0);
+    PyObject_SetAttrString(fPayload, "stand0", temp);
     Py_XDECREF(temp);
     
-    temp = Py_BuildValue("h", cFrame.data.stand1);
-    PyObject_SetAttrString(fData, "stand1", temp);
+    temp = Py_BuildValue("h", cFrame.payload.stand1);
+    PyObject_SetAttrString(fPayload, "stand1", temp);
     Py_XDECREF(temp);
     
-    PyObject_SetAttrString(fData, "vis", PyArray_Return(data));
+    PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data));
     
     // 3. Frame
     PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "data", fData);
+    PyObject_SetAttrString(frame, "payload", fPayload);
     output = Py_BuildValue("O", frame);
     
     Py_XDECREF(fHeader);
-    Py_XDECREF(fData);
+    Py_XDECREF(fPayload);
     Py_XDECREF(data);
     
     return output;
@@ -198,8 +198,8 @@ fail:
     return NULL;
 }
 
-char readCOR_doc[] = PyDoc_STR(\
-"Function to read in a single COR frame (header+data) and store the contents\n\
+char read_cor_doc[] = PyDoc_STR(\
+"Function to read in a single COR frame (header+payload) and store the contents\n\
 as a Frame object.\n\
 \n\
 .. versionchanged:: 1.2.1\n\

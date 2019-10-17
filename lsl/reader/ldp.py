@@ -338,7 +338,7 @@ class TBWFile(LDPFileBase):
         srate = 196e6
         bits = junkFrame.data_bits
         start = junkFrame.time
-        startRaw = junkFrame.data.timetag
+        startRaw = junkFrame.payload.timetag
         
         # Trick to figure out how many antennas are in a file and the "real" 
         # start time.  For details of why this needs to be done, see the read()
@@ -356,7 +356,7 @@ class TBWFile(LDPFileBase):
                     if stand not in idsFound:
                         idsFound.append(stand)
                     if frame.header.frame_count < 1000:
-                        timesFound.append( (frame.header.frame_count-1, frame.data.timetag) )
+                        timesFound.append( (frame.header.frame_count-1, frame.payload.timetag) )
                 self.fh.seek(tbw.FRAME_SIZE*(30000-26), 1)
             except:
                 break
@@ -461,15 +461,15 @@ class TBWFile(LDPFileBase):
             aStandY = 2*(stand-1) + 1
             
             if cFrame.header.frame_count < setTimeRef:
-                newSetTime = cFrame.data.timetag - (cFrame.header.frame_count-1)*dataSize
-                if setTime is None or cFrame.data.timetag < setTime:
+                newSetTime = cFrame.payload.timetag - (cFrame.header.frame_count-1)*dataSize
+                if setTime is None or cFrame.payload.timetag < setTime:
                     setTime = newSetTime
                     setTimeRef = cFrame.header.frame_count
                     
             try:
                 cnt = cFrame.header.frame_count - 1
-                data[aStandX, cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[0,:]
-                data[aStandY, cnt*dataSize:(cnt+1)*dataSize] = cFrame.data.xy[1,:]
+                data[aStandX, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.xy[0,:]
+                data[aStandY, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.xy[1,:]
                 
                 i += 1
             except ValueError:
@@ -527,14 +527,14 @@ class TBNFile(LDPFileBase):
         filesize = os.fstat(self.fh.fileno()).st_size
         nFramesFile = (filesize - self.fh.tell()) // tbn.FRAME_SIZE
         framesPerObsX, framesPerObsY = tbn.get_frames_per_obs(self.fh)
-        srate =  tbn.get_sample_rate(self.fh, nFrames=((framesPerObsX+framesPerObsY)*3))
+        srate =  tbn.get_sample_rate(self.fh, nframes=((framesPerObsX+framesPerObsY)*3))
         bits = 8
         
         junkFrame = self.read_frame()
         self.fh.seek(-tbn.FRAME_SIZE, 1)
         tuning1 = junkFrame.central_freq
         start = junkFrame.time
-        startRaw = junkFrame.data.timetag
+        startRaw = junkFrame.payload.timetag
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbn.FRAME_SIZE,
                             'nantenna': framesPerObsX+framesPerObsY, 
@@ -572,7 +572,7 @@ class TBNFile(LDPFileBase):
             if curr is None:
                 frame = tbn.read_frame(self.fh)
                 self.fh.seek(-tbn.FRAME_SIZE, 1)
-                curr = frame.data.time_time
+                curr = frame.payload.time_time
             buffer_offset = curr - self._timetag
             buffer_offset = buffer_offset / fS
             
@@ -638,7 +638,7 @@ class TBNFile(LDPFileBase):
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
             junkFrame = tbn.read_frame(self.fh)
-            self._timetag = junkFrame.data.timetag - timetagSkip
+            self._timetag = junkFrame.payload.timetag - timetagSkip
             self.fh.seek(-tbn.FRAME_SIZE, 1)
             
         # Find out how many frames to read in
@@ -658,7 +658,7 @@ class TBNFile(LDPFileBase):
             cFrames = deque()
             for i in xrange(self.description['nantenna']//2):
                 try:
-                    cFrames.append( tbn.read_frame(self.fh, Verbose=False) )
+                    cFrames.append( tbn.read_frame(self.fh, verbose=False) )
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
@@ -674,14 +674,14 @@ class TBNFile(LDPFileBase):
                 continue
                 
             # If something comes out, add it to the data array
-            cTimetag = cFrames[0].data.timetag
+            cTimetag = cFrames[0].payload.timetag
             if cTimetag != self._timetag+timetagSkip:
                 actStep = cTimetag - self._timetag
                 if self.ignore_timetag_errors:
                     warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
                 else:
                     raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
-            self._timetag = cFrames[0].data.timetag
+            self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
                 stand,pol = cFrame.header.id
@@ -689,11 +689,11 @@ class TBNFile(LDPFileBase):
                 
                 if setTime is None:
                     if time_in_samples:
-                        setTime = cFrame.data.timetag
+                        setTime = cFrame.payload.timetag
                     else:
                         setTime = sum(cFrame.time)
                         
-                data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+                data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.iq
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -701,14 +701,14 @@ class TBNFile(LDPFileBase):
         # flush the buffer
         if eofFound and nFrameSets != frame_count:
             for cFrames in self.buffer.flush():
-                cTimetag = cFrames[0].data.timetag
+                cTimetag = cFrames[0].payload.timetag
                 if cTimetag != self._timetag+timetagSkip:
                     actStep = cTimetag - self._timetag
                     if self.ignore_timetag_errors:
                         warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
                     else:
                         raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
-                self._timetag = cFrames[0].data.timetag
+                self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
                     stand,pol = cFrame.header.id
@@ -716,11 +716,11 @@ class TBNFile(LDPFileBase):
                     
                     if setTime is None:
                         if time_in_samples:
-                            setTime = cFrame.data.timetag
+                            setTime = cFrame.payload.timetag
                         else:
                             setTime = sum(cFrame.time)
                         
-                    data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.data.iq
+                    data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.iq
                     count[aStand] += 1
                 nFrameSets += 1
                 
@@ -756,7 +756,7 @@ class TBNFile(LDPFileBase):
             for j in xrange(self.description['nantenna']):
                 # Read in the next frame and anticipate any problems that could occur
                 try:
-                    cFrame = tbn.read_frame(self.fh, Verbose=False)
+                    cFrame = tbn.read_frame(self.fh, verbose=False)
                 except errors.EOFError:
                     break
                 except errors.SyncError:
@@ -765,7 +765,7 @@ class TBNFile(LDPFileBase):
                 s,p = cFrame.id
                 aStand = 2*(s-1) + p
                 
-                data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.data.iq )
+                data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.iq )
                 count[aStand] +=  1
         self.fh.seek(-tbn.FRAME_SIZE*self.description['nantenna']*nframes, 1)
         
@@ -827,7 +827,7 @@ class DRXFile(LDPFileBase):
             id = (t,p)
             if id not in ids:
                 ids.append(id)
-            timetags.append(junkFrame.data.timetag)
+            timetags.append(junkFrame.payload.timetag)
         self.fh.seek(-32*drx.FRAME_SIZE, 1)
         
         return True
@@ -868,7 +868,7 @@ class DRXFile(LDPFileBase):
                 
             if i == 0:
                 start = junkFrame.time
-                startRaw = junkFrame.data.timetag - junkFrame.header.time_offset
+                startRaw = junkFrame.payload.timetag - junkFrame.header.time_offset
         self.fh.seek(-drx.FRAME_SIZE*32, 1)
         
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': drx.FRAME_SIZE,
@@ -1018,7 +1018,7 @@ class DRXFile(LDPFileBase):
                 cFrames = deque()
                 for i in xrange(self.description['beampols']):
                     try:
-                        cFrames.append( drx.read_frame(self.fh, Verbose=False) )
+                        cFrames.append( drx.read_frame(self.fh, verbose=False) )
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
@@ -1043,8 +1043,8 @@ class DRXFile(LDPFileBase):
                         for m in xrange(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
                             baseframe = copy.deepcopy(cFrames[0])
-                            baseframe.data.timeTag = m
-                            baseframe.data.iq *= 0
+                            baseframe.payload.timeTag = m
+                            baseframe.payload.iq *= 0
                             self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
@@ -1052,7 +1052,7 @@ class DRXFile(LDPFileBase):
             for cFrame in cFrames:
                 b,t,p = cFrame.id
                 aStand = 2*(t-1) + p
-                cTimetag = cFrame.data.timetag
+                cTimetag = cFrame.payload.timetag
                 if self._timetag[aStand] == 0:
                     self._timetag[aStand] = cTimetag - self._timetagSkip
                 if cTimetag != self._timetag[aStand]+self._timetagSkip:
@@ -1064,11 +1064,11 @@ class DRXFile(LDPFileBase):
                         
                 if setTime is None:
                     if time_in_samples:
-                        setTime = cFrame.data.timetag - cFrame.header.time_offset
+                        setTime = cFrame.payload.timetag - cFrame.header.time_offset
                     else:
                         setTime = sum(cFrame.time)
                         
-                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
+                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.iq
                 count[aStand] +=  1
                 self._timetag[aStand] = cTimetag
             nFrameSets += 1
@@ -1080,7 +1080,7 @@ class DRXFile(LDPFileBase):
                 for cFrame in cFrames:
                     b,t,p = cFrame.id
                     aStand = 2*(t-1) + p
-                    cTimetag = cFrame.data.timetag
+                    cTimetag = cFrame.payload.timetag
                     if self._timetag[aStand] == 0:
                         self._timetag[aStand] = cTimetag - self._timetagSkip
                     if cTimetag != self._timetag[aStand]+self._timetagSkip:
@@ -1092,11 +1092,11 @@ class DRXFile(LDPFileBase):
                             
                     if setTime is None:
                         if time_in_samples:
-                            setTime = cFrame.data.timetag - cFrame.header.time_offset
+                            setTime = cFrame.payload.timetag - cFrame.header.time_offset
                         else:
                             setTime = sum(cFrame.time)
                             
-                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.data.iq
+                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.iq
                     count[aStand] +=  1
                     self._timetag[aStand] = cTimetag
                 nFrameSets += 1
@@ -1139,7 +1139,7 @@ class DRXFile(LDPFileBase):
             for j in xrange(self.description['beampols']):
                 # Read in the next frame and anticipate any problems that could occur
                 try:
-                    cFrame = drx.read_frame(self.fh, Verbose=False)
+                    cFrame = drx.read_frame(self.fh, verbose=False)
                 except errors.EOFError:
                     break
                 except errors.SyncError:
@@ -1148,7 +1148,7 @@ class DRXFile(LDPFileBase):
                 b,t,p = cFrame.id
                 aStand = 2*(t-1) + p
                 
-                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.data.iq )
+                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.payload.iq )
                 count[aStand] +=  1
         self.fh.seek(-drx.FRAME_SIZE*self.description['beampols']*nframes, 1)
         
@@ -1213,7 +1213,7 @@ class DRSpecFile(LDPFileBase):
         nInt = junkFrame.header.nints
         tInt = nInt*LFFT/srate
         start = junkFrame.time
-        startRaw = junkFrame.data.timetag - junkFrame.header.time_offset
+        startRaw = junkFrame.payload.timetag - junkFrame.header.time_offset
         tuning1, tuning2 = junkFrame.central_freq
         prod = junkFrame.data_products
         
@@ -1333,7 +1333,7 @@ class DRSpecFile(LDPFileBase):
         for i in xrange(frame_count):
             # Read in the next frame and anticipate any problems that could occur
             try:
-                cFrame = drspec.read_frame(self.fh, Verbose=False)
+                cFrame = drspec.read_frame(self.fh, verbose=False)
             except errors.EOFError:
                 break
             except errors.SyncError:
@@ -1349,13 +1349,13 @@ class DRSpecFile(LDPFileBase):
                     
             if setTime is None:
                 if time_in_samples:
-                    setTime = cFrame.data.timetag - cFrame.header.time_offset
+                    setTime = cFrame.payload.timetag - cFrame.header.time_offset
                 else:
                     setTime = sum(cFrame.time)
                     
             for j,p in enumerate(self.description['data_products']):
-                data[j+0,                             count, :] = getattr(cFrame.data, '%s0' % p, None)
-                data[j+self.description['nproducts'], count, :] = getattr(cFrame.data, '%s1' % p, None)
+                data[j+0,                             count, :] = getattr(cFrame.payload, '%s0' % p, None)
+                data[j+self.description['nproducts'], count, :] = getattr(cFrame.payload, '%s1' % p, None)
             count +=  1
             self._timetag = cTimetag
             nFrameSets += 1
@@ -1577,7 +1577,7 @@ class TBFFile(LDPFileBase):
             if cFrame.header.frame_count < firstFrameCount:
                 firstFrameCount = cFrame.header.frame_count
                 start = junkFrame.time
-                startRaw = junkFrame.data.timetag
+                startRaw = junkFrame.payload.timetag
         self.fh.seek(marker)
         self.mapper.sort()
         
@@ -1616,7 +1616,7 @@ class TBFFile(LDPFileBase):
             if curr is None:
                 frame = tbf.read_frame(self.fh)
                 self.fh.seek(-tbf.FRAME_SIZE, 1)
-                curr = frame.data.time_tag
+                curr = frame.payload.time_tag
             buffer_offset = curr - self._timetag
             buffer_offset = buffer_offset / fS
             
@@ -1703,7 +1703,7 @@ class TBFFile(LDPFileBase):
             cFrames = deque()
             for i in xrange(framesPerObs):
                 try:
-                    cFrame = tbf.read_frame(self.fh, Verbose=False)
+                    cFrame = tbf.read_frame(self.fh, verbose=False)
                     if not cFrame.is_tbf:
                         continue
                     cFrames.append( cFrame )
@@ -1722,7 +1722,7 @@ class TBFFile(LDPFileBase):
                 continue
                 
             # If something comes out, add it to the data array
-            cTimetag = cFrames[0].data.timetag
+            cTimetag = cFrames[0].payload.timetag
             if self._timetag == 0:
                 self._timetag = cTimetag - timetagSkip
             if cTimetag != self._timetag+timetagSkip:
@@ -1731,18 +1731,18 @@ class TBFFile(LDPFileBase):
                     warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
                 else:
                     raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
-            self._timetag = cFrames[0].data.timetag
+            self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
                 first_chan = cFrame.header.first_chan
                 
                 if setTime is None:
                     if time_in_samples:
-                        setTime = cFrame.data.timetag
+                        setTime = cFrame.payload.timetag
                     else:
                         setTime = sum(cFrame.time)
                         
-                subData = cFrame.data.fDomain
+                subData = cFrame.payload.fDomain
                 subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
                 subData = subData.T
                 
@@ -1755,7 +1755,7 @@ class TBFFile(LDPFileBase):
         # flush the buffer
         if eofFound and nFrameSets != frame_count:
             for cFrames in self.buffer.flush():
-                cTimetag = cFrames[0].data.timetag
+                cTimetag = cFrames[0].payload.timetag
                 if self._timetag == 0:
                     self._timetag = cTimetag - timetagSkip
                 if cTimetag != self._timetag+timetagSkip:
@@ -1764,18 +1764,18 @@ class TBFFile(LDPFileBase):
                         warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
                     else:
                         raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
-                self._timetag = cFrames[0].data.timetag
+                self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
                     first_chan = cFrame.header.first_chan
                     
                     if setTime is None:
                         if time_in_samples:
-                            setTime = cFrame.data.timetag
+                            setTime = cFrame.payload.timetag
                         else:
                             setTime = sum(cFrame.time)
                         
-                    subData = cFrame.data.fDomain
+                    subData = cFrame.payload.fDomain
                     subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
                     subData = subData.T
                     
@@ -1878,7 +1878,7 @@ class CORFile(LDPFileBase):
             if cFrame.header.frame_count < firstFrameCount:
                 firstFrameCount = cFrame.header.frame_count
                 start = junkFrame.time
-                startRaw = junkFrame.data.timetag
+                startRaw = junkFrame.payload.timetag
         self.fh.seek(marker)
         self.cmapper.sort()
         
@@ -1922,7 +1922,7 @@ class CORFile(LDPFileBase):
             if curr is None:
                 frame = cor.read_frame(self.fh)
                 self.fh.seek(-cor.FRAME_SIZE, 1)
-                curr = frame.data.time_tag
+                curr = frame.payload.time_tag
             buffer_offset = curr - self._timetag
             buffer_offset = buffer_offset / fS
             
@@ -2009,7 +2009,7 @@ class CORFile(LDPFileBase):
             cFrames = deque()
             for i in xrange(framesPerObs):
                 try:
-                    cFrame = cor.read_frame(self.fh, Verbose=False)
+                    cFrame = cor.read_frame(self.fh, verbose=False)
                     if not cFrame.isCOR():
                         continue
                     cFrames.append( cFrame )
@@ -2029,7 +2029,7 @@ class CORFile(LDPFileBase):
                 continue
                 
             # If something comes out, add it to the data array
-            cTimetag = cFrames[0].data.timetag
+            cTimetag = cFrames[0].payload.timetag
             if self._timetag == 0:
                 self._timetag = cTimetag - timetagSkip
             if cTimetag != self._timetag+timetagSkip:
@@ -2038,21 +2038,21 @@ class CORFile(LDPFileBase):
                     warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
                 else:
                     raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
-            self._timetag = cFrames[0].data.timetag
+            self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
                 first_chan = cFrame.header.first_chan
                 
                 if setTime is None:
                     if time_in_samples:
-                        setTime = cFrame.data.timetag
+                        setTime = cFrame.payload.timetag
                     else:
                         setTime = sum(cFrame.time)
                         
                 aBase = self.bmapperd[cFrame.id]
                 aChan = self.cmapperd[first_chan]
                 aStand = aBase*len(self.cmapper) + aChan
-                data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.data.vis
+                data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.vis
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -2060,7 +2060,7 @@ class CORFile(LDPFileBase):
         # flush the buffer
         if eofFound and nFrameSets != frame_count:
             for cFrames in self.buffer.flush():
-                cTimetag = cFrames[0].data.timetag
+                cTimetag = cFrames[0].payload.timetag
                 if self._timetag == 0:
                     self._timetag = cTimetag - timetagSkip
                 if cTimetag != self._timetag+timetagSkip:
@@ -2069,21 +2069,21 @@ class CORFile(LDPFileBase):
                         warnings.warn("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep), RuntimeWarning)
                     else:
                         raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
-                self._timetag = cFrames[0].data.timetag
+                self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
                     first_chan = cFrame.header.first_chan
                     
                     if setTime is None:
                         if time_in_samples:
-                            setTime = cFrame.data.timetag
+                            setTime = cFrame.payload.timetag
                         else:
                             setTime = sum(cFrame.time)
                             
                     aBase = self.bmapperd[cFrame.id]
                     aChan = self.cmapperd[first_chan]
                     aStand = aBase*len(self.cmapper) + aChan
-                    data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.data.vis
+                    data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.vis
                     count[aStand] += 1
                 nFrameSets += 1
                 

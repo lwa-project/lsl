@@ -88,27 +88,27 @@ extern void initVDIFLUTs(void);
 */
 
 // tbw.c
-extern PyObject *readTBW(PyObject*, PyObject*);
-extern char readTBW_doc[];
+extern PyObject *read_tbw(PyObject*, PyObject*);
+extern char read_tbw_doc[];
 // tbn.c
-extern PyObject *readTBN(PyObject*, PyObject*);
-extern char readTBN_doc[];
+extern PyObject *read_tbn(PyObject*, PyObject*);
+extern char read_tbn_doc[];
 // drx.c
-extern PyObject *readDRX(PyObject*, PyObject*);
-extern char readDRX_doc[];
+extern PyObject *read_drx(PyObject*, PyObject*);
+extern char read_drx_doc[];
 // drspec.c
-extern PyObject *readDRSpec(PyObject*, PyObject*);
-extern char readDRSpec_doc[];
+extern PyObject *read_drspec(PyObject*, PyObject*);
+extern char read_drspec_doc[];
 
 // vdif.c
-extern PyObject *readVDIF(PyObject*, PyObject*, PyObject*);
-extern char readVDIF_doc[];
+extern PyObject *read_vdif(PyObject*, PyObject*, PyObject*);
+extern char read_vdif_doc[];
 
 // tbf.c
-extern PyObject *readTBF(PyObject*, PyObject*);
-extern char readTBF_doc[];
+extern PyObject *read_tbf(PyObject*, PyObject*);
+extern char read_tbf_doc[];
 // cor.c
-extern PyObject *readCOR(PyObject*, PyObject*);
-extern char readCOR_doc[];
+extern PyObject *read_cor(PyObject*, PyObject*);
+extern char read_cor_doc[];
 
 #endif	// __READERS_H

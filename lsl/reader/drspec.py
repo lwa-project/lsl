@@ -8,7 +8,7 @@ Frame
   object that contains all data associated with a particular spectrometer frame.  
   The primary constituents of each frame are:
     * FrameHeader - the spectrometer frame header object and
-    * FrameData   - the spectral data object.
+    * FramePayload   - the spectral data object.
 Combined, these two objects contain all of the information found in the 
 original spectrometer frame.
 
@@ -45,8 +45,9 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
+from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
 from lsl.reader.drx import FILTER_CODES as drx_FILTER_CODES
-from lsl.reader._gofast import readDRSpec
+from lsl.reader._gofast import read_drspec
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -57,7 +58,7 @@ telemetry.track_module()
 
 __version__ = '0.3'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'get_data_products', 'is_linear',
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'get_data_products', 'is_linear',
            'is_stokes', 'get_sample_rate', 'get_frame_size', 'get_ffts_per_integration', 
            'get_transform_size', 'get_integration_time', 'FILTER_CODES']
 
@@ -67,11 +68,13 @@ __all__ = ['FrameHeader', 'FrameData', 'Frame', 'read_frame', 'get_data_products
 FILTER_CODES = drx_FILTER_CODES
 
 
-class FrameHeader(object):
+class FrameHeader(FrameHeaderBase):
     """
     Class that stores the information found in the header of a DR spectrometer/DRX 
     frame.
     """
+    
+    _header_attrs = ['beam', 'format', 'decimation', 'time_offset', 'nints']
     
     def __init__(self, beam=0, format=0, decimation=None, time_offset=None, nints=None):
         self.beam = beam
@@ -83,6 +86,8 @@ class FrameHeader(object):
             self.nints = 0
         else:
             self.nints = nints
+            
+        FrameHeaderBase.__init__(self)
         
     @property
     def id(self):
@@ -185,7 +190,7 @@ class FrameHeader(object):
         return self.nints
 
 
-class FrameData(object):
+class FramePayload(FramePayloadBase):
     """
     Class that stores the information found in the data section of a DR spectrometer/
     DRX frame.
@@ -198,6 +203,8 @@ class FrameData(object):
         to account for the fact that spectrometer files can store either linear or Stokes
         data.
     """
+    
+    _payload_attrs = ['timetag', 'tuning_words', 'fills', 'errors', 'saturations']
     
     def __init__(self, timetag=None, tuning_words=None, fills=None, errors=None, saturations=None):
         self.timetag = timetag
@@ -217,7 +224,8 @@ class FrameData(object):
             self.saturations = [0, 0, 0, 0]
         else:
             self.saturations = saturations
-            
+        FramePayloadBase.__init__(self, None)
+        
     @property
     def central_freq(self):
         """
@@ -225,12 +233,54 @@ class FrameData(object):
         """
         
         return [dp_common.fS * i / 2**32 for i in self.tuning_words]
+        
+    def __iadd__(self, y):
+        """
+        In-place add the data sections of two frames together or add 
+        a number to every element in the data section.
+        """
+        
+        attrs = self.header.getDataProducts()
+        
+        for attrBase in attrs:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) + getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.getDataProducts())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) + numpy.float32(y)
+                setattr(self.payload, attr, temp)
+                
+        return self
+        
+    def __imul__(self, y):
+        """
+        In-place multiple the data sections of two frames together or 
+        multiply a number to every element in the data section.
+        """
+        
+        attrs = self.header.getDataProducts()
+        
+        for attrBase in attrs:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) * getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.getDataProducts())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) * numpy.float32(y)
+                setattr(self.payload, attr, temp)
+                
+        return self
 
 
-class Frame(object):
+class Frame(FrameBase):
     """
     Class that stores the information contained within a single DR spectrometer/
-    DRX frame.  It's properties are FrameHeader and FrameDataLinear/FrameDataStokes
+    DRX frame.  It's properties are FrameHeader and FramePayloadLinear/FramePayloadStokes
     objects.
     
     .. versionchanged:: 0.6.0
@@ -240,20 +290,10 @@ class Frame(object):
         for normalization.
     """
     
-    def __init__(self, header=None, data=None):
-        if header is None:
-            self.header = FrameHeader()
-        else:
-            self.header = header
-            
-        if data is None:
-            self.data = FrameData()
-        else:
-            self.data = data
-            
-        self.valid = True
-        self.gain = None
-        
+    _header_class = FrameHeader
+    _payload_class = FramePayload
+    gain = None
+    
     @property
     def id(self):
         """
@@ -326,7 +366,7 @@ class Frame(object):
         element tuple.
         """
         
-        adj_timetag = self.data.timetag - self.header.time_offset
+        adj_timetag = self.payload.timetag - self.header.time_offset
         
         seconds_i = adj_timetag // int(dp_common.fS)
         seconds_f = (adj_timetag % int(dp_common.fS)) / dp_common.fS
@@ -336,10 +376,10 @@ class Frame(object):
     @property
     def central_freq(self):
         """
-        Convenience wrapper for the Frame.FrameData.central_freq property.
+        Convenience wrapper for the Frame.FramePayload.central_freq property.
         """
         
-        return self.data.central_freq
+        return self.payload.central_freq
         
     @property
     def transform_size(self):
@@ -350,7 +390,7 @@ class Frame(object):
         """
         
         p = self.data_products[0]
-        return getattr(self.data, "%s0" % p, None).size
+        return getattr(self.payload, "%s0" % p, None).size
         
     @property
     def integration_time(self):
@@ -386,12 +426,12 @@ class Frame(object):
             for tuning in (0, 1):
                 attr = "%s%i" % (attrBase, tuning)
                 try:
-                    temp = getattr(self.data, attr, None) + getattr(y.data, attr, None)
+                    temp = getattr(self.payload, attr, None) + getattr(y.payload, attr, None)
                 except TypeError:
                     raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
                 except AttributeError:
-                    temp = getattr(self.data, attr, None) + numpy.float32(y)
-                setattr(self.data, attr, temp)
+                    temp = getattr(self.payload, attr, None) + numpy.float32(y)
+                setattr(self.payload, attr, temp)
             
         return self
         
@@ -415,12 +455,12 @@ class Frame(object):
             for tuning in (0, 1):
                 attr = "%s%i" % (attrBase, tuning)
                 try:
-                    temp = getattr(self.data, attr, None) * getattr(y.data, attr, None)
+                    temp = getattr(self.payload, attr, None) * getattr(y.payload, attr, None)
                 except TypeError:
                     raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
                 except AttributeError:
-                    temp = getattr(self.data, attr, None) * numpy.float32(y)
-                setattr(self.data, attr, temp)
+                    temp = getattr(self.payload, attr, None) * numpy.float32(y)
+                setattr(self.payload, attr, temp)
             
         return self
             
@@ -430,9 +470,9 @@ class Frame(object):
         tag is equal to a particular value.
         """
         
-        tX = self.data.timetag
+        tX = self.payload.timetag
         try:
-            tY = y.data.timetag
+            tY = y.payload.timetag
         except AttributeError:
             tY = y
         
@@ -447,9 +487,9 @@ class Frame(object):
         tag is not equal to a particular value.
         """
         
-        tX = self.data.timetag
+        tX = self.payload.timetag
         try:
-            tY = y.data.timetag
+            tY = y.payload.timetag
         except AttributeError:
             tY = y
         
@@ -464,9 +504,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timetag
+        tX = self.payload.timetag
         try:
-            tY = y.data.timetag
+            tY = y.payload.timetag
         except AttributeError:
             tY = y
         
@@ -482,9 +522,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timetag
+        tX = self.payload.timetag
         try:
-            tY = y.data.timetag
+            tY = y.payload.timetag
         except AttributeError:
             tY = y
         
@@ -499,9 +539,9 @@ class Frame(object):
         second frame or if the time tag is greater than a particular value.
         """
         
-        tX = self.data.timetag
+        tX = self.payload.timetag
         try:
-            tY = y.data.timetag
+            tY = y.payload.timetag
         except AttributeError:
             tY = y
         
@@ -517,9 +557,9 @@ class Frame(object):
         value.
         """
         
-        tX = self.data.timetag
+        tX = self.payload.timetag
         try:
-            tY = y.data.timetag
+            tY = y.payload.timetag
         except AttributeError:
             tY = y
         
@@ -534,8 +574,8 @@ class Frame(object):
         sorting things.
         """
         
-        tX = self.data.timetag
-        tY = y.data.timetag
+        tX = self.payload.timetag
+        tY = y.payload.timetag
         if tY > tX:
             return -1
         elif tX > tY:
@@ -544,7 +584,7 @@ class Frame(object):
             return 0
 
 
-def read_frame(filehandle, Gain=None, Verbose=False):
+def read_frame(filehandle, gain=None, verbose=False):
     """
     Function to read in a single DR spectrometer/DRX frame (header+data) and 
     store the contents as a Frame object.
@@ -552,15 +592,15 @@ def read_frame(filehandle, Gain=None, Verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = readDRSpec(filehandle, Frame())
+        newFrame = read_drspec(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell()
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
         
-    if Gain is not None:
-        newFrame.gain = Gain
+    if gain is not None:
+        newFrame.gain = gain
         
     return newFrame
 
@@ -619,7 +659,7 @@ def is_stokes(filehandle):
     return newFrame.header.is_stokes
 
 
-def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
+def get_sample_rate(filehandle, nframes=None, filter_code=False):
     """
     Find out what the sampling rate/filter code is from a single observations.  
     By default, the rate in Hz is returned.  However, the corresponding filter 
@@ -635,7 +675,7 @@ def get_sample_rate(filehandle, nFrames=None, FilterCode=False):
     # Return to the place in the file where we started
     filehandle.seek(fhStart)
     
-    if not FilterCode:
+    if not filter_code:
         return newFrame.sample_rate
     else:
         return newFrame.filter_code
