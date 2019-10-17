@@ -75,7 +75,10 @@ class Observer(object):
         self.first = first
         self.last = last
         self.id = int(id)
-
+        
+    def __repr__(self):
+        return "<Observer name=%s, id=%i>" % (self.name, self.id)
+        
     def join_name(self):
         if self.first != '':
             self.name = ', '.join([self.last, self.first])
@@ -259,7 +262,7 @@ class Project(object):
         ## Run Information
         output = "%sRUN_ID           %s\n" % (output, ses.id)
         output = "%sRUN_TITLE        %s\n" % (output, 'None provided' if ses.name is None else ses.name)
-        output = "%sRUN_STATIONS     %s\n" % (output, ','.join([station.id for station in list(set(ses.stations))]))
+        output = "%sRUN_STATIONS     %s\n" % (output, ','.join([station.id for station in ses.stations]))
         output = "%sRUN_CHANNELS     %i\n" % (output, ses.corr_channels)
         output = "%sRUN_INTTIME      %.3f\n" % (output, ses.corr_inttime)
         output = "%sRUN_BASIS        %s\n" % (output, ses.corr_basis)
@@ -468,7 +471,7 @@ class Run(object):
         self.corr_inttime = corr_inttime
         self.corr_channels = corr_channels
         self.corr_basis = corr_basis
-        self.stations = list(set(stations))
+        self.stations = stations
         
     def set_stations(self, stations):
         """
@@ -480,7 +483,7 @@ class Run(object):
         for i,station in enumerate(stations):
             if not isinstance(station, LWAStation):
                 raise TypeError("Expected index %i to be an LWAStation" % i)
-        self.stations = list(set(stations))
+        self.stations = stations
         self.update()
         
     def append(self, newScan):
@@ -538,6 +541,17 @@ class Run(object):
             if verbose:
                 print("[%i] Error: Need at least two stations to form an interferometer" % (os.getpid(),))
             failures += 1
+        station_count = {}
+        for station in self.stations:
+            try:
+                station_count[station.id] += 1
+            except KeyError:
+                station_count[station.id] = 1
+        for station in station_count:
+            if station_count[station] != 1:
+                if verbose:
+                    print("[%i] Error: Station '%s' is included %i times" % (os.getpid(), station, station_count[station]))
+                failures += 1
         if self.corr_inttime < 0.1 or self.corr_inttime > 10.0:
             if verbose:
                 print("[%i] Error: Invalid correlator integration time '%.3f s'" % (os.getpid(), self.corr_inttime))
@@ -1263,7 +1277,7 @@ def parse_idf(filename, verbose=False):
                         if station.id == field:
                             use_stations.append(station)
                             break
-            project.runs[0].stations  = list(set(use_stations))
+            project.runs[0].stations  = use_stations
         if keyword == 'RUN_CHANNELS':
             project.runs[0].corr_channels = int(value)
             continue
