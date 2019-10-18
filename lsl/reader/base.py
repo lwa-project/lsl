@@ -312,7 +312,7 @@ class FrameBase(object):
             return 0
 
 
-class FilePosititionSaver(object):
+class FilePositionSaver(object):
     """
     Simple class to save the current location in a file and
     return to that position when we are done with it.
