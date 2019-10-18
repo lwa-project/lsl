@@ -101,7 +101,7 @@ class SimFrame(drx.Frame):
     this method can be written to a file via the methods write_raw_frame() function.
     """
 
-    def __init__(self, beam=None, tune=None, pol=None, decimation=None, time_offset=None, frame_count=None, obs_time=None, flags=None, iq=None):
+    def __init__(self, beam=None, tune=None, pol=None, decimation=None, time_offset=None, frame_count=None, obs_time=None, flags=None, data=None):
         """
         Given a list of parameters, build a drx.SimFrame object.  The parameters
         needed are:
@@ -132,7 +132,7 @@ class SimFrame(drx.Frame):
         self.second_count = 0
         self.obs_time = obs_time
         self.flags = flags
-        self.data = iq
+        self.data = data
         
     def _update(self):
         """

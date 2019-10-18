@@ -86,7 +86,7 @@ class SimFrame(tbn.Frame):
     this method can be written to a file via the methods write_raw_frame() function.
     """
 
-    def __init__(self, stand=None, pol=None, central_freq=None, gain=None, frame_count=None, obs_time=None, iq=None):
+    def __init__(self, stand=None, pol=None, central_freq=None, gain=None, frame_count=None, obs_time=None, data=None):
         """
         Given a list of parameters, build a tbn.SimFrame object.  The parameters
         needed are:
@@ -115,7 +115,7 @@ class SimFrame(tbn.Frame):
         self.frame_count = frame_count
         self.gain = gain
         self.obs_time = obs_time
-        self.data = iq
+        self.data = data
         
     def _update(self):
         """

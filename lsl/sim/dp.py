@@ -59,17 +59,17 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
         tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         for stand in stands:
             cFrame = tbn.SimFrame(stand=stand, pol=0, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
-            cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-            cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-            cFrame.iq *= maxValue*noise_strength
-            cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike*tFrame)
+            cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+            cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+            cFrame.data *= maxValue*noise_strength
+            cFrame.data += maxValue*numpy.exp(2j*numpy.pi*upperSpike*tFrame)
             cFrame.write_raw_frame(fh)
 
             cFrame = tbn.SimFrame(stand=stand, pol=1, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
-            cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-            cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-            cFrame.iq *= maxValue*noise_strength
-            cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
+            cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+            cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+            cFrame.data *= maxValue*noise_strength
+            cFrame.data += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
             cFrame.write_raw_frame(fh)
 
 def _basic_drx(fh, stands, nframes, **kwargs):
@@ -107,32 +107,32 @@ def _basic_drx(fh, stands, nframes, **kwargs):
                 if tune == 1:
                     # Tuning 1:
                     cFrame = drx.SimFrame(beam=beam, tune=1, pol=0, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-                    cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-                    cFrame.iq *= maxValue*noise_strength
-                    cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike1*tFrame)
+                    cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+                    cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+                    cFrame.data *= maxValue*noise_strength
+                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*upperSpike1*tFrame)
                     cFrame.write_raw_frame(fh)
             
                     cFrame = drx.SimFrame(beam=beam, tune=1, pol=1, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-                    cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-                    cFrame.iq *= maxValue*noise_strength
-                    cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike1*tFrame)
+                    cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+                    cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+                    cFrame.data *= maxValue*noise_strength
+                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*lowerSpike1*tFrame)
                     cFrame.write_raw_frame(fh)
                 else:
                     # Tuning 2:
                     cFrame = drx.SimFrame(beam=beam, tune=2, pol=0, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-                    cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-                    cFrame.iq *= maxValue*noise_strength
-                    cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*lowerSpike2*tFrame)
+                    cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+                    cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+                    cFrame.data *= maxValue*noise_strength
+                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*lowerSpike2*tFrame)
                     cFrame.write_raw_frame(fh)
             
                     cFrame = drx.SimFrame(beam=beam, tune=2, pol=1, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-                    cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-                    cFrame.iq *= maxValue*noise_strength
-                    cFrame.iq += maxValue*numpy.exp(2j*numpy.pi*upperSpike2*tFrame)
+                    cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+                    cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+                    cFrame.data *= maxValue*noise_strength
+                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*upperSpike2*tFrame)
                     cFrame.write_raw_frame(fh)
 
 
@@ -327,18 +327,18 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
         j = 0
         for stand in stands:
             cFrame = tbn.SimFrame(stand=stand.stand.id, pol=0, central_freq=central_freq, gain=19, frame_count=i+1, obs_time=t)
-            cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-            cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-            cFrame.iq *= maxValue*noise_strength
-            cFrame.iq += maxValue*tdSignalsX[j,:].astype(numpy.singlecomplex)
+            cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+            cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+            cFrame.data *= maxValue*noise_strength
+            cFrame.data += maxValue*tdSignalsX[j,:].astype(numpy.singlecomplex)
             
             cFrame.write_raw_frame(fh)
 
             cFrame = tbn.SimFrame(stand=stand.stand.id, pol=1, central_freq=central_freq, gain=19, frame_count=i+1, obs_time=t)
-            cFrame.iq = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-            cFrame.iq += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-            cFrame.iq *= maxValue*noise_strength
-            cFrame.iq += maxValue*tdSignalsY[j,:].astype(numpy.singlecomplex)
+            cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
+            cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
+            cFrame.data *= maxValue*noise_strength
+            cFrame.data += maxValue*tdSignalsY[j,:].astype(numpy.singlecomplex)
             
             cFrame.write_raw_frame(fh)
             
