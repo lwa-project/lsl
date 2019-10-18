@@ -229,12 +229,14 @@ class FramePayload(FramePayloadBase):
     @property
     def data(self):
         packed = []
+        dtype = []
         for p in ('XX', 'XY', 'YX', 'YY', 'I', 'Q', 'U', 'V'):
             for t in (0, 1):
                 sub = getattr(self, "%s%i" % (p, t), None)
                 if sub is not None:
                     packed.append(sub)
-        return numpy.array(packed, dtype=packed[0].dtype)
+                    dtype.append(("%s%i" % (p, t), packed[-1].dtype))
+        return numpy.rec.array(packed, dtype=dtype)
         
     @property
     def central_freq(self):

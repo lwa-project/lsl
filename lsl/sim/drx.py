@@ -132,7 +132,7 @@ class SimFrame(drx.Frame):
         self.second_count = 0
         self.obs_time = obs_time
         self.flags = flags
-        self.iq = iq
+        self.data = iq
         
     def _update(self):
         """
@@ -148,7 +148,7 @@ class SimFrame(drx.Frame):
         
         self.payload.timetag = self.obs_time
         self.payload.flags = self.flags
-        self.payload._data = self.iq
+        self.payload._data = self.data
         
     def load_frame(self, drx_frame):
         """
@@ -175,7 +175,7 @@ class SimFrame(drx.Frame):
         ## Data
         self.obs_time = self.payload.timetag
         self.flags = self.payload.flags
-        self.iq = self.payload.data
+        self.data = self.payload.data
     
     def is_valid(self, raise_errors=False):
         """

@@ -98,8 +98,8 @@ class fake_TBN_tests(unittest.TestCase):
             # Test raw data values
             self.assertEqual(fakeFrame.payload.timetag, origFrame.payload.timetag)
             for i in range(512):
-                self.assertEqual(fakeFrame.payload.iq[i].real, origFrame.payload.iq[i].real)
-                self.assertEqual(fakeFrame.payload.iq[i].imag, origFrame.payload.iq[i].imag)
+                self.assertEqual(fakeFrame.payload.data[i].real, origFrame.payload.data[i].real)
+                self.assertEqual(fakeFrame.payload.data[i].imag, origFrame.payload.data[i].imag)
                 
     def test_frame_data_errors(self):
         """Test the data error scenarios when validating a TBN SimFrame."""
@@ -112,17 +112,17 @@ class fake_TBN_tests(unittest.TestCase):
         # Try to validate frame with the wrong data type
         fakeFrame = tbnWriter.SimFrame()
         fakeFrame.load_frame(copy.deepcopy(origFrame))
-        fakeFrame.iq = fakeFrame.payload.iq.real
+        fakeFrame.data = fakeFrame.payload.data.real
         self.assertRaises(ValueError, fakeFrame.is_valid, raise_errors=True)
         
         # Try to validate frame with the wrong data size
         fakeFrame = tbnWriter.SimFrame()
         fakeFrame.load_frame(copy.deepcopy(origFrame))
-        fakeFrame.iq = None
+        fakeFrame.data = None
         self.assertRaises(ValueError, fakeFrame.is_valid, raise_errors=True)
         fakeFrame = tbnWriter.SimFrame()
         fakeFrame.load_frame(copy.deepcopy(origFrame))
-        fakeFrame.iq = fakeFrame.payload.iq[0:50]
+        fakeFrame.data = fakeFrame.payload.data[0:50]
         self.assertRaises(ValueError, fakeFrame.is_valid, raise_errors=True)
         
     def test_frame_header_errors(self):
@@ -218,8 +218,8 @@ class fake_DRX_tests(unittest.TestCase):
             self.assertEqual(fakeFrame.payload.timetag, origFrame.payload.timetag)
             self.assertEqual(fakeFrame.payload.flags, origFrame.payload.flags)
             for i in range(4096):
-                self.assertEqual(fakeFrame.payload.iq[i].real, origFrame.payload.iq[i].real)
-                self.assertEqual(fakeFrame.payload.iq[i].imag, origFrame.payload.iq[i].imag)
+                self.assertEqual(fakeFrame.payload.data[i].real, origFrame.payload.data[i].real)
+                self.assertEqual(fakeFrame.payload.data[i].imag, origFrame.payload.data[i].imag)
                 
     def test_frame_data_errors(self):
         """Test the data error scenarios when validating a DRX SimFrame."""
@@ -232,17 +232,17 @@ class fake_DRX_tests(unittest.TestCase):
         # Try to validate frame with the wrong data type
         fakeFrame = drxWriter.SimFrame()
         fakeFrame.load_frame(copy.deepcopy(origFrame))
-        fakeFrame.iq = fakeFrame.payload.iq.real
+        fakeFrame.data = fakeFrame.payload.data.real
         self.assertRaises(ValueError, fakeFrame.is_valid, raise_errors=True)
         
         # Try to validate frame with the wrong data size
         fakeFrame = drxWriter.SimFrame()
         fakeFrame.load_frame(copy.deepcopy(origFrame))
-        fakeFrame.iq = None
+        fakeFrame.data = None
         self.assertRaises(ValueError, fakeFrame.is_valid, raise_errors=True)
         fakeFrame = drxWriter.SimFrame()
         fakeFrame.load_frame(copy.deepcopy(origFrame))
-        fakeFrame.iq = fakeFrame.payload.iq[0:50]
+        fakeFrame.data = fakeFrame.payload.data[0:50]
         self.assertRaises(ValueError, fakeFrame.is_valid, raise_errors=True)
         
     def test_frame_header_errors(self):

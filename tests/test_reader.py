@@ -443,11 +443,14 @@ class reader_tests(unittest.TestCase):
         
         # The special "data" attribute
         data = frame2.payload.data
-        self.assertEqual(len(data.shape), 3)
-        self.assertEqual(data.shape[0], 2)
-        self.assertEqual(data.shape[1], 2)
-        self.assertEqual(data.shape[2], 1024)
-        
+        self.assertEqual(len(data.shape), 1)
+        self.assertEqual(data.shape[0], 1024)
+        for attr in ('XX0', 'XX1', 'YY0', 'YY1'):
+            d0 = getattr(frame2.payload, attr, None)
+            d1 = data[attr]
+            for i in range(1024):
+                self.assertAlmostEqual(d0[i], d1[i], 6)
+                
     def test_drspec_errors(self):
         """Test reading in all frames from a truncated DR spectrometer file."""
         

@@ -86,7 +86,7 @@ class vdif_tests(unittest.TestCase):
         # Write the data
         fh = open(testFile, 'wb')
         for frame in frames:
-            vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.payload.xy[0,:].astype(numpy.int8))
+            vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.payload.data[0,:].astype(numpy.int8))
             vFrame.write_raw_frame(fh)
         fh.close()
 
@@ -95,7 +95,7 @@ class vdif_tests(unittest.TestCase):
         for tFrame in frames:
             vFrame = vrdr.read_frame(fh)
             self.assertAlmostEqual(sum(vFrame.time), sum(tFrame.time), 6)
-            for v,t in zip((vFrame.payload.data*256-1)/2, tFrame.payload.xy[0,:].astype(numpy.int8)):
+            for v,t in zip((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(numpy.int8)):
                 self.assertAlmostEqual(v, t, 6)
                 
         fh.close()
@@ -115,7 +115,7 @@ class vdif_tests(unittest.TestCase):
             stand, pol = frame.id
             if pol == 1:
                 continue
-            vFrame = vdif.Frame(stand, frame.time, bits=8, data=frame.payload.iq, sample_rate=100e3)
+            vFrame = vdif.Frame(stand, frame.time, bits=8, data=frame.payload.data, sample_rate=100e3)
             vFrame.write_raw_frame(fh)
         fh.close()
 
@@ -123,7 +123,7 @@ class vdif_tests(unittest.TestCase):
         fh = open(testFile, 'rb')
         for tFrame in frames[::2]:
             vFrame = vrdr.read_frame(fh)
-            for v,t in zip((vFrame.payload.data*256-1-1j)/2, tFrame.payload.iq):
+            for v,t in zip((vFrame.payload.data*256-1-1j)/2, tFrame.payload.data):
                 self.assertAlmostEqual(v, t, 6)
                 
         fh.close()

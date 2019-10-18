@@ -115,7 +115,7 @@ class SimFrame(tbn.Frame):
         self.frame_count = frame_count
         self.gain = gain
         self.obs_time = obs_time
-        self.iq = iq
+        self.data = iq
         
     def _update(self):
         """
@@ -129,7 +129,7 @@ class SimFrame(tbn.Frame):
         self.header.gain = self.gain
         
         self.payload.timetag = self.obs_time
-        self.payload._data = self.iq
+        self.payload._data = self.data
     
     def load_frame(self, tbn_frame):
         """
@@ -148,7 +148,7 @@ class SimFrame(tbn.Frame):
         self.frame_count = self.header.frame_count
         ## Data
         self.obs_time = self.payload.timetag
-        self.iq = self.payload.data
+        self.data = self.payload.data
     
     def is_valid(self, raise_errors=False):
         """
