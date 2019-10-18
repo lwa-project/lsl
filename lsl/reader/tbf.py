@@ -32,7 +32,7 @@ import copy
 import numpy
 
 from lsl.common import adp as adp_common
-from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader.base import *
 from lsl.reader._gofast import read_tbf
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
@@ -45,7 +45,7 @@ telemetry.track_module()
 __version__ = '0.1'
 __revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT',
-           'get_frames_per_obs', 'getFirstFrameCount', 'get_channel_count', 'get_first_channel']
+           'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count', 'get_first_channel']
 
 FRAME_SIZE = 6168
 FRAME_CHANNEL_COUNT = 12
@@ -172,58 +172,48 @@ def get_frames_per_obs(filehandle):
     first 1000 TBF records.  Return the number of frames per observation.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
-    # Build up the list-of-lists that store the index of the first frequency
-    # channel in each frame.
-    channels = []
-    for i in range(1000):
-        try:
-            cFrame = read_frame(filehandle)
-            if not cFrame.is_tbf:
+    with FilePositionSaver(filehandle):
+        # Build up the list-of-lists that store the index of the first frequency
+        # channel in each frame.
+        channels = []
+        for i in range(1000):
+            try:
+                cFrame = read_frame(filehandle)
+                if not cFrame.is_tbf:
+                    continue
+            except EOFError:
+                break
+            except SyncError:
                 continue
-        except EOFError:
-            break
-        except SyncError:
-            continue
-            
-        chan = cFrame.header.first_chan
-        if chan not in channels:
-            channels.append( chan )
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+                
+            chan = cFrame.header.first_chan
+            if chan not in channels:
+                channels.append( chan )
+                
     # Return the number of channels
     return len(channels)
 
 
-def getFirstFrameCount(filehandle):
+def get_first_frame_count(filehandle):
     """
     Find and return the lowest frame count encountered in a TBF file.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
     # Find out how many frames there are per observation
     nFrames = get_frames_per_obs(filehandle)
     
-    firstFrameCount = 2**64-1
-    freqs = []
-    while len(freqs) < nFrames:
-        cFrame = read_frame(filehandle)
-        freq = cFrame.header.first_chan
+    with FilePositionSaver(filehandle):
+        firstFrameCount = 2**64-1
+        freqs = []
+        while len(freqs) < nFrames:
+            cFrame = read_frame(filehandle)
+            freq = cFrame.header.first_chan
             
-        if freq not in freqs:
-            freqs.append(freq)
-        if cFrame.header.frame_count < firstFrameCount:
-            firstFrameCount = cFrame.header.frame_count
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+            if freq not in freqs:
+                freqs.append(freq)
+            if cFrame.header.frame_count < firstFrameCount:
+                firstFrameCount = cFrame.header.frame_count
+                
     # Return the lowest frame number found
     return firstFrameCount
 
@@ -250,26 +240,21 @@ def get_first_channel(filehandle, frequency=False):
     `frequency` keyword is True the returned value is in Hz.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
     # Find out how many frames there are per observation
     nFrames = get_frames_per_obs(filehandle)
     
-    # Find the lowest frequency channel
-    freqs = []
-    while len(freqs) < nFrames:
-        cFrame = read_frame(filehandle)
-        if frequency:
-            freq = cFrame.channel_freqs[0]
-        else:
-            freq = cFrame.header.first_chan
-            
-        if freq not in freqs:
-            freqs.append(freq)
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Find the lowest frequency channel
+        freqs = []
+        while len(freqs) < nFrames:
+            cFrame = read_frame(filehandle)
+            if frequency:
+                freq = cFrame.channel_freqs[0]
+            else:
+                freq = cFrame.header.first_chan
+                
+            if freq not in freqs:
+                freqs.append(freq)
+                
     # Return the lowest frequency channel
     return min(freqs)

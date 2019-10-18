@@ -53,7 +53,7 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader.base import *
 from lsl.reader._gofast import read_drx
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
@@ -243,16 +243,11 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
     This function is included to make easier to write code for TBN analysis and 
     modify it for DRX data.
     """
-
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-
-    # Read in one frame
-    newFrame = read_frame(filehandle)
     
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-
+    with FilePositionSaver(filehandle):
+        # Read in one frame
+        newFrame = read_frame(filehandle)
+        
     if not filter_code:
         return newFrame.sample_rate
     else:
@@ -264,26 +259,21 @@ def get_beam_count(filehandle):
     Find out how many beams are present by examining the first 32 DRX
     records.  Return the number of beams found.
     """
-
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-
-    # Build up the list-of-lists that store ID codes and loop through 32
-    # frames.  In each case, parse pull the DRX ID, extract the beam number, 
-    # and append the DRX ID to the relevant beam array if it is not already 
-    # there.
-    beams = []
-    for i in range(32):
-        cFrame = read_frame(filehandle)
+    
+    with FilePositionSaver(filehandle):
+        # Build up the list-of-lists that store ID codes and loop through 32
+        # frames.  In each case, parse pull the DRX ID, extract the beam number, 
+        # and append the DRX ID to the relevant beam array if it is not already 
+        # there.
+        beams = []
+        for i in range(32):
+            cFrame = read_frame(filehandle)
             
-        cID = cFrame.header.drx_id
-        beam = cID&7
-        if beam not in beams:
-            beams.append(beam)
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-
+            cID = cFrame.header.drx_id
+            beam = cID&7
+            if beam not in beams:
+                beams.append(beam)
+                
     # Return the number of beams found
     return len(beams)
 
@@ -295,24 +285,19 @@ def get_frames_per_obs(filehandle):
     element tuple, one for each beam.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
-    # Build up the list-of-lists that store ID codes and loop through 32
-    # frames.  In each case, parse pull the DRX ID, extract the beam number, 
-    # and append the DRX ID to the relevant beam array if it is not already 
-    # there.
-    idCodes = [[], [], [], []]
-    for i in range(32):
-        cFrame = read_frame(filehandle)
-        
-        cID = cFrame.header.drx_id
-        beam = cID&7
-        if cID not in idCodes[beam-1]:
-            idCodes[beam-1].append(cID)
+    with FilePositionSaver(filehandle):
+        # Build up the list-of-lists that store ID codes and loop through 32
+        # frames.  In each case, parse pull the DRX ID, extract the beam number, 
+        # and append the DRX ID to the relevant beam array if it is not already 
+        # there.
+        idCodes = [[], [], [], []]
+        for i in range(32):
+            cFrame = read_frame(filehandle)
             
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+            cID = cFrame.header.drx_id
+            beam = cID&7
+            if cID not in idCodes[beam-1]:
+                idCodes[beam-1].append(cID)
+                
     # Get the length of each beam list and return them as a tuple
     return (len(idCodes[0]), len(idCodes[1]), len(idCodes[2]), len(idCodes[3]))

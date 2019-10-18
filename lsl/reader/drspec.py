@@ -45,7 +45,7 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader.base import *
 from lsl.reader.drx import FILTER_CODES as drx_FILTER_CODES
 from lsl.reader._gofast import read_drspec
 from lsl.reader._gofast import SyncError as gSyncError
@@ -475,125 +475,6 @@ class Frame(FrameBase):
                 setattr(self.payload, attr, temp)
             
         return self
-            
-    def __eq__(self, y):
-        """
-        Check if the time tags of two frames are equal or if the time
-        tag is equal to a particular value.
-        """
-        
-        tX = self.payload.timetag
-        try:
-            tY = y.payload.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX == tY:
-            return True
-        else:
-            return False
-            
-    def __ne__(self, y):
-        """
-        Check if the time tags of two frames are not equal or if the time
-        tag is not equal to a particular value.
-        """
-        
-        tX = self.payload.timetag
-        try:
-            tY = y.payload.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX != tY:
-            return True
-        else:
-            return False
-            
-    def __gt__(self, y):
-        """
-        Check if the time tag of the first frame is greater than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.payload.timetag
-        try:
-            tY = y.payload.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX > tY:
-            return True
-        else:
-            return False
-            
-    def __ge__(self, y):
-        """
-        Check if the time tag of the first frame is greater than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.payload.timetag
-        try:
-            tY = y.payload.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX >= tY:
-            return True
-        else:
-            return False
-            
-    def __lt__(self, y):
-        """
-        Check if the time tag of the first frame is less than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.payload.timetag
-        try:
-            tY = y.payload.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX < tY:
-            return True
-        else:
-            return False
-            
-    def __le__(self, y):
-        """
-        Check if the time tag of the first frame is less than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.payload.timetag
-        try:
-            tY = y.payload.timetag
-        except AttributeError:
-            tY = y
-        
-        if tX <= tY:
-            return True
-        else:
-            return False
-            
-    def __cmp__(self, y):
-        """
-        Compare two frames based on the time tags.  This is helpful for 
-        sorting things.
-        """
-        
-        tX = self.payload.timetag
-        tY = y.payload.timetag
-        if tY > tX:
-            return -1
-        elif tX > tY:
-            return 1
-        else:
-            return 0
 
 
 def read_frame(filehandle, gain=None, verbose=False):
@@ -622,15 +503,10 @@ def get_data_products(filehandle):
     Find out the data products contained in the file by looking at a frame.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
-    # Read in one frame
-    newFrame = read_frame(filehandle)
-    
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Read in one frame
+        newFrame = read_frame(filehandle)
+        
     # Return the data products
     return newFrame.header.data_products
 
@@ -640,15 +516,10 @@ def is_linear(filehandle):
     Find out if the file contains linear polarization products or not.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
-    # Read in one frame
-    newFrame = read_frame(filehandle)
-    
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Read in one frame
+        newFrame = read_frame(filehandle)
+        
     # Return the verdict
     return newFrame.header.is_linear
 
@@ -658,15 +529,10 @@ def is_stokes(filehandle):
     Find out if the file contains Stokes parameters or not.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
-    # Read in one frame
-    newFrame = read_frame(filehandle)
-    
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Read in one frame
+        newFrame = read_frame(filehandle)
+        
     # Return the verdict
     return newFrame.header.is_stokes
 
@@ -678,15 +544,10 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
     code can be returned instead by setting the FilterCode keyword to true.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
-    # Read in one frame
-    newFrame = read_frame(filehandle)
-    
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Read in one frame
+        newFrame = read_frame(filehandle)
+        
     if not filter_code:
         return newFrame.sample_rate
     else:
@@ -699,14 +560,12 @@ def get_frame_size(filehandle):
     Returns the frame size in bytes.
     """
     
-    cPos = filehandle.tell()
-    frame = read_frame(filehandle)
-    nPos = filehandle.tell()
-    
-    FRAME_SIZE = nPos - cPos
-    filehandle.seek(cPos)
-    
-    return FRAME_SIZE
+    with FilePositionSaver(filehandle):
+        cPos = filehandle.tell()
+        frame = read_frame(filehandle)
+        nPos = filehandle.tell()
+        
+    return nPos - cPos
 
 
 def get_ffts_per_integration(filehandle):
@@ -717,10 +576,9 @@ def get_ffts_per_integration(filehandle):
     .. versionadded:: 1.0.1
     """
     
-    cPos = filehandle.tell()
-    frame = read_frame(filehandle)
-    filehandle.seek(cPos)
-    
+    with FilePositionSaver(filehandle):
+        frame = read_frame(filehandle)
+        
     return frame.ffts_per_integration
 
 
@@ -730,10 +588,9 @@ def get_transform_size(filehandle):
     location.  
     """
     
-    cPos = filehandle.tell()
-    frame = read_frame(filehandle)
-    filehandle.seek(cPos)
-    
+    with FilePositionSaver(filehandle):
+        frame = read_frame(filehandle)
+        
     return frame.transform_size
 
 
@@ -742,8 +599,7 @@ def get_integration_time(filehandle):
     Find out what the integration time is at the current file location.
     """
     
-    cPos = filehandle.tell()
-    frame = read_frame(filehandle)
-    filehandle.seek(cPos)
-    
+    with FilePositionSaver(filehandle):
+        frame = read_frame(filehandle)
+        
     return frame.integration_time

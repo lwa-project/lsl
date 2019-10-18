@@ -19,7 +19,8 @@ from textwrap import fill as tw_fill
 
 __version__ = '0.1'
 __revision__ = '$Rev$'
-__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase']
+__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase',
+           'FilePositionSaver']
 
 
 def _build_repr(name, attrs=[]):
@@ -34,6 +35,10 @@ def _build_repr(name, attrs=[]):
 
 
 class FrameHeaderBase(object):
+    """
+    Base class for all lsl.reader FrameHeader-type objects.
+    """
+    
     _header_attrs = []
     
     def __repr__(self):
@@ -43,6 +48,10 @@ class FrameHeaderBase(object):
 
 
 class FramePayloadBase(object):
+    """
+    Base class for all lsl.reader FramePayload-type objects.
+    """
+    
     _payload_attrs = []
     
     def __init__(self, data):
@@ -62,6 +71,10 @@ class FramePayloadBase(object):
 
 
 class FrameBase(object):
+    """
+    Base class for all lsl.reader Frame-type objects.
+    """
+    
     _header_class = FrameHeaderBase
     _payload_class = FramePayloadBase
     
@@ -297,3 +310,17 @@ class FrameBase(object):
             return 1
         else:
             return 0
+
+
+class FilePosititionSaver(object):
+    """
+    Simple class to save the current location in a file and
+    return to that position when we are done with it.
+    """
+    
+    def __enter__(self, fh):
+        self.fh = fh
+        self.marker = self.fh.tell()
+        
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.fh.seek(self.marker, 0)

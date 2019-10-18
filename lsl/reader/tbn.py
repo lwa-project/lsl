@@ -59,7 +59,7 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader.base import *
 from lsl.reader._gofast import read_tbn
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
@@ -301,36 +301,31 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
     keyword to True.
     """
 
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-
     if nframes is None:
         nframes = 520
     nframes = 4*nframes
-
-    # Build up the list-of-lists that store ID codes and loop through 2,080
-    # frames.  In each case, parse pull the TBN ID, extract the stand 
-    # number, and append the stand number to the relevant polarization array 
-    # if it is not already there.
-    frames = {}
-    for i in range(nframes):
-        try:
-            cFrame = read_frame(filehandle)
-        except EOFError:
-            break
-        except SyncError:
-            continue
-        
-        stand, pol = cFrame.id
-        key = 2*stand + pol
-        try:
-            frames[key].append(cFrame)
-        except:
-            frames[key] = [cFrame,]
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-
+    
+    with FilePositionSaver(filehandle):
+        # Build up the list-of-lists that store ID codes and loop through 2,080
+        # frames.  In each case, parse pull the TBN ID, extract the stand 
+        # number, and append the stand number to the relevant polarization array 
+        # if it is not already there.
+        frames = {}
+        for i in range(nframes):
+            try:
+                cFrame = read_frame(filehandle)
+            except EOFError:
+                break
+            except SyncError:
+                continue
+                
+            stand, pol = cFrame.id
+            key = 2*stand + pol
+            try:
+                frames[key].append(cFrame)
+            except:
+                frames[key] = [cFrame,]
+                
     # Any key with complete data will work for this, so pick the first key with two
     # valid frames
     keyCount = 0
@@ -349,9 +344,9 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
             frame2 = frames[validKey][1]
         except IndexError:
             frame2 = None
-
+            
         keyCount = keyCount + 1
-
+        
     # Now that we have two valid frames that follow one another in time, load in their
     # time tags and calculate the sampling rate.  Since the time tags are based off f_S
     # @ 196 MSPS, and each frame contains 512 samples, the sampling rate is:
@@ -359,7 +354,7 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
     time1 = frame1.payload.timetag
     time2 = frame2.payload.timetag
     rate = dp_common.fS / (abs( time2 - time1 ) / 512)
-
+    
     if not filter_code:
         return rate
     else:
@@ -386,47 +381,42 @@ def get_frames_per_obs(filehandle):
         file.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-
-    # Build up the list-of-lists that store ID codes and loop through 600
-    # frames.  In each case, parse pull the TBN ID, extract the stand 
-    # number, and append the stand number to the relevant polarization array 
-    # if it is not already there.
-    idCodes = [[], []]
-    maxX = 0
-    maxY = 0
-    for i in range(4*520):
-        try:
-            cFrame = read_frame(filehandle)
-        except EOFError:
-            break
-        except SyncError:
-            continue
-        
-        cID, cPol = cFrame.header.id
-        if cID not in idCodes[cPol]:
-            idCodes[cPol].append(cID)
-        
-        # Also, look at the actual IDs to try to figure out how many of
-        # each there are in case the frames are out of order.  Will this
-        # help in all cases?  Probably not but we should at least try it
-        if cPol == 0:
-            if cID > maxX:
-                maxX = cID
-        else:
-            if cID > maxY:
-                maxY = cID
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Build up the list-of-lists that store ID codes and loop through 600
+        # frames.  In each case, parse pull the TBN ID, extract the stand 
+        # number, and append the stand number to the relevant polarization array 
+        # if it is not already there.
+        idCodes = [[], []]
+        maxX = 0
+        maxY = 0
+        for i in range(4*520):
+            try:
+                cFrame = read_frame(filehandle)
+            except EOFError:
+                break
+            except SyncError:
+                continue
+                
+            cID, cPol = cFrame.header.id
+            if cID not in idCodes[cPol]:
+                idCodes[cPol].append(cID)
+                
+            # Also, look at the actual IDs to try to figure out how many of
+            # each there are in case the frames are out of order.  Will this
+            # help in all cases?  Probably not but we should at least try it
+            if cPol == 0:
+                if cID > maxX:
+                    maxX = cID
+            else:
+                if cID > maxY:
+                    maxY = cID
+                    
     # Compare idCodes sizes with maxX and maxY.  Load maxX and maxY with 
     # the larger of the two values.
     if maxX < len(idCodes[0]):
         maxX = len(idCodes[0])
     if maxY < len(idCodes[1]):
         maxY = len(idCodes[1])
-    
+        
     # Get the length of each beam list and return them as a tuple
     return (maxX, maxY)

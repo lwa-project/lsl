@@ -48,7 +48,7 @@ import copy
 import numpy
 
 from lsl.common import dp as dp_common
-from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader.base import *
 from lsl.reader._gofast import read_tbw
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
@@ -219,18 +219,13 @@ def get_data_bits(filehandle):
     first frame.
     """
 
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-
-    # Read a frame
-    cFrame = read_frame(filehandle)
-
+    with FilePositionSaver(filehandle):
+        # Read a frame
+        cFrame = read_frame(filehandle)
+        
     # Get the number of bits used to represent the data
     dataBits = cFrame.data_bits
-
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-
+    
     return dataBits
 
 
@@ -245,33 +240,28 @@ def get_frames_per_obs(filehandle):
         frames per observation of 260 rather than try to find it from the
         file.
     """
-
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-
-    idCodes = []
-    for i in range(260):
-        currentPosition = filehandle.tell()
-        try:
-            cFrame1 = read_frame(filehandle)
-            cFrame2 = read_frame(filehandle)
-        except EOFError:
-            break
-        except SyncError:
-            continue
-
-        cID = cFrame1.id
-        if cID not in idCodes:
-            idCodes.append(cID)
-        cID = cFrame2.id
-        if cID not in idCodes:
-            idCodes.append(cID)
-
-        # Junk 30,000 frames since that is how many frames there are per stand
-        filehandle.seek(currentPosition+30000*FRAME_SIZE)
-
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
     
+    with FilePositionSaver(filehandle):
+        idCodes = []
+        for i in range(260):
+            currentPosition = filehandle.tell()
+            try:
+                cFrame1 = read_frame(filehandle)
+                cFrame2 = read_frame(filehandle)
+            except EOFError:
+                break
+            except SyncError:
+                continue
+                
+            cID = cFrame1.id
+            if cID not in idCodes:
+                idCodes.append(cID)
+            cID = cFrame2.id
+            if cID not in idCodes:
+                idCodes.append(cID)
+                
+            # Junk 30,000 frames since that is how many frames there are per stand
+            filehandle.seek(currentPosition+30000*FRAME_SIZE)
+            
     # Get the length of the stand list and return
     return len(idCodes)

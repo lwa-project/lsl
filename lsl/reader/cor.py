@@ -36,7 +36,7 @@ import copy
 import numpy
 
 from lsl.common import adp as adp_common
-from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader.base import *
 from lsl.reader._gofast import NCHAN_COR
 from lsl.reader._gofast import read_cor
 from lsl.reader._gofast import SyncError as gSyncError
@@ -240,25 +240,20 @@ def get_channel_count(filehandle):
     the first several COR records.  Return the number of channels found.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
-    # Build up the list-of-lists that store the index of the first frequency
-    # channel in each frame.
-    channels = []
-    for i in range(64):
-        try:
-            cFrame = read_frame(filehandle)
-        except:
-            break
-            
-        chan = cFrame.header.first_chan
-        if chan not in channels:
-            channels.append( chan )
-            
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Build up the list-of-lists that store the index of the first frequency
+        # channel in each frame.
+        channels = []
+        for i in range(64):
+            try:
+                cFrame = read_frame(filehandle)
+            except:
+                break
+                
+            chan = cFrame.header.first_chan
+            if chan not in channels:
+                channels.append( chan )
+                
     # Return the number of channels
     return len(channels)*NCHAN_COR
 

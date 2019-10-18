@@ -39,7 +39,7 @@ from datetime import datetime
 
 from lsl import astro
 from lsl.common.mcs import datetime_to_mjdmpm
-from lsl.reader.base import FrameHeaderBase, FramePayloadBase, FrameBase
+from lsl.reader.base import *
 from lsl.reader._gofast import read_vdif
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
@@ -393,15 +393,10 @@ def get_frame_size(filehandle, nframes=None):
     Find out what the frame size is in bytes from a single observation.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-
-    # Read in one frame
-    newFrame = read_frame(filehandle)
-    
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Read in one frame
+        newFrame = read_frame(filehandle)
+        
     return newFrame.header.frame_length*8
 
 
@@ -411,34 +406,29 @@ def get_thread_count(filehandle):
     records.  Return the number of threads found.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
     # Get the frame size
     frame_size = get_frame_size(filehandle)
     
-    # Build up the list-of-lists that store ID codes and loop through 1024
-    # frames.  In each case, parse pull the thread ID and append the thread 
-    # ID to the relevant thread array if it is not already there.
-    threads = []
-    i = 0
-    while i < 1024:
-        try:
-            cFrame = read_frame(filehandle)
-        except SyncError:
-            filehandle.seek(frame_size, 1)
-            continue
-        except EOFError:
-            break
+    with FilePositionSaver(filehandle):
+        # Build up the list-of-lists that store ID codes and loop through 1024
+        # frames.  In each case, parse pull the thread ID and append the thread 
+        # ID to the relevant thread array if it is not already there.
+        threads = []
+        i = 0
+        while i < 1024:
+            try:
+                cFrame = read_frame(filehandle)
+            except SyncError:
+                filehandle.seek(frame_size, 1)
+                continue
+            except EOFError:
+                break
+                
+            cID = cFrame.header.thread_id
+            if cID not in threads:
+                threads.append(cID)
+            i += 1
             
-        cID = cFrame.header.thread_id
-        if cID not in threads:
-            threads.append(cID)
-        i += 1
-        
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
     # Return the number of threads found
     return len(threads)
 
@@ -449,66 +439,61 @@ def get_frames_per_second(filehandle):
     headers change.  Returns the number of frames in a second.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
     # Get the frame size
     frame_size = get_frame_size(filehandle)
     
     # Get the number of threads
     nThreads = get_thread_count(filehandle)
     
-    # Get the current second counts for all threads
-    ref = {}
-    i = 0
-    while i < nThreads:
-        try:
-            cFrame = read_frame(filehandle)
-        except SyncError:
-            filehandle.seek(frame_size, 1)
-            continue
-        except EOFError:
-            break
-            
-        cID = cFrame.header.thread_id
-        cSC = cFrame.header.seconds_from_epoch
-        ref[cID] = cSC
-        i += 1
-        
-    # Read frames until we see a change in the second counter
-    cur = {}
-    fnd = []
-    while True:
-        ## Get a frame
-        try:
-            cFrame = read_frame(filehandle)
-        except SyncError:
-            filehandle.seek(frame_size, 1)
-            continue
-        except EOFError:
-            break
-            
-        ## Pull out the relevant metadata
-        cID = cFrame.header.thread_id
-        cSC = cFrame.header.seconds_from_epoch
-        cFC = cFrame.header.frame_in_second
-        
-        ## Figure out what to do with it
-        if cSC == ref[cID]:
-            ### Same second as the reference, save the frame number
-            cur[cID] = cFC
-        else:
-            ### Different second than the reference, we've found something
-            ref[cID] = cSC
-            if cID not in fnd:
-                fnd.append( cID )
+    with FilePositionSaver(filehandle):
+        # Get the current second counts for all threads
+        ref = {}
+        i = 0
+        while i < nThreads:
+            try:
+                cFrame = read_frame(filehandle)
+            except SyncError:
+                filehandle.seek(frame_size, 1)
+                continue
+            except EOFError:
+                break
                 
-        if len(fnd) == nThreads:
-            break
+            cID = cFrame.header.thread_id
+            cSC = cFrame.header.seconds_from_epoch
+            ref[cID] = cSC
+            i += 1
             
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+        # Read frames until we see a change in the second counter
+        cur = {}
+        fnd = []
+        while True:
+            ## Get a frame
+            try:
+                cFrame = read_frame(filehandle)
+            except SyncError:
+                filehandle.seek(frame_size, 1)
+                continue
+            except EOFError:
+                break
+                
+            ## Pull out the relevant metadata
+            cID = cFrame.header.thread_id
+            cSC = cFrame.header.seconds_from_epoch
+            cFC = cFrame.header.frame_in_second
+            
+            ## Figure out what to do with it
+            if cSC == ref[cID]:
+                ### Same second as the reference, save the frame number
+                cur[cID] = cFC
+            else:
+                ### Different second than the reference, we've found something
+                ref[cID] = cSC
+                if cID not in fnd:
+                    fnd.append( cID )
+                    
+            if len(fnd) == nThreads:
+                break
+                
     # Pull out the mode
     mode = {}
     for key,value in cur.iteritems():
@@ -533,18 +518,13 @@ def get_sample_rate(filehandle):
     there are per second and how many samples there are in a frame.
     """
     
-    # Save the current position in the file so we can return to that point
-    fhStart = filehandle.tell()
-    
     # Get the number of frames per second
     nFramesSecond = get_frames_per_second(filehandle)
     
-    # Read in a frame
-    cFrame = read_frame(filehandle)
-    
-    # Return to the place in the file where we started
-    filehandle.seek(fhStart)
-    
+    with FilePositionSaver(filehandle):
+        # Read in a frame
+        cFrame = read_frame(filehandle)
+        
     # Get the sample rate
     sample_rate = cFrame.payload.data.shape[-1] * nFramesSecond
     return float(sample_rate)
