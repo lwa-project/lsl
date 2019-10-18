@@ -39,6 +39,7 @@ from lsl.common.dp import fS
 from lsl.common.adp import fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
+from lsl.reader.utils import *
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -114,9 +115,10 @@ class LDPFileBase(object):
             self.fh = open(filename, 'rb')
         else:
             self.filename = fh.name
-            if fh.mode.find('b') == -1:
-                fh.close()
-                fh = open(self.filename, 'rb')
+            if not isinstance(fh, SplitFileWrapper):
+                if fh.mode.find('b') == -1:
+                    fh.close()
+                    fh = open(self.filename, 'rb')
             self.fh = fh
         _open_ldp_files.add(self)
         
@@ -343,39 +345,42 @@ class TBWFile(LDPFileBase):
         Describe the TBW file.
         """
         
-        junkFrame = self.read_frame()
-        self.fh.seek(-tbw.FRAME_SIZE, 1)
-        
-        # Basic file information
-        filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) // tbw.FRAME_SIZE
-        srate = 196e6
-        bits = junkFrame.data_bits
-        start = junkFrame.time
-        startRaw = junkFrame.payload.timetag
-        
-        # Trick to figure out how many antennas are in a file and the "real" 
-        # start time.  For details of why this needs to be done, see the read()
-        # function below.
-        idsFound = []
-        timesFound = []
-        filePosRef = self.fh.tell()
-        while True:
+        with FilePositionSaver(self.fh):
+            junkFrame = self.read_frame()
+            self.fh.seek(-tbw.FRAME_SIZE, 1)
+            
+            # Basic file information
             try:
-                for i in xrange(26):
-                    frame = tbw.read_frame(self.fh)
-                    while not frame.header.is_tbw:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+            nFramesFile = (filesize - self.fh.tell()) // tbw.FRAME_SIZE
+            srate = 196e6
+            bits = junkFrame.data_bits
+            start = junkFrame.time
+            startRaw = junkFrame.payload.timetag
+            
+            # Trick to figure out how many antennas are in a file and the "real" 
+            # start time.  For details of why this needs to be done, see the read()
+            # function below.
+            idsFound = []
+            timesFound = []
+            filePosRef = self.fh.tell()
+            while True:
+                try:
+                    for i in xrange(26):
                         frame = tbw.read_frame(self.fh)
-                    stand = frame.id
-                    if stand not in idsFound:
-                        idsFound.append(stand)
-                    if frame.header.frame_count < 1000:
-                        timesFound.append( (frame.header.frame_count-1, frame.payload.timetag) )
-                self.fh.seek(tbw.FRAME_SIZE*(30000-26), 1)
-            except:
-                break
-        self.fh.seek(filePosRef)
-        
+                        while not frame.header.is_tbw:
+                            frame = tbw.read_frame(self.fh)
+                        stand = frame.id
+                        if stand not in idsFound:
+                            idsFound.append(stand)
+                        if frame.header.frame_count < 1000:
+                            timesFound.append( (frame.header.frame_count-1, frame.payload.timetag) )
+                    self.fh.seek(tbw.FRAME_SIZE*(30000-26), 1)
+                except:
+                    break
+                    
         # What is that start time again?
         startTimeTag = None
         for fc,tt in timesFound:
@@ -421,7 +426,11 @@ class TBWFile(LDPFileBase):
         """
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()
@@ -538,14 +547,17 @@ class TBNFile(LDPFileBase):
         Describe the TBN file and initialize the frame circular buffer.
         """
         
-        filesize = os.fstat(self.fh.fileno()).st_size
+        try:
+            filesize = self.fh.size
+        except AttributeError:
+            filesize = os.fstat(self.fh.fileno()).st_size
         nFramesFile = (filesize - self.fh.tell()) // tbn.FRAME_SIZE
         framesPerObsX, framesPerObsY = tbn.get_frames_per_obs(self.fh)
         srate =  tbn.get_sample_rate(self.fh, nframes=((framesPerObsX+framesPerObsY)*3))
         bits = 8
         
-        junkFrame = self.read_frame()
-        self.fh.seek(-tbn.FRAME_SIZE, 1)
+        with FilePositionSaver(self.fh):
+            junkFrame = self.read_frame()
         tuning1 = junkFrame.central_freq
         start = junkFrame.time
         startRaw = junkFrame.payload.timetag
@@ -638,7 +650,11 @@ class TBNFile(LDPFileBase):
         """ 
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()
@@ -754,7 +770,11 @@ class TBNFile(LDPFileBase):
         """
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()
@@ -762,27 +782,27 @@ class TBNFile(LDPFileBase):
                 raise errors.EOFError()
                 
         # Go!
-        count = {}
-        for i in xrange(self.description['nantenna']):
-            count[i] = 0
-        data = numpy.zeros((self.description['nantenna'], nframes*512))
-        for i in xrange(nframes):
-            for j in xrange(self.description['nantenna']):
-                # Read in the next frame and anticipate any problems that could occur
-                try:
-                    cFrame = tbn.read_frame(self.fh, verbose=False)
-                except errors.EOFError:
-                    break
-                except errors.SyncError:
-                    continue
+        with FilePositionSaver(self.fh):
+            count = {}
+            for i in xrange(self.description['nantenna']):
+                count[i] = 0
+            data = numpy.zeros((self.description['nantenna'], nframes*512))
+            for i in xrange(nframes):
+                for j in xrange(self.description['nantenna']):
+                    # Read in the next frame and anticipate any problems that could occur
+                    try:
+                        cFrame = tbn.read_frame(self.fh, verbose=False)
+                    except errors.EOFError:
+                        break
+                    except errors.SyncError:
+                        continue
+                        
+                    s,p = cFrame.id
+                    aStand = 2*(s-1) + p
                     
-                s,p = cFrame.id
-                aStand = 2*(s-1) + p
-                
-                data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.data )
-                count[aStand] +=  1
-        self.fh.seek(-tbn.FRAME_SIZE*self.description['nantenna']*nframes, 1)
-        
+                    data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.data )
+                    count[aStand] +=  1
+                    
         # Statistics
         rv = norm()
         frac = rv.cdf(sigma) - rv.cdf(-sigma)
@@ -851,7 +871,10 @@ class DRXFile(LDPFileBase):
         Describe the DRX file.
         """
         
-        filesize = os.fstat(self.fh.fileno()).st_size
+        try:
+            filesize = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            filesize = self.fh.size
         nFramesFile = (filesize - self.fh.tell()) // drx.FRAME_SIZE
         beams = drx.get_beam_count(self.fh)
         tunepols = drx.get_frames_per_obs(self.fh)
@@ -859,32 +882,32 @@ class DRXFile(LDPFileBase):
         beampols = tunepol
         bits = 4
         
-        beams = []
-        tunes = []
-        pols = []
-        tuning1 = 0.0
-        tuning2 = 0.0
-        for i in xrange(32):
-            junkFrame = self.read_frame()
-            b,t,p = junkFrame.id
-            srate = junkFrame.sample_rate
-            if b not in beams:
-                beams.append(b)
-            if t not in tunes:
-                tunes.append(t)
-            if p not in pols:
-                pols.append(p)
-                
-            if t == 1:
-                tuning1 = junkFrame.central_freq
-            else:
-                tuning2 = junkFrame.central_freq
-                
-            if i == 0:
-                start = junkFrame.time
-                startRaw = junkFrame.payload.timetag - junkFrame.header.time_offset
-        self.fh.seek(-drx.FRAME_SIZE*32, 1)
-        
+        with FilePositionSaver(self.fh):
+            beams = []
+            tunes = []
+            pols = []
+            tuning1 = 0.0
+            tuning2 = 0.0
+            for i in xrange(32):
+                junkFrame = self.read_frame()
+                b,t,p = junkFrame.id
+                srate = junkFrame.sample_rate
+                if b not in beams:
+                    beams.append(b)
+                if t not in tunes:
+                    tunes.append(t)
+                if p not in pols:
+                    pols.append(p)
+                    
+                if t == 1:
+                    tuning1 = junkFrame.central_freq
+                else:
+                    tuning2 = junkFrame.central_freq
+                    
+                if i == 0:
+                    start = junkFrame.time
+                    startRaw = junkFrame.payload.timetag - junkFrame.header.time_offset
+                    
         self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': drx.FRAME_SIZE,
                             'beampols': beampols, 'beam': b, 
                             'sample_rate': srate, 'data_bits': bits, 
@@ -996,7 +1019,11 @@ class DRXFile(LDPFileBase):
         """
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()
@@ -1139,7 +1166,11 @@ class DRXFile(LDPFileBase):
         """
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()
@@ -1147,25 +1178,25 @@ class DRXFile(LDPFileBase):
                 raise errors.EOFError()
                 
         # Sample the data
-        count = {0:0, 1:0, 2:0, 3:0}
-        data = numpy.zeros((4, nframes*4096))
-        for i in xrange(nframes):
-            for j in xrange(self.description['beampols']):
-                # Read in the next frame and anticipate any problems that could occur
-                try:
-                    cFrame = drx.read_frame(self.fh, verbose=False)
-                except errors.EOFError:
-                    break
-                except errors.SyncError:
-                    continue
+        with FilePositionSaver(self.fh):
+            count = {0:0, 1:0, 2:0, 3:0}
+            data = numpy.zeros((4, nframes*4096))
+            for i in xrange(nframes):
+                for j in xrange(self.description['beampols']):
+                    # Read in the next frame and anticipate any problems that could occur
+                    try:
+                        cFrame = drx.read_frame(self.fh, verbose=False)
+                    except errors.EOFError:
+                        break
+                    except errors.SyncError:
+                        continue
+                        
+                    b,t,p = cFrame.id
+                    aStand = 2*(t-1) + p
                     
-                b,t,p = cFrame.id
-                aStand = 2*(t-1) + p
-                
-                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.payload.data )
-                count[aStand] +=  1
-        self.fh.seek(-drx.FRAME_SIZE*self.description['beampols']*nframes, 1)
-        
+                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.payload.data )
+                    count[aStand] +=  1
+                    
         # Statistics
         rv = norm()
         frac = rv.cdf(sigma) - rv.cdf(-sigma)
@@ -1213,13 +1244,16 @@ class DRSpecFile(LDPFileBase):
         Describe the DRSpec file.
         """
         
-        filesize = os.fstat(self.fh.fileno()).st_size
+        try:
+            filesize = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            filesize = self.fh.size
         FRAME_SIZE = drspec.get_frame_size(self.fh)
         nFramesFile = filesize // FRAME_SIZE
         LFFT = drspec.get_transform_size(self.fh)
-        junkFrame = drspec.read_frame(self.fh)
-        self.fh.seek(-FRAME_SIZE, 1)
-        
+        with FilePositionSaver(self.fh):
+            junkFrame = drspec.read_frame(self.fh)
+            
         bits = 32
         beam = junkFrame.id
         beampols = 4
@@ -1315,7 +1349,11 @@ class DRSpecFile(LDPFileBase):
         """
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()
@@ -1568,33 +1606,35 @@ class TBFFile(LDPFileBase):
         Describe the TBF file.
         """
         
-        # Read in frame
-        junkFrame = tbf.read_frame(self.fh)
-        self.fh.seek(-tbf.FRAME_SIZE, 1)
-        
-        # Basic file information
-        filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) // tbf.FRAME_SIZE
-        srate = fC
-        bits = 4
-        nFramesPerObs = tbf.get_frames_per_obs(self.fh)
-        nchan = tbf.get_channel_count(self.fh)
-        
-        # Pre-load the channel mapper
-        self.mapper = []
-        marker = self.fh.tell()
-        firstFrameCount = 2**64-1
-        while len(self.mapper) < nchan/tbf.FRAME_CHANNEL_COUNT:
-            cFrame = tbf.read_frame(self.fh)
-            if cFrame.header.first_chan not in self.mapper:
-                self.mapper.append( cFrame.header.first_chan )
-            if cFrame.header.frame_count < firstFrameCount:
-                firstFrameCount = cFrame.header.frame_count
-                start = junkFrame.time
-                startRaw = junkFrame.payload.timetag
-        self.fh.seek(marker)
-        self.mapper.sort()
-        
+        with FilePositionSaver(self.fh):
+            # Read in frame
+            junkFrame = tbf.read_frame(self.fh)
+            self.fh.seek(-tbf.FRAME_SIZE, 1)
+            
+            # Basic file information
+            try:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+            nFramesFile = (filesize - self.fh.tell()) // tbf.FRAME_SIZE
+            srate = fC
+            bits = 4
+            nFramesPerObs = tbf.get_frames_per_obs(self.fh)
+            nchan = tbf.get_channel_count(self.fh)
+            
+            # Pre-load the channel mapper
+            self.mapper = []
+            firstFrameCount = 2**64-1
+            while len(self.mapper) < nchan/tbf.FRAME_CHANNEL_COUNT:
+                cFrame = tbf.read_frame(self.fh)
+                if cFrame.header.first_chan not in self.mapper:
+                    self.mapper.append( cFrame.header.first_chan )
+                if cFrame.header.frame_count < firstFrameCount:
+                    firstFrameCount = cFrame.header.frame_count
+                    start = junkFrame.time
+                    startRaw = junkFrame.payload.timetag
+            self.mapper.sort()
+            
         # Calculate the frequencies
         freq = numpy.zeros(nchan)
         for i,c in enumerate(self.mapper):
@@ -1683,7 +1723,11 @@ class TBFFile(LDPFileBase):
         """ 
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()
@@ -1859,43 +1903,46 @@ class CORFile(LDPFileBase):
         """
         
         # Read in frame
-        junkFrame = cor.read_frame(self.fh)
-        self.fh.seek(-cor.FRAME_SIZE, 1)
-        
-        # Basic file information
-        filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
-        srate = fC
-        bits = 32
-        nFramesPerObs = cor.get_frames_per_obs(self.fh)
-        nchan = cor.get_channel_count(self.fh)
-        nBaseline = cor.get_baseline_count(self.fh)
-        
-        # Pre-load the baseline mapper
-        # NOTE: This is done with a dictionary rather than a list since 
-        #       the look-ups are much faster
-        self.bmapperd = {}
-        k = 0
-        for i in xrange(1, 256+1):
-            for j in xrange(i, 256+1):
-                self.bmapperd[(i,j)] = k
-                k += 1
-                
-        # Pre-load the channel mapper
-        self.cmapper = []
-        marker = self.fh.tell()
-        firstFrameCount = 2**64-1
-        while len(self.cmapper) < nchan/cor.FRAME_CHANNEL_COUNT:
-            cFrame = cor.read_frame(self.fh)
-            if cFrame.header.first_chan not in self.cmapper:
-                self.cmapper.append( cFrame.header.first_chan )
-            if cFrame.header.frame_count < firstFrameCount:
-                firstFrameCount = cFrame.header.frame_count
-                start = junkFrame.time
-                startRaw = junkFrame.payload.timetag
-        self.fh.seek(marker)
-        self.cmapper.sort()
-        
+        with FilePositionSaver(self.fh):
+            junkFrame = cor.read_frame(self.fh)
+            self.fh.seek(-cor.FRAME_SIZE, 1)
+            
+            # Basic file information
+            try:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+            nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
+            srate = fC
+            bits = 32
+            nFramesPerObs = cor.get_frames_per_obs(self.fh)
+            nchan = cor.get_channel_count(self.fh)
+            nBaseline = cor.get_baseline_count(self.fh)
+            
+            # Pre-load the baseline mapper
+            # NOTE: This is done with a dictionary rather than a list since 
+            #       the look-ups are much faster
+            self.bmapperd = {}
+            k = 0
+            for i in xrange(1, 256+1):
+                for j in xrange(i, 256+1):
+                    self.bmapperd[(i,j)] = k
+                    k += 1
+                    
+            # Pre-load the channel mapper
+            self.cmapper = []
+            marker = self.fh.tell()
+            firstFrameCount = 2**64-1
+            while len(self.cmapper) < nchan/cor.FRAME_CHANNEL_COUNT:
+                cFrame = cor.read_frame(self.fh)
+                if cFrame.header.first_chan not in self.cmapper:
+                    self.cmapper.append( cFrame.header.first_chan )
+                if cFrame.header.frame_count < firstFrameCount:
+                    firstFrameCount = cFrame.header.frame_count
+                    start = junkFrame.time
+                    startRaw = junkFrame.payload.timetag
+            self.cmapper.sort()
+            
         # Create a channel mapper dictionary
         self.cmapperd = {}
         for i,c in enumerate(self.cmapper):
@@ -1989,7 +2036,11 @@ class CORFile(LDPFileBase):
         """ 
         
         # Make sure there is file left to read
-        if self.fh.tell() == os.fstat(self.fh.fileno()).st_size:
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
             try:
                 if self.buffer.is_empty():
                     raise errors.EOFError()

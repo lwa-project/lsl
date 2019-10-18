@@ -42,6 +42,7 @@ from lsl.reader._gofast import read_cor
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
+from lsl.reader.utils import FilePositionSaver
 
 from lsl.misc import telemetry
 telemetry.track_module()
