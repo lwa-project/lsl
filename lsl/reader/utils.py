@@ -12,6 +12,7 @@ import sys
 if sys.version_info > (3,):
     xrange = range
     
+import os
 from bisect import bisect
 
 __version__ = '0.1'
@@ -41,12 +42,11 @@ class SplitFileWrapper(object):
     Class to allow seamless access to a file that has been split into parts.
     """
     
-    def __init__(self, filenames, mode='rb', sort=True):
+    def __init__(self, filenames, sort=True):
         self._filenames = filenames
         if sort:
             self._filenames.sort()
-        self._mode = mode
-        
+            
         self._nfiles = len(self._filenames)
         self._sizes = [os.path.getsize(filename) for filename in self._filenames]
         self._offsets = [0,]
@@ -54,31 +54,36 @@ class SplitFileWrapper(object):
             self._offsets.append(self._offsets[-1]+size)
         self._total_size = sum(self._sizes)
         
-        self._iopen(0)
-        
         self.name = "%s+%i_others" % (self._filenames[0], self._nfiles-1)
+        self.mode = 'rb'
+        self._open_part(0)
         self.closed = False
         
-    def _iopen(self, index=None, next=False):
+    def __enter__(self):
+	    return self
+        
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.close()
+        
+    def _open_part(self, index=None):
         try:
             self._fh.close()
         except AttributeError:
             pass
-        
-        if next is True:
-            index = min([self._idx + 1, nfiles-1])
+            
         if index is None:
-            raise RuntimeError("Expected either a file index or 'next' to be True")
+            index = min([self._idx + 1, self._nfiles-1])
         self._idx = index
-        self._fh = open(self._filenames[self._idx], self._mode)
+        self._fh = open(self._filenames[self._idx], self.mode)
         self._pos = self._offsets[self._idx]
         
     def close(self):
-        self.closed = True
-        self._fh.close()
-        del self._fh
-        del self._pos
-        
+        if not self.closed:
+            self.closed = True
+            self._fh.close()
+            del self._fh
+            del self._pos
+            
     def read(self, size):
         if self.closed:
             raise ValueError("I/O operation on a closed file")
@@ -86,7 +91,7 @@ class SplitFileWrapper(object):
         data = self._fh.read(size)
         self._pos += len(data)
         if len(data) < size and self._idx < self._nfiles-1:
-            self._iopen(next=True)
+            self._open_part()
             new_data = self._fh.read(size-len(data))
             self._pos += len(new_data)
             data += new_data
@@ -107,9 +112,9 @@ class SplitFileWrapper(object):
             raise ValueError("I/O operation on a closed file")
             
         if whence == 0:
-            idx = bisect(self._offsets, offset) - 1
-            self._open(idx)
-            offset -= self._pos
+            idx = bisect(self._offsets, pos) - 1
+            self._open_part(idx)
+            offset = pos - self._pos
             self._fh.seek(offset, 0)
             self._pos += offset
             

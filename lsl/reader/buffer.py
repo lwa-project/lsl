@@ -288,12 +288,12 @@ class FrameBufferBase(object):
         # Get the current status of the buffer
         keys = list(self.buffer.keys())
         try:
-            keyToReturn = min(keys)
+            key_to_return = min(keys)
         except ValueError:
-            keyToReturn = None
-        return keyToReturn
+            key_to_return = None
+        return key_to_return
         
-    def get(self, keyToReturn=None):
+    def get(self, key_to_return=None):
         """
         Return a list of frames that consitute a 'full' buffer.  Afterwards, 
         delete that buffer and mark it as closed so that any missing frames that
@@ -301,33 +301,33 @@ class FrameBufferBase(object):
         dumped, None is returned.
         """
         
-        if keyToReturn is None:
-            keyToReturn = self.peek()
-            if keyToReturn is None:
+        if key_to_return is None:
+            key_to_return = self.peek()
+            if key_to_return is None:
                 return None
-        returnCount = len(self.buffer[keyToReturn])
+        returnCount = len(self.buffer[key_to_return])
         
         if returnCount == self.nFrames:
             ## Everything is good (Is it really???)
             self.full = self.full + 1
             
-            output = self.buffer[keyToReturn]
+            output = self.buffer[key_to_return]
         elif returnCount < self.nFrames:
             ## There are too few frames
             self.partial = self.partial + 1
             self.missing = self.missing + (self.nFrames - returnCount)
             
-            output = self.buffer[keyToReturn]
+            output = self.buffer[key_to_return]
             
             ## Fill in the missing frames
-            output.extend( map(lambda x: self.create_fill(keyToReturn, x), self._get_missing_list(keyToReturn)) )
+            output.extend( map(lambda x: self.create_fill(key_to_return, x), self._get_missing_list(key_to_return)) )
         else:
             ## There are too many frames
             self.full = self.full + 1
             
             output = []
             frameIDs = []
-            for frame in self.buffer[keyToReturn]:
+            for frame in self.buffer[key_to_return]:
                 newID = frame.id
                 if newID not in frameIDs:
                     output.append(frame)
@@ -335,8 +335,8 @@ class FrameBufferBase(object):
                 else:
                     self.dropped += 1
                     
-        del(self.buffer[keyToReturn])
-        self.done.append(keyToReturn)
+        del(self.buffer[key_to_return])
+        self.done.append(key_to_return)
         
         # Sort and return
         if self.reorder:
@@ -364,7 +364,7 @@ class FrameBufferBase(object):
         """
         
         for key in list(self.buffer):
-            yield self.get(keyToReturn=key)
+            yield self.get(key_to_return=key)
             
     def reset(self):
         """

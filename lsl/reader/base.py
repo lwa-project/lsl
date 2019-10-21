@@ -94,9 +94,6 @@ class FrameBase(object):
             
         self.valid = valid
         
-    def __str__(self):
-        return "%s for %s at time %s s" % (self.__class__.__module__, self.__class__.__name__, self.id, self.time)
-        
     def __repr__(self):
         n = self.__class__.__module__+'.'+self.__class__.__name__
         a = [('header',repr(self.header).replace(',\n    ', ', ')),

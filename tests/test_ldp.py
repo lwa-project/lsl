@@ -12,10 +12,13 @@ if sys.version_info > (3,):
     
 import os
 import unittest
+import tempfile
+import shutil
 
 from lsl.common.paths import DATA_BUILD
 from lsl.reader import ldp
 from lsl.reader import errors
+from lsl.reader.utils import SplitFileWrapper
 
 
 __revision__ = "$Rev$"
@@ -35,6 +38,11 @@ class ldp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.reader
     modules."""
     
+    def setUp(self):
+        """Create the temporary file directory."""
+
+        self.testPath = tempfile.mkdtemp(prefix='test-ldp-', suffix='.tmp')
+        
     ### TBW ###
     
     def test_ldp_tbw(self):
@@ -485,10 +493,188 @@ class ldp_tests(unittest.TestCase):
         # TBF
         self.assertRaises(RuntimeError, ldp.LWA1DataFile, tbfFile)
         
+    ### SplitFileWrapper ###
+    
+    def testldp_splitfilewrapper(self):
+        """Test the LDP interface for a SplitFileWrapper."""
+        
+        # Split up the TBN file into many many parts
+        size = os.path.getsize(tbnFile)
+        block = size // 16
+        
+        splitFiles = []
+        f = open(tbnFile, 'rb')
+        while size > 0:
+            splitFiles.append(os.path.join(self.testPath, 'filepart%03i' % len(splitFiles)))
+            with open(splitFiles[-1], 'wb') as w:
+                w.write(f.read(block))
+                size -= block
+        f.close()
+        
+        w = SplitFileWrapper(splitFiles)
+        f = ldp.TBNFile(fh=w)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info("nframes"), 29)
+        
+        self.assertEqual(f.sample_rate, 100e3)
+        self.assertEqual(f.data_bits, 8)
+        self.assertEqual(f.nframes, 29)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
+        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(0.005)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - long
+        tInt, tStart, data = f.read(1.00)
+        
+        # Close it out
+        f.close()
+        w.close()
+        
+        # 'with' statement support
+        with SplitFileWrapper(splitFiles) as w:
+            with ldp.TBNFile(fh=w) as f:
+                ## File info
+                self.assertEqual(f.get_info("sample_rate"), 100e3)
+                self.assertEqual(f.get_info("data_bits"), 8)
+                self.assertEqual(f.get_info("nframes"), 29)
+        
+                self.assertEqual(f.sample_rate, 100e3)
+                self.assertEqual(f.data_bits, 8)
+                self.assertEqual(f.nframes, 29)
+        
+                ## Read a frame
+                frame = f.read_frame()
+        
+                ## Get the remaining frame count
+                self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
+                self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+                
+        # generator support
+        w = SplitFileWrapper(splitFiles)
+        f = ldp.TBNFile(fh=w)
+        i = 0
+        for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+            self.assertEqual(tInt, tInt2)
+            self.assertEqual(tStart, tStart2)
+            self.assertEqual(data.shape, data2.shape)
+            i += 1
+        self.assertEqual(i, 1)
+        f.close()
+        w.close()
+        
+        # both at the same time
+        with SplitFileWrapper(splitFiles) as w:
+            with ldp.TBNFile(fh=w) as f:
+                i = 0
+                for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+                    self.assertEqual(tInt, tInt2)
+                    self.assertEqual(tStart, tStart2)
+                    self.assertEqual(data.shape, data2.shape)
+                    i += 1
+                self.assertEqual(i, 1)
+                
+    def test_ldp_splitfilewrapper_single(self):
+        """Test the LDP interface for a SplitFileWrapper with a single file."""
+        
+        w = SplitFileWrapper([tbnFile,])
+        f = ldp.TBNFile(fh=w)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info("nframes"), 29)
+        
+        self.assertEqual(f.sample_rate, 100e3)
+        self.assertEqual(f.data_bits, 8)
+        self.assertEqual(f.nframes, 29)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
+        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(0.005)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - long
+        tInt, tStart, data = f.read(1.00)
+        
+        # Close it out
+        f.close()
+        w.close()
+        
+        # 'with' statement support
+        with SplitFileWrapper([tbnFile,]) as w:
+            with ldp.TBNFile(fh=w) as f:
+                ## File info
+                self.assertEqual(f.get_info("sample_rate"), 100e3)
+                self.assertEqual(f.get_info("data_bits"), 8)
+                self.assertEqual(f.get_info("nframes"), 29)
+        
+                self.assertEqual(f.sample_rate, 100e3)
+                self.assertEqual(f.data_bits, 8)
+                self.assertEqual(f.nframes, 29)
+        
+                ## Read a frame
+                frame = f.read_frame()
+        
+                ## Get the remaining frame count
+                self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
+                self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+                
+        # generator support
+        w = SplitFileWrapper([tbnFile,])
+        f = ldp.TBNFile(fh=w)
+        i = 0
+        for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+            self.assertEqual(tInt, tInt2)
+            self.assertEqual(tStart, tStart2)
+            self.assertEqual(data.shape, data2.shape)
+            i += 1
+        self.assertEqual(i, 1)
+        f.close()
+        w.close()
+        
+        # both at the same time
+        with SplitFileWrapper([tbnFile,]) as w:
+            with ldp.TBNFile(fh=w) as f:
+                i = 0
+                for (tInt2, tStart2, data2) in f.read_sequence(1.0):
+                    self.assertEqual(tInt, tInt2)
+                    self.assertEqual(tStart, tStart2)
+                    self.assertEqual(data.shape, data2.shape)
+                    i += 1
+                self.assertEqual(i, 1)
+                
     def tearDown(self):
         """Cleanup"""
         for handler in list(ldp._open_ldp_files.handlers):
             handler.close()
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class ldp_test_suite(unittest.TestSuite):
