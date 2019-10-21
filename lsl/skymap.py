@@ -200,13 +200,13 @@ class ProjectedSkyMap(object):
     the sky.
     """
     
-    def __init__(self, skyMapObject, lat, lon, utc_jd):
+    def __init__(self, skymap_object, lat, lon, utc_jd):
         """
         Initialize the skymap at input lat,lon (decimal degrees) and time (in 
         UTC julian day).
         """
         
-        self.skyMapObject = skyMapObject
+        self.skymap_object = skymap_object
         
         assert  -90 <= lat <=  90, ValueError('lat = %g not in [-90,90]' % lat)
         assert -360 <= lon <= 360, ValueError('lon = %g not in [-360,360]' % lon)
@@ -217,8 +217,8 @@ class ProjectedSkyMap(object):
         # Compute the ra and dec locations to a altitude and azimuth. This requires a lat/lon and a time (UTC).
         # Alt and Az are compressed to show only the visible source.
         ## Extract the RA/dec values
-        ra = self.skyMapObject.ra
-        dec = self.skyMapObject.dec
+        ra = self.skymap_object.ra
+        dec = self.skymap_object.dec
         
         ## Compute the LST at the lat/lon (hours)
         lst = astro.get_local_sidereal_time(self.lon, self.time)
@@ -246,28 +246,28 @@ class ProjectedSkyMap(object):
         #Compress arrays to hide non-visible sources
         self.visibleAlt = compress(visibleMask, self.alt)
         self.visibleAz = compress(visibleMask, self.az)
-        self.visiblePower = compress(visibleMask, self.skyMapObject._power)
+        self.visiblePower = compress(visibleMask, self.skymap_object._power)
         try:
-            pixelSolidAngle = (2.0 * pi)**2/(self.skyMapObject.numPixelsX*self.skyMapObject.numPixelsY)
+            pixelSolidAngle = (2.0 * pi)**2/(self.skymap_object.numPixelsX*self.skymap_object.numPixelsY)
         except AttributeError:
             pixelSolidAngle = 2.5566346e-4
         fractionSolidAngle = (1.0/4.0*pi) * pixelSolidAngle
         
         # The cosine term is the projection of the receiving area onto the direction 
         # of the source
-        normalizedPower = self.skyMapObject.normalize_power() * fractionSolidAngle  
+        normalizedPower = self.skymap_object.normalize_power() * fractionSolidAngle  
         self.visibleNormalizedPower = compress(visibleMask, normalizedPower)
-        #self.visibleNormalizedPower = self.visiblePower*cos(self.visibleAlt * self.skyMapObject.degToRad)
-        self.visibleRa = compress(visibleMask, self.skyMapObject.ra)
-        self.visibleDec = compress(visibleMask, self.skyMapObject.dec)
+        #self.visibleNormalizedPower = self.visiblePower*cos(self.visibleAlt * self.skymap_object.degToRad)
+        self.visibleRa = compress(visibleMask, self.skymap_object.ra)
+        self.visibleDec = compress(visibleMask, self.skymap_object.dec)
         
     def get_direction_cosines(self):
         """
         Compute the direction cosines and return the tuple of arrays (l,m,n).
         """
         
-        altRad = self.visibleAlt*self.skyMapObject.degToRad
-        azRad = self.visibleAz*self.skyMapObject.degToRad
+        altRad = self.visibleAlt*self.skymap_object.degToRad
+        azRad = self.visibleAz*self.skymap_object.degToRad
         l = cos(altRad)*sin(azRad)
         m = cos(altRad)*cos(azRad)
         n = sin(altRad)

@@ -127,7 +127,7 @@ def _load_igrf(filename):
     return output
 
 
-def _computeIGRFCoefficents(year, coeffs):
+def _compute_igrf_coefficents(year, coeffs):
     """
     Given a decimal year and a coefficient dictionary from _parseIGRFModel(),
     compute the actual coefficients for that epoch and return a dictionary
@@ -297,7 +297,7 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
         coeffs = _CACHE['IGRF']
         
     # Compute the coefficients for the epoch
-    coeffs = _computeIGRFCoefficents(year, coeffs)
+    coeffs = _compute_igrf_coefficents(year, coeffs)
     
     # Compute the field strength in spherical coordinates
     Br, Bth, Bph = 0.0, 0.0, 0.0

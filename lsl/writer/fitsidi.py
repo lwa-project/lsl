@@ -102,7 +102,7 @@ class WriterBase(object):
             self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': [0.0, 0.0]}
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
-        def getName(self):
+        def get_name(self):
             return "LWA%03i" % self.id
             
     class _Frequency:
@@ -110,10 +110,10 @@ class WriterBase(object):
         Holds information about the frequency setup used in the file.
         """
 
-        def __init__(self, offset, channelWidth, bandwidth):
+        def __init__(self, offset, channel_width, bandwidth):
             self.id = 1
             self.bandFreq = offset
-            self.chWidth = channelWidth
+            self.chWidth = channel_width
             self.totalBW = bandwidth
             self.sideBand = 1
             self.baseBand = 0
@@ -579,11 +579,11 @@ class Idi(WriterBase):
             xyz[i,0] = ant.x
             xyz[i,1] = ant.y
             xyz[i,2] = ant.z
-            names.append(ant.getName())
+            names.append(ant.get_name())
             
         # Antenna name
         c1 = astrofits.Column(name='ANNAME', format='A8', 
-                        array=numpy.array([ant.getName() for ant in self.array[0]['ants']]))
+                        array=numpy.array([ant.get_name() for ant in self.array[0]['ants']]))
         # Station coordinates in meters
         c2 = astrofits.Column(name='STABXYZ', unit='METERS', format='3D', 
                         array=xyz)
@@ -1236,7 +1236,7 @@ class Idi(WriterBase):
         """
         
         c1 = astrofits.Column(name='ANNAME', format='A8', 
-                        array=numpy.array([ant.getName() for ant in self.array[0]['ants']]))
+                        array=numpy.array([ant.get_name() for ant in self.array[0]['ants']]))
         c2 = astrofits.Column(name='NOSTA', format='1J', 
                         array=numpy.array([self.array[0]['mapper'][ant.id] for ant in self.array[0]['ants']]))
         c3 = astrofits.Column(name='NOACT', format='1J', 
@@ -1330,7 +1330,7 @@ class Aips(Idi):
             self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': [0.0, 0.0]}
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
-        def getName(self):
+        def get_name(self):
             return "L%03i" % self.id
             
     def _write_primary_hdu(self):
@@ -1406,7 +1406,7 @@ class ExtendedIdi(Idi):
             self.polA = {'Type': 'X', 'Angle': 0.0, 'Cal': [0.0, 0.0]}
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
-        def getName(self):
+        def get_name(self):
             return "LWA%05i" % self.id
             
     def _write_primary_hdu(self):

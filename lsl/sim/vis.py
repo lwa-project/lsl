@@ -542,7 +542,7 @@ class Antenna(aipy.amp.Antenna):
         """
         top = numpy.array(top)
         
-        def robustDot(a, b):
+        def _robust_dot(a, b):
             """
             Dot product that operations on multi-dimensional coordinate sets.
             """
@@ -566,10 +566,10 @@ class Antenna(aipy.amp.Antenna):
             
             return temp
             
-        top = {'y':robustDot(self.rot_pol_x, top), 
-            'x':robustDot(self.rot_pol_y, top), 
-            'l':robustDot(self.rot_pol_x, top), 
-            'r':robustDot(self.rot_pol_y, top)}[pol]
+        top = {'y':_robust_dot(self.rot_pol_x, top), 
+               'x':_robust_dot(self.rot_pol_y, top), 
+               'l':_robust_dot(self.rot_pol_x, top), 
+               'r':_robust_dot(self.rot_pol_y, top)}[pol]
         x,y,z = top
         
         return self.beam.response((x,y,z))
