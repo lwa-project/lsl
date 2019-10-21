@@ -455,12 +455,12 @@ class Uv(WriterBase):
         xyz = numpy.zeros((self.nAnt,3), dtype=numpy.float64)
         for ant in self.array[0]['ants']:
             xyz[i,:] = numpy.array([ant.x, ant.y, ant.z])
-            names.append(ant.getName())
+            names.append(ant.get_name())
             i = i + 1
             
         # Antenna name
         c1 = astrofits.Column(name='ANNAME', format='A8', 
-                        array=numpy.array([ant.getName() for ant in self.array[0]['ants']]))
+                        array=numpy.array([ant.get_name() for ant in self.array[0]['ants']]))
         # Station coordinates in meters
         c2 = astrofits.Column(name='STABXYZ', unit='METERS', format='3D', 
                         array=xyz)
@@ -811,7 +811,7 @@ class Uv(WriterBase):
         """
         
         c1 = astrofits.Column(name='ANNAME', format='A8', 
-                        array=numpy.array([ant.getName() for ant in self.array[0]['ants']]))
+                        array=numpy.array([ant.get_name() for ant in self.array[0]['ants']]))
         c2 = astrofits.Column(name='NOSTA', format='1J', 
                         array=numpy.array([self.array[0]['mapper'][ant.id] for ant in self.array[0]['ants']]))
         c3 = astrofits.Column(name='NOACT', format='1J', 

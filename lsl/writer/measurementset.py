@@ -296,7 +296,7 @@ try:
             tb.putcol('DISH_DIAMETER', [2.0,]*self.nAnt, 0, self.nAnt)
             tb.putcol('FLAG_ROW', [False,]*self.nAnt, 0, self.nAnt)
             tb.putcol('MOUNT', ['ALT-AZ',]*self.nAnt, 0, self.nAnt)
-            tb.putcol('NAME', [ant.getName() for ant in self.array[0]['ants']], 0, self.nAnt)
+            tb.putcol('NAME', [ant.get_name() for ant in self.array[0]['ants']], 0, self.nAnt)
             tb.putcol('STATION', [self.siteName,]*self.nAnt, 0, self.nAnt)
             
             for i,ant in enumerate(self.array[0]['ants']):
@@ -308,7 +308,7 @@ try:
                 #tb.putcell('DISH_DIAMETER', i, 2.0)
                 #tb.putcell('FLAG_ROW', i, False)
                 #tb.putcell('MOUNT', i, 'ALT-AZ')
-                #tb.putcell('NAME', i, ant.getName())
+                #tb.putcell('NAME', i, ant.get_name())
                 #tb.putcell('STATION', i, self.siteName)
                 
             tb.flush()
