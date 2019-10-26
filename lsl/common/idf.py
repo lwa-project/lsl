@@ -40,6 +40,7 @@ import copy
 import math
 import pytz
 import ephem
+from textwrap import fill as tw_fill
 from functools import total_ordering
 from datetime import datetime, timedelta
 
@@ -114,6 +115,11 @@ class ProjectOffice(object):
             self.scans = []
         else:
             self.scans = scans
+            
+    def __repr__(self):
+        return "<%s.%s runs=%s, scans=%s>" % (self.__class__.__module__,
+                                              self.__class__.__name__,
+                                              repr(self.runs), repr(self.scans))
 
 
 class Project(object):
@@ -122,7 +128,7 @@ class Project(object):
     project/proposal.
     """
     
-    def __init__(self, observer, name, id, runs=None, comments=None, projectOffice=None):
+    def __init__(self, observer, name, id, runs=None, comments=None, project_office=None):
         if not isinstance(observer, Observer):
             raise TypeError("Expected 'observer' to be an Observer")
         self.observer = observer
@@ -141,12 +147,12 @@ class Project(object):
             else:
                 raise TypeError("Expected 'runs' to be either a tuple or list of Run or a Run")
             self.runs = runs
-        if projectOffice is None:
-            self.projectOffice = ProjectOffice()
+        if project_office is None:
+            self.project_office = ProjectOffice()
         else:
-            if not isinstance(projectOffice, ProjectOffice):
-                raise TypeError("Expected 'projectOffice' to be a ProjectOffice")
-            self.projectOffice = projectOffice
+            if not isinstance(project_office, ProjectOffice):
+                raise TypeError("Expected 'project_office' to be a ProjectOffice")
+            self.project_office = project_office
             
     def __str__(self):
         return "%s: %s with %i run(s) for %s" % (self.id, self.name, len(self.runs), str(self.observer))
@@ -177,7 +183,7 @@ class Project(object):
         else:
             return False
             
-    def _renderFileSize(self, size):
+    def _render_file_size(self, size):
         """Convert a file size in bytes to a easy-to-use string."""
         
         units = 'B'
@@ -196,7 +202,7 @@ class Project(object):
             
         return "%.2f %s" % (size, units)
         
-    def _renderBandwidth(self, filter, FILTER_CODES):
+    def _render_bandwidth(self, filter, FILTER_CODES):
         """Convert a filter number to an easy-to-use string."""
         
         if FILTER_CODES[filter] > 1e6:
@@ -230,12 +236,12 @@ class Project(object):
         ses = self.runs[run]
         try:
             # Try to pull out the project office comments about the run
-            pos = self.projectOffice.runs[run]
+            pos = self.project_office.runs[run]
         except:
             pos = None
         try:
             # Try to pull out the project office comments about the scans
-            poo = self.projectOffice.scans[run]
+            poo = self.project_office.scans[run]
         except:
             poo = []
         # Enforce that the number of project office scan comments match the
@@ -254,7 +260,7 @@ class Project(object):
                 ses.comments += ';;%s' % clean
         ## Project office comments, including the data return method
         if pos != 'None' and pos is not None:
-            pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
+            pos = 'Requested data return method is %s;;%s' % (ses.data_return_method, pos)
             
         ## PI Information
         output = ""
@@ -266,7 +272,7 @@ class Project(object):
         output = "%sPROJECT_ID       %s\n" % (output, self.id)
         output = "%sPROJECT_TITLE    %s\n" % (output, self.name)
         output = "%sPROJECT_REMPI    %s\n" % (output, self.comments[:4090] if self.comments else 'None provided')
-        output = "%sPROJECT_REMPO    %s\n" % (output, self.projectOffice.project)
+        output = "%sPROJECT_REMPO    %s\n" % (output, self.project_office.project)
         output = "%s\n" % output
         
         ## Run Information
@@ -277,7 +283,7 @@ class Project(object):
         output = "%sRUN_INTTIME      %.3f\n" % (output, ses.corr_inttime)
         output = "%sRUN_BASIS        %s\n" % (output, ses.corr_basis)
         output = "%sRUN_REMPI        %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
-        output = "%sRUN_REMPO        %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
+        output = "%sRUN_REMPO        %s\n" % (output, "Requested data return method is %s" % ses.data_return_method if pos == 'None' or pos is None else pos[:4090])
         output = "%s\n" % output
                     
         ## Scans
@@ -288,7 +294,7 @@ class Project(object):
             output = "%sSCAN_TARGET      %s\n" % (output, obs.target)
             output = "%sSCAN_INTENT      %s\n" % (output, obs.intent)
             output = "%sSCAN_REMPI       %s\n" % (output, obs.comments[:4090] if obs.comments else 'None provided')
-            output = "%sSCAN_REMPO       %s\n" % (output, "Estimated data volume for this scan is %s" % self._renderFileSize(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
+            output = "%sSCAN_REMPO       %s\n" % (output, "Estimated data volume for this scan is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sSCAN_START_MJD   %i\n" % (output, obs.mjd)
             output = "%sSCAN_START_MPM   %i\n" % (output, obs.mpm)
             output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if type(obs.start).__name__ == 'datetime' else obs.start)
@@ -306,7 +312,7 @@ class Project(object):
             output = "%sSCAN_FREQ2       %i\n" % (output, obs.freq2)
             output = "%sSCAN_FREQ2+      %.9f MHz\n" % (output, obs.frequency2/1e6)
             output = "%sSCAN_BW          %i\n" % (output, obs.filter)
-            output = "%sSCAN_BW+         %s\n" % (output, self._renderBandwidth(obs.filter, obs.FILTER_CODES))
+            output = "%sSCAN_BW+         %s\n" % (output, self._render_bandwidth(obs.filter, obs.FILTER_CODES))
             ## Alternate phase centers
             if len(obs.alt_phase_centers) > 0:
                 output = "%sSCAN_ALT_N             %i\n" % (output, len(obs.alt_phase_centers))
@@ -358,12 +364,12 @@ class Project(object):
         ses = self.runs[run]
         try:
             # Try to pull out the project office comments about the run
-            pos = self.projectOffice.runs[run]
+            pos = self.project_office.runs[run]
         except:
             pos = None
         try:
             # Try to pull out the project office comments about the scans
-            poo = self.projectOffice.scans[run]
+            poo = self.project_office.scans[run]
         except:
             poo = []
         # Enforce that the number of project office scan comments match the
@@ -386,9 +392,9 @@ class Project(object):
             session.set_data_return_method('UCF')
             
             ## Project Office
-            new_projoff = sdf.ProjectOffice(project=copy.deepcopy(self.projectOffice.project), 
-                                            sessions=copy.deepcopy([self.projectOffice.runs[run],]), 
-                                            observations=copy.deepcopy([self.projectOffice.scans[run],]))
+            new_projoff = sdf.ProjectOffice(project=copy.deepcopy(self.project_office.project), 
+                                            sessions=copy.deepcopy([self.project_office.runs[run],]), 
+                                            observations=copy.deepcopy([self.project_office.scans[run],]))
             
             ## Observations
             for o,obs in enumerate(ses.scans):
@@ -442,10 +448,10 @@ class Project(object):
             ## Project
             project = sdf.Project(new_observer, "%s - %s (%i of %i)" % (self.name, station.id, i+1, len(ses.stations)), 
                                   copy.deepcopy(self.id), sessions=[session,], comments=copy.deepcopy(self.comments), 
-                                  projectOffice=new_projoff)
-            if project.projectOffice.sessions[0] is None:
-               project.projectOffice.sessions[0] = ''
-            project.projectOffice.sessions[0] = "corrchannels:%i;;corrinttime:%.3f;;corrbasis:%s;;origuser:%s;;origreturn:%s;;%s" % (ses.corr_channels, ses.corr_inttime, ses.corr_basis, ses.ucfuser, ses.dataReturnMethod.lower(), project.projectOffice.sessions[0])
+                                  project_office=new_projoff)
+            if project.project_office.sessions[0] is None:
+               project.project_office.sessions[0] = ''
+            project.project_office.sessions[0] = "corrchannels:%i;;corrinttime:%.3f;;corrbasis:%s;;origuser:%s;;origreturn:%s;;%s" % (ses.corr_channels, ses.corr_inttime, ses.corr_basis, ses.ucfuser, ses.data_return_method.lower(), project.project_office.sessions[0])
             
             ## Save an increment the session ID
             sdfs.append(project)
@@ -459,7 +465,7 @@ class Project(object):
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
-    def __init__(self, name, id, scans=None, dataReturnMethod='DRSU', comments=None, corr_channels=256, corr_inttime=1.0, corr_basis='linear', stations=get_full_stations()):
+    def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, corr_channels=256, corr_inttime=1.0, corr_basis='linear', stations=get_full_stations()):
         self.name = name
         self.id = int(id)
         if scans is None:
@@ -474,7 +480,7 @@ class Run(object):
             else:
                 raise TypeError("Expected 'scans' to be either a tuple or list of Scans of an Scan")
             self.scans = scans
-        self.dataReturnMethod = dataReturnMethod
+        self.data_return_method = data_return_method
         self.ucfuser = None
         self.comments = comments
         
@@ -530,7 +536,7 @@ class Run(object):
         if method not in ('UCF', 'DRSU', 'USB Harddrives'):
             raise ValueError("Unknown data return method: %s" % method)
             
-        self.dataReturnMethod = method
+        self.data_return_method = method
         
     def set_ucf_username(self, username):
         """Set the username to use for UCF data copies."""
@@ -1206,11 +1212,11 @@ def parse_idf(filename, verbose=False):
     # are found in the file
     po = ProjectOffice()
     observer = Observer('observer_name', 0)
-    project = Project(observer, 'project_name', 'project_id', projectOffice=po)
+    project = Project(observer, 'project_name', 'project_id', project_office=po)
     run = Run('run_name', 0, scans=[])
     project.runs = [run,]
-    project.projectOffice.runs = []
-    project.projectOffice.scans = [[],]
+    project.project_office.runs = []
+    project.project_office.scans = [[],]
     
     # Loop over the file
     obsTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0], 'start': '', 'duration': '', 'mode': '', 
@@ -1267,7 +1273,7 @@ def parse_idf(filename, verbose=False):
             project.comments = value
             continue
         if keyword == 'PROJECT_REMPO':
-            project.projectOffice.project = value
+            project.project_office.project = value
             continue
             
         # Run Info
@@ -1309,7 +1315,7 @@ def parse_idf(filename, verbose=False):
             project.runs[0].comments = sdf._usernameRE.sub('', value)
             continue
         if keyword == 'RUN_REMPO':
-            project.projectOffice.runs.append(None)
+            project.project_office.runs.append(None)
             parts = value.split(';;', 1)
             first = parts[0]
             try:
@@ -1319,11 +1325,11 @@ def parse_idf(filename, verbose=False):
                 
             if first[:31] == 'Requested data return method is':
                 # Catch for project office comments that are data return related
-                project.runs[0].dataReturnMethod = first[32:]
-                project.projectOffice.runs[0] = second
+                project.runs[0].data_return_method = first[32:]
+                project.project_office.runs[0] = second
             else:
                 # Catch for standard (not data related) project office comments
-                project.projectOffice.runs[0] = value
+                project.project_office.runs[0] = value
             continue
             
         # Scan Info
@@ -1333,7 +1339,7 @@ def parse_idf(filename, verbose=False):
                 altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
                 altTemps = []
             obsTemp['id'] = int(value)
-            project.projectOffice.scans[0].append( None )
+            project.project_office.scans[0].append( None )
             
             if verbose:
                 print("[%i] Started scan %i" % (os.getpid(), int(value)))
@@ -1349,7 +1355,7 @@ def parse_idf(filename, verbose=False):
             obsTemp['comments'] = value
             continue
         if keyword == 'SCAN_REMPO':
-            project.projectOffice.scans[0][-1] = value
+            project.project_office.scans[0][-1] = value
             continue
         if keyword == 'SCAN_START_MJD':
             obsTemp['mjd'] = int(value)
