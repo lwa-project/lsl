@@ -127,8 +127,8 @@ class StationSettings(object):
     Python object that holds the status for the sub-subsystems in a SDM file.
     """
     
-    def __init__(self, report=None, update=None, fee=None, aspFlt=None, aspAT1=None, aspAT2=None, aspATS=None, 
-                tbnGain=-1, drxGain=-1):
+    def __init__(self, report=None, update=None, fee=None, asp_flt=None, asp_at1=None, asp_at2=None, asp_ats=None, 
+                tbn_gain=-1, drx_gain=-1):
         if report is None:
             self.report = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         else:
@@ -144,28 +144,28 @@ class StationSettings(object):
         else:
             self.fee = fee
             
-        if aspFlt is None:
-            self.aspFlt = [0 for n in xrange(ME_MAX_NSTD)]
+        if asp_flt is None:
+            self.asp_flt = [0 for n in xrange(ME_MAX_NSTD)]
         else:
-            self.aspFlt = aspFlt
+            self.asp_flt = asp_flt
             
-        if aspAT1 is None:
-            self.aspAT1 = [0 for n in xrange(ME_MAX_NSTD)]
+        if asp_at1 is None:
+            self.asp_at1 = [0 for n in xrange(ME_MAX_NSTD)]
         else:
-            self.aspAT1 = aspAT1
+            self.asp_at1 = asp_at1
             
-        if aspAT2 is None:
-            self.aspAT2 = [0 for n in xrange(ME_MAX_NSTD)]
+        if asp_at2 is None:
+            self.asp_at2 = [0 for n in xrange(ME_MAX_NSTD)]
         else:
-            self.aspAT2 = aspAT2
+            self.asp_at2 = asp_at2
             
-        if aspATS is None:
-            self.aspATS = [0 for n in xrange(ME_MAX_NSTD)]
+        if asp_ats is None:
+            self.asp_ats = [0 for n in xrange(ME_MAX_NSTD)]
         else:
-            self.aspATS = aspATS
+            self.asp_ats = asp_ats
             
-        self.tbnGain = tbnGain
-        self.drxGain = drxGain
+        self.tbn_gain = tbn_gain
+        self.drx_gain = drx_gain
         
     def binary_read(self, fh):
         """
@@ -203,13 +203,13 @@ class StationSettings(object):
         
         self.fee = flat_to_multi(ssStruct.fee, *ssStruct.dims['fee'])
         
-        self.aspFlt = list(ssStruct.asp_flt)
-        self.aspAT1 = list(ssStruct.asp_at1)
-        self.aspAT2 = list(ssStruct.asp_at2)
-        self.aspATS = list(ssStruct.asp_ats)
+        self.asp_flt = list(ssStruct.asp_flt)
+        self.asp_at1 = list(ssStruct.asp_at1)
+        self.asp_at2 = list(ssStruct.asp_at2)
+        self.asp_ats = list(ssStruct.asp_ats)
         
-        self.tbnGain = ssStruct.tbn_gain
-        self.drxGain = ssStruct.drx_gain
+        self.tbn_gain = ssStruct.tbn_gain
+        self.drx_gain = ssStruct.drx_gain
 
 
 class SDM(object):
@@ -218,7 +218,7 @@ class SDM(object):
     Dynamic MIB file (SDM file).
     """
     
-    def __init__(self, station=None, shl=None, asp=None, dp=None, dr=None, status=None, antStatus=None, dpoStatus=None, settings=None):
+    def __init__(self, station=None, shl=None, asp=None, dp=None, dr=None, status=None, ant_status=None, dpo_status=None, settings=None):
         if station is None:
             self.station = SubSystemStatus('station')
         else:
@@ -245,14 +245,14 @@ class SDM(object):
         else:
             self.status = status
         
-        if antStatus is None:
-            self.antStatus = [[0,0] for n in xrange(ME_MAX_NSTD)]
+        if ant_status is None:
+            self.ant_status = [[0,0] for n in xrange(ME_MAX_NSTD)]
         else:
-            self.antStatus = antStatus
-        if dpoStatus is None:
-            self.dpoStatus = [0 for n in xrange(ME_MAX_NDR)]
+            self.ant_status = ant_status
+        if dpo_status is None:
+            self.dpo_status = [0 for n in xrange(ME_MAX_NDR)]
         else:
-            self.dpoStatus = dpoStatus
+            self.dpo_status = dpo_status
             
         if settings is None:
             self.settings = StationSettings()
@@ -269,8 +269,8 @@ class SDM(object):
         for ant in antennas:
             updatedAntennas.append(ant)
             
-            index = self.antStatus.index(ant.id)
-            updatedAntennas[-1].status = self.antStatus[index]
+            index = self.ant_status.index(ant.id)
+            updatedAntennas[-1].status = self.ant_status[index]
             
         return updatedAntennas
 
@@ -305,8 +305,8 @@ def parse_sdm(filename):
         
         fh.readinto(adpsStruct)
         
-        dynamic.antStatus = flat_to_multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
-        dynamic.dpoStatus = flat_to_multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
+        dynamic.ant_status = flat_to_multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
+        dynamic.dpo_status = flat_to_multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
         
         # Station settings section
         dynamic.settings.binary_read(fh)

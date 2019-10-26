@@ -520,7 +520,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
     return MyStruct()
 
 
-def _twoByteSwap(value):
+def _two_bytes_swap(value):
     return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF)
 
 
@@ -533,7 +533,7 @@ def delay_to_mcsd(delay):
     .. versionadded:: 0.6.3
     """
     
-    return _twoByteSwap( adpCommon.delay_to_dpd(delay) )
+    return _two_bytes_swap( adpCommon.delay_to_dpd(delay) )
 
 
 def mcsd_to_delay(delay):
@@ -544,7 +544,7 @@ def mcsd_to_delay(delay):
     .. versionadded:: 0.6.3
     """
     
-    return adpCommon.dpd_to_delay( _twoByteSwap(delay) )
+    return adpCommon.dpd_to_delay( _two_bytes_swap(delay) )
 
 
 def gain_to_mcsg(gain):
@@ -556,7 +556,7 @@ def gain_to_mcsg(gain):
     .. versionadded::0.6.3
     """
     
-    return _twoByteSwap( adpCommon.gain_to_dpg(gain) )
+    return _two_bytes_swap( adpCommon.gain_to_dpg(gain) )
 
 
 def mcsg_to_gain(gain):
@@ -567,7 +567,7 @@ def mcsg_to_gain(gain):
     .. versionadded:: 0.6.3
     """
     
-    return adpCommon.dpg_to_gain( _twoByteSwap(gain) )
+    return adpCommon.dpg_to_gain( _two_bytes_swap(gain) )
 
 
 def mjdmpm_to_datetime(mjd, mpm):

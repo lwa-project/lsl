@@ -42,13 +42,13 @@ filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?
 
 
 @lru_cache(maxsize=1)
-def _openTarball(tarname):
+def _open_tarball(tarname):
     return tarfile.open(tarname, mode='r:*')
 
 
 @lru_cache(maxsize=1)
-def _getMembers(tarname):
-    tf = _openTarball(tarname)
+def _get_members(tarname):
+    tf = _open_tarball(tarname)
     return tf.getmembers()
 
 
@@ -271,7 +271,7 @@ def get_sdm(tarname):
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         # Extract the SDM file.  If the dynamic/sdm.dat file cannot be found, None
         # is returned via the try...except block.
-        tf = _openTarball(tarname)
+        tf = _open_tarball(tarname)
         try:
             ti = tf.getmember('dynamic/sdm.dat')
         except KeyError:
@@ -297,7 +297,7 @@ def get_station(tarname, apply_sdm=True):
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         # Extract the SSMIF and SDM files.  If the ssmif.dat file cannot be found, None
         # is returned via the try...except block
-        tf = _openTarball(tarname)
+        tf = _open_tarball(tarname)
         try:
             ti = tf.getmember('ssmif.dat')
         except KeyError:
@@ -338,11 +338,11 @@ def get_session_metadata(tarname):
         basename, ext = os.path.splitext(basename)
         
         # Extract the session meta-data file (_metadata.txt)
-        tf = _openTarball(tarname)
+        tf = _open_tarball(tarname)
         try:
             ti = tf.getmember('%s_metadata.txt' % basename)
         except KeyError:
-            for ti in _getMembers(tarname):
+            for ti in _get_members(tarname):
                 if ti.name[-13:] == '_metadata.txt':
                     break
         tf.extractall(path=tempDir, members=[ti,])
@@ -419,11 +419,11 @@ def get_session_spec(tarname):
         basename, ext = os.path.splitext(basename)
         
         # Extract the session specification file (.ses)
-        tf = _openTarball(tarname)
+        tf = _open_tarball(tarname)
         try:
             ti = tf.getmember('%s.ses' % basename)
         except KeyError:
-            for ti in _getMembers(tarname):
+            for ti in _get_members(tarname):
                 if ti.name[-4:] == '.ses':
                     break
         tf.extractall(path=tempDir, members=[ti,])
@@ -448,9 +448,9 @@ def get_observation_spec(tarname, obs_id=None):
         basename, ext = os.path.splitext(basename)
         
         # Find all of the .obs files and extract them
-        tf = _openTarball(tarname)
+        tf = _open_tarball(tarname)
         tis = []
-        for ti in _getMembers(tarname):
+        for ti in _get_members(tarname):
             if ti.name[-4:] == '.obs':
                 tis.append(ti)
         tf.extractall(path=tempDir, members=tis)
@@ -498,8 +498,8 @@ def get_sdf(tarname):
         basename, ext = os.path.splitext(basename)
         
         # Find the right .txt file (not the metadata one) and extract it
-        tf = _openTarball(tarname)
-        for ti in _getMembers(tarname):
+        tf = _open_tarball(tarname)
+        for ti in _get_members(tarname):
             if ti.name[-4:] == '.txt' and ti.name.find('metadata') == -1:
                 break
         tf.extractall(path=tempDir, members=[ti,])
@@ -522,8 +522,8 @@ def get_command_script(tarname):
         basename, ext = os.path.splitext(basename)
         
         # Find the .cs file and extract it
-        tf = _openTarball(tarname)
-        for ti in _getMembers(tarname):
+        tf = _open_tarball(tarname)
+        for ti in _get_members(tarname):
             if ti.name[-3:] == '.cs':
                 break
         tf.extractall(path=tempDir, members=[ti,])
@@ -560,9 +560,9 @@ def get_asp_configuration(tarname, which='beginning'):
         basename, ext = os.path.splitext(basename)
         
         # Find the .pag file and extract it
-        tf = _openTarball(tarname)
+        tf = _open_tarball(tarname)
         mibs = []
-        for ti in _getMembers(tarname):
+        for ti in _get_members(tarname):
             if ti.name.find('_ASP_%s' % which[:5]) != -1:
                 if ti.name[-4:] in ('.pag', '.gdb'):
                     mibs.append(ti)
