@@ -33,7 +33,7 @@ In addition to providing the means for creating session definition files from sc
 this module also includes a simple parser for SD files.
 
 .. versionchanged:: 1.0.0
-    Added the getObservationStartStop() function.
+    Added the get_observation_start_stop() function.
     Renamed parse_timeString() to parse_time()
     parse_time() can now accept dates/times as timezone-aware datetime instances
     Observations can now be initialized with durations as timedelta instances
@@ -75,7 +75,7 @@ telemetry.track_module()
 
 __version__ = '1.1'
 __revision__ = '$Rev$'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'getObservationStartStop', 'is_valid']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
@@ -348,7 +348,7 @@ class Project(object):
         Added a new writeto() method to directly write the SDF to a file.
     """
     
-    def __init__(self, observer, name, id, sessions=None, comments=None, projectOffice=None):
+    def __init__(self, observer, name, id, sessions=None, comments=None, project_office=None):
         if not isinstance(observer, Observer):
             raise TypeError("Expected 'observer' to be an Observer")
         self.observer = observer
@@ -367,12 +367,12 @@ class Project(object):
             else:
                 raise TypeError("Expected 'sessions' to be either a tuple or list of Sessions or a Session")
             self.sessions = sessions
-        if projectOffice is None:
-            self.projectOffice = ProjectOffice()
+        if project_office is None:
+            self.project_office = ProjectOffice()
         else:
-            if not isinstance(projectOffice, ProjectOffice):
-                raise TypeError("Expected 'projectOffice' to be a ProjectOffice")
-            self.projectOffice = projectOffice
+            if not isinstance(project_office, ProjectOffice):
+                raise TypeError("Expected 'project_office' to be a ProjectOffice")
+            self.project_office = project_office
             
     def update(self):
         """Update the various sessions that are part of this project."""
@@ -457,12 +457,12 @@ class Project(object):
         ses = self.sessions[session]
         try:
             # Try to pull out the project office comments about the session
-            pos = self.projectOffice.sessions[session]
+            pos = self.project_office.sessions[session]
         except:
             pos = None
         try:
             # Try to pull out the project office comments about the observations
-            poo = self.projectOffice.observations[session]
+            poo = self.project_office.observations[session]
         except:
             poo = []
         # Enforce that the number of project office observation comments match the
@@ -493,7 +493,7 @@ class Project(object):
         output = "%sPROJECT_ID       %s\n" % (output, self.id)
         output = "%sPROJECT_TITLE    %s\n" % (output, self.name)
         output = "%sPROJECT_REMPI    %s\n" % (output, self.comments[:4090] if self.comments else 'None provided')
-        output = "%sPROJECT_REMPO    %s\n" % (output, self.projectOffice.project)
+        output = "%sPROJECT_REMPO    %s\n" % (output, self.project_office.project)
         output = "%s\n" % output
         
         ## Session Information
@@ -582,7 +582,7 @@ class Project(object):
                 output = "%sOBS_BW           %i\n" % (output, obs.filter)
                 output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
                 output = "%sOBS_STP_N        %i\n" % (output, len(obs.steps))
-                output = "%sOBS_STP_RADEC    %i\n" % (output, obs.steps[0].RADec)
+                output = "%sOBS_STP_RADEC    %i\n" % (output, obs.steps[0].is_radec)
                 for j,step in enumerate(obs.steps):
                     stpID = j + 1
                     
@@ -1363,15 +1363,15 @@ class _DRXBase(Observation):
         self.frequency2 = float(frequency2)
         self.update()
         
-    def set_beamdipole_mode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwasv):
+    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X', station=lwasv):
         """Convert the current observation to a 'beam-dipole mode' 
         observation with the specified stand.  Setting the stand to zero
         will disable the 'beam-dipole mode' for this observation'.
         
         Keywords:
-         * beamGain - BAM gain to use for each dipole in the beam
+         * beam_gain - BAM gain to use for each dipole in the beam
                       default: 0.04; range: 0.0 to 1.0
-         * dipoleGain - BAM gain to use for the single dipole
+         * dipole_gain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
          * pol - Polarization to record  default: "X"
          * station - lsl.common.stations instance to use for mapping
@@ -1381,10 +1381,10 @@ class _DRXBase(Observation):
         # Validate
         if stand < 0 or stand > LWA_MAX_NSTD:
             raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
-        if beamGain < 0.0 or beamGain > 1.0:
-            raise ValueError("Beam BAM gain is out of range: 0.0 <= beamGain <= 1.0" % beamGain)
-        if dipoleGain < 0.0 or dipoleGain > 1.0:
-            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipoleGain <= 1.0" % beamGain)
+        if beam_gain < 0.0 or beam_gain > 1.0:
+            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0" % beam_gain)
+        if dipole_gain < 0.0 or dipole_gain > 1.0:
+            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0" % beam_gain)
         if pol.upper() not in ('X', 'Y'):
             raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
         
@@ -1398,7 +1398,7 @@ class _DRXBase(Observation):
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
-            self.beamDipole = [dpStand, beamGain, dipoleGain, pol.upper()]
+            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper()]
             
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
@@ -1606,8 +1606,8 @@ class Stepped(Observation):
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, filter, steps=None, RADec=True, gain=-1, comments=None):
-        self.RADec = bool(RADec)
+    def __init__(self, name, target, start, filter, steps=None, is_radec=True, gain=-1, comments=None):
+        self.is_radec = bool(is_radec)
         if steps is None:
             self.steps = []
         else:
@@ -1678,15 +1678,15 @@ class Stepped(Observation):
         self.steps.append(newStep)
         self.update()
         
-    def set_beamdipole_mode(self, stand, beamGain=0.04, dipoleGain=1.0, pol='X', station=lwasv):
+    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X', station=lwasv):
         """Convert the current observation to a 'beam-dipole mode' 
         observation with the specified stand.  Setting the stand to zero
         will disable the 'beam-dipole mode' for this observation'.
         
         Keywords:
-         * beamGain - BAM gain to use for each dipole in the beam
+         * beam_gain - BAM gain to use for each dipole in the beam
                      default: 0.04; range: 0.0 to 1.0
-         * dipoleGain - BAM gain to use for the single dipole
+         * dipole_gain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
          * pol - Polarization to record  default: "X"
          * station - lsl.common.stations instance to use for mapping
@@ -1696,10 +1696,10 @@ class Stepped(Observation):
         # Validate
         if stand < 0 or stand > LWA_MAX_NSTD:
             raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
-        if beamGain < 0.0 or beamGain > 1.0:
-            raise ValueError("Beam BAM gain is out of range: 0.0 <= beamGain <= 1.0" % beamGain)
-        if dipoleGain < 0.0 or dipoleGain > 1.0:
-            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipoleGain <= 1.0" % beamGain)
+        if beam_gain < 0.0 or beam_gain > 1.0:
+            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0" % beam_gain)
+        if dipole_gain < 0.0 or dipole_gain > 1.0:
+            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0" % beam_gain)
         if pol.upper() not in ('X', 'Y'):
             raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
         
@@ -1713,7 +1713,7 @@ class Stepped(Observation):
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
-            self.beamDipole = [dpStand, beamGain, dipoleGain, pol.upper]
+            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper]
             
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
@@ -1740,7 +1740,7 @@ class Stepped(Observation):
         cnt = 0
         relStart = 0
         for step in self.steps:
-            if step.RADec:
+            if step.is_radec:
                 pnt = step.get_fixed_body()
                 
                 dt = 0.0
@@ -1780,7 +1780,7 @@ class Stepped(Observation):
                 print("[%i] Validating step %i" % (os.getpid(), stepCount))
             if not step.validate(station=station, verbose=verbose):
                 failures += 1
-            if step.RADec != self.RADec:
+            if step.is_radec != self.is_radec:
                 if verbose:
                     print("[%i] Error: Step is not of the same coordinate type as observation" % os.getpid())
                 failures += 1
@@ -1819,24 +1819,24 @@ class BeamStep(object):
      * observation tuning frequency 1 (Hz)
     
     Optional Keywords:
-     * RADec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
+     * is_radec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
      * max_snr - specifies if maximum signal-to-noise beam forming is to be used
                  (default = False)
-     * SpecDelays - 512 list of delays to apply for each antenna
-     * SpecGains - 256 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
+     * spec_delays - 512 list of delays to apply for each antenna
+     * spec_gains - 256 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
     
     .. note::
-    If `SpecDelays` is specified, `SpecGains` must also be specified.
-    Specifying both `SpecDelays` and `SpecGains` overrides the `max_snr` keyword.
+    If `spec_delays` is specified, `spec_gains` must also be specified.
+    Specifying both `spec_delays` and `spec_gains` overrides the `max_snr` keyword.
     
     .. versionchanged:: 1.0.0
         Added support for azimuth/altitude and RA/dec values as ephem.hours/ephem.degrees 
         instances
     """
     
-    def __init__(self, c1, c2, duration, frequency1, frequency2, RADec=True, max_snr=False, SpecDelays=None, SpecGains=None):
-        self.RADec = bool(RADec)
-        if self.RADec:
+    def __init__(self, c1, c2, duration, frequency1, frequency2, is_radec=True, max_snr=False, spec_delays=None, spec_gains=None):
+        self.is_radec = bool(is_radec)
+        if self.is_radec:
             convFactor = 12.0/math.pi
         else:
             convFactor = 180.0/math.pi
@@ -1850,8 +1850,8 @@ class BeamStep(object):
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
         self.max_snr = bool(max_snr)
-        self.delays = SpecDelays
-        self.gains = SpecGains
+        self.delays = spec_delays
+        self.gains = spec_gains
         
         self.dur = None
         self.freq1 = None
@@ -1861,8 +1861,8 @@ class BeamStep(object):
         self.update()
         
     def __str__(self):
-        c1s = "RA" if self.RADec else "Az"
-        c2s = "Dec" if self.RADec else "Alt"
+        c1s = "RA" if self.is_radec else "Az"
+        c2s = "Dec" if self.is_radec else "Alt"
         return "Step of %s %.3f, %s %.3f for %s at %.3f and %.3f MHz" % (c1s, self.c1, c2s, self.c2, self.duration, self.frequency1/1e6, self.frequency2/1e6)
         
     def set_duration(self, duration):
@@ -1890,7 +1890,7 @@ class BeamStep(object):
     def set_c1(self, c1):
         """Set the pointing c1."""
         
-        if self.RADec:
+        if self.is_radec:
             convFactor = 12.0/math.pi
         else:
             convFactor = 180.0/math.pi
@@ -1959,7 +1959,7 @@ class BeamStep(object):
         """Return an ephem.Body object corresponding to where the observation is 
         pointed.  None if the observation mode is TBN."""
         
-        if self.RADec:
+        if self.is_radec:
             pnt = ephem.FixedBody()
             pnt._ra = self.c1 / 12.0 * math.pi
             pnt._dec = self.c2 / 180.0 * math.pi
@@ -2008,7 +2008,7 @@ class BeamStep(object):
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
         # Advanced - Target Visibility via RA/Dec & Az/El ranging
-        if self.RADec:
+        if self.is_radec:
             if self.c1 < 0 or self.c1 >= 24:
                 if verbose:
                     print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.c1))
@@ -2084,7 +2084,7 @@ def _parse_create_obs_object(obsTemp, beamTemps=None, verbose=False):
         if verbose:
             print("[%i] -> found %i steps" % (os.getpid(), len(beamTemps)))
             
-        obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], RADec=obsTemp['stpRADec'], steps=[], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], is_radec=obsTemp['stpRADec'], steps=[], gain=obsTemp['gain'], comments=obsTemp['comments'])
         for beamTemp in beamTemps:
             try:
                 dur = beamTemp['duration']
@@ -2145,11 +2145,11 @@ def parse_sdf(filename, verbose=False):
     # are found in the file
     po = ProjectOffice()
     observer = Observer('observer_name', 0)
-    project = Project(observer, 'project_name', 'project_id', projectOffice=po)
+    project = Project(observer, 'project_name', 'project_id', project_office=po)
     session = Session('session_name', 0, observations=[])
     project.sessions = [session,]
-    project.projectOffice.sessions = []
-    project.projectOffice.observations = [[],]
+    project.project_office.sessions = []
+    project.project_office.observations = [[],]
     
     # Loop over the file
     obsTemp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
@@ -2209,7 +2209,7 @@ def parse_sdf(filename, verbose=False):
             project.comments = value
             continue
         if keyword == 'PROJECT_REMPO':
-            project.projectOffice.project = value
+            project.project_office.project = value
             continue
             
         # Session Info
@@ -2228,7 +2228,7 @@ def parse_sdf(filename, verbose=False):
             project.sessions[0].comments = value
             continue
         if keyword == 'SESSION_REMPO':
-            project.projectOffice.sessions.append(None)
+            project.project_office.sessions.append(None)
             parts = value.split(';;', 1)
             first = parts[0]
             try:
@@ -2239,10 +2239,10 @@ def parse_sdf(filename, verbose=False):
             if first[:31] == 'Requested data return method is':
                 # Catch for project office comments that are data return related
                 project.sessions[0].data_return_method = first[32:]
-                project.projectOffice.sessions[0] = second
+                project.project_office.sessions[0] = second
             else:
                 # Catch for standard (not data related) project office comments
-                project.projectOffice.sessions[0] = value
+                project.project_office.sessions[0] = value
             continue
         if keyword == 'SESSION_CRA':
             project.sessions[0].cra = int(value)
@@ -2297,7 +2297,7 @@ def parse_sdf(filename, verbose=False):
                 beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
                 beamTemps = []
             obsTemp['id'] = int(value)
-            project.projectOffice.observations[0].append( None )
+            project.project_office.observations[0].append( None )
             
             if verbose:
                 print("[%i] Started obs %i" % (os.getpid(), int(value)))
@@ -2313,7 +2313,7 @@ def parse_sdf(filename, verbose=False):
             obsTemp['comments'] = value
             continue
         if keyword == 'OBS_REMPO':
-            project.projectOffice.observations[0][-1] = value
+            project.project_office.observations[0][-1] = value
             continue
         if keyword == 'OBS_START_MJD':
             obsTemp['mjd'] = int(value)
@@ -2331,8 +2331,8 @@ def parse_sdf(filename, verbose=False):
             # Remove the ' marks
             value = value.replace("'", "")
             try:
-                stand, beamGain, dipoleGain, pol = value.lstrip().rstrip().split(None, 3)
-                obsTemp['beamDipole'] = [int(stand), float(beamGain), float(dipoleGain), pol]
+                stand, beam_gain, dipole_gain, pol = value.lstrip().rstrip().split(None, 3)
+                obsTemp['beamDipole'] = [int(stand), float(beam_gain), float(dipole_gain), pol]
             except ValueError:
                 pass
         if keyword == 'OBS_RA':
@@ -2557,7 +2557,7 @@ def parse_sdf(filename, verbose=False):
     return project
 
 
-def getObservationStartStop(obs):
+def get_observation_start_stop(obs):
     """
     Given an observation, get the start and stop times (returned as a two-
     element tuple of UTC datetime instances).
