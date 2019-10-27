@@ -572,7 +572,7 @@ class sdf_tests(unittest.TestCase):
         # Steps - 1
         self.assertEqual(len(project.sessions[0].observations[0].steps), 4)
         for i in xrange(4):
-            self.assertEqual(project.sessions[0].observations[0].steps[i].RADec, project.sessions[0].observations[0].RADec)
+            self.assertEqual(project.sessions[0].observations[0].steps[i].is_radec, project.sessions[0].observations[0].is_radec)
             self.assertEqual(project.sessions[0].observations[0].steps[i].freq1,  832697741)
             self.assertEqual(project.sessions[0].observations[0].steps[i].freq2, 1621569285)
         self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c1, 90.0, 6)
@@ -597,7 +597,7 @@ class sdf_tests(unittest.TestCase):
         # Steps - 2
         self.assertEqual(len(project.sessions[0].observations[1].steps), 2)
         for i in xrange(2):
-            self.assertEqual(project.sessions[0].observations[1].steps[i].RADec, project.sessions[0].observations[1].RADec)
+            self.assertEqual(project.sessions[0].observations[1].steps[i].is_radec, project.sessions[0].observations[1].is_radec)
             self.assertEqual(project.sessions[0].observations[1].steps[i].freq1,  832697741)
             self.assertEqual(project.sessions[0].observations[1].steps[i].freq2, 1621569285)
         self.assertAlmostEqual(project.sessions[0].observations[1].steps[0].c1, 0.0, 6)
@@ -631,10 +631,10 @@ class sdf_tests(unittest.TestCase):
             self.assertEqual(step.c2, 89.5)
             
         project = sdf.parse_sdf(stpFile)
-        project.sessions[0].observations[1].RADec = False
+        project.sessions[0].observations[1].is_radec = False
         project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
         for step in project.sessions[0].observations[1].steps:
-            step.RADec = False
+            step.is_radec = False
             step.set_duration(timedelta(seconds=15))
             step.set_frequency1(75e6)
             step.set_frequency2(76e6)
@@ -646,7 +646,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
         self.assertEqual(project.sessions[0].observations[1].dur,  30000)
         for step in project.sessions[0].observations[1].steps:
-            self.assertFalse(step.RADec)
+            self.assertFalse(step.is_radec)
             self.assertEqual(step.dur, 15000)
             self.assertEqual(step.freq1, 1643482384)
             self.assertEqual(step.freq2, 1665395482)
@@ -713,7 +713,7 @@ class sdf_tests(unittest.TestCase):
         
         # Steps - 1
         self.assertEqual(len(project.sessions[0].observations[0].steps), 1)
-        self.assertEqual(project.sessions[0].observations[0].steps[0].RADec, project.sessions[0].observations[0].RADec)
+        self.assertEqual(project.sessions[0].observations[0].steps[0].is_radec, project.sessions[0].observations[0].is_radec)
         self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c1, 90.0, 6)
         self.assertAlmostEqual(project.sessions[0].observations[0].steps[0].c2, 45.0, 6)
         self.assertEqual(project.sessions[0].observations[0].steps[0].freq1,  832697741)

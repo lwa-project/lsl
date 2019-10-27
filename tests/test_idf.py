@@ -297,7 +297,7 @@ class idf_tests(unittest.TestCase):
         sdfs = project.generate_sdfs()
         for sdf in sdfs:
             for o in xrange(len(project.runs[0].scans)):
-                sdf_phase_centers = sdf.projectOffice.observations[0][o]
+                sdf_phase_centers = sdf.project_office.observations[0][o]
                 for i,phase_center in enumerate(project.runs[0].scans[o].alt_phase_centers):
                     bdy = phase_center.get_fixed_body()
                     bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
