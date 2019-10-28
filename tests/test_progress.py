@@ -55,7 +55,7 @@ class progress_tests(unittest.TestCase):
             pbar.show()
             
         # Without percentage
-        pbar = progress.ProgressBar(printP=False)
+        pbar = progress.ProgressBar(print_percent=False)
         for i in range(101):
             pbar.inc(1)
             pbar.show()
