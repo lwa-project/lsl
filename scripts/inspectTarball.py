@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 from lsl.common import stations
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
 from lsl.common import metabundle, metabundleADP
+from lsl.common.sdf import get_observation_start_stop
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -32,28 +33,7 @@ __revision__ = "$Rev: 941 $"
 
 # Date/time manipulation
 _UTC = pytz.utc
-formatString = '%Y/%m/%d %H:%M:%S.%f %Z'
-
-
-def getObsStartStop(obs):
-    """
-    Given an observation, get the start and stop times (returned as a two-
-    element tuple).
-    """
-    
-    # UNIX timestamp for the start
-    tStart = utcjd_to_unix(obs.mjd + MJD_OFFSET)
-    tStart += obs.mpm / 1000.0
-    
-    # UNIX timestamp for the stop
-    tStop = tStart +  obs.dur / 1000.0
-    
-    # Conversion to a timezone-aware datetime instance
-    tStart = _UTC.localize( datetime.utcfromtimestamp(tStart) )
-    tStop  = _UTC.localize( datetime.utcfromtimestamp(tStop ) )
-    
-    # Return
-    return tStart, tStop
+_FORMAT_STRING = '%Y/%m/%d %H:%M:%S.%f %Z'
 
 
 def main(args):
@@ -101,7 +81,7 @@ def main(args):
     print("Filename: %s" % inputTGZ)
     print(" Project ID: %s" % project.id)
     print(" Session ID: %i" % project.sessions[0].id)
-    print(" Observations appear to start at %s" % (min(tStart)).strftime(formatString))
+    print(" Observations appear to start at %s" % (min(tStart)).strftime(_FORMAT_STRING))
     print(" -> LST at %s for this date/time is %s" % (site.name, lst))
     
     lastDur = project.sessions[0].observations[nObs-1].dur
@@ -110,8 +90,8 @@ def main(args):
     
     print(" ")
     print(" Total Session Duration: %s" % sessionDur)
-    print(" -> First observation starts at %s" % min(tStart).strftime(formatString))
-    print(" -> Last observation ends at %s" % (max(tStart) + lastDur).strftime(formatString))
+    print(" -> First observation starts at %s" % min(tStart).strftime(_FORMAT_STRING))
+    print(" -> Last observation ends at %s" % (max(tStart) + lastDur).strftime(_FORMAT_STRING))
     if project.sessions[0].observations[0].mode not in ('TBW', 'TBN'):
         drspec = 'No'
         if project.sessions[0].spcSetup[0] != 0 and project.sessions[0].spcSetup[1] != 0:
@@ -173,7 +153,7 @@ def main(args):
         print("   Start:")
         print("    MJD: %i" % project.sessions[0].observations[i].mjd)
         print("    MPM: %i" % project.sessions[0].observations[i].mpm)
-        print("    -> %s" % getObsStartStop(project.sessions[0].observations[i])[0].strftime(formatString))
+        print("    -> %s" % get_observation_start_stop(project.sessions[0].observations[i])[0].strftime(_FORMAT_STRING))
         print("   Duration: %s" % currDur)
         
         ## DP setup

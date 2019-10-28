@@ -30,16 +30,16 @@ __revision__ = '$Rev$'
 __all__ = ['clean', 'clean_sources', 'lsq']
 
 
-def _interpolate(data, peakX, peakY):
-    x1 = int(peakX)
+def _interpolate(data, peak_x, peak_y):
+    x1 = int(peak_x)
     x2 = x1 + 1
-    y1 = int(peakY)
+    y1 = int(peak_y)
     y2 = y1 + 1
     
-    x = peakX
+    x = peak_x
     if x < 0:
         raise IndexError("Invalid x")
-    y = peakY
+    y = peak_y
     if y < 0:
         raise IndexError("Invalid y")
         
@@ -117,7 +117,7 @@ def _fit_gaussian(data):
     return params
 
 
-def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.2, maxIter=150, sigma=3.0, verbose=True, plot=False):
+def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.2, max_iter=150, sigma=3.0, verbose=True, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
     instance filled with data, return a deconvolved image.  This function 
@@ -130,7 +130,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     CLEAN tuning parameters:
       * gain - CLEAN loop gain (default 0.2)
-      * maxIter - Maximum number of iterations (default 150)
+      * max_iter - Maximum number of iterations (default 150)
       * sigma - Threshold in sigma to stop cleaning (default 3.0)
     """
     
@@ -191,43 +191,43 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
         pylab.ion()
         
     exitStatus = 'iteration limit'
-    for i in xrange(maxIter):
+    for i in xrange(max_iter):
         # Find the location of the peak in the flux density
         peak = numpy.where( working == working.max() )
-        peakX = peak[0][0]
-        peakY = peak[1][0]
-        peakV = working[peakX,peakY]
+        peak_x = peak[0][0]
+        peak_y = peak[1][0]
+        peakV = working[peak_x,peak_y]
         
         # Optimize the location
-        peakParams = _fit_gaussian(working[peakX-FWHM/2:peakX+FWHM/2+1, peakY-FWHM/2:peakY+FWHM/2+1])
+        peakParams = _fit_gaussian(working[peak_x-FWHM/2:peak_x+FWHM/2+1, peak_y-FWHM/2:peak_y+FWHM/2+1])
         peakVO = peakParams[0]
-        peakXO = peakX - FWHM/2 + peakParams[1]
-        peakYO = peakY - FWHM/2 + peakParams[2]
+        peak_xO = peak_x - FWHM/2 + peakParams[1]
+        peak_yO = peak_y - FWHM/2 + peakParams[2]
         
         # Quantize to try and keep the computation down without over-simplifiying things
         subpixelationLevel = 5
-        peakXO = round(peakXO*subpixelationLevel)/float(subpixelationLevel)
-        peakYO = round(peakYO*subpixelationLevel)/float(subpixelationLevel)
+        peak_xO = round(peak_xO*subpixelationLevel)/float(subpixelationLevel)
+        peak_yO = round(peak_yO*subpixelationLevel)/float(subpixelationLevel)
         
         # Pixel coordinates to right ascension, dec.
         try:
-            peakRA = _interpolate(RA, peakXO, peakYO)
+            peakRA = _interpolate(RA, peak_xO, peak_yO)
         except IndexError:
-            peakRA = RA[peakX, peakY]
+            peakRA = RA[peak_x, peak_y]
         try:
-            peakDec = _interpolate(dec, peakXO, peakYO)
+            peakDec = _interpolate(dec, peak_xO, peak_yO)
         except IndexError:
-            peakDec = dec[peakX, peakY]
+            peakDec = dec[peak_x, peak_y]
             
         # Pixel coordinates to az, el
         try:
-            peakAz = _interpolate(az, peakXO, peakYO)
+            peakAz = _interpolate(az, peak_xO, peak_yO)
         except IndexError:
-            peakAz = az[peakX, peakY]
+            peakAz = az[peak_x, peak_y]
         try:
-            peakEl = _interpolate(alt, peakX, peakY)
+            peakEl = _interpolate(alt, peak_x, peak_y)
         except IndexError:
-            peakEl = alt[peakX, peakY]
+            peakEl = alt[peak_x, peak_y]
             
         if verbose:
             currRA  = deg_to_hms(peakRA * 180/numpy.pi)
@@ -235,7 +235,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
             currAz  = deg_to_dms(peakAz * 180/numpy.pi)
             currEl  = deg_to_dms(peakEl * 180/numpy.pi)
             
-            print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peakX, peakY))
+            print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peak_x, peak_y))
             print("               -> RA: %s, Dec: %s" % (currRA, currDec))
             print("               -> az: %s, el: %s" % (currAz, currEl))
             
@@ -246,7 +246,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
             break
         
         # Find the beam index and see if we need to compute the beam or not
-        beamIndex = (int(peakXO*subpixelationLevel), int(peakYO*subpixelationLevel))
+        beamIndex = (int(peak_xO*subpixelationLevel), int(peak_yO*subpixelationLevel))
         try:
             beam = prevBeam[beamIndex]
             
@@ -269,17 +269,17 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
         toRemove = gain*peakV*beam
         working -= toRemove
         asum = 0.0
-        for l in xrange(int(peakXO), int(peakXO)+2):
-            if l > peakXO:
-                side1 = (peakXO+0.5) - (l-0.5)
+        for l in xrange(int(peak_xO), int(peak_xO)+2):
+            if l > peak_xO:
+                side1 = (peak_xO+0.5) - (l-0.5)
             else:
-                side1 = (l+0.5) - (peakXO-0.5)
+                side1 = (l+0.5) - (peak_xO-0.5)
                 
-            for m in xrange(int(peakYO), int(peakYO)+2):
-                if m > peakYO:
-                    side2 = (peakYO+0.5) - (m-0.5)
+            for m in xrange(int(peak_yO), int(peak_yO)+2):
+                if m > peak_yO:
+                    side2 = (peak_yO+0.5) - (m-0.5)
                 else:
-                    side2 = (m+0.5) - (peakYO-0.5)
+                    side2 = (m+0.5) - (peak_yO-0.5)
                     
                 area = side1*side2
                 asum += area
@@ -351,7 +351,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     return conv
 
 
-def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.1, maxIter=150, sigma=2.0, verbose=True, plot=False):
+def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.1, max_iter=150, sigma=2.0, verbose=True, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, an AIPY ImgW 
     instance filled with data, and a dictionary of sources, return the CLEAN
@@ -369,7 +369,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     
     CLEAN tuning parameters:
       * gain - CLEAN loop gain (default 0.1)
-      * maxIter - Maximum number of iterations (default 150)
+      * max_iter - Maximum number of iterations (default 150)
       * sigma - Threshold in sigma to stop cleaning (default 2.0)
     """
     
@@ -460,48 +460,48 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         py1 = max(background[1])+2
         
         exitStatus = 'iteration'
-        for i in xrange(maxIter):
+        for i in xrange(max_iter):
             # Find the location of the peak in the flux density
             peak = numpy.where( working[rx0:rx1,ry0:ry1] == working[rx0:rx1,ry0:ry1].max() )
-            peakX = peak[0][0] + rx0
-            peakY = peak[1][0] + ry0
-            peakV = working[peakX,peakY]
+            peak_x = peak[0][0] + rx0
+            peak_y = peak[1][0] + ry0
+            peakV = working[peak_x,peak_y]
             
             # Optimize the location
             try:
-                peakParams = _fit_gaussian(working[peakX-FWHM/2:peakX+FWHM/2+1, peakY-FWHM/2:peakY+FWHM/2+1])
+                peakParams = _fit_gaussian(working[peak_x-FWHM/2:peak_x+FWHM/2+1, peak_y-FWHM/2:peak_y+FWHM/2+1])
             except IndexError:
-                peakParams = [peakV, peakX, peakY]
+                peakParams = [peakV, peak_x, peak_y]
             peakVO = peakParams[0]
-            peakXO = peakX - FWHM/2 + peakParams[1]
-            peakYO = peakY - FWHM/2 + peakParams[2]
+            peak_xO = peak_x - FWHM/2 + peakParams[1]
+            peak_yO = peak_y - FWHM/2 + peakParams[2]
             
             # Quantize to try and keep the computation down without over-simplifiying things
             subpixelationLevel = 5
-            peakXO = round(peakXO*subpixelationLevel)/float(subpixelationLevel)
-            peakYO = round(peakYO*subpixelationLevel)/float(subpixelationLevel)
+            peak_xO = round(peak_xO*subpixelationLevel)/float(subpixelationLevel)
+            peak_yO = round(peak_yO*subpixelationLevel)/float(subpixelationLevel)
             
             # Pixel coordinates to right ascension, dec.
             try:
-                peakRA = _interpolate(RA, peakXO, peakYO)
+                peakRA = _interpolate(RA, peak_xO, peak_yO)
             except IndexError:
-                peakXO, peakY0 = peakX, peakY
-                peakRA = RA[peakX, peakY]
+                peak_xO, peak_y0 = peak_x, peak_y
+                peakRA = RA[peak_x, peak_y]
             try:
-                peakDec = _interpolate(dec, peakXO, peakYO)
+                peakDec = _interpolate(dec, peak_xO, peak_yO)
             except IndexError:
-                peakDec = dec[peakX, peakY]
+                peakDec = dec[peak_x, peak_y]
                 
             # Pixel coordinates to az, el
             try:
-                peakAz = _interpolate(az, peakXO, peakYO)
+                peakAz = _interpolate(az, peak_xO, peak_yO)
             except IndexError:
-                peakXO, peakYO = peakX, peakY
-                peakAz = az[peakX, peakY]
+                peak_xO, peak_yO = peak_x, peak_y
+                peakAz = az[peak_x, peak_y]
             try:
-                peakEl = _interpolate(alt, peakX, peakY)
+                peakEl = _interpolate(alt, peak_x, peak_y)
             except IndexError:
-                peakEl = alt[peakX, peakY]
+                peakEl = alt[peak_x, peak_y]
                 
             if verbose:
                 currRA  = deg_to_hms(peakRA * 180/numpy.pi)
@@ -509,7 +509,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
                 currAz  = deg_to_dms(peakAz * 180/numpy.pi)
                 currEl  = deg_to_dms(peakEl * 180/numpy.pi)
                 
-                print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peakX, peakY))
+                print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peak_x, peak_y))
                 print("               -> RA: %s, Dec: %s" % (currRA, currDec))
                 print("               -> az: %s, el: %s" % (currAz, currEl))
                 
@@ -520,7 +520,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
                 break
             
             # Find the beam index and see if we need to compute the beam or not
-            beamIndex = (int(peakXO*subpixelationLevel), int(peakYO*subpixelationLevel))
+            beamIndex = (int(peak_xO*subpixelationLevel), int(peak_yO*subpixelationLevel))
             try:
                 beam = prevBeam[beamIndex]
                 
@@ -543,17 +543,17 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
             toRemove = gain*peakV*beam
             working -= toRemove
             asum = 0.0
-            for l in xrange(int(peakXO), int(peakXO)+2):
-                if l > peakXO:
-                    side1 = (peakXO+0.5) - (l-0.5)
+            for l in xrange(int(peak_xO), int(peak_xO)+2):
+                if l > peak_xO:
+                    side1 = (peak_xO+0.5) - (l-0.5)
                 else:
-                    side1 = (l+0.5) - (peakXO-0.5)
+                    side1 = (l+0.5) - (peak_xO-0.5)
                     
-                for m in xrange(int(peakYO), int(peakYO)+2):
-                    if m > peakYO:
-                        side2 = (peakYO+0.5) - (m-0.5)
+                for m in xrange(int(peak_yO), int(peak_yO)+2):
+                    if m > peak_yO:
+                        side2 = (peak_yO+0.5) - (m-0.5)
                     else:
-                        side2 = (m+0.5) - (peakYO-0.5)
+                        side2 = (m+0.5) - (peak_yO-0.5)
                         
                     area = side1*side2
                     asum += area
@@ -632,7 +632,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     return conv, working
 
 
-def _minorCycle(img, beam, gain=0.2, max_iter=150):
+def _minor_cycle(img, beam, gain=0.2, max_iter=150):
     """
     Function for performing the minor cycle part of lsq().
     """
@@ -644,26 +644,26 @@ def _minorCycle(img, beam, gain=0.2, max_iter=150):
         # Find the location of the peak in the flux density
         aw = numpy.abs( working )
         peak = numpy.where( aw == aw.max() )
-        peakX = peak[0][0]
-        peakY = peak[1][0]
-        peakV = working[peakX,peakY]
+        peak_x = peak[0][0]
+        peak_y = peak[1][0]
+        peakV = working[peak_x,peak_y]
         
         if numpy.abs(peakV - working.mean()) < 2*working.std():
             break
             
         # Build the beam
-        beam2 = numpy.roll(beam,  peakX-beam.shape[0]/2, axis=0)
-        beam2 = numpy.roll(beam2, peakY-beam.shape[1]/2, axis=1) 
+        beam2 = numpy.roll(beam,  peak_x-beam.shape[0]/2, axis=0)
+        beam2 = numpy.roll(beam2, peak_y-beam.shape[1]/2, axis=1) 
         
         # Calculate how much signal needs to be removed...
         toRemove = gain*peakV*beam2
         working -= toRemove
-        cleaned[peakX,peakY] += toRemove.sum()
+        cleaned[peak_x,peak_y] += toRemove.sum()
         
     return  cleaned + working
 
 
-def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.05, maxIter=150, rtol=1e-9, verbose=True, plot=False):
+def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.05, max_iter=150, rtol=1e-9, verbose=True, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
     instance filled with data, return a deconvolved image.  This function 
@@ -671,7 +671,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     
     Least squares tuning parameters:
       * gain - least squares loop gain (default 0.05)
-      * maxIter - Maximum number of iteration (default 150)
+      * max_iter - Maximum number of iteration (default 150)
       * rtol - Minimum change in the residual RMS between iterations
                (default 1e-9)
     """
@@ -745,7 +745,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     oldDiff = diff*0.0
     rHist = []
     exitStatus = 'iteration'
-    for k in xrange(maxIter):
+    for k in xrange(max_iter):
         ## Update the model image but don't allow negative flux
         mdl += diffScaled * gain
         mdl[numpy.where( mdl <= 0 )] = 0.0
@@ -773,7 +773,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         ## Difference the image and the simulated image and scale it to the 
         ## model's peak flux
         diff = img - simImg
-        diff2 = _minorCycle(diff, beamClean, gain=0.1, max_iter=2000)
+        diff2 = _minor_cycle(diff, beamClean, gain=0.1, max_iter=2000)
         
         ## Compute the RMS and create an appropriately scaled version of the model
         RMS = diff.std()

@@ -48,7 +48,7 @@ class UTC(tzinfo):
         return timedelta(0)
 
 
-def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize=100):
+def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_size=100):
     """
     Given a lsl.reader.ldp.TBNFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -78,9 +78,9 @@ def processChunk(idf, site, good, filename, intTime=5.0, pols=['xx',], ChunkSize
     ref_time = 0.0
     setTime = 0.0
     wallTime = time.time()
-    for s in xrange(ChunkSize):
+    for s in xrange(chunk_size):
         try:
-            readT, t, data = idf.read(intTime)
+            readT, t, data = idf.read(int_time)
         except Exception, e:
             print("Error: %s" % str(e))
             continue
@@ -260,8 +260,8 @@ def main(args):
         else:
             chunk = leftToDo
             
-        processChunk(idf, station, good, fitsFilename, intTime=args.avg_time, 
-                     pols=args.products, ChunkSize=chunk)
+        process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
+                     pols=args.products, chunk_size=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk

@@ -1134,56 +1134,56 @@ class AlternatePhaseCenter(object):
             return False
 
 
-def _parse_create_scan_object(obsTemp, altTemps=[], verbose=False):
-    """Given a obsTemp dictionary of scan parameters, return a complete Scan object 
+def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
+    """Given a obs_temp dictionary of scan parameters, return a complete Scan object 
     corresponding to those values."""
     
     # If the scan ID is 0, do nothing.
-    if obsTemp['id'] == 0:
+    if obs_temp['id'] == 0:
         return None
         
     # Create a time string for the start time in UTC.  This is a little tricky 
     # because of the rounding to the nearest millisecond which has to be done
     # to the datetime object.
-    start = Time(obsTemp['mjd'] + obsTemp['mpm'] / 1000.0 / 3600.0 / 24.0, format='MJD').utc_py_date
+    start = Time(obs_temp['mjd'] + obs_temp['mpm'] / 1000.0 / 3600.0 / 24.0, format='MJD').utc_py_date
     start += timedelta(microseconds=(int(round(start.microsecond/1000.0)*1000.0)-start.microsecond))
     utcString = start.strftime("UTC %Y %m %d %H:%M:%S.%f")
     utcString = utcString[:-3]
     
     # Build up a string representing the scan duration.
     try:
-        dur = obsTemp['duration']
+        dur = obs_temp['duration']
         dur = float(dur) / 1000.0
         durString = '%02i:%02i:%06.3f' % (dur/3600.0, (dur%3600.0)/60.0, dur%60.0)
     except:
         pass
         
     # Convert the frequencies from "tuning words" to Hz
-    f1 = word_to_freq(obsTemp['freq1'])
-    f2 = word_to_freq(obsTemp['freq2'])
+    f1 = word_to_freq(obs_temp['freq1'])
+    f2 = word_to_freq(obs_temp['freq2'])
     
     # Get the mode and run through the various cases
-    mode = obsTemp['mode']
+    mode = obs_temp['mode']
     if verbose:
-        print("[%i] Scan %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
+        print("[%i] Scan %i is mode %s" % (os.getpid(), obs_temp['id'], mode))
         
     if mode == 'TRK_RADEC':
-        obsOut = DRX(obsTemp['target'], obsTemp['intent'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], pm=obsTemp['pm'], comments=obsTemp['comments'])
+        obsOut = DRX(obs_temp['target'], obs_temp['intent'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], pm=obs_temp['pm'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
-        obsOut = Solar(obsTemp['target'], obsTemp['intent'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = Solar(obs_temp['target'], obs_temp['intent'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
-        obsOut = Jovian(obsTemp['target'], obsTemp['intent'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = Jovian(obs_temp['target'], obs_temp['intent'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
     else:
         raise RuntimeError("Invalid mode encountered: %s" % mode)
         
     # Add in the alternate phase centers
-    if obsTemp['nAlt'] != len(altTemps):
+    if obs_temp['nAlt'] != len(alt_temps):
         raise RuntimeError("Mis-match between SCAN_ALT_N and the number of alternate phase centers")
-    for altTemp in altTemps:
-        obsOut.add_alt_phase_center(altTemp['target'], altTemp['intent'], altTemp['ra'], altTemp['dec'], pm=altTemp['pm'])
+    for alt_temp in alt_temps:
+        obsOut.add_alt_phase_center(alt_temp['target'], alt_temp['intent'], alt_temp['ra'], alt_temp['dec'], pm=alt_temp['pm'])
         
     # Set the ASP/FEE values
-    obsOut.aspFlt = copy.deepcopy(obsTemp['aspFlt'])
+    obsOut.aspFlt = copy.deepcopy(obs_temp['aspFlt'])
     
     # Force the scan to be updated
     obsOut.update()
@@ -1219,11 +1219,11 @@ def parse_idf(filename, verbose=False):
     project.project_office.scans = [[],]
     
     # Loop over the file
-    obsTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0], 'start': '', 'duration': '', 'mode': '', 
-               'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'nAlt': 0, 'gain': -1, 
-               'aspFlt': -1}
-    altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
-    altTemps = []
+    obs_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0], 'start': '', 'duration': '', 'mode': '', 
+                'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'nAlt': 0, 'gain': -1, 
+                'aspFlt': -1}
+    alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
+    alt_temps = []
     
     for line in fh:
         # Trim off the newline character and skip blank lines
@@ -1334,11 +1334,11 @@ def parse_idf(filename, verbose=False):
             
         # Scan Info
         if keyword == 'SCAN_ID':
-            if obsTemp['id'] != 0:
-                project.runs[0].scans.append( _parse_create_scan_object(obsTemp, altTemps=altTemps, verbose=verbose) )
-                altTemp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
-                altTemps = []
-            obsTemp['id'] = int(value)
+            if obs_temp['id'] != 0:
+                project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
+                alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
+                alt_temps = []
+            obs_temp['id'] = int(value)
             project.project_office.scans[0].append( None )
             
             if verbose:
@@ -1346,127 +1346,127 @@ def parse_idf(filename, verbose=False):
                 
             continue
         if keyword == 'SCAN_TARGET':
-            obsTemp['target'] = value
+            obs_temp['target'] = value
             continue
         if keyword == 'SCAN_INTENT':
-            obsTemp['intent'] = value
+            obs_temp['intent'] = value
             continue
         if keyword == 'SCAN_REMPI':
-            obsTemp['comments'] = value
+            obs_temp['comments'] = value
             continue
         if keyword == 'SCAN_REMPO':
             project.project_office.scans[0][-1] = value
             continue
         if keyword == 'SCAN_START_MJD':
-            obsTemp['mjd'] = int(value)
+            obs_temp['mjd'] = int(value)
             continue
         if keyword == 'SCAN_START_MPM':
-            obsTemp['mpm'] = int(value)
+            obs_temp['mpm'] = int(value)
             continue
         if keyword == 'SCAN_DUR':
-            obsTemp['duration'] = int(value)
+            obs_temp['duration'] = int(value)
             continue
         if keyword == 'SCAN_MODE':
-            obsTemp['mode'] = value
+            obs_temp['mode'] = value
             continue
         if keyword == 'SCAN_RA':
-            obsTemp['ra'] = float(value)
+            obs_temp['ra'] = float(value)
             continue
         if keyword == 'SCAN_DEC':
-            obsTemp['dec'] = float(value)
+            obs_temp['dec'] = float(value)
             continue
         if keyword == 'SCAN_PM_RA':
-            obsTemp['pm'][0] = float(value)
+            obs_temp['pm'][0] = float(value)
             continue
         if keyword == 'SCAN_PM_DEC':
-            obsTemp['pm'][1] = float(value)
+            obs_temp['pm'][1] = float(value)
             continue
         if keyword == 'SCAN_FREQ1':
-            obsTemp['freq1'] = int(value)
+            obs_temp['freq1'] = int(value)
             continue
         if keyword == 'SCAN_FREQ2':
-            obsTemp['freq2'] = int(value)
+            obs_temp['freq2'] = int(value)
             continue
         if keyword == 'SCAN_BW':
-            obsTemp['filter'] = int(value)
+            obs_temp['filter'] = int(value)
             continue
             
         # Alternate phase centers
         if keyword == 'SCAN_ALT_N':
-            obsTemp['nAlt'] = int(value)
+            obs_temp['nAlt'] = int(value)
             continue
         if keyword == 'SCAN_ALT_TARGET':
-            if len(altTemps) == 0:
-                altTemps.append( copy.deepcopy(altTemp) )
-                altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['target'] = value
+            if len(alt_temps) == 0:
+                alt_temps.append( copy.deepcopy(alt_temp) )
+                alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['target'] = value
             else:
-                if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemps[-1]) )
-                    altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['target'] = value
+                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps.append( copy.deepcopy(alt_temps[-1]) )
+                    alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['target'] = value
             continue
         if keyword == 'SCAN_ALT_INTENT':
-            if len(altTemps) == 0:
-                altTemps.append( copy.deepcopy(altTemp) )
-                altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['intent'] = value
+            if len(alt_temps) == 0:
+                alt_temps.append( copy.deepcopy(alt_temp) )
+                alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['intent'] = value
             else:
-                if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemp) )
-                    altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['intent'] = value
+                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps.append( copy.deepcopy(alt_temp) )
+                    alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['intent'] = value
             continue
         if keyword == 'SCAN_ALT_RA':
-            if len(altTemps) == 0:
-                altTemps.append( copy.deepcopy(altTemp) )
-                altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['ra'] = float(value)
+            if len(alt_temps) == 0:
+                alt_temps.append( copy.deepcopy(alt_temp) )
+                alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['ra'] = float(value)
             else:
-                if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemp) )
-                    altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['ra'] = float(value)
+                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps.append( copy.deepcopy(alt_temp) )
+                    alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['ra'] = float(value)
             continue
         if keyword == 'SCAN_ALT_DEC':
-            if len(altTemps) == 0:
-                altTemps.append( copy.deepcopy(altTemp) )
-                altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['dec'] = float(value)
+            if len(alt_temps) == 0:
+                alt_temps.append( copy.deepcopy(alt_temp) )
+                alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['dec'] = float(value)
             else:
-                if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemp) )
-                    altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['dec'] = float(value)
+                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps.append( copy.deepcopy(alt_temp) )
+                    alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['dec'] = float(value)
             continue
         if keyword == 'SCAN_ALT_PM_RA':
-            if len(altTemps) == 0:
-                altTemps.append( copy.deepcopy(altTemp) )
-                altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['pm'][0] = float(value)
+            if len(alt_temps) == 0:
+                alt_temps.append( copy.deepcopy(alt_temp) )
+                alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['pm'][0] = float(value)
             else:
-                if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemp) )
-                    altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['pm'][0] = float(value)
+                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps.append( copy.deepcopy(alt_temp) )
+                    alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['pm'][0] = float(value)
             continue
         if keyword == 'SCAN_ALT_PM_DEC':
-            if len(altTemps) == 0:
-                altTemps.append( copy.deepcopy(altTemp) )
-                altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['pm'][1] = float(value)
+            if len(alt_temps) == 0:
+                alt_temps.append( copy.deepcopy(alt_temp) )
+                alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['pm'][1] = float(value)
             else:
-                if altTemps[-1]['id'] != ids[0]:
-                    altTemps.append( copy.deepcopy(altTemp) )
-                    altTemps[-1]['id'] = ids[0]
-                altTemps[-1]['pm'][1] = float(value)
+                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps.append( copy.deepcopy(alt_temp) )
+                    alt_temps[-1]['id'] = ids[0]
+                alt_temps[-1]['pm'][1] = float(value)
             continue
         # Run wide settings at the end of the scans
         if keyword == 'SCAN_ASP_FLT':
-            obsTemp['aspFlt'] = int(value)
+            obs_temp['aspFlt'] = int(value)
             continue
         if keyword == 'SCAN_DRX_GAIN':
-            obsTemp['gain'] = int(value)
+            obs_temp['gain'] = int(value)
             continue
             
         # Keywords that might indicate this is a SDF
@@ -1474,8 +1474,8 @@ def parse_idf(filename, verbose=False):
             raise RuntimeError("Invalid keyword encountered: %s" % keyword)
             
     # Create the final scan
-    if obsTemp['id'] != 0:
-        project.runs[0].scans.append( _parse_create_scan_object(obsTemp, altTemps=altTemps, verbose=verbose) )
+    if obs_temp['id'] != 0:
+        project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
         
     # Close the file
     fh.close()

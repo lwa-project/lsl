@@ -26,7 +26,7 @@ from lsl.misc import telemetry
 telemetry.track_script()
 
 
-def obsComp(x, y):
+def _obs_comp(x, y):
     """
     Function to help sort observations in time.
     """
@@ -58,7 +58,7 @@ def main(args):
         sdf = metabundleADP.get_sdf(meta)
         ses = metabundleADP.get_session_spec(meta)
         obs = metabundleADP.get_observation_spec(meta)
-    obs.sort(obsComp)
+    obs.sort(_obs_comp)
     tStart = []
     oDetails = []
     for i,o in enumerate(obs):

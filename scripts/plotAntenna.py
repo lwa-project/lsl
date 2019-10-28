@@ -80,7 +80,7 @@ def main(args):
         else:
             corrFnc = None
             
-        def BeamPattern(az, alt, corr=corrFnc):
+        def compute_beam_pattern(az, alt, corr=corrFnc):
             zaR = numpy.pi/2 - alt*numpy.pi / 180.0 
             azR = az*numpy.pi / 180.0
             
@@ -95,7 +95,7 @@ def main(args):
             return c*numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
     
         # Calculate the beam
-        pattern = BeamPattern(az, alt)
+        pattern = compute_beam_pattern(az, alt)
 
         if i == 0:
             p = ax1.imshow(pattern, origin='lower', vmin=0, vmax=1)

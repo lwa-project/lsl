@@ -26,7 +26,7 @@ from lsl.misc import telemetry
 telemetry.track_script()
 
 
-def fileSplitFunction(fhIn, fhOut, nCaptures, nBeampols):
+def split_file(fhIn, fhOut, nCaptures, nBeampols):
     pb = ProgressBar(max=nCaptures)
     
     for c in xrange(int(nCaptures)):
@@ -165,7 +165,7 @@ def main(args):
         
         t0 = time.time()
         fhOut = open(captFilename, 'wb')
-        fileSplitFunction(fh, fhOut, nCaptures, beampols)
+        split_file(fh, fhOut, nCaptures, beampols)
         fhOut.close()
         t1 = time.time()
         print("  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0)))

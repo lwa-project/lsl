@@ -106,7 +106,7 @@ def main(args):
     else:
         corrFnc = None
         
-    def BeamPattern(az, alt, corr=corrFnc):
+    def compute_beam_pattern(az, alt, corr=corrFnc):
         zaR = numpy.pi/2 - alt*numpy.pi / 180.0 
         azR = az*numpy.pi / 180.0
         
@@ -129,7 +129,7 @@ def main(args):
             alt[i,:] = i
         pylab.figure(1)
         pylab.title("Beam Response: %s pol. @ %0.2f MHz" % (args.pol, args.frequency/1e6))
-        pylab.imshow(BeamPattern(az, alt), extent=(0,359, 0,89), origin='lower')
+        pylab.imshow(compute_beam_pattern(az, alt), extent=(0,359, 0,89), origin='lower')
         pylab.xlabel("Azimuth [deg]")
         pylab.ylabel("Altitude [deg]")
         pylab.grid(1)
@@ -151,7 +151,7 @@ def main(args):
         lstList.append(lst)
         
         # Convolution of user antenna pattern with visible skymap
-        gain = BeamPattern(pmap.visibleAz, pmap.visibleAlt)
+        gain = compute_beam_pattern(pmap.visibleAz, pmap.visibleAlt)
         powerAnt = (pmap.visiblePower * gain).sum() / gain.sum()
         powListAnt.append(powerAnt)
 

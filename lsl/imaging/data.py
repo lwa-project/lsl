@@ -244,10 +244,10 @@ class VisibilityDataSet(object):
         
     @property
     def _baseline_order(self):
-        def __cmpBaseline(bl):
+        def __cmp_baseline(bl):
             return 4096*bl[0] + bl[1]
             
-        return [i for (v, i) in sorted((v, i) for (i, v) in enumerate([__cmpBaseline(bl) for bl in self.baselines]))]
+        return [i for (v, i) in sorted((v, i) for (i, v) in enumerate([__cmp_baseline(bl) for bl in self.baselines]))]
         
     def sort(self, order=None):
         """

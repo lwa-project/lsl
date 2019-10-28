@@ -45,7 +45,7 @@ class UTC(tzinfo):
         return timedelta(0)
 
 
-def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pfb=False, pols=['xx','yy']):
+def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols=['xx','yy']):
     """
     Given an lsl.reader.ldp.TBWFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -98,7 +98,7 @@ def processChunk(idf, site, good, filename, LFFT=64, Overlap=1, pfb=False, pols=
         
         # Loop over sub-integrations (set by nSec)
         for k in xrange(nSec):
-            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, Overlap=Overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
+            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
             
             toUse = numpy.where( (freq>=5.0e6) & (freq<=93.0e6) )
             toUse = toUse[0]
@@ -214,7 +214,7 @@ def main(args):
     basename, ext = os.path.splitext(basename)
     
     fitsFilename = "%s.FITS_1" % basename
-    processChunk(idf, station, good, fitsFilename, LFFT=args.fft_length, Overlap=1, pfb=args.pfb, pols=args.products)
+    process_chunk(idf, station, good, fitsFilename, LFFT=args.fft_length, overlap=1, pfb=args.pfb, pols=args.products)
     
     idf.close()
 

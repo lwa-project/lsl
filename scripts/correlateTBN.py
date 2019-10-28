@@ -44,7 +44,7 @@ class UTC(tzinfo):
         return timedelta(0)
 
 
-def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pfb=False, pols=['xx',], ChunkSize=100):
+def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, pfb=False, pols=['xx',], chunk_size=100):
     """
     Given a lsl.reader.ldp.TBNFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -74,9 +74,9 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pfb
     ref_time = 0.0
     setTime = 0.0
     wallTime = time.time()
-    for s in xrange(ChunkSize):
+    for s in xrange(chunk_size):
         try:
-            readT, t, data = idf.read(intTime)
+            readT, t, data = idf.read(int_time)
         except Exception, e:
             print("Error: %s" % str(e))
             continue
@@ -96,7 +96,7 @@ def processChunk(idf, site, good, filename, intTime=5.0, LFFT=64, Overlap=1, pfb
         # Loop over polarization products
         for pol in pols:
             print("->  %s" % pol)
-            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, Overlap=Overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, Pol=pol, return_baselines=True, gain_correct=True)
+            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, Pol=pol, return_baselines=True, gain_correct=True)
             
             # Select the right range of channels to save
             toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
@@ -225,8 +225,8 @@ def main(args):
         else:
             chunk = leftToDo
             
-        processChunk(idf, station, good, fitsFilename, intTime=args.avg_time, LFFT=args.fft_length, 
-                    Overlap=1, pfb=args.pfb, pols=args.products, ChunkSize=chunk)
+        process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, LFFT=args.fft_length, 
+                    overlap=1, pfb=args.pfb, pols=args.products, chunk_size=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk

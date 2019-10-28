@@ -30,7 +30,7 @@ telemetry.track_script()
 versionRE = re.compile(r'(?P<year>\d{4}) (?P<month>[a-zA-Z]{3,4}) (?P<day>\d{1,2}) by (?P<author>.*)')
 
 
-def parseIndex(index):
+def _parse_index(index):
     """
     Parse the archive listing of SSMIF version and return a list of 
     filename/date tuples.
@@ -77,7 +77,7 @@ def parseIndex(index):
     return versions
 
 
-def getMD5(filename, blockSize=262144):
+def _compute_md5(filename, block_size=262144):
     """
     Compute the MD5 checksum of a file.
     """
@@ -86,7 +86,7 @@ def getMD5(filename, blockSize=262144):
     
     m = hashlib.md5()
     while True:
-        block = fh.read(blockSize)
+        block = fh.read(block_size)
         if len(block) == 0:
             break
         m.update(block)
@@ -118,7 +118,7 @@ def main(args):
             ah.close()
             
             ## Parse
-            versions = parseIndex(index)
+            versions = _parse_index(index)
             
             ## Prompt the user for the version to revert to
             for i,(filename,date) in enumerate(versions):
@@ -173,7 +173,7 @@ def main(args):
     age = datetime.utcnow() - mtime
     
     ## MD5 checksum
-    md5 = getMD5(_ssmif)
+    md5 = _compute_md5(_ssmif)
     
     ## SSMIF version (date)
     fh = open(_ssmif, 'r')

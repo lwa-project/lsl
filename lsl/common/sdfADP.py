@@ -2033,90 +2033,90 @@ class BeamStep(object):
             return False
 
 
-def _parse_create_obs_object(obsTemp, beamTemps=None, verbose=False):
-    """Given a obsTemp dictionary of observation parameters and, optionally, a list of
-    beamTemp step parameters, return a complete Observation object corresponding to 
+def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
+    """Given a obs_temp dictionary of observation parameters and, optionally, a list of
+    beam_temp step parameters, return a complete Observation object corresponding to 
     those values."""
     
     # If the observation ID is 0, do nothing.
-    if obsTemp['id'] == 0:
+    if obs_temp['id'] == 0:
         return None
         
-    if beamTemps is None:
-        beamTemps = []
+    if beam_temps is None:
+        beam_temps = []
         
     # Create a time string for the start time in UTC.  This is a little tricky 
     # because of the rounding to the nearest millisecond which has to be done
     # to the datetime object.
-    start = Time(obsTemp['mjd'] + obsTemp['mpm'] / 1000.0 / 3600.0 / 24.0, format='MJD').utc_py_date
+    start = Time(obs_temp['mjd'] + obs_temp['mpm'] / 1000.0 / 3600.0 / 24.0, format='MJD').utc_py_date
     start += timedelta(microseconds=(int(round(start.microsecond/1000.0)*1000.0)-start.microsecond))
     utcString = start.strftime("UTC %Y %m %d %H:%M:%S.%f")
     utcString = utcString[:-3]
     
     # Build up a string representing the observation duration.
     try:
-        dur = obsTemp['duration']
+        dur = obs_temp['duration']
         dur = float(dur) / 1000.0
         durString = '%02i:%02i:%06.3f' % (dur/3600.0, (dur%3600.0)/60.0, dur%60.0)
     except:
         pass
         
     # Convert the frequencies from "tuning words" to Hz
-    f1 = word_to_freq(obsTemp['freq1'])
-    f2 = word_to_freq(obsTemp['freq2'])
+    f1 = word_to_freq(obs_temp['freq1'])
+    f2 = word_to_freq(obs_temp['freq2'])
     
     # Get the mode and run through the various cases
-    mode = obsTemp['mode']
+    mode = obs_temp['mode']
     if verbose:
-        print("[%i] Obs %i is mode %s" % (os.getpid(), obsTemp['id'], mode))
+        print("[%i] Obs %i is mode %s" % (os.getpid(), obs_temp['id'], mode))
         
     if mode == 'TBF':
-        obsOut = TBF(obsTemp['name'], obsTemp['target'], utcString, f1, f2, obsTemp['filter'], obsTemp['tbfSamples'], comments=obsTemp['comments'])
+        obsOut = TBF(obs_temp['name'], obs_temp['target'], utcString, f1, f2, obs_temp['filter'], obs_temp['tbfSamples'], comments=obs_temp['comments'])
     elif mode == 'TBN':
-        obsOut = TBN(obsTemp['name'], obsTemp['target'], utcString, durString, f1, obsTemp['filter'], gain=obsTemp['gain'], comments=obsTemp['comments'])
+        obsOut = TBN(obs_temp['name'], obs_temp['target'], utcString, durString, f1, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
     elif mode == 'TRK_RADEC':
-        obsOut = DRX(obsTemp['name'], obsTemp['target'], utcString, durString, obsTemp['ra'], obsTemp['dec'], f1, f2, obsTemp['filter'], gain=obsTemp['gain'], max_snr=obsTemp['MaxSNR'], comments=obsTemp['comments'])
+        obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
-        obsOut = Solar(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], max_snr=obsTemp['MaxSNR'], comments=obsTemp['comments'])
+        obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
-        obsOut = Jovian(obsTemp['name'], obsTemp['target'], utcString, durString, f1, f2, obsTemp['filter'], gain=obsTemp['gain'], max_snr=obsTemp['MaxSNR'], comments=obsTemp['comments'])
+        obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
-            print("[%i] -> found %i steps" % (os.getpid(), len(beamTemps)))
+            print("[%i] -> found %i steps" % (os.getpid(), len(beam_temps)))
             
-        obsOut = Stepped(obsTemp['name'], obsTemp['target'], utcString, obsTemp['filter'], is_radec=obsTemp['stpRADec'], steps=[], gain=obsTemp['gain'], comments=obsTemp['comments'])
-        for beamTemp in beamTemps:
+        obsOut = Stepped(obs_temp['name'], obs_temp['target'], utcString, obs_temp['filter'], is_radec=obs_temp['stpRADec'], steps=[], gain=obs_temp['gain'], comments=obs_temp['comments'])
+        for beam_temp in beam_temps:
             try:
-                dur = beamTemp['duration']
+                dur = beam_temp['duration']
                 dur = float(dur) / 1000.0
                 durString = '%02i:%02i:%06.3f' % (dur/3600.0, (dur%3600.0)/60.0, dur%60.0)
             except:
                 pass
             
-            f1 = word_to_freq(beamTemp['freq1'])
-            f2 = word_to_freq(beamTemp['freq2'])
+            f1 = word_to_freq(beam_temp['freq1'])
+            f2 = word_to_freq(beam_temp['freq2'])
             
-            if beamTemp['delays'] is not None:
-                if len(beamTemp['delays']) != 2*LWA_MAX_NSTD:
+            if beam_temp['delays'] is not None:
+                if len(beam_temp['delays']) != 2*LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of delays for custom beamforming")
-            if beamTemp['gains'] is not None:
-                if len(beamTemp['gains']) != LWA_MAX_NSTD:
+            if beam_temp['gains'] is not None:
+                if len(beam_temp['gains']) != LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of gains for custom beamforming")
                     
-            obsOut.append( BeamStep(beamTemp['c1'], beamTemp['c2'], durString, f1, f2, obsTemp['stpRADec'], beamTemp['MaxSNR'], beamTemp['delays'], beamTemp['gains']) )
+            obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
     else:
         raise RuntimeError("Invalid mode encountered: %s" % mode)
         
     # Set the beam-dipole mode information (if applicable)
-    if obsTemp['beamDipole'] is not None:
-        obsOut.beamDipole = obsTemp['beamDipole']
+    if obs_temp['beamDipole'] is not None:
+        obsOut.beamDipole = obs_temp['beamDipole']
         
     # Set the ASP/FEE values
-    obsOut.obsFEE = copy.deepcopy(obsTemp['obsFEE'])
-    obsOut.aspFlt = copy.deepcopy(obsTemp['aspFlt'])
-    obsOut.aspAT1 = copy.deepcopy(obsTemp['aspAT1'])
-    obsOut.aspAT2 = copy.deepcopy(obsTemp['aspAT2'])
-    obsOut.aspATS = copy.deepcopy(obsTemp['aspATS'])
+    obsOut.obsFEE = copy.deepcopy(obs_temp['obsFEE'])
+    obsOut.aspFlt = copy.deepcopy(obs_temp['aspFlt'])
+    obsOut.aspAT1 = copy.deepcopy(obs_temp['aspAT1'])
+    obsOut.aspAT2 = copy.deepcopy(obs_temp['aspAT2'])
+    obsOut.aspATS = copy.deepcopy(obs_temp['aspATS'])
     
     # Force the observation to be updated
     obsOut.update()
@@ -2152,14 +2152,14 @@ def parse_sdf(filename, verbose=False):
     project.project_office.observations = [[],]
     
     # Loop over the file
-    obsTemp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
+    obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
             'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
             'stpRADec': True, 'tbwBits': 12, 'tbfSamples': 0, 'gain': -1, 
             'obsFEE': [[-1,-1] for n in xrange(LWA_MAX_NSTD)], 
             'aspFlt': [-1 for n in xrange(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in xrange(LWA_MAX_NSTD)], 
             'aspAT2': [-1 for n in xrange(LWA_MAX_NSTD)], 'aspATS': [-1 for n in xrange(LWA_MAX_NSTD)]}
-    beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
-    beamTemps = []
+    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+    beam_temps = []
     
     for line in fh:
         # Trim off the newline character and skip blank lines
@@ -2292,11 +2292,11 @@ def parse_sdf(filename, verbose=False):
             
         # Observation Info
         if keyword == 'OBS_ID':
-            if obsTemp['id'] != 0:
-                project.sessions[0].observations.append( _parse_create_obs_object(obsTemp, beamTemps=beamTemps, verbose=verbose) )
-                beamTemp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
-                beamTemps = []
-            obsTemp['id'] = int(value)
+            if obs_temp['id'] != 0:
+                project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+                beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+                beam_temps = []
+            obs_temp['id'] = int(value)
             project.project_office.observations[0].append( None )
             
             if verbose:
@@ -2304,193 +2304,193 @@ def parse_sdf(filename, verbose=False):
                 
             continue
         if keyword == 'OBS_TITLE':
-            obsTemp['name'] = value
+            obs_temp['name'] = value
             continue
         if keyword == 'OBS_TARGET':
-            obsTemp['target'] = value
+            obs_temp['target'] = value
             continue
         if keyword == 'OBS_REMPI':
-            obsTemp['comments'] = value
+            obs_temp['comments'] = value
             continue
         if keyword == 'OBS_REMPO':
             project.project_office.observations[0][-1] = value
             continue
         if keyword == 'OBS_START_MJD':
-            obsTemp['mjd'] = int(value)
+            obs_temp['mjd'] = int(value)
             continue
         if keyword == 'OBS_START_MPM':
-            obsTemp['mpm'] = int(value)
+            obs_temp['mpm'] = int(value)
             continue
         if keyword == 'OBS_DUR':
-            obsTemp['duration'] = int(value)
+            obs_temp['duration'] = int(value)
             continue
         if keyword == 'OBS_MODE':
-            obsTemp['mode'] = value
+            obs_temp['mode'] = value
             continue
         if keyword == 'OBS_BDM':
             # Remove the ' marks
             value = value.replace("'", "")
             try:
                 stand, beam_gain, dipole_gain, pol = value.lstrip().rstrip().split(None, 3)
-                obsTemp['beamDipole'] = [int(stand), float(beam_gain), float(dipole_gain), pol]
+                obs_temp['beamDipole'] = [int(stand), float(beam_gain), float(dipole_gain), pol]
             except ValueError:
                 pass
         if keyword == 'OBS_RA':
-            obsTemp['ra'] = float(value)
+            obs_temp['ra'] = float(value)
             continue
         if keyword == 'OBS_DEC':
-            obsTemp['dec'] = float(value)
+            obs_temp['dec'] = float(value)
             continue
         if keyword == 'OBS_B':
             if value != 'SIMPLE':
-                obsTemp['MaxSNR'] = True
+                obs_temp['MaxSNR'] = True
             continue
         if keyword == 'OBS_FREQ1':
-            obsTemp['freq1'] = int(value)
+            obs_temp['freq1'] = int(value)
             continue
         if keyword == 'OBS_FREQ2':
-            obsTemp['freq2'] = int(value)
+            obs_temp['freq2'] = int(value)
             continue
         if keyword == 'OBS_BW':
-            obsTemp['filter'] = int(value)
+            obs_temp['filter'] = int(value)
             continue
         if keyword == 'OBS_STP_RADEC':
-            obsTemp['stpRADec'] = bool(int(value))
+            obs_temp['stpRADec'] = bool(int(value))
             continue
             
         # Individual Stepped Beam Observations - This is a bit messy because of
         # trying to keep up when a new step is encountered.  This adds in some 
         # overhead to all of the steps.
         if keyword == 'OBS_STP_C1':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['c1'] = float(value)
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['c1'] = float(value)
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['c1'] = float(value)
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['c1'] = float(value)
             continue
             
         if keyword == 'OBS_STP_C2':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['c2'] = float(value)
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['c2'] = float(value)
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['c2'] = float(value)
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['c2'] = float(value)
             continue
             
         if keyword == 'OBS_STP_T':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['duration'] = int(value)
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['duration'] = int(value)
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['duration'] = int(value)
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['duration'] = int(value)
             continue
             
         if keyword == 'OBS_STP_FREQ1':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['freq1'] = int(value)
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['freq1'] = int(value)
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['freq1'] = int(value)
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['freq1'] = int(value)
             continue
             
         if keyword == 'OBS_STP_FREQ2':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['freq2'] = int(value)
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['freq2'] = int(value)
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
-                beamTemps[-1]['freq2'] = int(value)
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
+                beam_temps[-1]['freq2'] = int(value)
             continue
             
         if keyword == 'OBS_STP_B':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
                 
                 if value in ('MAX_SNR', '2'):
-                    beamTemps[-1]['MaxSNR'] = True
+                    beam_temps[-1]['MaxSNR'] = True
                     
                 elif value in ('SPEC_DELAYS_GAINS', '3'):
-                    beamTemps[-1]['delays'] = []
-                    beamTemps[-1]['gains'] = []
+                    beam_temps[-1]['delays'] = []
+                    beam_temps[-1]['gains'] = []
                     for bdi in xrange(2*LWA_MAX_NSTD):
-                        beamTemps[-1]['delays'].append( 0 )
+                        beam_temps[-1]['delays'].append( 0 )
                         if bdi < LWA_MAX_NSTD:
-                            beamTemps[-1]['gains'].append( [[0, 0], [0, 0]] )
+                            beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                 else:
-                    beamTemps[-1]['MaxSNR'] = False
+                    beam_temps[-1]['MaxSNR'] = False
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
                     
                 if value in ('MAX_SNR', '2'):
-                    beamTemps[-1]['MaxSNR'] = True
+                    beam_temps[-1]['MaxSNR'] = True
                     
                 elif value in ('SPEC_DELAYS_GAINS', '3'):
-                    beamTemps[-1]['delays'] = []
-                    beamTemps[-1]['gains'] = []
+                    beam_temps[-1]['delays'] = []
+                    beam_temps[-1]['gains'] = []
                     for bdi in xrange(2*LWA_MAX_NSTD):
-                        beamTemps[-1]['delays'].append( 0 )
+                        beam_temps[-1]['delays'].append( 0 )
                         if bdi < LWA_MAX_NSTD:
-                            beamTemps[-1]['gains'].append( [[0, 0], [0, 0]] )
+                            beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                 else:
-                    beamTemps[-1]['MaxSNR'] = False
+                    beam_temps[-1]['MaxSNR'] = False
             continue
             
         if keyword == 'OBS_BEAM_DELAY':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
                 try:
-                    beamTemps[-1]['delays'][ids[1]-1] = int(value)
+                    beam_temps[-1]['delays'][ids[1]-1] = int(value)
                 except IndexError:
                     raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
                 try:
-                    beamTemps[-1]['delays'][ids[1]-1] = int(value)
+                    beam_temps[-1]['delays'][ids[1]-1] = int(value)
                 except IndexError:
                     raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
             continue
             
         if keyword == 'OBS_BEAM_GAIN':
-            if len(beamTemps) == 0:
-                beamTemps.append( copy.deepcopy(beamTemp) )
-                beamTemps[-1]['id'] = ids[0]
+            if len(beam_temps) == 0:
+                beam_temps.append( copy.deepcopy(beam_temp) )
+                beam_temps[-1]['id'] = ids[0]
                 try:
-                    beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
                 except IndexError:
                     pass
             else:
-                if beamTemps[-1]['id'] != ids[0]:
-                    beamTemps.append( copy.deepcopy(beamTemps[-1]) )
-                    beamTemps[-1]['id'] = ids[0]
+                if beam_temps[-1]['id'] != ids[0]:
+                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                    beam_temps[-1]['id'] = ids[0]
                 try:
-                    beamTemps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
                 except IndexError:
                     pass
             continue
@@ -2498,47 +2498,47 @@ def parse_sdf(filename, verbose=False):
         # Session wide settings at the end of the observations
         if keyword == 'OBS_FEE':
             if ids[0] == 0:
-                for n in xrange(len(obsTemp['obsFEE'])):
-                    obsTemp['obsFEE'][n][ids[1]-1] = int(value)
+                for n in xrange(len(obs_temp['obsFEE'])):
+                    obs_temp['obsFEE'][n][ids[1]-1] = int(value)
             else:
-                obsTemp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
+                obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_FLT':
             if ids[0] == 0:
-                for n in xrange(len(obsTemp['aspFlt'])):
-                    obsTemp['aspFlt'][n] = int(value)
+                for n in xrange(len(obs_temp['aspFlt'])):
+                    obs_temp['aspFlt'][n] = int(value)
             else:
-                obsTemp['aspFlt'][ids[0]-1] = int(value)
+                obs_temp['aspFlt'][ids[0]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_AT1':
             if ids[0] == 0:
-                for n in xrange(len(obsTemp['aspAT1'])):
-                    obsTemp['aspAT1'][n] = int(value)
+                for n in xrange(len(obs_temp['aspAT1'])):
+                    obs_temp['aspAT1'][n] = int(value)
             else:
-                obsTemp['aspAT1'][ids[0]-1] = int(value)
+                obs_temp['aspAT1'][ids[0]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_AT2':
             if ids[0] == 0:
-                for n in xrange(len(obsTemp['aspAT2'])):
-                    obsTemp['aspAT2'][n] = int(value)
+                for n in xrange(len(obs_temp['aspAT2'])):
+                    obs_temp['aspAT2'][n] = int(value)
             else:
-                obsTemp['aspAT2'][ids[0]-1] = int(value)
+                obs_temp['aspAT2'][ids[0]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_ATS':
             if ids[0] == 0:
-                for n in xrange(len(obsTemp['aspATS'])):
-                    obsTemp['aspATS'][n] = int(value)
+                for n in xrange(len(obs_temp['aspATS'])):
+                    obs_temp['aspATS'][n] = int(value)
             else:
-                obsTemp['aspATS'][ids[0]-1] = int(value)
+                obs_temp['aspATS'][ids[0]-1] = int(value)
             continue
         if keyword == 'OBS_TBF_SAMPLES':
-            obsTemp['tbfSamples'] = int(value)
+            obs_temp['tbfSamples'] = int(value)
             continue
         if keyword == 'OBS_TBN_GAIN':
-            obsTemp['gain'] = int(value)
+            obs_temp['gain'] = int(value)
             continue
         if keyword == 'OBS_DRX_GAIN':
-            obsTemp['gain'] = int(value)
+            obs_temp['gain'] = int(value)
             continue
             
         # Keywords that might indicate this is for DP-based stations/actually an IDF
@@ -2546,9 +2546,9 @@ def parse_sdf(filename, verbose=False):
             raise RuntimeError("Invalid keyword encountered: %s" % keyword)
             
     # Create the final observation
-    if obsTemp['id'] != 0:
-        project.sessions[0].observations.append( _parse_create_obs_object(obsTemp, beamTemps=beamTemps, verbose=verbose) )
-        beamTemps = []
+    if obs_temp['id'] != 0:
+        project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+        beam_temps = []
         
     # Close the file
     fh.close()

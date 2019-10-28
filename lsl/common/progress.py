@@ -36,13 +36,13 @@ class ProgressBar(object):
      >>> sys.stdout.flush()
     """
     
-    def __init__(self, max=100, span=70, sym='=', printP=True):
+    def __init__(self, max=100, span=70, sym='=', print_percent=True):
         """
         Initialize the ProgressBar class with various parameters:
          * max: maximum count for the progress bar (default: 100)
          * span: width in characters to make the bar (default: 70)
          * sym: character to use in the progress bar (default: '=')
-         * printP: whether or not to print the percentage in addition to
+         * print_percent: whether or not to print the percentage in addition to
                    the bar or not (default: True)
         """
         
@@ -51,7 +51,7 @@ class ProgressBar(object):
         self.span = span
         self.sym = sym
         self.rotations = ['-', '\\', '|', '/', self.sym]
-        self.printP = printP
+        self.print_percent = print_percent
         
     def inc(self, amount=1):
         """
@@ -74,7 +74,7 @@ class ProgressBar(object):
         Build a string representation of the progress bar and return it.
         """
         
-        if self.printP:
+        if self.print_percent:
             # If we want the percentage also displayed, trim a little 
             # more from the progress bar's wdith
             barSpan = self.span - 9
@@ -233,7 +233,7 @@ class ProgressBarPlus(ProgressBar):
             cte = (self.max - self.amount) * (self.t1 - self.t0)/self.amount
             cte = '%4im%02is' % (cte/60, cte%60)
             
-        if self.printP:
+        if self.print_percent:
             # If we want the percentage also displayed, trim a little 
             # more from the progress bar's wdith
             barSpan = self.span - 9

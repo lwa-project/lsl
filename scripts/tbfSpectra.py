@@ -29,7 +29,7 @@ from lsl.misc import telemetry
 telemetry.track_script()
 
 
-def bestFreqUnits(freq):
+def _best_freq_units(freq):
     """Given a numpy array of frequencies in Hz, return a new array with the
     frequencies in the best units possible (kHz, MHz, etc.)."""
     
@@ -152,7 +152,7 @@ def main(args):
             spec[s,:] /= currGain
                 
     # Put the frequencies in the best units possible
-    freq, units = bestFreqUnits(freq)
+    freq, units = _best_freq_units(freq)
     
     # Deal with the `keep` options
     if args.keep == 'all':

@@ -28,7 +28,7 @@ from lsl.misc import telemetry
 telemetry.track_script()
 
 
-def bestFreqUnits(freq):
+def _best_freq_units(freq):
     """Given a numpy array of frequencies in Hz, return a new array with the
     frequencies in the best units possible (kHz, MHz, etc.)."""
     
@@ -143,8 +143,8 @@ def main(args):
     figsX = int(round(math.sqrt(2*len(products))))
     figsY = 2*len(products) // figsX
     # Put the frequencies in the best units possible
-    freq1, units1 = bestFreqUnits(freq1)
-    freq2, units2 = bestFreqUnits(freq2)
+    freq1, units1 = _best_freq_units(freq1)
+    freq2, units2 = _best_freq_units(freq2)
     
     for i in xrange(masterSpectra.shape[1]):
         if i/len(products) == 0:
