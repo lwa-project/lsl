@@ -25,6 +25,7 @@ mdbFile = os.path.join(DATA_BUILD, 'tests', 'metadata.tgz')
 mdbFileOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-0.tgz')
 mdbFileOld1 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-1.tgz')
 mdbFileADP = os.path.join(DATA_BUILD, 'tests', 'metadata-adp.tgz')
+mdbFileGDB = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb.tgz')
 
 class metabundle_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
@@ -141,6 +142,7 @@ class metabundle_tests(unittest.TestCase):
         """Test whether or not is_valid works on LWA-SV files."""
         
         self.assertFalse(metabundle.is_valid(mdbFileADP))
+        self.assertFalse(metabundle.is_valid(mdbFileGDB))
 
 
 class metabundle_tests_old_0(unittest.TestCase):

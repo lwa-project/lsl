@@ -25,6 +25,7 @@ mdbFile = os.path.join(DATA_BUILD, 'tests', 'metadata.tgz')
 mdbFileOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-0.tgz')
 mdbFileOld1 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-1.tgz')
 mdbFileADP = os.path.join(DATA_BUILD, 'tests', 'metadata-adp.tgz')
+mdbFileGDB = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb.tgz')
 
 
 class metabundle_tests_adp(unittest.TestCase):
@@ -133,10 +134,31 @@ class metabundle_tests_adp(unittest.TestCase):
         # Unknown code
         self.assertRaises(ValueError, metabundleADP.get_asp_configuration_summary, mdbFileADP, 'middle')
         
+    def test_aspconfig_gdbm(self):
+        """Test retrieving the ASP configuration from a GDBM MIB."""
+        
+        # Beginning config.
+        aspConfig = metabundleADP.get_asp_configuration_summary(mdbFileGDB, which='beginning')
+        self.assertEqual(aspConfig['filter'],  0)
+        self.assertEqual(aspConfig['at1'],     6)
+        self.assertEqual(aspConfig['at2'],     5)
+        self.assertEqual(aspConfig['atsplit'],15)
+        
+        # End config.
+        aspConfig = metabundleADP.get_asp_configuration_summary(mdbFileGDB, which='End')
+        self.assertEqual(aspConfig['filter'],  0)
+        self.assertEqual(aspConfig['at1'],     6)
+        self.assertEqual(aspConfig['at2'],     5)
+        self.assertEqual(aspConfig['atsplit'],15)
+        
+        # Unknown code
+        self.assertRaises(ValueError, metabundleADP.get_asp_configuration_summary, mdbFileGDB, 'middle')
+        
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
         self.assertTrue(metabundleADP.is_valid(mdbFileADP))
+        self.assertTrue(metabundleADP.is_valid(mdbFileGDB))
         
     def test_is_not_valid(self):
         """Test whether or not is_valid works on LWA1 files."""
