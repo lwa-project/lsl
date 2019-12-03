@@ -129,7 +129,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test single session/observations SDFs."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.set_drx_beam(1)
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
@@ -139,7 +139,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test setting the UCF username for auto-copy support."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.set_drx_beam(1)
         sess.set_data_return_method('UCF')
@@ -149,7 +149,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertTrue(out.find('ucfuser:test') >= 0)
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ, comments='This is a comment')
         sess.set_drx_beam(1)
         sess.set_data_return_method('UCF')
@@ -288,9 +288,6 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TRK_RADEC SDF file."""
         
         project = sdfADP.parse_sdf(drxFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         out = project.render()
         
     def test_drx_errors(self):
@@ -307,7 +304,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 8
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -381,9 +378,6 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TRK_SOL SDF file."""
         
         project = sdfADP.parse_sdf(solFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         out = project.render()
         
     def test_sol_errors(self):
@@ -400,7 +394,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 8
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -468,9 +462,6 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TRK_JOV SDF file."""
         
         project = sdfADP.parse_sdf(jovFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         out = project.render()
         
     def test_jov_errors(self):
@@ -487,7 +478,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 8
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -618,9 +609,6 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a STEPPED SDF file."""
         
         project = sdfADP.parse_sdf(stpFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         out = project.render()
         
     def test_stp_errors(self):
@@ -637,7 +625,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 8
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -745,7 +733,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad filter
-        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].filter = 8
         self.assertFalse(project.validate())
         
         # Bad frequency
@@ -769,9 +757,6 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].duration = '00:01:31.000'
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')
         fh.write(project.render())
         fh.close()
@@ -785,9 +770,6 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].duration = timedelta(minutes=1, seconds=31, microseconds=1000)
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')
         fh.write(project.render())
         fh.close()
@@ -801,9 +783,6 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[1].frequency2 = 75e6
         project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
         fh.write(project.render())
         fh.close()
@@ -819,9 +798,6 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[1].frequency2 = 75e6
         project.sessions[0].observations[1].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
         fh.write(project.render())
         fh.close()
@@ -836,9 +812,6 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].set_station(lwasv)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         self.assertTrue(project.validate())
         
         self.assertRaises(RuntimeError, project.sessions[0].set_station, lwa1)
@@ -866,9 +839,6 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].set_data_return_method('UCF')
         project.sessions[0].set_ucf_username('jdowell')
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.sessions[0].observations:
-            obs.filter = 6
         out = project.render()
         
         self.assertTrue(out.find('Requested data return method is UCF') > 0)

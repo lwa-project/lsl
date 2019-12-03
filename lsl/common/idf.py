@@ -888,7 +888,7 @@ class Scan(object):
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
-        if self.filter not in [1, 2, 3, 4, 5, 6]:
+        if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
                 print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
             failures += 1

@@ -72,7 +72,6 @@ __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame',
 FRAME_SIZE = 4128
 
 # List of filter codes and their corresponding sample rates in Hz
-# NOTE: filter code 7 is only valid on DP DRX
 FILTER_CODES = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4900000, 6: 9800000, 7: 19600000}
 
 

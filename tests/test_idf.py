@@ -54,7 +54,7 @@ class idf_tests(unittest.TestCase):
         """Test single session/scans IDFs."""
         
         obs = idf.Observer('Test Observer', 99)
-        targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6)
+        targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7)
         sess = idf.Run('Test Session', 1, scans=targ)
         proj = idf.Project(obs, 'Test Project', 'COMTST', runs=sess)
         out = proj.render()
@@ -63,7 +63,7 @@ class idf_tests(unittest.TestCase):
         """Test setting the UCF username for auto-copy support."""
         
         obs = idf.Observer('Test Observer', 99)
-        targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6)
+        targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7)
         sess = idf.Run('Test Session', 1, scans=targ)
         sess.set_data_return_method('UCF')
         sess.set_ucf_username('test')
@@ -72,7 +72,7 @@ class idf_tests(unittest.TestCase):
         self.assertTrue(out.find('ucfuser:test') >= 0)
         
         obs = idf.Observer('Test Observer', 99)
-        targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 6)
+        targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7)
         sess = idf.Run('Test Session', 1, scans=targ, comments='This is a comment')
         sess.set_data_return_method('UCF')
         sess.set_ucf_username('test/dir1')
@@ -130,9 +130,6 @@ class idf_tests(unittest.TestCase):
         """Test writing a TRK_RADEC IDF file."""
         
         project = idf.parse_idf(drxFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         out = project.render()
         
     def test_drx_proper_motion(self):
@@ -145,9 +142,6 @@ class idf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.runs[0].scans[0].pm[1], 592.1, 1)
         
         ## TODO: Coordinate test?
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         sdfs = project.generate_sdfs()
         for sdf in sdfs:
             for o in xrange(len(project.runs[0].scans)):
@@ -182,9 +176,15 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
-        # Bad filter
+        # Good filter
         project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].update()
+        self.assertTrue(project.validate())
+        
+        # Bad filter
+        project.runs[0].scans[0].intent = 'Target'
+        project.runs[0].scans[0].filter = 8
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -274,9 +274,6 @@ class idf_tests(unittest.TestCase):
         """Test writing a TRK_RADEC IDF file with other phase centers."""
         
         project = idf.parse_idf(altFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         out = project.render()
         
     def test_drx_alt_proper_motion(self):
@@ -291,9 +288,6 @@ class idf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[1].pm[1], 0.0, 1)
         
         ## TODO: Coordinate test?
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         sdfs = project.generate_sdfs()
         for sdf in sdfs:
             for o in xrange(len(project.runs[0].scans)):
@@ -337,7 +331,7 @@ class idf_tests(unittest.TestCase):
         
         # Bad filter
         project.runs[0].scans[0].intent = 'Target'
-        project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].filter = 8
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -427,9 +421,6 @@ class idf_tests(unittest.TestCase):
         """Test writing a TRK_SOL IDF file."""
         
         project = idf.parse_idf(solFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         out = project.render()
         
     def test_sol_errors(self):
@@ -460,7 +451,7 @@ class idf_tests(unittest.TestCase):
         
         # Bad filter
         project.runs[0].scans[0].intent = 'Target'
-        project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].filter = 8
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -525,9 +516,6 @@ class idf_tests(unittest.TestCase):
         """Test writing a TRK_JOV IDF file."""
         
         project = idf.parse_idf(jovFile)
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         out = project.render()
         
     def test_jov_errors(self):
@@ -558,7 +546,7 @@ class idf_tests(unittest.TestCase):
         
         # Bad filter
         project.runs[0].scans[0].intent = 'Target'
-        project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[0].filter = 8
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
@@ -595,9 +583,6 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].frequency1 = 75e6
         project.runs[0].scans[0].duration = '00:01:31.000'
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')
         fh.write(project.render())
         fh.close()
@@ -611,9 +596,6 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].frequency1 = 75e6
         project.runs[0].scans[0].duration = timedelta(minutes=1, seconds=31, microseconds=1000)
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')
         fh.write(project.render())
         fh.close()
@@ -627,9 +609,6 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].frequency2 = 75e6
         project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
         fh.write(project.render())
         fh.close()
@@ -645,9 +624,6 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].frequency2 = 75e6
         project.runs[0].scans[0].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
         
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
         fh.write(project.render())
         fh.close()
@@ -662,9 +638,6 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(drxFile)
         project.runs[0].set_stations([lwasv, lwa1])
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         self.assertTrue(project.validate())
         
     def test_is_valid(self):
@@ -685,9 +658,6 @@ class idf_tests(unittest.TestCase):
         project = idf.parse_idf(drxFile)
         project.runs[0].set_data_return_method('UCF')
         project.runs[0].set_ucf_username('jdowell')
-        # Fix for LWA-SV only going up to filter code 6
-        for obs in project.runs[0].scans:
-            obs.filter = 6
         out = project.render()
         
         self.assertTrue(out.find('Requested data return method is UCF') > 0)
