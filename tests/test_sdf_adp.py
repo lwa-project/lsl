@@ -820,11 +820,11 @@ class sdf_adp_tests(unittest.TestCase):
         """Test whether or not is_valid works."""
         
         self.assertTrue(sdfADP.is_valid(tbnFile))
-        self.assertFalse(sdfADP.is_valid(drxFile))
-        self.assertFalse(sdfADP.is_valid(solFile))
-        self.assertFalse(sdfADP.is_valid(jovFile))
-        self.assertFalse(sdfADP.is_valid(stpFile))
-        self.assertFalse(sdfADP.is_valid(spcFile))
+        self.assertTrue(sdfADP.is_valid(drxFile))
+        self.assertTrue(sdfADP.is_valid(solFile))
+        self.assertTrue(sdfADP.is_valid(jovFile))
+        self.assertTrue(sdfADP.is_valid(stpFile))
+        self.assertTrue(sdfADP.is_valid(spcFile))
         self.assertTrue(sdfADP.is_valid(tbfFile))
         
     def test_is_not_valid(self):
