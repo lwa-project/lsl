@@ -160,18 +160,22 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad correlator channel count
+        project.runs[0].stations = [lwa1,lwasv]
         project.runs[0].corr_channels = 129
         self.assertFalse(project.validate())
         
         # Bad correlator integration time
+        project.runs[0].corr_channels = 128
         project.runs[0].corr_inttime = 1e-6
         self.assertFalse(project.validate())
         
         # Bad correlator output polarization basis
+        project.runs[0].corr_inttime = 1.0
         project.runs[0].corr_basis = 'cats'
         self.assertFalse(project.validate())
         
         # Bad intent
+        project.runs[0].corr_basis = 'linear'
         project.runs[0].scans[0].intent = 'cats'
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
