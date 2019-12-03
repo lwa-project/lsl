@@ -528,9 +528,16 @@ class Uv(WriterBase):
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
         eop = iers.IERS_Auto.open()
-        ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
-        pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
-            
+        try:
+            # Temporary fix for maia.usno.navy.mil being down
+            ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
+            pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
+        except eirs.IERSRangeError:
+            with iers.Conf().set_temp('iers_auto_url', 'https://datacenter.iers.org/data/9/finals2000A.all'):
+                eop = iers.IERS_Auto.open()
+                ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
+                pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
+                
         an.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         an.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
         an.header['POLARX'] = pm_xy[0].to('arcsec').value
