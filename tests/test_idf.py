@@ -187,7 +187,6 @@ class idf_tests(unittest.TestCase):
         self.assertTrue(project.validate())
         
         # Bad filter
-        project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 8
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
