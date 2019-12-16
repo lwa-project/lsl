@@ -26,6 +26,7 @@ mdbFileOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-0.tgz')
 mdbFileOld1 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-1.tgz')
 mdbFileADP = os.path.join(DATA_BUILD, 'tests', 'metadata-adp.tgz')
 mdbFileGDB = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb.tgz')
+mdbFileGDBOld0 = os.path.join(dataPath, 'tests', 'metadata-gdb-old-0.tgz')
 
 
 class metabundle_tests_adp(unittest.TestCase):
@@ -159,6 +160,7 @@ class metabundle_tests_adp(unittest.TestCase):
         
         self.assertTrue(metabundleADP.is_valid(mdbFileADP))
         self.assertTrue(metabundleADP.is_valid(mdbFileGDB))
+        self.assertTrue(metabundleADP.is_valid(mdbFileGDBOld0))
         
     def test_is_not_valid(self):
         """Test whether or not is_valid works on LWA1 files."""
