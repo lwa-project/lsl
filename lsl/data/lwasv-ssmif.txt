@@ -1,6 +1,8 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2019 Dec 16 by J. Dowell
+#  Initial update for three beams
 # 2019 Oct 11 by J. Dowell
 #  Updated the list of bad stands after monsoon season 2019
 # 2018 Jul 26 by J. Dowell
@@ -53,7 +55,7 @@
 #
 # Search "FIXME" for things that need work
 
-FORMAT_VERSION 8
+FORMAT_VERSION 9
 STATION_ID SV
 GEO_N   +34.348358 # N Lat [deg]
 GEO_E  -106.885783 # E Lat [deg]
@@ -7021,20 +7023,22 @@ SERVER_DESI[7]  2
 # --- DR ---------------
 # ----------------------
 # Maximum number of DR subsystems:
-N_DR 3
+N_DR 4
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DRs not identified
 # *** DR_STAT[dr#] goes here:
 DR_STAT[1]  3
 DR_STAT[2]  3
-DR_STAT[3]  3
+DR_STAT[3]  0
+DR_STAT[4]  3
 
 # DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
 # *** DR_ID[dr#] goes here:
 DR_ID[1]  DR1
 DR_ID[2]  DR2
 DR_ID[3]  DR3
+DR_ID[4]  DR4
 
 # DR_SHLF[] will be set to 0 (not known/not applicable) for any DRs not identified
 # *** DR_SHLF[dr#] goes here:
@@ -7044,6 +7048,7 @@ DR_ID[3]  DR3
 DR_PC[1]  SM1US
 DR_PC[2]  SM1US
 DR_PC[3]  SM1US
+DR_PC[4]  SM1US
 
 # 1 is the beam output, 2 is TBN
 # DR_DP[] will be set to 0 (no connection) for any DPs not identified
@@ -7051,6 +7056,7 @@ DR_PC[3]  SM1US
 DR_DP[1] 1
 DR_DP[2] 2
 DR_DP[3] 3
+DR_DP[4] 4
 
 # ----------------------
 # --- Power ------------
