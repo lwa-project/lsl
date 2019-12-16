@@ -63,7 +63,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
             'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
@@ -78,7 +78,7 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
             'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
-ME_SSMIF_FORMAT_VERSION = 8	# SSMIF format version code
+ME_SSMIF_FORMAT_VERSION = 9	# SSMIF format version code
 ME_MAX_NSTD = 256			# Maximum number of stands that can be described
 ME_MAX_NFEE = 256			# Maximum number of FEEs that can be described
 ME_MAX_FEEID_LENGTH = 10		# Number of characters in FEE ID name
@@ -97,7 +97,7 @@ ME_MAX_NROACHCH = 32		# Number of channels per ROACH board
 ME_MAX_ROACHID_LENGTH = 10	# Number of characters in the ROACH board ID name
 ME_MAX_NSERVER = 7			# Maximum number of server
 ME_MAX_SERVERID_LENGTH = 10	# Number of characters in the server ID name
-ME_MAX_NDR = 2				# Maximum number of data recorders
+ME_MAX_NDR = 4				# Maximum number of data recorders
 ME_MAX_DRID_LENGTH = 10		# Number of characters in the DR ID name
 ME_MAX_NPWRPORT = 50		# Maximum number of power ports
 ME_MAX_SSNAME_LENGTH = 3		# Number of characters in the power port ID names, for codes used for PWR_NAME
@@ -338,7 +338,7 @@ OSF2_STRUCT = """
 _cDecRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
 
 
-def parse_c_struct(cStruct, char_mode='str', endianness='native'):
+def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None):
     """
     Function to take a C structure declaration and build a ctypes.Structure out 
     of it with the appropriate alignment, character interpretation*, and endianness
@@ -350,6 +350,10 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
     bytes which can be converted to strings via chr().
     """
     
+    # Process the macro overrides dictionary
+    if overrides is None:
+        overrides = {}
+        
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):
         raise RuntimeError("Unknown character mode: '%s'" % char_mode)
@@ -388,16 +392,28 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
         try:
             d1 = mtch.group('d1')
             if d1 is not None:
-                d1 = eval(d1)
+                try:
+                    d1 = overrides[d1]
+                except KeyError:
+                    d1 = eval(d1)
             d2 = mtch.group('d2')
             if d2 is not None:
-                d2 = eval(d2)
+                try:
+                    d2 = overrides[d2]
+                except KeyError:
+                    d2 = eval(d2)
             d3 = mtch.group('d3')
             if d3 is not None:
-                d3 = eval(d3)
+                try:
+                    d3 = overrides[d3]
+                except KeyError:
+                    d3 = eval(d3)
             d4 = mtch.group('d4')
             if d4 is not None:
-                d4 = eval(d4)
+                try:
+                    d4 = overrides[d4]
+                except KeyError:
+                    d4 = eval(d4)
         except NameError:
             raise RuntimeError("Unknown value in array index: '%s'" % line)
         

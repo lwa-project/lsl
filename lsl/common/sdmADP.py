@@ -100,14 +100,14 @@ class SubSubSystemStatus(object):
         else:
             self.dr = dr
             
-    def binary_read(self, fh):
+    def binary_read(self, fh, overrides=None):
         """
         Given an open file handle, interpret it in the context of a 
         subsubsystem_status_struct C structure and update the Python instance accordingly.
         """
         
         # Figure out what to do
-        ssssStruct = parse_c_struct(SUBSUBSYSTEM_STATUS_STRUCT, endianness='little')
+        ssssStruct = parse_c_struct(SUBSUBSYSTEM_STATUS_STRUCT, endianness='little', overrides=overrides)
         
         # Read
         fh.readinto(ssssStruct)
@@ -186,6 +186,8 @@ class StationSettings(object):
         self.report['DP_'] = ssStruct.mrp_dp
         self.report['DR1'] = ssStruct.mrp_dr1
         self.report['DR2'] = ssStruct.mrp_dr2
+        self.report['DR3'] = ssStruct.mrp_dr3
+        self.report['DR4'] = ssStruct.mrp_dr4
         self.report['SHL'] = ssStruct.mrp_shl
         self.report['MCS'] = ssStruct.mrp_mcs
         
@@ -193,6 +195,8 @@ class StationSettings(object):
         self.update['DP_'] = ssStruct.mup_dp
         self.update['DR1'] = ssStruct.mup_dr1
         self.update['DR2'] = ssStruct.mup_dr2
+        self.update['DR3'] = ssStruct.mup_dr3
+        self.update['DR4'] = ssStruct.mup_dr4
         self.update['SHL'] = ssStruct.mup_shl
         self.update['MCS'] = ssStruct.mup_mcs
         
@@ -287,20 +291,40 @@ def parse_sdm(filename):
         dynamic.shl.binary_read(fh)
         dynamic.asp.binary_read(fh)
         dynamic.dp.binary_read(fh)
-        for n in xrange(ME_MAX_NDR):
-            dynamic.dr[n].binary_read(fh)
+        mark = fh.tell()
+        try:
+            for n in xrange(ME_MAX_NDR):
+                dynamic.dr[n].binary_read(fh)
+                
+            # Sub-sub-system status section
+            dynamic.status.binary_read(fh)
             
-        # Sub-sub-system status section
-        dynamic.status.binary_read(fh)
-        
-        # Antenna status and data path status
-        adpsStruct = parse_c_struct("""
-        int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
-        int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
-        """, endianness='little')
-        
-        fh.readinto(adpsStruct)
-        
+            # Antenna status and data path status
+            adpsStruct = parse_c_struct("""
+            int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
+            int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
+            """, endianness='little')
+            
+            fh.readinto(adpsStruct)
+            
+        except IOError:
+            fh.seek(mark)
+            overrides = {'ME_MAX_NDR': 3}
+            
+            for n in xrange(3):
+                dynamic.dr[n].binary_read(fh)
+                
+            # Sub-sub-system status section
+            dynamic.status.binary_read(fh, overrides=overrides)
+            
+            # Antenna status and data path status
+            adpsStruct = parse_c_struct("""
+            int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
+            int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
+            """, endianness='little', overrides=overrides)
+            
+            fh.readinto(adpsStruct)
+            
         dynamic.ant_status = flat_to_multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
         dynamic.dpo_status = flat_to_multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
         

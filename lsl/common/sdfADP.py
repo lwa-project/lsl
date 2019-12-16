@@ -846,7 +846,7 @@ class Session(object):
             if verbose:
                 print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
             failures += 1
-        if self.drxBeam not in (-1, 1, 2):
+        if self.drxBeam not in (-1, 1, 2, 3):
             if verbose:
                 print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
             failures += 1

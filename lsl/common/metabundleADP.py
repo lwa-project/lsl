@@ -104,10 +104,12 @@ def read_ses_file(filename):
             bses.SESSION_SPC = ''
             
     record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
-              'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2}
+              'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2,
+              'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4}
     
     update = {'ASP': bses.SESSION_MUP_ASP, 'ADP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
-              'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2}
+              'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2,
+              'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4}
     
     return {'version': bses.FORMAT_VERSION, 'projectID': bses.PROJECT_ID.lstrip().rstrip(), 
             'sessionID': bses.SESSION_ID,  'CRA': bses.SESSION_CRA,  'drxBeam': bses.SESSION_DRX_BEAM,

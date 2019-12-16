@@ -336,7 +336,7 @@ OSF2_STRUCT = """
 _cDecRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
 
 
-def parse_c_struct(cStruct, char_mode='str', endianness='native'):
+def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None):
     """
     Function to take a C structure declaration and build a ctypes.Structure out 
     of it with the appropriate alignment, character interpretation*, and endianness
@@ -348,6 +348,10 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
     bytes which can be converted to strings via chr().
     """
     
+    # Process the macro overrides dictionary
+    if overrides is None:
+        overrides = {}
+        
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):
         raise RuntimeError("Unknown character mode: '%s'" % char_mode)
@@ -386,16 +390,28 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native'):
         try:
             d1 = mtch.group('d1')
             if d1 is not None:
-                d1 = eval(d1)
+                try:
+                    d1 = overrides[d1]
+                except KeyError:
+                    d1 = eval(d1)
             d2 = mtch.group('d2')
             if d2 is not None:
-                d2 = eval(d2)
+                try:
+                    d2 = overrides[d2]
+                except KeyError:
+                    d2 = eval(d2)
             d3 = mtch.group('d3')
             if d3 is not None:
-                d3 = eval(d3)
+                try:
+                    d3 = overrides[d3]
+                except KeyError:
+                    d3 = eval(d3)
             d4 = mtch.group('d4')
             if d4 is not None:
-                d4 = eval(d4)
+                try:
+                    d4 = overrides[d4]
+                except KeyError:
+                    d4 = eval(d4)
         except NameError:
             raise RuntimeError("Unknown value in array index: '%s'" % line)
         

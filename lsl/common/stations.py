@@ -1545,14 +1545,17 @@ def _parse_ssmif_binary(filename):
     version = struct.unpack('<i', version)[0]
     fh.seek(0)
     
-    if version in (8,):
+    overrides = {}
+    if version in (8,9):
         ## ADP
         mode = mcsADP
+        if version == 8:
+            overrides['ME_MAX_NDR'] = 3
     else:
         ## DP
         mode = mcs
-    bssmif = mode.parse_c_struct(mode.SSMIF_STRUCT, char_mode='int', endianness='little')
-    bsettings = mode.parse_c_struct(mode.STATION_SETTINGS_STRUCT, endianness='little')
+    bssmif = mode.parse_c_struct(mode.SSMIF_STRUCT, char_mode='int', endianness='little', overrides=overrides)
+    bsettings = mode.parse_c_struct(mode.STATION_SETTINGS_STRUCT, endianness='little', overrides=overrides)
     
     fh.readinto(bssmif)
     
