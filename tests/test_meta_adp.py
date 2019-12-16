@@ -26,7 +26,7 @@ mdbFileOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-0.tgz')
 mdbFileOld1 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-1.tgz')
 mdbFileADP = os.path.join(DATA_BUILD, 'tests', 'metadata-adp.tgz')
 mdbFileGDB = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb.tgz')
-mdbFileGDBOld0 = os.path.join(DATA_PATH, 'tests', 'metadata-gdb-old-0.tgz')
+mdbFileGDBOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb-old-0.tgz')
 
 
 class metabundle_tests_adp(unittest.TestCase):
