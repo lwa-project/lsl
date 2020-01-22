@@ -14,7 +14,10 @@
   * Updated the scipy version requirement to >=0.19
   * Removed lsl.misc.mathutil.savitzky_golay since it was added in scipy v0.14.0+
   * Added support for collecting usage data for LSL via lsl.misc.telemetry
-  
+
+1.2.6
+  * Fixed a bug in the lsl.reader.ldp classes that causes offset() to fail in certain cases
+
 1.2.5
   * Updated setup.py to make it more likely that clang will build OpenMP-enabled extensions
   * Updated the install documentation to recommend pip
