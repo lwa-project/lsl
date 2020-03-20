@@ -31,10 +31,11 @@ script:
         numpy \
         matplotlib \
         scipy \
-        aipy \
-        pyephem \
         gdbm \
         codecov
+    - sudo pip --no-cache-dir install \
+        aipy \
+        pyephem
     - sudo python setup.py build
     - sudo python setup.py test
 
