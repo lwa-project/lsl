@@ -1,6 +1,8 @@
 LSL - The LWA Software Library
 ==============================
 
+[![Travis](https://travis-ci.org/lwa-project/lsl.svg?branch=master)](https://travis-ci.org/lwa-project/lsl.svg?branch=master)
+
 ### [![Paper](https://img.shields.io/badge/arXiv-1209.1576-blue.svg)](https://arxiv.org/abs/1209.1576)
 
 DESCRIPTION
