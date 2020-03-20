@@ -38,12 +38,12 @@ script:
         aipy \
         pyephem \
         astropy
-    - sudo python -c "from astropy.utils.data import download_file, import_file_to_cache; from astropy.utils.iers import IERS_A_URL; filename=download_file('ftp://ftp.iers.org/products/eop/rapid/standard/finals2000A.all', cache=True); import_file_to_cache(IERS_A_URL, filename)"
     - sudo python setup.py build
     - sudo python setup.py test
+    - sudo python setup.py install
+    - sudo coverage run --source=lsl -m unittest discover tests
 
 after_success:
-    - cd tests
     - coveralls
     - codecov
 
