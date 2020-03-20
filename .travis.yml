@@ -31,7 +31,6 @@ script:
         numpy \
         matplotlib \
         scipy \
-        gdbm \
         codecov
     - sudo pip --no-cache-dir install \
         aipy \
