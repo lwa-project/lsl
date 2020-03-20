@@ -37,15 +37,10 @@ script:
     - sudo pip --no-cache-dir install \
         aipy \
         pyephem
-    - python setup.py build
-    - python -c "from astropy.utils.data import download_file; from astropy.utils.iers import IERS_A_URL; download_file(IERS_A_URL, cache=True)"
-    - python setup.py test
+    - sudo python setup.py build
+    - sudo python setup.py test
 
 after_success:
     - cd tests
     - coveralls
     - codecov
-
-cache:
-  directories:
-    - $HOME/.astropy/cache
