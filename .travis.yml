@@ -36,7 +36,9 @@ script:
         codecov
     - sudo pip --no-cache-dir install \
         aipy \
-        pyephem
+        pyephem \
+        astropy
+    - sudo - python -c "from astropy.utils.data import download_file; download_file(ftp://ftp.iers.org/products/eop/rapid/standard/finals2000A.all, cache=True)"
     - sudo python setup.py build
     - sudo python setup.py test
 
@@ -44,3 +46,7 @@ after_success:
     - cd tests
     - coveralls
     - codecov
+
+cache:
+  directories:
+    - $HOME/.astropy/cache
