@@ -34,10 +34,6 @@ script:
         pylint \
         coveralls \
         codecov
-    - sudo pip --no-cache-dir install \
-        aipy \
-        pyephem \
-        astropy
     - sudo python setup.py build
     - sudo python setup.py test
     - sudo python setup.py install
