@@ -34,8 +34,7 @@ script:
         coveralls \
         codecov
     - sudo pip --no-cache-dir install \
-        aipy \
-        pyephem
+        aipy
     - sudo python setup.py build
     - sudo python setup.py test
     - sudo python setup.py install
