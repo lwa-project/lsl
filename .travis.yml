@@ -1,0 +1,43 @@
+sudo: required
+  
+language: python
+
+python:
+    - 2.7
+    - 3.6
+    ## PyPy versions
+    #- pypy2.7-6.0
+    #- pypy3
+
+services:
+    - docker
+
+addons:
+    apt:
+        packages:
+            - build-essential
+            - curl
+            - git
+            - pkg-config
+            - software-properties-common
+            - python-dev
+            - python3-dev
+            - libfftw3-dev
+            - libgdbm-dev
+
+script:
+    - sudo pip --no-cache-dir install \
+        setuptools \
+        numpy \
+        matplotlib \
+        scipy \
+        aipy \
+        pyephem \
+        gdbm \
+        codecov
+    - sudo python setup.py build
+    - sudo python setup.py test
+
+after_success:
+    - cd tests
+    - codecov
