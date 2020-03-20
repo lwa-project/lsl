@@ -38,7 +38,7 @@ script:
         aipy \
         pyephem \
         astropy
-    - sudo python -c "from astropy.utils.data import download_file; download_file('ftp://ftp.iers.org/products/eop/rapid/standard/finals2000A.all', cache=True)"
+    - sudo python -c "from astropy.utils.data import download_file; from astropy.utils.iers import IERS_A_URL; download_file(IERS_A_URL, cache=True)"
     - sudo python setup.py build
     - sudo python setup.py test
 
