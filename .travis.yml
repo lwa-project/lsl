@@ -44,3 +44,7 @@ script:
 after_success:
     - coveralls
     - codecov
+
+cache:
+  directories:
+    - $HOME/.astropy/cache
