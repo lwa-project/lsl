@@ -37,7 +37,7 @@ script:
     - sudo pip --no-cache-dir install \
         aipy
     - sudo python setup.py build
-      #- sudo python setup.py test
+    - sudo python setup.py test
     - sudo python setup.py install
     - sudo coverage run --source=lsl -m unittest discover tests
 
