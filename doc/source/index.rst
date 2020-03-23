@@ -83,11 +83,10 @@ Included Scripts
 
 Tutorials
 =========
-* `General LSL Routines <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20General%20Tutorial.ipynb>`_
-* `Building SDFs Programmatically <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20SDF%20Generation.ipynb>`_
-* `Observation Metadata <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20MCS%20Metadata%20Tutorial.ipynb>`_
-* `Working with TBW/TBN Data <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20TBW%20%26%20TBN%20Tutorial.ipynb>`_
-* `Working with DRX Data <http://nbviewer.ipython.org/url/fornax.phys.unm.edu/lwa/subversion/trunk/lsl/doc/notebooks/LSL%20DRX%20Tutorial.ipynb>`_
+* `General LSL Routines <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20General%20Tutorial.ipynb>`_
+* `Building SDFs Programmatically <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20SDF%20Generation.ipynb>`_
+* `Observation Metadata <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20MCS%20Metadata%20Tutorial.ipynb>`_
+* `Working with Data <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20LDP%20Tutorial.ipynb>`_
 
 Advanced
 ========
