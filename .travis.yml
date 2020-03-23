@@ -33,6 +33,7 @@ install:
         codecov
     - pip install aipy
     - pip install .
+    - python -c "from astropy.time import Time; t1=Time.now(); t1.ut1"
 
 script:
     - cd tests
