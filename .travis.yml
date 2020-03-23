@@ -9,24 +9,21 @@ python:
     #- pypy2.7-6.0
     #- pypy3
 
-services:
-    - docker
 
-addons:
-    apt:
-        packages:
-            - build-essential
-            - curl
-            - git
-            - pkg-config
-            - software-properties-common
-            - python-dev
-            - python3-dev
-            - libfftw3-dev
-            - libgdbm-dev
+before_install:
+    - sudo apt-get update
+    - sudo apt-get -y install \
+         build-essential \
+         curl \
+         git \
+         pkg-config \
+         software-properties-common \
+         python-dev \
+         python3-dev \
+         libfftw3-dev
 
-script:
-    - sudo pip --no-cache-dir install \
+install:
+    - pip install \
         setuptools \
         numpy \
         matplotlib \
@@ -34,18 +31,17 @@ script:
         pyephem==3.7.6.0 \
         coveralls \
         codecov
-    - sudo pip --no-cache-dir install \
-        aipy
-    - sudo python setup.py build
-    - sudo python setup.py test
-    - sudo python setup.py install
-    - sudo coverage run --source=lsl -m unittest discover tests
+    - pip install aipy
+    - pip install .
 
-after_success:
+script:
+    - python setup.py test
+    - coverage run --source=lsl -m unittest discover tests
+
+after_success:    
     - coveralls
     - codecov
 
 cache:
   directories:
-    - $HOME/.astropy/cache/download/py2
-    - $HOME/.astropy/cache/download/py3
+    - $HOME/.astropy/cache
