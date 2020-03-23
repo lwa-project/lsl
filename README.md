@@ -25,7 +25,7 @@ REQUIREMENTS
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
- * astropy < 2.0 (2.7) or >= 3.0 (3.0+)
+ * astropy < 3.0 (2.7) or >= 3.0 (3.0+)
  * pyephem >= 3.7.5.3
  * aipy >= 3.0.1
  * pytz >= 2012c
