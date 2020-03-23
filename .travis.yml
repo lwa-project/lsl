@@ -29,6 +29,7 @@ install:
         matplotlib \
         scipy \
         pyephem==3.7.6.0 \
+        berkeley-db \
         coveralls \
         codecov
     - pip install aipy
