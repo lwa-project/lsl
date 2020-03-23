@@ -47,4 +47,5 @@ after_success:
 
 cache:
   directories:
-    - $HOME/.astropy/cache
+    - $HOME/.astropy/cache/download/py2
+    - $HOME/.astropy/cache/download/py3
