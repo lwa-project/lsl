@@ -35,10 +35,11 @@ install:
     - pip install .
 
 script:
-    - python setup.py test
-    - coverage run --source=lsl -m unittest discover tests
+    - cd tests
+    - coverage run --source=lsl -m unittest discover
 
-after_success:    
+after_success:
+    - cd tests
     - coveralls
     - codecov
 
