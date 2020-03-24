@@ -638,7 +638,7 @@ class Idi(WriterBase):
             ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
             pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
         except iers.IERSRangeError:
-            with iers.Conf().set_temp('iers_auto_url', 'ftp://ftp.iers.org/products/eop/rapid/standard/finals2000A.all'):
+            with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
                 eop = iers.IERS_Auto.open()
                 ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
                 pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
