@@ -21,7 +21,13 @@ addons:
             - python-dev
             - python3-dev
             - libfftw3-dev
+            - libcfitsio-dev
+            - libboost-python-dev
 
+before_install:
+    - sudo add-apt-repository -y ppa:kernsuite/kern-5
+    - sudo apt-get -q update
+    - sudo apt-get -y install casacore-dev wcslib-dev
 install:
     - pip install \
         setuptools \
@@ -29,6 +35,7 @@ install:
         matplotlib \
         scipy \
         pyephem==3.7.6.0 \
+        python-casacore \
         coveralls \
         codecov
     - pip install aipy
