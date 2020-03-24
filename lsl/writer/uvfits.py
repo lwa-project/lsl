@@ -534,10 +534,11 @@ class Uv(WriterBase):
             pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
         except iers.IERSRangeError:
             with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
-                eop = iers.IERS_Auto.open()
-                ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
-                pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
-                
+                with iers.Conf().set_temp('auto_max_age', None):
+                    eop = iers.IERS_Auto.open()
+                    ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
+                    pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
+                    
         an.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         an.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
         an.header['POLARX'] = pm_xy[0].to('arcsec').value
