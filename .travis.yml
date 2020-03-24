@@ -38,9 +38,11 @@ install:
         python-casacore \
         coveralls \
         codecov
+    - pip install astropy==3.2.3
     - pip install aipy
     - pip install .
-    - python -c "from astropy.time import Time; t1=Time.now(); t1.ut1"
+    - python -c "from astropy.utils.data import download_file; download_file('https://datacenter.iers.org/data/9/finals2000A.all', cache=True)"
+
 
 script:
     - cd tests
