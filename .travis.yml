@@ -28,6 +28,7 @@ before_install:
     - sudo add-apt-repository -y ppa:kernsuite/kern-3
     - sudo apt-get -q update
     - sudo apt-get -y install casacore-dev wcslib-dev
+
 install:
     - pip install \
         setuptools \
@@ -41,8 +42,7 @@ install:
     - pip install "astropy<4.0"
     - pip install aipy
     - pip install .
-    - python -c "from astropy.utils.data import download_file; download_file('https://datacenter.iers.org/data/9/finals2000A.all', cache=True)"
-
+    - python -c "from astropy.time import Time; t1=Time.now(); t1.ut1"
 
 script:
     - cd tests
