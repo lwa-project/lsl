@@ -22,6 +22,7 @@ import re
 import math
 import ephem
 import numpy
+from astropy.time import Time as AstroTime
 from astropy.utils import iers
 from astropy.io import fits as astrofits
 from datetime import datetime
@@ -528,16 +529,17 @@ class Uv(WriterBase):
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
         eop = iers.IERS_Auto.open()
+        refAT = AstroTime(refMJD, format='mjd', scale='utc')
         try:
             # Temporary fix for maia.usno.navy.mil being down
-            ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
-            pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
+            ut1_utc = eop.ut1_utc(refAT)
+            pm_xy = eop.pm_xy(refAT)
         except iers.IERSRangeError:
             with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
                 with iers.Conf().set_temp('auto_max_age', None):
                     eop = iers.IERS_Auto.open()
-                    ut1_utc = eop.ut1_utc(refMJD + astro.MJD_OFFSET)
-                    pm_xy = eop.pm_xy(refMJD + astro.MJD_OFFSET)
+                    ut1_utc = eop.ut1_utc(refAT)
+                    pm_xy = eop.pm_xy(refAT)
                     
         an.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         an.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
