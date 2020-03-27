@@ -90,7 +90,7 @@ _NOTEBOOKS = glob.glob(os.path.join(MODULE_BUILD, '*.ipynb'))
 _NOTEBOOKS.sort()
 for notebook in _NOTEBOOKS:
     test = _test_generator(notebook)
-    name = 'test_%s' % os.path.splitext(os.path.basename(script))[0].replace(' ', '_')
+    name = 'test_%s' % os.path.splitext(os.path.basename(notebook))[0].replace(' ', '_')
     doc = """Execution of the '%s' notebook.""" % os.path.basename(notebook)
     setattr(test, '__doc__', doc)
     setattr(notebooks_tests, name, test)
