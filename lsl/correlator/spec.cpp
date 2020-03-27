@@ -703,7 +703,7 @@ See the inidividual functions for more details.\n\
 
 MOD_INIT(_spec) {
     char filename[256];
-    PyObject *m, *pModule, *pDataPath=NULL;
+    PyObject *m, *all, *pModule, *pDataPath=NULL;
     
     Py_Initialize();
     
@@ -716,7 +716,12 @@ MOD_INIT(_spec) {
     
     // Version and revision information
     PyModule_AddObject(m, "__version__", PyString_FromString("0.7"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    
+    // Function listings
+    all = PyList_New(0);
+    PyList_Append(all, PyString_FromString("FPSD"));
+    PyList_Append(all, PyString_FromString("PFBPSD"));
+    PyModule_AddObject(m, "__all__", all);
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");

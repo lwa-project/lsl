@@ -440,7 +440,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsF2, validF2 = func(signals[signalsIndex2,:], freq, delays2, LFFT=LFFT, overlap=overlap, sample_rate=sample_rate, clip_level=clip_level, window=window)
     
     # X
-    output = _stokes.XEngine2(signalsF1, signalsF2, validF1, validF2)
+    output = _stokes.XEngine3(signalsF1, signalsF2, validF1, validF2)
     if not include_auto:
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
