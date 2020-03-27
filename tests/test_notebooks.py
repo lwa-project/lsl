@@ -37,7 +37,7 @@ __version__  = "0.1"
 __author__   = "Jayce Dowell"
 
 
-def run_notebook(notebook_path):
+def run_notebook(notebook_path, kernel_name=None):
     """
     From:
         http://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
@@ -49,7 +49,7 @@ def run_notebook(notebook_path):
     with open(notebook_path) as f:
         nb = nbformat.read(f, as_version=4)
         
-    proc = ExecutePreprocessor(timeout=600)
+    proc = ExecutePreprocessor(timeout=600, kernel_name=kernel_name)
     proc.allow_errors = True
     
     proc.preprocess(nb, {'metadata': {'path': '/'}})
@@ -71,11 +71,13 @@ class notebooks_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the LSL IPython notebooks."""
     
     def setUp(self):
-        self.kernel = jupyter_client.KernelManager()
-        self.kernel.start_kernel()
+        self._kernel = jupyter_client.KernelManager()
+        self._kernel.start_kernel()
+        self.kernel_name = self._kernel.kernel_name
         
     def tearDown(self):
-        self.kernel.shutdown_kernel(now=True) 
+        self._kernel.shutdown_kernel()
+        self.kernel_name = None
 
 
 def _test_generator(notebook):
@@ -86,7 +88,7 @@ def _test_generator(notebook):
     """
     
     def test(self):
-        nb, errors = run_notebook(notebook)
+        nb, errors = run_notebook(notebook, kernel_name=self.kernel_name)
         self.assertEqual(errors, [])
         
     return test
