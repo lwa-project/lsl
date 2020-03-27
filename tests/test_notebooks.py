@@ -24,6 +24,7 @@ else:
 
 run_notebooks_tests = False
 try:
+    import jupyter_client
     import nbformat
     from nbconvert.preprocessors import ExecutePreprocessor
     if MODULE_BUILD is not None:
@@ -69,7 +70,12 @@ def run_notebook(notebook_path):
 class notebooks_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the LSL IPython notebooks."""
     
-    pass     
+    def setUp(self):
+        self.kernel = jupyter_client.KernelManager()
+        self.kernel.start()
+        
+    def tearDown(self):
+        self.kernel.shutdown_kernel(now=True) 
 
 
 def _test_generator(notebook):

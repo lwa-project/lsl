@@ -634,7 +634,7 @@ class Idi(WriterBase):
         refDate = self.astro_ref_time
         refMJD = refDate.to_jd() - astro.MJD_OFFSET
         eop = iers.IERS_Auto.open()
-        refAT = AstrTime(refMJD, format='mjd', scale='utc')
+        refAT = AstroTime(refMJD, format='mjd', scale='utc')
         try:
             # Temporary fix for maia.usno.navy.mil being down
             ut1_utc = eop.ut1_utc(refAT)
