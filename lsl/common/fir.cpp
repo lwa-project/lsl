@@ -504,7 +504,7 @@ Module Setup - Initialization
 */
 
 MOD_INIT(_fir) {
-    PyObject *m;
+    PyObject *m, *all;
     
     Py_Initialize();
     
@@ -517,7 +517,13 @@ MOD_INIT(_fir) {
     
     // Version and revision information
     PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    
+    // Function listings
+    all = PyList_New(0);
+    PyList_Append(all, PyString_FromString("integer16"));
+    PyList_Append(all, PyString_FromString("integer16Delayed"));
+    PyList_Append(all, PyString_FromString("integerBeamformer"));
+    PyModule_AddObject(m, "__all__", all);
     
     return MOD_SUCCESS_VAL(m);
 }

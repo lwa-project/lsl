@@ -827,10 +827,10 @@ Outputs:\n\
 
 /*
   Cross-Multiplication And Accumulation Function ("X Engines")
-    1. XEngine2 - XMAC two collections of signals
+    1. XEngine3 - XMAC two collections of signals
 */
 
-static PyObject *XEngine2(PyObject *self, PyObject *args) {
+static PyObject *XEngine3(PyObject *self, PyObject *args) {
     PyObject *signalsX, *signalsY, *sigValidX, *sigValidY, *output;
     PyArrayObject *dataX=NULL, *dataY=NULL, *validX=NULL, *validY=NULL, *vis=NULL;
     long nStand, nChan, nFFT, nBL;	
@@ -968,7 +968,7 @@ fail:
     return NULL;
 }
 
-PyDoc_STRVAR(XEngine2_doc, \
+PyDoc_STRVAR(XEngine3_doc, \
 "Perform all XMACs for a data stream out of the F engine using OpenMP that\n\
 creates the four Stokes parameters: I, Q, U, and V.\n\
 \n\
@@ -995,7 +995,7 @@ Ouputs:\n\
 static PyMethodDef StokesMethods[] = {
     {"FPSD",     (PyCFunction) FPSD,     METH_VARARGS|METH_KEYWORDS, FPSD_doc    }, 
     {"PFBPSD",   (PyCFunction) PFBPSD,   METH_VARARGS|METH_KEYWORDS, PFBPSD_doc  }, 
-    {"XEngine2", (PyCFunction) XEngine2, METH_VARARGS,               XEngine2_doc}, 
+    {"XEngine3", (PyCFunction) XEngine3, METH_VARARGS,               XEngine3_doc}, 
     {NULL,       NULL,                   0,                          NULL        }
 };
 
@@ -1004,11 +1004,13 @@ PyDoc_STRVAR(stokes_doc, \
 parameters.\n\
 \n\
 The functions defined in this module are:\n\
- * FPSDR -  FFT and integrate function for computing a series of overlapped\n\
-            Fourier transforms for a real-valued (TBW) or complex-valued (TBN\n\
-            and DRX) signals from a collection of stands all at once.\n\
- * PFBPSD - Similar to FPSD, but using a 4-tap + Hanning windowed polyphase\n\
-            filter bank.\n\
+ * FPSDR -    FFT and integrate function for computing a series of overlapped\n\
+              Fourier transforms for a real-valued (TBW) or complex-valued (TBN\n\
+              and DRX) signals from a collection of stands all at once.\n\
+ * PFBPSD -   Similar to FPSD, but using a 4-tap + Hanning windowed polyphase\n\
+              filter bank.\n\
+ * XEngine3 - Similar to XEngine2, but works with all linear polarization products at\n\
+              once to compute all four Stokes parameters.\n\
 \n\
 Also included is an X-Engine for use with the lsl.correlator._core module to\n\
 perform cross-correlations for the stokes parameters.\n\
@@ -1022,7 +1024,7 @@ See the inidividual functions for more details.");
 
 MOD_INIT(_stokes) {
     char filename[256];
-    PyObject *m, *pModule, *pDataPath=NULL;
+    PyObject *m, *all, *pModule, *pDataPath=NULL;
     
     Py_Initialize();
     
@@ -1035,7 +1037,13 @@ MOD_INIT(_stokes) {
     
     // Version and revision information
     PyModule_AddObject(m, "__version__", PyString_FromString("0.4"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    
+    // Function listings
+    all = PyList_New(0);
+    PyList_Append(all, PyString_FromString("FPSD"));
+    PyList_Append(all, PyString_FromString("PFBPSD"));
+    PyList_Append(all, PyString_FromString("XEngine3"));
+    PyModule_AddObject(m, "__all__", all);
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");

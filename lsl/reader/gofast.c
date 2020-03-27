@@ -100,7 +100,7 @@ PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VD
 */
 
 MOD_INIT(_gofast) {
-    PyObject *m, *dict1, *dict2;
+    PyObject *m, *all, *dict1, *dict2;
     
     Py_Initialize();
     
@@ -149,10 +149,23 @@ MOD_INIT(_gofast) {
     
     // Version and revision information
     PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
     
     // Correlator channel count
     PyModule_AddObject(m, "NCHAN_COR", PyInt_FromLong(COR_NCHAN));
+    
+    // Function listings
+    all = PyList_New(0);
+    PyList_Append(all, PyString_FromString("read_tbw"));
+    PyList_Append(all, PyString_FromString("read_tbn"));
+    PyList_Append(all, PyString_FromString("read_drx"));
+    PyList_Append(all, PyString_FromString("read_drspec"));
+    PyList_Append(all, PyString_FromString("read_vdif"));
+    PyList_Append(all, PyString_FromString("read_tbf"));
+    PyList_Append(all, PyString_FromString("read_cor"));
+    PyList_Append(all, PyString_FromString("SyncError"));
+    PyList_Append(all, PyString_FromString("EOFError"));
+    PyList_Append(all, PyString_FromString("NCHAN_COR"));
+    PyModule_AddObject(m, "__all__", all);
     
     return MOD_SUCCESS_VAL(m);
 }

@@ -400,7 +400,7 @@ Module Setup - Initialization
 */
 
 MOD_INIT(_simfast) {
-    PyObject *m;
+    PyObject *m, *all;
     
     Py_Initialize();
     
@@ -413,7 +413,11 @@ MOD_INIT(_simfast) {
     
     // Version and revision information
     PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev: 1639 $"));
+    
+    // Function listings
+    all = PyList_New(0);
+    PyList_Append(all, PyString_FromString("FastVis"));
+    PyModule_AddObject(m, "__all__", all);
     
     return MOD_SUCCESS_VAL(m);
 }

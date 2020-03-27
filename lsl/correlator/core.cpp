@@ -1264,7 +1264,9 @@ The function defined in this module are:\n\
              signals from a collection of stands all at once.\n\
  * PFBEngine - Similar to FEngine, but using a 4-tap + Hanning windowed polyphase\n\
                filter bank.\n\
- * XEngine2 - Similar to XEngine, but works with a collection of stands all at\n\
+ * XEngine2 - Cross multiply a single polarization stream created by FEngine or\n\
+              PFBEngine\n\
+ * XEngine3 - Similar to XEngine2, but works with all linear polarization products at\n\
               once.\n\
 \n\
 See the inidividual functions for more details.");
@@ -1276,7 +1278,7 @@ Module Setup - Initialization
 
 MOD_INIT(_core) {
     char filename[256];
-    PyObject *m, *pModule, *pDataPath=NULL;
+    PyObject *m, *all, *pModule, *pDataPath=NULL;
     
     Py_Initialize();
     
@@ -1289,7 +1291,14 @@ MOD_INIT(_core) {
     
     // Version and revision information
     PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    
+    // Function listings
+    all = PyList_New(0);
+    PyList_Append(all, PyString_FromString("FEngine"));
+    PyList_Append(all, PyString_FromString("PFBEngine"));
+    PyList_Append(all, PyString_FromString("XEngine2"));
+    PyList_Append(all, PyString_FromString("XEngine3"));
+    PyModule_AddObject(m, "__all__", all);
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");

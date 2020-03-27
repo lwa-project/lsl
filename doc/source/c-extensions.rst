@@ -9,8 +9,8 @@ Go-Fast! Readers
 ----------------
 .. automodule:: lsl.reader._gofast
    :members:
-.. autoexception:: lsl.reader._gofast.eofError
-.. autoexception:: lsl.reader._gofast.syncError
+.. autoexception:: lsl.reader._gofast.EOFError
+.. autoexception:: lsl.reader._gofast.SyncError
 
 Power Spectral Density Calculation
 ----------------------------------
@@ -24,16 +24,18 @@ Stokes Parameters
 +++++++++++++++++
 .. automodule:: lsl.correlator._stokes
 
-.. autofunction:: lsl.correlator._stokes.FPSDR2
-.. autofunction:: lsl.correlator._stokes.FPSDR3
-.. autofunction:: lsl.correlator._stokes.FPSDC2
-.. autofunction:: lsl.correlator._stokes.FPSDC3
+.. autofunction:: lsl.correlator._stokes.FPSD
+.. autofunction:: lsl.correlator._stokes.PFBPSD
+.. autofunction:: lsl.correlator._stokes.XEngine3
 
 FX Correlator Core
 ------------------
 .. automodule:: lsl.correlator._core
    :members:
-.. autofunction:: lsl.correlator._stokes.XEngine2
+.. autofunction:: lsl.correlator._core.FEngine
+.. autofunction:: lsl.correlator._core.PFBEngine
+.. autofunction:: lsl.correlator._core.XEngine2
+.. autofunction:: lsl.correlator._core.XEngine3
 
 DP-Style Signal Processing
 --------------------------
