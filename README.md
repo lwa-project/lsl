@@ -33,24 +33,10 @@ REQUIREMENTS
  * BeautifulSoup (required for some of the scripts)
  * casacore (required for measurement set support)
 
-BUILDING
---------
+INSTALLING
+----------
 The LSL package is installed as a regular Python package using distutils.  Unzip and untar the source distribution. Setup the Python interpreter you wish to use for running the package applications and switch to the root of the source distribution tree.
 
-A setup configuration script is required to run the build process.  A sample config file may be found in the root directory of the source distribution as `setup.cfg`.  Do not modify any of the lines in the `[build_ext]` section of the config file.
-
-To build the LSL package, run:
-
-    python setup.py build
-
-TESTING
--------
-To test the as-build LSL package, run:
-
-	python setup.py test
-
-INSTALLATION
-------------
 Install LSL by running:
 
 	pip install . [--root=<prefix>|--user]
@@ -69,7 +55,8 @@ UNIT TESTS
 ----------
 Unit tests for the package may be found in the 'lsl/tests' sub-directory in the package source distribution tree.  To run the complete suite of package unit tests:
 
-    python test_lsl.py
+    cd tests
+    python -m unittest discover
 
 TELEMETRY
 ---------

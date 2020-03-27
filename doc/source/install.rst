@@ -16,30 +16,13 @@ Requirements
 .. [1] Required for some of the included scripts
 .. [2] Required for measurement set support
 
-Building
-========
+Installing
+==========
 The LSL package is installed as a regular Python package using distutils.  
 Unzip and untar the source distribution. Setup the python interpreter you 
 wish to use for running the package applications and switch to the root of 
 the source distribution tree.
 
-A setup configuration script is required to run the build process.  A sample 
-config file may be found in the root directory of the source distribution as 
-'setup.cfg'.  Do not modify any of the lines in the [build_ext] section of 
-the config file.
-
-To build the LSL package, run::
-
-	python setup.py build
-
-Testing
-=======
-To test the as-build LSL package, run::
-
-	python setup.py test
-
-Installing
-==========
 Install LSL by running::
 	
 	pip install . [--root=<prefix>|--user]
@@ -60,6 +43,13 @@ environment to include directory '<prefix>/lib/python2.6/site-packages'.
 
 If the '--user' option is provided, then then installation tree root 
 directory will be in the current user's home directory.
+
+Unit Tests
+==========
+Unit tests for the package may be found in the 'lsl/tests' sub-directory in the package source distribution tree.  To run the complete suite of package unit tests:
+
+    cd tests
+    python -m unittest discover
 
 Telemetry
 =========
