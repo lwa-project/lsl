@@ -54,6 +54,7 @@ import test_meta
 import test_meta_adp
 import test_parser
 import test_scripts
+import test_notebooks
 import test_idf
 
 
@@ -110,6 +111,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_meta_adp.metabundle_adp_test_suite())
         self.addTest(test_parser.parser_test_suite())
         self.addTest(test_scripts.scripts_test_suite())
+        self.addTest(test_notebooks.notebooks_test_suite())
         self.addTest(test_idf.idf_test_suite())
 
 

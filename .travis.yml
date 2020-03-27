@@ -43,6 +43,8 @@ install:
         matplotlib \
         scipy \
         pyephem==3.7.6.0 \
+        nbformat \
+        nbconvert \
         coveralls \
         codecov
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install python-casacore; fi
