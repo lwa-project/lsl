@@ -39,6 +39,7 @@ install:
         matplotlib \
         scipy \
         pyephem==3.7.6.0 \
+        jupyter_client \
         nbformat \
         nbconvert \
         coveralls \
