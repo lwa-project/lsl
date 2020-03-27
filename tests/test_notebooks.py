@@ -72,7 +72,7 @@ class notebooks_tests(unittest.TestCase):
     
     def setUp(self):
         self.kernel = jupyter_client.KernelManager()
-        self.kernel.start()
+        self.kernel.start_kernel()
         
     def tearDown(self):
         self.kernel.shutdown_kernel(now=True) 
