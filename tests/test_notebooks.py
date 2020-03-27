@@ -80,7 +80,7 @@ def _test_generator(notebook):
     """
     
     def test(self):
-        nb, errors = runner.run_notebook(notebook)
+        nb, errors = run_notebook(notebook)
         self.assertEqual(errors, [])
         
     return test
