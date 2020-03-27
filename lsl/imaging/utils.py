@@ -1111,7 +1111,7 @@ try:
                     #       module
                     if len(self._windows) > 1:
                         nBand = len(self._windows)
-                        subvis.shape = (nBand,subvis.shape[0]/nBand,subvis.shape[1])
+                        subvis.shape = (nBand,subvis.shape[0]//nBand,subvis.shape[1])
                         subwgt.shape = subvis.shape
                         
                         subvis = subvis.transpose(1,0,2)
