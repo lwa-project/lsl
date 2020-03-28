@@ -71,6 +71,8 @@ class notebooks_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the LSL IPython notebooks."""
     
     def setUp(self):
+        self.maxDiff = 8192
+        
         self._kernel = jupyter_client.KernelManager()
         self._kernel.start_kernel()
         self.kernel_name = self._kernel.kernel_name
@@ -89,7 +91,14 @@ def _test_generator(notebook):
     
     def test(self):
         nb, errors = run_notebook(notebook, kernel_name=self.kernel_name)
-        self.assertEqual(errors, [])
+        
+        message = ''
+        if len(errors) > 0:
+            for error in errors:
+                message += '%s: %s\n' % (error['ename'], error['evalue'])
+                for line in error['traceback']:
+                    message += '  %s\n' % line
+        self.assertEqual(errors, [], message)
         
     return test
 

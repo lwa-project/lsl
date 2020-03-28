@@ -32,7 +32,15 @@ from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info > (3,):
     xrange = range
-    
+    t = {}
+    for c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+        t[ord(c)] = None
+    def strip_letters(s, t=t):
+        return s.translate(t)
+else:
+    def strip_letters(s):
+        return s.translate(None, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        
 import os
 import re
 import sys
@@ -946,7 +954,7 @@ try:
             antennas = []
             for i in xrange(lat.size):
                 enz = self.station.get_enz_offset((lat[i], lng[i], elv[i]))
-                sid = int(ants.col('NAME')[i].translate(None, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+                sid = int(strip_letters(ants.col('NAME')[i]))
                 
                 stand = stations.Stand(sid, *enz)
                 antennas.append( stations.Antenna(2*(stand.id-1)-1, stand=stand) )
