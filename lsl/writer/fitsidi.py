@@ -640,11 +640,11 @@ class Idi(WriterBase):
             ut1_utc = eop.ut1_utc(refAT)
             pm_xy = eop.pm_xy(refAT)
         except iers.IERSRangeError:
+            eop.close()
             with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
-                with iers.Conf().set_temp('auto_max_age', None):
-                    eop = iers.IERS_Auto.open()
-                    ut1_utc = eop.ut1_utc(refAT)
-                    pm_xy = eop.pm_xy(refAT)
+                eop = iers.IERS_Auto.open()
+                ut1_utc = eop.ut1_utc(refAT)
+                pm_xy = eop.pm_xy(refAT)
                     
         ag.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
