@@ -1,11 +1,3 @@
-# Notebook stuff
-#doc/notebooks/.ipynb_checkpoints/
-doc/notebooks/LK003_0113.tgz
-doc/notebooks/temp.drspec
-doc/notebooks/temp.drx
-doc/notebooks/temp.tbn
-doc/notebooks/temp.tbw
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
