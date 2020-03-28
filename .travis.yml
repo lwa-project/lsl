@@ -46,7 +46,7 @@ install:
         coveralls \
         codecov
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install python-casacore; fi
-    - pip install "astropy<4.0"
+    - pip install "astropy<3.2"
     - pip install aipy
     - pip install .
 

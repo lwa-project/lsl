@@ -45,7 +45,7 @@ PY2 = sys.version_info.major < 3
 if PY2:
     ASTROPY_VERSION = 'astropy<3.0'
 else:
-    ASTROPY_VERSION = 'astropy>=3.0'
+    ASTROPY_VERSION = 'astropy>=3.0,<3.2'
 
 
 def get_version():
