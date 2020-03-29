@@ -59,6 +59,6 @@ after_success:
     - coveralls
     - codecov
 
-cache:
-  directories:
-    - $HOME/.astropy/cache
+#cache:
+#  directories:
+#    - $HOME/.astropy/cache
