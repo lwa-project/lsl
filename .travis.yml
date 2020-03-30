@@ -9,8 +9,6 @@ python:
     #- pypy2.7-6.0
     #- pypy3
 
-services:
-    - docker
 
 addons:
     apt:
@@ -23,29 +21,44 @@ addons:
             - python-dev
             - python3-dev
             - libfftw3-dev
-            - libgdbm-dev
+            - libcfitsio-dev
+            - libboost-python-dev
+        brew:
+            - git
+            - fftw
 
-script:
-    - sudo pip --no-cache-dir install \
+before_install:
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo add-apt-repository -y ppa:kernsuite/kern-3; fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -q update; fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -y install casacore-dev wcslib-dev; fi
+
+install:
+    - pip install \
         setuptools \
         numpy \
         matplotlib \
         scipy \
         pyephem==3.7.6.0 \
+        jupyterlab \
+        jupyter_client \
+        nbformat \
+        nbconvert \
         coveralls \
         codecov
-    - sudo pip --no-cache-dir install \
-        aipy
-    - sudo python setup.py build
-    - sudo python setup.py test
-    - sudo python setup.py install
-    - sudo coverage run --source=lsl -m unittest discover tests
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install python-casacore; fi
+    - pip install "astropy<3.2"
+    - pip install aipy
+    - pip install .
+
+script:
+    - cd tests
+    - coverage run --source=lsl -m unittest discover
 
 after_success:
+    - cd tests
     - coveralls
     - codecov
 
 cache:
   directories:
-    - $HOME/.astropy/cache/download/py2
-    - $HOME/.astropy/cache/download/py3
+    - $HOME/.astropy/cache

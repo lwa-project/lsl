@@ -931,11 +931,11 @@ class DRXFile(LDPFileBase):
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
             if curr is not None:
-                ti0 = (curr - junkFrame.header.timeOffset) // int(fS)
-                tf0 = ((curr - junkFrame.header.timeOffset) % int(fS)) / fS
+                ti0 = (curr - junkFrame.header.time_offset) // int(fS)
+                tf0 = ((curr - junkFrame.header.time_offset) % int(fS)) / fS
         sample_rate = junkFrame.sample_rate
         beampols = drx.get_frames_per_obs(self.fh)
-        beampols = reduce(int.__add__, beampols)
+        beampols = sum(beampols)
         
         # Offset in frames for beampols beam/tuning/pol. sets
         ioffset = int(offset * sample_rate / 4096 * beampols)
@@ -954,7 +954,7 @@ class DRXFile(LDPFileBase):
             ti1, tf1 = junkFrame.time
             sample_rate = junkFrame.sample_rate
             beampols = drx.get_frames_per_obs(self.fh)
-            beampols = reduce(int.__add__, beampols)
+            beampols = sum(beampols)
             
             ## See how far off the current frame is from the target
             tDiff = ti1 - (ti0 + offset) + tf1 - tf0
@@ -985,7 +985,7 @@ class DRXFile(LDPFileBase):
         # Zero out the time tag checker
         self._timetag = None
         
-        return t1 - t0
+        return ti1 - ti0 + tf1 - tf0
         
     def read_frame(self):
         """
@@ -1323,7 +1323,7 @@ class DRSpecFile(LDPFileBase):
         # Zero out the timetag checker
         self._timetag = None
         
-        return t1 - t0
+        return ti1 - ti0 + tf1 - tf0
         
     def read_frame(self):
         """

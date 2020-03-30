@@ -87,13 +87,13 @@ class catalog_tests(unittest.TestCase):
         self.assertAlmostEqual(source.position.j2000_equ.dec, -28.806, 3)
         
         source = cat.lookup('CasA')
-        self.assertEquals(source.name, 'CasA')
+        self.assertEqual(source.name, 'CasA')
         self.assertTrue('NRAO711' in source.alias_list)
         self.assertAlmostEqual(source.position.j2000_equ.ra, 350.850, 3)
         self.assertAlmostEqual(source.position.j2000_equ.dec, 58.815, 3)
         
         source = cat.lookup('CygA')
-        self.assertEquals(source.name, 'CygA')
+        self.assertEqual(source.name, 'CygA')
         self.assertTrue('3C405' in source.alias_list)
         self.assertAlmostEqual(source.position.j2000_equ.ra, 299.868, 3)
         self.assertAlmostEqual(source.position.j2000_equ.dec, 40.734, 3) 
