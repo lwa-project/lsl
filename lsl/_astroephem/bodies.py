@@ -106,7 +106,7 @@ class _Body(object):
         if cos_h >= 1:
             rising_ha =  0.0
         elif cos_h <= -1:
-            rising_ha = numpy.py;
+            rising_ha = numpy.pi
         else:
             rising_ha = numpy.arccos(cos_h)
             
@@ -203,46 +203,63 @@ def readdb(line):
     return bdy
 
 
-class Sun(_Body):
+class Planet(_Body):
+    def __init__(self, func):
+        self.func = func
+        
+    def compute(self, date_or_observer=None):
+        if date_or_observer is None:
+            date_or_observer = Time.now()
+        elif isinstance(date_or_observer, float):
+            date_or_observer = Date(date_or_observer)
+            
+        if isinstance(date_or_observer, Time):
+            self._sc = self.func(date_or_observer)
+        else:
+            self._sc = self.func(date_or_observer.date)
+            
+        _Body.compute(self, date_or_observer=date_or_observer)            
+
+class Sun(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('sun', Time.now()))
+        Planet.__init__(self, lambda x: get_body('sun', x))
 
 
-class Mercury(_Body):
+class Mercury(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('sun', Time.now()))
+        Planet.__init__(self, lambda x: get_body('mercury', x))
 
 
-class Venus(_Body):
+class Venus(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('venus', Time.now()))
+        Planet.__init__(self, lambda x: get_body('venus', x))
 
 
-class Moon(_Body):
+class Moon(Planet):
     def __init__(self):
-        _Body.__init__(self, get_moon(Time.now()))
+        Planet.__init__(self, lambda x: get_moon(x))
 
 
-class Mars(_Body):
+class Mars(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('mars', Time.now()))
+        Planet.__init__(self, lambda x: get_body('mars', x))
 
 
-class Jupiter(_Body):
+class Jupiter(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('jupiter', Time.now()))
+        Planet.__init__(self, lambda x: get_body('jupiter', x))
 
 
-class Saturn(_Body):
+class Saturn(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('saturn', Time.now()))
+        Planet.__init__(self, lambda x: get_body('saturn', x))
 
 
-class Uranus(_Body):
+class Uranus(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('uranus', Time.now()))
+        Planet.__init__(self, lambda x: get_body('uranus', x))
 
 
-class Neptune(_Body):
+class Neptune(Planet):
     def __init__(self):
-        _Body.__init__(self, get_body('neptune', Time.now()))
+        Planet.__init__(self, lambda x: get_body('neptune', x))
