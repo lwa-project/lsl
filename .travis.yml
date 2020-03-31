@@ -63,3 +63,6 @@ after_success:
 cache:
   directories:
     - $HOME/.astropy/cache
+
+before_cache:
+    - find $HOME/.astropy | xargs ls -l

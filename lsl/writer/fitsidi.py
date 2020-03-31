@@ -641,7 +641,7 @@ class Idi(WriterBase):
             pm_xy = eop.pm_xy(refAT)
         except iers.IERSRangeError:
             eop.close()
-            with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all' if sys.version_info > (3,) else 'https://datacenter.iers.org/data/9/finals2000A.all'):
+            with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
                 eop = iers.IERS_Auto.open()
                 ut1_utc = eop.ut1_utc(refAT)
                 pm_xy = eop.pm_xy(refAT)
