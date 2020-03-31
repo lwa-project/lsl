@@ -1,7 +1,7 @@
 from __future__ import print_function, division
 
 from astropy.time import Time
-from astropy.coordinates import SkyCoord, GCRS, AltAz, get_body, get_moon
+from astropy.coordinates import SkyCoord, ITRS, AltAz, get_body, get_moon
 from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 import numpy
@@ -17,6 +17,10 @@ __all__ = ['FixedBody', 'readdb', 'Sun', 'Mercury', 'Venus', 'Moon', 'Mars',
 
 
 class _Body(object):
+    """
+    Base class that provides the compute() method for FixedBody and Planet.
+    """
+    
     def __init__(self, skycoord_or_body=SkyCoord(0*u.hourangle, 0*u.deg, frame='icrs')):
         self._sc = skycoord_or_body
         
@@ -28,35 +32,38 @@ class _Body(object):
             
         if isinstance(date_or_observer, Time):
             self.a_epoch = date_or_observer
+            gast = self.a_epoch.sidereal_time('apparent', longitude=0)
             try:
                 _ac = self._sc.apply_space_motion(new_obstime=date_or_observer)
             except (AttributeError, ValueError):
                 _ac = self._sc
-            _gc = _ac.transform_to(GCRS(obstime=self.a_epoch))
+            _gc = _ac.transform_to(ITRS(obstime=self.a_epoch))
         else:
             self.a_epoch = date_or_observer.date
+            gast = self.a_epoch.sidereal_time('apparent', longitude=0)
+            ogc = CartesianRepresentation(*date_or_observer._el.to_geocentric())
+            
             try:
                 _ac = self._sc.apply_space_motion(new_obstime=date_or_observer)
             except (AttributeError, ValueError):
                 _ac = self._sc
-            _gc = _ac.transform_to(GCRS(obstime=self.a_epoch))
-            cr = CartesianRepresentation(*date_or_observer._el.to_geocentric())
-            _lc = _ac.transform_to(GCRS(obstime=self.a_epoch,
-                                        obsgeoloc=cr))
+            _gc = _ac.transform_to(ITRS(obstime=self.a_epoch))
+            _lc = _ac.transform_to(ITRS(ogc,
+                                        obstime=self.a_epoch))
             _tc = _lc.transform_to(AltAz(obstime=date_or_observer.date,
                                          location=date_or_observer._el))
-        self.a_ra  = _ac.ra.to('radian').value
-        self.a_dec = _ac.dec.to('radian').value
-        self.g_ra  = _gc.ra.to('radian').value
-        self.g_dec = _gc.dec.to('radian').value
+        self.a_ra  = hours(_ac.ra)
+        self.a_dec = degrees(_ac.dec)
+        self.g_ra  = hours(gast + _gc.spherical.lon)
+        self.g_dec = degrees(_gc.spherical.lat)
         try:
-            self.ra  = _lc.ra.to('radian').value
-            self.dec = _lc.dec.to('radian').value
+            self.ra  = hours(gast + _lc.spherical.lon)
+            self.dec = degrees(_lc.spherical.lat)
         except NameError:
             pass
         try:
-            self.az = _tc.az.to('radian').value
-            self.alt = _tc.alt.to('radian').value
+            self.az = degrees(_tc.az)
+            self.alt = degrees(_tc.alt)
         except NameError:
             pass
             
@@ -77,9 +84,9 @@ class _Body(object):
             return False
             
         # Load the values we need in radians
-        ra = self.g_ra
-        dec = self.g_dec
-        lat = observer.lat
+        ra = self.g_ra.to('radian').value
+        dec = self.g_dec.to('radian').value
+        lat = observer.lat.to('radian').value
         
         # Flip things around if we are south of the equator
         southern = (lat < 0)
@@ -141,6 +148,10 @@ class _Body(object):
 
 
 class FixedBody(_Body):
+    """
+    A celestial body, that can compute() its sky position.
+    """
+    
     name = ''
     __ra = 0.0*u.hourangle
     __dec = 0.0*u.deg
@@ -204,6 +215,10 @@ def readdb(line):
 
 
 class Planet(_Body):
+    """
+    A solar system body, that can compute() its sky position.
+    """
+    
     def __init__(self, func):
         self.func = func
         
@@ -221,45 +236,80 @@ class Planet(_Body):
         _Body.compute(self, date_or_observer=date_or_observer)            
 
 class Sun(Planet):
+    """
+    A Planet instance representing the Sun.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('sun', x))
 
 
 class Mercury(Planet):
+    """
+    A Planet instance representing Mercury.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('mercury', x))
 
 
 class Venus(Planet):
+    """
+    A Planet instance representing Venus.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('venus', x))
 
 
 class Moon(Planet):
+    """
+    A Planet instance representing Earth's moon"""
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_moon(x))
 
 
 class Mars(Planet):
+    """
+    A Planet instance representing Mars.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('mars', x))
 
 
 class Jupiter(Planet):
+    """
+    A Planet instance representing Jupiter.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('jupiter', x))
 
 
 class Saturn(Planet):
+    """
+    A Planet instance representing Saturn.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('saturn', x))
 
 
 class Uranus(Planet):
+    """
+    A Planet instance representing Uranus.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('uranus', x))
 
 
 class Neptune(Planet):
+    """
+    A Planet instance representing Neptune.
+    """
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('neptune', x))

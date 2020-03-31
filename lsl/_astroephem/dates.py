@@ -9,9 +9,24 @@ _DJD_OFFSET = 2415020.0
 
 
 class _FloatableTime(Time):
+    def __str__(self):
+        return "%i/%i/%i %02i:%02i:%06.3f" % self.tuple()
+        
     def __float__(self):
         return self.jd - _DJD_OFFSET
         
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return float(self) + other
+        else:
+            return Time.__add__(self, other)
+            
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            return float(self) - other
+        else:
+            return Time.__sub__(self, other)
+            
     def __neg__(self):
         return -float(self)
         
@@ -32,7 +47,11 @@ class _FloatableTime(Time):
         
     def tuple(self):
         dt = self.datetime
-        return (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+        return (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second+dt.microsecond/1e6)
+        
+    def triple(self):
+        y, m, d, _, _, _ = self.tuple()
+        return (y, m, d)
 
 
 B1950 = _FloatableTime(1950.0, format='byear', scale='utc')
@@ -43,8 +62,9 @@ def Date(value):
     date = None
     if isinstance(value, Time):
         date = value
-    if isinstance(value, (int, float)):
-        date = _FloatableTime(value+_DJD_OFFSET, format='jd', scale='utc')
+    elif isinstance(value, (int, float)):
+        value = value + _DJD_OFFSET
+        date = _FloatableTime(value, format='jd', scale='utc')
     elif isinstance(value, str):
         value = value.replace('/', '-')
         date = _FloatableTime(value, format='iso', scale='utc')
