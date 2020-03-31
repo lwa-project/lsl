@@ -65,4 +65,5 @@ cache:
     - $HOME/.astropy/cache
 
 before_cache:
+    - cp -f $HOME/.astropy/cache/download/py3/* $HOME/.astropy/cache/download/py2/
     - find $HOME/.astropy | xargs ls -l
