@@ -41,6 +41,8 @@ J2000 = _FloatableTime(2000.0, format='jyear', scale='utc')
 
 def Date(value):
     date = None
+    if isinstance(value, Time):
+        date = value
     if isinstance(value, (int, float)):
         date = _FloatableTime(value+_DJD_OFFSET, format='jd', scale='utc')
     elif isinstance(value, str):
