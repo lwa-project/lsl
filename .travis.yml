@@ -20,6 +20,8 @@ addons:
             - software-properties-common
             - python-dev
             - python3-dev
+            - python-gdbm
+            - python3-gdbm
             - libgdbm-dev
             - libfftw3-dev
             - libcfitsio-dev
@@ -39,7 +41,6 @@ install:
         numpy \
         matplotlib \
         scipy \
-        gdbm \
         pyephem==3.7.6.0 \
         jupyterlab \
         jupyter_client \
