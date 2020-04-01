@@ -54,11 +54,11 @@ class _Body(object):
                                          location=date_or_observer._el))
         self.a_ra  = hours(_ac.ra)
         self.a_dec = degrees(_ac.dec)
-        self.g_ra  = hours(gast + _gc.spherical.lon)
-        self.g_dec = degrees(_gc.spherical.lat)
+        self.g_ra  = hours(gast + _gc.spherical.lon, wrap=True)
+        self.g_dec = degrees(_gc.spherical.lat, wrap180=True)
         try:
-            self.ra  = hours(gast + _lc.spherical.lon)
-            self.dec = degrees(_lc.spherical.lat)
+            self.ra  = hours(gast + _lc.spherical.lon, wrap=True)
+            self.dec = degrees(_lc.spherical.lat, wrap180=True)
         except NameError:
             pass
         try:
@@ -140,11 +140,11 @@ class _Body(object):
         self.circumpolar = circumpolar
         self.neverup = neverup
         self.transit_alt = degrees(transit_alt)
-        self.rising_az = degrees(rising_az % (2*numpy.pi))
-        self.setting_az = degrees(setting_az % (2*numpy.pi))
+        self.rising_az = degrees(rising_az, wrap360=True)
+        self.setting_az = degrees(setting_az, wrap360=True)
         ## Used later
-        self._rising_lst = hours(rising_lst % (2*numpy.pi))
-        self._setting_lst = hours(setting_lst % (2*numpy.pi))
+        self._rising_lst = hours(rising_lst, wrap=True)
+        self._setting_lst = hours(setting_lst, wrap=True)
 
 
 class FixedBody(_Body):

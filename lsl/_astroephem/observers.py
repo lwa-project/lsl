@@ -135,12 +135,12 @@ class Observer(object):
         if body.neverup:
             raise NeverUpError()
             
-        diff = lst - body.ra
-        t_transit = self.__date - TimeDelta(diff.to('radian').value*43200/numpy.pi*u.second, format='sec')
-        if diff.value > 0 and delta > 0:
-            t_transit = t_transit + 1*u.sday
-        elif diff.value < 0 and delta < 0:
+        diff = (lst - body.ra).to('radian').value % (2*numpy.pi)
+        t_transit = start - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
+        if t_transit > start and delta < 0:
             t_transit = t_transit - 1*u.sday
+        elif t_transit < start and delta > 0:
+            t_transit = t_transit + 1*u.sday
         def ninety(t):
             self.__date = Date(t)
             body.compute(self)
@@ -168,13 +168,13 @@ class Observer(object):
         if body.neverup:
             raise NeverUpError()
             
-        diff = lst - body.ra
-        t_antitransit = self.__date - TimeDelta(diff.to('radian').value*43200/numpy.pi*u.second, format='sec')
+        diff = (lst - body.ra).to('radian').value % (2*numpy.pi)
+        t_antitransit = start - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
         t_antitransit = t_antitransit - 0.5*u.sday
-        if diff.value > 0 and delta > 0:
-            t_antitransit = t_antitransit + 1*u.sday
-        elif diff.value < 0 and delta < 0:
+        if t_antitransit > start and delta < 0:
             t_antitransit = t_antitransit - 1*u.sday
+        elif t_antitransit < start and delta > 0:
+            t_antitransit = t_antitransit + 1*u.sday
         def neg_ninety(t):
             self.__date = Date(t)
             body.compute(self)
@@ -204,12 +204,12 @@ class Observer(object):
         if body.circumpolar:
             raise AlwaysUpError()
             
-        diff = lst - body._rising_lst
-        t_rise = self.__date - TimeDelta(diff.to('radian').value*43200/numpy.pi*u.second, format='sec')
-        if diff.value > 0 and delta > 0:
-            t_rise = t_rise + 1*u.sday
-        elif diff.value < 0 and delta < 0:
+        diff = (lst - body._rising_lst).to('radian').value % (2*numpy.pi)
+        t_rise = self.__date - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
+        if t_rise > start and delta < 0:
             t_rise = t_rise - 1*u.sday
+        elif t_rise < start and delta > 0:
+            t_rise = t_rise + 1*u.sday
         def zero(t):
             self.__date = Date(t)
             body.compute(self)
@@ -239,12 +239,12 @@ class Observer(object):
         if body.circumpolar:
             raise AlwaysUpError()
             
-        diff = lst - body._setting_lst
-        t_set = self.__date - TimeDelta(diff.to('radian').value*43200/numpy.pi*u.second, format='sec')
-        if diff.value > 0 and delta > 0:
-            t_set = t_set + 1*u.sday
-        elif diff.value < 0 and delta < 0:
+        diff = (lst - body._setting_lst).to('radian').value % (2*numpy.pi)
+        t_set = self.__date - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
+        if t_set > start and delta < 0:
             t_set = t_set - 1*u.sday
+        elif t_set < start and delta > 0:
+            t_set = t_set + 1*u.sday
         def zero(t):
             self.__date = Date(t)
             body.compute(self)
