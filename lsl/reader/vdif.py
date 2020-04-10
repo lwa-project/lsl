@@ -348,13 +348,13 @@ def read_guppi_header(filehandle):
     header = {}
     while True:
         line = filehandle.read(80)
-        if line[:3] == 'END':
+        if line[:3] == b'END':
             break
-        elif line[:8] == 'CONTINUE':
+        elif line[:8] == b'CONTINUE':
             junk, value2 = line.split(None, 1)
             value = "%s%s" % (value[:-1], value2[:-1])
         else:
-            name, value = line.split('=', 1)
+            name, value = line.split(b'=', 1)
             name = name.strip()
         try:
             value = int(value, 10)
@@ -362,7 +362,7 @@ def read_guppi_header(filehandle):
             try:
                 value = float(value)
             except:
-                value = value.strip().replace("'", '')
+                value = value.strip().replace(b"'", b'')
         header[name.strip()] = value
     header['OBSBW'] *= 1e6
     header['OBSFREQ'] *= 1e6
