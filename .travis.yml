@@ -50,8 +50,6 @@ install:
     - pip install "astropy<3.2"
     - pip install aipy
     - pip install .
-    - curl https://fornax.phys.unm.edu/lwa/data/c8628b379e6b606e21dd63cf549dc8e9 -o $HOME/.astropy/cache/download/py2/c8628b379e6b606e21dd63cf549dc8e9 --create-dirs
-    - curl https://fornax.phys.unm.edu/lwa/data/urlmap -o $HOME/.astropy/cache/download/py2/urlmap --create-dirs
 
 script:
     - cd tests

@@ -644,19 +644,10 @@ class Idi(WriterBase):
             
             with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
                 eop = iers.IERS_Auto.open()
-                try:
-                    ut1_utc = eop.ut1_utc(refAT)
-                    pm_xy = eop.pm_xy(refAT)
-                    pm_xy = eop.pm_xy(refAT)
-                except iers.IERSRangeError:
-                    import warnings
-                    warnings.warn("IERS Error - Ignoring", RuntimeWarning)
-                    iers.conf.auto_max_age = None
-                    eop = iers.IERS_Auto.open()
-                    ut1_utc = eop.ut1_utc(refAT)
-                    pm_xy = eop.pm_xy(refAT)
-                    pm_xy = eop.pm_xy(refAT)
-                    
+                ut1_utc = eop.ut1_utc(refAT)
+                pm_xy = eop.pm_xy(refAT)
+                pm_xy = eop.pm_xy(refAT)
+                 
         ag.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
         ag.header['POLARX'] = pm_xy[0].to('arcsec').value

@@ -66,7 +66,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_write_tables(self):
         """Test if the FITS IDI writer writes all of the tables."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-W.fits')
         
         # Get some data
@@ -97,7 +97,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_writer_errors(self):
         """Test that common FITS IDI error conditions are caught."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-ERR.fits')
         
         # Get some data
@@ -119,7 +119,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_array_geometry(self):
         """Test the ARRAY_GEOMETRY table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-AG.fits')
         
         # Get some data
@@ -149,7 +149,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_frequency(self):
         """Test the FREQUENCY table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-FQ.fits')
         
         # Get some data
@@ -183,7 +183,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_antenna(self):
         """Test the ANTENNA table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-AN.fits')
         
         # Get some data
@@ -212,7 +212,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_bandpass(self):
         """Test the BANDPASS table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-BP.fits')
         
         # Get some data
@@ -245,7 +245,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_source(self):
         """Test the SOURCE table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-SO.fits')
         
         # Get some data
@@ -273,7 +273,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_uvdata(self):
         """Test the UV_DATA table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-UV.fits')
         
         # Get some data
@@ -339,7 +339,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_mapper(self):
         """Test the NOSTA_MAPPER table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-SM.fits')
         
         # Get some data
@@ -379,7 +379,7 @@ class fitsidi_tests(unittest.TestCase):
     def test_multi_if(self):
         """Test writing more than one IF to a FITS IDI file."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-MultiIF.fits')
         
         # Get some data
@@ -502,7 +502,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_write_tables(self):
         """Test if the AIPS IDI writer writes all of the tables."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-W.fits')
         
         # Get some data
@@ -533,7 +533,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_array_geometry(self):
         """Test the AIPS IDI ARRAY_GEOMETRY table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-AG.fits')
         
         # Get some data
@@ -563,7 +563,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_frequency(self):
         """Test the AIPS IDI FREQUENCY table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-FQ.fits')
         
         # Get some data
@@ -597,7 +597,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_antenna(self):
         """Test the AIPS IDI ANTENNA table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-AN.fits')
         
         # Get some data
@@ -626,7 +626,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_bandpass(self):
         """Test the AIPS IDI BANDPASS table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-BP.fits')
         
         # Get some data
@@ -659,7 +659,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_source(self):
         """Test the AIPS IDI SOURCE table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-SO.fits')
         
         # Get some data
@@ -687,7 +687,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_uvdata(self):
         """Test the AIPS IDI UV_DATA table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-UV.fits')
         
         # Get some data
@@ -753,7 +753,7 @@ class aipsidi_tests(unittest.TestCase):
     def test_mapper(self):
         """Test the AIPS IDI NOSTA_MAPPER table."""
 
-        testTime = time.time() - 2*86400.0
+        testTime = 1514764800#time.time() - 2*86400.0
         testFile = os.path.join(self.testPath, 'idi-test-SM.fits')
         
         # Get some data
