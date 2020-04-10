@@ -650,7 +650,7 @@ class Idi(WriterBase):
                     pm_xy = eop.pm_xy(refAT)
                 except iers.IERSRangeError:
                     import warnings
-                    warnings.warn("IERS Error - Ignoring", warnings.RuntimeWarning)
+                    warnings.warn("IERS Error - Ignoring", RuntimeWarning)
                     iers.conf.auto_max_age = None
                     eop = iers.IERS_Auto.open()
                     ut1_utc = eop.ut1_utc(refAT)
