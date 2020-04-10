@@ -129,6 +129,10 @@ class _TelemetryClient(object):
                                          'version'     : self.version,
                                          'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
                                          'payload'     : payload})
+                    try:
+                        payload = payload.encode()
+                    except AttributeError:
+                        pass
                     uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload, 
                                  timeout=self.timeout)
                     status = uh.read()
