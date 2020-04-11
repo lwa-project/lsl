@@ -60,9 +60,9 @@ def main(args):
     
     idf = LWA1DataFile(args.filename)
     
-    nFramesFile = idf.get_info('nFrames')
+    nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
-    beampols = idf.get_info('beampols')
+    beampols = idf.get_info('nbeampol')
     
     # Offset in frames for beampols beam/tuning/pol. sets
     args.skip = idf.offset(args.skip)
@@ -82,7 +82,7 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
     beam = idf.get_info('beam')

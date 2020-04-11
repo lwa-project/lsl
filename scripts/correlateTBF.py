@@ -185,11 +185,11 @@ def main(args):
     
     idf = LWASVDataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     nFpO = idf.get_info('nchan') // 12
     sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nFrames') // nFpO
+    nInts = idf.get_info('nframe') // nFpO
     
     # Get valid stands for both polarizations
     goodX = []
@@ -223,7 +223,7 @@ def main(args):
     # Number of frames to read in at once and average
     nFrames = min([int(args.avg_time*sample_rate), nInts])
     args.offset = idf.offset(args.offset)
-    nSets = idf.get_info('nFrames') // nFpO // nFrames
+    nSets = idf.get_info('nframe') // nFpO // nFrames
     nSets = nSets - int(args.offset*sample_rate) // nFrames
     
     central_freq = idf.get_info('freq1')

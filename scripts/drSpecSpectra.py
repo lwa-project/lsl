@@ -58,11 +58,11 @@ def main(args):
     idf = LWA1DataFile(args.filename)
     
     # Basic file informaiton
-    nFramesFile = idf.get_info('nFrames')
+    nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     beam = idf.get_info('beam')
-    beampols = idf.get_info('beampols')
-    tInt = idf.get_info('tInt')
+    beampols = idf.get_info('nbeampol')
+    tInt = idf.get_info('tint')
     LFFT = idf.get_info('LFFT')
     products = idf.get_info('data_products')
     
@@ -79,7 +79,7 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
     freq = numpy.fft.fftfreq(LFFT, d=1.0/srate)

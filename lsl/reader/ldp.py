@@ -205,7 +205,7 @@ class LDPFileBase(object):
         return (self.description['size'] - self.fh.tell()) // self.description['frame_size']
         
     @property
-    def nframes_remaining(self):
+    def nframe_remaining(self):
         """
         Alternate method of accessing the number of frames remaining.
         """
@@ -276,7 +276,7 @@ class LDPFileBase(object):
             except errors.EOFError:
                 break
                 
-    def estimate_levels(self, nframes=10, sigma=5.0):
+    def estimate_levels(self, nframe=10, sigma=5.0):
         """
         Estimate the standard deviation of the data.
         """
@@ -390,7 +390,7 @@ class TBWFile(LDPFileBase):
         start = startTimeTag / fS
         startRaw = startTimeTag
         
-        self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbw.FRAME_SIZE,
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbw.FRAME_SIZE,
                             'sample_rate': srate, 'data_bits': bits, 'nantenna': 2*len(idsFound), 
                             'start_time': start, 'start_time_samples': startRaw}
                         
@@ -553,7 +553,7 @@ class TBNFile(LDPFileBase):
             filesize = os.fstat(self.fh.fileno()).st_size
         nFramesFile = (filesize - self.fh.tell()) // tbn.FRAME_SIZE
         framesPerObsX, framesPerObsY = tbn.get_frames_per_obs(self.fh)
-        srate =  tbn.get_sample_rate(self.fh, nframes=((framesPerObsX+framesPerObsY)*3))
+        srate =  tbn.get_sample_rate(self.fh, nframe=((framesPerObsX+framesPerObsY)*3))
         bits = 8
         
         with FilePositionSaver(self.fh):
@@ -562,7 +562,7 @@ class TBNFile(LDPFileBase):
         start = junkFrame.time
         startRaw = junkFrame.payload.timetag
         
-        self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbn.FRAME_SIZE,
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbn.FRAME_SIZE,
                             'nantenna': framesPerObsX+framesPerObsY, 
                             'sample_rate': srate, 'data_bits': bits, 
                             'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1}
@@ -763,7 +763,7 @@ class TBNFile(LDPFileBase):
         
         return duration, setTime, data
         
-    def estimate_levels(self, nframes=100, sigma=5.0):
+    def estimate_levels(self, nframe=100, sigma=5.0):
         """
         Estimate the n-sigma level for the absolute value of the voltages.  
         Returns a list with indicies that are the digitizer numbers minus one.
@@ -786,8 +786,8 @@ class TBNFile(LDPFileBase):
             count = {}
             for i in xrange(self.description['nantenna']):
                 count[i] = 0
-            data = numpy.zeros((self.description['nantenna'], nframes*512))
-            for i in xrange(nframes):
+            data = numpy.zeros((self.description['nantenna'], nframe*512))
+            for i in xrange(nframe):
                 for j in xrange(self.description['nantenna']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
@@ -908,8 +908,8 @@ class DRXFile(LDPFileBase):
                     start = junkFrame.time
                     startRaw = junkFrame.payload.timetag - junkFrame.header.time_offset
                     
-        self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': drx.FRAME_SIZE,
-                            'beampols': beampols, 'beam': b, 
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': drx.FRAME_SIZE,
+                            'nbeampol': beampols, 'beam': b, 
                             'sample_rate': srate, 'data_bits': bits, 
                             'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2}
                         
@@ -1057,7 +1057,7 @@ class DRXFile(LDPFileBase):
                 
             if not self.buffer.overfilled:
                 cFrames = deque()
-                for i in xrange(self.description['beampols']):
+                for i in xrange(self.description['nbeampol']):
                     try:
                         cFrames.append( drx.read_frame(self.fh, verbose=False) )
                     except errors.EOFError:
@@ -1151,7 +1151,7 @@ class DRXFile(LDPFileBase):
             
         return duration, setTime, data
         
-    def estimate_levels(self, nframes=100, sigma=5.0):
+    def estimate_levels(self, nframe=100, sigma=5.0):
         """
         Estimate the n-sigma level for the absolute value of the voltages.  
         Returns a list with indicies corresponding to:
@@ -1180,9 +1180,9 @@ class DRXFile(LDPFileBase):
         # Sample the data
         with FilePositionSaver(self.fh):
             count = {0:0, 1:0, 2:0, 3:0}
-            data = numpy.zeros((4, nframes*4096))
-            for i in xrange(nframes):
-                for j in xrange(self.description['beampols']):
+            data = numpy.zeros((4, nframe*4096))
+            for i in xrange(nframe):
+                for j in xrange(self.description['nbeampol']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
                         cFrame = drx.read_frame(self.fh, verbose=False)
@@ -1265,12 +1265,12 @@ class DRSpecFile(LDPFileBase):
         tuning1, tuning2 = junkFrame.central_freq
         prod = junkFrame.data_products
         
-        self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': FRAME_SIZE, 
-                            'beampols': beampols, 'beam': beam, 
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': FRAME_SIZE, 
+                            'nbeampol': beampols, 'beam': beam, 
                             'sample_rate': srate, 'data_bits': bits, 
                             'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2, 
-                            'nInt': nInt, 'tint': tInt, 'LFFT': LFFT, 
-                            'nproducts': len(prod), 'data_products': prod}
+                            'nint': nInt, 'tint': tInt, 'LFFT': LFFT, 
+                            'nproduct': len(prod), 'data_products': prod}
                         
     def offset(self, offset):
         """
@@ -1377,7 +1377,7 @@ class DRSpecFile(LDPFileBase):
         duration = frame_count * self.description['tint']
         
         # Setup the output arrays
-        data = numpy.zeros((2*self.description['nproducts'],frame_count,self.description['LFFT']), dtype=numpy.float32)
+        data = numpy.zeros((2*self.description['nproduct'],frame_count,self.description['LFFT']), dtype=numpy.float32)
         
         # Go!
         nFrameSets = 0
@@ -1407,7 +1407,7 @@ class DRSpecFile(LDPFileBase):
                     
             for j,p in enumerate(self.description['data_products']):
                 data[j+0,                             count, :] = getattr(cFrame.payload, '%s0' % p, None)
-                data[j+self.description['nproducts'], count, :] = getattr(cFrame.payload, '%s1' % p, None)
+                data[j+self.description['nproduct'], count, :] = getattr(cFrame.payload, '%s1' % p, None)
             count +=  1
             self._timetag = cTimetag
             nFrameSets += 1
@@ -1641,7 +1641,7 @@ class TBFFile(LDPFileBase):
             freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + numpy.arange(tbf.FRAME_CHANNEL_COUNT)
         freq *= fC
         
-        self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': tbf.FRAME_SIZE,
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbf.FRAME_SIZE,
                             'sample_rate': srate, 'data_bits': bits, 
                             'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
                             'start_time_samples': startRaw}
@@ -1743,7 +1743,7 @@ class TBFFile(LDPFileBase):
             
         # Find out how many frames to read in
         if duration is None:
-            duration = self.description['nframes'] / framesPerObs / self.description['sample_rate']
+            duration = self.description['nframe'] / framesPerObs / self.description['sample_rate']
         framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frame_count = int(round(1.0 * duration * self.description['sample_rate']))
         frame_count = frame_count if frame_count else 1
@@ -1954,7 +1954,7 @@ class CORFile(LDPFileBase):
             freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + numpy.arange(cor.FRAME_CHANNEL_COUNT)
         freq *= fC
         
-        self.description = {'size': filesize, 'nframes': nFramesFile, 'frame_size': cor.FRAME_SIZE,
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': cor.FRAME_SIZE,
                             'sample_rate': srate, 'data_bits': bits, 
                             'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
                             'start_time_samples': startRaw, 'nbaseline': nBaseline, 'tint':cFrame.get_integration_time()}
@@ -2056,7 +2056,7 @@ class CORFile(LDPFileBase):
             
         # Find out how many frames to read in
         if duration is None:
-            duration = self.description['nframes'] / framesPerObs * self.description['tint']
+            duration = self.description['nframe'] / framesPerObs * self.description['tint']
         framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
         frame_count = int(round(1.0 * duration / self.description['tint']))
         frame_count = frame_count if frame_count else 1

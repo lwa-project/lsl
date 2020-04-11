@@ -45,18 +45,18 @@ class ldp_adp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 25e3)
         self.assertEqual(f.get_info("data_bits"), 4)
-        self.assertEqual(f.get_info("nframes"), 5)
+        self.assertEqual(f.get_info('nframe'), 5)
         
         self.assertEqual(f.sample_rate, 25e3)
         self.assertEqual(f.data_bits, 4)
-        self.assertEqual(f.nframes, 5)
+        self.assertEqual(f.nframe, 5)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -72,18 +72,18 @@ class ldp_adp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 25e3)
         self.assertEqual(f.get_info("data_bits"), 4)
-        self.assertEqual(f.get_info("nframes"), 5)
+        self.assertEqual(f.get_info('nframe'), 5)
         
         self.assertEqual(f.sample_rate, 25e3)
         self.assertEqual(f.data_bits, 4)
-        self.assertEqual(f.nframes, 5)
+        self.assertEqual(f.nframe, 5)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()

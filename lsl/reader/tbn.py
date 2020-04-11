@@ -294,7 +294,7 @@ def read_frame(filehandle, sample_rate=None, verbose=False):
     return newFrame
 
 
-def get_sample_rate(filehandle, nframes=None, filter_code=False):
+def get_sample_rate(filehandle, nframe=None, filter_code=False):
     """
     Find out what the sampling rate/filter code is from consecutive sets of 
     observations.  By default, the rate in Hz is returned.  However, the 
@@ -302,9 +302,9 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
     keyword to True.
     """
 
-    if nframes is None:
-        nframes = 520
-    nframes = 4*nframes
+    if nframe is None:
+        nframe = 520
+    nframe = 4*nframe
     
     with FilePositionSaver(filehandle):
         # Build up the list-of-lists that store ID codes and loop through 2,080
@@ -312,7 +312,7 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
         # number, and append the stand number to the relevant polarization array 
         # if it is not already there.
         frames = {}
-        for i in range(nframes):
+        for i in range(nframe):
             try:
                 cFrame = read_frame(filehandle)
             except EOFError:

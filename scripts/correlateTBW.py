@@ -162,10 +162,10 @@ def main(args):
     
     idf = LWA1DataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nFrames') // (30000 * len(antennas) // 2)
+    nInts = idf.get_info('nframe') // (30000 * len(antennas) // 2)
     
     # Get valid stands for both polarizations
     goodX = []
@@ -197,7 +197,7 @@ def main(args):
         
     # Number of frames to read in at once and average
     nFrames = 30000
-    nSets = idf.get_info('nFrames') // (30000*len(antennas)//2)
+    nSets = idf.get_info('nframe') // (30000*len(antennas)//2)
     
     print("Data type:  %s" % type(idf))
     print("Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sample_rate))

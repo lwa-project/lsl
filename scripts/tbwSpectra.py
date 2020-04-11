@@ -55,9 +55,9 @@ def main(args):
     
     idf = LWA1DataFile(args.filename)
     
-    nFrames = idf.get_info('nFrames')
+    nFrames = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
-    dataBits = idf.get_info('dataBits')
+    dataBits = idf.get_info('data_bits')
     # The number of ant/pols in the file is hard coded because I cannot figure out 
     # a way to get this number in a systematic fashion
     antpols = len(antennas)
@@ -69,7 +69,7 @@ def main(args):
         
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
     
     # File summary
     print("Filename: %s" % args.filename)

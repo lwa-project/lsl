@@ -15,7 +15,10 @@ if sys.version_info > (3,):
 import os
 import re
 import sys
-import urllib
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
 import hashlib
 import argparse
 from datetime import datetime
@@ -113,8 +116,12 @@ def main(args):
         
         try:
             ## Retrieve the list
-            ah = urllib.urlopen(_url)
+            ah = urlopen(_url)
             index = ah.read()
+            try:
+                index = index.decode(encoding='ascii', error='ignore')
+            except AttributeError:
+                pass
             ah.close()
             
             ## Parse
@@ -152,7 +159,7 @@ def main(args):
     if urlToDownload is not None:
         ## Retrieve
         try:
-            ah = urllib.urlopen(urlToDownload)
+            ah = urlopen(urlToDownload)
             newSSMIF = ah.read()
             ah.close()
         except Exception, e:
