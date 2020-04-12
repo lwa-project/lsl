@@ -16,10 +16,16 @@ if sys.version_info > (3,):
 import copy
 import numpy
 from textwrap import fill as tw_fill
+from datetime import datetime, timedelta
 
-__version__ = '0.1'
-__revision__ = '$Rev$'
-__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase']
+from astropy.time import Time as AstroTime
+
+from lsl.common import dp as dp_common
+from lsl.astro import unix_to_utcjd, MJD_OFFSET
+
+
+__version__ = '0.2'
+__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase', 'FrameTime']
 
 
 def _build_repr(name, attrs=[]):
@@ -306,3 +312,222 @@ class FrameBase(object):
             return 1
         else:
             return 0
+
+
+class FrameTime(object):
+    """
+    Class to represent the UNIX timestamp of a data frame as an integer 
+    number of seconds and a fractional number of seconds.
+    """
+    
+    def __init__(self, si=0, sf=0.0):
+        if isinstance(si, float):
+            sf = si - int(si)
+            si = int(si)
+        self._int = int(si)
+        self._frac = float(sf)
+        
+    @classmethod
+    def from_dp_timetag(cls, value, offset=0):
+        """
+        Create a new FrameTime instance from a raw DP timetag with an optional
+        offset.
+        """
+        
+        tt = int(value) - offset
+        s = tt // int(dp_common.fS)
+        f = (tt - s*int(dp_common.fS)) / dp_common.fS
+        return cls(s, f)
+        
+    @classmethod
+    def from_mjd_mpm(cls, mjd, mpm):
+        """
+        Create a new FrameTime from a MJD/MPM (milliseconds past midnight) pair.
+        """
+        
+        imjd = int(mjd)
+        fmjd = mjd - imjd
+        mpm = mpm + int(fmjd*86400*1000)
+        s =  mpm // 1000
+        f = (mpm - s*1000) / 1000.0
+        s = s + (imjd - 40587)*86400
+        return cls(s, f)
+        
+    def __str__(self):
+        dt = self.datetime
+        return str(dt)
+        
+    def __repr__(self):
+        return "<FrameTime i=%i, f=%.9f>" % (self._int, self._frac)
+        
+    def __int__(self):
+        return self._int
+        
+    def __float__(self):
+        return self._int+self._frac
+        
+    def __getitem__(self, i):
+        if i == 0:
+            return self._int
+        elif i == 1:
+            return self._frac
+        else:
+            raise IndexError
+            
+    def __add__(self, other):
+        try:
+            oi, of = other[0], other[1]
+        except TypeError:
+            oi = int(other)
+            of = other - oi
+        _int = self._int + oi
+        _frac = self._frac + of
+        if _frac >= 1:
+            _int += 1
+            _frac -= 1
+        return FrameTime(_int, _frac)
+        
+    def __iadd_(self, other):
+        try:
+            oi, of = other[0], other[1]
+        except TypeError:
+            oi = int(other)
+            of = other - oi
+        self._int += oi
+        self._frac += of
+        if self._frac >= 1:
+            self._int += 1
+            self._frac -= 1
+            
+    def __sub__(self, other):
+        try:
+            oi, of = other[0], other[1]
+        except TpeError:
+            oi = int(other)
+            of = other - oi
+        _int = self._int - oi
+        _frac = self._frac - of
+        if _frac < 0:
+            _int -= 1
+            _frac += 1
+        return _int+_frac
+       
+    def __isub__(self, other):
+        try:
+            oi, of = other[0], other[1]
+        except TypeError:
+            oi = int(other)
+            of = other - oi
+        self._int -= oi
+        self._frac -= of
+        if self._frac < 0:
+            self._int -= 1
+            self._frac += 1
+            
+    def __eq__(self, y):
+        if isinstance(y, FrameTime):
+            return self._int == y._int and self._frac == y._frac
+        elif isinstance(y, int):
+            return self._int == y and self._frac == 0.0
+        elif isinstance(y, float):
+            return float(self) == float(y)
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            
+    def __ne__(self, y):
+        return not (self == y)
+            
+    def __gt__(self, y):
+        if isinstance(y, FrameTime):
+            return (self._int > y._int) or (self._int == y._int and self._frac > y._frac)
+        elif isinstance(y, int):
+            return self._int > y or (self._int == y and self._frac > 0.0)
+        elif isinstance(y, float):
+            return float(self) > y
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            
+    def __ge__(self, y):
+        return (self > y or self == y)
+        
+    def __lt__(self, y):
+        if isinstance(y, FrameTime):
+            return (self._int < y._int) or (self._int == y._int and self._frac < y._frac)
+        elif isinstance(y, int):
+            return self._int < y
+        elif isinstance(y, float):
+            return float(self) < y
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            
+    def __le__(self, y):
+        return (self < y or self == y)
+        
+    def __cmp__(self, y):
+        if y > self:
+            return -1
+        elif self > y:
+            return 1
+        else:
+            return 0
+            
+    @property
+    def unix(self):
+        """
+        UNIX timestamp as a floating point value.
+        """
+        
+        return self._int + self._frac
+            
+    @property
+    def mjd(self):
+        """
+        MJD as a floating point value.
+        """
+        
+        return unix_to_utcjd(self) - MJD_OFFSET
+        
+    @property
+    def pulsar_mjd(self):
+        """
+        MJD as  three-element tuple of integer number of MJD days, fractional
+        MJD day, and fractional seconds.
+        """
+        
+        days = self._int // 86400
+        frac = (self._int - days*86400) / 86400.0
+        return (days + 40587, frac, self._frac)
+        
+    @property
+    def dp_timetag(self):
+        """
+        Timestamp as a DP timetag (ticks of a 196 MHz clock since UTC midnight
+        on January 1, 1970).
+        """
+        
+        tt = self._int * int(dp_common.fS)
+        tt = tt + int(self._frac*dp_common.fS)
+        return tt
+        
+    @property
+    def datetime(self):
+        """
+        Timestamp as a naive `datetime.datetime` instance.
+        """
+        
+        s = self._int
+        us = int(self._frac*1e6)
+        if us >= 1000000:
+            s += 1
+            us -= 1000000
+        dt = datetime.utcfromtimestamp(s)
+        dt += timedelta(microseconds=us)
+        return dt
+        
+    @property
+    def astropy(self):
+        """
+        Timestamp as an `astropy.time.Time` instance.
+        """
+        
+        return AstroTime(self._int, self._frac, format='unix', scale='utc')

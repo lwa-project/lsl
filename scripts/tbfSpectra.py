@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Given a TBF file, plot the time averaged spectra for each digitizer input.
@@ -74,7 +73,7 @@ def main(args):
     # of the frame.  This is needed to get the list of stands.
     junkFrame = tbf.read_frame(fh)
     fh.seek(0)
-    beginDate = ephem.Date(unix_to_utcjd(sum(junkFrame.time)) - DJD_OFFSET)
+    beginDate = junkFrame.time.datetime
     
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file

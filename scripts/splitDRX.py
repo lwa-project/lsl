@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script for splitting a DRX file into smaller pieces.
@@ -58,7 +57,7 @@ def main(args):
             junkFrame = drx.read_frame(fh)
             try:
                 srate = junkFrame.sample_rate
-                ti0, tf0 = junkFrame.time
+                t0 = junkFrame.time
                 break
             except ZeroDivisionError:
                 pass
@@ -85,14 +84,14 @@ def main(args):
         ## rate is
         junkFrame = drx.read_frame(fh)
         srate = junkFrame.sample_rate
-        ti1, tf1 = junkFrame.time
+        t1 = junkFrame.time
         tunepols = drx.get_frames_per_obs(fh)
         tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
         beampols = tunepol
         fh.seek(-drx.FRAME_SIZE, 1)
         
         ## See how far off the current frame is from the target
-        tDiff = ti1 - (ti0 + args.offset) + tf1 - tf0
+        tDiff = t1 - (t0 + args.offset)
         
         ## Half that to come up with a new seek parameter
         tCorr = -tDiff / 2.0
@@ -107,7 +106,7 @@ def main(args):
         fh.seek(cOffset*drx.FRAME_SIZE, 1)
     
     # Update the offset actually used
-    args.offset = ti1 - ti0 + tf1 - tf0
+    args.offset = t1 - t0
     
     nCaptures = nFramesFile/beampols
 
@@ -153,7 +152,7 @@ def main(args):
             junkFrame = drx.read_frame(fh)
             fh.seek(filePos)
 
-            dt = datetime.utcfromtimestamp(sum(junkFrame.time))
+            dt = junkFrame.time.datetime
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
             captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count, scale)

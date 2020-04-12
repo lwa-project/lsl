@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script for splitting a TBN file into smaller pieces.
@@ -108,7 +107,7 @@ def main(args):
             junkFrame = tbn.read_frame(fh)
             fh.seek(filePos)
             
-            dt = datetime.utcfromtimestamp(sum(junkFrame.time))
+            dt = junkFrame.time.datetime
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
             captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count, scale)

@@ -46,7 +46,6 @@ telemetry.track_module()
 
 
 __version__ = '0.4'
-__revision__ = '$Rev$'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
            'LWASVDataFile', 'LWADataFile']
 
@@ -413,9 +412,10 @@ class TBWFile(LDPFileBase):
          1) the time tag for the first sample, and
          2) a 2-D Numpy array of data.
         
-        The time tag is returned as seconds since the UNIX epoch by default.
-        However, the time tags can be returns as samples at fS if the 
-        time_in_samples keyword is set.
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
         
         The sorting order of the output data array is by 
         digitizer number - 1.
@@ -641,9 +641,10 @@ class TBNFile(LDPFileBase):
          1) the time tag for the first sample, and
          2) a 2-D Numpy array of data.
         
-        The time tag is returned as seconds since the UNIX epoch by default.
-        However, the time tags can be returns as samples at fS if the 
-        time_in_samples keyword is set.
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
         
         The sorting order of the output data array is by 
         digitizer number - 1.
@@ -721,7 +722,7 @@ class TBNFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.payload.timetag
                     else:
-                        setTime = sum(cFrame.time)
+                        setTime = cFrame.time
                         
                 data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
                 count[aStand] += 1
@@ -748,7 +749,7 @@ class TBNFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.payload.timetag
                         else:
-                            setTime = sum(cFrame.time)
+                            setTime = cFrame.time
                         
                     data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
                     count[aStand] += 1
@@ -927,7 +928,7 @@ class DRXFile(LDPFileBase):
         self.fh.seek(-drx.FRAME_SIZE, 1)
         
         # Get the initial time, sample rate, and beampols
-        ti0, tf0 = junkFrame.time
+        t0 = junkFrame.time
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
             if curr is not None:
@@ -951,13 +952,13 @@ class DRXFile(LDPFileBase):
             
             ## Figure out where in the file we are and what the current tuning/sample 
             ## rate is
-            ti1, tf1 = junkFrame.time
+            t1 = junkFrame.time
             sample_rate = junkFrame.sample_rate
             beampols = drx.get_frames_per_obs(self.fh)
             beampols = sum(beampols)
             
             ## See how far off the current frame is from the target
-            tDiff = ti1 - (ti0 + offset) + tf1 - tf0
+            tDiff = t1 - (t0 + offset)
             
             ## Half that to come up with a new seek parameter
             tCorr   = -tDiff / 2.0
@@ -985,7 +986,7 @@ class DRXFile(LDPFileBase):
         # Zero out the time tag checker
         self._timetag = None
         
-        return ti1 - ti0 + tf1 - tf0
+        return t1 - t0
         
     def read_frame(self):
         """
@@ -1008,6 +1009,11 @@ class DRXFile(LDPFileBase):
         in the data and return a three-element tuple of the actual duration read 
         in, the time for the first sample, and the data as numpy 
         array.
+        
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
         
         ..note::
             This function always returns a 2-D array with the first dimension
@@ -1107,7 +1113,7 @@ class DRXFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.payload.timetag - cFrame.header.time_offset
                     else:
-                        setTime = sum(cFrame.time)
+                        setTime = cFrame.time
                         
                 data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
                 count[aStand] +=  1
@@ -1135,7 +1141,7 @@ class DRXFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.payload.timetag - cFrame.header.time_offset
                         else:
-                            setTime = sum(cFrame.time)
+                            setTime = cFrame.time
                             
                     data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
                     count[aStand] +=  1
@@ -1283,7 +1289,7 @@ class DRSpecFile(LDPFileBase):
         self.fh.seek(-self.description['frame_size'], 1)
         
         # Get the initial time, sample rate, and integration time
-        ti0, tf0 = junkFrame.time
+        t0 = junkFrame.time
         
         # Offset in frames for beampols beam/tuning/pol. sets
         ioffset = int(round(offset / self.description['tint']))
@@ -1298,13 +1304,13 @@ class DRSpecFile(LDPFileBase):
             
             ## Figure out where in the file we are and what the current tuning/sample 
             ## rate is
-            ti1, tf1 = junkFrame.time
+            t1 = junkFrame.time
             sample_rate = junkFrame.sample_rate
             LFFT = junkFrame.get_transform_size()
             tInt = junkFrame.header.nints*LFFT/sample_rate
             
             ## See how far off the current frame is from the target
-            tDiff = ti1 - (ti0 + offset) + tf1 - tf0
+            tDiff = t1 - (t0 + offset)
             
             ## Half that to come up with a new seek parameter
             tCorr   = -tDiff / 2.0
@@ -1323,7 +1329,7 @@ class DRSpecFile(LDPFileBase):
         # Zero out the timetag checker
         self._timetag = None
         
-        return ti1 - ti0 + tf1 - tf0
+        return t1 - t0
         
     def read_frame(self):
         """
@@ -1341,6 +1347,11 @@ class DRSpecFile(LDPFileBase):
         seconds, read in the data and return a three-element tuple of the actual 
         duration read in, the times at the beginning of each stream, and the 
         data as numpy array.
+        
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
         
         ..note::
             This function always returns a 3-D array with the first dimension
@@ -1391,7 +1402,7 @@ class DRSpecFile(LDPFileBase):
             except errors.SyncError:
                 continue
                 
-            cTimetag = sum(cFrame.time)
+            cTimetag = cFrame.time
             if cTimetag > self._timetag + 1.001*timetagSkip:
                 actStep = cTimetag - self._timetag
                 if self.ignore_timetag_errors:
@@ -1403,7 +1414,7 @@ class DRSpecFile(LDPFileBase):
                 if time_in_samples:
                     setTime = cFrame.payload.timetag - cFrame.header.time_offset
                 else:
-                    setTime = sum(cFrame.time)
+                    setTime = cFrame.time
                     
             for j,p in enumerate(self.description['data_products']):
                 data[j+0,                             count, :] = getattr(cFrame.payload, '%s0' % p, None)
@@ -1714,9 +1725,10 @@ class TBFFile(LDPFileBase):
          1) the time tag for the first sample, and
          2) a 3-D Numpy array of data.
         
-        The time tag is returned as seconds since the UNIX epoch by default.
-        However, the time tags can be returns as samples at fS if the 
-        time_in_samples keyword is set.
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
         
         The sorting order of the output data array is by 
         digitizer number - 1.
@@ -1798,7 +1810,7 @@ class TBFFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.payload.timetag
                     else:
-                        setTime = sum(cFrame.time)
+                        setTime = cFrame.time
                         
                 subData = cFrame.payload.data
                 subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
@@ -1831,7 +1843,7 @@ class TBFFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.payload.timetag
                         else:
-                            setTime = sum(cFrame.time)
+                            setTime = cFrame.time
                         
                     subData = cFrame.payload.data
                     subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
@@ -2027,9 +2039,10 @@ class CORFile(LDPFileBase):
         1) the time tag for the first sample, and
         2) a 5-D Numpy array of data.
         
-        The time tag is returned as seconds since the UNIX epoch by default.
-        However, the time tags can be returns as samples at fS if the 
-        time_in_samples keyword is set.
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
         
         The sorting order of the output data array is by 
         baseline.
@@ -2112,7 +2125,7 @@ class CORFile(LDPFileBase):
                     if time_in_samples:
                         setTime = cFrame.payload.timetag
                     else:
-                        setTime = sum(cFrame.time)
+                        setTime = cFrame.time
                         
                 aBase = self.bmapperd[cFrame.id]
                 aChan = self.cmapperd[first_chan]
@@ -2143,7 +2156,7 @@ class CORFile(LDPFileBase):
                         if time_in_samples:
                             setTime = cFrame.payload.timetag
                         else:
-                            setTime = sum(cFrame.time)
+                            setTime = cFrame.time
                             
                     aBase = self.bmapperd[cFrame.id]
                     aChan = self.cmapperd[first_chan]

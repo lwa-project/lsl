@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.writer.vdif module.
 """
@@ -21,7 +19,6 @@ from lsl.reader import tbw, tbn, vdif as vrdr, errors
 from lsl.writer import vdif
 
 
-__revision__ = "$Rev$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
@@ -94,7 +91,7 @@ class vdif_tests(unittest.TestCase):
         fh = open(testFile, 'rb')
         for tFrame in frames:
             vFrame = vrdr.read_frame(fh)
-            self.assertAlmostEqual(sum(vFrame.time), sum(tFrame.time), 6)
+            self.assertAlmostEqual(vFrame.time, tFrame.time, 6)
             for v,t in zip((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(numpy.int8)):
                 self.assertAlmostEqual(v, t, 6)
                 

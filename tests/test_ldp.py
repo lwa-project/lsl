@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.reader.ldp module.
 """
@@ -21,7 +19,6 @@ from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
 
 
-__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 

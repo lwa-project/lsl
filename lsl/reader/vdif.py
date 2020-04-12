@@ -51,7 +51,6 @@ telemetry.track_module()
 
 
 __version__ = '0.4'
-__revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_guppi_header', 'read_frame', 
            'get_frame_size', 'get_thread_count', 'get_frames_per_second', 'get_sample_rate']
 
@@ -118,8 +117,8 @@ class FrameHeader(FrameHeaderBase):
     @property
     def time(self):
         """
-        Function to convert the time tag to seconds since the UNIX epoch as a two-
-        element tuple.
+        Function to convert the time tag to seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance.
         """
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
@@ -174,7 +173,7 @@ class FrameHeader(FrameHeaderBase):
         seconds_i = int(astro.utcjd_to_unix(frameMJD_i + astro.MJD_OFFSET))
         seconds_f = frameMJD_f * 86400.0
         
-        return seconds_i, seconds_f
+        return FrameTime(seconds_i, seconds_f)
         
     @property
     def id(self):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Script for splitting a DRX file based on the information contained in a MCS
@@ -64,7 +63,8 @@ def main(args):
     for i,o in enumerate(obs):
         tStart.append( mjdmpm_to_datetime(o['MJD'], o['MPM']) )
         oDetails.append( {'m': o['Mode'], 'd': o['Dur'] / 1000.0, 'f': o['BW'], 
-                'p': o['projectID'], 's': o['sessionID'], 'o': o['obsID'], 't': sdf.sessions[0].observations[o['obsID']-1].target} )
+                          'p': o['projectID'], 's': o['sessionID'], 'o': o['obsID'], 
+                          't': sdf.sessions[0].observations[o['obsID']-1].target} )
 
         print("Observation #%i" % (o['obsID']))
         print(" Start: %i, %i -> %s" % (o['MJD'], o['MPM'], tStart[-1]))
@@ -80,7 +80,7 @@ def main(args):
     if beam != obs[0]['drxBeam']:
         print('ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drxBeam'], beam))
         sys.exit()
-    firstFrame = datetime.utcfromtimestamp(sum(lf.time))
+    firstFrame = lf.time.datetime
     if abs(firstFrame - min(tStart)) > timedelta(seconds=30):
         print('ERROR: Time mis-match, metadata is for %s, file is for %s' % (min(tStart), firstFrame))
         sys.exit()
@@ -137,24 +137,24 @@ def main(args):
         fh.seek(-reader.FRAME_SIZE, 1)	
 
         ## Go in search of the start of the observation
-        if datetime.utcfromtimestamp(sum(frame.time)) < oStart:
+        if frame.time.datetime < oStart:
             ### We aren't at the beginning yet, seek fowards
-            print("-> At byte %i, time is %s < %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
+            print("-> At byte %i, time is %s < %s" % (fh.tell(), frame.time.datetime, oStart))
 
-            while datetime.utcfromtimestamp(sum(frame.time)) < oStart:
+            while frame.time.datetime < oStart:
                 try:
                     frame = reader.read_frame(fh)
                 except errors.SyncError:		
                     fh.seek(1, 1)
                 except errors.EOFError:
                     break
-                #print(datetime.utcfromtimestamp(sum(frame.time)), oStart)
+                #print(frame.time.datetime, oStart)
 
-        elif datetime.utcfromtimestamp(sum(frame.time)) > oStart:
+        elif frame.time.datetime > oStart:
             ### We've gone too far, seek backwards
-            print("-> At byte %i, time is %s > %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
+            print("-> At byte %i, time is %s > %s" % (fh.tell(), frame.time.datetime, oStart))
 
-            while datetime.utcfromtimestamp(sum(frame.time)) > oStart:
+            while frame.time.datetime > oStart:
                 if fh.tell() == 0:
                     break
                 fh.seek(-2*reader.FRAME_SIZE, 1)
@@ -164,17 +164,17 @@ def main(args):
                     fh.seek(-1, 1)
                 except errors.EOFError:
                     break
-                #print(datetime.utcfromtimestamp(sum(frame.time)), oStart)
+                #print(frame.time.datetime, oStart)
                 
         else:
             ### We're there already
-            print("-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
+            print("-> At byte %i, time is %s = %s" % (fh.tell(), frame.time.datetime, oStart))
             
         ## Jump back exactly one frame so that the filehandle is in a position 
         ## to read the first frame that is part of the observation
         try:
             frame = reader.read_frame(fh)
-            print("-> At byte %i, time is %s = %s" % (fh.tell(), datetime.utcfromtimestamp(sum(frame.time)), oStart))
+            print("-> At byte %i, time is %s = %s" % (fh.tell(), frame.time.datetime, oStart))
             fh.seek(-reader.FRAME_SIZE, 1)
         except errors.EOFError:
             pass

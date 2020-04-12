@@ -44,7 +44,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT',
            'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count', 'get_first_channel']
 
@@ -106,13 +105,11 @@ class FramePayload(FramePayloadBase):
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTime` instance.
         """
         
-        seconds_i = self.timetag // int(adp_common.fS)
-        seconds_f = (self.timetag  % int(adp_common.fS)) / adp_common.fS
-        
-        return seconds_i, seconds_f
+        return FrameTime.from_dp_timetag(self.timetag)
 
 
 class Frame(FrameBase):
