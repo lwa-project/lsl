@@ -6,6 +6,9 @@ LSL Developer Primitives
 .. automodule:: lsl.reader.ldp
    :members:
 
+.. autoclass:: lsl.reader.base.FrameTime
+   :members:
+   
 Low-Level TBW -- DP
 -------------------
 .. automodule:: lsl.reader.tbw
