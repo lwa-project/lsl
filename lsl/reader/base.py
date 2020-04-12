@@ -402,7 +402,7 @@ class FrameTime(object):
     def __sub__(self, other):
         try:
             oi, of = other[0], other[1]
-        except TpeError:
+        except TypeError:
             oi = int(other)
             of = other - oi
         _int = self._int - oi
