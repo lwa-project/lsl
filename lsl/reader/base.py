@@ -188,8 +188,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, FrameTime)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -207,8 +207,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, FrameTime)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -226,8 +226,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, FrameTime)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -246,8 +246,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, FrameTime)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -265,8 +265,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, FrameTime)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -285,8 +285,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, FrameTime)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
