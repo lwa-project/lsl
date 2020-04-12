@@ -377,7 +377,7 @@ class FrameTime(object):
     def __add__(self, other):
         try:
             oi, of = other[0], other[1]
-        except TypeError:
+        except (TypeError, IndexError):
             oi = int(other)
             of = other - oi
         _int = self._int + oi
@@ -390,7 +390,7 @@ class FrameTime(object):
     def __iadd_(self, other):
         try:
             oi, of = other[0], other[1]
-        except TypeError:
+        except (TypeError, IndexError):
             oi = int(other)
             of = other - oi
         self._int += oi
@@ -402,7 +402,7 @@ class FrameTime(object):
     def __sub__(self, other):
         try:
             oi, of = other[0], other[1]
-        except TypeError:
+        except (TypeError, IndexError):
             oi = int(other)
             of = other - oi
         _int = self._int - oi
@@ -415,7 +415,7 @@ class FrameTime(object):
     def __isub__(self, other):
         try:
             oi, of = other[0], other[1]
-        except TypeError:
+        except (TypeError, IndexError):
             oi = int(other)
             of = other - oi
         self._int -= oi
