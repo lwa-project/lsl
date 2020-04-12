@@ -378,7 +378,7 @@ class Frame(FrameBase):
         `lsl.reader.base.FrameTime` instance.
         """
         
-        return FrameTime.from_dp_timetag(self.timetag, offset=self.header.time_offset)
+        return FrameTime.from_dp_timetag(self.payload.timetag, offset=self.header.time_offset)
         
     @property
     def central_freq(self):
