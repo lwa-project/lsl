@@ -375,54 +375,62 @@ class FrameTimestamp(object):
             raise IndexError
             
     def __add__(self, other):
-        try:
-            oi, of = other[0], other[1]
-        except (TypeError, IndexError):
+        if isinstance(other, (int, float)):
             oi = int(other)
             of = other - oi
-        _int = self._int + oi
-        _frac = self._frac + of
-        if _frac >= 1:
-            _int += 1
-            _frac -= 1
-        return FrameTimestamp(_int, _frac)
-        
+            _int = self._int + oi
+            _frac = self._frac + of
+            if _frac >= 1:
+                _int += 1
+                _frac -= 1
+            return FrameTimestamp(_int, _frac)
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __iadd_(self, other):
-        try:
-            oi, of = other[0], other[1]
-        except (TypeError, IndexError):
+        if isinstance(other, (int, float)):
             oi = int(other)
             of = other - oi
-        self._int += oi
-        self._frac += of
-        if self._frac >= 1:
-            self._int += 1
-            self._frac -= 1
+            self._int += oi
+            self._frac += of
+            if self._frac >= 1:
+                self._int += 1
+                self._frac -= 1
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __sub__(self, other):
-        try:
+        if isinstance(other, FrameTimestamp):
             oi, of = other[0], other[1]
-        except (TypeError, IndexError):
+            _int = self._int - oi
+            _frac = self._frac - of
+            if _frac < 0:
+                _int -= 1
+                _frac += 1
+            return _int+_frac
+        elif isinstance(other, (int, float)):
             oi = int(other)
             of = other - oi
-        _int = self._int - oi
-        _frac = self._frac - of
-        if _frac < 0:
-            _int -= 1
-            _frac += 1
-        return _int+_frac
-       
+            _int = self._int - oi
+            _frac = self._frac - of
+            if _frac < 0:
+                _int -= 1
+                _frac += 1
+            return FrameTimestamp(_int, _frac)
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __isub__(self, other):
-        try:
-            oi, of = other[0], other[1]
-        except (TypeError, IndexError):
+        if isinstance(other, (int, float)):
             oi = int(other)
             of = other - oi
-        self._int -= oi
-        self._frac -= of
-        if self._frac < 0:
-            self._int -= 1
-            self._frac += 1
+            self._int -= oi
+            self._frac -= of
+            if self._frac < 0:
+                self._int -= 1
+                self._frac += 1
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __eq__(self, y):
         if isinstance(y, FrameTimestamp):
@@ -477,7 +485,7 @@ class FrameTimestamp(object):
         UNIX timestamp as a floating point value.
         """
         
-        return self._int + self._frac
+        return float(self)
             
     @property
     def mjd(self):
