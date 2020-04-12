@@ -352,7 +352,7 @@ class ldp_tests(unittest.TestCase):
         self.assertEqual(f.data_bits, 32)
         self.assertEqual(f.nframe, 7)
         self.assertEqual(f.nbeampol, 4)
-        self.assertEqual(f.nproducts, 2)
+        self.assertEqual(f.nproduct, 2)
         
         # Read a frame
         frame = f.read_frame()
@@ -389,7 +389,7 @@ class ldp_tests(unittest.TestCase):
             self.assertEqual(f.data_bits, 32)
             self.assertEqual(f.nframe, 7)
             self.assertEqual(f.nbeampol, 4)
-            self.assertEqual(f.nproducts, 2)
+            self.assertEqual(f.nproduct, 2)
             
             ## Read a frame
             frame = f.read_frame()
@@ -435,7 +435,7 @@ class ldp_tests(unittest.TestCase):
         self.assertEqual(f.data_bits, 32)
         self.assertEqual(f.nframe, 7)
         self.assertEqual(f.nbeampol, 4)
-        self.assertEqual(f.nproducts, 2)
+        self.assertEqual(f.nproduct, 2)
         
         # Read a frame
         frame = f.read_frame()
