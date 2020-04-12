@@ -25,7 +25,7 @@ from lsl.astro import unix_to_utcjd, MJD_OFFSET
 
 
 __version__ = '0.2'
-__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase', 'FrameTime']
+__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase', 'FrameTimestamp']
 
 
 def _build_repr(name, attrs=[]):
@@ -188,7 +188,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTime)):
+        elif isinstance(y, (int, float, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -207,7 +207,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTime)):
+        elif isinstance(y, (int, float, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -226,7 +226,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTime)):
+        elif isinstance(y, (int, float, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -246,7 +246,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTime)):
+        elif isinstance(y, (int, float, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -265,7 +265,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTime)):
+        elif isinstance(y, (int, float, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -285,7 +285,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTime)):
+        elif isinstance(y, (int, float, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -314,7 +314,7 @@ class FrameBase(object):
             return 0
 
 
-class FrameTime(object):
+class FrameTimestamp(object):
     """
     Class to represent the UNIX timestamp of a data frame as an integer 
     number of seconds and a fractional number of seconds.
@@ -330,7 +330,7 @@ class FrameTime(object):
     @classmethod
     def from_dp_timetag(cls, value, offset=0):
         """
-        Create a new FrameTime instance from a raw DP timetag with an optional
+        Create a new FrameTimestamp instance from a raw DP timetag with an optional
         offset.
         """
         
@@ -342,7 +342,7 @@ class FrameTime(object):
     @classmethod
     def from_mjd_mpm(cls, mjd, mpm):
         """
-        Create a new FrameTime from a MJD/MPM (milliseconds past midnight) pair.
+        Create a new FrameTimestamp from a MJD/MPM (milliseconds past midnight) pair.
         """
         
         imjd = int(mjd)
@@ -358,7 +358,7 @@ class FrameTime(object):
         return str(dt)
         
     def __repr__(self):
-        return "<FrameTime i=%i, f=%.9f>" % (self._int, self._frac)
+        return "<FrameTimestamp i=%i, f=%.9f>" % (self._int, self._frac)
         
     def __int__(self):
         return self._int
@@ -385,7 +385,7 @@ class FrameTime(object):
         if _frac >= 1:
             _int += 1
             _frac -= 1
-        return FrameTime(_int, _frac)
+        return FrameTimestamp(_int, _frac)
         
     def __iadd_(self, other):
         try:
@@ -425,7 +425,7 @@ class FrameTime(object):
             self._frac += 1
             
     def __eq__(self, y):
-        if isinstance(y, FrameTime):
+        if isinstance(y, FrameTimestamp):
             return self._int == y._int and self._frac == y._frac
         elif isinstance(y, int):
             return self._int == y and self._frac == 0.0
@@ -438,7 +438,7 @@ class FrameTime(object):
         return not (self == y)
             
     def __gt__(self, y):
-        if isinstance(y, FrameTime):
+        if isinstance(y, FrameTimestamp):
             return (self._int > y._int) or (self._int == y._int and self._frac > y._frac)
         elif isinstance(y, int):
             return self._int > y or (self._int == y and self._frac > 0.0)
@@ -451,7 +451,7 @@ class FrameTime(object):
         return (self > y or self == y)
         
     def __lt__(self, y):
-        if isinstance(y, FrameTime):
+        if isinstance(y, FrameTimestamp):
             return (self._int < y._int) or (self._int == y._int and self._frac < y._frac)
         elif isinstance(y, int):
             return self._int < y

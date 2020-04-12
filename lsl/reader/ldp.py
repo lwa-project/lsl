@@ -413,7 +413,7 @@ class TBWFile(LDPFileBase):
          2) a 2-D Numpy array of data.
         
         The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         
@@ -642,7 +642,7 @@ class TBNFile(LDPFileBase):
          2) a 2-D Numpy array of data.
         
         The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         
@@ -1011,7 +1011,7 @@ class DRXFile(LDPFileBase):
         array.
         
         The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         
@@ -1349,7 +1349,7 @@ class DRSpecFile(LDPFileBase):
         data as numpy array.
         
         The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         
@@ -1726,7 +1726,7 @@ class TBFFile(LDPFileBase):
          2) a 3-D Numpy array of data.
         
         The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         
@@ -2040,7 +2040,7 @@ class CORFile(LDPFileBase):
         2) a 5-D Numpy array of data.
         
         The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance by default.  However, the time 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         

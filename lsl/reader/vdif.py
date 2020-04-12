@@ -118,7 +118,7 @@ class FrameHeader(FrameHeaderBase):
     def time(self):
         """
         Function to convert the time tag to seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance.
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
@@ -173,7 +173,7 @@ class FrameHeader(FrameHeaderBase):
         seconds_i = int(astro.utcjd_to_unix(frameMJD_i + astro.MJD_OFFSET))
         seconds_f = frameMJD_f * 86400.0
         
-        return FrameTime(seconds_i, seconds_f)
+        return FrameTimestamp(seconds_i, seconds_f)
         
     @property
     def id(self):

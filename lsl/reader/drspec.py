@@ -375,10 +375,10 @@ class Frame(FrameBase):
         """
         Function to convert the time tag from samples since the UNIX epoch
         (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTime` instance.
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        return FrameTime.from_dp_timetag(self.payload.timetag, offset=self.header.time_offset)
+        return FrameTimestamp.from_dp_timetag(self.payload.timetag, offset=self.header.time_offset)
         
     @property
     def central_freq(self):
