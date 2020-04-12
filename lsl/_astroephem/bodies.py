@@ -52,8 +52,8 @@ class _Body(object):
                                         obstime=self.a_epoch))
             _tc = _lc.transform_to(AltAz(obstime=date_or_observer.date,
                                          location=date_or_observer._el))
-        self.a_ra  = hours(_ac.ra)
-        self.a_dec = degrees(_ac.dec)
+        self.a_ra  = hours(_ac.ra, wrap=True)
+        self.a_dec = degrees(_ac.dec, wrap180=True)
         self.g_ra  = hours(gast + _gc.spherical.lon, wrap=True)
         self.g_dec = degrees(_gc.spherical.lat, wrap180=True)
         try:
@@ -234,6 +234,7 @@ class Planet(_Body):
             self._sc = self.func(date_or_observer.date)
             
         _Body.compute(self, date_or_observer=date_or_observer)            
+
 
 class Sun(Planet):
     """

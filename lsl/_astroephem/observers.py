@@ -13,7 +13,7 @@ from dates import Date
 __all__ = ['CircumpolarError', 'NeverUpError', 'AlwaysUpError', 'Observer']
 
 
-class CircumpolarError(Exception):
+class CircumpolarError(ValueError):
     pass
 
 
@@ -26,6 +26,12 @@ class AlwaysUpError(CircumpolarError):
 
 
 def _piecewise_search(func, x):
+    """
+    Simple search function for the rise/set times that does linear fits to the
+    below horizon and above horizon elevations to estimate when the source is
+    on the horizon.
+    """
+    
     x = [x+v*u.minute for v in (-5, -3, -2, -1, 0, 1, 2, 3, 5)]
     f = numpy.array([func(v) for v in x])
     x = numpy.array([float(v) for v in x])
@@ -37,6 +43,12 @@ def _piecewise_search(func, x):
 
 
 def _quadratic_search(func, x):
+    """
+    Simple search function for the transit/antitransit times that does a
+    quadratic fit to the elevation as a function to time to estimate when
+    the source is at transit.
+    """
+    
     x = [x+v*u.minute for v in (-20, -15, -10, -5, 0, 5, 10, 15, 20)]
     f = [func(v) for v in x]
     fit = numpy.polyfit([float(v) for v in x], f, 2)
