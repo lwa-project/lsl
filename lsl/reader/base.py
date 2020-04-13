@@ -321,9 +321,20 @@ class FrameTimestamp(object):
     """
     
     def __init__(self, si=0, sf=0.0):
-        if isinstance(si, float):
+        if isinstance(si, (float, numpy.floatting):
             sf = si - int(si)
             si = int(si)
+        # Make sure sf is [0.0, 1.0)
+        if sf >= 1:
+            sfi = int(sf)
+            sff = sf - sfi
+            si += sfi
+            sf = sff
+        elif sf < 0:
+            sfi = int(sf) - 1
+            sff = sf - sfi
+            si += sfi
+            sf = sff
         self._int = int(si)
         self._frac = float(sf)
         
@@ -435,9 +446,9 @@ class FrameTimestamp(object):
     def __eq__(self, y):
         if isinstance(y, FrameTimestamp):
             return self._int == y._int and self._frac == y._frac
-        elif isinstance(y, int):
+        elif isinstance(y, (int, numpy.integer)):
             return self._int == y and self._frac == 0.0
-        elif isinstance(y, float):
+        elif isinstance(y, (float, numpy.floating)):
             return float(self) == float(y)
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -448,9 +459,9 @@ class FrameTimestamp(object):
     def __gt__(self, y):
         if isinstance(y, FrameTimestamp):
             return (self._int > y._int) or (self._int == y._int and self._frac > y._frac)
-        elif isinstance(y, int):
+        elif isinstance(y, (int, numpy.integer)):
             return self._int > y or (self._int == y and self._frac > 0.0)
-        elif isinstance(y, float):
+        elif isinstance(y, (float, numpy.floating)):
             return float(self) > y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -461,9 +472,9 @@ class FrameTimestamp(object):
     def __lt__(self, y):
         if isinstance(y, FrameTimestamp):
             return (self._int < y._int) or (self._int == y._int and self._frac < y._frac)
-        elif isinstance(y, int):
+        elif isinstance(y, (int, numpy.integer)):
             return self._int < y
-        elif isinstance(y, float):
+        elif isinstance(y, (float, numpy.floating)):
             return float(self) < y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
