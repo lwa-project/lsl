@@ -188,7 +188,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTimestamp)):
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -207,7 +207,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTimestamp)):
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -226,7 +226,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTimestamp)):
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -246,7 +246,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTimestamp)):
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -265,7 +265,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTimestamp)):
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -285,7 +285,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, FrameTimestamp)):
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
@@ -375,7 +375,7 @@ class FrameTimestamp(object):
             raise IndexError
             
     def __add__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
             _int = self._int + oi
@@ -388,7 +388,7 @@ class FrameTimestamp(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __iadd_(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
             self._int += oi
@@ -408,7 +408,7 @@ class FrameTimestamp(object):
                 _int -= 1
                 _frac += 1
             return _int+_frac
-        elif isinstance(other, (int, float)):
+        elif isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
             _int = self._int - oi
@@ -421,7 +421,7 @@ class FrameTimestamp(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __isub__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
             self._int -= oi
