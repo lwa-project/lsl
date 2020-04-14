@@ -10,6 +10,27 @@ python:
     #- pypy3
 
 
+jobs:
+  allow_failures:
+    - os: osx
+    
+  include:
+    - stage: test
+      os: osx
+      language: sh
+      env:
+        - TOXENV=py3
+        - HOMEBREW_NO_INSTALL_CLEANUP=1
+        - HOMEBREW_NO_ANALYTICS=1
+      before_cache:
+        # - brew cleanup
+        - rm -f "$HOME/Library/Caches/pip/log/debug.log"
+      cache:
+        directories:
+          # - "$HOME/Library/Caches/Homebrew"
+          - "$HOME/Library/Caches/pip"
+
+
 addons:
     apt:
         packages:
@@ -24,7 +45,9 @@ addons:
             - libfftw3-dev
             - libcfitsio-dev
             - libboost-python-dev
-        brew:
+    homebrew:
+        packages:
+            - python3
             - git
             - fftw
 
@@ -32,6 +55,9 @@ before_install:
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo add-apt-repository -y ppa:kernsuite/kern-3; fi
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -q update; fi
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -y install casacore-dev wcslib-dev; fi
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then python3 -m pip install --upgrade virtualenv; fi
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then virtualenv -p python3 --system-site-packages "$HOME/venv"; fi
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then source "$HOME/venv/bin/activate"; fi
 
 install:
     - pip install \
