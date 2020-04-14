@@ -15,11 +15,10 @@ jobs:
     - os: osx
     
   include:
-    - stage: test
+    - stage: addons
       os: osx
       language: sh
       env:
-        - TOXENV=py3
         - HOMEBREW_NO_INSTALL_CLEANUP=1
         - HOMEBREW_NO_ANALYTICS=1
       before_cache:
