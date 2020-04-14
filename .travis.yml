@@ -17,6 +17,7 @@ jobs:
   include:
     - stage: test
       os: osx
+      osx_image: xcode11
       language: sh
       env:
         - HOMEBREW_NO_INSTALL_CLEANUP=1
@@ -45,7 +46,7 @@ addons:
             - libcfitsio-dev
             - libboost-python-dev
     homebrew:
-        update: true
+        # update: true
         packages:
             - python3
             - pkg-config
