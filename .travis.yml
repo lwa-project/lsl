@@ -15,7 +15,7 @@ jobs:
     - os: osx
     
   include:
-    - stage: addons
+    - stage: test
       os: osx
       language: sh
       env:
@@ -45,8 +45,10 @@ addons:
             - libcfitsio-dev
             - libboost-python-dev
     homebrew:
+        update: true
         packages:
             - python3
+            - pkg-config
             - git
             - fftw
 
