@@ -49,7 +49,7 @@ before_install:
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -q update; fi
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -y install casacore-dev wcslib-dev; fi
     - if [ "$TRAVIS_OS_NAME" = "osx" ]; then python3 -m pip install --upgrade virtualenv; fi
-    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then virtualenv -p python3 --system-site-packages "$HOME/venv"; fi
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then virtualenv -p python3 "$HOME/venv"; fi
     - if [ "$TRAVIS_OS_NAME" = "osx" ]; then source "$HOME/venv/bin/activate"; fi
 
 install:
