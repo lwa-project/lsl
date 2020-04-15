@@ -16,15 +16,15 @@ jobs:
     
   include:
     - os: osx
-    - osx_image: xcode11
-    - language: sh
-    - env:
+      osx_image: xcode11
+      language: sh
+      env:
         - HOMEBREW_NO_INSTALL_CLEANUP=1
         - HOMEBREW_NO_ANALYTICS=1
-    - before_cache:
+      before_cache:
         # - brew cleanup
         - rm -f "$HOME/Library/Caches/pip/log/debug.log"
-    - cache:
+      cache:
         directories:
           # - "$HOME/Library/Caches/Homebrew"
           - "$HOME/Library/Caches/pip"
