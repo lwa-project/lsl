@@ -1020,7 +1020,7 @@ class Observation(object):
         
         self.mjd = self.get_mjd()
         self.mpm = self.get_mpm()
-        self.dur = self.get_isinstance(self.start, datetime)duration()
+        self.dur = self.get_duration()
         self.freq1 = self.get_frequency1()
         self.freq2 = self.get_frequency2()
         self.beam = self.get_beam_type()
