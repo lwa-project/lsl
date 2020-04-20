@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Script to gather information about the Python interpreter, modules, 
@@ -7,11 +6,11 @@ C libraries, numpy installation, and LSL installation to help with
 debugging and install issues.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -187,11 +186,11 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
     print("Compiler OpenMP Support: %s" % ("Yes" if p.returncode == 0 else "No",))
     if p.returncode != 0:
         o = o.split('\n')[:-1]
-        for i in xrange(len(o)):
+        for i in range(len(o)):
             o[i] = '  %s' % o[i]
         o = '\n'.join(o)
         e = e.split('\n')[:-1]
-        for i in xrange(len(e)):
+        for i in range(len(e)):
             e[i] = '  %s' % e[i]
         e = '\n'.join(e)
         
@@ -208,7 +207,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
     p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     o, e = p.communicate()
     e = e.split('\n')[:-1]
-    for i in xrange(len(e)):
+    for i in range(len(e)):
         e[i] = '  %s' % e[i]
     e = '\n'.join(e)
     print("Compiler Version:")

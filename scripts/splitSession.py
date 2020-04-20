@@ -5,11 +5,11 @@ Script for splitting a DRX file based on the information contained in a MCS
 metadata tarball.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -86,7 +86,7 @@ def main(args):
         sys.exit()
     fh.seek(0)
 
-    for i in xrange(len(tStart)):
+    for i in range(len(tStart)):
         eof = False
 
         ## Get observation properties
@@ -198,7 +198,7 @@ def main(args):
     print(" ")
 
     # Report
-    for i in xrange(len(tStart)):
+    for i in range(len(tStart)):
         if oDetails[i]['b'] < 0:
             print("%s, Session %i, Observation %i: not found" % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o']))
 
@@ -208,7 +208,7 @@ def main(args):
 
     # Split
     if not args.list:
-        for i in xrange(len(tStart)):
+        for i in range(len(tStart)):
             if oDetails[i]['b'] < 0:
                 continue
                 

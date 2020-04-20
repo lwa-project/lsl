@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Given a DRX file, plot the time averaged spectra for each beam output.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import sys
 import math
@@ -117,7 +116,7 @@ def main(args):
         window = fxc.null_window
         
     # Master loop over all of the file chunks
-    standMapper = [4*(beam-1) + i for i in xrange(4)]
+    standMapper = [4*(beam-1) + i for i in range(4)]
     masterWeight = numpy.zeros((nChunks, 4, LFFT))
     masterSpectra = numpy.zeros((nChunks, 4, LFFT))
     for i in range(nChunks):
@@ -132,7 +131,7 @@ def main(args):
         # Calculate the spectra for this block of data and then weight the results by 
         # the total number of frames read.  This is needed to keep the averages correct.
         freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose, sample_rate=srate, clip_level=0)
-        for stand in xrange(tempSpec.shape[0]):
+        for stand in range(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
             

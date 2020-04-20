@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script that reads in TBN data and runs a cross-correlation on it.  
 The results are saved in the FITS IDI format.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -74,7 +73,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
     ref_time = 0.0
     setTime = 0.0
     wallTime = time.time()
-    for s in xrange(chunk_size):
+    for s in range(chunk_size):
         try:
             readT, t, data = idf.read(int_time)
         except Exception, e:
@@ -160,7 +159,7 @@ def main(args):
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
-    for i in xrange(len(antennas)):
+    for i in range(len(antennas)):
         ant = antennas[i]
         if ant.combined_status != 33 and not args.all:
             pass

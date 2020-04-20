@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script to plot the relative response of an isolated LWA antenna 
 as a function of azimuth and elevation.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -72,7 +71,7 @@ def main(args):
                 corrFnc = None
             else:
                 fCors = cAlts*0.0
-                for j in xrange(fCors.size):
+                for j in range(fCors.size):
                     ffnc = interp1d(cFreqs, cCorrs[:,j], bounds_error=False)
                     fCors[j] = ffnc(args.frequency/1e6)
                 corrFnc = interp1d(cAlts, fCors, bounds_error=False)

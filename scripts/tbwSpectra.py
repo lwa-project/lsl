@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Given a TBW file, plot the time averaged spectra for each digitizer input.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -102,7 +101,7 @@ def main(args):
     # NB:  The weighting is the same for the x and y polarizations because of how 
     # the data are packed in TBW
     freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose)
-    for stand in xrange(masterSpectra.shape[1]):
+    for stand in range(masterSpectra.shape[1]):
         masterSpectra[0,stand,:] = tempSpec[stand,:]
         masterWeight[0,stand,:] = int(readT*srate/LFFT)
         
@@ -111,9 +110,9 @@ def main(args):
     
     # Apply the cable loss corrections, if requested
     if args.gain_correct:
-        for s in xrange(masterSpectra.shape[1]):
+        for s in range(masterSpectra.shape[1]):
             currGain = antennas[s].cable.gain(freq)
-            for c in xrange(masterSpectra.shape[0]):
+            for c in range(masterSpectra.shape[0]):
                 masterSpectra[c,s,:] /= currGain
                 
     # Now that we have read through all of the chunks, perform the final averaging by
@@ -128,10 +127,10 @@ def main(args):
             'teal', 'steelblue', 'seagreen', 'slategray', 'mediumorchid', 'lime', 
             'dodgerblue', 'darkorange']
             
-        for f in xrange(int(numpy.ceil(antpols/20.))):
+        for f in range(int(numpy.ceil(antpols/20.))):
             fig = plt.figure()
             ax1 = fig.add_subplot(1, 1, 1)
-            for i in xrange(f*20, f*20+20):
+            for i in range(f*20, f*20+20):
                 currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
                 ax1.plot(freq/1e6, currSpectra, label='%i,%i' % (antennas[i].stand.id, antennas[i].pol), color=colors[i % 20])
                 
@@ -143,13 +142,13 @@ def main(args):
             for l in leg.get_lines():
                 l.set_linewidth(1.7)  # the legend line width
     else:
-        for f in xrange(int(numpy.ceil(antpols/20))):
+        for f in range(int(numpy.ceil(antpols/20))):
             # Normal plotting
             fig = plt.figure()
             figsY = 4
             figsX = 5
             fig.subplots_adjust(left=0.06, bottom=0.06, right=0.94, top=0.94, wspace=0.20, hspace=0.50)
-            for i in xrange(f*20, f*20+20):
+            for i in range(f*20, f*20+20):
                 ax = fig.add_subplot(figsX, figsY, (i%20)+1)
                 try:
                     currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
@@ -160,7 +159,7 @@ def main(args):
                 # If there is more than one chunk, plot the difference between the global 
                 # average and each chunk
                 if nChunks > 1:
-                    for j in xrange(nChunks):
+                    for j in range(nChunks):
                         # Some files are padded by zeros at the end and, thus, carry no 
                         # weight in the average spectra.  Skip over those.
                         if masterWeight[j,i,:].sum() == 0:

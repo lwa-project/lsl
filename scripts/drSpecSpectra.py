@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Given a DR spectrometer file, plot the time averaged spectra for each 
 polarization product.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import sys
 import math
@@ -110,7 +109,7 @@ def main(args):
     # Master loop over all of the file chunks
     masterWeight = numpy.zeros((nChunks, 2*len(products), LFFT))
     masterSpectra = numpy.zeros((nChunks, 2*len(products), LFFT))
-    for i in xrange(nChunks):
+    for i in range(nChunks):
         print("Working on chunk #%i of %i" % (i+1, nChunks))
         
         try:
@@ -123,7 +122,7 @@ def main(args):
         data = data.mean(axis=1)
         
         ## Save
-        for stand in xrange(data.shape[0]):
+        for stand in range(data.shape[0]):
             masterSpectra[i,stand,:] = data[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
             
@@ -146,7 +145,7 @@ def main(args):
     freq1, units1 = _best_freq_units(freq1)
     freq2, units2 = _best_freq_units(freq2)
     
-    for i in xrange(masterSpectra.shape[1]):
+    for i in range(masterSpectra.shape[1]):
         if i/len(products) == 0:
             freq = freq1
             units = units1

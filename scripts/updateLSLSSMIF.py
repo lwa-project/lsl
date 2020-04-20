@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Utility for updating/changing the LWA station SSMIF files in between LSL 
 releases.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -184,7 +183,7 @@ def main(args):
     
     ## SSMIF version (date)
     fh = open(_ssmif, 'r')
-    lines = [fh.readline() for i in xrange(10)]
+    lines = [fh.readline() for i in range(10)]
     fh.close()
     
     version = None
