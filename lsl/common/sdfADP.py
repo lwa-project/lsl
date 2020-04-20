@@ -536,7 +536,7 @@ class Project(object):
             output = "%sOBS_REMPO        %s\n" % (output, "Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sOBS_START_MJD    %i\n" % (output, obs.mjd)
             output = "%sOBS_START_MPM    %i\n" % (output, obs.mpm)
-            output = "%sOBS_START        %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.state, datetime) else obs.start)
+            output = "%sOBS_START        %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
             output = "%sOBS_DUR          %i\n" % (output, obs.dur)
             output = "%sOBS_DUR+         %s\n" % (output, obs.duration)
             output = "%sOBS_MODE         %s\n" % (output, obs.mode)

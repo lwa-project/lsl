@@ -294,7 +294,7 @@ class Project(object):
             output = "%sSCAN_REMPO       %s\n" % (output, "Estimated data volume for this scan is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sSCAN_START_MJD   %i\n" % (output, obs.mjd)
             output = "%sSCAN_START_MPM   %i\n" % (output, obs.mpm)
-            output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.state, datetime) else obs.start)
+            output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
             output = "%sSCAN_DUR         %i\n" % (output, obs.dur)
             output = "%sSCAN_DUR+        %s\n" % (output, obs.duration)
             output = "%sSCAN_MODE        %s\n" % (output, obs.mode)
