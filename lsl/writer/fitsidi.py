@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for writing correlator output to a FITS IDI file.  The classes and 
 functions defined in this module are based heavily off the lwda_fits library.
@@ -17,11 +15,11 @@ functions defined in this module are based heavily off the lwda_fits library.
     Added support for writing multiple IFs to the same FITS-IDI file
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -43,7 +41,6 @@ telemetry.track_module()
 
 
 __version__ = '0.9'
-__revision__ = '$Rev$'
 __all__ = ['Idi', 'Aips', 'ExtendedIdi', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
@@ -426,7 +423,7 @@ class Idi(WriterBase):
             
         ants = []
         topo2eci = site.get_eci_transform()
-        for i in xrange(len(stands)):
+        for i in range(len(stands)):
             eci = numpy.dot(topo2eci, xyz[i,:])
             ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
             if enableMapper:

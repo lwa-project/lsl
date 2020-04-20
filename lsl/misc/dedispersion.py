@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for calculating dispersion delay due to an ionized ISM and performing
 incoherent/coherent dedispersion.
@@ -8,11 +6,11 @@ incoherent/coherent dedispersion.
     Added support for using PyFFTW instead of NumPy for the FFTs and iFFTs.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import numpy
@@ -51,7 +49,6 @@ telemetry.track_module()
 
 
 __version__ = '0.5'
-__revision__ = '$Rev$'
 __all__ = ['delay', 'incoherent', 'get_coherent_sample_size', 'coherent']
 
 
@@ -253,7 +250,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         backwardPlan = pyfftw.FFTW(do1, do2, direction='FFTW_BACKWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
         
     # Go!
-    for i in xrange(2*nSets+1):
+    for i in range(2*nSets+1):
         start = i*N/2 - N/4
         stop = start + N
         

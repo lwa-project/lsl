@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for writing spectrometer output to a SDFITS file.  The SDFITS created by this 
 modulefiles closely follow the Parkes variant of the SDFITS convention 
@@ -13,12 +11,11 @@ Analysis Package (ASAP).
     the :mod:`lsl.writer.fitsidi` writer.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
-    from functools import cmp_to_key
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import gc
@@ -27,6 +24,7 @@ import numpy
 import warnings
 from astropy.io import fits as astrofits
 from datetime import datetime
+from functools import cmp_to_key
 
 from lsl import astro
 from lsl.common.stations import lwa1
@@ -37,7 +35,6 @@ telemetry.track_module()
 
 
 __version__ = '0.5'
-__revision__ = '$Rev$'
 __all__ = ['Sd', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
@@ -188,11 +185,8 @@ class Sd(WriterBase):
                 return 0
                 
         # Sort the data set
-        try:
-            self.data.sort(cmp=__sortData)
-        except TypeError:
-            self.data.sort(key=cmp_to_key(__sortData))
-            
+        self.data.sort(key=cmp_to_key(__sortData))
+        
         self._write_primary_hdu()
         self._write_singledish_hdu()
         
@@ -286,7 +280,7 @@ class Sd(WriterBase):
             if dataSet.pol == self.stokes[-1]:
                 for b in rawList:
                     matrix = numpy.zeros((self.nStokes,self.nChan), dtype=numpy.float32)
-                    for p in xrange(self.nStokes):
+                    for p in range(self.nStokes):
                         try:
                             matrix[p,:] = tempMList[self.stokes[p]][b]
                         except KeyError:
@@ -436,7 +430,7 @@ class Sd(WriterBase):
         dataIndex = 0
         #flagIndex = 0
         n = 1
-        for i in xrange(1, 38):
+        for i in range(1, 38):
             try:
                 cs.append(eval('c%i' % i))
                 if eval('c%i.name' %i) == 'DATA':

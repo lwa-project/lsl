@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for creating object oriented representations of the LWA stations.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
-    from functools import cmp_to_key
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -20,6 +17,7 @@ import ephem
 import struct
 from textwrap import fill as tw_fill
 from functools import total_ordering
+    
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
@@ -32,7 +30,6 @@ telemetry.track_module()
 
 
 __version__ = '2.2'
-__revision__ = '$Rev$'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
         'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations']
 
@@ -1050,7 +1047,7 @@ def _parse_ssmif_text(filename):
         keyword = mtch.group('keyword')
         
         ids = [-1, -1, -1]
-        for i in xrange(3):
+        for i in range(3):
             try:
                 ids[i] = int(mtch.group('id%i' % (i+1)))
             except TypeError:
@@ -1080,14 +1077,14 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_STD':
             nStand = int(value)
             
-            stdPos = [[0.0, 0.0, 0.0] for n in xrange(nStand)]
-            stdAnt = [n//2+1 for n in xrange(2*nStand)]
-            stdOrie = [n % 2 for n in xrange(2*nStand)]
-            stdStat = [3 for n in xrange(2*nStand)]
-            stdTheta = [0.0 for n in xrange(2*nStand)]
-            stdPhi = [0.0 for n in xrange(2*nStand)]
+            stdPos = [[0.0, 0.0, 0.0] for n in range(nStand)]
+            stdAnt = [n//2+1 for n in range(2*nStand)]
+            stdOrie = [n % 2 for n in range(2*nStand)]
+            stdStat = [3 for n in range(2*nStand)]
+            stdTheta = [0.0 for n in range(2*nStand)]
+            stdPhi = [0.0 for n in range(2*nStand)]
             
-            stdDesi = [1 for x in xrange(2*nStand)]
+            stdDesi = [1 for x in range(2*nStand)]
             
             continue
             
@@ -1128,13 +1125,13 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_FEE':
             nFee = int(value)
             
-            feeID = ["UNK" for n in xrange(nFee)]
-            feeStat = [3 for n in xrange(nFee)]
-            feeDesi = [1 for n in xrange(nFee)]
-            feeGai1 = [35.7 for n in xrange(nFee)]
-            feeGai2 = [35.7 for n in xrange(nFee)]
-            feeAnt1 = [2*n+1 for n in xrange(nFee)]
-            feeAnt2 = [2*n+2 for n in xrange(nFee)]
+            feeID = ["UNK" for n in range(nFee)]
+            feeStat = [3 for n in range(nFee)]
+            feeDesi = [1 for n in range(nFee)]
+            feeGai1 = [35.7 for n in range(nFee)]
+            feeGai2 = [35.7 for n in range(nFee)]
+            feeAnt1 = [2*n+1 for n in range(nFee)]
+            feeAnt2 = [2*n+2 for n in range(nFee)]
             
             continue
             
@@ -1168,17 +1165,17 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_RPD':
             nRPD = int(value)
             
-            rpdID = ['UNK' for n in xrange(nRPD)]
-            rpdStat = [3 for n in xrange(nRPD)]
-            rpdLeng = [0.0 for n in xrange(nRPD)]
-            rpdVF = [83.0 for n in xrange(nRPD)]
-            rpdDD = [2.4 for n in xrange(nRPD)]
-            rpdA0 = [0.00428 for n in xrange(nRPD)]
-            rpdA1 = [0.00000 for n in xrange(nRPD)]
-            rpdFre = [10e6 for n in xrange(nRPD)]
-            rpdStr = [1.0 for n in xrange(nRPD)]
-            rpdDesi = [1 for n in xrange(nRPD)]
-            rpdAnt = [n+1 for n in xrange(nRPD)]
+            rpdID = ['UNK' for n in range(nRPD)]
+            rpdStat = [3 for n in range(nRPD)]
+            rpdLeng = [0.0 for n in range(nRPD)]
+            rpdVF = [83.0 for n in range(nRPD)]
+            rpdDD = [2.4 for n in range(nRPD)]
+            rpdA0 = [0.00428 for n in range(nRPD)]
+            rpdA1 = [0.00000 for n in range(nRPD)]
+            rpdFre = [10e6 for n in range(nRPD)]
+            rpdStr = [1.0 for n in range(nRPD)]
+            rpdDesi = [1 for n in range(nRPD)]
+            rpdAnt = [n+1 for n in range(nRPD)]
             
             continue
         
@@ -1196,41 +1193,41 @@ def _parse_ssmif_text(filename):
         
         if keyword == 'RPD_VF':
             if ids[0] == -1:
-                rpdVF = [float(value) for n in xrange(nRPD)]
+                rpdVF = [float(value) for n in range(nRPD)]
             else:
                 rpdVF[ids[0]-1] = float(value)
             continue
         if keyword == 'RPD_DD':
             if ids[0] == -1:
-                rpdDD = [float(value) for n in xrange(nRPD)]
+                rpdDD = [float(value) for n in range(nRPD)]
             else:
                 rpdDD[ids[0]-1] = float(value)
             continue
         
         if keyword == 'RPD_A0':
             if ids[0] == -1:
-                rpdA0 = [float(value) for n in xrange(nRPD)]
+                rpdA0 = [float(value) for n in range(nRPD)]
             else:
                 rpdA0[ids[0]-1] = float(value)
             continue
         
         if keyword == 'RPD_A1':
             if ids[0] == -1:
-                rpdA1 = [float(value) for n in xrange(nRPD)]
+                rpdA1 = [float(value) for n in range(nRPD)]
             else:
                 rpdA1[ids[0]-1] = float(value)
             continue
         
         if keyword == 'RPD_FREF':
             if ids[0] == -1:
-                rpdFre = [float(value) for n in xrange(nRPD)]
+                rpdFre = [float(value) for n in range(nRPD)]
             else:
                 rpdFre[ids[0]-1] = float(value)
             continue
         
         if keyword == 'RPD_STR':
             if ids[0] == -1:
-                rpdStr = [float(value) for n in xrange(nRPD)]
+                rpdStr = [float(value) for n in range(nRPD)]
             else:
                 rpdStr[ids[0]-1] = float(value)
             continue
@@ -1247,11 +1244,11 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_SEP':
             nSEP = int(value)
             
-            sepCbl = ['UNK' for n in xrange(nSEP)]
-            sepLeng = [0.0 for n in xrange(nSEP)]
-            sepDesi = [1 for n in xrange(nSEP)]
-            sepGain = [0.0 for n in xrange(nSEP)]
-            sepAnt = [n+1 for n in xrange(nSEP)]
+            sepCbl = ['UNK' for n in range(nSEP)]
+            sepLeng = [0.0 for n in range(nSEP)]
+            sepDesi = [1 for n in range(nSEP)]
+            sepGain = [0.0 for n in range(nSEP)]
+            sepAnt = [n+1 for n in range(nSEP)]
             
             continue
         
@@ -1282,21 +1279,21 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_ARB':
             nARX = int(value)
             
-            arxID = ["UNK" for n in xrange(nARX)]
-            arxSlot = [0 for n in xrange(nARX)]
-            arxDesi = [0 for n in xrange(nARX)]
-            arxRack = [0 for n in xrange(nARX)]
-            arxPort = [0 for n in xrange(nARX)]
+            arxID = ["UNK" for n in range(nARX)]
+            arxSlot = [0 for n in range(nARX)]
+            arxDesi = [0 for n in range(nARX)]
+            arxRack = [0 for n in range(nARX)]
+            arxPort = [0 for n in range(nARX)]
             
             continue
         
         if keyword == 'N_ARBCH':
             nChanARX = int(value)
             
-            arxStat = [[3 for c in xrange(nChanARX)] for n in xrange(nARX)]
-            arxAnt = [[n*nChanARX+c+1 for c in xrange(nChanARX)] for n in xrange(nARX)]
-            arxIn = [["UNK" for c in xrange(nChanARX)] for n in xrange(nARX)]
-            arxOut = [["UNK" for c in xrange(nChanARX)] for n in xrange(nARX)]
+            arxStat = [[3 for c in range(nChanARX)] for n in range(nARX)]
+            arxAnt = [[n*nChanARX+c+1 for c in range(nChanARX)] for n in range(nARX)]
+            arxIn = [["UNK" for c in range(nChanARX)] for n in range(nARX)]
+            arxOut = [["UNK" for c in range(nChanARX)] for n in range(nARX)]
             
             continue
         
@@ -1345,19 +1342,19 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_DP1':
             nDP1 = int(value)
             
-            dp1ID = ["UNK" for n in xrange(nDP1)]
-            dp1Slot = [0 for n in xrange(nDP1)]
-            dp1Desi = [1 for n in xrange(nDP1)]
+            dp1ID = ["UNK" for n in range(nDP1)]
+            dp1Slot = [0 for n in range(nDP1)]
+            dp1Desi = [1 for n in range(nDP1)]
             
             continue
         
         if keyword == 'N_DP1CH':
             nChanDP1 = int(value)
             
-            dp1Stat = [[3 for c in xrange(nChanDP1)] for n in xrange(nDP1)]
-            dp1InR = [["UNK" for c in xrange(nChanDP1)] for n in xrange(nDP1)]
-            dp1InC = [["UNK" for c in xrange(nChanDP1)] for n in xrange(nDP1)]
-            dp1Ant = [[n*nChanDP1+c+1 for c in xrange(nChanDP1)] for n in xrange(nDP1)]
+            dp1Stat = [[3 for c in range(nChanDP1)] for n in range(nDP1)]
+            dp1InR = [["UNK" for c in range(nChanDP1)] for n in range(nDP1)]
+            dp1InC = [["UNK" for c in range(nChanDP1)] for n in range(nDP1)]
+            dp1Ant = [[n*nChanDP1+c+1 for c in range(nChanDP1)] for n in range(nDP1)]
             
             continue
         
@@ -1392,10 +1389,10 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_DP2':
             nDP2 = int(value)
             
-            dp2ID = ["UNK" for n in xrange(nDP2)]
-            dp2Slot = ["UNK" for n in xrange(nDP2)]
-            dp2Stat = [3 for n in xrange(nDP2)]
-            dp2Desi = [1 for n in xrange(nDP2)]
+            dp2ID = ["UNK" for n in range(nDP2)]
+            dp2Slot = ["UNK" for n in range(nDP2)]
+            dp2Stat = [3 for n in range(nDP2)]
+            dp2Desi = [1 for n in range(nDP2)]
             
             continue
         
@@ -1422,19 +1419,19 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_ROACH':
             nRoach = int(value)
             
-            roachID = ["UNK" for n in xrange(nRoach)]
-            roachSlot = [0 for n in xrange(nRoach)]
-            roachDesi = [1 for n in xrange(nRoach)]
+            roachID = ["UNK" for n in range(nRoach)]
+            roachSlot = [0 for n in range(nRoach)]
+            roachDesi = [1 for n in range(nRoach)]
             
             continue
         
         if keyword == 'N_ROACHCH':
             nChanRoach = int(value)
             
-            roachStat = [[3 for c in xrange(nChanRoach)] for n in xrange(nRoach)]
-            roachInR = [["UNK" for c in xrange(nChanRoach)] for n in xrange(nRoach)]
-            roachInC = [["UNK" for c in xrange(nChanRoach)] for n in xrange(nRoach)]
-            roachAnt = [[n*nChanRoach+c+1 for c in xrange(nChanRoach)] for n in xrange(nRoach)]
+            roachStat = [[3 for c in range(nChanRoach)] for n in range(nRoach)]
+            roachInR = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
+            roachInC = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
+            roachAnt = [[n*nChanRoach+c+1 for c in range(nChanRoach)] for n in range(nRoach)]
             
             continue
         
@@ -1469,10 +1466,10 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_SERVER':
             nServer = int(value)
             
-            serverID = ["UNK" for n in xrange(nServer)]
-            serverSlot = ["UNK" for n in xrange(nServer)]
-            serverStat = [3 for n in xrange(nServer)]
-            serverDesi = [1 for n in xrange(nServer)]
+            serverID = ["UNK" for n in range(nServer)]
+            serverSlot = ["UNK" for n in range(nServer)]
+            serverStat = [3 for n in range(nServer)]
+            serverDesi = [1 for n in range(nServer)]
             
             continue
         
@@ -1499,11 +1496,11 @@ def _parse_ssmif_text(filename):
         if keyword == 'N_DR':
             nDR = int(value)
             
-            drStat = [0 for n in xrange(nDR)]
-            drID = ["UNK" for n in xrange(nDR)]
-            drShlf = [0 for n in xrange(nDR)]
-            drPC = ["UNK" for n in xrange(nDR)]
-            drDP = [0 for n in xrange(nDR)]
+            drStat = [0 for n in range(nDR)]
+            drID = ["UNK" for n in range(nDR)]
+            drShlf = [0 for n in range(nDR)]
+            drPC = ["UNK" for n in range(nDR)]
+            drDP = [0 for n in range(nDR)]
             
             continue
         
@@ -1679,7 +1676,7 @@ def _parse_ssmif_binary(filename):
     drStat = list(bssmif.eDRStat)
     drID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
     drID   = [''.join([k for k in i if k != '\x00']) for i in drID]
-    drShlf = [0 for i in xrange(bssmif.nDR)]
+    drShlf = [0 for i in range(bssmif.nDR)]
     drPC   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
     drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
     drDP   = list(bssmif.iDRDP)
@@ -1804,8 +1801,8 @@ def parse_ssmif(filename):
         i += 1
     
     # Associate ARX boards/channels with Antennas
-    for i in xrange(len(arxAnt)):
-        for j in xrange(len(arxAnt[i])):
+    for i in range(len(arxAnt)):
+        for j in range(len(arxAnt[i])):
             ant = arxAnt[i][j]
             if ant == 0 or ant > 520:
                 continue

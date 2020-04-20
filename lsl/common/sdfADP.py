@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains all of the relevant class to build up a representation 
 of a session definition file as defined in MCS0030v5 and updated for LWA-SV.  The 
@@ -41,11 +39,11 @@ this module also includes a simple parser for SD files.
     ephem.degrees instances
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -55,6 +53,8 @@ import pytz
 import ephem
 from functools import total_ordering
 from datetime import datetime, timedelta
+
+from astropy.time import Time as AstroTime
 
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
@@ -74,7 +74,6 @@ telemetry.track_module()
 
 
 __version__ = '1.1'
-__revision__ = '$Rev$'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
@@ -137,7 +136,10 @@ def parse_time(s, station=lwasv):
         Added support for timezone-aware datetime instances
     """
     
-    if type(s).__name__ == 'datetime':
+    if isinstance(s, AstroTime):
+        s = s.datetime
+        
+    if isinstance(s, datetime):
         if s.tzinfo is None:
             raise ValueError("Only aware datetime instances are supported.")
             
@@ -534,7 +536,7 @@ class Project(object):
             output = "%sOBS_REMPO        %s\n" % (output, "Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sOBS_START_MJD    %i\n" % (output, obs.mjd)
             output = "%sOBS_START_MPM    %i\n" % (output, obs.mpm)
-            output = "%sOBS_START        %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if type(obs.start).__name__ == 'datetime' else obs.start)
+            output = "%sOBS_START        %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.state, datetime) else obs.start)
             output = "%sOBS_DUR          %i\n" % (output, obs.dur)
             output = "%sOBS_DUR+         %s\n" % (output, obs.duration)
             output = "%sOBS_MODE         %s\n" % (output, obs.mode)
@@ -906,12 +908,12 @@ class Session(object):
         # Make sure that the observations don't overlap
         sObs = self.observations
         
-        for i in xrange(len(sObs)):
+        for i in range(len(sObs)):
             maxOverlaps = 1
             overlaps = []
             nOverlaps = 0
 
-            for j in xrange(len(sObs)):
+            for j in range(len(sObs)):
                 if verbose and i != j:
                     print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
 
@@ -979,7 +981,7 @@ class Observation(object):
         self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
         self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
         self.start = start
-        if type(duration).__name__ == 'timedelta':
+        if isinstance(duration, timedelta):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
@@ -1000,11 +1002,11 @@ class Observation(object):
         self.beam = None
         self.dataVolume = None
         
-        self.obsFEE = [[-1,-1] for n in xrange(LWA_MAX_NSTD)]
-        self.aspFlt = [-1 for n in xrange(LWA_MAX_NSTD)]
-        self.aspAT1 = [-1 for n in xrange(LWA_MAX_NSTD)]
-        self.aspAT2 = [-1 for n in xrange(LWA_MAX_NSTD)]
-        self.aspATS = [-1 for n in xrange(LWA_MAX_NSTD)]
+        self.obsFEE = [[-1,-1] for n in range(LWA_MAX_NSTD)]
+        self.aspFlt = [-1 for n in range(LWA_MAX_NSTD)]
+        self.aspAT1 = [-1 for n in range(LWA_MAX_NSTD)]
+        self.aspAT2 = [-1 for n in range(LWA_MAX_NSTD)]
+        self.aspATS = [-1 for n in range(LWA_MAX_NSTD)]
 
         self.gain = int(gain)
         
@@ -1020,7 +1022,7 @@ class Observation(object):
         
         # If we have a datetime instance, make sure we have an integer
         # number of milliseconds
-        if type(self.start).__name__ == 'datetime':
+        if isinstance(self.start, datetime):
             us = self.start.microsecond
             us = int(round(us/1000.0))*1000
             self.start = self.start.replace(microsecond=us)
@@ -1270,7 +1272,7 @@ class TBN(Observation):
     def set_duration(self, duration):
         """Set the observation duration."""
         
-        if type(duration).__name__ == 'timedelta':
+        if isinstance(duration, timedelta):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
@@ -1344,7 +1346,7 @@ class _DRXBase(Observation):
     def set_duration(self, duration):
         """Set the observation duration."""
         
-        if type(duration).__name__ == 'timedelta':
+        if isinstance(duration, timedelta):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
@@ -1628,7 +1630,7 @@ class Stepped(Observation):
         
         # If we have a datetime instance, make sure we have an integer
         # number of milliseconds
-        if type(self.start).__name__ == 'datetime':
+        if isinstance(self.start, datetime):
             us = self.start.microsecond
             us = int(round(us/1000.0))*1000
             self.start = self.start.replace(microsecond=us)
@@ -1842,7 +1844,7 @@ class BeamStep(object):
             convFactor = 180.0/math.pi
         self.c1 = float(c1) * (convFactor if type(c1).__name__ == 'Angle' else 1.0)
         self.c2 = float(c2) * (180.0/math.pi if type(c2).__name__ == 'Angle' else 1.0)
-        if type(duration).__name__ == 'timedelta':
+        if isinstance(duration, timedelta):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
@@ -1868,7 +1870,7 @@ class BeamStep(object):
     def set_duration(self, duration):
         """Set the observation duration."""
         
-        if type(duration).__name__ == 'timedelta':
+        if isinstance(duration, timedelta):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
@@ -2155,9 +2157,9 @@ def parse_sdf(filename, verbose=False):
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
             'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
             'stpRADec': True, 'tbwBits': 12, 'tbfSamples': 0, 'gain': -1, 
-            'obsFEE': [[-1,-1] for n in xrange(LWA_MAX_NSTD)], 
-            'aspFlt': [-1 for n in xrange(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in xrange(LWA_MAX_NSTD)], 
-            'aspAT2': [-1 for n in xrange(LWA_MAX_NSTD)], 'aspATS': [-1 for n in xrange(LWA_MAX_NSTD)]}
+            'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
+            'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
+            'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}
     beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
     beam_temps = []
     
@@ -2178,7 +2180,7 @@ def parse_sdf(filename, verbose=False):
         keyword = mtch.group('keyword')
         
         ids = [-1, -1, -1, -1]
-        for i in xrange(4):
+        for i in range(4):
             try:
                 ids[i] = int(mtch.group('id%i' % (i+1)))
             except TypeError:
@@ -2432,7 +2434,7 @@ def parse_sdf(filename, verbose=False):
                 elif value in ('SPEC_DELAYS_GAINS', '3'):
                     beam_temps[-1]['delays'] = []
                     beam_temps[-1]['gains'] = []
-                    for bdi in xrange(2*LWA_MAX_NSTD):
+                    for bdi in range(2*LWA_MAX_NSTD):
                         beam_temps[-1]['delays'].append( 0 )
                         if bdi < LWA_MAX_NSTD:
                             beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
@@ -2450,7 +2452,7 @@ def parse_sdf(filename, verbose=False):
                 elif value in ('SPEC_DELAYS_GAINS', '3'):
                     beam_temps[-1]['delays'] = []
                     beam_temps[-1]['gains'] = []
-                    for bdi in xrange(2*LWA_MAX_NSTD):
+                    for bdi in range(2*LWA_MAX_NSTD):
                         beam_temps[-1]['delays'].append( 0 )
                         if bdi < LWA_MAX_NSTD:
                             beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
@@ -2498,35 +2500,35 @@ def parse_sdf(filename, verbose=False):
         # Session wide settings at the end of the observations
         if keyword == 'OBS_FEE':
             if ids[0] == 0:
-                for n in xrange(len(obs_temp['obsFEE'])):
+                for n in range(len(obs_temp['obsFEE'])):
                     obs_temp['obsFEE'][n][ids[1]-1] = int(value)
             else:
                 obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_FLT':
             if ids[0] == 0:
-                for n in xrange(len(obs_temp['aspFlt'])):
+                for n in range(len(obs_temp['aspFlt'])):
                     obs_temp['aspFlt'][n] = int(value)
             else:
                 obs_temp['aspFlt'][ids[0]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_AT1':
             if ids[0] == 0:
-                for n in xrange(len(obs_temp['aspAT1'])):
+                for n in range(len(obs_temp['aspAT1'])):
                     obs_temp['aspAT1'][n] = int(value)
             else:
                 obs_temp['aspAT1'][ids[0]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_AT2':
             if ids[0] == 0:
-                for n in xrange(len(obs_temp['aspAT2'])):
+                for n in range(len(obs_temp['aspAT2'])):
                     obs_temp['aspAT2'][n] = int(value)
             else:
                 obs_temp['aspAT2'][ids[0]-1] = int(value)
             continue
         if keyword == 'OBS_ASP_ATS':
             if ids[0] == 0:
-                for n in xrange(len(obs_temp['aspATS'])):
+                for n in range(len(obs_temp['aspATS'])):
                     obs_temp['aspATS'][n] = int(value)
             else:
                 obs_temp['aspATS'][ids[0]-1] = int(value)

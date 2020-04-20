@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 lsl.misc - Miscellanous modules including:
  * mathutil       - math utilities that were part of the lwa_user package, 
@@ -11,9 +9,9 @@ lsl.misc - Miscellanous modules including:
  * wisdom         - build LSL-specific FFTW and PyFFTW wisdom.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for computing spectral kurtosis both for instantaneous PSDs and spectrometer 
 output.  This module also provides functions to estimate the spectral kurtosis
@@ -10,11 +8,11 @@ This module is based on:
   * Nita & Gary (2010, MNRAS 406, L60)
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 
@@ -26,7 +24,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['mean', 'std', 'var', 'skew', 'get_limits', 'spectral_fft', 'spectral_power']
 
 

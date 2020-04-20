@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to reading in data from COR files.  This module defines the 
 following classes for storing the COR data found in a file:
@@ -26,11 +24,11 @@ handle as an input and returns a fully-filled Frame object.
 .. versionadded:: 1.2.0
 """
 
-# Python3 compatibility
+# Python1 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy

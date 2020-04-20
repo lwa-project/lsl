@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for writing correlator output to a CASA measurement set.
 
 .. versionadded:: 1.2.1
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import gc
@@ -177,7 +175,7 @@ try:
             mapper = []
             ants = []
             topo2eci = site.get_eci_transform()
-            for i in xrange(len(stands)):
+            for i in range(len(stands)):
                 eci = numpy.dot(topo2eci, xyz[i,:])
                 ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
                 mapper.append( stands[i] )
@@ -590,7 +588,7 @@ try:
                                           col10, col11, col12, col13])
             tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
             
-            for i in xrange(nSource):
+            for i in range(nSource):
                 tb.putcell('DIRECTION', i, posList[i])
                 tb.putcell('PROPER_MOTION', i, [0.0, 0.0])
                 tb.putcell('CALIBRATION_GROUP', i, 0)
@@ -644,7 +642,7 @@ try:
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
             tb = table("%s/FIELD" % self.basename, desc, nrow=nSource, ack=False)
             
-            for i in xrange(nSource):
+            for i in range(nSource):
                 tb.putcell('DELAY_DIR', i, numpy.array([posList[i],]))
                 tb.putcell('PHASE_DIR', i, numpy.array([posList[i],]))
                 tb.putcell('REFERENCE_DIR', i, numpy.array([posList[i],]))
@@ -720,9 +718,9 @@ try:
                 tb.putcell('MEAS_FREQ_REF', i, 0)
                 tb.putcell('CHAN_FREQ', i, self.refVal + freq.bandFreq + numpy.arange(self.nChan)*self.channelWidth)
                 tb.putcell('REF_FREQUENCY', i, self.refVal)
-                tb.putcell('CHAN_WIDTH', i, [freq.chWidth for j in xrange(self.nChan)])
-                tb.putcell('EFFECTIVE_BW', i, [freq.chWidth for j in xrange(self.nChan)])
-                tb.putcell('RESOLUTION', i, [freq.chWidth for j in xrange(self.nChan)])
+                tb.putcell('CHAN_WIDTH', i, [freq.chWidth for j in range(self.nChan)])
+                tb.putcell('EFFECTIVE_BW', i, [freq.chWidth for j in range(self.nChan)])
+                tb.putcell('RESOLUTION', i, [freq.chWidth for j in range(self.nChan)])
                 tb.putcell('FLAG_ROW', i, False)
                 tb.putcell('FREQ_GROUP', i, i+1)
                 tb.putcell('FREQ_GROUP_NAME', i, 'group%i' % (i+1))
@@ -914,7 +912,7 @@ try:
                     
                     matrix.shape = (len(order), self.nStokes, nBand, self.nChan)
                     
-                    for j in xrange(nBand):
+                    for j in range(nBand):
                         fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=numpy.bool)
                         fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=numpy.bool)
                         wg = numpy.ones((nBL,self.nStokes))
@@ -960,7 +958,7 @@ try:
             desc = tableutil.maketabdesc([col1, col2, col3])
             tb = table("%s/DATA_DESCRIPTION" % self.basename, desc, nrow=nBand, ack=False)
             
-            for i in xrange(nBand):
+            for i in range(nBand):
                 tb.putcell('FLAG_ROW', i, False)
                 tb.putcell('POLARIZATION_ID', i, 0)
                 tb.putcell('SPECTRAL_WINDOW_ID', i, i)

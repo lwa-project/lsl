@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module to help display color on the command line of ANSI-compliant
 termainals.
@@ -7,11 +5,11 @@ termainals.
 ..versionadded:: 1.2.1
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import re
 
@@ -20,7 +18,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['colorfy',]
 
 
@@ -123,7 +120,7 @@ def colorfy(text):
     levels.append(0)
     
     # Parse 3 - Work at each level to convert the tags to ANSI sequences
-    for level in xrange(max(levels), -1, -1):
+    for level in range(max(levels), -1, -1):
         ## Build the regular expression needed for this depth
         tagRE = re.compile('{{'+str(level)+'{{%(?P<tag>[a-zA-Z-]+) (?P<text>.*?)}}'+str(level)+'}}')
         

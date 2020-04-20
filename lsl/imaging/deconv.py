@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Deconvolution support for images made with :func:`lsl.imaging.utils.build_gridded_image`.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 from aipy.coord import eq2radec, top2azalt
@@ -26,7 +24,6 @@ telemetry.track_module()
 
 
 __version__ = '0.5'
-__revision__ = '$Rev$'
 __all__ = ['clean', 'clean_sources', 'lsq']
 
 
@@ -177,8 +174,8 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
     beamClean = psf * 0.0
-    for i in xrange(beamClean.shape[0]):
-        for j in xrange(beamClean.shape[1]):
+    for i in range(beamClean.shape[0]):
+        for j in range(beamClean.shape[1]):
             beamClean[i,j] = gauGen(i,j)
     beamClean /= beamClean.sum()
     convMask = xyz.mask[0,:,:]
@@ -191,7 +188,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
         pylab.ion()
         
     exitStatus = 'iteration limit'
-    for i in xrange(max_iter):
+    for i in range(max_iter):
         # Find the location of the peak in the flux density
         peak = numpy.where( working == working.max() )
         peak_x = peak[0][0]
@@ -269,13 +266,13 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
         toRemove = gain*peakV*beam
         working -= toRemove
         asum = 0.0
-        for l in xrange(int(peak_xO), int(peak_xO)+2):
+        for l in range(int(peak_xO), int(peak_xO)+2):
             if l > peak_xO:
                 side1 = (peak_xO+0.5) - (l-0.5)
             else:
                 side1 = (l+0.5) - (peak_xO-0.5)
                 
-            for m in xrange(int(peak_yO), int(peak_yO)+2):
+            for m in range(int(peak_yO), int(peak_yO)+2):
                 if m > peak_yO:
                     side2 = (peak_yO+0.5) - (m-0.5)
                 else:
@@ -416,8 +413,8 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
     beamClean = psf * 0.0
-    for i in xrange(beamClean.shape[0]):
-        for j in xrange(beamClean.shape[1]):
+    for i in range(beamClean.shape[0]):
+        for j in range(beamClean.shape[1]):
             beamClean[i,j] = gauGen(i,j)
     beamClean /= beamClean.sum()
     convMask = xyz.mask[0,:,:]
@@ -460,7 +457,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         py1 = max(background[1])+2
         
         exitStatus = 'iteration'
-        for i in xrange(max_iter):
+        for i in range(max_iter):
             # Find the location of the peak in the flux density
             peak = numpy.where( working[rx0:rx1,ry0:ry1] == working[rx0:rx1,ry0:ry1].max() )
             peak_x = peak[0][0] + rx0
@@ -543,13 +540,13 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
             toRemove = gain*peakV*beam
             working -= toRemove
             asum = 0.0
-            for l in xrange(int(peak_xO), int(peak_xO)+2):
+            for l in range(int(peak_xO), int(peak_xO)+2):
                 if l > peak_xO:
                     side1 = (peak_xO+0.5) - (l-0.5)
                 else:
                     side1 = (l+0.5) - (peak_xO-0.5)
                     
-                for m in xrange(int(peak_yO), int(peak_yO)+2):
+                for m in range(int(peak_yO), int(peak_yO)+2):
                     if m > peak_yO:
                         side2 = (peak_yO+0.5) - (m-0.5)
                     else:
@@ -640,7 +637,7 @@ def _minor_cycle(img, beam, gain=0.2, max_iter=150):
     cleaned = img*0.0
     working = img*1.0
     
-    for i in xrange(max_iter):
+    for i in range(max_iter):
         # Find the location of the peak in the flux density
         aw = numpy.abs( working )
         peak = numpy.where( aw == aw.max() )
@@ -702,8 +699,8 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
     beamClean = psf * 0.0
-    for i in xrange(beamClean.shape[0]):
-        for j in xrange(beamClean.shape[1]):
+    for i in range(beamClean.shape[0]):
+        for j in range(beamClean.shape[1]):
             beamClean[i,j] = gauGen(i,j)
     beamClean /= beamClean.sum()
     convMask = xyz.mask[0,:,:]
@@ -745,7 +742,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     oldDiff = diff*0.0
     rHist = []
     exitStatus = 'iteration'
-    for k in xrange(max_iter):
+    for k in range(max_iter):
         ## Update the model image but don't allow negative flux
         mdl += diffScaled * gain
         mdl[numpy.where( mdl <= 0 )] = 0.0
@@ -753,8 +750,8 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         ## Convert the model image to an ensemble of point sources for forward 
         ## modeling
         bSrcs = {}
-        for i in xrange(mdl.shape[0]):
-            for j in xrange(mdl.shape[1]):
+        for i in range(mdl.shape[0]):
+            for j in range(mdl.shape[1]):
                 if dec.mask[i,j]:
                     continue
                 if mdl[i,j] <= 0:

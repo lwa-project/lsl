@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for removing multi-path scattering effects in pulsar profiles.  This 
 is based on the CLEAN-like deconvolution method presented in Bhat, N., 
@@ -12,11 +10,11 @@ http://iopscience.iop.org/0004-637X/584/2/782/fulltext/56392.text.html
     seconds.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 
@@ -27,7 +25,6 @@ telemetry.track_module()
 
 
 __version__ = "0.1"
-__revision__ = "$Rev$"
 __all__ = ['thin', 'thick', 'uniform', 'unscatter']
 
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Small collection of robust statistical estimators based on functions from
 Henry Freudenriech (Hughes STX) statistics library (called ROBLIB) that have
@@ -21,11 +19,11 @@ For additional information about the original IDL routines, see:
 http://idlastro.gsfc.nasa.gov/contents.html#C17
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import math
 import numpy
@@ -35,7 +33,6 @@ telemetry.track_module()
 
 
 __version__ = '0.5'
-__revision__ = '$Rev$'
 __all__ = ['biweight_mean', 'mean', 'mode', 'std', 'checkfit', 'linefit', 'polyfit']
 
 __max_iter = 25
@@ -188,7 +185,7 @@ def mode(inputData, axis=None, dtype=None):
             else:
                 wMin = data[-1] - data[0]
                 N = data.size / 2 + data.size % 2 
-                for i in xrange(0, N):
+                for i in range(0, N):
                     w = data[i+N-1] - data[i] 
                     if w < wMin:
                         wMin = w

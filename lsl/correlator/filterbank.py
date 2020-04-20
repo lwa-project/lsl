@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This module implements a uniform DFT filter bank for use in calculating 
 spectra as an alternative to a simple FFT.  The implementation here is based 
@@ -9,11 +7,11 @@ on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
     Added support for using PyFFTW instead of NumPy for the FFTs
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 
@@ -55,7 +53,6 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['fft', 'fft2', 'fft4', 'fft8', 'fft16', 'fft32']
 
 def __filterCoeff(N, P):

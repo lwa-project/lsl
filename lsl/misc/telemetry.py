@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Basic telemetry client for LSL to help establish usage patterns
 
 .. versionadded:: 1.3.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import time
@@ -32,7 +30,6 @@ from lsl.version import version as lsl_version
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
            'track_script', 'track_module',
            'track_function', 'track_function_timed',

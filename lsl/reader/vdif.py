@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to read in VDIF data.  This module defines the following 
 classes for storing the VIDF data found in a file:
@@ -28,11 +26,11 @@ get_thread_count
   threads are present in the file.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 from datetime import datetime
@@ -65,7 +63,7 @@ def _crcc(data, length=48, mask=0o40003, cycle=16):
     """
     
     state = 0
-    for i in xrange(length):
+    for i in range(length):
         q = state & 1
         if ((data >> i) & 1) ^ q == 0:
             state &= -2

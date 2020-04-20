@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains the error classes for the DRX, TBN, and TBW readers.  
 These errors are currently meant to deal with file I/O problems.
@@ -8,18 +6,17 @@ These errors are currently meant to deal with file I/O problems.
     Removed numpyError and re-enumerated
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['BaseReaderError', 'EOFError', 'SyncError', 'notTBNError', 'notTBWError', 'list_error_codes', 
            'MinErrorNo', 'MaxErrorNo']
 

@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """
 A collection of utilities for retrieving parameters that may be relevant 
 for ionospheric corrections.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import glob
@@ -46,7 +44,6 @@ telemetry.track_module()
 
 
 __version__ = "0.5"
-__revision__ = "$Rev$"
 __all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
            'get_tec_value', 'get_ionospheric_pierce_point']
 
@@ -111,13 +108,13 @@ def _load_igrf(filename):
                 try:
                     dataCos[n][m] = c
                 except KeyError:
-                    dataCos[n] = [numpy.zeros(len(years)+1) for i in xrange(n+1)]
+                    dataCos[n] = [numpy.zeros(len(years)+1) for i in range(n+1)]
                     dataCos[n][m] = c
             else:
                 try:
                     dataSin[n][m] = c
                 except KeyError:
-                    dataSin[n] = [numpy.zeros(len(years)+1) for i in xrange(n+1)]
+                    dataSin[n] = [numpy.zeros(len(years)+1) for i in range(n+1)]
                     dataSin[n][m] = c
                     
     # Build the output
@@ -158,7 +155,7 @@ def _compute_igrf_coefficents(year, coeffs):
         # Loop over the degrees
         for n in coeffs['g'].keys():
             ## Loop over the orders
-            for m in xrange(0, n+1):
+            for m in range(0, n+1):
                 if year > max(coeffs['years']):
                     ### If we are beyond the last year in the model, use the secular changes
                     slope = coeffs['g'][n][m][-1]
@@ -174,7 +171,7 @@ def _compute_igrf_coefficents(year, coeffs):
                 try:
                     coeffsCos[n][m] = slope*(year - coeffs['years'][best[0]]) + coeffs['g'][n][m][best[0]]
                 except:
-                    coeffsCos[n] = [0.0 for i in xrange(n+1)]
+                    coeffsCos[n] = [0.0 for i in range(n+1)]
                     coeffsCos[n][m] = slope*(year - coeffs['years'][best[0]]) + coeffs['g'][n][m][best[0]]
                     
                 if year > max(coeffs['years']):
@@ -192,7 +189,7 @@ def _compute_igrf_coefficents(year, coeffs):
                 try:
                     coeffsSin[n][m] = slope*(year - coeffs['years'][best[0]]) + coeffs['h'][n][m][best[0]]
                 except:
-                    coeffsSin[n] = [0.0 for i in xrange(n+1)]
+                    coeffsSin[n] = [0.0 for i in range(n+1)]
                     coeffsSin[n][m] = slope*(year - coeffs['years'][best[0]]) + coeffs['h'][n][m][best[0]]
                     
     # Build the output
@@ -302,7 +299,7 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     # Compute the field strength in spherical coordinates
     Br, Bth, Bph = 0.0, 0.0, 0.0
     for n in coeffs['g'].keys():
-        for m in xrange(0, n+1):
+        for m in range(0, n+1):
             Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
             Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
             
@@ -895,8 +892,8 @@ def _parse_ustec_individual(filename):
         # uncertainty at each point
         interpFunction = RectBivariateSpline(rlats, rlngs, rdata, kx=1, ky=1)
         rms = data*0.0
-        for i in xrange(lats.shape[0]):
-            for j in xrange(lats.shape[0]):
+        for i in range(lats.shape[0]):
+            for j in range(lats.shape[0]):
                 rms[i,j] = interpFunction(lats[i,j], lngs[i,j])
     else:
         ## Sadness, no RMS file found...

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 LWA Development Primitives - A set of utilities that should make developing 
 new analysis software easier.  These functions wrap the nitty gritty of the 
@@ -21,11 +19,11 @@ use.
     Added support for LWA-SV ADP data
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import copy
@@ -367,7 +365,7 @@ class TBWFile(LDPFileBase):
             filePosRef = self.fh.tell()
             while True:
                 try:
-                    for i in xrange(26):
+                    for i in range(26):
                         frame = tbw.read_frame(self.fh)
                         while not frame.header.is_tbw:
                             frame = tbw.read_frame(self.fh)
@@ -680,14 +678,14 @@ class TBNFile(LDPFileBase):
         nFrameSets = 0
         eofFound = False
         setTime = None
-        count = [0 for i in xrange(self.description['nantenna'])]
+        count = [0 for i in range(self.description['nantenna'])]
         data = numpy.zeros((self.description['nantenna'], frame_count*512), dtype=numpy.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
             
             cFrames = deque()
-            for i in xrange(self.description['nantenna']//2):
+            for i in range(self.description['nantenna']//2):
                 try:
                     cFrames.append( tbn.read_frame(self.fh, verbose=False) )
                 except errors.EOFError:
@@ -785,11 +783,11 @@ class TBNFile(LDPFileBase):
         # Go!
         with FilePositionSaver(self.fh):
             count = {}
-            for i in xrange(self.description['nantenna']):
+            for i in range(self.description['nantenna']):
                 count[i] = 0
             data = numpy.zeros((self.description['nantenna'], nframe*512))
-            for i in xrange(nframe):
-                for j in xrange(self.description['nantenna']):
+            for i in range(nframe):
+                for j in range(self.description['nantenna']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
                         cFrame = tbn.read_frame(self.fh, verbose=False)
@@ -811,8 +809,8 @@ class TBNFile(LDPFileBase):
         if index == data.shape[1]:
             index = data.shape[1] - 1
         
-        levels = [0 for i in xrange(self.description['nantenna'])]
-        for i in xrange(self.description['nantenna']):
+        levels = [0 for i in range(self.description['nantenna'])]
+        for i in range(self.description['nantenna']):
             data2 = sorted(data[i,:])
             levels[i] = data2[index]
         
@@ -856,7 +854,7 @@ class DRXFile(LDPFileBase):
         # Line up the time tags for the various tunings/polarizations
         ids = []
         timetags = []
-        for i in xrange(32):
+        for i in range(32):
             junkFrame = drx.read_frame(self.fh)
             b,t,p = junkFrame.id
             id = (t,p)
@@ -889,7 +887,7 @@ class DRXFile(LDPFileBase):
             pols = []
             tuning1 = 0.0
             tuning2 = 0.0
-            for i in xrange(32):
+            for i in range(32):
                 junkFrame = self.read_frame()
                 b,t,p = junkFrame.id
                 srate = junkFrame.sample_rate
@@ -1063,7 +1061,7 @@ class DRXFile(LDPFileBase):
                 
             if not self.buffer.overfilled:
                 cFrames = deque()
-                for i in xrange(self.description['nbeampol']):
+                for i in range(self.description['nbeampol']):
                     try:
                         cFrames.append( drx.read_frame(self.fh, verbose=False) )
                     except errors.EOFError:
@@ -1087,7 +1085,7 @@ class DRXFile(LDPFileBase):
                     missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
                     if int(missing) == missing and missing < 50:
                         ## This is kind of black magic down here
-                        for m in xrange(int(missing)):
+                        for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
                             baseframe = copy.deepcopy(cFrames[0])
                             baseframe.payload.timeTag = m
@@ -1187,8 +1185,8 @@ class DRXFile(LDPFileBase):
         with FilePositionSaver(self.fh):
             count = {0:0, 1:0, 2:0, 3:0}
             data = numpy.zeros((4, nframe*4096))
-            for i in xrange(nframe):
-                for j in xrange(self.description['nbeampol']):
+            for i in range(nframe):
+                for j in range(self.description['nbeampol']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
                         cFrame = drx.read_frame(self.fh, verbose=False)
@@ -1211,7 +1209,7 @@ class DRXFile(LDPFileBase):
             index = data.shape[1] - 1
         
         levels = [0, 0, 0, 0]
-        for i in xrange(4):
+        for i in range(4):
             data2 = sorted(data[i,:])
             levels[i] = data2[index]
             
@@ -1393,7 +1391,7 @@ class DRSpecFile(LDPFileBase):
         # Go!
         nFrameSets = 0
         setTime = None
-        for i in xrange(frame_count):
+        for i in range(frame_count):
             # Read in the next frame and anticipate any problems that could occur
             try:
                 cFrame = drspec.read_frame(self.fh, verbose=False)
@@ -1465,7 +1463,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
             
         ## Loop over the frame size to try and find what looks like valid data.  If
         ## is is found, set 'foundMatch' to True.
-        for i in xrange(mfs):
+        for i in range(mfs):
             try:
                 junkFrame = mode.read_frame(fh)
                 foundMatch = True
@@ -1482,7 +1480,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
             fh.seek(-mfs, 1)
             
             try:
-                for i in xrange(2):
+                for i in range(2):
                     junkFrame = mode.read_frame(fh)
                 foundMode = True
             except errors.EOFError:
@@ -1522,7 +1520,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
             
             ### Loop over the frame size to try and find what looks like valid data.  If
             ### is is found, set 'foundMatch' to True.
-            for i in xrange(mfs):
+            for i in range(mfs):
                 try:
                     junkFrame = mode.read_frame(fh)
                     foundMatch = True
@@ -1539,7 +1537,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
                 fh.seek(-mfs, 1)
                 
                 try:
-                    for i in xrange(4):
+                    for i in range(4):
                         junkFrame = mode.read_frame(fh)
                     foundMode = True
                 except errors.SyncError:
@@ -1764,14 +1762,14 @@ class TBFFile(LDPFileBase):
         nFrameSets = 0
         eofFound = False
         setTime = None
-        count = [0 for i in xrange(framesPerObs)]
+        count = [0 for i in range(framesPerObs)]
         data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=numpy.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
                 
             cFrames = deque()
-            for i in xrange(framesPerObs):
+            for i in range(framesPerObs):
                 try:
                     cFrame = tbf.read_frame(self.fh, verbose=False)
                     if not cFrame.is_tbf:
@@ -1936,8 +1934,8 @@ class CORFile(LDPFileBase):
             #       the look-ups are much faster
             self.bmapperd = {}
             k = 0
-            for i in xrange(1, 256+1):
-                for j in xrange(i, 256+1):
+            for i in range(1, 256+1):
+                for j in range(i, 256+1):
                     self.bmapperd[(i,j)] = k
                     k += 1
                     
@@ -2078,14 +2076,14 @@ class CORFile(LDPFileBase):
         nFrameSets = 0
         eofFound = False
         setTime = None
-        count = [0 for i in xrange(framesPerObs)]
+        count = [0 for i in range(framesPerObs)]
         data = numpy.zeros((self.description['nbaseline'], self.description['nchan'], 2, 2, frame_count), dtype=numpy.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
                 
             cFrames = deque()
-            for i in xrange(framesPerObs):
+            for i in range(framesPerObs):
                 try:
                     cFrame = cor.read_frame(self.fh, verbose=False)
                     if not cFrame.isCOR():
@@ -2216,7 +2214,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
             
         ## Loop over the frame size to try and find what looks like valid data.  If
         ## is is found, set 'foundMatch' to True.
-        for i in xrange(mfs):
+        for i in range(mfs):
             try:
                 junkFrame = mode.read_frame(fh)
                 foundMatch = True
@@ -2233,7 +2231,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
             fh.seek(-mfs, 1)
             
             try:
-                for i in xrange(2):
+                for i in range(2):
                     junkFrame = mode.read_frame(fh)
                 foundMode = True
             except errors.EOFError:
@@ -2273,7 +2271,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
             
             ### Loop over the frame size to try and find what looks like valid data.  If
             ### is is found, set 'foundMatch' to True.
-            for i in xrange(mfs):
+            for i in range(mfs):
                 try:
                     junkFrame = mode.read_frame(fh)
                     foundMatch = True
@@ -2290,7 +2288,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
                 fh.seek(-mfs, 1)
                 
                 try:
-                    for i in xrange(4):
+                    for i in range(4):
                         junkFrame = mode.read_frame(fh)
                     foundMode = True
                 except errors.SyncError:

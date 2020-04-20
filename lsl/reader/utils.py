@@ -1,22 +1,19 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module that contains various helpers for the lsl.reader module.
 
 .. versionadded:: 1.3.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 from bisect import bisect
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['FilePositionSaver', 'SplitFileWrapper']
 
 

@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Astronomical utility functions and classes based on libnova library.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import time
 import math
@@ -22,7 +20,6 @@ telemetry.track_module()
 
 
 __version__   = '0.5'
-__revision__ = '$Rev$'
 __all__ = ['dms', 'hms', 'date', 'zonedate', 'rst_time', 'hrz_posn', 'equ_posn', 
            'gal_posn', 'rect_posn', 'lnlat_posn', 'ecl_posn', 'nutation', 
            'get_gmtoff', 'date_to_zonedate', 'zonedate_to_date', 'rad_to_deg', 
@@ -2577,7 +2574,7 @@ def get_equ_aber(mean_position, jD):
                     [0, 0, -2, 0]]
                     
     # Sum the terms
-    for i in xrange(TERMS):
+    for i in range(TERMS):
         A = arguments[i][0]*L2 + arguments[i][1]*L3 + arguments[i][2]*L4 + arguments[i][3]*L5 + arguments[i][4]*L6 + \
                 arguments[i][5]*L7 + arguments[i][6]*L8 + arguments[i][7]*LL + arguments[i][8]*D + arguments[i][9]*MM + \
                 arguments[i][10]*F

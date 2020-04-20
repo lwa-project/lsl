@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Classes to hold visibility data that are used internally with LSL.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import aipy
 import copy
@@ -21,7 +19,6 @@ telemetry.track_module()
 
 
 __version__ = "0.1"
-__revision__ = "$Rev$"
 __all__ = ['PolarizationDataSet', 'VisibilityDataSet', 'VisibilityData']
 
 
@@ -286,7 +283,7 @@ class VisibilityDataSet(object):
         for pds in self:
             pds.data = pds.data.astype(numpy.complex128)
             ## Loop over baselines
-            for k in xrange(self.nbaseline):
+            for k in range(self.nbaseline):
                 ### Load in the data
                 i,j = self.baselines[k]
                 vis = pds.data[k,:]

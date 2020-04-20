@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains all of the relevant class to build up a representation 
 of a interferometer definition file.  The hierarchy of classes is:
@@ -28,11 +26,11 @@ scratch, this module also includes a simple parser for ID files.
 .. versionadded:: 1.2.4
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -60,7 +58,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idF',  'get_scan_start_stop', 'is_valid', '__version__', '__revision__', '__all__']
 
 
@@ -297,7 +294,7 @@ class Project(object):
             output = "%sSCAN_REMPO       %s\n" % (output, "Estimated data volume for this scan is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sSCAN_START_MJD   %i\n" % (output, obs.mjd)
             output = "%sSCAN_START_MPM   %i\n" % (output, obs.mpm)
-            output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if type(obs.start).__name__ == 'datetime' else obs.start)
+            output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.state, datetime) else obs.start)
             output = "%sSCAN_DUR         %i\n" % (output, obs.dur)
             output = "%sSCAN_DUR+        %s\n" % (output, obs.duration)
             output = "%sSCAN_MODE        %s\n" % (output, obs.mode)
@@ -605,12 +602,12 @@ class Run(object):
         # Make sure that the scans don't overlap
         sObs = self.scans
         
-        for i in xrange(len(sObs)):
+        for i in range(len(sObs)):
             maxOverlaps = 1
             overlaps = []
             nOverlaps = 0
 
-            for j in xrange(len(sObs)):
+            for j in range(len(sObs)):
                 if verbose and i != j:
                     print("[%i] Checking for overlap between scans %i and %i" % (os.getpid(), i+1, j+1))
 
@@ -679,7 +676,7 @@ class Scan(object):
             pm = [0.0, 0.0]
         self.pm = [pm[0], pm[1]]
         self.start = start
-        if type(duration).__name__ == 'timedelta':
+        if isinstance(duration, timedelta):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
@@ -716,7 +713,7 @@ class Scan(object):
         
         # If we have a datetime instance, make sure we have an integer
         # number of milliseconds
-        if type(self.start).__name__ == 'datetime':
+        if isinstance(self.start, datetime):
             us = self.start.microsecond
             us = int(round(us/1000.0))*1000
             self.start = self.start.replace(microsecond=us)
@@ -776,7 +773,7 @@ class Scan(object):
     def set_duration(self, duration):
         """Set the scan duration."""
         
-        if type(duration).__name__ == 'timedelta':
+        if isinstance(duration, timedelta):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
@@ -1242,7 +1239,7 @@ def parse_idf(filename, verbose=False):
         keyword = mtch.group('keyword')
         
         ids = [-1, -1, -1, -1]
-        for i in xrange(4):
+        for i in range(4):
             try:
                 ids[i] = int(mtch.group('id%i' % (i+1)))
             except TypeError:

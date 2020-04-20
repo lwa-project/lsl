@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module that contains the base FrameHeader, FramePayload, and Frame 
 classes for all of the LSL readers.
@@ -7,11 +5,11 @@ classes for all of the LSL readers.
 .. versionadded:: 1.3.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
 
 import copy
 import numpy

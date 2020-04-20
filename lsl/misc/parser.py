@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that provides argparse-compatible conversion functions for a variety 
 of value formats, including:
@@ -10,11 +8,11 @@ of value formats, including:
 .. versionadded:: 1.2.4
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import re
 import ephem
@@ -29,7 +27,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['positive_or_zero_int', 'positive_int', 'positive_or_zero_float', 
            'positive_float', 'frequency', 'frequency_range', 'wavelength', 
            'wavelength_range', 'date', 'mjd', 'time', 'mpm', 'hours', 
@@ -99,7 +96,7 @@ def _get_units(string):
     """
     
     units = None
-    for i in xrange(len(string), 0, -1):
+    for i in range(len(string), 0, -1):
         try:
             float(string[:i])
             units = string[i:]

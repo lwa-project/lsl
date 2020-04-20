@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This module contains a set of convenience functions to parse the output 
 of NEC2, modify the input (.nec) file, and rerun NEC as necessary.
@@ -11,11 +9,11 @@ dipoles.  See the `README.NEC` file included in the LSL data directory for
 more information about what is included.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
 from lsl.misc.mathutil import regrid
@@ -29,7 +27,6 @@ telemetry.track_module()
 
 
 __version__   = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['close_to', 'open_and_get_nec_freq', 'change_nec_freq', 'calculate_ime', 
            'NECImpedance', 'NECPattern', 'which_nec4']
 __author__    = 'P. S. Ray'

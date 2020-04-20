@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM) 
 files (as defined in MCS0031, v5).
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 from datetime import datetime
 
@@ -23,7 +21,6 @@ telemetry.track_module()
 
 
 __version__ = '0.3'
-__revision__ = '$Rev$'
 __all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parse_sdm']
 
 
@@ -66,37 +63,37 @@ class SubSubSystemStatus(object):
     
     def __init__(self, fee=None, rpd=None, sep=None, arb=None, dp1=None, dp2=None, dr=None):
         if fee is None:
-            self.fee = [0 for n in xrange(ME_MAX_NFEE)]
+            self.fee = [0 for n in range(ME_MAX_NFEE)]
         else:
             self.fee = fee
         
         if rpd is None:
-            self.rpd = [0 for n in xrange(ME_MAX_NRPD)]
+            self.rpd = [0 for n in range(ME_MAX_NRPD)]
         else:
             self.rpd = rpd
             
         if sep is None:
-            self.sep = [0 for n in xrange(ME_MAX_NSEP)]
+            self.sep = [0 for n in range(ME_MAX_NSEP)]
         else:
             self.sep = sep
         
         if arb is None:
-            self.arb = [0 for n in xrange(ME_MAX_NARB)]
+            self.arb = [0 for n in range(ME_MAX_NARB)]
         else:
             self.arb = arb
             
         if dp1 is None:
-            self.dp1 = [0 for n in xrange(ME_MAX_NROACH)]
+            self.dp1 = [0 for n in range(ME_MAX_NROACH)]
         else:
             self.dp1 = dp1
         
         if dp2 is None:
-            self.dp2 = [0 for n in xrange(ME_MAX_NSERVER)]
+            self.dp2 = [0 for n in range(ME_MAX_NSERVER)]
         else:
             self.dp2 = dp2
             
         if dr is None:
-            self.dr = [0 for n in xrange(ME_MAX_NDR)]
+            self.dr = [0 for n in range(ME_MAX_NDR)]
         else:
             self.dr = dr
             
@@ -140,27 +137,27 @@ class StationSettings(object):
             self.update = update
             
         if fee is None:
-            self.fee = [0 for n in xrange(ME_MAX_NSTD)]
+            self.fee = [0 for n in range(ME_MAX_NSTD)]
         else:
             self.fee = fee
             
         if asp_flt is None:
-            self.asp_flt = [0 for n in xrange(ME_MAX_NSTD)]
+            self.asp_flt = [0 for n in range(ME_MAX_NSTD)]
         else:
             self.asp_flt = asp_flt
             
         if asp_at1 is None:
-            self.asp_at1 = [0 for n in xrange(ME_MAX_NSTD)]
+            self.asp_at1 = [0 for n in range(ME_MAX_NSTD)]
         else:
             self.asp_at1 = asp_at1
             
         if asp_at2 is None:
-            self.asp_at2 = [0 for n in xrange(ME_MAX_NSTD)]
+            self.asp_at2 = [0 for n in range(ME_MAX_NSTD)]
         else:
             self.asp_at2 = asp_at2
             
         if asp_ats is None:
-            self.asp_ats = [0 for n in xrange(ME_MAX_NSTD)]
+            self.asp_ats = [0 for n in range(ME_MAX_NSTD)]
         else:
             self.asp_ats = asp_ats
             
@@ -236,7 +233,7 @@ class SDM(object):
         else:
             self.dp = dp
         if dr is None:
-            self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in xrange(ME_MAX_NDR)]
+            self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in range(ME_MAX_NDR)]
         else:
             self.dr = dr
         
@@ -246,11 +243,11 @@ class SDM(object):
             self.status = status
         
         if ant_status is None:
-            self.ant_status = [[0,0] for n in xrange(ME_MAX_NSTD)]
+            self.ant_status = [[0,0] for n in range(ME_MAX_NSTD)]
         else:
             self.ant_status = ant_status
         if dpo_status is None:
-            self.dpo_status = [0 for n in xrange(ME_MAX_NDR)]
+            self.dpo_status = [0 for n in range(ME_MAX_NDR)]
         else:
             self.dpo_status = dpo_status
             
@@ -293,7 +290,7 @@ def parse_sdm(filename):
         dynamic.dp.binary_read(fh)
         mark = fh.tell()
         try:
-            for n in xrange(ME_MAX_NDR):
+            for n in range(ME_MAX_NDR):
                 dynamic.dr[n].binary_read(fh)
                 
             # Sub-sub-system status section
@@ -311,7 +308,7 @@ def parse_sdm(filename):
             fh.seek(mark)
             overrides = {'ME_MAX_NDR': 3}
             
-            for n in xrange(3):
+            for n in range(3):
                 dynamic.dr[n].binary_read(fh)
                 
             # Sub-sub-system status section

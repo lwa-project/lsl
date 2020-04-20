@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module to support imaging correlated data.  This module provides utilities to 
 read FITS IDI files into :class:`lsl.imaging.data.VisibilityDataSet` or 
@@ -27,19 +25,19 @@ read FITS IDI files into :class:`lsl.imaging.data.VisibilityDataSet` or
     Fixed a conjugation problem in the visibilities read from a FITS-IDI file
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
+    def strip_letters(s):
+        return s.translate(None, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+else:
     t = {}
     for c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
         t[ord(c)] = None
     def strip_letters(s, t=t):
         return s.translate(t)
-else:
-    def strip_letters(s):
-        return s.translate(None, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
         
 import os
 import re
@@ -224,7 +222,7 @@ class CorrelatedDataBase(object):
             min_uv and max_uv should be specified in lambda
         """
         
-        for i in xrange(self.integration_count):
+        for i in range(self.integration_count):
             yield self.get_data_set(i+1, include_auto=include_auto, sort=sort, 
                                     min_uv=min_uv, max_uv=max_uv)
             
@@ -379,7 +377,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         self.pols *= uvData.header['CDELT2'] 
         self.pols += uvData.header['CRVAL2']
         self.freq  = numpy.array([], dtype=numpy.float64)
-        for i in xrange(uvData.header['NO_BAND']):
+        for i in range(uvData.header['NO_BAND']):
             width = fq.data['CH_WIDTH'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['CH_WIDTH'][0]
             offset = fq.data['BANDFREQ'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['BANDFREQ'][0]
             
@@ -501,7 +499,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                     vis = vis[:,:,:,:2]
                 except IndexError:
                     ### Catch for FITS-IDI files generate by interfits
-                    wgt = numpy.ones([vis.shape[i] for i in xrange(3)], dtype=numpy.float32)
+                    wgt = numpy.ones([vis.shape[i] for i in range(3)], dtype=numpy.float32)
             ## Back to complex
             vis = vis.view(numpy.complex64)
             vis = vis[...,0]
@@ -519,7 +517,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
             # Setup the output data
             baselines = []
             select = []
-            for b in xrange(bl.size):
+            for b in range(bl.size):
                 if not self.extended:
                     i = self.stand_map[(bl[b] >> 8) & 255]
                     j = self.stand_map[bl[b] & 255]
@@ -789,7 +787,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
             # Setup the output data
             baselines = []
             select = []
-            for b in xrange(bl.size):
+            for b in range(bl.size):
                 if bl[b] >= 65536:
                     i = self.stand_map[int((bl[b] - 65536) / 2048)]
                     j = self.stand_map[int((bl[b] - 65536) % 2048)]
@@ -952,7 +950,7 @@ try:
             
             ## Fill in the antennas instances
             antennas = []
-            for i in xrange(lat.size):
+            for i in range(lat.size):
                 enz = self.station.get_enz_offset((lat[i], lng[i], elv[i]))
                 sid = int(strip_letters(ants.col('NAME')[i]))
                 
@@ -1082,7 +1080,7 @@ try:
                 # Expand the weights, if needed
                 if wgtS is None:
                     wgtS = numpy.ones(vis.shape, dtype=wgt.dtype)
-                    for i in xrange(wgtS.shape[1]):
+                    for i in range(wgtS.shape[1]):
                         wgtS[:,i,:] = wgt
                     wgt = wgtS
                     
@@ -1200,7 +1198,7 @@ class ImgWPlus(aipy.img.ImgW):
                 raise ValueError("Order mis-match: %i != %i" % (len(self.bm), len(uv.bm)))
                 
             self.uv += uv.uv
-            for i in xrange(len(self.bm)):
+            for i in range(len(self.bm)):
                 self.bm[i] += uv.bm[i]
                 
         elif isinstance(uv, numpy.ndarray):
@@ -1212,7 +1210,7 @@ class ImgWPlus(aipy.img.ImgW):
                 raise ValueError("Order mis-match: %i != %i" % (len(self.bm), len(bm)))
                 
             self.uv += uv
-            for i in xrange(len(self.bm)):
+            for i in range(len(self.bm)):
                 self.bm[i] += bm[i]
                 
         else:
@@ -1646,8 +1644,8 @@ def get_image_azalt(gimg, aa, phase_center='z', shifted=True):
     bdy = aipy.amp.RadioFixedBody(0, 0)
     
     az, el = ra*0.0, dec*0.0
-    for i in xrange(az.shape[0]):
-        for j in xrange(az.shape[1]):
+    for i in range(az.shape[0]):
+        for j in range(az.shape[1]):
             bdy._ra = ra[i,j]
             bdy._dec = dec[i,j]
             bdy.compute(aa)

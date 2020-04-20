@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*
-
 """
 This module stores various functions that are needed for computing UV 
 coverage and time delays.  The functions in the module:
@@ -17,11 +15,11 @@ coverage and time delays.  The functions in the module:
     Generalized the compute_uvw() and compute_uv_track() functions.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 from astropy.constants import c as speedOfLight

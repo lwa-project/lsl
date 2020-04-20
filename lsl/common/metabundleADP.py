@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for working with an MCS meta-data tarball and extracting the useful bits out 
 it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.LWAStation` 
 and :class:`lsl.common.sdm.SDM`.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -32,7 +30,6 @@ telemetry.track_module()
 
 
 __version__ = '1.0'
-__revision__ = '$Rev$'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_station', 'get_session_metadata', 
            'get_session_spec', 'get_observation_spec', 'get_sdf', 'get_command_script', 
            'get_asp_configuration', 'get_asp_configuration_summary', 'is_valid']
@@ -172,7 +169,7 @@ def read_obs_file(filename):
             bheader.OBS_BDM = ''
             
         steps = []
-        for n in xrange(bheader.OBS_STP_N):
+        for n in range(bheader.OBS_STP_N):
             fh.readinto(bstep)
             if bstep.OBS_STP_B == 3:
                 fh.readinto(bbeam)
@@ -552,10 +549,10 @@ def get_asp_configuration(tarname, which='beginning'):
         raise ValueError("Unknown configuration time '%s'" % which)
         
     # Stub ASP configuration
-    aspConfig = {'filter':  [-1 for i in xrange(264)],
-                 'at1':     [-1 for i in xrange(264)],
-                 'at2':     [-1 for i in xrange(264)],
-                 'atsplit': [-1 for i in xrange(264)]}
+    aspConfig = {'filter':  [-1 for i in range(264)],
+                 'at1':     [-1 for i in range(264)],
+                 'at2':     [-1 for i in range(264)],
+                 'atsplit': [-1 for i in range(264)]}
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         path, basename = os.path.split(tarname)
@@ -628,7 +625,7 @@ def get_asp_configuration_summary(tarname, which='beginning'):
     count = {}
     for param in aspConfig.keys():
         count[param] = {}
-        for ant in xrange(len(aspConfig[param])):
+        for ant in range(len(aspConfig[param])):
             value = aspConfig[param][ant]
             try:
                 count[param][value] += 1

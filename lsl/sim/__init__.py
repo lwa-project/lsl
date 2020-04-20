@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-"""lsl.sim - Simulate various types of LWA data.  The following follow DP
+"""
+lsl.sim - Simulate various types of LWA data.  The following follow DP
 format writers are avaliable:
   * tbn
   * drx
@@ -10,9 +9,9 @@ In addition, there are two simulation modules to generate fake data sets::
   * vis - generate visibility data sets for use with the aipy module
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     

@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Useful math functions for LWA work.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import math
 import warnings
@@ -21,7 +19,6 @@ telemetry.track_module()
 
 
 __version__   = '0.6'
-__revision__ = '$Rev$'
 __all__ = ['regrid', 'downsample', 'smooth', 'cmagnitude', 'cphase', 'cpolar', 'crect', 
            'creal', 'cimag', 'to_dB', 'from_dB', 'ndft',  'gaussian1d', 'gaussian2d', 
            'gaussparams', 'sphfit', 'sphval']
@@ -257,16 +254,16 @@ def ndft(t, x):
         
     # Create the output NDFT array and fill it
     out = numpy.zeros(x.shape, dtype=dtype)
-    for m in xrange(out.size):
+    for m in range(out.size):
         mPrime = out.size//2 - m
         s = 0.0j
-        for n in xrange(out.size):
+        for n in range(out.size):
             s += x[n]*numpy.exp(-2j*numpy.pi*t[n]*mPrime / (t.max() - t.min()))
         out[m] = s
         
     # Create the output frequency array and fill it
     f = numpy.zeros_like(t)
-    for m in xrange(out.size):
+    for m in range(out.size):
         mPrime = out.size//2 - m
         f[m] = mPrime / (t.max() - t.min())
         

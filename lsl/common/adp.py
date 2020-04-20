@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains common values found in the ADP ICD.  The values 
 are:
@@ -17,11 +15,11 @@ filters.
     filters
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 from scipy.signal import freqz, lfilter
@@ -32,7 +30,6 @@ telemetry.track_module()
 
 
 __version__ = '0.3'
-__revision__ = '$Rev$'
 __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'freq_to_word', 'word_to_freq', 
            'delay_to_dpd', 'dpd_to_delay', 'gain_to_dpg', 'dpg_to_gain', 
            'tbn_filter', 'drx_filter']

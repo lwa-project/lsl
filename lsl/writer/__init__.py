@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*
-
 """
 lsl.writer - Writers for exporting LWA data to various file formats.  
 Formats include:
@@ -10,9 +8,9 @@ Formats include:
  * vdif          - write data to the VLBI Data Interchange Format.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     

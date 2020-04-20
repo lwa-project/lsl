@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 A collection of utilities to help convert RF engineering/communications terms
 into radio astronomy terms.  This module is geared toward taking antenna 
@@ -9,11 +7,11 @@ K/Jy and then using those to get a system equivalent flux density.
 .. versionadded:: 1.0.3
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import math
 from astropy import units
@@ -24,7 +22,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['dBd_to_dBi', 'dBd_to_dBi', 'dBi_to_gain', 'dBd_to_gain', 'gain_to_dBi', 'gain_to_dBd', 'calculate_sefd', 
         'calculate_effective_area', 'Jy_to_dBm', 'dBm_to_Jy']
 

@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Module to make an ASCII progress bar.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import time
@@ -18,7 +16,6 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['ProgressBar', 'ProgressBarPlus']
 
 

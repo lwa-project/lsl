@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for generating simulated arrays and visibility data.  The chief 
 functions of this module are:
@@ -48,11 +46,11 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
     function to be the Gaussian full width at half maximum in degrees
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import aipy
@@ -271,13 +269,13 @@ class BeamAlm(aipy.amp.BeamAlm):
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
+            for i in range(temp.shape[1]):
                 temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
                     temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
@@ -347,13 +345,13 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
+            for i in range(temp.shape[1]):
                 temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
                     temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
@@ -429,13 +427,13 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
+            for i in range(temp.shape[1]):
                 temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
                     temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
@@ -484,13 +482,13 @@ class Beam(aipy.amp.Beam):
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
+            for i in range(temp.shape[1]):
                 temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
                     temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
@@ -552,13 +550,13 @@ class Antenna(aipy.amp.Antenna):
                 
             elif len(b.shape) == 2:
                 temp = numpy.zeros_like(b)
-                for i in xrange(b.shape[1]):
+                for i in range(b.shape[1]):
                     temp[:,i] = numpy.dot(a, b[:,i])
                     
             elif len(b.shape) == 3:
                 temp = numpy.zeros_like(b)
-                for i in xrange(b.shape[1]):
-                    for j in xrange(top.shape[2]):
+                for i in range(b.shape[1]):
+                    for j in range(top.shape[2]):
                         temp[:,i,j] = numpy.dot(a, b[:,i,j])
                         
             else:
@@ -688,7 +686,7 @@ class AntennaArray(aipy.amp.AntennaArray):
             
             # Mean ARX filter response
             arxf, arxr = ants[0].arx.response(filter, dB=False)
-            for i in xrange(1, len(ants)):
+            for i in range(1, len(ants)):
                 arxfi, arxri = ants[i].arx.response(filter, dB=False)
                 arxr += arxri
             arxr /= arxr.max()
@@ -700,7 +698,7 @@ class AntennaArray(aipy.amp.AntennaArray):
             resp *= arxIntp(freqs)
             
         # Update the AIPY passbands
-        for i in xrange(len(self.ants)):
+        for i in range(len(self.ants)):
             self[i].amp = resp
             self[i].update()
             
@@ -1092,10 +1090,10 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         ## Apply the antenna gain pattern for each source
         if not flat_response:
             if p == 0:
-                for i in xrange(aa._cache['jys'].shape[0]):
+                for i in range(aa._cache['jys'].shape[0]):
                     aa._cache['jys'][i,:] *= Bij_sf(aa._cache['s_top'][i,:], pol)
             else:
-                for i in xrange(aa._cache['jys'].shape[0]):
+                for i in range(aa._cache['jys'].shape[0]):
                     aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[p-1])	# Remove the old pol
                     aa._cache['jys'][i,:] *=  Bij_sf(aa._cache['s_top'][i,:], pol)
                     
@@ -1115,7 +1113,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         
     # Cleanup
     if not flat_response:
-        for i in xrange(aa._cache['jys'].shape[0]):
+        for i in range(aa._cache['jys'].shape[0]):
             aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[-1])	# Remove the old pol
             aa._cache['jys'][i,:] /= Gij_sf								# Remove the bandpass
             
@@ -1191,7 +1189,7 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
     fq = dataSet.freq / 1e9
     
     cGains = []
-    for i in xrange(len(amps)):
+    for i in range(len(amps)):
         gain = 2j*numpy.pi*fq*delays[i]
         if phase_offsets is not None:
             gain += 1j*phase_offsets[i]

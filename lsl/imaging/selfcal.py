@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Simple self-calibration module for correlated TBW and TBN data.  The 
 supported self-calibration methods are:
@@ -16,11 +14,11 @@ supported self-calibration methods are:
 ..versionadded:: 0.5.5
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 
@@ -32,7 +30,6 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['phase_only', 'delay_only', 'delay_and_phase']
 
 
@@ -50,7 +47,7 @@ def _scale_data(dataSet, amps, delays, phase_offsets):
     fq = dataSet.freq / 1e9
     
     cGains = []
-    for i in xrange(len(amps)):
+    for i in range(len(amps)):
         cGains.append( amps[i]*numpy.exp(2j*numpy.pi*fq*delays[i] + 1j*phase_offsets[i]) )
 
     # Apply the scales and delays for all polarization pairs found in the original data
@@ -107,7 +104,7 @@ def _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     C = numpy.log(numpy.abs(simVis / obsVis))
     
     Cp = numpy.zeros(nBLs)
-    for i in xrange(C.shape[0]):
+    for i in range(C.shape[0]):
         Cp[i] = robust.mean(C[i,:])
     
     return Cp
@@ -127,7 +124,7 @@ def _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     fq = dataSet.freq[chan] / 1e9
     
     A = numpy.zeros((nBLs*fq.size, nStands-1))
-    for i in xrange(fq.size):
+    for i in range(fq.size):
         for j,(l,m) in enumerate(dataSet.baselines):
             if l < ref_ant:
                 A[j+i*nBLs,l]   =  1.0
@@ -173,8 +170,8 @@ def _build_phaseonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     C = numpy.angle(simVis / obsVis)
     
     Cp = numpy.zeros(nBLs*fq.size)
-    for i in xrange(fq.size):
-        for j in xrange(C.shape[0]):
+    for i in range(fq.size):
+        for j in range(C.shape[0]):
             Cp[j+i*nBLs] = C[j,i]
     
     return Cp
@@ -193,7 +190,7 @@ def _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     fq = dataSet.freq[chan] / 1e9
     
     A = numpy.zeros((nBLs*fq.size, nStands-1))
-    for i in xrange(fq.size):
+    for i in range(fq.size):
         for j,(l,m) in enumerate(dataSet.baselines):
             if l < ref_ant:
                 A[j+i*nBLs,l]   =  2*numpy.pi*fq[i]
@@ -238,8 +235,8 @@ def _build_delayonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     C = numpy.angle(simVis / obsVis)
     
     Cp = numpy.zeros(nBLs*fq.size)
-    for i in xrange(fq.size):
-        for j in xrange(C.shape[0]):
+    for i in range(fq.size):
+        for j in range(C.shape[0]):
             Cp[j+i*nBLs] = C[j,i]
     
     return Cp
@@ -258,7 +255,7 @@ def _build_delayandphase_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     fq = dataSet.freq[chan] / 1e9
     
     A = numpy.zeros((nBLs*fq.size, 2*(nStands-1)))
-    for i in xrange(fq.size):
+    for i in range(fq.size):
         for j,(l,m) in enumerate(dataSet.baselines):
             if l < ref_ant:
                 A[j+i*nBLs,l]   =  2*numpy.pi*fq[i]
@@ -308,8 +305,8 @@ def _build_delayandphase_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     C = numpy.angle(simVis / obsVis)
     
     Cp = numpy.zeros(nBLs*fq.size)
-    for i in xrange(fq.size):
-        for j in xrange(C.shape[0]):
+    for i in range(fq.size):
+        for j in range(C.shape[0]):
             Cp[j+i*nBLs] = C[j,i]
     
     return Cp
@@ -377,7 +374,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
     tempGains = numpy.ones(N)
     tempDelays = numpy.zeros(N)
     tempPhaseOffsets = numpy.zeros(N)
-    for i in xrange(max_iter):
+    for i in range(max_iter):
         #
         # Amplitude
         #

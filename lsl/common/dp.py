@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains common values found in the DP ICD, revision I.  The values 
 are:
@@ -13,11 +11,11 @@ words and functions for calculating the magnitude response of the TBN and DRX
 filters and a software version of DP.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 from scipy.signal import freqz, lfilter
@@ -30,7 +28,6 @@ telemetry.track_module()
 
 
 __version__ = '0.6'
-__revision__ = '$Rev$'
 __all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq_to_word', 'word_to_freq', 
            'delay_to_dpd', 'dpd_to_delay', 'gain_to_dpg', 'dpg_to_gain', 
            'tbn_filter', 'drx_filter', 'SoftwareDP']
@@ -498,7 +495,7 @@ class SoftwareDP(object):
                         },}
                         
     delayFIRs = []
-    for i in xrange(520):
+    for i in range(520):
         delayFIRs.append([])
         delayFIRs[-1].extend(_DELAY_FIRS)
     
@@ -577,13 +574,13 @@ class SoftwareDP(object):
         
         if channel == -1:
             self.delayFIRs = []
-            for i in xrange(520):
+            for i in range(520):
                 self.delayFIRs.append([])
                 self.delayFIRs[-1].extend(_DELAY_FIRS)
         
         if channel == 0:
             self.delayFIRs = []
-            for i in xrange(520):
+            for i in range(520):
                 self.delayFIRs.append([])
                 self.delayFIRs[-1].extend(coeffs)
             
@@ -637,9 +634,9 @@ class SoftwareDP(object):
                 usePool = False
             
             # Multiple inputs - loop over all of them
-            output = [None for i in xrange(data.shape[0])]
+            output = [None for i in range(data.shape[0])]
             
-            for i in xrange(data.shape[0]):
+            for i in range(data.shape[0]):
                 if usePool:
                     # Use the pool
                     task = taskPool.apply_async(_process_stream_filter, args=(time, data[i,:], self.avaliableModes[self.mode][self.filter], self.central_freq))

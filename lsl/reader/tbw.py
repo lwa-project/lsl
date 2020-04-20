@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to reading in data from both 12-bit and 4-bit TBW files.  
 This module defines the following classes for storing the TBW data found in
@@ -38,11 +36,11 @@ get_frames_per_obs
     Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy

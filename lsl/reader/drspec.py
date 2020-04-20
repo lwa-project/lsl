@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to read in DR spectrometer data.  This module defines the following 
 classes for storing the spectra found in a file:
@@ -35,11 +33,11 @@ For describing the format of data in the file, three function are provided:
     spectrometer file.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy
