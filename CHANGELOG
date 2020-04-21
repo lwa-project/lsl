@@ -15,6 +15,7 @@
   * Removed lsl.misc.mathutil.savitzky_golay since it was added in scipy v0.14.0+
   * Added support for collecting usage data for LSL via lsl.misc.telemetry
   * Updated to lsl.misc.ionosphere to IGRF13
+  * Dropped support for PyFFTW
 
 1.2.6
   * Fixed a bug in the lsl.reader.ldp classes that causes offset() to fail in certain cases
