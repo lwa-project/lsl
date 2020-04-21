@@ -102,21 +102,21 @@ class ionosphere_tests(unittest.TestCase):
         """Test computing the magnetic declination"""
         
         bx, by, bz = ionosphere.get_magnetic_field(34.0, -107.0, 50e3, mjd=59215)
-        dec = ionosphere.compute_magnetic_decliation(bx, by, bz)
+        dec = ionosphere.compute_magnetic_declination(bx, by, bz)
         self.assertAlmostEqual(dec, 8+11/60.0, 2)
         
     def test_magnetic_inclination(self):
         """Test computing the magnetic inclination"""
         
         bx, by, bz = ionosphere.get_magnetic_field(34.0, -107.0, 50e3, mjd=59215)
-        inc = ionosphere.compute_magnetic_incliation(bx, by, bz)
+        inc = ionosphere.compute_magnetic_inclination(bx, by, bz)
         self.assertAlmostEqual(inc, 60+58/60.0, 2)
         
     def test_pierce_point(self):
         """Test the ionospheric pierce point"""
         
         az, el, h = 45.0, 45.0, 350e3   # m
-        pos = ionosphere.ionospheric_pierce_point(lwa1, az, el, height=h)
+        pos = ionosphere.get_ionospheric_pierce_point(lwa1, az, el, height=h)
         
         # https://gssc.esa.int/navipedia/index.php/Klobuchar_Ionospheric_Model
         psi = 0.0137/(el/180.0+0.11) - 0.022
@@ -134,8 +134,11 @@ class ionosphere_tests(unittest.TestCase):
         """
         LSL 1.2.5
         
+        Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
+        [GCC 7.4.0] on linux2
+        Type "help", "copyright", "credits" or "license" for more information.
         >>> from lsl.misc import ionosphere
-        >>> ionosphere.getTECValue(58215, lat=34, lng=-107, includeRMS=True, type='IGS')
+        >>> ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='IGS')
         (array([[ 14.87999992]]), array([[ 0.73999999]]))
         """
         

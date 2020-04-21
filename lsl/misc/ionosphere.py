@@ -694,6 +694,11 @@ def _parse_tec_map(filename):
     # Go
     with gzip.open(filename, 'r') as fh:
         for line in fh:
+            try:
+                line = line.decode('ascii', errors='ignore')
+            except AttributeError:
+                pass
+                
             ## Are we beginning a map?
             line = line.replace('\n', '')
             if line.find('START OF TEC MAP') != -1 or line.find('START OF RMS MAP') != -1:
