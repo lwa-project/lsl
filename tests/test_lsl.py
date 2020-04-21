@@ -41,6 +41,7 @@ import test_sdfits
 import test_vdif
 import test_measurementset
 import test_beamformer
+import test_ionosphere
 import test_imaging
 import test_progress
 import test_busy
@@ -56,7 +57,6 @@ import test_notebooks
 import test_idf
 
 
-__revision__  = "$Rev$"
 __version__   = "0.5"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -98,6 +98,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_vdif.vdif_test_suite())
         self.addTest(test_measurementset.measurementset_test_suite())
         self.addTest(test_beamformer.beamformer_test_suite())
+        self.addTest(test_ionosphere.ionosphere_test_suite())
         self.addTest(test_imaging.imaging_test_suite())
         self.addTest(test_progress.progress_test_suite())
         self.addTest(test_busy.busy_test_suite())
