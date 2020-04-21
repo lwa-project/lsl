@@ -23,6 +23,7 @@ import test_catalog
 import test_dp
 import test_stations
 import test_robust
+import test_kurtosis
 import test_stattests
 import test_reader
 import test_reader_adp
@@ -80,6 +81,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_dp.dp_test_suite())
         self.addTest(test_stations.stations_test_suite())
         self.addTest(test_robust.robust_test_suite())
+        self.addTest(test_kurtosis.kurtosis_test_suite())
         self.addTest(test_stattests.stattests_test_suite())
         self.addTest(test_reader.reader_test_suite())
         self.addTest(test_reader_adp.reader_adp_test_suite())
