@@ -74,7 +74,6 @@ telemetry.track_module()
 
 
 __version__ = '1.1'
-__revision__ = '$Rev$'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 

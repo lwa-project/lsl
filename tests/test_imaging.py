@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit tests for the lsl.imaging modules.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import copy
@@ -37,7 +35,6 @@ except ImportError:
     pass
 
 
-__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
@@ -151,8 +148,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(idi.freq.size, 2*data['freq'].size)
         ds = idi.get_data_set(1, include_auto=True)
         
-        for i in xrange(len(data['bl'])):
-            for j in xrange(data['freq'].size):
+        for i in range(len(data['bl'])):
+            for j in range(data['freq'].size):
                 self.assertAlmostEqual(ds.XX.data[i,j], data['vis'][i,j], 6)
                 self.assertAlmostEqual(ds.XX.data[i,j+data['freq'].size], 10*data['vis'][i,j], 6)
                 
@@ -287,8 +284,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        for i in xrange(len(data['bl'])):
-            for j in xrange(data['freq'].size):
+        for i in range(len(data['bl'])):
+            for j in range(data['freq'].size):
                 self.assertAlmostEqual(ds.XX.data[i,j], data['vis'][i,j], 6)
                 
     @unittest.skipUnless(run_ms_tests, "requires the 'casacore' module")
@@ -316,8 +313,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        for i in xrange(len(data['bl'])):
-            for j in xrange(data['freq'].size):
+        for i in range(len(data['bl'])):
+            for j in range(data['freq'].size):
                 self.assertAlmostEqual(ds.XX.data[i,j], data['vis'][i,j], 6)
                 self.assertAlmostEqual(ds.XX.data[i,j+data['freq'].size], 10*data['vis'][i,j], 6)
                 
@@ -518,17 +515,17 @@ class imaging_tests(unittest.TestCase):
         
         # Rephase #1
         ds.rephase(new_phase_center=simSrcs['Sun'])
-        for i in xrange(ds.nbaseline):
+        for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
         # Rephase #2
         ds.rephase(new_phase_center=orig_pc)
-        for i in xrange(ds.nbaseline):
+        for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
-            for j in xrange(ds.nchan):
+            for j in range(ds.nchan):
                 self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
@@ -551,17 +548,17 @@ class imaging_tests(unittest.TestCase):
         
         # Rephase #1
         ds.rephase(new_phase_center=simSrcs['Sun'])
-        for i in xrange(ds.nbaseline):
+        for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
         # Rephase #2
         ds.rephase(new_phase_center=orig_pc)
-        for i in xrange(ds.nbaseline):
+        for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
-            for j in xrange(ds.nchan):
+            for j in range(ds.nchan):
                 self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
@@ -584,17 +581,17 @@ class imaging_tests(unittest.TestCase):
         
         # Rephase #1
         ds.rephase(new_phase_center=simSrcs['Sun'])
-        for i in xrange(ds.nbaseline):
+        for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
         # Rephase #2
         ds.rephase(new_phase_center=orig_pc)
-        for i in xrange(ds.nbaseline):
+        for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
             
-            for j in xrange(ds.nchan):
+            for j in range(ds.nchan):
                 self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase

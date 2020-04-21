@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.misc.mathutil module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import unittest
 import math
@@ -24,7 +22,6 @@ from scipy.special import sph_harm
 from lsl.misc import mathutil
 
 
-__revision__  = "$Rev$"
 __version__   = "0.2"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -255,9 +252,9 @@ class mathutil_tests(unittest.TestCase):
         terms = numpy.array([1, 0.5, 0.4, 0.01, -0.02, -0.005])
         az  = numpy.zeros((180,45))
         alt = numpy.zeros((180,45))
-        for i in xrange(180):
+        for i in range(180):
             az[i,:] = 2*i
-        for i in xrange(45):
+        for i in range(45):
             alt[:,i] = 2*i
         
         out = mathutil.sphval(terms, az, alt, degrees=True, real_only=True)
@@ -270,9 +267,9 @@ class mathutil_tests(unittest.TestCase):
         
         az  = numpy.zeros((180,45))
         alt = numpy.zeros((180,45))
-        for i in xrange(180):
+        for i in range(180):
             az[i,:] = 2*i
-        for i in xrange(45):
+        for i in range(45):
             alt[:,i] = 2*i
         
         # Setup a nice, easy problem

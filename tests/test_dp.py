@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.common.dp module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import warnings
 import unittest
@@ -18,7 +16,6 @@ from lsl.common import dp
 from lsl.common import stations
 
 
-__revision__ = "$Rev$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
@@ -71,14 +68,14 @@ class dp_software_tests(unittest.TestCase):
         sdp = dp.SoftwareDP()
         
         sdp.set_mode("DRX")
-        for i in xrange(7,0,-1):
+        for i in range(7,0,-1):
             if i >= 3:
                 sdp.set_filter(i)
             else:
                 self.assertRaises(ValueError, sdp.set_filter, i)
                 
         sdp.set_mode("TBN")
-        for i in xrange(7,0,-1):
+        for i in range(7,0,-1):
             if i >= 5:
                 sdp.set_filter(i)
             else:
@@ -89,7 +86,7 @@ class dp_software_tests(unittest.TestCase):
         
         sdp = dp.SoftwareDP()
         
-        for f in xrange(5, 95, 5):
+        for f in range(5, 95, 5):
             if f < 10 or f > 88:
                 self.assertRaises(ValueError, sdp.set_tuning_freq, f*1e6)
             else:

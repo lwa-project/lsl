@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit tests for the lsl.reader modules that are for ADP stations.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import unittest
@@ -19,7 +17,6 @@ from lsl.reader import cor
 from lsl.reader import errors
 
 
-__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
@@ -98,7 +95,7 @@ class reader_adp_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_tbf_math(self):
@@ -244,7 +241,7 @@ class reader_adp_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_cor_math(self):
@@ -260,35 +257,35 @@ class reader_adp_tests(unittest.TestCase):
         # Multiplication
         frameT = frames[0] * 2.0
         for i in range(72):
-            for j in xrange(2):
-                for k in xrange(2):
+            for j in range(2):
+                for k in range(2):
                     self.assertAlmostEqual(frameT.payload.data[i,j,k], 2*frames[0].payload.data[i,j,k], 2)
         frameT *= 2.0
         for i in range(72):
-            for j in xrange(2):
-                for k in xrange(2):
+            for j in range(2):
+                for k in range(2):
                     self.assertAlmostEqual(frameT.payload.data[i,j,k], 4*frames[0].payload.data[i,j,k], 2)
         frameT = frames[0] * frames[1]
         for i in range(72):
-            for j in xrange(2):
-                for k in xrange(2):
+            for j in range(2):
+                for k in range(2):
                     self.assertAlmostEqual(frameT.payload.data[i,j,k], frames[0].payload.data[i,j,k]*frames[1].payload.data[i,j,k], 2)
             
         # Addition
         frameA = frames[0] + 2.0
         for i in range(72):
-            for j in xrange(2):
-                for k in xrange(2):
+            for j in range(2):
+                for k in range(2):
                     self.assertAlmostEqual(frameA.payload.data[i,j,k], 2+frames[0].payload.data[i,j,k], 2)
         frameA += 2.0
         for i in range(72):
-            for j in xrange(2):
-                for k in xrange(2):
+            for j in range(2):
+                for k in range(2):
                     self.assertAlmostEqual(frameA.payload.data[i,j,k], 4+frames[0].payload.data[i,j,k], 2)
         frameA = frames[0] + frames[1]
         for i in range(72):
-            for j in xrange(2):
-                for k in xrange(2):
+            for j in range(2):
+                for k in range(2):
                     self.assertAlmostEqual(frameA.payload.data[i,j,k], frames[0].payload.data[i,j,k]+frames[1].payload.data[i,j,k], 2)
             
         

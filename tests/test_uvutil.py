@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.correlator.uvutil module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import warnings
 import unittest
@@ -19,7 +17,6 @@ from lsl.common import stations
 
 
 __version__  = "0.5"
-__revision__ = "$Rev$"
 __author__    = "Jayce Dowell"
 
 
@@ -128,11 +125,11 @@ class uvutil_tests(unittest.TestCase):
         shape2 = (out0.shape[0], 3, 128, 4, 2)
         
         # Make sure we have the right dimensions
-        for i in xrange(len(shape0)):
+        for i in range(len(shape0)):
             self.assertEqual(out0.shape[i], shape0[i])
-        for i in xrange(len(shape1)):
+        for i in range(len(shape1)):
             self.assertEqual(out1.shape[i], shape1[i])
-        for i in xrange(len(shape2)):
+        for i in range(len(shape2)):
             self.assertEqual(out2.shape[i], shape2[i])
             
         # Make sure the values are the same

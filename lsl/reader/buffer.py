@@ -36,7 +36,6 @@ telemetry.track_module()
 
 
 __version__ = '1.2'
-__revision__ = '$Rev$'
 __all__ = ['FrameBufferBase', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer']
 
 

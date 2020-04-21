@@ -30,7 +30,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['Ms', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 

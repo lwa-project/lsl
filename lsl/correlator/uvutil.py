@@ -31,7 +31,6 @@ telemetry.track_module()
 
 
 __version__ = '0.6'
-__revision__ = '$Rev$'
 __all__ = ['get_baselines', 'baseline_to_antennas', 'antennas_to_baseline', 'compute_uvw', 'compute_uv_track']
 
 

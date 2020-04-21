@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.common.idf module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -25,7 +23,6 @@ from lsl.common import idf
 from lsl.common.stations import lwa1, lwasv
 
 
-__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
@@ -144,7 +141,7 @@ class idf_tests(unittest.TestCase):
         ## TODO: Coordinate test?
         sdfs = project.generate_sdfs()
         for sdf in sdfs:
-            for o in xrange(len(project.runs[0].scans)):
+            for o in range(len(project.runs[0].scans)):
                 bdy = project.runs[0].scans[o].get_fixed_body()
                 bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
                 self.assertAlmostEqual(bdy.a_ra, sdf.sessions[0].observations[o].ra*pi/12.0, 5)
@@ -293,7 +290,7 @@ class idf_tests(unittest.TestCase):
         ## TODO: Coordinate test?
         sdfs = project.generate_sdfs()
         for sdf in sdfs:
-            for o in xrange(len(project.runs[0].scans)):
+            for o in range(len(project.runs[0].scans)):
                 sdf_phase_centers = sdf.project_office.observations[0][o]
                 for i,phase_center in enumerate(project.runs[0].scans[o].alt_phase_centers):
                     bdy = phase_center.get_fixed_body()
@@ -375,7 +372,7 @@ class idf_tests(unittest.TestCase):
         
         # Too many phase centers
         project.runs[0].scans[0].alt_phase_centers[0].intent = 'PhaseCal'
-        for i in xrange(4):
+        for i in range(4):
             project.runs[0].scans[0].add_alt_phase_center('test', 'Target', 19.991210200, 40.733916000)
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())

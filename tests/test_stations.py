@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.common.stations module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import ephem
@@ -20,7 +18,6 @@ from lsl.common.paths import DATA_BUILD
 from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
 
 
-__revision__ = "$Rev$"
 __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
@@ -68,7 +65,7 @@ class stations_tests(unittest.TestCase):
         self.assertAlmostEqual(lwa1.lat, lwa1Prime.lat)
         self.assertAlmostEqual(lwa1.long, lwa1Prime.long)
         self.assertAlmostEqual(lwa1.elev, lwa1Prime.elev)
-        for i in xrange(520):
+        for i in range(520):
             self.assertEqual(lwa1.antennas[i].id, lwa1Prime.antennas[i].id)
             self.assertEqual(lwa1.antennas[i].stand.id, lwa1Prime.antennas[i].stand.id)
             self.assertEqual(lwa1.antennas[i].digitizer, lwa1Prime.antennas[i].digitizer)
@@ -89,7 +86,7 @@ class stations_tests(unittest.TestCase):
         self.assertAlmostEqual(lwasv.lat, lwasvPrime.lat)
         self.assertAlmostEqual(lwasv.long, lwasvPrime.long)
         self.assertAlmostEqual(lwasv.elev, lwasvPrime.elev)
-        for i in xrange(512):
+        for i in range(512):
             self.assertEqual(lwasv.antennas[i].id, lwasvPrime.antennas[i].id)
             self.assertEqual(lwasv.antennas[i].stand.id, lwasvPrime.antennas[i].stand.id)
             self.assertEqual(lwasv.antennas[i].digitizer, lwasvPrime.antennas[i].digitizer)

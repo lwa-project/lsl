@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for regressions in the lsl.common.busy module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import sys
 import time
@@ -20,7 +18,6 @@ except ImportError:
     
 from lsl.common import busy
 
-__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 

@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.common.sdf module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -23,7 +21,6 @@ from lsl.common import sdf
 from lsl.common.stations import lwa1, lwasv
 
 
-__revision__ = "$Rev$"
 __version__  = "0.4"
 __author__    = "Jayce Dowell"
 
@@ -571,7 +568,7 @@ class sdf_tests(unittest.TestCase):
         
         # Steps - 1
         self.assertEqual(len(project.sessions[0].observations[0].steps), 4)
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(project.sessions[0].observations[0].steps[i].is_radec, project.sessions[0].observations[0].is_radec)
             self.assertEqual(project.sessions[0].observations[0].steps[i].freq1,  832697741)
             self.assertEqual(project.sessions[0].observations[0].steps[i].freq2, 1621569285)
@@ -596,7 +593,7 @@ class sdf_tests(unittest.TestCase):
         
         # Steps - 2
         self.assertEqual(len(project.sessions[0].observations[1].steps), 2)
-        for i in xrange(2):
+        for i in range(2):
             self.assertEqual(project.sessions[0].observations[1].steps[i].is_radec, project.sessions[0].observations[1].is_radec)
             self.assertEqual(project.sessions[0].observations[1].steps[i].freq1,  832697741)
             self.assertEqual(project.sessions[0].observations[1].steps[i].freq2, 1621569285)
@@ -721,11 +718,11 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].steps[0].dur, 60000)
         
         # Delays - 1
-        for i in xrange(260):
+        for i in range(260):
             self.assertEqual(project.sessions[0].observations[0].steps[0].delays[i], 0)
             
         # Gains - 1
-        for i in xrange(260):
+        for i in range(260):
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][0], 1)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)

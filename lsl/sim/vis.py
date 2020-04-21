@@ -74,7 +74,6 @@ telemetry.track_module()
 
 
 __version__ = '0.6'
-__revision__ = '$Rev$'
 __all__ = ['SOURCES', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
            'build_sim_array', 'build_sim_data', 'scale_data', 'shift_data', 'add_baseline_noise']
 

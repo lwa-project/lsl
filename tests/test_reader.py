@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit tests for the lsl.reader modules.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import unittest
@@ -22,7 +20,6 @@ from lsl.reader import drspec
 from lsl.reader import errors
 
 
-__revision__ = "$Rev$"
 __version__  = "0.6"
 __author__    = "Jayce Dowell"
 
@@ -114,7 +111,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_tbw_math(self):
@@ -236,7 +233,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_tbn_math(self):
@@ -389,7 +386,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_drx_math(self):
@@ -532,7 +529,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
         fh.close()
         
@@ -550,24 +547,24 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameT.payload.XX0[i], 2*frames[0].payload.XX0[i], 2)
         frameT *= 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameT.payload.XX1[i], 4*frames[0].payload.XX1[i], 2)
         frameT = frames[0] * frames[1]
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameT.payload.YY0[i], frames[0].payload.YY0[i]*frames[1].payload.YY0[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameA.payload.XX0[i], 2+frames[0].payload.XX0[i], 2)
         frameA += 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameA.payload.XX1[i], 4+frames[0].payload.XX1[i], 2)
         frameA = frames[0] + frames[1]
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameA.payload.YY0[i], frames[0].payload.YY0[i]+frames[1].payload.YY0[i], 2)
             
     ### VDIF ###
@@ -674,7 +671,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
         fh.close()
         
