@@ -21,6 +21,7 @@ import test_mathutil
 import test_necutil
 import test_catalog
 import test_dp
+import test_adp
 import test_stations
 import test_robust
 import test_kurtosis
@@ -79,6 +80,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_necutil.necutil_test_suite())
         self.addTest(test_catalog.catalog_test_suite())
         self.addTest(test_dp.dp_test_suite())
+        self.addTest(test_adp.adp_test_suite())
         self.addTest(test_stations.stations_test_suite())
         self.addTest(test_robust.robust_test_suite())
         self.addTest(test_kurtosis.kurtosis_test_suite())
