@@ -69,22 +69,10 @@ from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 
-try:
-    import pyfftw
-    
-    # Enable the PyFFTW cache
-    if not pyfftw.interfaces.cache.is_enabled():
-        pyfftw.interfaces.cache.enable()
-        pyfftw.interfaces.cache.set_keepalive_time(60)
-        
-    fft2Function = lambda x: pyfftw.interfaces.numpy_fft.fft2(x)
-    ifft2Function = lambda x: pyfftw.interfaces.numpy_fft.ifft2(x)
+from scipy import fftpack
+fft2Function = fftpack.fft2
+ifft2Function = fftpack.ifft2
 
-except ImportError:
-    from scipy import fftpack
-    fft2Function = fftpack.fft2
-    ifft2Function = fftpack.ifft2
-    
 from lsl.misc import telemetry
 telemetry.track_module()
 
