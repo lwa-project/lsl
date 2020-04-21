@@ -405,6 +405,7 @@ class FrameTimestamp(object):
             if self._frac >= 1:
                 self._int += 1
                 self._frac -= 1
+            return self
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
@@ -438,6 +439,7 @@ class FrameTimestamp(object):
             if self._frac < 0:
                 self._int -= 1
                 self._frac += 1
+            return self
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
