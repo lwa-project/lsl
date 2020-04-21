@@ -103,14 +103,20 @@ class ionosphere_tests(unittest.TestCase):
         
         bx, by, bz = ionosphere.get_magnetic_field(34.0, -107.0, 50e3, mjd=59215)
         dec = ionosphere.compute_magnetic_declination(bx, by, bz)
-        self.assertAlmostEqual(dec, 8+11/60.0, 2)
+        d = int(dec)
+        m = int(round((dec-d)*60))
+        self.assertEqual(d, 8)
+        self.assertEqual(m, 11)
         
     def test_magnetic_inclination(self):
         """Test computing the magnetic inclination"""
         
         bx, by, bz = ionosphere.get_magnetic_field(34.0, -107.0, 50e3, mjd=59215)
         inc = ionosphere.compute_magnetic_inclination(bx, by, bz)
-        self.assertAlmostEqual(inc, 60+58/60.0, 2)
+        d = int(inc)
+        m = int(round((inc-d)*60))
+        self.assertEqual(d, 60)
+        self.assertEqual(m, 58)
         
     def test_pierce_point(self):
         """Test the ionospheric pierce point"""
