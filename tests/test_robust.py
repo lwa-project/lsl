@@ -59,7 +59,14 @@ class robust_tests(unittest.TestCase):
         b = 1.0*a
         b[10] = 1e6
         self.assertTrue(robust.mean(b) < b.mean())
-
+        
+    def test_mode(self):
+        """Test the half-sample mode function."""
+        
+        b = numpy.random.randn(512)**2 + 5
+        self.assertAlmostEqual(robust.mode(b), 5.0, 2)
+        
+        
     def test_std(self):
         """Test the outlier-resistant standard deviation function."""
 

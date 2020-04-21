@@ -43,6 +43,7 @@ import test_sdfits
 import test_vdif
 import test_measurementset
 import test_beamformer
+import test_dedispersion
 import test_imaging
 import test_progress
 import test_busy
@@ -102,6 +103,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_vdif.vdif_test_suite())
         self.addTest(test_measurementset.measurementset_test_suite())
         self.addTest(test_beamformer.beamformer_test_suite())
+        self.addTest(test_dedispersion.dedispersion_test_suite())
         self.addTest(test_imaging.imaging_test_suite())
         self.addTest(test_progress.progress_test_suite())
         self.addTest(test_busy.busy_test_suite())

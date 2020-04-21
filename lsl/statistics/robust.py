@@ -184,7 +184,7 @@ def mode(inputData, axis=None, dtype=None):
                     return data[1]
             else:
                 wMin = data[-1] - data[0]
-                N = data.size / 2 + data.size % 2 
+                N = data.size // 2 + data.size % 2 
                 for i in range(0, N):
                     w = data[i+N-1] - data[i] 
                     if w < wMin:
