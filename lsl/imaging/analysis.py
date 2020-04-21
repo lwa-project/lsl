@@ -52,8 +52,8 @@ def estimate_background(image, window=32):
     
     # Figure out how large the background grid should be assuming a half-
     # tile overlap
-    nX = 2 * image.shape[0] / window
-    nY = 2 * image.shape[1] / window
+    nX = 2 * image.shape[0] // window
+    nY = 2 * image.shape[1] // window
     
     # Process the background grid
     backgroundX = numpy.zeros((nX,nY), dtype=numpy.float64)
@@ -62,7 +62,7 @@ def estimate_background(image, window=32):
     for i in range(nX):
         for j in range(nY):
             ## Extract the tile area
-            tile = image[i*window/2:(i+1)*window/2,j*window/2:(j+1)*window/2]
+            tile = image[i*window//2:(i+1)*window//2,j*window//2:(j+1)*window//2]
             
             ## Compute the mean and standard deviation - both with and
             ## without progressive clipping
@@ -81,8 +81,8 @@ def estimate_background(image, window=32):
                 backgroundBasis[i,j] = 2.5*numpy.median(tile[valid]) - 1.5*m1
                 
             ## Save the center of this tile for interpolation
-            backgroundX[i,j] = i*window/2 + window/4.0
-            backgroundY[i,j] = j*window/2 + window/4.0
+            backgroundX[i,j] = i*window//2 + window/4.0
+            backgroundY[i,j] = j*window//2 + window/4.0
             
     # Deal with NaNs in the image
     good = numpy.where( numpy.isfinite(backgroundBasis) )
@@ -96,7 +96,7 @@ def estimate_background(image, window=32):
     backgroundX, backgroundY = backgroundX.ravel(), backgroundY.ravel()
     backgroundBasis = backgroundBasis.ravel()
     backgroundInterp = bisplrep(backgroundX, backgroundY, backgroundBasis, 
-                            xb=0, xe=image.shape[0], yb=0, ye=image.shape[1], kx=3, ky=3)
+                                xb=0, xe=image.shape[0], yb=0, ye=image.shape[1], kx=3, ky=3)
         
     # Evaluate
     x, y = numpy.arange(image.shape[0]), numpy.arange(image.shape[1])
@@ -151,7 +151,7 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
     radius = max([1.5*sigma, 2.0])			# Radius is the
     ## The detection box size is the smaller of the radius or half the
     ## maximum size of the convolution box
-    nHalf = min([int(radius),  (maxbox-1)/2])   	
+    nHalf = min([int(radius),  (maxbox-1)//2])   	
     ## The size of the convolution box
     nBox = 2*nHalf + 1
     

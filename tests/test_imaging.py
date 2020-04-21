@@ -19,6 +19,7 @@ import unittest
 from lsl import astro
 from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
+from lsl.imaging import analysis
 from lsl.imaging import selfcal
 from lsl.imaging.data import VisibilityData
 from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
@@ -690,6 +691,31 @@ class imaging_tests(unittest.TestCase):
         self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
         self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
         
+    def test_background(self):
+        """Test the background estimation"""
+        
+        img = numpy.random.randn(256, 256)*0.5 + 10
+        bkg = analysis.estimate_background(img)
+        self.assertAlmostEqual(bkg.mean(), img.mean(), 0)
+        
+    def test_source_detection(self):
+        """Test point source detection"""
+        
+        img = numpy.random.randn(256, 256)*0.5 + 10
+        sx = ( 10, 56, 105)
+        sy = (115, 35, 200)
+        sf = ( 20, 30,  15)
+        for i,j,f in zip(sx, sy, sf):
+            for di in (-2, -1, 0, 1, 2):
+                for dj in (-2, -1, 0, 1, 2):
+                    s = numpy.exp(-(di**2+dj**2)/2.0/1.0**2)
+                    img[i+di,j+dj] += f*s
+        img = img - analysis.estimate_background(img)
+        cx, cy, pf, sh, ro = analysis.find_point_sources(img, threshold=10, verbose=False)
+        for x,y,f in zip(cx,cy,pf):
+            self.assertTrue(int(round(x)) in sx)
+            self.assertTrue(int(round(y)) in sy)
+            
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
