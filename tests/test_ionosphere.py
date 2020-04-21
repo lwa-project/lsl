@@ -205,6 +205,24 @@ class ionosphere_tests(unittest.TestCase):
         tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='UQR')
         self.assertAlmostEqual(tec[0][0], 13.25999996, 6)
         self.assertAlmostEqual(rms[0][0],  6.91600008, 6)
+        
+    def test_tec_values_ustec(self):
+        """Test retrieving the TEC value at a particular location from USTEC"""
+        
+        """
+        LSL 1.2.5
+        
+        Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
+        [GCC 7.4.0] on linux2
+        Type "help", "copyright", "credits" or "license" for more information.
+        >>> from lsl.misc import ionosphere
+        >>> ionosphere.getTECValue(58415, lat=34.0, lng=-107.0, includeRMS=True, type='USTEC')
+        (array([[ 17.29999924]]), array([[ 2.5999999]]))
+        """
+        
+        tec, rms = ionosphere.get_tec_value(58415, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
+        self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
+        self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
 
 
 class ionosphere_test_suite(unittest.TestSuite):
