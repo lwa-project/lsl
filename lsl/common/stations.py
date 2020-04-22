@@ -16,6 +16,7 @@ import numpy
 import ephem
 import struct
 from textwrap import fill as tw_fill
+from functools import total_ordering
     
 from astropy.constants import c as speedOfLight
 
@@ -416,6 +417,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return [ant.cable for ant in self.antennas]
 
 
+@total_ordering
 class Antenna(object):
     """
     Object to store the information about an antenna.  Stores antenna:
@@ -546,6 +548,7 @@ class Antenna(object):
         return 10*self.status + self.fee.status
 
 
+@total_ordering
 class Stand(object):
     """
     Object to store the information (location and ID) about a stand.  
@@ -641,6 +644,7 @@ class Stand(object):
         return out
 
 
+@total_ordering
 class FEE(object):
     """
     Object to store the information about a FEE.  Stores FEE:
@@ -714,6 +718,7 @@ class FEE(object):
         return (freq, gai)
 
 
+@total_ordering
 class Cable(object):
     """
     Object to store information about a cable.  Stores cable:
