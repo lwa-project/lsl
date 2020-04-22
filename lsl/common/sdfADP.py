@@ -1461,9 +1461,9 @@ class _DRXBase(Observation):
         if stand < 0 or stand > LWA_MAX_NSTD:
             raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
         if beam_gain < 0.0 or beam_gain > 1.0:
-            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0" % beam_gain)
+            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0")
         if dipole_gain < 0.0 or dipole_gain > 1.0:
-            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0" % beam_gain)
+            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0"
         if pol.upper() not in ('X', 'Y'):
             raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
         
