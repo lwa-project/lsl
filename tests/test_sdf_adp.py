@@ -189,6 +189,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].freq1, 832697741)
         self.assertEqual(project.sessions[0].observations[1].filter,   7)
         
+        # Ordering
+        self.assertTrue(project.sessions[0].observations[0] < project.sessions[1].observations[1])
+        self.assertFalse(project.sessions[0].observations[0] > project.sessions[1].observations[1])
+        self.assertTrue(project.sessions[0].observations[0] != project.sessions[1].observations[1])
+        
     def test_tbn_update(self):
         """Test updating TBN values."""
         
@@ -679,6 +684,48 @@ class sdf_adp_tests(unittest.TestCase):
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][1], 1)
+            
+    def test_spectrometer(self):
+        """Test parsing DR spectrometer configurations."""
+        project = sdfADP.parse_sdf(drxFile)
+        
+        # Good spectrometer settings
+        for channels in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+            for ints in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+                for mode in (None, '', 'XXYY', 'IV', 'IQUV'):
+                    ## Method 1
+                    project.sessions[0].spcSetup = [channels, ints]
+                    if mode in (None, ''):
+                        project.sessions[0].spcMetatag = mode
+                    else:
+                        project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+                    self.assertTrue(project.validate())
+                    
+                    ## Method 2
+                    project.sessions[0].set_spectrometer_channels(channels)
+                    project.sessions[0].set_spectrometer_integration(ints)
+                    if mode in (None, ''):
+                        project.sessions[0].set_spectrometer_metatag(mode)
+                    else:
+                        project.sessions[0].set_spectrometer_metatag('Stokes=%s' % mode)
+                    self.assertEqual(project.sessions[0].spcSetup[0], channels)
+                    self.assertEqual(project.sessions[0].spcSetup[1], ints)
+                    self.assertEqual(project.sessions[0].spcMetatag, None if mode in (None, '') else '{Stokes=%s}' % mode)
+                    self.assertTrue(project.validate())
+                    
+        # Bad channel count
+        project.sessions[0].spcSetup = [31, 6144]
+        self.assertFalse(project.validate())
+        
+        # Bad integration count
+        project.sessions[0].spcSetup = [32, 6145]
+        self.assertFalse(project.validate())
+        
+        # Unsupported mode
+        for mode in ('XX', 'XY', 'YX', 'YY', 'XXXYYXYY', 'I', 'Q', 'U', 'V'):
+            project.sessions[0].spcSetup = [32, 6144]
+            project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+            self.assertFalse(project.validate())
             
     ### DRX - Beam/Dipole Mode ###
     
