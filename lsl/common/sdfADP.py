@@ -51,7 +51,6 @@ import copy
 import math
 import pytz
 import ephem
-from functools import total_ordering
 from datetime import datetime, timedelta
 
 from astropy.time import Time as AstroTime
@@ -699,7 +698,6 @@ class Project(object):
         fh.close()
 
 
-@total_ordering
 class Session(object):
     """Class to hold all of the observations in a session."""
     
@@ -942,28 +940,73 @@ class Session(object):
             return True
         else:
             return False
+            def __eq__(self, other):
+        if isintance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
             
-    def __cmp__(self, other):
-        self.observations.sort()
-        other.observations.sort()
-        
-        startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-        startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
         else:
-            return 0
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
-    def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+    def __ne__(self, other):
+        if isintance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf != startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isintance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isintance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
+        if isintance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isintance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
-@total_ordering
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
@@ -1122,22 +1165,54 @@ class Observation(object):
         if it is valid, False otherwise."""
         
         pass
-    
-    def __cmp__(self, other):
-        startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-        startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
-        else:
-            return 0
-            
-    def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
         
+    def __eq__(self, other):
+        if isintance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isintance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isintance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isintance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
+        if isintance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isintance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 class TBF(Observation):

@@ -292,24 +292,6 @@ class FrameBase(object):
             return True
         else:
             return False
-            
-    def __cmp__(self, y):
-        """
-        Compare two frames based on the time tags.  This is helpful for 
-        sorting things.
-        """
-        
-        tX = self.time
-        if not isinstance(y, FrameBase):
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
-        tY = y.time
-           
-        if tY > tX:
-            return -1
-        elif tX > tY:
-            return 1
-        else:
-            return 0
 
 
 class FrameTimestamp(object):
@@ -482,14 +464,6 @@ class FrameTimestamp(object):
     def __le__(self, y):
         return (self < y or self == y)
         
-    def __cmp__(self, y):
-        if y > self:
-            return -1
-        elif self > y:
-            return 1
-        else:
-            return 0
-            
     @property
     def unix(self):
         """

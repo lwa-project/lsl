@@ -39,7 +39,6 @@ import math
 import pytz
 import ephem
 from textwrap import fill as tw_fill
-from functools import total_ordering
 from datetime import datetime, timedelta
 
 from lsl.transform import Time
@@ -458,7 +457,6 @@ class Project(object):
         return sdfs
 
 
-@total_ordering
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
@@ -637,27 +635,73 @@ class Run(object):
         else:
             return False
             
-    def __cmp__(self, other):
-        self.scans.sort()
-        other.scans.sort()
-        
-        startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-        startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isintance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isintance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf != startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isintance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isintance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
+        if isintance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isintance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
-@total_ordering
 class Scan(object):
     """
     Class to hold the specifics of a scans.  It currently
@@ -944,21 +988,53 @@ class Scan(object):
         else:
             return False
             
-    def __cmp__(self, other):
-        startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-        startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isintance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isintance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isintance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isintance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
+        if isintance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isintance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 class DRX(Scan):

@@ -16,7 +16,6 @@ import numpy
 import ephem
 import struct
 from textwrap import fill as tw_fill
-from functools import total_ordering
     
 from astropy.constants import c as speedOfLight
 
@@ -417,7 +416,6 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return [ant.cable for ant in self.antennas]
 
 
-@total_ordering
 class Antenna(object):
     """
     Object to store the information about an antenna.  Stores antenna:
@@ -504,20 +502,18 @@ class Antenna(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Antenna):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, Antenna):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def response(self, dB=False):
         """
         Return a two-element tuple (freq in Hz, mis-match efficiency) for a model LWA1 
@@ -550,7 +546,6 @@ class Antenna(object):
         return 10*self.status + self.fee.status
 
 
-@total_ordering
 class Stand(object):
     """
     Object to store the information (location and ID) about a stand.  
@@ -573,20 +568,18 @@ class Stand(object):
         self.y = float(y)
         self.z = float(z)
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Stand):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, Stand):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __str__(self):
         return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
         
@@ -648,7 +641,6 @@ class Stand(object):
         return out
 
 
-@total_ordering
 class FEE(object):
     """
     Object to store the information about a FEE.  Stores FEE:
@@ -687,20 +679,18 @@ class FEE(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, FEE):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, FEE):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def response(self, dB=False):
         """
         Return a two-element tuple (freq in Hz, gain) for the frequency-
@@ -724,7 +714,6 @@ class FEE(object):
         return (freq, gai)
 
 
-@total_ordering
 class Cable(object):
     """
     Object to store information about a cable.  Stores cable:
@@ -769,20 +758,18 @@ class Cable(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Cable):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, Cable):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def set_clock_offset(self, offset):
         """
         Add a clock offset (in seconds) to the cable model.
