@@ -25,6 +25,7 @@ addons:
             - curl
             - git
             - pkg-config
+            - gzip
             - software-properties-common
             - python-dev
             - python3-dev

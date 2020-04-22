@@ -25,8 +25,6 @@ except ImportError:
     from urllib.request import urlopen
 from datetime import datetime, timedelta
 
-from astropy.constants import R_earth
-
 from scipy.special import lpmv
 try:
     from scipy.misc import factorial
@@ -35,9 +33,9 @@ except ImportError:
 from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
 
-from lsl.common.stations import geo2ecef
-from lsl.common.paths import data as dataPath
-from lsl.common.mcs import mjdmpm2datetime, datetime2mjdmpm
+from lsl.common.stations import geo_to_ecef
+from lsl.common.paths import DATA as dataPath
+from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -60,7 +58,7 @@ if not os.path.exists(_CACHE_DIR):
 _CACHE = {}
 
 # Radius of the Earth in meters for the IGRF
-_RADIUS_EARTH = R_earth.to('m').value
+_RADIUS_EARTH = 6371.2*1e3
 
 
 def _load_igrf(filename):
@@ -252,13 +250,13 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     
     # Get the current time if mjd is None
     if mjd is None:
-        mjd, mpm = datetime2mjdmpm( datetime.utcnow() )
+        mjd, mpm = datetime_to_mjdmpm( datetime.utcnow() )
         mjd = mjd + mpm/1000.0/3600.0/24.0
         
     # Convert the MJD to a decimal year.  This is a bit tricky
     ## Break the MJD into an integer MJD and an MPM in order to build a datetime instance
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000.0)
-    mjd0 = mjdmpm2datetime(int(mjd), mpm)
+    mjd0 = mjdmpm_to_datetime(int(mjd), mpm)
     ## Convert the datetime instance to January 1
     mjd0 = mjd0.replace(month=1, day=1, hour=0, second=0, microsecond=0)
     ## Figure out January 1 for the following year
@@ -267,18 +265,18 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     diffDays = mjd1-mjd0
     diffDays = diffDays.days + diffDays.seconds/86400.0 + diffDays.microseconds/1e6/86400.0
     ## Convert the January 1 date back to an MJD
-    mjd0, mpm0 = datetime2mjdmpm(mjd0)
+    mjd0, mpm0 = datetime_to_mjdmpm(mjd0)
     mjd0 = mjd0 + mpm/1000.0/3600.0/24.0
     year = (mjd1.year - 1) + (mjd - mjd0) / diffDays
     
     # Convert the geodetic position provided to a geocentric one for calculation
     ## Deal with the poles
     if 90.0 - lat < 0.001:
-        xyz = numpy.array(geo2ecef(89.999*numpy.pi/180, lng*numpy.pi/180, elev))
+        xyz = numpy.array(geo_to_ecef(89.999*numpy.pi/180, lng*numpy.pi/180, elev))
     elif 90.0 + lat < 0.001:
-        xyz = numpy.array(geo2ecef(-89.999*numpy.pi/180, lng*numpy.pi/180, elev))
+        xyz = numpy.array(geo_to_ecef(-89.999*numpy.pi/180, lng*numpy.pi/180, elev))
     else:
-        xyz = numpy.array(geo2ecef(lat*numpy.pi/180, lng*numpy.pi/180, elev))
+        xyz = numpy.array(geo_to_ecef(lat*numpy.pi/180, lng*numpy.pi/180, elev))
     ## To geocentric
     r = numpy.sqrt( (xyz**2).sum() )
     lt = numpy.arcsin(xyz[2]/r)
@@ -288,7 +286,7 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     try:
         coeffs = _CACHE['IGRF']
     except KeyError:
-        filename = os.path.join(dataPath, 'igrf12coeffs.txt')
+        filename = os.path.join(dataPath, 'igrf13coeffs.txt')
         _CACHE['IGRF'] = _load_igrf(filename)
         
         coeffs = _CACHE['IGRF']
@@ -396,6 +394,41 @@ def compute_magnetic_inclination(Bn, Be, Bz):
     return incl*180.0/numpy.pi
 
 
+def _download_worker(url, filename, timeout=120):
+    """
+    Download the URL and save it to a file.
+    """
+    
+    # Attempt to download the data
+    try:
+        tecFH = urlopen(url, timeout=timeout)
+        data = tecFH.read()
+        tecFH.close()
+    except IOError as e:
+        warnings.warn('Error downloading file from %s: %s' % (url, str(e)), RuntimeWarning)
+        data = ''
+    except socket.timeout:
+        data = ''
+        
+    # Did we get anything?
+    if len(data) == 0:
+        ## Fail
+        return False
+    else:
+        ## Success!
+        if os.path.splitext(filename)[1] == '.Z':
+            ## Save it to a regular gzip'd file after uncompressing it.
+            with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+                fh.write(data)
+            subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+            subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
+        else:
+            ## Save it to a file.
+            with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+                fh.write(data)
+        return True
+
+
 def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding IGS final data product 
@@ -410,7 +443,7 @@ def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
-    dt = mjdmpm2datetime(int(mjd), mpm)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
     
     year = dt.year
     dayOfYear = int(dt.strftime('%j'), 10)
@@ -427,31 +460,7 @@ def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    try:
-        tecFH = urlopen('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), timeout=timeout)
-        data = tecFH.read()
-        tecFH.close()
-    except IOError as e:
-        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
-        data = ''
-    except socket.timeout:
-        data = ''
-        
-    # Did we get anything?
-    if len(data) == 0:
-        ## Fail
-        return False
-    else:
-        ## Success!  Save it to a file and then decompress it with 'gunzip' 
-        ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
-        fh.write(data)
-        fh.close()
-        
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
-        
-        return True
+    return _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
 
 
 def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
@@ -468,7 +477,7 @@ def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
-    dt = mjdmpm2datetime(int(mjd), mpm)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
     
     year = dt.year
     dayOfYear = int(dt.strftime('%j'), 10)
@@ -485,31 +494,7 @@ def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    try:
-        tecFH = urlopen('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), timeout=timeout)
-        data = tecFH.read()
-        tecFH.close()
-    except IOError as e:
-        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
-        data = ''
-    except socket.timeout:
-        data = ''
-        
-    # Did we get anything?
-    if len(data) == 0:
-        ## Fail
-        return False
-    else:
-        ## Success!  Save it to a file and then decompress it with 'gunzip' 
-        ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
-        fh.write(data)
-        fh.close()
-        
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
-        
-        return True
+    return _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
 
 
 def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
@@ -526,7 +511,7 @@ def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
-    dt = mjdmpm2datetime(int(mjd), mpm)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
     
     year = dt.year
     dayOfYear = int(dt.strftime('%j'), 10)
@@ -543,31 +528,7 @@ def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    try:
-        tecFH = urlopen('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), timeout=timeout)
-        data = tecFH.read()
-        tecFH.close()
-    except IOError as e:
-        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
-        data = ''
-    except socket.timeout:
-        data = ''
-        
-    # Did we get anything?
-    if len(data) == 0:
-        ## Fail
-        return False
-    else:
-        ## Success!  Save it to a file and then decompress it with 'gunzip' 
-        ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
-        fh.write(data)
-        fh.close()
-        
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
-        
-        return True
+    return _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
 
 
 def _download_code(mjd, base_url='ftp://ftp.aiub.unibe.ch/CODE/', timeout=120, type='final'):
@@ -583,7 +544,7 @@ def _download_code(mjd, base_url='ftp://ftp.aiub.unibe.ch/CODE/', timeout=120, t
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
-    dt = mjdmpm2datetime(int(mjd), mpm)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
     
     year = dt.year
     dayOfYear = int(dt.strftime('%j'), 10)
@@ -592,31 +553,7 @@ def _download_code(mjd, base_url='ftp://ftp.aiub.unibe.ch/CODE/', timeout=120, t
     filename = 'CODG%03i0.%02iI.Z' % (dayOfYear, year%100)
     
     # Attempt to download the data
-    try:
-        tecFH = urlopen('%s/%04i/%s' % (base_url, year, filename), timeout=timeout)
-        data = tecFH.read()
-        tecFH.close()
-    except IOError as e:
-        warnings.warn('Error downloading file for %i, %i: %s' % (dayOfYear, year, str(e)), RuntimeWarning)
-        data = ''
-    except socket.timeout:
-        data = ''
-        
-    # Did we get anything?
-    if len(data) == 0:
-        ## Fail
-        return False
-    else:
-        ## Success!  Save it to a file and then decompress it with 'gunzip' 
-        ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
-        fh.write(data)
-        fh.close()
-        
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-        subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
-        
-        return True
+    return _download_worker('%s/%04i/%s' % (base_url, year, filename), filename, timeout=timeout)
 
 
 def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/products/', timeout=120):
@@ -633,7 +570,7 @@ def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/produ
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
-    dt = mjdmpm2datetime(int(mjd), mpm)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
     
     year = dt.year
     month = dt.month
@@ -642,28 +579,7 @@ def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/produ
     filename = '%s_ustec.tar.gz' % dateStr
     
     # Attempt to download the data
-    try:
-        tecFH = urlopen('%s/%04i/%02i/%s' % (base_url, year, month, filename), timeout=timeout)
-        data = tecFH.read()
-        tecFH.close()
-    except IOError as e:
-        warnings.warn('Error downloading file for %s: %s' % (dateStr, str(e)), RuntimeWarning)
-        data = ''
-    except socket.timeout:
-        data = ''
-        
-    # Did we get anything?
-    if len(data) == 0:
-        ## Fail
-        return False
-    else:
-        ## Success!  Save it to a file and then decompress it with 'gunzip' 
-        ## since I can't figure out how to decompress this in Python.
-        fh = open(os.path.join(_CACHE_DIR, filename), 'wb')
-        fh.write(data)
-        fh.close()
-        
-        return True
+    return _download_worker('%s/%04i/%02i/%s' % (base_url, year, month, filename), filename, timeout=timeout)
 
 
 def _parse_tec_map(filename):
@@ -694,6 +610,11 @@ def _parse_tec_map(filename):
     # Go
     with gzip.open(filename, 'r') as fh:
         for line in fh:
+            try:
+                line = line.decode('ascii', errors='ignore')
+            except AttributeError:
+                pass
+                
             ## Are we beginning a map?
             line = line.replace('\n', '')
             if line.find('START OF TEC MAP') != -1 or line.find('START OF RMS MAP') != -1:
@@ -732,7 +653,7 @@ def _parse_tec_map(filename):
                             dt += timedelta(days=1)
                         else:
                             continue
-                    mjd, mpm = datetime2mjdmpm(dt)
+                    mjd, mpm = datetime_to_mjdmpm(dt)
                     mjd = mjd + mpm/1000.0/3600.0/24.0
                     if mjd not in dates:
                         dates.append( mjd )
@@ -992,7 +913,7 @@ def _parse_ustec_map(filename):
         dt, lats, lngs, tec, rms = _parse_ustec_individual(tecfilename)
         
         ### Figure out the MJD
-        mjd, mpm = datetime2mjdmpm(dt)
+        mjd, mpm = datetime_to_mjdmpm(dt)
         mjd = mjd + mpm/1000.0/3600.0/24.0
         if mjd not in dates:
             dates.append( mjd )
@@ -1101,7 +1022,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
         # Convert the MJD to a datetime instance so that we can pull out the year
         # and the day-of-year
         mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
-        dt = mjdmpm2datetime(int(mjd), mpm)
+        dt = mjdmpm_to_datetime(int(mjd), mpm)
         
         if type == 'USTEC':
             # Pull out a YMD string
@@ -1238,7 +1159,7 @@ def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
     def func(params, xdata, site=site, elev=height):
         lat,lon = params
         
-        az,el,d = site.getPointingAndDistance((lat, lon, elev))
+        az,el,d = site.get_pointing_and_distance((lat, lon, elev))
         az %= (2*numpy.pi)
         
         az *= 180/numpy.pi
