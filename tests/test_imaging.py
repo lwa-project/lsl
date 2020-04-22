@@ -20,9 +20,11 @@ from lsl import astro
 from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import analysis
+from lsl.imaging import deconv
 from lsl.imaging import selfcal
 from lsl.imaging.data import VisibilityData
 from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
+from lsl.sim import vis
 from lsl.sim.vis import SOURCES as simSrcs
 from lsl.common.stations import lwa1, parse_ssmif
 from lsl.correlator import uvutil
@@ -438,7 +440,7 @@ class imaging_tests(unittest.TestCase):
         for a1,a2 in dss2.baselines:
             self.assertTrue(a1 != idi.stands.index(173))
             self.assertTrue(a2 != idi.stands.index(173))
-        
+            
     def test_prune_alt(self):
         """Test the utils.get_uv_range function - alternate FITS IDI file."""
         
@@ -716,6 +718,57 @@ class imaging_tests(unittest.TestCase):
             self.assertTrue(int(round(x)) in sx)
             self.assertTrue(int(round(y)) in sy)
             
+    def test_clean(self):
+        """Test CLEAN"""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        
+        # Build an image
+        img = utils.build_gridded_image(out)
+        
+        # CLEAN
+        deconv.clean(aa, out, img, max_iter=5, verbose=False, plot=False)
+        
+    def test_clean_sources(self):
+        """Test CLEANing around specific sources"""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        
+        # Build an image
+        img = utils.build_gridded_image(out)
+        
+        # CLEAN
+        deconv.clean_sources(aa, out, img, vis.SOURCES, max_iter=5, verbose=False, plot=False)
+        
+    def test_clean_leastsq(self):
+        """Test CLEANing using least squares in the image plane"""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        
+        # Build an image
+        img = utils.build_gridded_image(out)
+        
+        # CLEAN
+        deconv.lsq(aa, out, img, max_iter=2, verbose=False, plot=False)
+        
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
