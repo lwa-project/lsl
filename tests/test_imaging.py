@@ -657,7 +657,10 @@ class imaging_tests(unittest.TestCase):
         # Go for it!
         aa = idi.get_antennaarray()
         ds = idi.get_data_set(1)
+        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
         junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
+        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
         self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
