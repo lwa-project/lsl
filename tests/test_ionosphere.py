@@ -184,7 +184,7 @@ class ionosphere_tests(unittest.TestCase):
         (array([[ 14.14000015]]), array([[ 0.76]]))
         """
         
-        tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='JPL')
+        tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='CODE')
         self.assertAlmostEqual(tec[0][0], 14.14000015, 6)
         self.assertAlmostEqual(rms[0][0],  0.76000000, 6)
         
