@@ -190,9 +190,9 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].filter,   7)
         
         # Ordering
-        self.assertTrue(project.sessions[0].observations[0] < project.sessions[1].observations[1])
-        self.assertFalse(project.sessions[0].observations[0] > project.sessions[1].observations[1])
-        self.assertTrue(project.sessions[0].observations[0] != project.sessions[1].observations[1])
+        self.assertTrue(project.sessions[0].observations[0] < project.sessions[0].observations[1])
+        self.assertFalse(project.sessions[0].observations[0] > project.sessions[0].observations[1])
+        self.assertTrue(project.sessions[0].observations[0] != project.sessions[0].observations[1])
         
     def test_tbn_update(self):
         """Test updating TBN values."""

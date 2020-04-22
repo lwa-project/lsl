@@ -641,12 +641,24 @@ class imaging_tests(unittest.TestCase):
         uv = utils.CorrelatedData(uvFile)
         
         # Build the image
-        
         ds = uv.get_data_set(1)
         junk = utils.build_gridded_image(ds, verbose=False)
         
         # Error checking
         self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='XY')
+        
+    def test_image_coordinates(self):
+        """Test getting per-pixel image coordinates."""
+        
+        # Open the UVFITS file
+        uv = utils.CorrelatedData(uvFile)
+        
+        # Build the image
+        ds = uv.get_data_set(1)
+        junk = utils.build_gridded_image(ds, verbose=False)
+        
+        radec = utils.get_image_radec(junk, uv.get_antennaarray())
+        azalt = utils.get_image_azalt(junk, uv.get_antennaarray())
         
     def test_selfcal(self):
         """Test running a simple self calibration."""
