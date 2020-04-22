@@ -56,6 +56,7 @@ class rfutil_tests(unittest.TestCase):
         # https://www.atnf.csiro.au/people/Tasso.Tzioumis/sms2014/presentations/Clegg(RF_Engineering).pptx.pdf
         gain = rfutil.dBi_to_gain(0.0, 1.8e9)
         self.assertAlmostEqual(rfutil.Jy_to_dBm(1.0, 10e6, gain), -187, 0)
+        self.assertAlmostEqual(rfutil.dBm_to_Jy(-187.0, 10e6, gain), 1.0, 0)
 
 
 class rfutil_test_suite(unittest.TestSuite):

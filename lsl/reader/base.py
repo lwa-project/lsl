@@ -396,7 +396,7 @@ class FrameTimestamp(object):
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
-    def __iadd_(self, other):
+    def __iadd__(self, other):
         if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
