@@ -1473,7 +1473,7 @@ class _DRXBase(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
-            for ant in station.getAntennas():
+            for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     

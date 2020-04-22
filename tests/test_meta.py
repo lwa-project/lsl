@@ -94,6 +94,11 @@ class metabundle_tests(unittest.TestCase):
         
         sdf = metabundle.get_sdf(mdbFile)
         
+    def test_station(self):
+        """Test building a station from a tarball."""
+        
+        station = metabundle.get_station(mdbFileADP)
+        
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
         

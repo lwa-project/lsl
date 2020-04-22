@@ -575,6 +575,12 @@ class idf_tests(unittest.TestCase):
         project = idf.parse_idf(drxFile)
         sdfs = project.generate_sdfs()
         
+        project = idf.parse_idf(solFile)
+        sdfs = project.generate_sdfs()
+        
+        project = idf.parse_idf(jovFile)
+        sdfs = project.generate_sdfs()
+        
     def test_auto_update(self):
         """Test project auto-update on render."""
         
