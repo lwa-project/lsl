@@ -14,7 +14,7 @@ import unittest
 
 from lsl.common import progress
 
-__version__  = "0.1"
+__version__  = "021"
 __author__    = "Jayce Dowell"
 
 
@@ -53,6 +53,42 @@ class progress_tests(unittest.TestCase):
             
         # Without percentage
         pbar = progress.ProgressBar(print_percent=False)
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
+            
+    def test_bar_plus_default(self):
+        """Test the progress bar, default options."""
+        
+        pbar = progress.ProgressBarPlus()
+        for i in range(101):
+            pbar.inc(2)
+            pbar.dec(1)
+        
+    def test_bar_plus_attributes(self):
+        """Test the progress bar's attributes."""
+        
+        pbar2 = progress.ProgressBarPlus()
+        for i in range(101):
+            pbar2 += 2
+            pbar2 -= 1
+            
+            pbar2 = pbar2 + 1
+            pbar2 = pbar2 - 1
+            
+            self.assertEqual(pbar2.amount, i+1)
+            
+    def test_bar_plus_show(self):
+        """Test the progress bar's rendering."""
+        
+        # With percentage
+        pbar = progress.ProgressBarPlus()
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
+            
+        # Without percentage
+        pbar = progress.ProgressBarPlus(print_percent=False)
         for i in range(101):
             pbar.inc(1)
             pbar.show()

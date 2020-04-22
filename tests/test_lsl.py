@@ -22,6 +22,7 @@ import test_necutil
 import test_catalog
 import test_dp
 import test_adp
+import test_color
 import test_stations
 import test_robust
 import test_kurtosis
@@ -60,7 +61,6 @@ import test_notebooks
 import test_idf
 
 
-__revision__  = "$Rev$"
 __version__   = "0.5"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -83,6 +83,7 @@ class lsl_tests(unittest.TestSuite):
         self.addTest(test_catalog.catalog_test_suite())
         self.addTest(test_dp.dp_test_suite())
         self.addTest(test_adp.adp_test_suite())
+        self.addTest(test_color.color_test_suite())
         self.addTest(test_stations.stations_test_suite())
         self.addTest(test_robust.robust_test_suite())
         self.addTest(test_kurtosis.kurtosis_test_suite())
