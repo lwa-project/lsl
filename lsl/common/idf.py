@@ -1000,7 +1000,7 @@ class Scan(object):
         if isinstance(other, Scan):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf == startOther
+            return startSelf != startOther
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
