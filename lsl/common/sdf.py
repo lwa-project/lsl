@@ -954,7 +954,7 @@ class Session(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __gt__(self, other):
-        if isinstancec(other, Session):
+        if isinstance(other, Session):
             self.observations.sort()
             other.observations.sort()
             
