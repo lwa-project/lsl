@@ -685,7 +685,7 @@ class sdf_adp_tests(unittest.TestCase):
     def test_beamdipole_update(self):
         """Test updating beam/dipole mode values."""
         
-        project = sdf.parse_sdf(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].observations[1].set_beamdipole_mode(73)
         
         self.assertTrue(project.sessions[0].observations[0].beamDipole is     None)
@@ -698,14 +698,14 @@ class sdf_adp_tests(unittest.TestCase):
     def test_beamdipole_write(self):
         """Test writing a beam/dipole mode SDF file."""
         
-        project = sdf.parse_sdf(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].observations[1].set_beamdipole_mode(73)
         out = project.render()
         
     def test_beamdiploe_errors(self):
         """Test various beam/dipole mode SDF errors."""
         
-        project = sdf.parse_sdf(drxFile)
+        project = sdfADP.parse_sdf(drxFile)
         project.sessions[0].observations[0].set_beamdipole_mode(73)
         
         # Bad dipole
