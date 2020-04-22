@@ -220,7 +220,7 @@ def parse_time(s, station=lwa1):
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
                     import warnings
-                    warnings.warn(colorfy("{{%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
+                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
@@ -954,7 +954,7 @@ class Session(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __gt__(self, other):
-        if isinstance(other, Session):
+        if isinstancec(other, Session):
             self.observations.sort()
             other.observations.sort()
             

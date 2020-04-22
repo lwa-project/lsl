@@ -220,7 +220,7 @@ def parse_time(s, station=lwasv):
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
                     import warnings
-                    warnings.warn(colorfy("{{%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
+                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
