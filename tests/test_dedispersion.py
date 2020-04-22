@@ -34,18 +34,47 @@ class dedispersion_tests(unittest.TestCase):
         self.assertAlmostEqual(d0, d1, 6)
         self.assertAlmostEqual(d2[0], d3[0], 6)
         
+    def _create_pulse(self, freq, bw, dm):
+        data = numpy.random.randn(4096*1024) + numpy.random.randn(4096*1024)*1j
+        data = data.astype(numpy.complex64)
+        data[1000*1024] += 100
+        
+        freq = numpy.fft.fftfreq(data.size, d=1.0/bw) + freq
+        inv_chirp = dedispersion._chirp(freq, -dm)
+        data = numpy.fft.fft(data)
+        data *= inv_chirp
+        data = numpy.fft.ifft(data)
+        return data
+        
     def test_incoherent(self):
         """Test incoherent dedispersion"""
         
-        t = numpy.arange(3000)*0.1
-        freq = numpy.linspace(-9.8e6, 9.8e6, 1024) + 74e6
-        data = numpy.random.randn(t.size, freq.size)
-        data[100,:] += 10
-        data = dedispersion.incoherent(freq, data, t[1]-t[0], -12.455)
-        data2 = dedispersion.incoherent(freq, data, t[1]-t[0],  2.455)
-        data = dedispersion.incoherent(freq, data, t[1]-t[0],  12.455)
-        self.assertAlmostEqual(data[100,:].mean(), 10.0, 1)
-        self.assertTrue(data2[100,:].mean() < 10-1)
+        data = self._create_pulse(74e6, 1e6, 12.455)
+        data = data.reshape(-1, 1024)
+        data = numpy.abs(numpy.fft.fft(data, axis=1))**2
+        data = numpy.fft.fftshift(data, axes=1)
+        
+        
+        tint = data.shape[1]/1e6
+        freq = numpy.fft.fftshift(numpy.fft.fftfreq(data.shape[1], d=1.0/1e6) + 74e6)
+        data1 = dedispersion.incoherent(freq, data, tint, 12.455)
+        data2 = dedispersion.incoherent(freq, data, tint,  2.455)
+        self.assertEqual(numpy.argmax(data1.mean(axis=1)), 1000-124)   # 124 is half the delay
+        self.assertTrue(data2[1000-124,:].mean() < data1[1000-124,:].mean())
+        
+    def test_coherent(self):
+        """Test coherent dedispersion"""
+        
+        data = self._create_pulse(74e6, 1e6, 12.455)
+        t = numpy.arange(data.size)/1e6
+        
+        t, data = dedispersion.coherent(t, data, 74e6, 1e6, 12.455)
+        data = data.reshape(-1, 1024)
+        data = numpy.abs(numpy.fft.fft(data, axis=1))**2
+        data = numpy.fft.fftshift(data, axes=1)
+        
+        data = data.mean(axis=1)
+        self.assertEqual(numpy.argmax(data), 1000)
 
 
 class dedispersion_test_suite(unittest.TestSuite):
