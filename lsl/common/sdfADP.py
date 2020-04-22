@@ -58,6 +58,7 @@ from astropy.time import Time as AstroTime
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
+from lsl.common.color import colorfy
 
 from lsl.common.mcsADP import LWA_MAX_NSTD
 from lsl.common.adp import freq_to_word, word_to_freq, fC
@@ -219,7 +220,7 @@ def parse_time(s, station=lwasv):
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
                     import warnings
-                    warnings.warn("Entering pytz search mode for '%s'" % tzName, RuntimeWarning)
+                    warnings.warn(colorfy("{{%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
@@ -940,8 +941,9 @@ class Session(object):
             return True
         else:
             return False
-            def __eq__(self, other):
-        if isintance(other, Session):
+            
+    def __eq__(self, other):
+        if isinstance(other, Session):
             self.observations.sort()
             other.observations.sort()
             
@@ -952,7 +954,7 @@ class Session(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ne__(self, other):
-        if isintance(other, Session):
+        if isinstance(other, Session):
             self.observations.sort()
             other.observations.sort()
             
@@ -963,7 +965,7 @@ class Session(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __gt__(self, other):
-        if isintance(other, Session):
+        if isinstance(other, Session):
             self.observations.sort()
             other.observations.sort()
             
@@ -974,7 +976,7 @@ class Session(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ge__(self, other):
-        if isintance(other, Session):
+        if isinstance(other, Session):
             self.observations.sort()
             other.observations.sort()
             
@@ -985,7 +987,7 @@ class Session(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __lt__(self, other):
-        if isintance(other, Session):
+        if isinstance(other, Session):
             self.observations.sort()
             other.observations.sort()
             
@@ -996,7 +998,7 @@ class Session(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __le__(self, other):
-        if isintance(other, Session):
+        if isinstance(other, Session):
             self.observations.sort()
             other.observations.sort()
             
@@ -1167,7 +1169,7 @@ class Observation(object):
         pass
         
     def __eq__(self, other):
-        if isintance(other, Observation):
+        if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
@@ -1175,7 +1177,7 @@ class Observation(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ne__(self, other):
-        if isintance(other, Observation):
+        if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
@@ -1183,7 +1185,7 @@ class Observation(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __gt__(self, other):
-        if isintance(other, Observation):
+        if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf > startOther
@@ -1191,7 +1193,7 @@ class Observation(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ge__(self, other):
-        if isintance(other, Observation):
+        if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf >= startOther
@@ -1199,7 +1201,7 @@ class Observation(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __lt__(self, other):
-        if isintance(other, Observation):
+        if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
@@ -1207,7 +1209,7 @@ class Observation(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __le__(self, other):
-        if isintance(other, Observation):
+        if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf <= startOther

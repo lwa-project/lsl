@@ -636,7 +636,7 @@ class Run(object):
             return False
             
     def __eq__(self, other):
-        if isintance(other, Run):
+        if isinstance(other, Run):
             self.observations.sort()
             other.observations.sort()
             
@@ -647,7 +647,7 @@ class Run(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ne__(self, other):
-        if isintance(other, Run):
+        if isinstance(other, Run):
             self.observations.sort()
             other.observations.sort()
             
@@ -658,7 +658,7 @@ class Run(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __gt__(self, other):
-        if isintance(other, Run):
+        if isinstance(other, Run):
             self.observations.sort()
             other.observations.sort()
             
@@ -669,7 +669,7 @@ class Run(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ge__(self, other):
-        if isintance(other, Run):
+        if isinstance(other, Run):
             self.observations.sort()
             other.observations.sort()
             
@@ -680,7 +680,7 @@ class Run(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __lt__(self, other):
-        if isintance(other, Run):
+        if isinstance(other, Run):
             self.observations.sort()
             other.observations.sort()
             
@@ -691,7 +691,7 @@ class Run(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __le__(self, other):
-        if isintance(other, Run):
+        if isinstance(other, Run):
             self.observations.sort()
             other.observations.sort()
             
@@ -989,7 +989,7 @@ class Scan(object):
             return False
             
     def __eq__(self, other):
-        if isintance(other, Scan):
+        if isinstance(other, Scan):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
@@ -997,7 +997,7 @@ class Scan(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ne__(self, other):
-        if isintance(other, Scan):
+        if isinstance(other, Scan):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
@@ -1005,7 +1005,7 @@ class Scan(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __gt__(self, other):
-        if isintance(other, Scan):
+        if isinstance(other, Scan):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf > startOther
@@ -1013,7 +1013,7 @@ class Scan(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ge__(self, other):
-        if isintance(other, Scan):
+        if isinstance(other, Scan):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf >= startOther
@@ -1021,7 +1021,7 @@ class Scan(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __lt__(self, other):
-        if isintance(other, Scan):
+        if isinstance(other, Scan):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
@@ -1029,7 +1029,7 @@ class Scan(object):
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __le__(self, other):
-        if isintance(other, Scan):
+        if isinstance(other, Scan):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf <= startOther
