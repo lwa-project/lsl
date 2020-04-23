@@ -435,7 +435,7 @@ def _download_worker(url, filename, timeout=120):
         return True
 
 
-def _download_igs(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeout=120, type='final'):
+def _download_igs(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding IGS final data product 
     for that day.
@@ -466,15 +466,13 @@ def _download_igs(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeo
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = False
-    count = 0
-    while not status and count < 3:
-        status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
-        count += 1
+    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    if not status:
+        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
     return status
 
 
-def _download_jpl(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeout=120, type='final'):
+def _download_jpl(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -505,10 +503,13 @@ def _download_jpl(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeo
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    return _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    if not status:
+        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
+    return status
 
 
-def _download_uqr(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeout=120, type='final'):
+def _download_uqr(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -539,10 +540,13 @@ def _download_uqr(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeo
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    return _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    if not status:
+        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
+    return status
 
 
-def _download_code(mjd, base_url='ftp://ftp.aiub.unibe.ch/CODE/', timeout=120, type='final'):
+def _download_code(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding CODE final data product 
     for that day.
@@ -561,10 +565,13 @@ def _download_code(mjd, base_url='ftp://ftp.aiub.unibe.ch/CODE/', timeout=120, t
     dayOfYear = int(dt.strftime('%j'), 10)
     
     # Figure out which file we need to download
-    filename = 'CODG%03i0.%02iI.Z' % (dayOfYear, year%100)
+    filename = 'codg%03i0.%02iI.Z' % (dayOfYear, year%100)
     
     # Attempt to download the data
-    return _download_worker('%s/%04i/%s' % (base_url, year, filename), filename, timeout=timeout)
+    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    if not status:
+        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
+    return status
 
 
 def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/products/', timeout=120):
@@ -966,7 +973,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
     """
     
     # Figure out which map to use
-    if type == 'IGS':
+    if type.upper() == 'IGS':
         ## Cache entry name
         cacheName = 'TEC-IGS-%i' % mjd
         
@@ -977,7 +984,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
         filenameTemplate = 'igsg%03i0.%02ii.gz'
         filenameAltTemplate = 'igrg%03i0.%02ii.gz'
         
-    elif type == 'JPL':
+    elif type.upper() == 'JPL':
         ## Cache entry name
         cacheName = 'TEC-JPL-%i' % mjd
         
@@ -988,7 +995,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
         filenameTemplate = 'jplg%03i0.%02ii.gz'
         filenameAltTemplate = 'jprg%03i0.%02ii.gz'
         
-    elif type == 'UQR':
+    elif type.upper() == 'UQR':
         ## Cache entry name
         cacheName = 'TEC-UQR-%i' % mjd
         
@@ -999,7 +1006,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
         filenameTemplate = 'uqrg%03i0.%02ii.gz'
         filenameAltTemplate = 'uqrg%03i0.%02ii.gz'
         
-    elif type == 'CODE':
+    elif type.upper() == 'CODE':
         ## Cache entry name
         cacheName = 'TEC-CODE-%i' % mjd
         
@@ -1007,10 +1014,10 @@ def _load_map(mjd, timeout=120, type='IGS'):
         downloader = _download_code
         
         ## Filename templates
-        filenameTemplate = 'CODG%03i0.%02iI.gz'
-        filenameAltTemplate = 'CODG%03i0.%02iI.gz'
+        filenameTemplate = 'codg%03i0.%02iI.gz'
+        filenameAltTemplate = 'codg%03i0.%02iI.gz'
         
-    elif type == 'USTEC':
+    elif type.upper() == 'USTEC':
         ## Cache entry name
         cacheName = 'TEC-USTEC-%i' % mjd
         
@@ -1035,7 +1042,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
         mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
         dt = mjdmpm_to_datetime(int(mjd), mpm)
         
-        if type == 'USTEC':
+        if type.upper() == 'USTEC':
             # Pull out a YMD string
             dateStr = dt.strftime("%Y%m%d")
             
@@ -1106,7 +1113,7 @@ def get_tec_value(mjd, lat=None, lng=None, include_rms=False, timeout=120, type=
     # Load in the right map
     tecMap = _load_map(mjd, timeout=timeout, type=type)
     
-    if type == 'USTEC':
+    if type.upper() == 'USTEC':
         # Figure out the closest model point(s) to the requested MJD taking into
         # account that a new model is generated every fifteen minutes
         best = numpy.where( numpy.abs((tecMap['dates']-mjd)) < 15/60./24.0 )[0]
