@@ -435,7 +435,7 @@ def _download_worker(url, filename, timeout=120):
         return True
 
 
-def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+def _download_igs(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding IGS final data product 
     for that day.
@@ -474,7 +474,7 @@ def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     return status
 
 
-def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+def _download_jpl(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -508,7 +508,7 @@ def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
     return _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
 
 
-def _download_uqr(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
+def _download_uqr(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', timeout=120, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
