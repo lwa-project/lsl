@@ -79,4 +79,4 @@ after_success:
 cache:
   directories:
     - $HOME/.astropy/cache
-    - $HOME/.lsl/ionosphere_cache
+    - $HOME/.lsl/ionospheric_cache
