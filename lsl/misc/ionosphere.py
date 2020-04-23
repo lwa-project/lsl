@@ -410,8 +410,9 @@ def _download_worker(url, filename, timeout=120):
     except socket.timeout:
         data = ''
         
-    # Did we get anything?
-    if len(data) == 0:
+    # Did we get anything or, at least, enough of something like it looks like 
+    # a real file?
+    if len(data) < 3:
         ## Fail
         return False
     else:
