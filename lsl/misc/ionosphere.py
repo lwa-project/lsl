@@ -1014,8 +1014,8 @@ def _load_map(mjd, timeout=120, type='IGS'):
         downloader = _download_code
         
         ## Filename templates
-        filenameTemplate = 'codg%03i0.%02iI.gz'
-        filenameAltTemplate = 'codg%03i0.%02iI.gz'
+        filenameTemplate = 'codg%03i0.%02ii.gz'
+        filenameAltTemplate = 'codg%03i0.%02ii.gz'
         
     elif type.upper() == 'USTEC':
         ## Cache entry name
