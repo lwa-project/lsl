@@ -47,12 +47,18 @@ class simvis_tests(unittest.TestCase):
         freqs = numpy.arange(30e6, 50e6, 1e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs)
+        aa.set_asp_filter('split')
         # Check the number of stands
         self.assertEqual(len(aa.ants), len(antennas))
         
         # Check the frequencies comming out
         for fo, fi in zip(aa.get_afreqs(), freqs):
             self.assertAlmostEqual(fo, fi/1e9, 6)
+            
+        # Check that other methods even run
+        aa.get_baseline_fast(0, 1)
+        aa.gen_uvw_fast(0, 1)
+        aa.gen_phs_fast(vis.SOURCES['crab'], 0, 1)
             
     def test_build_data(self):
         """Test building simulated visibility data"""

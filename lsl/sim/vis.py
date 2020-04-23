@@ -68,6 +68,7 @@ from lsl.correlator import uvutil
 from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 from lsl.sim._simfast import FastVis
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -675,8 +676,10 @@ class AntennaArray(aipy.amp.AntennaArray):
             resp = numpy.ones(freqs.size)
             
         else:
-            # Load in the LWA1 antennas so we can grab some data
-            ants = lwa1.getAntennas()
+            # Load in the LWA antennas so we can grab some data.  If we don't know
+            # what station we are at, assume LWA1.
+            station = getattr(self, '_station', lwa1)
+            ants = station.antennas
             
             # Antenna impedance mis-match
             immf, immr = ants[0].response(dB=False)
@@ -916,7 +919,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
             beam = Beam(freqs)
             
     if pos_error != 0:
-        warnings.warn("Creating array with positional errors between %.3f and %.3f m" % (-pos_error, pos_error), RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Creating array with positional errors between %.3f and %.3f m}}" % (-pos_error, pos_error)), RuntimeWarning)
 
     # Build an array of AIPY Antenna objects
     ants = []
@@ -937,6 +940,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     # Combine the array of antennas with the array's location to generate an
     # AIPY AntennaArray object
     simAA = AntennaArray(station.get_aipy_location(), ants)
+    simAA._station = station
     
     # Set the Julian Data for the AntennaArray object if it is provided.  The try...except
     # clause is used to deal with people who may want to pass an array of JDs in rather than
