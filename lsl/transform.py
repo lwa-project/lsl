@@ -8,7 +8,10 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import collections
+try:
+    from collections.abs import Sequence as SequenceABC
+except ImportError: 
+    from collections import Sequence as SequenceABC
 import copy
 import datetime
 import math
@@ -508,9 +511,9 @@ class CelestialPosition(SkyPosition):
         
     @j2000_equ.setter
     def j2000_equ(self, value):
-        if not isinstance(value, (astro.equ_posn, collections.Sequence)):
+        if not isinstance(value, (astro.equ_posn, SequenceABC)):
             raise TypeError("value must be type astro.equ_posn or sequence of length 2")
-        if isinstance(value, collections.Sequence):
+        if isinstance(value, SequenceABC):
             if len(value) != 2:
                 raise TypeError("value sequence must be length 2")
             value = astro.equ_posn(*value)
@@ -542,9 +545,9 @@ class CelestialPosition(SkyPosition):
     
     @b1950_equ.setter
     def b1950_equ(self, value):
-        if not isinstance(value, (astro.equ_posn, collections.Sequence)):
+        if not isinstance(value, (astro.equ_posn, SequenceABC)):
             raise TypeError("value must be type astro.equ_posn or sequence of length 2")
-        if isinstance(value, collections.Sequence):
+        if isinstance(value, SequenceABC):
             if len(value) != 2:
                 raise TypeError("value sequence must be length 2")
             value = astro.equ_posn(*value)
@@ -562,9 +565,9 @@ class CelestialPosition(SkyPosition):
         
     @j2000_ecl.setter
     def j2000_ecl(self, value):
-        if not isinstance(value, (astro.equ_posn, collections.Sequence)):
+        if not isinstance(value, (astro.equ_posn, SequenceABC)):
             raise TypeError("value must be type astro.ecl_posn or sequence of length 2")
-        if isinstance(value, collections.Sequence):
+        if isinstance(value, SequenceABC):
             if len(value) != 2:
                 raise TypeError("value sequence must be length 2")
             value = astro.ecl_posn(*value)
@@ -596,9 +599,9 @@ class CelestialPosition(SkyPosition):
         
     @j2000_gal.setter
     def j2000_gal(self, value):
-        if not isinstance(value, (astro.gal_posn, collections.Sequence)):
+        if not isinstance(value, (astro.gal_posn, SequenceABC)):
             raise TypeError("value must be type astro.gal_posn or sequence of length 2")
-        if isinstance(value, collections.Sequence):
+        if isinstance(value, SequenceABC):
             if len(value) != 2:
                 raise TypeError("value sequence must be length 2")
             value = astro.gal_posn(*value)
@@ -740,9 +743,9 @@ class GeographicalPosition(object):
         
     @geo.setter
     def geo(self, value):
-        if not isinstance(value, (astro.geo_posn, collections.Sequence)):
+        if not isinstance(value, (astro.geo_posn, SequenceABC)):
             raise TypeError("value must be type astro.geo_posn or sequence of length 2/3")
-        if isinstance(value, collections.Sequence):
+        if isinstance(value, SequenceABC):
             if (len(value) != 2) and (len(value) != 3):
                 raise TypeError("value sequence must be length 2/3")
             value = astro.geo_posn(*value)
@@ -760,9 +763,9 @@ class GeographicalPosition(object):
         
     @ecef.setter
     def ecef(self, value):
-        if not isinstance(value, (astro.rect_posn, collections.Sequence)):
+        if not isinstance(value, (astro.rect_posn, SequenceABC)):
             raise TypeError("value must be type astro.rect_posn or sequence of length 3")
-        if isinstance(value, collections.Sequence):
+        if isinstance(value, SequenceABC):
             if len(value) != 3:
                 raise TypeError("value sequence must be length 3")
             value = astro.rect_posn(*value)
