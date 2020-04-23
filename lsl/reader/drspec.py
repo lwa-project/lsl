@@ -243,48 +243,6 @@ class FramePayload(FramePayloadBase):
         """
         
         return [dp_common.fS * i / 2**32 for i in self.tuning_words]
-        
-    def __iadd__(self, y):
-        """
-        In-place add the data sections of two frames together or add 
-        a number to every element in the data section.
-        """
-        
-        attrs = self.header.getDataProducts()
-        
-        for attrBase in attrs:
-            for tuning in (0, 1):
-                attr = "%s%i" % (attrBase, tuning)
-                try:
-                    temp = getattr(self.payload, attr, None) + getattr(y.payload, attr, None)
-                except TypeError:
-                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.getDataProducts())))
-                except AttributeError:
-                    temp = getattr(self.payload, attr, None) + numpy.float32(y)
-                setattr(self.payload, attr, temp)
-                
-        return self
-        
-    def __imul__(self, y):
-        """
-        In-place multiple the data sections of two frames together or 
-        multiply a number to every element in the data section.
-        """
-        
-        attrs = self.header.getDataProducts()
-        
-        for attrBase in attrs:
-            for tuning in (0, 1):
-                attr = "%s%i" % (attrBase, tuning)
-                try:
-                    temp = getattr(self.payload, attr, None) * getattr(y.payload, attr, None)
-                except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.getDataProducts())))
-                except AttributeError:
-                    temp = getattr(self.payload, attr, None) * numpy.float32(y)
-                setattr(self.payload, attr, temp)
-                
-        return self
 
 
 class Frame(FrameBase):
