@@ -565,7 +565,7 @@ def _download_code(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirr
     dayOfYear = int(dt.strftime('%j'), 10)
     
     # Figure out which file we need to download
-    filename = 'codg%03i0.%02iI.Z' % (dayOfYear, year%100)
+    filename = 'codg%03i0.%02ii.Z' % (dayOfYear, year%100)
     
     # Attempt to download the data
     status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
