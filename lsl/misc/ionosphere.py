@@ -400,6 +400,7 @@ def _download_worker(url, filename, timeout=120):
     """
     
     # Attempt to download the data
+    print("Downloading %s" % url)
     try:
         tecFH = urlopen(url, timeout=timeout)
         data = tecFH.read()
@@ -409,6 +410,7 @@ def _download_worker(url, filename, timeout=120):
         data = ''
     except socket.timeout:
         data = ''
+    print("Received %i B" % len(data))
         
     # Did we get anything or, at least, enough of something like it looks like 
     # a real file?
@@ -421,12 +423,15 @@ def _download_worker(url, filename, timeout=120):
             ## Save it to a regular gzip'd file after uncompressing it.
             with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
                 fh.write(data)
+            print("Wrote %i B to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
             subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+            print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
             subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
         else:
             ## Save it to a file.
             with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
                 fh.write(data)
+            print("Wrote %i B of .gz to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
         return True
 
 
