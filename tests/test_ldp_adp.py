@@ -14,6 +14,7 @@ import unittest
 from lsl.common.paths import DATA_BUILD
 from lsl.reader import ldp
 from lsl.reader import errors
+from lsl.reader.utils import SplitFileWrapper
 
 
 __version__  = "0.1"
@@ -123,6 +124,30 @@ class ldp_adp_tests(unittest.TestCase):
         """Cleanup"""
         for handler in list(ldp._open_ldp_files.handlers):
             handler.close()
+            
+    ### SplitFileWrapper ###
+    
+    def test_ldp_splitfilewrapper_discover(self):
+        """Test the LDP interface for type discover with a SplitFileWrapper."""
+        
+        w = SplitFileWrapper([tbnFile,])
+        f = ldp.LWASVDataFile(fh=w)
+        
+        # File info
+        self.assertTrue(isinstance(f, ldp.TBNFile))
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info('nframe'), 29)
+        
+        self.assertEqual(f.sample_rate, 100e3)
+        self.assertEqual(f.data_bits, 8)
+        self.assertEqual(f.nframe, 29)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        f.close()
+        w.close()
 
 
 class ldp_adp_test_suite(unittest.TestSuite):

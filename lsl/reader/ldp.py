@@ -1237,7 +1237,7 @@ class DRSpecFile(LDPFileBase):
             try:
                 junkFrame = drspec.read_frame(self.fh)
                 break
-            except errors.syncError:
+            except errors.SyncError:
                 self.fh.seek(1, 1)
         self.fh.seek(-drspec.get_frame_size(self.fh), 1)
         
@@ -1436,13 +1436,17 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
     """
     
     # Open the file as appropriate
+    is_splitfile = False
     if fh is None:
         fh = open(filename, 'rb')
     else:
         filename = fh.name
-        if fh.mode.find('b') == -1:
-            fh.close()
-            fh = open(filename, 'rb')
+        if not isinstance(fh, SplitFileWrapper):
+            if fh.mode.find('b') == -1:
+                fh.close()
+                fh = open(filename, 'rb')
+        else:
+            is_splitfile = True
             
     # Read a bit of data to try to find the right type
     for mode in (drx, tbn, tbw, drspec):
@@ -1505,7 +1509,10 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
         omfs = mode.FRAME_SIZE
         
         ## Seek half-way in
-        nFrames = os.path.getsize(filename)//omfs
+        if is_splitfile:
+            nFrames = fh.size//omfs
+        else:
+            nFrames = os.path.getsize(filename)//omfs
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
@@ -1551,21 +1558,24 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
             if foundMode:
                 break
                 
-    fh.close()
-    
+    fh.seek(0)
+    if not is_splitfile:
+        fh.close()
+        fh = None
+        
     # Raise an error if nothing is found
     if not foundMode:
         raise RuntimeError("File '%s' does not appear to be a valid LWA1 data file" % filename)
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
-        ldpInstance = DRXFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRXFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
     elif mode == tbn:
-        ldpInstance = TBNFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBNFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
     elif mode == tbw:
-        ldpInstance = TBWFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBWFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
     else:
-        ldpInstance = DRSpecFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRSpecFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
         
     # Done
     return ldpInstance
@@ -2187,13 +2197,17 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
     """
     
     # Open the file as appropriate
+    is_splitfile = False
     if fh is None:
         fh = open(filename, 'rb')
     else:
         filename = fh.name
-        if fh.mode.find('b') == -1:
-            fh.close()
-            fh = open(filename, 'rb')
+        if not isinstance(fh, SplitFileWrapper):
+            if fh.mode.find('b') == -1:
+                fh.close()
+                fh = open(filename, 'rb')
+        else:
+            is_splitfile = True
             
     # Read a bit of data to try to find the right type
     for mode in (drx, tbn, tbf, cor, drspec):
@@ -2256,7 +2270,10 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
         omfs = mode.FRAME_SIZE
         
         ## Seek half-way in
-        nFrames = os.path.getsize(filename)//omfs
+        if is_splitfile:
+            nFrames = fh.size//omfs
+        else:
+            nFrames = os.path.getsize(filename)//omfs
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
@@ -2302,7 +2319,10 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
             if foundMode:
                 break
                 
-    fh.close()
+    fh.seek(0)
+    if not is_splitfile:
+        fh.close()
+        fh = None
     
     # Raise an error if nothing is found
     if not foundMode:
@@ -2310,15 +2330,15 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
-        ldpInstance = DRXFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRXFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
     elif mode == tbn:
-        ldpInstance = TBNFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBNFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
     elif mode == tbf:
-        ldpInstance = TBFFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBFFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
     elif mode == cor:
-        ldpInstance = CORFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = CORFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
     else:
-        ldpInstance = DRSpecFile(filename, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRSpecFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
         
     # Done
     return ldpInstance

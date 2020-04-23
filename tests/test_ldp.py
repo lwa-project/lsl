@@ -19,7 +19,7 @@ from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
 
 
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -134,8 +134,21 @@ class ldp_tests(unittest.TestCase):
         # Reset
         f.reset()
         
+        # Offset and read a chunk - short
+        tSkip = f.offset(0.005)
+        tInt, tStart, data = f.read(0.005)
+        
+        # Reset
+        f.reset()
+        
         # Read a chunk - long
         tInt, tStart, data = f.read(1.00)
+        
+        # Reset
+        f.reset()
+        
+        # Estimate levels
+        f.estimate_levels()
         
         # Close it out
         f.close()
@@ -249,8 +262,21 @@ class ldp_tests(unittest.TestCase):
         # Reset
         f.reset()
         
+        # Offset and read a chunk - short
+        tSkip = f.offset(0.0001)
+        tInt, tStart, data = f.read(0.005)
+        
+        # Reset
+        f.reset()
+        
         # Read a chunk - long
         tInt, tStart, data = f.read(1.00)
+        
+        # Reset
+        f.reset()
+        
+        # Estimate levels
+        f.estimate_levels()
         
         # Close it out
         f.close()
@@ -667,6 +693,50 @@ class ldp_tests(unittest.TestCase):
                     i += 1
                 self.assertEqual(i, 1)
                 
+    def test_ldp_splitfilewrapper_discover(self):
+        """Test the LDP interface for type discover with a SplitFileWrapper."""
+        
+        w = SplitFileWrapper([tbnFile,])
+        f = ldp.LWA1DataFile(fh=w)
+        
+        # File info
+        self.assertTrue(isinstance(f, ldp.TBNFile))
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info('nframe'), 29)
+        
+        self.assertEqual(f.sample_rate, 100e3)
+        self.assertEqual(f.data_bits, 8)
+        self.assertEqual(f.nframe, 29)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        f.close()
+        w.close()
+        
+    def test_ldp_splitfilewrapper_mixed(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([tbwFile, tbnFile], sort=False)
+        f = ldp.LWA1DataFile(fh=w)
+        
+        # File info
+        self.assertTrue(isinstance(f, ldp.TBWFile))
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                if frame.is_tbw:
+                    frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 8+1)  # There is data at the end of the "file" now      
+        
     def tearDown(self):
         """Cleanup"""
         for handler in list(ldp._open_ldp_files.handlers):

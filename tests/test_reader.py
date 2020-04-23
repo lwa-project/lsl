@@ -21,7 +21,7 @@ from lsl.reader import errors
 from lsl.reader.base import FrameTimestamp
 
 
-__version__  = "0.7"
+__version__  = "0.8"
 __author__    = "Jayce Dowell"
 
 
@@ -61,6 +61,24 @@ class reader_tests(unittest.TestCase):
         self.assertAlmostEqual(t.pulsar_mjd[1], 0.7937268517, 9)
         self.assertAlmostEqual(t.pulsar_mjd[2], 0.5, 9)
         self.assertEqual(t.dp_timetag, 1587495778*196000000 + 196000000/2)
+        
+        t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
+        # 200423 16:48:01  58962  60481519 T   1099467 1 SHL RPT POWER-OUTAGE|
+        dt = t.datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 23)
+        self.assertEqual(dt.hour, 16)
+        self.assertEqual(dt.minute, 48)
+        self.assertEqual(dt.second, 1)
+        self.assertEqual(dt.microsecond, 519000)
+        
+    def test_timestamp_string(self):
+        """Test string representations of a FrameTimestamp"""
+        
+        t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
+        str(t)
+        repr(t)
         
     def test_timestamp_add(self):
         """Test adding to a FrameTimestamp"""
@@ -235,11 +253,15 @@ class reader_tests(unittest.TestCase):
         stand, pol = frame1.id
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 0)
+        str(frame1)
+        repr(frame1)
         # Second frame
         frame2 = tbn.read_frame(fh)
         stand, pol = frame2.id
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 1)
+        str(frame2)
+        repr(frame2)
         fh.close()
         
     def test_tbn_errors(self):
