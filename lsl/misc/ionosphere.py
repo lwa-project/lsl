@@ -466,7 +466,12 @@ def _download_igs(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/',
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    return _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    status = False
+    count = 0
+    while not status and count < 3:
+        status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+        count += 1
+    return status
 
 
 def _download_jpl(mjd, base_url='ftp://cddis.gsfc.nasa.gov/gps/products/ionex/', timeout=120, type='final'):
