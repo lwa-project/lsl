@@ -22,10 +22,10 @@ from lsl.imaging import utils
 from lsl.imaging import analysis
 from lsl.imaging import deconv
 from lsl.imaging import selfcal
+from lsl.imaging import overlay
 from lsl.imaging.data import VisibilityData
 from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
 from lsl.sim import vis
-from lsl.sim.vis import SOURCES as simSrcs
 from lsl.common.stations import lwa1, parse_ssmif
 from lsl.correlator import uvutil
 
@@ -34,6 +34,15 @@ try:
     import casacore
     from lsl.writer.measurementset import Ms
     run_ms_tests = True
+except ImportError:
+    pass
+
+run_plotting_tests = False
+try:
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplt as plt
+    run_plotting_tests = True
 except ImportError:
     pass
 
@@ -517,7 +526,7 @@ class imaging_tests(unittest.TestCase):
         orig_pc  = ds.phase_center
         
         # Rephase #1
-        ds.rephase(new_phase_center=simSrcs['Sun'])
+        ds.rephase(new_phase_center=vis.SOURCES['Sun'])
         for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
@@ -532,7 +541,7 @@ class imaging_tests(unittest.TestCase):
                 self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
-        self.assertRaises(RuntimeError, ds.rephase, simSrcs['vir'])
+        self.assertRaises(RuntimeError, ds.rephase, vis.SOURCES['vir'])
         
     def test_rephase_alt(self):
         """Test the utils.rephase_data function - alternate FITS IDI file."""
@@ -550,7 +559,7 @@ class imaging_tests(unittest.TestCase):
         orig_pc  = ds.phase_center
         
         # Rephase #1
-        ds.rephase(new_phase_center=simSrcs['Sun'])
+        ds.rephase(new_phase_center=vis.SOURCES['Sun'])
         for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
@@ -565,7 +574,7 @@ class imaging_tests(unittest.TestCase):
                 self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
-        self.assertRaises(RuntimeError, ds.rephase, simSrcs['vir'])
+        self.assertRaises(RuntimeError, ds.rephase, vis.SOURCES['vir'])
         
     def test_rephase_uvfits(self):
         """Test the utils.rephase_data function - UVFITS file."""
@@ -583,7 +592,7 @@ class imaging_tests(unittest.TestCase):
         orig_pc  = ds.phase_center
         
         # Rephase #1
-        ds.rephase(new_phase_center=simSrcs['Sun'])
+        ds.rephase(new_phase_center=vis.SOURCES['Sun'])
         for i in range(ds.nbaseline):
             self.assertEqual(orig_bls[i][0], ds.baselines[i][0])
             self.assertEqual(orig_bls[i][1], ds.baselines[i][1])
@@ -598,7 +607,7 @@ class imaging_tests(unittest.TestCase):
                 self.assertAlmostEqual(orig_dat[i][j], ds.XX.data[i][j], 2)
                 
         # Bad rephase
-        self.assertRaises(RuntimeError, ds.rephase, simSrcs['vir'])
+        self.assertRaises(RuntimeError, ds.rephase, vis.SOURCES['vir'])
         
     def test_gridding(self):
         """Test building a image from a visibility data set."""
@@ -784,10 +793,95 @@ class imaging_tests(unittest.TestCase):
         # CLEAN
         deconv.lsq(aa, out, img, max_iter=2, verbose=False, plot=False)
         
+    @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
+    def test_plotting(self):
+        """Test drawing an image."""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        
+        # Build an image
+        img = utils.build_gridded_image(out)
+        
+        # Plot
+        fig = plt.figure()
+        ax = fig.gca()
+        utils.plot_gridded_image(ax, img)
+        
+    @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
+    def test_plotting_horizon(self):
+        """Test drawing the horizon on an image."""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        
+        # Build an image
+        img = utils.build_gridded_image(out)
+        
+        # Plot
+        fig = plt.figure()
+        ax = fig.gca()
+        utils.plot_gridded_image(ax, img)
+        overlay.horizon(ax, aa)
+        
+    @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
+    def test_plotting_sources(self):
+        """Test marking sources on an image."""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        
+        # Build an image
+        img = utils.build_gridded_image(out)
+        
+        # Plot
+        fig = plt.figure()
+        ax = fig.gca()
+        utils.plot_gridded_image(ax, img)
+        overlay.sources(ax, aa, vis.SOURCES)
+        
+    @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
+    def test_plotting_graticules(self):
+        """Test adding a graticule to an image."""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        
+        # Build an image
+        img = utils.build_gridded_image(out)
+        
+        # Plot
+        fig = plt.figure()
+        ax = fig.gca()
+        utils.plot_gridded_image(ax, img)
+        overlay.graticule_radec(ax, aa)
+        overlay.graticule_azalt(ax, aa)
+        
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
         shutil.rmtree(self.testPath, ignore_errors=True)
+
 
 
 class imaging_test_suite(unittest.TestSuite):
