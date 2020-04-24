@@ -396,6 +396,13 @@ class ldp_tests(unittest.TestCase):
         # Reset
         f.reset()
         
+        # Offset and read a chunk - short
+        skip = f.offset(0.01)
+        tInt, tStart, data = f.read(0.01)
+
+        # Reset
+        f.reset()
+        
         # Read a chunk - long
         tInt, tStart, data = f.read(5.00)
         

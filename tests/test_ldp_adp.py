@@ -59,6 +59,9 @@ class ldp_adp_tests(unittest.TestCase):
         # Reset
         f.reset()
         
+        # Read a chunk - short
+        tInt, tStart, data = f.read(0.1)
+        
         # Close it out
         f.close()
         

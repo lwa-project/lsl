@@ -1304,7 +1304,7 @@ class DRSpecFile(LDPFileBase):
             ## rate is
             t1 = junkFrame.time
             sample_rate = junkFrame.sample_rate
-            LFFT = junkFrame.get_transform_size()
+            LFFT = junkFrame.transform_size
             tInt = junkFrame.header.nints*LFFT/sample_rate
             
             ## See how far off the current frame is from the target
