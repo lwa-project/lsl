@@ -41,7 +41,7 @@ run_plotting_tests = False
 try:
     import matplotlib
     matplotlib.use('Agg')
-    from matplotlib import pyplt as plt
+    from matplotlib import pyplot as plt
     run_plotting_tests = True
 except ImportError:
     pass
@@ -833,6 +833,7 @@ class imaging_tests(unittest.TestCase):
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
         overlay.horizon(ax, aa)
+        del fig
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting_sources(self):
@@ -854,6 +855,7 @@ class imaging_tests(unittest.TestCase):
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
         overlay.sources(ax, aa, vis.SOURCES)
+        del fig
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting_graticules(self):
@@ -876,6 +878,7 @@ class imaging_tests(unittest.TestCase):
         utils.plot_gridded_image(ax, img)
         overlay.graticule_radec(ax, aa)
         overlay.graticule_azalt(ax, aa)
+        del fig
         
     def tearDown(self):
         """Remove the test path directory and its contents"""

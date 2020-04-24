@@ -91,7 +91,8 @@ def sources(ax, antennaarray, srcs, phase_center='z', label=True, marker='x', co
     rot = aipy.coord.eq2top_m(0, pcDec)
         
     # Compute the positions of major sources and label the images
-    for name,src in srcs.iteritems():
+    for name in srcs.keys():
+        src = srcs[name]
         src.compute(antennaarray)
         eq = aipy.coord.radec2eq((src.ra-pcRA, src.dec))
         top = numpy.dot(rot, eq)
@@ -245,7 +246,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         
         if el > 0 or phase_center is not 'z':
             valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
-            pos = valid.size / 2 - valid.size / 5
+            pos = valid.size // 2 - valid.size // 5
             if valid.size > 10:
                 ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % el, color=color)
             
@@ -270,6 +271,6 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         ax.plot(x, y, color=color)
         
         valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
-        pos = valid.size / 2 - valid.size / 5
+        pos = valid.size // 2 - valid.size // 5
         if valid.size > 10:
             ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % az, color=color)
