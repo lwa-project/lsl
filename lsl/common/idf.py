@@ -44,6 +44,7 @@ from datetime import datetime, timedelta
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
+from lsl.common.color import colorfy
 
 from lsl.common.mcsADP import mjdmpm_to_datetime, LWA_MAX_NSTD
 from lsl.common.adp import freq_to_word, word_to_freq, fC
@@ -1599,24 +1600,24 @@ def is_valid(filename, verbose=False):
         proj = parse_idf(filename)
         passes += 1
         if verbose:
-            print("Parser - OK")
+            print(colorfy("Parser - {{%green OK}}"))
             
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
-                print("Validator - OK")
+                print(colorfy("Validator - {{%green OK}}"))
         else:
             failures += 1
             if verbose:
-                print("Validator - FAILED")
+                print(colorfy("Validator - {{%red {{%bold FAILED}}}}"))
                 
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
-            print("Parser - FAILED")
+            print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
             
     if verbose:
         print("---")

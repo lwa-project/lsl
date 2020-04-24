@@ -123,6 +123,22 @@ class idf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.runs[0].scans[0].ra, 5.5, 6)
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
         
+        dt0, dt1 = idf.get_scan_start_stop(project.runs[0].scans[0])
+        self.assertEqual(dt0.year, 2011)
+        self.assertEqual(dt0.month, 2)
+        self.assertEqual(dt0.day, 24)
+        self.assertEqual(dt0.hour, 0)
+        self.assertEqual(dt0.minute, 0)
+        self.assertEqual(dt0.second, 15)
+        self.assertEqual(dt0.microsecond, 0)
+        self.assertEqual(dt1.year, 2011)
+        self.assertEqual(dt1.month, 2)
+        self.assertEqual(dt1.day, 24)
+        self.assertEqual(dt1.hour, 0)
+        self.assertEqual(dt1.minute, 0)
+        self.assertEqual(dt1.second, 30)
+        self.assertEqual(dt1.microsecond, 0)
+        
     def test_drx_write(self):
         """Test writing a TRK_RADEC IDF file."""
         

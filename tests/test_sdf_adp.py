@@ -286,6 +286,22 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertAlmostEqual(project.sessions[0].observations[1].ra, 5.5, 6)
         self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.5, 6)
         
+        dt0, dt1 = sdfADP.get_observation_start_stop(project.sessions[0].observations[1])
+        self.assertEqual(dt0.year, 2011)
+        self.assertEqual(dt0.month, 2)
+        self.assertEqual(dt0.day, 24)
+        self.assertEqual(dt0.hour, 0)
+        self.assertEqual(dt0.minute, 0)
+        self.assertEqual(dt0.second, 15)
+        self.assertEqual(dt0.microsecond, 0)
+        self.assertEqual(dt1.year, 2011)
+        self.assertEqual(dt1.month, 2)
+        self.assertEqual(dt1.day, 24)
+        self.assertEqual(dt1.hour, 0)
+        self.assertEqual(dt1.minute, 0)
+        self.assertEqual(dt1.second, 30)
+        self.assertEqual(dt1.microsecond, 0)
+        
     def test_drx_write(self):
         """Test writing a TRK_RADEC SDF file."""
         
@@ -749,10 +765,52 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[1].set_beamdipole_mode(73)
         out = project.render()
         
-    def test_beamdiploe_errors(self):
+    def test_beamdipole_errors(self):
         """Test various beam/dipole mode SDF errors."""
         
         project = sdfADP.parse_sdf(drxFile)
+        project.sessions[0].observations[0].set_beamdipole_mode(73)
+        
+        # Bad dipole
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, -1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
+        
+        # Bad beam gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        
+        # Bad dipole gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        
+        # Bad polarization
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
+        
+    def test_stepped_beamdipole_update(self):
+        """Test updating STEPPED beam/dipole mode values."""
+        
+        project = sdfADP.parse_sdf(stpFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is     None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is not None)
+        
+        project.sessions[0].observations[1].set_beamdipole_mode(0)
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is None)
+        
+    def test_stepped_beamdipole_write(self):
+        """Test writing a STEPPED beam/dipole mode SDF file."""
+        
+        project = sdfADP.parse_sdf(stpFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        out = project.render()
+        
+    def test_stepped_beamdipole_errors(self):
+        """Test various STEPPED beam/dipole mode SDF errors."""
+        
+        project = sdfADP.parse_sdf(stpFile)
         project.sessions[0].observations[0].set_beamdipole_mode(73)
         
         # Bad dipole

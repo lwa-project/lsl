@@ -1776,9 +1776,9 @@ class Stepped(Observation):
         if stand < 0 or stand > LWA_MAX_NSTD:
             raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
         if beam_gain < 0.0 or beam_gain > 1.0:
-            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0" % beam_gain)
+            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0")
         if dipole_gain < 0.0 or dipole_gain > 1.0:
-            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0" % beam_gain)
+            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0")
         if pol.upper() not in ('X', 'Y'):
             raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
         
@@ -1788,7 +1788,7 @@ class Stepped(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
-            for ant in station.getAntennas():
+            for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
@@ -2682,24 +2682,24 @@ def is_valid(filename, verbose=False):
         proj = parse_sdf(filename)
         passes += 1
         if verbose:
-            print("Parser - OK")
+            print(colorfy("Parser - {{%green OK}}"))
             
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
-                print("Validator - OK")
+                print(colorfy("Validator - {{%green OK}}"))
         else:
             failures += 1
             if verbose:
-                print("Validator - FAILED")
+                print(colorfy("Validator -{{%red {{%bold FAILED}}}}"))
                 
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
-            print("Parser - FAILED")
+            print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
             
     if verbose:
         print("---")
