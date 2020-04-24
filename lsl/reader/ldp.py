@@ -691,6 +691,7 @@ class TBNFile(LDPFileBase):
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
+                    cFrames = []
                     break
                 except errors.SyncError:
                     continue
@@ -1067,6 +1068,7 @@ class DRXFile(LDPFileBase):
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
+                        cFrames = []
                         break
                     except errors.SyncError:
                         continue
@@ -1788,6 +1790,7 @@ class TBFFile(LDPFileBase):
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
+                    cFrames = []
                     break
                 except errors.SyncError:
                     continue
@@ -1977,7 +1980,7 @@ class CORFile(LDPFileBase):
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': cor.FRAME_SIZE,
                             'sample_rate': srate, 'data_bits': bits, 
                             'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
-                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'tint':cFrame.get_integration_time()}
+                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'tint':cFrame.integration_time}
                         
         # Initialize the buffer as part of the description process
         self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False)
@@ -2096,18 +2099,18 @@ class CORFile(LDPFileBase):
             for i in range(framesPerObs):
                 try:
                     cFrame = cor.read_frame(self.fh, verbose=False)
-                    if not cFrame.isCOR():
+                    if not cFrame.is_cor:
                         continue
                     cFrames.append( cFrame )
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
+                    cFrames = []
                     break
                 except errors.SyncError:
                     continue
                     
             self.buffer.append(cFrames)
-
             cFrames = self.buffer.get()
             
             # Continue adding frames if nothing comes out.

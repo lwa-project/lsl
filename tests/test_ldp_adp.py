@@ -27,6 +27,7 @@ drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
 drspecFile = os.path.join(DATA_BUILD, 'tests', 'drspec-test.dat')
 
 tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
+corFile = os.path.join(DATA_BUILD, 'tests', 'cor-test.dat')
 
 
 class ldp_adp_tests(unittest.TestCase):
@@ -92,6 +93,68 @@ class ldp_adp_tests(unittest.TestCase):
         # Close it out
         f.close()
         
+    ### COR ###
+    
+    def test_ldp_cor(self):
+        """Test the LDP interface for a COR file."""
+        
+        f = ldp.CORFile(corFile, ignore_timetag_errors=True)
+        
+        # File info
+        self.assertEqual(f.get_info('nchan'), 72)
+        self.assertEqual(f.get_info('nbaseline'), 32896)
+        self.assertEqual(f.get_info('nframe'), 65)
+        
+        self.assertEqual(f.nchan, 72)
+        self.assertEqual(f.nbaseline, 32896)
+        self.assertEqual(f.nframe, 65)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(5)
+        
+        # Close it out
+        f.close()
+        
+    def test_ldp_cor_nocheck(self):
+        """Test the LDP interface for a COR file."""
+        
+        f = ldp.CORFile(corFile)
+        
+        # File info
+        self.assertEqual(f.get_info('nchan'), 72)
+        self.assertEqual(f.get_info('nbaseline'), 32896)
+        self.assertEqual(f.get_info('nframe'), 65)
+        
+        self.assertEqual(f.nchan, 72)
+        self.assertEqual(f.nbaseline, 32896)
+        self.assertEqual(f.nframe, 65)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(5)
+        
+        # Close it out
+        f.close()
+        
     ### File Type Discovery ###
     
     def test_ldp_discover_tbw(self):
@@ -123,6 +186,12 @@ class ldp_adp_tests(unittest.TestCase):
         f = ldp.LWASVDataFile(tbfFile)
         self.assertEqual(type(f), ldp.TBFFile)
         
+    def test_ldp_discover_cor(self):
+        """Test the LDP LWASVDataFile function of COR."""
+        # TBF
+        f = ldp.LWASVDataFile(corFile)
+        self.assertEqual(type(f), ldp.CORFile)
+          
     def tearDown(self):
         """Cleanup"""
         for handler in list(ldp._open_ldp_files.handlers):

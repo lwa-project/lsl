@@ -36,7 +36,8 @@ telemetry.track_module()
 
 
 __version__ = '1.2'
-__all__ = ['FrameBufferBase', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer']
+__all__ = ['FrameBufferBase', 'TBNFrameBuffer', 'DRXFrameBuffer', 
+           'TBFFrameBuffer', 'CORFrameBuffer', 'VDIFFrameBuffer']
 
 
 def _cmp_frames(x, y):
