@@ -23,6 +23,20 @@ class mcs_adp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.mcs
     module."""
     
+    def test_delay_conversion(self):
+        """Test the MCS delay conversion"""
+        
+        delay_in = 5.0
+        delay_out = mcsADP.mcsd_to_delay(mcsADP.delay_to_mcsd(delay_in))
+        self.assertTrue(abs(delay_in-delay_out) < 1e9/196e6/16) # Within 1/16 of a sample
+        
+    def test_gain_conversion(self):
+        """Test the MCS gain conversion"""
+        
+        gain_in = 0.5
+        gain_out = mcsADP.mcsg_to_gain(mcsADP.gain_to_mcsg(0.5))
+        self.assertTrue(abs(gain_in-gain_out) < 1/2.**15)
+        
     def test_datetime(self):
         """Test the datetime to MJD, MPM conversion"""
         
