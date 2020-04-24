@@ -39,6 +39,15 @@ class simvis_tests(unittest.TestCase):
         
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_flat=True)
         
+    def test_build_aa_gaussian(self):
+        """Test building a antenna array object with Gaussian sky response."""
+        
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+
+        aa = vis.build_sim_array(lwa1, antennas, freqs, force_gaussian=True)
+        
     def test_build_aa(self):
         """Test building a antenna array object with realistic sky response."""
         
