@@ -84,7 +84,7 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        return (numpy.arange(12, dtype=numpy.float32)+self.first_chan) * adp_common.fC
+        return (numpy.arange(FRAME_CHANNEL_COUNT, dtype=numpy.float32)+self.first_chan) * adp_common.fC
 
 
 class FramePayload(FramePayloadBase):
@@ -224,7 +224,7 @@ def get_channel_count(filehandle):
     nFrames = get_frames_per_obs(filehandle)
     
     # Convert to channels
-    nChannels = nFrames * 12
+    nChannels = nFrames * FRAME_CHANNEL_COUNT
     
     # Return the number of channels
     return nChannels

@@ -1642,19 +1642,17 @@ class TBFFile(LDPFileBase):
             bits = 4
             nFramesPerObs = tbf.get_frames_per_obs(self.fh)
             nchan = tbf.get_channel_count(self.fh)
+            firstFrameCount = tbf.get_first_frame_count(self.fh)
+            firstChan = tbf.get_first_channel(self.fh)
             
             # Pre-load the channel mapper
-            self.mapper = []
-            firstFrameCount = 2**64-1
-            while len(self.mapper) < nchan/tbf.FRAME_CHANNEL_COUNT:
-                cFrame = tbf.read_frame(self.fh)
-                if cFrame.header.first_chan not in self.mapper:
-                    self.mapper.append( cFrame.header.first_chan )
-                if cFrame.header.frame_count < firstFrameCount:
-                    firstFrameCount = cFrame.header.frame_count
-                    start = junkFrame.time
-                    startRaw = junkFrame.payload.timetag
-            self.mapper.sort()
+            self.mapper = [firstChan+i*tbf.FRAME_CHANNEL_COUNT for i in range(nFramesPerObs)]
+            
+            # Find the "real" starttime
+            while junkFrame.header.frame_count != firstFrameCount:
+                junkFrame = tbf.read_frame(self.fh)
+            start = junkFrame.time
+            startRaw = junkFrame.payload.timetag
             
         # Calculate the frequencies
         freq = numpy.zeros(nchan)
