@@ -335,7 +335,6 @@ class sdf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.5, 6)
         
         dt0, dt1 = sdf.get_observation_start_stop(project.sessions[0].observations[1])
-        print(dt0, dt1)
         self.assertEqual(dt0.year, 2011)
         self.assertEqual(dt0.month, 2)
         self.assertEqual(dt0.day, 24)

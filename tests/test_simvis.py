@@ -41,6 +41,7 @@ class simvis_tests(unittest.TestCase):
         freqs = numpy.arange(30e6, 50e6, 1e6)
 
         aa = vis.build_sim_array(lwa1, antennas, freqs)
+        aa.set_unixtime(1588026422.0)
         iss.compute(aa)
         
     def test_build_aa_flat(self):
