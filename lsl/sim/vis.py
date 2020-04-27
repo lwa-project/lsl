@@ -722,7 +722,7 @@ class AntennaArray(aipy.amp.AntennaArray):
                 raise ValueError('Unrecognized source:' + src)
         try:
             if src.alt < 0:
-                raise PointingError('%s below horizon' % src.src_name)
+                raise RuntimeError('%s below horizon' % src.src_name)
             m = src.map
         except AttributeError:
             if map is None:
@@ -803,11 +803,21 @@ class AntennaArray(aipy.amp.AntennaArray):
             return numpy.zeros_like(self.passband(i,j))
             
         s_eqs = self._cache['s_eqs']
-        s_map = self._cache['s_map']
+        try:
+            s_map = self._cache['s_map']
+        except KeyError:
+            s_map = None
         w = self.gen_uvw_fast(i, j, src=s_eqs, map=s_map, w_only=True)
         I_sf = self._cache['jys']
         Gij_sf = self.passband(i,j)
-        Bij_sf = self.bm_response(i, j, pol=pol)
+        try:
+            self.set_active_pol(pol)
+            self._cache['s_top'] = self._cache['s_top'].T
+            Bij_sf = self.bm_response(i, j)
+            self._cache['s_top'] = self._cache['s_top'].T
+        except AttributeError:
+            # Older versions of AIPY
+            Bij_sf = self.bm_response(i, j, pol=pol)
         if len(Bij_sf.shape) == 2:
             Gij_sf = numpy.reshape(Gij_sf, (1, Gij_sf.size))
             

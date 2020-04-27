@@ -30,6 +30,19 @@ class simvis_tests(unittest.TestCase):
         
         numpy.seterr(all='ignore')
         
+    def test_earth_satellite(self):
+        tle = ["ISS (ZARYA)  ",
+               "1 25544U 98067A   20118.40744172 -.00000643  00000-0 -34717-5 0  9993",
+               "2 25544  51.6437 239.7966 0001371 201.5257 265.1663 15.49320404224148"]
+        iss = vis.RadioEarthSatellite(tle, 0.150, tpower=1.0, tbw=100e5)
+        
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        iss.compute(aa)
+        
     def test_build_aa_flat(self):
         """Test building a antenna array object with uniform sky response."""
         
@@ -67,6 +80,10 @@ class simvis_tests(unittest.TestCase):
         # Check that other methods even run
         aa.get_baseline_fast(0, 1)
         aa.gen_uvw_fast(0, 1)
+        aa.gen_phs_fast('z', 0, 1)
+        
+        aa.set_unixtime(1588026422.0)
+        vis.SOURCES['crab'].compute(aa)
         aa.gen_phs_fast(vis.SOURCES['crab'], 0, 1)
             
     def test_build_data(self):
@@ -91,6 +108,9 @@ class simvis_tests(unittest.TestCase):
         self.assertTrue('XY' in out.pols)
         self.assertTrue('YX' in out.pols)
         self.assertTrue('YY' in out.pols)
+        
+        # Try a simulation on a single baselines
+        aa.sim(0, 1)
         
         #
         # Single-channel test
