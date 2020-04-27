@@ -364,7 +364,6 @@ def linefit(inputX, inputY, max_iter=25, bisector=False, bisquare_limit=6.0, clo
             lsq = 1.0
             
     if lsq == 1 or n < 6:
-        print('here')
         sx = x.sum()
         sy = y.sum()
         sxy = (x*y).sum()

@@ -156,7 +156,19 @@ class robust_tests(unittest.TestCase):
         print, 'robust_linefit @ bisquare_limit=2:', c
         c = robust_linefit(bx, by, yfits, sig, coeff_sig, close_factor=0.1)
         print, 'robust_linefit @ close_factor=0.1:', c
-
+        
+        print, '+++ First 4 +++'
+        bx = x[0:4]
+        by = y[0:4]
+        c = robust_linefit(bx, by, yfit, sig, coef_sig)
+        print, 'robust_linefit:', c
+        c = robust_linefit(bx, by, yfit, sig, coef_sig, /bisect)
+        print, 'robust_linefit @ bisect:', c
+        c = robust_linefit(bx, by, yfits, sig, coeff_sig, bisquare_limit=2)
+        print, 'robust_linefit @ bisquare_limit=2:', c
+        c = robust_linefit(bx, by, yfits, sig, coeff_sig, close_factor=0.1)
+        print, 'robust_linefit @ close_factor=0.1:', c
+        
         y = [3.30994402e-01,   8.53591441e+00,   1.98878210e+01,$
              3.77759480e+01,   5.85981538e+01,   9.70162465e+01,$
              1.00401918e+02,   1.56681195e+02,   1.97736474e+02,$
@@ -221,6 +233,11 @@ class robust_tests(unittest.TestCase):
         robust_linefit @ bisect:     -1.45311      1.59971
         robust_linefit @ bisquare_limit=2:    -0.349420      1.43579
         robust_linefit @ close_factor=0.1:     -1.30168      1.56505
+        +++ First 5 +++
+        robust_linefit:     -2.29467      1.94324      
+        robust_linefit @ bisect:     -2.84038      2.11933
+        robust_linefit @ bisquare_limit=2:     -2.29467      1.94324
+        robust_linefit @ close_factor=0.1:     -2.29467      1.94324
         +++ Full +++
         % Compiled module: POLY_FIT.
         robust_poly_fit:     -1.49629    -0.269859      2.49115
@@ -315,7 +332,22 @@ class robust_tests(unittest.TestCase):
         cc = robust.linefit(self.x, b)
         self.assertAlmostEqual(cc[0],  1.56634, 5)
         self.assertAlmostEqual(cc[1], -1.31115, 5)
-
+        
+        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=numpy.bool))
+        b.mask[:5] = False
+        b.mask[5:] = True
+        cc = robust.linefit(self.x, b)
+        self.assertAlmostEqual(cc[0],  1.94324, 5)
+        self.assertAlmostEqual(cc[1], -2.29467, 5)
+        
+        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=numpy.bool))
+        b.mask[:5] = False
+        b.mask[5:] = True
+        cc = robust.linefit(self.x, b, bisector=True)
+        
+        self.assertAlmostEqual(cc[0],  2.11933, 5)
+        self.assertAlmostEqual(cc[1], -2.84038, 5)
+        
     def test_polyfit(self):
         """Test the outlier-resistant polynomial fitter."""
 
