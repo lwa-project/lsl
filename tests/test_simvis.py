@@ -49,18 +49,24 @@ class simvis_tests(unittest.TestCase):
         
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = numpy.arange(30e6, 50e6, 10e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_flat=True)
+        aa[0].bm_response((0,0,1), pol='x')
+        aa[0].bm_response((0,0,1), pol='y')
+        aa[0].get_beam_shape()
         
     def test_build_aa_gaussian(self):
         """Test building a antenna array object with Gaussian sky response."""
         
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = numpy.arange(30e6, 50e6, 10e6)
 
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_gaussian=True)
+        aa[0].bm_response((0,0,1), pol='x')
+        aa[0].bm_response((0,0,1), pol='y')
+        aa[0].get_beam_shape()
         
     def test_build_aa(self):
         """Test building a antenna array object with realistic sky response."""
@@ -71,6 +77,7 @@ class simvis_tests(unittest.TestCase):
         
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         aa.set_asp_filter('split')
+        aa[0].bm_response((0,0,1))
         # Check the number of stands
         self.assertEqual(len(aa.ants), len(antennas))
         
