@@ -759,7 +759,7 @@ class imaging_tests(unittest.TestCase):
         img = utils.build_gridded_image(out)
         
         # CLEAN
-        deconv.clean(aa, out, img, max_iter=5, verbose=False, plot=False)
+        deconv.clean(aa, out, img, max_iter=5, verbose=False, plot=run_plotting_tests)
         
     def test_clean_sources(self):
         """Test CLEANing around specific sources"""
@@ -776,7 +776,7 @@ class imaging_tests(unittest.TestCase):
         img = utils.build_gridded_image(out)
         
         # CLEAN
-        deconv.clean_sources(aa, out, img, vis.SOURCES, max_iter=5, verbose=False, plot=False)
+        deconv.clean_sources(aa, out, img, vis.SOURCES, max_iter=5, verbose=False, plot=run_plotting_tests)
         
     def test_clean_leastsq(self):
         """Test CLEANing using least squares in the image plane"""
@@ -793,7 +793,7 @@ class imaging_tests(unittest.TestCase):
         img = utils.build_gridded_image(out)
         
         # CLEAN
-        deconv.lsq(aa, out, img, max_iter=2, verbose=False, plot=False)
+        deconv.lsq(aa, out, img, max_iter=2, verbose=False, plot=run_plotting_tests)
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting(self):
