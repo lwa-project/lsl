@@ -744,6 +744,25 @@ class ldp_tests(unittest.TestCase):
                 break
         self.assertEqual(len(frames), 8+1)  # There is data at the end of the "file" now      
         
+    def test_ldp_splitfilewrapper_mixed2(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([tbnFile, tbwFile], sort=False)
+        f = ldp.TBWFile(fh=w)
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                if frame.is_tbw:
+                    frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 8-1)  # We loose part of the first frame to TBN   
+        
     def tearDown(self):
         """Cleanup"""
         for handler in list(ldp._open_ldp_files.handlers):

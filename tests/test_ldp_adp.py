@@ -191,12 +191,44 @@ class ldp_adp_tests(unittest.TestCase):
         # TBF
         f = ldp.LWASVDataFile(corFile)
         self.assertEqual(type(f), ldp.CORFile)
-          
-    def tearDown(self):
-        """Cleanup"""
-        for handler in list(ldp._open_ldp_files.handlers):
-            handler.close()
-            
+        
+    def test_ldp_discover_all_tbw(self):
+        """Test the LDP LWADataFile function of TBW."""
+        # TBW
+        f = ldp.LWADataFile(tbwFile)
+        self.assertEqual(type(f), ldp.TBWFile)
+        
+    def test_ldp_discover_all_tbn(self):
+        """Test the LDP LWADataFile function of TBN."""
+        # TBN
+        f = ldp.LWADataFile(tbnFile)
+        self.assertEqual(type(f), ldp.TBNFile)
+        
+    def test_ldp_discover_all_drx(self):
+        """Test the LDP LWADataFile function of DRX."""
+        # DRX
+        f = ldp.LWADataFile(drxFile)
+        self.assertEqual(type(f), ldp.DRXFile)
+        
+    def test_ldp_discover_all_drspec(self):
+        """Test the LDP LWADataFile function of DR Spectrometer."""
+        # DR Spectrometer
+        f = ldp.LWADataFile(drspecFile)
+        self.assertEqual(type(f), ldp.DRSpecFile)
+        
+    def test_ldp_discover_all_tbf(self):
+        """Test the LDP LWADataFile function of TBF."""
+        # TBF
+        f = ldp.LWADataFile(tbfFile)
+        self.assertEqual(type(f), ldp.TBFFile)
+        
+    def test_ldp_discover_all_cor(self):
+        """Test the LDP LWADataFile function of COR."""
+        # TBF
+        f = ldp.LWADataFile(corFile)
+        self.assertEqual(type(f), ldp.CORFile)
+        
+    
     ### SplitFileWrapper ###
     
     def test_ldp_splitfilewrapper_discover(self):
@@ -220,6 +252,50 @@ class ldp_adp_tests(unittest.TestCase):
         
         f.close()
         w.close()
+        
+    def test_ldp_splitfilewrapper_mixed(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([drxFile, tbfFile], sort=False)
+        f = ldp.LWASVDataFile(fh=w)
+        
+        # File info
+        self.assertTrue(isinstance(f, ldp.DRXFile))
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 32+1)  # There is data at the end of the "file" now      
+        
+    def test_ldp_splitfilewrapper_mixed2(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([drxFile, tbfFile], sort=False)
+        f = ldp.TBFFile(fh=w)
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 5-1)  # We loose part of the first frame to DRX   
+        
+    def tearDown(self):
+        """Cleanup"""
+        for handler in list(ldp._open_ldp_files.handlers):
+            handler.close()
 
 
 class ldp_adp_test_suite(unittest.TestSuite):
