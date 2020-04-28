@@ -308,6 +308,31 @@ class sdf_adp_tests(unittest.TestCase):
         project = sdfADP.parse_sdf(drxFile)
         out = project.render()
         
+        project.sessions[0].observations[0].obsFEE = [[1,1] for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].obsFEE[0] = [0,0]
+        project.sessions[0].observations[0].obsFEE[1] = [0,0]
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspFlt = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspFlt[0] = 3
+        project.sessions[0].observations[0].aspFlt[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspAT1 = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspAT1[0] = 3
+        project.sessions[0].observations[0].aspAT1[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspAT2 = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspAT2[0] = 3
+        project.sessions[0].observations[0].aspAT2[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspATS = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspATS[0] = 3
+        project.sessions[0].observations[0].aspATS[1] = 3
+        out = project.render()
+        
     def test_drx_errors(self):
         """Test various TRK_RADEC SDF errors."""
         
