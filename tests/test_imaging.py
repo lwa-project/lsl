@@ -682,6 +682,8 @@ class imaging_tests(unittest.TestCase):
         junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
         junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
+        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
         
         # Error checking
         self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
