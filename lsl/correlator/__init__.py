@@ -7,10 +7,3 @@ the results.  Modules included are:
                 and FX-style correlator, and
  * filterbank - calculate spectra using a polyphase filter bank.
 """
-
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    

@@ -1,10 +1,9 @@
 """
 lsl.imaging - Module dealing with imaging correlated data and deconvolution.
+Modules included are:
+ * analysis - simple image analysis and source finding
+ * deconv   - simple image-based deconvolution
+ * overlay  - utilties for plotting graticules and source positions on images
+ * selfcal  - tools for phase and/or delay self calibrtation of data
+ * utils    - tools for loading and working with visibility data
 """
-
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
