@@ -10,6 +10,7 @@ if sys.version_info < (3,):
     
 import os
 import re
+import copy
 import pytz
 import ephem
 import tempfile
@@ -103,6 +104,15 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].filter,   6)
         self.assertAlmostEqual(project.runs[0].scans[0].ra, 19.991210200, 6)
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 40.733916000, 6)
+        
+        # Ordering
+        scan = copy.deepcopy(project.runs[0].scans[0])
+        scan.set_start("UTC 2019/1/7 22:43:05")
+        project.runs[0].append(scan)
+        
+        self.assertTrue(project.runs[0].scans[0] < project.runs[0].scans[1])
+        self.assertFalse(project.runs[0].scans[0] > project.runs[0].scans[1])
+        self.assertTrue(project.runs[0].scans[0] != project.runs[0].scans[1])
         
     def test_drx_update(self):
         """Test updating TRK_RADEC values."""
