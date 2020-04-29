@@ -53,6 +53,30 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.second, 58)
         self.assertEqual(dt.microsecond, 500000)
         
+        t = FrameTimestamp(1587495778.5)
+        self.assertAlmostEqual(t.unix, 1587495778.5, 6)
+        # https://www.epochconverter.com/
+        dt = t.datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 21)
+        self.assertEqual(dt.hour, 19)
+        self.assertEqual(dt.minute, 2)
+        self.assertEqual(dt.second, 58)
+        self.assertEqual(dt.microsecond, 500000)
+        
+        t = FrameTimestamp(1587495777.4, 1.1)
+        self.assertAlmostEqual(t.unix, 1587495778.5, 6)
+        # https://www.epochconverter.com/
+        dt = t.datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 21)
+        self.assertEqual(dt.hour, 19)
+        self.assertEqual(dt.minute, 2)
+        self.assertEqual(dt.second, 58)
+        self.assertEqual(dt.microsecond, 500000)
+        
         t = FrameTimestamp.from_dp_timetag(1587495778*196000000 + 196000000/2)
         self.assertAlmostEqual(t.unix, 1587495778.5, 6)
         # https://planetcalc.com/503/

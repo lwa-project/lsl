@@ -48,6 +48,8 @@ class ldp_tests(unittest.TestCase):
         f = ldp.TBWFile(tbwFile)
         
         # File info
+        str(f)
+        repr(f)
         self.assertEqual(f.get_info("sample_rate"), 196e6)
         self.assertEqual(f.get_info("data_bits"), 12)
         self.assertEqual(f.get_info('nframe'), 8)
@@ -71,6 +73,36 @@ class ldp_tests(unittest.TestCase):
         
         # Close it out
         f.close()
+        
+        # Now try it with a filehandle that is already open
+        fh = open(tbwFile, 'r')
+        f = ldp.TBWFile(fh=fh, ignore_timetag_errors=True)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 196e6)
+        self.assertEqual(f.get_info("data_bits"), 12)
+        self.assertEqual(f.get_info('nframe'), 8)
+        
+        self.assertEqual(f.sample_rate, 196e6)
+        self.assertEqual(f.data_bits, 12)
+        self.assertEqual(f.nframe, 8)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read more
+        tInt, tStart, data = f.read()
+        
+        # Close it out
+        f.close()
+        fh.close()
         
     def test_ldp_tbw_nocheck(self):
         """Test the LDP interface for a TBW file."""

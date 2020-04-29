@@ -302,7 +302,7 @@ class FrameTimestamp(object):
     
     def __init__(self, si=0, sf=0.0):
         if isinstance(si, (float, numpy.floating)):
-            sf = si - int(si)
+            sf = sf + si - int(si)
             si = int(si)
         # Make sure sf is [0.0, 1.0)
         if sf >= 1:
