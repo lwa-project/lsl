@@ -84,22 +84,7 @@ def read_ses_file(filename):
         #if bses.FORMAT_VERSION not in (6,):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
-            
-        if bses.SESSION_NOBS > 150:
-            ## Pre SESSION_SPC
-            fh.seek(0)
-            
-            newStruct = []
-            for line in SSF_STRUCT.split('\n'):
-                if line.find('SESSION_SPC') != -1:
-                    continue
-                newStruct.append(line)
-            newStruct = '\n'.join(newStruct)
-            
-            bses = parse_c_struct(newStruct, endianness='little')
-            fh.readinto(bses)
-            bses.SESSION_SPC = ''
-            
+        
     record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
               'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2,
               'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4}
@@ -135,25 +120,7 @@ def read_obs_file(filename):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
             
-        if bheader.OBS_ID > 150:
-            ## Pre SESSION_SPC and OBS_BDM
-            fh.seek(0)
-            
-            newStruct = []
-            for line in OSF_STRUCT.split('\n'):
-                if line.find('OBS_BDM') != -1:
-                    continue
-                if line.find('SESSION_SPC') != -1:
-                    continue
-                newStruct.append(line)
-            newStruct = '\n'.join(newStruct)
-            
-            bheader = parse_c_struct(newStruct, endianness='little')
-            fh.readinto(bheader)
-            bheader.SESSION_SPC = ''
-            bheader.OBS_BDM = ''
-            
-        elif bheader.OBS_B > 2:
+        if bheader.OBS_B > 2:
             ## Pre OBS_BDM
             fh.seek(0)
             
