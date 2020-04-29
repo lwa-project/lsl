@@ -149,7 +149,7 @@ class LDPFileBase(object):
             raise AttributeError("'%s' object has no attribute '%s'" % (type(self).__name__, name))
             
     def __str__(self):
-        return "%s @ %s" % (self.__name__, self.filename)
+        return "%s @ %s" % (type(self).__name__, self.filename)
         
     def __repr__(self):
         n = self.__class__.__name__
