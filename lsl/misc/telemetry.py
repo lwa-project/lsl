@@ -24,7 +24,7 @@ except ImportError:
     from urllib.request import urlopen
     from urllib.parse import urlencode
 from threading import RLock
-from functools import update_wrapper
+from functools import wraps
 
 from lsl.version import version as lsl_version
 
@@ -272,6 +272,7 @@ def track_function(user_function):
     fnc = user_function.__name__
     name = mod+'.'+fnc+'()'
     
+    @wraps(user_function)
     def wrapper(*args, **kwds):
         global _telemetry_client
         result =  user_function(*args, **kwds)
@@ -279,8 +280,7 @@ def track_function(user_function):
         _telemetry_client.track(name)
         return result
         
-    wrapper.__wrapped__ = user_function
-    return update_wrapper(wrapper, user_function)
+    return wrapper
 
 
 def track_function_timed(user_function):
@@ -295,6 +295,7 @@ def track_function_timed(user_function):
     fnc = user_function.__name__
     name = mod+'.'+fnc+'()'
     
+    @wraps(user_function)
     def wrapper(*args, **kwds):
         global _telemetry_client
         t0 = time.time()
@@ -304,8 +305,7 @@ def track_function_timed(user_function):
         _telemetry_client.track(name, t1-t0)
         return result
         
-    wrapper.__wrapped__ = user_function
-    return update_wrapper(wrapper, user_function)
+    return wrapper
 
 
 def track_method(user_method):
@@ -321,6 +321,7 @@ def track_method(user_method):
     fnc = user_method.__name__
     name = mod+'.'+'%s'+'.'+fnc+'()'
     
+    @wraps(user_method)
     def wrapper(*args, **kwds):
         global _telemetry_client
         result =  user_method(*args, **kwds)
@@ -329,8 +330,7 @@ def track_method(user_method):
         _telemetry_client.track(name % cls)
         return result
         
-    wrapper.__wrapped__ = user_method
-    return update_wrapper(wrapper, user_method)
+    return wrapper
 
 
 def track_method_timed(user_method):
@@ -346,6 +346,7 @@ def track_method_timed(user_method):
     fnc = user_method.__name__
     name = mod+'.'+'%s'+'.'+fnc+'()'
     
+    @wraps(user_method)
     def wrapper(*args, **kwds):
         global _telemetry_client
         t0 = time.time()
@@ -356,5 +357,4 @@ def track_method_timed(user_method):
         _telemetry_client.track(name % cls, t1-t0)
         return result
         
-    wrapper.__wrapped__ = user_method
-    return update_wrapper(wrapper, user_method)
+    return wrapper
