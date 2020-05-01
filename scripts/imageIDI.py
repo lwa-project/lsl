@@ -222,13 +222,13 @@ def main(args):
                 
             ## Save the FITS file to disk
             hdulist = astrofits.HDUList(hdulist)
-            clobber = False
+            overwrite = False
             if os.path.exists(args.fits):
                 yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % args.fits)
                 if yn not in ('n', 'N'):
-                    clobber = True
+                    overwrite = True
             try:
-                hdulist.writeto(args.fits, clobber=clobber)
+                hdulist.writeto(args.fits, overwrite=overwrite)
             except IOError, e:
                 print("WARNING: FITS image file not saved")
                 

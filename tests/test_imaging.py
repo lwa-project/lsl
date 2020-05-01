@@ -146,7 +146,7 @@ class imaging_tests(unittest.TestCase):
         testTime, testFile = time.time(), os.path.join('idi-test-MultiIF.fits')
         
         # Start the file
-        fits = Idi(testFile, ref_time=testTime, clobber=True)
+        fits = Idi(testFile, ref_time=testTime, overwrite=True)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+30e6)
@@ -284,7 +284,7 @@ class imaging_tests(unittest.TestCase):
         testTime, testFile = time.time(), os.path.join(self.testPath, 'ms-test-SingleIF.ms')
         
         # Start the file
-        fits = Ms(testFile, ref_time=testTime, clobber=True)
+        fits = Ms(testFile, ref_time=testTime, overwrite=True)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
@@ -311,7 +311,7 @@ class imaging_tests(unittest.TestCase):
         testTime, testFile = time.time(), os.path.join(self.testPath, 'ms-test-MultiIF.ms')
         
         # Start the file
-        fits = Ms(testFile, ref_time=testTime, clobber=True)
+        fits = Ms(testFile, ref_time=testTime, overwrite=True)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+30e6)
