@@ -51,6 +51,7 @@ import copy
 import math
 import pytz
 import ephem
+import weakref
 from datetime import datetime, timedelta
 
 from astropy.time import Time as AstroTime
@@ -74,7 +75,7 @@ telemetry.track_module()
 
 
 __version__ = '1.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
@@ -220,7 +221,7 @@ def parse_time(s, station=lwasv):
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
                     import warnings
-                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
+                    warnings.warn("Entering pytz search mode for '%s'" % tzName, RuntimeWarning)
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
@@ -389,6 +390,11 @@ class Project(object):
         
         failures = 0
         sessionCount = 1
+        if len(self.id) > 8:
+            if verbose:
+                print("[%i] Project ID is too long" % (os.getpid(),))
+            failures += 1
+            
         for session in self.sessions:
             if verbose:
                 print("[%i] Validating session %i" % (os.getpid(), sessionCount))
@@ -686,17 +692,16 @@ class Project(object):
             
         return output
         
-    def writeto(self, filename, session=0, verbose=False, clobber=False):
+    def writeto(self, filename, session=0, verbose=False, overwrite=False):
         """Create a session definition file that corresponds to the specified 
         session and write it to the provided filename."""
         
-        if os.path.exists(filename) and not clobber:
+        if os.path.exists(filename) and not overwrite:
             raise RuntimeError("'%s' already exists" % filename)
             
         output = self.render(session=session, verbose=verbose)
-        fh = open(filename, 'w')
-        fh.write(output)
-        fh.close()
+        with open(filename, 'w') as fh:
+            fh.write(output)
 
 
 class Session(object):
@@ -834,6 +839,7 @@ class Session(object):
         """Update the various observations in the session."""
         
         for obs in self.observations:
+            obs._parent = weakref.proxy(self)
             obs.update()
             
     def validate(self, verbose=False):
@@ -841,8 +847,15 @@ class Session(object):
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
         
+        self.update()
+        
         failures = 0
         totalData = 0.0
+        if self.id < 1 or self.id > 9999:
+            if verbose:
+                print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
+            failures += 1
+            
         if self.cra < 0 or self.cra > 65535:
             if verbose:
                 print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
@@ -1018,8 +1031,10 @@ class Observation(object):
         Added support for RA/dec values as ephem.hours/ephem.degrees instances
     """
     
+    _parent = None
+    
     id = 1
-
+    
     def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
         self.name = name
         self.target = target
@@ -1091,7 +1106,10 @@ class Observation(object):
         """Return the modified Julian Date corresponding to the date/time of the
         self.start string."""
         
-        utc = parse_time(self.start)		## TODO:  We need to get the station informaiton here somehow
+        station = lwasv
+        if self._parent is not None:
+            station = self._parent.station
+        utc = parse_time(self.start, station=station)
         utc = Time(utc, format=Time.FORMAT_PY_DATE)
         return int(utc.utc_mjd)
 
@@ -1099,7 +1117,10 @@ class Observation(object):
         """Return the number of milliseconds between the date/time specified in the
         self.start string and the previous UT midnight."""
         
-        utc = parse_time(self.start)		## TODO:  We need to get the station informaiton here somehow
+        station = lwasv
+        if self._parent is not None:
+            station = self._parent.station
+        utc = parse_time(self.start, station=station)
         utcMidnight = datetime(utc.year, utc.month, utc.day, 0, 0, 0, tzinfo=_UTC)
         diff = utc - utcMidnight
         return int(round((diff.seconds + diff.microseconds/1000000.0)*1000.0))
@@ -1285,8 +1306,12 @@ class TBF(Observation):
             bytes = samples / samplesPerFrame * 1224 bytes
         """
         
+        try:
+            sample_rate = DRXFilters[self.filter]
+        except KeyError:
+            sample_rate = 0.0
         nFramesTime = self.samples / (196e6 / fC)
-        nFramesChan = math.ceil(DRXFilters[self.filter] / fC / 12)
+        nFramesChan = math.ceil(sample_rate / fC / 12)
         nBytes = nFramesTime * nFramesChan * TBFSize
         return nBytes
         
@@ -1487,11 +1512,21 @@ class _DRXBase(Observation):
         """
         
         try:
-            nFrames = self.get_duration()/1000.0 * self.filter_codes[self.filter] / 4096
+            sample_rate = self.filter_codes[self.filter]
         except KeyError:
-            nFrames = 0
-        nBytes = nFrames * DRXSize * 4
-        return nBytes
+            sample_rate = 0.0
+            
+        data_rate = DRXSize * 4 * sample_rate / 4096
+        if self._parent is not None:
+            nchan, nwin = self._parent.spcSetup
+            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            SPCSize = 76 + nchan*2*nprod*4
+            try:
+                data_rate = SPCSize * sample_rate / (nchan*nwin)
+            except ZeroDivisionError:
+                pass
+                
+        return self.get_duration()/1000.0 * data_rate
         
     def get_fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
@@ -1804,10 +1839,23 @@ class Stepped(Observation):
         dur = 0
         for step in self.steps:
             dur += step.dur
-        nFrames = dur/1000.0 * self.filter_codes[self.filter] / 4096
-        
-        nBytes = nFrames * DRXSize * 4
-        return nBytes
+            
+        try:
+            sample_rate = self.filter_codes[self.filter]
+        except KeyError:
+            sample_rate = 0.0
+            
+        data_rate = DRXSize * 4 * sample_rate / 4096
+        if self._parent is not None:
+            nchan, nwin = self._parent.spcSetup
+            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            SPCSize = 76 + nchan*2*nprod*4
+            try:
+                data_rate = SPCSize * sample_rate / (nchan*nwin)
+            except ZeroDivisionError:
+                pass
+                
+        return self.get_duration()/1000.0 * data_rate
         
     def compute_visibility(self, station=lwasv):
         """Return the fractional visibility of the target during the observation 
@@ -2210,9 +2258,6 @@ def parse_sdf(filename, verbose=False):
     that instance.
     """
     
-    # Open the file
-    fh = open(filename, 'r')
-    
     # Create the keyword regular expression to deal with various indicies included 
     # in the keywords
     kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9\+]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?(\[(?P<id4>[0-9]+?)\])?')
@@ -2230,7 +2275,6 @@ def parse_sdf(filename, verbose=False):
     project.project_office.sessions = []
     project.project_office.observations = [[],]
     
-    # Loop over the file
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
             'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
             'stpRADec': True, 'tbwBits': 12, 'tbfSamples': 0, 'gain': -1, 
@@ -2240,398 +2284,397 @@ def parse_sdf(filename, verbose=False):
     beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
     beam_temps = []
     
-    for line in fh:
-        # Trim off the newline character and skip blank lines
-        line = line.replace('\n', '')
-        if len(line) == 0 or line.isspace():
-            continue
+    # Loop over the file
+    with open(filename, 'r') as fh:
+        for line in fh:
+            # Trim off the newline character and skip blank lines
+            line = line.replace('\n', '')
+            if len(line) == 0 or line.isspace():
+                continue
             
-        # Split into a keyword, value pair and run it through the regular expression
-        # to deal with any indicies present
-        try:
-            keywordSection, value = line.split(None, 1)
-        except:
-            continue
+            # Split into a keyword, value pair and run it through the regular expression
+            # to deal with any indicies present
+            try:
+                keywordSection, value = line.split(None, 1)
+            except:
+                continue
             
-        mtch = kwdRE.match(keywordSection)
-        keyword = mtch.group('keyword')
+            mtch = kwdRE.match(keywordSection)
+            keyword = mtch.group('keyword')
         
-        ids = [-1, -1, -1, -1]
-        for i in range(4):
-            try:
-                ids[i] = int(mtch.group('id%i' % (i+1)))
-            except TypeError:
-                pass
-                
-        # Skip over the observer comment lines (denoted by a plus sign at the end) 
-        # of the keyword
-        if keyword[-1] == '+':
-            continue
-            
-        # Observer Info
-        if keyword == 'PI_ID':
-            project.observer.id = int(value)
-            continue
-        if keyword == 'PI_NAME':
-            project.observer.name = value
-            project.observer.split_name()
-            continue
-            
-        # Project/Proposal Info
-        if keyword == 'PROJECT_ID':
-            project.id = value
-            continue
-        if keyword == 'PROJECT_TITLE':
-            project.name = value
-            continue
-        if keyword == 'PROJECT_REMPI':
-            project.comments = value
-            continue
-        if keyword == 'PROJECT_REMPO':
-            project.project_office.project = value
-            continue
-            
-        # Session Info
-        if keyword == 'SESSION_ID':
-            project.sessions[0].id = int(value)
-            continue
-        if keyword == 'SESSION_TITLE':
-            project.sessions[0].name = value
-            continue
-        if keyword == 'SESSION_REMPI':
-            mtch = _usernameRE.search(value)
-            if mtch is not None:
-                project.sessions[0].ucfuser = mtch.group('username')
-                if mtch.group('subdir') is not None:
-                    project.sessions[0].ucfuser = os.path.join(project.sessions[0].ucfuser, mtch.group('subdir'))
-            project.sessions[0].comments = value
-            continue
-        if keyword == 'SESSION_REMPO':
-            project.project_office.sessions.append(None)
-            parts = value.split(';;', 1)
-            first = parts[0]
-            try:
-                second = parts[1]
-            except IndexError:
-                second = ''
-                
-            if first[:31] == 'Requested data return method is':
-                # Catch for project office comments that are data return related
-                project.sessions[0].data_return_method = first[32:]
-                project.project_office.sessions[0] = second
-            else:
-                # Catch for standard (not data related) project office comments
-                project.project_office.sessions[0] = value
-            continue
-        if keyword == 'SESSION_CRA':
-            project.sessions[0].cra = int(value)
-            continue
-        if keyword[0:12] == 'SESSION_MRP_':
-            component = keyword[12:]
-            project.sessions[0].recordMIB[component] = int(value)
-            continue
-        if keyword[0:12] == 'SESSION_MUP_':
-            component = keyword[12:]
-            project.sessions[0].updateMIB[component] = int(value)
-            continue
-        if keyword == 'SESSION_LOG_SCH':
-            project.sessions[0].logScheduler = bool(value)
-            continue
-        if keyword == 'SESSION_LOG_EXE':
-            project.sessions[0].logExecutive = bool(value)
-            continue
-        if keyword == 'SESSION_INC_SMIB':
-            project.sessions[0].includeStationStatic = bool(value)
-            continue
-        if keyword == 'SESSION_INC_DES':
-            project.sessions[0].includeDesign = bool(value)
-            continue
-        if keyword == 'SESSION_DRX_BEAM':
-            project.sessions[0].drxBeam = int(value)
-            continue
-        if keyword == 'SESSION_SPC':
-            # Remove the ' marks
-            value = value.replace("'", "")
-            # Excise the metatags
-            mtch = metaRE.search(value)
-            if mtch is not None:
-                metatag = mtch.group(0)
-                value = metaRE.sub('', value)
-            else:
-                metatag = None
-            
-            project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
-            project.sessions[0].spcMetatag = metatag
-            # If the input field is '' the value of spcSetup is [].  This
-            # isn't good for the SDF render so reset [] to [0, 0]
-            if project.sessions[0].spcSetup == []:
-                project.sessions[0].spcSetup = [0, 0]
-                project.sessions[0].spcMetatag = None
-            continue
-            
-        # Observation Info
-        if keyword == 'OBS_ID':
-            if obs_temp['id'] != 0:
-                project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
-                beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
-                beam_temps = []
-            obs_temp['id'] = int(value)
-            project.project_office.observations[0].append( None )
-            
-            if verbose:
-                print("[%i] Started obs %i" % (os.getpid(), int(value)))
-                
-            continue
-        if keyword == 'OBS_TITLE':
-            obs_temp['name'] = value
-            continue
-        if keyword == 'OBS_TARGET':
-            obs_temp['target'] = value
-            continue
-        if keyword == 'OBS_REMPI':
-            obs_temp['comments'] = value
-            continue
-        if keyword == 'OBS_REMPO':
-            project.project_office.observations[0][-1] = value
-            continue
-        if keyword == 'OBS_START_MJD':
-            obs_temp['mjd'] = int(value)
-            continue
-        if keyword == 'OBS_START_MPM':
-            obs_temp['mpm'] = int(value)
-            continue
-        if keyword == 'OBS_DUR':
-            obs_temp['duration'] = int(value)
-            continue
-        if keyword == 'OBS_MODE':
-            obs_temp['mode'] = value
-            continue
-        if keyword == 'OBS_BDM':
-            # Remove the ' marks
-            value = value.replace("'", "")
-            try:
-                stand, beam_gain, dipole_gain, pol = value.lstrip().rstrip().split(None, 3)
-                obs_temp['beamDipole'] = [int(stand), float(beam_gain), float(dipole_gain), pol]
-            except ValueError:
-                pass
-        if keyword == 'OBS_RA':
-            obs_temp['ra'] = float(value)
-            continue
-        if keyword == 'OBS_DEC':
-            obs_temp['dec'] = float(value)
-            continue
-        if keyword == 'OBS_B':
-            if value != 'SIMPLE':
-                obs_temp['MaxSNR'] = True
-            continue
-        if keyword == 'OBS_FREQ1':
-            obs_temp['freq1'] = int(value)
-            continue
-        if keyword == 'OBS_FREQ2':
-            obs_temp['freq2'] = int(value)
-            continue
-        if keyword == 'OBS_BW':
-            obs_temp['filter'] = int(value)
-            continue
-        if keyword == 'OBS_STP_RADEC':
-            obs_temp['stpRADec'] = bool(int(value))
-            continue
-            
-        # Individual Stepped Beam Observations - This is a bit messy because of
-        # trying to keep up when a new step is encountered.  This adds in some 
-        # overhead to all of the steps.
-        if keyword == 'OBS_STP_C1':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c1'] = float(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c1'] = float(value)
-            continue
-            
-        if keyword == 'OBS_STP_C2':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c2'] = float(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c2'] = float(value)
-            continue
-            
-        if keyword == 'OBS_STP_T':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['duration'] = int(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['duration'] = int(value)
-            continue
-            
-        if keyword == 'OBS_STP_FREQ1':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq1'] = int(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq1'] = int(value)
-            continue
-            
-        if keyword == 'OBS_STP_FREQ2':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq2'] = int(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq2'] = int(value)
-            continue
-            
-        if keyword == 'OBS_STP_B':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                
-                if value in ('MAX_SNR', '2'):
-                    beam_temps[-1]['MaxSNR'] = True
-                    
-                elif value in ('SPEC_DELAYS_GAINS', '3'):
-                    beam_temps[-1]['delays'] = []
-                    beam_temps[-1]['gains'] = []
-                    for bdi in range(2*LWA_MAX_NSTD):
-                        beam_temps[-1]['delays'].append( 0 )
-                        if bdi < LWA_MAX_NSTD:
-                            beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
-                            
-                else:
-                    beam_temps[-1]['MaxSNR'] = False
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                    
-                if value in ('MAX_SNR', '2'):
-                    beam_temps[-1]['MaxSNR'] = True
-                    
-                elif value in ('SPEC_DELAYS_GAINS', '3'):
-                    beam_temps[-1]['delays'] = []
-                    beam_temps[-1]['gains'] = []
-                    for bdi in range(2*LWA_MAX_NSTD):
-                        beam_temps[-1]['delays'].append( 0 )
-                        if bdi < LWA_MAX_NSTD:
-                            beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
-                            
-                else:
-                    beam_temps[-1]['MaxSNR'] = False
-            continue
-            
-        if keyword == 'OBS_BEAM_DELAY':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
+            ids = [-1, -1, -1, -1]
+            for i in range(4):
                 try:
-                    beam_temps[-1]['delays'][ids[1]-1] = int(value)
-                except IndexError:
-                    raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                try:
-                    beam_temps[-1]['delays'][ids[1]-1] = int(value)
-                except IndexError:
-                    raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
-            continue
-            
-        if keyword == 'OBS_BEAM_GAIN':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                try:
-                    beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
-                except IndexError:
+                    ids[i] = int(mtch.group('id%i' % (i+1)))
+                except TypeError:
                     pass
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
+                
+            # Skip over the observer comment lines (denoted by a plus sign at the end) 
+            # of the keyword
+            if keyword[-1] == '+':
+                continue
+            
+            # Observer Info
+            if keyword == 'PI_ID':
+                project.observer.id = int(value)
+                continue
+            if keyword == 'PI_NAME':
+                project.observer.name = value
+                project.observer.split_name()
+                continue
+            
+            # Project/Proposal Info
+            if keyword == 'PROJECT_ID':
+                project.id = value
+                continue
+            if keyword == 'PROJECT_TITLE':
+                project.name = value
+                continue
+            if keyword == 'PROJECT_REMPI':
+                project.comments = value
+                continue
+            if keyword == 'PROJECT_REMPO':
+                project.project_office.project = value
+                continue
+            
+            # Session Info
+            if keyword == 'SESSION_ID':
+                project.sessions[0].id = int(value)
+                continue
+            if keyword == 'SESSION_TITLE':
+                project.sessions[0].name = value
+                continue
+            if keyword == 'SESSION_REMPI':
+                mtch = _usernameRE.search(value)
+                if mtch is not None:
+                    project.sessions[0].ucfuser = mtch.group('username')
+                    if mtch.group('subdir') is not None:
+                        project.sessions[0].ucfuser = os.path.join(project.sessions[0].ucfuser, mtch.group('subdir'))
+                project.sessions[0].comments = value
+                continue
+            if keyword == 'SESSION_REMPO':
+                project.project_office.sessions.append(None)
+                parts = value.split(';;', 1)
+                first = parts[0]
                 try:
-                    beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    second = parts[1]
                 except IndexError:
+                    second = ''
+                
+                if first[:31] == 'Requested data return method is':
+                    # Catch for project office comments that are data return related
+                    project.sessions[0].data_return_method = first[32:]
+                    project.project_office.sessions[0] = second
+                else:
+                    # Catch for standard (not data related) project office comments
+                    project.project_office.sessions[0] = value
+                continue
+            if keyword == 'SESSION_CRA':
+                project.sessions[0].cra = int(value)
+                continue
+            if keyword[0:12] == 'SESSION_MRP_':
+                component = keyword[12:]
+                project.sessions[0].recordMIB[component] = int(value)
+                continue
+            if keyword[0:12] == 'SESSION_MUP_':
+                component = keyword[12:]
+                project.sessions[0].updateMIB[component] = int(value)
+                continue
+            if keyword == 'SESSION_LOG_SCH':
+                project.sessions[0].logScheduler = bool(value)
+                continue
+            if keyword == 'SESSION_LOG_EXE':
+                project.sessions[0].logExecutive = bool(value)
+                continue
+            if keyword == 'SESSION_INC_SMIB':
+                project.sessions[0].includeStationStatic = bool(value)
+                continue
+            if keyword == 'SESSION_INC_DES':
+                project.sessions[0].includeDesign = bool(value)
+                continue
+            if keyword == 'SESSION_DRX_BEAM':
+                project.sessions[0].drxBeam = int(value)
+                continue
+            if keyword == 'SESSION_SPC':
+                # Remove the ' marks
+                value = value.replace("'", "")
+                # Excise the metatags
+                mtch = metaRE.search(value)
+                if mtch is not None:
+                    metatag = mtch.group(0)
+                    value = metaRE.sub('', value)
+                else:
+                    metatag = None
+            
+                project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
+                project.sessions[0].spcMetatag = metatag
+                # If the input field is '' the value of spcSetup is [].  This
+                # isn't good for the SDF render so reset [] to [0, 0]
+                if project.sessions[0].spcSetup == []:
+                    project.sessions[0].spcSetup = [0, 0]
+                    project.sessions[0].spcMetatag = None
+                continue
+            
+            # Observation Info
+            if keyword == 'OBS_ID':
+                if obs_temp['id'] != 0:
+                    project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+                    beam_temps = []
+                obs_temp['id'] = int(value)
+                project.project_office.observations[0].append( None )
+            
+                if verbose:
+                    print("[%i] Started obs %i" % (os.getpid(), int(value)))
+                
+                continue
+            if keyword == 'OBS_TITLE':
+                obs_temp['name'] = value
+                continue
+            if keyword == 'OBS_TARGET':
+                obs_temp['target'] = value
+                continue
+            if keyword == 'OBS_REMPI':
+                obs_temp['comments'] = value
+                continue
+            if keyword == 'OBS_REMPO':
+                project.project_office.observations[0][-1] = value
+                continue
+            if keyword == 'OBS_START_MJD':
+                obs_temp['mjd'] = int(value)
+                continue
+            if keyword == 'OBS_START_MPM':
+                obs_temp['mpm'] = int(value)
+                continue
+            if keyword == 'OBS_DUR':
+                obs_temp['duration'] = int(value)
+                continue
+            if keyword == 'OBS_MODE':
+                obs_temp['mode'] = value
+                continue
+            if keyword == 'OBS_BDM':
+                # Remove the ' marks
+                value = value.replace("'", "")
+                try:
+                    stand, beam_gain, dipole_gain, pol = value.lstrip().rstrip().split(None, 3)
+                    obs_temp['beamDipole'] = [int(stand), float(beam_gain), float(dipole_gain), pol]
+                except ValueError:
                     pass
-            continue
+            if keyword == 'OBS_RA':
+                obs_temp['ra'] = float(value)
+                continue
+            if keyword == 'OBS_DEC':
+                obs_temp['dec'] = float(value)
+                continue
+            if keyword == 'OBS_B':
+                if value != 'SIMPLE':
+                    obs_temp['MaxSNR'] = True
+                continue
+            if keyword == 'OBS_FREQ1':
+                obs_temp['freq1'] = int(value)
+                continue
+            if keyword == 'OBS_FREQ2':
+                obs_temp['freq2'] = int(value)
+                continue
+            if keyword == 'OBS_BW':
+                obs_temp['filter'] = int(value)
+                continue
+            if keyword == 'OBS_STP_RADEC':
+                obs_temp['stpRADec'] = bool(int(value))
+                continue
             
-        # Session wide settings at the end of the observations
-        if keyword == 'OBS_FEE':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['obsFEE'])):
-                    obs_temp['obsFEE'][n][ids[1]-1] = int(value)
-            else:
-                obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_FLT':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspFlt'])):
-                    obs_temp['aspFlt'][n] = int(value)
-            else:
-                obs_temp['aspFlt'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_AT1':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspAT1'])):
-                    obs_temp['aspAT1'][n] = int(value)
-            else:
-                obs_temp['aspAT1'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_AT2':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspAT2'])):
-                    obs_temp['aspAT2'][n] = int(value)
-            else:
-                obs_temp['aspAT2'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_ATS':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspATS'])):
-                    obs_temp['aspATS'][n] = int(value)
-            else:
-                obs_temp['aspATS'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_TBF_SAMPLES':
-            obs_temp['tbfSamples'] = int(value)
-            continue
-        if keyword == 'OBS_TBN_GAIN':
-            obs_temp['gain'] = int(value)
-            continue
-        if keyword == 'OBS_DRX_GAIN':
-            obs_temp['gain'] = int(value)
-            continue
+            # Individual Stepped Beam Observations - This is a bit messy because of
+            # trying to keep up when a new step is encountered.  This adds in some 
+            # overhead to all of the steps.
+            if keyword == 'OBS_STP_C1':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c1'] = float(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c1'] = float(value)
+                continue
             
-        # Keywords that might indicate this is for DP-based stations/actually an IDF
-        if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'RUN_ID'):
-            raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+            if keyword == 'OBS_STP_C2':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c2'] = float(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c2'] = float(value)
+                continue
             
-    # Create the final observation
-    if obs_temp['id'] != 0:
-        project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
-        beam_temps = []
-        
-    # Close the file
-    fh.close()
-    
+            if keyword == 'OBS_STP_T':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['duration'] = int(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['duration'] = int(value)
+                continue
+            
+            if keyword == 'OBS_STP_FREQ1':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq1'] = int(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq1'] = int(value)
+                continue
+            
+            if keyword == 'OBS_STP_FREQ2':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq2'] = int(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq2'] = int(value)
+                continue
+            
+            if keyword == 'OBS_STP_B':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                
+                    if value in ('MAX_SNR', '2'):
+                        beam_temps[-1]['MaxSNR'] = True
+                    
+                    elif value in ('SPEC_DELAYS_GAINS', '3'):
+                        beam_temps[-1]['delays'] = []
+                        beam_temps[-1]['gains'] = []
+                        for bdi in range(2*LWA_MAX_NSTD):
+                            beam_temps[-1]['delays'].append( 0 )
+                            if bdi < LWA_MAX_NSTD:
+                                beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
+                            
+                    else:
+                        beam_temps[-1]['MaxSNR'] = False
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    
+                    if value in ('MAX_SNR', '2'):
+                        beam_temps[-1]['MaxSNR'] = True
+                    
+                    elif value in ('SPEC_DELAYS_GAINS', '3'):
+                        beam_temps[-1]['delays'] = []
+                        beam_temps[-1]['gains'] = []
+                        for bdi in range(2*LWA_MAX_NSTD):
+                            beam_temps[-1]['delays'].append( 0 )
+                            if bdi < LWA_MAX_NSTD:
+                                beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
+                            
+                    else:
+                        beam_temps[-1]['MaxSNR'] = False
+                continue
+            
+            if keyword == 'OBS_BEAM_DELAY':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['delays'][ids[1]-1] = int(value)
+                    except IndexError:
+                        raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['delays'][ids[1]-1] = int(value)
+                    except IndexError:
+                        raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
+                continue
+            
+            if keyword == 'OBS_BEAM_GAIN':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    except IndexError:
+                        pass
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    except IndexError:
+                        pass
+                continue
+            
+            # Session wide settings at the end of the observations
+            if keyword == 'OBS_FEE':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['obsFEE'])):
+                        obs_temp['obsFEE'][n][ids[1]-1] = int(value)
+                else:
+                    obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_FLT':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspFlt'])):
+                        obs_temp['aspFlt'][n] = int(value)
+                else:
+                    obs_temp['aspFlt'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_AT1':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspAT1'])):
+                        obs_temp['aspAT1'][n] = int(value)
+                else:
+                    obs_temp['aspAT1'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_AT2':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspAT2'])):
+                        obs_temp['aspAT2'][n] = int(value)
+                else:
+                    obs_temp['aspAT2'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_ATS':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspATS'])):
+                        obs_temp['aspATS'][n] = int(value)
+                else:
+                    obs_temp['aspATS'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_TBF_SAMPLES':
+                obs_temp['tbfSamples'] = int(value)
+                continue
+            if keyword == 'OBS_TBN_GAIN':
+                obs_temp['gain'] = int(value)
+                continue
+            if keyword == 'OBS_DRX_GAIN':
+                obs_temp['gain'] = int(value)
+                continue
+            
+            # Keywords that might indicate this is for DP-based stations/actually an IDF
+            if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'RUN_ID'):
+                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+            
+        # Create the final observation
+        if obs_temp['id'] != 0:
+            project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+            beam_temps = []
+            
     # Return the project
     return project
 

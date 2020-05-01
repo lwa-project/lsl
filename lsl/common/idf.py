@@ -38,6 +38,7 @@ import copy
 import math
 import pytz
 import ephem
+import weakref
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
 
@@ -167,6 +168,11 @@ class Project(object):
         
         failures = 0
         runCount = 1
+        if len(self.id) > 8:
+            if verbose:
+                print("[%i] Project ID is too long" % (os.getpid(),))
+            failures += 1
+            
         for run in self.runs:
             if verbose:
                 print("[%i] Validating run %i" % (os.getpid(), runCount))
@@ -332,18 +338,17 @@ class Project(object):
             
         return output
         
-    def writeto(self, filename, run=0, verbose=False, clobber=False):
+    def writeto(self, filename, run=0, verbose=False, overwrite=False):
         """Create a run definition file that corresponds to the specified 
         run and write it to the provided filename."""
         
-        if os.path.exists(filename) and not clobber:
+        if os.path.exists(filename) and not overwrite:
             raise RuntimeError("'%s' already exists" % filename)
             
         output = self.render(run=run, verbose=verbose)
-        fh = open(filename, 'w')
-        fh.write(output)
-        fh.close()
-        
+        with open(filename, 'w') as fh:
+            fh.write(output)
+            
     def generate_sdfs(self, starting_session_id=1, run=0, verbose=False):
         """Convert the ID file into a collection of `lsl.common.sdfADP.Project` instances
         that can be used to write SD files."""
@@ -543,6 +548,7 @@ class Run(object):
         """Update the various scans in the run."""
         
         for obs in self.scans:
+            obs._parent = weakref.proxy(self)
             obs.update()
             
     def validate(self, verbose=False):
@@ -550,8 +556,15 @@ class Run(object):
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
         
+        self.update()
+        
         failures = 0
         totalData = 0.0
+        if self.id < 1 or self.id > 9999:
+            if verbose:
+                print("[%i] Error: Invalid run ID number '%i'" % (os.getpid(), self.id))
+            failures += 1
+            
         if len(self.stations) < 2:
             if verbose:
                 print("[%i] Error: Need at least two stations to form an interferometer" % (os.getpid(),))
@@ -708,6 +721,8 @@ class Scan(object):
     Class to hold the specifics of a scans.  It currently
     handles TRK_RADEC, TRK_SOL, and TRK_JOV.
     """
+    
+    _parent = None
     
     id = 1
     FILTER_CODES = DRXFilters
@@ -1272,9 +1287,6 @@ def parse_idf(filename, verbose=False):
     that instance.
     """
     
-    # Open the file
-    fh = open(filename, 'r')
-    
     # Create the keyword regular expression to deal with various indicies included 
     # in the keywords
     kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9\+]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?(\[(?P<id4>[0-9]+?)\])?')
@@ -1292,268 +1304,266 @@ def parse_idf(filename, verbose=False):
     project.project_office.runs = []
     project.project_office.scans = [[],]
     
-    # Loop over the file
     obs_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0], 'start': '', 'duration': '', 'mode': '', 
                 'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'nAlt': 0, 'gain': -1, 
                 'aspFlt': -1}
     alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
     alt_temps = []
     
-    for line in fh:
-        # Trim off the newline character and skip blank lines
-        line = line.replace('\n', '')
-        if len(line) == 0 or line.isspace():
-            continue
+    # Loop over the file
+    with open(filename, 'r') as fh:
+        for line in fh:
+            # Trim off the newline character and skip blank lines
+            line = line.replace('\n', '')
+            if len(line) == 0 or line.isspace():
+                continue
             
-        # Split into a keyword, value pair and run it through the regular expression
-        # to deal with any indicies present
-        try:
-            keywordSection, value = line.split(None, 1)
-        except:
-            continue
-            
-        mtch = kwdRE.match(keywordSection)
-        keyword = mtch.group('keyword')
-        
-        ids = [-1, -1, -1, -1]
-        for i in range(4):
+            # Split into a keyword, value pair and run it through the regular expression
+            # to deal with any indicies present
             try:
-                ids[i] = int(mtch.group('id%i' % (i+1)))
-            except TypeError:
-                pass
+                keywordSection, value = line.split(None, 1)
+            except:
+                continue
+            
+            mtch = kwdRE.match(keywordSection)
+            keyword = mtch.group('keyword')
+        
+            ids = [-1, -1, -1, -1]
+            for i in range(4):
+                try:
+                    ids[i] = int(mtch.group('id%i' % (i+1)))
+                except TypeError:
+                    pass
                 
-        # Skip over the observer comment lines (denoted by a plus sign at the end) 
-        # of the keyword
-        if keyword[-1] == '+':
-            continue
+            # Skip over the observer comment lines (denoted by a plus sign at the end) 
+            # of the keyword
+            if keyword[-1] == '+':
+                continue
             
-        # Observer Info
-        if keyword == 'PI_ID':
-            project.observer.id = int(value)
-            continue
-        if keyword == 'PI_NAME':
-            project.observer.name = value
-            project.observer.split_name()
-            continue
+            # Observer Info
+            if keyword == 'PI_ID':
+                project.observer.id = int(value)
+                continue
+            if keyword == 'PI_NAME':
+                project.observer.name = value
+                project.observer.split_name()
+                continue
             
-        # Project/Proposal Info
-        if keyword == 'PROJECT_ID':
-            project.id = value
-            continue
-        if keyword == 'PROJECT_TITLE':
-            project.name = value
-            continue
-        if keyword == 'PROJECT_REMPI':
-            project.comments = value
-            continue
-        if keyword == 'PROJECT_REMPO':
-            project.project_office.project = value
-            continue
+            # Project/Proposal Info
+            if keyword == 'PROJECT_ID':
+                project.id = value
+                continue
+            if keyword == 'PROJECT_TITLE':
+                project.name = value
+                continue
+            if keyword == 'PROJECT_REMPI':
+                project.comments = value
+                continue
+            if keyword == 'PROJECT_REMPO':
+                project.project_office.project = value
+                continue
             
-        # Run Info
-        if keyword == 'RUN_ID':
-            project.runs[0].id = int(value)
-            continue
-        if keyword == 'RUN_TITLE':
-            project.runs[0].name = value
-            continue
-        if keyword == 'RUN_STATIONS':
-            use_stations = []
-            possible = get_full_stations()
-            for field in value.split(','):
-                field = field.strip().rstrip()
-                if field.lower() == 'all':
-                    use_stations = copy.deepcopy(possible)
-                    break
+            # Run Info
+            if keyword == 'RUN_ID':
+                project.runs[0].id = int(value)
+                continue
+            if keyword == 'RUN_TITLE':
+                project.runs[0].name = value
+                continue
+            if keyword == 'RUN_STATIONS':
+                use_stations = []
+                possible = get_full_stations()
+                for field in value.split(','):
+                    field = field.strip().rstrip()
+                    if field.lower() == 'all':
+                        use_stations = copy.deepcopy(possible)
+                        break
+                    else:
+                        for station in possible:
+                            if station.id == field:
+                                use_stations.append(station)
+                                break
+                project.runs[0].stations  = use_stations
+            if keyword == 'RUN_CHANNELS':
+                project.runs[0].corr_channels = int(value)
+                continue
+            if keyword == 'RUN_INTTIME':
+                project.runs[0].corr_inttime = float(value)
+                continue
+            if keyword == 'RUN_BASIS':
+                project.runs[0].corr_basis = value
+                continue
+            if keyword == 'RUN_REMPI':
+                mtch = sdf._usernameRE.search(value)
+                if mtch is not None:
+                    project.runs[0].ucfuser = mtch.group('username')
+                    if mtch.group('subdir') is not None:
+                        project.runs[0].ucfuser = os.path.join(project.runs[0].ucfuser, mtch.group('subdir'))
+                project.runs[0].comments = sdf._usernameRE.sub('', value)
+                continue
+            if keyword == 'RUN_REMPO':
+                project.project_office.runs.append(None)
+                parts = value.split(';;', 1)
+                first = parts[0]
+                try:
+                    second = parts[1]
+                except IndexError:
+                    second = ''
+                
+                if first[:31] == 'Requested data return method is':
+                    # Catch for project office comments that are data return related
+                    project.runs[0].data_return_method = first[32:]
+                    project.project_office.runs[0] = second
                 else:
-                    for station in possible:
-                        if station.id == field:
-                            use_stations.append(station)
-                            break
-            project.runs[0].stations  = use_stations
-        if keyword == 'RUN_CHANNELS':
-            project.runs[0].corr_channels = int(value)
-            continue
-        if keyword == 'RUN_INTTIME':
-            project.runs[0].corr_inttime = float(value)
-            continue
-        if keyword == 'RUN_BASIS':
-            project.runs[0].corr_basis = value
-            continue
-        if keyword == 'RUN_REMPI':
-            mtch = sdf._usernameRE.search(value)
-            if mtch is not None:
-                project.runs[0].ucfuser = mtch.group('username')
-                if mtch.group('subdir') is not None:
-                    project.runs[0].ucfuser = os.path.join(project.runs[0].ucfuser, mtch.group('subdir'))
-            project.runs[0].comments = sdf._usernameRE.sub('', value)
-            continue
-        if keyword == 'RUN_REMPO':
-            project.project_office.runs.append(None)
-            parts = value.split(';;', 1)
-            first = parts[0]
-            try:
-                second = parts[1]
-            except IndexError:
-                second = ''
+                    # Catch for standard (not data related) project office comments
+                    project.project_office.runs[0] = value
+                continue
+            
+            # Scan Info
+            if keyword == 'SCAN_ID':
+                if obs_temp['id'] != 0:
+                    project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
+                    alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
+                    alt_temps = []
+                obs_temp['id'] = int(value)
+                project.project_office.scans[0].append( None )
+            
+                if verbose:
+                    print("[%i] Started scan %i" % (os.getpid(), int(value)))
                 
-            if first[:31] == 'Requested data return method is':
-                # Catch for project office comments that are data return related
-                project.runs[0].data_return_method = first[32:]
-                project.project_office.runs[0] = second
-            else:
-                # Catch for standard (not data related) project office comments
-                project.project_office.runs[0] = value
-            continue
+                continue
+            if keyword == 'SCAN_TARGET':
+                obs_temp['target'] = value
+                continue
+            if keyword == 'SCAN_INTENT':
+                obs_temp['intent'] = value
+                continue
+            if keyword == 'SCAN_REMPI':
+                obs_temp['comments'] = value
+                continue
+            if keyword == 'SCAN_REMPO':
+                project.project_office.scans[0][-1] = value
+                continue
+            if keyword == 'SCAN_START_MJD':
+                obs_temp['mjd'] = int(value)
+                continue
+            if keyword == 'SCAN_START_MPM':
+                obs_temp['mpm'] = int(value)
+                continue
+            if keyword == 'SCAN_DUR':
+                obs_temp['duration'] = int(value)
+                continue
+            if keyword == 'SCAN_MODE':
+                obs_temp['mode'] = value
+                continue
+            if keyword == 'SCAN_RA':
+                obs_temp['ra'] = float(value)
+                continue
+            if keyword == 'SCAN_DEC':
+                obs_temp['dec'] = float(value)
+                continue
+            if keyword == 'SCAN_PM_RA':
+                obs_temp['pm'][0] = float(value)
+                continue
+            if keyword == 'SCAN_PM_DEC':
+                obs_temp['pm'][1] = float(value)
+                continue
+            if keyword == 'SCAN_FREQ1':
+                obs_temp['freq1'] = int(value)
+                continue
+            if keyword == 'SCAN_FREQ2':
+                obs_temp['freq2'] = int(value)
+                continue
+            if keyword == 'SCAN_BW':
+                obs_temp['filter'] = int(value)
+                continue
             
-        # Scan Info
-        if keyword == 'SCAN_ID':
-            if obs_temp['id'] != 0:
-                project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
-                alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
-                alt_temps = []
-            obs_temp['id'] = int(value)
-            project.project_office.scans[0].append( None )
-            
-            if verbose:
-                print("[%i] Started scan %i" % (os.getpid(), int(value)))
-                
-            continue
-        if keyword == 'SCAN_TARGET':
-            obs_temp['target'] = value
-            continue
-        if keyword == 'SCAN_INTENT':
-            obs_temp['intent'] = value
-            continue
-        if keyword == 'SCAN_REMPI':
-            obs_temp['comments'] = value
-            continue
-        if keyword == 'SCAN_REMPO':
-            project.project_office.scans[0][-1] = value
-            continue
-        if keyword == 'SCAN_START_MJD':
-            obs_temp['mjd'] = int(value)
-            continue
-        if keyword == 'SCAN_START_MPM':
-            obs_temp['mpm'] = int(value)
-            continue
-        if keyword == 'SCAN_DUR':
-            obs_temp['duration'] = int(value)
-            continue
-        if keyword == 'SCAN_MODE':
-            obs_temp['mode'] = value
-            continue
-        if keyword == 'SCAN_RA':
-            obs_temp['ra'] = float(value)
-            continue
-        if keyword == 'SCAN_DEC':
-            obs_temp['dec'] = float(value)
-            continue
-        if keyword == 'SCAN_PM_RA':
-            obs_temp['pm'][0] = float(value)
-            continue
-        if keyword == 'SCAN_PM_DEC':
-            obs_temp['pm'][1] = float(value)
-            continue
-        if keyword == 'SCAN_FREQ1':
-            obs_temp['freq1'] = int(value)
-            continue
-        if keyword == 'SCAN_FREQ2':
-            obs_temp['freq2'] = int(value)
-            continue
-        if keyword == 'SCAN_BW':
-            obs_temp['filter'] = int(value)
-            continue
-            
-        # Alternate phase centers
-        if keyword == 'SCAN_ALT_N':
-            obs_temp['nAlt'] = int(value)
-            continue
-        if keyword == 'SCAN_ALT_TARGET':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['target'] = value
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
-                    alt_temps.append( copy.deepcopy(alt_temps[-1]) )
-                    alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['target'] = value
-            continue
-        if keyword == 'SCAN_ALT_INTENT':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['intent'] = value
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+            # Alternate phase centers
+            if keyword == 'SCAN_ALT_N':
+                obs_temp['nAlt'] = int(value)
+                continue
+            if keyword == 'SCAN_ALT_TARGET':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['intent'] = value
-            continue
-        if keyword == 'SCAN_ALT_RA':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['ra'] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['target'] = value
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temps[-1]) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['target'] = value
+                continue
+            if keyword == 'SCAN_ALT_INTENT':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['ra'] = float(value)
-            continue
-        if keyword == 'SCAN_ALT_DEC':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['dec'] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['intent'] = value
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['intent'] = value
+                continue
+            if keyword == 'SCAN_ALT_RA':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['dec'] = float(value)
-            continue
-        if keyword == 'SCAN_ALT_PM_RA':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][0] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['ra'] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['ra'] = float(value)
+                continue
+            if keyword == 'SCAN_ALT_DEC':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][0] = float(value)
-            continue
-        if keyword == 'SCAN_ALT_PM_DEC':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][1] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['dec'] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['dec'] = float(value)
+                continue
+            if keyword == 'SCAN_ALT_PM_RA':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][1] = float(value)
-            continue
-        # Run wide settings at the end of the scans
-        if keyword == 'SCAN_ASP_FLT':
-            obs_temp['aspFlt'] = int(value)
-            continue
-        if keyword == 'SCAN_DRX_GAIN':
-            obs_temp['gain'] = int(value)
-            continue
+                    alt_temps[-1]['pm'][0] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['pm'][0] = float(value)
+                continue
+            if keyword == 'SCAN_ALT_PM_DEC':
+                if len(alt_temps) == 0:
+                    alt_temps.append( copy.deepcopy(alt_temp) )
+                    alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['pm'][1] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['pm'][1] = float(value)
+                continue
+            # Run wide settings at the end of the scans
+            if keyword == 'SCAN_ASP_FLT':
+                obs_temp['aspFlt'] = int(value)
+                continue
+            if keyword == 'SCAN_DRX_GAIN':
+                obs_temp['gain'] = int(value)
+                continue
             
-        # Keywords that might indicate this is a SDF
-        if keyword in ('SESSION_ID', 'SESSION_DRX_BEAM'):
-            raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+            # Keywords that might indicate this is a SDF
+            if keyword in ('SESSION_ID', 'SESSION_DRX_BEAM'):
+                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
             
-    # Create the final scan
-    if obs_temp['id'] != 0:
-        project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
-        
-    # Close the file
-    fh.close()
-    
+        # Create the final scan
+        if obs_temp['id'] != 0:
+            project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
+            
     # Return the project
     return project
 

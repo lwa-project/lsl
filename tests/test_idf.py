@@ -639,7 +639,7 @@ class idf_tests(unittest.TestCase):
         # Part 3 - frequency and start time
         project = idf.parse_idf(drxFile)
         project.runs[0].scans[0].frequency2 = 75e6
-        project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
+        project.runs[0].scans[0].start = "MST 2011 Feb 23 14:00:15"
         
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
         fh.write(project.render())
@@ -647,14 +647,14 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
         self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
-        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[0].mpm,  15000)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55615)
+        self.assertEqual(project.runs[0].scans[0].mpm,  75615000)
         
         # Part 4 - frequency and start time (timedelta)
         project = idf.parse_idf(drxFile)
         _MST = pytz.timezone('US/Mountain')
         project.runs[0].scans[0].frequency2 = 75e6
-        project.runs[0].scans[0].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
+        project.runs[0].scans[0].start = _MST.localize(datetime(2011, 2, 23, 14, 00, 30, 1000))
         
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
         fh.write(project.render())
@@ -662,8 +662,8 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
         self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
-        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[0].mpm,  30001)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55615)
+        self.assertEqual(project.runs[0].scans[0].mpm,  75630001)
         
     def test_set_stations(self):
         """Test the set stations functionlity."""
