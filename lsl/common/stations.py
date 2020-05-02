@@ -1556,7 +1556,7 @@ def _parse_ssmif_binary(filename):
             overrides['ME_MAX_NDR'] = 3
     else:
         ## DP
-        mode = mcs
+        mode = mcsDP
     bssmif = mode.parse_c_struct(mode.SSMIF_STRUCT, char_mode='int', endianness='little', overrides=overrides)
     bsettings = mode.parse_c_struct(mode.STATION_SETTINGS_STRUCT, endianness='little', overrides=overrides)
     
