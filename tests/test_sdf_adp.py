@@ -16,7 +16,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from lsl.common.paths import DATA_BUILD
-from lsl.common import sdfADP
+from lsl.common import sdfADP, sdf as other_sdf
 from lsl.common.stations import lwa1, lwasv
 
 
@@ -122,6 +122,18 @@ class sdf_adp_tests(unittest.TestCase):
         s2 = "UTC 2013-01-08 19:35:28.994"
         self.assertEqual(sdfADP.parse_time(s1, station=lwasv), sdfADP.parse_time(s2))
         
+    def test_type_control(self):
+        """Test SDF member type control."""
+        
+        obs = sdfADP.Observer('Test Observer', 99)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        sess = sdfADP.Session('Test Session', 1, observations=[targ,])
+        sess.set_drx_beam(1)
+        proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
+        
+        self.assertRaises(TypeError, proj.sessions.append, 5)
+        self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
+        
     def test_flat_projects(self):
         """Test single session/observations SDFs."""
         
@@ -161,6 +173,14 @@ class sdf_adp_tests(unittest.TestCase):
         """Test reading in a TBW SDF file."""
         
         self.assertRaises(RuntimeError, sdfADP.parse_sdf, tbwFile)
+        
+    def test_tbw_append(self):
+        """Test appending a TBF observation to an LWA-SV session."""
+        
+        project = sdfADP.parse_sdf(tbnFile)
+        
+        obs = other_sdf.TBW('TBW', 'TBW', '2020/4/30 01:23:45.5', 12000000)
+        self.assertRaises(TypeError, project.sessions[0].append, obs)
         
     ### TBN ###
     
@@ -218,11 +238,28 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parse_sdf(tbnFile)
         
+        # Bad project
+        old_id = project.id
+        project.id = 'ThisIsReallyLong'
+        self.assertFalse(project.validate())
+        
+        # Bad session
+        project.id = old_id
+        old_id = project.sessions[0].id
+        project.sessions[0].id = 10001
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.sessions[0].id = old_id
         project.sessions[0].observations[0].filter = 10
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 2.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 7
         project.sessions[0].observations[0].frequency1 = 95.0e6
         project.sessions[0].observations[0].update()
@@ -351,6 +388,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 6
+        project.sessions[0].observations[0].frequency1 = 10.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 6
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()

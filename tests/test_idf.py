@@ -178,7 +178,19 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(drxFile)
         
+        # Bad project
+        old_id = project.id
+        project.id = 'ThisIsReallyLong'
+        self.assertFalse(project.validate())
+        
+        # Bad session
+        project.id = old_id
+        old_id = project.runs[0].id
+        project.runs[0].id = 10001
+        self.assertFalse(project.validate())
+        
         # Bad interferometer
+        project.runs[0].id = old_id
         project.runs[0].stations = [lwa1,]
         self.assertFalse(project.validate())
         
@@ -215,6 +227,11 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.runs[0].scans[0].filter = 6
+        project.runs[0].scans[0].frequency1 = 10.0e6
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
         project.runs[0].scans[0].filter = 6
         project.runs[0].scans[0].frequency1 = 90.0e6
         project.runs[0].scans[0].update()

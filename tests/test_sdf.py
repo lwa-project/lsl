@@ -17,7 +17,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from lsl.common.paths import DATA_BUILD
-from lsl.common import sdf
+from lsl.common import sdf, sdfADP as other_sdf
 from lsl.common.stations import lwa1, lwasv
 
 
@@ -122,6 +122,18 @@ class sdf_tests(unittest.TestCase):
         s1 = "LST 2013-01-08 19:42:00.000"
         s2 = "UTC 2013-01-08 19:38:26.723"
         self.assertEqual(sdf.parse_time(s1, station=lwa1), sdf.parse_time(s2))
+        
+    def test_type_control(self):
+        """Test SDF member type control."""
+        
+        obs = sdf.Observer('Test Observer', 99)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        sess = sdf.Session('Test Session', 1, observations=[targ,])
+        sess.set_drx_beam(1)
+        proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
+        
+        self.assertRaises(TypeError, proj.sessions.append, 5)
+        self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
         
     def test_flat_projects(self):
         """Test single session/observations SDFs."""
@@ -266,11 +278,29 @@ class sdf_tests(unittest.TestCase):
         
         project = sdf.parse_sdf(tbnFile)
         
+        
+        # Bad project
+        old_id = project.id
+        project.id = 'ThisIsReallyLong'
+        self.assertFalse(project.validate())
+        
+        # Bad session
+        project.id = old_id
+        old_id = project.sessions[0].id
+        project.sessions[0].id = 10001
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.sessions[0].id = old_id
         project.sessions[0].observations[0].filter = 10
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 4.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 7
         project.sessions[0].observations[0].frequency1 = 95.0e6
         project.sessions[0].observations[0].update()
@@ -399,6 +429,11 @@ class sdf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 9.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 7
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
@@ -933,9 +968,17 @@ class sdf_tests(unittest.TestCase):
     ### TBF ###
     
     def test_tbf_parse(self):
-        """Test reading in a TBW SDF file."""
+        """Test reading in a TBF SDF file."""
         
         self.assertRaises(RuntimeError, sdf.parse_sdf, tbfFile)
+        
+    def test_tbf_append(self):
+        """Test appending a TBF observation to an LWA1 session."""
+        
+        project = sdf.parse_sdf(tbnFile)
+        
+        obs = other_sdf.TBF('TBF', 'TBF', '2020/4/30 01:23:45.5', 40e6, 75e6, 7, 196000)
+        self.assertRaises(TypeError, project.sessions[0].append, obs)
         
     ### Misc. ###
     

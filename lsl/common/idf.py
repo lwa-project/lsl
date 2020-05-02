@@ -47,7 +47,7 @@ from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
 from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import mjdmpm_to_datetime, LWA_MAX_NSTD
+from lsl.common.mcsADP import mjdmpm_to_datetime
 from lsl.common.adp import freq_to_word, word_to_freq, fC
 from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
@@ -160,6 +160,8 @@ class Project(object):
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
         
+        self.update()
+        
         failures = 0
         runCount = 1
         if len(self.id) > 8:
@@ -180,7 +182,8 @@ class Project(object):
         else:
             return False
             
-    def _render_file_size(self, size):
+    @staticmethod
+    def _render_file_size(size):
         """Convert a file size in bytes to a easy-to-use string."""
         
         units = 'B'
@@ -199,7 +202,8 @@ class Project(object):
             
         return "%.2f %s" % (size, units)
         
-    def _render_bandwidth(self, filter, FILTER_CODES):
+    @staticmethod
+    def _render_bandwidth(filter, FILTER_CODES):
         """Convert a filter number to an easy-to-use string."""
         
         if FILTER_CODES[filter] > 1e6:
@@ -212,8 +216,6 @@ class Project(object):
     def append(self, newRun):
         """Add a new run to the list of runs."""
         
-        if not isinstance(newRun, Run):
-            raise TypeError('Expected a Run instance')
         self.runs.append(newRun)
         
     def render(self, run=0, verbose=False):
@@ -291,7 +293,7 @@ class Project(object):
             output = "%sSCAN_TARGET      %s\n" % (output, obs.target)
             output = "%sSCAN_INTENT      %s\n" % (output, obs.intent)
             output = "%sSCAN_REMPI       %s\n" % (output, obs.comments[:4090] if obs.comments else 'None provided')
-            output = "%sSCAN_REMPO       %s\n" % (output, "Estimated data volume for this scan is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
+            output = "%sSCAN_REMPO       %s\n" % (output, "Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sSCAN_START_MJD   %i\n" % (output, obs.mjd)
             output = "%sSCAN_START_MPM   %i\n" % (output, obs.mpm)
             output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
@@ -476,7 +478,7 @@ class Run(object):
         self.corr_inttime = corr_inttime
         self.corr_channels = corr_channels
         self.corr_basis = corr_basis
-        self.stations = stations
+        self.stations = sdf._TypedParentList(LWAStation, None, stations)
         
     def __str__(self):
         return "%i: %s with %i scans and correlator setup:\n  channels: %i\n  int. time: %f\n  basis: %s\n  stations: %s" % (self.id, self.name, len(self.scans), self.corr_channels, self.corr_inttime, self.corr_basis, " ".join([s.id for s in self.stations]))
@@ -486,19 +488,12 @@ class Run(object):
         Update the stations used by the project for source computations.
         """
         
-        if not isinstance(stations, (tuple, list)):
-            raise TypeError('Expected a tuple of list of LWAStations')
-        for i,station in enumerate(stations):
-            if not isinstance(station, LWAStation):
-                raise TypeError("Expected index %i to be an LWAStation" % i)
-        self.stations = stations
+        self.stations = sdf._TypedParentList(LWAStation, None, stations)
         self.update()
         
     def append(self, newScan):
         """Add a new Scan to the list of scans."""
         
-        if not isinstance(newScan, Scan):
-            raise TypeError("Expected an Scan")
         self.scans.append(newScan)
         
     def set_correlator_channels(self, value):
@@ -585,10 +580,9 @@ class Run(object):
             if verbose:
                 print("[%i] Validating scan %i" % (os.getpid(), scanCount))
                 
-            for station in self.stations:
-                if not obs.validate(station=station, verbose=verbose):
-                    failures += 1
-                totalData += obs.dataVolume
+            if not obs.validate(verbose=verbose):
+                failures += 1
+            totalData += obs.dataVolume
                 
             if scanCount > 1:
                 if obs.filter != self.scans[scanCount-2].filter:
@@ -740,6 +734,7 @@ class Scan(object):
         self.dur = None
         self.freq1 = None
         self.freq2 = None
+        self.dataVolumeStation = None
         self.dataVolume = None
         
         self.aspFlt = -1
@@ -758,6 +753,10 @@ class Scan(object):
     def update(self):
         """Update the computed parameters from the string values."""
         
+        stations = [lwa1,]
+        if self._parent is not None:
+            stations = self._parent.stations
+            
         # If we have a datetime instance, make sure we have an integer
         # number of milliseconds
         if isinstance(self.start, datetime):
@@ -771,7 +770,8 @@ class Scan(object):
         self.dur = self.get_duration()
         self.freq1 = self.get_frequency1()
         self.freq2 = self.get_frequency2()
-        self.dataVolume = self.estimate_bytes()
+        self.dataVolumeStation = self.estimate_bytes()
+        self.dataVolume = self.dataVolumeStation*len(stations)
         
         # Update the associated alternate phase centers
         for phase_center in self.alt_phase_centers:
@@ -889,30 +889,45 @@ class Scan(object):
         pnt._epoch = ephem.J2000
         return pnt
         
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Return the fractional visibility of the target during the scan 
         period."""
         
-        lwa = station.get_observer()
-        pnt = self.get_fixed_body()
-        
-        vis = 0
-        cnt = 0
-        dt = 0.0
-        while dt <= self.dur/1000.0:
-            lwa.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
-            pnt.compute(lwa)
+        stations = [lwa1,]
+        if self._parent is not None:
+            stations = self._parent.stations
             
-            cnt += 1
-            if pnt.alt > 0:
-                vis += 1
+        vis_list = []
+        for station in stations:
+            lwa = station.get_observer()
+            pnt = self.get_fixed_body()
+            
+            vis = 0
+            cnt = 0
+            dt = 0.0
+            while dt <= self.dur/1000.0:
+                lwa.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
+                pnt.compute(lwa)
                 
-            dt += 300.0
+                cnt += 1
+                if pnt.alt > 0:
+                    vis += 1
+                    
+                dt += 300.0
+                
+            vis_list.append(float(vis)/float(cnt))
+        return min(vis_list)
         
-        return float(vis)/float(cnt)
-        
-    def validate(self, station, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the scan and return True if it is valid, False otherwise."""
+        
+        self.update()
+        
+        stations = [lwa1,]
+        if self._parent is not None:
+            stations = self._parent.stations
+        tuning_min = max([station.interface.get_module('backend').DRX_TUNING_WORD_MIN for station in stations])
+        tuning_max = min([station.interface.get_module('backend').DRX_TUNING_WORD_MAX for station in stations])
         
         failures = 0
         # Basic - Intent, duration, frequency, and filter code values
@@ -924,11 +939,11 @@ class Scan(object):
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
             failures += 1
-        if self.freq1 < 222417950 or self.freq1 > 1928352663:
+        if self.freq1 < tuning_min or self.freq1 > tuning_max:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 1 is outside of LWA tuning range" % os.getpid())
             failures += 1
-        if (self.freq2 < 222417950 or self.freq2 > 1928352663) and self.freq2 != 0:
+        if (self.freq2 < tuning_min or self.freq2 > tuning_max) and self.freq2 != 0:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of LWA tuning range" % os.getpid())
             failures += 1
@@ -946,7 +961,7 @@ class Scan(object):
             if verbose:
                 print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
             failures += 1
-        if self.compute_visibility(station=station) < 1.0:
+        if self.compute_visibility() < 1.0:
             if verbose:
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the scan for %s" % (os.getpid(), self.compute_visibility(station=station)*100.0, station.id))
             failures += 1
@@ -957,7 +972,7 @@ class Scan(object):
                 print("[%i] Error: too many alternate phase centers defined" % os.getpid())
             failures += 1
         for j,phase_center in enumerate(self.alt_phase_centers):
-            if not phase_center.validate(station, verbose=verbose):
+            if not phase_center.validate(verbose=verbose):
                 if verbose:
                     print("[%i] Error: invalid alternate phase center %i" % (os.getpid(), j+1))
                 failures += 1
@@ -966,7 +981,7 @@ class Scan(object):
             pnt = self.get_fixed_body()
             alt_pnt = phase_center.get_fixed_body()
             
-            lwa = station.get_observer()
+            lwa = stations[0].get_observer()
             lwa.date = self.mjd + (self.mpm/1000.0 + self.dur/1000.0/2.0)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
             pnt.compute(lwa)
             alt_pnt.compute(lwa)
@@ -980,7 +995,7 @@ class Scan(object):
                 failures += 1
                 
         # Advanced - Data Volume
-        if self.dataVolume >= (_DRSUCapacityTB*1024**4):
+        if self.dataVolumeStation >= (_DRSUCapacityTB*1024**4):
             if verbose:
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
@@ -1182,7 +1197,7 @@ class AlternatePhaseCenter(object):
         pnt._epoch = ephem.J2000
         return pnt
     
-    def validate(self, station, verbose=False):
+    def validate(self, verbose=False):
         """Basic validation of the pointing, that's it."""
         
         failures = 0

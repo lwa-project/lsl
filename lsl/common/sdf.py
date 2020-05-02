@@ -310,12 +310,15 @@ class _TypedParentList(list):
     back to who owns the list.
     """
     
-    def __init__(self, allowed_types, parent, iterable=None):
+    def __init__(self, allowed_types, parent=None, iterable=None):
         if not isinstance(allowed_types, (list, tuple)):
             allowed_types = [allowed_types,]
         self.allowed_types = tuple(allowed_types)
-        self.parent = weakref.proxy(parent)
-        
+        if parent is not None:
+            self.parent = weakref.proxy(parent)
+        else:
+            self.parent = None
+            
         if iterable is not None:
             if not all([isinstance(value, self.allowed_types) for value in iterable]):
                 raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
@@ -323,27 +326,31 @@ class _TypedParentList(list):
             
     def append(self, value):
         if isinstance(value, self.allowed_types):
-            value._parent = self.parent
+            if self.parent is not None:
+                value._parent = self.parent
             list.append(self, value)
         else:
             raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
             
     def extend(self, values):
         if all([isinstance(value, self.allowed_types) for value in values]):
-            for value in values:
-                value._parent = self.parent
+            if self.parent is not None:
+                for value in values:
+                    value._parent = self.parent
             list.extend(self, values)
             
     def insert(self, index, value):
         if isinstance(value, self.allowed_types):
-            value._parent = self.parent
+            if self.parent is not None:
+                value._parent = self.parent
             list.insert(self, index, value)
         else:
             raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
             
     def __setitem__(self, index, value):
         if isinstance(value, self.allowed_types):
-            value._parent = self.parent
+            if self.parent is not None:
+                value._parent = self.parent
             list.__setitem__(self, index, value)
         else:
             raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
@@ -454,7 +461,8 @@ class Project(object):
         else:
             return False
             
-    def _render_file_size(self, size):
+    @staticmethod
+    def _render_file_size(size):
         """Convert a file size in bytes to a easy-to-use string."""
         
         units = 'B'
@@ -473,7 +481,8 @@ class Project(object):
             
         return "%.2f %s" % (size, units)
         
-    def _render_bandwidth(self, filter, filter_codes):
+    @staticmethod
+    def _render_bandwidth(filter, filter_codes):
         """Convert a filter number to an easy-to-use string."""
         
         if filter_codes[filter] > 1e6:
@@ -486,8 +495,6 @@ class Project(object):
     def append(self, newSession):
         """Add a new Session to the list of sessions."""
         
-        if not isinstance(newSession, Session):
-            raise TypeError('Expected a Session instance')
         self.sessions.append(newSession)
         
     def render(self, session=0, verbose=False):
@@ -895,13 +902,13 @@ class Observation(object):
         
         return None
     
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Place holder for functions that return the fractional visibility of the 
         target during the observation period."""
         
         return 1.0
     
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Place holder for functions that evaluate the observation and return True 
         if it is valid, False otherwise."""
         
@@ -1016,9 +1023,11 @@ class TBW(Observation):
         nBytes = nFrames * TBWSize * LWA_MAX_NSTD
         return nBytes
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
+        
+        self.update()
         
         failures = 0
         # Basic - Sample size and data bits agreement
@@ -1099,7 +1108,7 @@ class TBN(Observation):
         nBytes = nFrames * TBNSize * LWA_MAX_NSTD * 2
         return nBytes
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise.
         
@@ -1107,13 +1116,20 @@ class TBN(Observation):
             This version of sdf allows for TBN tuning between 5 and 93 MHz.
         """
         
+        self.update()
+        
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        backend = station.interface.get_module('backend')
+        
         failures = 0
         # Basic - Duration, frequency, and filter code values
         if self.dur < 1:
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
             failures += 1
-        if self.freq1 < 109565492 or self.freq1 > 2037918156:
+        if self.freq1 < backend.TBN_TUNING_WORD_MIN or self.freq1 > backend.TBN_TUNING_WORD_MAX:
             if verbose:
                 print("[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid())
             failures += 1
@@ -1165,7 +1181,7 @@ class _DRXBase(Observation):
         self.frequency2 = float(frequency2)
         self.update()
         
-    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X', station=lwa1):
+    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X'):
         """Convert the current observation to a 'beam-dipole mode' 
         observation with the specified stand.  Setting the stand to zero
         will disable the 'beam-dipole mode' for this observation'.
@@ -1176,8 +1192,6 @@ class _DRXBase(Observation):
          * dipole_gain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
          * pol - Polarization to record  default: "X"
-         * station - lsl.common.stations instance to use for mapping
-                     default: lsl.common.stations.lwa1
         """
         
         # Validate
@@ -1196,6 +1210,10 @@ class _DRXBase(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
+            station = lwa1
+            if self._parent is not None:
+                station = self._parent.station
+                
             for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
@@ -1236,10 +1254,14 @@ class _DRXBase(Observation):
         pnt._epoch = ephem.J2000
         return pnt
         
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+            
         pnt = self.get_fixed_body()
         
         vis = 0
@@ -1257,9 +1279,16 @@ class _DRXBase(Observation):
         
         return float(vis)/float(cnt)
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
+        
+        self.update()
+        
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        backend = station.interface.get_module('backend')
         
         failures = 0
         # Basic - Duration, frequency, and filter code values
@@ -1267,11 +1296,11 @@ class _DRXBase(Observation):
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
             failures += 1
-        if self.freq1 < 219130984 or self.freq1 > 1928352663:
+        if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
             failures += 1
-        if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+        if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
@@ -1289,9 +1318,9 @@ class _DRXBase(Observation):
             if verbose:
                 print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
             failures += 1
-        if self.compute_visibility(station=station) < 1.0:
+        if self.compute_visibility() < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility(station=station)*100.0))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
             failures += 1
             
         # Advanced - Data Volume
@@ -1479,12 +1508,10 @@ class Stepped(Observation):
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
         
-        if not isinstance(newStep, BeamStep):
-            raise TypeError('Expected a BeamStep')
         self.steps.append(newStep)
         self.update()
         
-    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X', station=lwa1):
+    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X'):
         """Convert the current observation to a 'beam-dipole mode' 
         observation with the specified stand.  Setting the stand to zero
         will disable the 'beam-dipole mode' for this observation'.
@@ -1495,8 +1522,6 @@ class Stepped(Observation):
          * dipole_gain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
          * pol - Polarization to record  default: "X"
-         * station - lsl.common.stations instance to use for mapping
-                     default: lsl.common.stations.lwa1
         """
         
         # Validate
@@ -1515,6 +1540,10 @@ class Stepped(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
+            station = lwa1
+            if self._parent is not None:
+                station = self._parent.station
+                
             for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
@@ -1549,10 +1578,14 @@ class Stepped(Observation):
                 
         return dur/1000.0 * data_rate
         
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+            
         pnt = self.get_fixed_body()
         
         vis = 0
@@ -1581,9 +1614,11 @@ class Stepped(Observation):
             
         return float(vis)/float(cnt)
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
+        
+        self.update()
         
         failures = 0
         # Basic - filter setup
@@ -1597,7 +1632,7 @@ class Stepped(Observation):
         for step in self.steps:
             if verbose:
                 print("[%i] Validating step %i" % (os.getpid(), stepCount))
-            if not step.validate(station=station, verbose=verbose):
+            if not step.validate(verbose=verbose):
                 failures += 1
             if step.is_radec != self.is_radec:
                 if verbose:
@@ -1607,9 +1642,9 @@ class Stepped(Observation):
             stepCount += 1
             
         # Advanced - Target Visibility
-        if self.compute_visibility(station=station) < 1.0:
+        if self.compute_visibility() < 1.0:
             if verbose:
-                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility(station=station)*100.0))
+                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
             failures += 1
             
         # Advanced - Data Volume
@@ -1789,13 +1824,22 @@ class BeamStep(object):
             
         return pnt
             
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the step and return True if it is valid, False otherwise."""
+        
+        self.update()
+        
+        station = lwa1
+        if self._parent is not None:
+            if self._parent._parent is not None:
+                station = self._parent._parent.station
+        mandc = station.interface.get_module('mcs')
+        backend = station.interface.get_module('backend')
         
         failures = 0
         # Basic - Delay and gain settings are correctly configured
         if self.delays is not None:
-            if len(self.delays) != 2*LWA_MAX_NSTD:
+            if len(self.delays) != 2*mandc.LWA_MAX_NSTD:
                 failures += 1
                 if verbose:
                     print("[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid())
@@ -1804,7 +1848,7 @@ class BeamStep(object):
                 if verbose:
                     print("[%i] Error: Delays specified but gains were not" % os.getpid())
         if self.gains is not None:
-            if len(self.gains) != LWA_MAX_NSTD:
+            if len(self.gains) != mandc.LWA_MAX_NSTD:
                 failures += 1
                 if verbose:
                     print("[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid())
@@ -1818,11 +1862,11 @@ class BeamStep(object):
                 print("[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur))
             failures += 1
         # Basic - Frequency and filter code values
-        if self.freq1 < 219130984 or self.freq1 > 1928352663:
+        if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
             failures += 1
-        if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+        if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
@@ -1856,7 +1900,6 @@ class Session(object):
     """Class to hold all of the observations in a session."""
     
     _allowed_modes = (TBW, TBN, _DRXBase, Stepped)
-    _allowed_beams = (-1, 1, 2, 3, 4)
     
     _parent = None
     
@@ -1906,8 +1949,6 @@ class Session(object):
     def append(self, newObservation):
         """Add a new Observation to the list of observations."""
         
-        if not isinstance(newObservation, Observation):
-            raise TypeError("Expected an Observation")
         self.observations.append(newObservation)
         
     def set_configuration_authority(self, value):
@@ -1995,6 +2036,8 @@ class Session(object):
         
         self.update()
         
+        backend = self.station.interface.get_module('backend')
+        
         failures = 0
         totalData = 0.0
         if self.id < 1 or self.id > 9999:
@@ -2006,7 +2049,7 @@ class Session(object):
             if verbose:
                 print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
             failures += 1
-        if self.drxBeam not in self._allowed_beams:
+        if self.drxBeam != -1 and self.drxBeam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
             if verbose:
                 print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
             failures += 1
@@ -2052,7 +2095,7 @@ class Session(object):
             if verbose:
                 print("[%i] Validating observation %i" % (os.getpid(), observationCount))
             
-            if not obs.validate(station=self.station, verbose=verbose):
+            if not obs.validate(verbose=verbose):
                 failures += 1
             totalData += obs.dataVolume
             
