@@ -70,6 +70,9 @@ from lsl.reader.tbf import FRAME_SIZE as TBFSize
 from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
+from lsl.common.sdf import parse_time, _TypedParentList, Observer, ProjectOffice
+from lsl.common.sdf import Project as _Project, Session as _Session, Observation as _Observation
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -78,12 +81,7 @@ __version__ = '1.1'
 __all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
-_dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
 _UTC = pytz.utc
-_EST = pytz.timezone('US/Eastern')
-_CST = pytz.timezone('US/Central')
-_MST = pytz.timezone('US/Mountain')
-_PST = pytz.timezone('US/Pacific')
 _DRSUCapacityTB = 10
 # Factors for computing the time it takes to read out a TBF from the number 
 # of samples
@@ -93,256 +91,7 @@ _TBF_TIME_GAIN = 150
 _usernameRE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z]+)(\/(?P<subdir>[a-zA-Z0-9\/\+\-_]+))?')
 
 
-def _get_equinox_equation(jd):
-    """
-    Compute the equation of the equinoxes (nutation in right ascension) in 
-    hours for the specified Julian Date.
-    
-    From:
-    http://aa.usno.navy.mil/faq/docs/GAST.php
-    """
-    
-    # Get the number of days since January 1, 2000 @ 12:00 UT
-    D = jd - 2451545.0
-    
-    # Compute the obliquity
-    epsilon = 23.4393 - 0.0000004*D
-    
-    # Compute the mean longitude of the Sun
-    L = 280.47 + 0.98565*D
-    
-    # Compute the longitude of the Moon's ascending node
-    Omega = 125.04 - 0.052954*D
-    
-    # The nutation in the longitude (hours)
-    deltaPsi = -0.000319*math.sin(Omega*math.pi/180.0) - 0.000024*math.sin(2*L*math.pi/180.0)
-    
-    # Return the equation of the equinoxes
-    return deltaPsi * math.cos(epsilon*math.pi/180.0)
-
-
-def parse_time(s, station=lwasv):
-    """
-    Given a timezone-aware datetime instance or a string in the format of 
-    (UTC) YYYY MM DD HH:MM:SS.SSS, return the corresponding UTC datetime object.
-    This function goes a little beyond what datetime.strptime does in the 
-    since that it handle both integer and float seconds as well as does the 
-    appropriate rounding to get millisecond precision.
-    
-    .. versionchanged:: 1.2.0
-        Renamed the 'site' keyword to 'station'
-    
-    .. versionchanged:: 1.0.0
-        Renamed to parse_time()
-        Added support for timezone-aware datetime instances
-    """
-    
-    if isinstance(s, AstroTime):
-        s = s.datetime
-        
-    if isinstance(s, datetime):
-        if s.tzinfo is None:
-            raise ValueError("Only aware datetime instances are supported.")
-            
-        # Round the microsecond value to milliseconds
-        us = s.microsecond
-        us = int(round(us/1000.0))*1000
-        dtObject = s.replace(microsecond=us)
-        
-    else:
-        mtch = _dtRE.match(s)
-        if mtch is None:
-            raise ValueError("Unparsable time string: '%s'" % s)
-        else:
-            year = int(mtch.group('year'))
-            day = int(mtch.group('day'))
-            
-            hour = int(mtch.group('hour'))
-            minute = int(mtch.group('minute'))
-            second = math.floor(float(mtch.group('second')))
-            microsecond = int(round((float(mtch.group('second')) - second)*1000.0))*1000
-            second = int(second)
-            
-            if mtch.group('mname') is None:
-                month = int(mtch.group('month'))
-            else:
-                monthName = mtch.group('mname').lower()
-                if monthName == 'jan':
-                    month = 1
-                elif monthName == 'feb':
-                    month = 2
-                elif monthName == 'mar':
-                    month = 3
-                elif monthName == 'apr':
-                    month = 4
-                elif monthName == 'may':
-                    month = 5
-                elif monthName == 'jun':
-                    month = 6
-                elif monthName == 'jul':
-                    month = 7
-                elif monthName == 'aug':
-                    month = 8
-                elif monthName == 'sep':
-                    month = 9
-                elif monthName == 'oct':
-                    month = 10
-                elif monthName == 'nov':
-                    month = 11
-                elif monthName == 'dec':
-                    month = 12
-                else:
-                    raise ValueError("Unknown month abbreviation: '%s'" % monthName)
-                    
-            if mtch.group('tz') is None and mtch.group('tzOffset') is None:
-                tz = _UTC
-            elif mtch.group('tzOffset') is not None:
-                tzOffsetSign = 1
-                if mtch.group('tzOffset')[0] == '-':
-                    tzOffsetSign = -1
-                tzOffsetHours = int( mtch.group('tzOffset').replace(':', '')[1:3] )
-                tzOffsetMinutes = int( mtch.group('tzOffset').replace(':', '')[3:5] )
-                
-                tz = pytz.FixedOffset(tzOffsetSign*(tzOffsetHours*60+tzOffsetMinutes), {})
-            else:
-                tzName = mtch.group('tz')
-                if tzName in ['UT', 'UTC']:
-                    tz = _UTC
-                elif tzName in ['EST', 'EDT']:
-                    tz = _EST
-                elif tzName in ['CST', 'CDT']:
-                    tz = _CST
-                elif tzName in ['MST', 'MDT']:
-                    tz = _MST
-                elif tzName in ['PST', 'PDT']:
-                    tz = _PST
-                elif tzName in ['LST',]:
-                    tz = 'LST'
-                else:
-                    ## Exhaustive search through pytz.  This may yield strange matches...
-                    import warnings
-                    warnings.warn("Entering pytz search mode for '%s'" % tzName, RuntimeWarning)
-                    
-                    tzFound = False
-                    tzNormal = datetime(year, month, day)
-                    for tzi in pytz.common_timezones[::-1]:
-                        tz = pytz.timezone(tzi)
-                        try:
-                            cTZName = tz.tzname(tzNormal, is_dst=False)
-                        except TypeError:
-                            cTZName = tz.tzname(tzNormal)
-                        if cTZName == tzName:
-                            tzFound = True
-                            break
-                            
-                    if not tzFound:
-                        raise ValueError("Unknown time zone: '%s'" % tzName)
-                        
-            if tz == 'LST':
-                # Deal with sidereal times...
-                #
-                # NOTE:
-                # The RMS on this method is ~0.4 seconds over the years 
-                # 2000 to 2100.  This should be "good enough" for scheduling
-                # purposes.
-                
-                # Get the position of the observer on the Earth and the Julian 
-                # Date of midnight UT for the day we want to map LST to
-                dt = astroDate(year, month, day, 0, 0, 0)
-                jd = dt.to_jd()
-                
-                # Get the LST in hours
-                LST = hour + minute/60.0 + (second + microsecond/1e6)/3600.0
-                
-                # Get the Greenwich apparent ST for LST using the longitude of 
-                # the site.  The site longitude is stored as radians, so convert
-                # to hours first.
-                GAST = LST - station.long*12/math.pi
-                
-                # Get the Greenwich mean ST by removing the equation of the 
-                # equinoxes (or some approximation thereof)
-                GMST = GAST - _get_equinox_equation(jd)
-                
-                # Get the value of D0, days since January 1, 2000 @ 12:00 UT, 
-                # and T, the number of centuries since the year 2000.  The value
-                # of T isn't terribly important but it is nice to include
-                D0 = jd - 2451545.0
-                T = D0 / 36525.0
-                
-                # Solve for the UT hour for this LST and map onto 0 -> 24 hours
-                # From: http://aa.usno.navy.mil/faq/docs/GAST.php
-                H  = GMST - 6.697374558 - 0.06570982441908*D0 - 0.000026*T**2
-                H /= 1.002737909350795
-                while H < 0:
-                    H += 24/1.002737909350795
-                while H > 24:
-                    H -= 24/1.002737909350795
-                    
-                # Get the full Julian Day that this corresponds to
-                jd += H/24.0
-                
-                # Convert the JD back to a time and extract the relevant 
-                # quantities needed to build a datetime instance
-                dt = astroGetDate(jd)
-                
-                tz = _UTC
-                year = dt.years
-                month = dt.months
-                day = dt.days
-                hour = dt.hours
-                minute = dt.minutes
-                second = int(dt.seconds)
-                microsecond = int(round((dt.seconds - second)*1e6))
-                ## Trim the microsecond down to the millisecond level
-                microsecond = int(round(microsecond/1000.0))*1000
-                
-            # Localize as the appropriate time zone
-            dtObject = tz.localize(datetime(year, month, day, hour, minute, second, microsecond))
-            
-    # Return as UTC
-    return dtObject.astimezone(_UTC)
-
-
-class Observer(object):
-    """Class to hold information about an observer."""
-    
-    def __init__(self, name, id, first=None, last=None):
-        self.name = name
-        self.first = first
-        self.last = last
-        self.id = int(id)
-
-    def join_name(self):
-        if self.first != '':
-            self.name = ', '.join([self.last, self.first])
-        else:
-            self.name = self.last
-        
-    def split_name(self):
-        try:
-            self.last, self.first = self.name.split(', ', 1)
-        except ValueError:
-            self.last = self.name
-            self.first = ''
-
-
-class ProjectOffice(object):
-    """Class to hold comments from the LWA object office.  This class isn't really 
-    needed to create SD files, but it is helpful for parsing SD files."""
-    
-    def __init__(self, project=None, sessions=None, observations=None):
-        self.project = project
-        if sessions is None:
-            self.sessions = []
-        else:
-            self.sessions = sessions
-        if observations is None:
-            self.observations = []
-        else:
-            self.observations = observations
-
-
-class Project(object):
+class Project(_Project):
     """
     Class to hold all the information about a specific session for a 
     project/proposal.
@@ -351,103 +100,6 @@ class Project(object):
         Added a new writeto() method to directly write the SDF to a file.
     """
     
-    def __init__(self, observer, name, id, sessions=None, comments=None, project_office=None):
-        if not isinstance(observer, Observer):
-            raise TypeError("Expected 'observer' to be an Observer")
-        self.observer = observer
-        self.name = name
-        self.id = id
-        self.comments = comments
-        if sessions is None:
-            self.sessions = []
-        else:
-            if isinstance(sessions, Session):
-                sessions = [sessions,]
-            elif isinstance(sessions, (list, tuple)):
-                for i,sess in enumerate(sessions):
-                    if not isinstance(sess, Session):
-                        raise TypeError("Expected index %i of 'sessions' to be a Session" % i)
-            else:
-                raise TypeError("Expected 'sessions' to be either a tuple or list of Sessions or a Session")
-            self.sessions = sessions
-        if project_office is None:
-            self.project_office = ProjectOffice()
-        else:
-            if not isinstance(project_office, ProjectOffice):
-                raise TypeError("Expected 'project_office' to be a ProjectOffice")
-            self.project_office = project_office
-            
-    def update(self):
-        """Update the various sessions that are part of this project."""
-        
-        for ses in self.sessions:
-            ses.update()
-            
-    def validate(self, verbose=False):
-        """Examine all of the sessions and all of their observations to check
-        for validity.  If everything is valid, return True.  Otherwise, return
-        False."""
-        
-        failures = 0
-        sessionCount = 1
-        if len(self.id) > 8:
-            if verbose:
-                print("[%i] Project ID is too long" % (os.getpid(),))
-            failures += 1
-            
-        for session in self.sessions:
-            if verbose:
-                print("[%i] Validating session %i" % (os.getpid(), sessionCount))
-            if not session.validate(verbose=verbose):
-                failures += 1
-                
-            if session.station != self.sessions[0].station:
-                print("[%i] Session station mis-match" % os.getpid())
-                failures += 1
-                
-            sessionCount += 1
-            
-        if failures == 0:
-            return True
-        else:
-            return False
-            
-    def _render_file_size(self, size):
-        """Convert a file size in bytes to a easy-to-use string."""
-        
-        units = 'B'
-        if size >= 1024**4:
-            size /= 1024.0**4
-            units = 'TB'
-        elif size >= 1024**3:
-            size /= 1024.0**3
-            units = 'GB'
-        elif size >= 1024**2:
-            size /= 1024.0**2
-            units = 'MB'
-        elif size >= 1024**1:
-            size /= 1024.0**1
-            units = 'kB'
-            
-        return "%.2f %s" % (size, units)
-        
-    def _render_bandwidth(self, filter, filter_codes):
-        """Convert a filter number to an easy-to-use string."""
-        
-        if filter_codes[filter] > 1e6:
-            return "%.3f MHz" % (filter_codes[filter]/1e6,)
-        elif filter_codes[filter] > 1e3:
-            return "%.3f kHz" % (filter_codes[filter]/1e3,)
-        else:
-            return "%.3f Hz" % (filter_codes[filter],)
-            
-    def append(self, newSession):
-        """Add a new Session to the list of sessions."""
-        
-        if not isinstance(newSession, Session):
-            raise TypeError('Expected a Session instance')
-        self.sessions.append(newSession)
-        
     def render(self, session=0, verbose=False):
         """Create a session definition file that corresponds to the specified 
         session.  Returns the SD file's contents as a string."""
@@ -691,338 +343,9 @@ class Project(object):
             output = "%s\n" % output
             
         return output
-        
-    def writeto(self, filename, session=0, verbose=False, overwrite=False):
-        """Create a session definition file that corresponds to the specified 
-        session and write it to the provided filename."""
-        
-        if os.path.exists(filename) and not overwrite:
-            raise RuntimeError("'%s' already exists" % filename)
-            
-        output = self.render(session=session, verbose=verbose)
-        with open(filename, 'w') as fh:
-            fh.write(output)
 
 
-class Session(object):
-    """Class to hold all of the observations in a session."""
-    
-    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwasv):
-        self.name = name
-        self.id = int(id)
-        if observations is None:
-            self.observations = []
-        else:
-            if isinstance(observations, Observation):
-                observations = [observations,]
-            elif isinstance(observations, (tuple, list)):
-                for i,obs in enumerate(observations):
-                    if not isinstance(obs, Observation):
-                        raise TypeError("Expected index %i of 'obsevations' to be an Observation" % i)
-            else:
-                raise TypeError("Expected 'observations' to be either a tuple or list of Observations of an Observation")
-            self.observations = observations
-        self.data_return_method = data_return_method
-        self.ucfuser = None
-        self.comments = comments
-        
-        self.cra = 0
-        self.drxBeam = -1
-        self.spcSetup = [0, 0]
-        self.spcMetatag = None
-        
-        self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        
-        self.logScheduler = False
-        self.logExecutive = False
-        
-        self.includeStationStatic = False
-        self.includeDesign = False
-        
-        self.station = station
-        
-    def set_station(self, station):
-        """
-        Update the station used by the project for source computations.
-        
-        .. versionadded:: 1.2.0
-        """
-        
-        if station.interface.sdf != 'lsl.common.sdfADP':
-            raise RuntimeError("Incompatible station: expected %s, got %s" % \
-                            (station.interface.sdf, 'lsl.common.sdfADP'))
-            
-        self.station = station
-        self.update()
-        
-    def append(self, newObservation):
-        """Add a new Observation to the list of observations."""
-        
-        if not isinstance(newObservation, Observation):
-            raise TypeError("Expected an Observation")
-        self.observations.append(newObservation)
-        
-    def set_configuration_authority(self, value):
-        """Set the configuration request authority to a particular value in the range of
-        0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
-        parameters."""
-        
-        self.cra = int(value)
-        
-    def set_drx_beam(self, value):
-        """Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
-        
-        self.drxBeam = int(value)
-        
-    def set_spectrometer_channels(self, value):
-        """Set the number of spectrometer channels to generate, 0 to disable."""
-        
-        self.spcSetup[0] = int(value)
-        
-    def set_spectrometer_integration(self, value):
-        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
-        
-        self.spcSetup[1] = int(value)
-        
-    def set_spectrometer_metatag(self, value):
-        """Set the spectrometer metatag, '' to disable."""
-        
-        if value == '' or value is None:
-            self.spcMetatag = None
-        else:
-            self.spcMetatag = value
-            if self.spcMetatag[0] != '{':
-                self.spcMetatag = '{'+self.spcMetatag
-            if self.spcMetatag[-1] != '}':
-                self.spcMetatag = self.spcMetatag+'}'
-                
-    def set_mib_record_interval(self, component, interval):
-        """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
-        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
-        specified.
-        
-        Special Values are:
-         * -1 = use the MCS default interval
-         * 0 = never record the MIB entries (the entries are still updated, however)
-        """
-        
-        self.recordMIB[component] = int(interval)
-        
-    def set_mib_update_interval(self, component, interval):
-        """Set the update interval for one of the level-1 subsystems (ASP, DP_, etc.) to 
-        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
-        specified.
-        
-        Special Values are:
-         * -1 = use the MCS default interval
-         * 0 = request no updates to the MIB entries
-        """
-        
-        self.updateMIB[component] = int(interval)
-        
-    def set_data_return_method(self, method):
-        """Set the data return method for the session.  Valid values are: UCF, DRSU, and 
-        'USB Harddrives'."""
-        
-        if method not in ('UCF', 'DRSU', 'USB Harddrives'):
-            raise ValueError("Unknown data return method: %s" % method)
-            
-        self.data_return_method = method
-        
-    def set_ucf_username(self, username):
-        """Set the username to use for UCF data copies."""
-        
-        self.ucfuser = username
-        
-    def update(self):
-        """Update the various observations in the session."""
-        
-        for obs in self.observations:
-            obs._parent = weakref.proxy(self)
-            obs.update()
-            
-    def validate(self, verbose=False):
-        """Examine all of the observations associated with the session to check
-        for validity.  If everything is valid, return True.  Otherwise, return
-        False."""
-        
-        self.update()
-        
-        failures = 0
-        totalData = 0.0
-        if self.id < 1 or self.id > 9999:
-            if verbose:
-                print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
-            failures += 1
-            
-        if self.cra < 0 or self.cra > 65535:
-            if verbose:
-                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
-            failures += 1
-        if self.drxBeam not in (-1, 1, 2, 3):
-            if verbose:
-                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
-            failures += 1
-        for key in list(self.recordMIB.keys()):
-            if self.recordMIB[key] < -1:
-                if verbose:
-                    print("[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key]))
-                failures += 1
-            if self.updateMIB[key] < -1:
-                if verbose:
-                    print("[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key]))
-                failures += 1
-                
-        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
-            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0]))
-                failures += 1
-            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1]))
-                failures += 1
-            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
-                failures += 1
-            if len(self.observations) > 0:
-                if self.observations[0].mode in ('TBF', 'TBN'):
-                    if verbose:
-                        print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
-                    failures += 1
-                    
-        # Validate beam number
-        if len(self.observations) > 0:
-            if self.observations[0].mode not in ('TBN',):
-                if self.drxBeam == -1:
-                    if verbose:
-                        print("[%i] Error: Beam not assigned for this session" % os.getpid())
-                    failures += 1
-            if self.observations[0].mode ==  'TBF':
-                if self.drxBeam != 1:
-                    if verbose:
-                        print("[%i] Error: TBF can only run on beam 1" % os.getpid())
-                    failures += 1
-                    
-        observationCount = 1
-        for obs in self.observations:
-            if verbose:
-                print("[%i] Validating observation %i" % (os.getpid(), observationCount))
-            
-            if not obs.validate(station=self.station, verbose=verbose):
-                failures += 1
-            totalData += obs.dataVolume
-            
-            observationCount += 1
-
-        # Make sure that the observations don't overlap
-        sObs = self.observations
-        
-        for i in range(len(sObs)):
-            maxOverlaps = 1
-            overlaps = []
-            nOverlaps = 0
-
-            for j in range(len(sObs)):
-                if verbose and i != j:
-                    print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
-
-                cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
-                cStop = cStart + int(sObs[j].dur)
-                pStart = int(sObs[i].mjd)*24*3600*1000 + int(sObs[i].mpm)
-                pStop = pStart + int(sObs[i].dur)
-
-                if pStart >= cStart and pStart < cStop:
-                    nOverlaps += 1
-                    
-                    if i != j:
-                        overlaps.append(j)
-            
-            if nOverlaps > maxOverlaps:
-                if verbose:
-                    print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
-                failures += 1
-            
-        if totalData >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
-            failures += 1
-        
-        if failures == 0:
-            return True
-        else:
-            return False
-            
-    def __eq__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf == startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __lt__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf < startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-
-
-class Observation(object):
+class Observation(_Observation):
     """
     Class to hold the specifics of an observations.  It currently
     handles TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped
@@ -1031,77 +354,6 @@ class Observation(object):
         Added support for RA/dec values as ephem.hours/ephem.degrees instances
     """
     
-    _parent = None
-    
-    id = 1
-    
-    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        self.name = name
-        self.target = target
-        self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
-        self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
-        self.start = start
-        if isinstance(duration, timedelta):
-            # Make sure the number of microseconds agree with milliseconds
-            us = int(round(duration.microseconds/1000.0))*1000
-            duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
-        self.duration = str(duration)
-        self.mode = mode
-        self.beamDipole = None
-        self.frequency1 = float(frequency1)
-        self.frequency2 = float(frequency2)
-        self.filter = int(filter)
-        self.max_snr = bool(max_snr)
-        self.comments = comments
-        
-        self.mjd = None
-        self.mpm = None
-        self.dur = None
-        self.freq1 = None
-        self.freq2 = None
-        self.beam = None
-        self.dataVolume = None
-        
-        self.obsFEE = [[-1,-1] for n in range(LWA_MAX_NSTD)]
-        self.aspFlt = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspAT1 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspAT2 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspATS = [-1 for n in range(LWA_MAX_NSTD)]
-
-        self.gain = int(gain)
-        
-        self.update()
-        
-    def __str__(self):
-        """Return a nice string to describe the observation."""
-        
-        return "%s Obs. of '%s':\n Start %s\n Duration %s\n Filter: %i\n Frequency: %.3f; %.3f\n RA: %.3f\n Dec. %.3f\n" % (self.mode, self.name, self.start, self.duration, self.filter, self.frequency1, self.frequency2, self.ra, self.dec)
-        
-    def update(self):
-        """Update the computed parameters from the string values."""
-        
-        # If we have a datetime instance, make sure we have an integer
-        # number of milliseconds
-        if isinstance(self.start, datetime):
-            us = self.start.microsecond
-            us = int(round(us/1000.0))*1000
-            self.start = self.start.replace(microsecond=us)
-        self.duration = str(self.duration)
-        
-        self.mjd = self.get_mjd()
-        self.mpm = self.get_mpm()
-        self.dur = self.get_duration()
-        self.freq1 = self.get_frequency1()
-        self.freq2 = self.get_frequency2()
-        self.beam = self.get_beam_type()
-        self.dataVolume = self.estimate_bytes()
-        
-    def set_start(self, start):
-        """Set the observation start time."""
-        
-        self.start = start
-        self.update()
-        
     def get_mjd(self):
         """Return the modified Julian Date corresponding to the date/time of the
         self.start string."""
@@ -1124,118 +376,6 @@ class Observation(object):
         utcMidnight = datetime(utc.year, utc.month, utc.day, 0, 0, 0, tzinfo=_UTC)
         diff = utc - utcMidnight
         return int(round((diff.seconds + diff.microseconds/1000000.0)*1000.0))
-
-    def get_duration(self):
-        """Parse the self.duration string with the format of HH:MM:SS.SSS to return the
-        number of milliseconds in that period."""
-        
-        fields = self.duration.split(':')
-        if len(fields) == 3:
-            out = int(fields[0])*3600.0
-            out += int(fields[1])*60.0
-            out += float(fields[2])
-        elif len(fields) == 2:
-            out = int(fields[0])*60.0
-            out += float(fields[1])
-        else:
-            out = float(fields[0])
-            
-        return int(round(out*1000.0))
-
-    def get_frequency1(self):
-        """Return the number of "tuning words" corresponding to the first frequency."""
-        
-        freq1 = freq_to_word(self.frequency1)
-        self.frequency1 = word_to_freq(freq1)
-        return freq1
-
-    def get_frequency2(self):
-        """Return the number of "tuning words" corresponding to the second frequency."""
-        
-        freq2 = freq_to_word(self.frequency2)
-        self.frequency2 = word_to_freq(freq2)
-        return freq2
-        
-    def get_beam_type(self):
-        """Return a valid value for beam type based on whether maximum S/N beam 
-        forming has been requested."""
-        
-        if self.max_snr:
-            return 'MAX_SNR'
-        else:
-            return 'SIMPLE'
-    
-    def estimate_bytes(self):
-        """Place holder for functions that return the estimate size of the data
-        set being defined by the observation."""
-        
-        pass
-    
-    def get_fixed_body(self):
-        """Place holder for functions that return ephem.Body objects (or None)
-        that define the pointing center of the observation."""
-        
-        return None
-    
-    def compute_visibility(self, station=lwasv):
-        """Place holder for functions that return the fractional visibility of the 
-        target during the observation period."""
-        
-        return 1.0
-    
-    def validate(self, station=lwasv, verbose=False):
-        """Place holder for functions that evaluate the observation and return True 
-        if it is valid, False otherwise."""
-        
-        pass
-        
-    def __eq__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf == startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __lt__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf < startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 class TBF(Observation):
@@ -2160,6 +1300,140 @@ class BeamStep(object):
             return False
 
 
+class Session(_Session):
+    """Class to hold all of the observations in a session."""
+    
+    _allowed_modes = (TBF, TBN, _DRXBase, Stepped)
+    _allowed_beams = (-1, 1, 2, 3)
+    
+    def set_station(self, station):
+        """
+        Update the station used by the project for source computations.
+        
+        .. versionadded:: 1.2.0
+        """
+        
+        if station.interface.sdf != 'lsl.common.sdfADP':
+            raise RuntimeError("Incompatible station: expected %s, got %s" % \
+                            (station.interface.sdf, 'lsl.common.sdfADP'))
+            
+        self.station = station
+        self.update()
+        
+    def validate(self, verbose=False):
+        """Examine all of the observations associated with the session to check
+        for validity.  If everything is valid, return True.  Otherwise, return
+        False."""
+        
+        self.update()
+        
+        failures = 0
+        totalData = 0.0
+        if self.id < 1 or self.id > 9999:
+            if verbose:
+                print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
+            failures += 1
+            
+        if self.cra < 0 or self.cra > 65535:
+            if verbose:
+                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
+            failures += 1
+        if self.drxBeam not in (-1, 1, 2, 3):
+            if verbose:
+                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
+            failures += 1
+        for key in list(self.recordMIB.keys()):
+            if self.recordMIB[key] < -1:
+                if verbose:
+                    print("[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key]))
+                failures += 1
+            if self.updateMIB[key] < -1:
+                if verbose:
+                    print("[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key]))
+                failures += 1
+                
+        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
+            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0]))
+                failures += 1
+            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1]))
+                failures += 1
+            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
+                failures += 1
+            if len(self.observations) > 0:
+                if self.observations[0].mode in ('TBF', 'TBN'):
+                    if verbose:
+                        print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
+                    failures += 1
+                    
+        # Validate beam number
+        if len(self.observations) > 0:
+            if self.observations[0].mode not in ('TBN',):
+                if self.drxBeam == -1:
+                    if verbose:
+                        print("[%i] Error: Beam not assigned for this session" % os.getpid())
+                    failures += 1
+            if self.observations[0].mode ==  'TBF':
+                if self.drxBeam != 1:
+                    if verbose:
+                        print("[%i] Error: TBF can only run on beam 1" % os.getpid())
+                    failures += 1
+                    
+        observationCount = 1
+        for obs in self.observations:
+            if verbose:
+                print("[%i] Validating observation %i" % (os.getpid(), observationCount))
+            
+            if not obs.validate(station=self.station, verbose=verbose):
+                failures += 1
+            totalData += obs.dataVolume
+            
+            observationCount += 1
+
+        # Make sure that the observations don't overlap
+        sObs = self.observations
+        
+        for i in range(len(sObs)):
+            maxOverlaps = 1
+            overlaps = []
+            nOverlaps = 0
+
+            for j in range(len(sObs)):
+                if verbose and i != j:
+                    print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
+
+                cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
+                cStop = cStart + int(sObs[j].dur)
+                pStart = int(sObs[i].mjd)*24*3600*1000 + int(sObs[i].mpm)
+                pStop = pStart + int(sObs[i].dur)
+
+                if pStart >= cStart and pStart < cStop:
+                    nOverlaps += 1
+                    
+                    if i != j:
+                        overlaps.append(j)
+            
+            if nOverlaps > maxOverlaps:
+                if verbose:
+                    print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
+                failures += 1
+            
+        if totalData >= (_DRSUCapacityTB*1024**4):
+            if verbose:
+                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
+            failures += 1
+        
+        if failures == 0:
+            return True
+        else:
+            return False
+
+
 def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     """Given a obs_temp dictionary of observation parameters and, optionally, a list of
     beam_temp step parameters, return a complete Observation object corresponding to 
@@ -2276,11 +1550,11 @@ def parse_sdf(filename, verbose=False):
     project.project_office.observations = [[],]
     
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
-            'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
-            'stpRADec': True, 'tbwBits': 12, 'tbfSamples': 0, 'gain': -1, 
-            'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
-            'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
-            'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}
+                'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
+                'stpRADec': True, 'tbwBits': 12, 'tbfSamples': 0, 'gain': -1, 
+                'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
+                'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
+                'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}
     beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
     beam_temps = []
     

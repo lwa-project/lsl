@@ -133,18 +133,12 @@ class Project(object):
         self.name = name
         self.id = id
         self.comments = comments
-        if runs is None:
-            self.runs = []
-        else:
-            if isinstance(runs, Run):
-                runs = [runs,]
-            elif isinstance(runs, (list, tuple)):
-                for i,sess in enumerate(runs):
-                    if not isinstance(sess, Run):
-                        raise TypeError("Expected index %i of 'runs' to be an Run" % i)
+        self.runs = sdf._TypedParentList(Run, self)
+        if runs is not None:
+            if isinstance(runs, (list, tuple)):
+                self.runs.extend(runs)
             else:
-                raise TypeError("Expected 'runs' to be either a tuple or list of Run or a Run")
-            self.runs = runs
+                self.runs.append(runs)
         if project_office is None:
             self.project_office = ProjectOffice()
         else:
@@ -469,18 +463,12 @@ class Run(object):
     def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, corr_channels=256, corr_inttime=1.0, corr_basis='linear', stations=get_full_stations()):
         self.name = name
         self.id = int(id)
-        if scans is None:
-            self.scans = []
-        else:
-            if isinstance(scans, Scan):
-                scans = [scans,]
-            elif isinstance(scans, (tuple, list)):
-                for i,obs in enumerate(scans):
-                    if not isinstance(obs, Scan):
-                        raise TypeError("Expected index %i of 'obsevations' to be an Scan" % i)
+        self.scans = sdf._TypedParentList(Scan, self)
+        if scans is not None:
+            if isinstance(scans, (tuple, list)):
+                self.scans.extend(scans)
             else:
-                raise TypeError("Expected 'scans' to be either a tuple or list of Scans of an Scan")
-            self.scans = scans
+                self.scans.append(scans)
         self.data_return_method = data_return_method
         self.ucfuser = None
         self.comments = comments
@@ -548,7 +536,6 @@ class Run(object):
         """Update the various scans in the run."""
         
         for obs in self.scans:
-            obs._parent = weakref.proxy(self)
             obs.update()
             
     def validate(self, verbose=False):

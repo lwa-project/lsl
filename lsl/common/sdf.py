@@ -303,6 +303,52 @@ def parse_time(s, station=lwa1):
     return dtObject.astimezone(_UTC)
 
 
+class _TypedParentList(list):
+    """
+    Sub-class of list that restrictes the list's contents to certain object 
+    types.  Plus, it allows the entries to have a _parent reference that points
+    back to who owns the list.
+    """
+    
+    def __init__(self, allowed_types, parent, iterable=None):
+        if not isinstance(allowed_types, (list, tuple)):
+            allowed_types = [allowed_types,]
+        self.allowed_types = tuple(allowed_types)
+        self.parent = weakref.proxy(parent)
+        
+        if iterable is not None:
+            if not all([isinstance(value, self.allowed_types) for value in iterable]):
+                raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            list.extend(self, iterable)
+            
+    def append(self, value):
+        if isinstance(value, self.allowed_types):
+            value._parent = self.parent
+            list.append(self, value)
+        else:
+            raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            
+    def extend(self, values):
+        if all([isinstance(value, self.allowed_types) for value in values]):
+            for value in values:
+                value._parent = self.parent
+            list.extend(self, values)
+            
+    def insert(self, index, value):
+        if isinstance(value, self.allowed_types):
+            value._parent = self.parent
+            list.insert(self, index, value)
+        else:
+            raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            
+    def __setitem__(self, index, value):
+        if isinstance(value, self.allowed_types):
+            value._parent = self.parent
+            list.__setitem__(self, index, value)
+        else:
+            raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            
+
 class Observer(object):
     """Class to hold information about an observer."""
     
@@ -358,18 +404,12 @@ class Project(object):
         self.name = name
         self.id = id
         self.comments = comments
-        if sessions is None:
-            self.sessions = []
-        else:
-            if isinstance(sessions, Session):
-                sessions = [sessions,]
-            elif isinstance(sessions, (list, tuple)):
-                for i,sess in enumerate(sessions):
-                    if not isinstance(sess, Session):
-                        raise TypeError("Expected index %i of 'sessions' to be a Session" % i)
+        self.sessions = _TypedParentList(Session, self)
+        if sessions is not None:
+            if isinstance(sessions, (list, tuple)):
+                self.sessions.extend(sessions)
             else:
-                raise TypeError("Expected 'sessions' to be either a tuple or list of Sessions or a Session")
-            self.sessions = sessions
+                self.sessions.append(sessions)
         if project_office is None:
             self.project_office = ProjectOffice()
         else:
@@ -387,6 +427,8 @@ class Project(object):
         """Examine all of the sessions and all of their observations to check
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
+        
+        self.update()
         
         failures = 0
         sessionCount = 1
@@ -698,319 +740,6 @@ class Project(object):
             fh.write(output)
 
 
-class Session(object):
-    """Class to hold all of the observations in a session."""
-    
-    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwa1):
-        self.name = name
-        self.id = int(id)
-        if observations is None:
-            self.observations = []
-        else:
-            if isinstance(observations, Observation):
-                observations = [observations,]
-            elif isinstance(observations, (tuple, list)):
-                for i,obs in enumerate(observations):
-                    if not isinstance(obs, Observation):
-                        raise TypeError("Expected index %i of 'obsevations' to be an Observation" % i)
-            else:
-                raise TypeError("Expected 'observations' to be either a tuple or list of Observations of an Observation")
-            self.observations = observations
-        self.data_return_method = data_return_method
-        self.ucfuser = None
-        self.comments = comments
-        
-        self.cra = 0
-        self.drxBeam = -1
-        self.spcSetup = [0, 0]
-        self.spcMetatag = None
-        
-        self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        
-        self.logScheduler = False
-        self.logExecutive = False
-        
-        self.includeStationStatic = False
-        self.includeDesign = False
-        
-        self.station = station
-        
-    def set_station(self, station):
-        """
-        Update the station used by the project for source computations.
-        
-        .. versionadded:: 1.2.0
-        """
-        
-        if station.interface.sdf != 'lsl.common.sdf':
-            raise RuntimeError("Incompatible station: expected %s, got %s" % \
-                            (station.interface.sdf, 'lsl.common.sdf'))
-            
-        self.station = station
-        self.update()
-        
-    def append(self, newObservation):
-        """Add a new Observation to the list of observations."""
-        
-        if not isinstance(newObservation, Observation):
-            raise TypeError("Expected an Observation")
-        self.observations.append(newObservation)
-        
-    def set_configuration_authority(self, value):
-        """Set the configuration request authority to a particular value in the range of
-        0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
-        parameters."""
-        
-        self.cra = int(value)
-        
-    def set_drx_beam(self, value):
-        """Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
-        
-        self.drxBeam = int(value)
-        
-    def set_spectrometer_channels(self, value):
-        """Set the number of spectrometer channels to generate, 0 to disable."""
-        
-        self.spcSetup[0] = int(value)
-        
-    def set_spectrometer_integration(self, value):
-        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
-        
-        self.spcSetup[1] = int(value)
-        
-    def set_spectrometer_metatag(self, value):
-        """Set the spectrometer metatag, '' to disable."""
-        
-        if value == '' or value is None:
-            self.spcMetatag = None
-        else:
-            self.spcMetatag = value
-            if self.spcMetatag[0] != '{':
-                self.spcMetatag = '{'+self.spcMetatag
-            if self.spcMetatag[-1] != '}':
-                self.spcMetatag = self.spcMetatag+'}'
-                
-    def set_mib_record_interval(self, component, interval):
-        """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
-        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
-        specified.
-        
-        Special Values are:
-         * -1 = use the MCS default interval
-         * 0 = never record the MIB entries (the entries are still updated, however)
-        """
-        
-        self.recordMIB[component] = int(interval)
-        
-    def set_mib_update_interval(self, component, interval):
-        """Set the update interval for one of the level-1 subsystems (ASP, DP_, etc.) to 
-        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
-        specified.
-        
-        Special Values are:
-         * -1 = use the MCS default interval
-         * 0 = request no updates to the MIB entries
-        """
-        
-        self.updateMIB[component] = int(interval)
-        
-    def set_data_return_method(self, method):
-        """Set the data return method for the session.  Valid values are: UCF, DRSU, and 
-        'USB Harddrives'."""
-        
-        if method not in ('UCF', 'DRSU', 'USB Harddrives'):
-            raise ValueError("Unknown data return method: %s" % method)
-            
-        self.data_return_method = method
-        
-    def set_ucf_username(self, username):
-        """Set the username to use for UCF data copies."""
-        
-        self.ucfuser = username
-        
-    def update(self):
-        """Update the various observations in the session."""
-        
-        for obs in self.observations:
-            obs._parent = weakref.proxy(self)
-            obs.update()
-            
-    def validate(self, verbose=False):
-        """Examine all of the observations associated with the session to check
-        for validity.  If everything is valid, return True.  Otherwise, return
-        False."""
-        
-        self.update()
-        
-        failures = 0
-        totalData = 0.0
-        if self.id < 1 or self.id > 9999:
-            if verbose:
-                print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
-            failures += 1
-            
-        if self.cra < 0 or self.cra > 65535:
-            if verbose:
-                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
-            failures += 1
-        if self.drxBeam not in (-1, 1, 2, 3, 4):
-            if verbose:
-                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
-            failures += 1
-        for key in list(self.recordMIB.keys()):
-            if self.recordMIB[key] < -1:
-                if verbose:
-                    print("[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key]))
-                failures += 1
-            if self.updateMIB[key] < -1:
-                if verbose:
-                    print("[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key]))
-                failures += 1
-                
-        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
-            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0]))
-                failures += 1
-            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1]))
-                failures += 1
-            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
-                failures += 1
-            if len(self.observations) > 0:
-                if self.observations[0].mode in ('TBW', 'TBN'):
-                    if verbose:
-                        print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
-                    failures += 1
-                    
-        # Validate beam number
-        if len(self.observations) > 0:
-            if self.observations[0].mode not in ('TBW', 'TBN'):
-                if self.drxBeam == -1:
-                    if verbose:
-                        print("[%i] Error: Beam not assigned for this session" % os.getpid())
-                    failures += 1
-                    
-        observationCount = 1
-        for obs in self.observations:
-            if verbose:
-                print("[%i] Validating observation %i" % (os.getpid(), observationCount))
-            
-            if not obs.validate(station=self.station, verbose=verbose):
-                failures += 1
-            totalData += obs.dataVolume
-            
-            observationCount += 1
-
-        # Make sure that the observations don't overlap
-        sObs = self.observations
-        
-        for i in range(len(sObs)):
-            maxOverlaps = 1
-            overlaps = []
-            nOverlaps = 0
-
-            for j in range(len(sObs)):
-                if verbose and i != j:
-                    print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
-
-                cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
-                cStop = cStart + int(sObs[j].dur)
-                pStart = int(sObs[i].mjd)*24*3600*1000 + int(sObs[i].mpm)
-                pStop = pStart + int(sObs[i].dur)
-
-                if pStart >= cStart and pStart < cStop:
-                    nOverlaps += 1
-                    
-                    if i != j:
-                        overlaps.append(j)
-            
-            if nOverlaps > maxOverlaps:
-                if verbose:
-                    print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
-                failures += 1
-            
-        if totalData >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
-            failures += 1
-        
-        if failures == 0:
-            return True
-        else:
-            return False
-            
-    def __eq__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf == startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __lt__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf < startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-
-
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
@@ -1158,7 +887,7 @@ class Observation(object):
         """Place holder for functions that return the estimate size of the data
         set being defined by the observation."""
         
-        pass
+        raise NotImplementedError
     
     def get_fixed_body(self):
         """Place holder for functions that return ephem.Body objects (or None)
@@ -1176,7 +905,7 @@ class Observation(object):
         """Place holder for functions that evaluate the observation and return True 
         if it is valid, False otherwise."""
         
-        pass
+        raise NotImplementedError
         
     def __eq__(self, other):
         if isinstance(other, Observation):
@@ -1691,18 +1420,12 @@ class Stepped(Observation):
     
     def __init__(self, name, target, start, filter, steps=None, is_radec=True, gain=-1, comments=None):
         self.is_radec = bool(is_radec)
-        if steps is None:
-            self.steps = []
-        else:
-            if isinstance(steps, BeamStep):
-                steps = [steps,]
-            elif isinstance(steps, (tuple, list)):
-                for i,step in enumerate(steps):
-                    if not isinstance(step, BeamStep):
-                        raise TypeError("Expected index %i of 'steps' to be a BeamStep" % i)
+        self.steps = _TypedParentList(BeamStep, self)
+        if steps is not None:
+            if isinstance(steps, (tuple, list)):
+                self.steps.extend(steps)
             else:
-                raise TypeError("Expected 'steps' to be either a tuple or list of BeamSteps or a BeamStep")
-            self.steps = steps
+                self.steps.append(steps)
         self.filter_codes = DRXFilters
         Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
@@ -2127,6 +1850,317 @@ class BeamStep(object):
             return True
         else:
             return False
+
+
+class Session(object):
+    """Class to hold all of the observations in a session."""
+    
+    _allowed_modes = (TBW, TBN, _DRXBase, Stepped)
+    _allowed_beams = (-1, 1, 2, 3, 4)
+    
+    _parent = None
+    
+    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwa1):
+        self.name = name
+        self.id = int(id)
+        self.observations = _TypedParentList(self._allowed_modes, self)
+        if observations is not None:
+            if isinstance(observations, (tuple, list)):
+                self.observations.extend(observations)
+            else:
+                self.observations.append(observations)
+        self.data_return_method = data_return_method
+        self.ucfuser = None
+        self.comments = comments
+        
+        self.cra = 0
+        self.drxBeam = -1
+        self.spcSetup = [0, 0]
+        self.spcMetatag = None
+        
+        self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        
+        self.logScheduler = False
+        self.logExecutive = False
+        
+        self.includeStationStatic = False
+        self.includeDesign = False
+        
+        self.station = station
+        
+    def set_station(self, station):
+        """
+        Update the station used by the project for source computations.
+        
+        .. versionadded:: 1.2.0
+        """
+        
+        if station.interface.sdf != 'lsl.common.sdf':
+            raise RuntimeError("Incompatible station: expected %s, got %s" % \
+                            (station.interface.sdf, 'lsl.common.sdf'))
+            
+        self.station = station
+        self.update()
+        
+    def append(self, newObservation):
+        """Add a new Observation to the list of observations."""
+        
+        if not isinstance(newObservation, Observation):
+            raise TypeError("Expected an Observation")
+        self.observations.append(newObservation)
+        
+    def set_configuration_authority(self, value):
+        """Set the configuration request authority to a particular value in the range of
+        0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
+        parameters."""
+        
+        self.cra = int(value)
+        
+    def set_drx_beam(self, value):
+        """Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
+        
+        self.drxBeam = int(value)
+        
+    def set_spectrometer_channels(self, value):
+        """Set the number of spectrometer channels to generate, 0 to disable."""
+        
+        self.spcSetup[0] = int(value)
+        
+    def set_spectrometer_integration(self, value):
+        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
+        
+        self.spcSetup[1] = int(value)
+        
+    def set_spectrometer_metatag(self, value):
+        """Set the spectrometer metatag, '' to disable."""
+        
+        if value == '' or value is None:
+            self.spcMetatag = None
+        else:
+            self.spcMetatag = value
+            if self.spcMetatag[0] != '{':
+                self.spcMetatag = '{'+self.spcMetatag
+            if self.spcMetatag[-1] != '}':
+                self.spcMetatag = self.spcMetatag+'}'
+                
+    def set_mib_record_interval(self, component, interval):
+        """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
+        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
+        specified.
+        
+        Special Values are:
+         * -1 = use the MCS default interval
+         * 0 = never record the MIB entries (the entries are still updated, however)
+        """
+        
+        self.recordMIB[component] = int(interval)
+        
+    def set_mib_update_interval(self, component, interval):
+        """Set the update interval for one of the level-1 subsystems (ASP, DP_, etc.) to 
+        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
+        specified.
+        
+        Special Values are:
+         * -1 = use the MCS default interval
+         * 0 = request no updates to the MIB entries
+        """
+        
+        self.updateMIB[component] = int(interval)
+        
+    def set_data_return_method(self, method):
+        """Set the data return method for the session.  Valid values are: UCF, DRSU, and 
+        'USB Harddrives'."""
+        
+        if method not in ('UCF', 'DRSU', 'USB Harddrives'):
+            raise ValueError("Unknown data return method: %s" % method)
+            
+        self.data_return_method = method
+        
+    def set_ucf_username(self, username):
+        """Set the username to use for UCF data copies."""
+        
+        self.ucfuser = username
+        
+    def update(self):
+        """Update the various observations in the session."""
+        
+        for obs in self.observations:
+            obs.update()
+            
+    def validate(self, verbose=False):
+        """Examine all of the observations associated with the session to check
+        for validity.  If everything is valid, return True.  Otherwise, return
+        False."""
+        
+        self.update()
+        
+        failures = 0
+        totalData = 0.0
+        if self.id < 1 or self.id > 9999:
+            if verbose:
+                print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
+            failures += 1
+            
+        if self.cra < 0 or self.cra > 65535:
+            if verbose:
+                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
+            failures += 1
+        if self.drxBeam not in self._allowed_beams:
+            if verbose:
+                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
+            failures += 1
+        for key in list(self.recordMIB.keys()):
+            if self.recordMIB[key] < -1:
+                if verbose:
+                    print("[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key]))
+                failures += 1
+            if self.updateMIB[key] < -1:
+                if verbose:
+                    print("[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key]))
+                failures += 1
+                
+        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
+            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0]))
+                failures += 1
+            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1]))
+                failures += 1
+            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
+                failures += 1
+            if len(self.observations) > 0:
+                if self.observations[0].mode in ('TBW', 'TBN'):
+                    if verbose:
+                        print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
+                    failures += 1
+                    
+        # Validate beam number
+        if len(self.observations) > 0:
+            if self.observations[0].mode not in ('TBW', 'TBN'):
+                if self.drxBeam == -1:
+                    if verbose:
+                        print("[%i] Error: Beam not assigned for this session" % os.getpid())
+                    failures += 1
+                    
+        observationCount = 1
+        for obs in self.observations:
+            if verbose:
+                print("[%i] Validating observation %i" % (os.getpid(), observationCount))
+            
+            if not obs.validate(station=self.station, verbose=verbose):
+                failures += 1
+            totalData += obs.dataVolume
+            
+            observationCount += 1
+
+        # Make sure that the observations don't overlap
+        sObs = self.observations
+        
+        for i in range(len(sObs)):
+            maxOverlaps = 1
+            overlaps = []
+            nOverlaps = 0
+
+            for j in range(len(sObs)):
+                if verbose and i != j:
+                    print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
+
+                cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
+                cStop = cStart + int(sObs[j].dur)
+                pStart = int(sObs[i].mjd)*24*3600*1000 + int(sObs[i].mpm)
+                pStop = pStart + int(sObs[i].dur)
+
+                if pStart >= cStart and pStart < cStop:
+                    nOverlaps += 1
+                    
+                    if i != j:
+                        overlaps.append(j)
+            
+            if nOverlaps > maxOverlaps:
+                if verbose:
+                    print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
+                failures += 1
+            
+        if totalData >= (_DRSUCapacityTB*1024**4):
+            if verbose:
+                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
+            failures += 1
+        
+        if failures == 0:
+            return True
+        else:
+            return False
+            
+    def __eq__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf != startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __lt__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
