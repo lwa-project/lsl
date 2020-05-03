@@ -499,13 +499,15 @@ def get_frames_per_second(filehandle):
                 
     # Pull out the mode
     mode = {}
-    for key,value in cur.iteritems():
+    for key in cur.keys():
+        value = cur[key]
         try:
             mode[value] += 1
         except KeyError:
             mode[value] = 1
     best, bestValue = 0, 0
-    for key,value in mode.iteritems():
+    for key in mode.keys():
+        value = mode[key]
         if value > bestValue:
             best = key
             bestValue = value
