@@ -38,6 +38,7 @@ from lsl.common.adp import fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
+from lsl.reader.base import FrameTimestamp
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -589,22 +590,51 @@ class TBNFile(LDPFileBase):
             than to the start of the file
         """
         
-        # Find out where we really are taking into account the buffering
-        buffer_offset = 0
+        # Figure out how far we need to offset inside the file
+        junkFrame = tbn.read_frame(self.fh)
+        self.fh.seek(-tbn.FRAME_SIZE, 1)
+        
+        # Get the initial time
+        t0 = junkFrame.time
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
-            if curr is None:
-                frame = tbn.read_frame(self.fh)
-                self.fh.seek(-tbn.FRAME_SIZE, 1)
-                curr = frame.payload.time_time
-            buffer_offset = curr - self._timetag
-            buffer_offset = buffer_offset / fS
-            
-        offset = offset - buffer_offset
-        frameOffset = int(offset * self.description['sample_rate'] / 512 * self.description['nantenna'])
-        frameOffset = int(1.0 * frameOffset / self.description['nantenna']) * self.description['nantenna']
-        self.fh.seek(frameOffset*tbn.FRAME_SIZE, 1)
+            if curr is not None:
+                t0 = FrameTimestamp.from_dp_timetag(curr)
+                
+        # Offset in frames
+        ioffset = int(offset * self.description['sample_rate'] / 512 * self.description['nantenna'])
+        ioffset = int(1.0 * ioffset / self.description['nantenna']) * self.description['nantenna']
+        self.fh.seek(ioffset*tbn.FRAME_SIZE, 1)
         
+        # Iterate on the offsets until we reach the right point in the file.  This
+        # is needed to deal with files that start with only one tuning and/or a 
+        # different sample rate.  
+        while True:
+            junkFrame = tbn.read_frame(self.fh)
+            self.fh.seek(-tbn.FRAME_SIZE, 1)
+            
+            ## Figure out where in the file we are and what the current tuning/sample 
+            ## rate is
+            t1 = junkFrame.time
+            ## See how far off the current frame is from the target
+            tDiff = (t1 - t0) - offset
+            
+            ## Eighth that to come up with a new seek parameter
+            tCorr   = -tDiff / 8.0
+            cOffset = int(tCorr * self.description['sample_rate'] / 512 * self.description['nantenna'])
+            cOffset = int(1.0 * cOffset / self.description['nantenna']) * self.description['nantenna']
+            ioffset += cOffset
+            
+            ## If the offset is zero, we are done.  Otherwise, apply the offset
+            ## and check the location in the file again/
+            if cOffset is 0:
+                break
+            try:
+                self.fh.seek(cOffset*tbn.FRAME_SIZE, 1)
+            except IOError:
+                warnings.warn("Could not find the correct offset, giving up", RuntimeWarning)
+                break
+                
         # Update the file metadata
         self._describe_file()
         
@@ -615,7 +645,7 @@ class TBNFile(LDPFileBase):
         # Reset the timetag checker
         self._timetag = None
         
-        return 1.0 * frameOffset / self.description['nantenna'] * 512 / self.description['sample_rate']
+        return t1 - t0
         
     def read_frame(self):
         """
@@ -800,9 +830,12 @@ class TBNFile(LDPFileBase):
                     s,p = cFrame.id
                     aStand = 2*(s-1) + p
                     
-                    data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.data )
-                    count[aStand] +=  1
-                    
+                    try:
+                        data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.data )
+                        count[aStand] +=  1
+                    except ValueError:
+                        pass
+                        
         # Statistics
         rv = norm()
         frac = rv.cdf(sigma) - rv.cdf(-sigma)
@@ -931,8 +964,7 @@ class DRXFile(LDPFileBase):
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
             if curr is not None:
-                ti0 = (curr - junkFrame.header.time_offset) // int(fS)
-                tf0 = ((curr - junkFrame.header.time_offset) % int(fS)) / fS
+                t0 = FrameTimestamp.from_dp_timetag(curr, junkFrame.header.time_offset)
         sample_rate = junkFrame.sample_rate
         beampols = drx.get_frames_per_obs(self.fh)
         beampols = sum(beampols)
@@ -957,7 +989,7 @@ class DRXFile(LDPFileBase):
             beampols = sum(beampols)
             
             ## See how far off the current frame is from the target
-            tDiff = t1 - (t0 + offset)
+            tDiff = (t1 - t0) - offset
             
             ## Half that to come up with a new seek parameter
             tCorr   = -tDiff / 2.0
