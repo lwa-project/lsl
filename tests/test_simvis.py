@@ -12,6 +12,8 @@ import os
 import unittest
 import numpy
 
+import aipy
+
 from lsl.sim import vis
 from lsl.imaging.data import VisibilityData
 from lsl.common import stations as lwa_common
@@ -54,7 +56,17 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_flat=True)
         aa[0].bm_response((0,0,1), pol='x')
         aa[0].bm_response((0,0,1), pol='y')
-        aa[0].get_beam_shape()
+        bm1 = aa[0].get_beam_shape()
+        
+        az = numpy.zeros((360,90))
+        for i in range(360):
+            az[i,:] = i*numpy.pi/180.0
+        alt = numpy.zeros((360,90))
+        for i in range(90):
+            alt[:,i] = i*numpy.pi/180.0
+        xyz = aipy.coord.azalt2top(numpy.concatenate([[az],[alt]]))
+        bm2 = aa[0].bm_response(xyz, pol='x')
+        numpy.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
         
     def test_build_aa_gaussian(self):
         """Test building a antenna array object with Gaussian sky response."""
@@ -66,7 +78,17 @@ class simvis_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_gaussian=True)
         aa[0].bm_response((0,0,1), pol='x')
         aa[0].bm_response((0,0,1), pol='y')
-        aa[0].get_beam_shape()
+        bm1 = aa[0].get_beam_shape()
+        
+        az = numpy.zeros((360,90))
+        for i in range(360):
+            az[i,:] = i*numpy.pi/180.0
+        alt = numpy.zeros((360,90))
+        for i in range(90):
+            alt[:,i] = i*numpy.pi/180.0
+        xyz = aipy.coord.azalt2top(numpy.concatenate([[az],[alt]]))
+        bm2 = aa[0].bm_response(xyz, pol='x')
+        numpy.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
         
     def test_build_aa(self):
         """Test building a antenna array object with realistic sky response."""

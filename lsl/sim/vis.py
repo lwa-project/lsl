@@ -234,7 +234,7 @@ class BeamAlm(aipy.amp.BeamAlm):
                 self.alm[-1-c].set_data(coeffs[c])
         self._update_hmap()
         
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.BeamAlm.response function.
         
@@ -265,18 +265,18 @@ class BeamAlm(aipy.amp.BeamAlm):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -310,7 +310,7 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         aipy.phs.Beam.__init__(self, freqs)
         self.xwidth, self.ywidth = xwidth, ywidth
         
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
         
@@ -341,18 +341,18 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -383,7 +383,7 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
         self.poly = poly_azfreq
         self._update_sigma()
         
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
         
@@ -423,18 +423,18 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -452,7 +452,7 @@ class Beam(aipy.amp.Beam):
     beam response at all points.
     """
     
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam.response function.
         
@@ -478,18 +478,18 @@ class Beam(aipy.amp.Beam):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
