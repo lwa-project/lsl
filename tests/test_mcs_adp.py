@@ -58,31 +58,31 @@ class mcs_adp_tests(unittest.TestCase):
         """Test valid summary values"""
         
         for i in range(0, 6+1):
-            mcs.summary_to_string(i)
-        self.assertRaises(ValueError, mcs.summary_to_string, 7)
+            mcsADP.summary_to_string(i)
+        self.assertRaises(ValueError, mcsADP.summary_to_string, 7)
         
     def test_sid_limits(self):
         """Test valid subsystem ID values"""
         
         for i in range(1, 19+1):
-            mcs.sid_to_string(i)
-        self.assertRaises(ValueError, mcs.sid_to_string, 0)
-        self.assertRaises(ValueError, mcs.sid_to_string, 20)
+            mcsADP.sid_to_string(i)
+        self.assertRaises(ValueError, mcsADP.sid_to_string, 0)
+        self.assertRaises(ValueError, mcsADP.sid_to_string, 20)
         
     def test_cid_limits(self):
         """Test valid command ID values"""
         
         for i in range(0, 41+1):
-            mcs.cid_to_string(i)
-        self.assertRaises(ValueError, mcs.cid_to_string, 42)
+            mcsADP.cid_to_string(i)
+        self.assertRaises(ValueError, mcsADP.cid_to_string, 42)
         
     def test_mode_limits(self):
         """Test valid observing mode values"""
         
         for i in range(1, 8+1):
-            mcs.mode_to_string(i)
-        self.assertRaises(ValueError, mcs.mode_to_string, 0)
-        self.assertRaises(ValueError, mcs.mode_to_string, 9)
+            mcsADP.mode_to_string(i)
+        self.assertRaises(ValueError, mcsADP.mode_to_string, 0)
+        self.assertRaises(ValueError, mcsADP.mode_to_string, 9)
         
     def test_pointing_correction(self):
         """Test the pointing correction function"""
