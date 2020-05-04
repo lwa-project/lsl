@@ -677,7 +677,7 @@ def sid_to_string(sid):
     Convert a MCS subsystem ID code into a string.
     """
     
-    if sid > 0 and sid < 9:
+    if sid > 0 and sid <= 9:
         return "Null subsystem #%i" % sid
     elif sid == 10:
         return "MCS"
