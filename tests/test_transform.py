@@ -37,6 +37,18 @@ class transform_tests(unittest.TestCase):
         self.assertEqual(t0.utc_mcs, (56300, 5025000))
         self.assertAlmostEqual(t0.utc_dp/196e6, 1357608225.0, 3)
         
+        t1 = transform.Time((56300, 5026000), format='MCS')
+        self.assertEqual(t1.utc_str, '2013-01-08 01:23:46.000')
+        self.assertAlmostEqual(t1.utc_dp/196e6, 1357608226.0, 3)
+        
+        t2 = transform.Time(1357608224.0, format='TIMET')
+        self.assertEqual(t2.utc_str, '2013-01-08 01:23:44.000')
+        self.assertEqual(t2.utc_mcs, (56300, 5024000))
+        
+        t3 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        t3.utc_mcs = (56300, 5024000)
+        self.assertEqual(t3.utc_str, '2013-01-08 01:23:44.000')
+        
     def test_planetaryposition_init(self):
         """Test the transform.PlanetaryPosition constructor."""
         
@@ -119,6 +131,21 @@ class transform_tests(unittest.TestCase):
         
         self.assertAlmostEqual(p0.apparent_equ(t0)[0], sol.g_ra *180.0/math.pi, 4)
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sol.g_dec*180.0/math.pi, 4)
+        
+    def test_planetaryposition_moon(self):
+        """Test the location of the Moon."""
+        
+        t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        
+        obs = lwa1.get_observer()
+        obs.date = t0.utc_str
+        lun = ephem.Moon()
+        lun.compute(obs)
+        
+        p0 = transform.PlanetaryPosition('Moon')
+        
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], lun.g_ra *180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], lun.g_dec*180.0/math.pi, 4)
         
     def test_geographicalposition_init(self):
         """Test the transform.GeographicalPosition constructor."""
