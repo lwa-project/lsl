@@ -30,6 +30,9 @@ class transform_tests(unittest.TestCase):
         """Test the transform.Time constructor."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        str(t0)
+        repr(t0)
+        
         self.assertEqual(t0.utc_str, '2013-01-08 01:23:45.000')
         self.assertEqual(t0.utc_mcs, (56300, 5025000))
         self.assertAlmostEqual(t0.utc_dp/196e6, 1357608225.0, 3)
@@ -39,6 +42,8 @@ class transform_tests(unittest.TestCase):
         
         p0 = transform.PlanetaryPosition('Jupiter')
         p1 = transform.PlanetaryPosition('Sun')
+        str(p0)
+        repr(p0)
         
     def test_planetaryposition_saturn(self):
         """Test the location of Saturn."""
@@ -123,6 +128,8 @@ class transform_tests(unittest.TestCase):
         elv = lwa1.elev
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
+        str(g0)
+        repr(g0)
         
     def test_geographicalposition_ecef(self):
         """Test the tranform.GeographicalPosition EC-EF transform."""
@@ -164,6 +171,8 @@ class transform_tests(unittest.TestCase):
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
         p0 = transform.PlanetaryPosition('Jupiter')
+        str(p0)
+        repr(p0)
         
         d0 = transform.PointingDirection(p0, g0)
         
@@ -183,11 +192,13 @@ class transform_tests(unittest.TestCase):
         g0 = transform.GeographicalPosition([lon,lat,elv])
         p0 = transform.PlanetaryPosition('Jupiter')
         d0 = transform.PointingDirection(p0, g0)
+        str(d0)
+        repr(d0)
         
-        self.assertAlmostEqual(d0.hrz(t0)[0], jove.az *180.0/math.pi, 1)
-        self.assertAlmostEqual(d0.hrz(t0)[1], jove.alt*180.0/math.pi, 1)
+        self.assertAlmostEqual(d0.hrz(t0)[0], jove.az *180.0/math.pi, 0)
+        self.assertAlmostEqual(d0.hrz(t0)[1], jove.alt*180.0/math.pi, 0)
         
-    def test_pointingdirection_azalt(self):
+    def test_pointingdirection_rst(self):
         """Test the transform.PointingDirection az/alt transform."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')

@@ -51,7 +51,14 @@ class astro_tests(unittest.TestCase):
             
         self.assertRaises(ValueError, astro.hms, 30, 0, 0)
         self.assertRaises(ValueError, astro.hms, 0, 90, 0)
-        self.assertRaises(ValueError, astro.hms, 0, 0, 100) 
+        self.assertRaises(ValueError, astro.hms, 0, 0, 100)
+        
+    def test_hms_string(self):
+        """Test astro.hms string representations."""
+        
+        h = astro.hms(3, 42, 20.3242)
+        str(h)
+        repr(h)
         
     def test_hms_reduce(self):
         """Test astro.hms.__reduce__() method."""
@@ -131,6 +138,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.dms, False, 400, 0, 0)
         self.assertRaises(ValueError, astro.dms, False, 0, 80, 0)
         self.assertRaises(ValueError, astro.dms, False, 0, 0, 500)
+        
+    def test_dms_string(self):
+        """Test astro.dms string representations."""
+        
+        d = astro.dms(True, 1, 30, 29.3245)
+        str(d)
+        repr(d)
         
     def test_dms_reduce(self):
         """Test astro.dms.__reduce__() method."""
@@ -264,6 +278,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 69, 0)
         self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 0, 73)
         
+    def tet_date_string(self):
+        """Test astro.date string representation."""
+        
+        d = astro.date(2000, 4, 28, 21, 49, 13.0238)
+        str(d)
+        repr(d)
+        
     def test_date_reduce(self):
         """Test astro.date.__reduce__() method."""
         
@@ -317,6 +338,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 39, 0, 0, 0)
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 69, 0, 0)
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 0, 73, 0)
+        
+    def test_zonedata_string(self):
+        """Test astro.zonedata string representations."""
+        
+        d = astro.zonedate(2000, 4, 28, 21, 49, 13.0238, -3600 * 5)
+        str(d)
+        repr(d)
         
     def test_zonedate_reduce(self):
         """Test astro.zonedate reduce method."""
@@ -539,6 +567,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.equ_posn, 0, 100)
         self.assertRaises(ValueError, astro.equ_posn, 0, -100)
         
+    def test_equ_posn_string(self):
+        """Test astro.equ_posn string representations."""
+        
+        e = astro.equ_posn(39.221, -24.543)
+        str(e)
+        repr(e)
+        
     def test_equ_posn_reduce(self):
         """Test astro.equ_posn.__reduce__() method."""
         
@@ -596,6 +631,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.hrz_posn, 0, 100)
         self.assertRaises(ValueError, astro.hrz_posn, 0, -100)
         
+    def test_hrz_posn_string(self):
+        """Test astro.hrz_posn string representations."""
+        
+        h = astro.hrz_posn(39.221, 46.301)
+        str(h)
+        repr(h)
+        
     def test_hrz_posn_reduce(self):
         """Test astro.hrz_posn.__reduce__() method."""
         
@@ -649,6 +691,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.gal_posn, -400, 0)
         self.assertRaises(ValueError, astro.gal_posn, 0, 100)
         self.assertRaises(ValueError, astro.gal_posn, 0, -100)
+        
+    def test_gal_posn_string(self):
+        """Test astro.gal_posn string representations."""
+        
+        g = astro.gal_posn(39.221, -24.543)
+        str(g)
+        repr(g)
         
     def test_gal_posn_reduce(self):
         """Test astro.gal_posn.__reduce__() method."""
@@ -715,6 +764,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.geo_posn, 0, 100)
         self.assertRaises(ValueError, astro.geo_posn, 0, -100)
         
+    def test_geo_posn_string(self):
+        """Test astro.geo_posn string representations."""
+        
+        g = astro.geo_posn(39.221, -24.543, 2000.345)
+        str(g)
+        repr(g)
+        
     def test_geo_posn_reduce(self):
         """Test astro.geo_posn.__reduce__() method."""
         
@@ -771,6 +827,13 @@ class astro_tests(unittest.TestCase):
         self.assertAlmostEqual(r.X, 2.409)
         self.assertAlmostEqual(r.Y, 9.324)
         self.assertAlmostEqual(r.Z, 4.442)
+        
+    def test_rect_posn_string(self):
+        """Test astro.rect_posn string representations."""
+        
+        r = astro.rect_posn(2.409, 9.324, 4.442)
+        str(r)
+        repr(r)
         
     def test_rect_posn_reduce(self):
         """Test astro.rect_posn pickle.__reduce__() method."""
@@ -921,6 +984,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.nutation, 0, 0, 100)
         self.assertRaises(ValueError, astro.nutation, 0, 0, -100)
         
+    def test_nutation_string(self):
+        """Test astro.nutation string representations."""
+        
+        n = astro.nutation(0.0234, -0.0421, 23.5656)
+        str(n)
+        repr(n)
+        
     def test_get_nutation(self):
         """Test astro.get_nutation() function."""
         
@@ -1001,6 +1071,16 @@ class astro_tests(unittest.TestCase):
         self.assertAlmostEqual(rst.rise, rise)
         self.assertAlmostEqual(rst.transit, transit)
         self.assertAlmostEqual(rst.set, set)
+        
+    def test_rst_time_string(self):
+        """Test astro.rst_time string representations."""
+        
+        rise = self.times[0].to_jd()
+        transit = self.times[1].to_jd()
+        set = self.times[2].to_jd()
+        rst = astro.rst_time(rise, set, transit)
+        str(rst)
+        repr(rst)
         
     def test_get_object_rst(self):
         """Test astro.get_object_rst() function."""
