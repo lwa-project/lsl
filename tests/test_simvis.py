@@ -46,6 +46,9 @@ class simvis_tests(unittest.TestCase):
         aa.set_unixtime(1588026422.0)
         iss.compute(aa)
         
+        iss.get_crds('eq')
+        iss.get_crds('top')
+        
     def test_build_aa_flat(self):
         """Test building a antenna array object with uniform sky response."""
         
