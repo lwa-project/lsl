@@ -352,11 +352,11 @@ class imaging_tests(unittest.TestCase):
         fits.write()
         
         # Compress
-        compressFile = os.path.splitexit(testFile)[0]+'.tar.gz'
-        subprocess.check_call(['tar', 'czf', compressFile, testFile])
+        compressedFile = os.path.splitext(testFile)[0]+'.tar.gz'
+        subprocess.check_call(['tar', 'czf', compressedFile, testFile])
         
         # Open the measurement set
-        ms = utils.CorrelatedDataMS(compressFile)
+        ms = utils.CorrelatedDataMS(compressedFile)
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
