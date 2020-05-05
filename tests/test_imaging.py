@@ -15,6 +15,7 @@ import numpy
 import shutil
 import tempfile
 import unittest
+import subprocess
 
 from lsl import astro
 from lsl.common.paths import DATA_BUILD
@@ -322,6 +323,40 @@ class imaging_tests(unittest.TestCase):
         
         # Open the measurement set
         ms = utils.CorrelatedDataMS(testFile)
+        self.assertEqual(ms.freq.size, 2*data['freq'].size)
+        ds = ms.get_data_set(1, include_auto=True)
+        
+        for i in range(len(data['bl'])):
+            for j in range(data['freq'].size):
+                self.assertAlmostEqual(ds.XX.data[i,j], data['vis'][i,j], 6)
+                self.assertAlmostEqual(ds.XX.data[i,j+data['freq'].size], 10*data['vis'][i,j], 6)
+                
+    @unittest.skipUnless(run_ms_tests, "requires the 'casacore' module")
+    def test_CorrelatedDataMS_compressed(self):
+        """Test the utils.CorrelatedDataMS class on a compressed file."""
+        
+        # Get some data
+        data = self.__initData()
+        
+        # Filename and time
+        testTime, testFile = time.time(), os.path.join(self.testPath, 'ms-test-MultiIF.ms')
+        
+        # Start the file
+        fits = Ms(testFile, ref_time=testTime, overwrite=True)
+        fits.set_stokes(['xx'])
+        fits.set_frequency(data['freq'])
+        fits.set_frequency(data['freq']+30e6)
+        fits.set_geometry(data['site'], data['antennas'])
+        fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
+                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+        fits.write()
+        
+        # Compress
+        compressFile = os.path.splitexit(testFile)[0]+'.tar.gz'
+        subprocess.check_call(['tar', 'czf', compressFile, testFile])
+        
+        # Open the measurement set
+        ms = utils.CorrelatedDataMS(compressFile)
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
