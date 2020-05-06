@@ -32,12 +32,13 @@ inline void blas_dotc_sub(const int N,
                           const IType* X, const int incX, 
                           const IType* Y, const int incY,
                           OType* dotc) {
-    *dotc = 0.0;
+    std::complex<double> accum = 0.0;
     for(int i=0; i<N; i++) {
-        *dotc += conj(*X) * *Y;
+        accum += conj(*X) * *Y;
         X += incX;
         Y += incY;
     }
+    *dotc = (OType) accum;
     
     /* Was:
      *  cblas_cdotc_sub(N, X, incX, Y, incY, dotc);
