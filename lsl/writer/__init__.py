@@ -7,10 +7,3 @@ Formats include:
  * measurmentset - CASA MS writer also for storing correlator output, and
  * vdif          - write data to the VLBI Data Interchange Format.
 """
-
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    

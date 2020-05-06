@@ -51,7 +51,7 @@ import copy
 import math
 import pytz
 import ephem
-from functools import total_ordering
+import weakref
 from datetime import datetime, timedelta
 
 from astropy.time import Time as AstroTime
@@ -59,6 +59,7 @@ from astropy.time import Time as AstroTime
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
+from lsl.common.color import colorfy
 
 from lsl.common.mcs import LWA_MAX_NSTD
 from lsl.common.dp import freq_to_word, word_to_freq
@@ -302,6 +303,59 @@ def parse_time(s, station=lwa1):
     return dtObject.astimezone(_UTC)
 
 
+class _TypedParentList(list):
+    """
+    Sub-class of list that restrictes the list's contents to certain object 
+    types.  Plus, it allows the entries to have a _parent reference that points
+    back to who owns the list.
+    """
+    
+    def __init__(self, allowed_types, parent=None, iterable=None):
+        if not isinstance(allowed_types, (list, tuple)):
+            allowed_types = [allowed_types,]
+        self.allowed_types = tuple(allowed_types)
+        if parent is not None:
+            self.parent = weakref.proxy(parent)
+        else:
+            self.parent = None
+            
+        if iterable is not None:
+            if not all([isinstance(value, self.allowed_types) for value in iterable]):
+                raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            list.extend(self, iterable)
+            
+    def append(self, value):
+        if isinstance(value, self.allowed_types):
+            if self.parent is not None:
+                value._parent = self.parent
+            list.append(self, value)
+        else:
+            raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            
+    def extend(self, values):
+        if all([isinstance(value, self.allowed_types) for value in values]):
+            if self.parent is not None:
+                for value in values:
+                    value._parent = self.parent
+            list.extend(self, values)
+            
+    def insert(self, index, value):
+        if isinstance(value, self.allowed_types):
+            if self.parent is not None:
+                value._parent = self.parent
+            list.insert(self, index, value)
+        else:
+            raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            
+    def __setitem__(self, index, value):
+        if isinstance(value, self.allowed_types):
+            if self.parent is not None:
+                value._parent = self.parent
+            list.__setitem__(self, index, value)
+        else:
+            raise TypeError("Expected one of: %s" % (', '.join([t.__name__ for t in self.allowed_types])))
+            
+
 class Observer(object):
     """Class to hold information about an observer."""
     
@@ -357,18 +411,12 @@ class Project(object):
         self.name = name
         self.id = id
         self.comments = comments
-        if sessions is None:
-            self.sessions = []
-        else:
-            if isinstance(sessions, Session):
-                sessions = [sessions,]
-            elif isinstance(sessions, (list, tuple)):
-                for i,sess in enumerate(sessions):
-                    if not isinstance(sess, Session):
-                        raise TypeError("Expected index %i of 'sessions' to be a Session" % i)
+        self.sessions = _TypedParentList(Session, self)
+        if sessions is not None:
+            if isinstance(sessions, (list, tuple)):
+                self.sessions.extend(sessions)
             else:
-                raise TypeError("Expected 'sessions' to be either a tuple or list of Sessions or a Session")
-            self.sessions = sessions
+                self.sessions.append(sessions)
         if project_office is None:
             self.project_office = ProjectOffice()
         else:
@@ -387,8 +435,15 @@ class Project(object):
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
         
+        self.update()
+        
         failures = 0
         sessionCount = 1
+        if len(self.id) > 8:
+            if verbose:
+                print("[%i] Project ID is too long" % (os.getpid(),))
+            failures += 1
+            
         for session in self.sessions:
             if verbose:
                 print("[%i] Validating session %i" % (os.getpid(), sessionCount))
@@ -406,7 +461,8 @@ class Project(object):
         else:
             return False
             
-    def _render_file_size(self, size):
+    @staticmethod
+    def _render_file_size(size):
         """Convert a file size in bytes to a easy-to-use string."""
         
         units = 'B'
@@ -425,7 +481,8 @@ class Project(object):
             
         return "%.2f %s" % (size, units)
         
-    def _render_bandwidth(self, filter, filter_codes):
+    @staticmethod
+    def _render_bandwidth(filter, filter_codes):
         """Convert a filter number to an easy-to-use string."""
         
         if filter_codes[filter] > 1e6:
@@ -438,8 +495,6 @@ class Project(object):
     def append(self, newSession):
         """Add a new Session to the list of sessions."""
         
-        if not isinstance(newSession, Session):
-            raise TypeError('Expected a Session instance')
         self.sessions.append(newSession)
         
     def render(self, session=0, verbose=False):
@@ -680,279 +735,18 @@ class Project(object):
             
         return output
         
-    def writeto(self, filename, session=0, verbose=False, clobber=False):
+    def writeto(self, filename, session=0, verbose=False, overwrite=False):
         """Create a session definition file that corresponds to the specified 
         session and write it to the provided filename."""
         
-        if os.path.exists(filename) and not clobber:
+        if os.path.exists(filename) and not overwrite:
             raise RuntimeError("'%s' already exists" % filename)
             
         output = self.render(session=session, verbose=verbose)
-        fh = open(filename, 'w')
-        fh.write(output)
-        fh.close()
+        with open(filename, 'w') as fh:
+            fh.write(output)
 
 
-@total_ordering
-class Session(object):
-    """Class to hold all of the observations in a session."""
-    
-    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwa1):
-        self.name = name
-        self.id = int(id)
-        if observations is None:
-            self.observations = []
-        else:
-            if isinstance(observations, Observation):
-                observations = [observations,]
-            elif isinstance(observations, (tuple, list)):
-                for i,obs in enumerate(observations):
-                    if not isinstance(obs, Observation):
-                        raise TypeError("Expected index %i of 'obsevations' to be an Observation" % i)
-            else:
-                raise TypeError("Expected 'observations' to be either a tuple or list of Observations of an Observation")
-            self.observations = observations
-        self.data_return_method = data_return_method
-        self.ucfuser = None
-        self.comments = comments
-        
-        self.cra = 0
-        self.drxBeam = -1
-        self.spcSetup = [0, 0]
-        self.spcMetatag = None
-        
-        self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        
-        self.logScheduler = False
-        self.logExecutive = False
-        
-        self.includeStationStatic = False
-        self.includeDesign = False
-        
-        self.station = station
-        
-    def set_station(self, station):
-        """
-        Update the station used by the project for source computations.
-        
-        .. versionadded:: 1.2.0
-        """
-        
-        if station.interface.sdf != 'lsl.common.sdf':
-            raise RuntimeError("Incompatible station: expected %s, got %s" % \
-                            (station.interface.sdf, 'lsl.common.sdf'))
-            
-        self.station = station
-        self.update()
-        
-    def append(self, newObservation):
-        """Add a new Observation to the list of observations."""
-        
-        if not isinstance(newObservation, Observation):
-            raise TypeError("Expected an Observation")
-        self.observations.append(newObservation)
-        
-    def set_configuration_authority(self, value):
-        """Set the configuration request authority to a particular value in the range of
-        0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
-        parameters."""
-        
-        self.cra = int(value)
-        
-    def set_drx_beam(self, value):
-        """Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
-        
-        self.drxBeam = int(value)
-        
-    def set_spectrometer_channels(self, value):
-        """Set the number of spectrometer channels to generate, 0 to disable."""
-        
-        self.spcSetup[0] = int(value)
-        
-    def set_spectrometer_integration(self, value):
-        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
-        
-        self.spcSetup[1] = int(value)
-        
-    def set_spectrometer_metatag(self, value):
-        """Set the spectrometer metatag, '' to disable."""
-        
-        if value == '' or value is None:
-            self.spcMetatag = None
-        else:
-            self.spcMetatag = value
-            if self.spcMetatag[0] != '{':
-                self.spcMetatag = '{'+self.spcMetatag
-            if self.spcMetatag[-1] != '}':
-                self.spcMetatag = self.spcMetatag+'}'
-                
-    def set_mib_record_interval(self, component, interval):
-        """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
-        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
-        specified.
-        
-        Special Values are:
-         * -1 = use the MCS default interval
-         * 0 = never record the MIB entries (the entries are still updated, however)
-        """
-        
-        self.recordMIB[component] = int(interval)
-        
-    def set_mib_update_interval(self, component, interval):
-        """Set the update interval for one of the level-1 subsystems (ASP, DP_, etc.) to 
-        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
-        specified.
-        
-        Special Values are:
-         * -1 = use the MCS default interval
-         * 0 = request no updates to the MIB entries
-        """
-        
-        self.updateMIB[component] = int(interval)
-        
-    def set_data_return_method(self, method):
-        """Set the data return method for the session.  Valid values are: UCF, DRSU, and 
-        'USB Harddrives'."""
-        
-        if method not in ('UCF', 'DRSU', 'USB Harddrives'):
-            raise ValueError("Unknown data return method: %s" % method)
-            
-        self.data_return_method = method
-        
-    def set_ucf_username(self, username):
-        """Set the username to use for UCF data copies."""
-        
-        self.ucfuser = username
-        
-    def update(self):
-        """Update the various observations in the session."""
-        
-        for obs in self.observations:
-            obs.update()
-            
-    def validate(self, verbose=False):
-        """Examine all of the observations associated with the session to check
-        for validity.  If everything is valid, return True.  Otherwise, return
-        False."""
-        
-        failures = 0
-        totalData = 0.0
-        if self.cra < 0 or self.cra > 65535:
-            if verbose:
-                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
-            failures += 1
-        if self.drxBeam not in (-1, 1, 2, 3, 4):
-            if verbose:
-                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
-            failures += 1
-        for key in list(self.recordMIB.keys()):
-            if self.recordMIB[key] < -1:
-                if verbose:
-                    print("[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key]))
-                failures += 1
-            if self.updateMIB[key] < -1:
-                if verbose:
-                    print("[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key]))
-                failures += 1
-                
-        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
-            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0]))
-                failures += 1
-            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1]))
-                failures += 1
-            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
-                if verbose:
-                    print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
-                failures += 1
-            if len(self.observations) > 0:
-                if self.observations[0].mode in ('TBW', 'TBN'):
-                    if verbose:
-                        print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
-                    failures += 1
-                    
-        # Validate beam number
-        if len(self.observations) > 0:
-            if self.observations[0].mode not in ('TBW', 'TBN'):
-                if self.drxBeam == -1:
-                    if verbose:
-                        print("[%i] Error: Beam not assigned for this session" % os.getpid())
-                    failures += 1
-                    
-        observationCount = 1
-        for obs in self.observations:
-            if verbose:
-                print("[%i] Validating observation %i" % (os.getpid(), observationCount))
-            
-            if not obs.validate(station=self.station, verbose=verbose):
-                failures += 1
-            totalData += obs.dataVolume
-            
-            observationCount += 1
-
-        # Make sure that the observations don't overlap
-        sObs = self.observations
-        
-        for i in range(len(sObs)):
-            maxOverlaps = 1
-            overlaps = []
-            nOverlaps = 0
-
-            for j in range(len(sObs)):
-                if verbose and i != j:
-                    print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
-
-                cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
-                cStop = cStart + int(sObs[j].dur)
-                pStart = int(sObs[i].mjd)*24*3600*1000 + int(sObs[i].mpm)
-                pStop = pStart + int(sObs[i].dur)
-
-                if pStart >= cStart and pStart < cStop:
-                    nOverlaps += 1
-                    
-                    if i != j:
-                        overlaps.append(j)
-            
-            if nOverlaps > maxOverlaps:
-                if verbose:
-                    print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
-                failures += 1
-            
-        if totalData >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
-            failures += 1
-        
-        if failures == 0:
-            return True
-        else:
-            return False
-            
-    def __cmp__(self, other):
-        self.observations.sort()
-        other.observations.sort()
-        
-        startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-        startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
-        else:
-            return 0
-            
-    def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
-    def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-
-
-@total_ordering
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
@@ -961,6 +755,8 @@ class Observation(object):
     .. versionchanged:: 1.0.0
         Added support for RA/dec values as ephem.hours/ephem.degrees instances
     """
+    
+    _parent = None
     
     id = 1
 
@@ -1035,7 +831,10 @@ class Observation(object):
         """Return the modified Julian Date corresponding to the date/time of the
         self.start string."""
         
-        utc = parse_time(self.start)		## TODO:  We need to get the station informaiton here somehow
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        utc = parse_time(self.start, station=station)
         utc = Time(utc, format=Time.FORMAT_PY_DATE)
         return int(utc.utc_mjd)
 
@@ -1043,7 +842,10 @@ class Observation(object):
         """Return the number of milliseconds between the date/time specified in the
         self.start string and the previous UT midnight."""
         
-        utc = parse_time(self.start)		## TODO:  We need to get the station informaiton here somehow
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        utc = parse_time(self.start, station=station)
         utcMidnight = datetime(utc.year, utc.month, utc.day, 0, 0, 0, tzinfo=_UTC)
         diff = utc - utcMidnight
         return int(round((diff.seconds + diff.microseconds/1000000.0)*1000.0))
@@ -1092,7 +894,7 @@ class Observation(object):
         """Place holder for functions that return the estimate size of the data
         set being defined by the observation."""
         
-        pass
+        raise NotImplementedError
     
     def get_fixed_body(self):
         """Place holder for functions that return ephem.Body objects (or None)
@@ -1100,33 +902,65 @@ class Observation(object):
         
         return None
     
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Place holder for functions that return the fractional visibility of the 
         target during the observation period."""
         
         return 1.0
     
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Place holder for functions that evaluate the observation and return True 
         if it is valid, False otherwise."""
         
-        pass
-    
-    def __cmp__(self, other):
-        startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-        startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
-        else:
-            return 0
-            
-    def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
+        raise NotImplementedError
         
+    def __eq__(self, other):
+        if isinstance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isinstance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf != startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isinstance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isinstance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
+        if isinstance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isinstance(other, Observation):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 class TBW(Observation):
@@ -1189,9 +1023,11 @@ class TBW(Observation):
         nBytes = nFrames * TBWSize * LWA_MAX_NSTD
         return nBytes
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
+        
+        self.update()
         
         failures = 0
         # Basic - Sample size and data bits agreement
@@ -1272,7 +1108,7 @@ class TBN(Observation):
         nBytes = nFrames * TBNSize * LWA_MAX_NSTD * 2
         return nBytes
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise.
         
@@ -1280,13 +1116,20 @@ class TBN(Observation):
             This version of sdf allows for TBN tuning between 5 and 93 MHz.
         """
         
+        self.update()
+        
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        backend = station.interface.get_module('backend')
+        
         failures = 0
         # Basic - Duration, frequency, and filter code values
         if self.dur < 1:
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
             failures += 1
-        if self.freq1 < 109565492 or self.freq1 > 2037918156:
+        if self.freq1 < backend.TBN_TUNING_WORD_MIN or self.freq1 > backend.TBN_TUNING_WORD_MAX:
             if verbose:
                 print("[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid())
             failures += 1
@@ -1338,7 +1181,7 @@ class _DRXBase(Observation):
         self.frequency2 = float(frequency2)
         self.update()
         
-    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X', station=lwa1):
+    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X'):
         """Convert the current observation to a 'beam-dipole mode' 
         observation with the specified stand.  Setting the stand to zero
         will disable the 'beam-dipole mode' for this observation'.
@@ -1349,17 +1192,15 @@ class _DRXBase(Observation):
          * dipole_gain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
          * pol - Polarization to record  default: "X"
-         * station - lsl.common.stations instance to use for mapping
-                     default: lsl.common.stations.lwa1
         """
         
         # Validate
         if stand < 0 or stand > LWA_MAX_NSTD:
             raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
         if beam_gain < 0.0 or beam_gain > 1.0:
-            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0" % beam_gain)
+            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0")
         if dipole_gain < 0.0 or dipole_gain > 1.0:
-            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0" % beam_gain)
+            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0")
         if pol.upper() not in ('X', 'Y'):
             raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
         
@@ -1369,6 +1210,10 @@ class _DRXBase(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
+            station = lwa1
+            if self._parent is not None:
+                station = self._parent.station
+                
             for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
@@ -1383,11 +1228,21 @@ class _DRXBase(Observation):
         """
         
         try:
-            nFrames = self.get_duration()/1000.0 * self.filter_codes[self.filter] / 4096
+            sample_rate = self.filter_codes[self.filter]
         except KeyError:
-            nFrames = 0
-        nBytes = nFrames * DRXSize * 4
-        return nBytes
+            sample_rate = 0.0
+            
+        data_rate = DRXSize * 4 * sample_rate / 4096
+        if self._parent is not None:
+            nchan, nwin = self._parent.spcSetup
+            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            SPCSize = 76 + nchan*2*nprod*4
+            try:
+                data_rate = SPCSize * sample_rate / (nchan*nwin)
+            except ZeroDivisionError:
+                pass
+                
+        return self.get_duration()/1000.0 * data_rate
         
     def get_fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
@@ -1399,10 +1254,14 @@ class _DRXBase(Observation):
         pnt._epoch = ephem.J2000
         return pnt
         
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+            
         pnt = self.get_fixed_body()
         
         vis = 0
@@ -1420,9 +1279,16 @@ class _DRXBase(Observation):
         
         return float(vis)/float(cnt)
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
+        
+        self.update()
+        
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        backend = station.interface.get_module('backend')
         
         failures = 0
         # Basic - Duration, frequency, and filter code values
@@ -1430,11 +1296,11 @@ class _DRXBase(Observation):
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
             failures += 1
-        if self.freq1 < 219130984 or self.freq1 > 1928352663:
+        if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
             failures += 1
-        if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+        if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
@@ -1452,9 +1318,9 @@ class _DRXBase(Observation):
             if verbose:
                 print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
             failures += 1
-        if self.compute_visibility(station=station) < 1.0:
+        if self.compute_visibility() < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility(station=station)*100.0))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
             failures += 1
             
         # Advanced - Data Volume
@@ -1583,18 +1449,12 @@ class Stepped(Observation):
     
     def __init__(self, name, target, start, filter, steps=None, is_radec=True, gain=-1, comments=None):
         self.is_radec = bool(is_radec)
-        if steps is None:
-            self.steps = []
-        else:
-            if isinstance(steps, BeamStep):
-                steps = [steps,]
-            elif isinstance(steps, (tuple, list)):
-                for i,step in enumerate(steps):
-                    if not isinstance(step, BeamStep):
-                        raise TypeError("Expected index %i of 'steps' to be a BeamStep" % i)
+        self.steps = _TypedParentList(BeamStep, self)
+        if steps is not None:
+            if isinstance(steps, (tuple, list)):
+                self.steps.extend(steps)
             else:
-                raise TypeError("Expected 'steps' to be either a tuple or list of BeamSteps or a BeamStep")
-            self.steps = steps
+                self.steps.append(steps)
         self.filter_codes = DRXFilters
         Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
@@ -1648,12 +1508,10 @@ class Stepped(Observation):
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
         
-        if not isinstance(newStep, BeamStep):
-            raise TypeError('Expected a BeamStep')
         self.steps.append(newStep)
         self.update()
         
-    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X', station=lwa1):
+    def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X'):
         """Convert the current observation to a 'beam-dipole mode' 
         observation with the specified stand.  Setting the stand to zero
         will disable the 'beam-dipole mode' for this observation'.
@@ -1664,17 +1522,15 @@ class Stepped(Observation):
          * dipole_gain - BAM gain to use for the single dipole
                         default: 1.0; range: 0.0 to 1.0
          * pol - Polarization to record  default: "X"
-         * station - lsl.common.stations instance to use for mapping
-                     default: lsl.common.stations.lwa1
         """
         
         # Validate
         if stand < 0 or stand > LWA_MAX_NSTD:
             raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
         if beam_gain < 0.0 or beam_gain > 1.0:
-            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0" % beam_gain)
+            raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0")
         if dipole_gain < 0.0 or dipole_gain > 1.0:
-            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0" % beam_gain)
+            raise ValueError("Dipole BAM gain is out of range: 0.0 <= dipole_gain <= 1.0")
         if pol.upper() not in ('X', 'Y'):
             raise ValueError("Unknown polarization.  Valid values are 'X' and 'Y'")
         
@@ -1684,6 +1540,10 @@ class Stepped(Observation):
             self.beamDipole = None
         else:
             ## Stand -> DP Stand
+            station = lwa1
+            if self._parent is not None:
+                station = self._parent.station
+                
             for ant in station.antennas:
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
@@ -1700,15 +1560,32 @@ class Stepped(Observation):
         dur = 0
         for step in self.steps:
             dur += step.dur
-        nFrames = dur/1000.0 * self.filter_codes[self.filter] / 4096
+            
+        try:
+            sample_rate = self.filter_codes[self.filter]
+        except KeyError:
+            sample_rate = 0.0
+            
+        data_rate = DRXSize * 4 * sample_rate / 4096
+        if self._parent is not None:
+            nchan, nwin = self._parent.spcSetup
+            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            SPCSize = 76 + nchan*2*nprod*4
+            try:
+                data_rate = SPCSize * sample_rate / (nchan*nwin)
+            except ZeroDivisionError:
+                pass
+                
+        return dur/1000.0 * data_rate
         
-        nBytes = nFrames * DRXSize * 4
-        return nBytes
-        
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+            
         pnt = self.get_fixed_body()
         
         vis = 0
@@ -1737,9 +1614,11 @@ class Stepped(Observation):
             
         return float(vis)/float(cnt)
         
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
+        
+        self.update()
         
         failures = 0
         # Basic - filter setup
@@ -1753,7 +1632,7 @@ class Stepped(Observation):
         for step in self.steps:
             if verbose:
                 print("[%i] Validating step %i" % (os.getpid(), stepCount))
-            if not step.validate(station=station, verbose=verbose):
+            if not step.validate(verbose=verbose):
                 failures += 1
             if step.is_radec != self.is_radec:
                 if verbose:
@@ -1763,9 +1642,9 @@ class Stepped(Observation):
             stepCount += 1
             
         # Advanced - Target Visibility
-        if self.compute_visibility(station=station) < 1.0:
+        if self.compute_visibility() < 1.0:
             if verbose:
-                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility(station=station)*100.0))
+                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
             failures += 1
             
         # Advanced - Data Volume
@@ -1945,13 +1824,22 @@ class BeamStep(object):
             
         return pnt
             
-    def validate(self, station=lwa1, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the step and return True if it is valid, False otherwise."""
+        
+        self.update()
+        
+        station = lwa1
+        if self._parent is not None:
+            if self._parent._parent is not None:
+                station = self._parent._parent.station
+        mandc = station.interface.get_module('mcs')
+        backend = station.interface.get_module('backend')
         
         failures = 0
         # Basic - Delay and gain settings are correctly configured
         if self.delays is not None:
-            if len(self.delays) != 2*LWA_MAX_NSTD:
+            if len(self.delays) != 2*mandc.LWA_MAX_NSTD:
                 failures += 1
                 if verbose:
                     print("[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid())
@@ -1960,7 +1848,7 @@ class BeamStep(object):
                 if verbose:
                     print("[%i] Error: Delays specified but gains were not" % os.getpid())
         if self.gains is not None:
-            if len(self.gains) != LWA_MAX_NSTD:
+            if len(self.gains) != mandc.LWA_MAX_NSTD:
                 failures += 1
                 if verbose:
                     print("[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid())
@@ -1974,11 +1862,11 @@ class BeamStep(object):
                 print("[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur))
             failures += 1
         # Basic - Frequency and filter code values
-        if self.freq1 < 219130984 or self.freq1 > 1928352663:
+        if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
             failures += 1
-        if (self.freq2 < 219130984 or self.freq2 > 1928352663) and self.freq2 != 0:
+        if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
@@ -2006,6 +1894,316 @@ class BeamStep(object):
             return True
         else:
             return False
+
+
+class Session(object):
+    """Class to hold all of the observations in a session."""
+    
+    _allowed_modes = (TBW, TBN, _DRXBase, Stepped)
+    
+    _parent = None
+    
+    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwa1):
+        self.name = name
+        self.id = int(id)
+        self.observations = _TypedParentList(self._allowed_modes, self)
+        if observations is not None:
+            if isinstance(observations, (tuple, list)):
+                self.observations.extend(observations)
+            else:
+                self.observations.append(observations)
+        self.data_return_method = data_return_method
+        self.ucfuser = None
+        self.comments = comments
+        
+        self.cra = 0
+        self.drxBeam = -1
+        self.spcSetup = [0, 0]
+        self.spcMetatag = None
+        
+        self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        
+        self.logScheduler = False
+        self.logExecutive = False
+        
+        self.includeStationStatic = False
+        self.includeDesign = False
+        
+        self.station = station
+        
+    def set_station(self, station):
+        """
+        Update the station used by the project for source computations.
+        
+        .. versionadded:: 1.2.0
+        """
+        
+        if station.interface.sdf != 'lsl.common.sdf':
+            raise RuntimeError("Incompatible station: expected %s, got %s" % \
+                            (station.interface.sdf, 'lsl.common.sdf'))
+            
+        self.station = station
+        self.update()
+        
+    def append(self, newObservation):
+        """Add a new Observation to the list of observations."""
+        
+        self.observations.append(newObservation)
+        
+    def set_configuration_authority(self, value):
+        """Set the configuration request authority to a particular value in the range of
+        0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
+        parameters."""
+        
+        self.cra = int(value)
+        
+    def set_drx_beam(self, value):
+        """Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
+        
+        self.drxBeam = int(value)
+        
+    def set_spectrometer_channels(self, value):
+        """Set the number of spectrometer channels to generate, 0 to disable."""
+        
+        self.spcSetup[0] = int(value)
+        
+    def set_spectrometer_integration(self, value):
+        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
+        
+        self.spcSetup[1] = int(value)
+        
+    def set_spectrometer_metatag(self, value):
+        """Set the spectrometer metatag, '' to disable."""
+        
+        if value == '' or value is None:
+            self.spcMetatag = None
+        else:
+            self.spcMetatag = value
+            if self.spcMetatag[0] != '{':
+                self.spcMetatag = '{'+self.spcMetatag
+            if self.spcMetatag[-1] != '}':
+                self.spcMetatag = self.spcMetatag+'}'
+                
+    def set_mib_record_interval(self, component, interval):
+        """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
+        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
+        specified.
+        
+        Special Values are:
+         * -1 = use the MCS default interval
+         * 0 = never record the MIB entries (the entries are still updated, however)
+        """
+        
+        self.recordMIB[component] = int(interval)
+        
+    def set_mib_update_interval(self, component, interval):
+        """Set the update interval for one of the level-1 subsystems (ASP, DP_, etc.) to 
+        a particular value in minutes.  A KeyError is raised if an invalid sub-system is
+        specified.
+        
+        Special Values are:
+         * -1 = use the MCS default interval
+         * 0 = request no updates to the MIB entries
+        """
+        
+        self.updateMIB[component] = int(interval)
+        
+    def set_data_return_method(self, method):
+        """Set the data return method for the session.  Valid values are: UCF, DRSU, and 
+        'USB Harddrives'."""
+        
+        if method not in ('UCF', 'DRSU', 'USB Harddrives'):
+            raise ValueError("Unknown data return method: %s" % method)
+            
+        self.data_return_method = method
+        
+    def set_ucf_username(self, username):
+        """Set the username to use for UCF data copies."""
+        
+        self.ucfuser = username
+        
+    def update(self):
+        """Update the various observations in the session."""
+        
+        for obs in self.observations:
+            obs.update()
+            
+    def validate(self, verbose=False):
+        """Examine all of the observations associated with the session to check
+        for validity.  If everything is valid, return True.  Otherwise, return
+        False."""
+        
+        self.update()
+        
+        backend = self.station.interface.get_module('backend')
+        
+        failures = 0
+        totalData = 0.0
+        if self.id < 1 or self.id > 9999:
+            if verbose:
+                print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
+            failures += 1
+            
+        if self.cra < 0 or self.cra > 65535:
+            if verbose:
+                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
+            failures += 1
+        if self.drxBeam != -1 and self.drxBeam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
+            if verbose:
+                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
+            failures += 1
+        for key in list(self.recordMIB.keys()):
+            if self.recordMIB[key] < -1:
+                if verbose:
+                    print("[%i] Error: Invalid recording interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.recordMIB[key]))
+                failures += 1
+            if self.updateMIB[key] < -1:
+                if verbose:
+                    print("[%i] Error: Invalid update interval for '%s' MIB entry '%i'" % (os.getpid(), key, self.updateMIB[key]))
+                failures += 1
+                
+        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
+            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer channel count '%i'" % (os.getpid(), self.spcSetup[0]))
+                failures += 1
+            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer integration count '%i'" % (os.getpid(), self.spcSetup[1]))
+                failures += 1
+            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+                if verbose:
+                    print("[%i] Error: Invalid DR spectrometer mode '%s'" % (os.getpid(), self.spcMetatag))
+                failures += 1
+            if len(self.observations) > 0:
+                if self.observations[0].mode in ('TBW', 'TBN'):
+                    if verbose:
+                        print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
+                    failures += 1
+                    
+        # Validate beam number
+        if len(self.observations) > 0:
+            if self.observations[0].mode not in ('TBW', 'TBN'):
+                if self.drxBeam == -1:
+                    if verbose:
+                        print("[%i] Error: Beam not assigned for this session" % os.getpid())
+                    failures += 1
+                    
+        observationCount = 1
+        for obs in self.observations:
+            if verbose:
+                print("[%i] Validating observation %i" % (os.getpid(), observationCount))
+            
+            if not obs.validate(verbose=verbose):
+                failures += 1
+            totalData += obs.dataVolume
+            
+            observationCount += 1
+
+        # Make sure that the observations don't overlap
+        sObs = self.observations
+        
+        for i in range(len(sObs)):
+            maxOverlaps = 1
+            overlaps = []
+            nOverlaps = 0
+
+            for j in range(len(sObs)):
+                if verbose and i != j:
+                    print("[%i] Checking for overlap between observations %i and %i" % (os.getpid(), i+1, j+1))
+
+                cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
+                cStop = cStart + int(sObs[j].dur)
+                pStart = int(sObs[i].mjd)*24*3600*1000 + int(sObs[i].mpm)
+                pStop = pStart + int(sObs[i].dur)
+
+                if pStart >= cStart and pStart < cStop:
+                    nOverlaps += 1
+                    
+                    if i != j:
+                        overlaps.append(j)
+            
+            if nOverlaps > maxOverlaps:
+                if verbose:
+                    print("[%i] Error: Observation %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
+                failures += 1
+            
+        if totalData >= (_DRSUCapacityTB*1024**4):
+            if verbose:
+                print("[%i] Error: Total data volume for session exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
+            failures += 1
+        
+        if failures == 0:
+            return True
+        else:
+            return False
+            
+    def __eq__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf != startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __lt__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isinstance(other, Session):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
@@ -2112,9 +2310,6 @@ def parse_sdf(filename, verbose=False):
     that instance.
     """
     
-    # Open the file
-    fh = open(filename, 'r')
-    
     # Create the keyword regular expression to deal with various indicies included 
     # in the keywords
     kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9\+]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?(\[(?P<id4>[0-9]+?)\])?')
@@ -2132,7 +2327,6 @@ def parse_sdf(filename, verbose=False):
     project.project_office.sessions = []
     project.project_office.observations = [[],]
     
-    # Loop over the file
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
                 'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
                 'stpRADec': True, 'tbwBits': 12, 'tbwSamples': 0, 'gain': -1, 
@@ -2142,401 +2336,400 @@ def parse_sdf(filename, verbose=False):
     beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
     beam_temps = []
     
-    for line in fh:
-        # Trim off the newline character and skip blank lines
-        line = line.replace('\n', '')
-        if len(line) == 0 or line.isspace():
-            continue
+    # Loop over the file
+    with open(filename, 'r') as fh:
+        for line in fh:
+            # Trim off the newline character and skip blank lines
+            line = line.replace('\n', '')
+            if len(line) == 0 or line.isspace():
+                continue
             
-        # Split into a keyword, value pair and run it through the regular expression
-        # to deal with any indicies present
-        try:
-            keywordSection, value = line.split(None, 1)
-        except:
-            continue
+            # Split into a keyword, value pair and run it through the regular expression
+            # to deal with any indicies present
+            try:
+                keywordSection, value = line.split(None, 1)
+            except:
+                continue
             
-        mtch = kwdRE.match(keywordSection)
-        keyword = mtch.group('keyword')
+            mtch = kwdRE.match(keywordSection)
+            keyword = mtch.group('keyword')
         
-        ids = [-1, -1, -1, -1]
-        for i in range(4):
-            try:
-                ids[i] = int(mtch.group('id%i' % (i+1)))
-            except TypeError:
-                pass
-                
-        # Skip over the observer comment lines (denoted by a plus sign at the end) 
-        # of the keyword
-        if keyword[-1] == '+':
-            continue
-            
-        # Observer Info
-        if keyword == 'PI_ID':
-            project.observer.id = int(value)
-            continue
-        if keyword == 'PI_NAME':
-            project.observer.name = value
-            project.observer.split_name()
-            continue
-            
-        # Project/Proposal Info
-        if keyword == 'PROJECT_ID':
-            project.id = value
-            continue
-        if keyword == 'PROJECT_TITLE':
-            project.name = value
-            continue
-        if keyword == 'PROJECT_REMPI':
-            project.comments = value
-            continue
-        if keyword == 'PROJECT_REMPO':
-            project.project_office.project = value
-            continue
-            
-        # Session Info
-        if keyword == 'SESSION_ID':
-            project.sessions[0].id = int(value)
-            continue
-        if keyword == 'SESSION_TITLE':
-            project.sessions[0].name = value
-            continue
-        if keyword == 'SESSION_REMPI':
-            mtch = _usernameRE.search(value)
-            if mtch is not None:
-                project.sessions[0].ucfuser = mtch.group('username')
-                if mtch.group('subdir') is not None:
-                    project.sessions[0].ucfuser = os.path.join(project.sessions[0].ucfuser, mtch.group('subdir'))
-            project.sessions[0].comments = value
-            continue
-        if keyword == 'SESSION_REMPO':
-            project.project_office.sessions.append(None)
-            parts = value.split(';;', 1)
-            first = parts[0]
-            try:
-                second = parts[1]
-            except IndexError:
-                second = ''
-                
-            if first[:31] == 'Requested data return method is':
-                # Catch for project office comments that are data return related
-                project.sessions[0].data_return_method = first[32:]
-                project.project_office.sessions[0] = second
-            else:
-                # Catch for standard (not data related) project office comments
-                project.project_office.sessions[0] = value
-            continue
-        if keyword == 'SESSION_CRA':
-            project.sessions[0].cra = int(value)
-            continue
-        if keyword[0:12] == 'SESSION_MRP_':
-            component = keyword[12:]
-            project.sessions[0].recordMIB[component] = int(value)
-            continue
-        if keyword[0:12] == 'SESSION_MUP_':
-            component = keyword[12:]
-            project.sessions[0].updateMIB[component] = int(value)
-            continue
-        if keyword == 'SESSION_LOG_SCH':
-            project.sessions[0].logScheduler = bool(value)
-            continue
-        if keyword == 'SESSION_LOG_EXE':
-            project.sessions[0].logExecutive = bool(value)
-            continue
-        if keyword == 'SESSION_INC_SMIB':
-            project.sessions[0].includeStationStatic = bool(value)
-            continue
-        if keyword == 'SESSION_INC_DES':
-            project.sessions[0].includeDesign = bool(value)
-            continue
-        if keyword == 'SESSION_DRX_BEAM':
-            project.sessions[0].drxBeam = int(value)
-            continue
-        if keyword == 'SESSION_SPC':
-            # Remove the ' marks
-            value = value.replace("'", "")
-            # Excise the metatags
-            mtch = metaRE.search(value)
-            if mtch is not None:
-                metatag = mtch.group(0)
-                value = metaRE.sub('', value)
-            else:
-                metatag = None
-            
-            project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
-            project.sessions[0].spcMetatag = metatag
-            # If the input field is '' the value of spcSetup is [].  This
-            # isn't good for the SDF render so reset [] to [0, 0]
-            if project.sessions[0].spcSetup == []:
-                project.sessions[0].spcSetup = [0, 0]
-                project.sessions[0].spcMetatag = None
-            continue
-            
-        # Observation Info
-        if keyword == 'OBS_ID':
-            if obs_temp['id'] != 0:
-                project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
-                beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
-                beam_temps = []
-            obs_temp['id'] = int(value)
-            project.project_office.observations[0].append( None )
-            
-            if verbose:
-                print("[%i] Started obs %i" % (os.getpid(), int(value)))
-                
-            continue
-        if keyword == 'OBS_TITLE':
-            obs_temp['name'] = value
-            continue
-        if keyword == 'OBS_TARGET':
-            obs_temp['target'] = value
-            continue
-        if keyword == 'OBS_REMPI':
-            obs_temp['comments'] = value
-            continue
-        if keyword == 'OBS_REMPO':
-            project.project_office.observations[0][-1] = value
-            continue
-        if keyword == 'OBS_START_MJD':
-            obs_temp['mjd'] = int(value)
-            continue
-        if keyword == 'OBS_START_MPM':
-            obs_temp['mpm'] = int(value)
-            continue
-        if keyword == 'OBS_DUR':
-            obs_temp['duration'] = int(value)
-            continue
-        if keyword == 'OBS_MODE':
-            obs_temp['mode'] = value
-            continue
-        if keyword == 'OBS_BDM':
-            # Remove the ' marks
-            value = value.replace("'", "")
-            try:
-                stand, beam_gain, dipole_gain, pol = value.lstrip().rstrip().split(None, 3)
-                obs_temp['beamDipole'] = [int(stand), float(beam_gain), float(dipole_gain), pol]
-            except ValueError:
-                pass
-        if keyword == 'OBS_RA':
-            obs_temp['ra'] = float(value)
-            continue
-        if keyword == 'OBS_DEC':
-            obs_temp['dec'] = float(value)
-            continue
-        if keyword == 'OBS_B':
-            if value != 'SIMPLE':
-                obs_temp['MaxSNR'] = True
-            continue
-        if keyword == 'OBS_FREQ1':
-            obs_temp['freq1'] = int(value)
-            continue
-        if keyword == 'OBS_FREQ2':
-            obs_temp['freq2'] = int(value)
-            continue
-        if keyword == 'OBS_BW':
-            obs_temp['filter'] = int(value)
-            continue
-        if keyword == 'OBS_STP_RADEC':
-            obs_temp['stpRADec'] = bool(int(value))
-            continue
-            
-        # Individual Stepped Beam Observations - This is a bit messy because of
-        # trying to keep up when a new step is encountered.  This adds in some 
-        # overhead to all of the steps.
-        if keyword == 'OBS_STP_C1':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c1'] = float(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c1'] = float(value)
-            continue
-            
-        if keyword == 'OBS_STP_C2':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c2'] = float(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['c2'] = float(value)
-            continue
-            
-        if keyword == 'OBS_STP_T':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['duration'] = int(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['duration'] = int(value)
-            continue
-            
-        if keyword == 'OBS_STP_FREQ1':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq1'] = int(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq1'] = int(value)
-            continue
-            
-        if keyword == 'OBS_STP_FREQ2':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq2'] = int(value)
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                beam_temps[-1]['freq2'] = int(value)
-            continue
-            
-        if keyword == 'OBS_STP_B':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                
-                if value in ('MAX_SNR', '2'):
-                    beam_temps[-1]['MaxSNR'] = True
-                    
-                elif value in ('SPEC_DELAYS_GAINS', '3'):
-                    beam_temps[-1]['delays'] = []
-                    beam_temps[-1]['gains'] = []
-                    for bdi in range(2*LWA_MAX_NSTD):
-                        beam_temps[-1]['delays'].append( 0 )
-                        if bdi < LWA_MAX_NSTD:
-                            beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
-                            
-                else:
-                    beam_temps[-1]['MaxSNR'] = False
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                    
-                if value in ('MAX_SNR', '2'):
-                    beam_temps[-1]['MaxSNR'] = True
-                    
-                elif value in ('SPEC_DELAYS_GAINS', '3'):
-                    beam_temps[-1]['delays'] = []
-                    beam_temps[-1]['gains'] = []
-                    for bdi in range(2*LWA_MAX_NSTD):
-                        beam_temps[-1]['delays'].append( 0 )
-                        if bdi < LWA_MAX_NSTD:
-                            beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
-                            
-                else:
-                    beam_temps[-1]['MaxSNR'] = False
-            continue
-            
-        if keyword == 'OBS_BEAM_DELAY':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
+            ids = [-1, -1, -1, -1]
+            for i in range(4):
                 try:
-                    beam_temps[-1]['delays'][ids[1]-1] = int(value)
-                except IndexError:
-                    raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
-                try:
-                    beam_temps[-1]['delays'][ids[1]-1] = int(value)
-                except IndexError:
-                    raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
-            continue
-            
-        if keyword == 'OBS_BEAM_GAIN':
-            if len(beam_temps) == 0:
-                beam_temps.append( copy.deepcopy(beam_temp) )
-                beam_temps[-1]['id'] = ids[0]
-                try:
-                    beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
-                except IndexError:
+                    ids[i] = int(mtch.group('id%i' % (i+1)))
+                except TypeError:
                     pass
-            else:
-                if beam_temps[-1]['id'] != ids[0]:
-                    beam_temps.append( copy.deepcopy(beam_temps[-1]) )
-                    beam_temps[-1]['id'] = ids[0]
+                
+            # Skip over the observer comment lines (denoted by a plus sign at the end) 
+            # of the keyword
+            if keyword[-1] == '+':
+                continue
+            
+            # Observer Info
+            if keyword == 'PI_ID':
+                project.observer.id = int(value)
+                continue
+            if keyword == 'PI_NAME':
+                project.observer.name = value
+                project.observer.split_name()
+                continue
+            
+            # Project/Proposal Info
+            if keyword == 'PROJECT_ID':
+                project.id = value
+                continue
+            if keyword == 'PROJECT_TITLE':
+                project.name = value
+                continue
+            if keyword == 'PROJECT_REMPI':
+                project.comments = value
+                continue
+            if keyword == 'PROJECT_REMPO':
+                project.project_office.project = value
+                continue
+            
+            # Session Info
+            if keyword == 'SESSION_ID':
+                project.sessions[0].id = int(value)
+                continue
+            if keyword == 'SESSION_TITLE':
+                project.sessions[0].name = value
+                continue
+            if keyword == 'SESSION_REMPI':
+                mtch = _usernameRE.search(value)
+                if mtch is not None:
+                    project.sessions[0].ucfuser = mtch.group('username')
+                    if mtch.group('subdir') is not None:
+                        project.sessions[0].ucfuser = os.path.join(project.sessions[0].ucfuser, mtch.group('subdir'))
+                project.sessions[0].comments = value
+                continue
+            if keyword == 'SESSION_REMPO':
+                project.project_office.sessions.append(None)
+                parts = value.split(';;', 1)
+                first = parts[0]
                 try:
-                    beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    second = parts[1]
                 except IndexError:
+                    second = ''
+                
+                if first[:31] == 'Requested data return method is':
+                    # Catch for project office comments that are data return related
+                    project.sessions[0].data_return_method = first[32:]
+                    project.project_office.sessions[0] = second
+                else:
+                    # Catch for standard (not data related) project office comments
+                    project.project_office.sessions[0] = value
+                continue
+            if keyword == 'SESSION_CRA':
+                project.sessions[0].cra = int(value)
+                continue
+            if keyword[0:12] == 'SESSION_MRP_':
+                component = keyword[12:]
+                project.sessions[0].recordMIB[component] = int(value)
+                continue
+            if keyword[0:12] == 'SESSION_MUP_':
+                component = keyword[12:]
+                project.sessions[0].updateMIB[component] = int(value)
+                continue
+            if keyword == 'SESSION_LOG_SCH':
+                project.sessions[0].logScheduler = bool(value)
+                continue
+            if keyword == 'SESSION_LOG_EXE':
+                project.sessions[0].logExecutive = bool(value)
+                continue
+            if keyword == 'SESSION_INC_SMIB':
+                project.sessions[0].includeStationStatic = bool(value)
+                continue
+            if keyword == 'SESSION_INC_DES':
+                project.sessions[0].includeDesign = bool(value)
+                continue
+            if keyword == 'SESSION_DRX_BEAM':
+                project.sessions[0].drxBeam = int(value)
+                continue
+            if keyword == 'SESSION_SPC':
+                # Remove the ' marks
+                value = value.replace("'", "")
+                # Excise the metatags
+                mtch = metaRE.search(value)
+                if mtch is not None:
+                    metatag = mtch.group(0)
+                    value = metaRE.sub('', value)
+                else:
+                    metatag = None
+            
+                project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
+                project.sessions[0].spcMetatag = metatag
+                # If the input field is '' the value of spcSetup is [].  This
+                # isn't good for the SDF render so reset [] to [0, 0]
+                if project.sessions[0].spcSetup == []:
+                    project.sessions[0].spcSetup = [0, 0]
+                    project.sessions[0].spcMetatag = None
+                continue
+            
+            # Observation Info
+            if keyword == 'OBS_ID':
+                if obs_temp['id'] != 0:
+                    project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+                    beam_temps = []
+                obs_temp['id'] = int(value)
+                project.project_office.observations[0].append( None )
+            
+                if verbose:
+                    print("[%i] Started obs %i" % (os.getpid(), int(value)))
+                
+                continue
+            if keyword == 'OBS_TITLE':
+                obs_temp['name'] = value
+                continue
+            if keyword == 'OBS_TARGET':
+                obs_temp['target'] = value
+                continue
+            if keyword == 'OBS_REMPI':
+                obs_temp['comments'] = value
+                continue
+            if keyword == 'OBS_REMPO':
+                project.project_office.observations[0][-1] = value
+                continue
+            if keyword == 'OBS_START_MJD':
+                obs_temp['mjd'] = int(value)
+                continue
+            if keyword == 'OBS_START_MPM':
+                obs_temp['mpm'] = int(value)
+                continue
+            if keyword == 'OBS_DUR':
+                obs_temp['duration'] = int(value)
+                continue
+            if keyword == 'OBS_MODE':
+                obs_temp['mode'] = value
+                continue
+            if keyword == 'OBS_BDM':
+                # Remove the ' marks
+                value = value.replace("'", "")
+                try:
+                    stand, beam_gain, dipole_gain, pol = value.lstrip().rstrip().split(None, 3)
+                    obs_temp['beamDipole'] = [int(stand), float(beam_gain), float(dipole_gain), pol]
+                except ValueError:
                     pass
-            continue
+            if keyword == 'OBS_RA':
+                obs_temp['ra'] = float(value)
+                continue
+            if keyword == 'OBS_DEC':
+                obs_temp['dec'] = float(value)
+                continue
+            if keyword == 'OBS_B':
+                if value != 'SIMPLE':
+                    obs_temp['MaxSNR'] = True
+                continue
+            if keyword == 'OBS_FREQ1':
+                obs_temp['freq1'] = int(value)
+                continue
+            if keyword == 'OBS_FREQ2':
+                obs_temp['freq2'] = int(value)
+                continue
+            if keyword == 'OBS_BW':
+                obs_temp['filter'] = int(value)
+                continue
+            if keyword == 'OBS_STP_RADEC':
+                obs_temp['stpRADec'] = bool(int(value))
+                continue
             
-        # Session wide settings at the end of the observations
-        if keyword == 'OBS_FEE':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['obsFEE'])):
-                    obs_temp['obsFEE'][n][ids[1]-1] = int(value)
-            else:
-                obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_FLT':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspFlt'])):
-                    obs_temp['aspFlt'][n] = int(value)
-            else:
-                obs_temp['aspFlt'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_AT1':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspAT1'])):
-                    obs_temp['aspAT1'][n] = int(value)
-            else:
-                obs_temp['aspAT1'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_AT2':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspAT2'])):
-                    obs_temp['aspAT2'][n] = int(value)
-            else:
-                obs_temp['aspAT2'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_ASP_ATS':
-            if ids[0] == 0:
-                for n in range(len(obs_temp['aspATS'])):
-                    obs_temp['aspATS'][n] = int(value)
-            else:
-                obs_temp['aspATS'][ids[0]-1] = int(value)
-            continue
-        if keyword == 'OBS_TBW_BITS':
-            obs_temp['tbwBits'] = int(value)
-            continue
-        if keyword == 'OBS_TBW_SAMPLES':
-            obs_temp['tbwSamples'] = int(value)
-            continue
-        if keyword == 'OBS_TBN_GAIN':
-            obs_temp['gain'] = int(value)
-            continue
-        if keyword == 'OBS_DRX_GAIN':
-            obs_temp['gain'] = int(value)
-            continue
+            # Individual Stepped Beam Observations - This is a bit messy because of
+            # trying to keep up when a new step is encountered.  This adds in some 
+            # overhead to all of the steps.
+            if keyword == 'OBS_STP_C1':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c1'] = float(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c1'] = float(value)
+                continue
             
-        # Keywords that might indicate this is for ADP-based stations/actually an IDF
-        if keyword in ('OBS_TBF_SAMPLES', 'RUN_ID'):
-            raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+            if keyword == 'OBS_STP_C2':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c2'] = float(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['c2'] = float(value)
+                continue
             
-    # Create the final observation
-    if obs_temp['id'] != 0:
-        project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
-        beam_temps = []
-        
-    # Close the file
-    fh.close()
-    
+            if keyword == 'OBS_STP_T':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['duration'] = int(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['duration'] = int(value)
+                continue
+            
+            if keyword == 'OBS_STP_FREQ1':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq1'] = int(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq1'] = int(value)
+                continue
+            
+            if keyword == 'OBS_STP_FREQ2':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq2'] = int(value)
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    beam_temps[-1]['freq2'] = int(value)
+                continue
+            
+            if keyword == 'OBS_STP_B':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                
+                    if value in ('MAX_SNR', '2'):
+                        beam_temps[-1]['MaxSNR'] = True
+                    
+                    elif value in ('SPEC_DELAYS_GAINS', '3'):
+                        beam_temps[-1]['delays'] = []
+                        beam_temps[-1]['gains'] = []
+                        for bdi in range(2*LWA_MAX_NSTD):
+                            beam_temps[-1]['delays'].append( 0 )
+                            if bdi < LWA_MAX_NSTD:
+                                beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
+                            
+                    else:
+                        beam_temps[-1]['MaxSNR'] = False
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    
+                    if value in ('MAX_SNR', '2'):
+                        beam_temps[-1]['MaxSNR'] = True
+                    
+                    elif value in ('SPEC_DELAYS_GAINS', '3'):
+                        beam_temps[-1]['delays'] = []
+                        beam_temps[-1]['gains'] = []
+                        for bdi in range(2*LWA_MAX_NSTD):
+                            beam_temps[-1]['delays'].append( 0 )
+                            if bdi < LWA_MAX_NSTD:
+                                beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
+                            
+                    else:
+                        beam_temps[-1]['MaxSNR'] = False
+                continue
+            
+            if keyword == 'OBS_BEAM_DELAY':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['delays'][ids[1]-1] = int(value)
+                    except IndexError:
+                        raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['delays'][ids[1]-1] = int(value)
+                    except IndexError:
+                        raise RuntimeError("Invalid index encountered when parsing OBS_BEAM_DELAY")
+                continue
+            
+            if keyword == 'OBS_BEAM_GAIN':
+                if len(beam_temps) == 0:
+                    beam_temps.append( copy.deepcopy(beam_temp) )
+                    beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    except IndexError:
+                        pass
+                else:
+                    if beam_temps[-1]['id'] != ids[0]:
+                        beam_temps.append( copy.deepcopy(beam_temps[-1]) )
+                        beam_temps[-1]['id'] = ids[0]
+                    try:
+                        beam_temps[-1]['gains'][ids[1]-1][ids[2]-1][ids[3]-1] = int(value)
+                    except IndexError:
+                        pass
+                continue
+            
+            # Session wide settings at the end of the observations
+            if keyword == 'OBS_FEE':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['obsFEE'])):
+                        obs_temp['obsFEE'][n][ids[1]-1] = int(value)
+                else:
+                    obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_FLT':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspFlt'])):
+                        obs_temp['aspFlt'][n] = int(value)
+                else:
+                    obs_temp['aspFlt'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_AT1':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspAT1'])):
+                        obs_temp['aspAT1'][n] = int(value)
+                else:
+                    obs_temp['aspAT1'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_AT2':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspAT2'])):
+                        obs_temp['aspAT2'][n] = int(value)
+                else:
+                    obs_temp['aspAT2'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_ASP_ATS':
+                if ids[0] == 0:
+                    for n in range(len(obs_temp['aspATS'])):
+                        obs_temp['aspATS'][n] = int(value)
+                else:
+                    obs_temp['aspATS'][ids[0]-1] = int(value)
+                continue
+            if keyword == 'OBS_TBW_BITS':
+                obs_temp['tbwBits'] = int(value)
+                continue
+            if keyword == 'OBS_TBW_SAMPLES':
+                obs_temp['tbwSamples'] = int(value)
+                continue
+            if keyword == 'OBS_TBN_GAIN':
+                obs_temp['gain'] = int(value)
+                continue
+            if keyword == 'OBS_DRX_GAIN':
+                obs_temp['gain'] = int(value)
+                continue
+            
+            # Keywords that might indicate this is for ADP-based stations/actually an IDF
+            if keyword in ('OBS_TBF_SAMPLES', 'RUN_ID'):
+                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+            
+        # Create the final observation
+        if obs_temp['id'] != 0:
+            project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+            beam_temps = []
+            
     # Return the project
     return project
 
@@ -2587,24 +2780,24 @@ def is_valid(filename, verbose=False):
         proj = parse_sdf(filename)
         passes += 1
         if verbose:
-            print("Parser - OK")
+            print(colorfy("Parser - {{%green OK}}"))
             
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
-                print("Validator - OK")
+                print(colorfy("Validator - {{%green OK}}"))
         else:
             failures += 1
             if verbose:
-                print("Validator - FAILED")
+                print(colorfy("Validator -{{%red {{%bold FAILED}}}}"))
                 
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
-            print("Parser - FAILED")
+            print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
             
     if verbose:
         print("---")

@@ -18,7 +18,7 @@ from lsl.common.paths import DATA_BUILD
 from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
 
 
-__version__  = "0.3"
+__version__  = "0.4"
 __author__    = "Jayce Dowell"
 
 
@@ -96,6 +96,31 @@ class stations_tests(unittest.TestCase):
         # Check independence
         lwasvPrime.antennas[100].stand.id = 888
         self.assertTrue(lwasv.antennas[100].stand.id != lwasvPrime.antennas[100].stand.id)
+        
+    def test_strings(self):
+        """Test string representations in the stations module."""
+        
+        lwa1 = stations.lwa1
+        str(lwa1)
+        repr(lwa1)
+        
+        str(lwa1.antennas[0])
+        repr(lwa1.antennas[0])
+        
+        str(lwa1.antennas[0].fee)
+        repr(lwa1.antennas[0].fee)
+        
+        str(lwa1.antennas[0].stand)
+        repr(lwa1.antennas[0].stand)
+        
+        str(lwa1.antennas[0].cable)
+        repr(lwa1.antennas[0].cable)
+        
+        str(lwa1.antennas[0].arx)
+        repr(lwa1.antennas[0].arx)
+        
+        str(lwa1.interface)
+        repr(lwa1.interface)
         
     def test_ecef_conversion(self):
         """Test the stations.geo_to_ecef() function."""

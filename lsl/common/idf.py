@@ -38,15 +38,16 @@ import copy
 import math
 import pytz
 import ephem
+import weakref
 from textwrap import fill as tw_fill
-from functools import total_ordering
 from datetime import datetime, timedelta
 
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
+from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import mjdmpm_to_datetime, LWA_MAX_NSTD
+from lsl.common.mcsADP import mjdmpm_to_datetime
 from lsl.common.adp import freq_to_word, word_to_freq, fC
 from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
@@ -132,18 +133,12 @@ class Project(object):
         self.name = name
         self.id = id
         self.comments = comments
-        if runs is None:
-            self.runs = []
-        else:
-            if isinstance(runs, Run):
-                runs = [runs,]
-            elif isinstance(runs, (list, tuple)):
-                for i,sess in enumerate(runs):
-                    if not isinstance(sess, Run):
-                        raise TypeError("Expected index %i of 'runs' to be an Run" % i)
+        self.runs = sdf._TypedParentList(Run, self)
+        if runs is not None:
+            if isinstance(runs, (list, tuple)):
+                self.runs.extend(runs)
             else:
-                raise TypeError("Expected 'runs' to be either a tuple or list of Run or a Run")
-            self.runs = runs
+                self.runs.append(runs)
         if project_office is None:
             self.project_office = ProjectOffice()
         else:
@@ -165,8 +160,15 @@ class Project(object):
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
         
+        self.update()
+        
         failures = 0
         runCount = 1
+        if len(self.id) > 8:
+            if verbose:
+                print("[%i] Project ID is too long" % (os.getpid(),))
+            failures += 1
+            
         for run in self.runs:
             if verbose:
                 print("[%i] Validating run %i" % (os.getpid(), runCount))
@@ -180,7 +182,8 @@ class Project(object):
         else:
             return False
             
-    def _render_file_size(self, size):
+    @staticmethod
+    def _render_file_size(size):
         """Convert a file size in bytes to a easy-to-use string."""
         
         units = 'B'
@@ -199,7 +202,8 @@ class Project(object):
             
         return "%.2f %s" % (size, units)
         
-    def _render_bandwidth(self, filter, FILTER_CODES):
+    @staticmethod
+    def _render_bandwidth(filter, FILTER_CODES):
         """Convert a filter number to an easy-to-use string."""
         
         if FILTER_CODES[filter] > 1e6:
@@ -212,8 +216,6 @@ class Project(object):
     def append(self, newRun):
         """Add a new run to the list of runs."""
         
-        if not isinstance(newRun, Run):
-            raise TypeError('Expected a Run instance')
         self.runs.append(newRun)
         
     def render(self, run=0, verbose=False):
@@ -291,7 +293,7 @@ class Project(object):
             output = "%sSCAN_TARGET      %s\n" % (output, obs.target)
             output = "%sSCAN_INTENT      %s\n" % (output, obs.intent)
             output = "%sSCAN_REMPI       %s\n" % (output, obs.comments[:4090] if obs.comments else 'None provided')
-            output = "%sSCAN_REMPO       %s\n" % (output, "Estimated data volume for this scan is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
+            output = "%sSCAN_REMPO       %s\n" % (output, "Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i])
             output = "%sSCAN_START_MJD   %i\n" % (output, obs.mjd)
             output = "%sSCAN_START_MPM   %i\n" % (output, obs.mpm)
             output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
@@ -332,18 +334,17 @@ class Project(object):
             
         return output
         
-    def writeto(self, filename, run=0, verbose=False, clobber=False):
+    def writeto(self, filename, run=0, verbose=False, overwrite=False):
         """Create a run definition file that corresponds to the specified 
         run and write it to the provided filename."""
         
-        if os.path.exists(filename) and not clobber:
+        if os.path.exists(filename) and not overwrite:
             raise RuntimeError("'%s' already exists" % filename)
             
         output = self.render(run=run, verbose=verbose)
-        fh = open(filename, 'w')
-        fh.write(output)
-        fh.close()
-        
+        with open(filename, 'w') as fh:
+            fh.write(output)
+            
     def generate_sdfs(self, starting_session_id=1, run=0, verbose=False):
         """Convert the ID file into a collection of `lsl.common.sdfADP.Project` instances
         that can be used to write SD files."""
@@ -458,25 +459,18 @@ class Project(object):
         return sdfs
 
 
-@total_ordering
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
     def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, corr_channels=256, corr_inttime=1.0, corr_basis='linear', stations=get_full_stations()):
         self.name = name
         self.id = int(id)
-        if scans is None:
-            self.scans = []
-        else:
-            if isinstance(scans, Scan):
-                scans = [scans,]
-            elif isinstance(scans, (tuple, list)):
-                for i,obs in enumerate(scans):
-                    if not isinstance(obs, Scan):
-                        raise TypeError("Expected index %i of 'obsevations' to be an Scan" % i)
+        self.scans = sdf._TypedParentList(Scan, self)
+        if scans is not None:
+            if isinstance(scans, (tuple, list)):
+                self.scans.extend(scans)
             else:
-                raise TypeError("Expected 'scans' to be either a tuple or list of Scans of an Scan")
-            self.scans = scans
+                self.scans.append(scans)
         self.data_return_method = data_return_method
         self.ucfuser = None
         self.comments = comments
@@ -484,7 +478,7 @@ class Run(object):
         self.corr_inttime = corr_inttime
         self.corr_channels = corr_channels
         self.corr_basis = corr_basis
-        self.stations = stations
+        self.stations = sdf._TypedParentList(LWAStation, None, stations)
         
     def __str__(self):
         return "%i: %s with %i scans and correlator setup:\n  channels: %i\n  int. time: %f\n  basis: %s\n  stations: %s" % (self.id, self.name, len(self.scans), self.corr_channels, self.corr_inttime, self.corr_basis, " ".join([s.id for s in self.stations]))
@@ -494,19 +488,12 @@ class Run(object):
         Update the stations used by the project for source computations.
         """
         
-        if not isinstance(stations, (tuple, list)):
-            raise TypeError('Expected a tuple of list of LWAStations')
-        for i,station in enumerate(stations):
-            if not isinstance(station, LWAStation):
-                raise TypeError("Expected index %i to be an LWAStation" % i)
-        self.stations = stations
+        self.stations = sdf._TypedParentList(LWAStation, None, stations)
         self.update()
         
     def append(self, newScan):
         """Add a new Scan to the list of scans."""
         
-        if not isinstance(newScan, Scan):
-            raise TypeError("Expected an Scan")
         self.scans.append(newScan)
         
     def set_correlator_channels(self, value):
@@ -551,8 +538,15 @@ class Run(object):
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
         
+        self.update()
+        
         failures = 0
         totalData = 0.0
+        if self.id < 1 or self.id > 9999:
+            if verbose:
+                print("[%i] Error: Invalid run ID number '%i'" % (os.getpid(), self.id))
+            failures += 1
+            
         if len(self.stations) < 2:
             if verbose:
                 print("[%i] Error: Need at least two stations to form an interferometer" % (os.getpid(),))
@@ -586,10 +580,9 @@ class Run(object):
             if verbose:
                 print("[%i] Validating scan %i" % (os.getpid(), scanCount))
                 
-            for station in self.stations:
-                if not obs.validate(station=station, verbose=verbose):
-                    failures += 1
-                totalData += obs.dataVolume
+            if not obs.validate(verbose=verbose):
+                failures += 1
+            totalData += obs.dataVolume
                 
             if scanCount > 1:
                 if obs.filter != self.scans[scanCount-2].filter:
@@ -637,32 +630,80 @@ class Run(object):
         else:
             return False
             
-    def __cmp__(self, other):
-        self.scans.sort()
-        other.scans.sort()
-        
-        startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-        startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isinstance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf != startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isinstance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isinstance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
+        if isinstance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isinstance(other, Run):
+            self.observations.sort()
+            other.observations.sort()
+            
+            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
-@total_ordering
 class Scan(object):
     """
     Class to hold the specifics of a scans.  It currently
     handles TRK_RADEC, TRK_SOL, and TRK_JOV.
     """
+    
+    _parent = None
     
     id = 1
     FILTER_CODES = DRXFilters
@@ -693,6 +734,7 @@ class Scan(object):
         self.dur = None
         self.freq1 = None
         self.freq2 = None
+        self.dataVolumeStation = None
         self.dataVolume = None
         
         self.aspFlt = -1
@@ -711,6 +753,10 @@ class Scan(object):
     def update(self):
         """Update the computed parameters from the string values."""
         
+        stations = [lwa1,]
+        if self._parent is not None:
+            stations = self._parent.stations
+            
         # If we have a datetime instance, make sure we have an integer
         # number of milliseconds
         if isinstance(self.start, datetime):
@@ -724,7 +770,8 @@ class Scan(object):
         self.dur = self.get_duration()
         self.freq1 = self.get_frequency1()
         self.freq2 = self.get_frequency2()
-        self.dataVolume = self.estimate_bytes()
+        self.dataVolumeStation = self.estimate_bytes()
+        self.dataVolume = self.dataVolumeStation*len(stations)
         
         # Update the associated alternate phase centers
         for phase_center in self.alt_phase_centers:
@@ -842,30 +889,45 @@ class Scan(object):
         pnt._epoch = ephem.J2000
         return pnt
         
-    def compute_visibility(self, station=lwa1):
+    def compute_visibility(self):
         """Return the fractional visibility of the target during the scan 
         period."""
         
-        lwa = station.get_observer()
-        pnt = self.get_fixed_body()
-        
-        vis = 0
-        cnt = 0
-        dt = 0.0
-        while dt <= self.dur/1000.0:
-            lwa.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
-            pnt.compute(lwa)
+        stations = [lwa1,]
+        if self._parent is not None:
+            stations = self._parent.stations
             
-            cnt += 1
-            if pnt.alt > 0:
-                vis += 1
+        vis_list = []
+        for station in stations:
+            lwa = station.get_observer()
+            pnt = self.get_fixed_body()
+            
+            vis = 0
+            cnt = 0
+            dt = 0.0
+            while dt <= self.dur/1000.0:
+                lwa.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
+                pnt.compute(lwa)
                 
-            dt += 300.0
+                cnt += 1
+                if pnt.alt > 0:
+                    vis += 1
+                    
+                dt += 300.0
+                
+            vis_list.append(float(vis)/float(cnt))
+        return min(vis_list)
         
-        return float(vis)/float(cnt)
-        
-    def validate(self, station, verbose=False):
+    def validate(self, verbose=False):
         """Evaluate the scan and return True if it is valid, False otherwise."""
+        
+        self.update()
+        
+        stations = [lwa1,]
+        if self._parent is not None:
+            stations = self._parent.stations
+        tuning_min = max([station.interface.get_module('backend').DRX_TUNING_WORD_MIN for station in stations])
+        tuning_max = min([station.interface.get_module('backend').DRX_TUNING_WORD_MAX for station in stations])
         
         failures = 0
         # Basic - Intent, duration, frequency, and filter code values
@@ -877,11 +939,11 @@ class Scan(object):
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
             failures += 1
-        if self.freq1 < 222417950 or self.freq1 > 1928352663:
+        if self.freq1 < tuning_min or self.freq1 > tuning_max:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 1 is outside of LWA tuning range" % os.getpid())
             failures += 1
-        if (self.freq2 < 222417950 or self.freq2 > 1928352663) and self.freq2 != 0:
+        if (self.freq2 < tuning_min or self.freq2 > tuning_max) and self.freq2 != 0:
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of LWA tuning range" % os.getpid())
             failures += 1
@@ -899,7 +961,7 @@ class Scan(object):
             if verbose:
                 print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
             failures += 1
-        if self.compute_visibility(station=station) < 1.0:
+        if self.compute_visibility() < 1.0:
             if verbose:
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the scan for %s" % (os.getpid(), self.compute_visibility(station=station)*100.0, station.id))
             failures += 1
@@ -910,7 +972,7 @@ class Scan(object):
                 print("[%i] Error: too many alternate phase centers defined" % os.getpid())
             failures += 1
         for j,phase_center in enumerate(self.alt_phase_centers):
-            if not phase_center.validate(station, verbose=verbose):
+            if not phase_center.validate(verbose=verbose):
                 if verbose:
                     print("[%i] Error: invalid alternate phase center %i" % (os.getpid(), j+1))
                 failures += 1
@@ -919,7 +981,7 @@ class Scan(object):
             pnt = self.get_fixed_body()
             alt_pnt = phase_center.get_fixed_body()
             
-            lwa = station.get_observer()
+            lwa = stations[0].get_observer()
             lwa.date = self.mjd + (self.mpm/1000.0 + self.dur/1000.0/2.0)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
             pnt.compute(lwa)
             alt_pnt.compute(lwa)
@@ -933,7 +995,7 @@ class Scan(object):
                 failures += 1
                 
         # Advanced - Data Volume
-        if self.dataVolume >= (_DRSUCapacityTB*1024**4):
+        if self.dataVolumeStation >= (_DRSUCapacityTB*1024**4):
             if verbose:
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
@@ -944,21 +1006,53 @@ class Scan(object):
         else:
             return False
             
-    def __cmp__(self, other):
-        startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-        startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-        if startSelf < startOther:
-            return -1
-        elif startSelf > startOther:
-            return 1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf == startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ne__(self, other):
+        if isinstance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf != startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __gt__(self, other):
+        if isinstance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf > startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __ge__(self, other):
+        if isinstance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf >= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
+        if isinstance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf < startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __le__(self, other):
+        if isinstance(other, Scan):
+            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
+            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
+            return startSelf <= startOther
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 class DRX(Scan):
@@ -1103,7 +1197,7 @@ class AlternatePhaseCenter(object):
         pnt._epoch = ephem.J2000
         return pnt
     
-    def validate(self, station, verbose=False):
+    def validate(self, verbose=False):
         """Basic validation of the pointing, that's it."""
         
         failures = 0
@@ -1195,9 +1289,6 @@ def parse_idf(filename, verbose=False):
     that instance.
     """
     
-    # Open the file
-    fh = open(filename, 'r')
-    
     # Create the keyword regular expression to deal with various indicies included 
     # in the keywords
     kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9\+]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?(\[(?P<id4>[0-9]+?)\])?')
@@ -1215,268 +1306,266 @@ def parse_idf(filename, verbose=False):
     project.project_office.runs = []
     project.project_office.scans = [[],]
     
-    # Loop over the file
     obs_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0], 'start': '', 'duration': '', 'mode': '', 
                 'freq1': 0, 'freq2': 0, 'filter': 0, 'comments': None, 'nAlt': 0, 'gain': -1, 
                 'aspFlt': -1}
     alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
     alt_temps = []
     
-    for line in fh:
-        # Trim off the newline character and skip blank lines
-        line = line.replace('\n', '')
-        if len(line) == 0 or line.isspace():
-            continue
+    # Loop over the file
+    with open(filename, 'r') as fh:
+        for line in fh:
+            # Trim off the newline character and skip blank lines
+            line = line.replace('\n', '')
+            if len(line) == 0 or line.isspace():
+                continue
             
-        # Split into a keyword, value pair and run it through the regular expression
-        # to deal with any indicies present
-        try:
-            keywordSection, value = line.split(None, 1)
-        except:
-            continue
-            
-        mtch = kwdRE.match(keywordSection)
-        keyword = mtch.group('keyword')
-        
-        ids = [-1, -1, -1, -1]
-        for i in range(4):
+            # Split into a keyword, value pair and run it through the regular expression
+            # to deal with any indicies present
             try:
-                ids[i] = int(mtch.group('id%i' % (i+1)))
-            except TypeError:
-                pass
+                keywordSection, value = line.split(None, 1)
+            except:
+                continue
+            
+            mtch = kwdRE.match(keywordSection)
+            keyword = mtch.group('keyword')
+        
+            ids = [-1, -1, -1, -1]
+            for i in range(4):
+                try:
+                    ids[i] = int(mtch.group('id%i' % (i+1)))
+                except TypeError:
+                    pass
                 
-        # Skip over the observer comment lines (denoted by a plus sign at the end) 
-        # of the keyword
-        if keyword[-1] == '+':
-            continue
+            # Skip over the observer comment lines (denoted by a plus sign at the end) 
+            # of the keyword
+            if keyword[-1] == '+':
+                continue
             
-        # Observer Info
-        if keyword == 'PI_ID':
-            project.observer.id = int(value)
-            continue
-        if keyword == 'PI_NAME':
-            project.observer.name = value
-            project.observer.split_name()
-            continue
+            # Observer Info
+            if keyword == 'PI_ID':
+                project.observer.id = int(value)
+                continue
+            if keyword == 'PI_NAME':
+                project.observer.name = value
+                project.observer.split_name()
+                continue
             
-        # Project/Proposal Info
-        if keyword == 'PROJECT_ID':
-            project.id = value
-            continue
-        if keyword == 'PROJECT_TITLE':
-            project.name = value
-            continue
-        if keyword == 'PROJECT_REMPI':
-            project.comments = value
-            continue
-        if keyword == 'PROJECT_REMPO':
-            project.project_office.project = value
-            continue
+            # Project/Proposal Info
+            if keyword == 'PROJECT_ID':
+                project.id = value
+                continue
+            if keyword == 'PROJECT_TITLE':
+                project.name = value
+                continue
+            if keyword == 'PROJECT_REMPI':
+                project.comments = value
+                continue
+            if keyword == 'PROJECT_REMPO':
+                project.project_office.project = value
+                continue
             
-        # Run Info
-        if keyword == 'RUN_ID':
-            project.runs[0].id = int(value)
-            continue
-        if keyword == 'RUN_TITLE':
-            project.runs[0].name = value
-            continue
-        if keyword == 'RUN_STATIONS':
-            use_stations = []
-            possible = get_full_stations()
-            for field in value.split(','):
-                field = field.strip().rstrip()
-                if field.lower() == 'all':
-                    use_stations = copy.deepcopy(possible)
-                    break
+            # Run Info
+            if keyword == 'RUN_ID':
+                project.runs[0].id = int(value)
+                continue
+            if keyword == 'RUN_TITLE':
+                project.runs[0].name = value
+                continue
+            if keyword == 'RUN_STATIONS':
+                use_stations = []
+                possible = get_full_stations()
+                for field in value.split(','):
+                    field = field.strip().rstrip()
+                    if field.lower() == 'all':
+                        use_stations = copy.deepcopy(possible)
+                        break
+                    else:
+                        for station in possible:
+                            if station.id == field:
+                                use_stations.append(station)
+                                break
+                project.runs[0].stations  = use_stations
+            if keyword == 'RUN_CHANNELS':
+                project.runs[0].corr_channels = int(value)
+                continue
+            if keyword == 'RUN_INTTIME':
+                project.runs[0].corr_inttime = float(value)
+                continue
+            if keyword == 'RUN_BASIS':
+                project.runs[0].corr_basis = value
+                continue
+            if keyword == 'RUN_REMPI':
+                mtch = sdf._usernameRE.search(value)
+                if mtch is not None:
+                    project.runs[0].ucfuser = mtch.group('username')
+                    if mtch.group('subdir') is not None:
+                        project.runs[0].ucfuser = os.path.join(project.runs[0].ucfuser, mtch.group('subdir'))
+                project.runs[0].comments = sdf._usernameRE.sub('', value)
+                continue
+            if keyword == 'RUN_REMPO':
+                project.project_office.runs.append(None)
+                parts = value.split(';;', 1)
+                first = parts[0]
+                try:
+                    second = parts[1]
+                except IndexError:
+                    second = ''
+                
+                if first[:31] == 'Requested data return method is':
+                    # Catch for project office comments that are data return related
+                    project.runs[0].data_return_method = first[32:]
+                    project.project_office.runs[0] = second
                 else:
-                    for station in possible:
-                        if station.id == field:
-                            use_stations.append(station)
-                            break
-            project.runs[0].stations  = use_stations
-        if keyword == 'RUN_CHANNELS':
-            project.runs[0].corr_channels = int(value)
-            continue
-        if keyword == 'RUN_INTTIME':
-            project.runs[0].corr_inttime = float(value)
-            continue
-        if keyword == 'RUN_BASIS':
-            project.runs[0].corr_basis = value
-            continue
-        if keyword == 'RUN_REMPI':
-            mtch = sdf._usernameRE.search(value)
-            if mtch is not None:
-                project.runs[0].ucfuser = mtch.group('username')
-                if mtch.group('subdir') is not None:
-                    project.runs[0].ucfuser = os.path.join(project.runs[0].ucfuser, mtch.group('subdir'))
-            project.runs[0].comments = sdf._usernameRE.sub('', value)
-            continue
-        if keyword == 'RUN_REMPO':
-            project.project_office.runs.append(None)
-            parts = value.split(';;', 1)
-            first = parts[0]
-            try:
-                second = parts[1]
-            except IndexError:
-                second = ''
+                    # Catch for standard (not data related) project office comments
+                    project.project_office.runs[0] = value
+                continue
+            
+            # Scan Info
+            if keyword == 'SCAN_ID':
+                if obs_temp['id'] != 0:
+                    project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
+                    alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
+                    alt_temps = []
+                obs_temp['id'] = int(value)
+                project.project_office.scans[0].append( None )
+            
+                if verbose:
+                    print("[%i] Started scan %i" % (os.getpid(), int(value)))
                 
-            if first[:31] == 'Requested data return method is':
-                # Catch for project office comments that are data return related
-                project.runs[0].data_return_method = first[32:]
-                project.project_office.runs[0] = second
-            else:
-                # Catch for standard (not data related) project office comments
-                project.project_office.runs[0] = value
-            continue
+                continue
+            if keyword == 'SCAN_TARGET':
+                obs_temp['target'] = value
+                continue
+            if keyword == 'SCAN_INTENT':
+                obs_temp['intent'] = value
+                continue
+            if keyword == 'SCAN_REMPI':
+                obs_temp['comments'] = value
+                continue
+            if keyword == 'SCAN_REMPO':
+                project.project_office.scans[0][-1] = value
+                continue
+            if keyword == 'SCAN_START_MJD':
+                obs_temp['mjd'] = int(value)
+                continue
+            if keyword == 'SCAN_START_MPM':
+                obs_temp['mpm'] = int(value)
+                continue
+            if keyword == 'SCAN_DUR':
+                obs_temp['duration'] = int(value)
+                continue
+            if keyword == 'SCAN_MODE':
+                obs_temp['mode'] = value
+                continue
+            if keyword == 'SCAN_RA':
+                obs_temp['ra'] = float(value)
+                continue
+            if keyword == 'SCAN_DEC':
+                obs_temp['dec'] = float(value)
+                continue
+            if keyword == 'SCAN_PM_RA':
+                obs_temp['pm'][0] = float(value)
+                continue
+            if keyword == 'SCAN_PM_DEC':
+                obs_temp['pm'][1] = float(value)
+                continue
+            if keyword == 'SCAN_FREQ1':
+                obs_temp['freq1'] = int(value)
+                continue
+            if keyword == 'SCAN_FREQ2':
+                obs_temp['freq2'] = int(value)
+                continue
+            if keyword == 'SCAN_BW':
+                obs_temp['filter'] = int(value)
+                continue
             
-        # Scan Info
-        if keyword == 'SCAN_ID':
-            if obs_temp['id'] != 0:
-                project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
-                alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
-                alt_temps = []
-            obs_temp['id'] = int(value)
-            project.project_office.scans[0].append( None )
-            
-            if verbose:
-                print("[%i] Started scan %i" % (os.getpid(), int(value)))
-                
-            continue
-        if keyword == 'SCAN_TARGET':
-            obs_temp['target'] = value
-            continue
-        if keyword == 'SCAN_INTENT':
-            obs_temp['intent'] = value
-            continue
-        if keyword == 'SCAN_REMPI':
-            obs_temp['comments'] = value
-            continue
-        if keyword == 'SCAN_REMPO':
-            project.project_office.scans[0][-1] = value
-            continue
-        if keyword == 'SCAN_START_MJD':
-            obs_temp['mjd'] = int(value)
-            continue
-        if keyword == 'SCAN_START_MPM':
-            obs_temp['mpm'] = int(value)
-            continue
-        if keyword == 'SCAN_DUR':
-            obs_temp['duration'] = int(value)
-            continue
-        if keyword == 'SCAN_MODE':
-            obs_temp['mode'] = value
-            continue
-        if keyword == 'SCAN_RA':
-            obs_temp['ra'] = float(value)
-            continue
-        if keyword == 'SCAN_DEC':
-            obs_temp['dec'] = float(value)
-            continue
-        if keyword == 'SCAN_PM_RA':
-            obs_temp['pm'][0] = float(value)
-            continue
-        if keyword == 'SCAN_PM_DEC':
-            obs_temp['pm'][1] = float(value)
-            continue
-        if keyword == 'SCAN_FREQ1':
-            obs_temp['freq1'] = int(value)
-            continue
-        if keyword == 'SCAN_FREQ2':
-            obs_temp['freq2'] = int(value)
-            continue
-        if keyword == 'SCAN_BW':
-            obs_temp['filter'] = int(value)
-            continue
-            
-        # Alternate phase centers
-        if keyword == 'SCAN_ALT_N':
-            obs_temp['nAlt'] = int(value)
-            continue
-        if keyword == 'SCAN_ALT_TARGET':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['target'] = value
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
-                    alt_temps.append( copy.deepcopy(alt_temps[-1]) )
-                    alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['target'] = value
-            continue
-        if keyword == 'SCAN_ALT_INTENT':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['intent'] = value
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+            # Alternate phase centers
+            if keyword == 'SCAN_ALT_N':
+                obs_temp['nAlt'] = int(value)
+                continue
+            if keyword == 'SCAN_ALT_TARGET':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['intent'] = value
-            continue
-        if keyword == 'SCAN_ALT_RA':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['ra'] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['target'] = value
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temps[-1]) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['target'] = value
+                continue
+            if keyword == 'SCAN_ALT_INTENT':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['ra'] = float(value)
-            continue
-        if keyword == 'SCAN_ALT_DEC':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['dec'] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['intent'] = value
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['intent'] = value
+                continue
+            if keyword == 'SCAN_ALT_RA':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['dec'] = float(value)
-            continue
-        if keyword == 'SCAN_ALT_PM_RA':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][0] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['ra'] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['ra'] = float(value)
+                continue
+            if keyword == 'SCAN_ALT_DEC':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][0] = float(value)
-            continue
-        if keyword == 'SCAN_ALT_PM_DEC':
-            if len(alt_temps) == 0:
-                alt_temps.append( copy.deepcopy(alt_temp) )
-                alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][1] = float(value)
-            else:
-                if alt_temps[-1]['id'] != ids[0]:
+                    alt_temps[-1]['dec'] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['dec'] = float(value)
+                continue
+            if keyword == 'SCAN_ALT_PM_RA':
+                if len(alt_temps) == 0:
                     alt_temps.append( copy.deepcopy(alt_temp) )
                     alt_temps[-1]['id'] = ids[0]
-                alt_temps[-1]['pm'][1] = float(value)
-            continue
-        # Run wide settings at the end of the scans
-        if keyword == 'SCAN_ASP_FLT':
-            obs_temp['aspFlt'] = int(value)
-            continue
-        if keyword == 'SCAN_DRX_GAIN':
-            obs_temp['gain'] = int(value)
-            continue
+                    alt_temps[-1]['pm'][0] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['pm'][0] = float(value)
+                continue
+            if keyword == 'SCAN_ALT_PM_DEC':
+                if len(alt_temps) == 0:
+                    alt_temps.append( copy.deepcopy(alt_temp) )
+                    alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['pm'][1] = float(value)
+                else:
+                    if alt_temps[-1]['id'] != ids[0]:
+                        alt_temps.append( copy.deepcopy(alt_temp) )
+                        alt_temps[-1]['id'] = ids[0]
+                    alt_temps[-1]['pm'][1] = float(value)
+                continue
+            # Run wide settings at the end of the scans
+            if keyword == 'SCAN_ASP_FLT':
+                obs_temp['aspFlt'] = int(value)
+                continue
+            if keyword == 'SCAN_DRX_GAIN':
+                obs_temp['gain'] = int(value)
+                continue
             
-        # Keywords that might indicate this is a SDF
-        if keyword in ('SESSION_ID', 'SESSION_DRX_BEAM'):
-            raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+            # Keywords that might indicate this is a SDF
+            if keyword in ('SESSION_ID', 'SESSION_DRX_BEAM'):
+                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
             
-    # Create the final scan
-    if obs_temp['id'] != 0:
-        project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
-        
-    # Close the file
-    fh.close()
-    
+        # Create the final scan
+        if obs_temp['id'] != 0:
+            project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
+            
     # Return the project
     return project
 
@@ -1523,24 +1612,24 @@ def is_valid(filename, verbose=False):
         proj = parse_idf(filename)
         passes += 1
         if verbose:
-            print("Parser - OK")
+            print(colorfy("Parser - {{%green OK}}"))
             
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
-                print("Validator - OK")
+                print(colorfy("Validator - {{%green OK}}"))
         else:
             failures += 1
             if verbose:
-                print("Validator - FAILED")
+                print(colorfy("Validator - {{%red {{%bold FAILED}}}}"))
                 
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
-            print("Parser - FAILED")
+            print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
             
     if verbose:
         print("---")

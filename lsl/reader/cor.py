@@ -220,7 +220,7 @@ def get_frames_per_obs(filehandle):
     
     # Get the number of channels in the file
     nChan = get_channel_count(filehandle)
-    nFrames = nChan / NCHAN_COR
+    nFrames = nChan // NCHAN_COR
     
     # Multiply by the number of baselines
     nFrames *= get_baseline_count(filehandle)
@@ -260,6 +260,6 @@ def get_baseline_count(filehandle):
     """
     
     # This is fixed based on how ADP works
-    nBaseline = 256*(256+1) / 2
+    nBaseline = 256*(256+1) // 2
     
     return nBaseline

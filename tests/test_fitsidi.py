@@ -102,7 +102,7 @@ class fitsidi_tests(unittest.TestCase):
         
         for i in range(4):
             # Start the file
-            fits = fitsidi.Idi(testFile, ref_time=testTime, clobber=True)
+            fits = fitsidi.Idi(testFile, ref_time=testTime, overwrite=True)
             if i != 0:
                 fits.set_stokes(['xx'])
             if i != 1:

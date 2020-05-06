@@ -24,6 +24,7 @@ from lsl.common.mcs import *
 from lsl.common.dp import word_to_freq
 from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -250,7 +251,9 @@ def read_cs_file(filename):
                                'ignoreTime': True if action.bASAP else False, 
                                'subsystemID': sid_to_string(action.sid), 'commandID': cid_to_string(action.cid), 
                                'commandLength': action.len, 'data': data}
-                            
+                if actionPrime['subsystemID'] == 'ADP':
+                    raise RuntimeError("Command script references ADP not DP")
+                    
                 commands.append( actionPrime )
             except IOError:
                 break
@@ -661,33 +664,33 @@ def is_valid(tarname, verbose=False):
         get_session_spec(tarname)
         passes += 1
         if verbose:
-            print("Session specification - OK")
+            print(colorfy("Session specification - {{%green OK}}"))
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
-            print("Session specification - FAILED")
+            print(colorfy("Session specification - {{%red {{%bold FAILED}}}}"))
         
     try:
         get_observation_spec(tarname)
         passes += 1
         if verbose:
-            print("Observation specification(s) - OK")
+            print(colorfy("Observation specification(s) - {{%green OK}}"))
     except:
         failures += 1
         if verbose:
-            print("Observation specification(s) - FAILED")
+            print(colorfy("Observation specification(s) - {{%red {{%bold FAILED}}}}"))
             
     try:
         get_command_script(tarname)
         passes += 1
         if verbose:
-            print("Command script - OK")
+            print(colorfy("Command script - {{%green OK}}"))
     except:
         failures += 1
         if verbose:
-            print("Command script - FAILED")
+            print(colorfy("Command script - {{%red {{%bold FAILED}}}}"))
             
     if verbose:
         print("---")

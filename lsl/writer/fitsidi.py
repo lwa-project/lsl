@@ -26,7 +26,6 @@ import re
 import math
 import ephem
 import numpy
-from functools import total_ordering
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight
 from astropy.utils import iers
@@ -116,7 +115,6 @@ class WriterBase(object):
             self.sideBand = 1
             self.baseBand = 0
             
-    @total_ordering
     class _UVData(object):
         """
         Represents one UV visibility data set for a given observation time.
@@ -131,28 +129,54 @@ class WriterBase(object):
             self.pol = pol
             self.source = source
             
-        def __cmp__(self, y):
-            """
-            Function to sort the self.data list in order of time and then 
-            polarization code.
-            """
-            
-            sID = (self.obsTime, abs(self.pol))
-            yID = (y.obsTime,    abs(y.pol)   )
-            
-            if sID > yID:
-                return 1
-            elif sID < yID:
-                return -1
-            else:
-                return 0
-                
         def __eq__(self, other):
-            return True if self.__cmp__(other) == 0 else False
-            
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID == oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __ne__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID != oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __gt__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID > oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __ge__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID >= oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
         def __lt__(self, other):
-            return True if self.__cmp__(other) < 0 else False
-            
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID < oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __le__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID <= oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
         def time(self):
             return self.obsTime
             
@@ -359,14 +383,14 @@ class Idi(WriterBase):
     AIPS via the FITLD task.
     """
     
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new FITS IDI object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
-            Added the 'memmap' and 'clobber' keywords to control if the file
+            Added the 'memmap' and 'overwrite' keywords to control if the file
             is memory mapped and whether or not to overwrite an existing file, 
             respectively.
         """
@@ -376,7 +400,7 @@ class Idi(WriterBase):
         
         # Open the file and get going
         if os.path.exists(filename):
-            if clobber:
+            if overwrite:
                 os.unlink(filename)
             else:
                 raise IOError("File '%s' already exists" % filename)

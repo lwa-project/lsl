@@ -16,7 +16,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from lsl.common.paths import DATA_BUILD
-from lsl.common import sdfADP
+from lsl.common import sdfADP, sdf as other_sdf
 from lsl.common.stations import lwa1, lwasv
 
 
@@ -122,6 +122,18 @@ class sdf_adp_tests(unittest.TestCase):
         s2 = "UTC 2013-01-08 19:35:28.994"
         self.assertEqual(sdfADP.parse_time(s1, station=lwasv), sdfADP.parse_time(s2))
         
+    def test_type_control(self):
+        """Test SDF member type control."""
+        
+        obs = sdfADP.Observer('Test Observer', 99)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        sess = sdfADP.Session('Test Session', 1, observations=[targ,])
+        sess.set_drx_beam(1)
+        proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
+        
+        self.assertRaises(TypeError, proj.sessions.append, 5)
+        self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
+        
     def test_flat_projects(self):
         """Test single session/observations SDFs."""
         
@@ -162,6 +174,14 @@ class sdf_adp_tests(unittest.TestCase):
         
         self.assertRaises(RuntimeError, sdfADP.parse_sdf, tbwFile)
         
+    def test_tbw_append(self):
+        """Test appending a TBF observation to an LWA-SV session."""
+        
+        project = sdfADP.parse_sdf(tbnFile)
+        
+        obs = other_sdf.TBW('TBW', 'TBW', '2020/4/30 01:23:45.5', 12000000)
+        self.assertRaises(TypeError, project.sessions[0].append, obs)
+        
     ### TBN ###
     
     def test_tbn_parse(self):
@@ -189,6 +209,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].freq1, 832697741)
         self.assertEqual(project.sessions[0].observations[1].filter,   7)
         
+        # Ordering
+        self.assertTrue(project.sessions[0].observations[0] < project.sessions[0].observations[1])
+        self.assertFalse(project.sessions[0].observations[0] > project.sessions[0].observations[1])
+        self.assertTrue(project.sessions[0].observations[0] != project.sessions[0].observations[1])
+        
     def test_tbn_update(self):
         """Test updating TBN values."""
         
@@ -213,11 +238,28 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parse_sdf(tbnFile)
         
+        # Bad project
+        old_id = project.id
+        project.id = 'ThisIsReallyLong'
+        self.assertFalse(project.validate())
+        
+        # Bad session
+        project.id = old_id
+        old_id = project.sessions[0].id
+        project.sessions[0].id = 10001
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.sessions[0].id = old_id
         project.sessions[0].observations[0].filter = 10
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 2.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 7
         project.sessions[0].observations[0].frequency1 = 95.0e6
         project.sessions[0].observations[0].update()
@@ -281,10 +323,51 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertAlmostEqual(project.sessions[0].observations[1].ra, 5.5, 6)
         self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.5, 6)
         
+        dt0, dt1 = sdfADP.get_observation_start_stop(project.sessions[0].observations[1])
+        self.assertEqual(dt0.year, 2011)
+        self.assertEqual(dt0.month, 2)
+        self.assertEqual(dt0.day, 24)
+        self.assertEqual(dt0.hour, 0)
+        self.assertEqual(dt0.minute, 0)
+        self.assertEqual(dt0.second, 15)
+        self.assertEqual(dt0.microsecond, 0)
+        self.assertEqual(dt1.year, 2011)
+        self.assertEqual(dt1.month, 2)
+        self.assertEqual(dt1.day, 24)
+        self.assertEqual(dt1.hour, 0)
+        self.assertEqual(dt1.minute, 0)
+        self.assertEqual(dt1.second, 30)
+        self.assertEqual(dt1.microsecond, 0)
+        
     def test_drx_write(self):
         """Test writing a TRK_RADEC SDF file."""
         
         project = sdfADP.parse_sdf(drxFile)
+        out = project.render()
+        
+        project.sessions[0].observations[0].obsFEE = [[1,1] for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].obsFEE[0] = [0,0]
+        project.sessions[0].observations[0].obsFEE[1] = [0,0]
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspFlt = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspFlt[0] = 3
+        project.sessions[0].observations[0].aspFlt[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspAT1 = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspAT1[0] = 3
+        project.sessions[0].observations[0].aspAT1[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspAT2 = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspAT2[0] = 3
+        project.sessions[0].observations[0].aspAT2[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspATS = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspATS[0] = 3
+        project.sessions[0].observations[0].aspATS[1] = 3
         out = project.render()
         
     def test_drx_errors(self):
@@ -305,6 +388,11 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 6
+        project.sessions[0].observations[0].frequency1 = 10.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 6
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
@@ -679,6 +767,134 @@ class sdf_adp_tests(unittest.TestCase):
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][1], 1)
+            
+    def test_spectrometer(self):
+        """Test parsing DR spectrometer configurations."""
+        project = sdfADP.parse_sdf(drxFile)
+        
+        # Good spectrometer settings
+        for channels in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+            for ints in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+                for mode in (None, '', 'XXYY', 'IV', 'IQUV'):
+                    ## Method 1
+                    project.sessions[0].spcSetup = [channels, ints]
+                    if mode in (None, ''):
+                        project.sessions[0].spcMetatag = mode
+                    else:
+                        project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+                    self.assertTrue(project.validate())
+                    
+                    ## Method 2
+                    project.sessions[0].set_spectrometer_channels(channels)
+                    project.sessions[0].set_spectrometer_integration(ints)
+                    if mode in (None, ''):
+                        project.sessions[0].set_spectrometer_metatag(mode)
+                    else:
+                        project.sessions[0].set_spectrometer_metatag('Stokes=%s' % mode)
+                    self.assertEqual(project.sessions[0].spcSetup[0], channels)
+                    self.assertEqual(project.sessions[0].spcSetup[1], ints)
+                    self.assertEqual(project.sessions[0].spcMetatag, None if mode in (None, '') else '{Stokes=%s}' % mode)
+                    self.assertTrue(project.validate())
+                    
+        # Bad channel count
+        project.sessions[0].spcSetup = [31, 6144]
+        self.assertFalse(project.validate())
+        
+        # Bad integration count
+        project.sessions[0].spcSetup = [32, 6145]
+        self.assertFalse(project.validate())
+        
+        # Unsupported mode
+        for mode in ('XX', 'XY', 'YX', 'YY', 'XXXYYXYY', 'I', 'Q', 'U', 'V'):
+            project.sessions[0].spcSetup = [32, 6144]
+            project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+            self.assertFalse(project.validate())
+            
+    ### DRX - Beam/Dipole Mode ###
+    
+    def test_beamdipole_update(self):
+        """Test updating beam/dipole mode values."""
+        
+        project = sdfADP.parse_sdf(drxFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is     None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is not None)
+        
+        project.sessions[0].observations[1].set_beamdipole_mode(0)
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is None)
+        
+    def test_beamdipole_write(self):
+        """Test writing a beam/dipole mode SDF file."""
+        
+        project = sdfADP.parse_sdf(drxFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        out = project.render()
+        
+    def test_beamdipole_errors(self):
+        """Test various beam/dipole mode SDF errors."""
+        
+        project = sdfADP.parse_sdf(drxFile)
+        project.sessions[0].observations[0].set_beamdipole_mode(73)
+        
+        # Bad dipole
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, -1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
+        
+        # Bad beam gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        
+        # Bad dipole gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        
+        # Bad polarization
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
+        
+    def test_stepped_beamdipole_update(self):
+        """Test updating STEPPED beam/dipole mode values."""
+        
+        project = sdfADP.parse_sdf(stpFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is     None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is not None)
+        
+        project.sessions[0].observations[1].set_beamdipole_mode(0)
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is None)
+        
+    def test_stepped_beamdipole_write(self):
+        """Test writing a STEPPED beam/dipole mode SDF file."""
+        
+        project = sdfADP.parse_sdf(stpFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        out = project.render()
+        
+    def test_stepped_beamdipole_errors(self):
+        """Test various STEPPED beam/dipole mode SDF errors."""
+        
+        project = sdfADP.parse_sdf(stpFile)
+        project.sessions[0].observations[0].set_beamdipole_mode(73)
+        
+        # Bad dipole
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, -1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
+        
+        # Bad beam gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        
+        # Bad dipole gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        
+        # Bad polarization
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
         
     ### TBF ###
     

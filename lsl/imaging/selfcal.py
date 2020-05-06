@@ -105,8 +105,11 @@ def _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     
     Cp = numpy.zeros(nBLs)
     for i in range(C.shape[0]):
-        Cp[i] = robust.mean(C[i,:])
-    
+        try:
+            Cp[i] = robust.mean(C[i,:])
+        except ValueError:
+            Cp[i] = numpy.mean(C[i,:])
+            
     return Cp
 
 

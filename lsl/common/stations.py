@@ -22,7 +22,7 @@ from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as dataPath
-from lsl.common import mcs, mcsADP
+from lsl.common import dp, mcs as mcsDP, adp, mcsADP
 from lsl.misc.mathutil import to_dB, from_dB
 
 from lsl.misc import telemetry
@@ -504,20 +504,18 @@ class Antenna(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Antenna):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, Antenna):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def response(self, dB=False):
         """
         Return a two-element tuple (freq in Hz, mis-match efficiency) for a model LWA1 
@@ -573,20 +571,18 @@ class Stand(object):
         self.y = float(y)
         self.z = float(z)
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Stand):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, Stand):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __str__(self):
         return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
         
@@ -687,20 +683,18 @@ class FEE(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, FEE):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, FEE):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def response(self, dB=False):
         """
         Return a two-element tuple (freq in Hz, gain) for the frequency-
@@ -769,20 +763,18 @@ class Cable(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
-    def __cmp__(self, y):
-        if self.id > y.id:
-            return 1
-        elif self.id < y.id:
-            return -1
-        else:
-            return 0
-            
     def __eq__(self, other):
-        return True if self.__cmp__(other) == 0 else False
-        
+        if isinstance(other, Cable):
+            return self.id == other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __lt__(self, other):
-        return True if self.__cmp__(other) < 0 else False
-        
+        if isinstance(other, Cable):
+            return self.id < other.id
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def set_clock_offset(self, offset):
         """
         Add a clock offset (in seconds) to the cable model.
@@ -1000,6 +992,17 @@ class LSLInterface(object):
         self.metabundle = metabundle
         self.sdm = sdm
         
+        # Create a cache and preload it for the backend and mcs
+        self._cache = {}
+        if backend == 'lsl.common.dp':
+            self._cache['backend'] = dp
+        elif backend == 'lsl.common.adp':
+            self._cache['backend'] = adp
+        if mcs == 'lsl.common.mcs':
+            self._cache['mcs'] = mcsDP
+        elif mcs == 'lsl.common.mcsADP':
+            self._cache['mcs'] = mcsADP
+            
     def __str__(self):
         return "LSL Interfaces:\n Backend: %s\n MCS: %s\n SDF: %s\n Metadata: %s\n SDM: %s" % \
                 (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm)
@@ -1013,12 +1016,15 @@ class LSLInterface(object):
         return (LSLInterface, (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm))
         
     def get_module(self, which):
-        value = getattr(self, which)
-        if value is None:
-            raise RuntimeError("Unknown module for interface type '%s'" % which)
-        modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
-        tempModule = imp.load_module(value, *modInfo)
-        return tempModule
+        try:
+            return self._cache[which]
+        except KeyError:
+            value = getattr(self, which)
+            if value is None:
+                raise RuntimeError("Unknown module for interface type '%s'" % which)
+            modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
+            self._cache[which] = imp.load_module(value, *modInfo)
+        return self._cache[which]
 
 
 def _parse_ssmif_text(filename):
@@ -1550,7 +1556,7 @@ def _parse_ssmif_binary(filename):
             overrides['ME_MAX_NDR'] = 3
     else:
         ## DP
-        mode = mcs
+        mode = mcsDP
     bssmif = mode.parse_c_struct(mode.SSMIF_STRUCT, char_mode='int', endianness='little', overrides=overrides)
     bsettings = mode.parse_c_struct(mode.STATION_SETTINGS_STRUCT, endianness='little', overrides=overrides)
     
@@ -1579,7 +1585,7 @@ def _parse_ssmif_binary(filename):
     #
     # FEE, Cable, & SEP Data
     #
-    feeID   = mcs.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
+    feeID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
     feeID   = [''.join([k for k in i if k != '\x00']) for i in feeID]
     feeStat = list(bssmif.iFEEStat)
     feeDesi = list(bssmif.eFEEDesi)
@@ -1588,7 +1594,7 @@ def _parse_ssmif_binary(filename):
     feeAnt1 = list(bssmif.iFEEAnt1)
     feeAnt2 = list(bssmif.iFEEAnt2)
     
-    rpdID   = mcs.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
+    rpdID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
     rpdID   = [''.join([k for k in i if k != '\x00']) for i in rpdID]
     rpdStat = list(bssmif.iRPDStat)
     rpdDesi = list(bssmif.eRPDDesi)
@@ -1601,7 +1607,7 @@ def _parse_ssmif_binary(filename):
     rpdStr  = list(bssmif.fRPDStr)
     rpdAnt  = list(bssmif.iRPDAnt)
     
-    sepCbl  = mcs.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
+    sepCbl  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
     sepCbl  = [''.join([k for k in i if k != '\x00']) for i in sepCbl]
     sepLeng = list(bssmif.fSEPLeng)
     sepDesi = list(bssmif.eSEPDesi)
@@ -1612,38 +1618,38 @@ def _parse_ssmif_binary(filename):
     # ARX (ARB) Data
     #
     nChanARX = bssmif.nARBCH
-    arxID    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
+    arxID    = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
     arxID    = [''.join([k for k in i if k != '\x00']) for i in arxID]
     arxSlot  = list(bssmif.iARBSlot)
     arxDesi  = list(bssmif.eARBDesi)
     arxRack  = list(bssmif.iARBRack)
     arxPort  = list(bssmif.iARBPort)
-    arxStat  = mcs.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
-    arxAnt   = mcs.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
-    arxIn    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
+    arxStat  = mcsDP.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
+    arxAnt   = mcsDP.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
+    arxIn    = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
     arxIn    = [[''.join(i) for i in j] for j in arxIn]
-    arxOut   = mcs.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
+    arxOut   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
     arxOUt   = [[''.join(i) for i in j] for j in arxOut]
     
     try:
         #
         # DP 1 & 2 Data
         #
-        dp1ID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
+        dp1ID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
         dp1ID   = [''.join([k for k in i if k != '\x00']) for i in dp1ID]
-        dp1Slot = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
+        dp1Slot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
         dp1Slot = [''.join([k for k in i if k != '\x00']) for i in dp1Slot]
         dp1Desi = list(bssmif.eDP1Desi)
         dp1Stat = list(bssmif.eDP1Stat)
-        dp1InR  = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
+        dp1InR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
         dp1InR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InR]
-        dp1InC  = mcs.flat_to_multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
+        dp1InC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
         dp1InC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InC]
-        dp1Ant  = mcs.flat_to_multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
+        dp1Ant  = mcsDP.flat_to_multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
         
-        dp2ID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
+        dp2ID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
         dp2ID   = [''.join([k for k in i if k != '\x00']) for i in dp2ID]
-        dp2Slot = mcs.flat_to_multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
+        dp2Slot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
         dp2Slot = [''.join([k for k in i if k != '\x00']) for i in dp2Slot]
         dp2Stat = list(bssmif.eDP2Stat)
         dp2Desi = list(bssmif.eDP2Desi)
@@ -1651,21 +1657,21 @@ def _parse_ssmif_binary(filename):
         #
         # ROACH & Server Data
         #
-        roachID   = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
+        roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
         roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-        roachSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
+        roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
         roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
         roachDesi = list(bssmif.eRoachDesi)
         roachStat = list(bssmif.eRoachStat)
-        roachInR  = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
+        roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
         roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-        roachInC  = mcs.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
+        roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
         roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-        roachAnt  = mcs.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
+        roachAnt  = mcsDP.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
         
-        serverID   = mcs.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+        serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
         serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-        serverSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+        serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
         serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
         serverStat = list(bssmif.eServerStat)
         serverDesi = list(bssmif.eServerDesi)
@@ -1674,10 +1680,10 @@ def _parse_ssmif_binary(filename):
     # DR Data
     #
     drStat = list(bssmif.eDRStat)
-    drID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
+    drID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
     drID   = [''.join([k for k in i if k != '\x00']) for i in drID]
     drShlf = [0 for i in range(bssmif.nDR)]
-    drPC   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
+    drPC   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
     drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
     drDP   = list(bssmif.iDRDP)
     
@@ -1840,16 +1846,16 @@ def parse_ssmif(filename):
         ## LSL interface support
         if idn in ('VL',):
             interface = LSLInterface(backend='lsl.common.dp', 
-                                mcs='lsl.common.mcs', 
-                                sdf='lsl.common.sdf', 
-                                metabundle='lsl.common.metabundle', 
-                                sdm='lsl.common.sdm')
+                                     mcs='lsl.common.mcs', 
+                                     sdf='lsl.common.sdf', 
+                                     metabundle='lsl.common.metabundle', 
+                                     sdm='lsl.common.sdm')
         elif idn in ('SV',):
             interface = LSLInterface(backend='lsl.common.adp', 
-                                mcs='lsl.common.mcsADP', 
-                                sdf='lsl.common.sdfADP', 
-                                metabundle='lsl.common.metabundleADP', 
-                                sdm='lsl.common.sdmADP')
+                                     mcs='lsl.common.mcsADP', 
+                                     sdf='lsl.common.sdfADP', 
+                                     metabundle='lsl.common.metabundleADP', 
+                                     sdm='lsl.common.sdmADP')
         else:
             interface = None
             

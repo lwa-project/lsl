@@ -149,7 +149,7 @@ def get_limits(sigma, M, N=1):
     return lower, upper
 
 
-def spectral_fft(x):
+def spectral_fft(x, axis=None):
     """
     Compute the spectral kurtosis for a set of unaveraged FFT measurements.
     For a distribution consistent with Gaussian noise, this value should 
@@ -158,11 +158,10 @@ def spectral_fft(x):
     
     # Convert to power
     xPrime = numpy.abs(x)**2
-    
-    return spectral_power(xPrime, N=1)
+    return spectral_power(xPrime, N=1, axis=axis)
 
 
-def spectral_power(x, N=1):
+def spectral_power(x, N=1, axis=None):
     """
     Compute the spectral kurtosis for a set of power measurements averaged over 
     N FFT windows.  For a distribution consistent with Gaussian noise, this value 
@@ -171,7 +170,7 @@ def spectral_power(x, N=1):
     
     M = len(x)
     
-    k = M*(x**2).sum()/(x.sum())**2 - 1.0
+    k = M*(x**2).sum(axis=axis)/(x.sum(axis=axis))**2 - 1.0
     k *= (M*N+1)/(M-1)
     
     return k

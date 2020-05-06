@@ -206,7 +206,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         
     # Go!
     for i in range(2*nSets+1):
-        start = i*N/2 - N/4
+        start = i*N//2 - N//4
         stop = start + N
         
         if start < 0:

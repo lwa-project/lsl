@@ -114,7 +114,7 @@ def _fit_gaussian(data):
     return params
 
 
-def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.2, max_iter=150, sigma=3.0, verbose=True, plot=False):
+def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.2, max_iter=150, sigma=3.0, verbose=True, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
     instance filled with data, return a deconvolved image.  This function 
@@ -133,7 +133,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     # Sort out the channels to work on
     if chan is None:
-        chan = range(dataDict['freq'].size)
+        chan = range(dataDict.freq.size)
         
     # Get a grid of right ascensions and dec values for the image we are working with
     xyz = aipyImg.get_eq(0.0, aa.lat, center=(size,size))
@@ -144,7 +144,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     az,alt = top2azalt(top)
     
     # Get the list of baselines to generate visibilites for
-    baselines = dataDict['bls'][pol]
+    baselines = dataDict.baselines
     
     # Get the actual image out of the ImgW instance
     if input_image is None:
@@ -162,13 +162,13 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
-    psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+    psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
     psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
     psf = psf.image(center=(size,size))
     psf /= psf.max()
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
-    beamCutout = psf[size/2:3*size/2, size/2:3*size/2]
+    beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
     beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
@@ -196,10 +196,10 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
         peakV = working[peak_x,peak_y]
         
         # Optimize the location
-        peakParams = _fit_gaussian(working[peak_x-FWHM/2:peak_x+FWHM/2+1, peak_y-FWHM/2:peak_y+FWHM/2+1])
+        peakParams = _fit_gaussian(working[peak_x-FWHM//2:peak_x+FWHM//2+1, peak_y-FWHM//2:peak_y+FWHM//2+1])
         peakVO = peakParams[0]
-        peak_xO = peak_x - FWHM/2 + peakParams[1]
-        peak_yO = peak_y - FWHM/2 + peakParams[2]
+        peak_xO = peak_x - FWHM//2 + peakParams[1]
+        peak_yO = peak_y - FWHM//2 + peakParams[2]
         
         # Quantize to try and keep the computation down without over-simplifiying things
         subpixelationLevel = 5
@@ -252,12 +252,13 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
                 print("               -> Computing beam(s)")
                 
             beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
-            beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+            beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
             beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
             beam = beam.image(center=(size,size))
             beam /= beam.max()
-            print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-            
+            if verbose:
+                print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
+                
             prevBeam[beamIndex] = beam
             if verbose:
                 print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
@@ -280,7 +281,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
                     
                 area = side1*side2
                 asum += area
-                #print 'II', l, m, area, asum
+                #print('II', l, m, area, asum)
                 cleaned[l,m] += gain*area*peakV
                 
         if plot:
@@ -348,7 +349,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     return conv
 
 
-def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.1, max_iter=150, sigma=2.0, verbose=True, plot=False):
+def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.1, max_iter=150, sigma=2.0, verbose=True, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, an AIPY ImgW 
     instance filled with data, and a dictionary of sources, return the CLEAN
@@ -372,7 +373,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     
     # Sort out the channels to work on
     if chan is None:
-        chan = range(dataDict['freq'].size)
+        chan = range(dataDict.freq.size)
         
     # Get a grid of right ascensions and dec values for the image we are working with
     xyz = aipyImg.get_eq(0.0, aa.lat, center=(size,size))
@@ -383,7 +384,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     az,alt = top2azalt(top)
     
     # Get the list of baselines to generate visibilites for
-    baselines = dataDict['bls'][pol]
+    baselines = dataDict.baselines
     
     # Get the actual image out of the ImgW instance
     if input_image is None:
@@ -401,13 +402,13 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
-    psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+    psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
     psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
     psf = psf.image(center=(size,size))
     psf /= psf.max()
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
-    beamCutout = psf[size/2:3*size/2, size/2:3*size/2]
+    beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
     beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
@@ -431,7 +432,8 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         
         # Make sure the source is up
         src.compute(aa)
-        print('Source: %s @ %s degrees elevation' % (name, src.alt))
+        if verbose:
+            print('Source: %s @ %s degrees elevation' % (name, src.alt))
         if src.alt <= 10*numpy.pi/180.0:
             continue
             
@@ -440,17 +442,21 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         srcPeak = numpy.where( srcDist == srcDist.min() )
         
         # Define the clean box - this is fixed at 2*FWHM in width on each side
-        rx0 = srcPeak[0][0] - FWHM/2
-        rx1 = rx0 + FWHM + 1
-        ry0 = srcPeak[1][0] - FWHM/2
-        ry1 = ry0 + FWHM + 1
+        rx0 = max([0, srcPeak[0][0] - FWHM//2])
+        rx1 = min([rx0 + FWHM + 1, img.shape[0]])
+        ry0 = max([0, srcPeak[1][0] - FWHM//2])
+        ry1 = min([ry0 + FWHM + 1, img.shape[1]])
         
         # Define the background box - this lies outside the clean box and serves
         # as a reference for the background
         X, Y = numpy.indices(working.shape)
         R = numpy.sqrt( (X-srcPeak[0][0])**2 + (Y-srcPeak[1][0])**2 )
-        background = numpy.where( (R <= 2*FWHM+3) & (R > 2*FWHM) )
-        
+        bpad = 3
+        background = numpy.where( (R <= FWHM+bpad) & (R > FWHM) )
+        while len(background[0]) == 0 and bpad < img.shape[0]:
+            bpad += 1
+            background = numpy.where( (R <= FWHM+bpad) & (R > FWHM) )
+            
         px0 = min(background[0])-1
         px1 = max(background[0])+2
         py0 = min(background[1])-1
@@ -466,12 +472,12 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
             
             # Optimize the location
             try:
-                peakParams = _fit_gaussian(working[peak_x-FWHM/2:peak_x+FWHM/2+1, peak_y-FWHM/2:peak_y+FWHM/2+1])
+                peakParams = _fit_gaussian(working[peak_x-FWHM//2:peak_x+FWHM//2+1, peak_y-FWHM//2:peak_y+FWHM//2+1])
             except IndexError:
                 peakParams = [peakV, peak_x, peak_y]
             peakVO = peakParams[0]
-            peak_xO = peak_x - FWHM/2 + peakParams[1]
-            peak_yO = peak_y - FWHM/2 + peakParams[2]
+            peak_xO = peak_x - FWHM//2 + peakParams[1]
+            peak_yO = peak_y - FWHM//2 + peakParams[2]
             
             # Quantize to try and keep the computation down without over-simplifiying things
             subpixelationLevel = 5
@@ -526,12 +532,13 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
                     print("               -> Computing beam(s)")
                     
                 beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
-                beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+                beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
                 beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
                 beam = beam.image(center=(size,size))
                 beam /= beam.max()
-                print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-                
+                if verbose:
+                    print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
+                    
                 prevBeam[beamIndex] = beam
                 if verbose:
                     print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
@@ -554,7 +561,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
                         
                     area = side1*side2
                     asum += area
-                    #print 'II', l, m, area, asum
+                    #print('II', l, m, area, asum)
                     cleaned[l,m] += gain*area*peakV
                     
             if plot:
@@ -649,8 +656,8 @@ def _minor_cycle(img, beam, gain=0.2, max_iter=150):
             break
             
         # Build the beam
-        beam2 = numpy.roll(beam,  peak_x-beam.shape[0]/2, axis=0)
-        beam2 = numpy.roll(beam2, peak_y-beam.shape[1]/2, axis=1) 
+        beam2 = numpy.roll(beam,  peak_x-beam.shape[0]//2, axis=0)
+        beam2 = numpy.roll(beam2, peak_y-beam.shape[1]//2, axis=1) 
         
         # Calculate how much signal needs to be removed...
         toRemove = gain*peakV*beam2
@@ -660,7 +667,7 @@ def _minor_cycle(img, beam, gain=0.2, max_iter=150):
     return  cleaned + working
 
 
-def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='xx', chan=None, gain=0.05, max_iter=150, rtol=1e-9, verbose=True, plot=False):
+def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.05, max_iter=150, rtol=1e-9, verbose=True, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
     instance filled with data, return a deconvolved image.  This function 
@@ -675,7 +682,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     
     # Sort out the channels to work on
     if chan is None:
-        chan = range(dataDict['freq'].size)
+        chan = range(dataDict.freq.size)
         
     # Get a grid of right ascensions and dec values for the image we are working with
     xyz = aipyImg.get_eq(aa.sidereal_time(), aa.lat, center=(size,size))
@@ -683,17 +690,17 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     ra, dec = eq2radec(xyz)
     
     # Get the list of baselines to generate visibilites for
-    baselines = dataDict['bls'][pol]
+    baselines = dataDict.baselines
     
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
-    psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flatResponse=True)
+    psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
     psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
     psf = psf.image(center=(size,size))
     psf /= psf.max()
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
-    beamCutout = psf[size/2:3*size/2, size/2:3*size/2]
+    beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
     beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
@@ -720,7 +727,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     bSrcs = {}
     rChan = [chan[0], chan[-1]]
     bSrcs['zenith'] = RadioFixedBody(aa.sidereal_time(), aa.lat, name='zenith', jys=1, index=0)
-    simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flatResponse=True)
+    simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
     simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
     simImg = simImg.image(center=(size,size))
     
@@ -761,7 +768,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
                 bSrcs[nm] = RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=mdl[i,j], index=0, epoch=aa.date)
                 
         ## Model the visibilities
-        simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flatResponse=True)
+        simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
         
         ## Form the simulated image
         simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)

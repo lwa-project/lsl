@@ -10,6 +10,7 @@ if sys.version_info < (3,):
     
 import os
 import re
+import copy
 import pytz
 import ephem
 import tempfile
@@ -104,6 +105,15 @@ class idf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.runs[0].scans[0].ra, 19.991210200, 6)
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 40.733916000, 6)
         
+        # Ordering
+        scan = copy.deepcopy(project.runs[0].scans[0])
+        scan.set_start("UTC 2019/1/7 22:43:05")
+        project.runs[0].append(scan)
+        
+        self.assertTrue(project.runs[0].scans[0] < project.runs[0].scans[1])
+        self.assertFalse(project.runs[0].scans[0] > project.runs[0].scans[1])
+        self.assertTrue(project.runs[0].scans[0] != project.runs[0].scans[1])
+        
     def test_drx_update(self):
         """Test updating TRK_RADEC values."""
         
@@ -122,6 +132,22 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].freq2, 1665395482)
         self.assertAlmostEqual(project.runs[0].scans[0].ra, 5.5, 6)
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
+        
+        dt0, dt1 = idf.get_scan_start_stop(project.runs[0].scans[0])
+        self.assertEqual(dt0.year, 2011)
+        self.assertEqual(dt0.month, 2)
+        self.assertEqual(dt0.day, 24)
+        self.assertEqual(dt0.hour, 0)
+        self.assertEqual(dt0.minute, 0)
+        self.assertEqual(dt0.second, 15)
+        self.assertEqual(dt0.microsecond, 0)
+        self.assertEqual(dt1.year, 2011)
+        self.assertEqual(dt1.month, 2)
+        self.assertEqual(dt1.day, 24)
+        self.assertEqual(dt1.hour, 0)
+        self.assertEqual(dt1.minute, 0)
+        self.assertEqual(dt1.second, 30)
+        self.assertEqual(dt1.microsecond, 0)
         
     def test_drx_write(self):
         """Test writing a TRK_RADEC IDF file."""
@@ -152,7 +178,19 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(drxFile)
         
+        # Bad project
+        old_id = project.id
+        project.id = 'ThisIsReallyLong'
+        self.assertFalse(project.validate())
+        
+        # Bad session
+        project.id = old_id
+        old_id = project.runs[0].id
+        project.runs[0].id = 10001
+        self.assertFalse(project.validate())
+        
         # Bad interferometer
+        project.runs[0].id = old_id
         project.runs[0].stations = [lwa1,]
         self.assertFalse(project.validate())
         
@@ -189,6 +227,11 @@ class idf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.runs[0].scans[0].filter = 6
+        project.runs[0].scans[0].frequency1 = 10.0e6
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
         project.runs[0].scans[0].filter = 6
         project.runs[0].scans[0].frequency1 = 90.0e6
         project.runs[0].scans[0].update()
@@ -575,6 +618,12 @@ class idf_tests(unittest.TestCase):
         project = idf.parse_idf(drxFile)
         sdfs = project.generate_sdfs()
         
+        project = idf.parse_idf(solFile)
+        sdfs = project.generate_sdfs()
+        
+        project = idf.parse_idf(jovFile)
+        sdfs = project.generate_sdfs()
+        
     def test_auto_update(self):
         """Test project auto-update on render."""
         
@@ -607,7 +656,7 @@ class idf_tests(unittest.TestCase):
         # Part 3 - frequency and start time
         project = idf.parse_idf(drxFile)
         project.runs[0].scans[0].frequency2 = 75e6
-        project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
+        project.runs[0].scans[0].start = "MST 2011 Feb 23 14:00:15"
         
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
         fh.write(project.render())
@@ -615,14 +664,14 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
         self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
-        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[0].mpm,  15000)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55615)
+        self.assertEqual(project.runs[0].scans[0].mpm,  75615000)
         
         # Part 4 - frequency and start time (timedelta)
         project = idf.parse_idf(drxFile)
         _MST = pytz.timezone('US/Mountain')
         project.runs[0].scans[0].frequency2 = 75e6
-        project.runs[0].scans[0].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
+        project.runs[0].scans[0].start = _MST.localize(datetime(2011, 2, 23, 14, 00, 30, 1000))
         
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
         fh.write(project.render())
@@ -630,8 +679,8 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
         self.assertEqual(project.runs[0].scans[0].freq2, 1643482384)
-        self.assertEqual(project.runs[0].scans[0].mjd,  55616)
-        self.assertEqual(project.runs[0].scans[0].mpm,  30001)
+        self.assertEqual(project.runs[0].scans[0].mjd,  55615)
+        self.assertEqual(project.runs[0].scans[0].mpm,  75630001)
         
     def test_set_stations(self):
         """Test the set stations functionlity."""

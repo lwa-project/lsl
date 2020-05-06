@@ -120,14 +120,14 @@ try:
                 
                 return numpy.argsort(packed)
                 
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new FITS IDI object using a filename and a reference time 
             given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             
             .. versionchanged:: 1.1.2
-                Added the 'memmap' and 'clobber' keywords to control if the file
+                Added the 'memmap' and 'overwrite' keywords to control if the file
                 is memory mapped and whether or not to overwrite an existing file, 
                 respectively.
             """
@@ -137,7 +137,7 @@ try:
             
             # Open the file and get going
             if os.path.exists(filename):
-                if clobber:
+                if overwrite:
                     shutil.rmtree(filename, ignore_errors=False)
                 else:
                     raise IOError("File '%s' already exists" % filename)
@@ -1126,14 +1126,14 @@ except ImportError:
         
         _STOKES_CODES = STOKES_CODES
         
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new FITS IDI object using a filename and a reference time 
             given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             
             .. versionchanged:: 1.1.2
-                Added the 'memmap' and 'clobber' keywords to control if the file
+                Added the 'memmap' and 'overwrite' keywords to control if the file
                 is memory mapped and whether or not to overwrite an existing file, 
                 respectively.
             """

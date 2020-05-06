@@ -72,14 +72,14 @@ class Sd(WriterBase):
         def time(self):
             return self.obsTime
             
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new SDFITS object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
-            Added the 'memmap' and 'clobber' keywords to control if the file
+            Added the 'memmap' and 'overwrite' keywords to control if the file
             is memory mapped and whether or not to overwrite an existing file, 
             respectively.
         """
@@ -99,7 +99,7 @@ class Sd(WriterBase):
 
         # Open the file and get going
         if os.path.exists(filename):
-            if clobber:
+            if overwrite:
                 os.unlink(filename)
             else:
                 raise IOError("File '%s' already exists" % filename)

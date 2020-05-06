@@ -12,6 +12,8 @@ import os
 import unittest
 import numpy
 
+import aipy
+
 from lsl.sim import vis
 from lsl.imaging.data import VisibilityData
 from lsl.common import stations as lwa_common
@@ -30,14 +32,66 @@ class simvis_tests(unittest.TestCase):
         
         numpy.seterr(all='ignore')
         
+    def test_earth_satellite(self):
+        tle = ["ISS (ZARYA)  ",
+               "1 25544U 98067A   20118.40744172 -.00000643  00000-0 -34717-5 0  9993",
+               "2 25544  51.6437 239.7966 0001371 201.5257 265.1663 15.49320404224148"]
+        iss = vis.RadioEarthSatellite(tle, 0.150, tpower=1.0, tbw=100e5)
+        
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 1e6)
+
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        aa.set_unixtime(1588026422.0)
+        iss.compute(aa)
+        
+        iss.get_crds('eq')
+        iss.get_crds('top')
+        
     def test_build_aa_flat(self):
         """Test building a antenna array object with uniform sky response."""
         
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = numpy.arange(30e6, 50e6, 10e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_flat=True)
+        aa[0].bm_response((0,0,1), pol='x')
+        aa[0].bm_response((0,0,1), pol='y')
+        bm1 = aa[0].get_beam_shape()
+        
+        az = numpy.zeros((360,90))
+        for i in range(360):
+            az[i,:] = i*numpy.pi/180.0
+        alt = numpy.zeros((360,90))
+        for i in range(90):
+            alt[:,i] = i*numpy.pi/180.0
+        xyz = aipy.coord.azalt2top(numpy.concatenate([[az],[alt]]))
+        bm2 = aa[0].bm_response(xyz, pol='x')
+        numpy.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
+        
+    def test_build_aa_gaussian(self):
+        """Test building a antenna array object with Gaussian sky response."""
+        
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = numpy.arange(30e6, 50e6, 10e6)
+
+        aa = vis.build_sim_array(lwa1, antennas, freqs, force_gaussian=True)
+        aa[0].bm_response((0,0,1), pol='x')
+        aa[0].bm_response((0,0,1), pol='y')
+        bm1 = aa[0].get_beam_shape()
+        
+        az = numpy.zeros((360,90))
+        for i in range(360):
+            az[i,:] = i*numpy.pi/180.0
+        alt = numpy.zeros((360,90))
+        for i in range(90):
+            alt[:,i] = i*numpy.pi/180.0
+        xyz = aipy.coord.azalt2top(numpy.concatenate([[az],[alt]]))
+        bm2 = aa[0].bm_response(xyz, pol='x')
+        numpy.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
         
     def test_build_aa(self):
         """Test building a antenna array object with realistic sky response."""
@@ -47,12 +101,23 @@ class simvis_tests(unittest.TestCase):
         freqs = numpy.arange(30e6, 50e6, 1e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs)
+        aa.set_asp_filter('split')
+        aa[0].bm_response((0,0,1))
         # Check the number of stands
         self.assertEqual(len(aa.ants), len(antennas))
         
         # Check the frequencies comming out
         for fo, fi in zip(aa.get_afreqs(), freqs):
             self.assertAlmostEqual(fo, fi/1e9, 6)
+            
+        # Check that other methods even run
+        aa.get_baseline_fast(0, 1)
+        aa.gen_uvw_fast(0, 1)
+        aa.gen_phs_fast('z', 0, 1)
+        
+        aa.set_unixtime(1588026422.0)
+        vis.SOURCES['crab'].compute(aa)
+        aa.gen_phs_fast(vis.SOURCES['crab'], 0, 1)
             
     def test_build_data(self):
         """Test building simulated visibility data"""
@@ -76,6 +141,9 @@ class simvis_tests(unittest.TestCase):
         self.assertTrue('XY' in out.pols)
         self.assertTrue('YX' in out.pols)
         self.assertTrue('YY' in out.pols)
+        
+        # Try a simulation on a single baselines
+        aa.sim(0, 1)
         
         #
         # Single-channel test

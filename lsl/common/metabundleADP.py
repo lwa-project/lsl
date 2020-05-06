@@ -24,6 +24,7 @@ from lsl.common.mcsADP import *
 from lsl.common.adp import word_to_freq
 from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -84,22 +85,7 @@ def read_ses_file(filename):
         #if bses.FORMAT_VERSION not in (6,):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
-            
-        if bses.SESSION_NOBS > 150:
-            ## Pre SESSION_SPC
-            fh.seek(0)
-            
-            newStruct = []
-            for line in SSF_STRUCT.split('\n'):
-                if line.find('SESSION_SPC') != -1:
-                    continue
-                newStruct.append(line)
-            newStruct = '\n'.join(newStruct)
-            
-            bses = parse_c_struct(newStruct, endianness='little')
-            fh.readinto(bses)
-            bses.SESSION_SPC = ''
-            
+        
     record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
               'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2,
               'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4}
@@ -135,25 +121,7 @@ def read_obs_file(filename):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
             
-        if bheader.OBS_ID > 150:
-            ## Pre SESSION_SPC and OBS_BDM
-            fh.seek(0)
-            
-            newStruct = []
-            for line in OSF_STRUCT.split('\n'):
-                if line.find('OBS_BDM') != -1:
-                    continue
-                if line.find('SESSION_SPC') != -1:
-                    continue
-                newStruct.append(line)
-            newStruct = '\n'.join(newStruct)
-            
-            bheader = parse_c_struct(newStruct, endianness='little')
-            fh.readinto(bheader)
-            bheader.SESSION_SPC = ''
-            bheader.OBS_BDM = ''
-            
-        elif bheader.OBS_B > 2:
+        if bheader.OBS_B > 2:
             ## Pre OBS_BDM
             fh.seek(0)
             
@@ -250,7 +218,9 @@ def read_cs_file(filename):
                                'ignoreTime': True if action.bASAP else False, 
                                'subsystemID': sid_to_string(action.sid), 'commandID': cid_to_string(action.cid), 
                                'commandLength': action.len, 'data': data}
-                            
+                if actionPrime['subsystemID'] == 'DP':
+                    raise RuntimeError("Command script references DP not ADP")
+                    
                 commands.append( actionPrime )
             except IOError:
                 break
@@ -661,33 +631,33 @@ def is_valid(tarname, verbose=False):
         get_session_spec(tarname)
         passes += 1
         if verbose:
-            print("Session specification - OK")
+            print(colorfy("Session specification - {{%green OK}}"))
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
-            print("Session specification - FAILED")
+            print(colorfy("Session specification - {{%red {{%bold FAILED}}}}"))
         
     try:
         get_observation_spec(tarname)
         passes += 1
         if verbose:
-            print("Observation specification(s) - OK")
+            print(colorfy("Observation specification(s) - {{%green OK}}"))
     except:
         failures += 1
         if verbose:
-            print("Observation specification(s) - FAILED")
+            print(colorfy("Observation specification(s) - {{%red {{%bold FAILED}}}}"))
             
     try:
         get_command_script(tarname)
         passes += 1
         if verbose:
-            print("Command script - OK")
+            print(colorfy("Command script - {{%green OK}}"))
     except:
         failures += 1
         if verbose:
-            print("Command script - FAILED")
+            print(colorfy("Command script - {{%red {{%bold FAILED}}}}"))
             
     if verbose:
         print("---")

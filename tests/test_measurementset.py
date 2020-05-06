@@ -102,7 +102,7 @@ class measurementset_tests(unittest.TestCase):
         
         for i in range(4):
             # Start the file
-            ms = measurementset.Ms(testFile, ref_time=testTime, clobber=True)
+            ms = measurementset.Ms(testFile, ref_time=testTime, overwrite=True)
             if i != 0:
                 ms.set_stokes(['xx'])
             if i != 1:

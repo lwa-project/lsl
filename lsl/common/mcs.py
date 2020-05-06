@@ -646,16 +646,13 @@ def status_to_string(code):
     elif code == 3:
         return "OK"
     else:
-        return "Unknown status code '%i'" % code
+        raise ValueError("Unknown status code '%i'" % code)
 
 
 def summary_to_string(code):
     """
     Convert a numerical MCS overall status code to an explination.
     """
-    
-    if code < 0 or code > 6:
-        raise ValueError("Invalid code %i" % code)
     
     if code == 0:
         return "Not normally used"
@@ -669,8 +666,10 @@ def summary_to_string(code):
         return "Booting - initializing; not yet fully operational"
     elif code == 5:
         return "Shutdown - shutting down; not ready for operation"
+    elif code == 6:
+        return "Unknown"
     else:
-        return "Status is unknown"
+        raise ValueError("Unknown summary code '%i'" % code)
 
 
 def sid_to_string(sid):
@@ -678,10 +677,7 @@ def sid_to_string(sid):
     Convert a MCS subsystem ID code into a string.
     """
     
-    if sid < 1 or sid > 19:
-        raise ValueError("Invalid sid code %i" % sid)
-    
-    if sid < 9:
+    if sid > 0 and sid <= 9:
         return "Null subsystem #%i" % sid
     elif sid == 10:
         return "MCS"
@@ -701,6 +697,8 @@ def sid_to_string(sid):
         return "DR #4"
     elif sid == 18:
         return "DR #5"
+    elif sid == 19:
+        return "ADP"
     else:
         raise ValueError("Invalid sid code %i" % sid)
 
@@ -709,9 +707,6 @@ def cid_to_string(cid):
     """
     Convert a MCS command code into a string.
     """
-    
-    if cid < 0 or cid > 41:
-        raise ValueError("Invalid cid code %i" % cid)
     
     if cid == 0:
         return "MCSSHT"
@@ -793,6 +788,10 @@ def cid_to_string(cid):
         return "OBE"
     elif cid == 39:
         return "SPC"
+    elif cid == 40:
+        return "TBF"
+    elif cid == 41:
+        return "COR"
     else:
         raise ValueError("Invalid cid code %i" % cid)
 
@@ -801,9 +800,6 @@ def mode_to_string(mode):
     """
     Convert a MCS numeric observing mode into a string.
     """
-    
-    if mode < 1 or mode > 8:
-        raise ValueError("Invalid observing mode %i" % mode)
     
     if mode == 1:
         return "TRK_RADEC"
@@ -819,6 +815,8 @@ def mode_to_string(mode):
         return "TBN"
     elif mode == 7:
         return "DIAG1"
+    elif mode == 8:
+        return "TBF"
     else:
         raise ValueError("Invalid observing mode %i" % mode)
 

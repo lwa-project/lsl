@@ -17,7 +17,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from lsl.common.paths import DATA_BUILD
-from lsl.common import sdf
+from lsl.common import sdf, sdfADP as other_sdf
 from lsl.common.stations import lwa1, lwasv
 
 
@@ -122,6 +122,18 @@ class sdf_tests(unittest.TestCase):
         s1 = "LST 2013-01-08 19:42:00.000"
         s2 = "UTC 2013-01-08 19:38:26.723"
         self.assertEqual(sdf.parse_time(s1, station=lwa1), sdf.parse_time(s2))
+        
+    def test_type_control(self):
+        """Test SDF member type control."""
+        
+        obs = sdf.Observer('Test Observer', 99)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        sess = sdf.Session('Test Session', 1, observations=[targ,])
+        sess.set_drx_beam(1)
+        proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
+        
+        self.assertRaises(TypeError, proj.sessions.append, 5)
+        self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
         
     def test_flat_projects(self):
         """Test single session/observations SDFs."""
@@ -237,6 +249,11 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].freq1, 832697741)
         self.assertEqual(project.sessions[0].observations[1].filter,   7)
         
+        # Ordering
+        self.assertTrue(project.sessions[0].observations[0] < project.sessions[0].observations[1])
+        self.assertFalse(project.sessions[0].observations[0] > project.sessions[0].observations[1])
+        self.assertTrue(project.sessions[0].observations[0] != project.sessions[0].observations[1])
+        
     def test_tbn_update(self):
         """Test updating TBN values."""
         
@@ -261,11 +278,29 @@ class sdf_tests(unittest.TestCase):
         
         project = sdf.parse_sdf(tbnFile)
         
+        
+        # Bad project
+        old_id = project.id
+        project.id = 'ThisIsReallyLong'
+        self.assertFalse(project.validate())
+        
+        # Bad session
+        project.id = old_id
+        old_id = project.sessions[0].id
+        project.sessions[0].id = 10001
+        self.assertFalse(project.validate())
+        
         # Bad filter
+        project.sessions[0].id = old_id
         project.sessions[0].observations[0].filter = 10
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 4.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 7
         project.sessions[0].observations[0].frequency1 = 95.0e6
         project.sessions[0].observations[0].update()
@@ -329,10 +364,51 @@ class sdf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.sessions[0].observations[1].ra, 5.5, 6)
         self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.5, 6)
         
+        dt0, dt1 = sdf.get_observation_start_stop(project.sessions[0].observations[1])
+        self.assertEqual(dt0.year, 2011)
+        self.assertEqual(dt0.month, 2)
+        self.assertEqual(dt0.day, 24)
+        self.assertEqual(dt0.hour, 0)
+        self.assertEqual(dt0.minute, 0)
+        self.assertEqual(dt0.second, 15)
+        self.assertEqual(dt0.microsecond, 0)
+        self.assertEqual(dt1.year, 2011)
+        self.assertEqual(dt1.month, 2)
+        self.assertEqual(dt1.day, 24)
+        self.assertEqual(dt1.hour, 0)
+        self.assertEqual(dt1.minute, 0)
+        self.assertEqual(dt1.second, 30)
+        self.assertEqual(dt1.microsecond, 0)
+        
     def test_drx_write(self):
         """Test writing a TRK_RADEC SDF file."""
         
         project = sdf.parse_sdf(drxFile)
+        out = project.render()
+        
+        project.sessions[0].observations[0].obsFEE = [[1,1] for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].obsFEE[0] = [0,0]
+        project.sessions[0].observations[0].obsFEE[1] = [0,0]
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspFlt = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspFlt[0] = 3
+        project.sessions[0].observations[0].aspFlt[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspAT1 = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspAT1[0] = 3
+        project.sessions[0].observations[0].aspAT1[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspAT2 = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspAT2[0] = 3
+        project.sessions[0].observations[0].aspAT2[1] = 3
+        out = project.render()
+        
+        project.sessions[0].observations[0].aspATS = [1 for i in project.sessions[0].observations[0].aspFlt]
+        project.sessions[0].observations[0].aspATS[0] = 3
+        project.sessions[0].observations[0].aspATS[1] = 3
         out = project.render()
         
     def test_drx_errors(self):
@@ -353,6 +429,11 @@ class sdf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 9.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
         project.sessions[0].observations[0].filter = 7
         project.sessions[0].observations[0].frequency1 = 90.0e6
         project.sessions[0].observations[0].update()
@@ -776,12 +857,128 @@ class sdf_tests(unittest.TestCase):
             project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
             self.assertFalse(project.validate())
             
+    ### DRX - Beam/Dipole Mode ###
+    
+    def test_beamdipole_update(self):
+        """Test updating beam/dipole mode values."""
+        
+        project = sdf.parse_sdf(drxFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is     None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is not None)
+        
+        project.sessions[0].observations[1].set_beamdipole_mode(0)
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is None)
+        
+    def test_beamdipole_write(self):
+        """Test writing a beam/dipole mode SDF file."""
+        
+        project = sdf.parse_sdf(drxFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        out = project.render()
+        
+    def test_beamdiploe_errors(self):
+        """Test various beam/dipole mode SDF errors."""
+        
+        project = sdf.parse_sdf(drxFile)
+        project.sessions[0].observations[0].set_beamdipole_mode(73)
+        
+        # Bad dipole
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, -1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
+        
+        # Bad beam gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        
+        # Bad dipole gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        
+        # Bad polarization
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
+        
+    def test_beamdipole_errors(self):
+        """Test various beam/dipole mode SDF errors."""
+        
+        project = sdf.parse_sdf(drxFile)
+        project.sessions[0].observations[0].set_beamdipole_mode(73)
+        
+        # Bad dipole
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, -1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
+        
+        # Bad beam gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        
+        # Bad dipole gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        
+        # Bad polarization
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
+        
+    def test_stepped_beamdipole_update(self):
+        """Test updating STEPPED beam/dipole mode values."""
+        
+        project = sdf.parse_sdf(stpFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is     None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is not None)
+        
+        project.sessions[0].observations[1].set_beamdipole_mode(0)
+        self.assertTrue(project.sessions[0].observations[0].beamDipole is None)
+        self.assertTrue(project.sessions[0].observations[1].beamDipole is None)
+        
+    def test_stepped_beamdipole_write(self):
+        """Test writing a STEPPED beam/dipole mode SDF file."""
+        
+        project = sdf.parse_sdf(stpFile)
+        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        out = project.render()
+        
+    def test_stepped_beamdipole_errors(self):
+        """Test various STEPPED beam/dipole mode SDF errors."""
+        
+        project = sdf.parse_sdf(stpFile)
+        project.sessions[0].observations[0].set_beamdipole_mode(73)
+        
+        # Bad dipole
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, -1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
+        
+        # Bad beam gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        
+        # Bad dipole gain
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        
+        # Bad polarization
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
+        
     ### TBF ###
     
     def test_tbf_parse(self):
-        """Test reading in a TBW SDF file."""
+        """Test reading in a TBF SDF file."""
         
         self.assertRaises(RuntimeError, sdf.parse_sdf, tbfFile)
+        
+    def test_tbf_append(self):
+        """Test appending a TBF observation to an LWA1 session."""
+        
+        project = sdf.parse_sdf(tbnFile)
+        
+        obs = other_sdf.TBF('TBF', 'TBF', '2020/4/30 01:23:45.5', 40e6, 75e6, 7, 196000)
+        self.assertRaises(TypeError, project.sessions[0].append, obs)
         
     ### Misc. ###
     
