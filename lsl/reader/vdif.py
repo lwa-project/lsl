@@ -33,6 +33,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import copy
+import warnings
 from datetime import datetime
 
 from lsl import astro
@@ -128,6 +129,7 @@ class FrameHeader(FrameHeaderBase):
         # Get the frame MJD by adding the seconds_from_epoch value to the epoch
         frameMJD_i = epochMJD + self.seconds_from_epoch // 86400
         frameMJD_f = (self.seconds_from_epoch % 86400) / 86400.0
+        frameMJD_s = 0.0
         
         if self.sample_rate == 0.0:
             # Try to get the sub-second time by parsing the extended user data
@@ -146,10 +148,10 @@ class FrameHeader(FrameHeaderBase):
                 ## What is the frame rate?
                 frameRate = sample_rate // nSamples
                 
-                frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
+                frameMJD_s += 1.0*self.frame_in_second/frameRate/86400.0
             
             except KeyError:
-                pass
+                warnings.warn("Insufficient information to determine exact frame timestamp, time will be approximate")
                 
         else:
             # Use what we already have been told
@@ -162,16 +164,14 @@ class FrameHeader(FrameHeaderBase):
             ## What is the frame rate?
             frameRate = self.sample_rate // nSamples
             
-            frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
+            frameMJD_s += 1.0*self.frame_in_second/frameRate/86400.0
             
         # Convert from MJD to UNIX time
         if frameMJD_f > 1:
             frameMJD_i += 1
             frameMJD_f -= 1
-        seconds_i = int(astro.utcjd_to_unix(frameMJD_i + astro.MJD_OFFSET))
-        seconds_f = frameMJD_f * 86400.0
-        
-        return FrameTimestamp(seconds_i, seconds_f)
+            
+        return FrameTimestamp.from_pulsar_mjd(frameMJD_i, frameMJD_f, frameMJD_s)
         
     @property
     def id(self):

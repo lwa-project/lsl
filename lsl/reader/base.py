@@ -302,7 +302,7 @@ class FrameTimestamp(object):
     
     def __init__(self, si=0, sf=0.0):
         if isinstance(si, (float, numpy.floating)):
-            sf = sf + si - int(si)
+            sf = sf + (si - int(si))
             si = int(si)
         # Make sure sf is [0.0, 1.0)
         if sf >= 1:
@@ -343,6 +343,18 @@ class FrameTimestamp(object):
         f = (mpm - s*1000) / 1000.0
         s = s + (imjd - 40587)*86400
         return cls(s, f)
+        
+    @classmethod
+    def from_pulsar_mjd(cls, mjd, mjd_frac, sec_frac):
+        """
+        Create a new FrameTimstamp from a three-element tuple of integer number 
+        of MJD days, fractional MJD day, and fractional seconds.
+        """
+        
+        s = (mjd - 40587)*86400
+        f = sec_frac
+        s1 = int(mjd_frac * 86400)
+        return cls(s+s1, f)
         
     def __str__(self):
         dt = self.datetime
