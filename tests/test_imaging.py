@@ -354,9 +354,9 @@ class imaging_tests(unittest.TestCase):
         
         # Compress
         compressedFile = os.path.splitext(testFile)[0]+'.tar.gz'
-        cmd = ['tar', '-C', testFile,  'czf', compressedFile]
-        cmd.extend([filename.replace('testFile', './') for filename in glob.glob(os.path.join(testFile, '*'))])
-        subprocess.check_call(cmd)
+        cmd = ['tar', 'czf', compressedFile]
+        cmd.extend([filename.replace(testFile, './') for filename in glob.glob(os.path.join(testFile, '*'))])
+        subprocess.check_call(cmd, cwd=testFile)
         
         # Open the measurement set
         ms = utils.CorrelatedDataMS(compressedFile)
