@@ -138,7 +138,7 @@ class FrameHeader(FrameHeaderBase):
                 eud = self.extended_user_data
                 sample_rate = eud['sample_rate']
                 sample_rate *= 1e6 if eud['sample_rate_units'] == 'MHz' else 1e3
-            
+                
                 ## How many samples are in each frame?
                 dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		     # 8-byte chunks -> bytes - full header + legacy offset
                 samplesPerWord = 32 // self.bits_per_sample					     # dimensionless
@@ -148,7 +148,7 @@ class FrameHeader(FrameHeaderBase):
                 ## What is the frame rate?
                 frameRate = sample_rate // nSamples
                 
-                frameMJD_s += 1.0*self.frame_in_second/frameRate/86400.0
+                frameMJD_s += 1.0*self.frame_in_second/frameRate
             
             except KeyError:
                 warnings.warn("Insufficient information to determine exact frame timestamp, time will be approximate")
@@ -164,7 +164,7 @@ class FrameHeader(FrameHeaderBase):
             ## What is the frame rate?
             frameRate = self.sample_rate // nSamples
             
-            frameMJD_s += 1.0*self.frame_in_second/frameRate/86400.0
+            frameMJD_s += 1.0*self.frame_in_second/frameRate
             
         # Convert from MJD to UNIX time
         if frameMJD_f > 1:
