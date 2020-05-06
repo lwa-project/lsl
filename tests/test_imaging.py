@@ -355,7 +355,11 @@ class imaging_tests(unittest.TestCase):
         # Compress
         compressedFile = os.path.splitext(testFile)[0]+'.tar.gz'
         cmd = ['tar', 'czf', compressedFile]
-        cmd.extend([filename.replace(testFile, './') for filename in glob.glob(os.path.join(testFile, '*'))])
+        for depth in range(1, 4):
+            searchpath = [testFile,]
+            searchpath.extend(['*',]*depth)
+            filenames = glob.glob(os.path.join(searchpath))
+            cmd.extend([filename.replace(testFile, './') for filename in filenames])
         subprocess.check_call(cmd, cwd=testFile)
         
         # Open the measurement set
