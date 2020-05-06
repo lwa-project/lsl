@@ -4,12 +4,9 @@ Time and position transform objects.
 
 # Python2 compatibility
 from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
+
 try:
-    from collections.abs import Sequence as SequenceABC
+    from collections.abc import Sequence as SequenceABC
 except ImportError: 
     from collections import Sequence as SequenceABC
 import copy
@@ -234,10 +231,8 @@ class Time(object):
         return (mjd, mpm)
         
     @utc_mcs.setter
-    def utc_mcs(self, value, mpm=None):
-        if mpm is None:
-            if not isinstance(value, (tuple, list)):
-                raise TypeError("value must be a tuple or list if 'mpm' is not supplied")
+    def utc_mcs(self, value):
+        if isinstance(value, (tuple, list)):
             if len(value) != 2:
                 raise ValueError("value must be a two-element tuple or list")
             if not isinstance(value[0], (int, float)):
@@ -246,11 +241,7 @@ class Time(object):
                 raise TypeError("value[1] must be type int or float")
             mjd, mpm = value
         else:
-            if not isinstance(value, (int, float)):
-                raise TypeError("value must be type int or float")
-            if not isinstance(mpm, (int, float)):
-                raise TypeError("mpm must be type int or float")
-            mjd = value
+            raise TypeError("Expected a two-element tuple of int/float values")
         self._time = astro.mjd_to_jd(float(mjd) + float(mpm)/86400/1000)
         
     @property

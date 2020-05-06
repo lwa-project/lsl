@@ -49,6 +49,17 @@ class transform_tests(unittest.TestCase):
         t3.utc_mcs = (56300, 5024000)
         self.assertEqual(t3.utc_str, '2013-01-08 01:23:44.000')
         
+    def test_time_comparisons(self):
+        """Test ordering transform.Time instances."""
+        
+        t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        t1 = transform.Time((56300, 5026000), format='MCS')
+        t2 = transform.Time(1357608224.0, format='TIMET')
+        
+        self.assertTrue(t0 < t1)
+        self.assertTrue(t0 > t2)
+        self.assertTrue(t2 != t1)
+        
     def test_planetaryposition_init(self):
         """Test the transform.PlanetaryPosition constructor."""
         
