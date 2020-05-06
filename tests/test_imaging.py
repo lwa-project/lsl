@@ -358,7 +358,7 @@ class imaging_tests(unittest.TestCase):
         for depth in range(1, 4):
             searchpath = [testFile,]
             searchpath.extend(['*',]*depth)
-            filenames = glob.glob(os.path.join(searchpath))
+            filenames = glob.glob(os.path.join(*tuple(searchpath)))
             cmd.extend([filename.replace(testFile, './') for filename in filenames])
         subprocess.check_call(cmd, cwd=testFile)
         
