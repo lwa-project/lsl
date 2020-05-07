@@ -1137,8 +1137,8 @@ class Idi(WriterBase):
                 
                 ### Zero out the visibility data
                 try:
-                    matrix *= 0.0
-                    weights *= 0.0
+                    matrix[...] = 0.0
+                    weights[...] = 1.0
                 except NameError:
                     matrix = numpy.zeros((len(order), self.nStokes*self.nChan*nBand), dtype=numpy.complex64)
                     weights = numpy.ones((len(order), self.nStokes*self.nChan*nBand), dtype=numpy.float32)
