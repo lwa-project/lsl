@@ -151,7 +151,7 @@ class FrameHeader(FrameHeaderBase):
                 frameMJD_s += 1.0*self.frame_in_second/frameRate
             
             except KeyError:
-                warnings.warn("Insufficient information to determine exact frame timestamp, time will be approximate")
+                warnings.warn("Insufficient information to determine exact frame timestamp, time will be approximate", RuntimeWarning)
                 
         else:
             # Use what we already have been told
