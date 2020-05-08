@@ -859,7 +859,7 @@ void compute_xengine_three(long nStand,
     OutType tempVis1, tempVis2;
     
     // Time-domain blanking control
-    long nActVisPure;
+    long nActVis;
     
     #ifdef _OPENMP
         #pragma omp parallel default(shared) private(c, f, nActVis, tempVis1, tempVis2)
