@@ -63,8 +63,8 @@ class idf_tests(unittest.TestCase):
         obs = idf.Observer('Test Observer', 99)
         targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7)
         sess = idf.Run('Test Session', 1, scans=targ)
-        sess.set_data_return_method('UCF')
-        sess.set_ucf_username('test')
+        sess.data_return_method = 'UCF'
+        sess.ucf_username = 'test'
         proj = idf.Project(obs, 'Test Project', 'COMTST', runs=sess)
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test') >= 0)
@@ -72,8 +72,8 @@ class idf_tests(unittest.TestCase):
         obs = idf.Observer('Test Observer', 99)
         targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7)
         sess = idf.Run('Test Session', 1, scans=targ, comments='This is a comment')
-        sess.set_data_return_method('UCF')
-        sess.set_ucf_username('test/dir1')
+        sess.data_return_method = 'UCF'
+        sess.ucf_username = 'test/dir1'
         proj = idf.Project(obs, 'Test Project', 'COMTST', runs=sess)
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test/dir1') >= 0)
@@ -107,7 +107,7 @@ class idf_tests(unittest.TestCase):
         
         # Ordering
         scan = copy.deepcopy(project.runs[0].scans[0])
-        scan.set_start("UTC 2019/1/7 22:43:05")
+        scan.start = "UTC 2019/1/7 22:43:05"
         project.runs[0].append(scan)
         
         self.assertTrue(project.runs[0].scans[0] < project.runs[0].scans[1])
@@ -118,12 +118,12 @@ class idf_tests(unittest.TestCase):
         """Test updating TRK_RADEC values."""
         
         project = idf.parse_idf(drxFile)
-        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
-        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
-        project.runs[0].scans[0].set_frequency1(75e6)
-        project.runs[0].scans[0].set_frequency2(76e6)
-        project.runs[0].scans[0].set_ra(ephem.hours('5:30:00'))
-        project.runs[0].scans[0].set_dec(ephem.degrees('+22:30:00'))
+        project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
+        project.runs[0].scans[0].duration = timedelta(seconds=15)
+        project.runs[0].scans[0].frequency1 = 75e6
+        project.runs[0].scans[0].frequency2 = 76e6
+        project.runs[0].scans[0].ra = ephem.hours('5:30:00')
+        project.runs[0].scans[0].dec = ephem.degrees('+22:30:00')
         
         self.assertEqual(project.runs[0].scans[0].mjd,  55616)
         self.assertEqual(project.runs[0].scans[0].mpm,  15000)
@@ -149,6 +149,14 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(dt1.second, 30)
         self.assertEqual(dt1.microsecond, 0)
         
+        for scan in project.runs[0].scans:
+            scan.mjd += 1
+            scan.mpm += 1000
+        self.assertEqual(project.runs[0].scans[0].mjd,  55617)
+        self.assertEqual(project.runs[0].scans[0].mpm,  16000)
+        self.assertEqual(project.runs[0].scans[0].start, 'UTC 2011/02/25 00:00:16.000000')
+        
+        
     def test_drx_write(self):
         """Test writing a TRK_RADEC IDF file."""
         
@@ -159,7 +167,7 @@ class idf_tests(unittest.TestCase):
         """Test proper motion handling in a TRK_RADEC IDF file."""
         
         project = idf.parse_idf(drxFile)
-        project.runs[0].scans[0].set_pm([3182.7, 592.1])
+        project.runs[0].scans[0].pm = [3182.7, 592.1]
         
         self.assertAlmostEqual(project.runs[0].scans[0].pm[0], 3182.7, 1)
         self.assertAlmostEqual(project.runs[0].scans[0].pm[1], 592.1, 1)
@@ -168,7 +176,7 @@ class idf_tests(unittest.TestCase):
         sdfs = project.generate_sdfs()
         for sdf in sdfs:
             for o in range(len(project.runs[0].scans)):
-                bdy = project.runs[0].scans[o].get_fixed_body()
+                bdy = project.runs[0].scans[o].fixed_body
                 bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
                 self.assertAlmostEqual(bdy.a_ra, sdf.sessions[0].observations[o].ra*pi/12.0, 5)
                 self.assertAlmostEqual(bdy.a_dec, sdf.sessions[0].observations[o].dec*pi/180.0, 5)
@@ -294,14 +302,14 @@ class idf_tests(unittest.TestCase):
         """Test updating TRK_RADEC values with other phase centers."""
         
         project = idf.parse_idf(altFile)
-        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
-        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
-        project.runs[0].scans[0].set_frequency1(75e6)
-        project.runs[0].scans[0].set_frequency2(76e6)
-        project.runs[0].scans[0].set_ra(ephem.hours('5:30:00'))
-        project.runs[0].scans[0].set_dec(ephem.degrees('+22:30:00'))
-        project.runs[0].scans[0].alt_phase_centers[0].set_ra(ephem.hours('5:35:00'))
-        project.runs[0].scans[0].alt_phase_centers[1].set_ra(ephem.hours('5:25:00'))
+        project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
+        project.runs[0].scans[0].duration = timedelta(seconds=15)
+        project.runs[0].scans[0].frequency1 = 75e6
+        project.runs[0].scans[0].frequency2 = 76e6
+        project.runs[0].scans[0].ra = ephem.hours('5:30:00')
+        project.runs[0].scans[0].dec = ephem.degrees('+22:30:00')
+        project.runs[0].scans[0].alt_phase_centers[0].ra = ephem.hours('5:35:00')
+        project.runs[0].scans[0].alt_phase_centers[1].ra = ephem.hours('5:25:00')
         
         self.assertEqual(project.runs[0].scans[0].mjd,  55616)
         self.assertEqual(project.runs[0].scans[0].mpm,  15000)
@@ -323,7 +331,7 @@ class idf_tests(unittest.TestCase):
         """Test proper motion handling in a TRK_RADEC IDF file with other phase centers."""
         
         project = idf.parse_idf(altFile)
-        project.runs[0].scans[0].alt_phase_centers[0].set_pm([3182.7, 592.1])
+        project.runs[0].scans[0].alt_phase_centers[0].pm = [3182.7, 592.1]
         
         self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0].pm[0], 3182.7, 1)
         self.assertAlmostEqual(project.runs[0].scans[0].alt_phase_centers[0].pm[1], 592.1, 1)
@@ -336,7 +344,7 @@ class idf_tests(unittest.TestCase):
             for o in range(len(project.runs[0].scans)):
                 sdf_phase_centers = sdf.project_office.observations[0][o]
                 for i,phase_center in enumerate(project.runs[0].scans[o].alt_phase_centers):
-                    bdy = phase_center.get_fixed_body()
+                    bdy = phase_center.fixed_body
                     bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
                     
                     ra = re.search("altra%i:(?P<ra>\d+(.\d*)?)" % (i+1,), sdf_phase_centers)
@@ -449,10 +457,10 @@ class idf_tests(unittest.TestCase):
         """Test updating TRK_SOL values."""
         
         project = idf.parse_idf(solFile)
-        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
-        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
-        project.runs[0].scans[0].set_frequency1(75e6)
-        project.runs[0].scans[0].set_frequency2(76e6)
+        project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
+        project.runs[0].scans[0].duration = timedelta(seconds=15)
+        project.runs[0].scans[0].frequency1 = 75e6
+        project.runs[0].scans[0].frequency2 = 76e6
         
         self.assertEqual(project.runs[0].scans[0].mjd,  55616)
         self.assertEqual(project.runs[0].scans[0].mpm,  15000)
@@ -544,10 +552,10 @@ class idf_tests(unittest.TestCase):
         """Test updating TRK_JOV values."""
         
         project = idf.parse_idf(jovFile)
-        project.runs[0].scans[0].set_start("MST 2011 Feb 23 17:00:15")
-        project.runs[0].scans[0].set_duration(timedelta(seconds=15))
-        project.runs[0].scans[0].set_frequency1(75e6)
-        project.runs[0].scans[0].set_frequency2(76e6)
+        project.runs[0].scans[0].start = "MST 2011 Feb 23 17:00:15"
+        project.runs[0].scans[0].duration = timedelta(seconds=15)
+        project.runs[0].scans[0].frequency1 = 75e6
+        project.runs[0].scans[0].frequency2 = 76e6
         
         self.assertEqual(project.runs[0].scans[0].mjd,  55616)
         self.assertEqual(project.runs[0].scans[0].mpm,  15000)
@@ -686,7 +694,7 @@ class idf_tests(unittest.TestCase):
         """Test the set stations functionlity."""
         
         project = idf.parse_idf(drxFile)
-        project.runs[0].set_stations([lwasv, lwa1])
+        project.runs[0].stations = [lwasv, lwa1]
         self.assertTrue(project.validate())
         
     def test_is_valid(self):
@@ -705,8 +713,8 @@ class idf_tests(unittest.TestCase):
         """Test setting auto-copy parameters."""
         
         project = idf.parse_idf(drxFile)
-        project.runs[0].set_data_return_method('UCF')
-        project.runs[0].set_ucf_username('jdowell')
+        project.runs[0].data_return_method = 'UCF'
+        project.runs[0].ucf_username = 'jdowell'
         out = project.render()
         
         self.assertTrue(out.find('Requested data return method is UCF') > 0)

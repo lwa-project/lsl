@@ -61,7 +61,7 @@ from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
 from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import LWA_MAX_NSTD
+from lsl.common.mcsADP import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
 from lsl.common.adp import freq_to_word, word_to_freq, fC
 from lsl.common.stations import lwa1, lwasv
 from lsl.reader.tbn import FILTER_CODES as TBNFilters
@@ -72,7 +72,7 @@ from lsl.reader.drx import FRAME_SIZE as DRXSize
 
 from lsl.common.sdf import parse_time, _TypedParentList, Observer, ProjectOffice
 from lsl.common.sdf import _usernameRE, Project as _Project, Session as _Session
-from lsl.common.sdf import Observation, TBN, _DRXBase, DRX, Solar, Jovian, Stepped, BeamStep
+from lsl.common.sdf import Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -110,9 +110,7 @@ class Project(_Project):
         
         self.sessions[session].update()
         self.sessions[session].observations.sort()
-        for obs in self.sessions[session].observations:
-            obs.dur = obs.get_duration()
-            
+        
         ses = self.sessions[session]
         try:
             # Try to pull out the project office comments about the session
@@ -131,16 +129,16 @@ class Project(_Project):
             
         # Combine the session comments together in an intelligent fashion
         ## Observer comments
-        if ses.ucfuser is not None:
+        if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
                 clean = _usernameRE.sub('', ses.comments)
-            ses.comments = 'ucfuser:%s' % ses.ucfuser
+            ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
         ## Project office comments, including the data return method
         if pos != 'None' and pos is not None:
-            pos = 'Requested data return method is %s;;%s' % (ses.data_return_method, pos)
+            pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
             
         ## PI Information
         output = ""
@@ -159,7 +157,7 @@ class Project(_Project):
         output = "%sSESSION_ID       %s\n" % (output, ses.id)
         output = "%sSESSION_TITLE    %s\n" % (output, 'None provided' if ses.name is None else ses.name)
         output = "%sSESSION_REMPI    %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
-        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.data_return_method if pos == 'None' or pos is None else pos[:4090])
+        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
         if ses.cra != 0:
             output = "%sSESSION_CRA      %i\n" % (output, ses.cra)
         if ses.drxBeam != -1:
@@ -389,11 +387,6 @@ class TBF(Observation):
     def update(self):
         """Update the computed parameters from the string values."""
         
-        self.mjd = self.get_mjd()
-        self.mpm = self.get_mpm()
-        self.dur = self.get_duration()
-        self.freq1 = self.get_frequency1()
-        self.freq2 = self.get_frequency2()
         self.beam = self.get_beam_type()
         
         # Update the duration based on the number of bits and samples used
@@ -467,25 +460,30 @@ class TBF(Observation):
 class Session(_Session):
     """Class to hold all of the observations in a session."""
     
-    _allowed_modes = (TBF, TBN, _DRXBase, Stepped)
+    _allowed_modes = (TBF, TBN, DRX, Stepped)
     
     def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwasv):
         _Session.__init__(self, name, id, 
                           observations=observations, data_return_method=data_return_method, 
                           comments=comments, station=station)
         
-    def set_station(self, station):
+    @property
+    def station(self):
+        return self._station
+        
+    @station.setter
+    def station(self, value):
         """
         Update the station used by the project for source computations.
         
         .. versionadded:: 1.2.0
         """
         
-        if station.interface.sdf != 'lsl.common.sdfADP':
+        if value.interface.sdf != 'lsl.common.sdfADP':
             raise RuntimeError("Incompatible station: expected %s, got %s" % \
-                            (station.interface.sdf, 'lsl.common.sdfADP'))
+                               (value.interface.sdf, 'lsl.common.sdfADP'))
             
-        self.station = station
+        self._station = value
         self.update()
         
     def validate(self, verbose=False):
@@ -701,9 +699,9 @@ def parse_sdf(filename, verbose=False):
             if keyword == 'SESSION_REMPI':
                 mtch = _usernameRE.search(value)
                 if mtch is not None:
-                    project.sessions[0].ucfuser = mtch.group('username')
+                    project.sessions[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:
-                        project.sessions[0].ucfuser = os.path.join(project.sessions[0].ucfuser, mtch.group('subdir'))
+                        project.sessions[0].ucf_username = os.path.join(project.sessions[0].ucf_username, mtch.group('subdir'))
                 project.sessions[0].comments = value
                 continue
             if keyword == 'SESSION_REMPO':
@@ -717,7 +715,7 @@ def parse_sdf(filename, verbose=False):
                 
                 if first[:31] == 'Requested data return method is':
                     # Catch for project office comments that are data return related
-                    project.sessions[0].data_return_method = first[32:]
+                    project.sessions[0].dataReturnMethod = first[32:]
                     project.project_office.sessions[0] = second
                 else:
                     # Catch for standard (not data related) project office comments

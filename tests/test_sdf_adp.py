@@ -128,7 +128,7 @@ class sdf_adp_tests(unittest.TestCase):
         obs = sdfADP.Observer('Test Observer', 99)
         targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=[targ,])
-        sess.set_drx_beam(1)
+        sess.drx_beam = 1
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
         
         self.assertRaises(TypeError, proj.sessions.append, 5)
@@ -140,7 +140,7 @@ class sdf_adp_tests(unittest.TestCase):
         obs = sdfADP.Observer('Test Observer', 99)
         targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
-        sess.set_drx_beam(1)
+        sess.drx_beam = 1
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
         out = proj.render()
         
@@ -150,9 +150,9 @@ class sdf_adp_tests(unittest.TestCase):
         obs = sdfADP.Observer('Test Observer', 99)
         targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
-        sess.set_drx_beam(1)
-        sess.set_data_return_method('UCF')
-        sess.set_ucf_username('test')
+        sess.drx_beam = 1
+        sess.data_return_method = 'UCF'
+        sess.ucf_username = 'test'
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test') >= 0)
@@ -160,9 +160,9 @@ class sdf_adp_tests(unittest.TestCase):
         obs = sdfADP.Observer('Test Observer', 99)
         targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ, comments='This is a comment')
-        sess.set_drx_beam(1)
-        sess.set_data_return_method('UCF')
-        sess.set_ucf_username('test/dir1')
+        sess.drx_beam = 1
+        sess.data_return_method = 'UCF'
+        sess.ucf_username = 'test/dir1'
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test/dir1') >= 0)
@@ -218,14 +218,21 @@ class sdf_adp_tests(unittest.TestCase):
         """Test updating TBN values."""
         
         project = sdfADP.parse_sdf(tbnFile)
-        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
-        project.sessions[0].observations[1].set_frequency1(75e6)
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
+        project.sessions[0].observations[1].duration = timedelta(seconds=15)
+        project.sessions[0].observations[1].frequency1 = 75e6
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
         self.assertEqual(project.sessions[0].observations[1].dur,  15000)
         self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
+        
+        for obs in project.sessions[0].observations:
+            obs.mjd += 1
+            obs.mpm += 1000
+        self.assertEqual(project.sessions[0].observations[1].mjd,  55617)
+        self.assertEqual(project.sessions[0].observations[1].mpm,  16000)
+        self.assertEqual(project.sessions[0].observations[1].start, 'UTC 2011/02/25 00:00:16.000000')
         
     def test_tbn_write(self):
         """Test writing a TBN SDF file."""
@@ -308,12 +315,12 @@ class sdf_adp_tests(unittest.TestCase):
         """Test updating TRK_RADEC values."""
         
         project = sdfADP.parse_sdf(drxFile)
-        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
-        project.sessions[0].observations[1].set_frequency1(75e6)
-        project.sessions[0].observations[1].set_frequency2(76e6)
-        project.sessions[0].observations[1].set_ra(ephem.hours('5:30:00'))
-        project.sessions[0].observations[1].set_dec(ephem.degrees('+22:30:00'))
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
+        project.sessions[0].observations[1].duration = timedelta(seconds=15)
+        project.sessions[0].observations[1].frequency1 = 75e6
+        project.sessions[0].observations[1].frequency2 = 76e6
+        project.sessions[0].observations[1].ra = ephem.hours('5:30:00')
+        project.sessions[0].observations[1].dec = ephem.degrees('+22:30:00')
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
@@ -448,10 +455,10 @@ class sdf_adp_tests(unittest.TestCase):
         """Test updating TRK_SOL values."""
         
         project = sdfADP.parse_sdf(solFile)
-        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
-        project.sessions[0].observations[1].set_frequency1(75e6)
-        project.sessions[0].observations[1].set_frequency2(76e6)
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
+        project.sessions[0].observations[1].duration = timedelta(seconds=15)
+        project.sessions[0].observations[1].frequency1 = 75e6
+        project.sessions[0].observations[1].frequency2 = 76e6
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
@@ -532,10 +539,10 @@ class sdf_adp_tests(unittest.TestCase):
         """Test updating TRK_JOV values."""
         
         project = sdfADP.parse_sdf(jovFile)
-        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
-        project.sessions[0].observations[1].set_duration(timedelta(seconds=15))
-        project.sessions[0].observations[1].set_frequency1(75e6)
-        project.sessions[0].observations[1].set_frequency2(76e6)
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
+        project.sessions[0].observations[1].duration = timedelta(seconds=15)
+        project.sessions[0].observations[1].frequency1 = 75e6
+        project.sessions[0].observations[1].frequency2 = 76e6
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
@@ -648,13 +655,13 @@ class sdf_adp_tests(unittest.TestCase):
         """Test updating a STEPPED SDF file."""
         
         project = sdfADP.parse_sdf(stpFile)
-        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
         for step in project.sessions[0].observations[1].steps:
-            step.set_duration(timedelta(seconds=15))
-            step.set_frequency1(75e6)
-            step.set_frequency2(76e6)
-            step.set_c1(ephem.hours('10:30:00'))
-            step.set_c2(ephem.degrees('89:30:00'))
+            step.duration = timedelta(seconds=15)
+            step.frequency1 = 75e6
+            step.frequency2 = 76e6
+            step.c1 = ephem.hours('10:30:00')
+            step.c2 = ephem.degrees('89:30:00')
         project.sessions[0].observations[1].update()
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
@@ -669,14 +676,14 @@ class sdf_adp_tests(unittest.TestCase):
             
         project = sdfADP.parse_sdf(stpFile)
         project.sessions[0].observations[1].is_radec = False
-        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:00:15")
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
         for step in project.sessions[0].observations[1].steps:
             step.is_radec = False
-            step.set_duration(timedelta(seconds=15))
-            step.set_frequency1(75e6)
-            step.set_frequency2(76e6)
-            step.set_c1(ephem.hours('10:30:00'))
-            step.set_c2(ephem.degrees('89:30:00'))
+            step.duration = timedelta(seconds=15)
+            step.frequency1 = 75e6
+            step.frequency2 = 76e6
+            step.c1 = ephem.hours('10:30:00')
+            step.c2 = ephem.degrees('89:30:00')
         project.sessions[0].observations[1].update()
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
@@ -785,12 +792,12 @@ class sdf_adp_tests(unittest.TestCase):
                     self.assertTrue(project.validate())
                     
                     ## Method 2
-                    project.sessions[0].set_spectrometer_channels(channels)
-                    project.sessions[0].set_spectrometer_integration(ints)
+                    project.sessions[0].spectrometer_channels = channels
+                    project.sessions[0].spectrometer_integration = ints
                     if mode in (None, ''):
-                        project.sessions[0].set_spectrometer_metatag(mode)
+                        project.sessions[0].spectrometer_metatag = mode
                     else:
-                        project.sessions[0].set_spectrometer_metatag('Stokes=%s' % mode)
+                        project.sessions[0].spectrometer_metatag = 'Stokes=%s' % mode
                     self.assertEqual(project.sessions[0].spcSetup[0], channels)
                     self.assertEqual(project.sessions[0].spcSetup[1], ints)
                     self.assertEqual(project.sessions[0].spcMetatag, None if mode in (None, '') else '{Stokes=%s}' % mode)
@@ -925,7 +932,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test updating TRK_SOL values."""
         
         project = sdfADP.parse_sdf(tbfFile)
-        project.sessions[0].observations[1].set_start("MST 2011 Feb 23 17:10:15")
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:10:15"
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  615000)
@@ -1024,11 +1031,15 @@ class sdf_adp_tests(unittest.TestCase):
         """Test the set stations functionlity."""
         
         project = sdfADP.parse_sdf(drxFile)
-        project.sessions[0].set_station(lwasv)
+        project.sessions[0].station = lwasv
         self.assertTrue(project.validate())
         
-        self.assertRaises(RuntimeError, project.sessions[0].set_station, lwa1)
-        
+        try:
+            project.sessions[0].station = lwa1
+            self.assertTrue(False, msg, 'Project accepted the wrong style of LWAStation instance')
+        except RuntimeError:
+            pass
+            
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
@@ -1050,8 +1061,8 @@ class sdf_adp_tests(unittest.TestCase):
         """Test setting auto-copy parameters."""
         
         project = sdfADP.parse_sdf(drxFile)
-        project.sessions[0].set_data_return_method('UCF')
-        project.sessions[0].set_ucf_username('jdowell')
+        project.sessions[0].data_return_method = 'UCF'
+        project.sessions[0].ucf_username = 'jdowell'
         out = project.render()
         
         self.assertTrue(out.find('Requested data return method is UCF') > 0)
