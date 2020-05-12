@@ -64,7 +64,7 @@ install:
         nbconvert \
         coveralls \
         codecov
-    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install "python-casacore<3.3.0"; fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install python-casacore; fi
     - pip install "astropy<3.2"
     - pip install aipy
     - pip install .
