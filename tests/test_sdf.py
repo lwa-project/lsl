@@ -15,6 +15,12 @@ import ephem
 import tempfile
 import unittest
 from datetime import datetime, timedelta
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.paths import DATA_BUILD
 from lsl.common import sdf, sdfADP as other_sdf
@@ -34,6 +40,25 @@ stpFile = os.path.join(DATA_BUILD, 'tests', 'stp-sdf.txt')
 spcFile = os.path.join(DATA_BUILD, 'tests', 'spc-sdf.txt')
 tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
 idfFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
+
+
+class _SilentVerbose(object):
+    def __init__(self, stdout=True, stderr=False):
+        self.stdout = stdout
+        self.stderr = stderr
+        
+    def __enter__(self):
+        if self.stdout:
+            sys.stdout = StringIO()
+        if self.stderr:
+            sys.stderr = StringIO()
+        return self
+        
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if self.stdout:
+            sys.stdout = sys.__stdout__
+        if self.stderr:
+            sys.stderr = sys.__stderr__
 
 
 class sdf_tests(unittest.TestCase):
@@ -202,8 +227,9 @@ class sdf_tests(unittest.TestCase):
         """Test writing a TBW SDF file."""
         
         project = sdf.parse_sdf(tbwFile)
-        out = project.render()
-        
+        with _SilentVerbose() as sv:
+            out = project.render(verbose=True)
+            
     def test_tbw_errors(self):
         """Test various TBW SDF errors."""
         
@@ -267,6 +293,15 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].dur,  15000)
         self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
         
+        project.sessions[0].observations[1].duration = 16.0
+        self.assertEqual(project.sessions[0].observations[1].dur,  16000)
+        
+        project.sessions[0].observations[1].duration = '16.1'
+        self.assertEqual(project.sessions[0].observations[1].dur,  16100)
+        
+        project.sessions[0].observations[1].duration = '0:01:01.501'
+        self.assertEqual(project.sessions[0].observations[1].dur,  61501)
+        
         for obs in project.sessions[0].observations:
             obs.mjd += 1
             obs.mpm += 1000
@@ -278,8 +313,9 @@ class sdf_tests(unittest.TestCase):
         """Test writing a TBN SDF file."""
         
         project = sdf.parse_sdf(tbnFile)
-        out = project.render()
-        
+        with _SilentVerbose() as sv:
+            out = project.render(verbose=True)
+            
     def test_tbn_errors(self):
         """Test various TBN SDF errors."""
         
@@ -360,7 +396,7 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].observations[1].duration = timedelta(seconds=15)
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].frequency2 = 76e6
-        project.sessions[0].observations[1].ra = ephem.hours('5:30:00')
+        project.sessions[0].observations[1].ra = AstroAngle('5:30:00', unit='hourangle')
         project.sessions[0].observations[1].dec = ephem.degrees('+22:30:00')
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
@@ -391,8 +427,9 @@ class sdf_tests(unittest.TestCase):
         """Test writing a TRK_RADEC SDF file."""
         
         project = sdf.parse_sdf(drxFile)
-        out = project.render()
-        
+        with _SilentVerbose() as sv:
+            out = project.render(verbose=True)
+            
         project.sessions[0].observations[0].obsFEE = [[1,1] for i in project.sessions[0].observations[0].aspFlt]
         project.sessions[0].observations[0].obsFEE[0] = [0,0]
         project.sessions[0].observations[0].obsFEE[1] = [0,0]
@@ -742,8 +779,9 @@ class sdf_tests(unittest.TestCase):
         """Test writing a STEPPED SDF file."""
         
         project = sdf.parse_sdf(stpFile)
-        out = project.render()
-        
+        with _SilentVerbose() as sv:
+            out = project.render(verbose=True)
+            
     def test_stp_errors(self):
         """Test various STEPPED SDF errors."""
         
@@ -1085,9 +1123,7 @@ class sdf_tests(unittest.TestCase):
         self.assertTrue(out.find('Requested data return method is UCF') > 0)
         self.assertTrue(out.find('ucfuser:jdowell') > 0)
         
-        fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
-        fh.write(out)
-        fh.close()
+        project.writeto(os.path.join(self.testPath, 'sdf.txt'))		
         
         project = sdf.parse_sdf(os.path.join(self.testPath, 'sdf.txt'))
         out = project.render()

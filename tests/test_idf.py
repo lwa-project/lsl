@@ -17,6 +17,12 @@ import tempfile
 import unittest
 from math import pi
 from datetime import datetime, timedelta
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.astro import MJD_OFFSET, DJD_OFFSET
 from lsl.common.paths import DATA_BUILD
@@ -33,6 +39,25 @@ altFile = os.path.join(DATA_BUILD, 'tests', 'alt-idf.txt')
 solFile = os.path.join(DATA_BUILD, 'tests', 'sol-idf.txt')
 jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-idf.txt')
 sdfFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
+
+
+class _SilentVerbose(object):
+    def __init__(self, stdout=True, stderr=False):
+        self.stdout = stdout
+        self.stderr = stderr
+        
+    def __enter__(self):
+        if self.stdout:
+            sys.stdout = StringIO()
+        if self.stderr:
+            sys.stderr = StringIO()
+        return self
+        
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if self.stdout:
+            sys.stdout = sys.__stdout__
+        if self.stderr:
+            sys.stderr = sys.__stderr__
 
 
 class idf_tests(unittest.TestCase):
@@ -122,7 +147,7 @@ class idf_tests(unittest.TestCase):
         project.runs[0].scans[0].duration = timedelta(seconds=15)
         project.runs[0].scans[0].frequency1 = 75e6
         project.runs[0].scans[0].frequency2 = 76e6
-        project.runs[0].scans[0].ra = ephem.hours('5:30:00')
+        project.runs[0].scans[0].ra = AstroAngle('5:30:00', unit='hourangle')
         project.runs[0].scans[0].dec = ephem.degrees('+22:30:00')
         
         self.assertEqual(project.runs[0].scans[0].mjd,  55616)
@@ -156,12 +181,21 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].mpm,  16000)
         self.assertEqual(project.runs[0].scans[0].start, 'UTC 2011/02/25 00:00:16.000000')
         
+        project.runs[0].scans[0].duration = 16.0
+        self.assertEqual(project.runs[0].scans[0].dur,  16000)
+        
+        project.runs[0].scans[0].duration = '16.1'
+        self.assertEqual(project.runs[0].scans[0].dur,  16100)
+        
+        project.runs[0].scans[0].duration = '0:01:01.501'
+        self.assertEqual(project.runs[0].scans[0].dur,  61501)
         
     def test_drx_write(self):
         """Test writing a TRK_RADEC IDF file."""
         
         project = idf.parse_idf(drxFile)
-        out = project.render()
+        with _SilentVerbose() as sv:
+            out = project.render(verbose=True)
         
     def test_drx_proper_motion(self):
         """Test proper motion handling in a TRK_RADEC IDF file."""
@@ -715,9 +749,7 @@ class idf_tests(unittest.TestCase):
         self.assertTrue(out.find('Requested data return method is UCF') > 0)
         self.assertTrue(out.find('ucfuser:jdowell') > 0)
         
-        fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
-        fh.write(out)
-        fh.close()
+        project.writeto(os.path.join(self.testPath, 'idf.txt'))
         
         project = idf.parse_idf(os.path.join(self.testPath, 'idf.txt'))
         out = project.render()

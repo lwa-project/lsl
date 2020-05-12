@@ -915,7 +915,8 @@ class Observation(object):
         
         return None
         
-    def compute_visibility(self):
+    @property
+    def target_visibility(self):
         """Place holder for functions that return the fractional visibility of the 
         target during the observation period."""
         
@@ -1230,7 +1231,8 @@ class DRX(Observation):
         pnt._epoch = ephem.J2000
         return pnt
         
-    def compute_visibility(self):
+    @property
+    def target_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
@@ -1294,9 +1296,9 @@ class DRX(Observation):
             if verbose:
                 print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
             failures += 1
-        if self.compute_visibility() < 1.0:
+        if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.target_visibility*100.0))
             failures += 1
             
         # Advanced - Data Volume
@@ -1516,7 +1518,8 @@ class Stepped(Observation):
                 
         return dur/1000.0 * data_rate
         
-    def compute_visibility(self):
+    @property
+    def target_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
@@ -1580,9 +1583,9 @@ class Stepped(Observation):
             stepCount += 1
             
         # Advanced - Target Visibility
-        if self.compute_visibility() < 1.0:
+        if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
+                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.target_visibility*100.0))
             failures += 1
             
         # Advanced - Data Volume

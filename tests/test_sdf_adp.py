@@ -14,6 +14,12 @@ import ephem
 import tempfile
 import unittest
 from datetime import datetime, timedelta
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.paths import DATA_BUILD
 from lsl.common import sdfADP, sdf as other_sdf
@@ -33,6 +39,25 @@ stpFile = os.path.join(DATA_BUILD, 'tests', 'stp-sdf.txt')
 spcFile = os.path.join(DATA_BUILD, 'tests', 'spc-sdf.txt')
 tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
 idfFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
+
+
+class _SilentVerbose(object):
+    def __init__(self, stdout=True, stderr=False):
+        self.stdout = stdout
+        self.stderr = stderr
+        
+    def __enter__(self):
+        if self.stdout:
+            sys.stdout = StringIO()
+        if self.stderr:
+            sys.stderr = StringIO()
+        return self
+        
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if self.stdout:
+            sys.stdout = sys.__stdout__
+        if self.stderr:
+            sys.stderr = sys.__stderr__
 
 
 class sdf_adp_tests(unittest.TestCase):
@@ -319,7 +344,7 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[1].duration = timedelta(seconds=15)
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].frequency2 = 76e6
-        project.sessions[0].observations[1].ra = ephem.hours('5:30:00')
+        project.sessions[0].observations[1].ra = AstroAngle('5:30:00', unit='hourangle')
         project.sessions[0].observations[1].dec = ephem.degrees('+22:30:00')
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
@@ -941,8 +966,9 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TBF SDF file."""
         
         project = sdfADP.parse_sdf(tbfFile)
-        out = project.render()
-        
+        with _SilentVerbose() as sv:
+            out = project.render(verbose=True)
+            
     def test_tbf_errors(self):
         """Test various TBF SDF errors."""
         
@@ -1065,9 +1091,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertTrue(out.find('Requested data return method is UCF') > 0)
         self.assertTrue(out.find('ucfuser:jdowell') > 0)
         
-        fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
-        fh.write(out)
-        fh.close()
+        project.writeto(os.path.join(self.testPath, 'sdf.txt'))		
         
         project = sdfADP.parse_sdf(os.path.join(self.testPath, 'sdf.txt'))
         out = project.render()

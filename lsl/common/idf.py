@@ -278,9 +278,9 @@ class Project(object):
         output = "%sRUN_ID           %s\n" % (output, ses.id)
         output = "%sRUN_TITLE        %s\n" % (output, 'None provided' if ses.name is None else ses.name)
         output = "%sRUN_STATIONS     %s\n" % (output, ','.join([station.id for station in ses.stations]))
-        output = "%sRUN_CHANNELS     %i\n" % (output, ses.corr_channels)
-        output = "%sRUN_INTTIME      %.3f\n" % (output, ses.corr_inttime)
-        output = "%sRUN_BASIS        %s\n" % (output, ses.corr_basis)
+        output = "%sRUN_CHANNELS     %i\n" % (output, ses.correlator_channels)
+        output = "%sRUN_INTTIME      %.3f\n" % (output, ses.correlator_inttime)
+        output = "%sRUN_BASIS        %s\n" % (output, ses.correlator_basis)
         output = "%sRUN_REMPI        %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
         output = "%sRUN_REMPO        %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
         output = "%s\n" % output
@@ -449,7 +449,7 @@ class Project(object):
                                      project_office=new_projoff)
             if project.project_office.sessions[0] is None:
                project.project_office.sessions[0] = ''
-            project.project_office.sessions[0] = "corrchannels:%i;;corrinttime:%.3f;;corrbasis:%s;;origuser:%s;;origreturn:%s;;%s" % (ses.corr_channels, ses.corr_inttime, ses.corr_basis, ses.ucf_username, ses.data_return_method.lower(), project.project_office.sessions[0])
+            project.project_office.sessions[0] = "corrchannels:%i;;corrinttime:%.3f;;corrbasis:%s;;origuser:%s;;origreturn:%s;;%s" % (ses.correlator_channels, ses.correlator_inttime, ses.correlator_basis, ses.ucf_username, ses.data_return_method.lower(), project.project_office.sessions[0])
             
             ## Save an increment the session ID
             sdfs.append(project)
@@ -481,7 +481,7 @@ class Run(object):
         self.stations = sdf._TypedParentList(LWAStation, None, stations)
         
     def __str__(self):
-        return "%i: %s with %i scans and correlator setup:\n  channels: %i\n  int. time: %f\n  basis: %s\n  stations: %s" % (self.id, self.name, len(self.scans), self.corr_channels, self.corr_inttime, self.corr_basis, " ".join([s.id for s in self.stations]))
+        return "%i: %s with %i scans and correlator setup:\n  channels: %i\n  int. time: %f\n  basis: %s\n  stations: %s" % (self.id, self.name, len(self.scans), self.correlator_channels, self.correlator_inttime, self.correlator_basis, " ".join([s.id for s in self.stations]))
         
     @property
     def stations(self):
@@ -591,17 +591,17 @@ class Run(object):
                 if verbose:
                     print("[%i] Error: Station '%s' is included %i times" % (os.getpid(), station, station_count[station]))
                 failures += 1
-        if self.corr_inttime < 0.1 or self.corr_inttime > 10.0:
+        if self.correlator_inttime < 0.1 or self.correlator_inttime > 10.0:
             if verbose:
-                print("[%i] Error: Invalid correlator integration time '%.3f s'" % (os.getpid(), self.corr_inttime))
+                print("[%i] Error: Invalid correlator integration time '%.3f s'" % (os.getpid(), self.correlator_inttime))
             failures += 1
-        if self.corr_channels < 16 or self.corr_channels > 32768 or self.corr_channels % 2:
+        if self.correlator_channels < 16 or self.correlator_channels > 32768 or self.correlator_channels % 2:
             if verbose:
-                print("[%i] Error: Invalid correlator channel count '%i'" % (os.getpid(), self.corr_channels))
+                print("[%i] Error: Invalid correlator channel count '%i'" % (os.getpid(), self.correlator_channels))
             failures += 1
-        if self.corr_basis.lower() not in (None, '', 'linear', 'circular', 'stokes'):
+        if self.correlator_basis.lower() not in (None, '', 'linear', 'circular', 'stokes'):
             if verbose:
-                print("[%i] Error: Invalid correlator output polarization basis '%s'" % (os.getpid(), self.corr_basis))
+                print("[%i] Error: Invalid correlator output polarization basis '%s'" % (os.getpid(), self.correlator_basis))
             failures += 1
             
         scanCount = 1
@@ -939,7 +939,8 @@ class Scan(object):
         pnt._epoch = ephem.J2000
         return pnt
         
-    def compute_visibility(self):
+    @property
+    def target_visibility(self):
         """Return the fractional visibility of the target during the scan 
         period."""
         
@@ -1011,9 +1012,9 @@ class Scan(object):
             if verbose:
                 print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
             failures += 1
-        if self.compute_visibility() < 1.0:
+        if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan for %s" % (os.getpid(), self.compute_visibility(station=station)*100.0, station.id))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan for %s" % (os.getpid(), self.target_visibility*100.0, station.id))
             failures += 1
             
         # Advanced - alternate phase centers
@@ -1467,13 +1468,13 @@ def parse_idf(filename, verbose=False):
                                 break
                 project.runs[0].stations  = use_stations
             if keyword == 'RUN_CHANNELS':
-                project.runs[0].corr_channels = int(value)
+                project.runs[0].correlator_channels = int(value)
                 continue
             if keyword == 'RUN_INTTIME':
-                project.runs[0].corr_inttime = float(value)
+                project.runs[0].correlator_inttime = float(value)
                 continue
             if keyword == 'RUN_BASIS':
-                project.runs[0].corr_basis = value
+                project.runs[0].correlator_basis = value
                 continue
             if keyword == 'RUN_REMPI':
                 mtch = sdf._usernameRE.search(value)
