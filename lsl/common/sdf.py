@@ -859,6 +859,8 @@ class Observation(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        if value < 0.0 or value >= 24.0:
+            raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
         
     @property
@@ -871,6 +873,8 @@ class Observation(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        if value < -90.0 or value > 90.0:
+            raise ValueError("Invalid value for dec. '%+.6f' deg" % value)
         self._dec = value
         
     @property
@@ -1666,6 +1670,12 @@ class BeamStep(object):
                 value = value.to('hourangle').value
             else:
                 value = value.to('deg').value
+        if self.is_radec:
+            if value < 0.0 or value >=24.0:
+                raise ValueError("Invalid value for RA '%.6f' hr" % value)
+        else:
+            if value < 0.0 or value >= 360.0:
+                raise ValueError("Invalid value for azimuth '%.6f' deg" % value)
         self._c1 = value
         
     @property
@@ -1678,6 +1688,12 @@ class BeamStep(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        if self.is_radec:
+            if value < -90.0 or value > 90.0:
+                raise ValueError("Invalid value for dec. '%.6f' deg" % value)
+        else:
+            if value < 0.0 or value > 90.0:
+                raise ValueError("Invalid value for elevation '%.6f' deg" % value)
         self._c2 = value
         
     @property
@@ -1890,8 +1906,8 @@ class Session(object):
         """
         
         if value.interface.sdf != 'lsl.common.sdf':
-            raise RuntimeError("Incompatible station: expected %s, got %s" % \
-                               (value.interface.sdf, 'lsl.common.sdf'))
+            raise ValueError("Incompatible station: expected %s, got %s" % \
+                             (value.interface.sdf, 'lsl.common.sdf'))
             
         self._station = value
         self.update()
@@ -1909,8 +1925,12 @@ class Session(object):
     def configuration_authority(self, value):
         """Set the configuration request authority to a particular value in the range of
         0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
-        parameters."""        
-        self.cra = int(value)
+        parameters.""" 
+        
+        value = int(value)
+        if value < 0 or value > 65535:
+            raise ValueError("Invalid configuraton request authority '%i'" % value)
+        self.cra = value
         
     @property
     def drx_beam(self):
@@ -1930,7 +1950,10 @@ class Session(object):
     def spectrometer_channels(self, value):
         """Set the number of spectrometer channels to generate, 0 to disable."""
         
-        self.spcSetup[0] = int(value)
+        value = int(value)
+        if value not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+            raise ValueError("Invalid DR spectrometer channel count '%i'" % value)
+        self.spcSetup[0] = value
         
     @property
     def spectrometer_integration(self):
@@ -1940,7 +1963,10 @@ class Session(object):
     def spectrometer_integration(self, value):
         """Set the number of spectrometer FFT integrations to use, 0 to disable."""
         
-        self.spcSetup[1] = int(value)
+        value = int(value)
+        if value not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+            raise ValueError("Invalid DR spectrometer integration count '%i'" % value)
+        self.spcSetup[1] = value
         
     @property
     def spectrometer_metatag(self):
@@ -1950,15 +1976,17 @@ class Session(object):
     def spectrometer_metatag(self, value):
         """Set the spectrometer metatag, '' to disable."""
         
-        if value == '' or value is None:
-            self.spcMetatag = None
-        else:
-            self.spcMetatag = value
-            if self.spcMetatag[0] != '{':
-                self.spcMetatag = '{'+self.spcMetatag
-            if self.spcMetatag[-1] != '}':
-                self.spcMetatag = self.spcMetatag+'}'
-                
+        if value == '':
+            value = None
+        elif value is not None:
+            if value[0] != '{':
+                value = '{'+value
+            if value[-1] != '}':
+                value = value+'}'
+        if value not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+            raise ValueError("Invalid DR spectrometer mode '%s'" % value)
+        self.spcMetatag = value
+        
     def set_mib_record_interval(self, component, interval):
         """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
         a particular value in minutes.  A KeyError is raised if an invalid sub-system is
@@ -2431,7 +2459,7 @@ def parse_sdf(filename, verbose=False):
                     value = metaRE.sub('', value)
                 else:
                     metatag = None
-            
+                    
                 project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
                 project.sessions[0].spcMetatag = metatag
                 # If the input field is '' the value of spcSetup is [].  This
@@ -2440,7 +2468,7 @@ def parse_sdf(filename, verbose=False):
                     project.sessions[0].spcSetup = [0, 0]
                     project.sessions[0].spcMetatag = None
                 continue
-            
+                
             # Observation Info
             if keyword == 'OBS_ID':
                 if obs_temp['id'] != 0:

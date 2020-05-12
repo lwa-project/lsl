@@ -1034,11 +1034,8 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].station = lwasv
         self.assertTrue(project.validate())
         
-        try:
+        with self.assertRaises(ValueError):
             project.sessions[0].station = lwa1
-            self.assertTrue(False, msg, 'Project accepted the wrong style of LWAStation instance')
-        except RuntimeError:
-            pass
             
     def test_is_valid(self):
         """Test whether or not is_valid works."""

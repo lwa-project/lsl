@@ -462,7 +462,7 @@ class Project(object):
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
-    def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, corr_channels=256, corr_inttime=1.0, corr_basis='linear', stations=get_full_stations()):
+    def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, correlator_channels=256, correlator_inttime=1.0, correlator_basis='linear', stations=get_full_stations()):
         self.name = name
         self.id = int(id)
         self.scans = sdf._TypedParentList(Scan, self)
@@ -475,9 +475,9 @@ class Run(object):
         self.ucf_username = None
         self.comments = comments
         
-        self.corr_inttime = corr_inttime
-        self.corr_channels = corr_channels
-        self.corr_basis = corr_basis
+        self.correlator_inttime = correlator_inttime
+        self.correlator_channels = correlator_channels
+        self.correlator_basis = correlator_basis
         self.stations = sdf._TypedParentList(LWAStation, None, stations)
         
     def __str__(self):
@@ -488,12 +488,15 @@ class Run(object):
         return self._stations
         
     @stations.setter
-    def stations(self, stations):
+    def stations(self, value):
         """
         Update the stations used by the project for source computations.
         """
         
-        self._stations = sdf._TypedParentList(LWAStation, None, stations)
+        value = sdf._TypedParentList(LWAStation, None, value)
+        if len(value) < 2:
+            raise ValueError("Need at least two stations to form an interferometer")
+        self._stations = value
         self.update()
         
     def append(self, newScan):
@@ -509,7 +512,10 @@ class Run(object):
     def correlator_channels(self, value):
         """Set the number of spectrometer channels to generate, 0 to disable."""
         
-        self.corr_channels = int(value)
+        value = int(value)
+        if value < 16 or value > 32768 or value % 2:
+            raise ValueError("Invalid correlator channel count '%i'" % value)
+        self.corr_channels = value
         
     @property
     def correlator_inttime(self):
@@ -519,7 +525,10 @@ class Run(object):
     def correlator_inttime(self, value):
         """Set the number of spectrometer FFT integrations to use, 0 to disable."""
         
-        self.corr_inttime = float(value)
+        value = float(value)
+        if value < 0.1 or value > 10.0:
+            raise ValueError("Invalid integration time '%.3f'" % value)
+        self.corr_inttime = value
         
     @property
     def correlator_basis(self):
@@ -774,6 +783,17 @@ class Scan(object):
             phase_center.update()
             
     @property
+    def intent(self):
+        return self._intent
+        
+    @intent.setter
+    def intent(self, value):
+        value = value.lower()
+        if value not in ('fluxcal', 'phasecal', 'target', 'dummy'):
+            raise ValueError("Invalid scan intent '%s'" % value)
+        self._intent = value
+        
+    @property
     def start(self):
         utc = mjdmpm_to_datetime(self.mjd, self.mpm)
         return utc.strftime("UTC %Y/%m/%d %H:%M:%S.%f")
@@ -832,6 +852,8 @@ class Scan(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        if value < 0.0 or value >= 24.0:
+            raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
         
     @property
@@ -844,6 +866,8 @@ class Scan(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        if value < -90.0 or value > 90.0:
+            raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value
         
     @property
@@ -1175,11 +1199,20 @@ class AlternatePhaseCenter(object):
     def __init__(self, target, intent, ra, dec, pm=[0.0, 0.0]):
         self.target = target
         self.intent = intent
-        self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
-        self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
-        if pm is None:
-            pm = [0.0, 0.0]
-        self.pm = [pm[0], pm[1]]
+        self.ra = ra
+        self.dec = dec
+        self.pm = pm
+        
+    @property
+    def intent(self):
+        return self._intent
+        
+    @intent.setter
+    def intent(self, value):
+        value = value.lower()
+        if value not in ('fluxcal', 'phasecal', 'target', 'dummy'):
+            raise ValueError("Invalid scan intent '%s'" % value)
+        self._intent = value
         
     @property
     def ra(self):
@@ -1191,6 +1224,8 @@ class AlternatePhaseCenter(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        if value < 0.0 or value >= 24.0:
+            raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
         
     @property
@@ -1203,14 +1238,26 @@ class AlternatePhaseCenter(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        if value < -90.0 or value > 90.0:
+            raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value
         
-    def set_pm(self, ra_dec):
-        """Set the proper motion of the target in mas/yr."""
+    @property
+    def pm(self):
+        return self._pm
         
-        self.pm[0] = ra_dec[0]
-        self.pm[1] = ra_dec[1]
-        
+    @pm.setter
+    def pm(self, value):
+        if value is None:
+            self._pm = [0.0, 0.0]
+        elif isinstance(value, (tuple, list)):
+            if len(value) == 2:
+                self._pm = [value[0], value[1]]
+            else:
+                raise ValueError("Expected a two-element tuple of list of proper motion values in mas/yr")
+        else:
+            raise ValueError("Expected a two-element tuple of list of proper motion values in mas/yr")
+            
     def update(self):
         """Update the computed parameters from the string values."""
         

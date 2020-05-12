@@ -90,9 +90,9 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(len(project.runs[0].scans), 1)
         
         # Correlator setup
-        self.assertEqual(project.runs[0].corr_channels, 256)
-        self.assertAlmostEqual(project.runs[0].corr_inttime, 1.0, 6)
-        self.assertEqual(project.runs[0].corr_basis, 'linear')
+        self.assertEqual(project.runs[0].correlator_channels, 256)
+        self.assertAlmostEqual(project.runs[0].correlator_inttime, 1.0, 6)
+        self.assertEqual(project.runs[0].correlator_basis, 'linear')
         
         # Observational setup - 1
         self.assertEqual(project.runs[0].scans[0].mode, 'TRK_RADEC')
@@ -199,30 +199,29 @@ class idf_tests(unittest.TestCase):
         
         # Bad interferometer
         project.runs[0].id = old_id
-        project.runs[0].stations = [lwa1,]
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].stations = [lwa1,]
+            
         # Bad correlator channel count
         project.runs[0].stations = [lwa1,lwasv]
-        project.runs[0].corr_channels = 129
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_channels = 129
+            
         # Bad correlator integration time
-        project.runs[0].corr_channels = 128
-        project.runs[0].corr_inttime = 1e-6
-        self.assertFalse(project.validate())
-        
+        project.runs[0].correlator_channels = 128
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_inttime = 1e-6
+            
         # Bad correlator output polarization basis
-        project.runs[0].corr_inttime = 1.0
-        project.runs[0].corr_basis = 'cats'
-        self.assertFalse(project.validate())
-        
+        project.runs[0].correlator_inttime = 1.0
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_basis = 'cats'
+            
         # Bad intent
-        project.runs[0].corr_basis = 'linear'
-        project.runs[0].scans[0].intent = 'cats'
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
+        project.runs[0].correlator_basis = 'linear'
+        with self.assertRaises(ValueError):
+            project.runs[0].scans[0].intent = 'cats'
+            
         # Good filter
         project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 7
@@ -274,9 +273,9 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(len(project.runs[0].scans), 1)
         
         # Correlator setup
-        self.assertEqual(project.runs[0].corr_channels, 256)
-        self.assertAlmostEqual(project.runs[0].corr_inttime, 1.0, 6)
-        self.assertEqual(project.runs[0].corr_basis, 'linear')
+        self.assertEqual(project.runs[0].correlator_channels, 256)
+        self.assertAlmostEqual(project.runs[0].correlator_inttime, 1.0, 6)
+        self.assertEqual(project.runs[0].correlator_basis, 'linear')
         
         # Observational setup - 1
         self.assertEqual(project.runs[0].scans[0].mode, 'TRK_RADEC')
@@ -360,26 +359,25 @@ class idf_tests(unittest.TestCase):
         project = idf.parse_idf(altFile)
         
         # Bad interferometer
-        project.runs[0].stations = [lwa1,]
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].stations = [lwa1,]
+            
         # Bad correlator channel count
-        project.runs[0].corr_channels = 129
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_channels = 129
+            
         # Bad correlator integration time
-        project.runs[0].corr_inttime = 1e-6
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_inttime = 1e-6
+            
         # Bad correlator output polarization basis
-        project.runs[0].corr_basis = 'cats'
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+           project.runs[0].correlator_basis = 'cats'
+            
         # Bad intent
-        project.runs[0].scans[0].intent = 'cats'
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].scans[0].intent = 'cats'
+            
         # Bad filter
         project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 8
@@ -417,13 +415,12 @@ class idf_tests(unittest.TestCase):
         
         # Bad alternate phase center intent
         project.runs[0].scans[0].alt_phase_centers[0].dec = 40.733916000
-        project.runs[0].scans[0].alt_phase_centers[0].intent = 'cats'
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].scans[0].alt_phase_centers[0].intent = 'cats'
+            
         # Too many phase centers
         project.runs[0].scans[0].alt_phase_centers[0].intent = 'PhaseCal'
-        for i in range(4):
+        for i in range(40):
             project.runs[0].scans[0].add_alt_phase_center('test', 'Target', 19.991210200, 40.733916000)
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
@@ -440,9 +437,9 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(len(project.runs[0].scans), 1)
         
         # Correlator setup
-        self.assertEqual(project.runs[0].corr_channels, 512)
-        self.assertAlmostEqual(project.runs[0].corr_inttime, 0.5, 6)
-        self.assertEqual(project.runs[0].corr_basis, 'stokes')
+        self.assertEqual(project.runs[0].correlator_channels, 512)
+        self.assertAlmostEqual(project.runs[0].correlator_inttime, 0.5, 6)
+        self.assertEqual(project.runs[0].correlator_basis, 'stokes')
         
         # Observational setup - 1
         self.assertEqual(project.runs[0].scans[0].mode, 'TRK_SOL')
@@ -480,26 +477,25 @@ class idf_tests(unittest.TestCase):
         project = idf.parse_idf(solFile)
         
         # Bad interferometer
-        project.runs[0].stations = [lwa1,]
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].stations = [lwa1,]
+            
         # Bad correlator channel count
-        project.runs[0].corr_channels = 129
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_channels = 129
+            
         # Bad correlator integration time
-        project.runs[0].corr_inttime = 1e-6
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_inttime = 1e-6
+            
         # Bad correlator output polarization basis
-        project.runs[0].corr_basis = 'cats'
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_basis = 'cats'
+            
         # Bad intent
-        project.runs[0].scans[0].intent = 'cats'
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].scans[0].intent = 'cats'
+            
         # Bad filter
         project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 8
@@ -535,9 +531,9 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(len(project.runs[0].scans), 1)
         
         # Correlator setup
-        self.assertEqual(project.runs[0].corr_channels, 512)
-        self.assertAlmostEqual(project.runs[0].corr_inttime, 0.1, 6)
-        self.assertEqual(project.runs[0].corr_basis, 'circular')
+        self.assertEqual(project.runs[0].correlator_channels, 512)
+        self.assertAlmostEqual(project.runs[0].correlator_inttime, 0.1, 6)
+        self.assertEqual(project.runs[0].correlator_basis, 'circular')
         
         # Observational setup - 1
         self.assertEqual(project.runs[0].scans[0].mode, 'TRK_JOV')
@@ -575,26 +571,25 @@ class idf_tests(unittest.TestCase):
         project = idf.parse_idf(jovFile)
         
         # Bad interferometer
-        project.runs[0].stations = [lwa1,]
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].stations = [lwa1,]
+            
         # Bad correlator channel count
-        project.runs[0].corr_channels = 129
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_channels = 129
+            
         # Bad correlator integration time
-        project.runs[0].corr_inttime = 1e-6
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_inttime = 1e-6
+            
         # Bad correlator output polarization basis
-        project.runs[0].corr_basis = 'cats'
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].correlator_basis = 'cats'
+            
         # Bad intent
-        project.runs[0].scans[0].intent = 'cats'
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
+        with self.assertRaises(ValueError):
+            project.runs[0].scans[0].intent = 'cats'
+            
         # Bad filter
         project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 8

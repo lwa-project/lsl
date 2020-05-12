@@ -480,8 +480,8 @@ class Session(_Session):
         """
         
         if value.interface.sdf != 'lsl.common.sdfADP':
-            raise RuntimeError("Incompatible station: expected %s, got %s" % \
-                               (value.interface.sdf, 'lsl.common.sdfADP'))
+            raise ValueError("Incompatible station: expected %s, got %s" % \
+                             (value.interface.sdf, 'lsl.common.sdfADP'))
             
         self._station = value
         self.update()
