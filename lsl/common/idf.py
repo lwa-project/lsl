@@ -325,8 +325,8 @@ class Project(object):
                         output = "%sSCAN_ALT_PM_DEC[%i]      %+.1f\n" % (output, i+1, phase_center.pm[1])
                         
             ## ASP filter setting
-            if obs.aspFlt != -1:
-                output = "%sSCAN_ASP_FLT     %i\n" % (output, obs.aspFlt)
+            if obs.asp_filter != -1:
+                output = "%sSCAN_ASP_FLT     %i\n" % (output, obs.asp_filter)
             ## DRX gain
             if obs.gain != -1:
                 output = "%sSCAN_DRX_GAIN    %i\n" % (output, obs.gain)
@@ -485,6 +485,8 @@ class Run(object):
         
     @property
     def stations(self):
+        """List of LWA stations to use in the interferometer."""
+        
         return self._stations
         
     @stations.setter
@@ -506,11 +508,13 @@ class Run(object):
         
     @property
     def correlator_channels(self):
+        """Number of correlator channels to use."""
+        
         return self.corr_channels
         
     @correlator_channels.setter
     def correlator_channels(self, value):
-        """Set the number of spectrometer channels to generate, 0 to disable."""
+        """Set the number of correlator channels to generate."""
         
         value = int(value)
         if value < 16 or value > 32768 or value % 2:
@@ -519,11 +523,13 @@ class Run(object):
         
     @property
     def correlator_inttime(self):
+        """Correlator integration time in seconds."""
+        
         return self.corr_inttime
         
     @correlator_inttime.setter
     def correlator_inttime(self, value):
-        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
+        """Set the number of correlatro integration time to use."""
         
         value = float(value)
         if value < 0.1 or value > 10.0:
@@ -532,6 +538,7 @@ class Run(object):
         
     @property
     def correlator_basis(self):
+        """Correlator output polarization basis."""
         return self.corr_basis
         
     @correlator_basis.setter
@@ -755,7 +762,7 @@ class Scan(object):
         self.dataVolumeStation = None
         self.dataVolume = None
         
-        self.aspFlt = -1
+        self.asp_filter = -1
         
         self.gain = int(gain)
         
@@ -784,6 +791,8 @@ class Scan(object):
             
     @property
     def intent(self):
+        """Obsevational intent."""
+        
         return self._intent
         
     @intent.setter
@@ -795,6 +804,8 @@ class Scan(object):
         
     @property
     def start(self):
+        """Start time."""
+        
         utc = mjdmpm_to_datetime(self.mjd, self.mpm)
         return utc.strftime("UTC %Y/%m/%d %H:%M:%S.%f")
         
@@ -805,6 +816,8 @@ class Scan(object):
         
     @property
     def duration(self):
+        """Duration in seconds."""
+        
         s, ms = self.dur//1000, (self.dur%1000)/1000.0
         h = s // 3600
         m = (s // 60) % 60
@@ -844,6 +857,8 @@ class Scan(object):
         
     @property
     def ra(self):
+        """Target RA (J2000)."""
+        
         return self._ra
         
     @ra.setter
@@ -858,6 +873,7 @@ class Scan(object):
         
     @property
     def dec(self):
+        """Target dec. (J2000)."""
         return self._dec
         
     @dec.setter
@@ -872,6 +888,8 @@ class Scan(object):
         
     @property
     def pm(self):
+        """Target proper motion in mas/yr."""
+        
         return self._pm
         
     @pm.setter
@@ -888,6 +906,8 @@ class Scan(object):
             
     @property
     def frequency1(self):
+        """Tuning 1 frequency in Hz."""
+        
         return word_to_freq(self.freq1)
         
     @frequency1.setter
@@ -896,6 +916,8 @@ class Scan(object):
         
     @property
     def frequency2(self):
+        """Tuning 2 frequency in Hz."""
+        
         return word_to_freq(self.freq2)
         
     @frequency2.setter
@@ -1128,12 +1150,6 @@ class DRX(Scan):
     
     def __init__(self, target, intent, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, pm=[0.0, 0.0], comments=None):
         Scan.__init__(self, target, intent, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, pm=pm, comments=comments)
-        
-    def set_pm(self, ra_dec):
-        """Set the proper motion of the target in mas/yr."""
-        
-        self.pm[0] = ra_dec[0]
-        self.pm[1] = ra_dec[1]
 
 
 class Solar(Scan):
@@ -1206,6 +1222,8 @@ class AlternatePhaseCenter(object):
         
     @property
     def intent(self):
+        """Observational intent."""
+        
         return self._intent
         
     @intent.setter
@@ -1217,6 +1235,8 @@ class AlternatePhaseCenter(object):
         
     @property
     def ra(self):
+        """Target RA (J2000)."""
+        
         return self._ra
         
     @ra.setter
@@ -1231,6 +1251,8 @@ class AlternatePhaseCenter(object):
         
     @property
     def dec(self):
+        """Target dec. (J2000)."""
+        
         return self._dec
         
     @dec.setter
@@ -1245,6 +1267,8 @@ class AlternatePhaseCenter(object):
         
     @property
     def pm(self):
+        """Target proper motion in mas/yr."""
+        
         return self._pm
         
     @pm.setter
@@ -1355,7 +1379,7 @@ def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
         obsOut.add_alt_phase_center(alt_temp['target'], alt_temp['intent'], alt_temp['ra'], alt_temp['dec'], pm=alt_temp['pm'])
         
     # Set the ASP/FEE values
-    obsOut.aspFlt = copy.deepcopy(obs_temp['aspFlt'])
+    obsOut.asp_filter = copy.deepcopy(obs_temp['aspFlt'])
     
     # Force the scan to be updated
     obsOut.update()

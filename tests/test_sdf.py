@@ -430,29 +430,29 @@ class sdf_tests(unittest.TestCase):
         with _SilentVerbose() as sv:
             out = project.render(verbose=True)
             
-        project.sessions[0].observations[0].obsFEE = [[1,1] for i in project.sessions[0].observations[0].aspFlt]
-        project.sessions[0].observations[0].obsFEE[0] = [0,0]
-        project.sessions[0].observations[0].obsFEE[1] = [0,0]
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in project.sessions[0].observations[0].asp_filter]
+        project.sessions[0].observations[0].fee_power[0] = [0,0]
+        project.sessions[0].observations[0].fee_power[1] = [0,0]
         out = project.render()
         
-        project.sessions[0].observations[0].aspFlt = [1 for i in project.sessions[0].observations[0].aspFlt]
-        project.sessions[0].observations[0].aspFlt[0] = 3
-        project.sessions[0].observations[0].aspFlt[1] = 3
+        project.sessions[0].observations[0].asp_filter = [1 for i in project.sessions[0].observations[0].asp_filter]
+        project.sessions[0].observations[0].asp_filter[0] = 3
+        project.sessions[0].observations[0].asp_filter[1] = 3
         out = project.render()
         
-        project.sessions[0].observations[0].aspAT1 = [1 for i in project.sessions[0].observations[0].aspFlt]
-        project.sessions[0].observations[0].aspAT1[0] = 3
-        project.sessions[0].observations[0].aspAT1[1] = 3
+        project.sessions[0].observations[0].asp_atten_1 = [1 for i in project.sessions[0].observations[0].asp_filter]
+        project.sessions[0].observations[0].asp_atten_1[0] = 3
+        project.sessions[0].observations[0].asp_atten_1[1] = 3
         out = project.render()
         
-        project.sessions[0].observations[0].aspAT2 = [1 for i in project.sessions[0].observations[0].aspFlt]
-        project.sessions[0].observations[0].aspAT2[0] = 3
-        project.sessions[0].observations[0].aspAT2[1] = 3
+        project.sessions[0].observations[0].asp_atten_2 = [1 for i in project.sessions[0].observations[0].asp_filter]
+        project.sessions[0].observations[0].asp_atten_2[0] = 3
+        project.sessions[0].observations[0].asp_atten_2[1] = 3
         out = project.render()
         
-        project.sessions[0].observations[0].aspATS = [1 for i in project.sessions[0].observations[0].aspFlt]
-        project.sessions[0].observations[0].aspATS[0] = 3
-        project.sessions[0].observations[0].aspATS[1] = 3
+        project.sessions[0].observations[0].asp_atten_split = [1 for i in project.sessions[0].observations[0].asp_filter]
+        project.sessions[0].observations[0].asp_atten_split[0] = 3
+        project.sessions[0].observations[0].asp_atten_split[1] = 3
         out = project.render()
         
     def test_drx_errors(self):
@@ -461,11 +461,11 @@ class sdf_tests(unittest.TestCase):
         project = sdf.parse_sdf(drxFile)
         
         # Bad beam
-        project.sessions[0].drxBeam = 6
+        project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
         # No beam
-        project.sessions[0].drxBeam = -1
+        project.sessions[0].drx_beam = -1
         self.assertFalse(project.validate())
         
         # Bad filter
@@ -556,11 +556,11 @@ class sdf_tests(unittest.TestCase):
         project = sdf.parse_sdf(solFile)
         
         # Bad beam
-        project.sessions[0].drxBeam = 6
+        project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
         # No beam
-        project.sessions[0].drxBeam = -1
+        project.sessions[0].drx_beam = -1
         self.assertFalse(project.validate())
         
         # Bad filter
@@ -640,11 +640,11 @@ class sdf_tests(unittest.TestCase):
         project = sdf.parse_sdf(jovFile)
         
         # Bad beam
-        project.sessions[0].drxBeam = 6
+        project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
         # No beam
-        project.sessions[0].drxBeam = -1
+        project.sessions[0].drx_beam = -1
         self.assertFalse(project.validate())
         
         # Bad filter
@@ -685,11 +685,11 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].mpm, 440000)
         self.assertEqual(project.sessions[0].observations[0].dur, 300000)
         self.assertEqual(project.sessions[0].observations[0].filter,   7)
-        self.assertEqual(project.sessions[0].observations[0].obsFEE[0], [1,1])
-        self.assertEqual(project.sessions[0].observations[0].aspFlt[0], 2)
-        self.assertEqual(project.sessions[0].observations[0].aspAT1[0], 10)
-        self.assertEqual(project.sessions[0].observations[0].aspAT2[0], 12)
-        self.assertEqual(project.sessions[0].observations[0].aspATS[0], 14)
+        self.assertEqual(project.sessions[0].observations[0].fee_power[0], [1,1])
+        self.assertEqual(project.sessions[0].observations[0].asp_filter[0], 2)
+        self.assertEqual(project.sessions[0].observations[0].asp_atten_1[0], 10)
+        self.assertEqual(project.sessions[0].observations[0].asp_atten_2[0], 12)
+        self.assertEqual(project.sessions[0].observations[0].asp_atten_split[0], 14)
         
         # Steps - 1
         self.assertEqual(len(project.sessions[0].observations[0].steps), 4)
@@ -710,11 +710,11 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].mpm, 800000)
         self.assertEqual(project.sessions[0].observations[1].dur, 180000)
         self.assertEqual(project.sessions[0].observations[1].filter,   7)
-        self.assertEqual(project.sessions[0].observations[1].obsFEE[0], [1,0])
-        self.assertEqual(project.sessions[0].observations[1].aspFlt[0], 1)
-        self.assertEqual(project.sessions[0].observations[1].aspAT1[0], 11)
-        self.assertEqual(project.sessions[0].observations[1].aspAT2[0], 13)
-        self.assertEqual(project.sessions[0].observations[1].aspATS[0], 15)
+        self.assertEqual(project.sessions[0].observations[1].fee_power[0], [1,0])
+        self.assertEqual(project.sessions[0].observations[1].asp_filter[0], 1)
+        self.assertEqual(project.sessions[0].observations[1].asp_atten_1[0], 11)
+        self.assertEqual(project.sessions[0].observations[1].asp_atten_2[0], 13)
+        self.assertEqual(project.sessions[0].observations[1].asp_atten_split[0], 15)
         
         # Steps - 2
         self.assertEqual(len(project.sessions[0].observations[1].steps), 2)
@@ -788,11 +788,11 @@ class sdf_tests(unittest.TestCase):
         project = sdf.parse_sdf(stpFile)
         
         # Bad beam
-        project.sessions[0].drxBeam = 6
+        project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
         # No beam
-        project.sessions[0].drxBeam = -1
+        project.sessions[0].drx_beam = -1
         self.assertFalse(project.validate())
         
         # Bad filter

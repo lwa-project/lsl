@@ -158,10 +158,10 @@ class Project(_Project):
         output = "%sSESSION_TITLE    %s\n" % (output, 'None provided' if ses.name is None else ses.name)
         output = "%sSESSION_REMPI    %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
         output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
-        if ses.cra != 0:
-            output = "%sSESSION_CRA      %i\n" % (output, ses.cra)
-        if ses.drxBeam != -1:
-            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drxBeam)
+        if ses.configuration_authority != 0:
+            output = "%sSESSION_CRA      %i\n" % (output, ses.configuration_authority)
+        if ses.drx_beam != -1:
+            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drx_beam)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
             output = "%sSESSION_SPC      %i %i%s\n" % (output, ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
@@ -264,14 +264,14 @@ class Project(_Project):
                             output = "%sOBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (output, stpID, gaiID, gain[1][0])
                             output = "%sOBS_BEAM_GAIN[%i][%i][2][2] %i\n" % (output, stpID, gaiID, gain[1][1])
             ## FEE power settings
-            if all(j == obs.obsFEE[0] for j in obs.obsFEE):
+            if all(j == obs.fee_power[0] for j in obs.fee_power):
                 ### All the same
-                if obs.obsFEE[0][0] != -1 and obs.obsFEE[0][1] != -1:
-                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.obsFEE[0][0])
-                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.obsFEE[0][1])
+                if obs.fee_power[0][0] != -1 and obs.fee_power[0][1] != -1:
+                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.fee_power[0][0])
+                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.fee_power[0][1])
             else:
                 ### Some different
-                for j,fee in enumerate(obs.obsFEE):
+                for j,fee in enumerate(obs.fee_power):
                     feeID = j + 1
                     
                     if fee[0] != -1:
@@ -279,49 +279,49 @@ class Project(_Project):
                     if fee[1] != -1:
                         output = "%sOBS_FEE[%i][2]  %i\n" % (output, feeID, fee[1])
             ## ASP filter setting
-            if all(j == obs.aspFlt[0] for j in obs.aspFlt):
+            if all(j == obs.asp_filter[0] for j in obs.asp_filter):
                 ### All the same
-                if obs.aspFlt[0] != -1:
-                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.aspFlt[0])
+                if obs.asp_filter[0] != -1:
+                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.asp_filter[0])
             else:
                 ### Some different
-                for j,flt in enumerate(obs.aspFlt):
+                for j,flt in enumerate(obs.asp_filter):
                     fltID = j + 1
                     
                     if flt != -1:
                         output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, fltID, flt)
             ## First attenuator setting
-            if all(j == obs.aspAT1[0] for j in obs.aspAT1):
+            if all(j == obs.asp_atten_1[0] for j in obs.asp_atten_1):
                 ### All the same
-                if obs.aspAT1[0] != -1:
-                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.aspAT1[0])
+                if obs.asp_atten_1[0] != -1:
+                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.asp_atten_1[0])
             else:
                 ### Some different
-                for j,at1 in enumerate(obs.aspAT1):
+                for j,at1 in enumerate(obs.asp_atten_1):
                     at1ID = j + 1
                     
                     if at1 != -1:
                         output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, at1ID, at1)
             ## Second attenuator setting
-            if all(j == obs.aspAT2[0] for j in obs.aspAT2):
+            if all(j == obs.asp_atten_2[0] for j in obs.asp_atten_2):
                 ### All the same
-                if obs.aspAT2[0] != -1:
-                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.aspAT2[0])
+                if obs.asp_atten_2[0] != -1:
+                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.asp_atten_2[0])
             else:
                 ### Some different
-                for j,at2 in enumerate(obs.aspAT2):
+                for j,at2 in enumerate(obs.asp_atten_2):
                     at2ID = j + 1
                     
                     if at2 != -1:
                         output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, at2ID, at2)
             ## Second attenuator setting
-            if all(j == obs.aspATS[0] for j in obs.aspATS):
+            if all(j == obs.asp_atten_split[0] for j in obs.asp_atten_split):
                 ### All the same
-                if obs.aspATS[0] != -1:
-                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.aspATS[0])
+                if obs.asp_atten_split[0] != -1:
+                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.asp_atten_split[0])
             else:
                 ### Some different
-                for j,ats in enumerate(obs.aspATS):
+                for j,ats in enumerate(obs.asp_atten_split):
                     atsID = j + 1
                     
                     if ats != -1:
@@ -372,29 +372,13 @@ class TBF(Observation):
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
         Observation.__init__(self, name, target, start, durStr, 'TBF', 0.0, 0.0, frequency1, frequency2, filter, comments=comments)
         
-    def set_frequency1(self, frequency1):
-        """Set the frequency in Hz corresponding to tuning 1."""
-        
-        self.frequency1 = float(frequency1)
-        self.update()
-        
-    def set_frequency2(self, frequency2):
-        """Set the frequency in Hz correpsonding to tuning 2."""
-        
-        self.frequency2 = float(frequency2)
-        self.update()
-        
     def update(self):
         """Update the computed parameters from the string values."""
         
         self.beam = self.get_beam_type()
         
         # Update the duration based on the number of bits and samples used
-        duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN*(2 if self.freq2 != 0 else 1) + 5000
-        sc = int(duration/1000.0)
-        ms = int(round((duration/1000.0 - sc)*1000))
-        us = ms*1000
-        self.duration = str(timedelta(seconds=sc, microseconds=us))
+        self.dur = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN*(2 if self.freq2 != 0 else 1) + 5000
         
         self.dataVolume = self.estimate_bytes()
         
@@ -450,6 +434,9 @@ class TBF(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -501,7 +488,7 @@ class Session(_Session):
         # Validate beam number for TBF
         if len(self.observations) > 0:
             if self.observations[0].mode ==  'TBF':
-                if self.drxBeam != 1:
+                if self.drx_beam != 1:
                     if verbose:
                         print("[%i] Error: TBF can only run on beam 1" % os.getpid())
                     failures += 1
@@ -591,11 +578,11 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut.beamDipole = obs_temp['beamDipole']
         
     # Set the ASP/FEE values
-    obsOut.obsFEE = copy.deepcopy(obs_temp['obsFEE'])
-    obsOut.aspFlt = copy.deepcopy(obs_temp['aspFlt'])
-    obsOut.aspAT1 = copy.deepcopy(obs_temp['aspAT1'])
-    obsOut.aspAT2 = copy.deepcopy(obs_temp['aspAT2'])
-    obsOut.aspATS = copy.deepcopy(obs_temp['aspATS'])
+    obsOut.fee_power = copy.deepcopy(obs_temp['obsFEE'])
+    obsOut.asp_filter = copy.deepcopy(obs_temp['aspFlt'])
+    obsOut.asp_atten_1 = copy.deepcopy(obs_temp['aspAT1'])
+    obsOut.asp_atten_2 = copy.deepcopy(obs_temp['aspAT2'])
+    obsOut.asp_atten_split = copy.deepcopy(obs_temp['aspATS'])
     
     # Force the observation to be updated
     obsOut.update()
@@ -722,7 +709,7 @@ def parse_sdf(filename, verbose=False):
                     project.project_office.sessions[0] = value
                 continue
             if keyword == 'SESSION_CRA':
-                project.sessions[0].cra = int(value)
+                project.sessions[0].configuration_authority = int(value)
                 continue
             if keyword[0:12] == 'SESSION_MRP_':
                 component = keyword[12:]
@@ -745,7 +732,7 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].includeDesign = bool(value)
                 continue
             if keyword == 'SESSION_DRX_BEAM':
-                project.sessions[0].drxBeam = int(value)
+                project.sessions[0].drx_beam = int(value)
                 continue
             if keyword == 'SESSION_SPC':
                 # Remove the ' marks

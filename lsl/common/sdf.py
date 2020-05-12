@@ -558,10 +558,10 @@ class Project(object):
         output = "%sSESSION_TITLE    %s\n" % (output, 'None provided' if ses.name is None else ses.name)
         output = "%sSESSION_REMPI    %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
         output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos)
-        if ses.cra != 0:
-            output = "%sSESSION_CRA      %i\n" % (output, ses.cra)
-        if ses.drxBeam != -1:
-            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drxBeam)
+        if ses.configuration_authority != 0:
+            output = "%sSESSION_CRA      %i\n" % (output, ses.configuration_authority)
+        if ses.drx_beam != -1:
+            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drx_beam)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
             output = "%sSESSION_SPC      %i %i%s\n" % (output, ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
@@ -657,14 +657,14 @@ class Project(object):
                             output = "%sOBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (output, stpID, gaiID, gain[1][0])
                             output = "%sOBS_BEAM_GAIN[%i][%i][2][2] %i\n" % (output, stpID, gaiID, gain[1][1])
             ## FEE power settings
-            if all(j == obs.obsFEE[0] for j in obs.obsFEE):
+            if all(j == obs.fee_power[0] for j in obs.fee_power):
                 ### All the same
-                if obs.obsFEE[0][0] != -1 and obs.obsFEE[0][1] != -1:
-                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.obsFEE[0][0])
-                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.obsFEE[0][1])
+                if obs.fee_power[0][0] != -1 and obs.fee_power[0][1] != -1:
+                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.fee_power[0][0])
+                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.fee_power[0][1])
             else:
                 ### Some different
-                for j,fee in enumerate(obs.obsFEE):
+                for j,fee in enumerate(obs.fee_power):
                     feeID = j + 1
                     
                     if fee[0] != -1:
@@ -672,49 +672,49 @@ class Project(object):
                     if fee[1] != -1:
                         output = "%sOBS_FEE[%i][2]  %i\n" % (output, feeID, fee[1])
             ## ASP filter setting
-            if all(j == obs.aspFlt[0] for j in obs.aspFlt):
+            if all(j == obs.asp_filter[0] for j in obs.asp_filter):
                 ### All the same
-                if obs.aspFlt[0] != -1:
-                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.aspFlt[0])
+                if obs.asp_filter[0] != -1:
+                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.asp_filter[0])
             else:
                 ### Some different
-                for j,flt in enumerate(obs.aspFlt):
+                for j,flt in enumerate(obs.asp_filter):
                     fltID = j + 1
                     
                     if flt != -1:
                         output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, fltID, flt)
             ## First attenuator setting
-            if all(j == obs.aspAT1[0] for j in obs.aspAT1):
+            if all(j == obs.asp_atten_1[0] for j in obs.asp_atten_1):
                 ### All the same
-                if obs.aspAT1[0] != -1:
-                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.aspAT1[0])
+                if obs.asp_atten_1[0] != -1:
+                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.asp_atten_1[0])
             else:
                 ### Some different
-                for j,at1 in enumerate(obs.aspAT1):
+                for j,at1 in enumerate(obs.asp_atten_1):
                     at1ID = j + 1
                     
                     if at1 != -1:
                         output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, at1ID, at1)
             ## Second attenuator setting
-            if all(j == obs.aspAT2[0] for j in obs.aspAT2):
+            if all(j == obs.asp_atten_2[0] for j in obs.asp_atten_2):
                 ### All the same
-                if obs.aspAT2[0] != -1:
-                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.aspAT2[0])
+                if obs.asp_atten_2[0] != -1:
+                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.asp_atten_2[0])
             else:
                 ### Some different
-                for j,at2 in enumerate(obs.aspAT2):
+                for j,at2 in enumerate(obs.asp_atten_2):
                     at2ID = j + 1
                     
                     if at2 != -1:
                         output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, at2ID, at2)
             ## Second attenuator setting
-            if all(j == obs.aspATS[0] for j in obs.aspATS):
+            if all(j == obs.asp_atten_split[0] for j in obs.asp_atten_split):
                 ### All the same
-                if obs.aspATS[0] != -1:
-                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.aspATS[0])
+                if obs.asp_atten_split[0] != -1:
+                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.asp_atten_split[0])
             else:
                 ### Some different
-                for j,ats in enumerate(obs.aspATS):
+                for j,ats in enumerate(obs.asp_atten_split):
                     atsID = j + 1
                     
                     if ats != -1:
@@ -779,11 +779,11 @@ class Observation(object):
         self.beam = None
         self.dataVolume = None
         
-        self.obsFEE = [[-1,-1] for n in range(LWA_MAX_NSTD)]
-        self.aspFlt = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspAT1 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspAT2 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspATS = [-1 for n in range(LWA_MAX_NSTD)]
+        self.fee_power = [[-1,-1] for n in range(LWA_MAX_NSTD)]
+        self.asp_filter = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_1 = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_2 = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_split = [-1 for n in range(LWA_MAX_NSTD)]
 
         self.gain = int(gain)
         
@@ -802,6 +802,8 @@ class Observation(object):
         
     @property
     def start(self):
+        """Start time."""
+        
         utc = mjdmpm_to_datetime(self.mjd, self.mpm)
         return utc.strftime("UTC %Y/%m/%d %H:%M:%S.%f")
         
@@ -812,6 +814,8 @@ class Observation(object):
         
     @property
     def duration(self):
+        """Duration in seconds."""
+        
         s, ms = self.dur//1000, (self.dur%1000)/1000.0
         h = s // 3600
         m = (s // 60) % 60
@@ -851,6 +855,8 @@ class Observation(object):
         
     @property
     def ra(self):
+        """Target RA (J2000)."""
+        
         return self._ra
         
     @ra.setter
@@ -865,6 +871,8 @@ class Observation(object):
         
     @property
     def dec(self):
+        """Target dec. (J2000)."""
+        
         return self._dec
         
     @dec.setter
@@ -879,6 +887,8 @@ class Observation(object):
         
     @property
     def frequency1(self):
+        """Tuning 1 frequency in Hz."""
+        
         return word_to_freq(self.freq1)
         
     @frequency1.setter
@@ -887,6 +897,8 @@ class Observation(object):
         
     @property
     def frequency2(self):
+        """Tuning 2 frequency in Hz."""
+        
         return word_to_freq(self.freq2)
         
     @frequency2.setter
@@ -928,6 +940,79 @@ class Observation(object):
         
         raise NotImplementedError
         
+    def _validate_asp(self, verbose=False):
+        """Evaulate the FEE and ASP options associated with an observation and
+        return True if valid, False otherwise."""
+        
+        verbose = True
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        nstand = station.interface.get_module('mcs').LWA_MAX_NSTD
+                
+        failures = 0
+        # FEE
+        if len(self.fee_power) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of FEE power settings (%i != %i)" % (os.getpid(), len(self.fee_power), nstand))
+        for f,fee in enumerate(self.fee_power):
+            if len(fee) != 2:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid number of polarizations on FEE %i (%i != 2)" % (os.getpid(), f, len(fee)))
+            for p in (0, 1):
+                if fee[p] not in (-1, 0, 1):
+                    failures += 1
+                    if verbose:
+                        print("[%i] Error: Invalid power setting on FEE %i, polarization %i '%i'" % (os.getpid(), f, p, fee[p]))
+                        
+        # ASP
+        ## Filter
+        if len(self.asp_filter) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP filter settings (%i < %i)" % (os.getpid(), len(self.asp_filter), nstand))
+        for f,filt in enumerate(self.asp_filter):
+            if filt not in (-1, 0, 1, 2, 3, 4, 5):
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP filter setting on stand %i '%i'" % (os.getpid(), f, filt))
+        ## AT1/AT2/ATS
+        if len(self.asp_atten_1) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP attenuator 1 settings (%i < %i)" % (os.getpid(), len(self.asp_atten_1), nstand))
+        for f,atten in enumerate(self.asp_atten_1):
+            if atten < -1 or atten > 15:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP attenuator 1 setting on stand %i '%i'" % (os.getpid(), f, atten))
+        if len(self.asp_atten_2) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP attenuator 2 settings (%i < %i)" % (os.getpid(), len(self.asp_atten_2), nstand))
+        for f,atten in enumerate(self.asp_atten_2):
+            if atten < -1 or atten > 15:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP attenuator 2 setting on stand %i '%i'" % (os.getpid(), f, atten))
+        if len(self.asp_atten_split) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP attenuator split settings (%i < %i)" % (os.getpid(), len(self.asp_atten_split), nstand))
+        for f,atten in enumerate(self.asp_atten_split):
+            if atten < -1 or atten > 15:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP attenuator split setting on stand %i '%i'" % (os.getpid(), f, atten))
+                    
+        # Any failures indicates a bad FEE/ASP configuration
+        if failures == 0:
+            return True
+        else:
+            return False
+            
     def __eq__(self, other):
         if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
@@ -1046,6 +1131,9 @@ class TBW(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1124,6 +1212,9 @@ class TBN(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1307,6 +1398,9 @@ class DRX(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1428,7 +1522,7 @@ class Stepped(Observation):
     @property
     def duration(self):
         """Parse the list of BeamStep objects to get the total observation 
-        duration as the number of milliseconds in that period."""
+        duration as the number of seconds in that period."""
         
         duration = 0
         for step in self.steps:
@@ -1594,6 +1688,9 @@ class Stepped(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1659,6 +1756,8 @@ class BeamStep(object):
         
     @property
     def c1(self):
+        """Coordinate 1 - hours (J2000) if RA, degrees if azimuth."""
+        
         return self._c1
         
     @c1.setter
@@ -1683,6 +1782,8 @@ class BeamStep(object):
         
     @property
     def c2(self):
+        """Coordinate 2 - degrees (J2000) if dec., degrees if elevation."""
+        
         return self._c2
         
     @c2.setter
@@ -1701,6 +1802,8 @@ class BeamStep(object):
         
     @property
     def duration(self):
+        """Duration in seconds."""
+        
         s, ms = self.dur//1000, (self.dur%1000)/1000.0
         h = s // 3600
         m = (s // 60) % 60
@@ -1739,6 +1842,8 @@ class BeamStep(object):
         
     @property
     def frequency1(self):
+        """Tuning 1 frequency in Hz."""
+        
         return word_to_freq(self.freq1)
         
     @frequency1.setter
@@ -1747,6 +1852,8 @@ class BeamStep(object):
         
     @property
     def frequency2(self):
+        """Tuning 2 frequency in Hz."""
+        
         return word_to_freq(self.freq2)
         
     @frequency2.setter
@@ -1815,7 +1922,17 @@ class BeamStep(object):
             if len(self.gains) != mandc.LWA_MAX_NSTD:
                 failures += 1
                 if verbose:
-                    print("[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid())
+                    print("[%i] Error: Specified gain list had the wrong number of stands" % os.getpid())
+            for g,gain in enumerate(self.gains):
+                if len(gain) != 2:
+                    failures += 1
+                    if verbose:
+                        print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
+                else:
+                    if len(gain[0]) != 2 or len(gain[1]) != 2:
+                        failures += 1
+                        if verbose:
+                            print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
             if self.delays is None:
                 failures += 1
                 if verbose:
@@ -1880,8 +1997,8 @@ class Session(object):
         self.ucf_username = None
         self.comments = comments
         
-        self.cra = 0
-        self.drxBeam = -1
+        self.configuration_authority = 0
+        self.drx_beam = -1
         self.spcSetup = [0, 0]
         self.spcMetatag = None
         
@@ -1921,32 +2038,9 @@ class Session(object):
         self.observations.append(newObservation)
         
     @property
-    def configuration_authority(self):
-        return self.cra
-        
-    @configuration_authority.setter
-    def configuration_authority(self, value):
-        """Set the configuration request authority to a particular value in the range of
-        0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
-        parameters.""" 
-        
-        value = int(value)
-        if value < 0 or value > 65535:
-            raise ValueError("Invalid configuraton request authority '%i'" % value)
-        self.cra = value
-        
-    @property
-    def drx_beam(self):
-        return self.drxBeam
-        
-    @drx_beam.setter
-    def drx_beam(self, value):
-        """Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
-        
-        self.drxBeam = int(value)
-        
-    @property
     def spectrometer_channels(self):
+        """Number of spectrometer channesl to output, 0 is disables."""
+        
         return self.spcSetup[0]
         
     @spectrometer_channels.setter
@@ -1960,11 +2054,14 @@ class Session(object):
         
     @property
     def spectrometer_integration(self):
+        """Number of FFT windows per spectrometer integration, 0 to disable."""
+        
         return self.spcSetup[1]
         
     @spectrometer_integration.setter
     def spectrometer_integration(self, value):
-        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
+        """Set the number of FFT window per spectrometer integration to use, 
+        0 to disable."""
         
         value = int(value)
         if value not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
@@ -1973,6 +2070,8 @@ class Session(object):
         
     @property
     def spectrometer_metatag(self):
+        """Spectrometer polarization selection."""
+        
         return self.spcMetatag
         
     @spectrometer_metatag.setter
@@ -2050,13 +2149,13 @@ class Session(object):
                 print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
             failures += 1
             
-        if self.cra < 0 or self.cra > 65535:
+        if self.configuration_authority < 0 or self.configuration_authority > 65535:
             if verbose:
-                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
+                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.configuration_authority))
             failures += 1
-        if self.drxBeam != -1 and self.drxBeam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
+        if self.drx_beam != -1 and self.drx_beam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
             if verbose:
-                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
+                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drx_beam))
             failures += 1
         for key in list(self.recordMIB.keys()):
             if self.recordMIB[key] < -1:
@@ -2090,7 +2189,7 @@ class Session(object):
         # Validate beam number
         if len(self.observations) > 0:
             if self.observations[0].mode not in ('TBW', 'TBN'):
-                if self.drxBeam == -1:
+                if self.drx_beam == -1:
                     if verbose:
                         print("[%i] Error: Beam not assigned for this session" % os.getpid())
                     failures += 1
@@ -2296,11 +2395,11 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut.beamDipole = obs_temp['beamDipole']
         
     # Set the ASP/FEE values
-    obsOut.obsFEE = copy.deepcopy(obs_temp['obsFEE'])
-    obsOut.aspFlt = copy.deepcopy(obs_temp['aspFlt'])
-    obsOut.aspAT1 = copy.deepcopy(obs_temp['aspAT1'])
-    obsOut.aspAT2 = copy.deepcopy(obs_temp['aspAT2'])
-    obsOut.aspATS = copy.deepcopy(obs_temp['aspATS'])
+    obsOut.fee_power = copy.deepcopy(obs_temp['obsFEE'])
+    obsOut.asp_filter = copy.deepcopy(obs_temp['aspFlt'])
+    obsOut.asp_atten_1 = copy.deepcopy(obs_temp['aspAT1'])
+    obsOut.asp_atten_2 = copy.deepcopy(obs_temp['aspAT2'])
+    obsOut.asp_atten_split = copy.deepcopy(obs_temp['aspATS'])
     
     # Force the observation to be updated
     obsOut.update()
@@ -2427,7 +2526,7 @@ def parse_sdf(filename, verbose=False):
                     project.project_office.sessions[0] = value
                 continue
             if keyword == 'SESSION_CRA':
-                project.sessions[0].cra = int(value)
+                project.sessions[0].configuration_authority = int(value)
                 continue
             if keyword[0:12] == 'SESSION_MRP_':
                 component = keyword[12:]
@@ -2450,7 +2549,7 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].includeDesign = bool(value)
                 continue
             if keyword == 'SESSION_DRX_BEAM':
-                project.sessions[0].drxBeam = int(value)
+                project.sessions[0].drx_beam = int(value)
                 continue
             if keyword == 'SESSION_SPC':
                 # Remove the ' marks
