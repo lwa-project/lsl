@@ -148,7 +148,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertEqual(sdfADP.parse_time(s1, station=lwasv), sdfADP.parse_time(s2))
         
     def test_type_control(self):
-        """Test SDF member type control."""
+        """Test SDF (ADP) member type control."""
         
         obs = sdfADP.Observer('Test Observer', 99)
         targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
@@ -159,8 +159,28 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertRaises(TypeError, proj.sessions.append, 5)
         self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
         
+        with self.assertRaises(TypeError):
+            proj.sessions[0].observations[0] = None
+        self.assertRaises(TypeError, proj.sessions[0].observations.insert, (-1, 7))
+        
+    def test_string(self):
+        """Test string representations of SDF (ADP) objects."""
+        
+        obs = sdfADP.Observer('Test Observer', 99)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        sess = sdfADP.Session('Test Session', 1, observations=[targ,])
+        sess.drx_beam = 1
+        proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
+        
+        str(proj)
+        repr(proj)
+        str(proj.sessions[0])
+        repr(proj.sessions[0])
+        str(proj.sessions[0].observations[0])
+        repr(proj.sessions[0].observations[0])
+        
     def test_flat_projects(self):
-        """Test single session/observations SDFs."""
+        """Test single session/observations SDFs (ADP)."""
         
         obs = sdfADP.Observer('Test Observer', 99)
         targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
@@ -170,7 +190,7 @@ class sdf_adp_tests(unittest.TestCase):
         out = proj.render()
         
     def test_ucf_username(self):
-        """Test setting the UCF username for auto-copy support."""
+        """Test setting the UCF username for auto-copy support (ADP)."""
         
         obs = sdfADP.Observer('Test Observer', 99)
         targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)

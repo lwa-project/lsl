@@ -160,6 +160,26 @@ class sdf_tests(unittest.TestCase):
         self.assertRaises(TypeError, proj.sessions.append, 5)
         self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
         
+        with self.assertRaises(TypeError):
+            proj.sessions[0].observations[0] = None
+        self.assertRaises(TypeError, proj.sessions[0].observations.insert, (-1, 7))
+        
+    def test_string(self):
+        """Test string representations of SDF objects."""
+        
+        obs = sdf.Observer('Test Observer', 99)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        sess = sdf.Session('Test Session', 1, observations=[targ,])
+        sess.drx_beam = 1
+        proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
+        
+        str(proj)
+        repr(proj)
+        str(proj.sessions[0])
+        repr(proj.sessions[0])
+        str(proj.sessions[0].observations[0])
+        repr(proj.sessions[0].observations[0])
+        
     def test_flat_projects(self):
         """Test single session/observations SDFs."""
         

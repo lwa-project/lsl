@@ -307,7 +307,7 @@ def parse_time(s, station=lwa1):
 
 class _TypedParentList(list):
     """
-    Sub-class of list that restrictes the list's contents to certain object 
+    Sub-class of list that restricts the list's contents to certain object 
     types.  Plus, it allows the entries to have a _parent reference that points
     back to who owns the list.
     """

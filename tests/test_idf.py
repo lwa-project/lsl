@@ -73,6 +73,21 @@ class idf_tests(unittest.TestCase):
         
     ### General ###
     
+    def test_string(self):
+        """Test string representations of IDF objects."""
+        
+        obs = idf.Observer('Test Observer', 99)
+        targ = idf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7)
+        run = idf.Run('Test Run', 1, scans=targ)
+        proj = idf.Project(obs, 'Test Project', 'COMTST', runs=run)
+        
+        str(proj)
+        repr(proj)
+        str(proj.runs[0])
+        repr(proj.runs[0])
+        str(proj.runs[0].scans[0])
+        repr(proj.runs[0].scans[0])
+        
     def test_flat_projects(self):
         """Test single session/scans IDFs."""
         
