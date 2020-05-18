@@ -948,7 +948,7 @@ class Observation(object):
         station = lwa1
         if self._parent is not None:
             station = self._parent.station
-        is_dp = station.interface.backend === 'dp'
+        is_dp = station.interface.backend == 'dp'
         nstand = station.interface.get_module('mcs').LWA_MAX_NSTD
                 
         failures = 0
