@@ -135,9 +135,19 @@ class idf_tests(unittest.TestCase):
         scan.start = "UTC 2019/1/7 22:43:05"
         project.runs[0].append(scan)
         
+        self.assertFalse(project.runs[0] < project.runs[0])
+        self.assertTrue(project.runs[0] <= project.runs[0])
+        self.assertFalse(project.runs[0] > project.runs[0])
+        self.assertTrue(project.runs[0] >= project.runs[0])
+        self.assertFalse(project.runs[0] != project.runs[0])
+        self.assertTrue(project.runs[0] == project.runs[0])
+        
         self.assertTrue(project.runs[0].scans[0] < project.runs[0].scans[1])
+        self.assertTrue(project.runs[0].scans[0] <= project.runs[0].scans[1])
         self.assertFalse(project.runs[0].scans[0] > project.runs[0].scans[1])
+        self.assertFalse(project.runs[0].scans[0] >= project.runs[0].scans[1])
         self.assertTrue(project.runs[0].scans[0] != project.runs[0].scans[1])
+        self.assertFalse(project.runs[0].scans[0] == project.runs[0].scans[1])
         
     def test_drx_update(self):
         """Test updating TRK_RADEC values."""

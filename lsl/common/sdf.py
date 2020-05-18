@@ -948,6 +948,7 @@ class Observation(object):
         station = lwa1
         if self._parent is not None:
             station = self._parent.station
+        is_dp = station.interface.backend === 'dp'
         nstand = station.interface.get_module('mcs').LWA_MAX_NSTD
                 
         failures = 0
@@ -974,6 +975,9 @@ class Observation(object):
             if verbose:
                 print("[%i] Error: Invalid number of ASP filter settings (%i < %i)" % (os.getpid(), len(self.asp_filter), nstand))
         for f,filt in enumerate(self.asp_filter):
+            if is_dp and filt > 3:
+                warnings.warn("ASP filter %i is degenerate with %i for DP-based stations" % (filt, filt-4), RuntimeWarning)
+                
             if filt not in (-1, 0, 1, 2, 3, 4, 5):
                 failures += 1
                 if verbose:

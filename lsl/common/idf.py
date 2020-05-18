@@ -79,14 +79,6 @@ class Observer(object):
         self.last = last
         self.id = int(id)
         
-    def __str__(self):
-        return "%s (#%i)" % (self.name, self.id)
-        
-    def __repr__(self):
-        return "<%s.%s name='%s', id=%i>" % (self.__class__.__module__,
-                                             self.__class__.__name__,
-                                             self.name, self.id)
-        
     def join_name(self):
         if self.first != '':
             self.name = ', '.join([self.last, self.first])
@@ -115,11 +107,6 @@ class ProjectOffice(object):
             self.scans = []
         else:
             self.scans = scans
-            
-    def __repr__(self):
-        return "<%s.%s runs=%s, scans=%s>" % (self.__class__.__module__,
-                                              self.__class__.__name__,
-                                              repr(self.runs), repr(self.scans))
 
 
 class Project(object):
@@ -668,66 +655,66 @@ class Run(object):
             
     def __eq__(self, other):
         if isinstance(other, Run):
-            self.observations.sort()
-            other.observations.sort()
+            self.scans.sort()
+            other.scans.sort()
             
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ne__(self, other):
         if isinstance(other, Run):
-            self.observations.sort()
-            other.observations.sort()
+            self.scans.sort()
+            other.scans.sort()
             
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf != startOther
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __gt__(self, other):
         if isinstance(other, Run):
-            self.observations.sort()
-            other.observations.sort()
+            self.scans.sort()
+            other.scans.sort()
             
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf > startOther
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __ge__(self, other):
         if isinstance(other, Run):
-            self.observations.sort()
-            other.observations.sort()
+            self.scans.sort()
+            other.scans.sort()
             
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf >= startOther
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __lt__(self, other):
         if isinstance(other, Run):
-            self.observations.sort()
-            other.observations.sort()
+            self.scans.sort()
+            other.scans.sort()
             
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __le__(self, other):
         if isinstance(other, Run):
-            self.observations.sort()
-            other.observations.sort()
+            self.scans.sort()
+            other.scans.sort()
             
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
+            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
+            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf <= startOther
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
