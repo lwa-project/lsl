@@ -336,9 +336,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         in meter along the east, north, and vertical directions.
         """
         
-        ecefFrom = self.get_geocentric_location()
+        ecefFrom = self.geocentric_location
         try:
-            ecefTo = locTo.get_geocentric_location()
+            ecefTo = locTo.geocentric_location
         except AttributeError:
             ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
             
@@ -368,9 +368,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
             Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = self.get_geocentric_location()
+        ecefFrom = self.geocentric_location
         try:
-            ecefTo = locTo.get_geocentric_location()
+            ecefTo = locTo.geocentric_location
         except AttributeError:
             ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
             
