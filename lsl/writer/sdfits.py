@@ -451,7 +451,7 @@ class Sd(WriterBase):
         sd.header['OBSERVER'] = (self.observer, 'Observer name(s)')
         sd.header['PROJID']   = (self.project, 'Project name')
         sd.header['TELESCOP'] = (self.site.name, 'Telescope name')
-        x,y,z = self.site.get_geocentric_location()
+        x,y,z = self.site.geocentric_location
         sd.header['OBSGEO-X'] = (x, '[m] Antenna ECEF X-coordinate')
         sd.header['OBSGEO-Y'] = (y, '[m] Antenna ECEF Y-coordinate')
         sd.header['OBSGEO-Z'] = (z, '[m] Antenna ECEF Z-coordinate')

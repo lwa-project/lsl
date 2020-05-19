@@ -949,7 +949,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
 
     # Combine the array of antennas with the array's location to generate an
     # AIPY AntennaArray object
-    simAA = AntennaArray(station.get_aipy_location(), ants)
+    simAA = AntennaArray(station.aipy_location, ants)
     simAA._station = station
     
     # Set the Julian Data for the AntennaArray object if it is provided.  The try...except

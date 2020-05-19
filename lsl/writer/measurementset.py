@@ -162,7 +162,7 @@ try:
                 stands.append(ant.stand.id)
             stands = numpy.array(stands)
             
-            arrayX, arrayY, arrayZ = site.get_geocentric_location()
+            arrayX, arrayY, arrayZ = site.geocentric_location
             
             xyz = numpy.zeros((len(stands),3))
             for i,ant in enumerate(antennas):
@@ -173,7 +173,7 @@ try:
             # Create the stand mapper
             mapper = []
             ants = []
-            topo2eci = site.get_eci_transform()
+            topo2eci = site.eci_transform_matrix
             for i in range(len(stands)):
                 eci = numpy.dot(topo2eci, xyz[i,:])
                 ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
