@@ -9,6 +9,8 @@ if sys.version_info < (3,):
     range = xrange
     
 import unittest
+import tempfile
+import shutil
 import os
 try:
     from StringIO import StringIO
@@ -44,6 +46,26 @@ class necutil_tests(unittest.TestCase):
         
         (fh, freq) = necutil.open_and_get_nec_freq(self.nec_name)   
         fh.close()
+        
+    def test_change_nec_freq(self):
+        """Test the necutil.change_nec_freq() function."""
+        
+        testPath = tempfile.mkdtemp(prefix='test-necutil-', suffix='.tmp')
+        for freq in (25.6, 38.7, 54.6, 75.02):
+            shutil.copy(os.path.join(DATA_BUILD, 'lwa1_xep_1.nec'), testPath)
+        
+            filename = os.path.join(testPath, 'lwa1_xep_1.nec')
+            necutil.change_nec_freq(filename, freq)
+        
+            with open(filename, 'r') as fh:
+                found = False
+                for line in fh:
+                    if line[:2] == 'FR':
+                        found = True
+                        self.assertTrue(line.find('%.2f' % freq) != -1)
+                self.assertTrue(found)
+            os.unlink(filename)
+        shutil.rmtree(testPath)
         
     def test_calculate_ime(self):
         """Test necutil.calculate_ime() function."""
