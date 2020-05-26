@@ -197,6 +197,21 @@ class stations_tests(unittest.TestCase):
         
         ssmifFile = os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat')
         out = stations.parse_ssmif(ssmifFile)
+        
+    def test_responses(self):
+        """Test the various frequency responses."""
+        
+        lwa1 = stations.lwa1
+        lwa1[0].fee.response()
+        lwa1[0].cable.response()
+        for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
+            lwa1[0].arx.response(filt)
+            
+        lwasv = stations.lwasv
+        lwasv[0].fee.response()
+        lwasv[0].cable.response()
+        for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
+            lwasv[0].arx.response(filt)
 
 
 class stations_test_suite(unittest.TestSuite):

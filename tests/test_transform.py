@@ -177,9 +177,9 @@ class transform_tests(unittest.TestCase):
         elv = lwa1.elev
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
-        self.assertAlmostEqual(g0.ecef[0], lwa1.get_geocentric_location()[0], 6)
-        self.assertAlmostEqual(g0.ecef[1], lwa1.get_geocentric_location()[1], 6)
-        self.assertAlmostEqual(g0.ecef[2], lwa1.get_geocentric_location()[2], 6)
+        self.assertAlmostEqual(g0.ecef[0], lwa1.geocentric_location[0], 6)
+        self.assertAlmostEqual(g0.ecef[1], lwa1.geocentric_location[1], 6)
+        self.assertAlmostEqual(g0.ecef[2], lwa1.geocentric_location[2], 6)
         
     def test_geographicalposition_lst(self):
         """Test the tranform.GeographicalPosition sidereal time."""

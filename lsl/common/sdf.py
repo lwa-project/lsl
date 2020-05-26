@@ -52,16 +52,18 @@ import math
 import pytz
 import ephem
 import weakref
+import warnings
 from datetime import datetime, timedelta
 
 from astropy.time import Time as AstroTime
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.astro import date as astroDate, get_date as astroGetDate
 from lsl.common.color import colorfy
 
-from lsl.common.mcs import LWA_MAX_NSTD
+from lsl.common.mcs import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
 from lsl.common.dp import freq_to_word, word_to_freq
 from lsl.common.stations import lwa1
 from lsl.reader.tbn import FILTER_CODES as TBNFilters
@@ -305,7 +307,7 @@ def parse_time(s, station=lwa1):
 
 class _TypedParentList(list):
     """
-    Sub-class of list that restrictes the list's contents to certain object 
+    Sub-class of list that restricts the list's contents to certain object 
     types.  Plus, it allows the entries to have a _parent reference that points
     back to who owns the list.
     """
@@ -508,9 +510,7 @@ class Project(object):
         
         self.sessions[session].update()
         self.sessions[session].observations.sort()
-        for obs in self.sessions[session].observations:
-            obs.dur = obs.get_duration()
-            
+        
         ses = self.sessions[session]
         try:
             # Try to pull out the project office comments about the session
@@ -529,16 +529,16 @@ class Project(object):
             
         # Combine the session comments together in an intelligent fashion
         ## Observer comments
-        if ses.ucfuser is not None:
+        if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
                 clean = _usernameRE.sub('', ses.comments)
-            ses.comments = 'ucfuser:%s' % ses.ucfuser
+            ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
         ## Project office comments, including the data return method
         if pos != 'None' and pos is not None:
-            pos = 'Requested data return method is %s;;%s' % (ses.data_return_method, pos)
+            pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
             
         ## PI Information
         output = ""
@@ -557,11 +557,11 @@ class Project(object):
         output = "%sSESSION_ID       %s\n" % (output, ses.id)
         output = "%sSESSION_TITLE    %s\n" % (output, 'None provided' if ses.name is None else ses.name)
         output = "%sSESSION_REMPI    %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
-        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.data_return_method if pos == 'None' or pos is None else pos)
-        if ses.cra != 0:
-            output = "%sSESSION_CRA      %i\n" % (output, ses.cra)
-        if ses.drxBeam != -1:
-            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drxBeam)
+        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos)
+        if ses.configuration_authority != 0:
+            output = "%sSESSION_CRA      %i\n" % (output, ses.configuration_authority)
+        if ses.drx_beam != -1:
+            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drx_beam)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
             output = "%sSESSION_SPC      %i %i%s\n" % (output, ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
@@ -657,14 +657,14 @@ class Project(object):
                             output = "%sOBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (output, stpID, gaiID, gain[1][0])
                             output = "%sOBS_BEAM_GAIN[%i][%i][2][2] %i\n" % (output, stpID, gaiID, gain[1][1])
             ## FEE power settings
-            if all(j == obs.obsFEE[0] for j in obs.obsFEE):
+            if all(j == obs.fee_power[0] for j in obs.fee_power):
                 ### All the same
-                if obs.obsFEE[0][0] != -1 and obs.obsFEE[0][1] != -1:
-                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.obsFEE[0][0])
-                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.obsFEE[0][1])
+                if obs.fee_power[0][0] != -1 and obs.fee_power[0][1] != -1:
+                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.fee_power[0][0])
+                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.fee_power[0][1])
             else:
                 ### Some different
-                for j,fee in enumerate(obs.obsFEE):
+                for j,fee in enumerate(obs.fee_power):
                     feeID = j + 1
                     
                     if fee[0] != -1:
@@ -672,49 +672,49 @@ class Project(object):
                     if fee[1] != -1:
                         output = "%sOBS_FEE[%i][2]  %i\n" % (output, feeID, fee[1])
             ## ASP filter setting
-            if all(j == obs.aspFlt[0] for j in obs.aspFlt):
+            if all(j == obs.asp_filter[0] for j in obs.asp_filter):
                 ### All the same
-                if obs.aspFlt[0] != -1:
-                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.aspFlt[0])
+                if obs.asp_filter[0] != -1:
+                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.asp_filter[0])
             else:
                 ### Some different
-                for j,flt in enumerate(obs.aspFlt):
+                for j,flt in enumerate(obs.asp_filter):
                     fltID = j + 1
                     
                     if flt != -1:
                         output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, fltID, flt)
             ## First attenuator setting
-            if all(j == obs.aspAT1[0] for j in obs.aspAT1):
+            if all(j == obs.asp_atten_1[0] for j in obs.asp_atten_1):
                 ### All the same
-                if obs.aspAT1[0] != -1:
-                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.aspAT1[0])
+                if obs.asp_atten_1[0] != -1:
+                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.asp_atten_1[0])
             else:
                 ### Some different
-                for j,at1 in enumerate(obs.aspAT1):
+                for j,at1 in enumerate(obs.asp_atten_1):
                     at1ID = j + 1
                     
                     if at1 != -1:
                         output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, at1ID, at1)
             ## Second attenuator setting
-            if all(j == obs.aspAT2[0] for j in obs.aspAT2):
+            if all(j == obs.asp_atten_2[0] for j in obs.asp_atten_2):
                 ### All the same
-                if obs.aspAT2[0] != -1:
-                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.aspAT2[0])
+                if obs.asp_atten_2[0] != -1:
+                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.asp_atten_2[0])
             else:
                 ### Some different
-                for j,at2 in enumerate(obs.aspAT2):
+                for j,at2 in enumerate(obs.asp_atten_2):
                     at2ID = j + 1
                     
                     if at2 != -1:
                         output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, at2ID, at2)
             ## Second attenuator setting
-            if all(j == obs.aspATS[0] for j in obs.aspATS):
+            if all(j == obs.asp_atten_split[0] for j in obs.asp_atten_split):
                 ### All the same
-                if obs.aspATS[0] != -1:
-                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.aspATS[0])
+                if obs.asp_atten_split[0] != -1:
+                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.asp_atten_split[0])
             else:
                 ### Some different
-                for j,ats in enumerate(obs.aspATS):
+                for j,ats in enumerate(obs.asp_atten_split):
                     atsID = j + 1
                     
                     if ats != -1:
@@ -759,18 +759,15 @@ class Observation(object):
     _parent = None
     
     id = 1
-
+    dur = 0
+    
     def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
         self.name = name
         self.target = target
-        self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
-        self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
+        self.ra = ra
+        self.dec = dec
         self.start = start
-        if isinstance(duration, timedelta):
-            # Make sure the number of microseconds agree with milliseconds
-            us = int(round(duration.microseconds/1000.0))*1000
-            duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
-        self.duration = str(duration)
+        self.duration = duration
         self.mode = mode
         self.beamDipole = None
         self.frequency1 = float(frequency1)
@@ -779,19 +776,14 @@ class Observation(object):
         self.max_snr = bool(max_snr)
         self.comments = comments
         
-        self.mjd = None
-        self.mpm = None
-        self.dur = None
-        self.freq1 = None
-        self.freq2 = None
         self.beam = None
         self.dataVolume = None
         
-        self.obsFEE = [[-1,-1] for n in range(LWA_MAX_NSTD)]
-        self.aspFlt = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspAT1 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspAT2 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.aspATS = [-1 for n in range(LWA_MAX_NSTD)]
+        self.fee_power = [[-1,-1] for n in range(LWA_MAX_NSTD)]
+        self.asp_filter = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_1 = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_2 = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_split = [-1 for n in range(LWA_MAX_NSTD)]
 
         self.gain = int(gain)
         
@@ -805,81 +797,113 @@ class Observation(object):
     def update(self):
         """Update the computed parameters from the string values."""
         
-        # If we have a datetime instance, make sure we have an integer
-        # number of milliseconds
-        if isinstance(self.start, datetime):
-            us = self.start.microsecond
-            us = int(round(us/1000.0))*1000
-            self.start = self.start.replace(microsecond=us)
-        self.duration = str(self.duration)
-        
-        self.mjd = self.get_mjd()
-        self.mpm = self.get_mpm()
-        self.dur = self.get_duration()
-        self.freq1 = self.get_frequency1()
-        self.freq2 = self.get_frequency2()
         self.beam = self.get_beam_type()
         self.dataVolume = self.estimate_bytes()
         
-    def set_start(self, start):
-        """Set the observation start time."""
+    @property
+    def start(self):
+        """Start time."""
         
-        self.start = start
-        self.update()
+        utc = mjdmpm_to_datetime(self.mjd, self.mpm)
+        return utc.strftime("UTC %Y/%m/%d %H:%M:%S.%f")
         
-    def get_mjd(self):
-        """Return the modified Julian Date corresponding to the date/time of the
-        self.start string."""
+    @start.setter
+    def start(self, value):
+        utc = parse_time(value)
+        self.mjd, self.mpm = datetime_to_mjdmpm(utc)
         
-        station = lwa1
-        if self._parent is not None:
-            station = self._parent.station
-        utc = parse_time(self.start, station=station)
-        utc = Time(utc, format=Time.FORMAT_PY_DATE)
-        return int(utc.utc_mjd)
-
-    def get_mpm(self):
-        """Return the number of milliseconds between the date/time specified in the
-        self.start string and the previous UT midnight."""
+    @property
+    def duration(self):
+        """Duration in seconds."""
         
-        station = lwa1
-        if self._parent is not None:
-            station = self._parent.station
-        utc = parse_time(self.start, station=station)
-        utcMidnight = datetime(utc.year, utc.month, utc.day, 0, 0, 0, tzinfo=_UTC)
-        diff = utc - utcMidnight
-        return int(round((diff.seconds + diff.microseconds/1000000.0)*1000.0))
-
-    def get_duration(self):
-        """Parse the self.duration string with the format of HH:MM:SS.SSS to return the
-        number of milliseconds in that period."""
+        s, ms = self.dur//1000, (self.dur%1000)/1000.0
+        h = s // 3600
+        m = (s // 60) % 60
+        s = s % 60
+    
+        return "%i:%02i:%06.3f" % (h, m, s+ms)
         
-        fields = self.duration.split(':')
-        if len(fields) == 3:
-            out = int(fields[0])*3600.0
-            out += int(fields[1])*60.0
-            out += float(fields[2])
-        elif len(fields) == 2:
-            out = int(fields[0])*60.0
-            out += float(fields[1])
-        else:
-            out = float(fields[0])
+    @duration.setter
+    def duration(self, value):
+        if isinstance(value, str):
+            fields = value.split(':')
+            s = float(fields.pop())
+            try:
+                m = int(fields.pop(), 10)
+            except IndexError:
+                m = 0
+            try:
+                h = int(fields.pop(), 10)
+            except IndexError:
+                h = 0
+            seconds = h*3600 + m*60 + int(s)
+            ms = int(round((s - int(s))*1000))
+            if ms >= 1000:
+                seconds += 1
+                ms -= 1000
+            seconds = seconds + ms/1000.0
             
-        return int(round(out*1000.0))
-
-    def get_frequency1(self):
-        """Return the number of "tuning words" corresponding to the first frequency."""
+        elif isinstance(value, timedelta):
+            seconds = value.days*86400 + value.seconds
+            ms = int(round(value.microseconds/1000.0))/1000.0
+            seconds = seconds + ms
+            
+        else:
+            seconds = value
+            
+        self.dur = int(round(seconds*1000))
         
-        freq1 = freq_to_word(self.frequency1)
-        self.frequency1 = word_to_freq(freq1)
-        return freq1
-
-    def get_frequency2(self):
-        """Return the number of "tuning words" corresponding to the second frequency."""
+    @property
+    def ra(self):
+        """Target RA (J2000)."""
         
-        freq2 = freq_to_word(self.frequency2)
-        self.frequency2 = word_to_freq(freq2)
-        return freq2
+        return self._ra
+        
+    @ra.setter
+    def ra(self, value):
+        if isinstance(value, ephem.Angle):
+            value = value * 12.0/math.pi
+        elif isinstance(value, AstroAngle):
+            value = value.to('hourangle').value
+        if value < 0.0 or value >= 24.0:
+            raise ValueError("Invalid value for RA '%.6f' hr" % value)
+        self._ra = value
+        
+    @property
+    def dec(self):
+        """Target dec. (J2000)."""
+        
+        return self._dec
+        
+    @dec.setter
+    def dec(self, value):
+        if isinstance(value, ephem.Angle):
+            value = value * 180.0/math.pi
+        elif isinstance(value, AstroAngle):
+            value = value.to('deg').value
+        if value < -90.0 or value > 90.0:
+            raise ValueError("Invalid value for dec. '%+.6f' deg" % value)
+        self._dec = value
+        
+    @property
+    def frequency1(self):
+        """Tuning 1 frequency in Hz."""
+        
+        return word_to_freq(self.freq1)
+        
+    @frequency1.setter
+    def frequency1(self, value):
+        self.freq1 = freq_to_word(float(value))
+        
+    @property
+    def frequency2(self):
+        """Tuning 2 frequency in Hz."""
+        
+        return word_to_freq(self.freq2)
+        
+    @frequency2.setter
+    def frequency2(self, value):
+        self.freq2 = freq_to_word(float(value))
         
     def get_beam_type(self):
         """Return a valid value for beam type based on whether maximum S/N beam 
@@ -895,14 +919,16 @@ class Observation(object):
         set being defined by the observation."""
         
         raise NotImplementedError
-    
-    def get_fixed_body(self):
+        
+    @property
+    def fixed_body(self):
         """Place holder for functions that return ephem.Body objects (or None)
         that define the pointing center of the observation."""
         
         return None
-    
-    def compute_visibility(self):
+        
+    @property
+    def target_visibility(self):
         """Place holder for functions that return the fractional visibility of the 
         target during the observation period."""
         
@@ -914,6 +940,83 @@ class Observation(object):
         
         raise NotImplementedError
         
+    def _validate_asp(self, verbose=False):
+        """Evaulate the FEE and ASP options associated with an observation and
+        return True if valid, False otherwise."""
+        
+        verbose = True
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        is_dp = station.interface.backend == 'dp'
+        nstand = station.interface.get_module('mcs').LWA_MAX_NSTD
+                
+        failures = 0
+        # FEE
+        if len(self.fee_power) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of FEE power settings (%i != %i)" % (os.getpid(), len(self.fee_power), nstand))
+        for f,fee in enumerate(self.fee_power):
+            if len(fee) != 2:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid number of polarizations on FEE %i (%i != 2)" % (os.getpid(), f, len(fee)))
+            for p in (0, 1):
+                if fee[p] not in (-1, 0, 1):
+                    failures += 1
+                    if verbose:
+                        print("[%i] Error: Invalid power setting on FEE %i, polarization %i '%i'" % (os.getpid(), f, p, fee[p]))
+                        
+        # ASP
+        ## Filter
+        if len(self.asp_filter) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP filter settings (%i < %i)" % (os.getpid(), len(self.asp_filter), nstand))
+        for f,filt in enumerate(self.asp_filter):
+            if is_dp and filt > 3:
+                warnings.warn("ASP filter %i is degenerate with %i for DP-based stations" % (filt, filt-4), RuntimeWarning)
+                
+            if filt not in (-1, 0, 1, 2, 3, 4, 5):
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP filter setting on stand %i '%i'" % (os.getpid(), f, filt))
+        ## AT1/AT2/ATS
+        if len(self.asp_atten_1) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP attenuator 1 settings (%i < %i)" % (os.getpid(), len(self.asp_atten_1), nstand))
+        for f,atten in enumerate(self.asp_atten_1):
+            if atten < -1 or atten > 15:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP attenuator 1 setting on stand %i '%i'" % (os.getpid(), f, atten))
+        if len(self.asp_atten_2) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP attenuator 2 settings (%i < %i)" % (os.getpid(), len(self.asp_atten_2), nstand))
+        for f,atten in enumerate(self.asp_atten_2):
+            if atten < -1 or atten > 15:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP attenuator 2 setting on stand %i '%i'" % (os.getpid(), f, atten))
+        if len(self.asp_atten_split) < nstand:
+            failures += 1
+            if verbose:
+                print("[%i] Error: Invalid number of ASP attenuator split settings (%i < %i)" % (os.getpid(), len(self.asp_atten_split), nstand))
+        for f,atten in enumerate(self.asp_atten_split):
+            if atten < -1 or atten > 15:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Invalid ASP attenuator split setting on stand %i '%i'" % (os.getpid(), f, atten))
+                    
+        # Any failures indicates a bad FEE/ASP configuration
+        if failures == 0:
+            return True
+        else:
+            return False
+            
     def __eq__(self, other):
         if isinstance(other, Observation):
             startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
@@ -991,24 +1094,6 @@ class TBW(Observation):
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
         Observation.__init__(self, name, target, start, durStr, 'TBW', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
         
-    def update(self):
-        """Update the computed parameters from the string values."""
-        
-        # Update the duration based on the number of bits and samples used
-        duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
-        sc = int(duration/1000.0)
-        ms = int(round((duration/1000.0 - sc)*1000))
-        us = ms*1000
-        self.duration = str(timedelta(seconds=sc, microseconds=us))
-        
-        self.mjd = self.get_mjd()
-        self.mpm = self.get_mpm()
-        self.dur = self.get_duration()
-        self.freq1 = self.get_frequency1()
-        self.freq2 = self.get_frequency2()
-        self.beam = self.get_beam_type()
-        self.dataVolume = self.estimate_bytes()
-
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
         observations.  For TBW:
@@ -1050,6 +1135,9 @@ class TBW(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1078,22 +1166,6 @@ class TBN(Observation):
         self.filter_codes = TBNFilters
         Observation.__init__(self, name, target, start, duration, 'TBN', 0.0, 0.0, frequency, 0.0, filter, gain=gain, comments=comments)
         
-    def set_duration(self, duration):
-        """Set the observation duration."""
-        
-        if isinstance(duration, timedelta):
-            # Make sure the number of microseconds agree with milliseconds
-            us = int(round(duration.microseconds/1000.0))*1000
-            duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
-        self.duration = str(duration)
-        self.update()
-        
-    def set_frequency1(self, frequency1):
-        """Set the frequency in Hz corresponding to tuning 1."""
-        
-        self.frequency1 = float(frequency1)
-        self.update()
-        
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
         observations.  For TBN:
@@ -1102,7 +1174,7 @@ class TBN(Observation):
         """
         
         try:
-            nFrames = self.get_duration()/1000.0 * self.filter_codes[self.filter] / 512
+            nFrames = self.dur/1000.0 * self.filter_codes[self.filter] / 512
         except KeyError:
             nFrames = 0
         nBytes = nFrames * TBNSize * LWA_MAX_NSTD * 2
@@ -1144,6 +1216,9 @@ class TBN(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1151,35 +1226,31 @@ class TBN(Observation):
             return False
 
 
-class _DRXBase(Observation):
-    """Sub-class of Observation specifically for DRX-style observations."""
+class DRX(Observation):
+    """Sub-class of Observation specifically for DRX-style observations.
+    
+    Required Arguments:
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation RA in hours, J2000.0 or ephem.hours instance
+     * observation Dec in degrees, J2000.0 or ephem.hours instance
+     * observation tuning frequency 1 (Hz)
+     * observation tuning frequency 1 (Hz)
+     * integer filter code
+    
+    Optional Keywords:
+     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+                 (default = False)
+     * comments - comments about the observation
+    """
     
     filter_codes = DRXFilters
     
-    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
-        
-    def set_duration(self, duration):
-        """Set the observation duration."""
-        
-        if isinstance(duration, timedelta):
-            # Make sure the number of microseconds agree with milliseconds
-            us = int(round(duration.microseconds/1000.0))*1000
-            duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
-        self.duration = str(duration)
-        self.update()
-        
-    def set_frequency1(self, frequency1):
-        """Set the frequency in Hz corresponding to tuning 1."""
-        
-        self.frequency1 = float(frequency1)
-        self.update()
-        
-    def set_frequency2(self, frequency2):
-        """Set the frequency in Hz correpsonding to tuning 2."""
-        
-        self.frequency2 = float(frequency2)
-        self.update()
+    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
         
     def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X'):
         """Convert the current observation to a 'beam-dipole mode' 
@@ -1242,11 +1313,12 @@ class _DRXBase(Observation):
             except ZeroDivisionError:
                 pass
                 
-        return self.get_duration()/1000.0 * data_rate
+        return self.dur/1000.0 * data_rate
         
-    def get_fixed_body(self):
+    @property
+    def fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
-        pointed.  None if the observation mode is either TBN or TBW."""
+        pointed.  None if the observation mode is an all-sky mode."""
         
         pnt = ephem.FixedBody()
         pnt._ra = self.ra / 12.0 * math.pi
@@ -1254,7 +1326,8 @@ class _DRXBase(Observation):
         pnt._epoch = ephem.J2000
         return pnt
         
-    def compute_visibility(self):
+    @property
+    def target_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
@@ -1262,7 +1335,7 @@ class _DRXBase(Observation):
         if self._parent is not None:
             station = self._parent.station
             
-        pnt = self.get_fixed_body()
+        pnt = self.fixed_body
         
         vis = 0
         cnt = 0
@@ -1318,9 +1391,9 @@ class _DRXBase(Observation):
             if verbose:
                 print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
             failures += 1
-        if self.compute_visibility() < 1.0:
+        if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.target_visibility*100.0))
             failures += 1
             
         # Advanced - Data Volume
@@ -1329,6 +1402,9 @@ class _DRXBase(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1336,41 +1412,7 @@ class _DRXBase(Observation):
             return False
 
 
-class DRX(_DRXBase):
-    """
-    Required Arguments:
-     * observation name
-     * observation target
-     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
-       aware datetime instance)
-     * observation duration (HH:MM:SS.SSS string or timedelta instance)
-     * observation RA in hours, J2000.0 or ephem.hours instance
-     * observation Dec in degrees, J2000.0 or ephem.hours instance
-     * observation tuning frequency 1 (Hz)
-     * observation tuning frequency 1 (Hz)
-     * integer filter code
-    
-    Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
-                 (default = False)
-     * comments - comments about the observation
-    """
-    
-    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
-        
-    def set_ra(self, ra):
-        """Set the pointing RA."""
-        
-        self.ra = float(ra) * (12.0/math.pi if type(ra).__name__ == 'Angle' else 1.0)
-        
-    def set_dec(self, dec):
-        """Set the pointing Dec."""
-        
-        self.dec = float(dec)* (180.0/math.pi if type(dec).__name__ == 'Angle' else 1.0)
-
-
-class Solar(_DRXBase):
+class Solar(DRX):
     """Sub-class of DRX specifically for Solar DRX observations.   It features a
     reduced number of parameters needed to setup the observation.
     
@@ -1393,14 +1435,15 @@ class Solar(_DRXBase):
     def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
         Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
         
-    def get_fixed_body(self):
+    @property
+    def fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
         pointed.  None if the observation mode is either TBN or TBW."""
         
         return ephem.Sun()
 
 
-class Jovian(_DRXBase):
+class Jovian(DRX):
     """Sub-class of DRX specifically for Jovian DRX observations.   It features a
     reduced number of parameters needed to setup the observation.
     
@@ -1422,8 +1465,9 @@ class Jovian(_DRXBase):
     
     def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
         Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
-
-    def get_fixed_body(self):
+        
+    @property
+    def fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
         pointed.  None if the observation mode is either TBN or TBW."""
         
@@ -1461,24 +1505,13 @@ class Stepped(Observation):
     def update(self):
         """Update the computed parameters from the string values."""
         
-        # If we have a datetime instance, make sure we have an integer
-        # number of milliseconds
-        if isinstance(self.start, datetime):
-            us = self.start.microsecond
-            us = int(round(us/1000.0))*1000
-            self.start = self.start.replace(microsecond=us)
-        self.duration = str(self.duration)
-        
-        self.mjd = self.get_mjd()
-        self.mpm = self.get_mpm()
-        self.dur = self.get_duration()
-        self.freq1 = self.get_frequency1()
-        self.freq2 = self.get_frequency2()
         self.beam = self.get_beam_type()
         
         disabledBeamDipole = False
+        duration = 0
         for step in self.steps:
             step.update()
+            duration += step.dur
             
             ## Disable beam-dipole mode for STEPPED-mode observations that 
             ## use custom delays and gains
@@ -1487,23 +1520,28 @@ class Stepped(Observation):
                     self.set_beamdipole_mode(0)
                     disabledBeamDipole = True
                     
+        self.dur = duration
         self.dataVolume = self.estimate_bytes()
         
-    def get_duration(self):
+    @property
+    def duration(self):
         """Parse the list of BeamStep objects to get the total observation 
-        duration as the number of milliseconds in that period."""
+        duration as the number of seconds in that period."""
         
         duration = 0
         for step in self.steps:
             duration += step.dur
             
-        # Update the actual duration string
-        sc = int(duration/1000.0)
-        ms = int(round(duration/1000.0 - sc)*1000)
-        us = ms*1000
-        self.duration = str(timedelta(seconds=sc, microseconds=us))
+        s, ms = duration//1000, (duration%1000)/1000.0
+        h = s // 3600
+        m = (s // 60) % 60
+        s = s % 60
+    
+        return "%i:%02i:%06.3f" % (h, m, s+ms)
         
-        return duration
+    @duration.setter
+    def duration(self, value):
+        warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
         
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
@@ -1578,7 +1616,8 @@ class Stepped(Observation):
                 
         return dur/1000.0 * data_rate
         
-    def compute_visibility(self):
+    @property
+    def target_visibility(self):
         """Return the fractional visibility of the target during the observation 
         period."""
         
@@ -1586,14 +1625,14 @@ class Stepped(Observation):
         if self._parent is not None:
             station = self._parent.station
             
-        pnt = self.get_fixed_body()
+        pnt = self.fixed_body
         
         vis = 0
         cnt = 0
         relStart = 0
         for step in self.steps:
             if step.is_radec:
-                pnt = step.get_fixed_body()
+                pnt = step.fixed_body
                 
                 dt = 0.0
                 while dt <= self.dur/1000.0:
@@ -1642,9 +1681,9 @@ class Stepped(Observation):
             stepCount += 1
             
         # Advanced - Target Visibility
-        if self.compute_visibility() < 1.0:
+        if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.compute_visibility()*100.0))
+                print("[%i] Error: Target steps only above the horizon for %.1f%% of the observation" % (os.getpid(), self.target_visibility*100.0))
             failures += 1
             
         # Advanced - Data Volume
@@ -1653,6 +1692,9 @@ class Stepped(Observation):
                 print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
             failures += 1
             
+        # Advanced - ASP
+        failures += not self._validate_asp(verbose=verbose)
+        
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -1700,16 +1742,13 @@ class BeamStep(object):
             # Make sure the number of microseconds agree with milliseconds
             us = int(round(duration.microseconds/1000.0))*1000
             duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
-        self.duration = str(duration)
+        self.duration = duration
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
         self.max_snr = bool(max_snr)
         self.delays = spec_delays
         self.gains = spec_gains
         
-        self.dur = None
-        self.freq1 = None
-        self.freq2 = None
         self.beam = None
         
         self.update()
@@ -1719,83 +1758,118 @@ class BeamStep(object):
         c2s = "Dec" if self.is_radec else "Alt"
         return "Step of %s %.3f, %s %.3f for %s at %.3f and %.3f MHz" % (c1s, self.c1, c2s, self.c2, self.duration, self.frequency1/1e6, self.frequency2/1e6)
         
-    def set_duration(self, duration):
-        """Set the observation duration."""
+    @property
+    def c1(self):
+        """Coordinate 1 - hours (J2000) if RA, degrees if azimuth."""
         
-        if isinstance(duration, timedelta):
-            # Make sure the number of microseconds agree with milliseconds
-            us = int(round(duration.microseconds/1000.0))*1000
-            duration = timedelta(days=duration.days, seconds=duration.seconds, microseconds=us)
-        self.duration = str(duration)
-        self.update()
+        return self._c1
         
-    def set_frequency1(self, frequency1):
-        """Set the frequency in Hz corresponding to tuning 1."""
-        
-        self.frequency1 = float(frequency1)
-        self.update()
-        
-    def set_frequency2(self, frequency2):
-        """Set the frequency in Hz correpsonding to tuning 2."""
-        
-        self.frequency2 = float(frequency2)
-        self.update()
-        
-    def set_c1(self, c1):
-        """Set the pointing c1."""
-        
+    @c1.setter
+    def c1(self, value):
+        if isinstance(value, ephem.Angle):
+            if self.is_radec:
+                value = value * 12.0/math.pi
+            else:
+                value = value * 180.0/math.pi
+        elif isinstance(value, AstroAngle):
+            if self.is_radec:
+                value = value.to('hourangle').value
+            else:
+                value = value.to('deg').value
         if self.is_radec:
-            convFactor = 12.0/math.pi
+            if value < 0.0 or value >=24.0:
+                raise ValueError("Invalid value for RA '%.6f' hr" % value)
         else:
-            convFactor = 180.0/math.pi
-        self.c1 = float(c1) * (convFactor if type(c1).__name__ == 'Angle' else 1.0)
+            if value < 0.0 or value >= 360.0:
+                raise ValueError("Invalid value for azimuth '%.6f' deg" % value)
+        self._c1 = value
         
-    def set_c2(self, c2):
-        """Set the pointing c2"""
+    @property
+    def c2(self):
+        """Coordinate 2 - degrees (J2000) if dec., degrees if elevation."""
         
-        self.c2 = float(c2) * (180.0/math.pi if type(c2).__name__ == 'Angle' else 1.0)
+        return self._c2
+        
+    @c2.setter
+    def c2(self, value):
+        if isinstance(value, ephem.Angle):
+            value = value * 180.0/math.pi
+        elif isinstance(value, AstroAngle):
+            value = value.to('deg').value
+        if self.is_radec:
+            if value < -90.0 or value > 90.0:
+                raise ValueError("Invalid value for dec. '%.6f' deg" % value)
+        else:
+            if value < 0.0 or value > 90.0:
+                raise ValueError("Invalid value for elevation '%.6f' deg" % value)
+        self._c2 = value
+        
+    @property
+    def duration(self):
+        """Duration in seconds."""
+        
+        s, ms = self.dur//1000, (self.dur%1000)/1000.0
+        h = s // 3600
+        m = (s // 60) % 60
+        s = s % 60
+    
+        return "%i:%02i:%06.3f" % (h, m, s+ms)
+        
+    @duration.setter
+    def duration(self, value):
+        if isinstance(value, str):
+            fields = value.split(':')
+            s = float(fields.pop())
+            try:
+                m = int(fields.pop(), 10)
+            except IndexError:
+                m = 0
+            try:
+                h = int(fields.pop(), 10)
+            except IndexError:
+                h = 0
+            seconds = h*3600 + m*60 + int(s)
+            ms = int(round((s - int(s))*1000))
+            if ms >= 1000:
+                seconds += 1
+                ms -= 1000
+            seconds = seconds + ms/1000.0
+            
+        elif isinstance(value, timedelta):
+            seconds = value.days*86400 + value.seconds
+            ms = int(round(value.microseconds/1000.0))/1000.0
+            seconds = seconds + ms
+            
+        else:
+            seconds = value
+        self.dur = int(round(seconds*1000))
+        
+    @property
+    def frequency1(self):
+        """Tuning 1 frequency in Hz."""
+        
+        return word_to_freq(self.freq1)
+        
+    @frequency1.setter
+    def frequency1(self, value):
+        self.freq1 = freq_to_word(float(value))
+        
+    @property
+    def frequency2(self):
+        """Tuning 2 frequency in Hz."""
+        
+        return word_to_freq(self.freq2)
+        
+    @frequency2.setter
+    def frequency2(self, value):
+        self.freq2 = freq_to_word(float(value))
         
     def update(self):
         """
         Update the settings.
         """
         
-        self.duration = str(self.duration)
-        self.dur = self.get_duration()
-        self.freq1 = self.get_frequency1()
-        self.freq2 = self.get_frequency2()
         self.beam = self.get_beam_type()
-        
-    def get_duration(self):
-        """Parse the self.duration string with the format of HH:MM:SS.SSS to return the
-        number of milliseconds in that period."""
-        
-        fields = self.duration.split(':')
-        if len(fields) == 3:
-            out = int(fields[0])*3600.0
-            out += int(fields[1])*60.0
-            out += float(fields[2])
-        elif len(fields) == 2:
-            out = int(fields[0])*60.0
-            out += float(fields[1])
-        else:
-            out = float(fields[0])
-            
-        return int(round(out*1000.0))
-        
-    def get_frequency1(self):
-        """Return the number of "tuning words" corresponding to the first frequency."""
-        
-        freq1 = freq_to_word(self.frequency1)
-        self.frequency1 = word_to_freq(freq1)
-        return freq1
-
-    def get_frequency2(self):
-        """Return the number of "tuning words" corresponding to the second frequency."""
-        
-        freq2 = freq_to_word(self.frequency2)
-        self.frequency2 = word_to_freq(freq2)
-        return freq2
         
     def get_beam_type(self):
         """Return a valid value for beam type based on whether maximum S/N beam 
@@ -1808,8 +1882,9 @@ class BeamStep(object):
                 return 'MAX_SNR'
             else:
                 return 'SIMPLE'
-            
-    def get_fixed_body(self):
+                
+    @property
+    def fixed_body(self):
         """Return an ephem.Body object corresponding to where the observation is 
         pointed.  None if the observation mode is either TBN or TBW."""
         
@@ -1851,7 +1926,17 @@ class BeamStep(object):
             if len(self.gains) != mandc.LWA_MAX_NSTD:
                 failures += 1
                 if verbose:
-                    print("[%i] Error: Specified gain list had the wrong number of antennas" % os.getpid())
+                    print("[%i] Error: Specified gain list had the wrong number of stands" % os.getpid())
+            for g,gain in enumerate(self.gains):
+                if len(gain) != 2:
+                    failures += 1
+                    if verbose:
+                        print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
+                else:
+                    if len(gain[0]) != 2 or len(gain[1]) != 2:
+                        failures += 1
+                        if verbose:
+                            print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
             if self.delays is None:
                 failures += 1
                 if verbose:
@@ -1899,7 +1984,7 @@ class BeamStep(object):
 class Session(object):
     """Class to hold all of the observations in a session."""
     
-    _allowed_modes = (TBW, TBN, _DRXBase, Stepped)
+    _allowed_modes = (TBW, TBN, DRX, Stepped)
     
     _parent = None
     
@@ -1912,12 +1997,12 @@ class Session(object):
                 self.observations.extend(observations)
             else:
                 self.observations.append(observations)
-        self.data_return_method = data_return_method
-        self.ucfuser = None
+        self.dataReturnMethod = data_return_method
+        self.ucf_username = None
         self.comments = comments
         
-        self.cra = 0
-        self.drxBeam = -1
+        self.configuration_authority = 0
+        self.drx_beam = -1
         self.spcSetup = [0, 0]
         self.spcMetatag = None
         
@@ -1932,18 +2017,23 @@ class Session(object):
         
         self.station = station
         
-    def set_station(self, station):
+    @property
+    def station(self):
+        return self._station
+        
+    @station.setter
+    def station(self, value):
         """
         Update the station used by the project for source computations.
         
         .. versionadded:: 1.2.0
         """
         
-        if station.interface.sdf != 'lsl.common.sdf':
-            raise RuntimeError("Incompatible station: expected %s, got %s" % \
-                            (station.interface.sdf, 'lsl.common.sdf'))
+        if value.interface.sdf != 'lsl.common.sdf':
+            raise ValueError("Incompatible station: expected %s, got %s" % \
+                             (value.interface.sdf, 'lsl.common.sdf'))
             
-        self.station = station
+        self._station = value
         self.update()
         
     def append(self, newObservation):
@@ -1951,40 +2041,58 @@ class Session(object):
         
         self.observations.append(newObservation)
         
-    def set_configuration_authority(self, value):
-        """Set the configuration request authority to a particular value in the range of
-        0 to 65,535.  Higher values provide higher authority to set FEE and ASP 
-        parameters."""
+    @property
+    def spectrometer_channels(self):
+        """Number of spectrometer channesl to output, 0 is disables."""
         
-        self.cra = int(value)
+        return self.spcSetup[0]
         
-    def set_drx_beam(self, value):
-        """Set the beam to use in the range of 1 to 4 or -1 to let MCS decide."""
-        
-        self.drxBeam = int(value)
-        
-    def set_spectrometer_channels(self, value):
+    @spectrometer_channels.setter
+    def spectrometer_channels(self, value):
         """Set the number of spectrometer channels to generate, 0 to disable."""
         
-        self.spcSetup[0] = int(value)
+        value = int(value)
+        if value not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+            raise ValueError("Invalid DR spectrometer channel count '%i'" % value)
+        self.spcSetup[0] = value
         
-    def set_spectrometer_integration(self, value):
-        """Set the number of spectrometer FFT integrations to use, 0 to disable."""
+    @property
+    def spectrometer_integration(self):
+        """Number of FFT windows per spectrometer integration, 0 to disable."""
         
-        self.spcSetup[1] = int(value)
+        return self.spcSetup[1]
         
-    def set_spectrometer_metatag(self, value):
+    @spectrometer_integration.setter
+    def spectrometer_integration(self, value):
+        """Set the number of FFT window per spectrometer integration to use, 
+        0 to disable."""
+        
+        value = int(value)
+        if value not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+            raise ValueError("Invalid DR spectrometer integration count '%i'" % value)
+        self.spcSetup[1] = value
+        
+    @property
+    def spectrometer_metatag(self):
+        """Spectrometer polarization selection."""
+        
+        return self.spcMetatag
+        
+    @spectrometer_metatag.setter
+    def spectrometer_metatag(self, value):
         """Set the spectrometer metatag, '' to disable."""
         
-        if value == '' or value is None:
-            self.spcMetatag = None
-        else:
-            self.spcMetatag = value
-            if self.spcMetatag[0] != '{':
-                self.spcMetatag = '{'+self.spcMetatag
-            if self.spcMetatag[-1] != '}':
-                self.spcMetatag = self.spcMetatag+'}'
-                
+        if value == '':
+            value = None
+        elif value is not None:
+            if value[0] != '{':
+                value = '{'+value
+            if value[-1] != '}':
+                value = value+'}'
+        if value not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+            raise ValueError("Invalid DR spectrometer mode '%s'" % value)
+        self.spcMetatag = value
+        
     def set_mib_record_interval(self, component, interval):
         """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
         a particular value in minutes.  A KeyError is raised if an invalid sub-system is
@@ -2009,19 +2117,19 @@ class Session(object):
         
         self.updateMIB[component] = int(interval)
         
-    def set_data_return_method(self, method):
+    @property
+    def data_return_method(self):
+        return self.dataReturnMethod
+        
+    @data_return_method.setter
+    def data_return_method(self, method):
         """Set the data return method for the session.  Valid values are: UCF, DRSU, and 
         'USB Harddrives'."""
         
         if method not in ('UCF', 'DRSU', 'USB Harddrives'):
             raise ValueError("Unknown data return method: %s" % method)
             
-        self.data_return_method = method
-        
-    def set_ucf_username(self, username):
-        """Set the username to use for UCF data copies."""
-        
-        self.ucfuser = username
+        self.dataReturnMethod = method
         
     def update(self):
         """Update the various observations in the session."""
@@ -2045,13 +2153,13 @@ class Session(object):
                 print("[%i] Error: Invalid session ID number '%i'" % (os.getpid(), self.id))
             failures += 1
             
-        if self.cra < 0 or self.cra > 65535:
+        if self.configuration_authority < 0 or self.configuration_authority > 65535:
             if verbose:
-                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.cra))
+                print("[%i] Error: Invalid configuraton request authority '%i'" % (os.getpid(), self.configuration_authority))
             failures += 1
-        if self.drxBeam != -1 and self.drxBeam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
+        if self.drx_beam != -1 and self.drx_beam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
             if verbose:
-                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drxBeam))
+                print("[%i] Error: Invalid beam number '%i'" % (os.getpid(), self.drx_beam))
             failures += 1
         for key in list(self.recordMIB.keys()):
             if self.recordMIB[key] < -1:
@@ -2085,7 +2193,7 @@ class Session(object):
         # Validate beam number
         if len(self.observations) > 0:
             if self.observations[0].mode not in ('TBW', 'TBN'):
-                if self.drxBeam == -1:
+                if self.drx_beam == -1:
                     if verbose:
                         print("[%i] Error: Beam not assigned for this session" % os.getpid())
                     failures += 1
@@ -2291,11 +2399,11 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut.beamDipole = obs_temp['beamDipole']
         
     # Set the ASP/FEE values
-    obsOut.obsFEE = copy.deepcopy(obs_temp['obsFEE'])
-    obsOut.aspFlt = copy.deepcopy(obs_temp['aspFlt'])
-    obsOut.aspAT1 = copy.deepcopy(obs_temp['aspAT1'])
-    obsOut.aspAT2 = copy.deepcopy(obs_temp['aspAT2'])
-    obsOut.aspATS = copy.deepcopy(obs_temp['aspATS'])
+    obsOut.fee_power = copy.deepcopy(obs_temp['obsFEE'])
+    obsOut.asp_filter = copy.deepcopy(obs_temp['aspFlt'])
+    obsOut.asp_atten_1 = copy.deepcopy(obs_temp['aspAT1'])
+    obsOut.asp_atten_2 = copy.deepcopy(obs_temp['aspAT2'])
+    obsOut.asp_atten_split = copy.deepcopy(obs_temp['aspATS'])
     
     # Force the observation to be updated
     obsOut.update()
@@ -2399,9 +2507,9 @@ def parse_sdf(filename, verbose=False):
             if keyword == 'SESSION_REMPI':
                 mtch = _usernameRE.search(value)
                 if mtch is not None:
-                    project.sessions[0].ucfuser = mtch.group('username')
+                    project.sessions[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:
-                        project.sessions[0].ucfuser = os.path.join(project.sessions[0].ucfuser, mtch.group('subdir'))
+                        project.sessions[0].ucf_username = os.path.join(project.sessions[0].ucf_username, mtch.group('subdir'))
                 project.sessions[0].comments = value
                 continue
             if keyword == 'SESSION_REMPO':
@@ -2415,14 +2523,14 @@ def parse_sdf(filename, verbose=False):
                 
                 if first[:31] == 'Requested data return method is':
                     # Catch for project office comments that are data return related
-                    project.sessions[0].data_return_method = first[32:]
+                    project.sessions[0].dataReturnMethod = first[32:]
                     project.project_office.sessions[0] = second
                 else:
                     # Catch for standard (not data related) project office comments
                     project.project_office.sessions[0] = value
                 continue
             if keyword == 'SESSION_CRA':
-                project.sessions[0].cra = int(value)
+                project.sessions[0].configuration_authority = int(value)
                 continue
             if keyword[0:12] == 'SESSION_MRP_':
                 component = keyword[12:]
@@ -2445,7 +2553,7 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].includeDesign = bool(value)
                 continue
             if keyword == 'SESSION_DRX_BEAM':
-                project.sessions[0].drxBeam = int(value)
+                project.sessions[0].drx_beam = int(value)
                 continue
             if keyword == 'SESSION_SPC':
                 # Remove the ' marks
@@ -2457,7 +2565,7 @@ def parse_sdf(filename, verbose=False):
                     value = metaRE.sub('', value)
                 else:
                     metatag = None
-            
+                    
                 project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
                 project.sessions[0].spcMetatag = metatag
                 # If the input field is '' the value of spcSetup is [].  This
@@ -2466,7 +2574,7 @@ def parse_sdf(filename, verbose=False):
                     project.sessions[0].spcSetup = [0, 0]
                     project.sessions[0].spcMetatag = None
                 continue
-            
+                
             # Observation Info
             if keyword == 'OBS_ID':
                 if obs_temp['id'] != 0:
