@@ -449,7 +449,7 @@ class Project(object):
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
-    def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, correlator_channels=256, correlator_inttime=1.0, correlator_basis='linear', stations=get_full_stations()):
+    def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, correlator_channels=512, correlator_inttime=1.0, correlator_basis='linear', stations=get_full_stations()):
         self.name = name
         self.id = int(id)
         self.scans = sdf._TypedParentList(Scan, self)
