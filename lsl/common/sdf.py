@@ -1340,16 +1340,22 @@ class DRX(Observation):
         vis = 0
         cnt = 0
         dt = 0.0
+        max_alt = 0.0
         while dt <= self.dur/1000.0:
             station.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
             pnt.compute(station)
+            max_alt = max([max_alt, pnt.alt])
             
             cnt += 1
             if pnt.alt > 0:
                 vis += 1
                 
             dt += 300.0
-        
+            
+        if max_alt < 20*math.pi/180:
+            #warnings.warn("Maximum altitude for this observation is %.1f degrees" % (max_alt*180/math.pi))
+            pass
+            
         return float(vis)/float(cnt)
         
     def validate(self, verbose=False):
@@ -1630,6 +1636,7 @@ class Stepped(Observation):
         vis = 0
         cnt = 0
         relStart = 0
+        max_alt = 0.0
         for step in self.steps:
             if step.is_radec:
                 pnt = step.fixed_body
@@ -1638,6 +1645,7 @@ class Stepped(Observation):
                 while dt <= self.dur/1000.0:
                     station.date = self.mjd + (relStart/1000.0 + self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
                     pnt.compute(station)
+                    max_alt = max([max_alt, pnt.alt])
                     
                     cnt += 1
                     if pnt.alt > 0:
@@ -1645,11 +1653,17 @@ class Stepped(Observation):
                         
                     dt += 300.0
             else:
+                max_alt = max([max_alt, step.c2])
+                
                 cnt += 1
                 if step.c2 > 0:
                     vis += 1
             
             relStart += step.dur
+            
+        if max_alt < 20*math.pi/180:
+            #warnings.warn("Maximum altitude for this observation is %.1f degrees" % (max_alt*180/math.pi))
+            pass
             
         return float(vis)/float(cnt)
         

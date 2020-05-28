@@ -54,6 +54,7 @@ from lsl.common.adp import freq_to_word, word_to_freq, fC
 from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
+from lsl.common.sdf import Observer
 from lsl.common import sdf, sdfADP
 
 from lsl.misc import telemetry
@@ -68,29 +69,6 @@ _UTC = pytz.utc
 _DRSUCapacityTB = 10
 
 _MAX_ALT_PHASE_CENTERS = 10
-
-
-class Observer(object):
-    """Class to hold information about an observer."""
-    
-    def __init__(self, name, id, first=None, last=None):
-        self.name = name
-        self.first = first
-        self.last = last
-        self.id = int(id)
-        
-    def join_name(self):
-        if self.first != '':
-            self.name = ', '.join([self.last, self.first])
-        else:
-            self.name = self.last
-        
-    def split_name(self):
-        try:
-            self.last, self.first = self.name.split(', ', 1)
-        except ValueError:
-            self.last = self.name
-            self.first = ''
 
 
 class ProjectOffice(object):
@@ -958,6 +936,7 @@ class Scan(object):
             stations = self._parent.stations
             
         vis_list = []
+        max_alt = 0.0
         for station in stations:
             lwa = station.get_observer()
             pnt = self.fixed_body
@@ -968,6 +947,7 @@ class Scan(object):
             while dt <= self.dur/1000.0:
                 lwa.date = self.mjd + (self.mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
                 pnt.compute(lwa)
+                max_alt = max([max_alt, pnt.alt])
                 
                 cnt += 1
                 if pnt.alt > 0:
@@ -976,6 +956,11 @@ class Scan(object):
                 dt += 300.0
                 
             vis_list.append(float(vis)/float(cnt))
+            
+        if max_alt < 20*math.pi/180:
+            #warnings.warn("Maximum altitude for this scan is %.1f degrees" % (max_alt*180/math.pi))
+            pass
+            
         return min(vis_list)
         
     def validate(self, verbose=False):
@@ -1023,7 +1008,7 @@ class Scan(object):
             failures += 1
         if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan for %s" % (os.getpid(), self.target_visibility*100.0, station.id))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan" % (os.getpid(), self.target_visibility*100.0))
             failures += 1
             
         # Advanced - alternate phase centers
