@@ -37,6 +37,16 @@ class busy_tests(unittest.TestCase):
         bi.stop()
         
         sys.stdout = sys.__stdout__
+        
+    def test_context(self):
+        """Test the busy indicator as a context manager."""
+        
+        sys.stdout = StringIO()
+        
+        with busy.BusyIndicator() as bi:
+            time.sleep(1)
+            
+        sys.stdout = sys.__stdout__
 
 
 class busy_test_suite(unittest.TestSuite):

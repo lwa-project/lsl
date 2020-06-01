@@ -4,10 +4,7 @@ Module to make a blinking ASCII busy indicator.
 
 # Python2 compatibility
 from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
+
 import sys
 import time
 import threading
@@ -51,6 +48,16 @@ class BusyIndicator(object):
         self.alive = threading.Event()
         self._i = 0
         
+    def __enter__(self):
+        self.start()
+        return self
+        
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        success = True
+        if exc_type is not None:
+            success = False
+        self.stop(success=success)
+        
     def start(self):
         """
         Start the indicator running.
@@ -64,16 +71,20 @@ class BusyIndicator(object):
         self.alive.set()
         self.thread.start()
         
-    def stop(self):
+    def stop(self, success=True):
         """
-        Stop the indicator and display a 'Done' message.
+        Stop the indicator and display a 'Done'  or 'Failed' message depending on
+        whether or not the `success' keyword is True.
         
         .. note::
             This can take up to one BusyIndicator.interval to complete.
         """
         
         if self.thread is not None:
-            sys.stdout.write('%s%sDone%s\n' % (self.message, '.'*self._i, ' '*self.dots))
+            sys.stdout.write('%s%s%s%s\n' % (self.message, 
+                                             '.'*self._i, 
+                                             'Done' if success else 'Failed', 
+                                             ' '*self.dots))
             
             self.alive.clear()
             self.thread.join()
