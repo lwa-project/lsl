@@ -50,8 +50,9 @@ telemetry.track_module()
 
 
 __version__ = '0.4'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_guppi_header', 'read_frame', 
-           'get_frame_size', 'get_thread_count', 'get_frames_per_second', 'get_sample_rate']
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'has_guppi_header', 'read_guppi_header', 
+           'read_frame', 'get_frame_size', 'get_thread_count', 'get_frames_per_second', 
+           'get_sample_rate']
 
 
 
@@ -335,6 +336,28 @@ class Frame(FrameBase):
         return self.header.central_freq
 
 
+def has_guppi_header(filehanel):
+    """
+    Determine if a VDIF file has a GUPPI header or not.
+    """
+    
+    has_header = False
+    with FilePositionSaver(filehandle):
+        # Read in the first 16kB
+        block = filehandle.read(16384)
+        try:
+            block = block.decode(encoding='ascii', errors='ignore')
+        except AttributeError:
+            pass
+            
+        if block.find('TELESCOP') != -1 \
+           or block.find('END') != -1 \
+           or block.find('CONTINUE') != -1:
+            has_header = True
+            
+    return has_header
+
+
 def read_guppi_header(filehandle):
     """
     Read in a GUPPI header at the start of a VDIF file from the VLA.  The 
@@ -349,7 +372,7 @@ def read_guppi_header(filehandle):
             line = line.decode(encoding='ascii', errors='ignore')
         except AttributeError:
             pass
-
+            
         if line[:3] == 'END':
             break
         elif line[:8] == 'CONTINUE':

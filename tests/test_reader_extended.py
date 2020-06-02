@@ -56,6 +56,9 @@ class extended_reader_tests(unittest.TestCase):
         # Open the file
         fh = open(filename, 'rb')
         
+        # Make sure it is there
+        self.assertTrue(vdif.has_guppi_header(fh))
+        
         # Read the GUPPI header
         header = vdif.read_guppi_header(fh)
         self.assertEqual(header['NBITS'], 4)

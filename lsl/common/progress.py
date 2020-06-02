@@ -40,7 +40,7 @@ class ProgressBar(object):
          * span: width in characters to make the bar (default: 70)
          * sym: character to use in the progress bar (default: '=')
          * print_percent: whether or not to print the percentage in addition to
-                   the bar or not (default: True)
+                          the bar or not (default: True)
         """
         
         self.amount = 0
