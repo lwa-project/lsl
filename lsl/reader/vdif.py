@@ -336,7 +336,7 @@ class Frame(FrameBase):
         return self.header.central_freq
 
 
-def has_guppi_header(filehanel):
+def has_guppi_header(filehandle):
     """
     Determine if a VDIF file has a GUPPI header or not.
     """
