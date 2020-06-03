@@ -364,8 +364,13 @@ def read_guppi_header(filehandle):
     contents of the header are returned as a dictionary.
     """
     
-    # Read in the GUPPI header
+    # Is there a GUPPI header?
     header = {}
+    if not has_guppi_header(filehandle):
+        warnings.warn("GUPPI header not found, returning an empty dictionary", RuntimeWarning)
+        return header
+        
+    # Read in the GUPPI header
     while True:
         line = filehandle.read(80)
         try:
