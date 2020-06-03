@@ -102,7 +102,7 @@ class LDPFileBase(object):
     data files.
     """
     
-    def __init__(self, filename=None, fh=None, ignore_timetag_errors=False):
+    def __init__(self, filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
         # Make sure that we are given either a filename or an open file handle
         if filename is None and fh is None:
             raise RuntimeError("Must specify either a filename or open file instance")
@@ -110,13 +110,13 @@ class LDPFileBase(object):
         # Store a valid file handle and mark the object as ready
         if fh is None:
             self.filename = filename
-            self.fh = open(filename, 'rb')
+            self.fh = open(filename, 'rb', buffering)
         else:
             self.filename = fh.name
             if not isinstance(fh, SplitFileWrapper):
                 if fh.mode.find('b') == -1:
                     fh.close()
-                    fh = open(self.filename, 'rb')
+                    fh = open(self.filename, 'rb', buffering)
             self.fh = fh
         _open_ldp_files.add(self)
         
@@ -1462,7 +1462,7 @@ class DRSpecFile(LDPFileBase):
         return duration, setTime, data
 
 
-def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
+def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
     """
     Wrapper around the various LWA1-related classes defined here that takes
     a file, determines the data type, and initializes and returns the 
@@ -1603,13 +1603,21 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False):
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
-        ldpInstance = DRXFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRXFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
     elif mode == tbn:
-        ldpInstance = TBNFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBNFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
     elif mode == tbw:
-        ldpInstance = TBWFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBWFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
     else:
-        ldpInstance = DRSpecFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRSpecFile(filename=filename, fh=fh,
+                                 ignore_timetag_errors=ignore_timetag_errors,
+                                 buffering=buffering)
         
     # Done
     return ldpInstance
@@ -2222,7 +2230,7 @@ class CORFile(LDPFileBase):
         return duration, setTime, data
 
 
-def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
+def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
     """
     Wrapper around the various LWA-SV-related classes defined here that takes
     a file, determines the data type, and initializes and returns the 
@@ -2363,21 +2371,31 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False):
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
-        ldpInstance = DRXFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRXFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
     elif mode == tbn:
-        ldpInstance = TBNFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBNFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
     elif mode == tbf:
-        ldpInstance = TBFFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = TBFFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
     elif mode == cor:
-        ldpInstance = CORFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = CORFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
     else:
-        ldpInstance = DRSpecFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+        ldpInstance = DRSpecFile(filename=filename, fh=fh,
+                                 ignore_timetag_errors=ignore_timetag_errors,
+                                 buffering=buffering)
         
     # Done
     return ldpInstance
 
 
-def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False):
+def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
     """
     Wrapper around the various classes defined here that takes a file, 
     determines the data type, and initializes and returns the appropriate
@@ -2389,7 +2407,9 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False):
     # LWA-1?
     if not found:
         try:
-            ldpInstance = LWA1DataFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+            ldpInstance = LWA1DataFile(filename=filename, fh=fh,
+                                       ignore_timetag_errors=ignore_timetag_errors,
+                                       buffering=buffering)
             found = True
         except RuntimeError:
             pass
@@ -2397,7 +2417,9 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False):
     # LWA-SV?
     if not found:
         try:
-            ldpInstance = LWASVDataFile(filename=filename, fh=fh, ignore_timetag_errors=ignore_timetag_errors)
+            ldpInstance = LWASVDataFile(filename=filename, fh=fh,
+                                       ignore_timetag_errors=ignore_timetag_errors,
+                                       buffering=buffering)
             found = True
         except RuntimeError:
             pass
