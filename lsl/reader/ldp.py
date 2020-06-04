@@ -878,7 +878,7 @@ class DRXFile(LDPFileBase):
                     # ... that has a valid decimation
                     srate = junkFrame.sample_rate
                     # ... that it comes after 1980 (I don't know why this happens)
-                    assert(junkFrame.timetag > 61849368000000000)
+                    assert(junkFrame.payload.timetag > 61849368000000000)
                     break
                 except (ZeroDivisionError, AssertionError):
                     pass
