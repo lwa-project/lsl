@@ -191,21 +191,21 @@ class WriterBase(object):
             lat2 = obs.lat
             
             # Coordinate transformation matrices
-            trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                                   [1,  0,               0],
-                                   [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-            trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                                   [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                                   [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+            trans1 = numpy.array([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+                                  [1,  0,               0],
+                                  [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+            trans2 = numpy.array([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
+                                  [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+                                  [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
                     
             for i,(a1,a2) in enumerate(self.baselines):
                 # Go from a east, north, up coordinate system to a celestial equation, 
                 # east, north celestial pole system
                 xyzPrime = a1.stand - a2.stand
-                xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+                xyz = numpy.dot(trans1, numpy.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
                 
                 # Go from CE, east, NCP to u, v, w
-                temp = trans2*xyz
+                temp = numpy.dot(trans2, xyz)
                 uvw[i,:] = numpy.squeeze(temp) / speedOfLight
                 
             return uvw
@@ -265,6 +265,9 @@ class WriterBase(object):
         self.siteName = 'Unknown'
         
         # Observation-specific information
+        self.observer = 'UKNOWN'
+        self.project = 'UNKNOWN'
+        self.mode = 'ZA'
         self.ref_time = self.parse_time(ref_time)
         self.nAnt = 0
         self.nChan = 0
@@ -278,6 +281,7 @@ class WriterBase(object):
         self.freq = []
         self.stokes = []
         self.data = []
+        self.extra_keywords = {}
         
     def __enter__(self):
         return self
@@ -334,6 +338,36 @@ class WriterBase(object):
         """
         
         raise NotImplementedError
+        
+    def set_observer(self, observer, project='UNKNOWN', mode='ZA'):
+        """
+        Set the observer name, project, and observation mode (if given) to the 
+        self.observer, self.project, and self.mode attributes, respectively.
+        
+        .. versionadded:: 2.0.0
+        """
+        
+        self.observer = observer
+        self.project = project
+        self.mode = mode
+        
+    def add_header_keyword(self, name, value, comment=None):
+        """
+        Add an additional entry to the header of the primary HDU.
+        
+        .. versionadded:: 2.0.0
+        """
+        
+        name = name.upper()
+        if name in ('NAXIS', 'EXTEND', 'GROUPS', 'GCOUNT', 'PCOUNT', 'OBJECT', 
+                    'TELESCOP', 'OBSERVER', 'PROJECT', 'ORIGIN', 'CORRELAT', 'FXCORVER', 
+                    'LWATYPE', 'LWAMAJV', 'LWAMINV', 'DATE-OBS', 'DATE-MAP', 
+                    'COMMENT', 'HISTORY'):
+            raise ValueError("Cannot set a value for '%s'" % name)
+        if len(name) > 8:
+            raise ValueError("Keyword name cannot be more than eight characters long")
+            
+        self.extra_keywords[name] = value if comment is None else (value, comment)
         
     def add_data_set(self, obsTime, intTime, baselines, visibilities, weights=None, pol='XX', source='z'):
         """
@@ -561,17 +595,22 @@ class Idi(WriterBase):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('IDI-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = (self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:
@@ -1252,7 +1291,7 @@ class Idi(WriterBase):
         uv.header['CRVAL6'] = 0.0
         
         uv.header['TELESCOP'] = self.siteName
-        uv.header['OBSERVER'] = 'ZASKY'
+        uv.header['OBSERVER'] = self.observer
         uv.header['SORT'] = ('TB', 'data is sorted in [time,baseline] order')
         
         uv.header['VISSCALE'] = (1.0, 'UV data scale factor')
@@ -1381,17 +1420,22 @@ class Aips(Idi):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('IDI-AIPS-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = ('AIPS-%s' % self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:
@@ -1457,17 +1501,22 @@ class ExtendedIdi(Idi):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('IDI-EXTENDED-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = ('EXTENDED-%s' % self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:

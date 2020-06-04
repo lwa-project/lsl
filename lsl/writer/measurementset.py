@@ -89,21 +89,21 @@ try:
                 lat2 = obs.lat
                 
                 # Coordinate transformation matrices
-                trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                                       [1,  0,               0],
-                                       [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-                trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                                       [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                                       [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                trans1 = numpy.array([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+                                      [1,  0,               0],
+                                      [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+                trans2 = numpy.array([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
+                                      [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+                                      [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
                         
                 for i,(a1,a2) in enumerate(self.baselines):
                     # Go from a east, north, up coordinate system to a celestial equation, 
                     # east, north celestial pole system
                     xyzPrime = a1.stand - a2.stand
-                    xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+                    xyz = numpy.dot(trans1, numpy.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
                     
                     # Go from CE, east, NCP to u, v, w
-                    temp = trans2*xyz
+                    temp = numpy.dot(trans2, xyz)
                     uvw[i,:] = numpy.squeeze(temp)
                     
                 return uvw
@@ -181,6 +181,15 @@ try:
                 
             self.nAnt = len(ants)
             self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'inputAnts': antennas} )
+            
+        def add_header_keyword(self, name, value, comment=None):
+            """
+            Add an additional entry to the header of the primary HDU.
+            
+            .. versionadded:: 2.0.0
+            """
+            
+            raise NotImplementedError
             
         def add_data_set(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
             """
@@ -446,16 +455,16 @@ try:
                                             comment='Observing schedule')
             col4 = tableutil.makescacoldesc('FLAG_ROW', False, 
                                             comment='Row flag')
-            col5 = tableutil.makescacoldesc('OBSERVER', 'ZASKY', 
+            col5 = tableutil.makescacoldesc('OBSERVER', self.observer, 
                                             comment='Name of observer(s)')
-            col6 = tableutil.makescacoldesc('PROJECT', 'ZASKY', 
+            col6 = tableutil.makescacoldesc('PROJECT', self.project, 
                                             comment='Project identification string')
             col7 = tableutil.makescacoldesc('RELEASE_DATE', 0.0, 
                                             comment='Release date when data becomes public', 
                                             keywords={'QuantumUnits':['s',], 
                                                       'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                       })
-            col8 = tableutil.makescacoldesc('SCHEDULE_TYPE', 'none', 
+            col8 = tableutil.makescacoldesc('SCHEDULE_TYPE', self.mode, 
                                             comment='Observing schedule type')
             col9 = tableutil.makescacoldesc('TELESCOPE_NAME', self.siteName, 
                                             comment='Telescope Name (e.g. WSRT, VLBA)')
@@ -470,10 +479,10 @@ try:
             tb.putcell('LOG', 0, 'Not provided')
             tb.putcell('SCHEDULE', 0, 'Not provided')
             tb.putcell('FLAG_ROW', 0, False)
-            tb.putcell('OBSERVER', 0, 'ZASKY')
-            tb.putcell('PROJECT', 0, 'ZASKY')
+            tb.putcell('OBSERVER', 0, self.observer)
+            tb.putcell('PROJECT', 0, self.project)
             tb.putcell('RELEASE_DATE', 0, tStop*86400)
-            tb.putcell('SCHEDULE_TYPE', 0, 'None')
+            tb.putcell('SCHEDULE_TYPE', 0, self.mode)
             tb.putcell('TELESCOPE_NAME', 0, self.siteName)
             
             tb.flush()

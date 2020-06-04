@@ -92,11 +92,7 @@ class Sd(WriterBase):
         
         # Misc.
         self.tSys = 250
-        self.observer = 'UKNOWN'
-        self.project = 'UNKNOWN'
-        self.mode = 'UNKNOWN'
         
-
         # Open the file and get going
         if os.path.exists(filename):
             if overwrite:
@@ -112,16 +108,6 @@ class Sd(WriterBase):
         """
 
         self.site = site
-        
-    def set_observer(self, observer, project='UNKNOWN', mode='UNKNOWN'):
-        """
-        Set the observer name, project, and observation mode (if given) to the 
-        self.observer, self.project, and self.mode attributes, respectively.
-        """
-        
-        self.observer = observer
-        self.project = project
-        self.mode = mode
         
     def add_comment(self, comment):
         """
@@ -216,6 +202,10 @@ class Sd(WriterBase):
         primary.header['ORIGIN'] = 'LSL SDFITS writer'
         primary.header['TELESCOP'] = (self.site.name, 'Telescope name')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:

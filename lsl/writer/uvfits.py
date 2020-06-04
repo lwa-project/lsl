@@ -379,11 +379,12 @@ class Uv(WriterBase):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('UV-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = (self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (UV_VERSION[0], 'LWA UVFITS file format major version')
         primary.header['LWAMINV'] = (UV_VERSION[1], 'LWA UVFITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'UVFITS file data collection date')
@@ -419,11 +420,15 @@ class Uv(WriterBase):
         primary.header['CRVAL6'] = sourceDec
         
         primary.header['TELESCOP'] = self.siteName
-        primary.header['OBSERVER'] = 'ZASKY'
+        primary.header['OBSERVER'] = self.observer
         primary.header['SORT'] = ('TB', 'data is sorted in [time,baseline] order')
         
         primary.header['VISSCALE'] = (1.0, 'UV data scale factor')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:
