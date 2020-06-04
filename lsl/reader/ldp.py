@@ -877,8 +877,10 @@ class DRXFile(LDPFileBase):
                 try:
                     # ... that has a valid decimation
                     srate = junkFrame.sample_rate
+                    # ... that it comes after 1980 (I don't know why this happens)
+                    assert(junkFrame.timetag > 61849368000000000)
                     break
-                except ZeroDivisionError:
+                except (ZeroDivisionError, AssertionError):
                     pass
             except errors.SyncError:
                 self.fh.seek(-drx.FRAME_SIZE+1, 1)

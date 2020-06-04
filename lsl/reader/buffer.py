@@ -574,6 +574,10 @@ class DRXFrameBuffer(FrameBufferBase):
     def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nsegments=20, reorder=False):
         FrameBufferBase.__init__(self, mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
         
+        # Make sure that we ignore packets before 1980
+        # (although I don't really know why this happens sometimes)
+        self.done[0] = 61849368000000000
+        
     def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
