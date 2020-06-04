@@ -349,7 +349,7 @@ class WriterBase(object):
             This can either by 'z' for zenith or a ephem.Body instances for a
             point on the sky.
             
-        .. versionchanged:: 1.3.0
+        .. versionchanged:: 2.0.0
             Added a new 'weights' keyword to set the visibility weights for the
             data.
         """

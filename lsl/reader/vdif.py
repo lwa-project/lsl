@@ -339,6 +339,8 @@ class Frame(FrameBase):
 def has_guppi_header(filehandle):
     """
     Determine if a VDIF file has a GUPPI header or not.
+    
+    .. versionadded:: 2.0.0
     """
     
     has_header = False

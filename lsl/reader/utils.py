@@ -1,7 +1,7 @@
 """
 Python module that contains various helpers for the lsl.reader module.
 
-.. versionadded:: 1.3.0
+.. versionadded:: 2.0.0
 """
 
 # Python2 compatibility

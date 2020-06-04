@@ -157,7 +157,7 @@ def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, 
         Added the `noise_strength` keyword to control how much noise is added to 
         the data.
         
-    .. versionchanged:: 1.3.0
+    .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
     """
 
@@ -355,7 +355,7 @@ def point_source(fh, stands, src, nframes, mode='TBN', central_freq=49.0e6, filt
         Added the `noise_strength` keyword to control how much noise is added to 
         the data.
         
-    .. versionchanged:: 1.3.0
+    .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
     """
 

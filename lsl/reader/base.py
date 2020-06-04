@@ -2,7 +2,7 @@
 Python module that contains the base FrameHeader, FramePayload, and Frame 
 classes for all of the LSL readers.
 
-.. versionadded:: 1.3.0
+.. versionadded:: 2.0.0
 """
 
 # Python2 compatibility

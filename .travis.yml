@@ -5,9 +5,9 @@ language: python
 python:
     - 2.7
     - 3.6
-    # PyPy versions
-    - pypy2.7-6.0
-    - pypy3
+    ## PyPy versions
+    #- pypy2.7-6.0
+    #- pypy3
 
 jobs:
   include:
@@ -19,7 +19,7 @@ jobs:
         - HOMEBREW_NO_ANALYTICS=1
   allow_failures:
     - python: 2.7
-    - python: pypy2.7-6.0
+    #- python: pypy2.7-6.0
 
 addons:
     apt:

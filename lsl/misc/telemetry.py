@@ -1,7 +1,7 @@
 """
 Basic telemetry client for LSL to help establish usage patterns
 
-.. versionadded:: 1.3.0
+.. versionadded:: 2.0.0
 """
 
 # Python2 compatibility
