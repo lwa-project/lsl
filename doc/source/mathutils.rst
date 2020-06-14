@@ -1,6 +1,6 @@
 Math Utilities
 ==============
 
-.. automodule:: lsl.misc.mathutil
+.. automodule:: lsl.misc.mathutils
    :members:
 

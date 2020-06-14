@@ -6,12 +6,6 @@ Writers
 -------
 .. versionadded:: 0.3
 
-TBW
-+++
-.. automodule:: lsl.sim.tbw
-   :show-inheritance:
-   :members:
-
 TBN
 +++
 .. automodule:: lsl.sim.tbn

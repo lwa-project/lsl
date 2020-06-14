@@ -6,6 +6,9 @@ LSL Developer Primitives
 .. automodule:: lsl.reader.ldp
    :members:
 
+.. automodule:: lsl.reader.utils
+   :members:
+
 .. autoclass:: lsl.reader.base.FrameTimestamp
    :members:
    
@@ -34,11 +37,6 @@ Low-Level COR -- ADP
 Low-Level DRX -- DP and ADP
 ---------------------------
 .. automodule:: lsl.reader.drx
-   :members:
-
-Low-Level DRX8 -- ADP
----------------------
-.. automodule:: lsl.reader.drx8
    :members:
 
 Low-Level DR Spectrometer -- DP and ADP

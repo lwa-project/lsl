@@ -1,6 +1,6 @@
 RF Antenna Parameters
 =====================
-.. automodule:: lsl.misc.rfutil
+.. automodule:: lsl.misc.rfutils
    :members:
 
 Simulated Stand Response
