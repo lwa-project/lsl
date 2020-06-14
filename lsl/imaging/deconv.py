@@ -17,7 +17,7 @@ from lsl.sim.vis import build_sim_data
 from lsl.imaging import utils
 from lsl.astro import deg_to_dms, deg_to_hms
 from lsl.statistics.robust import std as rStd
-from lsl.misc.mathutil import gaussian2d
+from lsl.misc.mathutils import gaussian2d
 
 from lsl.misc import telemetry
 telemetry.track_module()

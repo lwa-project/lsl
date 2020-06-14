@@ -2,7 +2,7 @@
 lsl.sim - Simulate various types of LWA data.  The following follow DP
 format writers are avaliable:
  * tbn
-* drx
+ * drx
 
 In addition, there are two simulation modules to generate fake data sets::
  * dp  - generate DP-level data sets for basic signals and point source

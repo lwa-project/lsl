@@ -16,7 +16,7 @@ if sys.version_info < (3,):
     range = xrange
     
 from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
-from lsl.misc.mathutil import regrid
+from lsl.misc.mathutils import regrid
 import os
 import re
 import warnings

@@ -20,7 +20,7 @@ __version__  = "0.5"
 __author__    = "Jayce Dowell"
 
 
-class uvutil_tests(unittest.TestCase):
+class uvutils_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.correlator.uvutils
     module."""
     
@@ -152,7 +152,7 @@ class uvutil_tests(unittest.TestCase):
         self.assertEqual(out.shape, (435,2,512))
         
         
-class uvutil_test_suite(unittest.TestSuite):
+class uvutils_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.reader units 
     tests."""
     
@@ -160,7 +160,7 @@ class uvutil_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(uvutil_tests)) 
+        self.addTests(loader.loadTestsFromTestCase(uvutils_tests)) 
 
 
 if __name__ == '__main__':

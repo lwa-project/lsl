@@ -26,7 +26,7 @@ __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
 
-class necutil_tests(unittest.TestCase):
+class necutils_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.necutils
     module."""
     
@@ -50,7 +50,7 @@ class necutil_tests(unittest.TestCase):
     def test_change_nec_freq(self):
         """Test the necutils.change_nec_freq() function."""
         
-        testPath = tempfile.mkdtemp(prefix='test-necutil-', suffix='.tmp')
+        testPath = tempfile.mkdtemp(prefix='test-necutils-', suffix='.tmp')
         for freq in (25.6, 38.7, 54.6, 75.02):
             shutil.copy(os.path.join(DATA_BUILD, 'lwa1_xep_1.nec'), testPath)
         
@@ -79,7 +79,7 @@ class necutil_tests(unittest.TestCase):
         self.assertRaises(ValueError, necutils.NECPattern, self.nec_name, 0.0, False)
 
     
-class necutil_test_suite(unittest.TestSuite):
+class necutils_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lwa_user.necutils
     module unit tests."""
     
@@ -87,7 +87,7 @@ class necutil_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(necutil_tests))        
+        self.addTests(loader.loadTestsFromTestCase(necutils_tests))        
         
         
 if __name__ == '__main__':

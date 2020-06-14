@@ -23,7 +23,7 @@ from astropy.constants import c as speedOfLight
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as dataPath
 from lsl.common import dp, mcs as mcsDP, adp, mcsADP
-from lsl.misc.mathutil import to_dB, from_dB
+from lsl.misc.mathutils import to_dB, from_dB
 
 from lsl.misc import telemetry
 telemetry.track_module()

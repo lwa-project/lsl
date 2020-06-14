@@ -122,7 +122,7 @@ def calculate_sefd(Tsys, gain=None, area=None, efficiency=None):
      * gain - antenna gain in K/Jy - optional
      * area - antenna collecting area in m^2 - optional
      * efficiency - aperture efficiency - optional
-    
+     
     Of the optional parameters either 'gain' needs to be supplied or
     both 'area' and 'efficiency'.
     """
