@@ -24,7 +24,7 @@ speedOfLight = speedOfLight.to('m/s').value
 from lsl import astro
 from lsl.reader.ldp import LWASVDataFile
 from lsl.common import stations, metabundleADP
-from lsl.correlator import uvutil
+from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi
@@ -129,7 +129,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
                 a2, d2, v2 = antennasY, dataY, validY
                 
             ## Get the baselines
-            baselines = uvutil.get_baselines(a1, antennas2=a2, include_auto=True, indicies=True)
+            baselines = uvutils.get_baselines(a1, antennas2=a2, include_auto=True, indicies=True)
             blList = []
             for bl in range(len(baselines)):
                 blList.append( (a1[baselines[bl][0]], a2[baselines[bl][1]]) )

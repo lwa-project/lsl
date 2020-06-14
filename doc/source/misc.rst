@@ -5,7 +5,7 @@ RF Antenna Parameters
 
 Simulated Stand Response
 ========================
-.. automodule:: lsl.sim.necutil
+.. automodule:: lsl.sim.necutils
    :members:
 
 Ionospheric and Geomagnetic Field Models

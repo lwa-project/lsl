@@ -17,7 +17,7 @@ import shutil
 from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
-from lsl.correlator import uvutil
+from lsl.correlator import uvutils
 from lsl.writer import fitsidi
 
 
@@ -54,7 +54,7 @@ class fitsidi_tests(unittest.TestCase):
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
-        blList = uvutil.get_baselines(antennas, include_auto=True, indicies=False)
+        blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
 
@@ -497,7 +497,7 @@ class aipsidi_tests(unittest.TestCase):
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
-        blList = uvutil.get_baselines(antennas, include_auto=True, indicies=False)
+        blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
 

@@ -17,7 +17,7 @@ import numpy
 import argparse
 
 from lsl.common import stations, metabundle, metabundleADP
-from lsl.correlator import uvutil
+from lsl.correlator import uvutils
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
@@ -51,7 +51,7 @@ def main(args):
     HA = 0.0
     dec = station.lat*180.0/math.pi
     
-    uvw = uvutil.compute_uvw(antennas, HA=HA, dec=dec, freq=args.frequency)
+    uvw = uvutils.compute_uvw(antennas, HA=HA, dec=dec, freq=args.frequency)
     uvw = numpy.squeeze(uvw[:,:,0])
     
     # Coursely grid the uv data to come up with a rough beam

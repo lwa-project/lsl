@@ -35,7 +35,7 @@ import numpy
 from astropy.constants import c as speedOfLight
 
 from lsl.common import dp as dp_common
-from lsl.correlator import uvutil, _spec, _stokes, _core
+from lsl.correlator import uvutils, _spec, _stokes, _core
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -219,7 +219,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -306,7 +306,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
         fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
         nonAuto = numpy.where( fom != 0 )[0]
         output = output[nonAuto,:]
@@ -363,7 +363,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -442,7 +442,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
         fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
         nonAuto = numpy.where( fom != 0 )[0]
         output = output[:,nonAuto,:]

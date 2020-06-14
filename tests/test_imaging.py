@@ -29,7 +29,7 @@ from lsl.imaging.data import VisibilityData
 from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
 from lsl.sim import vis
 from lsl.common.stations import lwa1, parse_ssmif
-from lsl.correlator import uvutil
+from lsl.correlator import uvutils
 
 run_ms_tests = False
 try:
@@ -132,7 +132,7 @@ class imaging_tests(unittest.TestCase):
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
-        blList = uvutil.get_baselines(antennas, include_auto=True, indicies=False)
+        blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
         visData = numpy.random.rand(len(blList), len(freq))
         visData = visData.astype(numpy.complex64)
         

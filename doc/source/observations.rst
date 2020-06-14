@@ -58,8 +58,8 @@ Conversion to/from MJD and MPM
 These functions convert Python datetime instances to modified Julian Data (MJD) and
 milliseconds past midnight (MPM) pairs.
 
-.. autofunction:: lsl.common.mcs.datetime2mjdmpm
-.. autofunction:: lsl.common.mcs.mjdmpm2datetime
+.. autofunction:: lsl.common.mcs.datetime_to_mjdmpm
+.. autofunction:: lsl.common.mcs.mjdmpm_to_datetime
 
 Specifiying Delay and Gains for the Digital Processor
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -77,7 +77,7 @@ These functions convert various MCS numeric codes found in the metatdata into st
 
 .. autofunction:: lsl.common.mcs.status2string
 .. autofunction:: lsl.common.mcs.summary2string
-.. autofunction:: lsl.common.mcs.sid2string
-.. autofunction:: lsl.common.mcs.cid2string
-.. autofunction:: lsl.common.mcs.mode2string
+.. autofunction:: lsl.common.mcs.sid_to_string
+.. autofunction:: lsl.common.mcs.cid_to_string
+.. autofunction:: lsl.common.mcs.mode_to_string
 

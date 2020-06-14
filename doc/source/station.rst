@@ -13,10 +13,5 @@ Station Dynamic MIB Data
 
 Stand-Level Data
 ----------------
-.. automodule:: lsl.correlator.uvUtils
-
-Exceptions
-----------
-.. autoexception:: lsl.correlator.uvUtils.uvUtilsError
-   :members:
+.. automodule:: lsl.correlator.uvutils
 

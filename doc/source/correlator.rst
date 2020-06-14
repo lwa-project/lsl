@@ -4,14 +4,14 @@ Correlation
 
 Baseline Utilities
 ------------------
-.. autofunction:: lsl.correlator.uvutil.getBaselines
-.. autofunction:: lsl.correlator.uvutil.baseline2antenna
-.. autofunction:: lsl.correlator.uvutil.antenna2baseline
+.. autofunction:: lsl.correlator.uvutils.get_baselines
+.. autofunction:: lsl.correlator.uvutils.baseline_to_antenna
+.. autofunction:: lsl.correlator.uvutils.antenna_to_baseline
 
 Computing *uvw* Coordinates
 ---------------------------
-.. autofunction:: lsl.correlator.uvutil.computeUVW
-.. autofunction:: lsl.correlator.uvutil.computeUVTrack
+.. autofunction:: lsl.correlator.uvutils.compute_uvw
+.. autofunction:: lsl.correlator.uvutils.compute_uv_track
 
 Polyphase Filter Bank
 ---------------------
@@ -20,7 +20,7 @@ Polyphase Filter Bank
 
 FX Correlator
 -------------
-.. autofunction:: lsl.correlator.fx.noWindow
+.. autofunction:: lsl.correlator.fx.null_window
 .. autofunction:: lsl.correlator.fx.FXMaster
 .. autofunction:: lsl.correlator.fx.FXStokes
 
