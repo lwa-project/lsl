@@ -1,5 +1,5 @@
 """
-Unit test for the lsl.sim.necutil module.
+Unit test for the lsl.sim.necutils module.
 """
 
 # Python2 compatibility
@@ -17,7 +17,7 @@ try:
 except ImportError:
     from io import StringIO
 
-from lsl.sim import necutil
+from lsl.sim import necutils
 from lsl.common.paths import DATA_BUILD
 
 
@@ -27,7 +27,7 @@ __maintainer__ = "Jayce Dowell"
 
 
 class necutil_tests(unittest.TestCase):
-    """A unittest.TestCase collection of unit tests for the lsl.necutil
+    """A unittest.TestCase collection of unit tests for the lsl.necutils
     module."""
     
     def setUp(self):
@@ -37,25 +37,25 @@ class necutil_tests(unittest.TestCase):
         self.nec_name = os.path.join(DATA_BUILD, 'tests', 'bigblade_imp.out')
     
     def test_NECImpedance_init(self):
-        """Test necutil.NECImpedance constructor method."""
+        """Test necutils.NECImpedance constructor method."""
         
-        imp = necutil.NECImpedance(self.nec_name)
+        imp = necutils.NECImpedance(self.nec_name)
         
     def test_open_and_get_nec_freq(self):
-        """Test necutil.open_and_get_nec_freq() function."""
+        """Test necutils.open_and_get_nec_freq() function."""
         
-        (fh, freq) = necutil.open_and_get_nec_freq(self.nec_name)   
+        (fh, freq) = necutils.open_and_get_nec_freq(self.nec_name)   
         fh.close()
         
     def test_change_nec_freq(self):
-        """Test the necutil.change_nec_freq() function."""
+        """Test the necutils.change_nec_freq() function."""
         
         testPath = tempfile.mkdtemp(prefix='test-necutil-', suffix='.tmp')
         for freq in (25.6, 38.7, 54.6, 75.02):
             shutil.copy(os.path.join(DATA_BUILD, 'lwa1_xep_1.nec'), testPath)
         
             filename = os.path.join(testPath, 'lwa1_xep_1.nec')
-            necutil.change_nec_freq(filename, freq)
+            necutils.change_nec_freq(filename, freq)
         
             with open(filename, 'r') as fh:
                 found = False
@@ -68,19 +68,19 @@ class necutil_tests(unittest.TestCase):
         shutil.rmtree(testPath)
         
     def test_calculate_ime(self):
-        """Test necutil.calculate_ime() function."""
+        """Test necutils.calculate_ime() function."""
         
-        (freqs, ime) = necutil.calculate_ime(self.nec_name)
+        (freqs, ime) = necutils.calculate_ime(self.nec_name)
     
     def test_NECPattern_init(self):
-        """Test necutil.NECPattern constructor method."""
+        """Test necutils.NECPattern constructor method."""
         
-        pat = necutil.NECPattern(self.nec_name, 5.0)
-        self.assertRaises(ValueError, necutil.NECPattern, self.nec_name, 0.0, False)
+        pat = necutils.NECPattern(self.nec_name, 5.0)
+        self.assertRaises(ValueError, necutils.NECPattern, self.nec_name, 0.0, False)
 
     
 class necutil_test_suite(unittest.TestSuite):
-    """A unittest.TestSuite class which contains all of the lwa_user.necutil
+    """A unittest.TestSuite class which contains all of the lwa_user.necutils
     module unit tests."""
     
     def __init__(self):
