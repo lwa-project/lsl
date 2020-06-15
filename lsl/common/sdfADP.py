@@ -2,25 +2,25 @@
 Module that contains all of the relevant class to build up a representation 
 of a session definition file as defined in MCS0030v5 and updated for LWA-SV.  The 
 hierarchy of classes is:
- * Project - class that holds all of the information about the project (including
-             the observer) and one or more sessions.  Technically, a SD file has 
-             only one session but this approach allows for the generation of 
-             multiple SD files from a single Project object.
- * Observer - class that hold the observer's name and numeric ID
- * Session - class that holds all of the observations associated with a particular 
-             ADP output.  
- * Observations - class that hold information about a particular observation.  It
-                  includes a variety of attributes that are used to convert human-
-                  readable inputs to SDF data values.  The observation class is 
-                  further subclasses into:
-                   - TBF - class for TBF observations
-                   - TBN - class for TBN observations
-                   - DRX - class for general DRX observation, with sub-classes:
-                      * Solar - class for solar tracking
-                      * Jovian - class for Jovian tracking
-                   - Stepped - class for stepped observations
- * BeamStep - class that holds the information about a particular step in a Stepped
-              Observation
+  * Project - class that holds all of the information about the project (including
+              the observer) and one or more sessions.  Technically, a SD file has 
+              only one session but this approach allows for the generation of 
+              multiple SD files from a single Project object.
+  * Observer - class that hold the observer's name and numeric ID
+  * Session - class that holds all of the observations associated with a particular 
+              ADP output.  
+  * Observations - class that hold information about a particular observation.  It
+                   includes a variety of attributes that are used to convert human-
+                   readable inputs to SDF data values.  The observation class is 
+                   further subclasses into:
+                     - TBF - class for TBF observations
+                     - TBN - class for TBN observations
+                     - DRX - class for general DRX observation, with sub-classes:
+                       * Solar - class for solar tracking
+                       * Jovian - class for Jovian tracking
+                     - Stepped - class for stepped observations
+  * BeamStep - class that holds the information about a particular step in a Stepped
+               Observation
     
 All of the classes, except for Stepped and BeamStep, are complete and functional.  In 
 addition, most class contain 'validate' attribute functions that can be used to 

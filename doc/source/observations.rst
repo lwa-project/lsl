@@ -66,17 +66,17 @@ Specifiying Delay and Gains for the Digital Processor
 These functions are intended to help define observations that are run in Stepped mode with 
 the beamforming method set to "SPEC_DELAYS_GAINS".
 
-.. autofunction:: lsl.common.mcs.delaytoMCSD
-.. autofunction:: lsl.common.mcs.MCSDtodelay
-.. autofunction:: lsl.common.mcs.gaintoMCSG
-.. autofunction:: lsl.common.mcs.MCSGtogain
+.. autofunction:: lsl.common.mcs.delay_to_mcsd
+.. autofunction:: lsl.common.mcs.mcsd_to_delay
+.. autofunction:: lsl.common.mcs.gain_to_mcsg
+.. autofunction:: lsl.common.mcs.mcsg_to_gain
 
 Interpretting MCS Numeric Codes
 +++++++++++++++++++++++++++++++
 These functions convert various MCS numeric codes found in the metatdata into strings.
 
-.. autofunction:: lsl.common.mcs.status2string
-.. autofunction:: lsl.common.mcs.summary2string
+.. autofunction:: lsl.common.mcs.status_to_string
+.. autofunction:: lsl.common.mcs.summary_to_string
 .. autofunction:: lsl.common.mcs.sid_to_string
 .. autofunction:: lsl.common.mcs.cid_to_string
 .. autofunction:: lsl.common.mcs.mode_to_string

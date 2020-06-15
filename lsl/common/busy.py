@@ -74,7 +74,7 @@ class BusyIndicator(object):
     def stop(self, success=True):
         """
         Stop the indicator and display a 'Done'  or 'Failed' message depending on
-        whether or not the `success' keyword is True.
+        whether or not the 'success' keyword is True.
         
         .. note::
             This can take up to one BusyIndicator.interval to complete.

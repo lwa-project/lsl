@@ -5,8 +5,8 @@ Correlation
 Baseline Utilities
 ------------------
 .. autofunction:: lsl.correlator.uvutils.get_baselines
-.. autofunction:: lsl.correlator.uvutils.baseline_to_antenna
-.. autofunction:: lsl.correlator.uvutils.antenna_to_baseline
+.. autofunction:: lsl.correlator.uvutils.baseline_to_antennas
+.. autofunction:: lsl.correlator.uvutils.antennas_to_baseline
 
 Computing *uvw* Coordinates
 ---------------------------

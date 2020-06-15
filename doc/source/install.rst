@@ -37,6 +37,7 @@ option.  The package will install files in the following locations:
  * <prefix>/lib/python2.6/site-packages
  * <prefix>/share/doc
  * <prefix>/share/install
+
 If an alternate <prefix> value is provided, you should set the PATH
 environment to include directory '<prefix>/bin' and the PYTHONPATH
 environment to include directory '<prefix>/lib/python2.6/site-packages'.
@@ -46,7 +47,7 @@ directory will be in the current user's home directory.
 
 Unit Tests
 ==========
-Unit tests for the package may be found in the 'lsl/tests' sub-directory in the package source distribution tree.  To run the complete suite of package unit tests:
+Unit tests for the package may be found in the 'lsl/tests' sub-directory in the package source distribution tree.  To run the complete suite of package unit tests::
 
     cd tests
     python -m unittest discover
@@ -63,11 +64,12 @@ development.  The data collected as part of this consist seven things:
  * which LSL modules are imported,
  * which LSL functions are used and their average execution times, and
  * which LSL scripts are used.
+
 These data are sent to the LWA using a HTTP POST request where they
 are aggregated.
 
 Users can opt out of telemetry collection using the provided lslTelemetry.py
-script via:
+script via::
 
     python lslTelemetry.py --disable
 

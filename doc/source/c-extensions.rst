@@ -23,19 +23,12 @@ Linear Polarization
 Stokes Parameters
 +++++++++++++++++
 .. automodule:: lsl.correlator._stokes
-
-.. autofunction:: lsl.correlator._stokes.FPSD
-.. autofunction:: lsl.correlator._stokes.PFBPSD
-.. autofunction:: lsl.correlator._stokes.XEngine3
+   :members:
 
 FX Correlator Core
 ------------------
 .. automodule:: lsl.correlator._core
    :members:
-.. autofunction:: lsl.correlator._core.FEngine
-.. autofunction:: lsl.correlator._core.PFBEngine
-.. autofunction:: lsl.correlator._core.XEngine2
-.. autofunction:: lsl.correlator._core.XEngine3
 
 DP-Style Signal Processing
 --------------------------

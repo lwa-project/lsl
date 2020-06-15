@@ -1,20 +1,20 @@
 """
 Module that contains all of the relevant class to build up a representation 
 of a interferometer definition file.  The hierarchy of classes is:
- * Project - class that holds all of the information about the project (including
-             the observer) and one or more runs.  Technically, a ID file has 
-             only one run but this approach allows for the generation of 
-             multiple SD files from a single Project object.
- * Observer - class that hold the observer's name and numeric ID
- * Run - class that holds all of the scans associated and the associated
-         correlator setup for a with a particular interferometer run
- * Scan - class that hold information about a particular scan.  It
-          includes a variety of attributes that are used to convert human-
-          readable inputs to SDF data values.  The scan class is 
-          further subclasses into:
-           - DRX - class for general DRX scan, with sub-classes:
-            * Solar - class for solar tracking
-            * Jovian - class for Jovian tracking
+  * Project - class that holds all of the information about the project (including
+              the observer) and one or more runs.  Technically, a ID file has 
+              only one run but this approach allows for the generation of 
+              multiple SD files from a single Project object.
+  * Observer - class that hold the observer's name and numeric ID
+  * Run - class that holds all of the scans associated and the associated
+          correlator setup for a with a particular interferometer run
+  * Scan - class that hold information about a particular scan.  It
+           includes a variety of attributes that are used to convert human-
+           readable inputs to SDF data values.  The scan class is 
+           further subclasses into:
+             - DRX - class for general DRX scan, with sub-classes:
+               * Solar - class for solar tracking
+               * Jovian - class for Jovian tracking
     
 Most class contain 'validate' attribute functions that can be used to determine if the 
 project/run/scan are valid or not given the constraints of
@@ -62,7 +62,7 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idF',  'get_scan_start_stop', 'is_valid', '__version__', '__revision__', '__all__']
+__all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idf',  'get_scan_start_stop', 'is_valid', '__version__']
 
 
 _UTC = pytz.utc

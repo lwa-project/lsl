@@ -1138,7 +1138,7 @@ except ImportError:
     import warnings
     warnings.warn('Cannot import casacore.tables, MS support disabled', ImportWarning)
     
-    class CorrelatedMS(object):
+    class CorrelatedDataMS(object):
         """
         Class to make accessing information about a MS easy.  This wraps 
         all of the "messy" machinery needed to extract both the metadata and data 

@@ -2,25 +2,25 @@
 Module that contains all of the relevant class to build up a representation 
 of a session definition file as defined in MCS0030v5.  The hierarchy of classes
 is:
- * Project - class that holds all of the information about the project (including
-             the observer) and one or more sessions.  Technically, a SD file has 
-             only one session but this approach allows for the generation of 
-             multiple SD files from a single Project object.
- * Observer - class that hold the observer's name and numeric ID
- * Session - class that holds all of the observations associated with a particular 
-             DP output.  
- * Observations - class that hold information about a particular observation.  It
-                  includes a variety of attributes that are used to convert human-
-                  readable inputs to SDF data values.  The observation class is 
-                  further subclasses into:
-                   - TBW - class for TBW observations
-                   - TBN - class for TBN observations
-                   - DRX - class for general DRX observation, with sub-classes:
-                      * Solar - class for solar tracking
-                      * Jovian - class for Jovian tracking
-                   - Stepped - class for stepped observations
- * BeamStep - class that holds the information about a particular step in a Stepped
-              Observation
+  * Project - class that holds all of the information about the project (including
+              the observer) and one or more sessions.  Technically, a SD file has 
+              only one session but this approach allows for the generation of 
+              multiple SD files from a single Project object.
+  * Observer - class that hold the observer's name and numeric ID
+  * Session - class that holds all of the observations associated with a particular 
+              DP output.  
+  * Observations - class that hold information about a particular observation.  It
+                   includes a variety of attributes that are used to convert human-
+                   readable inputs to SDF data values.  The observation class is 
+                   further subclasses into:
+                     - TBW - class for TBW observations
+                     - TBN - class for TBN observations
+                     - DRX - class for general DRX observation, with sub-classes:
+                       * Solar - class for solar tracking
+                       * Jovian - class for Jovian tracking
+                     - Stepped - class for stepped observations
+  * BeamStep - class that holds the information about a particular step in a Stepped
+               Observation
     
 All of the classes, except for Stepped and BeamStep, are complete and functional.  In 
 addition, most class contain 'validate' attribute functions that can be used to 
@@ -1736,8 +1736,8 @@ class BeamStep(object):
      * spec_gains - 260 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
     
     .. note::
-    If `spec_delays` is specified, `spec_gains` must also be specified.
-    Specifying both `spec_delays` and `spec_gains` overrides the `max_snr` keyword.
+        If `spec_delays` is specified, `spec_gains` must also be specified.
+        Specifying both `spec_delays` and `spec_gains` overrides the `max_snr` keyword.
     
     .. versionchanged:: 1.0.0
         Added support for azimuth/altitude and RA/dec values as ephem.hours/ephem.degrees 
@@ -2113,8 +2113,8 @@ class Session(object):
         specified.
         
         Special Values are:
-         * -1 = use the MCS default interval
-         * 0 = never record the MIB entries (the entries are still updated, however)
+          * -1 = use the MCS default interval
+          * 0 = never record the MIB entries (the entries are still updated, however)
         """
         
         self.recordMIB[component] = int(interval)
