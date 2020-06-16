@@ -1,0 +1,11 @@
+name: lsl_doc_env
+
+channels:
+  - conda-forge
+
+dependencies:
+  - fftw
+  - numpy
+  - python
+  - scipy
+  - sphinx
