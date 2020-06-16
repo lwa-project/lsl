@@ -4,6 +4,7 @@ channels:
   - conda-forge
 
 dependencies:
+  - pkgconfig
   - fftw
   - numpy
   - python
