@@ -10,3 +10,4 @@ dependencies:
   - python
   - scipy
   - sphinx
+  - ephem=3.7.7.0
