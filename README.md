@@ -77,7 +77,7 @@ This command will set a disk-based flag that disables the reporting process.  Th
 
 DOCUMENTATION
 -------------
-See doc/README for documentation information.
+See docs/README.md for documentation information.
 
 RELEASE NOTES
 -------------
