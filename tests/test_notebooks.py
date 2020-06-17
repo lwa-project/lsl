@@ -15,8 +15,8 @@ import re
 import os
 
 currentDir = os.path.abspath(os.getcwd())
-if os.path.exists(os.path.join(currentDir, '..', 'doc', 'notebooks')):
-    MODULE_BUILD = os.path.join(currentDir, '..', 'doc', 'notebooks')
+if os.path.exists(os.path.join(currentDir, '..', 'docs', 'notebooks')):
+    MODULE_BUILD = os.path.join(currentDir, '..', 'docs', 'notebooks')
 else:
     MODULE_BUILD = None
 
