@@ -11,3 +11,4 @@ dependencies:
   - scipy
   - sphinx
   - ephem=3.7.7.0
+  - python-casacore
