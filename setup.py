@@ -315,7 +315,7 @@ setup(
     description = "LWA Software Library", 
     author = "Jayce Dowell", 
     author_email = "jdowell@unm.edu", 
-    url = "https://fornax.phys.unm.edu/lwa/trac/", 
+    url = "https://github.com/lwa-project/lsl", 
     long_description = get_description('README.md'), 
     license = 'GPL',
     classifiers = ['Development Status :: 5 - Production/Stable',
