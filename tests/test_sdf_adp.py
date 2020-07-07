@@ -220,7 +220,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertRaises(RuntimeError, sdfADP.parse_sdf, tbwFile)
         
     def test_tbw_append(self):
-        """Test appending a TBF observation to an LWA-SV session."""
+        """Test appending a TBW observation to an LWA-SV session."""
         
         project = sdfADP.parse_sdf(tbnFile)
         
