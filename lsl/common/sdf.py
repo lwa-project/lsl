@@ -125,7 +125,7 @@ def _get_equinox_equation(jd):
 
 def parse_time(s, station=lwa1):
     """
-    Given a timezone-aware datetime instance or a string in the format of 
+    Given a time zone-aware datetime instance or a string in the format of 
     (UTC) YYYY MM DD HH:MM:SS.SSS, return the corresponding UTC datetime object.
     This function goes a little beyond what datetime.strptime does in the 
     since that it handle both integer and float seconds as well as does the 
@@ -144,7 +144,7 @@ def parse_time(s, station=lwa1):
         
     if isinstance(s, datetime):
         if s.tzinfo is None:
-            raise ValueError("Only aware datetime instances are supported.")
+            raise ValueError("Only time zone-aware datetime instances are supported.")
             
         # Round the microsecond value to milliseconds
         us = s.microsecond

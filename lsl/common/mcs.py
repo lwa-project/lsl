@@ -50,6 +50,7 @@ else:
 import re
 import aipy
 import math
+import pytz
 import numpy
 import ctypes
 import struct
@@ -581,15 +582,24 @@ def mcsg_to_gain(gain):
     return dpCommon.dpg_to_gain( _two_byte_swap(gain) )
 
 
-def mjdmpm_to_datetime(mjd, mpm):
+def mjdmpm_to_datetime(mjd, mpm, tz=None):
     """
-    Convert a MJD, MPM pair to a UTC-aware datetime instance.
+    Convert a MJD, MPM pair to a naive datetime instance.  If `tz` is not None
+    the value is converted to a time zone-aware instance in the specified time
+    zone.
     
+    .. versionchanged:: 2.0.1
+        Added the `tz` keyword and fixed the documentation.
+        
     .. versionadded:: 0.5.2
     """
     
     unix = mjd*86400.0 + mpm/1000.0 - 3506716800.0
-    return datetime.utcfromtimestamp(unix)
+    dt = datetime.utcfromtimestamp(unix)
+    if tz is not None:
+        dt = pytz.utc.localize(dt)
+        dt = dt.astimezone(tz)
+    return dt
 
 
 def datetime_to_mjdmpm(dt):
@@ -599,9 +609,15 @@ def datetime_to_mjdmpm(dt):
     
     Based off: http://paste.lisp.org/display/73536
     
+    .. versionchanged:: 2.0.1
+        Better support for time zone-aware datetime instances
+    
     .. versionadded:: 0.5.2
     """
     
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(pytz.utc)
+        
     year        = dt.year             
     month       = dt.month      
     day         = dt.day    
