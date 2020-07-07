@@ -76,7 +76,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
     for s in range(chunk_size):
         try:
             readT, t, data = idf.read(int_time)
-        except Exception, e:
+        except Exception as e:
             print("Error: %s" % str(e))
             continue
             

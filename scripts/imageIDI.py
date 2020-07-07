@@ -70,12 +70,9 @@ def main(args):
         dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Build a list of unique JDs for the data
-        pols = dataDict['bls'].keys()
-        jdList = []
-        for jd in dataDict['jd'][pols[0]]:
-            if jd not in jdList:
-                jdList.append(jd)
-                
+        pols = dataDict.pols
+        jdList = [dataDict.mjd + astro.MJD_OFFSET,]
+        
         # Find the LST
         lo.date = jdList[0] - astro.DJD_OFFSET
         utc = str(lo.date)
@@ -106,7 +103,7 @@ def main(args):
         print("    Gridding")
         img1 = None
         lbl1 = 'XX'
-        for p in ('xx', 'rr', 'I'):
+        for p in ('XX', 'RR', 'I'):
             try:
                 img1 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl1 = p.upper()
@@ -115,7 +112,7 @@ def main(args):
                 
         img2 = None
         lbl2 = 'YY'
-        for p in ('yy', 'll', 'Q'):
+        for p in ('YY', 'LL', 'Q'):
             try:
                 img2 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl2 = p.upper()
@@ -124,7 +121,7 @@ def main(args):
                 
         img3 = None
         lbl3 = 'XY'
-        for p in ('xy', 'rl', 'U'):
+        for p in ('XY', 'RL', 'U'):
             try:
                 img3 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl3 = p.upper()
@@ -133,7 +130,7 @@ def main(args):
                 
         img4 = None
         lbl4 = 'YX'
-        for p in ('yx', 'lr', 'V'):
+        for p in ('YX', 'LR', 'V'):
             try:
                 img4 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl4 = p.upper()
@@ -229,7 +226,7 @@ def main(args):
                     overwrite = True
             try:
                 hdulist.writeto(args.fits, overwrite=overwrite)
-            except IOError, e:
+            except IOError as e:
                 print("WARNING: FITS image file not saved")
                 
     print("...Done")

@@ -18,7 +18,7 @@ import argparse
 
 from scipy.interpolate import interp1d
 
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt

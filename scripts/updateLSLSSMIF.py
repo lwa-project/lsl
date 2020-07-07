@@ -22,7 +22,7 @@ import hashlib
 import argparse
 from datetime import datetime
 
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -141,7 +141,7 @@ def main(args):
             
             ## Build the URL
             urlToDownload = "%s/%s" % (_url, versions[i][0])
-        except Exception, e:
+        except Exception as e:
             print("Error:  Cannot process reversion, %s" % str(e))
             
     elif args.update:
@@ -161,7 +161,7 @@ def main(args):
             ah = urlopen(urlToDownload)
             newSSMIF = ah.read()
             ah.close()
-        except Exception, e:
+        except Exception as e:
             print("Error:  Cannot download SSMIF, %s" % str(e))
             
         ## Save
@@ -169,7 +169,7 @@ def main(args):
             fh = open(_ssmif, 'wb')
             fh.write(newSSMIF)
             fh.close()
-        except Exception, e:
+        except Exception as e:
             print("Error:  Cannot %s SSMIF, %s" % ('update' if args.update else 'revert', str(e)))
             
     # Summarize the SSMIF

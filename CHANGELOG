@@ -1,3 +1,6 @@
+2.0.1
+  * Fixed a few problems with the scripts that ship with LSL 
+
 2.0.0
   * Major API changes to put LSL under a uniform coding style
   * Bumped the minimum Python version to 2.7

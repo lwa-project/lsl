@@ -114,7 +114,7 @@ def main(args):
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
-        except Exception, e:
+        except Exception as e:
             print("Error: %s" % str(e))
             continue
             
