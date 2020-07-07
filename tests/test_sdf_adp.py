@@ -441,9 +441,9 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
-        # No beam
+        # No beam (this is allowed now)
         project.sessions[0].drx_beam = -1
-        self.assertFalse(project.validate())
+        self.assertTrue(project.validate())
         
         # Bad filter
         project.sessions[0].observations[0].filter = 8
@@ -536,9 +536,9 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
-        # No beam
+        # No beam (this is allowed now)
         project.sessions[0].drx_beam = -1
-        self.assertFalse(project.validate())
+        self.assertTrue(project.validate())
         
         # Bad filter
         project.sessions[0].observations[0].filter = 8
@@ -620,9 +620,9 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
-        # No beam
+        # No beam (this is allowed now)
         project.sessions[0].drx_beam = -1
-        self.assertFalse(project.validate())
+        self.assertTrue(project.validate())
         
         # Bad filter
         project.sessions[0].observations[0].filter = 8
@@ -767,9 +767,9 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].drx_beam = 6
         self.assertFalse(project.validate())
         
-        # No beam
+        # No beam (this is allowed now)
         project.sessions[0].drx_beam = -1
-        self.assertFalse(project.validate())
+        self.assertTrue(project.validate())
         
         # Bad filter
         project.sessions[0].observations[0].filter = 8

@@ -2204,14 +2204,6 @@ class Session(object):
                         print("[%i] Error: DR spectrometer incompatible with '%s'" % (os.getpid(), self.observations[0].mode))
                     failures += 1
                     
-        # Validate beam number
-        if len(self.observations) > 0:
-            if self.observations[0].mode not in ('TBW', 'TBN'):
-                if self.drx_beam == -1:
-                    if verbose:
-                        print("[%i] Error: Beam not assigned for this session" % os.getpid())
-                    failures += 1
-                    
         observationCount = 1
         for obs in self.observations:
             if verbose:
