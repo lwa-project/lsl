@@ -609,6 +609,7 @@ class TBNFile(LDPFileBase):
         # Iterate on the offsets until we reach the right point in the file.  This
         # is needed to deal with files that start with only one tuning and/or a 
         # different sample rate.  
+        diffs_used = deque([], 25)
         while True:
             junkFrame = tbn.read_frame(self.fh)
             self.fh.seek(-tbn.FRAME_SIZE, 1)
@@ -618,6 +619,7 @@ class TBNFile(LDPFileBase):
             t1 = junkFrame.time
             ## See how far off the current frame is from the target
             tDiff = (t1 - t0) - offset
+            diffs_used.append(tDiff)
             
             ## Eighth that to come up with a new seek parameter
             tCorr   = -tDiff / 8.0
@@ -631,7 +633,8 @@ class TBNFile(LDPFileBase):
                 break
             try:
                 self.fh.seek(cOffset*tbn.FRAME_SIZE, 1)
-            except IOError:
+                assert(len(set(diffs_used)) > len(diffs_used)//4)
+            except (IOError, AssertionError):
                 warnings.warn("Could not find the correct offset, giving up", RuntimeWarning)
                 break
                 
@@ -979,6 +982,7 @@ class DRXFile(LDPFileBase):
         # Iterate on the offsets until we reach the right point in the file.  This
         # is needed to deal with files that start with only one tuning and/or a 
         # different sample rate.  
+        diffs_used = deque([], 25)
         while True:
             junkFrame = drx.read_frame(self.fh)
             self.fh.seek(-drx.FRAME_SIZE, 1)
@@ -992,6 +996,7 @@ class DRXFile(LDPFileBase):
             
             ## See how far off the current frame is from the target
             tDiff = (t1 - t0) - offset
+            diffs_used.append(tDiff)
             
             ## Half that to come up with a new seek parameter
             tCorr   = -tDiff / 2.0
@@ -1005,7 +1010,8 @@ class DRXFile(LDPFileBase):
                 break
             try:
                 self.fh.seek(cOffset*drx.FRAME_SIZE, 1)
-            except IOError:
+                assert(len(set(diffs_used)) > len(diffs_used)//4)
+            except (IOError, AssertionError):
                 warnings.warn("Could not find the correct offset, giving up", RuntimeWarning)
                 break
                 
@@ -1124,8 +1130,8 @@ class DRXFile(LDPFileBase):
                         for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
                             baseframe = copy.deepcopy(cFrames[0])
-                            baseframe.payload.timeTag = m
-                            baseframe.payload.data *= 0
+                            baseframe.payload.timetag = m
+                            baseframe.payload._data *= 0
                             self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
@@ -1331,7 +1337,8 @@ class DRSpecFile(LDPFileBase):
         
         # Iterate on the offsets until we reach the right point in the file.  This
         # is needed to deal with files that start with only one tuning and/or a 
-        # different sample rate.  
+        # different sample rate.
+        diffs_used = deque([], 25)
         while True:
             junkFrame = drspec.read_frame(self.fh)
             self.fh.seek(-self.description['frame_size'], 1)
@@ -1345,6 +1352,7 @@ class DRSpecFile(LDPFileBase):
             
             ## See how far off the current frame is from the target
             tDiff = t1 - (t0 + offset)
+            diffs_used.append(tDiff)
             
             ## Half that to come up with a new seek parameter
             tCorr   = -tDiff / 2.0
@@ -1355,8 +1363,13 @@ class DRSpecFile(LDPFileBase):
             ## and check the location in the file again/
             if cOffset is 0:
                 break
-            self.fh.seek(cOffset*self.description['frame_size'], 1)
-            
+            try:
+                self.fh.seek(cOffset*self.description['frame_size'], 1)
+                assert(len(set(diffs_used)) > len(diffs_used)//4)
+            except (IOError, AssertionError):
+                warnings.warn("Could not find the correct offset, giving up", RuntimeWarning)
+                break
+                
         # Update the file metadata
         self._describe_file()
         

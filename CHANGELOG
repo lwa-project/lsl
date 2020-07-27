@@ -2,6 +2,8 @@
   * Fixed a few problems with the scripts that ship with LSL
   * Added support for time zone-aware datetime instances in lsl.common.datetime_to_mjdmpm() and mjdmpm_to_datetime()
   * Dropped the requirement that a beam be specified in lsl.common.sdf and sdfADP
+  * Fixed a deadlock condition that could occur during a DRXFile.offset()
+  * Fixed a bug in the DRXFile when dealing with small gaps in the data
 
 2.0.0
   * Major API changes to put LSL under a uniform coding style
