@@ -60,12 +60,12 @@ class SyncError(BaseReaderError):
     """
     Extension to the base class for dealing with Mark 5C header sync word 
     problems.  If the sync word doesn't match what is expected.  The error code 
-    is 3.
+    is 2.
     """
 
-    def __init__(self, location=None, sync1=None, sync2=None, sync3=None, sync4=None):
+    def __init__(self, type='Mark5C', location=None, sync1=None, sync2=None, sync3=None, sync4=None):
         self.errno = 2
-        self.strerror = 'Mark 5C sync word differs from expected'
+        self.strerror = '%s sync word differs from expected' % type
         self.filename = None
         self.args = (self.errno, self.strerror)
         self.location = location
@@ -95,6 +95,6 @@ def list_error_codes(errno=None):
         if errno == 1:
             print("1: End of file encountered during filehandle read")
         elif errno == 2:
-            print("2: Mark 5C sync word differs from expected")
+            print("2: Sync word differs from expected")
         else:
             print("Unknown error code '%i'" % errno)

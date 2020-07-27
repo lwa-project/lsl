@@ -4,6 +4,7 @@
   * Dropped the requirement that a beam be specified in lsl.common.sdf and sdfADP
   * Fixed a deadlock condition that could occur during a DRXFile.offset()
   * Fixed a bug in the DRXFile when dealing with small gaps in the data
+  * Updated lsl.reader.errors.SyncError to allow for reporting non-Mark5C problems
 
 2.0.0
   * Major API changes to put LSL under a uniform coding style

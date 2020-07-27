@@ -439,7 +439,7 @@ def read_frame(filehandle, gain=None, verbose=False):
         newFrame = read_drspec(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell()
-        raise SyncError(location=mark)
+        raise SyncError(type='DRSpectrometer', location=mark)
     except gEOFError:
         raise EOFError
         

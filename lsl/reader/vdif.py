@@ -414,7 +414,7 @@ def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
         newFrame = read_vdif(filehandle, Frame(), central_freq=central_freq, sample_rate=sample_rate)
     except gSyncError:
         mark = filehandle.tell()
-        raise SyncError(location=mark)
+        raise SyncError(type='VDIF', location=mark)
     except gEOFError:
         raise EOFError
         
