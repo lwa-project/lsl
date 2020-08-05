@@ -96,6 +96,19 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.minute, 48)
         self.assertEqual(dt.second, 1)
         self.assertEqual(dt.microsecond, 519000)
+        self.assertTrue(dt.tzinfo is None)
+        
+        t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
+        # 200423 16:48:01  58962  60481519 T   1099467 1 SHL RPT POWER-OUTAGE|
+        dt = t.utc_datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 23)
+        self.assertEqual(dt.hour, 16)
+        self.assertEqual(dt.minute, 48)
+        self.assertEqual(dt.second, 1)
+        self.assertEqual(dt.microsecond, 519000)
+        self.assertFalse(dt.tzinfo is None)
         
     def test_timestamp_string(self):
         """Test string representations of a FrameTimestamp"""

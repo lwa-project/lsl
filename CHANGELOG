@@ -1,6 +1,7 @@
 2.0.1
   * Fixed a few problems with the scripts that ship with LSL
   * Added support for time zone-aware datetime instances in lsl.common.datetime_to_mjdmpm() and mjdmpm_to_datetime()
+  * Added a utc_datetime attribute to lsl.reader.base.FrameTimestamp to provide a time zone-aware datetime instance
   * Dropped the requirement that a beam be specified in lsl.common.sdf and sdfADP
   * Fixed a deadlock condition that could occur during a DRXFile.offset()
   * Fixed a bug in the DRXFile when dealing with small gaps in the data

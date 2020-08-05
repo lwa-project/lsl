@@ -12,6 +12,7 @@ if sys.version_info < (3,):
     range = xrange
 
 import copy
+import pytz
 import numpy
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
@@ -517,7 +518,7 @@ class FrameTimestamp(object):
     @property
     def datetime(self):
         """
-        Timestamp as a naive `datetime.datetime` instance.
+        Timestamp as a naive `datetime.datetime` instance in UTC.
         """
         
         s = self._int
@@ -528,6 +529,14 @@ class FrameTimestamp(object):
         dt = datetime.utcfromtimestamp(s)
         dt += timedelta(microseconds=us)
         return dt
+        
+    @property
+    def utc_datetime(self):
+        """
+        Timestamp as a time zone-aware datetime instance in UTC.
+        """
+        
+        return pytz.utc.localize(self.datetime)
         
     @property
     def astropy(self):
