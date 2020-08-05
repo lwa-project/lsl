@@ -13,7 +13,6 @@ if sys.version_info < (3,):
 import sys
 import math
 import numpy
-import ephem
 import argparse
 
 import lsl.correlator.fx as fxc
@@ -81,7 +80,7 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
+    beginDate = idf.get_info('start_time').datetime
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
     beam = idf.get_info('beam')

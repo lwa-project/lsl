@@ -14,7 +14,6 @@ import os
 import sys
 import math
 import numpy
-import ephem
 import argparse
 
 from lsl.common import stations, metabundle, metabundleADP
@@ -97,7 +96,7 @@ def main(args):
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
+    beginDate = idf.get_info('start_time').datetime
     central_freq = idf.get_info('freq1')
     
     # File summary

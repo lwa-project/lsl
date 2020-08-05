@@ -14,7 +14,6 @@ if sys.version_info < (3,):
 import os
 import sys
 import time
-import ephem
 import numpy
 import argparse
 from datetime import datetime, timedelta, tzinfo
@@ -150,8 +149,8 @@ def main(args):
     
     idf = LWA1DataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
-    date = str(ephem.Date(jd - astro.DJD_OFFSET))
+    jd = idf.get_info('start_time').jd
+    date = idf.get_info('start_time').datetime
     nFpO = len(antennas)
     sample_rate = idf.get_info('sample_rate')
     nInts = idf.get_info('nframe') // nFpO
