@@ -30,6 +30,9 @@ the ADP system.
 In addition to providing the means for creating session definition files from scratch, 
 this module also includes a simple parser for SD files.
 
+.. versionchanged:: 2.0.0
+    Added support for astropy.time.Time and astropy.coordinates.Angle instances
+
 .. versionchanged:: 1.0.0
     Added the get_observation_start_stop() function.
     Renamed parse_timeString() to parse_time()

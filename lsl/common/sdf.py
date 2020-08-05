@@ -30,6 +30,9 @@ the DP system.
 In addition to providing the means for creating session definition files from scratch, 
 this module also includes a simple parser for SD files.
 
+.. versionchanged:: 2.0.0
+    Added support for astropy.time.Time and astropy.coordinates.Angle instances
+
 .. versionchanged:: 1.0.0
     Added the get_observation_start_stop() function.
     Renamed parse_timeString() to parse_time()
@@ -131,6 +134,9 @@ def parse_time(s, station=lwa1):
     since that it handle both integer and float seconds as well as does the 
     appropriate rounding to get millisecond precision.
     
+    .. versionchanged:: 2.0.0
+        Added support for astropy.time.Time instances
+    
     .. versionchanged:: 1.2.0
         Renamed the 'site' keyword to 'station'
     
@@ -140,7 +146,7 @@ def parse_time(s, station=lwa1):
     """
     
     if isinstance(s, AstroTime):
-        s = s.datetime
+        s = s.utc.datetime
         
     if isinstance(s, datetime):
         if s.tzinfo is None:

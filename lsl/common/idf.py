@@ -23,6 +23,9 @@ the ADP system.
 In addition to providing the means for creating interferometer definition files from 
 scratch, this module also includes a simple parser for ID files.
 
+.. versionchanged:: 2.0.0
+    Added support for astropy.time.Time and astropy.coordinates.Angle instances
+
 .. versionadded:: 1.2.4
 """
 
