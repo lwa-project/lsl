@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script that reads in TBN data and runs a cross-correlation on it.  
 The results are saved in the FITS IDI format.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -74,10 +73,10 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
     ref_time = 0.0
     setTime = 0.0
     wallTime = time.time()
-    for s in xrange(chunk_size):
+    for s in range(chunk_size):
         try:
             readT, t, data = idf.read(int_time)
-        except Exception, e:
+        except Exception as e:
             print("Error: %s" % str(e))
             continue
             
@@ -151,16 +150,16 @@ def main(args):
     
     idf = LWA1DataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     nFpO = len(antennas)
     sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nFrames') // nFpO
+    nInts = idf.get_info('nframe') // nFpO
     
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
-    for i in xrange(len(antennas)):
+    for i in range(len(antennas)):
         ant = antennas[i]
         if ant.combined_status != 33 and not args.all:
             pass
@@ -189,7 +188,7 @@ def main(args):
     # Number of frames to read in at once and average
     nFrames = int(args.avg_time*sample_rate/512)
     args.offset = idf.offset(args.offset)
-    nSets = idf.get_info('nFrames') // nFpO // nFrames
+    nSets = idf.get_info('nframe') // nFpO // nFrames
     nSets = nSets - int(args.offset*sample_rate/512) // nFrames
     
     central_freq = idf.get_info('freq1')

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module for reading data in from TBN files.This module defines the 
 following classes for storing the TBN data found in a file:
@@ -49,11 +47,11 @@ get_frames_per_obs
     Support for ECR 11 TBN header format change.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy
@@ -71,7 +69,6 @@ telemetry.track_module()
 
 
 __version__ = '0.8'
-__revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
@@ -176,14 +173,11 @@ class FramePayload(FramePayloadBase):
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
-        element tuple.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch  as a 
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        seconds_i = self.timetag // int(dp_common.fS)
-        seconds_f = (self.timetag % int(dp_common.fS)) / dp_common.fS
-        
-        return seconds_i, seconds_f
+        return FrameTimestamp.from_dp_timetag(self.timetag)
 
 
 class Frame(FrameBase):
@@ -294,7 +288,7 @@ def read_frame(filehandle, sample_rate=None, verbose=False):
     return newFrame
 
 
-def get_sample_rate(filehandle, nframes=None, filter_code=False):
+def get_sample_rate(filehandle, nframe=None, filter_code=False):
     """
     Find out what the sampling rate/filter code is from consecutive sets of 
     observations.  By default, the rate in Hz is returned.  However, the 
@@ -302,9 +296,9 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
     keyword to True.
     """
 
-    if nframes is None:
-        nframes = 520
-    nframes = 4*nframes
+    if nframe is None:
+        nframe = 520
+    nframe = 4*nframe
     
     with FilePositionSaver(filehandle):
         # Build up the list-of-lists that store ID codes and loop through 2,080
@@ -312,7 +306,7 @@ def get_sample_rate(filehandle, nframes=None, filter_code=False):
         # number, and append the stand number to the relevant polarization array 
         # if it is not already there.
         frames = {}
-        for i in range(nframes):
+        for i in range(nframe):
             try:
                 cFrame = read_frame(filehandle)
             except EOFError:

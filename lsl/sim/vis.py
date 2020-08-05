@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for generating simulated arrays and visibility data.  The chief 
 functions of this module are:
@@ -48,11 +46,11 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
     function to be the Gaussian full width at half maximum in degrees
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import aipy
@@ -66,17 +64,17 @@ from astropy.constants import c as speedOfLight
 
 from lsl import astro
 from lsl.common.paths import DATA as dataPath
-from lsl.correlator import uvutil
+from lsl.correlator import uvutils
 from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 from lsl.sim._simfast import FastVis
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
 __version__ = '0.6'
-__revision__ = '$Rev$'
 __all__ = ['SOURCES', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
            'build_sim_array', 'build_sim_data', 'scale_data', 'shift_data', 'add_baseline_noise']
 
@@ -236,7 +234,7 @@ class BeamAlm(aipy.amp.BeamAlm):
                 self.alm[-1-c].set_data(coeffs[c])
         self._update_hmap()
         
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.BeamAlm.response function.
         
@@ -267,18 +265,18 @@ class BeamAlm(aipy.amp.BeamAlm):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+            for i in range(temp.shape[1]):
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -312,7 +310,7 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         aipy.phs.Beam.__init__(self, freqs)
         self.xwidth, self.ywidth = xwidth, ywidth
         
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
         
@@ -343,18 +341,18 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+            for i in range(temp.shape[1]):
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -385,7 +383,7 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
         self.poly = poly_azfreq
         self._update_sigma()
         
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
         
@@ -425,18 +423,18 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+            for i in range(temp.shape[1]):
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -454,7 +452,7 @@ class Beam(aipy.amp.Beam):
     beam response at all points.
     """
     
-    def _repsonse_primitive(self, top):
+    def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam.response function.
         
@@ -480,18 +478,18 @@ class Beam(aipy.amp.Beam):
         x,y,z = top
         
         if len(test.shape) == 1:
-            temp = self._repsonse_primitive((x,y,z))
+            temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._repsonse_primitive((x[i],y[i],z[i])))
+            for i in range(temp.shape[1]):
+                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
             temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
-            for i in xrange(temp.shape[1]):
-                for j in xrange(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._repsonse_primitive((x[i,j],y[i,j],z[i,j])))
+            for i in range(temp.shape[1]):
+                for j in range(temp.shape[2]):
+                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError("Cannot compute response for %s" % str(test.shape))
@@ -552,13 +550,13 @@ class Antenna(aipy.amp.Antenna):
                 
             elif len(b.shape) == 2:
                 temp = numpy.zeros_like(b)
-                for i in xrange(b.shape[1]):
+                for i in range(b.shape[1]):
                     temp[:,i] = numpy.dot(a, b[:,i])
                     
             elif len(b.shape) == 3:
                 temp = numpy.zeros_like(b)
-                for i in xrange(b.shape[1]):
-                    for j in xrange(top.shape[2]):
+                for i in range(b.shape[1]):
+                    for j in range(top.shape[2]):
                         temp[:,i,j] = numpy.dot(a, b[:,i,j])
                         
             else:
@@ -678,8 +676,10 @@ class AntennaArray(aipy.amp.AntennaArray):
             resp = numpy.ones(freqs.size)
             
         else:
-            # Load in the LWA1 antennas so we can grab some data
-            ants = lwa1.getAntennas()
+            # Load in the LWA antennas so we can grab some data.  If we don't know
+            # what station we are at, assume LWA1.
+            station = getattr(self, '_station', lwa1)
+            ants = station.antennas
             
             # Antenna impedance mis-match
             immf, immr = ants[0].response(dB=False)
@@ -688,7 +688,7 @@ class AntennaArray(aipy.amp.AntennaArray):
             
             # Mean ARX filter response
             arxf, arxr = ants[0].arx.response(filter, dB=False)
-            for i in xrange(1, len(ants)):
+            for i in range(1, len(ants)):
                 arxfi, arxri = ants[i].arx.response(filter, dB=False)
                 arxr += arxri
             arxr /= arxr.max()
@@ -700,7 +700,7 @@ class AntennaArray(aipy.amp.AntennaArray):
             resp *= arxIntp(freqs)
             
         # Update the AIPY passbands
-        for i in xrange(len(self.ants)):
+        for i in range(len(self.ants)):
             self[i].amp = resp
             self[i].update()
             
@@ -722,7 +722,7 @@ class AntennaArray(aipy.amp.AntennaArray):
                 raise ValueError('Unrecognized source:' + src)
         try:
             if src.alt < 0:
-                raise PointingError('%s below horizon' % src.src_name)
+                raise RuntimeError('%s below horizon' % src.src_name)
             m = src.map
         except AttributeError:
             if map is None:
@@ -803,11 +803,21 @@ class AntennaArray(aipy.amp.AntennaArray):
             return numpy.zeros_like(self.passband(i,j))
             
         s_eqs = self._cache['s_eqs']
-        s_map = self._cache['s_map']
+        try:
+            s_map = self._cache['s_map']
+        except KeyError:
+            s_map = None
         w = self.gen_uvw_fast(i, j, src=s_eqs, map=s_map, w_only=True)
         I_sf = self._cache['jys']
         Gij_sf = self.passband(i,j)
-        Bij_sf = self.bm_response(i, j, pol=pol)
+        try:
+            self.set_active_pol(pol)
+            self._cache['s_top'] = self._cache['s_top'].T
+            Bij_sf = self.bm_response(i, j)
+            self._cache['s_top'] = self._cache['s_top'].T
+        except AttributeError:
+            # Older versions of AIPY
+            Bij_sf = self.bm_response(i, j, pol=pol)
         if len(Bij_sf.shape) == 2:
             Gij_sf = numpy.reshape(Gij_sf, (1, Gij_sf.size))
             
@@ -919,7 +929,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
             beam = Beam(freqs)
             
     if pos_error != 0:
-        warnings.warn("Creating array with positional errors between %.3f and %.3f m" % (-pos_error, pos_error), RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Creating array with positional errors between %.3f and %.3f m}}" % (-pos_error, pos_error)), RuntimeWarning)
 
     # Build an array of AIPY Antenna objects
     ants = []
@@ -939,7 +949,8 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
 
     # Combine the array of antennas with the array's location to generate an
     # AIPY AntennaArray object
-    simAA = AntennaArray(station.get_aipy_location(), ants)
+    simAA = AntennaArray(station.aipy_location, ants)
+    simAA._station = station
     
     # Set the Julian Data for the AntennaArray object if it is provided.  The try...except
     # clause is used to deal with people who may want to pass an array of JDs in rather than
@@ -1071,7 +1082,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     # Build the simulated data.  If no baseline list is provided, build all 
     # baselines available
     if baselines is None:
-        baselines = uvutil.get_baselines(numpy.zeros(len(aa.ants)), indicies=True)
+        baselines = uvutils.get_baselines(numpy.zeros(len(aa.ants)), indicies=True)
         
     # Define output data structure
     freq = aa.get_afreqs()*1e9
@@ -1092,10 +1103,10 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         ## Apply the antenna gain pattern for each source
         if not flat_response:
             if p == 0:
-                for i in xrange(aa._cache['jys'].shape[0]):
+                for i in range(aa._cache['jys'].shape[0]):
                     aa._cache['jys'][i,:] *= Bij_sf(aa._cache['s_top'][i,:], pol)
             else:
-                for i in xrange(aa._cache['jys'].shape[0]):
+                for i in range(aa._cache['jys'].shape[0]):
                     aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[p-1])	# Remove the old pol
                     aa._cache['jys'][i,:] *=  Bij_sf(aa._cache['s_top'][i,:], pol)
                     
@@ -1115,7 +1126,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         
     # Cleanup
     if not flat_response:
-        for i in xrange(aa._cache['jys'].shape[0]):
+        for i in range(aa._cache['jys'].shape[0]):
             aa._cache['jys'][i,:] /= Bij_sf(aa._cache['s_top'][i,:], pols[-1])	# Remove the old pol
             aa._cache['jys'][i,:] /= Gij_sf								# Remove the bandpass
             
@@ -1191,7 +1202,7 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
     fq = dataSet.freq / 1e9
     
     cGains = []
-    for i in xrange(len(amps)):
+    for i in range(len(amps)):
         gain = 2j*numpy.pi*fq*delays[i]
         if phase_offsets is not None:
             gain += 1j*phase_offsets[i]

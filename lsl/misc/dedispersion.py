@@ -1,57 +1,22 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for calculating dispersion delay due to an ionized ISM and performing
 incoherent/coherent dedispersion.
-
-.. versionchanged:: 1.0.1
-    Added support for using PyFFTW instead of NumPy for the FFTs and iFFTs.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import numpy
 
-try:
-    import pickle
-    import pyfftw
-    
-    from lsl.common.paths import DATA as dataPath
-    
-    # Enable the PyFFTW cache
-    if not pyfftw.interfaces.cache.is_enabled():
-        pyfftw.interfaces.cache.enable()
-        pyfftw.interfaces.cache.set_keepalive_time(60)
-        
-    # Read in the wisdom (if it exists)
-    wisdomFilename = os.path.join(dataPath, 'pyfftw-wisdom.pkl')
-    if os.path.exists(wisdomFilename):
-        fh = open(wisdomFilename, 'r')
-        wisdom = pickle.load(fh)
-        fh.close()
-        
-        pyfftw.import_wisdom(wisdom)
-        useWisdom = True
-    else:
-        useWisdom = False
-        
-    usePyFFTW = True
-    
-except ImportError:
-    usePyFFTW = False
-    useWisdom = False
-    
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.5'
-__revision__ = '$Rev$'
+__version__ = '0.6'
 __all__ = ['delay', 'incoherent', 'get_coherent_sample_size', 'coherent']
 
 
@@ -205,7 +170,6 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         DM or 10 pc / cm^3 this function uses a window size of about 268 million points.
         
     .. versionchanged:: 1.0.1
-        Added support for using PyFFTW instead of NumPy for the FFTs and iFFTs.
         Added a cache for storing the chrip function between subsequent calls
         
     .. versionchanged:: 0.6.4
@@ -240,21 +204,9 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
     if nSets == 0:
         RuntimeWarning("Too few data samples for proper dedispersion")
         
-    if usePyFFTW:
-        if timeseries.dtype not in (numpy.complex64, numpy.complex128):
-            raise RuntimeError("Unsupported data type for timeseries: %s" % str(timeseries.dtype))
-            
-        dd = timeseries.dtype
-        di1 = numpy.empty(N, dtype=dd)
-        do1 = numpy.empty(N, dtype=dd)
-        do2 = numpy.empty(N, dtype=dd)
-            
-        forwardPlan = pyfftw.FFTW(di1, do1, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
-        backwardPlan = pyfftw.FFTW(do1, do2, direction='FFTW_BACKWARD', flags=('FFTW_ESTIMATE', 'FFTW_UNALIGNED'))
-        
     # Go!
-    for i in xrange(2*nSets+1):
-        start = i*N/2 - N/4
+    for i in range(2*nSets+1):
+        start = i*N//2 - N//4
         stop = start + N
         
         if start < 0:
@@ -291,17 +243,10 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
             dataIn = timeseries[start:stop]
             
         timeOut = timeIn
-        if usePyFFTW:
-            forwardPlan(dataIn, do1)
-            do1 *= chirp
-            backwardPlan(do1, do2)
-            dataOut = do2
-            
-        else:
-            dataOut = numpy.fft.fft( dataIn )
-            dataOut *= chirp
-            dataOut = numpy.fft.ifft( dataOut )
-            
+        dataOut = numpy.fft.fft( dataIn )
+        dataOut *= chirp
+        dataOut = numpy.fft.ifft( dataOut )
+        
         # Get the output data ranges
         outStart  = i*N//2
         outStop   = outStart + N//2

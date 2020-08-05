@@ -1,15 +1,14 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Simple LWA1 astronomical source catalogue display application.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import math
 import argparse
@@ -24,7 +23,6 @@ from lsl.misc import telemetry
 telemetry.track_script()
 
 
-__revision__  = "$Revision: 96 $"
 __version__   = "0.1"
 __author__	= "D.L.Wood"
 __maintainer__ = "Jayce Dowell"

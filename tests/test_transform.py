@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.transform module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import math
@@ -20,7 +18,6 @@ from lsl.astro import DJD_OFFSET
 from lsl.common.stations import lwa1
 
 
-__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
@@ -33,15 +30,43 @@ class transform_tests(unittest.TestCase):
         """Test the transform.Time constructor."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        str(t0)
+        repr(t0)
+        
         self.assertEqual(t0.utc_str, '2013-01-08 01:23:45.000')
         self.assertEqual(t0.utc_mcs, (56300, 5025000))
         self.assertAlmostEqual(t0.utc_dp/196e6, 1357608225.0, 3)
+        
+        t1 = transform.Time((56300, 5026000), format='MCS')
+        self.assertEqual(t1.utc_str, '2013-01-08 01:23:46.000')
+        self.assertAlmostEqual(t1.utc_dp/196e6, 1357608226.0, 3)
+        
+        t2 = transform.Time(1357608224.0, format='TIMET')
+        self.assertEqual(t2.utc_str, '2013-01-08 01:23:44.000')
+        self.assertEqual(t2.utc_mcs, (56300, 5024000))
+        
+        t3 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        t3.utc_mcs = (56300, 5024000)
+        self.assertEqual(t3.utc_str, '2013-01-08 01:23:44.000')
+        
+    def test_time_comparisons(self):
+        """Test ordering transform.Time instances."""
+        
+        t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        t1 = transform.Time((56300, 5026000), format='MCS')
+        t2 = transform.Time(1357608224.0, format='TIMET')
+        
+        self.assertTrue(t0 < t1)
+        self.assertTrue(t0 > t2)
+        self.assertTrue(t2 != t1)
         
     def test_planetaryposition_init(self):
         """Test the transform.PlanetaryPosition constructor."""
         
         p0 = transform.PlanetaryPosition('Jupiter')
         p1 = transform.PlanetaryPosition('Sun')
+        str(p0)
+        repr(p0)
         
     def test_planetaryposition_saturn(self):
         """Test the location of Saturn."""
@@ -118,6 +143,21 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_equ(t0)[0], sol.g_ra *180.0/math.pi, 4)
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sol.g_dec*180.0/math.pi, 4)
         
+    def test_planetaryposition_moon(self):
+        """Test the location of the Moon."""
+        
+        t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        
+        obs = lwa1.get_observer()
+        obs.date = t0.utc_str
+        lun = ephem.Moon()
+        lun.compute(obs)
+        
+        p0 = transform.PlanetaryPosition('Moon')
+        
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], lun.g_ra *180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], lun.g_dec*180.0/math.pi, 4)
+        
     def test_geographicalposition_init(self):
         """Test the transform.GeographicalPosition constructor."""
         
@@ -126,6 +166,8 @@ class transform_tests(unittest.TestCase):
         elv = lwa1.elev
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
+        str(g0)
+        repr(g0)
         
     def test_geographicalposition_ecef(self):
         """Test the tranform.GeographicalPosition EC-EF transform."""
@@ -135,9 +177,9 @@ class transform_tests(unittest.TestCase):
         elv = lwa1.elev
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
-        self.assertAlmostEqual(g0.ecef[0], lwa1.get_geocentric_location()[0], 6)
-        self.assertAlmostEqual(g0.ecef[1], lwa1.get_geocentric_location()[1], 6)
-        self.assertAlmostEqual(g0.ecef[2], lwa1.get_geocentric_location()[2], 6)
+        self.assertAlmostEqual(g0.ecef[0], lwa1.geocentric_location[0], 6)
+        self.assertAlmostEqual(g0.ecef[1], lwa1.geocentric_location[1], 6)
+        self.assertAlmostEqual(g0.ecef[2], lwa1.geocentric_location[2], 6)
         
     def test_geographicalposition_lst(self):
         """Test the tranform.GeographicalPosition sidereal time."""
@@ -167,6 +209,8 @@ class transform_tests(unittest.TestCase):
         
         g0 = transform.GeographicalPosition([lon,lat,elv])
         p0 = transform.PlanetaryPosition('Jupiter')
+        str(p0)
+        repr(p0)
         
         d0 = transform.PointingDirection(p0, g0)
         
@@ -186,11 +230,13 @@ class transform_tests(unittest.TestCase):
         g0 = transform.GeographicalPosition([lon,lat,elv])
         p0 = transform.PlanetaryPosition('Jupiter')
         d0 = transform.PointingDirection(p0, g0)
+        str(d0)
+        repr(d0)
         
-        self.assertAlmostEqual(d0.hrz(t0)[0], jove.az *180.0/math.pi, 1)
-        self.assertAlmostEqual(d0.hrz(t0)[1], jove.alt*180.0/math.pi, 1)
+        self.assertAlmostEqual(d0.hrz(t0)[0], jove.az *180.0/math.pi, 0)
+        self.assertAlmostEqual(d0.hrz(t0)[1], jove.alt*180.0/math.pi, 0)
         
-    def test_pointingdirection_azalt(self):
+    def test_pointingdirection_rst(self):
         """Test the transform.PointingDirection az/alt transform."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')

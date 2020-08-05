@@ -1,22 +1,19 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module that contains various helpers for the lsl.reader module.
 
-.. versionadded:: 1.3.0
+.. versionadded:: 2.0.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 from bisect import bisect
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['FilePositionSaver', 'SplitFileWrapper']
 
 
@@ -42,7 +39,7 @@ class SplitFileWrapper(object):
     Class to allow seamless access to a file that has been split into parts.
     """
     
-    def __init__(self, filenames, sort=True):
+    def __init__(self, filenames, sort=True, buffering=-1):
         self._filenames = filenames
         if sort:
             self._filenames.sort()
@@ -56,6 +53,7 @@ class SplitFileWrapper(object):
         
         self.name = "%s+%i_others" % (self._filenames[0], self._nfiles-1)
         self.mode = 'rb'
+        self.buffering = buffering
         self._open_part(0)
         self.closed = False
         
@@ -74,7 +72,7 @@ class SplitFileWrapper(object):
         if index is None:
             index = min([self._idx + 1, self._nfiles-1])
         self._idx = index
-        self._fh = open(self._filenames[self._idx], self.mode)
+        self._fh = open(self._filenames[self._idx], self.mode, self.buffering)
         self._pos = self._offsets[self._idx]
         
     def close(self):

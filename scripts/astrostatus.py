@@ -1,15 +1,14 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Application to calculate real-time ephemeris for a LWA site.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import math
 import time
@@ -24,7 +23,6 @@ from lsl.misc import telemetry
 telemetry.track_script()
 
 
-__revision__  = "$Revision: 94 $"
 __version__   = "dev"
 __author__    = "P.S.Ray"
 

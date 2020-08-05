@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to read in VDIF data.  This module defines the following 
 classes for storing the VIDF data found in a file:
@@ -28,13 +26,14 @@ get_thread_count
   threads are present in the file.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
+import warnings
 from datetime import datetime
 
 from lsl import astro
@@ -51,9 +50,9 @@ telemetry.track_module()
 
 
 __version__ = '0.4'
-__revision__ = '$Rev$'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_guppi_header', 'read_frame', 
-           'get_frame_size', 'get_thread_count', 'get_frames_per_second', 'get_sample_rate']
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'has_guppi_header', 'read_guppi_header', 
+           'read_frame', 'get_frame_size', 'get_thread_count', 'get_frames_per_second', 
+           'get_sample_rate']
 
 
 
@@ -66,7 +65,7 @@ def _crcc(data, length=48, mask=0o40003, cycle=16):
     """
     
     state = 0
-    for i in xrange(length):
+    for i in range(length):
         q = state & 1
         if ((data >> i) & 1) ^ q == 0:
             state &= -2
@@ -118,8 +117,8 @@ class FrameHeader(FrameHeaderBase):
     @property
     def time(self):
         """
-        Function to convert the time tag to seconds since the UNIX epoch as a two-
-        element tuple.
+        Function to convert the time tag to seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
@@ -131,6 +130,7 @@ class FrameHeader(FrameHeaderBase):
         # Get the frame MJD by adding the seconds_from_epoch value to the epoch
         frameMJD_i = epochMJD + self.seconds_from_epoch // 86400
         frameMJD_f = (self.seconds_from_epoch % 86400) / 86400.0
+        frameMJD_s = 0.0
         
         if self.sample_rate == 0.0:
             # Try to get the sub-second time by parsing the extended user data
@@ -139,7 +139,7 @@ class FrameHeader(FrameHeaderBase):
                 eud = self.extended_user_data
                 sample_rate = eud['sample_rate']
                 sample_rate *= 1e6 if eud['sample_rate_units'] == 'MHz' else 1e3
-            
+                
                 ## How many samples are in each frame?
                 dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		     # 8-byte chunks -> bytes - full header + legacy offset
                 samplesPerWord = 32 // self.bits_per_sample					     # dimensionless
@@ -149,10 +149,10 @@ class FrameHeader(FrameHeaderBase):
                 ## What is the frame rate?
                 frameRate = sample_rate // nSamples
                 
-                frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
+                frameMJD_s += 1.0*self.frame_in_second/frameRate
             
             except KeyError:
-                pass
+                warnings.warn("Insufficient information to determine exact frame timestamp, time will be approximate", RuntimeWarning)
                 
         else:
             # Use what we already have been told
@@ -165,16 +165,14 @@ class FrameHeader(FrameHeaderBase):
             ## What is the frame rate?
             frameRate = self.sample_rate // nSamples
             
-            frameMJD_f += 1.0*self.frame_in_second/frameRate/86400.0
+            frameMJD_s += 1.0*self.frame_in_second/frameRate
             
         # Convert from MJD to UNIX time
         if frameMJD_f > 1:
             frameMJD_i += 1
             frameMJD_f -= 1
-        seconds_i = int(astro.utcjd_to_unix(frameMJD_i + astro.MJD_OFFSET))
-        seconds_f = frameMJD_f * 86400.0
-        
-        return seconds_i, seconds_f
+            
+        return FrameTimestamp.from_pulsar_mjd(frameMJD_i, frameMJD_f, frameMJD_s)
         
     @property
     def id(self):
@@ -338,16 +336,50 @@ class Frame(FrameBase):
         return self.header.central_freq
 
 
+def has_guppi_header(filehandle):
+    """
+    Determine if a VDIF file has a GUPPI header or not.
+    
+    .. versionadded:: 2.0.0
+    """
+    
+    has_header = False
+    with FilePositionSaver(filehandle):
+        # Read in the first 16kB
+        block = filehandle.read(16384)
+        try:
+            block = block.decode(encoding='ascii', errors='ignore')
+        except AttributeError:
+            pass
+            
+        if block.find('TELESCOP') != -1 \
+           or block.find('END') != -1 \
+           or block.find('CONTINUE') != -1:
+            has_header = True
+            
+    return has_header
+
+
 def read_guppi_header(filehandle):
     """
     Read in a GUPPI header at the start of a VDIF file from the VLA.  The 
     contents of the header are returned as a dictionary.
     """
     
-    # Read in the GUPPI header
+    # Is there a GUPPI header?
     header = {}
+    if not has_guppi_header(filehandle):
+        warnings.warn("GUPPI header not found, returning an empty dictionary", RuntimeWarning)
+        return header
+        
+    # Read in the GUPPI header
     while True:
         line = filehandle.read(80)
+        try:
+            line = line.decode(encoding='ascii', errors='ignore')
+        except AttributeError:
+            pass
+            
         if line[:3] == 'END':
             break
         elif line[:8] == 'CONTINUE':
@@ -382,7 +414,7 @@ def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
         newFrame = read_vdif(filehandle, Frame(), central_freq=central_freq, sample_rate=sample_rate)
     except gSyncError:
         mark = filehandle.tell()
-        raise SyncError(location=mark)
+        raise SyncError(type='VDIF', location=mark)
     except gEOFError:
         raise EOFError
         
@@ -497,13 +529,15 @@ def get_frames_per_second(filehandle):
                 
     # Pull out the mode
     mode = {}
-    for key,value in cur.iteritems():
+    for key in cur.keys():
+        value = cur[key]
         try:
             mode[value] += 1
         except KeyError:
             mode[value] = 1
     best, bestValue = 0, 0
-    for key,value in mode.iteritems():
+    for key in mode.keys():
+        value = mode[key]
         if value > bestValue:
             best = key
             bestValue = value

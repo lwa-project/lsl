@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Given a TBN file, plot the time averaged spectra for each digitizer input.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -75,7 +74,7 @@ def main(args):
     
     idf = LWA1DataFile(args.filename)
     
-    nFramesFile = idf.get_info('nFrames')
+    nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     antpols = len(antennas)
     
@@ -98,7 +97,7 @@ def main(args):
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
     central_freq = idf.get_info('freq1')
     
     # File summary
@@ -133,12 +132,12 @@ def main(args):
     masterWeight = numpy.zeros((nChunks, antpols, LFFT))
     masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
     
-    for i in xrange(nChunks):
+    for i in range(nChunks):
         print("Working on chunk #%i of %i" % (i+1, nChunks))
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
-        except Exception, e:
+        except Exception as e:
             print("Error: %s" % str(e))
             continue
             
@@ -146,7 +145,7 @@ def main(args):
         # the total number of frames read.  This is needed to keep the averages correct.
         
         freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose, sample_rate=srate)
-        for stand in xrange(tempSpec.shape[0]):
+        for stand in range(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
             
@@ -168,7 +167,7 @@ def main(args):
     # Deal with the `keep` options
     if args.keep == 'all':
         antpolsDisp = int(numpy.ceil(antpols/20))
-        js = [i for i in xrange(antpols)]
+        js = [i for i in range(antpols)]
     else:
         antpolsDisp = int(numpy.ceil(len(args.keep)*2/20))
         if antpolsDisp < 1:
@@ -191,10 +190,10 @@ def main(args):
         figsY = 4
         figsX = 5
     figsN = figsX*figsY
-    for i in xrange(antpolsDisp):
+    for i in range(antpolsDisp):
         # Normal plotting
         fig = plt.figure()
-        for k in xrange(i*figsN, i*figsN+figsN):
+        for k in range(i*figsN, i*figsN+figsN):
             try:
                 j = js[k]
                 currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
@@ -206,7 +205,7 @@ def main(args):
             # If there is more than one chunk, plot the difference between the global 
             # average and each chunk
             if nChunks > 1 and not args.disable_chunks:
-                for k in xrange(nChunks):
+                for k in range(nChunks):
                     # Some files are padded by zeros at the end and, thus, carry no 
                     # weight in the average spectra.  Skip over those.
                     if masterWeight[k,j,:].sum() == 0:

@@ -1,25 +1,30 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module that contains the base FrameHeader, FramePayload, and Frame 
 classes for all of the LSL readers.
 
-.. versionadded:: 1.3.0
+.. versionadded:: 2.0.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
 
 import copy
+import pytz
 import numpy
 from textwrap import fill as tw_fill
+from datetime import datetime, timedelta
 
-__version__ = '0.1'
-__revision__ = '$Rev$'
-__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase']
+from astropy.time import Time as AstroTime
+
+from lsl.common import dp as dp_common
+from lsl.astro import unix_to_utcjd, MJD_OFFSET
+
+
+__version__ = '0.2'
+__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase', 'FrameTimestamp']
 
 
 def _build_repr(name, attrs=[]):
@@ -182,8 +187,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -201,8 +206,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -220,8 +225,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -240,8 +245,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -259,8 +264,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -279,8 +284,8 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float)):
-            tY = (int(y), y%1)
+        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+            tY = y
         else:
             raise TypeError("Unsupported type: '%s'" % type(y).__name__)
             
@@ -288,21 +293,255 @@ class FrameBase(object):
             return True
         else:
             return False
-            
-    def __cmp__(self, y):
+
+
+class FrameTimestamp(object):
+    """
+    Class to represent the UNIX timestamp of a data frame as an integer 
+    number of seconds and a fractional number of seconds.
+    """
+    
+    def __init__(self, si=0, sf=0.0):
+        if isinstance(si, (float, numpy.floating)):
+            sf = sf + (si - int(si))
+            si = int(si)
+        # Make sure sf is [0.0, 1.0)
+        if sf >= 1:
+            sfi = int(sf)
+            sff = sf - sfi
+            si += sfi
+            sf = sff
+        elif sf < 0:
+            sfi = int(sf) - 1
+            sff = sf - sfi
+            si += sfi
+            sf = sff
+        self._int = int(si)
+        self._frac = float(sf)
+        
+    @classmethod
+    def from_dp_timetag(cls, value, offset=0):
         """
-        Compare two frames based on the time tags.  This is helpful for 
-        sorting things.
+        Create a new FrameTimestamp instance from a raw DP timetag with an optional
+        offset.
         """
         
-        tX = self.time
-        if not isinstance(y, FrameBase):
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
-        tY = y.time
-           
-        if tY > tX:
-            return -1
-        elif tX > tY:
-            return 1
+        tt = int(value) - offset
+        s = tt // int(dp_common.fS)
+        f = (tt - s*int(dp_common.fS)) / dp_common.fS
+        return cls(s, f)
+        
+    @classmethod
+    def from_mjd_mpm(cls, mjd, mpm):
+        """
+        Create a new FrameTimestamp from a MJD/MPM (milliseconds past midnight) pair.
+        """
+        
+        imjd = int(mjd)
+        fmjd = mjd - imjd
+        mpm = mpm + int(fmjd*86400*1000)
+        s =  mpm // 1000
+        f = (mpm - s*1000) / 1000.0
+        s = s + (imjd - 40587)*86400
+        return cls(s, f)
+        
+    @classmethod
+    def from_pulsar_mjd(cls, mjd, mjd_frac, sec_frac):
+        """
+        Create a new FrameTimstamp from a three-element tuple of integer number 
+        of MJD days, fractional MJD day, and fractional seconds.
+        """
+        
+        s = (mjd - 40587)*86400
+        f = sec_frac
+        s1 = int(mjd_frac * 86400)
+        return cls(s+s1, f)
+        
+    def __str__(self):
+        dt = self.datetime
+        return str(dt)
+        
+    def __repr__(self):
+        return "<FrameTimestamp i=%i, f=%.9f>" % (self._int, self._frac)
+        
+    def __int__(self):
+        return self._int
+        
+    def __float__(self):
+        return self._int+self._frac
+        
+    def __getitem__(self, i):
+        if i == 0:
+            return self._int
+        elif i == 1:
+            return self._frac
         else:
-            return 0
+            raise IndexError
+            
+    def __add__(self, other):
+        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
+            oi = int(other)
+            of = other - oi
+            _int = self._int + oi
+            _frac = self._frac + of
+            if _frac >= 1:
+                _int += 1
+                _frac -= 1
+            return FrameTimestamp(_int, _frac)
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __iadd__(self, other):
+        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
+            oi = int(other)
+            of = other - oi
+            self._int += oi
+            self._frac += of
+            if self._frac >= 1:
+                self._int += 1
+                self._frac -= 1
+            return self
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __sub__(self, other):
+        if isinstance(other, FrameTimestamp):
+            oi, of = other[0], other[1]
+            _int = self._int - oi
+            _frac = self._frac - of
+            if _frac < 0:
+                _int -= 1
+                _frac += 1
+            return _int+_frac
+        elif isinstance(other, (int, float, numpy.integer, numpy.floating)):
+            oi = int(other)
+            of = other - oi
+            _int = self._int - oi
+            _frac = self._frac - of
+            if _frac < 0:
+                _int -= 1
+                _frac += 1
+            return FrameTimestamp(_int, _frac)
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __isub__(self, other):
+        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
+            oi = int(other)
+            of = other - oi
+            self._int -= oi
+            self._frac -= of
+            if self._frac < 0:
+                self._int -= 1
+                self._frac += 1
+            return self
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __eq__(self, y):
+        if isinstance(y, FrameTimestamp):
+            return self._int == y._int and self._frac == y._frac
+        elif isinstance(y, (int, numpy.integer)):
+            return self._int == y and self._frac == 0.0
+        elif isinstance(y, (float, numpy.floating)):
+            return float(self) == float(y)
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            
+    def __ne__(self, y):
+        return not (self == y)
+            
+    def __gt__(self, y):
+        if isinstance(y, FrameTimestamp):
+            return (self._int > y._int) or (self._int == y._int and self._frac > y._frac)
+        elif isinstance(y, (int, numpy.integer)):
+            return self._int > y or (self._int == y and self._frac > 0.0)
+        elif isinstance(y, (float, numpy.floating)):
+            return float(self) > y
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            
+    def __ge__(self, y):
+        return (self > y or self == y)
+        
+    def __lt__(self, y):
+        if isinstance(y, FrameTimestamp):
+            return (self._int < y._int) or (self._int == y._int and self._frac < y._frac)
+        elif isinstance(y, (int, numpy.integer)):
+            return self._int < y
+        elif isinstance(y, (float, numpy.floating)):
+            return float(self) < y
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            
+    def __le__(self, y):
+        return (self < y or self == y)
+        
+    @property
+    def unix(self):
+        """
+        UNIX timestamp as a floating point value.
+        """
+        
+        return float(self)
+            
+    @property
+    def mjd(self):
+        """
+        MJD as a floating point value.
+        """
+        
+        return unix_to_utcjd(self) - MJD_OFFSET
+        
+    @property
+    def pulsar_mjd(self):
+        """
+        MJD as  three-element tuple of integer number of MJD days, fractional
+        MJD day, and fractional seconds.
+        """
+        
+        days = self._int // 86400
+        frac = (self._int - days*86400) / 86400.0
+        return (days + 40587, frac, self._frac)
+        
+    @property
+    def dp_timetag(self):
+        """
+        Timestamp as a DP timetag (ticks of a 196 MHz clock since UTC midnight
+        on January 1, 1970).
+        """
+        
+        tt = self._int * int(dp_common.fS)
+        tt = tt + int(self._frac*dp_common.fS)
+        return tt
+        
+    @property
+    def datetime(self):
+        """
+        Timestamp as a naive `datetime.datetime` instance in UTC.
+        """
+        
+        s = self._int
+        us = int(self._frac*1e6)
+        if us >= 1000000:
+            s += 1
+            us -= 1000000
+        dt = datetime.utcfromtimestamp(s)
+        dt += timedelta(microseconds=us)
+        return dt
+        
+    @property
+    def utc_datetime(self):
+        """
+        Timestamp as a time zone-aware datetime instance in UTC.
+        """
+        
+        return pytz.utc.localize(self.datetime)
+        
+    @property
+    def astropy(self):
+        """
+        Timestamp as an `astropy.time.Time` instance.
+        """
+        
+        return AstroTime(self._int, self._frac, format='unix', scale='utc')

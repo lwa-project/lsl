@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.common.stations module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import ephem
@@ -20,8 +18,7 @@ from lsl.common.paths import DATA_BUILD
 from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
 
 
-__revision__ = "$Rev$"
-__version__  = "0.3"
+__version__  = "0.4"
 __author__    = "Jayce Dowell"
 
 
@@ -68,7 +65,7 @@ class stations_tests(unittest.TestCase):
         self.assertAlmostEqual(lwa1.lat, lwa1Prime.lat)
         self.assertAlmostEqual(lwa1.long, lwa1Prime.long)
         self.assertAlmostEqual(lwa1.elev, lwa1Prime.elev)
-        for i in xrange(520):
+        for i in range(520):
             self.assertEqual(lwa1.antennas[i].id, lwa1Prime.antennas[i].id)
             self.assertEqual(lwa1.antennas[i].stand.id, lwa1Prime.antennas[i].stand.id)
             self.assertEqual(lwa1.antennas[i].digitizer, lwa1Prime.antennas[i].digitizer)
@@ -89,7 +86,7 @@ class stations_tests(unittest.TestCase):
         self.assertAlmostEqual(lwasv.lat, lwasvPrime.lat)
         self.assertAlmostEqual(lwasv.long, lwasvPrime.long)
         self.assertAlmostEqual(lwasv.elev, lwasvPrime.elev)
-        for i in xrange(512):
+        for i in range(512):
             self.assertEqual(lwasv.antennas[i].id, lwasvPrime.antennas[i].id)
             self.assertEqual(lwasv.antennas[i].stand.id, lwasvPrime.antennas[i].stand.id)
             self.assertEqual(lwasv.antennas[i].digitizer, lwasvPrime.antennas[i].digitizer)
@@ -99,6 +96,31 @@ class stations_tests(unittest.TestCase):
         # Check independence
         lwasvPrime.antennas[100].stand.id = 888
         self.assertTrue(lwasv.antennas[100].stand.id != lwasvPrime.antennas[100].stand.id)
+        
+    def test_strings(self):
+        """Test string representations in the stations module."""
+        
+        lwa1 = stations.lwa1
+        str(lwa1)
+        repr(lwa1)
+        
+        str(lwa1.antennas[0])
+        repr(lwa1.antennas[0])
+        
+        str(lwa1.antennas[0].fee)
+        repr(lwa1.antennas[0].fee)
+        
+        str(lwa1.antennas[0].stand)
+        repr(lwa1.antennas[0].stand)
+        
+        str(lwa1.antennas[0].cable)
+        repr(lwa1.antennas[0].cable)
+        
+        str(lwa1.antennas[0].arx)
+        repr(lwa1.antennas[0].arx)
+        
+        str(lwa1.interface)
+        repr(lwa1.interface)
         
     def test_ecef_conversion(self):
         """Test the stations.geo_to_ecef() function."""
@@ -175,6 +197,21 @@ class stations_tests(unittest.TestCase):
         
         ssmifFile = os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat')
         out = stations.parse_ssmif(ssmifFile)
+        
+    def test_responses(self):
+        """Test the various frequency responses."""
+        
+        lwa1 = stations.lwa1
+        lwa1[0].fee.response()
+        lwa1[0].cable.response()
+        for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
+            lwa1[0].arx.response(filt)
+            
+        lwasv = stations.lwasv
+        lwasv[0].fee.response()
+        lwasv[0].cable.response()
+        for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
+            lwasv[0].arx.response(filt)
 
 
 class stations_test_suite(unittest.TestSuite):

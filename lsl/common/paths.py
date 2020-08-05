@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*
-
 """
 Module to set up path information for the LWA Software Library.  Two 
 variables are defined by this module:
@@ -13,11 +11,11 @@ DATA
     the absolute path to the data directory where data files are stored
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import imp
@@ -27,7 +25,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['MODULE', 'DATA', 'MODULE_BUILD', 'DATA_BUILD']
 
 

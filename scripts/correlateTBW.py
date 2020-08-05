@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script that reads in TBW data and runs a cross-correlation on it.  
 The results are saved in the FITS IDI format.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -97,7 +96,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
         sys.stdout.flush()
         
         # Loop over sub-integrations (set by nSec)
-        for k in xrange(nSec):
+        for k in range(nSec):
             blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
             
             toUse = numpy.where( (freq>=5.0e6) & (freq<=93.0e6) )
@@ -162,15 +161,15 @@ def main(args):
     
     idf = LWA1DataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nFrames') // (30000 * len(antennas) // 2)
+    nInts = idf.get_info('nframe') // (30000 * len(antennas) // 2)
     
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
-    for i in xrange(len(antennas)):
+    for i in range(len(antennas)):
         ant = antennas[i]
         if ant.combined_status != 33 and not args.all:
             pass
@@ -197,7 +196,7 @@ def main(args):
         
     # Number of frames to read in at once and average
     nFrames = 30000
-    nSets = idf.get_info('nFrames') // (30000*len(antennas)//2)
+    nSets = idf.get_info('nframe') // (30000*len(antennas)//2)
     
     print("Data type:  %s" % type(idf))
     print("Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sample_rate))

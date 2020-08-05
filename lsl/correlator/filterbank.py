@@ -1,61 +1,24 @@
-# -*- coding: utf-8 -*-
-
 """
 This module implements a uniform DFT filter bank for use in calculating 
 spectra as an alternative to a simple FFT.  The implementation here is based 
 on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
-
-.. versionchanged:: 1.0.1
-    Added support for using PyFFTW instead of NumPy for the FFTs
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 
 from lsl.correlator.fx import null_window
 
-try:
-    import os
-    import pickle
-    import pyfftw
-    
-    from lsl.common.paths import DATA as dataPath
-    
-    # Enable the PyFFTW cache
-    if not pyfftw.interfaces.cache.is_enabled():
-        pyfftw.interfaces.cache.enable()
-        pyfftw.interfaces.cache.set_keepalive_time(60)
-        
-    # Read in the wisdom (if it exists)
-    wisdomFilename = os.path.join(dataPath, 'pyfftw-wisdom.pkl')
-    if os.path.exists(wisdomFilename):
-        fh = open(wisdomFilename, 'r')
-        wisdom = pickle.load(fh)
-        fh.close()
-        
-        pyfftw.import_wisdom(wisdom)
-        useWisdom = True
-    else:
-        useWisdom = False
-        
-    usePyFFTW = True
-    
-except ImportError:
-    usePyFFTW = False
-    useWisdom = False
-
-
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
-__revision__ = '$Rev$'
+__version__ = '0.3'
 __all__ = ['fft', 'fft2', 'fft4', 'fft8', 'fft16', 'fft32']
 
 def __filterCoeff(N, P):
@@ -78,29 +41,13 @@ def fft(signal, N, P=1, window=null_window):
     
     filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N, P)
     
-    if usePyFFTW and filteredSignal.dtype in (numpy.complex64, numpy.complex128):
-        dd = filteredSignal.dtype
-        di = pyfftw.empty_aligned(N, dtype=dd)
-        do = pyfftw.empty_aligned(N, dtype=dd)
-        
-        forwardPlan = pyfftw.FFTW(di, do, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE',))
-        
-        for i in range(0, P):
-            di[:] = filteredSignal[i*N:(i+1)*N]
-            forwardPlan(di, do)
-            try:
-                fbOutput += do
-            except NameError:
-                fbOutput = do*1.0
-                
-    else:
-        for i in range(0, P):
-            fbTemp = numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
-            try:
-                fbOutput += fbTemp
-            except NameError:
-                fbOutput = fbTemp*1.0
-                
+    for i in range(0, P):
+        fbTemp = numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
+        try:
+            fbOutput += fbTemp
+        except NameError:
+            fbOutput = fbTemp*1.0
+            
     return fbOutput
 
 def fft2(signal, N, window=null_window):
@@ -137,4 +84,3 @@ def fft32(signal, N, window=null_window):
     """
 
     return fft(signal, N, P=32, window=window)
-

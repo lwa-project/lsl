@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.reader.buffer module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import unittest
@@ -19,7 +17,6 @@ from lsl.reader import errors
 from lsl.reader import buffer
 
 
-__revision__ = "$Rev$"
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
@@ -149,7 +146,7 @@ class buffer_tests(unittest.TestCase):
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
-            for i in xrange(1, len(cFrames)):
+            for i in range(1, len(cFrames)):
                 pS, pP = cFrames[i-1].id
                 cS, cP = cFrames[i].id
                 
@@ -230,7 +227,7 @@ class buffer_tests(unittest.TestCase):
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
-            for i in xrange(1, len(cFrames)):
+            for i in range(1, len(cFrames)):
                 pS, pP = cFrames[i-1].id
                 cS, cP = cFrames[i].id
                 
@@ -326,7 +323,7 @@ class buffer_tests(unittest.TestCase):
             self.assertEqual(len(cFrames), 4)
             
             # Check the order
-            for i in xrange(1, len(cFrames)):
+            for i in range(1, len(cFrames)):
                 pB, pT, pP = cFrames[i-1].id
                 cB, cT, cP = cFrames[i].id
                 
@@ -402,7 +399,7 @@ class buffer_tests(unittest.TestCase):
             self.assertEqual(len(cFrames), 4)
             
             # Check the order
-            for i in xrange(1, len(cFrames)):
+            for i in range(1, len(cFrames)):
                 pB, pT, pP = cFrames[i-1].id
                 cB, cT, cP = cFrames[i].id
                 
@@ -421,7 +418,7 @@ class buffer_tests(unittest.TestCase):
             self.assertEqual(len(cFrames), 4)
             
             # Check the order
-            for i in xrange(1, len(cFrames)):
+            for i in range(1, len(cFrames)):
                 pB, pT, pP = cFrames[i-1].id
                 cB, cT, cP = cFrames[i].id
                 
@@ -541,7 +538,7 @@ class buffer_tests(unittest.TestCase):
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
-            for i in xrange(1, len(cFrames)):
+            for i in range(1, len(cFrames)):
                 pC = cFrames[i-1].header.first_chan
                 cC = cFrames[i].header.first_chan
                 
@@ -618,7 +615,7 @@ class buffer_tests(unittest.TestCase):
             self.assertEqual(len(cFrames), nFpO)
             
             # Check the order
-            for i in xrange(1, len(cFrames)):
+            for i in range(1, len(cFrames)):
                 pC = cFrames[i-1].header.first_chan
                 cC = cFrames[i].header.first_chan
                 

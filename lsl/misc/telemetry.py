@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Basic telemetry client for LSL to help establish usage patterns
 
-.. versionadded:: 1.3.0
+.. versionadded:: 2.0.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import time
@@ -26,13 +24,12 @@ except ImportError:
     from urllib.request import urlopen
     from urllib.parse import urlencode
 from threading import RLock
-from functools import update_wrapper
+from functools import wraps
 
 from lsl.version import version as lsl_version
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
            'track_script', 'track_module',
            'track_function', 'track_function_timed',
@@ -129,6 +126,10 @@ class _TelemetryClient(object):
                                          'version'     : self.version,
                                          'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
                                          'payload'     : payload})
+                    try:
+                        payload = payload.encode()
+                    except AttributeError:
+                        pass
                     uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload, 
                                  timeout=self.timeout)
                     status = uh.read()
@@ -271,6 +272,7 @@ def track_function(user_function):
     fnc = user_function.__name__
     name = mod+'.'+fnc+'()'
     
+    @wraps(user_function)
     def wrapper(*args, **kwds):
         global _telemetry_client
         result =  user_function(*args, **kwds)
@@ -278,8 +280,7 @@ def track_function(user_function):
         _telemetry_client.track(name)
         return result
         
-    wrapper.__wrapped__ = user_function
-    return update_wrapper(wrapper, user_function)
+    return wrapper
 
 
 def track_function_timed(user_function):
@@ -294,6 +295,7 @@ def track_function_timed(user_function):
     fnc = user_function.__name__
     name = mod+'.'+fnc+'()'
     
+    @wraps(user_function)
     def wrapper(*args, **kwds):
         global _telemetry_client
         t0 = time.time()
@@ -303,8 +305,7 @@ def track_function_timed(user_function):
         _telemetry_client.track(name, t1-t0)
         return result
         
-    wrapper.__wrapped__ = user_function
-    return update_wrapper(wrapper, user_function)
+    return wrapper
 
 
 def track_method(user_method):
@@ -320,6 +321,7 @@ def track_method(user_method):
     fnc = user_method.__name__
     name = mod+'.'+'%s'+'.'+fnc+'()'
     
+    @wraps(user_method)
     def wrapper(*args, **kwds):
         global _telemetry_client
         result =  user_method(*args, **kwds)
@@ -328,8 +330,7 @@ def track_method(user_method):
         _telemetry_client.track(name % cls)
         return result
         
-    wrapper.__wrapped__ = user_method
-    return update_wrapper(wrapper, user_method)
+    return wrapper
 
 
 def track_method_timed(user_method):
@@ -345,6 +346,7 @@ def track_method_timed(user_method):
     fnc = user_method.__name__
     name = mod+'.'+'%s'+'.'+fnc+'()'
     
+    @wraps(user_method)
     def wrapper(*args, **kwds):
         global _telemetry_client
         t0 = time.time()
@@ -355,5 +357,4 @@ def track_method_timed(user_method):
         _telemetry_client.track(name % cls, t1-t0)
         return result
         
-    wrapper.__wrapped__ = user_method
-    return update_wrapper(wrapper, user_method)
+    return wrapper

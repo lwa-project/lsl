@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for analyzing images.  Currently, this module supports:
   * estimating the position-dependent background level in the image
@@ -8,11 +6,11 @@ Module for analyzing images.  Currently, this module supports:
 .. versionadded:: 1.1.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import math
 import numpy
@@ -24,7 +22,6 @@ telemetry.track_module()
 
 
 __version__ = "0.1"
-__revision__ = "$Rev$"
 __all__ = ['estimate_background', 'find_point_sources']
 
 
@@ -55,17 +52,17 @@ def estimate_background(image, window=32):
     
     # Figure out how large the background grid should be assuming a half-
     # tile overlap
-    nX = 2 * image.shape[0] / window
-    nY = 2 * image.shape[1] / window
+    nX = 2 * image.shape[0] // window
+    nY = 2 * image.shape[1] // window
     
     # Process the background grid
     backgroundX = numpy.zeros((nX,nY), dtype=numpy.float64)
     backgroundY = numpy.zeros((nX,nY), dtype=numpy.float64)
     backgroundBasis = numpy.zeros((nX,nY), dtype=image.dtype)
-    for i in xrange(nX):
-        for j in xrange(nY):
+    for i in range(nX):
+        for j in range(nY):
             ## Extract the tile area
-            tile = image[i*window/2:(i+1)*window/2,j*window/2:(j+1)*window/2]
+            tile = image[i*window//2:(i+1)*window//2,j*window//2:(j+1)*window//2]
             
             ## Compute the mean and standard deviation - both with and
             ## without progressive clipping
@@ -84,8 +81,8 @@ def estimate_background(image, window=32):
                 backgroundBasis[i,j] = 2.5*numpy.median(tile[valid]) - 1.5*m1
                 
             ## Save the center of this tile for interpolation
-            backgroundX[i,j] = i*window/2 + window/4.0
-            backgroundY[i,j] = j*window/2 + window/4.0
+            backgroundX[i,j] = i*window//2 + window/4.0
+            backgroundY[i,j] = j*window//2 + window/4.0
             
     # Deal with NaNs in the image
     good = numpy.where( numpy.isfinite(backgroundBasis) )
@@ -99,7 +96,7 @@ def estimate_background(image, window=32):
     backgroundX, backgroundY = backgroundX.ravel(), backgroundY.ravel()
     backgroundBasis = backgroundBasis.ravel()
     backgroundInterp = bisplrep(backgroundX, backgroundY, backgroundBasis, 
-                            xb=0, xe=image.shape[0], yb=0, ye=image.shape[1], kx=3, ky=3)
+                                xb=0, xe=image.shape[0], yb=0, ye=image.shape[1], kx=3, ky=3)
         
     # Evaluate
     x, y = numpy.arange(image.shape[0]), numpy.arange(image.shape[1])
@@ -154,7 +151,7 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
     radius = max([1.5*sigma, 2.0])			# Radius is the
     ## The detection box size is the smaller of the radius or half the
     ## maximum size of the convolution box
-    nHalf = min([int(radius),  (maxbox-1)/2])   	
+    nHalf = min([int(radius),  (maxbox-1)//2])   	
     ## The size of the convolution box
     nBox = 2*nHalf + 1
     
@@ -205,7 +202,7 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
     # Find all of the pixels above the threshold and run a simple "de-duplication"
     # to get the maximum inside the detection box
     ix, iy = numpy.where( convImage >= threshold )
-    for i in xrange(pixels):
+    for i in range(pixels):
         ox = ix + xx[i]
         oy = iy + yy[i]
         stars, = numpy.where( convImage[ix,iy] >= convImage[ox,oy] )
@@ -225,7 +222,7 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
     # Loop over the source positions and compute the various statistics
     nStar = 0
     bad = {'round': 0, 'sharp': 0}
-    for i in xrange(nGood): 
+    for i in range(nGood): 
         ## Sources are valid until they are not
         validSharpness = True
         validRoundness = True

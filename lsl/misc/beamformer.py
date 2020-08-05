@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Module to allow for post-acquisition delay-and-sum beamforming with integer 
 sample delays for TBW time series data (int_delay_and_sum) and phase-and-sum 
 beamforming for TBN time series data (delayAndSum).
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -27,7 +25,6 @@ telemetry.track_module()
 
 
 __version__ = '0.6'
-__revision__ = '$Rev$'
 __all__ = ['calc_delay', 'int_delay_and_sum', 'int_beam_shape', 'phase_and_sum', 'phase_beam_shape', 'circularize']
 
 
@@ -206,7 +203,7 @@ def _int_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_sh
     signals.shape = (1,signals.size)
     signals = numpy.repeat(signals, len(antennas), axis=0)
     delays = numpy.zeros((len(antennas),1), dtype=numpy.complex64)
-    for i in xrange(len(antennas)):
+    for i in range(len(antennas)):
         currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / speedOfLight
         delays[i,0] = numpy.exp(-2j*numpy.pi*freq*currDelay)
     signals *= delays
@@ -411,7 +408,7 @@ def _phase_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_
     signals.shape = (1,signals.size)
     signals = numpy.repeat(signals, len(antennas), axis=0)
     delays = numpy.zeros((len(antennas),1), dtype=numpy.complex64)
-    for i in xrange(len(antennas)):
+    for i in range(len(antennas)):
         currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / speedOfLight
         delays[i,0] = numpy.exp(-2j*numpy.pi*freq*currDelay)
     signals *= delays
@@ -471,17 +468,17 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
     
     # Build up the beam shape over all azimuths and elevations
     beam_shape =  numpy.zeros((360,90))
-    for az in xrange(360):
+    for az in range(360):
         rAz = az*numpy.pi/180.0
-        for el in xrange(90):
+        for el in range(90):
             rEl = el*numpy.pi/180.0
             beam_shape[az,el] = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
             
     # Build the output array and loop over all azimuths and elevations
     output = numpy.zeros((360,90))
-    for az in xrange(360):
+    for az in range(360):
         rAz = az*numpy.pi/180.0
-        for el in xrange(90):
+        for el in range(90):
             rEl = el*numpy.pi/180.0
             
             # Display the progress meter if the `progress' keyword is set to True.  The

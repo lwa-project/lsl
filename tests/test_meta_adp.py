@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.common.metabundleADP module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import unittest
@@ -17,7 +15,6 @@ from lsl.common import metabundleADP
 from lsl.common.paths import DATA_BUILD
 
 
-__revision__ = "$Rev$"
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
@@ -97,6 +94,11 @@ class metabundle_tests_adp(unittest.TestCase):
         """Test building a SDF from a tarball."""
         
         sdf = metabundleADP.get_sdf(mdbFileADP)
+        
+    def test_station(self):
+        """Test building a station from a tarball."""
+        
+        station = metabundleADP.get_station(mdbFileADP)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""

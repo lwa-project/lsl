@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains common values found in the ADP ICD.  The values 
 are:
@@ -17,11 +15,11 @@ filters.
     filters
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 from scipy.signal import freqz, lfilter
@@ -31,17 +29,25 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.3'
-__revision__ = '$Rev$'
-__all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'freq_to_word', 'word_to_freq', 
-           'delay_to_dpd', 'dpd_to_delay', 'gain_to_dpg', 'dpg_to_gain', 
-           'tbn_filter', 'drx_filter']
+__version__ = '0.4'
+__all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'TBN_TUNING_WORD_MIN', 'TBN_TUNING_WORD_MAX',
+           'DRX_TUNING_WORD_MIN', 'DRX_TUNING_WORD_MAX', 'DRX_BEAMS_MAX', 
+           'freq_to_word', 'word_to_freq', 'delay_to_dpd', 'dpd_to_delay', 
+           'gain_to_dpg', 'dpg_to_gain', 'tbn_filter', 'drx_filter']
 
 fS = 196.0e6	# Hz
 fC = 25e3		# Hz
 T = 1.0		# seconds
 T2 = 0.010	# seconds
 N_MAX = 8192	# bytes
+
+TBN_TUNING_WORD_MIN = 65739295         # Tuning word
+TBN_TUNING_WORD_MAX = 2037918156       # Tuning word
+
+DRX_TUNING_WORD_MIN = 222417950        # Tuning word
+DRX_TUNING_WORD_MAX = 1928352663       # Tuning word
+
+DRX_BEAMS_MAX = 3
 
 # FIR Filters
 ## TBN

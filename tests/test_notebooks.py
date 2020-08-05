@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit tests for the various LSL IPython notebooks.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import unittest
 import glob
@@ -17,8 +15,8 @@ import re
 import os
 
 currentDir = os.path.abspath(os.getcwd())
-if os.path.exists(os.path.join(currentDir, '..', 'doc', 'notebooks')):
-    MODULE_BUILD = os.path.join(currentDir, '..', 'doc', 'notebooks')
+if os.path.exists(os.path.join(currentDir, '..', 'docs', 'notebooks')):
+    MODULE_BUILD = os.path.join(currentDir, '..', 'docs', 'notebooks')
 else:
     MODULE_BUILD = None
 

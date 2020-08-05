@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """
 Collection of statistical tests not found in any of the common
 python libraries.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 from scipy.special import ndtr
@@ -19,7 +17,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['wald_wolfowitz',]
 
 

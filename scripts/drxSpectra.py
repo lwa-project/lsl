@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Given a DRX file, plot the time averaged spectra for each beam output.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import sys
 import math
@@ -60,9 +59,9 @@ def main(args):
     
     idf = LWA1DataFile(args.filename)
     
-    nFramesFile = idf.get_info('nFrames')
+    nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
-    beampols = idf.get_info('beampols')
+    beampols = idf.get_info('nbeampol')
     
     # Offset in frames for beampols beam/tuning/pol. sets
     args.skip = idf.offset(args.skip)
@@ -82,7 +81,7 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
     beam = idf.get_info('beam')
@@ -117,7 +116,7 @@ def main(args):
         window = fxc.null_window
         
     # Master loop over all of the file chunks
-    standMapper = [4*(beam-1) + i for i in xrange(4)]
+    standMapper = [4*(beam-1) + i for i in range(4)]
     masterWeight = numpy.zeros((nChunks, 4, LFFT))
     masterSpectra = numpy.zeros((nChunks, 4, LFFT))
     for i in range(nChunks):
@@ -125,14 +124,14 @@ def main(args):
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
-        except Exception, e:
+        except Exception as e:
             print("Error: %s" % str(e))
             continue
             
         # Calculate the spectra for this block of data and then weight the results by 
         # the total number of frames read.  This is needed to keep the averages correct.
         freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose, sample_rate=srate, clip_level=0)
-        for stand in xrange(tempSpec.shape[0]):
+        for stand in range(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
             

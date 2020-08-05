@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for removing multi-path scattering effects in pulsar profiles.  This 
 is based on the CLEAN-like deconvolution method presented in Bhat, N., 
@@ -12,11 +10,11 @@ http://iopscience.iop.org/0004-637X/584/2/782/fulltext/56392.text.html
     seconds.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 
@@ -27,7 +25,6 @@ telemetry.track_module()
 
 
 __version__ = "0.1"
-__revision__ = "$Rev$"
 __all__ = ['thin', 'thick', 'uniform', 'unscatter']
 
 
@@ -59,7 +56,7 @@ def thick(t, tau):
     g *= numpy.exp(-numpy.pi**2*tau/16/tPrime)
     g  = numpy.where(t > 0, g, 0)
     g /= g.sum()
-
+    
     return g
 
 
@@ -115,7 +112,7 @@ def _skewness(t, raw, resids, cc):
     t2 = ((t - tM)**2 * cc).sum()
     t3 = ((t - tM)**3 * cc).sum()
     
-    return t3 / t2**(3./2.)
+    return t3 / (t2 + 1e-15)**(3./2.)
 
 
 def _figure_of_merit(t, raw, resids, cc):
@@ -182,7 +179,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     sigma = robust.std(raw)
 
     # Loop over tScat values
-    best = 1e9
+    best = numpy.inf
     bestTau = None
     for tScat in numpy.arange(tScatMin, tScatMax, tScatStep):
         ## Setup the temporary variables
@@ -203,7 +200,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
             toRemove  = screen(tRel, tScat)
             toRemove /= toRemove.sum()
             toRemove *= gain*working.max()
-
+            
             ### Remove and continue
             cc[peak] += toRemove.sum()
             working -= toRemove

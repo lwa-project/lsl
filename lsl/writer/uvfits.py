@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for writing correlator output to a UVFITS file.  The classes and 
 functions defined in this module are based heavily off the lwda_fits library.
@@ -9,12 +7,11 @@ functions defined in this module are based heavily off the lwda_fits library.
     follows the MIRIAD convention.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
-    from functools import cmp_to_key
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import gc
@@ -35,7 +32,6 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['Uv',]
 
 
@@ -77,14 +73,14 @@ class Uv(WriterBase):
     AIPS via the UVLOD task.
     """
     
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new UVFITS object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
-            Added the 'memmap' and 'clobber' keywords to control if the file
+            Added the 'memmap' and 'overwrite' keywords to control if the file
             is memory mapped and whether or not to overwrite an existing file, 
             respectively.
         """
@@ -94,7 +90,7 @@ class Uv(WriterBase):
         
         # Open the file and get going
         if os.path.exists(filename):
-            if clobber:
+            if overwrite:
                 os.unlink(filename)
             else:
                 raise IOError("File '%s' already exists" % filename)
@@ -123,7 +119,7 @@ class Uv(WriterBase):
             stands.append(ant.stand.id)
         stands = numpy.array(stands)
         
-        arrayX, arrayY, arrayZ = site.get_geocentric_location()
+        arrayX, arrayY, arrayZ = site.geocentric_location
         
         xyz = numpy.zeros((len(stands),3))
         i = 0
@@ -141,8 +137,8 @@ class Uv(WriterBase):
             enableMapper = False
             
         ants = []
-        topo2eci = site.get_eci_transform()
-        for i in xrange(len(stands)):
+        topo2eci = site.eci_transform_matrix
+        for i in range(len(stands)):
             eci = numpy.dot(topo2eci, xyz[i,:])
             ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
             if enableMapper:
@@ -383,11 +379,12 @@ class Uv(WriterBase):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('UV-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = (self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (UV_VERSION[0], 'LWA UVFITS file format major version')
         primary.header['LWAMINV'] = (UV_VERSION[1], 'LWA UVFITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'UVFITS file data collection date')
@@ -423,11 +420,15 @@ class Uv(WriterBase):
         primary.header['CRVAL6'] = sourceDec
         
         primary.header['TELESCOP'] = self.siteName
-        primary.header['OBSERVER'] = 'ZASKY'
+        primary.header['OBSERVER'] = self.observer
         primary.header['SORT'] = ('TB', 'data is sorted in [time,baseline] order')
         
         primary.header['VISSCALE'] = (1.0, 'UV data scale factor')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:

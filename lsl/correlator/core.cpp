@@ -931,6 +931,132 @@ Cross-Multiplication And Accumulation Function ("X Engines")
     1. XEngine2 - XMAC two collections of signals
 */
 
+template<typename InType, typename OutType>
+void compute_xengine_two(long nStand,
+                         long nChan,
+                         long nFFT,
+                         long nBL,
+                         InType const* data1,
+                         InType const* data2,
+                         unsigned char const* valid1,
+                         unsigned char const* valid2,
+                         OutType* dataA) {
+    // Setup
+    Py_BEGIN_ALLOW_THREADS
+    
+    // Mapper for baseline number to stand 1, stand 2
+    long s1, s2, mapper[nBL][2];
+    long k = 0;
+    for(s1=0; s1<nStand; s1++) {
+        for(s2=s1; s2<nStand; s2++) {
+            mapper[k][0] = s1;
+            mapper[k++][1] = s2;
+        }
+    }
+    
+    // Cross-multiplication and accumulation
+    long bl, c, f;
+    OutType tempVis;
+    
+    // Time-domain blanking control
+    long nActVis;
+    
+    #ifdef _OPENMP
+        #pragma omp parallel default(shared) private(c, f, nActVis, tempVis)
+    #endif
+    {
+        #ifdef _OPENMP
+            #pragma omp for schedule(OMP_SCHEDULER)
+        #endif
+        for(bl=0; bl<nBL; bl++) {
+            nActVis = 0;
+            for(f=0; f<nFFT; f++) {
+                nActVis += (long) (*(valid1 + mapper[bl][0]*nFFT + f) & *(valid2 + mapper[bl][1]*nFFT + f));
+            }
+            
+            for(c=0; c<nChan; c++) {
+                blas_dotc_sub(nFFT, (data2 + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (data1 + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                *(dataA + bl*nChan + c) = tempVis / (float) nActVis;
+            }
+        }
+    }
+    
+    Py_END_ALLOW_THREADS
+    
+}
+
+
+template<typename InType, typename OutType>
+void compute_xengine_three(long nStand,
+                           long nChan,
+                           long nFFT,
+                           long nBL,
+                           InType const* dataX,
+                           InType const* dataY,
+                           unsigned char const* validX,
+                           unsigned char const* validY,
+                           OutType* dataA) {
+    // Setup
+    Py_BEGIN_ALLOW_THREADS
+    
+    // Mapper for baseline number to stand 1, stand 2
+    long s1, s2, mapper[nBL][2];
+    long k = 0;
+    for(s1=0; s1<nStand; s1++) {
+        for(s2=s1; s2<nStand; s2++) {
+            mapper[k][0] = s1;
+            mapper[k++][1] = s2;
+        }
+    }
+    
+    // Cross-multiplication and accumulation
+    long bl, c, f;
+    OutType tempVis;
+    
+    // Time-domain blanking control
+    long nActVisPureX, nActVisPureY, nActVisCross;
+    
+    #ifdef _OPENMP
+        #pragma omp parallel default(shared) private(c, f, nActVisPureX, nActVisPureY, nActVisCross, tempVis)
+    #endif
+    {
+        #ifdef _OPENMP
+            #pragma omp for schedule(OMP_SCHEDULER)
+        #endif
+        for(bl=0; bl<nBL; bl++) {
+            nActVisPureX = 0;
+            nActVisPureY = 0;
+            nActVisCross = 0;
+            for(f=0; f<nFFT; f++) {
+                nActVisPureX += (long) (*(validX + mapper[bl][0]*nFFT + f) & *(validX + mapper[bl][1]*nFFT + f));
+                nActVisPureY += (long) (*(validY + mapper[bl][0]*nFFT + f) & *(validY + mapper[bl][1]*nFFT + f));
+                nActVisCross += (long) (*(validX + mapper[bl][0]*nFFT + f) & *(validY + mapper[bl][1]*nFFT + f));
+            }
+            
+            for(c=0; c<nChan; c++) {
+                // XX
+                blas_dotc_sub(nFFT, (dataX + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataX + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                *(dataA + 0*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureX;
+                
+                // XY
+                blas_dotc_sub(nFFT, (dataY + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataX + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                *(dataA + 1*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross;
+                
+                // YX
+                *(dataA + 2*nBL*nChan + bl*nChan + c) = conj(*(dataA + 1*nBL*nChan + bl*nChan + c));
+                
+                // YY
+                blas_dotc_sub(nFFT, (dataY + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataY + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                *(dataA + 3*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureY;
+            }
+        }
+    }
+    
+    Py_END_ALLOW_THREADS
+    
+}
+
+
 static PyObject *XEngine2(PyObject *self, PyObject *args) {
     PyObject *signals1, *signals2, *sigValid1, *sigValid2, *output;
     PyArrayObject *data1=NULL, *data2=NULL, *valid1=NULL, *valid2=NULL, *vis=NULL;
@@ -966,11 +1092,7 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValid2 array to 2-D uint8");
         goto fail;
     }
-    if( !PyArray_ISCOMPLEX(data1) ) {
-        PyErr_Format(PyExc_RuntimeError, "Input data are not complex");
-        goto fail;
-    }
-
+    
     // Get channel count and number of FFTs stored
     nStand = (long) PyArray_DIM(data1, 0);
     nChan = (long) PyArray_DIM(data1, 1);
@@ -987,53 +1109,21 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
         goto fail;
     }
     
-    Py_BEGIN_ALLOW_THREADS
+    #define LAUNCH_XENGINE_TWO(IterType) \
+        compute_xengine_two<IterType>(nStand, nChan, nFFT, nBL, \
+                                      (IterType *) PyArray_DATA(data1), \
+                                      (IterType *) PyArray_DATA(data2), \
+                                      (unsigned char *) PyArray_DATA(valid1), \
+                                      (unsigned char *) PyArray_DATA(valid2), \
+                                      (Complex32 *) PyArray_DATA(vis))
     
-    // Mapper for baseline number to stand 1, stand 2
-    long s1, s2, mapper[nBL][2];
-    long k = 0;
-    for(s1=0; s1<nStand; s1++) {
-        for(s2=s1; s2<nStand; s2++) {
-            mapper[k][0] = s1;
-            mapper[k++][1] = s2;
-        }
+    switch( PyArray_TYPE(data1) ){
+        case( NPY_COMPLEX64  ): LAUNCH_XENGINE_TWO(Complex32); break;
+        case( NPY_COMPLEX128 ): LAUNCH_XENGINE_TWO(Complex64); break;
+        default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
     
-    // Cross-multiplication and accumulation
-    long bl, c, f;
-    Complex32 tempVis;
-    Complex32 *a, *b, *v;
-    a = (Complex32 *) PyArray_DATA(data1);
-    b = (Complex32 *) PyArray_DATA(data2);
-    v = (Complex32 *) PyArray_DATA(vis);
-    
-    // Time-domain blanking control
-    long nActVis;
-    unsigned char *u1, *u2;
-    u1 = (unsigned char *) PyArray_DATA(valid1);
-    u2 = (unsigned char *) PyArray_DATA(valid2);
-    
-    #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(c, f, nActVis, tempVis)
-    #endif
-    {
-        #ifdef _OPENMP
-            #pragma omp for schedule(OMP_SCHEDULER)
-        #endif
-        for(bl=0; bl<nBL; bl++) {
-            nActVis = 0;
-            for(f=0; f<nFFT; f++) {
-                nActVis += (long) (*(u1 + mapper[bl][0]*nFFT + f) & *(u2 + mapper[bl][1]*nFFT + f));
-            }
-            
-            for(c=0; c<nChan; c++) {
-                blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + bl*nChan + c) = tempVis / (float) nActVis;
-            }
-        }
-    }
-    
-    Py_END_ALLOW_THREADS
+    #undef LAUNCH_XENGINE_TWO
     
     output = Py_BuildValue("O", PyArray_Return(vis));
     
@@ -1113,11 +1203,7 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input sigValidY array to 2-D uint8");
         goto fail;
     }
-    if( !PyArray_ISCOMPLEX(dataX) ) {
-        PyErr_Format(PyExc_RuntimeError, "Input data are not complex");
-        goto fail;
-    }
-
+    
     // Get channel count and number of FFTs stored
     nStand = (long) PyArray_DIM(dataX, 0);
     nChan = (long) PyArray_DIM(dataX, 1);
@@ -1135,69 +1221,21 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
         goto fail;
     }
     
-    Py_BEGIN_ALLOW_THREADS
+    #define LAUNCH_XENGINE_THREE(IterType) \
+        compute_xengine_three<IterType>(nStand, nChan, nFFT, nBL, \
+                                        (IterType *) PyArray_DATA(dataX), \
+                                        (IterType *) PyArray_DATA(dataY), \
+                                        (unsigned char *) PyArray_DATA(validX), \
+                                        (unsigned char *) PyArray_DATA(validY), \
+                                        (Complex32 *) PyArray_DATA(vis))
     
-    // Mapper for baseline number to stand 1, stand 2
-    long s1, s2, mapper[nBL][2];
-    long k = 0;
-    for(s1=0; s1<nStand; s1++) {
-        for(s2=s1; s2<nStand; s2++) {
-            mapper[k][0] = s1;
-            mapper[k++][1] = s2;
-        }
+    switch( PyArray_TYPE(dataX) ){
+        case( NPY_COMPLEX64  ): LAUNCH_XENGINE_THREE(Complex32); break;
+        case( NPY_COMPLEX128 ): LAUNCH_XENGINE_THREE(Complex64); break;
+        default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
     
-    // Cross-multiplication and accumulation
-    long bl, c, f;
-    Complex32 tempVis;
-    Complex32 *a, *b, *v;
-    a = (Complex32 *) PyArray_DATA(dataX);
-    b = (Complex32 *) PyArray_DATA(dataY);
-    v = (Complex32 *) PyArray_DATA(vis);
-    
-    // Time-domain blanking control
-    long nActVisPureX, nActVisPureY, nActVisCross;
-    unsigned char *u1, *u2;
-    u1 = (unsigned char *) PyArray_DATA(validX);
-    u2 = (unsigned char *) PyArray_DATA(validY);
-    
-    #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(c, f, nActVisPureX, nActVisPureY, nActVisCross, tempVis)
-    #endif
-    {
-        #ifdef _OPENMP
-            #pragma omp for schedule(OMP_SCHEDULER)
-        #endif
-        for(bl=0; bl<nBL; bl++) {
-            nActVisPureX = 0;
-            nActVisPureY = 0;
-            nActVisCross = 0;
-            for(f=0; f<nFFT; f++) {
-                nActVisPureX += (long) (*(u1 + mapper[bl][0]*nFFT + f) & *(u1 + mapper[bl][1]*nFFT + f));
-                nActVisPureY += (long) (*(u2 + mapper[bl][0]*nFFT + f) & *(u2 + mapper[bl][1]*nFFT + f));
-                nActVisCross += (long) (*(u1 + mapper[bl][0]*nFFT + f) & *(u2 + mapper[bl][1]*nFFT + f));
-            }
-            
-            for(c=0; c<nChan; c++) {
-                // XX
-                blas_dotc_sub(nFFT, (a + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + 0*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureX;
-                
-                // XY
-                blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (a + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + 1*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross;
-                
-                // YX
-                *(v + 2*nBL*nChan + bl*nChan + c) = conj(*(v + 1*nBL*nChan + bl*nChan + c));
-                
-                // YY
-                blas_dotc_sub(nFFT, (b + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (b + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(v + 3*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureY;
-            }
-        }
-    }
-    
-    Py_END_ALLOW_THREADS
+    #undef LAUNCH_XENGINE_THREE
     
     output = Py_BuildValue("O", PyArray_Return(vis));
     

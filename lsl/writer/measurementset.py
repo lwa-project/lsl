@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for writing correlator output to a CASA measurement set.
 
 .. versionadded:: 1.2.1
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import gc
@@ -32,7 +30,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['Ms', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
@@ -92,21 +89,21 @@ try:
                 lat2 = obs.lat
                 
                 # Coordinate transformation matrices
-                trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                                       [1,  0,               0],
-                                       [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-                trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                                       [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                                       [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                trans1 = numpy.array([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+                                      [1,  0,               0],
+                                      [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+                trans2 = numpy.array([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
+                                      [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+                                      [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
                         
                 for i,(a1,a2) in enumerate(self.baselines):
                     # Go from a east, north, up coordinate system to a celestial equation, 
                     # east, north celestial pole system
                     xyzPrime = a1.stand - a2.stand
-                    xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+                    xyz = numpy.dot(trans1, numpy.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
                     
                     # Go from CE, east, NCP to u, v, w
-                    temp = trans2*xyz
+                    temp = numpy.dot(trans2, xyz)
                     uvw[i,:] = numpy.squeeze(temp)
                     
                 return uvw
@@ -123,14 +120,14 @@ try:
                 
                 return numpy.argsort(packed)
                 
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new FITS IDI object using a filename and a reference time 
             given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             
             .. versionchanged:: 1.1.2
-                Added the 'memmap' and 'clobber' keywords to control if the file
+                Added the 'memmap' and 'overwrite' keywords to control if the file
                 is memory mapped and whether or not to overwrite an existing file, 
                 respectively.
             """
@@ -140,7 +137,7 @@ try:
             
             # Open the file and get going
             if os.path.exists(filename):
-                if clobber:
+                if overwrite:
                     shutil.rmtree(filename, ignore_errors=False)
                 else:
                     raise IOError("File '%s' already exists" % filename)
@@ -165,7 +162,7 @@ try:
                 stands.append(ant.stand.id)
             stands = numpy.array(stands)
             
-            arrayX, arrayY, arrayZ = site.get_geocentric_location()
+            arrayX, arrayY, arrayZ = site.geocentric_location
             
             xyz = numpy.zeros((len(stands),3))
             for i,ant in enumerate(antennas):
@@ -176,14 +173,23 @@ try:
             # Create the stand mapper
             mapper = []
             ants = []
-            topo2eci = site.get_eci_transform()
-            for i in xrange(len(stands)):
+            topo2eci = site.eci_transform_matrix
+            for i in range(len(stands)):
                 eci = numpy.dot(topo2eci, xyz[i,:])
                 ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
                 mapper.append( stands[i] )
                 
             self.nAnt = len(ants)
             self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'inputAnts': antennas} )
+            
+        def add_header_keyword(self, name, value, comment=None):
+            """
+            Add an additional entry to the header of the primary HDU.
+            
+            .. versionadded:: 2.0.0
+            """
+            
+            raise NotImplementedError
             
         def add_data_set(self, obsTime, intTime, baselines, visibilities, pol='XX', source='z'):
             """
@@ -449,16 +455,16 @@ try:
                                             comment='Observing schedule')
             col4 = tableutil.makescacoldesc('FLAG_ROW', False, 
                                             comment='Row flag')
-            col5 = tableutil.makescacoldesc('OBSERVER', 'ZASKY', 
+            col5 = tableutil.makescacoldesc('OBSERVER', self.observer, 
                                             comment='Name of observer(s)')
-            col6 = tableutil.makescacoldesc('PROJECT', 'ZASKY', 
+            col6 = tableutil.makescacoldesc('PROJECT', self.project, 
                                             comment='Project identification string')
             col7 = tableutil.makescacoldesc('RELEASE_DATE', 0.0, 
                                             comment='Release date when data becomes public', 
                                             keywords={'QuantumUnits':['s',], 
                                                       'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                       })
-            col8 = tableutil.makescacoldesc('SCHEDULE_TYPE', 'none', 
+            col8 = tableutil.makescacoldesc('SCHEDULE_TYPE', self.mode, 
                                             comment='Observing schedule type')
             col9 = tableutil.makescacoldesc('TELESCOPE_NAME', self.siteName, 
                                             comment='Telescope Name (e.g. WSRT, VLBA)')
@@ -473,10 +479,10 @@ try:
             tb.putcell('LOG', 0, 'Not provided')
             tb.putcell('SCHEDULE', 0, 'Not provided')
             tb.putcell('FLAG_ROW', 0, False)
-            tb.putcell('OBSERVER', 0, 'ZASKY')
-            tb.putcell('PROJECT', 0, 'ZASKY')
+            tb.putcell('OBSERVER', 0, self.observer)
+            tb.putcell('PROJECT', 0, self.project)
             tb.putcell('RELEASE_DATE', 0, tStop*86400)
-            tb.putcell('SCHEDULE_TYPE', 0, 'None')
+            tb.putcell('SCHEDULE_TYPE', 0, self.mode)
             tb.putcell('TELESCOPE_NAME', 0, self.siteName)
             
             tb.flush()
@@ -590,7 +596,7 @@ try:
                                           col10, col11, col12, col13])
             tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
             
-            for i in xrange(nSource):
+            for i in range(nSource):
                 tb.putcell('DIRECTION', i, posList[i])
                 tb.putcell('PROPER_MOTION', i, [0.0, 0.0])
                 tb.putcell('CALIBRATION_GROUP', i, 0)
@@ -644,7 +650,7 @@ try:
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
             tb = table("%s/FIELD" % self.basename, desc, nrow=nSource, ack=False)
             
-            for i in xrange(nSource):
+            for i in range(nSource):
                 tb.putcell('DELAY_DIR', i, numpy.array([posList[i],]))
                 tb.putcell('PHASE_DIR', i, numpy.array([posList[i],]))
                 tb.putcell('REFERENCE_DIR', i, numpy.array([posList[i],]))
@@ -720,9 +726,9 @@ try:
                 tb.putcell('MEAS_FREQ_REF', i, 0)
                 tb.putcell('CHAN_FREQ', i, self.refVal + freq.bandFreq + numpy.arange(self.nChan)*self.channelWidth)
                 tb.putcell('REF_FREQUENCY', i, self.refVal)
-                tb.putcell('CHAN_WIDTH', i, [freq.chWidth for j in xrange(self.nChan)])
-                tb.putcell('EFFECTIVE_BW', i, [freq.chWidth for j in xrange(self.nChan)])
-                tb.putcell('RESOLUTION', i, [freq.chWidth for j in xrange(self.nChan)])
+                tb.putcell('CHAN_WIDTH', i, [freq.chWidth for j in range(self.nChan)])
+                tb.putcell('EFFECTIVE_BW', i, [freq.chWidth for j in range(self.nChan)])
+                tb.putcell('RESOLUTION', i, [freq.chWidth for j in range(self.nChan)])
                 tb.putcell('FLAG_ROW', i, False)
                 tb.putcell('FREQ_GROUP', i, i+1)
                 tb.putcell('FREQ_GROUP_NAME', i, 'group%i' % (i+1))
@@ -914,7 +920,7 @@ try:
                     
                     matrix.shape = (len(order), self.nStokes, nBand, self.nChan)
                     
-                    for j in xrange(nBand):
+                    for j in range(nBand):
                         fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=numpy.bool)
                         fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=numpy.bool)
                         wg = numpy.ones((nBL,self.nStokes))
@@ -960,7 +966,7 @@ try:
             desc = tableutil.maketabdesc([col1, col2, col3])
             tb = table("%s/DATA_DESCRIPTION" % self.basename, desc, nrow=nBand, ack=False)
             
-            for i in xrange(nBand):
+            for i in range(nBand):
                 tb.putcell('FLAG_ROW', i, False)
                 tb.putcell('POLARIZATION_ID', i, 0)
                 tb.putcell('SPECTRAL_WINDOW_ID', i, i)
@@ -1129,14 +1135,14 @@ except ImportError:
         
         _STOKES_CODES = STOKES_CODES
         
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new FITS IDI object using a filename and a reference time 
             given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             
             .. versionchanged:: 1.1.2
-                Added the 'memmap' and 'clobber' keywords to control if the file
+                Added the 'memmap' and 'overwrite' keywords to control if the file
                 is memory mapped and whether or not to overwrite an existing file, 
                 respectively.
             """

@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.astro module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import unittest
 import math
@@ -18,7 +16,6 @@ import operator
 from lsl import astro
 
 
-__revision__  = "$Rev$"
 __version__   = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -54,7 +51,14 @@ class astro_tests(unittest.TestCase):
             
         self.assertRaises(ValueError, astro.hms, 30, 0, 0)
         self.assertRaises(ValueError, astro.hms, 0, 90, 0)
-        self.assertRaises(ValueError, astro.hms, 0, 0, 100) 
+        self.assertRaises(ValueError, astro.hms, 0, 0, 100)
+        
+    def test_hms_string(self):
+        """Test astro.hms string representations."""
+        
+        h = astro.hms(3, 42, 20.3242)
+        str(h)
+        repr(h)
         
     def test_hms_reduce(self):
         """Test astro.hms.__reduce__() method."""
@@ -134,6 +138,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.dms, False, 400, 0, 0)
         self.assertRaises(ValueError, astro.dms, False, 0, 80, 0)
         self.assertRaises(ValueError, astro.dms, False, 0, 0, 500)
+        
+    def test_dms_string(self):
+        """Test astro.dms string representations."""
+        
+        d = astro.dms(True, 1, 30, 29.3245)
+        str(d)
+        repr(d)
         
     def test_dms_reduce(self):
         """Test astro.dms.__reduce__() method."""
@@ -267,6 +278,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 69, 0)
         self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 0, 73)
         
+    def tet_date_string(self):
+        """Test astro.date string representation."""
+        
+        d = astro.date(2000, 4, 28, 21, 49, 13.0238)
+        str(d)
+        repr(d)
+        
     def test_date_reduce(self):
         """Test astro.date.__reduce__() method."""
         
@@ -320,6 +338,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 39, 0, 0, 0)
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 69, 0, 0)
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 0, 73, 0)
+        
+    def test_zonedata_string(self):
+        """Test astro.zonedata string representations."""
+        
+        d = astro.zonedate(2000, 4, 28, 21, 49, 13.0238, -3600 * 5)
+        str(d)
+        repr(d)
         
     def test_zonedate_reduce(self):
         """Test astro.zonedate reduce method."""
@@ -542,6 +567,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.equ_posn, 0, 100)
         self.assertRaises(ValueError, astro.equ_posn, 0, -100)
         
+    def test_equ_posn_string(self):
+        """Test astro.equ_posn string representations."""
+        
+        e = astro.equ_posn(39.221, -24.543)
+        str(e)
+        repr(e)
+        
     def test_equ_posn_reduce(self):
         """Test astro.equ_posn.__reduce__() method."""
         
@@ -599,6 +631,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.hrz_posn, 0, 100)
         self.assertRaises(ValueError, astro.hrz_posn, 0, -100)
         
+    def test_hrz_posn_string(self):
+        """Test astro.hrz_posn string representations."""
+        
+        h = astro.hrz_posn(39.221, 46.301)
+        str(h)
+        repr(h)
+        
     def test_hrz_posn_reduce(self):
         """Test astro.hrz_posn.__reduce__() method."""
         
@@ -652,6 +691,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.gal_posn, -400, 0)
         self.assertRaises(ValueError, astro.gal_posn, 0, 100)
         self.assertRaises(ValueError, astro.gal_posn, 0, -100)
+        
+    def test_gal_posn_string(self):
+        """Test astro.gal_posn string representations."""
+        
+        g = astro.gal_posn(39.221, -24.543)
+        str(g)
+        repr(g)
         
     def test_gal_posn_reduce(self):
         """Test astro.gal_posn.__reduce__() method."""
@@ -718,6 +764,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.geo_posn, 0, 100)
         self.assertRaises(ValueError, astro.geo_posn, 0, -100)
         
+    def test_geo_posn_string(self):
+        """Test astro.geo_posn string representations."""
+        
+        g = astro.geo_posn(39.221, -24.543, 2000.345)
+        str(g)
+        repr(g)
+        
     def test_geo_posn_reduce(self):
         """Test astro.geo_posn.__reduce__() method."""
         
@@ -774,6 +827,13 @@ class astro_tests(unittest.TestCase):
         self.assertAlmostEqual(r.X, 2.409)
         self.assertAlmostEqual(r.Y, 9.324)
         self.assertAlmostEqual(r.Z, 4.442)
+        
+    def test_rect_posn_string(self):
+        """Test astro.rect_posn string representations."""
+        
+        r = astro.rect_posn(2.409, 9.324, 4.442)
+        str(r)
+        repr(r)
         
     def test_rect_posn_reduce(self):
         """Test astro.rect_posn pickle.__reduce__() method."""
@@ -924,6 +984,13 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.nutation, 0, 0, 100)
         self.assertRaises(ValueError, astro.nutation, 0, 0, -100)
         
+    def test_nutation_string(self):
+        """Test astro.nutation string representations."""
+        
+        n = astro.nutation(0.0234, -0.0421, 23.5656)
+        str(n)
+        repr(n)
+        
     def test_get_nutation(self):
         """Test astro.get_nutation() function."""
         
@@ -1005,6 +1072,16 @@ class astro_tests(unittest.TestCase):
         self.assertAlmostEqual(rst.transit, transit)
         self.assertAlmostEqual(rst.set, set)
         
+    def test_rst_time_string(self):
+        """Test astro.rst_time string representations."""
+        
+        rise = self.times[0].to_jd()
+        transit = self.times[1].to_jd()
+        set = self.times[2].to_jd()
+        rst = astro.rst_time(rise, set, transit)
+        str(rst)
+        repr(rst)
+        
     def test_get_object_rst(self):
         """Test astro.get_object_rst() function."""
         
@@ -1083,6 +1160,100 @@ class astro_tests(unittest.TestCase):
             self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
             self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
             
+    def test_get_venus_rst(self):
+        """Test astro.get_venus_rst() function."""
+        
+        ACCURACY = 2
+        
+        p = (-self.geo.lng / 360.0) + (1.002738 * astro.sec_to_jd(64))
+        transit_aa = (\
+            astro.date(2001,  1, 22, 15, 13, 21).to_jd() + p,
+            astro.date(2001,  4, 16, 10, 20, 13).to_jd() + p,
+            astro.date(2001,  8,  2,  9, 20, 11).to_jd() + p,
+            astro.date(2001, 10, 10, 10, 22, 57).to_jd() + p,
+            astro.date(1979,  2, 28,  9, 21,  6).to_jd() + p)
+            
+        itr = iter(transit_aa)
+        for t in self.times:
+            j = t.to_jd()
+            trns = astro.get_venus_rst(j, self.geo)
+            self.assertAlmostEqual(astro.utc_to_tt(trns.transit), next(itr), ACCURACY)
+            
+    def test_get_venus_equ_coord(self):
+        """Test astro.get_venus_equ_coords() function."""
+        
+        ACCURACY_RA  = 2
+        ACCURACY_DEC = 2
+        
+        ra_aa = (\
+            astro.hms(23, 19, 17.74).to_deg(),
+            astro.hms(23, 58, 49.74).to_deg(),
+            astro.hms( 6,  2, 24.55).to_deg(),
+            astro.hms(11, 37, 19.70).to_deg(),
+            astro.hms(19, 49, 36.74).to_deg()) 
+            
+        dec_aa = (\
+            astro.dms(True,   4,  6,  3.1).to_deg(),
+            astro.dms(False,  5, 12, 47.0).to_deg(),
+            astro.dms(False, 21, 47, 33.7).to_deg(),
+            astro.dms(False,  4,  0, 46.1).to_deg(),
+            astro.dms(True,  19, 45, 53.3).to_deg())  
+            
+        ira = iter(ra_aa)
+        idec = iter(dec_aa)
+        for t in self.times:
+            j = t.to_jd()
+            equ = astro.get_venus_equ_coords(j)
+            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
+            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
+            
+    def test_get_mars_rst(self):
+        """Test astro.get_mars_rst() function."""
+        
+        ACCURACY = 2
+        
+        p = (-self.geo.lng / 360.0) + (1.002738 * astro.sec_to_jd(64))
+        transit_aa = (\
+            astro.date(2001,  1, 22,  6, 53, 26).to_jd() + p,
+            astro.date(2001,  4, 16,  4,  2, 46).to_jd() + p,
+            astro.date(2001,  8,  1, 20, 13, 15).to_jd() + p,
+            astro.date(2001, 10,  9, 18,  5,  2).to_jd() + p,
+            astro.date(1979,  2, 28, 11, 41,  3).to_jd() + p)
+            
+        itr = iter(transit_aa)
+        for t in self.times:
+            j = t.to_jd()
+            trns = astro.get_mars_rst(j, self.geo)
+            self.assertAlmostEqual(astro.utc_to_tt(trns.transit), next(itr), ACCURACY)
+            
+    def test_get_mars_equ_coord(self):
+        """Test astro.get_mars_equ_coords() function."""
+        
+        ACCURACY_RA  = 2
+        ACCURACY_DEC = 2
+        
+        ra_aa = (\
+            astro.hms(14, 59, 33.45).to_deg(),
+            astro.hms(17, 40,  3.53).to_deg(),
+            astro.hms(16, 58, 30.05).to_deg(),
+            astro.hms(19, 20, 33.87).to_deg(),
+            astro.hms(22, 10, 22.21).to_deg()) 
+            
+        dec_aa = (\
+            astro.dms(True, 15, 47,  1.3).to_deg(),
+            astro.dms(True, 23, 29,  3.0).to_deg(),
+            astro.dms(True, 26, 52, 43.8).to_deg(),
+            astro.dms(True, 24, 49, 50.8).to_deg(),
+            astro.dms(True, 12, 26, 40.5).to_deg())  
+            
+        ira = iter(ra_aa)
+        idec = iter(dec_aa)
+        for t in self.times:
+            j = t.to_jd()
+            equ = astro.get_mars_equ_coords(j)
+            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
+            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
+            
     def test_get_jupiter_rst(self):
         """Test astro.get_jupiter_rst() function."""
         
@@ -1129,6 +1300,53 @@ class astro_tests(unittest.TestCase):
             equ = astro.get_jupiter_equ_coords(j)
             self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
             self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)                                                     
+            
+    def test_get_saturn_rst(self):
+        """Test astro.get_saturn_rst() function."""
+        
+        ACCURACY = 2
+        
+        p = (-self.geo.lng / 360.0) + (1.002738 * astro.sec_to_jd(64))
+        transit_aa = (\
+            astro.date(2001,  1, 21, 19, 20,  7).to_jd() + p,
+            astro.date(2001,  4, 16, 14, 11, 37).to_jd() + p,
+            astro.date(2001,  8,  2,  8,  0, 27).to_jd() + p,
+            astro.date(2001, 10, 10,  3, 39, 43).to_jd() + p,
+            astro.date(1979,  2, 28,  0, 22, 52).to_jd() + p)
+            
+        itr = iter(transit_aa)
+        for t in self.times:
+            j = t.to_jd()
+            trns = astro.get_saturn_rst(j, self.geo)
+            self.assertAlmostEqual(astro.utc_to_tt(trns.transit), next(itr), ACCURACY)
+            
+    def test_get_saturn_equ_coord(self):
+        """Test astro.get_saturn_equ_coords() function."""
+        
+        ACCURACY_RA  = 2
+        ACCURACY_DEC = 2
+        
+        ra_aa = (\
+            astro.hms( 3, 28, 56.63).to_deg(),
+            astro.hms( 3, 50, 28.83).to_deg(),
+            astro.hms( 4, 44, 15.13).to_deg(),
+            astro.hms( 4, 54, 58.74).to_deg(),
+            astro.hms(10, 51, 49.14).to_deg()) 
+            
+        dec_aa = (\
+            astro.dms(False, 16, 45, 00.0).to_deg(),
+            astro.dms(False, 18, 18,  8.8).to_deg(),
+            astro.dms(False, 20, 34,  4.1).to_deg(),
+            astro.dms(False, 20, 44, 15.8).to_deg(),
+            astro.dms(False,  9, 26, 32.8).to_deg())  
+            
+        ira = iter(ra_aa)
+        idec = iter(dec_aa)
+        for t in self.times:
+            j = t.to_jd()
+            equ = astro.get_saturn_equ_coords(j)
+            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
+            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
             
     def test_get_lunar_rst(self):
         """Test astro.get_lunar_rst() function."""

@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit tests for the various LSL scripts.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import unittest
 import glob
@@ -27,7 +25,6 @@ except ImportError:
 
 
 __version__  = "0.1"
-__revision__ = "$Rev$"
 __author__   = "Jayce Dowell"
 
 
@@ -49,16 +46,13 @@ def _test_generator(script):
     """
     
     def test(self):
-        out, err = lint.py_run("%s -E --init-hook='import sys; sys.path=[%s]; sys.path.insert(0, \"%s\")'" % (script, ",".join(['"%s"' % p for p in sys.path]), os.path.dirname(MODULE_BUILD)), return_std=True)
+        out, err = lint.py_run("%s -E --extension-pkg-whitelist=numpy --init-hook='import sys; sys.path=[%s]; sys.path.insert(0, \"%s\")'" % (script, ",".join(['"%s"' % p for p in sys.path]), os.path.dirname(MODULE_BUILD)), return_std=True)
         out_lines = out.read().split('\n')
         err_lines = err.read().split('\n')
         out.close()
         err.close()
         
         for line in out_lines:
-            if line.find("Module 'numpy") != -1:
-                continue
-                
             mtch = _LINT_RE.match(line)
             if mtch is not None:
                 line_no, type, info = mtch.group('line'), mtch.group('type'), mtch.group('info')

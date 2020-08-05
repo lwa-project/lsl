@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*
-
 """
 lsl.writer - Writers for exporting LWA data to various file formats.  
 Formats include:
@@ -9,10 +7,3 @@ Formats include:
  * measurmentset - CASA MS writer also for storing correlator output, and
  * vdif          - write data to the VLBI Data Interchange Format.
 """
-
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    

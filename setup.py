@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*
-
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import imp
@@ -317,7 +315,7 @@ setup(
     description = "LWA Software Library", 
     author = "Jayce Dowell", 
     author_email = "jdowell@unm.edu", 
-    url = "https://fornax.phys.unm.edu/lwa/trac/", 
+    url = "https://github.com/lwa-project/lsl", 
     long_description = get_description('README.md'), 
     license = 'GPL',
     classifiers = ['Development Status :: 5 - Production/Stable',

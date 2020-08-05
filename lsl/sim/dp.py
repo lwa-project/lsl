@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Module to simulate observations made with the DP system.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import time
 import numpy
@@ -28,7 +26,6 @@ telemetry.track_module()
 
 
 __version__ = '0.4'
-__revision__ = '$Rev$'
 __all__ = ['basic_signal', 'point_source']
 
 
@@ -52,7 +49,7 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
         print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
             (nframes, sample_rate/1e3, len(stands)))
     
-    for i in xrange(nframes):
+    for i in range(nframes):
         if i % 1000 == 0 and verbose:
             print(" frame %i" % (i+1))
         t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
@@ -160,7 +157,7 @@ def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, 
         Added the `noise_strength` keyword to control how much noise is added to 
         the data.
         
-    .. versionchanged:: 1.3.0
+    .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
     """
 
@@ -358,7 +355,7 @@ def point_source(fh, stands, src, nframes, mode='TBN', central_freq=49.0e6, filt
         Added the `noise_strength` keyword to control how much noise is added to 
         the data.
         
-    .. versionchanged:: 1.3.0
+    .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
     """
 

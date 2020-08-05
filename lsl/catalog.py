@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 LWA astronomical source catalogs.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import math
@@ -24,7 +22,6 @@ telemetry.track_module()
 
 
 __version__   = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['CatalogEntry', 'Catalog', 'LWA_Catalog', 'PSR_Catalog', 'PKS_Catalog', 
            'PKS90_Catalog', 'C3C_Catalog', 'C4C_Catalog', 'F2FGL_Catalog', 
            'CatalogFactory']

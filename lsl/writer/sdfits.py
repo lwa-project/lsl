@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for writing spectrometer output to a SDFITS file.  The SDFITS created by this 
 modulefiles closely follow the Parkes variant of the SDFITS convention 
@@ -13,12 +11,11 @@ Analysis Package (ASAP).
     the :mod:`lsl.writer.fitsidi` writer.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
-    from functools import cmp_to_key
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import gc
@@ -27,6 +24,7 @@ import numpy
 import warnings
 from astropy.io import fits as astrofits
 from datetime import datetime
+from functools import cmp_to_key
 
 from lsl import astro
 from lsl.common.stations import lwa1
@@ -37,7 +35,6 @@ telemetry.track_module()
 
 
 __version__ = '0.5'
-__revision__ = '$Rev$'
 __all__ = ['Sd', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
@@ -75,14 +72,14 @@ class Sd(WriterBase):
         def time(self):
             return self.obsTime
             
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new SDFITS object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
-            Added the 'memmap' and 'clobber' keywords to control if the file
+            Added the 'memmap' and 'overwrite' keywords to control if the file
             is memory mapped and whether or not to overwrite an existing file, 
             respectively.
         """
@@ -95,14 +92,10 @@ class Sd(WriterBase):
         
         # Misc.
         self.tSys = 250
-        self.observer = 'UKNOWN'
-        self.project = 'UNKNOWN'
-        self.mode = 'UNKNOWN'
         
-
         # Open the file and get going
         if os.path.exists(filename):
-            if clobber:
+            if overwrite:
                 os.unlink(filename)
             else:
                 raise IOError("File '%s' already exists" % filename)
@@ -115,16 +108,6 @@ class Sd(WriterBase):
         """
 
         self.site = site
-        
-    def set_observer(self, observer, project='UNKNOWN', mode='UNKNOWN'):
-        """
-        Set the observer name, project, and observation mode (if given) to the 
-        self.observer, self.project, and self.mode attributes, respectively.
-        """
-        
-        self.observer = observer
-        self.project = project
-        self.mode = mode
         
     def add_comment(self, comment):
         """
@@ -188,11 +171,8 @@ class Sd(WriterBase):
                 return 0
                 
         # Sort the data set
-        try:
-            self.data.sort(cmp=__sortData)
-        except TypeError:
-            self.data.sort(key=cmp_to_key(__sortData))
-            
+        self.data.sort(key=cmp_to_key(__sortData))
+        
         self._write_primary_hdu()
         self._write_singledish_hdu()
         
@@ -222,6 +202,10 @@ class Sd(WriterBase):
         primary.header['ORIGIN'] = 'LSL SDFITS writer'
         primary.header['TELESCOP'] = (self.site.name, 'Telescope name')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:
@@ -286,7 +270,7 @@ class Sd(WriterBase):
             if dataSet.pol == self.stokes[-1]:
                 for b in rawList:
                     matrix = numpy.zeros((self.nStokes,self.nChan), dtype=numpy.float32)
-                    for p in xrange(self.nStokes):
+                    for p in range(self.nStokes):
                         try:
                             matrix[p,:] = tempMList[self.stokes[p]][b]
                         except KeyError:
@@ -436,7 +420,7 @@ class Sd(WriterBase):
         dataIndex = 0
         #flagIndex = 0
         n = 1
-        for i in xrange(1, 38):
+        for i in range(1, 38):
             try:
                 cs.append(eval('c%i' % i))
                 if eval('c%i.name' %i) == 'DATA':
@@ -457,7 +441,7 @@ class Sd(WriterBase):
         sd.header['OBSERVER'] = (self.observer, 'Observer name(s)')
         sd.header['PROJID']   = (self.project, 'Project name')
         sd.header['TELESCOP'] = (self.site.name, 'Telescope name')
-        x,y,z = self.site.get_geocentric_location()
+        x,y,z = self.site.geocentric_location
         sd.header['OBSGEO-X'] = (x, '[m] Antenna ECEF X-coordinate')
         sd.header['OBSGEO-Y'] = (y, '[m] Antenna ECEF Y-coordinate')
         sd.header['OBSGEO-Z'] = (z, '[m] Antenna ECEF Z-coordinate')

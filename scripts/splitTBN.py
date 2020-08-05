@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script for splitting a TBN file into smaller pieces.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -29,8 +28,8 @@ telemetry.track_script()
 def split_file(fhIn, fhOut, nCaptures, nAntpols):
     pb = ProgressBar(max=nCaptures)
     
-    for c in xrange(int(nCaptures)):
-        for i in xrange(nAntpols):
+    for c in range(int(nCaptures)):
+        for i in range(nAntpols):
             cFrame = fhIn.read(tbn.FRAME_SIZE)
             fhOut.write(cFrame)
             
@@ -102,13 +101,13 @@ def main(args):
     scale = int(math.log10(nRecursions)) + 1
     ifString = "Working on #%%%ii of %i (%%s)" % (scale, nRecursions)
     
-    for r in xrange(nRecursions):
+    for r in range(nRecursions):
         if args.date:
             filePos = fh.tell()
             junkFrame = tbn.read_frame(fh)
             fh.seek(filePos)
             
-            dt = datetime.utcfromtimestamp(sum(junkFrame.time))
+            dt = junkFrame.time.datetime
             captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
         else:
             captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count, scale)

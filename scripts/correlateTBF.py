@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Example script that reads in TBF data and runs a cross-correlation on it.  
 The results are saved in the FITS IDI format.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -25,7 +24,7 @@ speedOfLight = speedOfLight.to('m/s').value
 from lsl import astro
 from lsl.reader.ldp import LWASVDataFile
 from lsl.common import stations, metabundleADP
-from lsl.correlator import uvutil
+from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi
@@ -78,10 +77,10 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
     ref_time = 0.0
     setTime = 0.0
     wallTime = time.time()
-    for s in xrange(chunk_size):
+    for s in range(chunk_size):
         try:
             readT, t, data = idf.read(int_time)
-        except Exception, e:
+        except Exception as e:
             print("Error: %s" % str(e))
             continue
             
@@ -95,17 +94,17 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
         validY = numpy.ones((dataY.shape[0],dataY.shape[2]), dtype=numpy.uint8)
         
         ## Apply the cable delays as phase rotations
-        for i in xrange(dataX.shape[0]):
+        for i in range(dataX.shape[0]):
             gain = numpy.sqrt( antennasX[i].cable.gain(freq) )
             phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasX[i].cable.delay(freq) \
                                                    -antennasX[i].stand.z/speedOfLight))
-            for j in xrange(dataX.shape[2]):
+            for j in range(dataX.shape[2]):
                 dataX[i,:,j] *= phaseRot / gain
-        for i in xrange(dataY.shape[0]):
+        for i in range(dataY.shape[0]):
             gain = numpy.sqrt( antennasY[i].cable.gain(freq) )
             phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasY[i].cable.delay(freq)\
                                                    -antennasY[i].stand.z/speedOfLight))
-            for j in xrange(dataY.shape[2]):
+            for j in range(dataY.shape[2]):
                 dataY[i,:,j] *= phaseRot / gain
                 
         setTime = t
@@ -130,9 +129,9 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
                 a2, d2, v2 = antennasY, dataY, validY
                 
             ## Get the baselines
-            baselines = uvutil.get_baselines(a1, antennas2=a2, include_auto=True, indicies=True)
+            baselines = uvutils.get_baselines(a1, antennas2=a2, include_auto=True, indicies=True)
             blList = []
-            for bl in xrange(len(baselines)):
+            for bl in range(len(baselines)):
                 blList.append( (a1[baselines[bl][0]], a2[baselines[bl][1]]) )
                 
             ## Run the cross multiply and accumulate
@@ -185,16 +184,16 @@ def main(args):
     
     idf = LWASVDataFile(filename)
     
-    jd = astro.unix_to_utcjd(idf.get_info('tStart'))
+    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
     date = str(ephem.Date(jd - astro.DJD_OFFSET))
     nFpO = idf.get_info('nchan') // 12
     sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nFrames') // nFpO
+    nInts = idf.get_info('nframe') // nFpO
     
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
-    for i in xrange(len(antennas)):
+    for i in range(len(antennas)):
         ant = antennas[i]
         if ant.combined_status != 33 and not args.all:
             pass
@@ -223,7 +222,7 @@ def main(args):
     # Number of frames to read in at once and average
     nFrames = min([int(args.avg_time*sample_rate), nInts])
     args.offset = idf.offset(args.offset)
-    nSets = idf.get_info('nFrames') // nFpO // nFrames
+    nSets = idf.get_info('nframe') // nFpO // nFrames
     nSets = nSets - int(args.offset*sample_rate) // nFrames
     
     central_freq = idf.get_info('freq1')

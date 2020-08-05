@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains common values found in the MCS Joint Release 5 header file
 src/exec/me.h and other functions useful for working with the MCS metadata.  
@@ -40,18 +38,19 @@ The other functions:
  * Parse the binary packed metadata, 
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
-    import dbm
-else:
+if sys.version_info < (3,):
+    range = xrange
     import anydbm as dbm
+else:
+    import dbm
     
 import re
 import aipy
 import math
+import pytz
 import numpy
 import ctypes
 import struct
@@ -64,18 +63,17 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
-            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
-            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
-            'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
-            'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
-            'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 
-            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
-            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
-            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
-            'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
-            'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
+           'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
+           'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
+           'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
+           'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
+           'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 
+           'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
+           'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
+           'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
+           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
+           'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
 ME_SSMIF_FORMAT_VERSION = 7	# SSMIF format version code
@@ -584,15 +582,24 @@ def mcsg_to_gain(gain):
     return dpCommon.dpg_to_gain( _two_byte_swap(gain) )
 
 
-def mjdmpm_to_datetime(mjd, mpm):
+def mjdmpm_to_datetime(mjd, mpm, tz=None):
     """
-    Convert a MJD, MPM pair to a UTC-aware datetime instance.
+    Convert a MJD, MPM pair to a naive datetime instance.  If `tz` is not None
+    the value is converted to a time zone-aware instance in the specified time
+    zone.
     
+    .. versionchanged:: 2.0.1
+        Added the `tz` keyword and fixed the documentation.
+        
     .. versionadded:: 0.5.2
     """
     
     unix = mjd*86400.0 + mpm/1000.0 - 3506716800.0
-    return datetime.utcfromtimestamp(unix)
+    dt = datetime.utcfromtimestamp(unix)
+    if tz is not None:
+        dt = pytz.utc.localize(dt)
+        dt = dt.astimezone(tz)
+    return dt
 
 
 def datetime_to_mjdmpm(dt):
@@ -602,9 +609,15 @@ def datetime_to_mjdmpm(dt):
     
     Based off: http://paste.lisp.org/display/73536
     
+    .. versionchanged:: 2.0.1
+        Better support for time zone-aware datetime instances
+    
     .. versionadded:: 0.5.2
     """
     
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(pytz.utc)
+        
     year        = dt.year             
     month       = dt.month      
     day         = dt.day    
@@ -649,16 +662,13 @@ def status_to_string(code):
     elif code == 3:
         return "OK"
     else:
-        return "Unknown status code '%i'" % code
+        raise ValueError("Unknown status code '%i'" % code)
 
 
 def summary_to_string(code):
     """
     Convert a numerical MCS overall status code to an explination.
     """
-    
-    if code < 0 or code > 6:
-        raise ValueError("Invalid code %i" % code)
     
     if code == 0:
         return "Not normally used"
@@ -672,8 +682,10 @@ def summary_to_string(code):
         return "Booting - initializing; not yet fully operational"
     elif code == 5:
         return "Shutdown - shutting down; not ready for operation"
+    elif code == 6:
+        return "Unknown"
     else:
-        return "Status is unknown"
+        raise ValueError("Unknown summary code '%i'" % code)
 
 
 def sid_to_string(sid):
@@ -681,10 +693,7 @@ def sid_to_string(sid):
     Convert a MCS subsystem ID code into a string.
     """
     
-    if sid < 1 or sid > 19:
-        raise ValueError("Invalid sid code %i" % sid)
-    
-    if sid < 9:
+    if sid > 0 and sid <= 9:
         return "Null subsystem #%i" % sid
     elif sid == 10:
         return "MCS"
@@ -704,6 +713,8 @@ def sid_to_string(sid):
         return "DR #4"
     elif sid == 18:
         return "DR #5"
+    elif sid == 19:
+        return "ADP"
     else:
         raise ValueError("Invalid sid code %i" % sid)
 
@@ -712,9 +723,6 @@ def cid_to_string(cid):
     """
     Convert a MCS command code into a string.
     """
-    
-    if cid < 0 or cid > 41:
-        raise ValueError("Invalid cid code %i" % cid)
     
     if cid == 0:
         return "MCSSHT"
@@ -796,6 +804,10 @@ def cid_to_string(cid):
         return "OBE"
     elif cid == 39:
         return "SPC"
+    elif cid == 40:
+        return "TBF"
+    elif cid == 41:
+        return "COR"
     else:
         raise ValueError("Invalid cid code %i" % cid)
 
@@ -804,9 +816,6 @@ def mode_to_string(mode):
     """
     Convert a MCS numeric observing mode into a string.
     """
-    
-    if mode < 1 or mode > 8:
-        raise ValueError("Invalid observing mode %i" % mode)
     
     if mode == 1:
         return "TRK_RADEC"
@@ -822,6 +831,8 @@ def mode_to_string(mode):
         return "TBN"
     elif mode == 7:
         return "DIAG1"
+    elif mode == 8:
+        return "TBF"
     else:
         raise ValueError("Invalid observing mode %i" % mode)
 
@@ -850,9 +861,9 @@ def _flat_to_two(inputList, dim1, dim2):
         raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i" % (len(inputList), dim1, dim2))
     
     outputList = []
-    for i in xrange(dim1):
-        outputList.append( [None for k in xrange(dim2)] )
-        for j in xrange(dim2):
+    for i in range(dim1):
+        outputList.append( [None for k in range(dim2)] )
+        for j in range(dim2):
             try:
                 outputList[i][j] = inputList[dim2*i+j]
             except IndexError:
@@ -871,10 +882,10 @@ def _flat_to_three(inputList, dim1, dim2, dim3):
         raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i by %i" % (len(inputList), dim1, dim2, dim3))
     
     outputList = []
-    for i in xrange(dim1):
-        outputList.append( [[None for l in xrange(dim3)] for k in xrange(dim2)] )
-        for j in xrange(dim2):
-            for k in xrange(dim3):
+    for i in range(dim1):
+        outputList.append( [[None for l in range(dim3)] for k in range(dim2)] )
+        for j in range(dim2):
+            for k in range(dim3):
                 try:
                     outputList[i][j][k] = inputList[dim2*dim3*i+dim3*j+k]
                 except IndexError:
@@ -893,11 +904,11 @@ def _flat_to_four(inputList, dim1, dim2, dim3, dim4):
         raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i by %i by %i" % (len(inputList), dim1, dim2, dim3, dim4))
     
     outputList = []
-    for i in xrange(dim1):
-        outputList.append( [[[None for m in xrange(dim4)] for l in xrange(dim3)] for k in xrange(dim2)] )
-        for j in xrange(dim2):
-            for k in xrange(dim3):
-                for l in xrange(dim4):
+    for i in range(dim1):
+        outputList.append( [[[None for m in range(dim4)] for l in range(dim3)] for k in range(dim2)] )
+        for j in range(dim2):
+            for k in range(dim3):
+                for l in range(dim4):
                     try:
                         outputList[i][j][k][l] = inputList[dim2*dim3*dim4*i+dim3*dim4*j+dim4*k+l]
                     except IndexError:

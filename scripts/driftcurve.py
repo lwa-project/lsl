@@ -1,15 +1,14 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Predict driftcurve for a given site using a given antenna model.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -22,14 +21,13 @@ from scipy.interpolate import interp1d
 
 from lsl import skymap, astro
 from lsl.common import stations
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
 telemetry.track_script()
 
 
-__revision__ = "$Revision: 94 $"
 __version__  = "0.1"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
@@ -98,7 +96,7 @@ def main(args):
             corrFnc = None
         else:
             fCors = cAlts*0.0
-            for i in xrange(fCors.size):
+            for i in range(fCors.size):
                 ffnc = interp1d(cFreqs, cCorrs[:,i], bounds_error=False)
                 fCors[i] = ffnc(args.frequency/1e6)
             corrFnc = interp1d(cAlts, fCors, bounds_error=False)

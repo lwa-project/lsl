@@ -1,11 +1,9 @@
 LSL - The LWA Software Library
 ==============================
 
-[![Travis](https://travis-ci.org/lwa-project/lsl.svg?branch=master)](https://travis-ci.org/lwa-project/lsl)
+[![Travis](https://travis-ci.org/lwa-project/lsl.svg?branch=master)](https://travis-ci.org/lwa-project/lsl)  [![Coverage Status](https://coveralls.io/repos/github/lwa-project/lsl/badge.svg?branch=master)](https://coveralls.io/github/lwa-project/lsl)  [![Documentation Status](https://readthedocs.org/projects/lsl/badge/?version=latest)](https://lsl.readthedocs.io/en/latest/?badge=latest)
 
-[![Coverage Status](https://coveralls.io/repos/github/lwa-project/lsl/badge.svg?branch=master)](https://coveralls.io/github/lwa-project/lsl)
-
-### [![Paper](https://img.shields.io/badge/arXiv-1209.1576-blue.svg)](https://arxiv.org/abs/1209.1576)
+[![Paper](https://img.shields.io/badge/arXiv-1209.1576-blue.svg)](https://arxiv.org/abs/1209.1576)
 
 DESCRIPTION
 -----------
@@ -79,7 +77,7 @@ This command will set a disk-based flag that disables the reporting process.  Th
 
 DOCUMENTATION
 -------------
-See doc/README for documentation information.
+See docs/README.md for documentation information.
 
 RELEASE NOTES
 -------------

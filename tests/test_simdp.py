@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.sim.dp module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import unittest
@@ -25,7 +23,6 @@ from lsl.common import stations as lwa_common
 
 
 __version__  = "0.3"
-__revision__ = "$Rev$"
 __author__    = "Jayce Dowell"
 
 

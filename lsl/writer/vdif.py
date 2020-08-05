@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module to write VDIF frames.  The implementation of this module is similar
 to that of lsl.sim.tbw in that the primary element defined in this module is
@@ -11,11 +9,11 @@ handle.
     :mod:`lsl.sim.tbw`
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 import ephem
@@ -28,7 +26,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['Frame',]
 
 VDIF_EPOCH = ephem.Date('2000/01/01 00:00:00.00')

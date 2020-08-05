@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to read in DRX data.  This module defines the following 
 classes for storing the DRX data found in a file:
@@ -43,11 +41,11 @@ get_frames_per_obs
     Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy
@@ -65,7 +63,6 @@ telemetry.track_module()
 
 
 __version__ = '0.8'
-__revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
@@ -192,17 +189,12 @@ class Frame(FrameBase):
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
-        element tuple.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        adj_timetag = self.payload.timetag - self.header.time_offset
+        return FrameTimestamp.from_dp_timetag(self.payload.timetag, offset=self.header.time_offset)
         
-        seconds_i = adj_timetag // int(dp_common.fS)
-        seconds_f = (adj_timetag % int(dp_common.fS)) / dp_common.fS
-        
-        return seconds_i, seconds_f
-    
     @property
     def central_freq(self):
         """

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*
-
 """
 lsl.reader - Modular readers for the various LWA data formats:
  * tbw
@@ -17,10 +15,3 @@ Also include as part of this module are the LWA Development
 Primities (LDP), a collection of utilites that make reading in
 data files fun.
 """
-
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to read in DR spectrometer data.  This module defines the following 
 classes for storing the spectra found in a file:
@@ -35,11 +33,11 @@ For describing the format of data in the file, three function are provided:
     spectrometer file.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy
@@ -58,7 +56,6 @@ telemetry.track_module()
 
 
 __version__ = '0.3'
-__revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'get_data_products', 'is_linear',
            'is_stokes', 'get_sample_rate', 'get_frame_size', 'get_ffts_per_integration', 
            'get_transform_size', 'get_integration_time', 'FILTER_CODES']
@@ -246,48 +243,6 @@ class FramePayload(FramePayloadBase):
         """
         
         return [dp_common.fS * i / 2**32 for i in self.tuning_words]
-        
-    def __iadd__(self, y):
-        """
-        In-place add the data sections of two frames together or add 
-        a number to every element in the data section.
-        """
-        
-        attrs = self.header.getDataProducts()
-        
-        for attrBase in attrs:
-            for tuning in (0, 1):
-                attr = "%s%i" % (attrBase, tuning)
-                try:
-                    temp = getattr(self.payload, attr, None) + getattr(y.payload, attr, None)
-                except TypeError:
-                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.getDataProducts())))
-                except AttributeError:
-                    temp = getattr(self.payload, attr, None) + numpy.float32(y)
-                setattr(self.payload, attr, temp)
-                
-        return self
-        
-    def __imul__(self, y):
-        """
-        In-place multiple the data sections of two frames together or 
-        multiply a number to every element in the data section.
-        """
-        
-        attrs = self.header.getDataProducts()
-        
-        for attrBase in attrs:
-            for tuning in (0, 1):
-                attr = "%s%i" % (attrBase, tuning)
-                try:
-                    temp = getattr(self.payload, attr, None) * getattr(y.payload, attr, None)
-                except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.getDataProducts())))
-                except AttributeError:
-                    temp = getattr(self.payload, attr, None) * numpy.float32(y)
-                setattr(self.payload, attr, temp)
-                
-        return self
 
 
 class Frame(FrameBase):
@@ -375,16 +330,11 @@ class Frame(FrameBase):
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
-        element tuple.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        adj_timetag = self.payload.timetag - self.header.time_offset
-        
-        seconds_i = adj_timetag // int(dp_common.fS)
-        seconds_f = (adj_timetag % int(dp_common.fS)) / dp_common.fS
-        
-        return seconds_i, seconds_f
+        return FrameTimestamp.from_dp_timetag(self.payload.timetag, offset=self.header.time_offset)
         
     @property
     def central_freq(self):
@@ -489,7 +439,7 @@ def read_frame(filehandle, gain=None, verbose=False):
         newFrame = read_drspec(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell()
-        raise SyncError(location=mark)
+        raise SyncError(type='DRSpectrometer', location=mark)
     except gEOFError:
         raise EOFError
         

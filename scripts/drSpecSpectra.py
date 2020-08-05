@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Given a DR spectrometer file, plot the time averaged spectra for each 
 polarization product.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import sys
 import math
@@ -58,11 +57,11 @@ def main(args):
     idf = LWA1DataFile(args.filename)
     
     # Basic file informaiton
-    nFramesFile = idf.get_info('nFrames')
+    nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     beam = idf.get_info('beam')
-    beampols = idf.get_info('beampols')
-    tInt = idf.get_info('tInt')
+    beampols = idf.get_info('nbeampol')
+    tInt = idf.get_info('tint')
     LFFT = idf.get_info('LFFT')
     products = idf.get_info('data_products')
     
@@ -79,7 +78,7 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('tStart')) - DJD_OFFSET)
+    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
     freq = numpy.fft.fftfreq(LFFT, d=1.0/srate)
@@ -110,12 +109,12 @@ def main(args):
     # Master loop over all of the file chunks
     masterWeight = numpy.zeros((nChunks, 2*len(products), LFFT))
     masterSpectra = numpy.zeros((nChunks, 2*len(products), LFFT))
-    for i in xrange(nChunks):
+    for i in range(nChunks):
         print("Working on chunk #%i of %i" % (i+1, nChunks))
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
-        except Exception, e:
+        except Exception as e:
             print("Error: %s" % str(e))
             continue
             
@@ -123,7 +122,7 @@ def main(args):
         data = data.mean(axis=1)
         
         ## Save
-        for stand in xrange(data.shape[0]):
+        for stand in range(data.shape[0]):
             masterSpectra[i,stand,:] = data[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
             
@@ -146,7 +145,7 @@ def main(args):
     freq1, units1 = _best_freq_units(freq1)
     freq2, units2 = _best_freq_units(freq2)
     
-    for i in xrange(masterSpectra.shape[1]):
+    for i in range(masterSpectra.shape[1]):
         if i/len(products) == 0:
             freq = freq1
             units = units1

@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.sim.tbn/drx modules.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import copy
@@ -23,7 +21,6 @@ from lsl.reader import drx as drxReader
 from lsl.sim import drx as drxWriter
 
 
-__revision__ = "$Rev$"
 __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
@@ -67,7 +64,7 @@ class fake_TBN_tests(unittest.TestCase):
         # Read in a TBN frame from the test file
         fh = open(tbnFile, 'rb')
         origFrames = []
-        for i in xrange(nFrames):
+        for i in range(nFrames):
             origFrames.append( tbnReader.read_frame(fh) )
         fh.close()
         
@@ -81,7 +78,7 @@ class fake_TBN_tests(unittest.TestCase):
         # Read in the 
         fh = open(testFile, 'rb')
         fakeFrames = []
-        for i in xrange(nFrames):
+        for i in range(nFrames):
             fakeFrames.append( tbnReader.read_frame(fh) )
         fh.close()
         
@@ -184,7 +181,7 @@ class fake_DRX_tests(unittest.TestCase):
         # Read in a TBN frame from the test file
         fh = open(drxFile, 'rb')
         origFrames = []
-        for i in xrange(nFrames):
+        for i in range(nFrames):
             origFrames.append( drxReader.read_frame(fh) )
         fh.close()
         
@@ -198,7 +195,7 @@ class fake_DRX_tests(unittest.TestCase):
         # Read in the 
         fh = open(testFile, 'rb')
         fakeFrames = []
-        for i in xrange(nFrames):
+        for i in range(nFrames):
             fakeFrames.append( drxReader.read_frame(fh) )
         fh.close()
         

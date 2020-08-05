@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for regressions in the lsl.common.progress module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import numpy
@@ -16,8 +14,7 @@ import unittest
 
 from lsl.common import progress
 
-__revision__ = "$Rev$"
-__version__  = "0.1"
+__version__  = "021"
 __author__    = "Jayce Dowell"
 
 
@@ -56,6 +53,42 @@ class progress_tests(unittest.TestCase):
             
         # Without percentage
         pbar = progress.ProgressBar(print_percent=False)
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
+            
+    def test_bar_plus_default(self):
+        """Test the progress bar, default options."""
+        
+        pbar = progress.ProgressBarPlus()
+        for i in range(101):
+            pbar.inc(2)
+            pbar.dec(1)
+        
+    def test_bar_plus_attributes(self):
+        """Test the progress bar's attributes."""
+        
+        pbar2 = progress.ProgressBarPlus()
+        for i in range(101):
+            pbar2 += 2
+            pbar2 -= 1
+            
+            pbar2 = pbar2 + 1
+            pbar2 = pbar2 - 1
+            
+            self.assertEqual(pbar2.amount, i+1)
+            
+    def test_bar_plus_show(self):
+        """Test the progress bar's rendering."""
+        
+        # With percentage
+        pbar = progress.ProgressBarPlus()
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
+            
+        # Without percentage
+        pbar = progress.ProgressBarPlus(print_percent=False)
         for i in range(101):
             pbar.inc(1)
             pbar.show()

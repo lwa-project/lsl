@@ -9,6 +9,17 @@ python:
     #- pypy2.7-6.0
     #- pypy3
 
+jobs:
+  include:
+    - os: osx
+      osx_image: xcode11
+      language: sh
+      env:
+        - HOMEBREW_NO_INSTALL_CLEANUP=1
+        - HOMEBREW_NO_ANALYTICS=1
+  allow_failures:
+    - python: 2.7
+    #- python: pypy2.7-6.0
 
 addons:
     apt:
@@ -17,13 +28,19 @@ addons:
             - curl
             - git
             - pkg-config
+            - gzip
             - software-properties-common
             - python-dev
             - python3-dev
+            - libgdbm-dev
             - libfftw3-dev
             - libcfitsio-dev
             - libboost-python-dev
-        brew:
+    homebrew:
+        # update: true
+        packages:
+            - python3
+            - pkg-config
             - git
             - fftw
 
@@ -31,6 +48,9 @@ before_install:
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo add-apt-repository -y ppa:kernsuite/kern-3; fi
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -q update; fi
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -y install casacore-dev wcslib-dev; fi
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then python3 -m pip install --upgrade virtualenv; fi
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then virtualenv -p python3 "$HOME/venv"; fi
+    - if [ "$TRAVIS_OS_NAME" = "osx" ]; then source "$HOME/venv/bin/activate"; fi
 
 install:
     - pip install \
@@ -49,6 +69,14 @@ install:
     - pip install "astropy<3.2"
     - pip install aipy
     - pip install .
+    - curl https://fornax.phys.unm.edu/lwa/data/igsg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/igsg0970.18i.gz --create-dirs
+    - curl https://fornax.phys.unm.edu/lwa/data/jplg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/jplg0970.18i.gz --create-dirs
+    - curl https://fornax.phys.unm.edu/lwa/data/codg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/codg0970.18i.gz --create-dirs
+    - curl https://fornax.phys.unm.edu/lwa/data/uqrg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/uqrg0970.18i.gz --create-dirs
+
+script:
+    - cd tests
+
 
 script:
     - cd tests
@@ -62,3 +90,4 @@ after_success:
 cache:
   directories:
     - $HOME/.astropy/cache
+    - $HOME/.lsl/ionospheric_cache

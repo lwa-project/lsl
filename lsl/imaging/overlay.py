@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that provides a variety of overlays for all-sky images.  These overlays
 include:
@@ -17,11 +15,11 @@ is used for plotting.
     Added support for overlaying on images with non-zenith phase centers
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import aipy
 import ephem
@@ -34,7 +32,6 @@ telemetry.track_module()
 
 
 __version__ = "0.3"
-__revision__ = "$Rev$"
 __all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt"]
 
 
@@ -94,7 +91,8 @@ def sources(ax, antennaarray, srcs, phase_center='z', label=True, marker='x', co
     rot = aipy.coord.eq2top_m(0, pcDec)
         
     # Compute the positions of major sources and label the images
-    for name,src in srcs.iteritems():
+    for name in srcs.keys():
+        src = srcs[name]
         src.compute(antennaarray)
         eq = aipy.coord.radec2eq((src.ra-pcRA, src.dec))
         top = numpy.dot(rot, eq)
@@ -126,7 +124,7 @@ def horizon(ax, antennaarray, phase_center='z', color='white'):
     # Add in the horizon
     x = numpy.zeros(361) + numpy.nan
     y = numpy.zeros(361) + numpy.nan
-    for i in xrange(361):
+    for i in range(361):
         ra, dec = _radec_of(antennaarray, i*numpy.pi/180.0, 0.0)
         eq = aipy.coord.radec2eq((ra-pcRA,dec))
         top = numpy.dot(rot, eq)
@@ -235,7 +233,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         x *= numpy.nan
         y *= numpy.nan
         
-        for i in xrange(361):
+        for i in range(361):
             ra, dec = _radec_of(antennaarray, i*numpy.pi/180.0, el*numpy.pi/180.0)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
             top = numpy.dot(rot, eq)
@@ -248,7 +246,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         
         if el > 0 or phase_center is not 'z':
             valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
-            pos = valid.size / 2 - valid.size / 5
+            pos = valid.size // 2 - valid.size // 5
             if valid.size > 10:
                 ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % el, color=color)
             
@@ -261,7 +259,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         x *= numpy.nan
         y *= numpy.nan
         
-        for i in xrange(81):
+        for i in range(81):
             ra, dec = _radec_of(antennaarray, az*numpy.pi/180.0, i*numpy.pi/180.0)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
             top = numpy.dot(rot, eq)
@@ -273,6 +271,6 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         ax.plot(x, y, color=color)
         
         valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
-        pos = valid.size / 2 - valid.size / 5
+        pos = valid.size // 2 - valid.size // 5
         if valid.size > 10:
             ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % az, color=color)

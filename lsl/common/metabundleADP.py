@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for working with an MCS meta-data tarball and extracting the useful bits out 
 it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.LWAStation` 
 and :class:`lsl.common.sdm.SDM`.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -26,13 +24,13 @@ from lsl.common.mcsADP import *
 from lsl.common.adp import word_to_freq
 from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
 __version__ = '1.0'
-__revision__ = '$Rev$'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_station', 'get_session_metadata', 
            'get_session_spec', 'get_observation_spec', 'get_sdf', 'get_command_script', 
            'get_asp_configuration', 'get_asp_configuration_summary', 'is_valid']
@@ -87,22 +85,7 @@ def read_ses_file(filename):
         #if bses.FORMAT_VERSION not in (6,):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
-            
-        if bses.SESSION_NOBS > 150:
-            ## Pre SESSION_SPC
-            fh.seek(0)
-            
-            newStruct = []
-            for line in SSF_STRUCT.split('\n'):
-                if line.find('SESSION_SPC') != -1:
-                    continue
-                newStruct.append(line)
-            newStruct = '\n'.join(newStruct)
-            
-            bses = parse_c_struct(newStruct, endianness='little')
-            fh.readinto(bses)
-            bses.SESSION_SPC = ''
-            
+        
     record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
               'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2,
               'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4}
@@ -138,25 +121,7 @@ def read_obs_file(filename):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
             
-        if bheader.OBS_ID > 150:
-            ## Pre SESSION_SPC and OBS_BDM
-            fh.seek(0)
-            
-            newStruct = []
-            for line in OSF_STRUCT.split('\n'):
-                if line.find('OBS_BDM') != -1:
-                    continue
-                if line.find('SESSION_SPC') != -1:
-                    continue
-                newStruct.append(line)
-            newStruct = '\n'.join(newStruct)
-            
-            bheader = parse_c_struct(newStruct, endianness='little')
-            fh.readinto(bheader)
-            bheader.SESSION_SPC = ''
-            bheader.OBS_BDM = ''
-            
-        elif bheader.OBS_B > 2:
+        if bheader.OBS_B > 2:
             ## Pre OBS_BDM
             fh.seek(0)
             
@@ -172,7 +137,7 @@ def read_obs_file(filename):
             bheader.OBS_BDM = ''
             
         steps = []
-        for n in xrange(bheader.OBS_STP_N):
+        for n in range(bheader.OBS_STP_N):
             fh.readinto(bstep)
             if bstep.OBS_STP_B == 3:
                 fh.readinto(bbeam)
@@ -253,7 +218,9 @@ def read_cs_file(filename):
                                'ignoreTime': True if action.bASAP else False, 
                                'subsystemID': sid_to_string(action.sid), 'commandID': cid_to_string(action.cid), 
                                'commandLength': action.len, 'data': data}
-                            
+                if actionPrime['subsystemID'] == 'DP':
+                    raise RuntimeError("Command script references DP not ADP")
+                    
                 commands.append( actionPrime )
             except IOError:
                 break
@@ -552,10 +519,10 @@ def get_asp_configuration(tarname, which='beginning'):
         raise ValueError("Unknown configuration time '%s'" % which)
         
     # Stub ASP configuration
-    aspConfig = {'filter':  [-1 for i in xrange(264)],
-                 'at1':     [-1 for i in xrange(264)],
-                 'at2':     [-1 for i in xrange(264)],
-                 'atsplit': [-1 for i in xrange(264)]}
+    aspConfig = {'filter':  [-1 for i in range(264)],
+                 'at1':     [-1 for i in range(264)],
+                 'at2':     [-1 for i in range(264)],
+                 'atsplit': [-1 for i in range(264)]}
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         path, basename = os.path.split(tarname)
@@ -628,7 +595,7 @@ def get_asp_configuration_summary(tarname, which='beginning'):
     count = {}
     for param in aspConfig.keys():
         count[param] = {}
-        for ant in xrange(len(aspConfig[param])):
+        for ant in range(len(aspConfig[param])):
             value = aspConfig[param][ant]
             try:
                 count[param][value] += 1
@@ -664,33 +631,33 @@ def is_valid(tarname, verbose=False):
         get_session_spec(tarname)
         passes += 1
         if verbose:
-            print("Session specification - OK")
+            print(colorfy("Session specification - {{%green OK}}"))
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
-            print("Session specification - FAILED")
+            print(colorfy("Session specification - {{%red {{%bold FAILED}}}}"))
         
     try:
         get_observation_spec(tarname)
         passes += 1
         if verbose:
-            print("Observation specification(s) - OK")
+            print(colorfy("Observation specification(s) - {{%green OK}}"))
     except:
         failures += 1
         if verbose:
-            print("Observation specification(s) - FAILED")
+            print(colorfy("Observation specification(s) - {{%red {{%bold FAILED}}}}"))
             
     try:
         get_command_script(tarname)
         passes += 1
         if verbose:
-            print("Command script - OK")
+            print(colorfy("Command script - {{%green OK}}"))
     except:
         failures += 1
         if verbose:
-            print("Command script - FAILED")
+            print(colorfy("Command script - {{%red {{%bold FAILED}}}}"))
             
     if verbose:
         print("---")

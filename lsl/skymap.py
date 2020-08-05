@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Classes and methods to model sky brightness and visibility.
 
@@ -12,11 +10,11 @@ Classes and methods to model sky brightness and visibility.
 ### This module handles the skymaps from the 74 MHz skymap.
 ### David Munton, ARL:UT Jan 2007
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
@@ -31,7 +29,6 @@ telemetry.track_module()
 
 
 __version__   = '0.3'
-__revision__ = '$Rev$'
 __all__ = ['SkyMapGSM', 'SkyMapLFSM', 'ProjectedSkyMap']
 __author__    = 'J. York'
 __maintainer__ = 'Jayce Dowell'
@@ -94,7 +91,7 @@ class SkyMapGSM(object):
         ## interpolation across log(freq)
         scaleFunc = interp1d(log(freqs), log(sigmas), kind='cubic')
         compFuncs = []
-        for i in xrange(comps.shape[1]):
+        for i in range(comps.shape[1]):
             compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
         ## Actually create the realization by running the interplation and adding up the
         ## compnent maps
@@ -170,7 +167,7 @@ class SkyMapLFSM(SkyMapGSM):
         ## interpolation across log(freq)
         scaleFunc = interp1d(log(freqs), log(sigmas), kind='slinear')
         compFuncs = []
-        for i in xrange(comps.shape[1]):
+        for i in range(comps.shape[1]):
             compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
         ## Actually create the realization by running the interplation and adding up the
         ## compnent maps

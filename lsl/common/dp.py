@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module that contains common values found in the DP ICD, revision I.  The values 
 are:
@@ -13,11 +11,11 @@ words and functions for calculating the magnitude response of the TBN and DRX
 filters and a software version of DP.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import numpy
 from scipy.signal import freqz, lfilter
@@ -29,16 +27,24 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.6'
-__revision__ = '$Rev$'
-__all__ = ['fS', 'T', 'T2', 'N_MAX', 'freq_to_word', 'word_to_freq', 
-           'delay_to_dpd', 'dpd_to_delay', 'gain_to_dpg', 'dpg_to_gain', 
-           'tbn_filter', 'drx_filter', 'SoftwareDP']
+__version__ = '0.7'
+__all__ = ['fS', 'T', 'T2', 'N_MAX', 'TBN_TUNING_WORD_MIN', 'TBN_TUNING_WORD_MAX',
+           'DRX_TUNING_WORD_MIN', 'DRX_TUNING_WORD_MAX', 'DRX_BEAMS_MAX', 
+           'freq_to_word', 'word_to_freq', 'delay_to_dpd', 'dpd_to_delay', 
+           'gain_to_dpg', 'dpg_to_gain', 'tbn_filter', 'drx_filter', 'SoftwareDP']
 
 fS = 196.0e6	# Hz
 T = 1.0		# seconds
 T2 = 0.010	# seconds
 N_MAX = 8192	# bytes
+
+TBN_TUNING_WORD_MIN = 109565492        # Tuning word
+TBN_TUNING_WORD_MAX = 2037918156       # Tuning word
+
+DRX_TUNING_WORD_MIN = 219130984        # Tuning word
+DRX_TUNING_WORD_MAX = 1928352663       # Tuning word
+
+DRX_BEAMS_MAX = 4
 
 # CIC Filters
 ## TBN CIC filter #7 with order 2, decimation by 98
@@ -487,18 +493,18 @@ class SoftwareDP(object):
     """
     
     avaliableModes = {'TBN': {7: {'totalD': 1960, 'CIC': _TBN_CIC_7, 'cicD':  98, 'FIR': _TBN_FIR, 'firD': 20},
-                        6: {'totalD': 3920, 'CIC': _TBN_CIC_6, 'cicD': 196, 'FIR': _TBN_FIR, 'firD': 20},
-                        5: {'totalD': 7840, 'CIC': _TBN_CIC_5, 'cicD': 392, 'FIR': _TBN_FIR, 'firD': 20},
-                        }, 
-                'DRX': {7: {'totalD':   10, 'CIC': _DRX_CIC_7, 'cicD':   5, 'FIR': _DRX_FIR, 'firD':  2}, 
-                        6: {'totalD':   20, 'CIC': _DRX_CIC_6, 'cicD':  10, 'FIR': _DRX_FIR, 'firD':  2}, 
-                        5: {'totalD':   40, 'CIC': _DRX_CIC_5, 'cicD':  20, 'FIR': _DRX_FIR, 'firD':  2}, 
-                        4: {'totalD':   98, 'CIC': _DRX_CIC_4, 'cicD':  49, 'FIR': _DRX_FIR, 'firD':  2}, 
-                        3: {'totalD':  196, 'CIC': _DRX_CIC_3, 'cicD':  98, 'FIR': _DRX_FIR, 'firD':  2},
-                        },}
+                              6: {'totalD': 3920, 'CIC': _TBN_CIC_6, 'cicD': 196, 'FIR': _TBN_FIR, 'firD': 20},
+                              5: {'totalD': 7840, 'CIC': _TBN_CIC_5, 'cicD': 392, 'FIR': _TBN_FIR, 'firD': 20},
+                             }, 
+                     'DRX': {7: {'totalD':   10, 'CIC': _DRX_CIC_7, 'cicD':   5, 'FIR': _DRX_FIR, 'firD':  2}, 
+                             6: {'totalD':   20, 'CIC': _DRX_CIC_6, 'cicD':  10, 'FIR': _DRX_FIR, 'firD':  2}, 
+                             5: {'totalD':   40, 'CIC': _DRX_CIC_5, 'cicD':  20, 'FIR': _DRX_FIR, 'firD':  2}, 
+                             4: {'totalD':   98, 'CIC': _DRX_CIC_4, 'cicD':  49, 'FIR': _DRX_FIR, 'firD':  2}, 
+                             3: {'totalD':  196, 'CIC': _DRX_CIC_3, 'cicD':  98, 'FIR': _DRX_FIR, 'firD':  2},
+                            },}
                         
     delayFIRs = []
-    for i in xrange(520):
+    for i in range(520):
         delayFIRs.append([])
         delayFIRs[-1].extend(_DELAY_FIRS)
     
@@ -523,7 +529,10 @@ class SoftwareDP(object):
         
         # Set the tuning frequency and make sure it is valid
         central_freq = float(central_freq)
-        if central_freq < 10e6 or central_freq > 88e6:
+        central_word = freq_to_word(central_freq)
+        
+        if central_word < (DRX_TUNING_WORD_MIN if self.mode == 'DRX' else TBN_TUNING_WORD_MIN) \
+           or central_word > (DRX_TUNING_WORD_MAX if self.mode == 'DRX' else TBN_TUNING_WORD_MAX):
             raise ValueError("Central frequency of %.2f MHz outside the DP tuning range." % (central_freq/1e6,))
         self.central_freq = central_freq
         
@@ -556,8 +565,10 @@ class SoftwareDP(object):
         """
         
         central_freq = float(central_freq)
+        central_word = freq_to_word(central_freq)
         
-        if central_freq < 10e6 or central_freq > 88e6:
+        if central_word < (DRX_TUNING_WORD_MIN if self.mode == 'DRX' else TBN_TUNING_WORD_MIN) \
+           or central_word > (DRX_TUNING_WORD_MAX if self.mode == 'DRX' else TBN_TUNING_WORD_MAX):
             raise ValueError("Central frequency of %.2f MHz outside the DP tuning range." % (central_freq/1e6,))
         self.central_freq = central_freq
         
@@ -577,13 +588,13 @@ class SoftwareDP(object):
         
         if channel == -1:
             self.delayFIRs = []
-            for i in xrange(520):
+            for i in range(520):
                 self.delayFIRs.append([])
                 self.delayFIRs[-1].extend(_DELAY_FIRS)
         
         if channel == 0:
             self.delayFIRs = []
-            for i in xrange(520):
+            for i in range(520):
                 self.delayFIRs.append([])
                 self.delayFIRs[-1].extend(coeffs)
             
@@ -637,9 +648,9 @@ class SoftwareDP(object):
                 usePool = False
             
             # Multiple inputs - loop over all of them
-            output = [None for i in xrange(data.shape[0])]
+            output = [None for i in range(data.shape[0])]
             
-            for i in xrange(data.shape[0]):
+            for i in range(data.shape[0]):
                 if usePool:
                     # Use the pool
                     task = taskPool.apply_async(_process_stream_filter, args=(time, data[i,:], self.avaliableModes[self.mode][self.filter], self.central_freq))

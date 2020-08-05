@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit tests for the lsl.reader modules.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import unittest
@@ -20,10 +18,10 @@ from lsl.reader import drx
 from lsl.reader import vdif
 from lsl.reader import drspec
 from lsl.reader import errors
+from lsl.reader.base import FrameTimestamp
 
 
-__revision__ = "$Rev$"
-__version__  = "0.6"
+__version__  = "0.8"
 __author__    = "Jayce Dowell"
 
 
@@ -38,6 +36,138 @@ class reader_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.reader
     modules."""
     
+    ### FrameTimestamp
+    
+    def test_timestamp(self):
+        """Test creating a new FrameTimestamp"""
+        
+        t = FrameTimestamp(1587495778, 0.5)
+        self.assertAlmostEqual(t.unix, 1587495778.5, 6)
+        # https://www.epochconverter.com/
+        dt = t.datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 21)
+        self.assertEqual(dt.hour, 19)
+        self.assertEqual(dt.minute, 2)
+        self.assertEqual(dt.second, 58)
+        self.assertEqual(dt.microsecond, 500000)
+        
+        t = FrameTimestamp(1587495778.5)
+        self.assertAlmostEqual(t.unix, 1587495778.5, 6)
+        # https://www.epochconverter.com/
+        dt = t.datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 21)
+        self.assertEqual(dt.hour, 19)
+        self.assertEqual(dt.minute, 2)
+        self.assertEqual(dt.second, 58)
+        self.assertEqual(dt.microsecond, 500000)
+        
+        t = FrameTimestamp(1587495777.4, 1.1)
+        self.assertAlmostEqual(t.unix, 1587495778.5, 6)
+        # https://www.epochconverter.com/
+        dt = t.datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 21)
+        self.assertEqual(dt.hour, 19)
+        self.assertEqual(dt.minute, 2)
+        self.assertEqual(dt.second, 58)
+        self.assertEqual(dt.microsecond, 500000)
+        
+        t = FrameTimestamp.from_dp_timetag(1587495778*196000000 + 196000000/2)
+        self.assertAlmostEqual(t.unix, 1587495778.5, 6)
+        # https://planetcalc.com/503/
+        self.assertAlmostEqual(t.mjd, 58960.7937268517+0.5/86400.0, 9)
+        self.assertEqual(t.pulsar_mjd[0], 58960)
+        self.assertAlmostEqual(t.pulsar_mjd[1], 0.7937268517, 9)
+        self.assertAlmostEqual(t.pulsar_mjd[2], 0.5, 9)
+        self.assertEqual(t.dp_timetag, 1587495778*196000000 + 196000000/2)
+        
+        t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
+        # 200423 16:48:01  58962  60481519 T   1099467 1 SHL RPT POWER-OUTAGE|
+        dt = t.datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 23)
+        self.assertEqual(dt.hour, 16)
+        self.assertEqual(dt.minute, 48)
+        self.assertEqual(dt.second, 1)
+        self.assertEqual(dt.microsecond, 519000)
+        self.assertTrue(dt.tzinfo is None)
+        
+        t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
+        # 200423 16:48:01  58962  60481519 T   1099467 1 SHL RPT POWER-OUTAGE|
+        dt = t.utc_datetime
+        self.assertEqual(dt.year, 2020)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 23)
+        self.assertEqual(dt.hour, 16)
+        self.assertEqual(dt.minute, 48)
+        self.assertEqual(dt.second, 1)
+        self.assertEqual(dt.microsecond, 519000)
+        self.assertFalse(dt.tzinfo is None)
+        
+    def test_timestamp_string(self):
+        """Test string representations of a FrameTimestamp"""
+        
+        t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
+        str(t)
+        repr(t)
+        
+    def test_timestamp_add(self):
+        """Test adding to a FrameTimestamp"""
+        
+        t = FrameTimestamp(1587495778, 0.5)
+        t = t + 0.1
+        self.assertEqual(t, FrameTimestamp(1587495778, 0.6))
+        self.assertAlmostEqual(t, FrameTimestamp(1587495778, 0.6), 6)
+        self.assertAlmostEqual(t, 1587495778.6, 6)
+        
+        t += 1
+        self.assertEqual(t, FrameTimestamp(1587495779, 0.6))
+        self.assertAlmostEqual(t, FrameTimestamp(1587495779, 0.6), 6)
+        self.assertAlmostEqual(t, 1587495779.6, 6)
+        
+    def test_timestamp_sub(self):
+        """Test subtracting from a FrameTimestamp"""
+        
+        t0 = FrameTimestamp(1587495778, 0.5)
+        t1 = FrameTimestamp(1587495778, 0.1)
+        self.assertAlmostEqual(t0-t1, 0.4, 9)
+        
+        t1 = FrameTimestamp(1587495778, 0.7)
+        self.assertAlmostEqual(t0-t1, -0.2, 9)
+        
+        t1 = FrameTimestamp(1587495700, 0.7)
+        self.assertAlmostEqual(t0-t1, 77.8, 9)
+        
+        t0 = t0 - 0.1
+        self.assertEqual(t0, FrameTimestamp(1587495778, 0.4))
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495778, 0.4), 6)
+        self.assertAlmostEqual(t0, 1587495778.4, 6)
+        
+        t0 -= 0.4
+        self.assertEqual(t0, FrameTimestamp(1587495778, 0.0))
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495778, 0.0), 6)
+        self.assertAlmostEqual(t0, 1587495778.0, 6)
+        
+    def test_timestmp_cmp(self):
+        """Test FrameTimestamp comparisons"""
+        
+        t0 = FrameTimestamp(1587495778, 0.5)
+        t1 = FrameTimestamp(1587495779, 0.5)
+        self.assertTrue(t0 <= t1)
+        
+        self.assertTrue(t0 > 0)
+        self.assertTrue(t0 > 1587495778)
+        self.assertTrue(t0 <= 1587495778.5)
+        
+        t0 = FrameTimestamp(1587495778, 0.0)
+        self.assertEqual(t0, 1587495778)
+            
     ### TBW ###
     
     def test_tbw_read(self):
@@ -114,7 +244,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_tbw_math(self):
@@ -160,11 +290,15 @@ class reader_tests(unittest.TestCase):
         stand, pol = frame1.id
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 0)
+        str(frame1)
+        repr(frame1)
         # Second frame
         frame2 = tbn.read_frame(fh)
         stand, pol = frame2.id
         self.assertEqual(stand, 1)
         self.assertEqual(pol, 1)
+        str(frame2)
+        repr(frame2)
         fh.close()
         
     def test_tbn_errors(self):
@@ -236,7 +370,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_tbn_math(self):
@@ -389,7 +523,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
     def test_drx_math(self):
@@ -532,7 +666,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
         fh.close()
         
@@ -550,24 +684,24 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameT.payload.XX0[i], 2*frames[0].payload.XX0[i], 2)
         frameT *= 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameT.payload.XX1[i], 4*frames[0].payload.XX1[i], 2)
         frameT = frames[0] * frames[1]
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameT.payload.YY0[i], frames[0].payload.YY0[i]*frames[1].payload.YY0[i], 2)
             
         # Addition
         frameA = frames[0] + 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameA.payload.XX0[i], 2+frames[0].payload.XX0[i], 2)
         frameA += 2.0
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameA.payload.XX1[i], 4+frames[0].payload.XX1[i], 2)
         frameA = frames[0] + frames[1]
-        for i in xrange(npts):
+        for i in range(npts):
             self.assertAlmostEqual(frameA.payload.YY0[i], frames[0].payload.YY0[i]+frames[1].payload.YY0[i], 2)
             
     ### VDIF ###
@@ -674,7 +808,7 @@ class reader_tests(unittest.TestCase):
         frames.sort()
         frames = frames[::-1]
         
-        for i in xrange(1,len(frames)):
+        for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
         fh.close()
         

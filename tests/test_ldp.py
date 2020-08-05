@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Unit test for the lsl.reader.ldp module.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import unittest
@@ -21,8 +19,7 @@ from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
 
 
-__revision__ = "$Rev$"
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -51,20 +48,22 @@ class ldp_tests(unittest.TestCase):
         f = ldp.TBWFile(tbwFile)
         
         # File info
+        str(f)
+        repr(f)
         self.assertEqual(f.get_info("sample_rate"), 196e6)
         self.assertEqual(f.get_info("data_bits"), 12)
-        self.assertEqual(f.get_info("nframes"), 8)
+        self.assertEqual(f.get_info('nframe'), 8)
         
         self.assertEqual(f.sample_rate, 196e6)
         self.assertEqual(f.data_bits, 12)
-        self.assertEqual(f.nframes, 8)
+        self.assertEqual(f.nframe, 8)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -75,6 +74,36 @@ class ldp_tests(unittest.TestCase):
         # Close it out
         f.close()
         
+        # Now try it with a filehandle that is already open
+        fh = open(tbwFile, 'r')
+        f = ldp.TBWFile(fh=fh, ignore_timetag_errors=True)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 196e6)
+        self.assertEqual(f.get_info("data_bits"), 12)
+        self.assertEqual(f.get_info('nframe'), 8)
+        
+        self.assertEqual(f.sample_rate, 196e6)
+        self.assertEqual(f.data_bits, 12)
+        self.assertEqual(f.nframe, 8)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read more
+        tInt, tStart, data = f.read()
+        
+        # Close it out
+        f.close()
+        fh.close()
+        
     def test_ldp_tbw_nocheck(self):
         """Test the LDP interface for a TBW file."""
         
@@ -83,18 +112,18 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 196e6)
         self.assertEqual(f.get_info("data_bits"), 12)
-        self.assertEqual(f.get_info("nframes"), 8)
+        self.assertEqual(f.get_info('nframe'), 8)
         
         self.assertEqual(f.sample_rate, 196e6)
         self.assertEqual(f.data_bits, 12)
-        self.assertEqual(f.nframes, 8)
+        self.assertEqual(f.nframe, 8)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -115,18 +144,18 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 100e3)
         self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info("nframes"), 29)
+        self.assertEqual(f.get_info('nframe'), 29)
         
         self.assertEqual(f.sample_rate, 100e3)
         self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframes, 29)
+        self.assertEqual(f.nframe, 29)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -137,8 +166,21 @@ class ldp_tests(unittest.TestCase):
         # Reset
         f.reset()
         
+        # Offset and read a chunk - short
+        tSkip = f.offset(0.005)
+        tInt, tStart, data = f.read(0.005)
+        
+        # Reset
+        f.reset()
+        
         # Read a chunk - long
         tInt, tStart, data = f.read(1.00)
+        
+        # Reset
+        f.reset()
+        
+        # Estimate levels
+        f.estimate_levels()
         
         # Close it out
         f.close()
@@ -148,18 +190,18 @@ class ldp_tests(unittest.TestCase):
             ## File info
             self.assertEqual(f.get_info("sample_rate"), 100e3)
             self.assertEqual(f.get_info("data_bits"), 8)
-            self.assertEqual(f.get_info("nframes"), 29)
+            self.assertEqual(f.get_info('nframe'), 29)
             
             self.assertEqual(f.sample_rate, 100e3)
             self.assertEqual(f.data_bits, 8)
-            self.assertEqual(f.nframes, 29)
+            self.assertEqual(f.nframe, 29)
             
             ## Read a frame
             frame = f.read_frame()
             
             ## Get the remaining frame count
-            self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-            self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+            self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+            self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
             
         # generator support
         f = ldp.TBNFile(tbnFile)
@@ -190,18 +232,18 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 100e3)
         self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info("nframes"), 29)
+        self.assertEqual(f.get_info('nframe'), 29)
         
         self.assertEqual(f.sample_rate, 100e3)
         self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframes, 29)
+        self.assertEqual(f.nframe, 29)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -228,20 +270,20 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 19.6e6)
         self.assertEqual(f.get_info("data_bits"), 4)
-        self.assertEqual(f.get_info("nframes"), 32)
-        self.assertEqual(f.get_info("beampols"), 4)
+        self.assertEqual(f.get_info('nframe'), 32)
+        self.assertEqual(f.get_info('nbeampol'), 4)
         
         self.assertEqual(f.sample_rate, 19.6e6)
         self.assertEqual(f.data_bits, 4)
-        self.assertEqual(f.nframes, 32)
-        self.assertEqual(f.beampols, 4)
+        self.assertEqual(f.nframe, 32)
+        self.assertEqual(f.nbeampol, 4)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -252,8 +294,21 @@ class ldp_tests(unittest.TestCase):
         # Reset
         f.reset()
         
+        # Offset and read a chunk - short
+        tSkip = f.offset(0.0001)
+        tInt, tStart, data = f.read(0.005)
+        
+        # Reset
+        f.reset()
+        
         # Read a chunk - long
         tInt, tStart, data = f.read(1.00)
+        
+        # Reset
+        f.reset()
+        
+        # Estimate levels
+        f.estimate_levels()
         
         # Close it out
         f.close()
@@ -263,20 +318,20 @@ class ldp_tests(unittest.TestCase):
             ## File info
             self.assertEqual(f.get_info("sample_rate"), 19.6e6)
             self.assertEqual(f.get_info("data_bits"), 4)
-            self.assertEqual(f.get_info("nframes"), 32)
-            self.assertEqual(f.get_info("beampols"), 4)
+            self.assertEqual(f.get_info('nframe'), 32)
+            self.assertEqual(f.get_info('nbeampol'), 4)
             
             self.assertEqual(f.sample_rate, 19.6e6)
             self.assertEqual(f.data_bits, 4)
-            self.assertEqual(f.nframes, 32)
-            self.assertEqual(f.beampols, 4)
+            self.assertEqual(f.nframe, 32)
+            self.assertEqual(f.nbeampol, 4)
             
             ## Read a frame
             frame = f.read_frame()
             
             ## Get the remaining frame count
-            self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-            self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+            self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+            self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
             
         # generator support
         f = ldp.DRXFile(drxFile)
@@ -307,20 +362,20 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 19.6e6)
         self.assertEqual(f.get_info("data_bits"), 4)
-        self.assertEqual(f.get_info("nframes"), 32)
-        self.assertEqual(f.get_info("beampols"), 4)
+        self.assertEqual(f.get_info('nframe'), 32)
+        self.assertEqual(f.get_info('nbeampol'), 4)
         
         self.assertEqual(f.sample_rate, 19.6e6)
         self.assertEqual(f.data_bits, 4)
-        self.assertEqual(f.nframes, 32)
-        self.assertEqual(f.beampols, 4)
+        self.assertEqual(f.nframe, 32)
+        self.assertEqual(f.nbeampol, 4)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -347,22 +402,22 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 19.6e6)
         self.assertEqual(f.get_info("data_bits"), 32)
-        self.assertEqual(f.get_info("nframes"), 7)
-        self.assertEqual(f.get_info("beampols"), 4)
-        self.assertEqual(f.get_info("nproducts"), 2)
+        self.assertEqual(f.get_info('nframe'), 7)
+        self.assertEqual(f.get_info('nbeampol'), 4)
+        self.assertEqual(f.get_info('nproduct'), 2)
         
         self.assertEqual(f.sample_rate, 19.6e6)
         self.assertEqual(f.data_bits, 32)
-        self.assertEqual(f.nframes, 7)
-        self.assertEqual(f.beampols, 4)
-        self.assertEqual(f.nproducts, 2)
+        self.assertEqual(f.nframe, 7)
+        self.assertEqual(f.nbeampol, 4)
+        self.assertEqual(f.nproduct, 2)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -370,6 +425,13 @@ class ldp_tests(unittest.TestCase):
         # Read a chunk - short
         tInt, tStart, data = f.read(0.01)
         
+        # Reset
+        f.reset()
+        
+        # Offset and read a chunk - short
+        skip = f.offset(0.01)
+        tInt, tStart, data = f.read(0.01)
+
         # Reset
         f.reset()
         
@@ -384,22 +446,22 @@ class ldp_tests(unittest.TestCase):
             ## File info
             self.assertEqual(f.get_info("sample_rate"), 19.6e6)
             self.assertEqual(f.get_info("data_bits"), 32)
-            self.assertEqual(f.get_info("nframes"), 7)
-            self.assertEqual(f.get_info("beampols"), 4)
-            self.assertEqual(f.get_info("nproducts"), 2)
+            self.assertEqual(f.get_info('nframe'), 7)
+            self.assertEqual(f.get_info('nbeampol'), 4)
+            self.assertEqual(f.get_info('nproduct'), 2)
             
             self.assertEqual(f.sample_rate, 19.6e6)
             self.assertEqual(f.data_bits, 32)
-            self.assertEqual(f.nframes, 7)
-            self.assertEqual(f.beampols, 4)
-            self.assertEqual(f.nproducts, 2)
+            self.assertEqual(f.nframe, 7)
+            self.assertEqual(f.nbeampol, 4)
+            self.assertEqual(f.nproduct, 2)
             
             ## Read a frame
             frame = f.read_frame()
             
             ## Get the remaining frame count
-            self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-            self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+            self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+            self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
             
         # generator support
         f = ldp.DRSpecFile(drspecFile)
@@ -430,22 +492,22 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 19.6e6)
         self.assertEqual(f.get_info("data_bits"), 32)
-        self.assertEqual(f.get_info("nframes"), 7)
-        self.assertEqual(f.get_info("beampols"), 4)
-        self.assertEqual(f.get_info("nproducts"), 2)
+        self.assertEqual(f.get_info('nframe'), 7)
+        self.assertEqual(f.get_info('nbeampol'), 4)
+        self.assertEqual(f.get_info('nproduct'), 2)
         
         self.assertEqual(f.sample_rate, 19.6e6)
         self.assertEqual(f.data_bits, 32)
-        self.assertEqual(f.nframes, 7)
-        self.assertEqual(f.beampols, 4)
-        self.assertEqual(f.nproducts, 2)
+        self.assertEqual(f.nframe, 7)
+        self.assertEqual(f.nbeampol, 4)
+        self.assertEqual(f.nproduct, 2)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -517,18 +579,18 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 100e3)
         self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info("nframes"), 29)
+        self.assertEqual(f.get_info('nframe'), 29)
         
         self.assertEqual(f.sample_rate, 100e3)
         self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframes, 29)
+        self.assertEqual(f.nframe, 29)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -552,18 +614,18 @@ class ldp_tests(unittest.TestCase):
                 ## File info
                 self.assertEqual(f.get_info("sample_rate"), 100e3)
                 self.assertEqual(f.get_info("data_bits"), 8)
-                self.assertEqual(f.get_info("nframes"), 29)
+                self.assertEqual(f.get_info('nframe'), 29)
         
                 self.assertEqual(f.sample_rate, 100e3)
                 self.assertEqual(f.data_bits, 8)
-                self.assertEqual(f.nframes, 29)
+                self.assertEqual(f.nframe, 29)
         
                 ## Read a frame
                 frame = f.read_frame()
         
                 ## Get the remaining frame count
-                self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-                self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+                self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+                self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
                 
         # generator support
         w = SplitFileWrapper(splitFiles)
@@ -598,18 +660,18 @@ class ldp_tests(unittest.TestCase):
         # File info
         self.assertEqual(f.get_info("sample_rate"), 100e3)
         self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info("nframes"), 29)
+        self.assertEqual(f.get_info('nframe'), 29)
         
         self.assertEqual(f.sample_rate, 100e3)
         self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframes, 29)
+        self.assertEqual(f.nframe, 29)
         
         # Read a frame
         frame = f.read_frame()
         
         # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-        self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
         
         # Reset
         f.reset()
@@ -633,18 +695,18 @@ class ldp_tests(unittest.TestCase):
                 ## File info
                 self.assertEqual(f.get_info("sample_rate"), 100e3)
                 self.assertEqual(f.get_info("data_bits"), 8)
-                self.assertEqual(f.get_info("nframes"), 29)
+                self.assertEqual(f.get_info('nframe'), 29)
         
                 self.assertEqual(f.sample_rate, 100e3)
                 self.assertEqual(f.data_bits, 8)
-                self.assertEqual(f.nframes, 29)
+                self.assertEqual(f.nframe, 29)
         
                 ## Read a frame
                 frame = f.read_frame()
         
                 ## Get the remaining frame count
-                self.assertEqual(f.get_remaining_frame_count(), f.get_info("nframes")-1)
-                self.assertEqual(f.nframes_remaining, f.get_info("nframes")-1)
+                self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+                self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
                 
         # generator support
         w = SplitFileWrapper([tbnFile,])
@@ -670,6 +732,69 @@ class ldp_tests(unittest.TestCase):
                     i += 1
                 self.assertEqual(i, 1)
                 
+    def test_ldp_splitfilewrapper_discover(self):
+        """Test the LDP interface for type discover with a SplitFileWrapper."""
+        
+        w = SplitFileWrapper([tbnFile,])
+        f = ldp.LWA1DataFile(fh=w)
+        
+        # File info
+        self.assertTrue(isinstance(f, ldp.TBNFile))
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info('nframe'), 29)
+        
+        self.assertEqual(f.sample_rate, 100e3)
+        self.assertEqual(f.data_bits, 8)
+        self.assertEqual(f.nframe, 29)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        f.close()
+        w.close()
+        
+    def test_ldp_splitfilewrapper_mixed(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([tbwFile, tbnFile], sort=False)
+        f = ldp.LWA1DataFile(fh=w)
+        
+        # File info
+        self.assertTrue(isinstance(f, ldp.TBWFile))
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                if frame.is_tbw:
+                    frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 8+1)  # There is data at the end of the "file" now      
+        
+    def test_ldp_splitfilewrapper_mixed2(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([tbnFile, tbwFile], sort=False)
+        f = ldp.TBWFile(fh=w)
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                if frame.is_tbw:
+                    frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 8-1)  # We loose part of the first frame to TBN   
+        
     def tearDown(self):
         """Cleanup"""
         for handler in list(ldp._open_ldp_files.handlers):

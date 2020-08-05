@@ -1,0 +1,14 @@
+name: lsl_doc_env
+
+channels:
+  - conda-forge
+
+dependencies:
+  - pkgconfig
+  - fftw
+  - numpy
+  - python
+  - scipy
+  - sphinx
+  - ephem=3.7.7.0
+  - python-casacore

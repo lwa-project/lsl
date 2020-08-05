@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to reading in data from TBF files.  This module defines the 
 following classes for storing the TBF data found in a file:
@@ -22,11 +20,11 @@ handle as an input and returns a fully-filled Frame object.
 .. versionadded:: 1.2.0
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy
@@ -44,7 +42,6 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT',
            'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count', 'get_first_channel']
 
@@ -87,7 +84,7 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        return (numpy.arange(12, dtype=numpy.float32)+self.first_chan) * adp_common.fC
+        return (numpy.arange(FRAME_CHANNEL_COUNT, dtype=numpy.float32)+self.first_chan) * adp_common.fC
 
 
 class FramePayload(FramePayloadBase):
@@ -106,13 +103,11 @@ class FramePayload(FramePayloadBase):
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        seconds_i = self.timetag // int(adp_common.fS)
-        seconds_f = (self.timetag  % int(adp_common.fS)) / adp_common.fS
-        
-        return seconds_i, seconds_f
+        return FrameTimestamp.from_dp_timetag(self.timetag)
 
 
 class Frame(FrameBase):
@@ -229,7 +224,7 @@ def get_channel_count(filehandle):
     nFrames = get_frames_per_obs(filehandle)
     
     # Convert to channels
-    nChannels = nFrames * 12
+    nChannels = nFrames * FRAME_CHANNEL_COUNT
     
     # Return the number of channels
     return nChannels

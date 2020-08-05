@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Buffer for dealing with out-of-order/missing frames.
 
@@ -23,14 +21,14 @@ Buffer for dealing with out-of-order/missing frames.
     Added support for the LWA-SV TBF and COR modes
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
-    from functools import cmp_to_key
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
+from functools import cmp_to_key
 from collections import deque, OrderedDict
 
 from lsl.misc import telemetry
@@ -38,8 +36,8 @@ telemetry.track_module()
 
 
 __version__ = '1.2'
-__revision__ = '$Rev$'
-__all__ = ['FrameBufferBase', 'TBNFrameBuffer', 'DRXFrameBuffer', 'TBFFrameBuffer', 'VDIFFrameBuffer']
+__all__ = ['FrameBufferBase', 'TBNFrameBuffer', 'DRXFrameBuffer', 
+           'TBFFrameBuffer', 'CORFrameBuffer', 'VDIFFrameBuffer']
 
 
 def _cmp_frames(x, y):
@@ -341,10 +339,7 @@ class FrameBufferBase(object):
         # Sort and return
         if self.reorder:
             output = list(output)
-            try:
-                output.sort(cmp=_cmp_frames)
-            except TypeError:
-                output.sort(key=cmp_to_key(_cmp_frames))
+            output.sort(key=cmp_to_key(_cmp_frames))
         return output
         
     def flush(self):
@@ -578,6 +573,10 @@ class DRXFrameBuffer(FrameBufferBase):
     
     def __init__(self, beams=[], tunes=[1,2], pols=[0, 1], nsegments=20, reorder=False):
         FrameBufferBase.__init__(self, mode='DRX', beams=beams, tunes=tunes, pols=pols, nsegments=nsegments, reorder=reorder)
+        
+        # Make sure that we ignore packets before 1980
+        # (although I don't really know why this happens sometimes)
+        self.done[0] = 61849368000000000
         
     def get_max_frames(self):
         """

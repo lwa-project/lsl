@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to reading in data from COR files.  This module defines the 
 following classes for storing the COR data found in a file:
@@ -26,11 +24,11 @@ handle as an input and returns a fully-filled Frame object.
 .. versionadded:: 1.2.0
 """
 
-# Python3 compatibility
+# Python1 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import copy
 import numpy
@@ -49,7 +47,6 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__revision__ = '$Rev$'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 
            'get_frames_per_obs', 'get_channel_count', 'get_baseline_count']
 
@@ -123,14 +120,11 @@ class FramePayload(FramePayloadBase):
     def time(self):
         """
         Function to convert the time tag from samples since the UNIX epoch
-        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a two-
-        element tuple.
+        (UTC 1970-01-01 00:00:00) to seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        seconds_i = self.timetag // int(adp_common.fS)
-        seconds_f = (self.timetag % int(adp_common.fS)) / adp_common.fS
-        
-        return seconds_i, seconds_f
+        return FrameTimestamp.from_dp_timetag(self.timetag)
         
     @property
     def integration_time(self):
@@ -226,7 +220,7 @@ def get_frames_per_obs(filehandle):
     
     # Get the number of channels in the file
     nChan = get_channel_count(filehandle)
-    nFrames = nChan / NCHAN_COR
+    nFrames = nChan // NCHAN_COR
     
     # Multiply by the number of baselines
     nFrames *= get_baseline_count(filehandle)
@@ -266,6 +260,6 @@ def get_baseline_count(filehandle):
     """
     
     # This is fixed based on how ADP works
-    nBaseline = 256*(256+1) / 2
+    nBaseline = 256*(256+1) // 2
     
     return nBaseline

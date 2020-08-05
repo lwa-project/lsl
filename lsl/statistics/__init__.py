@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*
-
 """
-lsl.statistics - Statistical routines for data analysis
+lsl.statistics - Statistical routines for data analysis.  This includes:
+ * robust - outlier-resistant statistics and data fitting utilities
+ * kurtosis - spectral kurtosis calculators
+ * stattest - miscellanous statistical tests
 """
-
-# Python3 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info > (3,):
-    xrange = range
-    

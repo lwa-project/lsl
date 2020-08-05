@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Script to gather information about the Python interpreter, modules, 
@@ -7,11 +6,11 @@ C libraries, numpy installation, and LSL installation to help with
 debugging and install issues.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
@@ -53,7 +52,7 @@ def main(args):
     for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
         try:
             exec "import %s" % mod
-        except ImportError, e:
+        except ImportError as e:
             if (str(e)).find('not found') != -1:
                 print( "%s: not found" % mod)
             else:
@@ -77,7 +76,7 @@ def main(args):
     for mod in ('matplotlib', 'h5py', 'psrfits_utils'):
         try:
             exec "import %s" % mod
-        except ImportError, e:
+        except ImportError as e:
             if (str(e)).find('not found') != -1:
                 print( "%s: not found" % mod)
             #else:
@@ -111,9 +110,19 @@ def main(args):
         try:
             pkgQuery = subprocess.Popen(['pkg-config', '--exists', pkgName])
             o, e = pkgQuery.communicate()
+            try:
+                o = o.decode()
+                e = e.decode()
+            except AttributeError:
+                pass
             if pkgQuery.returncode == 0:
                 pkgQuery = subprocess.Popen(['pkg-config', '--modversion', pkgName], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 o, e = pkgQuery.communicate()
+                try:
+                    o = o.decode()
+                    e = e.decode()
+                except AttributeError:
+                    pass
                 o = o.replace('\n', '')
                 
                 print("%s:  version %s" % (pkgName, o))
@@ -126,6 +135,11 @@ def main(args):
     try:
         p = subprocess.Popen(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = p.communicate()
+        try:
+            o = o.decode()
+            e = e.decode()
+        except AttributeError:
+            pass
         o = o.split('\n')
         
         for lib in ('libfftw3f', 'libgdbm', 'librt'):
@@ -184,14 +198,19 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
     cmd.extend(['-fopenmp', 'test.c', '-o', 'test', '-lgomp'])
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     o, e = p.communicate()
+    try:
+        o = o.decode()
+        e = e.decode()
+    except AttributeError:
+        pass
     print("Compiler OpenMP Support: %s" % ("Yes" if p.returncode == 0 else "No",))
     if p.returncode != 0:
         o = o.split('\n')[:-1]
-        for i in xrange(len(o)):
+        for i in range(len(o)):
             o[i] = '  %s' % o[i]
         o = '\n'.join(o)
         e = e.split('\n')[:-1]
-        for i in xrange(len(e)):
+        for i in range(len(e)):
             e[i] = '  %s' % e[i]
         e = '\n'.join(e)
         
@@ -207,8 +226,13 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
     
     p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     o, e = p.communicate()
+    try:
+        o = o.decode()
+        e = e.decode()
+    except AttributeError:
+        pass
     e = e.split('\n')[:-1]
-    for i in xrange(len(e)):
+    for i in range(len(e)):
         e[i] = '  %s' % e[i]
     e = '\n'.join(e)
     print("Compiler Version:")
@@ -226,6 +250,11 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 
         p = subprocess.Popen(['file', nfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = p.communicate()
+        try:
+            o = o.decode()
+            e = e.decode()
+        except AttributeError:
+            pass
         junk, numpyLinkage = o.split(None, 1)
         numpyLinkage = numpyLinkage.replace('\n', '')
 
@@ -233,7 +262,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
         print("Numpy Path: %s" % nfp)
         print("Numpy Version: %s" % numpy.version.version)
         print("Numpy Linkage: %s" % numpyLinkage)
-    except ImportError, e:
+    except ImportError as e:
         print("Numpy Import Error: %s" % str(e))
     print(" ")
     
@@ -248,6 +277,11 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 
         p = subprocess.Popen(['file', lfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = p.communicate()
+        try:
+            o = o.decode()
+            e = e.decode()
+        except AttributeError:
+            pass
         junk, lslLinkage = o.split(None, 1)
         lslLinkage = lslLinkage.replace('\n', '')
 
@@ -255,7 +289,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
         print("LSL Path: %s" % lfp)
         print("LSL Version: %s" % lsl.version.version)
         print("LSL Linkage: %s" % lslLinkage)
-    except ImportError, e:
+    except ImportError as e:
         print("LSL Import Error: %s" % str(e))
     print(" ")
 

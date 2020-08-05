@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Astronomical utility functions and classes based on libnova library.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import time
 import math
@@ -22,7 +20,6 @@ telemetry.track_module()
 
 
 __version__   = '0.5'
-__revision__ = '$Rev$'
 __all__ = ['dms', 'hms', 'date', 'zonedate', 'rst_time', 'hrz_posn', 'equ_posn', 
            'gal_posn', 'rect_posn', 'lnlat_posn', 'ecl_posn', 'nutation', 
            'get_gmtoff', 'date_to_zonedate', 'zonedate_to_date', 'rad_to_deg', 
@@ -61,7 +58,7 @@ class dms(object):
     
     Public members:
       neg     - True if measured west of GM, south of EQ
-                 False if measured east of GM, north of EQ.
+                False if measured east of GM, north of EQ.
       degrees - Angle degrees (integer).
       minutes - Angle minutes (integer).
       seconds - Angle seconds (float).
@@ -72,7 +69,7 @@ class dms(object):
         Create a dms object.
         
         Param: neg      - True if measured west of GM, south of EQ
-                        False if measured east of GM, north of EQ.
+                          False if measured east of GM, north of EQ.
         Param: degrees  - Angle degrees (integer [0, 359)).
         Param: minutes  - Angle minutes (integer [0, 59]).
         Param: seconds  - Angle seconds (float [0.0, 60.0)).
@@ -1815,16 +1812,16 @@ def get_date_from_sys():
     return _date
 
 
-def get_julian_from_timet(time_):
+def get_julian_from_timet(timet):
     """
     Gets Julian day from Unix time.
     
-    Param: time_ - Unix timet in seconds (integer)
+    Param: timet - Unix timet in seconds (integer)
     
     Returns UTC Julian day (float).
     """
     
-    jD = float(time_) / SECS_IN_DAY + UNIX_OFFSET
+    jD = float(timet) / SECS_IN_DAY + UNIX_OFFSET
     return jD
 
 
@@ -1837,19 +1834,19 @@ def get_timet_from_julian(jD):
     Returns Unix timet in seconds (integer).
     """
     
-    time_ = int((jD - UNIX_OFFSET) * SECS_IN_DAY)
-    return time_
+    timet = int((jD - UNIX_OFFSET) * SECS_IN_DAY)
+    return timet
 
 
 ######################################################################
 # Transformation of Coordinates Functions
 ######################################################################
 
-def get_hrz_from_equ(object_, observer, jD):
+def get_hrz_from_equ(target, observer, jD):
     """
     Get local horizontal coordinates from equatorial/celestial coordinates.
     
-    Param: object_  - Object of type equ_posn representing celestial position.
+    Param: target   - Object of type equ_posn representing celestial position.
     Param: observer - Object of type lnlat_posn representing observer position.
     Param: jD       - UTC Julian day (float).
     
@@ -1858,8 +1855,8 @@ def get_hrz_from_equ(object_, observer, jD):
     
     _posn = hrz_posn()
     b = ephem.FixedBody()
-    b._ra = deg_to_rad(object_.ra)
-    b._dec = deg_to_rad(object_.dec)
+    b._ra = deg_to_rad(target.ra)
+    b._dec = deg_to_rad(target.dec)
     
     o = ephem.Observer()
     o.date = jD-DJD_OFFSET
@@ -1878,11 +1875,11 @@ def get_hrz_from_equ(object_, observer, jD):
     return _posn
 
 
-def get_equ_from_hrz(object_, observer, jD):
+def get_equ_from_hrz(target, observer, jD):
     """
     Get equatorial/celestial coordinates from local horizontal coordinates.
     
-    Param: object_  - Object of type hrz_posn representing horizontal position.
+    Param: target   - Object of type hrz_posn representing horizontal position.
     Param: observer - Object of type lnlat_posn representing observer position.
     Param: jD       - UTC Julian day (float).
     
@@ -1899,7 +1896,7 @@ def get_equ_from_hrz(object_, observer, jD):
     except:
         pass
         
-    ra,dec = o.radec_of(deg_to_rad(object_.az), deg_to_rad(object_.alt))
+    ra,dec = o.radec_of(deg_to_rad(target.az), deg_to_rad(target.alt))
     ra = rad_to_deg(ra)
     dec = rad_to_deg(dec)
     
@@ -1923,18 +1920,18 @@ def get_ecl_from_rect(rect):
     return _posn
 
 
-def get_equ_from_ecl(object_, jD):
+def get_equ_from_ecl(target, jD):
     """
     Get equatorial coordinates from ecliptical coordinates for a given time.
     
-    Param: object_  - Object of type lnlat_posn representing ecliptic position.
+    Param: target   - Object of type lnlat_posn representing ecliptic position.
     Param: jD       - UTC Julian day (float). 
     
     Returns object of type equ_posn representing equatorial position.
     """
     
     _posn = equ_posn()
-    ecl = ephem.Ecliptic(deg_to_rad(object_.lng), deg_to_rad(object_.lat), epoch=ephem.B1950)
+    ecl = ephem.Ecliptic(deg_to_rad(target.lng), deg_to_rad(target.lat), epoch=ephem.B1950)
     equ = ephem.Equatorial(ecl)
     ra = rad_to_deg(equ.ra)
     dec = rad_to_deg(equ.dec)
@@ -1944,18 +1941,18 @@ def get_equ_from_ecl(object_, jD):
     return _posn
 
 
-def get_ecl_from_equ(object_, jD):
+def get_ecl_from_equ(target, jD):
     """
     Get ecliptical coordinates from equatorial coordinates for a given time.
     
-    Param: object_  - Object of type equ_posn representing equatorial position.
+    Param: target  - Object of type equ_posn representing equatorial position.
     Param: jD       - UTC Julian day (float). 
     
     Returns object of type ecl_posn representing ecliptic position.
     """
     
     _posn = ecl_posn()
-    equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=ephem.B1950)
+    equ = ephem.Equatorial(deg_to_rad(target.ra), deg_to_rad(target.dec), epoch=ephem.B1950)
     ecl = ephem.Ecliptic(equ)
     l = rad_to_deg(ecl.lon)
     b = rad_to_deg(ecl.lat)
@@ -1965,17 +1962,17 @@ def get_ecl_from_equ(object_, jD):
     return _posn    
 
 
-def get_equ_from_gal(object_):
+def get_equ_from_gal(target):
     """
     Get B1950 equatorial coordinates from galactic coordinates.
     
-    Param: object_ - Object of type gal_posn representing galactic position.
+    Param: target - Object of type gal_posn representing galactic position.
     
     Returns object of type equ_posn representing B1950 equatorial position.
     """
     
     _posn = equ_posn()
-    gal = ephem.Galactic(deg_to_rad(object_.l), deg_to_rad(object_.b))
+    gal = ephem.Galactic(deg_to_rad(target.l), deg_to_rad(target.b))
     equ = ephem.Equatorial(gal)
     equ = ephem.Equatorial(equ, epoch=ephem.B1950)
     ra = rad_to_deg(equ.ra)
@@ -1986,18 +1983,18 @@ def get_equ_from_gal(object_):
     return _posn
 
 
-def get_gal_from_equ(object_):
+def get_gal_from_equ(target):
     """
     Get galactic coordinates from B1950 equatorial coordinates.
     
-    Param: object_ - Object of type equ_posn representing B1950 equatorial 
+    Param: target - Object of type equ_posn representing B1950 equatorial 
                     position.
     
     Returns object of type gal_posn representing galactic position.
     """
     
     _posn = gal_posn()
-    equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=ephem.B1950)
+    equ = ephem.Equatorial(deg_to_rad(target.ra), deg_to_rad(target.dec), epoch=ephem.B1950)
     ecl = ephem.Galactic(equ)
     l = rad_to_deg(ecl.lon)
     b = rad_to_deg(ecl.lat)
@@ -2007,17 +2004,17 @@ def get_gal_from_equ(object_):
     return _posn
 
 
-def get_equ2000_from_gal(object_):
+def get_equ2000_from_gal(target):
     """
     Get J2000 equatorial coordinates from galactic coordinates.
     
-    Param: object_ - Object of type gal_posn representing galactic position.
+    Param: target - Object of type gal_posn representing galactic position.
     
     Returns object of type equ_posn representing J2000 equatorial position.
     """
     
     _posn = equ_posn()
-    gal = ephem.Galactic(deg_to_rad(object_.l), deg_to_rad(object_.b))
+    gal = ephem.Galactic(deg_to_rad(target.l), deg_to_rad(target.b))
     equ = ephem.Equatorial(gal, epoch=ephem.J2000)
     ra = rad_to_deg(equ.ra)
     dec = rad_to_deg(equ.dec)
@@ -2027,18 +2024,18 @@ def get_equ2000_from_gal(object_):
     return _posn
 
 
-def get_gal_from_equ2000(object_):
+def get_gal_from_equ2000(target):
     """
     Get galactic coordinates from J2000 equatorial coordinates.
     
-    Param: object_ - Object of type equ_posn representing J2000 equatorial 
+    Param: target - Object of type equ_posn representing J2000 equatorial 
                     position.
     
     Returns object of type gal_posn representing galactic position.
     """
     
     _posn = gal_posn()
-    equ = ephem.Equatorial(deg_to_rad(object_.ra), deg_to_rad(object_.dec), epoch=ephem.J2000)
+    equ = ephem.Equatorial(deg_to_rad(target.ra), deg_to_rad(target.dec), epoch=ephem.J2000)
     ecl = ephem.Galactic(equ)
     l = rad_to_deg(ecl.lon)
     b = rad_to_deg(ecl.lat)
@@ -2336,7 +2333,7 @@ def get_equ_nut(position, jD):
     Get the position of a celesital object accounting for nutation.
     
     Param: mean_position  -  Equatorial position of object as type 
-                        equ_posn.
+                             equ_posn.
     Param: jD             - UTC Julian day (float) to measure nutation.
     
     Returns: Adjusted equatorial position of object as type equ_posn.
@@ -2393,7 +2390,7 @@ def get_equ_aber(mean_position, jD):
     Get position of celestial object accounting for aberration.
     
     Param: mean_position  - J2000 equatorial mean position of object as type 
-                        equ_posn.
+                            equ_posn.
     Param: jD             - UTC Julian day (float) to measure aberration.
     
     Returns: Adjusted equatorial position of object as type equ_posn.
@@ -2577,7 +2574,7 @@ def get_equ_aber(mean_position, jD):
                     [0, 0, -2, 0]]
                     
     # Sum the terms
-    for i in xrange(TERMS):
+    for i in range(TERMS):
         A = arguments[i][0]*L2 + arguments[i][1]*L3 + arguments[i][2]*L4 + arguments[i][3]*L5 + arguments[i][4]*L6 + \
                 arguments[i][5]*L7 + arguments[i][6]*L8 + arguments[i][7]*LL + arguments[i][8]*D + arguments[i][9]*MM + \
                 arguments[i][10]*F
@@ -2608,7 +2605,7 @@ def get_equ_pm(mean_position, proper_motion, jD):
     
     Param: mean_position - J2000 equatorial mean position of object as type equ_posn.
     Param: proper_motion - Object of type equ_posn giving object's proper motion
-                        (units are deg/year).
+                           (units are deg/year).
     Param: jD - UTC Julian day (float) to measure position.
     
     Returns: Adjusted equatorial position of object as type equ_posn.
@@ -2656,13 +2653,13 @@ def get_equ_pm(mean_position, proper_motion, jD):
 # Rise, Set, Transit functions
 ######################################################################
 
-def get_object_rst(jD, observer, object_):
+def get_object_rst(jD, observer, target):
     """
     Get rise, set, and transit times of a celstial object.
     
     Param: jD       - UTC Julian day (float) target time.
     Param: observer - object of type lnlat_posn giving observer position
-    Param: object_  - object of type equ_posn giving target equatorial position
+    Param: target   - object of type equ_posn giving target equatorial position
     
     Returns: Object of type rst_time giving object's ephemeris UTC times,
             or None if the object is circumpolar.
@@ -2670,8 +2667,8 @@ def get_object_rst(jD, observer, object_):
 
     _rst = rst_time()
     b = ephem.FixedBody()
-    b._ra = deg_to_rad(object_.ra)
-    b._dec = deg_to_rad(object_.dec)
+    b._ra = deg_to_rad(target.ra)
+    b._dec = deg_to_rad(target.dec)
     
     o = ephem.Observer()
     o.date = jD-DJD_OFFSET

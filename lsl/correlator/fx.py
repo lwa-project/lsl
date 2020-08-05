@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main python functions in this module are:
@@ -26,25 +24,24 @@ of the data, including various window functions and time averaging.
     All of the functions here now return all 'LFFT' channels.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import ephem
 import numpy
 from astropy.constants import c as speedOfLight
 
 from lsl.common import dp as dp_common
-from lsl.correlator import uvutil, _spec, _stokes, _core
+from lsl.correlator import uvutils, _spec, _stokes, _core
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
 __version__ = '1.0'
-__revision__ = '$Rev$'
 __all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes']
 
 
@@ -222,7 +219,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -309,14 +306,14 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
         fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
         nonAuto = numpy.where( fom != 0 )[0]
         output = output[nonAuto,:]
         
     # Apply cable gain corrections (if needed)
     if gain_correct:
-        for bl in xrange(output.shape[0]):
+        for bl in range(output.shape[0]):
             cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
             cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
             
@@ -325,7 +322,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # Create antenna baseline list (if needed)
     if return_baselines:
         antennaBaselines = []
-        for bl in xrange(output.shape[0]):
+        for bl in range(output.shape[0]):
             antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
         returnValues = (antennaBaselines, freq, output)
     else:
@@ -366,7 +363,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -445,14 +442,14 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutil.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
         fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
         nonAuto = numpy.where( fom != 0 )[0]
         output = output[:,nonAuto,:]
         
     # Apply cable gain corrections (if needed)
     if gain_correct:
-        for bl in xrange(output.shape[0]):
+        for bl in range(output.shape[0]):
             cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
             cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
             
@@ -461,7 +458,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # Create antenna baseline list (if needed)
     if return_baselines:
         antennaBaselines = []
-        for bl in xrange(output.shape[1]):
+        for bl in range(output.shape[1]):
             antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
         returnValues = (antennaBaselines, freq, output)
     else:

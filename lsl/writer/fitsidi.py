@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Module for writing correlator output to a FITS IDI file.  The classes and 
 functions defined in this module are based heavily off the lwda_fits library.
@@ -17,18 +15,17 @@ functions defined in this module are based heavily off the lwda_fits library.
     Added support for writing multiple IFs to the same FITS-IDI file
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
 import math
 import ephem
 import numpy
-from functools import total_ordering
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight
 from astropy.utils import iers
@@ -43,7 +40,6 @@ telemetry.track_module()
 
 
 __version__ = '0.9'
-__revision__ = '$Rev$'
 __all__ = ['Idi', 'Aips', 'ExtendedIdi', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
@@ -119,7 +115,6 @@ class WriterBase(object):
             self.sideBand = 1
             self.baseBand = 0
             
-    @total_ordering
     class _UVData(object):
         """
         Represents one UV visibility data set for a given observation time.
@@ -134,28 +129,54 @@ class WriterBase(object):
             self.pol = pol
             self.source = source
             
-        def __cmp__(self, y):
-            """
-            Function to sort the self.data list in order of time and then 
-            polarization code.
-            """
-            
-            sID = (self.obsTime, abs(self.pol))
-            yID = (y.obsTime,    abs(y.pol)   )
-            
-            if sID > yID:
-                return 1
-            elif sID < yID:
-                return -1
-            else:
-                return 0
-                
         def __eq__(self, other):
-            return True if self.__cmp__(other) == 0 else False
-            
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID == oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __ne__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID != oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __gt__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID > oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __ge__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID >= oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
         def __lt__(self, other):
-            return True if self.__cmp__(other) < 0 else False
-            
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID < oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
+        def __le__(self, other):
+            if isinstance(other, _UVData):
+                sID = (self.obsTime,  abs(self.pol))
+                oID = (other.obsTime, abs(other.pol)   )
+                return sID <= oID
+            else:
+                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                
         def time(self):
             return self.obsTime
             
@@ -170,21 +191,21 @@ class WriterBase(object):
             lat2 = obs.lat
             
             # Coordinate transformation matrices
-            trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                                   [1,  0,               0],
-                                   [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-            trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                                   [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                                   [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+            trans1 = numpy.array([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+                                  [1,  0,               0],
+                                  [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+            trans2 = numpy.array([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
+                                  [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+                                  [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
                     
             for i,(a1,a2) in enumerate(self.baselines):
                 # Go from a east, north, up coordinate system to a celestial equation, 
                 # east, north celestial pole system
                 xyzPrime = a1.stand - a2.stand
-                xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+                xyz = numpy.dot(trans1, numpy.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
                 
                 # Go from CE, east, NCP to u, v, w
-                temp = trans2*xyz
+                temp = numpy.dot(trans2, xyz)
                 uvw[i,:] = numpy.squeeze(temp) / speedOfLight
                 
             return uvw
@@ -244,6 +265,9 @@ class WriterBase(object):
         self.siteName = 'Unknown'
         
         # Observation-specific information
+        self.observer = 'UKNOWN'
+        self.project = 'UNKNOWN'
+        self.mode = 'ZA'
         self.ref_time = self.parse_time(ref_time)
         self.nAnt = 0
         self.nChan = 0
@@ -257,6 +281,7 @@ class WriterBase(object):
         self.freq = []
         self.stokes = []
         self.data = []
+        self.extra_keywords = {}
         
     def __enter__(self):
         return self
@@ -314,6 +339,36 @@ class WriterBase(object):
         
         raise NotImplementedError
         
+    def set_observer(self, observer, project='UNKNOWN', mode='ZA'):
+        """
+        Set the observer name, project, and observation mode (if given) to the 
+        self.observer, self.project, and self.mode attributes, respectively.
+        
+        .. versionadded:: 2.0.0
+        """
+        
+        self.observer = observer
+        self.project = project
+        self.mode = mode
+        
+    def add_header_keyword(self, name, value, comment=None):
+        """
+        Add an additional entry to the header of the primary HDU.
+        
+        .. versionadded:: 2.0.0
+        """
+        
+        name = name.upper()
+        if name in ('NAXIS', 'EXTEND', 'GROUPS', 'GCOUNT', 'PCOUNT', 'OBJECT', 
+                    'TELESCOP', 'OBSERVER', 'PROJECT', 'ORIGIN', 'CORRELAT', 'FXCORVER', 
+                    'LWATYPE', 'LWAMAJV', 'LWAMINV', 'DATE-OBS', 'DATE-MAP', 
+                    'COMMENT', 'HISTORY'):
+            raise ValueError("Cannot set a value for '%s'" % name)
+        if len(name) > 8:
+            raise ValueError("Keyword name cannot be more than eight characters long")
+            
+        self.extra_keywords[name] = value if comment is None else (value, comment)
+        
     def add_data_set(self, obsTime, intTime, baselines, visibilities, weights=None, pol='XX', source='z'):
         """
         Create a UVData object to store a collection of visibilities.
@@ -328,7 +383,7 @@ class WriterBase(object):
             This can either by 'z' for zenith or a ephem.Body instances for a
             point on the sky.
             
-        .. versionchanged:: 1.3.0
+        .. versionchanged:: 2.0.0
             Added a new 'weights' keyword to set the visibility weights for the
             data.
         """
@@ -362,14 +417,14 @@ class Idi(WriterBase):
     AIPS via the FITLD task.
     """
     
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, clobber=False):
+    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new FITS IDI object using a filename and a reference time 
         given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
-            Added the 'memmap' and 'clobber' keywords to control if the file
+            Added the 'memmap' and 'overwrite' keywords to control if the file
             is memory mapped and whether or not to overwrite an existing file, 
             respectively.
         """
@@ -379,7 +434,7 @@ class Idi(WriterBase):
         
         # Open the file and get going
         if os.path.exists(filename):
-            if clobber:
+            if overwrite:
                 os.unlink(filename)
             else:
                 raise IOError("File '%s' already exists" % filename)
@@ -408,7 +463,7 @@ class Idi(WriterBase):
             stands.append(ant.stand.id)
         stands = numpy.array(stands)
         
-        arrayX, arrayY, arrayZ = site.get_geocentric_location()
+        arrayX, arrayY, arrayZ = site.geocentric_location
         
         xyz = numpy.zeros((len(stands),3))
         for i,ant in enumerate(antennas):
@@ -425,8 +480,8 @@ class Idi(WriterBase):
             enableMapper = False
             
         ants = []
-        topo2eci = site.get_eci_transform()
-        for i in xrange(len(stands)):
+        topo2eci = site.eci_transform_matrix
+        for i in range(len(stands)):
             eci = numpy.dot(topo2eci, xyz[i,:])
             ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
             if enableMapper:
@@ -540,17 +595,22 @@ class Idi(WriterBase):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('IDI-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = (self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:
@@ -641,11 +701,13 @@ class Idi(WriterBase):
             pm_xy = eop.pm_xy(refAT)
         except iers.IERSRangeError:
             eop.close()
+            
             with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
                 eop = iers.IERS_Auto.open()
                 ut1_utc = eop.ut1_utc(refAT)
                 pm_xy = eop.pm_xy(refAT)
-                    
+                pm_xy = eop.pm_xy(refAT)
+                 
         ag.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
         ag.header['POLARX'] = pm_xy[0].to('arcsec').value
@@ -1114,8 +1176,8 @@ class Idi(WriterBase):
                 
                 ### Zero out the visibility data
                 try:
-                    matrix *= 0.0
-                    weights *= 0.0
+                    matrix[...] = 0.0
+                    weights[...] = 1.0
                 except NameError:
                     matrix = numpy.zeros((len(order), self.nStokes*self.nChan*nBand), dtype=numpy.complex64)
                     weights = numpy.ones((len(order), self.nStokes*self.nChan*nBand), dtype=numpy.float32)
@@ -1229,7 +1291,7 @@ class Idi(WriterBase):
         uv.header['CRVAL6'] = 0.0
         
         uv.header['TELESCOP'] = self.siteName
-        uv.header['OBSERVER'] = 'ZASKY'
+        uv.header['OBSERVER'] = self.observer
         uv.header['SORT'] = ('TB', 'data is sorted in [time,baseline] order')
         
         uv.header['VISSCALE'] = (1.0, 'UV data scale factor')
@@ -1358,17 +1420,22 @@ class Aips(Idi):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('IDI-AIPS-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = ('AIPS-%s' % self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:
@@ -1434,17 +1501,22 @@ class ExtendedIdi(Idi):
         primary.header['OBJECT'] = 'BINARYTB'
         primary.header['TELESCOP'] = self.siteName
         primary.header['INSTRUME'] = self.siteName
-        primary.header['OBSERVER'] = ('ZASKY', 'zenith all-sky image')
+        primary.header['OBSERVER'] = (self.observer, 'Observer name(s)')
+        primary.header['PROJECT'] = (self.project, 'Project name')
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('IDI-EXTENDED-ZA', 'LWA FITS file type')
+        primary.header['LWATYPE'] = ('EXTENDED-%s' % self.mode, 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
         ts = str(astro.get_date_from_sys())
         primary.header['DATE-MAP'] = (ts.split()[0], 'IDI file creation date')
         
+        # Write extra header values
+        for name in self.extra_keywords:
+            primary.header[name] = self.extra_keywords[name]
+            
         # Write the comments and history
         try:
             for comment in self._comments:

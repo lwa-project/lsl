@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Utility to display observation information contained in a MCS metadata
 tarball.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import sys
 import pytz
@@ -29,7 +28,6 @@ telemetry.track_script()
 
 
 __version__ = "0.2"
-__revision__ = "$Rev: 941 $"
 
 # Date/time manipulation
 _UTC = pytz.utc
@@ -67,7 +65,7 @@ def main(args):
         
     nObs = len(project.sessions[0].observations)
     tStart = [None,]*nObs
-    for i in xrange(nObs):
+    for i in range(nObs):
         tStart[i]  = utcjd_to_unix(project.sessions[0].observations[i].mjd + MJD_OFFSET)
         tStart[i] += project.sessions[0].observations[i].mpm / 1000.0
         tStart[i]  = datetime.utcfromtimestamp(tStart[i])
@@ -136,13 +134,13 @@ def main(args):
     print(" ")
     print(" Number of observations: %i" % nObs)
     print(" Observation Detail:")
-    for i in xrange(nObs):
+    for i in range(nObs):
         currDur = project.sessions[0].observations[i].dur
         currDur = timedelta(seconds=int(currDur/1000), microseconds=(currDur*1000) % 1000000)
         
         print("  Observation #%i" % (i+1,))
         currObs = None
-        for j in xrange(len(obsImpl)):
+        for j in range(len(obsImpl)):
             if obsImpl[j]['obsID'] == i+1:
                 currObs = obsImpl[j]
                 break

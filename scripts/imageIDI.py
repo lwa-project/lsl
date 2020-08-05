@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Script for making and displaying images of correlated data files.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import sys
@@ -71,12 +70,9 @@ def main(args):
         dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Build a list of unique JDs for the data
-        pols = dataDict['bls'].keys()
-        jdList = []
-        for jd in dataDict['jd'][pols[0]]:
-            if jd not in jdList:
-                jdList.append(jd)
-                
+        pols = dataDict.pols
+        jdList = [dataDict.mjd + astro.MJD_OFFSET,]
+        
         # Find the LST
         lo.date = jdList[0] - astro.DJD_OFFSET
         utc = str(lo.date)
@@ -107,7 +103,7 @@ def main(args):
         print("    Gridding")
         img1 = None
         lbl1 = 'XX'
-        for p in ('xx', 'rr', 'I'):
+        for p in ('XX', 'RR', 'I'):
             try:
                 img1 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl1 = p.upper()
@@ -116,7 +112,7 @@ def main(args):
                 
         img2 = None
         lbl2 = 'YY'
-        for p in ('yy', 'll', 'Q'):
+        for p in ('YY', 'LL', 'Q'):
             try:
                 img2 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl2 = p.upper()
@@ -125,7 +121,7 @@ def main(args):
                 
         img3 = None
         lbl3 = 'XY'
-        for p in ('xy', 'rl', 'U'):
+        for p in ('XY', 'RL', 'U'):
             try:
                 img3 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl3 = p.upper()
@@ -134,7 +130,7 @@ def main(args):
                 
         img4 = None
         lbl4 = 'YX'
-        for p in ('yx', 'lr', 'V'):
+        for p in ('YX', 'LR', 'V'):
             try:
                 img4 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
                 lbl4 = p.upper()
@@ -223,14 +219,14 @@ def main(args):
                 
             ## Save the FITS file to disk
             hdulist = astrofits.HDUList(hdulist)
-            clobber = False
+            overwrite = False
             if os.path.exists(args.fits):
                 yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % args.fits)
                 if yn not in ('n', 'N'):
-                    clobber = True
+                    overwrite = True
             try:
-                hdulist.writeto(args.fits, clobber=clobber)
-            except IOError, e:
+                hdulist.writeto(args.fits, overwrite=overwrite)
+            except IOError as e:
                 print("WARNING: FITS image file not saved")
                 
     print("...Done")

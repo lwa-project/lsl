@@ -1,26 +1,28 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Utility for updating/changing the LWA station SSMIF files in between LSL 
 releases.
 """
 
-# Python3 compatibility
+# Python2 compatibility
 from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info > (3,):
-    xrange = range
+if sys.version_info < (3,):
+    range = xrange
     
 import os
 import re
 import sys
-import urllib
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
 import hashlib
 import argparse
 from datetime import datetime
 
-from lsl.common.paths import data as dataPath
+from lsl.common.paths import DATA as dataPath
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -113,8 +115,12 @@ def main(args):
         
         try:
             ## Retrieve the list
-            ah = urllib.urlopen(_url)
+            ah = urlopen(_url)
             index = ah.read()
+            try:
+                index = index.decode(encoding='ascii', error='ignore')
+            except AttributeError:
+                pass
             ah.close()
             
             ## Parse
@@ -135,7 +141,7 @@ def main(args):
             
             ## Build the URL
             urlToDownload = "%s/%s" % (_url, versions[i][0])
-        except Exception, e:
+        except Exception as e:
             print("Error:  Cannot process reversion, %s" % str(e))
             
     elif args.update:
@@ -152,10 +158,10 @@ def main(args):
     if urlToDownload is not None:
         ## Retrieve
         try:
-            ah = urllib.urlopen(urlToDownload)
+            ah = urlopen(urlToDownload)
             newSSMIF = ah.read()
             ah.close()
-        except Exception, e:
+        except Exception as e:
             print("Error:  Cannot download SSMIF, %s" % str(e))
             
         ## Save
@@ -163,7 +169,7 @@ def main(args):
             fh = open(_ssmif, 'wb')
             fh.write(newSSMIF)
             fh.close()
-        except Exception, e:
+        except Exception as e:
             print("Error:  Cannot %s SSMIF, %s" % ('update' if args.update else 'revert', str(e)))
             
     # Summarize the SSMIF
@@ -177,7 +183,7 @@ def main(args):
     
     ## SSMIF version (date)
     fh = open(_ssmif, 'r')
-    lines = [fh.readline() for i in xrange(10)]
+    lines = [fh.readline() for i in range(10)]
     fh.close()
     
     version = None
