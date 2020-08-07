@@ -33,6 +33,7 @@ if sys.version_info < (3,):
 import ephem
 import numpy
 from astropy.constants import c as speedOfLight
+from astropy.coordinates import AltAz as AstroAltAz
 
 from lsl.common import dp as dp_common
 from lsl.correlator import uvutils, _spec, _stokes, _core
@@ -41,7 +42,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.0'
+__version__ = '1.1'
 __all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes']
 
 
@@ -207,6 +208,9 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
          
     .. versionchanged:: 1.2.5
         Added the 'pfb' keyword.
+        
+    .. versionchanged:: 2.0.1
+        Added support for phase_center to be an astropy.coordinates.AltAz instance
     """
     
     # Decode the polarization product into something that we can use to figure 
@@ -249,6 +253,9 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         if isinstance(phase_center, ephem.Body):
             azPC = phase_center.az * 1.0
             elPC = phase_center.alt * 1.0
+        elif isinstance(phase_center, AstroAltAz):
+            azPC = phase_center.az.radian
+            elPC = phase_center.alt.radian
         else:
             azPC = phase_center[0]*numpy.pi/180.0
             elPC = phase_center[1]*numpy.pi/180.0
@@ -338,8 +345,11 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     the cross-correlation of the data for all baselines.  Return the frequencies 
     and visibilities as a two-elements tuple.
     
+    .. versionchanged:: 2.0.1
+        Added support for phase_center to be an astropy.coordinates.AltAz instance
+    
     .. versionchanged:: 1.0.0
-        Added a phase-center keyword that accept a two-element tuple of 
+        Added a phase_center keyword that accept a two-element tuple of 
         azimuth and elelvation (in degrees) to change where the 
         correlations are phased to
         
@@ -393,6 +403,9 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         if isinstance(phase_center, ephem.Body):
             azPC = phase_center.az * 1.0
             elPC = phase_center.alt * 1.0
+        elif isinstance(phase_center, AstroAltAz):
+            azPC = phase_center.az.radian
+            elPC = phase_center.alt.radian
         else:
             azPC = phase_center[0]*numpy.pi/180.0
             elPC = phase_center[1]*numpy.pi/180.0
