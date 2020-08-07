@@ -58,6 +58,7 @@ import weakref
 import warnings
 from datetime import datetime, timedelta
 
+from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 from astropy.coordinates import Angle as AstroAngle
 
@@ -854,6 +855,9 @@ class Observation(object):
             ms = int(round(value.microseconds/1000.0))/1000.0
             seconds = seconds + ms
             
+        elif isinstance(value, astrounits.quantity.Quantity):
+            seconds = seconds.to('s').value
+            
         else:
             seconds = value
             
@@ -899,6 +903,8 @@ class Observation(object):
         
     @frequency1.setter
     def frequency1(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq1 = freq_to_word(float(value))
         
     @property
@@ -909,6 +915,8 @@ class Observation(object):
         
     @frequency2.setter
     def frequency2(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq2 = freq_to_word(float(value))
         
     def get_beam_type(self):
@@ -1860,6 +1868,9 @@ class BeamStep(object):
             ms = int(round(value.microseconds/1000.0))/1000.0
             seconds = seconds + ms
             
+        elif isinstance(value, astrounits.quantity.Quantity):
+            seconds = seconds.to('s').value
+            
         else:
             seconds = value
         self.dur = int(round(seconds*1000))
@@ -1872,6 +1883,8 @@ class BeamStep(object):
         
     @frequency1.setter
     def frequency1(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq1 = freq_to_word(float(value))
         
     @property
@@ -1882,6 +1895,8 @@ class BeamStep(object):
         
     @frequency2.setter
     def frequency2(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq2 = freq_to_word(float(value))
         
     def update(self):

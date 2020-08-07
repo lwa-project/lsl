@@ -45,6 +45,7 @@ import weakref
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
 
+from astropy import units as astrounits
 from astropy.coordinates import Angle as AstroAngle
 
 from lsl.transform import Time
@@ -818,6 +819,9 @@ class Scan(object):
             ms = int(round(value.microseconds/1000.0))/1000.0
             seconds = seconds + ms
             
+        elif isinstance(value, astrounits.quantity.Quantity):
+            seconds = seconds.to('s').value
+            
         else:
             seconds = value
             
@@ -880,6 +884,8 @@ class Scan(object):
         
     @frequency1.setter
     def frequency1(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq1 = freq_to_word(float(value))
         
     @property
@@ -890,6 +896,8 @@ class Scan(object):
         
     @frequency2.setter
     def frequency2(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq2 = freq_to_word(float(value))
         
     def add_alt_phase_center(self, target_or_apc, intent=None, ra=None, dec=None, pm=None):
