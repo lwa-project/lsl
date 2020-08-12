@@ -174,7 +174,7 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
         HA2 = HA * 15.0 * numpy.pi/180
     if isinstance(dec, ephem.Angle):
         dec2 = dec*1.0
-    elif istinstance(dec, AstroAngle):
+    elif isinstance(dec, AstroAngle):
         dec2 = dec.radian
     else:
         dec2 = dec * numpy.pi/180
@@ -238,7 +238,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     # Convert numbers to radians and, for HA, hours to degrees
     if isinstance(dec, ephem.Angle):
         dec2 = dec*1.0
-    elif istinstance(dec, AstroAngle):
+    elif isinstance(dec, AstroAngle):
         dec2 = dec.radian
     else:
         dec2 = dec * numpy.pi/180
