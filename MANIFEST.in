@@ -4,7 +4,7 @@ include VERSION
 include PKG-INFO
 include setup.cfg
 recursive-include lsl *
-recursive-include doc *
+recursive-include docs *
 recursive-include tests *
 recursive-include scripts *
 global-exclude *~ *.bak *.pyc *.o *.d
