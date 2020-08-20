@@ -134,10 +134,6 @@ class LSLConfigContainer(object):
             output += "%s\n" % str(param)
         return output
         
-    def __del__(self):
-        if self._changed:
-            self._save_config()
-            
     def _load_config(self):
         """
         Load the configuation from disk.
@@ -195,10 +191,11 @@ class LSLConfigContainer(object):
         Save the configuation to disk.
         """
         
-        with open(self.filename, 'w') as fh:
-            fh.write(str(self))
-        self._changed = False
-        
+        if self._changed:
+            with open(self.filename, 'w') as fh:
+                fh.write(str(self))
+            self._changed = False
+            
     def view(self, section):
         """
         Return a configuration sub-container that defaults to looking up 
@@ -307,3 +304,6 @@ class LSLConfigSubContainer(object):
 
 # The LSLConfigContainer that users shoudl use
 LSL_CONFIG = LSLConfigContainer()
+
+import atexit
+atexit.register(LSL_CONFIG._save_config)
