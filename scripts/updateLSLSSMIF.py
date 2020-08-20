@@ -24,6 +24,8 @@ from datetime import datetime
 
 from lsl.common.paths import DATA as dataPath
 
+from lsl.config import LSLConfig
+
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -115,14 +117,17 @@ def main(args):
         
         try:
             ## Retrieve the list
-            ah = urlopen(_url)
-            index = ah.read()
             try:
-                index = index.decode(encoding='ascii', error='ignore')
-            except AttributeError:
-                pass
-            ah.close()
-            
+                ah = urlopen(_url, timeout=LSLConfig.get('download.timeout'))
+                index = ah.read()
+                try:
+                    index = index.decode(encoding='ascii', error='ignore')
+                except AttributeError:
+                    pass
+                ah.close()
+            except Exception as e:
+                print("Error:  Cannot download SSMIF listing, %s" % str(e))
+                
             ## Parse
             versions = _parse_index(index)
             
@@ -158,7 +163,7 @@ def main(args):
     if urlToDownload is not None:
         ## Retrieve
         try:
-            ah = urlopen(urlToDownload)
+            ah = urlopen(urlToDownload, timeout=LSLConfig.get('download.timeout'))
             newSSMIF = ah.read()
             ah.close()
         except Exception as e:

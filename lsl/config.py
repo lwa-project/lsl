@@ -45,6 +45,13 @@ DEFAULTS_IONO['ustec_mirror'] = {'value': None,
 DEFAULTS_IONO['max_cache_size'] = {'value': -1,
                                    'help':  'maximum cache size in MB; <= 0 disables cache size limiting'}
 
+## lsl.misc.telemetry
+DEFAULTS_TELEMETRY = OrderedDict()
+DEFAULTS_TELEMETRY['max_entries'] = {'value': 100,
+                                     'help':  'maximum number of entries to accumlate before reporting'}
+DEFAULTS_TELEMETRY['timeout'] = {'value': 120,
+                                 'help':  'upload timeout in seconds'}
+
 ## Download parameters
 DEFAULTS_DOWNLOAD = OrderedDict()
 DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
@@ -53,6 +60,7 @@ DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
 ## Everything
 DEFAULTS_ALL = OrderedDict()
 DEFAULTS_ALL['ionosphere'] = DEFAULTS_IONO
+DEFAULTS_ALL['telemetry'] = DEFAULTS_TELEMETRY
 DEFAULTS_ALL['download'] = DEFAULTS_DOWNLOAD
 
 

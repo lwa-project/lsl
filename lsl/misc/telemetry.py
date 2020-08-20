@@ -28,6 +28,8 @@ from functools import wraps
 
 from lsl.version import version as lsl_version
 
+from lsl.config import LSLConfig
+
 
 __version__ = '0.2'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
@@ -61,12 +63,12 @@ class _TelemetryClient(object):
     
     _lockout_file = os.path.join(_CACHE_DIR, 'lockout.key')
     
-    def __init__(self, key, version=lsl_version, max_entries=50, timeout=1.0):
+    def __init__(self, key, version=lsl_version):
         # Setup
         self.key = key
         self.version = version
-        self.max_entries = max_entries
-        self.timeout = timeout
+        self.max_entries = LSLConfig.get('telemetry.max_entries')
+        self.timeout = LSLConfig.get('telemetry.timeout')
         
         # Session reference
         self._session_start = time.time()
