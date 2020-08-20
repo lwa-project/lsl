@@ -230,7 +230,7 @@ class FrameBase(object):
         newFrame = copy.deepcopy(self)
         newFrame /= y
         return newFrame
-            
+        
     def __idiv__(self, y):
         """
         In-place divide the data sections of two frames together or 
@@ -249,6 +249,12 @@ class FrameBase(object):
         except AttributeError:
             self.payload._data /= self.payload._data.dtype.type(y)
         return self
+        
+    def __truediv__(self, y):
+        return self.__div__(y)
+        
+    def __itruediv__(self, y):
+        return self.__idiv__(y)
         
     def __eq__(self, y):
         """
