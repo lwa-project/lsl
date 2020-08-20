@@ -398,6 +398,35 @@ class Frame(FrameBase):
             
         return self
         
+    def __sub__(self, y):
+        """
+        Subtract the data sections of two frames or subtract a number 
+        from every element in the data section.
+        """
+        
+        newFrame = copy.deepcopy(self)
+        newFrame -= y
+        return newFrame
+        
+    def __isub__(self, y):
+        """
+        In-place subtract the data sections of two frames or subtract 
+        a number from every element in the data section.
+        """
+        
+        for attrBase in self.header.data_products:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) - getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) - numpy.float32(y)
+                setattr(self.payload, attr, temp)
+            
+        return self
+        
     def __mul__(self, y):
         """
         Multiple the data sections of two frames together or multiply 
@@ -424,7 +453,36 @@ class Frame(FrameBase):
                 except AttributeError:
                     temp = getattr(self.payload, attr, None) * numpy.float32(y)
                 setattr(self.payload, attr, temp)
+                
+        return self
+        
+    def __div__(self, y):
+        """
+        Divide the data sections of two frames or divide
+        a number from every element in the data section.
+        """
+        
+        newFrame = copy.deepcopy(self)
+        newFrame /= y
+        return newFrame
             
+    def __idiv__(self, y):
+        """
+        In-place divide the data sections of two frames or 
+        divide a number from every element in the data section.
+        """
+        
+        for attrBase in self.header.data_products:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) / getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) / numpy.float32(y)
+                setattr(self.payload, attr, temp)
+                
         return self
 
 

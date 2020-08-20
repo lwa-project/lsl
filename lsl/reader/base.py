@@ -142,6 +142,42 @@ class FrameBase(object):
             self.payload._data += self.payload._data.dtype.type(y)
         return self
         
+    def __sub__(self, y):
+        """
+        Subtract the data sections of two frames or subtract a number 
+        from every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        newFrame = copy.deepcopy(self)
+        newFrame -= y
+        return newFrame
+        
+    def __isub__(self, y):
+        """
+        In-place subtract the data sections of two frames together or subtract 
+        a number from every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        try:
+            self.payload._data -= y.payload._data
+        except AttributeError:
+            self.payload._data -= self.payload._data.dtype.type(y)
+        return self
+        
     def __mul__(self, y):
         """
         Multiple the data sections of two frames together or multiply 
@@ -176,6 +212,42 @@ class FrameBase(object):
             self.payload._data *= y.payload._data
         except AttributeError:
             self.payload._data *= self.payload._data.dtype.type(y)
+        return self
+        
+    def __div__(self, y):
+        """
+        Divide the data sections of two frames together or divide 
+        a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        newFrame = copy.deepcopy(self)
+        newFrame /= y
+        return newFrame
+            
+    def __idiv__(self, y):
+        """
+        In-place divide the data sections of two frames together or 
+        divide a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        try:
+            self.payload._data /= y.payload._data
+        except AttributeError:
+            self.payload._data /= self.payload._data.dtype.type(y)
         return self
         
     def __eq__(self, y):
