@@ -37,8 +37,8 @@ from lsl.common.stations import geo_to_ecef
 from lsl.common.paths import DATA as dataPath
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 
-from lsl.config import LSLConfig
-IonoConfig = LSLConfig.view('ionosphere')
+from lsl.config import LSL_CONFIG
+IONO_CONFIG = LSL_CONFIG.view('ionosphere')
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -402,7 +402,7 @@ def _cache_management():
     Simple cache manager.  It controls the size of the cache.
     """
     
-    if IonoConfig.get('max_cache_size') > 0:
+    if IONO_CONFIG.get('max_cache_size') > 0:
         # Get the list of files, their sizes, and their modificatio times
         filenames = glob.glob(os.path.join(_CACHE_DIR, '*'))
         sizes = [os.path.getsize(f)/1024.**2 for f in filenames]
@@ -410,7 +410,7 @@ def _cache_management():
         
         # Delete until we mee the cache size limit or until there is only one
         # file left (the most recent one)
-        while sum(sizes) > IonoConfig.get('max_cache_size') and len(filenames) > 1:
+        while sum(sizes) > IONO_CONFIG.get('max_cache_size') and len(filenames) > 1:
             oldest = min(mtimes)
             idx = mtimes.index(oldest)
             try:
@@ -430,7 +430,7 @@ def _download_worker(url, filename):
     # Attempt to download the data
     print("Downloading %s" % url)
     try:
-        tecFH = urlopen(url, timeout=LSLConfig.get('download.timeout'))
+        tecFH = urlopen(url, timeout=IONO_CONFIG.get('download.timeout'))
         data = tecFH.read()
         tecFH.close()
     except IOError as e:
@@ -498,9 +498,9 @@ def _download_igs(mjd, type='final'):
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('igs_url'), year, dayOfYear, filename), filename)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('igs_mirror'), year, dayOfYear, filename), filename)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
@@ -535,9 +535,9 @@ def _download_jpl(mjd, type='final'):
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('jpl_url'), year, dayOfYear, filename), filename)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('jpl_mirror'), year, dayOfYear, filename), filename)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
@@ -572,9 +572,9 @@ def _download_uqr(mjd, type='final'):
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('uqr_url'), year, dayOfYear, filename), filename)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('uqr_mirror'), year, dayOfYear, filename), filename)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
@@ -600,9 +600,9 @@ def _download_code(mjd, type='final'):
     filename = 'codg%03i0.%02ii.Z' % (dayOfYear, year%100)
     
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('code_url'), year, dayOfYear, filename), filename)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IonoConfig.get('code_mirror'), year, dayOfYear, filename), filename)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
@@ -629,7 +629,7 @@ def _download_ustec(mjd):
     filename = '%s_ustec.tar.gz' % dateStr
     
     # Attempt to download the data
-    return _download_worker('%s/%04i/%02i/%s' % (IonoConfig.get('ustec_url'), year, month, filename), filename)
+    return _download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, filename), filename)
 
 
 def _parse_tec_map(filename):

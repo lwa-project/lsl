@@ -16,7 +16,7 @@ _CONFIG_FILENAME = os.path.join(os.path.expanduser('~'), '.lsl', 'lsl.cfg')
 
 
 __version__ = "0.1"
-__all__ = ['LSLConfig',]
+__all__ = ['LSL_CONFIG',]
 
 
 # Default values
@@ -112,13 +112,27 @@ class LSLConfigContainer(object):
         self.filename = filename
         self._changed = False
         
-        self._parameters = OrderedDict({})
+        self._parameters = OrderedDict()
         self._load_config()
         
     def __repr__(self):
         n = self.__class__.__module__+'.'+self.__class__.__name__
-        a = [(attr,getattr(self, attr, None)) for attr in ('filename',)]
+        a = [(attr,getattr(self, attr, None)) for attr in ('filename', '_changed', '_parameters')]
         return tw_fill(_build_repr(n,a), subsequent_indent='    ')
+        
+    def __str__(self):
+        output = "# LSL Configuration File\n"
+        
+        last = None
+        for name in self._parameters:
+            param = self._parameters[name]
+            section, item = name.rsplit('.', 1)
+            if section != last:
+                output += "\n"
+                output += "[ %s ]\n" % section
+                last = section
+            output += "%s\n" % str(param)
+        return output
         
     def __del__(self):
         if self._changed:
@@ -182,18 +196,7 @@ class LSLConfigContainer(object):
         """
         
         with open(self.filename, 'w') as fh:
-            fh.write("# LSL Configuration File\n")
-            
-            last = None
-            for name in self._parameters:
-                print(name)
-                param = self._parameters[name]
-                section, item = name.rsplit('.', 1)
-                if section != last:
-                    fh.write("\n")
-                    fh.write("[ %s ]\n" % section)
-                    last = section
-                fh.write("%s\n" % str(param))
+            fh.write(str(self))
         self._changed = False
         
     def view(self, section):
@@ -303,4 +306,4 @@ class LSLConfigSubContainer(object):
 
 
 # The LSLConfigContainer that users shoudl use
-LSLConfig = LSLConfigContainer()
+LSL_CONFIG = LSLConfigContainer()

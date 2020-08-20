@@ -28,7 +28,8 @@ from functools import wraps
 
 from lsl.version import version as lsl_version
 
-from lsl.config import LSLConfig
+from lsl.config import LSL_CONFIG
+TELE_CONFIG = LSL_CONFIG.view('telemetry')
 
 
 __version__ = '0.2'
@@ -67,8 +68,8 @@ class _TelemetryClient(object):
         # Setup
         self.key = key
         self.version = version
-        self.max_entries = LSLConfig.get('telemetry.max_entries')
-        self.timeout = LSLConfig.get('telemetry.timeout')
+        self.max_entries = TELE_CONFIG.get('max_entries')
+        self.timeout = TELE_CONFIG.get('timeout')
         
         # Session reference
         self._session_start = time.time()

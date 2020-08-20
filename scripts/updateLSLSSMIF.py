@@ -24,7 +24,7 @@ from datetime import datetime
 
 from lsl.common.paths import DATA as dataPath
 
-from lsl.config import LSLConfig
+from lsl.config import LSL_CONFIG
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -118,7 +118,7 @@ def main(args):
         try:
             ## Retrieve the list
             try:
-                ah = urlopen(_url, timeout=LSLConfig.get('download.timeout'))
+                ah = urlopen(_url, timeout=LSL_CONFIG.get('download.timeout'))
                 index = ah.read()
                 try:
                     index = index.decode(encoding='ascii', error='ignore')
@@ -163,7 +163,7 @@ def main(args):
     if urlToDownload is not None:
         ## Retrieve
         try:
-            ah = urlopen(urlToDownload, timeout=LSLConfig.get('download.timeout'))
+            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
             newSSMIF = ah.read()
             ah.close()
         except Exception as e:
