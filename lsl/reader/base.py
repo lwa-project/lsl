@@ -214,7 +214,43 @@ class FrameBase(object):
             self.payload._data *= self.payload._data.dtype.type(y)
         return self
         
-    def __div__(self, y):
+    def __floordiv__(self, y):
+        """
+        Divide the data sections of two frames together or divide 
+        a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        newFrame = copy.deepcopy(self)
+        newFrame //= y
+        return newFrame
+        
+    def __ifloordiv__(self, y):
+        """
+        In-place divide the data sections of two frames together or 
+        divide a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        try:
+            self.payload._data //= y.payload._data
+        except AttributeError:
+            self.payload._data //= self.payload._data.dtype.type(y)
+        return self
+        
+    def __truediv__(self, y):
         """
         Divide the data sections of two frames together or divide 
         a number into every element in the data section.
@@ -231,7 +267,7 @@ class FrameBase(object):
         newFrame /= y
         return newFrame
         
-    def __idiv__(self, y):
+    def __itruediv__(self, y):
         """
         In-place divide the data sections of two frames together or 
         divide a number into every element in the data section.
@@ -250,11 +286,11 @@ class FrameBase(object):
             self.payload._data /= self.payload._data.dtype.type(y)
         return self
         
-    def __truediv__(self, y):
-        return self.__div__(y)
+    def __div__(self, y):
+        return self.__floordiv__(y)
         
-    def __itruediv__(self, y):
-        return self.__idiv__(y)
+    def __idiv__(self, y):
+        return self.__ifloordiv__(y)
         
     def __eq__(self, y):
         """

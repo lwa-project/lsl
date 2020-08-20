@@ -456,7 +456,36 @@ class Frame(FrameBase):
                 
         return self
         
-    def __div__(self, y):
+    def __floordiv__(self, y):
+        """
+        Divide the data sections of two frames or divide
+        a number from every element in the data section.
+        """
+        
+        newFrame = copy.deepcopy(self)
+        newFrame //= y
+        return newFrame
+            
+    def __ifloordiv__(self, y):
+        """
+        In-place divide the data sections of two frames or 
+        divide a number from every element in the data section.
+        """
+        
+        for attrBase in self.header.data_products:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) // getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) // numpy.float32(y)
+                setattr(self.payload, attr, temp)
+                
+        return self
+        
+    def __truediv__(self, y):
         """
         Divide the data sections of two frames or divide
         a number from every element in the data section.
@@ -466,7 +495,7 @@ class Frame(FrameBase):
         newFrame /= y
         return newFrame
             
-    def __idiv__(self, y):
+    def __itruediv__(self, y):
         """
         In-place divide the data sections of two frames or 
         divide a number from every element in the data section.
