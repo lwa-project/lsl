@@ -75,6 +75,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
     for s in range(chunk_size):
         try:
             readT, t, data = idf.read(int_time)
+            t=t.unix
         except Exception as e:
             print("Error: %s" % str(e))
             continue
@@ -149,7 +150,7 @@ def main(args):
     
     idf = LWA1DataFile(filename)
     
-    jd = idf.get_info('start_time').jd
+    mjd = idf.get_info('start_time').mjd
     date = idf.get_info('start_time').datetime
     nFpO = len(antennas)
     sample_rate = idf.get_info('sample_rate')
@@ -200,7 +201,7 @@ def main(args):
     print("==")
     print("Station: %s" % station.name)
     print("Date observed: %s" % date)
-    print("Julian day: %.5f" % jd)
+    print("Julian day: %.5f" % mjd)
     print("Offset: %.3f s (%i frames)" % (args.offset, args.offset*sample_rate/512))
     print("Integration Time: %.3f s" % (512*nFrames/sample_rate))
     print("Number of integrations in file: %i" % nSets)
