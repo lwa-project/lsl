@@ -130,7 +130,7 @@ class WriterBase(object):
             self.source = source
             
         def __eq__(self, other):
-            if isinstance(other, _UVData):
+            if isinstance(other, self.__class__):
                 sID = (self.obsTime,  abs(self.pol))
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID == oID
@@ -138,7 +138,7 @@ class WriterBase(object):
                 raise TypeError("Unsupported type: '%s'" % type(other).__name__)
                 
         def __ne__(self, other):
-            if isinstance(other, _UVData):
+            if isinstance(other, self.__class__):
                 sID = (self.obsTime,  abs(self.pol))
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID != oID
@@ -146,7 +146,7 @@ class WriterBase(object):
                 raise TypeError("Unsupported type: '%s'" % type(other).__name__)
                 
         def __gt__(self, other):
-            if isinstance(other, _UVData):
+            if isinstance(other, self.__class__):
                 sID = (self.obsTime,  abs(self.pol))
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID > oID
@@ -154,7 +154,7 @@ class WriterBase(object):
                 raise TypeError("Unsupported type: '%s'" % type(other).__name__)
                 
         def __ge__(self, other):
-            if isinstance(other, _UVData):
+            if isinstance(other, self.__class__):
                 sID = (self.obsTime,  abs(self.pol))
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID >= oID
@@ -162,7 +162,7 @@ class WriterBase(object):
                 raise TypeError("Unsupported type: '%s'" % type(other).__name__)
                 
         def __lt__(self, other):
-            if isinstance(other, _UVData):
+            if isinstance(other, self.__class__):
                 sID = (self.obsTime,  abs(self.pol))
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID < oID
@@ -170,7 +170,7 @@ class WriterBase(object):
                 raise TypeError("Unsupported type: '%s'" % type(other).__name__)
                 
         def __le__(self, other):
-            if isinstance(other, _UVData):
+            if isinstance(other, self.__class__):
                 sID = (self.obsTime,  abs(self.pol))
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID <= oID
