@@ -8,6 +8,8 @@
   * Updated lsl.reader.errors.SyncError to allow for reporting of non-Mark5C problems
   * Update the documentation for lsl.common.idf, sdf, and sdfADP
   * Added missing sub, isub, div, and idiv operators to lsl.reader.base.FrameBase
+  * Added a jd property to lsl.reader.base.FrameTimestamp to access the associated Julian day
+  * Updated the lsl.writer module to accept times as FrameTimestamp instances
 
 2.0.0
   * Major API changes to put LSL under a uniform coding style
