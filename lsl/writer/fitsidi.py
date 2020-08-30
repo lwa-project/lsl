@@ -34,6 +34,7 @@ from datetime import datetime
 from collections import OrderedDict
 
 from lsl import astro
+from lsl.reader.base import FrameTimestamp
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -231,12 +232,15 @@ class WriterBase(object):
         # Valid time string (modulo the 'T')
         timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
         
-        if type(ref_time) in (int, float):
+        if isinstance(ref_time, (int, float)):
             refDateTime = datetime.utcfromtimestamp(ref_time)
             ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(ref_time) == datetime:
+        elif isinstance(ref_time, FrameTimestamp):
+            refDateTime = ref_time.datetime
+            ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
+        elif isinstance(ref_time, datetime):
             ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
-        elif type(ref_time) == str:
+        elif isinstance(ref_time, str):
             # Make sure that the string times are of the correct format
             if re.match(timeRE, ref_time) is None:
                 raise RuntimeError("Malformed date/time provided: %s" % ref_time)
