@@ -598,14 +598,22 @@ class FrameTimestamp(object):
         """
         
         return float(self)
-            
+        
+    @property
+    def jd(self):
+        """
+        JD as a floating point value.
+        """
+        
+        return unix_to_utcjd(self)
+        
     @property
     def mjd(self):
         """
         MJD as a floating point value.
         """
         
-        return unix_to_utcjd(self) - MJD_OFFSET
+        return self.jd - MJD_OFFSET
         
     @property
     def pulsar_mjd(self):
