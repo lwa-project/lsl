@@ -23,6 +23,7 @@ from datetime import datetime
 from collections import OrderedDict
 
 from lsl import astro
+from lsl.reader.base import FrameTimestamp
 from lsl.writer.fitsidi import WriterBase
 
 from lsl.misc import telemetry
