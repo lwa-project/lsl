@@ -18,7 +18,7 @@ import math
 import ephem
 import numpy
 import shutil
-from functools import total_ordering
+from astropy.time import Time as AstroTime
 from datetime import datetime
 from collections import OrderedDict
 
@@ -73,7 +73,6 @@ try:
         
         _STOKES_CODES = STOKES_CODES
         
-        @total_ordering
         class _MS_UVData(WriterBase._UVData):
             """
             Represents one MS UV visibility data set for a given observation time.
