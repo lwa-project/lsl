@@ -211,6 +211,11 @@ try:
             else:
                 numericPol = pol
                 
+            if type(obsTime, FrameTimestamp):
+                obsTime = astro.unix_to_taimjd(obsTime.unix)
+            elif type(obsTime, AstroTime):
+                obsTime = obsTime.tai.mjd
+                
             self.data.append( self._MS_UVData(obsTime, intTime, baselines, visibilities, pol=numericPol, source=source) )
             
         def write(self):
