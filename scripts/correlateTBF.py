@@ -16,7 +16,7 @@ import sys
 import time
 import numpy
 import argparse
-from datetime import datetime, timedelta, tzinfo
+
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
@@ -31,19 +31,6 @@ from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
 telemetry.track_script()
-
-
-class UTC(tzinfo):
-    """tzinfo object for UTC time."""
-    
-    def utcoffset(self, dt):
-        return timedelta(0)
-        
-    def tzname(self, dt):
-        return "UTC"
-        
-    def dst(self, dt):
-        return timedelta(0)
 
 
 def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_size=100):
@@ -111,8 +98,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
             ref_time = setTime
             
         # Setup the set time as a python datetime instance so that it can be easily printed
-        setDT = datetime.utcfromtimestamp(setTime)
-        setDT.replace(tzinfo=UTC())
+        setDT = setTime.datetime
         print("Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
         
         # Loop over polarization products
