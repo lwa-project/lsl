@@ -778,7 +778,13 @@ MAKE_CI16_TO_CT(CLONGDOUBLE, npy_longdouble);
 static void register_cast_function_ci16(int sourceType, int destType, PyArray_VectorUnaryFunc *castfunc) {
     PyArray_Descr *descr = PyArray_DescrFromType(sourceType);
     PyArray_RegisterCastFunc(descr, destType, castfunc);
-    PyArray_RegisterCanCast(descr, destType, NPY_NOSCALAR);
+    if( ( (destType == NPY_CFLOAT) \
+         || (destType == NPY_CDOUBLE) \
+         || (destType == NPY_CLONGDOUBLE) ) ) {
+        PyArray_RegisterCanCast(descr, destType, NPY_COMPLEX_SCALAR);
+    } else {
+        PyArray_RegisterCanCast(descr, destType, NPY_NOSCALAR);
+    }
     Py_DECREF(descr);
 }
 
@@ -990,6 +996,7 @@ int create_complex_int16(PyObject* m, PyObject* numpy_dict) {
     register_cast_function_ci16(complexi16Num, NPY_CFLOAT, (PyArray_VectorUnaryFunc*)complex_int16_to_CFLOAT);
     register_cast_function_ci16(complexi16Num, NPY_CDOUBLE, (PyArray_VectorUnaryFunc*)complex_int16_to_CDOUBLE);
     register_cast_function_ci16(complexi16Num, NPY_CLONGDOUBLE, (PyArray_VectorUnaryFunc*)complex_int16_to_CLONGDOUBLE);
+    
     
     // These macros will be used below
 #define REGISTER_UFUNC_CI16(name)\

@@ -797,7 +797,13 @@ MAKE_CI32_TO_CT(CLONGDOUBLE, npy_longdouble);
 static void register_cast_function_ci32(int sourceType, int destType, PyArray_VectorUnaryFunc *castfunc) {
     PyArray_Descr *descr = PyArray_DescrFromType(sourceType);
     PyArray_RegisterCastFunc(descr, destType, castfunc);
-    PyArray_RegisterCanCast(descr, destType, NPY_NOSCALAR);
+    if( ( (destType == NPY_CFLOAT) \
+         || (destType == NPY_CDOUBLE) \
+         || (destType == NPY_CLONGDOUBLE) ) ) {
+        PyArray_RegisterCanCast(descr, destType, NPY_COMPLEX_SCALAR);
+    } else {
+        PyArray_RegisterCanCast(descr, destType, NPY_NOSCALAR);
+    }
     Py_DECREF(descr);
 }
 
