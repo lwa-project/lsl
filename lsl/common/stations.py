@@ -797,10 +797,10 @@ class Cable(object):
             return totlDelay
             
     def attenuation(self, frequency=49e6, dB=False):
-        """Get the multiplicative factor needed to correct for the cable 
-        loss for a specific frequency (in Hz).  If attenuations for more 
-        than one frequency are needed, the frequencies can be passed in as 
-        a numpy array.
+        """Get the multiplicative cable loss for a specific frequency (in Hz).
+        Cable loss (attenuation) affects measured voltages as follows: V_out = V_in / att.
+        If attenuations for more than one frequency are needed, the frequencies
+        can be passed in as a numpy array.
         
         .. versionchanged:: 1.0.0
             Added the `dB' keyword to allow dB to be returned.
@@ -817,8 +817,9 @@ class Cable(object):
         
     def gain(self, frequency=49e6, dB=False):
         """Get the cable gain ("inverse loss") for a specific frequency (in 
-        Hz).  If gains for more than one frequency are needed, the 
-        frequencies can be passed in as a numpy array.
+        Hz).  Cable gain affects measured voltages as follows: V_out = V_in * g.
+        If gains for more than one frequency are needed, the frequencies can be
+        passed in as a numpy array.
         
         .. versionchanged:: 1.0.0
             Added the `dB' keyword to allow dB to be returned.
