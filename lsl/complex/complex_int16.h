@@ -85,15 +85,11 @@ static NPY_INLINE long complex_int16_imag(complex_int16 c) {
 }
 
 // Unary float returners
-static NPY_INLINE double complex_int16_norm(complex_int16 c) {
-    return (((int) c.real)*c.real + ((int) c.imag)*c.imag)*1.0;
-}
-
 static NPY_INLINE double complex_int16_absolute(complex_int16 c) {
     return sqrt(((int) c.real)*c.real + ((int) c.imag)*c.imag);
 }
 
-static NPY_INLINE double complex_int16_angle(complex_int16 c) {
+static NPY_INLINE double complex_int16_kludgy_arctan2(long i, complex_int16 c) {
     return atan2((int) c.imag, (int) c.real);
 }
 
@@ -246,14 +242,14 @@ static NPY_INLINE void complex_int16_inplace_divide(complex_int16* c1, complex_i
 static NPY_INLINE complex_int16 complex_int16_scalar_divide(long s, complex_int16 c) {
     long mag2 = ((int) c.real)*c.real + ((int) c.imag)*c.imag;
     signed char real = (s*c.real + 0*c.imag) / mag2;
-    signed char imag = (s*c.real - 0*c.imag) / mag2;
+    signed char imag = (0*c.real - s*c.imag) / mag2;
     return (complex_int16) {real, imag};
 }
 
 static NPY_INLINE void complex_int16_inplace_scalar_divide(long s, complex_int16* c) {
     long mag2 = ((int) c->real)*c->real + ((int) c->imag)*c->imag;
     signed char real = (s*c->real + 0*c->imag) / mag2;
-    signed char imag = (s*c->real - 0*c->imag) / mag2;
+    signed char imag = (0*c->real - s*c->imag) / mag2;
     c->real = real;
     c->imag = imag;
 }

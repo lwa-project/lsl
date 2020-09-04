@@ -113,17 +113,12 @@ static NPY_INLINE long complex_int8_imag(complex_int8 c) {
 }
 
 // Unary float returners
-static NPY_INLINE double complex_int8_norm(complex_int8 c) {
-    const signed char* sc = fourBitLUT[c.real_imag];
-    return ((double) sc[0])*sc[0] + ((double) sc[1])*sc[1];
-}
-
 static NPY_INLINE double complex_int8_absolute(complex_int8 c) {
     const signed char* sc = fourBitLUT[c.real_imag];
     return sqrt((sc[0]*1.0)*sc[0] + (sc[1]*1.0)*sc[1]);
 }
 
-static NPY_INLINE double complex_int8_angle(complex_int8 c) {
+static NPY_INLINE double complex_int8_kludgy_arctan2(long i, complex_int8 c) {
     const signed char* sc = fourBitLUT[c.real_imag];
     return atan2((double) sc[1], (double) sc[0]);
 }
@@ -298,7 +293,7 @@ static NPY_INLINE complex_int8 complex_int8_scalar_divide(long s, complex_int8 c
     const signed char* sc = fourBitLUT[c.real_imag];
     long mag2 = ((int) sc[0])*sc[0] + ((int) sc[1])*sc[1];
     signed char real = (s*sc[0] + 0*sc[1]) / mag2;
-    signed char imag = (s*sc[0] - 0*sc[1]) / mag2;
+    signed char imag = (0*sc[0] - s*sc[1]) / mag2;
     return pack_ci8(real, imag);
 }
 
@@ -306,7 +301,7 @@ static NPY_INLINE void complex_int8_inplace_scalar_divide(long s, complex_int8* 
     const signed char* sc = fourBitLUT[c->real_imag];
     long mag2 = ((int) sc[0])*sc[0] + ((int) sc[1])*sc[1];
     signed char real = (s*sc[0] + 0*sc[1]) / mag2;
-    signed char imag = (s*sc[0] - 0*sc[1]) / mag2;
+    signed char imag = (0*sc[0] - s*sc[1]) / mag2;
     inplace_pack_ci8(real, imag, c);
 }
 

@@ -114,12 +114,12 @@ BINARY_BOOL_RETURNER_CI8(greater)
 BINARY_BOOL_RETURNER_CI8(less_equal)
 BINARY_BOOL_RETURNER_CI8(greater_equal)
 
-#define UNARY_INT_RETURNER_CI8(name)                                      \
+#define UNARY_INT_RETURNER_CI8(name)                                    \
     static PyObject*                                                    \
         pycomplexint8_##name(PyObject* a, PyObject* NPY_UNUSED(b)) {    \
         complex_int8 q = {0};                                           \
         PyComplexInt8_AsComplexInt8(q, a);                              \
-        return PyInt_FromLong(complex_int8_##name(q));              \
+        return PyInt_FromLong(complex_int8_##name(q));                  \
     }
 UNARY_INT_RETURNER_CI8(real)
 UNARY_INT_RETURNER_CI8(imag)
@@ -132,8 +132,6 @@ UNARY_INT_RETURNER_CI8(imag)
         return PyFloat_FromDouble(complex_int8_##name(q));              \
     }
 UNARY_FLOAT_RETURNER_CI8(absolute)
-UNARY_FLOAT_RETURNER_CI8(norm)
-UNARY_FLOAT_RETURNER_CI8(angle)
 
 #define UNARY_COMPLEX_INT8_RETURNER_CI8(name)                           \
     static PyObject*                                                    \
@@ -190,8 +188,8 @@ static PyObject* pycomplexint8_positive(PyObject* self, PyObject* NPY_UNUSED(b))
                 for(i = 0; i < size; i++, src += innerstride, dst += itemsize) {  \
                     *((complex_int8 *) dst) = complex_int8_##name(p, *((complex_int8 *) src)); \
                 }                                                             \
-            } while (iternext(iter));                                     \
-        } else if(PyArray_ISINTEGER((PyArrayObject*) b)) {                      \
+            } while (iternext(iter));                                         \
+        } else if(PyArray_ISINTEGER((PyArrayObject*) b)) {                    \
             npy_intp i;                                                       \
             do {                                                              \
                 npy_intp size = *innersizeptr;                                \
@@ -221,16 +219,16 @@ static PyObject* pycomplexint8_positive(PyObject* self, PyObject* NPY_UNUSED(b))
         npy_int32 val32;                                                      \
         complex_int8 p = {0};                                                 \
         if(PyArray_Check(b)) { return pycomplexint8_##fake_name##_array_operator(a, b); } \
-        if(PyInt_Check(a) && PyComplexInt8_Check(b)) {                    \
-            return PyComplexInt8_FromComplexInt8(complex_int8_scalar_##name(PyInt_AsLong(a), ((PyComplexInt8*)b)->obval));                                     \
+        if(PyInt_Check(a) && PyComplexInt8_Check(b)) {                        \
+            return PyComplexInt8_FromComplexInt8(complex_int8_scalar_##name(PyInt_AsLong(a), ((PyComplexInt8*)b)->obval));                                                 \
         }                                                                     \
         PyComplexInt8_AsComplexInt8(p, a);                                    \
         if(PyComplexInt8_Check(b)) {                                          \
             return PyComplexInt8_FromComplexInt8(complex_int8_##name(p,((PyComplexInt8*)b)->obval)); \
-        } else if(PyInt_Check(b)) {                                         \
+        } else if(PyInt_Check(b)) {                                           \
             return PyComplexInt8_FromComplexInt8(complex_int8_##name##_scalar(p,PyInt_AsLong(b))); \
         }                                                                     \
-        PyErr_SetString(PyExc_TypeError, "Binary operation involving complex_int8 and neither integer nor complex_int8.");                                                      \
+        PyErr_SetString(PyExc_TypeError, "Binary operation involving complex_int8 and neither integer nor complex_int8.");                                                              \
         return NULL;                                                          \
     }
 CI8CI8_CI8S_SCI8_BINARY_COMPLEX_INT8_RETURNER(add, add)
@@ -241,13 +239,79 @@ CI8CI8_CI8S_SCI8_BINARY_COMPLEX_INT8_RETURNER(true_divide, divide)
 CI8CI8_CI8S_SCI8_BINARY_COMPLEX_INT8_RETURNER(floor_divide, divide)
 /* CI8CI8_CI8S_SCI8_BINARY_COMPLEX_INT8_RETURNER(power, power) */
 
+static PyObject* pycomplexint8_kludgy_arctan2_array_operator(PyObject* a, PyObject* b) {
+    NpyIter *iter;
+    NpyIter_IterNextFunc *iternext;
+    PyArrayObject *op[2];
+    PyObject *ret;
+    npy_uint32 flags;
+    npy_uint32 op_flags[2];
+    PyArray_Descr *op_dtypes[2];
+    npy_intp itemsize, *innersizeptr, innerstride;
+    char **dataptrarray;
+    char *src, *dst;
+    long p = 0;
+    p = PyInt_AsLong(a);
+    flags = NPY_ITER_EXTERNAL_LOOP;
+    op[0] = (PyArrayObject *) b;
+    op[1] = NULL;
+    op_flags[0] = NPY_ITER_READONLY;
+    op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
+    op_dtypes[0] = PyArray_DESCR((PyArrayObject*) b);
+    op_dtypes[1] = complex_int8_descr;
+    iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_NO_CASTING, op_flags, op_dtypes);
+    if (iter == NULL) {
+        return NULL;
+    }
+    iternext = NpyIter_GetIterNext(iter, NULL);
+    innerstride = NpyIter_GetInnerStrideArray(iter)[0];
+    itemsize = NpyIter_GetDescrArray(iter)[1]->elsize;
+    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+    dataptrarray = NpyIter_GetDataPtrArray(iter);
+    if(PyArray_EquivTypes(PyArray_DESCR((PyArrayObject*) b), complex_int8_descr)) {
+        npy_intp i;
+        do {
+            npy_intp size = *innersizeptr;
+            src = dataptrarray[0];
+            dst = dataptrarray[1];
+            for(i = 0; i < size; i++, src += innerstride, dst += itemsize) {
+                *((double *) dst) = complex_int8_kludgy_arctan2(p, *((complex_int8 *) src));
+            }
+        } while (iternext(iter));
+    } else {
+        NpyIter_Deallocate(iter);
+        return NULL;
+    }
+    ret = (PyObject *) NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(ret);
+    if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    return ret;
+}
+
+static PyObject* pycomplexint8_kludgy_arctan2(PyObject* a, PyObject* b) {
+    /* PyObject *a_type, *a_repr, *b_type, *b_repr, *a_repr2, *b_repr2;   \ */
+    /* char* a_char, b_char, a_char2, b_char2;                            \ */
+    npy_int64 val64;
+    npy_int32 val32;
+    long p = 0;
+    if(PyArray_Check(b)) { return pycomplexint8_kludgy_arctan2_array_operator(a, b); }
+    p = PyInt_AsLong(a);
+    if(PyComplexInt8_Check(b)) {
+        return PyFloat_FromDouble(complex_int8_kludgy_arctan2(p,((PyComplexInt8*)b)->obval));
+    }
+    PyErr_SetString(PyExc_TypeError, "Binary operation involving complex_int8 and neither integer nor complex_int8.");
+    return NULL;
+}
+
 #define CI8CI8_CI8S_SCI8_BINARY_COMPLEX_INT8_INPLACE(fake_name, name)        \
     static PyObject*                                                         \
     pycomplexint8_inplace_##fake_name(PyObject* a, PyObject* b) {            \
         complex_int8* p = {0};                                               \
-        /* fprintf (stderr, "file %s, line %d, pycomplexint8_inplace_"#fake_name"(PyObject* a, PyObject* b).\n", __FILE__, __LINE__); \ */                                       \
         if(PyFloat_Check(a) || PyInt_Check(a)) {                             \
-            PyErr_SetString(PyExc_TypeError, "Cannot in-place "#fake_name" a scalar by a complex_int8; should be handled by python.");                                         \
+            PyErr_SetString(PyExc_TypeError, "Cannot in-place "#fake_name" a scalar by a complex_int8; should be handled by python.");                                                     \
             return NULL;                                                     \
         }                                                                    \
         PyComplexInt8_AsComplexInt8Pointer(p, a);                            \
@@ -255,8 +319,8 @@ CI8CI8_CI8S_SCI8_BINARY_COMPLEX_INT8_RETURNER(floor_divide, divide)
             complex_int8_inplace_##name(p,((PyComplexInt8*)b)->obval);       \
             Py_INCREF(a);                                                    \
             return a;                                                        \
-        } else if(PyInt_Check(b)) {                                      \
-            complex_int8_inplace_##name##_scalar(p,PyInt_AsLong(b));  \
+        } else if(PyInt_Check(b)) {                                          \
+            complex_int8_inplace_##name##_scalar(p,PyInt_AsLong(b));         \
             Py_INCREF(a);                                                    \
             return a;                                                        \
         }                                                                    \
@@ -332,11 +396,7 @@ PyMethodDef pycomplexint8_methods[] = {
    "Absolute value of complex_int8"},
   {"abs", pycomplexint8_absolute, METH_NOARGS,
    "Absolute value (Euclidean norm) of complex_int8"},
-  {"norm", pycomplexint8_norm, METH_NOARGS,
-   "Cayley norm (square of the absolute value) of complex_int8"},
-  {"angle", pycomplexint8_angle, METH_NOARGS,
-   "Angle through which rotor rotates"},
-
+  
   // Unary complex_int8 returners
   // {"negative", pycomplexint8_negative, METH_NOARGS,
   //  "Return the negated complex_int8"},
@@ -372,10 +432,10 @@ static int pycomplexint8_num_nonzero(PyObject* a) {
   complex_int8 q = ((PyComplexInt8*)a)->obval;
   return complex_int8_nonzero(q);
 }
-#define CANNOT_CONVERT_CI8(target)                                          \
-  static PyObject* pycomplexint8_convert_##target(PyObject* a) {         \
+#define CANNOT_CONVERT_CI8(target)                                           \
+  static PyObject* pycomplexint8_convert_##target(PyObject* a) {             \
     PyErr_SetString(PyExc_TypeError, "Cannot convert complex_int8 to " #target); \
-    return NULL;                                                        \
+    return NULL;                                                             \
   }
 CANNOT_CONVERT_CI8(int)
 CANNOT_CONVERT_CI8(float)
@@ -386,19 +446,19 @@ CANNOT_CONVERT_CI8(hex)
 #endif
 
 static PyNumberMethods pycomplexint8_as_number = {
-  pycomplexint8_add,               // nb_add
-  pycomplexint8_subtract,          // nb_subtract
-  pycomplexint8_multiply,          // nb_multiply
+  pycomplexint8_add,              // nb_add
+  pycomplexint8_subtract,         // nb_subtract
+  pycomplexint8_multiply,         // nb_multiply
   #if PY_MAJOR_VERSION < 3
-  pycomplexint8_divide,            // nb_divide
+  pycomplexint8_divide,           // nb_divide
   #endif
   0,                              // nb_remainder
   0,                              // nb_divmod
   0,                              // nb_power
-  pycomplexint8_num_negative,      // nb_negative
-  pycomplexint8_num_positive,      // nb_positive
-  pycomplexint8_num_absolute,      // nb_absolute
-  pycomplexint8_num_nonzero,       // nb_nonzero
+  pycomplexint8_num_negative,     // nb_negative
+  pycomplexint8_num_positive,     // nb_positive
+  pycomplexint8_num_absolute,     // nb_absolute
+  pycomplexint8_num_nonzero,      // nb_nonzero
   0,                              // nb_invert
   0,                              // nb_lshift
   0,                              // nb_rshift
@@ -408,22 +468,22 @@ static PyNumberMethods pycomplexint8_as_number = {
   #if PY_MAJOR_VERSION < 3
   0,                              // nb_coerce
   #endif
-  pycomplexint8_convert_int,       // nb_int
+  pycomplexint8_convert_int,      // nb_int
   #if PY_MAJOR_VERSION >= 3
   0,                              // nb_reserved
   #else
-  pycomplexint8_convert_long,      // nb_long
+  pycomplexint8_convert_long,     // nb_long
   #endif
-  pycomplexint8_convert_float,     // nb_float
+  pycomplexint8_convert_float,    // nb_float
   #if PY_MAJOR_VERSION < 3
-  pycomplexint8_convert_oct,       // nb_oct
-  pycomplexint8_convert_hex,       // nb_hex
+  pycomplexint8_convert_oct,      // nb_oct
+  pycomplexint8_convert_hex,      // nb_hex
   #endif
-  pycomplexint8_inplace_add,       // nb_inplace_add
-  pycomplexint8_inplace_subtract,  // nb_inplace_subtract
-  pycomplexint8_inplace_multiply,  // nb_inplace_multiply
+  pycomplexint8_inplace_add,      // nb_inplace_add
+  pycomplexint8_inplace_subtract, // nb_inplace_subtract
+  pycomplexint8_inplace_multiply, // nb_inplace_multiply
   #if PY_MAJOR_VERSION < 3
-  pycomplexint8_inplace_divide,    // nb_inplace_divide
+  pycomplexint8_inplace_divide,   // nb_inplace_divide
   #endif
   0,                              // nb_inplace_remainder
   0,                              // nb_inplace_power
@@ -432,10 +492,10 @@ static PyNumberMethods pycomplexint8_as_number = {
   0,                              // nb_inplace_and
   0,                              // nb_inplace_xor
   0,                              // nb_inplace_or
-  pycomplexint8_divide,            // nb_floor_divide
-  pycomplexint8_divide,            // nb_true_divide
-  pycomplexint8_inplace_divide,    // nb_inplace_floor_divide
-  pycomplexint8_inplace_divide,    // nb_inplace_true_divide
+  pycomplexint8_divide,           // nb_floor_divide
+  pycomplexint8_divide,           // nb_true_divide
+  pycomplexint8_inplace_divide,   // nb_inplace_floor_divide
+  pycomplexint8_inplace_divide,   // nb_inplace_true_divide
   0,                              // nb_index
   #if PY_MAJOR_VERSION >= 3
   #if PY_MINOR_VERSION >= 5
@@ -741,26 +801,20 @@ static void complex_int8_to_## TYPE(complex_int8* ip, type *op, npy_intp n, \
     const signed char* sc;                                            \
     while (n--) {                                                     \
         sc = fourBitLUT[ip->real_imag];                               \
-        *(op++) = (type) sc[0];                                       \
-        *(op++) = (type) sc[1];                                       \
-        (*ip++);                                                      \
+        op->real = sc[0];                                             \
+        op->imag = sc[1];                                             \
+        (*ip++); (*op++);                                             \
     }                                                                 \
 }
 
-MAKE_CI8_TO_CT(CFLOAT, npy_float);
-MAKE_CI8_TO_CT(CDOUBLE, npy_double);
-MAKE_CI8_TO_CT(CLONGDOUBLE, npy_longdouble);
+MAKE_CI8_TO_CT(CFLOAT, npy_cfloat);
+MAKE_CI8_TO_CT(CDOUBLE, npy_cdouble);
+MAKE_CI8_TO_CT(CLONGDOUBLE, npy_clongdouble);
 
 static void register_cast_function_ci8(int sourceType, int destType, PyArray_VectorUnaryFunc *castfunc) {
     PyArray_Descr *descr = PyArray_DescrFromType(sourceType);
     PyArray_RegisterCastFunc(descr, destType, castfunc);
-    if( ( (destType == NPY_CFLOAT) \
-         || (destType == NPY_CDOUBLE) \
-         || (destType == NPY_CLONGDOUBLE) ) ) {
-        PyArray_RegisterCanCast(descr, destType, NPY_COMPLEX_SCALAR);
-    } else {
-        PyArray_RegisterCanCast(descr, destType, NPY_NOSCALAR);
-    }
+    PyArray_RegisterCanCast(descr, destType, NPY_NOSCALAR);
     Py_DECREF(descr);
 }
 
@@ -787,9 +841,7 @@ UNARY_UFUNC_CI8(isinf, npy_bool)
 UNARY_UFUNC_CI8(isfinite, npy_bool)
 UNARY_UFUNC_CI8(real, npy_long)
 UNARY_UFUNC_CI8(imag, npy_long)
-UNARY_UFUNC_CI8(norm, npy_double)
 UNARY_UFUNC_CI8(absolute, npy_double)
-UNARY_UFUNC_CI8(angle, npy_double)
 UNARY_UFUNC_CI8(negative, complex_int8)
 UNARY_UFUNC_CI8(conjugate, complex_int8)
 static void complex_int8_positive_ufunc(char** args, npy_intp* dimensions, npy_intp* steps, void* NPY_UNUSED(data)) {
@@ -846,6 +898,8 @@ BINARY_GEN_UFUNC_CI8(true_divide_scalar, divide_scalar, complex_int8, long, comp
 BINARY_GEN_UFUNC_CI8(floor_divide_scalar, divide_scalar, complex_int8, long, complex_int8)
 BINARY_GEN_UFUNC_CI8(scalar_true_divide, scalar_divide, long, complex_int8, complex_int8)
 BINARY_GEN_UFUNC_CI8(scalar_floor_divide, scalar_divide, long, complex_int8, complex_int8)
+
+BINARY_GEN_UFUNC_CI8(arctan2, kludgy_arctan2, long, complex_int8, npy_double)
 
 static PyObject* complex_int8_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
     complex_int8 c;
@@ -980,7 +1034,7 @@ int create_complex_int8(PyObject* m, PyObject* numpy_dict) {
     
 #define REGISTER_SCALAR_UFUNC_CI8(name)\
     PyUFunc_RegisterLoopForType((PyUFuncObject *)PyDict_GetItemString(numpy_dict, #name),\
-            complex_int8_descr->type_num, complex_int8_##name##_scalar_ufunc, arg_types, NULL)
+            complex_int8_descr->type_num, complex_int8_scalar_##name##_ufunc, arg_types, NULL)
     
 #define REGISTER_UFUNC_SCALAR_CI8(name)                                   \
     PyUFunc_RegisterLoopForType((PyUFuncObject *)PyDict_GetItemString(numpy_dict, #name), \
@@ -1016,11 +1070,7 @@ int create_complex_int8(PyObject* m, PyObject* numpy_dict) {
     /* complex_int8 -> double */
     arg_types[1] = NPY_DOUBLE;
     
-    REGISTER_NEW_UFUNC_CI8(norm, 1, 1, \
-                           "Return Cayley norm (square of the absolute value) of each complex_int8\n");
     REGISTER_UFUNC_CI8(absolute);
-    REGISTER_NEW_UFUNC_GENERAL_CI8(angle, angle, 1, 1, \
-                                   "Return the angle of the complex argument\n");
     
     /* complex_int8 -> complex_int8 */
     arg_types[1] = complex_int8_descr->type_num;
@@ -1045,6 +1095,13 @@ int create_complex_int8(PyObject* m, PyObject* numpy_dict) {
     REGISTER_UFUNC_CI8(divide);
     REGISTER_UFUNC_CI8(true_divide);
     REGISTER_UFUNC_CI8(floor_divide);
+    
+    /* long, complex_int8 -> double */
+    arg_types[0] = NPY_LONG;
+    arg_types[1] = complex_int8_descr->type_num;
+    arg_types[2] = NPY_DOUBLE;
+    
+    REGISTER_UFUNC_CI8(arctan2);
     
     /* long, complex_int8 -> complex_int8 */
     arg_types[0] = NPY_LONG;
