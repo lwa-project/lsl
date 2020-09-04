@@ -112,7 +112,7 @@ class vdif_tests(unittest.TestCase):
             stand, pol = frame.id
             if pol == 1:
                 continue
-            vFrame = vdif.Frame(stand, frame.time, bits=8, data=frame.payload.data, sample_rate=100e3)
+            vFrame = vdif.Frame(stand, frame.time, bits=8, data=frame.payload.data.astype(numpy.complex64), sample_rate=100e3)
             vFrame.write_raw_frame(fh)
         fh.close()
 
@@ -121,7 +121,7 @@ class vdif_tests(unittest.TestCase):
         for tFrame in frames[::2]:
             vFrame = vrdr.read_frame(fh)
             for v,t in zip((vFrame.payload.data*256-1-1j)/2, tFrame.payload.data):
-                self.assertAlmostEqual(v, t, 6)
+                self.assertAlmostEqual(v, numpy.complex64(t), 6)
                 
         fh.close()
 
