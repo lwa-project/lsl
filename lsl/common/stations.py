@@ -798,7 +798,7 @@ class Cable(object):
             
     def attenuation(self, frequency=49e6, dB=False):
         """Get the multiplicative cable loss for a specific frequency (in Hz).
-        Cable loss (attenuation) affects measured voltages as follows: V_out = V_in / att.
+        Cable loss (attenuation) affects the measured power as follows: P_out = P_in / att.
         If attenuations for more than one frequency are needed, the frequencies
         can be passed in as a numpy array.
         
@@ -817,7 +817,7 @@ class Cable(object):
         
     def gain(self, frequency=49e6, dB=False):
         """Get the cable gain ("inverse loss") for a specific frequency (in 
-        Hz).  Cable gain affects measured voltages as follows: V_out = V_in * g.
+        Hz).  Cable gain affects the measured power as follows: P_out = P_in * g.
         If gains for more than one frequency are needed, the frequencies can be
         passed in as a numpy array.
         
