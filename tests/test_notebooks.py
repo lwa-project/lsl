@@ -69,7 +69,7 @@ class notebooks_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the LSL IPython notebooks."""
     
     def setUp(self):
-        self.maxDiff = 8192
+        self.maxDiff = 16384
         
         self._kernel = jupyter_client.KernelManager()
         self._kernel.start_kernel()
