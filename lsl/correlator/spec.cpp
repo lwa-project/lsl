@@ -493,16 +493,17 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
                                       (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(data) ){
-        case( NPY_INT8       ):   LAUNCH_PSD_REAL(int8_t);     break;
-        case( NPY_INT16      ):   LAUNCH_PSD_REAL(int16_t);    break;
-        case( NPY_INT32      ):   LAUNCH_PSD_REAL(int);        break;
-        case( NPY_INT64      ):   LAUNCH_PSD_REAL(long);       break;
-        case( NPY_FLOAT32    ):   LAUNCH_PSD_REAL(float);      break;
-        case( NPY_FLOAT64    ):   LAUNCH_PSD_REAL(double);     break;
-        case( NPY_COMPLEX_INT16): LAUNCH_PSD_COMPLEX(int8_t);  break;
-        case( NPY_COMPLEX_INT32): LAUNCH_PSD_COMPLEX(int16_t); break;
-        case( NPY_COMPLEX64  ):   LAUNCH_PSD_COMPLEX(float);   break;
-        case( NPY_COMPLEX128 ):   LAUNCH_PSD_COMPLEX(double);  break;
+        case( NPY_INT8         ): LAUNCH_PSD_REAL(int8_t);          break;
+        case( NPY_INT16        ): LAUNCH_PSD_REAL(int16_t);         break;
+        case( NPY_INT32        ): LAUNCH_PSD_REAL(int);             break;
+        case( NPY_INT64        ): LAUNCH_PSD_REAL(long);            break;
+        case( NPY_FLOAT32      ): LAUNCH_PSD_REAL(float);           break;
+        case( NPY_FLOAT64      ): LAUNCH_PSD_REAL(double);          break;
+        case( NPY_COMPLEX_INT8 ): LAUNCH_PSD_COMPLEX(complex_int8); break;
+        case( NPY_COMPLEX_INT16): LAUNCH_PSD_COMPLEX(int8_t);       break;
+        case( NPY_COMPLEX_INT32): LAUNCH_PSD_COMPLEX(int16_t);      break;
+        case( NPY_COMPLEX64    ): LAUNCH_PSD_COMPLEX(float);        break;
+        case( NPY_COMPLEX128   ): LAUNCH_PSD_COMPLEX(double);       break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         
@@ -616,16 +617,17 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
                                       (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(data) ){
-        case( NPY_INT8       ):   LAUNCH_PFB_REAL(int8_t);     break;
-        case( NPY_INT16      ):   LAUNCH_PFB_REAL(int16_t);    break;
-        case( NPY_INT32      ):   LAUNCH_PFB_REAL(int);        break;
-        case( NPY_INT64      ):   LAUNCH_PFB_REAL(long);       break;
-        case( NPY_FLOAT32    ):   LAUNCH_PFB_REAL(float);      break;
-        case( NPY_FLOAT64    ):   LAUNCH_PFB_REAL(double);     break;
-        case( NPY_COMPLEX_INT16): LAUNCH_PFB_COMPLEX(int8_t);  break;
-        case( NPY_COMPLEX_INT32): LAUNCH_PFB_COMPLEX(int16_t); break;
-        case( NPY_COMPLEX64  ):   LAUNCH_PFB_COMPLEX(float);   break;
-        case( NPY_COMPLEX128 ):   LAUNCH_PFB_COMPLEX(double);  break;
+        case( NPY_INT8         ): LAUNCH_PFB_REAL(int8_t);          break;
+        case( NPY_INT16        ): LAUNCH_PFB_REAL(int16_t);         break;
+        case( NPY_INT32        ): LAUNCH_PFB_REAL(int);             break;
+        case( NPY_INT64        ): LAUNCH_PFB_REAL(long);            break;
+        case( NPY_FLOAT32      ): LAUNCH_PFB_REAL(float);           break;
+        case( NPY_FLOAT64      ): LAUNCH_PFB_REAL(double);          break;
+        case( NPY_COMPLEX_INT8 ): LAUNCH_PFB_COMPLEX(complex_int8); break;
+        case( NPY_COMPLEX_INT16): LAUNCH_PFB_COMPLEX(int8_t);       break;
+        case( NPY_COMPLEX_INT32): LAUNCH_PFB_COMPLEX(int16_t);      break;
+        case( NPY_COMPLEX64    ): LAUNCH_PFB_COMPLEX(float);        break;
+        case( NPY_COMPLEX128   ): LAUNCH_PFB_COMPLEX(double);       break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         

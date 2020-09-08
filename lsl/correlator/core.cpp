@@ -660,16 +660,17 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
                                           (unsigned char*) PyArray_DATA(validF))
     
     switch( PyArray_TYPE(data) ){
-        case( NPY_INT8       ):   LAUNCH_FENGINE_REAL(int8_t);     break;
-        case( NPY_INT16      ):   LAUNCH_FENGINE_REAL(int16_t);    break;
-        case( NPY_INT32      ):   LAUNCH_FENGINE_REAL(int);        break;
-        case( NPY_INT64      ):   LAUNCH_FENGINE_REAL(long);       break;
-        case( NPY_FLOAT32    ):   LAUNCH_FENGINE_REAL(float);      break;
-        case( NPY_FLOAT64    ):   LAUNCH_FENGINE_REAL(double);     break;
-        case( NPY_COMPLEX_INT16): LAUNCH_FENGINE_COMPLEX(int8_t);  break;
-        case( NPY_COMPLEX_INT32): LAUNCH_FENGINE_COMPLEX(int16_t); break;
-        case( NPY_COMPLEX64  ):   LAUNCH_FENGINE_COMPLEX(float);   break;
-        case( NPY_COMPLEX128 ):   LAUNCH_FENGINE_COMPLEX(double);  break;
+        case( NPY_INT8         ): LAUNCH_FENGINE_REAL(int8_t);          break;
+        case( NPY_INT16        ): LAUNCH_FENGINE_REAL(int16_t);         break;
+        case( NPY_INT32        ): LAUNCH_FENGINE_REAL(int);             break;
+        case( NPY_INT64        ): LAUNCH_FENGINE_REAL(long);            break;
+        case( NPY_FLOAT32      ): LAUNCH_FENGINE_REAL(float);           break;
+        case( NPY_FLOAT64      ): LAUNCH_FENGINE_REAL(double);          break;
+        case( NPY_COMPLEX_INT8 ): LAUNCH_FENGINE_COMPLEX(complex_int8); break;
+        case( NPY_COMPLEX_INT16): LAUNCH_FENGINE_COMPLEX(int8_t);       break;
+        case( NPY_COMPLEX_INT32): LAUNCH_FENGINE_COMPLEX(int16_t);      break;
+        case( NPY_COMPLEX64    ): LAUNCH_FENGINE_COMPLEX(float);        break;
+        case( NPY_COMPLEX128   ): LAUNCH_FENGINE_COMPLEX(double);       break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         
@@ -858,16 +859,17 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
                                             (unsigned char*) PyArray_DATA(validF))
     
     switch( PyArray_TYPE(data) ){
-        case( NPY_INT8       ):   LAUNCH_PFBENGINE_REAL(int8_t);     break;
-        case( NPY_INT16      ):   LAUNCH_PFBENGINE_REAL(int16_t);    break;
-        case( NPY_INT32      ):   LAUNCH_PFBENGINE_REAL(int);        break;
-        case( NPY_INT64      ):   LAUNCH_PFBENGINE_REAL(long);       break;
-        case( NPY_FLOAT32    ):   LAUNCH_PFBENGINE_REAL(float);      break;
-        case( NPY_FLOAT64    ):   LAUNCH_PFBENGINE_REAL(double);     break;
-        case( NPY_COMPLEX_INT16): LAUNCH_PFBENGINE_COMPLEX(int8_t);  break;
-        case( NPY_COMPLEX_INT32): LAUNCH_PFBENGINE_COMPLEX(int16_t); break;
-        case( NPY_COMPLEX64  ):   LAUNCH_PFBENGINE_COMPLEX(float);   break;
-        case( NPY_COMPLEX128 ):   LAUNCH_PFBENGINE_COMPLEX(double);  break;
+        case( NPY_INT8         ): LAUNCH_PFBENGINE_REAL(int8_t);          break;
+        case( NPY_INT16        ): LAUNCH_PFBENGINE_REAL(int16_t);         break;
+        case( NPY_INT32        ): LAUNCH_PFBENGINE_REAL(int);             break;
+        case( NPY_INT64        ): LAUNCH_PFBENGINE_REAL(long);            break;
+        case( NPY_FLOAT32      ): LAUNCH_PFBENGINE_REAL(float);           break;
+        case( NPY_FLOAT64      ): LAUNCH_PFBENGINE_REAL(double);          break;
+        case( NPY_COMPLEX_INT8 ): LAUNCH_PFBENGINE_COMPLEX(complex_int8); break;
+        case( NPY_COMPLEX_INT16): LAUNCH_PFBENGINE_COMPLEX(int8_t);       break;
+        case( NPY_COMPLEX_INT32): LAUNCH_PFBENGINE_COMPLEX(int16_t);      break;
+        case( NPY_COMPLEX64    ): LAUNCH_PFBENGINE_COMPLEX(float);        break;
+        case( NPY_COMPLEX128   ): LAUNCH_PFBENGINE_COMPLEX(double);       break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         
