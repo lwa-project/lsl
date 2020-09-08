@@ -274,8 +274,7 @@ void compute_psd_complex(long nStand,
                 secStart = nSamps * i + nChan*j/Overlap;
                 
                 for(k=0; k<nChan; k++) {
-                    in[k] = Complex32(*(data + 2*secStart + 2*k + 0), \
-                                      *(data + 2*secStart + 2*k + 1));
+                    load_cmplx(data, secStart + k, in + k);
                     
                     if( Clip && abs(in[k]) >= Clip ) {
                         cleanFactor = 0.0;
@@ -377,8 +376,7 @@ void compute_pfb_complex(long nStand,
                     if( secStart - nChan*(PFB_NTAP-1) + k < nSamps*i ) {
                         in[k] = 0.0;
                     } else {
-                        in[k] = Complex32(*(data + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 0), \
-                                          *(data + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 1));
+                        load_cmplx(data, secStart - nChan*(PFB_NTAP-1) + k, in + k);
                     }
                     
                     if( Clip && abs(in[k]) >= Clip ) {
@@ -495,14 +493,16 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
                                       (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(data) ){
-        case( NPY_INT8       ): LAUNCH_PSD_REAL(int8_t);    break;
-        case( NPY_INT16      ): LAUNCH_PSD_REAL(int16_t);   break;
-        case( NPY_INT32      ): LAUNCH_PSD_REAL(int);       break;
-        case( NPY_INT64      ): LAUNCH_PSD_REAL(long);      break;
-        case( NPY_FLOAT32    ): LAUNCH_PSD_REAL(float);     break;
-        case( NPY_FLOAT64    ): LAUNCH_PSD_REAL(double);    break;
-        case( NPY_COMPLEX64  ): LAUNCH_PSD_COMPLEX(float);  break;
-        case( NPY_COMPLEX128 ): LAUNCH_PSD_COMPLEX(double); break;
+        case( NPY_INT8       ):   LAUNCH_PSD_REAL(int8_t);     break;
+        case( NPY_INT16      ):   LAUNCH_PSD_REAL(int16_t);    break;
+        case( NPY_INT32      ):   LAUNCH_PSD_REAL(int);        break;
+        case( NPY_INT64      ):   LAUNCH_PSD_REAL(long);       break;
+        case( NPY_FLOAT32    ):   LAUNCH_PSD_REAL(float);      break;
+        case( NPY_FLOAT64    ):   LAUNCH_PSD_REAL(double);     break;
+        case( NPY_COMPLEX_INT16): LAUNCH_PSD_COMPLEX(int8_t);  break;
+        case( NPY_COMPLEX_INT32): LAUNCH_PSD_COMPLEX(int16_t); break;
+        case( NPY_COMPLEX64  ):   LAUNCH_PSD_COMPLEX(float);   break;
+        case( NPY_COMPLEX128 ):   LAUNCH_PSD_COMPLEX(double);  break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         
@@ -616,14 +616,16 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
                                       (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(data) ){
-        case( NPY_INT8       ): LAUNCH_PFB_REAL(int8_t);    break;
-        case( NPY_INT16      ): LAUNCH_PFB_REAL(int16_t);   break;
-        case( NPY_INT32      ): LAUNCH_PFB_REAL(int);       break;
-        case( NPY_INT64      ): LAUNCH_PFB_REAL(long);      break;
-        case( NPY_FLOAT32    ): LAUNCH_PFB_REAL(float);     break;
-        case( NPY_FLOAT64    ): LAUNCH_PFB_REAL(double);    break;
-        case( NPY_COMPLEX64  ): LAUNCH_PFB_COMPLEX(float);  break;
-        case( NPY_COMPLEX128 ): LAUNCH_PFB_COMPLEX(double); break;
+        case( NPY_INT8       ):   LAUNCH_PFB_REAL(int8_t);     break;
+        case( NPY_INT16      ):   LAUNCH_PFB_REAL(int16_t);    break;
+        case( NPY_INT32      ):   LAUNCH_PFB_REAL(int);        break;
+        case( NPY_INT64      ):   LAUNCH_PFB_REAL(long);       break;
+        case( NPY_FLOAT32    ):   LAUNCH_PFB_REAL(float);      break;
+        case( NPY_FLOAT64    ):   LAUNCH_PFB_REAL(double);     break;
+        case( NPY_COMPLEX_INT16): LAUNCH_PFB_COMPLEX(int8_t);  break;
+        case( NPY_COMPLEX_INT32): LAUNCH_PFB_COMPLEX(int16_t); break;
+        case( NPY_COMPLEX64  ):   LAUNCH_PFB_COMPLEX(float);   break;
+        case( NPY_COMPLEX128 ):   LAUNCH_PFB_COMPLEX(double);  break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
         
@@ -722,6 +724,9 @@ MOD_INIT(_spec) {
     PyList_Append(all, PyString_FromString("FPSD"));
     PyList_Append(all, PyString_FromString("PFBPSD"));
     PyModule_AddObject(m, "__all__", all);
+    
+    // LSL complex integer support
+    import_complex_int();
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");

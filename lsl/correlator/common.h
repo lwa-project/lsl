@@ -7,6 +7,8 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
+#include "../complex/complex_int.h"
+
 
 /*
  Load in FFTW wisdom.  Based on the read_wisdom function in PRESTO.
@@ -95,13 +97,34 @@ inline float hamming(float x) {
 typedef std::complex<float> Complex32;
 typedef std::complex<double> Complex64;
 
-
 /*
   Macro for 2*pi
 */
 
 #define TPI (2*NPY_PI*Complex64(0,1))
 
+
+/*
+  Complex data loaders (strictly a way to make complexi8 behave)
+*/
+
+template<typename InType, typename OutType>
+inline void load_cmplx(const InType* data, long index, OutType* out) {
+    *out = OutType(*(data + 2*index + 0), \
+                   *(data + 2*index + 1));
+}
+template<>
+inline void load_cmplx<complex_int8,Complex32>(const complex_int8* data, long index, Complex32* out) {
+    int8_t real, imag;
+    lsl_unpack_ci8(*(data + index), &real, &imag);
+    *out = Complex32(real, imag);
+}
+template<>
+inline void load_cmplx<complex_int8,Complex64>(const complex_int8* data, long index, Complex64* out) {
+    int8_t real, imag;
+    lsl_unpack_ci8(*(data + index), &real, &imag);
+    *out = Complex64(real, imag);
+}
 
 /*
   Complex magnitude squared functions
