@@ -549,7 +549,7 @@ static PyObject* pycomplexint8_repr(PyObject *o) {
     complex_int8 c = ((PyComplexInt8 *)o)->obval;
     const signed char* sc = fourBitLUT[c.real_imag];
     sprintf(str, "complex_int8(%u [%i, %i])", c.real_imag, sc[0], sc[1]);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 static PyObject* pycomplexint8_str(PyObject *o) {
@@ -557,7 +557,7 @@ static PyObject* pycomplexint8_str(PyObject *o) {
     complex_int8 c = ((PyComplexInt8 *)o)->obval;
     const signed char* sc = fourBitLUT[c.real_imag];
     sprintf(str, "%i%+ij", sc[0], sc[1]);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 // This establishes the complex_int8 as a python object (not yet a numpy
@@ -940,7 +940,7 @@ static PyObject* complex_int8_arrtype_repr(PyObject *o) {
     complex_int8 c = ((PyComplexInt8 *)o)->obval;
     const signed char* sc = fourBitLUT[c.real_imag];
     sprintf(str, "complex_int8(%u [%i, %i])", c.real_imag, sc[0], sc[1]);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 static PyObject* complex_int8_arrtype_str(PyObject *o) {
@@ -948,7 +948,7 @@ static PyObject* complex_int8_arrtype_str(PyObject *o) {
     complex_int8 c = ((PyComplexInt8 *)o)->obval;
     const signed char* sc = fourBitLUT[c.real_imag];
     sprintf(str, "%i%+ij", sc[0], sc[1]);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 int complex_int8_elsize = sizeof(complex_int8);
@@ -1016,7 +1016,7 @@ int create_complex_int8(PyObject* m, PyObject* numpy_dict) {
     Py_INCREF(&PyComplexInt8_Type);
     complexi8Num = PyArray_RegisterDataType(complex_int8_descr);
     
-    if( complexi8Num < 0 || complexi8Num != NPY_COMPLEX_INT8 ) {
+    if( complexi8Num != NPY_COMPLEX_INT8 ) {
         return -1;
     }
     

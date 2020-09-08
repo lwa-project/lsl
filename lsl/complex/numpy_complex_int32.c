@@ -564,17 +564,17 @@ static long pycomplexint32_hash(PyObject *o) {
 }
 
 static PyObject* pycomplexint32_repr(PyObject *o) {
-    char str[1232];
+    char str[128];
     complex_int32 c = ((PyComplexInt32 *)o)->obval;
     sprintf(str, "complex_int32(%i, %i)", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 static PyObject* pycomplexint32_str(PyObject *o) {
     char str[64];
     complex_int32 c = ((PyComplexInt32 *)o)->obval;
     sprintf(str, "%i%+ij", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 // This establishes the complex_int32 as a python object (not yet a numpy
@@ -985,14 +985,14 @@ static PyObject* complex_int32_arrtype_repr(PyObject *o) {
     char str[64];
     complex_int32 c = ((PyComplexInt32 *)o)->obval;
     sprintf(str, "complex_int32(%i, %i)", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 static PyObject* complex_int32_arrtype_str(PyObject *o) {
     char str[64];
     complex_int32 c = ((PyComplexInt32 *)o)->obval;
     sprintf(str, "%i%+ij", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 int complex_int32_elsize = sizeof(complex_int32);
@@ -1057,7 +1057,7 @@ int create_complex_int32(PyObject* m, PyObject* numpy_dict) {
     Py_INCREF(&PyComplexInt32_Type);
     complexi32Num = PyArray_RegisterDataType(complex_int32_descr);
     
-    if( complexi32Num < 0 || complexi32Num != NPY_COMPLEX_INT32 ) {
+    if( complexi32Num != NPY_COMPLEX_INT32 ) {
         return -1;
     }
     

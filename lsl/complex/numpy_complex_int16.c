@@ -560,17 +560,17 @@ static long pycomplexint16_hash(PyObject *o) {
 }
 
 static PyObject* pycomplexint16_repr(PyObject *o) {
-    char str[1216];
+    char str[128];
     complex_int16 c = ((PyComplexInt16 *)o)->obval;
     sprintf(str, "complex_int16(%i, %i)", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 static PyObject* pycomplexint16_str(PyObject *o) {
     char str[64];
     complex_int16 c = ((PyComplexInt16 *)o)->obval;
     sprintf(str, "%i%+ij", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 // This establishes the complex_int16 as a python object (not yet a numpy
@@ -966,14 +966,14 @@ static PyObject* complex_int16_arrtype_repr(PyObject *o) {
     char str[64];
     complex_int16 c = ((PyComplexInt16 *)o)->obval;
     sprintf(str, "complex_int16(%i, %i)", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 static PyObject* complex_int16_arrtype_str(PyObject *o) {
     char str[64];
     complex_int16 c = ((PyComplexInt16 *)o)->obval;
     sprintf(str, "%i%+ij", c.real, c.imag);
-    return PyUString_FromString(str);
+    return PyString_FromString(str);
 }
 
 int complex_int16_elsize = sizeof(complex_int16);
@@ -1038,7 +1038,7 @@ int create_complex_int16(PyObject* m, PyObject* numpy_dict) {
     Py_INCREF(&PyComplexInt16_Type);
     complexi16Num = PyArray_RegisterDataType(complex_int16_descr);
     
-    if( complexi16Num < 0 || complexi16Num != NPY_COMPLEX_INT16 ) {
+    if( complexi16Num != NPY_COMPLEX_INT16 ) {
         return -1;
     }
     

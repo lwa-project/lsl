@@ -35,17 +35,14 @@ static NPY_INLINE int complex_int8_nonzero(complex_int8 c) {
 }
 
 static NPY_INLINE int complex_int8_isnan(complex_int8 c) {
-    const signed char* sc = fourBitLUT[c.real_imag];
     return 0;
 }
 
 static NPY_INLINE int complex_int8_isinf(complex_int8 c) {
-    const signed char* sc = fourBitLUT[c.real_imag];
     return 0;
 }
 
 static NPY_INLINE int complex_int8_isfinite(complex_int8 c) {
-    const signed char* sc = fourBitLUT[c.real_imag];
     return 1;
 }
 

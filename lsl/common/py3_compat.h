@@ -9,6 +9,15 @@
 
 #if PY_MAJOR_VERSION >= 3
     #define PyCapsule_Type PyCObject_Type
+// From npy_3kcompat.h
+static inline int PyInt_Check(PyObject *op) {
+    int overflow = 0;
+    if (!PyLong_Check(op)) {
+        return 0;
+    }
+    PyLong_AsLongAndOverflow(op, &overflow);
+    return (overflow == 0);
+}
     #define PyInt_AsLong PyLong_AsLong
     #define PyInt_FromLong PyLong_FromLong
     #define PyString_GET_SIZE PyBytes_GET_SIZE

@@ -7,7 +7,6 @@ extern "C" {
 
 #include <Python.h>
 #include "numpy/arrayobject.h"
-#include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
 
 #include "complex_int8.h"
