@@ -8,7 +8,6 @@ extern "C" {
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
-#include <numpy/ufuncobject.h>
 
 #include "complex_int8.h"
 #include "complex_int16.h"
@@ -20,7 +19,6 @@ extern "C" {
 
 static NPY_INLINE int import_complex_int(void) {
     // import_array();
-    // import_umath();
     
     PyObject *module = PyImport_ImportModule("lsl.complex");
     if( module == NULL ) {
