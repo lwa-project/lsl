@@ -38,9 +38,6 @@ int validSync5C(unsigned int syncWord) {
   Look-up Tables
 */
 short int tbw4LUT[256][2];
-float tbnLUT[256];
-float drxLUT[256][2];
-float tbfLUT[256][2];
 
 static void initLWALUTs(void) {
     // Look-up table inialization function from the VDIFIO library
@@ -54,24 +51,6 @@ static void initLWALUTs(void) {
             t = (i >> 4*(1-j)) & 15;
             tbw4LUT[i][j] = t;
             tbw4LUT[i][j] -= ((t&8)<<1);
-        }
-    }
-    
-    // TBN
-    for(i=0; i<256; i++) {
-        tbnLUT[i] = i;
-        tbnLUT[i] -= ((i&128)<<1);
-    }
-    
-    // DRX & TBF
-    for(i=0; i<256; i++) {
-        for(j=0; j<2; j++) {
-            t = (i >> 4*(1-j)) & 15;
-            drxLUT[i][j] = t;
-            drxLUT[i][j] -= ((t&8)<<1);
-            
-            tbfLUT[i][j] = t;
-            tbfLUT[i][j] -= ((t&8)<<1);
         }
     }
 }
