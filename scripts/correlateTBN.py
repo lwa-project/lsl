@@ -18,7 +18,7 @@ import numpy
 import argparse
 
 from lsl import astro
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi
@@ -128,11 +128,19 @@ def main(args):
                 station = metabundle.get_station(args.metadata, apply_sdm=True)
             except:
                 station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwasv:
+        station = stations.lwasv
     else:
         station = stations.lwa1
     antennas = station.antennas
-    
-    idf = LWA1DataFile(filename)
+
+
+    idf = LWADataFile(filename)
+
+    if not isinstance(idf, TBNFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBN mode data file" % filename)
+
+
     
     jd = idf.get_info('start_time').jd
     date = idf.get_info('start_time').datetime
@@ -226,6 +234,8 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-s', '--lwasv', action='store_true', 
+                        help='use LWA-SV instead of LWA1')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
                         help='set FFT length')
     parser.add_argument('-p', '--pfb', action='store_true', 
