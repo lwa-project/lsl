@@ -36,6 +36,7 @@ from astropy.constants import c as speedOfLight
 from astropy.coordinates import AltAz as AstroAltAz
 
 from lsl.common import dp as dp_common
+from lsl.complex import *
 from lsl.correlator import uvutils, _spec, _stokes, _core
 
 from lsl.misc import telemetry
@@ -47,6 +48,10 @@ __all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster', 'FXMaster
 
 
 speedOfLight = speedOfLight.to('m/s').value
+
+
+COMPLEX_DTYPES = (complex_int8, complex_int16, complex_int32, 
+                  numpy.complex64, numpy.complex128)
 
 
 def pol_to_pols(pol):
@@ -94,7 +99,7 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype in COMPLEX_DTYPES:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
@@ -143,7 +148,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype in COMPLEX_DTYPES:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
@@ -228,7 +233,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype in COMPLEX_DTYPES:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
@@ -378,7 +383,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype in COMPLEX_DTYPES:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)

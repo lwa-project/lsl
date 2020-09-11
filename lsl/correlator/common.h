@@ -105,25 +105,25 @@ typedef std::complex<double> Complex64;
 
 
 /*
-  Complex data loaders (strictly a way to make complexi8 behave)
+  Complex data loaders (strictly a way to make complex_int8 behave)
 */
 
 template<typename InType, typename OutType>
-inline void load_cmplx(const InType* data, long index, OutType* out) {
-    *out = OutType(*(data + 2*index + 0), \
-                   *(data + 2*index + 1));
+inline OutType load_cmplx(const InType* data, long index) {
+    return OutType(*(data + 2*index + 0), *(data + 2*index + 1));
 }
 template<>
-inline void load_cmplx<complex_int8,Complex32>(const complex_int8* data, long index, Complex32* out) {
-    int8_t real, imag;
-    lsl_unpack_ci8(*(data + index), &real, &imag);
-    *out = Complex32(real, imag);
+inline Complex32 load_cmplx<complex_int8,Complex32>(const complex_int8* data, long index) {
+    int8_t real_part, imag_part;
+    lsl_unpack_ci8(*(data + index), &real_part, &imag_part);
+    //printf("%i -> %i, %i\n", (data + index)->real_imag, real_part, imag_part);
+    return Complex32(real_part, imag_part);
 }
 template<>
-inline void load_cmplx<complex_int8,Complex64>(const complex_int8* data, long index, Complex64* out) {
-    int8_t real, imag;
-    lsl_unpack_ci8(*(data + index), &real, &imag);
-    *out = Complex64(real, imag);
+inline Complex64 load_cmplx<complex_int8,Complex64>(const complex_int8* data, long index) {
+    int8_t real_part, imag_part;
+    lsl_unpack_ci8(*(data + index), &real_part, &imag_part);
+    return Complex64(real_part, imag_part);
 }
 
 /*

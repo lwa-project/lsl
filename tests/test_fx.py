@@ -17,6 +17,7 @@ import numpy
 from lsl.common.paths import DATA_BUILD
 from lsl.common import stations
 from lsl.correlator import fx
+from lsl.complex import *
 
 _SSMIF = os.path.join(DATA_BUILD, 'lwa1-ssmif.txt')
 
@@ -90,9 +91,16 @@ class SpecMaster_tests(unittest.TestCase):
         #
         # Complex
         #
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.SpecMaster(fakeData, window=numpy.hamming)
             
             # Numpy comparison
@@ -137,9 +145,16 @@ class SpecMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.SpecMaster(fakeData, window=wndw2)
             
             # Numpy comparison
@@ -174,9 +189,16 @@ class SpecMaster_tests(unittest.TestCase):
     def test_spectra_complex(self):
         """Test the SpecMaster function on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.SpecMaster(fakeData, sample_rate=1e5, central_freq=38e6)
             
             # Numpy comparison
@@ -192,10 +214,17 @@ class SpecMaster_tests(unittest.TestCase):
     def test_spectra_odd_complex(self):
         """Test the SpecMaster function on odd-sized complex transforms."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,10) + 3.0
             fakeData = fakeData + 0j
-            fakeData = fakeData.astype(dtype)
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.SpecMaster(fakeData, LFFT=9, sample_rate=1e5, central_freq=38e6)
             
             for i in range(spectra.shape[0]):
@@ -230,9 +259,16 @@ class SpecMaster_tests(unittest.TestCase):
     def test_spectra_complex_pfb(self):
         """Test the PFB version of the SpecMaster function on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024*4) + 1j*numpy.random.rand(self.nAnt,1024*4) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024*4) + 3j*numpy.random.rand(self.nAnt,1024*4) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.SpecMaster(fakeData, pfb=True, sample_rate=1e5, central_freq=38e6)
         
             # Numpy comparison
@@ -293,9 +329,16 @@ class StokesMaster_tests(unittest.TestCase):
         #
         # Complex
         #
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], window=numpy.hamming)
             
             # Numpy comparison
@@ -356,9 +399,16 @@ class StokesMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], window=wndw2)
             
             # Numpy comparison
@@ -411,9 +461,16 @@ class StokesMaster_tests(unittest.TestCase):
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6)
             
             # Numpy comparison
@@ -438,10 +495,17 @@ class StokesMaster_tests(unittest.TestCase):
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,10) + 3.0
             fakeData = fakeData + 0j
-            fakeData = fakeData.astype(dtype)
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], LFFT=9, sample_rate=1e5, central_freq=38e6)
             
             for i in range(spectra.shape[0]):
@@ -488,9 +552,16 @@ class StokesMaster_tests(unittest.TestCase):
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024*4) + 1j*numpy.random.rand(self.nAnt,1024*4) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024*4) + 3j*numpy.random.rand(self.nAnt,1024*4) + 3.0 + 3.0j
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], pfb=True, sample_rate=1e5, central_freq=38e6)
         
             # Numpy comparison
@@ -567,10 +638,16 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex(self):
         """Test the C-based correlator on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
-            fakeData = fakeData.astype(dtype)
-            
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024)
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
             
@@ -652,10 +729,16 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex_window(self):
         """Test the C-based correlator on complex-valued data window."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
-            fakeData = fakeData.astype(dtype)
-            
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024)
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
             
@@ -737,10 +820,16 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex_pfb(self):
         """Test the C-based PFB version of the correlator on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024*4) + 1j*numpy.random.rand(self.nAnt,1024*4)
-            fakeData = fakeData.astype(dtype)
-        
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024*4) + 3j*numpy.random.rand(self.nAnt,1024*4)
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
         
@@ -839,11 +928,17 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_odd_complex(self):
         """Test the FXMaster function on odd-sized complex transforms."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,10) + 3.0
             fakeData = fakeData + 0j
-            fakeData = fakeData.astype(dtype)
-            
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
             for ant in antennas:
@@ -925,10 +1020,16 @@ class FXStokes_tests(unittest.TestCase):
     def test_correlator_complex(self):
         """Test the C-based correlator on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024) + 1j*numpy.random.rand(self.nAnt,1024)
-            fakeData = fakeData.astype(dtype)
-            
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024) + 3j*numpy.random.rand(self.nAnt,1024)
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
             
@@ -1010,10 +1111,16 @@ class FXStokes_tests(unittest.TestCase):
     def test_correlator_complex_window(self):
         """Test the C-based correlator on complex-valued data window."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024*4) + 1j*numpy.random.rand(self.nAnt,1024*4)
-            fakeData = fakeData.astype(dtype)
-            
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,1024*4) + 3j*numpy.random.rand(self.nAnt,1024*4)
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
             
@@ -1159,11 +1266,17 @@ class FXStokes_tests(unittest.TestCase):
     def test_correlator_odd_complex(self):
         """Test the FXStokes function on odd-sized complex transforms."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,10) + 3.0
+        for dtype in (complex_int8, complex_int16, complex_int32, numpy.complex64, numpy.complex128):
+            fakeData = 3*numpy.random.rand(self.nAnt,10) + 3.0
             fakeData = fakeData + 0j
-            fakeData = fakeData.astype(dtype)
-            
+            try:
+                fakeData = fakeData.astype(dtype)
+            except ValueError:
+                rfd = fakeData.ravel()
+                rfd = numpy.array([dtype(int(v.real), int(v.imag)) for v in rfd])
+                rfd.shape = fakeData.shape
+                fakeData = rfd
+                
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
             for ant in antennas:

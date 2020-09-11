@@ -68,15 +68,15 @@ static int pycomplexint8_init(PyObject *self, PyObject *args, PyObject *kwds) {
             c->real_imag = ((PyComplexInt8 *) C)->obval.real_imag;
             return 0;
         } else if( PyArg_ParseTuple(args, "D", &cmplx) ) {
-            inplace_pack_ci8(cmplx.real, cmplx.imag, c);
+            lsl_pack_ci8(cmplx.real, cmplx.imag, c);
             return 0;
         } else if( PyArg_ParseTuple(args, "i", &real) ) {
-            inplace_pack_ci8((signed char) real, 0, c);
+            lsl_pack_ci8((signed char) real, 0, c);
             return 0;
         }
     } else if( size == 2 ) {
         if( PyArg_ParseTuple(args, "ii", &real, &imag) ) {
-            inplace_pack_ci8((signed char) real, imag, c);
+            lsl_pack_ci8((signed char) real, imag, c);
             return 0;
         }
     }
@@ -677,11 +677,11 @@ static int CI8_setitem(PyObject* item, complex_int8* c, void* NPY_UNUSED(ap)) {
     if( PyComplexInt8_Check(item) ) {
         memcpy(c, &(((PyComplexInt8 *)item)->obval), sizeof(complex_int8));
     } else if( PyComplex_Check(item) ) {
-        inplace_pack_ci8(PyComplex_RealAsDouble(item), \
+        lsl_pack_ci8(PyComplex_RealAsDouble(item), \
                          PyComplex_ImagAsDouble(item), \
                          c);
     } else if( PyInt_Check(item) ) {
-        inplace_pack_ci8(PyInt_AsLong(item), \
+        lsl_pack_ci8(PyInt_AsLong(item), \
                          0, \
                          c);
     } else if( PySequence_Check(item) && PySequence_Length(item) == 2 ) {
@@ -699,7 +699,7 @@ static int CI8_setitem(PyObject* item, complex_int8* c, void* NPY_UNUSED(ap)) {
         imag = PyInt_AsLong(element);
         Py_DECREF(element);
         
-        inplace_pack_ci8(real, imag, c);
+        lsl_pack_ci8(real, imag, c);
     } else {
         PyErr_SetString(PyExc_TypeError, "Unknown input to CI8_setitem");
         return -1;
@@ -909,7 +909,7 @@ static PyObject* complex_int8_arrtype_new(PyTypeObject *type, PyObject *args, Py
         return NULL;
     }
     
-    c = pack_ci8(cmplx.real, cmplx.imag);
+    lsl_pack_ci8(cmplx.real, cmplx.imag, &c);
     return PyArray_Scalar(&c, complex_int8_descr, NULL);
 }
 
@@ -974,7 +974,7 @@ int create_complex_int8(PyObject* m, PyObject* numpy_dict) {
     PyObject *tmp_ufunc;
     int arg_types[3];
     
-    /* Fill the lookup table */
+    /* Fill the lookup tables */
     complex_int8_fillLUT();
     
     /* Register the complex_int8 array base type. */
@@ -1016,7 +1016,7 @@ int create_complex_int8(PyObject* m, PyObject* numpy_dict) {
     Py_INCREF(&PyComplexInt8_Type);
     complexi8Num = PyArray_RegisterDataType(complex_int8_descr);
     
-    if( complexi8Num != NPY_COMPLEX_INT8 ) {
+    if( complexi8Num < 0 || complexi8Num != NPY_COMPLEX_INT8 ) {
         return -1;
     }
     

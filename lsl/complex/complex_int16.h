@@ -5,13 +5,24 @@
 extern "C" {
 #endif
 
-#include "numpy/arrayobject.h"
-#include "numpy/npy_math.h"
+#include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
 
 typedef struct {
     signed char real;
     signed char imag;
 } complex_int16;
+
+// Access methods
+static NPY_INLINE void lsl_unpack_ci16(complex_int16 packed, signed char* real, signed char* imag) {
+    *real = packed.real;
+    *imag = packed.imag;
+}
+
+static NPY_INLINE void lsl_pack_ci16(signed char real, signed char imag, complex_int16* packed) {
+    packed->real = real;
+    packed->imag = imag;
+}
 
 // Unary bool operators
 static NPY_INLINE int complex_int16_nonzero(complex_int16 c) {

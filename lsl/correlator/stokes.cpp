@@ -332,8 +332,8 @@ void compute_psd_complex(long nStand,
                 secStart = nSamps * i + nChan*j/Overlap;
                 
                 for(k=0; k<nChan; k++) {
-                    load_cmplx(dataX, secStart + k, inX + k);
-                    load_cmplx(dataY, secStart + k, inY + k);
+                    inX[k] = load_cmplx<InType,Complex32>(dataX, secStart + k);
+                    inY[k] = load_cmplx<InType,Complex32>(dataY, secStart + k);
                     
                     if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
                         cleanFactor = 0.0;
@@ -460,8 +460,8 @@ void compute_pfb_complex(long nStand,
                         inX[k] = 0.0;
                         inY[k] = 0.0;
                     } else {
-                        load_cmplx(dataX, secStart - nChan*(PFB_NTAP-1) + k, inX + k);
-                        load_cmplx(dataY, secStart - nChan*(PFB_NTAP-1) + k, inY + k);
+                        inX[k] = load_cmplx<InType,Complex32>(dataX, secStart - nChan*(PFB_NTAP-1) + k);
+                        inY[k] = load_cmplx<InType,Complex32>(dataY, secStart - nChan*(PFB_NTAP-1) + k);
                     }
                     
                     if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
@@ -573,7 +573,7 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     // Get the properties of the data
     nStand = (long) PyArray_DIM(dataX, 0);
     nSamps = (long) PyArray_DIM(dataX, 1);
-    isReal = 1 - PyArray_ISCOMPLEX(dataX);
+    isReal = 1 - LSLArray_ISCOMPLEX(dataX);
     
     // Make sure the dimensions of X and Y agree
     if( PyArray_DIM(dataY, 0) != nStand ) {
@@ -721,7 +721,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     // Get the properties of the data
     nStand = (long) PyArray_DIM(dataX, 0);
     nSamps = (long) PyArray_DIM(dataX, 1);
-    isReal = 1 - PyArray_ISCOMPLEX(dataX);
+    isReal = 1 - LSLArray_ISCOMPLEX(dataX);
     
     // Make sure the dimensions of X and Y agree
     if( PyArray_DIM(dataY, 0) != nStand ) {

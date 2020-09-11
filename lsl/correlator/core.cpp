@@ -380,7 +380,7 @@ void compute_fengine_complex(long nStand,
             secStart = *(fifo + i) + nSamps*i + nChan*j/Overlap;
             
             for(k=0; k<nChan; k++) {
-                load_cmplx(data, secStart + k, in + k);
+                in[k] = load_cmplx<InType,Complex32>(data, secStart + k);
                 
                 if( Clip && abs(in[k]) >= Clip ) {
                     cleanFactor = 0.0;
@@ -487,7 +487,7 @@ void compute_pfbengine_complex(long nStand,
                 if( secStart - nChan*(PFB_NTAP-1) + k < nSamps*i ) {
                     in[k] = 0.0;
                 } else {
-                    load_cmplx(data, secStart - nChan*(PFB_NTAP-1) + k, in + k);
+                    in[k] = load_cmplx<InType,Complex32>(data, secStart - nChan*(PFB_NTAP-1) + k);
                 }
                 
                 if( Clip && abs(in[k]) >= Clip ) {
@@ -594,7 +594,7 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Get the properties of the data
     nStand = (long) PyArray_DIM(data, 0);
     nSamps = (long) PyArray_DIM(data, 1);
-    isReal = 1 - PyArray_ISCOMPLEX(data);
+    isReal = 1 - LSLArray_ISCOMPLEX(data);
     
     // Calculate the windowing function
     if( windowFunc != Py_None ) {
@@ -793,7 +793,7 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Get the properties of the data
     nStand = (long) PyArray_DIM(data, 0);
     nSamps = (long) PyArray_DIM(data, 1);
-    isReal = 1 - PyArray_ISCOMPLEX(data);
+    isReal = 1 - LSLArray_ISCOMPLEX(data);
     
     // Calculate the windowing function
     if( windowFunc != Py_None ) {

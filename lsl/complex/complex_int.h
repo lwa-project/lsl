@@ -6,8 +6,9 @@ extern "C" {
 #endif
 
 #include <Python.h>
-#include "numpy/arrayobject.h"
-#include "numpy/npy_math.h"
+#include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
+#include <numpy/ufuncobject.h>
 
 #include "complex_int8.h"
 #include "complex_int16.h"
@@ -19,6 +20,7 @@ extern "C" {
 
 static NPY_INLINE int import_complex_int(void) {
     // import_array();
+    // import_umath();
     
     PyObject *module = PyImport_ImportModule("lsl.complex");
     if( module == NULL ) {
@@ -26,13 +28,28 @@ static NPY_INLINE int import_complex_int(void) {
         return -1;
     }
     Py_XDECREF(module);
-
+    
+    /* Fill the lookup tables */
+    complex_int8_fillLUT();
+    
     return 0;
 }
 
-void lsl_unpack_ci8(complex_int8 packed, signed char* real, signed char* imag);
-void lsl_unpack_ci16(complex_int16 packed, signed char* real, signed char* imag);
-void lsl_unpack_ci32(complex_int32 packed, short int* real, short int* imag);
+#define PyTypeNum_ISCOMPLEX_INT(type) (((type) >= NPY_COMPLEX_INT8) \
+                                       && ((type) <= NPY_COMPLEX_INT32))
+
+#define PyDataType_ISCOMPLEX_INT(obj) PyTypeNum_ISCOMPLEX_INT(((PyArray_Descr*)(obj))->type_num)
+
+#define PyArray_ISCOMPLEX_INT(obj) PyTypeNum_ISCOMPLEX_INT(PyArray_TYPE(obj))
+
+#define LSLTypeNum_ISCOMPLEX(type) ((PyTypeNum_ISCOMPLEX(type)) \
+                                    || (PyTypeNum_ISCOMPLEX_INT(type)))
+
+#define LSLDataType_ISCOMPLEX(obj) ((PyDataType_ISCOMPLEX(obj)) \
+                                    || (PyDataType_ISCOMPLEX_INT(obj)))
+
+#define LSLArray_ISCOMPLEX(obj) ((PyArray_ISCOMPLEX(obj)) \
+                                 || (PyArray_ISCOMPLEX_INT(obj)))
 
 #ifdef __cplusplus
 }
