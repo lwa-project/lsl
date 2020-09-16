@@ -234,7 +234,7 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    parser.add_argument('-v', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
                         help='set FFT length')
