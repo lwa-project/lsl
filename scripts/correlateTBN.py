@@ -133,15 +133,11 @@ def main(args):
     else:
         station = stations.lwa1
     antennas = station.antennas
-
-
-    idf = LWADataFile(filename)
-
-    if not isinstance(idf, TBNFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBN mode data file" % filename)
-
-
     
+    idf = LWADataFile(filename)
+    if not isinstance(idf, TBNFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBN file" % os.path.basename(filename))
+        
     jd = idf.get_info('start_time').jd
     date = idf.get_info('start_time').datetime
     nFpO = len(antennas)

@@ -18,7 +18,7 @@ import numpy
 import argparse
 
 from lsl import astro
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWA1DataFile, TBWFile
 from lsl.common import stations, metabundle
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi
@@ -145,7 +145,9 @@ def main(args):
     antennas = station.antennas
     
     idf = LWA1DataFile(filename)
-    
+    if not isinstance(idf, TBWFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBW file" % os.path.basename(filename))
+        
     jd = idf.get_info('start_time').jd
     date = idf.get_info('start_time').datetime
     sample_rate = idf.get_info('sample_rate')
