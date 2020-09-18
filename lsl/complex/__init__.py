@@ -1,8 +1,10 @@
 import numpy
 
 from lsl.complex.numpy_complex_int import complex_int8, complex_int16, complex_int32
+from utils import get_include
 
-__all__ = ['complex_int8', 'complex_int16', 'complex_int32']
+__version__ = "0.1"
+__all__ = ['complex_int8', 'complex_int16', 'complex_int32', 'get_include']
 
 if numpy.__dict__.get('complex_int8') is None:
     numpy.complex_int8 = complex_int8
