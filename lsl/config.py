@@ -20,6 +20,11 @@ __all__ = ['LSL_CONFIG',]
 
 
 # Default values
+## lsl.reader.ldp
+DEFAULTS_LDP = OrderedDict()
+DEFAULTS_LDP['drx_gap_autofill'] = {'value': 50,
+                                    'help': 'maximum gap in packets that can be auto-filled with zeros without throwing a timetag error/warning'}
+
 ## lsl.misc.ionosphere
 DEFAULTS_IONO = OrderedDict()
 DEFAULTS_IONO['igs_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
@@ -59,6 +64,7 @@ DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
 
 ## Everything
 DEFAULTS_ALL = OrderedDict()
+DEFAULTS_ALL['ldp'] = DEFAULTS_LDP
 DEFAULTS_ALL['ionosphere'] = DEFAULTS_IONO
 DEFAULTS_ALL['telemetry'] = DEFAULTS_TELEMETRY
 DEFAULTS_ALL['download'] = DEFAULTS_DOWNLOAD

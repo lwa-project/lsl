@@ -40,6 +40,9 @@ from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CO
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp
 
+from lsl.config import LSL_CONFIG
+LDP_CONFIG = LSL_CONFIG.view('ldp')
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -1125,7 +1128,7 @@ class DRXFile(LDPFileBase):
                     pass
                 elif cTimetag != self._timetag[aStand]+self._timetagSkip:
                     missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
-                    if int(missing) == missing and missing < 50:
+                    if int(missing) == missing and missing < LDP_CONFIG.get('drx_gap_autofill'):
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
