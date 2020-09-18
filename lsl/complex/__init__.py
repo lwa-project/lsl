@@ -1,7 +1,7 @@
 import numpy
 
 from lsl.complex.numpy_complex_int import complex_int8, complex_int16, complex_int32
-from utils import get_include
+from lsl.complex.utils import get_include
 
 __version__ = "0.1"
 __all__ = ['complex_int8', 'complex_int16', 'complex_int32', 'get_include']
