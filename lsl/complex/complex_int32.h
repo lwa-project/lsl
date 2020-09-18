@@ -139,7 +139,7 @@ static NPY_INLINE complex_int32 complex_int32_scalar_add(long s, complex_int32 c
 
 static NPY_INLINE void complex_int32_inplace_scalar_add(long s, complex_int32* c) {
     short int real = s + c->real;
-    short int imag = s + c->imag;
+    short int imag = 0 + c->imag;
     c->real = real;
     c->imag = imag;
 }
@@ -178,7 +178,7 @@ static NPY_INLINE complex_int32 complex_int32_scalar_subtract(long s, complex_in
 
 static NPY_INLINE void complex_int32_inplace_scalar_subtract(long s, complex_int32* c) {
     short int real = s - c->real;
-    short int imag = s - c->imag;
+    short int imag = 0 - c->imag;
     c->real = real;
     c->imag = imag;
 }
@@ -191,7 +191,7 @@ static NPY_INLINE complex_int32 complex_int32_subtract_scalar(complex_int32 c, l
 
 static NPY_INLINE void complex_int32_inplace_subtract_scalar(complex_int32* c, long s) {
     short int real = -s + c->real;
-    short int imag = -s + c->imag;
+    short int imag = -0 + c->imag;
     c->real = real;
     c->imag = imag;
 }
@@ -210,27 +210,27 @@ static NPY_INLINE void complex_int32_inplace_multiply(complex_int32* c1, complex
 }
 
 static NPY_INLINE complex_int32 complex_int32_scalar_multiply(long s, complex_int32 c) {
-    short int real = s*c.real - 0*c.imag;
-    short int imag = 0*c.real + s*c.imag;
+    short int real = s*c.real;
+    short int imag = s*c.imag;
     return (complex_int32) {real, imag};
 }
 
 static NPY_INLINE void complex_int32_inplace_scalar_multiply(long s, complex_int32* c) {
-    short int real = s*c->real - 0*c->imag;
-    short int imag = 0*c->real + s*c->imag;
+    short int real = s*c->real;
+    short int imag = s*c->imag;
     c->real = real;
     c->imag = imag;
 }
 
 static NPY_INLINE complex_int32 complex_int32_multiply_scalar(complex_int32 c, long s) {
-    short int real = s*c.real - 0*c.imag;
-    short int imag = 0*c.real + s*c.imag;
+    short int real = s*c.real;
+    short int imag = s*c.imag;
     return (complex_int32) {real, imag};
 }
 
 static NPY_INLINE void complex_int32_inplace_multiply_scalar(complex_int32* c, long s) {
-    short int real = s*c->real - 0*c->imag;
-    short int imag = 0*c->real + s*c->imag;
+    short int real = s*c->real;
+    short int imag = s*c->imag;
     c->real = real;
     c->imag = imag;
 }
@@ -253,14 +253,14 @@ static NPY_INLINE void complex_int32_inplace_divide(complex_int32* c1, complex_i
 static NPY_INLINE complex_int32 complex_int32_scalar_divide(long s, complex_int32 c) {
     long mag2 = ((int) c.real)*c.real + ((int) c.imag)*c.imag;
     short int real = (s*c.real + 0*c.imag) / mag2;
-    short int imag = (s*c.real - 0*c.imag) / mag2;
+    short int imag = (0*c.real - s*c.imag) / mag2;
     return (complex_int32) {real, imag};
 }
 
 static NPY_INLINE void complex_int32_inplace_scalar_divide(long s, complex_int32* c) {
     long mag2 = ((int) c->real)*c->real + ((int) c->imag)*c->imag;
     short int real = (s*c->real + 0*c->imag) / mag2;
-    short int imag = (s*c->real - 0*c->imag) / mag2;
+    short int imag = (0*c->real - s*c->imag) / mag2;
     c->real = real;
     c->imag = imag;
 }
