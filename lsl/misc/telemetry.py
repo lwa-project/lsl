@@ -62,8 +62,6 @@ class _TelemetryClient(object):
     """
     _lock = RLock()
     
-    _lockout_file = os.path.join(_CACHE_DIR, 'lockout.key')
-    
     def __init__(self, key, version=lsl_version):
         # Setup
         self.key = key
@@ -79,10 +77,8 @@ class _TelemetryClient(object):
         self._cache_count = 0
         
         # Reporting lockout
-        self.active = True
-        if os.path.exists(self._lockout_file):
-            self.active = False
-            
+        self.active = TELE_CONFIG.get('enabled')
+        
         # Register the "send" method to be called by atexit... at exit
         atexit.register(self.send, True)
         
@@ -168,27 +164,24 @@ class _TelemetryClient(object):
         Enable saving data to the telemetry cache.
         """
         
-        try:
-            self.active = True
-            os.unlink(self._lockout_file)
-        except OSError:
-            pass
-            
+        TELE_CONFIG.set('enabled', True)
+        self.active = TELE_CONFIG.get('enabled')
+        
     def disable(self):
         """
         Disable saving data to the telemetry cache in a persistent way.
         """
         
-        self.active = False
-        with open(self._lockout_file, 'w') as fh:
-            fh.write('disable')
+        TELE_CONFIG.set('enabled', False)
+        self.active = TELE_CONFIG.get('enabled')
             
     def ignore(self):
         """
         Disable saving data to the telemetry cache in a temporary way.
         """
         
-        self.active = False
+        TELE_CONFIG.set_temp('enabled', False)
+        self.active = TELE_CONFIG.get('enabled')
 
 
 # Create an instance of the telemetry client to use.

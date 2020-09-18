@@ -52,6 +52,8 @@ DEFAULTS_IONO['max_cache_size'] = {'value': -1,
 
 ## lsl.misc.telemetry
 DEFAULTS_TELEMETRY = OrderedDict()
+DEFAULTS_TELEMETRY['enabled'] = {'value': True,
+                                 'help': 'whether or not LSL telemetry reporting is enabled'}
 DEFAULTS_TELEMETRY['max_entries'] = {'value': 100,
                                      'help':  'maximum number of entries to accumlate before reporting'}
 DEFAULTS_TELEMETRY['timeout'] = {'value': 120,
@@ -173,16 +175,19 @@ class LSLConfigContainer(object):
                         if section is not None:
                             name = section+'.'+name
                         value = value.strip().rstrip()
-                        try:
-                            value = int(value, 10)
-                        except ValueError:
+                        if value in ('True', 'False'):
+                            value = True if value == 'True' else False
+                        else:
                             try:
-                                value = float(value)
+                                value = int(value, 10)
                             except ValueError:
-                                pass
-                        if value == '':
-                            continue
-                            
+                                try:
+                                    value = float(value)
+                                except ValueError:
+                                    pass
+                            if value == '':
+                                continue
+                                
                         if name in self._parameters:
                             self._parameters[name].value = value
                         else:
