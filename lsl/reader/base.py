@@ -116,7 +116,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -133,7 +133,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -152,7 +152,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -169,7 +169,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -188,7 +188,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -205,7 +205,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -224,7 +224,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -241,7 +241,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -260,7 +260,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -277,7 +277,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -598,14 +598,22 @@ class FrameTimestamp(object):
         """
         
         return float(self)
-            
+        
+    @property
+    def jd(self):
+        """
+        JD as a floating point value.
+        """
+        
+        return unix_to_utcjd(self)
+        
     @property
     def mjd(self):
         """
         MJD as a floating point value.
         """
         
-        return unix_to_utcjd(self) - MJD_OFFSET
+        return self.jd - MJD_OFFSET
         
     @property
     def pulsar_mjd(self):

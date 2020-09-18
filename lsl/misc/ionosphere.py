@@ -24,6 +24,7 @@ try:
 except ImportError:
     from urllib.request import urlopen
 from datetime import datetime, timedelta
+from ftplib import FTP_TLS
 
 from scipy.special import lpmv
 try:
@@ -422,7 +423,52 @@ def _cache_management():
                 pass
 
 
-def _download_worker(url, filename):
+def _download_worker_cddis(url, filename):
+    """
+    Download the URL from gdc.cddis.eosdis.nasa.gov via FTP-SSL and save it to a file.
+    """
+    
+    # Attempt to download the data
+    print("Downloading %s" % url)
+    ## Login
+    ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=IONO_CONFIG.get('download.timeout'))
+    status = ftps.login("anonymous", "lwa@unm.edu")
+    if not status.startswith("230"):
+        ftps.close()
+        return False
+        
+    ## Secure
+    status = ftps.prot_p()
+    if not status.startswith("200"):
+        ftps.close()
+        return False
+        
+    ## Download
+    remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
+    with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+        status = ftps.retrbinary('RETR %s' % remote_path, fh.write)
+        if not status.startswith("226"):
+            try:
+                os.unlink(filename)
+            except OSError:
+                pass
+            ftps.close()
+            return False
+    print("Wrote %i B to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
+    
+    ## Further processing, if needed
+    if os.path.splitext(filename)[1] == '.Z':
+        ## Save it to a regular gzip'd file after uncompressing it.
+        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+        print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
+        subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
+        
+    # Done
+    ftps.close()
+    return True
+
+
+def _download_worker_standard(url, filename):
     """
     Download the URL and save it to a file.
     """
@@ -446,25 +492,37 @@ def _download_worker(url, filename):
         ## Fail
         return False
     else:
-        ## Success!
+        ## Success!  Save it to a file
+        with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+            fh.write(data)
+        print("Wrote %i B of .gz to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
+        
+        ## Further processing, if needed
         if os.path.splitext(filename)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
-            with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
-                fh.write(data)
-            print("Wrote %i B to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
             subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
             print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
-            subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
-        else:
-            ## Save it to a file.
-            with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
-                fh.write(data)
-            print("Wrote %i B of .gz to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
-            
-            ### Cache size management
-            _cache_management()
+            subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
             
         return True
+
+
+def _download_worker(url, filename, timeout=120):
+    """
+    Download the URL and save it to a file.
+    """
+    
+    # Attempt to download the data
+    if url.find('gdc.cddis.eosdis.nasa.gov') != -1:
+        status = _download_worker_cddis(url, filename, timeout=timeout)
+    else:
+        status = _download_worker_standard(url, filename, timeout=timeout)
+        
+    if status:
+        # Cache size management
+        _cache_management()
+        
+    return status
 
 
 def _download_igs(mjd, type='final'):

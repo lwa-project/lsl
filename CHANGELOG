@@ -1,3 +1,8 @@
+2.0.2
+  * Added a -v/--lwasv option to correlateTBN.py and tbnSpectra.py
+  * Added better input file type checking to the various "correlate" and "spectra" scripts
+  * Switched back to CDDIS for ionospheric data
+
 2.0.1
   * Fixed a few problems with the scripts that ship with LSL
   * Added support for time zone-aware datetime instances in lsl.common.datetime_to_mjdmpm() and mjdmpm_to_datetime()
@@ -8,6 +13,9 @@
   * Updated lsl.reader.errors.SyncError to allow for reporting of non-Mark5C problems
   * Update the documentation for lsl.common.idf, sdf, and sdfADP
   * Added missing sub, isub, div, and idiv operators to lsl.reader.base.FrameBase
+  * Added a jd property to lsl.reader.base.FrameTimestamp to access the associated Julian day
+  * Updated the lsl.writer module to accept times as FrameTimestamp instances
+  * Updated the documentation in lsl.common.stations.Cable to make it more clear what attenuation and gain are
 
 2.0.0
   * Major API changes to put LSL under a uniform coding style

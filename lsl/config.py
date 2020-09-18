@@ -22,21 +22,21 @@ __all__ = ['LSL_CONFIG',]
 # Default values
 ## lsl.misc.ionosphere
 DEFAULTS_IONO = OrderedDict()
-DEFAULTS_IONO['igs_url'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
+DEFAULTS_IONO['igs_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
                             'help':  'primary URL for accessing the IGS data products'}
-DEFAULTS_IONO['igs_mirror'] = {'value': 'ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/',
+DEFAULTS_IONO['igs_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
                                'help':  'mirror URL for accessing the IGS data products'}
-DEFAULTS_IONO['jpl_url'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
+DEFAULTS_IONO['jpl_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
                             'help':  'primary URL for accessing the JPL data products'}
-DEFAULTS_IONO['jpl_mirror'] = {'value': 'ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/',
+DEFAULTS_IONO['jpl_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
                                'help':  'mirror URL for accessing the JPL data products'}
-DEFAULTS_IONO['uqr_url'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
+DEFAULTS_IONO['uqr_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
                             'help':  'primary URL for accessing the UQR data products'}
-DEFAULTS_IONO['uqr_mirror'] = {'value': 'ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/',
+DEFAULTS_IONO['uqr_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
                                'help':  'mirror URL for accessing the UQR data products'}
-DEFAULTS_IONO['code_url'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
+DEFAULTS_IONO['code_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
                              'help':  'primary URL for accessing the CODE data products'}
-DEFAULTS_IONO['code_mirror'] = {'value': 'ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/',
+DEFAULTS_IONO['code_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
                                 'help':  'mirror URL for accessing the CODE data products'}
 DEFAULTS_IONO['ustec_url'] = {'value': 'http://www.ngdc.noaa.gov/stp/iono/ustec/products/',
                               'help':  'primary URL for accessing the USTEC data products'}

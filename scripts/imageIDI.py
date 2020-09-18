@@ -105,7 +105,7 @@ def main(args):
         lbl1 = 'XX'
         for p in ('XX', 'RR', 'I'):
             try:
-                img1 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
+                img1 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl1 = p.upper()
             except:
                 pass
@@ -114,7 +114,7 @@ def main(args):
         lbl2 = 'YY'
         for p in ('YY', 'LL', 'Q'):
             try:
-                img2 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
+                img2 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl2 = p.upper()
             except:
                 pass
@@ -123,7 +123,7 @@ def main(args):
         lbl3 = 'XY'
         for p in ('XY', 'RL', 'U'):
             try:
-                img3 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
+                img3 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl3 = p.upper()
             except:
                 pass
@@ -132,7 +132,7 @@ def main(args):
         lbl4 = 'YX'
         for p in ('YX', 'LR', 'V'):
             try:
-                img4 = utils.build_gridded_image(dataDict, size=NPIX_SIDE/2, res=0.5, pol=p, chan=toWork)
+                img4 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl4 = p.upper()
             except:
                 pass
@@ -197,18 +197,18 @@ def main(args):
                     
                 ### Create the HDU
                 try:
-                    hdu = astrofits.ImageHDU(data=img.image(center=(NPIX_SIDE/2,NPIX_SIDE/2)), name=pol)
+                    hdu = astrofits.ImageHDU(data=img.image(center=(NPIX_SIDE//2,NPIX_SIDE//2)), name=pol)
                 except AttributeError:
                     hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
                 hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
                 hdu.header['CTYPE1'] = 'RA---SIN'
-                hdu.header['CRPIX1'] = NPIX_SIDE/2+1
+                hdu.header['CRPIX1'] = NPIX_SIDE//2+1
                 hdu.header['CDELT1'] = -360.0/NPIX_SIDE/numpy.pi
                 hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi	# pylint:disable=no-member
                 hdu.header['CTYPE2'] = 'DEC--SIN'
-                hdu.header['CRPIX2'] = NPIX_SIDE/2+1
+                hdu.header['CRPIX2'] = NPIX_SIDE//2+1
                 hdu.header['CDELT2'] = 360.0/NPIX_SIDE/numpy.pi
                 hdu.header['CRVAL2'] = lo.lat*180/numpy.pi
                 hdu.header['LONPOLE'] = 180.0
