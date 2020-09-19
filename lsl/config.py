@@ -22,8 +22,16 @@ __all__ = ['LSL_CONFIG',]
 # Default values
 ## lsl.reader.ldp
 DEFAULTS_LDP = OrderedDict()
-DEFAULTS_LDP['drx_gap_autofill'] = {'value': 50,
-                                    'help': 'maximum gap in packets that can be auto-filled with zeros without throwing a timetag error/warning'}
+DEFAULTS_LDP['tbn_buffer_size'] = {'value': 20,
+                                   'help': 'TBN ring buffer size in timestamps'}
+DEFAULTS_LDP['drx_buffer_size'] = {'value': 20,
+                                   'help': 'DRX ring buffer size in timestamps'}
+DEFAULTS_LDP['drx_autofill_size'] = {'value': 50,
+                                     'help': 'maximum gap in timestamps that can be auto-filled with zeros without throwing a timetag error/warning'}
+DEFAULTS_LDP['tbf_buffer_size'] = {'value': 25,
+                                   'help': 'TBF ring buffer size in timestamps'}
+DEFAULTS_LDP['cor_buffer_size'] = {'value': 5,
+                                   'help': 'COR ring buffer size in timestamps'}
 
 ## lsl.misc.ionosphere
 DEFAULTS_IONO = OrderedDict()
