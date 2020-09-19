@@ -27,7 +27,7 @@ DEFAULTS_LDP['tbn_buffer_size'] = {'value': 20,
 DEFAULTS_LDP['drx_buffer_size'] = {'value': 20,
                                    'help': 'DRX ring buffer size in timestamps'}
 DEFAULTS_LDP['drx_autofill_size'] = {'value': 50,
-                                     'help': 'maximum gap in timestamps that can be auto-filled with zeros without throwing a timetag error/warning'}
+                                     'help': 'maximum DRX gap in timestamps that can be auto-filled with zeros without throwing a timetag error/warning'}
 DEFAULTS_LDP['tbf_buffer_size'] = {'value': 25,
                                    'help': 'TBF ring buffer size in timestamps'}
 DEFAULTS_LDP['cor_buffer_size'] = {'value': 5,
