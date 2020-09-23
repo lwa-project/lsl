@@ -141,7 +141,7 @@ def main(args):
         print("  Observation #%i" % (i+1,))
         currObs = None
         for j in range(len(obsImpl)):
-            if obsImpl[j]['obsID'] == i+1:
+            if obsImpl[j]['obs_id'] == i+1:
                 currObs = obsImpl[j]
                 break
                 
@@ -164,9 +164,9 @@ def main(args):
         if currObs is not None:
             if project.sessions[0].observations[i].mode not in ('TBW',):
                 if project.sessions[0].observations[i].mode == 'TBN':
-                    print("   Gain setting: %i" % currObs['tbnGain'])
+                    print("   Gain setting: %i" % currObs['tbn_gain'])
                 else:
-                    print("   Gain setting: %i" % currObs['drxGain'])
+                    print("   Gain setting: %i" % currObs['drx_gain'])
         else:
             print("   WARNING: observation specification not found for this observation")
             
