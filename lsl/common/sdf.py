@@ -577,14 +577,14 @@ class Project(object):
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.updateMIB[component] != -1:
                 output = "%sSESSION_MUP_%s  %i\n" % (output, component, ses.updateMIB[component])
-        if ses.logScheduler:
-            output = "%sSESSION_LOG_SCH  %i\n" % (output, ses.logScheduler)
-        if ses.logExecutive:
-            output = "%sSESSION_LOG_EXE  %i\n" % (output, ses.logExecutive)
-        if ses.includeStationStatic:
-            output = "%sSESSION_INC_SMIB %i\n" % (output, ses.includeStationStatic)
-        if ses.includeDesign:
-            output = "%sSESSION_INC_DES  %i\n" % (output, ses.includeDesign)
+        if ses.include_mcssch_log:
+            output = "%sSESSION_LOG_SCH  %i\n" % (output, ses.include_mcssch_log)
+        if ses.include_mcsexe_log:
+            output = "%sSESSION_LOG_EXE  %i\n" % (output, ses.include_mcsexe_log)
+        if ses.include_station_smib:
+            output = "%sSESSION_INC_SMIB %i\n" % (output, ses.include_station_smib)
+        if ses.include_station_design:
+            output = "%sSESSION_INC_DES  %i\n" % (output, ses.include_station_design)
         output = "%s\n" % output
         
         ## Observations
@@ -2044,11 +2044,11 @@ class Session(object):
         self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         
-        self.logScheduler = False
-        self.logExecutive = False
+        self.include_mcssch_log = False
+        self.include_mcsexe_log = False
         
-        self.includeStationStatic = False
-        self.includeDesign = False
+        self.include_station_smib = False
+        self.include_station_design = False
         
         self.station = station
         
@@ -2138,6 +2138,8 @@ class Session(object):
           * 0 = never record the MIB entries (the entries are still updated, however)
         """
         
+        if component not in self.recordMIB.keys():
+               raise KeyError("Unknown subsystem '%s'" % component)
         self.recordMIB[component] = int(interval)
         
     def set_mib_update_interval(self, component, interval):
@@ -2150,6 +2152,8 @@ class Session(object):
          * 0 = request no updates to the MIB entries
         """
         
+        if component not in self.updateMIB.keys():
+               raise KeyError("Unknown subsystem '%s'" % component)
         self.updateMIB[component] = int(interval)
         
     @property
@@ -2568,16 +2572,16 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].updateMIB[component] = int(value)
                 continue
             if keyword == 'SESSION_LOG_SCH':
-                project.sessions[0].logScheduler = bool(value)
+                project.sessions[0].include_mcssch_log = bool(value)
                 continue
             if keyword == 'SESSION_LOG_EXE':
-                project.sessions[0].logExecutive = bool(value)
+                project.sessions[0].include_mcsexe_log = bool(value)
                 continue
             if keyword == 'SESSION_INC_SMIB':
-                project.sessions[0].includeStationStatic = bool(value)
+                project.sessions[0].include_station_smib = bool(value)
                 continue
             if keyword == 'SESSION_INC_DES':
-                project.sessions[0].includeDesign = bool(value)
+                project.sessions[0].include_station_design = bool(value)
                 continue
             if keyword == 'SESSION_DRX_BEAM':
                 project.sessions[0].drx_beam = int(value)

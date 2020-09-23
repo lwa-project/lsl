@@ -98,7 +98,7 @@ def read_ses_file(filename):
             'sessionID': bses.SESSION_ID,  'CRA': bses.SESSION_CRA,  'drxBeam': bses.SESSION_DRX_BEAM,
             'spcSetup': bses.SESSION_SPC, 'MJD': bses.SESSION_START_MJD, 'MPM': bses.SESSION_START_MPM, 
             'Dur': bses.SESSION_DUR, 'nObs': bses.SESSION_NOBS, 'record': record, 'update': update, 
-            'logSch': bses.SESSION_LOG_SCH, 'logExe': bses.SESSION_LOG_EXE, 'incSMIF': bses.SESSION_INC_SMIB,
+            'logSch': bses.SESSION_LOG_SCH, 'logExe': bses.SESSION_LOG_EXE, 'incSMIB': bses.SESSION_INC_SMIB,
             'incDesi': bses.SESSION_INC_DES}
 
 
