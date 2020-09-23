@@ -1606,7 +1606,7 @@ class Stepped(Observation):
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
-            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper]
+            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper()]
             
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 

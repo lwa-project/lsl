@@ -2,6 +2,7 @@
   * Added a -v/--lwasv option to correlateTBN.py and tbnSpectra.py
   * Added better input file type checking to the various "correlate" and "spectra" scripts
   * Switched back to CDDIS for ionospheric data
+  * Fixed an error when setting beam/dipole mode for STEPPED SDFs
 
 2.0.1
   * Fixed a few problems with the scripts that ship with LSL
