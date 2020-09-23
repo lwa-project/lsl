@@ -120,6 +120,15 @@ class Project(object):
     def __str__(self):
         return "%s: %s with %i run(s) for %s" % (self.id, self.name, len(self.runs), str(self.observer))
         
+    @classmethod
+    def autofilled(cls, runs=None, comments=None, project_office=None):
+        observer = Observer.autofilled()
+        name = OBSV_CONFIG.get('project_name')
+        id = OBSV_CONFIG.get('project_id')
+        if name is None or id is None:
+            raise RuntimeError("Auto-fill values cannot be loaded from the configuration file")
+        return cls(observer, name, id, runs=runs, comments=comments, project_office=project_office)
+        
     def update(self):
         """Update the various runs that are part of this project."""
         

@@ -20,6 +20,17 @@ __all__ = ['LSL_CONFIG',]
 
 
 # Default values
+## lsl.common.sdf/sdfADP/idf
+DEFAULTS_OBS = OrderedDict()
+DEFAULTS_OBS['observer_name'] = {'value': None,
+                                 'help': 'Observer name for auto-filling Observer classes'}
+DEFAULTS_OBS['observer_id'] = {'value': None,
+                               'help': 'Observer ID number for auto-filling Observer classes'}
+DEFAULTS_OBS['project_name'] = {'value': None,
+                                'help': 'Project name for auto-filling Project classes'}
+DEFAULTS_OBS['project_id'] = {'value': None,
+                              'help': 'Project ID for auto-filling Project classes'}               
+
 ## lsl.reader.ldp
 DEFAULTS_LDP = OrderedDict()
 DEFAULTS_LDP['tbn_buffer_size'] = {'value': 20,
@@ -74,6 +85,7 @@ DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
 
 ## Everything
 DEFAULTS_ALL = OrderedDict()
+DEFAULTS_ALL['observing'] = DEFAULTS_OBS
 DEFAULTS_ALL['ldp'] = DEFAULTS_LDP
 DEFAULTS_ALL['ionosphere'] = DEFAULTS_IONO
 DEFAULTS_ALL['telemetry'] = DEFAULTS_TELEMETRY
