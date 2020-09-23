@@ -8,6 +8,8 @@ extern "C" {
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
+#include "complex_float.h"
+
 typedef struct {
     signed char real;
     signed char imag;
@@ -242,6 +244,13 @@ static NPY_INLINE complex_int16 complex_int16_divide(complex_int16 c1, complex_i
     return (complex_int16) {real, imag};
 }
 
+static NPY_INLINE complex_float64 complex_int16_true_divide(complex_int16 c1, complex_int16 c2) {
+    double mag2 = ((int) c2.real)*c2.real + ((int) c2.imag)*c2.imag;
+    double real = (c1.real*c2.real + c1.imag*c2.imag) / mag2;
+    double imag = (c1.imag*c2.real - c1.real*c2.imag) / mag2;
+    return (complex_float64) {real, imag};
+}
+
 static NPY_INLINE void complex_int16_inplace_divide(complex_int16* c1, complex_int16 c2) {
     long mag2 = ((int) c2.real)*c2.real + ((int) c2.imag)*c2.imag;
     signed char real = (c1->real*c2.real + c1->imag*c2.imag) / mag2;
@@ -257,6 +266,13 @@ static NPY_INLINE complex_int16 complex_int16_scalar_divide(long s, complex_int1
     return (complex_int16) {real, imag};
 }
 
+static NPY_INLINE complex_float64 complex_int16_scalar_true_divide(long s, complex_int16 c) {
+    double mag2 = ((int) c.real)*c.real + ((int) c.imag)*c.imag;
+    double real = (s*c.real + 0*c.imag) / mag2;
+    double imag = (0*c.real - s*c.imag) / mag2;
+    return (complex_float64) {real, imag};
+}
+
 static NPY_INLINE void complex_int16_inplace_scalar_divide(long s, complex_int16* c) {
     long mag2 = ((int) c->real)*c->real + ((int) c->imag)*c->imag;
     signed char real = (s*c->real + 0*c->imag) / mag2;
@@ -270,6 +286,13 @@ static NPY_INLINE complex_int16 complex_int16_divide_scalar(complex_int16 c, lon
     signed char real = (c.real*s - c.imag*0) / mag2;
     signed char imag = (c.imag*s + c.real*0) / mag2;
     return (complex_int16) {real, imag};
+}
+
+static NPY_INLINE complex_float64 complex_int16_true_divide_scalar(complex_int16 c, long s) {
+    double mag2 = s*s + 0*0;
+    double real = (c.real*s - c.imag*0) / mag2;
+    double imag = (c.imag*s + c.real*0) / mag2;
+    return (complex_float64) {real, imag};
 }
 
 static NPY_INLINE void complex_int16_inplace_divide_scalar(complex_int16* c, long s) {

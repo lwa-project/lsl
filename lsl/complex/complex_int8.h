@@ -8,13 +8,26 @@ extern "C" {
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
+#include "complex_float.h"
+
 typedef struct {
     unsigned char real_imag;
 } complex_int8;
 
 // Unpacking/repacking functions
-extern signed char fourBitLUT[256][2];
-void complex_int8_fillLUT();
+static signed char fourBitLUT[256][2];
+static NPY_INLINE void complex_int8_fillLUT() {
+    int i, j;
+    signed char t;
+    
+    for(i=0; i<256; i++) {
+        for(j=0; j<2; j++) {
+            t = (i >> 4*(1-j)) & 15;
+            fourBitLUT[(unsigned char) i][j] = t;
+            fourBitLUT[(unsigned char) i][j] -= ((t&8)<<1);
+        }
+    }
+}
 
 // Access methods
 static NPY_INLINE void lsl_unpack_ci8(complex_int8 packed, signed char* real, signed char* imag) {
@@ -301,6 +314,15 @@ static NPY_INLINE complex_int8 complex_int8_divide(complex_int8 c1, complex_int8
     return out;
 }
 
+static NPY_INLINE complex_float64 complex_int8_true_divide(complex_int8 c1, complex_int8 c2) {
+    const signed char* sc1 = fourBitLUT[c1.real_imag];
+    const signed char* sc2 = fourBitLUT[c2.real_imag];
+    double mag2 = ((int) sc2[0])*sc2[0] + ((int) sc2[1])*sc2[1];
+    double real = (sc1[0]*sc2[0] + sc1[1]*sc2[1]) / mag2;
+    double imag = (sc1[1]*sc2[0] - sc1[0]*sc2[1]) / mag2;
+    return (complex_float64) {real, imag};
+}
+
 static NPY_INLINE void complex_int8_inplace_divide(complex_int8* c1, complex_int8 c2) {
     const signed char* sc1 = fourBitLUT[c1->real_imag];
     const signed char* sc2 = fourBitLUT[c2.real_imag];
@@ -320,6 +342,14 @@ static NPY_INLINE complex_int8 complex_int8_scalar_divide(long s, complex_int8 c
     return out;
 }
 
+static NPY_INLINE complex_float64 complex_int8_scalar_true_divide(long s, complex_int8 c) {
+    const signed char* sc = fourBitLUT[c.real_imag];
+    double mag2 = ((int) sc[0])*sc[0] + ((int) sc[1])*sc[1];
+    double real = (s*sc[0] + 0*sc[1]) / mag2;
+    double imag = (0*sc[0] - s*sc[1]) / mag2;
+    return (complex_float64) {real, imag};
+}
+
 static NPY_INLINE void complex_int8_inplace_scalar_divide(long s, complex_int8* c) {
     const signed char* sc = fourBitLUT[c->real_imag];
     long mag2 = ((int) sc[0])*sc[0] + ((int) sc[1])*sc[1];
@@ -336,6 +366,14 @@ static NPY_INLINE complex_int8 complex_int8_divide_scalar(complex_int8 c, long s
     complex_int8 out;
     lsl_pack_ci8(real, imag, &out);
     return out;
+}
+
+static NPY_INLINE complex_float64 complex_int8_true_divide_scalar(complex_int8 c, long s) {
+    const signed char* sc = fourBitLUT[c.real_imag];
+    double mag2 = s*s + 0*0;
+    double real = (sc[0]*s - sc[1]*0) / mag2;
+    double imag = (sc[1]*s + sc[0]*0) / mag2;
+    return (complex_float64) {real, imag};
 }
 
 static NPY_INLINE void complex_int8_inplace_divide_scalar(complex_int8* c, long s) {

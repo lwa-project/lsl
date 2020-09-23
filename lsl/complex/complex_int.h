@@ -54,5 +54,3 @@ static NPY_INLINE int import_complex_int(void) {
 #endif
 
 #endif  //COMPLEX_COMPLEX_INT_H_INCLUDE_GUARD_
-
-
