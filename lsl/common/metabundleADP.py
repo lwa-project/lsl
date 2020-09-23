@@ -30,7 +30,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.0'
+__version__ = '1.1'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_station', 'get_session_metadata', 
            'get_session_spec', 'get_observation_spec', 'get_sdf', 'get_command_script', 
            'get_asp_configuration', 'get_asp_configuration_summary', 'is_valid']
@@ -94,12 +94,15 @@ def read_ses_file(filename):
               'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2,
               'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4}
     
-    return {'version': bses.FORMAT_VERSION, 'project_id': bses.PROJECT_ID.lstrip().rstrip(), 
-            'session_id': bses.SESSION_ID,  'configuration_authority': bses.SESSION_CRA,  'drx_beam': bses.SESSION_DRX_BEAM,
-            'spcSetup': bses.SESSION_SPC, 'mjd': bses.SESSION_START_MJD, 'mpm': bses.SESSION_START_MPM, 
-            'dur': bses.SESSION_DUR, 'nobs': bses.SESSION_NOBS, 'recordMIB': record, 'updateMIB': update, 
-            'include_mcssch_log': bses.SESSION_LOG_SCH, 'include_mcsexe_log': bses.SESSION_LOG_EXE, 'include_station_smib': bses.SESSION_INC_SMIB,
-            'include_station_design': bses.SESSION_INC_DES}
+    return {'version': bses.FORMAT_VERSION,
+            'project_id': bses.PROJECT_ID.lstrip().rstrip(), 'session_id': bses.SESSION_ID, 
+            'configuration_authority': bses.SESSION_CRA,
+            'drx_beam': bses.SESSION_DRX_BEAM, 'spcSetup': bses.SESSION_SPC, 
+            'mjd': bses.SESSION_START_MJD, 'mpm': bses.SESSION_START_MPM, 'dur': bses.SESSION_DUR,
+            'nobs': bses.SESSION_NOBS,
+            'recordMIB': record, 'updateMIB': update, 
+            'include_mcssch_log': bses.SESSION_LOG_SCH, 'include_mcsexe_log': bses.SESSION_LOG_EXE,
+            'include_station_smib': bses.SESSION_INC_SMIB, 'include_station_design': bses.SESSION_INC_DES}
 
 
 def read_obs_file(filename):
@@ -162,13 +165,17 @@ def read_obs_file(filename):
         if bfooter.alignment != (2**32 - 1):
             raise IOError("Byte alignment lost at byte %i" % fh.tell())
             
-    output = {'version': bheader.FORMAT_VERSION, 'project_id': bheader.PROJECT_ID.lstrip().rstrip(), 
-              'session_id': bheader.SESSION_ID, 'drx_beam': bheader.SESSION_DRX_BEAM, 
-              'spcSetup': bheader.SESSION_SPC, 'obs_id': bheader.OBS_ID,
-              'mjd': bheader.OBS_START_MJD, 'mpm': bheader.OBS_START_MPM, 'dur': bheader.OBS_DUR, 
+    output = {'version': bheader.FORMAT_VERSION,
+              'project_id': bheader.PROJECT_ID.lstrip().rstrip(), 'session_id': bheader.SESSION_ID,
+              'drx_beam': bheader.SESSION_DRX_BEAM, 'spcSetup': bheader.SESSION_SPC,
+              'obs_id': bheader.OBS_ID,
+              'mjd': bheader.OBS_START_MJD, 'mpm': bheader.OBS_START_MPM, 'dur': bheader.OBS_DUR,
               'mode': bheader.OBS_MODE, 'beamdipole_mode': bheader.OBS_BDM, 
-              'ra': bheader.OBS_RA, 'dec': bheader.OBS_DEC, 'beam': bheader.OBS_B, 
-              'freq1': word_to_freq(bheader.OBS_FREQ1), 'freq2': word_to_freq(bheader.OBS_FREQ2), 'bw': bheader.OBS_BW, 'nsteps': bheader.OBS_STP_N, 'is_radec': bheader.OBS_STP_RADEC,  'steps': steps, 
+              'ra': bheader.OBS_RA, 'dec': bheader.OBS_DEC,
+              'beam': bheader.OBS_B, 
+              'freq1': word_to_freq(bheader.OBS_FREQ1), 'freq2': word_to_freq(bheader.OBS_FREQ2),
+              'bw': bheader.OBS_BW,
+              'nsteps': bheader.OBS_STP_N, 'is_radec': bheader.OBS_STP_RADEC,  'steps': steps, 
               'fee_power': flat_to_multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
               'asp_filter': list(bfooter.OBS_ASP_FLT), 'asp_atten_1': list(bfooter.OBS_ASP_AT1), 
               'asp_atten_2': list(bfooter.OBS_ASP_AT2), 'asp_atten_split': list(bfooter.OBS_ASP_ATS)}
@@ -215,10 +222,11 @@ def read_cs_file(filename):
                     data = None
                 
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
-                               'ignoreTime': True if action.bASAP else False, 
-                               'subsystemID': sid_to_string(action.sid), 'commandID': cid_to_string(action.cid), 
-                               'commandLength': action.len, 'data': data}
-                if actionPrime['subsystemID'] == 'DP':
+                               'ignore_time': True if action.bASAP else False, 
+                               'subsystem_id': sid_to_string(action.sid),
+                               'command_id': cid_to_string(action.cid), 
+                               'command_length': action.len, 'data': data}
+                if actionPrime['subsystem_id'] == 'DP':
                     raise RuntimeError("Command script references DP not ADP")
                     
                 commands.append( actionPrime )
@@ -434,10 +442,10 @@ def get_observation_spec(tarname, obs_id=None):
             outObs = []
             for o in obsList:
                 try:
-                    if o['obsID'] in obs_id:
+                    if o['obs_id'] in obs_id:
                         outObs.append(o)
                 except TypeError:
-                    if o['obsID'] == obs_id:
+                    if o['obs_id'] == obs_id:
                         outObs.append(o)
                         
             if len(outObs) == 1:
