@@ -23,6 +23,7 @@ import argparse
 from datetime import datetime
 
 from lsl.common.paths import DATA as dataPath
+from lsl.common.progress import ProgressBarPlus
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -118,7 +119,7 @@ def main(args):
             ah = urlopen(_url)
             index = ah.read()
             try:
-                index = index.decode(encoding='ascii', error='ignore')
+                index = index.decode(encoding='ascii', errors='ignore')
             except AttributeError:
                 pass
             ah.close()
@@ -158,8 +159,23 @@ def main(args):
     if urlToDownload is not None:
         ## Retrieve
         try:
+            print("Downloading %s" % urlToDownload)
             ah = urlopen(urlToDownload)
-            newSSMIF = ah.read()
+            meta = ah.info()
+            pbar = ProgressBarPlus(max=int(meta.getheaders("Content-Length")[0]))
+            while True:
+                new_data = ah.read(32768)
+                if len(new_data) == 0:
+                    break
+                pbar.inc(len(new_data))
+                try:
+                    newSSMIF += new_data
+                except NameError:
+                    newSSMIF = new_data
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
+            sys.stdout.write(pbar.show()+'\n')
+            sys.stdout.flush()
             ah.close()
         except Exception as e:
             print("Error:  Cannot download SSMIF, %s" % str(e))
