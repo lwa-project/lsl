@@ -24,7 +24,7 @@ try:
 except ImportError:
     from urllib.request import urlopen
 from datetime import datetime, timedelta
-from ftplib import FTP_TLS
+from ftplib import FTP_TLS, error_perm as FTP_ERROR
 
 from scipy.special import lpmv
 try:
@@ -36,6 +36,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from lsl.common.stations import geo_to_ecef
 from lsl.common.paths import DATA as dataPath
+from lsl.common.progress import ProgressBarPlus
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 
 from lsl.misc import telemetry
@@ -417,15 +418,30 @@ def _download_worker_cddis(url, filename, timeout=120):
         
     ## Download
     remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
+    try:
+        remote_size = ftps.size(remote_path)
+    except FTP_ERROR:
+        ftps.close()
+        return False
     with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
-        status = ftps.retrbinary('RETR %s' % remote_path, fh.write)
-        if not status.startswith("226"):
-            try:
-                os.unlink(filename)
-            except OSError:
-                pass
-            ftps.close()
-            return False
+        pbar = ProgressBarPlus(max=remote_size)
+        def write(data):
+            fh.write(data)
+            pbar.inc(len(data))
+            sys.stdout.write(pbar.show()+'\r')
+            sys.stdout.flush()
+            
+        status = ftps.retrbinary('RETR %s' % remote_path, write)
+        sys.stdout.write(pbar.show()+'\n')
+        sys.stdout.flush()
+        
+    if not status.startswith("226"):
+        try:
+            os.unlink(filename)
+        except OSError:
+            pass
+        ftps.close()
+        return False
     print("Wrote %i B to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
     
     ## Further processing, if needed
@@ -449,8 +465,22 @@ def _download_worker_standard(url, filename, timeout=120):
     print("Downloading %s" % url)
     try:
         tecFH = urlopen(url, timeout=timeout)
-        data = tecFH.read()
+        meta = tecFH.info()
+        pbar = ProgressBarPlus(max=int(meta.getheaders("Content-Length")[0]))
+        while True:
+            new_data = tecFH.read(32768)
+            if len(new_data) == 0:
+                break
+            pbar.inc(len(new_data))
+            try:
+                data += new_data
+            except NameError:
+                data = new_data
+            sys.stdout.write(pbar.show()+'\r')
+            sys.stdout.flush()
         tecFH.close()
+        sys.stdout.write(pbar.show()+'\n')
+        sys.stdout.flush()
     except IOError as e:
         warnings.warn('Error downloading file from %s: %s' % (url, str(e)), RuntimeWarning)
         data = ''
