@@ -73,7 +73,8 @@ class busy_tests(unittest.TestCase):
                     
                 sys.stdout = sys.__stdout__
                 
-        self.assertRaises(ValueError, busy.BusyIndicatorPlus, (), {'style':'testing?'})            
+        with self.assertRaises(ValueError):
+            busy.BusyIndicatorPlus(style='testing?')
 
 
 class busy_test_suite(unittest.TestSuite):
