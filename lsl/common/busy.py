@@ -9,11 +9,13 @@ import sys
 import time
 import threading
 
+from lsl.common.color import colorfy
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['BusyIndicator',]
 
 
@@ -31,18 +33,20 @@ class BusyIndicator(object):
         >>> bi.stop()
     """
     
-    def __init__(self, message='Busy', interval=0.5, dots=3):
+    def __init__(self, message='Busy', interval=0.5, dots=3, color=None):
         """
         Initialize the BusyIndicator class with various parameters:
-        * message: message to display
-        * interval: interval in seconds between message displays
-        * dots: number of dots to cycle through at the end of the
-            message
+         * message: message to display
+         * interval: interval in seconds between message displays
+         * dots: number of dots to cycle through at the end of the
+                 message
+         * color: color to use for the indicator (default: None)
         """
             
         self.message = message
         self.interval = interval
         self.dots = dots
+        self.color = color
         
         self.thread = None
         self.alive = threading.Event()
@@ -81,10 +85,18 @@ class BusyIndicator(object):
         """
         
         if self.thread is not None:
-            sys.stdout.write('%s%s%s%s\n' % (self.message, 
-                                             '.'*self._i, 
-                                             'Done' if success else 'Failed', 
-                                             ' '*self.dots))
+            if self.color is None:
+                out = "%s%s%s%s\n" % (self.message, 
+                                      '.'*self._i, 
+                                      'Done' if success else 'Failed', 
+                                      ' '*self.dots)
+            else:
+                out = colorfy("%s{{%%%s %s}}%s%s\n" % (self.message, 
+                                                       self.color,
+                                                       '.'*self._i, 
+                                                       'Done' if success else 'Failed', 
+                                                       ' '*self.dots))
+            sys.stdout.write(out)
             
             self.alive.clear()
             self.thread.join()
@@ -97,7 +109,16 @@ class BusyIndicator(object):
         """
         
         while self.alive.isSet():
-            sys.stdout.write('%s%s%s\r' % (self.message, '.'*self._i, ' '*(self.dots-self._i)))
+            if self.color is None:
+                out = "%s%s%s\r" % (self.message,
+                                    '.'*self._i,
+                                    ' '*(self.dots-self._i))
+            else:
+                out = colorfy("%s{{%%%s %s}}%s\r" % (self.message,
+                                                     self.color,
+                                                     '.'*self._i,
+                                                     ' '*(self.dots-self._i)))
+            sys.stdout.write(out)
             sys.stdout.flush()
             
             self._i += 1

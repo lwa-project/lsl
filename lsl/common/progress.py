@@ -11,11 +11,13 @@ if sys.version_info < (3,):
 import copy
 import time
 
+from lsl.common.color import colorfy
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['ProgressBar', 'ProgressBarPlus']
 
 
@@ -33,7 +35,7 @@ class ProgressBar(object):
      >>> sys.stdout.flush()
     """
     
-    def __init__(self, max=100, span=70, sym='=', print_percent=True):
+    def __init__(self, max=100, span=70, sym='=', print_percent=True, color=None):
         """
         Initialize the ProgressBar class with various parameters:
          * max: maximum count for the progress bar (default: 100)
@@ -41,6 +43,7 @@ class ProgressBar(object):
          * sym: character to use in the progress bar (default: '=')
          * print_percent: whether or not to print the percentage in addition to
                           the bar or not (default: True)
+         * color: color to use for the progress bar (default: None)
         """
         
         self.amount = 0
@@ -49,6 +52,7 @@ class ProgressBar(object):
         self.sym = sym
         self.rotations = ['-', '\\', '|', '/', self.sym]
         self.print_percent = print_percent
+        self.color = color
         
     def inc(self, amount=1):
         """
@@ -87,7 +91,10 @@ class ProgressBar(object):
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             nte = "%5.1f%%" % (float(self.amount)/self.max*100)
             
-            out = "[%s] %s" % (bar, nte)
+            if self.color is None:
+                out = "[%s] %s" % (bar, nte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s" % (self.color, bar, nte))
         else:
             # Progress bar only
             barSpan = self.span - 2
@@ -102,7 +109,10 @@ class ProgressBar(object):
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             
-            out = "[%s]" % bar
+            if self.color is None:
+                out = "[%s]" % bar
+            else:
+                out = colorfy("[{{%%%s %s}}]" % (self.color, bar))
             
         return out
         
@@ -246,7 +256,10 @@ class ProgressBarPlus(ProgressBar):
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             nte = "%5.1f%%" % (float(self.amount)/self.max*100)
             
-            out = "[%s] %s %s" % (bar, nte, cte)
+            if self.color is None:
+                out = "[%s] %s %s" % (bar, nte, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s %s" % (self.color, bar, nte, cte))
         else:
             # Progress bar only
             barSpan = self.span - 2
@@ -261,6 +274,9 @@ class ProgressBarPlus(ProgressBar):
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             
-            out = "[%s] %s" % (bar, cte)
+            if self.color is None:
+                out = "[%s] %s" % (bar, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s" % (self.color, bar, cte))
             
         return out

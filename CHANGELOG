@@ -4,6 +4,7 @@
   * Switched back to CDDIS for ionospheric data
   * Fixed an error when setting beam/dipole mode for STEPPED SDFs
   * Fixed a bug in updateLSLSSMIF.py when trying to revert a SSMIF
+  * Added a color keyword the the classes in lsl.common.busy and lsl.common.progress
 
 2.0.1
   * Fixed a few problems with the scripts that ship with LSL
