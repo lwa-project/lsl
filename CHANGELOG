@@ -5,6 +5,8 @@
   * Fixed an error when setting beam/dipole mode for STEPPED SDFs
   * Fixed a bug in updateLSLSSMIF.py when trying to revert a SSMIF
   * Added a color keyword to the classes in lsl.common.busy and lsl.common.progress
+  * Added a new BusyIndicatorPlus class to lsl.common.busy
+  * Added a new DownloadBar class to lsl.common.progress
 
 2.0.1
   * Fixed a few problems with the scripts that ship with LSL

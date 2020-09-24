@@ -36,7 +36,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from lsl.common.stations import geo_to_ecef
 from lsl.common.paths import DATA as dataPath
-from lsl.common.progress import ProgressBarPlus
+from lsl.common.progress import DownloadBar
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 
 from lsl.misc import telemetry
@@ -424,7 +424,7 @@ def _download_worker_cddis(url, filename, timeout=120):
         ftps.close()
         return False
     with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
-        pbar = ProgressBarPlus(max=remote_size)
+        pbar = DownloadBar(max=remote_size)
         def write(data):
             fh.write(data)
             pbar.inc(len(data))
@@ -442,13 +442,11 @@ def _download_worker_cddis(url, filename, timeout=120):
             pass
         ftps.close()
         return False
-    print("Wrote %i B to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
-    
+        
     ## Further processing, if needed
     if os.path.splitext(filename)[1] == '.Z':
         ## Save it to a regular gzip'd file after uncompressing it.
         subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-        print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
         subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
         
     # Done
@@ -466,7 +464,7 @@ def _download_worker_standard(url, filename, timeout=120):
     try:
         tecFH = urlopen(url, timeout=timeout)
         meta = tecFH.info()
-        pbar = ProgressBarPlus(max=int(meta.getheaders("Content-Length")[0]))
+        pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
         while True:
             new_data = tecFH.read(32768)
             if len(new_data) == 0:
@@ -486,7 +484,6 @@ def _download_worker_standard(url, filename, timeout=120):
         data = ''
     except socket.timeout:
         data = ''
-    print("Received %i B" % len(data))
         
     # Did we get anything or, at least, enough of something like it looks like 
     # a real file?
@@ -497,13 +494,11 @@ def _download_worker_standard(url, filename, timeout=120):
         ## Success!  Save it to a file
         with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
             fh.write(data)
-        print("Wrote %i B of .gz to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
-        
+            
         ## Further processing, if needed
         if os.path.splitext(filename)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
             subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-            print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
             subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
             
         return True

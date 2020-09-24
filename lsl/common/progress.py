@@ -17,8 +17,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.3'
-__all__ = ['ProgressBar', 'ProgressBarPlus']
+__version__ = '0.4'
+__all__ = ['ProgressBar', 'ProgressBarPlus', 'DownloadBar']
 
 
 class ProgressBar(object):
@@ -169,8 +169,8 @@ class ProgressBarPlus(ProgressBar):
     
     Example Usage:
      >>> import sys
-     >>> from progess import ProgressBar
-     >>> pb = ProgressBar()
+     >>> from progess import ProgressBarPlus
+     >>> pb = ProgressBarPlus()
      >>> pb.inc()
      >>> sys.stdout.write(pb.show())
      >>> sys.stdout.flush()
@@ -280,3 +280,105 @@ class ProgressBarPlus(ProgressBar):
                 out = colorfy("[{{%%%s %s}}] %s" % (self.color, bar, cte))
             
         return out
+
+
+class DownloadBar(ProgressBarPlus):
+    """
+    Modified version of the ProgressBarPlus class that has a crude bandwidth
+    estimator.  At the end of the download the total file size (`max`) is 
+    displayed instead of the average rate.
+    
+    Example Usage:
+     >>> import sys
+     >>> from progess import DownloadBar
+     >>> db = DownloadBar()
+     >>> db.inc()
+     >>> sys.stdout.write(db.show())
+     >>> sys.stdout.flush()
+        
+    .. note::
+        The timing feature is only active when the inc()/dec() functions are called.
+        
+    .. versionadded:: 2.0.2
+    """
+    
+    @staticmethod
+    def _pprint(value):
+        """
+        Nice units for printing.
+        """
+        
+        units = 'B/s'
+        if value > 0.9*1024**3:
+            value = value/1024.**3
+            units = 'GB/s'
+        elif value > 0.9*1024**2:
+            value = value/1024.**2
+            units = 'MB/s'
+        elif value > 0.9*1024:
+            value = value/1024.
+            units = 'kB/s'
+        return "%5.1f%4s" % (value, units)
+        
+    def show(self):
+        """
+        Build a string representation of the download bar and return it.
+        """
+        
+        if self.t0 is None:
+            # Have we started?
+            cte = '----- B/s'
+        elif self.t1 - self.t0 < 0.01:
+            # Have we running long enough to get a "good" estimate?
+            cte = '----- B/s'
+        elif self.amount == 0:
+            # Have we gone far enough to get a "good" estimate?
+            cte = '----- B/s'
+        elif self.amount == self.max:
+            # Are we done?
+            cte = self._pprint(self.max)[:-2]
+        else:
+            cte = self.amount / (self.t1 - self.t0)
+            cte = self._pprint(cte)
+            
+        if self.print_percent:
+            # If we want the percentage also displayed, trim a little 
+            # more from the progress bar's wdith
+            barSpan = self.span - 10
+            nMarks = float(self.amount)/self.max * barSpan
+            nMarksFull = int(nMarks)
+            if nMarksFull < barSpan:
+                partial = nMarks - nMarksFull
+                lastMark = self.rotations[int(partial*len(self.rotations))]
+            else:
+                lastMark = ''
+            bar = self.sym * nMarksFull
+            bar = bar + lastMark
+            bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
+            nte = "%5.1f%%" % (float(self.amount)/self.max*100)
+            
+            if self.color is None:
+                out = "[%s] %s %s" % (bar, nte, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s %s" % (self.color, bar, nte, cte))
+        else:
+            # Progress bar only
+            barSpan = self.span - 3
+            nMarks = float(self.amount)/self.max * barSpan
+            nMarksFull = int(nMarks)
+            if nMarksFull < barSpan:
+                partial = nMarks - nMarksFull
+                lastMark = self.rotations[int(partial*len(self.rotations))]
+            else:
+                lastMark = ''
+            bar = self.sym * nMarksFull
+            bar = bar + lastMark
+            bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
+            
+            if self.color is None:
+                out = "[%s] %s" % (bar, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s" % (self.color, bar, cte))
+            
+        return out
+    

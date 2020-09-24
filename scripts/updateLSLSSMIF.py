@@ -23,7 +23,7 @@ import argparse
 from datetime import datetime
 
 from lsl.common.paths import DATA as dataPath
-from lsl.common.progress import ProgressBarPlus
+from lsl.common.progress import DownloadBar
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -162,7 +162,7 @@ def main(args):
             print("Downloading %s" % urlToDownload)
             ah = urlopen(urlToDownload)
             meta = ah.info()
-            pbar = ProgressBarPlus(max=int(meta.getheaders("Content-Length")[0]))
+            pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
             while True:
                 new_data = ah.read(32768)
                 if len(new_data) == 0:
