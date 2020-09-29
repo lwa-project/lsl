@@ -183,6 +183,12 @@ class idf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.runs[0].scans[0].ra, 5.5, 6)
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
         
+        project.runs[0].scans[1].ra = '5h45m00s'
+        project.runs[0].scans[1].dec = '+22d15m00s'
+        
+        self.assertAlmostEqual(project.runs[0].scans[1].ra, 5.75, 6)
+        self.assertAlmostEqual(project.runs[0].scans[1].dec, 22.25, 6)
+        
         dt0, dt1 = idf.get_scan_start_stop(project.runs[0].scans[0])
         self.assertEqual(dt0.year, 2011)
         self.assertEqual(dt0.month, 2)

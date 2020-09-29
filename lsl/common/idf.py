@@ -823,6 +823,8 @@ class Scan(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -838,6 +840,8 @@ class Scan(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value
@@ -1200,6 +1204,8 @@ class AlternatePhaseCenter(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -1216,6 +1222,8 @@ class AlternatePhaseCenter(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value

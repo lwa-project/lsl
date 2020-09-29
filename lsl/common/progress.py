@@ -273,13 +273,13 @@ class ProgressBarPlus(ProgressBar):
             # Progress bar only
             barSpan = self.span - 2
             nMarks = float(self.amount)/self.max * barSpan
-            nMarksFull = int(nMarks)
+            nMarksFull = min([int(nMarks), barSpan])
             if nMarksFull < barSpan:
                 partial = nMarks - nMarksFull
                 lastMark = self.rotations[int(partial*len(self.rotations))]
             else:
                 lastMark = ''
-            bar = self.sym * nMarksFull
+            bar = self.sym * min([nMarksFull, barSpan])
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             
@@ -355,7 +355,7 @@ class DownloadBar(ProgressBarPlus):
             # more from the progress bar's wdith
             barSpan = self.span - 10
             nMarks = float(self.amount)/self.max * barSpan
-            nMarksFull = int(nMarks)
+            nMarksFull = min([int(nMarks), barSpan])
             if nMarksFull < barSpan:
                 partial = nMarks - nMarksFull
                 lastMark = self.rotations[int(partial*len(self.rotations))]
