@@ -1408,14 +1408,6 @@ class DRX(Observation):
             failures += 1
             
         # Advanced - Target Visibility
-        if self.ra < 0 or self.ra >= 24:
-            if verbose:
-                print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra))
-            failures += 1
-        if self.dec < -90 or self.dec > 90:
-            if verbose:
-                print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
-            failures += 1
         if self.target_visibility < 1.0:
             if verbose:
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.target_visibility*100.0))
@@ -1995,25 +1987,6 @@ class BeamStep(object):
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
-        # Advanced - Target Visibility via RA/Dec & Az/El ranging
-        if self.is_radec:
-            if self.c1 < 0 or self.c1 >= 24:
-                if verbose:
-                    print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.c1))
-                failures += 1
-            if self.c2 < -90 or self.c2 > 90:
-                if verbose:
-                    print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.c2))
-                failures += 1
-        else:
-            if self.c1 < 0 or self.c1 > 360:
-                if verbose:
-                    print("[%i] Error: Invalid value for azimuth '%.6f'" % (os.getpid(), self.c1))
-                failures += 1
-            if self.c2 < 0 or self.c2 > 90:
-                if verbose:
-                    print("[%i] Error: Invalid value for elevation '%.6f'" % (os.getpid(), self.c2))
-                failures += 1
         # Any failures indicates a bad observation
         if failures == 0:
             return True

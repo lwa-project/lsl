@@ -408,6 +408,10 @@ class sdf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        project.sessions[0].observations[0].fee_power[10] = [2,]
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
         project.sessions[0].observations[0].fee_power[10] = [2,1]
         self.assertFalse(project.validate())
         
@@ -576,6 +580,10 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].observations[0].dec = 90.0
         project.sessions[0].observations[0].fee_power = [[1,1] for i in range(250)]
         project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        project.sessions[0].observations[0].fee_power[10] = [2,]
         self.assertFalse(project.validate())
         
         project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
@@ -911,6 +919,18 @@ class sdf_tests(unittest.TestCase):
         # Bad duration
         project.sessions[0].observations[0].steps[1].frequency2 = 38.0e6
         project.sessions[0].observations[0].steps[2].duration = '96:00:00.000'
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        # Bad pointing
+        project.sessions[0].observations[0].duration = '00:00:01.000'
+        project.sessions[0].observations[0].c2 = -72.0
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        # Bad pointing
+        project.sessions[0].observations[0].c2 = 90.0
+        project.sessions[0].observations[0].c1 = -72.0
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
         
