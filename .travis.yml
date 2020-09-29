@@ -68,10 +68,6 @@ install:
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install python-casacore; fi
     - pip install aipy
     - pip install .
-    - curl https://fornax.phys.unm.edu/lwa/data/igsg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/igsg0970.18i.gz --create-dirs
-    - curl https://fornax.phys.unm.edu/lwa/data/jplg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/jplg0970.18i.gz --create-dirs
-    - curl https://fornax.phys.unm.edu/lwa/data/codg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/codg0970.18i.gz --create-dirs
-    - curl https://fornax.phys.unm.edu/lwa/data/uqrg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/uqrg0970.18i.gz --create-dirs
 
 script:
     - cd tests
@@ -89,4 +85,3 @@ after_success:
 cache:
   directories:
     - $HOME/.astropy/cache
-    - $HOME/.lsl/ionospheric_cache
