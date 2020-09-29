@@ -169,7 +169,7 @@ def main(args):
             meta = ah.info()
             pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
             while True:
-                new_data = ah.read(32768)
+                new_data = ah.read(LSL_CONFIG.get('download.block_size'))
                 if len(new_data) == 0:
                     break
                 pbar.inc(len(new_data))

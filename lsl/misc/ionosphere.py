@@ -41,6 +41,7 @@ from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 
 from lsl.config import LSL_CONFIG
 IONO_CONFIG = LSL_CONFIG.view('ionosphere')
+DOWN_CONFIG = LSL_CONFIG.view('download')
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -459,7 +460,7 @@ def _download_worker_cddis(url, filename):
             sys.stdout.write(pbar.show()+'\r')
             sys.stdout.flush()
             
-        status = ftps.retrbinary('RETR %s' % remote_path, write)
+        status = ftps.retrbinary('RETR %s' % remote_path, write, blocksize=DOWN_CONFIG.get('block_size'))
         sys.stdout.write(pbar.show()+'\n')
         sys.stdout.flush()
         
@@ -494,7 +495,7 @@ def _download_worker_standard(url, filename):
         data = tecFH.read()
         pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
         while True:
-            new_data = tecFH.read(32768)
+            new_data = tecFH.read(DOWN_CONFIG.get('block_size'))
             if len(new_data) == 0:
                 break
             pbar.inc(len(new_data))

@@ -23,26 +23,26 @@ __all__ = ['LSL_CONFIG',]
 ## lsl.common.sdf/sdfADP/idf
 DEFAULTS_OBS = OrderedDict()
 DEFAULTS_OBS['observer_name'] = {'value': None,
-                                 'help': 'Observer name for auto-filling Observer classes'}
+                                 'help':  'Observer name for auto-filling Observer classes'}
 DEFAULTS_OBS['observer_id'] = {'value': None,
-                               'help': 'Observer ID number for auto-filling Observer classes'}
+                               'help':  'Observer ID number for auto-filling Observer classes'}
 DEFAULTS_OBS['project_name'] = {'value': None,
-                                'help': 'Project name for auto-filling Project classes'}
+                                'help':  'Project name for auto-filling Project classes'}
 DEFAULTS_OBS['project_id'] = {'value': None,
-                              'help': 'Project ID for auto-filling Project classes'}               
+                              'help':  'Project ID for auto-filling Project classes'}               
 
 ## lsl.reader.ldp
 DEFAULTS_LDP = OrderedDict()
 DEFAULTS_LDP['tbn_buffer_size'] = {'value': 20,
-                                   'help': 'TBN ring buffer size in timestamps'}
+                                   'help':  'TBN ring buffer size in timestamps'}
 DEFAULTS_LDP['drx_buffer_size'] = {'value': 20,
-                                   'help': 'DRX ring buffer size in timestamps'}
+                                   'help':  'DRX ring buffer size in timestamps'}
 DEFAULTS_LDP['drx_autofill_size'] = {'value': 50,
-                                     'help': 'maximum DRX gap in timestamps that can be auto-filled with zeros without throwing a timetag error/warning'}
+                                     'help':  'maximum DRX gap in timestamps that can be auto-filled with zeros without throwing a timetag error/warning'}
 DEFAULTS_LDP['tbf_buffer_size'] = {'value': 25,
-                                   'help': 'TBF ring buffer size in timestamps'}
+                                   'help':  'TBF ring buffer size in timestamps'}
 DEFAULTS_LDP['cor_buffer_size'] = {'value': 5,
-                                   'help': 'COR ring buffer size in timestamps'}
+                                   'help':  'COR ring buffer size in timestamps'}
 
 ## lsl.misc.ionosphere
 DEFAULTS_IONO = OrderedDict()
@@ -80,6 +80,8 @@ DEFAULTS_TELEMETRY['timeout'] = {'value': 120,
 
 ## Download parameters
 DEFAULTS_DOWNLOAD = OrderedDict()
+DEFAULTS_DOWNLOAD['block_size'] = {'value': 8192,
+                                   'help':  'download block size in bytes'}
 DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
                                 'help':  'download timeout in seconds'}
 
