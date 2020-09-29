@@ -3172,8 +3172,6 @@ def _parse_tai_file():
         except AttributeError:
             remote_size = 1
         pbar = DownloadBar(max=remote_size)
-        
-         -Length")[0]))
         while True:
             new_data = lsFH.read(32768)
             if len(new_data) == 0:
