@@ -365,7 +365,9 @@ class DownloadBar(ProgressBarPlus):
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             nte = "%5.1f%%" % (float(self.amount)/self.max*100)
-            
+            if self.amount > self.max:
+                nte = "-----%"
+                
             if self.color is None:
                 out = "[%s] %s %s" % (bar, nte, cte)
             else:
