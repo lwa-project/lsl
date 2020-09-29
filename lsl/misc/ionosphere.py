@@ -464,7 +464,11 @@ def _download_worker_standard(url, filename, timeout=120):
     try:
         tecFH = urlopen(url, timeout=timeout)
         meta = tecFH.info()
-        pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
+        try:
+            remote_size = int(meta.getheaders("Content-Length")[0])
+        except AttributeError:
+            remote_size = 1
+        pbar = DownloadBar(max=remote_size)
         while True:
             new_data = tecFH.read(32768)
             if len(new_data) == 0:

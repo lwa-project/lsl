@@ -238,7 +238,7 @@ class ProgressBarPlus(ProgressBar):
         elif self.amount == 0:
             # Have we gone far enough to get a "good" estimate?
             cte = '----m--s'
-        elif self.amount == self.max:
+        elif self.amount >= self.max:
             # Are we done?
             cte = self.t1 - self.t0
             cte = self._pprint(cte)
@@ -340,9 +340,9 @@ class DownloadBar(ProgressBarPlus):
         elif self.amount == 0:
             # Have we gone far enough to get a "good" estimate?
             cte = '----- B/s'
-        elif self.amount == self.max:
+        elif self.amount >= self.max:
             # Are we done?
-            cte = self._pprint(self.max)[:-2]
+            cte = self._pprint(self.amount)[:-2]
         elif self.t1 - self.t0 < 0.01:
             # Have we running long enough to get a "good" estimate?
             cte = '----- B/s'
