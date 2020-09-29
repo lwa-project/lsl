@@ -978,7 +978,6 @@ class Observation(object):
         """Evaulate the FEE and ASP options associated with an observation and
         return True if valid, False otherwise."""
         
-        verbose = True
         station = lwa1
         if self._parent is not None:
             station = self._parent.station
@@ -992,10 +991,16 @@ class Observation(object):
             if verbose:
                 print("[%i] Error: Invalid number of FEE power settings (%i != %i)" % (os.getpid(), len(self.fee_power), nstand))
         for f,fee in enumerate(self.fee_power):
+            if not isinstance(fee, (tuple, list)):
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Expected a tuple or list for the FEE %i power setting" % (os.getpid(), f))
+                continue
             if len(fee) != 2:
                 failures += 1
                 if verbose:
                     print("[%i] Error: Invalid number of polarizations on FEE %i (%i != 2)" % (os.getpid(), f, len(fee)))
+                continue
             for p in (0, 1):
                 if fee[p] not in (-1, 0, 1):
                     failures += 1
@@ -1626,7 +1631,7 @@ class Stepped(Observation):
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
-            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper]
+            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper()]
             
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 

@@ -11,12 +11,14 @@ if sys.version_info < (3,):
 import copy
 import time
 
+from lsl.common.color import colorfy
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
-__all__ = ['ProgressBar', 'ProgressBarPlus']
+__version__ = '0.4'
+__all__ = ['ProgressBar', 'ProgressBarPlus', 'DownloadBar']
 
 
 class ProgressBar(object):
@@ -33,7 +35,7 @@ class ProgressBar(object):
      >>> sys.stdout.flush()
     """
     
-    def __init__(self, max=100, span=70, sym='=', print_percent=True):
+    def __init__(self, max=100, span=70, sym='=', print_percent=True, color=None):
         """
         Initialize the ProgressBar class with various parameters:
          * max: maximum count for the progress bar (default: 100)
@@ -41,6 +43,7 @@ class ProgressBar(object):
          * sym: character to use in the progress bar (default: '=')
          * print_percent: whether or not to print the percentage in addition to
                           the bar or not (default: True)
+         * color: color to use for the progress bar (default: None)
         """
         
         self.amount = 0
@@ -49,6 +52,7 @@ class ProgressBar(object):
         self.sym = sym
         self.rotations = ['-', '\\', '|', '/', self.sym]
         self.print_percent = print_percent
+        self.color = color
         
     def inc(self, amount=1):
         """
@@ -87,7 +91,10 @@ class ProgressBar(object):
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             nte = "%5.1f%%" % (float(self.amount)/self.max*100)
             
-            out = "[%s] %s" % (bar, nte)
+            if self.color is None:
+                out = "[%s] %s" % (bar, nte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s" % (self.color, bar, nte))
         else:
             # Progress bar only
             barSpan = self.span - 2
@@ -102,7 +109,10 @@ class ProgressBar(object):
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             
-            out = "[%s]" % bar
+            if self.color is None:
+                out = "[%s]" % bar
+            else:
+                out = colorfy("[{{%%%s %s}}]" % (self.color, bar))
             
         return out
         
@@ -159,8 +169,8 @@ class ProgressBarPlus(ProgressBar):
     
     Example Usage:
      >>> import sys
-     >>> from progess import ProgressBar
-     >>> pb = ProgressBar()
+     >>> from progess import ProgressBarPlus
+     >>> pb = ProgressBarPlus()
      >>> pb.inc()
      >>> sys.stdout.write(pb.show())
      >>> sys.stdout.flush()
@@ -246,7 +256,10 @@ class ProgressBarPlus(ProgressBar):
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             nte = "%5.1f%%" % (float(self.amount)/self.max*100)
             
-            out = "[%s] %s %s" % (bar, nte, cte)
+            if self.color is None:
+                out = "[%s] %s %s" % (bar, nte, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s %s" % (self.color, bar, nte, cte))
         else:
             # Progress bar only
             barSpan = self.span - 2
@@ -261,6 +274,111 @@ class ProgressBarPlus(ProgressBar):
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             
-            out = "[%s] %s" % (bar, cte)
+            if self.color is None:
+                out = "[%s] %s" % (bar, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s" % (self.color, bar, cte))
             
         return out
+
+
+class DownloadBar(ProgressBarPlus):
+    """
+    Modified version of the ProgressBarPlus class that has a crude bandwidth
+    estimator.  At the end of the download the total file size (`max`) is 
+    displayed instead of the average rate.
+    
+    Example Usage:
+     >>> import sys
+     >>> from progess import DownloadBar
+     >>> db = DownloadBar()
+     >>> db.inc()
+     >>> sys.stdout.write(db.show())
+     >>> sys.stdout.flush()
+        
+    .. note::
+        The timing feature is only active when the inc()/dec() functions are called.
+        
+    .. versionadded:: 2.0.2
+    """
+    
+    @staticmethod
+    def _pprint(value):
+        """
+        Nice units for printing.
+        """
+        
+        units = 'B/s'
+        if value > 0.9*1024**3:
+            value = value/1024.**3
+            units = 'GB/s'
+        elif value > 0.9*1024**2:
+            value = value/1024.**2
+            units = 'MB/s'
+        elif value > 0.9*1024:
+            value = value/1024.
+            units = 'kB/s'
+        return "%5.1f%4s" % (value, units)
+        
+    def show(self):
+        """
+        Build a string representation of the download bar and return it.
+        """
+        
+        if self.t0 is None:
+            # Have we started?
+            cte = '----- B/s'
+        elif self.t1 - self.t0 < 0.01:
+            # Have we running long enough to get a "good" estimate?
+            cte = '----- B/s'
+        elif self.amount == 0:
+            # Have we gone far enough to get a "good" estimate?
+            cte = '----- B/s'
+        elif self.amount == self.max:
+            # Are we done?
+            cte = self._pprint(self.max)[:-2]
+        else:
+            cte = self.amount / (self.t1 - self.t0)
+            cte = self._pprint(cte)
+            
+        if self.print_percent:
+            # If we want the percentage also displayed, trim a little 
+            # more from the progress bar's wdith
+            barSpan = self.span - 10
+            nMarks = float(self.amount)/self.max * barSpan
+            nMarksFull = int(nMarks)
+            if nMarksFull < barSpan:
+                partial = nMarks - nMarksFull
+                lastMark = self.rotations[int(partial*len(self.rotations))]
+            else:
+                lastMark = ''
+            bar = self.sym * nMarksFull
+            bar = bar + lastMark
+            bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
+            nte = "%5.1f%%" % (float(self.amount)/self.max*100)
+            
+            if self.color is None:
+                out = "[%s] %s %s" % (bar, nte, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s %s" % (self.color, bar, nte, cte))
+        else:
+            # Progress bar only
+            barSpan = self.span - 3
+            nMarks = float(self.amount)/self.max * barSpan
+            nMarksFull = int(nMarks)
+            if nMarksFull < barSpan:
+                partial = nMarks - nMarksFull
+                lastMark = self.rotations[int(partial*len(self.rotations))]
+            else:
+                lastMark = ''
+            bar = self.sym * nMarksFull
+            bar = bar + lastMark
+            bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
+            
+            if self.color is None:
+                out = "[%s] %s" % (bar, cte)
+            else:
+                out = colorfy("[{{%%%s %s}}] %s" % (self.color, bar, cte))
+            
+        return out
+    

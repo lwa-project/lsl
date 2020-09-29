@@ -127,7 +127,7 @@ class idf_tests(unittest.TestCase):
         
         # Basic file structure
         self.assertEqual(len(project.runs), 1)
-        self.assertEqual(len(project.runs[0].scans), 1)
+        self.assertEqual(len(project.runs[0].scans), 2)
         
         # Correlator setup
         self.assertEqual(project.runs[0].correlator_channels, 256)
@@ -284,16 +284,24 @@ class idf_tests(unittest.TestCase):
         # Good filter
         project.runs[0].scans[0].intent = 'Target'
         project.runs[0].scans[0].filter = 7
+        project.runs[0].scans[1].filter = 7
         project.runs[0].scans[0].update()
         self.assertTrue(project.validate())
         
         # Bad filter
         project.runs[0].scans[0].filter = 8
+        project.runs[0].scans[0].filter = 6
+        project.runs[0].scans[0].update()
+        self.assertFalse(project.validate())
+        
+        # Mis-matches filter
+        project.runs[0].scans[0].filter = 6
+        project.runs[0].scans[1].filter = 7
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())
         
         # Bad frequency
-        project.runs[0].scans[0].filter = 6
+        project.runs[0].scans[1].filter = 6
         project.runs[0].scans[0].frequency1 = 10.0e6
         project.runs[0].scans[0].update()
         self.assertFalse(project.validate())

@@ -24,7 +24,7 @@ try:
 except ImportError:
     from urllib.request import urlopen
 from datetime import datetime, timedelta
-from ftplib import FTP_TLS
+from ftplib import FTP_TLS, error_perm as FTP_ERROR
 
 from scipy.special import lpmv
 try:
@@ -36,6 +36,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from lsl.common.stations import geo_to_ecef
 from lsl.common.paths import DATA as dataPath
+from lsl.common.progress import DownloadBar
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 
 from lsl.config import LSL_CONFIG
@@ -445,22 +446,35 @@ def _download_worker_cddis(url, filename):
         
     ## Download
     remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
+    try:
+        remote_size = ftps.size(remote_path)
+    except FTP_ERROR:
+        ftps.close()
+        return False
     with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
-        status = ftps.retrbinary('RETR %s' % remote_path, fh.write)
-        if not status.startswith("226"):
-            try:
-                os.unlink(filename)
-            except OSError:
-                pass
-            ftps.close()
-            return False
-    print("Wrote %i B to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
-    
+        pbar = DownloadBar(max=remote_size)
+        def write(data):
+            fh.write(data)
+            pbar.inc(len(data))
+            sys.stdout.write(pbar.show()+'\r')
+            sys.stdout.flush()
+            
+        status = ftps.retrbinary('RETR %s' % remote_path, write)
+        sys.stdout.write(pbar.show()+'\n')
+        sys.stdout.flush()
+        
+    if not status.startswith("226"):
+        try:
+            os.unlink(filename)
+        except OSError:
+            pass
+        ftps.close()
+        return False
+        
     ## Further processing, if needed
     if os.path.splitext(filename)[1] == '.Z':
         ## Save it to a regular gzip'd file after uncompressing it.
         subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-        print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
         subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
         
     # Done
@@ -478,13 +492,26 @@ def _download_worker_standard(url, filename):
     try:
         tecFH = urlopen(url, timeout=IONO_CONFIG.get('download.timeout'))
         data = tecFH.read()
+        pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
+        while True:
+            new_data = tecFH.read(32768)
+            if len(new_data) == 0:
+                break
+            pbar.inc(len(new_data))
+            try:
+                data += new_data
+            except NameError:
+                data = new_data
+            sys.stdout.write(pbar.show()+'\r')
+            sys.stdout.flush()
         tecFH.close()
+        sys.stdout.write(pbar.show()+'\n')
+        sys.stdout.flush()
     except IOError as e:
         warnings.warn('Error downloading file from %s: %s' % (url, str(e)), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
-    print("Received %i B" % len(data))
         
     # Did we get anything or, at least, enough of something like it looks like 
     # a real file?
@@ -495,13 +522,11 @@ def _download_worker_standard(url, filename):
         ## Success!  Save it to a file
         with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
             fh.write(data)
-        print("Wrote %i B of .gz to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
-        
+            
         ## Further processing, if needed
         if os.path.splitext(filename)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
             subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-            print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
             subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
             
         return True

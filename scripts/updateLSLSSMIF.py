@@ -23,6 +23,7 @@ import argparse
 from datetime import datetime
 
 from lsl.common.paths import DATA as dataPath
+from lsl.common.progress import DownloadBar
 
 from lsl.config import LSL_CONFIG
 
@@ -163,8 +164,23 @@ def main(args):
     if urlToDownload is not None:
         ## Retrieve
         try:
+            print("Downloading %s" % urlToDownload)
             ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
-            newSSMIF = ah.read()
+            meta = ah.info()
+            pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
+            while True:
+                new_data = ah.read(32768)
+                if len(new_data) == 0:
+                    break
+                pbar.inc(len(new_data))
+                try:
+                    newSSMIF += new_data
+                except NameError:
+                    newSSMIF = new_data
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
+            sys.stdout.write(pbar.show()+'\n')
+            sys.stdout.flush()
             ah.close()
         except Exception as e:
             print("Error:  Cannot download SSMIF, %s" % str(e))

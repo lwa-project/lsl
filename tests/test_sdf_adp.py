@@ -333,6 +333,32 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
         
+        # Bad ASP setup(s)
+        project.sessions[0].observations[0].duration = '1:00:00'
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(250)]
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        project.sessions[0].observations[0].fee_power[10] = [2,1]
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        project.sessions[0].observations[0].fee_power[10] = 2
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+            setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate())
+            
+            setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate())
+            
+            setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+            
     ### DRX - TRK_RADEC ###
     
     def test_drx_parse(self):
@@ -477,6 +503,32 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
         
+        # Bad ASP setup(s)
+        project.sessions[0].observations[0].dec = 90.0
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(250)]
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        project.sessions[0].observations[0].fee_power[10] = [2,1]
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        project.sessions[0].observations[0].fee_power[10] = 2
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+        for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+            setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate())
+            
+            setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate())
+            
+            setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+            
     ### DRX - TRK_SOL ###
     
     def test_sol_parse(self):
