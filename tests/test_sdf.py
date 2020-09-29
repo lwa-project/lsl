@@ -10,6 +10,7 @@ if sys.version_info < (3,):
     
 import os
 import re
+import copy
 import pytz
 import ephem
 import tempfile
@@ -156,6 +157,16 @@ class sdf_tests(unittest.TestCase):
         sess = sdf.Session('Test Session', 1, observations=[targ,])
         sess.drx_beam = 1
         proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
+        
+        targ2 = copy.deepcopy(targ)
+        targ2.start = '2019/1/1 00:00:10'
+        proj.sessions[0].observations.append(targ2)
+        self.assertEqual(len(proj.sessions[0].observations), 2)
+        
+        targ3 = copy.deepcopy(targ)
+        targ3.start = '2019/1/1 00:00:20'
+        proj.sessions[0].observations.insert(1, targ3)
+        self.assertEqual(len(proj.sessions[0].observations), 3)
         
         self.assertRaises(TypeError, proj.sessions.append, 5)
         self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
