@@ -168,6 +168,11 @@ class sdf_tests(unittest.TestCase):
         proj.sessions[0].observations.insert(1, targ3)
         self.assertEqual(len(proj.sessions[0].observations), 3)
         
+        targ4 = copy.deepcopy(targ)
+        targ4.start = '2019/1/1 00:00:30'
+        proj.sessions[0].observations[2] = targ4
+        self.assertEqual(len(proj.sessions[0].observations), 3)
+        
         self.assertRaises(TypeError, proj.sessions.append, 5)
         self.assertRaises(TypeError, proj.sessions[0].observations.append, 6)
         
