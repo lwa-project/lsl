@@ -126,7 +126,7 @@ class Project(object):
         name = OBSV_CONFIG.get('project_name')
         id = OBSV_CONFIG.get('project_id')
         if name is None or id is None:
-            raise RuntimeError("Auto-fill values cannot be loaded from the configuration file")
+            raise RuntimeError("Auto-fill values for the project cannot be loaded from the configuration file")
         return cls(observer, name, id, runs=runs, comments=comments, project_office=project_office)
         
     def update(self):
