@@ -218,6 +218,15 @@ class ProgressBarPlus(ProgressBar):
         
         return self
         
+    @staticmethod
+    def _pprint(value):
+        """
+        Nice units for printing.
+        """
+        
+        m, s = value / 60, value % 60
+        return '%4im%02is' % (m, s)
+        
     def show(self):
         """
         Build a string representation of the progress bar and return it.
@@ -226,19 +235,19 @@ class ProgressBarPlus(ProgressBar):
         if self.t0 is None:
             # Have we started?
             cte = '----m--s'
-        elif self.t1 - self.t0 < 0.2:
-            # Have we running long enough to get a "good" estimate?
-            cte = '----m--s'
         elif self.amount == 0:
             # Have we gone far enough to get a "good" estimate?
             cte = '----m--s'
         elif self.amount == self.max:
             # Are we done?
             cte = self.t1 - self.t0
-            cte = '%4im%02is' % (cte/60, cte%60)
+            cte = self._pprint(cte)
+        elif self.t1 - self.t0 < 0.2:
+            # Have we running long enough to get a "good" estimate?
+            cte = '----m--s'
         else:
             cte = (self.max - self.amount) * (self.t1 - self.t0)/self.amount
-            cte = '%4im%02is' % (cte/60, cte%60)
+            cte = self._pprint(cte)
             
         if self.print_percent:
             # If we want the percentage also displayed, trim a little 
@@ -328,15 +337,15 @@ class DownloadBar(ProgressBarPlus):
         if self.t0 is None:
             # Have we started?
             cte = '----- B/s'
-        elif self.t1 - self.t0 < 0.01:
-            # Have we running long enough to get a "good" estimate?
-            cte = '----- B/s'
         elif self.amount == 0:
             # Have we gone far enough to get a "good" estimate?
             cte = '----- B/s'
         elif self.amount == self.max:
             # Are we done?
             cte = self._pprint(self.max)[:-2]
+        elif self.t1 - self.t0 < 0.01:
+            # Have we running long enough to get a "good" estimate?
+            cte = '----- B/s'
         else:
             cte = self.amount / (self.t1 - self.t0)
             cte = self._pprint(cte)
