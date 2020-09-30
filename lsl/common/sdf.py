@@ -1521,7 +1521,7 @@ class Stepped(Observation):
             else:
                 self.steps.append(steps)
         self.filter_codes = DRXFilters
-        Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
+        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
     def update(self):
         """Update the computed parameters from the string values."""
@@ -1562,8 +1562,9 @@ class Stepped(Observation):
         
     @duration.setter
     def duration(self, value):
-        warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
-        
+        if value != 'please_dont_warn_me':
+            warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
+            
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
         

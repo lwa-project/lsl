@@ -930,17 +930,15 @@ class sdf_tests(unittest.TestCase):
         self.assertFalse(project.validate())
         
         # Bad pointing
-        project.sessions[0].observations[0].duration = '00:00:01.000'
-        project.sessions[0].observations[0].c2 = -72.0
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
+        project.sessions[0].observations[0].steps[2].duration = '00:00:01.000'
+        with self.assertRaises(ValueError):
+            project.sessions[0].observations[0].steps[2].c2 = -72.0
+            
         # Bad pointing
-        project.sessions[0].observations[0].c2 = 90.0
-        project.sessions[0].observations[0].c1 = -72.0
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
+        project.sessions[0].observations[0].steps[2].c2 = 90.0
+        with self.assertRaises(ValueError):
+            project.sessions[0].observations[0].steps[2].c1 = -72.0
+            
     ### DRX - STEPPED with delays and gains ###
     
     def test_spc_parse(self):
