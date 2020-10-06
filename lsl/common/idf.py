@@ -552,10 +552,6 @@ class Run(object):
                 print("[%i] Error: Invalid run ID number '%i'" % (os.getpid(), self.id))
             failures += 1
             
-        if len(self.stations) < 2:
-            if verbose:
-                print("[%i] Error: Need at least two stations to form an interferometer" % (os.getpid(),))
-            failures += 1
         station_count = {}
         for station in self.stations:
             try:
@@ -567,19 +563,7 @@ class Run(object):
                 if verbose:
                     print("[%i] Error: Station '%s' is included %i times" % (os.getpid(), station, station_count[station]))
                 failures += 1
-        if self.correlator_inttime < 0.1 or self.correlator_inttime > 10.0:
-            if verbose:
-                print("[%i] Error: Invalid correlator integration time '%.3f s'" % (os.getpid(), self.correlator_inttime))
-            failures += 1
-        if self.correlator_channels < 16 or self.correlator_channels > 32768 or self.correlator_channels % 2:
-            if verbose:
-                print("[%i] Error: Invalid correlator channel count '%i'" % (os.getpid(), self.correlator_channels))
-            failures += 1
-        if self.correlator_basis.lower() not in (None, '', 'linear', 'circular', 'stokes'):
-            if verbose:
-                print("[%i] Error: Invalid correlator output polarization basis '%s'" % (os.getpid(), self.correlator_basis))
-            failures += 1
-            
+                
         scanCount = 1
         for obs in self.scans:
             if verbose:
@@ -735,7 +719,7 @@ class Scan(object):
         
         self.gain = int(gain)
         
-        self.alt_phase_centers = []
+        self.alt_phase_centers = sdf._TypedParentList(AlternatePhaseCenter, self)
         
         self.update()
         
@@ -839,6 +823,8 @@ class Scan(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -854,6 +840,8 @@ class Scan(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value
@@ -987,10 +975,6 @@ class Scan(object):
         
         failures = 0
         # Basic - Intent, duration, frequency, and filter code values
-        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target', 'dummy'):
-            if verbose:
-                print("[%s] Error: Invalid scan intent '%s'" % (os.getpid(), self.intent))
-            failures += 1
         if self.dur < 1:
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
@@ -1009,14 +993,6 @@ class Scan(object):
             failures += 1
             
         # Advanced - Target Visibility
-        if self.ra < 0 or self.ra >= 24:
-            if verbose:
-                print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra))
-            failures += 1
-        if self.dec < -90 or self.dec > 90:
-            if verbose:
-                print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
-            failures += 1
         if self.target_visibility < 1.0:
             if verbose:
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the scan" % (os.getpid(), self.target_visibility*100.0))
@@ -1228,6 +1204,8 @@ class AlternatePhaseCenter(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -1244,6 +1222,8 @@ class AlternatePhaseCenter(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value
@@ -1284,29 +1264,61 @@ class AlternatePhaseCenter(object):
         pnt._pmdec = self.pm[1]
         pnt._epoch = ephem.J2000
         return pnt
-    
+        
+    @property
+    def target_visibility(self):
+        """Return the fractional visibility of the target during the scan 
+        period."""
+        
+        mjd, mpm, dur = 0, 0, 0
+        stations = [lwa1,]
+        if self._parent is not None:
+            mjd = self._parent.mjd
+            mpm = self._parent.mpm
+            dur = self._parent.dur
+            if self._parent._parent is not None:
+                stations = self._parent._parent.stations
+                
+        vis_list = []
+        max_alt = 0.0
+        for station in stations:
+            lwa = station.get_observer()
+            pnt = self.fixed_body
+            
+            vis = 0
+            cnt = 0
+            dt = 0.0
+            while dt <= dur/1000.0:
+                lwa.date = mjd + (mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
+                pnt.compute(lwa)
+                max_alt = max([max_alt, pnt.alt])
+                
+                cnt += 1
+                if pnt.alt > 0:
+                    vis += 1
+                    
+                dt += 300.0
+                
+            vis_list.append(float(vis)/float(cnt))
+            
+        if max_alt < 20*math.pi/180:
+            #warnings.warn("Maximum altitude for this scan is %.1f degrees" % (max_alt*180/math.pi))
+            pass
+            
+        return min(vis_list)
+        
     def validate(self, verbose=False):
         """Basic validation of the pointing, that's it."""
         
         failures = 0
         
-        ## Intent
-        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target'):
+        ## Advanced - Target Visibility
+        if self.target_visibility < 1.0:
             if verbose:
-                print("[%s] Error: Invalid alternate phase center intent '%s'" % (os.getpid(), self.intent))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan" % (os.getpid(), self.target_visibility*100.0))
             failures += 1
             
-        ## Pointing
-        if self.ra < 0 or self.ra >= 24:
-            if verbose:
-                print("[%i] Error: Invalid alternate phase center value for RA '%.6f'" % (os.getpid(), self.ra))
-            failures += 1
-        if self.dec < -90 or self.dec > 90:
-            if verbose:
-                print("[%i] Error: Invalid alternate phase center value for dec. '%+.6f'" % (os.getpid(), self.dec))
-            failures += 1
-            
-        # Any failures indicates a bad scan
+        # Any failures indicates a bad alternate phase center
         if failures == 0:
             return True
         else:

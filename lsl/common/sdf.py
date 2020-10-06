@@ -875,6 +875,8 @@ class Observation(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -891,6 +893,8 @@ class Observation(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%+.6f' deg" % value)
         self._dec = value
@@ -958,7 +962,6 @@ class Observation(object):
         """Evaulate the FEE and ASP options associated with an observation and
         return True if valid, False otherwise."""
         
-        verbose = True
         station = lwa1
         if self._parent is not None:
             station = self._parent.station
@@ -972,10 +975,16 @@ class Observation(object):
             if verbose:
                 print("[%i] Error: Invalid number of FEE power settings (%i != %i)" % (os.getpid(), len(self.fee_power), nstand))
         for f,fee in enumerate(self.fee_power):
+            if not isinstance(fee, (tuple, list)):
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Expected a tuple or list for the FEE %i power setting" % (os.getpid(), f))
+                continue
             if len(fee) != 2:
                 failures += 1
                 if verbose:
                     print("[%i] Error: Invalid number of polarizations on FEE %i (%i != 2)" % (os.getpid(), f, len(fee)))
+                continue
             for p in (0, 1):
                 if fee[p] not in (-1, 0, 1):
                     failures += 1
@@ -1403,14 +1412,6 @@ class DRX(Observation):
             failures += 1
             
         # Advanced - Target Visibility
-        if self.ra < 0 or self.ra >= 24:
-            if verbose:
-                print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra))
-            failures += 1
-        if self.dec < -90 or self.dec > 90:
-            if verbose:
-                print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
-            failures += 1
         if self.target_visibility < 1.0:
             if verbose:
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.target_visibility*100.0))
@@ -1520,7 +1521,7 @@ class Stepped(Observation):
             else:
                 self.steps.append(steps)
         self.filter_codes = DRXFilters
-        Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
+        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
     def update(self):
         """Update the computed parameters from the string values."""
@@ -1561,8 +1562,9 @@ class Stepped(Observation):
         
     @duration.setter
     def duration(self, value):
-        warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
-        
+        if value != 'please_dont_warn_me':
+            warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
+            
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
         
@@ -1804,6 +1806,12 @@ class BeamStep(object):
                 value = value.to('hourangle').value
             else:
                 value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value)
+            if self.is_radec:
+                value = value.to('hourangle').value
+            else:
+                value = value.to('deg').value
         if self.is_radec:
             if value < 0.0 or value >=24.0:
                 raise ValueError("Invalid value for RA '%.6f' hr" % value)
@@ -1824,6 +1832,8 @@ class BeamStep(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if self.is_radec:
             if value < -90.0 or value > 90.0:
                 raise ValueError("Invalid value for dec. '%.6f' deg" % value)
@@ -1990,25 +2000,6 @@ class BeamStep(object):
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
-        # Advanced - Target Visibility via RA/Dec & Az/El ranging
-        if self.is_radec:
-            if self.c1 < 0 or self.c1 >= 24:
-                if verbose:
-                    print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.c1))
-                failures += 1
-            if self.c2 < -90 or self.c2 > 90:
-                if verbose:
-                    print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.c2))
-                failures += 1
-        else:
-            if self.c1 < 0 or self.c1 > 360:
-                if verbose:
-                    print("[%i] Error: Invalid value for azimuth '%.6f'" % (os.getpid(), self.c1))
-                failures += 1
-            if self.c2 < 0 or self.c2 > 90:
-                if verbose:
-                    print("[%i] Error: Invalid value for elevation '%.6f'" % (os.getpid(), self.c2))
-                failures += 1
         # Any failures indicates a bad observation
         if failures == 0:
             return True

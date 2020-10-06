@@ -8,12 +8,20 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
+import os
 import time
 import math
 import ephem
 import numpy
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
 from calendar import timegm
+from datetime import datetime
 from functools import total_ordering    
+
+from lsl.common.progress import DownloadBar
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -3107,6 +3115,13 @@ def jd_to_sec(jD):
 # site location http://maia.usno.navy.mil/ser7/tai-utc.dat.
 ######################################################################
 
+# Create the cache directory
+if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
+    os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
+_CACHE_DIR = os.path.join(os.path.expanduser('~'), '.lsl', 'astro_cache')
+if not os.path.exists(_CACHE_DIR):
+    os.mkdir(_CACHE_DIR)
+
 ######################################################################
 #
 # Create empty UTC->leap second list.  The function _parse_tai_file()
@@ -3125,44 +3140,88 @@ FIRST_LEAP_UTC = 2441317.5
 
 _LEAP_SEC_LIST = []
 
-# lookup location of TAI/UTC almanac data file in location 
-# <package_dir>/data/astro/tai-utc.dat
 def _parse_tai_file():
-    import os
-    from lsl.common.paths import DATA
-    
     # get path to almanac data file
-    datName = os.path.join(DATA, 'astro', 'tai-utc.dat') 
+    download = True
+    datName = os.path.join(_CACHE_DIR, 'Leap_Second.dat')
     if not os.path.exists(datName):
-        raise RuntimeError("file %s not found" % datName)        
+        from lsl.common.paths import DATA
+        oldName = os.path.join(DATA, 'astro', 'Leap_Second.dat')
+        with open(oldName, 'rb') as oh:
+            with open(datName, 'wb') as dh:
+                dh.write(oh.read())
+                
+    # check for expiration
+    with open(datName, 'r') as datFile:
+        for l in datFile:
+            if l.find('File expires on') != -1:
+                expDate = l.strip().rstrip().split('on ', 1)[1]
+                expDate = datetime.strptime(expDate, "%d %B %Y")
+                if datetime.utcnow() < expDate:
+                    download = False
+                    
+    # download as needed
+    if download:
+        url = "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
         
+        print("Downloading %s" % url)
+        lsFH = urlopen(url, timeout=120)
+        meta = lsFH.info()
+        try:
+            remote_size = int(meta.getheaders("Content-Length")[0])
+        except AttributeError:
+            remote_size = 1
+        pbar = DownloadBar(max=remote_size)
+        while True:
+            new_data = lsFH.read(32768)
+            if len(new_data) == 0:
+                break
+            pbar.inc(len(new_data))
+            try:
+                data += new_data
+            except NameError:
+                data = new_data
+            sys.stdout.write(pbar.show()+'\r')
+            sys.stdout.flush()
+        lsFH.close()
+        sys.stdout.write(pbar.show()+'\n')
+        sys.stdout.flush()
+        
+        with open(datName, 'wb') as fh:
+            fh.write(data)
+            
     # read tai-utc.dat file to get conversion info
-    datFile = open(datName, 'r')
-    datLines = datFile.readlines()
-    datFile.close()
-    
-    lineNum = 0
-    for l in datLines:
-        # get UTC JD of leap second boundaries
-        try:
-            utcJD = float(l[16:26])
-        except ValueError:
-            raise RuntimeError("line %d of %s file not correctly formatted" % (lineNum, datName))
+    with open(datName, 'r') as datFile:
+        lineNum = 0
+        for l in datFile:
+            if l.startswith('#'):
+                continue
+            elif len(l) < 3:
+                continue
+                
+            # split
+            utcMJD, day, month, year, leapSec = l.split(None, 4)
             
-        # only get values prior to UTC JD 2441317.5 (1972 JAN  1)
-        if utcJD < FIRST_LEAP_UTC:
+            # get UTC JD of leap second boundaries
+            try:
+                utcJD = float(utcMJD) + MJD_OFFSET
+            except ValueError:
+                raise RuntimeError("line %d of %s file not correctly formatted" % (lineNum, datName))
+                
+            # only get values prior to UTC JD 2441317.5 (1972 JAN  1)
+            if utcJD < FIRST_LEAP_UTC:
+                lineNum += 1
+                continue
+                
+            # get leap second asjustment value
+            try:
+                leapSec = float(leapSec)
+            except ValueError:
+                raise RuntimeError("line %d of %s file not correctly formatted" % (lineNum, datName))
+                
+            # add entry to list
+            _LEAP_SEC_LIST.append((utcJD, leapSec, sec_to_jd(leapSec)))
             lineNum += 1
-            continue    
-            
-        # get leap second asjustment value
-        try:
-            leapSec = float(l[36:48])
-        except ValueError:
-            raise RuntimeError("line %d of %s file not correctly formatted" % (lineNum, datName))
-            
-        # add entry to list
-        _LEAP_SEC_LIST.append((utcJD, leapSec, sec_to_jd(leapSec)))    
-        lineNum += 1
 
 
 _parse_tai_file()
