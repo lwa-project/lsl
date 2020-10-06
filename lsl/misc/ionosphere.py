@@ -433,7 +433,7 @@ def _download_worker_cddis(url, filename):
     # Attempt to download the data
     print("Downloading %s" % url)
     ## Login
-    ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=IONO_CONFIG.get('download.timeout'))
+    ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))
     status = ftps.login("anonymous", "lwa@unm.edu")
     if not status.startswith("230"):
         ftps.close()
@@ -491,7 +491,7 @@ def _download_worker_standard(url, filename):
     # Attempt to download the data
     print("Downloading %s" % url)
     try:
-        tecFH = urlopen(url, timeout=IONO_CONFIG.get('download.timeout'))
+        tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
         meta = tecFH.info()
         try:
             remote_size = int(meta.getheaders("Content-Length")[0])
