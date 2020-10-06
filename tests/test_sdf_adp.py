@@ -300,65 +300,70 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parse_sdf(tbnFile)
         
-        # Bad project
-        old_id = project.id
-        project.id = 'ThisIsReallyLong'
-        self.assertFalse(project.validate())
-        
-        # Bad session
-        project.id = old_id
-        old_id = project.sessions[0].id
-        project.sessions[0].id = 10001
-        self.assertFalse(project.validate())
-        
-        # Bad filter
-        project.sessions[0].id = old_id
-        project.sessions[0].observations[0].filter = 10
-        self.assertFalse(project.validate())
-        
-        # Bad frequency
-        project.sessions[0].observations[0].filter = 7
-        project.sessions[0].observations[0].frequency1 = 2.0e6
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].filter = 7
-        project.sessions[0].observations[0].frequency1 = 95.0e6
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad duration
-        project.sessions[0].observations[0].frequency1 = 38.0e6
-        project.sessions[0].observations[0].duration = '96:00:00.000'
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad ASP setup(s)
-        project.sessions[0].observations[0].duration = '1:00:00'
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(250)]
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-        project.sessions[0].observations[0].fee_power[10] = [2,1]
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-        project.sessions[0].observations[0].fee_power[10] = 2
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-        for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
-            setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
+        with _SilentVerbose() as sv:
+            # Bad project
+            old_id = project.id
+            project.id = 'ThisIsReallyLong'
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad session
+            project.id = old_id
+            old_id = project.sessions[0].id
+            project.sessions[0].id = 10001
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad filter
+            project.sessions[0].id = old_id
+            project.sessions[0].observations[0].filter = 10
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad frequency
+            project.sessions[0].observations[0].filter = 7
+            project.sessions[0].observations[0].frequency1 = 2.0e6
             project.sessions[0].observations[0].update()
-            self.assertFalse(project.validate())
+            self.assertFalse(project.validate(verbose=True))
             
-            setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+            project.sessions[0].observations[0].filter = 7
+            project.sessions[0].observations[0].frequency1 = 95.0e6
             project.sessions[0].observations[0].update()
-            self.assertFalse(project.validate())
+            self.assertFalse(project.validate(verbose=True))
             
-            setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+            # Bad duration
+            project.sessions[0].observations[0].frequency1 = 38.0e6
+            project.sessions[0].observations[0].duration = '96:00:00.000'
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
+            # Bad ASP setup(s)
+            project.sessions[0].observations[0].duration = '1:00:00'
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(250)]
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            project.sessions[0].observations[0].fee_power[10] = [2,]
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            project.sessions[0].observations[0].fee_power[10] = [2,1]
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            project.sessions[0].observations[0].fee_power[10] = 2
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
+                project.sessions[0].observations[0].update()
+                self.assertFalse(project.validate(verbose=True))
+                
+                setattr(project.sessions[0].observations[0], attr, [30 for i in range(256)])
+                project.sessions[0].observations[0].update()
+                self.assertFalse(project.validate(verbose=True))
+                
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(256)])
+                
     ### DRX - TRK_RADEC ###
     
     def test_drx_parse(self):
@@ -410,6 +415,12 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].freq2, 1665395482)
         self.assertAlmostEqual(project.sessions[0].observations[1].ra, 5.5, 6)
         self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.5, 6)
+        
+        project.sessions[0].observations[1].ra = '5h45m00s'
+        project.sessions[0].observations[1].dec = '+22d15m00s'
+        
+        self.assertAlmostEqual(project.sessions[0].observations[1].ra, 5.75, 6)
+        self.assertAlmostEqual(project.sessions[0].observations[1].dec, 22.25, 6)
         
         dt0, dt1 = sdfADP.get_observation_start_stop(project.sessions[0].observations[1])
         self.assertEqual(dt0.year, 2011)
@@ -463,72 +474,77 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parse_sdf(drxFile)
         
-        # Bad beam
-        project.sessions[0].drx_beam = 6
-        self.assertFalse(project.validate())
-        
-        # No beam (this is allowed now)
-        project.sessions[0].drx_beam = -1
-        self.assertTrue(project.validate())
-        
-        # Bad filter
-        project.sessions[0].observations[0].filter = 8
-        self.assertFalse(project.validate())
-        
-        # Bad frequency
-        project.sessions[0].observations[0].filter = 6
-        project.sessions[0].observations[0].frequency1 = 10.0e6
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].filter = 6
-        project.sessions[0].observations[0].frequency1 = 90.0e6
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].frequency1 = 38.0e6
-        project.sessions[0].observations[0].frequency2 = 90.0e6
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad duration
-        project.sessions[0].observations[0].frequency2 = 38.0e6
-        project.sessions[0].observations[0].duration = '96:00:00.000'
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad pointing
-        project.sessions[0].observations[0].duration = '00:00:01.000'
-        project.sessions[0].observations[0].dec = -72.0
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad ASP setup(s)
-        project.sessions[0].observations[0].dec = 90.0
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(250)]
-        project.sessions[0].observations[0].update()
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-        project.sessions[0].observations[0].fee_power[10] = [2,1]
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-        project.sessions[0].observations[0].fee_power[10] = 2
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-        for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
-            setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
+        with _SilentVerbose() as sv:
+            # Bad beam
+            project.sessions[0].drx_beam = 6
+            self.assertFalse(project.validate(verbose=True))
+            
+            # No beam (this is allowed now)
+            project.sessions[0].drx_beam = -1
+            self.assertTrue(project.validate(verbose=True))
+            
+            # Bad filter
+            project.sessions[0].observations[0].filter = 8
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad frequency
+            project.sessions[0].observations[0].filter = 6
+            project.sessions[0].observations[0].frequency1 = 10.0e6
             project.sessions[0].observations[0].update()
-            self.assertFalse(project.validate())
+            self.assertFalse(project.validate(verbose=True))
             
-            setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+            project.sessions[0].observations[0].filter = 6
+            project.sessions[0].observations[0].frequency1 = 90.0e6
             project.sessions[0].observations[0].update()
-            self.assertFalse(project.validate())
+            self.assertFalse(project.validate(verbose=True))
             
-            setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+            project.sessions[0].observations[0].frequency1 = 38.0e6
+            project.sessions[0].observations[0].frequency2 = 90.0e6
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
+            # Bad duration
+            project.sessions[0].observations[0].frequency2 = 38.0e6
+            project.sessions[0].observations[0].duration = '96:00:00.000'
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad pointing
+            project.sessions[0].observations[0].duration = '00:00:01.000'
+            project.sessions[0].observations[0].dec = -72.0
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad ASP setup(s)
+            project.sessions[0].observations[0].dec = 90.0
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(250)]
+            project.sessions[0].observations[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            project.sessions[0].observations[0].fee_power[10] = [2,]
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            project.sessions[0].observations[0].fee_power[10] = [2,1]
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            project.sessions[0].observations[0].fee_power[10] = 2
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
+                project.sessions[0].observations[0].update()
+                self.assertFalse(project.validate(verbose=True))
+                
+                setattr(project.sessions[0].observations[0], attr, [30 for i in range(256)])
+                project.sessions[0].observations[0].update()
+                self.assertFalse(project.validate(verbose=True))
+                
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(256)])
+                
     ### DRX - TRK_SOL ###
     
     def test_sol_parse(self):
@@ -844,6 +860,16 @@ class sdf_adp_tests(unittest.TestCase):
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
         
+        # Bad pointing
+        project.sessions[0].observations[0].steps[2].duration = '00:00:01.000'
+        with self.assertRaises(ValueError):
+            project.sessions[0].observations[0].steps[2].c2 = -72.0
+            
+        # Bad pointing
+        project.sessions[0].observations[0].steps[2].c2 = 90.0
+        with self.assertRaises(ValueError):
+            project.sessions[0].observations[0].steps[2].c1 = -72.0
+            
     ### DRX - STEPPED with delays and gains ###
     
     def test_spc_parse(self):

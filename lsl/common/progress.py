@@ -218,6 +218,15 @@ class ProgressBarPlus(ProgressBar):
         
         return self
         
+    @staticmethod
+    def _pprint(value):
+        """
+        Nice units for printing.
+        """
+        
+        m, s = value / 60, value % 60
+        return '%4im%02is' % (m, s)
+        
     def show(self):
         """
         Build a string representation of the progress bar and return it.
@@ -226,19 +235,19 @@ class ProgressBarPlus(ProgressBar):
         if self.t0 is None:
             # Have we started?
             cte = '----m--s'
-        elif self.t1 - self.t0 < 0.2:
-            # Have we running long enough to get a "good" estimate?
-            cte = '----m--s'
         elif self.amount == 0:
             # Have we gone far enough to get a "good" estimate?
             cte = '----m--s'
-        elif self.amount == self.max:
+        elif self.amount >= self.max:
             # Are we done?
             cte = self.t1 - self.t0
-            cte = '%4im%02is' % (cte/60, cte%60)
+            cte = self._pprint(cte)
+        elif self.t1 - self.t0 < 0.2:
+            # Have we running long enough to get a "good" estimate?
+            cte = '----m--s'
         else:
             cte = (self.max - self.amount) * (self.t1 - self.t0)/self.amount
-            cte = '%4im%02is' % (cte/60, cte%60)
+            cte = self._pprint(cte)
             
         if self.print_percent:
             # If we want the percentage also displayed, trim a little 
@@ -264,13 +273,13 @@ class ProgressBarPlus(ProgressBar):
             # Progress bar only
             barSpan = self.span - 2
             nMarks = float(self.amount)/self.max * barSpan
-            nMarksFull = int(nMarks)
+            nMarksFull = min([int(nMarks), barSpan])
             if nMarksFull < barSpan:
                 partial = nMarks - nMarksFull
                 lastMark = self.rotations[int(partial*len(self.rotations))]
             else:
                 lastMark = ''
-            bar = self.sym * nMarksFull
+            bar = self.sym * min([nMarksFull, barSpan])
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             
@@ -328,15 +337,15 @@ class DownloadBar(ProgressBarPlus):
         if self.t0 is None:
             # Have we started?
             cte = '----- B/s'
-        elif self.t1 - self.t0 < 0.01:
-            # Have we running long enough to get a "good" estimate?
-            cte = '----- B/s'
         elif self.amount == 0:
             # Have we gone far enough to get a "good" estimate?
             cte = '----- B/s'
-        elif self.amount == self.max:
+        elif self.amount >= self.max:
             # Are we done?
-            cte = self._pprint(self.max)[:-2]
+            cte = self._pprint(self.amount)[:-2]
+        elif self.t1 - self.t0 < 0.01:
+            # Have we running long enough to get a "good" estimate?
+            cte = '----- B/s'
         else:
             cte = self.amount / (self.t1 - self.t0)
             cte = self._pprint(cte)
@@ -346,7 +355,7 @@ class DownloadBar(ProgressBarPlus):
             # more from the progress bar's wdith
             barSpan = self.span - 10
             nMarks = float(self.amount)/self.max * barSpan
-            nMarksFull = int(nMarks)
+            nMarksFull = min([int(nMarks), barSpan])
             if nMarksFull < barSpan:
                 partial = nMarks - nMarksFull
                 lastMark = self.rotations[int(partial*len(self.rotations))]
@@ -356,7 +365,9 @@ class DownloadBar(ProgressBarPlus):
             bar = bar + lastMark
             bar = bar+(' ' * (barSpan-(nMarksFull+len(lastMark))))
             nte = "%5.1f%%" % (float(self.amount)/self.max*100)
-            
+            if self.amount > self.max:
+                nte = "-----%"
+                
             if self.color is None:
                 out = "[%s] %s %s" % (bar, nte, cte)
             else:

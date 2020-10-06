@@ -183,6 +183,12 @@ class idf_tests(unittest.TestCase):
         self.assertAlmostEqual(project.runs[0].scans[0].ra, 5.5, 6)
         self.assertAlmostEqual(project.runs[0].scans[0].dec, 22.5, 6)
         
+        project.runs[0].scans[1].ra = '5h45m00s'
+        project.runs[0].scans[1].dec = '+22d15m00s'
+        
+        self.assertAlmostEqual(project.runs[0].scans[1].ra, 5.75, 6)
+        self.assertAlmostEqual(project.runs[0].scans[1].dec, 22.25, 6)
+        
         dt0, dt1 = idf.get_scan_start_stop(project.runs[0].scans[0])
         self.assertEqual(dt0.year, 2011)
         self.assertEqual(dt0.month, 2)
@@ -245,89 +251,90 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(drxFile)
         
-        # Bad project
-        old_id = project.id
-        project.id = 'ThisIsReallyLong'
-        self.assertFalse(project.validate())
-        
-        # Bad session
-        project.id = old_id
-        old_id = project.runs[0].id
-        project.runs[0].id = 10001
-        self.assertFalse(project.validate())
-        
-        # Bad interferometer
-        project.runs[0].id = old_id
-        with self.assertRaises(ValueError):
-            project.runs[0].stations = [lwa1,]
+        with _SilentVerbose() as sv:
+            # Bad project
+            old_id = project.id
+            project.id = 'ThisIsReallyLong'
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad correlator channel count
-        project.runs[0].stations = [lwa1,lwasv]
-        with self.assertRaises(ValueError):
-            project.runs[0].correlator_channels = 129
+            # Bad session
+            project.id = old_id
+            old_id = project.runs[0].id
+            project.runs[0].id = 10001
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad correlator integration time
-        project.runs[0].correlator_channels = 128
-        with self.assertRaises(ValueError):
-            project.runs[0].correlator_inttime = 1e-6
+            # Bad interferometer
+            project.runs[0].id = old_id
+            with self.assertRaises(ValueError):
+                project.runs[0].stations = [lwa1,]
+                
+            # Bad correlator channel count
+            project.runs[0].stations = [lwa1,lwasv]
+            with self.assertRaises(ValueError):
+                project.runs[0].correlator_channels = 129
+                
+            # Bad correlator integration time
+            project.runs[0].correlator_channels = 128
+            with self.assertRaises(ValueError):
+                project.runs[0].correlator_inttime = 1e-6
+                
+            # Bad correlator output polarization basis
+            project.runs[0].correlator_inttime = 1.0
+            with self.assertRaises(ValueError):
+                project.runs[0].correlator_basis = 'cats'
+                
+            # Bad intent
+            project.runs[0].correlator_basis = 'linear'
+            with self.assertRaises(ValueError):
+                project.runs[0].scans[0].intent = 'cats'
+                
+            # Good filter
+            project.runs[0].scans[0].intent = 'Target'
+            project.runs[0].scans[0].filter = 7
+            project.runs[0].scans[1].filter = 7
+            project.runs[0].scans[0].update()
+            self.assertTrue(project.validate(verbose=True))
             
-        # Bad correlator output polarization basis
-        project.runs[0].correlator_inttime = 1.0
-        with self.assertRaises(ValueError):
-            project.runs[0].correlator_basis = 'cats'
+            # Bad filter
+            project.runs[0].scans[0].filter = 8
+            project.runs[0].scans[0].filter = 6
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad intent
-        project.runs[0].correlator_basis = 'linear'
-        with self.assertRaises(ValueError):
-            project.runs[0].scans[0].intent = 'cats'
+            # Mis-matches filter
+            project.runs[0].scans[0].filter = 6
+            project.runs[0].scans[1].filter = 7
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Good filter
-        project.runs[0].scans[0].intent = 'Target'
-        project.runs[0].scans[0].filter = 7
-        project.runs[0].scans[1].filter = 7
-        project.runs[0].scans[0].update()
-        self.assertTrue(project.validate())
-        
-        # Bad filter
-        project.runs[0].scans[0].filter = 8
-        project.runs[0].scans[0].filter = 6
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Mis-matches filter
-        project.runs[0].scans[0].filter = 6
-        project.runs[0].scans[1].filter = 7
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad frequency
-        project.runs[0].scans[1].filter = 6
-        project.runs[0].scans[0].frequency1 = 10.0e6
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        project.runs[0].scans[0].filter = 6
-        project.runs[0].scans[0].frequency1 = 90.0e6
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        project.runs[0].scans[0].frequency1 = 38.0e6
-        project.runs[0].scans[0].frequency2 = 90.0e6
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad duration
-        project.runs[0].scans[0].frequency2 = 38.0e6
-        project.runs[0].scans[0].duration = '96:00:00.000'
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad pointing
-        project.runs[0].scans[0].duration = '00:00:01.000'
-        project.runs[0].scans[0].dec = -72.0
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
+            # Bad frequency
+            project.runs[0].scans[1].filter = 6
+            project.runs[0].scans[0].frequency1 = 10.0e6
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.runs[0].scans[0].filter = 6
+            project.runs[0].scans[0].frequency1 = 90.0e6
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            project.runs[0].scans[0].frequency1 = 38.0e6
+            project.runs[0].scans[0].frequency2 = 90.0e6
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad duration
+            project.runs[0].scans[0].frequency2 = 38.0e6
+            project.runs[0].scans[0].duration = '96:00:00.000'
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
+            # Bad pointing
+            project.runs[0].scans[0].duration = '00:00:01.000'
+            project.runs[0].scans[0].dec = -72.0
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
     ### DRX - TRK_RADEC + Alternate phase centers###
     
     def test_drx_alt_parse(self):
@@ -425,73 +432,74 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(altFile)
         
-        # Bad interferometer
-        with self.assertRaises(ValueError):
-            project.runs[0].stations = [lwa1,]
+        with _SilentVerbose() as sv:
+            # Bad interferometer
+            with self.assertRaises(ValueError):
+                project.runs[0].stations = [lwa1,]
+                
+            # Bad correlator channel count
+            with self.assertRaises(ValueError):
+                project.runs[0].correlator_channels = 129
+                
+            # Bad correlator integration time
+            with self.assertRaises(ValueError):
+                project.runs[0].correlator_inttime = 1e-6
+                
+            # Bad correlator output polarization basis
+            with self.assertRaises(ValueError):
+               project.runs[0].correlator_basis = 'cats'
+                
+            # Bad intent
+            with self.assertRaises(ValueError):
+                project.runs[0].scans[0].intent = 'cats'
+                
+            # Bad filter
+            project.runs[0].scans[0].intent = 'Target'
+            project.runs[0].scans[0].filter = 8
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad correlator channel count
-        with self.assertRaises(ValueError):
-            project.runs[0].correlator_channels = 129
+            # Bad frequency
+            project.runs[0].scans[0].filter = 6
+            project.runs[0].scans[0].frequency1 = 90.0e6
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad correlator integration time
-        with self.assertRaises(ValueError):
-            project.runs[0].correlator_inttime = 1e-6
+            project.runs[0].scans[0].frequency1 = 38.0e6
+            project.runs[0].scans[0].frequency2 = 90.0e6
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad correlator output polarization basis
-        with self.assertRaises(ValueError):
-           project.runs[0].correlator_basis = 'cats'
+            # Bad duration
+            project.runs[0].scans[0].frequency2 = 38.0e6
+            project.runs[0].scans[0].duration = '96:00:00.000'
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad intent
-        with self.assertRaises(ValueError):
-            project.runs[0].scans[0].intent = 'cats'
+            # Bad pointing
+            project.runs[0].scans[0].duration = '00:00:01.000'
+            project.runs[0].scans[0].dec = -72.0
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Bad filter
-        project.runs[0].scans[0].intent = 'Target'
-        project.runs[0].scans[0].filter = 8
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad frequency
-        project.runs[0].scans[0].filter = 6
-        project.runs[0].scans[0].frequency1 = 90.0e6
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        project.runs[0].scans[0].frequency1 = 38.0e6
-        project.runs[0].scans[0].frequency2 = 90.0e6
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad duration
-        project.runs[0].scans[0].frequency2 = 38.0e6
-        project.runs[0].scans[0].duration = '96:00:00.000'
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad pointing
-        project.runs[0].scans[0].duration = '00:00:01.000'
-        project.runs[0].scans[0].dec = -72.0
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad alternate phase center
-        project.runs[0].scans[0].dec = 40.733916000
-        project.runs[0].scans[0].alt_phase_centers[0].dec = 45.0
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
-        # Bad alternate phase center intent
-        project.runs[0].scans[0].alt_phase_centers[0].dec = 40.733916000
-        with self.assertRaises(ValueError):
-            project.runs[0].scans[0].alt_phase_centers[0].intent = 'cats'
+            # Bad alternate phase center
+            project.runs[0].scans[0].dec = 40.733916000
+            project.runs[0].scans[0].alt_phase_centers[0].dec = 45.0
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
             
-        # Too many phase centers
-        project.runs[0].scans[0].alt_phase_centers[0].intent = 'PhaseCal'
-        for i in range(40):
-            project.runs[0].scans[0].add_alt_phase_center('test', 'Target', 19.991210200, 40.733916000)
-        project.runs[0].scans[0].update()
-        self.assertFalse(project.validate())
-        
+            # Bad alternate phase center intent
+            project.runs[0].scans[0].alt_phase_centers[0].dec = 40.733916000
+            with self.assertRaises(ValueError):
+                project.runs[0].scans[0].alt_phase_centers[0].intent = 'cats'
+                
+            # Too many phase centers
+            project.runs[0].scans[0].alt_phase_centers[0].intent = 'PhaseCal'
+            for i in range(40):
+                project.runs[0].scans[0].add_alt_phase_center('test', 'Target', 19.991210200, 40.733916000)
+            project.runs[0].scans[0].update()
+            self.assertFalse(project.validate(verbose=True))
+            
     ### DRX - TRK_SOL ###
     
     def test_sol_parse(self):

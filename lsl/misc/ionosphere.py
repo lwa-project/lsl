@@ -492,8 +492,12 @@ def _download_worker_standard(url, filename):
     print("Downloading %s" % url)
     try:
         tecFH = urlopen(url, timeout=IONO_CONFIG.get('download.timeout'))
-        data = tecFH.read()
-        pbar = DownloadBar(max=int(meta.getheaders("Content-Length")[0]))
+        meta = tecFH.info()
+        try:
+            remote_size = int(meta.getheaders("Content-Length")[0])
+        except AttributeError:
+            remote_size = 1
+        pbar = DownloadBar(max=remote_size)
         while True:
             new_data = tecFH.read(DOWN_CONFIG.get('block_size'))
             if len(new_data) == 0:
