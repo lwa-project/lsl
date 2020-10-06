@@ -32,11 +32,7 @@ class BaseReaderError(IOError):
     """
 
     def __init__(self, strerror, errno='-1', filename=None):
-        IOError.__init__(self)
-        self.errno = errno
-        self.strerror = strerror
-        self.filename = filename
-        self.args = (errno, strerror)
+        IOError.__init__(self, errno, strerror, filename)
         
     def __str__(self):
         return "%s" % self.strerror
