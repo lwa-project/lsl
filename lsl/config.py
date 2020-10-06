@@ -44,6 +44,11 @@ DEFAULTS_LDP['tbf_buffer_size'] = {'value': 25,
 DEFAULTS_LDP['cor_buffer_size'] = {'value': 5,
                                    'help':  'COR ring buffer size in timestamps'}
 
+## lsl.astro
+DEFAULTS_ASTRO = OrderedDict()
+DEFAULTS_ASTRO['leapsec_url'] = {'value': 'https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat',
+                                 'help':'URL for accessing leap second information'}
+
 ## lsl.misc.ionosphere
 DEFAULTS_IONO = OrderedDict()
 DEFAULTS_IONO['igs_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
@@ -89,6 +94,7 @@ DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
 DEFAULTS_ALL = OrderedDict()
 DEFAULTS_ALL['observing'] = DEFAULTS_OBS
 DEFAULTS_ALL['ldp'] = DEFAULTS_LDP
+DEFAULTS_ALL['astro'] = DEFAULTS_ASTRO
 DEFAULTS_ALL['ionosphere'] = DEFAULTS_IONO
 DEFAULTS_ALL['telemetry'] = DEFAULTS_TELEMETRY
 DEFAULTS_ALL['download'] = DEFAULTS_DOWNLOAD

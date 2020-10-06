@@ -24,6 +24,7 @@ from functools import total_ordering
 from lsl.common.progress import DownloadBar
 
 from lsl.config import LSL_CONFIG
+ASTRO_CONFIG = LSL_CONFIG.view('astro')
 DOWN_CONFIG = LSL_CONFIG.view('download')
 
 from lsl.misc import telemetry
@@ -3165,7 +3166,7 @@ def _parse_tai_file():
                     
     # download as needed
     if download:
-        url = "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
+        url = ASTRO_CONFIG.get('leapsec_url')
         
         print("Downloading %s" % url)
         lsFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
