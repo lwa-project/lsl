@@ -125,11 +125,11 @@ def main(args):
     print(" ")
     print("ASP Configuration:")
     print('  Beginning')
-    for k in aspConfigB.keys():
-        print('    %s: %i' % (k, aspConfigB[k]))
+    for k,v in aspConfigB.items():
+        print('    %s: %i' % (k, v))
     print('  End')
-    for k in aspConfigE.keys():
-        print('    %s: %i' % (k, aspConfigE[k]))
+    for k,v in aspConfigE.items():
+        print('    %s: %i' % (k, v))
         
     print(" ")
     print(" Number of observations: %i" % nObs)

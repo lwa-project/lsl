@@ -171,8 +171,7 @@ class FrameHeader(FrameHeaderBase):
         """
         
         sampleCodes = {}
-        for key in FILTER_CODES:
-            value = FILTER_CODES[key]
+        for key,value in FILTER_CODES.items():
             sampleCodes[value] = key
             
         return sampleCodes[self.sample_rate]

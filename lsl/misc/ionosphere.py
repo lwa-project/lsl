@@ -131,9 +131,9 @@ def _compute_igrf_coefficents(year, coeffs):
     containing the cosine and sine coefficients for that year.
     
     The dictionary keys are:
-    * year - year the coefficients are computed for
-    * g - dictionary of cosine term coefficients
-    * h - dictionary of sine term coefficients
+     * year - year the coefficients are computed for
+     * g - dictionary of cosine term coefficients
+     * h - dictionary of sine term coefficients
     
     The g and h dictionaries are keyed off the degree of the Legendre 
     function and each stores a list of n orders.
