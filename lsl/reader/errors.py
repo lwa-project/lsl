@@ -31,13 +31,13 @@ class BaseReaderError(IOError):
     sync Mark5C headers.
     """
 
-    def __init__(self, strerror, errno='-1'):
+    def __init__(self, strerror, errno='-1', filename=None):
+        IOError.__init__(self)
         self.errno = errno
         self.strerror = strerror
-        self.filename = None
+        self.filename = filename
         self.args = (errno, strerror)
-        IOError.__init__(self)
-
+        
     def __str__(self):
         return "%s" % self.strerror
 
@@ -49,11 +49,9 @@ class EOFError(BaseReaderError):
     """
 
     def __init__(self):
-        self.errno = 1
-        self.strerror = 'End of file encountered during filehandle read'
-        self.filename = None
-        self.args = (self.errno, self.strerror)
-        BaseReaderError.__init__(self, self.strerror, errno=self.errno)
+        errno = 1
+        strerror = 'End of file encountered during filehandle read'
+        BaseReaderError.__init__(self, strerror, errno=errno)
 
 
 class SyncError(BaseReaderError):
@@ -64,14 +62,12 @@ class SyncError(BaseReaderError):
     """
 
     def __init__(self, type='Mark5C', location=None, sync1=None, sync2=None, sync3=None, sync4=None):
-        self.errno = 2
-        self.strerror = '%s sync word differs from expected' % type
-        self.filename = None
-        self.args = (self.errno, self.strerror)
+        errno = 2
+        strerror = '%s sync word differs from expected' % type
+        BaseReaderError.__init__(self, strerror, errno=errno)
         self.location = location
         self.syncWord = (sync1, sync2, sync3, sync4)
-        BaseReaderError.__init__(self, self.strerror, errno=self.errno)
-
+        
     def __str__(self):
         output = self.strerror
         if self.location is not None:
