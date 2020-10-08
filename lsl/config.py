@@ -1,5 +1,5 @@
 """
-Module for managing configuration parameters for LSL/
+Module for managing configuration parameters for LSL
 """
 
 import os
@@ -8,6 +8,8 @@ import contextlib
 from datetime import datetime
 from collections import OrderedDict
 from textwrap import fill as tw_fill
+
+from lsl.version import full_version as lsl_version
 
 # Create the .lsl directory and set the config filename
 if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
@@ -158,6 +160,7 @@ class LSLConfigContainer(object):
         
     def __str__(self):
         output = "# LSL Configuration File\n"
+        output += "# LSL Version: %s\n" % lsl_version
         
         last = None
         for name in self._parameters:
@@ -191,6 +194,12 @@ class LSLConfigContainer(object):
                     if len(line) < 3:
                         continue
                     if line[0] == '#':
+                        if line.find('LSL Version:') != -1:
+                            existing_version = line.split('LSL Version:', 1)[1]
+                            existing_version = existing_version.strip().rstrip()
+                            if existing_version != lsl_version:
+                                self._changed = True
+                                
                         continue
                         
                     if line[0] == '[':
