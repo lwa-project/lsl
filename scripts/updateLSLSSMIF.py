@@ -25,6 +25,8 @@ from datetime import datetime
 from lsl.common.paths import DATA as dataPath
 from lsl.common.progress import DownloadBar
 
+from lsl.config import LSL_CONFIG
+
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -116,14 +118,17 @@ def main(args):
         
         try:
             ## Retrieve the list
-            ah = urlopen(_url)
-            index = ah.read()
             try:
-                index = index.decode(encoding='ascii', errors='ignore')
-            except AttributeError:
-                pass
-            ah.close()
-            
+                ah = urlopen(_url, timeout=LSL_CONFIG.get('download.timeout'))
+                index = ah.read()
+                try:
+                    index = index.decode(encoding='ascii', error='ignore')
+                except AttributeError:
+                    pass
+                ah.close()
+            except Exception as e:
+                print("Error:  Cannot download SSMIF listing, %s" % str(e))
+                
             ## Parse
             versions = _parse_index(index)
             
@@ -160,7 +165,7 @@ def main(args):
         ## Retrieve
         try:
             print("Downloading %s" % urlToDownload)
-            ah = urlopen(urlToDownload)
+            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
             meta = ah.info()
             try:
                 remote_size = int(meta.getheaders("Content-Length")[0])
@@ -168,7 +173,7 @@ def main(args):
                 remote_size = 1
             pbar = DownloadBar(max=remote_size)
             while True:
-                new_data = ah.read(32768)
+                new_data = ah.read(LSL_CONFIG.get('download.block_size'))
                 if len(new_data) == 0:
                     break
                 pbar.inc(len(new_data))

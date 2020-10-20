@@ -76,6 +76,9 @@ from lsl.reader.tbw import FRAME_SIZE as TBWSize
 from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
+from lsl.config import LSL_CONFIG
+OBSV_CONFIG = LSL_CONFIG.view('observing')
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -373,7 +376,15 @@ class Observer(object):
         self.first = first
         self.last = last
         self.id = int(id)
-
+        
+    @classmethod
+    def autofilled(cls):
+        name = OBSV_CONFIG.get('observer_name')
+        id = OBSV_CONFIG.get('observer_id')
+        if name is None or id is None:
+            raise RuntimeError("Auto-fill values for the observer cannot be loaded from the configuration file")
+        return cls(name, id)
+        
     def join_name(self):
         if self.first != '':
             self.name = ', '.join([self.last, self.first])
@@ -433,6 +444,15 @@ class Project(object):
                 raise TypeError("Expected 'project_office' to be a ProjectOffice")
             self.project_office = project_office
             
+    @classmethod
+    def autofilled(cls, sessions=None, comments=None, project_office=None):
+        observer = Observer.autofilled()
+        name = OBSV_CONFIG.get('project_name')
+        id = OBSV_CONFIG.get('project_id')
+        if name is None or id is None:
+            raise RuntimeError("Auto-fill values for the project cannot be loaded from the configuration file")
+        return cls(observer, name, id, sessions=session, comments=comments, project_office=project_office)
+        
     def update(self):
         """Update the various sessions that are part of this project."""
         
