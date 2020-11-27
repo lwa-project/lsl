@@ -82,7 +82,7 @@ class FrameHeader(FrameHeaderBase):
     frame.  Most fields in the VDIF version 1.1.1 header are stored.
     """
     
-    _header_attrs = ['is_invalid', 'is_legacy', 'second_from_epoch',
+    _header_attrs = ['is_invalid', 'is_legacy', 'seconds_from_epoch',
                      'ref_epoch', 'frame_in_second',
                      'version', 'nchan', 'frame_length',
                      'is_complex', 'bits_per_sample', 'thread_id', 'station_id',
