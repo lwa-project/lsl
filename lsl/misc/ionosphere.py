@@ -537,16 +537,16 @@ def _download_worker_standard(url, filename):
         return True
 
 
-def _download_worker(url, filename, timeout=120):
+def _download_worker(url, filename):
     """
     Download the URL and save it to a file.
     """
     
     # Attempt to download the data
     if url.find('gdc.cddis.eosdis.nasa.gov') != -1:
-        status = _download_worker_cddis(url, filename, timeout=timeout)
+        status = _download_worker_cddis(url, filename)
     else:
-        status = _download_worker_standard(url, filename, timeout=timeout)
+        status = _download_worker_standard(url, filename)
         
     if status:
         # Cache size management
