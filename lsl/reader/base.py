@@ -434,6 +434,15 @@ class FrameTimestamp(object):
         self._frac = float(sf)
         
     @classmethod
+    def now(cls):
+        """
+        Create a new FrameTimestamp instance for the current time as determined
+        from `time.time()`.
+        """
+        
+        return cls(time.time())
+        
+    @classmethod
     def from_dp_timetag(cls, value, offset=0):
         """
         Create a new FrameTimestamp instance from a raw DP timetag with an optional
