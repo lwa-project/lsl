@@ -241,58 +241,58 @@ class Project(object):
             
         ## PI Information
         output = ""
-        output += "PI_ID            %s\n" % (self.observer.id)
-        output += "PI_NAME          %s\n" % (self.observer.name)
+        output += "PI_ID            %s\n" % (self.observer.id,)
+        output += "PI_NAME          %s\n" % (self.observer.name,)
         output += "\n"
         
         ## Project Information
-        output += "PROJECT_ID       %s\n" % (self.id)
-        output += "PROJECT_TITLE    %s\n" % (self.name)
-        output += "PROJECT_REMPI    %s\n" % (self.comments[:4090] if self.comments else 'None provided')
-        output += "PROJECT_REMPO    %s\n" % (self.project_office.project)
+        output += "PROJECT_ID       %s\n" % (self.id,)
+        output += "PROJECT_TITLE    %s\n" % (self.name,)
+        output += "PROJECT_REMPI    %s\n" % (self.comments[:4090] if self.comments else 'None provided',)
+        output += "PROJECT_REMPO    %s\n" % (self.project_office.project,)
         output += "\n"
         
         ## Run Information
-        output += "RUN_ID           %s\n" % (ses.id)
-        output += "RUN_TITLE        %s\n" % ('None provided' if ses.name is None else ses.name)
-        output += "RUN_STATIONS     %s\n" % (','.join([station.id for station in ses.stations]))
-        output += "RUN_CHANNELS     %i\n" % (ses.correlator_channels)
-        output += "RUN_INTTIME      %.3f\n" % (ses.correlator_inttime)
-        output += "RUN_BASIS        %s\n" % (ses.correlator_basis)
-        output += "RUN_REMPI        %s\n" % (ses.comments[:4090] if ses.comments else 'None provided')
-        output += "RUN_REMPO        %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
+        output += "RUN_ID           %s\n" % (ses.id,)
+        output += "RUN_TITLE        %s\n" % ('None provided' if ses.name is None else ses.name,)
+        output += "RUN_STATIONS     %s\n" % (','.join([station.id for station in ses.stations]),)
+        output += "RUN_CHANNELS     %i\n" % (ses.correlator_channels,)
+        output += "RUN_INTTIME      %.3f\n" % (ses.correlator_inttime,)
+        output += "RUN_BASIS        %s\n" % (ses.correlator_basis,)
+        output += "RUN_REMPI        %s\n" % (ses.comments[:4090] if ses.comments else 'None provided',)
+        output += "RUN_REMPO        %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090],)
         output += "\n"
                     
         ## Scans
         for i,obs in enumerate(ses.scans):
             obsID = i + 1
             
-            output += "SCAN_ID          %i\n" % (obsID)
-            output += "SCAN_TARGET      %s\n" % (obs.target)
-            output += "SCAN_INTENT      %s\n" % (obs.intent)
-            output += "SCAN_REMPI       %s\n" % (obs.comments[:4090] if obs.comments else 'None provided')
-            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i])
-            output += "SCAN_START_MJD   %i\n" % (obs.mjd)
-            output += "SCAN_START_MPM   %i\n" % (obs.mpm)
-            output += "SCAN_START       %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
-            output += "SCAN_DUR         %i\n" % (obs.dur)
-            output += "SCAN_DUR+        %s\n" % (obs.duration)
-            output += "SCAN_MODE        %s\n" % (obs.mode)
+            output += "SCAN_ID          %i\n" % (obsID,)
+            output += "SCAN_TARGET      %s\n" % (obs.target,)
+            output += "SCAN_INTENT      %s\n" % (obs.intent,)
+            output += "SCAN_REMPI       %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
+            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "SCAN_START_MJD   %i\n" % (obs.mjd,)
+            output += "SCAN_START_MPM   %i\n" % (obs.mpm,)
+            output += "SCAN_START       %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
+            output += "SCAN_DUR         %i\n" % (obs.dur,)
+            output += "SCAN_DUR+        %s\n" % (obs.duration,)
+            output += "SCAN_MODE        %s\n" % (obs.mode,)
             if obs.mode == 'TRK_RADEC':
-                output += "SCAN_RA          %.9f\n" % (obs.ra)
-                output += "SCAN_DEC         %+.9f\n" % (obs.dec)
+                output += "SCAN_RA          %.9f\n" % (obs.ra,)
+                output += "SCAN_DEC         %+.9f\n" % (obs.dec,)
                 if obs.pm[0] != 0.0 or obs.pm[1] != 0.0:
-                    output += "SCAN_PM_RA       %+.1f\n" % (obs.pm[0])
-                    output += "SCAN_PM_DEC      %+.1f\n" % (obs.pm[1])
-            output += "SCAN_FREQ1       %i\n" % (obs.freq1)
-            output += "SCAN_FREQ1+      %.9f MHz\n" % (obs.frequency1/1e6)
-            output += "SCAN_FREQ2       %i\n" % (obs.freq2)
-            output += "SCAN_FREQ2+      %.9f MHz\n" % (obs.frequency2/1e6)
-            output += "SCAN_BW          %i\n" % (obs.filter)
-            output += "SCAN_BW+         %s\n" % (self._render_bandwidth(obs.filter, obs.FILTER_CODES))
+                    output += "SCAN_PM_RA       %+.1f\n" % (obs.pm[0],)
+                    output += "SCAN_PM_DEC      %+.1f\n" % (obs.pm[1],)
+            output += "SCAN_FREQ1       %i\n" % (obs.freq1,)
+            output += "SCAN_FREQ1+      %.9f MHz\n" % (obs.frequency1/1e6,)
+            output += "SCAN_FREQ2       %i\n" % (obs.freq2,)
+            output += "SCAN_FREQ2+      %.9f MHz\n" % (obs.frequency2/1e6,)
+            output += "SCAN_BW          %i\n" % (obs.filter,)
+            output += "SCAN_BW+         %s\n" % (self._render_bandwidth(obs.filter, obs.FILTER_CODES),)
             ## Alternate phase centers
             if len(obs.alt_phase_centers) > 0:
-                output += "SCAN_ALT_N             %i\n" % (len(obs.alt_phase_centers))
+                output += "SCAN_ALT_N             %i\n" % (len(obs.alt_phase_centers),)
                 for i,phase_center in enumerate(obs.alt_phase_centers):
                     output += "SCAN_ALT_TARGET[%i]    %s\n" % (i+1, phase_center.target)  
                     output += "SCAN_ALT_INTENT[%i]    %s\n" % (i+1, phase_center.intent) 
@@ -304,10 +304,10 @@ class Project(object):
                         
             ## ASP filter setting
             if obs.asp_filter != -1:
-                output += "SCAN_ASP_FLT     %i\n" % (obs.asp_filter)
+                output += "SCAN_ASP_FLT     %i\n" % (obs.asp_filter,)
             ## DRX gain
             if obs.gain != -1:
-                output += "SCAN_DRX_GAIN    %i\n" % (obs.gain)
+                output += "SCAN_DRX_GAIN    %i\n" % (obs.gain,)
             output += "\n"
             
         return output
