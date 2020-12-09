@@ -145,26 +145,26 @@ class Project(_Project):
             
         ## PI Information
         output = ""
-        output += "PI_ID            %s\n" % (self.observer.id)
-        output += "PI_NAME          %s\n" % (self.observer.name)
+        output += "PI_ID            %s\n" % (self.observer.id,)
+        output += "PI_NAME          %s\n" % (self.observer.name,)
         output += "\n"
         
         ## Project Information
-        output += "PROJECT_ID       %s\n" % (self.id)
-        output += "PROJECT_TITLE    %s\n" % (self.name)
-        output += "PROJECT_REMPI    %s\n" % (self.comments[:4090] if self.comments else 'None provided')
-        output += "PROJECT_REMPO    %s\n" % (self.project_office.project)
+        output += "PROJECT_ID       %s\n" % (self.id,)
+        output += "PROJECT_TITLE    %s\n" % (self.name,)
+        output += "PROJECT_REMPI    %s\n" % (self.comments[:4090] if self.comments else 'None provided',)
+        output += "PROJECT_REMPO    %s\n" % (self.project_office.project,)
         output += "\n"
         
         ## Session Information
-        output += "SESSION_ID       %s\n" % (ses.id)
-        output += "SESSION_TITLE    %s\n" % ('None provided' if ses.name is None else ses.name)
-        output += "SESSION_REMPI    %s\n" % (ses.comments[:4090] if ses.comments else 'None provided')
-        output += "SESSION_REMPO    %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
+        output += "SESSION_ID       %s\n" % (ses.id,)
+        output += "SESSION_TITLE    %s\n" % ('None provided' if ses.name is None else ses.name,)
+        output += "SESSION_REMPI    %s\n" % (ses.comments[:4090] if ses.comments else 'None provided',)
+        output += "SESSION_REMPO    %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090],)
         if ses.configuration_authority != 0:
-            output += "SESSION_CRA      %i\n" % (ses.configuration_authority)
+            output += "SESSION_CRA      %i\n" % (ses.configuration_authority,)
         if ses.drx_beam != -1:
-            output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam)
+            output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
             output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
@@ -174,75 +174,75 @@ class Project(_Project):
             if ses.updateMIB[component] != -1:
                 output += "SESSION_MUP_%s  %i\n" % (component, ses.updateMIB[component])
         if ses.logScheduler:
-            output += "SESSION_LOG_SCH  %i\n" % (ses.logScheduler)
+            output += "SESSION_LOG_SCH  %i\n" % (ses.logScheduler,)
         if ses.logExecutive:
-            output += "SESSION_LOG_EXE  %i\n" % (ses.logExecutive)
+            output += "SESSION_LOG_EXE  %i\n" % (ses.logExecutive,)
         if ses.includeStationStatic:
-            output += "SESSION_INC_SMIB %i\n" % (ses.includeStationStatic)
+            output += "SESSION_INC_SMIB %i\n" % (ses.includeStationStatic,)
         if ses.includeDesign:
-            output += "SESSION_INC_DES  %i\n" % (ses.includeDesign)
+            output += "SESSION_INC_DES  %i\n" % (ses.includeDesign,)
         output += "\n"
         
         ## Observations
         for i,obs in enumerate(ses.observations):
             obsID = i + 1
             
-            output += "OBS_ID           %i\n" % (obsID)
-            output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided')
-            output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided')
-            output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided')
-            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
-            output += "OBS_START_MJD    %i\n" % (obs.mjd)
-            output += "OBS_START_MPM    %i\n" % (obs.mpm)
-            output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
-            output += "OBS_DUR          %i\n" % (obs.dur)
-            output += "OBS_DUR+         %s\n" % (obs.duration)
-            output += "OBS_MODE         %s\n" % (obs.mode)
+            output += "OBS_ID           %i\n" % (obsID,)
+            output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided',)
+            output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided',)
+            output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
+            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "OBS_START_MJD    %i\n" % (obs.mjd,)
+            output += "OBS_START_MPM    %i\n" % (obs.mpm,)
+            output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
+            output += "OBS_DUR          %i\n" % (obs.dur,)
+            output += "OBS_DUR+         %s\n" % (obs.duration,)
+            output += "OBS_MODE         %s\n" % (obs.mode,)
             if obs.beamDipole is not None:
                 output += "OBS_BDM          %i %6.4f %6.4f %s\n" % (tuple(obs.beamDipole))
             if obs.mode == 'TBF':
-                output += "OBS_FREQ1        %i\n" % (obs.freq1)
-                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6)
-                output += "OBS_FREQ2        %i\n" % (obs.freq2)
-                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6)
-                output += "OBS_BW           %i\n" % (obs.filter)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TBN':
-                output += "OBS_FREQ1        %i\n" % (obs.freq1)
-                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6)
-                output += "OBS_BW           %i\n" % (obs.filter)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_RADEC':
-                output += "OBS_RA           %.9f\n" % (obs.ra)
-                output += "OBS_DEC          %+.9f\n" % (obs.dec)
-                output += "OBS_B            %s\n" % (obs.beam)
-                output += "OBS_FREQ1        %i\n" % (obs.freq1)
-                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6)
-                output += "OBS_FREQ2        %i\n" % (obs.freq2)
-                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6)
-                output += "OBS_BW           %i\n" % (obs.filter)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_RA           %.9f\n" % (obs.ra,)
+                output += "OBS_DEC          %+.9f\n" % (obs.dec,)
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_SOL':
-                output += "OBS_B            %s\n" % (obs.beam)
-                output += "OBS_FREQ1        %i\n" % (obs.freq1)
-                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6)
-                output += "OBS_FREQ2        %i\n" % (obs.freq2)
-                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6)
-                output += "OBS_BW           %i\n" % (obs.filter)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_JOV':
-                output += "OBS_B            %s\n" % (obs.beam)
-                output += "OBS_FREQ1        %i\n" % (obs.freq1)
-                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6)
-                output += "OBS_FREQ2        %i\n" % (obs.freq2)
-                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6)
-                output += "OBS_BW           %i\n" % (obs.filter)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'STEPPED':
-                output += "OBS_BW           %i\n" % (obs.filter)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes))
-                output += "OBS_STP_N        %i\n" % (len(obs.steps))
-                output += "OBS_STP_RADEC    %i\n" % (obs.steps[0].is_radec)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_STP_N        %i\n" % (len(obs.steps),)
+                output += "OBS_STP_RADEC    %i\n" % (obs.steps[0].is_radec,)
                 for j,step in enumerate(obs.steps):
                     stpID = j + 1
                     
@@ -331,15 +331,15 @@ class Project(_Project):
                         output += "OBS_ASP_ATS[%i]  %i\n" % (atsID, ats)
             ## TBF settings
             if obs.mode == 'TBF':
-                output += "OBS_TBF_SAMPLES  %i\n" % (obs.samples)
+                output += "OBS_TBF_SAMPLES  %i\n" % (obs.samples,)
             ## TBN gain
             if obs.mode == 'TBN':
                 if obs.gain != -1:
-                    output += "OBS_TBN_GAIN     %i\n" % (obs.gain)
+                    output += "OBS_TBN_GAIN     %i\n" % (obs.gain,)
             ## DRX gain
             else:
                 if obs.gain != -1:
-                    output += "OBS_DRX_GAIN     %i\n" % (obs.gain)
+                    output += "OBS_DRX_GAIN     %i\n" % (obs.gain,)
             output += "\n"
             
         return output
