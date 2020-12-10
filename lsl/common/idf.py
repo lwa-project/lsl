@@ -61,6 +61,9 @@ from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common.sdf import Observer
 from lsl.common import sdf, sdfADP
 
+from lsl.config import LSL_CONFIG
+OBSV_CONFIG = LSL_CONFIG.view('observing')
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
