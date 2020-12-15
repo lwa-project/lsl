@@ -124,10 +124,10 @@ void compute_gridding(long nVis,
                       double const* u,
                       double const* v,
                       double const* w,
-                      InType const* vis,
-                      InType const* wgt,
-                      OutType* uv,
-                      OutType* bm) {
+                      std::complex<InType> const* vis,
+                      std::complex<InType> const* wgt,
+                      std::complex<OutType>* uv,
+                      std::complex<OutType>* bm) {
     // Setup
     long i, j, l, m;
     
@@ -217,8 +217,8 @@ void compute_gridding(long nVis,
                             pj += nPixSide;
                         }
                         
-                        *(suv + nPixSide*pi + pj) += *(vis + i) * (float) temp2;
-                        *(sbm + nPixSide*pi + pj) += *(wgt + i) * (float) temp2;
+                        *(suv + nPixSide*pi + pj) += (std::complex<OutType>) *(vis + i) * (OutType) temp2;
+                        *(sbm + nPixSide*pi + pj) += (std::complex<OutType>) *(wgt + i) * (OutType) temp2;
                     }
                 }
             }
@@ -290,8 +290,12 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     uu = (PyArrayObject *) PyArray_ContiguousFromObject(uVec, NPY_FLOAT64, 1, 1);
     vv = (PyArrayObject *) PyArray_ContiguousFromObject(vVec, NPY_FLOAT64, 1, 1);
     ww = (PyArrayObject *) PyArray_ContiguousFromObject(wVec, NPY_FLOAT64, 1, 1);
-    vd = (PyArrayObject *) PyArray_ContiguousFromObject(visVec, NPY_COMPLEX64, 1, 1);
-    wd = (PyArrayObject *) PyArray_ContiguousFromObject(wgtVec, NPY_COMPLEX64, 1, 1);
+    vd = (PyArrayObject *) PyArray_ContiguousFromObject(visVec,
+                                                        PyArray_TYPE((PyArrayObject *) visVec),
+                                                        1, 1);
+    wd = (PyArrayObject *) PyArray_ContiguousFromObject(wgtVec,
+                                                        PyArray_TYPE((PyArrayObject *) visVec),
+                                                        1, 1);
     if( uu == NULL ) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input u array to 1-D float64");
         goto fail;
@@ -305,11 +309,11 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
         goto fail;
     }
     if( vd == NULL ) {
-        PyErr_Format(PyExc_RuntimeError, "Cannot cast input data array to 1-D complex64");
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input data array to 1-D");
         goto fail;
     }
     if( wd == NULL ) {
-        PyErr_Format(PyExc_RuntimeError, "Cannot cast input wgt array to 1-D complex64");
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input wgt array to 1-D and the same type as the input data");
         goto fail;
     }
     
@@ -342,18 +346,26 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Get pointers to the data we need
     double *u, *v, *w;
-    Complex32 *vis, *wgt, *uv, *bm;
     u = (double *) PyArray_DATA(uu);
     v = (double *) PyArray_DATA(vv);
     w = (double *) PyArray_DATA(ww);
-    vis = (Complex32 *) PyArray_DATA(vd);
-    wgt = (Complex32 *) PyArray_DATA(wd);
-    uv = (Complex32 *) PyArray_DATA(uvPlane);
-    bm = (Complex32 *) PyArray_DATA(bmPlane);
     
     // Grid
-    compute_gridding(nVis, nPixSide, uvRes, wRes, u, v, w, vis, wgt, uv, bm);
+#define LAUNCH_GRIDDER(IterType) \
+    compute_gridding<IterType,float>(nVis, nPixSide, uvRes, wRes, \
+                                         u, v, w, \
+                                         (std::complex<IterType>*) PyArray_DATA(vd), \
+                                         (std::complex<IterType>*) PyArray_DATA(wd), \
+                                         (std::complex<float>*) PyArray_DATA(uvPlane), \
+                                         (std::complex<float>*) PyArray_DATA(bmPlane))
+    switch( PyArray_TYPE(vd) ) {
+      case( NPY_COMPLEX64  ): LAUNCH_GRIDDER(float); break;
+      case( NPY_COMPLEX128 ): LAUNCH_GRIDDER(double); break;
+      default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
+    }
     
+#undef LAUNCH_GRIDDER
+
     Py_XDECREF(uu);
     Py_XDECREF(vv);
     Py_XDECREF(ww);
@@ -384,8 +396,8 @@ Input arguments are:\n\
  * u: 1-D numpy.float64 array of u coordinates\n\
  * v: 1-D numpy.float64 array of v coordinates\n\
  * w: 1-D numpy.float64 array of w coordinates\n\
- * data: 1-D numpy.complex64 array of visibility data\n\
- * wgt: 1-D numpy.complex64 array of visibility weight data\n\
+ * data: 1-D numpy.complex64 or numpy.complex128 array of visibility data\n\
+ * wgt: 1-D numpy.complex64 or numpy.complex128 array of visibility weight data\n\
 \n\
 Input keywords are:\n\
  * uvSize: Basis size of the uv plane\n\
