@@ -35,16 +35,17 @@ double signed_sqrt(double data) {
 }
 
 
-double gridding_kernel_point(long i, 
-                             long j, 
-                             double ci, 
-                             double cj) {
+template<typename OutType>
+OutType gridding_kernel_point(long i, 
+                              long j, 
+                              double ci, 
+                              double cj) {
     double v;
     
     v = 1.0 / 2.0 / NPY_PI / 0.5 / 0.5;
     v *= exp(-(i-ci)*(i-ci)/2.0/0.5/0.5 + -(j-cj)*(j-cj)/2.0/0.5/0.5);
     
-    return v;
+    return (OutType) v;
 }
 
 
@@ -124,10 +125,10 @@ void compute_gridding(long nVis,
                       double const* u,
                       double const* v,
                       double const* w,
-                      std::complex<InType> const* vis,
-                      std::complex<InType> const* wgt,
-                      std::complex<OutType>* uv,
-                      std::complex<OutType>* bm) {
+                      InType const* vis,
+                      InType const* wgt,
+                      OutType* uv,
+                      OutType* bm) {
     // Setup
     long i, j, l, m;
     
@@ -217,8 +218,8 @@ void compute_gridding(long nVis,
                             pj += nPixSide;
                         }
                         
-                        *(suv + nPixSide*pi + pj) += (std::complex<OutType>) *(vis + i) * (OutType) temp2;
-                        *(sbm + nPixSide*pi + pj) += (std::complex<OutType>) *(wgt + i) * (OutType) temp2;
+                        *(suv + nPixSide*pi + pj) += (Complex32) *(vis + i) * (float) temp2;
+                        *(sbm + nPixSide*pi + pj) += (Complex32) *(wgt + i) * (float) temp2;
                     }
                 }
             }
@@ -352,15 +353,15 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Grid
 #define LAUNCH_GRIDDER(IterType) \
-    compute_gridding<IterType,float>(nVis, nPixSide, uvRes, wRes, \
+    compute_gridding<IterType,Complex32>(nVis, nPixSide, uvRes, wRes, \
                                          u, v, w, \
-                                         (std::complex<IterType>*) PyArray_DATA(vd), \
-                                         (std::complex<IterType>*) PyArray_DATA(wd), \
-                                         (std::complex<float>*) PyArray_DATA(uvPlane), \
-                                         (std::complex<float>*) PyArray_DATA(bmPlane))
+                                         (IterType*) PyArray_DATA(vd), \
+                                         (IterType*) PyArray_DATA(wd), \
+                                         (Complex32*) PyArray_DATA(uvPlane), \
+                                         (Complex32*) PyArray_DATA(bmPlane))
     switch( PyArray_TYPE(vd) ) {
-      case( NPY_COMPLEX64  ): LAUNCH_GRIDDER(float); break;
-      case( NPY_COMPLEX128 ): LAUNCH_GRIDDER(double); break;
+      case( NPY_COMPLEX64  ): LAUNCH_GRIDDER(Complex32); break;
+      case( NPY_COMPLEX128 ): LAUNCH_GRIDDER(Complex64); break;
       default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
     
