@@ -454,9 +454,8 @@ MOD_INIT(_gridder) {
     }
     import_array();
     
-    // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    // Version information
+    PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");
