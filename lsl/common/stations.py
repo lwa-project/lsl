@@ -29,7 +29,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '2.2'
+__version__ = '2.3'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
         'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations']
 
@@ -210,6 +210,10 @@ class LWAStation(ephem.Observer, LWAStationBase):
      * pols:  A list of polarizations
      * cables: A list of cables
     
+    .. versionchanged:: 2.1.0
+        Added new 'beamformer_min_delay' and 'beamformer_min_delay_samples' attributes
+        that can be used to help track the station's minimum beamformer delay.
+    
     .. versionchanged:: 1.2.0
         Added a new 'interface' attribute which provides referenves to various modules
         to help interface with the station.
@@ -233,6 +237,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         self.elev = elev
         self.pressure = 0.0
         self.horizon = 0.0
+        
+        self.beamformer_min_delay = None
+        self.beamformer_min_delay_samples = None
         
     def __str__(self):
         return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
