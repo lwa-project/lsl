@@ -28,6 +28,9 @@ from functools import wraps
 
 from lsl.version import version as lsl_version
 
+from lsl.config import LSL_CONFIG
+TELE_CONFIG = LSL_CONFIG.view('telemetry')
+
 
 __version__ = '0.2'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
@@ -59,14 +62,12 @@ class _TelemetryClient(object):
     """
     _lock = RLock()
     
-    _lockout_file = os.path.join(_CACHE_DIR, 'lockout.key')
-    
-    def __init__(self, key, version=lsl_version, max_entries=50, timeout=1.0):
+    def __init__(self, key, version=lsl_version):
         # Setup
         self.key = key
         self.version = version
-        self.max_entries = max_entries
-        self.timeout = timeout
+        self.max_entries = TELE_CONFIG.get('max_entries')
+        self.timeout = TELE_CONFIG.get('timeout')
         
         # Session reference
         self._session_start = time.time()
@@ -76,10 +77,8 @@ class _TelemetryClient(object):
         self._cache_count = 0
         
         # Reporting lockout
-        self.active = True
-        if os.path.exists(self._lockout_file):
-            self.active = False
-            
+        self.active = TELE_CONFIG.get('enabled')
+        
         # Register the "send" method to be called by atexit... at exit
         atexit.register(self.send, True)
         
@@ -165,27 +164,24 @@ class _TelemetryClient(object):
         Enable saving data to the telemetry cache.
         """
         
-        try:
-            self.active = True
-            os.unlink(self._lockout_file)
-        except OSError:
-            pass
-            
+        TELE_CONFIG.set('enabled', True)
+        self.active = TELE_CONFIG.get('enabled')
+        
     def disable(self):
         """
         Disable saving data to the telemetry cache in a persistent way.
         """
         
-        self.active = False
-        with open(self._lockout_file, 'w') as fh:
-            fh.write('disable')
+        TELE_CONFIG.set('enabled', False)
+        self.active = TELE_CONFIG.get('enabled')
             
     def ignore(self):
         """
         Disable saving data to the telemetry cache in a temporary way.
         """
         
-        self.active = False
+        TELE_CONFIG.set_temp('enabled', False)
+        self.active = TELE_CONFIG.get('enabled')
 
 
 # Create an instance of the telemetry client to use.

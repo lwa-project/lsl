@@ -1,3 +1,7 @@
+2.0.3
+  * Fixed a problem with displaying lsl.reader.errors under Python3
+  * Cleaned up SDF and IDF rendering to make it faster
+
 2.0.2
   * Added a -v/--lwasv option to correlateTBN.py and tbnSpectra.py
   * Added better input file type checking to the various "correlate" and "spectra" scripts

@@ -427,9 +427,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         
         pylab.ion()
         
-    for name in srcs.keys():
-        src = srcs[name]
-        
+    for name,src in srcs.items():
         # Make sure the source is up
         src.compute(aa)
         if verbose:

@@ -23,6 +23,10 @@ from functools import total_ordering
 
 from lsl.common.progress import DownloadBar
 
+from lsl.config import LSL_CONFIG
+ASTRO_CONFIG = LSL_CONFIG.view('astro')
+DOWN_CONFIG = LSL_CONFIG.view('download')
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -3162,10 +3166,10 @@ def _parse_tai_file():
                     
     # download as needed
     if download:
-        url = "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
+        url = ASTRO_CONFIG.get('leapsec_url')
         
         print("Downloading %s" % url)
-        lsFH = urlopen(url, timeout=120)
+        lsFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
         meta = lsFH.info()
         try:
             remote_size = int(meta.getheaders("Content-Length")[0])
@@ -3173,7 +3177,7 @@ def _parse_tai_file():
             remote_size = 1
         pbar = DownloadBar(max=remote_size)
         while True:
-            new_data = lsFH.read(32768)
+            new_data = lsFH.read(DOWN_CONFIG.get('block_size'))
             if len(new_data) == 0:
                 break
             pbar.inc(len(new_data))
