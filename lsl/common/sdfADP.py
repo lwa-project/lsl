@@ -74,15 +74,15 @@ from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
 from lsl.common.sdf import parse_time, _TypedParentList, Observer, ProjectOffice
-from lsl.common.sdf import _usernameRE, Project as _Project, Session as _Session
-from lsl.common.sdf import Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
+from lsl.common.sdf import UCF_USERNAME_RE, Project as _Project, Session as _Session
+from lsl.common.sdf import UCF_USERNAME_RE, Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__version__ = '1.2'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _UTC = pytz.utc
@@ -135,7 +135,7 @@ class Project(_Project):
         if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
-                clean = _usernameRE.sub('', ses.comments)
+                clean = UCF_USERNAME_RE.sub('', ses.comments)
             ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
@@ -687,7 +687,7 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].name = value
                 continue
             if keyword == 'SESSION_REMPI':
-                mtch = _usernameRE.search(value)
+                mtch = UCF_USERNAME_RE.search(value)
                 if mtch is not None:
                     project.sessions[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:
