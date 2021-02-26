@@ -58,7 +58,7 @@ from lsl.common.adp import freq_to_word, word_to_freq, fC
 from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
-from lsl.common.sdf import Observer
+from lsl.common.sdf import UCF_USERNAME_RE, Observer
 from lsl.common import sdf, sdfADP
 
 from lsl.config import LSL_CONFIG
@@ -68,8 +68,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idf',  'get_scan_start_stop', 'is_valid', '__version__']
+__version__ = '0.2'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idf',  'get_scan_start_stop', 'is_valid', '__version__']
 
 
 _UTC = pytz.utc
@@ -234,7 +234,7 @@ class Project(object):
         if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
-                clean = sdf._usernameRE.sub('', ses.comments)
+                clean = UCF_USERNAME_RE.sub('', ses.comments)
             ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
@@ -1508,12 +1508,12 @@ def parse_idf(filename, verbose=False):
                 project.runs[0].correlator_basis = value
                 continue
             if keyword == 'RUN_REMPI':
-                mtch = sdf._usernameRE.search(value)
+                mtch = UCF_USERNAME_RE.search(value)
                 if mtch is not None:
                     project.runs[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:
                         project.runs[0].ucf_username = os.path.join(project.runs[0].ucf_username, mtch.group('subdir'))
-                project.runs[0].comments = sdf._usernameRE.sub('', value)
+                project.runs[0].comments = UCF_USERNAME_RE.sub('', value)
                 continue
             if keyword == 'RUN_REMPO':
                 project.project_office.runs.append(None)
