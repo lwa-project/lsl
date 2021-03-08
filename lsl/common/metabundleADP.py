@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
-from lsl.common.adp import word_to_freq, FS
+from lsl.common.adp import word_to_freq, fS
 from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
@@ -308,7 +308,7 @@ def get_station(tarname, apply_sdm=True):
         mindelay = get_beamformer_min_delay(tarname)
         if mindelay is not None:
             station.beamformer_min_delay_samples = mindelay
-            station.beamformer_min_delay = mindelay/FS
+            station.beamformer_min_delay = mindelay/fS
             
         # Get the SDM (if we need to)
         if apply_sdm:
