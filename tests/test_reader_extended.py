@@ -28,7 +28,7 @@ __author__    = "Jayce Dowell"
 
 
 run_extended_tests = False
-if os.getenv('TRAVIS_OS_NAME', None) is not None:
+if os.getenv('TRAVIS_OS_NAME', None) not in ('osx', None):
     run_extended_tests = True
 
 
