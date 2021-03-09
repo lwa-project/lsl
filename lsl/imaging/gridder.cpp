@@ -57,7 +57,7 @@ void w_projection_kernel(long nPixSide,
     long i,j,l,m;
     double cL, cM;
     
-    memset(kernel, 0, sizeof(Complex32)*nPixSide*nPixSide);
+    memset(kernel, 0, sizeof(OutType)*nPixSide*nPixSide);
     
     for(i=0; i<nPixSide; i++) {
         m = i;
@@ -264,7 +264,7 @@ void compute_gridding(long nVis,
             {
                 for(i=0; i<nPixSide*nPixSide; i++) {
                     *(uv + i) += *(suv+i);
-                    *(bm + i) += *(suv+i);
+                    *(bm + i) += *(sbm+i);
                 }
             }
         }
