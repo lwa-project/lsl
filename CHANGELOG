@@ -2,6 +2,7 @@
   * Fixed a problem with displaying lsl.reader.errors under Python3
   * Cleaned up SDF and IDF rendering to make it faster
   * Added UCF_USERNAME_RE to lsl.common.idf/sdf/sdfADP to make it eaiser to validate UCF usernames 
+  * Added support for querying the MCS `mindelays.txt` file in lsl.common.metabundle/metabundleADP
 
 2.0.2
   * Added a -v/--lwasv option to correlateTBN.py and tbnSpectra.py
