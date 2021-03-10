@@ -83,8 +83,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__version__ = '1.2'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
@@ -98,8 +98,10 @@ _DRSUCapacityTB = 10
 # of samples
 _TBW_TIME_SCALE = 196000
 _TBW_TIME_GAIN = 2500
+
+
 # UCF Username RE
-_usernameRE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z]+)(\/(?P<subdir>[a-zA-Z0-9\/\+\-_]+))?')
+UCF_USERNAME_RE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z0-9_]+)(\/(?P<subdir>[a-zA-Z0-9\/\+\-_]+))?')
 
 
 def _get_equinox_equation(jd):
@@ -559,7 +561,7 @@ class Project(object):
         if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
-                clean = _usernameRE.sub('', ses.comments)
+                clean = UCF_USERNAME_RE.sub('', ses.comments)
             ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
@@ -2547,7 +2549,7 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].name = value
                 continue
             if keyword == 'SESSION_REMPI':
-                mtch = _usernameRE.search(value)
+                mtch = UCF_USERNAME_RE.search(value)
                 if mtch is not None:
                     project.sessions[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:
