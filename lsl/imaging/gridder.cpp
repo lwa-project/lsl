@@ -1,5 +1,6 @@
 #include "Python.h"
 #include <cmath>
+#include <math.h>
 #include <complex>
 #include <fftw3.h>
 
@@ -36,14 +37,35 @@ double signed_sqrt(double data) {
 }
 
 
-void gaussian_1d_kernel_filler(double *kernel1D) {
+// Modified Bessel function of the first find
+double iv0(double x) {
+    double d = 0.0, ds = 1.0, sum = 1.0;
+    do {
+        d += 2.0;
+        ds *= x*x/(d*d);
+        sum += ds;
+    } while(ds > sum*1e-8);
+    return sum;
+}
+
+
+void kaiser_bessel_1d_kernel_filler(double *kernel1D) {
     int i;
-    double p, v;
+    double x, v, scaleFactor;
     
-    for(i=0; i<(GRID_KERNEL_SIZE/2+1)*GRID_KERNEL_OVERSAMPLE; i++) {
-        p = (double) i / GRID_KERNEL_OVERSAMPLE;
-        v = sqrt(1.0 / 2.0 / NPY_PI / 0.5 / 0.5);
-        v *= exp(-p*p/2.0/0.5/0.5);
+    scaleFactor = iv0(8.6);
+    for(i=0; i<GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1; i++) {
+        x = ((double) i) / GRID_KERNEL_OVERSAMPLE;
+        v = sinc(x) / scaleFactor;
+        v *= iv0(8.6 * sqrt(1.0-(2*x/GRID_KERNEL_SIZE*2*x/GRID_KERNEL_SIZE)));
+        // Deal with NaNs
+        if(v != v) {
+            if(i == 0) {
+                v = 1.0;
+            } else {
+                v = 0.0;
+            }
+        }
         *(kernel1D + i) = v;
     }
 }
@@ -143,14 +165,14 @@ void compute_gridding(long nVis,
     
     // Fill in the 1-D gridding kernel
     double *kernel1D;
-    kernel1D = (double *) malloc((GRID_KERNEL_SIZE/2+1)*GRID_KERNEL_OVERSAMPLE*sizeof(double));
-    gaussian_1d_kernel_filler(kernel1D);
+    kernel1D = (double *) malloc((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1)*sizeof(double));
+    kaiser_bessel_1d_kernel_filler(kernel1D);
     
     long secStart, secStop;
     double avgW, ci, cj, temp, temp2;
     long pi, pj, gi, gj;
     Complex32 *suv, *sbm, *kern;
-    static float norm = (float) 1.0 / (nPixSide * nPixSide * nPixSide * nPixSide);
+    static float norm = (float) 1.0 / (nPixSide * nPixSide);
     
     // FFT setup
     Complex32* inP;
@@ -203,31 +225,33 @@ void compute_gridding(long nVis,
                 }
                 
                 for(m=-GRID_KERNEL_SIZE/2; m<GRID_KERNEL_SIZE/2+1; m++) {
-                    pi = (long) (ci + m);
-                    gi = (long) ((pi - ci)*GRID_KERNEL_OVERSAMPLE);
+                    pi = (long) round(ci) + m;
+                    gi = (long) ((ci - pi)*GRID_KERNEL_OVERSAMPLE);
                     if(gi < 0) {
                         gi = -gi;
                     }
                     
                     temp = *(kernel1D + gi);
                     
-                    pi %= nPixSide;
                     if( pi < 0 ) {
                         pi += nPixSide;
+                    } else if( pi >= nPixSide) {
+                        pi -= nPixSide;
                     }
                     
                     for(l=-GRID_KERNEL_SIZE/2; l<GRID_KERNEL_SIZE/2+1; l++) {
-                        pj = (long) (cj + l);
-                        gj = (long) ((pj - cj)*GRID_KERNEL_OVERSAMPLE);
+                        pj = (long) round(cj) + l;
+                        gj = (long) ((cj - pj)*GRID_KERNEL_OVERSAMPLE);
                         if(gj < 0) {
                             gj = -gj;
                         }
                         
                         temp2 = temp * *(kernel1D + gj);
                         
-                        pj %= nPixSide;
                         if( pj < 0 ) {
                             pj += nPixSide;
+                        } else if( pj >= nPixSide) {
+                            pj -= nPixSide;
                         }
                         
                         *(suv + nPixSide*pi + pj) += (Complex32) *(vis + i) * (float) temp2;
@@ -404,8 +428,10 @@ fail:
 }
 
 PyDoc_STRVAR(WProjection_doc, \
-"w-projection gridder for uv data based on the aipy.img.ImgW class and 'Wide-\n\
-field Imaging Problems in Radio Astronomy' (Cornwell et al. 2005).\n\
+"w-projection gridder for uv data based on the aipy.img.ImgW class, 'Wide-\n\
+field Imaging Problems in Radio Astronomy' (Cornwell et al. 2005), and\n\
+'WSClean: an Implementation of a Fast, Generic Wide-Field Imager for Radio\n\
+Astronomy' (Offringa et al. 2014).\n\
 \n\
 Input arguments are:\n\
  * u: 1-D numpy.float64 array of u coordinates\n\
@@ -469,7 +495,7 @@ MOD_INIT(_gridder) {
     import_array();
     
     // Version information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
+    PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");
