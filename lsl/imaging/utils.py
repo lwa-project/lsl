@@ -1517,8 +1517,6 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
         wgt = wgt.astype(numpy.complex64)
         
     im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
-    im.kern_corr.shape = (im.kern_corr.size,1)
-    im.kern_corr = im.kern_corr * im.kern_corr.T
     
     if not verbose:
         sys.stdout.close()

@@ -143,7 +143,8 @@ template<typename InType, typename OutType>
 void compute_kernel_correction(long nPixSide,
                                InType *kernel,
                                OutType *corr) {
-    long i;
+    long i, j;
+    OutType temp, temp2;
     OutType *corr_full;
     corr_full = (OutType*) malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(OutType));
     memset(corr_full, 0, sizeof(OutType)*nPixSide*GRID_KERNEL_OVERSAMPLE);
@@ -168,9 +169,19 @@ void compute_kernel_correction(long nPixSide,
     // Select what to keep
     for(i=0; i<nPixSide; i++) {
         if( i < nPixSide/2 ) {
-            *(corr + i) = *(corr_full + i) / GRID_KERNEL_OVERSAMPLE;
+            temp = *(corr_full + i) / GRID_KERNEL_OVERSAMPLE;
         } else {
-            *(corr + i) = *(corr_full + nPixSide - i) / GRID_KERNEL_OVERSAMPLE;
+            temp = *(corr_full + nPixSide - i) / GRID_KERNEL_OVERSAMPLE;
+        }
+        
+        for(j=0; j<nPixSide; j++) {
+            if( j < nPixSide/2 ) {
+                temp2 = *(corr_full + j) / GRID_KERNEL_OVERSAMPLE;
+            } else {
+                temp2 = *(corr_full + nPixSide - j) / GRID_KERNEL_OVERSAMPLE;
+            }
+            
+            *(corr + nPixSide*i + j) = temp * temp2;
         }
     }
     
@@ -427,7 +438,7 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     PyArray_FILLWBYTE(bmPlane, 0);
     /* kernel correction */
-    kernCorr = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_FLOAT32);
+    kernCorr = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT32);
     if( kernCorr == NULL ) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array - kernel correction");
         goto fail;
@@ -503,7 +514,7 @@ Outputs are:\n\
  * uvPlane: 2-D numpy.complex64 of the gridded and projected uv plane\n\
  * bmPlane: 2-D numpy.complex64 of the gridded and projected synthesized\n\
             beam\n\
- * kernCorr: 1-D numpy.float32 of the image correction for the gridding\n\
+ * kernCorr: 2-D numpy.float32 of the image correction for the gridding\n\
              kernel\n\
 \n\
 .. note::\n\
