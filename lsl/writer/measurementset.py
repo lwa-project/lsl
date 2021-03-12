@@ -404,24 +404,24 @@ try:
                                                        })
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, 
-                                            col9, col10, col11, col12])
+                                          col9, col10, col11, col12])
             tb = table("%s/FEED" % self.basename, desc, nrow=self.nAnt, ack=False)
             
             presp = numpy.zeros((self.nAnt,2,2), dtype=numpy.complex64)
             if self.stokes[0] > 8:
-                ptype = numpy.tile(['X', 'Y'], (self.nAnt,1))
+                ptype = [['X', 'Y'] for i in range(self.nAnt)]
                 presp[:,0,0] = 1.0
                 presp[:,0,1] = 0.0
                 presp[:,1,0] = 0.0
                 presp[:,1,1] = 1.0
             elif self.stokes[0] > 4:
-                ptype = numpy.tile(['R', 'L'], (self.nAnt,1))
+                ptype = [['R', 'L'] for i in range(self.nAnt)]
                 presp[:,0,0] = 1.0
                 presp[:,0,1] = -1.0j
                 presp[:,1,0] = 1.0j
                 presp[:,1,1] = 1.0
             else:
-                ptype = numpy.tile(['X', 'Y'], (self.nAnt,1))
+                ptype = [['X', 'Y'] for i in range(self.nAnt)]
                 presp[:,0,0] = 1.0
                 presp[:,0,1] = 0.0
                 presp[:,1,0] = 0.0
@@ -429,7 +429,7 @@ try:
                 
             tb.putcol('POSITION', numpy.zeros((self.nAnt,3)), 0, self.nAnt)
             tb.putcol('BEAM_OFFSET', numpy.zeros((self.nAnt,2,2)), 0, self.nAnt)
-            tb.putcol('POLARIZATION_TYPE', ptype, 0, self.nAnt)
+            tb.putcol('POLARIZATION_TYPE', numpy.array(ptype, dtype='S'), 0, self.nAnt)
             tb.putcol('POL_RESPONSE', presp, 0, self.nAnt)
             tb.putcol('RECEPTOR_ANGLE', numpy.zeros((self.nAnt,2)), 0, self.nAnt)
             tb.putcol('ANTENNA_ID', list(range(self.nAnt)), 0, self.nAnt)
@@ -455,9 +455,9 @@ try:
                                             keywords={'QuantumUnits':['s',], 
                                                       'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                       })
-            col2 = tableutil.makearrcoldesc('LOG', 'none', 1, 
+            col2 = tableutil.makescacoldesc('LOG', 'none', 
                                             comment='Observing log')
-            col3 = tableutil.makearrcoldesc('SCHEDULE', 'none', 1, 
+            col3 = tableutil.makescacoldesc('SCHEDULE', 'none', 
                                             comment='Observing schedule')
             col4 = tableutil.makescacoldesc('FLAG_ROW', False, 
                                             comment='Row flag')
@@ -622,17 +622,17 @@ try:
             
             # Field
             
-            col1 = tableutil.makearrcoldesc('DELAY_DIR', 0.0, 2, 
+            col1 = tableutil.makearrcoldesc('DELAY_DIR', 0.0, 1, 
                                             comment='Direction of delay center (e.g. RA, DEC)as polynomial in time.', 
                                             keywords={'QuantumUnits':['rad','rad'], 
                                                       'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                       })
-            col2 = tableutil.makearrcoldesc('PHASE_DIR', 0.0, 2, 
+            col2 = tableutil.makearrcoldesc('PHASE_DIR', 0.0, 1, 
                                             comment='Direction of phase center (e.g. RA, DEC).', 
                                             keywords={'QuantumUnits':['rad','rad'], 
                                                       'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                       })
-            col3 = tableutil.makearrcoldesc('REFERENCE_DIR', 0.0, 2, 
+            col3 = tableutil.makearrcoldesc('REFERENCE_DIR', 0.0, 1, 
                                             comment='Direction of REFERENCE center (e.g. RA, DEC).as polynomial in time.', 
                                             keywords={'QuantumUnits':['rad','rad'], 
                                                       'MEASINFO':{'type':'direction', 'Ref':'J2000'}
@@ -657,9 +657,9 @@ try:
             tb = table("%s/FIELD" % self.basename, desc, nrow=nSource, ack=False)
             
             for i in range(nSource):
-                tb.putcell('DELAY_DIR', i, numpy.array([posList[i],]))
-                tb.putcell('PHASE_DIR', i, numpy.array([posList[i],]))
-                tb.putcell('REFERENCE_DIR', i, numpy.array([posList[i],]))
+                tb.putcell('DELAY_DIR', i, numpy.array(posList[i]))
+                tb.putcell('PHASE_DIR', i, numpy.array(posList[i]))
+                tb.putcell('REFERENCE_DIR', i, numpy.array(posList[i]))
                 tb.putcell('CODE', i, 'None')
                 tb.putcell('FLAG_ROW', i, False)
                 tb.putcell('NAME', i, nameList[i])
@@ -725,7 +725,7 @@ try:
                                              keywords={'QuantumUnits':['Hz',]})
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
-                                            col10, col11, col12, col13, col14])
+                                          col10, col11, col12, col13, col14])
             tb = table("%s/SPECTRAL_WINDOW" % self.basename, desc, nrow=nBand, ack=False)
             
             for i,freq in enumerate(self.freq):
@@ -828,8 +828,8 @@ try:
                                              comment='The data column')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
-                                            col10, col11, col12, col13, col14, col15, col16, 
-                                            col17, col18, col19, col20, col21, col22])
+                                          col10, col11, col12, col13, col14, col15, col16, 
+                                          col17, col18, col19, col20, col21, col22])
             tb = table("%s" % self.basename, desc, nrow=0, ack=False)
             
             i = 0

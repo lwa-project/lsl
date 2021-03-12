@@ -74,15 +74,15 @@ from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
 from lsl.common.sdf import parse_time, _TypedParentList, Observer, ProjectOffice
-from lsl.common.sdf import _usernameRE, Project as _Project, Session as _Session
-from lsl.common.sdf import Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
+from lsl.common.sdf import UCF_USERNAME_RE, Project as _Project, Session as _Session
+from lsl.common.sdf import UCF_USERNAME_RE, Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__version__ = '1.2'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _UTC = pytz.utc
@@ -135,7 +135,7 @@ class Project(_Project):
         if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
-                clean = _usernameRE.sub('', ses.comments)
+                clean = UCF_USERNAME_RE.sub('', ses.comments)
             ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
@@ -145,202 +145,202 @@ class Project(_Project):
             
         ## PI Information
         output = ""
-        output = "%sPI_ID            %s\n" % (output, self.observer.id)
-        output = "%sPI_NAME          %s\n" % (output, self.observer.name)
-        output = "%s\n" % output
+        output += "PI_ID            %s\n" % (self.observer.id,)
+        output += "PI_NAME          %s\n" % (self.observer.name,)
+        output += "\n"
         
         ## Project Information
-        output = "%sPROJECT_ID       %s\n" % (output, self.id)
-        output = "%sPROJECT_TITLE    %s\n" % (output, self.name)
-        output = "%sPROJECT_REMPI    %s\n" % (output, self.comments[:4090] if self.comments else 'None provided')
-        output = "%sPROJECT_REMPO    %s\n" % (output, self.project_office.project)
-        output = "%s\n" % output
+        output += "PROJECT_ID       %s\n" % (self.id,)
+        output += "PROJECT_TITLE    %s\n" % (self.name,)
+        output += "PROJECT_REMPI    %s\n" % (self.comments[:4090] if self.comments else 'None provided',)
+        output += "PROJECT_REMPO    %s\n" % (self.project_office.project,)
+        output += "\n"
         
         ## Session Information
-        output = "%sSESSION_ID       %s\n" % (output, ses.id)
-        output = "%sSESSION_TITLE    %s\n" % (output, 'None provided' if ses.name is None else ses.name)
-        output = "%sSESSION_REMPI    %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
-        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
+        output += "SESSION_ID       %s\n" % (ses.id,)
+        output += "SESSION_TITLE    %s\n" % ('None provided' if ses.name is None else ses.name,)
+        output += "SESSION_REMPI    %s\n" % (ses.comments[:4090] if ses.comments else 'None provided',)
+        output += "SESSION_REMPO    %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090],)
         if ses.configuration_authority != 0:
-            output = "%sSESSION_CRA      %i\n" % (output, ses.configuration_authority)
+            output += "SESSION_CRA      %i\n" % (ses.configuration_authority,)
         if ses.drx_beam != -1:
-            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drx_beam)
+            output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-            output = "%sSESSION_SPC      %i %i%s\n" % (output, ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
+            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.recordMIB[component] != -1:
-                output = "%sSESSION_MRP_%s  %i\n" % (output, component, ses.recordMIB[component])
+                output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.updateMIB[component] != -1:
-                output = "%sSESSION_MUP_%s  %i\n" % (output, component, ses.updateMIB[component])
+                output += "SESSION_MUP_%s  %i\n" % (component, ses.updateMIB[component])
         if ses.logScheduler:
-            output = "%sSESSION_LOG_SCH  %i\n" % (output, ses.logScheduler)
+            output += "SESSION_LOG_SCH  %i\n" % (ses.logScheduler,)
         if ses.logExecutive:
-            output = "%sSESSION_LOG_EXE  %i\n" % (output, ses.logExecutive)
+            output += "SESSION_LOG_EXE  %i\n" % (ses.logExecutive,)
         if ses.includeStationStatic:
-            output = "%sSESSION_INC_SMIB %i\n" % (output, ses.includeStationStatic)
+            output += "SESSION_INC_SMIB %i\n" % (ses.includeStationStatic,)
         if ses.includeDesign:
-            output = "%sSESSION_INC_DES  %i\n" % (output, ses.includeDesign)
-        output = "%s\n" % output
+            output += "SESSION_INC_DES  %i\n" % (ses.includeDesign,)
+        output += "\n"
         
         ## Observations
         for i,obs in enumerate(ses.observations):
             obsID = i + 1
             
-            output = "%sOBS_ID           %i\n" % (output, obsID)
-            output = "%sOBS_TITLE        %s\n" % (output, obs.name if obs.name else 'None provided')
-            output = "%sOBS_TARGET       %s\n" % (output, obs.target if obs.target else 'None provided')
-            output = "%sOBS_REMPI        %s\n" % (output, obs.comments[:4090] if obs.comments else 'None provided')
-            output = "%sOBS_REMPO        %s\n" % (output, "Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
-            output = "%sOBS_START_MJD    %i\n" % (output, obs.mjd)
-            output = "%sOBS_START_MPM    %i\n" % (output, obs.mpm)
-            output = "%sOBS_START        %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
-            output = "%sOBS_DUR          %i\n" % (output, obs.dur)
-            output = "%sOBS_DUR+         %s\n" % (output, obs.duration)
-            output = "%sOBS_MODE         %s\n" % (output, obs.mode)
+            output += "OBS_ID           %i\n" % (obsID,)
+            output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided',)
+            output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided',)
+            output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
+            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "OBS_START_MJD    %i\n" % (obs.mjd,)
+            output += "OBS_START_MPM    %i\n" % (obs.mpm,)
+            output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
+            output += "OBS_DUR          %i\n" % (obs.dur,)
+            output += "OBS_DUR+         %s\n" % (obs.duration,)
+            output += "OBS_MODE         %s\n" % (obs.mode,)
             if obs.beamDipole is not None:
-                output = "%sOBS_BDM          %i %6.4f %6.4f %s\n" % ((output,) + tuple(obs.beamDipole))
+                output += "OBS_BDM          %i %6.4f %6.4f %s\n" % (tuple(obs.beamDipole))
             if obs.mode == 'TBF':
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-                output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TBN':
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_RADEC':
-                output = "%sOBS_RA           %.9f\n" % (output, obs.ra)
-                output = "%sOBS_DEC          %+.9f\n" % (output, obs.dec)
-                output = "%sOBS_B            %s\n" % (output, obs.beam)
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-                output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_RA           %.9f\n" % (obs.ra,)
+                output += "OBS_DEC          %+.9f\n" % (obs.dec,)
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_SOL':
-                output = "%sOBS_B            %s\n" % (output, obs.beam)
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-                output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_JOV':
-                output = "%sOBS_B            %s\n" % (output, obs.beam)
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-                output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'STEPPED':
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
-                output = "%sOBS_STP_N        %i\n" % (output, len(obs.steps))
-                output = "%sOBS_STP_RADEC    %i\n" % (output, obs.steps[0].is_radec)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_STP_N        %i\n" % (len(obs.steps),)
+                output += "OBS_STP_RADEC    %i\n" % (obs.steps[0].is_radec,)
                 for j,step in enumerate(obs.steps):
                     stpID = j + 1
                     
-                    output = "%sOBS_STP_C1[%i]      %.9f\n" % (output, stpID, step.c1)
-                    output = "%sOBS_STP_C2[%i]      %+.9f\n" % (output, stpID, step.c2)
-                    output = "%sOBS_STP_T[%i]       %i\n" % (output, stpID, step.dur)
-                    output = "%sOBS_STP_FREQ1[%i]   %i\n" % (output, stpID, step.freq1)
-                    output = "%sOBS_STP_FREQ1+[%i]  %.9f MHz\n" % (output, stpID, step.frequency1/1e6)
-                    output = "%sOBS_STP_FREQ2[%i]   %i\n" % (output, stpID, step.freq2)
-                    output = "%sOBS_STP_FREQ2+[%i]  %.9f MHz\n" % (output, stpID, step.frequency2/1e6)
-                    output = "%sOBS_STP_B[%i]       %s\n" % (output, stpID, step.beam)
+                    output += "OBS_STP_C1[%i]      %.9f\n" % (stpID, step.c1)
+                    output += "OBS_STP_C2[%i]      %+.9f\n" % (stpID, step.c2)
+                    output += "OBS_STP_T[%i]       %i\n" % (stpID, step.dur)
+                    output += "OBS_STP_FREQ1[%i]   %i\n" % (stpID, step.freq1)
+                    output += "OBS_STP_FREQ1+[%i]  %.9f MHz\n" % (stpID, step.frequency1/1e6)
+                    output += "OBS_STP_FREQ2[%i]   %i\n" % (stpID, step.freq2)
+                    output += "OBS_STP_FREQ2+[%i]  %.9f MHz\n" % (stpID, step.frequency2/1e6)
+                    output += "OBS_STP_B[%i]       %s\n" % (stpID, step.beam)
                     if step.beam == 'SPEC_DELAYS_GAINS':
                         for k,delay in enumerate(step.delays):
                             dlyID = k + 1
                             
-                            output = "%sOBS_BEAM_DELAY[%i][%i] %i\n" % (output, stpID, dlyID, delay)
+                            output += "OBS_BEAM_DELAY[%i][%i] %i\n" % (stpID, dlyID, delay)
                         for k,gain in enumerate(step.gains):
                             gaiID = k + 1
                             
-                            output = "%sOBS_BEAM_GAIN[%i][%i][1][1] %i\n" % (output, stpID, gaiID, gain[0][0])
-                            output = "%sOBS_BEAM_GAIN[%i][%i][1][2] %i\n" % (output, stpID, gaiID, gain[0][1])
-                            output = "%sOBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (output, stpID, gaiID, gain[1][0])
-                            output = "%sOBS_BEAM_GAIN[%i][%i][2][2] %i\n" % (output, stpID, gaiID, gain[1][1])
+                            output += "OBS_BEAM_GAIN[%i][%i][1][1] %i\n" % (stpID, gaiID, gain[0][0])
+                            output += "OBS_BEAM_GAIN[%i][%i][1][2] %i\n" % (stpID, gaiID, gain[0][1])
+                            output += "OBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (stpID, gaiID, gain[1][0])
+                            output += "OBS_BEAM_GAIN[%i][%i][2][2] %i\n" % (stpID, gaiID, gain[1][1])
             ## FEE power settings
             if all(j == obs.fee_power[0] for j in obs.fee_power):
                 ### All the same
                 if obs.fee_power[0][0] != -1 and obs.fee_power[0][1] != -1:
-                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.fee_power[0][0])
-                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.fee_power[0][1])
+                    output += "OBS_FEE[%i][1]  %i\n" % (0, obs.fee_power[0][0])
+                    output += "OBS_FEE[%i][2]  %i\n" % (0, obs.fee_power[0][1])
             else:
                 ### Some different
                 for j,fee in enumerate(obs.fee_power):
                     feeID = j + 1
                     
                     if fee[0] != -1:
-                        output = "%sOBS_FEE[%i][1]  %i\n" % (output, feeID, fee[0])
+                        output += "OBS_FEE[%i][1]  %i\n" % (feeID, fee[0])
                     if fee[1] != -1:
-                        output = "%sOBS_FEE[%i][2]  %i\n" % (output, feeID, fee[1])
+                        output += "OBS_FEE[%i][2]  %i\n" % (feeID, fee[1])
             ## ASP filter setting
             if all(j == obs.asp_filter[0] for j in obs.asp_filter):
                 ### All the same
                 if obs.asp_filter[0] != -1:
-                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.asp_filter[0])
+                    output += "OBS_ASP_FLT[%i]  %i\n" % (0, obs.asp_filter[0])
             else:
                 ### Some different
                 for j,flt in enumerate(obs.asp_filter):
                     fltID = j + 1
                     
                     if flt != -1:
-                        output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, fltID, flt)
+                        output += "OBS_ASP_FLT[%i]  %i\n" % (fltID, flt)
             ## First attenuator setting
             if all(j == obs.asp_atten_1[0] for j in obs.asp_atten_1):
                 ### All the same
                 if obs.asp_atten_1[0] != -1:
-                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.asp_atten_1[0])
+                    output += "OBS_ASP_AT1[%i]  %i\n" % (0, obs.asp_atten_1[0])
             else:
                 ### Some different
                 for j,at1 in enumerate(obs.asp_atten_1):
                     at1ID = j + 1
                     
                     if at1 != -1:
-                        output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, at1ID, at1)
+                        output += "OBS_ASP_AT1[%i]  %i\n" % (at1ID, at1)
             ## Second attenuator setting
             if all(j == obs.asp_atten_2[0] for j in obs.asp_atten_2):
                 ### All the same
                 if obs.asp_atten_2[0] != -1:
-                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.asp_atten_2[0])
+                    output += "OBS_ASP_AT2[%i]  %i\n" % (0, obs.asp_atten_2[0])
             else:
                 ### Some different
                 for j,at2 in enumerate(obs.asp_atten_2):
                     at2ID = j + 1
                     
                     if at2 != -1:
-                        output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, at2ID, at2)
+                        output += "OBS_ASP_AT2[%i]  %i\n" % (at2ID, at2)
             ## Second attenuator setting
             if all(j == obs.asp_atten_split[0] for j in obs.asp_atten_split):
                 ### All the same
                 if obs.asp_atten_split[0] != -1:
-                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.asp_atten_split[0])
+                    output += "OBS_ASP_ATS[%i]  %i\n" % (0, obs.asp_atten_split[0])
             else:
                 ### Some different
                 for j,ats in enumerate(obs.asp_atten_split):
                     atsID = j + 1
                     
                     if ats != -1:
-                        output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, atsID, ats)
+                        output += "OBS_ASP_ATS[%i]  %i\n" % (atsID, ats)
             ## TBF settings
             if obs.mode == 'TBF':
-                output = "%sOBS_TBF_SAMPLES  %i\n" % (output, obs.samples)
+                output += "OBS_TBF_SAMPLES  %i\n" % (obs.samples,)
             ## TBN gain
             if obs.mode == 'TBN':
                 if obs.gain != -1:
-                    output = "%sOBS_TBN_GAIN     %i\n" % (output, obs.gain)
+                    output += "OBS_TBN_GAIN     %i\n" % (obs.gain,)
             ## DRX gain
             else:
                 if obs.gain != -1:
-                    output = "%sOBS_DRX_GAIN     %i\n" % (output, obs.gain)
-            output = "%s\n" % output
+                    output += "OBS_DRX_GAIN     %i\n" % (obs.gain,)
+            output += "\n"
             
         return output
 
@@ -687,7 +687,7 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].name = value
                 continue
             if keyword == 'SESSION_REMPI':
-                mtch = _usernameRE.search(value)
+                mtch = UCF_USERNAME_RE.search(value)
                 if mtch is not None:
                     project.sessions[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:

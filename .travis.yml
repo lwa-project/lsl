@@ -12,7 +12,7 @@ python:
 jobs:
   include:
     - os: osx
-      osx_image: xcode11
+      osx_image: xcode12
       language: sh
       env:
         - HOMEBREW_NO_INSTALL_CLEANUP=1
@@ -37,7 +37,7 @@ addons:
             - libcfitsio-dev
             - libboost-python-dev
     homebrew:
-        # update: true
+        update: false
         packages:
             - python3
             - pkg-config
@@ -66,6 +66,7 @@ install:
         coveralls \
         codecov
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install python-casacore; fi
+    - if [ "`python -V | grep -v '2.7.'`" = "" ]; then pip install "healpy<1.14.0"; fi
     - pip install aipy
     - pip install .
     - curl https://fornax.phys.unm.edu/lwa/data/igsg0970.18i.gz -o $HOME/.lsl/ionospheric_cache/igsg0970.18i.gz --create-dirs

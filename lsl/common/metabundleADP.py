@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
-from lsl.common.adp import word_to_freq
+from lsl.common.adp import word_to_freq, fS
 from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
@@ -30,10 +30,11 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.0'
-__all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_station', 'get_session_metadata', 
-           'get_session_spec', 'get_observation_spec', 'get_sdf', 'get_command_script', 
-           'get_asp_configuration', 'get_asp_configuration_summary', 'is_valid']
+__version__ = '1.1'
+__all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_beamformer_min_delay',
+           'get_station', 'get_session_metadata', 'get_session_spec', 'get_observation_spec',
+           'get_sdf', 'get_command_script', 'get_asp_configuration', 'get_asp_configuration_summary',
+           'is_valid']
 
 # Regular expression for figuring out filenames
 filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
@@ -253,6 +254,33 @@ def get_sdm(tarname):
     return dynamic
 
 
+def get_beamformer_min_delay(tarname):
+    """
+    Given an MCS meta-data tarball, extract the minimum beamformer delay in 
+    samples and return it.  If no minimum delay can be found in the tarball, 
+    None is returned.
+    """
+    
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        # Extract the mindelay.txt file.  If mindelay.txt cannot be found, None
+        # is returned via the try...except block.
+        tf = _open_tarball(tarname)
+        try:
+            ti = tf.getmember('mindelay.txt')
+        except KeyError:
+            return None
+        tf.extractall(path=tempDir, members=[ti,])
+        
+        # Parse the SDM file and build the SDM instance
+        with open(os.path.join(tempDir, 'mindelay.txt'), 'r') as fh:
+            try:
+                mindelay = int(fh.read(), 10)
+            except ValueError:
+                mindelay = None
+                
+    return mindelay
+
+
 def get_station(tarname, apply_sdm=True):
     """
     Given an MCS meta-data tarball, extract the information stored in the ssmif.dat 
@@ -276,6 +304,12 @@ def get_station(tarname, apply_sdm=True):
         # Read in the SSMIF
         station = stations.parse_ssmif(os.path.join(tempDir, 'ssmif.dat'))
         
+        # Get the beamformer minimum delay, if found
+        mindelay = get_beamformer_min_delay(tarname)
+        if mindelay is not None:
+            station.beamformer_min_delay_samples = mindelay
+            station.beamformer_min_delay = mindelay/fS
+            
         # Get the SDM (if we need to)
         if apply_sdm:
             dynamic = get_sdm(tarname)
