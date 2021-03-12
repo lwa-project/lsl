@@ -1,5 +1,6 @@
 2.0.3
   * Fixed a problem with displaying lsl.reader.errors under Python3
+  * Added support for the XXCRCIYY, CRCI, and I DR spectrometer modes
 
 2.0.2
   * Added a -v/--lwasv option to correlateTBN.py and tbnSpectra.py
