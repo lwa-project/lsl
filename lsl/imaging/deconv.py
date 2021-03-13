@@ -169,7 +169,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+    beamCutout = numpy.where( beamCutout > 0.5, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
@@ -409,7 +409,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+    beamCutout = numpy.where( beamCutout > 0.5, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
@@ -472,7 +472,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
             try:
                 peakParams = _fit_gaussian(working[peak_x-FWHM//2:peak_x+FWHM//2+1, peak_y-FWHM//2:peak_y+FWHM//2+1])
             except IndexError:
-                peakParams = [peakV, peak_x, peak_y]
+                peakParams = [peakV, FWHM//2, FWHM//2]
             peakVO = peakParams[0]
             peak_xO = peak_x - FWHM//2 + peakParams[1]
             peak_yO = peak_y - FWHM//2 + peakParams[2]
@@ -486,7 +486,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
             try:
                 peakRA = _interpolate(RA, peak_xO, peak_yO)
             except IndexError:
-                peak_xO, peak_y0 = peak_x, peak_y
+                peak_xO, peak_yO = peak_x, peak_y
                 peakRA = RA[peak_x, peak_y]
             try:
                 peakDec = _interpolate(dec, peak_xO, peak_yO)
@@ -699,7 +699,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+    beamCutout = numpy.where( beamCutout > 0.5, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
@@ -740,6 +740,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         pylab.ion()
         
     rChan = [chan[0], chan[-1]]
+    mdl *= modelToSim
     diff = img - mdl
     diffScaled = 0.0*diff/gain
     oldModel = mdl
