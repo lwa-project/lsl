@@ -90,7 +90,7 @@ def _fit_gaussian(data):
         height = data.max()
         return height, x, y, width_x, width_y
 
-    def fitgaussian(data):
+    def fitgaussian(data, params=None):
         """
         Returns (height, x, y, width_x, width_y) the gaussian parameters 
         of a 2D distribution found by a fit
@@ -98,15 +98,22 @@ def _fit_gaussian(data):
         From:  http://wiki.scipy.org/Cookbook/FittingData
         """
         
-        params = moments(data)
+        if params is None:
+            params = moments(data)
         errorfunction = lambda p: numpy.ravel(gaussian(*p)(*numpy.indices(data.shape)) -
                                 data)
         p, success = leastsq(errorfunction, params)
         return p
         
-    params = fitgaussian(data)
-    fit = gaussian(*params)
-    
+    level = 0.5
+    params = None
+    while level > 0.1:
+        data_clipped = numpy.where(data/data.max() > level, data, 0)
+        params = fitgaussian(data_clipped, params=params)
+        level /= 2.0
+        
+    #fit = gaussian(*params)
+    #import pylab
     #pylab.matshow(data, cmap=pylab.cm.gist_earth_r)
     #pylab.contour(fit(*numpy.indices(data.shape)), cmap=pylab.cm.copper)
     #pylab.show()
@@ -169,7 +176,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.5, beamCutout, 0.0 )
+    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
@@ -409,7 +416,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.5, beamCutout, 0.0 )
+    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
@@ -699,7 +706,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.5, beamCutout, 0.0 )
+    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
     FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
