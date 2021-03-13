@@ -717,7 +717,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         img = input_image*1.0
         
     # Build the initial model
-    mdl = img*40
+    mdl = img*0 + img.max()
     mdl[numpy.where(mdl < 0)] = 0
     mdl[numpy.where(ra.mask == 1)] = 0
     
