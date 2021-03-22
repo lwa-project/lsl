@@ -90,7 +90,7 @@ def _fit_gaussian(data):
         height = data.max()
         return height, x, y, width_x, width_y
 
-    def fitgaussian(data):
+    def fitgaussian(data, params=None):
         """
         Returns (height, x, y, width_x, width_y) the gaussian parameters 
         of a 2D distribution found by a fit
@@ -98,15 +98,22 @@ def _fit_gaussian(data):
         From:  http://wiki.scipy.org/Cookbook/FittingData
         """
         
-        params = moments(data)
+        if params is None:
+            params = moments(data)
         errorfunction = lambda p: numpy.ravel(gaussian(*p)(*numpy.indices(data.shape)) -
                                 data)
         p, success = leastsq(errorfunction, params)
         return p
         
-    params = fitgaussian(data)
-    fit = gaussian(*params)
-    
+    level = 0.5
+    params = None
+    while level > 0.1:
+        data_clipped = numpy.where(data/data.max() > level, data, 0)
+        params = fitgaussian(data_clipped, params=params)
+        level /= 2.0
+        
+    #fit = gaussian(*params)
+    #import pylab
     #pylab.matshow(data, cmap=pylab.cm.gist_earth_r)
     #pylab.contour(fit(*numpy.indices(data.shape)), cmap=pylab.cm.copper)
     #pylab.show()
@@ -472,7 +479,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
             try:
                 peakParams = _fit_gaussian(working[peak_x-FWHM//2:peak_x+FWHM//2+1, peak_y-FWHM//2:peak_y+FWHM//2+1])
             except IndexError:
-                peakParams = [peakV, peak_x, peak_y]
+                peakParams = [peakV, FWHM//2, FWHM//2]
             peakVO = peakParams[0]
             peak_xO = peak_x - FWHM//2 + peakParams[1]
             peak_yO = peak_y - FWHM//2 + peakParams[2]
@@ -486,7 +493,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
             try:
                 peakRA = _interpolate(RA, peak_xO, peak_yO)
             except IndexError:
-                peak_xO, peak_y0 = peak_x, peak_y
+                peak_xO, peak_yO = peak_x, peak_y
                 peakRA = RA[peak_x, peak_y]
             try:
                 peakDec = _interpolate(dec, peak_xO, peak_yO)
@@ -717,7 +724,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         img = input_image*1.0
         
     # Build the initial model
-    mdl = img*40
+    mdl = img*0 + img.max()
     mdl[numpy.where(mdl < 0)] = 0
     mdl[numpy.where(ra.mask == 1)] = 0
     
@@ -740,6 +747,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         pylab.ion()
         
     rChan = [chan[0], chan[-1]]
+    mdl *= modelToSim
     diff = img - mdl
     diffScaled = 0.0*diff/gain
     oldModel = mdl
