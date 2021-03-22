@@ -2137,7 +2137,9 @@ class Session(object):
                 value = '{'+value
             if value[-1] != '}':
                 value = value+'}'
-        if value not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+        if value not in (None, '', 
+                         '{Stokes=XXYY}', '{Stokes=CRCI}', '{Stokes=XXCRCIYY}', 
+                         '{Stokes=I}', '{Stokes=IV}', '{Stokes=IQUV}'):
             raise ValueError("Invalid DR spectrometer mode '%s'" % value)
         self.spcMetatag = value
         

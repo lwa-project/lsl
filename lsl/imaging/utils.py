@@ -1404,7 +1404,7 @@ class ImgWPlus(aipy.img.ImgW):
                 
             data = data*taper1*taper2
             
-        return aipy.img.recenter(ifft2Function(data).real.astype(numpy.float32), center)
+        return aipy.img.recenter(ifft2Function(data).real.astype(numpy.float32)/self.kern_corr, center)
         
     def image(self, center=(0,0), weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
         """Return the inverse FFT of the UV matrix, with the 0,0 point moved
@@ -1516,7 +1516,7 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     if wgt.dtype != numpy.complex64:
         wgt = wgt.astype(numpy.complex64)
         
-    im.uv, im.bm[0] = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
+    im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
     
     if not verbose:
         sys.stdout.close()
