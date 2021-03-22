@@ -173,14 +173,14 @@ class Project(_Project):
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.updateMIB[component] != -1:
                 output += "SESSION_MUP_%s  %i\n" % (component, ses.updateMIB[component])
-        if ses.logScheduler:
-            output += "SESSION_LOG_SCH  %i\n" % (ses.logScheduler,)
-        if ses.logExecutive:
-            output += "SESSION_LOG_EXE  %i\n" % (ses.logExecutive,)
-        if ses.includeStationStatic:
-            output += "SESSION_INC_SMIB %i\n" % (ses.includeStationStatic,)
-        if ses.includeDesign:
-            output += "SESSION_INC_DES  %i\n" % (ses.includeDesign,)
+        if ses.include_mcssch_log:
+            output += "SESSION_LOG_SCH  %i\n" % (ses.include_mcssch_log,)
+        if ses.include_mcsexe_log:
+            output += "SESSION_LOG_EXE  %i\n" % (ses.include_mcsexe_log,)
+        if ses.include_station_smib:
+            output += "SESSION_INC_SMIB %i\n" % (ses.include_station_smib,)
+        if ses.include_station_design:
+            output += "SESSION_INC_DES  %i\n" % (ses.include_station_design,)
         output += "\n"
         
         ## Observations
@@ -723,16 +723,16 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].updateMIB[component] = int(value)
                 continue
             if keyword == 'SESSION_LOG_SCH':
-                project.sessions[0].logScheduler = bool(value)
+                project.sessions[0].include_mcssch_log = bool(value)
                 continue
             if keyword == 'SESSION_LOG_EXE':
-                project.sessions[0].logExecutive = bool(value)
+                project.sessions[0].include_mcsexe_log = bool(value)
                 continue
             if keyword == 'SESSION_INC_SMIB':
-                project.sessions[0].includeStationStatic = bool(value)
+                project.sessions[0].include_station_smib = bool(value)
                 continue
             if keyword == 'SESSION_INC_DES':
-                project.sessions[0].includeDesign = bool(value)
+                project.sessions[0].include_station_design = bool(value)
                 continue
             if keyword == 'SESSION_DRX_BEAM':
                 project.sessions[0].drx_beam = int(value)

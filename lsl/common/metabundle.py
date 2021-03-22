@@ -110,12 +110,15 @@ def read_ses_file(filename):
               'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2, 
               'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4, 'DR5': bses.SESSION_MUP_DR5}
     
-    return {'version': bses.FORMAT_VERSION, 'projectID': bses.PROJECT_ID.lstrip().rstrip(), 
-            'sessionID': bses.SESSION_ID,  'CRA': bses.SESSION_CRA,  'drxBeam': bses.SESSION_DRX_BEAM,
-            'spcSetup': bses.SESSION_SPC, 'MJD': bses.SESSION_START_MJD, 'MPM': bses.SESSION_START_MPM, 
-            'Dur': bses.SESSION_DUR, 'nObs': bses.SESSION_NOBS, 'record': record, 'update': update, 
-            'logSch': bses.SESSION_LOG_SCH, 'logExe': bses.SESSION_LOG_EXE, 'incSMIF': bses.SESSION_INC_SMIB,
-            'incDesi': bses.SESSION_INC_DES}
+    return {'version': bses.FORMAT_VERSION,
+            'project_id': bses.PROJECT_ID.lstrip().rstrip(), 'session_id': bses.SESSION_ID,
+            'configuration_authority': bses.SESSION_CRA,
+            'drx_beam': bses.SESSION_DRX_BEAM, 'spcSetup': bses.SESSION_SPC,
+            'mjd': bses.SESSION_START_MJD, 'mpm': bses.SESSION_START_MPM, 'dur': bses.SESSION_DUR,
+            'nobs': bses.SESSION_NOBS,
+            'recordMIB': record, 'updateMIB': update, 
+            'include_mcssch_log': bses.SESSION_LOG_SCH, 'include_mcsexe_log': bses.SESSION_LOG_EXE,
+            'include_station_smib': bses.SESSION_INC_SMIB, 'include_station_design': bses.SESSION_INC_DES}
 
 
 def read_obs_file(filename):
@@ -196,20 +199,24 @@ def read_obs_file(filename):
         if bfooter.alignment != (2**32 - 1):
             raise IOError("Byte alignment lost at byte %i" % fh.tell())
             
-    output = {'version': bheader.FORMAT_VERSION, 'projectID': bheader.PROJECT_ID.lstrip().rstrip(), 
-              'sessionID': bheader.SESSION_ID, 'drxBeam': bheader.SESSION_DRX_BEAM, 
-              'spcSetup': bheader.SESSION_SPC, 'obsID': bheader.OBS_ID,
-              'MJD': bheader.OBS_START_MJD, 'MPM': bheader.OBS_START_MPM, 'Dur': bheader.OBS_DUR, 
-              'Mode': bheader.OBS_MODE, 'beamDipole': bheader.OBS_BDM, 
-              'RA': bheader.OBS_RA, 'Dec': bheader.OBS_DEC, 'Beam': bheader.OBS_B, 
-              'Freq1': word_to_freq(bheader.OBS_FREQ1), 'Freq2': word_to_freq(bheader.OBS_FREQ2), 'BW': bheader.OBS_BW, 'nSteps': bheader.OBS_STP_N, 'StepRADec': bheader.OBS_STP_RADEC,  'steps': steps, 
-              'fee': flat_to_multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
-              'flt': list(bfooter.OBS_ASP_FLT), 'at1': list(bfooter.OBS_ASP_AT1), 
-              'at2': list(bfooter.OBS_ASP_AT2), 'ats': list(bfooter.OBS_ASP_ATS)}
-    output['tbwBits'] = bfooter.OBS_TBW_BITS
-    output['tbwSamples'] = bfooter.OBS_TBW_SAMPLES
-    output['tbnGain'] = bfooter.OBS_TBN_GAIN
-    output['drxGain'] = bfooter.OBS_DRX_GAIN
+    output = {'version': bheader.FORMAT_VERSION,
+              'project_id': bheader.PROJECT_ID.lstrip().rstrip(), 'session_id': bheader.SESSION_ID,
+              'drx_beam': bheader.SESSION_DRX_BEAM, 'spcSetup': bheader.SESSION_SPC,
+              'obs_id': bheader.OBS_ID,
+              'mjd': bheader.OBS_START_MJD, 'mpm': bheader.OBS_START_MPM, 'dur': bheader.OBS_DUR,
+              'mode': bheader.OBS_MODE, 'beamdipole_mode': bheader.OBS_BDM,
+              'ra': bheader.OBS_RA, 'dec': bheader.OBS_DEC,
+              'beam': bheader.OBS_B, 
+              'freq1': word_to_freq(bheader.OBS_FREQ1), 'freq2': word_to_freq(bheader.OBS_FREQ2),
+              'bw': bheader.OBS_BW,
+              'nsteps': bheader.OBS_STP_N, 'is_radec': bheader.OBS_STP_RADEC,  'steps': steps,
+              'fee_power': flat_to_multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
+              'asp_filter': list(bfooter.OBS_ASP_FLT), 'asp_atten_1': list(bfooter.OBS_ASP_AT1), 
+              'asp_atten_2': list(bfooter.OBS_ASP_AT2), 'asp_atten_split': list(bfooter.OBS_ASP_ATS)}
+    output['tbw_bits'] = bfooter.OBS_TBW_BITS
+    output['tbw_samples'] = bfooter.OBS_TBW_SAMPLES
+    output['tbn_gain'] = bfooter.OBS_TBN_GAIN
+    output['drx_gain'] = bfooter.OBS_DRX_GAIN
     
     return output
 
@@ -249,10 +256,11 @@ def read_cs_file(filename):
                     data = None
                     
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
-                               'ignoreTime': True if action.bASAP else False, 
-                               'subsystemID': sid_to_string(action.sid), 'commandID': cid_to_string(action.cid), 
-                               'commandLength': action.len, 'data': data}
-                if actionPrime['subsystemID'] == 'ADP':
+                               'ignore_time': True if action.bASAP else False, 
+                               'subsystem_id': sid_to_string(action.sid),
+                               'command_id': cid_to_string(action.cid), 
+                               'command_length': action.len, 'data': data}
+                if actionPrime['subsystem_id'] == 'ADP':
                     raise RuntimeError("Command script references ADP not DP")
                     
                 commands.append( actionPrime )
@@ -438,7 +446,7 @@ def get_session_metadata(tarname):
                 obsID = int(obsID)
                 obsOutcome = int(obsOutcome) if obsOutcome != 'Failed' else 1
                 result[obsID] = {'tag': opTag, 'barcode': drsuBarcode, 
-                                'outcome': obsOutcome, 'msg': msg}
+                                 'outcome': obsOutcome, 'msg': msg}
                 
     # Return
     return result
@@ -501,10 +509,10 @@ def get_observation_spec(tarname, obs_id=None):
             outObs = []
             for o in obsList:
                 try:
-                    if o['obsID'] in obs_id:
+                    if o['obs_id'] in obs_id:
                         outObs.append(o)
                 except TypeError:
-                    if o['obsID'] == obs_id:
+                    if o['obs_id'] == obs_id:
                         outObs.append(o)
                         
             if len(outObs) == 1:
@@ -586,10 +594,10 @@ def get_asp_configuration(tarname, which='beginning'):
         raise ValueError("Unknown configuration time '%s'" % which)
         
     # Stub ASP configuration
-    aspConfig = {'filter':  [-1 for i in range(264)],
-                 'at1':     [-1 for i in range(264)],
-                 'at2':     [-1 for i in range(264)],
-                 'atsplit': [-1 for i in range(264)]}
+    aspConfig = {'asp_filter':      [-1 for i in range(264)],
+                 'asp_atten_1':     [-1 for i in range(264)],
+                 'asp_atten_2':     [-1 for i in range(264)],
+                 'asp_atten_split': [-1 for i in range(264)]}
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         path, basename = os.path.split(tarname)
@@ -624,19 +632,19 @@ def get_asp_configuration(tarname, which='beginning'):
                 
                 if values[0] == 3:
                     ## Filter
-                    aspConfig['filter'][values[1]-1] = int(aspMIB[key].value)
+                    aspConfig['asp_filter'][values[1]-1] = int(aspMIB[key].value)
                     
                 elif values[0] == 4:
                     ## Attenuators
                     if values[1] == 1:
                         ### AT1
-                        aspConfig['at1'][values[2]-1] = int(aspMIB[key].value)
+                        aspConfig['asp_atten_1'][values[2]-1] = int(aspMIB[key].value)
                     elif values[1] == 2:
                         ### AT2
-                        aspConfig['at2'][values[2]-1] = int(aspMIB[key].value)
+                        aspConfig['asp_atten_2'][values[2]-1] = int(aspMIB[key].value)
                     elif values[1] == 3:
                         ### ATSPLIT
-                        aspConfig['atsplit'][values[2]-1] = int(aspMIB[key].value)
+                        aspConfig['asp_atten_split'][values[2]-1] = int(aspMIB[key].value)
                     else:
                         pass
                         
