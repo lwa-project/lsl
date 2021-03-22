@@ -109,9 +109,9 @@ class FrameHeader(FrameHeaderBase):
         if self.format & 0x01:
             products.append('XX')
         if self.format & 0x02:
-            products.append('XY')
+            products.append('XY_real')
         if self.format & 0x04:
-            products.append('YX')
+            products.append('XY_imag')
         if self.format & 0x08:
             products.append('YY')
             
@@ -227,7 +227,7 @@ class FramePayload(FramePayloadBase):
     def data(self):
         packed = []
         dtype = []
-        for p in ('XX', 'XY', 'YX', 'YY', 'I', 'Q', 'U', 'V'):
+        for p in ('XX', 'XY_real', 'XY_imag', 'YY', 'I', 'Q', 'U', 'V'):
             for t in (0, 1):
                 sub = getattr(self, "%s%i" % (p, t), None)
                 if sub is not None:
@@ -253,8 +253,8 @@ class Frame(FrameBase):
     .. versionchanged:: 0.6.0
         By default the data contained with in a frame is normalized by the number of
         fills (header.fills parameter).  For data products that are a function of more
-        than one primary input, i.e., XY* or I, the minimum fill of X and Y are used 
-        for normalization.
+        than one primary input, i.e., real(XY*) or I, the minimum fill of X and Y are 
+        used for normalization.
     """
     
     _header_class = FrameHeader

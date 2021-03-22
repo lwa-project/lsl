@@ -5,6 +5,7 @@
   * Added support for querying the MCS `mindelays.txt` file in lsl.common.metabundle/metabundleADP
   * Fixed a problem in lsl.imaging.utils.ImgW that lead to a shift in source position with frequency
   * Fixed a problem fitting a Gaussian to the point spread function in lsl.imaging.deconv
+  * Added support for the XXCRCIYY, CRCI, and I DR spectrometer modes
 
 2.0.2
   * Added a -v/--lwasv option to correlateTBN.py and tbnSpectra.py
