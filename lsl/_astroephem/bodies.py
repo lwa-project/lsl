@@ -1,11 +1,11 @@
 from __future__ import print_function, division
 
+import numpy
+
 from astropy.time import Time
 from astropy.coordinates import SkyCoord, ITRS, AltAz, get_body, get_moon
 from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
-import numpy
-import math
 
 from angles import hours, degrees
 from dates import Date
@@ -27,17 +27,23 @@ class _Body(object):
     def compute(self, date_or_observer=None):
         if date_or_observer is None:
             date_or_observer = Time.now()
+        elif isinstance(date_or_observer, str):
+            date_or_observer = Date(date_or_observer)
         elif isinstance(date_or_observer, float):
             date_or_observer = Date(date_or_observer)
             
         if isinstance(date_or_observer, Time):
             self.a_epoch = date_or_observer
             gast = self.a_epoch.sidereal_time('apparent', longitude=0)
+            ogc = CartesianRepresentation(0.0, 0.0, 0.0)
+            
             try:
                 _ac = self._sc.apply_space_motion(new_obstime=date_or_observer)
             except (AttributeError, ValueError):
                 _ac = self._sc
             _gc = _ac.transform_to(ITRS(obstime=self.a_epoch))
+            _lc = _ac.transform_to(ITRS(ogc,
+                                        obstime=self.a_epoch))
         else:
             self.a_epoch = date_or_observer.date
             gast = self.a_epoch.sidereal_time('apparent', longitude=0)
@@ -158,6 +164,10 @@ class FixedBody(_Body):
     __epoch = "J2000.0"
     __pmra = 0.0*u.mas/u.yr
     __pmdec = 0.0*u.mas/u.yr
+    
+    def __repr__(self):
+        return "<%s.%s %s at 0x%x>" % (type(self).__module__, type(self).__name__, '"%s"' % self.name if self.name else 'None', id(self))
+        
     def _update(self):
         self._sc = SkyCoord(self.__ra, self.__dec,
                             frame='icrs', obstime=self.__epoch)
@@ -222,9 +232,14 @@ class Planet(_Body):
     def __init__(self, func):
         self.func = func
         
+    def __repr__(self):
+        return "<%s.%s %s at 0x%x>" % (type(self).__module__, type(self).__name__, '"%s"' % self.name if self.name else 'None', id(self))
+        
     def compute(self, date_or_observer=None):
         if date_or_observer is None:
             date_or_observer = Time.now()
+        elif isinstance(date_or_observer, str):
+            date_or_observer = Date(date_or_observer)
         elif isinstance(date_or_observer, float):
             date_or_observer = Date(date_or_observer)
             
@@ -241,6 +256,8 @@ class Sun(Planet):
     A Planet instance representing the Sun.
     """
     
+    name = 'Sun'
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('sun', x))
 
@@ -249,6 +266,8 @@ class Mercury(Planet):
     """
     A Planet instance representing Mercury.
     """
+    
+    name = 'Mercury'
     
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('mercury', x))
@@ -259,6 +278,8 @@ class Venus(Planet):
     A Planet instance representing Venus.
     """
     
+    name = 'Venus'
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('venus', x))
 
@@ -266,6 +287,8 @@ class Venus(Planet):
 class Moon(Planet):
     """
     A Planet instance representing Earth's moon"""
+    
+    name = 'Moon'
     
     def __init__(self):
         Planet.__init__(self, lambda x: get_moon(x))
@@ -276,6 +299,8 @@ class Mars(Planet):
     A Planet instance representing Mars.
     """
     
+    name = 'Mars'
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('mars', x))
 
@@ -284,6 +309,8 @@ class Jupiter(Planet):
     """
     A Planet instance representing Jupiter.
     """
+    
+    name = 'Jupiter'
     
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('jupiter', x))
@@ -294,6 +321,8 @@ class Saturn(Planet):
     A Planet instance representing Saturn.
     """
     
+    name = 'Saturn'
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('saturn', x))
 
@@ -303,6 +332,8 @@ class Uranus(Planet):
     A Planet instance representing Uranus.
     """
     
+    name = 'Uranus'
+    
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('uranus', x))
 
@@ -311,6 +342,8 @@ class Neptune(Planet):
     """
     A Planet instance representing Neptune.
     """
+    
+    name = 'Neptune'
     
     def __init__(self):
         Planet.__init__(self, lambda x: get_body('neptune', x))
