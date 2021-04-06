@@ -1,10 +1,14 @@
 from __future__ import print_function, division
 
+import time
+import calendar
+import datetime
+
 from astropy.time import Time
 
 from functools import total_ordering 
 
-__all__ = ['B1950', 'J2000', 'Date']
+__all__ = ['B1950', 'J2000', 'Date', 'now', 'localtime']
 
 
 _DJD_OFFSET = 2415020.0
@@ -30,6 +34,12 @@ class _FloatableTime(Time):
         else:
             return Time.__sub__(self, other)
             
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return float(self)*other
+        else:
+            return Time.__mul__(self, other)
+            
     def __neg__(self):
         return -float(self)
         
@@ -44,7 +54,11 @@ class _FloatableTime(Time):
             return float(self) < float(other)
         else:
             return Time.__lt__(self, other)
-            
+           
+    @property
+    def djd(self):
+        return float(self)
+         
     def tuple(self):
         dt = self.datetime
         return (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second+dt.microsecond/1e6)
@@ -61,7 +75,7 @@ J2000 = _FloatableTime(2000.0, format='jyear', scale='utc')
 def Date(value):
     date = None
     if isinstance(value, Time):
-        date = value
+        date = _FloatableTime(value)
     elif isinstance(value, (int, float)):
         value = value + _DJD_OFFSET
         date = _FloatableTime(value, format='jd', scale='utc')
@@ -71,3 +85,13 @@ def Date(value):
     if date is None:
         raise ValueError("Cannot parse '%s'" % str(value))
     return date
+
+
+def now():
+    return Date(Time.now())
+
+
+def localtime(date):
+    timetuple = time.localtime(calendar.timegm(date.tuple()))
+    return datetime.datetime(*timetuple[:7])
+    
