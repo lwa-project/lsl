@@ -24,6 +24,16 @@ class _FloatableAngle(Angle):
         else:
             return Angle.__repr__(self)
             
+    def __str__(self):
+        if SIMPLE_REPR:
+            output = Angle.__str__(self)
+            for u in ('d', 'm', 'h'):
+                output = output.replace(u, ':')
+            output = output.replace('s', '')
+            return output
+        else:
+            return Angle.__str__(self)
+            
     def __float__(self):
         return self.to('radian').value % (2*numpy.pi)
         
