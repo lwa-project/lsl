@@ -94,7 +94,7 @@ def main(args):
         drspec = 'No'
         if project.sessions[0].spcSetup[0] != 0 and project.sessions[0].spcSetup[1] != 0:
             drspec = 'Yes'
-        drxBeam = project.sessions[0].drxBeam
+        drxBeam = project.sessions[0].drx_beam
         if drxBeam < 1:
             drxBeam = "MCS decides"
         else:
@@ -125,11 +125,11 @@ def main(args):
     print(" ")
     print("ASP Configuration:")
     print('  Beginning')
-    for k in aspConfigB.keys():
-        print('    %s: %i' % (k, aspConfigB[k]))
+    for k,v in aspConfigB.items():
+        print('    %s: %i' % (k, v))
     print('  End')
-    for k in aspConfigE.keys():
-        print('    %s: %i' % (k, aspConfigE[k]))
+    for k,v in aspConfigE.items():
+        print('    %s: %i' % (k, v))
         
     print(" ")
     print(" Number of observations: %i" % nObs)
@@ -141,7 +141,7 @@ def main(args):
         print("  Observation #%i" % (i+1,))
         currObs = None
         for j in range(len(obsImpl)):
-            if obsImpl[j]['obsID'] == i+1:
+            if obsImpl[j]['obs_id'] == i+1:
                 currObs = obsImpl[j]
                 break
                 
@@ -164,9 +164,9 @@ def main(args):
         if currObs is not None:
             if project.sessions[0].observations[i].mode not in ('TBW',):
                 if project.sessions[0].observations[i].mode == 'TBN':
-                    print("   Gain setting: %i" % currObs['tbnGain'])
+                    print("   Gain setting: %i" % currObs['tbn_gain'])
                 else:
-                    print("   Gain setting: %i" % currObs['drxGain'])
+                    print("   Gain setting: %i" % currObs['drx_gain'])
         else:
             print("   WARNING: observation specification not found for this observation")
             

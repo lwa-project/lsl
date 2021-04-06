@@ -124,7 +124,7 @@ class StationSettings(object):
     Python object that holds the status for the sub-subsystems in a SDM file.
     """
     
-    def __init__(self, report=None, update=None, fee=None, asp_flt=None, asp_at1=None, asp_at2=None, asp_ats=None, 
+    def __init__(self, report=None, update=None, fee_power=None, asp_filter=None, asp_atten_1=None, asp_atten_2=None, asp_atten_split=None, 
                 tbn_gain=-1, drx_gain=-1):
         if report is None:
             self.report = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
@@ -136,30 +136,30 @@ class StationSettings(object):
         else:
             self.update = update
             
-        if fee is None:
-            self.fee = [0 for n in range(ME_MAX_NSTD)]
+        if fee_power is None:
+            self.fee_power = [0 for n in range(ME_MAX_NSTD)]
         else:
-            self.fee = fee
+            self.fee_power = fee_power
             
-        if asp_flt is None:
-            self.asp_flt = [0 for n in range(ME_MAX_NSTD)]
+        if asp_filter is None:
+            self.asp_filter = [0 for n in range(ME_MAX_NSTD)]
         else:
-            self.asp_flt = asp_flt
+            self.asp_filter = asp_filter
             
-        if asp_at1 is None:
-            self.asp_at1 = [0 for n in range(ME_MAX_NSTD)]
+        if asp_atten_1 is None:
+            self.asp_atten_1 = [0 for n in range(ME_MAX_NSTD)]
         else:
-            self.asp_at1 = asp_at1
+            self.asp_atten_1 = asp_atten_1
             
-        if asp_at2 is None:
-            self.asp_at2 = [0 for n in range(ME_MAX_NSTD)]
+        if asp_atten_2 is None:
+            self.asp_atten_2 = [0 for n in range(ME_MAX_NSTD)]
         else:
-            self.asp_at2 = asp_at2
+            self.asp_atten_2 = asp_atten_2
             
-        if asp_ats is None:
-            self.asp_ats = [0 for n in range(ME_MAX_NSTD)]
+        if asp_atten_split is None:
+            self.asp_atten_split = [0 for n in range(ME_MAX_NSTD)]
         else:
-            self.asp_ats = asp_ats
+            self.asp_atten_split = asp_atten_split
             
         self.tbn_gain = tbn_gain
         self.drx_gain = drx_gain
@@ -198,12 +198,12 @@ class StationSettings(object):
         self.update['SHL'] = ssStruct.mup_shl
         self.update['MCS'] = ssStruct.mup_mcs
         
-        self.fee = flat_to_multi(ssStruct.fee, *ssStruct.dims['fee'])
+        self.fee_power = flat_to_multi(ssStruct.fee, *ssStruct.dims['fee'])
         
-        self.asp_flt = list(ssStruct.asp_flt)
-        self.asp_at1 = list(ssStruct.asp_at1)
-        self.asp_at2 = list(ssStruct.asp_at2)
-        self.asp_ats = list(ssStruct.asp_ats)
+        self.asp_filter = list(ssStruct.asp_flt)
+        self.asp_atten_1 = list(ssStruct.asp_at1)
+        self.asp_atten_2 = list(ssStruct.asp_at2)
+        self.asp_atten_split = list(ssStruct.asp_ats)
         
         self.tbn_gain = ssStruct.tbn_gain
         self.drx_gain = ssStruct.drx_gain

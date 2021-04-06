@@ -14,15 +14,14 @@ if sys.version_info < (3,):
 import os
 import sys
 import time
-import ephem
 import numpy
 import argparse
-from datetime import datetime, timedelta, tzinfo
+
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
 from lsl import astro
-from lsl.reader.ldp import LWASVDataFile
+from lsl.reader.ldp import LWASVDataFile, TBFFile
 from lsl.common import stations, metabundleADP
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
@@ -32,19 +31,6 @@ from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
 telemetry.track_script()
-
-
-class UTC(tzinfo):
-    """tzinfo object for UTC time."""
-    
-    def utcoffset(self, dt):
-        return timedelta(0)
-        
-    def tzname(self, dt):
-        return "UTC"
-        
-    def dst(self, dt):
-        return timedelta(0)
 
 
 def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_size=100):
@@ -112,8 +98,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
             ref_time = setTime
             
         # Setup the set time as a python datetime instance so that it can be easily printed
-        setDT = datetime.utcfromtimestamp(setTime)
-        setDT.replace(tzinfo=UTC())
+        setDT = setTime.datetime
         print("Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
         
         # Loop over polarization products
@@ -183,9 +168,11 @@ def main(args):
     antennas = station.antennas
     
     idf = LWASVDataFile(filename)
-    
-    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
-    date = str(ephem.Date(jd - astro.DJD_OFFSET))
+    if not isinstance(idf, TBFFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
+        
+    jd = idf.get_info('start_time').jd
+    date = idf.get_info('start_time').datetime
     nFpO = idf.get_info('nchan') // 12
     sample_rate = idf.get_info('sample_rate')
     nInts = idf.get_info('nframe') // nFpO

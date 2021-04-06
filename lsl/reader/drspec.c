@@ -59,14 +59,14 @@ static void parse_linear_single(DRSpecHeader header, float *data, float *S0, flo
         norm0 = header.nFreqs * header.fills[1];
         norm1 = header.nFreqs * header.fills[3];
     } else {
-        // XY* or YX*
+        // real(XY*) or imag(XY*)
         norm0 = header.nFreqs * min(header.fills[0], header.fills[1]);
         norm1 = header.nFreqs * min(header.fills[2], header.fills[3]);
     }
     
     // Sort out the data
     for(i=0; i<header.nFreqs; i++) {
-        // XX*/XY*/YX*/YY only
+        // XX*/real(XY*)/imag(XY*)/YY only
         *(S0 + i) = *(data + 0*header.nFreqs + i) / norm0;
         *(S1 + i) = *(data + 1*header.nFreqs + i) / norm1;
     }
@@ -96,7 +96,28 @@ static void parse_linear_half(DRSpecHeader header, float *data, float *XX0, floa
 }
 
 
-static void parse_linear_full(DRSpecHeader header, float *data, float *XX0, float *XX1, float *XY0, float *XY1, float *YX0, float *YX1, float *YY0, float *YY1) {
+static void parse_linear_other_half(DRSpecHeader header, float *data, float *CR0, float *CR1, float *CI0, float *CI1) {
+    int i;
+    float normCH0, normCH1;
+    
+    // Spectra normalization factors
+    normCH0 = header.nFreqs * min(header.fills[0], header.fills[1]);
+    normCH1 = header.nFreqs * min(header.fills[2], header.fills[3]);
+    
+    // Sort out the data
+    for(i=0; i<header.nFreqs; i++) {
+        // real(XY*)
+        *(CR0 + i) = *(data + 0*header.nFreqs + 2*i + 0) / normCH0;
+        *(CR1 + i) = *(data + 2*header.nFreqs + 2*i + 0) / normCH1;
+        
+        // imag(XY*)
+        *(CI0 + i) = *(data + 0*header.nFreqs + 2*i + 1) / normCH0;
+        *(CI1 + i) = *(data + 2*header.nFreqs + 2*i + 1) / normCH1;
+    }
+}
+
+
+static void parse_linear_full(DRSpecHeader header, float *data, float *XX0, float *XX1, float *CR0, float *CR1, float *CI0, float *CI1, float *YY0, float *YY1) {
     int i;
     float normXX0, normXX1, normCH0, normCH1, normYY0, normYY1;
     
@@ -114,13 +135,13 @@ static void parse_linear_full(DRSpecHeader header, float *data, float *XX0, floa
         *(XX0 + i) = *(data + 0*header.nFreqs + 4*i + 0) / normXX0;
         *(XX1 + i) = *(data + 4*header.nFreqs + 4*i + 0) / normXX1;
         
-        // XY*
-        *(XY0 + i) = *(data + 0*header.nFreqs + 4*i + 1) / normCH0;
-        *(XY1 + i) = *(data + 4*header.nFreqs + 4*i + 1) / normCH1;
+        // real(XY*)
+        *(CR0 + i) = *(data + 0*header.nFreqs + 4*i + 1) / normCH0;
+        *(CR1 + i) = *(data + 4*header.nFreqs + 4*i + 1) / normCH1;
         
-        // YX*
-        *(YX0 + i) = *(data + 0*header.nFreqs + 4*i + 2) / normCH0;
-        *(YX1 + i) = *(data + 4*header.nFreqs + 4*i + 2) / normCH1;
+        // imag(XY*)
+        *(CI0 + i) = *(data + 0*header.nFreqs + 4*i + 2) / normCH0;
+        *(CI1 + i) = *(data + 4*header.nFreqs + 4*i + 2) / normCH1;
         
         // YY*
         *(YY0 + i) = *(data + 0*header.nFreqs + 4*i + 3) / normYY0;
@@ -239,9 +260,9 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     // Get the data format
     if( header.stokes_format < 0x10 ) {
         // Linear
-        if( header.stokes_format < 0x09 ) {
+        if( header.stokes_format < 0x09 && header.stokes_format != 0x06 ) {
             nSets = 2;
-        } else if( header.stokes_format == 0x09 ) {
+        } else if( header.stokes_format == 0x06 || header.stokes_format == 0x09 ) {
             nSets = 4;
         } else {
             nSets = 8;
@@ -269,13 +290,13 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     
     dataB0 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
     if(dataB0 == NULL) {
-        PyErr_Format(PyExc_MemoryError, "Cannot create output array - XY0/Q0");
+        PyErr_Format(PyExc_MemoryError, "Cannot create output array - CR0/Q0");
         goto fail;
     }
     
     dataC0 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
     if(dataC0 == NULL) {
-        PyErr_Format(PyExc_MemoryError, "Cannot create output array - YX0/U0");
+        PyErr_Format(PyExc_MemoryError, "Cannot create output array - CI0/U0");
         goto fail;
     }
     
@@ -293,13 +314,13 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     
     dataB1 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
     if(dataB1 == NULL) {
-        PyErr_Format(PyExc_MemoryError, "Cannot create output array - XY1/Q1");
+        PyErr_Format(PyExc_MemoryError, "Cannot create output array - CR1/Q1");
         goto fail;
     }
     
     dataC1 = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
     if(dataC1 == NULL) {
-        PyErr_Format(PyExc_MemoryError, "Cannot create output array - YX1/U1");
+        PyErr_Format(PyExc_MemoryError, "Cannot create output array - CI1/U1");
         goto fail;
     }
     
@@ -353,10 +374,10 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
             // XX* only
             parse_linear_single(header, data, a0, a1, 1, 0);
         } else if( header.stokes_format == 0x02 ) {
-            // XY* only
+            // real(XY*) only
             parse_linear_single(header, data, b0, b1, 1, 1);
         } else if( header.stokes_format == 0x04 ) {
-            // YX* only
+            // imag(XY*) only
             parse_linear_single(header, data, c0, c1, 1, 1);
         } else if( header.stokes_format == 0x08 ) {
             // YY* only
@@ -364,8 +385,11 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
         } else if( header.stokes_format == 0x09 ) {
             // XX* and YY*
             parse_linear_half(header, data, a0, a1, d0, d1);
+        } else if( header.stokes_format == 0x06 ) {
+            // real(XY*) and imag(XY*)
+            parse_linear_other_half(header, data, b0, b1, c0, c1);
         } else {
-            // XX*, XY*, YX*, and YY*
+            // XX*, real(XY*), imag(XY*), and YY*
             parse_linear_full(header, data, a0, a1, b0, b1, c0, c1, d0, d1);
         }
     } else {
@@ -492,12 +516,12 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
         PyObject_SetAttrString(fPayload, "XX1", PyArray_Return(dataA1));
     }
     if( header.stokes_format & 0x02 ) {
-        PyObject_SetAttrString(fPayload, "XY0", PyArray_Return(dataB0));
-        PyObject_SetAttrString(fPayload, "XY1", PyArray_Return(dataB1));
+        PyObject_SetAttrString(fPayload, "XY_real0", PyArray_Return(dataB0));
+        PyObject_SetAttrString(fPayload, "XY_real1", PyArray_Return(dataB1));
     }
     if( header.stokes_format & 0x04 ) {
-        PyObject_SetAttrString(fPayload, "YX0", PyArray_Return(dataC0));
-        PyObject_SetAttrString(fPayload, "YX1", PyArray_Return(dataC1));
+        PyObject_SetAttrString(fPayload, "XY_imag0", PyArray_Return(dataC0));
+        PyObject_SetAttrString(fPayload, "XY_imag1", PyArray_Return(dataC1));
     }
     if( header.stokes_format & 0x08 ) {
         PyObject_SetAttrString(fPayload, "YY0", PyArray_Return(dataD0));
@@ -564,7 +588,6 @@ a drspec.Frame instance.\n\
 \n\
 .. note::\n\
 \tThis function normalizes the spectra by the number of relevant fills.  For\n\
-\tproducts that are a function of more than one primary input, i.e., XY* or\n\
+\tproducts that are a function of more than one primary input, i.e., real(XY*) or\n\
 \tI, the minimum fill of X and Y are used for normalization.\n\
 ");
-

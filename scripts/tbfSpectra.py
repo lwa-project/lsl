@@ -13,7 +13,6 @@ if sys.version_info < (3,):
 import os
 import sys
 import math
-import ephem
 import numpy
 import argparse
 

@@ -14,13 +14,11 @@ if sys.version_info < (3,):
 import os
 import sys
 import time
-import ephem
 import numpy
 import argparse
-from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWA1DataFile, TBWFile
 from lsl.common import stations, metabundle
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi
@@ -29,19 +27,6 @@ from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
 telemetry.track_script()
-
-
-class UTC(tzinfo):
-    """tzinfo object for UTC time."""
-    
-    def utcoffset(self, dt):
-        return timedelta(0)
-        
-    def tzname(self, dt):
-        return "UTC"
-        
-    def dst(self, dt):
-        return timedelta(0)
 
 
 def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols=['xx','yy']):
@@ -71,8 +56,8 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
     setTime = t
     ref_time = t
     
-    setDT = datetime.utcfromtimestamp(setTime)
-    setDT.replace(tzinfo=UTC())
+    # Setup the set time as a python datetime instance so that it can be easily printed
+    setDT = setTime.datetime
     print("Working on set #1 (%.3f seconds after set #1 = %s)" % ((setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
     
     # In order for the TBW stuff to actaully run, we need to run in with sub-
@@ -160,9 +145,11 @@ def main(args):
     antennas = station.antennas
     
     idf = LWA1DataFile(filename)
-    
-    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
-    date = str(ephem.Date(jd - astro.DJD_OFFSET))
+    if not isinstance(idf, TBWFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBW file" % os.path.basename(filename))
+        
+    jd = idf.get_info('start_time').jd
+    date = idf.get_info('start_time').datetime
     sample_rate = idf.get_info('sample_rate')
     nInts = idf.get_info('nframe') // (30000 * len(antennas) // 2)
     

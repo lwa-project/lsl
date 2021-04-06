@@ -15,7 +15,7 @@ from lsl.common import metabundle
 from lsl.common.paths import DATA_BUILD
 
 
-__version__  = "0.4"
+__version__  = "0.5"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(DATA_BUILD, 'tests', 'metadata.tgz')
@@ -36,14 +36,14 @@ class metabundle_tests(unittest.TestCase):
         obs = metabundle.get_observation_spec(mdbFile)
         
         # Check session start time
-        self.assertEqual(ses['MJD'], 56742)
-        self.assertEqual(ses['MPM'], 4914000)
+        self.assertEqual(ses['mjd'], 56742)
+        self.assertEqual(ses['mpm'], 4914000)
         
         # Check the duration
-        self.assertEqual(ses['Dur'], obs[0]['Dur'] + 10000)
+        self.assertEqual(ses['dur'], obs[0]['dur'] + 10000)
         
         # Check the number of observations
-        self.assertEqual(ses['nObs'], len(obs))
+        self.assertEqual(ses['nobs'], len(obs))
     
     def test_os(self):
         """Test the observation specification utilities."""
@@ -55,11 +55,11 @@ class metabundle_tests(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['Mode'], 1)
+        self.assertEqual(obs2['mode'], 1)
         
         # Check the time
-        self.assertEqual(obs2['MJD'], 56742)
-        self.assertEqual(obs2['MPM'], 4919000)
+        self.assertEqual(obs2['mjd'], 56742)
+        self.assertEqual(obs2['mpm'], 4919000)
         
     def test_cs(self):
         """Test the command script utilities."""
@@ -70,14 +70,14 @@ class metabundle_tests(unittest.TestCase):
         self.assertEqual(len(cmnds), 150)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['commandID'], 'NUL')
-        self.assertEqual(cmnds[-2]['commandID'], 'OBE')
-        self.assertEqual(cmnds[-1]['commandID'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
+        self.assertEqual(cmnds[-2]['command_id'], 'OBE')
+        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['commandID'] == 'BAM':
+            if cmnd['command_id'] == 'BAM':
                 nBAM += 1
         self.assertEqual(nBAM, 143)
         
@@ -121,17 +121,17 @@ class metabundle_tests(unittest.TestCase):
         
         # Beginning config.
         aspConfig = metabundle.get_asp_configuration_summary(mdbFile, which='beginning')
-        self.assertEqual(aspConfig['filter'],  1)
-        self.assertEqual(aspConfig['at1'],    13)
-        self.assertEqual(aspConfig['at2'],    13)
-        self.assertEqual(aspConfig['atsplit'],15)
+        self.assertEqual(aspConfig['asp_filter'],      1)
+        self.assertEqual(aspConfig['asp_atten_1'],    13)
+        self.assertEqual(aspConfig['asp_atten_2'],    13)
+        self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # End config.
         aspConfig = metabundle.get_asp_configuration_summary(mdbFile, which='End')
-        self.assertEqual(aspConfig['filter'],  1)
-        self.assertEqual(aspConfig['at1'],    13)
-        self.assertEqual(aspConfig['at2'],    13)
-        self.assertEqual(aspConfig['atsplit'],15)
+        self.assertEqual(aspConfig['asp_filter'],      1)
+        self.assertEqual(aspConfig['asp_atten_1'],    13)
+        self.assertEqual(aspConfig['asp_atten_2'],    13)
+        self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
         self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
@@ -160,14 +160,14 @@ class metabundle_tests_old_0(unittest.TestCase):
         obs = metabundle.get_observation_spec(mdbFileOld0)
         
         # Check session start time
-        self.assertEqual(ses['MJD'], 56013)
-        self.assertEqual(ses['MPM'], 25855000)
+        self.assertEqual(ses['mjd'], 56013)
+        self.assertEqual(ses['mpm'], 25855000)
         
         # Check the duration
-        self.assertEqual(ses['Dur'], obs[0]['Dur'] + 10000)
+        self.assertEqual(ses['dur'], obs[0]['dur'] + 10000)
         
         # Check the number of observations
-        self.assertEqual(ses['nObs'], len(obs))
+        self.assertEqual(ses['nobs'], len(obs))
         
     def test_os(self):
         """Test the observation specification utilities."""
@@ -179,11 +179,11 @@ class metabundle_tests_old_0(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['Mode'], 1)
+        self.assertEqual(obs2['mode'], 1)
         
         # Check the time
-        self.assertEqual(obs2['MJD'], 56013)
-        self.assertEqual(obs2['MPM'], 25860000)
+        self.assertEqual(obs2['mjd'], 56013)
+        self.assertEqual(obs2['mpm'], 25860000)
         
     def test_cs(self):
         """Test the command script utilities."""
@@ -194,14 +194,14 @@ class metabundle_tests_old_0(unittest.TestCase):
         self.assertEqual(len(cmnds), 491)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['commandID'], 'NUL')
-        self.assertEqual(cmnds[-2]['commandID'], 'OBE')
-        self.assertEqual(cmnds[-1]['commandID'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
+        self.assertEqual(cmnds[-2]['command_id'], 'OBE')
+        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['commandID'] == 'BAM':
+            if cmnd['command_id'] == 'BAM':
                 nBAM += 1
         self.assertEqual(nBAM, 484)
         
@@ -240,14 +240,14 @@ class metabundle_tests_old_1(unittest.TestCase):
         obs = metabundle.get_observation_spec(mdbFileOld1)
         
         # Check session start time
-        self.assertEqual(ses['MJD'], 56492)
-        self.assertEqual(ses['MPM'], 68995000)
+        self.assertEqual(ses['mjd'], 56492)
+        self.assertEqual(ses['mpm'], 68995000)
         
         # Check the duration
-        self.assertEqual(ses['Dur'], obs[0]['Dur'] + 10000)
+        self.assertEqual(ses['dur'], obs[0]['dur'] + 10000)
         
         # Check the number of observations
-        self.assertEqual(ses['nObs'], len(obs))
+        self.assertEqual(ses['nobs'], len(obs))
         
     def test_os(self):
         """Test the observation specification utilities."""
@@ -259,11 +259,11 @@ class metabundle_tests_old_1(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['Mode'], 1)
+        self.assertEqual(obs2['mode'], 1)
         
         # Check the time
-        self.assertEqual(obs2['MJD'], 56492)
-        self.assertEqual(obs2['MPM'], 69000000)
+        self.assertEqual(obs2['mjd'], 56492)
+        self.assertEqual(obs2['mpm'], 69000000)
         
     def test_cs(self):
         """Test the command script utilities."""
@@ -274,14 +274,14 @@ class metabundle_tests_old_1(unittest.TestCase):
         self.assertEqual(len(cmnds), 8)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['commandID'], 'NUL')
-        self.assertEqual(cmnds[-2]['commandID'], 'OBE')
-        self.assertEqual(cmnds[-1]['commandID'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
+        self.assertEqual(cmnds[-2]['command_id'], 'OBE')
+        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['commandID'] == 'BAM':
+            if cmnd['command_id'] == 'BAM':
                 nBAM += 1
         self.assertEqual(nBAM, 1)
         
@@ -320,17 +320,17 @@ class metabundle_tests_old_1(unittest.TestCase):
         
         # Beginning config.
         aspConfig = metabundle.get_asp_configuration_summary(mdbFileOld1, which='beginning')
-        self.assertEqual(aspConfig['filter'],  3)
-        self.assertEqual(aspConfig['at1'],     0)
-        self.assertEqual(aspConfig['at2'],     0)
-        self.assertEqual(aspConfig['atsplit'], 0)
+        self.assertEqual(aspConfig['asp_filter'],      3)
+        self.assertEqual(aspConfig['asp_atten_1'],     0)
+        self.assertEqual(aspConfig['asp_atten_2'],     0)
+        self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # End config.
         aspConfig = metabundle.get_asp_configuration_summary(mdbFileOld1, which='End')
-        self.assertEqual(aspConfig['filter'],  1)
-        self.assertEqual(aspConfig['at1'],    13)
-        self.assertEqual(aspConfig['at2'],    13)
-        self.assertEqual(aspConfig['atsplit'], 0)
+        self.assertEqual(aspConfig['asp_filter'],      1)
+        self.assertEqual(aspConfig['asp_atten_1'],    13)
+        self.assertEqual(aspConfig['asp_atten_2'],    13)
+        self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # Unknown code
         self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileOld1, 'middle')

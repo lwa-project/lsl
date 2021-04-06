@@ -43,7 +43,7 @@ PY2 = sys.version_info.major < 3
 if PY2:
     ASTROPY_VERSION = 'astropy<3.0'
 else:
-    ASTROPY_VERSION = 'astropy>=3.0,<3.2'
+    ASTROPY_VERSION = 'astropy>=3.0'
 
 
 def get_version():
@@ -138,8 +138,8 @@ return 0;
 
 def get_fftw():
     """Use pkg-config (if installed) to figure out the C flags and linker flags
-    needed to compile a C program with FFTW3 (floating point version).  If FFTW3 
-    cannot be found via pkg-config, some 'sane' values are returned."""
+    needed to compile a C program with single precision FFTW3.  If FFTW3 cannot 
+    be found via pkg-config, some 'sane' values are returned."""
     
     try:
         subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
@@ -165,7 +165,7 @@ def get_fftw():
             print("Found FFTW3, version %s" % outVersion[0])
             
     except (OSError, subprocess.CalledProcessError):
-        print("WARNING:  FFTW3 cannot be found, using defaults")
+        print("WARNING:  single precision FFTW3 cannot be found, using defaults")
         outCFLAGS = []
         outLIBS = ['-lfftw3f', '-lm']
         
@@ -225,12 +225,12 @@ short_version = '%s'
     return True
 
 
-# Get the FFTW flags/libs and manipulate the flags and libraries for 
+# Get the FFTW3 flags/libs and manipulate the flags and libraries for 
 # correlator._core appropriately.  This will, hopefully, fix the build
 # problems on Mac
 class lsl_build(build):
     user_options = build.user_options \
-                   + [('with-fftw=', None, 'Installation path for FFTW'),]
+                   + [('with-fftw=', None, 'Installation path for single precision FFTW3'),]
     
     def initialize_options(self, *args, **kwargs):
         build.initialize_options(self, *args, **kwargs)
@@ -244,13 +244,15 @@ class lsl_build(build):
             beco = self.distribution.get_command_obj('build_ext')
             
             ## Grab the FFTW flags
+            if os.getenv('WITH_FFTW', None) is not None:
+                self.with_fftw = os.getenv('WITH_FFTW')
             if self.with_fftw is not None:
                 beco.with_fftw = self.with_fftw
 
 
 class lsl_build_ext(build_ext):
     user_options = build_ext.user_options \
-                   + [('with-fftw=', None, 'Installation path for FFTW'),]
+                   + [('with-fftw=', None, 'Installation path for single precision FFTW3'),]
     
     def initialize_options(self, *args, **kwargs):
         build_ext.initialize_options(self, *args, **kwargs)
@@ -264,6 +266,8 @@ class lsl_build_ext(build_ext):
         openmpFlags, openmpLibs = get_openmp()
         
         ## Grab the FFTW flags
+        if os.getenv('WITH_FFTW', None) is not None:
+            self.with_fftw = os.getenv('WITH_FFTW')
         if self.with_fftw is not None:
             fftwFlags = ['-I%s/include' % self.with_fftw,]
             fftwLibs = ['-L%s/lib' % self.with_fftw, '-lfftw3f']

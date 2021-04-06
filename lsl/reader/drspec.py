@@ -109,9 +109,9 @@ class FrameHeader(FrameHeaderBase):
         if self.format & 0x01:
             products.append('XX')
         if self.format & 0x02:
-            products.append('XY')
+            products.append('XY_real')
         if self.format & 0x04:
-            products.append('YX')
+            products.append('XY_imag')
         if self.format & 0x08:
             products.append('YY')
             
@@ -171,8 +171,7 @@ class FrameHeader(FrameHeaderBase):
         """
         
         sampleCodes = {}
-        for key in FILTER_CODES:
-            value = FILTER_CODES[key]
+        for key,value in FILTER_CODES.items():
             sampleCodes[value] = key
             
         return sampleCodes[self.sample_rate]
@@ -228,7 +227,7 @@ class FramePayload(FramePayloadBase):
     def data(self):
         packed = []
         dtype = []
-        for p in ('XX', 'XY', 'YX', 'YY', 'I', 'Q', 'U', 'V'):
+        for p in ('XX', 'XY_real', 'XY_imag', 'YY', 'I', 'Q', 'U', 'V'):
             for t in (0, 1):
                 sub = getattr(self, "%s%i" % (p, t), None)
                 if sub is not None:
@@ -254,8 +253,8 @@ class Frame(FrameBase):
     .. versionchanged:: 0.6.0
         By default the data contained with in a frame is normalized by the number of
         fills (header.fills parameter).  For data products that are a function of more
-        than one primary input, i.e., XY* or I, the minimum fill of X and Y are used 
-        for normalization.
+        than one primary input, i.e., real(XY*) or I, the minimum fill of X and Y are 
+        used for normalization.
     """
     
     _header_class = FrameHeader
@@ -398,6 +397,35 @@ class Frame(FrameBase):
             
         return self
         
+    def __sub__(self, y):
+        """
+        Subtract the data sections of two frames or subtract a number 
+        from every element in the data section.
+        """
+        
+        newFrame = copy.deepcopy(self)
+        newFrame -= y
+        return newFrame
+        
+    def __isub__(self, y):
+        """
+        In-place subtract the data sections of two frames or subtract 
+        a number from every element in the data section.
+        """
+        
+        for attrBase in self.header.data_products:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) - getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) - numpy.float32(y)
+                setattr(self.payload, attr, temp)
+            
+        return self
+        
     def __mul__(self, y):
         """
         Multiple the data sections of two frames together or multiply 
@@ -424,7 +452,65 @@ class Frame(FrameBase):
                 except AttributeError:
                     temp = getattr(self.payload, attr, None) * numpy.float32(y)
                 setattr(self.payload, attr, temp)
+                
+        return self
+        
+    def __floordiv__(self, y):
+        """
+        Divide the data sections of two frames or divide
+        a number from every element in the data section.
+        """
+        
+        newFrame = copy.deepcopy(self)
+        newFrame //= y
+        return newFrame
             
+    def __ifloordiv__(self, y):
+        """
+        In-place divide the data sections of two frames or 
+        divide a number from every element in the data section.
+        """
+        
+        for attrBase in self.header.data_products:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) // getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) // numpy.float32(y)
+                setattr(self.payload, attr, temp)
+                
+        return self
+        
+    def __truediv__(self, y):
+        """
+        Divide the data sections of two frames or divide
+        a number from every element in the data section.
+        """
+        
+        newFrame = copy.deepcopy(self)
+        newFrame /= y
+        return newFrame
+            
+    def __itruediv__(self, y):
+        """
+        In-place divide the data sections of two frames or 
+        divide a number from every element in the data section.
+        """
+        
+        for attrBase in self.header.data_products:
+            for tuning in (0, 1):
+                attr = "%s%i" % (attrBase, tuning)
+                try:
+                    temp = getattr(self.payload, attr, None) / getattr(y.payload, attr, None)
+                except TypeError:
+                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                except AttributeError:
+                    temp = getattr(self.payload, attr, None) / numpy.float32(y)
+                setattr(self.payload, attr, temp)
+                
         return self
 
 

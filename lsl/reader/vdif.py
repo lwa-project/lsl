@@ -82,7 +82,7 @@ class FrameHeader(FrameHeaderBase):
     frame.  Most fields in the VDIF version 1.1.1 header are stored.
     """
     
-    _header_attrs = ['is_invalid', 'is_legacy', 'second_from_epoch',
+    _header_attrs = ['is_invalid', 'is_legacy', 'seconds_from_epoch',
                      'ref_epoch', 'frame_in_second',
                      'version', 'nchan', 'frame_length',
                      'is_complex', 'bits_per_sample', 'thread_id', 'station_id',
@@ -529,15 +529,13 @@ def get_frames_per_second(filehandle):
                 
     # Pull out the mode
     mode = {}
-    for key in cur.keys():
-        value = cur[key]
+    for key,value in cur.items():
         try:
             mode[value] += 1
         except KeyError:
             mode[value] = 1
     best, bestValue = 0, 0
-    for key in mode.keys():
-        value = mode[key]
+    for key,value in mode.items():
         if value > bestValue:
             best = key
             bestValue = value

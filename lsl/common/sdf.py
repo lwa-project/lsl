@@ -30,6 +30,9 @@ the DP system.
 In addition to providing the means for creating session definition files from scratch, 
 this module also includes a simple parser for SD files.
 
+.. versionchanged:: 2.0.0
+    Added support for astropy.time.Time and astropy.coordinates.Angle instances
+
 .. versionchanged:: 1.0.0
     Added the get_observation_start_stop() function.
     Renamed parse_timeString() to parse_time()
@@ -55,6 +58,7 @@ import weakref
 import warnings
 from datetime import datetime, timedelta
 
+from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 from astropy.coordinates import Angle as AstroAngle
 
@@ -72,12 +76,15 @@ from lsl.reader.tbw import FRAME_SIZE as TBWSize
 from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
+from lsl.config import LSL_CONFIG
+OBSV_CONFIG = LSL_CONFIG.view('observing')
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__version__ = '1.2'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
@@ -91,8 +98,10 @@ _DRSUCapacityTB = 10
 # of samples
 _TBW_TIME_SCALE = 196000
 _TBW_TIME_GAIN = 2500
+
+
 # UCF Username RE
-_usernameRE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z]+)(\/(?P<subdir>[a-zA-Z0-9\/\+\-_]+))?')
+UCF_USERNAME_RE = re.compile(r'ucfuser:[ \t]*(?P<username>[a-zA-Z0-9_]+)(\/(?P<subdir>[a-zA-Z0-9\/\+\-_]+))?')
 
 
 def _get_equinox_equation(jd):
@@ -131,6 +140,9 @@ def parse_time(s, station=lwa1):
     since that it handle both integer and float seconds as well as does the 
     appropriate rounding to get millisecond precision.
     
+    .. versionchanged:: 2.0.0
+        Added support for astropy.time.Time instances
+    
     .. versionchanged:: 1.2.0
         Renamed the 'site' keyword to 'station'
     
@@ -140,7 +152,7 @@ def parse_time(s, station=lwa1):
     """
     
     if isinstance(s, AstroTime):
-        s = s.datetime
+        s = s.utc.datetime
         
     if isinstance(s, datetime):
         if s.tzinfo is None:
@@ -366,7 +378,15 @@ class Observer(object):
         self.first = first
         self.last = last
         self.id = int(id)
-
+        
+    @classmethod
+    def autofilled(cls):
+        name = OBSV_CONFIG.get('observer_name')
+        id = OBSV_CONFIG.get('observer_id')
+        if name is None or id is None:
+            raise RuntimeError("Auto-fill values for the observer cannot be loaded from the configuration file")
+        return cls(name, id)
+        
     def join_name(self):
         if self.first != '':
             self.name = ', '.join([self.last, self.first])
@@ -426,6 +446,15 @@ class Project(object):
                 raise TypeError("Expected 'project_office' to be a ProjectOffice")
             self.project_office = project_office
             
+    @classmethod
+    def autofilled(cls, sessions=None, comments=None, project_office=None):
+        observer = Observer.autofilled()
+        name = OBSV_CONFIG.get('project_name')
+        id = OBSV_CONFIG.get('project_id')
+        if name is None or id is None:
+            raise RuntimeError("Auto-fill values for the project cannot be loaded from the configuration file")
+        return cls(observer, name, id, sessions=session, comments=comments, project_office=project_office)
+        
     def update(self):
         """Update the various sessions that are part of this project."""
         
@@ -532,7 +561,7 @@ class Project(object):
         if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
-                clean = _usernameRE.sub('', ses.comments)
+                clean = UCF_USERNAME_RE.sub('', ses.comments)
             ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
@@ -542,196 +571,196 @@ class Project(object):
             
         ## PI Information
         output = ""
-        output = "%sPI_ID            %s\n" % (output, self.observer.id)
-        output = "%sPI_NAME          %s\n" % (output, self.observer.name)
-        output = "%s\n" % output
+        output += "PI_ID            %s\n" % (self.observer.id,)
+        output += "PI_NAME          %s\n" % (self.observer.name,)
+        output += "\n"
         
         ## Project Information
-        output = "%sPROJECT_ID       %s\n" % (output, self.id)
-        output = "%sPROJECT_TITLE    %s\n" % (output, self.name)
-        output = "%sPROJECT_REMPI    %s\n" % (output, self.comments[:4090] if self.comments else 'None provided')
-        output = "%sPROJECT_REMPO    %s\n" % (output, self.project_office.project)
-        output = "%s\n" % output
+        output += "PROJECT_ID       %s\n" % (self.id,)
+        output += "PROJECT_TITLE    %s\n" % (self.name,)
+        output += "PROJECT_REMPI    %s\n" % (self.comments[:4090] if self.comments else 'None provided',)
+        output += "PROJECT_REMPO    %s\n" % (self.project_office.project,)
+        output += "\n"
         
         ## Session Information
-        output = "%sSESSION_ID       %s\n" % (output, ses.id)
-        output = "%sSESSION_TITLE    %s\n" % (output, 'None provided' if ses.name is None else ses.name)
-        output = "%sSESSION_REMPI    %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
-        output = "%sSESSION_REMPO    %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos)
+        output += "SESSION_ID       %s\n" % (ses.id,)
+        output += "SESSION_TITLE    %s\n" % ('None provided' if ses.name is None else ses.name,)
+        output += "SESSION_REMPI    %s\n" % (ses.comments[:4090] if ses.comments else 'None provided',)
+        output += "SESSION_REMPO    %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos,)
         if ses.configuration_authority != 0:
-            output = "%sSESSION_CRA      %i\n" % (output, ses.configuration_authority)
+            output += "SESSION_CRA      %i\n" % (ses.configuration_authority,)
         if ses.drx_beam != -1:
-            output = "%sSESSION_DRX_BEAM %i\n" % (output, ses.drx_beam)
+            output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-            output = "%sSESSION_SPC      %i %i%s\n" % (output, ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
+            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.recordMIB[component] != -1:
-                output = "%sSESSION_MRP_%s  %i\n" % (output, component, ses.recordMIB[component])
+                output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.updateMIB[component] != -1:
-                output = "%sSESSION_MUP_%s  %i\n" % (output, component, ses.updateMIB[component])
-        if ses.logScheduler:
-            output = "%sSESSION_LOG_SCH  %i\n" % (output, ses.logScheduler)
-        if ses.logExecutive:
-            output = "%sSESSION_LOG_EXE  %i\n" % (output, ses.logExecutive)
-        if ses.includeStationStatic:
-            output = "%sSESSION_INC_SMIB %i\n" % (output, ses.includeStationStatic)
-        if ses.includeDesign:
-            output = "%sSESSION_INC_DES  %i\n" % (output, ses.includeDesign)
-        output = "%s\n" % output
+                output += "SESSION_MUP_%s  %i\n" % (component, ses.updateMIB[component])
+        if ses.include_mcssch_log:
+            output += "SESSION_LOG_SCH  %i\n" % (ses.include_mcssch_log,)
+        if ses.include_mcsexe_log:
+            output += "SESSION_LOG_EXE  %i\n" % (ses.include_mcsexe_log,)
+        if ses.include_station_smib:
+            output += "SESSION_INC_SMIB %i\n" % (ses.include_station_smib,)
+        if ses.include_station_design:
+            output += "SESSION_INC_DES  %i\n" % (ses.include_station_design,)
+        output += "\n"
         
         ## Observations
         for i,obs in enumerate(ses.observations):
             obsID = i + 1
             
-            output = "%sOBS_ID           %i\n" % (output, obsID)
-            output = "%sOBS_TITLE        %s\n" % (output, obs.name if obs.name else 'None provided')
-            output = "%sOBS_TARGET       %s\n" % (output, obs.target if obs.target else 'None provided')
-            output = "%sOBS_REMPI        %s\n" % (output, obs.comments[:4090] if obs.comments else 'None provided')
-            output = "%sOBS_REMPO        %s\n" % (output, "Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i])
-            output = "%sOBS_START_MJD    %i\n" % (output, obs.mjd)
-            output = "%sOBS_START_MPM    %i\n" % (output, obs.mpm)
-            output = "%sOBS_START        %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
-            output = "%sOBS_DUR          %i\n" % (output, obs.dur)
-            output = "%sOBS_DUR+         %s\n" % (output, obs.duration)
-            output = "%sOBS_MODE         %s\n" % (output, obs.mode)
+            output += "OBS_ID           %i\n" % (obsID,)
+            output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided',)
+            output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided',)
+            output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
+            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "OBS_START_MJD    %i\n" % (obs.mjd,)
+            output += "OBS_START_MPM    %i\n" % (obs.mpm,)
+            output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
+            output += "OBS_DUR          %i\n" % (obs.dur,)
+            output += "OBS_DUR+         %s\n" % (obs.duration,)
+            output += "OBS_MODE         %s\n" % (obs.mode,)
             if obs.beamDipole is not None:
-                output = "%sOBS_BDM          %i %6.4f %6.4f %s\n" % ((output,) + tuple(obs.beamDipole))
+                output += "OBS_BDM          %i %6.4f %6.4f %s\n" % (tuple(obs.beamDipole))
             if obs.mode == 'TBN':
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_RADEC':
-                output = "%sOBS_RA           %.9f\n" % (output, obs.ra)
-                output = "%sOBS_DEC          %+.9f\n" % (output, obs.dec)
-                output = "%sOBS_B            %s\n" % (output, obs.beam)
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-                output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_RA           %.9f\n" % (obs.ra,)
+                output += "OBS_DEC          %+.9f\n" % (obs.dec,)
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_SOL':
-                output = "%sOBS_B            %s\n" % (output, obs.beam)
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-                output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_JOV':
-                output = "%sOBS_B            %s\n" % (output, obs.beam)
-                output = "%sOBS_FREQ1        %i\n" % (output, obs.freq1)
-                output = "%sOBS_FREQ1+       %.9f MHz\n" % (output, obs.frequency1/1e6)
-                output = "%sOBS_FREQ2        %i\n" % (output, obs.freq2)
-                output = "%sOBS_FREQ2+       %.9f MHz\n" % (output, obs.frequency2/1e6)
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'STEPPED':
-                output = "%sOBS_BW           %i\n" % (output, obs.filter)
-                output = "%sOBS_BW+          %s\n" % (output, self._render_bandwidth(obs.filter, obs.filter_codes))
-                output = "%sOBS_STP_N        %i\n" % (output, len(obs.steps))
-                output = "%sOBS_STP_RADEC    %i\n" % (output, obs.steps[0].is_radec)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_STP_N        %i\n" % (len(obs.steps),)
+                output += "OBS_STP_RADEC    %i\n" % (obs.steps[0].is_radec,)
                 for j,step in enumerate(obs.steps):
                     stpID = j + 1
                     
-                    output = "%sOBS_STP_C1[%i]      %.9f\n" % (output, stpID, step.c1)
-                    output = "%sOBS_STP_C2[%i]      %+.9f\n" % (output, stpID, step.c2)
-                    output = "%sOBS_STP_T[%i]       %i\n" % (output, stpID, step.dur)
-                    output = "%sOBS_STP_FREQ1[%i]   %i\n" % (output, stpID, step.freq1)
-                    output = "%sOBS_STP_FREQ1+[%i]  %.9f MHz\n" % (output, stpID, step.frequency1/1e6)
-                    output = "%sOBS_STP_FREQ2[%i]   %i\n" % (output, stpID, step.freq2)
-                    output = "%sOBS_STP_FREQ2+[%i]  %.9f MHz\n" % (output, stpID, step.frequency2/1e6)
-                    output = "%sOBS_STP_B[%i]       %s\n" % (output, stpID, step.beam)
+                    output += "OBS_STP_C1[%i]      %.9f\n" % (stpID, step.c1)
+                    output += "OBS_STP_C2[%i]      %+.9f\n" % (stpID, step.c2)
+                    output += "OBS_STP_T[%i]       %i\n" % (stpID, step.dur)
+                    output += "OBS_STP_FREQ1[%i]   %i\n" % (stpID, step.freq1)
+                    output += "OBS_STP_FREQ1+[%i]  %.9f MHz\n" % (stpID, step.frequency1/1e6)
+                    output += "OBS_STP_FREQ2[%i]   %i\n" % (stpID, step.freq2)
+                    output += "OBS_STP_FREQ2+[%i]  %.9f MHz\n" % (stpID, step.frequency2/1e6)
+                    output += "OBS_STP_B[%i]       %s\n" % (stpID, step.beam)
                     if step.beam == 'SPEC_DELAYS_GAINS':
                         for k,delay in enumerate(step.delays):
                             dlyID = k + 1
                             
-                            output = "%sOBS_BEAM_DELAY[%i][%i] %i\n" % (output, stpID, dlyID, delay)
+                            output += "OBS_BEAM_DELAY[%i][%i] %i\n" % (stpID, dlyID, delay)
                         for k,gain in enumerate(step.gains):
                             gaiID = k + 1
                             
-                            output = "%sOBS_BEAM_GAIN[%i][%i][1][1] %i\n" % (output, stpID, gaiID, gain[0][0])
-                            output = "%sOBS_BEAM_GAIN[%i][%i][1][2] %i\n" % (output, stpID, gaiID, gain[0][1])
-                            output = "%sOBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (output, stpID, gaiID, gain[1][0])
-                            output = "%sOBS_BEAM_GAIN[%i][%i][2][2] %i\n" % (output, stpID, gaiID, gain[1][1])
+                            output += "OBS_BEAM_GAIN[%i][%i][1][1] %i\n" % (stpID, gaiID, gain[0][0])
+                            output += "OBS_BEAM_GAIN[%i][%i][1][2] %i\n" % (stpID, gaiID, gain[0][1])
+                            output += "OBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (stpID, gaiID, gain[1][0])
+                            output += "OBS_BEAM_GAIN[%i][%i][2][2] %i\n" % (stpID, gaiID, gain[1][1])
             ## FEE power settings
             if all(j == obs.fee_power[0] for j in obs.fee_power):
                 ### All the same
                 if obs.fee_power[0][0] != -1 and obs.fee_power[0][1] != -1:
-                    output = "%sOBS_FEE[%i][1]  %i\n" % (output, 0, obs.fee_power[0][0])
-                    output = "%sOBS_FEE[%i][2]  %i\n" % (output, 0, obs.fee_power[0][1])
+                    output += "OBS_FEE[%i][1]  %i\n" % (0, obs.fee_power[0][0])
+                    output += "OBS_FEE[%i][2]  %i\n" % (0, obs.fee_power[0][1])
             else:
                 ### Some different
                 for j,fee in enumerate(obs.fee_power):
                     feeID = j + 1
                     
                     if fee[0] != -1:
-                        output = "%sOBS_FEE[%i][1]  %i\n" % (output, feeID, fee[0])
+                        output += "OBS_FEE[%i][1]  %i\n" % (feeID, fee[0])
                     if fee[1] != -1:
-                        output = "%sOBS_FEE[%i][2]  %i\n" % (output, feeID, fee[1])
+                        output += "OBS_FEE[%i][2]  %i\n" % (feeID, fee[1])
             ## ASP filter setting
             if all(j == obs.asp_filter[0] for j in obs.asp_filter):
                 ### All the same
                 if obs.asp_filter[0] != -1:
-                    output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, 0, obs.asp_filter[0])
+                    output += "OBS_ASP_FLT[%i]  %i\n" % (0, obs.asp_filter[0])
             else:
                 ### Some different
                 for j,flt in enumerate(obs.asp_filter):
                     fltID = j + 1
                     
                     if flt != -1:
-                        output = "%sOBS_ASP_FLT[%i]  %i\n" % (output, fltID, flt)
+                        output += "OBS_ASP_FLT[%i]  %i\n" % (fltID, flt)
             ## First attenuator setting
             if all(j == obs.asp_atten_1[0] for j in obs.asp_atten_1):
                 ### All the same
                 if obs.asp_atten_1[0] != -1:
-                    output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, 0, obs.asp_atten_1[0])
+                    output += "OBS_ASP_AT1[%i]  %i\n" % (0, obs.asp_atten_1[0])
             else:
                 ### Some different
                 for j,at1 in enumerate(obs.asp_atten_1):
                     at1ID = j + 1
                     
                     if at1 != -1:
-                        output = "%sOBS_ASP_AT1[%i]  %i\n" % (output, at1ID, at1)
+                        output += "OBS_ASP_AT1[%i]  %i\n" % (at1ID, at1)
             ## Second attenuator setting
             if all(j == obs.asp_atten_2[0] for j in obs.asp_atten_2):
                 ### All the same
                 if obs.asp_atten_2[0] != -1:
-                    output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, 0, obs.asp_atten_2[0])
+                    output += "OBS_ASP_AT2[%i]  %i\n" % (0, obs.asp_atten_2[0])
             else:
                 ### Some different
                 for j,at2 in enumerate(obs.asp_atten_2):
                     at2ID = j + 1
                     
                     if at2 != -1:
-                        output = "%sOBS_ASP_AT2[%i]  %i\n" % (output, at2ID, at2)
+                        output += "OBS_ASP_AT2[%i]  %i\n" % (at2ID, at2)
             ## Second attenuator setting
             if all(j == obs.asp_atten_split[0] for j in obs.asp_atten_split):
                 ### All the same
                 if obs.asp_atten_split[0] != -1:
-                    output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, 0, obs.asp_atten_split[0])
+                    output += "OBS_ASP_ATS[%i]  %i\n" % (0, obs.asp_atten_split[0])
             else:
                 ### Some different
                 for j,ats in enumerate(obs.asp_atten_split):
                     atsID = j + 1
                     
                     if ats != -1:
-                        output = "%sOBS_ASP_ATS[%i]  %i\n" % (output, atsID, ats)
+                        output += "OBS_ASP_ATS[%i]  %i\n" % (atsID, ats)
             ## TBW settings
             if obs.mode == 'TBW':
-                output = "%sOBS_TBW_BITS     %i\n" % (output, obs.bits)
-                output = "%sOBS_TBW_SAMPLES  %i\n" % (output, obs.samples)
+                output += "OBS_TBW_BITS     %i\n" % (obs.bits,)
+                output += "OBS_TBW_SAMPLES  %i\n" % (obs.samples,)
             ## TBN gain
             elif obs.mode == 'TBN':
                 if obs.gain != -1:
-                    output = "%sOBS_TBN_GAIN     %i\n" % (output, obs.gain)
+                    output += "OBS_TBN_GAIN     %i\n" % (obs.gain,)
             ## DRX gain
             else:
                 if obs.gain != -1:
-                    output = "%sOBS_DRX_GAIN     %i\n" % (output, obs.gain)
-            output = "%s\n" % output
+                    output += "OBS_DRX_GAIN     %i\n" % (obs.gain,)
+            output += "\n"
             
         return output
         
@@ -848,6 +877,9 @@ class Observation(object):
             ms = int(round(value.microseconds/1000.0))/1000.0
             seconds = seconds + ms
             
+        elif isinstance(value, astrounits.quantity.Quantity):
+            seconds = seconds.to('s').value
+            
         else:
             seconds = value
             
@@ -865,6 +897,8 @@ class Observation(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -881,6 +915,8 @@ class Observation(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%+.6f' deg" % value)
         self._dec = value
@@ -893,6 +929,8 @@ class Observation(object):
         
     @frequency1.setter
     def frequency1(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq1 = freq_to_word(float(value))
         
     @property
@@ -903,6 +941,8 @@ class Observation(object):
         
     @frequency2.setter
     def frequency2(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq2 = freq_to_word(float(value))
         
     def get_beam_type(self):
@@ -944,7 +984,6 @@ class Observation(object):
         """Evaulate the FEE and ASP options associated with an observation and
         return True if valid, False otherwise."""
         
-        verbose = True
         station = lwa1
         if self._parent is not None:
             station = self._parent.station
@@ -958,10 +997,16 @@ class Observation(object):
             if verbose:
                 print("[%i] Error: Invalid number of FEE power settings (%i != %i)" % (os.getpid(), len(self.fee_power), nstand))
         for f,fee in enumerate(self.fee_power):
+            if not isinstance(fee, (tuple, list)):
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Expected a tuple or list for the FEE %i power setting" % (os.getpid(), f))
+                continue
             if len(fee) != 2:
                 failures += 1
                 if verbose:
                     print("[%i] Error: Invalid number of polarizations on FEE %i (%i != 2)" % (os.getpid(), f, len(fee)))
+                continue
             for p in (0, 1):
                 if fee[p] not in (-1, 0, 1):
                     failures += 1
@@ -1389,14 +1434,6 @@ class DRX(Observation):
             failures += 1
             
         # Advanced - Target Visibility
-        if self.ra < 0 or self.ra >= 24:
-            if verbose:
-                print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra))
-            failures += 1
-        if self.dec < -90 or self.dec > 90:
-            if verbose:
-                print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
-            failures += 1
         if self.target_visibility < 1.0:
             if verbose:
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the observation" % (os.getpid(), self.target_visibility*100.0))
@@ -1506,7 +1543,7 @@ class Stepped(Observation):
             else:
                 self.steps.append(steps)
         self.filter_codes = DRXFilters
-        Observation.__init__(self, name, target, start, 0, 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
+        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
     def update(self):
         """Update the computed parameters from the string values."""
@@ -1547,8 +1584,9 @@ class Stepped(Observation):
         
     @duration.setter
     def duration(self, value):
-        warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
-        
+        if value != 'please_dont_warn_me':
+            warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
+            
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
         
@@ -1592,7 +1630,7 @@ class Stepped(Observation):
                 if ant.stand.id == stand:
                     dpStand = (ant.digitizer+1)/2
                     
-            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper]
+            self.beamDipole = [dpStand, beam_gain, dipole_gain, pol.upper()]
             
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
@@ -1790,6 +1828,12 @@ class BeamStep(object):
                 value = value.to('hourangle').value
             else:
                 value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value)
+            if self.is_radec:
+                value = value.to('hourangle').value
+            else:
+                value = value.to('deg').value
         if self.is_radec:
             if value < 0.0 or value >=24.0:
                 raise ValueError("Invalid value for RA '%.6f' hr" % value)
@@ -1810,6 +1854,8 @@ class BeamStep(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if self.is_radec:
             if value < -90.0 or value > 90.0:
                 raise ValueError("Invalid value for dec. '%.6f' deg" % value)
@@ -1854,6 +1900,9 @@ class BeamStep(object):
             ms = int(round(value.microseconds/1000.0))/1000.0
             seconds = seconds + ms
             
+        elif isinstance(value, astrounits.quantity.Quantity):
+            seconds = seconds.to('s').value
+            
         else:
             seconds = value
         self.dur = int(round(seconds*1000))
@@ -1866,6 +1915,8 @@ class BeamStep(object):
         
     @frequency1.setter
     def frequency1(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq1 = freq_to_word(float(value))
         
     @property
@@ -1876,6 +1927,8 @@ class BeamStep(object):
         
     @frequency2.setter
     def frequency2(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq2 = freq_to_word(float(value))
         
     def update(self):
@@ -1969,25 +2022,6 @@ class BeamStep(object):
             if verbose:
                 print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
             failures += 1
-        # Advanced - Target Visibility via RA/Dec & Az/El ranging
-        if self.is_radec:
-            if self.c1 < 0 or self.c1 >= 24:
-                if verbose:
-                    print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.c1))
-                failures += 1
-            if self.c2 < -90 or self.c2 > 90:
-                if verbose:
-                    print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.c2))
-                failures += 1
-        else:
-            if self.c1 < 0 or self.c1 > 360:
-                if verbose:
-                    print("[%i] Error: Invalid value for azimuth '%.6f'" % (os.getpid(), self.c1))
-                failures += 1
-            if self.c2 < 0 or self.c2 > 90:
-                if verbose:
-                    print("[%i] Error: Invalid value for elevation '%.6f'" % (os.getpid(), self.c2))
-                failures += 1
         # Any failures indicates a bad observation
         if failures == 0:
             return True
@@ -2023,11 +2057,11 @@ class Session(object):
         self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         
-        self.logScheduler = False
-        self.logExecutive = False
+        self.include_mcssch_log = False
+        self.include_mcsexe_log = False
         
-        self.includeStationStatic = False
-        self.includeDesign = False
+        self.include_station_smib = False
+        self.include_station_design = False
         
         self.station = station
         
@@ -2103,7 +2137,9 @@ class Session(object):
                 value = '{'+value
             if value[-1] != '}':
                 value = value+'}'
-        if value not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+        if value not in (None, '', 
+                         '{Stokes=XXYY}', '{Stokes=CRCI}', '{Stokes=XXCRCIYY}', 
+                         '{Stokes=I}', '{Stokes=IV}', '{Stokes=IQUV}'):
             raise ValueError("Invalid DR spectrometer mode '%s'" % value)
         self.spcMetatag = value
         
@@ -2117,6 +2153,8 @@ class Session(object):
           * 0 = never record the MIB entries (the entries are still updated, however)
         """
         
+        if component not in self.recordMIB.keys():
+               raise KeyError("Unknown subsystem '%s'" % component)
         self.recordMIB[component] = int(interval)
         
     def set_mib_update_interval(self, component, interval):
@@ -2129,6 +2167,8 @@ class Session(object):
          * 0 = request no updates to the MIB entries
         """
         
+        if component not in self.updateMIB.keys():
+               raise KeyError("Unknown subsystem '%s'" % component)
         self.updateMIB[component] = int(interval)
         
     @property
@@ -2511,7 +2551,7 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].name = value
                 continue
             if keyword == 'SESSION_REMPI':
-                mtch = _usernameRE.search(value)
+                mtch = UCF_USERNAME_RE.search(value)
                 if mtch is not None:
                     project.sessions[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:
@@ -2547,16 +2587,16 @@ def parse_sdf(filename, verbose=False):
                 project.sessions[0].updateMIB[component] = int(value)
                 continue
             if keyword == 'SESSION_LOG_SCH':
-                project.sessions[0].logScheduler = bool(value)
+                project.sessions[0].include_mcssch_log = bool(value)
                 continue
             if keyword == 'SESSION_LOG_EXE':
-                project.sessions[0].logExecutive = bool(value)
+                project.sessions[0].include_mcsexe_log = bool(value)
                 continue
             if keyword == 'SESSION_INC_SMIB':
-                project.sessions[0].includeStationStatic = bool(value)
+                project.sessions[0].include_station_smib = bool(value)
                 continue
             if keyword == 'SESSION_INC_DES':
-                project.sessions[0].includeDesign = bool(value)
+                project.sessions[0].include_station_design = bool(value)
                 continue
             if keyword == 'SESSION_DRX_BEAM':
                 project.sessions[0].drx_beam = int(value)

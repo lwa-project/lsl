@@ -15,7 +15,7 @@ from lsl.common import metabundleADP
 from lsl.common.paths import DATA_BUILD
 
 
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(DATA_BUILD, 'tests', 'metadata.tgz')
@@ -37,14 +37,14 @@ class metabundle_tests_adp(unittest.TestCase):
         obs = metabundleADP.get_observation_spec(mdbFileADP)
         
         # Check session start time
-        self.assertEqual(ses['MJD'], 57774)
-        self.assertEqual(ses['MPM'], 29970000)
+        self.assertEqual(ses['mjd'], 57774)
+        self.assertEqual(ses['mpm'], 29970000)
         
         # Check the duration
-        self.assertEqual(ses['Dur'], obs[0]['Dur'] + 10000)
+        self.assertEqual(ses['dur'], obs[0]['dur'] + 10000)
         
         # Check the number of observations
-        self.assertEqual(ses['nObs'], len(obs))
+        self.assertEqual(ses['nobs'], len(obs))
     
     def test_os(self):
         """Test the observation specification utilities."""
@@ -56,11 +56,11 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['Mode'], 1)
+        self.assertEqual(obs2['mode'], 1)
         
         # Check the time
-        self.assertEqual(obs2['MJD'], 57774)
-        self.assertEqual(obs2['MPM'], 29975000)
+        self.assertEqual(obs2['mjd'], 57774)
+        self.assertEqual(obs2['mpm'], 29975000)
         
     def test_cs(self):
         """Test the command script utilities."""
@@ -71,14 +71,14 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(len(cmnds), 50)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['commandID'], 'NUL')
-        self.assertEqual(cmnds[-2]['commandID'], 'STP')
-        self.assertEqual(cmnds[-1]['commandID'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
+        self.assertEqual(cmnds[-2]['command_id'], 'STP')
+        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['commandID'] == 'BAM':
+            if cmnd['command_id'] == 'BAM':
                 nBAM += 1
         self.assertEqual(nBAM, 40)
         
@@ -122,17 +122,17 @@ class metabundle_tests_adp(unittest.TestCase):
         
         # Beginning config.
         aspConfig = metabundleADP.get_asp_configuration_summary(mdbFileADP, which='beginning')
-        self.assertEqual(aspConfig['filter'],  0)
-        self.assertEqual(aspConfig['at1'],     6)
-        self.assertEqual(aspConfig['at2'],     5)
-        self.assertEqual(aspConfig['atsplit'],15)
+        self.assertEqual(aspConfig['asp_filter'],      0)
+        self.assertEqual(aspConfig['asp_atten_1'],     6)
+        self.assertEqual(aspConfig['asp_atten_2'],     5)
+        self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # End config.
         aspConfig = metabundleADP.get_asp_configuration_summary(mdbFileADP, which='End')
-        self.assertEqual(aspConfig['filter'],  0)
-        self.assertEqual(aspConfig['at1'],     6)
-        self.assertEqual(aspConfig['at2'],     5)
-        self.assertEqual(aspConfig['atsplit'],15)
+        self.assertEqual(aspConfig['asp_filter'],      0)
+        self.assertEqual(aspConfig['asp_atten_1'],     6)
+        self.assertEqual(aspConfig['asp_atten_2'],     5)
+        self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
         self.assertRaises(ValueError, metabundleADP.get_asp_configuration_summary, mdbFileADP, 'middle')
@@ -142,17 +142,17 @@ class metabundle_tests_adp(unittest.TestCase):
         
         # Beginning config.
         aspConfig = metabundleADP.get_asp_configuration_summary(mdbFileGDB, which='beginning')
-        self.assertEqual(aspConfig['filter'],  0)
-        self.assertEqual(aspConfig['at1'],     6)
-        self.assertEqual(aspConfig['at2'],     5)
-        self.assertEqual(aspConfig['atsplit'],15)
+        self.assertEqual(aspConfig['asp_filter'],      0)
+        self.assertEqual(aspConfig['asp_atten_1'],     6)
+        self.assertEqual(aspConfig['asp_atten_2'],     5)
+        self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # End config.
         aspConfig = metabundleADP.get_asp_configuration_summary(mdbFileGDB, which='End')
-        self.assertEqual(aspConfig['filter'],  0)
-        self.assertEqual(aspConfig['at1'],     6)
-        self.assertEqual(aspConfig['at2'],     5)
-        self.assertEqual(aspConfig['atsplit'],15)
+        self.assertEqual(aspConfig['asp_filter'],      0)
+        self.assertEqual(aspConfig['asp_atten_1'],     6)
+        self.assertEqual(aspConfig['asp_atten_2'],     5)
+        self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
         self.assertRaises(ValueError, metabundleADP.get_asp_configuration_summary, mdbFileGDB, 'middle')

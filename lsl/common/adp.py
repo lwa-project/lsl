@@ -92,9 +92,9 @@ def delay_to_dpd(delay):
     
     # Convert the delay to a combination of FIFO delays (~5.1 ns) and 
     # FIR delays (~0.3 ns)
-    sample = int(round(delay * fS * 16 / 1e9))
-    course = sample // 16
-    fine   = sample % 16
+    sample = delay * (fS/1e9)
+    course = int(sample)
+    fine   = int(16*(sample - course))
     
     # Combine into one value
     combined = (course << 4) | fine
@@ -118,8 +118,7 @@ def dpd_to_delay(combined):
     course = (combined >> 4) & 4095
     
     # Convert to time
-    delay = (course + fine/16.0) / fS
-    delay *= 1e9
+    delay = (course + fine/16.0) * (1e9/fS)
     
     return delay
 

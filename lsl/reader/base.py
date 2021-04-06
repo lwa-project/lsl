@@ -116,7 +116,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -133,13 +133,49 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
             self.payload._data += y.payload._data
         except AttributeError:
             self.payload._data += self.payload._data.dtype.type(y)
+        return self
+        
+    def __sub__(self, y):
+        """
+        Subtract the data sections of two frames or subtract a number 
+        from every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        newFrame = copy.deepcopy(self)
+        newFrame -= y
+        return newFrame
+        
+    def __isub__(self, y):
+        """
+        In-place subtract the data sections of two frames together or subtract 
+        a number from every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        try:
+            self.payload._data -= y.payload._data
+        except AttributeError:
+            self.payload._data -= self.payload._data.dtype.type(y)
         return self
         
     def __mul__(self, y):
@@ -152,7 +188,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -169,7 +205,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (type(self), int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -177,6 +213,84 @@ class FrameBase(object):
         except AttributeError:
             self.payload._data *= self.payload._data.dtype.type(y)
         return self
+        
+    def __floordiv__(self, y):
+        """
+        Divide the data sections of two frames together or divide 
+        a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        newFrame = copy.deepcopy(self)
+        newFrame //= y
+        return newFrame
+        
+    def __ifloordiv__(self, y):
+        """
+        In-place divide the data sections of two frames together or 
+        divide a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        try:
+            self.payload._data //= y.payload._data
+        except AttributeError:
+            self.payload._data //= self.payload._data.dtype.type(y)
+        return self
+        
+    def __truediv__(self, y):
+        """
+        Divide the data sections of two frames together or divide 
+        a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        newFrame = copy.deepcopy(self)
+        newFrame /= y
+        return newFrame
+        
+    def __itruediv__(self, y):
+        """
+        In-place divide the data sections of two frames together or 
+        divide a number into every element in the data section.
+        
+        .. note::
+            In the case where a frame is given the weights are
+            ignored.
+        """
+        
+        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            
+        try:
+            self.payload._data /= y.payload._data
+        except AttributeError:
+            self.payload._data /= self.payload._data.dtype.type(y)
+        return self
+        
+    def __div__(self, y):
+        return self.__floordiv__(y)
+        
+    def __idiv__(self, y):
+        return self.__ifloordiv__(y)
         
     def __eq__(self, y):
         """
@@ -318,6 +432,15 @@ class FrameTimestamp(object):
             sf = sff
         self._int = int(si)
         self._frac = float(sf)
+        
+    @classmethod
+    def now(cls):
+        """
+        Create a new FrameTimestamp instance for the current time as determined
+        from `time.time()`.
+        """
+        
+        return cls(time.time())
         
     @classmethod
     def from_dp_timetag(cls, value, offset=0):
@@ -484,14 +607,22 @@ class FrameTimestamp(object):
         """
         
         return float(self)
-            
+        
+    @property
+    def jd(self):
+        """
+        JD as a floating point value.
+        """
+        
+        return unix_to_utcjd(self)
+        
     @property
     def mjd(self):
         """
         MJD as a floating point value.
         """
         
-        return unix_to_utcjd(self) - MJD_OFFSET
+        return self.jd - MJD_OFFSET
         
     @property
     def pulsar_mjd(self):

@@ -23,6 +23,9 @@ the ADP system.
 In addition to providing the means for creating interferometer definition files from 
 scratch, this module also includes a simple parser for ID files.
 
+.. versionchanged:: 2.0.0
+    Added support for astropy.time.Time and astropy.coordinates.Angle instances
+
 .. versionadded:: 1.2.4
 """
 
@@ -42,6 +45,7 @@ import weakref
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
 
+from astropy import units as astrounits
 from astropy.coordinates import Angle as AstroAngle
 
 from lsl.transform import Time
@@ -54,15 +58,18 @@ from lsl.common.adp import freq_to_word, word_to_freq, fC
 from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
-from lsl.common.sdf import Observer
+from lsl.common.sdf import UCF_USERNAME_RE, Observer
 from lsl.common import sdf, sdfADP
+
+from lsl.config import LSL_CONFIG
+OBSV_CONFIG = LSL_CONFIG.view('observing')
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
-__all__ = ['Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idf',  'get_scan_start_stop', 'is_valid', '__version__']
+__version__ = '0.2'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idf',  'get_scan_start_stop', 'is_valid', '__version__']
 
 
 _UTC = pytz.utc
@@ -115,6 +122,15 @@ class Project(object):
             
     def __str__(self):
         return "%s: %s with %i run(s) for %s" % (self.id, self.name, len(self.runs), str(self.observer))
+        
+    @classmethod
+    def autofilled(cls, runs=None, comments=None, project_office=None):
+        observer = Observer.autofilled()
+        name = OBSV_CONFIG.get('project_name')
+        id = OBSV_CONFIG.get('project_id')
+        if name is None or id is None:
+            raise RuntimeError("Auto-fill values for the project cannot be loaded from the configuration file")
+        return cls(observer, name, id, runs=runs, comments=comments, project_office=project_office)
         
     def update(self):
         """Update the various runs that are part of this project."""
@@ -218,7 +234,7 @@ class Project(object):
         if ses.ucf_username is not None:
             clean = ''
             if ses.comments:
-                clean = sdf._usernameRE.sub('', ses.comments)
+                clean = UCF_USERNAME_RE.sub('', ses.comments)
             ses.comments = 'ucfuser:%s' % ses.ucf_username
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
@@ -228,74 +244,74 @@ class Project(object):
             
         ## PI Information
         output = ""
-        output = "%sPI_ID            %s\n" % (output, self.observer.id)
-        output = "%sPI_NAME          %s\n" % (output, self.observer.name)
-        output = "%s\n" % output
+        output += "PI_ID            %s\n" % (self.observer.id,)
+        output += "PI_NAME          %s\n" % (self.observer.name,)
+        output += "\n"
         
         ## Project Information
-        output = "%sPROJECT_ID       %s\n" % (output, self.id)
-        output = "%sPROJECT_TITLE    %s\n" % (output, self.name)
-        output = "%sPROJECT_REMPI    %s\n" % (output, self.comments[:4090] if self.comments else 'None provided')
-        output = "%sPROJECT_REMPO    %s\n" % (output, self.project_office.project)
-        output = "%s\n" % output
+        output += "PROJECT_ID       %s\n" % (self.id,)
+        output += "PROJECT_TITLE    %s\n" % (self.name,)
+        output += "PROJECT_REMPI    %s\n" % (self.comments[:4090] if self.comments else 'None provided',)
+        output += "PROJECT_REMPO    %s\n" % (self.project_office.project,)
+        output += "\n"
         
         ## Run Information
-        output = "%sRUN_ID           %s\n" % (output, ses.id)
-        output = "%sRUN_TITLE        %s\n" % (output, 'None provided' if ses.name is None else ses.name)
-        output = "%sRUN_STATIONS     %s\n" % (output, ','.join([station.id for station in ses.stations]))
-        output = "%sRUN_CHANNELS     %i\n" % (output, ses.correlator_channels)
-        output = "%sRUN_INTTIME      %.3f\n" % (output, ses.correlator_inttime)
-        output = "%sRUN_BASIS        %s\n" % (output, ses.correlator_basis)
-        output = "%sRUN_REMPI        %s\n" % (output, ses.comments[:4090] if ses.comments else 'None provided')
-        output = "%sRUN_REMPO        %s\n" % (output, "Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090])
-        output = "%s\n" % output
+        output += "RUN_ID           %s\n" % (ses.id,)
+        output += "RUN_TITLE        %s\n" % ('None provided' if ses.name is None else ses.name,)
+        output += "RUN_STATIONS     %s\n" % (','.join([station.id for station in ses.stations]),)
+        output += "RUN_CHANNELS     %i\n" % (ses.correlator_channels,)
+        output += "RUN_INTTIME      %.3f\n" % (ses.correlator_inttime,)
+        output += "RUN_BASIS        %s\n" % (ses.correlator_basis,)
+        output += "RUN_REMPI        %s\n" % (ses.comments[:4090] if ses.comments else 'None provided',)
+        output += "RUN_REMPO        %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090],)
+        output += "\n"
                     
         ## Scans
         for i,obs in enumerate(ses.scans):
             obsID = i + 1
             
-            output = "%sSCAN_ID          %i\n" % (output, obsID)
-            output = "%sSCAN_TARGET      %s\n" % (output, obs.target)
-            output = "%sSCAN_INTENT      %s\n" % (output, obs.intent)
-            output = "%sSCAN_REMPI       %s\n" % (output, obs.comments[:4090] if obs.comments else 'None provided')
-            output = "%sSCAN_REMPO       %s\n" % (output, "Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i])
-            output = "%sSCAN_START_MJD   %i\n" % (output, obs.mjd)
-            output = "%sSCAN_START_MPM   %i\n" % (output, obs.mpm)
-            output = "%sSCAN_START       %s\n" % (output, obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start)
-            output = "%sSCAN_DUR         %i\n" % (output, obs.dur)
-            output = "%sSCAN_DUR+        %s\n" % (output, obs.duration)
-            output = "%sSCAN_MODE        %s\n" % (output, obs.mode)
+            output += "SCAN_ID          %i\n" % (obsID,)
+            output += "SCAN_TARGET      %s\n" % (obs.target,)
+            output += "SCAN_INTENT      %s\n" % (obs.intent,)
+            output += "SCAN_REMPI       %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
+            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "SCAN_START_MJD   %i\n" % (obs.mjd,)
+            output += "SCAN_START_MPM   %i\n" % (obs.mpm,)
+            output += "SCAN_START       %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
+            output += "SCAN_DUR         %i\n" % (obs.dur,)
+            output += "SCAN_DUR+        %s\n" % (obs.duration,)
+            output += "SCAN_MODE        %s\n" % (obs.mode,)
             if obs.mode == 'TRK_RADEC':
-                output = "%sSCAN_RA          %.9f\n" % (output, obs.ra)
-                output = "%sSCAN_DEC         %+.9f\n" % (output, obs.dec)
+                output += "SCAN_RA          %.9f\n" % (obs.ra,)
+                output += "SCAN_DEC         %+.9f\n" % (obs.dec,)
                 if obs.pm[0] != 0.0 or obs.pm[1] != 0.0:
-                    output = "%sSCAN_PM_RA       %+.1f\n" % (output, obs.pm[0])
-                    output = "%sSCAN_PM_DEC      %+.1f\n" % (output, obs.pm[1])
-            output = "%sSCAN_FREQ1       %i\n" % (output, obs.freq1)
-            output = "%sSCAN_FREQ1+      %.9f MHz\n" % (output, obs.frequency1/1e6)
-            output = "%sSCAN_FREQ2       %i\n" % (output, obs.freq2)
-            output = "%sSCAN_FREQ2+      %.9f MHz\n" % (output, obs.frequency2/1e6)
-            output = "%sSCAN_BW          %i\n" % (output, obs.filter)
-            output = "%sSCAN_BW+         %s\n" % (output, self._render_bandwidth(obs.filter, obs.FILTER_CODES))
+                    output += "SCAN_PM_RA       %+.1f\n" % (obs.pm[0],)
+                    output += "SCAN_PM_DEC      %+.1f\n" % (obs.pm[1],)
+            output += "SCAN_FREQ1       %i\n" % (obs.freq1,)
+            output += "SCAN_FREQ1+      %.9f MHz\n" % (obs.frequency1/1e6,)
+            output += "SCAN_FREQ2       %i\n" % (obs.freq2,)
+            output += "SCAN_FREQ2+      %.9f MHz\n" % (obs.frequency2/1e6,)
+            output += "SCAN_BW          %i\n" % (obs.filter,)
+            output += "SCAN_BW+         %s\n" % (self._render_bandwidth(obs.filter, obs.FILTER_CODES),)
             ## Alternate phase centers
             if len(obs.alt_phase_centers) > 0:
-                output = "%sSCAN_ALT_N             %i\n" % (output, len(obs.alt_phase_centers))
+                output += "SCAN_ALT_N             %i\n" % (len(obs.alt_phase_centers),)
                 for i,phase_center in enumerate(obs.alt_phase_centers):
-                    output = "%sSCAN_ALT_TARGET[%i]    %s\n" % (output, i+1, phase_center.target)  
-                    output = "%sSCAN_ALT_INTENT[%i]    %s\n" % (output, i+1, phase_center.intent) 
-                    output = "%sSCAN_ALT_RA[%i]        %.9f\n" % (output, i+1, phase_center.ra)  
-                    output = "%sSCAN_ALT_DEC[%i]       %+.9f\n" % (output, i+1, phase_center.dec)
+                    output += "SCAN_ALT_TARGET[%i]    %s\n" % (i+1, phase_center.target)  
+                    output += "SCAN_ALT_INTENT[%i]    %s\n" % (i+1, phase_center.intent) 
+                    output += "SCAN_ALT_RA[%i]        %.9f\n" % (i+1, phase_center.ra)  
+                    output += "SCAN_ALT_DEC[%i]       %+.9f\n" % (i+1, phase_center.dec)
                     if phase_center.pm[0] != 0.0 or phase_center.pm[1] != 0.0:
-                        output = "%sSCAN_ALT_PM_RA[%i]       %+.1f\n" % (output, i+1, phase_center.pm[0])
-                        output = "%sSCAN_ALT_PM_DEC[%i]      %+.1f\n" % (output, i+1, phase_center.pm[1])
+                        output += "SCAN_ALT_PM_RA[%i]       %+.1f\n" % (i+1, phase_center.pm[0])
+                        output += "SCAN_ALT_PM_DEC[%i]      %+.1f\n" % (i+1, phase_center.pm[1])
                         
             ## ASP filter setting
             if obs.asp_filter != -1:
-                output = "%sSCAN_ASP_FLT     %i\n" % (output, obs.asp_filter)
+                output += "SCAN_ASP_FLT     %i\n" % (obs.asp_filter,)
             ## DRX gain
             if obs.gain != -1:
-                output = "%sSCAN_DRX_GAIN    %i\n" % (output, obs.gain)
-            output = "%s\n" % output
+                output += "SCAN_DRX_GAIN    %i\n" % (obs.gain,)
+            output += "\n"
             
         return output
         
@@ -548,10 +564,6 @@ class Run(object):
                 print("[%i] Error: Invalid run ID number '%i'" % (os.getpid(), self.id))
             failures += 1
             
-        if len(self.stations) < 2:
-            if verbose:
-                print("[%i] Error: Need at least two stations to form an interferometer" % (os.getpid(),))
-            failures += 1
         station_count = {}
         for station in self.stations:
             try:
@@ -563,19 +575,7 @@ class Run(object):
                 if verbose:
                     print("[%i] Error: Station '%s' is included %i times" % (os.getpid(), station, station_count[station]))
                 failures += 1
-        if self.correlator_inttime < 0.1 or self.correlator_inttime > 10.0:
-            if verbose:
-                print("[%i] Error: Invalid correlator integration time '%.3f s'" % (os.getpid(), self.correlator_inttime))
-            failures += 1
-        if self.correlator_channels < 16 or self.correlator_channels > 32768 or self.correlator_channels % 2:
-            if verbose:
-                print("[%i] Error: Invalid correlator channel count '%i'" % (os.getpid(), self.correlator_channels))
-            failures += 1
-        if self.correlator_basis.lower() not in (None, '', 'linear', 'circular', 'stokes'):
-            if verbose:
-                print("[%i] Error: Invalid correlator output polarization basis '%s'" % (os.getpid(), self.correlator_basis))
-            failures += 1
-            
+                
         scanCount = 1
         for obs in self.scans:
             if verbose:
@@ -731,7 +731,7 @@ class Scan(object):
         
         self.gain = int(gain)
         
-        self.alt_phase_centers = []
+        self.alt_phase_centers = sdf._TypedParentList(AlternatePhaseCenter, self)
         
         self.update()
         
@@ -815,6 +815,9 @@ class Scan(object):
             ms = int(round(value.microseconds/1000.0))/1000.0
             seconds = seconds + ms
             
+        elif isinstance(value, astrounits.quantity.Quantity):
+            seconds = seconds.to('s').value
+            
         else:
             seconds = value
             
@@ -832,6 +835,8 @@ class Scan(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -847,6 +852,8 @@ class Scan(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value
@@ -877,6 +884,8 @@ class Scan(object):
         
     @frequency1.setter
     def frequency1(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq1 = freq_to_word(float(value))
         
     @property
@@ -887,6 +896,8 @@ class Scan(object):
         
     @frequency2.setter
     def frequency2(self, value):
+        if isinstance(value, astrounits.quantity.Quantity):
+            value = value.to('Hz').value
         self.freq2 = freq_to_word(float(value))
         
     def add_alt_phase_center(self, target_or_apc, intent=None, ra=None, dec=None, pm=None):
@@ -976,10 +987,6 @@ class Scan(object):
         
         failures = 0
         # Basic - Intent, duration, frequency, and filter code values
-        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target', 'dummy'):
-            if verbose:
-                print("[%s] Error: Invalid scan intent '%s'" % (os.getpid(), self.intent))
-            failures += 1
         if self.dur < 1:
             if verbose:
                 print("[%i] Error: Specified a duration of length zero" % os.getpid())
@@ -998,14 +1005,6 @@ class Scan(object):
             failures += 1
             
         # Advanced - Target Visibility
-        if self.ra < 0 or self.ra >= 24:
-            if verbose:
-                print("[%i] Error: Invalid value for RA '%.6f'" % (os.getpid(), self.ra))
-            failures += 1
-        if self.dec < -90 or self.dec > 90:
-            if verbose:
-                print("[%i] Error: Invalid value for dec. '%+.6f'" % (os.getpid(), self.dec))
-            failures += 1
         if self.target_visibility < 1.0:
             if verbose:
                 print("[%i] Error: Target is only above the horizon for %.1f%% of the scan" % (os.getpid(), self.target_visibility*100.0))
@@ -1217,6 +1216,8 @@ class AlternatePhaseCenter(object):
             value = value * 12.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('hourangle').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
             raise ValueError("Invalid value for RA '%.6f' hr" % value)
         self._ra = value
@@ -1233,6 +1234,8 @@ class AlternatePhaseCenter(object):
             value = value * 180.0/math.pi
         elif isinstance(value, AstroAngle):
             value = value.to('deg').value
+        elif isinstance(value, str):
+            value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
             raise ValueError("Invalid value for dec. '%.6f' deg" % value)
         self._dec = value
@@ -1273,29 +1276,61 @@ class AlternatePhaseCenter(object):
         pnt._pmdec = self.pm[1]
         pnt._epoch = ephem.J2000
         return pnt
-    
+        
+    @property
+    def target_visibility(self):
+        """Return the fractional visibility of the target during the scan 
+        period."""
+        
+        mjd, mpm, dur = 0, 0, 0
+        stations = [lwa1,]
+        if self._parent is not None:
+            mjd = self._parent.mjd
+            mpm = self._parent.mpm
+            dur = self._parent.dur
+            if self._parent._parent is not None:
+                stations = self._parent._parent.stations
+                
+        vis_list = []
+        max_alt = 0.0
+        for station in stations:
+            lwa = station.get_observer()
+            pnt = self.fixed_body
+            
+            vis = 0
+            cnt = 0
+            dt = 0.0
+            while dt <= dur/1000.0:
+                lwa.date = mjd + (mpm/1000.0 + dt)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
+                pnt.compute(lwa)
+                max_alt = max([max_alt, pnt.alt])
+                
+                cnt += 1
+                if pnt.alt > 0:
+                    vis += 1
+                    
+                dt += 300.0
+                
+            vis_list.append(float(vis)/float(cnt))
+            
+        if max_alt < 20*math.pi/180:
+            #warnings.warn("Maximum altitude for this scan is %.1f degrees" % (max_alt*180/math.pi))
+            pass
+            
+        return min(vis_list)
+        
     def validate(self, verbose=False):
         """Basic validation of the pointing, that's it."""
         
         failures = 0
         
-        ## Intent
-        if self.intent.lower() not in ('fluxcal', 'phasecal', 'target'):
+        ## Advanced - Target Visibility
+        if self.target_visibility < 1.0:
             if verbose:
-                print("[%s] Error: Invalid alternate phase center intent '%s'" % (os.getpid(), self.intent))
+                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan" % (os.getpid(), self.target_visibility*100.0))
             failures += 1
             
-        ## Pointing
-        if self.ra < 0 or self.ra >= 24:
-            if verbose:
-                print("[%i] Error: Invalid alternate phase center value for RA '%.6f'" % (os.getpid(), self.ra))
-            failures += 1
-        if self.dec < -90 or self.dec > 90:
-            if verbose:
-                print("[%i] Error: Invalid alternate phase center value for dec. '%+.6f'" % (os.getpid(), self.dec))
-            failures += 1
-            
-        # Any failures indicates a bad scan
+        # Any failures indicates a bad alternate phase center
         if failures == 0:
             return True
         else:
@@ -1473,12 +1508,12 @@ def parse_idf(filename, verbose=False):
                 project.runs[0].correlator_basis = value
                 continue
             if keyword == 'RUN_REMPI':
-                mtch = sdf._usernameRE.search(value)
+                mtch = UCF_USERNAME_RE.search(value)
                 if mtch is not None:
                     project.runs[0].ucf_username = mtch.group('username')
                     if mtch.group('subdir') is not None:
                         project.runs[0].ucf_username = os.path.join(project.runs[0].ucf_username, mtch.group('subdir'))
-                project.runs[0].comments = sdf._usernameRE.sub('', value)
+                project.runs[0].comments = UCF_USERNAME_RE.sub('', value)
                 continue
             if keyword == 'RUN_REMPO':
                 project.project_office.runs.append(None)

@@ -14,13 +14,11 @@ if sys.version_info < (3,):
 import os
 import sys
 import time
-import ephem
 import numpy
 import argparse
-from datetime import datetime, timedelta, tzinfo
 
 from lsl import astro
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi
@@ -28,19 +26,6 @@ from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
 telemetry.track_script()
-
-
-class UTC(tzinfo):
-    """tzinfo object for UTC time."""
-    
-    def utcoffset(self, dt):
-        return timedelta(0)
-        
-    def tzname(self, dt):
-        return "UTC"
-        
-    def dst(self, dt):
-        return timedelta(0)
 
 
 def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, pfb=False, pols=['xx',], chunk_size=100):
@@ -88,8 +73,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
             ref_time = setTime
             
         # Setup the set time as a python datetime instance so that it can be easily printed
-        setDT = datetime.utcfromtimestamp(setTime)
-        setDT.replace(tzinfo=UTC())
+        setDT = setTime.datetime
         print("Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
         
         # Loop over polarization products
@@ -144,14 +128,18 @@ def main(args):
                 station = metabundle.get_station(args.metadata, apply_sdm=True)
             except:
                 station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwasv:
+        station = stations.lwasv
     else:
         station = stations.lwa1
     antennas = station.antennas
     
-    idf = LWA1DataFile(filename)
-    
-    jd = astro.unix_to_utcjd(idf.get_info('start_time'))
-    date = str(ephem.Date(jd - astro.DJD_OFFSET))
+    idf = LWADataFile(filename)
+    if not isinstance(idf, TBNFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBN file" % os.path.basename(filename))
+        
+    jd = idf.get_info('start_time').jd
+    date = idf.get_info('start_time').datetime
     nFpO = len(antennas)
     sample_rate = idf.get_info('sample_rate')
     nInts = idf.get_info('nframe') // nFpO
@@ -242,6 +230,8 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-v', '--lwasv', action='store_true', 
+                        help='use LWA-SV instead of LWA1')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=16, 
                         help='set FFT length')
     parser.add_argument('-p', '--pfb', action='store_true', 

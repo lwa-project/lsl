@@ -14,10 +14,9 @@ if sys.version_info < (3,):
 import sys
 import math
 import numpy
-import ephem
 import argparse
 
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWADataFile, DRSpecFile
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
@@ -54,8 +53,10 @@ def _best_freq_units(freq):
 
 
 def main(args):
-    idf = LWA1DataFile(args.filename)
-    
+    idf = LWADataFile(args.filename)
+    if not isinstance(idf, DRSpecFile):
+        raise RuntimeError("File '%s' does not appear to be a valid DR spectrometer file" % os.path.basename(filename))
+        
     # Basic file informaiton
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
@@ -78,7 +79,7 @@ def main(args):
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Date & Central Frequnecy
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
+    beginDate = idf.get_info('start_time').datetime
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
     freq = numpy.fft.fftfreq(LFFT, d=1.0/srate)

@@ -13,6 +13,11 @@ coverage and time delays.  The functions in the module:
     
 .. versionchanged:: 1.0.0
     Generalized the compute_uvw() and compute_uv_track() functions.
+
+.. versionchanged:: 2.0.1
+    Added support for ephem.Angle, astropy.coordinates.Angle, and 
+    astropy.coordinates.EarthLocation instances in the compute_uvw() and 
+    compute_uv_track() functions.
 """
 
 # Python2 compatibility
@@ -21,8 +26,11 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
+import ephem
 import numpy
 from astropy.constants import c as speedOfLight
+from astropy.coordinates import Angle as AstroAngle
+from astropy.coordinates import EarthLocation as AstroEarthLocation
 
 from lsl.common.stations import lwa1
 
@@ -30,7 +38,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.6'
+__version__ = '0.7'
 __all__ = ['get_baselines', 'baseline_to_antennas', 'antennas_to_baseline', 'compute_uvw', 'compute_uv_track']
 
 
@@ -137,6 +145,11 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
         
     .. versionchanged:: 1.1.2
         Updated to work with lists in a transparent manner.
+    
+    .. versionchanged:: 2.0.1
+        Added support for ephem.Angle and astropy.coordinates.Angle instances 
+        for HA and dec.
+        Added support for astropy.coordinates.EarthLocation instances for site.
     """
     
     # Try this so that freq can be either a scalar, a list, or an array
@@ -153,17 +166,30 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
 
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    HA2 = HA * 15.0 * numpy.pi/180
-    dec2 = dec * numpy.pi/180
-    lat2 = site.lat
+    if isinstance(HA, ephem.Angle):
+        HA2 = HA*1.0
+    elif isinstance(HA, AstroAngle):
+        HA2 = HA.radian
+    else:
+        HA2 = HA * 15.0 * numpy.pi/180
+    if isinstance(dec, ephem.Angle):
+        dec2 = dec*1.0
+    elif isinstance(dec, AstroAngle):
+        dec2 = dec.radian
+    else:
+        dec2 = dec * numpy.pi/180
+    if isinstance(site, AstroEarthLocation):
+        lat2 = site.lat.radian
+    else:
+        lat2 = site.lat
     
     # Coordinate transformation matrices
     trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                    [1,  0,               0],
-                    [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+                           [1,  0,               0],
+                           [0,  numpy.cos(lat2), numpy.sin(lat2)]])
     trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                    [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                    [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                           [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
+                           [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
                     
     for k,(i,j) in enumerate(baselines):
         # Go from a east, north, up coordinate system to a celestial equation, 
@@ -197,6 +223,11 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     .. versionchanged:: 1.0.0
         Added a keyword (site) to specify the station used for the 
         observation.
+    
+    .. versionchanged:: 2.0.1
+        Added support for ephem.Angle and astropy.coordinates.Angle instances 
+        for dec.
+        Added support for astropy.coordinates.EarthLocation instances for site.
     """
     
     N = len(antennas)
@@ -205,13 +236,21 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    dec2 = dec * numpy.pi/180
-    lat2 = site.lat
+    if isinstance(dec, ephem.Angle):
+        dec2 = dec*1.0
+    elif isinstance(dec, AstroAngle):
+        dec2 = dec.radian
+    else:
+        dec2 = dec * numpy.pi/180
+    if isinstance(site, AstroEarthLocation):
+        lat2 = site.lat.radian
+    else:
+        lat2 = site.lat
     
     # Coordinate transformation matrices
     trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                    [1,  0,               0],
-                    [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+                           [1,  0,               0],
+                           [0,  numpy.cos(lat2), numpy.sin(lat2)]])
                     
     count = 0
     for i,j in get_baselines(antennas, indicies=True):

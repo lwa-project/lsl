@@ -30,8 +30,8 @@ def _obs_comp(x, y):
     Function to help sort observations in time.
     """
     
-    tX = mjdmpm_to_datetime(x['MJD'], x['MPM'])
-    tY = mjdmpm_to_datetime(y['MJD'], y['MPM'])
+    tX = mjdmpm_to_datetime(x['mjd'], x['mpm'])
+    tY = mjdmpm_to_datetime(y['mjd'], y['mpm'])
     if tX < tY:
         return -1
     elif tX > tY:
@@ -61,24 +61,24 @@ def main(args):
     tStart = []
     oDetails = []
     for i,o in enumerate(obs):
-        tStart.append( mjdmpm_to_datetime(o['MJD'], o['MPM']) )
-        oDetails.append( {'m': o['Mode'], 'd': o['Dur'] / 1000.0, 'f': o['BW'], 
-                          'p': o['projectID'], 's': o['sessionID'], 'o': o['obsID'], 
-                          't': sdf.sessions[0].observations[o['obsID']-1].target} )
+        tStart.append( mjdmpm_to_datetime(o['mjd'], o['mpm']) )
+        oDetails.append( {'m': o['mode'], 'd': o['dur'] / 1000.0, 'f': o['bw'], 
+                          'p': o['project_id'], 's': o['session_id'], 'o': o['obs_id'], 
+                          't': sdf.sessions[0].observations[o['obs_id']-1].target} )
 
-        print("Observation #%i" % (o['obsID']))
-        print(" Start: %i, %i -> %s" % (o['MJD'], o['MPM'], tStart[-1]))
-        print(" Mode: %s" % mode_to_string(o['Mode']))
-        print(" BW: %i" % o['BW'])
-        print(" Target: %s" % sdf.sessions[0].observations[o['obsID']-1].target)
+        print("Observation #%i" % (o['obs_id']))
+        print(" Start: %i, %i -> %s" % (o['mjd'], o['mpm'], tStart[-1]))
+        print(" Mode: %s" % mode_to_string(o['mode']))
+        print(" BW: %i" % o['bw'])
+        print(" Target: %s" % sdf.sessions[0].observations[o['obs_id']-1].target)
     print(" ")
 
     # Figure out where in the file the various bits are.
     fh = open(data, 'rb')
     lf = drx.read_frame(fh)
     beam, j, k = lf.id
-    if beam != obs[0]['drxBeam']:
-        print('ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drxBeam'], beam))
+    if beam != obs[0]['drx_beam']:
+        print('ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drx_beam'], beam))
         sys.exit()
     firstFrame = lf.time.datetime
     if abs(firstFrame - min(tStart)) > timedelta(seconds=30):

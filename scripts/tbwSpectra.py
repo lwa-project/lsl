@@ -14,11 +14,10 @@ import os
 import sys
 import math
 import numpy
-import ephem
 import argparse
 
 from lsl.common import stations, metabundle
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWA1DataFile, TBWFile
 from lsl.correlator import fx as fxc
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
@@ -53,7 +52,9 @@ def main(args):
     maxFrames = (30000*260)
     
     idf = LWA1DataFile(args.filename)
-    
+    if not isinstance(idf, TBWFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBW file" % os.path.basename(filename))
+        
     nFrames = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     dataBits = idf.get_info('data_bits')
@@ -68,7 +69,7 @@ def main(args):
         
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    beginDate = ephem.Date(unix_to_utcjd(idf.get_info('start_time')) - DJD_OFFSET)
+    beginDate = idf.get_info('start_time').datetime
     
     # File summary
     print("Filename: %s" % args.filename)
