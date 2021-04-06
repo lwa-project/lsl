@@ -1,6 +1,8 @@
 from __future__ import print_function, division
 
 import numpy
+from functools import wraps
+from scipy.optimize import minimize_scalar
 
 from astropy.time import Time, TimeDelta
 from astropy.coordinates import EarthLocation, AltAz, ICRS
@@ -25,35 +27,28 @@ class AlwaysUpError(CircumpolarError):
     pass
 
 
-def _piecewise_search(func, x):
-    """
-    Simple search function for the rise/set times that does linear fits to the
-    below horizon and above horizon elevations to estimate when the source is
-    on the horizon.
-    """
-    
-    x = [x+v*u.minute for v in (-5, -3, -2, -1, 0, 1, 2, 3, 5)]
-    f = numpy.array([func(v) for v in x])
-    x = numpy.array([float(v) for v in x])
-    left = numpy.polyfit(x[:4], f[:4], 1)
-    right = numpy.polyfit(x[5:], f[5:], 1)
-    xL = -left[1]/left[0]
-    xR = -right[1]/right[0]
-    return (xL+xR)/2.0
+def _location(djd, obs, bdy, value, rising):
+    obs.date = Date(djd)
+    bdy.compute(obs)
+    diff = bdy.alt.rad
+    if bdy.az.rad % (2*numpy.pi) <= numpy.pi:
+        if not rising:
+            diff += numpy.pi/2
+    else:
+        if rising:
+            diff += numpy.pi/2
+    diff = abs(diff - value) % (2*numpy.pi)
+    return diff
 
 
-def _quadratic_search(func, x):
-    """
-    Simple search function for the transit/antitransit times that does a
-    quadratic fit to the elevation as a function to time to estimate when
-    the source is at transit.
-    """
-    
-    x = [x+v*u.minute for v in (-20, -15, -10, -5, 0, 5, 10, 15, 20)]
-    f = [func(v) for v in x]
-    fit = numpy.polyfit([float(v) for v in x], f, 2)
-    x1 = -fit[1] / (2*fit[0])
-    return x1
+def protect_date(func):
+    @wraps(func)
+    def wrapper(*args, **kwds):
+        initial_date = args[0].date
+        output = func(*args, **kwds)
+        args[0].date = initial_date
+        return output
+    return wrapper
 
 
 class Observer(object):
@@ -137,139 +132,115 @@ class Observer(object):
         equ = topo.transform_to(ICRS())
         return hours(equ.ra.to('radian').value), degrees(equ.dec.to('radian').value)
         
-    def _transit(self, delta, body, start=None):
-        initial_date = self.__date
-        if start is None:
-            start = self.__date
-            
-        lst = self.sidereal_time()
-        body.compute(self)
-        if body.neverup:
-            raise NeverUpError()
-            
-        diff = (lst - body.ra).to('radian').value % (2*numpy.pi)
-        t_transit = start - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
-        if t_transit > start and delta < 0:
-            t_transit = t_transit - 1*u.sday
-        elif t_transit < start and delta > 0:
-            t_transit = t_transit + 1*u.sday
-        def ninety(t):
-            self.__date = Date(t)
-            body.compute(self)
-            return abs(90 - body.alt.to('deg').value)
-        results = _quadratic_search(ninety, t_transit)
-        t_transit = Date(results)
-        
-        self.__date = initial_date
-        
-        return t_transit
-        
-    def next_transit(self, body, start=None):
-        return self._transit(1, body, start=start)
-        
+    @protect_date
     def previous_transit(self, body, start=None):
-        return self._transit(-1, body, start=start)
-        
-    def _antitransit(self, delta, body, start=None):
-        initial_date = self.__date
         if start is None:
-            start = self.__date
+            start = self.date
             
-        lst = self.sidereal_time()
-        body.compute(self)
+        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, True),
+                              method='bounded',
+                              bounds=(start-u.sday.to(u.day), start),
+                              options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
+        return Date(sol.x)
+        
+    @protect_date
+    def next_transit(self, body, start=None):
+        if start is None:
+            start = self.date
             
-        diff = (lst - body.ra).to('radian').value % (2*numpy.pi)
-        t_antitransit = start - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
-        t_antitransit = t_antitransit - 0.5*u.sday
-        if t_antitransit > start and delta < 0:
-            t_antitransit = t_antitransit - 1*u.sday
-        elif t_antitransit < start and delta > 0:
-            t_antitransit = t_antitransit + 1*u.sday
-        def neg_ninety(t):
-            self.__date = Date(t)
-            body.compute(self)
-            return body.alt.to('deg').value
-        results = _quadratic_search(neg_ninety, t_antitransit)
-        t_antitransit = Date(results)
+        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, True),
+                              method='bounded',
+                              bounds=(start, start+u.sday.to(u.day)),
+                              options={'xatol': 1/86400.0})
+        if body.neverup:
+            raise NeverUpError()
+        return Date(sol.x)
         
-        self.__date = initial_date
-        
-        return t_antitransit
-        
-    def next_antitransit(self, body, start=None):
-        return self._antitransit(1, body, start=start)
-        
+    @protect_date
     def previous_antitransit(self, body, start=None):
-        return self._antitransit(-1, body, start=start)
-        
-    def _rise(self, delta, body, start=None):
-        initial_date = self.__date
         if start is None:
-            start = self.__date
+            start = self.date
             
-        lst = self.sidereal_time()    
-        body.compute(self)
+        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, True),
+                              method='bounded',
+                              bounds=(start-u.sday.to(u.day), start),
+                              options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
-        if body.circumpolar:
-            raise AlwaysUpError()
+        return Date(sol.x)
+        
+    @protect_date
+    def next_antitransit(self, body, start=None):
+        if start is None:
+            start = self.date
             
-        diff = (lst - body._rising_lst).to('radian').value % (2*numpy.pi)
-        t_rise = self.__date - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
-        if t_rise > start and delta < 0:
-            t_rise = t_rise - 1*u.sday
-        elif t_rise < start and delta > 0:
-            t_rise = t_rise + 1*u.sday
-        def zero(t):
-            self.__date = Date(t)
-            body.compute(self)
-            return abs(body.alt.to('arcsec').value)
-        results = _piecewise_search(zero, t_rise)
-        t_rise = Date(results)
-           
-        self.__date = initial_date
+        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, True),
+                              method='bounded',
+                              bounds=(start, start+u.sday.to(u.day)),
+                              options={'xatol': 1/86400.0})
+        if body.neverup:
+            raise NeverUpError()
+        return Date(sol.x)
         
-        return t_rise
-        
-    def next_rising(self, body, start=None):
-        return self._rise(1, body, start=start)
-        
+    @protect_date
     def previous_rising(self, body, start=None):
-        return self._rise(-1, body, start=start)
-        
-    def _set(self, delta, body, start=None):
-        initial_date = self.__date
         if start is None:
-            start = self.__date
+            start = self.date
             
-        lst = self.sidereal_time()   
-        body.compute(self)
+        sol = minimize_scalar(_location, args=(self, body, 0.0, True),
+                              method='bounded',
+                              bounds=(start-u.sday.to(u.day), start),
+                              options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
-        if body.circumpolar:
-            raise AlwaysUpError()
+        elif body.circumpolar:
+            raise CircumpolarError()
+        return Date(sol.x)
+        
+    @protect_date
+    def next_rising(self, body, start=None):
+        if start is None:
+            start = self.date
             
-        diff = (lst - body._setting_lst).to('radian').value % (2*numpy.pi)
-        t_set = self.__date - TimeDelta(diff*43200/numpy.pi*u.second, format='sec')
-        if t_set > start and delta < 0:
-            t_set = t_set - 1*u.sday
-        elif t_set < start and delta > 0:
-            t_set = t_set + 1*u.sday
-        def zero(t):
-            self.__date = Date(t)
-            body.compute(self)
-            return abs(body.alt.to('arcsec').value)
-        results = _piecewise_search(zero, t_set)
-        t_set = Date(results)
+        sol = minimize_scalar(_location, args=(self, body, 0.0, True),
+                              method='bounded',
+                              bounds=(start, start+u.sday.to(u.day)),
+                              options={'xatol': 1/86400.0})
+        if body.neverup:
+            raise NeverUpError()
+        elif body.circumpolar:
+            raise CircumpolarError()
+        return Date(sol.x)
         
-        self.__date = initial_date
-        
-        return t_set
-        
-    def next_setting(self, body, start=None):
-        return self._set(1, body, start=start)
-        
+    @protect_date
     def previous_setting(self, body, start=None):
-        return self._set(-1, body, start=start)
+        if start is None:
+            start = self.date
+            
+        sol = minimize_scalar(_location, args=(self, body, 0.0, False),
+                              method='bounded',
+                              bounds=(start-u.sday.to(u.day), start),
+                              options={'xatol': 1/86400.0})
+        print(sol)
+        if body.neverup:
+            raise NeverUpError()
+        elif body.circumpolar:
+            raise CircumpolarError()
+        return Date(sol.x)
+        
+    @protect_date
+    def next_setting(self, body, start=None):
+        if start is None:
+            start = self.date
+            
+        sol = minimize_scalar(_location, args=(self, body, 0.0, False),
+                              method='bounded',
+                              bounds=(start, start+u.sday.to(u.day)),
+                              options={'xatol': 1/86400.0})
+        if body.neverup:
+            raise NeverUpError()
+        elif body.circumpolar:
+            raise CircumpolarError()
+        return Date(sol.x)
