@@ -6,7 +6,12 @@ from astropy import units as u
 from functools import total_ordering
 
 
-__all__ = ['hours', 'degrees', 'separation']
+__all__ = ['hour', 'degree', 'hours', 'degrees', 'separation']
+
+
+# Fixed quantity to radian values
+hour = 1 / 24.
+degree = numpy.pi / 180.
 
 
 @total_ordering
