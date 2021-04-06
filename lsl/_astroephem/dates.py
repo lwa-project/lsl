@@ -8,6 +8,8 @@ from astropy.time import Time
 
 from functools import total_ordering 
 
+from config import SIMPLE_REPR
+
 __all__ = ['B1950', 'J2000', 'Date', 'now', 'localtime']
 
 
@@ -16,6 +18,12 @@ _DJD_OFFSET = 2415020.0
 
 @total_ordering
 class _FloatableTime(Time):
+    def __repr__(self):
+        if SIMPLE_REPR:
+            return str(float(self))
+        else:
+            return Time.__repr__(self)
+            
     def __str__(self):
         return "%i/%i/%i %02i:%02i:%06.3f" % self.tuple()
         

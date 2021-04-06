@@ -5,6 +5,8 @@ from astropy import units as u
 
 from functools import total_ordering
 
+from config import SIMPLE_REPR
+
 
 __all__ = ['hour', 'degree', 'hours', 'degrees', 'separation']
 
@@ -16,6 +18,12 @@ degree = numpy.pi / 180.
 
 @total_ordering
 class _FloatableAngle(Angle):
+    def __repr__(self):
+        if SIMPLE_REPR:
+            return str(float(self))
+        else:
+            return Angle.__repr__(self)
+            
     def __float__(self):
         return self.to('radian').value % (2*numpy.pi)
         
@@ -129,4 +137,3 @@ def separation(pos1, pos2):
             pos2_2 = pos2_2*u.radian
         c2 = SkyCoord(pos2_1, pos2_2, frame='icrs')
     return c1.separation(c2)
-
