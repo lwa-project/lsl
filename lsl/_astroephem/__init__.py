@@ -1,3 +1,7 @@
+"""
+Python module that provides a PyEphem-like API that is built using AstroPy.
+"""
+
 from angles import *
 from bodies import *
 from config import *
