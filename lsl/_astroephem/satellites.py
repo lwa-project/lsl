@@ -26,13 +26,16 @@ class EphemEarthSatellte(object):
         satellite.
         
         For an EphemTime, this computes:
-         * the astrometric position of the body - a_ra and a_dec
+         * the sub-body location - sublat, sublon, and elevation
          * the geocentric position of the body - g_ra and g_dec
-         * the apparent position of the body - ra and dec
          
         For an Observer, this computes everything as in the case of EphemTime
         and also includes:
+         * the astrometric position of the body - a_ra and a_dec
+         * the apparent position of the body - ra and dec
          * the topocentric position of the body - az and alt
+         * the range to the body - range
+         * the line-of-sight velocity of the body - range_velocity
          
         If None is provided, the current time is used.
         """
