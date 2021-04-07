@@ -7,12 +7,11 @@ from __future__ import print_function, division
 import time
 import calendar
 import datetime
+from functools import total_ordering
 
 from astropy.time import Time
 
-from functools import total_ordering 
-
-from config import PYEPHEM_REPR
+from lsl._astroephem.config import PYEPHEM_REPR
 
 __all__ = ['B1950', 'J2000', 'Date', 'now', 'localtime']
 

@@ -7,13 +7,13 @@ from __future__ import print_function, division
 import numpy
 
 from astropy.time import Time
-from astropy.coordinates import SkyCoord, ITRS, AltAz, get_body, get_moon
+from astropy.coordinates import SkyCoord, ITRS, CIRS, AltAz, get_body, get_moon
 from astropy.coordinates import CartesianRepresentation
 import astropy.units as u
 
-from angles import hours, degrees
-from dates import Date
-from observers import Observer
+from lsl._astroephem.angles import hours, degrees
+from lsl._astroephem.dates import Date
+from lsl._astroephem.observers import Observer
 
 
 __all__ = ['FixedBody', 'readdb', 'Sun', 'Mercury', 'Venus', 'Moon', 'Mars', 
@@ -31,8 +31,8 @@ class _Body(object):
         
     def compute(self, date_or_observer=None):
         """
-        Given an EphemTime or Observer instance or None, compute the location of the
-        body.
+        Given an EphemTime or Observer instance or None, compute the location of
+        the body.
         
         For an EphemTime, this computes:
          * the astrometric position of the body - a_ra and a_dec
@@ -55,8 +55,8 @@ class _Body(object):
             
         if isinstance(date_or_observer, Time):
             self.a_epoch = date_or_observer
-            gast = self.a_epoch.sidereal_time('apparent', longitude=0)
-            ogc = CartesianRepresentation(0.0, 0.0, 0.0)
+            gast = self.a_epoch.sidereal_time('apparent', longitude=0*u.deg)
+            ogc = CartesianRepresentation(0.0*u.m, 0.0*u.m, 0.0*u.m)
             
             try:
                 _ac = self._sc.apply_space_motion(new_obstime=date_or_observer)
@@ -77,17 +77,15 @@ class _Body(object):
             _gc = _ac.transform_to(ITRS(obstime=self.a_epoch))
             _lc = _ac.transform_to(ITRS(ogc,
                                         obstime=self.a_epoch))
+            _lc = _lc.transform_to(CIRS(obstime=self.a_epoch))
             _tc = _lc.transform_to(AltAz(obstime=date_or_observer.date,
                                          location=date_or_observer._el))
         self.a_ra  = hours(_ac.ra, wrap=True)
         self.a_dec = degrees(_ac.dec, wrap180=True)
         self.g_ra  = hours(gast + _gc.spherical.lon, wrap=True)
         self.g_dec = degrees(_gc.spherical.lat, wrap180=True)
-        try:
-            self.ra  = hours(gast + _lc.spherical.lon, wrap=True)
-            self.dec = degrees(_lc.spherical.lat, wrap180=True)
-        except NameError:
-            pass
+        self.ra  = hours(gast + _lc.spherical.lon, wrap=True)
+        self.dec = degrees(_lc.spherical.lat, wrap180=True)
         try:
             self.az = degrees(_tc.az)
             self.alt = degrees(_tc.alt)
@@ -183,7 +181,7 @@ class _Body(object):
 
 class FixedBody(_Body):
     """
-    A celestial body, that can compute() its sky position.
+    A celestial body in the ICRS frame, that can compute() its sky position.
     """
     
     name = ''

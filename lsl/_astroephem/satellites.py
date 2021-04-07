@@ -5,8 +5,8 @@ from astropy.time import Time
 from astropy.coordinates import ITRS, AltAz, ICRS, CIRS, TEME, CartesianDifferential, CartesianRepresentation
 from astropy import units as u
 
-from angles import hours, degrees
-from dates import Date
+from lsl._astroephem.angles import hours, degrees
+from lsl._astroephem.dates import Date
 
 __all__ = ['EphemEarthSatellte', 'readtle']
 

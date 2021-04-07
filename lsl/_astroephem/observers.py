@@ -12,8 +12,8 @@ from astropy.time import Time, TimeDelta
 from astropy.coordinates import EarthLocation, AltAz, ICRS
 import astropy.units as u
 
-from angles import hours, degrees
-from dates import Date
+from lsl._astroephem.angles import hours, degrees
+from lsl._astroephem.dates import Date
 
 
 __all__ = ['CircumpolarError', 'NeverUpError', 'AlwaysUpError', 'Observer']

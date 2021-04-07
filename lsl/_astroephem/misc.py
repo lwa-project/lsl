@@ -11,7 +11,7 @@ from scipy.optimize import minimize_scalar
 from astropy import units as u
 from astropy.coordinates import get_body, GeocentricTrueEcliptic
 
-from dates import Date
+from lsl._astroephem.dates import Date
 
 __all__ = ['previous_equinox', 'next_equinox', 'previous_solstice', 'next_solstice',
            'previous_new_moon', 'next_new_moon', 'previous_first_quarter_moon',

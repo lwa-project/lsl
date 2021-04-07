@@ -10,7 +10,7 @@ from astropy import units as u
 
 from functools import total_ordering
 
-from config import PYEPHEM_REPR
+from lsl._astroephem.config import PYEPHEM_REPR
 
 
 __all__ = ['hour', 'degree', 'EphemAngle', 'hours', 'degrees', 'separation']

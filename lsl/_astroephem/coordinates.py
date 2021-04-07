@@ -8,8 +8,8 @@ from astropy.time import Time
 from astropy.coordinates import ICRS, ITRS, CIRS, FK4, FK5, GeocentricTrueEcliptic, Galactic as AstroGalactic
 import astropy.units as u
 
-from angles import hours, degrees
-from dates import Date, B1950, J2000
+from lsl._astroephem.angles import hours, degrees
+from lsl._astroephem.dates import Date, B1950, J2000
 
 __all__ = ['Equatorial', 'Ecliptic', 'Galactic']
 
