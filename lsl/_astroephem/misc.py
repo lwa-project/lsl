@@ -1,3 +1,8 @@
+"""
+Python module that provides miscellanous functions from ephem related to the
+equinoxes, solstices, and the phases of the Moon.
+"""
+
 from __future__ import print_function, division
 
 import numpy
@@ -15,6 +20,11 @@ __all__ = ['previous_equinox', 'next_equinox', 'previous_solstice', 'next_solsti
 
 
 def _seasons(djd, value):
+    """
+    Private function to help determine when the Sun is near a particular
+    ecliptic longitude.
+    """
+    
     d = Date(djd)
     s = get_body('sun', d)
     ecl = GeocentricTrueEcliptic(equinox=d)
@@ -23,6 +33,10 @@ def _seasons(djd, value):
 
 
 def previous_equinox(date):
+    """
+    Return the date of the previous equinox relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_seasons, args=(numpy.pi,), method='bounded',
                           bounds=(date-365.25, date*1.0),
@@ -31,6 +45,10 @@ def previous_equinox(date):
 
 
 def next_equinox(date):
+    """
+    Return the date of the next equinox relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_seasons, args=(numpy.pi,), method='bounded',
                           bounds=(date*1.0, date+365.25),
@@ -39,6 +57,10 @@ def next_equinox(date):
 
 
 def previous_solstice(date):
+    """
+    Retun the date of the previous solstice relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_seasons, args=(numpy.pi/2,), method='bounded',
                           bounds=(date-365.25, date*1.0),
@@ -47,6 +69,10 @@ def previous_solstice(date):
 
 
 def next_solstice(date):
+    """
+    Retun the date of the next solstice relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_seasons, args=(numpy.pi/2,), method='bounded',
                           bounds=(date*1.0, date+365.25),
@@ -55,6 +81,10 @@ def next_solstice(date):
 
 
 def _phases(djd, value):
+    """
+    Private function to help determine when the Moon is near a particular phase.
+    """
+    
     d = Date(djd)
     s = get_body('sun', d)
     m = get_body('moon', d)
@@ -65,6 +95,10 @@ def _phases(djd, value):
 
 
 def previous_new_moon(date):
+    """
+    Return the date of the previous new moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(0.0,), method='bounded',
                           bounds=(date-29.53, date*1.0),
@@ -73,6 +107,10 @@ def previous_new_moon(date):
 
 
 def next_new_moon(date):
+    """
+    Return the date of the next new moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(0.0,), method='bounded',
                           bounds=(date*1.0, date+29.53),
@@ -81,6 +119,10 @@ def next_new_moon(date):
 
 
 def previous_first_quarter_moon(date):
+    """
+    Return the date of the previous first quarter moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(numpy.pi/2,), method='bounded',
                           bounds=(date-29.53, date*1.0),
@@ -89,6 +131,10 @@ def previous_first_quarter_moon(date):
 
 
 def next_first_quarter_moon(date):
+    """
+    Return the date of the next first quarter moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(numpy.pi/2,), method='bounded',
                           bounds=(date*1.0, date+29.53),
@@ -97,6 +143,10 @@ def next_first_quarter_moon(date):
 
 
 def previous_full_moon(date):
+    """
+    Return the date of the previous full moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(numpy.pi,), method='bounded',
                           bounds=(date-29.53, date*1.0),
@@ -105,6 +155,10 @@ def previous_full_moon(date):
 
 
 def next_full_moon(date):
+    """
+    Return the date of the next full moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(numpy.pi,), method='bounded',
                           bounds=(date*1.0, date+29.53),
@@ -113,6 +167,10 @@ def next_full_moon(date):
 
 
 def previous_last_quarter_moon(date):
+    """
+    Return the date of the previous last quarter moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(3*numpy.pi/2,), method='bounded',
                           bounds=(date-29.53, date*1.0),
@@ -121,6 +179,10 @@ def previous_last_quarter_moon(date):
 
 
 def next_last_quarter_moon(date):
+    """
+    Return the date of the next last quarter moon relative to the date provided.
+    """
+    
     date = Date(date)
     sol = minimize_scalar(_phases, args=(3*numpy.pi/2,), method='bounded',
                           bounds=(date*1.0, date+29.53),

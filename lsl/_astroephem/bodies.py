@@ -1,3 +1,7 @@
+"""
+Python module for providing ephem-like FixedBody and planetary classes.
+"""
+
 from __future__ import print_function, division
 
 import numpy
@@ -18,13 +22,30 @@ __all__ = ['FixedBody', 'readdb', 'Sun', 'Mercury', 'Venus', 'Moon', 'Mars',
 
 class _Body(object):
     """
-    Base class that provides the compute() method for FixedBody and Planet.
+    Base class for a celestial body that provides the compute() method.  This is
+    sub-classed to generate both FixedBody and Planet.
     """
     
     def __init__(self, skycoord_or_body=SkyCoord(0*u.hourangle, 0*u.deg, frame='icrs')):
         self._sc = skycoord_or_body
         
     def compute(self, date_or_observer=None):
+        """
+        Given an EphemTime or Observer instance or None, compute the location of the
+        body.
+        
+        For an EphemTime, this computes:
+         * the astrometric position of the body - a_ra and a_dec
+         * the geocentric position of the body - g_ra and g_dec
+         * the apparent position of the body - ra and dec
+         
+        For an Observer, this computes everything as in the case of EphemTime
+        and also includes:
+         * the topocentric position of the body - az and alt
+         
+        If None is provided, the current time is used.
+        """
+        
         if date_or_observer is None:
             date_or_observer = Time.now()
         elif isinstance(date_or_observer, str):
@@ -151,6 +172,13 @@ class _Body(object):
         ## Used later
         self._rising_lst = hours(rising_lst, wrap=True)
         self._setting_lst = hours(setting_lst, wrap=True)
+        
+    def as_astropy(self):
+        """
+        Returns an astropy.coordinates.SkyCoord instance for the body.
+        """
+        
+        return self._sc
 
 
 class FixedBody(_Body):
@@ -213,6 +241,11 @@ class FixedBody(_Body):
 
 
 def readdb(line):
+    """
+    Read in a line of text from an ephem database and return a FixedBody
+    corresponding to that entry.
+    """
+    
     fields = line.split(',')
     name, type, ra, dec, _ = fields
     if type != 'f|J':

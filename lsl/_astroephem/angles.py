@@ -1,3 +1,8 @@
+"""
+Python module providing ephem-like hours, degrees, and separation functions as
+well as the hour and degree constants.
+"""
+
 import numpy
 
 from astropy.coordinates import Angle, SkyCoord
@@ -5,10 +10,10 @@ from astropy import units as u
 
 from functools import total_ordering
 
-from config import SIMPLE_REPR
+from config import PYEPHEM_REPR
 
 
-__all__ = ['hour', 'degree', 'hours', 'degrees', 'separation']
+__all__ = ['hour', 'degree', 'EphemAngle', 'hours', 'degrees', 'separation']
 
 
 # Fixed quantity to radian values
@@ -17,15 +22,19 @@ degree = numpy.pi / 180.
 
 
 @total_ordering
-class _FloatableAngle(Angle):
+class EphemAngle(Angle):
+    """
+    Base class for representing angles in a way that behaves like ephem.angle.
+    """
+    
     def __repr__(self):
-        if SIMPLE_REPR:
+        if PYEPHEM_REPR:
             return str(float(self))
         else:
             return Angle.__repr__(self)
             
     def __str__(self):
-        if SIMPLE_REPR:
+        if PYEPHEM_REPR:
             output = Angle.__str__(self)
             for u in ('d', 'm', 'h'):
                 output = output.replace(u, ':')
@@ -62,7 +71,7 @@ class _FloatableAngle(Angle):
             return Angle.__truediv__(self, other)
             
     def __floordiv__(self, other):
-        return _FloatableAngle.__truediv__(self, other)
+        return EphemAngle.__truediv__(self, other)
         
     def __neg__(self):
         return -float(self)
@@ -82,16 +91,16 @@ class _FloatableAngle(Angle):
 
 def hours(value, wrap=False):
     """
-    Build an astropy.coordinates.Angle-like object measured in hours.
+    Build an EphemAngle instance measured in hours.
     """
     
     ang = None
     if isinstance(value, Angle):
-        ang = _FloatableAngle(value).to(u.hourangle)
+        ang = EphemAngle(value).to(u.hourangle)
     elif isinstance(value, (int, float)):
-        ang = _FloatableAngle(value, u.rad).to(u.hourangle)
+        ang = EphemAngle(value, u.rad).to(u.hourangle)
     elif isinstance(value, str):
-        ang = _FloatableAngle(value, u.hourangle)
+        ang = EphemAngle(value, u.hourangle)
     if ang is None:
         raise ValueError("Cannot parse '%s'" % str(value))
         
@@ -102,16 +111,16 @@ def hours(value, wrap=False):
 
 def degrees(value, wrap360=False, wrap180=False):
     """
-    Build and astropy.coordinates.Angle-like object measured in degrees.
+    Build an EphemAngle instance measured in degrees.
     """
     
     ang = None
     if isinstance(value, Angle):
-        ang = _FloatableAngle(value).to(u.deg)
+        ang = EphemAngle(value).to(u.deg)
     elif isinstance(value, (int, float)):
-        ang = _FloatableAngle(value, u.rad).to(u.deg)
+        ang = EphemAngle(value, u.rad).to(u.deg)
     elif isinstance(value, str):
-        ang = _FloatableAngle(value, u.deg)
+        ang = EphemAngle(value, u.deg)
     if ang is None:
         raise ValueError("Cannot parse '%s'" % str(value))
         
@@ -125,7 +134,7 @@ def degrees(value, wrap360=False, wrap180=False):
 def separation(pos1, pos2):
     """
     Return the angular separation between two objects or positions as an
-    astropy.coordinates.Angle.
+    EphemAngle instance.
     """
     
     if isinstance(pos1, SkyCoord):
@@ -146,4 +155,4 @@ def separation(pos1, pos2):
         if not isinstance(pos2_2, u.quantity.Quantity):
             pos2_2 = pos2_2*u.radian
         c2 = SkyCoord(pos2_1, pos2_2, frame='icrs')
-    return c1.separation(c2)
+    return EphemAngle(c1.separation(c2))
