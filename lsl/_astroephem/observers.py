@@ -60,20 +60,21 @@ def protect_date(func):
     return wrapper
 
 
-def _location(djd, obs, bdy, value, rising):
+def _location(djd, obs, bdy, value, selection):
     """
     Private function for helping to determine when a body is at a certain
-    elevation.
+    elevation.  selection controls whether the minimimzation of azimuth agnostic
+    (0), in the east (1), or in the west (2).
     """
     
     obs.date = Date(djd)
     bdy.compute(obs)
     diff = bdy.alt.rad
     if bdy.az.rad % (2*numpy.pi) <= numpy.pi:
-        if not rising:
+        if selection == 2:
             diff += numpy.pi/2
     else:
-        if rising:
+        if selection == 1:
             diff += numpy.pi/2
     diff = abs(diff - value) % (2*numpy.pi)
     return diff
@@ -197,7 +198,7 @@ class Observer(object):
         """
         Given an azimuth and elevation as viewed by the Observer, return the
         right ascension and declination that they correspond to.  The RA and
-        dec. values are returned as EphemAngle instances.
+        dec. values are returned as EphemAngle instances in the ICRS frame.
         """
         
         alt = degrees(alt)
@@ -218,7 +219,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, True),
+        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, 0),
                               method='bounded',
                               bounds=(start-u.sday.to(u.day), start),
                               options={'xatol': 1/86400.0})
@@ -238,7 +239,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, True),
+        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, 0),
                               method='bounded',
                               bounds=(start, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
@@ -258,7 +259,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, True),
+        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, 0),
                               method='bounded',
                               bounds=(start-u.sday.to(u.day), start),
                               options={'xatol': 1/86400.0})
@@ -278,7 +279,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, True),
+        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, 0),
                               method='bounded',
                               bounds=(start, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
@@ -298,7 +299,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, True),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 1),
                               method='bounded',
                               bounds=(start-u.sday.to(u.day), start),
                               options={'xatol': 1/86400.0})
@@ -320,7 +321,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, True),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 1),
                               method='bounded',
                               bounds=(start, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
@@ -342,7 +343,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, False),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 2),
                               method='bounded',
                               bounds=(start-u.sday.to(u.day), start),
                               options={'xatol': 1/86400.0})
@@ -365,7 +366,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, False),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 2),
                               method='bounded',
                               bounds=(start, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
