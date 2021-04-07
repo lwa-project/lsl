@@ -221,7 +221,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, 0),
                               method='bounded',
-                              bounds=(start-u.sday.to(u.day), start),
+                              bounds=(start-u.sday.to(u.day), start*1.0),
                               options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
@@ -241,7 +241,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, 0),
                               method='bounded',
-                              bounds=(start, start+u.sday.to(u.day)),
+                              bounds=(start*1.0, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
@@ -261,7 +261,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, 0),
                               method='bounded',
-                              bounds=(start-u.sday.to(u.day), start),
+                              bounds=(start-u.sday.to(u.day), start*1.0),
                               options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
@@ -281,7 +281,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, 0),
                               method='bounded',
-                              bounds=(start, start+u.sday.to(u.day)),
+                              bounds=(start*1.0, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
@@ -301,7 +301,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 1),
                               method='bounded',
-                              bounds=(start-u.sday.to(u.day), start),
+                              bounds=(start-u.sday.to(u.day), start*1.0),
                               options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
@@ -323,7 +323,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 1),
                               method='bounded',
-                              bounds=(start, start+u.sday.to(u.day)),
+                              bounds=(start*1.0, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
@@ -345,7 +345,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 2),
                               method='bounded',
-                              bounds=(start-u.sday.to(u.day), start),
+                              bounds=(start-u.sday.to(u.day), start*1.0),
                               options={'xatol': 1/86400.0})
         print(sol)
         if body.neverup:
@@ -368,7 +368,7 @@ class Observer(object):
             
         sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 2),
                               method='bounded',
-                              bounds=(start, start+u.sday.to(u.day)),
+                              bounds=(start*1.0, start+u.sday.to(u.day)),
                               options={'xatol': 1/86400.0})
         if body.neverup:
             raise NeverUpError()
