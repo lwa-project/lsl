@@ -9,3 +9,4 @@ from coordinates import *
 from dates import *
 from observers import *
 from misc import *
+from satellites import *
