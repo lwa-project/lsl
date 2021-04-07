@@ -24,7 +24,7 @@ class EphemCoordinate(object):
     def __init__(self, c1_or_class, c2=None, epoch=None, hours=False):
         if epoch is None:
             epoch = Time.now()
-        self._epoch = epoch
+        self._epoch = Date(epoch)
         self._hours = hours
         
         if isinstance(c1_or_class, EphemCoordinate):
