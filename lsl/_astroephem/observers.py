@@ -202,7 +202,7 @@ class Observer(object):
         
         alt = degrees(alt)
         az = degrees(az)
-        topo = AltAz(alt, az, obstime=self.__date, location=self._el)
+        topo = AltAz(az, alt, obstime=self.__date, location=self._el)
         equ = topo.transform_to(ICRS())
         return hours(equ.ra.to('radian').value), degrees(equ.dec.to('radian').value)
         
