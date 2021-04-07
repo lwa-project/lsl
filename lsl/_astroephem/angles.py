@@ -44,7 +44,10 @@ class Angle(AstroAngle):
             return AstroAngle.__str__(self)
             
     def __float__(self):
-        return self.to('radian').value % (2*numpy.pi)
+        return float(self.to('radian').value)
+        
+    def __round__(self, ndigits=0):
+        return round(float(self), ndigits)
         
     def __add__(self, other):
         if isinstance(other, (int, float)):
