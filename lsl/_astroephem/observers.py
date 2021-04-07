@@ -188,7 +188,7 @@ class Observer(object):
         
     def sidereal_time(self):
         """
-        Returns an EphemAngle instance of the local apparent sidereal time for
+        Returns an Angle instance of the local apparent sidereal time for
         the Observer.
         """
         
@@ -198,7 +198,7 @@ class Observer(object):
         """
         Given an azimuth and elevation as viewed by the Observer, return the
         right ascension and declination that they correspond to.  The RA and
-        dec. values are returned as EphemAngle instances in the ICRS frame.
+        dec. values are returned as Angle instances in the ICRS frame.
         """
         
         alt = degrees(alt)

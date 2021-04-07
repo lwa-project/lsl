@@ -43,7 +43,7 @@ class EphemCoordinate(object):
             
     def get(self):
         """
-        Get the coordinate pair as two-element tuple of EphemAngle instances.
+        Get the coordinate pair as two-element tuple of Angle instances.
         Exactly what is returned is dependent on the frame used for the
         instance.
         """

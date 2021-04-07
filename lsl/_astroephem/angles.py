@@ -5,7 +5,7 @@ well as the hour and degree constants.
 
 import numpy
 
-from astropy.coordinates import Angle, SkyCoord
+from astropy.coordinates import Angle as AstroAngle, SkyCoord
 from astropy import units as u
 
 from functools import total_ordering
@@ -13,7 +13,7 @@ from functools import total_ordering
 from lsl._astroephem.config import PYEPHEM_REPR
 
 
-__all__ = ['hour', 'degree', 'EphemAngle', 'hours', 'degrees', 'separation']
+__all__ = ['hour', 'degree', 'Angle', 'hours', 'degrees', 'separation']
 
 
 # Fixed quantity to radian values
@@ -22,7 +22,7 @@ degree = numpy.pi / 180.
 
 
 @total_ordering
-class EphemAngle(Angle):
+class Angle(AstroAngle):
     """
     Base class for representing angles in a way that behaves like ephem.angle.
     """
@@ -31,17 +31,17 @@ class EphemAngle(Angle):
         if PYEPHEM_REPR:
             return str(float(self))
         else:
-            return Angle.__repr__(self)
+            return AstroAngle.__repr__(self)
             
     def __str__(self):
         if PYEPHEM_REPR:
-            output = Angle.__str__(self)
+            output = AstroAngle.__str__(self)
             for u in ('d', 'm', 'h'):
                 output = output.replace(u, ':')
             output = output.replace('s', '')
             return output
         else:
-            return Angle.__str__(self)
+            return AstroAngle.__str__(self)
             
     def __float__(self):
         return self.to('radian').value % (2*numpy.pi)
@@ -50,28 +50,28 @@ class EphemAngle(Angle):
         if isinstance(other, (int, float)):
             return float(self) + other
         else:
-            return Angle.__add__(self, other)
+            return AstroAngle.__add__(self, other)
             
     def __sub__(self, other):
         if isinstance(other, (int, float)):
             return float(self) - other
         else:
-            return Angle.__sub__(self, other)
+            return AstroAngle.__sub__(self, other)
             
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return float(self) * other
         else:
-            return Angle.__mul__(self, other)
+            return AstroAngle.__mul__(self, other)
             
     def __truediv__(self, other):
         if isinstance(other, (int, float)):
             return float(self) / other
         else:
-            return Angle.__truediv__(self, other)
+            return AstroAngle.__truediv__(self, other)
             
     def __floordiv__(self, other):
-        return EphemAngle.__truediv__(self, other)
+        return Angle.__truediv__(self, other)
         
     def __neg__(self):
         return -float(self)
@@ -80,27 +80,27 @@ class EphemAngle(Angle):
         if isinstance(other, (int, float)):
             return float(self) == float(other)
         else:
-            return Angle.__eq__(self, other)
+            return AstroAngle.__eq__(self, other)
         
     def __lt__(self, other):
         if isinstance(other, (int, float)):
             return float(self) < float(other)
         else:
-            return Angle.__lt__(self, other)
+            return AstroAngle.__lt__(self, other)
 
 
 def hours(value, wrap=False):
     """
-    Build an EphemAngle instance measured in hours.
+    Build an Angle instance measured in hours.
     """
     
     ang = None
-    if isinstance(value, Angle):
-        ang = EphemAngle(value).to(u.hourangle)
+    if isinstance(value, AstroAngle):
+        ang = Angle(value).to(u.hourangle)
     elif isinstance(value, (int, float)):
-        ang = EphemAngle(value, u.rad).to(u.hourangle)
+        ang = Angle(value, u.rad).to(u.hourangle)
     elif isinstance(value, str):
-        ang = EphemAngle(value, u.hourangle)
+        ang = Angle(value, u.hourangle)
     if ang is None:
         raise ValueError("Cannot parse '%s'" % str(value))
         
@@ -111,16 +111,16 @@ def hours(value, wrap=False):
 
 def degrees(value, wrap360=False, wrap180=False):
     """
-    Build an EphemAngle instance measured in degrees.
+    Build an Angle instance measured in degrees.
     """
     
     ang = None
-    if isinstance(value, Angle):
-        ang = EphemAngle(value).to(u.deg)
+    if isinstance(value, AstroAngle):
+        ang = Angle(value).to(u.deg)
     elif isinstance(value, (int, float)):
-        ang = EphemAngle(value, u.rad).to(u.deg)
+        ang = Angle(value, u.rad).to(u.deg)
     elif isinstance(value, str):
-        ang = EphemAngle(value, u.deg)
+        ang = Angle(value, u.deg)
     if ang is None:
         raise ValueError("Cannot parse '%s'" % str(value))
         
@@ -134,7 +134,7 @@ def degrees(value, wrap360=False, wrap180=False):
 def separation(pos1, pos2):
     """
     Return the angular separation between two objects or positions as an
-    EphemAngle instance.
+    Angle instance.
     """
     
     if isinstance(pos1, SkyCoord):
@@ -155,4 +155,4 @@ def separation(pos1, pos2):
         if not isinstance(pos2_2, u.quantity.Quantity):
             pos2_2 = pos2_2*u.radian
         c2 = SkyCoord(pos2_1, pos2_2, frame='icrs')
-    return EphemAngle(c1.separation(c2))
+    return Angle(c1.separation(c2))
