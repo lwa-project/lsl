@@ -1,4 +1,4 @@
-import lsl._astroephem as ephem"""
+"""
 Module for writing correlator output to a CASA measurement set.
 
 .. versionadded:: 1.2.1
@@ -15,7 +15,7 @@ import gc
 import re
 import glob
 import math
-import ephem
+import lsl._astroephem as ephem
 import numpy
 import shutil
 from astropy.time import Time as AstroTime
