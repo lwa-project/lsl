@@ -26,7 +26,7 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import ephem
+import lsl._astroephem as ephem
 import numpy
 from astropy.constants import c as speedOfLight
 from astropy.coordinates import Angle as AstroAngle

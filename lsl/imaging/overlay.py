@@ -22,7 +22,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import aipy
-import ephem
+import lsl._astroephem as ephem
 import numpy
 
 from lsl import astro

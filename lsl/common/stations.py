@@ -13,7 +13,7 @@ import re
 import imp
 import copy
 import numpy
-import ephem
+import lsl._astroephem as ephem
 import struct
 from textwrap import fill as tw_fill
 from functools import total_ordering

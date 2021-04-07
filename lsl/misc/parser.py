@@ -15,7 +15,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import re
-import ephem
+import lsl._astroephem as ephem
 from argparse import ArgumentTypeError
 from datetime import datetime
 from astropy import units

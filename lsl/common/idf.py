@@ -40,7 +40,7 @@ import re
 import copy
 import math
 import pytz
-import ephem
+import lsl._astroephem as ephem
 import weakref
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta

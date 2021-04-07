@@ -1,4 +1,4 @@
-"""
+import lsl._astroephem as ephem"""
 Module for writing correlator output to a CASA measurement set.
 
 .. versionadded:: 1.2.1

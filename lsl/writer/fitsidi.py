@@ -24,7 +24,7 @@ if sys.version_info < (3,):
 import os
 import re
 import math
-import ephem
+import lsl._astroephem as ephem
 import numpy
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight

@@ -11,7 +11,7 @@ if sys.version_info < (3,):
 import os
 import time
 import math
-import ephem
+import lsl._astroephem as ephem
 import numpy
 try:
     from urllib2 import urlopen

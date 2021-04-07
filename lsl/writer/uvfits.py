@@ -17,7 +17,7 @@ import os
 import gc
 import re
 import math
-import ephem
+import lsl._astroephem as ephem
 import numpy
 from astropy.time import Time as AstroTime
 from astropy.utils import iers
