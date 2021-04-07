@@ -24,7 +24,7 @@ REQUIREMENTS
  * numpy >= 1.7
  * scipy >= 0.19
  * astropy < 3.0 (2.7) or >= 3.0 (3.0+)
- * pyephem >= 3.7.5.3
+ * sgp4 >= 2.12
  * aipy >= 3.0.1
  * pytz >= 2012c
  * matplotlib >= 1.1 (required for some of the scripts)

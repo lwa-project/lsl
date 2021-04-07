@@ -49,7 +49,7 @@ def main(args):
     #
     
     ## Required
-    for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
+    for mod in ('numpy', 'scipy', 'astropy', 'sgp4', 'aipy', 'pytz'):
         try:
             exec "import %s" % mod
         except ImportError as e:
@@ -301,4 +301,3 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(args)
-
