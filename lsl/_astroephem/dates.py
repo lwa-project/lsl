@@ -38,7 +38,10 @@ class EphemTime(Time):
             return Time.__str__(self)
             
     def __float__(self):
-        return self.jd - _DJD_OFFSET
+        return float(self.jd - _DJD_OFFSET)
+        
+    def __round__(self, ndigits=0):
+        return round(float(self), ndigits)
         
     def __add__(self, other):
         if isinstance(other, (int, float)):
