@@ -19,17 +19,19 @@ __all__ = ['previous_equinox', 'next_equinox', 'previous_solstice', 'next_solsti
            'previous_last_quarter_moon', 'next_last_quarter_moon']
 
 
-def _seasons(djd, value):
+def _seasons(djd, value, specific):
     """
     Private function to help determine when the Sun is near a particular
-    ecliptic longitude.
+    ecliptic longitude.  specific controlls whether or not you are looking
+    for a specific longitude (1) or if you looking for any equinox or any
+    solstice (0).
     """
     
     d = Date(djd)
     s = get_body('sun', d)
     ecl = GeocentricTrueEcliptic(equinox=d)
     s_ecl = s.transform_to(ecl)
-    return abs(s_ecl.lon.rad - value) % numpy.pi
+    return abs(s_ecl.lon.rad - value) % (numpy.pi+specific*numpy.pi)
 
 
 def previous_equinox(date):
@@ -38,7 +40,7 @@ def previous_equinox(date):
     """
     
     date = Date(date)
-    sol = minimize_scalar(_seasons, args=(numpy.pi,), method='bounded',
+    sol = minimize_scalar(_seasons, args=(numpy.pi, 0), method='bounded',
                           bounds=(date-365.25, date*1.0),
                           options={'xatol': 1/86400.0})
     return Date(sol.x)
@@ -50,7 +52,7 @@ def next_equinox(date):
     """
     
     date = Date(date)
-    sol = minimize_scalar(_seasons, args=(numpy.pi,), method='bounded',
+    sol = minimize_scalar(_seasons, args=(numpy.pi, 0), method='bounded',
                           bounds=(date*1.0, date+365.25),
                           options={'xatol': 1/86400.0})
     return Date(sol.x)
@@ -62,7 +64,7 @@ def previous_solstice(date):
     """
     
     date = Date(date)
-    sol = minimize_scalar(_seasons, args=(numpy.pi/2,), method='bounded',
+    sol = minimize_scalar(_seasons, args=(numpy.pi/2, 0), method='bounded',
                           bounds=(date-365.25, date*1.0),
                           options={'xatol': 1/86400.0})
     return Date(sol.x)
@@ -74,7 +76,7 @@ def next_solstice(date):
     """
     
     date = Date(date)
-    sol = minimize_scalar(_seasons, args=(numpy.pi/2,), method='bounded',
+    sol = minimize_scalar(_seasons, args=(numpy.pi/2, 0), method='bounded',
                           bounds=(date*1.0, date+365.25),
                           options={'xatol': 1/86400.0})
     return Date(sol.x)
