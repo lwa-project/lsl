@@ -89,7 +89,7 @@ class EphemCoordinate(object):
         ascension and declination.
         """
         
-        radec = ICRS(hours(ra), degres(dec))
+        radec = ICRS(hours(ra), degrees(dec))
         try:
             new_frame = self.__astropy_base__(equinox=self._epoch,
                                               obstime=self._epoch)
