@@ -11,7 +11,7 @@ ts = api.load.timescale()
 from lsl._skyephem.angles import hours, degrees
 from lsl._skyephem.dates import Date, B1950, J2000
 
-__all__ = ['Coodinate', 'Equatorial', 'Ecliptic', 'Galactic']
+__all__ = ['Coordinate', 'Equatorial', 'Ecliptic', 'Galactic']
 
 
 class Coordinate(object):
