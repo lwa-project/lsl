@@ -10,7 +10,7 @@ if sys.version_info < (3,):
     
 import os
 import math
-import ephem
+import lsl._skyephem as ephem
 import unittest
 
 from lsl import transform

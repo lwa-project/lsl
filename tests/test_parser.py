@@ -9,7 +9,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import unittest
-import ephem
+import lsl._skyephem as ephem
 import numpy
 import argparse
 from astropy.constants import c

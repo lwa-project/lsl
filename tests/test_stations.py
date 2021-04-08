@@ -9,7 +9,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import os
-import ephem
+import lsl._astroephem as ephem
 import pickle
 import unittest
 from datetime import datetime

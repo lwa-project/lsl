@@ -10,7 +10,7 @@ if sys.version_info < (3,):
     
 import os
 import pytz
-import ephem
+import lsl._skyephem as ephem
 import tempfile
 import unittest
 from datetime import datetime, timedelta

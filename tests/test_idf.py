@@ -12,7 +12,7 @@ import os
 import re
 import copy
 import pytz
-import ephem
+import lsl._skyephem as ephem
 import tempfile
 import unittest
 from math import pi
