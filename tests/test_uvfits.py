@@ -77,7 +77,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_comment('This is a comment')
         fits.add_history('This is history')
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -106,7 +106,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -136,7 +136,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -161,7 +161,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -190,7 +190,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -213,7 +213,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
@@ -236,7 +236,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the file and examine
