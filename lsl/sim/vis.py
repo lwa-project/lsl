@@ -56,7 +56,7 @@ import os
 import aipy
 import copy
 import math
-import ephem
+import lsl._skyephem as ephem
 import numpy
 import warnings
 from scipy.interpolate import interp1d

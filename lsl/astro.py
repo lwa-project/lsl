@@ -10,7 +10,7 @@ if sys.version_info < (3,):
     
 import time
 import math
-import ephem
+import lsl._skyephem as ephem
 import numpy
 from calendar import timegm
 from functools import total_ordering    

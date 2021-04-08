@@ -53,7 +53,7 @@ import re
 import copy
 import math
 import pytz
-import ephem
+import lsl._skyephem as ephem
 import weakref
 import warnings
 from datetime import datetime, timedelta

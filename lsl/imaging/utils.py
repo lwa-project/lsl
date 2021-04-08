@@ -43,7 +43,7 @@ import os
 import re
 import sys
 import aipy
-import ephem
+import lsl._skyephem as ephem
 import numpy
 import atexit
 from astropy.io import fits as astrofits

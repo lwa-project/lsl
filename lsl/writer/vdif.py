@@ -16,7 +16,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import numpy
-import ephem
+import lsl._skyephem as ephem
 
 from lsl.common import dp as dp_common
 import lsl.astro as astro

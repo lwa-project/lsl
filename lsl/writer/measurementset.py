@@ -15,7 +15,7 @@ import gc
 import re
 import glob
 import math
-import ephem
+import lsl._skyephem as ephem
 import numpy
 import shutil
 from functools import total_ordering

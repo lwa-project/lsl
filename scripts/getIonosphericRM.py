@@ -12,7 +12,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import sys
-import ephem
+import lsl._skyephem as ephem
 import numpy
 import argparse
 from datetime import datetime
