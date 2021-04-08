@@ -17,7 +17,7 @@ import numpy
 import argparse
 
 from lsl.common import stations, metabundle, metabundleADP
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.correlator import fx as fxc
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
@@ -64,6 +64,8 @@ def main(args):
                 station = metabundle.get_station(args.metadata, apply_sdm=True)
             except:
                 station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwasv:
+        station = stations.lwasv
     else:
         station = stations.lwa1
     antennas = station.antennas
@@ -71,8 +73,10 @@ def main(args):
     # Length of the FFT
     LFFT = args.fft_length
     
-    idf = LWA1DataFile(args.filename)
-    
+    idf = LWADataFile(args.filename)
+    if not isinstance(idf, TBNFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBN file" % os.path.basename(filename))
+        
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     antpols = len(antennas)
@@ -241,6 +245,8 @@ if __name__ == "__main__":
                         help='filename to process')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-v', '--lwasv', action='store_true', 
+                        help='use LWA-SV instead of LWA1')
     wgroup = parser.add_mutually_exclusive_group(required=False)
     wgroup.add_argument('-t', '--bartlett', action='store_true', 
                         help='apply a Bartlett window to the data')

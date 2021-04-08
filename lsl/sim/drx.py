@@ -156,8 +156,7 @@ class SimFrame(drx.Frame):
         self.payload = drx_frame.payload
 
         inverseCodes = {}
-        for code in drx.FILTER_CODES:
-            rate = drx.FILTER_CODES[code]
+        for code,rate in drx.FILTER_CODES.items():
             inverseCodes[int(rate)] = code
         
         # Back-fill the class' fields to make sure the object is consistent

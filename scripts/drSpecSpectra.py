@@ -16,7 +16,7 @@ import math
 import numpy
 import argparse
 
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWADataFile, DRSpecFile
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
@@ -53,8 +53,10 @@ def _best_freq_units(freq):
 
 
 def main(args):
-    idf = LWA1DataFile(args.filename)
-    
+    idf = LWADataFile(args.filename)
+    if not isinstance(idf, DRSpecFile):
+        raise RuntimeError("File '%s' does not appear to be a valid DR spectrometer file" % os.path.basename(filename))
+        
     # Basic file informaiton
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')

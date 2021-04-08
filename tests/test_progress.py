@@ -58,7 +58,7 @@ class progress_tests(unittest.TestCase):
             pbar.show()
             
     def test_bar_plus_default(self):
-        """Test the progress bar, default options."""
+        """Test the progress bar plus, default options."""
         
         pbar = progress.ProgressBarPlus()
         for i in range(101):
@@ -66,7 +66,7 @@ class progress_tests(unittest.TestCase):
             pbar.dec(1)
         
     def test_bar_plus_attributes(self):
-        """Test the progress bar's attributes."""
+        """Test the progress bar plus's attributes."""
         
         pbar2 = progress.ProgressBarPlus()
         for i in range(101):
@@ -79,7 +79,7 @@ class progress_tests(unittest.TestCase):
             self.assertEqual(pbar2.amount, i+1)
             
     def test_bar_plus_show(self):
-        """Test the progress bar's rendering."""
+        """Test the progress bar plus's rendering."""
         
         # With percentage
         pbar = progress.ProgressBarPlus()
@@ -89,6 +89,42 @@ class progress_tests(unittest.TestCase):
             
         # Without percentage
         pbar = progress.ProgressBarPlus(print_percent=False)
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
+            
+    def test_download_default(self):
+        """Test the download bar, default options."""
+        
+        pbar = progress.ProgressBarPlus()
+        for i in range(101):
+            pbar.inc(2)
+            pbar.dec(1)
+        
+    def test_download_attributes(self):
+        """Test the download bar's attributes."""
+        
+        pbar2 = progress.DownloadBar()
+        for i in range(101):
+            pbar2 += 2
+            pbar2 -= 1
+            
+            pbar2 = pbar2 + 1
+            pbar2 = pbar2 - 1
+            
+            self.assertEqual(pbar2.amount, i+1)
+            
+    def test_download_show(self):
+        """Test the download bar's rendering."""
+        
+        # With percentage
+        pbar = progress.DownloadBar()
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
+            
+        # Without percentage
+        pbar = progress.DownloadBar(print_percent=False)
         for i in range(101):
             pbar.inc(1)
             pbar.show()

@@ -1,5 +1,6 @@
 #include "Python.h"
 #include <cmath>
+#include <math.h>
 #include <complex>
 #include <fftw3.h>
 
@@ -22,8 +23,9 @@
 // Maximum number of w-planes to project
 #define MAX_W_PLANES 1024
 
-// Gridding convolution size on a side
-#define GRID_KERNEL_SIZE 7
+// Gridding convolution size on a side and oversampling factor
+#define GRID_KERNEL_SIZE 7    // should be an odd number
+#define GRID_KERNEL_OVERSAMPLE 64
 
 
 double signed_sqrt(double data) {
@@ -35,16 +37,37 @@ double signed_sqrt(double data) {
 }
 
 
-double gridding_kernel_point(long i, 
-                             long j, 
-                             double ci, 
-                             double cj) {
-    double v;
+// Modified Bessel function of the first find
+double iv0(double x) {
+    double d = 0.0, ds = 1.0, sum = 1.0;
+    do {
+        d += 2.0;
+        ds *= x*x/(d*d);
+        sum += ds;
+    } while(ds > sum*1e-8);
+    return sum;
+}
+
+
+void kaiser_bessel_1d_kernel_filler(double *kernel1D) {
+    int i;
+    double x, v, scaleFactor;
     
-    v = 1.0 / 2.0 / NPY_PI / 0.5 / 0.5;
-    v *= exp(-(i-ci)*(i-ci)/2.0/0.5/0.5 + -(j-cj)*(j-cj)/2.0/0.5/0.5);
-    
-    return v;
+    scaleFactor = iv0(8.6);
+    for(i=0; i<GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1; i++) {
+        x = ((double) i) / GRID_KERNEL_OVERSAMPLE;
+        v = sinc(x) / scaleFactor;
+        v *= iv0(8.6 * sqrt(1.0-(2*x/GRID_KERNEL_SIZE*2*x/GRID_KERNEL_SIZE)));
+        // Deal with NaNs
+        if(v != v) {
+            if(i == 0) {
+                v = 1.0;
+            } else {
+                v = 0.0;
+            }
+        }
+        *(kernel1D + i) = v;
+    }
 }
 
 
@@ -56,7 +79,7 @@ void w_projection_kernel(long nPixSide,
     long i,j,l,m;
     double cL, cM;
     
-    memset(kernel, 0, sizeof(Complex32)*nPixSide*nPixSide);
+    memset(kernel, 0, sizeof(OutType)*nPixSide*nPixSide);
     
     for(i=0; i<nPixSide; i++) {
         m = i;
@@ -117,6 +140,57 @@ int compute_planes(int nVis,
 
 
 template<typename InType, typename OutType>
+void compute_kernel_correction(long nPixSide,
+                               InType *kernel,
+                               OutType *corr) {
+    long i, j;
+    OutType temp, temp2;
+    OutType *corr_full;
+    corr_full = (OutType*) malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(OutType));
+    memset(corr_full, 0, sizeof(OutType)*nPixSide*GRID_KERNEL_OVERSAMPLE);
+    
+    // Copy the kernel over
+    for(i=0; i<nPixSide*GRID_KERNEL_OVERSAMPLE; i++) {
+        if( i < GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2 ) {
+            *(corr_full + i) = *(kernel + i);
+        } else if( nPixSide*GRID_KERNEL_OVERSAMPLE - i < GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2) {
+            *(corr_full + i) = *(kernel + nPixSide*GRID_KERNEL_OVERSAMPLE - i);
+        }
+    }
+    
+    // Inverse transform
+    fftwf_plan pB;
+    pB = fftwf_plan_r2r_1d(nPixSide*GRID_KERNEL_OVERSAMPLE/2,
+                           corr_full, corr_full,
+                           FFTW_REDFT01, FFTW_ESTIMATE);
+    fftwf_execute(pB);
+    fftwf_destroy_plan(pB);
+    
+    // Select what to keep
+    for(i=0; i<nPixSide; i++) {
+        if( i < nPixSide/2 ) {
+            temp = *(corr_full + i) / GRID_KERNEL_OVERSAMPLE;
+        } else {
+            temp = *(corr_full + nPixSide - i) / GRID_KERNEL_OVERSAMPLE;
+        }
+        
+        for(j=0; j<nPixSide; j++) {
+            if( j < nPixSide/2 ) {
+                temp2 = *(corr_full + j) / GRID_KERNEL_OVERSAMPLE;
+            } else {
+                temp2 = *(corr_full + nPixSide - j) / GRID_KERNEL_OVERSAMPLE;
+            }
+            
+            *(corr + nPixSide*i + j) = temp * temp2;
+        }
+    }
+    
+    // Cleanup
+    free(corr_full);
+}
+
+
+template<typename InType, typename OutCompType, typename OutRealType>
 void compute_gridding(long nVis,
                       long nPixSide,
                       double uvRes,
@@ -126,8 +200,9 @@ void compute_gridding(long nVis,
                       double const* w,
                       InType const* vis,
                       InType const* wgt,
-                      OutType* uv,
-                      OutType* bm) {
+                      OutCompType* uv,
+                      OutCompType* bm,
+                      OutRealType* corr) {
     // Setup
     long i, j, l, m;
     
@@ -140,11 +215,16 @@ void compute_gridding(long nVis,
     planeStop = (long *) malloc(MAX_W_PLANES*sizeof(long));
     nPlanes = compute_planes(nVis, wRes, w, planeStart, planeStop);
     
+    // Fill in the 1-D gridding kernel
+    double *kernel1D;
+    kernel1D = (double *) malloc((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1)*sizeof(double));
+    kaiser_bessel_1d_kernel_filler(kernel1D);
+    
     long secStart, secStop;
     double avgW, ci, cj, temp, temp2;
-    long pi, pj;
+    long pi, pj, gi, gj;
     Complex32 *suv, *sbm, *kern;
-    static float norm = (float) 1.0 / (nPixSide * nPixSide * nPixSide * nPixSide);
+    static float norm = (float) 1.0 / (nPixSide * nPixSide);
     
     // FFT setup
     Complex32* inP;
@@ -161,7 +241,7 @@ void compute_gridding(long nVis,
     
     // Go!
     #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(suv, sbm, kern, i, j, l, m, secStart, secStop, avgW, ci, cj, pi, pj, temp, temp2)
+        #pragma omp parallel default(shared) private(suv, sbm, kern, i, j, l, m, secStart, secStop, avgW, ci, cj, pi, pj, gi, gj, temp, temp2)
     #endif
     {
         // Initialize the sub-grids and the w projection kernel
@@ -196,29 +276,38 @@ void compute_gridding(long nVis,
                     cj += nPixSide;
                 }
                 
-                for(m=0; m<GRID_KERNEL_SIZE; m++) {
-                    pi = (long) ci + m - GRID_KERNEL_SIZE/2;
-                    temp = 1.0 / 2.0 / NPY_PI / 0.5 / 0.5;
-                    temp *= exp(-(pi-ci)*(pi-ci)/2.0/0.5/0.5);
-                    
-                    pi %= nPixSide;
-                    if( pi < 0 ) {
-                        pi += nPixSide;
+                for(m=-GRID_KERNEL_SIZE/2; m<GRID_KERNEL_SIZE/2+1; m++) {
+                    pi = (long) round(ci) + m;
+                    gi = (long) ((ci - pi)*GRID_KERNEL_OVERSAMPLE);
+                    if(gi < 0) {
+                        gi = -gi;
                     }
                     
-                    for(l=0; l<GRID_KERNEL_SIZE; l++) {
-                        //pi = (long) ci + m - GRID_KERNEL_SIZE/2;
-                        pj = (long) cj + l - GRID_KERNEL_SIZE/2;
-                        
-                        temp2 = temp * exp(-(pj-cj)*(pj-cj)/2.0/0.5/0.5);
-                        
-                        pj %= nPixSide;
-                        if( pj < 0 ) {
-                            pj += nPixSide;
+                    temp = *(kernel1D + gi);
+                    
+                    if( pi < 0 ) {
+                        pi += nPixSide;
+                    } else if( pi >= nPixSide) {
+                        pi -= nPixSide;
+                    }
+                    
+                    for(l=-GRID_KERNEL_SIZE/2; l<GRID_KERNEL_SIZE/2+1; l++) {
+                        pj = (long) round(cj) + l;
+                        gj = (long) ((cj - pj)*GRID_KERNEL_OVERSAMPLE);
+                        if(gj < 0) {
+                            gj = -gj;
                         }
                         
-                        *(suv + nPixSide*pi + pj) += *(vis + i) * (float) temp2;
-                        *(sbm + nPixSide*pi + pj) += *(wgt + i) * (float) temp2;
+                        temp2 = temp * *(kernel1D + gj);
+                        
+                        if( pj < 0 ) {
+                            pj += nPixSide;
+                        } else if( pj >= nPixSide) {
+                            pj -= nPixSide;
+                        }
+                        
+                        *(suv + nPixSide*pi + pj) += (Complex32) *(vis + i) * (float) temp2;
+                        *(sbm + nPixSide*pi + pj) += (Complex32) *(wgt + i) * (float) temp2;
                     }
                 }
             }
@@ -251,7 +340,7 @@ void compute_gridding(long nVis,
             {
                 for(i=0; i<nPixSide*nPixSide; i++) {
                     *(uv + i) += *(suv+i);
-                    *(bm + i) += *(suv+i);
+                    *(bm + i) += *(sbm+i);
                 }
             }
         }
@@ -261,10 +350,15 @@ void compute_gridding(long nVis,
         fftwf_free(kern);
     }
     
+    // Correct for the kernel
+    compute_kernel_correction(nPixSide, kernel1D, corr);
+    
     // Cleanup
     fftwf_destroy_plan(pF);
     fftwf_destroy_plan(pR);
     fftwf_free(inP);
+    
+    free(kernel1D);
     
     free(planeStart);
     free(planeStop);
@@ -275,7 +369,7 @@ void compute_gridding(long nVis,
 
 static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *uVec, *vVec, *wVec, *visVec, *wgtVec, *output;
-    PyArrayObject *uu=NULL, *vv=NULL, *ww=NULL, *vd=NULL, *wd=NULL, *uvPlane=NULL, *bmPlane=NULL;
+    PyArrayObject *uu=NULL, *vv=NULL, *ww=NULL, *vd=NULL, *wd=NULL, *uvPlane=NULL, *bmPlane=NULL, *kernCorr=NULL;
     long uvSize = 80;
     double uvRes = 0.5;
     double wRes = 0.1;
@@ -290,8 +384,12 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     uu = (PyArrayObject *) PyArray_ContiguousFromObject(uVec, NPY_FLOAT64, 1, 1);
     vv = (PyArrayObject *) PyArray_ContiguousFromObject(vVec, NPY_FLOAT64, 1, 1);
     ww = (PyArrayObject *) PyArray_ContiguousFromObject(wVec, NPY_FLOAT64, 1, 1);
-    vd = (PyArrayObject *) PyArray_ContiguousFromObject(visVec, NPY_COMPLEX64, 1, 1);
-    wd = (PyArrayObject *) PyArray_ContiguousFromObject(wgtVec, NPY_COMPLEX64, 1, 1);
+    vd = (PyArrayObject *) PyArray_ContiguousFromObject(visVec,
+                                                        PyArray_TYPE((PyArrayObject *) visVec),
+                                                        1, 1);
+    wd = (PyArrayObject *) PyArray_ContiguousFromObject(wgtVec,
+                                                        PyArray_TYPE((PyArrayObject *) visVec),
+                                                        1, 1);
     if( uu == NULL ) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input u array to 1-D float64");
         goto fail;
@@ -305,11 +403,11 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
         goto fail;
     }
     if( vd == NULL ) {
-        PyErr_Format(PyExc_RuntimeError, "Cannot cast input data array to 1-D complex64");
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input data array to 1-D");
         goto fail;
     }
     if( wd == NULL ) {
-        PyErr_Format(PyExc_RuntimeError, "Cannot cast input wgt array to 1-D complex64");
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input wgt array to 1-D and the same type as the input data");
         goto fail;
     }
     
@@ -339,28 +437,45 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
         goto fail;
     }
     PyArray_FILLWBYTE(bmPlane, 0);
+    /* kernel correction */
+    kernCorr = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT32);
+    if( kernCorr == NULL ) {
+        PyErr_Format(PyExc_MemoryError, "Cannot create output array - kernel correction");
+        goto fail;
+    }
+    PyArray_FILLWBYTE(kernCorr, 0);
     
     // Get pointers to the data we need
     double *u, *v, *w;
-    Complex32 *vis, *wgt, *uv, *bm;
     u = (double *) PyArray_DATA(uu);
     v = (double *) PyArray_DATA(vv);
     w = (double *) PyArray_DATA(ww);
-    vis = (Complex32 *) PyArray_DATA(vd);
-    wgt = (Complex32 *) PyArray_DATA(wd);
-    uv = (Complex32 *) PyArray_DATA(uvPlane);
-    bm = (Complex32 *) PyArray_DATA(bmPlane);
     
     // Grid
-    compute_gridding(nVis, nPixSide, uvRes, wRes, u, v, w, vis, wgt, uv, bm);
+#define LAUNCH_GRIDDER(IterType) \
+    compute_gridding<IterType,Complex32,float>(nVis, nPixSide, uvRes, wRes, \
+                                               u, v, w, \
+                                               (IterType*) PyArray_DATA(vd), \
+                                               (IterType*) PyArray_DATA(wd), \
+                                               (Complex32*) PyArray_DATA(uvPlane), \
+                                               (Complex32*) PyArray_DATA(bmPlane), \
+                                               (float*) PyArray_DATA(kernCorr))
+    switch( PyArray_TYPE(vd) ) {
+      case( NPY_COMPLEX64  ): LAUNCH_GRIDDER(Complex32); break;
+      case( NPY_COMPLEX128 ): LAUNCH_GRIDDER(Complex64); break;
+      default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
+    }
     
+#undef LAUNCH_GRIDDER
+
     Py_XDECREF(uu);
     Py_XDECREF(vv);
     Py_XDECREF(ww);
     
-    output = Py_BuildValue("(OO)", PyArray_Return(uvPlane), PyArray_Return(bmPlane));
+    output = Py_BuildValue("(OOO)", PyArray_Return(uvPlane), PyArray_Return(bmPlane), PyArray_Return(kernCorr));
     Py_XDECREF(uvPlane);
     Py_XDECREF(bmPlane);
+    Py_XDECREF(kernCorr);
     
     return output;
     
@@ -372,20 +487,23 @@ fail:
     Py_XDECREF(wd);
     Py_XDECREF(uvPlane);
     Py_XDECREF(bmPlane);
+    Py_XDECREF(kernCorr);
     
     return NULL;
 }
 
 PyDoc_STRVAR(WProjection_doc, \
-"w-projection gridder for uv data based on the aipy.img.ImgW class and 'Wide-\n\
-field Imaging Problems in Radio Astronomy' (Cornwell et al. 2005).\n\
+"w-projection gridder for uv data based on the aipy.img.ImgW class, 'Wide-\n\
+field Imaging Problems in Radio Astronomy' (Cornwell et al. 2005), and\n\
+'WSClean: an Implementation of a Fast, Generic Wide-Field Imager for Radio\n\
+Astronomy' (Offringa et al. 2014).\n\
 \n\
 Input arguments are:\n\
  * u: 1-D numpy.float64 array of u coordinates\n\
  * v: 1-D numpy.float64 array of v coordinates\n\
  * w: 1-D numpy.float64 array of w coordinates\n\
- * data: 1-D numpy.complex64 array of visibility data\n\
- * wgt: 1-D numpy.complex64 array of visibility weight data\n\
+ * data: 1-D numpy.complex64 or numpy.complex128 array of visibility data\n\
+ * wgt: 1-D numpy.complex64 or numpy.complex128 array of visibility weight data\n\
 \n\
 Input keywords are:\n\
  * uvSize: Basis size of the uv plane\n\
@@ -396,6 +514,8 @@ Outputs are:\n\
  * uvPlane: 2-D numpy.complex64 of the gridded and projected uv plane\n\
  * bmPlane: 2-D numpy.complex64 of the gridded and projected synthesized\n\
             beam\n\
+ * kernCorr: 2-D numpy.float32 of the image correction for the gridding\n\
+             kernel\n\
 \n\
 .. note::\n\
      All of the input arrays are assumed to be sorted by increasing w\n\
@@ -441,9 +561,8 @@ MOD_INIT(_gridder) {
     }
     import_array();
     
-    // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    // Version information
+    PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");

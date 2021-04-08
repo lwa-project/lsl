@@ -24,6 +24,7 @@ try:
 except ImportError:
     from urllib.request import urlopen
 from datetime import datetime, timedelta
+from ftplib import FTP_TLS, error_perm as FTP_ERROR
 
 from scipy.special import lpmv
 try:
@@ -35,7 +36,12 @@ from scipy.interpolate import RectBivariateSpline
 
 from lsl.common.stations import geo_to_ecef
 from lsl.common.paths import DATA as dataPath
+from lsl.common.progress import DownloadBar
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
+
+from lsl.config import LSL_CONFIG
+IONO_CONFIG = LSL_CONFIG.view('ionosphere')
+DOWN_CONFIG = LSL_CONFIG.view('download')
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -129,9 +135,9 @@ def _compute_igrf_coefficents(year, coeffs):
     containing the cosine and sine coefficients for that year.
     
     The dictionary keys are:
-    * year - year the coefficients are computed for
-    * g - dictionary of cosine term coefficients
-    * h - dictionary of sine term coefficients
+     * year - year the coefficients are computed for
+     * g - dictionary of cosine term coefficients
+     * h - dictionary of sine term coefficients
     
     The g and h dictionaries are keyed off the degree of the Legendre 
     function and each stores a list of n orders.
@@ -394,7 +400,90 @@ def compute_magnetic_inclination(Bn, Be, Bz):
     return incl*180.0/numpy.pi
 
 
-def _download_worker(url, filename, timeout=120):
+def _cache_management():
+    """
+    Simple cache manager.  It controls the size of the cache.
+    """
+    
+    if IONO_CONFIG.get('max_cache_size') > 0:
+        # Get the list of files, their sizes, and their modificatio times
+        filenames = glob.glob(os.path.join(_CACHE_DIR, '*'))
+        sizes = [os.path.getsize(f)/1024.**2 for f in filenames]
+        mtimes = [os.path.getmtime(f) for f in filenames]
+        
+        # Delete until we mee the cache size limit or until there is only one
+        # file left (the most recent one)
+        while sum(sizes) > IONO_CONFIG.get('max_cache_size') and len(filenames) > 1:
+            oldest = min(mtimes)
+            idx = mtimes.index(oldest)
+            try:
+                os.path.unlink(filenames[idx])
+                del filenames[idx]
+                del sizes[idx]
+                del mtimes[idx]
+            except OSError:
+                pass
+
+
+def _download_worker_cddis(url, filename):
+    """
+    Download the URL from gdc.cddis.eosdis.nasa.gov via FTP-SSL and save it to a file.
+    """
+    
+    # Attempt to download the data
+    print("Downloading %s" % url)
+    ## Login
+    ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))
+    status = ftps.login("anonymous", "lwa@unm.edu")
+    if not status.startswith("230"):
+        ftps.close()
+        return False
+        
+    ## Secure
+    status = ftps.prot_p()
+    if not status.startswith("200"):
+        ftps.close()
+        return False
+        
+    ## Download
+    remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
+    try:
+        remote_size = ftps.size(remote_path)
+    except FTP_ERROR:
+        ftps.close()
+        return False
+    with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+        pbar = DownloadBar(max=remote_size)
+        def write(data):
+            fh.write(data)
+            pbar.inc(len(data))
+            sys.stdout.write(pbar.show()+'\r')
+            sys.stdout.flush()
+            
+        status = ftps.retrbinary('RETR %s' % remote_path, write, blocksize=DOWN_CONFIG.get('block_size'))
+        sys.stdout.write(pbar.show()+'\n')
+        sys.stdout.flush()
+        
+    if not status.startswith("226"):
+        try:
+            os.unlink(filename)
+        except OSError:
+            pass
+        ftps.close()
+        return False
+        
+    ## Further processing, if needed
+    if os.path.splitext(filename)[1] == '.Z':
+        ## Save it to a regular gzip'd file after uncompressing it.
+        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
+        subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
+        
+    # Done
+    ftps.close()
+    return True
+
+
+def _download_worker_standard(url, filename):
     """
     Download the URL and save it to a file.
     """
@@ -402,15 +491,32 @@ def _download_worker(url, filename, timeout=120):
     # Attempt to download the data
     print("Downloading %s" % url)
     try:
-        tecFH = urlopen(url, timeout=timeout)
-        data = tecFH.read()
+        tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
+        meta = tecFH.info()
+        try:
+            remote_size = int(meta.getheaders("Content-Length")[0])
+        except AttributeError:
+            remote_size = 1
+        pbar = DownloadBar(max=remote_size)
+        while True:
+            new_data = tecFH.read(DOWN_CONFIG.get('block_size'))
+            if len(new_data) == 0:
+                break
+            pbar.inc(len(new_data))
+            try:
+                data += new_data
+            except NameError:
+                data = new_data
+            sys.stdout.write(pbar.show()+'\r')
+            sys.stdout.flush()
         tecFH.close()
+        sys.stdout.write(pbar.show()+'\n')
+        sys.stdout.flush()
     except IOError as e:
         warnings.warn('Error downloading file from %s: %s' % (url, str(e)), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
-    print("Received %i B" % len(data))
         
     # Did we get anything or, at least, enough of something like it looks like 
     # a real file?
@@ -418,24 +524,38 @@ def _download_worker(url, filename, timeout=120):
         ## Fail
         return False
     else:
-        ## Success!
+        ## Success!  Save it to a file
+        with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+            fh.write(data)
+            
+        ## Further processing, if needed
         if os.path.splitext(filename)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
-            with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
-                fh.write(data)
-            print("Wrote %i B to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
             subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-            print("Uncompressed %i B" % os.path.getsize(os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])))
-            subprocess.check_call(['gzip', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
-        else:
-            ## Save it to a file.
-            with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
-                fh.write(data)
-            print("Wrote %i B of .gz to disk" % os.path.getsize(os.path.join(_CACHE_DIR, filename)))
+            subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
+            
         return True
 
 
-def _download_igs(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
+def _download_worker(url, filename):
+    """
+    Download the URL and save it to a file.
+    """
+    
+    # Attempt to download the data
+    if url.find('gdc.cddis.eosdis.nasa.gov') != -1:
+        status = _download_worker_cddis(url, filename)
+    else:
+        status = _download_worker_standard(url, filename)
+        
+    if status:
+        # Cache size management
+        _cache_management()
+        
+    return status
+
+
+def _download_igs(mjd, type='final'):
     """
     Given an MJD value, download the corresponding IGS final data product 
     for that day.
@@ -466,13 +586,13 @@ def _download_igs(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirro
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
-def _download_jpl(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
+def _download_jpl(mjd, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -503,13 +623,13 @@ def _download_jpl(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirro
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
-def _download_uqr(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
+def _download_uqr(mjd, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -540,13 +660,13 @@ def _download_uqr(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirro
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
-def _download_code(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirror_url='ftp://igs.ensg.ign.fr/pub/igs/products/ionosphere/', timeout=120, type='final'):
+def _download_code(mjd, type='final'):
     """
     Given an MJD value, download the corresponding CODE final data product 
     for that day.
@@ -568,13 +688,13 @@ def _download_code(mjd, base_url='ftp://gssc.esa.int/gnss/products/ionex/', mirr
     filename = 'codg%03i0.%02ii.Z' % (dayOfYear, year%100)
     
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (base_url, year, dayOfYear, filename), filename, timeout=timeout)
+    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, filename), filename)
     if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (mirror_url, year, dayOfYear, filename), filename, timeout=timeout)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, filename), filename)
     return status
 
 
-def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/products/', timeout=120):
+def _download_ustec(mjd):
     """
     Given an MJD value, download the corresponding JPL final data product 
     for that day.
@@ -597,7 +717,7 @@ def _download_ustec(mjd, base_url='http://www.ngdc.noaa.gov/stp/iono/ustec/produ
     filename = '%s_ustec.tar.gz' % dateStr
     
     # Attempt to download the data
-    return _download_worker('%s/%04i/%02i/%s' % (base_url, year, month, filename), filename, timeout=timeout)
+    return _download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, filename), filename)
 
 
 def _parse_tec_map(filename):
@@ -966,7 +1086,7 @@ def _parse_ustec_map(filename):
     return output
 
 
-def _load_map(mjd, timeout=120, type='IGS'):
+def _load_map(mjd, type='IGS'):
     """
     Given an MJD value, load the corresponding TEC map.  If the map is not
     avaliable on disk, download it.
@@ -1053,7 +1173,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
             # Is the primary file in the disk cache?
             if not os.path.exists(os.path.join(_CACHE_DIR, filename)):
                 ## Can we download it?
-                status = downloader(mjd, timeout=timeout)
+                status = downloader(mjd)
                 
             else:
                 ## Good we have the primary file
@@ -1076,12 +1196,12 @@ def _load_map(mjd, timeout=120, type='IGS'):
             # Is the primary file in the disk cache?
             if not os.path.exists(os.path.join(_CACHE_DIR, filename)):
                 ## Can we download it?
-                status = downloader(mjd, timeout=timeout, type='final')
+                status = downloader(mjd, type='final')
                 if not status:
                     ## Nope, now check for the secondary file on disk
                     if not os.path.exists(os.path.join(_CACHE_DIR, filenameAlt)):
                         ## Can we download it?
-                        status = downloader(mjd, timeout=timeout, type='rapid')
+                        status = downloader(mjd, type='rapid')
                         if status:
                             ### Good, we have the secondary file
                             filename = filenameAlt
@@ -1101,7 +1221,7 @@ def _load_map(mjd, timeout=120, type='IGS'):
     return tecMap
 
 
-def get_tec_value(mjd, lat=None, lng=None, include_rms=False, timeout=120, type='IGS'):
+def get_tec_value(mjd, lat=None, lng=None, include_rms=False, type='IGS'):
     """
     Given an MJD value and, optionally, a latitude and longitude in degrees, 
     compute the TEC value in TECU above that location using data from the 
@@ -1111,7 +1231,7 @@ def get_tec_value(mjd, lat=None, lng=None, include_rms=False, timeout=120, type=
     """
     
     # Load in the right map
-    tecMap = _load_map(mjd, timeout=timeout, type=type)
+    tecMap = _load_map(mjd, type=type)
     
     if type.upper() == 'USTEC':
         # Figure out the closest model point(s) to the requested MJD taking into

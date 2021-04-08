@@ -16,7 +16,7 @@ import numpy
 import argparse
 
 import lsl.correlator.fx as fxc
-from lsl.reader.ldp import LWA1DataFile
+from lsl.reader.ldp import LWADataFile, DRXFile
 from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
@@ -56,8 +56,10 @@ def main(args):
     # Length of the FFT
     LFFT = args.fft_length
     
-    idf = LWA1DataFile(args.filename)
-    
+    idf = LWADataFile(args.filename)
+    if not isinstance(idf, DRXFile):
+        raise RuntimeError("File '%s' does not appear to be a valid DRX file" % os.path.basename(filename))
+        
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     beampols = idf.get_info('nbeampol')

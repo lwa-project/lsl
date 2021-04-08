@@ -91,8 +91,7 @@ def sources(ax, antennaarray, srcs, phase_center='z', label=True, marker='x', co
     rot = aipy.coord.eq2top_m(0, pcDec)
         
     # Compute the positions of major sources and label the images
-    for name in srcs.keys():
-        src = srcs[name]
+    for name,src in srcs.items():
         src.compute(antennaarray)
         eq = aipy.coord.radec2eq((src.ra-pcRA, src.dec))
         top = numpy.dot(rot, eq)

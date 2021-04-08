@@ -40,6 +40,9 @@ from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CO
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp
 
+from lsl.config import LSL_CONFIG
+LDP_CONFIG = LSL_CONFIG.view('ldp')
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -574,7 +577,7 @@ class TBNFile(LDPFileBase):
             pols.append(1)
         nAntenna = framesPerObsX + framesPerObsY
         
-        self.buffer = TBNFrameBuffer(stands=range(1,nAntenna//len(pols)+1), pols=pols)
+        self.buffer = TBNFrameBuffer(stands=range(1,nAntenna//len(pols)+1), pols=pols, nsegments=LDP_CONFIG.get('tbn_buffer_size'))
         
     def offset(self, offset):
         """
@@ -952,7 +955,7 @@ class DRXFile(LDPFileBase):
                             'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2}
                         
         # Initialize the buffer as part of the description process
-        self.buffer = DRXFrameBuffer(beams=beams, tunes=tunes, pols=pols)
+        self.buffer = DRXFrameBuffer(beams=beams, tunes=tunes, pols=pols, nsegments=LDP_CONFIG.get('drx_buffer_size'))
         
     def offset(self, offset):
         """
@@ -1125,7 +1128,7 @@ class DRXFile(LDPFileBase):
                     pass
                 elif cTimetag != self._timetag[aStand]+self._timetagSkip:
                     missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
-                    if int(missing) == missing and missing < 50:
+                    if int(missing) == missing and missing < LDP_CONFIG.get('drx_autofill_size'):
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
@@ -1721,7 +1724,7 @@ class TBFFile(LDPFileBase):
                             'start_time_samples': startRaw}
                         
         # Initialize the buffer as part of the description process
-        self.buffer = TBFFrameBuffer(chans=self.mapper)
+        self.buffer = TBFFrameBuffer(chans=self.mapper, nsegments=LDP_CONFIG.get('tbf_buffer_size'))
         
     def offset(self, offset):
         """
@@ -2036,7 +2039,7 @@ class CORFile(LDPFileBase):
                             'start_time_samples': startRaw, 'nbaseline': nBaseline, 'tint':cFrame.integration_time}
                         
         # Initialize the buffer as part of the description process
-        self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False)
+        self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False, nsegments=LDP_CONFIG.get('cor_buffer_size'))
         
     def offset(self, offset):
         """

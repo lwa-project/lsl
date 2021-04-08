@@ -50,6 +50,7 @@ from astropy.io import fits as astrofits
 import shutil
 import tarfile
 import tempfile
+import warnings
 try:
     from StringIO import StringIO
 except ImportError:
@@ -822,7 +823,7 @@ try:
     from casacore.tables import table
     
     # Stokes codes for CASA Measurement Sets
-    NUMERIC_STOKESMS = { 1:'I',   2:'Q',   3:'U',   4:'V', 
+    NUMERIC_STOKESMS = {1:'I',   2:'Q',   3:'U',   4:'V', 
                         5:'RR',  6:'RL',  7:'LR',  8:'LL',
                         9:'XX', 10:'XY', 11:'YX', 12:'YY'}
     
@@ -900,7 +901,8 @@ try:
             try:
                 src = table(os.path.join(self.filename, 'SOURCE'), ack=False)
             except:
-                raise RuntimeError("Cannot find table 'SOURCE' in '%s'" % self.filename)
+                src = None
+                warnings.warn("Cannot find table 'SOURCE' in '%s', assuming zenith is the only source" % self.filename, RuntimeWarning)
             try:
                 fld = table(os.path.join(self.filename, 'FIELD'), ack=False)
             except:
@@ -980,8 +982,11 @@ try:
             
             # Data set sources
             self._sources = []
-            for sdir,name in zip(src.col('DIRECTION'), src.col('NAME')):
-                self._sources.append( aipy.amp.RadioFixedBody(*sdir, name=name) )
+            if src is not None:
+                for sdir,name in zip(src.col('DIRECTION'), src.col('NAME')):
+                    self._sources.append( aipy.amp.RadioFixedBody(*sdir, name=name) )
+            else:
+                self._sources.append('z')
                 
             # Data set fields
             self._fields = []
@@ -1002,7 +1007,8 @@ try:
             ants.close()
             pols.close()
             obs.close()
-            src.close()
+            if src is not None:
+                src.close()
             fld.close()
             spw.close()
             dsc.close()
@@ -1037,7 +1043,7 @@ try:
                 targetJD = targetTime / 3600.0 / 24.0 + astro.MJD_OFFSET
                 
                 # Pull out the data
-                targetData = data.query('TIME == %.16f' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
+                targetData = data.query('TIME == %.16f AND FLAG_ROW == false' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
                 uvw  = targetData.getcol('UVW')
                 try:
                     wgt  = None
@@ -1047,7 +1053,10 @@ try:
                     wgtS = None
                 ant1 = targetData.getcol('ANTENNA1')
                 ant2 = targetData.getcol('ANTENNA2')
-                vis  = targetData.getcol('DATA')
+                try:
+                    vis = targetData.getcol('CORRECTED_DATA')
+                except RuntimeError:
+                    vis  = targetData.getcol('DATA')
                 fld  = targetData.getcol('FIELD_ID')
                 dsc  = targetData.getcol('DATA_DESC_ID')
                 
@@ -1100,7 +1109,7 @@ try:
                     
                     # Deal with multiple spectral windows
                     # NOTE: This assumes that the data are stored in an array that 
-                    #       is window, basline per the lsl.writer.measurementset 
+                    #       is window, baseline per the lsl.writer.measurementset 
                     #       module
                     if len(self._windows) > 1:
                         nBand = len(self._windows)
@@ -1395,7 +1404,7 @@ class ImgWPlus(aipy.img.ImgW):
                 
             data = data*taper1*taper2
             
-        return aipy.img.recenter(ifft2Function(data).real.astype(numpy.float32), center)
+        return aipy.img.recenter(ifft2Function(data).real.astype(numpy.float32)/self.kern_corr, center)
         
     def image(self, center=(0,0), weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
         """Return the inverse FFT of the UV matrix, with the 0,0 point moved
@@ -1507,7 +1516,7 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     if wgt.dtype != numpy.complex64:
         wgt = wgt.astype(numpy.complex64)
         
-    im.uv, im.bm[0] = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
+    im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
     
     if not verbose:
         sys.stdout.close()

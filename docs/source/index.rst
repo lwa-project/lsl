@@ -68,6 +68,7 @@ Miscellaneous
 .. toctree::
    :maxdepth: 2
 
+   config
    misc
 
    genindex

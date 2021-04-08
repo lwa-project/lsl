@@ -146,8 +146,7 @@ class FrameHeader(FrameHeaderBase):
             return None
         else:
             sampleCodes = {}
-            for key in FILTER_CODES:
-                value = FILTER_CODES[key]
+            for key,value in FILTER_CODES.items():
                 sampleCodes[value] = key
 
             return sampleCodes[self.sample_rate]
@@ -354,10 +353,9 @@ def get_sample_rate(filehandle, nframe=None, filter_code=False):
         return rate
     else:
         sampleCodes = {}
-        for key in FILTER_CODES:
-            value = FILTER_CODES[key]
+        for key,value in FILTER_CODES.items():
             sampleCodes[value] = key
-
+            
         return sampleCodes[rate]
 
 
