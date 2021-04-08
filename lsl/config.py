@@ -17,7 +17,7 @@ if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
 _CONFIG_FILENAME = os.path.join(os.path.expanduser('~'), '.lsl', 'lsl.cfg')
 
 
-__version__ = "0.1"
+__version__ = "0.2"
 __all__ = ['LSL_CONFIG',]
 
 
@@ -76,6 +76,11 @@ DEFAULTS_IONO['ustec_mirror'] = {'value': None,
 DEFAULTS_IONO['max_cache_size'] = {'value': -1,
                                    'help':  'maximum cache size in MB; <= 0 disables cache size limiting'}
 
+## lsl._skyephem
+DEFAULTS_SKYEPHEM = OrderedDict()
+DEFAULTS_SKYEPHEM['ephemeris'] = {'value': 'de421.bsp',
+                                  'help': 'Planetary ephermeris to use with skyfield'}
+
 ## lsl.misc.telemetry
 DEFAULTS_TELEMETRY = OrderedDict()
 DEFAULTS_TELEMETRY['enabled'] = {'value': True,
@@ -98,6 +103,7 @@ DEFAULTS_ALL['observing'] = DEFAULTS_OBS
 DEFAULTS_ALL['ldp'] = DEFAULTS_LDP
 DEFAULTS_ALL['astro'] = DEFAULTS_ASTRO
 DEFAULTS_ALL['ionosphere'] = DEFAULTS_IONO
+DEFAULTS_ALL['skyephem'] = DEFAULTS_SKYEPHEM
 DEFAULTS_ALL['telemetry'] = DEFAULTS_TELEMETRY
 DEFAULTS_ALL['download'] = DEFAULTS_DOWNLOAD
 

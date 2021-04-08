@@ -13,11 +13,11 @@ from skyfield.toposlib import Topos
 from skyfield.timelib import Time as SkyTime
 from skyfield.units import Angle as SkyAngle, Distance as SkyDistance
 ts = api.load.timescale()
-_solar_system = api.load('de421.bsp')
 
 from lsl._skyephem.angles import hours, degrees
 from lsl._skyephem.dates import Date, J2000
 from lsl._skyephem.observers import Observer
+from lsl._skyephem.cache import load_planetary_ephemeris
 
 
 __all__ = ['prepare_date_or_observer', 'Body', 'FixedBody', 'readdb',
@@ -25,6 +25,7 @@ __all__ = ['prepare_date_or_observer', 'Body', 'FixedBody', 'readdb',
            'Uranus', 'Neptune']
            
            
+_solar_system = load_planetary_ephemeris()
 _ter = Topos(latitude_degrees=0, longitude_degrees=0, elevation_m=-6378136.6)
 
 

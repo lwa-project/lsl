@@ -11,6 +11,8 @@ from scipy.optimize import minimize_scalar
 from skyfield import api
 
 from lsl._skyephem.dates import Date
+from lsl._skyephem.cache import load_planetary_ephemeris
+
 
 __all__ = ['previous_equinox', 'next_equinox', 'previous_solstice', 'next_solstice',
            'previous_new_moon', 'next_new_moon', 'previous_first_quarter_moon',
@@ -18,7 +20,7 @@ __all__ = ['previous_equinox', 'next_equinox', 'previous_solstice', 'next_solsti
            'previous_last_quarter_moon', 'next_last_quarter_moon']
 
 
-_solar_system = api.load('de421.bsp')
+_solar_system = load_planetary_ephemeris()
 _sol = _solar_system['sun']
 _ter = _solar_system['earth']
 _lun = _solar_system['moon']

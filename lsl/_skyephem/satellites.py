@@ -4,13 +4,17 @@ from skyfield import api
 from skyfield.toposlib import Topos
 from skyfield.timelib import Time as SkyTime
 ts = api.load.timescale()
-_solar_system = api.load('de421.bsp')
 
 from lsl._skyephem.angles import hours, degrees
 from lsl._skyephem.dates import Date
 from lsl._skyephem.bodies import Body, prepare_date_or_observer
+from lsl._skyephem.cache import load_planetary_ephemeris
+
 
 __all__ = ['EarthSatellite', 'readtle']
+
+
+_solar_system = load_planetary_ephemeris()
 
 
 class EarthSatellite(Body):
