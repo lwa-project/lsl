@@ -15,10 +15,15 @@ ts = api.load.timescale()
 
 from lsl._skyephem.angles import hours, degrees
 from lsl._skyephem.dates import Date
+from lsl._skyephem.cache import load_planetary_ephemeris
 
 
 __all__ = ['CircumpolarError', 'NeverUpError', 'AlwaysUpError', 'Observer']
 
+
+
+_solar_system = load_planetary_ephemeris()
+_ter = _solar_system['earth']
 
 # Sidereal day as a fraction of a day
 _SIDEREAL_DAY = 0.9972695663194444
@@ -201,9 +206,11 @@ class Observer(object):
         
         alt = degrees(alt)
         az = degrees(az)
-        topo = AltAz(az, alt, obstime=self.__date, location=self._el)
-        equ = topo.transform_to(ICRS())
-        return hours(equ.ra.to('radian').value), degrees(equ.dec.to('radian').value)
+        
+        obs = _ter + self._wgs84
+        pos = obs.at(self.__date).from_altaz(alt_degrees=alt.degrees, az_degrees=az.degrees)
+        ra, dec, _ = pos.radec()
+        return hours(ra), degrees(dec)
         
     @protect_date
     def previous_transit(self, body, start=None):
@@ -297,7 +304,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 1),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 1),
                               method='bounded',
                               bounds=(start-_SIDEREAL_DAY, start*1.0),
                               options={'xatol': 1/86400.0})
@@ -319,7 +326,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 1),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 1),
                               method='bounded',
                               bounds=(start*1.0, start+_SIDEREAL_DAY),
                               options={'xatol': 1/86400.0})
@@ -341,11 +348,10 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 2),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 2),
                               method='bounded',
                               bounds=(start-_SIDEREAL_DAY, start*1.0),
                               options={'xatol': 1/86400.0})
-        print(sol)
         if body.neverup:
             raise NeverUpError()
         elif body.circumpolar:
@@ -364,7 +370,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.to(u.rad).value, 2),
+        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 2),
                               method='bounded',
                               bounds=(start*1.0, start+_SIDEREAL_DAY),
                               options={'xatol': 1/86400.0})
