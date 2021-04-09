@@ -94,14 +94,18 @@ class Angle(SkyAngle):
     def __eq__(self, other):
         if isinstance(other, (int, float)):
             return float(self) == float(other)
+        elif isinstance(other, SkyAngle):
+            return float(self) == float(other)
         else:
-            return SkyAngle.__eq__(self, other)
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
         
     def __lt__(self, other):
         if isinstance(other, (int, float)):
             return float(self) < float(other)
+        elif isinstance(other, SkyAngle):
+            return float(self) < float(other)
         else:
-            return SkyAngle.__lt__(self, other)
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
 
 
 def hours(value, wrap=True):
