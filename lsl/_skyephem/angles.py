@@ -50,29 +50,40 @@ class Angle(SkyAngle):
     def __round__(self, ndigits=0):
         return round(float(self), ndigits)
         
+    def __abs__(self):
+        return abs(float(self))
+        
     def __add__(self, other):
         if isinstance(other, (int, float)):
             return float(self) + other
+        elif isinstance(other, SkyAngle):
+            return Angle(radians=float(self) + float(other), preference=self.preference)
         else:
-            return SkyAngle.__add__(self, other)
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __sub__(self, other):
         if isinstance(other, (int, float)):
             return float(self) - other
+        elif isinstance(other, SkyAngle):
+            return Angle(radians=float(self) - float(other), preference=self.preference)
         else:
-            return SkyAngle.__sub__(self, other)
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return float(self) * other
+        elif isinstance(other, SkyAngle):
+            return float(self) * float(other)
         else:
-            return SkyAngle.__mul__(self, other)
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __truediv__(self, other):
         if isinstance(other, (int, float)):
             return float(self) / other
+        elif isinstance(other, SkyAngle):
+            return float(self) / float(other)
         else:
-            return SkyAngle.__truediv__(self, other)
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __floordiv__(self, other):
         return Angle.__truediv__(self, other)
