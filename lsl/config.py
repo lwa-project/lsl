@@ -78,7 +78,7 @@ DEFAULTS_IONO['max_cache_size'] = {'value': -1,
 
 ## lsl._skyephem
 DEFAULTS_SKYEPHEM = OrderedDict()
-DEFAULTS_SKYEPHEM['ephemeris'] = {'value': 'de421.bsp',
+DEFAULTS_SKYEPHEM['ephemeris'] = {'value': 'de440s.bsp',
                                   'help': 'Planetary ephermeris to use with skyfield'}
 
 ## lsl.misc.telemetry
