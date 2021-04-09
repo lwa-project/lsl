@@ -22,7 +22,7 @@ class Coordinate(object):
     
     def __init__(self, c1_or_class, c2=None, epoch=None):
         if epoch is None:
-            epoch = Time.now()
+            epoch = J2000
         self._epoch = Date(epoch)
         
         try:
