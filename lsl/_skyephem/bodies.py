@@ -36,17 +36,14 @@ def prepare_date_or_observer(func):
     """
     
     @wraps(func)
-    def wrapper(*args, **kwds):
-        if 'date_or_observer' in kwds:
-            date_or_observer = kwds['date_or_observer']
-            if date_or_observer is None:
-                date_or_observer = ts.now()
-            elif isinstance(date_or_observer, str):
-                date_or_observer = Date(date_or_observer)
-            elif isinstance(date_or_observer, float):
-                date_or_observer = Date(date_or_observer)
-            kwds['date_or_observer'] = date_or_observer
-        output = func(*args, **kwds)
+    def wrapper(cls, date_or_observer=None):
+        if date_or_observer is None:
+            date_or_observer = ts.now()
+        elif isinstance(date_or_observer, str):
+            date_or_observer = Date(date_or_observer)
+        elif isinstance(date_or_observer, float):
+            date_or_observer = Date(date_or_observer)
+        output = func(cls, date_or_observer=date_or_observer)
         return output
     return wrapper
 
@@ -95,14 +92,14 @@ class Body(object):
         try:
             pos = obs.at(t).observe(self._body)
         except AttributeError as e:
-            pass
+            pos = self._body.at(t)
             
         ra, dec, _ = pos.radec()
         self.a_ra = hours(ra.radians, wrap=True)
         self.a_dec = degrees(dec.radians, wrap180=True)
         
-        self.g_ra = None
-        self.g_dec = None
+        self.g_ra = self.a_ra
+        self.g_dec =self.a_dec
         
         try:
             pos = pos.apparent()
@@ -279,8 +276,12 @@ class Planet(Body):
     """
     
     def __init__(self, name):
+        Body.__init__(self)
         self.name = name
-        self._body = _solar_system[name.lower()]
+        try:
+            self._body = _solar_system[name.lower()]
+        except KeyError:
+            self._body = _solar_system[name.lower()+" barycenter"]
 
 
 class Sun(Planet):
@@ -307,7 +308,7 @@ class Venus(Planet):
     """
     
     def __init__(self):
-        Planet.__init__(self, lambda x: get_body('venus', x))
+        Planet.__init__(self, 'venus')
 
 
 class Moon(Planet):
