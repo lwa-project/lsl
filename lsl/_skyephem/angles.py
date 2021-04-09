@@ -22,10 +22,13 @@ degree = numpy.pi / 180.
 
 
 @total_ordering
-class Angle(SkyAngle):
+class Angle(SkyAngle, float):
     """
     Base class for representing angles in a way that behaves like ephem.angle.
     """
+    
+    def __new__(cls, *args, **kwds):
+        return float.__new__(cls, 0)
     
     def __repr__(self):
         if PYEPHEM_REPR:
@@ -46,12 +49,6 @@ class Angle(SkyAngle):
             
     def __float__(self):
         return float(self.radians)
-        
-    def __round__(self, ndigits=0):
-        return round(float(self), ndigits)
-        
-    def __abs__(self):
-        return abs(float(self))
         
     def __add__(self, other):
         if isinstance(other, (int, float)):
@@ -87,9 +84,6 @@ class Angle(SkyAngle):
             
     def __floordiv__(self, other):
         return Angle.__truediv__(self, other)
-        
-    def __neg__(self):
-        return -float(self)
         
     def __eq__(self, other):
         if isinstance(other, (int, float)):
