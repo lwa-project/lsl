@@ -82,7 +82,7 @@ class measurementset_tests(unittest.TestCase):
         tbl.set_stokes(['xx'])
         tbl.set_frequency(data['freq'])
         tbl.set_geometry(data['site'], data['antennas'])
-        tbl.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        tbl.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         tbl.write()
         
         # Make sure everyone is there
@@ -128,7 +128,7 @@ class measurementset_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the table and examine
@@ -190,7 +190,7 @@ class measurementset_tests(unittest.TestCase):
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+10e6)
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], 
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], 
                           numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         
