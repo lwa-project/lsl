@@ -21,7 +21,7 @@ if not os.path.exists(_CACHE_DIR):
 
 def load_planetary_ephemeris():
     load = api.Loader(_CACHE_DIR)
-    solar_system = load(EPHEM_CONFIG.get('ephemeris'))
+    solar_system = load(EPHEM_CONFIG.get('base_url')+'/'+EPHEM_CONFIG.get('ephemeris'))
     atexit.register(lambda: solar_system.close())
     
     return solar_system

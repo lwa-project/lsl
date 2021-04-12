@@ -15,7 +15,8 @@ ts = api.load.timescale()
 
 from astropy.time import Time as AstroTime
 
-from lsl._skyephem.config import PYEPHEM_REPR
+from lsl.config import LSL_CONFIG
+EPHEM_CONFIG = LSL_CONFIG.view('skyephem')
 
 __all__ = ['Date', 'B1950', 'J2000', 'now', 'localtime']
 
@@ -48,19 +49,14 @@ class Date(SkyTime):
             
         SkyTime.__init__(self, date.ts, date.whole, date.tt_fraction)
         
-    @property
-    def utc_jd(self):
-        value = AstroTime(self.whole, self.tt_fraction, format='jd', scale='tt')
-        return value.utc.jd
-        
     def __repr__(self):
-        if PYEPHEM_REPR:
+        if EPHEM_CONFIG.get('pyephem_repr'):
             return str(float(self))
         else:
             return SkyTime.__repr__(self)
             
     def __str__(self):
-        if PYEPHEM_REPR:
+        if EPHEM_CONFIG.get('pyephem_repr'):
             return "%i/%i/%i %02i:%02i:%06.3f" % self.tuple()
         else:
             return SkyTime.__str__(self)
@@ -71,8 +67,22 @@ class Date(SkyTime):
     def __add__(self, other):
         if isinstance(other, (int, float)):
             return float(self) + other
-        else:
+        elif isinstance(other, SkyTime):
             return SkyTime.__add__(self, other)
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __radd__(self, other):
+        return self.__add__(other)
+        
+    def __iadd__(self, other):
+        if isinstance(other, (int, float)):
+            self.whole += other
+        elif isinstance(other, SkyTime):
+            self.whole += other.whole
+            self.tt_fraction += other.tt_fraction
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __sub__(self, other):
         if isinstance(other, (int, float)):
@@ -80,12 +90,27 @@ class Date(SkyTime):
         else:
             return SkyTime.__sub__(self, other)
             
+    def __rsub__(self, other):
+        return self.__sub__(other)
+        
+    def __isub__(self, other):
+        if isinstance(other, (int, float)):
+            self.whole -= other
+        elif isinstance(other, SkyTime):
+            self.whole -= other.whole
+            self.tt_fraction -= other.tt_fraction
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return float(self) * other
         else:
             return SkyTime.__mul__(self, other)
             
+    def __rmul_(self, other):
+        return self.__mul__(other)
+        
     def __neg__(self):
         return -float(self)
         
@@ -101,6 +126,11 @@ class Date(SkyTime):
         else:
             return SkyTime.__lt__(self, other)
             
+    @property
+    def utc_jd(self):
+        value = AstroTime(self.whole, self.tt_fraction, format='jd', scale='tt')
+        return value.utc.jd
+        
     def tuple(self):
         """
         Returns a six-element tuple representing the date and time.  The

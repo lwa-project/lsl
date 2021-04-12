@@ -4,14 +4,68 @@ Python module providing ephem-like conversions between coordinate systems.
 
 from __future__ import print_function, division
 
+import numpy
+from scipy.optimize import minimize
+
 from skyfield import api
+from skyfield.starlib import Star
 from skyfield.positionlib import Astrometric, position_of_radec
 ts = api.load.timescale()
 
 from lsl._skyephem.angles import hours, degrees
 from lsl._skyephem.dates import Date, B1950, J2000
+from lsl._skyephem.cache import load_planetary_ephemeris
+from lsl._skyephem.bodies import Body
+
 
 __all__ = ['Coordinate', 'Equatorial', 'Ecliptic', 'Galactic']
+
+
+_solar_system = load_planetary_ephemeris()
+
+
+def _equ_from_ecl(lon, lat, epoch):
+    best = 1e9
+    for r in numpy.linspace(0, 2*numpy.pi, 25):
+        r = hours(r)
+        for d in numpy.linspace(-numpy.pi/2, numpy.pi/2, 13):
+            d = degrees(d)
+            s = Star(r, d, epoch=epoch)
+            p = _solar_system['earth'].at(epoch).observe(s).apparent().ecliptic_latlon()
+            o = (lon.radians-p[1].radians)**2 + (lat.radians-p[0].radians)**2
+            if o < best:
+                best = o
+                ra, dec = r, d
+                
+    def _search(x):
+         p = _solar_system['earth'].at(epoch).observe(Star(hours(x[0]), degrees(x[1]), epoch=epoch)).apparent().ecliptic_latlon()
+         return (lon.radians-p[1].radians)**2 + (lat.radians-p[0].radians)**2
+    
+    x0 = [ra.radians, dec.radians]
+    sol = minimize(_search, x0, tol=(0.1/3600*numpy.pi/180)**2)
+    return (hours(sol.x[0]), degrees(sol.x[1]))
+
+
+def _equ_from_gal(lon, lat, epoch):
+    best = 1e9
+    for r in numpy.linspace(0, 2*numpy.pi, 49):
+        r = hours(r)
+        for d in numpy.linspace(-numpy.pi/2, numpy.pi/2, 25):
+            d = degrees(d)
+            s = Star(r, d, epoch=epoch)
+            p = _solar_system['earth'].at(J2000).observe(s).apparent().galactic_latlon()
+            o = (lon.radians-p[1].radians)**2 + (lat.radians-p[0].radians)**2
+            if o < best:
+                best = o
+                ra, dec = r, d
+                
+    def _search(x):
+         p = _solar_system['earth'].at(J2000).observe(Star(hours(x[0]), degrees(x[1]), epoch=epoch)).apparent().galactic_latlon()
+         return (lon.radians-p[1].radians)**2 + (lat.radians-p[0].radians)**2
+
+    x0 = [ra.radians, dec.radians]
+    sol = minimize(_search, x0, tol=(0.01/3600*numpy.pi/180)**2)
+    return (hours(sol.x[0]), degrees(sol.x[1]))
 
 
 class Coordinate(object):
@@ -20,17 +74,24 @@ class Coordinate(object):
     like ephem.Coordinate.
     """
     
-    def __init__(self, c1_or_class, c2=None, epoch=None):
-        if epoch is None:
-            epoch = J2000
-        self._epoch = Date(epoch)
+    def __init__(self, c1_or_class, c2=None, epoch=J2000):
+        epoch = Date(epoch)
         
-        try:
-            ra, dec = c1_or_class.to_radec()
-        except AttributeError:
+        if isinstance(c1_or_class, Coordinate):
+            ra, dec, _ = c1_or_class._apparent_position(epoch).radec('date')
+        elif isinstance(c1_or_class, Body):
+            ra, dec = c1_or_class.a_ra, c1_or_class.a_dec
+            epoch = c1_or_class.a_epoch
+        else:
             ra, dec = hours(c1_or_class), degrees(c2)
-        self._coord = position_of_radec(ra.hours, dec.degrees, epoch=self._epoch)
-            
+        self._coord = Star(ra, dec, epoch=epoch)
+        self._epoch = epoch
+        
+    def _apparent_position(self, epoch=None):
+        if epoch is None:
+            epoch = self._epoch
+        return _solar_system['earth'].at(epoch).observe(self._coord).apparent()
+        
     @classmethod
     def from_radec(cls, ra, dec):
         """
@@ -45,7 +106,7 @@ class Coordinate(object):
         Return the ICRS right assencsion and declination for the coordinate.
         """
         
-        ra, dec, _ = self._coord.radec()
+        ra, dec, _ = self._apparent_position().radec()
         return (hours(ra), degrees(dec))
                
 
@@ -78,18 +139,16 @@ class Equatorial(Coordinate):
         instances.
         """
         
-        ra, dec, _ = self._coord.radec()
-        ra, dec = hours(ra), degrees(dec)
-        return ra, dec
+        ra, dec, _ = self._apparent_position().radec()
+        return (hours(ra), degrees(dec))
         
     def set(self, ra, dec):
         """
-        Set the coordinates for the instance.  Exactly what is set is dependent
-        on the frame used for the instance.
+        Set the right ascension and declination coordinates for the instance.
         """
         
         ra, dec = hours(c1_or_class), degrees(c2)
-        self._coord = position_of_radec(ra, dec, epoch=self._epoch)
+        self._coord = Star(ra, dec, epoch=self._epoch)
         
 
 class Ecliptic(Coordinate):
@@ -98,6 +157,16 @@ class Ecliptic(Coordinate):
     ecliptic frame.
     """
     
+    def __init__(self, c1_or_class, c2=None, epoch=J2000):
+        epoch = Date(epoch)
+        
+        try:
+            ra, dec = c1_or_class.to_radec()
+            epoch = c1_or_class._epoch
+        except AttributeError:
+            ra, dec = _equ_from_ecl(degrees(c1_or_class), degrees(c2), epoch)
+        Coordinate.__init__(self, ra, dec, epoch=epoch)
+        
     @property
     def lon(self):
         """
@@ -119,9 +188,18 @@ class Ecliptic(Coordinate):
         Get the longitude and latitude as two-element tuple of Angle instances.
         """
         
-        lat, lon, _ = self._coord.ecliptic_latlon()
+        lat, lon, _ = self._apparent_position().ecliptic_latlon('date')
         lat, lon = degrees(lat), degrees(lon)
         return lon, lat
+        
+    def set(self, lon, lat):
+        """
+        Set the longitude and latitude coordinates for the instance.
+        """
+        
+        lon, lat = degrees(lon), degrees(lat)
+        ra, dec = _equ_from_ecl(lon, lat, self._epoch)
+        self.set(ra, dec)
         
 
 class Galactic(Coordinate):
@@ -130,6 +208,16 @@ class Galactic(Coordinate):
     ecliptic frame.
     """
     
+    def __init__(self, c1_or_class, c2=None, epoch=J2000):
+        epoch = Date(epoch)
+        
+        try:
+            ra, dec = c1_or_class.to_radec()
+            epoch = c1_or_class._epoch
+        except AttributeError:
+            ra, dec = _equ_from_gal(degrees(c1_or_class), degrees(c2), epoch)
+        Coordinate.__init__(self, ra, dec, epoch=epoch)
+        
     @property
     def lon(self):
         """
@@ -151,6 +239,15 @@ class Galactic(Coordinate):
         Get the longitude and latitude as two-element tuple of Angle instances.
         """
         
-        lat, lon, _ = self._coord.galactic_latlon()
+        lat, lon, _ = self._apparent_position(J2000).galactic_latlon()
         lat, lon = degrees(lat), degrees(lon)
         return lon, lat
+        
+    def set(self, lon, lat):
+        """
+        Set the longitude and latitude coordinates for the instance.
+        """
+        
+        lon, lat = degrees(lon), degrees(lat)
+        ra, dec = _equ_from_gal(lon, lat, self._epoch)
+        self.set(ra, dec)

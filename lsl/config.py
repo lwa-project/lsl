@@ -78,8 +78,12 @@ DEFAULTS_IONO['max_cache_size'] = {'value': -1,
 
 ## lsl._skyephem
 DEFAULTS_SKYEPHEM = OrderedDict()
+DEFAULTS_SKYEPHEM['base_url'] = {'value': 'https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/',
+                                 'help': 'base URL to use for download plantery ephemeris file'}
 DEFAULTS_SKYEPHEM['ephemeris'] = {'value': 'de440s.bsp',
-                                  'help': 'Planetary ephermeris to use with skyfield'}
+                                  'help': 'planetary ephermeris to use'}
+DEFAULTS_SKYEPHEM['pyephem_repr'] = {'value': True,
+                                     'help': 'have repr() and str() behave like PyEphem'}
 
 ## lsl.misc.telemetry
 DEFAULTS_TELEMETRY = OrderedDict()

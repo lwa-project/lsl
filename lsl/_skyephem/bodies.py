@@ -26,7 +26,7 @@ __all__ = ['prepare_date_or_observer', 'Body', 'FixedBody', 'readdb',
            
            
 _solar_system = load_planetary_ephemeris()
-_ter = Topos(latitude_degrees=0, longitude_degrees=0, elevation_m=-6378136.6)
+
 
 
 def prepare_date_or_observer(func):
@@ -85,39 +85,41 @@ class Body(object):
         
         if isinstance(date_or_observer, SkyTime):
             t = date_or_observer
-            obs = None
+            obs = _solar_system['earth']
         else:
             t = date_or_observer.date
             obs = _solar_system['earth'] + date_or_observer._wgs84
-        try:
-            pos = obs.at(t).observe(self._body)
-        except AttributeError as e:
-            pos = self._body.at(t)
-            
+        pos = obs.at(t).observe(self._body)
+        
         ra, dec, _ = pos.radec()
         self.a_ra = hours(ra.radians, wrap=True)
         self.a_dec = degrees(dec.radians, wrap180=True)
         
-        self.g_ra = self.a_ra
-        self.g_dec =self.a_dec
+        try:
+            geo = pos.apparent()
+            ra, dec, _ = geo.radec('date')
+        except AttributeError as e:
+            pass
+        self.g_ra = hours(ra.radians, wrap=True)
+        self.g_dec = degrees(dec.radians, wrap180=True)
         
         try:
-            pos = pos.apparent()
-            ra, dec, _ = pos.radec()
+            ra, dec, _ = pos.apparent().radec('date')
             self.ra = hours(ra.radians, wrap=True)
             self.dec = degrees(dec.radians, wrap180=True)
         except AttributeError as e:
             pass
             
         try:
-            alt, az, _ = pos.altaz()
+            alt, az, _ = pos.apparent().altaz()
+            #print(alt, az)
             self.az = degrees(az, wrap360=True)
             self.alt = degrees(alt, wrap180=True)
-        except AttributeError as e:
+        except (AttributeError, ValueError) as e:
             pass
             
         self._rise_transit_set(date_or_observer)
-            
+        
     def _rise_transit_set(self, observer):
         """
         From:

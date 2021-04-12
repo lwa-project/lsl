@@ -9,7 +9,9 @@ from functools import wraps
 from scipy.optimize import minimize_scalar
 
 from skyfield import api
+from skyfield import almanac
 from skyfield.toposlib import Topos
+from skyfield.searchlib import find_discrete
 from skyfield.units import Angle as SkyAngle, Distance as SkyDistance
 ts = api.load.timescale()
 
@@ -90,6 +92,37 @@ def _location(djd, obs, bdy, value, selection):
     return diff
 
 
+def _search(obs, bdy, value, selection, t0, t1, tol=0.001/86400.0, recursive=False):
+    # Coarse grid to zero in on where we should look
+    ts = numpy.linspace(t0-0.5/24, t1+0.5/24, 51)
+    vs = [_location(t, obs, bdy, value, selection) for t in ts]
+    best = numpy.argmin(vs)
+    if best <= 1:
+        best = -3
+    if best >= ts.size - 2:
+        best = 2
+    t0_prime = ts[best] - (ts[1] - ts[0])
+    t1_prime = ts[best] + (ts[1] - ts[0])
+    
+    # Fine search
+    sol = minimize_scalar(_location, args=(obs, bdy, value, selection),
+                          method='bounded',
+                          bounds=(t0_prime, t1_prime),
+                          options={'xatol': tol})
+                          
+    # Bounds check
+    if recursive:
+        if sol.x < t0:
+            ## Outside the lower bound, shift up in time
+            sol = _search(obs, bdy, value, selection, t0+_SIDEREAL_DAY, t1+_SIDEREAL_DAY, recursive=False)
+        elif sol.x > t1:
+            ## Outside the upper bound, shift down in time
+            sol = _search(obs, bdy, value, selection, t0-_SIDEREAL_DAY, t1-_SIDEREAL_DAY, recursive=False)
+            
+    # Return the full optimization solution
+    return sol
+
+
 class Observer(object):
     """
     A location on earth for which positions are to be computed.
@@ -111,11 +144,11 @@ class Observer(object):
         self.__lon = SkyAngle(degrees=0.0)
         self.__elev = SkyDistance(m=0.0)
         self.__horz = SkyAngle(degrees=0.0)
-        self.__date = ts.now()
+        self.__date = Date(ts.now())
         self._update()
         
     def _update(self):
-        self._wgs84 = Topos(self.__lat, self.__lon, elevation_m=self.__elev.m)
+        self._wgs84 = Topos(latitude=self.__lat, longitude=self.__lon, elevation_m=self.__elev.m)
         
     @property
     def lat(self):
@@ -195,7 +228,7 @@ class Observer(object):
         the Observer.
         """
         
-        return hours(self.__date.gast - self._wgs84.longitude.radians)
+        return hours(self.__date.gast*numpy.pi/12 + self._wgs84.longitude.radians)
         
     def radec_of(self, az, alt):
         """
@@ -224,10 +257,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, 0),
-                              method='bounded',
-                              bounds=(start-_SIDEREAL_DAY, start*1.0),
-                              options={'xatol': 1/86400.0})
+        sol = _search(self, body, numpy.pi/2, 0, start-1.0, start*1.0)
         if body.neverup:
             raise NeverUpError()
         return Date(sol.x)
@@ -243,11 +273,8 @@ class Observer(object):
         
         if start is None:
             start = self.date
-            
-        sol = minimize_scalar(_location, args=(self, body, numpy.pi/2, 0),
-                              method='bounded',
-                              bounds=(start*1.0, start+_SIDEREAL_DAY),
-                              options={'xatol': 1/86400.0})
+        
+        sol = _search(self, body, numpy.pi/2, 0, start*1.0, start+1.0)
         if body.neverup:
             raise NeverUpError()
         return Date(sol.x)
@@ -264,10 +291,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, 0),
-                              method='bounded',
-                              bounds=(start-_SIDEREAL_DAY, start*1.0),
-                              options={'xatol': 1/86400.0})
+        sol = _search(self, body, -numpy.pi/2, 0, start-1.0, start*1.0)
         if body.neverup:
             raise NeverUpError()
         return Date(sol.x)
@@ -284,10 +308,7 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, -numpy.pi/2, 0),
-                              method='bounded',
-                              bounds=(start*1.0, start+_SIDEREAL_DAY),
-                              options={'xatol': 1/86400.0})
+        sol = _search(self, body, -numpy.pi/2, 0, start*1.0, start+1.0)
         if body.neverup:
             raise NeverUpError()
         return Date(sol.x)
@@ -304,14 +325,11 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 1),
-                              method='bounded',
-                              bounds=(start-_SIDEREAL_DAY, start*1.0),
-                              options={'xatol': 1/86400.0})
+        sol = _search(self, body, self.__horz.radians, 1, start-1.0, start*1.0)
         if body.neverup:
             raise NeverUpError()
         elif body.circumpolar:
-            raise CircumpolarError()
+            raise AlwaysUpError()
         return Date(sol.x)
         
     @protect_date
@@ -326,14 +344,11 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 1),
-                              method='bounded',
-                              bounds=(start*1.0, start+_SIDEREAL_DAY),
-                              options={'xatol': 1/86400.0})
+        sol = _search(self, body, self.__horz.radians, 1, start*1.0, start+1.0)
         if body.neverup:
             raise NeverUpError()
         elif body.circumpolar:
-            raise CircumpolarError()
+            raise AlwaysUpError()
         return Date(sol.x)
         
     @protect_date
@@ -348,14 +363,11 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 2),
-                              method='bounded',
-                              bounds=(start-_SIDEREAL_DAY, start*1.0),
-                              options={'xatol': 1/86400.0})
+        sol = _search(self, body, self.__horz.radians, 2, start-1.0, start*1.0)
         if body.neverup:
             raise NeverUpError()
         elif body.circumpolar:
-            raise CircumpolarError()
+            raise AlwaysUpError()
         return Date(sol.x)
         
     @protect_date
@@ -370,12 +382,9 @@ class Observer(object):
         if start is None:
             start = self.date
             
-        sol = minimize_scalar(_location, args=(self, body, self.__horz.radians, 2),
-                              method='bounded',
-                              bounds=(start*1.0, start+_SIDEREAL_DAY),
-                              options={'xatol': 1/86400.0})
+        sol = _search(self, body, self.__horz.radians, 2, start*1.0, start+1.0)
         if body.neverup:
             raise NeverUpError()
         elif body.circumpolar:
-            raise CircumpolarError()
+            raise AlwaysUpError()
         return Date(sol.x)

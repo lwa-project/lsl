@@ -10,7 +10,8 @@ from skyfield.units import Angle as SkyAngle
 from skyfield.starlib import Star
 from astropy.coordinates import Angle as AstroAngle
 
-from lsl._skyephem.config import PYEPHEM_REPR
+from lsl.config import LSL_CONFIG
+EPHEM_CONFIG = LSL_CONFIG.view('skyephem')
 
 
 __all__ = ['hour', 'degree', 'Angle', 'hours', 'degrees', 'separation']
@@ -22,22 +23,19 @@ degree = numpy.pi / 180.
 
 
 @total_ordering
-class Angle(SkyAngle, float):
+class Angle(SkyAngle):
     """
     Base class for representing angles in a way that behaves like ephem.angle.
     """
     
-    def __new__(cls, *args, **kwds):
-        return float.__new__(cls, 0)
-    
     def __repr__(self):
-        if PYEPHEM_REPR:
+        if EPHEM_CONFIG.get('pyephem_repr'):
             return str(float(self))
         else:
             return SkyAngle.__repr__(self)
             
     def __str__(self):
-        if PYEPHEM_REPR:
+        if EPHEM_CONFIG.get('pyephem_repr'):
             output = SkyAngle.__str__(self)
             for u in ('deg ', "' ", 'h ', 'm '):
                 output = output.replace(u, ':')
@@ -50,56 +48,101 @@ class Angle(SkyAngle, float):
     def __float__(self):
         return float(self.radians)
         
+    def __abs__(self):
+        return float(abs(self.radians))
+        
     def __add__(self, other):
         if isinstance(other, (int, float)):
-            return float(self) + other
+            return self.radians + other
         elif isinstance(other, SkyAngle):
-            return Angle(radians=float(self) + float(other), preference=self.preference)
+            return Angle(radians=self.radians - other.radians, preference=self.preference)
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __radd__(self, other):
+        return self.__add__(other)
+        
+    def __iadd__(self, other):
+        if isinstance(other, (int, float)):
+            self.radians += other
+        elif isinstance(other, SkyAngle):
+            self.radians += other.radians
+        else:
+            raise ValueError("Unsupported type '%s'" % type(other).__name__)
             
     def __sub__(self, other):
         if isinstance(other, (int, float)):
-            return float(self) - other
+            return self.radians - other
         elif isinstance(other, SkyAngle):
-            return Angle(radians=float(self) - float(other), preference=self.preference)
+            return Angle(radians=self.radians - other.radians, preference=self.preference)
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def __rsub__(self, other):
+        return self.__sub__(other)
+        
+    def __isub__(self, other):
+        if isinstance(other, (int, float)):
+            self.radians -= other
+        elif isinstance(other, SkyAngle):
+            self.radians -= other.radians
+        else:
+            raise ValueError("Unsupported type '%s'" % type(other).__name__)
             
     def __mul__(self, other):
         if isinstance(other, (int, float)):
-            return float(self) * other
+            return self.radians * other
         elif isinstance(other, SkyAngle):
-            return float(self) * float(other)
+            return self.radians * other.radians
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
+    def __rmul__(self, other):
+        return self.__mul__(other)
+        
+    def __imul__(self, other):
+        if isinstance(other, (int, float)):
+            self.radians *= other
+        elif isinstance(other, SkyAngle):
+            self.radians *= other.radians
+        else:
+            raise ValueError("Unsupported type '%s'" % type(other).__name__)
+            
     def __truediv__(self, other):
         if isinstance(other, (int, float)):
-            return float(self) / other
+            return self.radians / other
         elif isinstance(other, SkyAngle):
-            return float(self) / float(other)
+            return self.radians / other.radians
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
     def __floordiv__(self, other):
         return Angle.__truediv__(self, other)
         
+    def __neg__(self):
+        return -self.radians
+        
     def __eq__(self, other):
         if isinstance(other, (int, float)):
-            return float(self) == float(other)
+            return self.radians == float(other)
         elif isinstance(other, SkyAngle):
-            return float(self) == float(other)
+            return self.radians == other.radians
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
         
     def __lt__(self, other):
         if isinstance(other, (int, float)):
-            return float(self) < float(other)
+            return self.radians < float(other)
         elif isinstance(other, SkyAngle):
-            return float(self) < float(other)
+            return self.radians < other.radians
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
+    def cos(self):
+        return numpy.cos(self.radians)
+        
+    def sin(self):
+        return numpy.sin(self.radians)
 
 
 def hours(value, wrap=True):
@@ -109,7 +152,7 @@ def hours(value, wrap=True):
     
     ang = None
     if isinstance(value, SkyAngle):
-        ang = Angle(value, preference='hours')
+        ang = Angle(radians=value.radians, preference='hours')
     elif isinstance(value, (int, float)):
         ang = Angle(radians=value, preference='hours')
     elif isinstance(value, str):
