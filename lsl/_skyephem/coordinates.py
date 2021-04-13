@@ -15,10 +15,10 @@ ts = api.load.timescale()
 from lsl._skyephem.angles import hours, degrees
 from lsl._skyephem.dates import Date, B1950, J2000
 from lsl._skyephem.cache import load_planetary_ephemeris
-from lsl._skyephem.bodies import Body
+from lsl._skyephem.bodies import Body, FixedBody
 
 
-__all__ = ['Coordinate', 'Equatorial', 'Ecliptic', 'Galactic']
+__all__ = ['Coordinate', 'Equatorial', 'Ecliptic', 'Galactic', 'separation']
 
 
 _solar_system = load_planetary_ephemeris()
@@ -251,3 +251,70 @@ class Galactic(Coordinate):
         lon, lat = degrees(lon), degrees(lat)
         ra, dec = _equ_from_gal(lon, lat, self._epoch)
         self.set(ra, dec)
+
+
+def separation(pos1, pos2):
+    """
+    Return the angular separation between two objects or positions as an
+    Angle instance.
+    """
+    
+    c1 = None
+    e1 = None
+    if isinstance(pos1, (tuple, list)):
+        ra, dec = pos1
+        ra, dec = hours(ra), degrees(dec)
+        c1 = FixedBody()
+        c1._ra = ra
+        c1._dec = dec
+        c1._epoch = J2000
+        e1 = c1._epoch
+    elif isinstance(pos1, Body):
+        ra, dec = pos1.g_ra, pos1.g_dec
+        c1 = FixedBody()
+        c1._ra = ra
+        c1._dec = dec
+        c1._epoch = J2000
+        e1 = c1._epoch
+    elif isinstance(pos1, Coordinate):
+        ra, dec = pos1.to_radec()
+        c1 = FixedBody()
+        c1._ra = ra
+        c1._dec = dec
+        c1._epoch = pos1._epoch
+        e1 = c1._epoch
+    if c1 is None:
+        raise TypeError("Unexpected type for pos1: %s" % type(pos1))
+        
+    c2 = None
+    e2 = None
+    if isinstance(pos2, (tuple, list)):
+        ra, dec = pos2
+        ra, dec = hours(ra), degrees(dec)
+        c2 = FixedBody()
+        c2._ra = ra
+        c2._dec = dec
+        c2._epoch = J2000
+        e2 = c2._epoch
+    elif isinstance(pos2, Body):
+        ra, dec = pos2.g_ra, pos2.g_dec
+        c2 = FixedBody()
+        c2._ra = ra
+        c2._dec = dec
+        c2._epoch = J2000
+        e2 = c2._epoch
+    elif isinstance(pos2, Coordinate):
+        ra, dec = pos2.to_radec()
+        c2 = FixedBody()
+        c2._ra = ra
+        c2._dec = dec
+        c2._epoch = pos2._epoch
+        e2 = c2._epoch
+    if c2 is None:
+        raise TypeError("Unexpected type for pos2: %s" % type(pos1))
+        
+    e = e1 if e2 == J2000 else e2
+    c1 = _solar_system['earth'].at(e).observe(c1._body)
+    c2 = _solar_system['earth'].at(e).observe(c2._body)
+    distance = c1.separation_from(c2)
+    return degrees(distance)

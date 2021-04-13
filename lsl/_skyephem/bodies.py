@@ -90,6 +90,7 @@ class Body(object):
             t = date_or_observer.date
             obs = _solar_system['earth'] + date_or_observer._wgs84
         pos = obs.at(t).observe(self._body)
+        self.a_epoch = t
         
         ra, dec, _ = pos.radec()
         self.a_ra = hours(ra.radians, wrap=True)
