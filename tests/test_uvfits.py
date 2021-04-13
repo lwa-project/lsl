@@ -79,6 +79,7 @@ class uvfits_tests(unittest.TestCase):
         fits.add_history('This is history')
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
         
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -108,6 +109,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
         
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -138,6 +140,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
         
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -163,6 +166,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
         
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -192,6 +196,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
         
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -215,6 +220,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
         
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -238,6 +244,7 @@ class uvfits_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
         
         # Open the file and examine
         hdulist = astrofits.open(testFile)
