@@ -207,6 +207,8 @@ def separation(pos1, pos2):
         c1 = Star(ra=ra, dec=dec)
     elif isinstance(pos1, Star):
         c1 = pos1
+    elif getattr(c1, 'a_ra', None) is not None:
+        c1 = pos1
     if c1 is None:
         raise TypeError("Unexpected type for pos1: %s" % type(pos1))
         
@@ -216,6 +218,8 @@ def separation(pos1, pos2):
         ra, dec = hours(ra), degrees(dec)
         c2 = Star(ra=ra, dec=dec)
     elif isinstance(pos2, Star):
+        c2 = pos2
+    elif getattr(c2, 'a_ra', None) is not None:
         c2 = pos2
     if c2 is None:
         raise TypeError("Unexpected type for pos2: %s" % type(pos1))
