@@ -210,7 +210,7 @@ class FixedBody(Body):
     __pmra = 0.0    # mas/yr
     __pmdec = 0.0   # mas/yr
     
-    def _update(self):
+    def _parameter_callback(self):
         self._body = Star(ra=self.__ra, dec=self.__dec,
                           ra_mas_per_year=self.__pmra, dec_mas_per_year=self.__pmdec,
                           names=(self.name,), epoch=self.__epoch)
@@ -221,7 +221,7 @@ class FixedBody(Body):
     @_ra.setter
     def _ra(self, value):
         self.__ra = hours(value)
-        self._update()
+        self._parameter_callback()
         
     @property
     def _dec(self):
@@ -229,7 +229,7 @@ class FixedBody(Body):
     @_dec.setter
     def _dec(self, value):
         self.__dec = degrees(value)
-        self._update()
+        self._parameter_callback()
         
     @property
     def _epoch(self):
@@ -237,7 +237,7 @@ class FixedBody(Body):
     @_epoch.setter
     def _epoch(self, value):
         self.__epoch = Date(value)
-        self._update()
+        self._parameter_callback()
         
     @property
     def _pmra(self):
@@ -245,14 +245,14 @@ class FixedBody(Body):
     @_pmra.setter
     def _pmra(self, value):
         self.__pmra = value
-        self._update()
+        self._parameter_callback()
     @property
     def _pmdec(self):
         return self.__pmdec
     @_pmdec.setter
     def _pmdec(self, value):
         self.__pmdec = value
-        self._update() 
+        self._parameter_callback() 
 
 
 def readdb(line):

@@ -145,9 +145,9 @@ class Observer(object):
         self.__elev = SkyDistance(m=0.0)
         self.__horz = SkyAngle(degrees=0.0)
         self.__date = Date(ts.now())
-        self._update()
+        self._parameter_callback()
         
-    def _update(self):
+    def _parameter_callback(self):
         self._wgs84 = Topos(latitude=self.__lat, longitude=self.__lon, elevation_m=self.__elev.m)
         
     @property
@@ -160,7 +160,7 @@ class Observer(object):
     @lat.setter
     def lat(self, value):
         self.__lat = degrees(value)
-        self._update()
+        self._parameter_callback()
         
     @property
     def lon(self):
@@ -172,7 +172,7 @@ class Observer(object):
     @lon.setter
     def lon(self, value):
         self.__lon = degrees(value)
-        self._update()
+        self._parameter_callback()
     @property
     def long(self):
         return self.lon
@@ -190,7 +190,7 @@ class Observer(object):
     @elev.setter
     def elev(self, value):
         self.__elev = SkyDistance(m=float(value))
-        self._update()
+        self._parameter_callback()
     @property
     def elevation(self):
         return self.elev
@@ -209,7 +209,7 @@ class Observer(object):
     @horizon.setter
     def horizon(self, value):
         self.__horz = degrees(value)
-        self._update()
+        self._parameter_callback()
         
     @property
     def date(self):
