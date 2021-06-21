@@ -10,6 +10,16 @@
 
 #include "readers.h"
 
+// The Mac OSX 10.15 SDK has CR0 and CR1 macros
+#if defined(__APPLE__)
+  #ifdef CR0
+    #undef CR0
+  #endif
+  #ifdef CR1
+    #undef CR1
+  #endif
+#endif
+
 /*
   DR Spectrometer Reader
 */

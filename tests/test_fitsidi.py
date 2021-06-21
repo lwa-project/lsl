@@ -19,6 +19,7 @@ from astropy.io import fits as astrofits
 from lsl.common import stations as lwa_common
 from lsl.correlator import uvutils
 from lsl.writer import fitsidi
+from lsl.astro import unix_to_taimjd
 
 
 __version__  = "0.2"
@@ -78,8 +79,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.add_header_keyword('EXAMPLE', 'example keyword')
         fits.add_comment('This is a comment')
         fits.add_history('This is history')
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -117,7 +119,7 @@ class fitsidi_tests(unittest.TestCase):
             if i != 2:
                 fits.set_geometry(data['site'], data['antennas'])
             if i != 3:
-                fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+                fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
             self.assertRaises(RuntimeError, fits.write)
             
     def test_array_geometry(self):
@@ -134,8 +136,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -164,8 +167,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -198,8 +202,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -227,8 +232,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -260,8 +266,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -288,8 +295,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -354,8 +362,9 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -395,9 +404,10 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+10e6)
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], 
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], 
                           numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -519,8 +529,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_comment('This is a comment')
         fits.add_history('This is history')
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -548,8 +559,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -578,8 +590,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -612,8 +625,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -641,8 +655,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -674,8 +689,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -702,8 +718,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -768,8 +785,9 @@ class aipsidi_tests(unittest.TestCase):
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(testTime, 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)

@@ -1,3 +1,6 @@
+2.1.1
+  * Fixed a build problem with lsl/reader/drspec.c found on some versions of OSX
+
 2.1.0
   * Added UCF_USERNAME_RE to lsl.common.idf/sdf/sdfADP to make it eaiser to validate UCF usernames 
   * Added support for querying the MCS `mindelays.txt` file in lsl.common.metabundle/metabundleADP

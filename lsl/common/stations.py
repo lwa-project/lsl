@@ -1021,6 +1021,7 @@ class LSLInterface(object):
                 raise RuntimeError("Unknown module for interface type '%s'" % which)
             modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
             self._cache[which] = imp.load_module(value, *modInfo)
+            modInfo[0].close()
         return self._cache[which]
 
 
