@@ -50,7 +50,10 @@ __version__ = '0.2'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 
            'get_frames_per_obs', 'get_channel_count', 'get_baseline_count']
 
+#: COR packet size (header + payload)
 FRAME_SIZE = 32 + NCHAN_COR*4*8
+
+#: Number of frequency channels in a COR packet
 FRAME_CHANNEL_COUNT = NCHAN_COR
 
 

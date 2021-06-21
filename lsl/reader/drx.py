@@ -66,9 +66,10 @@ __version__ = '0.8'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
+#: DRX packet size (header + payload)
 FRAME_SIZE = 4128
 
-# List of filter codes and their corresponding sample rates in Hz
+#: List of filter codes and their corresponding sample rates in Hz
 FILTER_CODES = {1: 250000, 2: 500000, 3: 1000000, 4: 2000000, 5: 4900000, 6: 9800000, 7: 19600000}
 
 

@@ -61,6 +61,7 @@ __version__ = '0.6'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'FRAME_SIZE', 'get_data_bits', 'get_frames_per_obs']
 
+#: TBW packet size (header + payload)
 FRAME_SIZE = 1224
 
 

@@ -72,9 +72,10 @@ __version__ = '0.8'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
+#: TBN packet size (header + payload)
 FRAME_SIZE = 1048
 
-# List of filter codes and their corresponding sample rates in Hz
+#: List of filter codes and their corresponding sample rates in Hz
 FILTER_CODES = {1:   1000, 2:   3125, 3:    6250, 4:    12500, 5: 25000, 6: 50000, 7: 100000}
 
 

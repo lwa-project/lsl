@@ -45,7 +45,10 @@ __version__ = '0.1'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT',
            'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count', 'get_first_channel']
 
+#: TBF packet size (header + payload)
 FRAME_SIZE = 6168
+
+#: Number of frequency channels in a TBF packet
 FRAME_CHANNEL_COUNT = 12
 
 

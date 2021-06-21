@@ -60,9 +60,9 @@ __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'get_data_produ
            'is_stokes', 'get_sample_rate', 'get_frame_size', 'get_ffts_per_integration', 
            'get_transform_size', 'get_integration_time', 'FILTER_CODES']
 
-# List of filter codes and their corresponding sample rates in Hz.  
-# .. note::
-#		These are just the DRX filter codes
+#: List of filter codes and their corresponding sample rates in Hz.  
+#: .. note::
+#:		These are just the DRX filter codes
 FILTER_CODES = drx_FILTER_CODES
 
 
