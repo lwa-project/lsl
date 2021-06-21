@@ -35,18 +35,29 @@ __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'TBN_TUNING_WORD_MIN', 'TBN_TUNING_WO
            'freq_to_word', 'word_to_freq', 'delay_to_dpd', 'dpd_to_delay', 
            'gain_to_dpg', 'dpg_to_gain', 'tbn_filter', 'drx_filter']
 
+#: Sample rate in Hz that is the basis for LWA time tags
 fS = 196.0e6	# Hz
+
+#: F-engine channel width in Hz
 fC = 25e3		# Hz
+
 T = 1.0		# seconds
 T2 = 0.010	# seconds
 N_MAX = 8192	# bytes
 
+#: Minimum TBN tuning word
 TBN_TUNING_WORD_MIN = 65739295         # Tuning word
+
+#: Maximum TBN tuning word
 TBN_TUNING_WORD_MAX = 2037918156       # Tuning word
 
+#: Minimum DRX tuning word
 DRX_TUNING_WORD_MIN = 222417950        # Tuning word
+
+#: Maximum DRX tuning word
 DRX_TUNING_WORD_MAX = 1928352663       # Tuning word
 
+#: Maximum number of beams
 DRX_BEAMS_MAX = 3
 
 # FIR Filters
