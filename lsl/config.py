@@ -350,7 +350,7 @@ class LSLConfigSubContainer(object):
             self.container.set_temp(name, value)
 
 
-# The LSLConfigContainer that users shoudl use
+#: The LSLConfigContainer that users should use
 LSL_CONFIG = LSLConfigContainer()
 
 import atexit
