@@ -29,7 +29,11 @@ __all__ = ['MODULE', 'DATA', 'MODULE_BUILD', 'DATA_BUILD']
 
 
 modInfo = imp.find_module('lsl')
+
+#: Absolute path to the LSL intall location
 MODULE = os.path.abspath(modInfo[1])
+
+#: Absolute path to the data directory where data files for LSL are stored
 DATA = os.path.join(MODULE, 'data')
 
 
