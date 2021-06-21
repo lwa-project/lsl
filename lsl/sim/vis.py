@@ -82,7 +82,7 @@ __all__ = ['SOURCES', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray
 speedOfLight = speedOfLight.to('m/s').value
 
 
-# A dictionary of bright sources in the sky to use for simulations
+#: A dictionary of bright sources in the sky to use for simulations
 SOURCES = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
 
 
