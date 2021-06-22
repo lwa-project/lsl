@@ -339,13 +339,13 @@ class Uv(WriterBase):
                 wList.extend( uvwCoords[order,2] )
                 
                 ### Add in the new date/time
-                dateList.extend( [utc0-utcR for bl in dataSet.baselines] )
-                timeList.extend( [utc-utc0 for bl in dataSet.baselines] )
-                intTimeList.extend( [dataSet.intTime for bl in dataSet.baselines] )
+                dateList.extend( [utc0-utcR,]*len(dataSet.baselines) )
+                timeList.extend( [utc-utc0,]*len(dataSet.baselines) )
+                intTimeList.extend( [dataSet.intTime,]*len(dataSet.baselines) )
                 
                 ### Add in the new new source ID and name
-                sourceList.extend( [sourceID for bl in dataSet.baselines] )
-                nameList.extend( [name for bl in dataSet.baselines] )
+                sourceList.extend( [sourceID,]*len(dataSet.baselines) )
+                nameList.extend( [name,]*len(dataSet.baselines) )
                 
                 ### Zero out the visibility data
                 try:

@@ -902,12 +902,12 @@ try:
                     uvwList = uvwCoords[order,:]
                     
                     ### Add in the new date/time and integration time
-                    #timeList = [utc - astro.MJD_OFFSET for bl in dataSet.baselines]
-                    intTimeList = [dataSet.intTime for bl in dataSet.baselines]
-                    timeList = [(utc - astro.MJD_OFFSET)*86400 + dataSet.intTime/2.0 for bl in dataSet.baselines]
+                    #timeList = [utc - astro.MJD_OFFSET,]*len(dataSet.baselines)
+                    intTimeList = [dataSet.intTime,]*len(dataSet.baselines)
+                    timeList = [(utc - astro.MJD_OFFSET)*86400 + dataSet.intTime/2.0,]*len(dataSet.baselines)
                     
                     ### Add in the new new source ID and name
-                    sourceList = [sourceID for bl in dataSet.baselines]
+                    sourceList = [sourceID,]*len(dataSet.baselines)
                      
                     ### Zero out the visibility data
                     try:

@@ -716,7 +716,6 @@ class Idi(WriterBase):
                 eop = iers.IERS_Auto.open()
                 ut1_utc = eop.ut1_utc(refAT)
                 pm_xy = eop.pm_xy(refAT)
-                pm_xy = eop.pm_xy(refAT)
                  
         ag.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
         ag.header['IATUTC'] = (astro.leap_secs(utc0), 'TAI - UTC for reference date')
@@ -1176,13 +1175,13 @@ class Idi(WriterBase):
                 wList.extend( uvwCoords[order,2] )
                 
                 ### Add in the new date/time and integration time
-                dateList.extend( [utc0 for bl in dataSet.baselines] )
-                timeList.extend( [utc-utc0 for bl in dataSet.baselines] )
-                intTimeList.extend( [dataSet.intTime for bl in dataSet.baselines] )
+                dateList.extend( [utc0,]*len(dataSet.baselines) )
+                timeList.extend( [utc-utc0,]*len(dataSet.baselines) )
+                intTimeList.extend( [dataSet.intTime,]*len(dataSet.baselines) )
                 
                 ### Add in the new new source ID and name
-                sourceList.extend( [sourceID for bl in dataSet.baselines] )
-                nameList.extend( [name for bl in dataSet.baselines] )
+                sourceList.extend( [sourceID,]*len(dataSet.baselines) )
+                nameList.extend( [name,]*len(dataSet.baselines) )
                 
                 ### Zero out the visibility data
                 try:
