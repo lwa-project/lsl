@@ -592,7 +592,7 @@ class Project(object):
         if ses.drx_beam != -1:
             output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
+            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag is None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.recordMIB[component] != -1:
                 output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
@@ -617,7 +617,7 @@ class Project(object):
             output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided',)
             output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided',)
             output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
-            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] is None else poo[i],)
             output += "OBS_START_MJD    %i\n" % (obs.mjd,)
             output += "OBS_START_MPM    %i\n" % (obs.mpm,)
             output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)

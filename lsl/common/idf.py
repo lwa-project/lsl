@@ -274,7 +274,7 @@ class Project(object):
             output += "SCAN_TARGET      %s\n" % (obs.target,)
             output += "SCAN_INTENT      %s\n" % (obs.intent,)
             output += "SCAN_REMPI       %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
-            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] is None else poo[i],)
             output += "SCAN_START_MJD   %i\n" % (obs.mjd,)
             output += "SCAN_START_MPM   %i\n" % (obs.mpm,)
             output += "SCAN_START       %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
