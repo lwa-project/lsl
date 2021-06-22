@@ -55,174 +55,174 @@ PyObject *drspec_size_hdr = NULL;
 PyObject *drspec_size_dat = NULL;
 
 
-static void parse_linear_single(DRSpecHeader header, float *data, float *S0, float *S1, int isX, int isY) {
+static void parse_linear_single(DRSpecHeader *header, float *data, float *S0, float *S1, int isX, int isY) {
     int i;
     float norm0, norm1;
     
     // Spectra normalization factors
     if( isX == 1 && isY == 0) {
         // XX*
-        norm0 = header.nFreqs * header.fills[0];
-        norm1 = header.nFreqs * header.fills[2];
+        norm0 = header->nFreqs * header->fills[0];
+        norm1 = header->nFreqs * header->fills[2];
     } else if( isX == 0 && isY == 1 ) {
         // YY*
-        norm0 = header.nFreqs * header.fills[1];
-        norm1 = header.nFreqs * header.fills[3];
+        norm0 = header->nFreqs * header->fills[1];
+        norm1 = header->nFreqs * header->fills[3];
     } else {
         // real(XY*) or imag(XY*)
-        norm0 = header.nFreqs * min(header.fills[0], header.fills[1]);
-        norm1 = header.nFreqs * min(header.fills[2], header.fills[3]);
+        norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
+        norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
     }
     
     // Sort out the data
-    for(i=0; i<header.nFreqs; i++) {
+    for(i=0; i<header->nFreqs; i++) {
         // XX*/real(XY*)/imag(XY*)/YY only
-        *(S0 + i) = *(data + 0*header.nFreqs + i) / norm0;
-        *(S1 + i) = *(data + 1*header.nFreqs + i) / norm1;
+        *(S0 + i) = *(data + 0*header->nFreqs + i) / norm0;
+        *(S1 + i) = *(data + 1*header->nFreqs + i) / norm1;
     }
 }
 
 
-static void parse_linear_half(DRSpecHeader header, float *data, float *XX0, float *XX1, float *YY0, float *YY1) {
+static void parse_linear_half(DRSpecHeader *header, float *data, float *XX0, float *XX1, float *YY0, float *YY1) {
     int i;
     float normXX0, normXX1, normYY0, normYY1;
     
     // Spectra normalization factors
-    normXX0 = header.nFreqs * header.fills[0];
-    normXX1 = header.nFreqs * header.fills[2];
-    normYY0 = header.nFreqs * header.fills[1];
-    normYY1 = header.nFreqs * header.fills[3];
+    normXX0 = header->nFreqs * header->fills[0];
+    normXX1 = header->nFreqs * header->fills[2];
+    normYY0 = header->nFreqs * header->fills[1];
+    normYY1 = header->nFreqs * header->fills[3];
     
     // Sort out the data
-    for(i=0; i<header.nFreqs; i++) {
+    for(i=0; i<header->nFreqs; i++) {
         // XX*
-        *(XX0 + i) = *(data + 0*header.nFreqs + 2*i + 0) / normXX0;
-        *(XX1 + i) = *(data + 2*header.nFreqs + 2*i + 0) / normXX1;
+        *(XX0 + i) = *(data + 0*header->nFreqs + 2*i + 0) / normXX0;
+        *(XX1 + i) = *(data + 2*header->nFreqs + 2*i + 0) / normXX1;
         
         // YY*
-        *(YY0 + i) = *(data + 0*header.nFreqs + 2*i + 1) / normYY0;
-        *(YY1 + i) = *(data + 2*header.nFreqs + 2*i + 1) / normYY1;
+        *(YY0 + i) = *(data + 0*header->nFreqs + 2*i + 1) / normYY0;
+        *(YY1 + i) = *(data + 2*header->nFreqs + 2*i + 1) / normYY1;
     }
 }
 
 
-static void parse_linear_other_half(DRSpecHeader header, float *data, float *CR0, float *CR1, float *CI0, float *CI1) {
+static void parse_linear_other_half(DRSpecHeader *header, float *data, float *CR0, float *CR1, float *CI0, float *CI1) {
     int i;
     float normCH0, normCH1;
     
     // Spectra normalization factors
-    normCH0 = header.nFreqs * min(header.fills[0], header.fills[1]);
-    normCH1 = header.nFreqs * min(header.fills[2], header.fills[3]);
+    normCH0 = header->nFreqs * min(header->fills[0], header->fills[1]);
+    normCH1 = header->nFreqs * min(header->fills[2], header->fills[3]);
     
     // Sort out the data
-    for(i=0; i<header.nFreqs; i++) {
+    for(i=0; i<header->nFreqs; i++) {
         // real(XY*)
-        *(CR0 + i) = *(data + 0*header.nFreqs + 2*i + 0) / normCH0;
-        *(CR1 + i) = *(data + 2*header.nFreqs + 2*i + 0) / normCH1;
+        *(CR0 + i) = *(data + 0*header->nFreqs + 2*i + 0) / normCH0;
+        *(CR1 + i) = *(data + 2*header->nFreqs + 2*i + 0) / normCH1;
         
         // imag(XY*)
-        *(CI0 + i) = *(data + 0*header.nFreqs + 2*i + 1) / normCH0;
-        *(CI1 + i) = *(data + 2*header.nFreqs + 2*i + 1) / normCH1;
+        *(CI0 + i) = *(data + 0*header->nFreqs + 2*i + 1) / normCH0;
+        *(CI1 + i) = *(data + 2*header->nFreqs + 2*i + 1) / normCH1;
     }
 }
 
 
-static void parse_linear_full(DRSpecHeader header, float *data, float *XX0, float *XX1, float *CR0, float *CR1, float *CI0, float *CI1, float *YY0, float *YY1) {
+static void parse_linear_full(DRSpecHeader *header, float *data, float *XX0, float *XX1, float *CR0, float *CR1, float *CI0, float *CI1, float *YY0, float *YY1) {
     int i;
     float normXX0, normXX1, normCH0, normCH1, normYY0, normYY1;
     
     // Spectra normalization factors
-    normXX0 = header.nFreqs * header.fills[0];
-    normXX1 = header.nFreqs * header.fills[2];
-    normCH0 = header.nFreqs * min(header.fills[0], header.fills[1]);
-    normCH1 = header.nFreqs * min(header.fills[2], header.fills[3]);
-    normYY0 = header.nFreqs * header.fills[1];
-    normYY1 = header.nFreqs * header.fills[3];
+    normXX0 = header->nFreqs * header->fills[0];
+    normXX1 = header->nFreqs * header->fills[2];
+    normCH0 = header->nFreqs * min(header->fills[0], header->fills[1]);
+    normCH1 = header->nFreqs * min(header->fills[2], header->fills[3]);
+    normYY0 = header->nFreqs * header->fills[1];
+    normYY1 = header->nFreqs * header->fills[3];
 
     // Sort out the data
-    for(i=0; i<header.nFreqs; i++) {
+    for(i=0; i<header->nFreqs; i++) {
         // XX*
-        *(XX0 + i) = *(data + 0*header.nFreqs + 4*i + 0) / normXX0;
-        *(XX1 + i) = *(data + 4*header.nFreqs + 4*i + 0) / normXX1;
+        *(XX0 + i) = *(data + 0*header->nFreqs + 4*i + 0) / normXX0;
+        *(XX1 + i) = *(data + 4*header->nFreqs + 4*i + 0) / normXX1;
         
         // real(XY*)
-        *(CR0 + i) = *(data + 0*header.nFreqs + 4*i + 1) / normCH0;
-        *(CR1 + i) = *(data + 4*header.nFreqs + 4*i + 1) / normCH1;
+        *(CR0 + i) = *(data + 0*header->nFreqs + 4*i + 1) / normCH0;
+        *(CR1 + i) = *(data + 4*header->nFreqs + 4*i + 1) / normCH1;
         
         // imag(XY*)
-        *(CI0 + i) = *(data + 0*header.nFreqs + 4*i + 2) / normCH0;
-        *(CI1 + i) = *(data + 4*header.nFreqs + 4*i + 2) / normCH1;
+        *(CI0 + i) = *(data + 0*header->nFreqs + 4*i + 2) / normCH0;
+        *(CI1 + i) = *(data + 4*header->nFreqs + 4*i + 2) / normCH1;
         
         // YY*
-        *(YY0 + i) = *(data + 0*header.nFreqs + 4*i + 3) / normYY0;
-        *(YY1 + i) = *(data + 4*header.nFreqs + 4*i + 3) / normYY1;
+        *(YY0 + i) = *(data + 0*header->nFreqs + 4*i + 3) / normYY0;
+        *(YY1 + i) = *(data + 4*header->nFreqs + 4*i + 3) / normYY1;
     }
 }
 
 
-static void parse_stokes_single(DRSpecHeader header, float *data, float *S0, float *S1) {
+static void parse_stokes_single(DRSpecHeader *header, float *data, float *S0, float *S1) {
     int i;
     float norm0, norm1;
     
     // Spectra normalization factors
-    norm0 = header.nFreqs * min(header.fills[0], header.fills[1]);
-    norm1 = header.nFreqs * min(header.fills[2], header.fills[3]);
+    norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
+    norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
     
     // Sort out the data
-    for(i=0; i<header.nFreqs; i++) {
+    for(i=0; i<header->nFreqs; i++) {
         // I/Q/U/V only
-        *(S0 + i) = *(data + 0*header.nFreqs + i) / norm0;
-        *(S1 + i) = *(data + 1*header.nFreqs + i) / norm1;
+        *(S0 + i) = *(data + 0*header->nFreqs + i) / norm0;
+        *(S1 + i) = *(data + 1*header->nFreqs + i) / norm1;
     }
 }
 
 
-static void parse_stokes_half(DRSpecHeader header, float *data, float *I0, float *I1, float *V0, float *V1) {
+static void parse_stokes_half(DRSpecHeader *header, float *data, float *I0, float *I1, float *V0, float *V1) {
     int i;
     float norm0, norm1;
     
     // Spectra normalization factors
-    norm0 = header.nFreqs * min(header.fills[0], header.fills[1]);
-    norm1 = header.nFreqs * min(header.fills[2], header.fills[3]);
+    norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
+    norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
     
     // Sort out the data
-    for(i=0; i<header.nFreqs; i++) {
+    for(i=0; i<header->nFreqs; i++) {
         // I
-        *(I0 + i) = *(data + 0*header.nFreqs + 2*i + 0) / norm0;
-        *(I1 + i) = *(data + 2*header.nFreqs + 2*i + 0) / norm1;
+        *(I0 + i) = *(data + 0*header->nFreqs + 2*i + 0) / norm0;
+        *(I1 + i) = *(data + 2*header->nFreqs + 2*i + 0) / norm1;
         
         // V
-        *(V0 + i) = *(data + 0*header.nFreqs + 2*i + 1) / norm0;
-        *(V1 + i) = *(data + 2*header.nFreqs + 2*i + 1) / norm1;
+        *(V0 + i) = *(data + 0*header->nFreqs + 2*i + 1) / norm0;
+        *(V1 + i) = *(data + 2*header->nFreqs + 2*i + 1) / norm1;
     }
 }
 
 
-static void parse_stokes_full(DRSpecHeader header, float *data, float *I0, float *I1, float *Q0, float *Q1, float *U0, float *U1, float *V0, float *V1) {
+static void parse_stokes_full(DRSpecHeader *header, float *data, float *I0, float *I1, float *Q0, float *Q1, float *U0, float *U1, float *V0, float *V1) {
     int i;
     float norm0, norm1;
     
     // Spectra normalization factors
-    norm0 = header.nFreqs * min(header.fills[0], header.fills[1]);
-    norm1 = header.nFreqs * min(header.fills[2], header.fills[3]);
+    norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
+    norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
     
     // Sort out the data
-    for(i=0; i<header.nFreqs; i++) {
+    for(i=0; i<header->nFreqs; i++) {
         // I
-        *(I0 + i) = *(data + 0*header.nFreqs + 4*i + 0) / norm0;
-        *(I1 + i) = *(data + 4*header.nFreqs + 4*i + 0) / norm1;
+        *(I0 + i) = *(data + 0*header->nFreqs + 4*i + 0) / norm0;
+        *(I1 + i) = *(data + 4*header->nFreqs + 4*i + 0) / norm1;
         
         // Q
-        *(Q0 + i) = *(data + 0*header.nFreqs + 4*i + 1) / norm0;
-        *(Q1 + i) = *(data + 4*header.nFreqs + 4*i + 1) / norm1;
+        *(Q0 + i) = *(data + 0*header->nFreqs + 4*i + 1) / norm0;
+        *(Q1 + i) = *(data + 4*header->nFreqs + 4*i + 1) / norm1;
         
         // U
-        *(U0 + i) = *(data + 0*header.nFreqs + 4*i + 2) / norm0;
-        *(U1 + i) = *(data + 4*header.nFreqs + 4*i + 2) / norm1;
+        *(U0 + i) = *(data + 0*header->nFreqs + 4*i + 2) / norm0;
+        *(U1 + i) = *(data + 4*header->nFreqs + 4*i + 2) / norm1;
         
         // V
-        *(V0 + i) = *(data + 0*header.nFreqs + 4*i + 3) / norm0;
-        *(V1 + i) = *(data + 4*header.nFreqs + 4*i + 3) / norm1;
+        *(V0 + i) = *(data + 0*header->nFreqs + 4*i + 3) / norm0;
+        *(V1 + i) = *(data + 4*header->nFreqs + 4*i + 3) / norm1;
     }
 }
 
@@ -382,46 +382,46 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
         // Linear
         if( header.stokes_format == 0x01 ) {
             // XX* only
-            parse_linear_single(header, data, a0, a1, 1, 0);
+            parse_linear_single(&header, data, a0, a1, 1, 0);
         } else if( header.stokes_format == 0x02 ) {
             // real(XY*) only
-            parse_linear_single(header, data, b0, b1, 1, 1);
+            parse_linear_single(&header, data, b0, b1, 1, 1);
         } else if( header.stokes_format == 0x04 ) {
             // imag(XY*) only
-            parse_linear_single(header, data, c0, c1, 1, 1);
+            parse_linear_single(&header, data, c0, c1, 1, 1);
         } else if( header.stokes_format == 0x08 ) {
             // YY* only
-            parse_linear_single(header, data, d0, d1, 0, 1);
+            parse_linear_single(&header, data, d0, d1, 0, 1);
         } else if( header.stokes_format == 0x09 ) {
             // XX* and YY*
-            parse_linear_half(header, data, a0, a1, d0, d1);
+            parse_linear_half(&header, data, a0, a1, d0, d1);
         } else if( header.stokes_format == 0x06 ) {
             // real(XY*) and imag(XY*)
-            parse_linear_other_half(header, data, b0, b1, c0, c1);
+            parse_linear_other_half(&header, data, b0, b1, c0, c1);
         } else {
             // XX*, real(XY*), imag(XY*), and YY*
-            parse_linear_full(header, data, a0, a1, b0, b1, c0, c1, d0, d1);
+            parse_linear_full(&header, data, a0, a1, b0, b1, c0, c1, d0, d1);
         }
     } else {
         // Stokes
         if( header.stokes_format == 0x10 ) {
             // I only
-            parse_stokes_single(header, data, a0, a1);
+            parse_stokes_single(&header, data, a0, a1);
         } else if( header.stokes_format == 0x20 ) {
             // Q only
-            parse_stokes_single(header, data, b0, b1);
+            parse_stokes_single(&header, data, b0, b1);
         } else if( header.stokes_format == 0x40 ) {
             // U only
-            parse_stokes_single(header, data, c0, c1);
+            parse_stokes_single(&header, data, c0, c1);
         } else if( header.stokes_format == 0x80 ) {
             // V only
-            parse_stokes_single(header, data, d0, d1);
+            parse_stokes_single(&header, data, d0, d1);
         } else if( header.stokes_format == 0x90 ) {
             // I and V
-            parse_stokes_half(header, data, a0, a1, d0, d1);
+            parse_stokes_half(&header, data, a0, a1, d0, d1);
         } else {
             // I, Q, U, and V
-            parse_stokes_full(header, data, a0, a1, b0, b1, c0, c1, d0, d1);
+            parse_stokes_full(&header, data, a0, a1, b0, b1, c0, c1, d0, d1);
         }
     }
     
