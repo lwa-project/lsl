@@ -202,7 +202,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
     outD = numpy.zeros(timeseries.size, dtype=timeseries.dtype)
     
     if nSets == 0:
-        RuntimeWarning("Too few data samples for proper dedispersion")
+        raise RuntimeWarning("Too few data samples for proper dedispersion")
         
     # Go!
     for i in range(2*nSets+1):
