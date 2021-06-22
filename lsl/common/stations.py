@@ -73,7 +73,6 @@ def ecef_to_geo(x, y, z):
     
     # Longitude
     lon = numpy.arctan2(y, x)
-    p = numpy.sqrt(x**2 + y**2)
     
     # Latitude (first approximation)
     lat = numpy.arctan2(z, p)
@@ -1865,18 +1864,18 @@ def parse_ssmif(filename):
     return station
 
 
-# LWAVL
+#: LWAVL
 _ssmifvl = os.path.join(dataPath, 'lwa1-ssmif.txt')
 lwavl = parse_ssmif(_ssmifvl)
 
-# LWAVL is also known as LWA1
+#: LWAVL is also known as LWA1
 lwa1 = lwavl
 
-# LWANA
+#: LWANA
 _ssmifna = os.path.join(dataPath, 'lwana-ssmif.txt')
 lwana = parse_ssmif(_ssmifna)
 
-# LWASV
+#: LWASV
 _ssmifsv = os.path.join(dataPath, 'lwasv-ssmif.txt')
 lwasv = parse_ssmif(_ssmifsv)
 
