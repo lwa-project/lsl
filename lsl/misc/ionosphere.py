@@ -313,11 +313,11 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
             Bph += (_RADIUS_EARTH/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['g'][n][m]*m*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
             Bph -= (_RADIUS_EARTH/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['h'][n][m]*m*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
     ## And deal with NaNs
-    if Br != Br:
+    if numpy.isnan(Br):
         Br = 0.0
-    if Bth != Bth:
+    if numpy.isnan(Bth):
         Bth = 0.0
-    if Bph != Bph:
+    if numpy.isnan(Bph):
         Bph = 0.0
         
     # Convert from spherical to ECEF
