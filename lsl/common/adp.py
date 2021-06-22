@@ -22,7 +22,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import numpy
-from scipy.signal import freqz, lfilter
+from scipy.signal import freqz
 from scipy.interpolate import interp1d
 
 from lsl.misc import telemetry
