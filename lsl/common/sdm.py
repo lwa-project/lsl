@@ -21,7 +21,7 @@ telemetry.track_module()
 
 
 __version__ = '0.3'
-__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationsSettings', 'SDM', 'parse_sdm']
+__all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationSettings', 'SDM', 'parse_sdm']
 
 
 class SubSystemStatus(object):
