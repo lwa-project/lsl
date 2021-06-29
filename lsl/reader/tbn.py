@@ -53,9 +53,6 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import copy
-import numpy
-
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbn

@@ -26,7 +26,6 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import copy
 import numpy
 
 from lsl.common import adp as adp_common
