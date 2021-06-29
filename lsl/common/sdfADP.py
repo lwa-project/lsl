@@ -53,27 +53,19 @@ import re
 import copy
 import math
 import pytz
-import ephem
-import weakref
 from datetime import datetime, timedelta
 
-from astropy.time import Time as AstroTime
-
 from lsl.transform import Time
-from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
-from lsl.astro import date as astroDate, get_date as astroGetDate
+from lsl.astro import utcjd_to_unix, MJD_OFFSET
 from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.adp import freq_to_word, word_to_freq, fC
+from lsl.common.mcsADP import LWA_MAX_NSTD
+from lsl.common.adp import word_to_freq, fC
 from lsl.common.stations import lwa1, lwasv
-from lsl.reader.tbn import FILTER_CODES as TBNFilters
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_SIZE as TBFSize
-from lsl.reader.tbn import FRAME_SIZE as TBNSize
-from lsl.reader.drx import FRAME_SIZE as DRXSize
 
-from lsl.common.sdf import parse_time, _TypedParentList, Observer, ProjectOffice
+from lsl.common.sdf import Observer, ProjectOffice
 from lsl.common.sdf import UCF_USERNAME_RE, Project as _Project, Session as _Session
 from lsl.common.sdf import UCF_USERNAME_RE, Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
 

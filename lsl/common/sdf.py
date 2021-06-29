@@ -234,7 +234,6 @@ def parse_time(s, station=lwa1):
                     tz = 'LST'
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
-                    import warnings
                     warnings.warn("Entering pytz search mode for '%s'" % tzName, RuntimeWarning)
                     
                     tzFound = False
