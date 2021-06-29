@@ -22,7 +22,6 @@ from datetime import datetime, timedelta
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
 from lsl.common.adp import word_to_freq, fS
-from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
 
