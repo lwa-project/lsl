@@ -32,11 +32,9 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import copy
 import warnings
 from datetime import datetime
 
-from lsl import astro
 from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.reader.base import *
 from lsl.reader._gofast import read_vdif
