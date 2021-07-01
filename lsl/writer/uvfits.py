@@ -15,7 +15,6 @@ if sys.version_info < (3,):
     
 import os
 import gc
-import re
 import math
 import ephem
 import numpy

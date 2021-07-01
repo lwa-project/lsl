@@ -12,7 +12,6 @@ if sys.version_info < (3,):
     
 import os
 import gc
-import re
 import glob
 import math
 import ephem
@@ -20,7 +19,6 @@ import numpy
 import shutil
 from astropy.time import Time as AstroTime
 from datetime import datetime
-from collections import OrderedDict
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp

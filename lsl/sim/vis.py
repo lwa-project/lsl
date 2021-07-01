@@ -54,7 +54,6 @@ if sys.version_info < (3,):
     
 import os
 import aipy
-import copy
 import math
 import ephem
 import numpy
@@ -910,7 +909,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     # just one.  If one isn't provided, use the date set for the input 'station'.
     if jd is not None:
         try:
-            junk = len(jd)
+            len(jd)
         except:
             simAA.set_jultime(jd)
         else:
@@ -1107,7 +1106,7 @@ def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     # Update the JD if necessary
     if jd is not None:
         try:
-            junk = len(jd)
+            len(jd)
         except TypeError:
             jd = [jd]
     else:

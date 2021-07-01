@@ -19,7 +19,6 @@ if sys.version_info < (3,):
     
 import os
 import gc
-import re
 import numpy
 import warnings
 from astropy.io import fits as astrofits
