@@ -479,7 +479,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
             if seperateWeights:
                 if wgt.shape != nFreq*nStk:
                     ## Catch for some old stuff
-                    wgt = numpy.concatenate([wgt,]*len(self.pols]))
+                    wgt = numpy.concatenate([wgt,]*len(self.pols))
                 wgt.shape = (wgt.size//nFreq//nStk, nFreq, nStk)
             else:
                 try:
