@@ -213,27 +213,6 @@ class BeamAlm(aipy.amp.BeamAlm):
     beam response at all points.
     """
     
-    def __init__(self, freqs, lmax=8, mmax=8, deg=7, nside=64, coeffs={}):
-        """
-        AIPY __init__() function.
-        
-        lmax = maximum spherical harmonic term
-        mmax = maximum spherical harmonic term in the z direction
-        deg = order of polynomial to used for mapping response of each pointing
-        nside = resolution of underlying HealpixMap to use
-        coeffs = dictionary of polynomial term (integer) and corresponding Alm 
-        coefficients (see healpix.py doc).
-        """
-        
-        aipy.phs.Beam.__init__(self, freqs)
-        self.alm = [aipy.healpix.Alm(lmax, mmax) for i in range(deg+1)]
-        self.hmap = [aipy.healpix.HealpixMap(nside, scheme='RING', interp=True)
-            for a in self.alm]
-        for c in coeffs:
-            if c < len(self.alm):
-                self.alm[-1-c].set_data(coeffs[c])
-        self._update_hmap()
-        
     def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.BeamAlm.response function.
@@ -299,17 +278,6 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         Clarified what 'xwidth' and 'ywidth' are.
     """
     
-    def __init__(self, freqs, xwidth=numpy.Inf, ywidth=numpy.Inf):
-        """
-        AIPY __init__() function.
-        
-        xwidth = angular width (radians) in EW direction
-        ywidth = angular width (radians) in NS direction
-        """
-        
-        aipy.phs.Beam.__init__(self, freqs)
-        self.xwidth, self.ywidth = xwidth, ywidth
-        
     def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
@@ -370,19 +338,7 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
     similar to what aipy.img.ImgW.get_top() produces, and computes the 
     beam response at all points.
     """
-    def __init__(self, freqs, poly_azfreq=numpy.array([[.5]])):
-        """
-        AIPY __init__() function.
-        
-        poly_azfreq = a 2D polynomial in cos(2*n*az) for first axis and 
-        in freq**n for second axis.
-        """
-        
-        self.poly = poly_azfreq
-        aipy.phs.Beam.__init__(self, freqs)
-        self.poly = poly_azfreq
-        self._update_sigma()
-        
+    
     def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
@@ -517,13 +473,10 @@ class Antenna(aipy.amp.Antenna):
           * pointing = antenna pointing (az,alt).  Default is zenith.
         """
         
-        aipy.phs.Antenna.__init__(self, x,y,z, beam=beam, phsoff=phsoff)
-        self.set_pointing(*pointing)
-        self.bp_r = bp_r
-        self.bp_i = bp_i
-        self.amp = amp
+        aipy.amp.Antenna.__init__(self, x,y,z, beam=beam, phsoff=phsoff,
+                                  bp_r=bp_r, bp_i=bp_i, amp=amp,
+                                  pointing=pointing)
         self.stand = stand
-        self._update_gain()
         
     def bm_response(self, top, pol='x'):
         """
