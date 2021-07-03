@@ -415,18 +415,16 @@ class Sd(WriterBase):
         # Gather together all of the needed columns and figure out which ones
         # store the data and flag tables.  This information is needed later to
         # set the appropriate TDIM keywords.
-        cs = []
+        cs = [c1, c3, c4, c5, c6, c7, c8, c9, c10, c11,
+              c12, c13, c14, c15, c16, c17, c18, c19, c23]
         dataIndex = 0
         #flagIndex = 0
-        n = 1
-        for i in range(1, 38):
+        for i,c in enumerate(cs):
             try:
-                cs.append(eval('c%i' % i))
-                if eval('c%i.name' %i) == 'DATA':
-                    dataIndex = n
-                #if eval('c%i.name' %i) == 'FLAGGED':
+                if c.name == 'DATA':
+                    dataIndex = i+1
+                #if c.name == 'FLAGGED':
                     #flagIndex = n
-                n += 1
             except NameError:
                 pass
         colDefs = astrofits.ColDefs(cs)
