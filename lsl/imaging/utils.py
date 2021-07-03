@@ -57,7 +57,6 @@ except ImportError:
     from io import StringIO
 from calendar import timegm
 from datetime import datetime
-from operator import itemgetter
 from astropy.constants import c as vLight
 
 from lsl import astro
@@ -124,24 +123,21 @@ def CorrelatedData(filename, verbose=False):
         except Exception as e:
             if verbose:
                 print("FITSIDI - ERROR: %s" % str(e))
-            pass
-            
+                
         ## UVFITS
         try:
             return CorrelatedDataUV(filename)
         except Exception as e:
             if verbose:
                 print("UVFITS - ERROR: %s" % str(e))
-            pass
-            
+                
         ## Measurment Set as a compressed entity
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
             if verbose:
                 print("MS - ERROR: %s" % str(e))
-            pass
-            
+                
     if not valid:
         raise RuntimeError("File '%s' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet" % filename)
 
@@ -406,9 +402,6 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         # Open the file
         hdulist = astrofits.open(self.filename)
         uvData = hdulist['UV_DATA']
-        
-        # We need this a lot...
-        nPol = len(self.pols)
         
         dataSets = VisibilityData()
         try:
@@ -702,9 +695,6 @@ class CorrelatedDataUV(CorrelatedDataBase):
         # Open the file
         hdulist = astrofits.open(self.filename)
         uvData = hdulist[0]
-        
-        # We need this a lot...
-        nPol = len(self.pols)
         
         dataSets = VisibilityData()
         try:
@@ -1029,9 +1019,6 @@ try:
             # Open the data table
             data = table(self.filename, ack=False)
             
-            # We need this a lot...
-            nPol = len(self.pols)
-            
             dataSets = VisibilityData()
             try:
                 len(sets)
@@ -1144,7 +1131,6 @@ try:
             return dataSets
             
 except ImportError:
-    import warnings
     warnings.warn('Cannot import casacore.tables, MS support disabled', ImportWarning)
     
     class CorrelatedDataMS(object):
@@ -1166,26 +1152,6 @@ class ImgWPlus(aipy.img.ImgW):
     the field of view and the pixels near the phase center.
     """
     
-    def __init__(self, size=100, res=1, wres=.5, mf_order=0):
-        """
-        size = number of wavelengths which the UV matrix spans (this 
-        determines the image resolution).
-        res = resolution of the UV matrix (determines image field of view).
-        wres: the gridding resolution of sqrt(w) when projecting to w=0.
-        """
-        
-        self.res = float(res)
-        self.size = float(size)
-        ## Small change needed to work with Numpy 1.12+
-        dim = numpy.int64(numpy.round(self.size / self.res))
-        self.shape = (dim,dim)
-        self.uv = numpy.zeros(shape=self.shape, dtype=numpy.complex64)
-        self.bm = []
-        for i in range(mf_order+1):
-            self.bm.append(numpy.zeros(shape=self.shape, dtype=numpy.complex64))
-        self.wres = float(wres)
-        self.wcache = {}
-        
     def __iadd__(self, uv, bm=None):
         if isinstance(uv, ImgWPlus):
             if self.shape != uv.shape:
@@ -1487,7 +1453,7 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     if chan is not None:
         # Make sure that `chan' is an array by trying to find its length
         try:
-            junk = len(chan)
+            len(chan)
         except TypeError:
             chan = [chan]
             
@@ -1631,8 +1597,7 @@ def get_image_azalt(gimg, aa, phase_center='z', shifted=True):
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
         pcRA, pcDec = aa.sidereal_time(), aa.lat
-    rot = aipy.coord.eq2top_m(0, pcDec)
-    
+        
     # Get the RA and dec. coordinates for each pixel
     ra, dec = get_image_radec(gimg, aa, phase_center=phase_center, shifted=shifted)
     
