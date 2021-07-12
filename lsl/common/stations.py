@@ -11,7 +11,6 @@ if sys.version_info < (3,):
 import os
 import re
 import imp
-import copy
 import numpy
 import ephem
 import struct
