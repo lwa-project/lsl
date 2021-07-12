@@ -1591,13 +1591,6 @@ def get_image_azalt(gimg, aa, phase_center='z', shifted=True):
     .. versionadded: 1.1.0
     """
     
-    # Get the phase center
-    if phase_center is not 'z':
-        phase_center.compute(aa)
-        pcRA, pcDec = phase_center.ra, phase_center.dec
-    else:
-        pcRA, pcDec = aa.sidereal_time(), aa.lat
-        
     # Get the RA and dec. coordinates for each pixel
     ra, dec = get_image_radec(gimg, aa, phase_center=phase_center, shifted=shifted)
     
