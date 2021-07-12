@@ -5,20 +5,12 @@ if sys.version_info < (3,):
     range = xrange
     
 import os
-import imp
 import sys
 import glob
 import tempfile
-import unittest
-import platform
-import warnings
 import subprocess
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 
-from setuptools import setup, Extension, Distribution, find_packages
+from setuptools import setup, Extension, find_packages
 from distutils import log
 from distutils.command.build import build
 try:
@@ -32,10 +24,6 @@ except ImportError:
 
 try:
     import numpy
-except ImportError:
-    pass
-try:
-    import multiprocessing
 except ImportError:
     pass
 
