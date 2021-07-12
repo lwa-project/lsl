@@ -28,24 +28,65 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__   = '0.3'
-__all__ = ['SkyMapGSM', 'SkyMapLFSM', 'ProjectedSkyMap']
+__version__   = '0.4'
+__all__ = ['SkyMapBase', 'SkyMapBase', 'SkyMapGSM', 'SkyMapLFSM', 'ProjectedSkyMap']
 __author__    = 'J. York'
 __maintainer__ = 'Jayce Dowell'
 
 
-### This code is the base class for the sky map. It takes as input a skymap file name and frequency to
-### which the skymap corresponds.  It has the following methods:
-###     _init_ - takes the array coordinate filename as an input argument.
-###     normalize_power - Converts the skymap powers (in Kelvin radiated into 4 pi ster) into a power 
-###                      seen at the antenna.
-###     compute_total_power - Sums the power for all sources in the sky
-###     ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.8 MHz to the desired frequency.
-
-
-class SkyMapGSM(object):
+class SkyMapBase(object):
     """
-    Extension of the SkyMap class to use the Global Sky Model.
+    This code is the base class for the sky map. It takes as input a skymap file
+    name and frequency to which the skymap corresponds.  It has the following
+    methods:
+     * _init_ - takes the array coordinate filename as an input argument.
+     * normalize_power - Converts the skymap powers (in Kelvin radiated into 4 pi
+                         ster) into a power seen at the antenna.
+     * compute_total_power - Sums the power for all sources in the sky
+     * ScaleSourcePowerstoFrequency - Scales the skymap from the base 73.8 MHz to
+                                      the desired frequency.
+    """
+    
+    # Class data 
+    degToRad = (pi/180.)             # Usual conversion factor
+    
+    def __init__(self, filename=None, freq_MHz=73.9):
+        self.filename = filename
+        self.freq_MHz = freq_MHz
+        self._power = None
+        
+        # Load in the coordinates and data
+        self._load()
+        
+    def _load(self):
+        """
+        Load in the specified filename and populate the ra, dec, and _power
+        attributes.  This will be over-ridden in the skymap-specific subclasses.
+        """
+        
+        raise NotImplementedError
+        
+    def normalize_power(self):
+        """
+        Compute the skymap power (total power radiated into 4 pi steradians) into 
+        a power at antenna, based on pixel count.
+        """
+        
+        return self._power
+        
+    def compute_total_power(self):
+        """
+        Compute and return the the total power from the sky.
+        """
+        
+        if len(self._power) == 0:
+            raise RuntimeError("%s contains no data" % type(self).__name__)
+        return self.normalize_power().sum()
+
+
+class SkyMapGSM(SkyMapBase):
+    """
+    Extension of the SkyMapBase class to use the Global Sky Model.
     
     For more information on the Global Sky Model, see: http://space.mit.edu/~angelica/gsm/index.html
     
@@ -58,9 +99,6 @@ class SkyMapGSM(object):
         downsampled to 64 sides rather than the fit.
     """
     
-    # Class data 
-    degToRad = (pi/180.)             # Usual conversion factor
-    
     _input = os.path.join(dataPath, 'skymap', 'gsm-408locked.npz')
     
     def __init__(self, filename=None, freq_MHz=73.9):
@@ -71,10 +109,12 @@ class SkyMapGSM(object):
         
         if filename is None:
             filename = self._input
-            
+        SkyMapBase.__init__(self, filename=filename, freq_MHz=freq_MHz)
+        
+    def _load(self):
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(filename)
+        dataDict = load(self.filename)
         
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
@@ -97,8 +137,8 @@ class SkyMapGSM(object):
         ## compnent maps
         output = maps[:,0]*0.0
         for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(freq_MHz))*maps[:,i]
-        output *= exp(scaleFunc(log(freq_MHz)))
+            output += compFunc(log(self.freq_MHz))*maps[:,i]
+        output *= exp(scaleFunc(log(self.freq_MHz)))
         ## Save
         self._power = output
         
@@ -107,28 +147,11 @@ class SkyMapGSM(object):
             dataDict.close()
         except AttributeError:
             pass
-            
-    def normalize_power(self):
-        """
-        Compute the skymap power (total power radiated into 4 pi steradians) into 
-        a power at antenna, based on pixel count.
-        """
-        
-        return self._power
-        
-    def compute_total_power(self):
-        """
-        Compute and return the the total power from the sky.
-        """
-        
-        if len(self._power) == 0:
-            raise RuntimeError("%s contains no data" % type(self).__name__)
-        return self.normalize_power().sum()
 
 
 class SkyMapLFSM(SkyMapGSM):
     """
-    Extension of the SkyMap class to use the Low Frequency Sky Model with 5.1
+    Extension of the SkyMapBase class to use the Low Frequency Sky Model with 5.1
     degree resolution.
     
     For more information on the Low Frequency Sky Model, see: https://lda10g.alliance.unm.edu/LWA1LowFrequencySkySurvey/
@@ -146,10 +169,12 @@ class SkyMapLFSM(SkyMapGSM):
         
         if filename is None:
             filename = self._input
-            
+        SkyMapBase.__init__(self, filename=filename, freq_MHz=freq_MHz)
+        
+    def _load(self):
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(filename)
+        dataDict = load(self.filename)
         
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
@@ -173,8 +198,8 @@ class SkyMapLFSM(SkyMapGSM):
         ## compnent maps
         output = maps[:,0]*0.0
         for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(freq_MHz))*maps[:,i]
-        output *= exp(scaleFunc(log(freq_MHz)))
+            output += compFunc(log(self.freq_MHz))*maps[:,i]
+        output *= exp(scaleFunc(log(self.freq_MHz)))
         ## Save
         self._power = output
         
@@ -191,10 +216,10 @@ class ProjectedSkyMap(object):
     This code is the base class for the sky map visible at a specific location. It 
     takes as input a skymap file name and frequency to which the skymap corresponds.
     It inherits from class SkyMap. It has the following methods:
-    1. _init_ - takes the array coordinate filename as an input argument.
-    2. get_direction_cosines - Computes the direction cosines 
-    3. compute_visibile_power - Sums the power for all visible sources in 
-    the sky.
+     1. _init_ - takes the array coordinate filename as an input argument.
+     2. get_direction_cosines - Computes the direction cosines 
+     3. compute_visibile_power - Sums the power for all visible sources in 
+        the sky.
     """
     
     def __init__(self, skymap_object, lat, lon, utc_jd):
