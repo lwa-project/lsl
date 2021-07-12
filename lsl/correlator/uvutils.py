@@ -120,8 +120,8 @@ def antennas_to_baseline(ant1, ant2, antennas, antennas2=None, baseline_list=Non
         if ant1 in baseline and ant2 in baseline:
             return i
         i = i + 1
-    else:
-        return -1
+        
+    return -1
 
 
 def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_auto=False):
