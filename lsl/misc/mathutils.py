@@ -320,7 +320,15 @@ def gaussparams(data, x=None, y=None):
     total = data.sum()
     height = data.max()
     
-    if len(data.shape) == 2:
+    if len(data.shape) == 1:
+        # 1-D Data
+        if x is None:
+            x = numpy.arange(data.size)
+        center = (x*data).sum() / total
+        width = numpy.sqrt(abs(numpy.sum((x-center)**2*data)/total))
+        return height, center, width
+        
+    elif len(data.shape) == 2:
         # 2-D Data
         if x is None or y is None:
             x, y = numpy.indices(data.shape)
@@ -336,12 +344,8 @@ def gaussparams(data, x=None, y=None):
         return height, centerX, centerY, widthX, widthY, 0.0
         
     else:
-        # 1-D Data
-        if x is None:
-            x = numpy.arange(data.size)
-        center = (x*data).sum() / total
-        width = numpy.sqrt(abs(numpy.sum((x-center)**2*data)/total))
-        return height, center, width
+        # N-D data
+        raise ValueError("Cannot estimate parameters for %i-D" % (len(data.shape),))        
 
 
 def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
