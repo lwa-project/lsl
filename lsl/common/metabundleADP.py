@@ -454,9 +454,6 @@ def get_observation_spec(tarname, obs_id=None):
     """
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find all of the .obs files and extract them
         tf = _open_tarball(tarname)
         tis = []
@@ -504,9 +501,6 @@ def get_sdf(tarname):
     
     # Find the SDF file contained in the tarball
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find the right .txt file (not the metadata one) and extract it
         tf = _open_tarball(tarname)
         for ti in _get_members(tarname):
@@ -528,9 +522,6 @@ def get_command_script(tarname):
     """
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find the .cs file and extract it
         tf = _open_tarball(tarname)
         for ti in _get_members(tarname):
@@ -566,9 +557,6 @@ def get_asp_configuration(tarname, which='beginning'):
                  'asp_atten_split': [-1 for i in range(264)]}
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find the .pag file and extract it
         tf = _open_tarball(tarname)
         mibs = []
