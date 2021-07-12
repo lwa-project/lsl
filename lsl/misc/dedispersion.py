@@ -9,7 +9,6 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import os
 import numpy
 
 from lsl.misc import telemetry
