@@ -1,9 +1,6 @@
 /*                                                     mconf.h
  *
  *     Common include file for math routines
- *     
- *     From the SciPi GitHub Repository
- *     https://github.com/scipy/scipy/blob/master/scipy/special/cephes/
  *
  *
  *

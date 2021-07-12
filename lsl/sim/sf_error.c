@@ -1,3 +1,8 @@
+/*   
+ *     From the SciPi GitHub Repository
+ *     https://github.com/scipy/scipy/blob/master/scipy/special/
+ */
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>

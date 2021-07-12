@@ -1,3 +1,8 @@
+/*   
+ *     From the SciPi GitHub Repository
+ *     https://github.com/scipy/scipy/blob/master/scipy/special/
+ */
+
 #ifndef SF_ERROR_H_
 #define SF_ERROR_H_
 
