@@ -18,7 +18,6 @@ This package contains a collection of tools for reading, format shifting, and an
 REQUIREMENTS
 ------------
  * python >= 2.7
- * atlas >= 3.6
  * fftw3 >= 3.2
  * gdbm >= 1.8
  * numpy >= 1.7
