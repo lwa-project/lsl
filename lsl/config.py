@@ -3,7 +3,6 @@ Module for managing configuration parameters for LSL
 """
 
 import os
-import copy
 import contextlib
 from datetime import datetime
 from collections import OrderedDict
