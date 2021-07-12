@@ -24,7 +24,7 @@ from astropy.io import fits as astrofits
 from datetime import datetime
 
 from lsl import astro
-from lsl.writer.fitsidi import WriterBase, STOKES_CODES
+from lsl.writer.fitsidi import WriterBase
 
 from lsl.misc import telemetry
 telemetry.track_module()
