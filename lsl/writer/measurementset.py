@@ -453,9 +453,9 @@ try:
                                             keywords={'QuantumUnits':['s',], 
                                                       'MEASINFO':{'type':'epoch', 'Ref':'UTC'}
                                                       })
-            col2 = tableutil.makescacoldesc('LOG', 'none', 
+            col2 = tableutil.makearrcoldesc('LOG', 'none', 1,
                                             comment='Observing log')
-            col3 = tableutil.makescacoldesc('SCHEDULE', 'none', 
+            col3 = tableutil.makearrcoldesc('SCHEDULE', 'none', 1,
                                             comment='Observing schedule')
             col4 = tableutil.makescacoldesc('FLAG_ROW', False, 
                                             comment='Row flag')
@@ -480,8 +480,8 @@ try:
             tStop  = astro.taimjd_to_utcjd(self.data[-1].obsTime) - astro.MJD_OFFSET
             
             tb.putcell('TIME_RANGE', 0, [tStart*86400, tStop*86400])
-            tb.putcell('LOG', 0, 'Not provided')
-            tb.putcell('SCHEDULE', 0, 'Not provided')
+            tb.putcell('LOG', 0, ['Not provided',])
+            tb.putcell('SCHEDULE', 0, ['Not provided',])
             tb.putcell('FLAG_ROW', 0, False)
             tb.putcell('OBSERVER', 0, self.observer)
             tb.putcell('PROJECT', 0, self.project)
