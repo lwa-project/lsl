@@ -1,17 +1,23 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <complex.h>
+#include <cmath>
+#include <complex>
+#include <iostream>
 #include <fftw3.h>
-#include <stdlib.h>
 
 #ifdef _OPENMP
     #include <omp.h>
+    
+    // OpenMP scheduling method
+    #ifndef OMP_SCHEDULER
+    #define OMP_SCHEDULER dynamic
+	#endif
 #endif
 
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
+#include "../correlator/common.h"
 
 
 #define MAXTRANSFORM 262144
@@ -27,7 +33,7 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     int fftlen;
     FILE *fh;
     fftwf_plan plan;
-    float complex *inout;
+    Complex32 *inout;
     float *inR;
     char *filename;
     
@@ -39,18 +45,21 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     Py_BEGIN_ALLOW_THREADS
     
     if(!fftwf_import_system_wisdom()) {
-        printf("Warning: system wisdom file not found, continuing\n");
+        std::cout << "Warning: system wisdom file not found, continuing" << std::endl;
     }
     
     // Real to complex - powers of 2
     fftlen = 2;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen);
-        inout = (float complex *) fftwf_malloc(sizeof(float complex) * (fftlen+1));
+        inR = (float*) fftwf_malloc(sizeof(float) * 2*fftlen);
+        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * (fftlen+1));
         
         // Forward
-        plan = fftwf_plan_dft_r2c_1d(2*fftlen, inR, inout, FFTW_PATIENT);
+        plan = fftwf_plan_dft_r2c_1d(2*fftlen, \
+                                     inR, \
+                                     reinterpret_cast<fftwf_complex*>(inout), \
+                                     FFTW_PATIENT);
         fftwf_destroy_plan(plan);
         
         // Teardown
@@ -65,11 +74,14 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     fftlen = 10;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inR = (float *) fftwf_malloc(sizeof(float) * 2*fftlen);
-        inout = (float complex *) fftwf_malloc(sizeof(float complex) * (fftlen+1));
+        inR = (float*) fftwf_malloc(sizeof(float) * 2*fftlen);
+        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * (fftlen+1));
         
         // Forward
-        plan = fftwf_plan_dft_r2c_1d(2*fftlen, inR, inout, FFTW_PATIENT);
+        plan = fftwf_plan_dft_r2c_1d(2*fftlen, \
+                                     inR, \
+                                     reinterpret_cast<fftwf_complex*>(inout), \
+                                     FFTW_PATIENT);
         fftwf_destroy_plan(plan);
         
         // Teardown
@@ -84,14 +96,20 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     fftlen = 2;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inout = (float complex *) fftwf_malloc(sizeof(float complex) * fftlen);
+        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * fftlen);
         
         // Forward
-        plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
+        plan = fftwf_plan_dft_1d(fftlen, \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 FFTW_FORWARD, FFTW_PATIENT);
         fftwf_destroy_plan(plan);
         
         // Backward
-        plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
+        plan = fftwf_plan_dft_1d(fftlen, \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 FFTW_BACKWARD, FFTW_PATIENT);
         fftwf_destroy_plan(plan);
         
         // Teardown
@@ -105,14 +123,20 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     fftlen = 10;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inout = (float complex *) fftwf_malloc(sizeof(float complex) * fftlen);
+        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * fftlen);
         
         // Forward
-        plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_FORWARD, FFTW_PATIENT);
+        plan = fftwf_plan_dft_1d(fftlen, \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 FFTW_FORWARD, FFTW_PATIENT);
         fftwf_destroy_plan(plan);
         
         // Backward
-        plan = fftwf_plan_dft_1d(fftlen, inout, inout, FFTW_BACKWARD, FFTW_PATIENT);
+        plan = fftwf_plan_dft_1d(fftlen, \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 reinterpret_cast<fftwf_complex*>(inout), \
+                                 FFTW_BACKWARD, FFTW_PATIENT);
         fftwf_destroy_plan(plan);
         
         // Teardown
@@ -180,8 +204,7 @@ MOD_INIT(_wisdom) {
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
-    PyModule_AddObject(m, "__revision__", PyString_FromString("$Rev$"));
+    PyModule_AddObject(m, "__version__", PyString_FromString("0.4"));
     
     return MOD_SUCCESS_VAL(m);
 }
