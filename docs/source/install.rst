@@ -1,7 +1,7 @@
 Requirements
 ============
  * python >= 2.7
- * fftw3 >= 3.2
+ * fftw3 >= 3.2 (single precision version)
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19

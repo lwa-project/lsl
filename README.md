@@ -18,7 +18,7 @@ This package contains a collection of tools for reading, format shifting, and an
 REQUIREMENTS
 ------------
  * python >= 2.7
- * fftw3 >= 3.2
+ * fftw3 >= 3.2 (single precision version)
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
