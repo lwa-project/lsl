@@ -32,7 +32,7 @@ if os.getenv('TRAVIS_OS_NAME', None) not in ('osx', None):
     run_extended_tests = True
 
 
-_VDIF_URL = 'https://fornax.phys.unm.edu/lwa/data/eLWA_test_raw.tar.gz'
+_VDIF_URL = 'https://fornax.phys.unm.edu/lwa/data/eLWA_test_small_raw.tar.gz'
 
 
 @unittest.skipUnless(run_extended_tests, "requires appropriate environment variable to be set")
