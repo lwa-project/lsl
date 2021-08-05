@@ -24,9 +24,9 @@ except ImportError:
 
 try:
     import numpy
-except ImportError:
-    pass
-
+except Exception as e:
+    raise RuntimeError("numpy is required to run setup.py: %s" % str(e))
+    
 PY2 = sys.version_info.major < 3
 if PY2:
     ASTROPY_VERSION = 'astropy<3.0'
