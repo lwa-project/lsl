@@ -543,7 +543,7 @@ try:
                             equPo = astro.equ_posn(dataSet.source.a_ra*180/numpy.pi, dataSet.source.a_dec*180/numpy.pi)
                             
                         # J2000 zenith equatorial coordinates
-                        posList.append( [equPo.ra*numpy.pi/180, equPo.dec*numpy.pi/180] )
+                        posList.append( [[equPo.ra*numpy.pi/180, equPo.dec*numpy.pi/180],] )
                         
                         # name
                         nameList.append(name)
@@ -553,12 +553,12 @@ try:
             # Save these for later since we might need them
             self._sourceTable = nameList
             
-            col1  = tableutil.makearrcoldesc('DIRECTION', 0.0, 1, 
+            col1  = tableutil.makearrcoldesc('DIRECTION', 0.0, 2, 
                                              comment='Direction (e.g. RA, DEC).', 
                                              keywords={'QuantumUnits':['rad','rad'], 
                                                        'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                        })
-            col2  = tableutil.makearrcoldesc('PROPER_MOTION', 0.0, 1, 
+            col2  = tableutil.makearrcoldesc('PROPER_MOTION', 0.0, 2, 
                                              comment='Proper motion', 
                                              keywords={'QuantumUnits':['rad/s',]})
             col3  = tableutil.makescacoldesc('CALIBRATION_GROUP', 0, 
@@ -602,7 +602,7 @@ try:
             
             for i in range(nSource):
                 tb.putcell('DIRECTION', i, posList[i])
-                tb.putcell('PROPER_MOTION', i, [0.0, 0.0])
+                tb.putcell('PROPER_MOTION', i, [[0.0, 0.0],])
                 tb.putcell('CALIBRATION_GROUP', i, 0)
                 tb.putcell('CODE', i, 'none')
                 tb.putcell('INTERVAL', i, 0.0)
@@ -620,17 +620,17 @@ try:
             
             # Field
             
-            col1 = tableutil.makearrcoldesc('DELAY_DIR', 0.0, 1, 
+            col1 = tableutil.makearrcoldesc('DELAY_DIR', 0.0, 2, 
                                             comment='Direction of delay center (e.g. RA, DEC)as polynomial in time.', 
                                             keywords={'QuantumUnits':['rad','rad'], 
                                                       'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                       })
-            col2 = tableutil.makearrcoldesc('PHASE_DIR', 0.0, 1, 
+            col2 = tableutil.makearrcoldesc('PHASE_DIR', 0.0, 2, 
                                             comment='Direction of phase center (e.g. RA, DEC).', 
                                             keywords={'QuantumUnits':['rad','rad'], 
                                                       'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                       })
-            col3 = tableutil.makearrcoldesc('REFERENCE_DIR', 0.0, 1, 
+            col3 = tableutil.makearrcoldesc('REFERENCE_DIR', 0.0, 2, 
                                             comment='Direction of REFERENCE center (e.g. RA, DEC).as polynomial in time.', 
                                             keywords={'QuantumUnits':['rad','rad'], 
                                                       'MEASINFO':{'type':'direction', 'Ref':'J2000'}
@@ -685,7 +685,7 @@ try:
                                                        'MEASINFO':{'type':'frequency', 
                                                                    'VarRefCol':'MEAS_FREQ_REF', 
                                                                    'TabRefTypes':['REST','LSRK','LSRD','BARY','GEO','TOPO','GALACTO','LGROUP','CMB','Undefined'],
-                                                                   'TabRefCodes':[0,1,2,3,4,5,6,7,8,64]}
+                                                                   'TabRefCodes':numpy.array([0,1,2,3,4,5,6,7,8,64], dtype=numpy.uint32)}
                                                        })
             col3  = tableutil.makescacoldesc('REF_FREQUENCY', self.refVal, 
                                              comment='The reference frequency', 
@@ -693,7 +693,7 @@ try:
                                                        'MEASINFO':{'type':'frequency', 
                                                                    'VarRefCol':'MEAS_FREQ_REF', 
                                                                    'TabRefTypes':['REST','LSRK','LSRD','BARY','GEO','TOPO','GALACTO','LGROUP','CMB','Undefined'],
-                                                                   'TabRefCodes':[0,1,2,3,4,5,6,7,8,64]}
+                                                                   'TabRefCodes':numpy.array([0,1,2,3,4,5,6,7,8,64], dtype=numpy.uint32)}
                                                        })
             col4  = tableutil.makearrcoldesc('CHAN_WIDTH', 0.0, 1, 
                                              comment='Channel width for each channel', 
