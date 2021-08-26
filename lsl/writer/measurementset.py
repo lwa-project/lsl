@@ -601,8 +601,8 @@ try:
             tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
             
             for i in range(nSource):
-                tb.putcell('DIRECTION', i, posList[i])
-                tb.putcell('PROPER_MOTION', i, [[0.0, 0.0],])
+                tb.putcell('DIRECTION', i, numpy.array(posList[i]))
+                tb.putcell('PROPER_MOTION', i, numpy.array([[0.0, 0.0],]))
                 tb.putcell('CALIBRATION_GROUP', i, 0)
                 tb.putcell('CODE', i, 'none')
                 tb.putcell('INTERVAL', i, 0.0)
