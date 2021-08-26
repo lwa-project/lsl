@@ -21,7 +21,7 @@ from lsl import astro
 from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import fx as fxc
-from lsl.writer import fitsidi
+from lsl.writer import fitsidi, measurementset
 from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
@@ -51,6 +51,15 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
     # Create a list of unqiue stands to know what style of IDI file to create
     stands = set( [antennas[i].stand.id for i in good] )
     
+    # Figure out the output mode
+    if os.path.splitext(filename)[1].find('.ms_') != -1:
+        writer_class = measurementset.Ms
+    else:
+        if len(stands) > 255:
+            writer_class = fitsidi.ExtendedIdi
+        else:
+            writer_class = fitsidi.Idi
+            
     # Main loop over the input file to read in the data and organize it.  Several control 
     # variables are defined for this:
     #  ref_time -> time (in seconds since the UNIX epoch) for the first data set
@@ -90,10 +99,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
             if s  == 0 and pol == pols[0]:
                 pol1, pol2 = fxc.pol_to_pols(pol)
                 
-                if len(stands) > 255:
-                    fits = fitsidi.ExtendedIdi(filename, ref_time=ref_time)
-                else:
-                    fits = fitsidi.Idi(filename, ref_time=ref_time)
+                fits = writer_class(filename, ref_time=ref_time)
                 fits.set_stokes(pols)
                 fits.set_frequency(freq[toUse])
                 fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
@@ -205,8 +211,11 @@ def main(args):
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     while leftToDo > 0:
-        fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
-        
+        if args.casa:
+            fitsFilename = "%s.ms_%i" % (basename, (s+1),)
+        else:
+            fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
+            
         if leftToDo > 100:
             chunk = 100
         else:
@@ -255,6 +264,8 @@ if __name__ == "__main__":
                         help='compute only the XX and YY polarization products')
     pgroup.add_argument('-4', '--four-products', dest='products', action='store_const', const=['xx','yy','xy','yx'], 
                         help='compute the XX, XY, YX, and YY polarization products')
+    parser.add_argument('--casa', action='store_true',
+                        help='write out measurement sets instead of FITS-IDI files')
     args = parser.parse_args()
     main(args)
     
