@@ -1,5 +1,7 @@
 sudo: required
-  
+
+dist: bionic
+
 language: python
 
 python:
@@ -25,8 +27,10 @@ jobs:
 
 addons:
     apt:
+        update: true
         packages:
             - build-essential
+            - ca-certificates
             - curl
             - git
             - pkg-config
