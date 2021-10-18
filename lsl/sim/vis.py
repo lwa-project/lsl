@@ -572,9 +572,6 @@ class AntennaArray(aipy.amp.AntennaArray):
     def __repr__(self):
         return str(self)
         
-    def __reduce__(self):
-        return (AntennaArray, ((self.lat, self.lon, self.elev), self.ants))
-        
     def get_stands(self):
         """
         Return a numpy array listing the stands found in the AntennaArray 

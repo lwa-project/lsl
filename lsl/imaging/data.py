@@ -13,7 +13,6 @@ import copy
 import numpy
 
 from lsl import astro
-from lsl.sim.vis import AntennaArray
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -145,11 +144,8 @@ class VisibilityDataSet(object):
         self.uvw = uvw
         if antennaarray is not None and not isinstance(antennaarray, aipy.amp.AntennaArray):
             raise TypeError("Expected antennaarray to be either None or AntennaArray")
-        if self.antennaarray is None:
-            self.antennaarray = None
-        else:
-            self.antennaarray = AntennaArray((antennaarray.lat, antennaarray.long, antennaarray.elev),
-                                             copy.deepcopy(antennaarray.ants))
+        self.antennaarray = copy.copy(antennaarray)
+        if self.antennaarray is not None:
             self.antennaarray.set_jultime(self.jd)
         self.phase_center = phase_center
         
