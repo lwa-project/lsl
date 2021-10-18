@@ -573,7 +573,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         return str(self)
         
     def __copy__(self):
-        result = AntennaArray((self.lat, self.lon, self.elev), self.ants))
+        result = AntennaArray((self.lat, self.lon, self.elev), self.ants)
         result.__dict__.update(self.__dict__)
         return result
         
