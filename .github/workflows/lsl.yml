@@ -1,7 +1,7 @@
 name: LSL
 on: [push, pull_request]
 jobs:
-  setup:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -9,27 +9,26 @@ jobs:
         python-version: ['2.7', '3.6', '3.8']
     steps:
       - if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: sudo apt-get install -y build-essential ca-certificates curl git pkg-config gzip libgdbm-dev libfftw3-dev libcfitsio-dev
+        run: sudo apt-get install -y build-essential ca-certificates curl git pkg-config gzip libgdbm-dev libfftw3-dev libcfitsio-dev software-properties-common libboost-python-dev
+      - if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo add-apt-repository -y ppa:kernsuite/kern-6
+      - if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo apt-get -q update; fi
+      - if: ${{ matrix.os == 'ubuntu-latest' }}
+        run sudo apt-get -y install casacore-dev wcslib-dev
       - if: ${{ matrix.os == 'macos-latest' }}
         run: brew install pkg-config fftw
-        
-  build:
-    runs-on: [ubuntu-latest, macos-latest]
-    needs: setup
-    steps:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
       - uses: actions/checkout@v2
       - run: pip install setuptools numpy matplotlib scipy pyephem==3.7.6.0 jupyterlab jupyter_client nbformat nbconvert coveralls codecov
+      - if: ${{ matrix.python-version == '2.7' }}
+        run: pip install "healpy<1.14.0"
+      - if: ${{ matrix.os == 'ubuntu-latest' }}
+        run pip install python-casacore
       - run: pip install aipy
       - run: pip install .
-  test:
-    runs-on: [ubuntu-latest, macos-latest]
-    needs: [setup, build]
-    steps:
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
       - run: cd tests && coverage run --source=lsl -m unittest discover
+      - run: cd tests && coveralls && codecov
     
