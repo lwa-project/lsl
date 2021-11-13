@@ -13,6 +13,7 @@ jobs:
       - run: sudo homebrew install pkg-config fftw
         if: matrix.os = 'macos-latest'
   build:
+    runs-on: [ubuntu-latest, macos-latest]
     needs: setup
     steps:
       - uses: actions/setup-python@v2
@@ -23,6 +24,7 @@ jobs:
       - run: pip install aipy
       - run: pip install .
   test:
+    runs-on: [ubuntu-latest, macos-latest]
     needs: [setup, build]
     steps:
       - uses: actions/setup-python@v2
