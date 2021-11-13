@@ -33,5 +33,5 @@ jobs:
       - run: cd tests && coverage run --source=lsl -m unittest discover
       - env:
           GITHUB_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
-      - run: cd tests && coveralls && codecov
+        run: cd tests && coveralls && codecov
     
