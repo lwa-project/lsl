@@ -25,7 +25,7 @@ jobs:
       - run: pip install setuptools numpy matplotlib scipy pyephem==3.7.6.0 jupyterlab jupyter_client nbformat nbconvert coveralls codecov
       - if: ${{ matrix.python-version == '2.7' }}
         run: pip install "healpy<1.14.0"
-      - if: ${{ matrix.os == 'ubuntu-latest' }}
+      - if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '2.7' }}
         run: pip install python-casacore
       - run: pip install aipy
       - run: pip install .
