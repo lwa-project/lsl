@@ -14,7 +14,7 @@ jobs:
         if: matrix.os = 'macos-latest'
   build:
     steps:
-      - uses: setup
+      - needs: setup
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
@@ -24,6 +24,9 @@ jobs:
       - run: pip install .
   test:
     steps:
-      - uses: build
+      - needs: build
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
       - run: cd tests && coverage run --source=lsl -m unittest discover
     
