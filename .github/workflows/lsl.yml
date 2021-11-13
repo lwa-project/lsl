@@ -8,9 +8,9 @@ jobs:
       os: [ubuntu-latest, macos-latest]
       python-version: ['2.7', '3.6', '3.8']
     steps:
-      - shell: sudo apt-get install -y build-essential ca-certificates curl git pkg-config gzip libgddm-dev libfftw3-dev libcfitsio-dev
+      - run: sudo apt-get install -y build-essential ca-certificates curl git pkg-config gzip libgddm-dev libfftw3-dev libcfitsio-dev
         if: matrix.os = 'ubuntu-latest'
-      - shell: sudo homebrew install pkg-config fftw
+      - run: sudo homebrew install pkg-config fftw
         if: matrix.os = 'macos-latest'
   build:
     steps:
@@ -19,11 +19,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: actions/checkout@v2
-      - shell: pip install setuptools numpy matplotlib scipy pyephem==3.7.6.0 jupyterlab jupyter_client nbformat nbconvert coveralls codecov
-      - shell: pip install aipy
-      - shell: pip install .
+      - run: pip install setuptools numpy matplotlib scipy pyephem==3.7.6.0 jupyterlab jupyter_client nbformat nbconvert coveralls codecov
+      - run: pip install aipy
+      - run: pip install .
   test:
     steps:
       - uses: build
-      - shell: cd tests && coverage run --source=lsl -m unittest discover
+      - run: cd tests && coverage run --source=lsl -m unittest discover
     
