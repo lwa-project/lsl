@@ -31,5 +31,7 @@ jobs:
       - run: pip install aipy
       - run: pip install .
       - run: cd tests && coverage run --source=lsl -m unittest discover
+      - env:
+          GITHUB_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
       - run: cd tests && coveralls && codecov
     
