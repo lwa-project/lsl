@@ -1048,7 +1048,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     UVData = VisibilityDataSet(jd, freq, baselines, [], antennaarray=aa, phase_center=phase_center)
     
     # Go!
-    if phase_center is not 'z':
+    if phase_center != 'z':
         phase_center.compute(aa)
         pcAz = phase_center.az*180/numpy.pi
         pcEl = phase_center.alt*180/numpy.pi

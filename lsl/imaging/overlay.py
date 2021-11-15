@@ -83,7 +83,7 @@ def sources(ax, antennaarray, srcs, phase_center='z', label=True, marker='x', co
     """
     
     # Get the phase center
-    if phase_center is not 'z':
+    if phase_center != 'z':
         phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
@@ -113,7 +113,7 @@ def horizon(ax, antennaarray, phase_center='z', color='white'):
     """
         
     # Get the phase center
-    if phase_center is not 'z':
+    if phase_center != 'z':
         phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
@@ -142,7 +142,7 @@ def graticule_radec(ax, antennaarray, phase_center='z', label=True, color='white
     """
     
     # Get the phase center
-    if phase_center is not 'z':
+    if phase_center != 'z':
         phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
@@ -216,7 +216,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
     """
     
     # Get the phase center
-    if phase_center is not 'z':
+    if phase_center != 'z':
         phase_center.compute(antennaarray)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
@@ -243,7 +243,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
                 
         ax.plot(x, y, color=color)
         
-        if el > 0 or phase_center is not 'z':
+        if el > 0 or phase_center != 'z':
             valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
             pos = valid.size // 2 - valid.size // 5
             if valid.size > 10:
