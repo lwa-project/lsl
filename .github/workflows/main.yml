@@ -54,11 +54,15 @@ jobs:
         run: python -m pip install "healpy<1.14.0"
       - if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '2.7' }}
         run: python -m pip install python-casacore
-      - run: python -m pip install aipy
-      - run: python -m pip install .
-      - run: |
+      - name: "Software Install - Python, Part 2"
+        run: python -m pip install aipy
+      - name: "Build and Install"
+        run: python -m pip install .
+      - name: Test
+        run: |
           cd tests
           coverage run --source=lsl -m unittest discover
-      - run: |
+      - name: "Upload Coverage"
+        run: |
           cd tests
           codecov
