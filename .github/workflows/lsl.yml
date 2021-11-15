@@ -1,4 +1,4 @@
-name: LSL
+name: "Build and Test"
 on: [push, pull_request]
 jobs:
   build:
@@ -57,9 +57,9 @@ jobs:
       - run: |
           cd tests
           coverage run --source=lsl -m unittest discover
-      - run: |
+      - env:
+          GITHUB-TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+        run: |
           cd tests
           codecov
-      - uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.COVERALLS_TOKEN }}
+          coveralls --service=github
