@@ -58,7 +58,7 @@ jobs:
           cd tests
           coverage run --source=lsl -m unittest discover
       - env:
-          GITHUB-TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
         run: |
           cd tests
           codecov
