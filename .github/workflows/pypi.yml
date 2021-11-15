@@ -1,5 +1,5 @@
 name: "Publish to PyPI"
-on: tag
+on: push
 jobs:
   build:
     runs-on: ubuntu-latest
