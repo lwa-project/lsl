@@ -30,9 +30,14 @@ jobs:
         run: pip install python-casacore
       - run: pip install aipy
       - run: pip install .
-      - run: cd tests && coverage run --source=lsl -m unittest discover
+      - run: |
+          cd tests
+          coverage run --source=lsl -m unittest discover
       - env:
-          GITHUB_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
-          COVERALLS_REPO_TOKEN: $GITHUB_TOKEN
-        run: cd tests && coveralls --service=github-actions && codecov
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+          GITHUB_TOKEN: $COVERALLS_REPO_TOKEN
+        run: |
+          cd tests
+          codecov
+          coveralls -v --service=github-actions
     
