@@ -837,7 +837,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
             pylab.imshow(mdl, origin='lower', interpolation='nearest')
             pylab.subplot(3, 1, 3)
             pylab.cla()
-            pylab.semilogy(rHist)
+            pylab.plot(rHist)
             pylab.draw()
             
     # Summary

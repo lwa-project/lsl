@@ -1,7 +1,8 @@
 LSL - The LWA Software Library
 ==============================
 
-[![Travis](https://travis-ci.com/lwa-project/lsl.svg?branch=master)](https://travis-ci.com/lwa-project/lsl)  [![Coverage Status](https://coveralls.io/repos/github/lwa-project/lsl/badge.svg?branch=master)](https://coveralls.io/github/lwa-project/lsl)  [![Documentation Status](https://readthedocs.org/projects/lsl/badge/?version=latest)](https://lsl.readthedocs.io/en/latest/?badge=latest)
+[![GHA](https://github.com/lwa-project/lsl/actions/workflows/main.yml/badge.svg)](https://github.com/lwa-project/lsl/actions/workflows/main.yml)  [![Coverage Status](https://codecov.io/gh/lwa-project/lsl/branch/master/graph/badge.svg?token=CNCKDKBX9R)](https://codecov.io/gh/lwa-project/lsl)
+  [![Documentation Status](https://readthedocs.org/projects/lsl/badge/?version=latest)](https://lsl.readthedocs.io/en/latest/?badge=latest)
 
 [![Paper](https://img.shields.io/badge/arXiv-1209.1576-blue.svg)](https://arxiv.org/abs/1209.1576)    [![PyPi](https://img.shields.io/pypi/v/lsl.svg)](https://pypi.org/project/lsl/)
 

@@ -632,7 +632,7 @@ class TBNFile(LDPFileBase):
             
             ## If the offset is zero, we are done.  Otherwise, apply the offset
             ## and check the location in the file again/
-            if cOffset is 0:
+            if cOffset == 0:
                 break
             try:
                 self.fh.seek(cOffset*tbn.FRAME_SIZE, 1)
@@ -1009,7 +1009,7 @@ class DRXFile(LDPFileBase):
             
             ## If the offset is zero, we are done.  Otherwise, apply the offset
             ## and check the location in the file again/
-            if cOffset is 0:
+            if cOffset == 0:
                 break
             try:
                 self.fh.seek(cOffset*drx.FRAME_SIZE, 1)
@@ -1364,7 +1364,7 @@ class DRSpecFile(LDPFileBase):
             
             ## If the offset is zero, we are done.  Otherwise, apply the offset
             ## and check the location in the file again/
-            if cOffset is 0:
+            if cOffset == 0:
                 break
             try:
                 self.fh.seek(cOffset*self.description['frame_size'], 1)

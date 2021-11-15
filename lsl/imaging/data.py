@@ -274,9 +274,9 @@ class VisibilityDataSet(object):
         self.antennaarray.set_jultime(self.jd)
         
         # Recompute
-        if self.phase_center is not 'z':
+        if self.phase_center != 'z':
             self.phase_center.compute(self.antennaarray)
-        if new_phase_center is not 'z':
+        if new_phase_center != 'z':
             new_phase_center.compute(self.antennaarray)
             
         # Go!
