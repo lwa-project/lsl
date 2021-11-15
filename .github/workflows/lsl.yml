@@ -12,7 +12,7 @@ jobs:
       - if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get install -y \
-            build-essentials \
+            build-essential \
             ca-certificates \
             curl \
             git \
