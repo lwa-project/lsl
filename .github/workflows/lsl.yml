@@ -46,7 +46,6 @@ jobs:
             jupyter_client \
             nbformat \
             nbconvert \
-            coveralls \
             codecov
       - if: ${{ matrix.python-version == '2.7' }}
         run: python -m pip install "healpy<1.14.0"
@@ -57,9 +56,6 @@ jobs:
       - run: |
           cd tests
           coverage run --source=lsl -m unittest discover
-      - env:
-          GITHUB_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
-        run: |
+      - run: |
           cd tests
           codecov
-          coveralls --service=github
