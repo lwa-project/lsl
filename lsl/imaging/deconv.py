@@ -821,7 +821,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
             break
             
         ## Save the current iteration as the previous state
-        rHist.append(RMS)
+        rHist.append(max([RMS, 1e-12]))
         oldRMS = RMS
         oldModel = mdl
         oldDiff = diff
