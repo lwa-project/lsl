@@ -1027,6 +1027,7 @@ void compute_xengine_three(long nStand,
             nActVisPureX = 0;
             nActVisPureY = 0;
             nActVisCross0 = 0;
+            nActVisCross1 = 0;
             for(f=0; f<nFFT; f++) {
                 nActVisPureX  += (long) (*(validX + mapper[bl][0]*nFFT + f) & *(validX + mapper[bl][1]*nFFT + f));
                 nActVisPureY  += (long) (*(validY + mapper[bl][0]*nFFT + f) & *(validY + mapper[bl][1]*nFFT + f));
