@@ -1014,10 +1014,10 @@ void compute_xengine_three(long nStand,
     OutType tempVis;
     
     // Time-domain blanking control
-    long nActVisPureX, nActVisPureY, nActVisCross;
+    long nActVisPureX, nActVisPureY, nActVisCross0, nActVisCross1;
     
     #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(c, f, nActVisPureX, nActVisPureY, nActVisCross, tempVis)
+        #pragma omp parallel default(shared) private(c, f, nActVisPureX, nActVisPureY, nActVisCross0, nActVisCross1, tempVis)
     #endif
     {
         #ifdef _OPENMP
@@ -1026,11 +1026,12 @@ void compute_xengine_three(long nStand,
         for(bl=0; bl<nBL; bl++) {
             nActVisPureX = 0;
             nActVisPureY = 0;
-            nActVisCross = 0;
+            nActVisCross0 = 0;
             for(f=0; f<nFFT; f++) {
-                nActVisPureX += (long) (*(validX + mapper[bl][0]*nFFT + f) & *(validX + mapper[bl][1]*nFFT + f));
-                nActVisPureY += (long) (*(validY + mapper[bl][0]*nFFT + f) & *(validY + mapper[bl][1]*nFFT + f));
-                nActVisCross += (long) (*(validX + mapper[bl][0]*nFFT + f) & *(validY + mapper[bl][1]*nFFT + f));
+                nActVisPureX  += (long) (*(validX + mapper[bl][0]*nFFT + f) & *(validX + mapper[bl][1]*nFFT + f));
+                nActVisPureY  += (long) (*(validY + mapper[bl][0]*nFFT + f) & *(validY + mapper[bl][1]*nFFT + f));
+                nActVisCross0 += (long) (*(validX + mapper[bl][0]*nFFT + f) & *(validY + mapper[bl][1]*nFFT + f));
+                nActVisCross1 += (long) (*(validY + mapper[bl][0]*nFFT + f) & *(validX + mapper[bl][1]*nFFT + f));
             }
             
             for(c=0; c<nChan; c++) {
@@ -1040,10 +1041,11 @@ void compute_xengine_three(long nStand,
                 
                 // XY
                 blas_dotc_sub(nFFT, (dataY + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataX + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
-                *(dataA + 1*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross;
+                *(dataA + 1*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross0;
                 
                 // YX
-                *(dataA + 2*nBL*nChan + bl*nChan + c) = conj(*(dataA + 1*nBL*nChan + bl*nChan + c));
+                blas_dotc_sub(nFFT, (dataX + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataY + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                *(dataA + 2*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross1;
                 
                 // YY
                 blas_dotc_sub(nFFT, (dataY + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataY + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
@@ -1354,4 +1356,3 @@ MOD_INIT(_core) {
     
     return MOD_SUCCESS_VAL(m);
 }
-
