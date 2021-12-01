@@ -52,7 +52,8 @@ jobs:
             jupyter_client \
             nbformat \
             nbconvert \
-            coverage
+            coverage \
+            codecov
       - if: ${{ matrix.python-version == '2.7' }}
         run: python -m pip install "healpy<1.14.0"
       - if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '2.7' }}
@@ -66,15 +67,7 @@ jobs:
           cd tests
           coverage run --source=lsl -m unittest discover
       - name: "Upload Coverage"
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '3.8' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' }}
         run: |
           cd tests
-          curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
-          curl -Os https://uploader.codecov.io/latest/linux/codecov
-          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
-          gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-          sha256sum -c codecov.SHA256SUM
-          rm -rf codecov.SHA256SUM.sig codecov.SHA256SUM
-          chmod +x codecov
-          ./codecov
+          codecov
