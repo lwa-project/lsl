@@ -47,7 +47,7 @@ jobs:
             numpy \
             matplotlib \
             scipy \
-            pyephem==3.7.6.0 \
+            "ephem<4.1.1" \
             jupyterlab \
             jupyter_client \
             nbformat \
