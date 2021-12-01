@@ -59,10 +59,6 @@ jobs:
       - name: "Build and Install"
         run: python -m pip install .
       - name: Test
-        run: |
-          cd tests
-          coverage run --source=lsl -m unittest discover
+        run: coverage run --source=lsl -m unittest discover
       - name: "Upload Coverage"
-        run: |
-          cd tests
-          codecov
+        run: codecov
