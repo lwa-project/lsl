@@ -64,7 +64,7 @@ jobs:
       - name: Test
         run: |
           cd tests
-          coverage run --source=lsl -m unittest discover
+          coverage run --source=../lsl -m unittest discover
       - name: "Upload Coverage"
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
