@@ -68,6 +68,8 @@ jobs:
           coverage run --source=lsl -m unittest discover
       - name: "Upload Coverage"
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' }}
-        run: |
-          cd tests
-          codecov
+        uses: codecov/codecov-action@v2
+        with:
+          directory: ./tests/
+          fail_ci_if_error: false
+          verbose: true
