@@ -230,7 +230,8 @@ def read_frame_ci8(filehandle, gain=None, verbose=False):
     readData.
     
     .. note:: This function differs from `read_frame` in that the data are
-              returned as numpy.int8 values rather than numpy.complex64.
+              returned as 2-D numpy.int8 array (samples by real/complex)
+              rather than 1-D numpy.complex64 array.
     """
     
     # New Go Fast! (TM) method

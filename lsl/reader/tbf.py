@@ -171,7 +171,8 @@ def read_frame_ci8(filehandle, verbose=False):
     contents as a Frame object.
     
     .. note:: This function differs from `read_frame` in that the data are
-              returned as numpy.int8 values rather than numpy.complex64.
+              returned as 4-D numpy.int8 array (channels by stands by pols. by
+              real/complex) rather than 3-D numpy.complex64 array.
     """
     
     # New Go Fast! (TM) method
