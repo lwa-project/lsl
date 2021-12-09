@@ -151,7 +151,7 @@ MOD_INIT(_gofast) {
     PyModule_AddObject(m, "EOFError", EOFError);
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
+    PyModule_AddObject(m, "__version__", PyString_FromString("0.9"));
     
     // Correlator channel count
     PyModule_AddObject(m, "NCHAN_COR", PyInt_FromLong(COR_NCHAN));
