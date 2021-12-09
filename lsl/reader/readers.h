@@ -62,10 +62,9 @@ extern PyObject *EOFError;
 
 // gofast.c
 extern short int tbw4LUT[256][2];
-extern float tbnLUT[256];
-extern float drxLUT[256][2];
-extern float tbfLUT[256][2];
-extern float drx8LUT[256];
+extern signed char tbnLUT[256];
+extern signed char drxLUT[256][2];
+extern signed char tbfLUT[256][2];
 
 
 /* 
