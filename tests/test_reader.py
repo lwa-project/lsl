@@ -472,7 +472,7 @@ class reader_tests(unittest.TestCase):
         fh.close()
         
         # Read in as numpy.int8
-        fh = open(tbnFile, 'rb')
+        fh = open(drxFile, 'rb')
         frame3 = drx.read_frame_ci8(fh)
         frame4 = drx.read_frame_ci8(fh)
         fh.close()
