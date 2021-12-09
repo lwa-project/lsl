@@ -319,9 +319,10 @@ class reader_tests(unittest.TestCase):
         # Compare
         data1 = frame3.payload.data[:,0] + 1j*frame3.payload.data[:,1]
         data2 = frame4.payload.data[:,0] + 1j*frame4.payload.data[:,1]
-        self.assertAlmostEqual(frame1.payload.data, data1, 1e-6)
-        self.assertAlmostEqual(frame2.payload.data, data2, 1e-6)
-        
+        for i in range(512):
+            self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
+            
     def test_tbn_errors(self):
         """Test reading in all frames from a truncated TBN file."""
         
@@ -479,9 +480,10 @@ class reader_tests(unittest.TestCase):
         # Compare
         data1 = frame3.payload.data[:,0] + 1j*frame3.payload.data[:,1]
         data2 = frame4.payload.data[:,0] + 1j*frame4.payload.data[:,1]
-        self.assertAlmostEqual(frame1.payload.data, data1, 1e-6)
-        self.assertAlmostEqual(frame2.payload.data, data2, 1e-6)
-        
+        for i in range(4096):
+            self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
+            
     def test_drx_errors(self):
         """Test reading in all frames from a truncated DRX file."""
         

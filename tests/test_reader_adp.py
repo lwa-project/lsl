@@ -63,9 +63,13 @@ class reader_adp_tests(unittest.TestCase):
         # Compare
         data1 = frame3.payload.data[:,:,:,0] + 1j*frame3.payload.data[:,:,:,1]
         data2 = frame4.payload.data[:,:,:,0] + 1j*frame4.payload.data[:,:,:,1]
-        self.assertAlmostEqual(frame1.payload.data, data1, 1e-6)
-        self.assertAlmostEqual(frame2.payload.data, data2, 1e-6)
-        
+        for i in range(800):
+            c = i // 2 // 256
+            s = i // 2 % 256
+            p = i % 2
+            self.assertAlmostEqual(frame1.payload.data[c,s,p], data1[c,s,p], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[c,s,p], data2[c,s,p], 1e-6)
+            
     def test_tbf_errors(self):
         """Test TBF reading errors."""
         
