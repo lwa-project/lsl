@@ -30,7 +30,7 @@ import numpy
 
 from lsl.common import adp as adp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_tbf
+from lsl.reader._gofast import read_tbf, read_tbf_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -40,9 +40,10 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT',
-           'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count', 'get_first_channel']
+__version__ = '0.2'
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
+           'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 'get_frames_per_obs',
+           'get_first_frame_count', 'get_channel_count', 'get_first_channel']
 
 #: TBF packet size (header + payload)
 FRAME_SIZE = 6168
@@ -155,6 +156,27 @@ def read_frame(filehandle, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_tbf(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, verbose=False):
+    """
+    Function to read in a single TBF frame (header+data) and store the 
+    contents as a Frame object.
+    
+    .. note:: This function differs from `read_frame` in that the data are
+              returned as numpy.int8 values rather than numpy.complex64.
+    """
+    
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_tbf_ci8(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

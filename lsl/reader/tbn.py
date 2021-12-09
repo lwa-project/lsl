@@ -55,7 +55,7 @@ if sys.version_info < (3,):
     
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_tbn
+from lsl.reader._gofast import read_tbn, read_tbn_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -65,8 +65,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.8'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
+__version__ = '0.9'
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
            'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 #: TBN packet size (header + payload)
@@ -273,6 +273,30 @@ def read_frame(filehandle, sample_rate=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_tbn(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+    
+    if sample_rate is not None:
+        newFrame.setsample_rate(sample_rate)
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, sample_rate=None, verbose=False):
+    """
+    Function to read in a single TBN frame (header+data) and store the 
+    contents as a Frame object.
+    
+    .. note:: This function differs from `read_frame` in that the data are
+              returned as numpy.int8 values rather than numpy.complex64.
+    """
+
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_tbn_ci8(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

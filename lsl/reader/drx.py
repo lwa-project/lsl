@@ -49,7 +49,7 @@ if sys.version_info < (3,):
     
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_drx
+from lsl.reader._gofast import read_drx, read_drx_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -59,8 +59,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.8'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
+__version__ = '0.9'
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
            'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 #: DRX packet size (header + payload)
@@ -211,6 +211,31 @@ def read_frame(filehandle, gain=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_drx(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+    
+    if gain is not None:
+        newFrame.gain = gain
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, gain=None, verbose=False):
+    """
+    Function to read in a single DRX frame (header+data) and store the 
+    contents as a Frame object.  This function wraps readerHeader and 
+    readData.
+    
+    .. note:: This function differs from `read_frame` in that the data are
+              returned as numpy.int8 values rather than numpy.complex64.
+    """
+    
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_drx_ci8(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
