@@ -21,7 +21,7 @@ from lsl.reader import errors
 from lsl.reader.base import FrameTimestamp
 
 
-__version__  = "0.8"
+__version__  = "0.9"
 __author__    = "Jayce Dowell"
 
 
@@ -301,6 +301,27 @@ class reader_tests(unittest.TestCase):
         repr(frame2)
         fh.close()
         
+    def test_tbn_read_ci8(self):
+        """Test reading in a frame from a TBN file, ci8 style."""
+        
+        # Read in as numpy.complex64
+        fh = open(tbnFile, 'rb')
+        frame1 = tbn.read_frame(fh)
+        frame2 = tbn.read_frame(fh)
+        fh.close()
+        
+        # Read in as numpy.int8
+        fh = open(tbnFile, 'rb')
+        frame3 = tbn.read_frame_ci8(fh)
+        frame4 = tbn.read_frame_ci8(fh)
+        fh.close()
+        
+        # Compare
+        data1 = frame3.payload.data[:,0] + 1j*frame3.payload.data[:,1]
+        data2 = frame4.payload.data[:,0] + 1j*frame4.payload.data[:,1]
+        self.assertAlmostEqual(frame1.payload.data, data1, 1e-6)
+        self.assertAlmostEqual(frame2.payload.data, data2, 1e-6)
+        
     def test_tbn_errors(self):
         """Test reading in all frames from a truncated TBN file."""
         
@@ -439,6 +460,27 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(tune, 2)
         self.assertEqual(pol,  0)
         fh.close()
+        
+    def test_drx_read_ci8(self):
+        """Test reading in a frame from a DRX file, ci8 style."""
+        
+        # Read in as numpy.complex64
+        fh = open(drxFile, 'rb')
+        frame1 = drx.read_frame(fh)
+        frame2 = drx.read_frame(fh)
+        fh.close()
+        
+        # Read in as numpy.int8
+        fh = open(tbnFile, 'rb')
+        frame3 = drx.read_frame_ci8(fh)
+        frame4 = drx.read_frame_ci8(fh)
+        fh.close()
+        
+        # Compare
+        data1 = frame3.payload.data[:,0] + 1j*frame3.payload.data[:,1]
+        data2 = frame4.payload.data[:,0] + 1j*frame4.payload.data[:,1]
+        self.assertAlmostEqual(frame1.payload.data, data1, 1e-6)
+        self.assertAlmostEqual(frame2.payload.data, data2, 1e-6)
         
     def test_drx_errors(self):
         """Test reading in all frames from a truncated DRX file."""
