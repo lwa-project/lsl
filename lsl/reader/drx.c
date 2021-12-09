@@ -115,7 +115,7 @@ PyObject *read_drx_cf32(PyObject *self, PyObject *args) {
     cFrame.payload.flags = __bswap_32(cFrame.payload.flags);
     
     // Fill the data array
-    const float *fp;
+    const signed char *fp;
     float complex *a;
     a = (float complex *) PyArray_DATA(data);
     for(i=0; i<4096; i++) {

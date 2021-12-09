@@ -104,7 +104,7 @@ PyObject *read_tbf_cf32(PyObject *self, PyObject *args) {
     cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
     
     // Fill the data array
-    const float *fp;
+    const signed char *fp;
     float complex *a;
     a = (float complex *) PyArray_DATA(data);
     for(i=0; i<6144; i++) {
