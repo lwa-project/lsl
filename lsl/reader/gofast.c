@@ -38,9 +38,9 @@ int validSync5C(unsigned int syncWord) {
   Look-up Tables
 */
 short int tbw4LUT[256][2];
-float tbnLUT[256];
-float drxLUT[256][2];
-float tbfLUT[256][2];
+signed char tbnLUT[256];
+signed char drxLUT[256][2];
+signed char tbfLUT[256][2];
 
 static void initLWALUTs(void) {
     // Look-up table inialization function from the VDIFIO library
@@ -82,14 +82,17 @@ static void initLWALUTs(void) {
 */
 
 static PyMethodDef GoFastMethods[] = {
-    {"read_tbw",    (PyCFunction) read_tbw,    METH_VARARGS,               read_tbw_doc   }, 
-    {"read_tbn",    (PyCFunction) read_tbn,    METH_VARARGS,               read_tbn_doc   }, 
-    {"read_drx",    (PyCFunction) read_drx,    METH_VARARGS,               read_drx_doc   }, 
-    {"read_drspec", (PyCFunction) read_drspec, METH_VARARGS,               read_drspec_doc},
-    {"read_vdif",   (PyCFunction) read_vdif,   METH_VARARGS|METH_KEYWORDS, read_vdif_doc  }, 
-    {"read_tbf",    (PyCFunction) read_tbf,    METH_VARARGS,               read_tbf_doc   }, 
-    {"read_cor",    (PyCFunction) read_cor,    METH_VARARGS,               read_cor_doc   }, 
-    {NULL,          NULL,                      0,                          NULL           }
+    {"read_tbw",     (PyCFunction) read_tbw,      METH_VARARGS,               read_tbw_doc     }, 
+    {"read_tbn",     (PyCFunction) read_tbn_cf32, METH_VARARGS,               read_tbn_cf32_doc}, 
+    {"read_tbn_ci8", (PyCFunction) read_tbn_ci8,  METH_VARARGS,               read_tbn_ci8_doc }, 
+    {"read_drx",     (PyCFunction) read_drx_cf32, METH_VARARGS,               read_drx_cf32_doc}, 
+    {"read_drx_ci8", (PyCFunction) read_drx_ci8,  METH_VARARGS,               read_drx_ci8_doc }, 
+    {"read_drspec",  (PyCFunction) read_drspec,   METH_VARARGS,               read_drspec_doc  },
+    {"read_vdif",    (PyCFunction) read_vdif,     METH_VARARGS|METH_KEYWORDS, read_vdif_doc    }, 
+    {"read_tbf",     (PyCFunction) read_tbf_cf32, METH_VARARGS,               read_tbf_cf32_doc}, 
+    {"read_tbf_ci8", (PyCFunction) read_tbf_ci8,  METH_VARARGS,               read_tbf_ci8_doc }, 
+    {"read_cor",     (PyCFunction) read_cor,      METH_VARARGS,               read_cor_doc     }, 
+    {NULL,           NULL,                        0,                          NULL             }
 };
 
 PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VDIF readers written in C");
