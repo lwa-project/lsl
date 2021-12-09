@@ -19,7 +19,7 @@ from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
 
 
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -260,6 +260,49 @@ class ldp_tests(unittest.TestCase):
         # Close it out
         f.close()
         
+    def test_ldp_tbn_ci8(self):
+        """Test the LDP interface for a TBN file, ci8 style."""
+        
+        f = ldp.TBNFile(tbnFile)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 100e3)
+        self.assertEqual(f.get_info("data_bits"), 8)
+        self.assertEqual(f.get_info('nframe'), 29)
+        
+        self.assertEqual(f.sample_rate, 100e3)
+        self.assertEqual(f.data_bits, 8)
+        self.assertEqual(f.nframe, 29)
+        
+        # Read a frame
+        frame = f.read_frame(return_ci8=True)
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        self.assertEqual(len(data.shape), 3)
+        
+        # Reset
+        f.reset()
+        
+        # Offset and read a chunk - short
+        tSkip = f.offset(0.005)
+        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        self.assertEqual(len(data.shape), 3)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - long
+        tInt, tStart, data = f.read(1.00, return_ci8=True)
+        self.assertEqual(len(data.shape), 3)
+        
     ### DRX ###
     
     def test_ldp_drx(self):
@@ -391,6 +434,51 @@ class ldp_tests(unittest.TestCase):
         
         # Close it out
         f.close()
+        
+    def test_ldp_drx_ci8(self):
+        """Test the LDP interface for a DRX file, ci8 style."""
+        
+        f = ldp.DRXFile(drxFile)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 19.6e6)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info('nframe'), 32)
+        self.assertEqual(f.get_info('nbeampol'), 4)
+        
+        self.assertEqual(f.sample_rate, 19.6e6)
+        self.assertEqual(f.data_bits, 4)
+        self.assertEqual(f.nframe, 32)
+        self.assertEqual(f.nbeampol, 4)
+        
+        # Read a frame
+        frame = f.read_frame(return_ci8=True)
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        self.assertEqual(len(data.shape), 3)
+        
+        # Reset
+        f.reset()
+        
+        # Offset and read a chunk - short
+        tSkip = f.offset(0.0001)
+        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        self.assertEqual(len(data.shape), 3)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - long
+        tInt, tStart, data = f.read(1.00, return_ci8=True)
+        self.assertEqual(len(data.shape), 3)
         
     ### DR Spectrometer ###
     
