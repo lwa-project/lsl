@@ -34,7 +34,7 @@ import numpy
 
 from lsl.common import adp as adp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_tbf, read_tbf_ci8
+from lsl.reader._gofast import read_tbf
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError

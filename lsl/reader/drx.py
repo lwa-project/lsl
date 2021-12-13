@@ -55,7 +55,7 @@ import numpy
 
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_drx, read_drx_ci8
+from lsl.reader._gofast import read_drx
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
