@@ -48,21 +48,14 @@ class reader_adp_tests(unittest.TestCase):
     def test_tbf_read_ci8(self):
         """Test reading in a frame from a TBF file, ci8 style."""
         
-        # Read in as numpy.complex64
         fh = open(tbfFile, 'rb')
         frame1 = tbf.read_frame(fh)
         frame2 = tbf.read_frame(fh)
         fh.close()
         
-        # Read in as numpy.int8
-        fh = open(tbfFile, 'rb')
-        frame3 = tbf.read_frame_ci8(fh)
-        frame4 = tbf.read_frame_ci8(fh)
-        fh.close()
-        
         # Compare
-        data1 = frame3.payload.data[:,:,:,0] + 1j*frame3.payload.data[:,:,:,1]
-        data2 = frame4.payload.data[:,:,:,0] + 1j*frame4.payload.data[:,:,:,1]
+        data1 = frame1.payload.data_ci8[:,:,:,0] + 1j*frame3.payload.data_ci8[:,:,:,1]
+        data2 = frame2.payload.data_ci8[:,:,:,0] + 1j*frame4.payload.data_ci8[:,:,:,1]
         for i in range(800):
             c = i // 2 // 256
             s = i // 2 % 256
