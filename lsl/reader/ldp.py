@@ -521,6 +521,19 @@ class TBNFile(LDPFileBase):
      * estimate_levels - Estimate the n-sigma level for the absolute value of the voltages 
     """
     
+    def __init__(self, filename=None, fh=None, ignore_timetag_errors=False, buffering=-1, return_ci8=False):
+        LDPFileBase.__init__(self, filename=filename, fh=fh,
+                             ignore_timetag_errors=ignore_timetag_errors,
+                             buffering=buffering)
+        if return_ci8:
+            self._data_shape = lambda s, x: x+(2,)
+            self._data_dtype = numpy.int8
+            self._data_access = lambda s, x: x.payload.data_ci8 
+        else:
+            self._data_shape = lambda s, x: x
+            self._data_dtype = numpy.complex64
+            self._data_access = lambda s, x: x.payload.data
+            
     def _ready_file(self):
         """
         Given an open file handle, find the start of valid TBN data.  This
@@ -653,7 +666,7 @@ class TBNFile(LDPFileBase):
         
         return t1 - t0
         
-    def read_frame(self, return_ci8=False):
+    def read_frame(self):
         """
         Read and return a single `lsl.reader.tbn.Frame` instance.
         """
@@ -665,10 +678,9 @@ class TBNFile(LDPFileBase):
         # Reset the timetag checker
         self._timetag = None
         
-        tbn_rf = tbn.read_frame_ci8 if return_ci8 else tbn.read_frame
-        return tbn_rf(self.fh)
+        return tbn.read_frame(self.fh)
         
-    def read(self, duration, time_in_samples=False, return_ci8=False):
+    def read(self, duration, time_in_samples=False):
         """
         Read in a chunk (in seconds) of TBN data.  This function returns 
         a three-element tuple with elements of:
@@ -700,9 +712,6 @@ class TBNFile(LDPFileBase):
         # Covert the sample rate to an expected timetag skip
         timetagSkip = int(512 / self.description['sample_rate'] * fS)
         
-        # Setup the read_frame version to use
-        tbn_rf = tbn.read_frame_ci8 if return_ci8 else tbn.read_frame
-        
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
@@ -719,10 +728,8 @@ class TBNFile(LDPFileBase):
         eofFound = False
         setTime = None
         count = [0 for i in range(self.description['nantenna'])]
-        if return_ci8:
-            data = numpy.zeros((self.description['nantenna'], frame_count*512, 2), dtype=numpy.int8)
-        else:
-            data = numpy.zeros((self.description['nantenna'], frame_count*512), dtype=numpy.complex64)
+        data = numpy.zeros(self._data_shape((self.description['nantenna'], frame_count*512)),
+                           dtype=self._data_dtype)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -730,7 +737,7 @@ class TBNFile(LDPFileBase):
             cFrames = deque()
             for i in range(self.description['nantenna']//2):
                 try:
-                    cFrames.append( tbn_rf(self.fh, verbose=False) )
+                    cFrames.append( tbn.read_frame(self.fh, verbose=False) )
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
@@ -766,7 +773,7 @@ class TBNFile(LDPFileBase):
                     else:
                         setTime = cFrame.time
                         
-                data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
+                data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = self._data_access(cFrame)
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -793,7 +800,7 @@ class TBNFile(LDPFileBase):
                         else:
                             setTime = cFrame.time
                         
-                    data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
+                    data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = self._data_access(cFrame)
                     count[aStand] += 1
                 nFrameSets += 1
                 
@@ -875,6 +882,19 @@ class DRXFile(LDPFileBase):
       * estimate_levels - Estimate the n-sigma level for the absolute value of the voltages 
     """
     
+    def __init__(self, filename=None, fh=None, ignore_timetag_errors=False, buffering=-1, return_ci8=False):
+        LDPFileBase.__init__(self, filename=filename, fh=fh,
+                             ignore_timetag_errors=ignore_timetag_errors,
+                             buffering=buffering)
+        if return_ci8:
+            self._data_shape = lambda s, x: x+(2,)
+            self._data_dtype = numpy.int8
+            self._data_access = lambda s, x: x.payload.data_ci8
+        else:
+            self._data_shape = lambda s, x: x
+            self._data_dtype = numpy.complex64
+            self._data_access = lambda s, x: x.payload.data
+            
     def _ready_file(self):
         """
         Given an open file handle, find the start of valid DRX data.  This function:
@@ -1037,7 +1057,7 @@ class DRXFile(LDPFileBase):
         
         return t1 - t0
         
-    def read_frame(self, return_ci8=False):
+    def read_frame(self):
         """
         Read and return a single `lsl.reader.drx.Frame` instance.
         """
@@ -1050,10 +1070,9 @@ class DRXFile(LDPFileBase):
         self._timetagSkip = None
         self._timetag = None
         
-        drx_rf = drx.read_frame_ci8 if return_ci8 else drx.read_frame
-        return drx_rf(self.fh)
+        return drx.read_frame(self.fh)
         
-    def read(self, duration, time_in_samples=False, return_ci8=False):
+    def read(self, duration, time_in_samples=False):
         """
         Given an open DRX file and an amount of data to read in in seconds, read 
         in the data and return a three-element tuple of the actual duration read 
@@ -1090,9 +1109,6 @@ class DRXFile(LDPFileBase):
         if getattr(self, "_timetagSkip", None) is None:
             self._timetagSkip = int(4096 / self.description['sample_rate'] * fS)
             
-        # Setup the read_frame version to use
-        drx_rf = drx.read_frame_ci8 if return_ci8 else drx.read_frame
-        
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
             self._timetag = {0:0, 1:0, 2:0, 3:0}
@@ -1104,11 +1120,8 @@ class DRXFile(LDPFileBase):
         
         # Setup the output arrays
         setTime = None
-        if return_ci8:
-            data = numpy.zeros((4,frame_count*4096,2), dtype=numpy.int8)
-        else:
-            data = numpy.zeros((4,frame_count*4096), dtype=numpy.complex64)
-            
+        data = numpy.zeros(self._data_shape((4,frame_count*4096)), dtype=self._data_dtype)
+        
         # Go!
         nFrameSets = 0
         eofFound = False
@@ -1121,7 +1134,7 @@ class DRXFile(LDPFileBase):
                 cFrames = deque()
                 for i in range(self.description['nbeampol']):
                     try:
-                        cFrames.append( drx_rf(self.fh, verbose=False) )
+                        cFrames.append( drx.read_frame(self.fh, verbose=False) )
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
@@ -1148,7 +1161,7 @@ class DRXFile(LDPFileBase):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
                             baseframe = copy.deepcopy(cFrames[0])
                             baseframe.payload.timetag = m
-                            baseframe.payload._data *= 0
+                            baseframe.payload._data_ci8 *= 0
                             self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
@@ -1172,7 +1185,7 @@ class DRXFile(LDPFileBase):
                     else:
                         setTime = cFrame.time
                         
-                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
+                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = self._data_access(cFrame)
                 count[aStand] +=  1
                 self._timetag[aStand] = cTimetag
             nFrameSets += 1
@@ -1200,7 +1213,7 @@ class DRXFile(LDPFileBase):
                         else:
                             setTime = cFrame.time
                             
-                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
+                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = self._data_access(cFrame)
                     count[aStand] +=  1
                     self._timetag[aStand] = cTimetag
                 nFrameSets += 1

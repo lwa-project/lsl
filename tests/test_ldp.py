@@ -263,7 +263,7 @@ class ldp_tests(unittest.TestCase):
     def test_ldp_tbn_ci8(self):
         """Test the LDP interface for a TBN file, ci8 style."""
         
-        f = ldp.TBNFile(tbnFile)
+        f = ldp.TBNFile(tbnFile, return_ci8=True)
         
         # File info
         self.assertEqual(f.get_info("sample_rate"), 100e3)
@@ -275,7 +275,7 @@ class ldp_tests(unittest.TestCase):
         self.assertEqual(f.nframe, 29)
         
         # Read a frame
-        frame = f.read_frame(return_ci8=True)
+        frame = f.read_frame()
         
         # Get the remaining frame count
         self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
@@ -285,7 +285,7 @@ class ldp_tests(unittest.TestCase):
         f.reset()
         
         # Read a chunk - short
-        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        tInt, tStart, data = f.read(0.005)
         self.assertEqual(len(data.shape), 3)
         
         # Reset
@@ -293,14 +293,14 @@ class ldp_tests(unittest.TestCase):
         
         # Offset and read a chunk - short
         tSkip = f.offset(0.005)
-        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        tInt, tStart, data = f.read(0.005)
         self.assertEqual(len(data.shape), 3)
         
         # Reset
         f.reset()
         
         # Read a chunk - long
-        tInt, tStart, data = f.read(1.00, return_ci8=True)
+        tInt, tStart, data = f.read(1.00)
         self.assertEqual(len(data.shape), 3)
         
     ### DRX ###
@@ -438,7 +438,7 @@ class ldp_tests(unittest.TestCase):
     def test_ldp_drx_ci8(self):
         """Test the LDP interface for a DRX file, ci8 style."""
         
-        f = ldp.DRXFile(drxFile)
+        f = ldp.DRXFile(drxFile, return_ci8=True)
         
         # File info
         self.assertEqual(f.get_info("sample_rate"), 19.6e6)
@@ -452,7 +452,7 @@ class ldp_tests(unittest.TestCase):
         self.assertEqual(f.nbeampol, 4)
         
         # Read a frame
-        frame = f.read_frame(return_ci8=True)
+        frame = f.read_frame()
         
         # Get the remaining frame count
         self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
@@ -462,7 +462,7 @@ class ldp_tests(unittest.TestCase):
         f.reset()
         
         # Read a chunk - short
-        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        tInt, tStart, data = f.read(0.005)
         self.assertEqual(len(data.shape), 3)
         
         # Reset
@@ -470,14 +470,14 @@ class ldp_tests(unittest.TestCase):
         
         # Offset and read a chunk - short
         tSkip = f.offset(0.0001)
-        tInt, tStart, data = f.read(0.005, return_ci8=True)
+        tInt, tStart, data = f.read(0.005)
         self.assertEqual(len(data.shape), 3)
         
         # Reset
         f.reset()
         
         # Read a chunk - long
-        tInt, tStart, data = f.read(1.00, return_ci8=True)
+        tInt, tStart, data = f.read(1.00)
         self.assertEqual(len(data.shape), 3)
         
     ### DR Spectrometer ###
