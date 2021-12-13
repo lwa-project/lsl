@@ -54,8 +54,8 @@ class reader_adp_tests(unittest.TestCase):
         fh.close()
         
         # Compare
-        data1 = frame1.payload.data_ci8[:,:,:,0] + 1j*frame3.payload.data_ci8[:,:,:,1]
-        data2 = frame2.payload.data_ci8[:,:,:,0] + 1j*frame4.payload.data_ci8[:,:,:,1]
+        data1 = frame1.payload.data_ci8[:,:,:,0] + 1j*frame1.payload.data_ci8[:,:,:,1]
+        data2 = frame2.payload.data_ci8[:,:,:,0] + 1j*frame2.payload.data_ci8[:,:,:,1]
         for i in range(800):
             c = i // 2 // 256
             s = i // 2 % 256
