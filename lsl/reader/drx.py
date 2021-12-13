@@ -33,6 +33,10 @@ get_frames_per_obs
   read in the first several frames to see how many frames (tunings/polarizations)
   are associated with each beam.
 
+..versionchanged:: 2.1.3
+    Added a new data_ci8 field to the FramePayload to store data more
+    efficiently.
+
 ..versionchanged:: 1.2.0
     Dropped support for ObservingBlock since the lsl.reader.buffer modules does
     a better job.
@@ -47,6 +51,8 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
+import numpy
+
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_drx, read_drx_ci8
@@ -60,7 +66,7 @@ telemetry.track_module()
 
 
 __version__ = '0.9'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame',
            'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 #: DRX packet size (header + payload)
@@ -130,13 +136,17 @@ class FramePayload(FramePayloadBase):
     
     _payload_attrs = ['timetag', 'tuning_word', 'flags']
     
-    def __init__(self, timetag=None, tuning_word=None, flags=None, iq=None):
+    def __init__(self, timetag=None, tuning_word=None, flags=None, iq=None, iq_ci8=None):
         self.gain = None
         self.timetag = timetag
         self.tuning_word = tuning_word
         self.flags = flags
         FramePayloadBase.__init__(self, iq)
         
+        if iq_ci8 is not None:
+            self._data_ci8 = iq_ci8
+            del self._data
+            
     @property
     def central_freq(self):
         """
@@ -144,6 +154,28 @@ class FramePayload(FramePayloadBase):
         """
 
         return dp_common.fS * self.tuning_word / 2**32
+        
+    @property
+    def data(self):
+        try:
+            assert(self._data is not None)
+            return self._data
+        except (AttributeError, AssertionError):
+            self._data = self._data_ci8[:,0] + 1j*self._data_ci8[:,1]
+            self._data = self._data.astype(numpy.complex64)
+            return self._data
+            
+    @property
+    def data_ci8(self):
+        """
+        Read-only data stored as array of numpy.int8 values with an additional
+        axis for the real/imaginary values.
+        
+        .. note:: This field is unaffected by mathematical operations performed
+                  on its parent Frame.
+        """
+        
+        return self._data_ci8
 
 
 class Frame(FrameBase):
@@ -211,32 +243,6 @@ def read_frame(filehandle, gain=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_drx(filehandle, Frame())
-    except gSyncError:
-        mark = filehandle.tell() - FRAME_SIZE
-        raise SyncError(location=mark)
-    except gEOFError:
-        raise EOFError
-    
-    if gain is not None:
-        newFrame.gain = gain
-        
-    return newFrame
-
-
-def read_frame_ci8(filehandle, gain=None, verbose=False):
-    """
-    Function to read in a single DRX frame (header+data) and store the 
-    contents as a Frame object.  This function wraps readerHeader and 
-    readData.
-    
-    .. note:: This function differs from `read_frame` in that the data are
-              returned as 2-D numpy.int8 array (samples by real/complex)
-              rather than 1-D numpy.complex64 array.
-    """
-    
-    # New Go Fast! (TM) method
-    try:
-        newFrame = read_drx_ci8(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

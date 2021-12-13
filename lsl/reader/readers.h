@@ -90,13 +90,9 @@ extern void initVDIFLUTs(void);
 extern PyObject *read_tbw(PyObject*, PyObject*);
 extern char read_tbw_doc[];
 // tbn.c
-extern PyObject *read_tbn_cf32(PyObject*, PyObject*);
-extern char read_tbn_cf32_doc[];
 extern PyObject *read_tbn_ci8(PyObject*, PyObject*);
 extern char read_tbn_ci8_doc[];
 // drx.c
-extern PyObject *read_drx_cf32(PyObject*, PyObject*);
-extern char read_drx_cf32_doc[];
 extern PyObject *read_drx_ci8(PyObject*, PyObject*);
 extern char read_drx_ci8_doc[];
 // drspec.c
@@ -108,8 +104,6 @@ extern PyObject *read_vdif(PyObject*, PyObject*, PyObject*);
 extern char read_vdif_doc[];
 
 // tbf.c
-extern PyObject *read_tbf_cf32(PyObject*, PyObject*);
-extern char read_tbf_cf32_doc[];
 extern PyObject *read_tbf_ci8(PyObject*, PyObject*);
 extern char read_tbf_ci8_doc[];
 // cor.c
