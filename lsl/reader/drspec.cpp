@@ -343,7 +343,7 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     // Read in the data section
     if( drspec_size_dat == NULL ) {
         drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
-    } else if( PyInt_AsUnsignedLong(drspec_size_dat) != sizeof(float)*nSets*header.nFreqs ) {
+    } else if( PyInt_AsLong(drspec_size_dat) != sizeof(float)*nSets*header.nFreqs ) {
         Py_XDECREF(drspec_size_dat);
         drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
     }

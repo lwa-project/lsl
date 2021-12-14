@@ -18,14 +18,13 @@
  Python3 compatibility
 */
 #if PY_MAJOR_VERSION >= 3
-	#define PyCapsule_Type PyCObject_Type
-	#define PyString_FromString PyUnicode_FromString
-	#define PyString_GET_SIZE PyBytes_GET_SIZE
-	#define PyString_AS_STRING PyBytes_AS_STRING
-	#define PyInt_AsLong PyLong_AsLong
-	#define PyInt_AsUnsignedLong PyLong_AsUnsignedLong
-	#define PyInt_FromLong PyLong_FromLong 
-	#define MOD_ERROR_VAL NULL
+		#define PyCapsule_Type PyCObject_Type
+		#define PyString_FromString PyUnicode_FromString
+		#define PyString_GET_SIZE PyBytes_GET_SIZE
+		#define PyString_AS_STRING PyBytes_AS_STRING
+		#define PyInt_AsLong PyLong_AsLong
+		#define PyInt_FromLong PyLong_FromLong 
+		#define MOD_ERROR_VAL NULL
     #define MOD_SUCCESS_VAL(val) val
     #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
     #define MOD_DEF(ob, name, methods, doc) \
