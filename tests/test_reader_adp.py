@@ -53,9 +53,14 @@ class reader_adp_tests(unittest.TestCase):
         frame2 = tbf.read_frame(fh)
         fh.close()
         
+        fh = open(tbfFile, 'rb')
+        frame3 = tbf.read_frame_ci8(fh)
+        frame4 = tbf.read_frame_ci8(fh)
+        fh.close()
+        
         # Compare
-        data1 = frame1.payload.data_ci8[:,:,:,0] + 1j*frame3.payload.data_ci8[:,:,:,1]
-        data2 = frame2.payload.data_ci8[:,:,:,0] + 1j*frame4.payload.data_ci8[:,:,:,1]
+        data1 = frame3.payload.data[:,:,:,0] + 1j*frame3.payload.data[:,:,:,1]
+        data2 = frame4.payload.data[:,:,:,0] + 1j*frame4.payload.data[:,:,:,1]
         for i in range(800):
             c = i // 2 // 256
             s = i // 2 % 256

@@ -309,9 +309,14 @@ class reader_tests(unittest.TestCase):
         frame2 = tbn.read_frame(fh)
         fh.close()
         
+        fh = open(tbnFile, 'rb')
+        frame3 = tbn.read_frame_ci8(fh)
+        frame4 = tbn.read_frame_ci8(fh)
+        fh.close()
+        
         # Compare
-        data1 = frame1.payload.data_ci8[:,0] + 1j*frame3.payload.data_ci8[:,1]
-        data2 = frame2.payload.data_ci8[:,0] + 1j*frame4.payload.data_ci8[:,1]
+        data1 = frame3.payload.data[:,0] + 1j*frame3.payload.data[:,1]
+        data2 = frame4.payload.data[:,0] + 1j*frame4.payload.data[:,1]
         for i in range(512):
             self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
             self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
@@ -463,9 +468,14 @@ class reader_tests(unittest.TestCase):
         frame2 = drx.read_frame(fh)
         fh.close()
         
+        fh = open(drxFile, 'rb')
+        frame3 = drx.read_frame_ci8(fh)
+        frame4 = drx.read_frame_ci8(fh)
+        fh.close()
+        
         # Compare
-        data1 = frame1.payload.data_ci8[:,0] + 1j*frame3.payload.data_ci8[:,1]
-        data2 = frame2.payload.data_ci8[:,0] + 1j*frame4.payload.data_ci8[:,1]
+        data1 = frame3.payload.data[:,0] + 1j*frame3.payload.data[:,1]
+        data2 = frame4.payload.data[:,0] + 1j*frame4.payload.data[:,1]
         for i in range(512):
             self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
             self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)

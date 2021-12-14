@@ -18,8 +18,8 @@ For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.
 
 ..versionchanged:: 2.1.3
-    Added a new data_ci8 field to the FramePayload to store data more
-    efficiently.
+    Added a new read_frame_ci8 function that returns 8-bit+8-bit complex integers
+    instead of numpy.complex64
 
 .. versionadded:: 1.2.0
 """
@@ -45,7 +45,7 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame',
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
            'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 'get_frames_per_obs',
            'get_first_frame_count', 'get_channel_count', 'get_first_channel']
 
@@ -102,14 +102,10 @@ class FramePayload(FramePayloadBase):
     
     _payload_attrs = ['timetag']
     
-    def __init__(self, timetag=None, fDomain=None, fDomain_ci8=None):
+    def __init__(self, timetag=None, fDomain=None):
         self.timetag = timetag
         FramePayloadBase.__init__(self, fDomain)
         
-        if fDomain_ci8 is not None:
-            self._data_ci8 = fDomain_ci8
-            del self._data
-            
     @property
     def time(self):
         """
@@ -119,28 +115,6 @@ class FramePayload(FramePayloadBase):
         """
         
         return FrameTimestamp.from_dp_timetag(self.timetag)
-        
-    @property
-    def data(self):
-        try:
-            assert(self._data is not None)
-            return self._data
-        except (AttributeError, AssertionError):
-            self._data = self._data_ci8[:,:,:,0] + 1j*self._data_ci8[:,:,:,1]
-            self._data = self._data.astype(numpy.complex64)
-            return self._data
-            
-    @property
-    def data_ci8(self):
-        """
-        Read-only data stored as array of numpy.int8 values with an additional
-        axis for the real/imaginary values.
-        
-        .. note:: This field is unaffected by mathematical operations performed
-                  on its parent Frame.
-        """
-        
-        return self._data_ci8
 
 
 class Frame(FrameBase):
@@ -186,6 +160,24 @@ def read_frame(filehandle, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_tbf(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, verbose=False):
+    """
+    Function to read in a single TBF frame (header+data) and store the 
+    contents as a Frame object.
+    """
+    
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_tbf_ci8(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

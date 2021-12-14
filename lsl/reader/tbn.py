@@ -37,6 +37,8 @@ get_frames_per_obs
   read in the first several frames to see how many stands are found in the data.
 
 ..versionchanged:: 2.1.3
+    Added a new read_frame_ci8 function that returns 8-bit+8-bit complex integers
+    instead of numpy.complex64
     Added a new data_ci8 field to the FramePayload to store data more
     efficiently.
 
@@ -72,7 +74,7 @@ telemetry.track_module()
 
 
 __version__ = '0.9'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame',
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
            'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 #: TBN packet size (header + payload)
@@ -168,14 +170,10 @@ class FramePayload(FramePayloadBase):
     
     _payload_attrs = ['timetag']
     
-    def __init__(self, timetag=None, iq=None, iq_ci8=None):
+    def __init__(self, timetag=None, iq=None):
         self.timetag = timetag
         FramePayloadBase.__init__(self, iq)
         
-        if iq_ci8 is not None:
-            self._data_ci8 = iq_ci8
-            del self._data
-            
     @property
     def time(self):
         """
@@ -185,28 +183,6 @@ class FramePayload(FramePayloadBase):
         """
         
         return FrameTimestamp.from_dp_timetag(self.timetag)
-        
-    @property
-    def data(self):
-        try:
-            assert(self._data is not None)
-            return self._data
-        except (AttributeError, AssertionError):
-            self._data = self._data_ci8[:,0] + 1j*self._data_ci8[:,1]
-            self._data = self._data.astype(numpy.complex64)
-            return self._data
-            
-    @property
-    def data_ci8(self):
-        """
-        Read-only data stored as array of numpy.int8 values with an additional
-        axis for the real/imaginary values.
-        
-        .. note:: This field is unaffected by mathematical operations performed
-                  on its parent Frame.
-        """
-        
-        return self._data_ci8
 
 
 class Frame(FrameBase):
@@ -305,6 +281,27 @@ def read_frame(filehandle, sample_rate=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_tbn(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+    
+    if sample_rate is not None:
+        newFrame.setsample_rate(sample_rate)
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, sample_rate=None, verbose=False):
+    """
+    Function to read in a single TBN frame (header+data) and store the 
+    contents as a Frame object.
+    """
+
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_tbn_ci8(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

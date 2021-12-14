@@ -63,14 +63,18 @@ def frame_to_frame(tbn_frame):
     rawFrame[22] = (tbn_frame.payload.timetag>>8) & 255
     rawFrame[23] = tbn_frame.payload.timetag & 255
     ## Data
-    iq = tbn_frame.payload.data
-    ### Round and convert to unsigned integers
-    iq = numpy.round(iq)
-    if iq.dtype == numpy.complex128:
-        iq = iq.astype(numpy.complex64)
-    iq = iq.view(numpy.float32)
-    iq = iq.astype(numpy.int8)
-    
+    if tbn_frame.payload.data.dtype == numpy.int8:
+        iq = tbn_frame.payload.data.ravel().copy()
+    else:
+        iq = tbn_frame.payload.data
+        iq.real
+        ### Round and convert to unsigned integers
+        iq = numpy.round(iq)
+        if iq.dtype == numpy.complex128:
+            iq = iq.astype(numpy.complex64)
+        iq = iq.view(numpy.float32)
+        iq = iq.astype(numpy.int8)
+        
     rawFrame[24:] = iq
     
     return rawFrame
@@ -183,7 +187,11 @@ class SimFrame(tbn.Frame):
             return False
 
         # Does the data type make sense?
-        if self.payload.data.dtype.kind != 'c':
+        if len(self.payload.data.shape) == 1 and self.payload.data.dtype.kind != 'c':
+            if raise_errors:
+                raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
+            return False
+        elif len(self.payload.data.shape) == 2 and self.payload.data.dtype != numpy.int8:
             if raise_errors:
                 raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
