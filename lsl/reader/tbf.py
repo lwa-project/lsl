@@ -124,12 +124,14 @@ class FramePayload(FramePayloadBase):
     def data(self):
         try:
             assert(self._data is not None)
-            return self._data
         except (AttributeError, AssertionError):
-            self._data = self._data_ci8[:,:,:,0] + 1j*self._data_ci8[:,:,:,1]
-            self._data = self._data.astype(numpy.complex64)
-            return self._data
-            
+            try:
+                self._data = self._data_ci8[:,:,:,0] + 1j*self._data_ci8[:,:,:,1]
+                self._data = self._data.astype(numpy.complex64)
+            except AttributeError:
+                self._data = None
+        return self._data
+        
     @property
     def data_ci8(self):
         """
