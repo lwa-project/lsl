@@ -127,8 +127,11 @@ class SimFrame(tbn.Frame):
         
         self.payload.timetag = self.obs_time
         self.payload._data = self.data
-        del self.payload._data_ci8
-    
+        try:
+            del self.payload._data_ci8
+        except AttributeError:
+            pass
+            
     def load_frame(self, tbn_frame):
         """
         Populate the a tbn.SimFrame object with a pre-made frame.
@@ -147,11 +150,7 @@ class SimFrame(tbn.Frame):
         ## Data
         self.obs_time = self.payload.timetag
         self.data = self.payload.data
-        try:
-            del self.payload._data_ci8
-        except AttributeError:
-            pass
-            
+        
     def is_valid(self, raise_errors=False):
         """
         Check if simulated TBN frame is valid or not.  Valid frames return 
