@@ -147,7 +147,11 @@ class SimFrame(tbn.Frame):
         ## Data
         self.obs_time = self.payload.timetag
         self.data = self.payload.data
-    
+        try:
+            del self.payload._data_ci8
+        except AttributeError:
+            pass
+            
     def is_valid(self, raise_errors=False):
         """
         Check if simulated TBN frame is valid or not.  Valid frames return 

@@ -146,8 +146,11 @@ class SimFrame(drx.Frame):
         self.payload.timetag = self.obs_time
         self.payload.flags = self.flags
         self.payload._data = self.data
-        del self.payload._data_ci8
-        
+        try:
+            del self.payload._data_ci8
+        except AttributeError:
+            pass
+            
     def load_frame(self, drx_frame):
         """
         Populate the a drx.SimFrame object with a pre-made frame.
