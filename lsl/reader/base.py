@@ -14,6 +14,7 @@ if sys.version_info < (3,):
 import copy
 import pytz
 import numpy
+import functools
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
 
@@ -36,6 +37,22 @@ def _build_repr(name, attrs=[]):
         first = False
     output += ">"
     return output
+
+
+def _ensure_payload_has_data(access_func):
+    """
+    Decorator for the Frame mathematical functions to make sure that payload._data
+    exists.  If it does not it is computed from payload._data_ci8.
+    """
+
+    @functools.wraps(access_func)
+    def access_wrapper(*args, **kwds):
+        try:
+            assert(args[0].payload._data is not None)
+        except (AttributeError, AssertionError):
+            args[0].payload.data
+        return access_func(*args, **kwds)
+    return access_wrapper
 
 
 class FrameHeaderBase(object):
@@ -123,6 +140,7 @@ class FrameBase(object):
         newFrame += y
         return newFrame
         
+    @_ensure_payload_has_data
     def __iadd__(self, y):
         """
         In-place add the data sections of two frames together or add 
@@ -159,6 +177,7 @@ class FrameBase(object):
         newFrame -= y
         return newFrame
         
+    @_ensure_payload_has_data
     def __isub__(self, y):
         """
         In-place subtract the data sections of two frames together or subtract 
@@ -195,6 +214,7 @@ class FrameBase(object):
         newFrame *= y
         return newFrame
         
+    @_ensure_payload_has_data
     def __imul__(self, y):
         """
         In-place multiple the data sections of two frames together or 
@@ -231,6 +251,7 @@ class FrameBase(object):
         newFrame //= y
         return newFrame
         
+    @_ensure_payload_has_data
     def __ifloordiv__(self, y):
         """
         In-place divide the data sections of two frames together or 
@@ -267,6 +288,7 @@ class FrameBase(object):
         newFrame /= y
         return newFrame
         
+    @_ensure_payload_has_data
     def __itruediv__(self, y):
         """
         In-place divide the data sections of two frames together or 
