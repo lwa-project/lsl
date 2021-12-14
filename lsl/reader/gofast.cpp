@@ -23,7 +23,7 @@ PyObject *EOFError;
   valid.
 */
 
-int validSync5C(unsigned int syncWord) {
+int validSync5C(uint32_t syncWord) {
     int valid = 0;
     
     if( syncWord == 0x5CDEC0DE ) {
@@ -37,10 +37,10 @@ int validSync5C(unsigned int syncWord) {
 /* 
   Look-up Tables
 */
-short int tbw4LUT[256][2];
-signed char tbnLUT[256];
-signed char drxLUT[256][2];
-signed char tbfLUT[256][2];
+int16_t tbw4LUT[256][2];
+int8_t  tbnLUT[256];
+int8_t  drxLUT[256][2];
+int8_t  tbfLUT[256][2];
 
 static void initLWALUTs(void) {
     // Look-up table inialization function from the VDIFIO library

@@ -1,8 +1,5 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <complex.h>
+#include <cmath>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
@@ -14,41 +11,38 @@
   TBW Reader (12-bit and 4-bit samples)
 */
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct {
-    unsigned int sync_word;
+typedef struct __attribute__((packed)) {
+    uint32_t sync_word;
     union {
         struct {
-            unsigned int frame_count:24;
-            unsigned char id:8;
+            uint32_t frame_count:24;
+            uint8_t id:8;
         };
-        unsigned int frame_count_word;
+        uint32_t frame_count_word;
     };
-    unsigned int second_count;
+    uint32_t second_count;
     union {
-        unsigned short int tbw_id;
+        uint16_t tbw_id;
         struct {
-            unsigned short int stand:14;
-            unsigned char bits:1;
-            unsigned char is_tbw:1;
+            uint16_t stand:14;
+            uint8_t  bits:1;
+            uint8_t  is_tbw:1;
         };
     };
-    unsigned short int unassigned;
+    uint16_t unassigned;
 } TBWHeader;
 
 
-typedef struct {
-    unsigned long long timetag;
-    unsigned char bytes[1200];
+typedef struct __attribute__((packed)) {
+    uint64_t timetag;
+    uint8_t  bytes[1200];
 } TBWPayload;
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     TBWHeader header;
     TBWPayload payload;
 } TBWFrame;
-#pragma pack(pop)
 
 
 PyObject *tbw_method = NULL;
@@ -111,26 +105,26 @@ PyObject *read_tbw(PyObject *self, PyObject *args) {
     
     // Fill the data array
     if(cFrame.header.bits == 0) {
-        short int tempR;
-        short int *a;
-        a = (short int *) PyArray_DATA(data12);
+        int16_t tempR;
+        int16_t *a;
+        a = (int16_t *) PyArray_DATA(data12);
         for(i=0; i<400; i++) {
             tempR = (cFrame.payload.bytes[3*i]<<4) | ((cFrame.payload.bytes[3*i+1]>>4)&15);
             tempR -= ((tempR&2048)<<1);
-            *(a + i) = (short int) tempR;
+            *(a + i) = (int16_t) tempR;
 
             tempR = ((cFrame.payload.bytes[3*i+1]&15)<<8) | cFrame.payload.bytes[3*i+2];
             tempR -= ((tempR&2048)<<1);
-            *(a + 400 + i) = (short int) tempR;
+            *(a + 400 + i) = (int16_t) tempR;
         }
     } else {
-        const short int *fp;
-        short int *a;
-        a = (short int *) PyArray_DATA(data4);
+        const int16_t *fp;
+        int16_t *a;
+        a = (int16_t *) PyArray_DATA(data4);
         for(i=0; i<1200; i++) {
             fp = tbw4LUT[ cFrame.payload.bytes[i] ];
-            *(a + i) = (short int) fp[0];
-            *(a + 1200 + i) = (short int) fp[1];
+            *(a + i) = (int16_t) fp[0];
+            *(a + 1200 + i) = (int16_t) fp[1];
         }
     }
     

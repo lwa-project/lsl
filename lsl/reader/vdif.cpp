@@ -1,8 +1,6 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <complex.h>
+#include <cmath>
+#include <complex>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
@@ -14,39 +12,36 @@
   VIDF Reader
 */
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct {
+typedef struct __attribute__((packed)) {
     struct {
-        unsigned int seconds_from_epoch:30;
-        unsigned char is_legacy:1;
-        unsigned char is_invalid:1;
+        uint32_t seconds_from_epoch:30;
+        uint8_t  is_legacy:1;
+        uint8_t  is_invalid:1;
     };
     struct {
-        unsigned int frame_in_second:24;
-        unsigned short int refEpoch:6;
-        unsigned char unassigned:2;
+        uint32_t frame_in_second:24;
+        uint16_t refEpoch:6;
+        uint8_t  unassigned:2;
     };
     struct {
-        unsigned int frame_length:24;
-        unsigned int log2_nchan:5;
-        unsigned char version:3;
+        uint32_t frame_length:24;
+        uint32_t log2_nchan:5;
+        uint8_t  version:3;
     };
     struct {
-        unsigned short int station_id:16;
-        unsigned short int thread_id:10;
-        unsigned char bits_per_sample_minus_one:5;
-        unsigned char is_complex:1;
+        uint16_t station_id:16;
+        uint16_t thread_id:10;
+        uint8_t  bits_per_sample_minus_one:5;
+        uint8_t  is_complex:1;
     };
 } VDIFBasicHeader;
 
-typedef struct {
-    unsigned int extended_data_1;
-    unsigned int extended_data_2;
-    unsigned int extended_data_3;
-    unsigned int extended_data_4;
+typedef struct __attribute__((packed)) {
+    uint32_t extended_data_1;
+    uint32_t extended_data_2;
+    uint32_t extended_data_3;
+    uint32_t extended_data_4;
 } VDIFExtendedHeader;
-#pragma pack(pop)
 
 
 PyObject *vdif_method   = NULL;
@@ -83,25 +78,21 @@ void initVDIFLUTs(void) {
                     3/FourBit1sigma,4/FourBit1sigma,5/FourBit1sigma,6/FourBit1sigma,7/FourBit1sigma};
     int b, i, l;
     
-    for(b = 0; b < 256; b++)
-    {
+    for(b=0; b<256; b++) {
         /* vdif1LUT */
-        for(i = 0; i < 8; i++)
-        {
+        for(i=0; i<8; i++) {
             l = (b>>i) & 0x01;
             vdif1LUT[b][i] =  lut2level[l];
         }
         
         /* vdif2LUT */
-        for(i = 0; i < 4; i++)
-        {
+        for(i=0; i<4; i++) {
             l = (b >> (2*i)) & 0x03;
             vdif2LUT[b][i] = lut4level[l];
         }
         
         /* vdif4LUT */
-        for(i = 0; i < 2; i++)
-        {
+        for(i=0; i<2; i++) {
             l = (b >> (4*i)) & 0x0F;
             vdif4LUT[b][i] = lut16level[l];
         }
@@ -115,10 +106,11 @@ void initVDIFLUTs(void) {
   Data-type specific VDIF Helper Functions
 */
 
-static PyArrayObject * parse_vdif_8(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
+template<int8_t D>
+static PyArrayObject * parse_vdif(uint8_t *rawData, uint32_t dataLength, uint32_t samplesPerWord) {
     PyArrayObject *data;
     
-    unsigned int nSamples;	
+    uint32_t nSamples;	
     nSamples = dataLength / 4 * samplesPerWord;			// bytes -> words -> samples
     
     // Create the data holders and output data array
@@ -133,108 +125,32 @@ static PyArrayObject * parse_vdif_8(unsigned char *rawData, unsigned int dataLen
     float *a;
     a = (float *) PyArray_DATA(data);
     
-    unsigned int i;
-    for(i=0; i<dataLength; i++) {
-        *(a + i) = vdif8LUT[ *(rawData+i) ];
-    }
-    
-    // Done
-    return data;
-}
-
-static PyArrayObject * parse_vdif_4(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
-    PyArrayObject *data;
-    
-    unsigned int nSamples;	
-    nSamples = dataLength / 4 * samplesPerWord;			// bytes -> words -> samples
-    
-    // Create the data holders and output data array
-    npy_intp dims[1];
-    dims[0] = (npy_intp) nSamples;
-    data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
-    if(data == NULL) {
-        return data;
-    }
-    
-    // Fill the data
-    float *a;
-    a = (float *) PyArray_DATA(data);
-    
-    unsigned int i;
+    uint32_t i;
     float *fp;
     for(i=0; i<dataLength; i++) {
-        fp = vdif4LUT[ *(rawData+i) ];
-        *(a + 2*i + 0) = fp[0];
-        *(a + 2*i + 1) = fp[1];
-    }
-    
-    // Done
-    return data;
-}
-
-static PyArrayObject * parse_vdif_2(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
-    PyArrayObject *data;
-    
-    unsigned int nSamples;	
-    nSamples = dataLength / 4 * samplesPerWord;			// bytes -> words -> samples
-    
-    // Create the data holders and output data array
-    npy_intp dims[1];
-    dims[0] = (npy_intp) nSamples;
-    data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
-    if(data == NULL) {
-        return data;
-    }
-    
-    // Fill the data
-    float *a;
-    a = (float *) PyArray_DATA(data);
-    
-    unsigned int i;
-    float *fp;
-    for(i=0; i<dataLength; i++) {
-        fp = vdif2LUT[ *(rawData+i) ];
-        *(a + 4*i + 0) = fp[0];
-        *(a + 4*i + 1) = fp[1];
-        *(a + 4*i + 2) = fp[2];
-        *(a + 4*i + 3) = fp[3];
-    }
-    
-    // Done
-    return data;
-}
-
-
-static PyArrayObject * parse_vdif_1(unsigned char *rawData, unsigned int dataLength, unsigned int samplesPerWord) {
-    PyArrayObject *data;
-    
-    unsigned int nSamples;	
-    nSamples = dataLength / 4 * samplesPerWord;			// bytes -> words -> samples
-    
-    // Create the data holders and output data array
-    npy_intp dims[1];
-    dims[0] = (npy_intp) nSamples;
-    data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
-    if(data == NULL) {
-        return data;
-    }
-    
-    // Fill the data
-    float *a;
-    a = (float *) PyArray_DATA(data);
-    
-    unsigned int i;
-    float *fp;
-    for(i=0; i<dataLength; i++) {
-        fp = vdif1LUT[ *(rawData+i) ];
-        *(a + 8*i + 0) = fp[0];
-        *(a + 8*i + 1) = fp[1];
-        *(a + 8*i + 2) = fp[2];
-        *(a + 8*i + 3) = fp[3];
-        *(a + 8*i + 4) = fp[4];
-        *(a + 8*i + 5) = fp[5];
-        *(a + 8*i + 6) = fp[6];
-        *(a + 8*i + 7) = fp[7];
+        if( D == 8 ) {
+            *(a + i) = vdif8LUT[ *(rawData+i) ];
+        } else if( D == 4 ) {
+            fp = vdif4LUT[ *(rawData+i) ];
+            *(a + 2*i + 0) = fp[0];
+            *(a + 2*i + 1) = fp[1];
+        } else if( D == 2 ) {
+            fp = vdif2LUT[ *(rawData+i) ];
+            *(a + 4*i + 0) = fp[0];
+            *(a + 4*i + 1) = fp[1];
+            *(a + 4*i + 2) = fp[2];
+            *(a + 4*i + 3) = fp[3];
+        } else if( D == 1) {
+            fp = vdif1LUT[ *(rawData+i) ];
+            *(a + 8*i + 0) = fp[0];
+            *(a + 8*i + 1) = fp[1];
+            *(a + 8*i + 2) = fp[2];
+            *(a + 8*i + 3) = fp[3];
+            *(a + 8*i + 4) = fp[4];
+            *(a + 8*i + 5) = fp[5];
+            *(a + 8*i + 6) = fp[6];
+            *(a + 8*i + 7) = fp[7];
+        }
     }
     
     // Done
@@ -249,15 +165,15 @@ static PyArrayObject * parse_vdif_1(unsigned char *rawData, unsigned int dataLen
 PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data=NULL;
-    unsigned int i;
+    uint32_t i;
     float cFreq, sRate;
     cFreq = 0.0;
     sRate = 0.0;
     VDIFBasicHeader bHeader;
     VDIFExtendedHeader eHeader;
     
-    static char *kwlist[] = {"fh", "frame", "central_freq", "sample_rate", NULL};
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|ff", kwlist, &ph, &frame, &cFreq, &sRate)) {
+    char const* kwlist[] = {"fh", "frame", "central_freq", "sample_rate", NULL};
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|ff", const_cast<char **>(kwlist), &ph, &frame, &cFreq, &sRate)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         return NULL;
     }
@@ -283,8 +199,8 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     Py_XDECREF(buffer);
     
     // Fix up various bits in the basic header
-    unsigned int nChan;
-    unsigned char bitsPerSample;
+    uint32_t nChan;
+    uint8_t bitsPerSample;
     nChan = 1 << bHeader.log2_nchan;
     bitsPerSample = bHeader.bits_per_sample_minus_one + 1;
     
@@ -326,14 +242,14 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
     // Figure out how much to read in to get the entire data frame
-    unsigned int dataLength, samplesPerWord, nSamples;
+    uint32_t dataLength, samplesPerWord, nSamples;
     dataLength = bHeader.frame_length*8 - 32 + 16*bHeader.is_legacy;	// 8-byte chunks -> bytes - full header + legacy offset
     samplesPerWord = 32 / bitsPerSample;					// dimensionless
     nSamples = dataLength / 4 * samplesPerWord;					// bytes -> words -> samples
     
     // Read in a chunk of the data
-    unsigned char *rawData;
-    rawData = (unsigned char *) malloc(dataLength);
+    uint8_t *rawData;
+    rawData = (uint8_t *) malloc(dataLength);
     if( vdif_size_dat == NULL ) {
         vdif_size_dat = Py_BuildValue("i", dataLength);
     } else if( PyInt_AsLong(vdif_size_dat) != dataLength ) {
@@ -354,21 +270,21 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
         free(rawData);
         goto fail;
     }
-    memcpy(rawData, PyString_AS_STRING(buffer), sizeof(unsigned char)*dataLength);
+    memcpy(rawData, PyString_AS_STRING(buffer), sizeof(uint8_t)*dataLength);
     Py_XDECREF(buffer);
     
     // Parse it out
     if( bitsPerSample == 8 ) {
-        data = parse_vdif_8(rawData, dataLength, samplesPerWord);
+        data = parse_vdif<8>(rawData, dataLength, samplesPerWord);
     } else {
         if( bitsPerSample == 4 ) {
-            data = parse_vdif_4(rawData, dataLength, samplesPerWord);
+            data = parse_vdif<4>(rawData, dataLength, samplesPerWord);
         } else {
             if( bitsPerSample == 2 ) {
-                data = parse_vdif_2(rawData, dataLength, samplesPerWord);
+                data = parse_vdif<2>(rawData, dataLength, samplesPerWord);
             } else {
                 if( bitsPerSample == 1 ) {
-                    data = parse_vdif_1(rawData, dataLength, samplesPerWord);
+                    data = parse_vdif<1>(rawData, dataLength, samplesPerWord);
                 } else {
                     PyErr_Format(PyExc_RuntimeError, "Cannot parse data with %d bits per sample", bitsPerSample);
                     free(rawData);
@@ -400,12 +316,12 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
         }
         
         float *a;
-        float complex *b;
+        std::complex<float> *b;
         
         a = (float *) PyArray_DATA(data);
-        b = (float complex *) PyArray_DATA(tempArrayComplex);
+        b = (std::complex<float> *) PyArray_DATA(tempArrayComplex);
         for(i=0; i<nSamples; i+=2) {
-            *(b+i/2) = *(a+i+0) + _Complex_I * *(a+i+1);
+            *(b+i/2) = std::complex<float>(*(a+i+0), *(a+i+1));
         }
         
         Py_XDECREF(data);

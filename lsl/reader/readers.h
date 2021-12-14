@@ -22,7 +22,8 @@
 	#define PyString_FromString PyUnicode_FromString
 	#define PyString_GET_SIZE PyBytes_GET_SIZE
 	#define PyString_AS_STRING PyBytes_AS_STRING
-	#define PyInt_AsLong PyLong_AsLong 
+	#define PyInt_AsLong PyLong_AsLong
+	#define PyInt_AsUnsignedLong PyLong_AsUnsignedLong
 	#define PyInt_FromLong PyLong_FromLong 
 	#define MOD_ERROR_VAL NULL
     #define MOD_SUCCESS_VAL(val) val
@@ -61,10 +62,10 @@ extern PyObject *EOFError;
 */
 
 // gofast.c
-extern short int tbw4LUT[256][2];
-extern signed char tbnLUT[256];
-extern signed char drxLUT[256][2];
-extern signed char tbfLUT[256][2];
+extern int16_t tbw4LUT[256][2];
+extern int8_t  tbnLUT[256];
+extern int8_t  drxLUT[256][2];
+extern int8_t  tbfLUT[256][2];
 
 
 /* 
@@ -72,7 +73,7 @@ extern signed char tbfLUT[256][2];
 */
 
 // gofast.c
-extern int validSync5C(unsigned int);
+extern int validSync5C(uint32_t);
 // vdif.c
 extern void initVDIFLUTs(void);
 

@@ -1,8 +1,5 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <complex.h>
+#include <cmath>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
@@ -24,30 +21,27 @@
   DR Spectrometer Reader
 */
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct {
-    unsigned int MAGIC1; 			// must always equal 0xC0DEC0DE
-    unsigned long long timeTag0;		// time tag of first frame in ``block''
-    unsigned short int timeOffset;		// time offset reported by DP
-    unsigned short int decFactor;		// decimation factor
-    unsigned int freqCode[2]; 		// DP frequency codes for each tuning
+typedef struct __attribute__((packed)) {
+    uint32_t MAGIC1; 			// must always equal 0xC0DEC0DE
+    uint64_t timeTag0;		// time tag of first frame in ``block''
+    uint16_t timeOffset;		// time offset reported by DP
+    uint16_t decFactor;		// decimation factor
+    uint32_t freqCode[2]; 		// DP frequency codes for each tuning
                         //   indexing: 0..1 = Tuning 1..2
-    unsigned int fills[4]; 			// fills for each pol/tuning combination
+    uint32_t fills[4]; 			// fills for each pol/tuning combination
                         //   indexing: 0..3 = X0, Y0 X1, Y1
-    unsigned char errors[4]; 		// error flag for each pol/tuning combo
+    uint8_t  errors[4]; 		// error flag for each pol/tuning combo
                         //   indexing: 0..3 = X0, Y0 X1, Y1
-    unsigned char beam;			// beam number
-    unsigned char stokes_format; 		// ouptut format
-    unsigned char spec_version;		// version of the spectrometer data file
-    unsigned char flags;			// flag bit-field
-    unsigned int nFreqs;			// <Transform Length>
-    unsigned int nInts;			// <Integration Count>
-    unsigned int satCount[4];		// saturation count for each pol/tuning combo
+    uint8_t  beam;			// beam number
+    uint8_t  stokes_format; 		// ouptut format
+    uint8_t  spec_version;		// version of the spectrometer data file
+    uint8_t  flags;			// flag bit-field
+    uint32_t nFreqs;			// <Transform Length>
+    uint32_t nInts;			// <Integration Count>
+    uint32_t satCount[4];		// saturation count for each pol/tuning combo
                         //   indexing: 0..3 = X0, Y0 X1, Y1
-    unsigned int MAGIC2;			// must always equal 0xED0CED0C
+    uint32_t MAGIC2;			// must always equal 0xED0CED0C
 } DRSpecHeader;
-#pragma pack(pop)
 
 
 PyObject *drspec_method   = NULL;
@@ -55,16 +49,36 @@ PyObject *drspec_size_hdr = NULL;
 PyObject *drspec_size_dat = NULL;
 
 
-static void parse_linear_single(DRSpecHeader *header, float *data, float *S0, float *S1, int isX, int isY) {
-    int i;
+enum PolProds {LINEAR_XX    = 0x01,
+               LINEAR_XY_RE = 0x02,
+               LINEAR_XY_IM = 0x04,
+               LINEAR_YY    = 0x08,
+               STOKES_I     = 0x10,
+               STOKES_Q     = 0x20,
+               STOKES_U     = 0x40,
+               STOKES_V     = 0x80};
+
+
+inline uint8_t pol_count(uint8_t p) {
+    uint8_t v = p;
+    uint8_t c;
+    for(c=0; v; c++) {
+        v &= v - 1;
+    }
+    return c;
+}
+
+template<PolProds P>
+static void parse_linear_single(DRSpecHeader *header, float *data, float *S0, float *S1) {
+    unsigned int i;
     float norm0, norm1;
     
     // Spectra normalization factors
-    if( isX == 1 && isY == 0) {
+    if( P == LINEAR_XX ) {
         // XX*
         norm0 = header->nFreqs * header->fills[0];
         norm1 = header->nFreqs * header->fills[2];
-    } else if( isX == 0 && isY == 1 ) {
+    } else if( P == LINEAR_YY ) {
         // YY*
         norm0 = header->nFreqs * header->fills[1];
         norm1 = header->nFreqs * header->fills[3];
@@ -84,7 +98,7 @@ static void parse_linear_single(DRSpecHeader *header, float *data, float *S0, fl
 
 
 static void parse_linear_half(DRSpecHeader *header, float *data, float *XX0, float *XX1, float *YY0, float *YY1) {
-    int i;
+    unsigned int i;
     float normXX0, normXX1, normYY0, normYY1;
     
     // Spectra normalization factors
@@ -107,7 +121,7 @@ static void parse_linear_half(DRSpecHeader *header, float *data, float *XX0, flo
 
 
 static void parse_linear_other_half(DRSpecHeader *header, float *data, float *CR0, float *CR1, float *CI0, float *CI1) {
-    int i;
+    unsigned int i;
     float normCH0, normCH1;
     
     // Spectra normalization factors
@@ -128,7 +142,7 @@ static void parse_linear_other_half(DRSpecHeader *header, float *data, float *CR
 
 
 static void parse_linear_full(DRSpecHeader *header, float *data, float *XX0, float *XX1, float *CR0, float *CR1, float *CI0, float *CI1, float *YY0, float *YY1) {
-    int i;
+    unsigned int i;
     float normXX0, normXX1, normCH0, normCH1, normYY0, normYY1;
     
     // Spectra normalization factors
@@ -161,7 +175,7 @@ static void parse_linear_full(DRSpecHeader *header, float *data, float *XX0, flo
 
 
 static void parse_stokes_single(DRSpecHeader *header, float *data, float *S0, float *S1) {
-    int i;
+    unsigned int i;
     float norm0, norm1;
     
     // Spectra normalization factors
@@ -178,7 +192,7 @@ static void parse_stokes_single(DRSpecHeader *header, float *data, float *S0, fl
 
 
 static void parse_stokes_half(DRSpecHeader *header, float *data, float *I0, float *I1, float *V0, float *V1) {
-    int i;
+    unsigned int i;
     float norm0, norm1;
     
     // Spectra normalization factors
@@ -199,7 +213,7 @@ static void parse_stokes_half(DRSpecHeader *header, float *data, float *I0, floa
 
 
 static void parse_stokes_full(DRSpecHeader *header, float *data, float *I0, float *I1, float *Q0, float *Q1, float *U0, float *U1, float *V0, float *V1) {
-    int i;
+    unsigned int i;
     float norm0, norm1;
     
     // Spectra normalization factors
@@ -268,25 +282,7 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     }
     
     // Get the data format
-    if( header.stokes_format < 0x10 ) {
-        // Linear
-        if( header.stokes_format < 0x09 && header.stokes_format != 0x06 ) {
-            nSets = 2;
-        } else if( header.stokes_format == 0x06 || header.stokes_format == 0x09 ) {
-            nSets = 4;
-        } else {
-            nSets = 8;
-        }
-    } else {
-        // Stokes
-        if( header.stokes_format < 0x90 ) {
-            nSets = 2;
-        } else if( header.stokes_format == 0x90 ) {
-            nSets = 4;
-        } else {
-            nSets = 8;
-        }
-    }
+    nSets = pol_count(header.stokes_format)*2;
     
     // Create the output data arrays
     npy_intp dims[1];
@@ -347,7 +343,7 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     // Read in the data section
     if( drspec_size_dat == NULL ) {
         drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
-    } else if( PyInt_AsLong(drspec_size_dat) != sizeof(float)*nSets*header.nFreqs ) {
+    } else if( PyInt_AsUnsignedLong(drspec_size_dat) != sizeof(float)*nSets*header.nFreqs ) {
         Py_XDECREF(drspec_size_dat);
         drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
     }
@@ -378,24 +374,24 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     b1 = (float *) PyArray_DATA(dataB1);
     c1 = (float *) PyArray_DATA(dataC1);
     d1 = (float *) PyArray_DATA(dataD1);
-    if( header.stokes_format < 0x10 ) {
+    if( header.stokes_format & (LINEAR_XX | LINEAR_XY_RE | LINEAR_XY_IM | LINEAR_YY) ) {
         // Linear
-        if( header.stokes_format == 0x01 ) {
+        if( header.stokes_format == LINEAR_XX ) {
             // XX* only
-            parse_linear_single(&header, data, a0, a1, 1, 0);
-        } else if( header.stokes_format == 0x02 ) {
+            parse_linear_single<LINEAR_XX>(&header, data, a0, a1);
+        } else if( header.stokes_format == LINEAR_XY_RE ) {
             // real(XY*) only
-            parse_linear_single(&header, data, b0, b1, 1, 1);
-        } else if( header.stokes_format == 0x04 ) {
+              parse_linear_single<LINEAR_XY_RE>(&header, data, a0, a1);
+        } else if( header.stokes_format == LINEAR_XY_IM ) {
             // imag(XY*) only
-            parse_linear_single(&header, data, c0, c1, 1, 1);
-        } else if( header.stokes_format == 0x08 ) {
+            parse_linear_single<LINEAR_XY_IM>(&header, data, a0, a1);
+        } else if( header.stokes_format == LINEAR_YY ) {
             // YY* only
-            parse_linear_single(&header, data, d0, d1, 0, 1);
-        } else if( header.stokes_format == 0x09 ) {
+              parse_linear_single<LINEAR_YY>(&header, data, a0, a1);
+        } else if( header.stokes_format == (LINEAR_XX | LINEAR_YY) ) {
             // XX* and YY*
             parse_linear_half(&header, data, a0, a1, d0, d1);
-        } else if( header.stokes_format == 0x06 ) {
+        } else if( header.stokes_format == (LINEAR_XY_RE | LINEAR_XY_IM) ) {
             // real(XY*) and imag(XY*)
             parse_linear_other_half(&header, data, b0, b1, c0, c1);
         } else {
@@ -404,19 +400,19 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
         }
     } else {
         // Stokes
-        if( header.stokes_format == 0x10 ) {
+        if( header.stokes_format == STOKES_I ) {
             // I only
             parse_stokes_single(&header, data, a0, a1);
-        } else if( header.stokes_format == 0x20 ) {
+        } else if( header.stokes_format == STOKES_Q ) {
             // Q only
             parse_stokes_single(&header, data, b0, b1);
-        } else if( header.stokes_format == 0x40 ) {
+        } else if( header.stokes_format == STOKES_U ) {
             // U only
             parse_stokes_single(&header, data, c0, c1);
-        } else if( header.stokes_format == 0x80 ) {
+        } else if( header.stokes_format == STOKES_V ) {
             // V only
             parse_stokes_single(&header, data, d0, d1);
-        } else if( header.stokes_format == 0x90 ) {
+        } else if( header.stokes_format == (STOKES_I | STOKES_V) ) {
             // I and V
             parse_stokes_half(&header, data, a0, a1, d0, d1);
         } else {
@@ -521,37 +517,37 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     PyObject_SetAttrString(fPayload, "saturations", saturations);
     
     // Linear
-    if( header.stokes_format & 0x01 ) {
+    if( header.stokes_format & LINEAR_XX ) {
         PyObject_SetAttrString(fPayload, "XX0", PyArray_Return(dataA0));
         PyObject_SetAttrString(fPayload, "XX1", PyArray_Return(dataA1));
     }
-    if( header.stokes_format & 0x02 ) {
+    if( header.stokes_format & LINEAR_XY_RE ) {
         PyObject_SetAttrString(fPayload, "XY_real0", PyArray_Return(dataB0));
         PyObject_SetAttrString(fPayload, "XY_real1", PyArray_Return(dataB1));
     }
-    if( header.stokes_format & 0x04 ) {
+    if( header.stokes_format & LINEAR_XY_IM ) {
         PyObject_SetAttrString(fPayload, "XY_imag0", PyArray_Return(dataC0));
         PyObject_SetAttrString(fPayload, "XY_imag1", PyArray_Return(dataC1));
     }
-    if( header.stokes_format & 0x08 ) {
+    if( header.stokes_format & LINEAR_YY ) {
         PyObject_SetAttrString(fPayload, "YY0", PyArray_Return(dataD0));
         PyObject_SetAttrString(fPayload, "YY1", PyArray_Return(dataD1));
     }
     
     // Stokes
-    if( header.stokes_format & 0x10 ) {
+    if( header.stokes_format & STOKES_I ) {
         PyObject_SetAttrString(fPayload, "I0", PyArray_Return(dataA0));
         PyObject_SetAttrString(fPayload, "I1", PyArray_Return(dataA1));
     }
-    if( header.stokes_format & 0x20 ) {
+    if( header.stokes_format & STOKES_Q ) {
         PyObject_SetAttrString(fPayload, "Q0", PyArray_Return(dataB0));
         PyObject_SetAttrString(fPayload, "Q1", PyArray_Return(dataB1));
     }
-    if( header.stokes_format & 0x40 ) {
+    if( header.stokes_format & STOKES_U ) {
         PyObject_SetAttrString(fPayload, "U0", PyArray_Return(dataC0));
         PyObject_SetAttrString(fPayload, "U1", PyArray_Return(dataC1));
     }
-    if( header.stokes_format & 0x80 ) {
+    if( header.stokes_format & STOKES_V ) {
         PyObject_SetAttrString(fPayload, "V0", PyArray_Return(dataD0));
         PyObject_SetAttrString(fPayload, "V1", PyArray_Return(dataD1));
     }
