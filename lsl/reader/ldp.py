@@ -715,7 +715,7 @@ class TBNFile(LDPFileBase):
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
-            junkFrame = tbn.read_frame(self.fh)
+            junkFrame = tbn_rf(self.fh)
             self._timetag = junkFrame.payload.timetag - timetagSkip
             self.fh.seek(-tbn.FRAME_SIZE, 1)
             
@@ -889,7 +889,7 @@ class DRXFile(LDPFileBase):
         if return_ci8:
             self._data_shape = lambda x: x+(2,)
             self._data_dtype = numpy.int8
-            self._data_access = lambda x: x.payload.data_ci8
+            self._data_access = lambda s, x: x.payload.data_ci8
         else:
             self._data_shape = lambda x: x
             self._data_dtype = numpy.complex64

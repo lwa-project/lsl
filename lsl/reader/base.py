@@ -44,6 +44,7 @@ def _ensure_payload_has_data(access_func):
     Decorator for the Frame mathematical functions to make sure that payload._data
     exists.  If it does not it is computed from payload._data_ci8.
     """
+<<<<<<< HEAD
 
     @functools.wraps(access_func)
     def access_wrapper(*args, **kwds):
@@ -51,6 +52,15 @@ def _ensure_payload_has_data(access_func):
             assert(args[0].payload._data is not None)
         except (AttributeError, AssertionError):
             args[0].payload.data
+=======
+    
+    @functools.wraps(access_func)
+    def access_wrapper(*args, **kwds):
+        try:
+            args[0].payload._data
+        except AttributeError:
+            args[0].payload.data()
+>>>>>>> parent of 1d0465f5 (Various fixes.)
         return access_func(*args, **kwds)
     return access_wrapper
 
@@ -155,9 +165,9 @@ class FrameBase(object):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
-            self.payload._data += y.payload.data
+            self.payload._data += y.payload._data
         except AttributeError:
-            self.payload._data += self.payload.data.dtype.type(y)
+            self.payload._data += self.payload._data.dtype.type(y)
         return self
         
     def __sub__(self, y):
@@ -192,9 +202,9 @@ class FrameBase(object):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
-            self.payload._data -= y.payload.data
+            self.payload._data -= y.payload._data
         except AttributeError:
-            self.payload._data -= self.payload.data.dtype.type(y)
+            self.payload._data -= self.payload._data.dtype.type(y)
         return self
         
     def __mul__(self, y):
@@ -229,9 +239,9 @@ class FrameBase(object):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
-            self.payload._data *= y.payload.data
+            self.payload._data *= y.payload._data
         except AttributeError:
-            self.payload._data *= self.payload.data.dtype.type(y)
+            self.payload._data *= self.payload._data.dtype.type(y)
         return self
         
     def __floordiv__(self, y):
@@ -266,9 +276,9 @@ class FrameBase(object):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
-            self.payload._data //= y.payload.data
+            self.payload._data //= y.payload._data
         except AttributeError:
-            self.payload._data //= self.payload.data.dtype.type(y)
+            self.payload._data //= self.payload._data.dtype.type(y)
         return self
         
     def __truediv__(self, y):
@@ -303,9 +313,9 @@ class FrameBase(object):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
-            self.payload._data /= y.payload.data
+            self.payload._data /= y.payload._data
         except AttributeError:
-            self.payload._data /= self.payload.data.dtype.type(y)
+            self.payload._data /= self.payload._data.dtype.type(y)
         return self
         
     def __div__(self, y):

@@ -310,8 +310,8 @@ class reader_tests(unittest.TestCase):
         fh.close()
         
         # Compare
-        data1 = frame1.payload.data_ci8[:,0] + 1j*frame1.payload.data_ci8[:,1]
-        data2 = frame2.payload.data_ci8[:,0] + 1j*frame2.payload.data_ci8[:,1]
+        data1 = frame1.payload.data_ci8[:,0] + 1j*frame3.payload.data_ci8[:,1]
+        data2 = frame2.payload.data_ci8[:,0] + 1j*frame4.payload.data_ci8[:,1]
         for i in range(512):
             self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
             self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
@@ -464,8 +464,8 @@ class reader_tests(unittest.TestCase):
         fh.close()
         
         # Compare
-        data1 = frame1.payload.data_ci8[:,0] + 1j*frame1.payload.data_ci8[:,1]
-        data2 = frame2.payload.data_ci8[:,0] + 1j*frame2.payload.data_ci8[:,1]
+        data1 = frame1.payload.data_ci8[:,0] + 1j*frame3.payload.data_ci8[:,1]
+        data2 = frame2.payload.data_ci8[:,0] + 1j*frame4.payload.data_ci8[:,1]
         for i in range(512):
             self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
             self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
