@@ -526,13 +526,13 @@ class TBNFile(LDPFileBase):
                              ignore_timetag_errors=ignore_timetag_errors,
                              buffering=buffering)
         if return_ci8:
-            self._data_shape = lambda x: x+(2,)
+            self._data_shape = lambda s, x: x+(2,)
             self._data_dtype = numpy.int8
-            self._data_access = lambda x: x.payload.data_ci8 
+            self._data_access = lambda s, x: x.payload.data_ci8 
         else:
-            self._data_shape = lambda x: x
+            self._data_shape = lambda s, x: x
             self._data_dtype = numpy.complex64
-            self._data_access = lambda x: x.payload.data
+            self._data_access = lambda s, x: x.payload.data
             
     def _ready_file(self):
         """
@@ -887,13 +887,13 @@ class DRXFile(LDPFileBase):
                              ignore_timetag_errors=ignore_timetag_errors,
                              buffering=buffering)
         if return_ci8:
-            self._data_shape = lambda x: x+(2,)
+            self._data_shape = lambda s, x: x+(2,)
             self._data_dtype = numpy.int8
             self._data_access = lambda s, x: x.payload.data_ci8
         else:
-            self._data_shape = lambda x: x
+            self._data_shape = lambda s, x: x
             self._data_dtype = numpy.complex64
-            self._data_access = lambda x: x.payload.data
+            self._data_access = lambda s, x: x.payload.data
             
     def _ready_file(self):
         """
