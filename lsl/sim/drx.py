@@ -146,7 +146,6 @@ class SimFrame(drx.Frame):
         self.payload.timetag = self.obs_time
         self.payload.flags = self.flags
         self.payload._data = self.data
-        del self.payload._data_ci8
         
     def load_frame(self, drx_frame):
         """

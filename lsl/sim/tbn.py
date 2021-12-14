@@ -127,7 +127,6 @@ class SimFrame(tbn.Frame):
         
         self.payload.timetag = self.obs_time
         self.payload._data = self.data
-        del self.payload._data_ci8
     
     def load_frame(self, tbn_frame):
         """
