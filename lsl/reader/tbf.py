@@ -173,6 +173,14 @@ def read_frame_ci8(filehandle, verbose=False):
     """
     Function to read in a single TBF frame (header+data) and store the 
     contents as a Frame object.
+    
+    .. note::
+        This function differs from `read_frame` in that it returns a
+        `lsl.reader.tbf.FramePayload` that contains a 4-D numpy.int8 array
+        (channels by stands by polarizations by by real/complex) rather than a
+        3-D numpy.complex64 array.
+    
+    .. versionadded:: 2.1.3
     """
     
     # New Go Fast! (TM) method

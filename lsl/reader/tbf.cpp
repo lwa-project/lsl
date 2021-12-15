@@ -180,5 +180,11 @@ char read_tbf_ci8_doc[] = PyDoc_STR(\
 "Function to read in a single TBW frame (header+data) and store the contents\n\
 as a Frame object.\n\
 \n\
-.. versionadded:: 1.2.0\n\
+.. note::\n\
+    This function differs from `read_tbf` in that it returns a\n\
+    `lsl.tbf.FramePayload` containing a 4-D numpy.int8 array (channels by\n\
+    stands by polarizations by real/complex) rather than a 1-D numpy.complex64\n\
+    array.\n\
+\n\
+.. versionadded:: 2.1.3\n\
 ");

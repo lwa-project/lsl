@@ -180,4 +180,11 @@ PyObject *read_tbn_ci8(PyObject *self, PyObject *args) {
 char read_tbn_ci8_doc[] = PyDoc_STR(\
 "Function to read in a single TBN frame (header+payload) and store the contents\n\
 as a Frame object.\n\
+\n\
+.. note::\n\
+    This function differs from `read_tbn` in that it returns a\n\
+    `lsl.tbn.FramePayload` containing a 2-D numpy.int8 array (samples by real/\n\
+    complex) rather than a 1-D numpy.complex64 array.\n\
+\n\
+.. versionadded:: 2.1.3\n\
 ");

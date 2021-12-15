@@ -655,7 +655,9 @@ class TBNFile(LDPFileBase):
         
     def read_frame(self, return_ci8=False):
         """
-        Read and return a single `lsl.reader.tbn.Frame` instance.
+        Read and return a single `lsl.reader.tbn.Frame` instance.  If
+        `return_ci8` is True then the frame will contain 2-D numpy.int8 data
+        (samples by real/imaginary instead of 1-D numpy.complex64.
         """
         
         # Reset the buffer
@@ -674,12 +676,16 @@ class TBNFile(LDPFileBase):
         a three-element tuple with elements of:
          0) the actual duration of data read in, 
          1) the time tag for the first sample, and
-         2) a 2-D Numpy array of data.
+         2) a 2-D or 3-D Numpy array of data (see below).
         
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
+        
+        If `return_ci8` is True then the data are returned as a 3-D numpy.int8
+        array (input by samples by real/imaginary) instead of a 2-D
+        numpy.complex64 array (input by samples).
         
         The sorting order of the output data array is by 
         digitizer number - 1.
@@ -1039,7 +1045,9 @@ class DRXFile(LDPFileBase):
         
     def read_frame(self, return_ci8=False):
         """
-        Read and return a single `lsl.reader.drx.Frame` instance.
+        Read and return a single `lsl.reader.drx.Frame` instance.  If
+        `return_ci8` is True then the frame will contain 2-D numpy.int8 data
+        (samples by real/imaginary instead of 1-D numpy.complex64.
         """
         
         # Reset the buffer
@@ -1065,8 +1073,12 @@ class DRXFile(LDPFileBase):
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         
+        If `return_ci8` is True then the data are returned as a 3-D numpy.int8
+        array (input by samples by real/imaginary) instead of a 2-D
+        numpy.complex64 array (input by samples).
+        
         ..note::
-            This function always returns a 2-D array with the first dimension
+            This function always returns an array with the first dimension
             holding four elements.  These elements contain, in order:
              * Tuning 1, polarization X
              * Tuning 1, polarization Y

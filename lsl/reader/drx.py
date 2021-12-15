@@ -235,6 +235,13 @@ def read_frame_ci8(filehandle, gain=None, verbose=False):
     Function to read in a single DRX frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 
     readData.
+    
+    .. note::
+        This function differs from `read_frame` in that it returns a
+        `lsl.reader.drx.FramePayload` that contains a 2-D numpy.int8 array
+        (samples by real/complex) rather than a 1-D numpy.complex64 array.
+    
+    .. versionadded:: 2.1.3
     """
     
     # New Go Fast! (TM) method

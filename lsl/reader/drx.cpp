@@ -200,4 +200,11 @@ PyObject *read_drx_ci8(PyObject *self, PyObject *args) {
 char read_drx_ci8_doc[] = PyDoc_STR(\
 "Function to read in a single DRX frame (header+payload) and store the contents\n\
 as a Frame object.\n\
+\n\
+.. note::\n\
+    This function differs from `read_drx` in that it returns a\n\
+    `lsl.drx.FramePayload` containing a 2-D numpy.int8 array (samples by real/\n\
+    complex) rather than a 1-D numpy.complex64 array.\n\
+\n\
+.. versionadded:: 2.1.3\n\
 ");
