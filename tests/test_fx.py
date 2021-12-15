@@ -31,8 +31,8 @@ def _make_complex_data(shape, scale=1.0, offset=0.0, dtype=numpy.complex64):
     ci8 return data.
     """
     
-    i = numpy.random.randn(*shape)*scale + offset
-    q = numpy.random.randn(*shape)*scale + offset
+    i = numpy.random.rand(*shape)*scale + offset
+    q = numpy.random.rand(*shape)*scale + offset
     data = i + 1j*q
     if dtype == numpy.int8:
         data = data.astype(numpy.complex64)
