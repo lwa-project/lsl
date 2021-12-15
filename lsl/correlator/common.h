@@ -26,25 +26,38 @@ inline void read_wisdom(char *filename, PyObject *m) {
 
 
 /*
+ Wrap around PyArray_ISCOMPLEX to deal with our ci8 data format
+*/
+
+#define PyArray_LSL_ISCOMPLEX(arr, minDim) (PyArray_ISCOMPLEX(arr) \
+                                            || ((PyArray_TYPE(arr) == NPY_INT8) \
+                                                && (PyArray_NDIM(arr) == (minDim+1))))
+
+
+/*
+ Wrap around PyArray_TYPE to deal with our ci8 data format
+*/
+
+#define LSL_CI8 262
+
+#define PyArray_LSL_TYPE(arr, minDim) (((PyArray_TYPE(arr) == NPY_INT8) \
+                                        && (PyArray_NDIM(arr) == (minDim+1))) \
+                                       ? LSL_CI8 : PyArray_TYPE(arr))
+
+
+/*
   Warp the Numpy PyArray_DATA macro so that it can deal with NULL values.
 */
 
-#define PyArray_SAFE_DATA(arr)   (arr != NULL ? PyArray_DATA(arr) : NULL)
+#define PyArray_SAFE_DATA(arr) (arr != NULL ? PyArray_DATA(arr) : NULL)
 
 
 /*
   Sinc function for use by the polyphase filter bank
 */
 
-inline double sinc(double x) {
-    if(x == 0.0) {
-        return 1.0;
-    } else {
-        return sin(x*NPY_PI)/(x*NPY_PI);
-    }
-}
-
-inline float sinc(float x) {
+template<typename T>
+inline T sinc(T x) {
     if(x == 0.0) {
         return 1.0;
     } else {
@@ -57,12 +70,8 @@ inline float sinc(float x) {
   Hanning window for use by the polyphase filter bank
 */
 
-inline double hanning(double x) {
-    return 0.5 - 0.5*cos(x);
-    
-}
-
-inline float hanning(float x) {
+template<typename T>
+inline T hanning(T x) {
     return 0.5 - 0.5*cos(x);
 }
 
@@ -71,13 +80,9 @@ inline float hanning(float x) {
   Hamming window for use by the polyphase filter bank
 */
 
-inline double hamming(double x) {
-    return 0.53836 - 0.46164*cos(x);
-    
-}
-
-inline float hamming(float x) {
-    return 0.53836 - 0.46164*cos(x);
+template<typename T>
+inline T hamming(T x) {
+    return 0.53836 - 0.46164*cos(x); 
 }
 
 
@@ -107,10 +112,8 @@ typedef std::complex<double> Complex64;
   Complex magnitude squared functions
 */
 
-inline float abs2(Complex32 z) {
-    return z.real()*z.real() + z.imag()*z.imag();
-}
-inline double abs2(Complex64 z) {
+template<typename T>
+inline T abs2(std::complex<T> z) {
     return z.real()*z.real() + z.imag()*z.imag();
 }
 
