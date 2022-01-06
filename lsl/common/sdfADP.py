@@ -61,7 +61,7 @@ from lsl.common.color import colorfy
 
 from lsl.common.mcsADP import LWA_MAX_NSTD
 from lsl.common.adp import word_to_freq, fC
-from lsl.common.stations import lwa1, lwasv
+from lsl.common.stations import lwasv
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_SIZE as TBFSize
 
@@ -399,7 +399,7 @@ class TBF(Observation):
         
         self.update()
         
-        station = lwa1
+        station = lwasv
         if self._parent is not None:
             station = self._parent.station
         backend = station.interface.get_module('backend')
