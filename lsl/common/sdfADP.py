@@ -413,13 +413,13 @@ class TBF(Observation):
             failures += 1
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 1 is outside of %s tuning range" % (os.getpid(),
-                                                                                                      be_name))
+                print("[%i] Error: Specified frequency for tuning 1 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 2 is outside of %s tuning range" % (os.getpid(),
-                                                                                                      be_name))
+                print("[%i] Error: Specified frequency for tuning 2 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
