@@ -22,11 +22,6 @@ try:
 except ImportError:
     from distutils.command.build_ext import build_ext
 
-try:
-    import numpy
-except Exception as e:
-    raise RuntimeError("numpy is required to run setup.py: %s" % str(e))
-    
 PY2 = sys.version_info.major < 3
 if PY2:
     ASTROPY_VERSION = 'astropy<3.0'
@@ -288,7 +283,9 @@ coreExtraLibs = []
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
-ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/reader/tbw.c', 'lsl/reader/tbn.c', 'lsl/reader/drx.c', 'lsl/reader/drspec.c', 'lsl/reader/vdif.c', 'lsl/reader/tbf.c', 'lsl/reader/cor.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
+def get_extensions(coreExtraFlags=coreExtraFlags, coreExtraLibs=coreExtraLibs)
+    import numpy
+    return [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/reader/tbw.c', 'lsl/reader/tbn.c', 'lsl/reader/drx.c', 'lsl/reader/drspec.c', 'lsl/reader/vdif.c', 'lsl/reader/tbf.c', 'lsl/reader/cor.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
             Extension('common._fir', ['lsl/common/fir.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._spec', ['lsl/correlator/spec.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
@@ -296,6 +293,7 @@ ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/rea
             Extension('imaging._gridder', ['lsl/imaging/gridder.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('sim._simfast', ['lsl/sim/simfast.c', 'lsl/sim/const.c', 'lsl/sim/j1.c', 'lsl/sim/polevl.c', 'lsl/sim/mtherr.c', 'lsl/sim/sf_error.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('misc._wisdom', ['lsl/misc/wisdom.cpp'],include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), ]
+
 
 # Update the version information
 write_version_info()
@@ -329,7 +327,7 @@ setup(
     install_requires = [ASTROPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'], 
     include_package_data = True,  
     ext_package = 'lsl', 
-    ext_modules = ExtensionModules,
+    ext_modules = get_extensions(),
     zip_safe = False,  
     test_suite = "tests"
 ) 
