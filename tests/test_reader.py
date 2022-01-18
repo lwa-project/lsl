@@ -10,6 +10,7 @@ if sys.version_info < (3,):
     
 import os
 import unittest
+from datetime import timedelta
 
 from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbw
@@ -131,6 +132,16 @@ class reader_tests(unittest.TestCase):
         self.assertAlmostEqual(t, FrameTimestamp(1587495779, 0.6), 6)
         self.assertAlmostEqual(t, 1587495779.6, 6)
         
+        t = t + timedelta(seconds=1)
+        self.assertEqual(t, FrameTimestamp(1587495780, 0.6))
+        self.assertAlmostEqual(t, FrameTimestamp(1587495780, 0.6), 6)
+        self.assertAlmostEqual(t, 1587495780.6, 6)
+        
+        t += timedelta(seconds=1, microseconds=400000)
+        self.assertEqual(t, FrameTimestamp(1587495782, 0.0))
+        self.assertAlmostEqual(t, FrameTimestamp(1587495782, 0.0), 6)
+        self.assertAlmostEqual(t, 1587495782.0, 6)
+        
     def test_timestamp_sub(self):
         """Test subtracting from a FrameTimestamp"""
         
@@ -153,6 +164,16 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(t0, FrameTimestamp(1587495778, 0.0))
         self.assertAlmostEqual(t0, FrameTimestamp(1587495778, 0.0), 6)
         self.assertAlmostEqual(t0, 1587495778.0, 6)
+        
+        t0 = t0 - timedelta(seconds=1)
+        self.assertEqual(t0, FrameTimestamp(1587495777, 0.0))
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495777, 0.0), 6)
+        self.assertAlmostEqual(t0, 1587495777.0, 6)
+        
+        t0 -= timedelta(seconds=1, microseconds=500000)
+        self.assertEqual(t0, FrameTimestamp(1587495775, 0.5))
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495775, 0.5), 6)
+        self.assertAlmostEqual(t0, 1587495775.5, 6)
         
     def test_timestmp_cmp(self):
         """Test FrameTimestamp comparisons"""

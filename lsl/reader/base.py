@@ -511,6 +511,15 @@ class FrameTimestamp(object):
                 _int += 1
                 _frac -= 1
             return FrameTimestamp(_int, _frac)
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
+            _int = self._int + oi
+            _frac = self._frac + of
+            if _frac >= 1:
+                _int += 1
+                _frac -= 1
+            return FrameTimestamp(_int, _frac)
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
@@ -518,6 +527,15 @@ class FrameTimestamp(object):
         if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
+            self._int += oi
+            self._frac += of
+            if self._frac >= 1:
+                self._int += 1
+                self._frac -= 1
+            return self
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
             self._int += oi
             self._frac += of
             if self._frac >= 1:
@@ -545,6 +563,15 @@ class FrameTimestamp(object):
                 _int -= 1
                 _frac += 1
             return FrameTimestamp(_int, _frac)
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
+            _int = self._int - oi
+            _frac = self._frac - of
+            if _frac < 0:
+                _int -= 1
+                _frac += 1
+            return FrameTimestamp(_int, _frac)
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
@@ -552,6 +579,15 @@ class FrameTimestamp(object):
         if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
+            self._int -= oi
+            self._frac -= of
+            if self._frac < 0:
+                self._int -= 1
+                self._frac += 1
+            return self
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
             self._int -= oi
             self._frac -= of
             if self._frac < 0:
