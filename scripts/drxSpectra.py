@@ -74,9 +74,9 @@ def main(args):
     maxFrames = int(1.0*19144/beampols*4096/float(LFFT))*LFFT/4096*beampols
     
     # Number of frames to integrate over
-    nFrames = int(args.average * srate / 4096 * beampols)
-    nFrames = int(1.0 * nFrames / beampols*4096/float(LFFT))*LFFT/4096*beampols
-    args.average = 1.0 * nFrames / beampols * 4096 / srate
+    nFrames = int(args.average * srate / 4096) * beampols
+    nFrames = int(1.0 * (nFrames // beampols)*4096/float(LFFT))*LFFT/4096 * beampols
+    args.average = 1.0 * (nFrames // beampols) * 4096 / srate
     
     # Number of remaining chunks
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))

@@ -91,9 +91,9 @@ def main(args):
     maxFrames = int((2*260*750)/antpols*512/float(LFFT))*LFFT/512*antpols
     
     # Number of frames to integrate over
-    nFrames = int(args.average * srate / 512 * antpols)
-    nFrames = int(1.0 * nFrames / antpols*512/float(LFFT))*LFFT/512*antpols
-    args.average = 1.0 * nFrames / antpols * 512 / srate
+    nFrames = int(args.average * srate / 512) * antpols
+    nFrames = int(1.0 * (nFrames // antpols)*512/float(LFFT))*LFFT/512 * antpols
+    args.average = 1.0 * (nFrames // antpols) * 512 / srate
     
     # Number of remaining chunks
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
