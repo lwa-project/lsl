@@ -381,13 +381,13 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
             parse_linear_single<LINEAR_XX>(&header, data, a0, a1);
         } else if( header.stokes_format == LINEAR_XY_RE ) {
             // real(XY*) only
-              parse_linear_single<LINEAR_XY_RE>(&header, data, a0, a1);
+              parse_linear_single<LINEAR_XY_RE>(&header, data, b0, b1);
         } else if( header.stokes_format == LINEAR_XY_IM ) {
             // imag(XY*) only
-            parse_linear_single<LINEAR_XY_IM>(&header, data, a0, a1);
+            parse_linear_single<LINEAR_XY_IM>(&header, data, c0, c1);
         } else if( header.stokes_format == LINEAR_YY ) {
             // YY* only
-              parse_linear_single<LINEAR_YY>(&header, data, a0, a1);
+              parse_linear_single<LINEAR_YY>(&header, data, d0, d1);
         } else if( header.stokes_format == (LINEAR_XX | LINEAR_YY) ) {
             // XX* and YY*
             parse_linear_half(&header, data, a0, a1, d0, d1);
