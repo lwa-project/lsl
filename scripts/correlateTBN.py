@@ -181,8 +181,8 @@ def main(args):
         
     # Number of frames to read in at once and average
     nFrames = int(args.avg_time*sample_rate/512)
-    args.offset = idf.offset(args.offset)
     nSets = idf.get_info('nframe') // nFpO // nFrames
+    args.offset = idf.offset(args.offset)
     nSets = nSets - int(args.offset*sample_rate/512) // nFrames
     
     central_freq = idf.get_info('freq1')
