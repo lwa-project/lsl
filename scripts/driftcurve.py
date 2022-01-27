@@ -42,10 +42,10 @@ def main(args):
     if args.lwasv:
         nam = 'lwasv'
         sta = stations.lwasv
-    elif args.ovro_lwa:
+    elif args.ovrolwa:
         nam = 'ovro'
         sta = stations.lwa1
-        sta.lat, sta.lon, sta.elev = ('37.2397808', '-118.2816819', 1183.4839)
+        sta.lat, sta.lon, sta.elev = ('37.23977727', '-118.2816667', 1182.89)
     else:
         nam = 'lwa1'
         sta = stations.lwa1
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     sgroup = parser.add_mutually_exclusive_group(required=False)
     sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='calculate for LWA-SV instead of LWA1')
-    sgroup.add_argument('-o', '--ovro-lwa', action='store_true', 
+    sgroup.add_argument('-o', '--ovrolwa', action='store_true',
                         help='calculate for OVRO-LWA instead of LWA1')
     parser.add_argument('-p', '--pol', type=str, default='EW', 
                         help='polarization of the simulations (NS or EW)')

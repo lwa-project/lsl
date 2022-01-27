@@ -54,9 +54,9 @@ def main(args):
     # Setup everything for computing the position of the source
     if args.lwasv:
         site = stations.lwasv
-    elif args.ovro_lwa:
+    elif args.ovrolwa:
         site = stations.lwa1
-        site.lat, site.lon, site.elev = ('37.2397808', '-118.2816819', 1183.4839)
+        site.lat, site.lon, site.elev = ('37.23977727', '-118.2816667', 1182.89)
     else:
         site = stations.lwa1
     obs = site.get_observer()
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     sgroup = parser.add_mutually_exclusive_group(required=False)
     sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='calculate for LWA-SV instead of LWA1')
-    sgroup.add_argument('-o', '--ovro-lwa', action='store_true', 
+    sgroup.add_argument('-o', '--ovrolwa', action='store_true',
                         help='calculate for OVRO-LWA instead of LWA1')
     parser.add_argument('-n', '--n-samples', type=aph.positive_int, default=11, 
                         help='number of samples to take between the start and stop times')
