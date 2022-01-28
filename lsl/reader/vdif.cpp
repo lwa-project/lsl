@@ -276,22 +276,16 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     // Parse it out
     if( bitsPerSample == 8 ) {
         data = parse_vdif<8>(rawData, dataLength, samplesPerWord);
+    } else if( bitsPerSample == 4 ) {
+        data = parse_vdif<4>(rawData, dataLength, samplesPerWord);
+    } else if( bitsPerSample == 2 ) {
+        data = parse_vdif<2>(rawData, dataLength, samplesPerWord);
+    } else if( bitsPerSample == 1 ) {
+        data = parse_vdif<1>(rawData, dataLength, samplesPerWord);
     } else {
-        if( bitsPerSample == 4 ) {
-            data = parse_vdif<4>(rawData, dataLength, samplesPerWord);
-        } else {
-            if( bitsPerSample == 2 ) {
-                data = parse_vdif<2>(rawData, dataLength, samplesPerWord);
-            } else {
-                if( bitsPerSample == 1 ) {
-                    data = parse_vdif<1>(rawData, dataLength, samplesPerWord);
-                } else {
-                    PyErr_Format(PyExc_RuntimeError, "Cannot parse data with %d bits per sample", bitsPerSample);
-                    free(rawData);
-                    goto fail;
-                }
-            }
-        }
+        PyErr_Format(PyExc_RuntimeError, "Cannot parse data with %d bits per sample", bitsPerSample);
+        free(rawData);
+        goto fail;
     }
     
     // Clean and deal with the unexpected
