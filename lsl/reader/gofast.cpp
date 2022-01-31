@@ -98,7 +98,7 @@ static PyMethodDef GoFastMethods[] = {
 
 PyDoc_STRVAR(GoFast_doc, \
 "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, VDIF, TBF, and COR readers\n\
-written in C");
+written in C++");
 
 
 /*
