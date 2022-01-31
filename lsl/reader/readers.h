@@ -104,8 +104,10 @@ extern PyObject *read_drspec(PyObject*, PyObject*);
 extern char read_drspec_doc[];
 
 // vdif.cpp
-extern PyObject *read_vdif(PyObject*, PyObject*, PyObject*);
-extern char read_vdif_doc[];
+extern PyObject *read_vdif_f32(PyObject*, PyObject*, PyObject*);
+extern char read_vdif_f32_doc[];
+extern PyObject *read_vdif_i8(PyObject*, PyObject*, PyObject*);
+extern char read_vdif_i8_doc[];
 
 // tbf.cpp
 extern PyObject *read_tbf_cf32(PyObject*, PyObject*);

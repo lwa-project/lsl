@@ -798,6 +798,25 @@ class reader_tests(unittest.TestCase):
             
         fh.close()
         
+    def test_vdif_read_i8(self):
+        """Test reading in a frame from a VDIF file, i8 style."""
+        
+        fh = open(vdifFile, 'rb')
+        frame1 = vdif.read_frame(fh)
+        frame2 = vdif.read_frame(fh)
+        fh.close()
+        
+        fh = open(vdifFile, 'rb')
+        frame3 = vdif.read_frame_i8(fh)
+        frame4 = vdif.read_frame_i8(fh)
+        fh.close()
+        
+        # Validate the data
+        for i in range(frame1.payload.data.shape[0]):
+            for j in range(frame1.payload.data.shape[1]):
+                self.assertAlmostEqual(round(frame1.payload.data[i,j]), frame3.payload.data[i,j], 5)
+                self.assertAlmostEqual(round(frame2.payload.data[i,j]), frame4.payload.data[i,j], 5)
+                
     def test_vdif_errors(self):
         """Test reading in all frames from a truncated VDIF file."""
         

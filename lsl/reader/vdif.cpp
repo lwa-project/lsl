@@ -1,6 +1,7 @@
 #include "Python.h"
 #include <cmath>
 #include <complex>
+#include <type_traits>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
@@ -59,10 +60,15 @@ PyObject *vdif_size_dat = NULL;
 static const float HiMag = OPTIMAL_2BIT_HIGH;
 static const float FourBit1sigma = 2.95;
 
-static float vdif1LUT[256][8];
-static float vdif2LUT[256][4];
-static float vdif4LUT[256][2];
-static float vdif8LUT[256];
+static float vdif1_f32_LUT[256][8];
+static float vdif2_f32_LUT[256][4];
+static float vdif4_f32_LUT[256][2];
+static float vdif8_f32_LUT[256];
+
+static int8_t vdif1_i8_LUT[256][8];
+static int8_t vdif2_i8_LUT[256][4];
+static int8_t vdif4_i8_LUT[256][2];
+static int8_t vdif8_i8_LUT[256];
 
 void initVDIFLUTs(void) {
     /*
@@ -73,40 +79,46 @@ void initVDIFLUTs(void) {
     
     const float lut2level[2] = {-1.0, 1.0};
     const float lut4level[4] = {-HiMag, -1.0, 1.0, HiMag};
-    const float lut16level[16] = {-8/FourBit1sigma,-7/FourBit1sigma,-6/FourBit1sigma,-5/FourBit1sigma,-4/FourBit1sigma,
-                    -3/FourBit1sigma,-2/FourBit1sigma,-1/FourBit1sigma,0,1/FourBit1sigma,2/FourBit1sigma,
-                    3/FourBit1sigma,4/FourBit1sigma,5/FourBit1sigma,6/FourBit1sigma,7/FourBit1sigma};
+    const float lut16level[16] = {-8/FourBit1sigma, -7/FourBit1sigma, -6/FourBit1sigma, -5/FourBit1sigma,
+                                  -4/FourBit1sigma, -3/FourBit1sigma, -2/FourBit1sigma, -1/FourBit1sigma,
+                                   0/FourBit1sigma,  1/FourBit1sigma,  2/FourBit1sigma,  3/FourBit1sigma,
+                                   4/FourBit1sigma,  5/FourBit1sigma,  6/FourBit1sigma,  7/FourBit1sigma};
     int b, i, l;
     
     for(b=0; b<256; b++) {
-        /* vdif1LUT */
+        /* VDIF 1-bit LUTs */
         for(i=0; i<8; i++) {
             l = (b>>i) & 0x01;
-            vdif1LUT[b][i] =  lut2level[l];
+            vdif1_f32_LUT[b][i] =  lut2level[l];
+            vdif1_i8_LUT[b][i] =  (int8_t) round(lut2level[l]);
         }
         
-        /* vdif2LUT */
+        /* VDIF 2-bit LUTs */
         for(i=0; i<4; i++) {
             l = (b >> (2*i)) & 0x03;
-            vdif2LUT[b][i] = lut4level[l];
+            vdif2_f32_LUT[b][i] = lut4level[l];
+            vdif2_i8_LUT[b][i] = (int8_t) round(lut4level[l]);
         }
         
-        /* vdif4LUT */
+        /* VDIF 4-bit LUTs */
         for(i=0; i<2; i++) {
             l = (b >> (4*i)) & 0x0F;
-            vdif4LUT[b][i] = lut16level[l];
+            vdif4_f32_LUT[b][i] = lut16level[l];
+            vdif4_i8_LUT[b][i] = (int8_t) round(lut16level[l]*FourBit1sigma);
         }
         
-        /* vdif8LUT */
-        vdif8LUT[b] = (b*2-255)/256.0;
+        /* VDIF 8-bit LUTs */
+        vdif8_f32_LUT[b] = (b*2-255)/256.0;
+        vdif8_i8_LUT[b] = b - 128;
     }
 }
+
 
 /* 
   Data-type specific VDIF Helper Functions
 */
 
-template<int8_t D>
+template<int8_t D, typename T, NPY_TYPES N>
 static PyArrayObject * parse_vdif(uint8_t *rawData, uint32_t dataLength, uint32_t samplesPerWord) {
     PyArrayObject *data;
     
@@ -116,40 +128,40 @@ static PyArrayObject * parse_vdif(uint8_t *rawData, uint32_t dataLength, uint32_
     // Create the data holders and output data array
     npy_intp dims[1];
     dims[0] = (npy_intp) nSamples;
-    data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_FLOAT32, 0);
+    data = (PyArrayObject*) PyArray_ZEROS(1, dims, N, 0);
     if(data == NULL) {
         return data;
     }
     
     // Fill the data
-    float *a;
-    a = (float *) PyArray_DATA(data);
-    
+    T *a;
+    a = (T *) PyArray_DATA(data);
     uint32_t i;
-    float *fp;
     for(i=0; i<dataLength; i++) {
         if( D == 8 ) {
-            *(a + i) = vdif8LUT[ *(rawData+i) ];
+            if( std::is_same<T, int8_t>::value ) {
+                *(a + i) = vdif8_i8_LUT[ *(rawData+i) ];
+            } else if( std::is_same<T, float>::value ) {
+                *(a + i) = vdif8_f32_LUT[ *(rawData+i) ];
+            }
         } else if( D == 4 ) {
-            fp = vdif4LUT[ *(rawData+i) ];
-            *(a + 2*i + 0) = fp[0];
-            *(a + 2*i + 1) = fp[1];
+            if( std::is_same<T, int8_t>::value ) {
+                memcpy((a + 2*i), vdif4_i8_LUT[ *(rawData+i) ], 2*sizeof(T));
+            } else if( std::is_same<T, float>::value ) {
+                memcpy((a + 2*i), vdif4_f32_LUT[ *(rawData+i) ], 2*sizeof(T));
+            }
         } else if( D == 2 ) {
-            fp = vdif2LUT[ *(rawData+i) ];
-            *(a + 4*i + 0) = fp[0];
-            *(a + 4*i + 1) = fp[1];
-            *(a + 4*i + 2) = fp[2];
-            *(a + 4*i + 3) = fp[3];
+            if( std::is_same<T, int8_t>::value ) {
+                memcpy((a + 4*i), vdif2_i8_LUT[ *(rawData+i) ], 4*sizeof(T));
+            } else if( std::is_same<T, float>::value ) {
+                memcpy((a + 4*i), vdif2_f32_LUT[ *(rawData+i) ], 4*sizeof(T));
+            }
         } else if( D == 1) {
-            fp = vdif1LUT[ *(rawData+i) ];
-            *(a + 8*i + 0) = fp[0];
-            *(a + 8*i + 1) = fp[1];
-            *(a + 8*i + 2) = fp[2];
-            *(a + 8*i + 3) = fp[3];
-            *(a + 8*i + 4) = fp[4];
-            *(a + 8*i + 5) = fp[5];
-            *(a + 8*i + 6) = fp[6];
-            *(a + 8*i + 7) = fp[7];
+            if( std::is_same<T, int8_t>::value ) {
+                memcpy((a + 8*i), vdif1_i8_LUT[ *(rawData+i) ], 8*sizeof(T));
+            } else if( std::is_same<T, float>::value ) {
+                memcpy((a + 8*i), vdif1_f32_LUT[ *(rawData+i) ], 8*sizeof(T));
+            }
         }
     }
     
@@ -162,6 +174,7 @@ static PyArrayObject * parse_vdif(uint8_t *rawData, uint32_t dataLength, uint32_
   VIDF Reader
 */
 
+template<typename T, NPY_TYPES N>
 PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data=NULL;
@@ -275,13 +288,13 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Parse it out
     if( bitsPerSample == 8 ) {
-        data = parse_vdif<8>(rawData, dataLength, samplesPerWord);
+        data = parse_vdif<8,T,N>(rawData, dataLength, samplesPerWord);
     } else if( bitsPerSample == 4 ) {
-        data = parse_vdif<4>(rawData, dataLength, samplesPerWord);
+        data = parse_vdif<4,T,N>(rawData, dataLength, samplesPerWord);
     } else if( bitsPerSample == 2 ) {
-        data = parse_vdif<2>(rawData, dataLength, samplesPerWord);
+        data = parse_vdif<2,T,N>(rawData, dataLength, samplesPerWord);
     } else if( bitsPerSample == 1 ) {
-        data = parse_vdif<1>(rawData, dataLength, samplesPerWord);
+        data = parse_vdif<1,T,N>(rawData, dataLength, samplesPerWord);
     } else {
         PyErr_Format(PyExc_RuntimeError, "Cannot parse data with %d bits per sample", bitsPerSample);
         free(rawData);
@@ -444,7 +457,38 @@ fail:
     return NULL;
 }
 
-char read_vdif_doc[] = PyDoc_STR(\
+PyObject *read_vdif_f32(PyObject *self, PyObject *args, PyObject *kwds) {
+    return read_vdif<float,NPY_FLOAT32>(self, args, kwds);
+}
+
+char read_vdif_f32_doc[] = PyDoc_STR(\
 "Function to read in a single VDIF frame (header+payload) and store the contents\n\
 as a Frame object.\n\
+");
+
+PyObject *read_vdif_i8(PyObject *self, PyObject *args, PyObject *kwds) {
+    return read_vdif<int8_t,NPY_INT8>(self, args, kwds);
+}
+
+char read_vdif_i8_doc[] = PyDoc_STR(\
+"Function to read in a single VDIF frame (header+payload) and store the contents\n\
+as a Frame object.\n\
+\n\
+.. note::\n\
+    This function differs from `read_vdif` in that it returns a\n\
+    `lsl.vdif.FramePayload` containing numpy.int8 array rather than a\n\
+    numpy.float32 array for real data.  Complex data is always returned as\n\
+    numpy.complex64.\n\
+\n\
+.. note::\n\
+     The unpacking to integer does not match that for float for 2-, 4-, and\n\
+     8-bit data.  Specifically:\n\
+      * For 2-bit data:\n\
+        (-3.3359, -1, 1, 3.3359) -> (-3, -1, 1, 3)\n\
+      * For 4-bit data:\n\
+        (-8/2.95, -7/2.95, ..., 7/2.95) -> (-8, -7, ..., 7)\n\
+      * For 8-bit data:\n\
+        (-255/256, -253/256, ..., 255/256) -> (-128, -127, ... 127)\n\
+\n\
+.. versionadded:: 2.1.3\n\
 ");
