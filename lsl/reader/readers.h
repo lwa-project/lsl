@@ -51,7 +51,7 @@
   Exceptions for the Go Fast! Readers
 */
 
-// gofast.c
+// gofast.cpp
 extern PyObject *SyncError;
 extern PyObject *EOFError;
 
@@ -60,7 +60,7 @@ extern PyObject *EOFError;
   LWA1/LWA-SV Look up tables
 */
 
-// gofast.c
+// gofast.cpp
 extern int16_t tbw4LUT[256][2];
 extern int8_t  tbnLUT[256];
 extern int8_t  drxLUT[256][2];
@@ -71,9 +71,9 @@ extern int8_t  tbfLUT[256][2];
   Support Functions
 */
 
-// gofast.c
+// gofast.cpp
 extern int validSync5C(uint32_t);
-// vdif.c
+// vdif.cpp
 extern void initVDIFLUTs(void);
 
 /*
@@ -86,33 +86,33 @@ extern void initVDIFLUTs(void);
   Reader Functions and Documentation
 */
 
-// tbw.c
+// tbw.cpp
 extern PyObject *read_tbw(PyObject*, PyObject*);
 extern char read_tbw_doc[];
-// tbn.c
+// tbn.cpp
 extern PyObject *read_tbn_cf32(PyObject*, PyObject*);
 extern char read_tbn_cf32_doc[];
 extern PyObject *read_tbn_ci8(PyObject*, PyObject*);
 extern char read_tbn_ci8_doc[];
-// drx.c
+// drx.cpp
 extern PyObject *read_drx_cf32(PyObject*, PyObject*);
 extern char read_drx_cf32_doc[];
 extern PyObject *read_drx_ci8(PyObject*, PyObject*);
 extern char read_drx_ci8_doc[];
-// drspec.c
+// drspec.cpp
 extern PyObject *read_drspec(PyObject*, PyObject*);
 extern char read_drspec_doc[];
 
-// vdif.c
+// vdif.cpp
 extern PyObject *read_vdif(PyObject*, PyObject*, PyObject*);
 extern char read_vdif_doc[];
 
-// tbf.c
+// tbf.cpp
 extern PyObject *read_tbf_cf32(PyObject*, PyObject*);
 extern char read_tbf_cf32_doc[];
 extern PyObject *read_tbf_ci8(PyObject*, PyObject*);
 extern char read_tbf_ci8_doc[];
-// cor.c
+// cor.cpp
 extern PyObject *read_cor(PyObject*, PyObject*);
 extern char read_cor_doc[];
 
