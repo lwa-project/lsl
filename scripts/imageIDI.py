@@ -9,6 +9,7 @@ from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info < (3,):
     range = xrange
+    input = raw_input
     
 import os
 import sys
@@ -221,7 +222,7 @@ def main(args):
             hdulist = astrofits.HDUList(hdulist)
             overwrite = False
             if os.path.exists(args.fits):
-                yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n]" % args.fits)
+                yn = input("WARNING: '%s' exists, overwrite? [Y/n]" % args.fits)
                 if yn not in ('n', 'N'):
                     overwrite = True
             try:
