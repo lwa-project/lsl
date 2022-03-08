@@ -118,7 +118,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
             fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
             
         # Add the visibilities
-        obsTime = astro.unix_to_taimjd(setTime)
+        obsTime = setTime.tai_mjd
         fits.add_data_set(obsTime, readT, blList, vis[:,toUse], pol=pol)
         sys.stdout.write(pb.show()+'\r')
         sys.stdout.write('\n')
