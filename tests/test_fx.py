@@ -810,28 +810,28 @@ class FXMaster_tests(unittest.TestCase):
         
         ## XX
         blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
-                                    return_baselines=True, Pol='XX')
+                                    return_baselines=True, pol='XX')
         for (ant1,ant2) in blList:
             self.assertEqual(ant1.pol, 0)
             self.assertEqual(ant2.pol, 0)
         
         ## YY
         blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
-                                    return_baselines=True, Pol='YY')
+                                    return_baselines=True, pol='YY')
         for (ant1,ant2) in blList:
             self.assertEqual(ant1.pol, 1)
             self.assertEqual(ant2.pol, 1)
         
         ## XY
         blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
-                                    return_baselines=True, Pol='XY')
+                                    return_baselines=True, pol='XY')
         for (ant1,ant2) in blList:
             self.assertEqual(ant1.pol, 0)
             self.assertEqual(ant2.pol, 1)
             
         ## YX
         blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], sample_rate=1e5, central_freq=38e6, 
-                                    return_baselines=True, Pol='YX')
+                                    return_baselines=True, pol='YX')
         for (ant1,ant2) in blList:
             self.assertEqual(ant1.pol, 1)
             self.assertEqual(ant2.pol, 0)
@@ -853,7 +853,7 @@ class FXMaster_tests(unittest.TestCase):
                 ant.cable.length = 0.0
                 
             blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], LFFT=9, sample_rate=1e5, central_freq=38e6, 
-                                        return_baselines=True, Pol='XX')
+                                        return_baselines=True, pol='XX')
             
             for i in range(cps.shape[0]):
                 self.assertTrue(numpy.abs(cps[i,0]-cps[i,-1].conj()) < 1e-6*numpy.abs(cps[i,:]).max())
@@ -862,7 +862,7 @@ class FXMaster_tests(unittest.TestCase):
                 return numpy.kaiser(L, 1)
                 
             blList, freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], LFFT=9, sample_rate=1e5, central_freq=38e6, 
-                                        return_baselines=True, Pol='XX', window=wndw2)
+                                        return_baselines=True, pol='XX', window=wndw2)
             
             for i in range(cps.shape[0]):
                 self.assertTrue(numpy.abs(cps[i,0]-cps[i,-1].conj()) < 1e-6*numpy.abs(cps[i,:]).max())
