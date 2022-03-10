@@ -236,7 +236,10 @@ class WriterBase(object):
             refDateTime = datetime.utcfromtimestamp(ref_time)
             ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
         elif isinstance(ref_time, (FrameTimestamp, AstroTime)):
-            refDateTime = ref_time.datetime
+            try:
+                refDateTime = ref_time.utc.datetime
+            except AttributeError:
+                refDateTime = ref_time.datetime
             ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
         elif isinstance(ref_time, datetime):
             ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
