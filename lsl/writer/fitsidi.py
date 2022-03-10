@@ -272,7 +272,7 @@ class WriterBase(object):
         self.siteName = 'Unknown'
         
         # Observation-specific information
-        self.observer = 'UKNOWN'
+        self.observer = 'UNKNOWN'
         self.project = 'UNKNOWN'
         self.mode = 'ZA'
         self.ref_time = self.parse_time(ref_time)
@@ -505,7 +505,8 @@ class Idi(WriterBase):
         # If the mapper has been enabled, tell the user about it
         if enableMapper and self.verbose:
             print("FITS IDI: stand ID mapping enabled")
-            for key, value in mapper.iteritems():
+            for key in mapper.keys():
+                value = mapper[key]
                 print("FITS IDI:  stand #%i -> mapped #%i" % (key, value))
                 
         self.nAnt = len(ants)
@@ -1113,10 +1114,15 @@ class Idi(WriterBase):
                 
             # Sort the data by packed baseline
             try:
-                order
+                if len(dataSet.visibilities) != len(order):
+                    raise NameError
             except NameError:
                 order = dataSet.argsort(mapper=mapper, shift=self._PACKING_BIT_SHIFT)
-                
+                try:
+                    del baselineMapped
+                except NameError:
+                    pass
+                    
             # Deal with defininig the values of the new data set
             if dataSet.pol == self.stokes[0]:
                 ## Figure out the new date/time for the observation
@@ -1188,6 +1194,8 @@ class Idi(WriterBase):
                 
                 ### Zero out the visibility data
                 try:
+                    if matrix.shape[0] != len(order):
+                        raise NameError
                     matrix[...] = 0.0
                     weights[...] = 1.0
                 except NameError:

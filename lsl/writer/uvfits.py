@@ -148,7 +148,8 @@ class Uv(WriterBase):
         # If the mapper has been enabled, tell the user about it
         if enableMapper and self.verbose:
             print("UVFITS: stand ID mapping enabled")
-            for key, value in mapper.iteritems():
+            for key in mapper.keys():
+                value = mapper[key]
                 print("UVFITS:  stand #%i -> mapped #%i" % (key, value))
                 
         self.nAnt = len(ants)
@@ -266,10 +267,15 @@ class Uv(WriterBase):
         for dataSet in self.data:
             # Sort the data by packed baseline
             try:
-                order
+                if len(dataSet.visibilities) != len(order):
+                    raise NameError
             except NameError:
                 order = dataSet.argsort(mapper=mapper)
-                
+                try:
+                    del baselineMapped
+                except NameError:
+                    pass
+                    
             # Deal with defininig the values of the new data set
             if dataSet.pol == self.stokes[0]:
                 ## Figure out the new date/time for the observation
@@ -348,6 +354,8 @@ class Uv(WriterBase):
                 
                 ### Zero out the visibility data
                 try:
+                    if matrix.shape[0] != len(order):
+                        raise NameError
                     matrix *= 0.0
                 except NameError:
                     matrix = numpy.zeros((len(order), 1, 1, self.nChan, self.nStokes, 2), dtype=numpy.float32)

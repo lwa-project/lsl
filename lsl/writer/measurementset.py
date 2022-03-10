@@ -816,10 +816,15 @@ try:
             for dataSet in self.data:
                 # Sort the data by packed baseline
                 try:
-                    order
+                    if len(dataSet.visibilities) != len(order):
+                        raise NameError
                 except NameError:
                     order = dataSet.argsort(mapper=mapper, shift=16)
-                    
+                    try:
+                        del baselineMapped
+                    except NameError:
+                        pass
+                        
                 # Deal with defininig the values of the new data set
                 if dataSet.pol == self.stokes[0]:
                     ## Figure out the new date/time for the observation
@@ -889,6 +894,8 @@ try:
                      
                     ### Zero out the visibility data
                     try:
+                        if matrix.shape[0] != len(order):
+                            raise NameError
                         matrix.shape = (len(order), self.nStokes, nBand*self.nChan)
                         matrix *= 0.0
                     except NameError:
