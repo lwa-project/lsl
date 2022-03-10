@@ -33,7 +33,7 @@ from lsl.config import LSL_CONFIG
 TELE_CONFIG = LSL_CONFIG.view('telemetry')
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
            'track_script', 'track_module',
            'track_function', 'track_function_timed',
