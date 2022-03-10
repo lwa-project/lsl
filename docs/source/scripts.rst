@@ -7,13 +7,6 @@ gatherDebugging.py
 
   :Options: None
 
-makeWisdom.py
-  :Description: Build LSL-specific FFTW wisdom and save it to a file within the LSL distribution.
-
-  :Usage: makeWisdom.py
-
-  :Options: None
-
 updateLSLSSMIF.py
   :Description: Update the internal LWA1 SSMIF used by LSL.
 
